@@ -1,14 +1,17 @@
 import type {
   ApplicationsApi,
+  CreatePromptDto,
   PromptsApi,
   ResourceFoldersResponseDto,
+  SkillsApi,
   ToolsetBodyDto,
   ToolsetsApi,
   UpdatePromptDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
   ResourceSaveError,
-  type ResourceSaveAdapter,
+  type ResourceCreateSaveAdapter,
+  type ResourceEditSaveAdapter,
   type SavedResource,
 } from './resource-save';
 
@@ -27,10 +30,10 @@ export type ResourceSaveToolsetsApi = Pick<
   'updateToolset' | 'createToolset' | 'moveToolset'
 >;
 
-/** The prompt operations {@link createPromptSaveAdapter} and {@link createPromptFolderLister} call. */
+/** The prompt operations the prompt save adapters and {@link createPromptFolderLister} call. */
 export type ResourceSavePromptsApi = Pick<
   PromptsApi,
-  'listPrompts' | 'updatePrompt' | 'movePrompt'
+  'listPrompts' | 'createPrompt' | 'updatePrompt' | 'movePrompt'
 >;
 
 /** Parameters for {@link createEmbeddedApplicationSaveAdapter}. */
@@ -100,7 +103,7 @@ export const createEmbeddedApplicationSaveAdapter = ({
   applicationId,
   runEmbeddedSave,
   getCommitFailedMessage,
-}: EmbeddedApplicationSaveAdapterParams): ResourceSaveAdapter => ({
+}: EmbeddedApplicationSaveAdapterParams): ResourceEditSaveAdapter => ({
   publishEntityType: 'application',
   isVersioned: true,
   saveInPlace: async () => {
@@ -143,7 +146,7 @@ export const createHostApplicationSaveAdapter = ({
   applicationId,
   update,
   createVersion,
-}: HostApplicationSaveAdapterParams): ResourceSaveAdapter => ({
+}: HostApplicationSaveAdapterParams): ResourceEditSaveAdapter => ({
   publishEntityType: 'application',
   isVersioned: true,
   saveInPlace: async () => {
@@ -163,7 +166,7 @@ export const createToolsetSaveAdapter = ({
   toolsetsApi,
   toolsetId,
   body,
-}: ToolsetSaveAdapterParams): ResourceSaveAdapter => ({
+}: ToolsetSaveAdapterParams): ResourceEditSaveAdapter => ({
   publishEntityType: 'toolset',
   isVersioned: true,
   saveInPlace: () =>
@@ -189,7 +192,7 @@ export const createPromptSaveAdapter = ({
   promptsApi,
   promptId,
   body,
-}: PromptSaveAdapterParams): ResourceSaveAdapter => ({
+}: PromptSaveAdapterParams): ResourceEditSaveAdapter => ({
   publishEntityType: 'prompt',
   isVersioned: false,
   // A rename changes the prompt's id, so the id the update returns is the one moved next.
@@ -199,6 +202,55 @@ export const createPromptSaveAdapter = ({
     promptsApi.movePrompt({
       id,
       movePromptDto: { targetFolderId: folderPath.join('/') },
+    }),
+});
+
+/** Parameters for {@link createToolsetCreateAdapter}. */
+export interface ToolsetCreateAdapterParams {
+  /** Configured toolsets client. */
+  toolsetsApi: Pick<ResourceSaveToolsetsApi, 'createToolset'>;
+  /** The new toolset's values, already mapped to the write body. */
+  body: ToolsetBodyDto;
+}
+
+/** Parameters for {@link createPromptCreateAdapter}. */
+export interface PromptCreateAdapterParams {
+  /** Configured prompts client. */
+  promptsApi: Pick<ResourceSavePromptsApi, 'createPrompt'>;
+  /** The new prompt's values; its folder comes from the panel. */
+  body: Omit<CreatePromptDto, 'folderId'>;
+}
+
+/** Creates a new toolset in the chosen Personal folder, never overwriting an existing one. */
+export const createToolsetCreateAdapter = ({
+  toolsetsApi,
+  body,
+}: ToolsetCreateAdapterParams): ResourceCreateSaveAdapter => ({
+  publishEntityType: 'toolset',
+  isVersioned: false,
+  createIn: (folderPath) =>
+    toolsetsApi.createToolset({
+      createToolsetBodyDto: {
+        ...body,
+        createOnly: true,
+        ...(folderPath.length > 0 ? { folderPath: folderPath.join('/') } : {}),
+      },
+    }),
+});
+
+/** Creates a new prompt in the chosen Personal folder. */
+export const createPromptCreateAdapter = ({
+  promptsApi,
+  body,
+}: PromptCreateAdapterParams): ResourceCreateSaveAdapter => ({
+  publishEntityType: 'prompt',
+  isVersioned: false,
+  createIn: (folderPath) =>
+    promptsApi.createPrompt({
+      createPromptDto: {
+        ...body,
+        ...(folderPath.length > 0 ? { folderId: folderPath.join('/') } : {}),
+      },
     }),
 });
 
@@ -219,4 +271,35 @@ export const createPromptFolderLister =
         )
         .map((folder) => ({ name: folder.name, path: folder.id })),
     };
+  };
+
+/** The skill operation {@link createSkillFolderLister} calls. */
+export type ResourceSaveSkillsApi = Pick<SkillsApi, 'listSkills'>;
+
+/** Returns a lister of the grouping folders directly under `path` (plain text, `''` for the root) of the caller's skills in `bucket`. */
+export const createSkillFolderLister =
+  (skillsApi: ResourceSaveSkillsApi, bucket: string) =>
+  async (path: string): Promise<ResourceFoldersResponseDto> => {
+    const folders: ResourceFoldersResponseDto['folders'] = [];
+    const visitedTokens = new Set<string>();
+    let token: string | undefined;
+    do {
+      const page = await skillsApi.listSkills({
+        bucket,
+        path: path || undefined,
+        token,
+      });
+      for (const item of page.items) {
+        // A skill is itself stored as a folder; only grouping folders hold skills.
+        if (item.nodeType !== 'folder') continue;
+        const folderPath = item.path.replace(/\/$/, '');
+        folders.push({ name: item.name, path: folderPath });
+      }
+      token = page.nextToken;
+      if (token != null) {
+        if (visitedTokens.has(token)) break;
+        visitedTokens.add(token);
+      }
+    } while (token != null);
+    return { folders };
   };

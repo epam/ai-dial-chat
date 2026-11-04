@@ -1,5 +1,13 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
+import { MoveResourceDto } from '../../common/dto/resource-folder.dto';
+import { IsValidFilePath } from '../../files/dto/file-path.validator';
 import {
   SkillFileResourceQueryDto,
   SkillResourceQueryDto,
@@ -49,4 +57,17 @@ export class SkillOperationResultDto {
   @IsBoolean()
   @ApiPropertyOptional({ description: 'Always true on success', example: true })
   success!: boolean;
+}
+
+/** Body for `POST /api/v1/skills/move`: moves one of the caller's skills into another of their folders. */
+export class MoveSkillDto extends MoveResourceDto {
+  @IsString()
+  @IsNotEmpty()
+  @IsValidFilePath()
+  @MaxLength(1024)
+  @ApiProperty({
+    description: "The skill's resource path within the caller's own bucket",
+    example: 'team-a/docs-helper',
+  })
+  path!: string;
 }

@@ -8,7 +8,7 @@ import {
   ResourceSaveOutcome,
   ResourceSaveVersionError,
   SaveDestinationRoot,
-  type ResourceSaveAdapter,
+  type ResourceEditSaveAdapter,
 } from '../../resource-save';
 import type { UsePublishFoldersResult } from '../../usePublishFolders/usePublishFolders';
 import {
@@ -39,8 +39,8 @@ const RULE = {
 };
 
 const makeAdapter = (
-  overrides: Partial<ResourceSaveAdapter> = {},
-): ResourceSaveAdapter => ({
+  overrides: Partial<ResourceEditSaveAdapter> = {},
+): ResourceEditSaveAdapter => ({
   publishEntityType: 'application',
   isVersioned: true,
   saveInPlace: vi.fn().mockResolvedValue({ id: ID }),
@@ -147,10 +147,11 @@ describe('useResourceSavePanel', () => {
   });
 
   it('saves in place and reports the result with its choice', async () => {
-    const { result, params } = renderPanel();
+    const adapter = makeAdapter();
+    const { result, params } = renderPanel({ adapter });
     await act(() => result.current.submit());
 
-    expect(params.adapter.saveInPlace).toHaveBeenCalledOnce();
+    expect(adapter.saveInPlace).toHaveBeenCalledOnce();
     expect(params.onSaved).toHaveBeenCalledWith(
       expect.objectContaining({ outcome: ResourceSaveOutcome.Saved }),
       expect.objectContaining({ resourceId: ID }),

@@ -1,8 +1,21 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
+import {
+  handleDialSdkError,
+  mapDialHttpStatus,
+} from '../../common/dial/dial-error.mapper';
+import type { ResourceIdResponseDto } from '../../common/dto/resource-folder.dto';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { buildIfMatchHeaders } from '../../common/utils/conditional-headers';
+import {
+  buildFolderResourcePath,
+  getResourceLeaf,
+} from '../../common/utils/dial-resource-transfer';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
@@ -151,6 +164,71 @@ export class SkillsMutationService {
         'skills.createSkillGroupingFolder',
         this.logger,
       );
+    }
+  }
+
+  /**
+   * Moves one of the caller's skills into `folderPath` of the same bucket,
+   * never overwriting a skill already there; resolves with its new id.
+   * DIAL Core answers a non-overwriting move onto an existing target with
+   * 400, so that case is reported as 409.
+   */
+  async moveSkill(
+    bucket: string,
+    path: string,
+    folderPath: string,
+    accessToken: string,
+  ): Promise<ResourceIdResponseDto> {
+    const context = 'skills.moveSkill';
+    const leaf = path.split('/').pop() ?? path;
+    const targetPath = folderPath ? `${folderPath}/${leaf}` : leaf;
+    if (targetPath === path) return { id: `skills/${bucket}/${path}` };
+
+    const headers = getBearerAuthHeaders(accessToken);
+    const sourcePath = encodeDialResourcePath(path);
+    const destinationPath = buildFolderResourcePath(
+      folderPath,
+      getResourceLeaf(sourcePath),
+    );
+    try {
+      const { error, response } = await this.dialClient.client.moveResource({
+        headers,
+        body: {
+          sourceUrl: `skills/${bucket}/${sourcePath}`,
+          destinationUrl: `skills/${bucket}/${destinationPath}`,
+          overwrite: false,
+        },
+      });
+      if (error == null && response.status < 400) {
+        return { id: `skills/${bucket}/${targetPath}` };
+      }
+      if (
+        response.status === 400 &&
+        (await this.skillExists(bucket, destinationPath, headers))
+      ) {
+        this.logger.warn(`DIAL Core rejected ${context}: target exists`);
+        throw new ConflictException('A skill with this name already exists');
+      }
+      return mapDialHttpStatus(response.status, context, this.logger);
+    } catch (err) {
+      return handleDialSdkError(err, context, this.logger);
+    }
+  }
+
+  private async skillExists(
+    bucket: string,
+    encodedPath: string,
+    headers: Record<string, string>,
+  ): Promise<boolean> {
+    try {
+      const { response } = await this.dialClient.client.listSkillMetadata(
+        bucket,
+        encodedPath,
+        { headers },
+      );
+      return response.status === 200;
+    } catch {
+      return false;
     }
   }
 

@@ -3,9 +3,16 @@ import {
   TextRefinementPurpose,
   type DeploymentDetailsDto,
 } from '@epam/ai-dial-chat-api-client';
+import {
+  isResourceCreateAdapter,
+  type ResourceSaveAdapter,
+  ResourceSaveOutcome,
+  type ResourceSaveResult,
+} from '@epam/ai-dial-chat-hooks';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -29,10 +36,6 @@ import {
 } from '../../../server-api/applications';
 import { getDeploymentDetails } from '../../../server-api/deployments';
 import { ApplicationEditorKind } from '../../../types/application-editor';
-import {
-  EntityOperation,
-  NotifiableEntity,
-} from '../../../types/entity-notification';
 import { ROUTES } from '../../../types/routes';
 import ApplicationEditorPage from '../ApplicationEditorPage';
 
@@ -71,21 +74,38 @@ vi.mock(
     default: (props: {
       isOpen: boolean;
       typeLabel: string;
-      adapter: {
-        saveAsNewVersion?: (v: string, f: string[]) => Promise<unknown>;
+      adapter: ResourceSaveAdapter;
+      onSaved: (result: ResourceSaveResult) => void;
+    }) => {
+      const [createError, setCreateError] = useState('');
+      /* A create adapter runs the real create into the root folder, the way the panel does. */
+      const handleFinish = async () => {
+        if (!isResourceCreateAdapter(props.adapter)) return;
+        try {
+          const { id } = await props.adapter.createIn([]);
+          props.onSaved({
+            outcome: ResourceSaveOutcome.Saved,
+            savedId: id,
+            isCreated: true,
+            isNewVersion: false,
+            isPublished: false,
+          });
+        } catch {
+          setCreateError('Create failed');
+        }
       };
-    }) =>
-      props.isOpen ? (
+      const handleSaveNewVersion = () => {
+        if (isResourceCreateAdapter(props.adapter)) return;
+        void props.adapter.saveAsNewVersion?.('2.0.0', ['Design']);
+      };
+      return props.isOpen ? (
         <div role="dialog" aria-label={`Save ${props.typeLabel}`}>
-          <button
-            onClick={() =>
-              void props.adapter.saveAsNewVersion?.('2.0.0', ['Design'])
-            }
-          >
-            Save new version
-          </button>
+          <button onClick={handleSaveNewVersion}>Save new version</button>
+          <button onClick={handleFinish}>Finish save</button>
+          <p>{createError}</p>
         </div>
-      ) : null,
+      ) : null;
+    },
   }),
 );
 vi.mock('../../../hooks/useOperationNotification', () => ({
@@ -147,7 +167,7 @@ describe('ApplicationEditorPage — custom app', () => {
     vi.mocked(useNotification).mockReturnValue(
       createNotificationContextValue(mockShowNotification),
     );
-    vi.mocked(createApplication).mockResolvedValue({} as never);
+    vi.mocked(createApplication).mockResolvedValue({ id: APP_ID } as never);
     vi.mocked(updateApplication).mockResolvedValue({} as never);
     mockDeploymentItems.current = [];
     mockRefetchDeployments.mockResolvedValue(undefined);
@@ -277,11 +297,27 @@ describe('ApplicationEditorPage — custom app', () => {
     expect(createApplication).not.toHaveBeenCalled();
   });
 
-  it('creates the application in one request, confirms it and returns to the catalog', async () => {
+  const finishSaveInPanel = async () => {
+    await screen.findByRole('dialog', {
+      name: `Save ${CatalogI18nKeys.CreateCustomApp}`,
+    });
+    await user.click(screen.getByRole('button', { name: 'Finish save' }));
+  };
+
+  it('creates the application in one request through the Save panel and returns to the catalog', async () => {
     renderPage();
     await fillValidForm();
 
     await user.click(getAction(ButtonsI18nKeys.Create));
+
+    expect(
+      await screen.findByRole('dialog', {
+        name: `Save ${CatalogI18nKeys.CreateCustomApp}`,
+      }),
+    ).toBeTruthy();
+    expect(createApplication).not.toHaveBeenCalled();
+
+    await finishSaveInPanel();
 
     await screen.findByText('Catalog');
     expect(createApplication).toHaveBeenCalledOnce();
@@ -294,11 +330,8 @@ describe('ApplicationEditorPage — custom app', () => {
       }),
     );
     expect(mockRefetchDeployments).toHaveBeenCalled();
-    expect(mockNotifyOperationSuccess).toHaveBeenCalledWith(
-      NotifiableEntity.CustomApp,
-      EntityOperation.Created,
-      { name: 'My app' },
-    );
+    /* The panel confirms the create; the editor adds no second notification. */
+    expect(mockNotifyOperationSuccess).not.toHaveBeenCalled();
   });
 
   it('asks for confirmation before saving invalid features data', async () => {
@@ -311,29 +344,34 @@ describe('ApplicationEditorPage — custom app', () => {
 
     await user.click(getAction(ButtonsI18nKeys.Create));
 
-    expect(createApplication).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole('dialog', {
+        name: `Save ${CatalogI18nKeys.CreateCustomApp}`,
+      }),
+    ).toBeNull();
     await user.click(
       await screen.findByRole('button', {
         name: ButtonsI18nKeys.Save,
       }),
     );
+    await finishSaveInPanel();
 
     await waitFor(() => expect(createApplication).toHaveBeenCalledOnce());
   });
 
-  it('raises an error notification and stays on the page when the request fails', async () => {
+  it('stays on the page with the panel showing the error when the create fails', async () => {
     vi.mocked(createApplication).mockRejectedValue(new Error('boom'));
     renderPage();
     await fillValidForm();
 
     await user.click(getAction(ButtonsI18nKeys.Create));
+    await finishSaveInPanel();
 
-    await waitFor(() =>
-      expect(mockShowNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ variant: NotificationVariant.Error }),
-      ),
-    );
+    expect(await screen.findByText('Create failed')).toBeTruthy();
     expect(screen.queryByText('Catalog')).toBeNull();
+    expect(mockRefetchDeployments).not.toHaveBeenCalled();
+    expect(mockNotifyOperationSuccess).not.toHaveBeenCalled();
+    expect(mockShowNotification).not.toHaveBeenCalled();
   });
 
   describe('creation permissions', () => {

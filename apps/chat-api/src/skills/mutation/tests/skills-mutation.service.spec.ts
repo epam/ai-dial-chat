@@ -25,6 +25,8 @@ const makeService = () => {
     deleteSkillFile: vi.fn(),
     createSkillGroupingFolder: vi.fn(),
     deleteSkillGroupingFolder: vi.fn(),
+    moveResource: vi.fn(),
+    listSkillMetadata: vi.fn(),
   };
   const configService = {
     get: vi.fn().mockReturnValue(undefined),
@@ -256,6 +258,61 @@ describe('SkillsMutationService', () => {
 
       await expect(
         service.deleteSkillGroupingFolder('my-bucket', 'team-a/', 'token'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('moveSkill', () => {
+    it('moves the skill into the folder and returns its new id', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.moveResource.mockResolvedValue({ response: makeResponse(200) });
+
+      await expect(
+        service.moveSkill('b1', 'docs-helper', 'Team A', 'token'),
+      ).resolves.toEqual({ id: 'skills/b1/Team A/docs-helper' });
+      expect(sdkClient.moveResource).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token' },
+        body: {
+          sourceUrl: 'skills/b1/docs-helper',
+          destinationUrl: 'skills/b1/Team%20A/docs-helper',
+          overwrite: false,
+        },
+      });
+    });
+
+    it('returns the same id without calling DIAL Core when the folder is unchanged', async () => {
+      const { service, sdkClient } = makeService();
+
+      await expect(
+        service.moveSkill('b1', 'team-a/docs-helper', 'team-a', 'token'),
+      ).resolves.toEqual({ id: 'skills/b1/team-a/docs-helper' });
+      expect(sdkClient.moveResource).not.toHaveBeenCalled();
+    });
+
+    it('reports a skill already in the target folder as a conflict', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.moveResource.mockResolvedValue({
+        error: {},
+        response: makeResponse(400),
+      });
+      sdkClient.listSkillMetadata.mockResolvedValue({
+        response: makeResponse(200),
+      });
+
+      await expect(
+        service.moveSkill('b1', 'docs-helper', 'team-a', 'token'),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('maps any other DIAL Core failure through the status mapper', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.moveResource.mockResolvedValue({
+        error: {},
+        response: makeResponse(404),
+      });
+
+      await expect(
+        service.moveSkill('b1', 'docs-helper', 'team-a', 'token'),
       ).rejects.toThrow(NotFoundException);
     });
   });

@@ -4,8 +4,11 @@ import { ResourceSaveError } from '../resource-save';
 import {
   createEmbeddedApplicationSaveAdapter,
   createHostApplicationSaveAdapter,
+  createPromptCreateAdapter,
   createPromptFolderLister,
   createPromptSaveAdapter,
+  createSkillFolderLister,
+  createToolsetCreateAdapter,
   createToolsetSaveAdapter,
 } from '../resource-save-adapters';
 
@@ -23,8 +26,10 @@ const toolsetsApi = {
   createToolset: vi.fn(),
   moveToolset: vi.fn(),
 };
+const skillsApi = { listSkills: vi.fn() };
 const promptsApi = {
   listPrompts: vi.fn(),
+  createPrompt: vi.fn(),
   updatePrompt: vi.fn(),
   movePrompt: vi.fn(),
 };
@@ -274,6 +279,93 @@ describe('resource save adapters', () => {
         id: PROMPT_ID,
         movePromptDto: { targetFolderId: 'Archive' },
       });
+    });
+  });
+
+  describe('createToolsetCreateAdapter', () => {
+    const body = { name: 'search', version: '1.0.0' } as ToolsetBodyDto;
+    const adapter = createToolsetCreateAdapter({ toolsetsApi, body });
+
+    it('creates the toolset create-only in the chosen folder', async () => {
+      toolsetsApi.createToolset.mockResolvedValue({ id: 'toolsets/b1/A/x' });
+      await expect(adapter.createIn(['A'])).resolves.toEqual({
+        id: 'toolsets/b1/A/x',
+      });
+      expect(toolsetsApi.createToolset).toHaveBeenCalledWith({
+        createToolsetBodyDto: { ...body, createOnly: true, folderPath: 'A' },
+      });
+    });
+
+    it('creates at the root without a folder field', async () => {
+      toolsetsApi.createToolset.mockResolvedValue({ id: 'x' });
+      await adapter.createIn([]);
+      expect(
+        toolsetsApi.createToolset.mock.lastCall?.[0].createToolsetBodyDto,
+      ).not.toHaveProperty('folderPath');
+    });
+  });
+
+  describe('createPromptCreateAdapter', () => {
+    const body = { name: 'Summarize', content: 'x' };
+    const adapter = createPromptCreateAdapter({ promptsApi, body });
+
+    it('creates the prompt in the chosen folder as its folder id', async () => {
+      promptsApi.createPrompt.mockResolvedValue({ id: 'prompts/b1/Work/S' });
+      await expect(adapter.createIn(['Work'])).resolves.toEqual({
+        id: 'prompts/b1/Work/S',
+      });
+      expect(promptsApi.createPrompt).toHaveBeenCalledWith({
+        createPromptDto: { ...body, folderId: 'Work' },
+      });
+    });
+
+    it('creates at the root without a folder id', async () => {
+      promptsApi.createPrompt.mockResolvedValue({ id: 'prompts/b1/S' });
+      await adapter.createIn([]);
+      expect(promptsApi.createPrompt).toHaveBeenCalledWith({
+        createPromptDto: body,
+      });
+    });
+  });
+
+  describe('createSkillFolderLister', () => {
+    const listFolders = createSkillFolderLister(skillsApi, 'b1');
+
+    it('lists only grouping folders, across every page', async () => {
+      skillsApi.listSkills
+        .mockResolvedValueOnce({
+          items: [
+            { name: 'team-a', path: 'team-a/', nodeType: 'folder' },
+            { name: 'helper', path: 'helper', nodeType: 'item' },
+          ],
+          nextToken: 'next',
+        })
+        .mockResolvedValueOnce({
+          items: [{ name: 'team-b', path: 'team-b', nodeType: 'folder' }],
+        });
+
+      await expect(listFolders('')).resolves.toEqual({
+        folders: [
+          { name: 'team-a', path: 'team-a' },
+          { name: 'team-b', path: 'team-b' },
+        ],
+      });
+      expect(skillsApi.listSkills).toHaveBeenNthCalledWith(1, {
+        bucket: 'b1',
+        path: undefined,
+        token: undefined,
+      });
+      expect(skillsApi.listSkills).toHaveBeenNthCalledWith(2, {
+        bucket: 'b1',
+        path: undefined,
+        token: 'next',
+      });
+    });
+
+    it('stops on a repeated page token', async () => {
+      skillsApi.listSkills.mockResolvedValue({ items: [], nextToken: 'same' });
+      await expect(listFolders('team-a')).resolves.toEqual({ folders: [] });
+      expect(skillsApi.listSkills).toHaveBeenCalledTimes(2);
     });
   });
 });

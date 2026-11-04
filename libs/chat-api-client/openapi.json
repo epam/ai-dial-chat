@@ -8465,6 +8465,67 @@
         "tags": ["skills"]
       }
     },
+    "/api/v1/skills/move": {
+      "post": {
+        "description": "Moves a skill in the caller's own bucket into the given folder, never overwriting an existing skill. Resolves with the skill's new id.",
+        "operationId": "moveSkill",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveSkillDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceIdResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid path or folder path"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Skill not found"
+          },
+          "409": {
+            "description": "A skill with this name already exists in the folder"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Move a skill into another folder",
+        "tags": ["skills"]
+      }
+    },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
       "post": {
         "description": "Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication's displayed author (the catalog's **Hosted by** value); when it is omitted or blank the caller's own session display name is used, as it always was. The optional `publishCredentials` flag asks Core to copy the publisher's own credential for the entity onto the published copy, so members of the organization use it without authorising individually; it is forwarded unchanged and changes no authorization — Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication PENDING until an administrator approves it.",
@@ -18798,6 +18859,22 @@
             "example": "\"jkl012\""
           }
         }
+      },
+      "MoveSkillDto": {
+        "type": "object",
+        "properties": {
+          "folderPath": {
+            "type": "string",
+            "description": "Plain-text destination folder relative to the caller's bucket. Empty string moves the resource to the root.",
+            "example": "Design"
+          },
+          "path": {
+            "type": "string",
+            "description": "The skill's resource path within the caller's own bucket",
+            "example": "team-a/docs-helper"
+          }
+        },
+        "required": ["folderPath", "path"]
       },
       "PublishCatalogEntityDto": {
         "type": "object",

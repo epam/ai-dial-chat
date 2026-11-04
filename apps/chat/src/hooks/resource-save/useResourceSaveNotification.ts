@@ -73,7 +73,11 @@ export const useResourceSaveNotification = ({
         });
         return;
       }
-      notifyOperationSuccess(notifiableEntity, EntityOperation.Edited, params);
+      notifyOperationSuccess(
+        notifiableEntity,
+        result.isCreated ? EntityOperation.Created : EntityOperation.Edited,
+        params,
+      );
     },
     [
       notifiableEntity,

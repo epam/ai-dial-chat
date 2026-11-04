@@ -4,15 +4,16 @@ import {
   ResourceSaveOutcome,
   runResourceSave,
   SaveDestinationRoot,
-  type ResourceSaveAdapter,
+  type ResourceCreateSaveAdapter,
+  type ResourceEditSaveAdapter,
   type ResourceSaveChoice,
 } from '../resource-save';
 
 const ID = 'applications/b1/Design/agent__1.0.0';
 
 const makeAdapter = (
-  overrides: Partial<ResourceSaveAdapter> = {},
-): ResourceSaveAdapter => ({
+  overrides: Partial<ResourceEditSaveAdapter> = {},
+): ResourceEditSaveAdapter => ({
   publishEntityType: 'application',
   isVersioned: true,
   saveInPlace: vi.fn().mockResolvedValue({ id: ID }),
@@ -53,6 +54,7 @@ describe('runResourceSave', () => {
     expect(result).toEqual({
       outcome: ResourceSaveOutcome.Saved,
       savedId: ID,
+      isCreated: false,
       isNewVersion: false,
       isPublished: false,
     });
@@ -87,6 +89,7 @@ describe('runResourceSave', () => {
     expect(result).toEqual({
       outcome: ResourceSaveOutcome.SavedButMoveFailed,
       savedId: ID,
+      isCreated: false,
       isNewVersion: false,
       isPublished: false,
       error,
@@ -202,5 +205,47 @@ describe('runResourceSave', () => {
       'boom',
     );
     expect(publish).not.toHaveBeenCalled();
+  });
+
+  describe('creating', () => {
+    const NEW_ID = 'applications/b1/Sales/agent__1.0.0';
+    const makeCreateAdapter = (): ResourceCreateSaveAdapter => ({
+      publishEntityType: 'application',
+      isVersioned: false,
+      createIn: vi.fn().mockResolvedValue({ id: NEW_ID }),
+    });
+    const createChoice = (destination: ResourceSaveChoice['destination']) =>
+      choice({ resourceId: '', currentFolderPath: [], destination });
+
+    it('creates straight in the chosen Personal folder without moving', async () => {
+      const adapter = makeCreateAdapter();
+      const result = await runResourceSave(
+        adapter,
+        createChoice({ rootKey: SaveDestinationRoot.Personal, path: ['Sales'] }),
+        publish,
+      );
+
+      expect(adapter.createIn).toHaveBeenCalledWith(['Sales']);
+      expect(publish).not.toHaveBeenCalled();
+      expect(result.savedId).toBe(NEW_ID);
+    });
+
+    it('creates at the Personal root then publishes to an Organization folder', async () => {
+      const adapter = makeCreateAdapter();
+      await runResourceSave(
+        adapter,
+        createChoice({ rootKey: SaveDestinationRoot.Organization, path: ['EPAM'] }),
+        publish,
+      );
+
+      expect(adapter.createIn).toHaveBeenCalledWith([]);
+      expect(publish).toHaveBeenCalledWith(
+        'application',
+        NEW_ID,
+        ['EPAM'],
+        '1.0.0',
+        [],
+      );
+    });
   });
 });

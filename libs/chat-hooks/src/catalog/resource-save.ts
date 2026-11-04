@@ -6,6 +6,12 @@ import {
 } from '@epam/ai-dial-publish-panel';
 import { toPublishRuleDto, type PublishApiClient } from './create-publish-api';
 import type { CatalogPublishEntityType } from './publish';
+import {
+  isResourceCreateAdapter,
+  type ResourceSaveAdapter,
+} from './resource-save-adapter';
+
+export * from './resource-save-adapter';
 
 /** The roots of the Save panel's destination tree. */
 export enum SaveDestinationRoot {
@@ -33,29 +39,6 @@ export enum ResourceSaveVersionError {
   Unchanged = 'unchanged',
   /** DIAL Core already stores a resource with that version. */
   Exists = 'exists',
-}
-
-/** What a save step produced: the full id of the resource it wrote. */
-export interface SavedResource {
-  /** Full DIAL Core id `{type}/{bucket}/{path}`. */
-  id: string;
-}
-
-/** The resource-specific operations the Save panel runs, supplied by each editor. */
-export interface ResourceSaveAdapter {
-  /** The publish API entity type of the resource. */
-  publishEntityType: CatalogPublishEntityType;
-  /** Whether the resource has versions; an unversioned one never forks. */
-  isVersioned: boolean;
-  /** Saves the editor's current state in place; the editor's existing Save. */
-  saveInPlace: () => Promise<SavedResource>;
-  /** Writes the edits as `{folderPath}/{name}__{version}`, leaving the stored current version unchanged. Required when `isVersioned`. */
-  saveAsNewVersion?: (
-    version: string,
-    folderPath: string[],
-  ) => Promise<SavedResource>;
-  /** Moves a saved resource into `folderPath` of the user's own bucket. */
-  move: (id: string, folderPath: string[]) => Promise<SavedResource>;
 }
 
 /** What the user chose in the Save panel. */
@@ -91,6 +74,8 @@ export interface ResourceSaveResult {
   outcome: ResourceSaveOutcome;
   /** Id of the saved resource (the new version's, after a fork). */
   savedId: string;
+  /** Whether the resource was created rather than saved. */
+  isCreated: boolean;
   /** Whether a new version was written. */
   isNewVersion: boolean;
   /** Whether a publish request was sent successfully. */
@@ -99,8 +84,6 @@ export interface ResourceSaveResult {
   error?: unknown;
 }
 
-/** A save failure whose `message` is already translated for the user, e.g. a half-finished version commit. */
-export class ResourceSaveError extends Error {}
 
 const isSameFolder = (a: string[], b: string[]): boolean =>
   toFolderPathKey(a) === toFolderPathKey(b);
@@ -119,9 +102,10 @@ export const createPublishSavedResource =
   };
 
 /**
- * Runs the Save panel's choice through `adapter`: save in place or as a new
- * version, then move into a different Personal folder, or publish to an
- * Organization folder. Rejects only when the first step fails; a failure
+ * Runs the Save panel's choice through `adapter`: create the resource in the
+ * chosen Personal folder, or save it in place or as a new version and then
+ * move it into a different Personal folder; for an Organization folder, save
+ * where it lives and publish. Rejects only when the first step fails; a failure
  * after the save resolves with the matching partial outcome, because the
  * save itself already happened.
  */
@@ -140,7 +124,10 @@ export const runResourceSave = async (
     : choice.destination.path;
 
   let savedId: string;
-  if (isNewVersion) {
+  let shouldMove = false;
+  if (isResourceCreateAdapter(adapter)) {
+    ({ id: savedId } = await adapter.createIn(personalFolder));
+  } else if (isNewVersion) {
     if (!adapter.saveAsNewVersion) {
       throw new Error('This resource cannot be saved as a new version');
     }
@@ -150,20 +137,20 @@ export const runResourceSave = async (
     ));
   } else {
     ({ id: savedId } = await adapter.saveInPlace());
+    shouldMove =
+      !isOrganization &&
+      !isSameFolder(personalFolder, choice.currentFolderPath);
   }
 
   const result: ResourceSaveResult = {
     outcome: ResourceSaveOutcome.Saved,
     savedId,
+    isCreated: isResourceCreateAdapter(adapter),
     isNewVersion,
     isPublished: false,
   };
 
-  if (
-    !isNewVersion &&
-    !isOrganization &&
-    !isSameFolder(personalFolder, choice.currentFolderPath)
-  ) {
+  if (shouldMove && !isResourceCreateAdapter(adapter)) {
     try {
       ({ id: result.savedId } = await adapter.move(savedId, personalFolder));
     } catch (error) {

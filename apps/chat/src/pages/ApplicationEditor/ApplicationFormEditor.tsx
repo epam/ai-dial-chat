@@ -377,19 +377,24 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     ],
   );
 
-  const persist = useCallback(async () => {
-    /* The form may have opened under a permission the current config no
-     * longer grants; nothing is created then. */
-    if (!isEditMode && creationDecision !== CatalogCreationDecision.Allowed) {
-      showErrorNotification({
-        message: t(
-          creationDecision === CatalogCreationDecision.Denied
-            ? CatalogI18nKeys.CreationDenied
-            : CatalogI18nKeys.CreationUnavailable,
-        ),
-      });
-      return;
+  /* The form may have opened under a permission the current config no
+   * longer grants; nothing is created then. */
+  const isCreationBlocked = useCallback(() => {
+    if (isEditMode || creationDecision === CatalogCreationDecision.Allowed) {
+      return false;
     }
+    showErrorNotification({
+      message: t(
+        creationDecision === CatalogCreationDecision.Denied
+          ? CatalogI18nKeys.CreationDenied
+          : CatalogI18nKeys.CreationUnavailable,
+      ),
+    });
+    return true;
+  }, [creationDecision, isEditMode, showErrorNotification, t]);
+
+  const persist = useCallback(async () => {
+    if (isCreationBlocked()) return;
     setIsSaving(true);
     try {
       if (!isEditMode) {
@@ -454,8 +459,8 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     allowNextNavigation,
     appId,
     context,
-    creationDecision,
     definition,
+    isCreationBlocked,
     isEditMode,
     isMetadataFirst,
     metadata.values,
@@ -472,15 +477,17 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
   ]);
 
   /*
-   * Edit-mode Save of a kind that opts in goes through the Save panel, which
-   * may also move, fork or publish the application. Only the user's own
-   * application qualifies: moving and forking act on the caller's bucket, so a
-   * shared application keeps saving in place.
+   * Save of a kind that opts in goes through the Save panel, which picks the
+   * folder and may also move, fork or publish the application. A new
+   * application always qualifies; an existing one only when it is the user's
+   * own, because moving and forking act on the caller's bucket, so a shared
+   * application keeps saving in place.
    */
   const isSavePanelFlow =
-    isEditMode &&
     definition.savePanel != null &&
-    (wasCreatedThisSession || deployment?.isMy === true);
+    (!isEditMode || wasCreatedThisSession || deployment?.isMy === true);
+  /* A metadata-first create only starts the application; it is set up, and can be published, once it exists. */
+  const canPublishFromPanel = isEditMode || !isMetadataFirst;
   const [isSavePanelOpen, setIsSavePanelOpen] = useState(false);
   const savedVersion = metadata.values.version;
   /*
@@ -492,6 +499,21 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
   const openSavePanel = useCallback(() => {
     const values = metadata.values;
     const { update } = definition;
+    if (!isEditMode) {
+      setSaveAdapter({
+        publishEntityType: 'application',
+        isVersioned: false,
+        createIn: async (folderPath) => {
+          const created = await definition.create(values, setup, context, {
+            folderPath,
+          });
+          if (!created?.id) throw new Error('Created application has no id');
+          return { id: created.id };
+        },
+      });
+      setIsSavePanelOpen(true);
+      return;
+    }
     setSaveAdapter(
       update
         ? createHostApplicationSaveAdapter({
@@ -518,7 +540,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
           }),
     );
     setIsSavePanelOpen(true);
-  }, [appId, context, definition, metadata.values, setup, t]);
+  }, [appId, context, definition, isEditMode, metadata.values, setup, t]);
   const handleSavePanelClose = useCallback(() => setIsSavePanelOpen(false), []);
   const currentFolderPath = useMemo(
     () => parseResourceFolderPath(appId),
@@ -531,7 +553,12 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
 
   /* Every outcome reaching here saved the application; the panel has already notified. */
   const handleSavePanelSaved = useCallback(
-    (_result: ResourceSaveResult) => {
+    (result: ResourceSaveResult) => {
+      if (result.isCreated && isMetadataFirst) {
+        setIsSavePanelOpen(false);
+        switchToCreatedApp(result.savedId, metadata.values);
+        return;
+      }
       const leaveEditor = async () => {
         // Best-effort: brings the saved application into the catalog list.
         await refetchDeployments().catch(() => undefined);
@@ -541,16 +568,25 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
       };
       void leaveEditor();
     },
-    [allowNextNavigation, navigate, refetchDeployments, returnUrl],
+    [
+      allowNextNavigation,
+      isMetadataFirst,
+      metadata.values,
+      navigate,
+      refetchDeployments,
+      returnUrl,
+      switchToCreatedApp,
+    ],
   );
 
   const proceedWithSave = useCallback(() => {
     if (isSavePanelFlow) {
+      if (isCreationBlocked()) return;
       openSavePanel();
       return;
     }
     void persist();
-  }, [isSavePanelFlow, openSavePanel, persist]);
+  }, [isCreationBlocked, isSavePanelFlow, openSavePanel, persist]);
 
   const { attemptSubmit } = metadata;
   const handleSubmit = useCallback(() => {
@@ -790,7 +826,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
             typeLabel={definition.savePanel.getTypeLabel(context)}
             notifiableEntity={notifiableEntity}
             notificationType={notificationType}
-            canPublish
+            canPublish={canPublishFromPanel}
             onSaved={handleSavePanelSaved}
           />
         </Suspense>

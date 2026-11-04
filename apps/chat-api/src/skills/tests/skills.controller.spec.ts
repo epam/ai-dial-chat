@@ -109,6 +109,7 @@ describe('SkillsController (integration)', () => {
     deleteSkillFile: ReturnType<typeof vi.fn>;
     createSkillGroupingFolder: ReturnType<typeof vi.fn>;
     deleteSkillGroupingFolder: ReturnType<typeof vi.fn>;
+    moveSkill: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -131,6 +132,7 @@ describe('SkillsController (integration)', () => {
       deleteSkillFile: vi.fn(),
       createSkillGroupingFolder: vi.fn(),
       deleteSkillGroupingFolder: vi.fn(),
+      moveSkill: vi.fn(),
     };
     app = await buildApp(service);
   });
@@ -1054,6 +1056,41 @@ describe('SkillsController (integration)', () => {
       await request(app.getHttpServer())
         .post('/api/v1/skills/grouping-folders?bucket=my-bucket&path=team-a/')
         .expect(400);
+    });
+  });
+
+  describe('POST /api/v1/skills/move', () => {
+    it('moves a skill of the session bucket and returns its new id', async () => {
+      service.moveSkill.mockResolvedValue({ id: 'skills/test-bucket/team-a/x' });
+
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/skills/move')
+        .send({ path: 'x', folderPath: 'team-a' })
+        .expect(200);
+
+      expect(res.body).toEqual({ id: 'skills/test-bucket/team-a/x' });
+      expect(service.moveSkill).toHaveBeenCalledWith(
+        TEST_USER.bucket,
+        'x',
+        'team-a',
+        TEST_USER.at,
+      );
+    });
+
+    it('rejects a folder path that traverses out of the bucket', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/skills/move')
+        .send({ path: 'x', folderPath: '../other' })
+        .expect(400);
+      expect(service.moveSkill).not.toHaveBeenCalled();
+    });
+
+    it('returns 409 when the target folder already has the skill', async () => {
+      service.moveSkill.mockRejectedValue(new ConflictException('exists'));
+      await request(app.getHttpServer())
+        .post('/api/v1/skills/move')
+        .send({ path: 'x', folderPath: 'team-a' })
+        .expect(409);
     });
   });
 

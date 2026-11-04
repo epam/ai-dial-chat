@@ -8,6 +8,7 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import {
   buildToolsetMcpUrl,
+  createToolsetCreateAdapter,
   createToolsetSaveAdapter,
   getApiErrorDetails,
   parseResourceFolderPath,
@@ -72,7 +73,6 @@ import { useTextRefinementLabels } from '../../../hooks/useTextRefinementLabels'
 import { toolsetsApi } from '../../../server-api/api-client';
 import { mcpAppsApiClient } from '../../../server-api/mcp-apps';
 import {
-  createToolset,
   getToolset,
   listToolsetFolders,
   loginToolset,
@@ -148,6 +148,9 @@ const ToolsetApplicationEditor: FC = () => {
   const [isLoading, setIsLoading] = useState(isEditMode);
   /* Only the user's own toolset saves through the Save panel: moving and forking act on the caller's bucket. */
   const [isOwnToolset, setIsOwnToolset] = useState(false);
+  /* Set once this session creates the toolset through the Save panel, so later Saves edit that toolset where it lives. */
+  const [createdToolsetId, setCreatedToolsetId] = useState<string>();
+  const editedToolsetId = routeToolsetId || createdToolsetId || '';
 
   useEffect(() => {
     let cancelled = false;
@@ -200,18 +203,25 @@ const ToolsetApplicationEditor: FC = () => {
         });
         return null;
       }
-      if (toolsetId && isOwnToolset) {
-        const body = formToToolsetBody(form, getToolsetRedirectUri(), true);
+      if (!toolsetId || isOwnToolset) {
+        const isCreate = !toolsetId;
+        const body = formToToolsetBody(
+          form,
+          getToolsetRedirectUri(),
+          !isCreate,
+        );
         /*
          * The editor awaits this promise before its post-save login and exit,
-         * so the Save panel settles it: with the saved id (a moved or new
-         * version's own), or with `null` when the user cancels.
+         * so the Save panel settles it: with the saved id (a created, moved or
+         * new version's own), or with `null` when the user cancels.
          */
         return new Promise<string | null>((resolve) => {
           pendingPersistRef.current?.(null);
           pendingPersistRef.current = resolve;
           setSaveRequest({
-            adapter: createToolsetSaveAdapter({ toolsetsApi, toolsetId, body }),
+            adapter: isCreate
+              ? createToolsetCreateAdapter({ toolsetsApi, body })
+              : createToolsetSaveAdapter({ toolsetsApi, toolsetId, body }),
             name: form.name.trim(),
             version: form.version.trim(),
             iconUrl: avatarPicker.resolveIconUrl?.(form.iconUrl),
@@ -219,29 +229,17 @@ const ToolsetApplicationEditor: FC = () => {
           setIsSavePanelOpen(true);
         });
       }
+      /* Only a toolset shared with the user reaches here; it saves in place. */
       try {
-        const body = formToToolsetBody(
-          form,
-          getToolsetRedirectUri(),
-          Boolean(toolsetId),
-        );
-        if (toolsetId) {
-          const result = await updateToolset(toolsetId, body);
-          return result.id;
-        }
-        const result = await createToolset(body);
+        const body = formToToolsetBody(form, getToolsetRedirectUri(), true);
+        const result = await updateToolset(toolsetId, body);
         return result.id;
       } catch (err) {
         const { traceId } = await getApiErrorDetails(err);
         const upstreamMessage = await extractToolsetApiErrorMessage(err);
         showErrorNotification({
           message:
-            upstreamMessage ??
-            t(
-              toolsetId
-                ? ToolsetEditorI18nKeys.ErrorUpdateFailed
-                : ToolsetEditorI18nKeys.ErrorCreateFailed,
-            ),
+            upstreamMessage ?? t(ToolsetEditorI18nKeys.ErrorUpdateFailed),
           requestId: traceId,
         });
         return null;
@@ -265,6 +263,10 @@ const ToolsetApplicationEditor: FC = () => {
     (result: ResourceSaveResult) => {
       isSavedThroughPanelRef.current = true;
       setIsSavePanelOpen(false);
+      if (result.isCreated) {
+        setCreatedToolsetId(result.savedId);
+        setIsOwnToolset(true);
+      }
       settlePendingPersist(result.savedId);
     },
     [settlePendingPersist],
@@ -272,8 +274,8 @@ const ToolsetApplicationEditor: FC = () => {
   // A persist still waiting on the panel must not hang the editor after unmount.
   useEffect(() => () => settlePendingPersist(null), [settlePendingPersist]);
   const currentFolderPath = useMemo(
-    () => parseResourceFolderPath(routeToolsetId),
-    [routeToolsetId],
+    () => parseResourceFolderPath(editedToolsetId),
+    [editedToolsetId],
   );
 
   const handlePostSaveLogin = useCallback(
@@ -543,7 +545,7 @@ const ToolsetApplicationEditor: FC = () => {
             onClose={handleSavePanelClose}
             adapter={saveRequest.adapter}
             listPersonalFolders={listToolsetFolders}
-            resourceId={routeToolsetId}
+            resourceId={editedToolsetId}
             currentFolderPath={currentFolderPath}
             resourceName={saveRequest.name}
             currentVersion={saveRequest.version}

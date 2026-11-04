@@ -3,6 +3,7 @@ import {
   TextRefinementPurpose,
 } from '@epam/ai-dial-chat-api-client';
 import {
+  createPromptCreateAdapter,
   createPromptFolderLister,
   createPromptSaveAdapter,
   getApiErrorDetails,
@@ -55,7 +56,6 @@ import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { promptsApi } from '../../server-api/api-client';
 import {
-  createPrompt,
   getPrompt,
   updatePrompt,
 } from '../../server-api/prompts.api';
@@ -264,7 +264,23 @@ const PromptEditorPage: FC = () => {
 
       const trimmedName = name.trim();
 
-      if (isEditMode && promptId != null && loadedPrompt?.isMy) {
+      /* A new prompt, or the user's own, saves through the panel; a shared one saves in place. */
+      if (!isEditMode) {
+        setSaveRequest({
+          adapter: createPromptCreateAdapter({
+            promptsApi,
+            body: {
+              name: trimmedName,
+              description: description || undefined,
+              content,
+            },
+          }),
+          name: trimmedName,
+        });
+        setIsSavePanelOpen(true);
+        return;
+      }
+      if (promptId != null && loadedPrompt?.isMy) {
         setSaveRequest({
           adapter: createPromptSaveAdapter({
             promptsApi,
@@ -280,27 +296,16 @@ const PromptEditorPage: FC = () => {
       setIsSaving(true);
 
       try {
-        if (!isEditMode) {
-          await createPrompt({
-            name: trimmedName,
-            description: description || undefined,
-            content,
-          });
-        } else {
-          const updateBody = {
-            name: trimmedName,
-            description,
-            content,
-          };
-          await updatePrompt(promptId as string, updateBody);
-        }
+        await updatePrompt(promptId as string, {
+          name: trimmedName,
+          description,
+          content,
+        });
 
         await refetchPrompts();
-        notifyOperationSuccess(
-          NotifiableEntity.Prompt,
-          isEditMode ? EntityOperation.Edited : EntityOperation.Created,
-          { name: trimmedName },
-        );
+        notifyOperationSuccess(NotifiableEntity.Prompt, EntityOperation.Edited, {
+          name: trimmedName,
+        });
         allowNextNavigation();
         navigate(returnUrl);
       } catch (err) {
@@ -411,14 +416,14 @@ const PromptEditorPage: FC = () => {
         onRefineDescription={onRefineDescription}
         onRefineInstructions={onRefineInstructions}
       />
-      {saveRequest && promptId != null && (
+      {saveRequest && (
         <Suspense fallback={null}>
           <ResourceSavePanelContainer
             isOpen={isSavePanelOpen}
             onClose={handleSavePanelClose}
             adapter={saveRequest.adapter}
             listPersonalFolders={listPromptFolders}
-            resourceId={promptId}
+            resourceId={promptId ?? ''}
             currentFolderPath={loadedPrompt?.folderPath ?? []}
             resourceName={saveRequest.name}
             resourceType={CatalogEntityType.Prompt}

@@ -160,6 +160,7 @@ describe('ResourceSavePanelContainer', () => {
     const result = {
       outcome: ResourceSaveOutcome.Saved,
       savedId: 'id',
+      isCreated: false,
       isNewVersion: false,
       isPublished: false,
     };

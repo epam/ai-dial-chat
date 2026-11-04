@@ -6640,6 +6640,25 @@ export interface MoveResourceDto {
 /**
  *
  * @export
+ * @interface MoveSkillDto
+ */
+export interface MoveSkillDto {
+  /**
+   * Plain-text destination folder relative to the caller's bucket. Empty string moves the resource to the root.
+   * @type {string}
+   * @memberof MoveSkillDto
+   */
+  folderPath: string;
+  /**
+   * The skill's resource path within the caller's own bucket
+   * @type {string}
+   * @memberof MoveSkillDto
+   */
+  path: string;
+}
+/**
+ *
+ * @export
  * @interface MutatedToolsetDto
  */
 export interface MutatedToolsetDto {

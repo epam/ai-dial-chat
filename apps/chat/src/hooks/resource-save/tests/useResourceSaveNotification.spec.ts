@@ -30,6 +30,7 @@ const makeResult = (
 ): ResourceSaveResult => ({
   outcome: ResourceSaveOutcome.Saved,
   savedId: 'applications/b1/agent__1.0.0',
+  isCreated: false,
   isNewVersion: false,
   isPublished: false,
   ...overrides,

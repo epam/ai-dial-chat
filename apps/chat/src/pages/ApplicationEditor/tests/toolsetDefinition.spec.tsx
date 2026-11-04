@@ -7,17 +7,21 @@ import {
   type DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
+  isResourceCreateAdapter,
+  type ResourceSaveAdapter,
+  ResourceSaveOutcome,
+  type ResourceSaveResult,
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
 } from '@epam/ai-dial-chat-hooks';
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ButtonsI18nKeys,
   CatalogI18nKeys,
-  ToolsetEditorI18nKeys,
   UnsavedChangesI18nKeys,
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
@@ -27,6 +31,7 @@ import {
 } from '../../../context/tests/catalog-creation-state';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
+import { toolsetsApi as toolsetsApiClient } from '../../../server-api/api-client';
 import { mcpAppsApiClient } from '../../../server-api/mcp-apps';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import { ApplicationEditorKind } from '../../../types/application-editor';
@@ -38,7 +43,6 @@ import { ROUTES } from '../../../types/routes';
 import ApplicationEditorPage from '../ApplicationEditorPage';
 
 vi.mock('../../../server-api/toolsets', () => ({
-  createToolset: vi.fn(),
   getToolset: vi.fn(),
   listToolsetFolders: vi.fn(),
   listToolsets: vi.fn(),
@@ -58,28 +62,50 @@ vi.mock(
     default: (props: {
       isOpen: boolean;
       typeLabel: string;
+      adapter: ResourceSaveAdapter;
       onClose: () => void;
-      onSaved: (result: unknown) => void;
-    }) =>
-      props.isOpen ? (
+      onSaved: (result: ResourceSaveResult) => void;
+    }) => {
+      const [createError, setCreateError] = useState('');
+      /* A create adapter runs the real create into the root folder, the way the panel does. */
+      const handleFinish = async () => {
+        if (!isResourceCreateAdapter(props.adapter)) {
+          props.onSaved({
+            outcome: ResourceSaveOutcome.Saved,
+            savedId: 'toolsets/b/Search/my__1.0.0',
+            isCreated: false,
+            isNewVersion: false,
+            isPublished: false,
+          });
+          return;
+        }
+        try {
+          const { id } = await props.adapter.createIn([]);
+          props.onSaved({
+            outcome: ResourceSaveOutcome.Saved,
+            savedId: id,
+            isCreated: true,
+            isNewVersion: false,
+            isPublished: false,
+          });
+        } catch {
+          setCreateError('Create failed');
+        }
+      };
+      return props.isOpen ? (
         <div role="dialog" aria-label={`Save ${props.typeLabel}`}>
-          <button
-            onClick={() =>
-              props.onSaved({
-                outcome: 'saved',
-                savedId: 'toolsets/b/Search/my__1.0.0',
-                isNewVersion: false,
-                isPublished: false,
-              })
-            }
-          >
-            Finish save
-          </button>
+          <button onClick={handleFinish}>Finish save</button>
           <button onClick={props.onClose}>Close panel</button>
+          <p>{createError}</p>
         </div>
-      ) : null,
+      ) : null;
+    },
   }),
 );
+vi.mock('../../../server-api/api-client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../server-api/api-client')>()),
+  toolsetsApi: { createToolset: vi.fn() },
+}));
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => ({ refetchToolsets: mockRefetchToolsets }),
 }));
@@ -322,9 +348,9 @@ describe('ApplicationEditorPage — toolset', () => {
     vi.clearAllMocks();
     resetCatalogCreationState();
     sessionStorage.clear();
-    vi.mocked(toolsetsApi.createToolset).mockResolvedValue({
+    vi.mocked(toolsetsApiClient.createToolset).mockResolvedValue({
       id: NEW_TOOLSET_ID,
-    });
+    } as never);
     vi.mocked(toolsetsApi.updateToolset).mockResolvedValue({
       id: EDIT_TOOLSET_ID,
     });
@@ -412,7 +438,19 @@ describe('ApplicationEditorPage — toolset', () => {
     expect(screen.getByText('oauth-handler')).toBeTruthy();
   });
 
-  it('persists a new toolset through createToolset and resolves the created id', async () => {
+  const persistThroughPanel = async () => {
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'adapter-persist',
+      }),
+    );
+    await screen.findByRole('dialog', {
+      name: `Save ${CatalogI18nKeys.CreateToolset}`,
+    });
+    await user.click(screen.getByRole('button', { name: 'Finish save' }));
+  };
+
+  it('creates a new toolset create-only through the Save panel and resolves the created id', async () => {
     renderPage();
 
     await user.click(
@@ -422,11 +460,30 @@ describe('ApplicationEditorPage — toolset', () => {
     );
 
     expect(
+      await screen.findByRole('dialog', {
+        name: `Save ${CatalogI18nKeys.CreateToolset}`,
+      }),
+    ).toBeTruthy();
+    expect(toolsetsApiClient.createToolset).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Finish save' }));
+
+    expect(
       await screen.findByText(`persist-result-${NEW_TOOLSET_ID}`),
     ).toBeTruthy();
-    expect(toolsetsApi.createToolset).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Typed toolset', version: '1.0.0' }),
-    );
+    expect(toolsetsApiClient.createToolset).toHaveBeenCalledOnce();
+    expect(toolsetsApiClient.createToolset).toHaveBeenCalledWith({
+      createToolsetBodyDto: expect.objectContaining({
+        name: 'Typed toolset',
+        version: '1.0.0',
+        createOnly: true,
+      }),
+    });
+    expect(
+      screen.queryByRole('dialog', {
+        name: `Save ${CatalogI18nKeys.CreateToolset}`,
+      }),
+    ).toBeNull();
   });
 
   describe('creation permissions', () => {
@@ -462,7 +519,12 @@ describe('ApplicationEditorPage — toolset', () => {
       act(() => denyToolsets());
       await user.click(persist);
 
-      expect(toolsetsApi.createToolset).not.toHaveBeenCalled();
+      expect(toolsetsApiClient.createToolset).not.toHaveBeenCalled();
+      expect(
+        screen.queryByRole('dialog', {
+          name: `Save ${CatalogI18nKeys.CreateToolset}`,
+        }),
+      ).toBeNull();
       expect(mockShowNotification).toHaveBeenCalledWith(
         expect.objectContaining({ message: CatalogI18nKeys.CreationDenied }),
       );
@@ -514,7 +576,7 @@ describe('ApplicationEditorPage — toolset', () => {
         expect.objectContaining({ name: 'My toolset' }),
       ),
     );
-    expect(toolsetsApi.createToolset).not.toHaveBeenCalled();
+    expect(toolsetsApiClient.createToolset).not.toHaveBeenCalled();
   });
 
   it('keeps the Version editable on create and read-only while editing', async () => {
@@ -594,27 +656,27 @@ describe('ApplicationEditorPage — toolset', () => {
     });
   });
 
-  it('shows an error notification when create fails', async () => {
-    vi.mocked(toolsetsApi.createToolset).mockRejectedValue(new Error('fail'));
+  it('keeps the editor open with the panel showing the error when create fails', async () => {
+    vi.mocked(toolsetsApiClient.createToolset).mockRejectedValue(
+      new Error('fail'),
+    );
     renderPage();
 
-    await user.click(
-      await screen.findByRole('button', {
-        name: 'adapter-persist',
-      }),
-    );
+    await persistThroughPanel();
 
-    await waitFor(() =>
-      expect(mockShowNotification).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: ToolsetEditorI18nKeys.ErrorCreateFailed,
-        }),
-      ),
-    );
-    expect(await screen.findByText('persist-result-null')).toBeTruthy();
+    expect(await screen.findByText('Create failed')).toBeTruthy();
+    expect(
+      screen.getByRole('dialog', {
+        name: `Save ${CatalogI18nKeys.CreateToolset}`,
+      }),
+    ).toBeTruthy();
+    /* The persist stays pending, so the editor neither logs in nor exits. */
+    expect(screen.queryByText(/^persist-result-/)).toBeNull();
+    expect(screen.queryByText('Catalog')).toBeNull();
+    expect(mockShowNotification).not.toHaveBeenCalled();
   });
 
-  it('shows the DIAL Core error reason instead of a generic message when create fails', async () => {
+  it('resolves the persist with null when the panel is closed after a failed create', async () => {
     const response = new Response(
       JSON.stringify({
         message:
@@ -622,25 +684,17 @@ describe('ApplicationEditorPage — toolset', () => {
       }),
       { status: 400 },
     );
-    vi.mocked(toolsetsApi.createToolset).mockRejectedValue(
+    vi.mocked(toolsetsApiClient.createToolset).mockRejectedValue(
       new ResponseError(response),
     );
     renderPage();
 
-    await user.click(
-      await screen.findByRole('button', {
-        name: 'adapter-persist',
-      }),
-    );
+    await persistThroughPanel();
+    await screen.findByText('Create failed');
+    await user.click(screen.getByRole('button', { name: 'Close panel' }));
 
-    await waitFor(() =>
-      expect(mockShowNotification).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message:
-            "The specified endpoint 'https://test.com' is invalid or unreachable.",
-        }),
-      ),
-    );
+    expect(await screen.findByText('persist-result-null')).toBeTruthy();
+    expect(mockShowNotification).not.toHaveBeenCalled();
   });
 
   it('logs in a saved API-key toolset with a trimmed key through the post-save login', async () => {

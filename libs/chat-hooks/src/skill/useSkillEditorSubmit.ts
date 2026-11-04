@@ -8,6 +8,10 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback, useRef, useState } from 'react';
 import { getApiErrorDetails, getApiErrorStatus } from '../api-error/api-error';
 import {
+  ResourceSaveError,
+  type ResourceSaveAdapter,
+} from '../catalog/resource-save-adapter';
+import {
   buildSkillFilesPayload,
   buildSkillManifestForSubmit,
   getSkillFieldLengthViolations,
@@ -76,6 +80,8 @@ export interface SkillEditorSubmitClient {
     files: Blob[],
     ifMatch: string,
   ) => Promise<SkillUploadResponseDto>;
+  /** Moves one of the caller's skills into `folderPath` (plain text, `''` for the root); needed by the Save panel flow. */
+  moveSkill?: (path: string, folderPath: string) => Promise<{ id: string }>;
 }
 
 /** Localized messages `useSkillEditorSubmit` needs. */
@@ -158,6 +164,16 @@ export interface UseSkillEditorSubmitParams {
   onNavigate: (url: string) => void;
   /** Called to surface a host notification (success toast or unexpected-error toast). */
   onNotify: (notification: SkillEditorSubmitNotification) => void;
+  /**
+   * Hands a validated submit to the host's Save panel instead of writing it:
+   * the adapter creates the skill in the chosen folder, or saves it in place
+   * and moves it. Its failures carry already-translated messages. The hook
+   * then shows no notification and does not navigate; the panel owns both.
+   */
+  onSaveRequest?: (
+    adapter: ResourceSaveAdapter,
+    values: SkillEditorValues,
+  ) => void;
 }
 
 /** Return value of {@link useSkillEditorSubmit}. */
@@ -208,6 +224,7 @@ export const useSkillEditorSubmit = ({
   messages,
   onNavigate,
   onNotify,
+  onSaveRequest,
 }: UseSkillEditorSubmitParams): UseSkillEditorSubmitResult => {
   const [errors, setErrors] = useState<SkillEditorErrors>({});
   const [submitError, setSubmitError] = useState<string | undefined>();
@@ -425,6 +442,130 @@ export const useSkillEditorSubmit = ({
     ],
   );
 
+  /* The panel shows a failed write as text, so every status becomes the message the inline flow would show. */
+  const toSaveError = useCallback(
+    async (err: unknown, isEdit: boolean): Promise<ResourceSaveError> => {
+      const status = getApiErrorStatus(err);
+      if (status === 412 && isEdit) {
+        setConflict({ message: messages.conflictMessage });
+        return new ResourceSaveError(messages.conflictMessage);
+      }
+      if (status === 409 || status === 412) {
+        return new ResourceSaveError(messages.nameConflict);
+      }
+      if (status === 413) return new ResourceSaveError(messages.archiveTooLarge);
+      if (status === 503) {
+        return new ResourceSaveError(messages.serviceUnavailable);
+      }
+      if (status === 400) {
+        const { message } = await getApiErrorDetails(err);
+        return new ResourceSaveError(message ?? messages.pathInvalid);
+      }
+      return new ResourceSaveError(messages.saveError);
+    },
+    [messages],
+  );
+
+  const buildPanelAdapter = useCallback(
+    (values: SkillEditorValues): ResourceSaveAdapter | undefined => {
+      const skillBucket = bucket as string;
+      const { filePaths, files: fileBlobs } = buildSkillFilesPayload(
+        files,
+        filesContentRef.current,
+      );
+      if (!isEditMode) {
+        const normalizedName = normalizeSkillName(values.name);
+        if (!normalizedName || !isValidSkillRelativePath(normalizedName)) {
+          setErrors({ name: messages.nameInvalid });
+          return undefined;
+        }
+        const skillManifest = buildSkillManifestForSubmit(
+          frontmatterRef.current,
+          normalizedName,
+          values.description,
+          values.instructions,
+        );
+        return {
+          publishEntityType: 'skill',
+          isVersioned: false,
+          createIn: async (folderPath) => {
+            const path = [...folderPath, normalizedName].join('/');
+            try {
+              await client.createSkill(
+                skillBucket,
+                path,
+                skillManifest,
+                filePaths,
+                fileBlobs,
+              );
+            } catch (err) {
+              throw await toSaveError(err, false);
+            }
+            await refetchSkills().catch(() => undefined);
+            return { id: `skills/${skillBucket}/${path}` };
+          },
+        };
+      }
+
+      const path = loadedPathRef.current;
+      const etag = etagRef.current;
+      if (!path || !etag) {
+        setSubmitError(messages.saveError);
+        return undefined;
+      }
+      const skillManifest = buildSkillManifestForSubmit(
+        frontmatterRef.current,
+        values.name,
+        values.description,
+        values.instructions,
+      );
+      return {
+        publishEntityType: 'skill',
+        isVersioned: false,
+        saveInPlace: async () => {
+          try {
+            const result = await client.updateSkill(
+              skillBucket,
+              path,
+              skillManifest,
+              filePaths,
+              fileBlobs,
+              etagRef.current ?? etag,
+            );
+            etagRef.current = result.etag ?? etag;
+          } catch (err) {
+            throw await toSaveError(err, true);
+          }
+          await refetchSkills().catch(() => undefined);
+          return { id: `skills/${skillBucket}/${path}` };
+        },
+        move: async (_id, folderPath) => {
+          if (!client.moveSkill) {
+            throw new ResourceSaveError(messages.saveError);
+          }
+          try {
+            return await client.moveSkill(path, folderPath.join('/'));
+          } catch (err) {
+            throw await toSaveError(err, false);
+          }
+        },
+      };
+    },
+    [
+      bucket,
+      client,
+      etagRef,
+      files,
+      filesContentRef,
+      frontmatterRef,
+      isEditMode,
+      loadedPathRef,
+      messages,
+      refetchSkills,
+      toSaveError,
+    ],
+  );
+
   const handleValuesChange = useCallback(
     (values: SkillEditorValues) => {
       const hasFrontmatter = startsWithFrontmatterBlock(values.instructions);
@@ -507,13 +648,28 @@ export const useSkillEditorSubmit = ({
       setConflict(undefined);
       lastValuesRef.current = values;
 
+      if (onSaveRequest) {
+        const adapter = buildPanelAdapter(values);
+        if (adapter) onSaveRequest(adapter, values);
+        return;
+      }
+
       if (isEditMode) {
         await handleSubmitEdit(values);
       } else {
         await handleSubmitCreate(values);
       }
     },
-    [phase, bucket, messages, isEditMode, handleSubmitEdit, handleSubmitCreate],
+    [
+      phase,
+      bucket,
+      messages,
+      isEditMode,
+      onSaveRequest,
+      buildPanelAdapter,
+      handleSubmitEdit,
+      handleSubmitCreate,
+    ],
   );
 
   /*

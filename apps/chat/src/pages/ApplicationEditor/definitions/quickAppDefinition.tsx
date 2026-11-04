@@ -9,6 +9,7 @@ import {
   BasicI18nKeys,
 } from '../../../constants/translation-keys';
 import type {
+  ApplicationCreateOptions,
   ApplicationEditorContext,
   EmptyApplicationSetup,
 } from '../../../models/application-editor';
@@ -22,6 +23,7 @@ import { NotifiableEntity } from '../../../types/entity-notification';
 import {
   defineApplicationEditor,
   resolveSchemaNotificationTarget,
+  toFolderPathField,
 } from '../../../utils/application-editor';
 import QuickAppPreview from '../setup/QuickAppPreview';
 import QuickAppSetup from '../setup/QuickAppSetup';
@@ -60,6 +62,7 @@ const create = async (
   metadata: DeploymentCreationFormValues,
   _setup: EmptyApplicationSetup,
   ctx: ApplicationEditorContext,
+  options?: ApplicationCreateOptions,
 ) => {
   const schemaId = getSchemaId(ctx);
   const applicationProperties = isQuickAppSchema({ id: schemaId })
@@ -80,6 +83,7 @@ const create = async (
     topics: metadata.topics.length > 0 ? metadata.topics : undefined,
     applicationProperties,
     ...toLocaleFields(metadata),
+    ...toFolderPathField(options),
   });
   return { id: result.id };
 };
