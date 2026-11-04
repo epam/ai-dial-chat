@@ -1,14 +1,11 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
-  ButtonVariant,
-  Popup,
-  PopupSize,
-  Select,
-  Textarea,
-} from '@epam/ai-dial-ui-kit';
-import { memo, useCallback, useMemo, useState, type FC } from 'react';
+  NegativeFeedbackCategory,
+  NegativeFeedbackModal,
+  type NegativeFeedbackModalLabels,
+} from '@epam/ai-dial-conversation-messages';
+import { memo, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FEEDBACK_CATEGORIES } from '../../../constants/feedback-categories';
 import {
   ButtonsI18nKeys,
   RateI18nKeys,
@@ -20,72 +17,45 @@ interface Props {
   onSubmit: (comment: string) => void;
 }
 
-const NegativeFeedbackModal: FC<Props> = ({ onClose, onSubmit }) => {
+/** Feeds translated copy and the dislike-comment feature flag into the lib's negative feedback popup. */
+const NegativeFeedbackModalContainer: FC<Props> = ({ onClose, onSubmit }) => {
   const { t } = useTranslation();
   const isDislikeCommentEnabled = useUiFeature(OverlayFeature.DislikeComment);
-  const [category, setCategory] = useState('');
-  const [commentText, setCommentText] = useState('');
 
-  const options = useMemo(
-    () =>
-      FEEDBACK_CATEGORIES.map((categoryOption) => ({
-        value: categoryOption.value,
-        label: t(categoryOption.i18nKey),
-      })),
+  const labels = useMemo<NegativeFeedbackModalLabels>(
+    () => ({
+      title: t(RateI18nKeys.NegativeFeedbackTitle),
+      feedbackTypeLabel: t(RateI18nKeys.FeedbackTypeLabel),
+      selectPlaceholder: t(ButtonsI18nKeys.Select),
+      commentPlaceholder: t(RateI18nKeys.FeedbackCommentPlaceholder),
+      sendLabel: t(ButtonsI18nKeys.Send),
+      categoryLabels: {
+        [NegativeFeedbackCategory.UiBug]: t(RateI18nKeys.FeedbackCategoryUiBug),
+        [NegativeFeedbackCategory.OveractiveRefusal]: t(
+          RateI18nKeys.FeedbackCategoryOveractiveRefusal,
+        ),
+        [NegativeFeedbackCategory.IncompleteResponse]: t(
+          RateI18nKeys.FeedbackCategoryIncompleteResponse,
+        ),
+        [NegativeFeedbackCategory.ShouldHaveTriggeredThinking]: t(
+          RateI18nKeys.FeedbackCategoryShouldHaveTriggeredThinking,
+        ),
+        [NegativeFeedbackCategory.ShouldHaveSearchedTheWeb]: t(
+          RateI18nKeys.FeedbackCategoryShouldHaveSearchedTheWeb,
+        ),
+      },
+    }),
     [t],
   );
 
-  const handleSubmit = useCallback(() => {
-    const comment = commentText.trim()
-      ? `${category}: ${commentText.trim()}`
-      : category;
-    onSubmit(comment);
-  }, [category, commentText, onSubmit]);
-
-  const mainButtons = useMemo(
-    () => [
-      {
-        label: t(ButtonsI18nKeys.Send),
-        variant: ButtonVariant.Primary,
-        disabled: !category,
-        onClick: handleSubmit,
-      },
-    ],
-    [category, handleSubmit, t],
-  );
-
   return (
-    <Popup
-      open
-      header={t(RateI18nKeys.NegativeFeedbackTitle)}
+    <NegativeFeedbackModal
       onClose={onClose}
-      size={PopupSize.Sm}
-      className="h-[422px]!"
-      mainButtons={mainButtons}
-    >
-      <div className="flex h-full flex-col gap-4 px-6 py-4">
-        <Select
-          labelProps={{
-            label: t(RateI18nKeys.FeedbackTypeLabel),
-            required: true,
-          }}
-          options={options}
-          value={category}
-          placeholder={t(ButtonsI18nKeys.Select)}
-          onChange={(next) => setCategory(next as string)}
-        />
-        {isDislikeCommentEnabled && (
-          <Textarea
-            value={commentText}
-            placeholder={t(RateI18nKeys.FeedbackCommentPlaceholder)}
-            onChange={(value) => setCommentText(value ?? '')}
-            containerClassName="flex-1"
-            className="h-full"
-          />
-        )}
-      </div>
-    </Popup>
+      onSubmit={onSubmit}
+      isCommentEnabled={isDislikeCommentEnabled}
+      labels={labels}
+    />
   );
 };
 
-export default memo(NegativeFeedbackModal);
+export default memo(NegativeFeedbackModalContainer);
