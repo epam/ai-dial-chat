@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getGaugeNeedleAngle } from '../usage-limits';
+import { getGaugeNeedleAngle } from '../usage-gauge';
 
 describe('getGaugeNeedleAngle', () => {
   it.each([

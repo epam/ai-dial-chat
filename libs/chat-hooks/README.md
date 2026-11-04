@@ -42,6 +42,22 @@ destinations use the prepared fallback name and propagate stream failures. A
 missing response body aborts the writable and rejects. Cancelled destinations
 return the fallback without consuming the response.
 
+### Query-string cleanup
+
+`getCleanedLocationTarget(keys)` returns the `{ search, hash }` of the current
+`window.location` with `keys` dropped from the query string; the remaining
+pairs are kept byte for byte. It reads `window.location` at call time, so a
+host can pass the result to its router's `replace` navigation without relying
+on a router location that may lag. Available from the root and `./utils`.
+
+```ts
+import { getCleanedLocationTarget } from '@epam/ai-dial-chat-hooks/utils';
+
+navigate(getCleanedLocationTarget(['deployment-id', 'skill-id']), {
+  replace: true,
+});
+```
+
 ### Scheduled conversation controllers
 
 The root and `./conversation` export `groupScheduledTaskConversations`,
@@ -4141,6 +4157,16 @@ const limits = mapDeploymentLimitsToInput(
 import { findWorstCappedRow } from '@epam/ai-dial-chat-hooks/catalog';
 
 const worst = findWorstCappedRow(mapDeploymentLimitsToInput(limits, labels));
+```
+
+### getGaugeNeedleAngle
+
+`getGaugeNeedleAngle(usedPercent)` returns the angle, in degrees clockwise from 12 o'clock, at which a usage dial's needle points: `-135` at 0%, `0` at 50% and `135` at 100%, with the percentage clamped to 0–100. Available from the root and `./usage-limits`.
+
+```ts
+import { getGaugeNeedleAngle } from '@epam/ai-dial-chat-hooks/usage-limits';
+
+const style = { '--usage-angle': getGaugeNeedleAngle(worst.usedPercent) };
 ```
 
 ### mapDeploymentLimitsDtoToCatalogLimits
