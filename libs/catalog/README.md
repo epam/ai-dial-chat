@@ -1865,7 +1865,8 @@ The slot appears below the item header in the open, editable, normal details vie
 A host adapter can render `ApplicationCredentials` here and reuse it in another
 surface. The host decides which items qualify and supplies API/authentication
 behavior and translations; `useApplicationCredentials` from
-`@epam/ai-dial-chat-hooks` can own metadata loading with host-configured clients.
+`@epam/ai-dial-chat-hooks` can own metadata loading with host-configured clients,
+and its `useApplicationCredentialActions` the `onLogin` / `onLogout` callbacks.
 Existing toolset `onLogin` / `onLogout` contracts are unchanged.
 
 The public `DeploymentSelectorField` restores focus through the input's

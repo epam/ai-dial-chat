@@ -356,8 +356,11 @@ public OAuth settings and authentication statuses through an allowlist that excl
 
 The reusable `ApplicationCredentials` UI in `libs/catalog` shares the credentials
 row, identity icon and configured-key card with toolsets. It accepts normalized
-service states, labels and callbacks; Chat owns DTO mapping, OAuth/offline login,
-personal signout, feature gating and iframe integration.
+service states, labels and callbacks. `useApplicationCredentialActions` in
+`libs/chat-hooks` supplies those callbacks: it classifies the login outcome into a
+localized row error and signs out only personal credentials before refreshing.
+Chat owns the configured OAuth/offline login and signout operations, the copy,
+feature gating and iframe integration.
 Each authenticated service has its own API-key or OAuth form, current personal status,
 and login/logout actions. Shared credentials are informational; logout is confirmed and
 revokes only the user's credentials. DIAL-native services reuse offline access and require

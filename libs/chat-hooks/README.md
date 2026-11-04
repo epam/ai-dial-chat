@@ -6033,8 +6033,47 @@ const outcome = await login(
 );
 ```
 
-`MapApplicationCredentialsOptions` is exported. The host keeps localization,
-the outcome-to-message mapping and logout.
+`MapApplicationCredentialsOptions` is exported. The host keeps localization;
+the login/logout flow is `useApplicationCredentialActions` below.
+
+### useApplicationCredentialActions
+
+Returns the `onLogin` / `onLogout` callbacks of the catalog's
+`ApplicationCredentials` forms. `onLogin(serviceId, params)` builds the request
+with `buildApplicationCredentialLoginParams` and calls the host's `login`: success
+refreshes and resolves `true`; cancellation or an unknown service resolves
+`false`; a blocked popup, missing administrator consent or unavailable offline
+access throws an `Error` with that label, and any other outcome (or a thrown
+`login`) throws `loginFailed`. `onLogout(serviceId)` signs out only `USER`
+credentials through the host's `signOutExternalService`, then refreshes; it
+does nothing for a `DIAL_NATIVE` or unknown service and throws `logoutFailed`
+when sign-out fails. Available from the root and `./catalog`.
+
+```tsx
+import {
+  useApplicationCredentialActions,
+  useApplicationCredentials,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const { services, refresh } = useApplicationCredentials({
+  appId,
+  externalServicesClient,
+  offlineCredentialsClient,
+});
+const { onLogin, onLogout } = useApplicationCredentialActions({
+  appId,
+  services,
+  login, // useExternalServiceLogin(...).login
+  signOutExternalService, // (appId, serviceId, body) => configured client call
+  refresh,
+  labels: { loginFailed: t('toolsetSignin.errorLoginFailed') },
+});
+```
+
+`UseApplicationCredentialActionsParams`, `UseApplicationCredentialActionsResult`,
+`ApplicationCredentialActionsLabels` and
+`DEFAULT_APPLICATION_CREDENTIAL_ACTIONS_LABELS` are exported. Each omitted label
+falls back to its English default. The hook owns no client, localization or UI.
 
 ### useOfflineCredentialsGate
 

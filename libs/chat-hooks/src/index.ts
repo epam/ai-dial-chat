@@ -35,6 +35,7 @@ export * from './catalog/useCatalogItemDetails';
 export * from './catalog/useCatalogToolsetCredentials/useCatalogToolsetCredentials';
 export * from './catalog/application-credentials';
 export * from './catalog/useApplicationCredentials/useApplicationCredentials';
+export * from './catalog/useApplicationCredentialActions/useApplicationCredentialActions';
 export * from './catalog/useSkillItemDetails';
 export * from './catalog/useSkillDetailsPanelData/useSkillDetailsPanelData';
 export * from './catalog/useFavoriteEntitiesState/useFavoriteEntitiesState';
