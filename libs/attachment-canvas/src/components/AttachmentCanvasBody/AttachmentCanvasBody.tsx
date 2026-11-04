@@ -129,6 +129,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     mathScrollRegionAriaLabel,
     ooxmlHighlightsLabel,
     ooxmlHighlightNavigatedLabel,
+    loadingLabel = 'Loading…',
   } = {},
   styles: stylesProp,
   codeBlockTheme,
@@ -423,6 +424,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             labels={{
               htmlFrameBlockedLabel,
               htmlOpenInNewTabLabel,
+              loadingLabel,
             }}
             isSourceView={isHtmlSourceView}
             title={fileName}
@@ -481,6 +483,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             }
             highlightsLabel={ooxmlHighlightsLabel}
             highlightNavigatedLabel={ooxmlHighlightNavigatedLabel}
+            loadingLabel={loadingLabel}
           />
         );
       case AttachmentContentType.Visualizer:
@@ -493,7 +496,13 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
           />
         );
       case AttachmentContentType.McpApp:
-        return <McpAppCanvasRenderer content={content} onAppInfo={onAppInfo} />;
+        return (
+          <McpAppCanvasRenderer
+            content={content}
+            loadingLabel={loadingLabel}
+            onAppInfo={onAppInfo}
+          />
+        );
       case AttachmentContentType.Unsupported:
         return (
           <p className={mergeClasses('text-center', styles.statusLabel)}>
@@ -580,6 +589,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     mathScrollRegionAriaLabel,
     ooxmlHighlightsLabel,
     ooxmlHighlightNavigatedLabel,
+    loadingLabel,
   ]);
 
   return (
@@ -594,7 +604,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         bodyClassName,
       )}
     >
-      {isLoading ? <Spinner /> : renderedContent}
+      {isLoading ? <Spinner ariaLabel={loadingLabel} /> : renderedContent}
     </div>
   );
 };

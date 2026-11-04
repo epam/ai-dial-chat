@@ -53,6 +53,7 @@ import {
 } from '../constants/routes';
 import {
   AttachmentCanvasI18nKeys,
+  BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
   SidebarI18nKeys,
@@ -683,6 +684,7 @@ const App: FC = () => {
               ooxmlHighlightNavigatedLabel: t(
                 AttachmentCanvasI18nKeys.OoxmlHighlightNavigatedLabel,
               ),
+              loadingLabel: t(BasicI18nKeys.Loading),
             }}
             /* The project pages have no sources panel for the toggle to drive. */
             leftActions={

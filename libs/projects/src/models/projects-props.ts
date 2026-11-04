@@ -31,6 +31,8 @@ export interface ProjectsLabels {
   incompleteLabel: string;
   /** Label of the retry action shown when loading failed. */
   retryLabel: string;
+  /** Accessible label of the loading spinner. Defaults to `'Loading projects'`. */
+  loadingAriaLabel?: string;
   /** Label of each project source, the first segment of a card's folder path. */
   sourceLabels: Record<ProjectSource, string>;
   /** Accessible name of a card's folder path, e.g. "Project location". */

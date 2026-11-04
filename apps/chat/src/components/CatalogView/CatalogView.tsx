@@ -743,6 +743,7 @@ const CatalogView: FC<Props> = ({
           },
           ariaLabel: t(NavigationI18nKeys.Catalog),
           scrollToTopLabel: t(CatalogI18nKeys.ScrollToTop),
+          loadingLabel: t(BasicI18nKeys.Loading),
           tabLabels: {
             [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),
             [CatalogEntityType.Agent]: t(CatalogI18nKeys.TabApplications),

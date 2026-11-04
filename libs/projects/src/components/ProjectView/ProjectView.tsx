@@ -206,7 +206,11 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   };
 
   const renderState = () => {
-    if (isLoading) return <Spinner />;
+    if (isLoading) {
+      return (
+        <Spinner ariaLabel={labels.loadingAriaLabel ?? 'Loading project'} />
+      );
+    }
     if (hasError) {
       return (
         <div className="flex flex-col items-center gap-3">

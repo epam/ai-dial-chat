@@ -1104,6 +1104,7 @@ const ConversationMessageItem: FC<Props> = ({
                   loadErrorLabel={t(
                     AttachmentCanvasI18nKeys.McpAppLoadErrorLabel,
                   )}
+                  loadingAriaLabel={t(BasicI18nKeys.Loading)}
                   isOpenedInCanvas={isMcpAppOpenedInCanvas}
                   openedInCanvasLabel={
                     openedInCanvasLabel ?? 'Opened in canvas'

@@ -10,7 +10,10 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { UserConfigI18nKeys } from '../constants/translation-keys';
+import {
+  BasicI18nKeys,
+  UserConfigI18nKeys,
+} from '../constants/translation-keys';
 import {
   getUserConfig,
   pinConversation as apiPinConversation,
@@ -244,7 +247,7 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
   if (status === UserConfigStatus.Loading) {
     return (
       <div className="flex size-full items-center justify-center">
-        <Spinner />
+        <Spinner ariaLabel={t(BasicI18nKeys.Loading)} />
       </div>
     );
   }

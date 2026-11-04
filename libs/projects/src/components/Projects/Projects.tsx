@@ -128,7 +128,9 @@ export const Projects: FC<ProjectsProps> = ({
 
   const renderContent = () => {
     if (isLoading) {
-      return <Spinner />;
+      return (
+        <Spinner ariaLabel={labels.loadingAriaLabel ?? 'Loading projects'} />
+      );
     }
 
     if (hasError || isFailedEmpty) {

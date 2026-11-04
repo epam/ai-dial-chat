@@ -699,6 +699,7 @@ const labels: RenameConversationPopupLabels = {
 | `nameTooLongError`  | `string` | Error shown when the trimmed name exceeds 255 UTF-8 bytes |
 | `saveLabel`         | `string` | Label for the save/confirm button                         |
 | `cancelLabel`       | `string` | Label for the cancel button                               |
+| `savingLabel`       | `string` | Optional spinner name while saving; defaults `'Saving'`   |
 
 ### RenameConversationPopupStyles
 

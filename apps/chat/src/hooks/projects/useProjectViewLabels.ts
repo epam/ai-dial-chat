@@ -46,6 +46,7 @@ export const useProjectViewLabels = (): ProjectViewLabels => {
       retryLabel: t(ButtonsI18nKeys.Retry),
       notFoundLabel: t(ProjectsI18nKeys.ViewNotFound),
       browseProjectsLabel: t(ProjectsI18nKeys.ViewBrowseProjects),
+      loadingAriaLabel: t(BasicI18nKeys.Loading),
     }),
     [t],
   );

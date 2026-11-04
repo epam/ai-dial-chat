@@ -62,6 +62,27 @@ describe('HtmlContent — blocked state', () => {
   });
 });
 
+describe('HtmlContent — loading spinner', () => {
+  it('names the iframe-load spinner with labels.loadingLabel', () => {
+    render(
+      <HtmlContent
+        content={{ type: AttachmentContentType.Html, url }}
+        labels={{ loadingLabel: 'Chargement…' }}
+        isSourceView={false}
+        title="page.html"
+      />,
+    );
+
+    expect(screen.getByRole('img', { name: 'Chargement…' })).toBeTruthy();
+  });
+
+  it('defaults the spinner name to "Loading…"', () => {
+    renderContent({ type: AttachmentContentType.Html, url });
+
+    expect(screen.getByRole('img', { name: 'Loading…' })).toBeTruthy();
+  });
+});
+
 describe('HtmlContent — src/srcdoc precedence and sandbox', () => {
   it('renders local srcdoc-only content via srcdoc with no allow-same-origin', () => {
     renderContent({

@@ -125,6 +125,24 @@ describe('AttachmentCanvasBody', () => {
     expect(screen.getByRole('status')).toBeTruthy();
   });
 
+  it('names the isLoading spinner with labels.loadingLabel, defaulting to "Loading…"', () => {
+    const content: AttachmentCanvasContent = {
+      type: AttachmentContentType.PlainText,
+      text: 'ignored',
+    };
+    const { rerender } = renderBody(content, { isLoading: true });
+    expect(screen.getByRole('img', { name: 'Loading…' })).toBeTruthy();
+
+    rerender(
+      <AttachmentCanvasBody
+        content={content}
+        isLoading
+        labels={{ loadingLabel: 'Chargement…' }}
+      />,
+    );
+    expect(screen.getByRole('img', { name: 'Chargement…' })).toBeTruthy();
+  });
+
   it('renders PlainText content', () => {
     renderBody({
       type: AttachmentContentType.PlainText,

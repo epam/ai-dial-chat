@@ -1616,7 +1616,7 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 
 ### OperationLoaderModal
 
-Internal modal already rendered by `DialFileManagerShell`. Exported for hosts that need to compose it independently outside the shell. `colors.text` (`OperationLoaderModalColors`) sets the progress-line color (`--olm-text`, default `--text-secondary`), and `textClassName` its type (default `'dial-small-text'`).
+Internal modal already rendered by `DialFileManagerShell`. Exported for hosts that need to compose it independently outside the shell. `colors.text` (`OperationLoaderModalColors`) sets the progress-line color (`--olm-text`, default `--text-secondary`), and `textClassName` its type (default `'dial-small-text'`). The title and progress line sit in one always-mounted kit `LiveRegion`, so an updated `text` is announced; the spinner is decorative (`aria-hidden`).
 
 ```tsx
 import { OperationLoaderModal } from '@epam/ai-dial-chat-shared';

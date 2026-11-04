@@ -13,6 +13,7 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
+  DropdownOverlayRole,
   ErrorText,
   GhostIconButton,
   LiveRegion,
@@ -1046,6 +1047,9 @@ export const Input = forwardRef<InputHandle, InputProps>(
               placement="top-start"
               trigger={[]}
               initialFocus={-1}
+              /* The menu brings its own `listbox` and the textarea drives it,
+                 so the overlay adds no role of its own. */
+              overlayRole={DropdownOverlayRole.None}
               matchReferenceWidth={false}
               outsidePressIgnoreRef={textareaRef}
               renderOverlay={() => {

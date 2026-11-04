@@ -111,8 +111,9 @@ Confirm each still holds in the installed version before repeating it.
 
 - `Notification`'s own close button has a fixed English name — pass a
   lib-owned `CloseButton` instead of `closable`.
-- `MarkdownEditor` and `Calendar` take no `aria-describedby`/`aria-invalid` —
-  bridge with `useControlErrorAssociation` from `@epam/ai-dial-chat-shared`.
+- `MarkdownEditor` takes no `aria-describedby`/`aria-invalid` — bridge with
+  `useControlErrorAssociation` from `@epam/ai-dial-chat-shared`. `Calendar`
+  takes `ariaDescribedBy` since kit 0.16 — pass it instead of the hook.
 
 ## Accepted exceptions — do not report
 

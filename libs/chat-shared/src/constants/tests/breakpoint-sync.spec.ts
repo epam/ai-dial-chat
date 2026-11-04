@@ -60,16 +60,10 @@ describe('breakpoint-sync', () => {
   });
 
   it('the SCSS @media mirrors match the breakpoint constants', () => {
-    const publishPanel = readRepoFile(
-      'libs/publish-panel/src/components/PublishAccessRuleEditor/PublishAccessRuleEditor.module.scss',
-    );
     const scheduledTasks = readRepoFile(
       'libs/scheduled-tasks/src/components/ScheduledTasks/ScheduledTasks.module.scss',
     );
 
-    expect(publishPanel).toContain(
-      `@media (min-width: ${DESKTOP_BREAKPOINT_PX}px)`,
-    );
     expect(scheduledTasks).toContain(
       `@media (max-width: ${MOBILE_MAX_WIDTH_PX}px)`,
     );

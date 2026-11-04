@@ -2,6 +2,7 @@ import { ScheduledTaskRepeat } from '@epam/ai-dial-scheduled-tasks';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   EditorI18nKeys,
   ScheduledTasksI18nKeys,
@@ -99,6 +100,7 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
       modelOrAgentLabel: t(ScheduledTasksI18nKeys.CreateModelOrAgentLabel),
       descriptionLabel: t(ScheduledTasksI18nKeys.CreateDescriptionLabel),
       instructionsLabel: t(ScheduledTasksI18nKeys.CreateInstructionsLabel),
+      editorLoadingAriaLabel: t(BasicI18nKeys.Loading),
       cancelButtonLabel: t(ButtonsI18nKeys.Cancel),
       createButtonLabel: t(
         mode === 'create' ? ButtonsI18nKeys.Create : ButtonsI18nKeys.Save,

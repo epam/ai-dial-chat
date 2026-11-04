@@ -286,6 +286,8 @@ interface OoxmlContentProps {
   highlightsLabel?: string;
   /** Status announced once the cited location has been brought into view. Defaults to `'Scrolled to the cited location'`. */
   highlightNavigatedLabel?: string;
+  /** Accessible name of the loading spinner. Defaults to `'Loading…'`. */
+  loadingLabel?: string;
 }
 
 /** Renders DOCX, XLSX, PPTX, and CSV attachments with `@silurus/ooxml`, optionally highlighting cited locations. */
@@ -298,6 +300,7 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
   formulaValueClassName,
   highlightsLabel = 'Cited locations',
   highlightNavigatedLabel = 'Scrolled to the cited location',
+  loadingLabel = 'Loading…',
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -623,7 +626,7 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
           )}
         >
           {isLoading ? (
-            <Spinner size={48} />
+            <Spinner size={48} ariaLabel={loadingLabel} />
           ) : (
             <div className="flex flex-col items-center gap-2">
               <IconAlertTriangle

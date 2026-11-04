@@ -104,6 +104,7 @@ import {
     incompleteLabel:
       'Some projects could not be loaded. The list may be incomplete.',
     retryLabel: 'Retry',
+    loadingAriaLabel: 'Loading projects',
     sourceLabels: {
       [ProjectSource.Personal]: 'Personal',
       [ProjectSource.Shared]: 'Shared',
@@ -201,6 +202,7 @@ import { cloneElement } from 'react';
     instructionsLabel: 'Instructions',
     instructionsPlaceholder:
       'Explain your reasoning step by step for complex problems. Use specific examples.',
+    editorLoadingAriaLabel: 'Loading editor',
     contextLabel: 'Context',
     dropZoneLabel: ({ fromDevice, fileManager }) => (
       <>
@@ -308,6 +310,7 @@ import { ProjectView } from '@epam/ai-dial-projects';
     retryLabel: 'Retry',
     notFoundLabel: 'Project not found',
     browseProjectsLabel: 'Back to projects',
+    loadingAriaLabel: 'Loading project',
   }}
 />;
 ```
