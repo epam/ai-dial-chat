@@ -4919,6 +4919,67 @@ const personal = useResourceFolders({
 const currentFolder = parseResourceFolderPath(application.id);
 ```
 
+### useResourceSavePanel / runResourceSave
+
+`useResourceSavePanel(params)` owns the Save panel flow for one resource and
+returns `panelProps` to spread on `StandaloneSaveToFolderPanel` from
+`@epam/ai-dial-publish-panel`, plus `submit()`. It covers:
+
+- the Personal root, loaded through `useResourceFolders`;
+- the Organization root, built from the `organizationFolders` a host gets
+  from `usePublishFolders`; omit it when the user may not publish, and the
+  root is not offered;
+- the version choice, checked against `versionPattern` and reported as a
+  `ResourceSaveVersionError` (`Invalid`, `Unchanged`, `Exists`) that
+  `labels.getVersionError` turns into text;
+- the access rules of the pending Organization folder, fetched with
+  `publishClient.getPublishRules`, and kept while the same folder stays chosen.
+
+The host owns everything else: the resource summary, the panel's own labels,
+`onClose`, and the notification it shows from `onSaved(result, choice)`. The
+hook reads no i18n, app context or storage.
+
+`runResourceSave(adapter, choice, publish)` is the orchestrator the hook runs.
+It saves in place or as a new version through the host's
+`ResourceSaveAdapter`, then moves into another Personal folder, or publishes
+to an Organization folder. A failure after the save resolves with the
+`ResourceSaveOutcome` `SavedButMoveFailed` or `SavedButPublishFailed`.
+
+The module also exports:
+
+- `SaveDestinationRoot` (`Personal`, `Organization`);
+- the `SavedResource`, `ResourceSaveChoice`, `ResourceSaveResult` and
+  `PublishSavedResource` types;
+- `ResourceSaveError`, for a failure whose message is already translated;
+- `createPublishSavedResource(publishClient)`.
+
+All of it is available from the root and `./catalog`.
+
+```ts
+import { useResourceSavePanel } from '@epam/ai-dial-chat-hooks/catalog';
+
+const { panelProps } = useResourceSavePanel({
+  isOpen,
+  adapter,
+  resourceId: application.id,
+  currentFolderPath: parseResourceFolderPath(application.id),
+  currentVersion: application.version,
+  versionPattern: /^\d+(\.\d+)*$/,
+  listPersonalFolders: listApplicationFolders,
+  organizationFolders: canPublish ? publishFolders : undefined,
+  publishClient,
+  ruleSourceOptions: ['roles'],
+  labels: {
+    personalRoot: 'Personal',
+    organizationRoot: 'Organization',
+    foldersLoadError: 'Folders could not be loaded',
+    saveError: 'Saving failed',
+    getVersionError: (error, version) => `${error}: ${version}`,
+  },
+  onSaved: (result, choice) => notifySaved(result, choice),
+});
+```
+
 ### useCatalogToolsetCredentials
 
 Owns the catalog's toolset credential login/logout flow: wires `useToolsetLogin` (see OAuth Popup Flow) to the host's DIAL Core operations, resolves each outcome to a notification and toolset refetch, and owns the notification copy for every credential level / API-key / org-fallback combination. Every backend call and OAuth callback route arrives as an injected parameter — the hook constructs no client instance and reads no app context or i18n.

@@ -5,7 +5,7 @@ import {
   forkApplicationVersion,
   moveApplication,
 } from '../../../server-api/applications';
-import { ResourceSaveError } from '../../resource-save';
+import { ResourceSaveError } from '@epam/ai-dial-chat-hooks';
 import {
   createEmbeddedApplicationSaveAdapter,
   createHostApplicationSaveAdapter,

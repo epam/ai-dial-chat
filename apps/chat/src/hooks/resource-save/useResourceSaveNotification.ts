@@ -1,0 +1,88 @@
+import {
+  ResourceSaveOutcome,
+  type ResourceSaveChoice,
+  type ResourceSaveResult,
+} from '@epam/ai-dial-chat-hooks';
+import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ResourceSavePanelI18nKeys } from '../../constants/translation-keys';
+import { useNotification } from '../../context/NotificationContext';
+import {
+  EntityOperation,
+  type NotifiableEntity,
+} from '../../types/entity-notification';
+import { getPublishFolderLabel } from '../../utils/publish';
+import { useOperationNotification } from '../useOperationNotification';
+
+/** Parameters for {@link useResourceSaveNotification}. */
+export interface UseResourceSaveNotificationParams {
+  /** Display name, interpolated into notifications. */
+  resourceName: string;
+  /** Entity the success notifications name. */
+  notifiableEntity: NotifiableEntity;
+  /** Schema display name, for `NotifiableEntity.SchemaApp` copy. */
+  notificationType?: string;
+}
+
+/** Returns a callback that shows the notification for a finished Save panel run. */
+export const useResourceSaveNotification = ({
+  resourceName,
+  notifiableEntity,
+  notificationType,
+}: UseResourceSaveNotificationParams) => {
+  const { t } = useTranslation();
+  const { showErrorNotification, showSuccessNotification } = useNotification();
+  const { notifyOperationSuccess } = useOperationNotification();
+
+  return useCallback(
+    (result: ResourceSaveResult, choice: ResourceSaveChoice) => {
+      const folderPath = choice.destination.path;
+      const params = { name: resourceName, type: notificationType };
+      if (result.outcome === ResourceSaveOutcome.SavedButMoveFailed) {
+        showErrorNotification({
+          message: t(ResourceSavePanelI18nKeys.SavedButMoveFailed, {
+            name: resourceName,
+            folder: getPublishFolderLabel(folderPath, t),
+          }),
+        });
+        return;
+      }
+      if (result.outcome === ResourceSaveOutcome.SavedButPublishFailed) {
+        showErrorNotification({
+          message: t(ResourceSavePanelI18nKeys.SavedButPublishFailed, {
+            name: resourceName,
+          }),
+        });
+        return;
+      }
+      if (result.isPublished) {
+        notifyOperationSuccess(
+          notifiableEntity,
+          EntityOperation.PublishRequested,
+          { ...params, folder: getPublishFolderLabel(folderPath, t) },
+        );
+        return;
+      }
+      if (result.isNewVersion) {
+        showSuccessNotification({
+          title: t(ResourceSavePanelI18nKeys.NewVersionSavedTitle),
+          message: t(ResourceSavePanelI18nKeys.NewVersionSaved, {
+            name: resourceName,
+            version: choice.newVersion,
+          }),
+        });
+        return;
+      }
+      notifyOperationSuccess(notifiableEntity, EntityOperation.Edited, params);
+    },
+    [
+      notifiableEntity,
+      notificationType,
+      notifyOperationSuccess,
+      resourceName,
+      showErrorNotification,
+      showSuccessNotification,
+      t,
+    ],
+  );
+};

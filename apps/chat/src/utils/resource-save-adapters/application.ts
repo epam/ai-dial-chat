@@ -1,14 +1,14 @@
-import type {
-  ResourceSaveAdapter,
-  SavedResource,
-} from '../../models/resource-save';
 import {
   commitApplicationVersion,
   deleteApplication,
   forkApplicationVersion,
   moveApplication,
 } from '../../server-api/applications';
-import { ResourceSaveError } from '../resource-save';
+import {
+  ResourceSaveError,
+  type ResourceSaveAdapter,
+  type SavedResource,
+} from '@epam/ai-dial-chat-hooks';
 
 /** Parameters for {@link createEmbeddedApplicationSaveAdapter}. */
 export interface EmbeddedApplicationSaveAdapterParams {

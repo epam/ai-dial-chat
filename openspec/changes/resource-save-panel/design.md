@@ -49,11 +49,11 @@ The version section renders only when the host passes `version` props (`versionM
 - Stacking two trees was rejected: two searches, two empty states, and keyboard navigation broken between them.
 - A synthetic hidden root was rejected: path keys would be ambiguous between roots.
 
-The app's root keys are `SaveDestinationRoot { Personal = 'personal', Organization = 'organization' }` in `apps/chat/src/types/resource-save.ts`.
+The app's root keys are `SaveDestinationRoot { Personal = 'personal', Organization = 'organization' }` in `libs/chat-hooks/src/catalog/resource-save.ts`.
 
 ### D3. Per-resource adapter in the app
 
-All resource-specific behaviour sits behind `ResourceSaveAdapter` (interface in `apps/chat/src/models/resource-save.ts`):
+All resource-specific behaviour sits behind `ResourceSaveAdapter` (interface in `libs/chat-hooks/src/catalog/resource-save.ts`):
 
 ```ts
 interface ResourceSaveAdapter {
@@ -78,7 +78,7 @@ New-version strategies differ by writer:
 - **Host-written** (schema-form, custom, toolset): `saveAsNewVersion` = a create-only write of the *edited* values with `{ version, folderPath, createOnly: true }`. The old resource is never touched. 409 → inline "version already exists".
 - **Quick App** (embedded writer): see D4.
 
-`useResourceSavePanel` (`apps/chat/src/hooks/resource-save/useResourceSavePanel.ts`, with JSDoc) owns `isOpen`, `destination`, `versionMode`, `newVersion`, `versionError` and `isSubmitting`. It calls the pure orchestrator `runResourceSave(adapter, choice, publish)` in `apps/chat/src/utils/resource-save.ts`, which takes the adapter and the publish function, so it is unit-testable without React.
+`useResourceSavePanel` (`libs/chat-hooks/src/catalog/useResourceSavePanel/useResourceSavePanel.ts`, with JSDoc) owns `isOpen`, `destination`, `versionMode`, `newVersion`, `versionError` and `isSubmitting`. It calls the pure orchestrator `runResourceSave(adapter, choice, publish)` in `libs/chat-hooks/src/catalog/resource-save.ts`, which takes the adapter and the publish function, so it is unit-testable without React.
 
 The thin app component `ResourceSavePanelContainer` (`apps/chat/src/components/ResourceSavePanelContainer/`) builds the labels with `t()` (inside `useMemo`) and the two roots, and renders the lib panel. Each editor's existing Save handler opens the panel (after the same validation) instead of saving, in edit mode only.
 

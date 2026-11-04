@@ -1,5 +1,5 @@
 import type { ToolsetBodyDto } from '@epam/ai-dial-chat-api-client';
-import type { ResourceSaveAdapter } from '../../models/resource-save';
+import type { ResourceSaveAdapter } from '@epam/ai-dial-chat-hooks';
 import {
   createToolset,
   moveToolset,

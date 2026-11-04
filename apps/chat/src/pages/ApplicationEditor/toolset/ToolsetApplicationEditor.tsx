@@ -69,7 +69,7 @@ import { useTextRefinementLabels } from '../../../hooks/useTextRefinementLabels'
 import type {
   ResourceSaveAdapter,
   ResourceSaveResult,
-} from '../../../models/resource-save';
+} from '@epam/ai-dial-chat-hooks';
 import { mcpAppsApiClient } from '../../../server-api/mcp-apps';
 import {
   createToolset,

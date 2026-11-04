@@ -1,10 +1,15 @@
+import { SEMVER_VERSION_PATTERN } from '@epam/ai-dial-builder-form';
 import type { ResourceFoldersResponseDto } from '@epam/ai-dial-chat-api-client';
-import { toPublishRuleDto, useResourceFolders } from '@epam/ai-dial-chat-hooks';
-import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
-  StandaloneSaveToFolderPanel,
-  type FolderDestinationRoot,
-} from '@epam/ai-dial-publish-panel';
+  ResourceSaveVersionError,
+  useResourceSavePanel,
+  type ResourceSaveAdapter,
+  type ResourceSaveChoice,
+  type ResourceSaveResult,
+  type UseResourceSavePanelLabels,
+} from '@epam/ai-dial-chat-hooks';
+import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import { StandaloneSaveToFolderPanel } from '@epam/ai-dial-publish-panel';
 import type { FC, RefObject } from 'react';
 import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,16 +22,10 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
-import { useResourceSavePanel } from '../../hooks/resource-save/useResourceSavePanel';
-import type {
-  PublishSavedResource,
-  ResourceSaveAdapter,
-  ResourceSaveResult,
-} from '../../models/resource-save';
+import { useResourceSaveNotification } from '../../hooks/resource-save/useResourceSaveNotification';
 import { getPublishRules } from '../../server-api/publish-rules.api';
 import { publishCatalogEntity } from '../../server-api/publish.api';
 import type { NotifiableEntity } from '../../types/entity-notification';
-import { SaveDestinationRoot } from '../../types/resource-save';
 import {
   getAccessRulesLabels,
   getPublishPanelCommonLabels,
@@ -67,28 +66,9 @@ interface Props {
   returnFocusRef?: RefObject<HTMLElement | null>;
 }
 
-/* `usePublishFolders` keys loading folders by API path (`a/b/`); the tree takes plain path keys. */
-const toFolderKeys = (apiPaths: Set<string>): Set<string> =>
-  new Set([...apiPaths].map((apiPath) => apiPath.replace(/\/$/, '')));
+const publishClient = { publishCatalogEntity, getPublishRules };
 
-const publishSavedResource: PublishSavedResource = async (
-  entityType,
-  id,
-  folderPath,
-  version,
-  rules,
-) => {
-  await publishCatalogEntity(entityType, id, {
-    folderPath: folderPath.join('/'),
-    ...(version ? { version } : {}),
-    rules: rules.map(toPublishRuleDto),
-  });
-};
-
-const fetchFolderRules = (folderPath: string[]) =>
-  getPublishRules(folderPath.join('/'));
-
-/** App adapter for the Save panel: Personal and Organization folders, translated copy, and the save run. */
+/** App adapter for the Save panel: translated copy, notifications and the app's API clients around `useResourceSavePanel`. */
 const ResourceSavePanelContainer: FC<Props> = ({
   isOpen,
   onClose,
@@ -111,75 +91,55 @@ const ResourceSavePanelContainer: FC<Props> = ({
   const {
     config: { publicationFilterSources },
   } = useAppConfig();
-  const personal = useResourceFolders({
-    listFolders: listPersonalFolders,
-    isEnabled: isOpen,
-  });
   const organization = usePublishFolders();
+  const notifySaved = useResourceSaveNotification({
+    resourceName,
+    notifiableEntity,
+    notificationType,
+  });
 
-  const panel = useResourceSavePanel({
+  const handleSaved = useCallback(
+    (result: ResourceSaveResult, choice: ResourceSaveChoice) => {
+      notifySaved(result, choice);
+      onSaved(result);
+    },
+    [notifySaved, onSaved],
+  );
+
+  const flowLabels = useMemo<UseResourceSavePanelLabels>(
+    () => ({
+      personalRoot: t(CatalogI18nKeys.FolderPersonal),
+      organizationRoot: t(BasicI18nKeys.Organization),
+      foldersLoadError: t(ResourceSavePanelI18nKeys.FoldersLoadFailed),
+      saveError: t(ResourceSavePanelI18nKeys.SaveFailed),
+      getVersionError: (error, version) => {
+        if (error === ResourceSaveVersionError.Invalid) {
+          return t(ResourceSavePanelI18nKeys.VersionInvalid);
+        }
+        if (error === ResourceSaveVersionError.Unchanged) {
+          return t(ResourceSavePanelI18nKeys.VersionUnchanged, { version });
+        }
+        return t(ResourceSavePanelI18nKeys.VersionExists, { version });
+      },
+      accessRules: getAccessRulesLabels(t),
+    }),
+    [t],
+  );
+
+  const { panelProps } = useResourceSavePanel({
     isOpen,
     adapter,
     resourceId,
     currentFolderPath,
-    resourceName,
     currentVersion,
-    notifiableEntity,
-    notificationType,
-    publish: publishSavedResource,
-    rememberPublishFolder: organization.rememberPublishFolder,
-    onSaved,
-    fetchRules: fetchFolderRules,
+    versionPattern: SEMVER_VERSION_PATTERN,
+    listPersonalFolders,
+    organizationFolders: canPublish ? organization : undefined,
+    publishClient,
+    ruleSourceOptions: publicationFilterSources,
+    labels: flowLabels,
+    onSaved: handleSaved,
   });
-
-  const organizationLoadingPaths = useMemo(
-    () => toFolderKeys(organization.loadingPaths),
-    [organization.loadingPaths],
-  );
-  const roots = useMemo<FolderDestinationRoot[]>(() => {
-    const personalRoot: FolderDestinationRoot = {
-      key: SaveDestinationRoot.Personal,
-      label: t(CatalogI18nKeys.FolderPersonal),
-      items: personal.folderItems,
-      expandedPaths: personal.expandedPaths,
-      onExpandedPathsChange: personal.onExpandedPathsChange,
-      loadingPaths: personal.loadingPaths,
-    };
-    if (!canPublish) return [personalRoot];
-    return [
-      personalRoot,
-      {
-        key: SaveDestinationRoot.Organization,
-        label: t(BasicI18nKeys.Organization),
-        items: organization.folderItems,
-        expandedPaths: organization.expandedPaths,
-        onExpandedPathsChange: organization.onExpandedPathsChange,
-        loadingPaths: organizationLoadingPaths,
-        hasAccessRules: true,
-      },
-    ];
-  }, [
-    canPublish,
-    organization.expandedPaths,
-    organization.folderItems,
-    organization.onExpandedPathsChange,
-    organizationLoadingPaths,
-    personal.expandedPaths,
-    personal.folderItems,
-    personal.loadingPaths,
-    personal.onExpandedPathsChange,
-    t,
-  ]);
-
-  const { onCreateFolder: onCreatePersonalFolder } = personal;
-  const { onCreatePublishFolder } = organization;
-  const handleCreateFolder = useCallback(
-    (rootKey: string, parentPath: string[], name: string) =>
-      rootKey === SaveDestinationRoot.Organization
-        ? onCreatePublishFolder(parentPath, name)
-        : onCreatePersonalFolder(parentPath, name),
-    [onCreatePersonalFolder, onCreatePublishFolder],
-  );
 
   const resource = useMemo(
     () => ({
@@ -245,77 +205,13 @@ const ResourceSavePanelContainer: FC<Props> = ({
     [t, typeLabel],
   );
 
-  const version = useMemo(
-    () =>
-      adapter.isVersioned && currentVersion != null
-        ? {
-            versionMode: panel.versionMode,
-            onVersionModeChange: panel.setVersionMode,
-            currentVersion,
-            newVersion: panel.newVersion,
-            onNewVersionChange: panel.setNewVersion,
-            onNewVersionBlur: panel.markNewVersionTouched,
-            newVersionError: panel.newVersionError,
-          }
-        : undefined,
-    [
-      adapter.isVersioned,
-      currentVersion,
-      panel.markNewVersionTouched,
-      panel.newVersion,
-      panel.newVersionError,
-      panel.setNewVersion,
-      panel.setVersionMode,
-      panel.versionMode,
-    ],
-  );
-
-  const accessRulesLabels = useMemo(() => getAccessRulesLabels(t), [t]);
-  const accessRules = useMemo(
-    () => ({
-      rules: panel.rules,
-      onRulesChange: panel.setRules,
-      sourceOptions: publicationFilterSources,
-      isLoading: panel.isRulesLoading,
-      hasLoadError: panel.hasRulesLoadError,
-      labels: accessRulesLabels,
-    }),
-    [
-      accessRulesLabels,
-      panel.hasRulesLoadError,
-      panel.isRulesLoading,
-      panel.rules,
-      panel.setRules,
-      publicationFilterSources,
-    ],
-  );
-
-  const { submit } = panel;
-  const handleSubmit = useCallback(() => void submit(), [submit]);
-
   return (
     <StandaloneSaveToFolderPanel
+      {...panelProps}
       isOpen={isOpen}
       onClose={onClose}
-      onSubmit={handleSubmit}
-      isSubmitDisabled={panel.isSubmitDisabled}
-      isSubmitting={panel.isSubmitting}
-      submitError={panel.submitError}
       returnFocusRef={returnFocusRef}
       resource={resource}
-      roots={roots}
-      destination={panel.destination}
-      onDestinationChange={panel.setDestination}
-      onCreateFolder={handleCreateFolder}
-      version={version}
-      accessRules={accessRules}
-      onPendingDestinationChange={panel.setPendingDestination}
-      foldersError={
-        personal.hasError
-          ? t(ResourceSavePanelI18nKeys.FoldersLoadFailed)
-          : undefined
-      }
-      onRetryFolders={personal.retry}
       panelLabels={panelLabels}
       labels={labels}
     />

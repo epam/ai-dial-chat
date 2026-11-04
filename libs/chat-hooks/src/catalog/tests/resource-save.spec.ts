@@ -1,14 +1,12 @@
 import { SaveVersionMode } from '@epam/ai-dial-publish-panel';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type {
-  ResourceSaveAdapter,
-  ResourceSaveChoice,
-} from '../../models/resource-save';
 import {
   ResourceSaveOutcome,
+  runResourceSave,
   SaveDestinationRoot,
-} from '../../types/resource-save';
-import { runResourceSave } from '../resource-save';
+  type ResourceSaveAdapter,
+  type ResourceSaveChoice,
+} from '../resource-save';
 
 const ID = 'applications/b1/Design/agent__1.0.0';
 

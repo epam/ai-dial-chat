@@ -12,7 +12,7 @@ The editor's existing validation SHALL run first. When it fails, the panel SHALL
 
 The panel opens only for a resource the user owns (`isMy` on the loaded deployment, toolset or prompt, or an application created in this session). For a resource shared with the user, Save keeps saving in place, because moving and forking act on the caller's own bucket.
 
-State ownership: each editor owns `isOpen` and the adapter it built when the panel opened; `useResourceSavePanel` (`apps/chat/src/hooks/resource-save/useResourceSavePanel.ts`) owns the committed destination, the version mode, the new-version value, the version error and the submitting state.
+State ownership: each editor owns `isOpen` and the adapter it built when the panel opened; `useResourceSavePanel` (`libs/chat-hooks/src/catalog/useResourceSavePanel/useResourceSavePanel.ts`) owns the committed destination, the version mode, the new-version value, the version error and the submitting state.
 
 #### Scenario: Save opens the panel without persisting
 - **WHEN** a user edits an existing Quick App, toolset, custom app, schema-form app or prompt and clicks Save with a valid form
@@ -95,7 +95,7 @@ i18n keys: `ResourceSavePanelI18nKeys.VersionInvalid`, `VersionUnchanged`, `Vers
 - a header with a back button (mirrored arrow in RTL, `aria-label` from `ButtonsI18nKeys.Back`) and the title `ResourceSavePanelI18nKeys.ChangeFolderTitle`;
 - the kit `Search` (`ResourceSavePanelI18nKeys.SearchFolders`), with matches rendered through `Highlight`;
 - `PublishFoldersTree` in multi-root mode with two roots, in this order:
-  1. `SaveDestinationRoot.Personal` (`apps/chat/src/types/resource-save.ts`), labelled `ResourceSavePanelI18nKeys.PersonalRoot`. It holds the user's folders for that resource type, loaded lazily through `useResourceFolders` (`@epam/ai-dial-chat-hooks`) with the listing operation the editor passes to `ResourceSavePanelContainer` as `listPersonalFolders`;
+  1. `SaveDestinationRoot.Personal` (`libs/chat-hooks/src/catalog/resource-save.ts`), labelled `ResourceSavePanelI18nKeys.PersonalRoot`. It holds the user's folders for that resource type, loaded lazily through `useResourceFolders` (`@epam/ai-dial-chat-hooks`) with the listing operation the editor passes to `ResourceSavePanelContainer` as `listPersonalFolders`;
   2. `SaveDestinationRoot.Organization`, labelled with the existing publish root label. It holds the public bucket folders from `apps/chat/src/hooks/publish/usePublishFolders.ts`. It renders only when the user could publish this item (own item and a publishable type).
 - a footer with Cancel and Select (`ButtonsI18nKeys.Select`).
 
@@ -121,7 +121,7 @@ Empty and loading states: a root whose first level is loading shows the tree's l
 
 ### Requirement: Save sequencing by destination and version
 
-On the panel's Save, `runResourceSave` (`apps/chat/src/utils/resource-save.ts`) SHALL run these steps through the resource's `ResourceSaveAdapter` (`apps/chat/src/models/resource-save.ts`):
+On the panel's Save, `runResourceSave` (`libs/chat-hooks/src/catalog/resource-save.ts`) SHALL run these steps through the resource's `ResourceSaveAdapter` (`libs/chat-hooks/src/catalog/resource-save.ts`):
 
 | Destination | Version | Steps |
 | --- | --- | --- |

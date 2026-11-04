@@ -52,7 +52,7 @@ import { useUiFeature } from '../../hooks/useUiFeature';
 import type {
   ResourceSaveAdapter,
   ResourceSaveResult,
-} from '../../models/resource-save';
+} from '@epam/ai-dial-chat-hooks';
 import {
   createPrompt,
   getPrompt,

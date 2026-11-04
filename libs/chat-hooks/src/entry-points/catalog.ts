@@ -29,5 +29,7 @@ export * from '../catalog/useFavoriteEntitiesState/useFavoriteEntitiesState';
 export * from '../catalog/usePublishFolders/usePublishFolders';
 export * from '../catalog/useResourceFolders/useResourceFolders';
 export * from '../catalog/resource-folder';
+export * from '../catalog/resource-save';
+export * from '../catalog/useResourceSavePanel/useResourceSavePanel';
 export * from '../skill/useSkillFilePreview';
 export * from '../skill/skill-types';

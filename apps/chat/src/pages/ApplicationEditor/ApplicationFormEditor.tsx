@@ -68,7 +68,7 @@ import type { CatalogCreationCheck } from '../../models/catalog-creation';
 import type {
   ResourceSaveAdapter,
   ResourceSaveResult,
-} from '../../models/resource-save';
+} from '@epam/ai-dial-chat-hooks';
 import { listApplicationFolders } from '../../server-api/applications';
 import { ApplicationCreateStrategy } from '../../types/application-editor';
 import { CatalogCreationDecision } from '../../types/catalog-creation';

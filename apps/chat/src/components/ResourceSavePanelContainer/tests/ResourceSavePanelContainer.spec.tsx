@@ -1,4 +1,14 @@
+import {
+  ResourceSaveOutcome,
+  ResourceSaveVersionError,
+  SaveDestinationRoot,
+  useResourceSavePanel,
+  type ResourceSaveAdapter,
+  type ResourceSaveChoice,
+  type UseResourceSavePanelParams,
+} from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import { SaveVersionMode } from '@epam/ai-dial-publish-panel';
 import { render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -6,22 +16,11 @@ import {
   ResourceSavePanelI18nKeys,
 } from '../../../constants/translation-keys';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
-import { useResourceSavePanel } from '../../../hooks/resource-save/useResourceSavePanel';
-import type { ResourceSaveAdapter } from '../../../models/resource-save';
 import { NotifiableEntity } from '../../../types/entity-notification';
-import { SaveDestinationRoot } from '../../../types/resource-save';
 import ResourceSavePanelContainer from '../ResourceSavePanelContainer';
 
 const panelProps = vi.fn();
-const personalFolders = {
-  folderItems: [{ path: ['Design'], name: 'Design' }],
-  expandedPaths: new Set<string>(),
-  loadingPaths: new Set<string>(),
-  onExpandedPathsChange: vi.fn(),
-  onCreateFolder: vi.fn(),
-  hasError: false,
-  retry: vi.fn(),
-};
+const notifySaved = vi.fn();
 
 vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-publish-panel')>()),
@@ -33,7 +32,7 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => ({
 
 vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>()),
-  useResourceFolders: vi.fn(() => personalFolders),
+  useResourceSavePanel: vi.fn(),
 }));
 
 vi.mock('../../../context/AppConfigContext', () => ({
@@ -42,10 +41,12 @@ vi.mock('../../../context/AppConfigContext', () => ({
 vi.mock('../../../server-api/publish-rules.api', () => ({
   getPublishRules: vi.fn(),
 }));
-vi.mock('../../../hooks/publish/usePublishFolders');
-vi.mock('../../../hooks/resource-save/useResourceSavePanel');
 vi.mock('../../../server-api/publish.api', () => ({
   publishCatalogEntity: vi.fn(),
+}));
+vi.mock('../../../hooks/publish/usePublishFolders');
+vi.mock('../../../hooks/resource-save/useResourceSaveNotification', () => ({
+  useResourceSaveNotification: () => notifySaved,
 }));
 
 vi.mock('react-i18next', () => ({
@@ -63,22 +64,23 @@ const adapter: ResourceSaveAdapter = {
   move: vi.fn(),
 };
 
-const panelState = {
+const flowPanelProps = {
+  onSubmit: vi.fn(),
+  roots: [],
   destination: { rootKey: SaveDestinationRoot.Personal, path: [] },
-  setDestination: vi.fn(),
-  versionMode: 'keep',
-  setVersionMode: vi.fn(),
-  newVersion: '',
-  setNewVersion: vi.fn(),
-  markNewVersionTouched: vi.fn(),
-  isSubmitting: false,
-  isSubmitDisabled: false,
-  submit: vi.fn().mockResolvedValue(undefined),
-  rules: [],
-  setRules: vi.fn(),
-  isRulesLoading: false,
-  hasRulesLoadError: false,
-  setPendingDestination: vi.fn(),
+  onDestinationChange: vi.fn(),
+  onCreateFolder: vi.fn(),
+};
+
+const organizationFolders = {
+  folderItems: [],
+  expandedPaths: new Set<string>(),
+  loadedPaths: new Set<string>(),
+  loadingPaths: new Set<string>(),
+  onExpandedPathsChange: vi.fn(),
+  onCreatePublishFolder: vi.fn(),
+  rememberPublishFolder: vi.fn(),
+  hasPublishWriteAccess: vi.fn(),
 };
 
 const renderContainer = (
@@ -103,120 +105,84 @@ const renderContainer = (
     />,
   );
 
+const lastFlowParams = () =>
+  vi.mocked(useResourceSavePanel).mock.lastCall?.[0] as UseResourceSavePanelParams;
+
 const lastPanelProps = () =>
   panelProps.mock.lastCall?.[0] as Record<string, unknown> & {
-    roots: { key: string; label: string }[];
     labels: { title: string };
-    onCreateFolder: (root: string, parent: string[], name: string) => void;
-    onSubmit: () => void;
-    version?: unknown;
-    foldersError?: string;
   };
 
 describe('ResourceSavePanelContainer', () => {
-  const organizationFolders = {
-    folderItems: [{ path: ['EPAM'], name: 'EPAM' }],
-    expandedPaths: new Set<string>(),
-    loadedPaths: new Set<string>(),
-    loadingPaths: new Set(['EPAM/']),
-    onExpandedPathsChange: vi.fn(),
-    onCreatePublishFolder: vi.fn(),
-    rememberPublishFolder: vi.fn(),
-    hasPublishWriteAccess: vi.fn(),
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(usePublishFolders).mockReturnValue(organizationFolders);
-    vi.mocked(useResourceSavePanel).mockReturnValue(panelState as never);
-  });
-
-  it('offers the Personal and Organization roots, in that order', () => {
-    renderContainer();
-    const { roots } = lastPanelProps();
-    expect(roots.map((root) => [root.key, root.label])).toEqual([
-      [SaveDestinationRoot.Personal, CatalogI18nKeys.FolderPersonal],
-      [SaveDestinationRoot.Organization, 'basic.organization'],
-    ]);
-  });
-
-  it('takes access rules on Organization folders only, with the configured sources', () => {
-    renderContainer();
-    const props = lastPanelProps() as ReturnType<typeof lastPanelProps> & {
-      roots: { hasAccessRules?: boolean }[];
-      accessRules: { sourceOptions: string[]; onRulesChange: unknown };
-      onPendingDestinationChange: unknown;
-    };
-    expect(props.roots.map((root) => Boolean(root.hasAccessRules))).toEqual([
-      false,
-      true,
-    ]);
-    expect(props.accessRules.sourceOptions).toEqual(['roles']);
-    expect(props.accessRules.onRulesChange).toBe(panelState.setRules);
-    expect(props.onPendingDestinationChange).toBe(
-      panelState.setPendingDestination,
-    );
-  });
-
-  it('translates Organization loading keys to plain folder keys', () => {
-    renderContainer();
-    const organization = lastPanelProps().roots[1] as unknown as {
-      loadingPaths: Set<string>;
-    };
-    expect(organization.loadingPaths).toEqual(new Set(['EPAM']));
-  });
-
-  it('offers only the Personal root when the user cannot publish', () => {
-    renderContainer({ canPublish: false });
-    expect(lastPanelProps().roots.map((root) => root.key)).toEqual([
-      SaveDestinationRoot.Personal,
-    ]);
-  });
-
-  it('titles the panel with the resource type', () => {
-    renderContainer();
-    expect(lastPanelProps().labels.title).toBe(
-      `${ResourceSavePanelI18nKeys.Title}|${JSON.stringify({ type: 'QuickApp' })}`,
-    );
-  });
-
-  it('routes folder creation to the folder source of the chosen root', () => {
-    renderContainer();
-    const { onCreateFolder } = lastPanelProps();
-    onCreateFolder(SaveDestinationRoot.Personal, ['Design'], 'Reviews');
-    onCreateFolder(SaveDestinationRoot.Organization, ['EPAM'], 'Sales');
-    expect(personalFolders.onCreateFolder).toHaveBeenCalledWith(
-      ['Design'],
-      'Reviews',
-    );
-    expect(organizationFolders.onCreatePublishFolder).toHaveBeenCalledWith(
-      ['EPAM'],
-      'Sales',
-    );
-  });
-
-  it('offers the version choice only for a versioned resource', () => {
-    renderContainer();
-    expect(lastPanelProps().version).toBeDefined();
-    renderContainer({
-      adapter: { ...adapter, isVersioned: false },
-      currentVersion: undefined,
+    vi.mocked(useResourceSavePanel).mockReturnValue({
+      panelProps: flowPanelProps,
+      submit: vi.fn(),
     });
-    expect(lastPanelProps().version).toBeUndefined();
   });
 
-  it('shows a folder load error from the Personal listing', () => {
-    personalFolders.hasError = true;
+  it('runs the flow with the Organization folders and the configured rule sources', () => {
     renderContainer();
-    expect(lastPanelProps().foldersError).toBe(
+    const params = lastFlowParams();
+    expect(params.organizationFolders).toBe(organizationFolders);
+    expect(params.ruleSourceOptions).toEqual(['roles']);
+    expect(params.labels.personalRoot).toBe(CatalogI18nKeys.FolderPersonal);
+    expect(params.labels.foldersLoadError).toBe(
       ResourceSavePanelI18nKeys.FoldersLoadFailed,
     );
-    personalFolders.hasError = false;
   });
 
-  it('runs the save when the panel submits', () => {
+  it('leaves out the Organization folders when the user cannot publish', () => {
+    renderContainer({ canPublish: false });
+    expect(lastFlowParams().organizationFolders).toBeUndefined();
+  });
+
+  it('translates each version error', () => {
     renderContainer();
-    lastPanelProps().onSubmit();
-    expect(panelState.submit).toHaveBeenCalledOnce();
+    const { getVersionError } = lastFlowParams().labels;
+    expect(getVersionError(ResourceSaveVersionError.Invalid, 'x')).toBe(
+      ResourceSavePanelI18nKeys.VersionInvalid,
+    );
+    expect(getVersionError(ResourceSaveVersionError.Unchanged, '1.0.0')).toBe(
+      `${ResourceSavePanelI18nKeys.VersionUnchanged}|${JSON.stringify({ version: '1.0.0' })}`,
+    );
+    expect(getVersionError(ResourceSaveVersionError.Exists, '1.1.0')).toBe(
+      `${ResourceSavePanelI18nKeys.VersionExists}|${JSON.stringify({ version: '1.1.0' })}`,
+    );
+  });
+
+  it('notifies and reports a finished save', () => {
+    const onSaved = vi.fn();
+    renderContainer({ onSaved });
+    const result = {
+      outcome: ResourceSaveOutcome.Saved,
+      savedId: 'id',
+      isNewVersion: false,
+      isPublished: false,
+    };
+    const choice: ResourceSaveChoice = {
+      resourceId: 'id',
+      currentFolderPath: [],
+      destination: flowPanelProps.destination,
+      versionMode: SaveVersionMode.Keep,
+      newVersion: '',
+    };
+
+    lastFlowParams().onSaved(result, choice);
+
+    expect(notifySaved).toHaveBeenCalledWith(result, choice);
+    expect(onSaved).toHaveBeenCalledWith(result);
+  });
+
+  it('renders the panel with the flow state and the title naming the resource type', () => {
+    renderContainer();
+    const props = lastPanelProps();
+    expect(props.roots).toBe(flowPanelProps.roots);
+    expect(props.onSubmit).toBe(flowPanelProps.onSubmit);
+    expect(props.labels.title).toBe(
+      `${ResourceSavePanelI18nKeys.Title}|${JSON.stringify({ type: 'QuickApp' })}`,
+    );
   });
 });
