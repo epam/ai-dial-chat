@@ -56,6 +56,7 @@ export * from './conversation/quick-app-conversation-starters';
 export * from './conversation/stage';
 export * from './conversation/starter-option';
 export * from './oauth/authorize-url';
+export * from './oauth/callback-exchange';
 export * from './oauth/handshake';
 export * from './oauth/models';
 export * from './oauth/popup';

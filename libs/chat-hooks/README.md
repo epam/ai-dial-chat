@@ -3871,7 +3871,7 @@ if (outcome.type === ToolsetLoginOutcomeType.PopupBlocked) {
 
 Runs inside the OAuth callback popup and completes the flow: reads and clears the redirect state from the popup's own `sessionStorage`, removes the authorization code from the visible URL **before** any request, validates the returned `state` against the stored one, performs the exchange through the injected callback, then reports the outcome into the popup URL and over the flow channel until the opener acknowledges it, closing the popup afterwards. It runs its effect once per mount even under StrictMode double-invocation, renders nothing, and produces no user-visible text.
 
-Per-resource-kind dispatch stays in the host page — the hook sees only the one injected `exchange` callback.
+The hook itself has no per-resource-kind branching — it sees only the one injected `exchange` callback. A host serving toolsets, external services and offline credentials through one callback route builds that callback with [`createOAuthCallbackExchange`](#createoauthcallbackexchange); a host with a single resource kind may pass its own.
 
 **Parameters**:
 
@@ -3918,6 +3918,41 @@ const { isInProgress, failureReason } = useOAuthCallbackCompletion({
   callbackPath: '/auth/toolset-signin',
   exchange,
 });
+```
+
+### createOAuthCallbackExchange
+
+`createOAuthCallbackExchange(operations)` returns the `exchange` callback `useOAuthCallbackCompletion` takes, dispatching the authorization code by the stored redirect state's `resourceKind`:
+
+| `resourceKind`       | Operation called                                | Body                                                                                                                               |
+| -------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `Toolset` or absent  | `loginToolset(toolsetId, body)`                 | `url`, `credentialsLevel`, `authenticationType: OAUTH`, `code`, `redirectUri`, `offlineUsageConsent`                               |
+| `ExternalService`    | `signInExternalService(appId, serviceId, body)` | `credentialsLevel`, `authenticationType: OAUTH`, `code`, `redirectUri`, `offlineUsageConsent`; ids parsed from the stored scope id |
+| `OfflineCredentials` | `signInOfflineCredentials(body)`                | `code`, `redirectUri`                                                                                                              |
+
+An external-service scope id that `parseExternalServiceUrl` cannot split resolves `ToolsetOAuthFailureReason.MissingRedirectState` without calling anything. Success resolves `null`; a rejected operation rejects, which the hook reports as `LoginRequestFailed`. The operations (`OAuthCallbackExchangeOperations`) are the host's already-configured sign-in adapters — the lib never builds a client — and their resolved values are ignored. The returned function is stateless, so build it once at module scope. Available from the root and `./oauth`.
+
+```tsx
+import {
+  createOAuthCallbackExchange,
+  useOAuthCallbackCompletion,
+} from '@epam/ai-dial-chat-hooks/oauth';
+
+const exchange = createOAuthCallbackExchange({
+  loginToolset,
+  signInExternalService,
+  signInOfflineCredentials,
+});
+
+const ToolsetAuthCallback = () => {
+  const [searchParams] = useSearchParams();
+  const { isInProgress, failureReason } = useOAuthCallbackCompletion({
+    searchParams,
+    callbackPath: '/auth/toolset-signin',
+    exchange,
+  });
+  // render isInProgress / failureReason with the host's own copy
+};
 ```
 
 ## Toolset Login Events
