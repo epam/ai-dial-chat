@@ -72,6 +72,8 @@ export interface ProjectViewLabels {
   notFoundLabel: string;
   /** Label of the action that returns to the projects list. */
   browseProjectsLabel: string;
+  /** Accessible label of the loading spinner. Defaults to `'Loading project'`. */
+  loadingAriaLabel?: string;
 }
 
 /**

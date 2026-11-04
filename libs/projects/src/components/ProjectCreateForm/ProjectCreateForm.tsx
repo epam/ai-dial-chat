@@ -85,6 +85,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
 }) => {
   const nameId = useId();
   const nameErrorId = useId();
+  const nameValidationErrorId = useId();
   const instructionsId = useId();
   const contextLabelId = useId();
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -108,6 +109,10 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
       ? labels.nameErrors[nameCheck]
       : undefined);
   const isCreateDisabled = nameCheck != null || isSubmitting || isRefining;
+  /* A host error lives in the always-mounted alert; inline validation has its own, non-announcing element. */
+  let nameDescribedBy: string | undefined;
+  if (errors.name) nameDescribedBy = nameErrorId;
+  else if (nameError) nameDescribedBy = nameValidationErrorId;
 
   /* A host error on Name (a taken name) sends focus back to the field. */
   useEffect(() => {
@@ -271,9 +276,9 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
               aria-required
               invalid={Boolean(nameError)}
               aria-invalid={Boolean(nameError)}
-              aria-describedby={nameError ? nameErrorId : undefined}
+              aria-describedby={nameDescribedBy}
             />
-            {/* Mounted before a host error (a taken name) arrives, so it is announced; out of the column gap while empty. Inline validation stays outside it. */}
+            {/* Mounted before a host error (a taken name) arrives, so it is announced; out of the column gap while empty. Inline validation stays outside it, under its own id. */}
             <ErrorText
               announce={LiveRegionPoliteness.Assertive}
               id={nameErrorId}
@@ -282,7 +287,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
             />
             {nameError && !errors.name && (
               <ErrorText
-                id={nameErrorId}
+                id={nameValidationErrorId}
                 className={helperClassName}
                 text={nameError}
               />
@@ -314,7 +319,15 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
                   MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
                 )}
               >
-                <Suspense fallback={<Spinner />}>
+                <Suspense
+                  fallback={
+                    <Spinner
+                      ariaLabel={
+                        labels.editorLoadingAriaLabel ?? 'Loading editor'
+                      }
+                    />
+                  }
+                >
                   <MarkdownEditor
                     id={instructionsId}
                     value={values.instructions}

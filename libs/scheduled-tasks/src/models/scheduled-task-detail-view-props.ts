@@ -21,6 +21,8 @@ export interface ScheduledTaskDetailViewLabels extends ScheduledTaskInstructions
   deletedStateLabel: string;
   /** Message shown alongside the page-level retry action when `error` is set. */
   errorLabel: string;
+  /** Accessible label of the loading spinner shown while `isLoading` is `true`. Defaults to `'Loading scheduled task'`. */
+  loadingAriaLabel?: string;
   /** Title of the Details section. */
   detailsTitle: string;
   /** Label for the description field. */

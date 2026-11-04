@@ -57,6 +57,8 @@ export interface ProjectCreateFormLabels {
   instructionsLabel: string;
   /** Instructions editor placeholder. */
   instructionsPlaceholder: string;
+  /** Accessible label of the spinner shown while the instructions editor loads. Defaults to `'Loading editor'`. */
+  editorLoadingAriaLabel?: string;
   /** Context section label. */
   contextLabel: string;
   /**

@@ -44,8 +44,8 @@ Peers:
 
 - `react` ^19.2.8
 - `react-dom` ^19.2.8 (`NotificationStack` portals into `document.body`)
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.72
-- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.25
+- `@epam/ai-dial-ui-kit` ^0.16.0
+- `@epam/ai-dial-react-file-manager` ^0.4.0
 
 Installed for you as dependencies: `ag-grid-community`, `@tabler/icons-react`, `react-markdown`,
 `react-syntax-highlighter`, `remark-breaks`, `remark-gfm`, `remark-math`, `rehype-katex`,
@@ -1158,7 +1158,8 @@ fold stays usable) and `cssVariable` (default
 
 `useControlErrorAssociation(getControl, errorId, hasError)` links a field
 error to a control that takes no `aria-describedby` / `aria-invalid` prop —
-the kit `MarkdownEditor` and `Calendar`, or a host-composed selector. While
+the kit `MarkdownEditor`, or a host-composed selector (the kit `Calendar`
+takes `ariaDescribedBy` and `invalid` since kit 0.16, so pass those instead). While
 `hasError` is `true` it adds `errorId` to the control's `aria-describedby`
 (keeping any other ids) and sets `aria-invalid`; otherwise it removes both.
 It runs after every render, so a lazily mounted control is picked up once it
@@ -1616,7 +1617,7 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 
 ### OperationLoaderModal
 
-Internal modal already rendered by `DialFileManagerShell`. Exported for hosts that need to compose it independently outside the shell. `colors.text` (`OperationLoaderModalColors`) sets the progress-line color (`--olm-text`, default `--text-secondary`), and `textClassName` its type (default `'dial-small-text'`).
+Internal modal already rendered by `DialFileManagerShell`. Exported for hosts that need to compose it independently outside the shell. `colors.text` (`OperationLoaderModalColors`) sets the progress-line color (`--olm-text`, default `--text-secondary`), and `textClassName` its type (default `'dial-small-text'`). The title and progress line sit in one always-mounted kit `LiveRegion`, so an updated `text` is announced; the spinner is decorative (`aria-hidden`).
 
 ```tsx
 import { OperationLoaderModal } from '@epam/ai-dial-chat-shared';

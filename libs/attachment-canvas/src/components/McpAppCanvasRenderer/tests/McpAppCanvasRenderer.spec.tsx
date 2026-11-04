@@ -293,6 +293,21 @@ describe('McpAppCanvasRenderer', () => {
       expect(screen.queryByTitle('mcp-app')).toBeNull();
     });
 
+    it('names the loading spinner "Loading…" by default and with loadingLabel when given', () => {
+      const { rerender } = render(
+        <McpAppCanvasRenderer content={baseContent} />,
+      );
+      expect(screen.getByRole('img', { name: 'Loading…' })).toBeTruthy();
+
+      rerender(
+        <McpAppCanvasRenderer
+          content={baseContent}
+          loadingLabel="Chargement…"
+        />,
+      );
+      expect(screen.getByRole('img', { name: 'Chargement…' })).toBeTruthy();
+    });
+
     it('remounts cleanly (new AppBridge, no error overlay) when given a new key, as a reload does', async () => {
       const { rerender } = render(
         <McpAppCanvasRenderer key="attempt-1" content={baseContent} />,

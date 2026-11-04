@@ -268,6 +268,21 @@ describe('ProjectCreateForm', () => {
         .forEach((region) => expect(region.textContent).toBe(''));
     });
 
+    it('links the field to the visible inline error, not the empty alert region', async () => {
+      renderForm();
+      const input = screen.getByRole('textbox', { name: /Name/ });
+
+      await userEvent.click(input);
+      await userEvent.tab();
+
+      expect(
+        screen.getByRole('textbox', {
+          name: /Name/,
+          description: 'Name is required',
+        }),
+      ).toBe(input);
+    });
+
     it('moves focus to Name when the host reports a name error', async () => {
       const { props } = renderForm({
         values: { ...EMPTY_VALUES, name: 'Handbook' },

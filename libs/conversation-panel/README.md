@@ -647,7 +647,7 @@ Payload for a completed drag-and-drop move: the dragged `draggedId`, the
 
 The floating queue that shows export/import job progress is no longer part of
 this package: it is the UI kit's generic `TransferQueue`
-(`@epam/ai-dial-ui-kit` `^0.16.0-dev.72`). A host maps its
+(`@epam/ai-dial-ui-kit` `^0.16.0`). A host maps its
 `ConversationTransferJob`s (from `@epam/ai-dial-chat-shared`) onto
 `TransferQueueItem`s — `id`, `fileName` as `name`, the status, `progress.percent`
 as `percent`, and the translated failure or warning reason as `message` — and
@@ -699,6 +699,7 @@ const labels: RenameConversationPopupLabels = {
 | `nameTooLongError`  | `string` | Error shown when the trimmed name exceeds 255 UTF-8 bytes |
 | `saveLabel`         | `string` | Label for the save/confirm button                         |
 | `cancelLabel`       | `string` | Label for the cancel button                               |
+| `savingLabel`       | `string` | Optional spinner name while saving; defaults `'Saving'`   |
 
 ### RenameConversationPopupStyles
 

@@ -99,7 +99,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       onChange={(e) => onChange?.(e.target.checked)}
     />
   ),
-  Spinner: () => <div role="progressbar" />,
+  Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
+    <div role="progressbar" aria-label={ariaLabel} />
+  ),
   /* Mirrors the surface the view exercises: the span that carries the title
    * text, truncation, and the overflow tooltip in the real kit. */
   EllipsisTooltip: ({
@@ -576,7 +578,9 @@ describe('ScheduledTaskDetailView', () => {
       />,
     );
 
-    expect(screen.getByRole('progressbar')).toBeTruthy();
+    expect(
+      screen.getByRole('progressbar', { name: 'Loading scheduled task' }),
+    ).toBeTruthy();
     expect(screen.queryByText('Details')).toBeNull();
   });
 

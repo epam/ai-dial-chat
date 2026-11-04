@@ -54,6 +54,8 @@ export interface McpAppInlinePreviewProps {
   actionsGroupAriaLabel?: string;
   /** Message shown when the resource fails to load or the app fails to initialize. */
   loadErrorLabel: string;
+  /** Accessible label of the spinner shown while the app loads. Defaults to `'Loading app'`. */
+  loadingAriaLabel?: string;
   /**
    * Whether this message's MCP App is currently open in the full-width
    * canvas. When `true`, the header stays (so the tool/app identity is still
@@ -81,6 +83,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   reloadAriaLabel,
   actionsGroupAriaLabel = 'MCP app actions',
   loadErrorLabel,
+  loadingAriaLabel = 'Loading app',
   isOpenedInCanvas = false,
   openedInCanvasLabel,
   colors,
@@ -229,7 +232,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
           <>
             {status === McpAppInlinePreviewStatus.Loading && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <Spinner />
+                <Spinner ariaLabel={loadingAriaLabel} />
               </div>
             )}
             {status === McpAppInlinePreviewStatus.Error && (

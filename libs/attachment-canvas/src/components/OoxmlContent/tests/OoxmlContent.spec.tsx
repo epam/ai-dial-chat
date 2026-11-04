@@ -385,6 +385,26 @@ describe('OoxmlContent', () => {
     expect(screen.getByRole('alert').textContent).toBe('');
   });
 
+  it('names the parsing spinner "Loading…" by default and with loadingLabel when given', () => {
+    mockLoad.mockReturnValue(new Promise(() => undefined));
+
+    const { rerender } = renderContent(OoxmlFileType.Docx);
+    expect(screen.getByRole('img', { name: 'Loading…' })).toBeTruthy();
+
+    rerender(
+      <OoxmlContent
+        content={makeContent(OoxmlFileType.Docx)}
+        fileName="report.docx"
+        loadErrorLabel="Failed to load file"
+        formulaLabel="Formula"
+        formulaLabelClassName="dial-italic-text"
+        formulaValueClassName="dial-code-text"
+        loadingLabel="Chargement…"
+      />,
+    );
+    expect(screen.getByRole('img', { name: 'Chargement…' })).toBeTruthy();
+  });
+
   it('labels the container with the file name', () => {
     renderContent(OoxmlFileType.Xlsx);
 

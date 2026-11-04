@@ -139,6 +139,8 @@ export interface ScheduledTaskCreateFormLabels extends TextRefinementLabels {
   skillLabel?: string;
   /** Optional placeholder forwarded to the Instructions editor. */
   instructionsPlaceholder?: string;
+  /** Accessible label of the spinner shown while the Instructions editor loads. Defaults to `'Loading editor'`. */
+  editorLoadingAriaLabel?: string;
   /** Label for the Cancel action. */
   cancelButtonLabel: string;
   /** Label for the Save action (submits the create form). */

@@ -598,6 +598,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       nameTooLongError: t(ConversationPanelI18nKeys.RenameTitleTooLong),
       saveLabel: t(ButtonsI18nKeys.Save),
       cancelLabel: t(ButtonsI18nKeys.Cancel),
+      savingLabel: t(ButtonsI18nKeys.Saving),
     }),
     [t],
   );

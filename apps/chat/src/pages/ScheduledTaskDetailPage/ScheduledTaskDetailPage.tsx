@@ -46,6 +46,7 @@ import {
   getScheduledTaskEditRoute,
 } from '../../constants/routes';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationPanelI18nKeys,
@@ -444,6 +445,7 @@ const ScheduledTaskDetailPage: FC = () => {
       deleteButtonLabel: t(ButtonsI18nKeys.Delete),
       deletedStateLabel: t(ScheduledTasksI18nKeys.DetailDeletedStateLabel),
       errorLabel: t(ScheduledTasksI18nKeys.DetailErrorLabel),
+      loadingAriaLabel: t(BasicI18nKeys.Loading),
       detailsTitle: t(ScheduledTasksI18nKeys.CreateDetailsSectionTitle),
       descriptionLabel: t(ScheduledTasksI18nKeys.CreateDescriptionLabel),
       modelLabel: t(ScheduledTasksI18nKeys.CreateModelOrAgentLabel),

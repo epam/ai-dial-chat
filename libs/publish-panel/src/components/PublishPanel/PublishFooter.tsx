@@ -124,7 +124,12 @@ export const PublishFooter: FC<PublishFooterProps> = ({
           className="mobile:flex-1"
           disabled={isSubmitDisabled}
           iconBefore={
-            isSubmitLoading ? <Spinner size={DIAL_ICON_SIZE.SM} /> : undefined
+            /* The button's own label already reads `publishingInProgressLabel`; hide the spinner's English status name. */
+            isSubmitLoading ? (
+              <span aria-hidden>
+                <Spinner size={DIAL_ICON_SIZE.SM} />
+              </span>
+            ) : undefined
           }
           onClick={onSubmit}
         />
