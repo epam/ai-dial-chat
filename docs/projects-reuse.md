@@ -49,7 +49,8 @@ DIAL Chat keeps these in `apps/chat` because they depend on its own contexts,
 router, i18n or `server-api`: the chat input (`NewConversationComposer`, fed by
 its deployments and tools contexts), the project chat page's
 `ConversationDataSourceContext` value, the publish panel container, the
-unsaved-changes guard (`useBuilderLeaveGuard`), the Share overlay, the
+react-router edge of the unsaved-changes guard (`useBuilderLeaveGuard`, built on
+the shared `useUnsavedChangesLeaveGuard` from `@epam/ai-dial-chat-shared`), the Share overlay, the
 file-manager modal, every `*Labels` hook that resolves strings through i18n, and
 the translation of each error and toast. Its pages call the shared hooks directly
 with the app's `projectsClient`
