@@ -51,6 +51,8 @@ const VALIDATION_ERROR_KEYS: Record<
     ScheduledTasksI18nKeys.CreateMinuteInvalid,
   [ScheduledTaskValidationErrorCode.DayOfWeekInvalid]:
     ScheduledTasksI18nKeys.CreateDayOfWeekRequired,
+  [ScheduledTaskValidationErrorCode.DaysOfWeekInvalid]:
+    ScheduledTasksI18nKeys.CreateDaysOfWeekRequired,
   [ScheduledTaskValidationErrorCode.DayOfMonthInvalid]:
     ScheduledTasksI18nKeys.CreateDayOfMonthRequired,
   [ScheduledTaskValidationErrorCode.StartDateInvalid]:

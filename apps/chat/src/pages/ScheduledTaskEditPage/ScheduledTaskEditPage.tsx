@@ -176,11 +176,8 @@ const ScheduledTaskEditPage: FC = () => {
           return;
         }
         setTask(result);
-        /* `everyWeeks` defaults like `minute`: a mapped Custom task always
-         * carries it, and other cadences ignore it. */
         const hydratedValues = {
           minute: '0',
-          everyWeeks: '1',
           ...mapped.values,
         };
         setValues(hydratedValues);

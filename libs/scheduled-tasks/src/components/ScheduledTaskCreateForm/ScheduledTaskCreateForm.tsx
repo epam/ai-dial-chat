@@ -63,7 +63,6 @@ import {
   TIME_OF_DAY_PATTERN,
 } from '../../utils/calendar-value';
 import { hasScheduledTaskFormChanges } from '../../utils/scheduled-task-form-values';
-import { keepWindowBoundaryOnRepeatSwitch } from '../../utils/window-boundary';
 import { ScheduledTaskBoundaryField } from '../ScheduledTaskBoundaryField/ScheduledTaskBoundaryField';
 import { ScheduledTaskRunAtField } from '../ScheduledTaskRunAtField/ScheduledTaskRunAtField';
 import styles from './ScheduledTaskCreateForm.module.scss';
@@ -107,9 +106,10 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
 }) => {
   const descriptionId = useId();
   const instructionsEditorId = useId();
-  const dayOfWeekLabelId = useId();
+  const daysOfWeekLabelId = useId();
   const modelErrorId = useId();
   const dayOfWeekErrorId = useId();
+  const daysOfWeekErrorId = useId();
   const timeErrorId = useId();
   const promptErrorId = useId();
   const refinementLock = useRef<AbortSignal | undefined>(undefined);
@@ -217,30 +217,10 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     onFieldChange('time', typeof value === 'string' ? value : '');
   };
 
-  /*
-   * A repeat switch into or out of Custom clears both window boundaries (see
-   * `keepWindowBoundaryOnRepeatSwitch`): Custom renders no boundary pickers,
-   * so a carried-over value would stay live in form state while invisible.
-   */
+  /* Every recurring repeat renders the same date-only boundary pickers, so a
+   * repeat switch keeps both window boundaries. */
   const handleRepeatChange = (next: string | string[]) => {
-    const repeat = next as ScheduledTaskRepeat;
-    onFieldChange('repeat', repeat);
-    const startDate = keepWindowBoundaryOnRepeatSwitch(
-      values.startDate,
-      values.repeat,
-      repeat,
-    );
-    if (startDate !== values.startDate) {
-      onFieldChange('startDate', startDate ?? '');
-    }
-    const endDate = keepWindowBoundaryOnRepeatSwitch(
-      values.endDate,
-      values.repeat,
-      repeat,
-    );
-    if (endDate !== values.endDate) {
-      onFieldChange('endDate', endDate ?? '');
-    }
+    onFieldChange('repeat', next as ScheduledTaskRepeat);
   };
 
   const isTimeFieldShown =
@@ -250,7 +230,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   const isCustomRepeat = values.repeat === ScheduledTaskRepeat.Custom;
   /* Custom blocks Save until a weekday is selected, like the other
    * required fields. */
-  const isCustomDayMissing = isCustomRepeat && !values.dayOfWeek;
+  const isCustomDayMissing = isCustomRepeat && !values.daysOfWeek?.length;
 
   /*
    * A blur error describes the time field's visible draft. When a repeat
@@ -292,16 +272,24 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
 
   const handleRunAtChange = (value: string) => onFieldChange('runAt', value);
 
-  const handleEveryWeeksChange = (next: string | string[]) => {
-    onFieldChange('everyWeeks', next as string);
-  };
-
-  /* The Custom day row is single-select and required, so re-activating the
-   * already-selected day is a no-op — exactly one day stays selected. */
-  const handleCustomDaySelect = (day: string) => {
-    if (day !== values.dayOfWeek) {
-      onFieldChange('dayOfWeek', day);
+  /* The Custom day row is a required multi-select: activating a day toggles
+   * it, except the only selected day, which stays selected. The list stays
+   * sorted Monday first so equal selections compare equal. */
+  const handleCustomDayToggle = (day: string) => {
+    const selectedDays = values.daysOfWeek ?? [];
+    if (selectedDays.includes(day)) {
+      if (selectedDays.length > 1) {
+        onFieldChange(
+          'daysOfWeek',
+          selectedDays.filter((selectedDay) => selectedDay !== day),
+        );
+      }
+      return;
     }
+    onFieldChange(
+      'daysOfWeek',
+      [...selectedDays, day].sort((a, b) => Number(a) - Number(b)),
+    );
   };
 
   const isCreateDisabled =
@@ -480,17 +468,6 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
 
               {values.repeat !== ScheduledTaskRepeat.OneTime && (
                 <>
-                  {isCustomRepeat && (
-                    <Select
-                      id="scheduled-task-every-weeks"
-                      labelProps={{ label: labels.everyLabel }}
-                      value={values.everyWeeks ?? ''}
-                      onChange={handleEveryWeeksChange}
-                      options={labels.everyWeekOptions}
-                      disabled={isSubmitting}
-                    />
-                  )}
-
                   {values.repeat === ScheduledTaskRepeat.Weekly && (
                     <div className="flex flex-col gap-1">
                       <Calendar
@@ -550,30 +527,34 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
 
                   {isCustomRepeat && (
                     <div className="flex flex-col gap-1">
-                      {/* The visible "Day" label doubles as the button row's
+                      {/* The visible "Days" label doubles as the button row's
                        * accessible name, mirroring the Model or Agent field's
                        * Label id + aria-labelledby linkage. */}
                       <Label
-                        id={dayOfWeekLabelId}
-                        label={labels.dayOfWeekLabel}
+                        id={daysOfWeekLabelId}
+                        label={labels.daysOfWeekLabel}
                         required
                       />
                       <div
                         role="group"
-                        aria-labelledby={dayOfWeekLabelId}
+                        aria-labelledby={daysOfWeekLabelId}
                         className="flex gap-0.5"
                       >
-                        {/* Circular single-select day row: Neutral Solid when
+                        {/* Circular multi-select day row: Neutral Solid when
                          * unselected, Primary Solid when selected. */}
                         {labels.customDayOptions.map((day) => {
-                          const isSelected = day.value === values.dayOfWeek;
+                          const isSelected = Boolean(
+                            values.daysOfWeek?.includes(day.value),
+                          );
                           return (
                             <Button
                               key={day.value}
                               aria-label={day.fullName}
                               aria-pressed={isSelected}
                               aria-describedby={
-                                errors.dayOfWeek ? dayOfWeekErrorId : undefined
+                                errors.daysOfWeek
+                                  ? daysOfWeekErrorId
+                                  : undefined
                               }
                               variant={
                                 isSelected
@@ -586,20 +567,20 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                                * width makes the row a circle run. */
                               className="w-10 rounded-full"
                               label={day.shortLabel}
-                              onClick={() => handleCustomDaySelect(day.value)}
+                              onClick={() => handleCustomDayToggle(day.value)}
                               disabled={isSubmitting}
                             />
                           );
                         })}
                       </div>
-                      {errors.dayOfWeek && (
+                      {errors.daysOfWeek && (
                         <ErrorText
-                          id={dayOfWeekErrorId}
+                          id={daysOfWeekErrorId}
                           className={mergeClasses(
                             instructionsErrorClassName,
                             styles.instructionsError,
                           )}
-                          text={errors.dayOfWeek}
+                          text={errors.daysOfWeek}
                         />
                       )}
                     </div>
@@ -651,36 +632,32 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                       error={errors.minute}
                     />
                   )}
-                  {/* Custom renders no boundary fields — it has no activity
-                   * window by design (see the Custom repeat requirement). */}
-                  {!isCustomRepeat && (
-                    /* The two boundary fields share one row. */
-                    <div className="flex flex-row gap-3">
-                      <ScheduledTaskBoundaryField
-                        id="scheduled-task-start-date"
-                        label={labels.startDateLabel}
-                        placeholder={labels.startDatePlaceholder}
-                        value={values.startDate}
-                        onChange={(value) => onFieldChange('startDate', value)}
-                        minDate={minDate}
-                        error={errors.startDate}
-                        errorClassName={instructionsErrorClassName}
-                        disabled={isSubmitting}
-                      />
+                  {/* The two boundary fields share one row. */}
+                  <div className="flex flex-row gap-3">
+                    <ScheduledTaskBoundaryField
+                      id="scheduled-task-start-date"
+                      label={labels.startDateLabel}
+                      placeholder={labels.startDatePlaceholder}
+                      value={values.startDate}
+                      onChange={(value) => onFieldChange('startDate', value)}
+                      minDate={minDate}
+                      error={errors.startDate}
+                      errorClassName={instructionsErrorClassName}
+                      disabled={isSubmitting}
+                    />
 
-                      <ScheduledTaskBoundaryField
-                        id="scheduled-task-end-date"
-                        label={labels.endDateLabel}
-                        placeholder={labels.endDatePlaceholder}
-                        value={values.endDate}
-                        onChange={(value) => onFieldChange('endDate', value)}
-                        minDate={minDate}
-                        error={errors.endDate}
-                        errorClassName={instructionsErrorClassName}
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                  )}
+                    <ScheduledTaskBoundaryField
+                      id="scheduled-task-end-date"
+                      label={labels.endDateLabel}
+                      placeholder={labels.endDatePlaceholder}
+                      value={values.endDate}
+                      onChange={(value) => onFieldChange('endDate', value)}
+                      minDate={minDate}
+                      error={errors.endDate}
+                      errorClassName={instructionsErrorClassName}
+                      disabled={isSubmitting}
+                    />
+                  </div>
                 </>
               )}
             </div>
