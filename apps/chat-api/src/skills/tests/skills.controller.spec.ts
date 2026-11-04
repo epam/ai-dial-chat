@@ -1061,7 +1061,9 @@ describe('SkillsController (integration)', () => {
 
   describe('POST /api/v1/skills/move', () => {
     it('moves a skill of the session bucket and returns its new id', async () => {
-      service.moveSkill.mockResolvedValue({ id: 'skills/test-bucket/team-a/x' });
+      service.moveSkill.mockResolvedValue({
+        id: 'skills/test-bucket/team-a/x',
+      });
 
       const res = await request(app.getHttpServer())
         .post('/api/v1/skills/move')

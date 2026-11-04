@@ -221,7 +221,10 @@ describe('runResourceSave', () => {
       const adapter = makeCreateAdapter();
       const result = await runResourceSave(
         adapter,
-        createChoice({ rootKey: SaveDestinationRoot.Personal, path: ['Sales'] }),
+        createChoice({
+          rootKey: SaveDestinationRoot.Personal,
+          path: ['Sales'],
+        }),
         publish,
       );
 
@@ -234,7 +237,10 @@ describe('runResourceSave', () => {
       const adapter = makeCreateAdapter();
       await runResourceSave(
         adapter,
-        createChoice({ rootKey: SaveDestinationRoot.Organization, path: ['EPAM'] }),
+        createChoice({
+          rootKey: SaveDestinationRoot.Organization,
+          path: ['EPAM'],
+        }),
         publish,
       );
 

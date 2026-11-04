@@ -35,8 +35,7 @@ export interface ResourceCreateSaveAdapter {
 
 /** The resource-specific operations the Save panel runs. */
 export type ResourceSaveAdapter =
-  | ResourceEditSaveAdapter
-  | ResourceCreateSaveAdapter;
+  ResourceEditSaveAdapter | ResourceCreateSaveAdapter;
 
 /** Returns whether `adapter` creates a new resource rather than saving an existing one. */
 export const isResourceCreateAdapter = (

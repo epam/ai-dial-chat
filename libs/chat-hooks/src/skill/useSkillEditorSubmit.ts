@@ -453,7 +453,8 @@ export const useSkillEditorSubmit = ({
       if (status === 409 || status === 412) {
         return new ResourceSaveError(messages.nameConflict);
       }
-      if (status === 413) return new ResourceSaveError(messages.archiveTooLarge);
+      if (status === 413)
+        return new ResourceSaveError(messages.archiveTooLarge);
       if (status === 503) {
         return new ResourceSaveError(messages.serviceUnavailable);
       }

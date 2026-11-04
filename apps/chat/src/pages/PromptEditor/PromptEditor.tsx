@@ -55,10 +55,7 @@ import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback
 import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { promptsApi } from '../../server-api/api-client';
-import {
-  getPrompt,
-  updatePrompt,
-} from '../../server-api/prompts.api';
+import { getPrompt, updatePrompt } from '../../server-api/prompts.api';
 import { CatalogCreationDecision } from '../../types/catalog-creation';
 import { EditorQuery } from '../../types/editor-query';
 import {
@@ -303,9 +300,13 @@ const PromptEditorPage: FC = () => {
         });
 
         await refetchPrompts();
-        notifyOperationSuccess(NotifiableEntity.Prompt, EntityOperation.Edited, {
-          name: trimmedName,
-        });
+        notifyOperationSuccess(
+          NotifiableEntity.Prompt,
+          EntityOperation.Edited,
+          {
+            name: trimmedName,
+          },
+        );
         allowNextNavigation();
         navigate(returnUrl);
       } catch (err) {

@@ -84,7 +84,6 @@ export interface ResourceSaveResult {
   error?: unknown;
 }
 
-
 const isSameFolder = (a: string[], b: string[]): boolean =>
   toFolderPathKey(a) === toFolderPathKey(b);
 

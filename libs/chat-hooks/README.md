@@ -5060,6 +5060,7 @@ Each one takes a configured generated client and never creates one:
 
   If the save fails, the fork is deleted. If the commit fails, it throws a
   `ResourceSaveError` with `getCommitFailedMessage(version)`.
+
 - **`createHostApplicationSaveAdapter({ applicationsApi, applicationId, update, createVersion })`**
   is for applications the host writes itself.
 - **`createToolsetSaveAdapter({ toolsetsApi, toolsetId, body })`** writes a new
