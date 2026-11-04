@@ -18,6 +18,8 @@ export interface PublishPanelColors {
   summaryTitleText?: string;
   /** Section heading text color. Defaults to `--text-primary`. */
   headingText?: string;
+  /** Destination folder path text color. Defaults to `--text-secondary`. */
+  destinationText?: string;
 }
 
 /** Style overrides for the publish panel body and its nested components. */

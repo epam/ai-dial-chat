@@ -12,8 +12,8 @@ State ownership: `@epam/ai-dial-publish-panel`'s `usePublishFlow` hook (relocate
 RTL/direction impact: the tree and search input SHALL use CSS logical properties only; `DialFoldersTree` renders its own RTL-correct chevrons and indentation internally, so no app- or lib-level directional icon mirroring is added for this requirement.
 
 #### Scenario: User selects a destination folder
-- **WHEN** the user clicks a folder node in the publish folder tree
-- **THEN** that folder's path becomes `selectedFolderPath`, the tree highlights it as selected, and any previously selected folder is deselected
+- **WHEN** the user opens the folder view from the destination row, clicks a folder node in the publish folder tree and presses Select
+- **THEN** that folder's path becomes `selectedFolderPath`, the tree had highlighted it as selected, and any previously selected folder is deselected
 
 #### Scenario: Expanding a folder loads its children lazily
 - **WHEN** the user expands a folder node that has not yet been loaded

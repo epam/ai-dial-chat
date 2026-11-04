@@ -1017,6 +1017,8 @@ export enum PublishI18nKeys {
   AuthorPlaceholder = 'publish.authorPlaceholder',
   AuthorHint = 'publish.authorHint',
   FolderLabel = 'publish.folderLabel',
+  NoFolderSelected = 'publish.noFolderSelected',
+  ChooseFolder = 'publish.chooseFolder',
   NoAccessError = 'publish.noAccessError',
   AddSiblingFolder = 'publish.addSiblingFolder',
   AddChildFolder = 'publish.addChildFolder',
