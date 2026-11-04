@@ -3691,6 +3691,17 @@
         "operationId": "streamCompletion",
         "parameters": [
           {
+            "name": "X-Lang",
+            "in": "header",
+            "description": "Current UI language forwarded to DIAL Core for language-sensitive tools and agents.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 35,
+              "example": "en"
+            }
+          },
+          {
             "name": "X-Timezone",
             "in": "header",
             "description": "Current browser IANA timezone forwarded to DIAL Core for date- and time-sensitive tools.",
