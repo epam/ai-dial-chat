@@ -500,9 +500,6 @@ export enum ProjectsI18nKeys {
   ViewNotFound = 'projects.view.notFound',
   ViewBrowseProjects = 'projects.view.browseProjects',
   ViewDeletedElsewhere = 'projects.view.deletedElsewhere',
-  ActionsDeleteConfirmTitle = 'projects.actions.deleteConfirmTitle',
-  ActionsDeleteConfirmDescription = 'projects.actions.deleteConfirmDescription',
-  ActionsDeleteConfirmWithChatsDescription = 'projects.actions.deleteConfirmWithChatsDescription',
   ViewMainContent = 'projects.view.mainContent',
   ChatsTitle = 'projects.chats.title',
   ChatsEmpty = 'projects.chats.empty',
@@ -1842,6 +1839,7 @@ export enum UnsavedChangesI18nKeys {
   Title = 'unsavedChanges.title',
   Message = 'unsavedChanges.message',
   ConfirmLabel = 'unsavedChanges.confirmLabel',
+  ConfirmLabelMobile = 'unsavedChanges.confirmLabelMobile',
   CancelLabel = 'unsavedChanges.cancelLabel',
 }
 

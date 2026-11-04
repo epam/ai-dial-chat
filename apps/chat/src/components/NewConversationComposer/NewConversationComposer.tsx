@@ -530,6 +530,8 @@ const NewConversationComposer: FC<Props> = ({
           </Suspense>
         )}
         <ConversationInput
+          /* Embedded in a host page the host owns the gutters: no extra inline or block padding on mobile. */
+          className={isEmbeddedLayout ? 'px-0 py-0 desktop:p-5' : undefined}
           onSend={handleSend}
           onUploadAttachment={handleUploadAttachment}
           onAttachmentsChange={handleAttachmentsChange}

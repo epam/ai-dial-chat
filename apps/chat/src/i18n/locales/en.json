@@ -912,13 +912,9 @@
       "mainContent": "Project chats"
     },
     "actions": {
-      "deleteConfirmTitle": "Delete \"{{name}}\"?",
-      "deleteConfirmDescription": "The project and its context files will be deleted. This cannot be undone.",
       "deleteError": "Could not delete the project",
       "downloadError": "Could not download",
-      "pinError": "Could not update the pin",
-      "deleteConfirmWithChatsDescription_one": "The project, its context files and its {{count}} chat will be deleted. This cannot be undone.",
-      "deleteConfirmWithChatsDescription_other": "The project, its context files and its {{count}} chats will be deleted. This cannot be undone."
+      "pinError": "Could not update the pin"
     },
     "edit": {
       "title": "Edit project",
@@ -2054,6 +2050,7 @@
     "title": "Discard unsaved changes?",
     "message": "You have unsaved changes. Leaving now will discard them.",
     "confirmLabel": "Discard changes",
+    "confirmLabelMobile": "Discard",
     "cancelLabel": "Keep editing"
   },
   "urlPreselection": {

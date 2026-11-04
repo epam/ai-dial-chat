@@ -20,4 +20,16 @@ describe('useScheduledTaskFormLabels', () => {
     rerender({ mode: 'edit' });
     expect(result.current.createButtonLabel).toBe('buttons.save');
   });
+
+  it('translates the discard confirmation with the shared unsaved-changes copy', () => {
+    const { result } = renderHook(() => useScheduledTaskFormLabels('create'));
+
+    expect(result.current).toMatchObject({
+      discardTitle: 'unsavedChanges.title',
+      discardMessage: 'unsavedChanges.message',
+      discardConfirmLabel: 'unsavedChanges.confirmLabel',
+      discardConfirmMobileLabel: 'unsavedChanges.confirmLabelMobile',
+      discardCancelLabel: 'unsavedChanges.cancelLabel',
+    });
+  });
 });

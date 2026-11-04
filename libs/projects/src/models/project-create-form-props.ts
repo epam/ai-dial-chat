@@ -102,6 +102,8 @@ export interface ProjectCreateFormColors {
   labelText?: string;
   /** Drop zone "from device" and "file manager" links. Fallback: the drop zone text color. */
   linkText?: string;
+  /** Context drop zone background while it is idle. Fallback: `--bg-layer-raised`, then `#d1dbea`. */
+  dropZoneBackground?: string;
 }
 
 /** Typography overrides for the {@link ProjectCreateForm} component. */

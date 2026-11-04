@@ -44,6 +44,7 @@ const openDialog = async (onDiscard = vi.fn()) => {
 describe('UnsavedChangesContext', () => {
   afterEach(() => {
     document.documentElement.dir = '';
+    vi.unstubAllGlobals();
   });
 
   it('throws a provider-naming error when useUnsavedChanges is used outside the provider', () => {
@@ -110,8 +111,32 @@ describe('UnsavedChangesContext', () => {
       title: 'Discard unsaved changes?',
       message: 'You have unsaved changes. Leaving now will discard them.',
       confirmLabel: 'Discard changes',
+      confirmLabelMobile: 'Discard',
       cancelLabel: 'Keep editing',
     });
+  });
+
+  it('shortens the confirming action on a mobile screen', async () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    await openDialog();
+
+    expect(
+      screen.getByRole('button', {
+        name: UnsavedChangesI18nKeys.ConfirmLabelMobile,
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole('button', {
+        name: UnsavedChangesI18nKeys.ConfirmLabel,
+      }),
+    ).toBeNull();
   });
 
   it('runs the discard callback once when Discard changes is chosen', async () => {

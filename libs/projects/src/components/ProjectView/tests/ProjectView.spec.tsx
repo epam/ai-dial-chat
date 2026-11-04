@@ -296,6 +296,36 @@ describe('ProjectView', () => {
     ]);
   });
 
+  it('opens the more-actions menu as a bottom sheet on a phone', async () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    try {
+      const onEdit = vi.fn();
+      renderView({ onEdit });
+
+      const [, mobileTrigger] = screen.getAllByRole('button', {
+        name: 'More actions',
+      });
+      await userEvent.click(mobileTrigger);
+
+      const sheet = await screen.findByRole('dialog', {
+        name: 'More actions',
+      });
+      await userEvent.click(
+        within(sheet).getByRole('menuitem', { name: 'Edit' }),
+      );
+      expect(onEdit).toHaveBeenCalledOnce();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('renders instruction headings on the panel scale, not the page scale', () => {
     renderView();
 

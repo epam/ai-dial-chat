@@ -2,8 +2,12 @@
   background: var(--pv-bg, var(--bg-layer-base, #f5f7fa));
 }
 
+/* No divider under the header on mobile; the Details panel carries its own top border. */
 .header {
-  border-block-end: 1px solid var(--pv-border, var(--stroke-tertiary, #dde1e6));
+  @media (min-width: 1280px) {
+    border-block-end: 1px solid
+      var(--pv-border, var(--stroke-tertiary, #dde1e6));
+  }
 }
 
 .title {

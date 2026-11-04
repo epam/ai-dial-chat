@@ -82,6 +82,11 @@ Blocking covers PUSH, REPLACE and POP (browser Back/Forward). A blocked transiti
 - **WHEN** `isDirty` is `true` and the user presses the browser Back button
 - **THEN** the dialog opens and the URL stays on the builder route
 
+#### Scenario: Shortened confirming action on a mobile screen
+
+- **WHEN** the dialog opens on a viewport below the desktop breakpoint
+- **THEN** the confirming button reads "Discard" (`unsavedChanges.confirmLabelMobile`) instead of "Discard changes", and the cancelling button is unchanged
+
 #### Scenario: Discard changes continues to the chosen destination
 - **WHEN** the dialog was opened by clicking the Scheduler nav item and the user chooses Discard changes
 - **THEN** the app is on `ROUTES.ScheduledTasks` and no create or update request was sent
@@ -131,6 +136,7 @@ The provider SHALL render `ConfirmationDialog` from `@epam/ai-dial-chat-shared` 
 | Title | `unsavedChanges.title` | "Discard unsaved changes?" |
 | Message | `unsavedChanges.message` | "You have unsaved changes. Leaving now will discard them." |
 | Confirming action | `unsavedChanges.confirmLabel` | "Discard changes" |
+| Confirming action below the desktop breakpoint (`useIsMobile`) | `unsavedChanges.confirmLabelMobile` | "Discard" |
 | Cancelling action | `unsavedChanges.cancelLabel` | "Keep editing" |
 
 There SHALL be no third action.
@@ -235,9 +241,10 @@ All dialog strings SHALL go through `react-i18next`. The keys SHALL live in `app
 - `unsavedChanges.title`: "Discard unsaved changes?"
 - `unsavedChanges.message`: "You have unsaved changes. Leaving now will discard them."
 - `unsavedChanges.confirmLabel`: "Discard changes"
+- `unsavedChanges.confirmLabelMobile`: "Discard"
 - `unsavedChanges.cancelLabel`: "Keep editing"
 
-The former `skillEditor.unsavedChanges*` keys, and the prompt and scheduled-task `discard*` label wiring that reused them, SHALL be removed from the app.
+The former `skillEditor.unsavedChanges*` keys, and the prompt `discard*` label wiring that reused them, SHALL be removed from the app. The scheduled-task form's `discard*` labels (`useScheduledTaskFormLabels`) are filled from these same `unsavedChanges.*` keys, so both dialogs share one copy, including the shortened mobile action.
 
 #### Scenario: Strings are translated
 - **WHEN** the dialog renders

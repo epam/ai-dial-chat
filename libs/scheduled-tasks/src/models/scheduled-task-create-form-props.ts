@@ -157,6 +157,8 @@ export interface ScheduledTaskCreateFormLabels extends TextRefinementLabels {
   discardTitle?: string;
   /** Body of the discard confirmation. Defaults to `'You have unsaved changes. Leaving now will discard them.'`. */
   discardMessage?: string;
+  /** Label of the discard confirmation's confirming action below the desktop breakpoint. Defaults to `'Discard'`. */
+  discardConfirmMobileLabel?: string;
   /** Label of the discard confirmation's confirming action. Defaults to `'Discard changes'`. */
   discardConfirmLabel?: string;
   /** Label of the discard confirmation's cancel action. Defaults to `'Keep editing'`. */

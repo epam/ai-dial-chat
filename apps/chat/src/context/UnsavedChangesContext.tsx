@@ -1,4 +1,4 @@
-import { ConfirmationDialog } from '@epam/ai-dial-chat-shared';
+import { ConfirmationDialog, useIsMobile } from '@epam/ai-dial-chat-shared';
 import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 import {
   createContext,
@@ -66,6 +66,7 @@ export const UnsavedChangesProvider = ({
   children: ReactNode;
 }) => {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const [isRegisteredDirty, setIsRegisteredDirty] = useState(false);
   const [pending, setPending] = useState<PendingDiscard | null>(null);
   const unloadAllowedRef = useRef(false);
@@ -126,7 +127,11 @@ export const UnsavedChangesProvider = ({
           open={pending != null}
           title={t(UnsavedChangesI18nKeys.Title)}
           message={t(UnsavedChangesI18nKeys.Message)}
-          confirmLabel={t(UnsavedChangesI18nKeys.ConfirmLabel)}
+          confirmLabel={t(
+            isMobile
+              ? UnsavedChangesI18nKeys.ConfirmLabelMobile
+              : UnsavedChangesI18nKeys.ConfirmLabel,
+          )}
           cancelLabel={t(UnsavedChangesI18nKeys.CancelLabel)}
           variant={ConfirmationPopupVariant.Danger}
           onConfirm={handleConfirm}
