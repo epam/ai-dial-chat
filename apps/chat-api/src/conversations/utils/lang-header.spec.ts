@@ -1,9 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
-import {
-  assertValidOptionalLang,
-  LANG_MAX_LENGTH,
-} from './lang-header';
+import { assertValidOptionalLang, LANG_MAX_LENGTH } from './lang-header';
 
 describe('assertValidOptionalLang', () => {
   it.each(['en', 'uk', 'en-US', 'zh-Hans', 'pt-BR', 'es-419'])(

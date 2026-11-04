@@ -363,7 +363,7 @@ export class ConversationController {
     name: LANG_HEADER,
     required: false,
     description:
-      "Current UI language forwarded to DIAL Core for language-sensitive tools and agents.",
+      'Current UI language forwarded to DIAL Core for language-sensitive tools and agents.',
     schema: {
       type: 'string',
       maxLength: LANG_MAX_LENGTH,
