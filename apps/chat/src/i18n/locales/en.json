@@ -608,7 +608,6 @@
     "noAccessError": "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
     "addSiblingFolder": "Add sibling",
     "addChildFolder": "Add child",
-    "summaryVersion": "Version {version} · current",
     "updateVersion": "Update version {version}",
     "publishingInProgress": "Publishing…"
   },

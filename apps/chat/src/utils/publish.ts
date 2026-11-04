@@ -100,7 +100,6 @@ export const getPublishPanelCommonLabels = (
   | 'noAccessError'
   | 'addSiblingFolderLabel'
   | 'addChildFolderLabel'
-  | 'summaryVersionLabel'
 > => ({
   folderLabel: t(PublishI18nKeys.FolderLabel),
   destinationAriaLabel: t(ResourceSavePanelI18nKeys.DestinationAriaLabel),
@@ -111,7 +110,6 @@ export const getPublishPanelCommonLabels = (
   noAccessError: t(PublishI18nKeys.NoAccessError),
   addSiblingFolderLabel: t(PublishI18nKeys.AddSiblingFolder),
   addChildFolderLabel: t(PublishI18nKeys.AddChildFolder),
-  summaryVersionLabel: t(PublishI18nKeys.SummaryVersion),
 });
 
 /** Builds the translated Update and in-progress footer labels shared by the conversation and project publish panels. */

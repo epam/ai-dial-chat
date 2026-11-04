@@ -140,8 +140,8 @@ by the kit, so it must state what ticking the box does rather than restate the
 label.
 
 Add `type` (and optionally `iconUrl`) to `resource` to get the richer entity
-summary row — icon, type label, name, and a current-version tag — rendered by
-`ResourceSummary` from `@epam/ai-dial-chat-shared`. `libs/catalog`'s
+summary row — icon, type label, and the name followed by its version — rendered
+by `ResourceSummary` from `@epam/ai-dial-chat-shared`. `libs/catalog`'s
 `DetailsPanel` uses this for versioned catalog entities:
 
 ```tsx
@@ -152,9 +152,8 @@ summary row — icon, type label, name, and a current-version tag — rendered b
     type: item.type,
     iconUrl: item.iconUrl,
   }}
-  labels={{ summaryVersionLabel: t(...) }}
   {...rest}
-/>;
+/>
 ```
 
 For any other custom summary, pass `renderSummary={() => <CustomHeader />}`; it

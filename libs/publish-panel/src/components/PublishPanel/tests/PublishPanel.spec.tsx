@@ -115,10 +115,11 @@ describe('PublishPanel', () => {
     expect(screen.queryByText('ali.deepseek-v4-flash')).toBeNull();
   });
 
-  it('renders the entity-header row with a version tag when the resource has a type', () => {
+  it('renders the entity-header row with the version inline after the name when the resource has a type', () => {
     renderPanel({ resource: { ...resource, type: CatalogEntityType.Model } });
     expect(screen.getByText(CatalogEntityType.Model)).toBeTruthy();
-    expect(screen.getByText('Version 4.0.1 · current')).toBeTruthy();
+    expect(screen.getByText('4.0.1')).toBeTruthy();
+    expect(screen.queryByText(/· current/)).toBeNull();
   });
 
   it('ignores renderSummary once the resource carries a type', () => {

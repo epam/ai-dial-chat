@@ -8,12 +8,6 @@ export interface PublishPanelColors {
   summaryBorder?: string;
   /** Summary row background color. Defaults to `--bg-layer-sunken`. */
   summaryBackground?: string;
-  /** Version tag border color. Defaults to `--stroke-tertiary`. */
-  summaryVersionTagBorder?: string;
-  /** Version tag background color. Defaults to `--bg-control-accent-alpha`. */
-  summaryVersionTagBackground?: string;
-  /** Version tag text color. Defaults to `--text-accent`. */
-  summaryVersionTagText?: string;
   /** Default summary title text color. Defaults to `--text-primary`. */
   summaryTitleText?: string;
   /** Section heading text color. Defaults to `--text-primary`. */

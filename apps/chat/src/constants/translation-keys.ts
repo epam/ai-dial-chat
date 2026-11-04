@@ -1022,7 +1022,6 @@ export enum PublishI18nKeys {
   NoAccessError = 'publish.noAccessError',
   AddSiblingFolder = 'publish.addSiblingFolder',
   AddChildFolder = 'publish.addChildFolder',
-  SummaryVersion = 'publish.summaryVersion',
   UpdateVersion = 'publish.updateVersion',
   PublishingInProgress = 'publish.publishingInProgress',
 }

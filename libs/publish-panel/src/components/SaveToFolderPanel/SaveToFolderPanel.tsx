@@ -67,7 +67,6 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
     createFolderInvalidNameError,
     createFolderDuplicateNameError,
     retryLabel = 'Retry',
-    summaryVersionLabel,
   } = panelLabels;
   const { colors, folderTree: folderTreeStyles } = panelStyles;
   const cssVars = {
@@ -81,9 +80,6 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
   const summaryColors = {
     border: colors?.summaryBorder,
     background: colors?.summaryBackground,
-    versionTagBorder: colors?.summaryVersionTagBorder,
-    versionTagBackground: colors?.summaryVersionTagBackground,
-    versionTagText: colors?.summaryVersionTagText,
   };
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -201,7 +197,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
             version: resource.version ?? '',
             iconUrl: resource.iconUrl,
           }}
-          versionLabel={summaryVersionLabel}
+          hasVersionTag={false}
           colors={summaryColors}
         />
       ) : (

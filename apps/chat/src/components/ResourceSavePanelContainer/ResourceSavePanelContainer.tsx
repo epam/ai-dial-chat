@@ -181,13 +181,11 @@ const ResourceSavePanelContainer: FC<Props> = ({
         ConversationPublishI18nKeys.DuplicateFolderNameError,
       ),
       retryLabel: t(ButtonsI18nKeys.Retry),
-      summaryVersionLabel: commonLabels.summaryVersionLabel,
     }),
     [
       commonLabels.addChildFolderLabel,
       commonLabels.addSiblingFolderLabel,
       commonLabels.clearSearchAriaLabel,
-      commonLabels.summaryVersionLabel,
       currentVersion,
       t,
     ],

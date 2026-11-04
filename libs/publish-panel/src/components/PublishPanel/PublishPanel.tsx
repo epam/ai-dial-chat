@@ -94,8 +94,6 @@ export interface PublishPanelLabels {
   createFolderDuplicateNameError?: string;
   /** Label used for the bucket root as a destination and as `{folder}` in callouts when it is selected. Default: `'Organization'`. */
   rootFolderLabel?: string;
-  /** Version tag text in the entity-header summary row; `{version}` is replaced. Default: `'Version {version} · current'`. */
-  summaryVersionLabel?: string;
   /** Text overrides for the access-rules section. */
   accessRulesLabels?: PublishAccessRulesLabels;
 }
@@ -259,9 +257,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   const summaryColors = {
     border: colors?.summaryBorder,
     background: colors?.summaryBackground,
-    versionTagBorder: colors?.summaryVersionTagBorder,
-    versionTagBackground: colors?.summaryVersionTagBackground,
-    versionTagText: colors?.summaryVersionTagText,
   };
 
   const {
@@ -281,7 +276,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     createFolderInvalidNameError,
     createFolderDuplicateNameError,
     rootFolderLabel = 'Organization',
-    summaryVersionLabel,
     accessRulesLabels,
     searchPlaceholder,
     clearSearchAriaLabel,
@@ -422,7 +416,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             version: resource.version ?? '',
             iconUrl: resource.iconUrl,
           }}
-          versionLabel={summaryVersionLabel}
+          hasVersionTag={false}
           colors={summaryColors}
         />
       ) : (
