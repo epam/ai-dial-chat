@@ -87,12 +87,18 @@ import { SKILL_MANIFEST_PATH } from '../../types/skill-editor-defaults';
 import { SkillFileNodeKind } from '../../types/skill-file-node-kind';
 import { SkillFileUploadMode } from '../../types/skill-file-upload-mode';
 import { SkillFilesPane } from '../../types/skill-files-pane';
-import { buildDialFileTree, resolveAddTarget } from '../../utils/file-tree';
+import {
+  buildDialFileTree,
+  listAncestorPaths,
+  listFolderEntries,
+  resolveAddTarget,
+} from '../../utils/file-tree';
 import { renderIcon } from '../../utils/icon';
 import { SkillCreateFolderDialog } from '../SkillCreateFolderDialog/SkillCreateFolderDialog';
 import { SkillFileDropOverlay } from '../SkillFileDropOverlay/SkillFileDropOverlay';
 import { SkillFilesSummary } from '../SkillFilesSummary/SkillFilesSummary';
 import { SkillFileUploadDialog } from '../SkillFileUploadDialog/SkillFileUploadDialog';
+import { SkillFolderPreview } from '../SkillFolderPreview/SkillFolderPreview';
 import styles from './SkillEditor.module.scss';
 
 /** What the upload dialog was last opened for. */
@@ -384,6 +390,8 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     '--se-refine-error-text': colors?.refineErrorText,
     '--se-files-card-bg': colors?.filesCardBackground,
     '--se-files-card-border': colors?.filesCardBorder,
+    '--se-folder-row-border': colors?.folderRowBorder,
+    '--se-folder-row-hover-bg': colors?.folderRowHoverBackground,
     '--se-drop-overlay-icon': colors?.dropOverlayIcon,
   });
   const dialogColors = {
@@ -500,6 +508,15 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     [files, selectedPath],
   );
 
+  const selectedFolderEntries = useMemo(
+    () => listFolderEntries(files, selectedPath),
+    [files, selectedPath],
+  );
+  /* A folder is real when it has a node or any path below it; a stale path (its folder was removed) is neither. */
+  const isFolderSelected =
+    selectedNode?.kind === SkillFileNodeKind.Folder ||
+    selectedFolderEntries.length > 0;
+
   const handleTreeItemClick = useCallback(
     (item: DialFile) => {
       if (item.path === draftPath) return;
@@ -508,10 +525,28 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     [handleSelectedPathChange, draftPath],
   );
 
+  const handleOpenFromPreview = useCallback(
+    (path: string, kind: SkillFileNodeKind) => {
+      if (path === '') {
+        handleSelectedPathChange(SKILL_MANIFEST_PATH);
+        return;
+      }
+      const toReveal = [
+        ...listAncestorPaths(path),
+        ...(kind === SkillFileNodeKind.Folder ? [path] : []),
+      ].filter((folderPath) => !expandedPathsSet.has(folderPath));
+      if (toReveal.length > 0) {
+        handleExpandedPathsChange(new Set([...expandedPathsSet, ...toReveal]));
+      }
+      handleSelectedPathChange(path);
+    },
+    [expandedPathsSet, handleExpandedPathsChange, handleSelectedPathChange],
+  );
+
   const handleRemoveNode = useCallback(
     (path: string) => {
       fileActions.onRemoveNode(path);
-      if (selectedPath === path) {
+      if (selectedPath === path || selectedPath.startsWith(`${path}/`)) {
         handleSelectedPathChange(SKILL_MANIFEST_PATH);
       }
     },
@@ -862,11 +897,12 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   }
 
   const isManifestSelected = selectedPath === SKILL_MANIFEST_PATH;
+  /* An implicit folder has no node, so its name is the last segment of the path, not the whole path. */
+  const selectedName =
+    selectedNode?.name ?? selectedPath.slice(selectedPath.lastIndexOf('/') + 1);
   const setupTitle = isManifestSelected
     ? SKILL_MANIFEST_PATH
-    : (t.selectedFileHeading?.(selectedNode?.name ?? selectedPath) ??
-      selectedNode?.name ??
-      selectedPath);
+    : (t.selectedFileHeading?.(selectedName) ?? selectedName);
 
   const alert =
     submitError != null || conflict != null ? (
@@ -983,7 +1019,9 @@ export const SkillEditor: FC<SkillEditorProps> = ({
             <div className="desktop:hidden">
               <SkillFilesSummary
                 label={t.editingFileLabel ?? 'Editing file'}
-                fileName={selectedNode?.name ?? SKILL_MANIFEST_PATH}
+                fileName={
+                  isManifestSelected ? SKILL_MANIFEST_PATH : selectedName
+                }
                 isExpanded={isFilesExpanded}
                 onToggle={setIsFilesExpanded}
                 labelClassName={typography.editingFileLabelClassName}
@@ -1029,6 +1067,21 @@ export const SkillEditor: FC<SkillEditorProps> = ({
             </>
           ) : (
             <>
+              {isFolderSelected && selectedPath !== draftPath && (
+                <SkillFolderPreview
+                  folderPath={selectedPath}
+                  entries={selectedFolderEntries}
+                  onOpen={handleOpenFromPreview}
+                  rootLabel={t.folderPreviewRootLabel}
+                  breadcrumbAriaLabel={t.folderPreviewBreadcrumbAriaLabel}
+                  overflowAriaLabel={t.folderPreviewOverflowAriaLabel}
+                  listAriaLabel={t.folderPreviewListAriaLabel}
+                  emptyTitle={t.folderEmptyTitle}
+                  emptyDescription={t.folderEmptyDescription}
+                  itemCountLabel={t.folderItemCountLabel}
+                  itemCountClassName={typography.folderItemCountClassName}
+                />
+              )}
               {selectedNode?.kind === SkillFileNodeKind.File && (
                 <div className="flex h-[max(320px,60dvh)] min-h-0 min-w-0 flex-none flex-col desktop:h-auto desktop:flex-1">
                   {supportingFileContent ?? (

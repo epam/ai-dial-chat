@@ -470,6 +470,20 @@ const SkillEditorPage: FC = () => {
         SkillEditorI18nKeys.InstructionsLoadingAriaLabel,
       ),
       supportingFileNote: t(SkillEditorI18nKeys.SupportingFileNote),
+      folderPreviewRootLabel: t(SkillEditorI18nKeys.FolderPreviewRootLabel),
+      folderPreviewBreadcrumbAriaLabel: t(
+        SkillEditorI18nKeys.FolderPreviewBreadcrumbAriaLabel,
+      ),
+      folderPreviewOverflowAriaLabel: t(
+        SkillEditorI18nKeys.FolderPreviewOverflowAriaLabel,
+      ),
+      folderPreviewListAriaLabel: t(
+        SkillEditorI18nKeys.FolderPreviewListAriaLabel,
+      ),
+      folderEmptyTitle: t(SkillEditorI18nKeys.FolderEmptyTitle),
+      folderEmptyDescription: t(SkillEditorI18nKeys.FolderEmptyDescription),
+      folderItemCountLabel: (count: number) =>
+        t(SkillEditorI18nKeys.FolderItemCount, { count }),
       reloadLatestLabel: t(SkillEditorI18nKeys.ReloadLatestLabel),
       uploadDialogTitle: t(SkillEditorI18nKeys.UploadDialogTitle),
       uploadDialogCloseAriaLabel: t(ButtonsI18nKeys.Close),

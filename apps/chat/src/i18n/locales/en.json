@@ -1732,6 +1732,16 @@
     "loadingAriaLabel": "Loading skill",
     "instructionsLoadingAriaLabel": "Loading",
     "supportingFileNote": "This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.",
+    "folderPreview": {
+      "rootLabel": "Skill",
+      "breadcrumbAriaLabel": "Folder path",
+      "overflowAriaLabel": "Show hidden path segments",
+      "listAriaLabel": "Folder content",
+      "emptyTitle": "This folder is empty",
+      "emptyDescription": "Use Add to upload files or create a subfolder.",
+      "itemCount_one": "{{count}} item",
+      "itemCount_other": "{{count}} items"
+    },
     "bucketMissingTitle": "Can't create a skill right now",
     "bucketMissingMessage": "We couldn't determine your storage location. Please sign in again or try later.",
     "error": {

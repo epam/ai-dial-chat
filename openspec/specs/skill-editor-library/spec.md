@@ -70,7 +70,7 @@ When the host passes `isNameReadOnly`, the Name field SHALL render disabled (its
 - **THEN** `onDirtyChange(true)` is called, and the form stays dirty until it is re-seeded from a new `initialValues`
 
 ### Requirement: File-tree selection and protected `SKILL.md` node
-`SkillEditor` SHALL render a file tree seeded from a `files` prop (the in-memory supporting-file/folder structure) plus an always-present, always-first root `SKILL.md` node. The library SHALL own which tree node is currently selected and which folder nodes are expanded as internal state (overridable via optional `selectedPath`/`expandedPaths` + `onSelectedPathChange`/`onExpandedPathsChange` controlled props, mirroring `PublishFoldersTree`'s controlled/uncontrolled pattern). The `SKILL.md` node SHALL NOT expose rename, move, or delete affordances; all other nodes SHALL. When a supporting-file node (not `SKILL.md`, not a folder) is selected, the main pane SHALL render the host-supplied `supportingFileContent` prop when present, falling back to the existing `labels.supportingFileNote` text when it is not. Selecting a folder node SHALL only select or expand/collapse that folder and SHALL NOT render `supportingFileContent` or `supportingFileNote`.
+`SkillEditor` SHALL render a file tree seeded from a `files` prop (the in-memory supporting-file/folder structure) plus an always-present, always-first root `SKILL.md` node. The library SHALL own which tree node is currently selected and which folder nodes are expanded as internal state (overridable via optional `selectedPath`/`expandedPaths` + `onSelectedPathChange`/`onExpandedPathsChange` controlled props, mirroring `PublishFoldersTree`'s controlled/uncontrolled pattern). The `SKILL.md` node SHALL NOT expose rename, move, or delete affordances; all other nodes SHALL. When a supporting-file node (not `SKILL.md`, not a folder) is selected, the main pane SHALL render the host-supplied `supportingFileContent` prop when present, falling back to the existing `labels.supportingFileNote` text when it is not. Selecting a folder node SHALL select it and render the folder preview described under "Folder preview", and SHALL NOT render `supportingFileContent` or `supportingFileNote`.
 
 #### Scenario: SKILL.md is selected by default
 - **WHEN** `SkillEditor` first renders with no `selectedPath` override
@@ -85,12 +85,42 @@ When the host passes `isNameReadOnly`, the Name field SHALL render disabled (its
 - **THEN** the main pane heading updates to that file's name, `onSelectedPathChange` (if provided) is called with the new path, and the main pane body renders the host's `supportingFileContent` node when the host supplied one for this selection
 
 #### Scenario: Selecting a folder does not render supporting-file content
-- **WHEN** a user selects or expands a folder node
-- **THEN** the main pane does not render `supportingFileContent` or `supportingFileNote`, and only the folder's selection/expansion state changes
+- **WHEN** a user selects a folder node
+- **THEN** the main pane does not render `supportingFileContent` or `supportingFileNote`; it renders the folder preview instead
 
 #### Scenario: Falls back to the static note when no content is supplied
 - **WHEN** a host does not pass `supportingFileContent` and selects a supporting file
 - **THEN** the main pane renders `labels.supportingFileNote` exactly as it did before this change
+
+### Requirement: Folder preview
+
+When the selected node is a folder, the main pane SHALL render `SkillFolderPreview` (`libs/skill-editor/src/components/SkillFolderPreview/SkillFolderPreview.tsx`): a ui-kit `Breadcrumbs` trail and a list of the folder's direct children. The trail starts at a root crumb (`labels.folderPreviewRootLabel`, default "Skill") that selects `SKILL.md`, continues with one crumb per ancestor folder, and ends with the current folder as a non-interactive crumb. The list holds the folder's direct children as returned by `listFolderEntries` (`libs/skill-editor/src/utils/file-tree.ts`): folders first, then files, each group sorted by name, including folders that exist only through deeper file paths. A trail long enough to collapse names its ellipsis button with `labels.folderPreviewOverflowAriaLabel`. A folder row shows its direct-child count through `labels.folderItemCountLabel`. A folder with no children SHALL render an empty state (`labels.folderEmptyTitle`, `labels.folderEmptyDescription`) in place of the list. Activating a row or a crumb SHALL select that node and expand every folder on the path to it, plus the target itself when it is a folder, so the Files tree shows the same location as the preview.
+
+All visible text SHALL come from `labels` with English defaults, row border and hover colors from `colors.folderRowBorder` and `colors.folderRowHoverBackground`, and the count typography from `typography.folderItemCountClassName`.
+
+#### Scenario: Selecting a folder lists its direct children
+- **WHEN** a user selects the `agents` folder that holds `reviewers/` and `analyzer.md`
+- **THEN** the main pane shows the trail `Skill › agents` and a list with the `reviewers` folder row (with its item count) before the `analyzer.md` file row, and does not list files nested inside `reviewers`
+
+#### Scenario: Opening a nested folder from the preview reveals it in the tree
+- **WHEN** a user activates the `reviewers` row in the preview while `agents` is collapsed in the Files tree
+- **THEN** `reviewers` becomes the selected node and `agents` and `reviewers` are expanded in the Files tree
+
+#### Scenario: Removing an ancestor of the selection falls back to SKILL.md
+- **WHEN** `agents/planner.md` is selected and the user deletes the `agents` folder
+- **THEN** `SKILL.md` becomes the selected node and no folder preview renders for the removed path
+
+#### Scenario: A crumb navigates up
+- **WHEN** a user activates the `agents` crumb while `agents/reviewers` is selected
+- **THEN** `agents` becomes the selected node and its preview replaces the current one
+
+#### Scenario: The root crumb returns to SKILL.md
+- **WHEN** a user activates the root crumb
+- **THEN** `SKILL.md` becomes the selected node and the manifest form renders
+
+#### Scenario: An empty folder shows an empty state
+- **WHEN** a user selects a folder with no children
+- **THEN** the main pane shows the trail and the empty-state title and description instead of a list
 
 ### Requirement: Host-rendered supporting-file content slot
 
@@ -181,8 +211,8 @@ When the host passes `isNameReadOnly`, the Name field SHALL render disabled (its
 `SkillEditor` SHALL use `EntityEditor` from `@epam/ai-dial-builder-form` as its outer shell, the same shell every entity editor uses. The skill keeps its Files | selected-file arrangement on that shell. `EntityEditor` SHALL receive the following:
 
 - `onBack`, `labels.backAriaLabel` and `title`, forwarded from `SkillEditorProps`.
-- `metadataTitle={null}` and `metadata`: the Files pane, which carries its own "Files" heading. On mobile it sits inside the collapsible "Editing file" card, whose summary row shows the caption and the selected file's type icon and name next to a down/up caret.
-- `setupTitle`: `SKILL.md`, or `labels.selectedFileHeading(name)` for a supporting file.
+- `metadataTitle={null}` and `metadata`: the Files pane, which carries its own "Files" heading. On mobile it sits inside the collapsible "Editing file" card, whose summary row shows the caption and the selected file's or folder's type icon and name next to a down/up caret.
+- `setupTitle`: `SKILL.md`, or `labels.selectedFileHeading(name)` for a supporting file or folder, where `name` is the node's name or, for a folder that exists only through deeper file paths, the last segment of its path.
 - `setup`: for `SKILL.md`, the shared `MetadataForm` followed by the Instructions editor, which fills the height left below the fields. `MetadataForm` gets these settings:
   - `fields={[MetadataField.Name, MetadataField.Description]}`
   - `isDescriptionRequired`
