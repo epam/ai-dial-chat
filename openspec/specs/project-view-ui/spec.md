@@ -181,7 +181,7 @@ On `mobile`, Publish and Edit move into the ⋮ menu (before Share). The lib ren
 - `onEdit` navigates to `getProjectEditRoute(id)`;
 - `onTogglePin` calls `setPinnedProject(id, !isPinned)` from `useUserConfig()`;
 - `onDownload` downloads the archive (see the actions requirement);
-- `onShare` opens `ProjectShareOverlay`, and the page behind it is `inert` while it is open; `onPublish` opens `PublishProjectPanelContainer`, which mounts on the first open and loads the project's publish history on each open, so a folder already holding the project is flagged;
+- `onShare` opens `ProjectShareOverlay`, which portals to the body and makes the rest of the page `inert` while it is open; `onPublish` opens `PublishProjectPanelContainer`, which mounts on the first open and loads the project's publish history on each open, so a folder already holding the project is flagged;
 - `onDelete` opens the delete confirmation.
 
 Every handler is memoised with `useCallback`.
@@ -284,7 +284,7 @@ The error and not-found titles are announced through `role="alert"`.
 
 **Delete.**
 
-- The page opens `DeleteConfirmationDialog` (`@epam/ai-dial-chat-shared`). Its title is `projects.actions.deleteConfirmTitle` (interpolating `{{name}}`), and its labels are the shared confirm and cancel labels. Its body is:
+- The page opens `ProjectDeleteConfirmation` (`apps/chat/src/components/ProjectDeleteConfirmation/ProjectDeleteConfirmation.tsx`), the app's one project delete dialog, which renders `DeleteConfirmationDialog` (`@epam/ai-dial-chat-shared`). Its title is `projects.actions.deleteConfirmTitle` (interpolating `{{name}}`), and its labels are the shared confirm and cancel labels. Its body is:
   - `projects.actions.deleteConfirmDescription` when the loaded project has `conversationCount: 0`;
   - otherwise `projects.actions.deleteConfirmWithChatsDescription`, pluralised by `count` (`_one` / `_other`), which says the project's chats are deleted too.
 - Confirming calls `deleteProject(id, contentVersion)`, and the dialog shows `isLoading` while the request runs.

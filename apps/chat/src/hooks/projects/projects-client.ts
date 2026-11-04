@@ -34,6 +34,9 @@ export const projectViewedWriter = createSerializedKeyedWriter((id) =>
   markProjectConversationViewed(id),
 );
 
+/** Calls `listener` with a project conversation's id after every successful viewed write; returns the function that removes it. */
+export const subscribeProjectConversationViewed = projectViewedWriter.subscribe;
+
 /*
  * The project requests the chat-hooks project hooks run, resolved through the
  * app's server-api module at call time: one stable object for the hooks'

@@ -101,7 +101,7 @@ it('adds the currently-selected item to favorites when its star is clicked', asy
   }));
   ```
 
-- A mocked `ErrorText`/`CaptionText` must not render `role="alert"`: the real components have no live-region role, so `getByRole('alert')` against them passes only through the mock.
+- A mocked `ErrorText`/`CaptionText` must not render `role="alert"`: the real components have no live-region role, so `getByRole('alert')` against them passes only through the mock. The same holds for the `error`/`caption` of a mocked 2.0 `Input`/`Textarea`/`Select` and for a stub that replaces a child form: render the message as a plain element with an `id`, link it from the control with `aria-describedby` + `aria-invalid` the way the kit does, and assert that wiring (or the text) — not an alert role.
 
 ## Live regions
 

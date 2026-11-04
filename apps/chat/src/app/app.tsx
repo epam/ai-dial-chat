@@ -284,6 +284,17 @@ const App: FC = () => {
     [navigate, isMobile, closeNav],
   );
 
+  /* Same drawer rule as a picked chat, for the sidebar's other routes. */
+  const handleOpenRoute = useCallback(
+    (path: string) => {
+      if (isMobile) {
+        closeNav();
+      }
+      navigate(path);
+    },
+    [navigate, isMobile, closeNav],
+  );
+
   const handleNewChat = useCallback(() => {
     if (isMobile) {
       closeNav();
@@ -300,6 +311,7 @@ const App: FC = () => {
     <ConversationPanelView
       activeConversationId={activeConversationId}
       onSelectConversation={handleSelectConversation}
+      onOpenRoute={handleOpenRoute}
       requestedFilter={panelRequestedFilter}
       onRequestedFilterChange={handlePanelRequestedFilterChange}
       onActiveFilterChange={handlePanelActiveFilterChange}

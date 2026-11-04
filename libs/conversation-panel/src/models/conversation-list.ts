@@ -3,6 +3,7 @@ import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { ConversationTypeFilter } from '../types/conversation-kind';
 import type { ConversationRowVariant } from '../types/conversation-row-variant';
 import type { ConversationItem, ConversationMove } from './panel-props';
+import type { PinnedProjects } from './pinned-projects';
 
 /** CSS custom-property overrides for the conversation list and its rows. */
 export interface ConversationListColors {
@@ -12,7 +13,7 @@ export interface ConversationListColors {
   itemActive?: string;
   /** Primary text color. */
   text?: string;
-  /** Text color of the group headers (Pinned, My chats, …). Defaults to `--text-secondary`. */
+  /** Text color of the group headers (Pinned, My chats, …), defaulting to `--text-tertiary` for `Avatar` rows and `--text-secondary` for `Indicator` rows, and of See all rows and pinned project icons, defaulting to `--text-secondary`. */
   textSecondary?: string;
   /** Ring color shown around a group header acting as a drag-and-drop target. */
   dropZoneRing?: string;
@@ -28,6 +29,8 @@ export interface ConversationListColors {
   unreadDot?: string;
   /** Border color of the read indicator dot of `Indicator` rows; no effect on `Avatar` rows, so none in `ConversationPanel`. Defaults to `--stroke-secondary`. */
   indicatorDot?: string;
+  /** Color of the vertical guide line beside the rows nested under a pinned project. Defaults to `--stroke-tertiary`. */
+  projectGuideLine?: string;
 }
 
 /** Typography overrides for the conversation list. */
@@ -38,7 +41,7 @@ export interface ConversationListTypography {
   fontFamily?: string;
   /** Typography class applied to collapsible group header buttons. Defaults to `'dial-tiny-lead-text'`. */
   groupHeaderClassName?: string;
-  /** Typography class applied to conversation title text in each row. Defaults to `'dial-small-text'`. */
+  /** Typography class applied to conversation title text in each row, and to pinned project names and See all rows. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
   /** Typography class applied to the title of an unread conversation. Defaults to `'dial-small-semi-text'`. */
   unreadItemTitleClassName?: string;
@@ -99,6 +102,10 @@ export interface ConversationListLabels {
   actionsLabel?: string;
   /** Accessible (visually hidden) label announced for the unread indicator dot. Defaults to `"Unread"`. */
   unreadIndicatorLabel?: string;
+  /** Visible text of the See all row under a pinned project. Defaults to `'See all'`. */
+  seeAllLabel?: string;
+  /** Builds the accessible name of a pinned project's See all row from the project name. Defaults to `` (name) => `See all chats in ${name}` ``. */
+  seeAllAriaLabel?: (name: string) => string;
 }
 
 /** Props accepted by `ConversationList`. */
@@ -138,6 +145,8 @@ export interface ConversationListProps {
   onMoveConversation?: (move: ConversationMove) => void;
   /** Called with the distinct IDs of conversation rows in the visible viewport, in row order, whenever that sequence changes; excludes group headers and overscan rows, and is empty when no rows are visible. */
   onVisibleConversationIdsChange?: (ids: string[]) => void;
+  /** Project trees rendered at the top of the Pinned section, with their callbacks. */
+  pinnedProjects?: PinnedProjects;
   /** Style overrides for colors, typography and the row icon badge. */
   styles?: ConversationListStyles;
   /** `id` of the list root, for a header's `aria-controls` to reference. */

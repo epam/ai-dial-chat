@@ -5,6 +5,7 @@ import { resolveAppVersion } from '../common/utils/app-version';
 import { StringUtils } from '../common/utils/string-utils';
 import { EnvironmentVariables } from '../config/environment.config';
 import { withCoreRequestTiming } from '../telemetry/core-request-timing';
+import { streamingFetch } from './streaming-fetch';
 
 const USER_AGENT_PRODUCT = 'ai-dial-chat';
 const UNSUPPORTED_USER_AGENT_VERSION_CHARACTERS = /[^A-Za-z0-9._-]+/g;
@@ -34,6 +35,12 @@ export class DialClientService {
   readonly dialApiVersion: string;
   readonly userAgent: string;
   readonly fetchCore: typeof fetch;
+  /**
+   * `fetchCore` for large streamed request bodies (file uploads). Same
+   * User-Agent and Core timing, but sent through `streamingFetch`, which
+   * honours socket backpressure — native `fetch` buffers the whole body.
+   */
+  readonly uploadCore: typeof fetch;
 
   constructor(configService: ConfigService<EnvironmentVariables>) {
     const baseUrl = configService.get('DIAL_CORE_URL', { infer: true });
@@ -47,21 +54,28 @@ export class DialClientService {
       configService.get('CHAT_VERSION', { infer: true }),
     );
     this.userAgent = `${USER_AGENT_PRODUCT}/${normalizeUserAgentVersion(appVersion)}`;
-    this.fetchCore = (input, init) => {
-      const headers = new Headers(
-        init?.headers ?? (input instanceof Request ? input.headers : undefined),
-      );
-      headers.set('User-Agent', this.userAgent);
-
-      return withCoreRequestTiming(() =>
-        globalThis.fetch(input, { ...init, headers }),
-      );
-    };
+    this.fetchCore = this.withCoreHeaders((input, init) =>
+      globalThis.fetch(input, init),
+    );
+    this.uploadCore = this.withCoreHeaders(streamingFetch);
 
     this.logger.debug(
       `Initializing DIAL TypeScript SDK client with baseUrl=${this.baseUrl}`,
     );
     this.client = createSDK({ baseUrl: this.baseUrl, fetch: this.fetchCore });
     this.logger.debug('DIAL TypeScript SDK client initialized');
+  }
+
+  private withCoreHeaders(transport: typeof fetch): typeof fetch {
+    return (input, init) => {
+      const headers = new Headers(
+        init?.headers ?? (input instanceof Request ? input.headers : undefined),
+      );
+      headers.set('User-Agent', this.userAgent);
+
+      return withCoreRequestTiming(() =>
+        transport(input, { ...init, headers }),
+      );
+    };
   }
 }

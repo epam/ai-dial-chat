@@ -87,6 +87,19 @@ import {
 
 ````
 
+### `Dropdown` overlay roles
+
+A `Dropdown` overlay is `role="menu"` by default, and the trigger gets `aria-haspopup="menu"`. That is right only for `items` or a `renderOverlay` made of menu items. Set `overlayRole` whenever `renderOverlay` holds anything else:
+
+- a panel of free-form content, or menu rows plus a footer of buttons (Clear/Apply) — `overlayRole={DropdownOverlayRole.Dialog}` with `overlayAriaLabel` (or `overlayAriaLabelledBy`); keep `role="menu"` on a wrapper around the menu rows only;
+- content that already carries its own role (a card with `role="dialog"`) — `overlayRole={DropdownOverlayRole.None}`.
+
+Do not re-implement Escape or focus return in an overlay's `onKeyDown`: the kit closes on Escape and returns focus to the trigger (`returnFocus` defaults to `true`). A custom roving-tabindex handler takes `optionArrowNavigation={false}` so the kit's arrow keys do not fight it. Do not hardcode `aria-haspopup` on the trigger; it follows `overlayRole`.
+
+### `Spinner` inside a named element
+
+`Spinner` is a status region named `'Loading'` (English) unless it gets `ariaLabel`. Inside an element that already names the state — a `role="progressbar"` with `aria-label`, a button with its own label, a `LiveRegion` carrying the localised text — wrap it in `<span aria-hidden>`; otherwise pass `ariaLabel` from a `*Labels` prop.
+
 ## Semantic HTML
 
 Use semantic HTML elements (`button`, `nav`, `main`, `section`) before reaching for `div`/`span`.

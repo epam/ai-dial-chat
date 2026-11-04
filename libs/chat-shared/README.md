@@ -1198,6 +1198,7 @@ import {
   mergeClasses,
   buildCssVars,
   copyToClipboard,
+  makeOutsideInert,
   copyMarkdownAsRichText,
   markdownToRichTextHtml,
   formatLastUsed,
@@ -1264,6 +1265,11 @@ downloadTextFile(
 // Copy markdown as both flavours: rich text for Word/Gmail/Slack, raw markdown for plain-text targets.
 // Styling travels inline, so a pasted table keeps its border, header band, dividers, and zebra rows.
 copyMarkdownAsRichText(message.content);
+
+// While an overlay portalled to <body> is open, take every other child of <body>
+// out of the tab order and the accessibility tree; the returned function restores them.
+// A child that was already inert stays inert.
+const restoreOutside = makeOutsideInert(overlayElement);
 
 // Store JSON in web storage as Unicode-safe base64 — the wrap satisfies
 // clear-text-storage security scanning and is an encoding, not encryption;

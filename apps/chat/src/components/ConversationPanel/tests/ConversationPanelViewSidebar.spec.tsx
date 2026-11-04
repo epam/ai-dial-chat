@@ -324,6 +324,23 @@ vi.mock('../../../server-api/conversation-publish.api', () => ({
   }),
 }));
 const getShareRecipientsCount = vi.hoisted(() => vi.fn());
+/* The adapter has its own spec; here the view's wiring of its result is checked. */
+const pinnedPanel = vi.hoisted(() => ({
+  hook: vi.fn(),
+  overlayProps: undefined as Record<string, unknown> | undefined,
+}));
+vi.mock('../../../hooks/projects/usePinnedProjectsPanel', () => ({
+  usePinnedProjectsPanel: pinnedPanel.hook,
+}));
+vi.mock(
+  '../../PinnedProjectActionOverlays/PinnedProjectActionOverlays',
+  () => ({
+    default: (props: Record<string, unknown>) => {
+      pinnedPanel.overlayProps = props;
+      return <div role="dialog" aria-label="pinned project overlays" />;
+    },
+  }),
+);
 vi.mock('../../../server-api/api-client', () => ({
   shareApi: { getShareRecipientsCount },
   conversationsApi: {},
@@ -463,6 +480,13 @@ const baseContextValue = {
 const defaultProps = {
   activeConversationId: 'conv1',
   onSelectConversation: vi.fn(),
+  onOpenRoute: vi.fn(),
+};
+
+const emptyPinnedPanel = {
+  pinnedProjects: undefined,
+  activeConversationId: undefined,
+  actionOverlay: { action: null, project: null },
 };
 
 /** Every feature on except the given ones, which model the `Hide*` opt-outs. */
@@ -485,6 +509,7 @@ describe('ConversationPanelView', () => {
     );
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     vi.mocked(useConversations).mockReturnValue(baseContextValue as any);
+    pinnedPanel.hook.mockReturnValue(emptyPinnedPanel);
     vi.mocked(useNotification).mockReturnValue(
       createNotificationContextValue(mockShowNotification),
     );
@@ -617,5 +642,72 @@ describe('ConversationPanelView', () => {
     expect(getImportFileInput()).not.toBeNull();
     expect(container.contains(getImportFileInput())).toBe(false);
     /* eslint-enable testing-library/no-container */
+  });
+
+  describe('pinned projects', () => {
+    const pinnedProjects = {
+      projects: [
+        {
+          id: 'projects/bucket/support',
+          name: 'Support',
+          conversations: [],
+          hasMore: false,
+        },
+      ],
+      onSelectProject: vi.fn(),
+      onSelectConversation: vi.fn(),
+      onSeeAll: vi.fn(),
+    };
+
+    it('hands the adapter the route opener and the section its trees', () => {
+      const onOpenRoute = vi.fn();
+      pinnedPanel.hook.mockReturnValue({ ...emptyPinnedPanel, pinnedProjects });
+      renderSidebar({ onOpenRoute });
+
+      expect(pinnedPanel.hook).toHaveBeenCalledWith(onOpenRoute);
+      expect(sectionProps.current?.pinnedProjects).toBe(pinnedProjects);
+    });
+
+    it('passes no trees while the adapter has none', () => {
+      renderSidebar();
+
+      expect(sectionProps.current?.pinnedProjects).toBeUndefined();
+    });
+
+    it('marks the open project chat as the active row', () => {
+      pinnedPanel.hook.mockReturnValue({
+        ...emptyPinnedPanel,
+        activeConversationId: 'projects/bucket/support/conversations/c1',
+      });
+      renderSidebar({ activeConversationId: undefined });
+
+      expect(sectionProps.current?.activeConversationId).toBe(
+        'projects/bucket/support/conversations/c1',
+      );
+    });
+
+    it('translates the See all labels', () => {
+      renderSidebar();
+
+      const labels = sectionProps.current?.labels as {
+        seeAllLabel: string;
+        seeAllAriaLabel: (name: string) => string;
+      };
+      expect(labels.seeAllLabel).toBe('conversationPanel.seeAll');
+      expect(labels.seeAllAriaLabel('Support')).toContain(
+        'conversationPanel.seeAllProjectChats',
+      );
+    });
+
+    it('mounts the action overlays with the adapter state, out of the sidebar', () => {
+      const actionOverlay = { action: null, project: null, onClose: vi.fn() };
+      pinnedPanel.hook.mockReturnValue({ ...emptyPinnedPanel, actionOverlay });
+      renderSidebar();
+
+      expect(
+        screen.getByRole('dialog', { name: 'pinned project overlays' }),
+      ).toBeTruthy();
+      expect(pinnedPanel.overlayProps).toEqual(actionOverlay);
+    });
   });
 });

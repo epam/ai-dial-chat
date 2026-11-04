@@ -508,6 +508,8 @@
   "conversationPanel": {
     "updatingTitles": "Updating conversation names…",
     "chatsAndTasks": "Chats and tasks",
+    "seeAll": "See all",
+    "seeAllProjectChats": "See all chats in {{name}}",
     "search": {
       "open": "Search chats",
       "close": "Close search"
@@ -788,7 +790,10 @@
     "marker": {
       "label": "{{source}}",
       "labelWithOverflow": "{{source}} +{{count}}",
-      "ariaLabel": "Citation from {{source}}"
+      "ariaLabel": "Citation from {{source}}",
+      "labelWithPage": "{{source}}, p. {{page}}",
+      "labelWithPageAndOverflow": "{{source}}, p. {{page}} +{{count}}",
+      "ariaLabelWithPage": "Citation from {{source}}, page {{page}}"
     },
     "popup": {
       "switcher": "{{current}}/{{total}}",

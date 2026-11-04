@@ -8,7 +8,11 @@
    */
   border-radius: var(--cp-row-radius, 0.75rem);
 
-  &:hover {
+  /* A row with an `href` is focused through the link around it, so
+     focus-visible on that link tints the row the way hover does. */
+  &:hover,
+  &:focus-visible,
+  :focus-visible > & {
     background: var(--cp-item-hover, var(--bg-control-accent-alpha, #2764d90f));
   }
 
@@ -30,11 +34,16 @@
 }
 
 .indicatorDot {
-  border: 1px solid var(--cp-indicator-dot, var(--stroke-secondary, #d1dbea));
+  border: 1.5px solid var(--cp-indicator-dot, var(--stroke-secondary, #d1dbea));
 }
 
 .groupHeader {
   color: var(--cp-text-secondary, var(--text-tertiary, #848e9c));
+}
+
+/* The sidebar's headers take the secondary tone; declared after `.groupHeader` so it wins. */
+.groupHeaderIndicator {
+  color: var(--cp-text-secondary, var(--text-secondary, #57647a));
 }
 
 .dropZoneActive {

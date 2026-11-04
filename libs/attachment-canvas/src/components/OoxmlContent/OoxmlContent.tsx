@@ -3,6 +3,7 @@ import {
   DIAL_KIT_ICON_STROKE,
   Spinner,
   LiveRegion,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import type { XlsxSelectionContext } from '@silurus/ooxml/xlsx';
 import { IconAlertTriangle } from '@tabler/icons-react';
@@ -610,10 +611,12 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
       <LiveRegion visuallyHidden>
         {hasNavigated ? highlightNavigatedLabel : ''}
       </LiveRegion>
+      {/* Mounted before the overlay, so the load failure is announced when it replaces the spinner. */}
+      <LiveRegion politeness={LiveRegionPoliteness.Assertive} visuallyHidden>
+        {!isLoading && hasError ? loadErrorLabel : ''}
+      </LiveRegion>
       {(isLoading || hasError) && (
         <div
-          role={hasError ? 'alert' : undefined}
-          aria-live="polite"
           className={mergeClasses(
             'absolute inset-0 flex items-center justify-center',
             styles.statusOverlay,
@@ -629,7 +632,9 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
                 stroke={DIAL_KIT_ICON_STROKE}
                 className={styles.errorIcon}
               />
-              <p className="text-center">{loadErrorLabel}</p>
+              <p aria-hidden className="text-center">
+                {loadErrorLabel}
+              </p>
             </div>
           )}
         </div>

@@ -2,6 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   NeutralButton,
   PrimaryButton,
+  StateScreen,
   LiveRegion,
   LiveRegionElement,
   LiveRegionPoliteness,
@@ -46,101 +47,99 @@ const OverlayLoginGate: FC = () => {
       providers !== null &&
       providers.length === 0);
 
+  /* StateScreen draws the named `section`, the `h1` and the description; the
+     busy flag sits on the action block because StateScreen takes no aria-busy. */
   return (
-    <section
-      aria-busy={isLoadingProviders || isInFlight}
-      className="flex size-full min-h-dvh items-center justify-center bg-layer-raised px-6 py-8 text-center"
-    >
-      <div className="flex w-full max-w-[420px] flex-col items-center gap-5">
-        <div className="flex flex-col items-center gap-3">
-          <h1 className="dial-h1-text text-primary">
-            {t(AuthI18nKeys.OverlayLoginTitle)}
-          </h1>
-          <p className="dial-body-text text-secondary">
-            {t(AuthI18nKeys.OverlayLoginDescription)}
-          </p>
-        </div>
+    <StateScreen
+      className="min-h-dvh bg-layer-raised px-6 py-8 text-center"
+      title={t(AuthI18nKeys.OverlayLoginTitle)}
+      description={t(AuthI18nKeys.OverlayLoginDescription)}
+      action={
+        <div
+          aria-busy={isLoadingProviders || isInFlight}
+          className="flex w-full max-w-[420px] flex-col items-center gap-5"
+        >
+          {hasProviderConfiguration && isLoadingProviders && (
+            <p className="dial-body-text text-primary">
+              {t(AuthI18nKeys.OverlayProviderPickerLoading)}
+            </p>
+          )}
 
-        {hasProviderConfiguration && isLoadingProviders && (
-          <p className="dial-body-text text-primary">
-            {t(AuthI18nKeys.OverlayProviderPickerLoading)}
-          </p>
-        )}
-
-        {/* Always mounted: an alert that mounts together with its message is
+          {/* Always mounted: an alert that mounts together with its message is
             announced unreliably, so only its text and the retry button
             toggle. While hidden it is taken out of the flow. */}
-        <div
-          className={mergeClasses(
-            isProvidersErrorShown
-              ? 'flex flex-col items-center gap-3'
-              : 'sr-only',
-          )}
-        >
+          <div
+            className={mergeClasses(
+              isProvidersErrorShown
+                ? 'flex flex-col items-center gap-3'
+                : 'sr-only',
+            )}
+          >
+            <LiveRegion
+              politeness={LiveRegionPoliteness.Assertive}
+              as={LiveRegionElement.P}
+              className="dial-small-text text-error"
+            >
+              {isProvidersErrorShown && t(AuthI18nKeys.OverlayProvidersError)}
+            </LiveRegion>
+            {isProvidersErrorShown && (
+              <NeutralButton
+                className="min-h-11"
+                label={t(ButtonsI18nKeys.Retry)}
+                onClick={retryLoadProviders}
+              />
+            )}
+          </div>
+
+          {hasProviderConfiguration &&
+            !isLoadingProviders &&
+            !hasProviderError &&
+            providers !== null &&
+            providers.length > 0 && (
+              <div className="flex w-full flex-col gap-3">
+                {providers.map((provider) => (
+                  <div
+                    key={provider.id}
+                    className="flex w-full flex-col items-center gap-2"
+                  >
+                    <NeutralButton
+                      className="min-h-11 w-full"
+                      label={provider.label}
+                      disabled={isLoginDisabled}
+                      iconBefore={<ProviderIcon providerId={provider.id} />}
+                      onClick={() => openProviderLogin(provider.id)}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
           <LiveRegion
             politeness={LiveRegionPoliteness.Assertive}
             as={LiveRegionElement.P}
             className="dial-small-text text-error"
           >
-            {isProvidersErrorShown && t(AuthI18nKeys.OverlayProvidersError)}
+            {isBlocked && t(AuthI18nKeys.OverlayExternalLoginBlocked)}
           </LiveRegion>
-          {isProvidersErrorShown && (
-            <NeutralButton
+
+          <LiveRegion
+            as={LiveRegionElement.P}
+            className="dial-small-text text-error"
+          >
+            {isTakingLonger && t(AuthI18nKeys.OverlayLoginTakingLonger)}
+          </LiveRegion>
+
+          {showSingleLogin && (
+            <PrimaryButton
               className="min-h-11"
-              label={t(ButtonsI18nKeys.Retry)}
-              onClick={retryLoadProviders}
+              label={t(ButtonsI18nKeys.LogIn)}
+              disabled={isLoginDisabled}
+              onClick={openLogin}
             />
           )}
         </div>
-
-        {hasProviderConfiguration &&
-          !isLoadingProviders &&
-          !hasProviderError &&
-          providers !== null &&
-          providers.length > 0 && (
-            <div className="flex w-full flex-col gap-3">
-              {providers.map((provider) => (
-                <div
-                  key={provider.id}
-                  className="flex w-full flex-col items-center gap-2"
-                >
-                  <NeutralButton
-                    className="min-h-11 w-full"
-                    label={provider.label}
-                    disabled={isLoginDisabled}
-                    iconBefore={<ProviderIcon providerId={provider.id} />}
-                    onClick={() => openProviderLogin(provider.id)}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-
-        <LiveRegion
-          politeness={LiveRegionPoliteness.Assertive}
-          as={LiveRegionElement.P}
-          className="dial-small-text text-error"
-        >
-          {isBlocked && t(AuthI18nKeys.OverlayExternalLoginBlocked)}
-        </LiveRegion>
-
-        <LiveRegion
-          as={LiveRegionElement.P}
-          className="dial-small-text text-error"
-        >
-          {isTakingLonger && t(AuthI18nKeys.OverlayLoginTakingLonger)}
-        </LiveRegion>
-
-        {showSingleLogin && (
-          <PrimaryButton
-            className="min-h-11"
-            label={t(ButtonsI18nKeys.LogIn)}
-            disabled={isLoginDisabled}
-            onClick={openLogin}
-          />
-        )}
-      </div>
-    </section>
+      }
+    />
   );
 };
 

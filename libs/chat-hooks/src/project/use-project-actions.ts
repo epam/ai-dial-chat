@@ -32,6 +32,10 @@ export interface ProjectActionsHandlers {
   onError: (error: ProjectActionError, requestId?: string) => void;
   /** Re-reads the project, e.g. after a delete lost to a concurrent change. */
   onReload: () => void;
+  /** Whether the delete confirmation is open, when the host owns that state. Defaults to the hook's own state. */
+  isDeleteOpen?: boolean;
+  /** Called with the new state whenever the delete confirmation opens or closes: a request, a cancel, a success or a conflict. */
+  onDeleteOpenChange?: (isOpen: boolean) => void;
 }
 
 /**
@@ -54,11 +58,25 @@ export const useProjectActions = (
     onDeleted,
     onError,
     onReload,
+    isDeleteOpen: controlledDeleteOpen,
+    onDeleteOpenChange,
   }: ProjectActionsHandlers,
 ) => {
   const [isPinPending, setIsPinPending] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [ownDeleteOpen, setOwnDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  /* A host that passes `isDeleteOpen` owns the dialog state; the hook then
+     only reports the changes it would have made. */
+  const isDeleteControlled = controlledDeleteOpen != null;
+  const isDeleteOpen = controlledDeleteOpen ?? ownDeleteOpen;
+  const setIsDeleteOpen = useCallback(
+    (isOpen: boolean) => {
+      if (!isDeleteControlled) setOwnDeleteOpen(isOpen);
+      onDeleteOpenChange?.(isOpen);
+    },
+    [isDeleteControlled, onDeleteOpenChange],
+  );
 
   const reportError = useCallback(
     async (err: unknown, error: ProjectActionError) => {
@@ -94,10 +112,13 @@ export const useProjectActions = (
     }
   }, [client, project, saveFile, onArchiveDownloaded, reportError]);
 
-  const requestDelete = useCallback(() => setIsDeleteOpen(true), []);
+  const requestDelete = useCallback(
+    () => setIsDeleteOpen(true),
+    [setIsDeleteOpen],
+  );
   const cancelDelete = useCallback(() => {
     if (!isDeleting) setIsDeleteOpen(false);
-  }, [isDeleting]);
+  }, [isDeleting, setIsDeleteOpen]);
 
   const confirmDelete = useCallback(async () => {
     if (project == null) return;
@@ -118,7 +139,7 @@ export const useProjectActions = (
     } finally {
       setIsDeleting(false);
     }
-  }, [client, project, onDeleted, onError, onReload]);
+  }, [client, project, setIsDeleteOpen, onDeleted, onError, onReload]);
 
   return useMemo(
     () => ({

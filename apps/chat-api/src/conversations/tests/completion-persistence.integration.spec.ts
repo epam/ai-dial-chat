@@ -21,14 +21,15 @@ import type { EnvironmentVariables } from '../../config/environment.config';
 import type { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
-import {
-  ConversationGenerationService,
-  type GenerationTerminalEvent,
-} from '../conversation-generation.service';
+import { ConversationGenerationController } from '../conversation-generation.controller';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 import { BackgroundGenerationService } from '../generation/background-generation.service';
 import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
+import {
+  ConversationGenerationService,
+  type GenerationTerminalEvent,
+} from '../generation/conversation-generation.service';
 import { CoreResponsesClient } from '../generation/core-responses.client';
 import { GenerationApiSelector } from '../generation/generation-api-selector.service';
 import { ResponsesAdapter } from '../generation/responses.adapter';
@@ -214,7 +215,7 @@ describe('completion persistence over HTTP', () => {
       config,
     );
     const module = await Test.createTestingModule({
-      controllers: [ConversationController],
+      controllers: [ConversationController, ConversationGenerationController],
       providers: [
         ConversationCompletionsResponder,
         {

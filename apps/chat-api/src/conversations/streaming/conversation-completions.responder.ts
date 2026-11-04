@@ -19,15 +19,15 @@ import {
   SseSubscriptionKind,
   trackSseSubscription,
 } from '../../telemetry/runtime-metrics';
-import {
-  ConversationGenerationService,
-  type GenerationTerminalEvent,
-} from '../conversation-generation.service';
 import { ConversationService } from '../conversation.service';
 import type { AttachGenerationDto } from '../dto/attach-generation.dto';
 import type { SendCompletionDto } from '../dto/send-completion.dto';
 import type { StopCompletionDto } from '../dto/stop-completion.dto';
 import { BackgroundStopResult } from '../generation/background-generation.service';
+import {
+  ConversationGenerationService,
+  type GenerationTerminalEvent,
+} from '../generation/conversation-generation.service';
 import { assertValidOptionalTimezone } from '../utils/timezone-header';
 import {
   completionResponseTerminations,
@@ -57,7 +57,7 @@ const SSE_ATTACH_MAX_BUFFERED_BYTES = 1024 * 1024;
 /**
  * The HTTP side of completions, stop and attach: SSE framing, keepalive,
  * backpressure detach and bounded release around `ConversationService`.
- * `ConversationController` and the project conversations controller both
+ * `ConversationGenerationController` and the project conversations controller both
  * delegate here, with the conversation path already validated, so a project
  * conversation streams exactly like a top-level one. The path is also the
  * generation-registry key, so completions, stop and attach must receive the

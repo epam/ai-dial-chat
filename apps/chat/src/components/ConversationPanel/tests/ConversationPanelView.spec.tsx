@@ -421,6 +421,18 @@ vi.mock('../../../server-api/conversation-publish.api', () => ({
   }),
 }));
 const getShareRecipientsCount = vi.hoisted(() => vi.fn());
+/* The pinned-project tree has its own adapter spec; here it stays empty. */
+vi.mock('../../../hooks/projects/usePinnedProjectsPanel', () => ({
+  usePinnedProjectsPanel: () => ({
+    pinnedProjects: undefined,
+    activeConversationId: undefined,
+    actionOverlay: {},
+  }),
+}));
+vi.mock(
+  '../../PinnedProjectActionOverlays/PinnedProjectActionOverlays',
+  () => ({ default: () => null }),
+);
 vi.mock('../../../server-api/api-client', () => ({
   shareApi: { getShareRecipientsCount },
   conversationsApi: {},
@@ -593,6 +605,7 @@ const baseContextValue = {
 const defaultProps = {
   activeConversationId: 'conv1',
   onSelectConversation: vi.fn(),
+  onOpenRoute: vi.fn(),
 };
 
 const openDropdown = () => {

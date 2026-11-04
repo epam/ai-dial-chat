@@ -77,9 +77,16 @@ vi.mock('@epam/ai-dial-react-pdf-highlighter', () => ({
   ),
 }));
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', async () => ({
+  ...(await vi
+    .importActual<typeof import('@epam/ai-dial-ui-kit')>('@epam/ai-dial-ui-kit')
+    .then(({ LiveRegion, LiveRegionElement }) => ({
+      LiveRegion,
+      LiveRegionElement,
+    }))),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   DIAL_KIT_ICON_STROKE: 1.5,
+  DropdownOverlayRole: { Menu: 'menu', Dialog: 'dialog', None: 'none' },
   ElementSize: { Small: 'small', Medium: 'medium', Large: 'large' },
   Button: ({ label, 'aria-label': ariaLabel, onClick }: ButtonMockProps) => (
     <button aria-label={ariaLabel} onClick={onClick}>
@@ -609,9 +616,11 @@ describe('PdfContent', () => {
       await act(async () => {
         await Promise.resolve();
       });
-      expect(screen.getByText('Worker setup failed').getAttribute('role')).toBe(
-        'status',
-      );
+      expect(
+        screen
+          .getAllByRole('status')
+          .some((region) => region.textContent === 'Worker setup failed'),
+      ).toBe(true);
       expect(configurePdfWorker).toHaveBeenCalledOnce();
       expect(documentPreviewState.props).toBeUndefined();
 

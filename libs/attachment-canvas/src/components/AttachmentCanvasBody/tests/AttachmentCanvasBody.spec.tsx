@@ -548,7 +548,7 @@ describe('AttachmentCanvasBody', () => {
       layout: { themeId: 'light' },
       visualizerName: 'my-viz',
     });
-    expect(screen.getByRole('status')).toBeTruthy();
+    expect(screen.getAllByRole('status').length).toBeGreaterThan(0);
   });
 
   it.each([

@@ -218,3 +218,60 @@ describe('getDropAfterId', () => {
     expect(getDropAfterId(e, 'c', rows, FilterTab.MyChats)).toBe('b');
   });
 });
+
+describe('drag helpers — pinned project rows', () => {
+  const project = {
+    id: 'p1',
+    name: 'Support',
+    conversations: [{ id: 'nested-1', title: 'Nested' }],
+    hasMore: true,
+  };
+  const nestedPosition = {
+    setSize: 2,
+    isFirstNested: false,
+    isLastNested: false,
+  };
+  const rows: VirtualRow[] = [
+    makeHeader(FilterTab.Pinned),
+    { kind: VirtualRowKind.Project, project },
+    {
+      kind: VirtualRowKind.ProjectConversation,
+      item: project.conversations[0],
+      projectId: project.id,
+      ...nestedPosition,
+      posInSet: 1,
+      isFirstNested: true,
+    },
+    {
+      kind: VirtualRowKind.ProjectSeeAll,
+      project,
+      projectId: project.id,
+      ...nestedPosition,
+      posInSet: 2,
+      isLastNested: true,
+    },
+    makeItem('pinned-1', FilterTab.Pinned),
+    makeItem('pinned-2', FilterTab.Pinned),
+  ];
+
+  it('finds no group for a nested project conversation', () => {
+    expect(findGroupKeyForItem(rows, 'nested-1')).toBeNull();
+  });
+
+  it('still finds the group of a pinned conversation after project rows', () => {
+    expect(findGroupKeyForItem(rows, 'pinned-1')).toBe(FilterTab.Pinned);
+  });
+
+  it('skips project rows when computing the item a drop lands after', () => {
+    const e = {
+      currentTarget: {
+        getBoundingClientRect: () => ({ top: 0, height: 40 }),
+      } as unknown as HTMLElement,
+      clientY: 10,
+    };
+    expect(getDropAfterId(e, 'pinned-1', rows, FilterTab.Pinned)).toBeNull();
+    expect(getDropAfterId(e, 'pinned-2', rows, FilterTab.Pinned)).toBe(
+      'pinned-1',
+    );
+  });
+});

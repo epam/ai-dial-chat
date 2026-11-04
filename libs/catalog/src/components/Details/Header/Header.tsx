@@ -9,6 +9,7 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
+  DropdownOverlayRole,
   FolderPath,
   NeutralButton,
   NeutralIconButton,
@@ -1063,6 +1064,8 @@ export const Header: FC<HeaderProps> = ({
         onOpenChange={setIsShareOverlayOpen}
         trigger={[]}
         outsideClosable
+        /* The host's share popover carries its own `dialog` role. */
+        overlayRole={DropdownOverlayRole.None}
         renderOverlay={() => shareOverlay(item, handleCloseShareOverlay)}
       >
         {menu}
