@@ -4,6 +4,7 @@ import {
   MessageRole,
   StageStatus,
   type Annotation,
+  type AnnotationSelector,
   type ApplicationVisualizer,
   type ApplicationVisualizerRegistry,
   type Message,
@@ -365,7 +366,9 @@ describe('ConversationMessageItem', () => {
       );
 
       await userEvent.click(
-        screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+        screen.getByRole('button', {
+          name: CitationsI18nKeys.MarkerAriaLabelWithPage,
+        }),
       );
 
       expect(screen.getByRole('dialog')).toBeTruthy();
@@ -562,7 +565,7 @@ describe('ConversationMessageItem', () => {
         );
         const markers = () =>
           screen.getAllByRole('button', {
-            name: CitationsI18nKeys.MarkerAriaLabel,
+            name: CitationsI18nKeys.MarkerAriaLabelWithPage,
           });
         /* The single-citation marker previews directly; the grouped one keeps
          the card so its second citation stays reachable through Next. */
@@ -992,7 +995,7 @@ describe('ConversationMessageItem', () => {
       );
 
       const markers = screen.getAllByRole('button', {
-        name: CitationsI18nKeys.MarkerAriaLabel,
+        name: CitationsI18nKeys.MarkerAriaLabelWithPage,
       });
       expect(markers).toHaveLength(2);
 
@@ -1169,7 +1172,7 @@ describe('ConversationMessageItem', () => {
       );
 
       const markers = screen.getAllByRole('button', {
-        name: CitationsI18nKeys.MarkerAriaLabel,
+        name: CitationsI18nKeys.MarkerAriaLabelWithPage,
       });
       await userEvent.click(markers[1]);
       await userEvent.click(
@@ -1279,7 +1282,7 @@ describe('ConversationMessageItem', () => {
         );
 
         const markers = screen.getAllByRole('button', {
-          name: CitationsI18nKeys.MarkerAriaLabel,
+          name: CitationsI18nKeys.MarkerAriaLabelWithPage,
         });
         expect(markers).toHaveLength(4);
 
@@ -2599,6 +2602,123 @@ describe('ConversationMessageItem', () => {
       await userEvent.click(stageMarker);
 
       expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    });
+  });
+
+  describe('ConversationMessageItem — citation page label', () => {
+    const writeText = vi.fn(() => Promise.resolve());
+
+    const makeCitationMessage = (
+      attachment: { type: string; url: string; title?: string },
+      page?: number,
+    ): Message => ({
+      role: MessageRole.Assistant,
+      content: 'policy number is 555 <cit data-id="00000"></cit>',
+      timestamp: '2026-09-21T13:47:50Z',
+      custom_content: {
+        annotations: [
+          {
+            target: {
+              selector: { type: 'html_tag', tag: 'cit', id: '00000' },
+            },
+            body: {
+              source: { type: 'attachment', attachment },
+              selector:
+                page == null
+                  ? undefined
+                  : ({ type: 'pdf_region', page } as AnnotationSelector),
+            },
+          },
+        ],
+      },
+    });
+
+    beforeEach(() => {
+      writeText.mockClear();
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { writeText },
+      });
+    });
+
+    it('labels a PDF citation with its page', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={makeCitationMessage(
+            {
+              type: 'application/pdf',
+              url: 'files/b/clm.pdf',
+              title: 'clm.pdf',
+            },
+            1,
+          )}
+          index={1}
+        />,
+      );
+      const marker = screen.getByRole('button', {
+        name: CitationsI18nKeys.MarkerAriaLabelWithPage,
+      });
+      expect(marker.textContent).toBe(CitationsI18nKeys.MarkerLabelWithPage);
+    });
+
+    it('keeps the plain label when the title already names the page', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={makeCitationMessage(
+            {
+              type: 'application/pdf',
+              url: 'files/b/clm.pdf',
+              title: 'clm.pdf, page 1',
+            },
+            1,
+          )}
+          index={1}
+        />,
+      );
+      const marker = screen.getByRole('button', {
+        name: CitationsI18nKeys.MarkerAriaLabel,
+      });
+      expect(marker.textContent).toBe(CitationsI18nKeys.MarkerLabel);
+    });
+
+    it('keeps the plain label for a citation without a page', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={makeCitationMessage({
+            type: 'text/html',
+            url: 'https://example.com/page.html',
+          })}
+          index={1}
+        />,
+      );
+      expect(
+        screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+      ).toBeTruthy();
+    });
+
+    it('copies the citation as the same label the marker shows', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={makeCitationMessage(
+            {
+              type: 'application/pdf',
+              url: 'files/b/clm.pdf',
+              title: 'clm.pdf',
+            },
+            1,
+          )}
+          index={1}
+        />,
+      );
+      act(() => capturedActions?.onCopyMarkdown?.());
+
+      expect(writeText).toHaveBeenCalledWith(
+        `policy number is 555 ${CitationsI18nKeys.MarkerLabelWithPage}`,
+      );
     });
   });
 });
