@@ -1,68 +1,52 @@
+import { AttachmentTray } from '@epam/ai-dial-attachment-input';
 import {
-  AttachmentTray,
-  useClipboardPaste,
-} from '@epam/ai-dial-attachment-input';
-import {
-  buildCssVars,
   mergeClasses,
   useIsMobile,
   useIsPhone,
 } from '@epam/ai-dial-chat-shared';
 import {
-  BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  Dropdown,
   ErrorText,
   GhostIconButton,
   LiveRegion,
   LiveRegionElement,
   LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
-import { IconFile, IconMicrophone } from '@tabler/icons-react';
+import { IconMicrophone } from '@tabler/icons-react';
 import {
   ChangeEvent,
-  ClipboardEvent,
   forwardRef,
-  KeyboardEvent,
   useCallback,
   useEffect,
   useImperativeHandle,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';
 import { useAttachments } from '../../hooks/useAttachments';
-import {
-  CommandMenuOptionStep,
-  useCommandMenu,
-} from '../../hooks/useCommandMenu/useCommandMenu';
 import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
-import { useMentionSelectionMirror } from '../../hooks/useMentionSelectionMirror';
 import { useMessageState } from '../../hooks/useMessageState';
-import {
-  applyValueThroughReact,
-  useTextInsertion,
-} from '../../hooks/useTextInsertion';
-import {
-  useVoiceRecorder,
-  VoiceRecorderState,
-  VoiceRecordingMode,
-} from '../../hooks/useVoiceRecorder';
+import { useTextInsertion } from '../../hooks/useTextInsertion';
+import { VoiceRecordingMode } from '../../hooks/useVoiceRecorder';
 import { ActionRowLayout, SendOnEnter } from '../../models/Input';
 import type { InputHandle, InputProps } from '../../models/Input';
-import {
-  renderHighlightedText,
-  type MirrorInsertion,
-} from '../../utils/highlight-mirror';
-import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
 import { ToolsChips } from '../ToolsChips/ToolsChips';
 import { VoiceBar } from '../VoiceBar/VoiceBar';
 import { SendButton } from './Buttons/SendButton';
 import { StopButton } from './Buttons/StopButton';
+import { useCommandMenuAnchor } from './hooks/useCommandMenuAnchor';
+import { useCommandMenuController } from './hooks/useCommandMenuController';
+import { useDismissibleTools } from './hooks/useDismissibleTools';
+import { usePasteHandling } from './hooks/usePasteHandling';
+import { useSendKeyboard } from './hooks/useSendKeyboard';
+import { useVoiceInput } from './hooks/useVoiceInput';
+import { buildInputCssVars } from './input-css-vars';
 import styles from './Input.module.scss';
+import { InputAttachButton } from './InputAttachButton';
+import { InputCommandMenuArea } from './InputCommandMenuArea';
+import { InputTextareaArea } from './InputTextareaArea';
 import { ModelSelectorControl } from './ModelSelectorControl';
 
 /** Full conversation input field: textarea, send/stop, model selector, attachment menu, voice recording, and chat-settings controls. */
@@ -172,54 +156,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
     const mentionRanges = activeMentions ?? [];
     const hasActiveMentions = mentionRanges.length > 0;
 
-    const cssVars = useMemo(
-      () =>
-        buildCssVars({
-          '--ci-bg': colors?.background,
-          '--ci-text': colors?.text,
-          '--ci-border': colors?.border,
-          '--ci-border-focus': colors?.borderFocus,
-          '--ci-placeholder': colors?.placeholder,
-          '--ci-text-disabled': colors?.textDisabled,
-          '--ci-model-selector-caret-color': colors?.modelSelectorCaret,
-          '--ci-model-selector-hover-bg': colors?.modelSelectorHoverBg,
-          '--ci-model-selector-disabled-color': colors?.modelSelectorDisabled,
-          '--ci-model-selector-name-color': colors?.modelSelectorName,
-          '--ci-model-selector-version-color': colors?.modelSelectorVersion,
-          '--ci-voice-waveform': colors?.voiceWaveform,
-          '--ci-voice-accent': colors?.voiceAccent,
-          '--ci-mention-highlight-bg': colors?.mentionHighlightBg,
-          '--ci-mention-highlight-text': colors?.mentionHighlightText,
-          '--ci-mention-highlight-unsupported-bg':
-            colors?.mentionHighlightUnsupportedBg,
-          '--ci-mention-highlight-unsupported-text':
-            colors?.mentionHighlightUnsupportedText,
-          '--ci-selection-highlight-bg': colors?.selectionHighlightBg,
-        }),
-      [colors],
-    );
-
-    const dialFileSystemMenuItem = useMemo(
-      () =>
-        onDialFileSystemClick
-          ? [
-              {
-                key: 'dial-fs',
-                label: dialFileSystemLabel ?? 'DIAL file system',
-                icon: (
-                  <IconFile
-                    size={BASE_ICON_SIZE}
-                    aria-hidden
-                    stroke={DIAL_KIT_ICON_STROKE}
-                  />
-                ),
-                onClick: onDialFileSystemClick,
-              },
-            ]
-          : [],
-      [onDialFileSystemClick, dialFileSystemLabel],
-    );
-
+    const cssVars = useMemo(() => buildInputCssVars(colors), [colors]);
     const { message, setMessage, textareaRef } = useMessageState({
       messageProp,
       messageRevision,
@@ -266,247 +203,33 @@ export const Input = forwardRef<InputHandle, InputProps>(
       isMenuOpen,
       query,
       activeWordStart,
-      dismiss,
       closeOnOutsidePress,
-      handleCaretMove: handleCommandMenuCaretMove,
       handleValueChange,
-      listboxId: commandMenuListboxId,
-      overlayRef: commandMenuOverlayRef,
-      activeOptionId: activeCommandOptionId,
-      moveActiveOption: moveActiveCommandOption,
-      getActiveOption: getActiveCommandOption,
-    } = useCommandMenu({
-      config: commandMenu,
+      commandMenuListboxId,
+      commandMenuOverlayRef,
+      activeCommandOptionId,
+      handleTextareaClick,
+      handleTextareaFocus,
+      handleTextareaKeyUp,
+      skipFocusMenuEvaluationRef,
+      triggerEnd,
+      hasCommandEmptyQueryHint,
+      markerOffset,
+      handleCloseCommandMenu,
+      isSendGesture,
+      handleCommandMenuKeyDown,
+    } = useCommandMenuController({
+      commandMenu,
       message,
+      setMessage,
+      textareaRef,
+      historyNav,
+      onChange,
+      caretPositionOverride,
+      messageRevision,
+      markCaretPlaced,
+      sendOnEnter,
     });
-
-    /*
-     * `handleCommandMenuCaretMove` evaluates the word at a given caret
-     * position, so it needs that position resolved. A mouse click's own
-     * caret is already resolved by the time React's `onClick` fires, but the
-     * `focus` event that precedes it can fire before the browser has placed
-     * the caret — reading `selectionStart` there is unreliable across
-     * browsers — so `onFocus` defers one frame, by when it always has.
-     *
-     * The deferred call goes through a ref to the latest handler: an edit
-     * landing inside that frame (a paste right after focusing) re-renders
-     * with a new message, and the focus-time handler would evaluate the
-     * caret against the stale one and close a menu the edit just opened.
-     */
-    const latestCommandMenuCaretMoveRef = useRef(handleCommandMenuCaretMove);
-    latestCommandMenuCaretMoveRef.current = handleCommandMenuCaretMove;
-    const handleTextareaClick = () => {
-      handleCommandMenuCaretMove(
-        textareaRef.current?.selectionStart ?? message.length,
-      );
-    };
-    const skipFocusMenuEvaluationRef = useRef(false);
-    const handleTextareaFocus = () => {
-      if (skipFocusMenuEvaluationRef.current) {
-        skipFocusMenuEvaluationRef.current = false;
-        return;
-      }
-      requestAnimationFrame(() => {
-        const textarea = textareaRef.current;
-        latestCommandMenuCaretMoveRef.current(
-          textarea?.selectionStart ?? textarea?.value.length ?? 0,
-        );
-      });
-    };
-
-    /*
-     * Keyboard caret movement (Left/Right/Home/End/PageUp/PageDown) needs the
-     * same re-evaluation as a click, since it can carry the caret into or out
-     * of a command-shaped word with no `onChange` — the keys the command menu
-     * itself consumes for navigation (ArrowUp/ArrowDown/Enter, only while it's
-     * already open, see `handleCommandMenuKeyDown`) are excluded so this never
-     * double-processes those. `keyup`, not `keydown`, because the browser has
-     * already moved the caret to its new position by then.
-     */
-    const handleTextareaKeyUp = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      if (
-        e.key !== 'ArrowLeft' &&
-        e.key !== 'ArrowRight' &&
-        e.key !== 'Home' &&
-        e.key !== 'End' &&
-        e.key !== 'PageUp' &&
-        e.key !== 'PageDown'
-      ) {
-        return;
-      }
-      handleCommandMenuCaretMove(
-        e.currentTarget.selectionStart ?? message.length,
-      );
-    };
-
-    /*
-     * The command menu's empty-query hint: while the menu is open the value is
-     * the trigger prefix plus the query, so an empty query means the textarea
-     * holds exactly the prefix — the hint renders right after it and disappears
-     * with the first query keystroke. This gates only the hint content itself:
-     * the textarea's wrapper below is driven by the hint's *configuration*, not
-     * the live menu state, so the hint appearing and disappearing never
-     * remounts the textarea mid-typing.
-     *
-     * The hint is spliced in as real inline content of the highlight mirror
-     * (see `insertions` below), not a separately-positioned overlay, so it
-     * never pushes real text out of the way — anything after the trigger on
-     * the *same line* would sit right after the hint and read as one run, so
-     * the hint is suppressed whenever the line the trigger is on has more
-     * text after it — content on a later line is unaffected, since the hint
-     * never extends past its own line.
-     */
-    const hasCommandHintConfigured = commandMenu?.emptyQueryHint != null;
-    const triggerEnd =
-      commandMenu != null && activeWordStart != null
-        ? activeWordStart + commandMenu.triggerPrefix.length
-        : null;
-    const hasContentAfterTriggerOnLine =
-      triggerEnd != null && message.slice(triggerEnd).split('\n', 1)[0] !== '';
-    const hasCommandEmptyQueryHint =
-      hasCommandHintConfigured &&
-      isMenuOpen &&
-      query === '' &&
-      triggerEnd != null &&
-      !hasContentAfterTriggerOnLine;
-
-    /*
-     * The command menu's trigger word can sit anywhere in the message, not
-     * only at its very start, so the popup must be positioned at that word's
-     * actual on-screen location rather than a fixed corner. `markerOffset` is
-     * that word's character offset whenever the menu is open; a zero-size
-     * marker `<span>` is spliced into the invisible mention-highlight mirror
-     * at that offset (`insertions` below), and its measured position becomes
-     * the pixel anchor the popup's wrapper div positions itself at. The
-     * empty-query hint does not need this: it renders as real inline content
-     * of the same mirror, so it inherits the exact line position for free.
-     */
-    const markerOffset =
-      commandMenu != null && isMenuOpen ? (activeWordStart ?? 0) : null;
-    /*
-     * `left`/`top` (physical, not logical) is intentional here: the value is
-     * a real measured pixel position read off the marker's rendered box,
-     * which already reflects the browser's own RTL glyph placement — the
-     * same measured-value exception `left-1/2 -translate-x-1/2` centering
-     * gets in `.claude/rules/rtl.md`, not a static directional utility that
-     * would need an `rtl:`/logical counterpart.
-     */
-    const caretMarkerRef = useRef<HTMLSpanElement | null>(null);
-    const textareaAreaRef = useRef<HTMLDivElement | null>(null);
-    const [caretAnchor, setCaretAnchor] = useState<{
-      left: number;
-      top: number;
-    } | null>(null);
-
-    /*
-     * `getBoundingClientRect()` diff against `textareaAreaRef`, not
-     * `offsetLeft`/`offsetTop` — see `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3b
-     * (multi-skill-message-mentions).
-     */
-    const measureCaretAnchor = useCallback(() => {
-      const marker = caretMarkerRef.current;
-      const container = textareaAreaRef.current;
-      if (marker == null || container == null) {
-        setCaretAnchor(null);
-        return;
-      }
-      const markerRect = marker.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
-      setCaretAnchor({
-        left: markerRect.left - containerRect.left,
-        top: markerRect.top - containerRect.top,
-      });
-    }, []);
-
-    /*
-     * Auto-resizing the textarea's own width (e.g. a container resize) can
-     * reflow where the marker's line wraps without changing `message` or
-     * `markerOffset` — re-measure whenever the textarea's box changes while
-     * an overlay actually needs the position.
-     */
-    useEffect(() => {
-      if (markerOffset == null) return undefined;
-      const textareaEl = textareaRef.current;
-      if (textareaEl == null || typeof ResizeObserver === 'undefined') {
-        return undefined;
-      }
-      const observer = new ResizeObserver(measureCaretAnchor);
-      observer.observe(textareaEl);
-      return () => observer.disconnect();
-    }, [markerOffset, textareaRef, measureCaretAnchor]);
-
-    /*
-     * Selection path of the command menu: removes the `/query` text from the
-     * textarea so it is never sent, resets the draft-history state to match,
-     * and notifies the host. The consume lives here because the textarea value
-     * is owned by this component — a host-side removal would race the lib.
-     */
-    const handleCloseCommandMenu = useCallback(
-      (options?: { consumeQuery?: boolean; returnFocus?: boolean }) => {
-        if (commandMenu == null) return;
-
-        dismiss();
-        if (!options?.consumeQuery) return;
-
-        /* Return focus to the textarea (skipped for `returnFocus: false` — see the `commandMenu` doc on `close`). */
-        if (options.returnFocus !== false) textareaRef.current?.focus();
-
-        if (activeWordStart == null) return;
-
-        const consumed = `${commandMenu.triggerPrefix}${query}`;
-        const consumedEnd = activeWordStart + consumed.length;
-        if (message.slice(activeWordStart, consumedEnd) !== consumed) return;
-
-        const nextMessage =
-          message.slice(0, activeWordStart) + message.slice(consumedEnd);
-        setMessage(nextMessage);
-        historyNav.notifyChange();
-        onChange?.(nextMessage);
-      },
-      [
-        commandMenu,
-        dismiss,
-        query,
-        message,
-        activeWordStart,
-        setMessage,
-        historyNav,
-        onChange,
-        textareaRef,
-      ],
-    );
-
-    /*
-     * Places the caret once per host-driven resync (e.g. right after the host
-     * pushes a new `message` that spliced in a mention at a known position),
-     * so the user can keep typing from exactly where the inserted text ends
-     * rather than wherever the browser defaults the caret to after a
-     * programmatic value change. Keyed on `message` (the state `useMessageState`
-     * actually resyncs, not `messageRevision` itself): a prop change and its
-     * resulting `setMessage` call land in two separate commits, and assigning
-     * `.value` on that later commit resets the caret — this effect must run
-     * after that assignment, not alongside the prop-change commit that
-     * precedes it. `revisionRef` applies the override once per bump so it
-     * doesn't refire on every ordinary keystroke.
-     */
-    const appliedCaretRevisionRef = useRef<number | undefined>(undefined);
-    useEffect(() => {
-      if (
-        caretPositionOverride == null ||
-        appliedCaretRevisionRef.current === messageRevision
-      ) {
-        return;
-      }
-      appliedCaretRevisionRef.current = messageRevision;
-      textareaRef.current?.setSelectionRange(
-        caretPositionOverride,
-        caretPositionOverride,
-      );
-      markCaretPlaced();
-      /* Re-evaluates the command menu for this new caret position — a programmatic restore can land the caret back in a matching `/word`. */
-      handleCommandMenuCaretMove(caretPositionOverride);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [message]);
 
     const draftRef = useRef(message);
     draftRef.current = message;
@@ -548,130 +271,39 @@ export const Input = forwardRef<InputHandle, InputProps>(
       onAttachmentsLimitExceeded,
     });
 
-    const handleAttachAudio = useCallback(
-      (file: File) => {
-        addAttachments(buildAttachments([file]));
-      },
-      [addAttachments, buildAttachments],
-    );
-
-    const focusAfterTranscriptRef = useRef(false);
-    const [latestTranscript, setLatestTranscript] = useState({
-      text: '',
-      revision: 0,
-    });
-    const handleTranscript = useCallback(
-      (text: string) => {
-        const transcript = text.trim();
-        if (transcript) {
-          const draft = draftRef.current;
-          const nextMessage = `${draft}${draft && !/\s$/.test(draft) ? ' ' : ''}${transcript}`;
-          draftRef.current = nextMessage;
-          setMessage(nextMessage);
-          setLatestTranscript((previous) => ({
-            text: transcript,
-            revision: previous.revision + 1,
-          }));
-          historyNav.notifyChange();
-          onChange?.(nextMessage);
-        }
-        focusAfterTranscriptRef.current = true;
-      },
-      [setMessage, historyNav, onChange],
-    );
-
     const {
-      state: voiceState,
+      voiceState,
       analyserNodeRef,
-      errorMessage: voiceError,
+      voiceError,
       startRecording,
       stopRecording,
       discardRecording,
-    } = useVoiceRecorder({
-      onAttachAudio: handleAttachAudio,
+      isVoiceActive,
+      latestTranscript,
+    } = useVoiceInput({
+      addAttachments,
+      buildAttachments,
+      draftRef,
+      setMessage,
+      historyNav,
+      onChange,
       onTranscribeAudio,
-      onTranscript: handleTranscript,
-      errorLabel: voiceErrorLabel,
+      voiceErrorLabel,
+      textareaRef,
+      skipFocusMenuEvaluationRef,
     });
-    const isVoiceActive =
-      voiceState === VoiceRecorderState.Recording ||
-      voiceState === VoiceRecorderState.Processing;
-
-    useEffect(() => {
-      if (
-        voiceState === VoiceRecorderState.Error ||
-        (voiceState === VoiceRecorderState.Idle &&
-          focusAfterTranscriptRef.current)
-      ) {
-        focusAfterTranscriptRef.current = false;
-        const textarea = textareaRef.current;
-        if (textarea != null) {
-          /*
-           * The textarea is unmounted while recording, so it comes back as a
-           * fresh element whose caret sits at the start; a plain `focus()`
-           * would leave it there and the focus handler would re-open the
-           * command menu over a leading `/skill`. Put the caret at the end
-           * and skip that one focus-time menu evaluation.
-           */
-          skipFocusMenuEvaluationRef.current =
-            document.activeElement !== textarea;
-          textarea.focus();
-          const end = textarea.value.length;
-          textarea.setSelectionRange(end, end);
-        }
-      }
-    }, [voiceState, textareaRef]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    /*
-     * A long plain-text paste becomes a `text/plain` attachment only when the
-     * selected model would accept one: `isAttachmentsEnabled` says attachments
-     * are supported at all, `isTextAttachmentsAllowed` says a `text/plain`
-     * attachment would pass the host's validation. On a model that accepts
-     * only other kinds of attachments (e.g. images only), converting the paste
-     * would produce an attachment the model rejects.
-     */
-    const isPasteAsAttachmentEnabled =
-      isAttachmentsEnabled && isTextAttachmentsAllowed;
-    const { handlePaste: handleClipboardPaste } = useClipboardPaste(
+    const handlePaste = usePasteHandling({
       addAttachments,
-      isPasteAsAttachmentEnabled ? pasteTextThreshold : Infinity,
-    );
-
-    const handlePaste = useCallback(
-      (e: ClipboardEvent<HTMLTextAreaElement>) => {
-        /*
-         * Deliberately narrower than the send gate above. When a paste becomes
-         * an attachment it never reaches the textarea, so warning here would be
-         * about text the user did not paste inline; an under-threshold paste is
-         * at most pasteTextThreshold characters and cannot reach the cap on its
-         * own. Existing text plus a small paste crossing the cap is not visible
-         * from the pasted string's length at all — the send gate catches that.
-         */
-        if (!isPasteAsAttachmentEnabled) {
-          const text = e.clipboardData.getData('text/plain');
-          if (text.length >= maxMessageLength) {
-            onMessageTooLong?.(text.length, maxMessageLength);
-          }
-        }
-        handleClipboardPaste(e);
-        if (e.defaultPrevented) return;
-
-        /* A textarea stores `\r\n` as `\n`, so the reported text must match what lands in `onChange`. */
-        const pastedText = e.clipboardData
-          .getData('text/plain')
-          .replace(/\r\n?/g, '\n');
-        if (pastedText !== '') commandMenu?.onTextPaste?.(pastedText);
-      },
-      [
-        isPasteAsAttachmentEnabled,
-        maxMessageLength,
-        onMessageTooLong,
-        handleClipboardPaste,
-        commandMenu,
-      ],
-    );
+      isAttachmentsEnabled,
+      isTextAttachmentsAllowed,
+      pasteTextThreshold,
+      maxMessageLength,
+      onMessageTooLong,
+      commandMenu,
+    });
 
     /*
      * A tracked mention's `/{name}` text is part of `message` itself, so a
@@ -685,193 +317,37 @@ export const Input = forwardRef<InputHandle, InputProps>(
       !hasBlockedAttachments &&
       !isSendDisabled &&
       !isVoiceActive;
-    /*
-     * Chips the user dismissed with the chip's ×. Dismissal is view state of this
-     * input only: a dismissed tool comes back the moment it is switched on again
-     * from the `+` menu, and the whole set is forgotten when the deployment
-     * offers a different list of tools.
-     */
-    const [dismissedToolIds, setDismissedToolIds] = useState<string[]>([]);
-    const toolIdsSignature = (toolsMenuItems ?? [])
-      .map((tool) => tool.id)
-      .join('|');
-
-    useEffect(() => {
-      setDismissedToolIds([]);
-    }, [toolIdsSignature]);
-
-    const visibleTools = useMemo(() => {
-      const tools = toolsMenuItems ?? [];
-      /*
-       * A phone composer has no room for a chip per tool, so only tools that
-       * are switched on stay visible; the rest are added from `+` → Tools.
-       */
-      if (isPhone) return tools.filter((tool) => tool.isSelected);
-      if (!canRemoveTools) return tools;
-      return tools.filter(
-        (tool) => tool.isSelected || !dismissedToolIds.includes(tool.id),
-      );
-    }, [toolsMenuItems, dismissedToolIds, canRemoveTools, isPhone]);
-
-    const handleToolDismiss = useCallback(
-      (toolId: string) => {
-        setDismissedToolIds((prev) =>
-          prev.includes(toolId) ? prev : [...prev, toolId],
-        );
-        const tool = toolsMenuItems?.find((item) => item.id === toolId);
-        if (tool?.isSelected) onToolToggle?.(toolId);
-      },
-      [toolsMenuItems, onToolToggle],
-    );
+    const { visibleTools, handleToolDismiss } = useDismissibleTools({
+      toolsMenuItems,
+      canRemoveTools,
+      isPhone,
+      onToolToggle,
+    });
 
     const hasModelSelected =
       deployments === undefined || selectedDeploymentId != null;
     const shouldShowMicButton = isAudioMessageSupported && !isStreaming;
 
-    const handleSend = async () => {
-      if (isSendDisabled || isVoiceActive) return;
-      if (message.length >= maxMessageLength) {
-        onMessageTooLong?.(message.length, maxMessageLength);
-        return;
-      }
-
-      const currentMessage = message;
-      const currentAttachments = attachments;
-      setMessage('');
-      historyNav.reset();
-      try {
-        await onSend?.(currentMessage, currentAttachments);
-        currentAttachments.forEach((a) => {
-          if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
-          if (a.playUrl) URL.revokeObjectURL(a.playUrl);
-        });
-        resetAttachments([]);
-      } catch {
-        setMessage(currentMessage);
-        resetAttachments(currentAttachments);
-      }
-    };
-
-    const isSendGesture = (e: KeyboardEvent<HTMLTextAreaElement>) =>
-      sendOnEnter === SendOnEnter.MetaEnter
-        ? (e.metaKey || e.ctrlKey) && !e.shiftKey
-        : !e.shiftKey && !e.metaKey && !e.ctrlKey;
-
-    /*
-     * The open command menu behaves as a list autocomplete, so it takes the
-     * keys an autocomplete owns before the textarea's own handling: the
-     * arrows move the active option instead of navigating message history
-     * (the trigger word is single-line, so there is no line to move to), and
-     * Enter takes the active option instead of sending the message — with no
-     * option active it does nothing rather than send. Shift+Enter and, in
-     * MetaEnter mode, a bare Enter with nothing active keep inserting a
-     * newline, which closes the menu. Escape is handled here, not left to the
-     * `Dropdown`'s own floating-ui dismissal, so it can call the latching
-     * `dismiss()` and stop the event before it also reaches floating-ui's
-     * listener and gets folded into the *non*-latching outside-press path
-     * (`onOpenChange` below). Returns whether the key was consumed.
-     */
-    const handleCommandMenuKeyDown = (
-      e: KeyboardEvent<HTMLTextAreaElement>,
-    ): boolean => {
-      if (!isMenuOpen || e.nativeEvent.isComposing) return false;
-
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        dismiss();
-        return true;
-      }
-
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        moveActiveCommandOption(
-          e.key === 'ArrowDown'
-            ? CommandMenuOptionStep.Next
-            : CommandMenuOptionStep.Previous,
-        );
-        return true;
-      }
-
-      if (e.key !== 'Enter' || e.shiftKey) return false;
-
-      const activeOption = getActiveCommandOption();
-      if (activeOption != null) {
-        e.preventDefault();
-        activeOption.click();
-        return true;
-      }
-
-      if (isSendGesture(e)) {
-        e.preventDefault();
-        return true;
-      }
-
-      return false;
-    };
-
-    const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      if (isVoiceActive) return;
-      /* Serves the undo owed by an insertion the browser could not put on its own
-       undo stack; a no-op whenever the browser can undo the edit itself. */
-      if (handleUndoKeyDown(e)) return;
-      if (handleCommandMenuKeyDown(e)) return;
-      if (!e.nativeEvent.isComposing && !isInputDisabled && !isStreaming) {
-        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-          const cursorPos = e.currentTarget.selectionStart ?? 0;
-          const newValue = historyNav.navigate(
-            e.key === 'ArrowUp' ? 'up' : 'down',
-            message,
-            cursorPos,
-          );
-          if (newValue !== null) {
-            e.preventDefault();
-            setMessage(newValue);
-            return;
-          }
-        }
-
-        /*
-         * The whole-mention remove gesture: a Backspace with the caret
-         * collapsed exactly at a tracked range's trailing boundary deletes the
-         * entire range in one native edit (so it lands on the browser's own
-         * undo stack) instead of the default single-character deletion.
-         */
-        if (
-          e.key === 'Backspace' &&
-          onBackspaceAtCaret != null &&
-          e.currentTarget.selectionStart === e.currentTarget.selectionEnd &&
-          e.currentTarget.selectionStart != null
-        ) {
-          const range = onBackspaceAtCaret(e.currentTarget.selectionStart);
-          if (range != null) {
-            e.preventDefault();
-            const textarea = e.currentTarget;
-            textarea.setSelectionRange(range.start, range.start + range.length);
-            const deletedNatively =
-              typeof document.execCommand === 'function' &&
-              document.execCommand('delete', false);
-            if (!deletedNatively) {
-              const nextValue =
-                message.slice(0, range.start) +
-                message.slice(range.start + range.length);
-              applyValueThroughReact(textarea, nextValue, range.start);
-            }
-            return;
-          }
-        }
-      }
-
-      const isEnterKey = e.key === 'Enter';
-      if (!isEnterKey) return;
-
-      if (isSendGesture(e)) {
-        e.preventDefault();
-        if (!isStreaming && canSend && hasModelSelected && !isInputDisabled) {
-          handleSend();
-        }
-      }
-    };
+    const { handleSend, handleKeyDown } = useSendKeyboard({
+      message,
+      setMessage,
+      attachments,
+      resetAttachments,
+      historyNav,
+      onSend,
+      onMessageTooLong,
+      maxMessageLength,
+      isSendDisabled,
+      isVoiceActive,
+      isInputDisabled,
+      isStreaming,
+      canSend,
+      hasModelSelected,
+      handleUndoKeyDown,
+      handleCommandMenuKeyDown,
+      isSendGesture,
+      onBackspaceAtCaret,
+    });
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(e.target.files ?? []);
@@ -882,73 +358,24 @@ export const Input = forwardRef<InputHandle, InputProps>(
       addAttachments(newAttachments);
     };
 
-    const mirrorInsertions = useMemo(() => {
-      const list: MirrorInsertion[] = [];
-      if (markerOffset != null) {
-        list.push({
-          offset: markerOffset,
-          node: (
-            <span
-              key="caret-marker"
-              ref={caretMarkerRef}
-              aria-hidden
-              className="inline-block h-lh w-0 align-text-top"
-            />
-          ),
-        });
-      }
-      if (
-        hasCommandEmptyQueryHint &&
-        commandMenu != null &&
-        triggerEnd != null
-      ) {
-        list.push({
-          offset: triggerEnd,
-          node: (
-            <span
-              key="command-hint"
-              className={styles.commandHint}
-              aria-hidden
-              data-mirror-synthetic
-            >
-              {commandMenu.emptyQueryHint}
-            </span>
-          ),
-        });
-      }
-      return list;
-    }, [markerOffset, hasCommandEmptyQueryHint, commandMenu, triggerEnd]);
-
-    /*
-     * The mirror also renders while only synthetic insertions exist (the
-     * caret marker / empty-query hint of an open `/query`), and the
-     * textarea's native selection is hidden whenever it does — so the
-     * replacement selection highlight must follow the same condition, not
-     * just `hasActiveMentions` ([#9231](https://github.com/epam/ai-dial-chat/issues/9231)).
-     */
-    const isMirrorActive = hasActiveMentions || mirrorInsertions.length > 0;
-
     const {
+      textareaAreaRef,
+      caretAnchor,
+      mirrorInsertions,
+      isMirrorActive,
       mirrorRef,
       selectionRects,
       updateSelectionRects,
-      syncMirrorToTextarea,
-    } = useMentionSelectionMirror({ textareaRef, message, isMirrorActive });
-
-    /*
-     * Declared after `useMentionSelectionMirror` so its layout effect has
-     * already scrolled the mirror into sync: the caret marker lives inside
-     * the mirror, and measuring it first would anchor the command menu to
-     * the unscrolled position.
-     */
-    useLayoutEffect(() => {
-      measureCaretAnchor();
-    }, [measureCaretAnchor, markerOffset, message]);
-
-    const handleTextareaScroll = () => {
-      syncMirrorToTextarea();
-      if (markerOffset != null) measureCaretAnchor();
-    };
+      handleTextareaScroll,
+    } = useCommandMenuAnchor({
+      commandMenu,
+      message,
+      textareaRef,
+      hasActiveMentions,
+      markerOffset,
+      triggerEnd,
+      hasCommandEmptyQueryHint,
+    });
 
     const textarea = (
       <textarea
@@ -994,143 +421,33 @@ export const Input = forwardRef<InputHandle, InputProps>(
       />
     );
 
-    /*
-     * The command menu anchors to the trigger word's own on-screen position,
-     * not to the textarea as a whole — the kit `Dropdown` wraps its
-     * `children` in the actual floating-ui reference element, so that
-     * element has to sit at `caretAnchor` rather than the textarea itself
-     * (which, unlike the marker, sits fixed at the box's own top-left
-     * regardless of where the trigger word is). `Dropdown` takes no `style`
-     * prop, only `className`, so it cannot be positioned directly with a
-     * computed pixel value — instead, a plain `<div>` this component fully
-     * controls carries the inline `style` and is absolutely positioned at
-     * `caretAnchor`; `Dropdown`'s own internal reference span, rendered as
-     * that div's only child with no positioning of its own, lands in normal
-     * flow at the div's origin, i.e. exactly at the caret. The real textarea
-     * renders as a sibling instead of `Dropdown`'s child. `trigger={[]}`
-     * keeps the controlled `open` prop the only opener, focus stays in the
-     * textarea on open (`initialFocus={-1}`), and clicks inside the textarea
-     * count as inside the menu (`outsidePressIgnoreRef`).
-     * `matchReferenceWidth={false}` drops the kit's default min-width equal
-     * to the (now zero-size) reference, so the overlay sizes to its content.
-     */
-    /*
-     * Always the same Fragment with the textarea as its first child, so toggling
-     * `commandMenu` (e.g. switching to a skills-capable model) never changes the
-     * textarea's parent type and never remounts it (focus, caret and IME state
-     * survive).
-     */
-    const commandMenuArea = (
-      <>
-        {textarea}
-        {commandMenu != null && (
-          <div
-            aria-hidden
-            className={mergeClasses(
-              'pointer-events-none absolute',
-              typography?.fontClassName || 'dial-body-paragraph-text',
-            )}
-            style={{ left: caretAnchor?.left ?? 0, top: caretAnchor?.top ?? 0 }}
-          >
-            <Dropdown
-              open={isMenuOpen}
-              onOpenChange={(isOpen) => {
-                /*
-                 * Escape is intercepted earlier (`handleCommandMenuKeyDown`,
-                 * with `stopPropagation`) and never reaches this listener, so
-                 * a `false` here is always an outside click — the
-                 * non-latching close.
-                 */
-                if (!isOpen) closeOnOutsidePress();
-              }}
-              placement="top-start"
-              trigger={[]}
-              initialFocus={-1}
-              matchReferenceWidth={false}
-              outsidePressIgnoreRef={textareaRef}
-              renderOverlay={() => {
-                /*
-                 * The wrapper is always rendered: its ref scopes the
-                 * keyboard's option lookup to this menu. It becomes a
-                 * labeled group only when the host names the menu region.
-                 */
-                const hasMenuLabel = commandMenu.menuLabel != null;
-                return (
-                  <div
-                    ref={commandMenuOverlayRef}
-                    role={hasMenuLabel ? 'group' : undefined}
-                    aria-label={commandMenu.menuLabel}
-                  >
-                    {commandMenu.renderMenu({
-                      query,
-                      caretPosition: activeWordStart ?? 0,
-                      close: handleCloseCommandMenu,
-                      listboxId: commandMenuListboxId,
-                      activeOptionId: activeCommandOptionId,
-                    })}
-                  </div>
-                );
-              }}
-            >
-              {/*
-               * floating-ui's actual reference element — sized to match the
-               * caret marker's box. See `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3b
-               * (multi-skill-message-mentions).
-               */}
-              <span aria-hidden className="inline-block h-lh w-0" />
-            </Dropdown>
-          </div>
-        )}
-      </>
-    );
-
     const textareaArea = (
-      <div
-        ref={textareaAreaRef}
-        // Bleeds 4px past each edge, canceling the ps-1/pe-1 below.
-        className="relative -ms-1 -me-1 w-[calc(100%+8px)]"
+      <InputTextareaArea
+        areaRef={textareaAreaRef}
+        mirrorRef={mirrorRef}
+        isMirrorActive={isMirrorActive}
+        fontClassName={typography?.fontClassName}
+        message={message}
+        mentionRanges={mentionRanges}
+        mirrorInsertions={mirrorInsertions}
+        selectionRects={selectionRects}
       >
-        {isMirrorActive && (
-          <div
-            ref={mirrorRef}
-            className={mergeClasses(
-              styles.textarea,
-              typography?.fontClassName || 'dial-body-paragraph-text',
-              // Bleed room for chip edges — see `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3a.
-              'pointer-events-none absolute inset-0 z-10 max-h-[272px] w-full overflow-hidden ps-1 pe-1 wrap-anywhere whitespace-pre-wrap',
-            )}
-          >
-            {renderHighlightedText(
-              message,
-              mentionRanges,
-              mirrorInsertions,
-              styles.mentionHighlight,
-              styles.mentionHighlightUnsupported,
-            )}
-            {selectionRects.map((rect, index) => (
-              <div
-                key={`selection-${index}`}
-                aria-hidden
-                className={mergeClasses(
-                  'pointer-events-none absolute rounded-sm',
-                  styles.selectionHighlight,
-                )}
-                /*
-                 * A measured pixel rect from `Range.getClientRects()` — see
-                 * the `left`/`top` exception noted on `caretAnchor` above.
-                 */
-                style={{
-                  left: rect.left,
-                  top: rect.top,
-                  width: rect.width,
-                  height: rect.height,
-                }}
-              />
-            ))}
-          </div>
-        )}
-        {commandMenuArea}
-      </div>
+        <InputCommandMenuArea
+          textarea={textarea}
+          textareaRef={textareaRef}
+          commandMenu={commandMenu}
+          caretAnchor={caretAnchor}
+          fontClassName={typography?.fontClassName}
+          isMenuOpen={isMenuOpen}
+          query={query}
+          activeWordStart={activeWordStart}
+          listboxId={commandMenuListboxId}
+          activeOptionId={activeCommandOptionId}
+          overlayRef={commandMenuOverlayRef}
+          onOutsidePress={closeOnOutsidePress}
+          onClose={handleCloseCommandMenu}
+        />
+      </InputTextareaArea>
     );
 
     /*
@@ -1140,43 +457,33 @@ export const Input = forwardRef<InputHandle, InputProps>(
      * it cannot be used to interrupt a pending transcription.
      */
     const attachButtonNode = hideAddButton ? undefined : (
-      <AddAttachmentButton
-        onAttachClick={
-          hideAttachFile ? undefined : () => fileInputRef.current?.click()
-        }
+      <InputAttachButton
+        fileInputRef={fileInputRef}
+        textareaRef={textareaRef}
+        message={message}
+        style={cssVars}
+        hideAttachFile={hideAttachFile}
+        isInputDisabled={isInputDisabled}
+        isStreaming={isStreaming}
+        isAttachmentsEnabled={isAttachmentsEnabled}
+        isVoiceRecordingSupported={isVoiceRecordingSupported}
+        isVoiceActive={isVoiceActive}
+        startRecording={startRecording}
+        isPhone={isPhone}
+        canRemoveTools={canRemoveTools}
+        toolsMenuItems={toolsMenuItems}
+        onToolToggle={onToolToggle}
+        chatSettings={chatSettings}
+        menuOverlays={menuOverlays}
+        onDialFileSystemClick={onDialFileSystemClick}
+        dialFileSystemLabel={dialFileSystemLabel}
         attachLabel={attachLabel}
         addMenuTitle={addMenuTitle}
         menuTitle={menuTitle}
         menuCloseLabel={menuCloseLabel}
-        style={cssVars}
-        isDisabled={isInputDisabled || isVoiceActive}
-        chatSettings={chatSettings}
-        extraMenuItems={dialFileSystemMenuItem}
-        onRecordVoice={
-          isVoiceRecordingSupported &&
-          isAttachmentsEnabled &&
-          !isStreaming &&
-          !isVoiceActive
-            ? () => startRecording(VoiceRecordingMode.Attachment)
-            : undefined
-        }
         recordVoiceLabel={recordVoiceLabel}
-        /*
-         * The "Tools" submenu exists only to bring a dismissed chip
-         * back. With removal off every chip is always on screen, so the
-         * entry would be dead weight — and where tools are the menu's
-         * only content, withholding them drops the `+` button entirely.
-         * On a phone unselected tools have no chip, so the submenu is the
-         * only way to switch them on and is always offered.
-         */
-        toolsMenuItems={canRemoveTools || isPhone ? toolsMenuItems : undefined}
-        onToolToggle={onToolToggle}
         toolsMenuTitle={toolsMenuTitle}
         toolsBackLabel={toolsBackLabel}
-        menuOverlays={menuOverlays}
-        getCaretPosition={() =>
-          textareaRef.current?.selectionStart ?? message.length
-        }
       />
     );
 
