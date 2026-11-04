@@ -270,7 +270,7 @@ copying fields one by one:
   `getToolset`),
 - `libs/chat-hooks/src/catalog/useCatalogToolsetCredentials/useCatalogToolsetCredentials.ts`,
 - `libs/chat-hooks/src/catalog/application-credentials.ts` (`buildApplicationCredentialLoginParams`),
-- `apps/chat/src/utils/signin-interrupt.ts` (both the toolset and the external-service resolvers),
+- `libs/chat-hooks/src/signin-interrupt/signin-row-info.ts` (both the toolset and the external-service resolvers),
 - `apps/chat/src/pages/ApplicationEditor/setup/AppEditorIframe.tsx` (the QuickApps
   external-service relay).
 

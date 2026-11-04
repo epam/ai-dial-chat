@@ -191,14 +191,23 @@ failed state so the host page can render and announce it.
 ### Requirement: Host retains routing, i18n, and API dispatch
 
 The consuming page SHALL remain app-owned. It supplies the callback path, the exchange callback, and
-all user-visible text; it also owns any dispatch between multiple OAuth resource kinds, which the
-hook sees only as its single injected exchange callback.
+all user-visible text. Dispatch between multiple OAuth resource kinds SHALL stay out of the hook,
+which sees only its single injected exchange callback; the lib provides it separately as
+`createOAuthCallbackExchange`, which the page builds from its own already-configured sign-in
+operations (the lib never constructs a client).
 
 #### Scenario: Multiple resource kinds
 
 - **WHEN** an application supports several OAuth resource kinds through one callback route
-- **THEN** the page selects the API call for the stored resource kind and passes it as the exchange
-  callback, and the hook contains no per-kind branching
+- **THEN** the page passes its toolset, external-service and offline-credentials sign-in operations
+  to `createOAuthCallbackExchange`, which calls the one matching the stored resource kind, and
+  passes the result as the exchange callback; the hook contains no per-kind branching
+
+#### Scenario: Unparseable external-service scope id
+
+- **WHEN** the stored redirect state is for an external service and its scope id does not split
+  into an application id and a service id
+- **THEN** the exchange resolves `MissingRedirectState` without calling any sign-in operation
 
 #### Scenario: No translation in the lib
 

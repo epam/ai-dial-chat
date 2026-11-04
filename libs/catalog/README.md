@@ -1865,12 +1865,71 @@ The slot appears below the item header in the open, editable, normal details vie
 A host adapter can render `ApplicationCredentials` here and reuse it in another
 surface. The host decides which items qualify and supplies API/authentication
 behavior and translations; `useApplicationCredentials` from
-`@epam/ai-dial-chat-hooks` can own metadata loading with host-configured clients.
+`@epam/ai-dial-chat-hooks` can own metadata loading with host-configured clients,
+and its `useApplicationCredentialActions` the `onLogin` / `onLogout` callbacks.
 Existing toolset `onLogin` / `onLogout` contracts are unchanged.
 
 The public `DeploymentSelectorField` restores focus through the input's
 supported `onFocus` event and never requires a private input ref or DOM query.
 Its keyboard and Browse behavior is exercised by the packed scheduler consumer.
+
+### SigninInterruptDialog
+
+`SigninInterruptDialog` is the non-dismissible popup a host shows while a running
+application or toolset waits for the user to sign in mid-flow. Each
+`SigninInterruptDialogRow` renders the resource name and version, an optional
+password-type API key field, an always-mounted assertive region for its
+`errorMessage` with a Retry action, an optional DIAL-native hint, and Decline /
+Log in actions — or the no-credentials label when `requiresNoCredentials` is set.
+A processing row is `aria-busy`, its controls are disabled and Log in shows a
+spinner. `Decline all` renders only while more than one row is listed, the
+offline-use consent checkbox only when `isOfflineUsageConsentShown` is set, and
+`statusMessage` is announced in a visually hidden polite region. An empty `rows`
+list renders nothing.
+
+The component holds no state and knows no DIAL Core data: the host resolves the
+rows, translates errors and the status message, and supplies the callbacks.
+`useSigninInterrupt` from `@epam/ai-dial-chat-hooks` produces everything it needs
+from pending client-channel events.
+
+```tsx
+import { SigninInterruptDialog } from '@epam/ai-dial-catalog';
+
+<SigninInterruptDialog
+  rows={[
+    {
+      id: 'evt-1',
+      displayName: 'Notion',
+      displayVersion: '1.0',
+      apiKey,
+      isProcessing: false,
+      canSubmitLogin: apiKey.trim().length > 0,
+      requiresApiKey: true,
+      requiresNoCredentials: false,
+      showDialNativeHint: false,
+    },
+  ]}
+  statusMessage={statusMessage}
+  isOfflineUsageConsentShown
+  offlineUsageConsent={offlineUsageConsent}
+  onOfflineUsageConsentChange={setOfflineUsageConsent}
+  onApiKeyChange={(rowId, value) => setApiKey(value)}
+  onLogin={(rowId) => login(rowId)}
+  onDecline={(rowId) => decline(rowId)}
+  onDeclineAll={declineAll}
+/>;
+```
+
+`labels` (`SigninInterruptDialogLabels`) overrides `title`, `description`,
+`declineAll`, `decline`, `logIn`, `retry`, `apiKeyLabel`, `apiKeyPlaceholder`,
+`dialNativeHint`, `noCredentialsRequired`, `offlineUsageConsent` and
+`offlineUsageConsentHint`; each defaults to its English text. `colors`
+(`SigninInterruptDialogColors`) sets `rowBorder` (`--stroke-primary`), `nameText`
+(`--text-primary`), `errorText` (`--text-error`), `hintText` and `descriptionText`
+(both `--text-secondary`) as `--cat-signin-*` custom properties inside the popup.
+Typography props: `descriptionClassName` (`'dial-small-text'`), `nameClassName`
+(`'dial-body-semi-text'`), `errorClassName` (`'dial-small-text'`) and
+`hintClassName` (`'dial-small-text'`).
 
 ## Responsive menus and details
 
