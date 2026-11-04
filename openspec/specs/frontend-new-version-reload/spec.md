@@ -8,7 +8,7 @@ Detect when a newer build has been deployed while a chat tab remains open, and p
 
 ### Requirement: App-version polling hook
 
-A `useAppVersionCheck` hook in `apps/chat/src/hooks/` SHALL own the "is a new version available" state. On mount it SHALL capture the `buildId` from the `GET /api/health` response (via the generated `HealthApi.check()` method from `@epam/ai-dial-chat-api-client`, wrapped as `checkHealth` in `apps/chat/src/server-api/health.api.ts`) as the baseline for the current tab, then poll the same endpoint on a fixed interval (`POLL_INTERVAL_MS`, 5 minutes) for as long as the tab remains open, and additionally re-check whenever `document.visibilityState` becomes `visible`. A response without a `buildId` is ignored. The hook SHALL memoise its returned value and stop its interval and remove its `visibilitychange` listener on unmount (`useEffect` cleanup) to avoid leaking timers across route changes.
+The `useAppVersionCheck` hook in `libs/chat-hooks/src/shared/useAppVersionCheck/useAppVersionCheck.ts` (exported from `@epam/ai-dial-chat-hooks` and `@epam/ai-dial-chat-hooks/utils`) SHALL own the "is a new version available" state. The host passes the health request as `checkHealth`; `apps/chat` passes `checkHealth` from `apps/chat/src/server-api/health.api.ts`, which wraps the generated `HealthApi.check()` from `@epam/ai-dial-chat-api-client` with `cache: 'no-store'` and the hook's abort signal. On mount the hook SHALL capture the returned `buildId` as the baseline for the current tab, then re-check on a fixed interval (5 minutes) while the tab is visible, whenever the tab becomes visible again (`visibilitychange`, `focus`, `pageshow`), and on the first `pointerdown`/`keydown` after an idle period at least as long as the interval. Only one request SHALL be in flight at a time, and a request still pending after 10 seconds SHALL be aborted. A response without a `buildId` and a failed request are ignored. A `vite:preloadError` event (a chunk of the running build failed to load) SHALL be prevented and SHALL report a new version immediately. Once a new version is reported, and on unmount, the hook SHALL abort the pending request and remove every timer and listener.
 
 #### Scenario: Baseline build id captured on load
 
@@ -34,6 +34,21 @@ A `useAppVersionCheck` hook in `apps/chat/src/hooks/` SHALL own the "is a new ve
 
 - **WHEN** a poll's request to `GET /api/health` fails (network error or non-200 response)
 - **THEN** the hook leaves `isNewVersionAvailable` unchanged and retries on the next interval
+
+#### Scenario: Hidden tab is not polled
+
+- **WHEN** the tab is hidden while the interval elapses
+- **THEN** the hook makes no request, and checks as soon as the tab becomes visible again
+
+#### Scenario: Hung health request is aborted
+
+- **WHEN** a health request has not settled after 10 seconds
+- **THEN** the hook aborts it and the next check sends a new request
+
+#### Scenario: Failed chunk load reports a new version
+
+- **WHEN** the running build fails to load a chunk and Vite dispatches `vite:preloadError`
+- **THEN** the hook prevents the event's default and sets `isNewVersionAvailable` to `true` without waiting for a health check
 
 ---
 

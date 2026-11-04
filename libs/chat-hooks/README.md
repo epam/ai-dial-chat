@@ -1393,6 +1393,39 @@ const ResizableSidePanel = () => {
 | --------------------- | -------- | ----------------------------------------------------------------------------- |
 | `minContentAreaWidth` | `number` | Minimum pixel width the main content area must retain when the panel is open. |
 
+### useAppVersionCheck
+
+Reports when a long-lived tab runs a build that is no longer deployed, so the
+host can replace the app with a reload prompt. The host passes its health
+request; the hook keeps the first `buildId` as the tab's baseline and flags a
+different one. It also flags a new version at once when Vite fails to load a
+chunk of the running build (`vite:preloadError`). Available from the root and
+from `@epam/ai-dial-chat-hooks/utils`.
+
+```tsx
+import { useAppVersionCheck } from '@epam/ai-dial-chat-hooks/utils';
+
+const checkHealth = (signal: AbortSignal) =>
+  healthApi.check({ cache: 'no-store', signal });
+
+const App = () => {
+  const { isNewVersionAvailable } = useAppVersionCheck({ checkHealth });
+  return isNewVersionAvailable ? <NewVersionFallback /> : <Layout />;
+};
+```
+
+| Option             | Type                                             | Description                                                                                  |
+| ------------------ | ------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `checkHealth`      | `(signal: AbortSignal) => Promise<AppBuildInfo>` | Reads the deployed `buildId`; should bypass HTTP caches. A new function each render is fine. |
+| `pollIntervalMs`   | `number`                                         | Minimum time between checks while the tab is visible. Defaults to `300000` (5 minutes).      |
+| `requestTimeoutMs` | `number`                                         | Time after which one health request is aborted. Defaults to `10000`.                         |
+
+Checks run on mount, on the interval while the tab is visible, when the tab
+becomes visible again (`visibilitychange`, `focus`, `pageshow`), and on the
+first `pointerdown`/`keydown` after an idle period of at least
+`pollIntervalMs`. Only one request is in flight at a time; a missing `buildId`
+or a failed request is ignored. Once a new version is reported, all checks stop.
+
 ### useShareLink
 
 Resolves and manages share-link data for a DIAL Core resource: loading/error state, a stale-response guard, and re-fetch when the requested access levels change. Accepts an already-configured `ShareApi` instance from `@epam/ai-dial-chat-api-client` — the hook owns only the request lifecycle, not the client's base URL, auth, or CSRF setup.
