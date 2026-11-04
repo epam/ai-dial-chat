@@ -1,11 +1,11 @@
+import {
+  AVATAR_ALLOWED_MIME_TYPES,
+  AVATAR_MAX_FILE_SIZE_BYTES,
+} from '@epam/ai-dial-builder-form';
 import type { AttachResult } from '@epam/ai-dial-chat-shared';
 import { DialFileNodeType, type DialFile } from '@epam/ai-dial-ui-kit';
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  AVATAR_ALLOWED_MIME_TYPES,
-  AVATAR_MAX_FILE_SIZE_BYTES,
-} from '../../../constants/files';
 import { EditorI18nKeys } from '../../../constants/translation-keys';
 import { useApplicationAvatarPicker } from '../useApplicationAvatarPicker';
 

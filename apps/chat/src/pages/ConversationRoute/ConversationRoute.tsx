@@ -3,6 +3,7 @@ import {
   attachmentsToDtos,
   findDeploymentByIdOrReference,
   getApiErrorDetails,
+  getCleanedLocationTarget,
   getConversationPath,
   getQuickAppConversationStarters,
   getStarterConversationText,
@@ -64,7 +65,6 @@ import {
 import { ROUTES } from '../../types/routes';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
-import { getCleanedLocationTarget } from '../../utils/url-cleanup';
 
 /*
  * TODO: rename page and component
