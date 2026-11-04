@@ -61,7 +61,8 @@ The initial destination SHALL be the Personal root with the resource's current f
 
 i18n keys:
 
-- `ResourceSavePanelI18nKeys.Title` (with `{type}`), `SaveToFolderHeading`, `ChangeFolder`, `VersionHeading`, `KeepVersion` (with `{version}`), `SaveAsNewVersion`, `NewVersionLabel`, `NewVersionPlaceholder`, `PersonalRoot`;
+- `ResourceSavePanelI18nKeys.Title` (with `{type}`), `SaveToFolderHeading`, `ChangeFolder`, `KeepVersion` (with `{version}`), `SaveAsNewVersion`, `NewVersionLabel`, `NewVersionPlaceholder`, `PersonalRoot`;
+- `EditorI18nKeys.VersionLabel` for the Version heading;
 - `ButtonsI18nKeys.Save`, `ButtonsI18nKeys.Cancel`.
 
 RTL: logical properties only.
@@ -139,7 +140,7 @@ On the panel's Save, `runResourceSave` (`libs/chat-hooks/src/catalog/resource-sa
 | Personal folder (create) | — | `createIn(folder)` |
 | Organization folder (create) | — | `createIn([])` (the Personal root), then `publishCatalogEntity(type, newId, { folderPath, version: form version })` |
 
-In the Change folder view, while an Organization folder is selected, the access rules editor (`PublishAccessRules`) SHALL render below the tree, pre-filled with that folder's existing rules. The publish request SHALL carry those rules, and no `author` and no `publishCredentials`. After a successful publish the orchestrator SHALL call `rememberPublishFolder(folderPath)`.
+In the Change folder view, while an Organization folder is selected, the access rules editor (`PublishAccessRules`) SHALL render below the tree, pre-filled with that folder's existing rules. The publish request SHALL carry those rules, and no `author` and no `publishCredentials`. While the committed destination is an Organization folder whose rules are still loading or failed to load, Save SHALL be disabled and `submit` SHALL do nothing, so a publish never sends empty rules over the folder's existing ones. After a successful publish the orchestrator SHALL call `rememberPublishFolder(folderPath)`.
 
 Notifications, shown on success through `useOperationNotification` / `useNotification` helpers:
 
@@ -162,6 +163,14 @@ While a save runs, every panel control SHALL be disabled, and the Save button SH
 #### Scenario: Move fails after a successful save
 - **WHEN** the save succeeds and the move answers 409
 - **THEN** the "SavedButMoveFailed" notification shows and the editor returns to the Catalog
+
+#### Scenario: Move to the Personal root fails
+- **WHEN** the save succeeds and the move into the Personal root fails
+- **THEN** the "SavedButMoveFailed" notification names the folder "Personal" (`CatalogI18nKeys.FolderPersonal`), not "Organization"
+
+#### Scenario: Organization rules not loaded
+- **WHEN** the committed destination is Organization `EPAM` and its rules are still loading or failed to load
+- **THEN** Save is disabled and no save or publish request is sent
 
 #### Scenario: New version keeps the old version unchanged
 - **WHEN** the user saves toolset `search@1.0.0`, with unsaved edits, as new version `1.1.0` in Personal
@@ -189,11 +198,21 @@ For a Quick App (embedded-editor writer), `saveAsNewVersion` SHALL run:
 
 When step 2 fails or times out, the adapter SHALL delete the snapshot through the existing `deleteApplication` and rethrow. When step 3 fails, the adapter SHALL throw an error whose message is `ResourceSavePanelI18nKeys.CommitFailed`, naming both versions.
 
+The commit SHALL write the edits into the snapshot first and restore the source second, both with `If-Match`. When restoring the source fails, it SHALL write the snapshot's pre-edit body back before answering the error, so a failed commit leaves the edits in the current version, as `CommitFailed` says. A failure SHALL never leave the edits in neither version. The fork SHALL derive the base name from the text before the last `__`, so a name that itself contains `__` keeps it.
+
 Host-written kinds (schema-form, custom app, toolset) SHALL implement `saveAsNewVersion` as one create-only write of the edited values with `{ version, folderPath, createOnly: true }`, and SHALL NOT call fork or commit.
 
 #### Scenario: Quick App new version holds the edits
 - **WHEN** the user saves Quick App `agent@1.0.0`, with unsaved embedded-editor edits, as `1.1.0`
 - **THEN** after commit, `agent__1.1.0` holds the edits and `agent__1.0.0` holds its pre-edit content
+
+#### Scenario: Restoring the source fails during commit
+- **WHEN** the commit writes the edits into `agent__1.1.0` and then restoring `agent__1.0.0` fails
+- **THEN** `agent__1.1.0` gets its pre-edit body back, `agent__1.0.0` still holds the edits, and the panel shows `CommitFailed`
+
+#### Scenario: Name containing the separator
+- **WHEN** the user saves Quick App `my__app@1.0.0` (`my__app__1.0.0`) as `1.1.0`
+- **THEN** the snapshot is `my__app__1.1.0`
 
 #### Scenario: Embedded save fails after fork
 - **WHEN** the fork succeeds and the embedded editor reports `SaveError`

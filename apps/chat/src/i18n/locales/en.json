@@ -2071,7 +2071,6 @@
     "changeFolder": "Change",
     "changeFolderTitle": "Change folder",
     "destinationAriaLabel": "Destination folder",
-    "versionHeading": "Version",
     "keepVersion": "Keep version {{version}}",
     "saveAsNewVersion": "Save as new version",
     "newVersionLabel": "New version",

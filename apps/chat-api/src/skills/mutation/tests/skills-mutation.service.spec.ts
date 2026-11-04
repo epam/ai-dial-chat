@@ -269,7 +269,7 @@ describe('SkillsMutationService', () => {
 
       await expect(
         service.moveSkill('b1', 'docs-helper', 'Team A', 'token'),
-      ).resolves.toEqual({ id: 'skills/b1/Team A/docs-helper' });
+      ).resolves.toEqual({ id: 'skills/b1/Team%20A/docs-helper' });
       expect(sdkClient.moveResource).toHaveBeenCalledWith({
         headers: { Authorization: 'Bearer token' },
         body: {
@@ -286,6 +286,15 @@ describe('SkillsMutationService', () => {
       await expect(
         service.moveSkill('b1', 'team-a/docs-helper', 'team-a', 'token'),
       ).resolves.toEqual({ id: 'skills/b1/team-a/docs-helper' });
+      expect(sdkClient.moveResource).not.toHaveBeenCalled();
+    });
+
+    it('returns a percent-encoded id when the unchanged folder has a space', async () => {
+      const { service, sdkClient } = makeService();
+
+      await expect(
+        service.moveSkill('b1', 'Team A/docs helper', 'Team A', 'token'),
+      ).resolves.toEqual({ id: 'skills/b1/Team%20A/docs%20helper' });
       expect(sdkClient.moveResource).not.toHaveBeenCalled();
     });
 

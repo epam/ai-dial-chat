@@ -1863,7 +1863,6 @@ export enum ResourceSavePanelI18nKeys {
   ChangeFolder = 'resourceSavePanel.changeFolder',
   ChangeFolderTitle = 'resourceSavePanel.changeFolderTitle',
   DestinationAriaLabel = 'resourceSavePanel.destinationAriaLabel',
-  VersionHeading = 'resourceSavePanel.versionHeading',
   KeepVersion = 'resourceSavePanel.keepVersion',
   SaveAsNewVersion = 'resourceSavePanel.saveAsNewVersion',
   NewVersionLabel = 'resourceSavePanel.newVersionLabel',

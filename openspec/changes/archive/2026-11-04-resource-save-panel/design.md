@@ -160,7 +160,7 @@ All are under the existing versioned controllers.
 
 ## Risks / Trade-offs
 
-- **[R1] Quick App commit is two writes, not atomic.** → `If-Match` guards both writes, and the old path is restored first. A failure after that leaves the old version restored and the new version holding pre-edit content. The error names which version holds the edits, and commit is retry-safe given the same ETags.
+- **[R1] Quick App commit is two writes, not atomic.** → `If-Match` guards both writes. The edits go into the new version first, then the old path is restored. If restoring fails, the new version is rolled back to its pre-edit body, so the edits stay in the current version, as `CommitFailed` says. If the rollback fails too, the edits exist in both versions — duplicated, never lost. A retry re-reads the ETags.
 - **[R2] Code assuming flat ids.** Callers may assume `{type}/{bucket}/{name}` with exactly three segments (`normalizeDeploymentId`, catalog id parsers, toolset lookups). → Task 1.1 audits them before any move ships.
 - **[R3] Locally created folders vanish if the user cancels.** This is intended and matches Publish.
 - **[R4] Publishing without author or credentials** differs from the Catalog panel. → Documented as a non-goal; access rules are offered under the folder tree.

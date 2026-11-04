@@ -169,7 +169,8 @@ export class SkillsMutationService {
 
   /**
    * Moves one of the caller's skills into `folderPath` of the same bucket,
-   * never overwriting a skill already there; resolves with its new id.
+   * never overwriting a skill already there; resolves with its new
+   * percent-encoded id.
    * DIAL Core answers a non-overwriting move onto an existing target with
    * 400, so that case is reported as 409.
    */
@@ -180,16 +181,16 @@ export class SkillsMutationService {
     accessToken: string,
   ): Promise<ResourceIdResponseDto> {
     const context = 'skills.moveSkill';
-    const leaf = path.split('/').pop() ?? path;
-    const targetPath = folderPath ? `${folderPath}/${leaf}` : leaf;
-    if (targetPath === path) return { id: `skills/${bucket}/${path}` };
-
-    const headers = getBearerAuthHeaders(accessToken);
     const sourcePath = encodeDialResourcePath(path);
     const destinationPath = buildFolderResourcePath(
       folderPath,
       getResourceLeaf(sourcePath),
     );
+    // Percent-encoded, like the ids the application and toolset moves return.
+    const id = `skills/${bucket}/${destinationPath}`;
+    if (destinationPath === sourcePath) return { id };
+
+    const headers = getBearerAuthHeaders(accessToken);
     try {
       const { error, response } = await this.dialClient.client.moveResource({
         headers,
@@ -199,9 +200,7 @@ export class SkillsMutationService {
           overwrite: false,
         },
       });
-      if (error == null && response.status < 400) {
-        return { id: `skills/${bucket}/${targetPath}` };
-      }
+      if (error == null && response.status < 400) return { id };
       if (
         response.status === 400 &&
         (await this.skillExists(bucket, destinationPath, headers))

@@ -1,11 +1,15 @@
 import {
   ResourceSaveOutcome,
+  SaveDestinationRoot,
   type ResourceSaveChoice,
   type ResourceSaveResult,
 } from '@epam/ai-dial-chat-hooks';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ResourceSavePanelI18nKeys } from '../../constants/translation-keys';
+import {
+  CatalogI18nKeys,
+  ResourceSavePanelI18nKeys,
+} from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import {
   EntityOperation,
@@ -39,10 +43,15 @@ export const useResourceSaveNotification = ({
       const folderPath = choice.destination.path;
       const params = { name: resourceName, type: notificationType };
       if (result.outcome === ResourceSaveOutcome.SavedButMoveFailed) {
+        // The Personal root has no path segments; name it as the folder tree does.
+        const folder =
+          choice.destination.rootKey === SaveDestinationRoot.Organization
+            ? getPublishFolderLabel(folderPath, t)
+            : (folderPath.at(-1) ?? t(CatalogI18nKeys.FolderPersonal));
         showErrorNotification({
           message: t(ResourceSavePanelI18nKeys.SavedButMoveFailed, {
             name: resourceName,
-            folder: getPublishFolderLabel(folderPath, t),
+            folder,
           }),
         });
         return;

@@ -1521,6 +1521,27 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
       );
     });
 
+    it('keeps a separator inside the name when forking', async () => {
+      const { service } = makeService();
+      withBucket(service);
+      client(service).copyResource.mockResolvedValue({
+        response: { status: 200 },
+      } as never);
+      client(service).getCustomApplication.mockResolvedValue(
+        appResponse({ displayVersion: '1.0.0' }, 'e1'),
+      );
+      client(service).saveCustomApplication.mockResolvedValue(okResponse({}));
+
+      const result = await service.forkApplicationVersion(
+        'user1',
+        'token',
+        'applications/b1/my__app__1.0.0',
+        { version: '1.1.0', folderPath: '' },
+      );
+
+      expect(result).toEqual({ id: 'applications/b1/my__app__1.1.0' });
+    });
+
     it('deletes the copy when stamping the version fails', async () => {
       const { service } = makeService();
       withBucket(service);
@@ -1569,7 +1590,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
       ).rejects.toBeInstanceOf(ConflictException);
     });
 
-    it('commits by restoring the source first and moving the edits to the snapshot', async () => {
+    it('commits by moving the edits to the snapshot first and then restoring the source', async () => {
       const { service } = makeService();
       withBucket(service);
       client(service).getCustomApplication.mockImplementation(((
@@ -1598,7 +1619,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
 
       expect(result).toEqual({ id: 'applications/b1/agent__1.1.0' });
       expect(client(service).saveCustomApplication).toHaveBeenNthCalledWith(
-        1,
+        2,
         'b1',
         'agent__1.0.0',
         {
@@ -1607,13 +1628,83 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
         },
       );
       expect(client(service).saveCustomApplication).toHaveBeenNthCalledWith(
-        2,
+        1,
         'b1',
         'agent__1.1.0',
         {
           headers: { Authorization: 'Bearer token', 'If-Match': 'snap' },
           body: { displayVersion: '1.1.0', description: 'edited' },
         },
+      );
+    });
+
+    it('rolls the snapshot back and keeps the edits in the source when restoring the source fails', async () => {
+      const { service } = makeService();
+      withBucket(service);
+      client(service).getCustomApplication.mockImplementation(((
+        _bucket: string,
+        path: string,
+      ) =>
+        Promise.resolve(
+          path === 'agent__1.0.0'
+            ? appResponse(
+                { displayVersion: '1.0.0', description: 'edited' },
+                'src',
+              )
+            : appResponse(
+                { displayVersion: '1.1.0', description: 'pre' },
+                'snap',
+              ),
+        )) as never);
+      client(service).saveCustomApplication.mockImplementation(((
+        _bucket: string,
+        path: string,
+      ) =>
+        Promise.resolve(
+          path === 'agent__1.0.0' ? errResponse(500) : okResponse({}),
+        )) as never);
+
+      await expect(
+        service.commitApplicationVersion(
+          'user1',
+          'token',
+          'applications/b1/agent__1.0.0',
+          { snapshotId: 'applications/b1/agent__1.1.0' },
+        ),
+      ).rejects.toBeInstanceOf(BadGatewayException);
+      expect(client(service).saveCustomApplication).toHaveBeenCalledTimes(3);
+      expect(client(service).saveCustomApplication).toHaveBeenNthCalledWith(
+        3,
+        'b1',
+        'agent__1.1.0',
+        {
+          headers: { Authorization: 'Bearer token' },
+          body: { displayVersion: '1.1.0', description: 'pre' },
+        },
+      );
+    });
+
+    it('leaves both resources untouched when writing the snapshot fails', async () => {
+      const { service } = makeService();
+      withBucket(service);
+      client(service).getCustomApplication.mockResolvedValue(
+        appResponse({ displayVersion: '1.0.0' }, 'e'),
+      );
+      client(service).saveCustomApplication.mockResolvedValue(errResponse(500));
+
+      await expect(
+        service.commitApplicationVersion(
+          'user1',
+          'token',
+          'applications/b1/agent__1.0.0',
+          { snapshotId: 'applications/b1/agent__1.1.0' },
+        ),
+      ).rejects.toBeInstanceOf(BadGatewayException);
+      expect(client(service).saveCustomApplication).toHaveBeenCalledOnce();
+      expect(client(service).saveCustomApplication).toHaveBeenCalledWith(
+        'b1',
+        'agent__1.1.0',
+        expect.anything(),
       );
     });
 

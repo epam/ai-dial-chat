@@ -282,9 +282,20 @@ export class ToolsetsMutationService {
         });
       }
       id = `${TOOLSET_RESOURCE_PREFIX}${bucket}/${destination.path}`;
-      await this.listingService.invalidateCaches(userSub, toolsetName);
     } catch (err) {
       return handleDialFetchError(err, context, this.logger, 0);
+    }
+    // The move already succeeded; a cache failure must not report it as failed.
+    try {
+      await this.listingService.invalidateCaches(userSub, toolsetName);
+    } catch (err) {
+      handleDialFetchError(
+        err,
+        `invalidate caches after ${context} (sub: ${userSub})`,
+        this.logger,
+        0,
+        { swallow: true },
+      );
     }
     this.logger.debug(
       `Moved toolset ${toolsetName} to ${id} (sub: ${userSub})`,

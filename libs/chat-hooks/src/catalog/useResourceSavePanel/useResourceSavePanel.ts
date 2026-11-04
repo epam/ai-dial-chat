@@ -219,6 +219,11 @@ export const useResourceSavePanel = ({
     conflictedVersion,
   ]);
 
+  /* Publishing before the folder's rules arrive would send `rules: []` and overwrite the folder's existing rules. */
+  const isRulesPending =
+    destination.rootKey === SaveDestinationRoot.Organization &&
+    (isRulesLoading || hasRulesLoadError);
+
   const setNewVersion = useCallback((version: string) => {
     setNewVersionValue(version);
     setSubmitError(undefined);
@@ -232,7 +237,7 @@ export const useResourceSavePanel = ({
   const { saveError } = labels;
   const submit = useCallback(async () => {
     setIsNewVersionTouched(true);
-    if (versionError) return;
+    if (versionError || isRulesPending) return;
     setIsSubmitting(true);
     setSubmitError(undefined);
     const choice: ResourceSaveChoice = {
@@ -268,6 +273,7 @@ export const useResourceSavePanel = ({
     currentVersion,
     destination,
     isNewVersion,
+    isRulesPending,
     onSaved,
     publish,
     rememberPublishFolder,
@@ -387,7 +393,8 @@ export const useResourceSavePanel = ({
   return {
     panelProps: {
       onSubmit: handleSubmit,
-      isSubmitDisabled: isNewVersion && Boolean(versionError),
+      isSubmitDisabled:
+        (isNewVersion && Boolean(versionError)) || isRulesPending,
       isSubmitting,
       submitError,
       roots,

@@ -290,7 +290,7 @@ export const createSkillFolderLister =
         token,
       });
       for (const item of page.items) {
-        // A skill is itself stored as a folder; only grouping folders hold skills.
+        // Skills list as `item` nodes; only the grouping folders above them are `folder`.
         if (item.nodeType !== 'folder') continue;
         const folderPath = item.path.replace(/\/$/, '');
         folders.push({ name: item.name, path: folderPath });

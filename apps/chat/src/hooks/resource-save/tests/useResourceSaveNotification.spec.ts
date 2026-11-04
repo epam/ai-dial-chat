@@ -8,7 +8,10 @@ import { SaveVersionMode } from '@epam/ai-dial-publish-panel';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ResourceSavePanelI18nKeys } from '../../../constants/translation-keys';
+import {
+  CatalogI18nKeys,
+  ResourceSavePanelI18nKeys,
+} from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { NotifiableEntity } from '../../../types/entity-notification';
@@ -74,6 +77,37 @@ describe('useResourceSaveNotification', () => {
       expect.objectContaining({
         variant: NotificationVariant.Success,
         message: `${ResourceSavePanelI18nKeys.NewVersionSaved}|${JSON.stringify({ name: 'Agent', version: '1.1.0' })}`,
+      }),
+    );
+  });
+
+  it('names the Personal root when a move to it fails', () => {
+    renderNotify()(
+      makeResult({ outcome: ResourceSaveOutcome.SavedButMoveFailed }),
+      choice,
+    );
+    expect(showNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variant: NotificationVariant.Error,
+        message: `${ResourceSavePanelI18nKeys.SavedButMoveFailed}|${JSON.stringify({ name: 'Agent', folder: CatalogI18nKeys.FolderPersonal })}`,
+      }),
+    );
+  });
+
+  it('names the last folder segment when a move to a Personal subfolder fails', () => {
+    renderNotify()(
+      makeResult({ outcome: ResourceSaveOutcome.SavedButMoveFailed }),
+      {
+        ...choice,
+        destination: {
+          rootKey: SaveDestinationRoot.Personal,
+          path: ['Work', 'Drafts'],
+        },
+      },
+    );
+    expect(showNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: `${ResourceSavePanelI18nKeys.SavedButMoveFailed}|${JSON.stringify({ name: 'Agent', folder: 'Drafts' })}`,
       }),
     );
   });

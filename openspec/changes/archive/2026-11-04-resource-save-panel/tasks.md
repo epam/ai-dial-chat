@@ -22,7 +22,7 @@ Slices 4–6 each depend only on slices 1–3. Run `npm run verify:changed` once
   - Verification: `npm run test:file -- apps/chat-api/src/applications/tests/applications.service.spec.ts`
 - [x] 1.5 Applications: add `listApplicationFolders` (`GET folders`, registered before `:applicationName` routes) and `moveApplication` (`POST :applicationName/move`) in `applications.controller.ts` / `applications.service.ts`. Include `@ApiOperation` and `@ApiResponse` for every status, and invalidate `applications:list:{userSub}`.
   - Verification: `npm run test:file -- apps/chat-api/src/applications/tests/applications.controller.spec.ts`
-- [x] 1.6 Applications: add `forkApplicationVersion` and `commitApplicationVersion`, with `ForkApplicationVersionDto` / `CommitApplicationVersionDto` in `apps/chat-api/src/applications/dto/`. Commit writes with `If-Match` and restores the source first.
+- [x] 1.6 Applications: add `forkApplicationVersion` and `commitApplicationVersion`, with `ForkApplicationVersionDto` / `CommitApplicationVersionDto` in `apps/chat-api/src/applications/dto/`. Commit writes with `If-Match`, puts the edits into the snapshot first, and rolls the snapshot back if restoring the source fails.
   - Verification: `npm run test:file -- apps/chat-api/src/applications/tests/applications.service.spec.ts`
 - [x] 1.7 Toolsets: add `folderPath` and `createOnly` to the create body (`apps/chat-api/src/toolsets/dto/toolset-body.dto.ts`, `toolsets-mutation.service.ts`), plus `listToolsetFolders` (registered before `:toolsetName`) and `moveToolset` in `toolsets.controller.ts`. The move neither reads nor logs secrets.
   - Verification: `npm run test:file -- apps/chat-api/src/toolsets/tests/toolsets.controller.spec.ts`

@@ -704,9 +704,11 @@ export class ApplicationsService {
         authHeaders,
         applicationName,
       );
-      const [baseName] = getResourceLeaf(source.path).split(
-        APPLICATION_VERSION_SEPARATOR,
-      );
+      // The name itself may contain the separator; the version follows the last one.
+      const leaf = getResourceLeaf(source.path);
+      const separatorIndex = leaf.lastIndexOf(APPLICATION_VERSION_SEPARATOR);
+      const baseName =
+        separatorIndex === -1 ? leaf : leaf.slice(0, separatorIndex);
       snapshot = {
         bucket: source.bucket,
         path: buildFolderResourcePath(
@@ -756,13 +758,40 @@ export class ApplicationsService {
     return { id };
   }
 
+  /*
+   * Best-effort undo of the first commit write. If it fails too, the edits
+   * are in both the source and the snapshot — duplicated, never lost.
+   */
+  private async rollbackSnapshot(
+    authHeaders: ReturnType<typeof getBearerAuthHeaders>,
+    snapshot: DialApplicationResource,
+    preEditBody: DialApplication,
+    context: string,
+  ): Promise<void> {
+    try {
+      await this.writeApplication(
+        authHeaders,
+        snapshot,
+        preEditBody,
+        `${context} (rollback)`,
+      );
+    } catch (err) {
+      handleDialFetchError(err, `${context} (rollback)`, this.logger, 0, {
+        swallow: true,
+      });
+    }
+  }
+
   /**
    * Swaps the bodies of the source application and its forked snapshot,
-   * each keeping its own `displayVersion`: the source gets back the pre-edit
-   * body the snapshot preserved, and the snapshot gets the edits the source
-   * was saved with. The source is restored first, so a failure between the
-   * two writes leaves the old version intact. Both writes are conditional on
-   * the ETags read here, so a concurrent change answers 409.
+   * each keeping its own `displayVersion`: the snapshot gets the edits the
+   * source was saved with, and the source gets back the pre-edit body the
+   * snapshot preserved. The snapshot is written first, so the edits are
+   * stored in the new version before the source is overwritten; if
+   * restoring the source then fails, the snapshot is rolled back and the
+   * edits stay in the source. Either way a failure never loses the edits.
+   * Both writes are conditional on the ETags read here, so a concurrent
+   * change answers 409.
    */
   async commitApplicationVersion(
     userSub: string,
@@ -791,16 +820,6 @@ export class ApplicationsService {
       ]);
       await this.writeApplication(
         authHeaders,
-        source,
-        {
-          ...snapshotState.body,
-          displayVersion: sourceState.body.displayVersion,
-        },
-        context,
-        sourceState.etag,
-      );
-      await this.writeApplication(
-        authHeaders,
         snapshot,
         {
           ...sourceState.body,
@@ -809,6 +828,26 @@ export class ApplicationsService {
         context,
         snapshotState.etag,
       );
+      try {
+        await this.writeApplication(
+          authHeaders,
+          source,
+          {
+            ...snapshotState.body,
+            displayVersion: sourceState.body.displayVersion,
+          },
+          context,
+          sourceState.etag,
+        );
+      } catch (err) {
+        await this.rollbackSnapshot(
+          authHeaders,
+          snapshot,
+          snapshotState.body,
+          context,
+        );
+        throw err;
+      }
     } catch (err) {
       return handleDialFetchError(err, context, this.logger, 0);
     }

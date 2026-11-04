@@ -1,6 +1,7 @@
 import {
   PublicationRuleFunction,
   SaveVersionMode,
+  type PublicationRule,
 } from '@epam/ai-dial-publish-panel';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -295,6 +296,53 @@ describe('useResourceSavePanel', () => {
       expect(result.current.panelProps.accessRules?.hasLoadError).toBe(true),
     );
     expect(result.current.panelProps.accessRules?.isLoading).toBe(false);
+  });
+
+  it('blocks Save on an Organization folder while its rules load or after they fail', async () => {
+    let rejectRules: (error: Error) => void = () => undefined;
+    const publishCatalogEntity = vi.fn();
+    const adapter = makeAdapter();
+    const { result } = renderPanel({
+      adapter,
+      publishClient: {
+        publishCatalogEntity,
+        getPublishRules: vi.fn(
+          () =>
+            new Promise<PublicationRule[]>((_resolve, reject) => {
+              rejectRules = reject;
+            }),
+        ),
+      },
+    });
+    act(() => result.current.panelProps.onPendingDestinationChange?.(EPAM));
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+
+    expect(result.current.panelProps.isSubmitDisabled).toBe(true);
+
+    act(() => rejectRules(new Error('boom')));
+    await waitFor(() =>
+      expect(result.current.panelProps.accessRules?.hasLoadError).toBe(true),
+    );
+    expect(result.current.panelProps.isSubmitDisabled).toBe(true);
+
+    await act(() => result.current.submit());
+    expect(adapter.saveInPlace).not.toHaveBeenCalled();
+    expect(publishCatalogEntity).not.toHaveBeenCalled();
+  });
+
+  it('keeps Save enabled on a Personal folder when the last Organization rules failed', async () => {
+    const { result } = renderPanel({
+      publishClient: {
+        publishCatalogEntity: vi.fn(),
+        getPublishRules: vi.fn().mockRejectedValue(new Error('boom')),
+      },
+    });
+    act(() => result.current.panelProps.onPendingDestinationChange?.(EPAM));
+    await waitFor(() =>
+      expect(result.current.panelProps.accessRules?.hasLoadError).toBe(true),
+    );
+
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
   });
 
   it('reports a failed publish after a successful save as a partial outcome', async () => {

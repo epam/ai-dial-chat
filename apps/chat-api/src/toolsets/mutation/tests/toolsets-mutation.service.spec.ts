@@ -827,6 +827,26 @@ describe('ToolsetsMutationService', () => {
       expect(client(service).getCustomToolSet).not.toHaveBeenCalled();
     });
 
+    it('still returns the new id when invalidating caches after a move fails', async () => {
+      const { service, cacheManager } = makeWriteService();
+      client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+      client(service).moveResource.mockResolvedValue({
+        response: { status: 200 },
+      } as never);
+      cacheManager.del.mockRejectedValue(new Error('redis down'));
+
+      await expect(
+        service.moveToolset(
+          'user1',
+          'token',
+          'toolsets/test-bucket/search__1.0.0',
+          'Search',
+        ),
+      ).resolves.toEqual({
+        id: 'toolsets/test-bucket/Search/search__1.0.0',
+      });
+    });
+
     it('rejects moving a toolset from another bucket', async () => {
       const { service } = makeWriteService();
       client(service).getUserBucket.mockResolvedValue(bucketSdkOk);

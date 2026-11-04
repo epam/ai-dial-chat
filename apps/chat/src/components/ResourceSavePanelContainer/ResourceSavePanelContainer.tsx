@@ -18,6 +18,7 @@ import {
   ButtonsI18nKeys,
   CatalogI18nKeys,
   ConversationPublishI18nKeys,
+  EditorI18nKeys,
   ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
@@ -157,7 +158,7 @@ const ResourceSavePanelContainer: FC<Props> = ({
       saveToFolderHeading: t(ResourceSavePanelI18nKeys.SaveToFolderHeading),
       changeFolderLabel: t(ResourceSavePanelI18nKeys.ChangeFolder),
       destinationAriaLabel: t(ResourceSavePanelI18nKeys.DestinationAriaLabel),
-      versionHeading: t(ResourceSavePanelI18nKeys.VersionHeading),
+      versionHeading: t(EditorI18nKeys.VersionLabel),
       keepVersionLabel: t(ResourceSavePanelI18nKeys.KeepVersion, {
         version: currentVersion,
       }),
