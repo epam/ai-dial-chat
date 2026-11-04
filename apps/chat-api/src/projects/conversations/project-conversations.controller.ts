@@ -37,8 +37,8 @@ import { SaveConversationBodyDto } from '../../conversations/dto/save-conversati
 import { SendCompletionDto } from '../../conversations/dto/send-completion.dto';
 import { StopCompletionDto } from '../../conversations/dto/stop-completion.dto';
 import { ConversationCompletionsResponder } from '../../conversations/streaming/conversation-completions.responder';
-import { TIMEZONE_HEADER } from '../../conversations/utils/timezone-header';
 import { LANG_HEADER } from '../../conversations/utils/lang-header';
+import { TIMEZONE_HEADER } from '../../conversations/utils/timezone-header';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import { ProjectCreateErrorDto } from '../dto/project-create-error.dto';
 import {

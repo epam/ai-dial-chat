@@ -28,8 +28,8 @@ import type { AttachGenerationDto } from '../dto/attach-generation.dto';
 import type { SendCompletionDto } from '../dto/send-completion.dto';
 import type { StopCompletionDto } from '../dto/stop-completion.dto';
 import { BackgroundStopResult } from '../generation/background-generation.service';
-import { assertValidOptionalTimezone } from '../utils/timezone-header';
 import { assertValidOptionalLang } from '../utils/lang-header';
+import { assertValidOptionalTimezone } from '../utils/timezone-header';
 import {
   completionResponseTerminations,
   CompletionResponseTermination,

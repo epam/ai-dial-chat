@@ -81,8 +81,8 @@ import {
   ConversationCompletionsResponder,
   SSE_KEEPALIVE_INTERVAL_MS,
 } from './streaming/conversation-completions.responder';
-import { TIMEZONE_HEADER, TIMEZONE_MAX_LENGTH } from './utils/timezone-header';
 import { LANG_HEADER, LANG_MAX_LENGTH } from './utils/lang-header';
+import { TIMEZONE_HEADER, TIMEZONE_MAX_LENGTH } from './utils/timezone-header';
 
 @ApiTags('conversations')
 @Controller({ path: 'conversations', version: '1' })

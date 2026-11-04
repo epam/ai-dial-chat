@@ -3,8 +3,8 @@ import {
   createChatStreamApi,
   getBrowserTimezone,
 } from '@epam/ai-dial-chat-hooks';
-import { ApiEndpoints, getCsrfToken, setCsrfToken } from './base';
 import { getUiLanguage } from '../i18n/get-ui-language';
+import { ApiEndpoints, getCsrfToken, setCsrfToken } from './base';
 
 export { SendCompletionDtoModeEnum as CompletionMode };
 
