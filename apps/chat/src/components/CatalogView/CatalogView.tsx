@@ -39,6 +39,7 @@ import {
   NavigationI18nKeys,
   PublishI18nKeys,
   ToolsetEditorI18nKeys,
+  ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
@@ -682,6 +683,7 @@ const CatalogView: FC<Props> = ({
           ),
           submitError: t(PublishI18nKeys.SubmitErrorCallout),
           rootFolderLabel: t(BasicI18nKeys.Organization),
+          selectFolderLabel: t(ButtonsI18nKeys.Select),
           accessRulesLabels: getAccessRulesLabels(t),
           ...getPublishAuthorLabels(t),
           ...getPublishPanelCommonLabels(t),
@@ -951,6 +953,9 @@ const CatalogView: FC<Props> = ({
             CatalogI18nKeys.DetailsRevokeShareRevokingStatus,
           ),
           unpublishLabel: t(ButtonsI18nKeys.Unpublish),
+          publishChangeFolderTitle: t(
+            ResourceSavePanelI18nKeys.ChangeFolderTitle,
+          ),
           unpublishConfirmTitle: t(
             CatalogI18nKeys.DetailsUnpublishConfirmTitle,
           ),

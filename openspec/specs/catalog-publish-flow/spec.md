@@ -12,8 +12,8 @@ State ownership: `@epam/ai-dial-publish-panel`'s `usePublishFlow` hook (relocate
 RTL/direction impact: the tree and search input SHALL use CSS logical properties only; `DialFoldersTree` renders its own RTL-correct chevrons and indentation internally, so no app- or lib-level directional icon mirroring is added for this requirement.
 
 #### Scenario: User selects a destination folder
-- **WHEN** the user clicks a folder node in the publish folder tree
-- **THEN** that folder's path becomes `selectedFolderPath`, the tree highlights it as selected, and any previously selected folder is deselected
+- **WHEN** the user opens the folder view from the destination row, clicks a folder node in the publish folder tree and presses Select
+- **THEN** that folder's path becomes `selectedFolderPath`, the tree had highlighted it as selected, and any previously selected folder is deselected
 
 #### Scenario: Expanding a folder loads its children lazily
 - **WHEN** the user expands a folder node that has not yet been loaded
@@ -216,7 +216,7 @@ Accessibility: the submit-error callout SHALL use `role="alert"`.
 - **THEN** it rejects, so the `Unpublish` entry stays hidden and is retried on the next menu open
 
 ### Requirement: Catalog entity summary is supplied to the shared publish panel as resource metadata
-`DetailsPanel` SHALL supply the publish summary to the shared `PublishPanel` (from `@epam/ai-dial-publish-panel`) as the `resource` prop — `{ title: item.name, version: item.version, type: item.type, iconUrl: item.iconUrl }` — plus the version-tag colors through `styles.colors` (`summaryVersionTagBorder`/`summaryVersionTagBackground`/`summaryVersionTagText`, from `detailsColors`), rather than passing a `CatalogItem` or a `renderSummary` slot. `DetailsPanel` SHALL remain the only place in `libs/catalog` that maps a `CatalogItem` to that summary; `PublishPanel` SHALL NOT receive a `CatalogItem`. Because `resource.type` is set, `PublishPanel` builds the entity-header row itself (`ResourceSummary` with type, name, version and icon) and ignores any `renderSummary`, which only replaces the title-only row used when `resource.type` is absent.
+`DetailsPanel` SHALL supply the publish summary to the shared `PublishPanel` (from `@epam/ai-dial-publish-panel`) as the `resource` prop — `{ title: item.name, version: item.version, type: item.type, iconUrl: item.iconUrl }`, rather than passing a `CatalogItem` or a `renderSummary` slot. `DetailsPanel` SHALL remain the only place in `libs/catalog` that maps a `CatalogItem` to that summary; `PublishPanel` SHALL NOT receive a `CatalogItem`. Because `resource.type` is set, `PublishPanel` builds the entity-header row itself (`ResourceSummary` with type, name, icon, and the version shown inline after the name rather than as a tag) and ignores any `renderSummary`, which only replaces the title-only row used when `resource.type` is absent.
 
 #### Scenario: Catalog publish sub-view still shows the entity header and version tag
 - **WHEN** the user opens the publish sub-view for a versioned catalog entity (Application, Toolset, or Model)

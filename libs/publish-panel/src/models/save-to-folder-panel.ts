@@ -52,8 +52,6 @@ export interface SaveToFolderPanelLabels {
   createFolderDuplicateNameError?: string;
   /** Label of the action that retries a failed folder listing. Defaults to `'Retry'`. */
   retryLabel?: string;
-  /** Version tag text in the summary row; `{version}` is replaced. */
-  summaryVersionLabel?: string;
 }
 
 /** Color overrides for the body of the save-to-folder panel. */
@@ -66,12 +64,6 @@ export interface SaveToFolderPanelColors {
   summaryBorder?: string;
   /** Summary row background color. Defaults to `--bg-layer-sunken`. */
   summaryBackground?: string;
-  /** Version tag border color. Defaults to `--stroke-tertiary`. */
-  summaryVersionTagBorder?: string;
-  /** Version tag background color. Defaults to `--bg-control-accent-alpha`. */
-  summaryVersionTagBackground?: string;
-  /** Version tag text color. Defaults to `--text-accent`. */
-  summaryVersionTagText?: string;
 }
 
 /** Style overrides for the body of the save-to-folder panel. */
