@@ -1462,6 +1462,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         type="file"
         className="sr-only"
         aria-hidden
+        /* axe `label` still asks a hidden file input for a name. */
+        aria-label={t(ConversationImportI18nKeys.ImportLabel)}
         tabIndex={-1}
         onChange={handleImportFileChange}
       />
