@@ -1,0 +1,29 @@
+/*
+ * Each nested row draws its own segment of the guide line, so the line stays
+ * continuous across virtualized rows. The segment runs from the row's top
+ * across the 2px gap above the next row (`bottom: -2px`); the first and the
+ * last segment are inset 5px. `20px` is the centre of the project icon slot.
+ */
+.guideLine::before {
+  position: absolute;
+  top: 0;
+  bottom: -2px;
+  inset-inline-start: 20px;
+  width: 1px;
+  content: '';
+  background: var(--cp-project-guide-line, var(--stroke-tertiary, #e0e6f0));
+  pointer-events: none;
+}
+
+.guideLineFirst::before {
+  top: 5px;
+}
+
+.guideLineLast::before {
+  bottom: 5px;
+}
+
+.seeAllText,
+.projectIcon {
+  color: var(--cp-text-secondary, var(--text-secondary, #57647a));
+}

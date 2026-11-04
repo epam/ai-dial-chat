@@ -2,12 +2,14 @@ import {
   type ProjectDetailsDto,
   ProjectSource as ProjectSourceDto,
 } from '@epam/ai-dial-chat-api-client';
+import { FilterTab } from '@epam/ai-dial-chat-shared';
 import { ProjectSource } from '@epam/ai-dial-projects';
 import { describe, expect, it } from 'vitest';
 import {
   mapProjectArtifactsToOutputs,
   mapProjectDetailsToViewModel,
   mapProjectDtoToItem,
+  mapProjectSourceToFilterTab,
   mapStoredContextFiles,
 } from '../project-mapping';
 
@@ -118,5 +120,19 @@ describe('mapProjectArtifactsToOutputs', () => {
       { name: 'report.pdf', contentType: 'application/pdf' },
       { name: 'raw.unknownext', contentType: '' },
     ]);
+  });
+});
+
+describe('mapProjectSourceToFilterTab', () => {
+  it('maps each project source onto its Origin tab', () => {
+    expect(mapProjectSourceToFilterTab(ProjectSourceDto.Personal)).toBe(
+      FilterTab.MyChats,
+    );
+    expect(mapProjectSourceToFilterTab(ProjectSourceDto.Shared)).toBe(
+      FilterTab.Shared,
+    );
+    expect(mapProjectSourceToFilterTab(ProjectSourceDto.Organization)).toBe(
+      FilterTab.Organization,
+    );
   });
 });

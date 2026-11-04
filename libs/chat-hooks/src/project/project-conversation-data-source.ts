@@ -53,7 +53,7 @@ export interface ProjectConversationDataSourceOptions {
     getExitRoute: () => string;
   };
   /** The queue viewed marks go through, shared with the host's other pages so they write one at a time. */
-  viewedWriter: SerializedKeyedWriter;
+  viewedWriter: Pick<SerializedKeyedWriter, 'enqueue' | 'drop'>;
   /** Translation key of the toast shown when the conversation cannot be loaded; the host resolves it. */
   notFoundMessageKey?: string;
 }
