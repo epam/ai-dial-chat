@@ -1,7 +1,16 @@
 import { ScheduledTaskRepeat } from '@epam/ai-dial-scheduled-tasks';
 import { renderHook } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { useScheduledTaskFormLabels } from '../useScheduledTaskFormLabels';
+
+/* A Russian browser with only English resources: i18next keeps the detected
+ * `ru` as `language` while the UI renders the resolved `en` bundle. */
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: { language: 'ru', resolvedLanguage: 'en', changeLanguage: vi.fn() },
+  }),
+}));
 
 describe('useScheduledTaskFormLabels', () => {
   it('shares repeat options while selecting the mode-specific actions', () => {
@@ -24,5 +33,15 @@ describe('useScheduledTaskFormLabels', () => {
 
     rerender({ mode: 'edit' });
     expect(result.current.createButtonLabel).toBe('buttons.save');
+  });
+
+  it('names the Custom weekdays in the rendered language, not the detected one', () => {
+    const { result } = renderHook(() => useScheduledTaskFormLabels('create'));
+
+    expect(result.current.customDayOptions[0]).toEqual({
+      value: '0',
+      shortLabel: 'M',
+      fullName: 'Monday',
+    });
   });
 });

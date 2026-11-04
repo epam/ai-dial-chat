@@ -6,6 +6,7 @@ import {
   EditorI18nKeys,
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
+import { useLanguage } from '../language/useLanguage';
 import { useTextRefinementLabels } from '../useTextRefinementLabels';
 
 /** APScheduler-convention day values (`'0'` Monday – `'6'` Sunday) for the Custom repeat's day row. */
@@ -13,7 +14,8 @@ const CUSTOM_DAY_VALUES = ['0', '1', '2', '3', '4', '5', '6'] as const;
 
 /** Keeps create/edit form copy and repeat options identical at the app edge. */
 export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const { displayLanguage } = useLanguage();
   const refinementLabels = useTextRefinementLabels();
   return useMemo(
     () => ({
@@ -74,11 +76,11 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
         const dayDate = new Date(Date.UTC(2023, 0, 2 + Number(value)));
         return {
           value,
-          shortLabel: new Intl.DateTimeFormat(i18n.language, {
+          shortLabel: new Intl.DateTimeFormat(displayLanguage, {
             weekday: 'narrow',
             timeZone: 'UTC',
           }).format(dayDate),
-          fullName: new Intl.DateTimeFormat(i18n.language, {
+          fullName: new Intl.DateTimeFormat(displayLanguage, {
             weekday: 'long',
             timeZone: 'UTC',
           }).format(dayDate),
@@ -106,6 +108,6 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
           : ButtonsI18nKeys.Saving,
       ),
     }),
-    [mode, t, i18n.language, refinementLabels],
+    [mode, t, displayLanguage, refinementLabels],
   );
 };
