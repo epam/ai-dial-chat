@@ -49,12 +49,17 @@ Code that validates, documents or compares these values SHALL use the enum membe
 
 ### Requirement: chat-api forbids nested ternaries
 
-`apps/chat-api/eslint.config.mjs` SHALL set `no-nested-ternary` to `error` for `apps/chat-api/src`. A nested conditional SHALL be written as an early return, an `if`/`else` or a named helper. The only allowed exception is the archive-upload result mapping in `apps/chat-api/src/files/upload/files-upload.service.ts`, until that code moves with the archive-upload extraction. That exception SHALL be a single `eslint-disable-next-line no-nested-ternary` with a reason that names the follow-up.
+`apps/chat-api/eslint.config.mjs` SHALL set `no-nested-ternary` to `error` for `apps/chat-api/src`. A nested conditional SHALL be written as an early return, an `if`/`else` or a named helper. `apps/chat-api/src` SHALL contain no `eslint-disable` directive for `no-nested-ternary`. The archive-upload result mapping that was once exempt is now the `getArchiveEntryUploadError` helper in `apps/chat-api/src/files/upload/archive-upload.ts`.
 
 #### Scenario: Lint rejects a new nested ternary
 
 - **WHEN** a contributor adds `a ? b : c ? d : e` anywhere in `apps/chat-api/src`
 - **THEN** `nx lint chat-api` fails with `no-nested-ternary`
+
+#### Scenario: No nested-ternary exceptions remain
+
+- **WHEN** `apps/chat-api/src` is searched for `no-nested-ternary`
+- **THEN** no `eslint-disable` directive for that rule is found
 
 ### Requirement: Generation registry and naming services live in domain sub-folders
 
