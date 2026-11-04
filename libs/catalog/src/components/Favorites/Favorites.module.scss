@@ -119,3 +119,10 @@
     transform: translateY(0);
   }
 }
+
+/* A clickable card's keyboard focus sits on its visually hidden button, so
+ * the card draws the ring. */
+.favoriteCard:has(> .cardButton:focus-visible) {
+  outline: 2px solid var(--fc-focus-outline, var(--stroke-focus, #161b2d));
+  outline-offset: 2px;
+}

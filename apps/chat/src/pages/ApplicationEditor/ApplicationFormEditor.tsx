@@ -664,14 +664,9 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
         {isBusy ? overlayLabel : ''}
       </LiveRegion>
       {isBusy && (
-        <div
-          className="absolute inset-0 flex items-center justify-center bg-backdrop"
-          aria-hidden="true"
-        >
-          <div className="flex items-center gap-3 rounded-lg bg-layer-sunken px-4 py-3 shadow-lg">
-            <Spinner />
-            <span className="dial-small-text text-primary">{overlayLabel}</span>
-          </div>
+        /* The LiveRegion above announces the state, so the overlay is visual only. */
+        <div className="absolute inset-0 bg-backdrop" aria-hidden="true">
+          <Spinner fullWidth ariaLabel={overlayLabel} />
         </div>
       )}
       {confirmation && (
