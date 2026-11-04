@@ -173,7 +173,7 @@ Logs carry the outcome only, never ids, names or versions.
 - **Delete:** after `deleteConversation`, remove `projectConversationIds[projectId][locator]` from the caller's file.
 - **Rename (title only; the file name does not change):** before the rename, compute whether the conversation is read for the caller under the unread rule. If it was, store its new content hash after the save, so the user's own rename does not turn their chat unread. A chat that was unread stays unread.
 
-- **Background display name:** when `ConversationNamingService` (`apps/chat-api/src/conversations/conversation-naming.service.ts`) writes the LLM title of a project chat after its first answer, `ConversationReadStateService.carryProjectConversationViewed` moves the caller's stored version from the version before that write to the one after it. Nothing is written when the caller had viewed another version, or none. So an owner who watched the first answer does not find the chat unread once it has been named.
+- **Background display name:** when `ConversationNamingService` (`apps/chat-api/src/conversations/naming/conversation-naming.service.ts`) writes the LLM title of a project chat after its first answer, `ConversationReadStateService.carryProjectConversationViewed` moves the caller's stored version from the version before that write to the one after it. Nothing is written when the caller had viewed another version, or none. So an owner who watched the first answer does not find the chat unread once it has been named.
 
 Only the caller's own file is changed. Other readers keep their entries:
 

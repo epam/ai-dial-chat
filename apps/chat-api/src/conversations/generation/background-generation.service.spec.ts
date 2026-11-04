@@ -2,10 +2,6 @@ import { ConflictException, ServiceUnavailableException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
 import {
-  ConversationGenerationService,
-  GenerationCancelReason,
-} from '../conversation-generation.service';
-import {
   BackgroundGenerationDto,
   BackgroundGenerationStatus,
 } from '../dto/background-generation.dto';
@@ -23,6 +19,10 @@ import {
   BackgroundStartResult,
   BackgroundStopResult,
 } from './background-generation.service';
+import {
+  ConversationGenerationService,
+  GenerationCancelReason,
+} from './conversation-generation.service';
 import {
   CoreResponseResultKind,
   type CoreResponsesClient,

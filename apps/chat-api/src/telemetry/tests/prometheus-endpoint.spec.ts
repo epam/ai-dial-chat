@@ -3,6 +3,7 @@ import { metrics } from '@opentelemetry/api';
 import type { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { MeterProvider } from '@opentelemetry/sdk-metrics';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { MetricsExporter } from '../otel-config';
 import { buildMetricReaders } from '../otel-sdk';
 import {
   initializeRuntimeMetrics,
@@ -37,7 +38,7 @@ describe('Prometheus scrape endpoint', () => {
   beforeAll(async () => {
     port = await getFreePort();
 
-    [exporter] = buildMetricReaders(['prometheus'], {
+    [exporter] = buildMetricReaders([MetricsExporter.Prometheus], {
       OTEL_EXPORTER_PROMETHEUS_HOST: '127.0.0.1',
       OTEL_EXPORTER_PROMETHEUS_PORT: String(port),
     }) as [PrometheusExporter];

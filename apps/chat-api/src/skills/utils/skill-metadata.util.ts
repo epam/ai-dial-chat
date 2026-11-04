@@ -22,15 +22,18 @@ const joinMetadataPath = (
  * throwing, since a single bad entry should not fail the whole listing.
  * Shared by `SkillsListingService` and `SkillsLookupService`.
  */
+const toSkillNodeType = (
+  nodeType: DialMetadataBase['nodeType'],
+): SkillNodeType | null => {
+  if (nodeType === 'FOLDER') return SkillNodeType.Folder;
+  if (nodeType === 'ITEM') return SkillNodeType.Item;
+  return null;
+};
+
 export const mapToSkillMetadataItem = (
   item: DialMetadataBase,
 ): SkillMetadataItemDto | null => {
-  const nodeType =
-    item.nodeType === 'FOLDER'
-      ? SkillNodeType.Folder
-      : item.nodeType === 'ITEM'
-        ? SkillNodeType.Item
-        : null;
+  const nodeType = toSkillNodeType(item.nodeType);
   if (nodeType == null || item.bucket == null || item.name == null) {
     return null;
   }

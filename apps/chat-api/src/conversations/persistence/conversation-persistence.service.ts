@@ -7,7 +7,6 @@ import { safeDecodeURIComponent } from '../../common/utils/uri';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import { isProjectConversationLocator } from '../../projects/utils/project-conversation-id.util';
-import { ConversationNamingService } from '../conversation-naming.service';
 import {
   CONDITIONAL_WRITE_ATTEMPTS,
   ConditionalUpdateStatus,
@@ -17,6 +16,7 @@ import {
   type VersionedConversation,
 } from '../conversation-persistence.port';
 import { ConversationTitleCacheService } from '../listing/conversation-title-cache.service';
+import { ConversationNamingService } from '../naming/conversation-naming.service';
 import {
   getConversationTitleFromName,
   isApplicationDeploymentPath,
