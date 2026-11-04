@@ -70,7 +70,7 @@ interface UseConversationRowActionsParams {
   toContextId: LookupMaps['toContextId'];
   getRawItem: LookupMaps['getRawItem'];
   findDeployment: ReturnType<typeof createDeploymentLookup>;
-  selectedItemId: string | undefined;
+  selectedItemId: string | null | undefined;
   isConversationsSharingEnabled: boolean;
   isConversationsPublishingEnabled: boolean;
   isConversationExportHidden: boolean;
