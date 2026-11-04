@@ -60,6 +60,8 @@ export interface SaveToFolderPanelLabels {
 export interface SaveToFolderPanelColors {
   /** Section heading text color. Defaults to `--text-primary`. */
   headingText?: string;
+  /** Destination path text color. Defaults to `--text-secondary`. */
+  destinationText?: string;
   /** Summary row border color. Defaults to `--stroke-tertiary`. */
   summaryBorder?: string;
   /** Summary row background color. Defaults to `--bg-layer-sunken`. */
@@ -152,6 +154,8 @@ export interface SaveToFolderPanelBaseProps {
   panelStyles?: SaveToFolderPanelStyles;
   /** Typography class of the section headings. Defaults to `'dial-body-semi-text'`. */
   headingClassName?: string;
+  /** Typography class of the destination path. Defaults to `'dial-small-semi-text'`. */
+  destinationClassName?: string;
 }
 
 /** Props of the body of the save-to-folder panel. */

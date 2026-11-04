@@ -255,7 +255,7 @@ import {
 
 The "save to a folder, optionally as a new version" flow. `StandaloneSaveToFolderPanel` is an end-edge `SideDrawer` with two views:
 
-- **Main** — the entity summary (`ResourceSummary`), the committed destination as a read-only `FolderPath` with a **Change** action, an optional version choice, and a Cancel / Save footer.
+- **Main** — the entity summary (`ResourceSummary`), the committed destination as a folder name with the file manager's folder icon (`FolderName`, the path joined with ` / `) and a small **Change** action, an optional version choice, and a Cancel / Save footer.
 - **Change folder** — a back button, folder search and the multi-root `PublishFoldersTree`, with a Cancel / Select footer. A destination picked here is pending until Select commits it through `onDestinationChange`; Back and Cancel discard it. While a folder of a root with `hasAccessRules` is pending and `accessRules` (`SaveToFolderAccessRulesProps`) is passed, `PublishAccessRules` renders below the tree for that folder; `onPendingDestinationChange` tells the host which folder is pending — including the reset to `destination` on entering and leaving the view — so it can load that folder's existing rules.
 
 The version section renders only when `version` (`SaveToFolderVersionProps`) is passed: a `RadioGroup` of "Keep version {version}" and "Save as new version", the latter revealing a required version input whose error the host supplies as `newVersionError`. Pass no `version` for an unversioned resource. `submitError` is announced through an assertive `LiveRegion`; `foldersError` shows above the tree with a Retry action when `onRetryFolders` is given. Every control is disabled while `isSubmitting`.
@@ -290,7 +290,7 @@ import {
 />;
 ```
 
-Copy comes from `labels` (`StandaloneSaveToFolderPanelLabels`: `title`, `changeFolderTitle`, `closeAriaLabel`, `backAriaLabel`, `cancelLabel`, `saveLabel`, `savingLabel`, `selectLabel`) and `panelLabels` (`SaveToFolderPanelLabels`), each with an English default. Colors come from `colors` (`StandaloneSaveToFolderPanelColors`: `backdropBackground`, `panelBackground`, `panelBorder`, `dividerBorder`, `scrollbarThumb`, `titleText`) and `panelStyles.colors` (`SaveToFolderPanelColors`: `headingText` and the `summary*` colors). `titleClassName` and `headingClassName` default to `'dial-body-semi-text'`. `SaveToFolderView` (`Main`, `ChangeFolder`) and `SaveVersionMode` (`Keep`, `New`) are exported.
+Copy comes from `labels` (`StandaloneSaveToFolderPanelLabels`: `title`, `changeFolderTitle`, `closeAriaLabel`, `backAriaLabel`, `cancelLabel`, `saveLabel`, `savingLabel`, `selectLabel`) and `panelLabels` (`SaveToFolderPanelLabels`), each with an English default. Colors come from `colors` (`StandaloneSaveToFolderPanelColors`: `backdropBackground`, `panelBackground`, `panelBorder`, `dividerBorder`, `scrollbarThumb`, `titleText`) and `panelStyles.colors` (`SaveToFolderPanelColors`: `headingText`, `destinationText` and the `summary*` colors). `titleClassName` and `headingClassName` default to `'dial-body-semi-text'`, and `destinationClassName` (the destination path) to `'dial-small-semi-text'`. `SaveToFolderView` (`Main`, `ChangeFolder`) and `SaveVersionMode` (`Keep`, `New`) are exported.
 
 ### PublishHistoryList
 

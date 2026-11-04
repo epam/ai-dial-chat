@@ -17,7 +17,6 @@ import userEvent from '@testing-library/user-event';
 import { strToU8, zipSync } from 'fflate';
 import { StrictMode, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { EntityNotificationsI18nKeys } from '../../../constants/translation-keys';
 import { useUser } from '../../../context/auth/UserContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { useSkills } from '../../../context/SkillsContext';
@@ -1017,6 +1016,8 @@ describe('SkillEditor page — edit mode', () => {
         '"etag-1"',
       ),
     );
+    /* A skill in another bucket saves in place; moving acts on the caller's own bucket only. */
+    expect(screen.queryByRole('dialog', { name: 'Save panel' })).toBeNull();
   });
 
   it('falls back to manifest and file endpoints when Core treats the ZIP path as a grouping folder', async () => {
@@ -1140,7 +1141,7 @@ describe('SkillEditor page — edit mode', () => {
     );
   });
 
-  it('saves via updateSkill with the loaded ETag and shows an update notification', async () => {
+  it('saves an own skill through the Save panel via updateSkill with the loaded ETag, then returns to the Catalog', async () => {
     vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
     vi.mocked(updateSkill).mockResolvedValue({
       etag: 'etag-2',
@@ -1150,6 +1151,10 @@ describe('SkillEditor page — edit mode', () => {
     expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
 
     await user.click(getSaveButton());
+    await findSavePanel();
+    expect(updateSkill).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Finish save' }));
 
     await waitFor(() =>
       expect(updateSkill).toHaveBeenCalledWith(
@@ -1161,14 +1166,9 @@ describe('SkillEditor page — edit mode', () => {
         '"etag-1"',
       ),
     );
-    await waitFor(() =>
-      expect(showNotification).toHaveBeenCalledWith(
-        expect.objectContaining({
-          variant: 'success',
-          title: EntityNotificationsI18nKeys.SkillEditedTitle,
-        }),
-      ),
-    );
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/catalog'));
+    expect(refetchSkills).toHaveBeenCalledOnce();
+    expectNoEditorSuccessNotification();
   });
 
   it('preserves an unknown frontmatter field on save', async () => {
@@ -1184,7 +1184,7 @@ describe('SkillEditor page — edit mode', () => {
     render(<SkillEditor />);
     expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
 
-    await user.click(getSaveButton());
+    await saveThroughPanel(user, getSaveButton());
 
     await waitFor(() => expect(updateSkill).toHaveBeenCalledOnce());
     const sentManifest = vi.mocked(updateSkill).mock.calls[0][2];
@@ -1219,7 +1219,7 @@ describe('SkillEditor page — edit mode', () => {
     );
     await waitFor(() => expect(screen.getAllByText('new.md')[0]).toBeTruthy());
 
-    await user.click(getSaveButton());
+    await saveThroughPanel(user, getSaveButton());
 
     await waitFor(() =>
       expect(updateSkill).toHaveBeenCalledWith(
@@ -1235,7 +1235,7 @@ describe('SkillEditor page — edit mode', () => {
     expect(filePaths).not.toContain('SKILL.md');
   });
 
-  it('shows an explicit conflict state on a 412 save failure, with a working Reload latest', async () => {
+  it('shows the conflict in the Save panel and an explicit conflict state on a 412 save failure, with a working Reload latest', async () => {
     vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
     vi.mocked(updateSkill).mockRejectedValue({
       response: { status: 412, json: () => Promise.resolve({}) },
@@ -1244,9 +1244,17 @@ describe('SkillEditor page — edit mode', () => {
     render(<SkillEditor />);
     expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
 
-    await user.click(getSaveButton());
+    const panel = await saveThroughPanel(user, getSaveButton());
 
-    expect(await screen.findByText('skillEditor.conflictMessage')).toBeTruthy();
+    expect(
+      await within(panel).findByText('skillEditor.conflictMessage'),
+    ).toBeTruthy();
+    expect(
+      await screen.findByRole('button', {
+        name: 'skillEditor.reloadLatestLabel',
+      }),
+    ).toBeTruthy();
+    expect(mockNavigate).not.toHaveBeenCalled();
 
     await user.click(
       screen.getByRole('button', { name: 'skillEditor.reloadLatestLabel' }),
@@ -1396,7 +1404,7 @@ describe('SkillEditor page — edit mode', () => {
     );
     expect(await screen.findByDisplayValue('Updated description')).toBeTruthy();
 
-    await user.click(getSaveButton());
+    await saveThroughPanel(user, getSaveButton());
 
     await waitFor(() => expect(updateSkill).toHaveBeenCalledOnce());
     const sentManifest = vi.mocked(updateSkill).mock.calls[0][2];
@@ -1657,8 +1665,9 @@ describe('SkillEditor page — creation permissions', { timeout: 15000 }, () => 
     );
   });
 
-  it('loads and saves an existing skill when creation is denied', async () => {
+  it('loads and saves an existing own skill through the Save panel when creation is denied', async () => {
     denySkills();
+    /* A bare path resolves to the user's own bucket, so the save goes through the panel. */
     mockSearchParams = new URLSearchParams({ id: 'team-a/docs-helper' });
     vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
     vi.mocked(updateSkill).mockResolvedValue({
@@ -1667,9 +1676,10 @@ describe('SkillEditor page — creation permissions', { timeout: 15000 }, () => 
     render(<SkillEditor />);
 
     expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
-    await user.click(getSaveButton());
+    await saveThroughPanel(user, getSaveButton());
 
-    await waitFor(() => expect(updateSkill).toHaveBeenCalled());
+    await waitFor(() => expect(updateSkill).toHaveBeenCalledOnce());
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/catalog'));
     expect(createSkill).not.toHaveBeenCalled();
     expect(alertText()).toBe('');
   });

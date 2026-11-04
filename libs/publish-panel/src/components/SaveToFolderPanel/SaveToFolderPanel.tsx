@@ -6,8 +6,9 @@ import {
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  ElementSize,
   ErrorText,
-  FolderPath,
+  FolderName,
   GhostButton,
   Input,
   LinkButton,
@@ -44,6 +45,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
   panelLabels = {},
   panelStyles = {},
   headingClassName = 'dial-body-semi-text',
+  destinationClassName = 'dial-small-semi-text',
 }) => {
   const {
     saveToFolderHeading = 'Save to folder',
@@ -71,6 +73,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
   const cssVars = {
     ...buildCssVars({
       '--stf-heading-text': colors?.headingText,
+      '--stf-destination-text': colors?.destinationText,
     }),
     ...panelStyles.cssVars,
   };
@@ -212,13 +215,23 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
       <section className="flex flex-col gap-2">
         <h2 className={headingClass}>{saveToFolderHeading}</h2>
         <div className="flex min-w-0 items-center gap-2">
-          <FolderPath
-            segments={destinationSegments}
-            ariaLabel={destinationAriaLabel}
+          {/* The folder icon matches the file manager's; the whole path is one truncating name. */}
+          <div
+            role="group"
+            aria-label={destinationAriaLabel}
             className="min-w-0 flex-1"
-          />
+          >
+            <FolderName
+              name={destinationSegments.join(' / ')}
+              nameClassName={mergeClasses(
+                destinationClassName,
+                styles.destination,
+              )}
+            />
+          </div>
           <GhostButton
             ref={changeFolderButtonRef}
+            size={ElementSize.Small}
             label={changeFolderLabel}
             iconBefore={
               <IconFolder

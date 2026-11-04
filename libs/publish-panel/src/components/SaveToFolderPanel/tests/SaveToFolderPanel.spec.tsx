@@ -68,7 +68,7 @@ const versionProps = (
 describe('SaveToFolderPanel', () => {
   it('shows the destination path starting with the root label', () => {
     renderPanel();
-    const path = screen.getByRole('navigation', { name: 'Destination folder' });
+    const path = screen.getByRole('group', { name: 'Destination folder' });
     expect(path.textContent).toContain('Personal');
     expect(path.textContent).toContain('Audit');
   });
