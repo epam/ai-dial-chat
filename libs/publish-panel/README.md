@@ -360,3 +360,7 @@ is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
 
 Write host overrides with CSS logical properties (`margin-inline-start`,
 `inset-inline-end`) so they keep working under `dir="rtl"`.
+
+## Tablet drawer sizing
+
+StandalonePublishPanel preserves SideDrawer's modal focus, scroll lock and close behavior. At 768-1279px it uses a 540px preferred width capped to the available inline width minus 32px. Phone and desktop presentation, form state and host callbacks are unchanged.

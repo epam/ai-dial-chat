@@ -1,0 +1,86 @@
+/* Matches the catalog Favorites grid's fade convention (favFadeIn/cardFadeOut
+   in libs/catalog/src/components/Favorites/Favorites.module.scss). */
+.rowEnter {
+  animation: rowFadeIn 200ms ease-out;
+}
+
+.rowLeaving {
+  animation: rowFadeOut 180ms ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes rowFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rowFadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+/* Inline padding of the sticky search header, overridable from the panel
+   root's className via the --ds-search-inline custom property (e.g.
+   `[--ds-search-inline:12px]` for the 320px scheduled-task panel, whose
+   search field then matches the 296px form field it opens from). */
+.searchHeader {
+  padding-inline: var(--ds-search-inline, 4px);
+  background: var(--ds-surface, var(--bg-layer-raised, #fcfcfc));
+}
+
+.sectionHeading {
+  color: var(--ds-section-heading, var(--text-tertiary, #848e9c));
+}
+
+/* Bleeds the sticky label's background 1px upward so subpixel scroll
+   positions don't leave a seam where the row underneath peeks through. */
+.stickyHeading {
+  background: var(--ds-surface, var(--bg-layer-raised, #fcfcfc));
+  box-shadow: 0 -1px 0 0 var(--ds-surface, var(--bg-layer-raised, #fcfcfc));
+}
+
+.emptyHint {
+  color: var(--ds-empty-hint, var(--text-secondary, #57647a));
+}
+
+.starFilledIcon {
+  color: var(--ds-star-filled, var(--text-warning-icon, #eec840));
+}
+
+.footer {
+  border-block-start: 1px solid
+    var(--ds-footer-border, var(--stroke-tertiary, #e0e6f0));
+  background: var(--ds-surface, var(--bg-layer-raised, #fcfcfc));
+}
+
+/* Animates the scrollable list's own height across structural changes
+   (a row moving into or out of the selected slot); see
+   listContentRef/listHeight in DeploymentSelectorPanel.tsx. */
+.listContent {
+  transition: max-height 200ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rowEnter,
+  .rowLeaving {
+    animation: none;
+  }
+
+  .listContent {
+    transition: none;
+  }
+}

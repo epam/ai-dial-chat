@@ -214,6 +214,13 @@ export type {
 } from './models/app-identity-styles';
 export { CATALOG_CLASS } from './constants/public-class-names';
 export { DeploymentSelectorField } from './components/DeploymentSelectorField/DeploymentSelectorField';
+export { DeploymentSelectorPanel } from './components/DeploymentSelectorPanel/DeploymentSelectorPanel';
+export type {
+  DeploymentSelectorPanelColors,
+  DeploymentSelectorPanelLabels,
+  DeploymentSelectorPanelProps,
+} from './models/deployment-selector-panel';
+export { DeploymentSelectorLayout } from './types/deployment-selector-layout';
 export type {
   DeploymentSelectorDisplayRecord,
   DeploymentSelectorExtraOption,

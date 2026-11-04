@@ -1,7 +1,13 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { describe, expect, it } from 'vitest';
-import { DESKTOP_BREAKPOINT_PX, MOBILE_MAX_WIDTH_PX } from '../breakpoint';
+import {
+  DESKTOP_BREAKPOINT_PX,
+  MOBILE_MAX_WIDTH_PX,
+  PHONE_MEDIA_QUERY,
+  TABLET_MEDIA_QUERY,
+  TABLET_BREAKPOINT_PX,
+} from '../breakpoint';
 
 /*
  * The responsive boundary is single-sourced in chat-shared's breakpoint
@@ -20,6 +26,18 @@ const readRepoFile = (relativePath: string): string =>
   readFileSync(join(REPO_ROOT, relativePath), 'utf-8');
 
 describe('breakpoint-sync', () => {
+  it('keeps menu and tablet variants synchronized independently of layout', () => {
+    const theme = readRepoFile('tools/tailwind/theme.css');
+    expect(theme).toContain(
+      `@custom-variant phone (@media ${PHONE_MEDIA_QUERY});`,
+    );
+    expect(theme).toContain(
+      `@custom-variant tablet (@media ${TABLET_MEDIA_QUERY});`,
+    );
+    expect(theme).toContain(
+      `@custom-variant tablet-up (@media (min-width: ${TABLET_BREAKPOINT_PX}px));`,
+    );
+  });
   it('the Tailwind theme variants match the breakpoint constants', () => {
     const theme = readRepoFile('tools/tailwind/theme.css');
 

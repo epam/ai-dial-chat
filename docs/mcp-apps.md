@@ -77,7 +77,7 @@ Tool-call data comes from `message.custom_content.state`, which the SSE chunk me
 
 ### 3. Rendering: inline preview first, canvas on demand
 
-Each matched message renders `McpAppInlinePreview` below its stages (and below a grouped visualizer, if any). It is a bordered box sized to the app's content, with a header showing `mcpToolName` — plus the app's self-reported name and version once `ui/initialize` completes — and two actions: reload and expand.
+Each matched message renders `McpAppInlinePreview` below its stages (and below a grouped visualizer, if any). It is a bordered box sized to the app's content, with a header showing `mcpToolName` — plus the app's self-reported name once `ui/initialize` completes (its version is deliberately omitted so it is not read as the version of the entity the app shows) — and two actions: reload and expand.
 
 The full-width canvas **never opens by itself**. It is reached only through the expand button, or when the app requests `fullscreen`. While a message's canvas is open, its inline preview keeps the header but shows an "opened in canvas" placeholder instead of the app, so the same app is never mounted twice.
 
@@ -98,7 +98,7 @@ Before mounting, `resolveMcpAppToolResult` decides which tool result the app get
 
 - For a `direct` match, or an `indirect` match with a real tool call in `custom_content.state`, it **calls the tool again live** with the seed's arguments (or `{}` for a direct match with no seed) and hands the app the fresh `CallToolResult`. The transcript's text result is often not what the app's UI expects.
 - For an indirect match with no seed (matching no longer produces one), it passes the transcript result through unchanged.
-- If the live call throws, it falls back to the transcript result.
+- If the live call throws, it is retried once after a short randomized delay (500–1000 ms), so a transient connection drop — typical when many cards re-mount together after a page reload — does not cost the card its data. If the retry throws too, it falls back to the transcript result.
 
 The app receives `toolInput` and `toolResult` once per mount, because the MCP Apps spec sends `ui/notifications/tool-input` at most once per view and an app that gets it again drops its result and shows its loading state. `useMcpAppInlinePreview` therefore reloads only when the seed's data (`computeMcpAppSeedKey`), the match, the sandbox URL or the cache key changes, or the user reloads. A message update with the same data, such as a like or a streamed chunk, does not remount the app or re-send its input.
 

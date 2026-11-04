@@ -13,12 +13,6 @@ import type { EnvironmentVariables } from '../../config/environment.config';
 import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
-import {
-  ConversationGenerationService,
-  GenerationCancelReason,
-  GenerationStatus,
-  type GenerationLease,
-} from '../conversation-generation.service';
 import type { VersionedConversation } from '../conversation-persistence.port';
 import {
   ConversationMessageDto,
@@ -39,6 +33,12 @@ import {
   type StoredMessage,
 } from '../generation/background-message';
 import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
+import {
+  ConversationGenerationService,
+  GenerationCancelReason,
+  GenerationStatus,
+  type GenerationLease,
+} from '../generation/conversation-generation.service';
 import { GenerationApi } from '../generation/generation-api';
 import { GenerationApiSelector } from '../generation/generation-api-selector.service';
 import {
@@ -782,7 +782,7 @@ export class ConversationStreamingService {
        * terminal outcome — e.g. an unexpected exception unwinding this
        * generator between a `yield` and the next `relayIterator.next()`
        * call. This is NOT reached merely because the downstream HTTP
-       * response closed: `ConversationController.streamCompletion` keeps
+       * response closed: `ConversationGenerationController.streamCompletion` keeps
        * consuming this generator after disconnect (see
        * backend-owned-generation-persistence — a completion's generation is
        * independent of the originating browser connection), so a closed

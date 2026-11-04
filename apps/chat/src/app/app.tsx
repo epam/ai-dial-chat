@@ -12,6 +12,7 @@ import {
   CodeBlockTheme,
   FilterTab,
   useIsMobile,
+  useIsTablet,
 } from '@epam/ai-dial-chat-shared';
 import {
   lazy,
@@ -144,6 +145,7 @@ const App: FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
   const loadPdf = usePdfPreviewLoader();
   const isFileManagerRoute = !!useMatch(ROUTES.FileManager);
   /* The project create, edit and view pages preview their context files in the canvas. */
@@ -203,12 +205,12 @@ const App: FC = () => {
     ? 0
     : getNavigationSidebarWidth(isPanelOpen);
   const canvasMaxWidth = usePanelMaxWidth(
-    MIN_CONTENT_AREA_WIDTH + navigationSidebarWidth,
+    isTablet ? 32 : MIN_CONTENT_AREA_WIDTH + navigationSidebarWidth,
   );
   const { defaultWidth: canvasDefaultWidth, minWidth: canvasMinWidth } =
     resolveCanvasWidth({
       isFileManagerRoute,
-      isMobile,
+      isMobile: isMobile && !isTablet,
       viewportWidth,
       maxWidth: canvasMaxWidth,
     });
@@ -282,6 +284,17 @@ const App: FC = () => {
     [navigate, isMobile, closeNav],
   );
 
+  /* Same drawer rule as a picked chat, for the sidebar's other routes. */
+  const handleOpenRoute = useCallback(
+    (path: string) => {
+      if (isMobile) {
+        closeNav();
+      }
+      navigate(path);
+    },
+    [navigate, isMobile, closeNav],
+  );
+
   const handleNewChat = useCallback(() => {
     if (isMobile) {
       closeNav();
@@ -298,6 +311,7 @@ const App: FC = () => {
     <ConversationPanelView
       activeConversationId={activeConversationId}
       onSelectConversation={handleSelectConversation}
+      onOpenRoute={handleOpenRoute}
       requestedFilter={panelRequestedFilter}
       onRequestedFilterChange={handlePanelRequestedFilterChange}
       onActiveFilterChange={handlePanelActiveFilterChange}
@@ -309,7 +323,7 @@ const App: FC = () => {
   return (
     <div className="flex size-full flex-col">
       <AnnouncementBanner />
-      <div className="flex min-h-0 flex-1 flex-row">
+      <div className="relative flex min-h-0 flex-1 flex-row tablet:overflow-hidden">
         <Suspense fallback={null}>
           <SigninInterruptDialog />
         </Suspense>
@@ -672,6 +686,7 @@ const App: FC = () => {
               ) : undefined
             }
             isMobile={isMobile}
+            isBoundedOverlay={isTablet}
             defaultWidth={canvasDefaultWidth}
             minWidth={canvasMinWidth}
             maxWidth={canvasMaxWidth}

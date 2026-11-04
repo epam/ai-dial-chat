@@ -64,6 +64,15 @@ export const buildDeduplicatedFilePath = (
 export const isConflictError = (err: unknown): boolean =>
   err instanceof HttpException && err.getStatus() === HttpStatus.CONFLICT;
 
+/** Per-entry error text recorded in an archive upload result. */
+export const getArchiveEntryUploadError = (err: unknown): string => {
+  if (isConflictError(err)) {
+    return 'Conflict';
+  }
+
+  return err instanceof HttpException ? err.message : 'Upload failed';
+};
+
 /** Decodes a yauzl entry name read with `decodeStrings: false` (raw `Buffer`), or passes a string through unchanged. */
 export const decodeArchiveEntryName = (rawFileName: string): string => {
   const raw: unknown = rawFileName;

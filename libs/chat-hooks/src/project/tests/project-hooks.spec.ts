@@ -608,6 +608,72 @@ describe('project hooks', () => {
       expect(host.onDeleted).not.toHaveBeenCalled();
     });
 
+    it('reports a cancel and a success to a host that owns the delete dialog', async () => {
+      client.deleteProject.mockResolvedValue(undefined);
+      const host = handlers();
+      const onDeleteOpenChange = vi.fn();
+      const { result } = renderHook(() =>
+        useProjectActions(client, details, {
+          ...host,
+          isDeleteOpen: true,
+          onDeleteOpenChange,
+        }),
+      );
+
+      expect(result.current.isDeleteOpen).toBe(true);
+      act(() => result.current.cancelDelete());
+      expect(onDeleteOpenChange).toHaveBeenLastCalledWith(false);
+      /* The host did not close it, so it stays open. */
+      expect(result.current.isDeleteOpen).toBe(true);
+
+      onDeleteOpenChange.mockClear();
+      await act(() => result.current.confirmDelete());
+
+      expect(onDeleteOpenChange).toHaveBeenCalledExactlyOnceWith(false);
+      expect(host.onDeleted).toHaveBeenCalledWith(details);
+    });
+
+    it('reports a conflict close to a host that owns the delete dialog', async () => {
+      client.deleteProject.mockRejectedValue(
+        rejection(409, { code: ProjectCreateErrorCode.ProjectChanged }),
+      );
+      const host = handlers();
+      const onDeleteOpenChange = vi.fn();
+      const { result } = renderHook(() =>
+        useProjectActions(client, details, {
+          ...host,
+          isDeleteOpen: true,
+          onDeleteOpenChange,
+        }),
+      );
+
+      await act(() => result.current.confirmDelete());
+
+      expect(onDeleteOpenChange).toHaveBeenCalledExactlyOnceWith(false);
+      expect(host.onReload).toHaveBeenCalledOnce();
+    });
+
+    it('keeps a failed delete open for a host that owns the delete dialog', async () => {
+      client.deleteProject.mockRejectedValue(rejection(500, {}));
+      const host = handlers();
+      const onDeleteOpenChange = vi.fn();
+      const { result } = renderHook(() =>
+        useProjectActions(client, details, {
+          ...host,
+          isDeleteOpen: true,
+          onDeleteOpenChange,
+        }),
+      );
+
+      await act(() => result.current.confirmDelete());
+
+      expect(onDeleteOpenChange).not.toHaveBeenCalled();
+      expect(host.onError).toHaveBeenCalledWith(
+        ProjectActionError.Delete,
+        undefined,
+      );
+    });
+
     it('reports a failed pin change', async () => {
       const host = handlers();
       host.setPinned.mockRejectedValue(new Error('down'));

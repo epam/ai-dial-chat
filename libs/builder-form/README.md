@@ -36,7 +36,7 @@ import '@epam/ai-dial-builder-form/styles.css';
 
 - `react` `^19.2.8`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.67`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.72`
 
 ## Components
 
@@ -275,7 +275,7 @@ The standard entity editor page: `EditorLayout` with a back arrow and `<h1>` tit
 - `extraActions` render before Cancel; `hideStandardActions` hides Cancel and the primary button so only they remain (e.g. while a preview is open).
 - `metadataTitle` replaces the Metadata heading; `null` renders the section without one, for left-column content that carries its own heading.
 - `metadataFooter` renders below the Metadata section in the left column.
-- `setup` fills the Setup section; without it the left column takes the full width. `setupTitle` replaces the section heading; `null` renders the section without one, for Setup content that carries its own heading (e.g. an embedded editor).
+- `setup` fills the Setup section; without it the left column takes the full width. `setupTitle` replaces the section heading; `null` renders the section without one, for Setup content that carries its own heading (e.g. an embedded editor). `hasSetupSectionPadding={false}` drops the Setup section's padding so its content runs edge to edge (e.g. an embedded editor once it has loaded); it defaults to `true`.
 - `alert` renders in a `role="alert"` region above the Setup section (above Metadata when there is no Setup).
 - `asideData` fills an Aside section in an extra, third column at the inline end, below the header (a fixed 400px wide on desktop, stacked after the content on mobile/tablet). `asideTitle` adds a heading (none by default, for content that carries its own), `asideSectionClassName` is merged onto the section root. Omit it for the default two-column layout.
 - `resizableLeftColumn` makes the Metadata column resizable on desktop (see [Resizable left column](#resizable-left-column)); `labels.resizeHandleLabel` and `labels.resizeHandleTooltip` name the handle.

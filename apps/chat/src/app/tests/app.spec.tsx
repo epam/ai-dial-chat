@@ -25,7 +25,7 @@ const SidebarValueContext = createContext<{ revision: number }>({
 const mocks = vi.hoisted(() => ({
   panelCommits: 0,
   closeSourcesPanel: () => undefined,
-  closePanel: () => undefined,
+  closePanel: vi.fn(),
   togglePanel: () => undefined,
   canvas: { closeCanvas: () => undefined, isOpen: false },
   enabledFeatures: new Set<string>(),
@@ -33,8 +33,10 @@ const mocks = vi.hoisted(() => ({
     minWidth?: number;
     leftActions?: ReactNode;
     isMobile?: boolean;
+    isBoundedOverlay?: boolean;
   } | null,
   isMobile: false,
+  isTablet: false,
 }));
 
 vi.mock('@epam/ai-dial-attachment-canvas', () => ({
@@ -42,6 +44,7 @@ vi.mock('@epam/ai-dial-attachment-canvas', () => ({
     minWidth?: number;
     leftActions?: ReactNode;
     isMobile?: boolean;
+    isBoundedOverlay?: boolean;
   }) => {
     mocks.canvasProps = props;
     return <aside aria-label="attachment canvas" />;
@@ -80,6 +83,7 @@ vi.mock('../../hooks/attachment/usePdfPreviewLoader', () => ({
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useIsMobile: () => mocks.isMobile,
+  useIsTablet: () => mocks.isTablet,
 }));
 vi.mock('../../hooks/conversation/useConversationListBridge', () => ({
   useConversationListBridge: () => undefined,
@@ -187,6 +191,7 @@ describe('app', () => {
     mocks.enabledFeatures = new Set();
     mocks.canvasProps = null;
     mocks.isMobile = false;
+    mocks.isTablet = false;
   });
 
   describe('App — conversation panel memo boundary', () => {
@@ -275,6 +280,15 @@ describe('app', () => {
       await renderAt('/projects/new');
 
       expect(mocks.canvasProps?.minWidth).toBeUndefined();
+    });
+
+    it('opts project previews into a bounded overlay without changing the mobile layout signal', async () => {
+      mocks.isMobile = true;
+      mocks.isTablet = true;
+      await renderAt('/projects/new');
+      expect(mocks.canvasProps?.isBoundedOverlay).toBe(true);
+      expect(mocks.canvasProps?.isMobile).toBe(true);
+      expect(mocks.closePanel).not.toHaveBeenCalled();
     });
 
     it('renders the canvas in its mobile full-screen mode on a mobile project page', async () => {

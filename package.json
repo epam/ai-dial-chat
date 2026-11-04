@@ -137,7 +137,7 @@
   "dependencies": {
     "@epam/ai-dial-react-file-manager": "0.4.0-dev.26",
     "@epam/ai-dial-react-pdf-highlighter": "0.3.0-dev.6",
-    "@epam/ai-dial-ui-kit": "^0.16.0-dev.67",
+    "@epam/ai-dial-ui-kit": "^0.16.0-dev.72",
     "@epam/pdf-highlighter-kit": "^0.0.19",
     "@mcp-ui/client": "^7.1.1",
     "@monaco-editor/react": "^4.7.0",
@@ -164,7 +164,7 @@
     "micromark-extension-llm-math": "^3.1.0",
     "mime-types": "^3.0.2",
     "monaco-editor": "^0.57.0",
-    "pdfjs-dist": "5.6.205",
+    "pdfjs-dist": "6.5.438",
     "polished": "^4.3.1",
     "randomcolor": "^0.6.2",
     "react": "^19.3.1",
@@ -207,6 +207,7 @@
     "dompurify": "3.4.17",
     "follow-redirects": "1.16.2",
     "multer": "2.5.0",
+    "pdfjs-dist": "$pdfjs-dist",
     "@mcp-ui/client": {
       "zod": "^4.6.6"
     },

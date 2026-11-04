@@ -81,8 +81,8 @@ vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
         )}
         <span>{`metadata-name-${values.name}`}</span>
         <span>{`name-label-${labels?.form?.name.label}`}</span>
-        {errors.name && <p role="alert">{errors.name}</p>}
-        {errors.version && <p role="alert">{errors.version}</p>}
+        {errors.name && <p className="field-error">{errors.name}</p>}
+        {errors.version && <p className="field-error">{errors.version}</p>}
         <button type="button" onClick={() => onChange({ name: '' })}>
           clear-name
         </button>
@@ -150,12 +150,14 @@ vi.mock('../../SettingsForm/SettingsForm', () => ({
         {ensureSavedResult != null && (
           <span>{`ensure-saved-result-${ensureSavedResult}`}</span>
         )}
-        {errors?.endpoint && <p role="alert">{errors.endpoint}</p>}
+        {errors?.endpoint && <p className="field-error">{errors.endpoint}</p>}
         {errors?.authorizationEndpoint && (
-          <p role="alert">{errors.authorizationEndpoint}</p>
+          <p className="field-error">{errors.authorizationEndpoint}</p>
         )}
-        {errors?.tokenEndpoint && <p role="alert">{errors.tokenEndpoint}</p>}
-        {errors?.resource && <p role="alert">{errors.resource}</p>}
+        {errors?.tokenEndpoint && (
+          <p className="field-error">{errors.tokenEndpoint}</p>
+        )}
+        {errors?.resource && <p className="field-error">{errors.resource}</p>}
         <label>
           resource
           <input
@@ -379,6 +381,12 @@ const makeProps = (
 const renderEditor = (props: Partial<ToolsetEditorProps> = {}) =>
   render(<ToolsetEditor {...makeProps(props)} />);
 
+/* The stubs render field errors as plain paragraphs, like the real kit captions (no live-region role). */
+const fieldErrors = () =>
+  screen
+    .queryAllByText(/.+/, { selector: '.field-error' })
+    .map((element) => element.textContent ?? '');
+
 describe('ToolsetEditor', () => {
   const user = userEvent.setup({ delay: null });
 
@@ -485,7 +493,7 @@ describe('ToolsetEditor', () => {
   it('shows validation errors after an invalid field becomes dirty', async () => {
     renderEditor();
 
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByText(/Endpoint is required/)).toBeNull();
 
     await user.click(
       screen.getByRole('button', {
@@ -493,9 +501,7 @@ describe('ToolsetEditor', () => {
       }),
     );
 
-    expect(screen.getByRole('alert').textContent).toContain(
-      'Endpoint is required',
-    );
+    expect(screen.getByText(/Endpoint is required/)).toBeTruthy();
   });
 
   it('keeps the create action disabled when OAuth endpoint URLs are invalid', async () => {
@@ -512,9 +518,7 @@ describe('ToolsetEditor', () => {
     );
 
     expect(saveButton.disabled).toBe(true);
-    expect(screen.getByRole('alert').textContent).toContain(
-      'Enter a valid http(s) URL',
-    );
+    expect(fieldErrors()).toContain('Enter a valid http(s) URL');
 
     await user.click(
       screen.getByRole('button', {
@@ -560,9 +564,9 @@ describe('ToolsetEditor', () => {
       await user.type(screen.getByLabelText('resource'), invalid);
 
       await waitFor(() => expect(saveButton.disabled).toBe(true));
-      expect(screen.getByRole('alert').textContent).toBe(
-        'Enter an absolute URI without a fragment',
-      );
+      expect(
+        screen.getByText('Enter an absolute URI without a fragment'),
+      ).toBeTruthy();
     }
 
     await user.clear(screen.getByLabelText('resource'));
@@ -571,7 +575,9 @@ describe('ToolsetEditor', () => {
       'https://mcp.example.com/mcp',
     );
     await waitFor(() => expect(saveButton.disabled).toBe(false));
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(
+      screen.queryByText('Enter an absolute URI without a fragment'),
+    ).toBeNull();
   });
 
   it('shows required errors once the OAuth endpoints are cleared', async () => {
@@ -584,9 +590,9 @@ describe('ToolsetEditor', () => {
       screen.getByRole('button', { name: 'clear-oauth-endpoints' }),
     );
 
-    const alerts = screen.getAllByRole('alert').map((el) => el.textContent);
-    expect(alerts).toContain('Authorization endpoint is required');
-    expect(alerts).toContain('Token endpoint is required');
+    const errors = fieldErrors();
+    expect(errors).toContain('Authorization endpoint is required');
+    expect(errors).toContain('Token endpoint is required');
   });
 
   it('runs the post-save login for a newly created API-key toolset using the returned id', async () => {
@@ -745,11 +751,11 @@ describe('ToolsetEditor', () => {
     await user.click(
       screen.getByRole('button', { name: 'touch-empty-endpoint' }),
     );
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(fieldErrors()).toHaveLength(1);
 
     rerender(<ToolsetEditor {...makeProps()} />);
 
-    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
+    await waitFor(() => expect(fieldErrors()).toHaveLength(0));
   });
 
   it('calls onToolsetsChanged after a successful create so the host list stays in sync', async () => {
@@ -845,11 +851,11 @@ describe('ToolsetEditor — shared editor shell', () => {
   it('shows no metadata error until the user edits the field', async () => {
     renderEditor();
 
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(fieldErrors()).toHaveLength(0);
 
     await user.click(screen.getByRole('button', { name: 'clear-name' }));
 
-    expect(screen.getByRole('alert').textContent).toBe('Name is required');
+    expect(fieldErrors()).toEqual(['Name is required']);
   });
 
   it('shows the invalid-version error only for the edited version field', async () => {
@@ -859,20 +865,20 @@ describe('ToolsetEditor — shared editor shell', () => {
       screen.getByRole('button', { name: 'type-invalid-version' }),
     );
 
-    const alerts = screen.getAllByRole('alert');
-    expect(alerts).toHaveLength(1);
-    expect(alerts[0].textContent).toContain('Version may only contain');
+    const errors = fieldErrors();
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain('Version may only contain');
   });
 
   it('clears the metadata error once the field becomes valid again', async () => {
     renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'clear-name' }));
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(fieldErrors()).toHaveLength(1);
 
     await user.click(screen.getByRole('button', { name: 'rename' }));
 
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(fieldErrors()).toHaveLength(0);
     expect(screen.getByText('metadata-name-Renamed')).toBeTruthy();
   });
 
@@ -900,11 +906,11 @@ describe('ToolsetEditor — shared editor shell', () => {
     const { rerender } = renderEditor();
 
     await user.click(screen.getByRole('button', { name: 'clear-name' }));
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(fieldErrors()).toHaveLength(1);
 
     rerender(<ToolsetEditor {...makeProps()} />);
 
-    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
+    await waitFor(() => expect(fieldErrors()).toHaveLength(0));
     expect(screen.getByText('metadata-name-My toolset')).toBeTruthy();
   });
 });

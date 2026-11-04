@@ -152,9 +152,15 @@ import { FilterTab } from '@epam/ai-dial-chat-shared';
 `ConversationRowVariant.Indicator` draws a leading status dot instead — hollow
 when read, filled with a semi-bold title when unread — and renders neither the
 avatar nor `leadingIcon`; the visually hidden `unreadIndicatorLabel` is still
-announced. The hollow dot's border is `colors.indicatorDot`
-(`--cp-indicator-dot`). Row and group-header heights follow the variant. `ConversationPanel`
-always renders `Avatar` rows.
+announced. Both dots are 7.11px; the hollow one has a 1.5px border in
+`colors.indicatorDot` (`--cp-indicator-dot`). Row and group-header heights
+follow the variant, and so does the group-header color: `colors.textSecondary`
+(`--cp-text-secondary`) falls back to `--text-secondary` over `Indicator` rows
+and to `--text-tertiary` over `Avatar` rows. `ConversationPanel`
+always renders `Avatar` rows. An `Indicator` row has 8px inline padding on both
+sides (`ps-2`, and `pe-2` without actions), so its 24px dot slot sits under the
+8px-padded group label; while the actions trigger shows, the end padding is
+`pe-9`. `Avatar` rows keep `ps-3` and `pe-3`.
 
 `styles.typography.fontClassName` puts one typography class on the list root, which rows
 and group headers inherit unless they set their own (`groupHeaderClassName`,
@@ -279,6 +285,95 @@ a chat. Row actions, `onActionMenuOpen`, `onMoveConversation` and
 and `styles.header` / `styles.list` to the matching component. `listClassName`
 is merged onto the list root, for a host anchor. The section fills the height
 its parent gives it, with the list scrolling inside.
+
+### Pinned projects
+
+`pinnedProjects` (on `ConversationList` and `ConversationListSection`) renders
+host-supplied project trees at the top of the Pinned group, before the pinned
+conversations. The list does not trim, sort or fetch: each project renders as a
+project row (briefcase icon, name, ⋮ actions), one nested `Indicator` row per
+conversation in the given order, and a See all row when `hasMore` is set. The
+rows are never draggable nor drop targets, and project rows cannot collapse on
+their own: collapsing the Pinned group hides them with the rest of it.
+
+```tsx
+import {
+  ConversationListSection,
+  type PinnedProjects,
+} from '@epam/ai-dial-conversation-panel';
+import { FilterTab } from '@epam/ai-dial-chat-shared';
+
+const pinnedProjects: PinnedProjects = {
+  projects: [
+    {
+      id: 'projects/bucket/support',
+      name: 'Support',
+      href: '/projects/view/bucket/support',
+      source: FilterTab.MyChats,
+      conversations: [
+        {
+          id: 'projects/bucket/support/conversations/c1',
+          title: 'Billing reply',
+          href: '/projects/chat/bucket/support/conversations/c1',
+          isUnread: true,
+        },
+      ],
+      hasMore: true,
+    },
+  ],
+  onSelectProject: openProject,
+  onSelectConversation: (conversationId, projectId) =>
+    openProjectChat(conversationId, projectId),
+  onSeeAll: openProject,
+  getActions: (project) => [
+    { key: 'unpin', label: 'Unpin', onClick: () => unpin(project.id) },
+  ],
+  activeProjectId,
+};
+
+<ConversationListSection
+  conversations={conversations}
+  onSelectConversation={openConversation}
+  pinnedProjects={pinnedProjects}
+  labels={{
+    ...sectionLabels,
+    seeAllLabel: 'See all',
+    seeAllAriaLabel: (name) => `See all chats in ${name}`,
+  }}
+/>;
+```
+
+- **Callbacks.** A project row calls `onSelectProject(id)`, a nested row
+  `onSelectConversation(conversationId, projectId)` — never the list's own
+  `onSelectConversation` — and a See all row `onSeeAll(id)`. `getActions`
+  builds the ⋮ items of the project row; no trigger renders when it returns
+  none. The See all row is only a link and never has a trigger. `onActionMenuOpen(project, trigger)` reports
+  the trigger, for focus to return to after an overlay.
+- **Current location.** The row of `activeProjectId` and the nested row of
+  `activeConversationId` get `aria-current="page"`.
+- **Search and filters.** While `searchQuery` is non-empty, a project whose
+  name matches keeps all its rows; otherwise it keeps only the matching
+  conversations and drops its See all row, and a project with no match is
+  hidden. Names and titles are highlighted with `Highlight`. The Origin filter
+  keeps a project under `FilterTab.All` and the tab equal to its `source`
+  (default `FilterTab.MyChats`), `hiddenSources` removes it, and
+  `ConversationTypeFilter.Task` hides every project. A list whose only rows are
+  projects is not empty.
+- **Layout.** Every row is 32px with a 2px gap. Nested and See all rows are
+  indented 28px (`ps-7`); a 1px guide line at `inset-inline-start: 20px` (the
+  centre of the project icon) runs from 5px below the first nested row's top
+  to 5px above the last one's bottom. Its color is
+  `colors.projectGuideLine` (`--cp-project-guide-line`, default
+  `var(--stroke-tertiary, #e0e6f0)`). The See all text and the briefcase icon use
+  `colors.textSecondary` (`--cp-text-secondary`, default `--text-secondary`), and project names and See all
+  text use `typography.itemTitleClassName`. Indent and line use logical
+  properties, so they mirror in RTL; the briefcase is not mirrored.
+- **Accessibility.** Project rows carry `aria-level="1"`; nested and See all
+  rows `aria-level="2"`, `aria-posinset` and `aria-setsize` (conversations plus
+  See all). The See all row's accessible name is
+  `labels.seeAllAriaLabel(name)` (default `` `See all chats in ${name}` ``),
+  its visible text `labels.seeAllLabel` (default `'See all'`). A row focused
+  with the keyboard is tinted like a hovered one.
 
 ### Corner radii
 
@@ -455,8 +550,15 @@ import type {
   ConversationListSectionLabels,
   ConversationListSectionStyles,
   FilterLabels,
+  PinnedProjectGroup,
+  PinnedProjects,
 } from '@epam/ai-dial-conversation-panel';
 ```
+
+`PinnedProjectGroup` (`id`, `name`, `href?`, `source?`, `conversations`,
+`hasMore`) and `PinnedProjects` (`projects`, `onSelectProject`,
+`onSelectConversation`, `onSeeAll`, `getActions?`, `onActionMenuOpen?`,
+`activeProjectId?`) are described under [Pinned projects](#pinned-projects).
 
 ### ConversationItem
 
@@ -522,7 +624,7 @@ Payload for a completed drag-and-drop move: the dragged `draggedId`, the
 
 The floating queue that shows export/import job progress is no longer part of
 this package: it is the UI kit's generic `TransferQueue`
-(`@epam/ai-dial-ui-kit` `^0.16.0-dev.67`). A host maps its
+(`@epam/ai-dial-ui-kit` `^0.16.0-dev.72`). A host maps its
 `ConversationTransferJob`s (from `@epam/ai-dial-chat-shared`) onto
 `TransferQueueItem`s — `id`, `fileName` as `name`, the status, `progress.percent`
 as `percent`, and the translated failure or warning reason as `message` — and

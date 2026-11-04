@@ -274,6 +274,7 @@ vi.mock('../../ListView/ListView', () => ({
 vi.mock('../../Details/DetailsPanel', () => ({
   DetailsPanel: ({
     item,
+    isOpen,
     isPrimaryActionVisible,
     shareOverlay,
     isDetailsLoading,
@@ -286,6 +287,7 @@ vi.mock('../../Details/DetailsPanel', () => ({
     onClose,
   }: {
     item: CatalogItem;
+    isOpen?: boolean;
     isPrimaryActionVisible?: (item: CatalogItem) => boolean;
     shareOverlay?: (item: CatalogItem, onClose: () => void) => React.ReactNode;
     isDetailsLoading?: boolean;
@@ -328,6 +330,7 @@ vi.mock('../../Details/DetailsPanel', () => ({
       {shareOverlay?.(item, () => undefined)}
       <span>{`details:${JSON.stringify(item.details ?? null)}`}</span>
       <span>{`isDetailsLoading:${String(isDetailsLoading)}`}</span>
+      <span>{`isOpen:${String(isOpen)}`}</span>
       <span>{`userStatus:${item.credentials?.userStatus ?? 'none'}`}</span>
     </div>
   ),
@@ -863,6 +866,7 @@ describe('Catalog', () => {
   });
 
   it('applies only the second response when the same item is closed and reopened while a request is pending', async () => {
+    vi.useFakeTimers();
     const first = { overview: { sections: [{ title: 'First', specs: [] }] } };
     const second = { overview: { sections: [{ title: 'Second', specs: [] }] } };
     let resolveFirst: (value: typeof first) => void = () => undefined;
@@ -884,19 +888,33 @@ describe('Catalog', () => {
       />,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
-    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+    fireEvent.click(screen.getByRole('button', { name: 'Claude' }));
+    act(() => vi.advanceTimersByTime(20));
+    expect(onFetchDetails).toHaveBeenCalledOnce();
+    expect(screen.getByText('isOpen:true')).toBeTruthy();
 
-    await userEvent.click(screen.getByRole('button', { name: 'ClosePanel' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
-    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledTimes(2));
+    fireEvent.click(screen.getByRole('button', { name: 'ClosePanel' }));
+    expect(screen.getByText('isOpen:false')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Claude' }));
+    expect(onFetchDetails).toHaveBeenCalledTimes(2);
 
-    /* The stale first response resolves after the reopen — must not land. */
-    resolveFirst(first);
-    resolveSecond(second);
+    /* The previous close animation must not clear the reopened panel. */
+    act(() => vi.advanceTimersByTime(300));
+    expect(screen.getByText('isDetailsLoading:true')).toBeTruthy();
+    expect(screen.getByText('isOpen:true')).toBeTruthy();
 
-    await screen.findByText(`details:${JSON.stringify(second)}`);
+    await act(async () => resolveSecond(second));
+    expect(screen.getByText(`details:${JSON.stringify(second)}`)).toBeTruthy();
+    expect(screen.getByText('isDetailsLoading:false')).toBeTruthy();
+
+    /* A stale response must not overwrite the newer response. */
+    await act(async () => resolveFirst(first));
+    expect(screen.getByText(`details:${JSON.stringify(second)}`)).toBeTruthy();
     expect(screen.queryByText(`details:${JSON.stringify(first)}`)).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'ClosePanel' }));
+    act(() => vi.advanceTimersByTime(300));
+    expect(screen.queryByRole('button', { name: 'ClosePanel' })).toBeNull();
   });
 
   it('applies no state and keeps the panel closed when a response arrives after close', async () => {

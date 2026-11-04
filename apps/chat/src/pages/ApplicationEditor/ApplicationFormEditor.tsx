@@ -149,6 +149,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     isEditMode && Boolean(definition.loadSetup),
   );
   const [isSetupReady, setIsSetupReady] = useState(true);
+  const [isEmbeddedEditorLoaded, setIsEmbeddedEditorLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   /*
@@ -603,6 +604,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
               ? null
               : undefined
           }
+          hasSetupSectionPadding={!isEmbeddedEditorLoaded}
           metadata={
             <MetadataForm
               values={metadata.values}
@@ -633,6 +635,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
               onSubmit={handleSubmit}
               isSubmitting={isSaving}
               onReadyChange={setIsSetupReady}
+              onEmbeddedEditorLoadedChange={setIsEmbeddedEditorLoaded}
             />
           }
         />
@@ -661,14 +664,9 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
         {isBusy ? overlayLabel : ''}
       </LiveRegion>
       {isBusy && (
-        <div
-          className="absolute inset-0 flex items-center justify-center bg-backdrop"
-          aria-hidden="true"
-        >
-          <div className="flex items-center gap-3 rounded-lg bg-layer-sunken px-4 py-3 shadow-lg">
-            <Spinner />
-            <span className="dial-small-text text-primary">{overlayLabel}</span>
-          </div>
+        /* The LiveRegion above announces the state, so the overlay is visual only. */
+        <div className="absolute inset-0 bg-backdrop" aria-hidden="true">
+          <Spinner fullWidth ariaLabel={overlayLabel} />
         </div>
       )}
       {confirmation && (

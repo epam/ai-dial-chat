@@ -376,12 +376,23 @@ describe('ProjectView', () => {
     expect(screen.queryByRole('button', { name: 'Pin' })).toBeNull();
   });
 
-  it('shows the error state with a retry action', async () => {
-    const { onRetry } = renderView({ project: null, hasError: true });
+  it('announces the load failure through the status region mounted while loading', async () => {
+    const props = { ...baseProps(), project: null };
+    const { rerender } = render(<ProjectView {...props} isLoading />);
+    /* The Spinner is an empty status of its own, so keep every empty region seen while loading. */
+    const emptyRegions = screen
+      .getAllByRole('status')
+      .filter((node) => node.textContent === '');
+
+    rerender(<ProjectView {...props} hasError />);
+    const { onRetry } = props;
 
     expect(
-      screen.getByText('Could not load the project').getAttribute('role'),
-    ).toBe('status');
+      emptyRegions.some(
+        (node) =>
+          node.isConnected && node.textContent === 'Could not load the project',
+      ),
+    ).toBe(true);
     expect(screen.queryByRole('alert')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledOnce();

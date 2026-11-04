@@ -123,6 +123,7 @@ import {
   resolveMarkdownUrl,
 } from '../../utils/dial-file';
 import { buildMessageActions } from './utils/build-message-actions';
+import { buildCitationMarkerLabels } from './utils/citation-labels';
 import {
   getMessageStarterProps,
   getStatusMessageProps,
@@ -557,10 +558,9 @@ const ConversationMessageItem: FC<Props> = ({
   }, []);
   const buildCitationLabels = useCallback(
     (group: AnnotationGroup) => {
+      const markerLabels = buildCitationMarkerLabels(t, group);
       const cardLabels = {
-        ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
-          source: group.sourceName,
-        }),
+        ariaLabel: markerLabels.ariaLabel,
         previousCitation: t(CitationsI18nKeys.PopupPreviousCitation),
         nextCitation: t(CitationsI18nKeys.PopupNextCitation),
         formatSwitcherText: (current: number, total: number) =>
@@ -575,16 +575,6 @@ const ConversationMessageItem: FC<Props> = ({
         codeBlockDownloadLabel: t(ButtonsI18nKeys.Download),
         tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
         mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
-      };
-      const markerLabels = {
-        ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
-          source: group.sourceName,
-        }),
-        label: t(CitationsI18nKeys.MarkerLabel, { source: group.sourceName }),
-        labelWithOverflow: t(CitationsI18nKeys.MarkerLabelWithOverflow, {
-          source: group.sourceName,
-          count: group.annotations.length - 1,
-        }),
       };
       return { cardLabels, markerLabels };
     },
@@ -627,7 +617,7 @@ const ConversationMessageItem: FC<Props> = ({
     [stages, isStreaming],
   );
   /* The Copy actions serialize markdown outside the renderer, so a `<cit>`
-     element has to be swapped for the source name its marker shows — a
+     element has to be swapped for the label its marker shows — a
      references-table title cell is otherwise copied empty (issue #9245). */
   const copyContent = useMemo(
     () =>
@@ -635,8 +625,9 @@ const ConversationMessageItem: FC<Props> = ({
         msg.content,
         citationGroups,
         fallbackCitationGroups,
+        (group) => buildCitationMarkerLabels(t, group).label,
       ),
-    [msg.content, citationGroups, fallbackCitationGroups],
+    [msg.content, citationGroups, fallbackCitationGroups, t],
   );
   const referenceGroups = useMemo(
     () => getReferenceAttachmentGroups(msg.custom_content?.attachments),
@@ -1001,6 +992,7 @@ const ConversationMessageItem: FC<Props> = ({
                         group.primaryAnnotation.body.source.attachment,
                         attachmentCanvasUrlResolvers,
                       ) != null;
+                    const markerLabels = buildCitationMarkerLabels(t, group);
                     return (
                       <CitationDropdown
                         key={group.groupKey}
@@ -1018,9 +1010,7 @@ const ConversationMessageItem: FC<Props> = ({
                           />
                         }
                         cardLabels={{
-                          ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
-                            source: group.sourceName,
-                          }),
+                          ariaLabel: markerLabels.ariaLabel,
                           previousCitation: t(
                             CitationsI18nKeys.PopupPreviousCitation,
                           ),
@@ -1047,21 +1037,7 @@ const ConversationMessageItem: FC<Props> = ({
                             ChatI18nKeys.ScrollableFormula,
                           ),
                         }}
-                        markerLabels={{
-                          ariaLabel: t(CitationsI18nKeys.MarkerAriaLabel, {
-                            source: group.sourceName,
-                          }),
-                          label: t(CitationsI18nKeys.MarkerLabel, {
-                            source: group.sourceName,
-                          }),
-                          labelWithOverflow: t(
-                            CitationsI18nKeys.MarkerLabelWithOverflow,
-                            {
-                              source: group.sourceName,
-                              count: group.annotations.length - 1,
-                            },
-                          ),
-                        }}
+                        markerLabels={markerLabels}
                       />
                     );
                   })}

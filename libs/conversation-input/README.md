@@ -261,7 +261,10 @@ the neutral `--bg-layer-sunken` surface, recoloured by `colors.background`), wit
 reset sentence after it. `UsageLimitBannerSeverity.Warning` renders the kit's
 filled warning icon and `UsageLimitBannerSeverity.Reached` its filled error icon.
 Both announce politely through `role="status"`, because the banner reports
-state rather than replying to an action.
+state rather than replying to an action. A banner mounted together with its
+text is not announced reliably, so a host that shows it conditionally should
+keep a kit `LiveRegion` mounted around it and pass `isLiveRegion={false}` —
+the root then takes `role="none"` and the host's region is the only one.
 
 The component holds no state and knows nothing about usage data. The host
 decides when to render it and passes every string already translated and
@@ -627,7 +630,8 @@ whose composer is already wide below that width opts the narrower widths in with
 ```
 
 The flag affects the action row alone. The add menu and the model picker keep
-their bottom-sheet presentation below 1280px, so it does not turn an embed into
+their bottom-sheet presentation below 768px, independently of this flag, so it
+does not turn an embed into
 a desktop layout wholesale.
 
 Neither layout uses an `order-*` utility: each renders its children in the
@@ -646,3 +650,9 @@ npm exec nx build conversation-input
 ```sh
 npm exec nx test conversation-input
 ```
+
+## Responsive menu policy
+
+Attachment, tools, add-on and model menus switch from bottom sheets to anchored menus at 768px. Composer layout and Chat Settings destination presentation keep the existing 1280px layout boundary. ModelSelectorBottomSheet accepts optional `searchQuery` and `onSearchQueryChange` for a query shared across presentations; useModelSelector exposes those query controls. Omitting the new sheet inputs preserves local search state.
+
+`onModelPickerOpenChange(open)` reports picker opening and dismissal to the host. Use it to reset host-owned search on dismissal; presentation changes keep the picker open and retain its query.

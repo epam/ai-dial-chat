@@ -13,7 +13,7 @@ vi.mock('../useDeploymentSelectorFieldOverlay');
 const breakpoint = vi.hoisted(() => ({ isMobile: false }));
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
-  useIsMobile: () => breakpoint.isMobile,
+  useIsPhone: () => breakpoint.isMobile,
 }));
 
 const mockOverlay = (
@@ -26,6 +26,7 @@ const mockOverlay = (
       </button>
     ),
     catalogModal: null,
+    onOpenChange: vi.fn(),
     isLoading: false,
     error: null,
     resolvedLabel: null,

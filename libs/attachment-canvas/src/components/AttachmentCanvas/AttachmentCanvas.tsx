@@ -90,6 +90,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   onCopyJson,
   tableDownloadFilename,
   isMobile = false,
+  isBoundedOverlay = false,
   defaultWidth,
   minWidth = 600,
   maxWidth = 1500,
@@ -235,11 +236,12 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   return (
     <SidebarPanel
       isOpen={isOpen}
+      isBoundedOverlay={isBoundedOverlay}
       orientation={SidebarOrientation.Right}
       title={panelTitle}
       labels={{ ariaLabel, closeLabel, resizeLabel }}
       onClose={onClose}
-      resizable={!isMobile}
+      resizable={!isMobile || isBoundedOverlay}
       defaultWidth={defaultWidth}
       minWidth={minWidth}
       maxWidth={maxWidth}
@@ -257,7 +259,8 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           panelStyles?.headerClassName,
         ),
         className: mergeClasses(
-          isOpen ? 'mobile:w-full mobile:max-w-full' : 'w-0',
+          !isBoundedOverlay &&
+            (isOpen ? 'mobile:w-full mobile:max-w-full' : 'w-0'),
           className,
           panelStyles?.className,
           ATTACHMENT_CANVAS_CLASS.panel,

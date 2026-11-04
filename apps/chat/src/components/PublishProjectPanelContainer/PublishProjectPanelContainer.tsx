@@ -1,9 +1,9 @@
 import {
   mapPublishHistoryEntryDto,
   toPublishRuleDto,
+  usePublishHistory,
 } from '@epam/ai-dial-chat-hooks';
 import {
-  PublishHistoryEntry,
   PublishResourceSummary,
   StandalonePublishPanel,
   usePublishFlow,
@@ -14,7 +14,7 @@ import {
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import type { FC, RefObject } from 'react';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BasicI18nKeys,
@@ -44,8 +44,6 @@ import {
   getPublishPanelCommonLabels,
   getPublishFolderLabel,
 } from '../../utils/publish';
-
-const EMPTY_HISTORY: PublishHistoryEntry[] = [];
 
 /** Props for `PublishProjectPanelContainer`. */
 interface Props {
@@ -123,29 +121,18 @@ const PublishProjectPanelContainer: FC<Props> = ({
     [conversationCount, projectName, t],
   );
 
-  /* Re-read on every open, so a publication requested since the last one
-   * already blocks its folder. A failed lookup leaves the history empty: the
-   * backend still refuses a duplicate publication. */
-  const [history, setHistory] = useState<PublishHistoryEntry[]>(EMPTY_HISTORY);
-  useEffect(() => {
-    if (!isOpen) return;
-    let isCancelled = false;
-    const load = async () => {
-      try {
-        const entries = await getCatalogPublishHistory(
-          CatalogPublishEntityType.Project,
-          projectId,
-        );
-        if (!isCancelled) setHistory(entries.map(mapPublishHistoryEntryDto));
-      } catch {
-        if (!isCancelled) setHistory(EMPTY_HISTORY);
-      }
-    };
-    void load();
-    return () => {
-      isCancelled = true;
-    };
-  }, [isOpen, projectId]);
+  const loadHistory = useCallback(
+    async (id: string) =>
+      (
+        await getCatalogPublishHistory(CatalogPublishEntityType.Project, id)
+      ).map(mapPublishHistoryEntryDto),
+    [],
+  );
+  const history = usePublishHistory({
+    isOpen,
+    entityId: projectId,
+    loadHistory,
+  });
 
   const publishFlow = usePublishFlow<PublishResourceSummary>({
     item: resource,

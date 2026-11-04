@@ -27,7 +27,7 @@ It already includes the styles of the publish flow from `@epam/ai-dial-publish-p
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.67 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.72 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 
 `ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
@@ -111,6 +111,66 @@ in both layouts; favorites and catalog integration remain host-owned panel conte
 The list view imports Grid through `@epam/ai-dial-ui-kit/grid`. Library builds
 keep UI Kit root and subpath imports external. JavaScript is tree-shakeable;
 CSS/SCSS imports remain side effects. Load catalog UI through a host lazy boundary.
+
+### DeploymentSelectorPanel
+
+`DeploymentSelectorPanel` is the searchable model/agent picker a host renders
+inside its own popover or bottom sheet: a search header, the selected row, the
+favourites with star toggles, and a footer button that hands off to the full
+catalog. Picking a row or the footer button calls `onSelect` / `onBrowseCatalog`
+and then `onClose`; a star toggle plays the row's exit animation and then calls
+`onToggleFavorite(id, isFavorite)`. Items whose `isHidden` is set stay out of
+the list; a hidden selection is shown disabled with `labels.unavailableLabel`.
+
+```tsx
+import {
+  DeploymentSelectorLayout,
+  DeploymentSelectorPanel,
+  type CatalogItem,
+} from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+
+<DeploymentSelectorPanel
+  favorites={favorites}
+  pinnedItem={operatorDefault}
+  selectedId={selectedId}
+  selectedItem={selectedItem}
+  onSelect={handleSelect}
+  onToggleFavorite={handleToggleFavorite}
+  onBrowseCatalog={openCatalog}
+  onClose={closePopover}
+  labels={{ searchPlaceholder: 'Search agents…', browseCatalogLabel: 'Browse' }}
+  /* An agents-only host with one flat list and a fixed default row. */
+  layout={DeploymentSelectorLayout.Flat}
+  isSelectableItem={(item: CatalogItem) =>
+    item.type === CatalogEntityType.Agent
+  }
+  canFavoritePinnedItem={false}
+/>;
+```
+
+- `layout` — `DeploymentSelectorLayout.Sectioned` (default) shows a
+  "Currently selected" section above a headed Favorites section;
+  `DeploymentSelectorLayout.Flat` shows one list without headings: the pinned
+  row, then the selection when it is not a favourite, then the favourites.
+- `searchQuery` / `onSearchQueryChange` — optional controlled search, allowing
+  the host to retain the query when switching between a sheet and a popover.
+  Without `searchQuery`, the panel manages its own query. Search receives focus
+  on open from 768px; phone sheets leave focus unchanged.
+- `isSelectableItem` — which items belong in the picker. Defaults to items
+  listed under the Model or Agent catalog tab.
+- `pinnedItem` / `canFavoritePinnedItem` — an operator-default row placed
+  ahead of the favourites; `canFavoritePinnedItem={false}` drops its star.
+- `extraOptions` — non-deployment rows (`DeploymentSelectorExtraOption`) above
+  every section, such as "Default agent" modes.
+- `labels` (`DeploymentSelectorPanelLabels`) — every string, English defaults.
+- `colors` (`DeploymentSelectorPanelColors`) — `surface`, `sectionHeading`,
+  `emptyHint`, `footerBorder`, `starFilled`, set as `--ds-*` custom properties.
+- `sectionHeadingClassName` (default `'dial-tiny-lead-semi-text'`),
+  `itemNameClassName` and `emptyHintClassName` (both `'dial-small-text'`) —
+  typography classes.
+- `className` — merged over the root; set `[--ds-search-inline:<length>]` there
+  to change the search header's inline padding (default `4px`).
 
 ### Catalog
 
@@ -265,7 +325,7 @@ navigation (a category tree, etc.).
 
 #### Mobile browse settings
 
-Below the desktop breakpoint (`useIsMobile` from `@epam/ai-dial-chat-shared`)
+Below 768px (`useIsPhone` from `@epam/ai-dial-chat-shared`)
 the Browse toolbar drops the view toggle, the sort dropdown and the filter
 dropdown. In their place, next to the search field, it shows one settings
 button that opens a bottom sheet with View, Sorting and Filtering pages.
@@ -295,8 +355,8 @@ const browseSettings: Partial<BrowseSettingsSheetLabels> = {
 `createOptions` may contain `DropdownItemType.Divider` and
 `DropdownItemType.PlainText` items to split the Create menu into sections, for
 example a divider plus a section header. Search highlighting leaves them alone.
-The desktop dropdown renders them with the kit's own styles. Below the desktop
-breakpoint, the bottom sheet renders the divider as `role="separator"` and the
+The anchored dropdown renders them with the kit's own styles from 768px. Below
+768px, the bottom sheet renders the divider as `role="separator"` and the
 header as a non-interactive caption, neither of them a `menuitem`. Restyle them
 through `styles.colors.createMenu` (`CreateMenuColors`) and
 `styles.typography.createMenuSectionHeaderClassName` (defaults to
@@ -391,7 +451,7 @@ empty state for free.
 
 Once the user has scrolled the catalog down by at least one screen — the page
 plus, in list view, the table's own rows — a floating `FabButton` appears in the
-bottom inline-end corner (above the floating Create button on mobile).
+bottom inline-end corner (above the floating Create button below 768px).
 Activating it scrolls the page and the list rows back to the top and moves focus
 to the search field. The scroll is instant under
 `prefers-reduced-motion: reduce`. Pass a translated accessible name through
@@ -499,7 +559,9 @@ The table frame, header, row dividers and selected-row tint come from the
 12px card with the MD shadow and inset row dividers. `styles.colors` (`ListViewColors`) covers cell content only:
 `starFilled`, `folderIcon`, `selectedRowCheckIcon`, `nameText` and `versionText`. With no items, the grid
 shows its own empty state from `emptyStateTitle` (default `'No results'`) and
-`emptyStateDescription`.
+`emptyStateDescription`. The message is announced only with `isEmptyStateLive`
+(default `false`); `Catalog` sets it when a search or topic filter left the tab
+empty.
 
 Name, Folder and Tags share the spare width (Name takes twice the share of the
 other two), so widening the table widens the columns that carry variable-length
@@ -741,6 +803,14 @@ import { Favorites } from '@epam/ai-dial-catalog';
 ### FavoriteCard
 
 A single favorite tile, exported for hosts composing their own favorites layout.
+
+A clickable `FavoriteCard` (and the browse-grid `Card`) stays an unroled
+`<article>`: the pointer clicks the card itself, and keyboard and
+screen-reader users reach it through a visually hidden native `<button>`
+named after the item, placed before the star. Its focus draws a ring around
+the card — `focusOutlineColor` on `FavoriteCard`, `styles.colors.focusOutline`
+on `Card` (vars `--fc-focus-outline` / `--cg-focus-outline`, default
+`--stroke-focus`).
 
 ### Filter / TopicTag
 
@@ -1054,6 +1124,7 @@ import {
   CredentialStatus,
   CredentialsBadgeState,
   CredentialsUiState,
+  DeploymentSelectorLayout,
   DeploymentSize,
   DetailsConfirmationKind,
   LimitRowLayout,
@@ -1800,3 +1871,7 @@ Existing toolset `onLogin` / `onLogout` contracts are unchanged.
 The public `DeploymentSelectorField` restores focus through the input's
 supported `onFocus` event and never requires a private input ref or DOM query.
 Its keyboard and Browse behavior is exercised by the packed scheduler consumer.
+
+## Responsive menus and details
+
+Create and browse view/sort/filter menus use phone sheets below 768px and existing anchored menus from 768px. Catalog shows a floating icon-only Create button below 768px and the normal labeled header button from 768px. Open Create menus and their search query survive this placement change; hidden/read-only rules still apply. Only the phone presentation reserves bottom content padding and stacks Scroll to top above Create. Catalog grids, gutters and catalog dialogs retain the existing 1280px layout boundary. DetailsPanel (also composed by SkillDetailsSidePanel) keeps its SideDrawer focus/scroll lifecycle; at 768-1279px the drawer uses its 540px preferred width capped to available width minus 32px.

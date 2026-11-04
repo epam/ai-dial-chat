@@ -87,7 +87,7 @@ import {
 
 ### ScheduledTaskCard
 
-A single scheduled task rendered as a card: title, optional description/prompt preview, a status pill, and optional location breadcrumb and "new" badge. The status pill is resolved by `getScheduledTaskStatus`: an explicit `item.presentationStatus` wins over the derived statuses; otherwise `item.isCompleted: true` renders a "Completed" badge (check icon), `item.isActive: false` renders a "Paused" badge, and otherwise the schedule label renders as the schedule pill — exactly one of the three, never two together. When `onCardClick` is supplied, the whole card becomes an activatable element (click or Enter/Space) reporting the task id.
+A single scheduled task rendered as a card: title, optional description/prompt preview, a status pill, and optional location breadcrumb and "new" badge. The status pill is resolved by `getScheduledTaskStatus`: an explicit `item.presentationStatus` wins over the derived statuses; otherwise `item.isCompleted: true` renders a "Completed" badge (check icon), `item.isActive: false` renders a "Paused" badge, and otherwise the schedule label renders as the schedule pill — exactly one of the three, never two together. When `onCardClick` is supplied, the title renders as a native `<button>` stretched over the whole card (the card stays an unroled `<article>`), so a click anywhere or Enter/Space on the button reports the task id; keyboard focus outlines the card with `styles.colors.focusOutline` (var `--stc-focus-outline`, default `--stroke-focus`).
 
 Supply `labels.completedBadgeLabel` for localized completed-state copy.
 
@@ -261,6 +261,49 @@ const markdownLabels: ScheduledTaskInstructionsMarkdownLabels = {
   modelDisplayName="GPT-4.1 mini"
   instructionsMarkdown="Summarize my inbox"
   markdownLabels={markdownLabels}
+/>;
+```
+
+### ScheduledTaskConversationBanner
+
+Compact card above a scheduled-task conversation: the task's `displayName`
+with an optional pre-formatted `timestampLabel` (own line on mobile, inline on
+desktop) and a "Task details" link the host renders through
+`renderDetailsLink`, so the route and router element stay in the host. The
+link receives `className`, `aria-label` and `children` (label plus a
+chevron mirrored in RTL).
+
+- `isLoading` shows a skeleton instead of the name.
+- `isUnavailable` shows `labels.unavailableLabel`, plus a retry button when
+  `onRetry` is set.
+- `isTaskDeleted` replaces the link with `labels.taskDeletedLabel`.
+
+Two polite `LiveRegion`s stay mounted in every state: a visually hidden one
+announces `labels.loadingLabel` while loading, and the visible unavailable
+message is the other. Strings come from `ScheduledTaskConversationBannerLabels`
+(English defaults); colors from `ScheduledTaskConversationBannerColors` — CSS
+vars `--stcb-surface`, `--stcb-border`, `--stcb-text`,
+`--stcb-details-link`, `--stcb-details-link-hover-surface`,
+`--stcb-focus-outline`, `--stcb-deleted-text` on the card root; typography
+from `nameClassName` (default `'dial-small-semi-text'`), `textClassName`
+(default `'dial-small-text'`) and `actionClassName` (default
+`'dial-tiny-semi-text'`).
+
+```tsx
+import { ScheduledTaskConversationBanner } from '@epam/ai-dial-scheduled-tasks';
+import { Link } from 'react-router';
+
+<ScheduledTaskConversationBanner
+  isLoading={isLoading}
+  isUnavailable={isUnavailable}
+  displayName={task.displayName}
+  timestampLabel={runTimeLabel}
+  renderDetailsLink={({ children, ...linkProps }) => (
+    <Link to={`/scheduled-tasks/${scheduleId}`} {...linkProps}>
+      {children}
+    </Link>
+  )}
+  onRetry={hasFailed ? retry : undefined}
 />;
 ```
 

@@ -36,20 +36,26 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     labelProps?: { label?: string; required?: boolean };
     error?: string;
     disabled?: boolean;
-  }) => (
-    <>
-      <label>
-        {labelProps?.label}
-        <input
-          value={value ?? ''}
-          disabled={disabled}
-          required={labelProps?.required}
-          onChange={(e) => onChange?.(e.target.value)}
-        />
-      </label>
-      {error && <p role="alert">{error}</p>}
-    </>
-  ),
+  }) => {
+    /* Mirrors the kit 2.0 Input: the error is a described caption with no live-region role. */
+    const errorId = `${labelProps?.label ?? 'input'}-error`;
+    return (
+      <>
+        <label>
+          {labelProps?.label}
+          <input
+            value={value ?? ''}
+            disabled={disabled}
+            required={labelProps?.required}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? errorId : undefined}
+            onChange={(e) => onChange?.(e.target.value)}
+          />
+        </label>
+        {error && <p id={errorId}>{error}</p>}
+      </>
+    );
+  },
   TagInput: ({
     labelProps,
     placeholder,
@@ -619,12 +625,17 @@ describe('AuthSection', () => {
       };
       renderSection({ auth: oauthWithConfigAuth(), errors });
 
-      const alerts = screen.getAllByRole('alert');
-      expect(alerts).toHaveLength(2);
-      expect(alerts[0]?.textContent).toContain(
-        'Invalid authorization endpoint',
+      const authorization = screen.getByLabelText('Authorization endpoint');
+      const token = screen.getByLabelText('Token endpoint');
+      expect(authorization.getAttribute('aria-invalid')).toBe('true');
+      expect(token.getAttribute('aria-invalid')).toBe('true');
+      expect(authorization.getAttribute('aria-describedby')).toBe(
+        screen.getByText('Invalid authorization endpoint').id,
       );
-      expect(alerts[1]?.textContent).toContain('Invalid token endpoint');
+      expect(token.getAttribute('aria-describedby')).toBe(
+        screen.getByText('Invalid token endpoint').id,
+      );
+      expect(screen.queryByRole('alert')).toBeNull();
     });
   });
 

@@ -1,5 +1,9 @@
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
-import { resolveArchiveEntryPath } from '../../upload/archive-upload';
+import {
+  getArchiveEntryUploadError,
+  resolveArchiveEntryPath,
+} from '../../upload/archive-upload';
 
 describe('resolveArchiveEntryPath', () => {
   it('rejects a parent-directory traversal segment', () => {
@@ -60,5 +64,25 @@ describe('resolveArchiveEntryPath', () => {
       isDirectory: false,
       safeRelativePath: null,
     });
+  });
+});
+
+describe('getArchiveEntryUploadError', () => {
+  it('reports a conflict as Conflict', () => {
+    expect(getArchiveEntryUploadError(new ConflictException('exists'))).toBe(
+      'Conflict',
+    );
+  });
+
+  it('reports another HTTP exception by its message', () => {
+    expect(getArchiveEntryUploadError(new NotFoundException('gone'))).toBe(
+      'gone',
+    );
+  });
+
+  it('reports a non-HTTP error as Upload failed', () => {
+    expect(getArchiveEntryUploadError(new Error('socket'))).toBe(
+      'Upload failed',
+    );
   });
 });

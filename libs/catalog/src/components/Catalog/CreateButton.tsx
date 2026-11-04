@@ -1,4 +1,4 @@
-import { mergeClasses, useIsMobile } from '@epam/ai-dial-chat-shared';
+import { mergeClasses, useIsPhone } from '@epam/ai-dial-chat-shared';
 import {
   Button,
   ButtonAppearance,
@@ -6,12 +6,11 @@ import {
   ButtonVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  Dropdown,
   DropdownItem,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconPlus } from '@tabler/icons-react';
-import { FC, MouseEvent, useRef, useState } from 'react';
+import { FC, MouseEvent, useState } from 'react';
 import {
   CREATE_MENU_LIST_CLASS_NAME,
   CREATE_MENU_VISIBLE_ROWS,
@@ -49,7 +48,7 @@ export interface CreateButtonProps {
   colors?: CreateMenuColors;
   /** Typography class of a section header in the mobile menu sheet. Defaults to `'dial-caption-text'`. */
   sectionHeaderClassName?: string;
-  /** Renders a round icon-only `+` button, named by `label`, that opens any menu as a sheet; the caller positions it. Defaults to `false`. */
+  /** Renders a round icon-only `+` button, named by `label`, whose menu follows the phone-menu breakpoint; the caller positions it. Defaults to `false`. */
   isFloating?: boolean;
 }
 
@@ -69,9 +68,8 @@ export const CreateButton: FC<CreateButtonProps> = ({
   sectionHeaderClassName,
   isFloating = false,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const isMobile = useIsMobile();
+  const isPhone = useIsPhone();
 
   const chevron = (
     <IconChevronDown
@@ -96,10 +94,9 @@ export const CreateButton: FC<CreateButtonProps> = ({
     className: 'size-12 rounded-full px-0',
   };
 
-  /* A floating menu's side flyouts fall off a phone screen, so below the
-   * desktop breakpoint — and always from the round floating button, which is
-   * only shown there — the menu is a sheet. */
-  if ((isMobile || isFloating) && (search || options?.length)) {
+  /* Side flyouts do not fit phone screens. Floating triggers retain their
+   * shape on tablets but use the same anchored menu as other triggers. */
+  if (isPhone && (search || options?.length)) {
     const handleSheetClose = () => {
       setIsOpen(false);
       search?.onChange('');
@@ -133,7 +130,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
     );
   }
 
-  if (isFloating) {
+  if (isFloating && !search && !options?.length) {
     return (
       <Button
         {...floatingShapeProps}
@@ -144,33 +141,30 @@ export const CreateButton: FC<CreateButtonProps> = ({
     );
   }
 
-  if (search) {
+  if (search || (isFloating && options?.length)) {
     return (
-      <div ref={containerRef}>
-        <Dropdown
-          items={options ?? []}
-          searchable
-          searchValue={search.value}
-          onSearchChange={search.onChange}
-          searchPlaceholder={searchPlaceholder}
-          searchClearLabel={searchClearLabel}
-          noResultsLabel={noResultsLabel}
-          maxVisibleItems={CREATE_MENU_VISIBLE_ROWS}
-          placement="bottom-end"
-          matchReferenceWidth={false}
-          listClassName={CREATE_MENU_LIST_CLASS_NAME}
-          onOpenChange={setIsOpen}
-        >
-          <Button
-            label={label}
-            variant={variant}
-            appearance={ButtonAppearance.Solid}
-            iconAfter={chevron}
-            aria-haspopup="menu"
-            aria-expanded={isOpen}
-          />
-        </Dropdown>
-      </div>
+      <ButtonDropdown
+        {...(isFloating
+          ? { ...floatingShapeProps, iconAfter: null }
+          : { label })}
+        variant={variant}
+        appearance={ButtonAppearance.Solid}
+        items={options ?? []}
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        dropdownProps={{
+          searchable: !!search,
+          searchValue: search?.value,
+          onSearchChange: search?.onChange,
+          searchPlaceholder,
+          searchClearLabel,
+          noResultsLabel,
+          maxVisibleItems: CREATE_MENU_VISIBLE_ROWS,
+          placement: 'bottom-end',
+          matchReferenceWidth: false,
+          listClassName: CREATE_MENU_LIST_CLASS_NAME,
+        }}
+      />
     );
   }
 
@@ -192,13 +186,13 @@ export const CreateButton: FC<CreateButtonProps> = ({
   }
 
   return (
-    <div ref={containerRef}>
-      <ButtonDropdown
-        appearance={ButtonAppearance.Solid}
-        label={label}
-        variant={variant}
-        items={options}
-      />
-    </div>
+    <ButtonDropdown
+      appearance={ButtonAppearance.Solid}
+      label={label}
+      variant={variant}
+      items={options}
+      open={isOpen}
+      onOpenChange={setIsOpen}
+    />
   );
 };

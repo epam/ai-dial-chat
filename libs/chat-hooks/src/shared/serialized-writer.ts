@@ -4,6 +4,8 @@ export interface SerializedKeyedWriter {
   enqueue: (key: string) => Promise<void>;
   /** Drops the write queued for `key` if it has not started; its promise resolves without writing. */
   drop: (key: string) => void;
+  /** Calls `listener` with the key of every write that succeeded; returns the function that removes it. */
+  subscribe: (listener: (key: string) => void) => () => void;
 }
 
 interface QueuedWrite {
@@ -17,7 +19,18 @@ export const createSerializedKeyedWriter = (
   write: (key: string) => Promise<void>,
 ): SerializedKeyedWriter => {
   const queued = new Map<string, QueuedWrite>();
+  const listeners = new Set<(key: string) => void>();
   let tail: Promise<void> = Promise.resolve();
+
+  const notify = (key: string) => {
+    for (const listener of [...listeners]) {
+      try {
+        listener(key);
+      } catch {
+        /* One listener's failure reaches neither the others nor the writer. */
+      }
+    }
+  };
 
   const enqueue = (key: string): Promise<void> => {
     const existing = queued.get(key);
@@ -41,10 +54,13 @@ export const createSerializedKeyedWriter = (
       queued.delete(key);
       try {
         await write(key);
-        entry.resolve();
       } catch (error) {
         entry.reject(error);
+        return;
       }
+      /* Listeners hear only of a write that ran and succeeded, before its callers resume. */
+      notify(key);
+      entry.resolve();
     })();
     return promise;
   };
@@ -53,5 +69,12 @@ export const createSerializedKeyedWriter = (
     queued.delete(key);
   };
 
-  return { enqueue, drop };
+  const subscribe = (listener: (key: string) => void) => {
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+    };
+  };
+
+  return { enqueue, drop, subscribe };
 };

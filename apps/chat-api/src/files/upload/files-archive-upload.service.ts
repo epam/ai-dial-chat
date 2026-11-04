@@ -26,6 +26,7 @@ import {
   ARCHIVE_ENTRY_CONFLICT_RETRY_LIMIT,
   buildDeduplicatedFilePath,
   decodeArchiveEntryName,
+  getArchiveEntryUploadError,
   isConflictError,
   resolveArchiveEntryPath,
 } from './archive-upload';
@@ -254,11 +255,7 @@ export class FilesArchiveUploadService {
           results.push({
             path: entryPath,
             success: false,
-            error: isConflictError(err)
-              ? 'Conflict'
-              : err instanceof HttpException
-                ? err.message
-                : 'Upload failed',
+            error: getArchiveEntryUploadError(err),
           });
         }
       }

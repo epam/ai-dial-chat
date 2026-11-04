@@ -1,5 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Tag } from '@epam/ai-dial-ui-kit';
+import { LiveRegion, LiveRegionElement, Tag } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import { PublishHistoryEntry } from '../../models/publish';
 import { formatPublishedDate } from '../../utils/format-published-date';
@@ -99,27 +99,19 @@ export const PublishHistoryList: FC<PublishHistoryListProps> = ({
     styles.emptyState,
   );
 
-  if (isLoading) {
+  if (isLoading || hasError || entries.length === 0) {
+    let stateLabel = emptyStateLabel;
+    if (isLoading) stateLabel = loadingLabel;
+    else if (hasError) stateLabel = errorLabel;
+    /* One region for every non-list state, so the error is announced when it replaces the loading text. */
     return (
-      <p style={cssVars} className={emptyStateClasses}>
-        {loadingLabel}
-      </p>
-    );
-  }
-
-  if (hasError) {
-    return (
-      <p style={cssVars} className={emptyStateClasses} role="status">
-        {errorLabel}
-      </p>
-    );
-  }
-
-  if (entries.length === 0) {
-    return (
-      <p style={cssVars} className={emptyStateClasses}>
-        {emptyStateLabel}
-      </p>
+      <LiveRegion
+        as={LiveRegionElement.P}
+        style={cssVars}
+        className={emptyStateClasses}
+      >
+        {stateLabel}
+      </LiveRegion>
     );
   }
 

@@ -98,6 +98,13 @@ export type {
   ScheduledTaskConversationDetailsSectionLabels,
 } from './components/ScheduledTaskConversationDetailsSection/ScheduledTaskConversationDetailsSection';
 export { ScheduledTaskConversationDetailsState } from './components/ScheduledTaskConversationDetailsSection/ScheduledTaskConversationDetailsSection';
+export { ScheduledTaskConversationBanner } from './components/ScheduledTaskConversationBanner/ScheduledTaskConversationBanner';
+export type {
+  ScheduledTaskConversationBannerColors,
+  ScheduledTaskConversationBannerDetailsLinkProps,
+  ScheduledTaskConversationBannerLabels,
+  ScheduledTaskConversationBannerProps,
+} from './models/scheduled-task-conversation-banner-props';
 export { ScheduledTasksLoginBanner } from './components/ScheduledTasksLoginBanner/ScheduledTasksLoginBanner';
 export type {
   ScheduledTasksLoginBannerLabels,

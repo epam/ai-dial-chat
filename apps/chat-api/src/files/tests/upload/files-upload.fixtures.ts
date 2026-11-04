@@ -30,16 +30,14 @@ export const makeUploadServiceDeps = (
     baseUrl: 'http://dial-core',
     dialApiVersion: '2024-10-21',
     fetchCore,
+    uploadCore: fetchCore,
   } as unknown as DialClientService;
 
   return { configService, dialClient, sdkClient, fetchCore };
 };
 
 /** Drains an upload request body; `delayMs` simulates a slow consumer between chunks. */
-export const readBody = async (
-  body: unknown,
-  delayMs = 0,
-): Promise<Buffer> => {
+export const readBody = async (body: unknown, delayMs = 0): Promise<Buffer> => {
   const reader = (body as ReadableStream<Uint8Array>).getReader();
   const parts: Buffer[] = [];
   for (;;) {

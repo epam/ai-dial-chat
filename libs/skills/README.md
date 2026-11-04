@@ -53,7 +53,7 @@ import '@epam/ai-dial-skills/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.67`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.72`
 - `@epam/ai-dial-chat-shared` `*`
 - `@epam/ai-dial-react-file-manager` `^0.4.0-dev.25` — `SkillDetailsSidePanel`
   renders its `DialFoldersTree`
@@ -416,6 +416,7 @@ const {
   selectedSkills,
   resetSkillMentions,
   seedSkillMentions,
+  selectSkillByUrl,
   recognizeMentionsInInsertion,
   renderHistorySkillSegments,
   renderHistorySkills,
@@ -511,6 +512,10 @@ mention and the draft alongside it — call after a successful send.
 `seedSkillMentions(content, skills)` seeds the draft and its tracked mentions
 from a persisted message — call once when entering edit mode on a message
 that carries `custom_content.skills`.
+`selectSkillByUrl(url)` seeds the draft with a single `/{name} ` mention of
+`url`, naming it from the listings or, for an unlisted url, its last path
+segment — for a one-shot selection that has only a url, such as a catalog
+"Use in chat" action or a deep link.
 `recognizeMentionsInInsertion(text)` marks text the host is about to insert
 into the composer (a picked prompt): once that insertion reaches
 `onDraftChange`, every `/{name}` run in it that names a listed skill becomes a

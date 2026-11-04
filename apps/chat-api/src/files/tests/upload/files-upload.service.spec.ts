@@ -15,6 +15,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { streamingFetch } from '../../../dial/streaming-fetch';
+import { UploadMode } from '../../types/upload-mode.enum';
 import { FilesUploadService } from '../../upload/files-upload.service';
 import { UPLOAD_RESPONSE_TIMEOUT_MS } from '../../upload/upload-watchdog';
 import { makeUploadServiceDeps, readBody } from './files-upload.fixtures';
@@ -247,7 +249,7 @@ describe('FilesUploadService', () => {
       const { service, fetchCore } = makeService();
       fetchCore.mockImplementation(respondWith(201));
 
-      await service.uploadFile('b', 'p', mockFile, 't', 'overwrite');
+      await service.uploadFile('b', 'p', mockFile, 't', UploadMode.Overwrite);
 
       expect(putCall(fetchCore).headers).not.toHaveProperty('If-None-Match');
     });
@@ -265,7 +267,7 @@ describe('FilesUploadService', () => {
       const { service, fetchCore } = makeService();
       fetchCore.mockImplementation(respondWith(201));
 
-      await service.uploadFile('b', 'p', mockFile, 't', 'create-only');
+      await service.uploadFile('b', 'p', mockFile, 't', UploadMode.CreateOnly);
 
       expect(putCall(fetchCore).headers).toMatchObject({
         'If-None-Match': '*',
@@ -277,7 +279,7 @@ describe('FilesUploadService', () => {
       fetchCore.mockImplementation(respondWith(412));
 
       const error = await service
-        .uploadFile('b', 'p', mockFile, 't', 'create-only')
+        .uploadFile('b', 'p', mockFile, 't', UploadMode.CreateOnly)
         .catch((err: unknown) => err);
 
       expect(error).toBeInstanceOf(HttpException);
@@ -316,8 +318,8 @@ describe('FilesUploadService', () => {
           }
         ).dialClient.baseUrl = `http://127.0.0.1:${port}`;
         (
-          service as unknown as { dialClient: { fetchCore: typeof fetch } }
-        ).dialClient.fetchCore = globalThis.fetch;
+          service as unknown as { dialClient: { uploadCore: typeof fetch } }
+        ).dialClient.uploadCore = streamingFetch;
         const payload = Buffer.alloc(3 * 1024 * 1024, 'x');
 
         const result = await service.uploadFile(
@@ -329,7 +331,7 @@ describe('FilesUploadService', () => {
             originalname: 'big file.csv',
           },
           'tok',
-          'create-only',
+          UploadMode.CreateOnly,
         );
 
         expect(result).toEqual({ url: 'files/bucket/dir/big file.csv' });
@@ -530,7 +532,7 @@ describe('FilesUploadService', () => {
               'p',
               streamedFile(PATTERN),
               't',
-              'create-only',
+              UploadMode.CreateOnly,
             ),
           ).rejects.toThrow(error);
         },

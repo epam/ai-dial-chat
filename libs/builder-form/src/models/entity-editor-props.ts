@@ -73,6 +73,8 @@ export interface EntityEditorProps {
   metadataSectionClassName?: string;
   /** Class added to the Setup section root, e.g. an embedding editor's own public class. */
   setupSectionClassName?: string;
+  /** Pads the Setup section; `false` lets content (e.g. a loaded embedded editor) run edge to edge. Defaults to `true`. */
+  hasSetupSectionPadding?: boolean;
   /**
    * Host-rendered content of an extra Aside section in a third column at the
    * inline end, below the header, on desktop (the Metadata and Setup sections

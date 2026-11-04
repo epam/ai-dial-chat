@@ -208,7 +208,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
     if (hasError) {
       return (
         <div className="flex flex-col items-center gap-3">
-          <p role="status" className={mergeClasses(bodyClassName, styles.body)}>
+          <p aria-hidden className={mergeClasses(bodyClassName, styles.body)}>
             {labels.errorLabel}
           </p>
           <GhostButton label={labels.retryLabel} onClick={onRetry} />
@@ -237,6 +237,10 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
           styles.container,
         )}
       >
+        {/* Mounted while loading, so the load failure is announced when it replaces the spinner. */}
+        <LiveRegion visuallyHidden>
+          {!isLoading && hasError && labels.errorLabel}
+        </LiveRegion>
         {renderState()}
       </div>
     );

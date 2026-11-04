@@ -285,7 +285,11 @@ const ConversationView: FC<Props> = ({
   hasMessageTimestamps = false,
 }) => {
   const isModelFixed = !!fixedModel;
-  const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
+  const {
+    renderOverlay,
+    catalogModal,
+    onOpenChange: onModelPickerOpenChange,
+  } = useDeploymentSelectorOverlay();
   const { t } = useTranslation();
   const { language } = useLanguage();
   const {
@@ -1407,6 +1411,7 @@ const ConversationView: FC<Props> = ({
                 fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
+                onModelPickerOpenChange={onModelPickerOpenChange}
                 menuOverlays={menuOverlays}
                 activeMentions={activeMentions}
                 onBackspaceAtCaret={onBackspaceAtCaret}

@@ -188,6 +188,7 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
         wrapCustomCellRenderers={false}
         emptyStateTitle={labels.emptyStateLabel}
         emptyStateDescription=""
+        className={mergeClasses(rows.length === 0 && styles.emptyGrid)}
         additionalGridOptions={GRID_OPTIONS}
         ariaLabel={`${labels.headingLabel} ${rows.length}`}
       />

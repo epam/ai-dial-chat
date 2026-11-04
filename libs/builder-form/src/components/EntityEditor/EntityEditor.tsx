@@ -11,6 +11,8 @@ import type { EntityEditorProps } from '../../models/entity-editor-props';
 import { EditorLayout } from '../EditorLayout/EditorLayout';
 import { EditorSection } from '../EditorSection/EditorSection';
 
+const SECTION_CLASS_NAME = 'border-0 p-4 desktop:p-8';
+const UNPADDED_SECTION_CLASS_NAME = 'border-0';
 /* On desktop the Setup section fills the column, so full-height content (an embedded editor) can stretch. */
 const SETUP_SECTION_CLASS_NAME = 'desktop:flex-1';
 const ALERT_CLASS_NAME = 'px-4 pt-4 desktop:px-6 desktop:pt-6';
@@ -38,6 +40,7 @@ const EntityEditorComponent: FC<EntityEditorProps> = ({
   resizableLeftColumn,
   metadataSectionClassName,
   setupSectionClassName,
+  hasSetupSectionPadding = true,
   labels,
   styles,
   dir,
@@ -72,6 +75,7 @@ const EntityEditorComponent: FC<EntityEditorProps> = ({
             title={asideTitle}
             styles={styles?.section}
             className={mergeClasses(
+              SECTION_CLASS_NAME,
               asideSectionClassName,
               BUILDER_FORM_CLASS.asideSection,
             )}
@@ -112,6 +116,7 @@ const EntityEditorComponent: FC<EntityEditorProps> = ({
             }
             styles={styles?.section}
             className={mergeClasses(
+              SECTION_CLASS_NAME,
               metadataSectionClassName,
               BUILDER_FORM_CLASS.metadataSection,
             )}
@@ -133,6 +138,9 @@ const EntityEditorComponent: FC<EntityEditorProps> = ({
               }
               styles={styles?.section}
               className={mergeClasses(
+                hasSetupSectionPadding
+                  ? SECTION_CLASS_NAME
+                  : UNPADDED_SECTION_CLASS_NAME,
                 SETUP_SECTION_CLASS_NAME,
                 setupSectionClassName,
                 BUILDER_FORM_CLASS.setupSection,

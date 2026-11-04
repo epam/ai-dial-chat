@@ -1,7 +1,7 @@
 import {
   ItemHeader,
   mergeClasses,
-  useIsMobile,
+  useIsPhone,
 } from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
@@ -23,7 +23,15 @@ import {
   IconLayoutGrid,
   IconLayoutList,
 } from '@tabler/icons-react';
-import { FC, ReactNode, Ref, useMemo, useState } from 'react';
+import {
+  FC,
+  ReactNode,
+  Ref,
+  useMemo,
+  useState,
+  useLayoutEffect,
+  useRef,
+} from 'react';
 import { DEFAULT_BROWSE_SETTINGS_LABELS } from '../../../constants/browse-settings';
 import {
   BrowseSettingsSheetLabels,
@@ -95,8 +103,28 @@ export const TitleRow: FC<TitleRowProps> = ({
   filterTopicsLabel,
   browseSettingsLabels,
 }) => {
-  const isMobile = useIsMobile();
+  const isPhone = useIsPhone();
+  const rowRef = useRef<HTMLDivElement>(null);
+  const settingsTriggerRef = useRef<HTMLButtonElement>(null);
+  const desktopControlsRef = useRef<HTMLDivElement>(null);
+  const hadFocusRef = useRef(false);
+  const previousPhoneRef = useRef(isPhone);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  useLayoutEffect(() => {
+    if (previousPhoneRef.current === isPhone) return;
+    previousPhoneRef.current = isPhone;
+    if (
+      isSettingsOpen ||
+      (hadFocusRef.current && document.activeElement === document.body)
+    ) {
+      setIsSettingsOpen(false);
+      if (isPhone) settingsTriggerRef.current?.focus();
+      else
+        desktopControlsRef.current
+          ?.querySelector<HTMLElement>('[role="radio"]')
+          ?.focus();
+    }
+  }, [isPhone, isSettingsOpen]);
   const isFilterActive = (isMyAppsActive ?? false) || (filters?.size ?? 0) > 0;
   const sheetLabels: BrowseSettingsSheetLabels = {
     ...DEFAULT_BROWSE_SETTINGS_LABELS,
@@ -166,8 +194,22 @@ export const TitleRow: FC<TitleRowProps> = ({
   );
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Row 1: title | view toggle | divider | sort. Below the desktop
+    <div
+      ref={rowRef}
+      onFocusCapture={() => {
+        hadFocusRef.current = true;
+      }}
+      onBlurCapture={(event) => {
+        if (
+          event.relatedTarget &&
+          !event.currentTarget.contains(event.relatedTarget)
+        ) {
+          hadFocusRef.current = false;
+        }
+      }}
+      className="flex flex-col gap-3"
+    >
+      {/* Row 1: title | view toggle | divider | sort. Below the phone-menu
           breakpoint the controls move into the browse-settings sheet, so the
           row holds the title alone. */}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-3">
@@ -186,8 +228,11 @@ export const TitleRow: FC<TitleRowProps> = ({
           />
         )}
 
-        {!isMobile && (
-          <div className="ms-auto flex shrink-0 items-center gap-2">
+        {!isPhone && (
+          <div
+            ref={desktopControlsRef}
+            className="ms-auto flex shrink-0 items-center gap-2"
+          >
             <SegmentedControl
               aria-label={viewToggleLabel}
               value={viewMode}
@@ -227,10 +272,11 @@ export const TitleRow: FC<TitleRowProps> = ({
             inputRef={searchInputRef}
           />
         </div>
-        {isMobile ? (
+        {isPhone ? (
           <>
             <span className="relative shrink-0">
               <GhostIconButton
+                ref={settingsTriggerRef}
                 size={ElementSize.Large}
                 aria-label={sheetLabels.title}
                 aria-haspopup="dialog"

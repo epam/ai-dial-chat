@@ -24,7 +24,7 @@ import {
   encodeDialFilePath,
 } from '../dial-resource-path.util';
 import type { FileUploadResponseDto } from '../dto/upload-file-response.dto';
-import type { UploadMode } from '../dto/upload-file.dto';
+import { UploadMode } from '../types/upload-mode.enum';
 import { throwIfUploadAborted } from './upload-abort';
 import {
   UPLOAD_CHUNK_BYTES,
@@ -197,7 +197,7 @@ export class FilesUploadService {
         token,
         signal,
         {
-          createOnly: uploadMode === 'create-only',
+          createOnly: uploadMode === UploadMode.CreateOnly,
           fileName: file.originalname ?? getFileNameFromPath(path),
           contentType: file.mimetype,
           encodePath: encodeDialResourcePath,
@@ -287,9 +287,11 @@ export class FilesUploadService {
     try {
       /*
        * The SDK upload helper requires FormData/Blob, which would buffer the
-       * staged file again. Raw fetch lets archive uploads stream from disk.
+       * staged file again. `uploadCore` (not native fetch) because native
+       * fetch ignores socket backpressure on a streamed body and would queue
+       * the whole file in memory when DIAL Core reads slower than the source.
        */
-      const response = await this.dialClient.fetchCore(
+      const response = await this.dialClient.uploadCore(
         this.buildDialUploadUrl(bucket, encodePath(path)),
         {
           method: 'PUT',
@@ -304,6 +306,8 @@ export class FilesUploadService {
           duplex: 'half',
         } as RequestInit & { duplex: 'half' },
       );
+      /* Only the status is used; release the connection. */
+      await response.body?.cancel();
 
       if (response.status === 412) {
         throw new ConflictException('File already exists at this path');

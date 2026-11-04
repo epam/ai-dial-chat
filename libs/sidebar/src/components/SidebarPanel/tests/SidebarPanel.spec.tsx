@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SidebarPanelProps } from '../../../models/panel-props';
 import { SidebarOrientation } from '../../../types/orientation';
 import { SidebarPanel } from '../SidebarPanel';
@@ -35,6 +35,30 @@ const defaultProps = {
 };
 
 describe('SidebarPanel', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('dismisses a bounded overlay with Escape and returns focus', async () => {
+    const user = userEvent.setup();
+    const trigger = document.createElement('button');
+    document.body.append(trigger);
+    trigger.focus();
+    const onClose = vi.fn();
+    const { rerender } = render(
+      <SidebarPanel {...defaultProps} isBoundedOverlay onClose={onClose}>
+        <p>Preview</p>
+      </SidebarPanel>,
+    );
+    screen.getByRole('button', { name: 'Close' }).focus();
+    await user.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalledOnce();
+    rerender(
+      <SidebarPanel {...defaultProps} isBoundedOverlay isOpen={false}>
+        <p>Preview</p>
+      </SidebarPanel>,
+    );
+    expect(trigger.matches(':focus')).toBe(true);
+    trigger.remove();
+  });
   it('renders children in the body', () => {
     render(
       <SidebarPanel {...defaultProps}>

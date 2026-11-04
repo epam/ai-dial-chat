@@ -10,6 +10,7 @@ import { IconX } from '@tabler/icons-react';
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -18,6 +19,7 @@ import {
 import { SIDEBAR_CLASS } from '../../constants/public-class-names';
 import { type SidebarPanelProps } from '../../models/panel-props';
 import { SidebarOrientation } from '../../types/orientation';
+import { resolvePanelWidth } from '../../utils/panel-width';
 import { Header } from '../Header/Header';
 import styles from './SidebarPanel.module.scss';
 
@@ -34,11 +36,84 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
   styles: panelStyles,
   resizable,
   isOverlay = false,
+  isBoundedOverlay = false,
   defaultWidth = 360,
   minWidth = 280,
   maxWidth = 600,
   onResizeStop,
 }) => {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const focusReturnRef = useRef<HTMLElement | null>(null);
+  const [availableWidth, setAvailableWidth] = useState(0);
+  const [isRtl, setIsRtl] = useState(false);
+  useEffect(() => {
+    if (!isBoundedOverlay) return;
+    const parent = wrapperRef.current?.parentElement;
+    const updateWidth = () => {
+      const viewport = document.documentElement.clientWidth;
+      if (wrapperRef.current)
+        setIsRtl(getComputedStyle(wrapperRef.current).direction === 'rtl');
+      setAvailableWidth(Math.min(parent?.clientWidth || viewport, viewport));
+    };
+    updateWidth();
+    const observer =
+      typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(updateWidth)
+        : undefined;
+    if (parent) observer?.observe(parent);
+    const directionObserver = new MutationObserver(updateWidth);
+    let ancestor: HTMLElement | null = parent ?? null;
+    while (ancestor) {
+      directionObserver.observe(ancestor, {
+        attributes: true,
+        attributeFilter: ['dir', 'class', 'style'],
+      });
+      ancestor = ancestor.parentElement;
+    }
+    window.addEventListener('resize', updateWidth);
+    return () => {
+      observer?.disconnect();
+      directionObserver.disconnect();
+      window.removeEventListener('resize', updateWidth);
+    };
+  }, [isBoundedOverlay]);
+
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    const wrapper = wrapperRef.current;
+    if (
+      document.activeElement instanceof HTMLElement &&
+      !wrapper?.contains(document.activeElement) &&
+      document.activeElement !== document.body
+    ) {
+      focusReturnRef.current = document.activeElement;
+    }
+    return () => {
+      if (
+        isBoundedOverlay &&
+        (wrapper?.contains(document.activeElement) ||
+          document.activeElement === document.body)
+      ) {
+        focusReturnRef.current?.focus();
+      }
+    };
+  }, [isOpen, isBoundedOverlay]);
+  const handleClose = useCallback(() => {
+    if (isBoundedOverlay) focusReturnRef.current?.focus();
+    onClose?.();
+  }, [isBoundedOverlay, onClose]);
+  useEffect(() => {
+    if (!isBoundedOverlay || !isOpen) return;
+    const wrapper = wrapperRef.current;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !event.defaultPrevented) {
+        event.stopPropagation();
+        handleClose();
+      }
+    };
+    wrapper?.addEventListener('keydown', handleKeyDown);
+    return () => wrapper?.removeEventListener('keydown', handleKeyDown);
+  }, [isBoundedOverlay, isOpen, handleClose]);
   const {
     colors,
     typography,
@@ -99,23 +174,40 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
     }
   }, [isOpen, defaultWidth]);
 
-  const handleResize = useCallback((width: number) => {
-    setIsResizing(true);
-    setAnimationMaxWidth(width);
-  }, []);
+  const clampWidth = useCallback(
+    (width: number) =>
+      isBoundedOverlay
+        ? resolvePanelWidth(width, minWidth, maxWidth, availableWidth).width
+        : width,
+    [isBoundedOverlay, minWidth, maxWidth, availableWidth],
+  );
+  const handleResize = useCallback(
+    (width: number) => {
+      setIsResizing(true);
+      setAnimationMaxWidth(clampWidth(width));
+    },
+    [clampWidth],
+  );
 
   const handleResizeStop = useCallback(
-    (width: number) => {
+    (nextWidth: number) => {
+      const width = clampWidth(nextWidth);
       userChosenWidthRef.current = { forDefault: defaultWidth, width };
       currentWidthRef.current = width;
       setAnimationMaxWidth(width);
       setIsResizing(false);
       onResizeStop?.(width);
     },
-    [defaultWidth, onResizeStop],
+    [defaultWidth, onResizeStop, clampWidth],
   );
 
   const panelWidth = isOpen ? animationMaxWidth || currentWidthRef.current : 0;
+  const boundedSize = resolvePanelWidth(
+    animationMaxWidth || currentWidthRef.current,
+    minWidth,
+    maxWidth,
+    availableWidth,
+  );
 
   /*
    * Check if the className contains w-full to allow full-width override.
@@ -151,7 +243,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
    * every computed change, including the ones a resize drag makes per frame.
    */
   const getTransitionClass = () => {
-    if (isOverlay) {
+    if (isOverlay || isBoundedOverlay) {
       return 'transition-transform duration-200 ease-in-out motion-reduce:transition-none';
     }
     if (isResizing) {
@@ -171,7 +263,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
   const navDividerClass =
     orientation === SidebarOrientation.Left && isOpen ? 'border-s' : undefined;
   const resizableSide =
-    orientation === SidebarOrientation.Right
+    (orientation === SidebarOrientation.Right) !== (isBoundedOverlay && isRtl)
       ? ResizableContainerSide.Left
       : ResizableContainerSide.Right;
   const closeButton = onClose ? (
@@ -185,13 +277,21 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
       }
       aria-label={labels.closeLabel}
       tooltipProps={{ tooltip: labels.closeLabel }}
-      onClick={onClose}
+      onClick={handleClose}
     />
   ) : null;
 
   return (
     <div
-      style={shouldSetInlineWidth ? { width: panelWidth } : undefined}
+      ref={wrapperRef}
+      inert={isBoundedOverlay && !isOpen}
+      style={
+        isBoundedOverlay
+          ? { width: boundedSize.width }
+          : shouldSetInlineWidth
+            ? { width: panelWidth }
+            : undefined
+      }
       className={mergeClasses(
         'h-full shrink-0 gap-3 overflow-hidden shadow-sm',
         orientation === SidebarOrientation.Left &&
@@ -210,6 +310,12 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
          * both states: it slides out of view instead of collapsing in place.
          */
         isOverlay && mergeClasses('w-full', getOverlayTransformClass()),
+        isBoundedOverlay &&
+          mergeClasses(
+            'absolute inset-y-0 inset-e-0 overflow-visible',
+            getOverlayTransformClass(),
+            !isOpen && 'pointer-events-none',
+          ),
         styles.panel,
       )}
     >
@@ -218,11 +324,15 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
         side={resizableSide}
         ariaLabel={labels.resizeLabel ?? 'Resize panel'}
         width={
-          isOpen ? animationMaxWidth || currentWidthRef.current : undefined
+          isBoundedOverlay
+            ? boundedSize.width
+            : isOpen
+              ? animationMaxWidth || currentWidthRef.current
+              : undefined
         }
-        defaultWidth={defaultWidth}
-        minWidth={minWidth}
-        maxWidth={maxWidth}
+        defaultWidth={isBoundedOverlay ? boundedSize.width : defaultWidth}
+        minWidth={isBoundedOverlay ? boundedSize.minWidth : minWidth}
+        maxWidth={isBoundedOverlay ? boundedSize.maxWidth : maxWidth}
         resizeHandlerClassName={styles.resizeHandler}
         onResizeStop={handleResizeStop}
         onResize={handleResize}
