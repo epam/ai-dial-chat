@@ -523,6 +523,7 @@ describe('POST /conversations/completions (integration)', () => {
       res,
       VALID_COMPLETION_BODY as unknown as SendCompletionDto,
       undefined,
+      undefined,
     );
 
     expect(reachedNaturalEnd).toBe(true);
@@ -596,6 +597,7 @@ describe('POST /conversations/completions — backpressure-driven detachment (di
       TEST_REQUEST,
       res,
       VALID_COMPLETION_BODY as unknown as SendCompletionDto,
+      undefined,
       undefined,
     );
 
