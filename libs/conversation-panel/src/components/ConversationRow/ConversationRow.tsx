@@ -4,7 +4,6 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
-  Button,
   DIAL_ICON_SIZE,
   Highlight,
   Skeleton,
@@ -17,11 +16,14 @@ import { ConversationItem } from '../../models/panel-props';
 import type { NestedRowPosition } from '../../models/pinned-projects';
 import type { VirtualRow } from '../../models/virtual-row';
 import { ConversationRowVariant } from '../../types/conversation-row-variant';
-import { getButtonPaddingEnd } from '../../utils/conversation-row';
+import {
+  getButtonPaddingEnd,
+  getNestedRowProps,
+} from '../../utils/conversation-row';
 import { getDropAfterId } from '../../utils/drag';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
-import projectStyles from '../ProjectRow/ProjectRow.module.scss';
 import { RowActionsMenu } from '../RowActionsMenu/RowActionsMenu';
+import { RowLink } from '../RowLink/RowLink';
 
 /** Props for `ConversationRow`. */
 export interface ConversationRowProps {
@@ -213,18 +215,15 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
   const isDropAllowed =
     rowGroupKey != null && (allowedDropGroups?.has(rowGroupKey) ?? false);
   const isDragActive = draggingId != null;
+  const nestedRowProps = nesting ? getNestedRowProps(nesting) : undefined;
 
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <li
-      aria-level={nesting ? 2 : undefined}
-      aria-posinset={nesting?.posInSet}
-      aria-setsize={nesting?.setSize}
+      {...nestedRowProps}
       className={mergeClasses(
         'group/conversation relative',
-        nesting && mergeClasses('ps-7', projectStyles.guideLine),
-        nesting?.isFirstNested && projectStyles.guideLineFirst,
-        nesting?.isLastNested && projectStyles.guideLineLast,
+        nestedRowProps?.className,
         isDragging && 'cursor-grabbing opacity-50',
         isDropTarget && isDropAllowed && 'rounded',
         isDropTarget && isDropAllowed && styles.dropZoneActive,
@@ -244,44 +243,34 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
       onDragLeave={isDragEnabled ? handleDragLeave : undefined}
       onDrop={isDragEnabled ? handleDrop : undefined}
     >
-      <a
+      <RowLink
         href={item.href}
-        className="contents"
-        onClick={(e) => {
-          if (!item.href) return;
-          e.preventDefault();
-          onSelectConversation(item.id);
-        }}
-      >
-        <Button
-          iconBefore={isIndicator ? leadingIndicator : avatar}
-          label={
-            <Highlight
-              text={item.title}
-              query={searchQuery}
-              className={
-                item.isUnread ? unreadItemTitleClassName : itemTitleClassName
-              }
-              maxLines={1}
-            />
-          }
-          iconAfter={unreadIndicator}
-          textClassName="min-w-0 flex-1"
-          aria-current={isActive ? 'page' : undefined}
-          onClick={item.href ? undefined : () => onSelectConversation(item.id)}
-          tabIndex={item.href ? -1 : undefined}
-          className={mergeClasses(
-            /* The row's corner radius comes from `styles.item` (--cp-row-radius). */
-            'h-8 w-full justify-start py-2 after:pointer-events-none',
-            isIndicator ? 'gap-0.5 ps-2' : 'gap-2 ps-3',
-            buttonPaddingEnd,
-            styles.item,
-            isIndicator && styles.itemIndicator,
-            isActive && styles.itemActive,
-            isMenuOpen && styles.itemActive,
-          )}
-        />
-      </a>
+        onSelect={() => onSelectConversation(item.id)}
+        iconBefore={isIndicator ? leadingIndicator : avatar}
+        label={
+          <Highlight
+            text={item.title}
+            query={searchQuery}
+            className={
+              item.isUnread ? unreadItemTitleClassName : itemTitleClassName
+            }
+            maxLines={1}
+          />
+        }
+        iconAfter={unreadIndicator}
+        textClassName="min-w-0 flex-1"
+        aria-current={isActive ? 'page' : undefined}
+        className={mergeClasses(
+          /* The row's corner radius comes from `styles.item` (--cp-row-radius). */
+          'h-8 w-full justify-start py-2 after:pointer-events-none',
+          isIndicator ? 'gap-0.5 ps-2' : 'gap-2 ps-3',
+          buttonPaddingEnd,
+          styles.item,
+          isIndicator && styles.itemIndicator,
+          isActive && styles.itemActive,
+          isMenuOpen && styles.itemActive,
+        )}
+      />
 
       {hasActions && (
         <RowActionsMenu

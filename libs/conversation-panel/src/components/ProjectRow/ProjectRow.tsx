@@ -1,6 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  Button,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Highlight,
@@ -14,6 +13,7 @@ import { ConversationRowVariant } from '../../types/conversation-row-variant';
 import { getButtonPaddingEnd } from '../../utils/conversation-row';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
 import { RowActionsMenu } from '../RowActionsMenu/RowActionsMenu';
+import { RowLink } from '../RowLink/RowLink';
 import projectStyles from './ProjectRow.module.scss';
 
 /** Props for `ProjectRow`. */
@@ -54,51 +54,41 @@ const ProjectRowComponent: FC<ProjectRowProps> = ({
 
   return (
     <li aria-level={1} className="group/conversation relative">
-      <a
+      <RowLink
         href={project.href}
-        className="contents"
-        onClick={(e) => {
-          if (!project.href) return;
-          e.preventDefault();
-          onSelectProject(project.id);
-        }}
-      >
-        <Button
-          iconBefore={
-            <span className="flex size-6 shrink-0 items-center justify-center">
-              <IconBriefcase
-                size={DIAL_ICON_SIZE.SM}
-                stroke={DIAL_KIT_ICON_STROKE}
-                className={projectStyles.projectIcon}
-                aria-hidden
-              />
-            </span>
-          }
-          label={
-            <Highlight
-              text={project.name}
-              query={searchQuery}
-              className={titleClassName}
-              maxLines={1}
+        onSelect={() => onSelectProject(project.id)}
+        iconBefore={
+          <span className="flex size-6 shrink-0 items-center justify-center">
+            <IconBriefcase
+              size={DIAL_ICON_SIZE.SM}
+              stroke={DIAL_KIT_ICON_STROKE}
+              className={projectStyles.projectIcon}
+              aria-hidden
             />
-          }
-          textClassName="min-w-0 flex-1"
-          aria-current={isActive ? 'page' : undefined}
-          onClick={project.href ? undefined : () => onSelectProject(project.id)}
-          tabIndex={project.href ? -1 : undefined}
-          className={mergeClasses(
-            'h-8 w-full justify-start gap-0.5 py-2 ps-2 after:pointer-events-none',
-            getButtonPaddingEnd(
-              hasActions,
-              isMenuOpen,
-              ConversationRowVariant.Indicator,
-            ),
-            styles.item,
-            styles.itemIndicator,
-            (isActive || isMenuOpen) && styles.itemActive,
-          )}
-        />
-      </a>
+          </span>
+        }
+        label={
+          <Highlight
+            text={project.name}
+            query={searchQuery}
+            className={titleClassName}
+            maxLines={1}
+          />
+        }
+        textClassName="min-w-0 flex-1"
+        aria-current={isActive ? 'page' : undefined}
+        className={mergeClasses(
+          'h-8 w-full justify-start gap-0.5 py-2 ps-2 after:pointer-events-none',
+          getButtonPaddingEnd(
+            hasActions,
+            isMenuOpen,
+            ConversationRowVariant.Indicator,
+          ),
+          styles.item,
+          styles.itemIndicator,
+          (isActive || isMenuOpen) && styles.itemActive,
+        )}
+      />
       {hasActions && (
         <RowActionsMenu
           items={menuItems}

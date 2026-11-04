@@ -1,3 +1,5 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import projectStyles from '../components/ProjectRow/ProjectRow.module.scss';
 import {
   FIRST_GROUP_HEADER_ROW_HEIGHT,
   GROUP_HEADER_ROW_HEIGHT,
@@ -6,7 +8,11 @@ import {
   INDICATOR_ITEM_ROW_HEIGHT,
   ITEM_ROW_HEIGHT,
 } from '../constants/virtual-list';
-import type { PinnedProjectGroup } from '../models/pinned-projects';
+import type {
+  NestedRowPosition,
+  NestedRowProps,
+  PinnedProjectGroup,
+} from '../models/pinned-projects';
 import type { RowRendererData, VirtualRow } from '../models/virtual-row';
 import { ConversationRowVariant } from '../types/conversation-row-variant';
 import { VirtualRowKind } from '../types/virtual-row';
@@ -36,6 +42,21 @@ export const getButtonPaddingEnd = (
   if (isMenuOpen) return 'pe-9';
   return 'pe-2 group-focus-within/conversation:pe-9 group-hover/conversation:pe-9';
 };
+
+/** Returns the level-2 ARIA position and the indent and guide-line classes of a row nested under a project row. */
+export const getNestedRowProps = (
+  position: NestedRowPosition,
+): NestedRowProps => ({
+  'aria-level': 2,
+  'aria-posinset': position.posInSet,
+  'aria-setsize': position.setSize,
+  className: mergeClasses(
+    'ps-7',
+    projectStyles.guideLine,
+    position.isFirstNested && projectStyles.guideLineFirst,
+    position.isLastNested && projectStyles.guideLineLast,
+  ),
+});
 
 /** Returns the pixel height for a virtual list row (item, first group header, or subsequent group header) in the active row variant; pinned project rows always take the `Indicator` item height. */
 export const getRowHeight = (

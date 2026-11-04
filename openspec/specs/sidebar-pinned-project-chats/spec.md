@@ -256,6 +256,7 @@ For a shared or organization project (`canEdit: false`), the menu offers Unpin o
 - The sidebar passes `true` only while the current route is that project's view, edit or chat page.
 - With `false`, the success toast is shown and the pin is dropped, but the route does not change.
 - A `ProjectChanged` conflict shows `ProjectsI18nKeys.ErrorsChangedElsewhere` and refreshes that project in the tree.
+- The sidebar owns the dialog's open state: it passes `isDeleteOpen` (the Delete action is open) and `onDeleteOpenChange`, through which the shared `useProjectActions` reports a cancel, a success or a conflict, and each of them ends the action.
 
 #### Scenario: Owner menu
 

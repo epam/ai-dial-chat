@@ -181,7 +181,7 @@ On `mobile`, Publish and Edit move into the ⋮ menu (before Share). The lib ren
 - `onEdit` navigates to `getProjectEditRoute(id)`;
 - `onTogglePin` calls `setPinnedProject(id, !isPinned)` from `useUserConfig()`;
 - `onDownload` downloads the archive (see the actions requirement);
-- `onShare` opens `ProjectShareOverlay`, and the page behind it is `inert` while it is open; `onPublish` opens `PublishProjectPanelContainer`, which mounts on the first open and loads the project's publish history on each open, so a folder already holding the project is flagged;
+- `onShare` opens `ProjectShareOverlay`, which portals to the body and makes the rest of the page `inert` while it is open; `onPublish` opens `PublishProjectPanelContainer`, which mounts on the first open and loads the project's publish history on each open, so a folder already holding the project is flagged;
 - `onDelete` opens the delete confirmation.
 
 Every handler is memoised with `useCallback`.

@@ -10,6 +10,7 @@ import { ConversationRowVariant } from '../../types/conversation-row-variant';
 import { VirtualRowKind } from '../../types/virtual-row';
 import {
   getButtonPaddingEnd,
+  getNestedRowProps,
   getOverscanCount,
   getRowHeight,
   getSkeletonWidth,
@@ -149,5 +150,36 @@ describe('getOverscanCount', () => {
 
   it('overscans half a viewport on each side for a tall list', () => {
     expect(getOverscanCount(900)).toBe(13);
+  });
+});
+
+describe('getNestedRowProps', () => {
+  it('returns the level-2 position and the guide-line classes of a first nested row', () => {
+    const props = getNestedRowProps({
+      posInSet: 1,
+      setSize: 3,
+      isFirstNested: true,
+      isLastNested: false,
+    });
+
+    expect(props['aria-level']).toBe(2);
+    expect(props['aria-posinset']).toBe(1);
+    expect(props['aria-setsize']).toBe(3);
+    expect(props.className).toMatch(/ps-7/);
+    expect(props.className).toMatch(/guideLine/);
+    expect(props.className).toMatch(/guideLineFirst/);
+    expect(props.className).not.toMatch(/guideLineLast/);
+  });
+
+  it('marks only the last segment of a last nested row', () => {
+    const { className } = getNestedRowProps({
+      posInSet: 3,
+      setSize: 3,
+      isFirstNested: false,
+      isLastNested: true,
+    });
+
+    expect(className).toMatch(/guideLineLast/);
+    expect(className).not.toMatch(/guideLineFirst/);
   });
 });

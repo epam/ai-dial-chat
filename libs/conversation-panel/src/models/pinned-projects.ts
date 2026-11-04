@@ -50,3 +50,15 @@ export interface NestedRowPosition {
   /** The row is the last nested row of its project. */
   isLastNested: boolean;
 }
+
+/** ARIA attributes and classes of a row nested under a project row. */
+export interface NestedRowProps {
+  /** Tree level of the row; nested rows are level 2. */
+  'aria-level': number;
+  /** 1-based position among the project's nested rows. */
+  'aria-posinset': number;
+  /** Number of the project's nested rows. */
+  'aria-setsize': number;
+  /** Indent and guide-line segment classes. */
+  className: string;
+}

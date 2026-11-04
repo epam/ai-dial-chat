@@ -1,11 +1,12 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Button } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import type {
   NestedRowPosition,
   PinnedProjectGroup,
 } from '../../models/pinned-projects';
+import { getNestedRowProps } from '../../utils/conversation-row';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
+import { RowLink } from '../RowLink/RowLink';
 import projectStyles from './ProjectRow.module.scss';
 
 /** Props for `ProjectSeeAllRow`. */
@@ -34,54 +35,36 @@ const ProjectSeeAllRowComponent: FC<ProjectSeeAllRowProps> = ({
   ariaLabel = defaultAriaLabel,
   titleClassName = 'dial-small-text',
 }) => {
-  const accessibleName = ariaLabel(project.name);
+  const nestedRowProps = getNestedRowProps(position);
 
   return (
     <li
-      aria-level={2}
-      aria-posinset={position.posInSet}
-      aria-setsize={position.setSize}
-      className={mergeClasses(
-        'relative ps-7',
-        projectStyles.guideLine,
-        position.isFirstNested && projectStyles.guideLineFirst,
-        position.isLastNested && projectStyles.guideLineLast,
-      )}
+      {...nestedRowProps}
+      className={mergeClasses('relative', nestedRowProps.className)}
     >
-      <a
+      <RowLink
         href={project.href}
-        aria-label={project.href ? accessibleName : undefined}
-        className="contents"
-        onClick={(e) => {
-          if (!project.href) return;
-          e.preventDefault();
-          onSeeAll(project.id);
-        }}
-      >
-        <Button
-          label={
-            <span
-              className={mergeClasses(
-                /* The kit button centres its text; the row label starts at the inline start. */
-                'block truncate text-start',
-                titleClassName,
-                projectStyles.seeAllText,
-              )}
-            >
-              {label}
-            </span>
-          }
-          aria-label={accessibleName}
-          textClassName="min-w-0 flex-1"
-          onClick={project.href ? undefined : () => onSeeAll(project.id)}
-          tabIndex={project.href ? -1 : undefined}
-          className={mergeClasses(
-            'h-8 w-full justify-start py-2 ps-2 pe-2 after:pointer-events-none',
-            styles.item,
-            styles.itemIndicator,
-          )}
-        />
-      </a>
+        onSelect={() => onSeeAll(project.id)}
+        label={
+          <span
+            className={mergeClasses(
+              /* The kit button centres its text; the row label starts at the inline start. */
+              'block truncate text-start',
+              titleClassName,
+              projectStyles.seeAllText,
+            )}
+          >
+            {label}
+          </span>
+        }
+        aria-label={ariaLabel(project.name)}
+        textClassName="min-w-0 flex-1"
+        className={mergeClasses(
+          'h-8 w-full justify-start py-2 ps-2 pe-2 after:pointer-events-none',
+          styles.item,
+          styles.itemIndicator,
+        )}
+      />
     </li>
   );
 };

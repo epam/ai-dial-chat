@@ -209,58 +209,54 @@ const ProjectViewPage: FC = () => {
 
   return (
     <>
-      {/* The share overlay is modal: the page behind leaves the tab order and
-       * the accessibility tree while it is open. */}
-      <div className="contents" inert={isShareOpen}>
-        <ProjectView
-          project={viewModel}
-          isLoading={isLoading}
-          hasError={hasError}
-          isNotFound={isNotFound || projectId == null}
-          isPinned={actions.isPinned}
-          isPinPending={actions.isPinPending}
-          contextSearchQuery={contextSearchQuery}
-          onContextSearchQueryChange={setContextSearchQuery}
-          onBack={handleBrowseProjects}
-          onTogglePin={handleTogglePin}
-          onPublish={canEdit ? handlePublish : undefined}
-          onEdit={canEdit ? handleEdit : undefined}
-          onShare={canEdit ? handleShare : undefined}
-          onDelete={canEdit ? actions.requestDelete : undefined}
-          onDownload={handleDownload}
-          onContextFileClick={handleContextFileClick}
-          selectedContextFileId={selectedContextFileId}
-          isDetailsStacked={selectedCardId != null}
-          onRetry={retry}
-          onBrowseProjects={handleBrowseProjects}
-          mainContent={
-            project ? (
-              <ProjectConversationsSection
-                projectId={project.id}
-                projectName={project.name}
-                canEdit={canEdit}
-                conversations={conversations}
-                onConversationDeleted={handleConversationDeleted}
-                /* An Outputs section with files or an error is content of its own, so no "no outputs" empty state under it. */
-                hasOutputs={outputItems.length > 0 || artifacts.hasError}
-                /* Always mounted: it shows nothing until there are outputs or an error, and keeps its live region in place. */
-                outputs={
-                  <ProjectOutputs
-                    items={outputItems}
-                    onOpenOutput={handleOpenOutput}
-                    selectedOutputName={selectedOutputName}
-                    hasError={artifacts.hasError}
-                    onRetry={artifacts.retry}
-                    labels={outputsLabels}
-                  />
-                }
-              />
-            ) : undefined
-          }
-          mainContentLabel={t(ProjectsI18nKeys.ViewMainContent)}
-          labels={labels}
-        />
-      </div>
+      <ProjectView
+        project={viewModel}
+        isLoading={isLoading}
+        hasError={hasError}
+        isNotFound={isNotFound || projectId == null}
+        isPinned={actions.isPinned}
+        isPinPending={actions.isPinPending}
+        contextSearchQuery={contextSearchQuery}
+        onContextSearchQueryChange={setContextSearchQuery}
+        onBack={handleBrowseProjects}
+        onTogglePin={handleTogglePin}
+        onPublish={canEdit ? handlePublish : undefined}
+        onEdit={canEdit ? handleEdit : undefined}
+        onShare={canEdit ? handleShare : undefined}
+        onDelete={canEdit ? actions.requestDelete : undefined}
+        onDownload={handleDownload}
+        onContextFileClick={handleContextFileClick}
+        selectedContextFileId={selectedContextFileId}
+        isDetailsStacked={selectedCardId != null}
+        onRetry={retry}
+        onBrowseProjects={handleBrowseProjects}
+        mainContent={
+          project ? (
+            <ProjectConversationsSection
+              projectId={project.id}
+              projectName={project.name}
+              canEdit={canEdit}
+              conversations={conversations}
+              onConversationDeleted={handleConversationDeleted}
+              /* An Outputs section with files or an error is content of its own, so no "no outputs" empty state under it. */
+              hasOutputs={outputItems.length > 0 || artifacts.hasError}
+              /* Always mounted: it shows nothing until there are outputs or an error, and keeps its live region in place. */
+              outputs={
+                <ProjectOutputs
+                  items={outputItems}
+                  onOpenOutput={handleOpenOutput}
+                  selectedOutputName={selectedOutputName}
+                  hasError={artifacts.hasError}
+                  onRetry={artifacts.retry}
+                  labels={outputsLabels}
+                />
+              }
+            />
+          ) : undefined
+        }
+        mainContentLabel={t(ProjectsI18nKeys.ViewMainContent)}
+        labels={labels}
+      />
       {project && isShareOpen && (
         <ProjectShareOverlay
           projectId={project.id}

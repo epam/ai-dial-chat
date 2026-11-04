@@ -1,6 +1,4 @@
-import { makeOutsideInert } from '@epam/ai-dial-chat-shared';
-import { memo, useCallback, useEffect, useRef, type FC } from 'react';
-import { createPortal } from 'react-dom';
+import { memo, useCallback, useEffect, type FC } from 'react';
 import type { PinnedProjectActionOverlay } from '../../hooks/projects/usePinnedProjectsPanel';
 import { useProjectActions } from '../../hooks/projects/useProjectActions';
 import { PinnedProjectActionKind } from '../../types/pinned-project-action';
@@ -34,31 +32,21 @@ const PinnedProjectActionOverlays: FC<Props> = ({
   const handleReload = useCallback(() => {
     if (deleteTargetId != null) onProjectChanged(deleteTargetId);
   }, [deleteTargetId, onProjectChanged]);
-  const {
-    requestDelete,
-    cancelDelete,
-    confirmDelete,
-    isDeleteOpen,
-    isDeleting,
-  } = useProjectActions(deleteTarget, handleReload, {
-    leaveOnDelete: deleteTargetId != null && deleteTargetId === routeProjectId,
-  });
-
-  /* The shared actions own the dialog's open state: the action opens it, and
-     any way it closes — cancel, success or a conflict — ends the action. */
-  useEffect(() => {
-    if (deleteTargetId != null) requestDelete();
-  }, [deleteTargetId, requestDelete]);
-  const wasDeleteOpenRef = useRef(false);
-  useEffect(() => {
-    if (isDeleteOpen) {
-      wasDeleteOpenRef.current = true;
-      return;
-    }
-    if (!wasDeleteOpenRef.current) return;
-    wasDeleteOpenRef.current = false;
-    onClose();
-  }, [isDeleteOpen, onClose]);
+  /* The action owns the dialog's open state: it opens the dialog, and any
+     way the dialog closes — cancel, success or a conflict — ends the action. */
+  const handleDeleteOpenChange = useCallback(
+    (isOpen: boolean) => {
+      if (!isOpen) onClose();
+    },
+    [onClose],
+  );
+  const { cancelDelete, confirmDelete, isDeleteOpen, isDeleting } =
+    useProjectActions(deleteTarget, handleReload, {
+      leaveOnDelete:
+        deleteTargetId != null && deleteTargetId === routeProjectId,
+      isDeleteOpen: deleteTarget != null,
+      onDeleteOpenChange: handleDeleteOpenChange,
+    });
 
   /* A project that left the tree (unpinned or deleted elsewhere) ends its
      action, so it cannot reopen by itself if the project comes back. */
@@ -68,18 +56,7 @@ const PinnedProjectActionOverlays: FC<Props> = ({
     if (isActionOpen && !hasProject) onClose();
   }, [isActionOpen, hasProject, onClose]);
 
-  /* The share overlay dims the page but traps no focus: while it is open,
-     the rest of the page leaves the tab order, as on the project view page.
-     It is portalled to the body, so that the rest of the page is a sibling
-     to make inert, and its fixed backdrop is not boxed in by the sidebar
-     (the mobile drawer is translated and clips its overflow). */
   const isShareOpen = isOpenAction(PinnedProjectActionKind.Share);
-  const shareContainerRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const container = shareContainerRef.current;
-    if (!isShareOpen || container == null) return;
-    return makeOutsideInert(container);
-  }, [isShareOpen]);
 
   const handleConfirmDelete = useCallback(() => {
     void confirmDelete();
@@ -91,13 +68,9 @@ const PinnedProjectActionOverlays: FC<Props> = ({
 
   return (
     <>
-      {isShareOpen &&
-        createPortal(
-          <div ref={shareContainerRef} className="contents">
-            <ProjectShareOverlay projectId={project.id} onClose={onClose} />
-          </div>,
-          document.body,
-        )}
+      {isShareOpen && (
+        <ProjectShareOverlay projectId={project.id} onClose={onClose} />
+      )}
       {/* Kept mounted after closing, so the panel slides out. */}
       {action?.kind === PinnedProjectActionKind.Publish && project.canEdit && (
         <PublishProjectPanelContainer

@@ -2,6 +2,7 @@ import type { ProjectDetailsDto } from '@epam/ai-dial-chat-api-client';
 import {
   ProjectActionError,
   useProjectActions as useSharedProjectActions,
+  type ProjectActionsHandlers,
 } from '@epam/ai-dial-chat-hooks/project';
 import { triggerBrowserDownload } from '@epam/ai-dial-chat-hooks/utils';
 import { useCallback } from 'react';
@@ -27,7 +28,10 @@ const ERROR_MESSAGES: Record<ProjectActionError, ProjectsI18nKeys> = {
 };
 
 /** How the app's project actions behave around a delete. */
-interface ProjectActionsOptions {
+interface ProjectActionsOptions extends Pick<
+  ProjectActionsHandlers,
+  'isDeleteOpen' | 'onDeleteOpenChange'
+> {
   /** Leaves for the Projects list after a delete; `false` keeps the current route. Defaults to `true`. */
   leaveOnDelete?: boolean;
 }
@@ -35,7 +39,9 @@ interface ProjectActionsOptions {
 /**
  * App adapter of the shared `useProjectActions`: pins through the user
  * config, toasts through the notification context, and leaves for the
- * Projects list after a delete unless `leaveOnDelete` is `false`.
+ * Projects list after a delete unless `leaveOnDelete` is `false`. A caller
+ * that owns the delete dialog state passes `isDeleteOpen` and
+ * `onDeleteOpenChange`.
  *
  * @param project - The loaded project, or `null` while none is loaded.
  * @param onReload - Re-reads the project, e.g. `useProject().retry`.
@@ -44,7 +50,11 @@ interface ProjectActionsOptions {
 export const useProjectActions = (
   project: ProjectDetailsDto | null,
   onReload: () => void,
-  { leaveOnDelete = true }: ProjectActionsOptions = {},
+  {
+    leaveOnDelete = true,
+    isDeleteOpen,
+    onDeleteOpenChange,
+  }: ProjectActionsOptions = {},
 ) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -94,5 +104,7 @@ export const useProjectActions = (
     onDeleted: handleDeleted,
     onError: handleError,
     onReload,
+    isDeleteOpen,
+    onDeleteOpenChange,
   });
 };

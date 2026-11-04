@@ -291,45 +291,6 @@ describe('PinnedProjectActionOverlays', () => {
     expect(deleteProject).not.toHaveBeenCalled();
   });
 
-  it('takes the rest of the page out of the tab order while sharing', () => {
-    /* As in the app: the sidebar that renders the overlays and the page share one root. */
-    const root = document.createElement('div');
-    const page = document.createElement('main');
-    const sidebar = document.createElement('aside');
-    root.append(sidebar, page);
-    document.body.append(root);
-    const onClose = vi.fn();
-    const onProjectChanged = vi.fn();
-    const { rerender } = render(
-      <PinnedProjectActionOverlays
-        action={open(PinnedProjectActionKind.Share)}
-        project={project}
-        returnFocusRef={{ current: trigger }}
-        onClose={onClose}
-        onProjectChanged={onProjectChanged}
-      />,
-      { container: sidebar },
-    );
-
-    expect(root.hasAttribute('inert')).toBe(true);
-    expect(
-      root.contains(screen.getByRole('dialog', { name: 'share project' })),
-    ).toBe(false);
-
-    rerender(
-      <PinnedProjectActionOverlays
-        action={{ ...open(PinnedProjectActionKind.Share), isOpen: false }}
-        project={project}
-        returnFocusRef={{ current: trigger }}
-        onClose={onClose}
-        onProjectChanged={onProjectChanged}
-      />,
-    );
-
-    expect(root.hasAttribute('inert')).toBe(false);
-    root.remove();
-  });
-
   it('ends an open action whose project left the tree', () => {
     const { onClose } = renderOverlays({
       action: open(PinnedProjectActionKind.Delete),
