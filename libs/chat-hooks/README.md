@@ -296,6 +296,7 @@ whether you need to `npm install` it.
 | `./skill-editor`          | `@epam/ai-dial-skill-editor`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`                                                                   | `@epam/ai-dial-react-file-manager`                              |
 | `./oauth`                 | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                               |
 | `./offline-credentials`   | —                                                                                                                                                   | —                                                               |
+| `./external-services`     | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                               |
 | `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                     | —                                                               |
 | `./project`               | `@epam/ai-dial-projects`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`                                                                       | —                                                               |
 | `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                               |
@@ -3593,6 +3594,57 @@ import { ExternalServiceAuthStatus } from '@epam/ai-dial-chat-hooks';
 
 const isSignedIn =
   service.userLevelAuthStatus === ExternalServiceAuthStatus.SignedIn;
+```
+
+### useSigninInterrupt
+
+Resolves pending `toolset/signin` and `external-service/signin` client-channel events
+(`PendingSigninEvent`) into dialog rows and runs their login, decline and result
+reporting. It fetches metadata missing from `toolsets` once per resource (the fallback
+name renders meanwhile), auto-reports `success` for a `NONE`-auth external service,
+reports `success` for sibling events on the same resource and credentials level after a
+login, always logs in with `forceStale: true`, and calls `refetchToolsets` before
+reporting a toolset login. `login` stays synchronous up to the login call, so an OAuth
+popup opens inside the click. A failed attempt leaves the event pending with a
+`SigninInterruptRowError` (`LoginFailed`, `PopupBlocked`, `DeclineFailed`,
+`AdminConsentRequired`, `OfflineUnavailable`); a cancelled login returns the row to
+`SigninInterruptRowStatus.Idle` without one. `announcement`
+(`SigninInterruptAnnouncementKind.LoginSucceeded` / `Declined` plus the resource name)
+carries the latest resolution for a status region. `offlineUsageConsent` defaults to
+`true`; `isOfflineUsageConsentShown` is `true` while any row uses an API key or OAuth.
+
+The hook never constructs a client and holds no copy: the host passes its configured
+fetch, login and report operations and the locales, and maps errors and announcements
+to its own strings. `SigninInterruptDialog` from `@epam/ai-dial-catalog` renders the
+rows. Available from the root and `./external-services`, together with `SigninRowInfo`,
+`SigninInterruptRow`, `SigninInterruptAnnouncement`, `UseSigninInterruptOptions`,
+`UseSigninInterruptResult` and the row helpers `resolveToolsetSigninRowInfo`,
+`resolveExternalServiceSigninRowInfo` and `getSigninEventResourceKey`.
+
+```tsx
+import {
+  useExternalServiceLogin,
+  useSigninInterrupt,
+} from '@epam/ai-dial-chat-hooks/external-services';
+import { useToolsetLogin } from '@epam/ai-dial-chat-hooks/oauth';
+
+const { login: loginToolset } = useToolsetLogin(toolsetLoginOptions);
+const { login: loginExternalService } = useExternalServiceLogin(
+  externalServiceLoginOptions,
+);
+const { rows, announcement, login, decline, declineAll, changeApiKey } =
+  useSigninInterrupt({
+    pendingEvents,
+    toolsets,
+    activeLocale: language,
+    primaryLocale: 'en',
+    getToolset, // (toolsetId) => Promise<DialToolsetDto>
+    getExternalService, // (appId, serviceName) => Promise<GetExternalServiceResponseDto>
+    loginToolset,
+    loginExternalService,
+    refetchToolsets,
+    reportEvent, // (eventId, 'success' | 'denied') => Promise<unknown>
+  });
 ```
 
 ## OAuth Popup Flow

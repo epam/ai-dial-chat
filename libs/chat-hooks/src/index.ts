@@ -285,6 +285,10 @@ export * from './conversation/conversation-list';
 export * from './skill-editor/useSkillFilePreviewSyncController';
 
 export * from './external-services/useExternalServiceLogin';
+export * from './signin-interrupt/models';
+export * from './signin-interrupt/signin-row-info';
+export * from './signin-interrupt/types';
+export * from './signin-interrupt/useSigninInterrupt/useSigninInterrupt';
 
 export * from './conversation/useDeploymentChangeTracking';
 export * from './conversation/conversation-data-source';

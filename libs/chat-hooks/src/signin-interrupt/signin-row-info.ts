@@ -6,21 +6,38 @@ import {
   ExternalServiceAuthStatus,
   type ExternalServiceAuthType,
   ExternalServiceCredentialsLevel,
-  getExternalServiceFallbackName,
+} from '../external-services/useExternalServiceLogin';
+import { toToolsetOAuthSettings } from '../oauth/authorize-url';
+import {
   getToolsetFallbackName,
   resolveToolsetCredentialsLevel,
-  toToolsetOAuthSettings,
-} from '@epam/ai-dial-chat-hooks';
-import type { ResolvedRowInfo } from '../models/signin-interrupt';
-import { PRIMARY_LOCALE, resolveLocalizedText } from './locale';
+} from '../oauth/toolset-id';
+import {
+  type PendingSigninEvent,
+  PendingSigninEventKind,
+} from '../shared/client-channel';
+import {
+  buildExternalServiceScopeId,
+  getExternalServiceFallbackName,
+} from '../shared/external-services';
+import { resolveLocalizedText } from '../shared/locale';
+import type { SigninRowInfo } from './models';
 
-export const resolveToolsetInfo = (
+/** Returns the key of a pending event's underlying resource: the toolset id, or the external-service scope id. */
+export const getSigninEventResourceKey = (event: PendingSigninEvent): string =>
+  event.kind === PendingSigninEventKind.Toolset
+    ? event.toolsetId
+    : buildExternalServiceScopeId(event.appId, event.serviceName);
+
+/** Returns the row metadata for a toolset, falling back to a name derived from its id while `toolset` is unknown. */
+export const resolveToolsetSigninRowInfo = (
   toolsetId: string,
   toolset: DialToolsetDto | undefined,
-  activeLocale = PRIMARY_LOCALE,
-): ResolvedRowInfo => ({
+  activeLocale: string,
+  primaryLocale: string,
+): SigninRowInfo => ({
   displayName:
-    resolveLocalizedText(toolset?.displayName, activeLocale) ||
+    resolveLocalizedText(toolset?.displayName, activeLocale, primaryLocale) ||
     getToolsetFallbackName(toolsetId),
   displayVersion: toolset?.displayVersion,
   authenticationType: toolset?.authSettings?.authenticationType as
@@ -29,10 +46,11 @@ export const resolveToolsetInfo = (
   oauthSettings: toToolsetOAuthSettings(toolset?.authSettings),
 });
 
-export const resolveExternalServiceInfo = (
+/** Returns the row metadata for an application's external service, falling back to its decoded name while `service` is unknown. */
+export const resolveExternalServiceSigninRowInfo = (
   serviceName: string,
   service: GetExternalServiceResponseDto | undefined,
-): ResolvedRowInfo => ({
+): SigninRowInfo => ({
   displayName:
     service?.displayName || getExternalServiceFallbackName(serviceName),
   authenticationType: service?.authenticationType as

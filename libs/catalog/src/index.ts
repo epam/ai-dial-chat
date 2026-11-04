@@ -236,3 +236,11 @@ export type {
   ApplicationCredentialsTexts,
   ApplicationCredentialsTypography,
 } from './models/application-credentials';
+
+export { SigninInterruptDialog } from './components/SigninInterruptDialog/SigninInterruptDialog';
+export type {
+  SigninInterruptDialogColors,
+  SigninInterruptDialogLabels,
+  SigninInterruptDialogProps,
+  SigninInterruptDialogRow,
+} from './models/signin-interrupt-dialog';
