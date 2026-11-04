@@ -1892,6 +1892,19 @@ export interface ClientConfigResponseDto {
 /**
  *
  * @export
+ * @interface CommitApplicationVersionDto
+ */
+export interface CommitApplicationVersionDto {
+  /**
+   * Full id of the snapshot `forkApplicationVersion` returned. Must be in the caller's own bucket.
+   * @type {string}
+   * @memberof CommitApplicationVersionDto
+   */
+  snapshotId: string;
+}
+/**
+ *
+ * @export
  * @interface ConversationAttachmentMissingErrorDto
  */
 export interface ConversationAttachmentMissingErrorDto {
@@ -2995,6 +3008,12 @@ export interface CreateApplicationBodyDto {
    */
   createOnly?: boolean;
   /**
+   * Plain-text personal folder to create the application in, relative to the caller's bucket. Omit or leave empty for the root. createOnly candidates stay in this folder.
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  folderPath?: string;
+  /**
    * Store applicationProperties verbatim, including schema-specific features. Use top-level attachment fields for Core capabilities.
    * @type {boolean}
    * @memberof CreateApplicationBodyDto
@@ -3283,6 +3302,108 @@ export const CreateShareLinkDtoAccessEnum = {
 } as const;
 export type CreateShareLinkDtoAccessEnum =
   (typeof CreateShareLinkDtoAccessEnum)[keyof typeof CreateShareLinkDtoAccessEnum];
+
+/**
+ *
+ * @export
+ * @interface CreateToolsetBodyDto
+ */
+export interface CreateToolsetBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  version?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  description?: string;
+  /**
+   * An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager.
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof CreateToolsetBodyDto
+   */
+  topics?: Array<string>;
+  /**
+   *
+   * @type {Array<LocaleTextEntryDto>}
+   * @memberof CreateToolsetBodyDto
+   */
+  locales?: Array<LocaleTextEntryDto>;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  primaryLocale?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  endpoint: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  transport: CreateToolsetBodyDtoTransportEnum;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof CreateToolsetBodyDto
+   */
+  allowedTools?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  reference?: string;
+  /**
+   *
+   * @type {ToolsetAuthSettingsBodyDto}
+   * @memberof CreateToolsetBodyDto
+   */
+  authSettings: ToolsetAuthSettingsBodyDto;
+  /**
+   * Plain-text personal folder to create the toolset in, relative to the caller's bucket. Omit or leave empty for the root.
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  folderPath?: string;
+  /**
+   * Never overwrite an existing toolset: answer 409 when `{name}__{version}` is already taken in the folder.
+   * @type {boolean}
+   * @memberof CreateToolsetBodyDto
+   */
+  createOnly?: boolean;
+}
+
+/**
+ * @export
+ */
+export const CreateToolsetBodyDtoTransportEnum = {
+  Http: 'HTTP',
+  Sse: 'SSE',
+} as const;
+export type CreateToolsetBodyDtoTransportEnum =
+  (typeof CreateToolsetBodyDtoTransportEnum)[keyof typeof CreateToolsetBodyDtoTransportEnum];
 
 /**
  *
@@ -5519,6 +5640,25 @@ export interface FileUploadResponseDto {
 /**
  *
  * @export
+ * @interface ForkApplicationVersionDto
+ */
+export interface ForkApplicationVersionDto {
+  /**
+   * The new version
+   * @type {string}
+   * @memberof ForkApplicationVersionDto
+   */
+  version: string;
+  /**
+   * Plain-text personal folder for the new version, relative to the caller's bucket. Empty string is the root.
+   * @type {string}
+   * @memberof ForkApplicationVersionDto
+   */
+  folderPath: string;
+}
+/**
+ *
+ * @export
  * @interface GenerateTitleResponseDto
  */
 export interface GenerateTitleResponseDto {
@@ -6489,6 +6629,38 @@ export interface MovePromptDto {
    * @memberof MovePromptDto
    */
   targetFolderId: string;
+}
+/**
+ *
+ * @export
+ * @interface MoveResourceDto
+ */
+export interface MoveResourceDto {
+  /**
+   * Plain-text destination folder relative to the caller's bucket. Empty string moves the resource to the root.
+   * @type {string}
+   * @memberof MoveResourceDto
+   */
+  folderPath: string;
+}
+/**
+ *
+ * @export
+ * @interface MoveSkillDto
+ */
+export interface MoveSkillDto {
+  /**
+   * Plain-text destination folder relative to the caller's bucket. Empty string moves the resource to the root.
+   * @type {string}
+   * @memberof MoveSkillDto
+   */
+  folderPath: string;
+  /**
+   * The skill's resource path within the caller's own bucket
+   * @type {string}
+   * @memberof MoveSkillDto
+   */
+  path: string;
 }
 /**
  *
@@ -7724,6 +7896,51 @@ export interface RequestSkillDto {
    * @memberof RequestSkillDto
    */
   url: string;
+}
+/**
+ *
+ * @export
+ * @interface ResourceFolderDto
+ */
+export interface ResourceFolderDto {
+  /**
+   * Folder name, decoded
+   * @type {string}
+   * @memberof ResourceFolderDto
+   */
+  name: string;
+  /**
+   * Plain-text folder path relative to the bucket
+   * @type {string}
+   * @memberof ResourceFolderDto
+   */
+  path: string;
+}
+/**
+ *
+ * @export
+ * @interface ResourceFoldersResponseDto
+ */
+export interface ResourceFoldersResponseDto {
+  /**
+   *
+   * @type {Array<ResourceFolderDto>}
+   * @memberof ResourceFoldersResponseDto
+   */
+  folders: Array<ResourceFolderDto>;
+}
+/**
+ *
+ * @export
+ * @interface ResourceIdResponseDto
+ */
+export interface ResourceIdResponseDto {
+  /**
+   * Full resource id `{type}/{bucket}/{path}`
+   * @type {string}
+   * @memberof ResourceIdResponseDto
+   */
+  id: string;
 }
 /**
  *

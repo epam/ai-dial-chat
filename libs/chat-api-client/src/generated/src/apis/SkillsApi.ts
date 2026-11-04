@@ -14,6 +14,8 @@
 
 import * as runtime from '../runtime';
 import type {
+  MoveSkillDto,
+  ResourceIdResponseDto,
   SkillCatalogListResponseDto,
   SkillFileDeleteResponseDto,
   SkillFileListResponseDto,
@@ -93,6 +95,10 @@ export interface ListSkillsRequest {
   token?: string;
   limit?: number;
   recursive?: boolean;
+}
+
+export interface MoveSkillRequest {
+  moveSkillDto: MoveSkillDto;
 }
 
 export interface UpdateSkillRequest {
@@ -1065,6 +1071,64 @@ export class SkillsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<SkillListResponseDto> {
     const response = await this.listSkillsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Moves a skill in the caller\'s own bucket into the given folder, never overwriting an existing skill. Resolves with the skill\'s new id.
+   * Move a skill into another folder
+   */
+  async moveSkillRaw(
+    requestParameters: MoveSkillRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ResourceIdResponseDto>> {
+    if (requestParameters['moveSkillDto'] == null) {
+      throw new runtime.RequiredError(
+        'moveSkillDto',
+        'Required parameter "moveSkillDto" was null or undefined when calling moveSkill().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/skills/move`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['moveSkillDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ResourceIdResponseDto>(response);
+  }
+
+  /**
+   * Moves a skill in the caller\'s own bucket into the given folder, never overwriting an existing skill. Resolves with the skill\'s new id.
+   * Move a skill into another folder
+   */
+  async moveSkill(
+    requestParameters: MoveSkillRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ResourceIdResponseDto> {
+    const response = await this.moveSkillRaw(requestParameters, initOverrides);
     return await response.value();
   }
 

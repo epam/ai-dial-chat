@@ -161,6 +161,14 @@ export interface DeploymentCreationFormProps {
   isNameReadOnly?: boolean;
   /** Tooltip shown over the name field while `isNameReadOnly` is set. Defaults to the field value. */
   nameReadOnlyTooltip?: string;
+  /**
+   * Renders the version field read-only (still focusable), e.g. in edit mode
+   * where a version changes only by saving a new one. Typing and
+   * `onVersionBlur` are ignored while set. Defaults to `false`.
+   */
+  isVersionReadOnly?: boolean;
+  /** Tooltip shown over the version field while `isVersionReadOnly` is set. Defaults to `'The version is changed with "Save as new version"'`. */
+  versionReadOnlyTooltip?: string;
   /** Helper text rendered under the name field. */
   nameCaption?: string;
   /** Marks the description field as required. The host still owns the validation. */

@@ -63,6 +63,10 @@ export interface MetadataFormProps {
   isNameReadOnly?: boolean;
   /** Tooltip shown over the Name field while `isNameReadOnly` is set. Defaults to the field value. */
   nameReadOnlyTooltip?: string;
+  /** Renders the Version field read-only (still focusable); typing and `onVersionBlur` are ignored. Defaults to `false`. */
+  isVersionReadOnly?: boolean;
+  /** Tooltip shown over the Version field while `isVersionReadOnly` is set. Defaults to `'The version is changed with "Save as new version"'`. */
+  versionReadOnlyTooltip?: string;
   /** Helper text rendered under the Name field. */
   nameCaption?: string;
   /** Marks the Description field as required. Defaults to `false`. */

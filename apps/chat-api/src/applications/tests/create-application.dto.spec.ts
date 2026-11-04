@@ -95,3 +95,26 @@ describe('CreateApplicationBodyDto — features', () => {
     },
   );
 });
+
+describe('CreateApplicationBodyDto — folderPath', () => {
+  it.each(['', 'Design', 'Design/Audit Agents'])(
+    'accepts the folder path %j',
+    async (folderPath) => {
+      const errors = await validateDto({ ...BASE_BODY, folderPath });
+      expect(errors).toHaveLength(0);
+    },
+  );
+
+  it.each([
+    '../escape',
+    'a/../b',
+    '/root',
+    'trailing/',
+    'a//b',
+    'a%2Fb',
+    'a:b',
+  ])('rejects the folder path %j', async (folderPath) => {
+    const errors = await validateDto({ ...BASE_BODY, folderPath });
+    expect(errors.some((e) => e.property === 'folderPath')).toBe(true);
+  });
+});

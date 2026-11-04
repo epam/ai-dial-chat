@@ -10,7 +10,7 @@ Define how deployment-provided tool toggles are shown in the conversation input,
 
 The system SHALL derive the available tools from the selected deployment's configuration schema alone. Every boolean-typed property (explicit `"type": "boolean"`, or no `type` with a boolean `default`) of `selectedDeploymentConfiguration.properties` is one tool, in schema order.
 
-Tools SHALL always be surfaced as a row of chips rendered directly in the conversation input (`ToolsChips` in `libs/conversation-input`) — every tool, selected or not, in schema order. The chip body toggles the tool and `aria-pressed` reflects the state. When the host supplies both `stateOnLabel` and `stateOffLabel` (this app passes `tools.stateOn` / `tools.stateOff`), the chip appends that visible, `aria-hidden` state text after the label.
+From the phone breakpoint (768px) up, tools SHALL be surfaced as a row of chips rendered directly in the conversation input (`ToolsChips` in `libs/conversation-input`) — every tool, selected or not, in schema order. Below 768px the composer has no room for a chip per tool, so only the tools that are switched on render as chips; an unselected tool is switched on from the `+` menu's "Tools" bottom sheet, which is always offered on a phone regardless of `removable-tools`. The chip body toggles the tool and `aria-pressed` reflects the state. When the host supplies both `stateOnLabel` and `stateOffLabel` (this app passes `tools.stateOn` / `tools.stateOff`), the chip appends that visible, `aria-hidden` state text after the label.
 
 Whether a chip can additionally be taken off the input is governed by the `removable-tools` UI feature (`OverlayFeature.RemovableTools`), which is in `DEFAULT_ENABLED_UI_FEATURES`:
 
@@ -24,6 +24,11 @@ Beyond `removable-tools`, no operator configuration gates this: there is no env 
 #### Scenario: Schema exposes a boolean property — tools visible
 - **WHEN** the deployment configuration schema contains `properties.deep_research` with `type: "boolean"`
 - **THEN** the conversation input renders a "Deep research" toggle chip
+
+#### Scenario: Phone — unselected tools live in the Tools menu only
+- **WHEN** the viewport is below 768px AND the schema exposes `properties.deep_research` AND Deep research is off
+- **THEN** the input renders no "Deep research" chip AND the `+` menu renders a "Tools" item that lists it
+- **AND** once Deep research is switched on from that menu, its chip renders in the input
 
 #### Scenario: removable-tools enabled — chip is dismissible and the menu offers Tools
 - **WHEN** `isEnabled('removable-tools')` is `true` AND the schema exposes `properties.deep_research`

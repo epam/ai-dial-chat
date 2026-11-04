@@ -222,6 +222,76 @@ import { PublishFoldersTree } from '@epam/ai-dial-publish-panel';
 />;
 ```
 
+#### Multi-root mode
+
+Pass `roots` (a list of `FolderDestinationRoot`: `key`, `label`, `items`, and optional `canCreateFolders`, `expandedPaths`, `onExpandedPathsChange`, `loadingPaths`) to render one always-expanded top-level node per root, in the given order, instead of the single `rootLabel` root. Selection then travels as a `FolderDestination` (`{ rootKey, path }`, where `path: []` is the root itself) through `destination` / `onDestinationChange`, and a confirmed new folder reaches `onCreateDestinationFolder(rootKey, parentPath, name)`. Folders are name-ordered inside each root, search filters every root, a new name is validated against its siblings in the same root, and a root with `canCreateFolders: false` offers no create actions. `items`, `selectedPath`, `onSelectedPathChange`, `onCreateFolder`, `rootLabel`, `expandedPaths` and `loadingPaths` are ignored in this mode — each root carries its own.
+
+```tsx
+import {
+  PublishFoldersTree,
+  type FolderDestination,
+} from '@epam/ai-dial-publish-panel';
+
+<PublishFoldersTree
+  roots={[
+    {
+      key: 'personal',
+      label: 'Personal',
+      items: personal.folderItems,
+      expandedPaths: personal.expandedPaths,
+      onExpandedPathsChange: personal.onExpandedPathsChange,
+      loadingPaths: personal.loadingPaths,
+    },
+    { key: 'organization', label: 'Organization', items: organizationItems },
+  ]}
+  destination={destination}
+  onDestinationChange={setDestination}
+  onCreateDestinationFolder={handleCreateFolder}
+  searchQuery={searchQuery}
+/>;
+```
+
+### SaveToFolderPanel / StandaloneSaveToFolderPanel
+
+The "save to a folder, optionally as a new version" flow. `StandaloneSaveToFolderPanel` is an end-edge `SideDrawer` with two views:
+
+- **Main** — the entity summary (`ResourceSummary`), the committed destination as a folder name with the file manager's folder icon (`FolderName`, the path joined with `/`) and a small **Change** action, an optional version choice, and a Cancel / Save footer.
+- **Change folder** — a back button, folder search and the multi-root `PublishFoldersTree`, with a Cancel / Select footer. A destination picked here is pending until Select commits it through `onDestinationChange`; Back and Cancel discard it. While a folder of a root with `hasAccessRules` is pending and `accessRules` (`SaveToFolderAccessRulesProps`) is passed, `PublishAccessRules` renders below the tree for that folder; `onPendingDestinationChange` tells the host which folder is pending — including the reset to `destination` on entering and leaving the view — so it can load that folder's existing rules.
+
+The version section renders only when `version` (`SaveToFolderVersionProps`) is passed: a `RadioGroup` of "Keep version {version}" and "Save as new version", the latter revealing a required version input whose error the host supplies as `newVersionError`. Pass no `version` for an unversioned resource. `submitError` is announced through an assertive `LiveRegion`; `foldersError` shows above the tree with a Retry action when `onRetryFolders` is given. Every control is disabled while `isSubmitting`.
+
+The drawer is named by `labels.title` in both views; switching views moves focus to the new view's heading, and leaving the folder view returns it to Change. `SaveToFolderPanel` is the controlled body (`view`, `pendingDestination`, `onPendingDestinationChange`, `onChangeFolderClick`) for a host that renders its own shell. The panel never decides what a destination means — saving, moving and publishing are the host's.
+
+```tsx
+import {
+  SaveVersionMode,
+  StandaloneSaveToFolderPanel,
+} from '@epam/ai-dial-publish-panel';
+
+<StandaloneSaveToFolderPanel
+  isOpen={isOpen}
+  onClose={close}
+  onSubmit={save}
+  isSubmitDisabled={Boolean(versionError)}
+  resource={{ title: 'Design Review Agent', version: '1.0.0' }}
+  roots={roots}
+  destination={destination}
+  onDestinationChange={setDestination}
+  onCreateFolder={handleCreateFolder}
+  version={{
+    versionMode,
+    onVersionModeChange: setVersionMode,
+    currentVersion: '1.0.0',
+    newVersion,
+    onNewVersionChange: setNewVersion,
+    newVersionError: versionError,
+  }}
+  labels={{ title: 'Save QuickApp' }}
+/>;
+```
+
+Copy comes from `labels` (`StandaloneSaveToFolderPanelLabels`: `title`, `changeFolderTitle`, `closeAriaLabel`, `backAriaLabel`, `cancelLabel`, `saveLabel`, `savingLabel`, `selectLabel`) and `panelLabels` (`SaveToFolderPanelLabels`), each with an English default. Colors come from `colors` (`StandaloneSaveToFolderPanelColors`: `backdropBackground`, `panelBackground`, `panelBorder`, `dividerBorder`, `scrollbarThumb`, `titleText`) and `panelStyles.colors` (`SaveToFolderPanelColors`: `headingText`, `destinationText` and the `summary*` colors). `titleClassName` and `headingClassName` default to `'dial-body-semi-text'`, and `destinationClassName` (the destination path) to `'dial-small-semi-text'`. `SaveToFolderView` (`Main`, `ChangeFolder`) and `SaveVersionMode` (`Keep`, `New`) are exported.
+
 ### PublishHistoryList
 
 Read-only list of previously published versions for the currently selected destination folder.

@@ -6,6 +6,7 @@ import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import type { TFunction } from 'i18next';
 import { AppsEditorI18nKeys } from '../../../constants/translation-keys';
 import type {
+  ApplicationCreateOptions,
   ApplicationEditorContext,
   ApplicationSetupErrors,
   SchemaApplicationSetup,
@@ -25,13 +26,16 @@ import {
   defineApplicationEditor,
   getMissingRequiredProperties,
   resolveSchemaNotificationTarget,
+  toFolderPathField,
 } from '../../../utils/application-editor';
 import SchemaAppSetup from '../setup/SchemaAppSetup';
 import {
   SCHEMA_APP_DEFAULT_METADATA,
   getSchemaAppMetadataLabelOverrides,
   getSchemaAppTitle,
+  getSchemaAppTypeName,
   getSchemaId,
+  getVersionLockedInEditMode,
   toLocaleFields,
 } from './schemaDefinitionHelpers';
 
@@ -58,6 +62,7 @@ const create = (
   metadata: DeploymentCreationFormValues,
   setup: SchemaApplicationSetup,
   ctx: ApplicationEditorContext,
+  options?: ApplicationCreateOptions,
 ) =>
   createApplication({
     name: metadata.name.trim(),
@@ -68,6 +73,7 @@ const create = (
     topics: metadata.topics.length > 0 ? metadata.topics : undefined,
     applicationProperties: setup.properties ?? {},
     ...toLocaleFields(metadata),
+    ...toFolderPathField(options),
   });
 
 const update = (
@@ -117,4 +123,6 @@ export const schemaAppDefinition =
     Setup: SchemaAppSetup,
     create,
     update,
+    savePanel: { getTypeLabel: getSchemaAppTypeName },
+    getMetadataFieldState: getVersionLockedInEditMode,
   });

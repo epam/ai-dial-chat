@@ -143,19 +143,19 @@ Whether typed manually or imported by dropping a `SKILL.md` file, the manifest s
 - **THEN** the `filePaths` array sent to `createSkill` does not include `SKILL.md`, and `skillManifest` is the page's own generated text, not the imported file's untouched bytes
 
 ### Requirement: Create-time atomicity via createSkill; no preflight
-Before calling `createSkill` in create mode, the `SkillEditor` page SHALL NOT perform a `listSkills` preflight check. It SHALL call `createSkill(bucket, path, skillManifest, filePaths, files)` directly. The BFF's `createSkill` sends `If-None-Match: '*'` to DIAL Core (its verified real create-only mechanism — read directly from DIAL Core's `EtagHeader` source, not inferred from an incomplete generated SDK type) and translates an upstream `412` collision to `409 Conflict`, which the page treats as the sole "a skill with this name already exists" case.
+Before calling `createSkill` in create mode, the `SkillEditor` page SHALL NOT perform a `listSkills` preflight check. Create SHALL open the Save panel (see the `resource-save-panel` capability); on the panel's Save the page SHALL call `createSkill(bucket, path, skillManifest, filePaths, files)` directly, where `path` is the chosen Personal folder followed by the normalized name. The BFF's `createSkill` sends `If-None-Match: '*'` to DIAL Core (its verified real create-only mechanism — read directly from DIAL Core's `EtagHeader` source, not inferred from an incomplete generated SDK type) and translates an upstream `412` collision to `409 Conflict`, which the page treats as the sole "a skill with this name already exists" case.
 
 #### Scenario: Create proceeds directly to createSkill
-- **WHEN** a user submits the create form
-- **THEN** the page calls `createSkill(bucket, path, skillManifest, filePaths, files)` immediately, with no preceding `listSkills` call
+- **WHEN** a user submits the create form and confirms the Save panel with Personal `team-a`
+- **THEN** the page calls `createSkill(bucket, 'team-a/<normalized name>', skillManifest, filePaths, files)` immediately, with no preceding `listSkills` call
 
 #### Scenario: Create collision surfaces as a naming conflict
 - **WHEN** `createSkill` rejects with `409 Conflict`
-- **THEN** the page shows "A skill with this name already exists" as an inline Name-field error and does not clear other field values
+- **THEN** the Save panel shows "A skill with this name already exists", stays open, and the form keeps its field values
 
 #### Scenario: Successful create navigates on 201
 - **WHEN** `createSkill` resolves successfully
-- **THEN** the page treats the resulting `201 Created` response as success, refetches the skills listing, shows a success notification, and navigates to `ROUTES.Catalog` with `itemId=skills/<bucket>/<path>`
+- **THEN** the skills listing is refetched, the panel shows the Created notification, and the page navigates to `ROUTES.Catalog` with `itemId=skills/<bucket>/<path>`
 
 ### Requirement: HTTP error mapping for `createSkill`
 The `SkillEditor` page SHALL interpret `createSkill` failures as follows and render a corresponding inline or notification error, keeping the form's field values intact for retry: `400` → the server's own validation message, shown verbatim when present; `409` → naming conflict (inline Name-field error, offering retry with a different name); `413` → the package is too large (inline `skillEditor.error.archiveTooLarge`, "This skill package is too large to upload."); `503` → service unavailable (inline, alongside a Retry action which resubmits the same in-memory manifest/files without rebuilding anything). Retry is offered only for a failure a plain re-send can clear: the other statuses above name something wrong with the submission itself, and re-sending it unchanged would fail the same way, so they render as text alone.

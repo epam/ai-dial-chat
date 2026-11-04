@@ -4951,6 +4951,150 @@ const next = rememberPublishFolderKey(storedKeys, toFolderPathKey(folderPath));
 if (next) setStoredKeys(next);
 ```
 
+### useResourceFolders / parseResourceFolderPath
+
+`useResourceFolders({ listFolders, isEnabled })` lazily loads one resource
+type's personal folder tree for a destination picker: the root once
+`isEnabled` (default `true`) is first true, then one listing per expanded
+folder. `listFolders(path)` is the host's already-bound listing operation (a
+plain-text path, `''` for the root) returning a `ResourceFoldersResponseDto`;
+the hook builds no request itself. `onCreateFolder` adds a folder to the
+in-memory tree only, kept across later listings. `hasError` is `true` while
+any folder's last fetch failed, and `retry()` re-fetches those folders. Pass
+`folderItems`, `expandedPaths`, `onExpandedPathsChange` and `loadingPaths` to a
+`FolderDestinationRoot` of `@epam/ai-dial-publish-panel`'s multi-root tree.
+
+`parseResourceFolderPath(id)` returns the decoded folder segments of a personal
+resource id `{type}/{bucket}/{folder…}/{name}` — `[]` at the bucket root or for
+an id that is not a full resource id. Both are available from the root and
+`./catalog`.
+
+```ts
+import {
+  parseResourceFolderPath,
+  useResourceFolders,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const personal = useResourceFolders({
+  listFolders: listApplicationFolders,
+  isEnabled: isPanelOpen,
+});
+const currentFolder = parseResourceFolderPath(application.id);
+```
+
+### useResourceSavePanel / runResourceSave
+
+`useResourceSavePanel(params)` owns the Save panel flow for one resource and
+returns `panelProps` to spread on `StandaloneSaveToFolderPanel` from
+`@epam/ai-dial-publish-panel`, plus `submit()`. It covers:
+
+- the Personal root, loaded through `useResourceFolders`;
+- the Organization root, built from the `organizationFolders` a host gets
+  from `usePublishFolders`; omit it when the user may not publish, and the
+  root is not offered;
+- the version choice, checked against `versionPattern` and reported as a
+  `ResourceSaveVersionError` (`Invalid`, `Unchanged`, `Exists`) that
+  `labels.getVersionError` turns into text;
+- the access rules of the pending Organization folder, fetched with
+  `publishClient.getPublishRules`, and kept while the same folder stays chosen.
+
+The host owns everything else: the resource summary, the panel's own labels,
+`onClose`, and the notification it shows from `onSaved(result, choice)`. The
+hook reads no i18n, app context or storage.
+
+`runResourceSave(adapter, choice, publish)` is the orchestrator the hook runs.
+With an edit adapter (`ResourceEditSaveAdapter`) it saves in place or as a
+new version, then moves into another Personal folder, or publishes to an
+Organization folder. With a create adapter (`ResourceCreateSaveAdapter`, told
+apart by `isResourceCreateAdapter`) it calls `createIn` with the chosen
+Personal folder, or with the root before publishing; the result's `isCreated`
+is then `true`, and the panel offers no version choice. A failure after the save resolves with the
+`ResourceSaveOutcome` `SavedButMoveFailed` or `SavedButPublishFailed`.
+
+The module also exports:
+
+- `SaveDestinationRoot` (`Personal`, `Organization`);
+- the `SavedResource`, `ResourceSaveChoice`, `ResourceSaveResult` and
+  `PublishSavedResource` types;
+- `ResourceSaveError`, for a failure whose message is already translated;
+- `createPublishSavedResource(publishClient)`.
+
+All of it is available from the root and `./catalog`.
+
+```ts
+import { useResourceSavePanel } from '@epam/ai-dial-chat-hooks/catalog';
+
+const { panelProps } = useResourceSavePanel({
+  isOpen,
+  adapter,
+  resourceId: application.id,
+  currentFolderPath: parseResourceFolderPath(application.id),
+  currentVersion: application.version,
+  versionPattern: /^\d+(\.\d+)*$/,
+  listPersonalFolders: listApplicationFolders,
+  organizationFolders: canPublish ? publishFolders : undefined,
+  publishClient,
+  ruleSourceOptions: ['roles'],
+  labels: {
+    personalRoot: 'Personal',
+    organizationRoot: 'Organization',
+    foldersLoadError: 'Folders could not be loaded',
+    saveError: 'Saving failed',
+    getVersionError: (error, version) => `${error}: ${version}`,
+  },
+  onSaved: (result, choice) => notifySaved(result, choice),
+});
+```
+
+### Resource save adapters
+
+These functions build the `ResourceSaveAdapter` for each resource type.
+Each one takes a configured generated client and never creates one:
+
+- **`createEmbeddedApplicationSaveAdapter({ applicationsApi, applicationId, runEmbeddedSave, getCommitFailedMessage })`**
+  is for Quick Apps, whose embedded editor is the only writer. A new version
+  runs in three steps:
+  1. fork the stored application;
+  2. run the editor's save on the original;
+  3. commit, which swaps the two bodies.
+
+  If the save fails, the fork is deleted. If the commit fails, it throws a
+  `ResourceSaveError` with `getCommitFailedMessage(version)`.
+
+- **`createHostApplicationSaveAdapter({ applicationsApi, applicationId, update, createVersion })`**
+  is for applications the host writes itself.
+- **`createToolsetSaveAdapter({ toolsetsApi, toolsetId, body })`** writes a new
+  version with `createOnly: true` into the chosen folder.
+- **`createPromptSaveAdapter({ promptsApi, promptId, body })`** is unversioned:
+  it updates the prompt and then moves it.
+- **`createPromptFolderLister(promptsApi)`** returns the `listPersonalFolders`
+  for prompts, one folder level built from the prompt listing.
+- **`createToolsetCreateAdapter({ toolsetsApi, body })`** and
+  **`createPromptCreateAdapter({ promptsApi, body })`** create a new toolset
+  (create-only) or prompt in the chosen folder.
+- **`createSkillFolderLister(skillsApi, bucket)`** returns the
+  `listPersonalFolders` for skills: the grouping folders of one level, across
+  every listing page.
+
+The client parameters are typed as the narrow `Pick`s
+`ResourceSaveApplicationsApi`, `ResourceSaveToolsetsApi`,
+`ResourceSavePromptsApi` and `ResourceSaveSkillsApi`. All of it is available from the root and
+`./catalog`.
+
+```ts
+import {
+  createPromptFolderLister,
+  createToolsetSaveAdapter,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const adapter = createToolsetSaveAdapter({
+  toolsetsApi,
+  toolsetId: toolset.id,
+  body,
+});
+const listPromptFolders = createPromptFolderLister(promptsApi);
+```
+
 ### useCatalogToolsetCredentials
 
 Owns the catalog's toolset credential login/logout flow: wires `useToolsetLogin` (see OAuth Popup Flow) to the host's DIAL Core operations, resolves each outcome to a notification and toolset refetch, and owns the notification copy for every credential level / API-key / org-fallback combination. Every backend call and OAuth callback route arrives as an injected parameter — the hook constructs no client instance and reads no app context or i18n.
@@ -5229,6 +5373,13 @@ const {
   onNotify: (notification) => showNotification(notification),
 });
 ```
+
+Pass `onSaveRequest(adapter, values)` to save through the Save panel (`useResourceSavePanel`). A submit that passes validation then writes nothing itself. Instead it hands the host a `ResourceSaveAdapter`:
+
+- **Create mode:** `createIn(folderPath)` creates the skill under the chosen folder.
+- **Edit mode:** `saveInPlace()` updates the skill with the loaded ETag, and `move(id, folderPath)` calls `client.moveSkill`.
+
+In this mode the hook shows no success notification and does not navigate; the panel does both. Write failures reject with a `ResourceSaveError` whose message is the matching `messages` text. A stale edit (412) still sets `conflict`.
 
 ### useSkillFileActions
 

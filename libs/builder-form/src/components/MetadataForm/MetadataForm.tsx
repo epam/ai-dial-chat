@@ -25,6 +25,8 @@ const MetadataFormComponent: FC<MetadataFormProps> = ({
   fields = ALL_METADATA_FIELDS,
   isNameReadOnly,
   nameReadOnlyTooltip,
+  isVersionReadOnly,
+  versionReadOnlyTooltip,
   nameCaption,
   isDescriptionRequired,
   descriptionCaption,
@@ -87,6 +89,8 @@ const MetadataFormComponent: FC<MetadataFormProps> = ({
         fields={renderedFields}
         isNameReadOnly={isNameReadOnly}
         nameReadOnlyTooltip={nameReadOnlyTooltip}
+        isVersionReadOnly={isVersionReadOnly}
+        versionReadOnlyTooltip={versionReadOnlyTooltip}
         nameCaption={nameCaption}
         isDescriptionRequired={isDescriptionRequired}
         descriptionCaption={descriptionCaption}

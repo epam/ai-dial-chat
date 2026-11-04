@@ -1,6 +1,13 @@
 import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
+import {
+  isResourceCreateAdapter,
+  type ResourceSaveAdapter,
+  ResourceSaveOutcome,
+  type ResourceSaveResult,
+} from '@epam/ai-dial-chat-hooks';
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -50,6 +57,7 @@ vi.mock('../../../context/AppConfigContext', async () => {
 vi.mock('../../../server-api/applications', () => ({
   createApplication: vi.fn(),
   updateApplication: vi.fn(),
+  listApplicationFolders: vi.fn(),
 }));
 vi.mock('../../../server-api/application-schemas', () => ({
   getApplicationSchema: vi.fn(),
@@ -70,6 +78,40 @@ vi.mock('../../../hooks/useOperationNotification', () => ({
 vi.mock(
   '../../../components/DialFileManagerModal/DialFileManagerModal',
   () => ({ default: () => null }),
+);
+vi.mock(
+  '../../../components/ResourceSavePanelContainer/ResourceSavePanelContainer',
+  () => ({
+    default: (props: {
+      isOpen: boolean;
+      adapter: ResourceSaveAdapter;
+      onSaved: (result: ResourceSaveResult) => void;
+    }) => {
+      const [createError, setCreateError] = useState('');
+      /* A create adapter runs the real create into the root folder, the way the panel does. */
+      const handleFinish = async () => {
+        if (!isResourceCreateAdapter(props.adapter)) return;
+        try {
+          const { id } = await props.adapter.createIn([]);
+          props.onSaved({
+            outcome: ResourceSaveOutcome.Saved,
+            savedId: id,
+            isCreated: true,
+            isNewVersion: false,
+            isPublished: false,
+          });
+        } catch {
+          setCreateError('Create failed');
+        }
+      };
+      return props.isOpen ? (
+        <div role="dialog" aria-label="Save panel">
+          <button onClick={handleFinish}>Finish save</button>
+          <p>{createError}</p>
+        </div>
+      ) : null;
+    },
+  }),
 );
 
 const SCHEMA_ID = 'https://example.com/schemas/text-classification';
@@ -124,6 +166,13 @@ const alertText = () =>
     .queryAllByRole('alert')
     .map((region) => region.textContent)
     .join('');
+
+/* Create opens the Save panel; the stub's Finish save runs the create adapter. */
+const createThroughPanel = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.click(getAction(ButtonsI18nKeys.Create));
+  await screen.findByRole('dialog', { name: 'Save panel' });
+  await user.click(screen.getByRole('button', { name: 'Finish save' }));
+};
 
 const createSearch = `schema=${SCHEMA_ID}`;
 const editSearch = `${createSearch}&appId=${encodeURIComponent(APP_ID)}`;
@@ -206,12 +255,18 @@ describe('ApplicationEditorPage — schema app', () => {
     expect(getApplicationSchema).not.toHaveBeenCalled();
   });
 
-  it('creates the app in one request carrying the form values as applicationProperties', async () => {
+  it('creates the app in one request through the Save panel carrying the form values as applicationProperties', async () => {
     renderPage(createSearch);
 
     await user.type(getNameInput(), 'Classifier');
     await user.type(await findLabelsInput(), 'spam,ham');
     await user.click(getAction(ButtonsI18nKeys.Create));
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Save panel' }),
+    ).toBeTruthy();
+    expect(createApplication).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Finish save' }));
 
     await waitFor(() =>
       expect(createApplication).toHaveBeenCalledWith(
@@ -223,11 +278,8 @@ describe('ApplicationEditorPage — schema app', () => {
       ),
     );
     expect(await screen.findByText('Catalog')).toBeTruthy();
-    expect(mockNotifyOperationSuccess).toHaveBeenCalledWith(
-      NotifiableEntity.SchemaApp,
-      EntityOperation.Created,
-      { name: 'Classifier', type: SUMMARY.displayName },
-    );
+    /* The panel confirms the create; the editor adds no second notification. */
+    expect(mockNotifyOperationSuccess).not.toHaveBeenCalled();
   });
 
   it('opens the create form with version 1.0.0 and an empty name', async () => {
@@ -243,7 +295,7 @@ describe('ApplicationEditorPage — schema app', () => {
 
     await user.type(getNameInput(), 'Classifier');
     await user.type(await findLabelsInput(), 'spam,ham');
-    await user.click(getAction(ButtonsI18nKeys.Create));
+    await createThroughPanel(user);
 
     await waitFor(() =>
       expect(createApplication).toHaveBeenCalledWith(
@@ -258,7 +310,7 @@ describe('ApplicationEditorPage — schema app', () => {
     await user.type(getNameInput(), 'Classifier');
     await user.clear(getVersionInput());
     await user.type(await findLabelsInput(), 'spam,ham');
-    await user.click(getAction(ButtonsI18nKeys.Create));
+    await createThroughPanel(user);
 
     await waitFor(() => expect(createApplication).toHaveBeenCalled());
     expect(
@@ -502,7 +554,7 @@ describe('ApplicationEditorPage — schema app', () => {
       await user.type(getNameInput(), 'Classifier');
       await user.type(await findLabelsInput(), 'spam,ham');
 
-      await user.click(getAction(ButtonsI18nKeys.Create));
+      await createThroughPanel(user);
 
       expect(await screen.findByText('Catalog')).toBeTruthy();
       expect(screen.queryByRole('dialog')).toBeNull();

@@ -69,8 +69,13 @@ vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
       renderDescription,
       avatarPicker,
       labels,
+      isVersionReadOnly,
+      versionReadOnlyTooltip,
     }: MetadataFormProps) => (
       <div>
+        <span>
+          {`version-read-only-${String(Boolean(isVersionReadOnly))}-${versionReadOnlyTooltip ?? 'default'}`}
+        </span>
         {renderDescription?.(
           <textarea
             id="toolset-description"
@@ -395,6 +400,21 @@ describe('ToolsetEditor', () => {
     onPersist.mockResolvedValue(NEW_TOOLSET_ID);
     onPostSaveLogin.mockResolvedValue(undefined);
     onToolsetsChanged.mockResolvedValue(undefined);
+  });
+
+  it('keeps the Version editable by default', () => {
+    renderEditor();
+    expect(screen.getByText('version-read-only-false-default')).toBeTruthy();
+  });
+
+  it('forwards a read-only Version and its tooltip to the metadata form', () => {
+    renderEditor({
+      isVersionReadOnly: true,
+      labels: { versionReadOnlyTooltip: 'Use Save as new version' },
+    });
+    expect(
+      screen.getByText('version-read-only-true-Use Save as new version'),
+    ).toBeTruthy();
   });
 
   it('renders the create title and actions with the default labels', () => {
