@@ -13,6 +13,7 @@ import {
   GhostButton,
   GhostIconButton,
   LinkButton,
+  LiveRegion,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconDotsVertical } from '@tabler/icons-react';
@@ -176,22 +177,18 @@ const ProjectConversationListComponent: FC<ProjectConversationListProps> = ({
   const renderBody = () => {
     if (isLoading) {
       return (
-        <div role="status" className="flex justify-center py-6">
-          {/* The kit spinner is a status of its own; the region below carries the localized text instead. */}
+        <div className="flex justify-center py-6">
+          {/* The kit spinner is a status of its own; the section's live region carries the localized text instead. */}
           <span aria-hidden>
             <Spinner />
           </span>
-          <span className="sr-only">{labels.loadingLabel}</span>
         </div>
       );
     }
     if (hasError) {
       return (
-        <div
-          role="status"
-          className="flex flex-col items-center gap-3 py-6 text-center"
-        >
-          <p className={mergeClasses('m-0', messageClassName)}>
+        <div className="flex flex-col items-center gap-3 py-6 text-center">
+          <p aria-hidden className={mergeClasses('m-0', messageClassName)}>
             {labels.errorLabel}
           </p>
           <GhostButton label={labels.retryLabel} onClick={onRetry} />
@@ -200,7 +197,7 @@ const ProjectConversationListComponent: FC<ProjectConversationListProps> = ({
     }
     if (isEmpty) {
       return (
-        <div role="status">
+        <div aria-hidden>
           <PanelEmptyState
             label={labels.emptyTitle}
             description={labels.emptyDescription}
@@ -236,6 +233,20 @@ const ProjectConversationListComponent: FC<ProjectConversationListProps> = ({
     );
   };
 
+  const renderStatus = () => {
+    if (isLoading) return labels.loadingLabel;
+    if (hasError) return labels.errorLabel;
+    if (isEmpty) {
+      return (
+        <>
+          <span>{labels.emptyTitle}</span>{' '}
+          <span>{labels.emptyDescription}</span>
+        </>
+      );
+    }
+    return null;
+  };
+
   if (isEmpty && !isEmptyStateShown) return null;
 
   return (
@@ -250,6 +261,8 @@ const ProjectConversationListComponent: FC<ProjectConversationListProps> = ({
           {labels.title}
         </h2>
       )}
+      {/* Mounted across loading, error and empty so each state is announced when it replaces the previous one. */}
+      <LiveRegion visuallyHidden>{renderStatus()}</LiveRegion>
       {renderBody()}
     </section>
   );

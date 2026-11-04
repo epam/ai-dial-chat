@@ -275,10 +275,13 @@ describe('ProjectConversationsSection', () => {
     });
     renderSection();
 
-    expect(await screen.findByText(ProjectsI18nKeys.ChatsEmpty)).toBeTruthy();
+    /* Drawn once visibly and once in the section's live region. */
     expect(
-      screen.getByText(ProjectsI18nKeys.ChatsEmptyDescription),
-    ).toBeTruthy();
+      (await screen.findAllByText(ProjectsI18nKeys.ChatsEmpty)).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(ProjectsI18nKeys.ChatsEmptyDescription).length,
+    ).toBeGreaterThan(0);
   });
 
   it('renames a chat from its row menu', async () => {
