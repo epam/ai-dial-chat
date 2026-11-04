@@ -37,6 +37,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   labels,
   styles,
   availableLocaleOptions = [],
+  formatLocaleLabel,
   fields = ALL_METADATA_FIELDS,
   isNameReadOnly = false,
   nameReadOnlyTooltip,
@@ -198,6 +199,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
           value={values.otherLocales}
           onChange={(otherLocales) => onChange({ otherLocales })}
           availableLocaleOptions={availableLocaleOptions}
+          formatLocaleLabel={formatLocaleLabel}
           labels={labels.otherLocales}
           className={styles?.field}
           colors={styles?.localesColors}

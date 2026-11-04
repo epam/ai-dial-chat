@@ -1,5 +1,6 @@
+import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../../config/environment.config';
 import type { AppConfigEvalContext } from '../../app-config.types';
 import { EnvConfigProvider } from '../../config-registry/env-config.provider';
@@ -803,6 +804,68 @@ describe('EnvConfigProvider', () => {
       expect(
         await provider.resolve('publish.publicationFilterSources', ctx),
       ).toEqual(['roles', 'department', 'title']);
+    });
+  });
+
+  describe('content.additionalLocales', () => {
+    const KEY = 'content.additionalLocales';
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('returns canonical, de-duplicated codes keeping the first occurrence', async () => {
+      const { provider } = makeProvider({
+        ADDITIONAL_CONTENT_LOCALES: ['de-de', 'en', 'DE-DE', 'pt-br', 'en'],
+      });
+      expect(await provider.resolve(KEY, ctx)).toEqual([
+        'de-DE',
+        'en',
+        'pt-BR',
+      ]);
+    });
+
+    it('resolves to undefined when neither variable is set', async () => {
+      const { provider } = makeProvider();
+      expect(await provider.resolve(KEY, ctx)).toBeUndefined();
+    });
+
+    it('resolves a present but empty ADDITIONAL_CONTENT_LOCALES to []', async () => {
+      const { provider } = makeProvider({ ADDITIONAL_CONTENT_LOCALES: [] });
+      expect(await provider.resolve(KEY, ctx)).toEqual([]);
+    });
+
+    it('reads the legacy AVAILABLE_LOCALES when the new variable is absent', async () => {
+      const { provider } = makeProvider({ AVAILABLE_LOCALES: ['ar', 'en'] });
+      expect(await provider.resolve(KEY, ctx)).toEqual(['ar', 'en']);
+    });
+
+    it('lets an empty ADDITIONAL_CONTENT_LOCALES win over AVAILABLE_LOCALES without a warning', async () => {
+      const warn = vi.spyOn(Logger.prototype, 'warn');
+      const { provider } = makeProvider({
+        ADDITIONAL_CONTENT_LOCALES: [],
+        AVAILABLE_LOCALES: ['ar'],
+      });
+
+      provider.onModuleInit();
+
+      expect(await provider.resolve(KEY, ctx)).toEqual([]);
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('logs the deprecation warning once, naming only the variables', async () => {
+      const warn = vi.spyOn(Logger.prototype, 'warn');
+      const { provider } = makeProvider({ AVAILABLE_LOCALES: ['ar'] });
+
+      provider.onModuleInit();
+      await provider.resolve(KEY, ctx);
+      await provider.resolve(KEY, ctx);
+
+      expect(warn).toHaveBeenCalledOnce();
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('ADDITIONAL_CONTENT_LOCALES'),
+      );
+      expect(String(warn.mock.calls[0]?.[0])).not.toContain('ar,');
     });
   });
 

@@ -89,6 +89,7 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
   onNotifyError,
   avatarPicker,
   availableLocaleOptions,
+  formatLocaleLabel,
   onRefineDescription,
   labels,
   colors,
@@ -521,6 +522,7 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
           onChange={handleChange}
           avatarPicker={avatarPicker}
           availableLocaleOptions={availableLocaleOptions}
+          formatLocaleLabel={formatLocaleLabel}
           renderDescription={renderRefinableDescription}
           labels={metadataLabels}
         />

@@ -68,7 +68,10 @@ import {
   NotifiableEntity,
 } from '../../../types/entity-notification';
 import { ROUTES } from '../../../types/routes';
-import { buildAdditionalLocaleOptions } from '../../../utils/locale';
+import {
+  buildAdditionalLocaleOptions,
+  getLocaleDisplayName,
+} from '../../../utils/locale';
 import {
   extractToolsetApiErrorMessage,
   fetchToolsetAuthSettings,
@@ -292,7 +295,10 @@ const ToolsetApplicationEditor: FC = () => {
   const { avatarPicker, avatarPickerLabels } = useApplicationAvatarPicker();
   const metadataFormLabels = useMetadataLabels(getMetadataLabelOverrides);
 
-  const localeOptions = useMemo(() => buildAdditionalLocaleOptions(), []);
+  const localeOptions = useMemo(
+    () => buildAdditionalLocaleOptions(config.additionalContentLocales),
+    [config.additionalContentLocales],
+  );
   const onRefineDescription = useTextRefinementCallback(
     TextRefinementPurpose.ToolsetDescription,
   );
@@ -441,6 +447,7 @@ const ToolsetApplicationEditor: FC = () => {
       onNotifyError={notifyError}
       avatarPicker={avatarPicker}
       availableLocaleOptions={localeOptions}
+      formatLocaleLabel={getLocaleDisplayName}
       onRefineDescription={onRefineDescription}
       labels={labels}
     />

@@ -165,6 +165,7 @@ export const createDefaultClientConfig = (): MappedClientConfig => ({
   applicationVisualizers: {},
   customVariables: {},
   publicationFilterSources: [...DEFAULT_PUBLICATION_FILTER_SOURCES],
+  additionalContentLocales: [],
   maxAttachmentFileSizeBytes: DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES,
   usageLimitsWarningThresholdPercent:
     DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
@@ -334,6 +335,12 @@ export const CLIENT_CONFIG_MAPPINGS: ReadonlyMap<string, ClientConfigMapping> =
         Array.isArray(resolved)
           ? resolved
           : [...DEFAULT_PUBLICATION_FILTER_SOURCES],
+      ),
+    ],
+    [
+      'content.additionalLocales',
+      defineMapping('additionalContentLocales', ({ resolved }) =>
+        Array.isArray(resolved) ? resolved : [],
       ),
     ],
     [

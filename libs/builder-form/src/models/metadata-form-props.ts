@@ -55,6 +55,8 @@ export interface MetadataFormProps {
   avatarPicker?: MetadataFormAvatarPicker;
   /** Locale options offered by the "Add locale" popup. Defaults to an empty list. */
   availableLocaleOptions?: DeploymentCreationFormLocaleOption[];
+  /** Labels a stored locale code that is not in `availableLocaleOptions`. Defaults to `code.toUpperCase()`. */
+  formatLocaleLabel?: (code: string) => string;
   /** Fields to render, in fixed order. Defaults to every field. */
   fields?: readonly MetadataField[];
   /** Renders the Name field disabled. Defaults to `false`. */
