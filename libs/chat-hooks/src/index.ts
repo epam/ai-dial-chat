@@ -42,6 +42,7 @@ export * from './catalog/usePublishFolders/usePublishFolders';
 export * from './catalog/useResourceFolders/useResourceFolders';
 export * from './catalog/resource-folder';
 export * from './catalog/resource-save';
+export * from './catalog/resource-save-adapters';
 export * from './catalog/useResourceSavePanel/useResourceSavePanel';
 export * from './conversation/announcement-message';
 export * from './conversation/conversation-draft/conversation-draft';

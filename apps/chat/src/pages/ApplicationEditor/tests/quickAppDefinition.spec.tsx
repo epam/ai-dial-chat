@@ -78,9 +78,6 @@ vi.mock('../../../server-api/applications', () => ({
   updateApplication: vi.fn(),
   deleteApplication: vi.fn(),
   listApplicationFolders: vi.fn(),
-  moveApplication: vi.fn(),
-  forkApplicationVersion: vi.fn(),
-  commitApplicationVersion: vi.fn(),
 }));
 vi.mock(
   '../../../components/ResourceSavePanelContainer/ResourceSavePanelContainer',

@@ -106,7 +106,8 @@ const renderContainer = (
   );
 
 const lastFlowParams = () =>
-  vi.mocked(useResourceSavePanel).mock.lastCall?.[0] as UseResourceSavePanelParams;
+  vi.mocked(useResourceSavePanel).mock
+    .lastCall?.[0] as UseResourceSavePanelParams;
 
 const lastPanelProps = () =>
   panelProps.mock.lastCall?.[0] as Record<string, unknown> & {

@@ -4980,6 +4980,48 @@ const { panelProps } = useResourceSavePanel({
 });
 ```
 
+### Resource save adapters
+
+These functions build the `ResourceSaveAdapter` for each resource type.
+Each one takes a configured generated client and never creates one:
+
+- **`createEmbeddedApplicationSaveAdapter({ applicationsApi, applicationId, runEmbeddedSave, getCommitFailedMessage })`**
+  is for Quick Apps, whose embedded editor is the only writer. A new version
+  runs in three steps:
+  1. fork the stored application;
+  2. run the editor's save on the original;
+  3. commit, which swaps the two bodies.
+
+  If the save fails, the fork is deleted. If the commit fails, it throws a
+  `ResourceSaveError` with `getCommitFailedMessage(version)`.
+- **`createHostApplicationSaveAdapter({ applicationsApi, applicationId, update, createVersion })`**
+  is for applications the host writes itself.
+- **`createToolsetSaveAdapter({ toolsetsApi, toolsetId, body })`** writes a new
+  version with `createOnly: true` into the chosen folder.
+- **`createPromptSaveAdapter({ promptsApi, promptId, body })`** is unversioned:
+  it updates the prompt and then moves it.
+- **`createPromptFolderLister(promptsApi)`** returns the `listPersonalFolders`
+  for prompts, one folder level built from the prompt listing.
+
+The client parameters are typed as the narrow `Pick`s
+`ResourceSaveApplicationsApi`, `ResourceSaveToolsetsApi` and
+`ResourceSavePromptsApi`. All of it is available from the root and
+`./catalog`.
+
+```ts
+import {
+  createPromptFolderLister,
+  createToolsetSaveAdapter,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const adapter = createToolsetSaveAdapter({
+  toolsetsApi,
+  toolsetId: toolset.id,
+  body,
+});
+const listPromptFolders = createPromptFolderLister(promptsApi);
+```
+
 ### useCatalogToolsetCredentials
 
 Owns the catalog's toolset credential login/logout flow: wires `useToolsetLogin` (see OAuth Popup Flow) to the host's DIAL Core operations, resolves each outcome to a notification and toolset refetch, and owns the notification copy for every credential level / API-key / org-fallback combination. Every backend call and OAuth callback route arrives as an injected parameter — the hook constructs no client instance and reads no app context or i18n.

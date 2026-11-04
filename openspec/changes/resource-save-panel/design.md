@@ -69,9 +69,11 @@ interface ResourceSaveAdapter {
 
 Adapters:
 
-- `apps/chat/src/utils/resource-save-adapters/application.ts`, which takes the definition. It is used by Quick App, schema-form and custom apps.
-- `.../toolset.ts`
-- `.../prompt.ts`
+All in `libs/chat-hooks/src/catalog/resource-save-adapters.ts`, each taking the configured generated client (`ApplicationsApi`, `ToolsetsApi`, `PromptsApi`) from the host:
+
+- `createEmbeddedApplicationSaveAdapter` (Quick Apps) and `createHostApplicationSaveAdapter` (schema-form and custom apps, which pass their definition's `update` / `create` as callbacks).
+- `createToolsetSaveAdapter`.
+- `createPromptSaveAdapter`, with `createPromptFolderLister` for the Personal tree.
 
 New-version strategies differ by writer:
 

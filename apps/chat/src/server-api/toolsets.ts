@@ -4,7 +4,6 @@ import type {
   DialToolsetListResponseDto,
   MutatedToolsetDto,
   ResourceFoldersResponseDto,
-  ResourceIdResponseDto,
   ToolsetAuthResultDto,
   ToolsetBodyDto,
   ToolsetLoginBodyDto,
@@ -28,13 +27,6 @@ export const listToolsetFolders = (
   path: string,
 ): Promise<ResourceFoldersResponseDto> =>
   toolsetsApi.listToolsetFolders({ path });
-
-/** Moves an own toolset into `folderPath`; resolves with its new id. */
-export const moveToolset = (
-  toolsetName: string,
-  folderPath: string,
-): Promise<ResourceIdResponseDto> =>
-  toolsetsApi.moveToolset({ toolsetName, moveResourceDto: { folderPath } });
 
 export const updateToolset = (
   toolsetName: string,

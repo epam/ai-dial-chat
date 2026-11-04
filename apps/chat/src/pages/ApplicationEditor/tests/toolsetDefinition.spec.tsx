@@ -41,7 +41,6 @@ vi.mock('../../../server-api/toolsets', () => ({
   createToolset: vi.fn(),
   getToolset: vi.fn(),
   listToolsetFolders: vi.fn(),
-  moveToolset: vi.fn(),
   listToolsets: vi.fn(),
   loginToolset: vi.fn(),
   logoutToolset: vi.fn(),

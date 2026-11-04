@@ -8,11 +8,14 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import {
   buildToolsetMcpUrl,
+  createToolsetSaveAdapter,
   getApiErrorDetails,
   parseResourceFolderPath,
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
   WithLogin,
+  type ResourceSaveAdapter,
+  type ResourceSaveResult,
 } from '@epam/ai-dial-chat-hooks';
 import {
   CatalogEntityType,
@@ -66,10 +69,7 @@ import { useBuilderLeaveGuard } from '../../../hooks/unsaved-changes/useBuilderL
 import { useOperationNotification } from '../../../hooks/useOperationNotification';
 import { useTextRefinementCallback } from '../../../hooks/useTextRefinementCallback';
 import { useTextRefinementLabels } from '../../../hooks/useTextRefinementLabels';
-import type {
-  ResourceSaveAdapter,
-  ResourceSaveResult,
-} from '@epam/ai-dial-chat-hooks';
+import { toolsetsApi } from '../../../server-api/api-client';
 import { mcpAppsApiClient } from '../../../server-api/mcp-apps';
 import {
   createToolset,
@@ -86,7 +86,6 @@ import {
 } from '../../../types/entity-notification';
 import { ROUTES } from '../../../types/routes';
 import { buildAdditionalLocaleOptions } from '../../../utils/locale';
-import { createToolsetSaveAdapter } from '../../../utils/resource-save-adapters/toolset';
 import {
   extractToolsetApiErrorMessage,
   fetchToolsetAuthSettings,
@@ -212,7 +211,7 @@ const ToolsetApplicationEditor: FC = () => {
           pendingPersistRef.current?.(null);
           pendingPersistRef.current = resolve;
           setSaveRequest({
-            adapter: createToolsetSaveAdapter({ toolsetId, body }),
+            adapter: createToolsetSaveAdapter({ toolsetsApi, toolsetId, body }),
             name: form.name.trim(),
             version: form.version.trim(),
             iconUrl: avatarPicker.resolveIconUrl?.(form.iconUrl),

@@ -277,9 +277,7 @@ describe('useResourceSavePanel', () => {
       'application',
       ID,
       expect.objectContaining({
-        rules: [
-          { source: 'roles', function: 'EQUAL', targets: ['qa'] },
-        ],
+        rules: [{ source: 'roles', function: 'EQUAL', targets: ['qa'] }],
       }),
     );
   });

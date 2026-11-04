@@ -7,8 +7,12 @@ import {
 } from '@epam/ai-dial-builder-form';
 import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import {
+  createEmbeddedApplicationSaveAdapter,
+  createHostApplicationSaveAdapter,
   getApiErrorDetails,
   parseResourceFolderPath,
+  type ResourceSaveAdapter,
+  type ResourceSaveResult,
 } from '@epam/ai-dial-chat-hooks';
 import {
   CatalogEntityType,
@@ -65,10 +69,7 @@ import type {
   ApplicationSetupValues,
 } from '../../models/application-editor';
 import type { CatalogCreationCheck } from '../../models/catalog-creation';
-import type {
-  ResourceSaveAdapter,
-  ResourceSaveResult,
-} from '@epam/ai-dial-chat-hooks';
+import { applicationsApi } from '../../server-api/api-client';
 import { listApplicationFolders } from '../../server-api/applications';
 import { ApplicationCreateStrategy } from '../../types/application-editor';
 import { CatalogCreationDecision } from '../../types/catalog-creation';
@@ -80,10 +81,6 @@ import {
 } from '../../utils/application-editor';
 import { translateDeploymentCreationErrors } from '../../utils/entity-field-validation';
 import { buildAdditionalLocaleOptions } from '../../utils/locale';
-import {
-  createEmbeddedApplicationSaveAdapter,
-  createHostApplicationSaveAdapter,
-} from '../../utils/resource-save-adapters/application';
 
 /* Loaded on the first Save of an edit session, so opening the editor fetches no folder listing. */
 const ResourceSavePanelContainer = lazy(
@@ -498,6 +495,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     setSaveAdapter(
       update
         ? createHostApplicationSaveAdapter({
+            applicationsApi,
             applicationId: appId,
             update: () => update(appId, values, setup),
             createVersion: (version, folderPath) =>
@@ -506,6 +504,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
               }),
           })
         : createEmbeddedApplicationSaveAdapter({
+            applicationsApi,
             applicationId: appId,
             // The embedded editor is the single writer; it shows its own save error inline.
             runEmbeddedSave: async () => {

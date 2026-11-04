@@ -3,7 +3,6 @@ import type {
   CreateApplicationBodyDto,
   CreatedApplicationDto,
   ResourceFoldersResponseDto,
-  ResourceIdResponseDto,
   UpdateApplicationBodyDto,
   UpdatedApplicationDto,
 } from '@epam/ai-dial-chat-api-client';
@@ -43,41 +42,3 @@ export const listApplicationFolders = (
   path: string,
 ): Promise<ResourceFoldersResponseDto> =>
   applicationsApi.listApplicationFolders({ path });
-
-/** Moves an own application into `folderPath`; resolves with its new id. */
-export const moveApplication = (
-  applicationName: string,
-  folderPath: string,
-): Promise<ResourceIdResponseDto> =>
-  applicationsApi.moveApplication({
-    applicationName,
-    moveResourceDto: { folderPath },
-  });
-
-/*
- * Copies the stored (pre-edit) application to `{folderPath}/{name}__{version}`.
- * The first step of a Quick App save-as-new-version; see
- * `commitApplicationVersion`.
- */
-export const forkApplicationVersion = (
-  applicationName: string,
-  version: string,
-  folderPath: string,
-): Promise<ResourceIdResponseDto> =>
-  applicationsApi.forkApplicationVersion({
-    applicationName,
-    forkApplicationVersionDto: { version, folderPath },
-  });
-
-/*
- * Swaps the source's saved edits into the forked snapshot and restores the
- * source's pre-edit body; resolves with the new version's id.
- */
-export const commitApplicationVersion = (
-  applicationName: string,
-  snapshotId: string,
-): Promise<ResourceIdResponseDto> =>
-  applicationsApi.commitApplicationVersion({
-    applicationName,
-    commitApplicationVersionDto: { snapshotId },
-  });

@@ -3,6 +3,8 @@ import {
   TextRefinementPurpose,
 } from '@epam/ai-dial-chat-api-client';
 import {
+  createPromptFolderLister,
+  createPromptSaveAdapter,
   getApiErrorDetails,
   PROMPT_CONTENT_MAX_LENGTH,
   PROMPT_DESCRIPTION_MAX_LENGTH,
@@ -12,6 +14,8 @@ import {
   validatePromptContent,
   validatePromptDescription,
   validatePromptName,
+  type ResourceSaveAdapter,
+  type ResourceSaveResult,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
@@ -49,10 +53,7 @@ import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
 import { useUiFeature } from '../../hooks/useUiFeature';
-import type {
-  ResourceSaveAdapter,
-  ResourceSaveResult,
-} from '@epam/ai-dial-chat-hooks';
+import { promptsApi } from '../../server-api/api-client';
 import {
   createPrompt,
   getPrompt,
@@ -66,10 +67,8 @@ import {
 } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
-import {
-  createPromptSaveAdapter,
-  listPromptFolders,
-} from '../../utils/resource-save-adapters/prompt';
+
+const listPromptFolders = createPromptFolderLister(promptsApi);
 
 /* Loaded on the first Save of an edit session, so opening the editor fetches no folder listing. */
 const ResourceSavePanelContainer = lazy(
@@ -268,6 +267,7 @@ const PromptEditorPage: FC = () => {
       if (isEditMode && promptId != null && loadedPrompt?.isMy) {
         setSaveRequest({
           adapter: createPromptSaveAdapter({
+            promptsApi,
             promptId,
             body: { name: trimmedName, description, content },
           }),

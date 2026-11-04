@@ -4,10 +4,7 @@ import {
   type FolderDestination,
   type PublicationRule,
 } from '@epam/ai-dial-publish-panel';
-import {
-  toPublishRuleDto,
-  type PublishApiClient,
-} from './create-publish-api';
+import { toPublishRuleDto, type PublishApiClient } from './create-publish-api';
 import type { CatalogPublishEntityType } from './publish';
 
 /** The roots of the Save panel's destination tree. */
