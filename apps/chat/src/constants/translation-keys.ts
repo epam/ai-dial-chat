@@ -1850,3 +1850,27 @@ export enum UrlPreselectionI18nKeys {
   PromptUnavailableTitle = 'urlPreselection.promptUnavailableTitle',
   PromptUnavailableMessage = 'urlPreselection.promptUnavailableMessage',
 }
+
+export enum ResourceSavePanelI18nKeys {
+  Title = 'resourceSavePanel.title',
+  SaveToFolderHeading = 'resourceSavePanel.saveToFolderHeading',
+  ChangeFolder = 'resourceSavePanel.changeFolder',
+  ChangeFolderTitle = 'resourceSavePanel.changeFolderTitle',
+  DestinationAriaLabel = 'resourceSavePanel.destinationAriaLabel',
+  VersionHeading = 'resourceSavePanel.versionHeading',
+  KeepVersion = 'resourceSavePanel.keepVersion',
+  SaveAsNewVersion = 'resourceSavePanel.saveAsNewVersion',
+  NewVersionLabel = 'resourceSavePanel.newVersionLabel',
+  NewVersionPlaceholder = 'resourceSavePanel.newVersionPlaceholder',
+  VersionInvalid = 'resourceSavePanel.versionInvalid',
+  VersionUnchanged = 'resourceSavePanel.versionUnchanged',
+  VersionExists = 'resourceSavePanel.versionExists',
+  VersionReadOnlyTooltip = 'resourceSavePanel.versionReadOnlyTooltip',
+  FoldersLoadFailed = 'resourceSavePanel.foldersLoadFailed',
+  SaveFailed = 'resourceSavePanel.saveFailed',
+  CommitFailed = 'resourceSavePanel.commitFailed',
+  NewVersionSavedTitle = 'resourceSavePanel.newVersionSavedTitle',
+  NewVersionSaved = 'resourceSavePanel.newVersionSaved',
+  SavedButMoveFailed = 'resourceSavePanel.savedButMoveFailed',
+  SavedButPublishFailed = 'resourceSavePanel.savedButPublishFailed',
+}

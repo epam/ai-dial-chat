@@ -40,6 +40,8 @@ import ApplicationEditorPage from '../ApplicationEditorPage';
 vi.mock('../../../server-api/toolsets', () => ({
   createToolset: vi.fn(),
   getToolset: vi.fn(),
+  listToolsetFolders: vi.fn(),
+  moveToolset: vi.fn(),
   listToolsets: vi.fn(),
   loginToolset: vi.fn(),
   logoutToolset: vi.fn(),
@@ -51,6 +53,34 @@ vi.mock('../../../server-api/mcp-apps', () => ({
 }));
 
 vi.mock('../../../context/NotificationContext');
+vi.mock(
+  '../../../components/ResourceSavePanelContainer/ResourceSavePanelContainer',
+  () => ({
+    default: (props: {
+      isOpen: boolean;
+      typeLabel: string;
+      onClose: () => void;
+      onSaved: (result: unknown) => void;
+    }) =>
+      props.isOpen ? (
+        <div role="dialog" aria-label={`Save ${props.typeLabel}`}>
+          <button
+            onClick={() =>
+              props.onSaved({
+                outcome: 'saved',
+                savedId: 'toolsets/b/Search/my__1.0.0',
+                isNewVersion: false,
+                isPublished: false,
+              })
+            }
+          >
+            Finish save
+          </button>
+          <button onClick={props.onClose}>Close panel</button>
+        </div>
+      ) : null,
+  }),
+);
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => ({ refetchToolsets: mockRefetchToolsets }),
 }));
@@ -105,6 +135,7 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
       signal: AbortSignal,
     ) => Promise<string>;
     listToolNames?: (toolsetId: string) => Promise<string[]>;
+    isVersionReadOnly?: boolean;
     onPersist: (
       form: { name: string },
       toolsetId: string,
@@ -142,6 +173,9 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
         <span>{props.toolsetId}</span>
         <span>{props.onOAuthLogin ? 'oauth-handler' : 'no-oauth-handler'}</span>
         <span>{props.labels?.layout?.createLabel}</span>
+        <span>
+          {props.isVersionReadOnly ? 'version-read-only' : 'version-editable'}
+        </span>
         {props.onRefineDescription && (
           <button
             type="button"
@@ -482,6 +516,83 @@ describe('ApplicationEditorPage — toolset', () => {
       ),
     );
     expect(toolsetsApi.createToolset).not.toHaveBeenCalled();
+  });
+
+  it('keeps the Version editable on create and read-only while editing', async () => {
+    renderPage();
+    expect(await screen.findByText('version-editable')).toBeTruthy();
+  });
+
+  describe('Save panel for an own toolset', () => {
+    const openEditor = async () => {
+      vi.mocked(toolsetsApi.getToolset).mockResolvedValue({
+        ...editDto(),
+        isMy: true,
+      });
+      renderPage(
+        `${ROUTES.ToolsetEditor}?id=${encodeURIComponent(EDIT_TOOLSET_ID)}`,
+      );
+      expect(await screen.findByText('version-read-only')).toBeTruthy();
+    };
+
+    const openPanel = async () => {
+      await openEditor();
+      await user.click(screen.getByRole('button', { name: 'adapter-persist' }));
+      return screen.findByRole('dialog', {
+        name: `Save ${CatalogI18nKeys.CreateToolset}`,
+      });
+    };
+
+    it('opens the Save panel instead of updating in place', async () => {
+      await openPanel();
+      expect(toolsetsApi.updateToolset).not.toHaveBeenCalled();
+    });
+
+    it("resolves the editor's persist with the id the panel saved", async () => {
+      await openPanel();
+      await user.click(screen.getByRole('button', { name: 'Finish save' }));
+      expect(
+        await screen.findByText('persist-result-toolsets/b/Search/my__1.0.0'),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('dialog', {
+          name: `Save ${CatalogI18nKeys.CreateToolset}`,
+        }),
+      ).toBeNull();
+    });
+
+    it('resolves the persist with null when the panel is closed', async () => {
+      await openPanel();
+      await user.click(screen.getByRole('button', { name: 'Close panel' }));
+      expect(await screen.findByText('persist-result-null')).toBeTruthy();
+    });
+
+    it('skips the editor success toast the panel already raised', async () => {
+      await openPanel();
+      await user.click(screen.getByRole('button', { name: 'Finish save' }));
+      await screen.findByText('persist-result-toolsets/b/Search/my__1.0.0');
+      await user.click(
+        screen.getByRole('button', { name: 'adapter-save-success' }),
+      );
+      expect(mockNotifyOperationSuccess).not.toHaveBeenCalled();
+    });
+
+    it('still updates in place a toolset the user does not own', async () => {
+      vi.mocked(toolsetsApi.getToolset).mockResolvedValue({
+        ...editDto(),
+        isMy: false,
+      });
+      vi.mocked(toolsetsApi.updateToolset).mockResolvedValue({
+        id: EDIT_TOOLSET_ID,
+      });
+      renderPage(
+        `${ROUTES.ToolsetEditor}?id=${encodeURIComponent(EDIT_TOOLSET_ID)}`,
+      );
+      await user.click(
+        await screen.findByRole('button', { name: 'adapter-persist' }),
+      );
+      await waitFor(() => expect(toolsetsApi.updateToolset).toHaveBeenCalled());
+    });
   });
 
   it('shows an error notification when create fails', async () => {

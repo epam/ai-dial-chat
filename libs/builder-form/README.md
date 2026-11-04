@@ -335,6 +335,18 @@ import { MetadataField, MetadataForm } from '@epam/ai-dial-builder-form';
 />;
 ```
 
+`isVersionReadOnly` and `versionReadOnlyTooltip` are forwarded to `DeploymentCreationForm`: the Version field stays focusable and readable, but typing changes nothing and `onVersionBlur` is not called — for an editor whose version changes only by saving a new one.
+
+```tsx
+<MetadataForm
+  values={values}
+  errors={errors}
+  onChange={handleChange}
+  isVersionReadOnly={isEditMode}
+  versionReadOnlyTooltip="Use Save as new version to change it"
+/>
+```
+
 `renderDescription(textarea, fieldId)` wraps the Description textarea, for example in a label row with an extra action. The textarea then renders without its own label, so the wrapper must label the control whose id is `fieldId`:
 
 ```tsx
@@ -382,7 +394,7 @@ import {
 
 Renders the whole shared General-step field set. `values`, `errors`, `onChange`, `onAddAvatarClick`, and `labels` are required. The avatar field never opens a file picker itself — `onAddAvatarClick` is the host's hook to open its own file manager/upload flow, and the host reports the result back through `onChange({ iconUrl })`. `iconPreviewUrl` is the URL to actually render in the preview box; the host resolves it from `values.iconUrl` (which may be a DIAL file id rather than a directly displayable URL). Supplying `labels.ariaLabel` wraps the root in a named `role="group"`, so the field set is discoverable as one region inside a larger host form.
 
-`fields` renders a subset (Avatar, Name + Version, Description, Locales, Tags, in that fixed order); Name takes the full row when Version is hidden. `isNameReadOnly` (renders the Name field disabled; `nameReadOnlyTooltip` replaces its hover tooltip, which otherwise shows the value), `nameCaption`, `isDescriptionRequired`, and `errors.description` cover editors whose name is fixed after creation or whose description is required. `descriptionCaption` renders helper text under the Description textarea (for example a `120/2000` counter); the textarea never caps its length, so an over-limit value stays in the field for the host to flag through `errors.description`. When errors first appear, focus moves to the first invalid field — Name, then Version, then Description. `labels.topics.placeholder` falls back to `'Add tags, comma separated'`.
+`fields` renders a subset (Avatar, Name + Version, Description, Locales, Tags, in that fixed order); Name takes the full row when Version is hidden. `isNameReadOnly` (renders the Name field disabled; `nameReadOnlyTooltip` replaces its hover tooltip, which otherwise shows the value), `isVersionReadOnly` (renders the Version field read-only but focusable, ignoring typing and `onVersionBlur`; `versionReadOnlyTooltip` defaults to `'The version is changed with "Save as new version"'`), `nameCaption`, `isDescriptionRequired`, and `errors.description` cover editors whose name is fixed after creation or whose description is required. `descriptionCaption` renders helper text under the Description textarea (for example a `120/2000` counter); the textarea never caps its length, so an over-limit value stays in the field for the host to flag through `errors.description`. When errors first appear, focus moves to the first invalid field — Name, then Version, then Description. `labels.topics.placeholder` falls back to `'Add tags, comma separated'`.
 
 ```tsx
 import { DeploymentCreationForm } from '@epam/ai-dial-builder-form';

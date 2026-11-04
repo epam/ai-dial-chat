@@ -39,6 +39,8 @@ export * from './catalog/useSkillItemDetails';
 export * from './catalog/useSkillDetailsPanelData/useSkillDetailsPanelData';
 export * from './catalog/useFavoriteEntitiesState/useFavoriteEntitiesState';
 export * from './catalog/usePublishFolders/usePublishFolders';
+export * from './catalog/useResourceFolders/useResourceFolders';
+export * from './catalog/resource-folder';
 export * from './conversation/announcement-message';
 export * from './conversation/conversation-draft/conversation-draft';
 export * from './conversation/conversation-draft/conversation-draft-store';

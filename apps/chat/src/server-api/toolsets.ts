@@ -1,7 +1,10 @@
 import type {
+  CreateToolsetBodyDto,
   DialToolsetDto,
   DialToolsetListResponseDto,
   MutatedToolsetDto,
+  ResourceFoldersResponseDto,
+  ResourceIdResponseDto,
   ToolsetAuthResultDto,
   ToolsetBodyDto,
   ToolsetLoginBodyDto,
@@ -16,9 +19,22 @@ export const getToolset = (toolsetName: string): Promise<DialToolsetDto> =>
   toolsetsApi.getToolset({ toolsetName });
 
 export const createToolset = (
-  body: ToolsetBodyDto,
+  body: CreateToolsetBodyDto,
 ): Promise<MutatedToolsetDto> =>
-  toolsetsApi.createToolset({ toolsetBodyDto: body });
+  toolsetsApi.createToolset({ createToolsetBodyDto: body });
+
+/** Lists one level of the caller's toolset folders; an empty `path` is the root. */
+export const listToolsetFolders = (
+  path: string,
+): Promise<ResourceFoldersResponseDto> =>
+  toolsetsApi.listToolsetFolders({ path });
+
+/** Moves an own toolset into `folderPath`; resolves with its new id. */
+export const moveToolset = (
+  toolsetName: string,
+  folderPath: string,
+): Promise<ResourceIdResponseDto> =>
+  toolsetsApi.moveToolset({ toolsetName, moveResourceDto: { folderPath } });
 
 export const updateToolset = (
   toolsetName: string,

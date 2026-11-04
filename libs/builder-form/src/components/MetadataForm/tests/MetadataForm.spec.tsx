@@ -44,11 +44,15 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     error,
     placeholder,
     inputRef,
+    readOnly,
+    tooltipText,
   }: {
     id?: string;
     value?: string;
     onChange?: (v?: string) => void;
     onBlur?: () => void;
+    readOnly?: boolean;
+    tooltipText?: string;
     labelProps?: { label?: string };
     error?: string;
     placeholder?: string;
@@ -62,6 +66,8 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
           id={id}
           value={value ?? ''}
           placeholder={placeholder}
+          readOnly={readOnly}
+          title={tooltipText}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${id}-error` : undefined}
           onChange={(e) => onChange?.(e.target.value)}
@@ -225,6 +231,20 @@ describe('MetadataForm', () => {
     expect(onChange).toHaveBeenCalledWith({ name: 'Renamed' });
     expect(onNameBlur).toHaveBeenCalled();
     expect(onVersionBlur).toHaveBeenCalled();
+  });
+
+  it('forwards a read-only Version and its tooltip to the field', () => {
+    const onVersionBlur = vi.fn();
+    renderForm({
+      isVersionReadOnly: true,
+      versionReadOnlyTooltip: 'Locked while editing',
+      onVersionBlur,
+    });
+    const version = screen.getByLabelText('Version') as HTMLInputElement;
+    expect(version.readOnly).toBe(true);
+    expect(version.title).toBe('Locked while editing');
+    fireEvent.blur(version);
+    expect(onVersionBlur).not.toHaveBeenCalled();
   });
 
   it('stores the icon URL the host resolves for a picked file and closes the picker', async () => {

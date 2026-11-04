@@ -7,12 +7,19 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
+import {
+  ListResourceFoldersQueryDto,
+  MoveResourceDto,
+  ResourceFoldersResponseDto,
+  ResourceIdResponseDto,
+} from '../common/dto/resource-folder.dto';
 import {
   DialToolsetDto,
   DialToolsetListResponseDto,
@@ -23,7 +30,11 @@ import {
   ToolsetLoginBodyDto,
   ToolsetLogoutBodyDto,
 } from './dto/toolset-auth.dto';
-import { MutatedToolsetDto, ToolsetBodyDto } from './dto/toolset-body.dto';
+import {
+  CreateToolsetBodyDto,
+  MutatedToolsetDto,
+  ToolsetBodyDto,
+} from './dto/toolset-body.dto';
 import { ToolsetsService } from './toolsets.service';
 
 @ApiTags('toolsets')
@@ -67,6 +78,97 @@ export class ToolsetsController {
   listToolsets(@Req() req: Request) {
     const { sub, at, bucket } = req.user as SessionUser;
     return this.toolsetsService.listToolsets(sub, at, bucket);
+  }
+
+  /* Registered before `:toolsetName` so `folders` is never read as a toolset name. */
+  @Get('folders')
+  @ApiOperation({
+    operationId: 'listToolsetFolders',
+    summary: "List the caller's toolset folders",
+    description:
+      "Lists the folders directly under `path` in the caller's own toolsets bucket. " +
+      'A folder that does not exist yet lists as empty. Not cached.',
+  })
+  @ApiDialCoreErrors()
+  @ApiResponse({
+    status: 200,
+    description: 'Folders under the requested path',
+    type: ResourceFoldersResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid folder path' })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  listToolsetFolders(
+    @Req() req: Request,
+    @Query() query: ListResourceFoldersQueryDto,
+  ): Promise<ResourceFoldersResponseDto> {
+    const { at } = req.user as SessionUser;
+    return this.toolsetsService.listToolsetFolders(at, query.path ?? '');
+  }
+
+  @Post(':toolsetName/move')
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'moveToolset',
+    summary: "Move a toolset to one of the caller's folders",
+    description:
+      "Moves a toolset in the caller's own bucket into `folderPath`, never overwriting an existing toolset. " +
+      'Invalidates the toolset caches on success.',
+  })
+  @ApiBody({ type: MoveResourceDto })
+  @ApiDialCoreErrors()
+  @ApiResponse({
+    status: 200,
+    description: 'Toolset moved; the response carries its new id',
+    type: ResourceIdResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid toolset name or folder path',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({
+    status: 403,
+    description: "The toolset is not in the caller's own bucket",
+  })
+  @ApiResponse({ status: 404, description: 'Toolset not found' })
+  @ApiResponse({
+    status: 409,
+    description: 'A toolset with the same name already exists in the folder',
+  })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  moveToolset(
+    @Req() req: Request,
+    @Param() params: GetToolsetDto,
+    @Body() body: MoveResourceDto,
+  ): Promise<ResourceIdResponseDto> {
+    const { sub, at } = req.user as SessionUser;
+    return this.toolsetsService.moveToolset(
+      sub,
+      at,
+      params.toolsetName,
+      body.folderPath,
+    );
   }
 
   @Get(':toolsetName')
@@ -121,7 +223,7 @@ export class ToolsetsController {
       'Creates a new toolset for the authenticated session user by proxying DIAL Core. ' +
       'Invalidates the toolset list cache on success.',
   })
-  @ApiBody({ type: ToolsetBodyDto })
+  @ApiBody({ type: CreateToolsetBodyDto })
   @ApiDialCoreErrors()
   @ApiResponse({
     status: 201,
@@ -148,7 +250,7 @@ export class ToolsetsController {
   })
   createToolset(
     @Req() req: Request,
-    @Body() body: ToolsetBodyDto,
+    @Body() body: CreateToolsetBodyDto,
   ): Promise<MutatedToolsetDto> {
     const { sub, at } = req.user as SessionUser;
     return this.toolsetsService.createToolset(sub, at, body);

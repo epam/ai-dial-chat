@@ -29,7 +29,9 @@ import {
   SCHEMA_APP_DEFAULT_METADATA,
   getSchemaAppMetadataLabelOverrides,
   getSchemaAppTitle,
+  getSchemaAppTypeName,
   getSchemaId,
+  getVersionLockedInEditMode,
   toLocaleFields,
 } from './schemaDefinitionHelpers';
 
@@ -115,4 +117,6 @@ export const quickAppDefinition =
     Preview: QuickAppPreview,
     isPreviewAvailable,
     create,
+    savePanel: { getTypeLabel: getSchemaAppTypeName },
+    getMetadataFieldState: getVersionLockedInEditMode,
   });

@@ -132,7 +132,29 @@ vi.mock('../../../server-api/prompts.api', () => ({
   createPrompt: vi.fn(),
   getPrompt: vi.fn(),
   updatePrompt: vi.fn(),
+  listPrompts: vi.fn(),
+  movePrompt: vi.fn(),
 }));
+
+const mockSavePanelProps = vi.fn();
+vi.mock(
+  '../../../components/ResourceSavePanelContainer/ResourceSavePanelContainer',
+  () => ({
+    default: (props: {
+      isOpen: boolean;
+      onSaved: (result: unknown) => void;
+    }) => {
+      mockSavePanelProps(props);
+      return props.isOpen ? (
+        <div role="dialog" aria-label="Save panel">
+          <button onClick={() => props.onSaved({ outcome: 'saved' })}>
+            Finish save
+          </button>
+        </div>
+      ) : null;
+    },
+  }),
+);
 
 const promptDto = {
   id: 'prompts/my-bucket/Work/AI/summarize',
@@ -438,6 +460,43 @@ describe('PromptEditor', () => {
       variant: 'success',
       title: 'entityNotifications.prompt.editedTitle',
       message: 'entityNotifications.prompt.edited',
+    });
+  });
+
+  describe('Save panel for an own prompt', () => {
+    beforeEach(() => {
+      mockSearchParams = new URLSearchParams({ id: promptDto.id });
+      vi.mocked(getPrompt).mockResolvedValue({ ...promptDto, isMy: true });
+    });
+
+    const openPanel = async () => {
+      render(<PromptEditor />);
+      expect(await screen.findByDisplayValue('summarize')).toBeTruthy();
+      await user.click(screen.getByRole('button', { name: 'buttons.save' }));
+      return screen.findByRole('dialog', { name: 'Save panel' });
+    };
+
+    it('opens the Save panel at the prompt folder instead of updating in place', async () => {
+      await openPanel();
+      expect(updatePrompt).not.toHaveBeenCalled();
+      expect(mockSavePanelProps).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          isOpen: true,
+          resourceId: promptDto.id,
+          currentFolderPath: ['Work', 'AI'],
+          adapter: expect.objectContaining({ isVersioned: false }),
+        }),
+      );
+    });
+
+    it('refetches prompts and leaves for the catalog once the panel has saved', async () => {
+      await openPanel();
+      await user.click(screen.getByRole('button', { name: 'Finish save' }));
+      await waitFor(() =>
+        expect(mockNavigate).toHaveBeenCalledWith('/catalog'),
+      );
+      expect(refetchPrompts).toHaveBeenCalled();
+      expect(mockAllowNextNavigation).toHaveBeenCalled();
     });
   });
 

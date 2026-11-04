@@ -19,6 +19,8 @@ import { AddAvatar } from '../AddAvatar/AddAvatar';
 import { DeploymentLocalesField } from '../DeploymentLocalesField/DeploymentLocalesField';
 
 const DEFAULT_TOPICS_PLACEHOLDER = 'Add tags, comma separated';
+const DEFAULT_VERSION_READ_ONLY_TOOLTIP =
+  'The version is changed with "Save as new version"';
 const DESCRIPTION_FIELD_ID = 'deployment-creation-form-description';
 
 /**
@@ -40,6 +42,8 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   fields = ALL_METADATA_FIELDS,
   isNameReadOnly = false,
   nameReadOnlyTooltip,
+  isVersionReadOnly = false,
+  versionReadOnlyTooltip = DEFAULT_VERSION_READ_ONLY_TOOLTIP,
   nameCaption,
   isDescriptionRequired = false,
   descriptionCaption,
@@ -170,8 +174,14 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
               id="deployment-creation-form-version"
               inputRef={versionInputRef}
               value={values.version}
-              onChange={(value) => onChange({ version: value ?? '' })}
-              onBlur={onVersionBlur}
+              onChange={(value) => {
+                if (!isVersionReadOnly) onChange({ version: value ?? '' });
+              }}
+              onBlur={isVersionReadOnly ? undefined : onVersionBlur}
+              readOnly={isVersionReadOnly}
+              tooltipText={
+                isVersionReadOnly ? versionReadOnlyTooltip : undefined
+              }
               labelProps={{ label: labels.version.label }}
               placeholder={labels.version.placeholder}
               error={errors.version || undefined}

@@ -26,7 +26,12 @@ import {
   LOCALE_CODE_PATTERN,
   LOCALE_CODE_VALIDATION_MESSAGE,
 } from '../../common/validators/locale-code.pattern';
+import {
+  RESOURCE_FOLDER_PATH_PATTERN,
+  RESOURCE_FOLDER_PATH_VALIDATION_MESSAGE,
+} from '../../common/validators/resource-folder-path.pattern';
 import { IsValidResourceReference } from '../../common/validators/resource-reference.validator';
+import { IsValidFilePath } from '../../files/dto/file-path.validator';
 
 export class CreateApplicationBodyDto {
   @ApiProperty({ example: 'My App', maxLength: ENTITY_NAME_MAX_LENGTH })
@@ -104,6 +109,19 @@ export class CreateApplicationBodyDto {
   @IsBoolean()
   @IsOptional()
   createOnly?: boolean;
+
+  @ApiPropertyOptional({
+    example: 'Design/Audit Agents',
+    description:
+      "Plain-text personal folder to create the application in, relative to the caller's bucket. Omit or leave empty for the root. createOnly candidates stay in this folder.",
+  })
+  @IsString()
+  @IsOptional()
+  @IsValidFilePath()
+  @Matches(RESOURCE_FOLDER_PATH_PATTERN, {
+    message: RESOURCE_FOLDER_PATH_VALIDATION_MESSAGE,
+  })
+  folderPath?: string;
 
   @ApiPropertyOptional({
     default: false,

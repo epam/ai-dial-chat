@@ -492,6 +492,287 @@
         "tags": ["applications"]
       }
     },
+    "/api/v1/applications/folders": {
+      "get": {
+        "description": "Lists the folders directly under `path` in the caller's own applications bucket. A folder that does not exist yet lists as empty. Not cached.",
+        "operationId": "listApplicationFolders",
+        "parameters": [
+          {
+            "name": "path",
+            "required": false,
+            "in": "query",
+            "description": "Plain-text folder path to list, relative to the caller's bucket. Omit or leave empty for the root.",
+            "schema": {
+              "example": "Design",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Folders under the requested path",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceFoldersResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid folder path"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "DIAL Core denied access to the resource"
+          },
+          "404": {
+            "description": "DIAL Core resource not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "List the caller's application folders",
+        "tags": ["applications"]
+      }
+    },
+    "/api/v1/applications/{applicationName}/move": {
+      "post": {
+        "description": "Moves an application in the caller's own bucket into `folderPath`, never overwriting an existing application. Invalidates the applications, deployments and details caches on success.",
+        "operationId": "moveApplication",
+        "parameters": [
+          {
+            "name": "applicationName",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-app__1.0",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveResourceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application moved; the response carries its new id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceIdResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid application name or folder path"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "The application is not in the caller's own bucket"
+          },
+          "404": {
+            "description": "Application not found"
+          },
+          "409": {
+            "description": "An application with the same name already exists in the folder"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Move an application to one of the caller's folders",
+        "tags": ["applications"]
+      }
+    },
+    "/api/v1/applications/{applicationName}/versions": {
+      "post": {
+        "description": "Copies the stored application to `{folderPath}/{name}__{version}` and stamps the copy with `version`, never overwriting. Used with commitApplicationVersion so edits saved to the source end up in the new version only.",
+        "operationId": "forkApplicationVersion",
+        "parameters": [
+          {
+            "name": "applicationName",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-app__1.0",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForkApplicationVersionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Snapshot created; the response carries its id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceIdResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid application name, version or folder path"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "The application is not in the caller's own bucket"
+          },
+          "404": {
+            "description": "Application not found"
+          },
+          "409": {
+            "description": "The version already exists in the folder"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Fork an application into a new version",
+        "tags": ["applications"]
+      }
+    },
+    "/api/v1/applications/{applicationName}/versions/commit": {
+      "post": {
+        "description": "Swaps the bodies of the source application and its forked snapshot, each keeping its own version: the source gets back its pre-edit body and the snapshot gets the edits. Both writes are conditional on the ETags read in the same request.",
+        "operationId": "commitApplicationVersion",
+        "parameters": [
+          {
+            "name": "applicationName",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-app__1.0",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommitApplicationVersionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Committed; the response carries the new version's id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceIdResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid application name or snapshot id"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "The source or the snapshot is not in the caller's own bucket"
+          },
+          "404": {
+            "description": "Source or snapshot not found"
+          },
+          "409": {
+            "description": "The source or the snapshot changed while committing"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Commit a forked application version",
+        "tags": ["applications"]
+      }
+    },
     "/api/v1/applications/{applicationName}": {
       "patch": {
         "description": "Updates the General-step fields (name, description, iconUrl, topics) of an existing application for the authenticated session user, by proxying DIAL Core. Settings-step configuration (application_properties) is preserved untouched unless the request supplies applicationProperties, in which case it fully replaces the stored value. Invalidates the applications and deployments list caches on success.",
@@ -1634,7 +1915,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToolsetBodyDto"
+                "$ref": "#/components/schemas/CreateToolsetBodyDto"
               }
             }
           }
@@ -1682,6 +1963,140 @@
           }
         },
         "summary": "Create a new toolset",
+        "tags": ["toolsets"]
+      }
+    },
+    "/api/v1/toolsets/folders": {
+      "get": {
+        "description": "Lists the folders directly under `path` in the caller's own toolsets bucket. A folder that does not exist yet lists as empty. Not cached.",
+        "operationId": "listToolsetFolders",
+        "parameters": [
+          {
+            "name": "path",
+            "required": false,
+            "in": "query",
+            "description": "Plain-text folder path to list, relative to the caller's bucket. Omit or leave empty for the root.",
+            "schema": {
+              "example": "Design",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Folders under the requested path",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceFoldersResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid folder path"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "DIAL Core denied access to the resource"
+          },
+          "404": {
+            "description": "DIAL Core resource not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "List the caller's toolset folders",
+        "tags": ["toolsets"]
+      }
+    },
+    "/api/v1/toolsets/{toolsetName}/move": {
+      "post": {
+        "description": "Moves a toolset in the caller's own bucket into `folderPath`, never overwriting an existing toolset. Invalidates the toolset caches on success.",
+        "operationId": "moveToolset",
+        "parameters": [
+          {
+            "name": "toolsetName",
+            "required": true,
+            "in": "path",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
+            "schema": {
+              "example": "my-toolset",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveResourceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Toolset moved; the response carries its new id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceIdResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid toolset name or folder path"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "The toolset is not in the caller's own bucket"
+          },
+          "404": {
+            "description": "Toolset not found"
+          },
+          "409": {
+            "description": "A toolset with the same name already exists in the folder"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Move a toolset to one of the caller's folders",
         "tags": ["toolsets"]
       }
     },
@@ -12392,6 +12807,83 @@
         },
         "required": ["data"]
       },
+      "ResourceFolderDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Folder name, decoded",
+            "example": "Audit Agents"
+          },
+          "path": {
+            "type": "string",
+            "description": "Plain-text folder path relative to the bucket",
+            "example": "Design/Audit Agents"
+          }
+        },
+        "required": ["name", "path"]
+      },
+      "ResourceFoldersResponseDto": {
+        "type": "object",
+        "properties": {
+          "folders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceFolderDto"
+            }
+          }
+        },
+        "required": ["folders"]
+      },
+      "MoveResourceDto": {
+        "type": "object",
+        "properties": {
+          "folderPath": {
+            "type": "string",
+            "description": "Plain-text destination folder relative to the caller's bucket. Empty string moves the resource to the root.",
+            "example": "Design"
+          }
+        },
+        "required": ["folderPath"]
+      },
+      "ResourceIdResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Full resource id `{type}/{bucket}/{path}`",
+            "example": "applications/6FEup.../Design/agent__1.0.0"
+          }
+        },
+        "required": ["id"]
+      },
+      "ForkApplicationVersionDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "example": "1.1.0",
+            "description": "The new version"
+          },
+          "folderPath": {
+            "type": "string",
+            "example": "Design",
+            "description": "Plain-text personal folder for the new version, relative to the caller's bucket. Empty string is the root."
+          }
+        },
+        "required": ["version", "folderPath"]
+      },
+      "CommitApplicationVersionDto": {
+        "type": "object",
+        "properties": {
+          "snapshotId": {
+            "type": "string",
+            "example": "applications/6FEup.../agent__1.1.0",
+            "description": "Full id of the snapshot `forkApplicationVersion` returned. Must be in the caller's own bucket."
+          }
+        },
+        "required": ["snapshotId"]
+      },
       "LocaleTextEntryDto": {
         "type": "object",
         "properties": {
@@ -12462,6 +12954,11 @@
             "type": "boolean",
             "default": false,
             "description": "Never overwrite an existing application: when the name/version path is taken, create at the next free path (name-2, name-3, ...), checked atomically by DIAL Core; 409 only when every candidate is taken."
+          },
+          "folderPath": {
+            "type": "string",
+            "example": "Design/Audit Agents",
+            "description": "Plain-text personal folder to create the application in, relative to the caller's bucket. Omit or leave empty for the root. createOnly candidates stay in this folder."
           },
           "preserveApplicationProperties": {
             "type": "boolean",
@@ -14358,6 +14855,91 @@
         },
         "required": ["authenticationType"]
       },
+      "CreateToolsetBodyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "My toolset",
+            "maxLength": 256
+          },
+          "version": {
+            "type": "string",
+            "example": "0.0.1"
+          },
+          "description": {
+            "type": "string",
+            "example": "My toolset description",
+            "maxLength": 2000
+          },
+          "iconUrl": {
+            "type": "string",
+            "example": "files/6FEup.../uploads/2026-06/icon.png",
+            "description": "An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager."
+          },
+          "topics": {
+            "example": ["keyword1", "keyword2"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "locales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LocaleTextEntryDto"
+            }
+          },
+          "primaryLocale": {
+            "type": "string",
+            "example": "en"
+          },
+          "endpoint": {
+            "type": "string",
+            "example": "https://my-toolset.example.com/mcp"
+          },
+          "transport": {
+            "type": "string",
+            "enum": ["HTTP", "SSE"],
+            "example": "HTTP"
+          },
+          "allowedTools": {
+            "example": ["tool1", "tool2"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reference": {
+            "type": "string",
+            "example": "ff5584b7-a82b-4f4f-bf42-5bf74a3893d6"
+          },
+          "authSettings": {
+            "$ref": "#/components/schemas/ToolsetAuthSettingsBodyDto"
+          },
+          "folderPath": {
+            "type": "string",
+            "example": "Search",
+            "description": "Plain-text personal folder to create the toolset in, relative to the caller's bucket. Omit or leave empty for the root."
+          },
+          "createOnly": {
+            "type": "boolean",
+            "default": false,
+            "description": "Never overwrite an existing toolset: answer 409 when `{name}__{version}` is already taken in the folder."
+          }
+        },
+        "required": ["name", "endpoint", "transport", "authSettings"]
+      },
+      "MutatedToolsetDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "toolsets/encrypted-bucket/My%20toolset__0.0.1"
+          }
+        },
+        "required": ["id"]
+      },
       "ToolsetBodyDto": {
         "type": "object",
         "properties": {
@@ -14422,16 +15004,6 @@
           }
         },
         "required": ["name", "endpoint", "transport", "authSettings"]
-      },
-      "MutatedToolsetDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "toolsets/encrypted-bucket/My%20toolset__0.0.1"
-          }
-        },
-        "required": ["id"]
       },
       "ToolsetLoginBodyDto": {
         "type": "object",

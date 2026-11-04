@@ -1,14 +1,27 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import {
   extractDialErrorMessage,
   handleDialFetchError,
   mapDialHttpStatus,
 } from '../../common/dial/dial-error.mapper';
+import type {
+  ResourceFoldersResponseDto,
+  ResourceIdResponseDto,
+} from '../../common/dto/resource-folder.dto';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
+import {
+  DialResourceType,
+  assertOwnBucket,
+  buildFolderResourcePath,
+  getResourceLeaf,
+  listDialResourceFolders,
+  transferDialResource,
+} from '../../common/utils/dial-resource-transfer';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ToolsetAuthType } from '../dto/toolset-body.dto';
 import type {
+  CreateToolsetBodyDto,
   MutatedToolsetDto,
   ToolsetBodyDto,
 } from '../dto/toolset-body.dto';
@@ -59,7 +72,7 @@ export class ToolsetsMutationService {
   async createToolset(
     userSub: string,
     accessToken: string,
-    body: ToolsetBodyDto,
+    body: CreateToolsetBodyDto,
   ): Promise<MutatedToolsetDto> {
     const authHeaders = getBearerAuthHeaders(accessToken);
 
@@ -69,13 +82,17 @@ export class ToolsetsMutationService {
         'get user bucket',
       );
       const version = body.version ?? DEFAULT_TOOLSET_VERSION;
-      const path = encodeURIComponent(
-        safeDecodeURIComponent(`${body.name}__${version}`),
+      const path = buildFolderResourcePath(
+        body.folderPath ?? '',
+        encodeURIComponent(safeDecodeURIComponent(`${body.name}__${version}`)),
       );
       const id = `${TOOLSET_RESOURCE_PREFIX}${bucket}/${path}`;
 
       const response = await this.dialClient.client.saveToolSet(bucket, path, {
-        headers: authHeaders,
+        headers: {
+          ...authHeaders,
+          ...(body.createOnly ? { 'If-None-Match': '*' } : {}),
+        },
         /*
          * The SDK types `displayName`/`description` as plain `string`; DIAL
          * Core actually accepts a locale map too. Remove this cast when the
@@ -84,6 +101,9 @@ export class ToolsetsMutationService {
         body: toDialToolsetBody(body, version) as unknown as SaveToolSetBody,
       });
       if (response.error) {
+        if (body.createOnly && response.response.status === 412) {
+          throw new ConflictException('Toolset version already exists');
+        }
         this.logger.warn(
           `DIAL Core rejected create toolset: ${JSON.stringify(response.error)}`,
         );
@@ -195,5 +215,80 @@ export class ToolsetsMutationService {
         0,
       );
     }
+  }
+
+  async listToolsetFolders(
+    accessToken: string,
+    folderPath: string,
+  ): Promise<ResourceFoldersResponseDto> {
+    const authHeaders = getBearerAuthHeaders(accessToken);
+    try {
+      const bucket = await this.listingService.getUserBucket(
+        authHeaders,
+        'get user bucket',
+      );
+      const folders = await listDialResourceFolders(
+        this.dialClient.client,
+        DialResourceType.Toolsets,
+        authHeaders,
+        bucket,
+        folderPath,
+        this.logger,
+      );
+      return { folders };
+    } catch (err) {
+      return handleDialFetchError(err, 'list toolset folders', this.logger, 0);
+    }
+  }
+
+  /**
+   * Moves a toolset in the caller's own bucket into `folderPath`, never
+   * overwriting. Only resource urls cross the wire: auth settings and
+   * secrets are neither read nor logged.
+   */
+  async moveToolset(
+    userSub: string,
+    accessToken: string,
+    toolsetName: string,
+    folderPath: string,
+  ): Promise<ResourceIdResponseDto> {
+    const authHeaders = getBearerAuthHeaders(accessToken);
+    const context = `move toolset "${toolsetName}"`;
+    let id: string;
+    try {
+      const bucket = await this.listingService.getUserBucket(
+        authHeaders,
+        'get user bucket',
+      );
+      const source = await this.listingService.resolveToolsetResource(
+        authHeaders,
+        toolsetName,
+      );
+      assertOwnBucket(source, bucket);
+      const destination = {
+        bucket,
+        path: buildFolderResourcePath(folderPath, getResourceLeaf(source.path)),
+      };
+      if (destination.path !== source.path) {
+        await transferDialResource({
+          client: this.dialClient.client,
+          operation: 'moveResource',
+          type: DialResourceType.Toolsets,
+          headers: authHeaders,
+          source,
+          destination,
+          context,
+          logger: this.logger,
+        });
+      }
+      id = `${TOOLSET_RESOURCE_PREFIX}${bucket}/${destination.path}`;
+      await this.listingService.invalidateCaches(userSub, toolsetName);
+    } catch (err) {
+      return handleDialFetchError(err, context, this.logger, 0);
+    }
+    this.logger.debug(
+      `Moved toolset ${toolsetName} to ${id} (sub: ${userSub})`,
+    );
+    return { id };
   }
 }

@@ -4888,6 +4888,37 @@ const next = rememberPublishFolderKey(storedKeys, toFolderPathKey(folderPath));
 if (next) setStoredKeys(next);
 ```
 
+### useResourceFolders / parseResourceFolderPath
+
+`useResourceFolders({ listFolders, isEnabled })` lazily loads one resource
+type's personal folder tree for a destination picker: the root once
+`isEnabled` (default `true`) is first true, then one listing per expanded
+folder. `listFolders(path)` is the host's already-bound listing operation (a
+plain-text path, `''` for the root) returning a `ResourceFoldersResponseDto`;
+the hook builds no request itself. `onCreateFolder` adds a folder to the
+in-memory tree only, kept across later listings. `hasError` is `true` while
+any folder's last fetch failed, and `retry()` re-fetches those folders. Pass
+`folderItems`, `expandedPaths`, `onExpandedPathsChange` and `loadingPaths` to a
+`FolderDestinationRoot` of `@epam/ai-dial-publish-panel`'s multi-root tree.
+
+`parseResourceFolderPath(id)` returns the decoded folder segments of a personal
+resource id `{type}/{bucket}/{folder…}/{name}` — `[]` at the bucket root or for
+an id that is not a full resource id. Both are available from the root and
+`./catalog`.
+
+```ts
+import {
+  parseResourceFolderPath,
+  useResourceFolders,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const personal = useResourceFolders({
+  listFolders: listApplicationFolders,
+  isEnabled: isPanelOpen,
+});
+const currentFolder = parseResourceFolderPath(application.id);
+```
+
 ### useCatalogToolsetCredentials
 
 Owns the catalog's toolset credential login/logout flow: wires `useToolsetLogin` (see OAuth Popup Flow) to the host's DIAL Core operations, resolves each outcome to a notification and toolset refetch, and owns the notification copy for every credential level / API-key / org-fallback combination. Every backend call and OAuth callback route arrives as an injected parameter — the hook constructs no client instance and reads no app context or i18n.

@@ -88,3 +88,24 @@ export type {
   StandalonePublishPanelLabels,
 } from './components/PublishPanel/StandalonePublishPanel';
 export { PUBLISH_PANEL_CLASS } from './constants/public-class-names';
+
+export type {
+  FolderDestination,
+  FolderDestinationRoot,
+} from './models/folder-destination';
+
+export { SaveToFolderView, SaveVersionMode } from './types/save-to-folder';
+export { SaveToFolderPanel } from './components/SaveToFolderPanel/SaveToFolderPanel';
+export { StandaloneSaveToFolderPanel } from './components/SaveToFolderPanel/StandaloneSaveToFolderPanel';
+export type {
+  SaveToFolderAccessRulesProps,
+  SaveToFolderPanelBaseProps,
+  SaveToFolderPanelColors,
+  SaveToFolderPanelLabels,
+  SaveToFolderPanelProps,
+  SaveToFolderPanelStyles,
+  SaveToFolderVersionProps,
+  StandaloneSaveToFolderPanelColors,
+  StandaloneSaveToFolderPanelLabels,
+  StandaloneSaveToFolderPanelProps,
+} from './models/save-to-folder-panel';

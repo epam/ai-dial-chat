@@ -4,14 +4,19 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Input } from '../Input';
 
-const { mockUseIsMobile } = vi.hoisted(() => ({
+const { mockUseIsMobile, mockUseIsPhone } = vi.hoisted(() => ({
   mockUseIsMobile: vi.fn(() => false),
+  mockUseIsPhone: vi.fn(() => false),
 }));
 
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-chat-shared')>();
-  return { ...actual, useIsMobile: mockUseIsMobile };
+  return {
+    ...actual,
+    useIsMobile: mockUseIsMobile,
+    useIsPhone: mockUseIsPhone,
+  };
 });
 
 const buildTool = (
@@ -33,6 +38,7 @@ describe('Input — tool chips', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseIsMobile.mockReturnValue(false);
+    mockUseIsPhone.mockReturnValue(false);
   });
 
   it('renders a chip for every tool the deployment exposes', () => {
@@ -113,6 +119,7 @@ describe('Input — tool chips with canRemoveTools off', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseIsMobile.mockReturnValue(false);
+    mockUseIsPhone.mockReturnValue(false);
   });
 
   it('renders every chip without a × control', () => {
@@ -150,6 +157,40 @@ describe('Input — tool chips with canRemoveTools off', () => {
     render(
       <Input
         onSend={vi.fn()}
+        canRemoveTools={false}
+        toolsMenuItems={[buildTool('deep_research', 'Deep Research')]}
+        onToolToggle={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Add' })).toBeTruthy();
+  });
+});
+
+describe('Input — tool chips on a phone', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseIsMobile.mockReturnValue(true);
+    mockUseIsPhone.mockReturnValue(true);
+  });
+
+  it('hides the chip of a tool that is switched off', () => {
+    renderInput([buildTool('deep_research', 'Deep Research')]);
+
+    expect(screen.queryByRole('button', { name: 'Deep Research' })).toBeNull();
+  });
+
+  it('keeps the chip of a tool that is switched on', () => {
+    renderInput([buildTool('deep_research', 'Deep Research', true)]);
+
+    expect(screen.getByRole('button', { name: 'Deep Research' })).toBeTruthy();
+  });
+
+  it('keeps the + button for tools even when chips are not removable', () => {
+    render(
+      <Input
+        onSend={vi.fn()}
+        hideAttachFile
         canRemoveTools={false}
         toolsMenuItems={[buildTool('deep_research', 'Deep Research')]}
         onToolToggle={vi.fn()}

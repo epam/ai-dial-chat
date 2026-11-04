@@ -2057,5 +2057,28 @@
     "skillsLoadFailedMessage": "The skill list could not be loaded, so the requested skill was not added.",
     "promptUnavailableTitle": "Prompt unavailable",
     "promptUnavailableMessage": "The requested prompt could not be loaded."
+  },
+  "resourceSavePanel": {
+    "title": "Save {{type}}",
+    "saveToFolderHeading": "Save to folder",
+    "changeFolder": "Change",
+    "changeFolderTitle": "Change folder",
+    "destinationAriaLabel": "Destination folder",
+    "versionHeading": "Version",
+    "keepVersion": "Keep version {{version}}",
+    "saveAsNewVersion": "Save as new version",
+    "newVersionLabel": "New version",
+    "newVersionPlaceholder": "Enter new version",
+    "versionInvalid": "Use a version like 1.0.0.",
+    "versionUnchanged": "Enter a version other than {{version}}.",
+    "versionExists": "Version {{version}} already exists in this folder.",
+    "versionReadOnlyTooltip": "To change the version, choose “Save as new version” when you save.",
+    "foldersLoadFailed": "Folders could not be loaded.",
+    "saveFailed": "Saving failed. Please try again.",
+    "commitFailed": "Version {{version}} was created, but your changes stayed in version {{currentVersion}}. Save again to move them.",
+    "newVersionSavedTitle": "New version saved",
+    "newVersionSaved": "“{{name}}” was saved as version {{version}}.",
+    "savedButMoveFailed": "“{{name}}” was saved, but it could not be moved to {{folder}}.",
+    "savedButPublishFailed": "“{{name}}” was saved, but the publish request failed."
   }
 }

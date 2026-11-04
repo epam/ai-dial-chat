@@ -206,6 +206,22 @@ The host owns transport, availability, and translations, passing the copy
 through `labels.refinement` (`TextRefinementLabels` from
 `@epam/ai-dial-chat-shared`). Save is disabled while a request is pending.
 
+`isVersionReadOnly` (default `false`) renders the Version field read-only —
+for a host that changes versions another way while editing, such as a save
+panel's "Save as new version". `labels.versionReadOnlyTooltip` replaces the
+field's tooltip, which otherwise keeps `MetadataForm`'s English default.
+`onPersist` may resolve later than the click that started it: a host can open
+its own save step there and resolve with the id it saved, or `null` when the
+user cancels.
+
+```tsx
+<ToolsetEditor
+  {...editorProps}
+  isVersionReadOnly={isEditMode}
+  labels={{ ...labels, versionReadOnlyTooltip: t('…') }}
+/>
+```
+
 ### Migrating from `GeneralForm`
 
 The deprecated `GeneralForm` wrapper and `GeneralFormProps` were removed. Render `MetadataForm` from `@epam/ai-dial-builder-form` and pass it an `avatarPicker` (including `resolveAttachedIconUrl`) and `labels`. `GeneralFormLabels` stays exported as the type of `ToolsetEditorLabels.general`; `ToolsetEditor` falls back to toolset-flavoured English field labels when `labels.general.form` is omitted.

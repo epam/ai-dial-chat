@@ -76,7 +76,30 @@ vi.mock('../setup/AppPreviewChat', () => ({
 vi.mock('../../../server-api/applications', () => ({
   createApplication: vi.fn(),
   updateApplication: vi.fn(),
+  deleteApplication: vi.fn(),
+  listApplicationFolders: vi.fn(),
+  moveApplication: vi.fn(),
+  forkApplicationVersion: vi.fn(),
+  commitApplicationVersion: vi.fn(),
 }));
+vi.mock(
+  '../../../components/ResourceSavePanelContainer/ResourceSavePanelContainer',
+  () => ({
+    default: (props: {
+      isOpen: boolean;
+      onSaved: (result: unknown) => void;
+    }) => {
+      mockSavePanelProps(props);
+      return props.isOpen ? (
+        <div role="dialog" aria-label="Save panel">
+          <button onClick={() => props.onSaved({ outcome: 'saved' })}>
+            Finish save
+          </button>
+        </div>
+      ) : null;
+    },
+  }),
+);
 vi.mock('../../../context/DeploymentsContext');
 vi.mock('../../../context/NotificationContext');
 vi.mock('../../../context/auth/UserContext', () => ({
@@ -93,6 +116,7 @@ vi.mock(
 );
 
 const mockShowNotification = vi.fn();
+const mockSavePanelProps = vi.fn();
 const mockRefetchDeployments = vi.fn();
 const mockNotifyOperationSuccess = vi.fn();
 
@@ -498,11 +522,6 @@ describe('ApplicationEditorPage — quick app', () => {
     it('forwards the Metadata to the embedded editor on Save, confirms and exits', async () => {
       renderPage(editSearch);
       await typeName();
-      await user.clear(screen.getByLabelText(EditorI18nKeys.VersionLabel));
-      await user.type(
-        screen.getByLabelText(EditorI18nKeys.VersionLabel),
-        '2.0',
-      );
       act(() => getIframeProps()?.onReadyChange?.(true));
 
       await user.click(getAction(ButtonsI18nKeys.Save));
@@ -510,7 +529,7 @@ describe('ApplicationEditorPage — quick app', () => {
       await waitFor(() => expect(mockTriggerSave).toHaveBeenCalledOnce());
       const general = mockTriggerSave.mock.calls[0][0];
       expect(general).toEqual(
-        expect.objectContaining({ name: 'My App', display_version: '2.0' }),
+        expect.objectContaining({ name: 'My App', display_version: '1.0.0' }),
       );
       expect(general).not.toHaveProperty('version');
 
@@ -524,6 +543,67 @@ describe('ApplicationEditorPage — quick app', () => {
         EntityOperation.Edited,
         { name: 'My App' },
       );
+    });
+
+    it('renders the Version read-only while editing', () => {
+      renderPage(editSearch);
+      expect(
+        (screen.getByLabelText(EditorI18nKeys.VersionLabel) as HTMLInputElement)
+          .readOnly,
+      ).toBe(true);
+    });
+
+    it('keeps the Version editable on create', () => {
+      renderPage(createSearch);
+      expect(
+        (screen.getByLabelText(EditorI18nKeys.VersionLabel) as HTMLInputElement)
+          .readOnly,
+      ).toBe(false);
+    });
+
+    describe('Save panel for an own application', () => {
+      beforeEach(() => {
+        vi.mocked(DeploymentsContextModule.useDeployments).mockReturnValue({
+          schemas: [SCHEMA],
+          items: [{ id: APP_ID, displayName: 'My App', isMy: true }],
+          isLoading: false,
+          refetchDeployments: mockRefetchDeployments,
+        } as unknown as ReturnType<
+          typeof DeploymentsContextModule.useDeployments
+        >);
+      });
+
+      it('opens the Save panel instead of saving', async () => {
+        renderPage(editSearch);
+        act(() => getIframeProps()?.onReadyChange?.(true));
+
+        await user.click(getAction(ButtonsI18nKeys.Save));
+
+        expect(
+          await screen.findByRole('dialog', { name: 'Save panel' }),
+        ).toBeTruthy();
+        expect(mockSavePanelProps).toHaveBeenLastCalledWith(
+          expect.objectContaining({
+            isOpen: true,
+            resourceId: APP_ID,
+            currentFolderPath: [],
+            typeLabel: SCHEMA.displayName,
+          }),
+        );
+        expect(mockTriggerSave).not.toHaveBeenCalled();
+      });
+
+      it('leaves for the Catalog once the panel has saved', async () => {
+        renderPage(editSearch);
+        act(() => getIframeProps()?.onReadyChange?.(true));
+        await user.click(getAction(ButtonsI18nKeys.Save));
+        await screen.findByRole('dialog', { name: 'Save panel' });
+
+        await user.click(screen.getByRole('button', { name: 'Finish save' }));
+
+        await screen.findByText('Catalog');
+        expect(mockRefetchDeployments).toHaveBeenCalled();
+      });
     });
 
     it('shows the embedded editor’s save error inline and stays on the page', async () => {

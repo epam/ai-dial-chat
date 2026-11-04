@@ -60,11 +60,34 @@ vi.mock('../../../context/auth/UserContext', () => ({
 }));
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => ({
-    items: [],
+    items: mockDeploymentItems.current,
     refetchDeployments: mockRefetchDeployments,
     isLoading: false,
   }),
 }));
+vi.mock(
+  '../../../components/ResourceSavePanelContainer/ResourceSavePanelContainer',
+  () => ({
+    default: (props: {
+      isOpen: boolean;
+      typeLabel: string;
+      adapter: {
+        saveAsNewVersion?: (v: string, f: string[]) => Promise<unknown>;
+      };
+    }) =>
+      props.isOpen ? (
+        <div role="dialog" aria-label={`Save ${props.typeLabel}`}>
+          <button
+            onClick={() =>
+              void props.adapter.saveAsNewVersion?.('2.0.0', ['Design'])
+            }
+          >
+            Save new version
+          </button>
+        </div>
+      ) : null,
+  }),
+);
 vi.mock('../../../hooks/useOperationNotification', () => ({
   useOperationNotification: () => ({
     notifyOperationSuccess: mockNotifyOperationSuccess,
@@ -77,12 +100,18 @@ vi.mock(
 vi.mock('../../../server-api/applications', () => ({
   createApplication: vi.fn(),
   updateApplication: vi.fn(),
+  deleteApplication: vi.fn(),
+  listApplicationFolders: vi.fn(),
+  moveApplication: vi.fn(),
+  forkApplicationVersion: vi.fn(),
+  commitApplicationVersion: vi.fn(),
 }));
 vi.mock('../../../server-api/deployments', () => ({
   getDeploymentDetails: vi.fn(),
 }));
 
 const mockShowNotification = vi.fn();
+const mockDeploymentItems: { current: unknown[] } = { current: [] };
 const mockRefetchDeployments = vi.fn();
 const mockNotifyOperationSuccess = vi.fn();
 
@@ -123,6 +152,7 @@ describe('ApplicationEditorPage — custom app', () => {
     );
     vi.mocked(createApplication).mockResolvedValue({} as never);
     vi.mocked(updateApplication).mockResolvedValue({} as never);
+    mockDeploymentItems.current = [];
     mockRefetchDeployments.mockResolvedValue(undefined);
     refinementConfig.aiTextRefinementAvailable = false;
   });
@@ -414,6 +444,72 @@ describe('ApplicationEditorPage — custom app', () => {
         ),
       );
       expect(createApplication).not.toHaveBeenCalled();
+    });
+
+    describe('Save panel for an own custom app', () => {
+      beforeEach(() => {
+        mockDeploymentItems.current = [
+          { id: APP_ID, displayName: 'My app', isMy: true },
+        ];
+        vi.mocked(getDeploymentDetails).mockResolvedValue({
+          id: APP_ID,
+          type: 'application',
+          applicationDetails: { endpoint: 'https://api.example.com/chat' },
+        } as DeploymentDetailsDto);
+      });
+
+      const openPanel = async () => {
+        renderPage(editEntry);
+        await waitFor(() =>
+          expect((getCompletionUrlInput() as HTMLInputElement).value).toBe(
+            'https://api.example.com/chat',
+          ),
+        );
+        await user.click(getAction(ButtonsI18nKeys.Save));
+        return screen.findByRole('dialog', {
+          name: `Save ${CatalogI18nKeys.CreateCustomApp}`,
+        });
+      };
+
+      it('opens the Save panel instead of updating in place', async () => {
+        await openPanel();
+        expect(updateApplication).not.toHaveBeenCalled();
+      });
+
+      it('renders the Version read-only', async () => {
+        renderPage(editEntry);
+        expect(
+          (
+            screen.getByLabelText(
+              EditorI18nKeys.VersionLabel,
+            ) as HTMLInputElement
+          ).readOnly,
+        ).toBe(true);
+      });
+
+      it('saves a new version as a create-only write into the chosen folder', async () => {
+        vi.mocked(createApplication).mockResolvedValue({
+          id: 'applications/bucket/Design/my-app__2.0.0',
+        } as never);
+        await openPanel();
+
+        await user.click(
+          screen.getByRole('button', { name: 'Save new version' }),
+        );
+
+        await waitFor(() =>
+          expect(createApplication).toHaveBeenCalledWith(
+            expect.objectContaining({
+              version: '2.0.0',
+              folderPath: 'Design',
+              applicationProperties: expect.objectContaining({
+                endpoint: 'https://api.example.com/chat',
+              }),
+            }),
+          ),
+        );
+        expect(updateApplication).not.toHaveBeenCalled();
+      });
     });
 
     it('returns to the catalog with an error when the settings cannot be loaded', async () => {
