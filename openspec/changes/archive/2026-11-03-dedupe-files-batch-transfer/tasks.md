@@ -45,4 +45,4 @@ Verification: `npm run test:file -- apps/chat-api/src/files/tests/batch/files-ba
 
 ## 6. Follow-up (out of scope)
 
-- [ ] 6.1 Propose `extract-archive-upload-service` (refactoring plan B5, `files-upload.service.ts` at 751 lines).
+- [x] 6.1 Propose `extract-archive-upload-service` (refactoring plan B5, `files-upload.service.ts` at 751 lines).
