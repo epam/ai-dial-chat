@@ -42,6 +42,22 @@ destinations use the prepared fallback name and propagate stream failures. A
 missing response body aborts the writable and rejects. Cancelled destinations
 return the fallback without consuming the response.
 
+### Query-string cleanup
+
+`getCleanedLocationTarget(keys)` returns the `{ search, hash }` of the current
+`window.location` with `keys` dropped from the query string; the remaining
+pairs are kept byte for byte. It reads `window.location` at call time, so a
+host can pass the result to its router's `replace` navigation without relying
+on a router location that may lag. Available from the root and `./utils`.
+
+```ts
+import { getCleanedLocationTarget } from '@epam/ai-dial-chat-hooks/utils';
+
+navigate(getCleanedLocationTarget(['deployment-id', 'skill-id']), {
+  replace: true,
+});
+```
+
 ### Scheduled conversation controllers
 
 The root and `./conversation` export `groupScheduledTaskConversations`,
@@ -1392,6 +1408,39 @@ const ResizableSidePanel = () => {
 | Name                  | Type     | Description                                                                   |
 | --------------------- | -------- | ----------------------------------------------------------------------------- |
 | `minContentAreaWidth` | `number` | Minimum pixel width the main content area must retain when the panel is open. |
+
+### useAppVersionCheck
+
+Reports when a long-lived tab runs a build that is no longer deployed, so the
+host can replace the app with a reload prompt. The host passes its health
+request; the hook keeps the first `buildId` as the tab's baseline and flags a
+different one. It also flags a new version at once when Vite fails to load a
+chunk of the running build (`vite:preloadError`). Available from the root and
+from `@epam/ai-dial-chat-hooks/utils`.
+
+```tsx
+import { useAppVersionCheck } from '@epam/ai-dial-chat-hooks/utils';
+
+const checkHealth = (signal: AbortSignal) =>
+  healthApi.check({ cache: 'no-store', signal });
+
+const App = () => {
+  const { isNewVersionAvailable } = useAppVersionCheck({ checkHealth });
+  return isNewVersionAvailable ? <NewVersionFallback /> : <Layout />;
+};
+```
+
+| Option             | Type                                             | Description                                                                                  |
+| ------------------ | ------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `checkHealth`      | `(signal: AbortSignal) => Promise<AppBuildInfo>` | Reads the deployed `buildId`; should bypass HTTP caches. A new function each render is fine. |
+| `pollIntervalMs`   | `number`                                         | Minimum time between checks while the tab is visible. Defaults to `300000` (5 minutes).      |
+| `requestTimeoutMs` | `number`                                         | Time after which one health request is aborted. Defaults to `10000`.                         |
+
+Checks run on mount, on the interval while the tab is visible, when the tab
+becomes visible again (`visibilitychange`, `focus`, `pageshow`), and on the
+first `pointerdown`/`keydown` after an idle period of at least
+`pollIntervalMs`. Only one request is in flight at a time; a missing `buildId`
+or a failed request is ignored. Once a new version is reported, all checks stop.
 
 ### useShareLink
 
@@ -4111,6 +4160,16 @@ const limits = mapDeploymentLimitsToInput(
 import { findWorstCappedRow } from '@epam/ai-dial-chat-hooks/catalog';
 
 const worst = findWorstCappedRow(mapDeploymentLimitsToInput(limits, labels));
+```
+
+### getGaugeNeedleAngle
+
+`getGaugeNeedleAngle(usedPercent)` returns the angle, in degrees clockwise from 12 o'clock, at which a usage dial's needle points: `-135` at 0%, `0` at 50% and `135` at 100%, with the percentage clamped to 0–100. Available from the root and `./usage-limits`.
+
+```ts
+import { getGaugeNeedleAngle } from '@epam/ai-dial-chat-hooks/usage-limits';
+
+const style = { '--usage-angle': getGaugeNeedleAngle(worst.usedPercent) };
 ```
 
 ### mapDeploymentLimitsDtoToCatalogLimits

@@ -1,16 +1,14 @@
-import type {
-  AvatarPickerModalLabels,
-  MetadataFormAvatarPicker,
+import {
+  AVATAR_ALLOWED_MIME_TYPES,
+  AVATAR_MAX_FILE_SIZE_BYTES,
+  type AvatarPickerModalLabels,
+  type MetadataFormAvatarPicker,
 } from '@epam/ai-dial-builder-form';
 import { dialFileToAttachment } from '@epam/ai-dial-chat-hooks';
 import type { AttachResult } from '@epam/ai-dial-chat-shared';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import AvatarFileManagerModal from '../../components/AvatarFileManagerModal/AvatarFileManagerModal';
-import {
-  AVATAR_ALLOWED_MIME_TYPES,
-  AVATAR_MAX_FILE_SIZE_BYTES,
-} from '../../constants/files';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,

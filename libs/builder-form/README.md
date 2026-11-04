@@ -215,8 +215,14 @@ import { AddAvatar } from '@epam/ai-dial-builder-form';
 
 The host-side counterpart to `DeploymentCreationForm`'s `onAddAvatarClick`: a file manager modal restricted to a single image, for picking an entity's avatar. It never talks to a backend, a specific file-manager implementation, or a storage identifier itself — `FileManagerModal` is the host's own DIAL file manager modal component (rendered for the actual browsing/upload UI), `bucket` comes from the host's user/session, `onAttach` is where the host resolves the picked file to a DIAL resource URL (and closes the modal), and every string is pre-translated through `labels`.
 
+`AVATAR_ALLOWED_MIME_TYPES` (PNG, JPEG, SVG) and `AVATAR_MAX_FILE_SIZE_BYTES` (1 MB) are the avatar limits both DIAL hosts pass; a host with other limits passes its own values.
+
 ```tsx
-import { AvatarPickerModal } from '@epam/ai-dial-builder-form';
+import {
+  AVATAR_ALLOWED_MIME_TYPES,
+  AVATAR_MAX_FILE_SIZE_BYTES,
+  AvatarPickerModal,
+} from '@epam/ai-dial-builder-form';
 
 <AvatarPickerModal
   isOpen={isAvatarPickerOpen}
