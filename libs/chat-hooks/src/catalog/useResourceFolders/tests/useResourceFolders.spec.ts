@@ -90,7 +90,9 @@ describe('useResourceFolders', () => {
 
     act(() => result.current.retry());
 
-    await waitFor(() => expect(result.current.hasError).toBe(false));
-    expect(result.current.folderItems).toHaveLength(2);
+    /* `retry` clears the error before the listing resolves, so wait for the data itself. */
+    await waitFor(() => expect(result.current.folderItems).toHaveLength(2));
+    expect(result.current.hasError).toBe(false);
+    expect(listFolders).toHaveBeenCalledTimes(2);
   });
 });
