@@ -13,6 +13,12 @@ export type {
 export { derivePublishState } from './utils/publish-state';
 export { formatPublishedDate } from './utils/format-published-date';
 export { usePublishFlow } from './utils/use-publish-flow';
+export { usePublishFolderView } from './utils/use-publish-folder-view';
+export type {
+  UsePublishFolderViewOptions,
+  UsePublishFolderViewResult,
+} from './utils/use-publish-folder-view';
+export { PublishPanelView } from './types/publish-panel';
 export type {
   PublishFlowItem,
   UsePublishFlowOptions,

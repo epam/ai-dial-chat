@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
@@ -73,6 +73,10 @@ describe('SigninInterruptDialog', () => {
     expect(
       screen.getByRole('button', { name: 'Log in' }).hasAttribute('disabled'),
     ).toBe(true);
+    /* The kit popup moves focus to itself after opening; typing earlier would land in the dialog, not the field. */
+    await waitFor(() =>
+      expect(screen.getByRole('dialog').matches(':focus')).toBe(true),
+    );
     await user.type(screen.getByLabelText('API key'), 'k');
 
     expect(onApiKeyChange).toHaveBeenCalledWith('evt-1', 'k');
