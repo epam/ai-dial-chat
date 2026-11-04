@@ -185,6 +185,9 @@ const App: FC = () => {
   const isFileManagerEnabled = useUiFeature(OverlayFeature.FileManager);
   const isSettingsPageHidden = useUiFeature(OverlayFeature.HideSettingsPage);
   const isUsagePageHidden = useUiFeature(OverlayFeature.HideUsagePage);
+  const isSidebarToggleEnabled = useUiFeature(
+    OverlayFeature.ConversationsPanelToggle,
+  );
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const handleCanvasVisualizerSendMessage = useCanvasVisualizerMessageHandler();
@@ -195,6 +198,7 @@ const App: FC = () => {
     isMobile,
     isCanvasOpen,
     isOpenByDefault: isConversationsSectionOpenByDefault,
+    isToggleEnabled: isSidebarToggleEnabled,
     onCloseCanvas: closeCanvas,
     onCloseSourcesPanel: closeSourcesPanel,
   });

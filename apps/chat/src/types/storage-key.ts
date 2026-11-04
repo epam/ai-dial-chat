@@ -12,4 +12,5 @@ export enum StorageKey {
   TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
   PublishDestinationFolders = 'publishDestinationFolders',
   ConversationDrafts = 'conversationDrafts',
+  NavigationSidebarExpanded = 'navigationSidebarExpanded',
 }
