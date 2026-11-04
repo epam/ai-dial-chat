@@ -30,6 +30,8 @@ export enum ScheduledTaskValidationErrorCode {
   TimeInvalid = 'timeInvalid',
   MinuteInvalid = 'minuteInvalid',
   DayOfWeekInvalid = 'dayOfWeekInvalid',
+  /** The Custom repeat selects no weekday, an unknown one, or the same one twice. */
+  DaysOfWeekInvalid = 'daysOfWeekInvalid',
   DayOfMonthInvalid = 'dayOfMonthInvalid',
   StartDateInvalid = 'startDateInvalid',
   /** The activity-window start boundary is earlier than the clock — its day earlier than today for a date-only value, its instant earlier than now for a time-carrying one — and differs from the option's original. */
@@ -96,6 +98,12 @@ const MINUTE_PATTERN = /^(?:[0-9]|[1-5][0-9])$/;
 const WEEKDAY_PATTERN = /^[0-6]$/;
 const MONTH_DAY_PATTERN = /^(?:[1-9]|[12][0-9]|3[01])$/;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+const isValidDaysOfWeek = (days: string[] | undefined): boolean =>
+  !!days?.length &&
+  days.every((day) => WEEKDAY_PATTERN.test(day)) &&
+  new Set(days).size === days.length;
+
 const isValidDateOnly = (value: string): boolean => {
   if (!DATE_PATTERN.test(value)) return false;
 
@@ -191,13 +199,19 @@ export const validateScheduledTaskFormValues = (
     errors.time = ScheduledTaskValidationErrorCode.TimeInvalid;
   }
 
-  /* Weekly picks its day in the weekday Calendar; Custom in the segmented
-   * day row — both store the same APScheduler-convention string. */
-  const isDayOfWeekRepeat =
-    values.repeat === ScheduledTaskRepeat.Weekly ||
-    values.repeat === ScheduledTaskRepeat.Custom;
-  if (isDayOfWeekRepeat && !WEEKDAY_PATTERN.test(values.dayOfWeek ?? '')) {
+  /* Weekly picks one day in the weekday Calendar; Custom picks several in
+   * the day button row — both use the APScheduler-convention day string. */
+  if (
+    values.repeat === ScheduledTaskRepeat.Weekly &&
+    !WEEKDAY_PATTERN.test(values.dayOfWeek ?? '')
+  ) {
     errors.dayOfWeek = ScheduledTaskValidationErrorCode.DayOfWeekInvalid;
+  }
+  if (
+    values.repeat === ScheduledTaskRepeat.Custom &&
+    !isValidDaysOfWeek(values.daysOfWeek)
+  ) {
+    errors.daysOfWeek = ScheduledTaskValidationErrorCode.DaysOfWeekInvalid;
   }
   if (
     values.repeat === ScheduledTaskRepeat.Monthly &&

@@ -6,7 +6,6 @@ export enum ScheduledTaskTriggerDescriptionKind {
   OneTime = 'oneTime',
   Hourly = 'hourly',
   EveryNMinutes = 'everyNMinutes',
-  EveryNWeeks = 'everyNWeeks',
   Daily = 'daily',
   Weekly = 'weekly',
   Monthly = 'monthly',
@@ -18,10 +17,10 @@ export interface ScheduledTaskTriggerDescription {
   kind: ScheduledTaskTriggerDescriptionKind;
   time?: string;
   dayOfWeek?: string;
+  /** Every display-timezone weekday of a `Weekly` description, Monday first; `dayOfWeek` is its first entry. */
+  daysOfWeek?: string[];
   dayOfMonth?: string;
   intervalMinutes?: number;
-  /** Week count of an `EveryNWeeks` description (the cron `week` step). */
-  intervalWeeks?: number;
   date?: Date;
   expression?: string;
   sourceTimezone: 'utc';
@@ -73,9 +72,6 @@ export const describeScheduledTaskTrigger = (
     result(ScheduledTaskTriggerDescriptionKind.Custom, {
       expression: JSON.stringify(fields),
     });
-  /* The Custom repeat's stored `week` step: a star-step with N in 1–10.
-   * Anything else set on `week` keeps the raw-expression Custom kind. */
-  const weekStep = fields.week?.match(/^\*\/(10|[1-9])$/);
   const ranges: Record<string, [number, number]> = {
     hour: [0, 23],
     minute: [0, 59],
@@ -97,11 +93,6 @@ export const describeScheduledTaskTrigger = (
       return result(ScheduledTaskTriggerDescriptionKind.Invalid);
     /* An explicit wildcard second means every second, not the default zero. */
     if (key === 'second' && value !== '0') return custom();
-    if (key === 'week') {
-      /* Only the editor's star-step is described structurally below. */
-      if (!weekStep) return custom();
-      continue;
-    }
     if (
       !['hour', 'minute', 'day', 'day_of_week'].includes(key) &&
       value !== '*' &&
@@ -124,23 +115,25 @@ export const describeScheduledTaskTrigger = (
     'saturday',
     'sunday',
   ];
-  const namedWeekday = rawWeekday
-    ? weekdayNames.findIndex(
-        (name) =>
-          name === rawWeekday.toLowerCase() ||
-          name.slice(0, 3) === rawWeekday.toLowerCase(),
-      )
-    : -1;
-  const weekday = namedWeekday >= 0 ? String(namedWeekday) : rawWeekday;
+  /* A comma list of weekdays (the Custom repeat) is described like Weekly,
+   * one entry per day; ranges and steps keep the raw-expression kind. */
+  const weekdays = (rawWeekday?.split(',') ?? []).map((entry) => {
+    const namedWeekday = weekdayNames.findIndex(
+      (name) =>
+        name === entry.toLowerCase() ||
+        name.slice(0, 3) === entry.toLowerCase(),
+    );
+    return namedWeekday >= 0 ? String(namedWeekday) : entry;
+  });
+  const weekday = weekdays[0];
   if (
     (day && weekday) ||
     (day && !isLastDayOfMonth && !/^\d+$/.test(day)) ||
-    (weekday && !/^\d+$/.test(weekday))
+    weekdays.some((entry) => !/^[0-6]$/.test(entry)) ||
+    new Set(weekdays).size !== weekdays.length
   )
     return custom();
   const everyHour = hour == null || hour === '*';
-  /* A week constraint must not disappear into a simpler cadence label. */
-  if (weekStep && (everyHour || !weekday || day)) return custom();
   const interval = minute?.match(/^\*\/(\d+)$/);
   if (everyHour && interval && !day && !weekday) {
     const count = Number(interval[1]);
@@ -189,25 +182,20 @@ export const describeScheduledTaskTrigger = (
   );
   const dayShift = Math.round((localDate.getTime() - utcDay) / 86400000);
   const time = part('hour') + ':' + part('minute');
-  if (weekStep) {
-    /* The Custom repeat's shape: a fixed time-of-day on one weekday, every
-     * N weeks. The week step is a count and needs no conversion; the
-     * weekday shifts across the UTC day boundary exactly like Weekly's. */
-    return result(ScheduledTaskTriggerDescriptionKind.EveryNWeeks, {
-      intervalWeeks: Number(weekStep[1]),
-      time,
-      dayOfWeek: String((Number(weekday) + dayShift + 7) % 7),
-    });
-  }
   if (everyHour)
     return result(ScheduledTaskTriggerDescriptionKind.Hourly, {
       time: part('minute'),
     });
-  if (weekday)
+  if (weekday) {
+    const daysOfWeek = weekdays
+      .map((entry) => String((Number(entry) + dayShift + 7) % 7))
+      .sort((a, b) => Number(a) - Number(b));
     return result(ScheduledTaskTriggerDescriptionKind.Weekly, {
       time,
-      dayOfWeek: String((Number(weekday) + dayShift + 7) % 7),
+      dayOfWeek: daysOfWeek[0],
+      daysOfWeek,
     });
+  }
   if (isLastDayOfMonth)
     return dayShift === 1
       ? result(ScheduledTaskTriggerDescriptionKind.Monthly, {

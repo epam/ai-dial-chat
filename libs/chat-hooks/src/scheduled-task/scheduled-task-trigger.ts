@@ -31,8 +31,12 @@ enum CronWindowEdge {
 
 const CRON_FIELD_KEYS = new Set(['hour', 'minute', 'day_of_week', 'day']);
 
-/** Matches the Custom repeat's stored `week` step: a star-step with N an integer 1–10. */
-const CUSTOM_WEEK_PATTERN = /^\*\/(10|[1-9])$/;
+/** Matches one APScheduler-convention weekday, `0` (Monday) – `6` (Sunday). */
+const WEEKDAY_PATTERN = /^[0-6]$/;
+
+/** Sorts APScheduler-convention weekday strings Monday first. */
+const sortWeekdays = (days: string[]): string[] =>
+  [...days].sort((a, b) => Number(a) - Number(b));
 
 /**
  * `values.time` placeholder for repeat values that don't use it (`OneTime`,
@@ -59,12 +63,11 @@ const DEFAULT_TIME_PLACEHOLDER = '09:00';
  * sub-hour-offset timezones (e.g. UTC+5:30) — done via a reference `Date`
  * set to local hour `0`/local `minute`, reading back only `getUTCMinutes()`.
  *
- * `Custom` follows the weekly path (reference rolled to the selected
- * weekday, `day_of_week` read back in UTC) and additionally emits the
- * `week` step expression built from `everyWeeks` — a week count, so it
- * passes through with no timezone conversion, and it is emitted for every
- * value including `1` because its presence is what distinguishes a Custom
- * task from a Weekly one on the reverse mapping.
+ * `Custom` rolls the reference to its first selected weekday and applies
+ * that reference's UTC calendar-day shift to every selected day, so all days
+ * share one UTC `hour`/`minute` and a single `day_of_week` list. A list of
+ * two or more days is what distinguishes a Custom task from a Weekly one on
+ * the reverse mapping.
  */
 const buildCronFields = (
   values: ScheduledTaskCreateFormValues,
@@ -83,14 +86,17 @@ const buildCronFields = (
   reference.setHours(hour, minute, 0, 0);
 
   const hasDayOfWeek =
-    (values.repeat === ScheduledTaskRepeat.Weekly ||
-      values.repeat === ScheduledTaskRepeat.Custom) &&
-    !!values.dayOfWeek;
+    values.repeat === ScheduledTaskRepeat.Weekly && !!values.dayOfWeek;
+  const customDays =
+    values.repeat === ScheduledTaskRepeat.Custom
+      ? sortWeekdays(values.daysOfWeek ?? [])
+      : [];
   const hasDayOfMonth =
     values.repeat === ScheduledTaskRepeat.Monthly && !!values.dayOfMonth;
 
-  if (hasDayOfWeek) {
-    const targetLocalDay = apSchedulerDayToJsDay(Number(values.dayOfWeek));
+  const anchorDay = hasDayOfWeek ? values.dayOfWeek : customDays[0];
+  if (anchorDay !== undefined) {
+    const targetLocalDay = apSchedulerDayToJsDay(Number(anchorDay));
     const diff = (targetLocalDay - reference.getDay() + 7) % 7;
     reference.setDate(reference.getDate() + diff);
   }
@@ -109,8 +115,11 @@ const buildCronFields = (
       getUtcDayShift(reference),
     );
   }
-  if (values.repeat === ScheduledTaskRepeat.Custom) {
-    fields.week = `*/${values.everyWeeks ?? '1'}`;
+  if (customDays.length) {
+    const dayShift = getUtcDayShift(reference);
+    fields.day_of_week = sortWeekdays(
+      customDays.map((day) => String((Number(day) + dayShift + 7) % 7)),
+    ).join(',');
   }
 
   return fields;
@@ -156,9 +165,7 @@ export const mapFormValuesToCreateBody = (
       : {
           cron: {
             fields: buildCronFields(values),
-            /* Custom has no activity window — stale boundary values from a
-             * prior cadence selection are never sent. */
-            ...(values.repeat !== ScheduledTaskRepeat.Custom && values.startDate
+            ...(values.startDate
               ? {
                   startDate: buildCronWindowBoundary(
                     values.startDate,
@@ -166,7 +173,7 @@ export const mapFormValuesToCreateBody = (
                   ),
                 }
               : {}),
-            ...(values.repeat !== ScheduledTaskRepeat.Custom && values.endDate
+            ...(values.endDate
               ? {
                   endDate: buildCronWindowBoundary(
                     values.endDate,
@@ -237,10 +244,10 @@ const isoToLocalDateOnly = (iso: string): string => {
  * `setUTCHours(0, utcMinute)` → `getMinutes()`) — there is no local hour to
  * convert, since `hour` is always the literal `'*'`.
  *
- * A set `week` value is checked next: the editor's week-step expression
- * (a star-step with N in 1–10) with a single weekday and a plain time-of-day
- * returns the Custom repeat's values (the week step is a count and passes
- * through unconverted); any other `week` expression fails closed.
+ * A `day_of_week` list of two or more distinct weekdays returns the Custom
+ * repeat's local weekdays, each shifted back by the reference's UTC
+ * calendar-day shift. Any `week` value is an unsupported extra field and
+ * fails closed.
  */
 const parseCronFields = (
   fields: Record<string, string | null | undefined>,
@@ -250,9 +257,8 @@ const parseCronFields = (
       ok: true;
       isHourly: false;
       isCustom: true;
-      everyWeeks: string;
       time: string;
-      dayOfWeek: string;
+      daysOfWeek: string[];
     }
   | {
       ok: true;
@@ -274,41 +280,6 @@ const parseCronFields = (
   const extraKeys = [...presentKeys].filter((key) => !CRON_FIELD_KEYS.has(key));
   const hasDayOfWeek = presentKeys.has('day_of_week');
   const hasDayOfMonth = presentKeys.has('day');
-
-  /* A set `week` value selects the Custom repeat when it is exactly the
-   * editor's week-step expression (a star-step with N in 1–10) alongside a
-   * single weekday and a plain time-of-day — anything else involving `week`
-   * fails closed below, since the editor cannot represent it losslessly. */
-  if (presentKeys.has('week')) {
-    const weekMatch = fields.week?.match(CUSTOM_WEEK_PATTERN);
-    if (
-      weekMatch &&
-      extraKeys.every((key) => key === 'week') &&
-      hasDayOfWeek &&
-      !hasDayOfMonth &&
-      /^\d+$/.test(String(fields.day_of_week)) &&
-      /^\d+$/.test(String(fields.hour)) &&
-      /^\d+$/.test(String(fields.minute))
-    ) {
-      const utcHour = Number(fields.hour);
-      const utcMinute = Number(fields.minute);
-      const utcDayOfWeek = Number(fields.day_of_week);
-      const reference = new Date();
-      reference.setUTCHours(utcHour, utcMinute, 0, 0);
-      const targetUtcDay = apSchedulerDayToJsDay(utcDayOfWeek);
-      const diff = (targetUtcDay - reference.getUTCDay() + 7) % 7;
-      reference.setUTCDate(reference.getUTCDate() + diff);
-      return {
-        ok: true,
-        isHourly: false,
-        isCustom: true,
-        everyWeeks: weekMatch[1],
-        time: `${padTwoDigits(reference.getHours())}:${padTwoDigits(reference.getMinutes())}`,
-        dayOfWeek: String(jsDayToApSchedulerDay(reference.getDay())),
-      };
-    }
-    return { ok: false };
-  }
 
   if (
     extraKeys.length > 0 ||
@@ -343,12 +314,30 @@ const parseCronFields = (
   const reference = new Date();
   reference.setUTCHours(utcHour, utcMinute, 0, 0);
 
-  if (hasDayOfWeek) {
-    const utcDayOfWeek = Number(fields.day_of_week);
-    if (Number.isNaN(utcDayOfWeek)) return { ok: false };
-    const targetUtcDay = apSchedulerDayToJsDay(utcDayOfWeek);
+  const utcDays = hasDayOfWeek ? String(fields.day_of_week).split(',') : [];
+  if (
+    utcDays.some((day) => !WEEKDAY_PATTERN.test(day)) ||
+    new Set(utcDays).size !== utcDays.length
+  ) {
+    return { ok: false };
+  }
+  if (utcDays.length) {
+    const targetUtcDay = apSchedulerDayToJsDay(Number(utcDays[0]));
     const diff = (targetUtcDay - reference.getUTCDay() + 7) % 7;
     reference.setUTCDate(reference.getUTCDate() + diff);
+  }
+  const time = `${padTwoDigits(reference.getHours())}:${padTwoDigits(reference.getMinutes())}`;
+  if (utcDays.length > 1) {
+    const dayShift = getUtcDayShift(reference);
+    return {
+      ok: true,
+      isHourly: false,
+      isCustom: true,
+      time,
+      daysOfWeek: sortWeekdays(
+        utcDays.map((day) => String((Number(day) - dayShift + 7) % 7)),
+      ),
+    };
   }
   const dayOfMonth = hasDayOfMonth
     ? toLocalDayOfMonth(String(fields.day), getUtcDayShift(reference))
@@ -358,7 +347,7 @@ const parseCronFields = (
   return {
     ok: true,
     isHourly: false,
-    time: `${padTwoDigits(reference.getHours())}:${padTwoDigits(reference.getMinutes())}`,
+    time,
     ...(hasDayOfWeek
       ? { dayOfWeek: String(jsDayToApSchedulerDay(reference.getDay())) }
       : {}),
@@ -450,23 +439,17 @@ export const mapScheduledTaskDtoToFormValues = (
   }
 
   if (parsed.isCustom) {
-    /* The Custom editor has no boundary fields, so a custom trigger that
-     * also carries an activity window cannot round-trip losslessly — it
-     * fails closed like any other unrepresentable shape. */
-    if (cron.startDate || cron.endDate) {
-      return {
-        ok: false,
-        reason: UnsupportedTriggerReason.UnsupportedCronShape,
-      };
-    }
     return {
       ok: true,
       values: {
         ...base,
         repeat: ScheduledTaskRepeat.Custom,
         time: parsed.time,
-        everyWeeks: parsed.everyWeeks,
-        dayOfWeek: parsed.dayOfWeek,
+        daysOfWeek: parsed.daysOfWeek,
+        ...(cron.startDate
+          ? { startDate: isoToLocalDateOnly(cron.startDate) }
+          : {}),
+        ...(cron.endDate ? { endDate: isoToLocalDateOnly(cron.endDate) } : {}),
       },
     };
   }

@@ -55,7 +55,7 @@ const PAGE_STYLES: ScheduledTasksStyles = {
 
 const ScheduledTasksPage: FC = () => {
   const { t } = useTranslation();
-  const { language } = useLanguage();
+  const { displayLanguage } = useLanguage();
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
@@ -184,8 +184,8 @@ const ScheduledTasksPage: FC = () => {
   );
 
   const items = useMemo(
-    () => mapScheduledTaskDtosToItems(taskDtos, t, language),
-    [taskDtos, t, language],
+    () => mapScheduledTaskDtosToItems(taskDtos, t, displayLanguage),
+    [taskDtos, t, displayLanguage],
   );
 
   if (appConfigStatus !== UserConfigStatus.Ready) {

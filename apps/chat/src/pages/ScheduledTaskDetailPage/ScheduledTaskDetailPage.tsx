@@ -122,7 +122,7 @@ const ScheduledTaskDetailPage: FC = () => {
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
   const { scheduleId = '' } = useParams<{ scheduleId: string }>();
-  const { language } = useLanguage();
+  const { displayLanguage } = useLanguage();
   const { conversations, refreshConversations } = useConversations();
 
   const [task, setTask] = useState<ScheduledTaskDto | null>(null);
@@ -395,8 +395,8 @@ const ScheduledTaskDetailPage: FC = () => {
     useScheduledTaskModelPreview(task?.model);
 
   const repeatsLabel = useMemo(
-    () => (task ? buildScheduleLabel(task, t, language) : undefined),
-    [task, t, language],
+    () => (task ? buildScheduleLabel(task, t, displayLanguage) : undefined),
+    [task, t, displayLanguage],
   );
 
   const cronWindow = task?.trigger.cron;

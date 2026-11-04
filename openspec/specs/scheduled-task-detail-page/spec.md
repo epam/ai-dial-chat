@@ -355,7 +355,6 @@ It SHALL join the rendered units with a single space and wrap them with the tran
 
 The scheduled-task conversation banner's timestamp SHALL use the same format, because `formatRunTimestamp` builds its suffix with `formatRunDuration`. The duration is plain text in the row's existing duration slot, so it adds no RTL impact beyond the row's own. It sits behind no `ENABLED_FEATURES` gate other than the one that already guards Scheduled Tasks.
 
-
 When `item.isUnread` is `true`, the row SHALL additionally render the shared unread-dot treatment (a reserved `size-3` slot immediately before the timestamp, a `size-[5.33px] rounded-full` disk filled with `var(--text-accent, #1d4ed8)` by default — overridable via an `unreadDotColor` style — marked `aria-hidden`) so timestamps stay aligned across unread and read rows. Because the row's own `aria-label` (built from the status label and timestamp per the requirement above) overrides all descendant text per the ARIA accessible-name algorithm, the unread state MUST be conveyed by appending the row's `unreadIndicatorLabel` to that same `aria-label` — not by a nested `sr-only` span, which an ancestor `aria-label` renders unreachable to assistive technology. When `item.isUnread` is `false` or omitted, no dot renders and the accessible name carries no unread suffix.
 
 #### Scenario: Initial load shows 6 skeleton rows
@@ -1138,19 +1137,30 @@ Keyboard Enter/Space SHALL invoke the same guarded action. Decorative icons SHAL
 
 ### Requirement: Repeats field renders the every-N-weeks custom schedule label
 
-The detail page's Details section "Repeats" value SHALL render the every-N-weeks label produced by the same shared formatter the list page uses — `describeScheduledTaskTrigger` (extended per `scheduled-tasks-page-ui`'s "Custom schedule label renders every-N-weeks copy") consumed through `buildScheduleLabel` in `apps/chat/src/utils/map-scheduled-task-dto.ts` — with no formatter duplication inside the detail page or `libs/scheduled-tasks`. A custom task's "Next run" value continues to come from the server's `nextRunTime` with no client-side cron evaluation: `getNextCronOccurrence` is only invoked for the active-window label when `trigger.cron.endDate` exists without a `startDate`, and a Custom trigger never carries window boundaries, so no week-step-aware occurrence computation is added.
+The detail page's Details section "Repeats" value SHALL render the label produced by the same shared formatter the list page uses — `describeScheduledTaskTrigger` (extended per `scheduled-tasks-page-ui`'s "Custom schedule label renders every-N-weeks copy") consumed through `formatScheduledTaskScheduleLabel` (`libs/chat-hooks/src/scheduled-task/scheduled-task-display.ts`) via `buildScheduleLabel` in `apps/chat/src/utils/map-scheduled-task-dto.ts` — with no formatter duplication inside the detail page or `libs/scheduled-tasks`: the weekday-list label for Custom tasks with several days, and the generic "Recurring schedule" label for tasks written by the former, never released every-N-weeks Custom option. A custom task's "Next run" value continues to come from the server's `nextRunTime` with no client-side cron evaluation. A Custom task may now carry an activity window: the active-window label and the active-switch disabling read `trigger.cron.startDate`/`endDate` exactly as for Weekly, and `getNextCronOccurrence` (`libs/chat-hooks/src/scheduled-task/scheduled-task-next-occurrence.ts`) — invoked only when the window has an `endDate`, no `startDate`, and the server has no `nextRunTime` — SHALL accept a comma-separated `day_of_week` list and return the earliest matching day.
 
 #### Scenario: Custom task's Repeats value shows the structured label
 
 - **WHEN** the detail page loads a task whose `trigger.cron.fields` is `{ week: '*/2', day_of_week: '1', hour: '7', minute: '0' }`
-- **THEN** the Details section's "Repeats" value shows the same "Every 2 weeks on <localized day> at <localized time>" label the card shows, produced by the shared `buildScheduleLabel` formatter
+- **THEN** the Details section's "Repeats" value shows the same "Recurring schedule" fallback label the card shows (the scenario name is historical: the every-N-weeks label was removed)
+
+#### Scenario: Multi-day Custom task's Repeats value
+
+- **WHEN** the detail page loads a task whose `trigger.cron.fields` is `{ day_of_week: '0,2,4', hour: '7', minute: '0' }` in a UTC+2 browser
+- **THEN** the "Repeats" value shows "Every Monday, Wednesday and Friday at 9:00 AM", the same label the card shows
 
 #### Scenario: Custom task's next run comes from the server
 
 - **WHEN** the detail page loads an active custom task whose `nextRunTime` is set by the BFF
-- **THEN** the "Next run" value renders that server-provided instant formatted with `Intl.DateTimeFormat`, with no client-side computation of the next week-step occurrence
+- **THEN** the "Next run" value renders that server-provided instant formatted with `Intl.DateTimeFormat`, with no client-side computation of the next occurrence
 
 #### Scenario: No active-window label renders for a custom task
 
 - **WHEN** the detail page loads a custom task whose `trigger.cron` has no `endDate`
 - **THEN** no active-window label renders — `getNextCronOccurrence` is never called for the task
+
+#### Scenario: A Custom task's window drives the label and the switch
+
+- **WHEN** the detail page loads an inactive Custom task with `day_of_week: '0,2'`, an `endDate`, no `startDate` and no `nextRunTime`
+- **THEN** the active-window label starts at the earliest upcoming Monday or Wednesday occurrence returned by `getNextCronOccurrence`, and a past `endDate` disables the active switch exactly as for Weekly
+

@@ -27,25 +27,45 @@ describe('describeScheduledTaskTrigger', () => {
     });
   });
 
-  it('describes the editor week-step schedule as every-N-weeks', () => {
+  it('describes a weekday list as one weekly schedule, Monday first', () => {
     expect(
       describeScheduledTaskTrigger(
-        {
-          cron: {
-            fields: { week: '*/2', hour: '2', minute: '0', day_of_week: '1' },
-          },
-        },
-        { timeZone: 'UTC' },
+        { cron: { fields: { hour: '7', minute: '0', day_of_week: '4,0,2' } } },
+        { timeZone: 'Europe/Warsaw', referenceDate: new Date('2026-07-15') },
       ),
     ).toMatchObject({
-      kind: ScheduledTaskTriggerDescriptionKind.EveryNWeeks,
-      intervalWeeks: 2,
-      dayOfWeek: '1',
-      time: '02:00',
+      kind: ScheduledTaskTriggerDescriptionKind.Weekly,
+      dayOfWeek: '0',
+      daysOfWeek: ['0', '2', '4'],
+      time: '09:00',
     });
   });
 
-  it.each(['2-40', '1,3', '*/12', '2'])(
+  it('shifts every listed weekday with the time across midnight', () => {
+    expect(
+      describeScheduledTaskTrigger(
+        { cron: { fields: { hour: '22', minute: '30', day_of_week: '1,6' } } },
+        { timeZone: 'Europe/Warsaw', referenceDate: new Date('2026-07-15') },
+      ),
+    ).toMatchObject({
+      kind: ScheduledTaskTriggerDescriptionKind.Weekly,
+      daysOfWeek: ['0', '2'],
+      time: '00:30',
+    });
+  });
+
+  it.each(['0-4', '*/2', '0,0'])(
+    'keeps weekday expression %s as a custom expression',
+    (dayOfWeek) => {
+      const fields = { hour: '9', minute: '0', day_of_week: dayOfWeek };
+      expect(describeScheduledTaskTrigger({ cron: { fields } })).toMatchObject({
+        kind: ScheduledTaskTriggerDescriptionKind.Custom,
+        expression: JSON.stringify(fields),
+      });
+    },
+  );
+
+  it.each(['*/1', '*/2', '2-40', '1,3', '*/12', '2'])(
     'keeps week expression %s as a custom expression',
     (week) => {
       const fields = { week, hour: '9', minute: '0', day_of_week: '0' };
