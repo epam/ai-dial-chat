@@ -19,6 +19,7 @@ export const useProjectViewLabels = (): ProjectViewLabels => {
     () => ({
       backLabel: t(ButtonsI18nKeys.Back),
       pinLabel: t(ButtonsI18nKeys.Pin),
+      unpinLabel: t(ButtonsI18nKeys.Unpin),
       publishLabel: t(ButtonsI18nKeys.Publish),
       editLabel: t(ButtonsI18nKeys.Edit),
       moreActionsLabel: t(ButtonsI18nKeys.MoreActions),

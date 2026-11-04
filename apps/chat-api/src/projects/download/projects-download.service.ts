@@ -4,7 +4,10 @@ import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { DialClientService } from '../../dial/dial-client.service';
 import type { ParsedProjectId } from '../utils/project-id.util';
-import { PROJECT_CONTEXT_FOLDER } from '../utils/project-manifest.util';
+import {
+  PROJECT_ARTIFACTS_FOLDER,
+  PROJECT_CONTEXT_FOLDER,
+} from '../utils/project-manifest.util';
 
 /** A Core download ready to stream to the client. */
 export interface ProjectDownload {
@@ -41,9 +44,9 @@ export const buildAttachmentDisposition = (fileName: string): string =>
   `attachment; filename="${toAsciiFileName(fileName)}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
 
 /**
- * Streams a whole project (Core's ZIP) or one context file to the client.
- * Responses are always attachments with `nosniff`, so a context file never
- * renders on the chat origin. A `403` in the caller's own bucket is Core
+ * Streams a whole project (Core's ZIP), one context file or one artifact to
+ * the client. Responses are always attachments with `nosniff`, so a project
+ * file never renders on the chat origin. A `403` in the caller's own bucket is Core
  * masking a missing resource and becomes a `404`.
  */
 @Injectable()
@@ -91,6 +94,31 @@ export class ProjectsDownloadService {
           project.bucket,
           encodeDialResourcePath(project.path),
           encodeDialResourcePath(`${PROJECT_CONTEXT_FOLDER}/${fileName}`),
+          {
+            headers: getBearerAuthHeaders(accessToken),
+            parseAs: 'stream',
+            signal,
+          },
+        ),
+    );
+  }
+
+  downloadArtifact(
+    project: ParsedProjectId,
+    fileName: string,
+    accessToken: string,
+    callerBucket: string,
+  ): Promise<ProjectDownload> {
+    return this.download(
+      'projects.downloadProjectArtifact',
+      fileName,
+      project.bucket,
+      callerBucket,
+      (signal) =>
+        this.dialClient.client.downloadProjectFile(
+          project.bucket,
+          encodeDialResourcePath(project.path),
+          encodeDialResourcePath(`${PROJECT_ARTIFACTS_FOLDER}/${fileName}`),
           {
             headers: getBearerAuthHeaders(accessToken),
             parseAs: 'stream',

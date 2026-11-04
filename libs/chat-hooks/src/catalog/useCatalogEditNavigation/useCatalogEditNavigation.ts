@@ -10,13 +10,15 @@ import type {
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { DropdownItem, DropdownItemType } from '@epam/ai-dial-ui-kit';
 import { useCallback, useMemo, useState } from 'react';
-import { getApiErrorDetails } from '../../api-error/api-error';
 import {
   getRunnerSchemas,
   isQuickAppSchema,
 } from '../../shared/application-schema';
-import { parseSkillResourceUrl } from '../../skill/skill-types';
 import { findDeploymentByIdOrReference } from '../deployment-id';
+import {
+  type CatalogItemDeleteNotification,
+  useCatalogItemDelete,
+} from '../useCatalogItemDelete/useCatalogItemDelete';
 
 /* The default creation predicate for hosts that apply no creation policy. */
 const ALLOW_ANY_SCHEMA = (): boolean => true;
@@ -30,10 +32,7 @@ const sortByLabel = (options: DropdownItem[]): DropdownItem[] =>
   );
 
 /** A host notification `useCatalogEditNavigation` asks to be shown for a failed delete. */
-export interface CatalogEditNavigationNotification {
-  message: string;
-  requestId?: string;
-}
+export type CatalogEditNavigationNotification = CatalogItemDeleteNotification;
 
 /** Localized copy `useCatalogEditNavigation` needs for the Create menu and delete errors. */
 export interface CatalogEditNavigationLabels {
@@ -239,51 +238,19 @@ export const useCatalogEditNavigation = ({
     [deployments, isCustomAppsEnabled, runnerSchemas, onNavigate, urls],
   );
 
-  const handleDelete = useCallback(
-    async (item: CatalogItem) => {
-      try {
-        if (item.type === CatalogEntityType.Prompt) {
-          await deletePrompt(item.id);
-          await refetchPrompts();
-        } else if (item.type === CatalogEntityType.Toolset) {
-          await deleteToolset(item.id);
-          await refetchToolsets();
-        } else if (item.type === CatalogEntityType.Skill) {
-          const parsed = parseSkillResourceUrl(item.id);
-          if (parsed == null) {
-            throw new Error(`Invalid skill resource url: ${item.id}`);
-          }
-          await deleteSkill(parsed.bucket, parsed.path);
-          await refetchSkills();
-        } else {
-          await deleteApplication(item.id);
-          await refetchDeployments();
-        }
-
-        onDeleteSuccess(item);
-      } catch (err) {
-        const { traceId } = await getApiErrorDetails(err);
-        onNotify({
-          message: labels.deleteError,
-          requestId: traceId,
-        });
-        throw err;
-      }
-    },
-    [
-      deletePrompt,
-      deleteToolset,
-      deleteSkill,
-      deleteApplication,
-      refetchToolsets,
-      refetchDeployments,
-      refetchPrompts,
-      refetchSkills,
-      onDeleteSuccess,
-      labels,
-      onNotify,
-    ],
-  );
+  const handleDelete = useCatalogItemDelete({
+    deletePrompt,
+    deleteToolset,
+    deleteSkill,
+    deleteApplication,
+    refetchPrompts,
+    refetchToolsets,
+    refetchSkills,
+    refetchDeployments,
+    onDeleteSuccess,
+    deleteErrorLabel: labels.deleteError,
+    onNotify,
+  });
 
   const createMenuParts = useMemo(() => {
     const query = createSearchQuery.trim().toLocaleLowerCase();

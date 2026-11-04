@@ -24,7 +24,7 @@ The application SHALL register `ROUTES.ProjectCreate` (`/projects/new`) as a laz
 
 ### Requirement: The app page owns form state, submission and navigation
 
-`ProjectCreatePage` SHALL own the form state:
+`ProjectCreatePage` SHALL own the form state through the shared `useProjectDraft` hook (create mode, `libs/chat-hooks/src/project/use-project-draft.ts`, exported from `@epam/ai-dial-chat-hooks/project`):
 
 - `values: ProjectCreateFormValues` (`{ name, instructions }`, both initially `''`);
 - `contextFiles: Attachment[]`, using the `Attachment` type from `@epam/ai-dial-chat-shared`, initially `[]`;
@@ -32,7 +32,7 @@ The application SHALL register `ROUTES.ProjectCreate` (`/projects/new`) as a laz
 
 No new React context is introduced.
 
-Submission goes through a `useCreateProject` hook (`apps/chat/src/hooks/projects/useCreateProject.ts`, one hook per file, with JSDoc on why it exists).
+Submission goes through the shared `useCreateProject(client)` hook (`libs/chat-hooks/src/project/use-project-submit.ts`, exported from `@epam/ai-dial-chat-hooks/project`), which the page calls with the app's `projectsClient` (`apps/chat/src/hooks/projects/projects-client.ts`).
 
 - The hook calls `createProject(values, files, signal)` in `apps/chat/src/server-api/projects.api.ts`, which calls `projectsApi.createProject({ name, instructions, fileNames: JSON.stringify(names), files })` on the generated `ProjectsApi`. The form has no description field, so no `description` is sent and the BFF stores an empty one.
 - The request is aborted on unmount.
@@ -252,11 +252,11 @@ Files from every source go through `checkContextFiles(incoming, contextFiles, { 
 
 Accepted files are appended through `onContextFilesChange`. Each rejection, `labels.fileRejections[reason](name)`, is shown as the kit `FileDropzone` `errorText`, one rejection per line, followed by a non-empty `errors.context`. The kit draws it in the error color under the area, gives the area an error border, and links it to the file input with `aria-describedby` and `aria-invalid`. Rejections are replaced by the next add and cleared by a remove; there is no toast.
 
-`useProjectFileManagerPicker` (`apps/chat/src/hooks/projects/useProjectFileManagerPicker.ts`) is the app-level adapter. It follows `useSkillFileSystemPicker`:
+`useProjectFileManagerPicker` (`apps/chat/src/hooks/projects/useProjectFileManagerPicker.ts`) is the app-level adapter over the shared `useSkillFileSystemPicker<File>` from `@epam/ai-dial-chat-hooks/skill-editor`:
 
 - It opens `DialFileManagerModal` with `canAttachFolders={false}`, `allowedTypes` derived from the allowed extensions, and `maxSelectableFileSize={maxFileBytes}`.
-- It downloads each picked file, which copies it into the project.
-- It resolves the files as `File[]`. A download failure shows `projects.create.toast.fileManagerError` and resolves `undefined`.
+- It downloads each picked file, which copies it into the project; the download receives the picker's abort signal, so a cancelled pick aborts its requests.
+- It resolves the files as `File[]`, in selection order, folders ignored. A download failure shows `projects.create.toast.fileManagerError` and resolves `undefined`; closing the modal or leaving the page while a pick is pending resolves it as cancelled.
 
 #### Scenario: Add from device
 

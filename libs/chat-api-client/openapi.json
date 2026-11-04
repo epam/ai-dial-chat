@@ -10287,10 +10287,72 @@
         "tags": ["projects"]
       }
     },
-    "/api/v1/projects/{id}/conversations": {
+    "/api/v1/projects/{id}/artifacts": {
       "get": {
-        "description": "Lists the conversations stored in the project's `conversations/` folder, newest first, with their titles and authors.",
-        "operationId": "listProjectConversations",
+        "description": "Lists the files directly under the project `artifacts/` folder, where the agents of the project's chats save their outputs, newest first. Nested paths are not listed. Any reader of the project may call it.",
+        "operationId": "listProjectArtifacts",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The outputs; a project without `artifacts/` lists none",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectArtifactListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The project id is invalid"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "The project does not exist"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "List a project's outputs",
+        "tags": ["projects"]
+      }
+    },
+    "/api/v1/projects/{id}/artifacts/{fileName}": {
+      "get": {
+        "description": "Streams one file directly under the project `artifacts/` folder as an attachment with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.",
+        "operationId": "downloadProjectArtifact",
         "parameters": [
           {
             "name": "id",
@@ -10303,28 +10365,76 @@
             }
           },
           {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "description": "Maximum number of conversations to return, newest first. `hasMore` tells whether more exist.",
+            "name": "fileName",
+            "required": true,
+            "in": "path",
+            "description": "Name of a file directly under the project `artifacts/` folder.",
             "schema": {
-              "minimum": 1,
-              "maximum": 100,
-              "default": 50,
-              "example": 50,
-              "type": "number"
+              "example": "report.pdf",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Streamed file content",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
             }
           },
+          "400": {
+            "description": "The project id or the file name is invalid"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "The project or the file does not exist"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Download one output of a project",
+        "tags": ["projects"]
+      }
+    },
+    "/api/v1/projects/{id}/conversations": {
+      "get": {
+        "description": "Lists every conversation stored in the project's `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.",
+        "operationId": "listProjectConversations",
+        "parameters": [
           {
-            "name": "offset",
-            "required": false,
-            "in": "query",
-            "description": "Number of conversations to skip in the newest-first order; the next page starts at the count already loaded.",
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
             "schema": {
-              "minimum": 0,
-              "default": 0,
-              "example": 0,
-              "type": "number"
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
             }
           }
         ],
@@ -10340,7 +10450,7 @@
             }
           },
           "400": {
-            "description": "Invalid id, limit or offset"
+            "description": "Invalid id"
           },
           "401": {
             "description": "Not authenticated"
@@ -10448,6 +10558,78 @@
           }
         },
         "summary": "Create a project conversation",
+        "tags": ["projects"]
+      }
+    },
+    "/api/v1/projects/{id}/conversations/titles": {
+      "post": {
+        "description": "Reads the bodies of the named conversations, as listed with `isTitlePending`, and returns them with their titles and read state resolved. Up to 100 names per request. Any reader of the project may call it.",
+        "operationId": "getProjectConversationTitles",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectConversationTitlesBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The named conversations the project holds, in request order; unknown names are omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectConversationTitlesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid id or body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, or DIAL Core denied read access"
+          },
+          "404": {
+            "description": "The project does not exist"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out"
+          }
+        },
+        "summary": "Resolve project conversations' titles",
         "tags": ["projects"]
       }
     },
@@ -10923,6 +11105,71 @@
           }
         },
         "summary": "Delete a project conversation",
+        "tags": ["projects"]
+      }
+    },
+    "/api/v1/projects/{id}/conversations/{conversationName}/viewed": {
+      "patch": {
+        "description": "Records the conversation's current version as seen by the caller, in the caller's own read state, so it is not reported unread until it changes. Any reader of the project may call it.",
+        "operationId": "markProjectConversationViewed",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          },
+          {
+            "name": "conversationName",
+            "required": true,
+            "in": "path",
+            "description": "File name of the conversation under the project `conversations/` folder, URL-encoded.",
+            "schema": {
+              "example": "gpt-4o__Weekly%20support%20health%20summary__7c1d",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Conversation marked as viewed"
+          },
+          "400": {
+            "description": "Invalid id or conversation name"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, or DIAL Core denied read access"
+          },
+          "404": {
+            "description": "The project or the conversation does not exist"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out"
+          }
+        },
+        "summary": "Mark a project conversation as viewed",
         "tags": ["projects"]
       }
     },
@@ -13914,6 +14161,11 @@
               "type": "string"
             }
           },
+          "resource": {
+            "type": "string",
+            "description": "RFC 8707 resource indicator DIAL Core sends on the token exchange; the client puts the same value on the authorization URL.",
+            "example": "https://mcp.example.com/mcp"
+          },
           "globalAuthStatus": {
             "type": "string",
             "example": "SIGNED_OUT",
@@ -14108,6 +14360,12 @@
           "codeChallenge": {
             "type": "string",
             "example": "abc123"
+          },
+          "resource": {
+            "type": "string",
+            "example": "https://mcp.example.com/mcp",
+            "maxLength": 2048,
+            "description": "OAUTH with a static client: the RFC 8707 resource indicator DIAL Core sends on the token exchange. Omitted keeps the stored value, an empty string clears it. DIAL Core rejects it for a dynamically registered client."
           }
         },
         "required": ["authenticationType"]
@@ -14845,6 +15103,11 @@
             "type": "string",
             "example": "S256"
           },
+          "resource": {
+            "type": "string",
+            "description": "RFC 8707 resource indicator DIAL Core sends on the token exchange; the client puts the same value on the authorization URL.",
+            "example": "https://mcp.example.com/mcp"
+          },
           "id": {
             "type": "string",
             "description": "External-service identifier within the application",
@@ -14906,6 +15169,11 @@
           "codeChallengeMethod": {
             "type": "string",
             "example": "S256"
+          },
+          "resource": {
+            "type": "string",
+            "description": "RFC 8707 resource indicator DIAL Core sends on the token exchange; the client puts the same value on the authorization URL.",
+            "example": "https://mcp.example.com/mcp"
           }
         },
         "required": ["displayName", "authenticationType"]
@@ -15005,6 +15273,12 @@
             "items": {
               "type": "string"
             }
+          },
+          "resource": {
+            "type": "string",
+            "description": "OAUTH: the RFC 8707 resource indicator DIAL Core sends on the token exchange. An empty string clears it. The PUT replaces the whole service, so leaving it out erases a stored value — resend it when editing a service.",
+            "example": "https://mcp.example.com/mcp",
+            "maxLength": 2048
           }
         },
         "required": ["authenticationType"]
@@ -19026,6 +19300,40 @@
         },
         "required": ["id", "name", "bucket", "path", "isPinned"]
       },
+      "ProjectArtifactItemDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "File name under the project `artifacts/` folder.",
+            "example": "report.pdf"
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Last update time, in epoch milliseconds.",
+            "example": 1793606400000
+          },
+          "author": {
+            "type": "string",
+            "description": "Display name of the file's last writer, from DIAL Core.",
+            "example": "Jane Doe"
+          }
+        },
+        "required": ["name"]
+      },
+      "ProjectArtifactListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Files directly under `artifacts/`, newest first; nested paths are not listed.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectArtifactItemDto"
+            }
+          }
+        },
+        "required": ["items"]
+      },
       "CreateProjectResponseDto": {
         "type": "object",
         "properties": {
@@ -19070,7 +19378,7 @@
           },
           "title": {
             "type": "string",
-            "description": "Display title: the stored body's `name`, or the title derived from the file name when the body cannot be read.",
+            "description": "Display title: the stored body's `name`, or the title derived from the file name when the body cannot be read or is not read yet (`isTitlePending`).",
             "example": "Write a weekly support health summary for the VP of Customer Success."
           },
           "author": {
@@ -19082,27 +19390,61 @@
             "type": "number",
             "description": "Last update time, in epoch milliseconds.",
             "example": 1793000000000
+          },
+          "isUnread": {
+            "type": "boolean",
+            "description": "Whether the conversation changed after the caller's read baseline and since the caller last viewed it; `false` when the caller's read state cannot be read or the title is pending.",
+            "example": false
+          },
+          "isTitlePending": {
+            "type": "boolean",
+            "description": "Present and `true` when the body was not read for this listing: `title` is the file-name title and `isUnread` is `false`. `POST /api/v1/projects/:id/conversations/titles` resolves both.",
+            "example": true
           }
         },
-        "required": ["id", "name", "title"]
+        "required": ["id", "name", "title", "isUnread"]
       },
       "ProjectConversationListResponseDto": {
         "type": "object",
         "properties": {
           "items": {
-            "description": "Conversations, newest first.",
+            "description": "Every conversation of the project, newest first. Titles of the first 20 and of cached ones are resolved; the rest carry `isTitlePending`.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ProjectConversationItemDto"
             }
-          },
-          "hasMore": {
-            "type": "boolean",
-            "description": "Whether the project holds more conversations than `items`.",
-            "example": false
           }
         },
-        "required": ["items", "hasMore"]
+        "required": ["items"]
+      },
+      "ProjectConversationTitlesBodyDto": {
+        "type": "object",
+        "properties": {
+          "names": {
+            "description": "File names under the project `conversations/` folder, as listed in `name`. Duplicates are resolved once; names the project does not hold are omitted.",
+            "minItems": 1,
+            "maxItems": 100,
+            "example": ["gpt-4o__Weekly support health summary__7c1d"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["names"]
+      },
+      "ProjectConversationTitlesResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "The requested conversations the project holds, in request order, with their titles and read state resolved.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectConversationItemDto"
+            }
+          }
+        },
+        "required": ["items"]
       },
       "OfflineCredentialsConnectDto": {
         "type": "object",

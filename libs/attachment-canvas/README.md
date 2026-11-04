@@ -273,6 +273,15 @@ openCanvas(
 );
 ```
 
+`openCanvas` takes an optional fourth argument, `onRetry`, which the context
+exposes as `retryCanvas` until the canvas closes or starts loading again.
+`useOpenAttachmentCanvas` passes one for every file it opens, so a file that
+fails to load (`Error` content with `errorType: LoadFailed`) can be opened
+again as a new request. `AttachmentCanvasContainer` forwards `retryCanvas` to
+`AttachmentCanvas`'s `onRetry`, and the body then shows a Retry button
+(`labels.loadErrorRetryLabel`, default `'Retry'`) under the load error. A
+`Forbidden` error never offers Retry.
+
 ## Hooks
 
 ### useLatestCanvasRequest
@@ -754,3 +763,7 @@ is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
 
 Write host overrides with CSS logical properties (`margin-inline-start`,
 `inset-inline-end`) so they keep working under `dir="rtl"`.
+
+## Tablet presentation
+
+`AttachmentCanvas` and `AttachmentCanvasContainer` accept optional `isBoundedOverlay` (false by default), forwarded to SidebarPanel. A host can pass `useIsTablet()` for a bounded overlay at 768-1279px while preserving existing `isMobile` behavior elsewhere. Provide a positioned containing block and the preferred panel width; the overlay clamps even the default 600px minimum to available width minus 32px. This applies to every content type, including MCP. Route policy, source-panel exclusion and any persistence remain host responsibilities.

@@ -48,6 +48,13 @@ const openRowMenu = async (item: 'Rename' | 'Delete') => {
 };
 
 describe('ProjectConversationsPanel', () => {
+  it('drops the Chats empty state while the outputs slot shows content', () => {
+    renderPanel({ items: [], hasOutputs: true, outputs: <p>outputs</p> });
+
+    expect(screen.getByText('outputs')).toBeTruthy();
+    expect(screen.queryByText(labels.list.emptyTitle)).toBeNull();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -57,6 +64,24 @@ describe('ProjectConversationsPanel', () => {
 
     expect(screen.getByText('composer here')).toBeTruthy();
     expect(screen.getByRole('region', { name: 'Chats' })).toBeTruthy();
+  });
+
+  it('renders the host outputs between the composer and the Chats list', () => {
+    renderPanel({
+      composer: <p>composer here</p>,
+      outputs: <p>outputs here</p>,
+    });
+
+    const composer = screen.getByText('composer here');
+    const outputs = screen.getByText('outputs here');
+    const chats = screen.getByRole('heading', { name: 'Chats' });
+    expect(
+      composer.compareDocumentPosition(outputs) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      outputs.compareDocumentPosition(chats) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it('has no row menu without rename and delete handlers', () => {
@@ -213,11 +238,33 @@ describe('ProjectConversationsPanel', () => {
     await waitFor(() => expect(document.activeElement).toBe(nextRow));
   });
 
+  it('closes the rename dialog when a refresh removes its row', async () => {
+    const onRename = vi.fn(async () => undefined);
+    const { rerender } = renderPanel({ onRename });
+    await openRowMenu('Rename');
+    expect(await screen.findByLabelText('Chat name')).toBeTruthy();
+
+    rerender(
+      <ProjectConversationsPanel
+        items={[]}
+        onRetry={vi.fn()}
+        onOpen={vi.fn()}
+        onRename={onRename}
+        labels={labels}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.queryByLabelText('Chat name')).toBeNull(),
+    );
+    expect(onRename).not.toHaveBeenCalled();
+  });
+
   it('passes the load-more state through to the list', async () => {
     const onLoadMore = vi.fn();
     renderPanel({ hasMore: true, onLoadMore });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Show more' }));
+    await userEvent.click(screen.getByRole('button', { name: 'See more' }));
 
     expect(onLoadMore).toHaveBeenCalledOnce();
   });

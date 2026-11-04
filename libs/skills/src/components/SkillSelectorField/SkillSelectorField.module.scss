@@ -22,3 +22,9 @@
     color: var(--ssf-error, var(--text-error, #ae2f2f));
   }
 }
+
+.unavailableTag.unavailableTag {
+  background: var(--ssf-unavailable-tag-bg, var(--bg-error, #f3d6d8));
+  border-color: var(--ssf-unavailable-tag-border, var(--stroke-error, #ae2f2f));
+  cursor: pointer;
+}

@@ -90,6 +90,31 @@ describe('useMcpAppTools indirect discovery', () => {
     expect(result.current[0].toolName).toBe('entity-mcp_show_entity_card');
   });
 
+  it('queries only the public toolset when a private one shares its display name', async () => {
+    const client = makeClient();
+    const publicId = 'toolsets/public/Entity%20MCP%20Server__1.0.0';
+    const { result } = renderHook(() =>
+      useMcpAppTools(
+        client,
+        quickApp,
+        makeMessages('Entity_MCP_Server_show_entity_card'),
+        [
+          makeToolset('Entity MCP Server'),
+          {
+            id: publicId,
+            toolset: publicId,
+            displayName: 'Entity MCP Server',
+          } as DialToolsetDto,
+        ],
+      ),
+    );
+
+    await waitFor(() => expect(result.current).toHaveLength(1));
+    expect(client.listAppTools).toHaveBeenCalledOnce();
+    expect(client.listAppTools).toHaveBeenCalledWith(publicId, 'toolset');
+    expect(result.current[0].toolsetId).toBe(publicId);
+  });
+
   it('does not query a toolset whose name does not prefix any tool call', async () => {
     const client = makeClient();
     const { result } = renderHook(() =>

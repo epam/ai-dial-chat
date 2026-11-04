@@ -82,6 +82,7 @@ describe('useProjectFileManagerPicker', () => {
     expect(mockDownloadFile).toHaveBeenCalledWith(
       'other-bucket',
       'data/tickets.csv',
+      expect.any(AbortSignal),
     );
     expect(files?.map((file) => file.name)).toEqual(['tickets.csv']);
     expect(files?.[0].type).toBe('text/csv');

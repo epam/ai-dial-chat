@@ -1,12 +1,17 @@
 import type { UseConversationHandlersParams } from '@epam/ai-dial-chat-hooks';
 import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
+import { NO_CONVERSATION_LIST_SYNC } from '@epam/ai-dial-chat-hooks/conversation';
 import type { Conversation, ToolMenuItem } from '@epam/ai-dial-chat-shared';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactElement, type ReactNode, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as ClientChannelContextModule from '../../../context/ClientChannelContext';
-import { ConversationDataSourceProvider } from '../../../context/ConversationDataSourceContext';
+import {
+  ConversationDataSourceContext,
+  ConversationDataSourceProvider,
+  useConversationDataSource,
+} from '../../../context/ConversationDataSourceContext';
 import * as ConversationsContextModule from '../../../context/ConversationsContext';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
 import * as NotificationContextModule from '../../../context/NotificationContext';
@@ -620,6 +625,85 @@ describe('Conversation', () => {
         1,
         'gpt-4o',
       );
+    });
+  });
+
+  describe('ConversationPage — read state without a sidebar row', () => {
+    const markViewed = vi.fn(async () => undefined);
+    const markUnread = vi.fn();
+
+    /* A project chat's data source: no sidebar row, the page marks the open chat itself. */
+    const ListlessSource = ({ children }: { children: ReactNode }) => {
+      const source = useConversationDataSource();
+      return (
+        <ConversationDataSourceContext.Provider
+          value={{
+            ...source,
+            listSync: {
+              ...NO_CONVERSATION_LIST_SYNC,
+              markViewed,
+              markUnread,
+              shouldMarkOpenChatViewed: true,
+            },
+          }}
+        >
+          {children}
+        </ConversationDataSourceContext.Provider>
+      );
+    };
+    const Wrapper = ({ children }: { children: ReactNode }) => (
+      <ConversationDataSourceProvider>
+        <ListlessSource>{children}</ListlessSource>
+      </ConversationDataSourceProvider>
+    );
+
+    it('marks the open chat viewed once it has loaded with nothing generating', async () => {
+      mockGetConversation.mockResolvedValue(makeConversation() as never);
+
+      render(<ConversationPage />, { wrapper: Wrapper });
+
+      await waitFor(() =>
+        expect(markViewed).toHaveBeenCalledExactlyOnceWith(CONVERSATION_ID),
+      );
+    });
+
+    it('waits for the stream to end before marking the chat viewed', async () => {
+      mockGetConversation.mockResolvedValue(makeConversation() as never);
+      streamMocks.isStreaming = true;
+      const { rerender } = render(<ConversationPage />, { wrapper: Wrapper });
+      await waitFor(() => expect(mockGetConversation).toHaveBeenCalled());
+      await act(async () => undefined);
+      expect(markViewed).not.toHaveBeenCalled();
+
+      streamMocks.isStreaming = false;
+      rerender(<ConversationPage />);
+
+      await waitFor(() =>
+        expect(markViewed).toHaveBeenCalledExactlyOnceWith(CONVERSATION_ID),
+      );
+    });
+
+    it('does not mark the chat viewed when the page is left mid-stream', async () => {
+      mockGetConversation.mockResolvedValue(makeConversation() as never);
+      streamMocks.isStreaming = true;
+      const { unmount } = render(<ConversationPage />, { wrapper: Wrapper });
+      await waitFor(() => expect(mockGetConversation).toHaveBeenCalled());
+      await act(async () => undefined);
+
+      unmount();
+      streamMocks.isStreaming = false;
+
+      expect(markViewed).not.toHaveBeenCalled();
+    });
+
+    it('drops a waiting mark when a generation starts', async () => {
+      mockGetConversation.mockResolvedValue(makeConversation() as never);
+      render(<ConversationPage />, { wrapper: Wrapper });
+      await waitFor(() => expect(handlersMocks.lastParams).toBeDefined());
+
+      getHandlerParams().startStream(CONVERSATION_ID, 'hello', 1, 'gpt-4o');
+
+      expect(markUnread).toHaveBeenCalledWith(CONVERSATION_ID);
     });
   });
 

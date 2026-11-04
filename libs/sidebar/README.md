@@ -201,3 +201,7 @@ import type {
   PanelNoResultsProps,
 } from '@epam/ai-dial-sidebar';
 ```
+
+## Bounded overlays
+
+`SidebarPanel.isBoundedOverlay` defaults to false. Opt in on a right panel to position it at the logical inline end of its positioned containing block without reserving layout space. The shell observes the containing width and caps its own and the resize container's sizes to that width minus 32px, also bounded by the viewport. Configured minima cannot exceed that cap. Temporary viewport clamping does not call `onResizeStop` or replace the user's preferred size. Existing close/reset semantics remain. The non-modal complementary region supports Escape and focus return; closed overlays are inert. Other consumers, including left panels and the legacy `isOverlay` contract, remain unchanged.

@@ -5,6 +5,7 @@ import {
   createProjectConversation,
   deleteProjectConversation,
   getProjectConversation,
+  getProjectConversationTitles,
   listProjectConversations,
   renameProjectConversation,
   saveProjectConversation,
@@ -14,6 +15,7 @@ import {
 vi.mock('../api-client', () => ({
   projectsApi: {
     listProjectConversations: vi.fn(),
+    getProjectConversationTitles: vi.fn(),
     createProjectConversation: vi.fn(),
     getProjectConversation: vi.fn(),
     saveProjectConversation: vi.fn(),
@@ -57,13 +59,16 @@ describe('project conversations adapter', () => {
     );
   });
 
-  it('lists the next page from the given offset', async () => {
+  it('resolves the titles of the named conversations with the caller signal', async () => {
     const signal = new AbortController().signal;
 
-    await listProjectConversations(PROJECT_ID, signal, { offset: 50 });
+    await getProjectConversationTitles(PROJECT_ID, ['gpt-4o__Hi__1'], signal);
 
-    expect(projectsApi.listProjectConversations).toHaveBeenCalledWith(
-      { id: PROJECT_ID, offset: 50 },
+    expect(projectsApi.getProjectConversationTitles).toHaveBeenCalledWith(
+      {
+        id: PROJECT_ID,
+        projectConversationTitlesBodyDto: { names: ['gpt-4o__Hi__1'] },
+      },
       { signal },
     );
   });

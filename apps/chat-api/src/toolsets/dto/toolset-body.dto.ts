@@ -26,6 +26,11 @@ import {
   LOCALE_CODE_PATTERN,
   LOCALE_CODE_VALIDATION_MESSAGE,
 } from '../../common/validators/locale-code.pattern';
+import {
+  OAUTH_RESOURCE_MAX_LENGTH,
+  OAUTH_RESOURCE_PATTERN,
+  OAUTH_RESOURCE_VALIDATION_MESSAGE,
+} from '../../common/validators/oauth-resource.pattern';
 import { IsValidResourceReference } from '../../common/validators/resource-reference.validator';
 
 export enum ToolsetTransport {
@@ -107,6 +112,22 @@ export class ToolsetAuthSettingsBodyDto {
   @IsString()
   @IsOptional()
   codeChallenge?: string;
+
+  @ApiPropertyOptional({
+    example: 'https://mcp.example.com/mcp',
+    maxLength: OAUTH_RESOURCE_MAX_LENGTH,
+    description:
+      'OAUTH with a static client: the RFC 8707 resource indicator DIAL Core ' +
+      'sends on the token exchange. Omitted keeps the stored value, an empty ' +
+      'string clears it. DIAL Core rejects it for a dynamically registered client.',
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(OAUTH_RESOURCE_MAX_LENGTH)
+  @Matches(OAUTH_RESOURCE_PATTERN, {
+    message: OAUTH_RESOURCE_VALIDATION_MESSAGE,
+  })
+  resource?: string;
 }
 
 export class ToolsetBodyDto {

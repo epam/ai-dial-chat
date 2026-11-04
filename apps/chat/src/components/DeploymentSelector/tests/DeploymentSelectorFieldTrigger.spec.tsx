@@ -13,7 +13,7 @@ vi.mock('../useDeploymentSelectorFieldOverlay');
 const breakpoint = vi.hoisted(() => ({ isMobile: false }));
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
-  useIsMobile: () => breakpoint.isMobile,
+  useIsPhone: () => breakpoint.isMobile,
 }));
 
 const mockOverlay = (
@@ -26,6 +26,7 @@ const mockOverlay = (
       </button>
     ),
     catalogModal: null,
+    onOpenChange: vi.fn(),
     isLoading: false,
     error: null,
     resolvedLabel: null,
@@ -46,6 +47,25 @@ const renderTrigger = (
   );
 
 describe('DeploymentSelectorFieldTrigger', () => {
+  it('shows the unavailable label and error state while allowing replacement', async () => {
+    mockOverlay({ resolvedLabel: 'applications/bucket/Agent' });
+    const user = userEvent.setup();
+    renderTrigger({
+      selectedId: 'applications/bucket/Agent',
+      selectedLabel: 'Agent (unavailable)',
+      isInvalid: true,
+      labelTooltip: 'The model or agent has been deleted or access revoked',
+    });
+    const field = screen.getByRole('combobox');
+    expect(screen.getByDisplayValue('Agent (unavailable)')).toBeTruthy();
+    expect(field.getAttribute('aria-invalid')).toBe('true');
+    await user.hover(field);
+    expect((await screen.findByRole('tooltip')).textContent).toBe(
+      'The model or agent has been deleted or access revoked',
+    );
+    await user.click(field);
+    expect(await screen.findByText('overlay content')).toBeTruthy();
+  });
   afterEach(() => {
     breakpoint.isMobile = false;
   });

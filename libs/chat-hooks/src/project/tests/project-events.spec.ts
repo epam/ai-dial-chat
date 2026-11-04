@@ -14,17 +14,34 @@ const items: ProjectItem[] = [
 ];
 
 describe('parseProjectWatchEvent', () => {
-  it('accepts a well-formed event and drops extra fields', () => {
+  it('accepts a well-formed event, keeps its etag and drops extra fields', () => {
     expect(
       parseProjectWatchEvent({
         id: 'projects/b/alpha',
         action: 'UPDATE',
         timestamp: 5,
-        etag: 'e',
+        etag: '"c3d4"',
+        url: 'ignored',
       }),
     ).toEqual({
       id: 'projects/b/alpha',
       action: ProjectWatchAction.Update,
+      timestamp: 5,
+      etag: '"c3d4"',
+    });
+  });
+
+  it('leaves out an etag that is not a string', () => {
+    expect(
+      parseProjectWatchEvent({
+        id: 'projects/b/alpha',
+        action: 'DELETE',
+        timestamp: 5,
+        etag: 7,
+      }),
+    ).toEqual({
+      id: 'projects/b/alpha',
+      action: ProjectWatchAction.Delete,
       timestamp: 5,
     });
   });

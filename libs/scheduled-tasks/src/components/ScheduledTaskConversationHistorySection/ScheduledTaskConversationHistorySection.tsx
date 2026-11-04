@@ -36,6 +36,8 @@ export interface ScheduledTaskConversationHistorySectionLabels {
   currentRunLabel?: string;
   /** `sr-only` label announced alongside the unread-dot indicator on a run row whose `isUnread` is `true`. Defaults to `'Unread'`. */
   unreadIndicatorLabel?: string;
+  /** Label of the link inside an expanded failed run's details that opens its conversation. Defaults to `'Open conversation'`. */
+  openConversationLabel?: string;
 }
 
 /** Color overrides for {@link ScheduledTaskConversationHistorySection}. */
@@ -173,6 +175,7 @@ export const ScheduledTaskConversationHistorySection: FC<
             runStatusLabels: labels.runStatusLabels,
             currentRunLabel: labels.currentRunLabel,
             unreadIndicatorLabel: labels.unreadIndicatorLabel,
+            openConversationLabel: labels.openConversationLabel,
           }}
         />
       )}

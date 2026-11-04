@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type {
   ProjectConversationListItem,
   ProjectConversationListLabels,
+  ProjectConversationListColors,
   ProjectConversationListTypography,
 } from './project-conversation-list-props';
 
@@ -32,6 +33,10 @@ export interface ProjectConversationsPanelLabels {
 export interface ProjectConversationsPanelProps {
   /** Content above the Chats list, typically the host's chat input; omitted when unset. */
   composer?: ReactNode;
+  /** Content between `composer` and the Chats list, typically the host's Outputs section; omitted when unset. */
+  outputs?: ReactNode;
+  /** Whether `outputs` shows content; the Chats list then renders nothing while empty instead of its empty state. Defaults to `false`. */
+  hasOutputs?: boolean;
   /** Conversations, in display order. */
   items: ProjectConversationListItem[];
   /** Shows the list's loading state. Defaults to `false`. */
@@ -56,4 +61,6 @@ export interface ProjectConversationsPanelProps {
   labels: ProjectConversationsPanelLabels;
   /** Typography overrides of the Chats list. */
   listTypography?: ProjectConversationListTypography;
+  /** Color overrides of the Chats list. */
+  listColors?: ProjectConversationListColors;
 }

@@ -1,23 +1,37 @@
-import type { ProjectConversationListResponseDto } from '@epam/ai-dial-chat-api-client';
+import type { ProjectConversationItemDto } from '@epam/ai-dial-chat-api-client';
 import type { ProjectConversationListItem } from '@epam/ai-dial-projects';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ProjectsApiClient } from './projects-api-client';
 
 interface ProjectConversationsState {
-  items: ProjectConversationListItem[];
+  /** Every conversation of the project, newest first. */
+  rows: ConversationRow[];
+  /** How many of `rows` the list shows. */
+  visibleCount: number;
   isLoading: boolean;
   hasError: boolean;
-  /** More conversations exist after `items`. */
-  hasMore: boolean;
-  /** The next page is being read. */
+  /** The titles of the next rows are being read. */
   isLoadingMore: boolean;
 }
 
+/** A listed conversation with what the hook needs to resolve its title later. */
+interface ConversationRow extends ProjectConversationListItem {
+  /** File name under the project `conversations/` folder. */
+  name: string;
+  /** The title is the file-name one until the body is read. */
+  isTitlePending: boolean;
+}
+
+/* The design's page of chats before See more. */
+const PAGE_SIZE = 20;
+/* The most names one titles request resolves. */
+const TITLES_BATCH_SIZE = 100;
+
 const INITIAL_STATE: ProjectConversationsState = {
-  items: [],
+  rows: [],
+  visibleCount: PAGE_SIZE,
   isLoading: true,
   hasError: false,
-  hasMore: false,
   isLoadingMore: false,
 };
 
@@ -26,18 +40,71 @@ const EMPTY_STATE: ProjectConversationsState = {
   isLoading: false,
 };
 
-const toListItems = ({
-  items,
-}: ProjectConversationListResponseDto): ProjectConversationListItem[] =>
-  items.map(({ id, title, author }) => ({ id, title, authorName: author }));
+/** Conversation id → its `updatedAt` when the viewer opened it from the list. */
+type ViewedMarks = Map<string, number | undefined>;
+
+/*
+ * A row marked viewed stays read until a read reports a newer `updatedAt`
+ * than the one it had when marked, so a read already in flight cannot bring
+ * back the dot the user just cleared.
+ */
+const toRows = (
+  items: ProjectConversationItemDto[],
+  viewed: ViewedMarks,
+): ConversationRow[] =>
+  items.map(
+    ({ id, name, title, author, updatedAt, isUnread, isTitlePending }) => {
+      let isRowUnread = isUnread;
+      if (viewed.has(id)) {
+        const markedAt = viewed.get(id);
+        if (updatedAt != null && markedAt != null && updatedAt > markedAt) {
+          viewed.delete(id);
+        } else {
+          isRowUnread = false;
+        }
+      }
+      return {
+        id,
+        name,
+        title,
+        authorName: author,
+        isTitlePending: isTitlePending === true,
+        ...(isRowUnread ? { isUnread: true } : {}),
+      };
+    },
+  );
+
+/* Replaces the rows a titles read resolved, keeping every other row as it is. */
+const mergeResolved = (
+  rows: ConversationRow[],
+  resolved: ConversationRow[],
+): ConversationRow[] => {
+  if (resolved.length === 0) return rows;
+  const byId = new Map(resolved.map((row) => [row.id, row]));
+  return rows.map((row) => byId.get(row.id) ?? row);
+};
+
+const toListItem = ({
+  id,
+  title,
+  authorName,
+  isUnread,
+}: ConversationRow): ProjectConversationListItem => ({
+  id,
+  title,
+  authorName,
+  ...(isUnread ? { isUnread: true } : {}),
+});
 
 /**
  * Loads a project's conversations for its Chats list and keeps them in local
- * state: there is no live subscription, so the first page is read once per
- * project (and on retry), `loadMore` appends the next one, and rename and
- * delete update the list in place. Requests are aborted when the project
- * changes or the view unmounts. Rename, delete and `loadMore` reject on
- * failure for the caller's toast.
+ * state. DIAL Core cannot page them in display order, so the whole list is
+ * read once per project (and on retry) and paged here: the list shows the
+ * first 20, and `loadMore` shows 20 more after reading the titles the list
+ * left pending. `refresh` silently re-reads the whole list for live updates,
+ * and rename, delete and `markViewed` update it in place. Requests are
+ * aborted when the project changes or the view unmounts. Rename, delete and
+ * `loadMore` reject on failure for the caller's toast.
  *
  * @param client - Configured project requests, from `createProjectsApiClient`; it must be referentially stable, because a new object reloads the list.
  * @param projectId - The project's DIAL id, or `null` while none is known.
@@ -46,17 +113,78 @@ export const useProjectConversations = (
   client: Pick<
     ProjectsApiClient,
     | 'listProjectConversations'
+    | 'getProjectConversationTitles'
     | 'renameProjectConversation'
     | 'deleteProjectConversation'
+    | 'markProjectConversationViewed'
   >,
   projectId: string | null,
 ) => {
   const [state, setState] = useState(INITIAL_STATE);
   const [reloadToken, setReloadToken] = useState(0);
-  /* Aborts a page read when the project changes, the list reloads or the view unmounts. */
+  /* Aborts the project's reads when the project changes, the list reloads or the view unmounts. */
   const pageControllerRef = useRef<AbortController | null>(null);
+  const refreshControllerRef = useRef<AbortController | null>(null);
+  /* Set synchronously, so a second See more before the next render is ignored. */
+  const isLoadingMoreRef = useRef(false);
+  const viewedRef = useRef<ViewedMarks>(new Map());
+  const updatedAtRef = useRef(new Map<string, number | undefined>());
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  });
+
+  const remember = useCallback((items: ProjectConversationItemDto[]) => {
+    for (const { id, updatedAt } of items) {
+      updatedAtRef.current.set(id, updatedAt);
+    }
+  }, []);
+
+  /* Reads the pending titles among `rows`; resolves the rows it read. */
+  const resolvePending = useCallback(
+    async (
+      rows: ConversationRow[],
+      signal: AbortSignal,
+    ): Promise<ConversationRow[]> => {
+      if (projectId == null) return [];
+      const names = rows
+        .filter((row) => row.isTitlePending)
+        .map((row) => row.name);
+      const resolved: ProjectConversationItemDto[] = [];
+      for (let start = 0; start < names.length; start += TITLES_BATCH_SIZE) {
+        const { items } = await client.getProjectConversationTitles(
+          projectId,
+          names.slice(start, start + TITLES_BATCH_SIZE),
+          signal,
+        );
+        resolved.push(...items);
+      }
+      remember(resolved);
+      return toRows(resolved, viewedRef.current);
+    },
+    [client, projectId, remember],
+  );
+
+  /* Silently fills titles a delete or refresh brought into view; a failure keeps the file-name titles. */
+  const fillPending = useCallback(
+    async (rows: ConversationRow[], count: number, signal: AbortSignal) => {
+      try {
+        const resolved = await resolvePending(rows.slice(0, count), signal);
+        if (signal.aborted) return;
+        setState((prev) => ({
+          ...prev,
+          rows: mergeResolved(prev.rows, resolved),
+        }));
+      } catch {
+        /* The next refresh tries again. */
+      }
+    },
+    [resolvePending],
+  );
 
   useEffect(() => {
+    viewedRef.current = new Map();
+    updatedAtRef.current = new Map();
     if (projectId == null) {
       setState(EMPTY_STATE);
       return;
@@ -71,17 +199,15 @@ export const useProjectConversations = (
         isLoadingMore: false,
       }));
       try {
-        const page = await client.listProjectConversations(
+        const { items } = await client.listProjectConversations(
           projectId,
           controller.signal,
         );
         if (controller.signal.aborted) return;
+        remember(items);
         setState({
-          items: toListItems(page),
-          isLoading: false,
-          hasError: false,
-          hasMore: page.hasMore,
-          isLoadingMore: false,
+          ...EMPTY_STATE,
+          rows: toRows(items, viewedRef.current),
         });
       } catch {
         if (controller.signal.aborted) return;
@@ -89,49 +215,96 @@ export const useProjectConversations = (
       }
     };
     void load();
-    return () => controller.abort();
-  }, [client, projectId, reloadToken]);
+    return () => {
+      controller.abort();
+      refreshControllerRef.current?.abort();
+    };
+  }, [client, projectId, reloadToken, remember]);
 
   const retry = useCallback(() => setReloadToken((token) => token + 1), []);
 
   const loadMore = useCallback(async () => {
     const controller = pageControllerRef.current;
-    if (projectId == null || controller == null) return;
+    const current = stateRef.current;
+    if (projectId == null || controller == null || isLoadingMoreRef.current) {
+      return;
+    }
+    isLoadingMoreRef.current = true;
+    const nextCount = current.visibleCount + PAGE_SIZE;
+    const nextRows = current.rows.slice(current.visibleCount, nextCount);
+    /* The next rows show once their titles are read, so none flashes its file name. */
     setState((prev) => ({ ...prev, isLoadingMore: true }));
     try {
-      const page = await client.listProjectConversations(
-        projectId,
-        controller.signal,
-        { offset: state.items.length },
-      );
+      const resolved = await resolvePending(nextRows, controller.signal);
       if (controller.signal.aborted) return;
-      setState((prev) => {
-        /* A delete since the last read shifts the order; never list a conversation twice. */
-        const knownIds = new Set(prev.items.map((item) => item.id));
-        return {
-          ...prev,
-          items: [
-            ...prev.items,
-            ...toListItems(page).filter((item) => !knownIds.has(item.id)),
-          ],
-          hasMore: page.hasMore,
-          isLoadingMore: false,
-        };
-      });
+      setState((prev) => ({
+        ...prev,
+        rows: mergeResolved(prev.rows, resolved),
+        visibleCount: Math.max(prev.visibleCount, nextCount),
+        isLoadingMore: false,
+      }));
     } catch (error) {
       if (controller.signal.aborted) return;
       setState((prev) => ({ ...prev, isLoadingMore: false }));
       throw error;
+    } finally {
+      isLoadingMoreRef.current = false;
     }
-  }, [client, projectId, state.items.length]);
+  }, [projectId, resolvePending]);
+
+  const refresh = useCallback(async () => {
+    const current = stateRef.current;
+    if (projectId == null || current.isLoading || current.hasError) return;
+    refreshControllerRef.current?.abort();
+    const controller = new AbortController();
+    refreshControllerRef.current = controller;
+    let rows: ConversationRow[];
+    try {
+      const { items } = await client.listProjectConversations(
+        projectId,
+        controller.signal,
+      );
+      if (controller.signal.aborted) return;
+      remember(items);
+      rows = toRows(items, viewedRef.current);
+    } catch {
+      /* The rows stay; the next change or a reload tries again. */
+      return;
+    }
+    setState((prev) => ({ ...prev, rows }));
+    await fillPending(rows, stateRef.current.visibleCount, controller.signal);
+  }, [client, fillPending, projectId, remember]);
+
+  useEffect(() => () => refreshControllerRef.current?.abort(), []);
+
+  const markViewed = useCallback(
+    (id: string) => {
+      viewedRef.current.set(id, updatedAtRef.current.get(id));
+      setState((prev) => ({
+        ...prev,
+        rows: prev.rows.map((row) =>
+          row.id === id && row.isUnread ? { ...row, isUnread: false } : row,
+        ),
+      }));
+      const persist = async () => {
+        try {
+          await client.markProjectConversationViewed?.(id);
+        } catch {
+          /* The row stays read here; the next list read reports the truth. */
+        }
+      };
+      void persist();
+    },
+    [client],
+  );
 
   const rename = useCallback(
     async (id: string, newTitle: string) => {
       const { name } = await client.renameProjectConversation(id, newTitle);
       setState((prev) => ({
         ...prev,
-        items: prev.items.map((item) =>
-          item.id === id ? { ...item, title: name } : item,
+        rows: prev.rows.map((row) =>
+          row.id === id ? { ...row, title: name, isTitlePending: false } : row,
         ),
       }));
     },
@@ -141,13 +314,40 @@ export const useProjectConversations = (
   const remove = useCallback(
     async (id: string) => {
       await client.deleteProjectConversation(id);
+      const { rows, visibleCount } = stateRef.current;
+      const remaining = rows.filter((row) => row.id !== id);
       setState((prev) => ({
         ...prev,
-        items: prev.items.filter((item) => item.id !== id),
+        rows: prev.rows.filter((row) => row.id !== id),
       }));
+      /* The row that slides into view may still carry its file-name title. */
+      const controller = pageControllerRef.current;
+      if (controller != null) {
+        void fillPending(remaining, visibleCount, controller.signal);
+      }
     },
-    [client],
+    [client, fillPending],
   );
 
-  return { ...state, retry, loadMore, rename, remove };
+  const { rows, visibleCount, isLoading, hasError, isLoadingMore } = state;
+  const items = useMemo(
+    () => rows.slice(0, visibleCount).map(toListItem),
+    [rows, visibleCount],
+  );
+
+  return {
+    items,
+    isLoading,
+    hasError,
+    /** More conversations exist after `items`. */
+    hasMore: visibleCount < rows.length,
+    /** The titles of the next conversations are being read. */
+    isLoadingMore,
+    retry,
+    loadMore,
+    rename,
+    remove,
+    refresh,
+    markViewed,
+  };
 };

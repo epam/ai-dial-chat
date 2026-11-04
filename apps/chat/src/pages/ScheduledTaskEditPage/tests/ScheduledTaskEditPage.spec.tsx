@@ -22,6 +22,30 @@ import { createNotificationContextValue } from '../../../context/tests/notificat
 import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
 import ScheduledTaskEditPage from '../ScheduledTaskEditPage';
 
+const availability = vi.hoisted(() => ({
+  skillUnavailable: false,
+  modelUnavailable: false,
+  loading: false,
+}));
+vi.mock(
+  '../../../hooks/scheduled-tasks/useUnavailableScheduledTaskSkills',
+  () => ({
+    useScheduledTaskSkillDetails: (urls: string[] = []) =>
+      urls.map((url) => ({
+        url,
+        name: url,
+        isUnavailable: availability.skillUnavailable,
+        isLoading: availability.loading,
+      })),
+  }),
+);
+vi.mock('../../../hooks/scheduled-tasks/useScheduledTaskModelPreview', () => ({
+  useScheduledTaskModelPreview: () => ({
+    isUnavailable: availability.modelUnavailable,
+    isLoading: availability.loading,
+  }),
+}));
+
 vi.mock(
   '../../../components/ScheduledTaskSkillField/ScheduledTaskSkillField',
   () => ({
@@ -29,19 +53,24 @@ vi.mock(
       value,
       onChange,
       isSkillsSupported,
+      error,
     }: {
       value: string[];
       onChange: (value: string[]) => void;
       isSkillsSupported: boolean;
+      error?: string;
     }) => (
-      <input
-        aria-label="skillUrls"
-        aria-invalid={!isSkillsSupported}
-        value={value.join(',')}
-        onChange={(event) =>
-          onChange(event.target.value ? event.target.value.split(',') : [])
-        }
-      />
+      <>
+        <input
+          aria-label="skillUrls"
+          aria-invalid={!isSkillsSupported}
+          value={value.join(',')}
+          onChange={(event) =>
+            onChange(event.target.value ? event.target.value.split(',') : [])
+          }
+        />
+        {error && <span data-testid="skill-field-error">{error}</span>}
+      </>
     ),
   }),
 );
@@ -168,6 +197,7 @@ interface FormProps {
   onCancel: () => void;
   onSubmit: () => void;
   isSubmitting?: boolean;
+  isSubmitDisabled?: boolean;
 }
 
 vi.mock('@epam/ai-dial-scheduled-tasks', async (importOriginal) => ({
@@ -196,6 +226,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', async (importOriginal) => ({
     onCancel,
     onSubmit,
     isSubmitting,
+    isSubmitDisabled,
     onRefineDescription,
     onRefineInstructions,
   }: FormProps): ReactNode => (
@@ -255,13 +286,18 @@ vi.mock('@epam/ai-dial-scheduled-tasks', async (importOriginal) => ({
       <output aria-label="modelLabelId">{modelLabelId}</output>
       {modelSelector}
       {skillSelector}
-      {errors.skillUrls && <span>{errors.skillUrls}</span>}
       {errors.displayName && <span>{errors.displayName}</span>}
       {errors.startDate && <span>{errors.startDate}</span>}
       <button onClick={onCancel}>{labels.cancelButtonLabel}</button>
+      <button onClick={onSubmit}>submit directly</button>
       <button
         onClick={onSubmit}
-        disabled={isSubmitting || Boolean(errors.skillUrls)}
+        disabled={
+          isSubmitting ||
+          isSubmitDisabled ||
+          Boolean(errors.skillUrls) ||
+          Boolean(errors.modelId)
+        }
       >
         {labels.createButtonLabel}
       </button>
@@ -299,6 +335,48 @@ const baseTask = {
 };
 
 describe('ScheduledTaskEditPage', () => {
+  beforeEach(() => {
+    availability.skillUnavailable = false;
+    availability.modelUnavailable = false;
+    availability.loading = false;
+  });
+  it.each(['skill', 'model', 'loading'])(
+    'blocks saving an unavailable or pending %s selection and recovers',
+    async (kind) => {
+      availability.skillUnavailable = kind === 'skill';
+      availability.modelUnavailable = kind === 'model';
+      availability.loading = kind === 'loading';
+      getScheduledTaskMock.mockResolvedValue({
+        ...baseTask,
+        skillUrls: ['skills/public/report'],
+      });
+      updateScheduledTaskMock.mockResolvedValue(baseTask);
+      const view = renderEditPage();
+      const save = await screen.findByRole('button', { name: 'buttons.save' });
+      expect((save as HTMLButtonElement).disabled).toBe(true);
+      if (kind === 'skill') {
+        expect(screen.getByTestId('skill-field-error').textContent).toBe(
+          'skillSelector.unavailableSkillTooltip',
+        );
+      }
+      await userEvent.click(save);
+      await userEvent.click(
+        screen.getByRole('button', { name: 'submit directly' }),
+      );
+      expect(updateScheduledTaskMock).not.toHaveBeenCalled();
+      availability.skillUnavailable = false;
+      availability.modelUnavailable = false;
+      availability.loading = false;
+      view.rerenderRoutes();
+      await userEvent.click(
+        screen.getByRole('button', { name: 'buttons.save' }),
+      );
+      await waitFor(() =>
+        expect(updateScheduledTaskMock).toHaveBeenCalledTimes(1),
+      );
+    },
+  );
+
   it('supplies both purpose callbacks only when available and saves their results', async () => {
     useAppConfigMock.mockReturnValue({
       status: 'ready',

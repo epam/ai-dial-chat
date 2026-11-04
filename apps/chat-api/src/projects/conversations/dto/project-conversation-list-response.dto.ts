@@ -27,7 +27,7 @@ export class ProjectConversationItemDto {
 
   @ApiProperty({
     description:
-      "Display title: the stored body's `name`, or the title derived from the file name when the body cannot be read.",
+      "Display title: the stored body's `name`, or the title derived from the file name when the body cannot be read or is not read yet (`isTitlePending`).",
     example:
       'Write a weekly support health summary for the VP of Customer Success.',
   })
@@ -50,21 +50,32 @@ export class ProjectConversationItemDto {
   @IsOptional()
   @IsInt()
   updatedAt?: number;
+
+  @ApiProperty({
+    description:
+      "Whether the conversation changed after the caller's read baseline and since the caller last viewed it; `false` when the caller's read state cannot be read or the title is pending.",
+    example: false,
+  })
+  @IsBoolean()
+  isUnread!: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Present and `true` when the body was not read for this listing: `title` is the file-name title and `isUnread` is `false`. `POST /api/v1/projects/:id/conversations/titles` resolves both.',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isTitlePending?: boolean;
 }
 
 /** Response of `GET /api/v1/projects/:id/conversations`. */
 export class ProjectConversationListResponseDto {
   @ApiProperty({
     type: [ProjectConversationItemDto],
-    description: 'Conversations, newest first.',
+    description:
+      'Every conversation of the project, newest first. Titles of the first 20 and of cached ones are resolved; the rest carry `isTitlePending`.',
   })
   @ValidateNested({ each: true })
   items!: ProjectConversationItemDto[];
-
-  @ApiProperty({
-    description: 'Whether the project holds more conversations than `items`.',
-    example: false,
-  })
-  @IsBoolean()
-  hasMore!: boolean;
 }

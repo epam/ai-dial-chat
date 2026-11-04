@@ -7,10 +7,14 @@ import {
   getApiErrorStatus,
   getNextCronOccurrence,
   getScheduledTasksLoginRetryState,
+  mergeScheduledTaskRuns,
   OfflineCredentialsGateStatus,
   OfflineCredentialsLoginOutcomeType,
   resolveScheduledTasksLoginBannerState,
+  ScheduledTaskRunStatusFeedback,
   ScheduledTasksLoginBannerState,
+  useStartScheduledTask,
+  type StartScheduledTaskApi,
 } from '@epam/ai-dial-chat-hooks';
 import {
   ScheduledTaskDetailView,
@@ -49,28 +53,24 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useConversations } from '../../context/ConversationsContext';
-import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useOfflineCredentialsGate } from '../../hooks/offlineCredentials/useOfflineCredentialsGate';
 import { useOfflineCredentialsLogin } from '../../hooks/offlineCredentials/useOfflineCredentialsLogin';
+import { useScheduledTaskModelPreview } from '../../hooks/scheduled-tasks/useScheduledTaskModelPreview';
 import { useScheduledTaskRuns } from '../../hooks/scheduled-tasks/useScheduledTaskRuns';
-import { useScheduledTaskSkillDisplayNames } from '../../hooks/scheduled-tasks/useScheduledTaskSkillDisplayNames';
-import {
-  mergeScheduledTaskRuns,
-  ScheduledTaskRunStatusFeedback,
-  useStartScheduledTask,
-} from '../../hooks/scheduled-tasks/useStartScheduledTask';
+import { useScheduledTaskSkillPreview } from '../../hooks/scheduled-tasks/useScheduledTaskSkillPreview';
 import { useStaleGuard } from '../../hooks/useStaleGuard';
 import {
   deleteScheduledTask,
   getScheduledTask,
+  getScheduledTaskRun,
   pauseScheduledTask,
   resumeScheduledTask,
+  startScheduledTask,
 } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
-import { resolveLocalizedText } from '../../utils/locale';
 import {
   buildScheduleLabel,
   getDeleteErrorMessageKey,
@@ -109,6 +109,12 @@ const RUN_STATUS_LABEL_KEYS: Record<
   [ScheduledTaskRunDtoStatusEnum.Missed]: 'missed',
 };
 
+/* Module-level so the hook's polling effects keep a stable dependency. */
+const START_SCHEDULED_TASK_API: StartScheduledTaskApi = {
+  startScheduledTask,
+  getScheduledTaskRun,
+};
+
 const ScheduledTaskDetailPage: FC = () => {
   const { t } = useTranslation();
   const { showSuccessNotification, showErrorNotification } = useNotification();
@@ -116,12 +122,13 @@ const ScheduledTaskDetailPage: FC = () => {
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
   const { scheduleId = '' } = useParams<{ scheduleId: string }>();
-  const { items: deploymentItems } = useDeployments();
   const { language } = useLanguage();
   const { conversations, refreshConversations } = useConversations();
 
   const [task, setTask] = useState<ScheduledTaskDto | null>(null);
-  const skillDisplayNames = useScheduledTaskSkillDisplayNames(task?.skillUrls);
+  const { skillDisplayNames, renderSkillName } = useScheduledTaskSkillPreview(
+    task?.skillUrls,
+  );
   const [isTaskLoading, setIsTaskLoading] = useState(true);
   const [taskError, setTaskError] = useState<Error | null>(null);
   const [isNotFound, setIsNotFound] = useState(false);
@@ -191,6 +198,7 @@ const ScheduledTaskDetailPage: FC = () => {
     start: startTask,
     terminalRun,
   } = useStartScheduledTask({
+    api: START_SCHEDULED_TASK_API,
     scheduleId,
     enabled: isEnabled,
     canStart:
@@ -383,14 +391,8 @@ const ScheduledTaskDetailPage: FC = () => {
     [navigate],
   );
 
-  const taskModel = task?.model;
-  const modelLabel = useMemo(() => {
-    if (!taskModel) return undefined;
-    const deployment = deploymentItems.find((item) => item.id === taskModel);
-    return deployment
-      ? resolveLocalizedText(deployment.displayName, language) || taskModel
-      : taskModel;
-  }, [taskModel, deploymentItems, language]);
+  const { modelDisplayName: modelLabel, renderModelName } =
+    useScheduledTaskModelPreview(task?.model);
 
   const repeatsLabel = useMemo(
     () => (task ? buildScheduleLabel(task, t, language) : undefined),
@@ -474,6 +476,9 @@ const ScheduledTaskDetailPage: FC = () => {
       startNowBusyLabel: t(ScheduledTasksI18nKeys.DetailStartBusy),
       startStatusAnnouncement,
       unreadIndicatorLabel: t(ConversationPanelI18nKeys.UnreadIndicatorLabel),
+      openConversationLabel: t(
+        ScheduledTasksI18nKeys.DetailHistoryOpenConversationLabel,
+      ),
       codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
       codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
       codeBlockDownloadLabel: t(ButtonsI18nKeys.Download),
@@ -782,12 +787,14 @@ const ScheduledTaskDetailPage: FC = () => {
         onRetry={handleRetry}
         description={task?.description}
         modelLabel={modelLabel}
+        renderModelName={renderModelName}
         repeatsLabel={repeatsLabel}
         activeWindowLabel={activeWindowLabel}
         completedLabel={completedLabel}
         nextRunLabel={nextRunLabel}
         instructionsMarkdown={task?.prompt}
         skillDisplayNames={skillDisplayNames}
+        renderSkillName={renderSkillName}
         runs={runItems}
         runsIsLoading={runsIsLoading && mergedRunDtos.length === 0}
         runsIsLoadingMore={runsIsLoadingMore}

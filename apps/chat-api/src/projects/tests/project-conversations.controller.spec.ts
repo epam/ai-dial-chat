@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   INestApplication,
+  NotFoundException,
   ValidationPipe,
   VersioningType,
 } from '@nestjs/common';
@@ -30,6 +31,7 @@ describe('ProjectConversationsController', () => {
   let app: INestApplication;
   const service = {
     listConversations: vi.fn(),
+    resolveConversations: vi.fn(),
     createConversation: vi.fn(),
     getConversation: vi.fn(),
     saveConversation: vi.fn(),
@@ -37,6 +39,7 @@ describe('ProjectConversationsController', () => {
     deleteConversation: vi.fn(),
     assertOwner: vi.fn(),
     resolveCompletionLocator: vi.fn(),
+    markViewed: vi.fn(),
   };
 
   beforeEach(async () => {
@@ -87,27 +90,49 @@ describe('ProjectConversationsController', () => {
     ).toBe(FeatureKey.ProjectsEnabled);
   });
 
-  it('lists with the limit and a no-store cache header', async () => {
-    service.listConversations.mockResolvedValue({ items: [], hasMore: false });
+  it('lists every conversation with a no-store cache header', async () => {
+    service.listConversations.mockResolvedValue({ items: [] });
 
     const res = await request(app.getHttpServer())
-      .get(`/api/v1/projects/${ENCODED}/conversations?limit=10&offset=20`)
+      .get(`/api/v1/projects/${ENCODED}/conversations`)
       .expect(200);
 
     expect(res.headers['cache-control']).toBe('private, no-store');
     expect(service.listConversations).toHaveBeenCalledWith(
       expect.objectContaining({ id: PROJECT_ID }),
       USER.at,
-      10,
-      20,
+      USER.bucket,
     );
   });
 
-  it.each(['limit=101', 'offset=-1'])('rejects %s', async (query) => {
+  it('resolves titles of the named conversations', async () => {
+    const names = ['gpt-4o__Hi__1', 'gpt-4o__Bye__2'];
+    service.resolveConversations.mockResolvedValue({ items: [] });
+
+    const res = await request(app.getHttpServer())
+      .post(`/api/v1/projects/${ENCODED}/conversations/titles`)
+      .send({ names })
+      .expect(200);
+
+    expect(res.headers['cache-control']).toBe('private, no-store');
+    expect(service.resolveConversations).toHaveBeenCalledWith(
+      expect.objectContaining({ id: PROJECT_ID }),
+      names,
+      USER.at,
+      USER.bucket,
+    );
+  });
+
+  it.each([
+    ['no names', { names: [] }],
+    ['a traversal name', { names: ['..'] }],
+    ['an unknown field', { names: ['gpt-4o__Hi__1'], limit: 1 }],
+  ])('rejects a titles body with %s', async (_label, body) => {
     await request(app.getHttpServer())
-      .get(`/api/v1/projects/${ENCODED}/conversations?${query}`)
+      .post(`/api/v1/projects/${ENCODED}/conversations/titles`)
+      .send(body)
       .expect(400);
-    expect(service.listConversations).not.toHaveBeenCalled();
+    expect(service.resolveConversations).not.toHaveBeenCalled();
   });
 
   it('delegates get, save, rename and delete with the decoded conversation name', async () => {
@@ -157,6 +182,43 @@ describe('ProjectConversationsController', () => {
     );
   });
 
+  it('marks a conversation viewed with 204 for the session user', async () => {
+    const name = 'gpt-4o__Hi there__1';
+    service.markViewed.mockResolvedValue(undefined);
+
+    await request(app.getHttpServer())
+      .patch(
+        `/api/v1/projects/${ENCODED}/conversations/${encodeURIComponent(name)}/viewed`,
+      )
+      .expect(204);
+
+    expect(service.markViewed).toHaveBeenCalledWith(
+      expect.objectContaining({ id: PROJECT_ID }),
+      name,
+      USER.at,
+      USER.bucket,
+    );
+  });
+
+  it.each([
+    ['a traversal in the conversation name', encodeURIComponent('../secret')],
+    ['an encoded slash in the conversation name', encodeURIComponent('a/b')],
+  ])('rejects %s on the viewed route', async (_case, name) => {
+    await request(app.getHttpServer())
+      .patch(`/api/v1/projects/${ENCODED}/conversations/${name}/viewed`)
+      .expect(400);
+    expect(service.markViewed).not.toHaveBeenCalled();
+  });
+
+  it('rejects an invalid project id on the viewed route', async () => {
+    await request(app.getHttpServer())
+      .patch(
+        `/api/v1/projects/${encodeURIComponent('projects/a1b2c3/../x')}/conversations/c/viewed`,
+      )
+      .expect((res) => expect([400, 404]).toContain(res.status));
+    expect(service.markViewed).not.toHaveBeenCalled();
+  });
+
   it('creates with the create body', async () => {
     service.createConversation.mockResolvedValue({ id: LOCATOR });
 
@@ -186,6 +248,22 @@ describe('ProjectConversationsService', () => {
         async (_l: string, _t: string, body: unknown) => body,
       ),
       deleteConversation: vi.fn(async () => undefined),
+      readConversationWithEtag: vi.fn(
+        async (): Promise<{
+          conversation: { updatedAt?: number };
+          etag: string | null;
+        } | null> => ({ conversation: { updatedAt: 500 }, etag: 'sha256:1' }),
+      ),
+    };
+    const readState = {
+      getProjectReadState: vi.fn(
+        async (): Promise<{
+          readBefore: number;
+          versions: Map<string, string>;
+        } | null> => ({ readBefore: 100, versions: new Map() }),
+      ),
+      markProjectConversationViewed: vi.fn(async () => undefined),
+      removeProjectConversation: vi.fn(async () => undefined),
     };
     const listService = {
       listProjectConversations: vi.fn(),
@@ -196,10 +274,12 @@ describe('ProjectConversationsService', () => {
         conversationService as unknown as ConversationService,
         store as unknown as ProjectConversationStore,
         listService as unknown as ProjectConversationsListService,
+        readState as never,
       ),
       conversationService,
       store,
       listService,
+      readState,
     };
   };
 
@@ -251,6 +331,92 @@ describe('ProjectConversationsService', () => {
       't',
       'a1b2c3',
     );
+  });
+
+  it("stores the conversation's current version as viewed by the caller", async () => {
+    const { service, readState } = makeService();
+
+    await service.markViewed(PROJECT, 'gpt-4o__Hi__1', 'token', 'reader');
+
+    expect(readState.markProjectConversationViewed).toHaveBeenCalledWith(
+      PROJECT_ID,
+      LOCATOR,
+      'sha256:1',
+      'token',
+      'reader',
+    );
+  });
+
+  it('answers 404 and writes nothing when the conversation is missing', async () => {
+    const { service, store, readState } = makeService();
+    store.readConversationWithEtag.mockResolvedValue(null);
+
+    await expect(
+      service.markViewed(PROJECT, 'gpt-4o__Hi__1', 'token', 'reader'),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(readState.markProjectConversationViewed).not.toHaveBeenCalled();
+  });
+
+  it('drops a deleted conversation from the read state, without failing on a read-state error', async () => {
+    const { service, readState } = makeService();
+    readState.removeProjectConversation.mockRejectedValue(new Error('down'));
+
+    await expect(
+      service.deleteConversation(PROJECT, 'gpt-4o__Hi__1', 'token', 'a1b2c3'),
+    ).resolves.toBeUndefined();
+    expect(readState.removeProjectConversation).toHaveBeenCalledWith(
+      PROJECT_ID,
+      LOCATOR,
+      'token',
+      'a1b2c3',
+    );
+  });
+
+  it('keeps a read chat read after the owner renames it', async () => {
+    const { service, store, readState } = makeService();
+    readState.getProjectReadState.mockResolvedValue({
+      readBefore: 100,
+      versions: new Map([[LOCATOR, 'sha256:1']]),
+    });
+    store.readConversationWithEtag
+      .mockResolvedValueOnce({
+        conversation: { updatedAt: 500 },
+        etag: 'sha256:1',
+      })
+      .mockResolvedValueOnce({
+        conversation: { updatedAt: 600 },
+        etag: 'sha256:2',
+      });
+
+    await service.renameConversation(
+      PROJECT,
+      'gpt-4o__Hi__1',
+      'New',
+      'token',
+      'a1b2c3',
+    );
+
+    expect(readState.markProjectConversationViewed).toHaveBeenCalledWith(
+      PROJECT_ID,
+      LOCATOR,
+      'sha256:2',
+      'token',
+      'a1b2c3',
+    );
+  });
+
+  it('leaves an unread chat unread after a rename', async () => {
+    const { service, readState } = makeService();
+
+    await service.renameConversation(
+      PROJECT,
+      'gpt-4o__Hi__1',
+      'New',
+      'token',
+      'a1b2c3',
+    );
+
+    expect(readState.markProjectConversationViewed).not.toHaveBeenCalled();
   });
 
   it('refuses every write outside the caller bucket', async () => {

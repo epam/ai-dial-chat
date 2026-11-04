@@ -638,6 +638,8 @@ export interface InputProps {
    * popover after a selection or an explicit dismiss.
    */
   modelPickerOverlay?: (onClose: () => void) => ReactNode;
+  /** Reports open/dismiss events so host-owned picker search can reset on dismissal. Breakpoint changes keep it open. */
+  onModelPickerOpenChange?: (open: boolean) => void;
   /** Arbitrary slot rendered in the action row before the model selector. Use to inject app-level controls (e.g. a token-usage indicator). */
   usageLimitsSlot?: ReactNode;
   /**

@@ -23,6 +23,8 @@ export interface AttachmentCanvasContainerProps {
   leftActions?: ReactNode;
   /** Whether the viewport is in mobile breakpoint — disables drag-to-resize. Defaults to `false`. */
   isMobile?: boolean;
+  /** Opt into the bounded inline-end overlay while keeping legacy layout defaults. */
+  isBoundedOverlay?: boolean;
   /** Initial panel width in pixels. When omitted, SidebarPanel uses its own default. */
   defaultWidth?: number;
   /** Minimum panel width in pixels (desktop resize). Defaults to the panel's own minimum (600). */
@@ -58,6 +60,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
       labels,
       leftActions,
       isMobile = false,
+      isBoundedOverlay = false,
       defaultWidth,
       minWidth,
       maxWidth,
@@ -73,6 +76,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
         downloadLabel = 'Download',
         unsupportedLabel = 'Preview is not supported for this file',
         loadErrorLabel = 'Failed to load file',
+        loadErrorRetryLabel,
         forbiddenErrorLabel = "You don't have permission to access this file",
         copyTextLabel,
         copiedTextLabel,
@@ -107,7 +111,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
         ooxmlHighlightNavigatedLabel,
       } = labels ?? {};
 
-      const { isOpen, isLoading, content, fileName, closeCanvas } =
+      const { isOpen, isLoading, content, fileName, closeCanvas, retryCanvas } =
         useAttachmentCanvas();
 
       const handleDownload = useCallback(() => {
@@ -141,6 +145,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           isOpen={isOpen}
           isLoading={isLoading}
           onClose={closeCanvas}
+          onRetry={retryCanvas}
           content={content}
           fileName={fileName}
           leftActions={leftActions}
@@ -156,6 +161,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
             copiedJsonLabel,
             unsupportedLabel,
             loadErrorLabel,
+            loadErrorRetryLabel,
             forbiddenErrorLabel,
             htmlFrameBlockedLabel,
             htmlOpenInNewTabLabel,
@@ -202,6 +208,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           }
           tableDownloadFilename={tableDownloadFilename}
           isMobile={isMobile}
+          isBoundedOverlay={isBoundedOverlay}
           defaultWidth={defaultWidth}
           minWidth={minWidth}
           maxWidth={maxWidth}

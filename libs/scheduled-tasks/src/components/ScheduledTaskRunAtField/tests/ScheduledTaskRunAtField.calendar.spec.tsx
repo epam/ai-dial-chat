@@ -103,4 +103,29 @@ describe('ScheduledTaskRunAtField — real Calendar', () => {
     /* Re-picking the same day keeps its time-of-day (DateTime mode). */
     expect(onChange).toHaveBeenCalledWith(picked);
   });
+
+  it('offers an hour/minute picker for the time in the popover footer', async () => {
+    const pickedDate = new Date();
+    pickedDate.setDate(pickedDate.getDate() + 1);
+    const pad = (value: number) => String(value).padStart(2, '0');
+    const day = `${pickedDate.getFullYear()}-${pad(pickedDate.getMonth() + 1)}-${pad(pickedDate.getDate())}`;
+    render(
+      <ScheduledTaskRunAtField
+        label="Date and time"
+        placeholder="Pick date and time"
+        value={`${day}T09:30`}
+        onChange={onChange}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /Date and time/ }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Choose time' }));
+    /* "14" exists in both columns; the hour column renders first. */
+    await userEvent.click(screen.getAllByRole('option', { name: '14' })[0]);
+    await userEvent.click(screen.getByRole('option', { name: '45' }));
+
+    expect(onChange).toHaveBeenLastCalledWith(`${day}T14:45`);
+  });
 });

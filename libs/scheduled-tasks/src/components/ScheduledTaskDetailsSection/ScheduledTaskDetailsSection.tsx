@@ -15,6 +15,7 @@ export const ScheduledTaskDetailsSection: FC<
   labels,
   description,
   modelLabel,
+  renderModelName,
   repeatsLabel,
   activeWindowLabel,
   completedLabel,
@@ -80,7 +81,9 @@ export const ScheduledTaskDetailsSection: FC<
           >
             {labels.modelLabel}
           </span>
-          <p className={fieldValueClassName}>{modelLabel}</p>
+          <p className={fieldValueClassName}>
+            {renderModelName ? renderModelName(modelLabel) : modelLabel}
+          </p>
         </div>
       )}
 

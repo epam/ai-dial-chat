@@ -12,6 +12,7 @@ import {
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { DialClientService } from '../../dial/dial-client.service';
+import { ConversationReadStateService } from '../../scheduled-task-unread/conversation-read-state.service';
 import { UserConfigService } from '../../user-config/user-config.service';
 import {
   PROJECT_MANIFEST_MAX_BYTES,
@@ -43,6 +44,7 @@ import {
 } from '../utils/project-id.util';
 import {
   buildProjectManifest,
+  getArtifactContentType,
   PROJECT_CONTEXT_FOLDER,
   PROJECT_MANIFEST_FILE,
 } from '../utils/project-manifest.util';
@@ -106,6 +108,7 @@ export class ProjectsUpdateService {
     private readonly createService: ProjectsCreateService,
     private readonly snapshotService: ProjectsSnapshotService,
     private readonly userConfigService: UserConfigService,
+    private readonly readStateService: ConversationReadStateService,
   ) {}
 
   async updateProject(
@@ -192,7 +195,7 @@ export class ProjectsUpdateService {
         );
       } else {
         this.logger.log(
-          `Project saved (kept=${keptFiles.length}, added=${files.length}, removed=${removedFileNames.length}, conversations=${snapshot.conversationEntries.length}, bytes=${totalBytes})`,
+          `Project saved (kept=${keptFiles.length}, added=${files.length}, removed=${removedFileNames.length}, conversations=${snapshot.conversationEntries.length}, artifacts=${snapshot.artifactEntries.length}, bytes=${totalBytes})`,
         );
       }
     }
@@ -205,6 +208,12 @@ export class ProjectsUpdateService {
     const renameSignal = AbortSignal.timeout(PROJECT_RENAME_TIMEOUT_MS);
     await this.move(project, destination, accessToken, renameSignal);
     await this.migratePinQuietly(
+      project.id,
+      destination.id,
+      accessToken,
+      sessionBucket,
+    );
+    await this.migrateReadStateQuietly(
       project.id,
       destination.id,
       accessToken,
@@ -344,11 +353,6 @@ export class ProjectsUpdateService {
     addedFileNames.forEach((name, index) => {
       this.createService.appendContextFile(formData, name, files[index].buffer);
     });
-    /*
-     * Files another client wrote outside the chat's layout keep their bytes
-     * and path, but not their content type: the archive carries none, so
-     * they are re-uploaded as `application/octet-stream`.
-     */
     /* Project conversations keep their bytes; their stored type is always JSON. */
     for (const { name } of snapshot.conversationEntries) {
       const entryPath = `${PROJECT_CONVERSATIONS_FOLDER}/${name}`;
@@ -360,6 +364,25 @@ export class ProjectsUpdateService {
         entryPath,
       );
     }
+    /*
+     * The agents' outputs keep their bytes and path. The archive carries no
+     * content type, so it is re-derived from the extension
+     * (`getArtifactContentType`); the chat never adds, renames or removes one.
+     */
+    for (const entryPath of snapshot.artifactEntries) {
+      formData.append(
+        'file',
+        new Blob([await snapshot.readEntry(entryPath)], {
+          type: getArtifactContentType(entryPath),
+        }),
+        entryPath,
+      );
+    }
+    /*
+     * Files another client wrote outside the chat's layout keep their bytes
+     * and path, but not their content type: the archive carries none, so
+     * they are re-uploaded as `application/octet-stream`.
+     */
     for (const entryPath of snapshot.otherEntries) {
       formData.append(
         'file',
@@ -515,6 +538,27 @@ export class ProjectsUpdateService {
     } catch (err) {
       this.logger.warn(
         `Pin migration after a project rename failed (${describeError(err)})`,
+      );
+    }
+  }
+
+  /** Best-effort read-state re-keying after a committed rename; a failure is logged, not thrown. */
+  private async migrateReadStateQuietly(
+    oldId: string,
+    newId: string,
+    accessToken: string,
+    sessionBucket: string,
+  ): Promise<void> {
+    try {
+      await this.readStateService.renameProject(
+        oldId,
+        newId,
+        accessToken,
+        sessionBucket,
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Read-state migration after a project rename failed (${describeError(err)})`,
       );
     }
   }

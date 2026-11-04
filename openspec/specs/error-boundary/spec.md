@@ -7,17 +7,11 @@ The React error boundary: its accessible fallback, recovery paths, placement in 
 ## Requirements
 
 ### Requirement: ErrorBoundary catches descendant render and lifecycle errors
-The root and route wrappers (`RootErrorBoundary` and `RouteErrorBoundary` in `apps/chat/src/components/ErrorBoundary/ErrorBoundary.tsx`) SHALL use `react-error-boundary` to catch descendant errors thrown during render, construction, or React lifecycle methods.
+The root and route wrappers (`RootErrorBoundary` and `RouteErrorBoundary` in `apps/chat/src/components/ErrorBoundary/ErrorBoundary.tsx`) SHALL use the kit `ErrorBoundary` from `@epam/ai-dial-ui-kit` (0.16.0-dev.66+) to catch descendant errors thrown during render, construction, or React lifecycle methods. The kit boundary draws the fallback itself; the app passes only translated text, the recovery handler and `resetKeys`.
 
 The component SHALL NOT catch errors thrown inside event handlers, async functions (e.g., `useEffect` bodies after mount), or errors thrown by the boundary component itself.
 
-**Fallback props interface** (`ErrorFallback.tsx` extends the library's `FallbackProps`):
-```ts
-interface Props extends FallbackProps {
-  // from FallbackProps: error: unknown; resetErrorBoundary: () => void;
-  actionLabel?: ParseKeys<'translation'>; // i18n key override, default ButtonsI18nKeys.TryAgain ("buttons.tryAgain")
-}
-```
+**Wrapper props:** `RootErrorBoundary` passes `title`, `description`, `actionLabel` (`errorBoundary.reloadLabel`) and `onError`, and no `onReset`, so the kit boundary reloads the page. `RouteErrorBoundary` passes `actionLabel` (`buttons.tryAgain`), a no-op `onReset`, so the button renders the children again, and `resetKeys={[pathname]}`.
 
 **i18n keys (all in `apps/chat/src/i18n/locales/en.json`):**
 ```json
@@ -34,7 +28,7 @@ interface Props extends FallbackProps {
 
 #### Scenario: Child throws during render
 - **WHEN** a descendant component throws an `Error` during a render cycle
-- **THEN** the library boundary SHALL catch the error and render `ErrorFallback` in place of the crashed subtree
+- **THEN** the library boundary SHALL catch the error and render its fallback screen in place of the crashed subtree
 - **THEN** the configured root `onError` callback SHALL receive `(error, info)` where `info.componentStack` is the React component stack
 
 #### Scenario: Root logging behavior
@@ -44,13 +38,13 @@ interface Props extends FallbackProps {
 ---
 
 ### Requirement: Accessible fallback UI
-The default `ErrorFallback` component SHALL render an accessible, user-friendly error UI instead of a blank screen, by rendering `ErrorAlert` from `@epam/ai-dial-chat-shared` (`libs/chat-shared/src/components/ErrorAlert/ErrorAlert.tsx`) with translated labels and `resetErrorBoundary` as its action. `ErrorAlert` draws the shared full-screen `FullScreenAlert` layout, which wraps the kit `StateScreen`.
+The fallback SHALL be an accessible, user-friendly error UI instead of a blank screen. The kit `ErrorBoundary` renders it as a `StateScreen` with the default warning badge and an auto-focused `PrimaryButton`, with translated labels from the wrappers.
 
 **Accessibility requirements:**
-- The fallback SHALL carry no live-region role: it replaces the whole view, and the auto-focused action moves focus into the `section` named by the heading, which is what gets announced.
+- The crash SHALL be announced through an assertive `LiveRegion` (`role="alert"`) that the kit boundary mounts before any error, so the region exists before its text; it carries the heading. The screen itself is a `section` named by its heading.
 - The first interactive element (recovery button) SHALL receive `autoFocus` so keyboard users can act immediately.
 - The warning icon SHALL have `aria-hidden="true"` as it is decorative.
-- The heading SHALL render as the screen's `<h1>` (drawn by the kit `StateScreen` that `FullScreenAlert` wraps).
+- The heading SHALL render as the screen's `<h1>` (drawn by the kit `StateScreen`).
 - The recovery button SHALL be keyboard-accessible and focusable.
 
 **RTL requirements:**
@@ -87,13 +81,13 @@ The default `ErrorFallback` component SHALL render an accessible, user-friendly 
 ---
 
 ### Requirement: Recovery — retry and reset
-The `ErrorFallback` SHALL provide a recovery action button that either resets the error boundary (per-route) or reloads the page (root).
+The fallback SHALL provide a recovery action button that either resets the error boundary (per-route) or reloads the page (root).
 
 Recovery SHALL NOT trigger automatically; it SHALL only occur in response to an explicit user action, ensuring no infinite error loops are introduced by automatic recovery.
 
 #### Scenario: Per-route retry resets the boundary
 - **WHEN** the user clicks the recovery button inside a per-route `ErrorBoundary`
-- **THEN** `resetErrorBoundary` SHALL request a boundary reset
+- **THEN** the wrapper's `onReset` SHALL be called and the kit boundary SHALL clear its error state
 - **THEN** the boundary SHALL attempt to re-render its children
 - **THEN** if the same error recurs, the boundary SHALL catch it again and show the fallback — no automatic re-retry SHALL occur
 
@@ -101,9 +95,11 @@ Recovery SHALL NOT trigger automatically; it SHALL only occur in response to an 
 - **WHEN** the user clicks the recovery button inside the root `ErrorBoundary`
 - **THEN** `window.location.reload()` SHALL be called
 
-#### Scenario: Recovery button label is overridable
-- **WHEN** a boundary wrapper passes a custom `actionLabel` i18n key
-- **THEN** the `ErrorFallback` SHALL display the text resolved from that key
+#### Scenario: Recovery button label depends on the boundary
+- **WHEN** the root boundary shows its fallback
+- **THEN** the button SHALL read `errorBoundary.reloadLabel`
+- **WHEN** a per-route boundary shows its fallback
+- **THEN** the button SHALL read `buttons.tryAgain`
 
 ---
 
@@ -120,14 +116,14 @@ The root boundary SHALL NOT reload, reset, or retry automatically after catching
 ### Requirement: Navigation-triggered boundary reset
 The per-route `ErrorBoundary` SHALL reset its error state automatically when the user navigates to a different route, so that visiting a previously crashed route from a different URL starts fresh.
 
-**Mechanism:** A thin functional wrapper reads `useLocation().pathname` and passes it through the library boundary's `resetKeys` prop.
+**Mechanism:** A thin functional wrapper reads `useLocation().pathname` and passes it through the kit boundary's `resetKeys` prop.
 
 **State concerns:** No context or browser storage is involved in per-route reset.
 
 #### Scenario: Navigating away from a crashed route resets the boundary
 - **WHEN** a per-route boundary is in an error state (fallback is shown)
 - **AND** the user navigates to a different route (`pathname` changes)
-- **THEN** the library SHALL reset the boundary through `resetKeys`
+- **THEN** the kit boundary SHALL reset through `resetKeys`
 - **THEN** no fallback SHALL be shown on the new route (assuming the new route renders without error)
 
 #### Scenario: Returning to the crashed route after navigating away
@@ -148,7 +144,7 @@ Two boundary instances SHALL be integrated into the application entry points.
 **Per-route boundaries** (`apps/chat/src/app/app.tsx`):
 - One `RouteErrorBoundary` per lazy-loaded route element — `ConversationPage`, `CatalogView`, the shared-invitation pages, `DialFileManagerPage`, the scheduled-task pages, `ApplicationEditorPage`, `ToolsetAuthCallbackPage`, `PromptEditorPage`, `SkillEditorPage`, and `NotFoundPage`.
 - Each boundary wraps the corresponding `<Suspense fallback={<RouteFallback />}>` block.
-- Recovery action: call `resetErrorBoundary`.
+- Recovery action: a no-op `onReset`, after which the kit boundary renders the children again.
 - Navigation-triggered `resetKeys` reset is enabled.
 
 **Existing `<RouteFallback />` and `<Suspense>` boundaries are preserved** — `ErrorBoundary` wraps around them; it does not replace Suspense.
@@ -173,7 +169,7 @@ Two boundary instances SHALL be integrated into the application entry points.
 ---
 
 ### Requirement: Security — no sensitive information disclosure
-The `ErrorFallback` SHALL NOT expose raw error messages, stack traces, or component stacks in the rendered UI visible to the end user.
+The fallback SHALL NOT expose raw error messages, stack traces, or component stacks in the rendered UI visible to the end user.
 
 Development context (not applicable to production UI):
 - In a local development environment, engineers can inspect caught root errors via the browser DevTools console.
@@ -181,7 +177,7 @@ Development context (not applicable to production UI):
 
 #### Scenario: Error message is not rendered to the DOM
 - **WHEN** a descendant throws an error with a message containing implementation details (e.g., file paths, variable names)
-- **THEN** the `ErrorFallback` rendered DOM SHALL NOT contain that message text
+- **THEN** the rendered fallback DOM SHALL NOT contain that message text
 
 ---
 
@@ -203,22 +199,20 @@ The `[ErrorBoundary]` prefix SHALL be present so logs are easily filterable in b
 ---
 
 ### Requirement: Unit test coverage
-Tests for `ErrorBoundary` and `ErrorFallback` SHALL live at `apps/chat/src/components/ErrorBoundary/tests/ErrorBoundary.spec.tsx` and SHALL use Vitest 4 + `@testing-library/react` 16 with role, label, and text queries.
+Tests for `RootErrorBoundary` and `RouteErrorBoundary` SHALL live at `apps/chat/src/components/ErrorBoundary/tests/ErrorBoundary.spec.tsx` and SHALL use Vitest 4 + `@testing-library/react` 16 with role, label, and text queries.
 
 **Required test cases:**
 1. Normal children render when no error is thrown.
-2. Fallback renders when a descendant throws (`role="alert"` container present, heading and description text visible).
-3. Recovery button (`retryLabel`) resets the boundary and re-renders children.
+2. Fallback renders when a descendant throws (heading as `h1`, description visible).
+3. Recovery button (`buttons.tryAgain`) resets the boundary and re-renders children.
 4. Recovery button (`reloadLabel`) calls `window.location.reload` (mocked) when used in the root-boundary configuration.
 5. A root crash logs the error and React error info.
 6. A root crash does not call `window.location.reload()` automatically.
 7. Repeated failures: child throws → user clicks retry → child throws again → boundary shows fallback again.
 8. Recovery button has focus on mount (`document.activeElement` assertion).
-9. `role="alert"` is present on the fallback root element.
+9. The crash is announced through the `role="alert"` live region.
 10. Error message text does NOT appear in the rendered DOM.
 11. Navigation reset through `resetKeys` clears the route error state.
-
-**Memoisation:** `ErrorFallback` is a pure functional component with stable props; wrapping in `React.memo` is optional but acceptable.
 
 #### Scenario: Test suite passes with no console errors from React
 - **WHEN** the test suite for `ErrorBoundary` runs

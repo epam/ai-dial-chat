@@ -53,6 +53,27 @@ run by creation time, update time and descending ID; applying an older active
 run preserves its original relative position. Unchanged active selections
 reuse the collapsed array.
 
+For DIAL Core conversation listings, pass `getScheduledTaskRunGroupKey` as
+`getGroupKey` (it keys a run by `{bucket}/{scheduleId}`, because a schedule id
+is unique only per owner) and `isScheduledTaskRunCollapsible` as
+`isCollapsible` (pinned runs and runs shared with or published to the user stay
+visible):
+
+```ts
+import {
+  collapseScheduledTaskConversations,
+  getScheduledTaskRunGroupKey,
+  isScheduledTaskRunCollapsible,
+} from '@epam/ai-dial-chat-hooks/conversation';
+
+const visible = collapseScheduledTaskConversations(items, {
+  getGroupKey: getScheduledTaskRunGroupKey,
+  isCollapsible: isScheduledTaskRunCollapsible,
+  conversationIdsMatch,
+  activeConversationId,
+});
+```
+
 `useConversationDiscovery` accepts `UseConversationDiscoveryOptions`: `items`,
 `refresh`, `sessionKey`, `normalizeId`, optional `onError`, `retryCount` and
 `retryDelayMs`. Defaults are five additional retries, two seconds after each
@@ -74,7 +95,9 @@ abort obsolete requests. `UseScheduledTaskSkillDisplayNamesOptions` and
 `handleAttach` and `handleClose`. Only files are materialized, in selection
 order. Replacement, close and unmount cancel the old promise with `undefined`;
 late completions cannot settle a new attempt. The host owns downloads, paths,
-File construction and translated errors.
+File construction and translated errors. It is not tied to skills: the New project
+form's "File manager" source uses it with `T = File`. A host that imports it from
+`./skill-editor` needs that entry's peers, including `@epam/ai-dial-skill-editor`.
 
 ### Pending attachment results
 
@@ -190,7 +213,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.62
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.72
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.2
 - `@epam/pdf-highlighter-kit` ^0.0.19
@@ -467,6 +490,263 @@ successful load it watches the first 1000 listed ids:
 - a watch that cannot be opened is not retried for the rest of the visit.
 
 A client without `watchProjects` gets a one-off load, as before.
+
+`useProjectConversations` reads a project's whole conversation list once,
+because DIAL Core cannot page it in display order, and pages it locally:
+`items` holds the first 20 rows and `hasMore` tells whether more are loaded.
+`loadMore` shows 20 more; when some of them were listed with
+`isTitlePending`, it first reads their titles through the client's
+`getProjectConversationTitles(projectId, names, signal)`, and rejects when
+that read fails.
+
+A page that shows one project keeps it current with `useProjectWatch`. It
+opens once `etag` is known, skips an event carrying the loaded `etag`, runs
+`onChange` one at a time (plus one trailing run for whatever arrived
+meanwhile), calls `onDelete` once on a delete, and reconnects with the same
+backoff as `useProjects`, followed by one `onChange`. `useProject().refresh()`
+and `useProjectConversations().refresh()` re-read without the loading state;
+`refresh` of `useProject` resolves a `ProjectRefreshOutcome` (`Updated`,
+`NotFound`, `Failed`, `Skipped`). `useProjectConversations().markViewed(id)`
+clears a row's `isUnread` at once and calls the optional
+`ProjectsApiClient.markProjectConversationViewed`.
+`useProjectArtifacts(client, projectId)` reads the files the agents of the
+project's chats saved under `artifacts/` (`ProjectsApiClient.listProjectArtifacts`,
+newest first) and returns `{ items, isLoading, hasError, retry, refresh }`;
+`refresh` re-reads without the loading state and keeps the items on failure.
+`mapProjectArtifactsToOutputs(items)` turns them into the `ProjectOutputItem`s
+that `ProjectOutputs` from `@epam/ai-dial-projects` renders, with each content
+type inferred from the file name.
+`createSerializedKeyedWriter(write)` returns `{ enqueue, drop }`, a queue that
+runs one write at a time and never queues a key twice, for hosts that mark
+chats viewed from more than one page.
+
+Project file preview helpers (root and `./project`) build the keys and
+attachments a host opens in its attachment canvas, so the New, Edit and view
+pages share one scheme. `toProjectPreviewKey(scope, cardId)` returns
+`{scope}::{cardId}` (the scope is the project id, or a fixed value before the
+project exists) and `fromProjectPreviewKey(scope, key)` reads the card id back
+only for the same scope. `toProjectOutputCardId(name)` returns `artifacts/{name}`,
+so an output never shares a card id with a context file, and
+`fromProjectOutputCardId` reverses it. `toStoredProjectFileAttachment`,
+`toProjectOutputAttachment` and `toProjectContextFileAttachment` return the
+`DisplayAttachment` to open: a file added in the session is its own attachment
+(it carries the `File`), a stored file or output gets `url` from the
+`ProjectFileLocatorBuilder` the host passes. The locator scheme and its mapping
+to the project file endpoints stay with the host.
+
+```ts
+import {
+  fromProjectPreviewKey,
+  toProjectContextFileAttachment,
+  toProjectPreviewKey,
+} from '@epam/ai-dial-chat-hooks/project';
+
+/* The host owns the locator scheme its canvas content resolvers understand. */
+const toLocator = (projectId: string, name: string) =>
+  `${projectId}/files/context/${name}`;
+
+const attachment = toProjectContextFileAttachment(file, projectId, toLocator);
+const key = toProjectPreviewKey(projectId, file.id);
+const openCardId = fromProjectPreviewKey(projectId, canvasAttachmentId);
+```
+
+`useProjectFilePreview` (root and `./project`) is the controller the New project,
+Edit project and project view pages share, the project analogue of
+`useDialFilePreview`. It calls no canvas hook: the host passes the canvas
+`attachmentId`, `openAttachment(attachment, key, shouldCommit)`, `closeCanvas`,
+`startRequest()` (returns the commit guard of the latest request) and
+`resolveContextAttachment(cardId)`, plus `resolveOutputAttachment(name)` where
+outputs are shown. It derives `selectedCardId`, `selectedContextFileId` and
+`selectedOutputName` from the canvas, so there is no second state to keep in
+step, and returns `onContextFileClick`, `onOutputClick` and
+`closeIfRemoved(cards)`. Activating the open card closes the canvas, a card the
+host resolves to nothing is ignored, and `closeIfRemoved` closes the canvas only
+when the open context card is no longer among `cards`. Callbacks keep their
+identity while their inputs do; memoise `resolveContextAttachment` and
+`resolveOutputAttachment` on the cards they read. `UseProjectFilePreviewOptions`
+and `UseProjectFilePreviewResult` are public.
+
+```tsx
+import {
+  toProjectContextFileAttachment,
+  useProjectFilePreview,
+} from '@epam/ai-dial-chat-hooks/project';
+
+const { attachmentId, closeCanvas } = useAttachmentCanvas();
+const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
+const startRequest = useLatestCanvasRequest();
+const resolveContextAttachment = useCallback(
+  (id: string) => {
+    const file = files.find((item) => item.id === id);
+    return file && toProjectContextFileAttachment(file, projectId, toLocator);
+  },
+  [files, projectId],
+);
+const { selectedContextFileId, onContextFileClick, closeIfRemoved } =
+  useProjectFilePreview({
+    scope: projectId,
+    attachmentId,
+    openAttachment: openAttachmentCanvas,
+    closeCanvas,
+    startRequest,
+    resolveContextAttachment,
+  });
+```
+
+`useProjectDraft` (root and `./project`) owns the state of the New project and
+Edit project forms. Pass `{ mode: ProjectDraftMode.Create }`, or
+`{ mode: ProjectDraftMode.Edit, project }` with the loaded `ProjectDetailsDto`
+(or `null` while it loads). It returns `values`, `contextFiles`, `errors` and
+`setErrors` (for a rejection the host maps to a field), `onFieldChange` (a name
+change clears the name error), `onContextFilesChange` (clears the context
+error), `isDirty`, `isSeeded`, `removedFileNames` and `newFiles`. In edit mode
+the draft seeds itself from the project once per `contentVersion`, so a reload
+after a conflict replaces it and a re-render never does; it is neither seeded
+nor dirty until a project arrives. In create mode it is dirty once a field is
+non-empty or a file is staged. Navigation, the unsaved-changes guard, toasts and
+the canvas stay with the host; compose `onContextFilesChange` with
+`useProjectFilePreview`'s `closeIfRemoved`.
+
+```tsx
+import {
+  ProjectDraftMode,
+  useProjectDraft,
+} from '@epam/ai-dial-chat-hooks/project';
+
+const {
+  values,
+  contextFiles,
+  onFieldChange,
+  isDirty,
+  removedFileNames,
+  newFiles,
+} = useProjectDraft({ mode: ProjectDraftMode.Edit, project });
+```
+
+`createProjectChat(client, projectId, request, settings, onCreated)` (root and
+`./project`) creates a project chat from its first message (`request` is a
+`ConversationCreateRequest`: message, deployment, attachments, tool
+configuration, form values, skills), saves `settings` (`systemPrompt`,
+`temperature`, `responseFormat`) onto it, and calls `onCreated` with the saved
+chat even when saving the settings fails, then rethrows that failure; the chat
+exists either way, so a host that opens it avoids a duplicate on retry. A failed
+create rejects without calling `onCreated`. `classifyProjectChatCreateError(error)`
+resolves to `{ failure, requestId }` where `failure` is
+`ProjectChatCreateFailure.StorageFull` for the BFF's `project-storage-full` code
+and `ProjectChatCreateFailure.Failed` otherwise. The model selection, tool
+configuration, skill mentions, toasts and navigation stay with the host.
+
+```ts
+import {
+  classifyProjectChatCreateError,
+  createProjectChat,
+  ProjectChatCreateFailure,
+} from '@epam/ai-dial-chat-hooks/project';
+
+try {
+  await createProjectChat(
+    projectsClient,
+    projectId,
+    { firstMessage, deploymentId },
+    chatSettings,
+    (saved) => openChat(saved),
+  );
+} catch (error) {
+  const { failure, requestId } = await classifyProjectChatCreateError(error);
+  showError(failure === ProjectChatCreateFailure.StorageFull, requestId);
+}
+```
+
+`ConversationDataSource`, `ConversationListSync` and `NO_CONVERSATION_LIST_SYNC`
+(root and `./conversation`) are the contract a conversation page reads and writes
+through: the stream transport, `getConversation`/`saveConversation`, the
+save/delete `handlersApi`, `watchTitle`, the conversation and exit routes,
+`isReadOnly`, the sidebar `listSync`, `canDuplicate` and a host-resolved
+`notFoundMessageKey` string. `NO_CONVERSATION_LIST_SYNC` is the list sync of a
+conversation that has no sidebar row.
+
+`createProjectConversationDataSource(options)` (root and `./project`) returns that
+contract for a chat stored inside a project. It reads, saves, deletes, streams and
+attaches through the `client` you pass (`getProjectConversation`,
+`saveProjectConversation`, `deleteProjectConversation`,
+`attachToProjectGeneration`); maps a stream path to a conversation id by adding
+`projects/` only when it is missing; opens read-only unless `canEdit`; offers no
+Duplicate; marks the open chat viewed through your `viewedWriter` (a
+`SerializedKeyedWriter` you share with the project pages) and drops a waiting mark
+when a generation starts; and, because Core resource subscriptions inside a
+project are unavailable, polls the watch stream every five seconds and re-reads
+the conversation up to five times, two seconds apart, for the title its first
+reply produces. The host supplies `stream` (`completionsBasePath`, `getCsrfToken`,
+`setCsrfToken`), `routes` and `notFoundMessageKey`.
+
+```ts
+import { createProjectConversationDataSource } from '@epam/ai-dial-chat-hooks/project';
+
+const source = createProjectConversationDataSource({
+  projectId,
+  canEdit,
+  client: projectsClient,
+  stream: {
+    completionsBasePath: `/api/projects/${encodeURIComponent(projectId)}/conversations`,
+    getCsrfToken,
+    setCsrfToken,
+  },
+  routes: { getConversationRoute, getExitRoute: () => projectRoute },
+  viewedWriter,
+});
+```
+
+`usePublishHistory({ isOpen, entityId, loadHistory })` (root and `./catalog`) returns
+the `PublishHistoryEntry[]` a publish panel uses to block a folder the entity is
+already published to. It reads through your `loadHistory(entityId)` each time
+`isOpen` turns true, so a publication requested since the last open shows, leaves
+the history empty when a read fails (the backend still refuses a duplicate), and
+ignores a read that finishes after the panel closed or `entityId` changed. The
+request and its mapping to `PublishHistoryEntry` (for the catalog endpoint,
+`mapPublishHistoryEntryDto`) stay with the host.
+
+```tsx
+import {
+  ProjectRefreshOutcome,
+  createProjectsApiClient,
+  createSerializedKeyedWriter,
+  mapProjectArtifactsToOutputs,
+  useProject,
+  useProjectArtifacts,
+  useProjectConversations,
+  useProjectWatch,
+} from '@epam/ai-dial-chat-hooks/project';
+
+/* Module scope: one queue for every page that marks chats viewed. */
+const projectsRequests = createProjectsApiClient(projectsApi);
+const viewedWriter = createSerializedKeyedWriter((id) =>
+  projectsRequests.markProjectConversationViewed(id),
+);
+const projectsClient = {
+  ...projectsRequests,
+  markProjectConversationViewed: (id: string) => viewedWriter.enqueue(id),
+};
+
+const ProjectPage = () => {
+  const { project, refresh } = useProject(projectsClient, projectId, true);
+  const conversations = useProjectConversations(projectsClient, projectId);
+  const artifacts = useProjectArtifacts(projectsClient, projectId);
+  const outputs = mapProjectArtifactsToOutputs(artifacts.items);
+  useProjectWatch(projectsClient, projectId, {
+    etag: project?.etag,
+    onChange: async () => {
+      const [outcome] = await Promise.all([
+        refresh(),
+        conversations.refresh(),
+        artifacts.refresh(),
+      ]);
+      if (outcome === ProjectRefreshOutcome.NotFound) leavePage();
+    },
+    onDelete: leavePage,
+  });
+  // …
+};
+```
 
 ```tsx
 // ./offline-credentials — no peer beyond react
@@ -2924,6 +3204,20 @@ text stays with the host.
 
 ## Locale Utilities
 
+### getAcceptInvitationErrorItemName
+
+`getAcceptInvitationErrorItemName(error)` resolves the shared item's title that
+a refused `acceptInvitation` call carries in its `AcceptInvitationErrorDto` body,
+or `undefined` when the error is not a `ResponseError`, the body is not JSON or
+the title is empty. The response is cloned, so the body stays readable. Available
+from the root and `./utils`.
+
+```ts
+import { getAcceptInvitationErrorItemName } from '@epam/ai-dial-chat-hooks';
+
+const itemName = await getAcceptInvitationErrorItemName(error);
+```
+
 ### toBaseLocale / resolveLocalizedText / appendLocaleCode
 
 Resolves DIAL Core's `LocalizedText` shape (a plain string, or a map of locale code to translated value) to a single display string, with base-language and primary-locale fallback.
@@ -3117,25 +3411,26 @@ The module imports only browser APIs, `@epam/ai-dial-chat-shared`, and `@epam/ai
 
 ### OAuth enums and models
 
-| Name                                | Kind      | Purpose                                                                                              |
-| ----------------------------------- | --------- | ---------------------------------------------------------------------------------------------------- |
-| `ToolsetAuthTypes`                  | enum      | `NONE` / `API_KEY` / `OAUTH` — the mechanism a toolset requires.                                     |
-| `ToolsetAuthStatus`                 | enum      | `SIGNED_IN` / `SIGNED_OUT` / `FAILED` — sign-in state for one credentials level.                     |
-| `ToolsetCredentialsLevel`           | enum      | `GLOBAL` / `USER` / `APP` — scope the submitted credentials apply to.                                |
-| `WithLogin`                         | enum      | `with-login` / `without-login` / `with-config`.                                                      |
-| `OAuthResourceKind`                 | enum      | `toolset` / `external-service` / `offline-credentials`.                                              |
-| `ToolsetOAuthInitiationResultType`  | enum      | `started` / `blocked` / `invalid-config`.                                                            |
-| `ToolsetOAuthResultType`            | enum      | `success` / `failure` / `cancelled`.                                                                 |
-| `ToolsetOAuthFailureReason`         | enum      | `missing-code` / `missing-redirect-state` / `state-mismatch` / `login-request-failed`.               |
-| `ToolsetOAuthChannelControlType`    | enum      | `result-acknowledged` — the opener's consumption acknowledgement.                                    |
-| `ToolsetOAuthCallbackQuery`         | enum      | `toolsetOAuthResult` / `toolsetOAuthFailureReason` — query keys written into the callback popup URL. |
-| `TOOLSET_REDIRECT_STATE_KEY`        | const     | `sessionStorage` key the redirect state is written under, inside the popup.                          |
-| `ToolsetOAuthSettings`              | interface | `clientId` / `authorizationEndpoint` / `scopes` / `codeChallenge` / `codeChallengeMethod`.           |
-| `ToolsetRedirectState`              | interface | State handed to the popup: `toolsetId`, `credentialsLevel`, `redirectUri`, `state`, `resourceKind`.  |
-| `ToolsetOAuthInitiationResult`      | type      | Discriminated result of opening/navigating the popup.                                                |
-| `ToolsetOAuthResult`                | type      | Discriminated result resolved to the initiating tab.                                                 |
-| `ToolsetOAuthChannelMessage`        | type      | Non-secret success/failure message posted by the callback.                                           |
-| `ToolsetOAuthResultAcknowledgement` | interface | Control message confirming the opener consumed a result.                                             |
+| Name                                | Kind      | Purpose                                                                                                 |
+| ----------------------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
+| `ToolsetAuthTypes`                  | enum      | `NONE` / `API_KEY` / `OAUTH` — the mechanism a toolset requires.                                        |
+| `ToolsetAuthStatus`                 | enum      | `SIGNED_IN` / `SIGNED_OUT` / `FAILED` — sign-in state for one credentials level.                        |
+| `ToolsetCredentialsLevel`           | enum      | `GLOBAL` / `USER` / `APP` — scope the submitted credentials apply to.                                   |
+| `WithLogin`                         | enum      | `with-login` / `without-login` / `with-config`.                                                         |
+| `OAuthResourceKind`                 | enum      | `toolset` / `external-service` / `offline-credentials`.                                                 |
+| `ToolsetOAuthInitiationResultType`  | enum      | `started` / `blocked` / `invalid-config`.                                                               |
+| `ToolsetOAuthResultType`            | enum      | `success` / `failure` / `cancelled`.                                                                    |
+| `ToolsetOAuthFailureReason`         | enum      | `missing-code` / `missing-redirect-state` / `state-mismatch` / `login-request-failed`.                  |
+| `ToolsetOAuthChannelControlType`    | enum      | `result-acknowledged` — the opener's consumption acknowledgement.                                       |
+| `ToolsetOAuthCallbackQuery`         | enum      | `toolsetOAuthResult` / `toolsetOAuthFailureReason` — query keys written into the callback popup URL.    |
+| `TOOLSET_REDIRECT_STATE_KEY`        | const     | `sessionStorage` key the redirect state is written under, inside the popup.                             |
+| `ToolsetOAuthSettings`              | interface | `clientId` / `authorizationEndpoint` / `scopes` / `codeChallenge` / `codeChallengeMethod` / `resource`. |
+| `ToolsetOAuthSettingsSource`        | interface | Public OAuth fields of a DIAL Core auth-settings DTO, as `toToolsetOAuthSettings` reads them.           |
+| `ToolsetRedirectState`              | interface | State handed to the popup: `toolsetId`, `credentialsLevel`, `redirectUri`, `state`, `resourceKind`.     |
+| `ToolsetOAuthInitiationResult`      | type      | Discriminated result of opening/navigating the popup.                                                   |
+| `ToolsetOAuthResult`                | type      | Discriminated result resolved to the initiating tab.                                                    |
+| `ToolsetOAuthChannelMessage`        | type      | Non-secret success/failure message posted by the callback.                                              |
+| `ToolsetOAuthResultAcknowledgement` | interface | Control message confirming the opener consumed a result.                                                |
 
 These declarations live in the package rather than being copied per host: TypeScript string enums are nominal, so a structurally identical host-side copy would not type-check against a lib signature that names the enum.
 
@@ -3204,9 +3499,9 @@ import { getToolsetFallbackName } from '@epam/ai-dial-chat-hooks/oauth';
 getToolsetFallbackName('toolsets/bucket/My%20Toolset__1.0.0'); // 'My Toolset'
 ```
 
-### getToolsetRedirectUri / buildToolsetAuthorizeUrl
+### getToolsetRedirectUri / buildToolsetAuthorizeUrl / toToolsetOAuthSettings
 
-`getToolsetRedirectUri` resolves the host's own callback path against `window.location.origin`. `buildToolsetAuthorizeUrl` builds an authorization-code URL carrying `response_type=code`, `client_id`, `redirect_uri` and `state`, plus `code_challenge`/`code_challenge_method` and a space-joined `scope` when the supplied settings carry them. It returns `null` — never throws — for a configuration that cannot produce a valid URL: a missing or blank `clientId`/`authorizationEndpoint`, an unparseable endpoint, or an endpoint whose scheme is not `http:`/`https:` (so `javascript:` and `data:` URLs never reach the popup). Plain `http:` is accepted for any host.
+`getToolsetRedirectUri` resolves the host's own callback path against `window.location.origin`. `buildToolsetAuthorizeUrl` builds an authorization-code URL carrying `response_type=code`, `client_id`, `redirect_uri` and `state`, plus `code_challenge`/`code_challenge_method`, a space-joined `scope` and the RFC 8707 `resource` when the supplied settings carry them. `resource` is the value DIAL Core stored for the client and sends on the token exchange; it is added trimmed and otherwise verbatim, and left out when blank — servers that check it on both legs reject a mismatch with `invalid_target`. It returns `null` — never throws — for a configuration that cannot produce a valid URL: a missing or blank `clientId`/`authorizationEndpoint`, an unparseable endpoint, or an endpoint whose scheme is not `http:`/`https:` (so `javascript:` and `data:` URLs never reach the popup). Plain `http:` is accepted for any host.
 
 **Parameters** (`buildToolsetAuthorizeUrl`):
 
@@ -3228,10 +3523,24 @@ const url = buildToolsetAuthorizeUrl(
     clientId: 'client',
     authorizationEndpoint: 'https://auth.example.com/authorize',
     scopes: ['read', 'write'],
+    resource: 'https://mcp.example.com/mcp',
   },
   redirectUri,
   crypto.randomUUID(),
 );
+```
+
+`toToolsetOAuthSettings(source?)` maps the public OAuth fields of a toolset's `authSettings` or an external service's metadata (`clientId`, `authorizationEndpoint`, `scopesSupported`, `codeChallenge`, `codeChallengeMethod`, `resource`) onto `ToolsetOAuthSettings`, so every login entry point passes the same fields; an absent source yields all-`undefined` settings. Available from the root and `./oauth`.
+
+```ts
+import { toToolsetOAuthSettings } from '@epam/ai-dial-chat-hooks';
+
+await login({
+  toolsetId: toolset.id,
+  credentialsLevel,
+  authenticationType: ToolsetAuthTypes.OAuth,
+  oauthSettings: toToolsetOAuthSettings(toolset.authSettings),
+});
 ```
 
 ### openToolsetOAuthPopup / navigateToolsetOAuthPopup / initiateOAuthLogin
@@ -3326,12 +3635,13 @@ For OAuth, a reported cancellation is re-checked against the backend through `ge
 
 **Parameters**:
 
-| Name            | Type                                                                  | Description                                           |
-| --------------- | --------------------------------------------------------------------- | ----------------------------------------------------- |
-| `callbackPath`  | `string`                                                              | The host's OAuth callback route.                      |
-| `loginToolset`  | `(toolsetId: string, body: ToolsetLoginBodyDto) => Promise<unknown>`  | Submits credentials at one level.                     |
-| `logoutToolset` | `(toolsetId: string, body: ToolsetLogoutBodyDto) => Promise<unknown>` | Clears credentials at one level.                      |
-| `getToolset`    | `(toolsetId: string) => Promise<DialToolsetDto>`                      | Re-reads a toolset to verify a reported cancellation. |
+| Name                       | Type                                                                  | Description                                                                                                                                                                                                                                                             |
+| -------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `callbackPath`             | `string`                                                              | The host's OAuth callback route.                                                                                                                                                                                                                                        |
+| `loginToolset`             | `(toolsetId: string, body: ToolsetLoginBodyDto) => Promise<unknown>`  | Submits credentials at one level.                                                                                                                                                                                                                                       |
+| `logoutToolset`            | `(toolsetId: string, body: ToolsetLogoutBodyDto) => Promise<unknown>` | Clears credentials at one level.                                                                                                                                                                                                                                        |
+| `getToolset`               | `(toolsetId: string) => Promise<DialToolsetDto>`                      | Re-reads a toolset to verify a reported cancellation.                                                                                                                                                                                                                   |
+| `shouldFetchOAuthSettings` | `boolean`                                                             | Optional, default `false`. An OAuth login opens the popup first, then reads the toolset's current OAuth settings with `getToolset` instead of using `params.oauthSettings`; a popup closed meanwhile resolves cancelled, a toolset no longer on OAuth resolves failure. |
 
 **Returns**: `{ login: (params: ToolsetLoginParams) => Promise<ToolsetLoginOutcome> }` — `login` is `useCallback`-stable while the injected callbacks are unchanged.
 
@@ -3952,6 +4262,15 @@ const error = validatePromptName('My Prompt'); // PromptFieldError | null
 const remaining = getRemainingCharacters('My Prompt', PROMPT_NAME_MAX_LENGTH);
 ```
 
+`PROMPT_FIELD_VALIDATORS` maps each prompt form field (`name`, `description`, `content`) to its validator, and `PromptFieldErrors` holds one optional `PromptFieldError` per field — the shape a prompt form validates into on each change.
+
+```ts
+import { PROMPT_FIELD_VALIDATORS } from '@epam/ai-dial-chat-hooks';
+
+const validateField = PROMPT_FIELD_VALIDATORS[field];
+const error = validateField(value) ?? undefined;
+```
+
 ### PromptSource / parsePromptResourceUrl
 
 `PromptSource` identifies which prompt namespace a catalog prompt item came from. `CatalogItem.id` for a prompt is always the full `prompts/{bucket}/{path}` resource path, regardless of source; `parsePromptResourceUrl` splits it back into `{ bucket, path }` for the one caller that still needs the bucket-relative sub-path on its own — the organisation (public) prompt read, whose endpoint kept a bucket-relative `path` argument.
@@ -4016,6 +4335,118 @@ changed schedule. The older `mapFormValuesToCreateBody` and
 stale generations, distinguish `initialError` from `loadMoreError`, preserve
 loaded records after a page failure, and expose `retryLoadMore`. No hook
 constructs a client or reads application state.
+
+### useStartScheduledTask / mergeScheduledTaskRuns
+
+`useStartScheduledTask` owns one manual "Start now" request for a schedule and
+the run it accepts. `start()` sends at most one request while one is pending,
+while `canStart` is false, or while any accepted or `loadedRuns` entry is
+`InProgress`. An accepted `InProgress` run is polled every 2s for up to 70s;
+polling pauses while the tab is hidden, honours `Retry-After`, and stops on a
+terminal status, a 401/403/404, or a terminal copy of the run in `loadedRuns`.
+`statusFeedback` is `ScheduledTaskRunStatusFeedback.Unavailable` after a
+failed status request and `Delayed` once the deadline passes;
+`refreshStatus()` polls once more on demand. Changing `scheduleId` or
+`enabled` resets everything.
+
+`mergeScheduledTaskRuns(acceptedRuns, loadedRuns)` deduplicates runs by id,
+keeping first-seen order and never replacing a terminal status with
+`InProgress`. All three are available from the root and `./scheduled-tasks`.
+
+```ts
+import {
+  mergeScheduledTaskRuns,
+  useStartScheduledTask,
+  type StartScheduledTaskApi,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+// Bound to the host's configured client; keep the object stable.
+const startApi: StartScheduledTaskApi = {
+  startScheduledTask: (scheduleId) => client.startScheduledTask({ scheduleId }),
+  getScheduledTaskRun: (scheduleId, runId, signal) =>
+    client.getScheduledTaskRun(
+      { scheduleId, runId },
+      signal ? { signal } : undefined,
+    ),
+};
+
+const { acceptedRuns, isStarting, statusFeedback, start, refreshStatus } =
+  useStartScheduledTask({
+    api: startApi,
+    scheduleId,
+    enabled: true,
+    canStart: task != null,
+    loadedRuns: runs,
+  });
+const historyRuns = mergeScheduledTaskRuns(acceptedRuns, runs);
+```
+
+### Scheduled-task display adapters
+
+Turn scheduler DTOs into the props `@epam/ai-dial-scheduled-tasks` renders.
+The lib decides everything the response determines — the trigger kind and the
+timezone it is shown in, the duration units, whether a run started today, the
+run status, and which delete or mutation error applies — and the host supplies
+every word through formatter objects. Available from the root and
+`./scheduled-tasks`.
+
+| Export                                                              | Returns                                                                                                                                      |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output; `options.timeZone` defaults to the browser's, `options.locale` formats dates and weekdays |
+| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                        |
+| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                     |
+| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                  |
+| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                             |
+| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                 |
+| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                  |
+
+```ts
+import {
+  toScheduledTaskItems,
+  toScheduledTaskRunItems,
+  type ScheduledTaskRunDurationLabels,
+  type ScheduledTaskRunTimestampLabels,
+  type ScheduledTaskScheduleLabels,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+const scheduleLabels: ScheduledTaskScheduleLabels = {
+  onceAt: (date) => `Once on ${date}`,
+  everyNMinutes: (count) => `Every ${count} minutes`,
+  hourlyAt: (minute) => `Every hour at :${minute}`,
+  dailyAt: (time) => `Every day at ${time}`,
+  weeklyAt: (day, time) => `Every ${day} at ${time}`,
+  everyNWeeks: (count, day, time) =>
+    `Every ${count} weeks on ${day} at ${time}`,
+  monthlyAt: (day, time) => `Monthly on day ${day} at ${time}`,
+  invalid: 'Invalid schedule',
+  recurringFallback: 'Recurring',
+};
+const durationLabels: ScheduledTaskRunDurationLabels = {
+  hours: (count) => `${count}h`,
+  minutes: (count) => `${count}m`,
+  seconds: (count) => `${count}s`,
+  suffix: (duration) => `(${duration})`,
+};
+const timestampLabels: ScheduledTaskRunTimestampLabels = {
+  todayAt: (time) => `Today at ${time}`,
+  dateAt: (date, time) => `${date} at ${time}`,
+};
+
+const items = toScheduledTaskItems(tasks, scheduleLabels, { locale: 'en' });
+const runItems = toScheduledTaskRunItems(runs, {
+  timestampLabels,
+  durationLabels,
+  conversations,
+  conversationIdsMatch: (left, right) => left === right,
+});
+```
+
+Keep the formatter objects stable (module constants or `useMemo`) when the
+mapping runs inside a memoized selector. `apps/chat` wraps these as
+`buildScheduleLabel`, `mapScheduledTaskDtoToItem(s)`, `formatRunDuration`,
+`formatRunTimestamp`, `mapScheduledTaskRunDtoToItem(s)`,
+`getDeleteErrorMessageKey` and `resolveScheduledTaskErrorMessage`, each
+building the formatters from `t()`.
 
 ### mapFormValuesToCreateBody / mapFormValuesToUpdateBody / mapScheduledTaskDtoToFormValues
 
@@ -4337,6 +4768,56 @@ const {
   canCreateSkill,
   canCreateSchema,
 });
+```
+
+### useCatalogItemDelete
+
+The delete handler `useCatalogEditNavigation` returns, for a host that builds its
+own Edit and Create flows. `useCatalogItemDelete(params)` returns
+`(item) => Promise<void>`: it deletes a prompt, toolset or skill through its own
+operation (a skill by the bucket and path parsed from its resource URL) and any
+other item as an application, refetches that listing and calls
+`onDeleteSuccess`. On failure it calls `onNotify` with `deleteErrorLabel` and
+the request's trace id, then rethrows so a confirmation stays open.
+`UseCatalogItemDeleteParams` and `CatalogItemDeleteNotification` are exported.
+Available from the root and `./catalog`.
+
+```ts
+import { useCatalogItemDelete } from '@epam/ai-dial-chat-hooks/catalog';
+
+const handleDelete = useCatalogItemDelete({
+  deletePrompt,
+  deleteToolset,
+  deleteSkill,
+  deleteApplication,
+  refetchPrompts,
+  refetchToolsets,
+  refetchSkills,
+  refetchDeployments,
+  onDeleteSuccess: notifyDeleted,
+  deleteErrorLabel: t('catalog.details.deleteError'),
+  onNotify: showErrorNotification,
+});
+```
+
+### rememberPublishFolderKey / hasPublishFolderWriteAccess
+
+The publish-destination rules `usePublishFolders` applies, for a host that
+builds its own folder tree. `rememberPublishFolderKey(storedKeys, folderKey)`
+returns the remembered destination keys with `folderKey` moved to the front and
+the list capped at 50, or `undefined` when nothing changes (an empty key, or one
+already first); a stored value that is not an array of strings is ignored.
+`hasPublishFolderWriteAccess(folderPath)` is `false` for a folder under a
+`Production` segment. Available from the root and `./catalog`.
+
+```ts
+import {
+  hasPublishFolderWriteAccess,
+  rememberPublishFolderKey,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const next = rememberPublishFolderKey(storedKeys, toFolderPathKey(folderPath));
+if (next) setStoredKeys(next);
 ```
 
 ### useCatalogToolsetCredentials
@@ -5095,6 +5576,33 @@ const panelActiveConversationId = useActiveConversationSync({
 
 **Returns**: `string | undefined` — the panel-space id to highlight.
 
+### readConversationTitleStream / createSseFrameDecoder / parseConversationTitleStreamEvent
+
+Typed reader for the body of `streamConversationTitles` (the finite SSE title
+stream). `readConversationTitleStream(body)` yields each event as a
+`ConversationTitleStreamEventDto`; `createSseFrameDecoder` splits bytes into SSE
+frames and `parseConversationTitleStreamEvent` validates one `data:` payload
+against the generated event union. A frame over
+`CONVERSATION_TITLE_STREAM_MAX_FRAME_BYTES` or a payload outside the union throws
+`ConversationTitleStreamProtocolError`, after which the attempt must stop
+without retrying. `isConversationTitleStreamUnsupported(error)` is `true` when
+the route answered 404 or 405 (an older backend), so the host can fall back to
+the JSON titles endpoint. `CONVERSATION_TITLE_STREAM_MAX_IDS` and
+`CONVERSATION_TITLE_STREAM_MAX_ID_BYTES` are the request bounds. Available from
+the root and `./conversation`.
+
+```ts
+import { readConversationTitleStream } from '@epam/ai-dial-chat-hooks/conversation';
+
+const response = await conversationsApi.streamConversationTitlesRaw(
+  { streamConversationTitlesBodyDto: { ids } },
+  { signal },
+);
+for await (const event of readConversationTitleStream(response.raw.body!)) {
+  applyTitleEvent(event);
+}
+```
+
 ### useVisibleConversationIdsReporter
 
 Feeds the conversation panel's viewport report into title-enrichment priority. It returns the `(panelIds: string[]) => void` callback the panel calls with its visible rows, maps those panel ids back to list ids through `toPanelConversationId`, and registers them with `setVisibleConversationIds(viewKey, ids)` (from `useConversationTitleEnrichmentController`) under a per-instance key. While `isVisible` is `false` it registers `null` but keeps the last report, so reopening restores priority without a scroll; unmounting withdraws the registration. `UseVisibleConversationIdsReporterParams` is exported.
@@ -5372,8 +5880,9 @@ every other service follows its user-level status, and shows
 `hasSharedCredentials` while signed out with a global or app-level login.
 `buildApplicationCredentialLoginParams(appId, service, params)` returns the
 user-level `ExternalServiceLoginParams` for `useExternalServiceLogin().login`,
-with the service's OAuth settings and `forceStale` when its user-level status
-is `FAILED`.
+with the service's OAuth settings (including its `resource`, through
+`toToolsetOAuthSettings`) and `forceStale` when its user-level status is
+`FAILED`.
 
 ```tsx
 import {
@@ -5686,7 +6195,9 @@ useExternalServiceLogin and its params/outcome/auth enums are available from the
 root and external-services entry. ExternalServiceLoginOptions supplies callbackPath,
 service get/sign-in/sign-out operations, offline status and offline login callbacks.
 The controller uses the existing OAuth popup/handshake implementation; hosts retain
-client configuration and callback code exchange. A reserved popup is reused, stale
+client configuration and callback code exchange. `ExternalServiceOAuthSettings`
+is an alias of `ToolsetOAuthSettings`, `resource` included, so the authorize URL
+carries the service's RFC 8707 resource indicator. A reserved popup is reused, stale
 logout is best-effort, API keys are trimmed, ambiguous cancellation is checked against
 fresh service status and DIAL-native login verifies administrator consent again after
 successful offline login. Offline timeout maps explicitly to failure.

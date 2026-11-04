@@ -47,3 +47,10 @@
     var(--bg-control-disable-primary, #dce0e8)
   );
 }
+
+/* A clickable card's keyboard focus sits on its visually hidden button, so
+ * the card draws the ring. */
+.card:has(> .cardButton:focus-visible) {
+  outline: 2px solid var(--cg-focus-outline, var(--stroke-focus, #161b2d));
+  outline-offset: 2px;
+}

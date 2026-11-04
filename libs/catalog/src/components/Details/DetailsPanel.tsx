@@ -1118,7 +1118,10 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
       }
       style={cssVars}
       overlayStyle={cssVars}
-      className={styles.panel}
+      className={mergeClasses(
+        styles.panel,
+        'tablet:w-[540px]! tablet:max-w-[calc(100%-32px)]!',
+      )}
       overlayClassName={styles.backdrop}
       headerClassName={styles.divider}
       titleClassName={mergeClasses(subViewTitleClassName, styles.publishTitle)}

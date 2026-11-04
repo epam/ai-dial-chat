@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { ConversationService } from '../../conversations/conversation.service';
 import type { CreateConversationDto } from '../../conversations/dto/create-conversation.dto';
@@ -11,12 +12,17 @@ import { ProjectConversationStore } from '../../conversations/persistence/projec
 import { buildNewConversation } from '../../conversations/utils/conversation.utils';
 import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import {
+  ConversationReadStateService,
+  isProjectConversationUnread,
+} from '../../scheduled-task-unread/conversation-read-state.service';
+import {
   buildProjectConversationLocator,
   fromStrippedProjectConversationPath,
   toProjectConversationDeploymentKey,
 } from '../utils/project-conversation-id.util';
 import type { ParsedProjectId } from '../utils/project-id.util';
 import type { ProjectConversationListResponseDto } from './dto/project-conversation-list-response.dto';
+import type { ProjectConversationTitlesResponseDto } from './dto/project-conversation-titles.dto';
 import { ProjectConversationsListService } from './project-conversations-list.service';
 
 /**
@@ -35,6 +41,7 @@ export class ProjectConversationsService {
     private readonly conversationService: ConversationService,
     private readonly store: ProjectConversationStore,
     private readonly listService: ProjectConversationsListService,
+    private readonly readStateService: ConversationReadStateService,
   ) {}
 
   /** `403` unless the project is in the caller's own bucket. */
@@ -63,15 +70,59 @@ export class ProjectConversationsService {
   listConversations(
     project: ParsedProjectId,
     accessToken: string,
-    limit?: number,
-    offset?: number,
+    sessionBucket: string,
   ): Promise<ProjectConversationListResponseDto> {
     return this.listService.listProjectConversations(
       project,
       accessToken,
-      limit,
-      offset,
+      sessionBucket,
     );
+  }
+
+  /** Resolves the titles and read state of the named conversations; names the project does not hold are omitted. */
+  resolveConversations(
+    project: ParsedProjectId,
+    names: string[],
+    accessToken: string,
+    sessionBucket: string,
+  ): Promise<ProjectConversationTitlesResponseDto> {
+    return this.listService.resolveProjectConversations(
+      project,
+      names,
+      accessToken,
+      sessionBucket,
+    );
+  }
+
+  /**
+   * Records the conversation's current version as seen by the caller, in the
+   * caller's own read state. Any reader may call it: reading the body checks
+   * Core access and proves the conversation exists.
+   */
+  async markViewed(
+    project: ParsedProjectId,
+    name: string,
+    accessToken: string,
+    sessionBucket: string,
+  ): Promise<void> {
+    const locator = buildProjectConversationLocator(project, name);
+    const stored = await this.store.readConversationWithEtag(
+      locator,
+      accessToken,
+    );
+    if (stored == null) {
+      throw new NotFoundException('Conversation not found');
+    }
+    /* The project store always answers a content hash; without one there is nothing to compare later. */
+    if (stored.etag == null) return;
+    await this.readStateService.markProjectConversationViewed(
+      project.id,
+      locator,
+      stored.etag,
+      accessToken,
+      sessionBucket,
+    );
+    this.logger.debug('Project conversation marked viewed');
   }
 
   /** Creates `conversations/{deployment}__{title}__{uuid}` with `If-Match: *`; the trailing UUID makes a collision negligible. */
@@ -142,6 +193,12 @@ export class ProjectConversationsService {
   ): Promise<RenameConversationResponseDto> {
     this.assertOwner(project, sessionBucket);
     const locator = buildProjectConversationLocator(project, name);
+    const wasRead = await this.isReadQuietly(
+      project,
+      locator,
+      accessToken,
+      sessionBucket,
+    );
     const renamed = await this.conversationService.renameConversation(
       locator,
       newTitle,
@@ -149,6 +206,9 @@ export class ProjectConversationsService {
       sessionBucket,
     );
     await this.listService.evict(locator);
+    if (wasRead) {
+      await this.keepReadQuietly(project, locator, accessToken, sessionBucket);
+    }
     return renamed;
   }
 
@@ -163,5 +223,75 @@ export class ProjectConversationsService {
     await this.store.deleteConversation(locator, accessToken);
     await this.listService.evict(locator);
     this.logger.log('Project conversation deleted');
+    try {
+      await this.readStateService.removeProjectConversation(
+        project.id,
+        locator,
+        accessToken,
+        sessionBucket,
+      );
+    } catch {
+      this.logger.warn(
+        'Failed to drop the deleted project conversation from the read state',
+      );
+    }
+  }
+
+  /*
+   * A rename rewrites the body, so its version changes and the renamer's own
+   * read chat would turn unread. Whether it was read is decided before the
+   * write; any failure answers false, so a rename is never blocked.
+   */
+  private async isReadQuietly(
+    project: ParsedProjectId,
+    locator: string,
+    accessToken: string,
+    sessionBucket: string,
+  ): Promise<boolean> {
+    try {
+      const [state, stored] = await Promise.all([
+        this.readStateService.getProjectReadState(
+          project.id,
+          accessToken,
+          sessionBucket,
+        ),
+        this.store.readConversationWithEtag(locator, accessToken),
+      ]);
+      if (state == null || stored?.etag == null) return false;
+      /* Viewed at this version, or untouched since the baseline; an unknown time is not read. */
+      const updatedAt = stored.conversation.updatedAt;
+      return (
+        state.versions.get(locator) === stored.etag ||
+        (typeof updatedAt === 'number' &&
+          !isProjectConversationUnread(state, locator, updatedAt, stored.etag))
+      );
+    } catch {
+      this.logger.warn('Failed to read the read state before rename');
+      return false;
+    }
+  }
+
+  private async keepReadQuietly(
+    project: ParsedProjectId,
+    locator: string,
+    accessToken: string,
+    sessionBucket: string,
+  ): Promise<void> {
+    try {
+      const stored = await this.store.readConversationWithEtag(
+        locator,
+        accessToken,
+      );
+      if (stored?.etag == null) return;
+      await this.readStateService.markProjectConversationViewed(
+        project.id,
+        locator,
+        stored.etag,
+        accessToken,
+        sessionBucket,
+      );
+    } catch {
+      this.logger.warn('Failed to keep the renamed project conversation read');
+    }
   }
 }

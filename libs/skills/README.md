@@ -53,7 +53,7 @@ import '@epam/ai-dial-skills/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.62`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.72`
 - `@epam/ai-dial-chat-shared` `*`
 - `@epam/ai-dial-react-file-manager` `^0.4.0-dev.25` — `SkillDetailsSidePanel`
   renders its `DialFoldersTree`
@@ -416,6 +416,7 @@ const {
   selectedSkills,
   resetSkillMentions,
   seedSkillMentions,
+  selectSkillByUrl,
   recognizeMentionsInInsertion,
   renderHistorySkillSegments,
   renderHistorySkills,
@@ -511,6 +512,10 @@ mention and the draft alongside it — call after a successful send.
 `seedSkillMentions(content, skills)` seeds the draft and its tracked mentions
 from a persisted message — call once when entering edit mode on a message
 that carries `custom_content.skills`.
+`selectSkillByUrl(url)` seeds the draft with a single `/{name} ` mention of
+`url`, naming it from the listings or, for an unlisted url, its last path
+segment — for a one-shot selection that has only a url, such as a catalog
+"Use in chat" action or a deep link.
 `recognizeMentionsInInsertion(text)` marks text the host is about to insert
 into the composer (a picked prompt): once that insertion reaches
 `onDraftChange`, every `/{name}` run in it that names a listed skill becomes a
@@ -660,3 +665,13 @@ reference. The host supplies `labels.fieldLabel` as the Select's accessible
 name. Unavailable metadata falls back to the URL. Unsupported models disable
 adding but allow removal; submission makes the Select inert and disables all
 actions. `SkillSelectorFieldProps` is the single exported field contract.
+
+`SkillSelectorField.unavailableValues` identifies host-confirmed unavailable
+selections. These retain removable compact tags with an error fill and border;
+other selected tags remain normal. Unavailable tags suppress the native HTML
+title tooltip and show only the custom availability tooltip. Supply localized `labels.unavailableTooltipLabel`
+and `labels.removeLabel`. The tag colors are overridden by
+`styles.colors.unavailableTagBackground` and `unavailableTagBorder`.
+The host's `error` remains visible as a field caption alongside unavailable
+tags. If the model also does not support skills, the field still exposes
+`labels.unsupportedTooltipLabel`; unavailable tag tooltips do not suppress it.

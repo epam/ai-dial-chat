@@ -33,6 +33,7 @@ const snapshotOf = (extra: Partial<ProjectSnapshot> = {}): ProjectSnapshot => ({
   hasOversizedManifest: false,
   contextFiles: [{ name: 'tickets.csv', size: 2048 }],
   conversationEntries: [],
+  artifactEntries: [],
   otherEntries: [],
   readEntry: vi.fn(),
   ...extra,
@@ -69,6 +70,7 @@ const makeService = ({
     new ProjectsCreateService(config),
     { read } as unknown as ProjectsSnapshotService,
     {} as UserConfigService,
+    {} as never,
   );
   return { service, listProjectMetadata, read };
 };
@@ -140,7 +142,7 @@ describe('ProjectsService.getProject', () => {
     expect(JSON.stringify(project)).not.toContain('gpt-4o__A__1');
   });
 
-  it('logs the item metadata Core returned at debug level', async () => {
+  it('does not log the item metadata Core returned', async () => {
     const debug = vi
       .spyOn(Logger.prototype, 'debug')
       .mockImplementation(() => undefined);
@@ -151,9 +153,7 @@ describe('ProjectsService.getProject', () => {
     const logged = debug.mock.calls
       .map(([message]) => String(message))
       .join('\n');
-    expect(logged).toContain('DIAL Core project metadata:');
-    expect(logged).toContain('"author":"jane.doe"');
-    expect(logged).not.toContain('token');
+    expect(logged).not.toContain('jane.doe');
   });
 
   it('returns a shared project as read-only', async () => {

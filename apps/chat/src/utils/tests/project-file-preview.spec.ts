@@ -12,39 +12,28 @@ import type { ProjectContextFile } from '@epam/ai-dial-projects';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { attachmentCanvasUrlResolvers } from '../attachment-display-resolvers';
 import {
-  fromProjectPreviewKey,
   toProjectContextFileAttachment,
-  toProjectPreviewKey,
+  toProjectOutputAttachment,
   toStoredProjectFileAttachment,
 } from '../project-file-preview';
 
 const PROJECT_ID = 'projects/b/q4';
 
-describe('project preview keys', () => {
-  it('prefixes the card id with its scope', () => {
-    expect(toProjectPreviewKey(PROJECT_ID, 'tickets.csv')).toBe(
-      'projects/b/q4::tickets.csv',
-    );
-  });
-
-  it('reads the card id back for the same scope', () => {
+describe('toProjectOutputAttachment', () => {
+  it('builds an idle attachment whose url is the output locator', () => {
     expect(
-      fromProjectPreviewKey(PROJECT_ID, 'projects/b/q4::tickets.csv'),
-    ).toBe('tickets.csv');
-  });
-
-  it('keeps a card id that itself contains the separator', () => {
-    expect(fromProjectPreviewKey('new', 'new::stored:a::b.csv')).toBe(
-      'stored:a::b.csv',
-    );
-  });
-
-  it.each([
-    ['another scope', 'projects/b/other::tickets.csv'],
-    ['a key that is not a project key', '0:abc'],
-    ['no key', undefined],
-  ])('returns nothing for %s', (_, key) => {
-    expect(fromProjectPreviewKey(PROJECT_ID, key)).toBeUndefined();
+      toProjectOutputAttachment(
+        { name: 'report.pdf', contentType: 'application/pdf' },
+        PROJECT_ID,
+      ),
+    ).toEqual({
+      id: 'report.pdf',
+      name: 'report.pdf',
+      contentType: 'application/pdf',
+      type: AttachmentType.File,
+      status: RequestStatus.Idle,
+      url: 'projects/b/q4/files/artifacts/report.pdf',
+    });
   });
 });
 

@@ -10,6 +10,16 @@ import type {
   McpAppToolRef,
 } from '../models/mcp-apps';
 
+const LIVE_CALL_RETRY_DELAY_MS = 500;
+const LIVE_CALL_RETRY_JITTER_MS = 500;
+
+/**
+ * Resolves after the given delay.
+ * @param ms - delay in milliseconds
+ */
+const waitFor = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
 /** A tool-call request paired with its result content, keyed by `tool_call_id`. */
 interface ResolvedToolCall {
   name: string;
@@ -110,8 +120,9 @@ export const collectToolCallNames = (messages: Message[]): Set<string> => {
 
 /**
  * Returns the `mcpAppTools` entry that best matches this message: the one
- * whose name was actually called (per `custom_content.state`, in whichever
- * of its two known orchestrator-specific shapes is present).
+ * whose name was actually called and has returned a result (per
+ * `custom_content.state`, in whichever of its two known orchestrator-specific
+ * shapes is present).
  *
  * If no real call matches, a `discovery: 'direct'` tool (the deployment
  * itself IS this MCP server, whether it's a bare Toolset or an Application —
@@ -124,13 +135,11 @@ export const collectToolCallNames = (messages: Message[]): Set<string> => {
  *
  * Otherwise (a `discovery: 'indirect'` match — a real MCP-capable toolset a
  * different, tool-calling deployment delegates to, guessed by name-prefix), a
- * real match is required once the message has settled; while still
- * streaming, `custom_content.state` may not have caught up with a tool call
- * the model already made this turn, so the first such tool is guessed
- * optimistically rather than popping in a beat late. Once settled, a
- * deployment that finished without calling any MCP-capable toolset must
- * never show the trigger, even though the deployment supports MCP Apps in
- * general.
+ * call to that tool that has already returned a result is required, whether
+ * the message is streaming or settled. A call without a result is still
+ * running, and with no call at all the model may never call the tool, so
+ * guessing earlier would mount the app on every answer in a conversation that
+ * once used it, and the app would wait for data that never arrives.
  *
  * Returns `undefined` for non-assistant messages or when the deployment has
  * no MCP-Apps-capable tool at all.
@@ -138,21 +147,18 @@ export const collectToolCallNames = (messages: Message[]): Set<string> => {
 export const findMcpAppForMessage = (
   message: Message,
   mcpAppTools: McpAppToolRef[],
-  isStreaming: boolean,
 ): McpAppToolRef | undefined => {
   if (mcpAppTools.length === 0 || message.role !== MessageRole.Assistant) {
     return undefined;
   }
-  const calledNames = new Set(
-    [...resolveToolCalls(message.custom_content?.state).values()].map(
-      (call) => call.name,
-    ),
+  const finishedNames = new Set(
+    [...resolveToolCalls(message.custom_content?.state).values()]
+      .filter((call) => call.result != null)
+      .map((call) => call.name),
   );
-  const matched = mcpAppTools.find((tool) => calledNames.has(tool.toolName));
+  const matched = mcpAppTools.find((tool) => finishedNames.has(tool.toolName));
   if (matched) return matched;
-  const selfHosted = mcpAppTools.find((tool) => tool.discovery === 'direct');
-  if (selfHosted) return selfHosted;
-  return isStreaming ? mcpAppTools[0] : undefined;
+  return mcpAppTools.find((tool) => tool.discovery === 'direct');
 };
 
 /** Stable key identifying a message's MCP App canvas in an attachment canvas's `attachmentId` tracking, mirroring the `${messageIndex}:${attachmentId}` scheme used for regular attachment tiles. */
@@ -222,18 +228,16 @@ export const resolveMcpAppToolCallSeed = (
  * - `seed?.toolInput != null` — a `discovery: 'indirect'` match (the toolset
  *   a *different*, tool-calling deployment appears to delegate to) whose
  *   `toolName` was matched against a *real* tool call actually seen in
- *   `custom_content.state` (`findMcpAppForMessage`'s name-match branch, not
- *   its streaming-optimistic `mcpAppTools[0]` guess). Once a real call is
- *   confirmed, re-calling it with the exact same `toolsetId`/args it was
+ *   `custom_content.state` (`findMcpAppForMessage`'s name-match branch).
+ *   Once a real call is confirmed, re-calling it with the exact same `toolsetId`/args it was
  *   really invoked with carries no more risk than the direct case.
  *
- * Only the streaming-optimistic guess (`discovery: 'indirect'` with no real
- * call seen yet, so `seed` is `undefined`) is skipped — that toolset/tool
- * pairing is still an unconfirmed guess, and re-calling it could hit the
- * wrong tool or re-trigger a non-idempotent side effect; it keeps
- * `seed?.toolResult` (`undefined` here) as-is. Falls back to
- * `seed?.toolResult` if an attempted live call fails (e.g. the deployment
- * has no live MCP session outside the original conversation turn).
+ * An `indirect` match with no seed is skipped — that toolset/tool pairing
+ * is unconfirmed, and re-calling it could hit the wrong tool or re-trigger a
+ * non-idempotent side effect; it keeps `seed?.toolResult` as-is. Falls back to
+ * `seed?.toolResult` if an attempted live call fails twice (e.g. the
+ * deployment has no live MCP session outside the original conversation turn).
+ * A failed live call is retried once after a short randomized delay.
  */
 export const resolveMcpAppToolResult = async (
   match: McpAppToolRef,
@@ -245,13 +249,30 @@ export const resolveMcpAppToolResult = async (
     return seed?.toolResult;
   }
 
-  try {
-    return await callTool(
+  const liveCall = () =>
+    callTool(
       match.toolsetId,
       match.mcpToolName,
       seed?.toolInput ?? {},
       match.kind,
     );
+
+  try {
+    return await liveCall();
+  } catch {
+    /*
+     * Retried on any error on purpose: this call already re-runs on every
+     * mount, so one more attempt adds no new kind of risk, and the lib cannot
+     * tell a lost response from a failed request. The jitter keeps sibling
+     * cards that failed together from retrying as one burst.
+     */
+    await waitFor(
+      LIVE_CALL_RETRY_DELAY_MS + Math.random() * LIVE_CALL_RETRY_JITTER_MS,
+    );
+  }
+
+  try {
+    return await liveCall();
   } catch {
     return seed?.toolResult;
   }

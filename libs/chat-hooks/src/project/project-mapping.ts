@@ -1,5 +1,6 @@
 import {
   ProjectSource as ProjectSourceDto,
+  type ProjectArtifactItemDto,
   type ProjectDetailsDto,
   type ProjectDto,
 } from '@epam/ai-dial-chat-api-client';
@@ -10,6 +11,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   type ProjectItem,
+  type ProjectOutputItem,
   ProjectSource,
   type ProjectViewModel,
   type StoredProjectContextFile,
@@ -69,3 +71,12 @@ export const mapStoredContextFiles = (
       isStored: true,
     };
   });
+
+/** Maps a project's BFF artifact listing to the output cards the project view renders, keeping its order; content types come from the file names. */
+export const mapProjectArtifactsToOutputs = (
+  items: ProjectArtifactItemDto[],
+): ProjectOutputItem[] =>
+  items.map(({ name }) => ({
+    name,
+    contentType: inferMimeTypeFromPath(name) ?? UNKNOWN_CONTENT_TYPE,
+  }));

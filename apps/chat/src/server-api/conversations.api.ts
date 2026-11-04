@@ -3,13 +3,13 @@ import type {
   ConversationResponseDto,
   ConversationTitleStreamEventDto,
 } from '@epam/ai-dial-chat-api-client';
-import { buildCreateConversationDto } from '@epam/ai-dial-chat-hooks';
-import type { RequestSkill } from '@epam/ai-dial-chat-shared';
-import { conversationsApi } from './api-client';
 import {
+  buildCreateConversationDto,
   ConversationTitleStreamProtocolError,
   readConversationTitleStream,
-} from './conversation-title-stream';
+} from '@epam/ai-dial-chat-hooks';
+import type { RequestSkill } from '@epam/ai-dial-chat-shared';
+import { conversationsApi } from './api-client';
 
 export const createConversation = (
   firstMessage: string,

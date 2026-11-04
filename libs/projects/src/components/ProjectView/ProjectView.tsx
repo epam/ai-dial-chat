@@ -10,8 +10,6 @@ import {
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
 import {
-  Button,
-  ButtonVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
@@ -28,8 +26,13 @@ import {
 import {
   IconArrowNarrowLeft,
   IconDotsVertical,
+  IconDownload,
+  IconPencilMinus,
   IconPin,
-  IconPinFilled,
+  IconShare,
+  IconTrashX,
+  IconWorldShare,
+  type TablerIcon,
 } from '@tabler/icons-react';
 import { type FC, memo, useId, useMemo } from 'react';
 import type {
@@ -37,6 +40,7 @@ import type {
   ProjectViewProps,
 } from '../../models/project-view-props';
 import { filterContextFileItems } from '../../utils/context-files';
+import { IconPinOff } from '../IconPinOff/IconPinOff';
 import styles from './ProjectView.module.scss';
 
 const toDisplayAttachment = (
@@ -77,7 +81,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   styles: viewStyles,
 }) => {
   const { colors, typography } = viewStyles ?? {};
-  const titleClassName = typography?.titleClassName ?? 'dial-h2-text';
+  const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const panelTitleClassName =
     typography?.panelTitleClassName ?? 'dial-body-semi-text';
   const sectionTitleClassName =
@@ -124,30 +128,47 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   /* The same actions in two placements: on desktop Publish and Edit are
    * header buttons, on mobile they lead the ⋮ menu. CSS hides one copy, so
    * the hidden one is out of the accessibility tree too. */
+  const renderMenuIcon = (Icon: TablerIcon) => (
+    <Icon size={DIAL_ICON_SIZE.SM} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
+  );
+
   const buildMenuItems = (includePrimary: boolean): DropdownItem[] => {
     const items: DropdownItem[] = [];
     if (includePrimary && onPublish) {
       items.push({
         key: 'publish',
         label: labels.publishLabel,
+        icon: renderMenuIcon(IconWorldShare),
         onClick: onPublish,
       });
     }
     if (includePrimary && onEdit) {
-      items.push({ key: 'edit', label: labels.editLabel, onClick: onEdit });
+      items.push({
+        key: 'edit',
+        label: labels.editLabel,
+        icon: renderMenuIcon(IconPencilMinus),
+        onClick: onEdit,
+      });
     }
     if (onShare) {
-      items.push({ key: 'share', label: labels.shareLabel, onClick: onShare });
+      items.push({
+        key: 'share',
+        label: labels.shareLabel,
+        icon: renderMenuIcon(IconShare),
+        onClick: onShare,
+      });
     }
     items.push({
       key: 'download',
       label: labels.downloadLabel,
+      icon: renderMenuIcon(IconDownload),
       onClick: onDownload,
     });
     if (onDelete) {
       items.push({
         key: 'delete',
         label: labels.deleteLabel,
+        icon: renderMenuIcon(IconTrashX),
         danger: true,
         onClick: onDelete,
       });
@@ -266,17 +287,21 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
     );
   };
 
+  /* Beside each other on desktop the header stays put and each column
+   * scrolls on its own; stacked, the columns scroll together under it. */
+  const isSideBySide = !isDetailsStacked;
+
   return (
     <div
       style={cssVars}
       className={mergeClasses(
-        'flex h-full w-full min-w-0 flex-col overflow-y-auto',
+        'flex h-full w-full min-w-0 flex-col',
         styles.container,
       )}
     >
       <header
         className={mergeClasses(
-          'flex min-w-0 items-center gap-2 px-4 py-3 desktop:px-8',
+          'flex min-w-0 shrink-0 items-center gap-2 px-4 py-3 desktop:px-8 desktop:py-4',
           styles.header,
         )}
       >
@@ -301,10 +326,15 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
         >
           <EllipsisTooltip text={project.name} />
         </h1>
-        <GhostIconButton
-          icon={
+        <GhostButton
+          label={isPinned ? labels.unpinLabel : labels.pinLabel}
+          iconBefore={
             isPinned ? (
-              <IconPinFilled size={DIAL_ICON_SIZE.MD} aria-hidden />
+              <IconPinOff
+                size={DIAL_ICON_SIZE.MD}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
             ) : (
               <IconPin
                 size={DIAL_ICON_SIZE.MD}
@@ -313,22 +343,34 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
               />
             )
           }
-          aria-label={labels.pinLabel}
-          aria-pressed={isPinned}
           aria-disabled={isPinPending || undefined}
           onClick={handleTogglePin}
+          className="shrink-0"
         />
         {onPublish && (
           <NeutralButton
             label={labels.publishLabel}
+            iconBefore={
+              <IconWorldShare
+                size={DIAL_ICON_SIZE.MD}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
             onClick={onPublish}
             className="hidden shrink-0 desktop:inline-flex"
           />
         )}
         {onEdit && (
-          <Button
+          <NeutralButton
             label={labels.editLabel}
-            variant={ButtonVariant.Primary}
+            iconBefore={
+              <IconPencilMinus
+                size={DIAL_ICON_SIZE.MD}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
             onClick={onEdit}
             className="hidden shrink-0 desktop:inline-flex"
           />
@@ -339,17 +381,22 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
 
       <div
         className={mergeClasses(
-          'flex min-w-0 flex-1 flex-col',
-          !isDetailsStacked && 'desktop:flex-row',
-          mainContent == null && !isDetailsStacked && 'desktop:justify-end',
+          'flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto',
+          isSideBySide && 'desktop:flex-row desktop:overflow-hidden',
+          mainContent == null && isSideBySide && 'desktop:justify-end',
         )}
       >
         {mainContent != null && (
           <section
             aria-label={mainContentLabel}
-            className="flex min-w-0 flex-1 flex-col gap-6 px-4 py-6 desktop:px-8"
+            className={mergeClasses(
+              'flex min-w-0 flex-1 flex-col px-4 py-6 desktop:px-8',
+              isSideBySide && 'desktop:overflow-y-auto',
+            )}
           >
-            {mainContent}
+            <div className="mx-auto flex w-full max-w-[748px] min-w-0 flex-col gap-5">
+              {mainContent}
+            </div>
           </section>
         )}
         {/* No card: the panel is framed only by an inline-start border on
@@ -358,8 +405,8 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
           aria-labelledby={detailsHeadingId}
           className={mergeClasses(
             'flex w-full min-w-0 flex-col gap-5 border-t px-4 py-6 desktop:px-8',
-            !isDetailsStacked &&
-              'desktop:w-[488px] desktop:shrink-0 desktop:border-s desktop:border-t-0',
+            isSideBySide &&
+              'desktop:w-[488px] desktop:shrink-0 desktop:overflow-y-auto desktop:border-s desktop:border-t-0',
             styles.panel,
           )}
         >

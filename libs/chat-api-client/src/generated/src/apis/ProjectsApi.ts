@@ -19,7 +19,10 @@ import type {
   CreateConversationDto,
   CreateProjectResponseDto,
   ListProjectsResponseDto,
+  ProjectArtifactListResponseDto,
   ProjectConversationListResponseDto,
+  ProjectConversationTitlesBodyDto,
+  ProjectConversationTitlesResponseDto,
   ProjectCreateErrorDto,
   ProjectDetailsDto,
   RenameConversationBodyDto,
@@ -63,6 +66,11 @@ export interface DownloadProjectRequest {
   id: string;
 }
 
+export interface DownloadProjectArtifactRequest {
+  id: string;
+  fileName: string;
+}
+
 export interface DownloadProjectFileRequest {
   id: string;
   fileName: string;
@@ -77,10 +85,22 @@ export interface GetProjectConversationRequest {
   conversationName: string;
 }
 
+export interface GetProjectConversationTitlesRequest {
+  id: string;
+  projectConversationTitlesBodyDto: ProjectConversationTitlesBodyDto;
+}
+
+export interface ListProjectArtifactsRequest {
+  id: string;
+}
+
 export interface ListProjectConversationsRequest {
   id: string;
-  limit?: number;
-  offset?: number;
+}
+
+export interface MarkProjectConversationViewedRequest {
+  id: string;
+  conversationName: string;
 }
 
 export interface RenameProjectConversationRequest {
@@ -567,6 +587,79 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
+   * Streams one file directly under the project `artifacts/` folder as an attachment with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.
+   * Download one output of a project
+   */
+  async downloadProjectArtifactRaw(
+    requestParameters: DownloadProjectArtifactRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Blob>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling downloadProjectArtifact().',
+      );
+    }
+
+    if (requestParameters['fileName'] == null) {
+      throw new runtime.RequiredError(
+        'fileName',
+        'Required parameter "fileName" was null or undefined when calling downloadProjectArtifact().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/artifacts/{fileName}`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'fileName'}}`,
+      encodeURIComponent(String(requestParameters['fileName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.BlobApiResponse(response);
+  }
+
+  /**
+   * Streams one file directly under the project `artifacts/` folder as an attachment with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.
+   * Download one output of a project
+   */
+  async downloadProjectArtifact(
+    requestParameters: DownloadProjectArtifactRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Blob> {
+    const response = await this.downloadProjectArtifactRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
    * Streams one file directly under the project `context/` folder as an attachment with `X-Content-Type-Options: nosniff`.
    * Download one context file of a project
    */
@@ -770,7 +863,145 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Lists the conversations stored in the project\'s `conversations/` folder, newest first, with their titles and authors.
+   * Reads the bodies of the named conversations, as listed with `isTitlePending`, and returns them with their titles and read state resolved. Up to 100 names per request. Any reader of the project may call it.
+   * Resolve project conversations\' titles
+   */
+  async getProjectConversationTitlesRaw(
+    requestParameters: GetProjectConversationTitlesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ProjectConversationTitlesResponseDto>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling getProjectConversationTitles().',
+      );
+    }
+
+    if (requestParameters['projectConversationTitlesBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'projectConversationTitlesBodyDto',
+        'Required parameter "projectConversationTitlesBodyDto" was null or undefined when calling getProjectConversationTitles().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/conversations/titles`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['projectConversationTitlesBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ProjectConversationTitlesResponseDto>(
+      response,
+    );
+  }
+
+  /**
+   * Reads the bodies of the named conversations, as listed with `isTitlePending`, and returns them with their titles and read state resolved. Up to 100 names per request. Any reader of the project may call it.
+   * Resolve project conversations\' titles
+   */
+  async getProjectConversationTitles(
+    requestParameters: GetProjectConversationTitlesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ProjectConversationTitlesResponseDto> {
+    const response = await this.getProjectConversationTitlesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Lists the files directly under the project `artifacts/` folder, where the agents of the project\'s chats save their outputs, newest first. Nested paths are not listed. Any reader of the project may call it.
+   * List a project\'s outputs
+   */
+  async listProjectArtifactsRaw(
+    requestParameters: ListProjectArtifactsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ProjectArtifactListResponseDto>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling listProjectArtifacts().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/artifacts`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ProjectArtifactListResponseDto>(
+      response,
+    );
+  }
+
+  /**
+   * Lists the files directly under the project `artifacts/` folder, where the agents of the project\'s chats save their outputs, newest first. Nested paths are not listed. Any reader of the project may call it.
+   * List a project\'s outputs
+   */
+  async listProjectArtifacts(
+    requestParameters: ListProjectArtifactsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ProjectArtifactListResponseDto> {
+    const response = await this.listProjectArtifactsRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Lists every conversation stored in the project\'s `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.
    * List a project\'s conversations
    */
   async listProjectConversationsRaw(
@@ -785,14 +1016,6 @@ export class ProjectsApi extends runtime.BaseAPI {
     }
 
     const queryParameters: runtime.HTTPQuery = {};
-
-    if (requestParameters['limit'] != null) {
-      queryParameters['limit'] = requestParameters['limit'];
-    }
-
-    if (requestParameters['offset'] != null) {
-      queryParameters['offset'] = requestParameters['offset'];
-    }
 
     const headerParameters: runtime.HTTPHeaders = {};
 
@@ -827,7 +1050,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Lists the conversations stored in the project\'s `conversations/` folder, newest first, with their titles and authors.
+   * Lists every conversation stored in the project\'s `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.
    * List a project\'s conversations
    */
   async listProjectConversations(
@@ -885,6 +1108,78 @@ export class ProjectsApi extends runtime.BaseAPI {
   ): Promise<ListProjectsResponseDto> {
     const response = await this.listProjectsRaw(initOverrides);
     return await response.value();
+  }
+
+  /**
+   * Records the conversation\'s current version as seen by the caller, in the caller\'s own read state, so it is not reported unread until it changes. Any reader of the project may call it.
+   * Mark a project conversation as viewed
+   */
+  async markProjectConversationViewedRaw(
+    requestParameters: MarkProjectConversationViewedRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling markProjectConversationViewed().',
+      );
+    }
+
+    if (requestParameters['conversationName'] == null) {
+      throw new runtime.RequiredError(
+        'conversationName',
+        'Required parameter "conversationName" was null or undefined when calling markProjectConversationViewed().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/conversations/{conversationName}/viewed`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'conversationName'}}`,
+      encodeURIComponent(String(requestParameters['conversationName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PATCH',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Records the conversation\'s current version as seen by the caller, in the caller\'s own read state, so it is not reported unread until it changes. Any reader of the project may call it.
+   * Mark a project conversation as viewed
+   */
+  async markProjectConversationViewed(
+    requestParameters: MarkProjectConversationViewedRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.markProjectConversationViewedRaw(
+      requestParameters,
+      initOverrides,
+    );
   }
 
   /**

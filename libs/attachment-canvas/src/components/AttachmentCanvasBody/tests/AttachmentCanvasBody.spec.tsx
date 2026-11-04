@@ -1,5 +1,6 @@
 import { MarkdownRenderer } from '@epam/ai-dial-chat-shared';
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AttachmentCanvasContent } from '../../../models/attachment-canvas';
 import {
@@ -605,6 +606,39 @@ describe('AttachmentCanvasBody', () => {
       errorType: AttachmentErrorType.LoadFailed,
     });
     expect(screen.getByText('Failed to load file')).toBeTruthy();
+  });
+
+  it('offers Retry under a LoadFailed error when onRetry is given', async () => {
+    const onRetry = vi.fn();
+    renderBody(
+      {
+        type: AttachmentContentType.Error,
+        errorType: AttachmentErrorType.LoadFailed,
+      },
+      { onRetry, labels: { loadErrorRetryLabel: 'Try again' } },
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(onRetry).toHaveBeenCalledOnce();
+  });
+
+  it('offers no Retry without onRetry or for a Forbidden error', () => {
+    const { unmount } = renderBody({
+      type: AttachmentContentType.Error,
+      errorType: AttachmentErrorType.LoadFailed,
+    });
+    expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
+    unmount();
+
+    renderBody(
+      {
+        type: AttachmentContentType.Error,
+        errorType: AttachmentErrorType.Forbidden,
+      },
+      { onRetry: vi.fn() },
+    );
+    expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
   });
 
   it('renders the Forbidden error message', () => {

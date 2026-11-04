@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 /** Localized field labels used by the {@link ScheduledTaskDetailsSection} component. */
 interface ScheduledTaskDetailsSectionLabels {
   /** Label for the description field. */
@@ -20,6 +22,8 @@ export interface ScheduledTaskDetailsSectionProps {
   description?: string;
   /** Resolved "Model or Agent" display value (display name, or the raw id as a fallback). Omit to hide the field. */
   modelLabel?: string;
+  /** Optional host renderer for model availability and its explanation. */
+  renderModelName?: (name: string) => ReactNode;
   /** Pre-formatted recurrence label, e.g. "Every Monday 12:00". Omit to hide the field. */
   repeatsLabel?: string;
   /** Pre-formatted activity-window label, e.g. "Aug 1, 2026 – Dec 31, 2026". Omit to hide the field (unbounded or one-shot schedule). */

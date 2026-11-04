@@ -11,6 +11,7 @@ import {
   type KeyboardEvent,
   memo,
   useCallback,
+  useEffect,
   useId,
   useMemo,
   useRef,
@@ -24,6 +25,8 @@ const ProjectConversationsPanelComponent: FC<
   ProjectConversationsPanelProps
 > = ({
   composer,
+  outputs,
+  hasOutputs = false,
   items,
   isLoading = false,
   hasError = false,
@@ -36,6 +39,7 @@ const ProjectConversationsPanelComponent: FC<
   onDelete,
   labels,
   listTypography,
+  listColors,
 }) => {
   const renameInputId = useId();
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -77,6 +81,27 @@ const ProjectConversationsPanelComponent: FC<
     (id: string) => items.find((item) => item.id === id) ?? null,
     [items],
   );
+
+  /* A live refresh can remove the row a dialog was opened for; the dialog closes and focus moves to the list. */
+  useEffect(() => {
+    const hasRow = (row: ProjectConversationListItem | null) =>
+      row != null && items.some((item) => item.id === row.id);
+    if (renameRow && !isRenaming && !hasRow(renameRow)) {
+      setRenameRow(null);
+      focusRowAfterDelete(0);
+    }
+    if (deleteRow && !isDeleting && !hasRow(deleteRow)) {
+      setDeleteRow(null);
+      focusRowAfterDelete(0);
+    }
+  }, [
+    deleteRow,
+    focusRowAfterDelete,
+    isDeleting,
+    isRenaming,
+    items,
+    renameRow,
+  ]);
 
   const handleRenameRequest = useCallback(
     (id: string) => {
@@ -185,6 +210,7 @@ const ProjectConversationsPanelComponent: FC<
   return (
     <>
       {composer}
+      {outputs}
       <div ref={listRef} className="contents">
         <ProjectConversationList
           items={items}
@@ -194,11 +220,13 @@ const ProjectConversationsPanelComponent: FC<
           hasMore={hasMore}
           isLoadingMore={isLoadingMore}
           onLoadMore={onLoadMore}
+          isEmptyStateShown={!hasOutputs}
           onOpen={onOpen}
           onRename={onRename ? handleRenameRequest : undefined}
           onDelete={onDelete ? handleDeleteRequest : undefined}
           labels={labels.list}
           typography={listTypography}
+          colors={listColors}
         />
       </div>
       {renameRow && (

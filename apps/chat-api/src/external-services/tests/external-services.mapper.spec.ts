@@ -6,6 +6,7 @@ import {
 import {
   mapDialExternalServiceToDto,
   toDialExternalServiceAppId,
+  toDialExternalServiceDefinition,
   toDialExternalServiceSigninBody,
   toDialExternalServiceSignoutBody,
   toDialExternalServiceUrl,
@@ -178,5 +179,54 @@ describe('mapDialExternalServiceToDto', () => {
       description: undefined,
       authenticationType: ExternalServiceAuthType.None,
     });
+  });
+
+  it('returns the stored OAuth resource, and none when Core has none', () => {
+    expect(
+      mapDialExternalServiceToDto({
+        display_name: 'Notion',
+        auth_settings: {
+          authentication_type: 'OAUTH',
+          resource: 'https://mcp.notion.com/mcp',
+        },
+      }).resource,
+    ).toBe('https://mcp.notion.com/mcp');
+    expect(
+      mapDialExternalServiceToDto({
+        display_name: 'Notion',
+        auth_settings: { authentication_type: 'OAUTH' },
+      }).resource,
+    ).toBeUndefined();
+  });
+});
+
+describe('toDialExternalServiceDefinition', () => {
+  const oauthDefinition = (resource?: string) => ({
+    displayName: 'Notion',
+    authSettings: {
+      authenticationType: ExternalServiceAuthType.OAuth as const,
+      clientId: 'dial-chat',
+      resource,
+    },
+  });
+
+  it.each(['https://mcp.notion.com/mcp', ''])(
+    'forwards resource %j as auth_settings.resource',
+    (resource) => {
+      expect(
+        toDialExternalServiceDefinition(oauthDefinition(resource))
+          .auth_settings,
+      ).toEqual({
+        authentication_type: 'OAUTH',
+        client_id: 'dial-chat',
+        resource,
+      });
+    },
+  );
+
+  it('leaves resource out when the body has none', () => {
+    expect(
+      toDialExternalServiceDefinition(oauthDefinition()).auth_settings,
+    ).not.toHaveProperty('resource');
   });
 });

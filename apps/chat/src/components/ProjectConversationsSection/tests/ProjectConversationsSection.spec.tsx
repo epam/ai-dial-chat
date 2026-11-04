@@ -1,4 +1,5 @@
 import { ResponseError } from '@epam/ai-dial-chat-api-client';
+import { useProjectConversations } from '@epam/ai-dial-chat-hooks/project';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -6,16 +7,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ButtonsI18nKeys,
   ChatI18nKeys,
+  ConversationPanelI18nKeys,
   ProjectsI18nKeys,
 } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { createDeploymentsContextValue } from '../../../context/tests/deployments-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { projectsClient } from '../../../hooks/projects/projects-client';
 import {
   createProjectConversation,
   deleteProjectConversation,
   listProjectConversations,
+  markProjectConversationViewed,
   renameProjectConversation,
   saveProjectConversation,
 } from '../../../server-api/project-conversations.api';
@@ -82,6 +86,7 @@ vi.mock('../../../server-api/project-conversations.api', () => ({
   saveProjectConversation: vi.fn(),
   renameProjectConversation: vi.fn(),
   deleteProjectConversation: vi.fn(),
+  markProjectConversationViewed: vi.fn(),
 }));
 
 const PROJECT_ID = 'projects/a1b2c3/q4';
@@ -89,18 +94,25 @@ const CHAT_ID = `${PROJECT_ID}/conversations/gpt-4o__Old__1`;
 const showNotification = vi.fn();
 const restoreDefaultSelection = vi.fn();
 
+/* The page owns the list state; the harness plays the page. */
+const SectionHarness = ({ canEdit }: { canEdit: boolean }) => {
+  const conversations = useProjectConversations(projectsClient, PROJECT_ID);
+  return (
+    <ProjectConversationsSection
+      projectId={PROJECT_ID}
+      projectName="Q4 launch"
+      canEdit={canEdit}
+      conversations={conversations}
+    />
+  );
+};
+
 const renderSection = (canEdit = true) => {
   const router = createMemoryRouter(
     [
       {
         path: '/projects/view/:bucket/*',
-        element: (
-          <ProjectConversationsSection
-            projectId={PROJECT_ID}
-            projectName="Q4 launch"
-            canEdit={canEdit}
-          />
-        ),
+        element: <SectionHarness canEdit={canEdit} />,
       },
       { path: '/projects/chat/:bucket/*', element: <p>project chat</p> },
     ],
@@ -124,8 +136,35 @@ describe('ProjectConversationsSection', () => {
     );
     vi.mocked(listProjectConversations).mockResolvedValue({
       items: [{ id: CHAT_ID, name: 'gpt-4o__Old__1', title: 'Old title' }],
-      hasMore: false,
     });
+  });
+
+  it('marks an unread chat read and opens it', async () => {
+    vi.mocked(listProjectConversations).mockResolvedValue({
+      items: [
+        {
+          id: CHAT_ID,
+          name: 'gpt-4o__Old__1',
+          title: 'Old title',
+          isUnread: true,
+        },
+      ],
+    });
+    vi.mocked(markProjectConversationViewed).mockResolvedValue(undefined);
+    const { router } = renderSection();
+    const row = await screen.findByRole('button', {
+      name: ProjectsI18nKeys.ChatsOpenLabelNoAuthor,
+      description: ConversationPanelI18nKeys.UnreadIndicatorLabel,
+    });
+
+    await userEvent.click(row);
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        '/projects/chat/a1b2c3/q4/conversations/gpt-4o__Old__1',
+      ),
+    );
+    expect(markProjectConversationViewed).toHaveBeenCalledWith(CHAT_ID);
   });
 
   it('opens the new chat after the first message', async () => {
@@ -160,6 +199,27 @@ describe('ProjectConversationsSection', () => {
       expect.objectContaining({ prompt: 'Be brief', temperature: 0.5 }),
     );
     expect(restoreDefaultSelection).toHaveBeenCalled();
+  });
+
+  it('still opens the new chat when saving its settings fails, without an error toast', async () => {
+    const created = { id: `${PROJECT_ID}/conversations/gpt-4o__Draft__2` };
+    vi.mocked(createProjectConversation).mockResolvedValue(created as never);
+    vi.mocked(saveProjectConversation).mockRejectedValue(new Error('save'));
+    const { router } = renderSection();
+
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: ChatI18nKeys.Placeholder,
+      }),
+    );
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        '/projects/chat/a1b2c3/q4/conversations/gpt-4o__Draft__2',
+      ),
+    );
+    expect(showNotification).not.toHaveBeenCalled();
+    expect(composerMenus.seedSkillMentions).not.toHaveBeenCalled();
   });
 
   it('reports a full project and stays on the page', async () => {
@@ -212,7 +272,6 @@ describe('ProjectConversationsSection', () => {
   it('shows the empty state', async () => {
     vi.mocked(listProjectConversations).mockResolvedValue({
       items: [],
-      hasMore: false,
     });
     renderSection();
 

@@ -1,0 +1,15 @@
+.row:hover,
+.row:focus-within {
+  background: var(
+    --pcl-row-hover,
+    var(--bg-control-accent-alpha-hover, #2764d924)
+  );
+}
+
+.readDot {
+  border: 1.5px solid var(--pcl-read-dot, var(--stroke-secondary, #d1dbea));
+}
+
+.unreadDot {
+  background: var(--pcl-unread-dot, var(--text-accent, #1d4ed8));
+}

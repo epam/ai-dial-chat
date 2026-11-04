@@ -9,6 +9,7 @@ import {
   getExternalServiceFallbackName,
   getToolsetFallbackName,
   resolveToolsetCredentialsLevel,
+  toToolsetOAuthSettings,
 } from '@epam/ai-dial-chat-hooks';
 import type { ResolvedRowInfo } from '../models/signin-interrupt';
 import { PRIMARY_LOCALE, resolveLocalizedText } from './locale';
@@ -25,13 +26,7 @@ export const resolveToolsetInfo = (
   authenticationType: toolset?.authSettings?.authenticationType as
     ExternalServiceAuthType | undefined,
   credentialsLevel: resolveToolsetCredentialsLevel(toolsetId),
-  oauthSettings: {
-    clientId: toolset?.authSettings?.clientId,
-    authorizationEndpoint: toolset?.authSettings?.authorizationEndpoint,
-    scopes: toolset?.authSettings?.scopesSupported,
-    codeChallenge: toolset?.authSettings?.codeChallenge,
-    codeChallengeMethod: toolset?.authSettings?.codeChallengeMethod,
-  },
+  oauthSettings: toToolsetOAuthSettings(toolset?.authSettings),
 });
 
 export const resolveExternalServiceInfo = (
@@ -53,11 +48,5 @@ export const resolveExternalServiceInfo = (
     service.userLevelAuthStatus == null
       ? ExternalServiceCredentialsLevel.Global
       : ExternalServiceCredentialsLevel.User,
-  oauthSettings: {
-    clientId: service?.clientId,
-    authorizationEndpoint: service?.authorizationEndpoint,
-    scopes: service?.scopesSupported,
-    codeChallenge: service?.codeChallenge,
-    codeChallengeMethod: service?.codeChallengeMethod,
-  },
+  oauthSettings: toToolsetOAuthSettings(service),
 });

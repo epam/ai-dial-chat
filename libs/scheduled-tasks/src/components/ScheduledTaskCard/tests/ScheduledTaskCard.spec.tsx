@@ -124,10 +124,21 @@ describe('ScheduledTaskCard', () => {
     expect(screen.getByText('NEW')).toBeTruthy();
   });
 
+  it("renders the item's own badge text over the shared label", () => {
+    render(
+      <ScheduledTaskCard
+        item={buildItem({ isNew: true, newBadgeLabel: '3 NEW' })}
+        labels={{ newBadgeLabel: 'NEW' }}
+      />,
+    );
+
+    expect(screen.getByText('3 NEW')).toBeTruthy();
+  });
+
   it('renders the card with a fixed height', () => {
     render(<ScheduledTaskCard item={buildItem()} />);
 
-    expect(screen.getByRole('group').className).toContain(
+    expect(screen.getByRole('article').className).toContain(
       'h-(--st-card-height,232px)',
     );
   });
@@ -192,7 +203,7 @@ describe('ScheduledTaskCard', () => {
     const description = screen.getByText('a'.repeat(600));
     expect(description.className).toContain('min-w-0');
     expect(description.className).toContain('wrap-anywhere');
-    expect(screen.getByRole('group').className).toContain('min-w-0');
+    expect(screen.getByRole('article').className).toContain('min-w-0');
   });
 
   it('collapses whitespace in the description preview instead of preserving the author line breaks', () => {
@@ -224,6 +235,17 @@ describe('ScheduledTaskCard', () => {
     expect(onCardClick).toHaveBeenCalledWith('sched_1');
   });
 
+  it('renders a clickable card as an unroled article holding a native button', () => {
+    render(<ScheduledTaskCard item={buildItem()} onCardClick={vi.fn()} />);
+
+    // An `<article>` may not take `role="button"` (axe aria-allowed-role).
+    const card = screen.getByRole('article');
+    expect(card.getAttribute('role')).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Competitor Updates' }).tagName,
+    ).toBe('BUTTON');
+  });
+
   it('invokes onCardClick on Enter/Space keyboard activation', async () => {
     const onCardClick = vi.fn();
     render(<ScheduledTaskCard item={buildItem()} onCardClick={onCardClick} />);
@@ -241,7 +263,7 @@ describe('ScheduledTaskCard', () => {
     expect(
       screen.queryByRole('button', { name: 'Competitor Updates' }),
     ).toBeNull();
-    expect(screen.getByRole('group')).toBeTruthy();
+    expect(screen.getByRole('article')).toBeTruthy();
   });
 
   it('renders the "Paused" badge instead of the schedule pill when isActive is false', () => {
@@ -294,13 +316,13 @@ describe('ScheduledTaskCard', () => {
 describe('ScheduledTaskCard — public class names', () => {
   it('stamps the card whether or not it is clickable', () => {
     const { unmount } = render(<ScheduledTaskCard item={buildItem()} />);
-    expect(screen.getByRole('group').classList).toContain(
+    expect(screen.getByRole('article').classList).toContain(
       SCHEDULED_TASKS_CLASS.card,
     );
     unmount();
 
     render(<ScheduledTaskCard item={buildItem()} onCardClick={vi.fn()} />);
-    expect(screen.getByRole('button').classList).toContain(
+    expect(screen.getByRole('article').classList).toContain(
       SCHEDULED_TASKS_CLASS.card,
     );
   });

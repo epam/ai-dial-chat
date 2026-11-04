@@ -35,13 +35,22 @@ The page SHALL:
 
 ### Requirement: The app owns project data through useProject
 
-`useProject(id: string | null, enabled: boolean)` (`apps/chat/src/hooks/projects/useProject.ts`, one hook per file, with JSDoc on why it exists) SHALL call `getProject(id, { signal })` from `apps/chat/src/server-api/projects.api.ts`, which wraps `projectsApi.getProject`. It returns `{ project, isLoading, hasError, isNotFound, retry }`:
+`useProject(client, id: string | null, enabled: boolean)` (`libs/chat-hooks/src/project/use-project.ts`, exported from `@epam/ai-dial-chat-hooks/project`) SHALL call `client.getProject(id, signal)`. The pages call it with `projectsClient` (`apps/chat/src/hooks/projects/projects-client.ts`), which wraps `getProject` from `apps/chat/src/server-api/projects.api.ts` (`projectsApi.getProject`). The hook returns `{ project, isLoading, hasError, isNotFound, retry, refresh }`:
 
 - `project` is the `ProjectDetailsDto`, or `null`.
 - The fetch runs in `useEffect` with an `AbortController`. It aborts on unmount and on an id change, and a cancelled request never sets state.
 - `isLoading` is derived, as in `useProjects`: it is `true` while `enabled && id != null` and no result answers the current reload token.
 - A `404` sets `isNotFound`. Any other failure sets `hasError`.
 - `retry` is a stable `useCallback`.
+- `refresh` is a stable `useCallback` returning `Promise<ProjectRefreshOutcome>`. `ProjectRefreshOutcome` is a string enum in `libs/chat-hooks/src/project/project-refresh.ts`: `Updated = 'updated'`, `NotFound = 'not-found'`, `Failed = 'failed'`, `Skipped = 'skipped'`.
+  - It re-requests `getProject` without touching `isLoading`, `hasError` or `isNotFound`.
+  - On success it replaces `project` in the current result, which keeps its key, and resolves `Updated`.
+  - On `404` it keeps the current `project` and resolves `NotFound`, so the page can leave (see the `project-view-live-updates` capability).
+  - On any other failure it keeps the current `project` and resolves `Failed`.
+  - A refresh started while no project is loaded resolves `Skipped`.
+  - A newer `refresh` or an id change aborts an older one. An aborted refresh sets no state and resolves `Skipped`.
+
+The page's derived state follows `project`: the view model, `canEdit`, `conversationCount` and the header actions. A refresh that turns `canEdit` to `false` (the project was unshared) therefore hides Edit, Delete, Share and Publish without a reload.
 
 No new React context is introduced.
 
@@ -59,6 +68,16 @@ No new React context is introduced.
 
 - **WHEN** `getProject` rejects with `503` and the user activates Retry
 - **THEN** `getProject` is called again
+
+#### Scenario: Silent refresh
+
+- **WHEN** a project is loaded and `refresh()` resolves with new instructions
+- **THEN** `isLoading` stays `false` throughout, `project.instructions` is the new value, and the promise resolves `Updated`
+
+#### Scenario: Failed refresh keeps the page
+
+- **WHEN** `refresh()` rejects with `503`
+- **THEN** `project` is unchanged, `hasError` stays `false`, and the promise resolves `Failed`
 
 ### Requirement: ProjectView is a host-agnostic presentational component in libs/projects
 
@@ -102,7 +121,8 @@ Props:
 
 - it is named by `labels.mainContentLabel`, a new optional label;
 - it is `flex-1 min-w-0`, with `24px 32px` padding on `desktop`;
-- its content is centered at the design's 748px max width.
+- its content is centered at the design's 748px max width, with `20px` between its blocks;
+- while the Details panel sits beside it on `desktop`, the header stays in place and the main column and the panel each scroll on their own (Figma node `23:24330`); wherever the panel stacks, both scroll together below the header.
 
 On `mobile`, and on `desktop` while `isDetailsStacked` is `true`, the section stacks above the Details panel. Without `mainContent`, the layout is unchanged, so the Details panel is pushed to the inline end; a panel stacked by `isDetailsStacked` without `mainContent` stays at the top instead. The lib renders the node as given: the chat input and the Chats list are composed by the host.
 
@@ -144,15 +164,14 @@ Every declared prop SHALL be read. Read-only mode is expressed only by omitting 
 
 The `ProjectView` header SHALL render, in inline order:
 
-- a back kit `GhostIconButton` named `labels.backLabel`, with `IconArrowNarrowLeft` (`aria-hidden`, `stroke={DIAL_KIT_ICON_STROKE}`, `rtl:scale-x-[-1]`), calling `onBack`;
-- the name as the page's `<h1>`, truncated to one line with `EllipsisTooltip`, so the full name is in the tooltip;
-- a Pin toggle kit `GhostIconButton`:
-  - icon `IconPin` when unpinned, `IconPinFilled` when pinned;
-  - a stable accessible name `labels.pinLabel`, with the state carried by `aria-pressed={isPinned}` alone, so the name never contradicts the pressed state;
+- a back kit `GhostIconButton` named `labels.backLabel`, with `IconArrowNarrowLeft` (`aria-hidden`, `stroke={DIAL_KIT_ICON_STROKE}`, `rtl:scale-x-[-1]`), calling `onBack` (Figma node `1:2756`);
+- the name as the page's `<h1>` in `typography.titleClassName` (default `dial-h1-text`, 20/28 semibold), truncated to one line with `EllipsisTooltip`, so the full name is in the tooltip;
+- a Pin kit `GhostButton` with an icon and a text label:
+  - `IconPin` and `labels.pinLabel` when unpinned, `IconPinOff` (a crossed-out `IconPin` drawn in `libs/projects/src/components/IconPinOff/IconPinOff.ts`, since Tabler has none) and `labels.unpinLabel` when pinned, so the label names the action and shows the state; it has no `aria-pressed`, because a pressed state would contradict a label that already changes;
   - while `isPinPending` it is `aria-disabled` and ignores activation but stays focusable, so keyboard focus is not dropped to `<body>`;
   - it calls `onTogglePin`;
-- a Publish `Button` (`labels.publishLabel`) and an Edit `Button` (`labels.editLabel`), when their callbacks are supplied;
-- a ⋮ kit `Dropdown` triggered by a `GhostIconButton` named `labels.moreActionsLabel`, with items Share (when `onShare`), Download and Delete (when `onDelete`). The dropdown is keyboard-operable: Enter, Space and the arrow keys come from the kit.
+- a Publish `NeutralButton` (`IconWorldShare`, `labels.publishLabel`) and an Edit `NeutralButton` (`IconPencilMinus`, `labels.editLabel`), when their callbacks are supplied;
+- a ⋮ kit `Dropdown` triggered by a `GhostIconButton` named `labels.moreActionsLabel`, with items Share (when `onShare`, `IconShare`), Download (`IconDownload`) and Delete (when `onDelete`, `IconTrashX`, danger). Every item carries its icon, and Publish and Edit keep theirs in the mobile menu. The dropdown is keyboard-operable: Enter, Space and the arrow keys come from the kit.
 
 On `mobile`, Publish and Edit move into the ⋮ menu (before Share). The lib renders both placements and hides one through the `mobile:` / `desktop:` variants, so it never needs `useIsMobile`.
 
@@ -170,7 +189,7 @@ Every handler is memoised with `useCallback`.
 #### Scenario: Pin toggles and announces state
 
 - **WHEN** the user activates Pin on an unpinned project
-- **THEN** `setPinnedProject` is called with `true`, and the button reports `aria-pressed="true"` and is still named "Pin"
+- **THEN** `setPinnedProject` is called with `true`, and the button is then labelled "Unpin"
 
 #### Scenario: Long name is truncated with a tooltip
 
@@ -324,7 +343,7 @@ It submits through `publishCatalogEntity({ entityType: CatalogPublishEntityType.
 
 **Chats warning.** DIAL Core publishes a project as a whole, `conversations/` included. When `conversationCount > 0`, the container renders a kit `Notification` with the warning variant through `StandalonePublishPanel`'s `renderSummary`, after the resource title, so `libs/publish-panel` is not changed.
 
-- Its text is `projects.publish.chatsWarning`, pluralised by `count`: "This project's {{count}} chats will be published with it and visible to everyone who can see the project."
+- Its text is `projects.publish.chatsWarning`, pluralised by `count`: "The {{count}} chats in this project are published with it."
 - The warning does not block submission: publishing stays the user's choice.
 - It sits inside the panel's labelled region, so screen readers read it with the summary.
 
@@ -345,11 +364,11 @@ It submits through `publishCatalogEntity({ entityType: CatalogPublishEntityType.
 
 ### Requirement: Project view strings flow through react-i18next
 
-`ProjectViewPage` SHALL resolve every `ProjectViewLabels` value with `useTranslation().t()`, through `ProjectsI18nKeys` / `ButtonsI18nKeys` / `NavigationI18nKeys` members in `apps/chat/src/constants/translation-keys.ts`. The labels object is memoised with `useMemo` on `t`.
+`ProjectViewPage` SHALL resolve every `ProjectViewLabels` value with `useTranslation().t()`, through `ProjectsI18nKeys` / `ButtonsI18nKeys` members in `apps/chat/src/constants/translation-keys.ts`. The labels object is memoised with `useMemo` on `t`.
 
 **Reused keys:**
 
-- `navigation.back` (back);
+- `buttons.back` (back);
 - `buttons.publish`, `buttons.edit`, `buttons.download`, `buttons.delete`, `buttons.retry`, `buttons.cancel`;
 - `basic.clearSearch`.
 
@@ -417,12 +436,12 @@ The project view page and `ProjectView` SHALL meet the following contract.
 
 - Logical properties only (`ms-*`, `pe-*`, `start-*`, `border-s-*`, `text-start`).
 - The back arrow is mirrored with `rtl:scale-x-[-1]`.
-- The pin, ⋮, share, download and delete icons are not mirrored.
+- The pin, publish, edit, ⋮, share, download and delete icons are not mirrored.
 
 **Accessibility:**
 
 - Every icon-only button has an accessible name.
-- Pin uses `aria-pressed`.
+- Pin names its action ("Pin" / "Unpin") instead of using `aria-pressed`.
 - The ⋮ menu is keyboard-operable.
 - The delete confirmation is a labeled dialog (`DeleteConfirmationDialog`, whose title names it).
 - Context search results are announced through the `aria-live` status.
@@ -459,3 +478,213 @@ No new analytics event or metric SHALL be introduced. The BFF routes are covered
 
 - **WHEN** `deleteProject` fails with a response that carries a trace id
 - **THEN** the error toast is shown with that `requestId`
+
+### Requirement: ProjectViewPage owns the project's outputs through useProjectArtifacts
+
+`ProjectViewPage` (`apps/chat/src/pages/ProjectViewPage/ProjectViewPage.tsx`) SHALL own the outputs state through `useProjectArtifacts(projectId)`. The page calls the shared hook `useProjectArtifacts(client, projectId)` in `libs/chat-hooks/src/project/use-project-artifacts.ts` with `projectsClient`. The page owns the state, not the section, so that the project watch can refresh it (see the `project-view-live-updates` capability). No new React context is added: the page is the only consumer.
+
+The shared hook SHALL:
+
+- take `client: Pick<ProjectsApiClient, 'listProjectArtifacts'>`, which must be referentially stable, and `projectId: string | null`;
+- return `{ items, isLoading, hasError, retry, refresh }`, where `items` are `ProjectArtifactItemDto[]` in the BFF's newest-first order;
+- read once per project id and on `retry`, starting with `isLoading: true`;
+  - a `null` id is `{ items: [], isLoading: false, hasError: false }` with no request;
+  - a failed read is `hasError: true` with no items;
+  - a `retry` keeps `hasError` until its read settles, while a project change resets the state;
+- treat `refresh()` as a silent re-read:
+  - it never sets `isLoading` or `hasError`;
+  - it replaces `items` on success and keeps them on failure;
+  - while a read is in flight it marks that read pending, and the read lists once more before it settles, so a write during the first read is not lost;
+  - it is a no-op in the error state;
+- abort a request in flight on a newer `refresh`, a `retry`, a project change or unmount. It follows the `useFavicon` pattern: async/await, and an `AbortController` per request.
+
+`ProjectsApiClient` (`libs/chat-hooks/src/project/projects-api-client.ts`) SHALL gain `listProjectArtifacts(projectId, signal?)`, which forwards to the generated `listProjectArtifacts({ id: projectId })`. `ProjectsConfiguredClient` gains the generated method's signature. The hook never constructs or configures a client.
+
+`mapProjectArtifactsToOutputs(items)` in `libs/chat-hooks/src/project/project-mapping.ts` SHALL map each item to `ProjectOutputItem { name, contentType }`. The `contentType` is `inferMimeTypeFromPath(name)`, or `''` when that returns nothing, as `mapProjectDetailsToViewModel` maps context files. The page memoises the mapped items with `useMemo`.
+
+The page always renders `ProjectOutputs` once the project is loaded, and passes it to `ProjectConversationsSection` as `outputs` (see the `project-conversations-ui` capability). The component itself shows no section while the first read is in flight or when there are no outputs.
+
+**Feature flag:** none beyond the page's own `features.projectsEnabled` (`PROJECTS_ENABLED` / `PROJECTS_ENABLED_ROLES`). **Observability:** no new metric or analytics event; the BFF route is covered by `MetricsInterceptor`.
+
+#### Scenario: A project with outputs
+
+- **WHEN** the view page loads a project whose `listProjectArtifacts` answers `summary.md` and `report.pdf`
+- **THEN** `ProjectOutputs` renders between the chat input and the Chats list with the cards `summary.md` and `report.pdf`, in that order
+
+#### Scenario: A project without outputs
+
+- **WHEN** `listProjectArtifacts` answers `{ items: [] }`
+- **THEN** no Outputs heading or region renders, and the Chats list follows the chat input directly
+
+#### Scenario: Outputs fail to load
+
+- **WHEN** `listProjectArtifacts` rejects on the first read
+- **THEN** the Outputs heading renders with `projects.outputs.error` and a Retry button, and activating Retry reads again
+
+#### Scenario: A failed silent refresh keeps the cards
+
+- **WHEN** two outputs are shown and a `refresh()` rejects
+- **THEN** both cards stay, and no error renders
+
+#### Scenario: Read-only project shows outputs
+
+- **WHEN** a shared project (`canEdit: false`) with one output is opened
+- **THEN** the Outputs section renders its card, with no chat input above it
+
+### Requirement: ProjectOutputs is a host-agnostic presentational component in libs/projects
+
+`libs/projects` SHALL export `ProjectOutputs` (`libs/projects/src/components/ProjectOutputs/ProjectOutputs.tsx`) and its types from `libs/projects/src/models/project-outputs-props.ts`: `ProjectOutputsProps`, `ProjectOutputItem`, `ProjectOutputsLabels`, `ProjectOutputsColors`, `ProjectOutputsTypography` and `ProjectOutputsStyles`.
+
+| Prop | Contract |
+| --- | --- |
+| `items` | `ProjectOutputItem[]` (`{ name: string; contentType: string }`), in display order. The lib does not sort. |
+| `onOpenOutput` | `(name: string) => void`, called when a card is activated. The host decides what opens. |
+| `selectedOutputName` | optional `string`: the card that renders selected. |
+| `hasError` | optional `boolean`, default `false`: renders the error text and the retry action instead of cards. |
+| `onRetry` | optional `() => void`: the retry action, hidden when omitted. |
+| `previewLimit` | optional `number`, default `6`: the cards shown before "See all". |
+| `labels` | optional `ProjectOutputsLabels`: `title`, `seeAllLabel(count)`, `showLessLabel`, `openOutputLabel(name)`, `errorLabel`, `retryLabel`, each optional with an English default. |
+| `styles` | optional `ProjectOutputsStyles` (`colors`, `typography`). |
+
+Rendering:
+
+- **Empty.** With no `items` and no `hasError`, it SHALL render no section, only an empty visually hidden `LiveRegion`. That region is the same node that later carries the error text, so the error is announced.
+- **Section.** Otherwise it renders a `<section aria-labelledby>` whose `<h2>` is `labels.title`, styled with `typography.titleClassName`, default `'dial-body-semi-text'`. This is the same level as the Chats heading.
+- **Cards.** The first `previewLimit` items render as a `<ul>` of `AttachmentCard`s from `@epam/ai-dial-attachment-input`, the same 100×100 cards as the Details panel's context files, with 8 px gaps (`gap-2`).
+  - Each card is a `DisplayAttachment` with `id: name`, `status: RequestStatus.Idle` and `type: getAttachmentTypeFromMime(contentType)`.
+  - It takes `onClick` → `onOpenOutput`, `isSelected` when `name === selectedOutputName`, and `labels.clickLabel = openOutputLabel(name)`.
+  - A card offers no rename, delete or upload action, and the section has no add control.
+- **Collapsed row.** The row is `flex-nowrap` with `overflow-x-auto` at every width, inside a `min-w-0` container, so only the row scrolls.
+- **See all.** When `items.length > previewLimit`, a kit `LinkButton` after the heading reads `seeAllLabel(items.length)`. Activating it renders every item in a wrapping (`flex-wrap`) list, and the button then reads `showLessLabel` and collapses again.
+  - The button carries `aria-expanded` and `aria-controls` (the list's id).
+  - The expanded state is the component's own state, so a new `items` array does not reset it.
+- **Error.** `hasError` renders `errorLabel` in the section, in `typography.helperClassName` (default `'dial-tiny-text'`), with that visible copy `aria-hidden`. The always-mounted polite `LiveRegion` announces the same text.
+  - When `onRetry` is set, the section also renders a kit `GhostButton` labelled `retryLabel`.
+  - When `hasError` turns `false` after that button was activated, focus moves to the section's `<h2>` (`tabIndex={-1}`) instead of falling to the page body.
+
+**Colors** (`ProjectOutputsColors`, set with `buildCssVars` and read in `ProjectOutputs.module.scss`): `headingText` → `--po-heading-text`, fallback `--text-primary`, and `secondaryText` → `--po-secondary-text`, fallback `--text-secondary`.
+
+**Isolation.** The lib gets plain data and callbacks only. It SHALL NOT know the `/api` routes, the `{projectId}/files/artifacts/{name}` locator, the generated client, the canvas or i18n. `npm run lint:check` enforces `@nx/enforce-module-boundaries` (`type:ui`).
+
+`ProjectOutputs` is memoised with `memo`. `ProjectOutputs` and its types are documented in `libs/projects/README.md` with a compiling example.
+
+#### Scenario: Cards beyond the preview limit are behind See all
+
+- **WHEN** `ProjectOutputs` renders 9 items with the default `previewLimit`
+- **THEN** 6 cards render, and a button named `See all (9)` has `aria-expanded="false"`
+
+#### Scenario: See all expands and collapses in place
+
+- **WHEN** the user activates `See all (9)`
+- **THEN** 9 cards render in a wrapping list, and the button reads `Show less` with `aria-expanded="true"`
+- **AND** activating it again shows 6 cards
+
+#### Scenario: No See all when everything fits
+
+- **WHEN** 4 items render
+- **THEN** 4 cards render, and there is no See all button
+
+#### Scenario: Activating a card
+
+- **WHEN** the user activates the card named `Preview report.pdf`
+- **THEN** `onOpenOutput` is called with `report.pdf`
+
+#### Scenario: Selected card
+
+- **WHEN** `selectedOutputName` is `report.pdf`
+- **THEN** that card renders selected, and no other does
+
+#### Scenario: Nothing to show
+
+- **WHEN** `items` is empty and `hasError` is `false`
+- **THEN** `ProjectOutputs` renders no section or heading, only an empty live region
+
+#### Scenario: A failure is announced through the region mounted before it
+
+- **WHEN** `ProjectOutputs` renders empty and then with `hasError`
+- **THEN** the `status` region is the same node in both renders, and it then reads `Could not load outputs`
+
+#### Scenario: Focus follows a successful retry
+
+- **WHEN** the user activates Retry and the next render has items and no error
+- **THEN** focus is on the Outputs heading
+
+### Requirement: An output opens in the attachment canvas, as a context file does
+
+`ProjectViewPage` SHALL open an output the way it opens a context file (see the `project-context-file-preview` capability). Its `onOpenOutput(name)` calls `openAttachmentCanvas(attachment, key, startCanvasRequest())` with:
+
+- `attachment = toStoredProjectFileAttachment({ id: name, name, contentType }, projectId)`, whose `url` is the output locator `{projectId}/files/artifacts/{name}`, from `toProjectArtifactUrl` in `apps/chat/src/utils/dial-file.ts`;
+- `key = toProjectPreviewKey(projectId, 'artifacts/' + name)`. A context file name cannot contain `/`, so an output and a context file with the same name are never the same preview and never both render selected.
+
+The shared `toStoredProjectFileAttachment` (`libs/chat-hooks/src/project/project-file-preview.ts`, exported from `@epam/ai-dial-chat-hooks/project`) SHALL take the locator builder for the folder as a required parameter, so that context and output cards share it; `apps/chat/src/utils/project-file-preview.ts` binds it to the app's locator builders.
+
+`resolveDialUrl` SHALL map an output locator to `GET /api/v1/projects/{encodeURIComponent(projectId)}/artifacts/{encodeURIComponent(name)}` (see the `project-detail-api` capability).
+
+- The existing context-locator resolver becomes `resolveProjectFileDownloadUrl`. It recognises the `/files/context/` and `/files/artifacts/` segments and keeps the single-segment file-name rule for both.
+- The shared canvas content resolvers, the canvas Download action and `resolveAbsoluteDialUrl` therefore reach outputs with no project-specific fetch.
+- **Generated-client impact:** none for the canvas; it requests the route by URL.
+
+The page derives `selectedOutputName` from the canvas `attachmentId`: the card id after the `artifacts/` prefix in the project scope, or `undefined`. It passes `isDetailsStacked` to `ProjectView` while either a context file or an output is open.
+
+Handlers are memoised with `useCallback`.
+
+#### Scenario: Opening an output
+
+- **WHEN** the user activates the `report.pdf` output card of `projects/bucket-1/support`
+- **THEN** one `GET /api/v1/projects/projects%2Fbucket-1%2Fsupport/artifacts/report.pdf` request is made, and the canvas shows the PDF
+- **AND** the `report.pdf` output card renders selected, and the Details panel stacks below the main column
+
+#### Scenario: Locator mapping
+
+- **WHEN** the locator `projects/bucket-1/support/files/artifacts/Q4 deck.pptx` is resolved
+- **THEN** it maps to `/api/v1/projects/projects%2Fbucket-1%2Fsupport/artifacts/Q4%20deck.pptx`
+- **AND** an output locator with no file name, or a name containing `/`, resolves to nothing
+
+#### Scenario: Same name in context and outputs
+
+- **WHEN** the project has a context file `notes.md` and an output `notes.md`, and the output is open in the canvas
+- **THEN** only the output card renders selected
+
+### Requirement: Outputs strings, layout, RTL and accessibility
+
+**i18n.** `apps/chat/src/hooks/projects/useProjectOutputsLabels.ts` SHALL fill every `ProjectOutputsLabels` field with `t()`, memoised on `t`, through `ProjectsI18nKeys` members in `apps/chat/src/constants/translation-keys.ts`. New keys in `apps/chat/src/i18n/locales/en.json`:
+
+| Key (enum member) | English |
+| --- | --- |
+| `projects.outputs.title` (`OutputsTitle`) | `Outputs` |
+| `projects.outputs.seeAll` (`OutputsSeeAll`) | `See all ({{count}})` |
+| `projects.outputs.error` (`OutputsError`) | `Could not load outputs` |
+
+It reuses the following keys rather than adding new ones:
+
+- `buttons.showLess` (`ButtonsI18nKeys.ShowLess`) for `showLessLabel`;
+- `buttons.retry` for `retryLabel`;
+- `projects.view.openFile` (`Preview {{name}}`) for `openOutputLabel`.
+
+**Mobile.** On `mobile` the section stays in the main column above the Chats list. The card row scrolls horizontally inside the column; at 320 px wide the page itself has no horizontal scroll. It uses the named breakpoints only (`mobile`, `desktop`), with no JS width check.
+
+**RTL.** Only logical utilities are used (`gap-*`, `ms-*`/`me-*`, `ps-*`/`pe-*`, `text-start`). In RTL the row starts at the inline start (right) and scrolls towards the inline end. No directional icon is used, so nothing is mirrored. The lib never reads the language.
+
+**Accessibility (WCAG 2.1 AAA).**
+
+- The section is a `<section>` named by its `<h2>`.
+- Every card is the `AttachmentCard`'s `role="button"` element, with the accessible name `Preview {name}` and `aria-pressed` for the selected one. It is reachable in DOM order with Tab and activated with Enter or Space.
+- See all is a native button with `aria-expanded` and `aria-controls`.
+- After a collapse, focus stays on the See all button.
+- The error text is announced through a `LiveRegion` mounted before it, and focus moves to the heading after a successful retry.
+- Focus rings are the kit's own, and the text and icon contrast comes from the kit tokens.
+
+#### Scenario: Labels are translated
+
+- **WHEN** the app language changes
+- **THEN** the Outputs heading, See all, Show less, the card names and the error text re-render in that language
+
+#### Scenario: No page scroll at 320 px
+
+- **WHEN** the view page renders 6 outputs at a 320 px viewport
+- **THEN** `document.documentElement.scrollWidth` equals its `clientWidth`, and the card row's own `scrollWidth` exceeds its `clientWidth`
+
+#### Scenario: Keyboard access
+
+- **WHEN** a keyboard user tabs from the chat input
+- **THEN** focus reaches the See all button and each output card, before the Chats list

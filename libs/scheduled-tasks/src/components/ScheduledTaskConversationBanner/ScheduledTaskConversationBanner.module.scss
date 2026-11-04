@@ -1,0 +1,29 @@
+.card {
+  border-color: var(--stcb-border, var(--stroke-secondary, #d1dbea));
+  background: var(--stcb-surface, var(--bg-layer-sunken, #eef1f7));
+}
+
+.text {
+  color: var(--stcb-text, var(--text-primary, #161b2d));
+}
+
+.detailsLink {
+  color: var(--stcb-details-link, var(--text-accent, #1d4ed8));
+
+  &:hover,
+  &:focus-visible {
+    background: var(
+      --stcb-details-link-hover-surface,
+      var(--bg-control-accent-alpha-hover, #2764d924)
+    );
+  }
+
+  &:focus-visible {
+    outline: 1px solid var(--stcb-focus-outline, var(--stroke-focus, #161b2d));
+    outline-offset: -1px;
+  }
+}
+
+.deleted {
+  color: var(--stcb-deleted-text, var(--text-secondary, #57647a));
+}

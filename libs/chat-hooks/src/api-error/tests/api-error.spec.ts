@@ -1,5 +1,7 @@
+import { ResponseError } from '@epam/ai-dial-chat-api-client';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  getAcceptInvitationErrorItemName,
   getApiErrorDetails,
   getApiErrorMessage,
   isConversationNotFoundError,
@@ -232,5 +234,35 @@ describe('getApiErrorDetails', () => {
     await expect(response.clone().json()).resolves.toEqual({
       message: 'Deployment is not available',
     });
+  });
+});
+
+describe('getAcceptInvitationErrorItemName', () => {
+  const refused = (body: unknown) =>
+    new ResponseError(new Response(JSON.stringify(body), { status: 409 }));
+
+  it('returns the shared item title from the error body', async () => {
+    await expect(
+      getAcceptInvitationErrorItemName(
+        refused({ itemName: 'Quarterly report' }),
+      ),
+    ).resolves.toBe('Quarterly report');
+  });
+
+  it('returns undefined for an empty title or a non-JSON body', async () => {
+    await expect(
+      getAcceptInvitationErrorItemName(refused({ itemName: '' })),
+    ).resolves.toBeUndefined();
+    await expect(
+      getAcceptInvitationErrorItemName(
+        new ResponseError(new Response('oops', { status: 500 })),
+      ),
+    ).resolves.toBeUndefined();
+  });
+
+  it('returns undefined for an error that is not a ResponseError', async () => {
+    await expect(
+      getAcceptInvitationErrorItemName(new Error('offline')),
+    ).resolves.toBeUndefined();
   });
 });

@@ -51,7 +51,7 @@ import '@epam/ai-dial-toolset-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.62`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.72`
 - `@epam/ai-dial-chat-shared` `*`
 - `@epam/ai-dial-chat-hooks` `*`
 
@@ -164,6 +164,21 @@ is shown neither in create mode nor without a hint. Its copy comes from
 default `` (hint) => `******${hint}` ``) and
 `labels.settings.auth.clientSecretKeepCaption` (default
 `'Leave empty to keep the saved secret.'`).
+
+OAuth "Custom login" (static client registration) also shows an optional
+Resource field after Scopes, bound to `ToolsetAuthFormData.resource` — the
+RFC 8707 resource indicator the backend sends on the token exchange and the
+host puts on the authorize URL. It is not rendered for "Standard login"
+(dynamic registration), API key or no authentication, because DIAL Core
+rejects a supplied value there. A blank value is valid; anything else must be
+an absolute URI of at most 2048 characters without whitespace or a
+`#fragment`, or the field shows
+`labels.validation.resourceInvalid` (default
+`'Enter an absolute URI without a fragment'`) and blocks save and login. Its
+label and placeholder come from `labels.settings.auth.resourceLabel` (default
+`'Resource'`) and `labels.settings.auth.resourcePlaceholder` (default
+`'Enter resource URI'`). The library only edits the value; whether a blank
+field is sent as "clear" or left out is the host's mapping.
 
 `labels` is a nested `ToolsetEditorLabels` object whose `layout`, `general`,
 `settings`, `validation`, and `refinement` groups are each optional and

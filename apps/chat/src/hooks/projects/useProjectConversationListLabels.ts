@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
+  ConversationPanelI18nKeys,
   ProjectsI18nKeys,
 } from '../../constants/translation-keys';
 
@@ -30,7 +31,8 @@ export const useProjectConversationListLabels =
         retryLabel: t(ButtonsI18nKeys.Retry),
         emptyTitle: t(ProjectsI18nKeys.ChatsEmpty),
         emptyDescription: t(ProjectsI18nKeys.ChatsEmptyDescription),
-        loadMoreLabel: t(ButtonsI18nKeys.ShowMore),
+        loadMoreLabel: t(ButtonsI18nKeys.SeeMore),
+        unreadLabel: t(ConversationPanelI18nKeys.UnreadIndicatorLabel),
       }),
       [t],
     );

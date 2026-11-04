@@ -11,7 +11,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
-import { ReactNode } from 'react';
+import { cloneElement, isValidElement, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Input } from '../Input';
 
@@ -32,14 +32,20 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       items,
       open,
       renderOverlay,
+      onOpenChange,
     }: {
       children: ReactNode;
       items?: MenuItems;
       open?: boolean;
       renderOverlay?: () => ReactNode;
+      onOpenChange?: (open: boolean) => void;
     }) => (
       <div>
-        {children}
+        {isValidElement<{ onClick?: () => void }>(children) && onOpenChange
+          ? cloneElement(children, {
+              onClick: children.props.onClick ?? (() => onOpenChange(!open)),
+            })
+          : children}
         {open && renderOverlay?.()}
         {items?.map((item) => (
           <button

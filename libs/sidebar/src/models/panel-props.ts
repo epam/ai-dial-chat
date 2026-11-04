@@ -81,6 +81,8 @@ export interface SidebarPanelProps {
    * still owns the positioning itself. Defaults to `false`.
    */
   isOverlay?: boolean;
+  /** Opt into an inline-end overlay bounded by its containing block, leaving 32px visible. */
+  isBoundedOverlay?: boolean;
   /** Initial panel width in px used when `resizable` is true. Defaults to `360`. */
   defaultWidth?: number;
   /** Minimum panel width in px used when `resizable` is true. Defaults to `280`. */

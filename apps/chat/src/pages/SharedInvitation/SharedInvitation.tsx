@@ -1,5 +1,8 @@
 import { ShareInvitationErrorCode } from '@epam/ai-dial-chat-api-client';
-import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
+import {
+  getAcceptInvitationErrorItemName,
+  getApiErrorDetails,
+} from '@epam/ai-dial-chat-hooks';
 import { FC, memo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
@@ -9,10 +12,7 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { usePrompts } from '../../context/PromptsContext';
 import { useSkills } from '../../context/SkillsContext';
-import {
-  acceptInvitation,
-  getAcceptInvitationErrorItemName,
-} from '../../server-api/share.api';
+import { acceptInvitation } from '../../server-api/share.api';
 import { CatalogQuery } from '../../types/catalog';
 import { ROUTES } from '../../types/routes';
 

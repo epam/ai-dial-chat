@@ -132,6 +132,45 @@ describe('ExternalServicesController — PUT/DELETE (integration)', () => {
       .expect(400);
   });
 
+  it('passes an OAuth resource through to the service', async () => {
+    const body = {
+      displayName: 'Notion',
+      authSettings: {
+        authenticationType: ExternalServiceAuthType.OAuth,
+        clientId: 'dial-chat',
+        resource: 'https://mcp.notion.com/mcp',
+      },
+    };
+    app = await buildApp(service);
+    await request(app.getHttpServer()).put(PATH).send(body).expect(200);
+
+    expect(service.putExternalService).toHaveBeenCalledWith(
+      'test-access-token',
+      'applications/bkt/loop__1.0.0',
+      SERVICE_ID,
+      body,
+    );
+  });
+
+  it.each([
+    'mcp.notion.com/mcp',
+    'https://mcp.notion.com/mcp#x',
+    'https://mcp.notion.com/mcp\r\nX-B: 1',
+  ])('refuses the resource %j without calling Core', async (resource) => {
+    app = await buildApp(service);
+    await request(app.getHttpServer())
+      .put(PATH)
+      .send({
+        displayName: 'Notion',
+        authSettings: {
+          authenticationType: ExternalServiceAuthType.OAuth,
+          resource,
+        },
+      })
+      .expect(400);
+    expect(service.putExternalService).not.toHaveBeenCalled();
+  });
+
   it('refuses fields outside the definition', async () => {
     app = await buildApp(service);
     await request(app.getHttpServer())

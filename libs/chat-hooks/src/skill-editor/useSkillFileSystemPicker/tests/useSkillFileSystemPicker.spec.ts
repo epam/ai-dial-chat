@@ -95,6 +95,24 @@ describe('skill file selection lifetime', () => {
     },
   );
 
+  it.each(['close', 'unmount'])(
+    'settles a pick as cancelled on %s before any file is attached',
+    async (mode) => {
+      const load = vi.fn();
+      const { result, unmount } = renderHook(() =>
+        useSkillFileSystemPicker({ materializeFile: load, onError: vi.fn() }),
+      );
+      let picked!: Promise<unknown[] | undefined>;
+      act(() => {
+        picked = result.current.pickFromFileSystem();
+      });
+      if (mode === 'unmount') unmount();
+      else act(() => result.current.handleClose());
+      expect(await picked).toBeUndefined();
+      expect(load).not.toHaveBeenCalled();
+    },
+  );
+
   it('settles and reports an active download failure', async () => {
     const error = new Error('download');
     const onError = vi.fn();

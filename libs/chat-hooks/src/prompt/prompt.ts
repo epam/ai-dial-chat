@@ -65,6 +65,26 @@ export const validatePromptContent = (
   return null;
 };
 
+/** Field errors of a prompt form, keyed by field. */
+export interface PromptFieldErrors {
+  /** Error of the name field. */
+  name?: PromptFieldError;
+  /** Error of the description field. */
+  description?: PromptFieldError;
+  /** Error of the prompt body field. */
+  content?: PromptFieldError;
+}
+
+/** The validator of each prompt form field. */
+export const PROMPT_FIELD_VALIDATORS: Record<
+  keyof PromptFieldErrors,
+  (value: string) => PromptFieldError | null
+> = {
+  name: validatePromptName,
+  description: validatePromptDescription,
+  content: validatePromptContent,
+};
+
 /**
  * Returns the characters left before a limit, or `null` while still further
  * away than the announce threshold — a counter that fires on every keystroke

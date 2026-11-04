@@ -8,7 +8,7 @@ import { CreateButton } from '../CreateButton';
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-chat-shared')>();
-  return { ...actual, useIsMobile: () => true };
+  return { ...actual, useIsPhone: () => true };
 });
 
 const MobileCreateButton = ({

@@ -8,7 +8,8 @@ import {
   resolveDialFileDownloadUrl,
   resolveDialFileMetadataUrl,
   resolveDialUrl,
-  resolveProjectContextFileDownloadUrl,
+  resolveProjectFileDownloadUrl,
+  toProjectArtifactUrl,
   toProjectContextFileUrl,
 } from '../dial-file';
 
@@ -96,7 +97,7 @@ describe('project context file URLs', () => {
 
   it('resolves a locator to the BFF project file endpoint with the id and name encoded', () => {
     expect(
-      resolveProjectContextFileDownloadUrl(
+      resolveProjectFileDownloadUrl(
         toProjectContextFileUrl(PROJECT_ID, 'Q4 tickets (1).csv'),
       ),
     ).toBe(
@@ -112,7 +113,7 @@ describe('project context file URLs', () => {
     ['a locator with no project', 'projects//files/context/a.csv'],
     ['an external URL', 'https://example.com/projects/b/p/files/context/a.csv'],
   ])('does not resolve %s', (_, url) => {
-    expect(resolveProjectContextFileDownloadUrl(url)).toBeUndefined();
+    expect(resolveProjectFileDownloadUrl(url)).toBeUndefined();
   });
 
   it('lets resolveDialUrl return the project file endpoint for an attachment carrying a locator', () => {
@@ -125,6 +126,56 @@ describe('project context file URLs', () => {
       ),
     ).toBe(
       '/api/v1/projects/projects%2Fbucket-1%2Fmarketing%2Fq4/files/tickets.csv',
+    );
+  });
+
+  it('builds the locator of an output from its project id and name', () => {
+    expect(toProjectArtifactUrl(PROJECT_ID, 'report.pdf')).toBe(
+      'projects/bucket-1/marketing/q4/files/artifacts/report.pdf',
+    );
+  });
+
+  it('resolves an output locator to the BFF artifact endpoint', () => {
+    expect(
+      resolveProjectFileDownloadUrl(
+        'projects/bucket-1/support/files/artifacts/Q4 deck.pptx',
+      ),
+    ).toBe(
+      '/api/v1/projects/projects%2Fbucket-1%2Fsupport/artifacts/Q4%20deck.pptx',
+    );
+  });
+
+  it('uses the last folder segment when the project path contains one', () => {
+    expect(
+      resolveProjectFileDownloadUrl(
+        'projects/b/files/context/team/files/artifacts/report.pdf',
+      ),
+    ).toBe(
+      '/api/v1/projects/projects%2Fb%2Ffiles%2Fcontext%2Fteam/artifacts/report.pdf',
+    );
+  });
+
+  it.each([
+    ['an output locator with no file name', 'projects/b/p/files/artifacts/'],
+    [
+      'an output locator whose name has a path',
+      'projects/b/p/files/artifacts/run-1/data.csv',
+    ],
+    ['an output locator with no project', 'projects//files/artifacts/a.csv'],
+  ])('does not resolve %s', (_, url) => {
+    expect(resolveProjectFileDownloadUrl(url)).toBeUndefined();
+  });
+
+  it('lets resolveDialUrl return the artifact endpoint for an output attachment', () => {
+    expect(
+      resolveDialUrl(
+        makeAttachment({
+          name: 'report.pdf',
+          url: toProjectArtifactUrl(PROJECT_ID, 'report.pdf'),
+        }),
+      ),
+    ).toBe(
+      '/api/v1/projects/projects%2Fbucket-1%2Fmarketing%2Fq4/artifacts/report.pdf',
     );
   });
 

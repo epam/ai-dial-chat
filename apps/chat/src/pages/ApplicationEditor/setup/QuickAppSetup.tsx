@@ -56,6 +56,7 @@ const QuickAppSetup: FC<Props> = ({
   onSubmit,
   isSubmitting,
   onReadyChange,
+  onEmbeddedEditorLoadedChange,
   ref,
   onDirtyChange,
 }) => {
@@ -204,6 +205,21 @@ const QuickAppSetup: FC<Props> = ({
       },
     }),
     [onPreviewReset, refetchDeployments, runSave],
+  );
+
+  /* Only a loaded editor with nothing to report runs edge to edge; loading, errors and placeholders keep the section padding. */
+  const isEmbeddedEditorLoaded =
+    hasEditor &&
+    isEditorReady &&
+    !isNotReadyExplained &&
+    !saveError &&
+    !isReadinessTimedOut;
+  useEffect(() => {
+    onEmbeddedEditorLoadedChange?.(isEmbeddedEditorLoaded);
+  }, [isEmbeddedEditorLoaded, onEmbeddedEditorLoadedChange]);
+  useEffect(
+    () => () => onEmbeddedEditorLoadedChange?.(false),
+    [onEmbeddedEditorLoadedChange],
   );
 
   const handleUpdated = useCallback(() => {

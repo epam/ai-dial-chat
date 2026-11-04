@@ -15,6 +15,7 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { PUBLIC_BUCKET } from '../constants/dial.constants';
 import { DialClientService } from '../dial/dial-client.service';
+import { ConversationReadStateService } from '../scheduled-task-unread/conversation-read-state.service';
 import { UserConfigService } from '../user-config/user-config.service';
 import { PROJECT_WRITE_ATTEMPTS } from './constants/project-context.constants';
 import {
@@ -112,6 +113,7 @@ export class ProjectsService {
     private readonly createService: ProjectsCreateService,
     private readonly snapshotService: ProjectsSnapshotService,
     private readonly userConfigService: UserConfigService,
+    private readonly readStateService: ConversationReadStateService,
   ) {}
 
   /**
@@ -166,6 +168,7 @@ export class ProjectsService {
 
     this.logger.log('Project deleted');
     await this.removePinQuietly(parsed.id, accessToken, sessionBucket);
+    await this.removeReadStateQuietly(parsed.id, accessToken, sessionBucket);
   }
 
   /** One conditional Core delete; resolves `false` on Core's `412`. */
@@ -225,6 +228,21 @@ export class ProjectsService {
     }
   }
 
+  /** Best-effort removal of the caller's project read state after a committed delete; a failure is logged, not thrown. */
+  private async removeReadStateQuietly(
+    id: string,
+    accessToken: string,
+    sessionBucket: string,
+  ): Promise<void> {
+    try {
+      await this.readStateService.removeProject(id, accessToken, sessionBucket);
+    } catch (err) {
+      this.logger.warn(
+        `Read-state cleanup after a project delete failed (${err instanceof Error ? err.name : 'unknown error'})`,
+      );
+    }
+  }
+
   /**
    * Reads one project: its item metadata (author, timestamps) and its
    * archive snapshot (manifest, context sizes, ETag), concurrently under
@@ -278,10 +296,6 @@ export class ProjectsService {
         ),
       ),
     ]);
-    /* Debug only (LOG_LEVEL=debug): the item metadata exactly as Core sent it. */
-    this.logger.debug(
-      `DIAL Core project metadata: ${JSON.stringify(metadata)}`,
-    );
     const source = resolveProjectSource(parsed.bucket, sessionBucket);
 
     return {

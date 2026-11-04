@@ -308,6 +308,11 @@ export const useSkillSelectorOverlay = ({
     [mentions, resolveName],
   );
 
+  const selectSkillByUrl = useCallback(
+    (url: string) => seedSkillMentions(`/${resolveName(url)} `, [{ url }]),
+    [seedSkillMentions, resolveName],
+  );
+
   /*
    * User-bubble history rendering: slices `content` into plain-text runs and
    * `ChatSkill` elements at each mention's actual position, via
@@ -639,6 +644,7 @@ export const useSkillSelectorOverlay = ({
     selectedSkills: mentions.orderedSkills,
     resetSkillMentions,
     seedSkillMentions,
+    selectSkillByUrl,
     recognizeMentionsInInsertion,
     renderHistorySkillSegments,
     renderHistorySkills,

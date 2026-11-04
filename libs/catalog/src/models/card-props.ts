@@ -39,6 +39,8 @@ export interface CardColors {
   checkIcon?: string;
   /** Top border color of the footer row (folder path / star button). Fallback: `--stroke-tertiary`. */
   footerBorder?: string;
+  /** Keyboard focus outline of a clickable card. Fallback: `--stroke-focus`. */
+  focusOutline?: string;
   /** Featured chip style override, merged over its default per-entity-type colors for every entity type, e.g. `{ backgroundColor, color, border }`. */
   featuredChipStyle?: CSSProperties;
 }

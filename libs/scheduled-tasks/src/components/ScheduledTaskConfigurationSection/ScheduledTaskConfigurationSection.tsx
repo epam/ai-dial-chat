@@ -32,6 +32,7 @@ export const ScheduledTaskConfigurationSection: FC<
 > = ({
   skillLabel,
   skillDisplayNames,
+  renderSkillName,
   instructionsLabel,
   instructionsMarkdown,
   renderInstructions,
@@ -56,7 +57,7 @@ export const ScheduledTaskConfigurationSection: FC<
         <p className="wrap-anywhere whitespace-normal">
           {skillDisplayNames?.map((name, index) => (
             <span className="block" key={`${index}:${name}`}>
-              {name}
+              {renderSkillName ? renderSkillName(name, index) : name}
             </span>
           ))}
         </p>

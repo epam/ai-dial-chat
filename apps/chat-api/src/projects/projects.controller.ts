@@ -46,6 +46,7 @@ import {
   SseSubscriptionKind,
   trackSseSubscription,
 } from '../telemetry/runtime-metrics';
+import { ProjectArtifactsListService } from './artifacts/projects-artifacts-list.service';
 import type { UploadedContextFile } from './create/projects-create.service';
 import {
   type ProjectDownload,
@@ -54,10 +55,12 @@ import {
 import { CreateProjectResponseDto } from './dto/create-project-response.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ListProjectsResponseDto } from './dto/list-projects-response.dto';
+import { ProjectArtifactListResponseDto } from './dto/project-artifact-list-response.dto';
 import { ProjectCreateErrorDto } from './dto/project-create-error.dto';
 import { ProjectDetailsDto } from './dto/project-details.dto';
 import {
   PROJECT_ID_PARAM,
+  ProjectArtifactParamDto,
   ProjectFileParamDto,
   ProjectIdParamDto,
 } from './dto/project-id-param.dto';
@@ -110,6 +113,7 @@ export class ProjectsController {
     private readonly downloadService: ProjectsDownloadService,
     private readonly updateService: ProjectsUpdateService,
     private readonly watchService: ProjectsWatchService,
+    private readonly artifactsListService: ProjectArtifactsListService,
   ) {}
 
   @Get()
@@ -521,6 +525,108 @@ export class ProjectsController {
     const { at, bucket } = req.user as SessionUser;
     await this.streamDownload(res, () =>
       this.downloadService.downloadContextFile(
+        requireProjectId(id),
+        fileName,
+        at,
+        bucket,
+      ),
+    );
+  }
+
+  @Get(':id/artifacts')
+  @Header('Cache-Control', 'private, no-store')
+  @ApiOperation({
+    operationId: 'listProjectArtifacts',
+    summary: "List a project's outputs",
+    description:
+      "Lists the files directly under the project `artifacts/` folder, where the agents of the project's chats save their outputs, newest first. Nested paths are not listed. Any reader of the project may call it.",
+  })
+  @ApiParam(PROJECT_ID_PARAM)
+  @ApiDialCoreErrors()
+  @ApiResponse({
+    status: 200,
+    description: 'The outputs; a project without `artifacts/` lists none',
+    type: ProjectArtifactListResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'The project id is invalid' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 403,
+    description:
+      'The projectsEnabled feature is not enabled for this user, or DIAL Core denied access',
+  })
+  @ApiResponse({ status: 404, description: 'The project does not exist' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  listProjectArtifacts(
+    @Param() { id }: ProjectIdParamDto,
+    @Req() req: Request,
+  ): Promise<ProjectArtifactListResponseDto> {
+    const { at, bucket } = req.user as SessionUser;
+    return this.artifactsListService.listArtifacts(
+      requireProjectId(id),
+      at,
+      bucket,
+    );
+  }
+
+  @Get(':id/artifacts/:fileName')
+  @ApiProduces('application/octet-stream')
+  @ApiOperation({
+    operationId: 'downloadProjectArtifact',
+    summary: 'Download one output of a project',
+    description:
+      'Streams one file directly under the project `artifacts/` folder as an attachment with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.',
+  })
+  @ApiParam(PROJECT_ID_PARAM)
+  @ApiParam({
+    name: 'fileName',
+    description:
+      'Name of a file directly under the project `artifacts/` folder.',
+    example: 'report.pdf',
+  })
+  @ApiDialCoreErrors()
+  @ApiResponse({
+    status: 200,
+    description: 'Streamed file content',
+    schema: { type: 'string', format: 'binary' },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'The project id or the file name is invalid',
+  })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 403,
+    description:
+      'The projectsEnabled feature is not enabled for this user, or DIAL Core denied access',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'The project or the file does not exist',
+  })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  async downloadProjectArtifact(
+    @Param() { id, fileName }: ProjectArtifactParamDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<void> {
+    const { at, bucket } = req.user as SessionUser;
+    await this.streamDownload(res, () =>
+      this.downloadService.downloadArtifact(
         requireProjectId(id),
         fileName,
         at,

@@ -1,4 +1,7 @@
-import type { ToolsetOAuthSettings } from './models';
+import type {
+  ToolsetOAuthSettings,
+  ToolsetOAuthSettingsSource,
+} from './models';
 
 /**
  * Resolves the OAuth callback location against the current origin. The
@@ -49,8 +52,33 @@ export const buildToolsetAuthorizeUrl = (
     if (auth.scopes && auth.scopes.length > 0) {
       url.searchParams.set('scope', auth.scopes.join(' '));
     }
+    /*
+     * Sent verbatim: DIAL Core validated it on save and sends the same string
+     * on the token exchange, and servers enforcing RFC 8707 on both legs
+     * reject a mismatch with `invalid_target`.
+     */
+    const resource = auth.resource?.trim();
+    if (resource) {
+      url.searchParams.set('resource', resource);
+    }
     return url.toString();
   } catch {
     return null;
   }
 };
+
+/**
+ * Maps the public OAuth client fields of a DIAL Core auth-settings DTO onto
+ * the settings `buildToolsetAuthorizeUrl` reads, so every login entry point
+ * copies the same fields. An absent source yields all-`undefined` settings.
+ */
+export const toToolsetOAuthSettings = (
+  source?: ToolsetOAuthSettingsSource,
+): ToolsetOAuthSettings => ({
+  clientId: source?.clientId,
+  authorizationEndpoint: source?.authorizationEndpoint,
+  scopes: source?.scopesSupported,
+  codeChallenge: source?.codeChallenge,
+  codeChallengeMethod: source?.codeChallengeMethod,
+  resource: source?.resource,
+});

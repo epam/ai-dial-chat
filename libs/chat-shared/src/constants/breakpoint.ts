@@ -1,13 +1,6 @@
 /*
- * The single source of truth for the app-wide responsive boundary. Every
- * mechanism that branches on viewport width must resolve to the same band:
- * the named Tailwind screens in the root tailwind.config.js, the
- * useIsMobile hook (used by the app and the libs), the
- * catalog grid virtualizer, the chat-overlay manager, and the SCSS @media
- * mirrors in libs/*. The sites that cannot import this module — the root
- * tailwind config (plain CJS), SCSS stylesheets, and chat-overlay (which has
- * no dependencies) — repeat the literal and are pinned to it by
- * libs/chat-shared/src/constants/tests/breakpoint-sync.spec.ts.
+ * Layout stays at 1280px. Menus and right-panel overlays opt into a separate
+ * 768px policy. Tailwind and SCSS mirrors are pinned by breakpoint-sync.spec.ts.
  */
 
 /** The viewport width (inclusive) where the desktop presentation begins. */
@@ -21,3 +14,12 @@ export const DESKTOP_MEDIA_QUERY = `(min-width: ${DESKTOP_BREAKPOINT_PX}px)`;
 
 /** `matchMedia` query matching the mobile/tablet band (up to 1279px). */
 export const MOBILE_MEDIA_QUERY = `(max-width: ${MOBILE_MAX_WIDTH_PX}px)`;
+
+/** Inclusive boundary for anchored menus and bounded tablet panels, independent of layout. */
+export const TABLET_BREAKPOINT_PX = 768;
+
+/** Phone menu presentation, including fractional widths below 768px. */
+export const PHONE_MEDIA_QUERY = `(width < ${TABLET_BREAKPOINT_PX}px)`;
+
+/** Bounded overlays without changing the app's mobile layout policy. */
+export const TABLET_MEDIA_QUERY = `(${TABLET_BREAKPOINT_PX}px <= width < ${DESKTOP_BREAKPOINT_PX}px)`;

@@ -39,7 +39,7 @@ A `useAppVersionCheck` hook in `apps/chat/src/hooks/` SHALL own the "is a new ve
 
 ### Requirement: Full-screen reload prompt
 
-A `NewVersionFallback` component in `apps/chat/src/components/NewVersionFallback/` SHALL render in place of the entire app (rendering `NewVersionAlert` from `@epam/ai-dial-chat-shared` with translated labels and an `onReload` that calls `window.location.reload()`; `NewVersionAlert` shares `ErrorFallback`'s `FullScreenAlert` layout — the kit `StateScreen` icon badge, `h1` heading, message, and auto-focused `PrimaryButton` action, with no live-region role) when `useAppVersionCheck` reports `isNewVersionAvailable === true`. `App` (`apps/chat/src/app/app.tsx`) SHALL call `useAppVersionCheck` and return `<NewVersionFallback />` instead of its normal layout whenever `isNewVersionAvailable` is `true`, blocking further interaction with the stale build until the user reloads.
+A `NewVersionFallback` component in `apps/chat/src/components/NewVersionFallback/` SHALL render in place of the entire app (rendering `NewVersionAlert` from `@epam/ai-dial-chat-shared` with translated labels and an `onReload` that calls `window.location.reload()`; `NewVersionAlert` shares the error boundary's layout — the kit `StateScreen` icon badge, `h1` heading, message, and auto-focused `PrimaryButton` action, with no live-region role) when `useAppVersionCheck` reports `isNewVersionAvailable === true`. `App` (`apps/chat/src/app/app.tsx`) SHALL call `useAppVersionCheck` and return `<NewVersionFallback />` instead of its normal layout whenever `isNewVersionAvailable` is `true`, blocking further interaction with the stale build until the user reloads.
 
 The fallback is always active and is NOT gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — it is a reliability affordance, not a product feature toggle.
 
@@ -56,7 +56,7 @@ The fallback is always active and is NOT gated behind `ENABLED_FEATURES` / `ENAB
 #### Scenario: Reload button receives focus automatically
 
 - **WHEN** the fallback mounts
-- **THEN** the reload button receives focus (`autoFocus`), matching `ErrorFallback`'s existing pattern, so keyboard users can act immediately
+- **THEN** the reload button receives focus (`autoFocus`), matching the error boundary's fallback, so keyboard users can act immediately
 
 #### Scenario: Fallback strings are translated
 

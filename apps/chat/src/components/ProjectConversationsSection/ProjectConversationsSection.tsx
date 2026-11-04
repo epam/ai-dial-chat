@@ -1,19 +1,28 @@
 import {
-  type ConversationResponseDto,
-  ProjectCreateErrorCode,
-} from '@epam/ai-dial-chat-api-client';
-import {
   attachmentsToDtos,
   findDeploymentByIdOrReference,
   getApiErrorDetails,
   hasActiveToolConfig,
   useToolsMenu,
 } from '@epam/ai-dial-chat-hooks';
+import {
+  classifyProjectChatCreateError,
+  createProjectChat,
+  ProjectChatCreateFailure,
+  type useProjectConversations,
+} from '@epam/ai-dial-chat-hooks/project';
 import type { Attachment, DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { ProjectConversationsPanel } from '@epam/ai-dial-projects';
 import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconTelescope } from '@tabler/icons-react';
-import { memo, useCallback, useEffect, useMemo, type FC } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  type FC,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { getProjectConversationRoute } from '../../constants/routes';
@@ -26,13 +35,9 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useComposerMenus } from '../../hooks/conversation/useComposerMenus';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { useProjectConversations } from '../../hooks/projects/useProjectConversations';
+import { projectsClient } from '../../hooks/projects/projects-client';
 import { useProjectConversationsPanelLabels } from '../../hooks/projects/useProjectConversationsPanelLabels';
 import type { ProjectChatProjectSummary } from '../../models/project-chat';
-import {
-  createProjectConversation,
-  saveProjectConversation,
-} from '../../server-api/project-conversations.api';
 import { ComposerLayout } from '../../types/conversation-composer';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
@@ -41,6 +46,9 @@ import NewConversationComposer, {
   type NewConversationChatSettings,
 } from '../NewConversationComposer/NewConversationComposer';
 
+/** Chats list state and actions, owned by the page. */
+type ProjectConversationsState = ReturnType<typeof useProjectConversations>;
+
 interface Props {
   /** The project whose chats this section lists. */
   projectId: string;
@@ -48,15 +56,24 @@ interface Props {
   projectName: string;
   /** Whether the caller owns the project: only an owner chats, renames and deletes. */
   canEdit: boolean;
+  /** The Chats list state, owned by the page so its live updates can refresh it. */
+  conversations: ProjectConversationsState;
   /** Called after a chat is deleted, so the page can keep its chat count current. */
   onConversationDeleted?: () => void;
+  /** The page's Outputs section, rendered between the chat input and the Chats list; omitted when unset. */
+  outputs?: ReactNode;
+  /** Whether the Outputs section shows content, so an empty Chats list hides its "No outputs or chats yet" state. */
+  hasOutputs?: boolean;
 }
 
 const ProjectConversationsSection: FC<Props> = ({
   projectId,
   projectName,
   canEdit,
+  conversations,
   onConversationDeleted,
+  outputs,
+  hasOutputs,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -73,7 +90,8 @@ const ProjectConversationsSection: FC<Props> = ({
     loadMore,
     rename,
     remove,
-  } = useProjectConversations(projectId);
+    markViewed,
+  } = conversations;
   const {
     items: deployments,
     selectedItemId,
@@ -83,7 +101,11 @@ const ProjectConversationsSection: FC<Props> = ({
     isLoading: isDeploymentsLoading,
     error: deploymentsError,
   } = useDeployments();
-  const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
+  const {
+    renderOverlay,
+    catalogModal,
+    onOpenChange: onModelPickerOpenChange,
+  } = useDeploymentSelectorOverlay();
 
   /* A model restored from a viewed chat must not leak into a new project chat, as on the new-conversation screen. */
   useEffect(() => {
@@ -156,46 +178,45 @@ const ProjectConversationsSection: FC<Props> = ({
       }
       const skillsForSend = selectedSkills;
       resetSkillMentions();
-      let conversation: ConversationResponseDto;
+      let isCreated = false;
       try {
-        conversation = await createProjectConversation(
+        await createProjectChat(
+          projectsClient,
           projectId,
-          message,
-          selectedItemId,
-          attachmentsToDtos(attachments || []),
-          hasActiveToolConfig(toolConfigurationValue)
-            ? toolConfigurationValue
-            : undefined,
-          undefined,
-          skillsForSend,
+          {
+            firstMessage: message,
+            deploymentId: selectedItemId,
+            attachments: attachmentsToDtos(attachments || []),
+            configurationValue: hasActiveToolConfig(toolConfigurationValue)
+              ? toolConfigurationValue
+              : undefined,
+            skills: skillsForSend,
+          },
+          chatSettingsValues,
+          /* The chat exists either way; opening it avoids a duplicate on retry. */
+          (saved) => {
+            isCreated = true;
+            navigate(getProjectConversationRoute(saved.id), {
+              state: { conversation: saved, project },
+            });
+          },
         );
       } catch (error) {
+        /* A chat that exists but lost its settings was opened above; nothing else to report. */
+        if (isCreated) throw error;
         seedSkillMentions(message, skillsForSend);
-        const { code, traceId } = await getApiErrorDetails(error);
+        const { failure, requestId } =
+          await classifyProjectChatCreateError(error);
         showErrorNotification({
           message: t(
-            code === ProjectCreateErrorCode.ProjectStorageFull
+            failure === ProjectChatCreateFailure.StorageFull
               ? ProjectsI18nKeys.ChatsStorageFull
               : ProjectsI18nKeys.ChatsCreateError,
           ),
-          requestId: traceId,
+          requestId,
         });
         /* Rejecting keeps the draft in the composer. */
         throw error;
-      }
-      const savedConversation = {
-        ...conversation,
-        prompt: chatSettingsValues.systemPrompt,
-        temperature: chatSettingsValues.temperature,
-        responseFormat: chatSettingsValues.responseFormat,
-      } as ConversationResponseDto;
-      try {
-        await saveProjectConversation(conversation.id, savedConversation);
-      } finally {
-        /* The chat exists either way; opening it avoids a duplicate on retry. */
-        navigate(getProjectConversationRoute(conversation.id), {
-          state: { conversation: savedConversation, project },
-        });
       }
     },
     [
@@ -213,9 +234,11 @@ const ProjectConversationsSection: FC<Props> = ({
   );
 
   const handleOpen = useCallback(
-    (id: string) =>
-      navigate(getProjectConversationRoute(id), { state: { project } }),
-    [navigate, project],
+    (id: string) => {
+      markViewed(id);
+      navigate(getProjectConversationRoute(id), { state: { project } });
+    },
+    [markViewed, navigate, project],
   );
 
   const handleRename = useCallback(
@@ -298,6 +321,7 @@ const ProjectConversationsSection: FC<Props> = ({
               placeholder={t(ChatI18nKeys.Placeholder)}
               onCreateConversation={handleCreateConversation}
               modelPickerOverlay={renderOverlay}
+              onModelPickerOpenChange={onModelPickerOpenChange}
               toolsMenuItems={toolsMenuItems}
               onToolToggle={onToolToggle}
               toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
@@ -309,6 +333,8 @@ const ProjectConversationsSection: FC<Props> = ({
             />
           ) : undefined
         }
+        outputs={outputs}
+        hasOutputs={hasOutputs}
         items={items}
         isLoading={isLoading}
         hasError={hasError}

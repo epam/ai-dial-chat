@@ -3,10 +3,27 @@ import {
   useLatestCanvasRequest,
   useOpenAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
-import { mapProjectDetailsToViewModel } from '@epam/ai-dial-chat-hooks/project';
+import {
+  mapProjectArtifactsToOutputs,
+  mapProjectDetailsToViewModel,
+  ProjectRefreshOutcome,
+  useProject,
+  useProjectArtifacts,
+  useProjectConversations,
+  useProjectFilePreview,
+  useProjectWatch,
+} from '@epam/ai-dial-chat-hooks/project';
 import { DeleteConfirmationDialog } from '@epam/ai-dial-chat-shared';
-import { ProjectView } from '@epam/ai-dial-projects';
-import { memo, useCallback, useMemo, useRef, useState, type FC } from 'react';
+import { ProjectOutputs, ProjectView } from '@epam/ai-dial-projects';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FC,
+} from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import ProjectConversationsSection from '../../components/ProjectConversationsSection/ProjectConversationsSection';
@@ -19,16 +36,18 @@ import {
 } from '../../constants/routes';
 import { ProjectsI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
+import { useNotification } from '../../context/NotificationContext';
+import { useUserConfig } from '../../context/UserConfigContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
-import { useProject } from '../../hooks/projects/useProject';
+import { projectsClient } from '../../hooks/projects/projects-client';
 import { useProjectActions } from '../../hooks/projects/useProjectActions';
+import { useProjectOutputsLabels } from '../../hooks/projects/useProjectOutputsLabels';
 import { useProjectViewLabels } from '../../hooks/projects/useProjectViewLabels';
 import { useDeleteConfirmationLabels } from '../../hooks/useDeleteConfirmationLabels';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
 import {
-  fromProjectPreviewKey,
-  toProjectPreviewKey,
+  toProjectOutputAttachment,
   toStoredProjectFileAttachment,
 } from '../../utils/project-file-preview';
 import NotFoundPage from '../NotFound/NotFound';
@@ -42,12 +61,49 @@ const ProjectViewPage: FC = () => {
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('projectsEnabled');
   const projectId = parseProjectRouteParams(params);
-  const { project, isLoading, hasError, isNotFound, retry } = useProject(
-    projectId,
-    isEnabled,
-  );
+  const { project, isLoading, hasError, isNotFound, retry, refresh } =
+    useProject(projectsClient, projectId, isEnabled);
   const actions = useProjectActions(project, retry);
+  const conversations = useProjectConversations(
+    projectsClient,
+    project?.id ?? null,
+  );
+  const artifacts = useProjectArtifacts(projectsClient, project?.id ?? null);
+  const { showInfoNotification } = useNotification();
+  const { replacePinnedProjectId } = useUserConfig();
+
+  /* The page's own delete already notifies and leaves; a delete event racing it must not toast twice. */
+  const isOwnDeleteRef = useRef(false);
+  const hasLeftRef = useRef(false);
+  useEffect(() => {
+    isOwnDeleteRef.current = actions.isDeleting;
+  }, [actions.isDeleting]);
+  const handleDeletedElsewhere = useCallback(() => {
+    if (isOwnDeleteRef.current || hasLeftRef.current || projectId == null) {
+      return;
+    }
+    hasLeftRef.current = true;
+    showInfoNotification({ message: t(ProjectsI18nKeys.ViewDeletedElsewhere) });
+    replacePinnedProjectId(projectId, null);
+    navigate(ROUTES.Projects, { replace: true });
+  }, [navigate, projectId, replacePinnedProjectId, showInfoNotification, t]);
+  const { refresh: refreshConversations } = conversations;
+  const { refresh: refreshArtifacts } = artifacts;
+  const handleProjectChanged = useCallback(async () => {
+    const [outcome] = await Promise.all([
+      refresh(),
+      refreshConversations(),
+      refreshArtifacts(),
+    ]);
+    if (outcome === ProjectRefreshOutcome.NotFound) handleDeletedElsewhere();
+  }, [handleDeletedElsewhere, refresh, refreshArtifacts, refreshConversations]);
+  useProjectWatch(projectsClient, project?.id ?? null, {
+    etag: project?.etag,
+    onChange: handleProjectChanged,
+    onDelete: handleDeletedElsewhere,
+  });
   const labels = useProjectViewLabels();
+  const outputsLabels = useProjectOutputsLabels();
   const deleteLabels = useDeleteConfirmationLabels();
 
   const [contextSearchQuery, setContextSearchQuery] = useState('');
@@ -63,33 +119,45 @@ const ProjectViewPage: FC = () => {
     [project],
   );
   /* Opens a context file in the canvas the way the conversation opens an attachment. A saved file's card id is its name. */
-  const { attachmentId } = useAttachmentCanvas();
+  const { attachmentId, closeCanvas } = useAttachmentCanvas();
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
   const startCanvasRequest = useLatestCanvasRequest();
-  const previewScope = projectId ?? '';
-  const selectedContextFileId = fromProjectPreviewKey(
-    previewScope,
-    attachmentId,
+  const outputItems = useMemo(
+    () => mapProjectArtifactsToOutputs(artifacts.items),
+    [artifacts.items],
   );
-  const handleContextFileClick = useCallback(
+  const resolveContextAttachment = useCallback(
     (name: string) => {
       const file = viewModel?.contextFiles.find((item) => item.name === name);
-      if (!file || projectId == null) return;
-      void openAttachmentCanvas(
-        toStoredProjectFileAttachment({ id: name, ...file }, projectId),
-        toProjectPreviewKey(previewScope, name),
-        startCanvasRequest(),
-      );
+      if (!file || projectId == null) return undefined;
+      return toStoredProjectFileAttachment({ id: name, ...file }, projectId);
     },
-    [
-      viewModel,
-      projectId,
-      previewScope,
-      openAttachmentCanvas,
-      startCanvasRequest,
-    ],
+    [viewModel, projectId],
   );
+  const resolveOutputAttachment = useCallback(
+    (name: string) => {
+      const item = outputItems.find((output) => output.name === name);
+      if (!item || projectId == null) return undefined;
+      return toProjectOutputAttachment(item, projectId);
+    },
+    [outputItems, projectId],
+  );
+  const {
+    selectedCardId,
+    selectedOutputName,
+    selectedContextFileId,
+    onContextFileClick: handleContextFileClick,
+    onOutputClick: handleOpenOutput,
+  } = useProjectFilePreview({
+    scope: projectId ?? '',
+    attachmentId,
+    openAttachment: openAttachmentCanvas,
+    closeCanvas,
+    startRequest: startCanvasRequest,
+    resolveContextAttachment,
+    resolveOutputAttachment,
+  });
   const canEdit = project?.canEdit ?? false;
   /* Chats deleted from the list since `project` was read; a fresh read resets the count. */
   const [deletedChats, setDeletedChats] = useState({ project, count: 0 });
@@ -166,7 +234,7 @@ const ProjectViewPage: FC = () => {
           onDownload={handleDownload}
           onContextFileClick={handleContextFileClick}
           selectedContextFileId={selectedContextFileId}
-          isDetailsStacked={selectedContextFileId != null}
+          isDetailsStacked={selectedCardId != null}
           onRetry={retry}
           onBrowseProjects={handleBrowseProjects}
           mainContent={
@@ -175,7 +243,21 @@ const ProjectViewPage: FC = () => {
                 projectId={project.id}
                 projectName={project.name}
                 canEdit={canEdit}
+                conversations={conversations}
                 onConversationDeleted={handleConversationDeleted}
+                /* An Outputs section with files or an error is content of its own, so no "no outputs" empty state under it. */
+                hasOutputs={outputItems.length > 0 || artifacts.hasError}
+                /* Always mounted: it shows nothing until there are outputs or an error, and keeps its live region in place. */
+                outputs={
+                  <ProjectOutputs
+                    items={outputItems}
+                    onOpenOutput={handleOpenOutput}
+                    selectedOutputName={selectedOutputName}
+                    hasError={artifacts.hasError}
+                    onRetry={artifacts.retry}
+                    labels={outputsLabels}
+                  />
+                }
               />
             ) : undefined
           }

@@ -13,6 +13,7 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeatureGuard } from '../../app-config/feature-flags/feature.guard';
 import type { SessionUser } from '../../auth/session/session.types';
+import { ProjectArtifactsListService } from '../artifacts/projects-artifacts-list.service';
 import { ProjectsDownloadService } from '../download/projects-download.service';
 import { ProjectWatchAction } from '../dto/project-watch-action.enum';
 import type { ProjectWatchEventDto } from '../dto/project-watch-event.dto';
@@ -47,6 +48,7 @@ const buildApp = async (
       { provide: ProjectsDownloadService, useValue: {} },
       { provide: ProjectsUpdateService, useValue: {} },
       { provide: ProjectsWatchService, useValue: watchService },
+      { provide: ProjectArtifactsListService, useValue: {} },
       ProjectContextUploadInterceptor,
       { provide: ConfigService, useValue: { get: () => undefined } },
     ],
@@ -208,6 +210,7 @@ describe('ProjectsController watchProjects (client disconnect)', () => {
       {} as ProjectsDownloadService,
       {} as ProjectsUpdateService,
       watchService as unknown as ProjectsWatchService,
+      {} as ProjectArtifactsListService,
     );
     const res = Object.assign(new EventEmitter(), {
       writableEnded: false,

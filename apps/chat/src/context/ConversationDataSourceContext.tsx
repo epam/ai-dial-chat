@@ -1,3 +1,7 @@
+import type {
+  ConversationDataSource,
+  ConversationListSync,
+} from '@epam/ai-dial-chat-hooks/conversation';
 import {
   createContext,
   ReactNode,
@@ -5,10 +9,6 @@ import {
   useContext,
   useMemo,
 } from 'react';
-import type {
-  ConversationDataSource,
-  ConversationListSync,
-} from '../models/conversation-data-source';
 import {
   createRegularConversationDataSource,
   isRegularConversationReadOnly,

@@ -225,11 +225,17 @@ describe('useToolsetLogin', () => {
         toolsetId: TOOLSET_ID,
         credentialsLevel: ToolsetCredentialsLevel.User,
         authenticationType: ToolsetAuthTypes.OAuth,
-        oauthSettings: { clientId: 'client' },
+        oauthSettings: {
+          clientId: 'client',
+          resource: 'https://mcp.example.com/mcp',
+        },
       });
 
       expect(initiateOAuthLogin).toHaveBeenCalledWith(
-        expect.objectContaining({ clientId: 'client' }),
+        expect.objectContaining({
+          clientId: 'client',
+          resource: 'https://mcp.example.com/mcp',
+        }),
         TOOLSET_ID,
         '/some/other/callback',
         ToolsetCredentialsLevel.User,
@@ -279,6 +285,76 @@ describe('useToolsetLogin', () => {
       );
       expect(initiateOAuthLogin).not.toHaveBeenCalled();
       expect(outcome).toEqual({ type: ToolsetLoginOutcomeType.Success });
+    });
+
+    it('opens the popup, then navigates it with the fetched OAuth settings when shouldFetchOAuthSettings is set', async () => {
+      const fakePopup = { closed: false } as Window;
+      vi.mocked(openToolsetOAuthPopup).mockReturnValue(fakePopup);
+      getToolset.mockResolvedValue({
+        authSettings: {
+          authenticationType: ToolsetAuthTypes.OAuth,
+          clientId: 'fresh-client',
+          authorizationEndpoint: 'https://idp.example/authorize',
+          scopesSupported: ['read'],
+          resource: 'https://mcp.example.com/mcp',
+        },
+      });
+      vi.mocked(navigateToolsetOAuthPopup).mockReturnValue({
+        type: ToolsetOAuthInitiationResultType.Started,
+        popup: fakePopup,
+        flowId: 'flow-1',
+      });
+      vi.mocked(waitForToolsetOAuthResult).mockResolvedValue({
+        type: ToolsetOAuthResultType.Success,
+        toolsetId: TOOLSET_ID,
+        credentialsLevel: ToolsetCredentialsLevel.User,
+      });
+      const { result } = renderToolsetLogin({ shouldFetchOAuthSettings: true });
+
+      const outcome = await result.current.login({
+        toolsetId: TOOLSET_ID,
+        credentialsLevel: ToolsetCredentialsLevel.User,
+        authenticationType: ToolsetAuthTypes.OAuth,
+        oauthSettings: { clientId: 'stale-client' },
+      });
+
+      expect(navigateToolsetOAuthPopup).toHaveBeenCalledWith(
+        fakePopup,
+        expect.objectContaining({
+          clientId: 'fresh-client',
+          scopes: ['read'],
+          resource: 'https://mcp.example.com/mcp',
+        }),
+        TOOLSET_ID,
+        CALLBACK_PATH,
+        ToolsetCredentialsLevel.User,
+        OAuthResourceKind.Toolset,
+        undefined,
+      );
+      expect(initiateOAuthLogin).not.toHaveBeenCalled();
+      expect(outcome).toEqual({ type: ToolsetLoginOutcomeType.Success });
+    });
+
+    it('closes the popup and fails when the fetched toolset is no longer OAuth', async () => {
+      const close = vi.fn();
+      vi.mocked(openToolsetOAuthPopup).mockReturnValue({
+        closed: false,
+        close,
+      } as unknown as Window);
+      getToolset.mockResolvedValue({
+        authSettings: { authenticationType: ToolsetAuthTypes.ApiKey },
+      });
+      const { result } = renderToolsetLogin({ shouldFetchOAuthSettings: true });
+
+      const outcome = await result.current.login({
+        toolsetId: TOOLSET_ID,
+        credentialsLevel: ToolsetCredentialsLevel.User,
+        authenticationType: ToolsetAuthTypes.OAuth,
+      });
+
+      expect(close).toHaveBeenCalledOnce();
+      expect(navigateToolsetOAuthPopup).not.toHaveBeenCalled();
+      expect(outcome).toEqual({ type: ToolsetLoginOutcomeType.Failure });
     });
 
     it('resolves popup-blocked without logging out when a forced re-login is blocked', async () => {

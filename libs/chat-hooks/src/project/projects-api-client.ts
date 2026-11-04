@@ -4,7 +4,9 @@ import type {
   CreateConversationDto,
   CreateProjectResponseDto,
   ListProjectsResponseDto,
+  ProjectArtifactListResponseDto,
   ProjectConversationListResponseDto,
+  ProjectConversationTitlesResponseDto,
   ProjectDetailsDto,
   RenameConversationResponseDto,
   UpdateProjectResponseDto,
@@ -56,9 +58,20 @@ export interface ProjectsConfiguredClient {
     options?: RequestInit,
   ) => Promise<RawApiResponse>;
   listProjectConversations: (
-    request: { id: string; limit?: number; offset?: number },
+    request: { id: string },
     options?: RequestInit,
   ) => Promise<ProjectConversationListResponseDto>;
+  getProjectConversationTitles: (
+    request: {
+      id: string;
+      projectConversationTitlesBodyDto: { names: string[] };
+    },
+    options?: RequestInit,
+  ) => Promise<ProjectConversationTitlesResponseDto>;
+  listProjectArtifacts: (
+    request: { id: string },
+    options?: RequestInit,
+  ) => Promise<ProjectArtifactListResponseDto>;
   createProjectConversation: (request: {
     id: string;
     createConversationDto: CreateConversationDto;
@@ -78,6 +91,10 @@ export interface ProjectsConfiguredClient {
     renameConversationBodyDto: { newTitle: string };
   }) => Promise<RenameConversationResponseDto>;
   deleteProjectConversation: (request: {
+    id: string;
+    conversationName: string;
+  }) => Promise<void>;
+  markProjectConversationViewed: (request: {
     id: string;
     conversationName: string;
   }) => Promise<void>;
@@ -113,14 +130,6 @@ export interface ProjectUpdateRequest {
   removedFileNames: string[];
   /** The loaded project's `contentVersion`; a conversation written meanwhile does not change it. */
   contentVersion: string;
-}
-
-/** One page of a project's conversations, newest first. */
-export interface ProjectConversationListPage {
-  /** Page size, `1..100`; the BFF defaults to 50. */
-  limit?: number;
-  /** Conversations to skip; the next page starts at the count already loaded. */
-  offset?: number;
 }
 
 /** The first message of a new top-level or project conversation. */
@@ -162,11 +171,20 @@ export interface ProjectsApiClient {
     fileName: string,
     signal?: AbortSignal,
   ) => Promise<Response>;
+  /** Lists the files the agents saved under the project's `artifacts/` folder, newest first. */
+  listProjectArtifacts: (
+    projectId: string,
+    signal?: AbortSignal,
+  ) => Promise<ProjectArtifactListResponseDto>;
   listProjectConversations: (
     projectId: string,
     signal?: AbortSignal,
-    page?: ProjectConversationListPage,
   ) => Promise<ProjectConversationListResponseDto>;
+  getProjectConversationTitles: (
+    projectId: string,
+    names: string[],
+    signal?: AbortSignal,
+  ) => Promise<ProjectConversationTitlesResponseDto>;
   createProjectConversation: (
     projectId: string,
     request: ConversationCreateRequest,
@@ -184,6 +202,8 @@ export interface ProjectsApiClient {
     newTitle: string,
   ) => Promise<RenameConversationResponseDto>;
   deleteProjectConversation: (conversationId: string) => Promise<void>;
+  /** Records that the caller has seen the conversation's current version; a host without it keeps no read state. */
+  markProjectConversationViewed?: (conversationId: string) => Promise<void>;
   attachToProjectGeneration: (
     projectId: string,
     path: string,
@@ -304,9 +324,13 @@ export const createProjectsApiClient = (
         ...withSignal(signal),
       )
     ).raw,
-  listProjectConversations: (projectId, signal, page) =>
-    client.listProjectConversations(
-      { id: projectId, ...page },
+  listProjectArtifacts: (projectId, signal) =>
+    client.listProjectArtifacts({ id: projectId }, ...withSignal(signal)),
+  listProjectConversations: (projectId, signal) =>
+    client.listProjectConversations({ id: projectId }, ...withSignal(signal)),
+  getProjectConversationTitles: (projectId, names, signal) =>
+    client.getProjectConversationTitles(
+      { id: projectId, projectConversationTitlesBodyDto: { names } },
       ...withSignal(signal),
     ),
   createProjectConversation: (projectId, request) =>
@@ -331,6 +355,10 @@ export const createProjectsApiClient = (
     }),
   deleteProjectConversation: (conversationId) =>
     client.deleteProjectConversation(requireConversationParts(conversationId)),
+  markProjectConversationViewed: (conversationId) =>
+    client.markProjectConversationViewed(
+      requireConversationParts(conversationId),
+    ),
   attachToProjectGeneration: async (projectId, path, signal) => {
     const { raw } = await client.attachToProjectGenerationRaw(
       { id: projectId, attachGenerationDto: { path } },

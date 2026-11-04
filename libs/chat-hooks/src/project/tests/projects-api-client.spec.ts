@@ -19,11 +19,14 @@ const makeClient = () => {
     downloadProjectRaw: vi.fn(async () => ({ raw: new Response('zip') })),
     downloadProjectFileRaw: vi.fn(async () => ({ raw: new Response('f') })),
     listProjectConversations: vi.fn(),
+    getProjectConversationTitles: vi.fn(),
+    listProjectArtifacts: vi.fn(),
     createProjectConversation: vi.fn(),
     getProjectConversation: vi.fn(),
     saveProjectConversation: vi.fn(),
     renameProjectConversation: vi.fn(),
     deleteProjectConversation: vi.fn(),
+    markProjectConversationViewed: vi.fn(),
     attachToProjectGenerationRaw: vi.fn(),
     watchProjectsRaw: vi.fn(),
   };
@@ -123,17 +126,39 @@ describe('createProjectsApiClient', () => {
     expect(await archive.text()).toBe('zip');
   });
 
-  it('lists a page of project conversations from the given offset', async () => {
+  it("lists every project conversation with the caller's abort signal", async () => {
+    const { client, generated } = makeClient();
+    const controller = new AbortController();
+
+    await client.listProjectConversations(PROJECT_ID, controller.signal);
+
+    expect(generated.listProjectConversations).toHaveBeenCalledWith(
+      { id: PROJECT_ID },
+      { signal: controller.signal },
+    );
+  });
+
+  it('resolves the titles of the named project conversations', async () => {
     const { client, generated } = makeClient();
 
-    await client.listProjectConversations(PROJECT_ID, undefined, {
-      offset: 50,
-    });
+    await client.getProjectConversationTitles(PROJECT_ID, ['gpt-4o__Hi__1']);
 
-    expect(generated.listProjectConversations).toHaveBeenCalledWith({
+    expect(generated.getProjectConversationTitles).toHaveBeenCalledWith({
       id: PROJECT_ID,
-      offset: 50,
+      projectConversationTitlesBodyDto: { names: ['gpt-4o__Hi__1'] },
     });
+  });
+
+  it("lists a project's outputs with the caller's abort signal", async () => {
+    const { client, generated } = makeClient();
+    const controller = new AbortController();
+
+    await client.listProjectArtifacts(PROJECT_ID, controller.signal);
+
+    expect(generated.listProjectArtifacts).toHaveBeenCalledWith(
+      { id: PROJECT_ID },
+      { signal: controller.signal },
+    );
   });
 
   it('creates a project conversation with the first-message fields of a top-level create', async () => {
@@ -162,6 +187,7 @@ describe('createProjectsApiClient', () => {
     await client.saveProjectConversation(CHAT_ID, body);
     await client.renameProjectConversation(CHAT_ID, 'New');
     await client.deleteProjectConversation(CHAT_ID);
+    await client.markProjectConversationViewed(CHAT_ID);
 
     expect(generated.saveProjectConversation).toHaveBeenCalledWith({
       ...PARTS,
@@ -172,6 +198,7 @@ describe('createProjectsApiClient', () => {
       renameConversationBodyDto: { newTitle: 'New' },
     });
     expect(generated.deleteProjectConversation).toHaveBeenCalledWith(PARTS);
+    expect(generated.markProjectConversationViewed).toHaveBeenCalledWith(PARTS);
     expect(() => client.getProjectConversation('a1b2c3/x')).toThrow();
   });
 

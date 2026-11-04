@@ -1,5 +1,6 @@
 import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 import { render, renderHook, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   useAppConfig as mockUseAppConfig,
@@ -53,8 +54,23 @@ vi.mock('../../../hooks/language/useLanguage', async (importOriginal) => {
   };
 });
 vi.mock('../DeploymentSelectorOverlay', () => ({
-  default: ({ pinnedItem }: { pinnedItem?: { id: string } }) => (
-    <div data-testid="pinned-item">{pinnedItem?.id}</div>
+  default: ({
+    pinnedItem,
+    searchQuery,
+    onSearchQueryChange,
+  }: {
+    pinnedItem?: { id: string };
+    searchQuery?: string;
+    onSearchQueryChange: (value: string) => void;
+  }) => (
+    <>
+      <div data-testid="pinned-item">{pinnedItem?.id}</div>
+      <input
+        aria-label="Model search"
+        value={searchQuery}
+        onChange={(event) => onSearchQueryChange(event.target.value)}
+      />
+    </>
   ),
 }));
 vi.mock('../CatalogModal', () => ({ default: () => null }));
@@ -63,6 +79,41 @@ const makeDeployment = (id: string): DeploymentItemDto =>
   ({ id, displayName: id, type: 'model' }) as DeploymentItemDto;
 
 describe('useDeploymentSelectorOverlay', () => {
+  it('retains search across overlay remounts and clears it on dismissal', async () => {
+    const user = userEvent.setup();
+    function Harness({ generation }: { generation: number }) {
+      const picker = useDeploymentSelectorOverlay();
+      return (
+        <>
+          <button onClick={() => picker.onOpenChange(false)}>
+            Dismiss picker
+          </button>
+          <div key={generation}>{picker.renderOverlay(vi.fn())}</div>
+        </>
+      );
+    }
+    const { rerender } = render(<Harness generation={0} />);
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Model search' }),
+      'model',
+    );
+    rerender(<Harness generation={1} />);
+    expect(
+      (
+        (await screen.findByRole('textbox', {
+          name: 'Model search',
+        })) as HTMLInputElement
+      ).value,
+    ).toBe('model');
+    await user.click(screen.getByRole('button', { name: 'Dismiss picker' }));
+    expect(
+      (
+        screen.getByRole('textbox', {
+          name: 'Model search',
+        }) as HTMLInputElement
+      ).value,
+    ).toBe('');
+  });
   beforeEach(() => {
     mocks.defaultDeploymentId = 'default-model';
     mocks.isDefaultDeploymentPinned = true;

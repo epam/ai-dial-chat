@@ -42,6 +42,10 @@ export interface UseModelSelectorOptions {
 
 /** Values returned by `useModelSelector`. */
 export interface UseModelSelectorResult {
+  /** Shared query retained while a selector changes presentation. */
+  searchQuery: string;
+  /** Updates the shared phone/desktop search query. */
+  onSearchQueryChange: (query: string) => void;
   /** Icon node for the trigger button. */
   selectorIcon: ReactNode;
   /** Accessible label for the trigger button. */
@@ -239,6 +243,8 @@ export const useModelSelector = ({
   };
 
   return {
+    searchQuery,
+    onSearchQueryChange: setSearchQuery,
     selectorIcon,
     selectorAriaLabel,
     selectedLabel,

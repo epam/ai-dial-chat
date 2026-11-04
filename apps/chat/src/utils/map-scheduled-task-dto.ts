@@ -1,11 +1,12 @@
-import {
-  ScheduledTaskErrorCode,
-  type ScheduledTaskDto,
-} from '@epam/ai-dial-chat-api-client';
+import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
 import type { ApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 import {
-  describeScheduledTaskTrigger,
-  ScheduledTaskTriggerDescriptionKind as Kind,
+  classifyScheduledTaskDeleteError,
+  formatScheduledTaskScheduleLabel,
+  ScheduledTaskDeleteErrorKind,
+  selectScheduledTaskErrorMessage,
+  toScheduledTaskItem,
+  type ScheduledTaskScheduleLabels,
 } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import type { ScheduledTaskItem } from '@epam/ai-dial-scheduled-tasks';
 import type { TFunction } from 'i18next';
@@ -14,126 +15,64 @@ import {
   ToolsetSigninI18nKeys,
 } from '../constants/translation-keys';
 
+const buildScheduleLabels = (t: TFunction): ScheduledTaskScheduleLabels => ({
+  onceAt: (date) => t(Keys.CardScheduleOnceAt, { date }),
+  everyNMinutes: (count) => t(Keys.CardScheduleEveryNMinutes, { count }),
+  hourlyAt: (minute) => t(Keys.CardScheduleHourlyAt, { minute }),
+  dailyAt: (time) => t(Keys.CardScheduleDailyAt, { time }),
+  weeklyAt: (day, time) => t(Keys.CardScheduleWeeklyAt, { day, time }),
+  everyNWeeks: (count, day, time) =>
+    t(Keys.CardScheduleEveryNWeeks, { count, day, time }),
+  monthlyAt: (day, time) => t(Keys.CardScheduleMonthlyAt, { day, time }),
+  invalid: t(Keys.EditInvalidScheduleLabel),
+  recurringFallback: t(Keys.CardScheduleRecurringFallback),
+});
+
 /** Localizes the shared trigger descriptor in the browser's display timezone. */
 export const buildScheduleLabel = (
   task: ScheduledTaskDto,
   t: TFunction,
   locale?: string,
-): string => {
-  const description = describeScheduledTaskTrigger(task.trigger, {
-    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  });
-  const { time } = description;
-  switch (description.kind) {
-    case Kind.OneTime:
-      return t(Keys.CardScheduleOnceAt, {
-        date: new Intl.DateTimeFormat(locale, {
-          dateStyle: 'medium',
-          timeStyle: 'short',
-        }).format(description.date),
-      });
-    case Kind.EveryNMinutes:
-      return t(Keys.CardScheduleEveryNMinutes, {
-        count: description.intervalMinutes,
-      });
-    case Kind.Hourly:
-      return t(Keys.CardScheduleHourlyAt, { minute: time });
-    case Kind.Daily:
-      return t(Keys.CardScheduleDailyAt, { time });
-    case Kind.Weekly: {
-      const date = new Date(
-        Date.UTC(2023, 0, 2 + Number(description.dayOfWeek)),
-      );
-      const day = new Intl.DateTimeFormat(locale, {
-        weekday: 'long',
-        timeZone: 'UTC',
-      }).format(date);
-      return t(Keys.CardScheduleWeeklyAt, { day, time });
-    }
-    case Kind.EveryNWeeks: {
-      const date = new Date(
-        Date.UTC(2023, 0, 2 + Number(description.dayOfWeek)),
-      );
-      const day = new Intl.DateTimeFormat(locale, {
-        weekday: 'long',
-        timeZone: 'UTC',
-      }).format(date);
-      return t(Keys.CardScheduleEveryNWeeks, {
-        count: description.intervalWeeks,
-        day,
-        time,
-      });
-    }
-    case Kind.Monthly:
-      return t(Keys.CardScheduleMonthlyAt, {
-        day: description.dayOfMonth,
-        time,
-      });
-    case Kind.Invalid:
-      return t(Keys.EditInvalidScheduleLabel);
-    default:
-      return t(Keys.CardScheduleRecurringFallback);
-  }
-};
+): string =>
+  formatScheduledTaskScheduleLabel(task, buildScheduleLabels(t), { locale });
 
-/**
- * Maps a `GET /api/v1/scheduled-tasks` DTO to the lib-facing `ScheduledTaskItem`.
- * `description` maps 1:1 to `descriptionPreview` (undefined when absent)
- * with no truncation — the BFF's 500-char cap bounds the value, and the
- * card's own line-clamp/ellipsis handles presentation-layer truncation.
- * `isActive` and `isCompleted` map 1:1 from the DTO with no reinterpretation —
- * derivation is owned entirely by the BFF mapper.
- */
+/** Maps a `GET /api/v1/scheduled-tasks` DTO to the lib-facing `ScheduledTaskItem`. */
 export const mapScheduledTaskDtoToItem = (
   task: ScheduledTaskDto,
   t: TFunction,
   locale?: string,
-): ScheduledTaskItem => ({
-  id: task.id,
-  displayName: task.displayName,
-  descriptionPreview: task.description,
-  scheduleLabel: buildScheduleLabel(task, t, locale),
-  isActive: task.isActive,
-  isCompleted: task.isCompleted,
-});
+): ScheduledTaskItem =>
+  toScheduledTaskItem(task, buildScheduleLabels(t), { locale });
 
 /** Maps a list of `ScheduledTaskDto` to `ScheduledTaskItem[]`, preserving order. */
 export const mapScheduledTaskDtosToItems = (
   tasks: ScheduledTaskDto[],
   t: TFunction,
   locale?: string,
-): ScheduledTaskItem[] =>
-  tasks.map((task) => mapScheduledTaskDtoToItem(task, t, locale));
-
-/**
- * Maps a failed delete request's HTTP status to the localized error message
- * key shown in the delete confirmation dialog: not-found/already-deleted
- * (404/409), a retryable scheduler failure (502), or a generic fallback.
- */
-export const getDeleteErrorMessageKey = (status: number | undefined): Keys => {
-  if (status === 404 || status === 409) {
-    return Keys.DetailDeleteNotFoundError;
-  }
-  if (status === 502) {
-    return Keys.DetailDeleteRetryableError;
-  }
-  return Keys.DetailDeleteGenericError;
+): ScheduledTaskItem[] => {
+  const labels = buildScheduleLabels(t);
+  return tasks.map((task) => toScheduledTaskItem(task, labels, { locale }));
 };
 
-/**
- * Picks the notification text for a failed scheduled-task mutation: a revoked
- * DIAL_NATIVE scheduler consent gets the localized "contact your
- * administrator" message; otherwise DIAL Scheduler's own reason is shown as
- * received; otherwise the page's localized fallback. The BFF's generic
- * `message` is never shown — it is English-only and not actionable.
- */
+/** Maps a failed delete request's HTTP status to the localized error message key shown in the delete confirmation dialog. */
+export const getDeleteErrorMessageKey = (status: number | undefined): Keys => {
+  switch (classifyScheduledTaskDeleteError(status)) {
+    case ScheduledTaskDeleteErrorKind.NotFound:
+      return Keys.DetailDeleteNotFoundError;
+    case ScheduledTaskDeleteErrorKind.Retryable:
+      return Keys.DetailDeleteRetryableError;
+    default:
+      return Keys.DetailDeleteGenericError;
+  }
+};
+
+/** Picks the notification text for a failed scheduled-task mutation; the BFF's generic `message` is never shown. */
 export const resolveScheduledTaskErrorMessage = (
   details: Pick<ApiErrorDetails, 'code' | 'upstreamMessage'>,
   fallbackKey: Keys,
   t: TFunction,
-): string => {
-  if (details.code === ScheduledTaskErrorCode.ScheduledTaskAdminConsentRequired)
-    return t(ToolsetSigninI18nKeys.AdminConsentRequired);
-  const upstreamMessage = details.upstreamMessage?.trim();
-  return upstreamMessage || t(fallbackKey);
-};
+): string =>
+  selectScheduledTaskErrorMessage(details, {
+    adminConsentRequired: t(ToolsetSigninI18nKeys.AdminConsentRequired),
+    fallback: t(fallbackKey),
+  });

@@ -62,6 +62,8 @@ export interface ListViewProps {
   emptyStateTitle?: string;
   /** Secondary line under the grid empty-state title. Omitted when not set. */
   emptyStateDescription?: string;
+  /** Announces the empty state to screen readers; set it when a search or filter left `items` empty. Defaults to `false`. */
+  isEmptyStateLive?: boolean;
   /** Grouped typography and color overrides for table cells. */
   styles?: ListViewStyles;
   /** Called when the star icon is toggled on a row. */

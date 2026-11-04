@@ -66,9 +66,17 @@ export const ModelSelectorControl: FC<Props> = ({
   onPickerToggle,
   onPickerOpenChange,
 }) => {
-  const [isModelSheetOpen, setIsModelSheetOpen] = useState(false);
+  const [localOpen, setLocalOpen] = useState(false);
+  const isModelSheetOpen = isPickerOpen ?? localOpen;
+  const setIsModelSheetOpen = (open: boolean) => {
+    setLocalOpen(open);
+    onPickerOpenChange?.(open);
+    handleModelSelectorOpenChange(open);
+  };
 
   const {
+    searchQuery,
+    onSearchQueryChange,
     selectorIcon,
     selectorAriaLabel,
     selectedLabel,
@@ -164,6 +172,8 @@ export const ModelSelectorControl: FC<Props> = ({
           </BottomSheetShell>
         ) : (
           <ModelSelectorBottomSheet
+            searchQuery={searchQuery}
+            onSearchQueryChange={onSearchQueryChange}
             isOpen={isModelSheetOpen}
             title={modelSelectorLabels?.ariaLabel ?? 'Select model'}
             closeLabel={modelSelectorLabels?.closeLabel ?? 'Close'}
@@ -194,12 +204,12 @@ export const ModelSelectorControl: FC<Props> = ({
       <Dropdown
         placement="top-end"
         matchReferenceWidth={false}
-        open={isPickerOpen}
-        onOpenChange={onPickerOpenChange}
+        open={isModelSheetOpen}
+        onOpenChange={setIsModelSheetOpen}
         trigger={[]}
         outsideClosable
         renderOverlay={() =>
-          modelPickerOverlay(() => onPickerOpenChange?.(false))
+          modelPickerOverlay(() => setIsModelSheetOpen(false))
         }
         listClassName={mergeClasses(
           'w-[368px]!',
@@ -228,7 +238,8 @@ export const ModelSelectorControl: FC<Props> = ({
           )}
           onClick={() => {
             if (!isBlocked) {
-              onPickerToggle?.();
+              if (onPickerToggle) onPickerToggle();
+              else setIsModelSheetOpen(!isModelSheetOpen);
             }
           }}
           iconBefore={iconNode}
@@ -285,7 +296,8 @@ export const ModelSelectorControl: FC<Props> = ({
         )}
         listStyle={menuStyle}
         disabled={isBlocked}
-        onOpenChange={isBlocked ? undefined : handleModelSelectorOpenChange}
+        open={isModelSheetOpen}
+        onOpenChange={isBlocked ? undefined : setIsModelSheetOpen}
       >
         <Button
           aria-label={selectorAriaLabel}

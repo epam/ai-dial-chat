@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import {
   applyActiveScheduledTaskRun,
   collapseScheduledTaskConversations as collapseRuns,
+  getScheduledTaskRunGroupKey,
   groupScheduledTaskConversations as groupRuns,
+  isScheduledTaskRunCollapsible,
 } from '../scheduled-task-grouping';
 
 const normalize = (id: string) =>
@@ -312,5 +314,72 @@ describe('scheduled-task-grouping', () => {
       id: item.id.replace(/^conversations\//, ''),
     }));
     expect(collapse(items)).toEqual([items[1], items[2]]);
+  });
+});
+
+describe('getScheduledTaskRunGroupKey', () => {
+  const run = (patch: Partial<ConversationListItemDto>) =>
+    ({
+      id: 'conversations/bucket-a/run.json',
+      isScheduledTask: true,
+      scheduleId: 'task-1',
+      ...patch,
+    }) as ConversationListItemDto;
+
+  it('keys a run by its bucket and schedule id', () => {
+    expect(getScheduledTaskRunGroupKey(run({}))).toBe('bucket-a/task-1');
+  });
+
+  it('keys runs of different owners apart', () => {
+    expect(
+      getScheduledTaskRunGroupKey(
+        run({ id: 'conversations/bucket-b/run.json' }),
+      ),
+    ).toBe('bucket-b/task-1');
+  });
+
+  it('decodes an encoded id before reading the bucket', () => {
+    expect(
+      getScheduledTaskRunGroupKey(
+        run({ id: 'conversations%2Fbucket-a%2Frun.json' }),
+      ),
+    ).toBe('bucket-a/task-1');
+  });
+
+  it('returns undefined for an id without the conversations prefix', () => {
+    expect(
+      getScheduledTaskRunGroupKey(run({ id: 'bucket-a/run.json' })),
+    ).toBeUndefined();
+  });
+
+  it('returns undefined for an ordinary conversation', () => {
+    expect(
+      getScheduledTaskRunGroupKey(run({ isScheduledTask: false })),
+    ).toBeUndefined();
+    expect(
+      getScheduledTaskRunGroupKey(run({ scheduleId: undefined })),
+    ).toBeUndefined();
+  });
+});
+
+describe('isScheduledTaskRunCollapsible', () => {
+  const item = (patch: Partial<ConversationListItemDto>) =>
+    ({
+      id: 'conversations/bucket-a/run.json',
+      ...patch,
+    }) as ConversationListItemDto;
+
+  it('allows an own unpinned run to collapse', () => {
+    expect(isScheduledTaskRunCollapsible(item({}))).toBe(true);
+  });
+
+  it('keeps pinned, shared and published runs visible', () => {
+    expect(isScheduledTaskRunCollapsible(item({ isPinned: true }))).toBe(false);
+    expect(isScheduledTaskRunCollapsible(item({ sharedWithMe: true }))).toBe(
+      false,
+    );
+    expect(isScheduledTaskRunCollapsible(item({ publishedWithMe: true }))).toBe(
+      false,
+    );
   });
 });

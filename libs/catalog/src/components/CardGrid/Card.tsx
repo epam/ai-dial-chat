@@ -122,6 +122,7 @@ export const Card: FC<CardProps> = ({
     '--cg-selected-bg': cardStyles?.colors?.selectedBackground,
     '--cg-check-icon': cardStyles?.colors?.checkIcon,
     '--cg-footer-border': cardStyles?.colors?.footerBorder,
+    '--cg-focus-outline': cardStyles?.colors?.focusOutline,
   });
 
   const isFeaturedVisible = !isReadonly && item.isFeatured === true;
@@ -136,17 +137,6 @@ export const Card: FC<CardProps> = ({
       }
     : undefined;
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLElement>) => {
-      if (!onClick || isLinkEvent(e) || isOutsideCardEvent(e)) return;
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        onClick(item);
-      }
-    },
-    [onClick, item],
-  );
-
   const handleStarToggle = useCallback(
     (e: MouseEvent<HTMLElement>) => {
       e.stopPropagation();
@@ -158,15 +148,13 @@ export const Card: FC<CardProps> = ({
   );
 
   return (
+    /* `CardShell` renders an `<article>`, which may not take `role="button"`
+     * (axe `aria-allowed-role`), and the star and description links inside
+     * would be nested in it (`nested-interactive`). The pointer clicks the
+     * card itself; keyboard and screen-reader users get the visually hidden
+     * native button below, whose click bubbles to the same handler. */
     <CardShell
-      {...(onClick
-        ? {
-            role: 'button' as const,
-            tabIndex: 0,
-            onClick: handleClick,
-            onKeyDown: handleKeyDown,
-          }
-        : {})}
+      onClick={handleClick}
       aria-label={item.name}
       style={cssVars}
       className={mergeClasses(
@@ -178,6 +166,15 @@ export const Card: FC<CardProps> = ({
         CATALOG_CLASS.card,
       )}
     >
+      {onClick && (
+        <button
+          type="button"
+          className={mergeClasses('sr-only', styles.cardButton)}
+        >
+          {item.name}
+        </button>
+      )}
+
       {isFeaturedVisible && (
         <div className="absolute inset-e-[22px] top-0 -translate-y-1/2">
           <FeaturedChip

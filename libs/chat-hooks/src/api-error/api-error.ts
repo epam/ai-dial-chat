@@ -1,3 +1,8 @@
+import {
+  ResponseError,
+  type AcceptInvitationErrorDto,
+} from '@epam/ai-dial-chat-api-client';
+
 interface ApiErrorBody {
   message?: string | string[];
   error?: string;
@@ -197,4 +202,21 @@ export const getApiErrorDetails = async (
     ...(upstreamCode ? { upstreamCode } : {}),
     ...(upstreamMessage ? { upstreamMessage } : {}),
   };
+};
+
+/** Shared item's title carried by a refused `acceptInvitation` error, when the backend sent one. */
+export const getAcceptInvitationErrorItemName = async (
+  error: unknown,
+): Promise<string | undefined> => {
+  if (!(error instanceof ResponseError)) return undefined;
+  try {
+    const body = (await error.response
+      .clone()
+      .json()) as Partial<AcceptInvitationErrorDto>;
+    return typeof body.itemName === 'string' && body.itemName
+      ? body.itemName
+      : undefined;
+  } catch {
+    return undefined;
+  }
 };

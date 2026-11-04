@@ -10,7 +10,7 @@ Lets a user check a project's context file in place, in the shared attachment ca
 On the New project page (`/projects/new`), the edit page (`/projects/edit/:bucket/*`) and the view page (`/projects/view/:bucket/*`), activating a context file card (click, Enter or Space) SHALL open that file in `AttachmentCanvas` from `@epam/ai-dial-attachment-canvas`, on the inline-end side of the page. The canvas header shows the file name, **Download** and **Close**, with the labels the canvas already uses on conversation routes.
 
 - The page opens the file the way `ConversationView` opens a message attachment: `useOpenAttachmentCanvas` with the app's `useAttachmentCanvasResolvers`, and a request guard from `useLatestCanvasRequest`, so the loading state, the content resolvers, the error states, the theme and the panel coordination (`onBeforeOpen`) are the conversation's. No project-specific hook, request or content resolver exists.
-- The open file's card renders selected (`isSelected`, exposed as `aria-pressed`); no other card does. Activating another card replaces the preview. Re-activating the open card opens it again, as a conversation attachment does.
+- The open file's card renders selected (`isSelected`, exposed as `aria-pressed`); no other card does. Activating another card replaces the preview. Re-activating the open card closes the canvas, so the card's pressed state toggles. On the view page the same holds for an Outputs card.
 - **Close** closes the canvas.
 - Every format a project accepts by default (`.csv`, `.pdf`, `.xlsx`) renders in its viewer, and so does any other extension the deployment allows that the canvas supports (`.txt`, `.md`, `.json`, images, `.docx`, `.pptx`). A type the canvas cannot render (the allowed extensions are configurable through `PROJECT_CONTEXT_ALLOWED_EXTENSIONS`) shows the canvas's existing unsupported state, which offers Download.
 - The pages already render the not-found page when `FeatureKey.ProjectsEnabled` (`PROJECTS_ENABLED`) is off, so no preview can open without the flag.
@@ -83,7 +83,7 @@ Errors: `400` invalid id or file name, `401` not authenticated, `403` the `proje
 - A `403` shows the canvas's forbidden state; any other non-2xx status, and a network failure, show its load-error state.
 - The canvas file type comes from the file name (the card's content type), not from the response header.
 - The project file has no metadata URL, so the resolvers read no ETag and cache nothing, matching the BFF's `Cache-Control: private, no-store`: every activation requests the file.
-- There is no retry control. Closing the preview and activating the card again loads the file again.
+- A load error offers the shared canvas's Retry (see the `canvas` capability), which requests the file again as a new request.
 - A response that belongs to a request the user has superseded is discarded by the `useLatestCanvasRequest` guard, as in a conversation.
 
 #### Scenario: Saved file loads and renders
@@ -100,7 +100,7 @@ Errors: `400` invalid id or file name, `401` not authenticated, `403` the `proje
 #### Scenario: Other failure
 
 - **WHEN** the request answers `502`, or fails at the network
-- **THEN** the canvas shows the load-error message, and offers no retry control
+- **THEN** the canvas shows the load-error message with a Retry button, and activating it requests the file again
 
 #### Scenario: Unchanged file on the edit page
 
@@ -248,9 +248,6 @@ A project page SHALL behave like the conversation canvas wherever the two differ
 - **Escape closes the canvas.**
 - **Focus returns to the opening card** when the canvas closes.
 - **Loading and failure are announced** through live regions. Until then the preview shows the canvas's own spinner and error text and announces nothing more.
-- **Re-activating the open card closes the canvas.** A project card re-opens its file, as a conversation attachment does.
-- **Removing the open file closes the canvas.** On the New project and edit pages the canvas stays open on a file the form no longer holds, as the conversation canvas stays open on a removed input attachment, until the user closes it or leaves the page.
-- **A retry control for a failed load.** The canvas's load-error state has none, so a failed stored file is retried by closing the preview and activating the card again.
 
 Adding any of them is a change to the `canvas` capability, with the conversation and file manager routes covered by the same requirement.
 
@@ -260,19 +257,18 @@ Adding any of them is a change to the `canvas` capability, with the conversation
 - **WHEN** the user presses Escape with focus outside the canvas
 - **THEN** the canvas stays open, as it does on a conversation route
 
-#### Scenario: Re-activating the open card re-opens the file
+### Requirement: The open card toggles the canvas and a removed file closes it
+
+On the New project, edit and view pages, activating the card of the file the canvas shows SHALL close the canvas instead of loading the file again, so `aria-pressed` toggles; on the view page this holds for Outputs cards too. On the New project and edit pages, removing the file the canvas shows SHALL close the canvas. Each page calls `closeCanvas` from `useAttachmentCanvas`; the lib only receives `selectedContextFileId` and `onContextFileClick`.
+
+#### Scenario: Re-activating the open card closes the canvas
 
 - **GIVEN** `tickets.csv` is open
 - **WHEN** the user activates the `tickets.csv` card again
-- **THEN** the canvas shows `tickets.csv` again and stays open
+- **THEN** the canvas closes, the card is no longer pressed, and the file is not requested again
 
-#### Scenario: Removing the open file leaves the canvas open
+#### Scenario: Removing the open file closes the canvas
 
 - **GIVEN** `tickets.csv` is open on the edit page
 - **WHEN** the user removes the `tickets.csv` card
-- **THEN** the canvas stays open until the user closes it or leaves the page
-
-#### Scenario: A failed load has no retry control
-
-- **WHEN** loading a stored file fails
-- **THEN** the canvas shows its load-error text without a retry control, and activating the card again after closing the preview requests the file again
+- **THEN** the canvas closes

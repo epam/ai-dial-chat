@@ -260,6 +260,8 @@ export interface ScheduledTaskCreateFormProps {
   onSubmit: () => void;
   /** When `true`, the Save action is disabled and shows a busy affordance. Defaults to `false`. */
   isSubmitting?: boolean;
+  /** Disables Save while the host validates external selections. */
+  isSubmitDisabled?: boolean;
   /** Color theme applied to the Instructions markdown editor. Defaults to the editor's own default (`EditorThemes.light`). */
   markdownEditorTheme?: EditorThemes;
   /** Optional replacement for the default back icon. */

@@ -252,9 +252,9 @@ import { cloneElement } from 'react';
 
 ### ProjectView
 
-A project's home page: a header with back, the name (an `<h1>`, truncated with a tooltip), a Pin toggle (a stable `labels.pinLabel` name with `aria-pressed`, still focusable while `isPinPending`), Publish and Edit buttons and a ⋮ menu (Share, Download, Delete), then a Details panel — an `<aside>` headed by an `<h2>`, a 488px column on the inline end on desktop framed only by an inline-start border (a top border when stacked under the header on mobile) — with the description, the instructions rendered as markdown, and the context: a search that filters and highlights the files and announces the match count, and one `AttachmentCard` per file. The view shows no capacity meter. On mobile, Publish and Edit move into the ⋮ menu.
+A project's home page: a header with back (its arrow mirrored in RTL), the name (an `<h1>`, truncated with a tooltip), a Pin button (`IconPin` with `labels.pinLabel`, or a crossed-out `IconPin` with `labels.unpinLabel` while `isPinned`, still focusable while `isPinPending`), Publish and Edit buttons with icons and a ⋮ menu (Share, Download, Delete, each with an icon), then a Details panel — an `<aside>` headed by an `<h2>`, a 488px column on the inline end on desktop framed only by an inline-start border (a top border when stacked under the header on mobile) — with the description, the instructions rendered as markdown, and the context: a search that filters and highlights the files and announces the match count, and one `AttachmentCard` per file. The view shows no capacity meter. On mobile, Publish and Edit move into the ⋮ menu.
 
-`mainContent` fills a main column rendered before the Details panel (stacked above it on mobile), named by `mainContentLabel` (default `'Project content'`); without it the panel stays on the inline end. The host puts its own content there, such as a chat input and a `ProjectConversationList`.
+`mainContent` fills a main column rendered before the Details panel (stacked above it on mobile), named by `mainContentLabel` (default `'Project content'`), with its content centered at a 748px max width; without it the panel stays on the inline end. While the panel sits beside the main column on desktop, the header stays in place and each column scrolls on its own; stacked, both scroll together below the header. The host puts its own content there, such as a chat input and a `ProjectConversationList`.
 
 Activating a context card calls `onContextFileClick` with the file's name, and the card whose name equals `selectedContextFileId` renders selected (`aria-pressed`). The lib downloads and opens nothing: the host decides, for example by previewing the file in a canvas beside the page. While such a preview takes the inline end, the host sets `isDetailsStacked` (default `false`) so the Details panel and its cards move below the main column at every width, with a top border instead of the inline-start one, and stay reachable.
 
@@ -285,6 +285,7 @@ import { ProjectView } from '@epam/ai-dial-projects';
   labels={{
     backLabel: 'Back',
     pinLabel: 'Pin',
+    unpinLabel: 'Unpin',
     publishLabel: 'Publish',
     editLabel: 'Edit',
     moreActionsLabel: 'More actions',
@@ -310,11 +311,11 @@ import { ProjectView } from '@epam/ai-dial-projects';
 />;
 ```
 
-`styles.colors` fields fall back to `--bg-layer-base` (`background`), `--stroke-tertiary` (`border`), `--text-primary` (`headingText`, `bodyText`) and `--text-secondary` (`secondaryText`). `styles.typography` defaults to `'dial-h2-text'` (`titleClassName`), `'dial-body-semi-text'` (`panelTitleClassName`), `'dial-tiny-text'` (`sectionTitleClassName`, `helperClassName`) and `'dial-small-text'` (`bodyClassName`).
+`styles.colors` fields fall back to `--bg-layer-base` (`background`), `--stroke-tertiary` (`border`), `--text-primary` (`headingText`, `bodyText`) and `--text-secondary` (`secondaryText`). `styles.typography` defaults to `'dial-h1-text'` (`titleClassName`), `'dial-body-semi-text'` (`panelTitleClassName`), `'dial-tiny-text'` (`sectionTitleClassName`, `helperClassName`) and `'dial-small-text'` (`bodyClassName`).
 
 ### ProjectConversationList
 
-A project's conversations as a `<section>` named by its `<h2>` (`labels.title`; with no chats the heading is hidden and the section keeps the name through `aria-label`), with one row per item: a button named `labels.openLabel(title, authorName)` holding the author's initials (`aria-hidden`) and the title truncated with a tooltip. When `onRename` or `onDelete` is given, each row also has a ⋮ menu (`labels.moreActionsLabel(title)`) with those items; without both it is read-only and rows only open. Exactly one state renders — loading, error with Retry, the empty state, or the rows — and the loading, error and empty states are a `role="status"` region. With `hasMore` and `onLoadMore`, a Show more button (`labels.loadMoreLabel`, default `'Show more'`) follows the rows and is disabled while `isLoadingMore`. The lib loads nothing: the host passes the rows and handles the callbacks.
+A project's conversations as a `<section>` named by its `<h2>` (`labels.title`; with no chats the heading is hidden and the section keeps the name through `aria-label`), with one row per item: a button named `labels.openLabel(title, authorName)` holding an `aria-hidden` status point (an outline when read, filled when unread) and the title truncated with a tooltip. When `onRename` or `onDelete` is given, each row also has a ⋮ menu (`labels.moreActionsLabel(title)`) with those items, shown on `desktop` only while the row is hovered or focused or the menu is open (always on `mobile`); without both it is read-only and rows only open. Exactly one state renders — loading, error with Retry, the empty state, or the rows — and the loading, error and empty states are a `role="status"` region. With `hasMore` and `onLoadMore`, a See more link button (`labels.loadMoreLabel`, default `'See more'`) follows the rows and is disabled while `isLoadingMore`. With `isEmptyStateShown={false}` (default `true`) an empty list renders nothing instead of the empty state. The lib loads nothing: the host passes the rows and handles the callbacks.
 
 ```tsx
 import { ProjectConversationList } from '@epam/ai-dial-projects';
@@ -341,22 +342,35 @@ import { ProjectConversationList } from '@epam/ai-dial-projects';
     retryLabel: 'Retry',
     emptyTitle: 'No outputs or chats yet',
     emptyDescription: 'Your outputs and chats will appear here once started.',
-    loadMoreLabel: 'Show more',
+    loadMoreLabel: 'See more',
   }}
 />;
 ```
 
-`typography` defaults to `'dial-body-semi-text'` (`titleClassName`), `'dial-body-text'` (`rowTitleClassName`) and `'dial-small-text'` (`messageClassName`).
+`typography` defaults to `'dial-body-semi-text'` (`titleClassName`), `'dial-body-text'` (`rowTitleClassName`), `'dial-body-semi-text'` (`unreadRowTitleClassName`) and `'dial-small-text'` (`messageClassName`).
+
+An item with `isUnread: true` shows its title in `unreadRowTitleClassName` and a filled status point, and its row button is described by `labels.unreadLabel` (default `'Unread'`) through `aria-describedby`, so its accessible name does not change. `colors.readDot` sets the read point's outline (`--pcl-read-dot`, default `var(--stroke-secondary, #d1dbea)`), `colors.unreadDot` the unread point's fill (`--pcl-unread-dot`, default `var(--text-accent, #1d4ed8)`), and `colors.rowHoverBackground` the background of a hovered or focused row (`--pcl-row-hover`, default `var(--bg-control-accent-alpha-hover, #2764d924)`).
+
+```tsx
+<ProjectConversationList
+  items={[{ id: 'c1', title: 'Weekly summary', isUnread: true }]}
+  onRetry={retry}
+  onOpen={openChat}
+  labels={{ ...labels, unreadLabel: 'Unread' }}
+  colors={{ unreadDot: 'var(--text-accent)' }}
+/>
+```
 
 ### ProjectConversationsPanel
 
-A project's chat column for `ProjectView.mainContent`: the host's chat input (`composer`, any node), then `ProjectConversationList`, plus the rename dialog (a labelled input seeded with the title, an inline error for an empty name, Cancel and Save buttons, Enter to save, the trimmed value sent to `onRename`) and the delete confirmation. `hasMore`, `isLoadingMore` and `onLoadMore` pass through to the list. Both dialogs return focus to the row's ⋮ trigger when they close; after a delete, whose row is gone, focus moves to the row now in its place, the one before it, or the list. They stay open, and cannot be closed, while the host's promise is pending, and stay open while it rejects, so the host only reports the failure. Omitting `onRename` and `onDelete` makes it read-only.
+A project's chat column for `ProjectView.mainContent`: the host's chat input (`composer`, any node), then the host's `outputs` node (any node, typically `ProjectOutputs`; nothing renders in its place when it is unset), then `ProjectConversationList`; `hasOutputs` (default `false`) tells it that `outputs` shows content, so an empty list drops its "No outputs or chats yet" state, plus the rename dialog (a labelled input seeded with the title, an inline error for an empty name, Cancel and Save buttons, Enter to save, the trimmed value sent to `onRename`) and the delete confirmation. `hasMore`, `isLoadingMore` and `onLoadMore` pass through to the list, and so do `listTypography` and `listColors` (as its `typography` and `colors`). A rename or delete dialog whose row disappears from `items` (a live refresh) closes, and focus moves to the list. Both dialogs return focus to the row's ⋮ trigger when they close; after a delete, whose row is gone, focus moves to the row now in its place, the one before it, or the list. They stay open, and cannot be closed, while the host's promise is pending, and stay open while it rejects, so the host only reports the failure. Omitting `onRename` and `onDelete` makes it read-only.
 
 ```tsx
 import { ProjectConversationsPanel } from '@epam/ai-dial-projects';
 
 <ProjectConversationsPanel
   composer={<MyChatInput />}
+  outputs={<MyOutputs />}
   items={[{ id: 'c1', title: 'Weekly support summary' }]}
   onRetry={() => {}}
   onOpen={(id) => {}}
@@ -385,6 +399,42 @@ import { ProjectConversationsPanel } from '@epam/ai-dial-projects';
   }}
 />;
 ```
+
+### ProjectOutputs
+
+A project's outputs, the files the agents of its chats saved under the project's `artifacts/` folder, for `ProjectConversationsPanel`'s `outputs` slot.
+
+- **Layout.** A `<section>` named by its `<h2>` (`labels.title`, default `'Outputs'`), then one `AttachmentCard` per item: the same 100×100 file cards as the Details panel's context, with the name and the type icon.
+- **Preview row.** The first `previewLimit` items (default `6`) render in one row that scrolls horizontally inside its column at every width, so the page itself never scrolls sideways.
+- **See all.** When there are more items, a See all link (`labels.seeAllLabel(count)`, default `` `See all (${count})` ``, with `aria-expanded` and `aria-controls`) expands the section in place into a wrapping grid of every item. Show less (`labels.showLessLabel`, default `'Show less'`) collapses it again. A new `items` array keeps the expanded state.
+- **Opening.** Activating a card calls `onOpenOutput` with the file name. The card whose name equals `selectedOutputName` renders selected (`aria-pressed`). Each card is named `labels.openOutputLabel(name)` (default `` `Preview ${name}` ``).
+- **Read-only.** The section offers no rename, delete or upload action. The lib downloads and opens nothing; the host decides.
+- **Empty.** When `items` is empty and `hasError` is `false`, it renders no section, only an empty visually hidden live region, so render it unconditionally and let it decide.
+- **Error.** `hasError` shows `labels.errorLabel` (default `'Could not load outputs'`), announced through that always-mounted live region, plus a Retry button (`labels.retryLabel`, default `'Retry'`) when `onRetry` is set. When `hasError` clears after Retry, focus moves to the section heading.
+
+```tsx
+import { ProjectOutputs } from '@epam/ai-dial-projects';
+
+<ProjectOutputs
+  items={[
+    { name: 'summary.md', contentType: 'text/markdown' },
+    { name: 'report.pdf', contentType: 'application/pdf' },
+  ]}
+  onOpenOutput={(name) => {}}
+  selectedOutputName={undefined}
+  previewLimit={6}
+  labels={{
+    title: 'Outputs',
+    seeAllLabel: (count) => `See all (${count})`,
+    showLessLabel: 'Show less',
+    openOutputLabel: (name) => `Preview ${name}`,
+    errorLabel: 'Could not load outputs',
+    retryLabel: 'Retry',
+  }}
+/>;
+```
+
+`styles.colors` fields fall back to `--text-primary` (`headingText`) and `--text-secondary` (`secondaryText`). `styles.typography` defaults to `'dial-body-semi-text'` (`titleClassName`) and `'dial-tiny-text'` (`helperClassName`).
 
 ### ProjectChatHeader
 
@@ -464,6 +514,8 @@ Why a context file was not added: `UnsupportedType` (`'unsupported-type'`), `Too
 - `ProjectContextFile` — `Attachment | StoredProjectContextFile`, the type of `ProjectCreateForm`'s `contextFiles`; `StoredProjectContextFile` is a file already in the project (`size`, `isStored: true`, no `File`), so the same form edits a project.
 - `ProjectViewProps`, `ProjectViewLabels`, `ProjectViewModel`, `ProjectContextFileItem` — the props, strings and content of `ProjectView`.
 - `ProjectViewStyles`, `ProjectViewColors`, `ProjectViewTypography` — style overrides of `ProjectView`.
-- `ProjectConversationListProps`, `ProjectConversationListItem`, `ProjectConversationListLabels`, `ProjectConversationListTypography` — the props, rows, strings and typography of `ProjectConversationList`.
+- `ProjectConversationListProps`, `ProjectConversationListItem`, `ProjectConversationListLabels`, `ProjectConversationListTypography`, `ProjectConversationListColors` — the props, rows, strings, typography and colours of `ProjectConversationList`.
 - `ProjectConversationsPanelProps`, `ProjectConversationsPanelLabels` — the props and strings of `ProjectConversationsPanel`.
+- `ProjectOutputsProps`, `ProjectOutputItem`, `ProjectOutputsLabels` — the props, cards (`{ name, contentType }`) and strings of `ProjectOutputs`.
+- `ProjectOutputsStyles`, `ProjectOutputsColors`, `ProjectOutputsTypography` — style overrides of `ProjectOutputs`.
 - `ProjectChatHeaderProps` — the props of `ProjectChatHeader`.

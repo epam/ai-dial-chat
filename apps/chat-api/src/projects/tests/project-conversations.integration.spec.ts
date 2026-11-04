@@ -17,6 +17,7 @@ import { ConversationService } from '../../conversations/conversation.service';
 import { ProjectConversationStore } from '../../conversations/persistence/project-conversation.store';
 import { ConversationCompletionsResponder } from '../../conversations/streaming/conversation-completions.responder';
 import { DialClientService } from '../../dial/dial-client.service';
+import { ConversationReadStateService } from '../../scheduled-task-unread/conversation-read-state.service';
 import { ProjectConversationsListService } from '../conversations/project-conversations-list.service';
 import { ProjectConversationsController } from '../conversations/project-conversations.controller';
 import { ProjectConversationsService } from '../conversations/project-conversations.service';
@@ -53,6 +54,14 @@ const buildApp = async (isFeatureEnabled = true) => {
     stopBackgroundGeneration: vi.fn(),
     resolveBackgroundAttach: vi.fn(),
   };
+  const readState = {
+    getProjectReadState: vi.fn(async () => ({
+      readBefore: 0,
+      versions: new Map<string, string>(),
+    })),
+    markProjectConversationViewed: vi.fn(async () => undefined),
+    removeProjectConversation: vi.fn(async () => undefined),
+  };
   const module = await Test.createTestingModule({
     controllers: [ProjectConversationsController],
     providers: [
@@ -68,6 +77,7 @@ const buildApp = async (isFeatureEnabled = true) => {
         useValue: { get: vi.fn(), set: vi.fn(), del: vi.fn() },
       },
       { provide: ConfigService, useValue: { get: () => 1_800_000 } },
+      { provide: ConversationReadStateService, useValue: readState },
     ],
   })
     .overrideGuard(FeatureGuard)
@@ -100,6 +110,7 @@ const buildApp = async (isFeatureEnabled = true) => {
     app,
     client,
     conversationService,
+    readState,
     generations: module.get(ConversationGenerationService),
   };
 };
@@ -187,6 +198,93 @@ describe('ProjectConversationsController (integration)', () => {
       .expect((res) => expect([400, 404]).toContain(res.status));
     expect(built.client.downloadProjectFile).not.toHaveBeenCalled();
     expect(built.conversationService.getConversation).not.toHaveBeenCalled();
+  });
+
+  it('lists conversations with isUnread from the caller read state', async () => {
+    const built = await buildApp();
+    app = built.app;
+    built.client.listProjectFileMetadata.mockResolvedValue(
+      ok({
+        items: [{ name: 'gpt-4o__Hi__1', nodeType: 'ITEM', updatedAt: 5 }],
+      }),
+    );
+    built.client.downloadProjectFile.mockResolvedValue(
+      ok(JSON.stringify({ name: 'Hi' })),
+    );
+
+    const res = await request(app.getHttpServer())
+      .get(`/api/v1/projects/${OWN}/conversations`)
+      .expect(200);
+
+    expect(res.body.items).toEqual([
+      expect.objectContaining({ name: 'gpt-4o__Hi__1', isUnread: true }),
+    ]);
+    expect(built.readState.getProjectReadState).toHaveBeenCalledWith(
+      'projects/a1b2c3/q4',
+      USER.at,
+      USER.bucket,
+    );
+  });
+
+  it("marks a shared project's conversation viewed in the caller's state with 204", async () => {
+    const built = await buildApp();
+    app = built.app;
+    built.client.downloadProjectFile.mockResolvedValue(
+      ok(JSON.stringify({ name: 'Hi' })),
+    );
+
+    await request(app.getHttpServer())
+      .patch(`/api/v1/projects/${SHARED}/conversations/gpt-4o__Hi__1/viewed`)
+      .expect(204);
+
+    expect(built.readState.markProjectConversationViewed).toHaveBeenCalledWith(
+      'projects/z9y8x7/research',
+      'projects/z9y8x7/research/conversations/gpt-4o__Hi__1',
+      expect.stringMatching(/^"sha256:[\da-f]+"$/),
+      USER.at,
+      USER.bucket,
+    );
+  });
+
+  it('answers 404 on the viewed route for a missing conversation', async () => {
+    const built = await buildApp();
+    app = built.app;
+    built.client.downloadProjectFile.mockResolvedValue({
+      data: undefined,
+      error: undefined,
+      response: new Response(null, { status: 404 }),
+    });
+
+    await request(app.getHttpServer())
+      .patch(`/api/v1/projects/${OWN}/conversations/gpt-4o__Gone__1/viewed`)
+      .expect(404);
+    expect(
+      built.readState.markProjectConversationViewed,
+    ).not.toHaveBeenCalled();
+  });
+
+  it('answers 400 for traversal on the viewed route without calling Core', async () => {
+    const built = await buildApp();
+    app = built.app;
+
+    await request(app.getHttpServer())
+      .patch(
+        `/api/v1/projects/${OWN}/conversations/${encodeURIComponent('../secret')}/viewed`,
+      )
+      .expect(400);
+    expect(built.client.downloadProjectFile).not.toHaveBeenCalled();
+  });
+
+  it('answers 403 on the viewed route when the projects flag is off', async () => {
+    const built = await buildApp(false);
+    app = built.app;
+
+    await request(app.getHttpServer())
+      .patch(`/api/v1/projects/${OWN}/conversations/gpt-4o__Hi__1/viewed`)
+      .expect(403);
+    expect(
+      built.readState.markProjectConversationViewed,
+    ).not.toHaveBeenCalled();
   });
 
   it('creates a conversation with If-Match: * and answers 201 with its locator', async () => {

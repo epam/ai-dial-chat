@@ -24,6 +24,30 @@ const RESTRICTED_FOLDER_SEGMENT = 'Production';
  */
 const MAX_REMEMBERED_FOLDERS = 50;
 
+/** Returns whether a publish destination folder accepts writes: any folder not under a `Production` segment. */
+export const hasPublishFolderWriteAccess = (folderPath: string[]): boolean =>
+  !folderPath.includes(RESTRICTED_FOLDER_SEGMENT);
+
+/**
+ * Returns the remembered destination keys with `folderKey` moved to the front
+ * and the list capped at 50, or `undefined` when nothing changes (an empty
+ * key, or one already first). Ignores a stored value that is not an array.
+ */
+export const rememberPublishFolderKey = (
+  storedKeys: unknown,
+  folderKey: string,
+): string[] | undefined => {
+  const keys = Array.isArray(storedKeys)
+    ? storedKeys.filter((key): key is string => typeof key === 'string')
+    : [];
+  if (!folderKey || keys[0] === folderKey) return undefined;
+  // A re-used destination moves to the front, so the cap drops the least recently used folder.
+  return [folderKey, ...keys.filter((key) => key !== folderKey)].slice(
+    0,
+    MAX_REMEMBERED_FOLDERS,
+  );
+};
+
 const buildFolderNodes = (
   cache: Map<string, ListFilesItemDto[]>,
   apiPath: string,
@@ -199,31 +223,17 @@ export const usePublishFolders = ({
 
   const rememberPublishFolder = useCallback(
     (folderPath: string[]) => {
-      const folderKey = toFolderPathKey(folderPath);
       /* Guarded: the stored value is user-visible and survives app versions. */
-      const storedKeys = Array.isArray(rememberedFolderKeys)
-        ? rememberedFolderKeys
-        : [];
-      /* Already the most recent destination: nothing to reorder. */
-      if (!folderKey || storedKeys[0] === folderKey) {
-        return;
-      }
-      /* A re-used destination moves to the front, so the cap drops the
-       * least recently used folder rather than a frequently used one. */
-      onRememberedFolderKeysChange?.(
-        [folderKey, ...storedKeys.filter((key) => key !== folderKey)].slice(
-          0,
-          MAX_REMEMBERED_FOLDERS,
-        ),
+      const next = rememberPublishFolderKey(
+        rememberedFolderKeys,
+        toFolderPathKey(folderPath),
       );
+      if (next) onRememberedFolderKeysChange?.(next);
     },
     [rememberedFolderKeys, onRememberedFolderKeysChange],
   );
 
-  const hasPublishWriteAccess = useCallback(
-    (folderPath: string[]) => !folderPath.includes(RESTRICTED_FOLDER_SEGMENT),
-    [],
-  );
+  const hasPublishWriteAccess = hasPublishFolderWriteAccess;
 
   const folderItems = useMemo(() => {
     const storedKeys = Array.isArray(rememberedFolderKeys)

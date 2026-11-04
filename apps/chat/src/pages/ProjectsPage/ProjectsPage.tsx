@@ -1,4 +1,5 @@
 import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
+import { useProjects } from '@epam/ai-dial-chat-hooks/project';
 import {
   Projects,
   ProjectSource,
@@ -19,7 +20,7 @@ import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useUserConfig } from '../../context/UserConfigContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { useProjects } from '../../hooks/projects/useProjects';
+import { projectsClient } from '../../hooks/projects/projects-client';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
 import NotFoundPage from '../NotFound/NotFound';
@@ -30,7 +31,7 @@ const ProjectsPage: FC = () => {
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('projectsEnabled');
   const { projects, incompleteSources, isLoading, hasError, retry } =
-    useProjects(isEnabled);
+    useProjects(projectsClient, isEnabled);
   const { pinnedProjectIds, setPinnedProject } = useUserConfig();
   const { showErrorNotification } = useNotification();
   const projectItems = useMemo(() => {

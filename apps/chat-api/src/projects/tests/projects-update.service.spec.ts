@@ -39,6 +39,7 @@ const snapshotOf = (
     { name: 'tickets.csv', size: 3 },
   ],
   conversationEntries: [],
+  artifactEntries: [],
   otherEntries: [],
   readEntry: vi.fn(async (path: string) => Buffer.from(entries[path] ?? '')),
   ...extra,
@@ -84,6 +85,7 @@ const makeService = ({
     replaceProjectPin: vi.fn(async () => undefined),
     getPinnedProjectIds: vi.fn(async () => pinnedIds),
   };
+  const readState = { renameProject: vi.fn(async () => undefined) };
   const snapshotQueue = [...snapshots];
   const read = vi.fn(async () => snapshotQueue.shift() ?? snapshot);
   const service = new ProjectsUpdateService(
@@ -91,8 +93,9 @@ const makeService = ({
     new ProjectsCreateService(config),
     { read } as unknown as ProjectsSnapshotService,
     userConfig as unknown as UserConfigService,
+    readState as never,
   );
-  return { service, client, userConfig, read };
+  return { service, client, userConfig, read, readState };
 };
 
 const uploadedParts = (client: ReturnType<typeof makeService>['client']) => {
@@ -464,6 +467,129 @@ describe('ProjectsUpdateService', () => {
     expect(client.uploadProjectFolder).not.toHaveBeenCalled();
   });
 
+  it('keeps every stored artifact with the content type of its extension', async () => {
+    const { service, client } = makeService({
+      snapshot: snapshotOf(
+        {
+          artifactEntries: [
+            'artifacts/raw.unknownext',
+            'artifacts/report.pdf',
+            'artifacts/run-1/deck.pptx',
+            'artifacts/script.ts',
+          ],
+        },
+        {
+          'context/tickets.csv': 'a',
+          'context/survey.csv': 'b',
+          'artifacts/raw.unknownext': 'raw',
+          'artifacts/report.pdf': '%PDF',
+          'artifacts/run-1/deck.pptx': 'deck',
+          'artifacts/script.ts': 'export {};',
+        },
+      ),
+    });
+
+    await service.updateProject(
+      PROJECT,
+      { name: 'q4', description: 'new' },
+      [],
+      '"cv1"',
+      USER_BUCKET,
+      'token',
+    );
+
+    const parts = uploadedParts(client);
+    expect(parts.names.sort()).toEqual([
+      'PROJECT.md',
+      'artifacts/raw.unknownext',
+      'artifacts/report.pdf',
+      'artifacts/run-1/deck.pptx',
+      'artifacts/script.ts',
+      'context/survey.csv',
+      'context/tickets.csv',
+    ]);
+    expect(await parts.file('artifacts/report.pdf')?.text()).toBe('%PDF');
+    expect(parts.file('artifacts/report.pdf')?.type).toBe('application/pdf');
+    expect(parts.file('artifacts/run-1/deck.pptx')?.type).toBe(
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    );
+    expect(parts.file('artifacts/raw.unknownext')?.type).toBe(
+      'application/octet-stream',
+    );
+    expect(parts.file('artifacts/script.ts')?.type).toBe('text/typescript');
+  });
+
+  it('saves when an agent wrote an artifact after the edit page loaded', async () => {
+    const { service, client } = makeService({
+      snapshot: snapshotOf(
+        {
+          etag: '"after-artifact"',
+          artifactEntries: ['artifacts/report.pdf'],
+        },
+        {
+          'context/tickets.csv': 'a',
+          'context/survey.csv': 'b',
+          'artifacts/report.pdf': '%PDF',
+        },
+      ),
+    });
+
+    const result = await service.updateProject(
+      PROJECT,
+      { name: 'q4', description: 'new' },
+      [],
+      '"cv1"',
+      USER_BUCKET,
+      'token',
+    );
+
+    const parts = uploadedParts(client);
+    expect(parts.headers['If-Match']).toBe('"after-artifact"');
+    expect(await parts.file('artifacts/report.pdf')?.text()).toBe('%PDF');
+    expect(result.etag).toBe('"e2"');
+  });
+
+  it('retries a 412 caused by a new artifact and carries it into the write', async () => {
+    const { service, client } = makeService({
+      snapshots: [
+        snapshotOf(),
+        snapshotOf(
+          { etag: '"e2"', artifactEntries: ['artifacts/summary.md'] },
+          {
+            'context/tickets.csv': 'a,b',
+            'context/survey.csv': 'c,d',
+            'artifacts/summary.md': '# Summary',
+          },
+        ),
+      ],
+    });
+    client.uploadProjectFolder.mockImplementationOnce(async () => ({
+      error: { message: 'precondition' },
+      response: { status: 412, headers: new Headers() },
+    }));
+
+    await service.updateProject(
+      PROJECT,
+      { name: 'q4' },
+      [],
+      '"cv1"',
+      USER_BUCKET,
+      'token',
+    );
+
+    expect(client.uploadProjectFolder).toHaveBeenCalledTimes(2);
+    const [, , retry] = client.uploadProjectFolder.mock.calls[1] as [
+      string,
+      string,
+      { headers: Record<string, string>; body: FormData },
+    ];
+    expect(retry.headers['If-Match']).toBe('"e2"');
+    const artifact = (retry.body.getAll('file') as File[]).find(
+      (file) => file.name === 'artifacts/summary.md',
+    );
+    expect(await artifact?.text()).toBe('# Summary');
+  });
+
   it('keeps files another client wrote outside the context folder', async () => {
     const { service, client } = makeService({
       snapshot: snapshotOf(
@@ -572,6 +698,42 @@ describe('ProjectsUpdateService', () => {
 
     expect(status).toBe(409);
     expect(body.code).toBe('name-taken');
+  });
+
+  it("re-keys the caller's read state after a rename", async () => {
+    const { service, readState } = makeService();
+
+    await service.updateProject(
+      PROJECT,
+      { name: 'Q4 launch' },
+      [],
+      '"cv1"',
+      USER_BUCKET,
+      'token',
+    );
+
+    expect(readState.renameProject).toHaveBeenCalledWith(
+      PROJECT.id,
+      'projects/a1b2c3/marketing/Q4 launch',
+      'token',
+      USER_BUCKET,
+    );
+  });
+
+  it('still saves a rename when the read-state migration fails', async () => {
+    const { service, readState } = makeService();
+    readState.renameProject.mockRejectedValue(new Error('core down'));
+
+    await expect(
+      service.updateProject(
+        PROJECT,
+        { name: 'Q4 launch' },
+        [],
+        '"cv1"',
+        USER_BUCKET,
+        'token',
+      ),
+    ).resolves.toMatchObject({ id: 'projects/a1b2c3/marketing/Q4 launch' });
   });
 
   it('still saves a rename when the pin migration fails', async () => {
@@ -757,7 +919,7 @@ describe('ProjectsUpdateService', () => {
     const warn = vi
       .spyOn(Logger.prototype, 'warn')
       .mockImplementation(() => undefined);
-    const { service, client, userConfig } = makeService({
+    const { service, client, userConfig, readState } = makeService({
       move: { error: { message: 'down' }, response: { status: 503 } },
     });
 
@@ -776,6 +938,7 @@ describe('ProjectsUpdateService', () => {
     expect(body.code).toBe('project-changed');
     expect(client.uploadProjectFolder).toHaveBeenCalledOnce();
     expect(userConfig.replaceProjectPin).not.toHaveBeenCalled();
+    expect(readState.renameProject).not.toHaveBeenCalled();
     const warned = warn.mock.calls
       .map(([message]) => String(message))
       .join('\n');

@@ -37,9 +37,11 @@ const mockSkillDisplayNames = vi.hoisted(() => ({
   value: undefined as string[] | undefined,
 }));
 vi.mock(
-  '../../../../hooks/scheduled-tasks/useScheduledTaskSkillDisplayNames',
+  '../../../../hooks/scheduled-tasks/useScheduledTaskSkillPreview',
   () => ({
-    useScheduledTaskSkillDisplayNames: () => mockSkillDisplayNames.value,
+    useScheduledTaskSkillPreview: () => ({
+      skillDisplayNames: mockSkillDisplayNames.value,
+    }),
   }),
 );
 

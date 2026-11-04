@@ -22,6 +22,8 @@ import { resolvePrompt } from '../common/utils/resolve-prompt';
 import { EnvironmentVariables } from '../config/environment.config';
 import { DialClientService } from '../dial/dial-client.service';
 import { ConversationResponseDto } from '../openapi/openapi-response.dto';
+import { parseProjectConversationLocator } from '../projects/utils/project-conversation-id.util';
+import { ConversationReadStateService } from '../scheduled-task-unread/conversation-read-state.service';
 import {
   ConditionalUpdateStatus,
   CONVERSATION_PERSISTENCE,
@@ -55,6 +57,7 @@ export class ConversationNamingService {
     private readonly appConfigService: AppConfigService,
     @Inject(CONVERSATION_PERSISTENCE)
     private readonly conversationPersistence: ConversationPersistencePort,
+    private readonly readStateService: ConversationReadStateService,
   ) {}
 
   maybeRenameAfterFirstReply(
@@ -366,16 +369,65 @@ export class ConversationNamingService {
     bucket: string,
     title: string,
   ): Promise<boolean> {
+    let previousVersion: string | null = null;
     const result = await this.conversationPersistence.updateConversation(
       conversationPath,
       token,
       bucket,
-      (stored) =>
-        stored && stored.conversation.llmNamingDone !== true
+      (stored) => {
+        previousVersion = stored?.etag ?? null;
+        return stored && stored.conversation.llmNamingDone !== true
           ? { ...stored.conversation, name: title, llmNamingDone: true }
-          : null,
+          : null;
+      },
     );
-    return result.status === ConditionalUpdateStatus.Saved;
+    const isSaved = result.status === ConditionalUpdateStatus.Saved;
+    if (isSaved && previousVersion != null) {
+      await this.keepProjectChatReadQuietly(
+        conversationPath,
+        token,
+        bucket,
+        previousVersion,
+      );
+    }
+    return isSaved;
+  }
+
+  /*
+   * A project chat's read state is the content version the user viewed, and
+   * this write changes the version right after the answer the user may have
+   * just watched; carrying the viewed version over keeps that chat read.
+   * Best effort: a failure costs one false unread dot.
+   */
+  private async keepProjectChatReadQuietly(
+    conversationPath: string,
+    token: string,
+    bucket: string,
+    previousVersion: string,
+  ): Promise<void> {
+    const parsed = parseProjectConversationLocator(conversationPath);
+    if (parsed == null) return;
+    try {
+      const stored =
+        await this.conversationPersistence.readConversationWithEtag(
+          conversationPath,
+          token,
+          bucket,
+        );
+      if (stored?.etag == null) return;
+      await this.readStateService.carryProjectConversationViewed(
+        parsed.project.id,
+        conversationPath,
+        previousVersion,
+        stored.etag,
+        token,
+        bucket,
+      );
+    } catch {
+      this.logger.warn(
+        'Failed to keep the project chat read after its display name update',
+      );
+    }
   }
 
   private async requestLlmTitle(
