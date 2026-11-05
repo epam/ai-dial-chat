@@ -32,13 +32,13 @@ const encodePath = (value: string): string =>
   value.split('/').map(encodeURIComponent).join('/');
 
 /**
- * TEMPORARY, to try a Core application route from the browser: forwards
+ * Lets the browser call a DIAL application's configured route: forwards
  * `/api/v1/deployment-route/{deploymentId}/{path}` to DIAL Core's
  * `/v1/deployments/{deploymentId}/route/{path}` with the caller's own access
- * token, and relays Core's status and JSON body unchanged. The deployment ID
- * may contain slashes (`applications/public/name__1.0.0`), so the client sends
- * it URL-encoded as one segment. Core stays the authority for route
- * permissions and rate limits.
+ * token, and relays Core's status and body unchanged. The deployment ID may
+ * contain slashes (`applications/public/name__1.0.0`), so the client sends it
+ * URL-encoded as one segment. Core stays the authority for route permissions
+ * and rate limits.
  */
 @Controller({ path: 'deployment-route', version: '1' })
 export class DeploymentRouteController {
