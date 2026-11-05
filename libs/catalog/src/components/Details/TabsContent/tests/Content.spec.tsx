@@ -137,15 +137,24 @@ describe('ContentTab', () => {
     ).toBeNull();
   });
 
-  it('scrolls the body inside its own container rather than the page', () => {
-    render(<ContentTab content="a very long prompt body" />);
+  it('scrolls the description and body together instead of confining scrolling to the body', () => {
+    render(
+      <ContentTab
+        content="a very long prompt body"
+        description="a very long description"
+      />,
+    );
 
+    /* Scroll ownership is a CSS layout contract; jsdom cannot measure overflow. */
+    /* eslint-disable testing-library/no-node-access */
+    const scrollArea = screen
+      .getByText('a very long description')
+      .closest('.overflow-y-auto');
+    expect(scrollArea).toBeTruthy();
     const body = screen.getByText('a very long prompt body');
-    /* The markdown paragraph sits inside the scroll container. The scroll
-     * container is a bare div with no role, so checking ancestry via its
-     * CSS class is the only way to verify this layout detail. */
-    // eslint-disable-next-line testing-library/no-node-access
-    expect(body.closest('.overflow-auto')).toBeTruthy();
+    expect(body.closest('.overflow-y-auto')).toBe(scrollArea);
+    expect(body.closest('.overflow-auto')).toBeNull();
+    /* eslint-enable testing-library/no-node-access */
   });
 
   it('renders no copy control', () => {
@@ -180,6 +189,43 @@ describe('ContentTab — file selector', () => {
     file('SKILL.md'),
     folder('scripts', [file('scripts/run.py', 'run.py')]),
   ];
+
+  it('places the file selector after the description and before the file content', () => {
+    render(
+      <ContentTab
+        content="File content"
+        description="Skill description"
+        files={flatFiles}
+        selectedFileId="SKILL.md"
+      />,
+    );
+
+    const selector = screen.getByRole('button', { name: 'SKILL.md' });
+    expect(
+      screen.getByText('Skill description').compareDocumentPosition(selector) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      selector.compareDocumentPosition(screen.getByText('File content')) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('keeps the file selector sticky at the top of the shared scroll area', () => {
+    render(
+      <ContentTab content="Body" files={flatFiles} selectedFileId="SKILL.md" />,
+    );
+
+    /* Sticky positioning has no semantic query or layout engine in jsdom. */
+    /* eslint-disable testing-library/no-node-access */
+    const stickyRow = screen
+      .getByRole('button', { name: 'SKILL.md' })
+      .closest('.sticky');
+    expect(stickyRow).toBeTruthy();
+    expect(stickyRow?.className).toContain('top-0');
+    expect(stickyRow?.closest('.overflow-y-auto')).toBeTruthy();
+    /* eslint-enable testing-library/no-node-access */
+  });
 
   it('renders no selector when the item carries no files', () => {
     render(<ContentTab content="Body" />);
