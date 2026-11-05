@@ -22,6 +22,7 @@ import {
   resolveOwnerCoords,
   hasSamePaths,
   resolveSectionByPath,
+  toSectionApiPath,
   unionPathSets,
   withRoutableRootLabels,
 } from '../dial-file-manager-path.util';
@@ -390,5 +391,83 @@ describe('withRoutableRootLabels', () => {
         { tab: DialFileManagerTabs.MyFiles, rootLabel: '  ' },
       ])[0].rootLabel,
     ).toBe(DialFileManagerTabs.MyFiles);
+  });
+});
+
+describe('toSectionApiPath', () => {
+  const sections = [
+    { tab: DialFileManagerTabs.MyFiles, rootLabel: 'My files' },
+    { tab: DialFileManagerTabs.Organization, rootLabel: 'Organization' },
+  ];
+
+  it('maps a folder under the section root to its bucket path', () => {
+    expect(
+      toSectionApiPath(
+        '/Organization/Acme/US Risk/',
+        sections,
+        DialFileManagerTabs.Organization,
+      ),
+    ).toBe('Acme/US Risk/');
+  });
+
+  it('accepts a path without the leading slash', () => {
+    expect(
+      toSectionApiPath(
+        'Organization/Acme',
+        sections,
+        DialFileManagerTabs.Organization,
+      ),
+    ).toBe('Acme/');
+  });
+
+  it('ignores rows under another root, as in the All tab', () => {
+    expect(
+      toSectionApiPath(
+        '/My files/Acme',
+        sections,
+        DialFileManagerTabs.Organization,
+      ),
+    ).toBeUndefined();
+  });
+
+  it('does not treat a root whose name only starts the same as the section root', () => {
+    expect(
+      toSectionApiPath(
+        '/Organization 2/Acme',
+        sections,
+        DialFileManagerTabs.Organization,
+      ),
+    ).toBeUndefined();
+  });
+
+  it('returns undefined for the section root itself', () => {
+    expect(
+      toSectionApiPath(
+        '/Organization',
+        sections,
+        DialFileManagerTabs.Organization,
+      ),
+    ).toBeUndefined();
+  });
+
+  it('follows the tab id when the root label is not routable', () => {
+    const withSlashLabel = [
+      { tab: DialFileManagerTabs.Organization, rootLabel: 'Org/Units' },
+    ];
+
+    expect(
+      toSectionApiPath(
+        `/${DialFileManagerTabs.Organization}/Acme`,
+        withSlashLabel,
+        DialFileManagerTabs.Organization,
+      ),
+    ).toBe('Acme/');
+    expect(
+      toSectionApiPath(
+        '/Org/Units/Acme',
+        withSlashLabel,
+        DialFileManagerTabs.Organization,
+      ),
+    ).toBeUndefined();
   });
 });

@@ -194,6 +194,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   isPublishPrimary,
   getPublishHistory,
   publishFolderItems = EMPTY_PUBLISH_FOLDERS,
+  isPublishOrgUnitFolder,
   publishExpandedPaths,
   onPublishExpandedPathsChange,
   publishLoadingPaths,
@@ -1217,6 +1218,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               expandedPaths={publishExpandedPaths}
               onExpandedPathsChange={onPublishExpandedPathsChange}
               loadingPaths={publishLoadingPaths}
+              isOrgUnitFolder={isPublishOrgUnitFolder}
               hasExistingPublicationInFolder={
                 publishFlow.hasExistingPublicationInFolder
               }

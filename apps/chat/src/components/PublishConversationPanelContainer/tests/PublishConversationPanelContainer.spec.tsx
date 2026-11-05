@@ -12,6 +12,17 @@ import { publishConversation } from '../../../server-api/conversation-publish.ap
 import { getPublishRules } from '../../../server-api/publish-rules.api';
 import PublishConversationPanelContainer from '../PublishConversationPanelContainer';
 
+const { mockIsOrgUnitFolder } = vi.hoisted(() => ({
+  mockIsOrgUnitFolder: vi.fn((_path: string) => false),
+}));
+
+vi.mock('../../../context/OrgUnitsContext', () => ({
+  useOrgUnitsContext: () => ({
+    ensureUnits: vi.fn(),
+    isOrgUnitFolder: mockIsOrgUnitFolder,
+  }),
+}));
+
 const mockRule: PublicationRule = {
   source: 'role',
   function: PublicationRuleFunction.Contain,
@@ -41,6 +52,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       hasRulesLoadError,
       onClose,
       onSubmit,
+      isOrgUnitFolder,
+      panelLabels,
     }: {
       resource?: { title: string };
       selectedFolderPath?: string[];
@@ -59,6 +72,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       hasRulesLoadError?: boolean;
       onClose: () => void;
       onSubmit: () => void;
+      isOrgUnitFolder?: (folderPath: string[]) => boolean;
+      panelLabels?: { orgUnitLabel?: string };
     }) => (
       <div role="dialog" aria-label="publish conversation">
         <span>{resource?.title}</span>
@@ -71,6 +86,10 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
         <span>rules:{rules.map((r) => r.source).join(',')}</span>
         <span>rulesLoading:{String(isRulesLoading)}</span>
         <span>rulesLoadError:{String(hasRulesLoadError)}</span>
+        <span>orgUnitLabel:{panelLabels?.orgUnitLabel}</span>
+        <span>
+          acmeIsUnit:{String(isOrgUnitFolder?.(['Acme', 'Risk']) ?? false)}
+        </span>
         {hasSubmitError && <span role="alert">submit failed</span>}
         <button onClick={() => onSelectedFolderPathChange(['Shared'])}>
           Select Shared
@@ -154,6 +173,17 @@ describe('PublishConversationPanelContainer', () => {
       config: { publicationFilterSources: ['title', 'role', 'dial_roles'] },
     });
     vi.mocked(getPublishRules).mockResolvedValue([]);
+  });
+
+  it('marks org-unit destinations with the translated org-unit label', async () => {
+    mockIsOrgUnitFolder.mockImplementation((path) => path === 'Acme/Risk');
+    renderContainer();
+
+    expect(await screen.findByText('acmeIsUnit:true')).toBeTruthy();
+    expect(
+      screen.getByText('orgUnitLabel:dialFileManager.orgUnit'),
+    ).toBeTruthy();
+    expect(mockIsOrgUnitFolder).toHaveBeenCalledWith('Acme/Risk');
   });
 
   it('renders the conversation title as the resource summary', async () => {

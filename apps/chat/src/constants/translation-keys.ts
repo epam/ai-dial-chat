@@ -723,6 +723,7 @@ export enum DialFileManagerI18nKeys {
   PageTitle = 'dialFileManager.page.title',
   Attach = 'dialFileManager.attach',
   Empty = 'dialFileManager.empty',
+  OrgUnit = 'dialFileManager.orgUnit',
   Error = 'dialFileManager.error',
   HiddenFiles = 'dialFileManager.hiddenFiles',
   ShowHiddenFiles = 'dialFileManager.showHiddenFiles',

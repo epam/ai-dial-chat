@@ -6741,6 +6741,62 @@ export interface OfflineCredentialsSigninBodyDto {
 /**
  *
  * @export
+ * @interface OrgUnitDto
+ */
+export interface OrgUnitDto {
+  /**
+   * Core unit id
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  id: string;
+  /**
+   * Unit name; also the last segment of its folder
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  name: string;
+  /**
+   * Display name; falls back to `name` when Core has none
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  displayName: string;
+  /**
+   * Decoded unit address without a trailing slash
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  path: string;
+  /**
+   * Unit folder exactly as DIAL Core returns it: url-encoded, with a trailing slash
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  folder: string;
+}
+/**
+ *
+ * @export
+ * @interface OrgUnitsResponseDto
+ */
+export interface OrgUnitsResponseDto {
+  /**
+   * `false` when DIAL Core has org units turned off
+   * @type {boolean}
+   * @memberof OrgUnitsResponseDto
+   */
+  enabled: boolean;
+  /**
+   *
+   * @type {Array<OrgUnitDto>}
+   * @memberof OrgUnitsResponseDto
+   */
+  units: Array<OrgUnitDto>;
+}
+/**
+ *
+ * @export
  * @interface ProjectArtifactItemDto
  */
 export interface ProjectArtifactItemDto {

@@ -12,7 +12,10 @@ import type { FileManagerSelectableNode } from '../../types/file-manager-node';
 import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
 import type { AttachResult } from '../attach-result';
-import { DialFileManagerShell } from '../DialFileManagerShell/DialFileManagerShell';
+import {
+  DialFileManagerShell,
+  type DialFileManagerShellProps,
+} from '../DialFileManagerShell/DialFileManagerShell';
 import type { FileManagerController } from '../file-manager-controller';
 import {
   type DialFileManagerActionProfile,
@@ -109,6 +112,8 @@ export interface FileManagerAttachModalProps {
   autoSelectUploadedItems?: boolean;
   /** Pre-translated message shown by the ui-kit when a newly-selected file exceeds `maxSelectableFileSize`. Omit to leave upload-size validation unrestricted regardless of `maxSelectableFileSize`. */
   oversizedUploadMessage?: string;
+  /** Whether a folder row is a DIAL Core org unit; forwarded to the shell. */
+  isOrgUnitFolder?: DialFileManagerShellProps['isOrgUnitFolder'];
   /** Color overrides applied as CSS custom properties. */
   colors?: FileManagerAttachModalColors;
   /** Typography class of the modal title. Defaults to `'dial-h1-text'`. */
@@ -146,6 +151,7 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
     allowedFileTypes,
     autoSelectUploadedItems = false,
     oversizedUploadMessage,
+    isOrgUnitFolder,
     colors,
     titleClassName = 'dial-h1-text',
     descriptionClassName = 'dial-small-text',
@@ -366,6 +372,7 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
             getDisabledTooltip={getDisabledTooltip}
             unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
             oversizedUploadMessage={oversizedUploadMessage}
+            isOrgUnitFolder={isOrgUnitFolder}
           />
         </div>
       </Popup>

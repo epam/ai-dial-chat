@@ -792,4 +792,89 @@ describe('PublishFoldersTree', () => {
       );
     });
   });
+
+  describe('org-unit folders', () => {
+    const folder = (path: string): DialFile => ({
+      path,
+      name: path.split('/').pop() ?? path,
+      folderId: path,
+      nodeType: DialFileNodeType.FOLDER,
+    });
+    const renderIcon = (file: DialFile) =>
+      render(<>{capturedProps.current?.getItemIcon?.(file)}</>);
+
+    it('shows the org-unit icon on a unit folder with the host label', () => {
+      const isOrgUnitFolder = vi.fn(
+        (path: string[]) => path.join('/') === 'Shared',
+      );
+      renderTree({ isOrgUnitFolder, orgUnitLabel: 'Unit of the organization' });
+
+      renderIcon(folder('Shared'));
+
+      expect(
+        screen.getByRole('img', { name: 'Unit of the organization' }),
+      ).toBeTruthy();
+      expect(isOrgUnitFolder).toHaveBeenCalledWith(['Shared'], undefined);
+    });
+
+    it('keeps the folder icon for plain folders and the bucket root', () => {
+      renderTree({ isOrgUnitFolder: (path) => path.join('/') === 'Shared' });
+
+      expect(
+        capturedProps.current?.getItemIcon?.(folder('My workspace')),
+      ).toBeUndefined();
+      expect(capturedProps.current?.getItemIcon?.(folder(''))).toBeUndefined();
+    });
+
+    it('marks nothing when the host passes no predicate', () => {
+      renderTree();
+
+      expect(
+        capturedProps.current?.getItemIcon?.(folder('Shared')),
+      ).toBeUndefined();
+    });
+
+    it('passes the root key and the path inside it in multi-root mode', () => {
+      const isOrgUnitFolder = vi.fn(
+        (path: string[], rootKey?: string) =>
+          rootKey === 'organization' && path.join('/') === 'EPAM',
+      );
+      render(
+        <PublishFoldersTree
+          roots={[
+            {
+              key: 'organization',
+              label: 'Organization',
+              items: [{ path: ['EPAM'], name: 'EPAM' }],
+            },
+          ]}
+          searchQuery=""
+          onDestinationChange={vi.fn()}
+          onCreateDestinationFolder={vi.fn()}
+          isOrgUnitFolder={isOrgUnitFolder}
+        />,
+      );
+
+      renderIcon(folder(':organization/EPAM'));
+
+      expect(
+        screen.getByRole('img', { name: 'Organization unit' }),
+      ).toBeTruthy();
+      expect(isOrgUnitFolder).toHaveBeenCalledWith(['EPAM'], 'organization');
+      expect(
+        capturedProps.current?.getItemIcon?.(folder(':organization')),
+      ).toBeUndefined();
+    });
+
+    it('renders the unit icon unmirrored under a right-to-left document', () => {
+      document.documentElement.dir = 'rtl';
+      renderTree({ isOrgUnitFolder: () => true });
+
+      renderIcon(folder('Shared'));
+
+      const icon = screen.getByRole('img', { name: 'Organization unit' });
+      expect(icon.className).not.toMatch(/scale-x/);
+      document.documentElement.dir = '';
+    });
+  });
 });

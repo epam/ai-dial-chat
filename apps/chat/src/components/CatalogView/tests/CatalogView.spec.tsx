@@ -40,6 +40,18 @@ import { AuthStatus } from '../../../types/auth-status';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import CatalogView from '../CatalogView';
 
+const { mockIsOrgUnitFolder, mockEnsureUnits } = vi.hoisted(() => ({
+  mockIsOrgUnitFolder: vi.fn((_path: string) => false),
+  mockEnsureUnits: vi.fn(),
+}));
+
+vi.mock('../../../context/OrgUnitsContext', () => ({
+  useOrgUnitsContext: () => ({
+    ensureUnits: mockEnsureUnits,
+    isOrgUnitFolder: mockIsOrgUnitFolder,
+  }),
+}));
+
 const mockNavigate = vi.fn();
 const mockSetSearchParams = vi.fn();
 let mockSearchParams = new URLSearchParams();
@@ -934,6 +946,22 @@ describe('CatalogView', () => {
       expect(
         screen.getByLabelText('Publish credentials hint').textContent,
       ).toBe(CatalogI18nKeys.PublishCredentialsHint);
+    });
+
+    it('starts the org-unit read for the publish destination tree', () => {
+      mockEnsureUnits.mockClear();
+
+      render(<CatalogView />);
+
+      expect(mockEnsureUnits).toHaveBeenCalled();
+    });
+
+    it('does not read the org units in selector mode, which offers no publish panel', () => {
+      mockEnsureUnits.mockClear();
+
+      render(<CatalogView isSelectorMode onClose={vi.fn()} />);
+
+      expect(mockEnsureUnits).not.toHaveBeenCalled();
     });
   });
 

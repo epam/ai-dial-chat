@@ -50,6 +50,7 @@ import { usePrompts } from '../../context/PromptsContext';
 import { useSkills } from '../../context/SkillsContext';
 import { useCatalogCreationPermissions } from '../../hooks/catalog/useCatalogCreationPermissions';
 import { useLanguage } from '../../hooks/language/useLanguage';
+import { useOrgUnitDestinationPredicate } from '../../hooks/publish/useOrgUnitDestinationPredicate';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import { useSkillArchiveImport } from '../../hooks/skills/useSkillArchiveImport';
@@ -351,6 +352,10 @@ const CatalogView: FC<Props> = ({
     rememberPublishFolder,
     hasPublishWriteAccess,
   } = usePublishFolders();
+  /* The catalog owns its publish panel's open state, so the units are read with
+     the catalog — but never in selector mode, which offers no publish panel. */
+  const { isOrgUnitDestination } =
+    useOrgUnitDestinationPredicate(!isSelectorMode);
 
   const showPublishError = usePublishErrorNotification();
 
@@ -657,6 +662,7 @@ const CatalogView: FC<Props> = ({
         isPublishVisible={isPublishVisible}
         getPublishHistory={getPublishHistory}
         publishFolderItems={publishFolderItems}
+        isPublishOrgUnitFolder={isOrgUnitDestination}
         publishExpandedPaths={publishExpandedPaths}
         onPublishExpandedPathsChange={onPublishExpandedPathsChange}
         publishLoadingPaths={publishLoadingPaths}

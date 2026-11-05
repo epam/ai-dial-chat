@@ -9,6 +9,8 @@ import type { PublishFolderNode } from './publish';
 export interface PublishFoldersTreeColors {
   /** Divider color above the folder-creation controls. Defaults to `--stroke-tertiary`. */
   divider?: string;
+  /** Fill of the org-unit icon on unit folders. Defaults to `--stroke-gradient-1`. */
+  orgUnitIcon?: string;
 }
 
 /** Style overrides for the publish destination folder tree. */
@@ -65,6 +67,10 @@ export interface PublishFoldersTreeProps {
   invalidFolderNameError?: string;
   /** Validation message for a duplicate folder name. Defaults to `'A folder with this name already exists.'`. */
   duplicateFolderNameError?: string;
+  /** Whether a destination folder is a DIAL Core org unit; a matching folder shows the org-unit icon. `rootKey` is set only in multi-root mode. */
+  isOrgUnitFolder?: (folderPath: string[], rootKey?: string) => boolean;
+  /** Accessible name and tooltip of the org-unit icon. Defaults to `'Organization unit'`. */
+  orgUnitLabel?: string;
   /** Label for the selectable bucket root of the single-root tree. Ignored when `roots` is set. Defaults to `'Organization'`. */
   rootLabel?: string;
   /** Externally controlled expanded folder path keys of the single-root tree; use `FolderDestinationRoot.expandedPaths` in multi-root mode. */

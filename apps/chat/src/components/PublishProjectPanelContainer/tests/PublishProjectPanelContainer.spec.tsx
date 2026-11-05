@@ -16,6 +16,17 @@ import {
 } from '../../../server-api/publish.api';
 import PublishProjectPanelContainer from '../PublishProjectPanelContainer';
 
+const { mockIsOrgUnitFolder } = vi.hoisted(() => ({
+  mockIsOrgUnitFolder: vi.fn((_path: string) => false),
+}));
+
+vi.mock('../../../context/OrgUnitsContext', () => ({
+  useOrgUnitsContext: () => ({
+    ensureUnits: vi.fn(),
+    isOrgUnitFolder: mockIsOrgUnitFolder,
+  }),
+}));
+
 const mockRule: PublicationRule = {
   source: 'role',
   function: PublicationRuleFunction.Contain,

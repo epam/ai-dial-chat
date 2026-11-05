@@ -2,7 +2,9 @@ import {
   DialFileManager,
   DialFileManagerActions,
   DialFileManagerTabs,
+  DialFileNodeType,
   GridSelectionMode,
+  type DialFile,
   type DialFileAcceptType,
   type FileManagerGridRow,
   type FileTreeOptions,
@@ -27,6 +29,7 @@ import {
   useState,
   type FC,
 } from 'react';
+import { OrgUnitFolderIcon } from '../../components/OrgUnitFolderIcon/OrgUnitFolderIcon';
 import type { FileManagerSelectableNode } from '../../types/file-manager-node';
 import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
@@ -138,6 +141,8 @@ export interface DialFileManagerShellProps {
   onTableFileClick?: (row: FileManagerGridRow) => void;
   /** Dotted extensions (e.g. `.md`) the Preview row action is offered for. The file manager matches them exactly as written, so list every spelling that should qualify. */
   previewExtensions?: string[];
+  /** Whether a folder row is a DIAL Core org unit; a matching folder shows the org-unit icon in the tree and the grid. */
+  isOrgUnitFolder?: (item: DialFile) => boolean;
   /** Color overrides, e.g. a different surface background. */
   styles?: DialFileManagerShellStyles;
 }
@@ -168,6 +173,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   onPreview,
   onTableFileClick,
   previewExtensions,
+  isOrgUnitFolder,
   styles: shellStyles,
 }) => {
   const {
@@ -318,6 +324,21 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
 
   const isAttachVariant = variant === DialFileManagerVariant.Attach;
 
+  const orgUnitLabel = labels.orgUnit;
+  const orgUnitIconColor = shellStyles?.colors?.orgUnitIcon;
+  const getItemIcon = useCallback(
+    (item: DialFile) =>
+      isOrgUnitFolder != null &&
+      item.nodeType === DialFileNodeType.FOLDER &&
+      isOrgUnitFolder(item) ? (
+        <OrgUnitFolderIcon
+          label={orgUnitLabel}
+          colors={{ icon: orgUnitIconColor }}
+        />
+      ) : undefined,
+    [isOrgUnitFolder, orgUnitLabel, orgUnitIconColor],
+  );
+
   const gridOptions = useMemo(
     () => ({
       selectionMode: GridSelectionMode.MULTIPLE,
@@ -341,8 +362,10 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
         },
       },
       actionLabels: gridActionLabels,
+      getItemIcon,
     }),
     [
+      getItemIcon,
       visibleColumns,
       dateLocale,
       dateOptions,
@@ -373,8 +396,10 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       loadingPaths: folderPopupLoadingPaths,
       onExpandedPathsChange,
       actionLabels,
+      getItemIcon,
     }),
     [
+      getItemIcon,
       labels.treeHeader,
       labels.treeHeaderByTab,
       treeContainerClassName,

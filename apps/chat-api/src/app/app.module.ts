@@ -21,6 +21,7 @@ import { FilesModule } from '../files/files.module';
 import { HealthController } from '../health/health.controller';
 import { ModelsModule } from '../models/models.module';
 import { OfflineCredentialsModule } from '../offline-credentials/offline-credentials.module';
+import { OrgUnitsModule } from '../org-units/org-units.module';
 import { ProjectsModule } from '../projects/projects.module';
 import { PromptModule } from '../prompts/prompt.module';
 import { PublishModule } from '../publish/publish.module';
@@ -52,6 +53,7 @@ import { createAppCacheOptions } from './cache.config';
     DialCoreModule,
     AppConfigModule,
     ApplicationSchemasModule,
+    OrgUnitsModule,
     ApplicationsModule,
     DeploymentsModule,
     ModelsModule,

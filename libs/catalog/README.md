@@ -912,6 +912,12 @@ soon as it shows it, and once the history has resolved the lone `Unpublish`
 of a published copy renders as a button like any other last action. An item
 the rule is absent for keeps the hold.
 
+`Catalog` and `DetailsPanel` take an optional
+`isPublishOrgUnitFolder?: (folderPath: string[]) => boolean`, forwarded to the
+publish flow's destination tree. A matching folder there shows the org-unit
+icon, named by `publishLabels.orgUnitLabel` (see `PublishFoldersTree` in
+`@epam/ai-dial-publish-panel`).
+
 ### LimitsTab
 
 The usage-limits list `DetailsPanel` renders on its `Limits` tab, exported so
