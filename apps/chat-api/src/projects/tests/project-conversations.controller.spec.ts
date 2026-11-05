@@ -38,6 +38,7 @@ describe('ProjectConversationsController', () => {
     getConversation: vi.fn(),
     saveConversation: vi.fn(),
     renameConversation: vi.fn(),
+    generateTitle: vi.fn(),
     deleteConversation: vi.fn(),
     resolveCompletionLocator: vi.fn(),
     markViewed: vi.fn(),
@@ -181,6 +182,25 @@ describe('ProjectConversationsController', () => {
     );
     expect(service.deleteConversation).toHaveBeenCalledWith(
       project,
+      name,
+      USER.at,
+      USER.bucket,
+    );
+  });
+
+  it('generates a title suggestion for the decoded conversation name', async () => {
+    const name = 'gpt-4o__Hi there__1';
+    service.generateTitle.mockResolvedValue('Greeting chat');
+
+    const response = await request(app.getHttpServer())
+      .post(
+        `/api/v1/projects/${ENCODED}/conversations/${encodeURIComponent(name)}/generate-title`,
+      )
+      .expect(200);
+
+    expect(response.body).toEqual({ name: 'Greeting chat' });
+    expect(service.generateTitle).toHaveBeenCalledWith(
+      expect.objectContaining({ id: PROJECT_ID }),
       name,
       USER.at,
       USER.bucket,
