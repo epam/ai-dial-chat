@@ -87,7 +87,7 @@ import {
   getProjectHref={(id) => `/projects/view/${id.slice('projects/'.length)}`}
   locale="en"
   labels={{
-    title: 'All projects',
+    title: 'Projects',
     searchPlaceholder: 'Search projects',
     searchAriaLabel: 'Search projects',
     clearSearchLabel: 'Clear search',

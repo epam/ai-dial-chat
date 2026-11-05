@@ -60,6 +60,7 @@ What DIAL Core already supports. Verified on `ai-dial-core` `origin/development`
   - `ProjectViewPage`, `usePinnedProjectsPanel` and `PinnedProjectActionOverlays` gate Publish, Share and Delete on `canManage`, and Edit on `canEdit`;
   - `ProjectEditPage` passes `isNameReadOnly={!project.canManage}`.
 - **`libs/projects`:** `ProjectCreateForm` gains `isNameReadOnly?: boolean` and `labels.nameReadOnlyHint?: string`.
+- **Projects page title (copy only, bundled here):** `projects.page.title` changes from "All projects" to "Projects", so the page's `<h1>` matches the `navigation.projects` entry that opens it. No key, prop or component changes. The `ProjectsLabels.title` JSDoc example and the `libs/projects/README.md` example follow.
 - **Comments and docs that state today's owner-only rule:**
   - `libs/chat-hooks/src/project/project-conversation-data-source.ts`;
   - `apps/chat/src/models/project-chat.ts`;
@@ -88,6 +89,7 @@ None.
 - `project-create-ui`: `ProjectCreateForm` gains `isNameReadOnly` and `labels.nameReadOnlyHint`.
 - `project-conversations-ui`: the read-only scenarios name a view-only recipient, and an editor gets the chat input, chat rename and chat delete.
 - `sidebar-pinned-project-chats`: the row menu splits Edit (`canEdit`) from Publish, Share and Delete (`canManage`).
+- `projects-page-ui`: `projects.page.title` reads "Projects" instead of "All projects". This is a copy change unrelated to sharing.
 
 ## Non-goals
 
@@ -115,6 +117,7 @@ None.
   - on `GET`, the response is still `200`, with `canEdit: false`;
   - on a write, the response is the upstream error (`502` / `503`), never `403`.
 - **The owner's behaviour and requests are unchanged**, and the owner's paths make no new Core call.
+- **The Projects page title** reads "Projects" for everyone.
 - **Checks:**
   - BFF and frontend tests named in `tasks.md`;
   - `npm run openapi:check`, `npm run validate:docs` and `npm run validate:specs` pass.
@@ -147,6 +150,10 @@ New keys:
 - `share.visibilityNoteEditProject`: "Anyone with the link will be able to view and edit this project and chat in it."
 
 They reach the app through new members of `ProjectsI18nKeys` and `ShareI18nKeys`. Generic labels are reused.
+
+Changed value:
+
+- `projects.page.title`: "All projects" becomes "Projects". The `ProjectsI18nKeys.PageTitle` member is unchanged.
 
 ## Rollback and compatibility
 

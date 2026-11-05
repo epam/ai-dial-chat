@@ -4,6 +4,7 @@
 - **Slice 2** opens the BFF writes to editors and keeps rename owner-only.
 - **Slices 3 and 4** make the app use the two flags. Slice 3 covers the share popover and the action gates; slice 4 covers the name lock in the form.
 - **Slice 5** updates comments and docs.
+- **Slice 6** is a copy-only change unrelated to sharing: the Projects page title.
 
 Each slice is verifiable on its own. Backend tests live in `apps/chat-api/src/projects/tests/`, and frontend tests in a `tests/` folder next to the source. Relative TypeScript imports stay extensionless. `apps/chat-api/AGENTS.md` and `.claude/rules/libs.md` were read for the wording of these tasks.
 
@@ -136,10 +137,17 @@ Each slice is verifiable on its own. Backend tests live in `apps/chat-api/src/pr
 - [x] 5.5 At archive time, when syncing the delta specs, also reword the Purpose paragraph of `openspec/specs/project-conversations-api/spec.md`. "the flag-gated owner-writable endpoints" becomes "the flag-gated endpoints writable by the owner and by recipients with `WRITE`". Delta specs cannot change a Purpose.
 - [x] 5.6 Run `npm run validate:specs` and `npm run spec:impact`, and resolve every finding the change introduced.
 
-## 6. Close
+## 6. Projects page title
 
-- [x] 6.1 Run `npm run build:quiet`: the generated client and a shared lib changed.
-- [x] 6.2 Run `npm run verify:full` once.
+- [x] 6.1 Change `projects.page.title` in `apps/chat/src/i18n/locales/en.json` from "All projects" to "Projects", so it matches `navigation.projects`. Keep `ProjectsI18nKeys.PageTitle` as is.
+- [x] 6.2 Update the "e.g." in the `ProjectsLabels.title` JSDoc (`libs/projects/src/models/projects-props.ts`) and the `title` in the `Projects` example of `libs/projects/README.md`. Run `npm run validate:docs`.
+- [x] 6.3 Update the `projects.page.title` value in `openspec/specs/projects-page-ui/spec.md` through the `projects-page-ui` delta spec. Run `npm run validate:specs`.
+  - Verification: `npm run test:file -- apps/chat/src/pages/ProjectsPage/tests/ProjectsPage.spec.tsx libs/projects/src/components/Projects/tests/Projects.spec.tsx`
+
+## 7. Close
+
+- [x] 7.1 Run `npm run build:quiet`: the generated client and a shared lib changed.
+- [x] 7.2 Run `npm run verify:full` once.
 
 ## Follow-ups (not in this change)
 
