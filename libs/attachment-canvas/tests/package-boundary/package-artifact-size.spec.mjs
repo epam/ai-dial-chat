@@ -85,8 +85,11 @@ describe('publish-ready package artifact size', () => {
      * into a region-owning wrapper and an inner error catcher, PdfContent, MCP App, visualizer and
      * OOXML overlays); measured at 249,691.
      * Raised from 250_500: the translatable `loadingLabel` threaded to every canvas `Spinner`
-     * plus its README lines; measured at 250,527. */
-    expect(artifact.unpackedSize).toBeLessThanOrEqual(251_500);
+     * plus its README lines; measured at 250,527.
+     * Raised from 251_500: `@epam/pdf-highlighter-kit` 0.0.21 (required by
+     * `@epam/ai-dial-react-pdf-highlighter` 0.3.1) ships a ~3.1 KB larger
+     * pdf-highlight-viewer.css, inlined into dist/PdfContent.css; measured at 253,637. */
+    expect(artifact.unpackedSize).toBeLessThanOrEqual(254_500);
   });
 
   it('contains no private OOXML renderer or worker chunks', () => {

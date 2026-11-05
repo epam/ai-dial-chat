@@ -224,7 +224,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-projects` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.4.0
+- `@epam/ai-dial-react-file-manager` ^0.4.1
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
@@ -232,7 +232,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-ui-kit` ^0.16.0
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.2
-- `@epam/pdf-highlighter-kit` ^0.0.19
+- `@epam/pdf-highlighter-kit` ^0.0.21
 
 `@epam/ai-dial-chat-api-client` is **not** a peer. Every entry that calls DIAL Core
 imports a runtime enum from it (`SendCompletionDtoModeEnum`,

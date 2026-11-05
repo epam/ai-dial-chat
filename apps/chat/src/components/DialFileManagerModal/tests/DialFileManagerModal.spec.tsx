@@ -671,7 +671,7 @@ describe('DialFileManagerModal', () => {
       'size-full gap-6 px-6 py-4',
     );
     expect(fileManager.getAttribute('data-tree-container-class')).toMatch(
-      /^min-h-0 h-full w-\[360px\] shrink-0 border-e \S*tree/,
+      /^relative z-1 min-h-0 h-full w-\[360px\] shrink-0 border-e \S*tree/,
     );
     expect(fileManager.getAttribute('data-grid-layout')).toBe('normal');
     expect(fileManager.getAttribute('data-show-hidden-files-toggle')).toBe(
@@ -713,7 +713,7 @@ describe('DialFileManagerModal', () => {
     );
   });
 
-  it('keeps a fixed modal height and uses one-sided header and footer padding', () => {
+  it('keeps a fixed modal height and divides the header and footer from the body', () => {
     render(<DialFileManagerModal {...defaultProps} />);
 
     const dialog = screen.getByRole('dialog');
@@ -740,15 +740,11 @@ describe('DialFileManagerModal', () => {
     expect(contentWrapper?.classList.contains('min-h-0')).toBe(true);
     expect(contentWrapper?.classList.contains('flex-col')).toBe(true);
 
+    // The kit draws a rule under the header and above the footer.
     // eslint-disable-next-line testing-library/no-node-access
-    const header = dialog.querySelector('.pb-0');
-    expect(header?.classList.contains('px-6')).toBe(true);
-    expect(header).not.toBeNull();
-
+    expect(dialog.querySelector('.border-b.border-tertiary')).not.toBeNull();
     // eslint-disable-next-line testing-library/no-node-access
-    const footer = dialog.querySelector('.pt-0');
-    expect(footer?.classList.contains('px-6')).toBe(true);
-    expect(footer).not.toBeNull();
+    expect(dialog.querySelector('.border-t.border-tertiary')).not.toBeNull();
   });
 
   it('attaches selected files', () => {
@@ -880,9 +876,8 @@ describe('DialFileManagerModal', () => {
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-grid-filterable')).toBe('false');
     expect(manager.getAttribute('data-grid-no-header-borders')).toBe('true');
-    expect(manager.getAttribute('data-grid-container-class')).toBe(
-      'rounded-none shadow-none',
-    );
+    // The attach picker keeps the file manager's own grid card and shadow.
+    expect(manager.getAttribute('data-grid-container-class')).toBeNull();
     expect(manager.getAttribute('data-new-button-variant')).toBe(
       String(ButtonVariant.Neutral),
     );

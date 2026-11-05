@@ -331,9 +331,10 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
         overlayStyle={buildCssVars({
           '--fmam-bg': colors?.background,
           '--fmam-title': colors?.title,
+          '--fmam-shadow': colors?.shadow,
         })}
-        headerClassName="pb-0"
-        footerClassName="pt-0"
+        headerDivider
+        footerDivider
         onClose={onClose}
         mainButtons={[
           {

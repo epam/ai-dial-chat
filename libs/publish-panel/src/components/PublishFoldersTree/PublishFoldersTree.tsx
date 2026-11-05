@@ -88,6 +88,16 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     () => (roots ? buildRootedFolderTree(roots) : items),
     [roots, items],
   );
+  /*
+   * "Add child" expands a parent whose children may still be loading. The
+   * inline editor can hold on to the validate/confirm callbacks from when it
+   * opened, so they read the tree through this ref: a sibling that lands
+   * after the editor opened still counts as a duplicate.
+   */
+  const treeItemsRef = useRef(treeItems);
+  useEffect(() => {
+    treeItemsRef.current = treeItems;
+  }, [treeItems]);
   const rootKeys = useMemo(
     () => (roots ? getRootTokenKeys(roots) : [SINGLE_ROOT_KEY]),
     [roots],
@@ -373,7 +383,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     }
     const error = validateFolderName(
       rawValue,
-      getSiblingFolderNames(treeItems, creatingParentPath),
+      getSiblingFolderNames(treeItemsRef.current, creatingParentPath),
       folderNameErrors,
     );
     lastLiveValidationErrorRef.current = error;
@@ -453,6 +463,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
           onCreateFolderSave={handleConfirmCreatingFolder}
           onCreateFolderCancel={handleCancelCreatingFolder}
           onRenameValidate={(value) => validateNewFolderName(value)}
+          searchQuery={isFiltering ? trimmedQuery : undefined}
           emptyStateTitle={
             isFiltering
               ? noResultsLabel.replace('{query}', trimmedQuery)

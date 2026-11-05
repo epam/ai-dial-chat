@@ -102,8 +102,9 @@ const ResourceSavePanelContainer: FC<Props> = ({
 
   const handleSaved = useCallback(
     (result: ResourceSaveResult, choice: ResourceSaveChoice) => {
-      notifySaved(result, choice);
+      // The host navigates in `onSaved`; notifying after it keeps the toast from preceding the redirect.
       onSaved(result);
+      notifySaved(result, choice);
     },
     [notifySaved, onSaved],
   );

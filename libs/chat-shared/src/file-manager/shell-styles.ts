@@ -12,6 +12,8 @@ export interface DialFileManagerShellColors {
   treeBackground?: string;
   /** Border color between the folder tree and the grid in the attach variant. Defaults to `--stroke-tertiary`. */
   treeBorder?: string;
+  /** Color of the shadow on the folder tree's end edge in the attach variant. Defaults to a 10% blue. */
+  treeShadow?: string;
   /** Scrim behind the spinner shown while an overlay operation runs. Defaults to `--bg-backdrop`. */
   overlayBackdrop?: string;
   /** Fill of the org-unit icon on unit folders. Defaults to `--stroke-gradient-1`. */
@@ -34,4 +36,6 @@ export interface FileManagerAttachModalColors {
   background?: string;
   /** Text color of the title when a header description is shown. Defaults to `--text-primary`. */
   title?: string;
+  /** Color of the drop shadow that lifts the dialog off the backdrop. Defaults to a 16% black. */
+  shadow?: string;
 }

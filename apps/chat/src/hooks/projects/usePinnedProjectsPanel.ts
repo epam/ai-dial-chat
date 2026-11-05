@@ -195,7 +195,7 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
       } catch (err) {
         const { traceId } = await getApiErrorDetails(err);
         showErrorNotification({
-          message: t(ProjectsI18nKeys.ActionsPinError),
+          message: t(ProjectsI18nKeys.ActionsUnpinError),
           requestId: traceId,
         });
       }

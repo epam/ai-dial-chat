@@ -915,13 +915,14 @@
     "actions": {
       "deleteError": "Could not delete the project",
       "downloadError": "Could not download",
-      "pinError": "Could not update the pin"
+      "pinError": "Could not pin the project. Please try again.",
+      "unpinError": "Could not unpin the project. Please try again."
     },
     "edit": {
       "title": "Edit project",
       "saving": "Saving…",
       "savingStatus": "Saving project…",
-      "nameReadOnlyHint": "Only the project owner can rename it.",
+      "nameReadOnlyHint": "The project name can't be changed after creation",
       "toast": {
         "success": "Project \"{{name}}\" saved",
         "error": "Could not save the project",
@@ -2079,7 +2080,7 @@
     "newVersionPlaceholder": "Enter new version",
     "versionInvalid": "Use a version like 1.0.0.",
     "versionUnchanged": "Enter a version other than {{version}}.",
-    "versionExists": "Version {{version}} already exists in this folder.",
+    "versionExists": "Version {{version}} already exists. Enter another version.",
     "versionReadOnlyTooltip": "To change the version, choose “Save as new version” when you save.",
     "foldersLoadFailed": "Folders could not be loaded.",
     "saveFailed": "Saving failed. Please try again.",
@@ -2087,6 +2088,8 @@
     "newVersionSavedTitle": "New version saved",
     "newVersionSaved": "“{{name}}” was saved as version {{version}}.",
     "savedButMoveFailed": "“{{name}}” was saved, but it could not be moved to {{folder}}.",
-    "savedButPublishFailed": "“{{name}}” was saved, but the publish request failed."
+    "savedButPublishFailed": "“{{name}}” was saved, but the publish request failed.",
+    "savedButPublishFailedReason": "“{{name}}” was saved, but the publish request failed: {{reason}}",
+    "savedButAlreadyPublished": "“{{name}}” was saved, but this version is already published in {{folder}}. Choose another folder or save as a new version."
   }
 }

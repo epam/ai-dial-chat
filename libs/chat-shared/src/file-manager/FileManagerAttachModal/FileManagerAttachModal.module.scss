@@ -1,6 +1,8 @@
 /* `!important` keeps the kit Popup's own surface class from winning. */
 .popup {
   background: var(--fmam-bg, var(--bg-layer-raised, #fcfcfc)) !important;
+  /* Lifts the dialog off the backdrop, like the kit's other raised layers. */
+  box-shadow: 0 8px 32px 0 var(--fmam-shadow, rgb(0 0 0 / 16%));
 }
 
 .title {

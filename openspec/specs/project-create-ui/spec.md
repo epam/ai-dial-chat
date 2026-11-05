@@ -113,7 +113,7 @@ Its props:
 | `markdownEditorTheme` | optional `EditorThemes` |
 | `styles` | optional `ProjectCreateFormStyles`, applied via `buildCssVars` |
 
-Every declared prop SHALL be read. The same component serves the edit page (`project-edit-ui`). The host changes only the strings it already owns (`labels.title`, `labels.createLabel`, `labels.submittingLabel`, `labels.creatingStatus`, and `labels.nameReadOnlyHint` when it locks the name), passes stored files, and sets `isNameReadOnly` for a caller who may not rename.
+Every declared prop SHALL be read. The same component serves the edit page (`project-edit-ui`). The host changes only the strings it already owns (`labels.title`, `labels.createLabel`, `labels.submittingLabel`, `labels.creatingStatus`, and `labels.nameReadOnlyHint` when it locks the name), passes stored files, and sets `isNameReadOnly` on every edit page.
 
 `ProjectCreatePage` supplies the host-owned pieces:
 
@@ -423,10 +423,11 @@ No new client telemetry event SHALL be added. Project creation is observed throu
 
 ### Requirement: The Name field can be read-only
 
-`ProjectCreateForm` SHALL accept `isNameReadOnly?: boolean` (default `false`) and `labels.nameReadOnlyHint?: string` (English default "Only the project owner can rename it."). With `isNameReadOnly`:
+`ProjectCreateForm` SHALL accept `isNameReadOnly?: boolean` (default `false`) and `labels.nameReadOnlyHint?: string` (English default "The project name can't be changed after creation"). With `isNameReadOnly`:
 
-- **The input.** The Name `Input` renders `values.name` with the native `readOnly` attribute, not `disabled`, so it stays in the tab order and screen readers announce it as read-only. It keeps its visible label and `required`. `onFieldChange('name', …)` is never called.
+- **The input.** The Name `Input` renders `values.name` with the native `readOnly` and `disabled` attributes, matching the disabled name field in the skill editor. It is skipped in the tab order and keeps its visible label and `required`. `onFieldChange('name', …)` is never called, including for an injected change event.
 - **The hint.** The form renders `labels.nameReadOnlyHint` as helper text under the field, with the form's helper typography (`helperClassName`), and gives it an `id`. The input's `aria-describedby` includes that id; when a name error is also shown, it includes both ids.
+- **The tooltip.** The input's `tooltipText` uses the same hint while locked. The persistent helper text keeps the explanation available on touch devices without relying on hover.
 - **Validation.** `validateProjectName` still runs on the value and can still disable Submit. In practice it does not, because the host passes a stored, valid name.
 - **Everything else** (instructions, context files, Refine with AI, header and footer buttons) behaves as without the prop.
 
@@ -437,11 +438,11 @@ Without `isNameReadOnly`, the hint does not render and the field behaves as befo
 #### Scenario: Read-only name
 
 - **WHEN** `ProjectCreateForm` renders with `isNameReadOnly` and `values.name` `research`
-- **THEN** the textbox named by `labels.nameLabel` has the value `research` and is read-only, and the hint text is rendered and linked from its `aria-describedby`
+- **THEN** the textbox named by `labels.nameLabel` has the value `research` and is disabled and read-only, and the hint text is rendered and linked from its `aria-describedby`
 
 #### Scenario: Typing does not change a read-only name
 
-- **WHEN** the user focuses the read-only Name input and types
+- **WHEN** the user attempts to type into the disabled Name input
 - **THEN** `onFieldChange` is not called
 
 #### Scenario: Editable by default

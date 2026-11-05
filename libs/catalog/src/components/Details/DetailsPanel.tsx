@@ -1335,8 +1335,14 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
             <div
               className={mergeClasses(
-                'min-h-0 flex-1 overflow-y-auto',
-                activeTab !== CatalogDetailsTab.Overview && 'px-6',
+                'min-h-0 min-w-0 flex-1',
+                activeTab === CatalogDetailsTab.Content
+                  ? 'overflow-hidden'
+                  : 'overflow-y-auto',
+                /* The Content tab pads its own sections so its divider spans the full width. */
+                activeTab !== CatalogDetailsTab.Overview &&
+                  activeTab !== CatalogDetailsTab.Content &&
+                  'px-6',
               )}
             >
               {activeTab === CatalogDetailsTab.About && isAboutEmpty

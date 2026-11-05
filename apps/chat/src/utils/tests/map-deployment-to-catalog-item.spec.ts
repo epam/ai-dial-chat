@@ -90,6 +90,6 @@ describe('mapToolsetToCatalogItem', () => {
       { t },
     );
 
-    expect(result.folder).toEqual([CatalogI18nKeys.FolderPersonal]);
+    expect(result.folder).toEqual([CatalogI18nKeys.FolderPersonal, 'folder']);
   });
 });
