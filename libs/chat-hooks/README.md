@@ -224,7 +224,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-projects` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.4.0
+- `@epam/ai-dial-react-file-manager` ^0.4.1
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*

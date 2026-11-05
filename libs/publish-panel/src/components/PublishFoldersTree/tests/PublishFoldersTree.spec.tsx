@@ -132,6 +132,16 @@ describe('PublishFoldersTree', () => {
     ).toEqual(['Shared/Data Science']);
   });
 
+  it('passes the trimmed query to the tree for highlighting while filtering', () => {
+    renderTree({ searchQuery: '  data  ' });
+    expect(capturedProps.current?.searchQuery).toBe('data');
+  });
+
+  it('passes no highlight query without a search', () => {
+    renderTree({ searchQuery: '   ' });
+    expect(capturedProps.current?.searchQuery).toBeUndefined();
+  });
+
   it('passes a no-results empty state title when search matches nothing, and omits the root node', () => {
     renderTree({ searchQuery: 'zzz_nonexistent_zzz' });
     expect(capturedProps.current?.emptyStateTitle).toBe(

@@ -436,6 +436,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
           onCreateFolderSave={handleConfirmCreatingFolder}
           onCreateFolderCancel={handleCancelCreatingFolder}
           onRenameValidate={(value) => validateNewFolderName(value)}
+          searchQuery={isFiltering ? trimmedQuery : undefined}
           emptyStateTitle={
             isFiltering
               ? noResultsLabel.replace('{query}', trimmedQuery)
