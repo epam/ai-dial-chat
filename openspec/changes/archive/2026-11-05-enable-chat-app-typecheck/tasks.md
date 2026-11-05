@@ -19,7 +19,10 @@ Branch: `refactor/split-use-conversation-stream` (PR #9763, together with F5). D
   - `usePinnedProjectsPanel.spec.ts` (1): a cast to `{ onClick: () => void }` replaced by clicking a rendered button that forwards its React event, the pattern `CatalogView.spec.tsx` already uses.
   - `project-preview-test-helpers.tsx` (1): `resolvePdfContent` is typed with the resolver signature, so `mock.calls[0][0]` is typed.
   - `useResourceSaveNotification.spec.ts` (2, arrived with #9764 after rebasing onto it): `ApiErrorDetails` mocks now include the required `message: null`.
-- [ ] 3.2 Re-run CI until the `typecheck` job passes.
+- [ ] 3.2 Re-run CI until the `typecheck` job passes. Second CI round, declaration emit (3 errors, type-only):
+  - `ConversationFileManagerModal` (TS4023): the lazy `DialFileManagerModal` exposed its unexported `Props`; `DialFileManagerModal.tsx` now exports `Props`.
+  - `useConversationDeploymentState` (TS4023): it exposed the unexported `Result` of `useModelSelectorLabels`, now exported as `ModelSelectorLabels`.
+  - `useMessageCitations` (TS2883): the inferred return type reached `Components` in `react-markdown/lib`; the hook now declares `UseMessageCitationsResult` from the citation hooks' return types.
 
 ## 4. Close
 
