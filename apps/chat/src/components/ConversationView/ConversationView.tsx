@@ -9,26 +9,15 @@ import {
 } from '@epam/ai-dial-attachment-input';
 import {
   type AttachmentValidationErrorEvent,
-  findDeploymentByIdOrReference,
   getEffectiveDeploymentIds,
-  getQuickAppConversationStarters,
   isQuickAppSchema,
   normalizeResponseFormat,
   referenceAttachmentToPdfCanvasContent,
-  shouldRerunGenerationOnEdit,
   useAttachmentValidation,
   useChatSettingsFormConfig,
   useConversationAnnotationPool,
 } from '@epam/ai-dial-chat-hooks';
-import {
-  type ConversationDraft,
-  useConversationComposerDraft,
-  useMessageSelectionReply,
-} from '@epam/ai-dial-chat-hooks/conversation';
-import {
-  useMcpAppTools,
-  useOpenMcpAppCanvas,
-} from '@epam/ai-dial-chat-hooks/mcp-apps';
+import { useMessageSelectionReply } from '@epam/ai-dial-chat-hooks/conversation';
 import { useConversationScroll } from '@epam/ai-dial-chat-hooks/scroll-anchoring';
 import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
@@ -47,28 +36,18 @@ import {
   useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import {
-  useComposerSeed,
-  useComposerSeedSource,
   type TextInsertion,
   type ToolsChipLabels,
 } from '@epam/ai-dial-conversation-input';
-import type {
-  MessageActionAriaLabels,
-  MessageActionTooltips,
-} from '@epam/ai-dial-conversation-messages';
 import { MessageSelectionReply } from '@epam/ai-dial-conversation-messages';
-import { useMcpAppResponseCache } from '@epam/ai-dial-mcp-apps';
 import {
   BASE_ICON_SIZE,
-  DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  ErrorMessageNotification,
   FabButton,
-  NeutralButton,
   LiveRegion,
   LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
-import { IconCopy, IconPrompt } from '@tabler/icons-react';
+import { IconPrompt } from '@tabler/icons-react';
 import {
   FC,
   lazy,
@@ -76,10 +55,7 @@ import {
   type ReactNode,
   Suspense,
   useCallback,
-  useEffect,
-  useLayoutEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -90,7 +66,6 @@ import {
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationI18nKeys,
-  ConversationPanelI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
   PromptSelectorI18nKeys,
@@ -98,42 +73,34 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
-import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
-import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
-import { useMcpAppHostAdapter } from '../../hooks/attachment/useMcpAppHostAdapter';
+import { useAnchoredMessageActions } from '../../hooks/conversation/useAnchoredMessageActions';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
-import { useConversationDraftStore } from '../../hooks/conversation/useConversationDraftStore';
-import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
+import { useComposerDraftWiring } from '../../hooks/conversation/useComposerDraftWiring';
+import { useConversationDeploymentState } from '../../hooks/conversation/useConversationDeploymentState';
+import { useConversationMcpApps } from '../../hooks/conversation/useConversationMcpApps';
+import { useMessageListLabels } from '../../hooks/conversation/useMessageListLabels';
 import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
-import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUiFeature } from '../../hooks/useUiFeature';
-import { mcpAppsApiClient } from '../../server-api/mcp-apps';
 import { attachmentCanvasUrlResolvers } from '../../utils/attachment-display-resolvers';
 import { buildAttachmentValidationNotification } from '../../utils/attachment-validation-notification';
-import { resolveCatalogIconUrl } from '../../utils/icon-path';
-import { resolveLocalizedText } from '../../utils/locale';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
-import FileDeleteConfirmContent from '../FileDeleteConfirmContent/FileDeleteConfirmContent';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOverlay';
 import { useSkillSelectorOverlay } from '../SkillSelector/useSkillSelectorOverlay';
 import UsageLimitBanner from '../UsageLimitBanner/UsageLimitBanner';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
+import ConversationFileManagerModal from './ConversationFileManagerModal';
 import ConversationMessageItem from './ConversationMessageItem';
+import ConversationReadOnlyFooter from './ConversationReadOnlyFooter';
 import { ConversationReloadNotification } from './ConversationReloadNotification';
 import { getInputMessageHistory } from './utils/message-display';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
   return { default: module.ConversationInput };
-});
-
-const DialFileManagerModal = lazy(async () => {
-  const module = await import('../DialFileManagerModal/DialFileManagerModal');
-  return { default: module.default };
 });
 
 interface Props {
@@ -239,6 +206,8 @@ interface Props {
   onRetryConversationReload?: () => Promise<void>;
 }
 
+export type ConversationViewProps = Props;
+
 const ConversationView: FC<Props> = ({
   messages,
   hasConversationReloadError = false,
@@ -291,42 +260,24 @@ const ConversationView: FC<Props> = ({
     onOpenChange: onModelPickerOpenChange,
   } = useDeploymentSelectorOverlay();
   const { t } = useTranslation();
-  const { language } = useLanguage();
   const {
     items,
-    selectedItemId,
     setSelectedItemId,
-    selectedDeploymentConfiguration,
     isLoading,
-    error,
     toolsets,
-  } = useDeployments();
-  const activeDeploymentId = fixedModel?.id ?? selectedItemId;
-
-  const selectedDeployment = useMemo(() => {
-    const deployment = findDeploymentByIdOrReference(items, activeDeploymentId);
-    return deployment
-      ? {
-          ...deployment,
-          displayName: resolveLocalizedText(deployment.displayName, language),
-          description: resolveLocalizedText(deployment.description, language),
-        }
-      : undefined;
-  }, [items, activeDeploymentId, language]);
-  /*
-   * A model hidden through HIDDEN_ENTITY_TAGS can no longer be used, even in a
-   * conversation that already ran on it (issue #9183). The picker stays
-   * enabled: switching to a visible model is how the conversation continues.
-   */
-  const isSelectedModelHidden = !!selectedDeployment?.isHidden;
+    activeDeploymentId,
+    selectedDeployment,
+    isSelectedModelHidden,
+    usageDeploymentId,
+    deploymentItems,
+    fixedDeploymentItems,
+    isInputDisabled,
+    modelSelectorLabels,
+  } = useConversationDeploymentState({ fixedModel });
   /* Set only while the reload notification is shown. */
   const retryConversationReload = hasConversationReloadError
     ? onRetryConversationReload
     : undefined;
-  /* Exactly one usage surface is composed: the dial when the flag is on,
-     otherwise the banner above the input. */
-  const usageDeploymentId =
-    selectedDeployment?.id ?? activeDeploymentId ?? undefined;
 
   const {
     skillMenuOverlay,
@@ -417,115 +368,23 @@ const ConversationView: FC<Props> = ({
     [editSelectedSkills],
   );
 
-  /*
-   * Merges two independent "seed the composer once" sources into the one
-   * message/messageRevision pair ConversationInput accepts: this component's
-   * own `inputContent`/`inputContentRevision` props (overlay mode's external
-   * content injection) and the skill hook's own message/messageRevision push
-   * (a mention insertion).
-   */
   const {
-    message: composerSeedText,
-    messageRevision: composerSeedRevision,
-    seedMessage: seedComposerSeed,
-  } = useComposerSeed({
-    text: inputContent,
-    revision: inputContentRevision ?? 0,
-  });
-
-  /*
-   * Per-conversation composer draft. The lib owns the save/restore/clear state
-   * machine; this view only decides how a draft is seeded back: skill drafts
-   * through the composer's mention instance (so chips come back active),
-   * everything else as plain text. A skill draft waits for the deployments to
-   * load so its skills support is known — a deployment that is gone once they
-   * have loaded gets the text only — and overlay content present at mount wins
-   * over whatever was stored.
-   */
-  const draftStore = useConversationDraftStore();
-  const isSkillsSupported =
-    selectedDeployment?.features?.skillsSupported === true;
-  const hasStoredDraftSkills = useMemo(
-    () => (draftStore?.read(conversation.id)?.skills.length ?? 0) > 0,
-    [draftStore, conversation.id],
-  );
-  const [hasInputContentAtMount] = useState(
-    () => (inputContentRevision ?? 0) > 0,
-  );
-  /*
-   * The mount-time overlay content belongs to the conversation open at mount
-   * only. Dropped during render rather than in an effect, so the id change
-   * costs no extra commit.
-   */
-  const [skipRestoreConversationId, setSkipRestoreConversationId] = useState(
-    () => (hasInputContentAtMount ? conversation.id : undefined),
-  );
-  if (
-    skipRestoreConversationId != null &&
-    conversation.id !== skipRestoreConversationId
-  ) {
-    setSkipRestoreConversationId(undefined);
-  }
-  const restoreDraft = useCallback(
-    ({ text, skills }: ConversationDraft) => {
-      if (skills.length > 0 && isSkillsSupported) {
-        seedComposerSkillMentions(text, skills);
-        return;
-      }
-      seedComposerSeed(text);
-    },
-    [isSkillsSupported, seedComposerSkillMentions, seedComposerSeed],
-  );
-  const {
-    handleTextChange: handleDraftTextChange,
-    handleSkillsChange: handleDraftSkillsChange,
-    handleExternalContent: handleDraftExternalContent,
+    composerSeedText,
+    composerSeedRevision,
+    handleDraftChange,
     sendWithDraft,
-  } = useConversationComposerDraft({
-    store: draftStore,
+  } = useComposerDraftWiring({
     conversationId: conversation.id,
-    restoreDraft,
-    isRestoreReady: !(
-      hasStoredDraftSkills &&
-      selectedDeployment == null &&
-      isLoading
-    ),
-    shouldSkipRestore: skipRestoreConversationId === conversation.id,
+    inputContent,
+    inputContentRevision,
+    selectedDeployment,
+    isLoading,
+    onDraftChange,
+    seedComposerSkillMentions,
+    selectedSkills,
+    skillMessage,
+    skillMessageRevision,
   });
-  const handleDraftChange = useCallback(
-    (text: string) => {
-      onDraftChange(text);
-      handleDraftTextChange(text);
-    },
-    [onDraftChange, handleDraftTextChange],
-  );
-  /*
-   * Fires on a selection change only, not when the handler's identity moves
-   * with the conversation id — the outgoing selection belongs to the previous
-   * conversation and must not land in the next one's draft.
-   */
-  const lastDraftSkillsRef = useRef(selectedSkills);
-  useEffect(() => {
-    if (lastDraftSkillsRef.current === selectedSkills) return;
-    lastDraftSkillsRef.current = selectedSkills;
-    handleDraftSkillsChange(selectedSkills ?? []);
-  }, [selectedSkills, handleDraftSkillsChange]);
-  /* Overlay content already present at mount is the initial seed; persist it as the draft. */
-  useEffect(() => {
-    if (hasInputContentAtMount) handleDraftExternalContent(inputContent ?? '');
-    // Mount-only: later overlay content arrives through the seed source below.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useComposerSeedSource(inputContentRevision, () => {
-    /* A drop back to 0 is the host marking the content spent, not new content. */
-    if (!inputContentRevision) return;
-    seedComposerSeed(inputContent ?? '');
-    handleDraftExternalContent(inputContent ?? '');
-  });
-  useComposerSeedSource(skillMessageRevision, () =>
-    seedComposerSeed(skillMessage),
-  );
   /*
    * The Skills entry joins the Prompts entry in array order, so it renders
    * below Prompts in the `+` menu; `undefined` when both are absent keeps
@@ -579,25 +438,8 @@ const ConversationView: FC<Props> = ({
      conversation, not of the message it was chosen before. */
   const responseFormat = normalizeResponseFormat(conversation.responseFormat);
   const fallbackCitationGroups = useConversationAnnotationPool(conversation);
-  const mcpAppCache = useMcpAppResponseCache(conversation.id);
-  const mcpAppHostAdapter = useMcpAppHostAdapter('fullscreen');
-  /* The MCP app canvas takes the sources panel's place at the end edge; the
-     navigation sidebar is left as the user set it. */
-  const { handleClose: closeSourcesPanel } = useSourcesSidebar();
-  const mcpAppCanvasLabels = useMemo(
-    () => ({
-      forbiddenErrorLabel: t(
-        AttachmentCanvasI18nKeys.McpAppForbiddenErrorLabel,
-      ),
-      loadErrorLabel: t(AttachmentCanvasI18nKeys.McpAppLoadErrorLabel),
-    }),
-    [t],
-  );
-  const { openMcpAppCanvas } = useOpenMcpAppCanvas(
-    mcpAppCache,
-    mcpAppHostAdapter,
-    mcpAppCanvasLabels,
-    closeSourcesPanel,
+  const { mcpAppCache, openMcpAppCanvas, mcpAppTools } = useConversationMcpApps(
+    { conversationId: conversation.id, selectedDeployment, messages, toolsets },
   );
   const { openCanvas, attachmentId: selectedAttachmentKey } =
     useAttachmentCanvas();
@@ -615,19 +457,7 @@ const ConversationView: FC<Props> = ({
     [openCanvas],
   );
 
-  const stepsLabel = useCallback(
-    (count: number) => t(ConversationI18nKeys.StagesStep, { count }),
-    [t],
-  );
-
   const isEditActive = !!editingMessageIndexes?.size;
-
-  const mcpAppTools = useMcpAppTools(
-    mcpAppsApiClient,
-    selectedDeployment,
-    messages,
-    toolsets,
-  );
 
   const handleAttachmentValidationError = useCallback(
     (event: AttachmentValidationErrorEvent) =>
@@ -657,44 +487,6 @@ const ConversationView: FC<Props> = ({
     inputAttachmentTypes,
   );
 
-  const deploymentItems = useMemo(
-    () =>
-      items.map(
-        ({
-          id,
-          displayName,
-          displayVersion,
-          iconUrl,
-          type,
-          inputAttachmentTypes,
-          features,
-        }) => ({
-          id,
-          displayName: resolveLocalizedText(displayName, language),
-          displayVersion,
-          iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
-          type,
-          inputAttachmentTypes,
-          features,
-        }),
-      ),
-    [items, language],
-  );
-
-  const fixedDeploymentItems = useMemo(
-    () =>
-      fixedModel
-        ? [
-            {
-              id: fixedModel.id,
-              displayName: fixedModel.displayName,
-              iconUrl: fixedModel.iconUrl,
-            },
-          ]
-        : undefined,
-    [fixedModel],
-  );
-
   /*
    * A selector the user cannot act on is removed rather than dimmed: a greyed-out
    * icon with a caret advertises a menu that never opens, and where a deployment
@@ -714,20 +506,6 @@ const ConversationView: FC<Props> = ({
   const agentSelectorItems = isModelFixed
     ? fixedDeploymentItems
     : deploymentItems;
-
-  const hasQuickAppStarters = useMemo(
-    () =>
-      getQuickAppConversationStarters(selectedDeployment?.conversationStarters)
-        .starters.length > 0,
-    [selectedDeployment?.conversationStarters],
-  );
-
-  const isInputDisabled = useMemo(
-    () =>
-      !hasQuickAppStarters &&
-      !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
-    [hasQuickAppStarters, selectedDeploymentConfiguration],
-  );
 
   /*
    * While the composer input is disabled a page drop is rejected the same way
@@ -764,21 +542,13 @@ const ConversationView: FC<Props> = ({
     onDroppedFilesConsumed: onFilesConsumed,
   });
 
-  const deploymentLookup = useMemo<
-    Record<string, { displayName: string; iconUrl: string | undefined }>
-  >(
-    () =>
-      Object.fromEntries(
-        items.map((d) => [
-          d.id,
-          {
-            displayName: resolveLocalizedText(d.displayName, language),
-            iconUrl: resolveCatalogIconUrl(d.iconUrl),
-          },
-        ]),
-      ),
-    [items, language],
-  );
+  const {
+    deploymentLookup,
+    tooltips,
+    ariaLabels,
+    formatStatusModelChangedBody,
+    stepsLabel,
+  } = useMessageListLabels({ items });
 
   /*
    * For each message, resolve the deployment active at that point in the conversation.
@@ -792,55 +562,6 @@ const ConversationView: FC<Props> = ({
   const messageHistory = useMemo(
     () => getInputMessageHistory(messages, isInputHistoryNavigationDisabled),
     [messages, isInputHistoryNavigationDisabled],
-  );
-
-  const tooltips = useMemo<MessageActionTooltips>(
-    () => ({
-      edit: t(ButtonsI18nKeys.Edit),
-      delete: t(ButtonsI18nKeys.Delete),
-      regenerate: t(ButtonsI18nKeys.Regenerate),
-      copy: t(ButtonsI18nKeys.CopyText),
-      copyMessage: t(ButtonsI18nKeys.CopyMessage),
-      copied: t(ButtonsI18nKeys.Copied),
-      copyMarkdown: t(ButtonsI18nKeys.CopyAsMarkdown),
-      copiedMarkdown: t(ButtonsI18nKeys.Copied),
-      like: t(ButtonsI18nKeys.Like),
-      dislike: t(ButtonsI18nKeys.Dislike),
-    }),
-    [t],
-  );
-
-  const ariaLabels = useMemo<MessageActionAriaLabels>(
-    () => ({
-      editMessage: t(ButtonsI18nKeys.EditMessage),
-      deleteMessage: t(ButtonsI18nKeys.DeleteMessage),
-      regenerateResponse: t(ButtonsI18nKeys.RegenerateResponse),
-      copyResponse: t(ButtonsI18nKeys.CopyResponse),
-      copyMessage: t(ButtonsI18nKeys.CopyMessage),
-      copiedMessageStatus: t(ButtonsI18nKeys.MessageCopiedStatus),
-      copiedStatus: t(ButtonsI18nKeys.ResponseCopiedStatus),
-      copiedMarkdownStatus: t(ButtonsI18nKeys.MarkdownCopiedStatus),
-      actionsGroup: t(ButtonsI18nKeys.MessageActionsGroup),
-      copyAsMarkdown: t(ButtonsI18nKeys.CopyAsMarkdown),
-      likeResponse: t(ButtonsI18nKeys.LikeResponse),
-      dislikeResponse: t(ButtonsI18nKeys.DislikeResponse),
-    }),
-    [t],
-  );
-
-  const modelSelectorLabels = useModelSelectorLabels({
-    isLoading,
-    error,
-    itemCount: items.length,
-  });
-
-  const formatStatusModelChangedBody = useCallback(
-    (from: string, to: string) =>
-      t(ConversationI18nKeys.StatusModelChangedBody, {
-        from,
-        to,
-      }),
-    [t],
   );
 
   const {
@@ -857,132 +578,32 @@ const ConversationView: FC<Props> = ({
     conversationId: conversation.id,
   });
 
-  const handleSendWithAnchor = useCallback(
-    async (message: string, attachments: Attachment[]) => {
-      armAnchor(messages.length);
-      /* ConversationInput awaits this to know whether to restore the draft
-       * on failure — forward onSend's rejection rather than discarding it.
-       * `sendWithDraft` discards the stored draft only once onSend resolves. */
-      await sendWithDraft(message, () =>
-        onSend(message, attachments, selectedSkills),
-      );
-      /*
-       * Clear only after a successful send: a rejected onSend restores the
-       * draft, and the mentions should survive with it for the retry.
-       * No-op while the skill flag is off.
-       */
-      resetSkillMentions();
-    },
-    [
-      onSend,
-      messages.length,
-      armAnchor,
-      selectedSkills,
-      resetSkillMentions,
-      sendWithDraft,
-    ],
-  );
-
-  /*
-   * Per-chunk values read by the message-item handlers at call time. Keeping
-   * them out of those handlers' deps keeps every item's props stable while a
-   * reply streams, so `memo(ConversationMessageItem)` re-renders only the
-   * streaming message. Assigned in a layout effect: committed before any user
-   * event can reach a handler.
-   */
-  const latestRef = useRef({ messages, isAssistantTyping });
-  useLayoutEffect(() => {
-    latestRef.current = { messages, isAssistantTyping };
-  }, [messages, isAssistantTyping]);
+  const {
+    handleSendWithAnchor,
+    handleRegenerateMessageWithAnchor,
+    handleStartEdit,
+    handleCancelEdit,
+    handleEditMessageWithAnchor,
+  } = useAnchoredMessageActions({
+    messages,
+    isAssistantTyping,
+    onSend,
+    onRegenerateMessage,
+    onStartEdit,
+    onCancelEdit,
+    onEditMessage,
+    armAnchor,
+    sendWithDraft,
+    selectedSkills,
+    resetSkillMentions,
+    seedSkillMentions,
+    resetEditSkillMentions,
+    editSkills,
+  });
 
   const editMenuOverlays = useMemo(
     () => (editSkillMenuOverlay ? [editSkillMenuOverlay] : undefined),
     [editSkillMenuOverlay],
-  );
-
-  const handleRegenerateMessageWithAnchor = useCallback(
-    (messageIndex: number) => {
-      /*
-       * Regenerating while another generation is in flight is a no-op in
-       * handleRegenerateMessage — skip arming the anchor so a later,
-       * unrelated message update doesn't consume a stale index.
-       */
-      if (!latestRef.current.isAssistantTyping) {
-        armAnchor(messageIndex - 1);
-      }
-      onRegenerateMessage?.(messageIndex);
-    },
-    [onRegenerateMessage, armAnchor],
-  );
-
-  /*
-   * Seeds the edit input with the edited message's full mention state:
-   * `seedSkillMentions` reconstructs every mention's position in the
-   * message's text, matching `custom_content.skills` in order. A no-op (empty
-   * mentions) while the skill flag is off.
-   */
-  const handleStartEdit = useCallback(
-    (messageIndex: number) => {
-      const editedMessage = latestRef.current.messages[messageIndex];
-      seedSkillMentions(
-        editedMessage?.content ?? '',
-        editedMessage?.custom_content?.skills,
-      );
-      onStartEdit?.(messageIndex);
-    },
-    [onStartEdit, seedSkillMentions],
-  );
-
-  /*
-   * An edit session's mentions never outlive it — otherwise the composer
-   * would silently attach the edited message's mentions to the next message.
-   * No-op while the skill flag is off.
-   */
-  const handleCancelEdit = useCallback(
-    (messageIndex: number) => {
-      resetEditSkillMentions();
-      onCancelEdit?.(messageIndex);
-    },
-    [onCancelEdit, resetEditSkillMentions],
-  );
-
-  const handleEditMessageWithAnchor = useCallback(
-    (
-      messageIndex: number,
-      text: string,
-      keptAttachments: DisplayAttachment[],
-      newAttachments: Attachment[],
-    ) => {
-      /*
-       * handleEditMessage no-ops if a generation is in flight, or if nothing
-       * changed and the existing answer is complete (shouldRerunGenerationOnEdit
-       * mirrors that same check) — skip arming in either case so a later,
-       * unrelated update can't consume a stale index.
-       */
-      if (
-        !latestRef.current.isAssistantTyping &&
-        shouldRerunGenerationOnEdit(
-          latestRef.current.messages,
-          messageIndex,
-          text,
-          keptAttachments,
-          newAttachments,
-          editSkills,
-        )
-      ) {
-        armAnchor(messageIndex);
-      }
-      onEditMessage?.(
-        messageIndex,
-        text,
-        keptAttachments,
-        newAttachments,
-        editSkills,
-      );
-      /* The edit session consumed the mentions; the next edit starts fresh. */
-      resetEditSkillMentions();
-    },
-    [onEditMessage, armAnchor, editSkills, resetEditSkillMentions],
   );
 
   const chatSettingsLabels = useChatSettingsFormLabels();
@@ -1278,29 +899,11 @@ const ConversationView: FC<Props> = ({
         className="relative z-10 w-full px-6"
       >
         {isReadOnly ? (
-          <div className="flex flex-col items-center justify-center gap-2 p-4">
-            {duplicateError && (
-              <ErrorMessageNotification message={duplicateError} />
-            )}
-            {isDuplicateUnavailable ? (
-              <p className="dial-small-text text-center text-secondary">
-                {t(ConversationPanelI18nKeys.DuplicateUnavailableModel)}
-              </p>
-            ) : (
-              <NeutralButton
-                label={t(
-                  ConversationPanelI18nKeys.DuplicateReadOnlyDescription,
-                )}
-                iconBefore={
-                  <IconCopy
-                    size={DIAL_ICON_SIZE.MD}
-                    stroke={DIAL_KIT_ICON_STROKE}
-                  />
-                }
-                onClick={onDuplicateConversation}
-              />
-            )}
-          </div>
+          <ConversationReadOnlyFooter
+            duplicateError={duplicateError}
+            isDuplicateUnavailable={isDuplicateUnavailable}
+            onDuplicateConversation={onDuplicateConversation}
+          />
         ) : (
           <>
             {/* Empty while the model is available, so it takes no space. */}
@@ -1436,52 +1039,16 @@ const ConversationView: FC<Props> = ({
                 }
               />
             </Suspense>
-            <Suspense fallback={null}>
-              {isDialFileManagerOpen && (
-                <DialFileManagerModal
-                  isOpen={isDialFileManagerOpen}
-                  onClose={closeDialFileManager}
-                  onAttach={handleAttachDialFiles}
-                  bucket={bucket}
-                  allowedTypes={inputAttachmentTypes}
-                  maxSelectableFileSize={maxAttachmentFileSizeBytes}
-                  maximumAttachmentsAmount={
-                    selectedDeployment?.maxInputAttachments
-                  }
-                  existingAttachmentsAmount={attachmentsAmount}
-                  canAttachFolders={
-                    selectedDeployment?.features?.folderAttachments
-                  }
-                  title={t(BasicI18nKeys.AttachFiles)}
-                  attachLabel={t(DialFileManagerI18nKeys.Attach)}
-                  emptyTitle={t(DialFileManagerI18nKeys.Empty)}
-                  emptyDescription=""
-                  errorMessage={t(DialFileManagerI18nKeys.Error)}
-                  retryLabel={t(ButtonsI18nKeys.Retry)}
-                  hiddenFilesLabel={t(DialFileManagerI18nKeys.HiddenFiles)}
-                  showHiddenFilesLabel={t(
-                    DialFileManagerI18nKeys.ShowHiddenFiles,
-                  )}
-                  hideHiddenFilesLabel={t(
-                    DialFileManagerI18nKeys.HideHiddenFiles,
-                  )}
-                  getSelectionLabel={(count) =>
-                    t(DialFileManagerI18nKeys.ItemsSelected, { count })
-                  }
-                  uploadFilesLabel={t(DialFileManagerI18nKeys.Upload)}
-                  newFolderLabel={t(DialFileManagerI18nKeys.NewFolder)}
-                  downloadLabel={t(ButtonsI18nKeys.Download)}
-                  downloadingLabel={t(DialFileManagerI18nKeys.Downloading)}
-                  deleteLabel={t(ButtonsI18nKeys.Delete)}
-                  deletingLabel={t(BasicI18nKeys.DeletingStatus)}
-                  deleteConfirmBody={(names) => (
-                    <FileDeleteConfirmContent names={names} />
-                  )}
-                  deleteConfirmLabel={t(ButtonsI18nKeys.Delete)}
-                  deleteCancelLabel={t(ButtonsI18nKeys.Cancel)}
-                />
-              )}
-            </Suspense>
+            <ConversationFileManagerModal
+              isDialFileManagerOpen={isDialFileManagerOpen}
+              closeDialFileManager={closeDialFileManager}
+              handleAttachDialFiles={handleAttachDialFiles}
+              bucket={bucket}
+              inputAttachmentTypes={inputAttachmentTypes}
+              maxAttachmentFileSizeBytes={maxAttachmentFileSizeBytes}
+              selectedDeployment={selectedDeployment}
+              attachmentsAmount={attachmentsAmount}
+            />
           </>
         )}
       </div>
