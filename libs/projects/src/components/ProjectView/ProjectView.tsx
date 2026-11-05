@@ -125,8 +125,14 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
     };
   }, [bodyClassName, instructionsHeadingClassName]);
 
+  /* `aria-disabled` rather than `disabled`: a natively disabled button drops
+   * keyboard focus to <body> while the pin change is saved. */
+  const handleTogglePin = () => {
+    if (!isPinPending) onTogglePin();
+  };
+
   /* The same actions in two placements: on desktop Publish and Edit are
-   * header buttons, on mobile they lead the ⋮ menu. CSS hides one copy, so
+   * header buttons, on mobile Pin, Publish and Edit lead the ⋮ menu, whose sheet is titled with the project name. CSS hides one copy, so
    * the hidden one is out of the accessibility tree too. */
   const renderMenuIcon = (Icon: TablerIcon) => (
     <Icon size={DIAL_ICON_SIZE.SM} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
@@ -134,6 +140,14 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
 
   const buildMenuItems = (includePrimary: boolean): DropdownItem[] => {
     const items: DropdownItem[] = [];
+    if (includePrimary) {
+      items.push({
+        key: 'pin',
+        label: isPinned ? labels.unpinLabel : labels.pinLabel,
+        icon: isPinned ? renderMenuIcon(IconPinOff) : renderMenuIcon(IconPin),
+        onClick: handleTogglePin,
+      });
+    }
     if (includePrimary && onPublish) {
       items.push({
         key: 'publish',
@@ -180,7 +194,11 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
     <div className={className}>
       <ActionMenu
         items={buildMenuItems(includePrimary)}
-        title={labels.moreActionsLabel}
+        title={
+          includePrimary
+            ? (project?.name ?? labels.moreActionsLabel)
+            : labels.moreActionsLabel
+        }
         closeLabel={labels.closeLabel}
         matchReferenceWidth={false}
         listClassName="w-[200px]"
@@ -198,12 +216,6 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
       </ActionMenu>
     </div>
   );
-
-  /* `aria-disabled` rather than `disabled`: a natively disabled button drops
-   * keyboard focus to <body> while the pin change is saved. */
-  const handleTogglePin = () => {
-    if (!isPinPending) onTogglePin();
-  };
 
   const renderState = () => {
     if (isLoading) {
@@ -355,7 +367,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
           }
           aria-disabled={isPinPending || undefined}
           onClick={handleTogglePin}
-          className="shrink-0"
+          className="hidden shrink-0 desktop:inline-flex"
         />
         {onPublish && (
           <NeutralButton
