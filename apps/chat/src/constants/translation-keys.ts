@@ -529,6 +529,7 @@ export enum ProjectsI18nKeys {
   ActionsDeleteError = 'projects.actions.deleteError',
   ActionsDownloadError = 'projects.actions.downloadError',
   ActionsPinError = 'projects.actions.pinError',
+  ActionsUnpinError = 'projects.actions.unpinError',
   EditTitle = 'projects.edit.title',
   EditSaving = 'projects.edit.saving',
   EditSavingStatus = 'projects.edit.savingStatus',
