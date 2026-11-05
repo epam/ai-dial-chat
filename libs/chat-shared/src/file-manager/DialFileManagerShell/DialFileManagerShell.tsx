@@ -323,10 +323,13 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       selectionMode: GridSelectionMode.MULTIPLE,
       /* Column filters are redundant next to the search bar. */
       filterable: false,
-      /* The grid is a flat table in both variants: no vertical header borders,
-         and no card shadow or rounding of its own. */
+      /* No vertical header borders in either variant. The standalone page draws
+         a flat table; the attach modal keeps the file manager's own card (rounded,
+         with its shadow) so the file list stands out from the dialog. */
       withoutHeaderBorders: true,
-      containerClassName: 'rounded-none shadow-none',
+      containerClassName: isAttachVariant
+        ? undefined
+        : 'rounded-none shadow-none',
       visibleColumns,
       dateLocale,
       dateOptions,
@@ -345,6 +348,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       dateOptions,
       gridActionLabels,
       isRowSelectable,
+      isAttachVariant,
     ],
   );
 
@@ -356,7 +360,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
         treeContainerClassName ??
         (variant === DialFileManagerVariant.Attach
           ? mergeClasses(
-              'min-h-0 h-full w-[360px] shrink-0 border-e',
+              'relative z-1 min-h-0 h-full w-[360px] shrink-0 border-e',
               styles.tree,
             )
           : undefined),
@@ -620,6 +624,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     '--dfms-surface': shellStyles?.colors?.surface,
     '--dfms-tree-bg': shellStyles?.colors?.treeBackground,
     '--dfms-tree-border': shellStyles?.colors?.treeBorder,
+    '--dfms-tree-shadow': shellStyles?.colors?.treeShadow,
     '--dfms-overlay-backdrop': shellStyles?.colors?.overlayBackdrop,
   });
 
