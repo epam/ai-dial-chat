@@ -999,6 +999,9 @@ given, and every visible string comes from their props, with English defaults
 where one exists. `OverviewTab` also takes an optional
 `sectionContainerClassName` for the wrapper around each section's table
 (default `'px-6'`), so a host surface with its own padding can pass `''`.
+`ContentTab` likewise takes `sectionClassName` (default `'px-6'`) for its
+description, file selector and body; the divider under the description and the
+scroll area carry no side padding, so they span the full width.
 
 `getCatalogDetailsTabs` (also on `@epam/ai-dial-catalog/mapping`) returns the
 tabs the panel would show for an item, in order: About unless the item is
@@ -1422,12 +1425,18 @@ changing shape mid-interaction.
 An item whose body is one of several files supplies `promptContent.files` as
 a `CatalogContentTreeNode[]` — a folder/file union, folders nesting further
 `items` — and the `selectedFileId` the body belongs to. The Content tab then
-renders a hierarchical file selector above the body (a `Dropdown` trigger
+renders a hierarchical file selector below the description and above the body (a `Dropdown` trigger
 showing the open file's basename, its overlay a folder/file tree the lib owns
 and draws itself), alongside a file count. **The selector appears only when
 the tree contains two or more file nodes, at any depth** — a single file,
 however deep it sits, is the body itself, so a selector with one option is
 noise.
+
+The description, selector and file content share one scroll area below the
+tabs. When the description scrolls away, the selector sticks to the top of
+that area on the panel's themed background. Built-in text and Markdown flow
+with the tab; a host-rendered preview gets at least one tab-height surface so
+viewport-based viewers are not squeezed by a long description.
 
 Every node's `id` is opaque to the lib: a file's `id` round-trips to
 `onLoadContentFile` unchanged, and a folder's `id` only keys the selector's

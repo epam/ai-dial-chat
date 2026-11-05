@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The flag-gated `/projects/edit/:bucket/*` page: `ProjectCreateForm` seeded with the stored project, the single atomic save, rename navigation with the pin kept, conflict and name-taken handling, the leave guard, i18n and accessibility.
+The flag-gated `/projects/edit/:bucket/*` page: `ProjectCreateForm` seeded with the stored project, a locked name, the single atomic content save, response-id navigation with the pin kept, conflict and name-error handling, the leave guard, i18n and accessibility.
 
 ## Requirements
 
@@ -90,7 +90,7 @@ projectsApi.updateProject({
 });
 ```
 
-`contentVersion` is the value the loaded `ProjectDetailsDto` carries, not its `etag`: a project conversation written while the form is open does not change it, so chatting in another tab never makes the save fail (see the `project-detail-api` capability). The hook returns `{ save, isSubmitting }`, aborts the request on unmount, and normalizes failures with `getApiErrorDetails` into `{ status, code, requestId }`. Before submitting, the page trims `name`. No `description` is sent, and the BFF keeps the project's stored description (`project-detail-api`).
+`contentVersion` is the value the loaded `ProjectDetailsDto` carries, not its `etag`: a project conversation written while the form is open does not change it, so chatting in another tab never makes the save fail (see the `project-detail-api` capability). The hook returns `{ save, isSubmitting }`, aborts the request on unmount, and normalizes failures with `getApiErrorDetails` into `{ status, code, requestId }`. The page sends the loaded `project.name`, regardless of the draft's name. No `description` is sent, and the BFF keeps the project's stored description (`project-detail-api`).
 
 The page maps outcomes as follows:
 
@@ -99,7 +99,7 @@ The page maps outcomes as follows:
   2. when `response.id !== id`, `replacePinnedProjectId(id, response.isPinned ? response.id : null)` from `useUserConfig()`, following the pin state the BFF reports because it moves the pin best-effort;
   3. `allowNextNavigation()`;
   4. `navigate(getProjectViewRoute(response.id), { replace: true })`, so Back never returns to the stale edit URL.
-- **`409 name-taken`:** `errors.name` is set to `projects.create.errors.nameTaken`. Focus moves to Name, and the draft is kept.
+- **`409 name-taken`:** `errors.name` is set to `projects.create.errors.nameTaken` and announced; the disabled Name field is not focused, and the draft is kept.
 - **`409 project-changed`:** `showErrorNotification` with `projects.errors.changedElsewhere`, with a Reload action (`buttons.reload`). Reload calls `retry()` from `useProject`, which reseeds the form from the new `contentVersion`. The draft is kept until the user chooses Reload.
 - **`400`/`413` file codes** (`unsupported-file-type`, `file-too-large`, `capacity-exceeded`, `invalid-file-name`, `duplicate-file-name`, `too-many-files`, `unknown-file`): `errors.context`, through `mapProjectCreateError` (`apps/chat/src/utils/project-create-errors.ts`), which gains `unknown-file` → `projects.edit.errors.unknownFile`.
 - **`400 invalid-name`:** the matching name message.
@@ -111,15 +111,15 @@ The page maps outcomes as follows:
 - **WHEN** the user edits the instructions and saves
 - **THEN** `updateProject` is called once with the loaded `contentVersion`, empty `fileNames` and `removedFileNames`, and the router is at the same view route after the toast
 
-#### Scenario: Rename navigates to the new id and keeps the pin
+#### Scenario: A changed response id navigates to the new id and keeps the pin
 
-- **WHEN** a pinned project `q4` is renamed to `Q4 launch` and the save resolves with `id: 'projects/a1b2c3/Q4 launch'`
+- **WHEN** a pinned project `q4` is saved with its stored name and the response nevertheless resolves with `id: 'projects/a1b2c3/Q4 launch'`
 - **THEN** `replacePinnedProjectId` is called, the leave guard does not prompt, and the router is at `/projects/view/a1b2c3/Q4%20launch`
 
 #### Scenario: Name collision is inline
 
 - **WHEN** `updateProject` rejects with `409` and `code: 'name-taken'`
-- **THEN** the Name field shows "A project with this name already exists", focus is on Name, and no toast is shown
+- **THEN** the Name field shows "A project with this name already exists", the error is announced, and no toast is shown
 
 #### Scenario: Concurrent change asks to reload
 
@@ -148,7 +148,7 @@ The edit page SHALL resolve every string through `useTranslation().t()` with `Pr
 | `projects.edit.toast.success` | `Project "{{name}}" saved` |
 | `projects.edit.toast.error` | Could not save the project |
 | `projects.edit.errors.unknownFile` | A removed file no longer exists. Reload and try again. |
-| `projects.edit.nameReadOnlyHint` | Only the project owner can rename it. |
+| `projects.edit.nameReadOnlyHint` | The project name can't be changed after creation |
 
 `projects.edit.nameReadOnlyHint` is the `ProjectsI18nKeys.EditNameReadOnlyHint` member.
 
@@ -164,7 +164,7 @@ Reused keys: `buttons.save`, `buttons.reload`, `projects.create.errors.*`, `proj
 The edit page SHALL inherit `ProjectCreateForm`'s layout, RTL and accessibility contract (`project-create-ui`). In addition:
 
 - The Reload action of the conflict toast is a keyboard-operable button.
-- Focus moves to Name on `name-taken`.
+- A `name-taken` error is announced without attempting to focus the disabled Name field.
 - Stored context cards have the same named remove buttons as new ones (`labels.removeFileLabel(name)`).
 - The page's handlers are `useCallback`. The draft hook seeds itself by an effect once per loaded `contentVersion`, and the page shows `RouteFallback` until it is seeded.
 
@@ -173,34 +173,34 @@ The edit page SHALL inherit `ProjectCreateForm`'s layout, RTL and accessibility 
 - **WHEN** a stored file `tickets.csv` is shown
 - **THEN** its remove button is named "Remove tickets.csv"
 
-### Requirement: A shared editor edits the content but not the name
+### Requirement: Every editor edits the content but not the name
 
-`ProjectEditPage` (`apps/chat/src/pages/ProjectEditPage/ProjectEditPage.tsx`) SHALL render the edit form for every loaded project with `canEdit: true`. That is the owner and a recipient with edit access; the read-only guard still sends a `canEdit: false` project to its view page. For a project with `canManage: false`, the page passes to `ProjectCreateForm`:
+`ProjectEditPage` (`apps/chat/src/pages/ProjectEditPage/ProjectEditPage.tsx`) SHALL render the edit form for every loaded project with `canEdit: true`. That is the owner and a recipient with edit access; the read-only guard still sends a `canEdit: false` project to its view page. For every editable project, regardless of `canManage`, the page passes to `ProjectCreateForm`:
 
 - `isNameReadOnly`, so the Name field shows the stored name and cannot be changed (see the `project-create-ui` capability);
-- `labels.nameReadOnlyHint = t(ProjectsI18nKeys.EditNameReadOnlyHint)` ("Only the project owner can rename it.").
+- `labels.nameReadOnlyHint = t(ProjectsI18nKeys.EditNameReadOnlyHint)` ("The project name can't be changed after creation").
 
-The owner's form is unchanged: `isNameReadOnly` is `false`, and no hint renders.
+The owner's name is locked in exactly the same way as a shared editor's. New-project names remain editable.
 
-Because the field cannot change, `values.name` stays the loaded name. The save sends that name, so the BFF makes no move and the page stays on the same route. Instructions and context files are edited, validated, dirty-checked, guarded on leave and saved exactly as for the owner. The draft hook (`useProjectDraft`) and the save hook (`useSaveProject`) do not change.
+Because the field cannot change, `values.name` stays the loaded name. The save explicitly sends `project.name`, so the BFF makes no move and the page stays on the same route. Instructions and context files are edited, validated, dirty-checked, guarded on leave and saved exactly as for the owner. The draft hook (`useProjectDraft`) and the save hook (`useSaveProject`) do not change.
 
 A save the BFF refuses with `403` (for example, the owner revoked the share while the page was open) shows the existing `projects.edit.toast.error` and keeps the draft.
 
-**State ownership:** no new state. `isNameReadOnly` is derived from the loaded `ProjectDetailsDto` on render.
+**State ownership:** no new state. `isNameReadOnly` is always true on the edit page.
 
-**Feature flag:** `projectsEnabled`, unchanged. **RTL impact:** none beyond the form's (the hint is text in normal flow under the field). **Accessibility:** see the `project-create-ui` capability: the read-only field stays focusable and is described by the hint.
+**Feature flag:** `projectsEnabled`, unchanged. **RTL impact:** none beyond the form's (the hint is text in normal flow under the field). **Accessibility:** see the `project-create-ui` capability: the disabled field is skipped in the tab order, and its hint remains visible on touch devices and available to screen readers.
 
 #### Scenario: An editor opens the edit page
 
 - **WHEN** a recipient with edit access opens `/projects/edit/z9y8x7/research` for a project with `canEdit: true` and `canManage: false`
-- **THEN** the form renders with the stored instructions and context files, the Name input is read-only with the value `research`, and the hint "Only the project owner can rename it." is shown under it
+- **THEN** the form renders with the stored instructions and context files, the Name input is disabled and read-only with the value `research`, and the hint "The project name can't be changed after creation" is shown under it and as a hover tooltip
 
 #### Scenario: An editor saves new instructions
 
 - **WHEN** that editor changes the instructions and activates Save
 - **THEN** `updateProject` is called with `name: 'research'`, and after the success toast the router is at `/projects/view/z9y8x7/research`
 
-#### Scenario: The owner can still rename
+#### Scenario: The owner cannot rename after creation
 
 - **WHEN** the owner opens the edit page of their project
-- **THEN** the Name input is editable, and no read-only hint renders
+- **THEN** the Name input is disabled, the read-only hint renders, and instructions and context files remain editable

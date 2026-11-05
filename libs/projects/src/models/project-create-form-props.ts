@@ -51,7 +51,7 @@ export interface ProjectCreateFormLabels {
   nameLabel: string;
   /** Name field placeholder, e.g. "Enter project name". */
   namePlaceholder: string;
-  /** Helper text under a read-only Name field. Defaults to `'Only the project owner can rename it.'`. */
+  /** Helper text and tooltip for a locked Name field. Defaults to `"The project name can't be changed after creation"`. */
   nameReadOnlyHint?: string;
   /** Message per client-side name check failure. */
   nameErrors: Record<ProjectNameError, string>;
@@ -168,7 +168,7 @@ export interface ProjectCreateFormProps {
   onSubmit: () => void;
   /** Disables Create and shows its loading state. Defaults to `false`. */
   isSubmitting?: boolean;
-  /** Renders the Name field read-only, with `labels.nameReadOnlyHint` under it. Defaults to `false`. */
+  /** Disables the Name field, with `labels.nameReadOnlyHint` as its tooltip and helper text. Defaults to `false`. */
   isNameReadOnly?: boolean;
   /** Localized labels. */
   labels: ProjectCreateFormLabels;

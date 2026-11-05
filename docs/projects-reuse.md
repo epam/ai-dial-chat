@@ -45,6 +45,13 @@ so the host maps each to its own message.
 
 ## What stays in the host
 
+The host decides when the form's name is locked. DIAL Chat passes
+`isNameReadOnly` on every project edit page, including the owner's, and
+translates `labels.nameReadOnlyHint` ("The project name can't be changed after
+creation") for both the tooltip and persistent helper text. New-project names
+remain editable. Edit saves use the loaded project's name, not a changed draft
+name; instructions and context files remain editable.
+
 DIAL Chat keeps these in `apps/chat` because they depend on its own contexts,
 router, i18n or `server-api`: the chat input (`NewConversationComposer`, fed by
 its deployments and tools contexts), the project chat page's
