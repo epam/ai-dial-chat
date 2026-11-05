@@ -173,6 +173,9 @@ jobs:
         run: >-
           npm exec nx run-many -- -t lint --all --output-style=static
           -- --format="$GITHUB_WORKSPACE/tools/eslint-github-formatter.mjs"
+      - name: Guard against disabled typecheck targets
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run typecheck:targets:test
       - name: Typecheck all projects
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm exec nx run-many -- -t typecheck --all
