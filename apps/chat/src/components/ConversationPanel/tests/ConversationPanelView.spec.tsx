@@ -39,6 +39,7 @@ import {
   revokeSharedAccess,
 } from '../../../server-api/share.api';
 import { toPanelConversationId } from '../../../utils/conversation-id-match';
+import { preloadPublishConversationPanel } from '../../PublishConversationPanelContainer/load-publish-conversation-panel';
 import ConversationPanelView from '../ConversationPanelView';
 
 /* Counts renders of the mocked lib panel, which stays `memo`-wrapped like the real one. */
@@ -460,6 +461,15 @@ vi.mock('../../../utils/icon-path', () => ({
   resolveCatalogIconUrl: (url: string) => url,
 }));
 
+vi.mock(
+  '../../PublishConversationPanelContainer/load-publish-conversation-panel',
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import('../../PublishConversationPanelContainer/load-publish-conversation-panel')
+    >()),
+    preloadPublishConversationPanel: vi.fn(),
+  }),
+);
 vi.mock(
   '../../PublishConversationPanelContainer/PublishConversationPanelContainer',
   () => ({
@@ -3025,6 +3035,15 @@ describe('ConversationPanelView', () => {
         expect(getConversationPublishHistory).toHaveBeenCalledTimes(1),
       );
       expect(getConversationPublishHistory).toHaveBeenCalledWith('conv1');
+    });
+
+    it('preloads the publish panel chunk when the row action menu opens', async () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      expect(preloadPublishConversationPanel).not.toHaveBeenCalled();
+
+      await openActionMenu();
+
+      expect(preloadPublishConversationPanel).toHaveBeenCalled();
     });
 
     it('shows Unpublish once history resolves with a folder', async () => {
