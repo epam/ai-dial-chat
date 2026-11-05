@@ -470,7 +470,14 @@
             "description": "DIAL Core resource not found"
           },
           "409": {
-            "description": "Application name already taken"
+            "description": "Another own entity in the folder and catalog tab already has this name and version (`code` `name-taken-agent` or `name-taken-toolset`), or, without a `code`, every candidate storage path is taken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceNameConflictDto"
+                }
+              }
+            }
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -605,7 +612,14 @@
             "description": "Application not found"
           },
           "409": {
-            "description": "An application with the same name already exists in the folder"
+            "description": "The target folder already holds an own application with the same displayed name and version (`code` `name-taken-agent` or `name-taken-toolset`), or an application with the same leaf",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceNameConflictDto"
+                }
+              }
+            }
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -678,7 +692,14 @@
             "description": "Application not found"
           },
           "409": {
-            "description": "The version already exists in the folder"
+            "description": "The version already exists in the folder (path conflict, no `code`), or another own entity in the folder already has this name and version (`code` `name-taken-agent` or `name-taken-toolset`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceNameConflictDto"
+                }
+              }
+            }
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -824,7 +845,14 @@
             "description": "Application not found"
           },
           "409": {
-            "description": "DIAL Core reported a conflict with the current resource state"
+            "description": "The new name and version are already held by another own entity in the same folder and catalog tab (`code` `name-taken-agent` or `name-taken-toolset`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceNameConflictDto"
+                }
+              }
+            }
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -1944,7 +1972,14 @@
             "description": "DIAL Core resource not found"
           },
           "409": {
-            "description": "Toolset name already taken"
+            "description": "Another own entity in the folder and Toolsets tab already has this name and version (`code` `name-taken-agent` or `name-taken-toolset`), or, without a `code`, every candidate storage path is taken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceNameConflictDto"
+                }
+              }
+            }
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -2078,7 +2113,14 @@
             "description": "Toolset not found"
           },
           "409": {
-            "description": "A toolset with the same name already exists in the folder"
+            "description": "The target folder already holds an own toolset with the same displayed name and version (`code` `name-taken-toolset`), or a toolset with the same leaf",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceNameConflictDto"
+                }
+              }
+            }
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -2213,7 +2255,14 @@
             "description": "Toolset not found"
           },
           "409": {
-            "description": "DIAL Core reported a conflict with the current resource state"
+            "description": "The new name and version are already held by another own entity in the same folder and Toolsets tab (`code` `name-taken-agent` or `name-taken-toolset`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceNameConflictDto"
+                }
+              }
+            }
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -12937,6 +12986,37 @@
           }
         },
         "required": ["id"]
+      },
+      "ResourceNameConflictCode": {
+        "type": "string",
+        "enum": ["name-taken-agent", "name-taken-toolset"],
+        "description": "Kind of the entity that already holds the displayed name and version."
+      },
+      "ResourceNameConflictDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 409
+          },
+          "message": {
+            "type": "string",
+            "example": "An agent with this name and version already exists in this folder"
+          },
+          "error": {
+            "type": "string",
+            "example": "Conflict"
+          },
+          "code": {
+            "description": "Kind of the entity that already holds the displayed name and version.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResourceNameConflictCode"
+              }
+            ]
+          }
+        },
+        "required": ["statusCode", "message", "error"]
       },
       "ForkApplicationVersionDto": {
         "type": "object",

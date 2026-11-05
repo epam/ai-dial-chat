@@ -1421,6 +1421,8 @@ export enum AppsEditorI18nKeys {
   PreviewGreetingAriaLabel = 'appsEditor.previewChat.greetingAriaLabel',
   ErrorCreateFailed = 'appsEditor.error.createFailed',
   ErrorNameConflict = 'appsEditor.error.nameConflict',
+  ErrorNameConflictAgent = 'appsEditor.error.nameConflictAgent',
+  ErrorNameConflictToolset = 'appsEditor.error.nameConflictToolset',
   ErrorSaveFailed = 'appsEditor.error.saveFailed',
   ErrorSaveTimeout = 'appsEditor.error.saveTimeout',
   ErrorSettingsNotReady = 'appsEditor.error.settingsNotReady',

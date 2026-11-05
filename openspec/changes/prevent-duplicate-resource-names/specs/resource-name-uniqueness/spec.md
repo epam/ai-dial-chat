@@ -153,8 +153,14 @@ duplicate check rejects.
 ### Requirement: Updating an entity never conflicts with itself
 
 An update, rename or move SHALL exclude the entity being written (matched by resource id)
-from the comparison, and SHALL run the check only when its displayed name, displayed
-version or folder changes.
+from the comparison, and SHALL run the comparison only when its displayed name, displayed
+version or folder changes and only for an entity the caller owns; an entity shared with
+the caller by another bucket's owner is not compared. A fork leaves its source in place
+beside the new copy, so the source SHALL take part in the comparison.
+
+A create SHALL be compared only when it is create-only (`createOnly`); a create without it
+keeps its unconditional-write semantics and is neither compared nor given the
+next-free-path fallback.
 
 #### Scenario: Saving without identity changes
 
@@ -165,6 +171,21 @@ version or folder changes.
 
 - **WHEN** the caller renames own agent `A` version `1.0.0` to `B` and an own agent `B` version `1.0.0` exists in the same folder
 - **THEN** the update is rejected as a duplicate
+
+#### Scenario: Entity shared by another owner
+
+- **WHEN** the caller saves a rename of a toolset or application owned by another user and shared with write access
+- **THEN** no duplicate comparison is made
+
+#### Scenario: Fork onto the source identity
+
+- **WHEN** the caller forks own agent `A` version `1.0.0` to version `1.0.0` in the same folder
+- **THEN** the fork is rejected as a duplicate of the source
+
+#### Scenario: Create without create-only
+
+- **WHEN** a create arrives without `createOnly` and an own entity already has the same name and version
+- **THEN** no duplicate comparison is made and the write keeps its unconditional semantics
 
 ### Requirement: The comparison reads current data
 

@@ -17,7 +17,22 @@ import {
   listDialResourceFolders,
   transferDialResource,
 } from '../../common/utils/dial-resource-transfer';
+import {
+  MAX_CREATE_PATH_ATTEMPTS,
+  buildNextFreeLeaf,
+} from '../../common/utils/next-free-path';
+import {
+  DEFAULT_RESOURCE_VERSION,
+  ResourceIdentityTab,
+  buildResourceNameConflict,
+  findDuplicateIdentity,
+  getResourceIdentityFolder,
+  resolveDisplayedName,
+  type ResourceIdentityCandidate,
+} from '../../common/utils/resource-identity';
+import { toResourceIdentityEntries } from '../../common/utils/resource-identity-sources';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
+import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ToolsetAuthType } from '../dto/toolset-body.dto';
 import type {
@@ -47,7 +62,113 @@ export class ToolsetsMutationService {
   constructor(
     private readonly dialClient: DialClientService,
     private readonly listingService: ToolsetsListingService,
+    private readonly deploymentsService: DeploymentsService,
   ) {}
+
+  /**
+   * Rejects a write that would give a toolset the displayed name and version
+   * of another own entity in the Toolsets tab and the same folder. Reads
+   * toolsets and deployments fresh, because the duplicate may be seconds old.
+   * @param userSub - session user the lists are cached under
+   * @param accessToken - bearer token for DIAL Core
+   * @param bucket - the caller's own bucket
+   * @param candidate - identity the write is about to apply
+   * @param selfId - id of the toolset being updated, skipped in the comparison
+   */
+  private async assertNoDuplicateIdentity(
+    userSub: string,
+    accessToken: string,
+    bucket: string,
+    candidate: ResourceIdentityCandidate,
+    selfId?: string,
+  ): Promise<void> {
+    const [toolsets, deployments] = await Promise.all([
+      this.listingService.listToolsets(userSub, accessToken, bucket, true),
+      this.deploymentsService.listDeployments(
+        userSub,
+        accessToken,
+        bucket,
+        undefined,
+        true,
+      ),
+    ]);
+    const duplicate = findDuplicateIdentity({
+      candidate,
+      tabs: [ResourceIdentityTab.Toolsets],
+      entries: toResourceIdentityEntries(
+        deployments.deployments,
+        toolsets.data,
+      ),
+      selfId,
+    });
+    if (duplicate) throw buildResourceNameConflict(duplicate);
+  }
+
+  /**
+   * For an existing own toolset, rejects a rename, version change or move that
+   * would give it the identity of another own entity in the Toolsets tab. The
+   * stored identity comes from the fresh toolsets list entry matching
+   * `selfId`; nothing else is read unless the identity actually changes, so a
+   * description-only save costs one list read. A toolset the caller does not
+   * own, or one missing from the list, is not checked.
+   * @param userSub - session user the lists are cached under
+   * @param accessToken - bearer token for DIAL Core
+   * @param bucket - the caller's own bucket
+   * @param selfId - id of the toolset being written
+   * @param change - the parts of the identity the write changes; omitted parts keep their stored value
+   */
+  private async assertIdentityChangeAllowed(
+    userSub: string,
+    accessToken: string,
+    bucket: string,
+    selfId: string,
+    change: Partial<ResourceIdentityCandidate>,
+  ): Promise<void> {
+    const toolsets = await this.listingService.listToolsets(
+      userSub,
+      accessToken,
+      bucket,
+      true,
+    );
+    const self = toolsets.data.find((item) => item.id === selfId);
+    if (self?.isMy !== true) return;
+
+    const current = {
+      folder: getResourceIdentityFolder(selfId),
+      name: resolveDisplayedName(self.displayName),
+      version: self.displayVersion ?? DEFAULT_RESOURCE_VERSION,
+    };
+    const next = {
+      folder: change.folder ?? current.folder,
+      name: change.name?.trim() ?? current.name,
+      version: change.version ?? current.version,
+    };
+    if (
+      next.folder === current.folder &&
+      next.name === current.name &&
+      next.version === current.version
+    ) {
+      return;
+    }
+
+    const deployments = await this.deploymentsService.listDeployments(
+      userSub,
+      accessToken,
+      bucket,
+      undefined,
+      true,
+    );
+    const duplicate = findDuplicateIdentity({
+      candidate: next,
+      tabs: [ResourceIdentityTab.Toolsets],
+      entries: toResourceIdentityEntries(
+        deployments.deployments,
+        toolsets.data,
+      ),
+      selfId,
+    });
+    if (duplicate) throw buildResourceNameConflict(duplicate);
+  }
 
   private async tryGetCustomToolsetAuthSettings(
     authHeaders: ReturnType<typeof getBearerAuthHeaders>,
@@ -82,26 +203,57 @@ export class ToolsetsMutationService {
         'get user bucket',
       );
       const version = body.version ?? DEFAULT_TOOLSET_VERSION;
-      const path = buildFolderResourcePath(
-        body.folderPath ?? '',
-        encodeURIComponent(safeDecodeURIComponent(`${body.name}__${version}`)),
-      );
-      const id = `${TOOLSET_RESOURCE_PREFIX}${bucket}/${path}`;
+      const folderPath = body.folderPath ?? '';
+      if (body.createOnly) {
+        await this.assertNoDuplicateIdentity(userSub, accessToken, bucket, {
+          folder: folderPath,
+          name: body.name,
+          version,
+        });
+      }
 
-      const response = await this.dialClient.client.saveToolSet(bucket, path, {
-        headers: {
-          ...authHeaders,
-          ...(body.createOnly ? { 'If-None-Match': '*' } : {}),
-        },
-        /*
-         * The SDK types `displayName`/`description` as plain `string`; DIAL
-         * Core actually accepts a locale map too. Remove this cast when the
-         * SDK's toolset schema is widened to match.
-         */
-        body: toDialToolsetBody(body, version) as unknown as SaveToolSetBody,
-      });
-      if (response.error) {
+      /*
+       * The SDK types `displayName`/`description` as plain `string`; DIAL
+       * Core actually accepts a locale map too. Remove this cast when the
+       * SDK's toolset schema is widened to match.
+       */
+      const toolsetBody = toDialToolsetBody(
+        body,
+        version,
+      ) as unknown as SaveToolSetBody;
+
+      /*
+       * The storage path never follows a rename, so a path can be held by a
+       * toolset the user now sees under another name. Once the identity check
+       * has passed, a create-only request moves on to the next free path
+       * instead of refusing a name nothing visible owns; each try is still
+       * atomic via `If-None-Match`, so no existing toolset is overwritten.
+       */
+      const maxAttempts = body.createOnly ? MAX_CREATE_PATH_ATTEMPTS : 1;
+      let path = '';
+      for (let attempt = 1; ; attempt++) {
+        path = buildFolderResourcePath(
+          folderPath,
+          encodeURIComponent(
+            safeDecodeURIComponent(
+              buildNextFreeLeaf(body.name, version, attempt),
+            ),
+          ),
+        );
+        const response = await this.dialClient.client.saveToolSet(
+          bucket,
+          path,
+          {
+            headers: {
+              ...authHeaders,
+              ...(body.createOnly ? { 'If-None-Match': '*' } : {}),
+            },
+            body: toolsetBody,
+          },
+        );
+        if (!response.error) break;
         if (body.createOnly && response.response.status === 412) {
+          if (attempt < maxAttempts) continue;
           throw new ConflictException('Toolset version already exists');
         }
         this.logger.warn(
@@ -115,6 +267,7 @@ export class ToolsetsMutationService {
           extractDialErrorMessage(response.error),
         );
       }
+      const id = `${TOOLSET_RESOURCE_PREFIX}${bucket}/${path}`;
       await this.listingService.invalidateCaches(userSub);
       this.logger.debug(`Created toolset ${id} (sub: ${userSub})`);
       return { id };
@@ -136,6 +289,13 @@ export class ToolsetsMutationService {
       const { bucket, path } = await this.listingService.resolveToolsetResource(
         authHeaders,
         toolsetName,
+      );
+      await this.assertIdentityChangeAllowed(
+        userSub,
+        accessToken,
+        await this.listingService.getUserBucket(authHeaders, 'get user bucket'),
+        `${TOOLSET_RESOURCE_PREFIX}${bucket}/${path}`,
+        { name: body.name, version },
       );
       const existingAuthSettings =
         body.authSettings.authenticationType === ToolsetAuthType.OAuth
@@ -270,6 +430,13 @@ export class ToolsetsMutationService {
         path: buildFolderResourcePath(folderPath, getResourceLeaf(source.path)),
       };
       if (destination.path !== source.path) {
+        await this.assertIdentityChangeAllowed(
+          userSub,
+          accessToken,
+          bucket,
+          `${TOOLSET_RESOURCE_PREFIX}${source.bucket}/${source.path}`,
+          { folder: folderPath },
+        );
         await transferDialResource({
           client: this.dialClient.client,
           operation: 'moveResource',

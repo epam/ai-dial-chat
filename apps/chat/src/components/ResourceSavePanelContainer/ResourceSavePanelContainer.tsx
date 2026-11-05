@@ -31,6 +31,7 @@ import {
   getAccessRulesLabels,
   getPublishPanelCommonLabels,
 } from '../../utils/publish';
+import { withResourceNameConflictMessages } from '../../utils/resource-name-conflict';
 
 interface Props {
   /** Whether the panel is open. */
@@ -73,7 +74,7 @@ const publishClient = { publishCatalogEntity, getPublishRules };
 const ResourceSavePanelContainer: FC<Props> = ({
   isOpen,
   onClose,
-  adapter,
+  adapter: editorAdapter,
   listPersonalFolders,
   resourceId,
   currentFolderPath,
@@ -89,6 +90,10 @@ const ResourceSavePanelContainer: FC<Props> = ({
   returnFocusRef,
 }) => {
   const { t } = useTranslation();
+  const adapter = useMemo(
+    () => withResourceNameConflictMessages(editorAdapter, (key) => t(key)),
+    [editorAdapter, t],
+  );
   const {
     config: { publicationFilterSources },
   } = useAppConfig();

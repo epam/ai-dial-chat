@@ -10,14 +10,15 @@
 `resource-name-uniqueness` capability before writing:
 
 - **Create** compares the new application with the Agents tab of the caller's own bucket
-  in the target folder (`folderPath`, default the bucket root).
+  in the target folder (`folderPath`, default the bucket root) when it is create-only.
 - **Update** compares the application's new displayed name and version with every tab its
   `interfaces` place it in (read from the fresh deployments list entry whose id matches
-  the application; absent means Agents only), only when the name or version changes,
-  excluding itself. The stored identity it is compared against comes from that same entry,
-  and an omitted version is defaulted as the write defaults it before comparing.
-- **Fork** compares the new `version` with the application's name in the target folder.
-- **Move** compares the application's identity in the target folder.
+  the application; absent means Agents only), only when the name or version differs from
+  the stored body the update already reads, excluding itself. An omitted version keeps the
+  stored version. An application the caller does not own is not compared.
+- **Fork** compares the application's name with the new `version` in the target folder; the
+  source stays in place, so it takes part in the comparison.
+- **Move** compares the application's identity in the target folder, excluding itself.
 
 A duplicate SHALL answer `409` with `code` `name-taken-agent` or `name-taken-toolset`,
 according to the conflicting entity, and write nothing. The codes are the enum defined by

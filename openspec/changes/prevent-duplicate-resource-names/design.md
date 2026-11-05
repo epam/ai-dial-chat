@@ -69,7 +69,7 @@ first conflicting entity or `undefined`. Services gather the lists and call it:
   Toolsets tab. It injects `DeploymentsService` (the facade `DeploymentsModule` exports).
 - `ApplicationsService`: reads deployments, and toolsets only when the application's
   deployments entry places it in the Toolsets tab, and compares with the tabs from that
-  entry.
+  entry. It injects `ToolsetsListingService` through `ToolsetsListingModule` (D10).
 
 The folder of an entity is the part of its resource id between the bucket and the last
 segment, decoded; the bucket root is the empty string. The candidate's `folderPath` is
@@ -164,13 +164,24 @@ silently reintroduce duplicates exactly when Core is degraded.
 
 ### D8. Check only when identity changes, from a known stored identity
 
-Update and move run the check only when displayed name, displayed version or folder differ
-from the stored values. The stored values come from the fresh list entry whose id matches
-the entity being written (`updateToolset` does not read the toolset today, and the stored
-application body lacks `interfaces`). An absent `version` in the update body is defaulted
-exactly as the write defaults it (`1.0.0`) before comparing, so omitting it is not a
-change. A description edit therefore never pays for the check and never fails because of a
-pre-existing duplicate.
+Update and move run the comparison only when displayed name, displayed version or folder
+differ from the stored values, and only for an entity the caller owns (`isMy` on its list
+entry); a toolset or application someone shared with the caller is never compared.
+
+- Toolsets: `updateToolset` reads nothing today, so the stored identity comes from the
+  fresh toolsets list entry whose id matches. A save that keeps name and version costs that
+  one list read and nothing else; the deployments list is read only when the identity
+  changes. An absent `version` in the body is defaulted exactly as the toolset write
+  defaults it (`1.0.0`) before comparing, so omitting it is not a change.
+- Applications: `updateApplication` already reads the stored body, so name and version are
+  compared without any list read; a body without `version` keeps the stored one. Only a
+  changed identity reads the fresh deployments list, which supplies `interfaces`,
+  ownership and, for fork and move, the stored name and version.
+- Fork keeps the source in place beside the new copy, so the source takes part in the
+  comparison (a fork onto the source's own identity is rejected); an update or move
+  rewrites the source, so it is excluded.
+
+A description edit therefore never fails because of a pre-existing duplicate.
 
 ### D9. Localized names
 
@@ -184,11 +195,19 @@ by the rule above.
 
 ### D10. Module wiring
 
-`ToolsetsModule` exports `ToolsetsListingService` in addition to `ToolsetsService`, and
-`ApplicationsModule` imports `ToolsetsModule`. This adds no cycle (`ToolsetsModule` does
-not import `ApplicationsModule`, and `DeploymentsModule` imports neither). Alternative
-considered: a new shared module that owns both reads; rejected as a larger surface for the
-same wiring.
+`ToolsetsListingService` moves into a small `ToolsetsListingModule` (no controllers) that
+`ToolsetsModule` and `ApplicationsModule` both import. This adds no cycle
+(`DeploymentsModule` imports neither). Importing `ToolsetsModule` from `ApplicationsModule`
+was tried first and rejected: it makes the toolsets controllers appear earlier in the
+generated OpenAPI document and reshuffles about 1500 lines of `openapi.json`, which buries
+the real change in review.
+
+### D11. Creates are checked only when create-only
+
+The check on create runs for `createOnly` writes. Every editor path (the Save panel and the
+generated-client wrappers in `apps/chat`) sends `createOnly`; a create without it keeps its
+documented unconditional-write semantics (an upsert onto the same path), which an external
+caller may rely on, so it is neither checked nor given the next-free-path fallback.
 
 ## Risks / Trade-offs
 

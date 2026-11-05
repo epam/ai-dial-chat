@@ -24,14 +24,17 @@ The create toolset body SHALL accept optional `folderPath: string` (`@IsValidFil
 `POST /api/v1/toolsets`, `PATCH /api/v1/toolsets/:toolsetName` and
 `POST /api/v1/toolsets/:toolsetName/move` SHALL apply the duplicate rule of the
 `resource-name-uniqueness` capability against the Toolsets tab of the caller's own bucket
-before writing: toolset resources and applications whose `interfaces` include `mcp`. The
-folder compared is the target folder (`folderPath` on create and move; the stored folder on
-update). On update and move the toolset's stored identity (name, version, folder) SHALL be
-read from the fresh toolsets list entry whose id matches the toolset being written, and the
-version SHALL be defaulted exactly as the write defaults it (absent means the platform
-default) before comparing, so an omitted version is not mistaken for a change. The check
-SHALL run on update only when the displayed name or version changes, and on move for the
-target folder, excluding the toolset being written.
+before writing: toolset resources and applications whose `interfaces` include `mcp`. A
+create is compared when it is create-only. The folder compared is the target folder
+(`folderPath` on create and move; the stored folder on update). On update and move the
+toolset's stored identity (name, version, folder) and ownership SHALL be read from the
+fresh toolsets list entry whose id matches the toolset being written, and the version
+SHALL be defaulted exactly as the write defaults it (absent means the platform default)
+before comparing, so an omitted version is not mistaken for a change. The comparison SHALL
+run on update only when the displayed name or version changes, and on move for the target
+folder, excluding the toolset being written; only after the identity is seen to change is
+the deployments list read. A toolset the caller does not own, or one missing from the list,
+is not compared.
 
 A duplicate SHALL answer `409` with `code` `name-taken-toolset` or `name-taken-agent`
 according to the conflicting entity, and no DIAL Core write. The error codes SHALL be a

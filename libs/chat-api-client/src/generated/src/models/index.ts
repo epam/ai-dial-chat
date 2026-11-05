@@ -7948,6 +7948,50 @@ export interface ResourceIdResponseDto {
    */
   id: string;
 }
+
+/**
+ * Kind of the entity that already holds the displayed name and version.
+ * @export
+ */
+export const ResourceNameConflictCode = {
+  NameTakenAgent: 'name-taken-agent',
+  NameTakenToolset: 'name-taken-toolset',
+} as const;
+export type ResourceNameConflictCode =
+  (typeof ResourceNameConflictCode)[keyof typeof ResourceNameConflictCode];
+
+/**
+ *
+ * @export
+ * @interface ResourceNameConflictDto
+ */
+export interface ResourceNameConflictDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ResourceNameConflictDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {string}
+   * @memberof ResourceNameConflictDto
+   */
+  message: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ResourceNameConflictDto
+   */
+  error: string;
+  /**
+   * Kind of the entity that already holds the displayed name and version.
+   * @type {ResourceNameConflictCode}
+   * @memberof ResourceNameConflictDto
+   */
+  code?: ResourceNameConflictCode;
+}
+
 /**
  *
  * @export

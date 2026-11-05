@@ -17,6 +17,7 @@ import type {
   ResourceFoldersResponseDto,
   ResourceIdResponseDto,
 } from '../common/dto/resource-folder.dto';
+import type { LocalizedText } from '../common/types/localized-text';
 import { isQuickAppSchema } from '../common/utils/application-schema';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import {
@@ -36,10 +37,27 @@ import {
   transferDialResource,
 } from '../common/utils/dial-resource-transfer';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
+import {
+  MAX_CREATE_PATH_ATTEMPTS,
+  RESOURCE_VERSION_SEPARATOR,
+  buildNextFreeLeaf,
+} from '../common/utils/next-free-path';
+import {
+  DEFAULT_RESOURCE_VERSION,
+  ResourceIdentityKind,
+  ResourceIdentityTab,
+  buildResourceNameConflict,
+  findDuplicateIdentity,
+  getResourceIdentityFolder,
+  getResourceIdentityTabs,
+  resolveDisplayedName,
+} from '../common/utils/resource-identity';
+import { toResourceIdentityEntries } from '../common/utils/resource-identity-sources';
 import { DeploymentsService } from '../deployments/deployments.service';
 import { DeploymentsDetailsService } from '../deployments/details/deployments-details.service';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
+import { ToolsetsListingService } from '../toolsets/listing/toolsets-listing.service';
 import type {
   CommitApplicationVersionDto,
   ForkApplicationVersionDto,
@@ -57,25 +75,6 @@ import { hoistApplicationFields } from './utils/application-body-mapping';
 
 type DialApplication = components['schemas']['Application'];
 
-/*
- * How many storage paths a create-only request tries before giving up with
- * 409: the original `name__version`, then `name-2__version` up to this count.
- */
-const MAX_CREATE_PATH_ATTEMPTS = 20;
-
-/** Separates an application's name from its version in its storage path. */
-const APPLICATION_VERSION_SEPARATOR = '__';
-
-/** Storage path of the `attempt`-th (1-based) create-only candidate. */
-const buildApplicationPath = (
-  name: string,
-  version: string,
-  attempt: number,
-): string => {
-  const baseName = attempt === 1 ? name : `${name}-${attempt}`;
-  return `${baseName}${APPLICATION_VERSION_SEPARATOR}${version}`;
-};
-
 @Injectable()
 export class ApplicationsService {
   private readonly logger = new Logger(ApplicationsService.name);
@@ -85,7 +84,83 @@ export class ApplicationsService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly deploymentsService: DeploymentsService,
     private readonly deploymentsDetailsService: DeploymentsDetailsService,
+    private readonly toolsetsListingService: ToolsetsListingService,
   ) {}
+
+  /**
+   * Rejects a write that would give an application the displayed name and
+   * version of another own entity in the same folder and a shared catalog tab.
+   * Both lists are read fresh because a duplicate may be seconds old. A new
+   * application competes as an agent; an existing one competes in the tabs its
+   * `interfaces` place it in, read from its entry in the deployments list (a
+   * stored body carries none), and toolsets are read only for the Toolsets tab.
+   * A name or version the write does not set is taken from that entry, and an
+   * application the caller does not own is not checked.
+   * @param userSub - session user the lists are cached under
+   * @param accessToken - bearer token for DIAL Core
+   * @param bucket - the caller's own bucket
+   * @param candidate - folder, and the name and version when the write sets them
+   * @param sourceId - id of the existing application the write starts from, if any
+   * @param excludeSource - skip the source itself in the comparison (an update
+   *   or move rewrites it; a fork leaves it in place beside the new copy)
+   */
+  private async assertNoDuplicateIdentity(
+    userSub: string,
+    accessToken: string,
+    bucket: string,
+    candidate: { folder: string; name?: string; version?: string },
+    sourceId?: string,
+    excludeSource = true,
+  ): Promise<void> {
+    const deployments = await this.deploymentsService.listDeployments(
+      userSub,
+      accessToken,
+      bucket,
+      undefined,
+      true,
+    );
+    const source =
+      sourceId == null
+        ? undefined
+        : deployments.deployments.find((item) => item.id === sourceId);
+    if (source?.isMy === false) return;
+
+    const name =
+      candidate.name ??
+      (source == null ? undefined : resolveDisplayedName(source.displayName));
+    if (name == null) return;
+
+    const tabs = source
+      ? getResourceIdentityTabs(
+          ResourceIdentityKind.Application,
+          source.interfaces,
+        )
+      : [ResourceIdentityTab.Agents];
+    const toolsets = tabs.includes(ResourceIdentityTab.Toolsets)
+      ? (
+          await this.toolsetsListingService.listToolsets(
+            userSub,
+            accessToken,
+            bucket,
+            true,
+          )
+        ).data
+      : [];
+    const duplicate = findDuplicateIdentity({
+      candidate: {
+        folder: candidate.folder,
+        name,
+        version:
+          candidate.version ??
+          source?.displayVersion ??
+          DEFAULT_RESOURCE_VERSION,
+      },
+      tabs,
+      entries: toResourceIdentityEntries(deployments.deployments, toolsets),
+      selfId: excludeSource ? sourceId : undefined,
+    });
+    if (duplicate) throw buildResourceNameConflict(duplicate);
+  }
 
   private async getUserBucket(
     authHeaders: ReturnType<typeof getBearerAuthHeaders>,
@@ -175,6 +250,14 @@ export class ApplicationsService {
 
       const version = body.version ?? '1.0.0';
 
+      if (body.createOnly) {
+        await this.assertNoDuplicateIdentity(userSub, accessToken, bucket, {
+          folder: body.folderPath ?? '',
+          name: body.name,
+          version,
+        });
+      }
+
       const {
         endpoint,
         features,
@@ -249,7 +332,7 @@ export class ApplicationsService {
       let appPath = '';
       let encodedPath = '';
       for (let attempt = 1; ; attempt++) {
-        appPath = buildApplicationPath(body.name, version, attempt);
+        appPath = buildNextFreeLeaf(body.name, version, attempt);
         encodedPath = buildFolderResourcePath(
           body.folderPath ?? '',
           encodeURIComponent(appPath),
@@ -331,6 +414,27 @@ export class ApplicationsService {
           existingResponse.response.status,
           `get application "${applicationName}"`,
           this.logger,
+        );
+      }
+
+      const stored = existingResponse.data as DialApplication;
+      const storedName = resolveDisplayedName(
+        stored.displayName as LocalizedText,
+      );
+      const storedVersion = stored.displayVersion ?? DEFAULT_RESOURCE_VERSION;
+      const nextVersion = body.version ?? storedVersion;
+      if (body.name.trim() !== storedName || nextVersion !== storedVersion) {
+        const applicationId = `applications/${bucket}/${path}`;
+        await this.assertNoDuplicateIdentity(
+          userSub,
+          accessToken,
+          await this.getUserBucket(authHeaders, 'get user bucket'),
+          {
+            folder: getResourceIdentityFolder(applicationId),
+            name: body.name,
+            version: nextVersion,
+          },
+          applicationId,
         );
       }
 
@@ -663,6 +767,13 @@ export class ApplicationsService {
         path: buildFolderResourcePath(folderPath, getResourceLeaf(source.path)),
       };
       if (destination.path !== source.path) {
+        await this.assertNoDuplicateIdentity(
+          userSub,
+          accessToken,
+          source.bucket,
+          { folder: folderPath },
+          `applications/${source.bucket}/${source.path}`,
+        );
         await transferDialResource({
           client: this.dialClient.client,
           operation: 'moveResource',
@@ -706,14 +817,22 @@ export class ApplicationsService {
       );
       // The name itself may contain the separator; the version follows the last one.
       const leaf = getResourceLeaf(source.path);
-      const separatorIndex = leaf.lastIndexOf(APPLICATION_VERSION_SEPARATOR);
+      const separatorIndex = leaf.lastIndexOf(RESOURCE_VERSION_SEPARATOR);
       const baseName =
         separatorIndex === -1 ? leaf : leaf.slice(0, separatorIndex);
+      await this.assertNoDuplicateIdentity(
+        userSub,
+        accessToken,
+        source.bucket,
+        { folder: body.folderPath, version: body.version },
+        `applications/${source.bucket}/${source.path}`,
+        false,
+      );
       snapshot = {
         bucket: source.bucket,
         path: buildFolderResourcePath(
           body.folderPath,
-          `${baseName}${APPLICATION_VERSION_SEPARATOR}${encodeURIComponent(body.version)}`,
+          `${baseName}${RESOURCE_VERSION_SEPARATOR}${encodeURIComponent(body.version)}`,
         ),
       };
       await transferDialResource({

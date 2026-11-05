@@ -85,6 +85,7 @@ import {
   buildAdditionalLocaleOptions,
   getLocaleDisplayName,
 } from '../../utils/locale';
+import { getResourceNameConflictKey } from '../../utils/resource-name-conflict';
 
 /* Loaded on the first Save of an edit session, so opening the editor fetches no folder listing. */
 const ResourceSavePanelContainer = lazy(
@@ -280,6 +281,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
   const [conflictedIdentity, setConflictedIdentity] = useState<{
     name: string;
     version: string;
+    messageKey: AppsEditorI18nKeys;
   } | null>(null);
   const isNameConflicted =
     conflictedIdentity != null &&
@@ -292,10 +294,10 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
       t,
     );
     if (isNameConflicted && !errors.name) {
-      errors.name = t(AppsEditorI18nKeys.ErrorNameConflict);
+      errors.name = t(conflictedIdentity.messageKey);
     }
     return errors;
-  }, [isNameConflicted, metadata.visibleErrorCodes, t]);
+  }, [conflictedIdentity, isNameConflicted, metadata.visibleErrorCodes, t]);
 
   const { markTouched } = metadata;
   const handleNameBlur = useCallback(
@@ -439,15 +441,19 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
       navigate(returnUrl);
     } catch (error) {
       const { message, status, traceId } = await getApiErrorDetails(error);
-      if (!isEditMode && status === 409) {
+      const duplicateKey = await getResourceNameConflictKey(error);
+      if (duplicateKey != null || (!isEditMode && status === 409)) {
         /* Inline on Name, plus a notification: an all-at-once create may be
-         * submitted from the Setup step, where the Name field is not visible. */
+         * submitted from the Setup step, where the Name field is not visible.
+         * A duplicate-identity code also applies to a rename in edit mode. */
+        const messageKey = duplicateKey ?? AppsEditorI18nKeys.ErrorNameConflict;
         setConflictedIdentity({
           name: metadata.values.name.trim(),
           version: metadata.values.version.trim(),
+          messageKey,
         });
         showErrorNotification({
-          message: t(AppsEditorI18nKeys.ErrorNameConflict),
+          message: t(messageKey),
           requestId: traceId,
         });
         return;

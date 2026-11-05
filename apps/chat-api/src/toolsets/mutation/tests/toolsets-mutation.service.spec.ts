@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   ConflictException,
   ForbiddenException,
   NotFoundException,
@@ -27,7 +28,9 @@ function makeDeps() {
       getToolSets: vi.fn(),
       getToolset: vi.fn(),
       getCustomToolSet: vi.fn(),
-      getUserBucket: vi.fn(),
+      getUserBucket: vi
+        .fn()
+        .mockResolvedValue(okResponse({ bucket: 'test-bucket' })),
       saveToolSet: vi.fn(),
       deleteToolSet: vi.fn(),
       getToolSetMetadata: vi.fn(),
@@ -68,8 +71,24 @@ function makeWriteService() {
     userConfigService as never,
     deploymentsService as never,
   );
-  const service = new ToolsetsMutationService(dialClient, listingService);
-  return { service, cacheManager, deploymentsService };
+  const listToolsetsSpy = vi
+    .spyOn(listingService, 'listToolsets')
+    .mockResolvedValue({ data: [] });
+  const identityDeployments = {
+    listDeployments: vi.fn().mockResolvedValue({ deployments: [] }),
+  };
+  const service = new ToolsetsMutationService(
+    dialClient,
+    listingService,
+    identityDeployments as never,
+  );
+  return {
+    service,
+    cacheManager,
+    deploymentsService,
+    listToolsetsSpy,
+    identityDeployments,
+  };
 }
 
 const bucketSdkOk = okResponse({ bucket: 'test-bucket' });
@@ -454,6 +473,121 @@ describe('ToolsetsMutationService', () => {
       );
     });
 
+    describe('duplicate identity', () => {
+      const stored = {
+        id,
+        displayName: 'My toolset',
+        displayVersion: '0.0.1',
+        isMy: true,
+      };
+      const twin = {
+        id: 'toolsets/test-bucket/other__1.0.0',
+        displayName: 'Taken',
+        displayVersion: '1.0.0',
+        isMy: true,
+      };
+      const savedService = () => {
+        const made = makeWriteService();
+        vi.spyOn(
+          (made.service['dialClient'] as DialClientService).client,
+          'saveToolSet',
+        ).mockResolvedValue(mutationSdkOk);
+        return made;
+      };
+
+      it('does not read deployments for a save that keeps name and version', async () => {
+        const { service, listToolsetsSpy, identityDeployments } =
+          savedService();
+        listToolsetsSpy.mockResolvedValue({ data: [stored] } as never);
+
+        await service.updateToolset('user1', 'token', id, {
+          ...baseBody,
+          version: '0.0.1',
+        });
+
+        expect(listToolsetsSpy).toHaveBeenCalledOnce();
+        expect(identityDeployments.listDeployments).not.toHaveBeenCalled();
+      });
+
+      it('treats an omitted version as the default the write applies', async () => {
+        const { service, listToolsetsSpy, identityDeployments } =
+          savedService();
+        listToolsetsSpy.mockResolvedValue({
+          data: [{ ...stored, displayVersion: '1.0.0' }],
+        } as never);
+
+        await service.updateToolset('user1', 'token', id, baseBody);
+
+        expect(identityDeployments.listDeployments).not.toHaveBeenCalled();
+      });
+
+      it('rejects a rename into the identity of another own toolset', async () => {
+        const { service, listToolsetsSpy } = savedService();
+        listToolsetsSpy.mockResolvedValue({ data: [stored, twin] } as never);
+
+        const error = await service
+          .updateToolset('user1', 'token', id, {
+            ...baseBody,
+            name: 'Taken',
+            version: '1.0.0',
+          })
+          .catch((e: unknown) => e);
+
+        expect((error as ConflictException).getResponse()).toMatchObject({
+          code: 'name-taken-toolset',
+        });
+        expect(
+          (service['dialClient'] as DialClientService).client.saveToolSet,
+        ).not.toHaveBeenCalled();
+      });
+
+      it('rejects a rename into the name of an own MCP-capable agent', async () => {
+        const { service, listToolsetsSpy, identityDeployments } =
+          savedService();
+        listToolsetsSpy.mockResolvedValue({ data: [stored] } as never);
+        identityDeployments.listDeployments.mockResolvedValue({
+          deployments: [
+            {
+              id: 'applications/test-bucket/loop__1.0.0',
+              type: 'application',
+              displayName: 'Loop',
+              displayVersion: '1.0.0',
+              interfaces: ['chat', 'mcp'],
+              isMy: true,
+            },
+          ],
+        });
+
+        const error = await service
+          .updateToolset('user1', 'token', id, {
+            ...baseBody,
+            name: 'Loop',
+            version: '1.0.0',
+          })
+          .catch((e: unknown) => e);
+
+        expect((error as ConflictException).getResponse()).toMatchObject({
+          code: 'name-taken-agent',
+        });
+      });
+
+      it('does not check a toolset the caller does not own', async () => {
+        const { service, listToolsetsSpy, identityDeployments } =
+          savedService();
+        listToolsetsSpy.mockResolvedValue({
+          data: [{ ...stored, isMy: false }, twin],
+        } as never);
+
+        await service.updateToolset('user1', 'token', id, {
+          ...baseBody,
+          name: 'Taken',
+          version: '1.0.0',
+        });
+
+        expect(identityDeployments.listDeployments).not.toHaveBeenCalled();
+      });
+    });
+
     it('replaces a previously plain-string displayName with a locale map when locales is provided', async () => {
       const { service } = makeWriteService();
       const saveSpy = vi
@@ -785,6 +919,228 @@ describe('ToolsetsMutationService', () => {
       expect(cacheManager.del).not.toHaveBeenCalled();
     });
 
+    describe('duplicate identity', () => {
+      const createOnlyBody = {
+        ...baseBody,
+        name: 'search',
+        version: '1.0.0',
+        createOnly: true,
+      };
+      const agent = (
+        interfaces: string[],
+        id = 'applications/test-bucket/x',
+      ) => ({
+        id,
+        type: 'application',
+        displayName: 'search',
+        displayVersion: '1.0.0',
+        interfaces,
+        isMy: true,
+      });
+      const ownToolset = (id: string, displayName = 'search') => ({
+        id,
+        displayName,
+        displayVersion: '1.0.0',
+        isMy: true,
+      });
+
+      it('rejects a toolset named like an own MCP-capable agent and writes nothing', async () => {
+        const { service, identityDeployments, cacheManager } =
+          makeWriteService();
+        client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+        identityDeployments.listDeployments.mockResolvedValue({
+          deployments: [agent(['chat', 'mcp'])],
+        });
+
+        const error = await service
+          .createToolset('user1', 'token', createOnlyBody)
+          .catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(ConflictException);
+        expect((error as ConflictException).getResponse()).toMatchObject({
+          code: 'name-taken-agent',
+        });
+        expect(client(service).saveToolSet).not.toHaveBeenCalled();
+        expect(cacheManager.del).not.toHaveBeenCalled();
+      });
+
+      it('accepts a toolset named like an own chat-only agent', async () => {
+        const { service, identityDeployments } = makeWriteService();
+        client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+        client(service).saveToolSet.mockResolvedValue(mutationSdkOk);
+        identityDeployments.listDeployments.mockResolvedValue({
+          deployments: [agent(['chat'])],
+        });
+
+        await expect(
+          service.createToolset('user1', 'token', createOnlyBody),
+        ).resolves.toEqual({ id: 'toolsets/test-bucket/search__1.0.0' });
+      });
+
+      it('rejects a toolset whose name a renamed toolset shows although no path collides', async () => {
+        const { service, listToolsetsSpy } = makeWriteService();
+        client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+        listToolsetsSpy.mockResolvedValue({
+          data: [ownToolset('toolsets/test-bucket/old__1.0.0')],
+        } as never);
+
+        const error = await service
+          .createToolset('user1', 'token', createOnlyBody)
+          .catch((e: unknown) => e);
+
+        expect((error as ConflictException).getResponse()).toMatchObject({
+          code: 'name-taken-toolset',
+        });
+        expect(client(service).saveToolSet).not.toHaveBeenCalled();
+      });
+
+      it('accepts the same name and version in a different folder', async () => {
+        const { service, listToolsetsSpy } = makeWriteService();
+        client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+        client(service).saveToolSet.mockResolvedValue(mutationSdkOk);
+        listToolsetsSpy.mockResolvedValue({
+          data: [ownToolset('toolsets/test-bucket/Design/search__1.0.0')],
+        } as never);
+
+        await expect(
+          service.createToolset('user1', 'token', {
+            ...createOnlyBody,
+            folderPath: 'Research',
+          }),
+        ).resolves.toEqual({
+          id: 'toolsets/test-bucket/Research/search__1.0.0',
+        });
+      });
+
+      it('reads both lists fresh', async () => {
+        const { service, listToolsetsSpy, identityDeployments } =
+          makeWriteService();
+        client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+        client(service).saveToolSet.mockResolvedValue(mutationSdkOk);
+
+        await service.createToolset('user1', 'token', createOnlyBody);
+
+        expect(listToolsetsSpy).toHaveBeenCalledWith(
+          'user1',
+          'token',
+          'test-bucket',
+          true,
+        );
+        expect(identityDeployments.listDeployments).toHaveBeenCalledWith(
+          'user1',
+          'token',
+          'test-bucket',
+          undefined,
+          true,
+        );
+      });
+
+      it('does not check a create that is not create-only', async () => {
+        const { service, listToolsetsSpy } = makeWriteService();
+        client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+        client(service).saveToolSet.mockResolvedValue(mutationSdkOk);
+
+        await service.createToolset('user1', 'token', {
+          ...baseBody,
+          name: 'search',
+        });
+
+        expect(listToolsetsSpy).not.toHaveBeenCalled();
+      });
+
+      it('writes nothing when a list read fails', async () => {
+        const { service, identityDeployments } = makeWriteService();
+        client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+        identityDeployments.listDeployments.mockRejectedValue(
+          new ServiceUnavailableException(),
+        );
+
+        await expect(
+          service.createToolset('user1', 'token', createOnlyBody),
+        ).rejects.toBeInstanceOf(ServiceUnavailableException);
+        expect(client(service).saveToolSet).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('next free path', () => {
+      const createOnlyBody = {
+        ...baseBody,
+        name: 'old',
+        version: '1.0.0',
+        createOnly: true,
+      };
+
+      it('reuses a name whose path a renamed toolset still holds', async () => {
+        const { service, cacheManager } = makeWriteService();
+        client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+        client(service)
+          .saveToolSet.mockResolvedValueOnce(errResponse(412))
+          .mockResolvedValueOnce(mutationSdkOk);
+
+        const result = await service.createToolset(
+          'user1',
+          'token',
+          createOnlyBody,
+        );
+
+        expect(result).toEqual({ id: 'toolsets/test-bucket/old-2__1.0.0' });
+        expect(client(service).saveToolSet).toHaveBeenNthCalledWith(
+          2,
+          'test-bucket',
+          'old-2__1.0.0',
+          expect.objectContaining({
+            headers: { Authorization: 'Bearer token', 'If-None-Match': '*' },
+          }),
+        );
+        expect(cacheManager.del).toHaveBeenCalledWith('toolsets:list:user1');
+      });
+
+      it('places a racing create at the next free path inside the same folder', async () => {
+        const { service } = makeWriteService();
+        client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+        client(service)
+          .saveToolSet.mockResolvedValueOnce(errResponse(412))
+          .mockResolvedValueOnce(mutationSdkOk);
+
+        const result = await service.createToolset('user1', 'token', {
+          ...createOnlyBody,
+          folderPath: 'Design',
+        });
+
+        expect(result).toEqual({
+          id: 'toolsets/test-bucket/Design/old-2__1.0.0',
+        });
+      });
+
+      it('answers the path-only 409 without a code once every candidate is taken', async () => {
+        const { service, cacheManager } = makeWriteService();
+        client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+        client(service).saveToolSet.mockResolvedValue(errResponse(412));
+
+        const error = await service
+          .createToolset('user1', 'token', createOnlyBody)
+          .catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(ConflictException);
+        expect((error as ConflictException).message).toBe(
+          'Toolset version already exists',
+        );
+        expect(client(service).saveToolSet).toHaveBeenCalledTimes(20);
+        expect(cacheManager.del).not.toHaveBeenCalled();
+      });
+
+      it('does not retry other Core errors', async () => {
+        const { service } = makeWriteService();
+        client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+        client(service).saveToolSet.mockResolvedValue(errResponse(503));
+
+        await expect(
+          service.createToolset('user1', 'token', createOnlyBody),
+        ).rejects.toBeInstanceOf(BadGatewayException);
+        expect(client(service).saveToolSet).toHaveBeenCalledOnce();
+      });
+    });
+
     it('lists the folders of the caller bucket', async () => {
       const { service } = makeWriteService();
       client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
@@ -825,6 +1181,41 @@ describe('ToolsetsMutationService', () => {
       });
       expect(cacheManager.del).toHaveBeenCalledWith('toolsets:list:user1');
       expect(client(service).getCustomToolSet).not.toHaveBeenCalled();
+    });
+
+    it('rejects a move into a folder that already holds the same identity', async () => {
+      const { service, listToolsetsSpy } = makeWriteService();
+      client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+      listToolsetsSpy.mockResolvedValue({
+        data: [
+          {
+            id: 'toolsets/test-bucket/search__1.0.0',
+            displayName: 'search',
+            displayVersion: '1.0.0',
+            isMy: true,
+          },
+          {
+            id: 'toolsets/test-bucket/Search/other__1.0.0',
+            displayName: 'search',
+            displayVersion: '1.0.0',
+            isMy: true,
+          },
+        ],
+      } as never);
+
+      const error = await service
+        .moveToolset(
+          'user1',
+          'token',
+          'toolsets/test-bucket/search__1.0.0',
+          'Search',
+        )
+        .catch((e: unknown) => e);
+
+      expect((error as ConflictException).getResponse()).toMatchObject({
+        code: 'name-taken-toolset',
+      });
+      expect(client(service).moveResource).not.toHaveBeenCalled();
     });
 
     it('still returns the new id when invalidating caches after a move fails', async () => {

@@ -128,8 +128,9 @@ this change.
 
 - `apps/chat-api`: a shared check helper and a shared next-free-path util, with calls in
   `ToolsetsMutationService` and `ApplicationsService`; `ToolsetsListingService` gains a
-  fresh-read option (the deployments listing already has one) and is exported so
-  `ApplicationsModule` can read toolsets. Closest model: the create-only handling at
+  fresh-read option (the deployments listing already has one) and moves into a
+  controller-free module so `ApplicationsModule` can read toolsets without reshuffling the
+  OpenAPI document. Closest model: the create-only handling at
   `apps/chat-api/src/applications/applications.service.ts:248`. No `libs/*` change: the
   backend does not import the libs, so the tab-membership rule gets a small backend
   equivalent pinned to the spec table (see design.md).
