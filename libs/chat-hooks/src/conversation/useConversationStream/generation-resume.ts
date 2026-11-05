@@ -9,6 +9,7 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { readSseEvents } from '../../shared/read-sse-events';
 import { safeDecodeURI } from '../../shared/string-utils';
 import {
+  DEFAULT_GENERATION_INTERRUPTED_ERROR_MESSAGE,
   DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE,
   GenerationPersistenceError,
 } from '../create-chat-stream-api';
@@ -170,6 +171,13 @@ export interface ResumeGenerationOptions {
    * already knows its local id, and the conflict handover keeps Stop unavailable.
    */
   trackAttachGenerationId?: boolean;
+  /**
+   * Releases the chat and shows an unresolved placeholder as interrupted once nothing is
+   * producing the answer here (attach unavailable, stored copy still the placeholder). Set
+   * only by the public entry point: stream recovery and the conflict handover know a
+   * generation exists, so they keep their own behaviour.
+   */
+  markOrphanedAsInterrupted?: boolean;
 }
 
 /** Host-owned state {@link createResumeIfAwaitingGeneration} reads/writes through. */
@@ -183,6 +191,8 @@ export interface ResumeIfAwaitingGenerationDeps {
   removeStreamingPath: (path: string) => void;
   isPathDisplayed: (path: string) => boolean;
   generationPersistenceErrorMessage?: string;
+  /** Host-translated text shown on a placeholder nothing is producing. Defaults to {@link DEFAULT_GENERATION_INTERRUPTED_ERROR_MESSAGE}. */
+  generationInterruptedMessage?: string;
   /** Records a terminal read failure and its guarded read-only retry. */
   onReloadError?: (
     path: string,
@@ -232,6 +242,7 @@ export const createResumeIfAwaitingGeneration = ({
   removeStreamingPath,
   isPathDisplayed,
   generationPersistenceErrorMessage = DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE,
+  generationInterruptedMessage = DEFAULT_GENERATION_INTERRUPTED_ERROR_MESSAGE,
   frameScheduler,
   stoppedGenerationIdsRef,
   rememberResumedGenerationId,
@@ -303,6 +314,40 @@ export const createResumeIfAwaitingGeneration = ({
       forgetResumedGenerationId?.(conversationPath, generationId);
     };
 
+    /*
+     * Nothing is left to preserve and nothing is producing the answer: the stored
+     * copy still ends this turn in the unresolved placeholder, and the page holds
+     * no content for it. A pending background message is a running Core job.
+     */
+    const isOrphanedPlaceholder = (result?: Conversation): boolean =>
+      !!options.markOrphanedAsInterrupted &&
+      !isBackground &&
+      !!result &&
+      result.messages.length - 1 === messageIndex &&
+      findPendingBackgroundMessageIndex(result) === -1 &&
+      isAwaitingGenerationResume(result) &&
+      !hasGeneratedPayload(resumedBuffer.message);
+
+    /* Releases the chat and labels the placeholder, keeping ownership so the watch can still deliver the answer. */
+    const showInterrupted = () => {
+      if (!ownsBuffer()) return;
+      resumedBuffer.message = {
+        ...resumedBuffer.message,
+        streamErrorMessage: generationInterruptedMessage,
+      };
+      resumingPathsRef.current.delete(conversationPath);
+      removeStreamingPath(conversationPath);
+      forgetAttachGenerationId();
+      if (!isPathDisplayed(conversationPath)) return;
+      setConversation((prev) => {
+        if (!prev || !ownsBuffer() || !isPathDisplayed(conversationPath))
+          return prev;
+        const next = restoreBufferedMessage(prev, resumedBuffer);
+        conversationRef.current = next;
+        return next;
+      });
+    };
+
     const finish = (result?: Conversation, persistenceFailed = false) => {
       frameScheduler?.flush(conversationPath);
       if (backgroundGenerationId != null) {
@@ -342,8 +387,21 @@ export const createResumeIfAwaitingGeneration = ({
       }
       bufferedGenerationsRef.current.delete(conversationPath);
       if (result && isPathDisplayed(conversationPath)) {
-        setConversation(result);
-        conversationRef.current = result;
+        const displayed = isOrphanedPlaceholder(result)
+          ? {
+              ...result,
+              messages: result.messages.map((message, index) =>
+                index === messageIndex
+                  ? {
+                      ...message,
+                      streamErrorMessage: generationInterruptedMessage,
+                    }
+                  : message,
+              ),
+            }
+          : result;
+        setConversation(displayed);
+        conversationRef.current = displayed;
       }
     };
 
@@ -440,6 +498,7 @@ export const createResumeIfAwaitingGeneration = ({
           finish(current);
           return;
         }
+        if (isOrphanedPlaceholder(current)) showInterrupted();
       } catch {
         // Keep watching: a later update or the final check resolves it.
       }

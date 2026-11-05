@@ -9,6 +9,7 @@ import { StrictMode, useEffect, useRef, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   DEFAULT_GENERATION_CONFLICT_MESSAGE,
+  DEFAULT_GENERATION_INTERRUPTED_ERROR_MESSAGE,
   GenerationConflictError,
   GenerationPersistenceError,
   StopCompletionError,
@@ -56,6 +57,7 @@ const useHookHarness = ({
   initialConversation?: Conversation;
   generationConflictMessage?: string;
   generationPersistenceErrorMessage?: string;
+  generationInterruptedMessage?: string;
   onStreamError?: (error: Error) => void;
   batchChunksPerFrame?: boolean;
   /** Overrides the `AbortController` `startGeneration` returns, so a test can abort it directly to simulate a host-driven stop. */
@@ -3055,6 +3057,14 @@ describe('useConversationStream', () => {
   });
 
   describe('resumeIfAwaitingGeneration', () => {
+    /** A watch stream that never delivers an update: nothing is producing the answer. */
+    const openWatchStream = () =>
+      new ReadableStream<Uint8Array>({
+        start() {
+          /* stays open: no update arrives */
+        },
+      });
+
     const makeAwaitingConversation = (): Conversation =>
       makeConversation({
         messages: [
@@ -3099,6 +3109,69 @@ describe('useConversationStream', () => {
         expect.any(AbortSignal),
       );
       expect(transport.watchConversation).toHaveBeenCalledOnce();
+    });
+
+    it('releases the chat and shows the host text when attach finds nothing and the stored copy is still the placeholder', async () => {
+      transport.watchConversation = vi
+        .fn()
+        .mockResolvedValue(openWatchStream());
+      transport.getConversation = vi
+        .fn()
+        .mockResolvedValue(makeAwaitingConversation());
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          initialConversation: makeAwaitingConversation(),
+          generationInterruptedMessage: 'Interrupted',
+        }),
+      );
+
+      act(() => {
+        result.current.stream.resumeIfAwaitingGeneration(
+          'bucket/conv',
+          makeAwaitingConversation(),
+        );
+      });
+      expect(result.current.stream.isStreaming).toBe(true);
+
+      await waitFor(() =>
+        expect(result.current.stream.isStreaming).toBe(false),
+      );
+      expect(result.current.stream.canStopStreaming).toBe(false);
+      expect(result.current.conversation?.messages[1].streamErrorMessage).toBe(
+        'Interrupted',
+      );
+      expect(transport.stopCompletion).not.toHaveBeenCalled();
+    });
+
+    it('shows the English default text when the host passes no interrupted text', async () => {
+      transport.watchConversation = vi
+        .fn()
+        .mockResolvedValue(openWatchStream());
+      transport.getConversation = vi
+        .fn()
+        .mockResolvedValue(makeAwaitingConversation());
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          initialConversation: makeAwaitingConversation(),
+        }),
+      );
+
+      act(() => {
+        result.current.stream.resumeIfAwaitingGeneration(
+          'bucket/conv',
+          makeAwaitingConversation(),
+        );
+      });
+
+      await waitFor(() =>
+        expect(
+          result.current.conversation?.messages[1].streamErrorMessage,
+        ).toBe(DEFAULT_GENERATION_INTERRUPTED_ERROR_MESSAGE),
+      );
     });
 
     it('attaches to the live replay: applies the snapshot and chunks progressively, then reloads on the terminal event', async () => {

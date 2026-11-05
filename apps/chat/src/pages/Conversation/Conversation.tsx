@@ -448,6 +448,7 @@ export const ConversationPage: FC<Props> = ({
     generationPersistenceErrorMessage: t(
       ChatI18nKeys.GenerationPersistenceError,
     ),
+    generationInterruptedMessage: t(ChatI18nKeys.GenerationInterrupted),
     onStreamError: logConversationStreamError,
     /* One commit per frame while a reply streams, not one per network read. */
     batchChunksPerFrame: true,
