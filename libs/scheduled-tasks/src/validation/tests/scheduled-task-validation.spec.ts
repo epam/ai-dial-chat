@@ -4,6 +4,7 @@ import {
   type ScheduledTaskCreateFormValues,
 } from '../../index';
 import {
+  ScheduledTaskTextField,
   ScheduledTaskValidationErrorCode,
   validateScheduledTaskFormValues,
   validateScheduledTaskTextField,
@@ -76,11 +77,17 @@ describe('validateScheduledTaskFormValues', () => {
       prompt: ScheduledTaskValidationErrorCode.PromptTooLong,
       description: ScheduledTaskValidationErrorCode.DescriptionTooLong,
     });
-    expect(validateScheduledTaskTextField('displayName', 'Daily\treview')).toBe(
-      ScheduledTaskValidationErrorCode.DisplayNameControlCharacters,
-    );
     expect(
-      validateScheduledTaskTextField('displayName', 'a'.repeat(256)),
+      validateScheduledTaskTextField(
+        ScheduledTaskTextField.DisplayName,
+        'Daily\treview',
+      ),
+    ).toBe(ScheduledTaskValidationErrorCode.DisplayNameControlCharacters);
+    expect(
+      validateScheduledTaskTextField(
+        ScheduledTaskTextField.DisplayName,
+        'a'.repeat(256),
+      ),
     ).toBeUndefined();
   });
 

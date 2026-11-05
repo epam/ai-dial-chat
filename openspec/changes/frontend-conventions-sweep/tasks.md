@@ -16,8 +16,8 @@ Branch: `chore/enable-chat-app-typecheck`. Celebrations code is not touched.
 
 ## 3. Nested ternaries
 
-- [ ] 3.1 Rewrite the 33 production hits outside `libs/celebrations` (design D3).
-- [ ] 3.2 Add `no-nested-ternary: 'error'` to `eslint.config.mjs`, with celebrations and spec files exempt. Lint finds no violation.
+- [x] 3.1 Rewrite the 33 production hits outside `libs/celebrations` (design D3). Result: 24 files were rewritten with early returns, `let` with if/else, or small local helpers. The finder now reports hits only in `libs/celebrations`, whose code is unchanged.
+- [x] 3.2 Add `no-nested-ternary: 'error'` to `eslint.config.mjs`, with celebrations and spec files exempt. Lint finds no violation. The rule uses the project-relative glob `**/src/**`, so it also applies under each project's own `eslint .`. `libs/celebrations/eslint.config.mjs` turns it off there.
 
 ## 4. Notification adapter
 
@@ -25,5 +25,11 @@ Branch: `chore/enable-chat-app-typecheck`. Celebrations code is not touched.
 
 ## 5. Close
 
-- [ ] 5.1 Lint, test, build and typecheck for every touched project. The `apps/chat` typecheck is real on this branch.
-- [ ] 5.2 `validate:docs`, `validate:specs`, `validate:lib-duplicates` and `openspec validate frontend-conventions-sweep` pass.
+- [x] 5.1 Lint, test, build and typecheck for every touched project. The `apps/chat` typecheck is real on this branch.
+
+  Results:
+  - `nx run-many -t lint typecheck` on the 13 touched projects (and 20 dependencies) passes.
+  - `nx run-many -t test` on 12 projects passes: 10564 tests.
+  - Build: in a combined run, `@epam/chat:build` failed on an `os error 32` file lock, then passed when run alone. The 11 libs build.
+  - Two errors the real `apps/chat` typecheck found are fixed: `ToolsetApplicationEditor` now passes `McpDeploymentKind.Toolset`, and the adapter lookups are guarded for an absent `reason`.
+- [x] 5.2 `validate:docs`, `validate:specs`, `validate:lib-duplicates` and `openspec validate frontend-conventions-sweep` pass. All four pass.

@@ -133,13 +133,15 @@ export const buildFileManagerNotificationOptions = (
     return `${joined}${t(DialFileManagerI18nKeys.AndOtherItems, { count: restCount })}`;
   };
 
-  const messageKey = MESSAGE_ONLY_NOTIFICATION_KEYS[reason];
-  if (messageKey != null) {
-    return { variant, message: t(messageKey) };
-  }
-  const countMessageKey = COUNT_MESSAGE_NOTIFICATION_KEYS[reason];
-  if (countMessageKey != null) {
-    return { variant, message: t(countMessageKey, { count }) };
+  if (reason != null) {
+    const messageKey = MESSAGE_ONLY_NOTIFICATION_KEYS[reason];
+    if (messageKey != null) {
+      return { variant, message: t(messageKey) };
+    }
+    const countMessageKey = COUNT_MESSAGE_NOTIFICATION_KEYS[reason];
+    if (countMessageKey != null) {
+      return { variant, message: t(countMessageKey, { count }) };
+    }
   }
 
   switch (reason) {

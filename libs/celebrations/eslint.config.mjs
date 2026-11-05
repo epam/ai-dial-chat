@@ -27,4 +27,11 @@ export default [
   {
     ignores: ['**/out-tsc', '**/storybook-static'],
   },
+  {
+    /* Celebration scenes are exempt from the workspace's no-nested-ternary rule. */
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      'no-nested-ternary': 'off',
+    },
+  },
 ];
