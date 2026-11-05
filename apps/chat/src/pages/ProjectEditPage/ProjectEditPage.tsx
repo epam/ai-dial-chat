@@ -193,7 +193,7 @@ const ProjectEditPage: FC = () => {
 
   const handleSubmit = useCallback(async () => {
     if (project == null) return;
-    const name = values.name.trim();
+    const name = project.name;
     const outcome = await save({
       id: project.id,
       fields: { ...values, name },
@@ -321,8 +321,7 @@ const ProjectEditPage: FC = () => {
         onCancel={handleLeave}
         onSubmit={handleFormSubmit}
         isSubmitting={isSubmitting}
-        /* Only the owner renames: a share recipient with edit access saves the stored name. */
-        isNameReadOnly={!project.canManage}
+        isNameReadOnly
         labels={labels}
         markdownEditorTheme={markdownEditorTheme}
       />

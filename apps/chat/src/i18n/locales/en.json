@@ -921,7 +921,7 @@
       "title": "Edit project",
       "saving": "Saving…",
       "savingStatus": "Saving project…",
-      "nameReadOnlyHint": "Only the project owner can rename it.",
+      "nameReadOnlyHint": "The project name can't be changed after creation",
       "toast": {
         "success": "Project \"{{name}}\" saved",
         "error": "Could not save the project",
