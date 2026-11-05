@@ -1,181 +1,33 @@
 import {
-  buildCssVars,
-  CatalogEntityType,
   ConfirmationFooter,
   ConfirmationView,
   mergeClasses,
-  PanelEmptyState,
 } from '@epam/ai-dial-chat-shared';
-import type {
-  PublishFolderNode,
-  PublishHistoryEntry,
-} from '@epam/ai-dial-publish-panel';
-import {
-  derivePublishState,
-  PublishFooter,
-  PublishPanel,
-  PublishPanelView,
-  usePublishFlow,
-  usePublishFolderView,
-} from '@epam/ai-dial-publish-panel';
-import {
-  ConfirmationPopupVariant,
-  RadioGroup,
-  SideDrawer,
-  Skeleton,
-  Tabs,
-  LiveRegion,
-  LiveRegionElement,
-} from '@epam/ai-dial-ui-kit';
-import {
-  FC,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
-import type { CatalogItem } from '../../models/catalog-item';
-import type {
-  CatalogContentFilePreview,
-  ToolsLabels,
-} from '../../models/item-details-data';
+import { PublishFooter } from '@epam/ai-dial-publish-panel';
+import { RadioGroup, SideDrawer } from '@epam/ai-dial-ui-kit';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DetailsPanelProps } from '../../models/item-details-props';
-import { CatalogContentPreviewType } from '../../types/catalog-content-type';
 import { CatalogDetailsTab } from '../../types/detail-tab';
 import { DetailsConfirmationKind } from '../../types/details-confirmation';
 import {
-  CredentialsLevel,
-  ToolsetAuthenticationType,
-} from '../../types/toolset-auth';
-import {
-  collectAllFolderIds,
-  findContentNodeName,
-} from '../../utils/catalog-content-tree';
-import {
-  getCatalogDetailsTabs,
-  hasConnectableApi,
-} from '../../utils/details-tabs';
-import { getCatalogMarkdownLabels } from '../../utils/item-details-texts';
-import {
-  canPublishCredentials,
-  getCredentialsBannerState,
-  getSignedInLevel,
-} from '../../utils/toolset-credentials';
+  CATALOG_PUBLISH_ALLOWS_REPLACE,
+  defaultCredentialsManagementTitle,
+  EMPTY_PUBLISH_FOLDERS,
+  EMPTY_RULE_SOURCE_OPTIONS,
+  getDetailsPanelCssVars,
+} from '../../utils/details-panel';
+import { getCatalogDetailsTabs } from '../../utils/details-tabs';
+import { getCredentialsBannerState } from '../../utils/toolset-credentials';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
-import { ApiDetails } from './ApiDetails';
 import { CredentialsBanner } from './Credentials/CredentialsBanner/CredentialsBanner';
 import { CredentialsManagementPanel } from './Credentials/CredentialsManagementPanel/CredentialsManagementPanel';
 import styles from './DetailsPanel.module.scss';
+import { DetailsPublishContent } from './DetailsPublishContent';
+import { DetailsTabs } from './DetailsTabs';
 import { Header } from './Header/Header';
-import { AboutTab } from './TabsContent/About';
-import { ContentTab } from './TabsContent/Content';
-import { LimitsTab } from './TabsContent/Limits/Limits';
-import { Overview } from './TabsContent/Overview';
-import { Pricing } from './TabsContent/Pricing';
-import { Tools } from './TabsContent/Tools/Tools';
-
-/** One folder an item is currently published to, derived from its publish history. */
-interface PublishedFolder {
-  /** Joined folder path, used for identity and display. Empty for the public root. */
-  key: string;
-  /** Folder path segments, the shape `onUnpublish` is handed. */
-  segments: string[];
-}
-
-/** One published folder needs no choice; several require the user to pick one. */
-const resolveUnpublishFolder = (
-  folders: PublishedFolder[],
-  selectedKey: string | null,
-): PublishedFolder | undefined => {
-  if (selectedKey != null) {
-    return folders.find((folder) => folder.key === selectedKey);
-  }
-  return folders.length === 1 ? folders[0] : undefined;
-};
-
-/*
- * A catalog publication cannot overwrite an existing version: DIAL Core
- * rejects an `ADD` whose target exists ("Target resource already exists"),
- * rejects a `DELETE` + `ADD` pair on the same target as duplicate urls, and
- * `ADD_IF_ABSENT` silently skips the copy. So an already-published version
- * blocks submit instead of offering "Update version" (issue #9427).
- */
-const CATALOG_PUBLISH_ALLOWS_REPLACE = false;
-const NO_OP_PUBLISH = async () => undefined;
-const EMPTY_PUBLISH_FOLDERS: PublishFolderNode[] = [];
-const EMPTY_RULE_SOURCE_OPTIONS: string[] = [];
-
-const DEFAULT_DELETE_CONSEQUENCES = [
-  'All shared configurations will be lost',
-  'Users who rely on it will lose access',
-  'Cannot be undone',
-];
-
-const DEFAULT_UNSHARE_CONSEQUENCES = [
-  'You will lose access to this item',
-  'Other people keep their access',
-  'You will need a new invitation to get it back',
-];
-
-const DEFAULT_UNPUBLISH_CONSEQUENCES = [
-  'Everyone loses access to the published copy',
-  'Your own copy is not deleted',
-  'You can publish it again later',
-];
-
-const DEFAULT_REVOKE_SHARE_CONSEQUENCES = [
-  'Everyone you shared it with loses access',
-  'Existing share links stop working',
-  'You keep full access — nothing is deleted',
-];
-
-const defaultCredentialsManagementTitle = (
-  authenticationType: ToolsetAuthenticationType,
-): string =>
-  authenticationType === ToolsetAuthenticationType.ApiKey
-    ? 'Toolset API keys'
-    : 'Toolset credentials';
-
-const defaultDeleteApiKeyConfirmMessage = (level: CredentialsLevel): string =>
-  level === CredentialsLevel.Global
-    ? 'Are you sure you want to delete the organization API key?'
-    : 'Are you sure you want to delete your personal API key?';
-
-/*
- * Whether confirming a given step takes the item out of the caller's own
- * view. `Delete` destroys it and `Unshare` drops the caller's own grant, so
- * both close the whole panel; `Logout` and `RevokeAccess` leave the item
- * exactly where it was for the caller — revoking removes *other people's*
- * access — so those return to the details content instead.
- */
-const CONFIRMATIONS_REMOVING_ITEM_FROM_VIEW = new Set<DetailsConfirmationKind>([
-  DetailsConfirmationKind.Delete,
-  DetailsConfirmationKind.Unshare,
-]);
-
-/** Everything the panel needs to render the confirmation step for one {@link DetailsConfirmationKind}. */
-interface ConfirmationContent {
-  /** Sub-view title, shown next to the back button and used as the dialog's accessible name. */
-  title: string;
-  /** Confirmation body copy. */
-  message: ReactNode;
-  /** Consequences listed as bullets under the message. */
-  consequences?: string[];
-  /** Label of the confirming action button. */
-  confirmLabel: string;
-  /** Status text announced to assistive tech while the action is in flight. */
-  loadingStatusLabel: string;
-  /** Palette the confirm button (and its icon) is rendered with. */
-  variant: ConfirmationPopupVariant;
-  /**
-   * Palette of the item identity card. Defaults to `variant` when absent —
-   * only `DeleteApiKey` diverges, since removing one credential is far less
-   * consequential than the whole-item actions that share the danger button.
-   */
-  cardVariant?: ConfirmationPopupVariant;
-}
+import { useDetailsConfirmation } from './hooks/useDetailsConfirmation';
+import { useDetailsContentFile } from './hooks/useDetailsContentFile';
+import { useDetailsPublish } from './hooks/useDetailsPublish';
 
 /** Right-side slide-in panel displaying full details for a catalog item. */
 export const DetailsPanel: FC<DetailsPanelProps> = ({
@@ -234,369 +86,87 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 }) => {
   const {
     subViewTitleClassName = 'dial-body-semi-text',
-    overviewSectionClassName = 'dial-caption-text',
-    overviewLabelClassName = 'dial-small-semi-text',
-    overviewValueClassName = 'dial-small-text',
-    overviewValueTrueClassName = 'dial-small-text',
     confirmMessageClassName = 'dial-small-text',
   } = detailsStyles?.typography ?? {};
 
   const detailsColors = detailsStyles?.colors;
   /* Set on both the backdrop and the panel — they are siblings, not nested. */
-  const cssVars = buildCssVars({
-    '--cat-details-backdrop': detailsColors?.backdrop,
-    '--cat-details-bg': detailsColors?.background,
-    '--cat-details-border': detailsColors?.border,
-    '--cat-details-divider': detailsColors?.divider,
-    '--cat-details-scrollbar': detailsColors?.scrollbar,
-    '--cat-details-skeleton': detailsColors?.skeleton,
-    '--cat-details-name-text': detailsColors?.nameText,
-    '--cat-details-publish-title-text': detailsColors?.publishTitleText,
-    // '--cat-credentials-status-text': detailsColors?.credentialsStatusText,
-    '--cat-details-content-text': detailsColors?.contentText,
-    '--cat-details-variable-text': detailsColors?.variableText,
-    '--cat-details-file-count-text': detailsColors?.contentFileCountText,
-    '--cat-api-heading-text': detailsColors?.apiHeadingText,
-    '--cat-tools-divider': detailsColors?.toolsDivider,
-    '--cat-tools-description-text': detailsColors?.toolsDescriptionText,
-    '--cat-tools-count-text': detailsColors?.toolsCountText,
-    '--cat-grid-border': detailsColors?.gridBorder,
-    '--cat-grid-header-text': detailsColors?.gridHeaderText,
-    '--cat-grid-header-bg': detailsColors?.gridHeaderBackground,
-    '--cat-grid-cell-text': detailsColors?.gridCellText,
-    '--cat-grid-cell-divider': detailsColors?.gridCellDivider,
-    '--cat-grid-row-even-bg': detailsColors?.gridRowEvenBackground,
-    '--cat-cred-surface-bg': detailsColors?.credentialsSurfaceBackground,
-    '--cat-cred-active-icon': detailsColors?.credentialsActiveIcon,
-    '--cat-cred-banner-icon-bg': detailsColors?.credentialsBannerIconBackground,
-    '--cat-cred-description-text': detailsColors?.credentialsDescriptionText,
-    '--cat-cred-row-description-text':
-      detailsColors?.credentialsRowDescriptionText,
-    '--cat-cred-error-text': detailsColors?.credentialsErrorText,
-    '--cat-cred-delete-action-text': detailsColors?.credentialsDeleteActionText,
-    '--cat-details-limit-reached-bg': detailsColors?.limitReachedBackground,
-    '--cat-details-limit-reached-text': detailsColors?.limitReachedText,
-    '--cat-details-limit-running-low-bg':
-      detailsColors?.limitRunningLowBackground,
-    '--cat-details-limit-running-low-text': detailsColors?.limitRunningLowText,
-    '--cat-cred-card-bg': detailsColors?.credentialsCardBackground,
-    '--cat-cred-card-icon': detailsColors?.credentialsCardIcon,
-    '--cat-cred-card-title-text': detailsColors?.credentialsCardTitleText,
-    '--cat-cred-card-description-text':
-      detailsColors?.credentialsCardDescriptionText,
-  });
+  const cssVars = getDetailsPanelCssVars(detailsColors);
 
   const [isStarred, setIsStarred] = useState(initialIsStarred);
   const [activeTab, setActiveTab] = useState<string>('');
-  const [isPublishOpen, setIsPublishOpen] = useState(false);
-  const [publishHistory, setPublishHistory] = useState<PublishHistoryEntry[]>(
-    [],
-  );
-  /* Distinguishes "resolved, zero folders" from "not looked up yet" — the
-   * Unpublish entry is withheld in the second case and hidden in the first. */
-  const [isPublishHistoryResolved, setIsPublishHistoryResolved] =
-    useState(false);
-  const publishHistoryRequestedItemIdRef = useRef<string | null>(null);
 
-  const promptContent = item.details?.promptContent;
-  const baseFileId = promptContent?.selectedFileId;
-  /*
-   * A picked file overlays the body the details fetch already supplied.
-   * `null` means "showing the base content", so reselecting the base file
-   * costs no request.
-   */
-  const [pickedFile, setPickedFile] = useState<{
-    id: string;
-    preview: CatalogContentFilePreview | null;
-  } | null>(null);
-  const [isContentFileLoading, setIsContentFileLoading] = useState(false);
-  const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(
-    new Set(),
-  );
-  const [isFileSelectorOpen, setIsFileSelectorOpen] = useState(false);
-
-  /*
-   * The blob: URL (if any) currently displayed as an image preview. Tracked
-   * outside React state so it can be revoked exactly once, right before it
-   * stops being displayed — never for a host-supplied non-blob URL.
-   */
-  const activeImageUrlRef = useRef<string | null>(null);
-  /*
-   * Guards against an out-of-order resolution: a superseded pick (or an item
-   * switch) bumps this, and a resolution whose captured generation no longer
-   * matches the latest one is discarded on arrival.
-   */
-  const requestGenerationRef = useRef(0);
-
-  const setPickedFilePreview = useCallback(
-    (
-      next: { id: string; preview: CatalogContentFilePreview | null } | null,
-    ) => {
-      const previousUrl = activeImageUrlRef.current;
-      const nextUrl =
-        next?.preview?.type === CatalogContentPreviewType.Image
-          ? next.preview.url
-          : null;
-      if (
-        previousUrl != null &&
-        previousUrl !== nextUrl &&
-        previousUrl.startsWith('blob:')
-      ) {
-        URL.revokeObjectURL(previousUrl);
-      }
-      activeImageUrlRef.current = nextUrl;
-      setPickedFile(next);
-    },
-    [],
-  );
-
-  /*
-   * A new item, or a re-fetched body, invalidates whatever file was picked
-   * and resets the selector back to every folder expanded and closed.
-   */
-  useEffect(() => {
-    requestGenerationRef.current += 1;
-    setPickedFilePreview(null);
-    setIsContentFileLoading(false);
-    setExpandedFolderIds(collectAllFolderIds(promptContent?.files ?? []));
-    setIsFileSelectorOpen(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item.id, baseFileId]);
-
-  /* Revoke whatever blob: URL is still displayed when the panel unmounts. */
-  useEffect(() => {
-    return () => {
-      const url = activeImageUrlRef.current;
-      if (url != null && url.startsWith('blob:')) URL.revokeObjectURL(url);
-    };
-  }, []);
-
-  const handleToggleFolder = useCallback((folderId: string) => {
-    setExpandedFolderIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(folderId)) {
-        next.delete(folderId);
-      } else {
-        next.add(folderId);
-      }
-      return next;
-    });
-  }, []);
-
-  const handleSelectContentFile = useCallback(
-    async (fileId: string) => {
-      if (fileId === baseFileId) {
-        requestGenerationRef.current += 1;
-        setPickedFilePreview(null);
-        setIsContentFileLoading(false);
-        return;
-      }
-      if (
-        renderContentFilePreview == null &&
-        onLoadContentFile == null &&
-        onLoadContentFilePreview == null
-      ) {
-        return;
-      }
-
-      if (renderContentFilePreview != null) {
-        requestGenerationRef.current += 1;
-        setPickedFilePreview({ id: fileId, preview: null });
-        setIsContentFileLoading(false);
-        return;
-      }
-
-      const generation = ++requestGenerationRef.current;
-      setPickedFilePreview({ id: fileId, preview: null });
-      setIsContentFileLoading(true);
-      try {
-        const preview: CatalogContentFilePreview | undefined =
-          onLoadContentFilePreview != null
-            ? await onLoadContentFilePreview(fileId)
-            : await onLoadContentFile?.(fileId).then((text) =>
-                text != null
-                  ? ({
-                      type: CatalogContentPreviewType.Markdown,
-                      text,
-                    } satisfies CatalogContentFilePreview)
-                  : undefined,
-              );
-        if (requestGenerationRef.current !== generation) {
-          /*
-           * A discarded resolution's own image preview was never tracked by
-           * `activeImageUrlRef` (it only learns about a URL through
-           * `setPickedFilePreview`), so its `blob:` URL must be revoked here
-           * or it leaks.
-           */
-          if (
-            preview?.type === CatalogContentPreviewType.Image &&
-            preview.url.startsWith('blob:')
-          ) {
-            URL.revokeObjectURL(preview.url);
-          }
-          return;
-        }
-        setPickedFilePreview({ id: fileId, preview: preview ?? null });
-      } catch {
-        if (requestGenerationRef.current !== generation) return;
-        setPickedFilePreview({ id: fileId, preview: null });
-      } finally {
-        if (requestGenerationRef.current === generation) {
-          setIsContentFileLoading(false);
-        }
-      }
-    },
-    [
-      baseFileId,
-      onLoadContentFile,
-      onLoadContentFilePreview,
-      renderContentFilePreview,
-      setPickedFilePreview,
-    ],
-  );
-
-  const selectedFileId = pickedFile?.id ?? baseFileId;
-  const resolveContentFilePreview = (): CatalogContentFilePreview | null => {
-    if (pickedFile == null) return null;
-    if (pickedFile.preview != null) return pickedFile.preview;
-    return {
-      type: CatalogContentPreviewType.Text,
-      text: texts?.contentFileErrorLabel ?? 'Failed to load this file.',
-    };
-  };
-  const renderedContentFilePreview =
-    pickedFile != null && renderContentFilePreview != null
-      ? renderContentFilePreview(
-          pickedFile.id,
-          findContentNodeName(promptContent?.files ?? [], pickedFile.id) ?? '',
-        )
-      : undefined;
-
-  /*
-   * Publish history is fetched at most once per item and shared by the publish
-   * sub-view and the Manage menu's Unpublish gate, so opening Publish after
-   * opening the menu issues no second request. For most items it is not
-   * fetched on panel open or item render: most items are never unpublished,
-   * and the request is only worth making when the user reaches for one of
-   * those surfaces. The exception is an item the host has said is
-   * unpublishable — see the effect after the per-item reset below.
-   */
-  const requestPublishHistory = useCallback(() => {
-    if (
-      !getPublishHistory ||
-      publishHistoryRequestedItemIdRef.current === item.id
-    ) {
-      return;
-    }
-    const requestedItemId = item.id;
-    publishHistoryRequestedItemIdRef.current = requestedItemId;
-
-    const resolve = async () => {
-      try {
-        const entries = await getPublishHistory(item);
-        if (publishHistoryRequestedItemIdRef.current !== requestedItemId)
-          return;
-        setPublishHistory(entries);
-        setIsPublishHistoryResolved(true);
-      } catch {
-        if (publishHistoryRequestedItemIdRef.current !== requestedItemId)
-          return;
-        /* Cleared so the next Manage-menu or publish open retries the lookup.
-         * Settled all the same, with no folder: the header holds its Manage
-         * slot back until the lookup settles, so a failure left pending would
-         * hide every other Manage entry along with Unpublish. */
-        publishHistoryRequestedItemIdRef.current = null;
-        setIsPublishHistoryResolved(true);
-      }
-    };
-    void resolve();
-  }, [getPublishHistory, item]);
-
-  useEffect(() => {
-    if (isPublishOpen) requestPublishHistory();
-  }, [isPublishOpen, requestPublishHistory]);
-
-  /*
-   * A successful publish adds a folder to this item's history, so the
-   * once-per-item lookup guard has to be released: without this the panel
-   * keeps the pre-publish folder list, leaving the replace warning stale and
-   * Unpublish hidden for the folder the user just published to.
-   */
-  const handlePublishSuccess = useCallback(
-    (publishedItem: CatalogItem, folderPath: string[]) => {
-      publishHistoryRequestedItemIdRef.current = null;
-      setIsPublishHistoryResolved(false);
-      requestPublishHistory();
-      onPublishSuccess?.(publishedItem, folderPath);
-    },
-    [requestPublishHistory, onPublishSuccess],
-  );
-
-  const publishFlow = usePublishFlow<CatalogItem>({
+  const contentFile = useDetailsContentFile({
     item,
-    history: publishHistory,
-    folderItems: publishFolderItems,
-    hasWriteAccess: hasPublishWriteAccess,
-    defaultAuthor: publishDefaultAuthor,
-    onCreateFolder: onCreatePublishFolder,
-    onPublish: onPublish ?? NO_OP_PUBLISH,
-    onPublishSuccess: handlePublishSuccess,
-    onPublishError,
-    onFetchExistingRules,
+    onLoadContentFile,
+    onLoadContentFilePreview,
+    renderContentFilePreview,
+    texts,
   });
 
-  /*
-   * Offering the option is the catalog's call, not the panel's: only a toolset
-   * that needs a login and whose publisher holds one can pass that access on.
-   * `libs/publish-panel` renders whatever it is handed and knows none of this.
-   */
-  const isPublishCredentialsEligible =
-    item.type === CatalogEntityType.Toolset &&
-    canPublishCredentials(item.credentials);
+  const {
+    isPublishOpen,
+    isPublishHistoryResolved,
+    requestPublishHistory,
+    publishFlow,
+    isPublishCredentialsEligible,
+    publishDerived,
+    publishedFolders,
+    hasPublishedFolders,
+    formatFolderLabel,
+    handleOpenPublish,
+    handleClosePublish,
+    publishFolderView,
+    isPublishFolderView,
+    handleSubmitPublish,
+  } = useDetailsPublish({
+    item,
+    isReadonly,
+    getPublishHistory,
+    publishFolderItems,
+    hasPublishWriteAccess,
+    publishDefaultAuthor,
+    onPublish,
+    onPublishSuccess,
+    onPublishError,
+    onCreatePublishFolder,
+    onFetchExistingRules,
+    onUnpublish,
+    isUnpublishVisible,
+    publishLabels,
+  });
 
-  const publishDerived = useMemo(
-    () =>
-      derivePublishState({
-        hasSelectedFolder: publishFlow.selectedFolderPath != null,
-        hasExistingPublicationInFolder:
-          publishFlow.hasExistingPublicationInFolder,
-        hasWriteAccess: publishFlow.hasWriteAccess,
-        isSubmitting: publishFlow.isSubmitting,
-        hasSubmitError: publishFlow.hasSubmitError,
-        allowReplace: CATALOG_PUBLISH_ALLOWS_REPLACE,
-      }),
-    [
-      publishFlow.selectedFolderPath,
-      publishFlow.hasExistingPublicationInFolder,
-      publishFlow.hasWriteAccess,
-      publishFlow.isSubmitting,
-      publishFlow.hasSubmitError,
-    ],
-  );
+  const {
+    confirmation,
+    isConfirming,
+    selectedUnpublishFolder,
+    setSelectedUnpublishFolder,
+    handleRequestDelete,
+    handleRequestLogout,
+    handleRequestUnshare,
+    handleRequestRevokeShare,
+    handleRequestUnpublish,
+    handleRequestDeleteApiKey,
+    handleCancelConfirmation,
+    handleConfirm,
+    confirmationContent,
+    isConfirmDisabled,
+  } = useDetailsConfirmation({
+    item,
+    isOpen,
+    onClose,
+    onDelete,
+    onUnshare,
+    onRevokeShare,
+    onLogout,
+    onUnpublish,
+    texts,
+    publishedFolders,
+    formatFolderLabel,
+  });
+
   const [isCredentialsManagementOpen, setIsCredentialsManagementOpen] =
     useState(false);
-  const [confirmation, setConfirmation] =
-    useState<DetailsConfirmationKind | null>(null);
-  const [isConfirming, setIsConfirming] = useState(false);
-  /* Set alongside `confirmation` only for `DeleteApiKey`, since that step can apply to either credentials slot on the same item. */
-  const [pendingApiKeyDeleteLevel, setPendingApiKeyDeleteLevel] =
-    useState<CredentialsLevel | null>(null);
-  /*
-   * Set alongside `confirmation` for `Logout`. The top-level header action
-   * has only one signed-in level to log out of, resolved via
-   * `getSignedInLevel`; the admin management panel can request either level
-   * explicitly since both may be independently signed in.
-   */
-  const [pendingLogoutLevel, setPendingLogoutLevel] =
-    useState<CredentialsLevel | null>(null);
-  /*
-   * Set alongside `confirmation` for `Unpublish` when the item is published
-   * to more than one folder. Held here rather than in `ConfirmationView` so
-   * that view stays presentational, and cleared on cancel and on item change.
-   */
-  const [selectedUnpublishFolder, setSelectedUnpublishFolder] = useState<
-    string | null
-  >(null);
 
   useEffect(() => {
     setIsStarred(initialIsStarred);
@@ -610,36 +180,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
      * actually first for this item.
      */
     setActiveTab('');
-    setIsPublishOpen(false);
-    publishFlow.reset();
-    setPublishHistory([]);
-    setIsPublishHistoryResolved(false);
-    publishHistoryRequestedItemIdRef.current = null;
-    setSelectedUnpublishFolder(null);
     setIsCredentialsManagementOpen(false);
-    setConfirmation(null);
-    setIsConfirming(false);
-    setPendingApiKeyDeleteLevel(null);
-    setPendingLogoutLevel(null);
-    // Reset publish-flow-local state only when the displayed item changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id]);
-
-  /*
-   * An item the host affirmatively calls unpublishable — a published copy the
-   * caller may remove — resolves its history up front. Whether "Unpublish"
-   * joins the Manage menu decides whether the header shows a menu at all or
-   * promotes a lone action to a button, and that decision has to be settled
-   * before the pointer arrives rather than flip under it ([#8989](https://github.com/epam/ai-dial-chat/issues/8989), where an
-   * Organization copy's only action sat behind `...`). Declared after the
-   * reset above so a new item's request is not cleared in the same commit.
-   */
-  const shouldPrefetchPublishHistory =
-    !isReadonly && !!onUnpublish && isUnpublishVisible?.(item) === true;
-
-  useEffect(() => {
-    if (shouldPrefetchPublishHistory) requestPublishHistory();
-  }, [shouldPrefetchPublishHistory, requestPublishHistory]);
 
   const handleOpenCredentialsManagement = useCallback(
     () => setIsCredentialsManagementOpen(true),
@@ -649,188 +191,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     () => setIsCredentialsManagementOpen(false),
     [],
   );
-
-  const handleRequestDelete = useCallback(() => {
-    setConfirmation(DetailsConfirmationKind.Delete);
-  }, []);
-
-  const handleRequestLogout = useCallback(
-    (level?: CredentialsLevel) => {
-      setPendingLogoutLevel(
-        level ??
-          (item.credentials != null
-            ? getSignedInLevel(item.credentials)
-            : null),
-      );
-      setConfirmation(DetailsConfirmationKind.Logout);
-    },
-    [item.credentials],
-  );
-
-  const handleRequestUnshare = useCallback(() => {
-    setConfirmation(DetailsConfirmationKind.Unshare);
-  }, []);
-
-  const handleRequestRevokeShare = useCallback(() => {
-    setConfirmation(DetailsConfirmationKind.RevokeAccess);
-  }, []);
-
-  /*
-   * Deduplicated because history lists one entry per publication, and an
-   * item republished to the same folder yields that folder twice. Order is
-   * preserved, so the most recently published folder stays first. `key` is
-   * the joined path, used for identity and display; `segments` is the
-   * `string[]` shape `onUnpublish` is handed, matching `onPublish`.
-   */
-  const publishedFolders = useMemo(() => {
-    const seen = new Set<string>();
-    const folders: PublishedFolder[] = [];
-    for (const entry of publishHistory) {
-      const key = entry.folderPath.join('/');
-      if (seen.has(key)) continue;
-      seen.add(key);
-      folders.push({ key, segments: entry.folderPath });
-    }
-    return folders;
-  }, [publishHistory]);
-
-  const hasPublishedFolders =
-    isPublishHistoryResolved && publishedFolders.length > 0;
-
-  /* The public root has no path segments, so it borrows the publish panel's
-   * own root label rather than rendering as an empty string. */
-  const formatFolderLabel = useCallback(
-    (folderKey: string) =>
-      folderKey || (publishLabels?.rootFolderLabel ?? 'Organization'),
-    [publishLabels],
-  );
-
-  const handleRequestUnpublish = useCallback(() => {
-    setConfirmation(DetailsConfirmationKind.Unpublish);
-  }, []);
-
-  const handleRequestDeleteApiKey = useCallback((level: CredentialsLevel) => {
-    setPendingApiKeyDeleteLevel(level);
-    setConfirmation(DetailsConfirmationKind.DeleteApiKey);
-  }, []);
-
-  const handleCancelConfirmation = useCallback(() => {
-    if (isConfirming) return;
-    setConfirmation(null);
-    setPendingApiKeyDeleteLevel(null);
-    setPendingLogoutLevel(null);
-    setSelectedUnpublishFolder(null);
-  }, [isConfirming]);
-
-  const handleConfirm = useCallback(async () => {
-    if (isConfirming || confirmation == null) return;
-    setIsConfirming(true);
-    try {
-      switch (confirmation) {
-        case DetailsConfirmationKind.Delete:
-          await onDelete?.(item);
-          break;
-        case DetailsConfirmationKind.Unshare:
-          await onUnshare?.(item);
-          break;
-        case DetailsConfirmationKind.RevokeAccess:
-          await onRevokeShare?.(item);
-          break;
-        case DetailsConfirmationKind.Logout:
-          if (pendingLogoutLevel != null) {
-            await onLogout?.(item, { level: pendingLogoutLevel });
-          }
-          break;
-        case DetailsConfirmationKind.DeleteApiKey:
-          if (pendingApiKeyDeleteLevel != null) {
-            await onLogout?.(item, { level: pendingApiKeyDeleteLevel });
-          }
-          break;
-        case DetailsConfirmationKind.Unpublish: {
-          /* With one published folder there is nothing to choose, so it is
-           * confirmed directly; with several the footer stays disabled until
-           * the user picks one. */
-          const chosen = resolveUnpublishFolder(
-            publishedFolders,
-            selectedUnpublishFolder,
-          );
-          if (chosen != null) {
-            await onUnpublish?.(item, chosen.segments);
-          }
-          break;
-        }
-      }
-      setConfirmation(null);
-      setPendingApiKeyDeleteLevel(null);
-      setPendingLogoutLevel(null);
-      setSelectedUnpublishFolder(null);
-      if (CONFIRMATIONS_REMOVING_ITEM_FROM_VIEW.has(confirmation)) {
-        onClose();
-      }
-    } catch {
-      /*
-       * Failure feedback (e.g. a notification) is the caller's
-       * responsibility; the item stays visible and the panel stays open.
-       */
-      setConfirmation(null);
-      setPendingApiKeyDeleteLevel(null);
-      setPendingLogoutLevel(null);
-      setSelectedUnpublishFolder(null);
-    } finally {
-      setIsConfirming(false);
-    }
-  }, [
-    isConfirming,
-    confirmation,
-    pendingApiKeyDeleteLevel,
-    pendingLogoutLevel,
-    item,
-    onDelete,
-    onUnshare,
-    onRevokeShare,
-    onUnpublish,
-    selectedUnpublishFolder,
-    publishedFolders,
-    onLogout,
-    onClose,
-  ]);
-
-  useEffect(() => {
-    if (!isOpen || confirmation == null) return;
-
-    /*
-     * Escape backs out of an open confirmation before it closes the panel.
-     * Listening in the capture phase and stopping the event there keeps it
-     * from the drawer's own dismiss handler, which would close the panel.
-     */
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      event.stopPropagation();
-      handleCancelConfirmation();
-    };
-
-    document.addEventListener('keydown', handleKeyDown, true);
-    return () => document.removeEventListener('keydown', handleKeyDown, true);
-  }, [isOpen, confirmation, handleCancelConfirmation]);
-
-  const handleOpenPublish = useCallback(() => setIsPublishOpen(true), []);
-  const handleClosePublish = useCallback(() => {
-    setIsPublishOpen(false);
-    publishFlow.reset();
-  }, [publishFlow]);
-  const publishFolderView = usePublishFolderView({
-    isOpen: isPublishOpen,
-    selectedFolderPath: publishFlow.selectedFolderPath,
-    onSelectedFolderPathChange: publishFlow.setSelectedFolderPath,
-  });
-  const isPublishFolderView =
-    publishFolderView.view === PublishPanelView.ChangeFolder;
-  const handleSubmitPublish = useCallback(async () => {
-    const isSuccess = await publishFlow.handleSubmit();
-    if (isSuccess) {
-      handleClosePublish();
-    }
-  }, [publishFlow, handleClosePublish]);
 
   const handleToggleFavorite = useCallback(() => {
     const next = !isStarred;
@@ -867,38 +227,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     }
   }, [item.id, tabs, activeTab]);
 
-  const markdownLabels = useMemo(
-    () => getCatalogMarkdownLabels(texts),
-    [texts],
-  );
-
-  // Only the strings the host set: an `undefined` would override the tab's English default.
-  const toolsLabels = useMemo(() => {
-    const labels: Partial<ToolsLabels> = {};
-    if (texts?.toolsSearchPlaceholder != null)
-      labels.searchPlaceholder = texts.toolsSearchPlaceholder;
-    if (texts?.toolsSearchClearLabel != null)
-      labels.searchClearLabel = texts.toolsSearchClearLabel;
-    if (texts?.toolsCountLabel != null)
-      labels.toolCount = texts.toolsCountLabel;
-    if (texts?.toolsNoResultsLabel != null)
-      labels.noResults = texts.toolsNoResultsLabel;
-    return labels;
-  }, [texts]);
-
-  const emptyTabLabel = texts?.emptyTabLabel ?? 'No data';
-  const isAboutEmpty =
-    !item.description?.trim() && (item.topics?.length ?? 0) === 0;
-  const isOverviewEmpty = !item.details?.overview?.sections?.length;
-  const emptyTabState = (
-    <div className="flex size-full items-center justify-center py-6">
-      <PanelEmptyState label={emptyTabLabel} />
-    </div>
-  );
-
-  const overviewYesLabel = texts?.overviewYesLabel ?? 'Yes';
-  const overviewNoLabel = texts?.overviewNoLabel ?? 'No';
-
   const panelAriaLabel = texts?.ariaLabel ?? 'Item details';
   const closeAriaLabel = texts?.closeAriaLabel ?? 'Close';
   const starAriaLabel = isStarred
@@ -908,157 +236,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   const backToDetailsAriaLabel = texts?.backToDetailsAriaLabel ?? 'Back';
   const cancelLabel = texts?.cancelLabel ?? 'Cancel';
 
-  const confirmationContent = useMemo<ConfirmationContent | null>(() => {
-    switch (confirmation) {
-      case DetailsConfirmationKind.Delete: {
-        const deleteLabel = texts?.deleteActionLabel ?? 'Delete';
-        return {
-          title: texts?.deleteConfirmTitle ?? deleteLabel,
-          message: texts?.deleteConfirmMessage?.(item.name) ?? (
-            <>
-              Are you sure you want to delete <strong>{item.name}</strong>? This
-              action is permanent and cannot be undone.
-            </>
-          ),
-          consequences:
-            texts?.deleteConfirmConsequences ?? DEFAULT_DELETE_CONSEQUENCES,
-          confirmLabel: deleteLabel,
-          loadingStatusLabel: texts?.deletingStatusLabel ?? 'Deleting',
-          variant: ConfirmationPopupVariant.Danger,
-        };
-      }
-      case DetailsConfirmationKind.Unshare: {
-        const unshareLabel = texts?.unshareLabel ?? 'Remove from My List';
-        return {
-          title: texts?.unshareConfirmTitle ?? unshareLabel,
-          message: texts?.unshareConfirmMessage?.(item.name) ?? (
-            <>
-              Remove <strong>{item.name}</strong> from your list? You&apos;ll
-              need a new invitation to access it again.
-            </>
-          ),
-          consequences:
-            texts?.unshareConfirmConsequences ?? DEFAULT_UNSHARE_CONSEQUENCES,
-          confirmLabel: unshareLabel,
-          loadingStatusLabel: texts?.unsharingStatusLabel ?? 'Removing',
-          /* Removal only revokes the caller's own access and is recoverable
-           * with a new invitation, so it is not framed as destructive. */
-          variant: ConfirmationPopupVariant.Info,
-        };
-      }
-      case DetailsConfirmationKind.RevokeAccess: {
-        const revokeShareLabel = texts?.revokeShareLabel ?? 'Revoke access';
-        return {
-          title: texts?.revokeShareConfirmTitle ?? revokeShareLabel,
-          message: texts?.revokeShareConfirmMessage?.(item.name) ?? (
-            <>
-              Revoke shared access to <strong>{item.name}</strong>? Anyone you
-              shared it with will lose access.
-            </>
-          ),
-          consequences:
-            texts?.revokeShareConfirmConsequences ??
-            DEFAULT_REVOKE_SHARE_CONSEQUENCES,
-          confirmLabel: revokeShareLabel,
-          loadingStatusLabel:
-            texts?.revokingShareStatusLabel ?? 'Revoking access',
-          /* Other people irreversibly lose access and the owner must re-share
-           * to restore it, so this is framed as destructive — even though the
-           * item itself survives untouched for its owner. */
-          variant: ConfirmationPopupVariant.Danger,
-        };
-      }
-      case DetailsConfirmationKind.Unpublish: {
-        const unpublishLabel = texts?.unpublishLabel ?? 'Unpublish';
-        const isSingleFolder = publishedFolders.length === 1;
-        const singleFolderLabel = isSingleFolder
-          ? formatFolderLabel(publishedFolders[0].key)
-          : '';
-        const singleFolderMessage = texts?.unpublishConfirmMessage?.(
-          item.name,
-          singleFolderLabel,
-        ) ?? (
-          <>
-            Unpublish <strong>{item.name}</strong> from "{singleFolderLabel}"?
-            The request is submitted for admin approval.
-          </>
-        );
-        const multiFolderMessage = texts?.unpublishSelectFolderMessage?.(
-          item.name,
-        ) ?? (
-          <>
-            Choose which folder to unpublish <strong>{item.name}</strong> from.
-            The request is submitted for admin approval.
-          </>
-        );
-        return {
-          title: texts?.unpublishConfirmTitle ?? unpublishLabel,
-          message: isSingleFolder ? singleFolderMessage : multiFolderMessage,
-          consequences:
-            texts?.unpublishConfirmConsequences ??
-            DEFAULT_UNPUBLISH_CONSEQUENCES,
-          confirmLabel: unpublishLabel,
-          loadingStatusLabel:
-            texts?.unpublishingStatusLabel ?? 'Requesting unpublish',
-          /* Everyone loses access to the published copy and the owner must
-           * publish again to restore it — the same reasoning as revoke, with
-           * the same caveat that the source item is untouched. */
-          variant: ConfirmationPopupVariant.Danger,
-        };
-      }
-      case DetailsConfirmationKind.Logout: {
-        const logoutLabel = texts?.logoutActionLabel ?? 'Log out';
-        return {
-          title: logoutLabel,
-          message:
-            texts?.logoutConfirmMessage ?? 'Are you sure you want to log out?',
-          consequences: undefined,
-          confirmLabel: logoutLabel,
-          loadingStatusLabel: texts?.loggingOutStatusLabel ?? 'Logging out',
-          variant: ConfirmationPopupVariant.Info,
-        };
-      }
-      case DetailsConfirmationKind.DeleteApiKey: {
-        const deleteLabel = texts?.deleteActionLabel ?? 'Delete';
-        const level = pendingApiKeyDeleteLevel ?? CredentialsLevel.User;
-        return {
-          title: deleteLabel,
-          message: (
-            texts?.deleteApiKeyConfirmMessage ??
-            defaultDeleteApiKeyConfirmMessage
-          )(level),
-          consequences: undefined,
-          confirmLabel: deleteLabel,
-          loadingStatusLabel: texts?.deletingStatusLabel ?? 'Deleting',
-          variant: ConfirmationPopupVariant.Danger,
-          /* Removing one credential doesn't warrant a red toolset card — the
-           * item itself is unaffected, only the confirm button stays danger. */
-          cardVariant: ConfirmationPopupVariant.Info,
-        };
-      }
-      default:
-        return null;
-    }
-  }, [
-    confirmation,
-    item.name,
-    pendingApiKeyDeleteLevel,
-    texts,
-    publishedFolders,
-    formatFolderLabel,
-  ]);
-
   const isConfirmationOpen = confirmationContent != null;
 
-  /*
-   * Kept separate from `isConfirming`: a confirmation that cannot run yet
-   * and one already running are different states, and only the latter also
-   * disables the back/cancel control. Today only `Unpublish` can be blocked,
-   * and only while it is published to several folders and none is chosen.
-   */
-  const isConfirmDisabled =
-    confirmation === DetailsConfirmationKind.Unpublish &&
-    resolveUnpublishFolder(publishedFolders, selectedUnpublishFolder) == null;
   const isSubViewOpen =
     isConfirmationOpen || isPublishOpen || isCredentialsManagementOpen;
 
@@ -1199,47 +378,17 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           )}
 
         {!isConfirmationOpen && isPublishOpen && (
-          <div className="p-4 desktop:p-[22px]">
-            <PublishPanel
-              resource={{
-                title: item.name,
-                version: item.version,
-                type: item.type,
-                iconUrl: item.iconUrl,
-              }}
-              view={publishFolderView.view}
-              onChangeFolderClick={publishFolderView.openFolderView}
-              folderItems={publishFlow.folderItems}
-              selectedFolderPath={publishFlow.selectedFolderPath}
-              pendingFolderPath={publishFolderView.pendingFolderPath}
-              onPendingFolderPathChange={publishFolderView.setPendingFolderPath}
-              onCreateFolder={publishFlow.handleCreateFolder}
-              expandedPaths={publishExpandedPaths}
-              onExpandedPathsChange={onPublishExpandedPathsChange}
-              loadingPaths={publishLoadingPaths}
-              hasExistingPublicationInFolder={
-                publishFlow.hasExistingPublicationInFolder
-              }
-              hasWriteAccess={publishFlow.hasWriteAccess}
-              isSubmitting={publishFlow.isSubmitting}
-              hasSubmitError={publishFlow.hasSubmitError}
-              allowReplace={CATALOG_PUBLISH_ALLOWS_REPLACE}
-              author={publishFlow.author}
-              onAuthorChange={publishFlow.setAuthor}
-              publishCredentials={publishFlow.publishCredentials}
-              onPublishCredentialsChange={
-                isPublishCredentialsEligible
-                  ? publishFlow.setPublishCredentials
-                  : undefined
-              }
-              rules={publishFlow.rules}
-              onRulesChange={publishFlow.setRules}
-              ruleSourceOptions={ruleSourceOptions}
-              isRulesLoading={publishFlow.isRulesLoading}
-              hasRulesLoadError={publishFlow.hasRulesLoadError}
-              labels={publishLabels}
-            />
-          </div>
+          <DetailsPublishContent
+            item={item}
+            publishFlow={publishFlow}
+            publishFolderView={publishFolderView}
+            isPublishCredentialsEligible={isPublishCredentialsEligible}
+            publishExpandedPaths={publishExpandedPaths}
+            onPublishExpandedPathsChange={onPublishExpandedPathsChange}
+            publishLoadingPaths={publishLoadingPaths}
+            ruleSourceOptions={ruleSourceOptions}
+            publishLabels={publishLabels}
+          />
         )}
 
         {!isSubViewOpen && (
@@ -1301,133 +450,18 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
             {!isReadonly && isOpen && renderCredentials?.(item)}
 
-            <div className="flex items-center px-6">
-              {/* The tab row scrolls on its own so a narrow panel never scrolls sideways as a whole. */}
-              <Tabs
-                tabs={tabs}
-                activeTabId={activeTab}
-                onTabChange={setActiveTab}
-                className={mergeClasses(
-                  'min-w-0 flex-1 overflow-x-auto',
-                  styles.tabsScroll,
-                )}
-                tabClassName="shrink-0"
-              />
-              {/* Always mounted, so the loading text is announced when fetching starts. */}
-              <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
-                {isDetailsLoading
-                  ? (texts?.detailsLoadingAriaLabel ?? 'Loading details')
-                  : ''}
-              </LiveRegion>
-              {isDetailsLoading && (
-                <div aria-hidden className="shrink-0">
-                  <Skeleton
-                    showTitle={false}
-                    paragraph={{ rows: 1, width: '72px' }}
-                    active
-                    color={styles.skeletonColor}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div
-              className={mergeClasses(
-                'min-h-0 min-w-0 flex-1',
-                activeTab === CatalogDetailsTab.Content
-                  ? 'overflow-hidden'
-                  : 'overflow-y-auto',
-                /* The Content tab pads its own sections so its divider spans the full width. */
-                activeTab !== CatalogDetailsTab.Overview &&
-                  activeTab !== CatalogDetailsTab.Content &&
-                  'px-6',
-              )}
-            >
-              {activeTab === CatalogDetailsTab.About && isAboutEmpty
-                ? emptyTabState
-                : null}
-              {activeTab === CatalogDetailsTab.About && !isAboutEmpty && (
-                <AboutTab
-                  content={item.description}
-                  topics={item.topics}
-                  detailsStyles={detailsStyles}
-                  markdownLabels={markdownLabels}
-                />
-              )}
-              {activeTab === CatalogDetailsTab.Content && (
-                <ContentTab
-                  content={promptContent?.content ?? ''}
-                  filePreview={resolveContentFilePreview()}
-                  filePreviewContent={renderedContentFilePreview}
-                  renderFileTree={renderContentFileTree}
-                  description={promptContent?.description ?? item.description}
-                  files={promptContent?.files}
-                  selectedFileId={selectedFileId}
-                  onSelectFile={(fileId) =>
-                    void handleSelectContentFile(fileId)
-                  }
-                  isFileLoading={isContentFileLoading}
-                  expandedFolderIds={expandedFolderIds}
-                  onToggleFolder={handleToggleFolder}
-                  isFileSelectorOpen={isFileSelectorOpen}
-                  onFileSelectorOpenChange={setIsFileSelectorOpen}
-                  fileSelectorAriaLabel={texts?.contentFileSelectorAriaLabel}
-                  fileCountLabel={texts?.contentFileCountLabel}
-                  fileLoadingLabel={texts?.contentFileLoadingLabel}
-                  fileUnsupportedLabel={texts?.contentFileUnsupportedLabel}
-                  detailsStyles={detailsStyles}
-                  markdownLabels={markdownLabels}
-                />
-              )}
-              {activeTab === CatalogDetailsTab.Overview && isOverviewEmpty
-                ? emptyTabState
-                : null}
-              {activeTab === CatalogDetailsTab.Overview && !isOverviewEmpty && (
-                <Overview
-                  sections={item.details?.overview?.sections}
-                  sectionClassName={overviewSectionClassName}
-                  labelClassName={overviewLabelClassName}
-                  valueClassName={overviewValueClassName}
-                  valueTrueClassName={overviewValueTrueClassName}
-                  yesLabel={overviewYesLabel}
-                  noLabel={overviewNoLabel}
-                />
-              )}
-              {activeTab === CatalogDetailsTab.Pricing && (
-                <Pricing
-                  pricing={item.details?.pricing}
-                  pricesSectionLabel={texts?.pricingPricesSectionLabel}
-                  characterPricesSectionLabel={
-                    texts?.pricingCharacterPricesSectionLabel
-                  }
-                  limitsSectionLabel={texts?.pricingLimitsSectionLabel}
-                />
-              )}
-              {activeTab === CatalogDetailsTab.Limits && (
-                <LimitsTab
-                  limits={item.details?.limits}
-                  footerNote={limitsFooterNote}
-                />
-              )}
-              {activeTab === CatalogDetailsTab.Api &&
-                hasConnectableApi(item.details?.api) && (
-                  <ApiDetails
-                    api={item.details?.api}
-                    resourceSectionLabel={texts?.apiResourceSectionLabel}
-                    snippetSectionLabel={texts?.apiSnippetSectionLabel}
-                    modelIdLabel={texts?.apiModelIdLabel}
-                    endpointLabel={texts?.apiEndpointLabel}
-                    endpointSectionLabel={texts?.apiEndpointSectionLabel}
-                    requestExampleLabel={texts?.apiRequestExampleLabel}
-                    responseSchemaLabel={texts?.apiResponseSchemaLabel}
-                    copyAriaLabel={texts?.copyCodeAriaLabel}
-                    copiedStatusLabel={texts?.copiedCodeStatusLabel}
-                  />
-                )}
-              {activeTab === CatalogDetailsTab.Tools && (
-                <Tools tools={item.details?.tools} labels={toolsLabels} />
-              )}
-            </div>
+            <DetailsTabs
+              item={item}
+              tabs={tabs}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              isDetailsLoading={isDetailsLoading}
+              contentFile={contentFile}
+              renderContentFileTree={renderContentFileTree}
+              texts={texts}
+              detailsStyles={detailsStyles}
+              limitsFooterNote={limitsFooterNote}
+            />
           </>
         )}
       </div>

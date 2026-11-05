@@ -1,272 +1,34 @@
+import { EntityHeader, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  buildCssVars,
-  CatalogEntityType,
-  EntityHeader,
-  mergeClasses,
-} from '@epam/ai-dial-chat-shared';
-import {
-  DangerButton,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  Dropdown,
-  DropdownOverlayRole,
   FolderPath,
-  NeutralButton,
-  NeutralIconButton,
-  PrimaryButton,
-  Spinner,
-  type DropdownItem,
   LiveRegion,
   LiveRegionElement,
+  NeutralButton,
+  PrimaryButton,
+  Spinner,
 } from '@epam/ai-dial-ui-kit';
 import {
-  IconArrowRight,
-  IconChevronDown,
-  IconDots,
   IconDownload,
-  IconKey,
-  IconLogin,
-  IconLogout,
-  IconPencil,
   IconPlayerPlayFilled,
-  IconShare,
-  IconTrashX,
-  IconUserOff,
   IconWorldOff,
   IconWorldShare,
-  type TablerIcon,
 } from '@tabler/icons-react';
-import {
-  FC,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
-import { CatalogItem } from '../../../models/catalog-item';
+import { FC, useCallback, useEffect, useState } from 'react';
+import type { HeaderProps } from '../../../models/details-header';
 import { CatalogLimitStatus } from '../../../models/item-details-data';
-import type {
-  ItemDetailsStyles,
-  ItemDetailsTexts,
-} from '../../../models/item-details-props';
-import { RecipientsCountStatus } from '../../../types/recipients-count';
-import {
-  CredentialsLevel,
-  CredentialsUiState,
-  ToolsetAuthenticationType,
-} from '../../../types/toolset-auth';
-import {
-  getCredentialsUiState,
-  getDirectCredentialsLevel,
-} from '../../../utils/toolset-credentials';
-import { CredentialsApiKeyOverlay } from './CredentialsApiKeyOverlay/CredentialsApiKeyOverlay';
+import { resolveHeaderActionVisibility } from '../../../utils/details-header-actions';
 import styles from './Header.module.scss';
+import { HeaderCredentialsButton } from './HeaderCredentialsButton';
+import { HeaderManageSlot } from './HeaderManageSlot';
+import { useManageActions } from './hooks/useManageActions';
+import { useRecipientsCount } from './hooks/useRecipientsCount';
+import { LimitStatusBadge } from './LimitStatusBadge';
 import { ShareButton } from './ShareButton/ShareButton';
 
-const defaultManageCredentialsActionLabel = (
-  authenticationType: ToolsetAuthenticationType,
-): string =>
-  authenticationType === ToolsetAuthenticationType.ApiKey
-    ? 'Manage API keys'
-    : 'Manage credentials';
+export type { HeaderProps } from '../../../models/details-header';
 
-const LIMIT_STATUS_CLASSES: Record<CatalogLimitStatus, string> = {
-  [CatalogLimitStatus.LimitReached]: styles.limitReached,
-  [CatalogLimitStatus.RunningLow]: styles.limitRunningLow,
-};
-
-interface LimitStatusBadgeProps {
-  status: CatalogLimitStatus;
-  label: string;
-  className: string;
-}
-
-/** Small status pill matching `FeaturedChip`'s shape, shown in the same header corner. */
-const LimitStatusBadge: FC<LimitStatusBadgeProps> = ({
-  status,
-  label,
-  className,
-}) => (
-  <div
-    className={mergeClasses(
-      'flex h-[24px] items-center justify-center gap-1 rounded-2xl px-2 whitespace-nowrap',
-      className,
-      LIMIT_STATUS_CLASSES[status],
-    )}
-  >
-    {label}
-  </div>
-);
-
-/**
- * One secondary ("Manage") action, declared once and rendered on whichever
- * surface it lands on: an entry inside the overflow menu, or — when it is the
- * only action left after filtering — a button in the action row. The icon
- * stays a component rather than a rendered node so each surface can size it
- * for itself (SM in the menu, MD on a button).
- */
-interface ManageAction {
-  key: string;
-  label: ReactNode;
-  Icon: TablerIcon;
-  /** Menu-entry icon tint. The destructive entries take the menu row's own colour. */
-  iconClassName?: string;
-  danger?: boolean;
-  onClick: () => void;
-}
-
-/**
- * Props for {@link Header}, exported as `DetailsHeaderProps`: the details
- * view's identity block and action row. Every action is opt-in and hidden
- * when its prop is absent.
- */
-export interface HeaderProps {
-  /** The item whose identity, folder and actions are shown. */
-  item: CatalogItem;
-  /** Called by the primary "Use in chat" action. The action is hidden when absent. */
-  onUseInChat?: (item: CatalogItem) => void;
-  /** Returns `false` to hide the primary action for an item. */
-  isPrimaryActionVisible?: (item: CatalogItem) => boolean;
-  /** Called by Share when no `shareOverlay` is given. Share is hidden when both are absent. */
-  onShare?: (item: CatalogItem) => void;
-  /**
-   * Renders the Share popover content. When provided, choosing Share opens
-   * this popover instead of calling `onShare`. It anchors to whichever surface
-   * carries Share: the header button, or the Manage trigger when
-   * `isSharePrimary` has moved the entry into that menu.
-   */
-  shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
-  /**
-   * Additional caller-supplied rule for whether Share is shown, combined
-   * (AND) with the built-in ownership/type rule.
-   */
-  isShareVisible?: (item: CatalogItem) => boolean;
-  /**
-   * Resolves whether Share renders as its own header button rather than a
-   * Manage-menu entry. Defaults to `true` — the header button. Returning
-   * `false` moves Share into the Manage menu, beside Delete. Share renders on
-   * one surface or the other, never both.
-   */
-  isSharePrimary?: (item: CatalogItem) => boolean;
-  /** Called by the Manage menu's "Edit" entry, shown only for an editable item. */
-  onEdit?: (item: CatalogItem) => void;
-  /**
-   * Called when "Download" is clicked. In the Manage menu, fire-and-forget:
-   * the result is not awaited and no pending state is shown. As the primary
-   * action (see `isDownloadPrimary`), the call is awaited and drives a
-   * pending/disabled state on the button.
-   */
-  onDownload?: (item: CatalogItem) => Promise<void> | void;
-  /** Additional caller-supplied rule for whether "Download" is shown. Defaults to `true` when absent. */
-  isDownloadVisible?: (item: CatalogItem) => boolean;
-  /**
-   * Resolves whether Download renders as the primary action instead of a
-   * Manage-menu entry. Defaults to a Skill whose "Use in chat" primary action
-   * is not shown (`item.type === CatalogEntityType.Skill` and no primary
-   * action). An item whose Download is primary never also shows it in the
-   * Manage menu.
-   */
-  isDownloadPrimary?: (item: CatalogItem) => boolean;
-  /** Called when "Delete" is clicked in the Manage menu. The details panel owns the confirmation step, so this only requests it. */
-  onDelete?: (item: CatalogItem) => void;
-  /** Called when the recipient-side "Remove from My List" action is clicked for an item shared with the current user. The details panel owns the confirmation step. */
-  onUnshare?: (item: CatalogItem) => void;
-  /** Additional caller-supplied rule for whether "Remove from My List" is shown, combined (AND) with the built-in `sharedWithMe`/`isMyApp` rule. Defaults to `true` when absent. */
-  isUnshareVisible?: (item: CatalogItem) => boolean;
-  /** Called when the owner-side "Revoke access" action is clicked for an item the current user owns. The details panel owns the confirmation step. */
-  onRevokeShare?: (item: CatalogItem) => void;
-  /** Resolves how many users currently hold shared access to an owned item, called when the Manage menu is opened or focused. `0` hides "Revoke access"; `undefined` or a rejection leaves it reachable without a count. */
-  onFetchRecipientsCount?: (item: CatalogItem) => Promise<number | undefined>;
-  /** Additional caller-supplied rule for whether "Revoke access" is shown, combined (AND) with the built-in `isMyApp` rule and the recipient count. Defaults to `true` when absent. */
-  isRevokeShareVisible?: (item: CatalogItem) => boolean;
-  /** Called by the credentials action to sign in (OAuth) or to add an API key, for the given credentials level. May return a promise. */
-  onLogin?: (
-    item: CatalogItem,
-    params: { level: CredentialsLevel; apiKey?: string },
-  ) => Promise<void> | void;
-  /** Called to sign out or remove an API key for the given credentials level, when no confirmation is requested through `onRequestLogout`. May return a promise. */
-  onLogout?: (
-    item: CatalogItem,
-    params: { level: CredentialsLevel },
-  ) => Promise<void> | void;
-  /**
-   * Called when the credentials trigger button is clicked and the resolved
-   * state is "Manage credentials"/"Manage API keys" — opens the admin
-   * credentials-management sub-screen.
-   */
-  onOpenCredentialsManagement?: () => void;
-  /**
-   * Called instead of directly logging out when the resolved state is
-   * "Log out" for OAuth authentication — opens the logout confirmation
-   * without signing out immediately.
-   */
-  onRequestLogout?: () => void;
-  /** Text overrides, shared with `DetailsPanel`. */
-  texts?: ItemDetailsTexts;
-  /** Style overrides, shared with `DetailsPanel`. */
-  detailsStyles?: ItemDetailsStyles;
-  /**
-   * Controls whether the "Publish" action is shown. Defaults to the same rule
-   * as the primary action. Returning `true` is not sufficient on its own:
-   * "Publish" is suppressed whenever "Unpublish" is shown, so the panel
-   * carries one of the two, never both.
-   */
-  isPublishVisible?: (item: CatalogItem) => boolean;
-  /**
-   * Resolves whether whichever of "Publish"/"Unpublish" applies renders as its
-   * own header button rather than a Manage-menu entry. Defaults to `false` —
-   * the menu entry. It renders on one surface or the other, never both.
-   */
-  isPublishPrimary?: (item: CatalogItem) => boolean;
-  /** Called when the "Publish" button is clicked; the host swaps this panel's content to the publish view. */
-  onOpenPublish?: () => void;
-  /**
-   * Additional caller-supplied rule for whether "Unpublish" is shown,
-   * combined (AND) with `hasPublishedFolders` and the presence of
-   * `onOpenUnpublish`. Defaults to `true` when absent. When the entry ends up
-   * shown, it replaces "Publish" rather than joining it. Supplying it also
-   * withholds the Manage slot for an item it returns `true` for while
-   * `isPublishHistoryResolved` is still `false`, and lets a lone "Unpublish"
-   * render as its own button once history resolves — so the host must
-   * resolve history for such an item without waiting for hover, and settle
-   * it on failure too.
-   */
-  isUnpublishVisible?: (item: CatalogItem) => boolean;
-  /**
-   * Whether the panel has resolved publish history for this item to at least
-   * one folder. Withheld while the lookup is unresolved and `false` on zero
-   * entries or failure — the request cannot be built without a folder, so an
-   * entry shown without one could not do anything if clicked. Default: `false`.
-   */
-  hasPublishedFolders?: boolean;
-  /**
-   * Whether the panel's publish-history lookup for this item has settled.
-   * Keeps the Manage trigger rendered while an "Unpublish" entry is still
-   * pending, so an item that would have no other entry can still start the
-   * lookup that produces one. Default: `true` — a host that does not report
-   * it is treated as having nothing outstanding.
-   */
-  isPublishHistoryResolved?: boolean;
-  /**
-   * Starts the panel's publish-history lookup, called on hover/focus of the
-   * Manage trigger and on Manage-menu open, plus on hover/focus of the publish
-   * button where `isPublishPrimary` promoted it into the action row. Guarded
-   * once per item by the panel.
-   */
-  onRequestPublishHistory?: () => void;
-  /** Called when the "Unpublish" button is clicked; the host swaps this panel's content to the unpublish confirmation. */
-  onOpenUnpublish?: () => void;
-  /**
-   * Renders the header read-only: every action that mutates the item or the
-   * caller's relationship to it — Share, Publish/Unpublish, Edit, Delete,
-   * "Remove from My List", "Revoke access", and the credentials Log in / Log
-   * out / manage button — is withheld. The non-mutating actions (the primary
-   * "Use in chat" and Download) still render. Default: false.
-   */
-  isReadonly?: boolean;
-}
 /** Details panel header bar: entity identity (icon + name + version), action buttons (primary action, Share, a "Manage" menu for Edit, Publish or Unpublish, and Delete — or that action as a button of its own where filtering leaves only one), and inline credentials section. For Toolsets, the credentials action (Log in / Log out / manage) renders first and styled as the primary action, since Toolsets have no "Use in chat" action. Shows a "Running low"/"Limit reached" badge from `item.details?.limits?.status`, disabling "Use in chat" once a limit is reached. */
 export const Header: FC<HeaderProps> = ({
   item,
@@ -410,60 +172,13 @@ export const Header: FC<HeaderProps> = ({
     onRevokeShare?.(item);
   }, [item, onRevokeShare]);
 
-  const [recipientsCountStatus, setRecipientsCountStatus] = useState(
-    RecipientsCountStatus.Idle,
-  );
-  const [recipientsCount, setRecipientsCount] = useState<number | undefined>(
-    undefined,
-  );
-  /* The item whose lookup has already been started, so hovering and then
-   * opening the menu does not issue the same request twice, and a response
-   * that arrives after the panel moved on is discarded. */
-  const requestedItemIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    requestedItemIdRef.current = null;
-    setRecipientsCountStatus(RecipientsCountStatus.Idle);
-    setRecipientsCount(undefined);
-  }, [item.id]);
-
-  const requestRecipientsCount = useCallback(() => {
-    if (!onFetchRecipientsCount || requestedItemIdRef.current === item.id) {
-      return;
-    }
-    /* Nothing to gate: an item that could never offer the action needs no
-     * count, so no request is made for one. */
-    if (
-      !onRevokeShare ||
-      item.isMyApp !== true ||
-      isRevokeShareVisible?.(item) === false
-    ) {
-      return;
-    }
-    const requestedItemId = item.id;
-    requestedItemIdRef.current = requestedItemId;
-    setRecipientsCountStatus(RecipientsCountStatus.Loading);
-
-    const resolve = async () => {
-      try {
-        const count = await onFetchRecipientsCount(item);
-        if (requestedItemIdRef.current !== requestedItemId) return;
-        setRecipientsCount(count);
-        setRecipientsCountStatus(
-          count == null
-            ? RecipientsCountStatus.Unknown
-            : RecipientsCountStatus.Resolved,
-        );
-      } catch {
-        /* An unresolved count must not remove the only way to revoke, so the
-         * action stays reachable — just without a number. */
-        if (requestedItemIdRef.current !== requestedItemId) return;
-        setRecipientsCount(undefined);
-        setRecipientsCountStatus(RecipientsCountStatus.Unknown);
-      }
-    };
-    void resolve();
-  }, [item, onFetchRecipientsCount, onRevokeShare, isRevokeShareVisible]);
+  const { recipientsCountStatus, recipientsCount, requestRecipientsCount } =
+    useRecipientsCount({
+      item,
+      onFetchRecipientsCount,
+      onRevokeShare,
+      isRevokeShareVisible,
+    });
 
   const [isManageMenuOpen, setIsManageMenuOpen] = useState(false);
 
@@ -500,252 +215,56 @@ export const Header: FC<HeaderProps> = ({
     onRequestPublishHistory?.();
   }, [onRequestPublishHistory]);
 
-  const shouldShowPrimaryAction =
-    texts?.hasPrimaryAction !== false &&
-    (isPrimaryActionVisible?.(item) ??
-      (item.type === CatalogEntityType.Model ||
-        item.type === CatalogEntityType.Agent ||
-        item.type === CatalogEntityType.Prompt));
-
-  /*
-   * Gated on resolved history rather than staying reachable the way "Revoke
-   * access" does on an unresolved count: revoke needs the lookup only for a
-   * number in its label, while unpublish needs the folder itself to build the
-   * request, so an entry shown without one could not do anything if clicked.
-   */
-  const shouldShowUnpublish =
-    !isReadonly &&
-    !!onOpenUnpublish &&
-    hasPublishedFolders &&
-    (isUnpublishVisible?.(item) ?? true);
-
-  /*
-   * An item the host affirmatively calls unpublishable has its history
-   * resolved up front, without waiting for hover — which is what un-deadlocks
-   * a published copy whose only entry would be "Unpublish" ([#8691](https://github.com/epam/ai-dial-chat/issues/8691)).
-   * While that lookup is outstanding the Manage slot renders nothing at all:
-   * the caller may turn out to have no right to unpublish, and a speculative
-   * trigger shown in the meantime flashed and vanished on every first open
-   * ([#9500](https://github.com/epam/ai-dial-chat/issues/9500)). The slot
-   * appears once, in its settled form.
-   *
-   * It reads `=== true` rather than defaulting the way `shouldShowUnpublish`
-   * does: a host that supplies no rule gets no up-front lookup, so holding
-   * the slot back would hide its menu until a hover that could never happen.
-   */
-  const isUnpublishPending =
-    !isReadonly &&
-    !!onOpenUnpublish &&
-    !isPublishHistoryResolved &&
-    isUnpublishVisible?.(item) === true;
-
-  /*
-   * "Publish" and "Unpublish" are mutually exclusive: the panel offers
-   * whichever one matches the item's current state, never both at once. An
-   * item with no published copy offers "Publish"; once history resolves to at
-   * least one published folder, "Unpublish" takes its place.
-   *
-   * This does hide a second publish of an already-published item (to another
-   * folder, or a re-publish of the same one). That is the trade the
-   * single-state action buys, and republishing stays reachable by unpublishing
-   * first.
-   *
-   * Because the history lookup is lazy (see `handleManageTriggerIntent` and
-   * `handlePublishTriggerIntent`), it can start as "Publish" and become
-   * "Unpublish" once the response arrives — which is why the lookup is fired
-   * on hover/focus of the trigger rather than on click, so it is usually
-   * settled before the action becomes visible.
-   */
-  const shouldShowPublish =
-    !isReadonly &&
-    !shouldShowUnpublish &&
-    (isPublishVisible?.(item) ??
-      (item.type === CatalogEntityType.Model ||
-        item.type === CatalogEntityType.Toolset ||
-        item.type === CatalogEntityType.Agent));
-
-  const shouldShowEditAction = !isReadonly && !!onEdit && !!item.isEditable;
-
-  /*
-   * Sharing is limited to entities the current user owns (deployments and
-   * toolsets in their personal space), not the whole catalog — anything else
-   * would offer an entry with no defined behavior. `ShareButton` applies the
-   * same rule itself, so this only gates the Manage-menu arrangement.
-   */
-  const shouldShowShareAction =
-    !isReadonly && item.isMyApp === true && (isShareVisible?.(item) ?? true);
-
-  /*
-   * Which surface each of Share and Publish lands on. The defaults are the
-   * historical arrangement — Share as its own button in the action row,
-   * Publish inside the Manage menu — and a host that wants the reverse flips
-   * one or both. Each action renders on exactly one of the two surfaces.
-   */
-  const isShareInActionRow = isSharePrimary?.(item) ?? true;
-  const isPublishInActionRow = isPublishPrimary?.(item) ?? false;
-
-  const authenticationType =
-    item.credentials?.authenticationType ?? ToolsetAuthenticationType.None;
-  const credentialsUiState =
-    item.credentials != null &&
-    authenticationType !== ToolsetAuthenticationType.None
-      ? getCredentialsUiState(item.credentials)
-      : undefined;
-  const shouldShowCredentialsAction =
-    !isReadonly && credentialsUiState != null && (!!onLogin || !!onLogout);
-  /* Toolsets have no "Use in chat" primary action, so the credentials
-   * button (Log in / Log out / manage) takes over as their primary,
-   * leading action instead. */
-  const isCredentialsActionPrimary =
-    item.type === CatalogEntityType.Toolset && shouldShowCredentialsAction;
-
-  const isDownloadActionEnabled =
-    !!onDownload && (isDownloadVisible?.(item) ?? true);
-  /* Credentials, where active, always keeps the primary slot ahead of Download. */
-  const isDownloadActionPrimary =
-    isDownloadActionEnabled &&
-    !isCredentialsActionPrimary &&
-    (isDownloadPrimary?.(item) ??
-      (item.type === CatalogEntityType.Skill && !shouldShowPrimaryAction));
-  /* A promoted Download renders in the primary slot only — never duplicated in the Manage menu. */
-  const shouldShowDownloadAction =
-    isDownloadActionEnabled && !isDownloadActionPrimary;
-  const shouldShowDeleteAction = !isReadonly && item.isMyApp;
-  /*
-   * The recipient-side "Remove from My List" action is the counterpart of
-   * Delete: it discards only the current user's own access, so it shows
-   * exclusively for items shared with them. `isMyApp` and `sharedWithMe` are
-   * mutually exclusive for a given item, so Delete and this action never
-   * render at the same time.
-   */
-  const shouldShowUnshareAction =
-    !isReadonly &&
-    !!onUnshare &&
-    item.isMyApp !== true &&
-    item.sharedWithMe === true &&
-    (isUnshareVisible?.(item) ?? true);
-  /*
-   * The owner-side counterpart: revoking removes *other people's* access to
-   * an item the caller owns, so it renders alongside Delete and never with
-   * "Remove from My List". It also stays hidden while nobody holds access —
-   * an action that would be a no-op is noise.
-   *
-   * The count is resolved when this menu opens rather than carried on the
-   * item, so it is never a stale snapshot from a list fetch (revoking once
-   * would otherwise leave the action offering to revoke again). Until it
-   * settles the entry is withheld; a lookup that cannot produce a number
-   * still shows it, so a transient failure never removes the only way to
-   * revoke.
-   */
-  const shouldShowRevokeShareAction =
-    !isReadonly &&
-    !!onRevokeShare &&
-    item.isMyApp === true &&
-    (!onFetchRecipientsCount ||
-      recipientsCountStatus === RecipientsCountStatus.Unknown ||
-      (recipientsCountStatus === RecipientsCountStatus.Resolved &&
-        (recipientsCount ?? 0) > 0)) &&
-    (isRevokeShareVisible?.(item) ?? true);
-
-  const manageActions = useMemo<ManageAction[]>(() => {
-    const items: ManageAction[] = [];
-    if (!isShareInActionRow && shouldShowShareAction) {
-      items.push({
-        key: 'share',
-        label: texts?.shareLabel ?? 'Share',
-        Icon: IconShare,
-        iconClassName: styles.manageMenuIcon,
-        onClick: handleShare,
-      });
-    }
-    if (shouldShowEditAction) {
-      items.push({
-        key: 'edit',
-        label: texts?.editActionLabel ?? 'Edit',
-        Icon: IconPencil,
-        iconClassName: styles.manageMenuIcon,
-        onClick: handleEdit,
-      });
-    }
-    if (shouldShowDownloadAction) {
-      items.push({
-        key: 'download',
-        label: texts?.downloadActionLabel ?? 'Download',
-        Icon: IconDownload,
-        iconClassName: styles.manageMenuIcon,
-        onClick: handleDownload,
-      });
-    }
-    if (!isPublishInActionRow && shouldShowPublish) {
-      items.push({
-        key: 'publish',
-        label: texts?.publishLabel ?? 'Publish',
-        Icon: IconWorldShare,
-        iconClassName: styles.manageMenuIcon,
-        onClick: handleOpenPublish,
-      });
-    }
-    if (!isPublishInActionRow && shouldShowUnpublish) {
-      /* Not `danger`: unpublishing removes a published copy but destroys
-       * nothing the owner holds — the source item is untouched and can be
-       * published again — so it sits with Edit/Download/Publish. */
-      items.push({
-        key: 'unpublish',
-        label: texts?.unpublishLabel ?? 'Unpublish',
-        Icon: IconWorldOff,
-        iconClassName: styles.manageMenuIcon,
-        onClick: handleOpenUnpublish,
-      });
-    }
-    if (shouldShowRevokeShareAction) {
-      const revokeShareLabel = texts?.revokeShareLabel ?? 'Revoke access';
-      const formatWithCount =
-        texts?.revokeShareLabelWithCount ??
-        ((count: number) => `${revokeShareLabel} (${count})`);
-      items.push({
-        key: 'revoke-share',
-        label:
-          recipientsCount == null
-            ? revokeShareLabel
-            : formatWithCount(recipientsCount),
-        Icon: IconUserOff,
-        danger: true,
-        onClick: handleRevokeShare,
-      });
-    }
-    if (shouldShowUnshareAction) {
-      items.push({
-        key: 'unshare',
-        label: texts?.unshareLabel ?? 'Remove from My List',
-        Icon: IconTrashX,
-        onClick: handleUnshare,
-      });
-    }
-    /* Last, and after the access actions: the destructive entry closes the
-     * menu so it is never the neighbour of something a misclick can reach. */
-    if (shouldShowDeleteAction) {
-      items.push({
-        key: 'delete',
-        label: texts?.deleteActionLabel ?? 'Delete',
-        Icon: IconTrashX,
-        danger: true,
-        onClick: handleDelete,
-      });
-    }
-    return items;
-  }, [
-    isShareInActionRow,
-    shouldShowShareAction,
-    shouldShowEditAction,
-    shouldShowDownloadAction,
-    isPublishInActionRow,
-    shouldShowPublish,
-    shouldShowUnpublish,
-    shouldShowDeleteAction,
-    shouldShowRevokeShareAction,
-    recipientsCount,
-    shouldShowUnshareAction,
+  const visibility = resolveHeaderActionVisibility({
+    item,
     texts,
+    isReadonly,
+    isPrimaryActionVisible,
+    onOpenUnpublish,
+    hasPublishedFolders,
+    isUnpublishVisible,
+    isPublishHistoryResolved,
+    isPublishVisible,
+    onEdit,
+    isShareVisible,
+    isSharePrimary,
+    isPublishPrimary,
+    onLogin,
+    onLogout,
+    onDownload,
+    isDownloadVisible,
+    isDownloadPrimary,
+    onUnshare,
+    isUnshareVisible,
+    onRevokeShare,
+    onFetchRecipientsCount,
+    isRevokeShareVisible,
+    recipientsCountStatus,
+    recipientsCount,
+  });
+  const {
+    shouldShowPrimaryAction,
+    shouldShowUnpublish,
+    isUnpublishPending,
+    shouldShowPublish,
+    shouldShowShareAction,
+    isShareInActionRow,
+    isPublishInActionRow,
+    authenticationType,
+    credentialsUiState,
+    shouldShowCredentialsAction,
+    isCredentialsActionPrimary,
+    isDownloadActionPrimary,
+    isApiKeyConfigured,
+    isOAuthLogoutState,
+  } = visibility;
+
+  const { manageItems, promotedManageAction } = useManageActions({
+    visibility,
+    texts,
+    detailsStyles,
+    recipientsCount,
+    isManageMenuOpen,
     handleShare,
     handleEdit,
     handleDownload,
@@ -754,326 +273,18 @@ export const Header: FC<HeaderProps> = ({
     handleDelete,
     handleRevokeShare,
     handleUnshare,
-  ]);
+  });
 
-  const manageMenuIcon = detailsStyles?.colors?.manageMenuIcon;
-  const manageMenuIconVars = useMemo(
-    () => buildCssVars({ '--cat-details-manage-menu-icon': manageMenuIcon }),
-    [manageMenuIcon],
-  );
-  const manageItems = useMemo<DropdownItem[]>(
-    () =>
-      manageActions.map(
-        ({ key, label, Icon, iconClassName, danger, onClick }) => ({
-          key,
-          label,
-          icon: (
-            <Icon
-              size={DIAL_ICON_SIZE.SM}
-              aria-hidden
-              className={iconClassName}
-              style={manageMenuIconVars}
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          ),
-          danger,
-          onClick,
-        }),
-      ),
-    [manageActions, manageMenuIconVars],
-  );
-
-  /*
-   * An overflow menu holding a single entry costs a click for nothing and
-   * leaves the header looking empty until it is opened — which is how a
-   * read-only shared item, whose only surviving action is "Remove from My
-   * List", ended up with no visible action at all ([#8989](https://github.com/epam/ai-dial-chat/issues/8989)). So the last
-   * action standing is rendered as a button in the action row instead.
-   *
-   * Two entries resolve lazily off the Manage trigger, and the trigger is
-   * what starts their lookups: "Unpublish" needs the publish history and
-   * "Revoke access" needs the recipient count. An item that could produce
-   * either keeps its menu whatever the lookup eventually says, because the
-   * decision has to hold still — gating on the pending state instead would
-   * turn the button back into a kebab under the pointer that was reaching
-   * for it, the hover having settled the lookup on the way in.
-   *
-   * "Unpublish" is released from that hold once the history has settled for
-   * an item the host affirmatively calls unpublishable, because the details
-   * panel resolves those up front rather than on hover. That is what lets an
-   * Organization copy, whose only action is "Unpublish", show it as a button
-   * ([#8989](https://github.com/epam/ai-dial-chat/issues/8989)). A host with no unpublish rule gets no up-front lookup, so its
-   * items keep the hold.
-   */
-  const isUnpublishRuleAffirmed = isUnpublishVisible?.(item);
-  const mayGainUnpublishEntry =
-    !isReadonly &&
-    !!onOpenUnpublish &&
-    (isUnpublishRuleAffirmed == null ||
-      (isUnpublishRuleAffirmed && !isPublishHistoryResolved));
-  const mayGainRevokeShareEntry =
-    !isReadonly &&
-    !!onRevokeShare &&
-    !!onFetchRecipientsCount &&
-    item.isMyApp === true &&
-    (isRevokeShareVisible?.(item) ?? true);
-  /*
-   * Never while the menu is open either. The set can still shrink to one
-   * from a prop the host resolves late, and promoting then unmounts the
-   * trigger the open overlay hangs from, taking the overlay with it.
-   */
-  const promotedManageAction =
-    manageActions.length === 1 &&
-    !isManageMenuOpen &&
-    !mayGainUnpublishEntry &&
-    !mayGainRevokeShareEntry
-      ? manageActions[0]
-      : undefined;
-
-  const [isApiKeyOverlayOpen, setIsApiKeyOverlayOpen] = useState(false);
-
-  /* API-key auth resolves to a popover trigger for every state except the
-   * admin's "Manage API keys", which opens the dedicated sub-screen. */
-  const isApiKeyOverlayTrigger =
-    authenticationType === ToolsetAuthenticationType.ApiKey &&
-    credentialsUiState !== CredentialsUiState.ManageCredentials;
-  const apiKeyOverlayLevel =
-    item.credentials != null
-      ? getDirectCredentialsLevel(item.credentials)
-      : CredentialsLevel.User;
-  /* Once a personal API key is on file, the trigger drops from the
-   * call-to-action (primary) look to the same low-emphasis style as Share —
-   * matching the design's "Change API key" state. */
-  const isApiKeyConfigured =
-    authenticationType === ToolsetAuthenticationType.ApiKey &&
-    credentialsUiState === CredentialsUiState.LogOut;
-  const isOAuthLoginLogoutButton =
-    authenticationType !== ToolsetAuthenticationType.ApiKey &&
-    credentialsUiState !== CredentialsUiState.ManageCredentials;
-  const isOAuthLogoutState =
-    isOAuthLoginLogoutButton &&
-    credentialsUiState === CredentialsUiState.LogOut;
-
-  const handleCredentialsClick = useCallback(() => {
-    if (credentialsUiState === CredentialsUiState.ManageCredentials) {
-      onOpenCredentialsManagement?.();
-      return;
-    }
-    if (isApiKeyOverlayTrigger) {
-      setIsApiKeyOverlayOpen((prev) => !prev);
-      return;
-    }
-    if (credentialsUiState === CredentialsUiState.LogOut) {
-      onRequestLogout?.();
-      return;
-    }
-    /* OAuth "Log in" outside the admin states has no level chooser: a public
-     * toolset signs in personally (`USER`), a private one at the owner's own
-     * `GLOBAL` level. The org-fallback nudge is conveyed by the banner below
-     * the header, not by the button's wording. */
-    if (item.credentials == null) return;
-    onLogin?.(item, { level: getDirectCredentialsLevel(item.credentials) });
-  }, [
-    credentialsUiState,
-    isApiKeyOverlayTrigger,
+  const credentialsButtonProps = {
     item,
+    authenticationType,
+    credentialsUiState,
     onLogin,
+    onLogout,
     onOpenCredentialsManagement,
     onRequestLogout,
-  ]);
-
-  const credentialsLabel = (() => {
-    if (credentialsUiState === CredentialsUiState.ManageCredentials) {
-      return (
-        texts?.manageCredentialsActionLabel ??
-        defaultManageCredentialsActionLabel
-      )(authenticationType);
-    }
-    if (authenticationType === ToolsetAuthenticationType.ApiKey) {
-      return credentialsUiState === CredentialsUiState.LogOut
-        ? (texts?.changeApiKeyActionLabel ?? 'Change API key')
-        : (texts?.apiKeyActionLabel ?? 'API key');
-    }
-    return credentialsUiState === CredentialsUiState.LogOut
-      ? (texts?.logoutActionLabel ?? 'Log out')
-      : (texts?.loginActionLabel ?? 'Log in');
-  })();
-
-  const credentialsIconBefore = (() => {
-    if (credentialsUiState === CredentialsUiState.ManageCredentials) {
-      return <IconKey size={DIAL_ICON_SIZE.MD} stroke={DIAL_KIT_ICON_STROKE} />;
-    }
-    if (authenticationType === ToolsetAuthenticationType.ApiKey) {
-      return <IconKey size={DIAL_ICON_SIZE.MD} stroke={DIAL_KIT_ICON_STROKE} />;
-    }
-    return credentialsUiState === CredentialsUiState.LogOut ? (
-      <IconLogout size={DIAL_ICON_SIZE.MD} stroke={DIAL_KIT_ICON_STROKE} />
-    ) : (
-      <IconLogin size={DIAL_ICON_SIZE.MD} stroke={DIAL_KIT_ICON_STROKE} />
-    );
-  })();
-
-  const credentialsIconAfter =
-    credentialsUiState === CredentialsUiState.ManageCredentials ? (
-      <IconArrowRight
-        size={DIAL_ICON_SIZE.MD}
-        className="rtl:scale-x-[-1]"
-        stroke={DIAL_KIT_ICON_STROKE}
-      />
-    ) : isApiKeyOverlayTrigger ? (
-      <IconChevronDown size={DIAL_ICON_SIZE.MD} stroke={DIAL_KIT_ICON_STROKE} />
-    ) : undefined;
-
-  const renderCredentialsButton = (
-    ButtonComponent: typeof PrimaryButton | typeof NeutralButton,
-  ) => {
-    const button = (
-      <ButtonComponent
-        label={credentialsLabel}
-        iconBefore={credentialsIconBefore}
-        iconAfter={credentialsIconAfter}
-        onClick={handleCredentialsClick}
-        aria-expanded={isApiKeyOverlayTrigger ? isApiKeyOverlayOpen : undefined}
-      />
-    );
-    if (!isApiKeyOverlayTrigger || item.credentials == null) {
-      return button;
-    }
-    return (
-      <Dropdown
-        placement="bottom-start"
-        matchReferenceWidth={false}
-        open={isApiKeyOverlayOpen}
-        onOpenChange={setIsApiKeyOverlayOpen}
-        trigger={[]}
-        outsideClosable
-        /* A form panel, not a menu; the kit derives the trigger's
-         * `aria-haspopup="dialog"` from this role. */
-        overlayRole={DropdownOverlayRole.Dialog}
-        overlayAriaLabel={texts?.personalApiKeyPanelTitle ?? 'Personal API key'}
-        renderOverlay={() => (
-          <CredentialsApiKeyOverlay
-            item={item}
-            level={apiKeyOverlayLevel}
-            status={
-              apiKeyOverlayLevel === CredentialsLevel.User
-                ? item.credentials?.userStatus
-                : item.credentials?.globalStatus
-            }
-            apiKeyAddedWhen={
-              apiKeyOverlayLevel === CredentialsLevel.User
-                ? item.credentials?.userApiKeyAddedWhen
-                : item.credentials?.globalApiKeyAddedWhen
-            }
-            apiKeyHeader={item.credentials?.apiKeyHeader}
-            onLogin={onLogin}
-            onLogout={onLogout}
-            onClose={() => setIsApiKeyOverlayOpen(false)}
-            texts={texts}
-            colors={detailsStyles?.colors}
-            typography={detailsStyles?.typography}
-          />
-        )}
-      >
-        {button}
-      </Dropdown>
-    );
-  };
-
-  /*
-   * The action-row form of a promoted Manage entry. Share is the one that
-   * cannot be drawn generically: its popover anchors to the trigger, which
-   * is what `ShareButton` — the same component the row already uses when
-   * `isSharePrimary` puts Share there — exists to do. Delete accompanies
-   * Share on every item that offers it today, so that branch is a guard
-   * rather than a live path; it keeps the rule total if the two ever come
-   * apart.
-   */
-  const renderPromotedManageAction = ({
-    key,
-    label,
-    Icon,
-    danger,
-    onClick,
-  }: ManageAction): ReactNode => {
-    if (key === 'share') {
-      return (
-        <ShareButton
-          item={item}
-          onShare={onShare}
-          shareOverlay={shareOverlay}
-          isShareVisible={isShareVisible}
-          label={texts?.shareLabel}
-        />
-      );
-    }
-    /* A destructive entry keeps the weight the menu gave it: dropping the
-     * danger styling on the way to the row would quietly make Delete look
-     * like Edit. */
-    const ButtonComponent = danger ? DangerButton : NeutralButton;
-    return (
-      <ButtonComponent
-        label={label}
-        iconBefore={
-          <Icon
-            size={DIAL_ICON_SIZE.MD}
-            aria-hidden
-            stroke={DIAL_KIT_ICON_STROKE}
-          />
-        }
-        onClick={onClick}
-      />
-    );
-  };
-
-  const renderManageMenu = (): ReactNode => {
-    const menu = (
-      <Dropdown
-        items={manageItems}
-        placement="bottom-end"
-        matchReferenceWidth={false}
-        onOpenChange={handleManageOpenChange}
-      >
-        {/* Hover and focus start the recipient-count and publish-history
-         * lookups before the click lands, so the "Revoke access" entry — and
-         * the publish button's own state — are usually already settled by the
-         * time the menu opens. */}
-        <NeutralIconButton
-          icon={
-            <IconDots
-              size={DIAL_ICON_SIZE.LG}
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          }
-          aria-label={texts?.manageActionLabel ?? 'Manage'}
-          aria-haspopup="menu"
-          onMouseEnter={handleManageTriggerIntent}
-          onFocus={handleManageTriggerIntent}
-        />
-      </Dropdown>
-    );
-    if (isShareInActionRow || !shareOverlay || !shouldShowShareAction) {
-      return menu;
-    }
-    /* With Share inside the menu, its popover is anchored to this trigger
-     * instead: the entry that opens it is unmounted by the time the popover
-     * appears, so it has no node of its own to hang from. */
-    return (
-      <Dropdown
-        placement="bottom-end"
-        matchReferenceWidth={false}
-        open={isShareOverlayOpen}
-        onOpenChange={setIsShareOverlayOpen}
-        trigger={[]}
-        outsideClosable
-        /* The host's share popover carries its own `dialog` role. */
-        overlayRole={DropdownOverlayRole.None}
-        renderOverlay={() => shareOverlay(item, handleCloseShareOverlay)}
-      >
-        {menu}
-      </Dropdown>
-    );
+    texts,
+    detailsStyles,
   };
 
   /*
@@ -1114,12 +325,16 @@ export const Header: FC<HeaderProps> = ({
       />
       {hasActionRowContent && (
         <div className="flex flex-wrap items-center gap-2 ps-[60px]">
-          {isCredentialsActionPrimary &&
-            renderCredentialsButton(
-              isApiKeyConfigured || isOAuthLogoutState
-                ? NeutralButton
-                : PrimaryButton,
-            )}
+          {isCredentialsActionPrimary && (
+            <HeaderCredentialsButton
+              buttonComponent={
+                isApiKeyConfigured || isOAuthLogoutState
+                  ? NeutralButton
+                  : PrimaryButton
+              }
+              {...credentialsButtonProps}
+            />
+          )}
           {shouldShowPrimaryAction && (
             <PrimaryButton
               label={texts?.primaryActionLabel ?? 'Use in chat'}
@@ -1198,13 +413,30 @@ export const Header: FC<HeaderProps> = ({
               onFocus={handlePublishTriggerIntent}
             />
           )}
-          {shouldShowCredentialsAction &&
-            !isCredentialsActionPrimary &&
-            renderCredentialsButton(NeutralButton)}
-          {!isUnpublishPending &&
-            (promotedManageAction
-              ? renderPromotedManageAction(promotedManageAction)
-              : manageItems.length > 0 && renderManageMenu())}
+          {shouldShowCredentialsAction && !isCredentialsActionPrimary && (
+            <HeaderCredentialsButton
+              buttonComponent={NeutralButton}
+              {...credentialsButtonProps}
+            />
+          )}
+          {!isUnpublishPending && (
+            <HeaderManageSlot
+              item={item}
+              promotedManageAction={promotedManageAction}
+              manageItems={manageItems}
+              onManageOpenChange={handleManageOpenChange}
+              onManageTriggerIntent={handleManageTriggerIntent}
+              isShareInActionRow={isShareInActionRow}
+              shouldShowShareAction={shouldShowShareAction}
+              shareOverlay={shareOverlay}
+              isShareOverlayOpen={isShareOverlayOpen}
+              onShareOverlayOpenChange={setIsShareOverlayOpen}
+              onCloseShareOverlay={handleCloseShareOverlay}
+              onShare={onShare}
+              isShareVisible={isShareVisible}
+              texts={texts}
+            />
+          )}
         </div>
       )}
     </div>
