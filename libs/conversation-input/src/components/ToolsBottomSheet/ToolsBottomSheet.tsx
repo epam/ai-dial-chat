@@ -2,8 +2,8 @@ import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import type { ToolMenuItem } from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
-  Button,
   DIAL_KIT_ICON_STROKE,
+  MenuItem,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import type { CSSProperties, FC } from 'react';
@@ -76,40 +76,41 @@ export const ToolsBottomSheet: FC<ToolsBottomSheetProps> = ({
       backLabel={backLabel}
       style={style}
     >
-      <ul role="menu" className="flex flex-col pb-4" style={cssVars}>
+      <div
+        role="menu"
+        aria-label={title}
+        className="flex flex-col px-2 pb-4"
+        style={cssVars}
+      >
         {items.map((item) => (
-          <li key={item.id} role="none">
-            <Button
-              type="button"
-              role="menuitemcheckbox"
-              aria-checked={item.isSelected}
-              className="w-full gap-3 px-4 py-[10px] text-start"
-              iconBefore={
-                <span
-                  className={mergeClasses('flex items-center', styles.icon)}
-                >
-                  {item.icon}
+          /* The check goes in `trailing` rather than `mark`, so its color
+             keeps coming from the `--tbs-selected-icon-text` hook. */
+          <MenuItem
+            key={item.id}
+            role="menuitemcheckbox"
+            aria-checked={item.isSelected}
+            icon={
+              <span className={mergeClasses('flex items-center', styles.icon)}>
+                {item.icon}
+              </span>
+            }
+            label={item.label}
+            labelClassName={itemLabelClassName}
+            trailing={
+              item.isSelected ? (
+                <span className={mergeClasses('flex', styles.selectedIcon)}>
+                  <IconCheck
+                    size={BASE_ICON_SIZE}
+                    aria-hidden
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
                 </span>
-              }
-              iconAfter={
-                item.isSelected ? (
-                  <span
-                    className={mergeClasses('ms-auto', styles.selectedIcon)}
-                  >
-                    <IconCheck
-                      size={BASE_ICON_SIZE}
-                      aria-hidden
-                      stroke={DIAL_KIT_ICON_STROKE}
-                    />
-                  </span>
-                ) : null
-              }
-              label={<span className={itemLabelClassName}>{item.label}</span>}
-              onClick={() => onToolToggle(item.id)}
-            />
-          </li>
+              ) : undefined
+            }
+            onClick={() => onToolToggle(item.id)}
+          />
         ))}
-      </ul>
+      </div>
     </BottomSheetShell>
   );
 };

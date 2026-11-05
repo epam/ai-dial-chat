@@ -172,6 +172,7 @@ const ScheduledTasksPage: FC = () => {
       noResultsDescription: t(BasicI18nKeys.NoResultsDescription),
       errorLabel: t(ScheduledTasksI18nKeys.ListErrorLabel),
       retryLabel: t(ButtonsI18nKeys.Retry),
+      loadingAriaLabel: t(BasicI18nKeys.Loading),
       loadingMoreLabel: t(ScheduledTasksI18nKeys.ListLoadingMoreLabel),
       loadMoreErrorLabel: t(ScheduledTasksI18nKeys.ListLoadMoreErrorLabel),
       cardLabels: {

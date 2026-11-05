@@ -27,7 +27,7 @@ It already includes the styles of the publish flow from `@epam/ai-dial-publish-p
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.72 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.16.0 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 
 `ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
@@ -88,6 +88,7 @@ import { DeploymentSelectorField } from '@epam/ai-dial-catalog';
     emptyLabel: 'No models',
     errorLabel: 'Could not load models',
     browseLabel: 'Browse',
+    panelAriaLabel: 'Select model',
   }}
   labelledById="model-label"
   onSelect={setSelectedId}
@@ -104,7 +105,10 @@ also supply a decorative `icon` and a `description`, both rendered in the row.
 `renderPanel(onClose)` replaces the default searchable list. The resulting panel
 is passed to `renderOverlay(panel, open, onClose)` when a host supplies a sheet;
 otherwise it appears in the default dropdown. These slots compose together.
-Pass `ariaHasPopup="dialog"` for a sheet (the default is `"listbox"`). The same
+The default dropdown is a `dialog` named by `labels.panelAriaLabel` (default
+`'Select model'`), and its trigger reports `aria-haspopup="dialog"`.
+`ariaHasPopup` applies to a `renderOverlay` sheet only: pass `"dialog"` for a
+sheet (the default is `"listbox"`). The same
 field handles selection display, disabled state and keyboard/pointer activation
 in both layouts; favorites and catalog integration remain host-owned panel content.
 
@@ -481,6 +485,11 @@ const searchInputRef = useRef<HTMLInputElement>(null);
   searchInputRef={searchInputRef}
 />;
 ```
+
+#### Loading
+
+While `isLoading` is set, `Catalog` renders only a `Spinner` named by
+`titles.loadingLabel` (default `'Loading…'`).
 
 ### CardGrid
 

@@ -14,7 +14,9 @@ import {
   derivePublishState,
   PublishFooter,
   PublishPanel,
+  PublishPanelView,
   usePublishFlow,
+  usePublishFolderView,
 } from '@epam/ai-dial-publish-panel';
 import {
   ConfirmationPopupVariant,
@@ -816,6 +818,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     setIsPublishOpen(false);
     publishFlow.reset();
   }, [publishFlow]);
+  const publishFolderView = usePublishFolderView({
+    isOpen: isPublishOpen,
+    selectedFolderPath: publishFlow.selectedFolderPath,
+    onSelectedFolderPathChange: publishFlow.setSelectedFolderPath,
+  });
+  const isPublishFolderView =
+    publishFolderView.view === PublishPanelView.ChangeFolder;
   const handleSubmitPublish = useCallback(async () => {
     const isSuccess = await publishFlow.handleSubmit();
     if (isSuccess) {
@@ -1071,9 +1080,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     }
     if (isPublishOpen) {
       return {
-        title: publishTitle,
+        title: isPublishFolderView
+          ? (texts?.publishChangeFolderTitle ?? 'Change folder')
+          : publishTitle,
         isBackDisabled: publishFlow.isSubmitting,
-        onBack: handleClosePublish,
+        onBack: isPublishFolderView
+          ? publishFolderView.backToMain
+          : handleClosePublish,
       };
     }
     if (isCredentialsManagementOpen) {
@@ -1194,9 +1207,12 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 type: item.type,
                 iconUrl: item.iconUrl,
               }}
+              view={publishFolderView.view}
+              onChangeFolderClick={publishFolderView.openFolderView}
               folderItems={publishFlow.folderItems}
               selectedFolderPath={publishFlow.selectedFolderPath}
-              onSelectedFolderPathChange={publishFlow.setSelectedFolderPath}
+              pendingFolderPath={publishFolderView.pendingFolderPath}
+              onPendingFolderPathChange={publishFolderView.setPendingFolderPath}
               onCreateFolder={publishFlow.handleCreateFolder}
               expandedPaths={publishExpandedPaths}
               onExpandedPathsChange={onPublishExpandedPathsChange}
@@ -1222,14 +1238,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               isRulesLoading={publishFlow.isRulesLoading}
               hasRulesLoadError={publishFlow.hasRulesLoadError}
               labels={publishLabels}
-              styles={{
-                colors: {
-                  summaryVersionTagBorder: detailsColors?.versionTagBorder,
-                  summaryVersionTagBackground:
-                    detailsColors?.versionTagBackground,
-                  summaryVersionTagText: detailsColors?.versionTagText,
-                },
-              }}
             />
           </div>
         )}
@@ -1441,8 +1449,15 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           allowReplace={CATALOG_PUBLISH_ALLOWS_REPLACE}
           isSubmitDisabled={publishDerived.isSubmitDisabled}
           isSubmitLoading={publishDerived.isSubmitLoading}
-          onCancel={handleClosePublish}
+          onCancel={
+            isPublishFolderView
+              ? publishFolderView.backToMain
+              : handleClosePublish
+          }
           onSubmit={handleSubmitPublish}
+          view={publishFolderView.view}
+          onSelectFolder={publishFolderView.selectFolder}
+          isSelectFolderDisabled={publishFolderView.pendingFolderPath == null}
           labels={publishLabels}
         />
       )}

@@ -6,6 +6,7 @@ import {
   NeutralButton,
 } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
+import { PublishPanelView } from '../../types/publish-panel';
 import styles from './PublishFooter.module.scss';
 
 /** Text overrides for all user-visible strings in {@link PublishFooter}. */
@@ -18,6 +19,8 @@ export interface PublishFooterLabels {
   updateLabel?: string;
   /** Submit button label while the request is in flight. Default: `'Publishing…'`. */
   publishingInProgressLabel?: string;
+  /** Confirm button label in the folder view. Default: `'Select'`. */
+  selectFolderLabel?: string;
 }
 
 /** Props for {@link PublishFooter}. */
@@ -36,6 +39,12 @@ export interface PublishFooterProps {
   onCancel: () => void;
   /** Called when the user confirms the publish/update action. */
   onSubmit: () => void;
+  /** Which panel view the footer serves; the folder view shows Cancel and Select. Default: `PublishPanelView.Main`. */
+  view?: PublishPanelView;
+  /** Called when the user confirms the folder picked in the folder view. */
+  onSelectFolder?: () => void;
+  /** Whether Select is disabled in the folder view. Default: `false`. */
+  isSelectFolderDisabled?: boolean;
   /** Text overrides for all user-visible strings. */
   labels?: PublishFooterLabels;
   /** Color overrides. */
@@ -48,7 +57,7 @@ export interface PublishFooterColors {
   border?: string;
 }
 
-/** Action row for the Publish flow: pinned Cancel and Publish/Update buttons. */
+/** Action row for the Publish flow: pinned Cancel and Publish/Update buttons, or Cancel and Select in the folder view. */
 export const PublishFooter: FC<PublishFooterProps> = ({
   version,
   hasExistingPublicationInFolder,
@@ -57,6 +66,9 @@ export const PublishFooter: FC<PublishFooterProps> = ({
   isSubmitLoading,
   onCancel,
   onSubmit,
+  view = PublishPanelView.Main,
+  onSelectFolder,
+  isSelectFolderDisabled = false,
   labels = {},
   colors,
 }) => {
@@ -69,7 +81,9 @@ export const PublishFooter: FC<PublishFooterProps> = ({
     publishDefaultLabel = 'Publish',
     updateLabel = 'Update version {version}',
     publishingInProgressLabel = 'Publishing…',
+    selectFolderLabel = 'Select',
   } = labels;
+  const isFolderView = view === PublishPanelView.ChangeFolder;
 
   const submitLabel = (() => {
     if (isSubmitLoading) {
@@ -97,15 +111,29 @@ export const PublishFooter: FC<PublishFooterProps> = ({
         disabled={isSubmitLoading}
         onClick={onCancel}
       />
-      <NeutralButton
-        label={submitLabel}
-        className="mobile:flex-1"
-        disabled={isSubmitDisabled}
-        iconBefore={
-          isSubmitLoading ? <Spinner size={DIAL_ICON_SIZE.SM} /> : undefined
-        }
-        onClick={onSubmit}
-      />
+      {isFolderView ? (
+        <NeutralButton
+          label={selectFolderLabel}
+          className="mobile:flex-1"
+          disabled={isSelectFolderDisabled}
+          onClick={onSelectFolder}
+        />
+      ) : (
+        <NeutralButton
+          label={submitLabel}
+          className="mobile:flex-1"
+          disabled={isSubmitDisabled}
+          iconBefore={
+            /* The button's own label already reads `publishingInProgressLabel`; hide the spinner's English status name. */
+            isSubmitLoading ? (
+              <span aria-hidden>
+                <Spinner size={DIAL_ICON_SIZE.SM} />
+              </span>
+            ) : undefined
+          }
+          onClick={onSubmit}
+        />
+      )}
     </div>
   );
 };

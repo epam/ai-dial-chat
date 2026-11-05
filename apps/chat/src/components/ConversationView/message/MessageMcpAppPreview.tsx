@@ -8,6 +8,7 @@ import type { ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AttachmentCanvasI18nKeys,
+  BasicI18nKeys,
   ButtonsI18nKeys,
 } from '../../../constants/translation-keys';
 import type { ConversationMessageItemProps } from '../ConversationMessageItem';
@@ -53,6 +54,7 @@ const MessageMcpAppPreview: FC<MessageMcpAppPreviewProps> = ({
       expandAriaLabel={t(AttachmentCanvasI18nKeys.ExpandAppLabel)}
       reloadAriaLabel={t(ButtonsI18nKeys.Reload)}
       loadErrorLabel={t(AttachmentCanvasI18nKeys.McpAppLoadErrorLabel)}
+      loadingAriaLabel={t(BasicI18nKeys.Loading)}
       isOpenedInCanvas={isMcpAppOpenedInCanvas}
       openedInCanvasLabel={openedInCanvasLabel ?? 'Opened in canvas'}
     />

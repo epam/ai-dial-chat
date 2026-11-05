@@ -129,6 +129,7 @@ const project: ProjectDetailsDto = {
   contentVersion: '"cv1"',
   conversationCount: 3,
   canEdit: true,
+  canManage: true,
 };
 
 const open = (kind: PinnedProjectActionKind): PinnedProjectActionState => ({
@@ -185,6 +186,17 @@ describe('PinnedProjectActionOverlays', () => {
     const panel = screen.getByRole('dialog', { name: 'publish project' });
     expect(panel.getAttribute('data-open')).toBe('true');
     expect(screen.getByText('buttons.moreActions')).toBeTruthy();
+  });
+
+  it('does not mount the publish panel for a caller who does not manage the project', () => {
+    renderOverlays({
+      action: open(PinnedProjectActionKind.Publish),
+      project: { ...project, canManage: false },
+    });
+
+    expect(
+      screen.queryByRole('dialog', { name: 'publish project' }),
+    ).toBeNull();
   });
 
   it('keeps the publish panel mounted while it slides out', () => {

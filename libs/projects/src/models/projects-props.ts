@@ -5,7 +5,7 @@ import type { ProjectItem } from './project-item';
 
 /** Localized labels used by the {@link Projects} component. */
 export interface ProjectsLabels {
-  /** Page title, e.g. "All projects". */
+  /** Page title, e.g. "Projects". */
   title: string;
   /** One-line description shown beneath the title. Omitted when not set. */
   subtitle?: string;
@@ -31,6 +31,8 @@ export interface ProjectsLabels {
   incompleteLabel: string;
   /** Label of the retry action shown when loading failed. */
   retryLabel: string;
+  /** Accessible label of the loading spinner. Defaults to `'Loading projects'`. */
+  loadingAriaLabel?: string;
   /** Label of each project source, the first segment of a card's folder path. */
   sourceLabels: Record<ProjectSource, string>;
   /** Accessible name of a card's folder path, e.g. "Project location". */

@@ -83,6 +83,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     mathScrollRegionAriaLabel,
     ooxmlHighlightsLabel,
     ooxmlHighlightNavigatedLabel,
+    loadingLabel,
   },
   onDownload,
   onCopyText,
@@ -455,6 +456,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           mathScrollRegionAriaLabel,
           ooxmlHighlightsLabel,
           ooxmlHighlightNavigatedLabel,
+          loadingLabel,
         }}
         styles={bodyStylesProp}
         codeBlockTheme={codeBlockTheme}

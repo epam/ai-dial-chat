@@ -16,6 +16,8 @@ import type { SessionUser } from '../../auth/session/session.types';
 import type { ConversationService } from '../../conversations/conversation.service';
 import type { ProjectConversationStore } from '../../conversations/persistence/project-conversation.store';
 import { ConversationCompletionsResponder } from '../../conversations/streaming/conversation-completions.responder';
+import type { DialClientService } from '../../dial/dial-client.service';
+import { ProjectAccessService } from '../access/project-access.service';
 import type { ProjectConversationsListService } from '../conversations/project-conversations-list.service';
 import { ProjectConversationsController } from '../conversations/project-conversations.controller';
 import { ProjectConversationsService } from '../conversations/project-conversations.service';
@@ -37,9 +39,11 @@ describe('ProjectConversationsController', () => {
     saveConversation: vi.fn(),
     renameConversation: vi.fn(),
     deleteConversation: vi.fn(),
-    assertOwner: vi.fn(),
     resolveCompletionLocator: vi.fn(),
     markViewed: vi.fn(),
+  };
+  const access = {
+    assertCanWrite: vi.fn(async () => undefined),
   };
 
   beforeEach(async () => {
@@ -49,6 +53,7 @@ describe('ProjectConversationsController', () => {
       providers: [
         { provide: ProjectConversationsService, useValue: service },
         { provide: ConversationCompletionsResponder, useValue: {} },
+        { provide: ProjectAccessService, useValue: access },
       ],
     })
       .overrideGuard(FeatureGuard)
@@ -237,7 +242,23 @@ describe('ProjectConversationsController', () => {
 });
 
 describe('ProjectConversationsService', () => {
-  const makeService = () => {
+  const makeService = (sharedPermissions: string[] = ['READ']) => {
+    const getSharedResources = vi.fn(async () => ({
+      data: {
+        resources: [
+          {
+            nodeType: 'ITEM',
+            url: 'projects/z9y8x7/research',
+            permissions: sharedPermissions,
+          },
+        ],
+      },
+      error: undefined,
+      response: { status: 200 },
+    }));
+    const dialClient = {
+      client: { getSharedResources },
+    } as unknown as DialClientService;
     const conversationService = {
       getConversation: vi.fn(),
       saveClientConversation: vi.fn(async () => ({ id: LOCATOR })),
@@ -275,7 +296,9 @@ describe('ProjectConversationsService', () => {
         store as unknown as ProjectConversationStore,
         listService as unknown as ProjectConversationsListService,
         readState as never,
+        new ProjectAccessService(dialClient),
       ),
+      getSharedResources,
       conversationService,
       store,
       listService,
@@ -419,8 +442,8 @@ describe('ProjectConversationsService', () => {
     expect(readState.markProjectConversationViewed).not.toHaveBeenCalled();
   });
 
-  it('refuses every write outside the caller bucket', async () => {
-    const { service, store } = makeService();
+  it('refuses every write by a view-only recipient', async () => {
+    const { service, store } = makeService(['READ']);
     const shared = parseProjectId('projects/z9y8x7/research')!;
 
     await expect(
@@ -436,6 +459,55 @@ describe('ProjectConversationsService', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
     expect(store.saveConversation).not.toHaveBeenCalled();
     expect(store.deleteConversation).not.toHaveBeenCalled();
+  });
+
+  it('lets a recipient with WRITE create a chat and delete one the owner started', async () => {
+    const { service, store, getSharedResources } = makeService([
+      'READ',
+      'WRITE',
+    ]);
+    const shared = parseProjectId('projects/z9y8x7/research');
+    if (shared == null) throw new Error('Invalid project id');
+
+    const created = await service.createConversation(
+      shared,
+      { firstMessage: 'Hi', deploymentId: 'gpt-4o' },
+      't',
+      'a1b2c3',
+    );
+    await service.deleteConversation(shared, 'gpt-4o__Owner__1', 't', 'a1b2c3');
+
+    expect(created.id).toMatch(/^projects\/z9y8x7\/research\/conversations\//);
+    expect(store.deleteConversation).toHaveBeenCalledWith(
+      'projects/z9y8x7/research/conversations/gpt-4o__Owner__1',
+      't',
+    );
+    expect(getSharedResources).toHaveBeenCalledTimes(2);
+  });
+
+  it('refuses a write to an organization project without asking DIAL Core', async () => {
+    const { service, store, getSharedResources } = makeService();
+    const organization = parseProjectId('projects/public/handbook');
+    if (organization == null) throw new Error('Invalid project id');
+
+    await expect(
+      service.createConversation(
+        organization,
+        { firstMessage: 'Hi', deploymentId: 'gpt-4o' },
+        't',
+        'a1b2c3',
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(getSharedResources).not.toHaveBeenCalled();
+    expect(store.saveConversation).not.toHaveBeenCalled();
+  });
+
+  it('writes an owned project without asking DIAL Core for permissions', async () => {
+    const { service, getSharedResources } = makeService();
+
+    await service.deleteConversation(PROJECT, 'x', 't', 'a1b2c3');
+
+    expect(getSharedResources).not.toHaveBeenCalled();
   });
 
   it('resolves a completion path only inside the addressed project', () => {

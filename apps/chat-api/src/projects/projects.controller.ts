@@ -86,9 +86,13 @@ const IF_MATCH_HEADER_DOC = {
     'The single `contentVersion` of the project the caller read from `GET /api/v1/projects/:id` (not its `etag`, which every project conversation write changes). A stale value yields 409 project-changed; a missing one, `*` or a comma-separated list, 428.',
 };
 
-/** Swagger description of `403` on the owner-only writes. */
+/** Swagger description of `403` on the owner-only delete. */
 const OWNER_ONLY_FORBIDDEN =
   "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access";
+
+/** Swagger description of `403` on a save, which an editor may make without renaming. */
+const SAVE_FORBIDDEN =
+  'The projectsEnabled feature is not enabled for this user; the caller may not write to the project (`canEdit: false`); a caller other than the owner changed the name; or DIAL Core denied access';
 
 /*
  * A signal that aborts when the client goes away, so a long Core call stops
@@ -246,8 +250,9 @@ export class ProjectsController {
     description:
       "Returns one project's name, description, instructions, context files with their sizes, " +
       'and the ETag of the version they were read from. The BFF reads the project archive from ' +
-      'DIAL Core, because project metadata carries no file sizes; `canEdit` is true only for a ' +
-      "project in the caller's own bucket.",
+      'DIAL Core, because project metadata carries no file sizes. `canEdit` is true for the owner ' +
+      'and for a recipient the project is shared with with WRITE; `canManage` (rename, delete, share, ' +
+      "publish) is true only for a project in the caller's own bucket.",
   })
   @ApiParam(PROJECT_ID_PARAM)
   @ApiDialCoreErrors()
@@ -322,7 +327,8 @@ export class ProjectsController {
       '`files` parts, carries the stored conversations over, and writes the whole project conditioned on the ' +
       "fresh snapshot's ETag, retrying a concurrent conversation write while `If-Match` still names the " +
       '`contentVersion`. A different name then moves the project in its ' +
-      "folder and keeps the caller's pin. Only a project in the caller's own bucket can be saved. " +
+      "folder and keeps the caller's pin. The owner and a recipient the project is shared with with WRITE " +
+      'may save; only the owner may rename. ' +
       'Every domain rejection carries a ProjectCreateErrorCode.',
   })
   @ApiParam(PROJECT_ID_PARAM)
@@ -340,7 +346,7 @@ export class ProjectsController {
     type: ProjectCreateErrorDto,
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 403, description: OWNER_ONLY_FORBIDDEN })
+  @ApiResponse({ status: 403, description: SAVE_FORBIDDEN })
   @ApiResponse({ status: 404, description: 'The project does not exist' })
   @ApiResponse({
     status: 409,

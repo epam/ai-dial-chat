@@ -1038,6 +1038,34 @@ describe('MessageBubble', () => {
       expect(screen.getByText('Stages')).toBeTruthy();
     });
 
+    it('mounts the live region before the first token and keeps the same node once text streams in', () => {
+      const { container, rerender } = render(
+        <AssistantMessageBubble
+          isStreaming
+          hasThinkingPlaceholder={false}
+          afterContent={<span>Stages</span>}
+        />,
+      );
+
+      const region = getTextContainer(container);
+      expect(region).toBeTruthy();
+      expect(region?.textContent).toBe('');
+      expect(region?.className).toContain('absolute');
+
+      rerender(
+        <AssistantMessageBubble
+          text="First token"
+          isStreaming
+          hasThinkingPlaceholder={false}
+          afterContent={<span>Stages</span>}
+        />,
+      );
+
+      expect(getTextContainer(container)).toBe(region);
+      expect(region?.getAttribute('aria-atomic')).toBe('false');
+      expect(region?.className).toContain('relative');
+    });
+
     it('renders the slot on its own line for a message with no text at all', () => {
       const { container } = render(
         <AssistantMessageBubble beforeContent={skillSlot} />,

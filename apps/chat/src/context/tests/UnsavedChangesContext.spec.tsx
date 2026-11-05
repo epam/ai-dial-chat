@@ -1,102 +1,39 @@
-import { render, renderHook, screen, within } from '@testing-library/react';
+import { useUnsavedChanges } from '@epam/ai-dial-chat-shared';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useEffect, type FC } from 'react';
+import type { FC } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { UnsavedChangesI18nKeys } from '../../constants/translation-keys';
 import en from '../../i18n/locales/en.json';
-import {
-  UnsavedChangesProvider,
-  useUnsavedChanges,
-  useUnsavedChangesInternal,
-} from '../UnsavedChangesContext';
+import { UnsavedChangesProvider } from '../UnsavedChangesContext';
 
-const Status: FC = () => {
-  const { hasUnsavedChanges } = useUnsavedChanges();
-  return <p>{hasUnsavedChanges ? 'dirty' : 'clean'}</p>;
-};
-
-const Registrar: FC<{ isDirty: boolean }> = ({ isDirty }) => {
-  const { register } = useUnsavedChangesInternal();
-  useEffect(() => register(isDirty), [register, isDirty]);
-  return null;
-};
-
-const DiscardTrigger: FC<{ onDiscard: () => void }> = ({ onDiscard }) => {
+const DiscardTrigger: FC = () => {
   const { requestDiscard } = useUnsavedChanges();
   return (
-    <button type="button" onClick={() => requestDiscard(onDiscard)}>
+    <button type="button" onClick={() => requestDiscard(() => undefined)}>
       Leave
     </button>
   );
 };
 
-const openDialog = async (onDiscard = vi.fn()) => {
-  const user = userEvent.setup();
-  render(
-    <UnsavedChangesProvider>
-      <DiscardTrigger onDiscard={onDiscard} />
-    </UnsavedChangesProvider>,
-  );
-  await user.click(screen.getByRole('button', { name: 'Leave' }));
-  return { user, onDiscard };
-};
-
-describe('UnsavedChangesContext', () => {
+describe('UnsavedChangesProvider', () => {
   afterEach(() => {
-    document.documentElement.dir = '';
     vi.unstubAllGlobals();
   });
 
-  it('throws a provider-naming error when useUnsavedChanges is used outside the provider', () => {
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
-
-    expect(() => renderHook(() => useUnsavedChanges())).toThrow(
-      /UnsavedChangesProvider/,
-    );
-  });
-
-  it('reports no unsaved changes when nothing is registered', () => {
+  it('fills every dialog label with a translated unsavedChanges key', async () => {
+    const user = userEvent.setup();
     render(
       <UnsavedChangesProvider>
-        <Status />
+        <DiscardTrigger />
       </UnsavedChangesProvider>,
     );
 
-    expect(screen.getByText('clean')).toBeTruthy();
-  });
+    await user.click(screen.getByRole('button', { name: 'Leave' }));
 
-  it('follows the registered dirty state and clears it on unregister', () => {
-    const { rerender } = render(
-      <UnsavedChangesProvider>
-        <Registrar isDirty />
-        <Status />
-      </UnsavedChangesProvider>,
-    );
-    expect(screen.getByText('dirty')).toBeTruthy();
-
-    rerender(
-      <UnsavedChangesProvider>
-        <Registrar isDirty={false} />
-        <Status />
-      </UnsavedChangesProvider>,
-    );
-    expect(screen.getByText('clean')).toBeTruthy();
-
-    rerender(
-      <UnsavedChangesProvider>
-        <Status />
-      </UnsavedChangesProvider>,
-    );
-    expect(screen.getByText('clean')).toBeTruthy();
-  });
-
-  it('names the dialog by its title and offers exactly two actions', async () => {
-    await openDialog();
-
-    const dialog = screen.getByRole('dialog', {
-      name: UnsavedChangesI18nKeys.Title,
-    });
-    expect(dialog).toBeTruthy();
+    expect(
+      screen.getByRole('dialog', { name: UnsavedChangesI18nKeys.Title }),
+    ).toBeTruthy();
     expect(screen.getByText(UnsavedChangesI18nKeys.Message)).toBeTruthy();
     expect(
       screen.getByRole('button', { name: UnsavedChangesI18nKeys.ConfirmLabel }),
@@ -115,7 +52,6 @@ describe('UnsavedChangesContext', () => {
       cancelLabel: 'Keep editing',
     });
   });
-
   it('shortens the confirming action on a mobile screen', async () => {
     vi.stubGlobal(
       'matchMedia',
@@ -125,7 +61,14 @@ describe('UnsavedChangesContext', () => {
         removeEventListener: vi.fn(),
       })),
     );
-    await openDialog();
+    const user = userEvent.setup();
+    render(
+      <UnsavedChangesProvider>
+        <DiscardTrigger />
+      </UnsavedChangesProvider>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Leave' }));
 
     expect(
       screen.getByRole('button', {
@@ -137,52 +80,5 @@ describe('UnsavedChangesContext', () => {
         name: UnsavedChangesI18nKeys.ConfirmLabel,
       }),
     ).toBeNull();
-  });
-
-  it('runs the discard callback once when Discard changes is chosen', async () => {
-    const { user, onDiscard } = await openDialog();
-
-    await user.click(
-      screen.getByRole('button', { name: UnsavedChangesI18nKeys.ConfirmLabel }),
-    );
-
-    expect(onDiscard).toHaveBeenCalledOnce();
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  it('runs nothing when Keep editing is chosen', async () => {
-    const { user, onDiscard } = await openDialog();
-
-    await user.click(
-      screen.getByRole('button', { name: UnsavedChangesI18nKeys.CancelLabel }),
-    );
-
-    expect(onDiscard).not.toHaveBeenCalled();
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  it('runs nothing when the dialog is dismissed with Escape', async () => {
-    const { user, onDiscard } = await openDialog();
-
-    await user.keyboard('{Escape}');
-
-    expect(onDiscard).not.toHaveBeenCalled();
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  it('lays out under rtl without flipping any glyph', async () => {
-    document.documentElement.dir = 'rtl';
-    await openDialog();
-
-    const dialog = within(screen.getByRole('dialog'));
-    expect(
-      dialog.getByRole('button', { name: UnsavedChangesI18nKeys.ConfirmLabel }),
-    ).toBeTruthy();
-    expect(
-      dialog.getByRole('button', { name: UnsavedChangesI18nKeys.CancelLabel }),
-    ).toBeTruthy();
-    for (const button of dialog.getAllByRole('button')) {
-      expect(button.className).not.toMatch(/scale-x-/);
-    }
   });
 });

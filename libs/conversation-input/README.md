@@ -507,8 +507,9 @@ The model-selector menu carries its own set:
 
 `dial-ci-model-menu` lands on three different presentations, so scope your rule
 if you need to distinguish them: the desktop dropdown (a Floating UI portal), a
-host-supplied `modelPickerOverlay` dropdown, and the mobile bottom sheet (a
-`role="dialog"`). The portal renders outside the composer's DOM subtree, which
+host-supplied `modelPickerOverlay` dropdown (a `role="dialog"` named by
+`modelSelectorLabels.ariaLabel`, since the host panel is more than a menu), and
+the mobile bottom sheet (a `role="dialog"`). The portal renders outside the composer's DOM subtree, which
 is why the menu needs a class of its own rather than a descendant selector from
 `dial-ci-wrapper`.
 

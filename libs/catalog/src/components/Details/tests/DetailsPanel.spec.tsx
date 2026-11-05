@@ -312,7 +312,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
   return {
     ...actual,
     PublishPanel: ({
-      onSelectedFolderPathChange,
+      onChangeFolderClick,
+      onPendingFolderPathChange,
       onCreateFolder,
       author,
       onAuthorChange,
@@ -326,7 +327,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       allowReplace,
     }: {
       allowReplace?: boolean;
-      onSelectedFolderPathChange: (path: string[]) => void;
+      onChangeFolderClick: () => void;
+      onPendingFolderPathChange: (path: string[]) => void;
       onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
       author: string;
       onAuthorChange: (author: string) => void;
@@ -356,7 +358,12 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
             Toggle credentials:{String(publishCredentials)}
           </button>
         )}
-        <button onClick={() => onSelectedFolderPathChange(['Shared'])}>
+        <button
+          onClick={() => {
+            onChangeFolderClick();
+            onPendingFolderPathChange(['Shared']);
+          }}
+        >
           Select Shared
         </button>
         <button onClick={() => void onCreateFolder(['Shared'], 'New')}>
@@ -382,14 +389,17 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       onCancel,
       onSubmit,
       allowReplace,
+      onSelectFolder,
     }: {
       onCancel: () => void;
       onSubmit: () => void;
       allowReplace?: boolean;
+      onSelectFolder?: () => void;
     }) => (
       <div>
         <span>footerAllowReplace:{String(allowReplace)}</span>
         <button onClick={onCancel}>Cancel</button>
+        <button onClick={onSelectFolder}>Confirm folder</button>
         <button onClick={onSubmit}>Submit</button>
       </div>
     ),
@@ -436,6 +446,12 @@ const renderPanel = (props?: Partial<ComponentProps<typeof DetailsPanel>>) =>
 const toolsetWithCredentials = (
   credentials: CatalogItem['credentials'],
 ): CatalogItem => makeItem({ type: CatalogEntityType.Toolset, credentials });
+
+/* The mocked body drills into the folder view and picks Shared; the footer's Select commits it. */
+const selectSharedFolder = async () => {
+  await userEvent.click(screen.getByRole('button', { name: 'Select Shared' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Confirm folder' }));
+};
 
 const openPublish = async () =>
   userEvent.click(screen.getByRole('button', { name: 'Publish' }));
@@ -564,9 +580,7 @@ describe('DetailsPanel — publish credentials opt-in', () => {
     renderPanel({ item: eligibleItem, onPublish });
     await openPublish();
 
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Select Shared' }),
-    );
+    await selectSharedFolder();
     await userEvent.click(credentialsToggle() as HTMLElement);
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
@@ -591,9 +605,7 @@ describe('DetailsPanel — publish credentials opt-in', () => {
     });
     await openPublish();
 
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Select Shared' }),
-    );
+    await selectSharedFolder();
     await userEvent.click(credentialsToggle() as HTMLElement);
     expect(
       screen.getByRole('button', { name: 'Toggle credentials:true' }),
@@ -1539,9 +1551,7 @@ describe('DetailsPanel', () => {
     const onPublishSuccess = vi.fn();
     renderPanel({ onPublish, onPublishSuccess });
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Select Shared' }),
-    );
+    await selectSharedFolder();
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
     expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], '', false);
     expect(onPublishSuccess).toHaveBeenCalledWith(item, ['Shared']);
@@ -1558,9 +1568,7 @@ describe('DetailsPanel', () => {
     const onPublish = vi.fn().mockResolvedValue(undefined);
     renderPanel({ onPublish, publishDefaultAuthor: 'Daniil Pavlov' });
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Select Shared' }),
-    );
+    await selectSharedFolder();
     await userEvent.click(screen.getByRole('button', { name: 'Set author' }));
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
@@ -1577,9 +1585,7 @@ describe('DetailsPanel', () => {
     const onPublish = vi.fn().mockResolvedValue(undefined);
     renderPanel({ onPublish, publishDefaultAuthor: 'Daniil Pavlov' });
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Select Shared' }),
-    );
+    await selectSharedFolder();
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
     expect(onPublish).toHaveBeenCalledWith(
@@ -1595,9 +1601,7 @@ describe('DetailsPanel', () => {
     const onPublish = vi.fn().mockResolvedValue(undefined);
     renderPanel({ onPublish });
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Select Shared' }),
-    );
+    await selectSharedFolder();
     await userEvent.click(
       screen.getByRole('button', { name: 'Add mock rule' }),
     );
@@ -1634,9 +1638,7 @@ describe('DetailsPanel', () => {
     ]);
     renderPanel({ onFetchExistingRules });
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Select Shared' }),
-    );
+    await selectSharedFolder();
 
     expect(onFetchExistingRules).toHaveBeenCalledWith(['Shared']);
     await waitFor(() => {
@@ -1651,9 +1653,7 @@ describe('DetailsPanel', () => {
     const onPublish = vi.fn().mockResolvedValue(undefined);
     renderPanel({ onFetchExistingRules, onPublish });
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Select Shared' }),
-    );
+    await selectSharedFolder();
 
     await waitFor(() => {
       expect(screen.getByText('rulesLoadError:true')).toBeTruthy();
@@ -1666,9 +1666,7 @@ describe('DetailsPanel', () => {
   it('returns to the details content after a successful publish submit', async () => {
     renderPanel();
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Select Shared' }),
-    );
+    await selectSharedFolder();
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
     expect(screen.getByRole('tablist')).toBeTruthy();
     expect(screen.queryByText('Publish panel')).toBeNull();
@@ -1679,9 +1677,7 @@ describe('DetailsPanel', () => {
     const onPublishSuccess = vi.fn();
     renderPanel({ onPublish, onPublishSuccess });
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Select Shared' }),
-    );
+    await selectSharedFolder();
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
     expect(screen.getByText('Publish panel')).toBeTruthy();
     expect(screen.queryByRole('tablist')).toBeNull();
@@ -1694,9 +1690,7 @@ describe('DetailsPanel', () => {
     const onPublishError = vi.fn();
     renderPanel({ onPublish, onPublishError });
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Select Shared' }),
-    );
+    await selectSharedFolder();
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
     expect(onPublishError).toHaveBeenCalledWith(item, ['Shared'], rejection);
@@ -1712,9 +1706,7 @@ describe('DetailsPanel', () => {
     );
     renderPanel({ onPublish });
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Select Shared' }),
-    );
+    await selectSharedFolder();
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
     expect(
       screen.getByRole('button', { name: 'Back' }).hasAttribute('disabled'),

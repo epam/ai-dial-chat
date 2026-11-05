@@ -186,7 +186,11 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     showTimezone,
     minDate,
     mode,
+    invalid,
+    ariaDescribedBy,
   }: {
+    invalid?: boolean;
+    ariaDescribedBy?: string;
     id?: string;
     labelProps?: { label: ReactNode; required?: boolean };
     value?: Date | string | null;
@@ -214,6 +218,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
           onChange={(e) => onChange(e.target.value || null)}
           onBlur={onBlur}
           disabled={disabled}
+          aria-invalid={invalid || undefined}
+          aria-describedby={ariaDescribedBy}
         />
       </label>
       {mode === 'datetime' && <span>isDateTimeMode</span>}
@@ -911,6 +917,31 @@ describe('ScheduledTaskCreateForm', () => {
     await renderForm();
 
     expect(screen.getByText('Model or Agent *')).toBeTruthy();
+  });
+
+  it('links the time picker to errors.time through ariaDescribedBy', async () => {
+    await renderForm({ errors: { time: 'Enter a valid time' } });
+
+    const error = screen.getByText('Enter a valid time');
+    const input = screen.getByLabelText(/^Time/);
+    expect(input.getAttribute('aria-describedby')).toBe(error.id);
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('links the day-of-week picker to errors.dayOfWeek through ariaDescribedBy', async () => {
+    await renderForm({
+      values: {
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Weekly,
+        dayOfWeek: '0',
+      },
+      errors: { dayOfWeek: 'Choose a day' },
+    });
+
+    const error = screen.getByText('Choose a day');
+    expect(screen.getByLabelText(/^Day/).getAttribute('aria-describedby')).toBe(
+      error.id,
+    );
   });
 
   it('renders errors.modelId below the modelSelector slot', async () => {

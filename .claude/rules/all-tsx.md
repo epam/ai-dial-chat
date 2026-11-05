@@ -94,11 +94,13 @@ A `Dropdown` overlay is `role="menu"` by default, and the trigger gets `aria-has
 - a panel of free-form content, or menu rows plus a footer of buttons (Clear/Apply) — `overlayRole={DropdownOverlayRole.Dialog}` with `overlayAriaLabel` (or `overlayAriaLabelledBy`); keep `role="menu"` on a wrapper around the menu rows only;
 - content that already carries its own role (a card with `role="dialog"`) — `overlayRole={DropdownOverlayRole.None}`.
 
-Do not re-implement Escape or focus return in an overlay's `onKeyDown`: the kit closes on Escape and returns focus to the trigger (`returnFocus` defaults to `true`). A custom roving-tabindex handler takes `optionArrowNavigation={false}` so the kit's arrow keys do not fight it. Do not hardcode `aria-haspopup` on the trigger; it follows `overlayRole`.
+Do not re-implement Escape or focus return in an overlay's `onKeyDown`: the kit closes on Escape and returns focus to the trigger (`returnFocus` defaults to `true`). A custom roving-tabindex handler takes `optionArrowNavigation={false}` so the kit's arrow keys do not fight it. The kit's arrow-key navigation is on only for the default menu role: a `Dialog` or `None` overlay whose content is a listbox or menu rows that rely on it needs an explicit `optionArrowNavigation`, or keyboard users silently lose it (`DeploymentSelectorField` is the reference). Do not hardcode `aria-haspopup` on the trigger; it follows `overlayRole`, and a value on the trigger overrides the kit's.
 
 ### `Spinner` inside a named element
 
-`Spinner` is a status region named `'Loading'` (English) unless it gets `ariaLabel`. Inside an element that already names the state — a `role="progressbar"` with `aria-label`, a button with its own label, a `LiveRegion` carrying the localised text — wrap it in `<span aria-hidden>`; otherwise pass `ariaLabel` from a `*Labels` prop.
+`Spinner` is a status region named `'Loading'` (English) unless it gets `ariaLabel`. Inside an element that already names the state — a `role="progressbar"` with `aria-label`, a button with its own label, a `LiveRegion` carrying the localised text — wrap it in `<span aria-hidden>`; otherwise pass `ariaLabel` from a `*Labels` prop (an app passes `t()`, e.g. `t(BasicI18nKeys.Loading)`).
+
+In a test against the real kit, the name sits on the spinner's inner `role="img"` element, not on its `role="status"` wrapper — query `getByRole('img', { name })`. A test that mocks `Spinner` must forward `ariaLabel`, or it cannot prove the name.
 
 ## Semantic HTML
 

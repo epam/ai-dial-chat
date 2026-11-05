@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { PublishPanelView } from '../../../types/publish-panel';
 import { PublishFooter } from '../PublishFooter';
 
 const renderFooter = (props?: Partial<ComponentProps<typeof PublishFooter>>) =>
@@ -76,5 +77,34 @@ describe('PublishFooter', () => {
     const publishBtn = screen.getByRole('button', { name: 'Publish' });
     expect(publishBtn.className).toContain('dial-kit-neutral-solid-button');
     expect(publishBtn.className).not.toContain('dial-kit-primary-solid-button');
+  });
+
+  describe('folder view', () => {
+    it('renders Select in place of the submit action', () => {
+      renderFooter({ view: PublishPanelView.ChangeFolder });
+
+      expect(screen.getByRole('button', { name: 'Select' })).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+    });
+
+    it('calls onSelectFolder when Select is clicked', async () => {
+      const onSelectFolder = vi.fn();
+      renderFooter({ view: PublishPanelView.ChangeFolder, onSelectFolder });
+
+      await userEvent.click(screen.getByRole('button', { name: 'Select' }));
+
+      expect(onSelectFolder).toHaveBeenCalledOnce();
+    });
+
+    it('disables Select while no folder is picked', () => {
+      renderFooter({
+        view: PublishPanelView.ChangeFolder,
+        isSelectFolderDisabled: true,
+      });
+
+      expect(
+        screen.getByRole('button', { name: 'Select' }).hasAttribute('disabled'),
+      ).toBe(true);
+    });
   });
 });

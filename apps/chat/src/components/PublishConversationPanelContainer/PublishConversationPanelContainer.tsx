@@ -12,6 +12,7 @@ import {
   ButtonsI18nKeys,
   ConversationPublishI18nKeys,
   PublishI18nKeys,
+  ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
@@ -192,6 +193,8 @@ const PublishConversationPanelContainer: FC<Props> = ({
         title: t(ButtonsI18nKeys.Publish),
         ariaLabel: t(ConversationPublishI18nKeys.PanelAriaLabel),
         closeAriaLabel: t(ButtonsI18nKeys.Close),
+        changeFolderTitle: t(ResourceSavePanelI18nKeys.ChangeFolderTitle),
+        backAriaLabel: t(ButtonsI18nKeys.Back),
       }}
     />
   );

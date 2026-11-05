@@ -74,12 +74,19 @@ The direct server-api calls, the `/conversations` routing and the read-only rule
 - wrap `ConversationPage` in `ConversationDataSourceContext.Provider` with the project value, and pass it the parsed `conversationId` (the page's optional `conversationId` prop; it defaults to the `/conversations/*` splat);
 - render a breadcrumb (`ProjectChatHeader`). On desktop it is portalled into the start cell of `ChatLayout`'s top bar through `ChatLayoutHeaderSlotContext` (`apps/chat/src/context/ChatLayoutHeaderSlotContext.tsx`), beside the sources toggle, with no border of its own; on mobile, where that bar is hidden, it is a bar above the conversation: a back `GhostIconButton` named `projects.chat.backToProject` (with `IconArrowNarrowLeft`, `aria-hidden`, `stroke={DIAL_KIT_ICON_STROKE}`, `rtl:scale-x-[-1]`), then the project name truncated with `EllipsisTooltip`, linking to `getProjectViewRoute(projectId)`.
 
+**Who may write.** `canEdit` is `true` for the owner and for a recipient with edit access (see the `project-detail-api` capability). For both, the project value of `ConversationDataSourceContext` is writable: the input, regenerate, message edit and delete, and rating work as in a regular chat. The conversation is read-only only when `canEdit` is `false` (a view-only recipient or an organization project). `ProjectChatNavigationState.project.canEdit` keeps the same meaning: whether the caller may write the project's chats.
+
 The page owns no conversation state: `ConversationPage` and `GenerationContext` own it, as for a regular chat. The generation-registry key is the stripped path `{bucket}/{projectPath}/conversations/{name}`. It begins with a bucket id and therefore does not collide with a regular bucket-relative path in practice.
 
 #### Scenario: Read-only shared project chat
 
-- **WHEN** a user opens a conversation of a project shared with them
+- **WHEN** a view-only recipient (`canEdit: false`) opens a conversation of a project shared with them
 - **THEN** the conversation renders read-only: no input and no regenerate or edit actions, and no Duplicate action
+
+#### Scenario: A shared editor's chat is writable
+
+- **WHEN** a recipient with edit access (`canEdit: true`, `canManage: false`) opens a conversation the owner started
+- **THEN** the input, regenerate and message edit actions render, and sending a message posts to `POST /api/v1/projects/{id}/conversations/completions`
 
 #### Scenario: Back to project
 
@@ -216,14 +223,16 @@ The section renders:
 
 **Row actions:**
 - `onOpen` (every reader) calls `conversations.markViewed(id)`, then navigates to the project chat route.
-- `onRename` (owner only) opens a kit `Popup` named `projects.chats.renameTitle`, with a labelled `Input` seeded with the title and Save and Cancel buttons (`buttons.save`, `buttons.cancel`). Save, or Enter in the input, trims the value, refuses an empty one inline (`projects.chats.renameEmpty`), and calls `renameProjectConversation`.
-- `onDelete` (owner only) opens `DeleteConfirmationDialog` with `projects.chats.deleteConfirmTitle` (`{{title}}`) and `projects.chats.deleteConfirmDescription`, then calls `deleteProjectConversation`.
+- `onRename` (when `project.canEdit`) opens a kit `Popup` named `projects.chats.renameTitle`, with a labelled `Input` seeded with the title and Save and Cancel buttons (`buttons.save`, `buttons.cancel`). Save, or Enter in the input, trims the value, refuses an empty one inline (`projects.chats.renameEmpty`), and calls `renameProjectConversation`.
+- `onDelete` (when `project.canEdit`) opens `DeleteConfirmationDialog` with `projects.chats.deleteConfirmTitle` (`{{title}}`) and `projects.chats.deleteConfirmDescription`, then calls `deleteProjectConversation`.
 
 Success updates the list in place and shows a toast. Failure shows `projects.chats.renameError` or `projects.chats.deleteError`. Neither dialog can be closed while its request is pending. When a refresh removes the row a rename or delete dialog was opened for, the dialog closes and focus moves to the list.
 
 After a delete, the project view's chat count (the delete-project message and the publish warning) drops by one without a reload. A later silent `refresh()` of the project resets the count to the BFF's `conversationCount`.
 
-**Read-only** (`canEdit: false`): no input, and `onRename`/`onDelete` are omitted. The list still opens chats and marks them viewed.
+**Who may write.** `canEdit` is `true` for the owner and for a recipient with edit access. Both get the input and the row menus, and an editor may rename and delete any row, the owner's included, because Core grants `WRITE` to the whole project.
+
+**Read-only** (`canEdit: false`: a view-only recipient or an organization project): no input, and `onRename`/`onDelete` are omitted. The list still opens chats and marks them viewed.
 
 The section labels pass `unreadLabel: t(ConversationPanelI18nKeys.UnreadIndicatorLabel)`, which reuses `conversationPanel.unreadIndicatorLabel`, through `useProjectConversationsPanelLabels`.
 
@@ -246,8 +255,13 @@ Handlers are memoised with `useCallback`, and the mapped items with `useMemo`.
 
 #### Scenario: Shared project shows chats without the input
 
-- **WHEN** a shared project with two conversations is opened
+- **WHEN** a view-only shared project (`canEdit: false`) with two conversations is opened
 - **THEN** the Chats list shows both without row menus, and no chat input renders
+
+#### Scenario: A shared editor gets the input and row menus
+
+- **WHEN** a recipient with edit access opens a shared project with two conversations, one started by the owner
+- **THEN** the chat input renders, and both rows offer Rename and Delete
 
 #### Scenario: Rename from the list
 

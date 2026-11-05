@@ -29,7 +29,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
       onChange={(e) => onChange?.(e.target.value)}
     />
   ),
-  Spinner: () => <div role="progressbar" />,
+  Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
+    <div role="progressbar" aria-label={ariaLabel} />
+  ),
 }));
 
 const labels: ProjectViewLabels = {
@@ -402,7 +404,9 @@ describe('ProjectView', () => {
   it('shows the loading state', () => {
     renderView({ project: null, isLoading: true });
 
-    expect(screen.getByRole('progressbar')).toBeTruthy();
+    expect(
+      screen.getByRole('progressbar', { name: 'Loading project' }),
+    ).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Pin' })).toBeNull();
   });
 
