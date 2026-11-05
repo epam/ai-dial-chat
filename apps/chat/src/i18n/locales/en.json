@@ -915,7 +915,8 @@
     "actions": {
       "deleteError": "Could not delete the project",
       "downloadError": "Could not download",
-      "pinError": "Could not update the pin"
+      "pinError": "Could not pin the project. Please try again.",
+      "unpinError": "Could not unpin the project. Please try again."
     },
     "edit": {
       "title": "Edit project",

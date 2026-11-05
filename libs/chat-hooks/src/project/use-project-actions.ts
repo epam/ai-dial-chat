@@ -10,6 +10,7 @@ import type { ProjectsApiClient } from './projects-api-client';
 /** Which project action failed, for the host's error message. */
 export enum ProjectActionError {
   Pin = 'pin',
+  Unpin = 'unpin',
   Download = 'download',
   Delete = 'delete',
   /** The delete lost to a concurrent change; the project should be reloaded. */
@@ -92,7 +93,10 @@ export const useProjectActions = (
     try {
       await setPinned(project.id, !isPinned);
     } catch (err) {
-      await reportError(err, ProjectActionError.Pin);
+      await reportError(
+        err,
+        isPinned ? ProjectActionError.Unpin : ProjectActionError.Pin,
+      );
     } finally {
       setIsPinPending(false);
     }

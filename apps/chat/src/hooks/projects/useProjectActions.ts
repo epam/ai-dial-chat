@@ -21,6 +21,7 @@ import { projectsClient } from './projects-client';
 
 const ERROR_MESSAGES: Record<ProjectActionError, ProjectsI18nKeys> = {
   [ProjectActionError.Pin]: ProjectsI18nKeys.ActionsPinError,
+  [ProjectActionError.Unpin]: ProjectsI18nKeys.ActionsUnpinError,
   [ProjectActionError.Download]: ProjectsI18nKeys.ActionsDownloadError,
   [ProjectActionError.Delete]: ProjectsI18nKeys.ActionsDeleteError,
   [ProjectActionError.ChangedElsewhere]:
