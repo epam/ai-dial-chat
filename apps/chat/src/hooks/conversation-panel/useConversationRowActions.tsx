@@ -36,6 +36,7 @@ import {
 import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
+import { preloadPublishConversationPanel } from '../../components/PublishConversationPanelContainer/load-publish-conversation-panel';
 import {
   getConversationRoute,
   normalizeConversationId,
@@ -195,6 +196,8 @@ export const useConversationRowActions = ({
         requestPublishHistory(
           getConversationPath(normalizeConversationId(contextId)),
         );
+        // The panel renders without a loading fallback, so fetch its chunk before Publish is picked.
+        preloadPublishConversationPanel();
       }
     },
     [
