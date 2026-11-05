@@ -177,7 +177,7 @@ export interface ResumeGenerationOptions {
    * only by the public entry point: stream recovery and the conflict handover know a
    * generation exists, so they keep their own behaviour.
    */
-  markOrphanedAsInterrupted?: boolean;
+  shouldMarkOrphanedAsInterrupted?: boolean;
 }
 
 /** Host-owned state {@link createResumeIfAwaitingGeneration} reads/writes through. */
@@ -320,7 +320,7 @@ export const createResumeIfAwaitingGeneration = ({
      * no content for it. A pending background message is a running Core job.
      */
     const isOrphanedPlaceholder = (result?: Conversation): boolean =>
-      !!options.markOrphanedAsInterrupted &&
+      !!options.shouldMarkOrphanedAsInterrupted &&
       !isBackground &&
       !!result &&
       result.messages.length - 1 === messageIndex &&
@@ -328,13 +328,17 @@ export const createResumeIfAwaitingGeneration = ({
       isAwaitingGenerationResume(result) &&
       !hasGeneratedPayload(resumedBuffer.message);
 
-    /* Releases the chat and labels the placeholder, keeping ownership so the watch can still deliver the answer. */
-    const showInterrupted = () => {
-      if (!ownsBuffer()) return;
+    const labelInterrupted = () => {
       resumedBuffer.message = {
         ...resumedBuffer.message,
         streamErrorMessage: generationInterruptedMessage,
       };
+    };
+
+    /* Releases the chat and labels the placeholder, keeping ownership so the watch can still deliver the answer. */
+    const showInterrupted = () => {
+      if (!ownsBuffer()) return;
+      labelInterrupted();
       resumingPathsRef.current.delete(conversationPath);
       removeStreamingPath(conversationPath);
       forgetAttachGenerationId();
@@ -387,18 +391,10 @@ export const createResumeIfAwaitingGeneration = ({
       }
       bufferedGenerationsRef.current.delete(conversationPath);
       if (result && isPathDisplayed(conversationPath)) {
-        const displayed = isOrphanedPlaceholder(result)
-          ? {
-              ...result,
-              messages: result.messages.map((message, index) =>
-                index === messageIndex
-                  ? {
-                      ...message,
-                      streamErrorMessage: generationInterruptedMessage,
-                    }
-                  : message,
-              ),
-            }
+        const isOrphaned = isOrphanedPlaceholder(result);
+        if (isOrphaned) labelInterrupted();
+        const displayed = isOrphaned
+          ? restoreBufferedMessage(result, resumedBuffer)
           : result;
         setConversation(displayed);
         conversationRef.current = displayed;

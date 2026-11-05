@@ -1260,7 +1260,7 @@ export const useConversationStream = ({
         return;
       resumeGeneration(currentConversationId, conversation, {
         trackAttachGenerationId: true,
-        markOrphanedAsInterrupted: true,
+        shouldMarkOrphanedAsInterrupted: true,
       });
     },
     [resumeGeneration],

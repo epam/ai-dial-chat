@@ -917,7 +917,7 @@ describe('createResumeIfAwaitingGeneration — orphaned placeholder', () => {
       makeHarness();
 
     resume(CONVERSATION_ID, makeConversation(), {
-      markOrphanedAsInterrupted: true,
+      shouldMarkOrphanedAsInterrupted: true,
     });
 
     await vi.waitFor(() =>
@@ -933,7 +933,7 @@ describe('createResumeIfAwaitingGeneration — orphaned placeholder', () => {
     });
 
     resume(CONVERSATION_ID, makeConversation(), {
-      markOrphanedAsInterrupted: true,
+      shouldMarkOrphanedAsInterrupted: true,
     });
 
     await vi.waitFor(() => expect(removeStreamingPath).toHaveBeenCalled());
@@ -952,7 +952,7 @@ describe('createResumeIfAwaitingGeneration — orphaned placeholder', () => {
     });
 
     resume(CONVERSATION_ID, makeConversation(), {
-      markOrphanedAsInterrupted: true,
+      shouldMarkOrphanedAsInterrupted: true,
     });
     await vi.waitFor(() => expect(removeStreamingPath).toHaveBeenCalled());
 
@@ -978,7 +978,7 @@ describe('createResumeIfAwaitingGeneration — orphaned placeholder', () => {
     } = makeHarness({ getConversation });
 
     resume(CONVERSATION_ID, makeConversation(), {
-      markOrphanedAsInterrupted: true,
+      shouldMarkOrphanedAsInterrupted: true,
     });
     await vi.waitFor(() => expect(removeStreamingPath).toHaveBeenCalled());
     bufferedGenerationsRef.current.set(PATH, {
@@ -998,7 +998,7 @@ describe('createResumeIfAwaitingGeneration — orphaned placeholder', () => {
     const { resume, watch, removeStreamingPath, getDisplayed } = makeHarness();
 
     resume(CONVERSATION_ID, makeConversation(), {
-      markOrphanedAsInterrupted: true,
+      shouldMarkOrphanedAsInterrupted: true,
     });
     await vi.waitFor(() => expect(removeStreamingPath).toHaveBeenCalled());
 
@@ -1016,7 +1016,7 @@ describe('createResumeIfAwaitingGeneration — orphaned placeholder', () => {
     });
 
     resume(CONVERSATION_ID, makeConversation(), {
-      markOrphanedAsInterrupted: true,
+      shouldMarkOrphanedAsInterrupted: true,
     });
 
     await vi.waitFor(() =>
@@ -1043,7 +1043,7 @@ describe('createResumeIfAwaitingGeneration — orphaned placeholder', () => {
     });
 
     resume(CONVERSATION_ID, makeConversation(), {
-      markOrphanedAsInterrupted: true,
+      shouldMarkOrphanedAsInterrupted: true,
     });
     attach.emit({
       type: 'snapshot',
@@ -1080,7 +1080,7 @@ describe('createResumeIfAwaitingGeneration — orphaned placeholder', () => {
       getConversation: vi.fn().mockResolvedValue(pending),
     });
 
-    resume(CONVERSATION_ID, pending, { markOrphanedAsInterrupted: true });
+    resume(CONVERSATION_ID, pending, { shouldMarkOrphanedAsInterrupted: true });
     await flush();
 
     expect(removeStreamingPath).not.toHaveBeenCalled();
@@ -1092,7 +1092,7 @@ describe('createResumeIfAwaitingGeneration — orphaned placeholder', () => {
     const { resume, removeStreamingPath, watch } = makeHarness();
 
     resume(CONVERSATION_ID, makeConversation(), {
-      markOrphanedAsInterrupted: true,
+      shouldMarkOrphanedAsInterrupted: true,
       seedMessage: {
         role: MessageRole.Assistant,
         content: 'Partial answer so far',
