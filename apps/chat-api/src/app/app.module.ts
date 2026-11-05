@@ -13,6 +13,7 @@ import { MetricsInterceptor } from '../common/interceptors/metrics.interceptor';
 import { validate } from '../config/validation';
 import { ConversationModule } from '../conversations/conversation.module';
 import { CustomApiModule } from '../custom-api/custom-api.module';
+import { DeploymentRouteModule } from '../deployment-route/deployment-route.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
 import { DialCoreModule } from '../dial/dial-core.module';
 import { ExternalServicesModule } from '../external-services/external-services.module';
@@ -74,6 +75,7 @@ import { createAppCacheOptions } from './cache.config';
     SkillsModule,
     TextRefinementModule,
     CustomApiModule,
+    DeploymentRouteModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
