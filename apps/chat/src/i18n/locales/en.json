@@ -866,7 +866,8 @@
         "dropOverlayTitle": "Upload files",
         "dropOverlaySubtitle": "Drop files here to add them to this project",
         "remove": "Remove {{name}}",
-        "open": "Preview {{name}}"
+        "open": "Preview {{name}}",
+        "download": "Download {{name}}"
       },
       "status": {
         "added_one": "{{count}} file added",

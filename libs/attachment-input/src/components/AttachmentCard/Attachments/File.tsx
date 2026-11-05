@@ -2,6 +2,7 @@ import {
   AttachmentErrorReason,
   mergeClasses,
   RequestStatus,
+  useIsVerticallyClamped,
 } from '@epam/ai-dial-chat-shared';
 import {
   DialItemType,
@@ -12,6 +13,7 @@ import {
   Spinner,
   LiveRegion,
   LiveRegionElement,
+  Tooltip,
 } from '@epam/ai-dial-ui-kit';
 import { type FC, useCallback, useId, useMemo } from 'react';
 import {
@@ -123,6 +125,14 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
 
   const displayName = useMemo(() => getNameWithoutExtension(name), [name]);
 
+  /*
+   * The tile's action button covers the whole tile, so the name's own `title`
+   * (and the `Highlight` tooltip) never sees the pointer. While the name is
+   * clamped, the button carries the full name in a kit tooltip instead.
+   */
+  const { ref: nameRef, isClamped: isNameClamped } =
+    useIsVerticallyClamped<HTMLDivElement>(displayName);
+
   const onOpenInNewTab = useCallback((): void => {
     window.open(attachment.referenceUrl, '_blank', 'noopener,noreferrer');
   }, [attachment]);
@@ -142,6 +152,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
 
   const nameEl = (
     <div
+      ref={nameRef}
       title={displayName}
       className={mergeClasses(
         typography?.nameClassName ?? 'dial-tiny-text',
@@ -212,19 +223,25 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
           tile, so no control is nested inside another (WCAG 4.1.2). It comes
           before the actions so they stack above it. */}
       {hasAction && (
-        <button
-          type="button"
-          aria-label={isExpandAction ? expandLabel : clickLabel}
-          /* A selected state carried only by a CSS class is invisible to assistive technology, so a tile whose action is `onClick` reports it as pressed. An expandable pasted tile is not a toggle, so it never does. */
-          aria-pressed={
-            !isExpandAction && onClick !== undefined ? isSelected : undefined
-          }
-          onClick={handleClick}
-          className={mergeClasses(
-            'absolute inset-0 cursor-pointer rounded-[11px]',
-            styles.tileAction,
-          )}
-        />
+        <Tooltip
+          tooltip={name}
+          hideTooltip={!isNameClamped}
+          triggerClassName="absolute inset-0"
+        >
+          <button
+            type="button"
+            aria-label={isExpandAction ? expandLabel : clickLabel}
+            /* A selected state carried only by a CSS class is invisible to assistive technology, so a tile whose action is `onClick` reports it as pressed. An expandable pasted tile is not a toggle, so it never does. */
+            aria-pressed={
+              !isExpandAction && onClick !== undefined ? isSelected : undefined
+            }
+            onClick={handleClick}
+            className={mergeClasses(
+              'absolute inset-0 cursor-pointer rounded-[11px]',
+              styles.tileAction,
+            )}
+          />
+        </Tooltip>
       )}
 
       {isLoading && (

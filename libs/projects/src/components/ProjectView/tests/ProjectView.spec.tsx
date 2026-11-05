@@ -171,6 +171,38 @@ describe('ProjectView', () => {
     expect(onContextFileClick).toHaveBeenCalledWith('tickets.csv');
   });
 
+  it('calls onContextFileDownload with the file name from a card download button without opening the file', async () => {
+    const onContextFileDownload = vi.fn();
+    const { onContextFileClick } = renderView({
+      onContextFileDownload,
+      labels: { ...labels, downloadFileLabel: (name) => `Save ${name}` },
+    });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Save tickets.csv' }),
+    );
+
+    expect(onContextFileDownload).toHaveBeenCalledOnce();
+    expect(onContextFileDownload).toHaveBeenCalledWith('tickets.csv');
+    expect(onContextFileClick).not.toHaveBeenCalled();
+  });
+
+  it('names a card download button "Download" when the host supplies no downloadFileLabel', () => {
+    renderView({ onContextFileDownload: vi.fn() });
+
+    expect(
+      screen.getByRole('button', { name: 'Download tickets.csv' }),
+    ).toBeTruthy();
+  });
+
+  it('shows no card download button when onContextFileDownload is omitted', () => {
+    renderView();
+
+    expect(
+      screen.queryByRole('button', { name: 'Download tickets.csv' }),
+    ).toBeNull();
+  });
+
   it('renders only the card named by selectedContextFileId as selected', () => {
     renderView({ selectedContextFileId: 'tickets.csv' });
 
