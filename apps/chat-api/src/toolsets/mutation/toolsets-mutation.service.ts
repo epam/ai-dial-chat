@@ -290,10 +290,14 @@ export class ToolsetsMutationService {
         authHeaders,
         toolsetName,
       );
+      const userBucket = await this.listingService.getUserBucket(
+        authHeaders,
+        'get user bucket',
+      );
       await this.assertIdentityChangeAllowed(
         userSub,
         accessToken,
-        await this.listingService.getUserBucket(authHeaders, 'get user bucket'),
+        userBucket,
         `${TOOLSET_RESOURCE_PREFIX}${bucket}/${path}`,
         { name: body.name, version },
       );

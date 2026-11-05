@@ -418,6 +418,10 @@ export class ApplicationsService {
       }
 
       const stored = existingResponse.data as DialApplication;
+      /*
+       * A stored display name is a string or a locale map; the SDK types it
+       * narrower than DIAL Core writes it, so it is widened here.
+       */
       const storedName = resolveDisplayedName(
         stored.displayName as LocalizedText,
       );
