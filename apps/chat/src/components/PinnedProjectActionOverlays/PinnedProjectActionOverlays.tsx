@@ -72,21 +72,21 @@ const PinnedProjectActionOverlays: FC<Props> = ({
         <ProjectShareOverlay projectId={project.id} onClose={onClose} />
       )}
       {/* Kept mounted after closing, so the panel slides out. */}
-      {action?.kind === PinnedProjectActionKind.Publish && project.canEdit && (
-        <PublishProjectPanelContainer
-          isOpen={action.isOpen}
-          projectId={project.id}
-          projectName={project.name}
-          conversationCount={conversationCount}
-          onClose={onClose}
-          returnFocusRef={returnFocusRef}
-        />
-      )}
+      {action?.kind === PinnedProjectActionKind.Publish &&
+        project.canManage && (
+          <PublishProjectPanelContainer
+            isOpen={action.isOpen}
+            projectId={project.id}
+            projectName={project.name}
+            conversationCount={conversationCount}
+            onClose={onClose}
+            returnFocusRef={returnFocusRef}
+          />
+        )}
       {deleteTarget != null && (
         <ProjectDeleteConfirmation
           isOpen={isDeleteOpen}
           projectName={project.name}
-          conversationCount={conversationCount}
           isDeleting={isDeleting}
           onConfirm={handleConfirmDelete}
           onClose={cancelDelete}

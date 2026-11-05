@@ -36,7 +36,7 @@ import '@epam/ai-dial-builder-form/styles.css';
 
 - `react` `^19.2.8`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.72`
+- `@epam/ai-dial-ui-kit` `^0.16.0`
 
 ## Components
 
@@ -47,6 +47,8 @@ The whole builder form page shell — full height, non-scrolling, with the page 
 It renders the header itself: a back control, the title, and a cancel/submit action pair, where submit is the primary action and both actions disable independently (e.g. submit disabled while required fields are empty, cancel disabled while a submission is in flight). Its responsive vertical and inline padding matches the scheduled-task detail header. Header styling is forwarded through `styles.header`.
 
 The action pair is placed per breakpoint: in the header at the desktop breakpoint, and in a sticky footer pinned over the bottom of the scrolling form at mobile widths, so it stays thumb-reachable while the form scrolls. Both copies render the same actions from the same props — exactly one is visible (and in the tab order) at any width. The footer paints the page background and an elevation shadow (`shadow-sm`, from `--shadow-sm`) so scrolled content never shows through it, and its two actions split the row equally. At mobile the header row — back control and title — reads as the first row of the form rather than a page bar: its divider is drawn above the row (under the app shell's floating header) instead of below it.
+
+`footerActionsOrder` (`BuilderFormActionsOrder.CancelFirst` by default) sets the order of the mobile footer pair; `BuilderFormActionsOrder.SubmitFirst` puts Submit before Cancel there, while the desktop header always lists Cancel first.
 
 `isSubmitDisabled` covers both "not ready yet" and "already submitting", so it cannot on its own tell a user which of the two is happening. `isSubmitting` supplies the difference: it puts a spinner in the submit button, sets `aria-busy` on it, and announces `labels.submittingLabel` (default `'Submitting'`) through the header's `role="status"` region. The button's accessible name stays `labels.submitButtonLabel` throughout — the spinner is `aria-hidden`. Set both flags while a submit is in flight.
 

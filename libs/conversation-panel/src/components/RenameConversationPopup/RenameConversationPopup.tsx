@@ -154,7 +154,7 @@ export const RenameConversationPopup: FC<RenameConversationPopupProps> = memo(
           </LiveRegion>
           {isSaving ? (
             <div className="h-[120px] px-6 py-4">
-              <Spinner size={50} />
+              <Spinner size={50} ariaLabel={labels.savingLabel ?? 'Saving'} />
             </div>
           ) : (
             <div className="flex items-start gap-2 px-6 py-3">

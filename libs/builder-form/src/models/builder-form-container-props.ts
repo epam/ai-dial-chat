@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
+import type { BuilderFormActionsOrder } from './builder-form-actions-order';
 import type {
   BuilderFormHeaderLabels,
   BuilderFormHeaderStyles,
@@ -43,6 +44,8 @@ export interface BuilderFormContainerProps {
   isSubmitDisabled?: boolean;
   /** When `true`, the submit action shows a spinner and reports `aria-busy` on both surfaces. Defaults to `false`. */
   isSubmitting?: boolean;
+  /** Order of Cancel and Submit in the mobile sticky footer; the desktop header always lists Cancel first. Defaults to `BuilderFormActionsOrder.CancelFirst`. */
+  footerActionsOrder?: BuilderFormActionsOrder;
   /** Optional replacement for the header's default back icon. */
   backIcon?: ReactNode;
   /** Additional class name for the container root. */

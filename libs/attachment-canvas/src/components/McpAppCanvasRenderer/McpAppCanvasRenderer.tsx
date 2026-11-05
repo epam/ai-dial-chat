@@ -18,6 +18,8 @@ export interface McpAppCanvasRendererProps {
   content: McpAppCanvasContent;
   /** Message shown when the app fails to initialize. Defaults to `'Failed to load app'`. */
   errorLabel?: string;
+  /** Accessible name of the loading spinner. Defaults to `'Loading…'`. */
+  loadingLabel?: string;
   /** Called once the mounted app completes its `ui/initialize` handshake, with its declared name/version. Omitted when the app didn't declare an `appInfo`. */
   onAppInfo?: (appInfo: Implementation) => void;
 }
@@ -40,6 +42,7 @@ enum RendererStatus {
 export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
   content,
   errorLabel = 'Failed to load app',
+  loadingLabel = 'Loading…',
   onAppInfo,
 }) => {
   const [status, setStatus] = useState<RendererStatus>(RendererStatus.Loading);
@@ -142,7 +145,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
             styles.loadingOverlay,
           )}
         >
-          <Spinner />
+          <Spinner ariaLabel={loadingLabel} />
         </div>
       )}
       {/* Mounted before the overlay so the failure is announced when it appears. */}

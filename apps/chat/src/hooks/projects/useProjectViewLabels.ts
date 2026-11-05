@@ -23,6 +23,7 @@ export const useProjectViewLabels = (): ProjectViewLabels => {
       publishLabel: t(ButtonsI18nKeys.Publish),
       editLabel: t(ButtonsI18nKeys.Edit),
       moreActionsLabel: t(ButtonsI18nKeys.MoreActions),
+      closeLabel: t(ButtonsI18nKeys.Close),
       shareLabel: t(ButtonsI18nKeys.Share),
       downloadLabel: t(ButtonsI18nKeys.Download),
       deleteLabel: t(ButtonsI18nKeys.Delete),
@@ -45,6 +46,7 @@ export const useProjectViewLabels = (): ProjectViewLabels => {
       retryLabel: t(ButtonsI18nKeys.Retry),
       notFoundLabel: t(ProjectsI18nKeys.ViewNotFound),
       browseProjectsLabel: t(ProjectsI18nKeys.ViewBrowseProjects),
+      loadingAriaLabel: t(BasicI18nKeys.Loading),
     }),
     [t],
   );

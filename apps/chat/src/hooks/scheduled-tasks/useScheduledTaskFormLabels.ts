@@ -2,9 +2,11 @@ import { ScheduledTaskRepeat } from '@epam/ai-dial-scheduled-tasks';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   EditorI18nKeys,
   ScheduledTasksI18nKeys,
+  UnsavedChangesI18nKeys,
 } from '../../constants/translation-keys';
 import { useLanguage } from '../language/useLanguage';
 import { useTextRefinementLabels } from '../useTextRefinementLabels';
@@ -98,6 +100,7 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
       modelOrAgentLabel: t(ScheduledTasksI18nKeys.CreateModelOrAgentLabel),
       descriptionLabel: t(ScheduledTasksI18nKeys.CreateDescriptionLabel),
       instructionsLabel: t(ScheduledTasksI18nKeys.CreateInstructionsLabel),
+      editorLoadingAriaLabel: t(BasicI18nKeys.Loading),
       cancelButtonLabel: t(ButtonsI18nKeys.Cancel),
       createButtonLabel: t(
         mode === 'create' ? ButtonsI18nKeys.Create : ButtonsI18nKeys.Save,
@@ -107,6 +110,11 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
           ? ScheduledTasksI18nKeys.CreateSubmittingLabel
           : ButtonsI18nKeys.Saving,
       ),
+      discardTitle: t(UnsavedChangesI18nKeys.Title),
+      discardMessage: t(UnsavedChangesI18nKeys.Message),
+      discardConfirmLabel: t(UnsavedChangesI18nKeys.ConfirmLabel),
+      discardConfirmMobileLabel: t(UnsavedChangesI18nKeys.ConfirmLabelMobile),
+      discardCancelLabel: t(UnsavedChangesI18nKeys.CancelLabel),
     }),
     [mode, t, displayLanguage, refinementLabels],
   );

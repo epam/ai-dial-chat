@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Dropdown } from '@epam/ai-dial-ui-kit';
+import { Dropdown, DropdownOverlayRole } from '@epam/ai-dial-ui-kit';
 import type { ReactNode, RefObject } from 'react';
 import type { InputProps } from '../../models/Input';
 import type { useCommandMenuAnchor } from './hooks/useCommandMenuAnchor';
@@ -88,6 +88,9 @@ export const InputCommandMenuArea = ({
           placement="top-start"
           trigger={[]}
           initialFocus={-1}
+          /* The menu brings its own `listbox` and the textarea drives it,
+             so the overlay adds no role of its own. */
+          overlayRole={DropdownOverlayRole.None}
           matchReferenceWidth={false}
           outsidePressIgnoreRef={textareaRef}
           renderOverlay={() => {

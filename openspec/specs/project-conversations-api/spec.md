@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The BFF side of chats stored inside a project: the `projects/{bucket}/{path}/conversations/{name}` locator, `ProjectConversationStore` behind `ConversationPersistenceService`, the flag-gated owner-writable endpoints under `/api/v1/projects/:id/conversations`, completions through the regular generation pipeline, and the `x-project-id` header that is the only project context a model call carries.
+The BFF side of chats stored inside a project: the `projects/{bucket}/{path}/conversations/{name}` locator, `ProjectConversationStore` behind `ConversationPersistenceService`, the flag-gated endpoints under `/api/v1/projects/:id/conversations`, writable by the owner and by recipients with `WRITE`, completions through the regular generation pipeline, and the `x-project-id` header that is the only project context a model call carries.
 
 ## Requirements
 
@@ -87,7 +87,7 @@ A project conversation SHALL be stored as the file `conversations/{name}` inside
 - **WHEN** Core answers `uploadProjectFile` with `413`
 - **THEN** the request fails with `413` and `code: 'project-storage-full'`
 
-### Requirement: Project conversation endpoints are flag-gated and owner-writable
+### Requirement: Project conversation endpoints are flag-gated and writable by project editors
 
 `ProjectConversationsController` (`apps/chat-api/src/projects/conversations/project-conversations.controller.ts`) SHALL be registered by `ProjectsModule`, which imports `ConversationModule` (and `ConversationModule` exports `ConversationService` for it):
 
@@ -97,9 +97,17 @@ A project conversation SHALL be stored as the file `conversations/{name}` inside
   - `:conversationName` is validated by `ProjectConversationParamDto` (`apps/chat-api/src/projects/conversations/dto/project-conversation-param.dto.ts`), which uses `IsSafeDialPathSegment` and a `DIAL_PATH_SEGMENT_MAX_BYTES` (1024-byte) UTF-8 cap. The entity-name rule does not fit a stored file name: it wraps a title of up to 255 bytes in the deployment id, which may contain `:`, and a UUID, so a chat started with a long message has a longer name.
   - The BFF builds the locator from both.
 - **Completion bodies.** The `path` in completion, stop and attach bodies SHALL equal the locator without its leading `projects/`, i.e. `{bucket}/{projectPath}/conversations/{name}`, which is the path the app's stream hook derives from the conversation id. The BFF re-prefixes it and requires the result to parse as a locator under `:id`, otherwise `400`. The path is also the generation-registry key, so stop and attach find the generation.
-- **Writes.** Create, save, rename, delete and completions SHALL be refused with `403` before any Core call when the project's bucket is not the session bucket, matching `canEdit` in `GET /api/v1/projects/:id`.
-- **Reads.** List and get go to Core with the caller's token, so a shared or organization project's conversations can be read.
-- **Only entry point.** The regular conversation routes SHALL refuse a project conversation locator with `400`, so the gating and owner check above cannot be bypassed. `IsNotProjectConversationLocator` (`apps/chat-api/src/conversations/dto/not-project-conversation-locator.validator.ts`) sits on the `path` of `ConversationPathDto` (and so of every query DTO extending it), `SendCompletionDto`, `StopCompletionDto`, `AttachGenerationDto` and `WatchConversationBodyDto`. A project completion body carries the locator without `projects/`, so it passes.
+- **Writes.** Create, save, rename, delete, completions, stop and attach SHALL first await `ProjectAccessService.assertCanWrite(project, sessionBucket, accessToken)` (see the `project-detail-api` capability). That is the same rule as `canEdit` in `GET /api/v1/projects/:id`:
+  - the owner passes with no Core call;
+  - an organization project is `403` with no Core call;
+  - a shared project passes only when the caller holds `WRITE`; without it the answer is `403` after the one `getSharedResources` lookup, before any conversation write or model call;
+  - a failed lookup is the mapped upstream error, never `403`.
+
+  `ProjectConversationsService` calls it first in each write, and the controller's `resolveWritableLocator` awaits it before resolving the body path. The lookup has its own deadline (see the `project-detail-api` capability), because these routes pass no signal and the completion check runs before the generation's preparation deadline starts.
+- **Equal rights for editors.** Every caller who passes the check may write every conversation of the project, including one another caller started: Core grants `WRITE` to the whole project and records no per-conversation rule. A write stores the file in the project's bucket, with the caller's token.
+- **Known gap: concurrent writers are not serialized.** The generation registry rejects a second generation only for the same principal and path (`generation-registry`), and a project conversation is written with `If-Match: *` (`ProjectConversationStore.saveConversation`). So when two callers generate in the same conversation at the same time on a stateless (non-background) model, the later terminal save overwrites the other caller's exchange. This is a follow-up, not intended behaviour ([#9731](https://github.com/epam/ai-dial-chat/issues/9731)).
+- **Reads.** List and get go to Core with the caller's token, so a shared or organization project's conversations can be read. Marking a conversation viewed stays open to every reader (see the `project-conversation-read-state` capability).
+- **Only entry point.** The regular conversation routes SHALL refuse a project conversation locator with `400`, so the gating and the access check above cannot be bypassed. `IsNotProjectConversationLocator` (`apps/chat-api/src/conversations/dto/not-project-conversation-locator.validator.ts`) sits on the `path` of `ConversationPathDto` (and so of every query DTO extending it), `SendCompletionDto`, `StopCompletionDto`, `AttachGenerationDto` and `WatchConversationBodyDto`. A project completion body carries the locator without `projects/`, so it passes.
 - **OpenAPI.** Every route documents every status with `@ApiResponse`, and success responses name a DTO class.
 
 #### Scenario: Flag off
@@ -107,9 +115,19 @@ A project conversation SHALL be stored as the file `conversations/{name}` inside
 - **WHEN** `projectsEnabled` is false and `GET /api/v1/projects/{id}/conversations` is called
 - **THEN** the response is `403`
 
-#### Scenario: Writing to a shared project
+#### Scenario: Writing to a view-only shared project
 
-- **WHEN** a user whose bucket is `a1b2c3` calls `POST /api/v1/projects/projects%2Fz9y8x7%2Fresearch/conversations`
+- **WHEN** a user whose bucket is `a1b2c3` calls `POST /api/v1/projects/projects%2Fz9y8x7%2Fresearch/conversations`, and `getSharedResources` lists the project with `permissions: ['READ']`
+- **THEN** the response is `403`, the only Core call is `getSharedResources`, and no `uploadProjectFile` call is made
+
+#### Scenario: An editor creates a conversation in a shared project
+
+- **WHEN** the same call is made, and `getSharedResources` lists the project with `permissions: ['READ', 'WRITE']`
+- **THEN** the response is `201`, and `uploadProjectFile` is called with bucket `z9y8x7` and the caller's token
+
+#### Scenario: Writing to an organization project
+
+- **WHEN** a user calls `POST /api/v1/projects/projects%2Fpublic%2Fhandbook/conversations`
 - **THEN** the response is `403`, and no Core call is made
 
 #### Scenario: Path outside the addressed project
@@ -299,13 +317,13 @@ Status codes:
 | `200` / `201` / `204` | Success. |
 | `400` | Invalid `:id`, `:conversationName` or body. |
 | `401` | No valid session. |
-| `403` | The flag is off, the project is not in the caller's own bucket (writes), or Core denied access. |
+| `403` | The flag is off, the caller may not write to the project (writes; `canEdit: false`), or Core denied access. |
 | `404` | No such project or conversation. |
 | `409` | Save or rename met a pending background message, or a persistent conflict. |
 | `413` | `project-storage-full`. |
-| `429` / `502` / `503` | Upstream. |
+| `429` / `502` / `503` | Upstream, including a failed permission lookup on a write. |
 
-**Generated-client impact:** `ProjectsApi.createProjectConversation`, `getProjectConversation`, `saveProjectConversation`, `renameProjectConversation` and `deleteProjectConversation`, all normal methods.
+**Generated-client impact:** `ProjectsApi.createProjectConversation`, `getProjectConversation`, `saveProjectConversation`, `renameProjectConversation` and `deleteProjectConversation`, all normal methods. None changes shape.
 
 #### Scenario: Create from the first message
 
@@ -316,6 +334,11 @@ Status codes:
 
 - **WHEN** the owner renames a project conversation to `Login article`
 - **THEN** the stored body's `name` is `Login article`, and no file is created or deleted
+
+#### Scenario: An editor deletes a chat the owner started
+
+- **WHEN** a recipient with `WRITE` deletes `projects/z9y8x7/research/conversations/x`, which the owner created
+- **THEN** `deleteProjectFile` is called with bucket `z9y8x7`, and the response is `204`
 
 #### Scenario: Delete a missing conversation
 
@@ -330,7 +353,7 @@ Status codes:
 - `POST /api/v1/projects/:id/conversations/completions/stop` (`stopProjectCompletion`, body `StopCompletionDto`);
 - `POST /api/v1/projects/:id/conversations/completions/attach` (`attachToProjectGeneration`, body `AttachGenerationDto`, SSE).
 
-Each handler checks access and the path, then calls the same `ConversationService` method as the `/api/v1/conversations/completions…` handler, with the locator as the path. The SSE framing, the `onReady` flush, client-disconnect handling, hidden-model checks, background generation, stop and attach therefore behave exactly as for a top-level conversation.
+Each handler first awaits the write-access check, then checks the path, then calls the same `ConversationService` method as the `/api/v1/conversations/completions…` handler, with the locator as the path. The SSE framing, the `onReady` flush, client-disconnect handling, hidden-model checks, background generation, stop and attach therefore behave exactly as for a top-level conversation. A refused check answers before the SSE stream opens.
 
 Watching (`POST /api/v1/conversations/watch`) is not offered for project conversations: Core resource subscriptions for a file inside a complex resource are not verified.
 
@@ -341,10 +364,15 @@ Watching (`POST /api/v1/conversations/watch`) is not offered for project convers
 - **WHEN** a completion is streaming with `path: 'a1b2c3/q4/conversations/x'`, and stop is called with the same path
 - **THEN** the generation registered under that path is stopped
 
-#### Scenario: Completion on a read-only project
+#### Scenario: Completion on a view-only project
 
-- **WHEN** a user whose bucket is `a1b2c3` posts a completion for `projects/z9y8x7/research`
-- **THEN** the response is `403`, and no Core call is made
+- **WHEN** a user whose bucket is `a1b2c3` posts a completion for `projects/z9y8x7/research`, and `getSharedResources` lists the project with `permissions: ['READ']`
+- **THEN** the response is `403`, no model is called, and no Core write is made
+
+#### Scenario: An editor's completion streams
+
+- **WHEN** the listed permissions are `['READ', 'WRITE']`
+- **THEN** the completion streams as for the owner, and the answer is saved into `projects/z9y8x7/research/conversations/{name}`
 
 ### Requirement: Project completions carry only the project id
 

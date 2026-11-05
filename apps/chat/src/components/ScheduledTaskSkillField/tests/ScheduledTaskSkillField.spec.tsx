@@ -23,10 +23,6 @@ vi.mock('../../../context/SkillsContext', () => ({
     ],
   }),
 }));
-vi.mock(
-  '../../../hooks/scheduled-tasks/useScheduledTaskSkillDisplayNames',
-  () => ({ useScheduledTaskSkillDisplayNames: () => [] }),
-);
 describe('ScheduledTaskSkillField', () => {
   it('formats unavailable references as removable short names', async () => {
     const onChange = vi.fn();

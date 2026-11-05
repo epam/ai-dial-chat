@@ -55,6 +55,7 @@ export * from './components/InitialsAvatar/InitialsAvatar';
 export * from './components/CopyButton/CopyButton';
 export * from './utils/initials';
 export * from './utils/avatar-color';
+export * from './components/ActionMenu/ActionMenu';
 export * from './components/PanelEmptyState/PanelEmptyState';
 export * from './components/NewVersionAlert/NewVersionAlert';
 export * from './components/NotificationStack/NotificationStack';
@@ -70,6 +71,7 @@ export * from './components/ConfirmationView/ConfirmationFooter';
 export * from './components/ConfirmationDialog/ConfirmationDialog';
 export * from './components/DeleteConfirmationView/DeleteConfirmationView';
 export * from './components/DeleteConfirmationDialog/DeleteConfirmationDialog';
+export * from './components/DeleteConfirmationDrawer/DeleteConfirmationDrawer';
 export * from './components/MarkdownRenderer/Table/TableHeader';
 export * from './components/TextRefinementField/TextRefinementField';
 export * from './entry-points/markdown';
@@ -81,6 +83,13 @@ export * from './hooks/useIsTablet';
 export * from './hooks/useIsTextClipped';
 export * from './hooks/useTextRefinement';
 export * from './hooks/useUnsavedChangesGuard';
+export * from './hooks/useUnsavedChangesLeaveGuard';
+export * from './hooks/useUnsavedChangesLeaveConfirmation';
+export * from './components/UnsavedChangesProvider/UnsavedChangesProvider';
+export {
+  useUnsavedChanges,
+  type UnsavedChangesContextValue,
+} from './components/UnsavedChangesProvider/unsaved-changes-context';
 
 /*
  * Explicit `/index` avoids a declaration-resolution collision with this

@@ -268,6 +268,21 @@ describe('ProjectCreateForm', () => {
         .forEach((region) => expect(region.textContent).toBe(''));
     });
 
+    it('links the field to the visible inline error, not the empty alert region', async () => {
+      renderForm();
+      const input = screen.getByRole('textbox', { name: /Name/ });
+
+      await userEvent.click(input);
+      await userEvent.tab();
+
+      expect(
+        screen.getByRole('textbox', {
+          name: /Name/,
+          description: 'Name is required',
+        }),
+      ).toBe(input);
+    });
+
     it('moves focus to Name when the host reports a name error', async () => {
       const { props } = renderForm({
         values: { ...EMPTY_VALUES, name: 'Handbook' },
@@ -285,6 +300,62 @@ describe('ProjectCreateForm', () => {
       await userEvent.type(screen.getByRole('textbox', { name: /Name/ }), 'a');
 
       expect(props.onFieldChange).toHaveBeenCalledWith('name', 'a');
+    });
+
+    it('keeps the name editable without a hint by default', () => {
+      renderForm({ values: { ...EMPTY_VALUES, name: 'research' } });
+
+      const input = screen.getByRole('textbox', { name: /Name/ });
+      expect(input.hasAttribute('readonly')).toBe(false);
+      expect(
+        screen.queryByText('Only the project owner can rename it.'),
+      ).toBeNull();
+    });
+  });
+
+  describe('read-only name', () => {
+    it('shows the stored name read-only with the default hint linked to it', () => {
+      renderForm({
+        values: { ...EMPTY_VALUES, name: 'research' },
+        isNameReadOnly: true,
+      });
+
+      const input = screen.getByRole('textbox', { name: /Name/ });
+      const hint = screen.getByText('Only the project owner can rename it.');
+      expect((input as HTMLInputElement).value).toBe('research');
+      expect(input.hasAttribute('readonly')).toBe(true);
+      expect(input.getAttribute('aria-describedby')).toBe(hint.id);
+    });
+
+    it('uses the host hint and links it next to a name error', () => {
+      renderForm({
+        values: { ...EMPTY_VALUES, name: 'research' },
+        errors: { name: 'A project with this name already exists' },
+        isNameReadOnly: true,
+        labels: { ...LABELS, nameReadOnlyHint: 'Ask the owner to rename it' },
+      });
+
+      const input = screen.getByRole('textbox', { name: /Name/ });
+      const hint = screen.getByText('Ask the owner to rename it');
+      const error = screen.getByText('A project with this name already exists');
+      expect(input.getAttribute('aria-describedby')?.split(' ')).toEqual([
+        hint.id,
+        error.id,
+      ]);
+    });
+
+    it('never reports typing into a read-only name', async () => {
+      const { props } = renderForm({
+        values: { ...EMPTY_VALUES, name: 'research' },
+        isNameReadOnly: true,
+      });
+
+      await userEvent.type(screen.getByRole('textbox', { name: /Name/ }), 'a');
+
+      expect(props.onFieldChange).not.toHaveBeenCalledWith(
+        'name',
+        expect.anything(),
+      );
     });
   });
 
@@ -330,6 +401,18 @@ describe('ProjectCreateForm', () => {
 
       expect(screen.getByText('from device')).toBeTruthy();
       expect(screen.queryByRole('button', { name: 'file manager' })).toBeNull();
+    });
+
+    it('opens the device picker from anywhere on the drop zone, not only the link', async () => {
+      renderForm();
+      const onInputClick = vi.fn();
+      getDropzoneInput().addEventListener('click', onInputClick);
+
+      await userEvent.click(
+        screen.getByText('File formats .csv, .pdf and .xlsx (max 1 MB)'),
+      );
+
+      expect(onInputClick).toHaveBeenCalledOnce();
     });
 
     it('lists and announces files the client rejects', async () => {
@@ -606,6 +689,27 @@ describe('ProjectCreateForm — layout', () => {
     expect(
       within(context).getByRole('heading', { name: 'Context' }).className,
     ).toContain('dial-tiny-semi-text');
+  });
+
+  it('lists Cancel first in the header and Create first in the mobile footer', () => {
+    renderForm();
+
+    const names = screen
+      .getAllByRole('button', { name: /^(Create|Cancel)$/ })
+      .map((button) => button.textContent);
+
+    expect(names).toEqual(['Cancel', 'Create', 'Create', 'Cancel']);
+  });
+
+  it('paints the idle drop zone with the layer-raised background', () => {
+    const styles = readFileSync(
+      join(__dirname, '../ProjectCreateForm.module.scss'),
+      'utf-8',
+    );
+
+    expect(styles).toMatch(
+      /--pcf-dropzone-bg, var\(--bg-layer-raised, #d1dbea\)/,
+    );
   });
 
   it('renders every file card as an item of one list', () => {

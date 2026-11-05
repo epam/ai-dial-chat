@@ -1,4 +1,5 @@
 import {
+  ActionMenu,
   buildCssVars,
   mergeClasses,
   PanelEmptyState,
@@ -6,7 +7,6 @@ import {
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  Dropdown,
   type DropdownItem,
   ElementSize,
   EllipsisTooltip,
@@ -86,18 +86,20 @@ const ConversationRow: FC<RowProps> = ({
         className="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-3 text-start focus-visible:outline-2 focus-visible:-outline-offset-2"
         onClick={() => onOpen(item.id)}
       >
-        {/* The status point: an outline when read, filled when unread. */}
-        <span
-          aria-hidden
-          className="flex size-4 shrink-0 items-center justify-center"
-        >
+        {/* The host's leading visual, else the status point: an outline when read, filled when unread. */}
+        {item.leading ?? (
           <span
-            className={mergeClasses(
-              'size-[7.11px] rounded-full',
-              isUnread ? styles.unreadDot : styles.readDot,
-            )}
-          />
-        </span>
+            aria-hidden
+            className="flex size-4 shrink-0 items-center justify-center"
+          >
+            <span
+              className={mergeClasses(
+                'size-[7.11px] rounded-full',
+                isUnread ? styles.unreadDot : styles.readDot,
+              )}
+            />
+          </span>
+        )}
         <EllipsisTooltip
           text={item.title}
           className={mergeClasses(
@@ -105,6 +107,21 @@ const ConversationRow: FC<RowProps> = ({
             isUnread ? unreadRowTitleClassName : rowTitleClassName,
           )}
         />
+        {/* The host's trailing visual, else — beside a host `leading` node, which replaces the status point — the unread dot. */}
+        {item.trailing ??
+          (isUnread && item.leading != null && (
+            <span
+              aria-hidden
+              className="flex size-6 shrink-0 items-center justify-center"
+            >
+              <span
+                className={mergeClasses(
+                  'size-[7.11px] rounded-full',
+                  styles.unreadDot,
+                )}
+              />
+            </span>
+          ))}
       </button>
       {isUnread && (
         <span id={unreadId} className="sr-only">
@@ -112,8 +129,10 @@ const ConversationRow: FC<RowProps> = ({
         </span>
       )}
       {menuItems.length > 0 && (
-        <Dropdown
+        <ActionMenu
           items={menuItems}
+          title={labels.moreActionsLabel(item.title)}
+          closeLabel={labels.closeLabel}
           placement="bottom-end"
           onOpenChange={setIsMenuOpen}
         >
@@ -134,7 +153,7 @@ const ConversationRow: FC<RowProps> = ({
               />
             }
           />
-        </Dropdown>
+        </ActionMenu>
       )}
     </li>
   );

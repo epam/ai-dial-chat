@@ -887,7 +887,7 @@ authorizes each call with the caller's token. All of them are gated by
 
 | Method and path                                | Handler                   | What it does                                                                                                                                  |
 | ---------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/v1/projects/:id`                     | `getProject`              | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source` and `canEdit`              |
+| `GET /api/v1/projects/:id`                     | `getProject`              | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source`, `canEdit` and `canManage` |
 | `GET /api/v1/projects/:id/archive`             | `downloadProject`         | Streams Core's ZIP as an attachment                                                                                                           |
 | `GET /api/v1/projects/:id/files/:fileName`     | `downloadProjectFile`     | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                                          |
 | `GET /api/v1/projects/:id/artifacts`           | `listProjectArtifacts`    | Lists the files directly under `artifacts/`, where the agents of the project's chats save their outputs, newest first; any reader may call it |
@@ -936,8 +936,13 @@ as `video/mp2t`; `application/octet-stream` for an unknown one);
 any other file outside the chat's layout is re-uploaded as
 `application/octet-stream`.
 
-`PUT` and `DELETE` act only on a project in the caller's own bucket (`403`
-otherwise, before any Core call), matching `canEdit`.
+`PUT` saves for the owner and for a recipient the project is shared with
+with `WRITE` (`canEdit`); a recipient's save changing the name is `403`
+before any Core call, because only the owner renames (`canManage`). `DELETE`
+acts only on a project in the caller's own bucket (`403` otherwise, before
+any Core call). For a shared project the BFF reads the caller's permissions
+from DIAL Core's share list (`ProjectAccessService`) — one extra call per
+recipient read or write, none for the owner.
 
 Conditional writes answer:
 
@@ -1893,7 +1898,7 @@ authorizes each call with the caller's token. All of them are gated by
 
 | Method and path                                | Handler                   | What it does                                                                                                                                  |
 | ---------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/v1/projects/:id`                     | `getProject`              | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source` and `canEdit`              |
+| `GET /api/v1/projects/:id`                     | `getProject`              | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source`, `canEdit` and `canManage` |
 | `GET /api/v1/projects/:id/archive`             | `downloadProject`         | Streams Core's ZIP as an attachment                                                                                                           |
 | `GET /api/v1/projects/:id/files/:fileName`     | `downloadProjectFile`     | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                                          |
 | `GET /api/v1/projects/:id/artifacts`           | `listProjectArtifacts`    | Lists the files directly under `artifacts/`, where the agents of the project's chats save their outputs, newest first; any reader may call it |
@@ -1942,8 +1947,13 @@ as `video/mp2t`; `application/octet-stream` for an unknown one);
 any other file outside the chat's layout is re-uploaded as
 `application/octet-stream`.
 
-`PUT` and `DELETE` act only on a project in the caller's own bucket (`403`
-otherwise, before any Core call), matching `canEdit`.
+`PUT` saves for the owner and for a recipient the project is shared with
+with `WRITE` (`canEdit`); a recipient's save changing the name is `403`
+before any Core call, because only the owner renames (`canManage`). `DELETE`
+acts only on a project in the caller's own bucket (`403` otherwise, before
+any Core call). For a shared project the BFF reads the caller's permissions
+from DIAL Core's share list (`ProjectAccessService`) — one extra call per
+recipient read or write, none for the owner.
 
 Conditional writes answer:
 
@@ -2885,7 +2895,7 @@ authorizes each call with the caller's token. All of them are gated by
 
 | Method and path                                | Handler                   | What it does                                                                                                                                  |
 | ---------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/v1/projects/:id`                     | `getProject`              | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source` and `canEdit`              |
+| `GET /api/v1/projects/:id`                     | `getProject`              | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source`, `canEdit` and `canManage` |
 | `GET /api/v1/projects/:id/archive`             | `downloadProject`         | Streams Core's ZIP as an attachment                                                                                                           |
 | `GET /api/v1/projects/:id/files/:fileName`     | `downloadProjectFile`     | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                                          |
 | `GET /api/v1/projects/:id/artifacts`           | `listProjectArtifacts`    | Lists the files directly under `artifacts/`, where the agents of the project's chats save their outputs, newest first; any reader may call it |
@@ -2934,8 +2944,13 @@ as `video/mp2t`; `application/octet-stream` for an unknown one);
 any other file outside the chat's layout is re-uploaded as
 `application/octet-stream`.
 
-`PUT` and `DELETE` act only on a project in the caller's own bucket (`403`
-otherwise, before any Core call), matching `canEdit`.
+`PUT` saves for the owner and for a recipient the project is shared with
+with `WRITE` (`canEdit`); a recipient's save changing the name is `403`
+before any Core call, because only the owner renames (`canManage`). `DELETE`
+acts only on a project in the caller's own bucket (`403` otherwise, before
+any Core call). For a shared project the BFF reads the caller's permissions
+from DIAL Core's share list (`ProjectAccessService`) — one extra call per
+recipient read or write, none for the owner.
 
 Conditional writes answer:
 
@@ -3876,7 +3891,7 @@ authorizes each call with the caller's token. All of them are gated by
 
 | Method and path                                | Handler                   | What it does                                                                                                                                  |
 | ---------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/v1/projects/:id`                     | `getProject`              | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source` and `canEdit`              |
+| `GET /api/v1/projects/:id`                     | `getProject`              | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source`, `canEdit` and `canManage` |
 | `GET /api/v1/projects/:id/archive`             | `downloadProject`         | Streams Core's ZIP as an attachment                                                                                                           |
 | `GET /api/v1/projects/:id/files/:fileName`     | `downloadProjectFile`     | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                                          |
 | `GET /api/v1/projects/:id/artifacts`           | `listProjectArtifacts`    | Lists the files directly under `artifacts/`, where the agents of the project's chats save their outputs, newest first; any reader may call it |
@@ -3925,8 +3940,13 @@ as `video/mp2t`; `application/octet-stream` for an unknown one);
 any other file outside the chat's layout is re-uploaded as
 `application/octet-stream`.
 
-`PUT` and `DELETE` act only on a project in the caller's own bucket (`403`
-otherwise, before any Core call), matching `canEdit`.
+`PUT` saves for the owner and for a recipient the project is shared with
+with `WRITE` (`canEdit`); a recipient's save changing the name is `403`
+before any Core call, because only the owner renames (`canManage`). `DELETE`
+acts only on a project in the caller's own bucket (`403` otherwise, before
+any Core call). For a shared project the BFF reads the caller's permissions
+from DIAL Core's share list (`ProjectAccessService`) — one extra call per
+recipient read or write, none for the owner.
 
 Conditional writes answer:
 

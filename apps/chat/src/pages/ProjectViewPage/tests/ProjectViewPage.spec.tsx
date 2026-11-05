@@ -10,7 +10,9 @@ import type { ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
+  CatalogI18nKeys,
   NotFoundI18nKeys,
   ProjectsI18nKeys,
 } from '../../../constants/translation-keys';
@@ -146,6 +148,7 @@ const details = (
   contentVersion: '"cv1"',
   conversationCount: 0,
   canEdit: true,
+  canManage: true,
   ...extra,
 });
 
@@ -227,7 +230,11 @@ describe('ProjectViewPage', () => {
 
   it('opens a shared project read-only: Pin and Download only', async () => {
     vi.mocked(getProject).mockResolvedValue(
-      details({ source: ProjectSource.Shared, canEdit: false }),
+      details({
+        source: ProjectSource.Shared,
+        canEdit: false,
+        canManage: false,
+      }),
     );
     renderAt();
     await screen.findByRole('heading', { level: 1, name: 'q4' });
@@ -240,6 +247,38 @@ describe('ProjectViewPage', () => {
     ).toBeNull();
     expect(
       screen.getByRole('button', { name: ButtonsI18nKeys.Pin }),
+    ).toBeTruthy();
+    const menu = await openMenu();
+    expect(
+      within(menu).queryByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
+    ).toBeNull();
+    expect(
+      within(menu).queryByRole('menuitem', { name: ButtonsI18nKeys.Share }),
+    ).toBeNull();
+    expect(
+      within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Download }),
+    ).toBeTruthy();
+  });
+
+  it('lets a shared editor edit and chat but not publish, share or delete', async () => {
+    vi.mocked(getProject).mockResolvedValue(
+      details({
+        source: ProjectSource.Shared,
+        canEdit: true,
+        canManage: false,
+      }),
+    );
+    renderAt();
+    await screen.findByRole('heading', { level: 1, name: 'q4' });
+
+    expect(
+      screen.getByRole('button', { name: ButtonsI18nKeys.Edit }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: ButtonsI18nKeys.Publish }),
+    ).toBeNull();
+    expect(
+      screen.getByText(`chats of ${PROJECT_ID}, editable: true`),
     ).toBeTruthy();
     const menu = await openMenu();
     expect(
@@ -302,7 +341,7 @@ describe('ProjectViewPage', () => {
     );
   });
 
-  it('opens the view-only share overlay and the publish panel', async () => {
+  it('opens the share overlay and the publish panel for the owner', async () => {
     renderAt();
     await screen.findByRole('heading', { level: 1, name: 'q4' });
 
@@ -344,7 +383,7 @@ describe('ProjectViewPage', () => {
       within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
     );
     const dialog = await screen.findByRole('dialog', {
-      name: ProjectsI18nKeys.ActionsDeleteConfirmTitle,
+      name: ButtonsI18nKeys.Delete,
     });
     await userEvent.click(
       within(dialog).getByRole('button', { name: ButtonsI18nKeys.Delete }),
@@ -356,8 +395,7 @@ describe('ProjectViewPage', () => {
     expect(deleteProject).toHaveBeenCalledWith(PROJECT_ID, '"cv1"');
   });
 
-  it('says the chats are deleted too when the project has some', async () => {
-    vi.mocked(getProject).mockResolvedValue(details({ conversationCount: 2 }));
+  it('confirms the delete in a side panel with the catalog copy', async () => {
     renderAt();
     await screen.findByRole('heading', { level: 1, name: 'q4' });
 
@@ -365,38 +403,19 @@ describe('ProjectViewPage', () => {
     await userEvent.click(
       within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
     );
-    const dialog = await screen.findByRole('dialog', {
-      name: ProjectsI18nKeys.ActionsDeleteConfirmTitle,
+    const drawer = await screen.findByRole('dialog', {
+      name: ButtonsI18nKeys.Delete,
     });
 
     expect(
-      within(dialog).getByText(
-        ProjectsI18nKeys.ActionsDeleteConfirmWithChatsDescription,
-      ),
-    ).toBeTruthy();
-  });
-
-  it('stops saying the chats are deleted too once the list deleted them all', async () => {
-    vi.mocked(getProject).mockResolvedValue(details({ conversationCount: 1 }));
-    renderAt();
-    await screen.findByRole('heading', { level: 1, name: 'q4' });
-
-    await userEvent.click(
-      screen.getByRole('button', { name: 'delete a chat' }),
-    );
-    const menu = await openMenu();
-    await userEvent.click(
-      within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
-    );
-    const dialog = await screen.findByRole('dialog', {
-      name: ProjectsI18nKeys.ActionsDeleteConfirmTitle,
-    });
-
-    expect(
-      within(dialog).getByText(
-        ProjectsI18nKeys.ActionsDeleteConfirmDescription,
-      ),
-    ).toBeTruthy();
+      within(drawer)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual([
+      CatalogI18nKeys.DetailsDeleteConsequenceSharedConfigurations,
+      CatalogI18nKeys.DetailsDeleteConsequenceUsersLoseAccess,
+      BasicI18nKeys.ConsequenceCannotBeUndone,
+    ]);
   });
 
   it('fills the main column with the project chats', async () => {
@@ -484,7 +503,9 @@ describe('ProjectViewPage', () => {
     });
 
     it('previews a file of a shared read-only project', async () => {
-      vi.mocked(getProject).mockResolvedValue(details({ canEdit: false }));
+      vi.mocked(getProject).mockResolvedValue(
+        details({ canEdit: false, canManage: false }),
+      );
       renderAt();
 
       await userEvent.click(await findCard());
@@ -580,7 +601,9 @@ describe('ProjectViewPage', () => {
     });
 
     it('shows the outputs of a shared read-only project', async () => {
-      vi.mocked(getProject).mockResolvedValue(details({ canEdit: false }));
+      vi.mocked(getProject).mockResolvedValue(
+        details({ canEdit: false, canManage: false }),
+      );
       vi.mocked(listProjectArtifacts).mockResolvedValue(outputs('report.pdf'));
       renderAt();
 
@@ -646,7 +669,7 @@ describe('ProjectViewPage', () => {
       within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
     );
     const dialog = await screen.findByRole('dialog', {
-      name: ProjectsI18nKeys.ActionsDeleteConfirmTitle,
+      name: ButtonsI18nKeys.Delete,
     });
     await userEvent.click(
       within(dialog).getByRole('button', { name: ButtonsI18nKeys.Delete }),
@@ -841,7 +864,7 @@ describe('ProjectViewPage', () => {
         within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
       );
       const dialog = await screen.findByRole('dialog', {
-        name: ProjectsI18nKeys.ActionsDeleteConfirmTitle,
+        name: ButtonsI18nKeys.Delete,
       });
       await userEvent.click(
         within(dialog).getByRole('button', { name: ButtonsI18nKeys.Delete }),

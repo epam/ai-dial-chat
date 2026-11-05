@@ -1,5 +1,6 @@
 import { AttachmentCard } from '@epam/ai-dial-attachment-input';
 import {
+  ActionMenu,
   buildCssVars,
   type DisplayAttachment,
   getAttachmentTypeFromMime,
@@ -12,7 +13,6 @@ import {
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  Dropdown,
   type DropdownItem,
   EllipsisTooltip,
   GhostButton,
@@ -178,8 +178,10 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
 
   const renderMenu = (includePrimary: boolean, className: string) => (
     <div className={className}>
-      <Dropdown
+      <ActionMenu
         items={buildMenuItems(includePrimary)}
+        title={labels.moreActionsLabel}
+        closeLabel={labels.closeLabel}
         matchReferenceWidth={false}
         listClassName="w-[200px]"
       >
@@ -193,7 +195,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
           }
           aria-label={labels.moreActionsLabel}
         />
-      </Dropdown>
+      </ActionMenu>
     </div>
   );
 
@@ -204,7 +206,11 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   };
 
   const renderState = () => {
-    if (isLoading) return <Spinner />;
+    if (isLoading) {
+      return (
+        <Spinner ariaLabel={labels.loadingAriaLabel ?? 'Loading project'} />
+      );
+    }
     if (hasError) {
       return (
         <div className="flex flex-col items-center gap-3">
@@ -299,7 +305,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
     <div
       style={cssVars}
       className={mergeClasses(
-        'flex h-full w-full min-w-0 flex-col',
+        'flex size-full min-h-0 min-w-0 flex-1 flex-col',
         styles.container,
       )}
     >

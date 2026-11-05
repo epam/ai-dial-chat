@@ -99,7 +99,7 @@ Overrides arrive through `styles.colors` (`background`, `dangerBackground`, `dan
 
 `DeleteConfirmationView` (`libs/chat-shared/src/components/DeleteConfirmationView/DeleteConfirmationView.tsx`) SHALL compose `ConfirmationView` in the `Danger` variant from `names: string[]`, an optional host-supplied `icon` and `typeLabel`, a host-composed `message`, optional `consequences`, `maxListedNames` (default 10), `labels`, `styles`, and `children`:
 
-- **One name:** a plain `ResourceSummary` with a `ConfirmationIdentityRow` showing `icon`, `typeLabel`, and the name; no name list.
+- **One name:** a plain `ResourceSummary` with a `ConfirmationIdentityRow` showing `icon`, `typeLabel`, and the name; no name list. An optional `identityVariant` (default `undefined`, the neutral card) wraps the same row in a `ConfirmationIdentityCard` of that variant instead, so `ConfirmationPopupVariant.Danger` gives the red-tinted card of the catalog's delete step.
 - **Several names:** the card shows `labels.itemCount(count)` (default `"{count} items"`) with no icon or type label, and the first `maxListedNames` names are listed through `details`; the rest collapse into one `labels.moreItems(rest)` entry (default `"… and {count} more"`), colored like the consequences.
 - **Consequences:** `consequences` followed by `labels.cannotBeUndone` (default `"Cannot be undone"`), which is always the last bullet.
 
@@ -118,6 +118,20 @@ The lib SHALL hold no i18n; every string has an English default the host overrid
 
 - **WHEN** the dialog is rendered with no `labels`
 - **THEN** its actions read "Cancel" and "Delete" and the last bullet reads "Cannot be undone"
+
+### Requirement: `DeleteConfirmationDrawer` presents the delete body as a side panel
+
+`DeleteConfirmationDrawer` (`libs/chat-shared/src/components/DeleteConfirmationDrawer/DeleteConfirmationDrawer.tsx`) SHALL wrap `DeleteConfirmationView` and a `Danger` `ConfirmationFooter` in the kit's `SideDrawer` — the panel the catalog shows for an item — with the body scrolling and the footer pinned under it. `title` is a `string`, so the kit names the dialog with it, and it takes the view's props plus `open`, `isLoading`, `onConfirm` and `onClose`. While `isLoading` is `true` the close control is disabled and Cancel, Escape and a backdrop press are ignored. Its `labels` add `confirm` (default `"Delete"`), `cancel` (default `"Cancel"`), `deleting` (default `"Deleting…"`) and `close` (default `"Close"`) to the view's labels. The project delete (`ProjectDeleteConfirmation`) uses it, with `identityVariant={ConfirmationPopupVariant.Danger}`.
+
+#### Scenario: The drawer is named by its title and lists the consequences
+
+- **WHEN** the drawer is open with `title="Delete"` and one consequence
+- **THEN** its accessible name is "Delete" and its bullets are the consequence followed by "Cannot be undone"
+
+#### Scenario: Dismissal is blocked while deleting
+
+- **WHEN** `isLoading` is `true` and the user activates Cancel or the close control
+- **THEN** `onClose` is not called
 
 ### Requirement: The chat panel's single-chat delete uses the shared dialog
 

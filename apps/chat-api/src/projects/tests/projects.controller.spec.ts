@@ -368,6 +368,7 @@ describe('ProjectsController (integration)', () => {
       contextFiles: [{ name: 'tickets.csv', size: 2048 }],
       etag: '"e1"',
       canEdit: true,
+      canManage: true,
     };
 
     it('returns the project for its encoded id with a no-store cache header', async () => {
@@ -386,6 +387,32 @@ describe('ProjectsController (integration)', () => {
         TEST_USER.at,
         expect.any(AbortSignal),
       );
+    });
+
+    it('returns the access flags of a recipient with edit access', async () => {
+      const shared = {
+        ...details,
+        id: 'projects/z9y8x7/research',
+        bucket: 'z9y8x7',
+        path: 'research',
+        parentPath: undefined,
+        name: 'research',
+        source: ProjectSource.Shared,
+        canEdit: true,
+        canManage: false,
+      };
+      service.getProject.mockResolvedValue(shared);
+      app = await buildApp(service);
+
+      const res = await request(app.getHttpServer())
+        .get(`/api/v1/projects/${encodeURIComponent(shared.id)}`)
+        .expect(200);
+
+      expect(res.body).toMatchObject({
+        source: ProjectSource.Shared,
+        canEdit: true,
+        canManage: false,
+      });
     });
 
     it('rejects a traversal id with 400 before calling the service', async () => {

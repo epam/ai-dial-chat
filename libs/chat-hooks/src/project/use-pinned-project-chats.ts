@@ -41,7 +41,7 @@ export interface PinnedProjectChat {
 
 /** A loaded pinned project and its newest chats. */
 export interface PinnedProjectChats {
-  /** The project's details as last read; `canEdit`, `contentVersion` and `conversationCount` feed the host's actions. */
+  /** The project's details as last read; `canEdit`, `canManage`, `contentVersion` and `conversationCount` feed the host's actions. */
   project: ProjectDetailsDto;
   /** At most `PINNED_PROJECT_CHATS_LIMIT` chats, newest first. */
   chats: PinnedProjectChat[];

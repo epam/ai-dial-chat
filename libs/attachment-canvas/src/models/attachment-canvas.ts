@@ -519,6 +519,8 @@ export interface AttachmentCanvasLabels {
   ooxmlHighlightsLabel?: string;
   /** Status announced once navigation to the selected OOXML citation highlight completes. Defaults to `'Scrolled to the cited location'`. */
   ooxmlHighlightNavigatedLabel?: string;
+  /** Accessible name of the content loading spinners. Defaults to `'Loading…'`. */
+  loadingLabel?: string;
 }
 
 /** Props for the AttachmentCanvas component. */
@@ -618,6 +620,7 @@ export type AttachmentCanvasBodyLabels = Pick<
   | 'mathScrollRegionAriaLabel'
   | 'ooxmlHighlightsLabel'
   | 'ooxmlHighlightNavigatedLabel'
+  | 'loadingLabel'
 >;
 
 /** Props for the `AttachmentCanvasBody` component. */

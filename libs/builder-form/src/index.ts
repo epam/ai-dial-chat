@@ -4,6 +4,7 @@ export type {
   BuilderFormContainerStyles,
   BuilderFormContainerColors,
 } from './models/builder-form-container-props';
+export { BuilderFormActionsOrder } from './models/builder-form-actions-order';
 export type { BuilderFormActionsLabels } from './models/builder-form-actions-props';
 export type {
   BuilderFormHeaderLabels,

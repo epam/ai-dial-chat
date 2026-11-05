@@ -16,6 +16,8 @@ export interface RenameConversationPopupLabels {
   saveLabel: string;
   /** Label for the cancel button. */
   cancelLabel: string;
+  /** Accessible name of the spinner shown while the rename is saved. Defaults to `'Saving'`. */
+  savingLabel?: string;
 }
 
 /** Style overrides for `RenameConversationPopup` content. */

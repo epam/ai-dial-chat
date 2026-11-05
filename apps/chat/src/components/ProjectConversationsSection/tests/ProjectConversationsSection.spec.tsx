@@ -269,6 +269,30 @@ describe('ProjectConversationsSection', () => {
     ).toBeNull();
   });
 
+  it('gives a shared editor the input and the row menu of a chat the owner started', async () => {
+    vi.mocked(listProjectConversations).mockResolvedValue({
+      items: [
+        {
+          id: CHAT_ID,
+          name: 'gpt-4o__Old__1',
+          title: 'Old title',
+          author: 'jane.owner',
+          isUnread: false,
+        },
+      ],
+    });
+    renderSection(true);
+
+    expect(
+      await screen.findByRole('button', {
+        name: ProjectsI18nKeys.ChatsMoreActions,
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: ChatI18nKeys.Placeholder }),
+    ).toBeTruthy();
+  });
+
   it('shows the empty state', async () => {
     vi.mocked(listProjectConversations).mockResolvedValue({
       items: [],

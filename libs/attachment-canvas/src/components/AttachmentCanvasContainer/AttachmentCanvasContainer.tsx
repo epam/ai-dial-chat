@@ -109,6 +109,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
         mathScrollRegionAriaLabel,
         ooxmlHighlightsLabel,
         ooxmlHighlightNavigatedLabel,
+        loadingLabel,
       } = labels ?? {};
 
       const { isOpen, isLoading, content, fileName, closeCanvas, retryCanvas } =
@@ -188,6 +189,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
             mathScrollRegionAriaLabel,
             ooxmlHighlightsLabel,
             ooxmlHighlightNavigatedLabel,
+            loadingLabel,
           }}
           onDownload={handleDownload}
           onCopyText={

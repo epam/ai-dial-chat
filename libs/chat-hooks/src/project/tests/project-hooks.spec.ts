@@ -32,6 +32,7 @@ const details = {
   contentVersion: '"cv1"',
   conversationCount: 0,
   canEdit: true,
+  canManage: true,
 };
 
 const rejection = (status: number, body: unknown = {}) =>

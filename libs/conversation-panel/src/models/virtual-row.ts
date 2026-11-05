@@ -123,6 +123,8 @@ export interface RowRendererData {
   styles?: RowStyles;
   /** Presentation of conversation rows and group headers. Defaults to `ConversationRowVariant.Avatar`. */
   rowVariant?: ConversationRowVariant;
+  /** Presentation of the chats nested under a pinned project. Defaults to `ConversationRowVariant.Indicator`. */
+  projectConversationVariant?: ConversationRowVariant;
   /** Id of the conversation currently being dragged. `null` when no drag is in progress. */
   draggingId: string | null;
   /** Id of the row (item or group header sentinel) currently under the drag cursor. */

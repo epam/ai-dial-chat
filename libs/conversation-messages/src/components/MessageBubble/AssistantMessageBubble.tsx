@@ -110,6 +110,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
    * push the content below it out of line with the deployment icon.
    */
   const hasText = !!text?.trim();
+  const isTextRegionEmpty = !hasText && !hasThinkingPlaceholder;
   const { slotRef, firstLineIndent } = useInlineStartIndent(
     beforeContent != null && hasText,
   );
@@ -168,13 +169,22 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
           {beforeContent != null && !hasText && (
             <div className="min-w-0">{beforeContent}</div>
           )}
-          {(hasText || (isStreaming && hasThinkingPlaceholder)) && (
+          {/*
+           * The live region mounts with the stream, before its first token,
+           * and stays the same node until the text settles: a region created
+           * in the same commit as its text is read late or not at all. With
+           * nothing to show yet (no text, no placeholder) it is taken out of
+           * flow, so it adds no column gap and `afterContent` stays level
+           * with the avatar.
+           */}
+          {(hasText || isStreaming) && (
             <div
               aria-live="polite"
               aria-atomic="false"
               className={mergeClasses(
                 textClass,
-                'relative max-w-full min-w-0 text-start',
+                isTextRegionEmpty ? 'absolute' : 'relative',
+                'max-w-full min-w-0 text-start',
                 /*
                  * `text-indent` inherits, so the indent targets the markdown
                  * container's first block child (a leading list indents its
@@ -204,29 +214,31 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                * unbreakable token in every markdown element — including ones
                * whose per-element class (or a host override) carries none.
                */}
-              <div
-                ref={contentRef}
-                className="cm-bubble-markdown max-w-full min-w-0 wrap-anywhere"
-              >
-                <MDMessageViewer
-                  content={text ?? ''}
-                  isPlainText={responseFormat === ResponseFormat.PlainText}
-                  isStreaming={isStreaming}
-                  thinkingLabel={thinkingLabel}
-                  components={markdownComponents}
-                  classNames={markdownClassNames}
-                  urlTransform={markdownUrlTransform}
-                  codeBlockCopyLabel={codeBlockCopyLabel}
-                  codeBlockCopiedLabel={codeBlockCopiedLabel}
-                  codeBlockDownloadLabel={codeBlockDownloadLabel}
-                  codeBlockTheme={codeBlockTheme}
-                  tableActionLabels={tableActionLabels}
-                  tableDownloadFilename={tableDownloadFilename}
-                  tableOnOpenInCanvas={tableOnOpenInCanvas}
-                  tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
-                  mathScrollRegionAriaLabel={mathScrollRegionAriaLabel}
-                />
-              </div>
+              {!isTextRegionEmpty && (
+                <div
+                  ref={contentRef}
+                  className="cm-bubble-markdown max-w-full min-w-0 wrap-anywhere"
+                >
+                  <MDMessageViewer
+                    content={text ?? ''}
+                    isPlainText={responseFormat === ResponseFormat.PlainText}
+                    isStreaming={isStreaming}
+                    thinkingLabel={thinkingLabel}
+                    components={markdownComponents}
+                    classNames={markdownClassNames}
+                    urlTransform={markdownUrlTransform}
+                    codeBlockCopyLabel={codeBlockCopyLabel}
+                    codeBlockCopiedLabel={codeBlockCopiedLabel}
+                    codeBlockDownloadLabel={codeBlockDownloadLabel}
+                    codeBlockTheme={codeBlockTheme}
+                    tableActionLabels={tableActionLabels}
+                    tableDownloadFilename={tableDownloadFilename}
+                    tableOnOpenInCanvas={tableOnOpenInCanvas}
+                    tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
+                    mathScrollRegionAriaLabel={mathScrollRegionAriaLabel}
+                  />
+                </div>
+              )}
             </div>
           )}
           <AttachmentGroup

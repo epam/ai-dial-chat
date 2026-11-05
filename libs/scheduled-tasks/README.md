@@ -74,6 +74,7 @@ import {
     noResultsDescription: 'Try a different search term or check your filters.',
     errorLabel: 'Something went wrong',
     retryLabel: 'Retry',
+    loadingAriaLabel: 'Loading scheduled tasks',
   }}
   onCreateClick={() => {}}
   searchQuery=""
@@ -124,9 +125,9 @@ When `repeat` is `ScheduledTaskRepeat.Custom`, the schedule section renders the 
 
 **Migration:** the former Custom every-N-weeks interval is removed — `values.everyWeeks`, `labels.everyLabel`, `labels.everyWeekOptions` and the `ScheduledTaskEveryWeekOption` type no longer exist. Pass `labels.daysOfWeekLabel` and read `values.daysOfWeek` instead of `values.dayOfWeek` for Custom.
 
-`isSubmitting` disables Cancel and Save **and** gives Save a busy affordance — a spinner, `aria-busy`, and an announcement of `labels.submittingLabel` (default `'Saving'`). Save is equally disabled whenever a required field is empty or the time draft is invalid, so the affordance is the only thing that separates "submitting" from "not ready".
+`isSubmitting` disables Cancel and Save **and** gives Save a busy affordance — a spinner, `aria-busy`, and an announcement of `labels.submittingLabel` (default `'Saving'`). While the lazy Instructions editor loads, a spinner named `labels.editorLoadingAriaLabel` (default `'Loading editor'`) stands in for it. Save is equally disabled whenever a required field is empty or the time draft is invalid, so the affordance is the only thing that separates "submitting" from "not ready".
 
-Pass `initialValues` — the values the form was opened with — to guard unsaved edits: while `values` differs from it (compared by `hasScheduledTaskFormChanges`, which treats empty strings, `undefined` and empty skill lists as equal), Back and Cancel open a discard confirmation instead of calling `onBack` / `onCancel`, and the browser warns before the page unloads. The confirmation's copy comes from the optional `labels.discardTitle`, `discardMessage`, `discardConfirmLabel` and `discardCancelLabel` (English defaults). Omit `initialValues` to handle unsaved changes in the host.
+Pass `initialValues` — the values the form was opened with — to guard unsaved edits: while `values` differs from it (compared by `hasScheduledTaskFormChanges`, which treats empty strings, `undefined` and empty skill lists as equal), Back and Cancel open a discard confirmation instead of calling `onBack` / `onCancel`, and the browser warns before the page unloads. The confirmation's copy comes from the optional `labels.discardTitle`, `discardMessage`, `discardConfirmLabel`, `discardConfirmMobileLabel` (used below the desktop breakpoint, default `'Discard'`) and `discardCancelLabel` (English defaults). Omit `initialValues` to handle unsaved changes in the host.
 
 ```tsx
 import {
@@ -196,6 +197,7 @@ import {
     /* ...the required labels, plus: */
     unreadIndicatorLabel: 'Unread',
     openConversationLabel: 'Open conversation',
+    loadingAriaLabel: 'Loading scheduled task',
   }}
   onBack={() => {}}
   onEdit={() => {}}

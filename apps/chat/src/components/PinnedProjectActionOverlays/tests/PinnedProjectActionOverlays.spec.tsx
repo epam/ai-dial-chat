@@ -61,7 +61,7 @@ vi.mock('../../../hooks/useDeleteConfirmationLabels', () => ({
 }));
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
-  DeleteConfirmationDialog: ({
+  DeleteConfirmationDrawer: ({
     open,
     title,
     message,
@@ -129,6 +129,7 @@ const project: ProjectDetailsDto = {
   contentVersion: '"cv1"',
   conversationCount: 3,
   canEdit: true,
+  canManage: true,
 };
 
 const open = (kind: PinnedProjectActionKind): PinnedProjectActionState => ({
@@ -187,6 +188,17 @@ describe('PinnedProjectActionOverlays', () => {
     expect(screen.getByText('buttons.moreActions')).toBeTruthy();
   });
 
+  it('does not mount the publish panel for a caller who does not manage the project', () => {
+    renderOverlays({
+      action: open(PinnedProjectActionKind.Publish),
+      project: { ...project, canManage: false },
+    });
+
+    expect(
+      screen.queryByRole('dialog', { name: 'publish project' }),
+    ).toBeNull();
+  });
+
   it('keeps the publish panel mounted while it slides out', () => {
     renderOverlays({
       action: { ...open(PinnedProjectActionKind.Publish), isOpen: false },
@@ -204,11 +216,11 @@ describe('PinnedProjectActionOverlays', () => {
 
     expect(
       screen.getByRole('dialog', {
-        name: 'projects.actions.deleteConfirmTitle:Support',
+        name: 'buttons.delete',
       }),
     ).toBeTruthy();
     expect(
-      screen.getByText('projects.actions.deleteConfirmWithChatsDescription'),
+      screen.getByText('catalog.details.delete.confirmMessage'),
     ).toBeTruthy();
   });
 

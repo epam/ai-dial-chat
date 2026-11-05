@@ -1,3 +1,4 @@
+import { LiveRegion } from '@epam/ai-dial-ui-kit';
 import { useEffect, useMemo, useState, type FC, type ReactNode } from 'react';
 import { CelebrationDecor } from '../components/CelebrationDecor/CelebrationDecor';
 import {
@@ -126,9 +127,7 @@ export const ScenePlayer: FC<ScenePlayerProps> = ({
         {children}
       </CelebrationProvider>
       {/* The live region stays mounted; only a filled toast draws a frame. */}
-      <div
-        role="status"
-        aria-live="polite"
+      <LiveRegion
         className={
           notification
             ? 'bg-layer-2 fixed inset-e-3 top-3 z-80 max-w-xs rounded border p-3'
@@ -141,7 +140,7 @@ export const ScenePlayer: FC<ScenePlayerProps> = ({
             <p>{notification.message}</p>
           </>
         )}
-      </div>
+      </LiveRegion>
     </div>
   );
 };

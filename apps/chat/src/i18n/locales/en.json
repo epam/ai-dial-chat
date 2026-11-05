@@ -603,10 +603,11 @@
     "authorPlaceholder": "Author name",
     "authorHint": "Shown as the publication's author. Defaults to you — replace it to credit a team instead.",
     "folderLabel": "Publish to folder",
+    "noFolderSelected": "No folder selected",
+    "chooseFolder": "Choose",
     "noAccessError": "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
     "addSiblingFolder": "Add sibling",
     "addChildFolder": "Add child",
-    "summaryVersion": "Version {version} · current",
     "updateVersion": "Update version {version}",
     "publishingInProgress": "Publishing…"
   },
@@ -809,7 +810,7 @@
   },
   "projects": {
     "page": {
-      "title": "All projects",
+      "title": "Projects",
       "newProject": "New project"
     },
     "toolbar": {
@@ -912,18 +913,15 @@
       "mainContent": "Project chats"
     },
     "actions": {
-      "deleteConfirmTitle": "Delete \"{{name}}\"?",
-      "deleteConfirmDescription": "The project and its context files will be deleted. This cannot be undone.",
       "deleteError": "Could not delete the project",
       "downloadError": "Could not download",
-      "pinError": "Could not update the pin",
-      "deleteConfirmWithChatsDescription_one": "The project, its context files and its {{count}} chat will be deleted. This cannot be undone.",
-      "deleteConfirmWithChatsDescription_other": "The project, its context files and its {{count}} chats will be deleted. This cannot be undone."
+      "pinError": "Could not update the pin"
     },
     "edit": {
       "title": "Edit project",
       "saving": "Saving…",
       "savingStatus": "Saving project…",
+      "nameReadOnlyHint": "Only the project owner can rename it.",
       "toast": {
         "success": "Project \"{{name}}\" saved",
         "error": "Could not save the project",
@@ -1424,6 +1422,8 @@
     "visibilityNote": "This deployment and its updates will be visible to users with the link.",
     "visibilityNoteEdit": "Anyone with the link will be able to view and edit this deployment.",
     "visibilityNoteConversation": "This conversation and its updates will be visible to users with the link.",
+    "visibilityNoteProject": "This project, its chats and its updates will be visible to users with the link.",
+    "visibilityNoteEditProject": "Anyone with the link will be able to view and edit this project and chat in it.",
     "nestedItemsNote": "Nested items such as prompts and files aren't shared automatically — share them separately so the app works correctly.",
     "copiedButtonLabel": "Copied",
     "linkAriaLabel": "Share link",
@@ -2051,6 +2051,7 @@
     "title": "Discard unsaved changes?",
     "message": "You have unsaved changes. Leaving now will discard them.",
     "confirmLabel": "Discard changes",
+    "confirmLabelMobile": "Discard",
     "cancelLabel": "Keep editing"
   },
   "urlPreselection": {

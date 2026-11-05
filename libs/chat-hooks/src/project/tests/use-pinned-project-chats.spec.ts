@@ -38,6 +38,7 @@ const details = (
   contentVersion: 'v1',
   conversationCount: 0,
   canEdit: true,
+  canManage: true,
   ...overrides,
 });
 

@@ -8,6 +8,7 @@ import {
   useAvailableHeightCap,
   TextRefinementField,
   useTextRefinement,
+  useIsMobile,
   useUnsavedChangesGuard,
   type TextRefinementCallback,
   useControlErrorAssociation,
@@ -150,6 +151,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     initialValues && hasScheduledTaskFormChanges(values, initialValues),
   );
   const leaveGuard = useUnsavedChangesGuard(isDirty);
+  const isMobile = useIsMobile();
   const handleBack = () =>
     leaveGuard.guard(() => {
       resetRefinement();
@@ -251,16 +253,6 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     () => findElementLabelledBy(modelLabelId),
     modelErrorId,
     Boolean(errors.modelId),
-  );
-  useControlErrorAssociation(
-    () => document.getElementById('scheduled-task-day-of-week'),
-    dayOfWeekErrorId,
-    Boolean(errors.dayOfWeek),
-  );
-  useControlErrorAssociation(
-    () => document.getElementById('scheduled-task-time'),
-    timeErrorId,
-    Boolean(timeError),
   );
   useControlErrorAssociation(
     () => document.getElementById(instructionsEditorId),
@@ -483,6 +475,9 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           required: true,
                         }}
                         invalid={Boolean(errors.dayOfWeek)}
+                        ariaDescribedBy={
+                          errors.dayOfWeek ? dayOfWeekErrorId : undefined
+                        }
                       />
                       {errors.dayOfWeek && (
                         <ErrorText
@@ -507,6 +502,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                         onBlur={handleTimeBlur}
                         labelProps={{ label: labels.timeLabel, required: true }}
                         invalid={Boolean(timeError)}
+                        ariaDescribedBy={timeError ? timeErrorId : undefined}
                         disabled={isSubmitting}
                         showTimezone
                       />
@@ -729,7 +725,15 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                     MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
                   )}
                 >
-                  <Suspense fallback={<Spinner />}>
+                  <Suspense
+                    fallback={
+                      <Spinner
+                        ariaLabel={
+                          labels.editorLoadingAriaLabel ?? 'Loading editor'
+                        }
+                      />
+                    }
+                  >
                     <MarkdownEditor
                       id={instructionsEditorId}
                       value={values.prompt}
@@ -766,7 +770,11 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             labels.discardMessage ??
             'You have unsaved changes. Leaving now will discard them.'
           }
-          confirmLabel={labels.discardConfirmLabel ?? 'Discard changes'}
+          confirmLabel={
+            isMobile
+              ? (labels.discardConfirmMobileLabel ?? 'Discard')
+              : (labels.discardConfirmLabel ?? 'Discard changes')
+          }
           cancelLabel={labels.discardCancelLabel ?? 'Keep editing'}
           variant={ConfirmationPopupVariant.Danger}
           onConfirm={leaveGuard.confirm}

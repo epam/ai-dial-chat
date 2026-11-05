@@ -29,7 +29,7 @@ export interface ProjectCreateFormErrors {
  * around its link text.
  */
 export interface ProjectDropZoneLinks {
-  /** Underlined text; the whole drop zone opens the device picker. */
+  /** Underlined text that opens the device picker; the rest of the drop zone takes drops but ignores clicks. */
   fromDevice: ReactElement;
   /** Button that opens the host's file manager; absent without `onPickFromFileManager`. */
   fileManager?: ReactElement;
@@ -51,12 +51,16 @@ export interface ProjectCreateFormLabels {
   nameLabel: string;
   /** Name field placeholder, e.g. "Enter project name". */
   namePlaceholder: string;
+  /** Helper text under a read-only Name field. Defaults to `'Only the project owner can rename it.'`. */
+  nameReadOnlyHint?: string;
   /** Message per client-side name check failure. */
   nameErrors: Record<ProjectNameError, string>;
   /** Instructions field label. */
   instructionsLabel: string;
   /** Instructions editor placeholder. */
   instructionsPlaceholder: string;
+  /** Accessible label of the spinner shown while the instructions editor loads. Defaults to `'Loading editor'`. */
+  editorLoadingAriaLabel?: string;
   /** Context section label. */
   contextLabel: string;
   /**
@@ -102,6 +106,8 @@ export interface ProjectCreateFormColors {
   labelText?: string;
   /** Drop zone "from device" and "file manager" links. Fallback: the drop zone text color. */
   linkText?: string;
+  /** Context drop zone background while it is idle. Fallback: `--bg-layer-raised`, then `#d1dbea`. */
+  dropZoneBackground?: string;
 }
 
 /** Typography overrides for the {@link ProjectCreateForm} component. */
@@ -162,6 +168,8 @@ export interface ProjectCreateFormProps {
   onSubmit: () => void;
   /** Disables Create and shows its loading state. Defaults to `false`. */
   isSubmitting?: boolean;
+  /** Renders the Name field read-only, with `labels.nameReadOnlyHint` under it. Defaults to `false`. */
+  isNameReadOnly?: boolean;
   /** Localized labels. */
   labels: ProjectCreateFormLabels;
   /** Theme of the markdown editor. */

@@ -301,6 +301,8 @@ export const MyComponent: FC<MyComponentProps> = ({ ... }) => { ... };
 
 Component folders under `src/components/` must use PascalCase and match the component name (e.g., `RequireAuth/RequireAuth.tsx`). Tests go in a `tests/` subfolder inside the component folder.
 
+`libs/chat-hooks` is organised by domain rather than by kind: a domain folder (`src/oauth/`, `src/share-invitation/`, `src/signin-interrupt/`) keeps its interfaces in a `models.ts` and its enums in a `types.ts` next to the hooks and functions that use them, instead of separate `models/` and `types/` directories. Follow the folder you are adding to.
+
 ## JSDoc on all exported symbols
 
 Every exported symbol (interfaces, enums, types, functions) must have a JSDoc comment. Each interface/type property must also have an inline `/** ... */` doc. Keep comments factual — describe what the value represents, not how it is used.
