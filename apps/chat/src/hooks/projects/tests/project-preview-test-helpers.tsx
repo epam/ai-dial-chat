@@ -38,7 +38,9 @@ export const previewResolvers = {
     type: AttachmentContentType.Html as const,
     srcdoc: 'stub',
   })),
-  resolvePdfContent: vi.fn(async () => ({
+  resolvePdfContent: vi.fn<
+    UseOpenAttachmentCanvasResolvers['resolvePdfContent']
+  >(async () => ({
     type: AttachmentContentType.Pdf as const,
     url: 'blob:stub',
   })),
