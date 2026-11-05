@@ -73,7 +73,7 @@ frontend hosted elsewhere) and `ai-dial-chat-mcp-app-sandbox`
 
 ### Typechecking and verification
 
-Every project with a `typecheck` target (32 as of this writing, out of 33
+Every project with a `typecheck` target (36 as of this writing, out of 39
 projects total) runs `tsc --build --emitDeclarationOnly` and is checked by the
 same command whether the target is inferred by `@nx/vite` or `@nx/js/typescript`.
 `nx.json`'s `targetDefaults.typecheck` gives every one of those targets the
@@ -104,6 +104,12 @@ format`, `npm run lint --fix` and `npm run test` only — none of those
   typechecks. **Open:** making that check a required status check is a
   branch-protection setting administered outside this repository; the job's
   existence does not by itself enforce it (see the Decision Log).
+- Guard: `npm run typecheck:targets:test` (`tools/typecheck-targets.spec.mjs`)
+  runs in the same CI job before the typecheck and fails, naming the project,
+  when a `typecheck` target is disabled. `@nx/js/typescript` replaces the
+  target with an echo that exits `0` when a project tsconfig sets
+  `"noEmit": true`, so no project tsconfig may set it. `apps/chat` was checked
+  by nothing until its `tsconfig.spec.json` dropped `noEmit`.
 
 ## Architecture Layers
 
