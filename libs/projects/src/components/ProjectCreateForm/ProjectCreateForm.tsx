@@ -93,7 +93,6 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   const instructionsId = useId();
   const contextLabelId = useId();
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const deviceLinkRef = useRef<HTMLSpanElement>(null);
   const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
   const [isNameTouched, setIsNameTouched] = useState(false);
   const [rejections, setRejections] = useState<RejectedContextFile[]>([]);
@@ -183,20 +182,6 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
     }
   };
 
-  const handleDropZoneClickCapture = (event: MouseEvent<HTMLDivElement>) => {
-    /*
-     * The kit area is a label over the file input, so any click on it opens the device picker.
-     * Only the links pick files: a click elsewhere on the area is cancelled, while the input's
-     * own click (keyboard activation, or the one the "from device" link forwards) goes through.
-     */
-    const { target } = event;
-    if (target instanceof HTMLInputElement) return;
-    if (target instanceof Node && deviceLinkRef.current?.contains(target)) {
-      return;
-    }
-    event.preventDefault();
-  };
-
   const handleSubmit = () => {
     if (!isCreateDisabled) onSubmit();
   };
@@ -225,7 +210,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
     .filter(Boolean)
     .join('\n');
   const dropZoneLabel = labels.dropZoneLabel({
-    fromDevice: <span ref={deviceLinkRef} className={styles.link} />,
+    fromDevice: <span className={styles.link} />,
     fileManager: onPickFromFileManager ? (
       <button
         type="button"
@@ -385,23 +370,18 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
             <h2 id={contextLabelId} className={labelClassName}>
               {labels.contextLabel}
             </h2>
-            <div onClickCapture={handleDropZoneClickCapture}>
-              <FileDropzone
-                label={dropZoneLabel}
-                ariaLabel={labels.dropZoneAriaLabel}
-                description={labels.dropZoneHint}
-                accept={accept}
-                multiple
-                disabled={isSubmitting}
-                onChange={addFiles}
-                onReject={addFiles}
-                errorText={dropZoneError || undefined}
-                className={mergeClasses(
-                  styles.dropZone,
-                  !isSubmitting && styles.linkClicksOnly,
-                )}
-              />
-            </div>
+            <FileDropzone
+              label={dropZoneLabel}
+              ariaLabel={labels.dropZoneAriaLabel}
+              description={labels.dropZoneHint}
+              accept={accept}
+              multiple
+              disabled={isSubmitting}
+              onChange={addFiles}
+              onReject={addFiles}
+              errorText={dropZoneError || undefined}
+              className={styles.dropZone}
+            />
             {/* Mounted before a host context error arrives, so it is announced; the drop zone shows it. Client rejections go through the status region. */}
             <LiveRegion
               visuallyHidden

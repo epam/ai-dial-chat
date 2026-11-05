@@ -810,7 +810,7 @@
   },
   "projects": {
     "page": {
-      "title": "Projects",
+      "title": "All projects",
       "newProject": "New project"
     },
     "toolbar": {

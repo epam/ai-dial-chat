@@ -16,11 +16,6 @@
   background: var(--pcf-dropzone-bg, var(--bg-layer-raised, #d1dbea));
 }
 
-/* Only the links pick files, so the area drops the kit's pointer cursor; the doubled class beats the kit utility. */
-.dropZone.linkClicksOnly {
-  cursor: default;
-}
-
 .label {
   color: var(--pcf-label-text, var(--text-secondary, #57647a));
 }
@@ -30,14 +25,12 @@
   text-decoration: underline;
   text-underline-offset: 2px;
 
-  &:is(button),
-  .linkClicksOnly & {
+  &:is(button) {
     cursor: pointer;
   }
 
   &:is(button):hover,
-  &:is(button):focus-visible,
-  .linkClicksOnly &:hover {
+  &:is(button):focus-visible {
     text-decoration-thickness: 2px;
   }
 

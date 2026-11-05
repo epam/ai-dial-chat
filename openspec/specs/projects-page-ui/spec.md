@@ -318,7 +318,7 @@ The title, the subtitle (when `labels.subtitle` is set) and the toolbar (search 
 
 Every user-visible string SHALL be resolved in `ProjectsPage` with `useTranslation().t()` and passed to the lib as a plain string. The keys live in a new `projects` namespace in `apps/chat/src/i18n/locales/en.json` and are referenced through a `ProjectsI18nKeys` enum in `apps/chat/src/constants/translation-keys.ts`:
 
-- `projects.page.title` ("Projects")
+- `projects.page.title` ("All projects")
 - `projects.toolbar.searchPlaceholder`
 - `projects.toolbar.searchAriaLabel`
 - `projects.toolbar.sortNewest`

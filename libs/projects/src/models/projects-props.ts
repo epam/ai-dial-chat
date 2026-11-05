@@ -5,7 +5,7 @@ import type { ProjectItem } from './project-item';
 
 /** Localized labels used by the {@link Projects} component. */
 export interface ProjectsLabels {
-  /** Page title, e.g. "Projects". */
+  /** Page title, e.g. "All projects". */
   title: string;
   /** One-line description shown beneath the title. Omitted when not set. */
   subtitle?: string;

@@ -403,7 +403,7 @@ describe('ProjectCreateForm', () => {
       expect(screen.queryByRole('button', { name: 'file manager' })).toBeNull();
     });
 
-    it('opens the device picker from the "from device" link only', async () => {
+    it('opens the device picker from anywhere on the drop zone, not only the link', async () => {
       renderForm();
       const onInputClick = vi.fn();
       getDropzoneInput().addEventListener('click', onInputClick);
@@ -411,9 +411,7 @@ describe('ProjectCreateForm', () => {
       await userEvent.click(
         screen.getByText('File formats .csv, .pdf and .xlsx (max 1 MB)'),
       );
-      expect(onInputClick).not.toHaveBeenCalled();
 
-      await userEvent.click(screen.getByText('from device'));
       expect(onInputClick).toHaveBeenCalledOnce();
     });
 
