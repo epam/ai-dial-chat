@@ -368,7 +368,7 @@ An item with `isUnread: true` shows its title in `unreadRowTitleClassName` and a
 
 ### ProjectConversationsPanel
 
-A project's chat column for `ProjectView.mainContent`: the host's chat input (`composer`, any node), then the host's `outputs` node (any node, typically `ProjectOutputs`; nothing renders in its place when it is unset), then `ProjectConversationList`; `hasOutputs` (default `false`) tells it that `outputs` shows content, so an empty list drops its "No outputs or chats yet" state, plus the rename dialog (a labelled input seeded with the title, an inline error for an empty name, Cancel and Save buttons, Enter to save, the trimmed value sent to `onRename`) and the delete confirmation. `hasMore`, `isLoadingMore` and `onLoadMore` pass through to the list, and so do `listTypography` and `listColors` (as its `typography` and `colors`). A rename or delete dialog whose row disappears from `items` (a live refresh) closes, and focus moves to the list. Both dialogs return focus to the row's ⋮ trigger when they close; after a delete, whose row is gone, focus moves to the row now in its place, the one before it, or the list. They stay open, and cannot be closed, while the host's promise is pending, and stay open while it rejects, so the host only reports the failure. Omitting `onRename` and `onDelete` makes it read-only.
+A project's chat column for `ProjectView.mainContent`: the host's chat input (`composer`, any node), then the host's `outputs` node (any node, typically `ProjectOutputs`; nothing renders in its place when it is unset), then `ProjectConversationList`; `hasOutputs` (default `false`) tells it that `outputs` shows content, so an empty list drops its "No outputs or chats yet" state, plus the rename dialog (a labelled input seeded with the title, an inline error for an empty name, Cancel and Save buttons, Enter to save, the trimmed value sent to `onRename`) and the delete confirmation. `hasMore`, `isLoadingMore` and `onLoadMore` pass through to the list, and so do `listTypography` and `listColors` (as its `typography` and `colors`). A rename or delete dialog whose row disappears from `items` (a live refresh) closes, and focus moves to the list. Both dialogs return focus to the row's ⋮ trigger when they close; after a delete, whose row is gone, focus moves to the row now in its place, the one before it, or the list. They stay open, and cannot be closed, while the host's promise is pending, and stay open while it rejects, so the host only reports the failure. With `onGenerateTitle` (`(id) => Promise<string>`), the rename dialog also shows a sparkles button (`labels.renameWithAiLabel`, default `'Rename with AI'`) that fills the input with the returned title without saving it; a rejection shows `labels.renameWithAiError` (default `'Could not generate a name. Try again.'`), and a late answer after the dialog closed or reopened is ignored. Omitting `onGenerateTitle` hides the button. Omitting `onRename` and `onDelete` makes it read-only.
 
 ```tsx
 import { ProjectConversationsPanel } from '@epam/ai-dial-projects';
@@ -380,6 +380,7 @@ import { ProjectConversationsPanel } from '@epam/ai-dial-projects';
   onRetry={() => {}}
   onOpen={(id) => {}}
   onRename={async (id, newTitle) => {}}
+  onGenerateTitle={async (id) => 'Suggested title'}
   onDelete={async (id) => {}}
   labels={{
     list: {
@@ -399,6 +400,8 @@ import { ProjectConversationsPanel } from '@epam/ai-dial-projects';
     renameEmptyError: 'Enter a chat name',
     renameSaveLabel: 'Save',
     renameCancelLabel: 'Cancel',
+    renameWithAiLabel: 'Rename with AI',
+    renameWithAiError: 'Could not generate a name. Try again.',
     deleteTitle: (title) => `Delete "${title}"?`,
     deleteDescription: 'The chat will be deleted. This cannot be undone.',
   }}

@@ -7,6 +7,7 @@ import {
   createProjectConversation,
   deleteProjectConversation,
   getProjectConversation,
+  generateProjectConversationTitle,
   getProjectConversationTitles,
   listProjectConversations,
   markProjectConversationViewed,
@@ -88,6 +89,8 @@ export const projectsClient: ProjectsApiClient = {
   getProjectConversation: (...args) => getProjectConversation(...args),
   saveProjectConversation: (...args) => saveProjectConversation(...args),
   renameProjectConversation: (...args) => renameProjectConversation(...args),
+  generateProjectConversationTitle: (...args) =>
+    generateProjectConversationTitle(...args),
   deleteProjectConversation: (...args) => deleteProjectConversation(...args),
   markProjectConversationViewed: (id) => projectViewedWriter.enqueue(id),
   attachToProjectGeneration: (...args) => attachToProjectGeneration(...args),
