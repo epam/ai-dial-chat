@@ -140,15 +140,22 @@ export const useSkillFilePreviewSyncController = ({
     closeCanvas,
   ]);
   const retry = useCallback(() => setRetryCount((value) => value + 1), []);
-  const state =
-    !node || (!content && !getContent) || !canvasAttachmentId
-      ? SkillFilePreviewState.Idle
-      : failed?.id === canvasAttachmentId && failed.revision === contentRevision
-        ? SkillFilePreviewState.Error
-        : currentCanvasId === canvasAttachmentId &&
-            isCanvasOpen &&
-            !isCanvasLoading
-          ? SkillFilePreviewState.Ready
-          : SkillFilePreviewState.Loading;
+  let state: SkillFilePreviewState;
+  if (!node || (!content && !getContent) || !canvasAttachmentId) {
+    state = SkillFilePreviewState.Idle;
+  } else if (
+    failed?.id === canvasAttachmentId &&
+    failed.revision === contentRevision
+  ) {
+    state = SkillFilePreviewState.Error;
+  } else if (
+    currentCanvasId === canvasAttachmentId &&
+    isCanvasOpen &&
+    !isCanvasLoading
+  ) {
+    state = SkillFilePreviewState.Ready;
+  } else {
+    state = SkillFilePreviewState.Loading;
+  }
   return { state, retry };
 };

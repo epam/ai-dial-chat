@@ -127,16 +127,20 @@ export const HeaderCredentialsButton: FC<HeaderCredentialsButtonProps> = ({
     );
   })();
 
-  const credentialsIconAfter =
-    credentialsUiState === CredentialsUiState.ManageCredentials ? (
-      <IconArrowRight
-        size={DIAL_ICON_SIZE.MD}
-        className="rtl:scale-x-[-1]"
-        stroke={DIAL_KIT_ICON_STROKE}
-      />
-    ) : isApiKeyOverlayTrigger ? (
+  const credentialsIconAfter = (() => {
+    if (credentialsUiState === CredentialsUiState.ManageCredentials) {
+      return (
+        <IconArrowRight
+          size={DIAL_ICON_SIZE.MD}
+          className="rtl:scale-x-[-1]"
+          stroke={DIAL_KIT_ICON_STROKE}
+        />
+      );
+    }
+    return isApiKeyOverlayTrigger ? (
       <IconChevronDown size={DIAL_ICON_SIZE.MD} stroke={DIAL_KIT_ICON_STROKE} />
     ) : undefined;
+  })();
 
   const button = (
     <ButtonComponent

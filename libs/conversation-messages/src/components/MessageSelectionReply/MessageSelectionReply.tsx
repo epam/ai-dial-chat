@@ -7,7 +7,13 @@ import {
   LiveRegion,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowBackUp } from '@tabler/icons-react';
-import { useLayoutEffect, useState, type FC, type RefObject } from 'react';
+import {
+  useLayoutEffect,
+  useState,
+  type FC,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import { createPortal } from 'react-dom';
 import styles from './MessageSelectionReply.module.scss';
 
@@ -79,12 +85,12 @@ export const MessageSelectionReply: FC<MessageSelectionReplyProps> = ({
 }) => {
   const { colors, typography, className, buttonClassName } = actionStyles ?? {};
   const fontClassName = typography?.fontClassName ?? 'dial-small-text';
-  const container =
-    portalContainer === undefined
-      ? typeof document === 'undefined'
-        ? null
-        : document.body
-      : portalContainer;
+  let container: HTMLElement | null;
+  if (portalContainer !== undefined) {
+    container = portalContainer;
+  } else {
+    container = typeof document === 'undefined' ? null : document.body;
+  }
   const cssVars = buildCssVars({
     '--cm-reply-background': colors?.background,
     '--cm-reply-hover-background': colors?.hoverBackground,
@@ -120,6 +126,12 @@ export const MessageSelectionReply: FC<MessageSelectionReplyProps> = ({
     labels.reply,
   ]);
   if (!container) return null;
+  let liveMessage: ReactNode = null;
+  if (rect) {
+    liveMessage = labels.selectionAvailable;
+  } else if (addedRevision > 0) {
+    liveMessage = <span key={addedRevision}>{labels.attachmentAdded}</span>;
+  }
   return createPortal(
     <>
       {rect && (
@@ -157,13 +169,7 @@ export const MessageSelectionReply: FC<MessageSelectionReplyProps> = ({
           />
         </div>
       )}
-      <LiveRegion visuallyHidden>
-        {rect ? (
-          labels.selectionAvailable
-        ) : addedRevision > 0 ? (
-          <span key={addedRevision}>{labels.attachmentAdded}</span>
-        ) : null}
-      </LiveRegion>
+      <LiveRegion visuallyHidden>{liveMessage}</LiveRegion>
     </>,
     container,
   );

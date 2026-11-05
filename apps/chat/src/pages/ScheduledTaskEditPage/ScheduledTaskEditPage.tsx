@@ -133,18 +133,25 @@ const ScheduledTaskEditPage: FC = () => {
       previous.skillUrls ? { ...previous, skillUrls: undefined } : previous,
     );
   }, [isSkillsSupported]);
+  const resolveSkillUrlsError = () => {
+    if (hasUnavailableSkills) {
+      return t(SkillSelectorI18nKeys.UnavailableSkillTooltip);
+    }
+    if (
+      values?.skillUrls?.some((url) =>
+        isSkillSelectionUnsupported(url, isSkillsSupported),
+      )
+    ) {
+      return t(SkillSelectorI18nKeys.UnsupportedTooltipLabel);
+    }
+    return errors.skillUrls;
+  };
   const effectiveErrors = {
     ...errors,
     modelId: modelPreview.isUnavailable
       ? t(ScheduledTasksI18nKeys.UnavailableModelTooltip)
       : errors.modelId,
-    skillUrls: hasUnavailableSkills
-      ? t(SkillSelectorI18nKeys.UnavailableSkillTooltip)
-      : values?.skillUrls?.some((url) =>
-            isSkillSelectionUnsupported(url, isSkillsSupported),
-          )
-        ? t(SkillSelectorI18nKeys.UnsupportedTooltipLabel)
-        : errors.skillUrls,
+    skillUrls: resolveSkillUrlsError(),
   };
 
   const returnUrl = useMemo(

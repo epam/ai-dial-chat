@@ -1,6 +1,7 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { McpAppToolCallSeed, McpAppToolRef } from '../../models/mcp-apps';
+import { McpAppToolDiscovery, McpDeploymentKind } from '../../types/mcp-apps';
 import { resolveMcpAppToolResult } from '../mcp-app';
 
 const makeMatch = (overrides?: Partial<McpAppToolRef>): McpAppToolRef => ({
@@ -8,8 +9,8 @@ const makeMatch = (overrides?: Partial<McpAppToolRef>): McpAppToolRef => ({
   resourceUri: 'ui://entity-card/index.html',
   toolName: 'Entity_Lookup_show_entity_card',
   mcpToolName: 'show_entity_card',
-  kind: 'toolset',
-  discovery: 'direct',
+  kind: McpDeploymentKind.Toolset,
+  discovery: McpAppToolDiscovery.Direct,
   ...overrides,
 });
 
@@ -156,7 +157,7 @@ describe('resolveMcpAppToolResult', () => {
     const callTool = vi.fn();
 
     const result = await resolveMcpAppToolResult(
-      makeMatch({ discovery: 'indirect' }),
+      makeMatch({ discovery: McpAppToolDiscovery.Indirect }),
       undefined,
       callTool,
     );

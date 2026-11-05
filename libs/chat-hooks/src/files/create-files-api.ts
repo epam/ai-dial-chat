@@ -22,9 +22,7 @@ import type {
   RevokeAccessResponseDto,
   UploadArchiveResponseDto,
 } from '@epam/ai-dial-chat-api-client';
-
-/** Upload mode passed to `FilesApi.uploadFile`: overwrite an existing file or fail if it already exists. */
-export type UploadMode = 'overwrite' | 'create-only';
+import type { DialFilesApiUploadMode } from './dial-files-api';
 
 /** Options accepted by an {@link UploadFileWithProgressFn}. */
 export interface UploadFileWithProgressOptions {
@@ -33,7 +31,7 @@ export interface UploadFileWithProgressOptions {
   /** Called with the upload's progress percentage (0–100). */
   onProgress?: (percent: number) => void;
   /** Defaults to the generated client's own default when omitted. */
-  uploadMode?: UploadMode;
+  uploadMode?: DialFilesApiUploadMode;
 }
 
 /** Shape of a progress-reporting file upload function, e.g. the return value of `createUploadFileWithProgress`. */

@@ -486,8 +486,17 @@ const SkillEditorPage: FC = () => {
     retryLoad();
   }, [clearConflict, retryLoad]);
 
-  const labels = useMemo<SkillEditorLabels>(
-    () => ({
+  const labels = useMemo<SkillEditorLabels>(() => {
+    const resolveLoadErrorMessage = () => {
+      if (loadState === SkillEditorLoadState.Forbidden) {
+        return t(SkillEditorI18nKeys.LoadErrorForbidden);
+      }
+      if (loadState === SkillEditorLoadState.NotFound) {
+        return t(SkillEditorI18nKeys.LoadErrorNotFound);
+      }
+      return t(SkillEditorI18nKeys.LoadError);
+    };
+    return {
       ...refinementLabels,
       filesHeading: t(SkillEditorI18nKeys.FilesHeading),
       filesTreeAriaLabel: t(SkillEditorI18nKeys.FilesTreeAriaLabel),
@@ -525,12 +534,7 @@ const SkillEditorPage: FC = () => {
         : t(ButtonsI18nKeys.Create),
       cancelLabel: t(ButtonsI18nKeys.Cancel),
       retryLabel: t(ButtonsI18nKeys.Retry),
-      loadErrorMessage:
-        loadState === SkillEditorLoadState.Forbidden
-          ? t(SkillEditorI18nKeys.LoadErrorForbidden)
-          : loadState === SkillEditorLoadState.NotFound
-            ? t(SkillEditorI18nKeys.LoadErrorNotFound)
-            : t(SkillEditorI18nKeys.LoadError),
+      loadErrorMessage: resolveLoadErrorMessage(),
       savingStatusLabel: t(ButtonsI18nKeys.Saving),
       loadingAriaLabel: t(SkillEditorI18nKeys.LoadingAriaLabel),
       instructionsLoadingAriaLabel: t(
@@ -588,9 +592,8 @@ const SkillEditorPage: FC = () => {
       ),
       createFolderCloseAriaLabel: t(ButtonsI18nKeys.Close),
       createFolderConfirmLabel: t(ButtonsI18nKeys.Create),
-    }),
-    [t, isEditMode, loadState, refinementLabels],
-  );
+    };
+  }, [t, isEditMode, loadState, refinementLabels]);
 
   if (!bucket) {
     return (

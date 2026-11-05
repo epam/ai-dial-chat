@@ -30,12 +30,11 @@ import {
   type ToolsetSpecification,
 } from './entity-details';
 
-const formatTokens = (n: number): string =>
-  n >= 1_000_000
-    ? `${n / 1_000_000}M tokens`
-    : n >= 1_000
-      ? `${n / 1_000}K tokens`
-      : `${n} tokens`;
+const formatTokens = (n: number): string => {
+  if (n >= 1_000_000) return `${n / 1_000_000}M tokens`;
+  if (n >= 1_000) return `${n / 1_000}K tokens`;
+  return `${n} tokens`;
+};
 
 const formatCatalogDate = (date: string): string => {
   const dateParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);

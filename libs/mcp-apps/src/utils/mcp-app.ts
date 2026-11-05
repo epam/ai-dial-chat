@@ -9,6 +9,7 @@ import type {
   McpAppToolCallSeed,
   McpAppToolRef,
 } from '../models/mcp-apps';
+import { McpAppToolDiscovery } from '../types/mcp-apps';
 
 const LIVE_CALL_RETRY_DELAY_MS = 500;
 const LIVE_CALL_RETRY_JITTER_MS = 500;
@@ -124,7 +125,7 @@ export const collectToolCallNames = (messages: Message[]): Set<string> => {
  * `custom_content.state`, in whichever of its two known orchestrator-specific
  * shapes is present).
  *
- * If no real call matches, a `discovery: 'direct'` tool (the deployment
+ * If no real call matches, a `McpAppToolDiscovery.Direct` tool (the deployment
  * itself IS this MCP server, whether it's a bare Toolset or an Application —
  * see `useMcpAppTools`) always wins regardless: such a deployment's own
  * response IS its MCP App responding, and it typically never populates
@@ -133,7 +134,7 @@ export const collectToolCallNames = (messages: Message[]): Set<string> => {
  * class of self-hosted-app gap `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md`'s D9 "Known gap" documents for
  * discovery — here it recurs at per-message matching).
  *
- * Otherwise (a `discovery: 'indirect'` match — a real MCP-capable toolset a
+ * Otherwise (a `McpAppToolDiscovery.Indirect` match — a real MCP-capable toolset a
  * different, tool-calling deployment delegates to, guessed by name-prefix), a
  * call to that tool that has already returned a result is required, whether
  * the message is streaming or settled. A call without a result is still
@@ -158,7 +159,9 @@ export const findMcpAppForMessage = (
   );
   const matched = mcpAppTools.find((tool) => finishedNames.has(tool.toolName));
   if (matched) return matched;
-  return mcpAppTools.find((tool) => tool.discovery === 'direct');
+  return mcpAppTools.find(
+    (tool) => tool.discovery === McpAppToolDiscovery.Direct,
+  );
 };
 
 /** Stable key identifying a message's MCP App canvas in an attachment canvas's `attachmentId` tracking, mirroring the `${messageIndex}:${attachmentId}` scheme used for regular attachment tiles. */
@@ -218,14 +221,14 @@ export const resolveMcpAppToolCallSeed = (
  * app's UI to render anything at all.
  *
  * Attempted whenever the call is confirmed safe:
- * - `match.discovery === 'direct'` — the deployment the host is talking to
+ * - `match.discovery === McpAppToolDiscovery.Direct` — the deployment the host is talking to
  *   IS this MCP server (whether a bare Toolset or an Application), so
  *   `toolsetId`/`mcpToolName`/`kind` are unambiguous. Called even when `seed`
  *   has no `toolInput`, since a self-hosting MCP App never populates
  *   `custom_content.state` in the first place (see `findMcpAppForMessage`) —
  *   `{}` is passed instead, the same "give me your current/initial state"
  *   call the app's own resource would make on `ui/initialize`.
- * - `seed?.toolInput != null` — a `discovery: 'indirect'` match (the toolset
+ * - `seed?.toolInput != null` — a `McpAppToolDiscovery.Indirect` match (the toolset
  *   a *different*, tool-calling deployment appears to delegate to) whose
  *   `toolName` was matched against a *real* tool call actually seen in
  *   `custom_content.state` (`findMcpAppForMessage`'s name-match branch).
@@ -244,7 +247,8 @@ export const resolveMcpAppToolResult = async (
   seed: McpAppToolCallSeed | undefined,
   callTool: CallMcpAppTool,
 ): Promise<CallToolResult | undefined> => {
-  const isConfirmed = match.discovery === 'direct' || seed?.toolInput != null;
+  const isConfirmed =
+    match.discovery === McpAppToolDiscovery.Direct || seed?.toolInput != null;
   if (!isConfirmed) {
     return seed?.toolResult;
   }
