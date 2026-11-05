@@ -11,6 +11,7 @@ export * from '../catalog/map-skill-to-catalog-item';
 export * from '../catalog/mcp-endpoint-url';
 export * from '../catalog/publish';
 export * from '../catalog/use-publish-history';
+export * from '../catalog/use-unpublishable-folders';
 export * from '../catalog/catalog-derivations';
 export * from '../catalog/catalog-entity-kind';
 export * from '../catalog/favorite-entity-type';

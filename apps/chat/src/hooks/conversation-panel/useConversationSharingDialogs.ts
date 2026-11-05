@@ -112,8 +112,6 @@ export const useConversationSharingDialogs = ({
   );
 
   const unpublishFolders = pendingUnpublish?.folders ?? [];
-  /* One published folder is confirmed directly; several require a pick. */
-  const hasUnpublishFolderChoice = unpublishFolders.length > 1;
 
   const handleClosePublishPanel = useCallback(() => {
     setPendingPublishConversation(null);
@@ -298,7 +296,6 @@ export const useConversationSharingDialogs = ({
     getPublishHistory,
     publishPanelHistory,
     unpublishFolders,
-    hasUnpublishFolderChoice,
     pendingUnshareTitle,
     pendingRevokeTitle,
     handleCloseSharePopover,

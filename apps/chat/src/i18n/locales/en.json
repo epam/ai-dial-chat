@@ -944,6 +944,13 @@
       "chatsWarning_one": "The {{count}} chat in this project is published with it.",
       "chatsWarning_other": "The {{count}} chats in this project are published with it."
     },
+    "unpublish": {
+      "confirmTitle": "Unpublish project?",
+      "confirmMessage": "Unpublish \"{{name}}\" from \"{{folder}}\"? The request is submitted for admin approval.",
+      "selectFolderMessage": "Choose which folder to unpublish \"{{name}}\" from. The request is submitted for admin approval.",
+      "folderGroupAriaLabel": "Published folders",
+      "requestingStatus": "Requesting unpublish…"
+    },
     "chats": {
       "title": "Chats",
       "empty": "No outputs or chats yet",
@@ -1953,7 +1960,9 @@
       "downloadedTitle": "Project downloaded successfully",
       "downloaded": "Project \"{{name}}\" is saved on your device.",
       "publishRequestedTitle": "Project publish requested",
-      "publishRequested": "Publish request for project \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+      "publishRequested": "Publish request for project \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Project unpublish requested",
+      "unpublishRequested": "Unpublish request for project \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     }
   },
   "usage": {

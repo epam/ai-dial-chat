@@ -544,6 +544,11 @@ export enum ProjectsI18nKeys {
   PublishEmptyFolderNameError = 'projects.publish.emptyFolderNameError',
   PublishInvalidFolderNameError = 'projects.publish.invalidFolderNameError',
   PublishDuplicateFolderNameError = 'projects.publish.duplicateFolderNameError',
+  UnpublishConfirmTitle = 'projects.unpublish.confirmTitle',
+  UnpublishConfirmMessage = 'projects.unpublish.confirmMessage',
+  UnpublishSelectFolderMessage = 'projects.unpublish.selectFolderMessage',
+  UnpublishFolderGroupAriaLabel = 'projects.unpublish.folderGroupAriaLabel',
+  UnpublishRequestingStatus = 'projects.unpublish.requestingStatus',
 }
 
 export enum ScheduledTasksI18nKeys {
@@ -1730,6 +1735,8 @@ export enum EntityNotificationsI18nKeys {
   ProjectDownloaded = 'entityNotifications.project.downloaded',
   ProjectPublishRequestedTitle = 'entityNotifications.project.publishRequestedTitle',
   ProjectPublishRequested = 'entityNotifications.project.publishRequested',
+  ProjectUnpublishRequestedTitle = 'entityNotifications.project.unpublishRequestedTitle',
+  ProjectUnpublishRequested = 'entityNotifications.project.unpublishRequested',
   ConversationDeletedTitle = 'entityNotifications.conversation.deletedTitle',
   ConversationDeleted = 'entityNotifications.conversation.deleted',
   ConversationPublishRequestedTitle = 'entityNotifications.conversation.publishRequestedTitle',

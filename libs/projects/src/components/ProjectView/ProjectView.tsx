@@ -31,6 +31,7 @@ import {
   IconPin,
   IconShare,
   IconTrashX,
+  IconWorldOff,
   IconWorldShare,
   type TablerIcon,
 } from '@tabler/icons-react';
@@ -66,6 +67,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   onBack,
   onTogglePin,
   onPublish,
+  onUnpublish,
   onEdit,
   onShare,
   onDelete,
@@ -125,6 +127,9 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
     };
   }, [bodyClassName, instructionsHeadingClassName]);
 
+  /* Unpublish takes Publish's slot: the two are never offered together. */
+  const unpublishLabel = labels.unpublishLabel ?? 'Unpublish';
+
   /* The same actions in two placements: on desktop Publish and Edit are
    * header buttons, on mobile they lead the ⋮ menu. CSS hides one copy, so
    * the hidden one is out of the accessibility tree too. */
@@ -134,7 +139,14 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
 
   const buildMenuItems = (includePrimary: boolean): DropdownItem[] => {
     const items: DropdownItem[] = [];
-    if (includePrimary && onPublish) {
+    if (includePrimary && onUnpublish) {
+      items.push({
+        key: 'unpublish',
+        label: unpublishLabel,
+        icon: renderMenuIcon(IconWorldOff),
+        onClick: onUnpublish,
+      });
+    } else if (includePrimary && onPublish) {
       items.push({
         key: 'publish',
         label: labels.publishLabel,
@@ -357,7 +369,21 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
           onClick={handleTogglePin}
           className="shrink-0"
         />
-        {onPublish && (
+        {onUnpublish && (
+          <NeutralButton
+            label={unpublishLabel}
+            iconBefore={
+              <IconWorldOff
+                size={DIAL_ICON_SIZE.MD}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
+            onClick={onUnpublish}
+            className="hidden shrink-0 desktop:inline-flex"
+          />
+        )}
+        {!onUnpublish && onPublish && (
           <NeutralButton
             label={labels.publishLabel}
             iconBefore={

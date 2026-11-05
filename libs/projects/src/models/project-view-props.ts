@@ -30,6 +30,8 @@ export interface ProjectViewLabels {
   unpinLabel: string;
   /** Publish action label. */
   publishLabel: string;
+  /** Unpublish action label. Defaults to `'Unpublish'`. */
+  unpublishLabel?: string;
   /** Edit action label. */
   editLabel: string;
   /** Accessible name of the more-actions menu trigger. */
@@ -141,6 +143,8 @@ export interface ProjectViewProps {
   onTogglePin: () => void;
   /** Called from the Publish action; the action is hidden when omitted. */
   onPublish?: () => void;
+  /** Called from the Unpublish action, which replaces Publish; the action is hidden when omitted. */
+  onUnpublish?: () => void;
   /** Called from the Edit action; the action is hidden when omitted. */
   onEdit?: () => void;
   /** Called from the Share action; the action is hidden when omitted. */

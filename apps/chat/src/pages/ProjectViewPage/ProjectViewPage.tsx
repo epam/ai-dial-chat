@@ -30,18 +30,21 @@ import ProjectDeleteConfirmation from '../../components/ProjectDeleteConfirmatio
 import ProjectShareOverlay from '../../components/ProjectShareOverlay/ProjectShareOverlay';
 import PublishProjectPanelContainer from '../../components/PublishProjectPanelContainer/PublishProjectPanelContainer';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
+import UnpublishConfirmationDialog from '../../components/UnpublishConfirmationDialog/UnpublishConfirmationDialog';
 import {
   getProjectEditRoute,
   parseProjectRouteParams,
 } from '../../constants/routes';
 import { ProjectsI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
+import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useUserConfig } from '../../context/UserConfigContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { projectsClient } from '../../hooks/projects/projects-client';
 import { useProjectActions } from '../../hooks/projects/useProjectActions';
 import { useProjectOutputsLabels } from '../../hooks/projects/useProjectOutputsLabels';
+import { useProjectUnpublish } from '../../hooks/projects/useProjectUnpublish';
 import { useProjectViewLabels } from '../../hooks/projects/useProjectViewLabels';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
@@ -190,6 +193,25 @@ const ProjectViewPage: FC = () => {
     setIsPublishOpen(true);
   }, []);
   const handleClosePublish = useCallback(() => setIsPublishOpen(false), []);
+  const { user } = useUser();
+  const unpublish = useProjectUnpublish({
+    project,
+    isAdmin: user?.isAdmin ?? false,
+  });
+  /* Exactly one of Publish and Unpublish, and neither until the publish state settles. */
+  const hasPublishedFolders = unpublish.publishedFolders.length > 0;
+  const shouldOfferPublish =
+    canManage && unpublish.isPublishStateResolved && !hasPublishedFolders;
+  const formatUnpublishMessage = useCallback(
+    (name: string, folder: string) =>
+      t(ProjectsI18nKeys.UnpublishConfirmMessage, { name, folder }),
+    [t],
+  );
+  const formatUnpublishSelectFolderMessage = useCallback(
+    (name: string) =>
+      t(ProjectsI18nKeys.UnpublishSelectFolderMessage, { name }),
+    [t],
+  );
   const { togglePin, downloadArchive, confirmDelete } = actions;
   const handleTogglePin = useCallback(() => {
     void togglePin();
@@ -222,7 +244,10 @@ const ProjectViewPage: FC = () => {
         onContextSearchQueryChange={setContextSearchQuery}
         onBack={handleBrowseProjects}
         onTogglePin={handleTogglePin}
-        onPublish={canManage ? handlePublish : undefined}
+        onPublish={shouldOfferPublish ? handlePublish : undefined}
+        onUnpublish={
+          hasPublishedFolders ? unpublish.requestUnpublish : undefined
+        }
         onEdit={canEdit ? handleEdit : undefined}
         onShare={canManage ? handleShare : undefined}
         onDelete={canManage ? actions.requestDelete : undefined}
@@ -272,9 +297,18 @@ const ProjectViewPage: FC = () => {
           projectName={project.name}
           conversationCount={conversationCount}
           onClose={handleClosePublish}
+          onPublished={unpublish.refreshPublishState}
           returnFocusRef={publishTriggerRef}
         />
       )}
+      <UnpublishConfirmationDialog
+        {...unpublish.dialog}
+        title={t(ProjectsI18nKeys.UnpublishConfirmTitle)}
+        confirmMessage={formatUnpublishMessage}
+        selectFolderMessage={formatUnpublishSelectFolderMessage}
+        folderGroupAriaLabel={t(ProjectsI18nKeys.UnpublishFolderGroupAriaLabel)}
+        loadingStatusLabel={t(ProjectsI18nKeys.UnpublishRequestingStatus)}
+      />
       {project && (
         <ProjectDeleteConfirmation
           isOpen={actions.isDeleteOpen}

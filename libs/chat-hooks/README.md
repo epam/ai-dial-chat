@@ -727,6 +727,40 @@ ignores a read that finishes after the panel closed or `entityId` changed. The
 request and its mapping to `PublishHistoryEntry` (for the catalog endpoint,
 `mapPublishHistoryEntryDto`) stay with the host.
 
+`useUnpublishableFolders(client, target, isAdmin)` (root and `./catalog`) reports
+the folders the caller may request removal of one published entity from, as
+`{ isResolved, folders, refresh }`, through `resolveUnpublishableFolders`: an owner
+(`target.isOwner`) gets the live folders from `getCatalogPublishHistory`, de-duplicated
+and newest first; on a public copy (`{type}/public/…`) an administrator gets its
+folder outright and anyone else only when `getCatalogUnpublishAccess` answers
+`canUnpublish: true`; anyone else gets none. `isResolved` stays `false` while the
+lookup for the current `target` runs, so a host can withhold Publish and Unpublish
+until it settles; a failed lookup settles as no folders, and `refresh()` re-runs it
+while keeping the folders already reported. `client` is a `PublishApiClient`
+(`createPublishApiClient`) and must be referentially stable. The confirmation, the
+unpublish request and its notifications stay with the host.
+
+```ts
+import {
+  createPublishApiClient,
+  useUnpublishableFolders,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const publishClient = createPublishApiClient(publishApi);
+
+const { isResolved, folders, refresh } = useUnpublishableFolders(
+  publishClient,
+  project
+    ? {
+        entityType: 'project',
+        entityId: project.id,
+        isOwner: project.canManage,
+      }
+    : null,
+  user.isAdmin,
+);
+```
+
 ```tsx
 import {
   ProjectRefreshOutcome,
