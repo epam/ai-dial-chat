@@ -121,14 +121,15 @@ export const resolveDeploymentFolder = (
     Partial<Pick<DeploymentItemDto, 'type'>>,
   labels: DeploymentFolderLabels,
 ): string[] => {
-  if (deployment.isMy) {
-    return [labels.personal];
-  }
-
   const segments = stripPrefixSegments(
     deployment.applicationFolder ?? '',
     APPLICATIONS_PREFIX,
   );
+
+  /* The first segment is the bucket; the rest are the user's own folders. */
+  if (deployment.isMy) {
+    return [labels.personal, ...segments.slice(1)];
+  }
 
   if (deployment.sharedWithMe) {
     return [labels.shared, ...segments.slice(1)];
@@ -153,11 +154,14 @@ const resolveToolsetFolder = (
   toolset: DialToolsetDto,
   labels?: DeploymentFolderLabels,
 ): string[] => {
+  const raw = toolset.toolset || toolset.id;
   if (toolset.isMy && labels != null) {
-    return [labels.personal];
+    const ownFolders = raw.startsWith(TOOLSETS_PREFIX)
+      ? stripPrefixSegments(raw, TOOLSETS_PREFIX).slice(1, -1)
+      : [];
+    return [labels.personal, ...ownFolders];
   }
 
-  const raw = toolset.toolset || toolset.id;
   if (!raw.startsWith(TOOLSETS_PREFIX)) {
     if (labels == null) return [];
     if (toolset.sharedWithMe) return [labels.shared];

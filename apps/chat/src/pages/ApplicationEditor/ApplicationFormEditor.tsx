@@ -429,14 +429,15 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
           return;
         }
       }
-      await refetchDeployments();
+      // Not awaited: the catalog picks the saved application up when the listing lands.
+      void refetchDeployments().catch(() => undefined);
+      allowNextNavigation();
+      navigate(returnUrl);
       notifyOperationSuccess(
         notifiableEntity,
         isEditMode ? EntityOperation.Edited : EntityOperation.Created,
         { name: metadata.values.name, type: notificationType },
       );
-      allowNextNavigation();
-      navigate(returnUrl);
     } catch (error) {
       const { message, status, traceId } = await getApiErrorDetails(error);
       if (!isEditMode && status === 409) {
@@ -561,7 +562,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     [avatarPicker, metadata.values.iconUrl],
   );
 
-  /* Every outcome reaching here saved the application; the panel has already notified. */
+  /* Every outcome reaching here saved the application; the panel notifies once this returns. */
   const handleSavePanelSaved = useCallback(
     (result: ResourceSaveResult) => {
       if (result.isCreated && isMetadataFirst) {
@@ -569,14 +570,12 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
         switchToCreatedApp(result.savedId, metadata.values);
         return;
       }
-      const leaveEditor = async () => {
-        // Best-effort: brings the saved application into the catalog list.
-        await refetchDeployments().catch(() => undefined);
-        setIsSavePanelOpen(false);
-        allowNextNavigation();
-        navigate(returnUrl);
-      };
-      void leaveEditor();
+      /* Best-effort and not awaited: a full uncached listing can take seconds,
+       * and the catalog picks the saved application up when it lands. */
+      void refetchDeployments().catch(() => undefined);
+      setIsSavePanelOpen(false);
+      allowNextNavigation();
+      navigate(returnUrl);
     },
     [
       allowNextNavigation,
