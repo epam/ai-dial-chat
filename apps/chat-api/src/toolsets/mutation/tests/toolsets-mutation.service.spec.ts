@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   NotFoundException,
   ServiceUnavailableException,
@@ -29,6 +30,8 @@ function makeDeps() {
       getUserBucket: vi.fn(),
       saveToolSet: vi.fn(),
       deleteToolSet: vi.fn(),
+      getToolSetMetadata: vi.fn(),
+      moveResource: vi.fn(),
       toolsetSignin: vi.fn(),
       toolSetSignout: vi.fn(),
       getSharedResources: vi
@@ -716,6 +719,147 @@ describe('ToolsetsMutationService', () => {
       await expect(service.deleteToolset('u', 't', id)).rejects.toThrow(
         ForbiddenException,
       );
+    });
+  });
+
+  describe('personal folders', () => {
+    const client = (service: ToolsetsMutationService) =>
+      vi.mocked((service['dialClient'] as DialClientService).client);
+
+    it('creates inside the requested folder with a create-only precondition', async () => {
+      const { service } = makeWriteService();
+      client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+      client(service).saveToolSet.mockResolvedValue(mutationSdkOk);
+
+      const result = await service.createToolset('user1', 'token', {
+        ...baseBody,
+        version: '1.1.0',
+        folderPath: 'My Search',
+        createOnly: true,
+      });
+
+      expect(result).toEqual({
+        id: 'toolsets/test-bucket/My%20Search/My%20toolset__1.1.0',
+      });
+      expect(client(service).saveToolSet).toHaveBeenCalledWith(
+        'test-bucket',
+        'My%20Search/My%20toolset__1.1.0',
+        expect.objectContaining({
+          headers: { Authorization: 'Bearer token', 'If-None-Match': '*' },
+        }),
+      );
+    });
+
+    it('never sends folderPath or createOnly to DIAL Core', async () => {
+      const { service } = makeWriteService();
+      client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+      client(service).saveToolSet.mockResolvedValue(mutationSdkOk);
+
+      await service.createToolset('user1', 'token', {
+        ...baseBody,
+        folderPath: 'Search',
+        createOnly: true,
+      });
+
+      const [, , { body }] = client(service).saveToolSet.mock
+        .calls[0] as never as [
+        string,
+        string,
+        { body: Record<string, unknown> },
+      ];
+      expect(body).not.toHaveProperty('folderPath');
+      expect(body).not.toHaveProperty('createOnly');
+    });
+
+    it('answers 409 when a create-only version already exists', async () => {
+      const { service, cacheManager } = makeWriteService();
+      client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+      client(service).saveToolSet.mockResolvedValue(errResponse(412));
+
+      await expect(
+        service.createToolset('user1', 'token', {
+          ...baseBody,
+          createOnly: true,
+        }),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(cacheManager.del).not.toHaveBeenCalled();
+    });
+
+    it('lists the folders of the caller bucket', async () => {
+      const { service } = makeWriteService();
+      client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+      client(service).getToolSetMetadata.mockResolvedValue({
+        data: { items: [{ name: 'Search', nodeType: 'FOLDER' }] },
+        response: { status: 200 },
+      } as never);
+
+      await expect(service.listToolsetFolders('token', '')).resolves.toEqual({
+        folders: [{ name: 'Search', path: 'Search' }],
+      });
+    });
+
+    it('moves an own toolset into a folder and invalidates its caches', async () => {
+      const { service, cacheManager } = makeWriteService();
+      client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+      client(service).moveResource.mockResolvedValue({
+        response: { status: 200 },
+      } as never);
+
+      const result = await service.moveToolset(
+        'user1',
+        'token',
+        'toolsets/test-bucket/search__1.0.0',
+        'Search',
+      );
+
+      expect(result).toEqual({
+        id: 'toolsets/test-bucket/Search/search__1.0.0',
+      });
+      expect(client(service).moveResource).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token' },
+        body: {
+          sourceUrl: 'toolsets/test-bucket/search__1.0.0',
+          destinationUrl: 'toolsets/test-bucket/Search/search__1.0.0',
+          overwrite: false,
+        },
+      });
+      expect(cacheManager.del).toHaveBeenCalledWith('toolsets:list:user1');
+      expect(client(service).getCustomToolSet).not.toHaveBeenCalled();
+    });
+
+    it('still returns the new id when invalidating caches after a move fails', async () => {
+      const { service, cacheManager } = makeWriteService();
+      client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+      client(service).moveResource.mockResolvedValue({
+        response: { status: 200 },
+      } as never);
+      cacheManager.del.mockRejectedValue(new Error('redis down'));
+
+      await expect(
+        service.moveToolset(
+          'user1',
+          'token',
+          'toolsets/test-bucket/search__1.0.0',
+          'Search',
+        ),
+      ).resolves.toEqual({
+        id: 'toolsets/test-bucket/Search/search__1.0.0',
+      });
+    });
+
+    it('rejects moving a toolset from another bucket', async () => {
+      const { service } = makeWriteService();
+      client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+
+      await expect(
+        service.moveToolset(
+          'user1',
+          'token',
+          'toolsets/other/search__1.0.0',
+          'Search',
+        ),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(client(service).moveResource).not.toHaveBeenCalled();
     });
   });
 });

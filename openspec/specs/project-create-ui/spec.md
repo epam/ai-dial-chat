@@ -148,7 +148,7 @@ The form SHALL render inside `BuilderFormContainer` from `@epam/ai-dial-builder-
 - on the inline end, **Cancel**, which calls `onCancel`;
 - **Create**, which calls `onSubmit`.
 
-At mobile widths the container moves Cancel and Create into a sticky footer, so both stay reachable.
+At mobile widths the container moves Cancel and Create into a sticky footer, so both stay reachable. The form passes `footerActionsOrder={BuilderFormActionsOrder.SubmitFirst}`, so in that footer Create is first (inline start) and Cancel second; the desktop header keeps Cancel before Create.
 
 Create SHALL be disabled while any of these holds:
 
@@ -240,7 +240,7 @@ The field is wrapped in `TextRefinementField` and driven by `useTextRefinement` 
 
 The Context section SHALL render:
 
-- **A drop zone**: the kit `FileDropzone`. Its label is `labels.dropZoneLabel(links)` ("Drag&drop context, upload from device or file manager"), where `links` (`ProjectDropZoneLinks`) holds two empty elements the host fills with their text: `fromDevice`, an underlined span that opens the device picker (a click anywhere else on the zone opens no picker), and `fileManager`, a button that calls `onPickFromFileManager()` without opening the device picker, present only when that prop is supplied. The app renders the sentence with `Trans` and the keys `projects.create.context.dropZone` / `projects.create.context.dropZoneDeviceOnly`. The file input's accessible name is `labels.dropZoneAriaLabel` ("Upload context from device"). Its hint is the host-resolved `labels.dropZoneHint` ("File formats .csv, .pdf, .xlsx (max 1 MB)"), which names the same limits the host passes as props. The kit renders the area as a label over a visually hidden file input, so it is keyboard-operable and announced as a file input. The `accept` attribute is built from `allowedExtensions`.
+- **A drop zone**: the kit `FileDropzone`. Its label is `labels.dropZoneLabel(links)` ("Drag&drop context, upload from device or file manager"), where `links` (`ProjectDropZoneLinks`) holds two empty elements the host fills with their text: `fromDevice`, an underlined span that opens the device picker (a click anywhere else on the zone opens no picker), and `fileManager`, a button that calls `onPickFromFileManager()` without opening the device picker, present only when that prop is supplied. The app renders the sentence with `Trans` and the keys `projects.create.context.dropZone` / `projects.create.context.dropZoneDeviceOnly`. The file input's accessible name is `labels.dropZoneAriaLabel` ("Upload context from device"). Its hint is the host-resolved `labels.dropZoneHint` ("File formats .csv, .pdf, .xlsx (max 1 MB)"), which names the same limits the host passes as props. The kit renders the area as a label over a visually hidden file input, so it is keyboard-operable and announced as a file input. The `accept` attribute is built from `allowedExtensions`. While idle the zone's background is `var(--pcf-dropzone-bg, var(--bg-layer-raised, #d1dbea))` (`styles.colors.dropZoneBackground`), on every screen size; a disabled zone and one being dragged over keep the kit's own backgrounds.
 - **A drag overlay**: `FileDndOverlay` from `@epam/ai-dial-attachment-input`, shown while a file-bearing drag is over the form.
 
 The Context header carries only the `labels.contextLabel` heading: there is no Add menu and no capacity meter.

@@ -1,4 +1,8 @@
 import type { CSSProperties } from 'react';
+import type {
+  FolderDestination,
+  FolderDestinationRoot,
+} from './folder-destination';
 import type { PublishFolderNode } from './publish';
 
 /** Color overrides for the publish destination folder tree. */
@@ -19,14 +23,26 @@ export interface PublishFoldersTreeStyles {
 
 /** Props for the publish destination folder tree. */
 export interface PublishFoldersTreeProps {
-  /** Root-level folder nodes. */
-  items: PublishFolderNode[];
-  /** Currently selected destination path; `undefined` means no selection and `[]` means the bucket root. */
+  /** Root-level folder nodes of the single-root tree. Ignored when `roots` is set. Defaults to `[]`. */
+  items?: PublishFolderNode[];
+  /** Currently selected destination path of the single-root tree; `undefined` means no selection and `[]` means the bucket root. Ignored when `roots` is set. */
   selectedPath?: string[];
-  /** Called when the selected destination changes. */
-  onSelectedPathChange: (path: string[] | undefined) => void;
-  /** Called when a new folder name is confirmed. */
-  onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
+  /** Called when the selected destination of the single-root tree changes. */
+  onSelectedPathChange?: (path: string[] | undefined) => void;
+  /** Called when a new folder name is confirmed in the single-root tree. */
+  onCreateFolder?: (parentPath: string[], name: string) => Promise<void>;
+  /** Renders one top-level node per root, in this order, instead of the single `rootLabel` root. */
+  roots?: FolderDestinationRoot[];
+  /** Currently selected destination in multi-root mode; `undefined` means no selection. */
+  destination?: FolderDestination;
+  /** Called when the selected destination changes in multi-root mode. */
+  onDestinationChange?: (destination: FolderDestination | undefined) => void;
+  /** Called when a new folder name is confirmed in multi-root mode, with the root and the parent path inside it. */
+  onCreateDestinationFolder?: (
+    rootKey: string,
+    parentPath: string[],
+    name: string,
+  ) => Promise<void>;
   /** Host-owned search query used to filter the tree. */
   searchQuery: string;
   /** Disables every control. Defaults to `false`. */
@@ -49,13 +65,13 @@ export interface PublishFoldersTreeProps {
   invalidFolderNameError?: string;
   /** Validation message for a duplicate folder name. Defaults to `'A folder with this name already exists.'`. */
   duplicateFolderNameError?: string;
-  /** Label for the selectable bucket root. Defaults to `'Organization'`. */
+  /** Label for the selectable bucket root of the single-root tree. Ignored when `roots` is set. Defaults to `'Organization'`. */
   rootLabel?: string;
-  /** Externally controlled expanded folder path keys. */
+  /** Externally controlled expanded folder path keys of the single-root tree; use `FolderDestinationRoot.expandedPaths` in multi-root mode. */
   expandedPaths?: Set<string>;
   /** Called when expanded folder path keys change. */
   onExpandedPathsChange?: (paths: Set<string>) => void;
-  /** Folder path keys currently being fetched by the host. */
+  /** Folder path keys of the single-root tree currently being fetched by the host; use `FolderDestinationRoot.loadingPaths` in multi-root mode. */
   loadingPaths?: Set<string>;
   /** Style overrides. */
   styles?: PublishFoldersTreeStyles;

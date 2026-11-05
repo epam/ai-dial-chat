@@ -603,10 +603,11 @@
     "authorPlaceholder": "Author name",
     "authorHint": "Shown as the publication's author. Defaults to you — replace it to credit a team instead.",
     "folderLabel": "Publish to folder",
+    "noFolderSelected": "No folder selected",
+    "chooseFolder": "Choose",
     "noAccessError": "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
     "addSiblingFolder": "Add sibling",
     "addChildFolder": "Add child",
-    "summaryVersion": "Version {version} · current",
     "updateVersion": "Update version {version}",
     "publishingInProgress": "Publishing…"
   },
@@ -912,13 +913,9 @@
       "mainContent": "Project chats"
     },
     "actions": {
-      "deleteConfirmTitle": "Delete \"{{name}}\"?",
-      "deleteConfirmDescription": "The project and its context files will be deleted. This cannot be undone.",
       "deleteError": "Could not delete the project",
       "downloadError": "Could not download",
-      "pinError": "Could not update the pin",
-      "deleteConfirmWithChatsDescription_one": "The project, its context files and its {{count}} chat will be deleted. This cannot be undone.",
-      "deleteConfirmWithChatsDescription_other": "The project, its context files and its {{count}} chats will be deleted. This cannot be undone."
+      "pinError": "Could not update the pin"
     },
     "edit": {
       "title": "Edit project",
@@ -1016,8 +1013,6 @@
       "scheduleHourlyAt": "Hourly, {{minute}} min past the hour",
       "scheduleEveryNMinutes_one": "Every minute",
       "scheduleEveryNMinutes_other": "Every {{count}} minutes",
-      "scheduleEveryNWeeks_one": "Every week on {{day}} at {{time}}",
-      "scheduleEveryNWeeks_other": "Every {{count}} weeks on {{day}} at {{time}}",
       "scheduleOnceAt": "Once on {{date}}",
       "scheduleRecurringFallback": "Recurring schedule"
     },
@@ -1036,13 +1031,12 @@
       "repeatWeekly": "Weekly",
       "repeatMonthly": "Monthly",
       "repeatCustom": "Custom",
-      "everyLabel": "Every",
-      "everyWeeksOption_one": "{{count}} week",
-      "everyWeeksOption_other": "{{count}} weeks",
       "timeLabel": "Time",
       "timeInvalid": "Enter a valid time",
       "dayOfWeekLabel": "Day",
       "dayOfWeekRequired": "Day of week is required",
+      "daysOfWeekLabel": "Days",
+      "daysOfWeekRequired": "Select at least one day",
       "dayOfMonthLabel": "Day of month",
       "dayOfMonthRequired": "Day of month is required",
       "minuteLabel": "Minutes past the hour",
@@ -1735,6 +1729,16 @@
     "loadingAriaLabel": "Loading skill",
     "instructionsLoadingAriaLabel": "Loading",
     "supportingFileNote": "This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.",
+    "folderPreview": {
+      "rootLabel": "Skill",
+      "breadcrumbAriaLabel": "Folder path",
+      "overflowAriaLabel": "Show hidden path segments",
+      "listAriaLabel": "Folder content",
+      "emptyTitle": "This folder is empty",
+      "emptyDescription": "Use Add to upload files or create a subfolder.",
+      "itemCount_one": "{{count}} item",
+      "itemCount_other": "{{count}} items"
+    },
     "bucketMissingTitle": "Can't create a skill right now",
     "bucketMissingMessage": "We couldn't determine your storage location. Please sign in again or try later.",
     "error": {
@@ -2047,6 +2051,7 @@
     "title": "Discard unsaved changes?",
     "message": "You have unsaved changes. Leaving now will discard them.",
     "confirmLabel": "Discard changes",
+    "confirmLabelMobile": "Discard",
     "cancelLabel": "Keep editing"
   },
   "urlPreselection": {
@@ -2060,5 +2065,27 @@
     "skillsLoadFailedMessage": "The skill list could not be loaded, so the requested skill was not added.",
     "promptUnavailableTitle": "Prompt unavailable",
     "promptUnavailableMessage": "The requested prompt could not be loaded."
+  },
+  "resourceSavePanel": {
+    "title": "Save {{type}}",
+    "saveToFolderHeading": "Save to folder",
+    "changeFolder": "Change",
+    "changeFolderTitle": "Change folder",
+    "destinationAriaLabel": "Destination folder",
+    "keepVersion": "Keep version {{version}}",
+    "saveAsNewVersion": "Save as new version",
+    "newVersionLabel": "New version",
+    "newVersionPlaceholder": "Enter new version",
+    "versionInvalid": "Use a version like 1.0.0.",
+    "versionUnchanged": "Enter a version other than {{version}}.",
+    "versionExists": "Version {{version}} already exists in this folder.",
+    "versionReadOnlyTooltip": "To change the version, choose “Save as new version” when you save.",
+    "foldersLoadFailed": "Folders could not be loaded.",
+    "saveFailed": "Saving failed. Please try again.",
+    "commitFailed": "Version {{version}} was created, but your changes stayed in version {{currentVersion}}. Save again to move them.",
+    "newVersionSavedTitle": "New version saved",
+    "newVersionSaved": "“{{name}}” was saved as version {{version}}.",
+    "savedButMoveFailed": "“{{name}}” was saved, but it could not be moved to {{folder}}.",
+    "savedButPublishFailed": "“{{name}}” was saved, but the publish request failed."
   }
 }

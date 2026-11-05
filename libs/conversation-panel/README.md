@@ -288,11 +288,11 @@ its parent gives it, with the list scrolling inside.
 
 ### Pinned projects
 
-`pinnedProjects` (on `ConversationList` and `ConversationListSection`) renders
-host-supplied project trees at the top of the Pinned group, before the pinned
+`pinnedProjects` (on `ConversationList`, `ConversationListSection` and
+`ConversationPanel`) renders host-supplied project trees at the top of the Pinned group, before the pinned
 conversations. The list does not trim, sort or fetch: each project renders as a
-project row (briefcase icon, name, ⋮ actions), one nested `Indicator` row per
-conversation in the given order, and a See all row when `hasMore` is set. The
+project row (briefcase icon, name, ⋮ actions), one nested row per
+conversation in the given order (`Indicator` by default; `conversationRowVariant: ConversationRowVariant.Avatar` gives them the deployment avatar or `leadingIcon` and a trailing unread dot, like the panel's own rows, at the 36px row height), and a See all row when `hasMore` is set. The
 rows are never draggable nor drop targets, and project rows cannot collapse on
 their own: collapsing the Pinned group hides them with the rest of it.
 
@@ -359,7 +359,7 @@ const pinnedProjects: PinnedProjects = {
   (default `FilterTab.MyChats`), `hiddenSources` removes it, and
   `ConversationTypeFilter.Task` hides every project. A list whose only rows are
   projects is not empty.
-- **Layout.** Every row is 32px with a 2px gap. Nested and See all rows are
+- **Layout.** Every row is 32px with a 2px gap (36px for nested chats in the `Avatar` variant). Nested and See all rows are
   indented 28px (`ps-7`); a 1px guide line at `inset-inline-start: 20px` (the
   centre of the project icon) runs from 5px below the first nested row's top
   to 5px above the last one's bottom. Its color is
@@ -374,6 +374,29 @@ const pinnedProjects: PinnedProjects = {
   `labels.seeAllAriaLabel(name)` (default `` `See all chats in ${name}` ``),
   its visible text `labels.seeAllLabel` (default `'See all'`). A row focused
   with the keyboard is tinted like a hovered one.
+
+In `ConversationPanel` the prop works the same way: the panel forwards it, and
+`labels.seeAllLabel` and `labels.seeAllAriaLabel`, to its list, and its own
+search field and filter chips drive the list's `searchQuery` and
+`activeFilter`, so they filter the project trees as above. The panel is
+memoized: pass a referentially stable `pinnedProjects` object and
+`seeAllAriaLabel` (for example from `useMemo` and `useCallback`), or it
+re-renders on every host render.
+
+```tsx
+<ConversationPanel
+  conversations={conversations}
+  isOpen={isPanelOpen}
+  onSelectConversation={openConversation}
+  onNewChat={handleNewChat}
+  pinnedProjects={pinnedProjects}
+  labels={{
+    ...panelLabels,
+    seeAllLabel: 'See all',
+    seeAllAriaLabel: (name) => `See all chats in ${name}`,
+  }}
+/>
+```
 
 ### Corner radii
 
@@ -558,7 +581,7 @@ import type {
 `PinnedProjectGroup` (`id`, `name`, `href?`, `source?`, `conversations`,
 `hasMore`) and `PinnedProjects` (`projects`, `onSelectProject`,
 `onSelectConversation`, `onSeeAll`, `getActions?`, `onActionMenuOpen?`,
-`activeProjectId?`) are described under [Pinned projects](#pinned-projects).
+`activeProjectId?`, `conversationRowVariant?`) are described under [Pinned projects](#pinned-projects).
 
 ### ConversationItem
 
@@ -624,7 +647,7 @@ Payload for a completed drag-and-drop move: the dragged `draggedId`, the
 
 The floating queue that shows export/import job progress is no longer part of
 this package: it is the UI kit's generic `TransferQueue`
-(`@epam/ai-dial-ui-kit` `^0.16.0-dev.72`). A host maps its
+(`@epam/ai-dial-ui-kit` `^0.16.0`). A host maps its
 `ConversationTransferJob`s (from `@epam/ai-dial-chat-shared`) onto
 `TransferQueueItem`s — `id`, `fileName` as `name`, the status, `progress.percent`
 as `percent`, and the translated failure or warning reason as `message` — and
@@ -676,6 +699,7 @@ const labels: RenameConversationPopupLabels = {
 | `nameTooLongError`  | `string` | Error shown when the trimmed name exceeds 255 UTF-8 bytes |
 | `saveLabel`         | `string` | Label for the save/confirm button                         |
 | `cancelLabel`       | `string` | Label for the cancel button                               |
+| `savingLabel`       | `string` | Optional spinner name while saving; defaults `'Saving'`   |
 
 ### RenameConversationPopupStyles
 

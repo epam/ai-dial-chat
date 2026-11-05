@@ -51,7 +51,7 @@ import '@epam/ai-dial-toolset-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.72`
+- `@epam/ai-dial-ui-kit` `^0.16.0`
 - `@epam/ai-dial-chat-shared` `*`
 - `@epam/ai-dial-chat-hooks` `*`
 
@@ -116,6 +116,7 @@ const ToolsetEditorPage = () => {
       onNotifyError={(message, requestId) => showError(message, requestId)}
       avatarPicker={avatarPicker}
       availableLocaleOptions={localeOptions}
+      formatLocaleLabel={resolveLanguageName}
       labels={labels}
     />
   );
@@ -123,6 +124,8 @@ const ToolsetEditorPage = () => {
 ```
 
 `avatarPicker` is a `MetadataFormAvatarPicker` from `@epam/ai-dial-builder-form` — the same object `MetadataForm` takes: the user's `bucket`, the host `FileManagerModal`, `resolveIconUrl`, `allowedMimeTypes`, `maxFileSizeBytes`, and `resolveAttachedIconUrl`, which turns the picked file into the stored icon URL. The editor passes it to `MetadataForm` unchanged and never builds a DIAL file path itself.
+
+`availableLocaleOptions` and the optional `formatLocaleLabel` are forwarded to `MetadataForm` unchanged. `formatLocaleLabel` names a stored locale code that is not among the options (default `code.toUpperCase()`); see `DeploymentLocalesField` in `@epam/ai-dial-builder-form`.
 
 `initialForm` re-seeds the editor whenever its object identity changes, so a
 host that loads asynchronously should memoize it and produce a new object only
@@ -205,6 +208,22 @@ AI action (and, after a result, Restore original and Regenerate) beside the Desc
 The host owns transport, availability, and translations, passing the copy
 through `labels.refinement` (`TextRefinementLabels` from
 `@epam/ai-dial-chat-shared`). Save is disabled while a request is pending.
+
+`isVersionReadOnly` (default `false`) renders the Version field read-only —
+for a host that changes versions another way while editing, such as a save
+panel's "Save as new version". `labels.versionReadOnlyTooltip` replaces the
+field's tooltip, which otherwise keeps `MetadataForm`'s English default.
+`onPersist` may resolve later than the click that started it: a host can open
+its own save step there and resolve with the id it saved, or `null` when the
+user cancels.
+
+```tsx
+<ToolsetEditor
+  {...editorProps}
+  isVersionReadOnly={isEditMode}
+  labels={{ ...labels, versionReadOnlyTooltip: t('…') }}
+/>
+```
 
 ### Migrating from `GeneralForm`
 

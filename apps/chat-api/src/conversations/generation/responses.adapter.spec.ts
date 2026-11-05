@@ -590,6 +590,7 @@ describe('ResponsesAdapter', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         { extraHeaders: { 'x-project-id': 'projects/a1b2c3/q4' } },
       );
       let next = await iterator.next();
@@ -637,6 +638,7 @@ describe('ResponsesAdapter', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         onChunkApplied,
         undefined,
         { isPassThrough: true },
@@ -663,6 +665,7 @@ describe('ResponsesAdapter', () => {
       streamChunks: string[],
       status = 200,
       timezone?: string,
+      lang?: string,
     ) => {
       vi.spyOn(mockDialClient.client, 'createResponse').mockResolvedValue({
         response: new Response(textToStream(streamChunks), {
@@ -679,6 +682,7 @@ describe('ResponsesAdapter', () => {
         { role: ConversationMessageRole.Assistant, content: '' } as never,
         undefined,
         timezone,
+        lang,
       );
       return { result, res };
     };
@@ -715,6 +719,29 @@ describe('ResponsesAdapter', () => {
       const request = vi.mocked(mockDialClient.client.createResponse).mock
         .calls[0][0];
       expect(request.headers).not.toHaveProperty('X-Timezone');
+    });
+
+    it('forwards X-Lang to DIAL Core when provided', async () => {
+      const { adapter, mockDialClient } = makeAdapter();
+
+      await relay(
+        adapter,
+        mockDialClient,
+        [
+          'data: {"type":"response.completed","response":{"status":"completed"}}\n\n',
+        ],
+        200,
+        undefined,
+        'uk',
+      );
+
+      expect(mockDialClient.client.createResponse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'X-Lang': 'uk',
+          }),
+        }),
+      );
     });
 
     it('assembles text deltas into the assistant message and sets responseId on completion', async () => {

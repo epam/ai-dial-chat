@@ -245,7 +245,7 @@ The adapter SHALL build `getActions` for project rows (the See all row is only a
 | Edit (`ButtonsI18nKeys.Edit`) | `project.canEdit` | opens `getProjectEditRoute(id)` through `onOpenRoute` |
 | Publish (`ButtonsI18nKeys.Publish`) | `project.canManage` | opens `PublishProjectPanelContainer` for the project, returning focus to the row's ⋮ trigger on close |
 | Share (`ButtonsI18nKeys.Share`) | `project.canManage` | opens `ProjectShareOverlay` for the project |
-| Delete (`ButtonsI18nKeys.Delete`) | `project.canManage` | opens `ProjectDeleteConfirmation`, the dialog `ProjectViewPage` uses |
+| Delete (`ButtonsI18nKeys.Delete`) | `project.canManage` | opens `ProjectDeleteConfirmation`, the side panel `ProjectViewPage` uses |
 
 `project` is the snapshot's `ProjectDetailsDto` (`usePinnedProjectChats`). So:
 
@@ -260,7 +260,7 @@ The adapter SHALL build `getActions` for project rows (the See all row is only a
 - The sidebar passes `true` only while the current route is that project's view, edit or chat page.
 - With `false`, the success toast is shown and the pin is dropped, but the route does not change.
 - A `ProjectChanged` conflict shows `ProjectsI18nKeys.ErrorsChangedElsewhere` and refreshes that project in the tree.
-- The sidebar owns the dialog's open state: it passes `isDeleteOpen` (the Delete action is open) and `onDeleteOpenChange`, through which the shared `useProjectActions` reports a cancel, a success or a conflict, and each of them ends the action.
+- The sidebar owns the confirmation panel's open state: it passes `isDeleteOpen` (the Delete action is open) and `onDeleteOpenChange`, through which the shared `useProjectActions` reports a cancel, a success or a conflict, and each of them ends the action.
 
 #### Scenario: Owner menu
 

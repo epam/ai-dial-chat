@@ -268,6 +268,21 @@ describe('ProjectCreateForm', () => {
         .forEach((region) => expect(region.textContent).toBe(''));
     });
 
+    it('links the field to the visible inline error, not the empty alert region', async () => {
+      renderForm();
+      const input = screen.getByRole('textbox', { name: /Name/ });
+
+      await userEvent.click(input);
+      await userEvent.tab();
+
+      expect(
+        screen.getByRole('textbox', {
+          name: /Name/,
+          description: 'Name is required',
+        }),
+      ).toBe(input);
+    });
+
     it('moves focus to Name when the host reports a name error', async () => {
       const { props } = renderForm({
         values: { ...EMPTY_VALUES, name: 'Handbook' },
@@ -676,6 +691,27 @@ describe('ProjectCreateForm — layout', () => {
     expect(
       within(context).getByRole('heading', { name: 'Context' }).className,
     ).toContain('dial-tiny-semi-text');
+  });
+
+  it('lists Cancel first in the header and Create first in the mobile footer', () => {
+    renderForm();
+
+    const names = screen
+      .getAllByRole('button', { name: /^(Create|Cancel)$/ })
+      .map((button) => button.textContent);
+
+    expect(names).toEqual(['Cancel', 'Create', 'Create', 'Cancel']);
+  });
+
+  it('paints the idle drop zone with the layer-raised background', () => {
+    const styles = readFileSync(
+      join(__dirname, '../ProjectCreateForm.module.scss'),
+      'utf-8',
+    );
+
+    expect(styles).toMatch(
+      /--pcf-dropzone-bg, var\(--bg-layer-raised, #d1dbea\)/,
+    );
   });
 
   it('renders every file card as an item of one list', () => {

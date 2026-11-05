@@ -57,4 +57,5 @@ export class SkillsService {
     this.mutationService.createSkillGroupingFolder.bind(this.mutationService);
   deleteSkillGroupingFolder =
     this.mutationService.deleteSkillGroupingFolder.bind(this.mutationService);
+  moveSkill = this.mutationService.moveSkill.bind(this.mutationService);
 }

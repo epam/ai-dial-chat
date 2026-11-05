@@ -32,6 +32,9 @@ function makeDeps() {
       saveCustomApplication: vi.fn(),
       getCustomApplication: vi.fn(),
       deleteCustomApplication: vi.fn(),
+      getApplicationMetadata: vi.fn(),
+      moveResource: vi.fn(),
+      copyResource: vi.fn(),
     },
     baseUrl: 'http://dial-core',
     dialApiVersion: '2024-10-21',
@@ -331,6 +334,46 @@ describe('ApplicationsService', () => {
         }),
       ).rejects.toThrow();
       expect(saveCustomApplicationSpy).toHaveBeenCalledOnce();
+    });
+
+    it('creates inside the requested folder and keeps create-only candidates there', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+      saveCustomApplicationSpy.mockResolvedValueOnce(errResponse(412));
+      const result = await service.createApplication('user1', 'token', {
+        ...body,
+        createOnly: true,
+        folderPath: 'My Design/Audit',
+      });
+      expect(saveCustomApplicationSpy).toHaveBeenNthCalledWith(
+        1,
+        'test-bucket',
+        'My%20Design/Audit/My%20App__1.0.0',
+        expect.anything(),
+      );
+      expect(saveCustomApplicationSpy).toHaveBeenNthCalledWith(
+        2,
+        'test-bucket',
+        'My%20Design/Audit/My%20App-2__1.0.0',
+        expect.anything(),
+      );
+      expect(result).toEqual({
+        id: 'applications/test-bucket/My%20Design/Audit/My%20App-2__1.0.0',
+      });
+    });
+
+    it('creates at the bucket root when folderPath is empty', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+      await service.createApplication('user1', 'token', {
+        ...body,
+        folderPath: '',
+      });
+      expect(saveCustomApplicationSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'My%20App__1.0.0',
+        expect.anything(),
+      );
     });
 
     it('keeps legacy writes unconditional when createOnly is absent', async () => {
@@ -1338,5 +1381,364 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
     // A cache hit would have returned `cached`'s value without a second
     // getApplication call — this proves the cache was actually invalidated.
     expect(sdkClient.getApplication).toHaveBeenCalledTimes(2);
+  });
+
+  describe('personal folders and versions', () => {
+    const client = (service: ApplicationsService) =>
+      vi.mocked((service['dialClient'] as DialClientService).client);
+
+    const withBucket = (service: ApplicationsService, bucket = 'b1') =>
+      client(service).getUserBucket.mockResolvedValue(okResponse({ bucket }));
+
+    const appResponse = (body: Record<string, unknown>, etag: string) =>
+      ({
+        data: body,
+        response: { status: 200, headers: new Headers({ etag }) },
+      }) as never;
+
+    it('lists the folders of the caller bucket', async () => {
+      const { service } = makeService();
+      withBucket(service);
+      client(service).getApplicationMetadata.mockResolvedValue({
+        data: {
+          items: [
+            { name: 'Design', nodeType: 'FOLDER' },
+            { name: 'agent__1.0.0', nodeType: 'ITEM' },
+          ],
+        },
+        response: { status: 200 },
+      } as never);
+
+      await expect(
+        service.listApplicationFolders('token', ''),
+      ).resolves.toEqual({
+        folders: [{ name: 'Design', path: 'Design' }],
+      });
+      expect(client(service).getApplicationMetadata).toHaveBeenCalledWith(
+        'b1',
+        '',
+        expect.anything(),
+      );
+    });
+
+    it('moves an own application into a folder and invalidates caches', async () => {
+      const { service, cacheManager, deploymentsDetailsService } =
+        makeService();
+      withBucket(service);
+      client(service).moveResource.mockResolvedValue({
+        response: { status: 200 },
+      } as never);
+
+      const result = await service.moveApplication(
+        'user1',
+        'token',
+        'applications/b1/agent__1.0.0',
+        'My Design',
+      );
+
+      expect(result).toEqual({
+        id: 'applications/b1/My%20Design/agent__1.0.0',
+      });
+      expect(client(service).moveResource).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token' },
+        body: {
+          sourceUrl: 'applications/b1/agent__1.0.0',
+          destinationUrl: 'applications/b1/My%20Design/agent__1.0.0',
+          overwrite: false,
+        },
+      });
+      expect(cacheManager.del).toHaveBeenCalledWith('applications:list:user1');
+      expect(
+        deploymentsDetailsService.invalidateDetailsCache,
+      ).toHaveBeenCalledWith('user1', 'applications/b1/agent__1.0.0');
+    });
+
+    it('skips the move when the application is already in the folder', async () => {
+      const { service } = makeService();
+      withBucket(service);
+
+      const result = await service.moveApplication(
+        'user1',
+        'token',
+        'applications/b1/Design/agent__1.0.0',
+        'Design',
+      );
+
+      expect(result).toEqual({ id: 'applications/b1/Design/agent__1.0.0' });
+      expect(client(service).moveResource).not.toHaveBeenCalled();
+    });
+
+    it('rejects moving an application from another bucket', async () => {
+      const { service } = makeService();
+      withBucket(service);
+
+      await expect(
+        service.moveApplication(
+          'user1',
+          'token',
+          'applications/other/agent__1.0.0',
+          'Design',
+        ),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(client(service).moveResource).not.toHaveBeenCalled();
+    });
+
+    it('forks into the new version path and stamps the version', async () => {
+      const { service } = makeService();
+      withBucket(service);
+      client(service).copyResource.mockResolvedValue({
+        response: { status: 200 },
+      } as never);
+      client(service).getCustomApplication.mockResolvedValue(
+        appResponse({ displayVersion: '1.0.0', description: 'pre' }, 'e1'),
+      );
+      client(service).saveCustomApplication.mockResolvedValue(okResponse({}));
+
+      const result = await service.forkApplicationVersion(
+        'user1',
+        'token',
+        'applications/b1/agent__1.0.0',
+        { version: '1.1.0', folderPath: 'Design' },
+      );
+
+      expect(result).toEqual({ id: 'applications/b1/Design/agent__1.1.0' });
+      expect(client(service).copyResource).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: {
+            sourceUrl: 'applications/b1/agent__1.0.0',
+            destinationUrl: 'applications/b1/Design/agent__1.1.0',
+            overwrite: false,
+          },
+        }),
+      );
+      expect(client(service).saveCustomApplication).toHaveBeenCalledWith(
+        'b1',
+        'Design/agent__1.1.0',
+        {
+          headers: { Authorization: 'Bearer token', 'If-Match': 'e1' },
+          body: { displayVersion: '1.1.0', description: 'pre' },
+        },
+      );
+    });
+
+    it('keeps a separator inside the name when forking', async () => {
+      const { service } = makeService();
+      withBucket(service);
+      client(service).copyResource.mockResolvedValue({
+        response: { status: 200 },
+      } as never);
+      client(service).getCustomApplication.mockResolvedValue(
+        appResponse({ displayVersion: '1.0.0' }, 'e1'),
+      );
+      client(service).saveCustomApplication.mockResolvedValue(okResponse({}));
+
+      const result = await service.forkApplicationVersion(
+        'user1',
+        'token',
+        'applications/b1/my__app__1.0.0',
+        { version: '1.1.0', folderPath: '' },
+      );
+
+      expect(result).toEqual({ id: 'applications/b1/my__app__1.1.0' });
+    });
+
+    it('deletes the copy when stamping the version fails', async () => {
+      const { service } = makeService();
+      withBucket(service);
+      client(service).copyResource.mockResolvedValue({
+        response: { status: 200 },
+      } as never);
+      client(service).getCustomApplication.mockResolvedValue(
+        appResponse({ displayVersion: '1.0.0' }, 'e1'),
+      );
+      client(service).saveCustomApplication.mockResolvedValue(errResponse(500));
+      client(service).deleteCustomApplication.mockResolvedValue(
+        okResponse(undefined),
+      );
+
+      await expect(
+        service.forkApplicationVersion(
+          'user1',
+          'token',
+          'applications/b1/agent__1.0.0',
+          { version: '1.1.0', folderPath: '' },
+        ),
+      ).rejects.toBeInstanceOf(BadGatewayException);
+      expect(client(service).deleteCustomApplication).toHaveBeenCalledWith(
+        'b1',
+        'agent__1.1.0',
+        expect.anything(),
+      );
+    });
+
+    it('reports an existing version as a conflict', async () => {
+      const { service } = makeService();
+      withBucket(service);
+      client(service).copyResource.mockResolvedValue(errResponse(400));
+      client(service).getApplicationMetadata.mockResolvedValue({
+        data: {},
+        response: { status: 200 },
+      } as never);
+
+      await expect(
+        service.forkApplicationVersion(
+          'user1',
+          'token',
+          'applications/b1/agent__1.0.0',
+          { version: '1.1.0', folderPath: '' },
+        ),
+      ).rejects.toBeInstanceOf(ConflictException);
+    });
+
+    it('commits by moving the edits to the snapshot first and then restoring the source', async () => {
+      const { service } = makeService();
+      withBucket(service);
+      client(service).getCustomApplication.mockImplementation(((
+        _bucket: string,
+        path: string,
+      ) =>
+        Promise.resolve(
+          path === 'agent__1.0.0'
+            ? appResponse(
+                { displayVersion: '1.0.0', description: 'edited' },
+                'src',
+              )
+            : appResponse(
+                { displayVersion: '1.1.0', description: 'pre' },
+                'snap',
+              ),
+        )) as never);
+      client(service).saveCustomApplication.mockResolvedValue(okResponse({}));
+
+      const result = await service.commitApplicationVersion(
+        'user1',
+        'token',
+        'applications/b1/agent__1.0.0',
+        { snapshotId: 'applications/b1/agent__1.1.0' },
+      );
+
+      expect(result).toEqual({ id: 'applications/b1/agent__1.1.0' });
+      expect(client(service).saveCustomApplication).toHaveBeenNthCalledWith(
+        2,
+        'b1',
+        'agent__1.0.0',
+        {
+          headers: { Authorization: 'Bearer token', 'If-Match': 'src' },
+          body: { displayVersion: '1.0.0', description: 'pre' },
+        },
+      );
+      expect(client(service).saveCustomApplication).toHaveBeenNthCalledWith(
+        1,
+        'b1',
+        'agent__1.1.0',
+        {
+          headers: { Authorization: 'Bearer token', 'If-Match': 'snap' },
+          body: { displayVersion: '1.1.0', description: 'edited' },
+        },
+      );
+    });
+
+    it('rolls the snapshot back and keeps the edits in the source when restoring the source fails', async () => {
+      const { service } = makeService();
+      withBucket(service);
+      client(service).getCustomApplication.mockImplementation(((
+        _bucket: string,
+        path: string,
+      ) =>
+        Promise.resolve(
+          path === 'agent__1.0.0'
+            ? appResponse(
+                { displayVersion: '1.0.0', description: 'edited' },
+                'src',
+              )
+            : appResponse(
+                { displayVersion: '1.1.0', description: 'pre' },
+                'snap',
+              ),
+        )) as never);
+      client(service).saveCustomApplication.mockImplementation(((
+        _bucket: string,
+        path: string,
+      ) =>
+        Promise.resolve(
+          path === 'agent__1.0.0' ? errResponse(500) : okResponse({}),
+        )) as never);
+
+      await expect(
+        service.commitApplicationVersion(
+          'user1',
+          'token',
+          'applications/b1/agent__1.0.0',
+          { snapshotId: 'applications/b1/agent__1.1.0' },
+        ),
+      ).rejects.toBeInstanceOf(BadGatewayException);
+      expect(client(service).saveCustomApplication).toHaveBeenCalledTimes(3);
+      expect(client(service).saveCustomApplication).toHaveBeenNthCalledWith(
+        3,
+        'b1',
+        'agent__1.1.0',
+        {
+          headers: { Authorization: 'Bearer token' },
+          body: { displayVersion: '1.1.0', description: 'pre' },
+        },
+      );
+    });
+
+    it('leaves both resources untouched when writing the snapshot fails', async () => {
+      const { service } = makeService();
+      withBucket(service);
+      client(service).getCustomApplication.mockResolvedValue(
+        appResponse({ displayVersion: '1.0.0' }, 'e'),
+      );
+      client(service).saveCustomApplication.mockResolvedValue(errResponse(500));
+
+      await expect(
+        service.commitApplicationVersion(
+          'user1',
+          'token',
+          'applications/b1/agent__1.0.0',
+          { snapshotId: 'applications/b1/agent__1.1.0' },
+        ),
+      ).rejects.toBeInstanceOf(BadGatewayException);
+      expect(client(service).saveCustomApplication).toHaveBeenCalledOnce();
+      expect(client(service).saveCustomApplication).toHaveBeenCalledWith(
+        'b1',
+        'agent__1.1.0',
+        expect.anything(),
+      );
+    });
+
+    it('answers 409 when a resource changed before the commit wrote it', async () => {
+      const { service } = makeService();
+      withBucket(service);
+      client(service).getCustomApplication.mockResolvedValue(
+        appResponse({ displayVersion: '1.0.0' }, 'e'),
+      );
+      client(service).saveCustomApplication.mockResolvedValue(errResponse(412));
+
+      await expect(
+        service.commitApplicationVersion(
+          'user1',
+          'token',
+          'applications/b1/agent__1.0.0',
+          { snapshotId: 'applications/b1/agent__1.1.0' },
+        ),
+      ).rejects.toBeInstanceOf(ConflictException);
+    });
+
+    it('rejects a snapshot from another bucket', async () => {
+      const { service } = makeService();
+      withBucket(service);
+
+      await expect(
+        service.commitApplicationVersion(
+          'user1',
+          'token',
+          'applications/b1/agent__1.0.0',
+          { snapshotId: 'applications/other/agent__1.1.0' },
+        ),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(client(service).saveCustomApplication).not.toHaveBeenCalled();
+    });
   });
 });

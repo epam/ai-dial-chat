@@ -1,6 +1,7 @@
 import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 import type { FC, ReactNode } from 'react';
 import { mergeClasses } from '../../utils/merge-class';
+import { ConfirmationIdentityCard } from '../ConfirmationIdentityCard/ConfirmationIdentityCard';
 import { ConfirmationIdentityRow } from '../ConfirmationIdentityRow/ConfirmationIdentityRow';
 import {
   ConfirmationView,
@@ -48,6 +49,8 @@ export interface DeleteConfirmationViewProps {
   message: ReactNode;
   /** Consequences listed before the final "cannot be undone" bullet. */
   consequences?: string[];
+  /** Palette of the identity card. Defaults to `undefined`, a neutral card; `ConfirmationPopupVariant.Danger` tints it red. */
+  identityVariant?: ConfirmationPopupVariant;
   /** Maximum number of names listed for a multi-item delete. Defaults to `DELETE_CONFIRMATION_MAX_LISTED_NAMES` (10). */
   maxListedNames?: number;
   /** User-visible strings. */
@@ -69,6 +72,7 @@ export const DeleteConfirmationView: FC<DeleteConfirmationViewProps> = ({
   typeLabel,
   message,
   consequences = [],
+  identityVariant,
   maxListedNames = DELETE_CONFIRMATION_MAX_LISTED_NAMES,
   labels,
   styles: stylesProp,
@@ -86,20 +90,37 @@ export const DeleteConfirmationView: FC<DeleteConfirmationViewProps> = ({
   const listedNames = isSingle ? [] : names.slice(0, maxListedNames);
   const restCount = names.length - (isSingle ? 1 : listedNames.length);
 
+  const identityRow = (
+    <ConfirmationIdentityRow
+      icon={isSingle ? icon : undefined}
+      typeLabel={isSingle ? typeLabel : undefined}
+      name={isSingle ? names[0] : itemCount(names.length)}
+      styles={{ colors: { typeLabelText } }}
+    />
+  );
+
   return (
     <ConfirmationView
       variant={ConfirmationPopupVariant.Danger}
       messageClassName={messageClassName}
       styles={{ colors: viewColors }}
       identity={
-        <ResourceSummary>
-          <ConfirmationIdentityRow
-            icon={isSingle ? icon : undefined}
-            typeLabel={isSingle ? typeLabel : undefined}
-            name={isSingle ? names[0] : itemCount(names.length)}
-            styles={{ colors: { typeLabelText } }}
-          />
-        </ResourceSummary>
+        identityVariant == null ? (
+          <ResourceSummary>{identityRow}</ResourceSummary>
+        ) : (
+          <ConfirmationIdentityCard
+            variant={identityVariant}
+            styles={{
+              colors: {
+                background: viewColors.cardBackground,
+                dangerBackground: viewColors.cardDangerBackground,
+                dangerBorder: viewColors.cardDangerBorder,
+              },
+            }}
+          >
+            {identityRow}
+          </ConfirmationIdentityCard>
+        )
       }
       message={message}
       details={

@@ -83,8 +83,10 @@ describe('publish-ready package artifact size', () => {
      * `loadErrorRetryLabel`) plus its README paragraph; measured at 248,632.
      * Raised from 249_500: always-mounted `LiveRegion`s for load failures (LazyContentBoundary split
      * into a region-owning wrapper and an inner error catcher, PdfContent, MCP App, visualizer and
-     * OOXML overlays); measured at 249,691. */
-    expect(artifact.unpackedSize).toBeLessThanOrEqual(250_500);
+     * OOXML overlays); measured at 249,691.
+     * Raised from 250_500: the translatable `loadingLabel` threaded to every canvas `Spinner`
+     * plus its README lines; measured at 250,527. */
+    expect(artifact.unpackedSize).toBeLessThanOrEqual(251_500);
   });
 
   it('contains no private OOXML renderer or worker chunks', () => {

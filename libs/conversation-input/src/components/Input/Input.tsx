@@ -13,6 +13,7 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
+  DropdownOverlayRole,
   ErrorText,
   GhostIconButton,
   LiveRegion,
@@ -702,11 +703,16 @@ export const Input = forwardRef<InputHandle, InputProps>(
 
     const visibleTools = useMemo(() => {
       const tools = toolsMenuItems ?? [];
+      /*
+       * A phone composer has no room for a chip per tool, so only tools that
+       * are switched on stay visible; the rest are added from `+` → Tools.
+       */
+      if (isPhone) return tools.filter((tool) => tool.isSelected);
       if (!canRemoveTools) return tools;
       return tools.filter(
         (tool) => tool.isSelected || !dismissedToolIds.includes(tool.id),
       );
-    }, [toolsMenuItems, dismissedToolIds, canRemoveTools]);
+    }, [toolsMenuItems, dismissedToolIds, canRemoveTools, isPhone]);
 
     const handleToolDismiss = useCallback(
       (toolId: string) => {
@@ -1041,6 +1047,9 @@ export const Input = forwardRef<InputHandle, InputProps>(
               placement="top-start"
               trigger={[]}
               initialFocus={-1}
+              /* The menu brings its own `listbox` and the textarea drives it,
+                 so the overlay adds no role of its own. */
+              overlayRole={DropdownOverlayRole.None}
               matchReferenceWidth={false}
               outsidePressIgnoreRef={textareaRef}
               renderOverlay={() => {
@@ -1161,8 +1170,10 @@ export const Input = forwardRef<InputHandle, InputProps>(
          * back. With removal off every chip is always on screen, so the
          * entry would be dead weight — and where tools are the menu's
          * only content, withholding them drops the `+` button entirely.
+         * On a phone unselected tools have no chip, so the submenu is the
+         * only way to switch them on and is always offered.
          */
-        toolsMenuItems={canRemoveTools ? toolsMenuItems : undefined}
+        toolsMenuItems={canRemoveTools || isPhone ? toolsMenuItems : undefined}
         onToolToggle={onToolToggle}
         toolsMenuTitle={toolsMenuTitle}
         toolsBackLabel={toolsBackLabel}

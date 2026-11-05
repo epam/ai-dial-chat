@@ -247,6 +247,45 @@ import { ConversationStartTimestamp } from '@epam/ai-dial-conversation-messages'
 />;
 ```
 
+### NegativeFeedbackModal
+
+Popup shown before a dislike is sent. The user picks a required `NegativeFeedbackCategory` and, when `isCommentEnabled` (default `true`), types an optional comment. `onSubmit` receives the rating comment: the category value, followed by `: <comment>` when one was typed (`'Incomplete response: Too short'`). The host mounts it while a dislike is pending and sends the comment with the rating. Category values are fixed English strings; `labels.categoryLabels` only changes what is shown.
+
+```tsx
+import {
+  NegativeFeedbackCategory,
+  NegativeFeedbackModal,
+} from '@epam/ai-dial-conversation-messages';
+
+{
+  pendingDislikeIndex != null && (
+    <NegativeFeedbackModal
+      onClose={() => setPendingDislikeIndex(null)}
+      onSubmit={(comment) =>
+        rateMessage(pendingDislikeIndex, MessageRating.Dislike, comment)
+      }
+      isCommentEnabled={isDislikeCommentEnabled}
+      labels={{
+        title: t('rate.negativeFeedbackTitle'),
+        sendLabel: t('buttons.send'),
+        categoryLabels: {
+          [NegativeFeedbackCategory.UiBug]: t('rate.feedbackCategories.uiBug'),
+        },
+      }}
+    />
+  );
+}
+```
+
+| Label                | Default                                       |
+| -------------------- | --------------------------------------------- |
+| `title`              | `'Send negative feedback'`                    |
+| `feedbackTypeLabel`  | `'What type of feedback you want to give?'`   |
+| `selectPlaceholder`  | `'Select'`                                    |
+| `commentPlaceholder` | `'Type an optional comment to your feedback'` |
+| `sendLabel`          | `'Send'`                                      |
+| `categoryLabels`     | each category's own value                     |
+
 ### MessageActions
 
 Toolbar with per-message actions. `role` selects the action set: `MessageRole.User` (the default) shows Copy/Edit/Delete, any other role shows Regenerate/Copy/Like/Dislike. Usually passed to a bubble through its `actions` prop rather than rendered directly.
@@ -367,11 +406,23 @@ BubblePosition.Bottom; // first bubble in a group — bottom-start corner square
 BubblePosition.Top; // subsequent bubble in a group — top-start corner squared
 ```
 
+```tsx
+import { NegativeFeedbackCategory } from '@epam/ai-dial-conversation-messages';
+
+NegativeFeedbackCategory.UiBug; // 'UI bug'
+NegativeFeedbackCategory.OveractiveRefusal; // 'Overactive refusal'
+NegativeFeedbackCategory.IncompleteResponse; // 'Incomplete response'
+NegativeFeedbackCategory.ShouldHaveTriggeredThinking; // 'Should have triggered thinking'
+NegativeFeedbackCategory.ShouldHaveSearchedTheWeb; // 'Should have searched the web'
+```
+
 ## Types
 
 ```tsx
 import type {
   MessageBubbleProps,
+  NegativeFeedbackModalLabels,
+  NegativeFeedbackModalProps,
   UserMessageBubbleProps,
   AssistantMessageBubbleProps,
   StatusMessageBubbleProps,

@@ -15,6 +15,7 @@ export const BuilderFormContainer: FC<BuilderFormContainerProps> = ({
   isCancelDisabled = false,
   isSubmitDisabled = false,
   isSubmitting = false,
+  footerActionsOrder,
   backIcon,
   className,
   left,
@@ -78,6 +79,7 @@ export const BuilderFormContainer: FC<BuilderFormContainerProps> = ({
           isSubmitDisabled={isSubmitDisabled}
           isSubmitting={isSubmitting}
           buttonClassName="flex-1"
+          order={footerActionsOrder}
         />
       </div>
     </div>

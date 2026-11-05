@@ -1,5 +1,7 @@
-import { ShareInvitationErrorCode } from '@epam/ai-dial-chat-api-client';
-import { getAcceptInvitationErrorItemName } from '@epam/ai-dial-chat-hooks';
+import {
+  ResponseError,
+  ShareInvitationErrorCode,
+} from '@epam/ai-dial-chat-api-client';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -45,17 +47,17 @@ vi.mock('../../../server-api/share.api', () => ({
   acceptInvitation: vi.fn(),
 }));
 
-vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>()),
-  getAcceptInvitationErrorItemName: vi.fn(),
-}));
-
-const makeCodedError = (status: number, code: string) => ({
-  response: new Response(JSON.stringify({ statusCode: status, code }), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  }),
-});
+const makeCodedError = (
+  status: number,
+  code: string,
+  body: Record<string, unknown> = {},
+) =>
+  new ResponseError(
+    new Response(JSON.stringify({ statusCode: status, code, ...body }), {
+      status,
+      headers: { 'Content-Type': 'application/json' },
+    }),
+  );
 
 describe('SharedInvitationPage', () => {
   const showNotification = vi.fn();
@@ -208,10 +210,8 @@ describe('SharedInvitationPage', () => {
       makeCodedError(
         400,
         ShareInvitationErrorCode.ShareInvitationAcceptedUsersLimitReached,
+        { itemName: 'Quarterly plan' },
       ),
-    );
-    vi.mocked(getAcceptInvitationErrorItemName).mockResolvedValue(
-      'Quarterly plan',
     );
 
     render(<SharedInvitationPage />);
@@ -231,7 +231,6 @@ describe('SharedInvitationPage', () => {
         ShareInvitationErrorCode.ShareInvitationAcceptedUsersLimitReached,
       ),
     );
-    vi.mocked(getAcceptInvitationErrorItemName).mockResolvedValue(undefined);
 
     render(<SharedInvitationPage />);
 

@@ -221,6 +221,34 @@ describe('POST /conversations/completions (integration)', () => {
     expect(mockService.streamCompletion).not.toHaveBeenCalled();
   });
 
+  it('passes a valid lang header to the completion service', async () => {
+    await request(app.getHttpServer())
+      .post('/conversations/completions')
+      .set('X-Lang', 'en')
+      .send(VALID_COMPLETION_BODY)
+      .expect(200);
+
+    expect(mockService.streamCompletion).toHaveBeenCalledOnce();
+    expect(mockService.streamCompletion.mock.calls[0][14]).toBe('en');
+  });
+
+  it.each([
+    ['malformed', 'en US'],
+    ['empty-subtag', 'en-'],
+    ['leading separator', '-en'],
+    ['double separator', 'en--US'],
+    ['oversized', 'a'.repeat(36)],
+    ['multiple', 'en, uk'],
+  ])('returns 400 for a %s lang header', async (_case, lang) => {
+    await request(app.getHttpServer())
+      .post('/conversations/completions')
+      .set('X-Lang', lang)
+      .send(VALID_COMPLETION_BODY)
+      .expect(400);
+
+    expect(mockService.streamCompletion).not.toHaveBeenCalled();
+  });
+
   it('returns 409 when ConversationService throws ConflictException (duplicate active generation)', async () => {
     mockService.streamCompletion.mockImplementation(() => {
       throw new ConflictException('Another generation is already active');
@@ -495,6 +523,7 @@ describe('POST /conversations/completions (integration)', () => {
       res,
       VALID_COMPLETION_BODY as unknown as SendCompletionDto,
       undefined,
+      undefined,
     );
 
     expect(reachedNaturalEnd).toBe(true);
@@ -568,6 +597,7 @@ describe('POST /conversations/completions — backpressure-driven detachment (di
       TEST_REQUEST,
       res,
       VALID_COMPLETION_BODY as unknown as SendCompletionDto,
+      undefined,
       undefined,
     );
 

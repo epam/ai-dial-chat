@@ -59,6 +59,8 @@ export interface ProjectCreateFormLabels {
   instructionsLabel: string;
   /** Instructions editor placeholder. */
   instructionsPlaceholder: string;
+  /** Accessible label of the spinner shown while the instructions editor loads. Defaults to `'Loading editor'`. */
+  editorLoadingAriaLabel?: string;
   /** Context section label. */
   contextLabel: string;
   /**
@@ -104,6 +106,8 @@ export interface ProjectCreateFormColors {
   labelText?: string;
   /** Drop zone "from device" and "file manager" links. Fallback: the drop zone text color. */
   linkText?: string;
+  /** Context drop zone background while it is idle. Fallback: `--bg-layer-raised`, then `#d1dbea`. */
+  dropZoneBackground?: string;
 }
 
 /** Typography overrides for the {@link ProjectCreateForm} component. */

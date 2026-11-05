@@ -1,3 +1,5 @@
+import type { BuilderFormActionsOrder } from './builder-form-actions-order';
+
 /** Localized labels read by the {@link BuilderFormActions} action pair. */
 export interface BuilderFormActionsLabels {
   /** Label for the cancel action. */
@@ -22,4 +24,6 @@ export interface BuilderFormActionsProps {
   isSubmitting?: boolean;
   /** CSS class applied to both action buttons (e.g. `flex-1` for an equal-width pair). */
   buttonClassName?: string;
+  /** Order of the two actions. Defaults to `BuilderFormActionsOrder.CancelFirst`. */
+  order?: BuilderFormActionsOrder;
 }

@@ -33,7 +33,7 @@ import styles from './VisualizerCanvasRenderer.module.scss';
 export interface VisualizerCanvasRendererProps {
   /** Visualizer content to render. A single-attachment payload is delivered with `SEND_VISUALIZE_DATA`, a grouped one with `SEND_GROUPED_VISUALIZE_DATA`. */
   content: VisualizerCanvasContent | GroupedVisualizerCanvasContent;
-  /** Text shown alongside the spinner while the handshake/data delivery is pending. Omitted by default (spinner only). */
+  /** Text shown and used as the spinner's name while data delivery is pending. Omitted by default (spinner only). */
   loadingLabel?: string;
   /** Message shown when the visualizer fails to receive its data. Defaults to `'Failed to load visualizer'`. */
   errorLabel?: string;
@@ -195,9 +195,13 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
             styles.loadingOverlay,
           )}
         >
-          <Spinner />
+          <Spinner ariaLabel={loadingLabel} />
           {loadingLabel && (
-            <p className={mergeClasses('text-center', styles.statusLabel)}>
+            /* The spinner already carries the label as its accessible name. */
+            <p
+              aria-hidden
+              className={mergeClasses('text-center', styles.statusLabel)}
+            >
               {loadingLabel}
             </p>
           )}

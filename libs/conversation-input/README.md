@@ -343,6 +343,8 @@ Set `isAudioMessageSupported` to show the microphone. Pass translated `transcrib
 
 Base text input with auto-resize and keyboard shortcut handling. Use directly when a stripped-down input is needed — `ConversationInput` wraps it with the app-facing props it needs. The layout is always two rows: the textarea on its own full-width row, and the action bar (`+` button, tools chips, model selector, send/stop, mic) below it. Pass `hideActionBar` to render only the textarea and the attachment tray.
 
+Below 768px the tools chips show only the tools that are switched on; an unselected tool is switched on from the `+` menu's Tools bottom sheet, which a phone always offers even when `canRemoveTools` is `false`.
+
 `onChange` (on `Input`, `ConversationInput`, and `EditMessageInput`) fires with the textarea's current value on every change — typing, deleting, pasting, undo/redo — not only on send/save. Omit it to ignore keystrokes between sends, as before this prop existed on `ConversationInput`/`EditMessageInput`; a host tracking live state derived from the draft (e.g. skill-mention anchors that must reconcile as the user edits around them) wires this alongside `activeMentions`/`onBackspaceAtCaret`.
 
 `commandMenu` (on `Input`, `ConversationInput`, and `EditMessageInput`) mounts a host-injected slash-command menu. The trigger is evaluated against the whitespace-delimited word around the caret, not the whole textarea value, so it opens whenever the configured `triggerPrefix` starts that word — typed as its first character anywhere in the text (start, middle, or after other words/mentions), or arriving in a paste that produces such a word. The menu stays open while the caret's word keeps matching the prefix followed by a query with no whitespace or second prefix character, and closes the moment it stops (including when the caret moves to a different, non-matching word); selection typically goes through `ctx.close({ consumeQuery: true })`, which removes that `/query` text from wherever it sits in the textarea. `ctx.caretPosition` gives the triggering word's start offset, for splicing a selection's result in at that same spot. A dismissed menu also reopens the moment its word returns to exactly the bare `triggerPrefix` — whether reached by typing it fresh, or by backspacing down to it after typing more and dismissing (e.g. `/sdf` → dismiss → Backspace ×3 → `/` reopens) — even though dismissing at any other query value keeps that same word's menu closed until the word stops matching and starts again. `onTextPaste(text)` receives the plain text of every paste that lands inline in the textarea (not one converted into an attachment), with line endings normalized to `\n`, just before the `onChange` that carries it — e.g. so a host can recognize trigger-prefixed words in pasted text.
@@ -505,8 +507,9 @@ The model-selector menu carries its own set:
 
 `dial-ci-model-menu` lands on three different presentations, so scope your rule
 if you need to distinguish them: the desktop dropdown (a Floating UI portal), a
-host-supplied `modelPickerOverlay` dropdown, and the mobile bottom sheet (a
-`role="dialog"`). The portal renders outside the composer's DOM subtree, which
+host-supplied `modelPickerOverlay` dropdown (a `role="dialog"` named by
+`modelSelectorLabels.ariaLabel`, since the host panel is more than a menu), and
+the mobile bottom sheet (a `role="dialog"`). The portal renders outside the composer's DOM subtree, which
 is why the menu needs a class of its own rather than a descendant selector from
 `dial-ci-wrapper`.
 

@@ -18,6 +18,7 @@ import { validate } from '../validation';
  * a deliberate new var is added to this list in the same change.
  */
 const ENV_VAR_NAMES = [
+  'ADDITIONAL_CONTENT_LOCALES',
   'ADMIN_ROLE_NAMES',
   'ALLOWED_CONNECT_ORIGINS',
   'ALLOWED_IFRAME_ORIGINS',
@@ -116,6 +117,7 @@ const ENV_VAR_NAMES = [
   'AUTH_SESSION_PREV_SECRET',
   'AUTH_SESSION_SECRET',
   'AUTH_TRANSACTION_COOKIE_NAME',
+  'AVAILABLE_LOCALES',
   'CATALOG_CREATION_ROLES',
   'CHAT_VERSION',
   'CONVERSATION_BODY_SIZE_LIMIT_BYTES',

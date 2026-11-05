@@ -1,5 +1,11 @@
 import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import {
+  isResourceCreateAdapter,
+  type ResourceSaveAdapter,
+  ResourceSaveOutcome,
+  type ResourceSaveResult,
+} from '@epam/ai-dial-chat-hooks';
+import {
   act,
   fireEvent,
   render,
@@ -9,9 +15,8 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { strToU8, zipSync } from 'fflate';
-import { StrictMode } from 'react';
+import { StrictMode, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { EntityNotificationsI18nKeys } from '../../../constants/translation-keys';
 import { useUser } from '../../../context/auth/UserContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { useSkills } from '../../../context/SkillsContext';
@@ -135,12 +140,56 @@ vi.mock('../../../hooks/attachment/useAttachmentCanvasResolvers', () => ({
 }));
 
 vi.mock('../../../server-api/skills.api', () => ({
+  moveSkill: vi.fn(),
   createSkill: vi.fn(),
   updateSkill: vi.fn(),
   downloadSkill: vi.fn(),
   downloadSkillFile: vi.fn(),
   listSkillFiles: vi.fn(),
 }));
+
+/*
+ * The Save panel is covered by its own spec; this stub runs the page's adapter
+ * for real — a create into the root folder, an edit in place — and shows a
+ * failed write as plain text, the way the panel does.
+ */
+vi.mock(
+  '../../../components/ResourceSavePanelContainer/ResourceSavePanelContainer',
+  () => ({
+    default: (props: {
+      isOpen: boolean;
+      adapter: ResourceSaveAdapter;
+      onSaved: (result: ResourceSaveResult) => void;
+    }) => {
+      const [saveError, setSaveError] = useState('');
+      const handleFinish = async () => {
+        setSaveError('');
+        const { adapter } = props;
+        const isCreated = isResourceCreateAdapter(adapter);
+        try {
+          const { id } = isResourceCreateAdapter(adapter)
+            ? await adapter.createIn([])
+            : await adapter.saveInPlace();
+          props.onSaved({
+            outcome: ResourceSaveOutcome.Saved,
+            savedId: id,
+            isCreated,
+            isNewVersion: false,
+            isPublished: false,
+          });
+        } catch (err) {
+          setSaveError(err instanceof Error ? err.message : String(err));
+        }
+      };
+      return props.isOpen ? (
+        <div role="dialog" aria-label="Save panel">
+          <button onClick={handleFinish}>Finish save</button>
+          <p>{saveError}</p>
+        </div>
+      ) : null;
+    },
+  }),
+);
 
 /*
  * Only `LazyMarkdownEditor` is stubbed: the real `@uiw/react-md-editor` chunk
@@ -224,6 +273,25 @@ const getCreateButton = () =>
   screen.getAllByRole('button', { name: 'buttons.create' })[0];
 const getSaveButton = () =>
   screen.getAllByRole('button', { name: 'buttons.save' })[0];
+
+const findSavePanel = () => screen.findByRole('dialog', { name: 'Save panel' });
+
+/* Presses the editor's Create/Save, then finishes the save in the Save panel it opens. */
+const saveThroughPanel = async (
+  user: ReturnType<typeof userEvent.setup>,
+  editorButton: HTMLElement,
+) => {
+  await user.click(editorButton);
+  const panel = await findSavePanel();
+  await user.click(within(panel).getByRole('button', { name: 'Finish save' }));
+  return panel;
+};
+
+/* In the panel flow the panel, not the editor, reports a successful save. */
+const expectNoEditorSuccessNotification = () =>
+  expect(showNotification).not.toHaveBeenCalledWith(
+    expect.objectContaining({ variant: 'success' }),
+  );
 
 /*
  * The `Input`/`Textarea`/`MarkdownEditor` fields render their `labelProps`
@@ -331,7 +399,7 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
     expect(createSkill).not.toHaveBeenCalled();
   });
 
-  it('calls createSkill directly (no preflight) with a normalized name, and navigates + notifies on success', async () => {
+  it('opens the Save panel on Create, creates the skill under its normalized name, and navigates to it once saved', async () => {
     render(<SkillEditor />);
 
     await fillRequiredFields(
@@ -341,6 +409,11 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
       '# Instructions',
     );
     await user.click(getCreateButton());
+
+    await findSavePanel();
+    expect(createSkill).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Finish save' }));
 
     await waitFor(() =>
       expect(createSkill).toHaveBeenCalledWith(
@@ -353,16 +426,11 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
     );
 
     await waitFor(() =>
-      expect(showNotification).toHaveBeenCalledWith(
-        expect.objectContaining({
-          variant: 'success',
-          title: EntityNotificationsI18nKeys.SkillCreatedTitle,
-        }),
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/catalog?itemId=skills%2Fmy-bucket%2Fgood-morning-breakfast',
       ),
     );
-    expect(mockNavigate).toHaveBeenCalledWith(
-      '/catalog?itemId=skills%2Fmy-bucket%2Fgood-morning-breakfast',
-    );
+    expectNoEditorSuccessNotification();
     /* The post-save exit must not be intercepted by the leave guard. */
     expect(mockAllowNextNavigation).toHaveBeenCalledOnce();
     expect(mockAllowNextNavigation.mock.invocationCallOrder[0]).toBeLessThan(
@@ -382,7 +450,7 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
       'New Catalog Skill',
       'Must appear immediately',
     );
-    await user.click(getCreateButton());
+    await saveThroughPanel(user, getCreateButton());
 
     await waitFor(() => expect(refetchSkills).toHaveBeenCalledOnce());
     await waitFor(() =>
@@ -460,7 +528,7 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
         screen.queryByText('skillEditor.error.instructionsFrontmatter'),
       ).toBeNull(),
     );
-    await user.click(getCreateButton());
+    await saveThroughPanel(user, getCreateButton());
 
     await waitFor(() => expect(createSkill).toHaveBeenCalledOnce());
     const manifest = vi.mocked(createSkill).mock.calls[0][2];
@@ -487,7 +555,7 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
     ).toBeNull();
   });
 
-  it('shows a naming conflict inline when createSkill rejects with 409', async () => {
+  it('shows the naming conflict in the Save panel and stays on the editor when createSkill rejects with 409', async () => {
     vi.mocked(createSkill).mockRejectedValue({
       response: { status: 409, json: () => Promise.resolve({}) },
     });
@@ -498,19 +566,20 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
       'Good Morning Breakfast',
       'Says good morning',
     );
-    await user.click(getCreateButton());
+    const panel = await saveThroughPanel(user, getCreateButton());
 
     expect(
-      await screen.findByText('skillEditor.error.nameConflict'),
+      await within(panel).findByText('skillEditor.error.nameConflict'),
     ).toBeTruthy();
-    expect(mockNavigate).not.toHaveBeenCalledWith('/catalog');
+    expect(screen.getByDisplayValue('Good Morning Breakfast')).toBeTruthy();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it.each([
     [413, 'skillEditor.error.archiveTooLarge'],
     [503, 'skillEditor.error.serviceUnavailable'],
   ])(
-    'maps a %s upload failure to its documented message and keeps field values',
+    'shows a %s upload failure as its documented message in the Save panel and keeps field values',
     async (status, expectedKey) => {
       vi.mocked(createSkill).mockRejectedValue({
         response: {
@@ -525,15 +594,15 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
         'Good Morning Breakfast',
         'Says good morning',
       );
-      await user.click(getCreateButton());
+      const panel = await saveThroughPanel(user, getCreateButton());
 
-      expect(await screen.findByText(expectedKey)).toBeTruthy();
+      expect(await within(panel).findByText(expectedKey)).toBeTruthy();
       expect(screen.getByDisplayValue('Good Morning Breakfast')).toBeTruthy();
-      expect(mockNavigate).not.toHaveBeenCalledWith('/catalog');
+      expect(mockNavigate).not.toHaveBeenCalled();
     },
   );
 
-  it('shows the BFF-forwarded message on a 400 upload failure and keeps field values', async () => {
+  it('shows the BFF-forwarded message of a 400 upload failure in the Save panel and keeps field values', async () => {
     vi.mocked(createSkill).mockRejectedValue({
       response: {
         status: 400,
@@ -550,16 +619,18 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
       'Good Morning Breakfast',
       'Says good morning',
     );
-    await user.click(getCreateButton());
+    const panel = await saveThroughPanel(user, getCreateButton());
 
     expect(
-      await screen.findByText('Skill must contain a SKILL.md at its root'),
+      await within(panel).findByText(
+        'Skill must contain a SKILL.md at its root',
+      ),
     ).toBeTruthy();
     expect(screen.getByDisplayValue('Good Morning Breakfast')).toBeTruthy();
-    expect(mockNavigate).not.toHaveBeenCalledWith('/catalog');
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
-  it('falls back to the generic path-invalid message on a 400 with no server message', async () => {
+  it('falls back to the generic path-invalid message in the Save panel on a 400 with no server message', async () => {
     vi.mocked(createSkill).mockRejectedValue({
       response: {
         status: 400,
@@ -573,14 +644,14 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
       'Good Morning Breakfast',
       'Says good morning',
     );
-    await user.click(getCreateButton());
+    const panel = await saveThroughPanel(user, getCreateButton());
 
     expect(
-      await screen.findByText('skillEditor.error.pathInvalid'),
+      await within(panel).findByText('skillEditor.error.pathInvalid'),
     ).toBeTruthy();
   });
 
-  it('resubmits the same request payload on retry after a 503 without rebuilding it', async () => {
+  it('sends the same request payload when Save is finished again in the panel after a 503', async () => {
     vi.mocked(createSkill).mockRejectedValueOnce({
       response: {
         status: 503,
@@ -594,19 +665,25 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
       'Good Morning Breakfast',
       'Says good morning',
     );
-    await user.click(getCreateButton());
+    const panel = await saveThroughPanel(user, getCreateButton());
 
     expect(
-      await screen.findByText('skillEditor.error.serviceUnavailable'),
+      await within(panel).findByText('skillEditor.error.serviceUnavailable'),
     ).toBeTruthy();
 
-    const firstManifest = vi.mocked(createSkill).mock.calls[0][2];
-
-    await user.click(getCreateButton());
+    await user.click(
+      within(panel).getByRole('button', { name: 'Finish save' }),
+    );
 
     await waitFor(() => expect(createSkill).toHaveBeenCalledTimes(2));
-    const secondManifest = vi.mocked(createSkill).mock.calls[1][2];
-    expect(secondManifest).toBe(firstManifest);
+    expect(vi.mocked(createSkill).mock.calls[1]).toEqual(
+      vi.mocked(createSkill).mock.calls[0],
+    );
+    await waitFor(() =>
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/catalog?itemId=skills%2Fmy-bucket%2Fgood-morning-breakfast',
+      ),
+    );
   });
 
   it('keeps Create/Cancel present and enabled at the default (desktop) breakpoint', () => {
@@ -751,7 +828,7 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
     await confirmUpload(user);
     expect(await screen.findByDisplayValue('good-morning')).toBeTruthy();
 
-    await user.click(getCreateButton());
+    await saveThroughPanel(user, getCreateButton());
 
     await waitFor(() => expect(createSkill).toHaveBeenCalledOnce());
     const sentManifest = vi.mocked(createSkill).mock.calls[0][2];
@@ -775,7 +852,7 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
     await confirmUpload(user);
     expect(await screen.findByDisplayValue('good-morning')).toBeTruthy();
 
-    await user.click(getCreateButton());
+    await saveThroughPanel(user, getCreateButton());
 
     await waitFor(() =>
       expect(createSkill).toHaveBeenCalledWith(
@@ -810,7 +887,7 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
       expect(screen.getAllByText('bundle.zip')[0]).toBeTruthy(),
     );
 
-    await user.click(getCreateButton());
+    await saveThroughPanel(user, getCreateButton());
 
     await waitFor(() =>
       expect(createSkill).toHaveBeenCalledWith(
@@ -939,6 +1016,8 @@ describe('SkillEditor page — edit mode', () => {
         '"etag-1"',
       ),
     );
+    /* A skill in another bucket saves in place; moving acts on the caller's own bucket only. */
+    expect(screen.queryByRole('dialog', { name: 'Save panel' })).toBeNull();
   });
 
   it('falls back to manifest and file endpoints when Core treats the ZIP path as a grouping folder', async () => {
@@ -1062,7 +1141,7 @@ describe('SkillEditor page — edit mode', () => {
     );
   });
 
-  it('saves via updateSkill with the loaded ETag and shows an update notification', async () => {
+  it('saves an own skill through the Save panel via updateSkill with the loaded ETag, then returns to the Catalog', async () => {
     vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
     vi.mocked(updateSkill).mockResolvedValue({
       etag: 'etag-2',
@@ -1072,6 +1151,10 @@ describe('SkillEditor page — edit mode', () => {
     expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
 
     await user.click(getSaveButton());
+    await findSavePanel();
+    expect(updateSkill).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Finish save' }));
 
     await waitFor(() =>
       expect(updateSkill).toHaveBeenCalledWith(
@@ -1083,14 +1166,9 @@ describe('SkillEditor page — edit mode', () => {
         '"etag-1"',
       ),
     );
-    await waitFor(() =>
-      expect(showNotification).toHaveBeenCalledWith(
-        expect.objectContaining({
-          variant: 'success',
-          title: EntityNotificationsI18nKeys.SkillEditedTitle,
-        }),
-      ),
-    );
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/catalog'));
+    expect(refetchSkills).toHaveBeenCalledOnce();
+    expectNoEditorSuccessNotification();
   });
 
   it('preserves an unknown frontmatter field on save', async () => {
@@ -1106,7 +1184,7 @@ describe('SkillEditor page — edit mode', () => {
     render(<SkillEditor />);
     expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
 
-    await user.click(getSaveButton());
+    await saveThroughPanel(user, getSaveButton());
 
     await waitFor(() => expect(updateSkill).toHaveBeenCalledOnce());
     const sentManifest = vi.mocked(updateSkill).mock.calls[0][2];
@@ -1141,7 +1219,7 @@ describe('SkillEditor page — edit mode', () => {
     );
     await waitFor(() => expect(screen.getAllByText('new.md')[0]).toBeTruthy());
 
-    await user.click(getSaveButton());
+    await saveThroughPanel(user, getSaveButton());
 
     await waitFor(() =>
       expect(updateSkill).toHaveBeenCalledWith(
@@ -1157,7 +1235,7 @@ describe('SkillEditor page — edit mode', () => {
     expect(filePaths).not.toContain('SKILL.md');
   });
 
-  it('shows an explicit conflict state on a 412 save failure, with a working Reload latest', async () => {
+  it('shows the conflict in the Save panel and an explicit conflict state on a 412 save failure, with a working Reload latest', async () => {
     vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
     vi.mocked(updateSkill).mockRejectedValue({
       response: { status: 412, json: () => Promise.resolve({}) },
@@ -1166,9 +1244,17 @@ describe('SkillEditor page — edit mode', () => {
     render(<SkillEditor />);
     expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
 
-    await user.click(getSaveButton());
+    const panel = await saveThroughPanel(user, getSaveButton());
 
-    expect(await screen.findByText('skillEditor.conflictMessage')).toBeTruthy();
+    expect(
+      await within(panel).findByText('skillEditor.conflictMessage'),
+    ).toBeTruthy();
+    expect(
+      await screen.findByRole('button', {
+        name: 'skillEditor.reloadLatestLabel',
+      }),
+    ).toBeTruthy();
+    expect(mockNavigate).not.toHaveBeenCalled();
 
     await user.click(
       screen.getByRole('button', { name: 'skillEditor.reloadLatestLabel' }),
@@ -1318,7 +1404,7 @@ describe('SkillEditor page — edit mode', () => {
     );
     expect(await screen.findByDisplayValue('Updated description')).toBeTruthy();
 
-    await user.click(getSaveButton());
+    await saveThroughPanel(user, getSaveButton());
 
     await waitFor(() => expect(updateSkill).toHaveBeenCalledOnce());
     const sentManifest = vi.mocked(updateSkill).mock.calls[0][2];
@@ -1579,8 +1665,9 @@ describe('SkillEditor page — creation permissions', { timeout: 15000 }, () => 
     );
   });
 
-  it('loads and saves an existing skill when creation is denied', async () => {
+  it('loads and saves an existing own skill through the Save panel when creation is denied', async () => {
     denySkills();
+    /* A bare path resolves to the user's own bucket, so the save goes through the panel. */
     mockSearchParams = new URLSearchParams({ id: 'team-a/docs-helper' });
     vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
     vi.mocked(updateSkill).mockResolvedValue({
@@ -1589,9 +1676,10 @@ describe('SkillEditor page — creation permissions', { timeout: 15000 }, () => 
     render(<SkillEditor />);
 
     expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
-    await user.click(getSaveButton());
+    await saveThroughPanel(user, getSaveButton());
 
-    await waitFor(() => expect(updateSkill).toHaveBeenCalled());
+    await waitFor(() => expect(updateSkill).toHaveBeenCalledOnce());
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/catalog'));
     expect(createSkill).not.toHaveBeenCalled();
     expect(alertText()).toBe('');
   });

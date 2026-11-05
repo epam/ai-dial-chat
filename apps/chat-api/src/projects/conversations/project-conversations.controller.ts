@@ -37,6 +37,7 @@ import { SaveConversationBodyDto } from '../../conversations/dto/save-conversati
 import { SendCompletionDto } from '../../conversations/dto/send-completion.dto';
 import { StopCompletionDto } from '../../conversations/dto/stop-completion.dto';
 import { ConversationCompletionsResponder } from '../../conversations/streaming/conversation-completions.responder';
+import { LANG_HEADER } from '../../conversations/utils/lang-header';
 import { TIMEZONE_HEADER } from '../../conversations/utils/timezone-header';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import { ProjectAccessService } from '../access/project-access.service';
@@ -228,6 +229,7 @@ export class ProjectConversationsController {
     @Res() res: Response,
     @Body() dto: SendCompletionDto,
     @Headers(TIMEZONE_HEADER) timezoneHeader: string | string[] | undefined,
+    @Headers(LANG_HEADER) langHeader: string | string[] | undefined,
   ): Promise<void> {
     const locator = await this.resolveWritableLocator(id, dto.path, req);
     return this.completionsResponder.streamCompletion(
@@ -235,6 +237,7 @@ export class ProjectConversationsController {
       res,
       dto,
       timezoneHeader,
+      langHeader,
       locator,
     );
   }

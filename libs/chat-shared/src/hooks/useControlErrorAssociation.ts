@@ -2,8 +2,8 @@ import { useLayoutEffect } from 'react';
 
 /*
  * Bridges a field error to a control that exposes no `aria-describedby` /
- * `aria-invalid` prop (the kit `MarkdownEditor` and `Calendar`, or a
- * host-composed selector). The effect runs after every render because a
+ * `aria-invalid` prop (the kit `MarkdownEditor`, or a host-composed
+ * selector; the kit `Calendar` takes `ariaDescribedBy`). The effect runs after every render because a
  * lazily loaded control can mount or remount independently of the error
  * changing; ids other than `errorId` already on the control are kept.
  */

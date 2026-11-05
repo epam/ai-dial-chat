@@ -1,8 +1,15 @@
 import type { EntityEditorProps } from '@epam/ai-dial-builder-form';
 import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
+import {
+  isResourceCreateAdapter,
+  type ResourceSaveAdapter,
+  ResourceSaveOutcome,
+  type ResourceSaveResult,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePrompts } from '../../../context/PromptsContext';
@@ -12,11 +19,8 @@ import {
 } from '../../../context/tests/catalog-creation-state';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { useUiFeature } from '../../../hooks/useUiFeature';
-import {
-  createPrompt,
-  getPrompt,
-  updatePrompt,
-} from '../../../server-api/prompts.api';
+import { promptsApi } from '../../../server-api/api-client';
+import { getPrompt, updatePrompt } from '../../../server-api/prompts.api';
 import PromptEditor from '../PromptEditor';
 
 vi.mock('../../../context/AppConfigContext', async () => {
@@ -129,9 +133,54 @@ vi.mock('../../../hooks/useUiFeature', () => ({
 }));
 
 vi.mock('../../../server-api/prompts.api', () => ({
-  createPrompt: vi.fn(),
   getPrompt: vi.fn(),
   updatePrompt: vi.fn(),
+  listPrompts: vi.fn(),
+  movePrompt: vi.fn(),
+}));
+
+const mockSavePanelProps = vi.fn();
+vi.mock(
+  '../../../components/ResourceSavePanelContainer/ResourceSavePanelContainer',
+  () => ({
+    default: (props: {
+      isOpen: boolean;
+      adapter: ResourceSaveAdapter;
+      onSaved: (result: ResourceSaveResult | { outcome: string }) => void;
+    }) => {
+      mockSavePanelProps(props);
+      const [createError, setCreateError] = useState('');
+      /* A create adapter runs the real create into the root folder, the way the panel does. */
+      const handleFinish = async () => {
+        if (!isResourceCreateAdapter(props.adapter)) {
+          props.onSaved({ outcome: 'saved' });
+          return;
+        }
+        try {
+          const { id } = await props.adapter.createIn([]);
+          props.onSaved({
+            outcome: ResourceSaveOutcome.Saved,
+            savedId: id,
+            isCreated: true,
+            isNewVersion: false,
+            isPublished: false,
+          });
+        } catch {
+          setCreateError('Create failed');
+        }
+      };
+      return props.isOpen ? (
+        <div role="dialog" aria-label="Save panel">
+          <button onClick={handleFinish}>Finish save</button>
+          <p>{createError}</p>
+        </div>
+      ) : null;
+    },
+  }),
+);
+vi.mock('../../../server-api/api-client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../server-api/api-client')>()),
+  promptsApi: { createPrompt: vi.fn() },
 }));
 
 const promptDto = {
@@ -174,7 +223,7 @@ describe('PromptEditor', () => {
     vi.mocked(useNotification).mockReturnValue(
       createNotificationContextValue(showNotification),
     );
-    vi.mocked(createPrompt).mockResolvedValue(promptDto);
+    vi.mocked(promptsApi.createPrompt).mockResolvedValue(promptDto);
     vi.mocked(updatePrompt).mockResolvedValue(promptDto);
     vi.mocked(getPrompt).mockResolvedValue(promptDto);
   });
@@ -242,26 +291,39 @@ describe('PromptEditor', () => {
     expect(screen.queryByText('promptEditor.createTitle')).toBeNull();
   });
 
-  it('creates a root-level prompt', async () => {
+  /* Create opens the Save panel; the stub's Finish save runs the create adapter. */
+  const createThroughPanel = async () => {
+    await user.click(screen.getByRole('button', { name: 'buttons.create' }));
+    await screen.findByRole('dialog', { name: 'Save panel' });
+    await user.click(screen.getByRole('button', { name: 'Finish save' }));
+  };
+
+  it('creates a root-level prompt through the Save panel and leaves for the catalog', async () => {
     render(<PromptEditor />);
 
     await fillRequiredFields('summarize', 'Summarize:');
     await user.click(screen.getByRole('button', { name: 'buttons.create' }));
 
+    expect(
+      await screen.findByRole('dialog', { name: 'Save panel' }),
+    ).toBeTruthy();
+    expect(promptsApi.createPrompt).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Finish save' }));
+
     await waitFor(() =>
-      expect(createPrompt).toHaveBeenCalledWith({
-        name: 'summarize',
-        description: undefined,
-        content: 'Summarize:',
+      expect(promptsApi.createPrompt).toHaveBeenCalledWith({
+        createPromptDto: {
+          name: 'summarize',
+          description: undefined,
+          content: 'Summarize:',
+        },
       }),
     );
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/catalog'));
     expect(refetchPrompts).toHaveBeenCalled();
-    expect(mockNavigate).toHaveBeenCalledWith('/catalog');
-    expect(showNotification).toHaveBeenCalledWith({
-      variant: 'success',
-      title: 'entityNotifications.prompt.createdTitle',
-      message: 'entityNotifications.prompt.created',
-    });
+    /* The panel confirms the create; the editor adds no second notification. */
+    expect(showNotification).not.toHaveBeenCalled();
   });
 
   it('blocks submission and shows an inline error for an empty name', async () => {
@@ -273,7 +335,7 @@ describe('PromptEditor', () => {
     );
     await user.click(screen.getByRole('button', { name: 'buttons.create' }));
 
-    expect(createPrompt).not.toHaveBeenCalled();
+    expect(promptsApi.createPrompt).not.toHaveBeenCalled();
     expect(screen.getByText('promptEditor.error.required')).toBeTruthy();
   });
 
@@ -283,7 +345,7 @@ describe('PromptEditor', () => {
     await fillRequiredFields('Work/summarize', 'Summarize:');
     await user.click(screen.getByRole('button', { name: 'buttons.create' }));
 
-    expect(createPrompt).not.toHaveBeenCalled();
+    expect(promptsApi.createPrompt).not.toHaveBeenCalled();
     expect(screen.getByText('promptEditor.error.nameInvalid')).toBeTruthy();
   });
 
@@ -301,7 +363,7 @@ describe('PromptEditor', () => {
     await user.paste('x'.repeat(50001));
     await user.click(screen.getByRole('button', { name: 'buttons.create' }));
 
-    expect(createPrompt).not.toHaveBeenCalled();
+    expect(promptsApi.createPrompt).not.toHaveBeenCalled();
     expect(screen.getByText('promptEditor.error.contentTooLong')).toBeTruthy();
   });
 
@@ -341,7 +403,7 @@ describe('PromptEditor', () => {
 
     await user.click(screen.getByRole('button', { name: 'buttons.create' }));
 
-    expect(createPrompt).not.toHaveBeenCalled();
+    expect(promptsApi.createPrompt).not.toHaveBeenCalled();
 
     await user.type(descriptionField, '{Backspace}');
 
@@ -373,9 +435,9 @@ describe('PromptEditor', () => {
     expect(screen.queryByText('promptEditor.error.required')).toBeNull();
   });
 
-  it('shows an inline name error on a 409 conflict and stays on the form', async () => {
+  it('leaves a 409 create conflict to the panel and shows no inline name error', async () => {
     /* Shape thrown by the generated client: a ResponseError carrying `response`. */
-    vi.mocked(createPrompt).mockRejectedValue({
+    vi.mocked(promptsApi.createPrompt).mockRejectedValue({
       response: {
         status: 409,
         json: () => Promise.resolve({ message: 'Prompt already exists' }),
@@ -384,28 +446,26 @@ describe('PromptEditor', () => {
 
     render(<PromptEditor />);
     await fillRequiredFields('summarize', 'Summarize:');
-    await user.click(screen.getByRole('button', { name: 'buttons.create' }));
+    await createThroughPanel();
 
-    expect(
-      await screen.findByText('promptEditor.error.nameConflict'),
-    ).toBeTruthy();
+    expect(await screen.findByText('Create failed')).toBeTruthy();
+    expect(screen.queryByText('promptEditor.error.nameConflict')).toBeNull();
     expect(mockNavigate).not.toHaveBeenCalledWith('/catalog');
   });
 
-  it('keeps entered values and notifies when the save fails', async () => {
-    vi.mocked(createPrompt).mockRejectedValue(new Error('502'));
+  it('keeps entered values and the panel open when the create fails', async () => {
+    vi.mocked(promptsApi.createPrompt).mockRejectedValue(new Error('502'));
 
     render(<PromptEditor />);
     await fillRequiredFields('summarize', 'Summarize:');
-    await user.click(screen.getByRole('button', { name: 'buttons.create' }));
+    await createThroughPanel();
 
-    await waitFor(() =>
-      expect(showNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ variant: 'error' }),
-      ),
-    );
+    expect(await screen.findByText('Create failed')).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: 'Save panel' })).toBeTruthy();
     expect(screen.getByDisplayValue('summarize')).toBeTruthy();
     expect(mockNavigate).not.toHaveBeenCalledWith('/catalog');
+    expect(refetchPrompts).not.toHaveBeenCalled();
+    expect(showNotification).not.toHaveBeenCalled();
   });
 
   it('updates the prompt in place', async () => {
@@ -438,6 +498,43 @@ describe('PromptEditor', () => {
       variant: 'success',
       title: 'entityNotifications.prompt.editedTitle',
       message: 'entityNotifications.prompt.edited',
+    });
+  });
+
+  describe('Save panel for an own prompt', () => {
+    beforeEach(() => {
+      mockSearchParams = new URLSearchParams({ id: promptDto.id });
+      vi.mocked(getPrompt).mockResolvedValue({ ...promptDto, isMy: true });
+    });
+
+    const openPanel = async () => {
+      render(<PromptEditor />);
+      expect(await screen.findByDisplayValue('summarize')).toBeTruthy();
+      await user.click(screen.getByRole('button', { name: 'buttons.save' }));
+      return screen.findByRole('dialog', { name: 'Save panel' });
+    };
+
+    it('opens the Save panel at the prompt folder instead of updating in place', async () => {
+      await openPanel();
+      expect(updatePrompt).not.toHaveBeenCalled();
+      expect(mockSavePanelProps).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          isOpen: true,
+          resourceId: promptDto.id,
+          currentFolderPath: ['Work', 'AI'],
+          adapter: expect.objectContaining({ isVersioned: false }),
+        }),
+      );
+    });
+
+    it('refetches prompts and leaves for the catalog once the panel has saved', async () => {
+      await openPanel();
+      await user.click(screen.getByRole('button', { name: 'Finish save' }));
+      await waitFor(() =>
+        expect(mockNavigate).toHaveBeenCalledWith('/catalog'),
+      );
+      expect(refetchPrompts).toHaveBeenCalled();
+      expect(mockAllowNextNavigation).toHaveBeenCalled();
     });
   });
 
@@ -478,7 +575,7 @@ describe('PromptEditor', () => {
     await user.click(screen.getByRole('button', { name: 'buttons.cancel' }));
 
     expect(mockNavigate).toHaveBeenCalledWith('/catalog');
-    expect(createPrompt).not.toHaveBeenCalled();
+    expect(promptsApi.createPrompt).not.toHaveBeenCalled();
   });
 
   describe('creation permissions', () => {
@@ -501,7 +598,7 @@ describe('PromptEditor', () => {
         }),
       ).toBeTruthy();
       expect(screen.queryByText('promptEditor.createTitle')).toBeNull();
-      expect(createPrompt).not.toHaveBeenCalled();
+      expect(promptsApi.createPrompt).not.toHaveBeenCalled();
     });
 
     it('creates a prompt when prompt creation is allowed', async () => {
@@ -512,9 +609,9 @@ describe('PromptEditor', () => {
       render(<PromptEditor />);
 
       await fillRequiredFields('summarize', 'Summarize:');
-      await user.click(screen.getByRole('button', { name: 'buttons.create' }));
+      await createThroughPanel();
 
-      await waitFor(() => expect(createPrompt).toHaveBeenCalled());
+      await waitFor(() => expect(promptsApi.createPrompt).toHaveBeenCalled());
     });
 
     it('blocks the create request when permission is lost while the form is open', async () => {
@@ -524,7 +621,7 @@ describe('PromptEditor', () => {
       act(() => denyPrompts());
       await user.click(screen.getByRole('button', { name: 'buttons.create' }));
 
-      expect(createPrompt).not.toHaveBeenCalled();
+      expect(promptsApi.createPrompt).not.toHaveBeenCalled();
       expect(showNotification).toHaveBeenCalledWith(
         expect.objectContaining({ message: 'catalog.creation.denied' }),
       );
@@ -539,7 +636,7 @@ describe('PromptEditor', () => {
       await user.click(screen.getByRole('button', { name: 'buttons.save' }));
 
       await waitFor(() => expect(updatePrompt).toHaveBeenCalled());
-      expect(createPrompt).not.toHaveBeenCalled();
+      expect(promptsApi.createPrompt).not.toHaveBeenCalled();
     });
 
     it('treats an empty id parameter as edit mode, as before', async () => {
@@ -586,7 +683,7 @@ describe('PromptEditor', () => {
       render(<PromptEditor />);
       await fillRequiredFields('summarize', 'Summarize:');
 
-      await user.click(screen.getByRole('button', { name: 'buttons.create' }));
+      await createThroughPanel();
 
       await waitFor(() =>
         expect(mockNavigate).toHaveBeenCalledWith('/catalog'),

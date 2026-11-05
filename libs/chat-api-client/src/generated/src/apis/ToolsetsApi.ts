@@ -14,13 +14,17 @@
 
 import * as runtime from '../runtime';
 import type {
+  CreateToolsetBodyDto,
   DialToolsetDto,
   DialToolsetListResponseDto,
   ListMcpAppToolsResponseDto,
   ListMcpToolNamesResponseDto,
   McpAppToolCallRequestDto,
   McpAppToolCallResponseDto,
+  MoveResourceDto,
   MutatedToolsetDto,
+  ResourceFoldersResponseDto,
+  ResourceIdResponseDto,
   ToolsetAuthResultDto,
   ToolsetBodyDto,
   ToolsetLoginBodyDto,
@@ -33,7 +37,7 @@ export interface CallToolsetMcpAppToolRequest {
 }
 
 export interface CreateToolsetRequest {
-  toolsetBodyDto: ToolsetBodyDto;
+  createToolsetBodyDto: CreateToolsetBodyDto;
 }
 
 export interface DeleteToolsetRequest {
@@ -59,6 +63,10 @@ export interface ListMcpToolNamesRequest {
   kind: ListMcpToolNamesKindEnum;
 }
 
+export interface ListToolsetFoldersRequest {
+  path?: string;
+}
+
 export interface LoginToolsetRequest {
   toolsetName: string;
   toolsetLoginBodyDto: ToolsetLoginBodyDto;
@@ -67,6 +75,11 @@ export interface LoginToolsetRequest {
 export interface LogoutToolsetRequest {
   toolsetName: string;
   toolsetLogoutBodyDto: ToolsetLogoutBodyDto;
+}
+
+export interface MoveToolsetRequest {
+  toolsetName: string;
+  moveResourceDto: MoveResourceDto;
 }
 
 export interface UpdateToolsetRequest {
@@ -158,10 +171,10 @@ export class ToolsetsApi extends runtime.BaseAPI {
     requestParameters: CreateToolsetRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<MutatedToolsetDto>> {
-    if (requestParameters['toolsetBodyDto'] == null) {
+    if (requestParameters['createToolsetBodyDto'] == null) {
       throw new runtime.RequiredError(
-        'toolsetBodyDto',
-        'Required parameter "toolsetBodyDto" was null or undefined when calling createToolset().',
+        'createToolsetBodyDto',
+        'Required parameter "createToolsetBodyDto" was null or undefined when calling createToolset().',
       );
     }
 
@@ -188,7 +201,7 @@ export class ToolsetsApi extends runtime.BaseAPI {
         method: 'POST',
         headers: headerParameters,
         query: queryParameters,
-        body: requestParameters['toolsetBodyDto'],
+        body: requestParameters['createToolsetBodyDto'],
       },
       initOverrides,
     );
@@ -544,6 +557,61 @@ export class ToolsetsApi extends runtime.BaseAPI {
   }
 
   /**
+   * Lists the folders directly under `path` in the caller\'s own toolsets bucket. A folder that does not exist yet lists as empty. Not cached.
+   * List the caller\'s toolset folders
+   */
+  async listToolsetFoldersRaw(
+    requestParameters: ListToolsetFoldersRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ResourceFoldersResponseDto>> {
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/toolsets/folders`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ResourceFoldersResponseDto>(response);
+  }
+
+  /**
+   * Lists the folders directly under `path` in the caller\'s own toolsets bucket. A folder that does not exist yet lists as empty. Not cached.
+   * List the caller\'s toolset folders
+   */
+  async listToolsetFolders(
+    requestParameters: ListToolsetFoldersRequest = {},
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ResourceFoldersResponseDto> {
+    const response = await this.listToolsetFoldersRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
    * Returns the list of DIAL Core toolsets visible to the authenticated session user. Proxies GET /openai/toolsets using the caller\'s session access token. Results are cached server-side for 30 seconds per user; the response carries no client-facing Cache-Control so a browser never serves a stale copy across a login/logout that already invalidated that cache.
    * List available toolsets
    */
@@ -727,6 +795,78 @@ export class ToolsetsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ToolsetAuthResultDto> {
     const response = await this.logoutToolsetRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Moves a toolset in the caller\'s own bucket into `folderPath`, never overwriting an existing toolset. Invalidates the toolset caches on success.
+   * Move a toolset to one of the caller\'s folders
+   */
+  async moveToolsetRaw(
+    requestParameters: MoveToolsetRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ResourceIdResponseDto>> {
+    if (requestParameters['toolsetName'] == null) {
+      throw new runtime.RequiredError(
+        'toolsetName',
+        'Required parameter "toolsetName" was null or undefined when calling moveToolset().',
+      );
+    }
+
+    if (requestParameters['moveResourceDto'] == null) {
+      throw new runtime.RequiredError(
+        'moveResourceDto',
+        'Required parameter "moveResourceDto" was null or undefined when calling moveToolset().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/toolsets/{toolsetName}/move`;
+    urlPath = urlPath.replace(
+      `{${'toolsetName'}}`,
+      encodeURIComponent(String(requestParameters['toolsetName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['moveResourceDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ResourceIdResponseDto>(response);
+  }
+
+  /**
+   * Moves a toolset in the caller\'s own bucket into `folderPath`, never overwriting an existing toolset. Invalidates the toolset caches on success.
+   * Move a toolset to one of the caller\'s folders
+   */
+  async moveToolset(
+    requestParameters: MoveToolsetRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ResourceIdResponseDto> {
+    const response = await this.moveToolsetRaw(
       requestParameters,
       initOverrides,
     );

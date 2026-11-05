@@ -591,6 +591,54 @@ describe('AppConfigContext', () => {
     });
   });
 
+  describe('additionalContentLocales', () => {
+    it('surfaces the configured codes from a successful API call', async () => {
+      mockGetClientConfig.mockResolvedValue({
+        ...READY_RESPONSE,
+        config: {
+          ...(READY_RESPONSE as unknown as { config: object }).config,
+          additionalContentLocales: ['de', 'fr-FR'],
+        },
+      } as unknown as ClientConfigResponseDto);
+
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      expect(result.current.config.additionalContentLocales).toEqual([
+        'de',
+        'fr-FR',
+      ]);
+    });
+
+    it('defaults to an empty list when the field is missing', async () => {
+      const config: Record<string, unknown> = {
+        ...(READY_RESPONSE as unknown as { config: object }).config,
+      };
+      delete config.additionalContentLocales;
+      mockGetClientConfig.mockResolvedValue({
+        ...READY_RESPONSE,
+        config,
+      } as unknown as ClientConfigResponseDto);
+
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      expect(result.current.config.additionalContentLocales).toEqual([]);
+    });
+
+    it('remains an empty list when the API call fails', async () => {
+      mockGetClientConfig.mockRejectedValue(new Error('network error'));
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Error),
+      );
+      expect(result.current.config.additionalContentLocales).toEqual([]);
+    });
+  });
+
   describe('maxAttachmentFileSizeBytes', () => {
     it('defaults to 512 MB before the config loads', () => {
       mockGetClientConfig.mockReturnValue(new Promise(() => undefined));

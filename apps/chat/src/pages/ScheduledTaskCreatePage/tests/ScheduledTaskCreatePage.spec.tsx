@@ -169,6 +169,7 @@ interface FormProps {
     startDate?: string;
     endDate?: string;
     runAt?: string;
+    daysOfWeek?: string[];
   };
   errors: Record<string, string | undefined>;
   skillSelector?: ReactNode;
@@ -194,6 +195,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', async (importOriginal) => ({
     Daily: 'daily',
     Weekly: 'weekly',
     Monthly: 'monthly',
+    Custom: 'custom',
   },
   DESCRIPTION_MAX_LENGTH: 500,
   TIME_OF_DAY_PATTERN: /^([01]\d|2[0-3]):([0-5]\d)$/,
@@ -273,7 +275,18 @@ vi.mock('@epam/ai-dial-scheduled-tasks', async (importOriginal) => ({
         <option value="daily">daily</option>
         <option value="weekly">weekly</option>
         <option value="monthly">monthly</option>
+        <option value="custom">custom</option>
       </select>
+      <input
+        aria-label="daysOfWeek"
+        value={values.daysOfWeek?.join(',') ?? ''}
+        onChange={(e) =>
+          onFieldChange(
+            'daysOfWeek',
+            e.target.value ? e.target.value.split(',') : [],
+          )
+        }
+      />
       <input
         aria-label="startDate"
         value={values.startDate ?? ''}
@@ -348,6 +361,40 @@ const localDateOnly = (offsetDays: number): string => {
 };
 
 describe('ScheduledTaskCreatePage', () => {
+  it('creates a custom task on several weekdays with an activity window', async () => {
+    createScheduledTaskMock.mockResolvedValue({ id: 'new-task' });
+    renderAtRoute('/scheduled-tasks/new');
+    await fillValidForm();
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: 'repeat' }),
+      'custom',
+    );
+    /* Noon keeps every weekday on the same UTC day in any common timezone. */
+    fireEvent.change(screen.getByRole('textbox', { name: 'time' }), {
+      target: { value: '12:00' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: 'daysOfWeek' }), {
+      target: { value: '0,2,4' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: 'startDate' }), {
+      target: { value: localDateOnly(1) },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: 'endDate' }), {
+      target: { value: localDateOnly(30) },
+    });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    const trigger = createScheduledTaskMock.mock.calls[0][0].trigger;
+    expect(trigger.date).toBeUndefined();
+    expect(trigger.cron.fields.day_of_week).toBe('0,2,4');
+    expect(trigger.cron.fields).not.toHaveProperty('week');
+    expect(trigger.cron.startDate).toEqual(expect.any(String));
+    expect(trigger.cron.endDate).toEqual(expect.any(String));
+  });
+
   it('supplies both purpose callbacks only when available and saves their results', async () => {
     useAppConfigMock.mockReturnValue({
       status: 'ready',

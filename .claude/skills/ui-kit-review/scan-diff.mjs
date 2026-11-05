@@ -23,6 +23,11 @@ const LEGACY_ALLOWLIST = new Set([
   'DialPagination',
   'DialFileName',
   'DialInputPopup',
+  /* File-manager data types. */
+  'DialCopiedItem',
+  'DialDeletedItem',
+  'DialUploadFileItem',
+  'DialFilePermission',
 ]);
 
 /* Files whose custom typography is an accepted exception: the 404 hero numeral
@@ -45,9 +50,15 @@ const SIGNALS = [
        multi-line import list. */
     re: /(?:^|[\s({])<(Dial[A-Z]\w*)[\s/>]|^\s*(Dial[A-Z]\w*),?\s*$/,
     hint: '1.0 kit component — confirm a 2.0 replacement via MCP (searchEntity shows "Use instead")',
-    skip: (line, match) =>
-      LEGACY_ALLOWLIST.has(match[1] ?? match[2]) ||
-      /DialFileManager|DialFoldersTree/.test(line),
+    /* Generated API DTOs (`DialToolsetDto`) are not 1.0 components. */
+    skip: (line, match) => {
+      const name = match[1] ?? match[2];
+      return (
+        LEGACY_ALLOWLIST.has(name) ||
+        /Dto$/.test(name) ||
+        /DialFileManager|DialFoldersTree/.test(line)
+      );
+    },
   },
   {
     id: 'error-text-markup',
@@ -97,7 +108,10 @@ const SIGNALS = [
   {
     id: 'hand-rolled-popover',
     scope: SOURCE,
-    re: /addEventListener\(\s*['"](pointerdown|mousedown|keydown)['"]|getBoundingClientRect\(/,
+    /* Document/window listeners only: `getBoundingClientRect` is nearly always
+       measurement (virtualization, scroll, celebration animation) and buried
+       every real hit in a whole-repo audit. */
+    re: /(?:document|window)\.addEventListener\(\s*['"](pointerdown|mousedown|keydown)['"]/,
     hint: 'outside-click / Escape / manual positioning — Dropdown (renderOverlay), Popup, InteractiveTooltip',
   },
   {

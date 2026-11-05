@@ -6,8 +6,16 @@ import {
   useMetadataForm,
 } from '@epam/ai-dial-builder-form';
 import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
-import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 import {
+  createEmbeddedApplicationSaveAdapter,
+  createHostApplicationSaveAdapter,
+  getApiErrorDetails,
+  parseResourceFolderPath,
+  type ResourceSaveAdapter,
+  type ResourceSaveResult,
+} from '@epam/ai-dial-chat-hooks';
+import {
+  CatalogEntityType,
   mergeClasses,
   TextRefinementField,
   useTextRefinement,
@@ -24,7 +32,9 @@ import {
 import { IconEye } from '@tabler/icons-react';
 import type { FC, ReactNode } from 'react';
 import {
+  lazy,
   memo,
+  Suspense,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -39,7 +49,9 @@ import {
   ButtonsI18nKeys,
   CatalogI18nKeys,
   EditorI18nKeys,
+  ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useApplicationAvatarPicker } from '../../hooks/application-editor/useApplicationAvatarPicker';
@@ -58,6 +70,8 @@ import type {
   ApplicationSetupValues,
 } from '../../models/application-editor';
 import type { CatalogCreationCheck } from '../../models/catalog-creation';
+import { applicationsApi } from '../../server-api/api-client';
+import { listApplicationFolders } from '../../server-api/applications';
 import { ApplicationCreateStrategy } from '../../types/application-editor';
 import { CatalogCreationDecision } from '../../types/catalog-creation';
 import { EntityOperation } from '../../types/entity-notification';
@@ -67,7 +81,16 @@ import {
   deploymentToMetadata,
 } from '../../utils/application-editor';
 import { translateDeploymentCreationErrors } from '../../utils/entity-field-validation';
-import { buildAdditionalLocaleOptions } from '../../utils/locale';
+import {
+  buildAdditionalLocaleOptions,
+  getLocaleDisplayName,
+} from '../../utils/locale';
+
+/* Loaded on the first Save of an edit session, so opening the editor fetches no folder listing. */
+const ResourceSavePanelContainer = lazy(
+  async () =>
+    import('../../components/ResourceSavePanelContainer/ResourceSavePanelContainer'),
+);
 
 interface Props {
   definition: ApplicationEditorFormDefinition<ApplicationSetupValues>;
@@ -215,7 +238,13 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     () => ({ form: metadataFormLabels, avatarPicker: avatarPickerLabels }),
     [metadataFormLabels, avatarPickerLabels],
   );
-  const localeOptions = useMemo(() => buildAdditionalLocaleOptions(), []);
+  const {
+    config: { additionalContentLocales },
+  } = useAppConfig();
+  const localeOptions = useMemo(
+    () => buildAdditionalLocaleOptions(additionalContentLocales),
+    [additionalContentLocales],
+  );
 
   const onRefineDescription = useTextRefinementCallback(
     TextRefinementPurpose.ApplicationDescription,
@@ -358,19 +387,24 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     ],
   );
 
-  const persist = useCallback(async () => {
-    /* The form may have opened under a permission the current config no
-     * longer grants; nothing is created then. */
-    if (!isEditMode && creationDecision !== CatalogCreationDecision.Allowed) {
-      showErrorNotification({
-        message: t(
-          creationDecision === CatalogCreationDecision.Denied
-            ? CatalogI18nKeys.CreationDenied
-            : CatalogI18nKeys.CreationUnavailable,
-        ),
-      });
-      return;
+  /* The form may have opened under a permission the current config no
+   * longer grants; nothing is created then. */
+  const isCreationBlocked = useCallback(() => {
+    if (isEditMode || creationDecision === CatalogCreationDecision.Allowed) {
+      return false;
     }
+    showErrorNotification({
+      message: t(
+        creationDecision === CatalogCreationDecision.Denied
+          ? CatalogI18nKeys.CreationDenied
+          : CatalogI18nKeys.CreationUnavailable,
+      ),
+    });
+    return true;
+  }, [creationDecision, isEditMode, showErrorNotification, t]);
+
+  const persist = useCallback(async () => {
+    if (isCreationBlocked()) return;
     setIsSaving(true);
     try {
       if (!isEditMode) {
@@ -435,8 +469,8 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     allowNextNavigation,
     appId,
     context,
-    creationDecision,
     definition,
+    isCreationBlocked,
     isEditMode,
     isMetadataFirst,
     metadata.values,
@@ -451,6 +485,118 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     switchToCreatedApp,
     t,
   ]);
+
+  /*
+   * Save of a kind that opts in goes through the Save panel, which picks the
+   * folder and may also move, fork or publish the application. A new
+   * application always qualifies; an existing one only when it is the user's
+   * own, because moving and forking act on the caller's bucket, so a shared
+   * application keeps saving in place.
+   */
+  const isSavePanelFlow =
+    definition.savePanel != null &&
+    (!isEditMode || wasCreatedThisSession || deployment?.isMy === true);
+  /* A metadata-first create only starts the application; it is set up, and can be published, once it exists. */
+  const canPublishFromPanel = isEditMode || !isMetadataFirst;
+  const [isSavePanelOpen, setIsSavePanelOpen] = useState(false);
+  const savedVersion = metadata.values.version;
+  /*
+   * Built when the panel opens, never during render: its save reads the Setup
+   * handle ref. The panel is modal, so the Metadata it captures cannot change
+   * while it is open.
+   */
+  const [saveAdapter, setSaveAdapter] = useState<ResourceSaveAdapter>();
+  const openSavePanel = useCallback(() => {
+    const values = metadata.values;
+    const { update } = definition;
+    if (!isEditMode) {
+      setSaveAdapter({
+        publishEntityType: 'application',
+        isVersioned: false,
+        createIn: async (folderPath) => {
+          const created = await definition.create(values, setup, context, {
+            folderPath,
+          });
+          if (!created?.id) throw new Error('Created application has no id');
+          return { id: created.id };
+        },
+      });
+      setIsSavePanelOpen(true);
+      return;
+    }
+    setSaveAdapter(
+      update
+        ? createHostApplicationSaveAdapter({
+            applicationsApi,
+            applicationId: appId,
+            update: () => update(appId, values, setup),
+            createVersion: (version, folderPath) =>
+              definition.create({ ...values, version }, setup, context, {
+                folderPath,
+              }),
+          })
+        : createEmbeddedApplicationSaveAdapter({
+            applicationsApi,
+            applicationId: appId,
+            // The embedded editor is the single writer; it shows its own save error inline.
+            runEmbeddedSave: async () => {
+              await setupRef.current?.save(values);
+            },
+            getCommitFailedMessage: (version) =>
+              t(ResourceSavePanelI18nKeys.CommitFailed, {
+                version,
+                currentVersion: values.version,
+              }),
+          }),
+    );
+    setIsSavePanelOpen(true);
+  }, [appId, context, definition, isEditMode, metadata.values, setup, t]);
+  const handleSavePanelClose = useCallback(() => setIsSavePanelOpen(false), []);
+  const currentFolderPath = useMemo(
+    () => parseResourceFolderPath(appId),
+    [appId],
+  );
+  const savePanelIconUrl = useMemo(
+    () => avatarPicker?.resolveIconUrl?.(metadata.values.iconUrl),
+    [avatarPicker, metadata.values.iconUrl],
+  );
+
+  /* Every outcome reaching here saved the application; the panel has already notified. */
+  const handleSavePanelSaved = useCallback(
+    (result: ResourceSaveResult) => {
+      if (result.isCreated && isMetadataFirst) {
+        setIsSavePanelOpen(false);
+        switchToCreatedApp(result.savedId, metadata.values);
+        return;
+      }
+      const leaveEditor = async () => {
+        // Best-effort: brings the saved application into the catalog list.
+        await refetchDeployments().catch(() => undefined);
+        setIsSavePanelOpen(false);
+        allowNextNavigation();
+        navigate(returnUrl);
+      };
+      void leaveEditor();
+    },
+    [
+      allowNextNavigation,
+      isMetadataFirst,
+      metadata.values,
+      navigate,
+      refetchDeployments,
+      returnUrl,
+      switchToCreatedApp,
+    ],
+  );
+
+  const proceedWithSave = useCallback(() => {
+    if (isSavePanelFlow) {
+      if (isCreationBlocked()) return;
+      openSavePanel();
+      return;
+    }
+    void persist();
+  }, [isCreationBlocked, isSavePanelFlow, openSavePanel, persist]);
 
   const { attemptSubmit } = metadata;
   const handleSubmit = useCallback(() => {
@@ -467,13 +613,13 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
       setIsConfirmOpen(true);
       return;
     }
-    void persist();
-  }, [attemptSubmit, definition, persist, setup, t]);
+    proceedWithSave();
+  }, [attemptSubmit, definition, proceedWithSave, setup, t]);
 
   const handleConfirm = useCallback(() => {
     setIsConfirmOpen(false);
-    void persist();
-  }, [persist]);
+    proceedWithSave();
+  }, [proceedWithSave]);
 
   const handleConfirmClose = useCallback(() => setIsConfirmOpen(false), []);
 
@@ -553,6 +699,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
       />
     ) : undefined;
 
+  const metadataFieldState = definition.getMetadataFieldState?.(isEditMode);
   const isLoading = isLoadingSetup || isResolving;
   const isBusy = isSaving || isLoading;
   const overlayLabel = t(
@@ -612,8 +759,13 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
               onChange={metadata.setValues}
               onNameBlur={handleNameBlur}
               onVersionBlur={handleVersionBlur}
+              isVersionReadOnly={metadataFieldState?.isVersionReadOnly}
+              versionReadOnlyTooltip={t(
+                ResourceSavePanelI18nKeys.VersionReadOnlyTooltip,
+              )}
               avatarPicker={avatarPicker}
               availableLocaleOptions={localeOptions}
+              formatLocaleLabel={getLocaleDisplayName}
               renderDescription={renderRefinableDescription}
               labels={metadataLabels}
               focusRequestKey={metadata.submitAttemptCount}
@@ -668,6 +820,27 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
         <div className="absolute inset-0 bg-backdrop" aria-hidden="true">
           <Spinner fullWidth ariaLabel={overlayLabel} />
         </div>
+      )}
+      {saveAdapter && definition.savePanel && (
+        <Suspense fallback={null}>
+          <ResourceSavePanelContainer
+            isOpen={isSavePanelOpen}
+            onClose={handleSavePanelClose}
+            adapter={saveAdapter}
+            listPersonalFolders={listApplicationFolders}
+            resourceId={appId}
+            currentFolderPath={currentFolderPath}
+            resourceName={metadata.values.name}
+            currentVersion={savedVersion}
+            resourceType={CatalogEntityType.Agent}
+            iconUrl={savePanelIconUrl}
+            typeLabel={definition.savePanel.getTypeLabel(context)}
+            notifiableEntity={notifiableEntity}
+            notificationType={notificationType}
+            canPublish={canPublishFromPanel}
+            onSaved={handleSavePanelSaved}
+          />
+        </Suspense>
       )}
       {confirmation && (
         <ConfirmationPopup

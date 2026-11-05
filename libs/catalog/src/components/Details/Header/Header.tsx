@@ -933,7 +933,6 @@ export const Header: FC<HeaderProps> = ({
         iconBefore={credentialsIconBefore}
         iconAfter={credentialsIconAfter}
         onClick={handleCredentialsClick}
-        aria-haspopup={isApiKeyOverlayTrigger ? 'dialog' : undefined}
         aria-expanded={isApiKeyOverlayTrigger ? isApiKeyOverlayOpen : undefined}
       />
     );
@@ -948,6 +947,10 @@ export const Header: FC<HeaderProps> = ({
         onOpenChange={setIsApiKeyOverlayOpen}
         trigger={[]}
         outsideClosable
+        /* A form panel, not a menu; the kit derives the trigger's
+         * `aria-haspopup="dialog"` from this role. */
+        overlayRole={DropdownOverlayRole.Dialog}
+        overlayAriaLabel={texts?.personalApiKeyPanelTitle ?? 'Personal API key'}
         renderOverlay={() => (
           <CredentialsApiKeyOverlay
             item={item}

@@ -148,8 +148,12 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     open,
     onOpenChange,
     renderOverlay,
+    overlayRole,
+    overlayAriaLabel,
   }: {
     children: ReactElement<{ onClick?: () => void }>;
+    overlayRole?: string;
+    overlayAriaLabel?: string;
     items?: Array<{
       key: string;
       label: ReactNode;
@@ -180,7 +184,15 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
               {item.label}
             </button>
           ))}
-        {isOpen && renderOverlay?.()}
+        {isOpen &&
+          renderOverlay &&
+          (overlayRole === 'dialog' ? (
+            <div role="dialog" aria-label={overlayAriaLabel}>
+              {renderOverlay()}
+            </div>
+          ) : (
+            renderOverlay()
+          ))}
       </div>
     );
   },
@@ -1663,6 +1675,24 @@ describe('Header', () => {
       await userEvent.click(screen.getByRole('button', { name: 'API key' }));
       expect(onLogin).not.toHaveBeenCalled();
       expect(screen.getByText('Add GLOBAL popover content')).toBeTruthy();
+    });
+
+    it('opens the API key popover as a dialog named by its title', async () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.ApiKey,
+              userStatus: CredentialStatus.SignedOut,
+            },
+          }}
+          onLogin={vi.fn()}
+          texts={{ personalApiKeyPanelTitle: 'Your API key' }}
+        />,
+      );
+      await userEvent.click(screen.getByRole('button', { name: 'API key' }));
+      expect(screen.getByRole('dialog', { name: 'Your API key' })).toBeTruthy();
     });
 
     it('opens the popover showing the delete affordance when already signed in', async () => {

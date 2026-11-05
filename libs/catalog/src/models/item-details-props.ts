@@ -100,6 +100,8 @@ export interface ItemDetailsTexts {
   publishLabel?: string;
   /** Title shown in the panel header while the Publish view is open. Default: `'Publish'`. */
   publishTitle?: string;
+  /** Title shown in the panel header while the Publish folder view is open. Default: `'Change folder'`. */
+  publishChangeFolderTitle?: string;
   /** Accessible label for the back button that returns from the Publish view to details. Default: `'Back'`. */
   backToDetailsAriaLabel?: string;
   /** When `false`, the primary action button is hidden. Default: `true`. */

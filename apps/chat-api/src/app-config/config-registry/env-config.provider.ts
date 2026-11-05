@@ -1,7 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
+import {
+  canonicalizeContentLocales,
+  parseContentLocaleList,
+} from '../../config/content-locales';
 import { extractOrigin, isOriginAllowedForIframe } from '../../config/csp';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import type {
@@ -16,12 +20,20 @@ import { CONFIG_DEFINITIONS } from './config-registry.constants';
 const FILE_MANAGER_ALLOWED_TABS = ['all', 'my_files', 'shared', 'organization'];
 
 @Injectable()
-export class EnvConfigProvider implements ConfigProvider {
+export class EnvConfigProvider implements ConfigProvider, OnModuleInit {
   private readonly logger = new Logger(EnvConfigProvider.name);
 
   constructor(
     private readonly configService: ConfigService<EnvironmentVariables>,
   ) {}
+
+  onModuleInit(): void {
+    if (this.isLegacyContentLocalesInEffect()) {
+      this.logger.warn(
+        'AVAILABLE_LOCALES is deprecated; rename it to ADDITIONAL_CONTENT_LOCALES. It is read only while ADDITIONAL_CONTENT_LOCALES is unset.',
+      );
+    }
+  }
 
   async resolve(
     key: string,
@@ -94,6 +106,18 @@ export class EnvConfigProvider implements ConfigProvider {
         return undefined;
       }
       return sources;
+    }
+
+    /*
+     * content.additionalLocales: ADDITIONAL_CONTENT_LOCALES wins whenever it is
+     * present (even empty); the deprecated AVAILABLE_LOCALES is read only when
+     * it is absent. The primary locale is not filtered here — the frontend owns it.
+     */
+    if (key === 'content.additionalLocales') {
+      const codes = this.getContentLocaleList();
+      return codes === undefined
+        ? undefined
+        : canonicalizeContentLocales(codes);
     }
 
     // customVisualizers is a JSON array requiring full parse + per-entry validation
@@ -249,6 +273,30 @@ export class EnvConfigProvider implements ConfigProvider {
     }
 
     return parsed;
+  }
+
+  private readContentLocaleVariable(
+    name: 'ADDITIONAL_CONTENT_LOCALES' | 'AVAILABLE_LOCALES',
+  ): string[] | undefined {
+    const value: unknown = this.configService.get(name, { infer: true });
+    return parseContentLocaleList(value, {
+      stripLegacyDecoration: name === 'AVAILABLE_LOCALES',
+    });
+  }
+
+  private isLegacyContentLocalesInEffect(): boolean {
+    return (
+      this.readContentLocaleVariable('ADDITIONAL_CONTENT_LOCALES') ===
+        undefined &&
+      this.readContentLocaleVariable('AVAILABLE_LOCALES') !== undefined
+    );
+  }
+
+  private getContentLocaleList(): string[] | undefined {
+    return (
+      this.readContentLocaleVariable('ADDITIONAL_CONTENT_LOCALES') ??
+      this.readContentLocaleVariable('AVAILABLE_LOCALES')
+    );
   }
 
   /**

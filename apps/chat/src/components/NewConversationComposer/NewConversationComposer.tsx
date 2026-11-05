@@ -50,7 +50,6 @@ import {
   FileDndI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
-import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -315,7 +314,6 @@ const NewConversationComposer: FC<Props> = ({
     filesApi,
     bucket,
     onNetworkError: handleNetworkUploadError,
-    debounceMs: NETWORK_ERROR_DEBOUNCE_MS,
   });
 
   /*
@@ -532,6 +530,8 @@ const NewConversationComposer: FC<Props> = ({
           </Suspense>
         )}
         <ConversationInput
+          /* Embedded in a host page the host owns the gutters: no extra inline or block padding on mobile. */
+          className={isEmbeddedLayout ? 'px-0 py-0 desktop:p-5' : undefined}
           onSend={handleSend}
           onUploadAttachment={handleUploadAttachment}
           onAttachmentsChange={handleAttachmentsChange}

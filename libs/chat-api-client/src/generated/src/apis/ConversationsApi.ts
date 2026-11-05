@@ -117,6 +117,7 @@ export interface StopCompletionRequest {
 
 export interface StreamCompletionRequest {
   sendCompletionDto: SendCompletionDto;
+  xLang?: string;
   xTimezone?: string;
 }
 
@@ -1210,6 +1211,10 @@ export class ConversationsApi extends runtime.BaseAPI {
     const headerParameters: runtime.HTTPHeaders = {};
 
     headerParameters['Content-Type'] = 'application/json';
+
+    if (requestParameters['xLang'] != null) {
+      headerParameters['X-Lang'] = String(requestParameters['xLang']);
+    }
 
     if (requestParameters['xTimezone'] != null) {
       headerParameters['X-Timezone'] = String(requestParameters['xTimezone']);

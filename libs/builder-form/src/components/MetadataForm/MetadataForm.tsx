@@ -21,9 +21,12 @@ const MetadataFormComponent: FC<MetadataFormProps> = ({
   onVersionBlur,
   avatarPicker,
   availableLocaleOptions,
+  formatLocaleLabel,
   fields = ALL_METADATA_FIELDS,
   isNameReadOnly,
   nameReadOnlyTooltip,
+  isVersionReadOnly,
+  versionReadOnlyTooltip,
   nameCaption,
   isDescriptionRequired,
   descriptionCaption,
@@ -82,9 +85,12 @@ const MetadataFormComponent: FC<MetadataFormProps> = ({
         onAddAvatarClick={handleAvatarPickerOpen}
         labels={labels?.form ?? DEFAULT_METADATA_FORM_LABELS}
         availableLocaleOptions={availableLocaleOptions}
+        formatLocaleLabel={formatLocaleLabel}
         fields={renderedFields}
         isNameReadOnly={isNameReadOnly}
         nameReadOnlyTooltip={nameReadOnlyTooltip}
+        isVersionReadOnly={isVersionReadOnly}
+        versionReadOnlyTooltip={versionReadOnlyTooltip}
         nameCaption={nameCaption}
         isDescriptionRequired={isDescriptionRequired}
         descriptionCaption={descriptionCaption}

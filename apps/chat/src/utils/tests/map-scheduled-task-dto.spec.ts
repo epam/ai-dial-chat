@@ -81,9 +81,9 @@ describe('buildScheduleLabel', () => {
       { day: 'Monday', time: '09:00' },
     ],
     [
-      cron({ week: '*/2', hour: '9', minute: '0', day_of_week: 'Tuesday' }),
-      ScheduledTasksI18nKeys.CardScheduleEveryNWeeks,
-      { count: 2, day: 'Tuesday', time: '09:00' },
+      cron({ hour: '9', minute: '0', day_of_week: '0,2,4' }),
+      ScheduledTasksI18nKeys.CardScheduleWeeklyAt,
+      { day: 'Monday, Wednesday, and Friday', time: '09:00' },
     ],
     [
       cron({ hour: '9', minute: '0', day: '15' }),

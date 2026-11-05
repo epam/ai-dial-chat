@@ -16,11 +16,21 @@ import * as runtime from '../runtime';
 import type {
   ApplicationSchemasResponseDto,
   ApplicationsResponseDto,
+  CommitApplicationVersionDto,
   CreateApplicationBodyDto,
   CreatedApplicationDto,
+  ForkApplicationVersionDto,
+  MoveResourceDto,
+  ResourceFoldersResponseDto,
+  ResourceIdResponseDto,
   UpdateApplicationBodyDto,
   UpdatedApplicationDto,
 } from '../models/index';
+
+export interface CommitApplicationVersionRequest {
+  applicationName: string;
+  commitApplicationVersionDto: CommitApplicationVersionDto;
+}
 
 export interface CreateApplicationRequest {
   createApplicationBodyDto: CreateApplicationBodyDto;
@@ -30,8 +40,22 @@ export interface DeleteApplicationRequest {
   applicationName: string;
 }
 
+export interface ForkApplicationVersionRequest {
+  applicationName: string;
+  forkApplicationVersionDto: ForkApplicationVersionDto;
+}
+
 export interface GetApplicationSchemaRequest {
   id: string;
+}
+
+export interface ListApplicationFoldersRequest {
+  path?: string;
+}
+
+export interface MoveApplicationRequest {
+  applicationName: string;
+  moveResourceDto: MoveResourceDto;
 }
 
 export interface UpdateApplicationRequest {
@@ -43,6 +67,78 @@ export interface UpdateApplicationRequest {
  *
  */
 export class ApplicationsApi extends runtime.BaseAPI {
+  /**
+   * Swaps the bodies of the source application and its forked snapshot, each keeping its own version: the source gets back its pre-edit body and the snapshot gets the edits. Both writes are conditional on the ETags read in the same request.
+   * Commit a forked application version
+   */
+  async commitApplicationVersionRaw(
+    requestParameters: CommitApplicationVersionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ResourceIdResponseDto>> {
+    if (requestParameters['applicationName'] == null) {
+      throw new runtime.RequiredError(
+        'applicationName',
+        'Required parameter "applicationName" was null or undefined when calling commitApplicationVersion().',
+      );
+    }
+
+    if (requestParameters['commitApplicationVersionDto'] == null) {
+      throw new runtime.RequiredError(
+        'commitApplicationVersionDto',
+        'Required parameter "commitApplicationVersionDto" was null or undefined when calling commitApplicationVersion().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/applications/{applicationName}/versions/commit`;
+    urlPath = urlPath.replace(
+      `{${'applicationName'}}`,
+      encodeURIComponent(String(requestParameters['applicationName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['commitApplicationVersionDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ResourceIdResponseDto>(response);
+  }
+
+  /**
+   * Swaps the bodies of the source application and its forked snapshot, each keeping its own version: the source gets back its pre-edit body and the snapshot gets the edits. Both writes are conditional on the ETags read in the same request.
+   * Commit a forked application version
+   */
+  async commitApplicationVersion(
+    requestParameters: CommitApplicationVersionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ResourceIdResponseDto> {
+    const response = await this.commitApplicationVersionRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
   /**
    * Creates a new application for the authenticated session user by proxying DIAL Core. With createOnly, never overwrites an existing application and creates at the next free path instead (409 when none is free). With preserveApplicationProperties, stores schema settings verbatim. Invalidates the applications list and deployments list caches on success.
    * Create a new application
@@ -163,6 +259,78 @@ export class ApplicationsApi extends runtime.BaseAPI {
   }
 
   /**
+   * Copies the stored application to `{folderPath}/{name}__{version}` and stamps the copy with `version`, never overwriting. Used with commitApplicationVersion so edits saved to the source end up in the new version only.
+   * Fork an application into a new version
+   */
+  async forkApplicationVersionRaw(
+    requestParameters: ForkApplicationVersionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ResourceIdResponseDto>> {
+    if (requestParameters['applicationName'] == null) {
+      throw new runtime.RequiredError(
+        'applicationName',
+        'Required parameter "applicationName" was null or undefined when calling forkApplicationVersion().',
+      );
+    }
+
+    if (requestParameters['forkApplicationVersionDto'] == null) {
+      throw new runtime.RequiredError(
+        'forkApplicationVersionDto',
+        'Required parameter "forkApplicationVersionDto" was null or undefined when calling forkApplicationVersion().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/applications/{applicationName}/versions`;
+    urlPath = urlPath.replace(
+      `{${'applicationName'}}`,
+      encodeURIComponent(String(requestParameters['applicationName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['forkApplicationVersionDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ResourceIdResponseDto>(response);
+  }
+
+  /**
+   * Copies the stored application to `{folderPath}/{name}__{version}` and stamps the copy with `version`, never overwriting. Used with commitApplicationVersion so edits saved to the source end up in the new version only.
+   * Fork an application into a new version
+   */
+  async forkApplicationVersion(
+    requestParameters: ForkApplicationVersionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ResourceIdResponseDto> {
+    const response = await this.forkApplicationVersionRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
    * Returns one DIAL Core application type schema by its $id. Results are cached server-side for 60 seconds per user per schema.
    * Get application type schema by id
    */
@@ -218,6 +386,61 @@ export class ApplicationsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<{ [key: string]: unknown }> {
     const response = await this.getApplicationSchemaRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Lists the folders directly under `path` in the caller\'s own applications bucket. A folder that does not exist yet lists as empty. Not cached.
+   * List the caller\'s application folders
+   */
+  async listApplicationFoldersRaw(
+    requestParameters: ListApplicationFoldersRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ResourceFoldersResponseDto>> {
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/applications/folders`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ResourceFoldersResponseDto>(response);
+  }
+
+  /**
+   * Lists the folders directly under `path` in the caller\'s own applications bucket. A folder that does not exist yet lists as empty. Not cached.
+   * List the caller\'s application folders
+   */
+  async listApplicationFolders(
+    requestParameters: ListApplicationFoldersRequest = {},
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ResourceFoldersResponseDto> {
+    const response = await this.listApplicationFoldersRaw(
       requestParameters,
       initOverrides,
     );
@@ -313,6 +536,78 @@ export class ApplicationsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ApplicationsResponseDto> {
     const response = await this.listApplicationsRaw(initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Moves an application in the caller\'s own bucket into `folderPath`, never overwriting an existing application. Invalidates the applications, deployments and details caches on success.
+   * Move an application to one of the caller\'s folders
+   */
+  async moveApplicationRaw(
+    requestParameters: MoveApplicationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ResourceIdResponseDto>> {
+    if (requestParameters['applicationName'] == null) {
+      throw new runtime.RequiredError(
+        'applicationName',
+        'Required parameter "applicationName" was null or undefined when calling moveApplication().',
+      );
+    }
+
+    if (requestParameters['moveResourceDto'] == null) {
+      throw new runtime.RequiredError(
+        'moveResourceDto',
+        'Required parameter "moveResourceDto" was null or undefined when calling moveApplication().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/applications/{applicationName}/move`;
+    urlPath = urlPath.replace(
+      `{${'applicationName'}}`,
+      encodeURIComponent(String(requestParameters['applicationName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['moveResourceDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ResourceIdResponseDto>(response);
+  }
+
+  /**
+   * Moves an application in the caller\'s own bucket into `folderPath`, never overwriting an existing application. Invalidates the applications, deployments and details caches on success.
+   * Move an application to one of the caller\'s folders
+   */
+  async moveApplication(
+    requestParameters: MoveApplicationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ResourceIdResponseDto> {
+    const response = await this.moveApplicationRaw(
+      requestParameters,
+      initOverrides,
+    );
     return await response.value();
   }
 

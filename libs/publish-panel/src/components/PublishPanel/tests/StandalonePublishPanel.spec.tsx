@@ -8,9 +8,20 @@ import { StandalonePublishPanel } from '../StandalonePublishPanel';
 const publishPanelProps = vi.fn();
 
 vi.mock('../PublishPanel', () => ({
-  PublishPanel: (props: Record<string, unknown>) => {
+  PublishPanel: (props: {
+    onChangeFolderClick: () => void;
+    onPendingFolderPathChange: (path: string[]) => void;
+  }) => {
     publishPanelProps(props);
-    return <span>Publish panel body</span>;
+    return (
+      <div>
+        <span>Publish panel body</span>
+        <button onClick={props.onChangeFolderClick}>Change</button>
+        <button onClick={() => props.onPendingFolderPathChange(['Shared'])}>
+          Pick Shared
+        </button>
+      </div>
+    );
   },
 }));
 
@@ -18,13 +29,21 @@ vi.mock('../PublishFooter', () => ({
   PublishFooter: ({
     onCancel,
     onSubmit,
+    view,
+    onSelectFolder,
   }: {
     onCancel: () => void;
     onSubmit: () => void;
+    view?: string;
+    onSelectFolder?: () => void;
   }) => (
     <div>
       <button onClick={onCancel}>Cancel</button>
-      <button onClick={onSubmit}>Publish</button>
+      {view === 'change-folder' ? (
+        <button onClick={onSelectFolder}>Select</button>
+      ) : (
+        <button onClick={onSubmit}>Publish</button>
+      )}
     </div>
   ),
 }));
@@ -206,6 +225,50 @@ describe('StandalonePublishPanel', () => {
     // inert removes the closed panel from both the tab order and the accessibility tree.
     expect(dialog.hasAttribute('inert')).toBe(true);
   });
+  describe('folder view', () => {
+    it('drills into the folder view with a Back control and the folder title', async () => {
+      renderPanel();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+
+      expect(screen.getByText('Change folder')).toBeTruthy();
+      expect(screen.getByLabelText('Back')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Select' })).toBeTruthy();
+    });
+
+    it('commits the picked folder only on Select', async () => {
+      const onSelectedFolderPathChange = vi.fn();
+      renderPanel({ onSelectedFolderPathChange });
+
+      await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Pick Shared' }),
+      );
+      expect(onSelectedFolderPathChange).not.toHaveBeenCalled();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Select' }));
+
+      expect(onSelectedFolderPathChange).toHaveBeenCalledWith(['Shared']);
+      expect(screen.queryByLabelText('Back')).toBeNull();
+    });
+
+    it('returns to the main view on Cancel without committing or closing', async () => {
+      const onSelectedFolderPathChange = vi.fn();
+      const onClose = vi.fn();
+      renderPanel({ onSelectedFolderPathChange, onClose });
+
+      await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Pick Shared' }),
+      );
+      await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+      expect(onSelectedFolderPathChange).not.toHaveBeenCalled();
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
+    });
+  });
+
   it('forwards the author props through to the inner publish panel unmodified', () => {
     const onAuthorChange = vi.fn();
     renderPanel({ author: 'DIAL Team', onAuthorChange });

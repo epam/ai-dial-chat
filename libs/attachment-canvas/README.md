@@ -145,7 +145,7 @@ import {
 
 ### AttachmentCanvasBody
 
-Content-only renderer shared by `AttachmentCanvas` — the same Markdown/JSON/code/HTML/PDF/OOXML/image/audio/visualizer/unsupported/error rendering, with no sidebar chrome (no panel, header, close/download/copy actions). Use it when a host wants to mount an attachment preview inline in its own layout instead of the resizable side panel `AttachmentCanvas`/`AttachmentCanvasContainer` render. For content type `MarkdownTable`, pass the table copy/download labels in `labels` (and optionally `tableDownloadFilename`) to show the table's own inline copy/download header, same as `AttachmentCanvas`. The code-block, table and formula labels (`codeBlockCopyLabel`, `codeBlockCopiedLabel`, `codeBlockDownloadLabel`, `tableScrollRegionAriaLabel`, `mathScrollRegionAriaLabel`) are part of `AttachmentCanvasBodyLabels` too. For content type `McpApp`, pass `onAppInfo` to be notified once the mounted app completes its `ui/initialize` handshake, with its declared name/version.
+Content-only renderer shared by `AttachmentCanvas` — the same Markdown/JSON/code/HTML/PDF/OOXML/image/audio/visualizer/unsupported/error rendering, with no sidebar chrome (no panel, header, close/download/copy actions). Use it when a host wants to mount an attachment preview inline in its own layout instead of the resizable side panel `AttachmentCanvas`/`AttachmentCanvasContainer` render. For content type `MarkdownTable`, pass the table copy/download labels in `labels` (and optionally `tableDownloadFilename`) to show the table's own inline copy/download header, same as `AttachmentCanvas`. The code-block, table and formula labels (`codeBlockCopyLabel`, `codeBlockCopiedLabel`, `codeBlockDownloadLabel`, `tableScrollRegionAriaLabel`, `mathScrollRegionAriaLabel`) are part of `AttachmentCanvasBodyLabels` too. `loadingLabel` (default `'Loading…'`) is the accessible name of every loading spinner the body renders — the whole-body spinner while `isLoading`, the HTML source fetch and iframe load, the OOXML/CSV viewer and the MCP App handshake; `AttachmentCanvas` and `AttachmentCanvasContainer` forward it from `AttachmentCanvasLabels`. For content type `McpApp`, pass `onAppInfo` to be notified once the mounted app completes its `ui/initialize` handshake, with its declared name/version.
 
 ```tsx
 import { AttachmentCanvasBody } from '@epam/ai-dial-attachment-canvas';
@@ -210,7 +210,7 @@ import {
 
 ### McpAppCanvasRenderer
 
-Mounts an MCP tool's `ui://` resource via `@mcp-ui/client`'s `AppFrame` and a host-owned `AppBridge`, inside the isolated-origin sandbox proxy named by `content.sandboxUrl`, seeded with the original invocation's `content.toolInput`/`content.toolResult`. Handles its own loading/error overlay while the app initializes. Exported so a host can also mount a compact preview outside the full canvas — e.g. inline under a chat message — using the same `McpAppCanvasContent` payload it builds for `AttachmentCanvas`.
+Mounts an MCP tool's `ui://` resource via `@mcp-ui/client`'s `AppFrame` and a host-owned `AppBridge`, inside the isolated-origin sandbox proxy named by `content.sandboxUrl`, seeded with the original invocation's `content.toolInput`/`content.toolResult`. Handles its own loading/error overlay while the app initializes. `loadingLabel` (default `'Loading…'`) names the overlay's spinner for assistive tech. Exported so a host can also mount a compact preview outside the full canvas — e.g. inline under a chat message — using the same `McpAppCanvasContent` payload it builds for `AttachmentCanvas`.
 
 Watches its own container with a `ResizeObserver` and reports the live pixel size to the mounted app via `hostContext.containerDimensions`, so a resize (the host dragging a resizable panel, a window resize) reaches a well-behaved app after mount, not just once. When `content.hostContext.displayMode` is `'fullscreen'` (the value `AttachmentCanvas`'s own usage sets), the mounted iframe is also forced to fill 100% of that container — overriding the mounted app's own reported content size, which is otherwise what drives the iframe's dimensions and is a better default for a compact inline preview.
 
@@ -243,6 +243,7 @@ const content: McpAppCanvasContent = {
 <McpAppCanvasRenderer
   content={content}
   errorLabel="Failed to load app"
+  loadingLabel="Loading…"
   onAppInfo={(appInfo) => console.log(appInfo.name, appInfo.version)}
 />;
 ```

@@ -98,6 +98,15 @@ describe('getNextCronOccurrence', () => {
     ).toBe('2026-10-31T09:00:00.000Z');
   });
 
+  it('returns the earliest matching day of a weekday list', () => {
+    expect(
+      getNextCronOccurrence(
+        cron({ hour: '9', minute: '0', day_of_week: '0,4' }),
+        from,
+      )?.toISOString(),
+    ).toBe('2026-10-09T09:00:00.000Z');
+  });
+
   it('returns undefined for a day constraint it cannot evaluate', () => {
     expect(
       getNextCronOccurrence(

@@ -1,5 +1,8 @@
 import { FileDndOverlay, AttachmentCard } from '@epam/ai-dial-attachment-input';
-import { BuilderFormContainer } from '@epam/ai-dial-builder-form';
+import {
+  BuilderFormActionsOrder,
+  BuilderFormContainer,
+} from '@epam/ai-dial-builder-form';
 import {
   buildCssVars,
   MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
@@ -85,6 +88,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
 }) => {
   const nameId = useId();
   const nameErrorId = useId();
+  const nameValidationErrorId = useId();
   const nameHintId = useId();
   const instructionsId = useId();
   const contextLabelId = useId();
@@ -110,6 +114,14 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
       ? labels.nameErrors[nameCheck]
       : undefined);
   const isCreateDisabled = nameCheck != null || isSubmitting || isRefining;
+  /* A host error lives in the always-mounted alert; inline validation has its own, non-announcing element. */
+  let nameErrorDescribedBy: string | undefined;
+  if (errors.name) nameErrorDescribedBy = nameErrorId;
+  else if (nameError) nameErrorDescribedBy = nameValidationErrorId;
+  const nameDescribedBy =
+    [isNameReadOnly && nameHintId, nameErrorDescribedBy]
+      .filter(Boolean)
+      .join(' ') || undefined;
 
   /* A host error on Name (a taken name) sends focus back to the field. */
   useEffect(() => {
@@ -199,6 +211,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   const cssVars = buildCssVars({
     '--pcf-label-text': colors?.labelText,
     '--pcf-link-text': colors?.linkText,
+    '--pcf-dropzone-bg': colors?.dropZoneBackground,
   });
   const refinementLabels = labels.refinement;
   const contextError = errors.context;
@@ -249,6 +262,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
         isCancelDisabled={isSubmitting}
         isSubmitDisabled={isCreateDisabled}
         isSubmitting={isSubmitting}
+        footerActionsOrder={BuilderFormActionsOrder.SubmitFirst}
         backIcon={
           <IconArrowNarrowLeft
             size={DIAL_ICON_SIZE.LG}
@@ -289,11 +303,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
               readOnly={isNameReadOnly}
               invalid={Boolean(nameError)}
               aria-invalid={Boolean(nameError)}
-              aria-describedby={
-                [isNameReadOnly && nameHintId, nameError && nameErrorId]
-                  .filter(Boolean)
-                  .join(' ') || undefined
-              }
+              aria-describedby={nameDescribedBy}
             />
             {isNameReadOnly && (
               <CaptionText
@@ -302,7 +312,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
                 text={labels.nameReadOnlyHint ?? DEFAULT_NAME_READ_ONLY_HINT}
               />
             )}
-            {/* Mounted before a host error (a taken name) arrives, so it is announced; out of the column gap while empty. Inline validation stays outside it. */}
+            {/* Mounted before a host error (a taken name) arrives, so it is announced; out of the column gap while empty. Inline validation stays outside it, under its own id. */}
             <ErrorText
               announce={LiveRegionPoliteness.Assertive}
               id={nameErrorId}
@@ -311,7 +321,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
             />
             {nameError && !errors.name && (
               <ErrorText
-                id={nameErrorId}
+                id={nameValidationErrorId}
                 className={helperClassName}
                 text={nameError}
               />
@@ -343,7 +353,15 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
                   MARKDOWN_EDITOR_PREVIEW_LIST_CLASS_NAME,
                 )}
               >
-                <Suspense fallback={<Spinner />}>
+                <Suspense
+                  fallback={
+                    <Spinner
+                      ariaLabel={
+                        labels.editorLoadingAriaLabel ?? 'Loading editor'
+                      }
+                    />
+                  }
+                >
                   <MarkdownEditor
                     id={instructionsId}
                     value={values.instructions}

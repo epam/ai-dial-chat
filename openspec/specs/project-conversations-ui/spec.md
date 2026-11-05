@@ -99,7 +99,7 @@ The page owns no conversation state: `ConversationPage` and `GenerationContext` 
 
 | Prop | Type |
 | --- | --- |
-| `items` | `ProjectConversationListItem[]`, where an item is `{ id: string; title: string; authorName?: string; isUnread?: boolean }` |
+| `items` | `ProjectConversationListItem[]`, where an item is `{ id: string; title: string; authorName?: string; isUnread?: boolean; leading?: ReactNode; trailing?: ReactNode }` |
 | `isLoading` | optional `boolean` |
 | `hasError` | optional `boolean` |
 | `onRetry` | `() => void` |
@@ -118,12 +118,12 @@ The page owns no conversation state: `ConversationPage` and `GenerationContext` 
 - a `<section>` named by its `<h2>` `labels.title` ("Chats"). While the project has no chats (not loading, no error, no items) the heading is not rendered and the section is named by `aria-label={labels.title}` instead, so only the empty state shows, as in the design;
 - the section has `12px` top padding and `8px` between the heading, the rows and the See more link, as in the design (Figma *DIAL Chat 2.0 — Projects*, frame "Chat - View project - Unpinned", node `1:2407`);
 - a `<ul>` with one `<li>` per item, `8px` apart. Each row is a button named `labels.openLabel(title, authorName)`, with `12px` padding, a `12px` radius and `12px` between its parts, containing:
-  - the **status point**, an `aria-hidden` `16px` slot holding a `7.11px` circle: an outline when the chat is read (`.readDot { border: 1.5px solid var(--pcl-read-dot, var(--stroke-secondary, #d1dbea)); }`) and a fill when it is unread (`.unreadDot { background: var(--pcl-unread-dot, var(--text-accent, #1d4ed8)); }`), both in `ProjectConversationList.module.scss`. It replaces the author avatar of the earlier design; the author stays in the accessible name;
+  - the **status point**, an `aria-hidden` `16px` slot holding a `7.11px` circle: an outline when the chat is read (`.readDot { border: 1.5px solid var(--pcl-read-dot, var(--stroke-secondary, #d1dbea)); }`) and a fill when it is unread (`.unreadDot { background: var(--pcl-unread-dot, var(--text-accent, #1d4ed8)); }`), both in `ProjectConversationList.module.scss`. It replaces the author avatar of the earlier design; the author stays in the accessible name. An item's host-rendered `leading` node (a deployment avatar, say) replaces the status point, and the unread state then shows as a `24px` slot at the end of the row button holding the same `.unreadDot` circle, as in the conversation panel's rows; a host `trailing` node replaces that dot;
   - the title in `dial-body-text` (16/24), truncated to one line with `EllipsisTooltip`, or in `typography.unreadRowTitleClassName` when `isUnread`.
 
   A hovered or focused row has the background `.row:hover, .row:focus-within { background: var(--pcl-row-hover, var(--bg-control-accent-alpha-hover, #2764d924)); }` in `ProjectConversationList.module.scss`, set through `colors.rowHoverBackground`.
-- **Unread rows** (`isUnread: true`) follow the indicator rows of `ConversationRow` in `libs/conversation-panel`, which this lib does not import: the filled point and the semibold title. The row button carries `aria-describedby` pointing to a visually hidden `<span>` with `labels.unreadLabel`, so screen readers announce "…, Unread" after the accessible name without changing it. A read row has the outline point and no description. The point is always visible.
-- when `onRename` or `onDelete` is supplied, a ⋮ kit `Dropdown` per row, triggered by a `GhostIconButton` named `labels.moreActionsLabel(title)`, with Rename and Delete. The arrow keys, Enter and Space come from the kit. The design shows rows without a trigger, so on `desktop` the trigger is transparent (`desktop:opacity-0`) until the row is hovered or holds focus, and it stays visible while its menu is open. It stays in the tab order, so focusing it reveals it. On `mobile`, which has no hover, it is always visible.
+- **Unread rows** (`isUnread: true`) follow the indicator rows of `ConversationRow` in `libs/conversation-panel`, which this lib does not import: the filled point and the semibold title. The row button carries `aria-describedby` pointing to a visually hidden `<span>` with `labels.unreadLabel`, so screen readers announce "…, Unread" after the accessible name without changing it. A read row has the outline point and no description. The point is always visible. With a `leading` node the filled point moves to the end of the row.
+- when `onRename` or `onDelete` is supplied, a ⋮ `ActionMenu` (`@epam/ai-dial-chat-shared`) per row, triggered by a `GhostIconButton` named `labels.moreActionsLabel(title)`, with Rename and Delete: the kit `Dropdown` on tablet and desktop, and on a phone a bottom sheet titled `labels.moreActionsLabel(title)` and closed by `labels.closeLabel` (default `'Close'`). The arrow keys, Enter and Space come from the kit. The design shows rows without a trigger, so on `desktop` the trigger is transparent (`desktop:opacity-0`) until the row is hovered or holds focus, and it stays visible while its menu is open. It stays in the tab order, so focusing it reveals it. On `mobile`, which has no hover, it is always visible.
 - with `hasMore` and `onLoadMore`, a kit `LinkButton` (`labels.loadMoreLabel`, default `'See more'`) at the inline start follows the rows, disabled while `isLoadingMore`.
 - **States:**
   - loading: `Spinner` with `labels.loadingLabel`;
@@ -170,6 +170,16 @@ The component's stylesheet ships in the lib's existing `./styles.css` export, an
 
 - **WHEN** an item has no `isUnread`
 - **THEN** its status point is an outline, no accessible description renders, and the title uses `dial-body-text`
+
+#### Scenario: Leading node replaces the status point
+
+- **WHEN** an item has `leading` and `isUnread: true`
+- **THEN** the `leading` node starts the row button, no status point renders, and the filled unread point sits at the end of the row button; a `trailing` node replaces that point
+
+#### Scenario: Row menu is a bottom sheet on a phone
+
+- **WHEN** the viewport is below 768px and the user activates a row's ⋮ trigger
+- **THEN** a bottom sheet titled `labels.moreActionsLabel(title)` lists Rename and Delete, and choosing one closes it and runs the action
 
 #### Scenario: A row turns unread in place
 
@@ -294,8 +304,7 @@ New strings SHALL be added to `apps/chat/src/i18n/locales/en.json` and to `Proje
 - `projects.chats.createError`, `projects.chats.storageFull`;
 - `projects.chat.backToProject` ("Back to {{name}}");
 - `projects.chat.notFound`;
-- `projects.publish.chatsWarning_one` / `_other`;
-- `projects.actions.deleteConfirmWithChatsDescription_one` / `_other`.
+- `projects.publish.chatsWarning_one` / `_other`.
 
 The Rename, Delete, Save, Cancel and Retry labels reuse `buttons.rename`, `buttons.delete`, `buttons.save`, `buttons.cancel` and `buttons.retry`. The See more link takes the new generic key `buttons.seeMore` ("See more", `ButtonsI18nKeys.SeeMore`), because the design's wording differs from `buttons.showMore`. The lib never imports i18n.
 

@@ -42,6 +42,22 @@ destinations use the prepared fallback name and propagate stream failures. A
 missing response body aborts the writable and rejects. Cancelled destinations
 return the fallback without consuming the response.
 
+### Query-string cleanup
+
+`getCleanedLocationTarget(keys)` returns the `{ search, hash }` of the current
+`window.location` with `keys` dropped from the query string; the remaining
+pairs are kept byte for byte. It reads `window.location` at call time, so a
+host can pass the result to its router's `replace` navigation without relying
+on a router location that may lag. Available from the root and `./utils`.
+
+```ts
+import { getCleanedLocationTarget } from '@epam/ai-dial-chat-hooks/utils';
+
+navigate(getCleanedLocationTarget(['deployment-id', 'skill-id']), {
+  replace: true,
+});
+```
+
 ### Scheduled conversation controllers
 
 The root and `./conversation` export `groupScheduledTaskConversations`,
@@ -208,12 +224,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-projects` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.25
+- `@epam/ai-dial-react-file-manager` ^0.4.0
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.72
+- `@epam/ai-dial-ui-kit` ^0.16.0
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.2
 - `@epam/pdf-highlighter-kit` ^0.0.19
@@ -280,6 +296,7 @@ whether you need to `npm install` it.
 | `./skill-editor`          | `@epam/ai-dial-skill-editor`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`                                                                   | `@epam/ai-dial-react-file-manager`                              |
 | `./oauth`                 | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                               |
 | `./offline-credentials`   | —                                                                                                                                                   | —                                                               |
+| `./external-services`     | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                               |
 | `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                     | —                                                               |
 | `./project`               | `@epam/ai-dial-projects`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`                                                                       | —                                                               |
 | `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                               |
@@ -829,10 +846,20 @@ const { status, connect, connected, schedulerServiceConsent, refetch } =
 
 ```tsx
 // ./sharing
-import { useShareRecipientsCount } from '@epam/ai-dial-chat-hooks/sharing';
+import {
+  useAcceptShareInvitation,
+  useShareRecipientsCount,
+} from '@epam/ai-dial-chat-hooks/sharing';
 
 const { requestRecipientsCount, getRecipientsCount } =
   useShareRecipientsCount(shareApi);
+
+useAcceptShareInvitation({
+  invitationId,
+  acceptInvitation,
+  onAccepted,
+  onError,
+});
 ```
 
 ```tsx
@@ -1393,6 +1420,39 @@ const ResizableSidePanel = () => {
 | --------------------- | -------- | ----------------------------------------------------------------------------- |
 | `minContentAreaWidth` | `number` | Minimum pixel width the main content area must retain when the panel is open. |
 
+### useAppVersionCheck
+
+Reports when a long-lived tab runs a build that is no longer deployed, so the
+host can replace the app with a reload prompt. The host passes its health
+request; the hook keeps the first `buildId` as the tab's baseline and flags a
+different one. It also flags a new version at once when Vite fails to load a
+chunk of the running build (`vite:preloadError`). Available from the root and
+from `@epam/ai-dial-chat-hooks/utils`.
+
+```tsx
+import { useAppVersionCheck } from '@epam/ai-dial-chat-hooks/utils';
+
+const checkHealth = (signal: AbortSignal) =>
+  healthApi.check({ cache: 'no-store', signal });
+
+const App = () => {
+  const { isNewVersionAvailable } = useAppVersionCheck({ checkHealth });
+  return isNewVersionAvailable ? <NewVersionFallback /> : <Layout />;
+};
+```
+
+| Option             | Type                                             | Description                                                                                  |
+| ------------------ | ------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `checkHealth`      | `(signal: AbortSignal) => Promise<AppBuildInfo>` | Reads the deployed `buildId`; should bypass HTTP caches. A new function each render is fine. |
+| `pollIntervalMs`   | `number`                                         | Minimum time between checks while the tab is visible. Defaults to `300000` (5 minutes).      |
+| `requestTimeoutMs` | `number`                                         | Time after which one health request is aborted. Defaults to `10000`.                         |
+
+Checks run on mount, on the interval while the tab is visible, when the tab
+becomes visible again (`visibilitychange`, `focus`, `pageshow`), and on the
+first `pointerdown`/`keydown` after an idle period of at least
+`pollIntervalMs`. Only one request is in flight at a time; a missing `buildId`
+or a failed request is ignored. Once a new version is reported, all checks stop.
+
 ### useShareLink
 
 Resolves and manages share-link data for a DIAL Core resource: loading/error state, a stale-response guard, and re-fetch when the requested access levels change. Accepts an already-configured `ShareApi` instance from `@epam/ai-dial-chat-api-client` — the hook owns only the request lifecycle, not the client's base URL, auth, or CSRF setup.
@@ -1521,6 +1581,64 @@ const RevokeAccessMenuItem = ({
 | `invalidateRecipientsCount` | `(itemId: string) => void`                 | Drops the resource's cached result so the next request fetches again. |
 
 `RecipientsCountEntry.status` is a `RecipientsCountStatus` of `Idle` / `Loading` / `Resolved` / `Unknown` (`Unknown` on a failed lookup, so a "Revoke access" action stays reachable without a number).
+
+### useAcceptShareInvitation
+
+Accept flow for the landing route of an opened share link. Accepts the invitation once per mount, awaits `refreshLists`, then hands the backend-resolved summaries to `onSharedItem` (model, application or toolset) and `onSharedSkill`, and finally calls `onAccepted`. The summaries are merged after the refresh, never before or in parallel, so a stale bulk list that does not yet reflect the share cannot overwrite them. Any failure — the accept, the refresh or a callback — reaches `onError` already classified by `resolveAcceptShareInvitationError`. Callbacks are read at call time, so new identities never re-run the accept. The hook takes an already-configured `acceptInvitation` function and owns no routing, notification or copy: the host navigates, shows the notification and passes translated `labels`. Available from the root and from `@epam/ai-dial-chat-hooks/sharing`.
+
+```tsx
+import { useAcceptShareInvitation } from '@epam/ai-dial-chat-hooks/sharing';
+
+useAcceptShareInvitation({
+  invitationId,
+  acceptInvitation: (id) => shareApi.acceptInvitation({ invitationId: id }),
+  refreshLists: () => Promise.all([refetchDeployments(), refetchSkills()]),
+  onSharedItem: mergeSharedItem,
+  onSharedSkill: mergeSharedSkill,
+  onAccepted: ({ itemId }) =>
+    navigate(`/catalog?itemId=${encodeURIComponent(itemId)}`),
+  onError: ({ message, requestId }) => {
+    showErrorNotification({ message, requestId });
+    navigate('/catalog');
+  },
+});
+```
+
+**Parameters** (`UseAcceptShareInvitationOptions`):
+
+| Name               | Type                                                             | Description                                                                                 |
+| ------------------ | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `invitationId`     | `string \| undefined`                                            | Invitation id from the link; nothing is accepted while it is `undefined`.                   |
+| `acceptInvitation` | `(invitationId: string) => Promise<AcceptInvitationResponseDto>` | Already-configured accept call.                                                             |
+| `refreshLists`     | `(response) => Promise<unknown>`                                 | Optional. Refreshes the host's lists before the summaries are merged; skipped when omitted. |
+| `onSharedItem`     | `(item: DeploymentItemDto \| DialToolsetDto) => void`            | Optional. Receives `sharedDeployment ?? sharedToolset` when the backend resolved one.       |
+| `onSharedSkill`    | `(skill: SkillMetadataItemDto) => void`                          | Optional. Receives `sharedSkill` when the backend resolved one.                             |
+| `onAccepted`       | `(response: AcceptInvitationResponseDto) => void`                | Called last on success.                                                                     |
+| `onError`          | `(error: AcceptShareInvitationError) => void`                    | Called with the classified failure.                                                         |
+| `labels`           | `Partial<AcceptShareInvitationErrorLabels>`                      | Optional. Failure sentences; defaults to `DEFAULT_ACCEPT_SHARE_INVITATION_ERROR_LABELS`.    |
+
+**Returns**: nothing.
+
+### resolveAcceptShareInvitationError
+
+`resolveAcceptShareInvitationError(error, labels?)` classifies a failed accept into an `AcceptShareInvitationError` — `{ kind, message, requestId?, itemName?, cause }`. `kind` is an `AcceptShareInvitationErrorKind`:
+
+| Member              | When                                                                          | `message`                                                                  | `requestId` |
+| ------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------- |
+| `NotFound`          | `code` is `ShareInvitationErrorCode.ShareInvitationNotFound`                  | `labels.notFound`                                                          | never       |
+| `UsersLimitReached` | `code` is `ShareInvitationErrorCode.ShareInvitationAcceptedUsersLimitReached` | `labels.usersLimitReached(itemName)`, or `labels.usersLimitReachedUnnamed` | never       |
+| `Failed`            | anything else                                                                 | the API or `Error` message, or `labels.acceptError`                        | trace id    |
+
+Expired and over-the-limit links are expected outcomes, so they carry no Request ID. `DEFAULT_ACCEPT_SHARE_INVITATION_ERROR_LABELS` holds the English defaults (`notFound`, `usersLimitReached`, `usersLimitReachedUnnamed`, `acceptError`). Available from the root and `./sharing`.
+
+```ts
+import { resolveAcceptShareInvitationError } from '@epam/ai-dial-chat-hooks/sharing';
+
+const { kind, message, requestId } = await resolveAcceptShareInvitationError(
+  error,
+  labels,
+);
+```
 
 ### useAttachmentUpload
 
@@ -3179,7 +3297,7 @@ const uploadFileWithProgress = createUploadFileWithProgress({
 
 ### createChatStreamApi
 
-Builds the streamed-completion transport (`streamCompletion`/`stopCompletion`), parameterized by the host's CSRF state, completions base path, and an optional timezone resolver.
+Builds the streamed-completion transport (`streamCompletion`/`stopCompletion`), parameterized by the host's CSRF state, completions base path, and optional timezone and language resolvers.
 
 ```ts
 import { createChatStreamApi } from '@epam/ai-dial-chat-hooks';
@@ -3189,8 +3307,11 @@ const { streamCompletion, stopCompletion } = createChatStreamApi({
   setCsrfToken,
   completionsBasePath: '/api/v1/conversations',
   getTimezone: getBrowserTimezone,
+  getLanguage: () => i18n.language,
 });
 ```
+
+`getLanguage`, like `getTimezone`, is resolved per request; a non-empty value is sent as the `X-Lang` request header on `POST .../completions` (validated by the chat-api BFF and forwarded to DIAL Core for language-sensitive tools), and an absent value omits the header.
 
 `streamCompletion` reports a `409` from the completions endpoint as a `GenerationConflictError` (message defaulting to `DEFAULT_GENERATION_CONFLICT_MESSAGE`) rather than a generic transport error, so callers can present it as an expected state — the conversation is already generating, typically in another browser tab of the same session. `useConversationStream` uses that distinction to show its `generationConflictMessage`. Both the error class and the default message are exported:
 
@@ -3278,7 +3399,8 @@ text stays with the host.
 a refused `acceptInvitation` call carries in its `AcceptInvitationErrorDto` body,
 or `undefined` when the error is not a `ResponseError`, the body is not JSON or
 the title is empty. The response is cloned, so the body stays readable. Available
-from the root and `./utils`.
+from the root and `./utils`. `resolveAcceptShareInvitationError` (see
+[useAcceptShareInvitation](#useacceptshareinvitation)) already calls it.
 
 ```ts
 import { getAcceptInvitationErrorItemName } from '@epam/ai-dial-chat-hooks';
@@ -3298,16 +3420,19 @@ resolveLocalizedText({ en: 'Name', fr: 'Nom' }, 'fr-FR', 'en'); // 'Nom'
 
 ### composeLocalePayload / decomposeLocalizedFields / buildAdditionalLocaleOptions
 
-Round-trips a deployment-creation form's "Add locale" popup entries against DIAL Core's `LocaleTextEntryDto[]` write payload, and builds the popup's selectable locale options.
+Round-trips a deployment-creation form's "Add locale" popup entries against DIAL Core's `LocaleTextEntryDto[]` write payload, and builds the popup's selectable locale options. `buildAdditionalLocaleOptions(codes, primaryLocale, formatLabel?)` drops the exact `primaryLocale` match (so `en-GB` stays next to `en`) and labels each option with `formatLabel`, which defaults to `code.toUpperCase()`. The host supplies the codes and any language-name resolver; the lib reads no configuration.
 
 ```ts
 import {
+  buildAdditionalLocaleOptions,
   composeLocalePayload,
   decomposeLocalizedFields,
 } from '@epam/ai-dial-chat-hooks';
 
 const payload = composeLocalePayload(otherLocales, 'en'); // LocaleTextEntryDto[] | undefined
 const rows = decomposeLocalizedFields(displayName, description, 'en');
+const options = buildAdditionalLocaleOptions(['en', 'de'], 'en'); // [{ code: 'de', label: 'DE' }]
+const named = buildAdditionalLocaleOptions(['de'], 'en', resolveLanguageName);
 ```
 
 ## Shared Utilities
@@ -3469,6 +3594,57 @@ import { ExternalServiceAuthStatus } from '@epam/ai-dial-chat-hooks';
 
 const isSignedIn =
   service.userLevelAuthStatus === ExternalServiceAuthStatus.SignedIn;
+```
+
+### useSigninInterrupt
+
+Resolves pending `toolset/signin` and `external-service/signin` client-channel events
+(`PendingSigninEvent`) into dialog rows and runs their login, decline and result
+reporting. It fetches metadata missing from `toolsets` once per resource (the fallback
+name renders meanwhile), auto-reports `success` for a `NONE`-auth external service,
+reports `success` for sibling events on the same resource and credentials level after a
+login, always logs in with `forceStale: true`, and calls `refetchToolsets` before
+reporting a toolset login. `login` stays synchronous up to the login call, so an OAuth
+popup opens inside the click. A failed attempt leaves the event pending with a
+`SigninInterruptRowError` (`LoginFailed`, `PopupBlocked`, `DeclineFailed`,
+`AdminConsentRequired`, `OfflineUnavailable`); a cancelled login returns the row to
+`SigninInterruptRowStatus.Idle` without one. `announcement`
+(`SigninInterruptAnnouncementKind.LoginSucceeded` / `Declined` plus the resource name)
+carries the latest resolution for a status region. `offlineUsageConsent` defaults to
+`true`; `isOfflineUsageConsentShown` is `true` while any row uses an API key or OAuth.
+
+The hook never constructs a client and holds no copy: the host passes its configured
+fetch, login and report operations and the locales, and maps errors and announcements
+to its own strings. `SigninInterruptDialog` from `@epam/ai-dial-catalog` renders the
+rows. Available from the root and `./external-services`, together with `SigninRowInfo`,
+`SigninInterruptRow`, `SigninInterruptAnnouncement`, `UseSigninInterruptOptions`,
+`UseSigninInterruptResult` and the row helpers `resolveToolsetSigninRowInfo`,
+`resolveExternalServiceSigninRowInfo` and `getSigninEventResourceKey`.
+
+```tsx
+import {
+  useExternalServiceLogin,
+  useSigninInterrupt,
+} from '@epam/ai-dial-chat-hooks/external-services';
+import { useToolsetLogin } from '@epam/ai-dial-chat-hooks/oauth';
+
+const { login: loginToolset } = useToolsetLogin(toolsetLoginOptions);
+const { login: loginExternalService } = useExternalServiceLogin(
+  externalServiceLoginOptions,
+);
+const { rows, announcement, login, decline, declineAll, changeApiKey } =
+  useSigninInterrupt({
+    pendingEvents,
+    toolsets,
+    activeLocale: language,
+    primaryLocale: 'en',
+    getToolset, // (toolsetId) => Promise<DialToolsetDto>
+    getExternalService, // (appId, serviceName) => Promise<GetExternalServiceResponseDto>
+    loginToolset,
+    loginExternalService,
+    refetchToolsets,
+    reportEvent, // (eventId, 'success' | 'denied') => Promise<unknown>
+  });
 ```
 
 ## OAuth Popup Flow
@@ -3747,7 +3923,7 @@ if (outcome.type === ToolsetLoginOutcomeType.PopupBlocked) {
 
 Runs inside the OAuth callback popup and completes the flow: reads and clears the redirect state from the popup's own `sessionStorage`, removes the authorization code from the visible URL **before** any request, validates the returned `state` against the stored one, performs the exchange through the injected callback, then reports the outcome into the popup URL and over the flow channel until the opener acknowledges it, closing the popup afterwards. It runs its effect once per mount even under StrictMode double-invocation, renders nothing, and produces no user-visible text.
 
-Per-resource-kind dispatch stays in the host page — the hook sees only the one injected `exchange` callback.
+The hook itself has no per-resource-kind branching — it sees only the one injected `exchange` callback. A host serving toolsets, external services and offline credentials through one callback route builds that callback with [`createOAuthCallbackExchange`](#createoauthcallbackexchange); a host with a single resource kind may pass its own.
 
 **Parameters**:
 
@@ -3794,6 +3970,41 @@ const { isInProgress, failureReason } = useOAuthCallbackCompletion({
   callbackPath: '/auth/toolset-signin',
   exchange,
 });
+```
+
+### createOAuthCallbackExchange
+
+`createOAuthCallbackExchange(operations)` returns the `exchange` callback `useOAuthCallbackCompletion` takes, dispatching the authorization code by the stored redirect state's `resourceKind`:
+
+| `resourceKind`       | Operation called                                | Body                                                                                                                               |
+| -------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `Toolset` or absent  | `loginToolset(toolsetId, body)`                 | `url`, `credentialsLevel`, `authenticationType: OAUTH`, `code`, `redirectUri`, `offlineUsageConsent`                               |
+| `ExternalService`    | `signInExternalService(appId, serviceId, body)` | `credentialsLevel`, `authenticationType: OAUTH`, `code`, `redirectUri`, `offlineUsageConsent`; ids parsed from the stored scope id |
+| `OfflineCredentials` | `signInOfflineCredentials(body)`                | `code`, `redirectUri`                                                                                                              |
+
+An external-service scope id that `parseExternalServiceUrl` cannot split resolves `ToolsetOAuthFailureReason.MissingRedirectState` without calling anything. Success resolves `null`; a rejected operation rejects, which the hook reports as `LoginRequestFailed`. The operations (`OAuthCallbackExchangeOperations`) are the host's already-configured sign-in adapters — the lib never builds a client — and their resolved values are ignored. The returned function is stateless, so build it once at module scope. Available from the root and `./oauth`.
+
+```tsx
+import {
+  createOAuthCallbackExchange,
+  useOAuthCallbackCompletion,
+} from '@epam/ai-dial-chat-hooks/oauth';
+
+const exchange = createOAuthCallbackExchange({
+  loginToolset,
+  signInExternalService,
+  signInOfflineCredentials,
+});
+
+const ToolsetAuthCallback = () => {
+  const [searchParams] = useSearchParams();
+  const { isInProgress, failureReason } = useOAuthCallbackCompletion({
+    searchParams,
+    callbackPath: '/auth/toolset-signin',
+    exchange,
+  });
+  // render isInProgress / failureReason with the host's own copy
+};
 ```
 
 ## Toolset Login Events
@@ -4105,6 +4316,16 @@ const limits = mapDeploymentLimitsToInput(
 import { findWorstCappedRow } from '@epam/ai-dial-chat-hooks/catalog';
 
 const worst = findWorstCappedRow(mapDeploymentLimitsToInput(limits, labels));
+```
+
+### getGaugeNeedleAngle
+
+`getGaugeNeedleAngle(usedPercent)` returns the angle, in degrees clockwise from 12 o'clock, at which a usage dial's needle points: `-135` at 0%, `0` at 50% and `135` at 100%, with the percentage clamped to 0–100. Available from the root and `./usage-limits`.
+
+```ts
+import { getGaugeNeedleAngle } from '@epam/ai-dial-chat-hooks/usage-limits';
+
+const style = { '--usage-angle': getGaugeNeedleAngle(worst.usedPercent) };
 ```
 
 ### mapDeploymentLimitsDtoToCatalogLimits
@@ -4458,15 +4679,15 @@ run status, and which delete or mutation error applies — and the host supplies
 every word through formatter objects. Available from the root and
 `./scheduled-tasks`.
 
-| Export                                                              | Returns                                                                                                                                      |
-| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output; `options.timeZone` defaults to the browser's, `options.locale` formats dates and weekdays |
-| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                        |
-| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                     |
-| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                  |
-| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                             |
-| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                 |
-| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                  |
+| Export                                                              | Returns                                                                                                                                                                                           |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output; `options.timeZone` defaults to the browser's, `options.locale` formats dates and weekdays (several weekdays are joined with `Intl.ListFormat`) |
+| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                                                                             |
+| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                                                                          |
+| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                                                                       |
+| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                                                                                  |
+| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                                                                      |
+| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                                                                       |
 
 ```ts
 import {
@@ -4483,8 +4704,6 @@ const scheduleLabels: ScheduledTaskScheduleLabels = {
   hourlyAt: (minute) => `Every hour at :${minute}`,
   dailyAt: (time) => `Every day at ${time}`,
   weeklyAt: (day, time) => `Every ${day} at ${time}`,
-  everyNWeeks: (count, day, time) =>
-    `Every ${count} weeks on ${day} at ${time}`,
   monthlyAt: (day, time) => `Monthly on day ${day} at ${time}`,
   invalid: 'Invalid schedule',
   recurringFallback: 'Recurring',
@@ -4535,7 +4754,7 @@ if (result.ok) {
 
 ### getNextCronOccurrence
 
-Returns the next UTC time a cron trigger with a fixed `hour`/`minute` fires after `from` (default: now), honouring its `day_of_week` (APScheduler Monday=0) or `day` (a number or `'last'`) constraint. Returns `undefined` when the fields are not plain values it can evaluate (`*`, ranges, lists). Available from the root and `./scheduled-tasks`.
+Returns the next UTC time a cron trigger with a fixed `hour`/`minute` fires after `from` (default: now), honouring its `day_of_week` (APScheduler Monday=0, one weekday or a comma list such as `'0,2,4'`) or `day` (a number or `'last'`) constraint. Returns `undefined` when the fields are not plain values it can evaluate (`*`, ranges, steps). Available from the root and `./scheduled-tasks`.
 
 ```ts
 import { getNextCronOccurrence } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
@@ -4888,6 +5107,150 @@ const next = rememberPublishFolderKey(storedKeys, toFolderPathKey(folderPath));
 if (next) setStoredKeys(next);
 ```
 
+### useResourceFolders / parseResourceFolderPath
+
+`useResourceFolders({ listFolders, isEnabled })` lazily loads one resource
+type's personal folder tree for a destination picker: the root once
+`isEnabled` (default `true`) is first true, then one listing per expanded
+folder. `listFolders(path)` is the host's already-bound listing operation (a
+plain-text path, `''` for the root) returning a `ResourceFoldersResponseDto`;
+the hook builds no request itself. `onCreateFolder` adds a folder to the
+in-memory tree only, kept across later listings. `hasError` is `true` while
+any folder's last fetch failed, and `retry()` re-fetches those folders. Pass
+`folderItems`, `expandedPaths`, `onExpandedPathsChange` and `loadingPaths` to a
+`FolderDestinationRoot` of `@epam/ai-dial-publish-panel`'s multi-root tree.
+
+`parseResourceFolderPath(id)` returns the decoded folder segments of a personal
+resource id `{type}/{bucket}/{folder…}/{name}` — `[]` at the bucket root or for
+an id that is not a full resource id. Both are available from the root and
+`./catalog`.
+
+```ts
+import {
+  parseResourceFolderPath,
+  useResourceFolders,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const personal = useResourceFolders({
+  listFolders: listApplicationFolders,
+  isEnabled: isPanelOpen,
+});
+const currentFolder = parseResourceFolderPath(application.id);
+```
+
+### useResourceSavePanel / runResourceSave
+
+`useResourceSavePanel(params)` owns the Save panel flow for one resource and
+returns `panelProps` to spread on `StandaloneSaveToFolderPanel` from
+`@epam/ai-dial-publish-panel`, plus `submit()`. It covers:
+
+- the Personal root, loaded through `useResourceFolders`;
+- the Organization root, built from the `organizationFolders` a host gets
+  from `usePublishFolders`; omit it when the user may not publish, and the
+  root is not offered;
+- the version choice, checked against `versionPattern` and reported as a
+  `ResourceSaveVersionError` (`Invalid`, `Unchanged`, `Exists`) that
+  `labels.getVersionError` turns into text;
+- the access rules of the pending Organization folder, fetched with
+  `publishClient.getPublishRules`, and kept while the same folder stays chosen.
+
+The host owns everything else: the resource summary, the panel's own labels,
+`onClose`, and the notification it shows from `onSaved(result, choice)`. The
+hook reads no i18n, app context or storage.
+
+`runResourceSave(adapter, choice, publish)` is the orchestrator the hook runs.
+With an edit adapter (`ResourceEditSaveAdapter`) it saves in place or as a
+new version, then moves into another Personal folder, or publishes to an
+Organization folder. With a create adapter (`ResourceCreateSaveAdapter`, told
+apart by `isResourceCreateAdapter`) it calls `createIn` with the chosen
+Personal folder, or with the root before publishing; the result's `isCreated`
+is then `true`, and the panel offers no version choice. A failure after the save resolves with the
+`ResourceSaveOutcome` `SavedButMoveFailed` or `SavedButPublishFailed`.
+
+The module also exports:
+
+- `SaveDestinationRoot` (`Personal`, `Organization`);
+- the `SavedResource`, `ResourceSaveChoice`, `ResourceSaveResult` and
+  `PublishSavedResource` types;
+- `ResourceSaveError`, for a failure whose message is already translated;
+- `createPublishSavedResource(publishClient)`.
+
+All of it is available from the root and `./catalog`.
+
+```ts
+import { useResourceSavePanel } from '@epam/ai-dial-chat-hooks/catalog';
+
+const { panelProps } = useResourceSavePanel({
+  isOpen,
+  adapter,
+  resourceId: application.id,
+  currentFolderPath: parseResourceFolderPath(application.id),
+  currentVersion: application.version,
+  versionPattern: /^\d+(\.\d+)*$/,
+  listPersonalFolders: listApplicationFolders,
+  organizationFolders: canPublish ? publishFolders : undefined,
+  publishClient,
+  ruleSourceOptions: ['roles'],
+  labels: {
+    personalRoot: 'Personal',
+    organizationRoot: 'Organization',
+    foldersLoadError: 'Folders could not be loaded',
+    saveError: 'Saving failed',
+    getVersionError: (error, version) => `${error}: ${version}`,
+  },
+  onSaved: (result, choice) => notifySaved(result, choice),
+});
+```
+
+### Resource save adapters
+
+These functions build the `ResourceSaveAdapter` for each resource type.
+Each one takes a configured generated client and never creates one:
+
+- **`createEmbeddedApplicationSaveAdapter({ applicationsApi, applicationId, runEmbeddedSave, getCommitFailedMessage })`**
+  is for Quick Apps, whose embedded editor is the only writer. A new version
+  runs in three steps:
+  1. fork the stored application;
+  2. run the editor's save on the original;
+  3. commit, which swaps the two bodies.
+
+  If the save fails, the fork is deleted. If the commit fails, it throws a
+  `ResourceSaveError` with `getCommitFailedMessage(version)`.
+
+- **`createHostApplicationSaveAdapter({ applicationsApi, applicationId, update, createVersion })`**
+  is for applications the host writes itself.
+- **`createToolsetSaveAdapter({ toolsetsApi, toolsetId, body })`** writes a new
+  version with `createOnly: true` into the chosen folder.
+- **`createPromptSaveAdapter({ promptsApi, promptId, body })`** is unversioned:
+  it updates the prompt and then moves it.
+- **`createPromptFolderLister(promptsApi)`** returns the `listPersonalFolders`
+  for prompts, one folder level built from the prompt listing.
+- **`createToolsetCreateAdapter({ toolsetsApi, body })`** and
+  **`createPromptCreateAdapter({ promptsApi, body })`** create a new toolset
+  (create-only) or prompt in the chosen folder.
+- **`createSkillFolderLister(skillsApi, bucket)`** returns the
+  `listPersonalFolders` for skills: the grouping folders of one level, across
+  every listing page.
+
+The client parameters are typed as the narrow `Pick`s
+`ResourceSaveApplicationsApi`, `ResourceSaveToolsetsApi`,
+`ResourceSavePromptsApi` and `ResourceSaveSkillsApi`. All of it is available from the root and
+`./catalog`.
+
+```ts
+import {
+  createPromptFolderLister,
+  createToolsetSaveAdapter,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const adapter = createToolsetSaveAdapter({
+  toolsetsApi,
+  toolsetId: toolset.id,
+  body,
+});
+const listPromptFolders = createPromptFolderLister(promptsApi);
+```
+
 ### useCatalogToolsetCredentials
 
 Owns the catalog's toolset credential login/logout flow: wires `useToolsetLogin` (see OAuth Popup Flow) to the host's DIAL Core operations, resolves each outcome to a notification and toolset refetch, and owns the notification copy for every credential level / API-key / org-fallback combination. Every backend call and OAuth callback route arrives as an injected parameter — the hook constructs no client instance and reads no app context or i18n.
@@ -5166,6 +5529,13 @@ const {
   onNotify: (notification) => showNotification(notification),
 });
 ```
+
+Pass `onSaveRequest(adapter, values)` to save through the Save panel (`useResourceSavePanel`). A submit that passes validation then writes nothing itself. Instead it hands the host a `ResourceSaveAdapter`:
+
+- **Create mode:** `createIn(folderPath)` creates the skill under the chosen folder.
+- **Edit mode:** `saveInPlace()` updates the skill with the loaded ETag, and `move(id, folderPath)` calls `client.moveSkill`.
+
+In this mode the hook shows no success notification and does not navigate; the panel does both. Write failures reject with a `ResourceSaveError` whose message is the matching `messages` text. A stale edit (412) still sets `conflict`.
 
 ### useSkillFileActions
 
@@ -5968,8 +6338,47 @@ const outcome = await login(
 );
 ```
 
-`MapApplicationCredentialsOptions` is exported. The host keeps localization,
-the outcome-to-message mapping and logout.
+`MapApplicationCredentialsOptions` is exported. The host keeps localization;
+the login/logout flow is `useApplicationCredentialActions` below.
+
+### useApplicationCredentialActions
+
+Returns the `onLogin` / `onLogout` callbacks of the catalog's
+`ApplicationCredentials` forms. `onLogin(serviceId, params)` builds the request
+with `buildApplicationCredentialLoginParams` and calls the host's `login`: success
+refreshes and resolves `true`; cancellation or an unknown service resolves
+`false`; a blocked popup, missing administrator consent or unavailable offline
+access throws an `Error` with that label, and any other outcome (or a thrown
+`login`) throws `loginFailed`. `onLogout(serviceId)` signs out only `USER`
+credentials through the host's `signOutExternalService`, then refreshes; it
+does nothing for a `DIAL_NATIVE` or unknown service and throws `logoutFailed`
+when sign-out fails. Available from the root and `./catalog`.
+
+```tsx
+import {
+  useApplicationCredentialActions,
+  useApplicationCredentials,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const { services, refresh } = useApplicationCredentials({
+  appId,
+  externalServicesClient,
+  offlineCredentialsClient,
+});
+const { onLogin, onLogout } = useApplicationCredentialActions({
+  appId,
+  services,
+  login, // useExternalServiceLogin(...).login
+  signOutExternalService, // (appId, serviceId, body) => configured client call
+  refresh,
+  labels: { loginFailed: t('toolsetSignin.errorLoginFailed') },
+});
+```
+
+`UseApplicationCredentialActionsParams`, `UseApplicationCredentialActionsResult`,
+`ApplicationCredentialActionsLabels` and
+`DEFAULT_APPLICATION_CREDENTIAL_ACTIONS_LABELS` are exported. Each omitted label
+falls back to its English default. The hook owns no client, localization or UI.
 
 ### useOfflineCredentialsGate
 
@@ -6171,7 +6580,10 @@ displaying local time should explicitly pass
 determines the offset for the existing UTC-storage policy; this is not a
 timezone-aware future scheduler. Numeric weekday values use Monday = 0.
 Hourly `time` is the local minute; daily/weekly/monthly `time` is HH:mm.
-`EveryNMinutes` supplies `intervalMinutes`.
+`EveryNMinutes` supplies `intervalMinutes`. A `Weekly` description also
+carries `daysOfWeek`, every local weekday Monday first, so a `day_of_week`
+list such as `'0,2,4'` (the Custom repeat) is described as one weekly
+schedule. Any `week` constraint is `Custom`.
 
 The scheduler APIs are available from both the root barrel and the
 `/scheduled-tasks` entry; prefer the subpath for a focused dependency graph.

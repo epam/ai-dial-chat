@@ -30,6 +30,7 @@ import {
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
+import { ResourceIdResponseDto } from '../common/dto/resource-folder.dto';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { ApiIfMatchHeader, IF_MATCH_HEADER } from './dto/skill-file-path.dto';
 import {
@@ -45,6 +46,7 @@ import {
 import {
   DeleteSkillDto,
   DeleteSkillFileDto,
+  MoveSkillDto,
   SkillFileDeleteResponseDto,
   SkillGroupingFolderDto,
   SkillGroupingFolderResponseDto,
@@ -839,5 +841,42 @@ export class SkillsController {
       at,
       ifMatch,
     );
+  }
+
+  @Post('move')
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'moveSkill',
+    summary: 'Move a skill into another folder',
+    description:
+      "Moves a skill in the caller's own bucket into the given folder, never overwriting an existing skill. Resolves with the skill's new id.",
+  })
+  @ApiDialCoreErrors()
+  @ApiResponse({ status: 200, type: ResourceIdResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid path or folder path' })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Skill not found' })
+  @ApiResponse({
+    status: 409,
+    description: 'A skill with this name already exists in the folder',
+  })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  moveSkill(
+    @Body() body: MoveSkillDto,
+    @Req() req: Request,
+  ): Promise<ResourceIdResponseDto> {
+    const { at, bucket } = req.user as SessionUser;
+    return this.skillsService.moveSkill(bucket, body.path, body.folderPath, at);
   }
 }

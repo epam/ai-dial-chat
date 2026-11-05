@@ -5,7 +5,6 @@
 The standalone publish-panel library: its public surface, and the independence from catalog models, i18n, and app context it must keep.
 
 ## Requirements
-
 ### Requirement: Public package surface exports the shared publish UI and state
 `libs/publish-panel/src/index.ts` SHALL be the only public entry for the publish UI (`libs/catalog/src/index.ts` no longer re-exports any publish symbol; it only imports `@epam/ai-dial-publish-panel/styles.css`) and SHALL export: components `PublishPanel`, `StandalonePublishPanel`, `PublishFooter`, `PublishFoldersTree`, `PublishHistoryList`, `PublishAccessRules`, `PublishAccessRuleEditor`; the `usePublishFlow` hook (its `UsePublishFlowOptions.onPublish` signature now `(item: TItem, folderPath: string[], rules: PublicationRule[], author: string, publishCredentials: boolean) => Promise<void>`, `UsePublishFlowOptions` now also accepting an optional `onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>` and an optional `defaultAuthor?: string`, and `UsePublishFlowResult` now including `rules: PublicationRule[]`, `setRules: (rules: PublicationRule[]) => void`, `isRulesLoading: boolean`, `hasRulesLoadError: boolean`, `author: string`, `setAuthor: (author: string) => void`, `publishCredentials: boolean`, and `setPublishCredentials: (value: boolean) => void`); the pure functions `derivePublishState`, `formatPublishedDate`, and the `publish-folder-tree` helpers (`filterFolderTree`, `sortFolderTree`, `mergeFolderPaths`, `collectFolderKeys`, `toFolderPathKey`, `fromFolderPathKey`, `toDialFileTree`, `validateFolderName`, `getUniqueFolderName`, `getSiblingFolderNames`); the `PUBLISH_PANEL_CLASS` public class-name constant; and all associated types/interfaces (`PublishFolderNode`, `PublishHistoryEntry`, `PublishResourceSummary`, `PublishCalloutKind`, `PublishDerivationInput`, `PublishDerivedState`, `PublishFlowItem`, `UsePublishFlowOptions`, `UsePublishFlowResult`, `PublicationRule`, `PublicationRuleFunction`, `FolderNameValidationMessages`, every `*Labels`, `*Props`, `*Colors`, and `*Styles` interface, including `PublishAccessRulesProps`/`PublishAccessRuleEditorProps` and their labels). Internal-only helpers (e.g. `PublishPanel.tsx`'s unexported `calloutVariant`/`calloutMessage`/`withBoldFolderName`) SHALL NOT be exported from the barrel.
 
@@ -32,6 +31,7 @@ The standalone publish-panel library: its public surface, and the independence f
 #### Scenario: usePublishFlow's defaultAuthor option is exercised by both consumers
 - **WHEN** `PublishConversationPanelContainer` and `DetailsPanel` each call `usePublishFlow`
 - **THEN** both supply a `defaultAuthor` resolved by the host from the signed-in user's display name, with no session, claims, or context access inside the library
+
 ### Requirement: The library has no dependency on catalog domain models
 `PublishPanel` and `StandalonePublishPanel` SHALL NOT import `CatalogItem`, `EntityHeader`, or any other symbol from `@epam/ai-dial-catalog`. `PublishPanel` SHALL accept an optional `renderSummary?: () => ReactNode` prop in place of the removed `item?: CatalogItem` prop. The summary row SHALL render through `@epam/ai-dial-chat-shared`'s `ResourceSummary`: when `resource?.type` is set, the typed `ResourceSummary` (type, `resource.title`, `resource.version`, `resource.iconUrl`) renders and `renderSummary` is ignored; otherwise `renderSummary()`'s return value renders inside `ResourceSummary` when provided, and the title-only `resource.title` row renders when it is absent. `StandalonePublishPanel` SHALL forward the same `renderSummary` prop through to `PublishPanel` without inspecting it. `usePublishFlow`'s generic type parameter default SHALL be `<TItem extends PublishFlowItem = PublishFlowItem>`, not `CatalogItem`.
 
@@ -158,7 +158,7 @@ The library SHALL NOT resolve the author itself: it holds no notion of a session
 
 ### Requirement: PublishPanel renders a controlled author field below the destination folder
 
-`PublishPanel` SHALL render a labelled, single-line text input for the publication's display author inside the destination-folder block: after `PublishFoldersTree` and its callout, and before the `PublishAccessRules` wrapper. `StandalonePublishPanel` SHALL forward the same props through to `PublishPanel` without inspecting them.
+`PublishPanel` SHALL render a labelled, single-line text input for the publication's display author inside the destination-folder block of the main view: after the destination row and its callout, and before the `PublishAccessRules` wrapper. `StandalonePublishPanel` SHALL forward the same props through to `PublishPanel` without inspecting them.
 
 `PublishPanelProps` and `StandalonePublishPanelProps` SHALL each gain required controlled props `author: string` and `onAuthorChange: (author: string) => void`, mirroring the existing `rules` / `onRulesChange` pair. This is a breaking change for consumers implementing these prop types; both in-repo consumers are updated in the same change.
 
@@ -166,16 +166,16 @@ The field SHALL be rendered with ui-kit 2.0 `Input` (`labelProps`, `placeholder`
 
 `PublishPanelLabels` SHALL gain optional `authorLabel`, `authorPlaceholder`, and `authorHint` entries with English defaults (`'Author'`, `'Author name'`, and `'Shown as the publication’s author. Defaults to you — replace it to credit a team instead.'`), so the library stays free of i18n per AGENTS.md §Library isolation.
 
-Accessibility: the input SHALL be associated with its visible label through `Input`'s `labelProps` (not a bare `aria-label`), SHALL be reachable in the panel's natural tab order between the folder tree and the access-rules controls, and SHALL carry its hint as the field's `caption` so it is announced as the field's description. No new live region is required, because the field produces no dynamic feedback.
+Accessibility: the input SHALL be associated with its visible label through `Input`'s `labelProps` (not a bare `aria-label`), SHALL be reachable in the panel's natural tab order between the destination row and the access-rules controls, and SHALL carry its hint as the field's `caption` so it is announced as the field's description. No new live region is required, because the field produces no dynamic feedback.
 
 RTL/direction impact: none beyond what the surrounding panel already provides. The field uses ui-kit `Input` and existing layout utilities with CSS logical properties only; no directional icon is added, so no `rtl:` mirroring applies.
 
 Memoisation: no new `useMemo`/`useCallback` is required. The field is a controlled input whose value and change handler come from `usePublishFlow`, whose `setAuthor` is already stable.
 
-#### Scenario: Field renders between the folder tree and the access rules
+#### Scenario: Field renders between the destination row and the access rules
 
-- **WHEN** the publish panel is open
-- **THEN** the author input appears after the destination-folder tree (and its callout, when shown) and before the access-rules section
+- **WHEN** the publish panel is open on its main view
+- **THEN** the author input appears after the destination row (and its callout, when shown) and before the access-rules section
 
 #### Scenario: Editing the field calls onAuthorChange
 
@@ -301,3 +301,69 @@ The marker reports what a publication **requested**. The library SHALL NOT claim
 
 - **WHEN** `PublishHistoryList` renders an entry whose `publishCredentials` is `false` or absent
 - **THEN** that row renders exactly as it did before this change, with no marker
+
+### Requirement: Save-to-folder panel components are exported
+`@epam/ai-dial-publish-panel` (`libs/publish-panel/src/index.ts`) SHALL export:
+
+- `SaveToFolderPanel` (body) and `StandaloneSaveToFolderPanel` (`SideDrawer` shell with a pinned Cancel/Save footer);
+- the models `SaveToFolderPanelProps`, `SaveToFolderPanelLabels`, `SaveToFolderPanelColors`, `FolderDestination` (`{ rootKey: string; path: string[] }`) and `FolderDestinationRoot` (`{ key: string; label: string; items: PublishFolderNode[]; canCreateFolders?: boolean }`);
+- the string enum `SaveVersionMode` (`Keep = 'keep'`, `New = 'new'`).
+
+The components SHALL take every user-visible string from `labels`, with English defaults. Every color SHALL come from `colors`, applied as `var(--publish-panel-x, fallback)` in their `.module.scss`. Typography comes from `*ClassName` props whose defaults are kit `dial-*-text` classes.
+
+The components SHALL know no resource ids, REST paths, i18n, routing or storage. The host supplies:
+
+- the summary `resource`, `roots`, the committed `destination` and `onDestinationChange`;
+- `onCreateFolder(rootKey, parentPath, name)`;
+- optional version props: `versionMode`, `onVersionModeChange`, `currentVersion`, `newVersion`, `onNewVersionChange`, `newVersionError`;
+- `isSubmitting`, `isSubmitDisabled`, `onSubmit` and `onClose`.
+
+The version section renders only when `version` (`SaveToFolderVersionProps`) is provided. `StandaloneSaveToFolderPanel` owns the view state (`SaveToFolderView`: `Main`, `ChangeFolder`) and the pending Change-view destination, and renders the per-view header (the kit `SideDrawer`'s `onBack` in the Change view) and footer (Save, or Select). `SaveToFolderPanel` is the controlled body: it takes `view`, `pendingDestination`, `onPendingDestinationChange` and `onChangeFolderClick`.
+
+The main view shows the committed destination as the kit `FolderName` (the path joined with " / ", `destinationClassName` defaulting to `dial-small-semi-text`, color `destinationText`) followed by a small ghost Change button. When `accessRules` (`SaveToFolderAccessRulesProps`) is passed and the pending destination belongs to a root with `hasAccessRules`, `PublishAccessRules` renders below the tree in the Change view; the shell reports the pending destination through `onPendingDestinationChange`, including the reset to `destination` on entering and leaving that view, so the host can load that folder's rules.
+
+#### Scenario: Unversioned host
+- **WHEN** a host renders `SaveToFolderPanel` without `versionMode`
+- **THEN** no Version section is rendered
+
+#### Scenario: Change view commits on Select only
+- **WHEN** the user selects a folder in the Change view
+- **THEN** `onDestinationChange` is not called until Select is pressed, and is never called when Back or Cancel is pressed
+
+#### Scenario: No history or dependencies
+- **WHEN** `SaveToFolderPanel` renders
+- **THEN** it renders no publish history and no dependencies list
+
+### Requirement: PublishFoldersTree supports multiple roots
+`PublishFoldersTree` SHALL accept optional `roots?: FolderDestinationRoot[]`, `destination?: FolderDestination` and `onDestinationChange?: (destination: FolderDestination | undefined) => void`. When `roots` is given:
+
+- the tree renders one always-expanded top-level node per root, in order;
+- each root node and every folder under it is selectable;
+- search filters all roots, and inline creation targets the root the parent belongs to, using the same validation as the single-root mode;
+- arrow-key navigation moves across root boundaries;
+- a root with `canCreateFolders: false` offers no create actions.
+
+When `roots` is absent, `items` / `rootLabel` / `selectedPath` / `onSelectedPathChange` SHALL behave exactly as before.
+
+#### Scenario: Selecting a folder under the second root
+- **WHEN** the tree has roots `personal` and `organization` and the user clicks `organization › EPAM › Delivery`
+- **THEN** `onDestinationChange` receives `{ rootKey: 'organization', path: ['EPAM', 'Delivery'] }`
+
+#### Scenario: Single-root callers are unchanged
+- **WHEN** the Catalog Publish panel renders `PublishFoldersTree` with `items` and `rootLabel` only
+- **THEN** it renders and selects exactly as before this change
+
+### Requirement: PublishPanel picks the destination through a drill-in folder view
+`PublishPanel` SHALL render one of two views, chosen by its `view` prop (`PublishPanelView`, default `Main`), matching the save-to-folder panel. The main view SHALL show the entity summary, a "Publish to folder" heading, and a destination row with the committed path (`rootFolderLabel` followed by `selectedFolderPath`, joined with ` / ` in one truncating `FolderName`), or `noFolderSelectedLabel` when nothing is selected, beside a button labelled `changeFolderLabel` or `chooseFolderLabel` that calls `onChangeFolderClick`. The callout, author field, credentials opt-in and access rules SHALL follow the row. The `ChangeFolder` view SHALL show only the folder search and `PublishFoldersTree`, bound to `pendingFolderPath` and `onPendingFolderPathChange`.
+
+`usePublishFolderView` SHALL hold the view and the pending folder: opening copies the committed folder into the pending one, `selectFolder` commits a defined pending folder through `onSelectedFolderPathChange` and returns to the main view, `backToMain` returns without committing, and every opening of the flow starts on the main view. `PublishFooter` SHALL render Cancel and Select in place of the submit action when `view` is `ChangeFolder`. `StandalonePublishPanel` and the catalog `DetailsPanel` SHALL title the folder view "Change folder" and show a Back button that returns to the main view.
+
+Accessibility: the folder view root SHALL be a named `group` that receives focus when the view opens, and focus SHALL return to the Change button when the main view comes back.
+
+#### Scenario: Choosing a folder commits it only on Select
+- **WHEN** the user presses Choose, picks a folder in the tree and presses Select
+- **THEN** `onSelectedFolderPathChange` is called with that folder and the main view shows its path in the destination row
+
+#### Scenario: Leaving the folder view discards the pick
+- **WHEN** the user picks a folder in the folder view and presses Back or Cancel
+- **THEN** the committed folder is unchanged and the main view is shown

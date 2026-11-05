@@ -98,6 +98,7 @@ const ProjectsPage: FC = () => {
       errorLabel: t(ProjectsI18nKeys.ErrorLabel),
       incompleteLabel: t(ProjectsI18nKeys.IncompleteLabel),
       retryLabel: t(ButtonsI18nKeys.Retry),
+      loadingAriaLabel: t(BasicI18nKeys.Loading),
       sourceLabels: {
         [ProjectSource.Personal]: t(ProjectsI18nKeys.SourcePersonal),
         [ProjectSource.Shared]: t(ProjectsI18nKeys.SourceShared),

@@ -1030,20 +1030,22 @@ interface PinnedProjects {
   ) => void;
   /** Id of the project the host currently shows; its row gets `aria-current="page"`. */
   activeProjectId?: string;
+  /** Presentation of the chats nested under a project. Defaults to `ConversationRowVariant.Indicator`. */
+  conversationRowVariant?: ConversationRowVariant;
 }
 ```
 
 **Rendering.** The lib SHALL NOT trim, sort or fetch: it renders exactly what the host passes. With `pinnedProjects` present, the Pinned group SHALL render each visible project, in order, before the pinned conversations, as these rows:
 
 1. **Project row.** It has the project icon (default Tabler `IconBriefcase`, 16px glyph in the 24px slot, `aria-hidden`, `DIAL_KIT_ICON_STROKE`, in the `textSecondary` color), the name truncated through `Highlight`, and the ⋮ trigger when `getActions` returns items.
-2. **One nested row per conversation.** It is an `Indicator` row (status point, title, `aria-current` when it matches `activeConversationId`) without a ⋮ trigger.
+2. **One nested row per conversation.** By default it is an `Indicator` row (status point, title, `aria-current` when it matches `activeConversationId`) without a ⋮ trigger. With `conversationRowVariant: ConversationRowVariant.Avatar` it is the panel's own `Avatar` row instead — the deployment avatar or `leadingIcon`, the title, and the trailing unread dot — still without a ⋮ trigger or drag, and with the same indent and guide line.
 3. **A See all row, when `hasMore` is set.** Its visible text is `labels.seeAllLabel` (default `'See all'`) in the `textSecondary` color, and its accessible name is `labels.seeAllAriaLabel(name)` (default `` `See all chats in ${name}` ``). It is only a link to the project: it has no ⋮ trigger, whatever `getActions` returns.
 
 The Pinned header SHALL render when the section has at least one visible project or pinned conversation. Collapsing it hides the project rows too.
 
 **Layout**, per the Figma frame "Chat - Project - See all" (`ao2NXcmfF23QrZigbiHC8M`, node `17:14375`):
 
-- Every row is 32px high with a 2px gap: `INDICATOR_ITEM_ROW_HEIGHT` (34).
+- Every row is 32px high with a 2px gap: `INDICATOR_ITEM_ROW_HEIGHT` (34); a nested row in the `Avatar` variant is `ITEM_ROW_HEIGHT` (36).
 - The project row has the same 8px inline padding and 2px icon gap as an `Indicator` row.
 - Nested and See all rows are offset 28px from the list's inline start (`padding-inline-start`). The See all row has no icon slot, so its text starts at the 8px row padding; it is start-aligned (`text-start`), since the kit `Button` centres its content.
 - A 1px vertical guide line is drawn at `inset-inline-start: 20px`, the centre of the project icon. Each nested and See all row draws its segment, so the line is continuous across the virtualized rows. The first segment starts 5px below its row's top, and the last segment (See all, or the last chat when there is none) ends 5px above its row's bottom.
@@ -1119,3 +1121,69 @@ The Pinned header SHALL render when the section has at least one visible project
 
 - **WHEN** `pinnedProjects` is absent
 - **THEN** the list renders the same rows as before this change, with no project, nested or See all row
+
+#### Scenario: Nested chats in the Avatar variant
+
+- **WHEN** `pinnedProjects.conversationRowVariant` is `ConversationRowVariant.Avatar`
+- **THEN** each nested chat renders as an `Avatar` row (avatar first, unread dot last) at `ITEM_ROW_HEIGHT`, while the project and See all rows keep `INDICATOR_ITEM_ROW_HEIGHT`
+
+### Requirement: `ConversationPanel` shows host-supplied pinned project trees
+
+`ConversationPanelProps` (`libs/conversation-panel/src/models/panel-props.ts`) SHALL accept an optional `pinnedProjects?: PinnedProjects`, the type exported from `@epam/ai-dial-conversation-panel` and defined by the requirement "The Pinned section renders host-supplied project trees". `ConversationPanel` SHALL forward the value to its inner `ConversationList` by reference, without copying, wrapping or filtering it. The list owns the rendering, so the project rows, nested chat rows and See all rows, their ordering inside the Pinned group, drag and drop rules, `aria-level`/`aria-setsize`/`aria-posinset` and RTL behaviour are exactly those the list defines; `ConversationPanel` adds none of its own.
+
+`ConversationPanel` SHALL also forward `labels.seeAllLabel` and `labels.seeAllAriaLabel` to the list. Both fields already belong to `ConversationPanelLabels` through `ConversationListLabels`; the panel SHALL include them in its memoized list labels object and in that object's dependency list, so the object keeps its identity while the values keep theirs. With either field omitted the list's defaults apply (`'See all'` and `` (name) => `See all chats in ${name}` ``).
+
+The panel's controlled inputs already reach the list, so these hold without panel-specific code:
+
+- **Search.** The panel's search text is the list's `searchQuery`: a project is matched by name or by the titles of its chats, as the list defines.
+- **Filter chips.** The active chip is the list's `activeFilter`, and `hiddenSources` is forwarded, so the Origin filter applies to a project's `source`.
+- **Chrome.** The header, New chat button, search field and filter chips render as without `pinnedProjects`.
+
+With `pinnedProjects` omitted or `undefined`, `ConversationPanel` SHALL render exactly as before. The prop has no state owner inside the panel: the host owns the trees and their callbacks, and the lib SHALL NOT know about DIAL projects, routes, pins or feature keys. The panel is already a `memo` component, so a host SHALL pass a referentially stable `pinnedProjects` (and a stable `seeAllAriaLabel`) to keep it from re-rendering; the lib adds no memoisation of its own beyond the labels object above.
+
+The change adds no user-visible strings (the See all text is host-translated through `labels`), is not gated by `ENABLED_FEATURES` or `ENABLED_FEATURES_ROLES`, adds no cache, and has no telemetry. It adds no direction-specific UI: the rows are the list's own.
+
+`libs/conversation-panel/README.md` SHALL document `pinnedProjects` and the See all labels for `ConversationPanel`.
+
+#### Scenario: A pinned project renders inside the panel
+
+- **GIVEN** `pinnedProjects.projects` holds P named "Support" with chats C1 and C2 and `hasMore: true`
+- **WHEN** `<ConversationPanel pinnedProjects={…} />` renders
+- **THEN** the Pinned group shows P's row, C1 and C2 as nested rows and a See all row, before any pinned conversation, below the panel's New chat button, search field and filter chips
+
+#### Scenario: Activating pinned project rows through the panel
+
+- **WHEN** the user activates P's row, C1 and P's See all row in turn
+- **THEN** `onSelectProject(P)`, `onSelectConversation(C1, P)` and `onSeeAll(P)` are called, and the panel's `onSelectConversation` is not called
+
+#### Scenario: The panel search filters project trees
+
+- **GIVEN** P is named "Support" and has chats "Weekly summary" and "Billing reply"
+- **WHEN** the user types "billing" into the panel's search field
+- **THEN** P's row and only "Billing reply" render, and no See all row renders
+
+#### Scenario: The panel filter chip applies to a project's source
+
+- **GIVEN** P has `source: FilterTab.Shared`
+- **WHEN** the user selects the "My chats" chip
+- **THEN** P does not render, and it renders again under the "All" and "Shared" chips
+
+#### Scenario: See all labels reach the list
+
+- **WHEN** `labels.seeAllLabel` is `'Show all'` and `labels.seeAllAriaLabel` returns `All chats of ${name}`
+- **THEN** P's See all row shows "Show all" and is named "All chats of Support"
+
+#### Scenario: Default See all labels
+
+- **WHEN** `labels` omits `seeAllLabel` and `seeAllAriaLabel`
+- **THEN** the See all row shows "See all" and is named "See all chats in Support"
+
+#### Scenario: No project trees without the prop
+
+- **WHEN** `pinnedProjects` is omitted
+- **THEN** the Pinned group holds only pinned conversations, and the rendered output matches the panel's output before this change
+
+#### Scenario: Labels keep their identity across unrelated renders
+
+- **WHEN** the panel re-renders with new `conversations` and the same `labels` field values
+- **THEN** the labels object handed to the list is the same reference, including the See all fields

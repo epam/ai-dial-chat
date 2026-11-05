@@ -79,6 +79,7 @@ import { McpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
   reloadAriaLabel="Reload"
   actionsGroupAriaLabel="MCP app actions"
   loadErrorLabel="Failed to load app"
+  loadingAriaLabel="Loading app"
   openedInCanvasLabel="Opened in canvas"
 />;
 ```

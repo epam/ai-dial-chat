@@ -87,7 +87,6 @@ const PinnedProjectActionOverlays: FC<Props> = ({
         <ProjectDeleteConfirmation
           isOpen={isDeleteOpen}
           projectName={project.name}
-          conversationCount={conversationCount}
           isDeleting={isDeleting}
           onConfirm={handleConfirmDelete}
           onClose={cancelDelete}

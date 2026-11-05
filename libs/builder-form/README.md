@@ -36,7 +36,7 @@ import '@epam/ai-dial-builder-form/styles.css';
 
 - `react` `^19.2.8`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.72`
+- `@epam/ai-dial-ui-kit` `^0.16.0`
 
 ## Components
 
@@ -47,6 +47,8 @@ The whole builder form page shell — full height, non-scrolling, with the page 
 It renders the header itself: a back control, the title, and a cancel/submit action pair, where submit is the primary action and both actions disable independently (e.g. submit disabled while required fields are empty, cancel disabled while a submission is in flight). Its responsive vertical and inline padding matches the scheduled-task detail header. Header styling is forwarded through `styles.header`.
 
 The action pair is placed per breakpoint: in the header at the desktop breakpoint, and in a sticky footer pinned over the bottom of the scrolling form at mobile widths, so it stays thumb-reachable while the form scrolls. Both copies render the same actions from the same props — exactly one is visible (and in the tab order) at any width. The footer paints the page background and an elevation shadow (`shadow-sm`, from `--shadow-sm`) so scrolled content never shows through it, and its two actions split the row equally. At mobile the header row — back control and title — reads as the first row of the form rather than a page bar: its divider is drawn above the row (under the app shell's floating header) instead of below it.
+
+`footerActionsOrder` (`BuilderFormActionsOrder.CancelFirst` by default) sets the order of the mobile footer pair; `BuilderFormActionsOrder.SubmitFirst` puts Submit before Cancel there, while the desktop header always lists Cancel first.
 
 `isSubmitDisabled` covers both "not ready yet" and "already submitting", so it cannot on its own tell a user which of the two is happening. `isSubmitting` supplies the difference: it puts a spinner in the submit button, sets `aria-busy` on it, and announces `labels.submittingLabel` (default `'Submitting'`) through the header's `role="status"` region. The button's accessible name stays `labels.submitButtonLabel` throughout — the spinner is `aria-hidden`. Set both flags while a submit is in flight.
 
@@ -215,8 +217,14 @@ import { AddAvatar } from '@epam/ai-dial-builder-form';
 
 The host-side counterpart to `DeploymentCreationForm`'s `onAddAvatarClick`: a file manager modal restricted to a single image, for picking an entity's avatar. It never talks to a backend, a specific file-manager implementation, or a storage identifier itself — `FileManagerModal` is the host's own DIAL file manager modal component (rendered for the actual browsing/upload UI), `bucket` comes from the host's user/session, `onAttach` is where the host resolves the picked file to a DIAL resource URL (and closes the modal), and every string is pre-translated through `labels`.
 
+`AVATAR_ALLOWED_MIME_TYPES` (PNG, JPEG, SVG) and `AVATAR_MAX_FILE_SIZE_BYTES` (1 MB) are the avatar limits both DIAL hosts pass; a host with other limits passes its own values.
+
 ```tsx
-import { AvatarPickerModal } from '@epam/ai-dial-builder-form';
+import {
+  AVATAR_ALLOWED_MIME_TYPES,
+  AVATAR_MAX_FILE_SIZE_BYTES,
+  AvatarPickerModal,
+} from '@epam/ai-dial-builder-form';
 
 <AvatarPickerModal
   isOpen={isAvatarPickerOpen}
@@ -335,6 +343,18 @@ import { MetadataField, MetadataForm } from '@epam/ai-dial-builder-form';
 />;
 ```
 
+`isVersionReadOnly` and `versionReadOnlyTooltip` are forwarded to `DeploymentCreationForm`: the Version field stays focusable and readable, but typing changes nothing and `onVersionBlur` is not called — for an editor whose version changes only by saving a new one.
+
+```tsx
+<MetadataForm
+  values={values}
+  errors={errors}
+  onChange={handleChange}
+  isVersionReadOnly={isEditMode}
+  versionReadOnlyTooltip="Use Save as new version to change it"
+/>
+```
+
 `renderDescription(textarea, fieldId)` wraps the Description textarea, for example in a label row with an extra action. The textarea then renders without its own label, so the wrapper must label the control whose id is `fieldId`:
 
 ```tsx
@@ -382,7 +402,7 @@ import {
 
 Renders the whole shared General-step field set. `values`, `errors`, `onChange`, `onAddAvatarClick`, and `labels` are required. The avatar field never opens a file picker itself — `onAddAvatarClick` is the host's hook to open its own file manager/upload flow, and the host reports the result back through `onChange({ iconUrl })`. `iconPreviewUrl` is the URL to actually render in the preview box; the host resolves it from `values.iconUrl` (which may be a DIAL file id rather than a directly displayable URL). Supplying `labels.ariaLabel` wraps the root in a named `role="group"`, so the field set is discoverable as one region inside a larger host form.
 
-`fields` renders a subset (Avatar, Name + Version, Description, Locales, Tags, in that fixed order); Name takes the full row when Version is hidden. `isNameReadOnly` (renders the Name field disabled; `nameReadOnlyTooltip` replaces its hover tooltip, which otherwise shows the value), `nameCaption`, `isDescriptionRequired`, and `errors.description` cover editors whose name is fixed after creation or whose description is required. `descriptionCaption` renders helper text under the Description textarea (for example a `120/2000` counter); the textarea never caps its length, so an over-limit value stays in the field for the host to flag through `errors.description`. When errors first appear, focus moves to the first invalid field — Name, then Version, then Description. `labels.topics.placeholder` falls back to `'Add tags, comma separated'`.
+`fields` renders a subset (Avatar, Name + Version, Description, Locales, Tags, in that fixed order); Name takes the full row when Version is hidden. `isNameReadOnly` (renders the Name field disabled; `nameReadOnlyTooltip` replaces its hover tooltip, which otherwise shows the value), `isVersionReadOnly` (renders the Version field read-only but focusable, ignoring typing and `onVersionBlur`; `versionReadOnlyTooltip` defaults to `'The version is changed with "Save as new version"'`), `nameCaption`, `isDescriptionRequired`, and `errors.description` cover editors whose name is fixed after creation or whose description is required. `descriptionCaption` renders helper text under the Description textarea (for example a `120/2000` counter); the textarea never caps its length, so an over-limit value stays in the field for the host to flag through `errors.description`. When errors first appear, focus moves to the first invalid field — Name, then Version, then Description. `labels.topics.placeholder` falls back to `'Add tags, comma separated'`.
 
 ```tsx
 import { DeploymentCreationForm } from '@epam/ai-dial-builder-form';
@@ -426,7 +446,9 @@ import { DeploymentCreationForm } from '@epam/ai-dial-builder-form';
 
 The additional-locales summary row plus its editing popup, usable on its own when a host needs the locale editor without the surrounding fields. `value`, `onChange`, and `labels` are required; `onChange` receives the full updated list when the user saves.
 
-`availableLocaleOptions` drives whether the control exists at all: with an empty list (its default) the component renders `null` — no summary, no "Add locales" link. Every row needs a language and a name before Save enables, so a popup with nothing to pick from could never be satisfied. `value` is left untouched when the control hides, so locales already stored on the deployment survive.
+`availableLocaleOptions` and `value` together decide whether the control exists. With an empty list (its default) and no retained entry, the component renders `null` — no summary, no "Add locales" link. Every row needs a language and a name before Save enables, so a popup with nothing to pick from could never be satisfied. `value` is left untouched when the control hides, so locales already stored on the deployment survive.
+
+A **retained** entry is one whose `language` is not among `availableLocaleOptions` — typically a translation stored under a code the host no longer offers. The component derives these from `value` itself. A retained row keeps its own code in its language select, labelled through `formatLocaleLabel` (default `code.toUpperCase()`), and can be edited, switched to a configured language, or deleted. Its code is never offered to another row, and it does not count toward the "Add locale" limit, which is reached once every configured code is in use. A retained entry keeps the control visible even when `availableLocaleOptions` is empty. The summary row always shows the uppercased codes (`Locales: [DE], [IT]`), whatever the option labels are. `DeploymentCreationForm` and `MetadataForm` forward `formatLocaleLabel` unchanged.
 
 ```tsx
 import { DeploymentLocalesField } from '@epam/ai-dial-builder-form';
@@ -434,7 +456,8 @@ import { DeploymentLocalesField } from '@epam/ai-dial-builder-form';
 <DeploymentLocalesField
   value={values.otherLocales}
   onChange={handleLocalesChange}
-  availableLocaleOptions={localeOptions}
+  availableLocaleOptions={[{ code: 'de', label: 'Deutsch' }]}
+  formatLocaleLabel={(code) => code.toUpperCase()}
   labels={localeLabels}
 />;
 ```

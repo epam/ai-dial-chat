@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
   IsOptional,
   IsString,
@@ -7,6 +8,12 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
+import {
+  CONTENT_LOCALE_MAX_LENGTH,
+  CONTENT_LOCALE_PATTERN,
+  IsBcp47LocaleList,
+  parseContentLocaleList,
+} from '../content-locales';
 import { IFRAME_ORIGIN_PATTERN } from './env-patterns';
 
 /** Values forwarded to the client: announcements, deployment defaults, visualizers, overlay and UI features. */
@@ -179,4 +186,35 @@ export class ClientUiEnv {
   @IsString({ each: true })
   @MaxLength(200, { each: true })
   PUBLICATION_FILTER_SOURCES?: string[] = [];
+
+  /*
+   * Additional content locales authors can translate a toolset's or
+   * application's Name/Description into (comma-separated BCP-47 tags).
+   * No property initialiser on purpose: an absent value stays `undefined` so
+   * the deprecated AVAILABLE_LOCALES fallback can apply, while a present but
+   * empty value (`[]`) switches the list off and wins over the legacy one.
+   */
+  @IsOptional()
+  @Transform(({ value }) => parseContentLocaleList(value))
+  @IsArray()
+  @Matches(CONTENT_LOCALE_PATTERN, { each: true })
+  @MaxLength(CONTENT_LOCALE_MAX_LENGTH, { each: true })
+  @IsBcp47LocaleList()
+  ADDITIONAL_CONTENT_LOCALES?: string[];
+
+  /*
+   * Deprecated 0.x name for ADDITIONAL_CONTENT_LOCALES, read only when the new
+   * variable is absent. Brackets and quotes are stripped the way 0.x did, so
+   * `["ar","en"]` and `ar,en` are equivalent. Content locales only — 1.0 UI
+   * languages and the primary locale are not configured here.
+   */
+  @IsOptional()
+  @Transform(({ value }) =>
+    parseContentLocaleList(value, { stripLegacyDecoration: true }),
+  )
+  @IsArray()
+  @Matches(CONTENT_LOCALE_PATTERN, { each: true })
+  @MaxLength(CONTENT_LOCALE_MAX_LENGTH, { each: true })
+  @IsBcp47LocaleList()
+  AVAILABLE_LOCALES?: string[];
 }

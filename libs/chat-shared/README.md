@@ -44,8 +44,8 @@ Peers:
 
 - `react` ^19.2.8
 - `react-dom` ^19.2.8 (`NotificationStack` portals into `document.body`)
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.72
-- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.25
+- `@epam/ai-dial-ui-kit` ^0.16.0
+- `@epam/ai-dial-react-file-manager` ^0.4.0
 
 Installed for you as dependencies: `ag-grid-community`, `@tabler/icons-react`, `react-markdown`,
 `react-syntax-highlighter`, `remark-breaks`, `remark-gfm`, `remark-math`, `rehype-katex`,
@@ -651,6 +651,26 @@ import { InitialsAvatar } from '@epam/ai-dial-chat-shared';
 />;
 ```
 
+### ActionMenu
+
+Action menu around a trigger: the kit `Dropdown` on tablet and desktop, a titled
+bottom sheet on a phone (`useIsPhone`). The trigger must accept `onClick`; on a
+phone it receives the click handler plus `aria-haspopup="dialog"` and
+`aria-expanded`. The sheet lists plain actions only — dividers, plain-text rows
+and nested items appear in the dropdown but are skipped in the sheet.
+
+```tsx
+import { ActionMenu } from '@epam/ai-dial-chat-shared';
+
+<ActionMenu
+  title="More actions"
+  closeLabel="Close"
+  items={[{ key: 'delete', label: 'Delete', danger: true, onClick: onDelete }]}
+>
+  <GhostIconButton aria-label="More actions" icon={<IconDotsVertical />} />
+</ActionMenu>;
+```
+
 ### PanelEmptyState
 
 Generic empty-state placeholder used inside panels, built on the kit's
@@ -972,7 +992,7 @@ import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 
 The delete confirmation body every delete surface shows, built on
 [`ConfirmationView`](#confirmationview). Pass `names`: one name goes in a
-neutral `ResourceSummary` card, with the optional `icon` and `typeLabel`;
+neutral `ResourceSummary` card (red with `identityVariant={ConfirmationPopupVariant.Danger}`), with the optional `icon` and `typeLabel`;
 several are counted in the card (`labels.itemCount`) and listed under the
 message, up to `maxListedNames` (10), with the rest summed up by
 `labels.moreItems`. `consequences` are listed before the final
@@ -1023,6 +1043,33 @@ import { DeleteConfirmationDialog } from '@epam/ai-dial-chat-shared';
 >
   {error && <ErrorMessageNotification message={error} />}
 </DeleteConfirmationDialog>;
+```
+
+### DeleteConfirmationDrawer
+
+[`DeleteConfirmationView`](#deleteconfirmationview) in the kit's `SideDrawer` — the side panel the catalog shows for an item — with a danger [`ConfirmationFooter`](#confirmationfooter) pinned under the scrolling body. It takes the same props as the view plus `open`, `title`, `isLoading`, `onConfirm` and `onClose`. While `isLoading` is set, Cancel, the close control, Escape and a backdrop press are all blocked. `labels` adds `confirm`, `cancel`, `deleting` and `close` (all English by default) to the view's labels.
+
+```tsx
+import { DeleteConfirmationDrawer } from '@epam/ai-dial-chat-shared';
+
+<DeleteConfirmationDrawer
+  open={isDeleteOpen}
+  title="Delete project"
+  names={[project.name]}
+  message={
+    <>
+      Are you sure you want to delete <strong>{project.name}</strong>? This
+      action is permanent and cannot be undone.
+    </>
+  }
+  consequences={[
+    'All shared configurations will be lost',
+    'Users who rely on it will lose access',
+  ]}
+  isLoading={isDeleting}
+  onConfirm={handleDelete}
+  onClose={closeDelete}
+/>;
 ```
 
 ### TextRefinementField
@@ -1111,7 +1158,8 @@ fold stays usable) and `cssVariable` (default
 
 `useControlErrorAssociation(getControl, errorId, hasError)` links a field
 error to a control that takes no `aria-describedby` / `aria-invalid` prop —
-the kit `MarkdownEditor` and `Calendar`, or a host-composed selector. While
+the kit `MarkdownEditor`, or a host-composed selector (the kit `Calendar`
+takes `ariaDescribedBy` and `invalid` since kit 0.16, so pass those instead). While
 `hasError` is `true` it adds `errorId` to the control's `aria-describedby`
 (keeping any other ids) and sets `aria-invalid`; otherwise it removes both.
 It runs after every render, so a lazily mounted control is picked up once it
@@ -1189,6 +1237,49 @@ const { guard, isConfirmOpen, confirm, dismiss } =
   onConfirm={confirm}
   onClose={dismiss}
 />;
+```
+
+### UnsavedChangesProvider, useUnsavedChanges and the leave-guard hooks
+
+A page-wide unsaved-changes guard: one "Discard unsaved changes?" dialog shared by every form page below the provider, the dirty state of the one form mounted at a time, and a confirm/discard flow for exits that are not router transitions (such as Log out). It knows no router — the host builds its blocker on the two leave-guard hooks. All of it is in the root entry, with no peer beyond the package's own.
+
+- `UnsavedChangesProvider` renders `ConfirmationDialog` with `ConfirmationPopupVariant.Danger`. `labels` (`UnsavedChangesLabels`) takes `title` (default `'Discard unsaved changes?'`), `message` (default `'You have unsaved changes. Leaving now will discard them.'`), `confirmLabel` (default `'Discard changes'`) and `cancelLabel` (default `'Keep editing'`); each omitted field keeps its default. Escape, the close control and an outside click act as Keep editing.
+- `useUnsavedChanges()` returns `{ hasUnsavedChanges, requestDiscard }` (`UnsavedChangesContextValue`) and throws outside the provider. `requestDiscard(onDiscard)` opens the dialog; Discard changes lets the next page unload pass without the native prompt, closes the dialog and runs `onDiscard`; Keep editing runs nothing.
+- `useUnsavedChangesLeaveGuard({ isDirty })` registers the form's dirty state with the provider (cleared on unmount), adds a `beforeunload` listener while `isDirty` is `true` unless a confirmed `requestDiscard` already allowed the unload, and returns `{ shouldBlockLeave, allowNextNavigation }` (`UnsavedChangesLeaveGuardResult`). `shouldBlockLeave(isLeaving)` is stable and reads the latest `isDirty`: it returns `isDirty && isLeaving`, except that the first call after `allowNextNavigation()` returns `false` and consumes that one-shot bypass. Pass your own "does this transition leave the form" decision as `isLeaving`.
+- `useUnsavedChangesLeaveConfirmation({ isBlocked, onDiscard, onKeep })` opens the dialog while `isBlocked` is `true` — Discard changes runs `onDiscard`, Keep editing or a dismissal runs `onKeep` — and closes it without running either once `isBlocked` turns `false` or the caller unmounts. A dialog opened by `requestDiscard` is left open.
+
+Call both leave-guard hooks from one page at a time, inside the provider. With react-router's `useBlocker`:
+
+```tsx
+import {
+  UnsavedChangesProvider,
+  useUnsavedChangesLeaveConfirmation,
+  useUnsavedChangesLeaveGuard,
+} from '@epam/ai-dial-chat-shared';
+import { useCallback } from 'react';
+import { useBlocker, type BlockerFunction } from 'react-router';
+
+const useLeaveGuard = (isDirty: boolean) => {
+  const { shouldBlockLeave, allowNextNavigation } = useUnsavedChangesLeaveGuard(
+    { isDirty },
+  );
+  const shouldBlock = useCallback<BlockerFunction>(
+    ({ currentLocation, nextLocation }) =>
+      shouldBlockLeave(currentLocation.pathname !== nextLocation.pathname),
+    [shouldBlockLeave],
+  );
+  const blocker = useBlocker(shouldBlock);
+  useUnsavedChangesLeaveConfirmation({
+    isBlocked: blocker.state === 'blocked',
+    onDiscard: () => blocker.proceed?.(),
+    onKeep: () => blocker.reset?.(),
+  });
+  return allowNextNavigation;
+};
+
+<UnsavedChangesProvider labels={{ title: t('unsavedChanges.title') }}>
+  <App />
+</UnsavedChangesProvider>;
 ```
 
 ## Utilities
@@ -1569,7 +1660,7 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 
 ### OperationLoaderModal
 
-Internal modal already rendered by `DialFileManagerShell`. Exported for hosts that need to compose it independently outside the shell. `colors.text` (`OperationLoaderModalColors`) sets the progress-line color (`--olm-text`, default `--text-secondary`), and `textClassName` its type (default `'dial-small-text'`).
+Internal modal already rendered by `DialFileManagerShell`. Exported for hosts that need to compose it independently outside the shell. `colors.text` (`OperationLoaderModalColors`) sets the progress-line color (`--olm-text`, default `--text-secondary`), and `textClassName` its type (default `'dial-small-text'`). The title and progress line sit in one always-mounted kit `LiveRegion`, so an updated `text` is announced; the spinner is decorative (`aria-hidden`).
 
 ```tsx
 import { OperationLoaderModal } from '@epam/ai-dial-chat-shared';

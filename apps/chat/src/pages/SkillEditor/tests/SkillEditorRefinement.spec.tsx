@@ -62,6 +62,7 @@ vi.mock('../../../server-api/text-refinement.api', () => ({
   refineText: (...args: unknown[]) => refine(...args),
 }));
 vi.mock('../../../server-api/skills.api', () => ({
+  moveSkill: vi.fn(),
   createSkill: vi.fn(),
   updateSkill: vi.fn(),
   downloadSkillFile: vi.fn(),

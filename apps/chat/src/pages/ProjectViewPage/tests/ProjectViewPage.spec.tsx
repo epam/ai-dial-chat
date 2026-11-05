@@ -10,7 +10,9 @@ import type { ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
+  CatalogI18nKeys,
   NotFoundI18nKeys,
   ProjectsI18nKeys,
 } from '../../../constants/translation-keys';
@@ -381,7 +383,7 @@ describe('ProjectViewPage', () => {
       within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
     );
     const dialog = await screen.findByRole('dialog', {
-      name: ProjectsI18nKeys.ActionsDeleteConfirmTitle,
+      name: ButtonsI18nKeys.Delete,
     });
     await userEvent.click(
       within(dialog).getByRole('button', { name: ButtonsI18nKeys.Delete }),
@@ -393,8 +395,7 @@ describe('ProjectViewPage', () => {
     expect(deleteProject).toHaveBeenCalledWith(PROJECT_ID, '"cv1"');
   });
 
-  it('says the chats are deleted too when the project has some', async () => {
-    vi.mocked(getProject).mockResolvedValue(details({ conversationCount: 2 }));
+  it('confirms the delete in a side panel with the catalog copy', async () => {
     renderAt();
     await screen.findByRole('heading', { level: 1, name: 'q4' });
 
@@ -402,38 +403,19 @@ describe('ProjectViewPage', () => {
     await userEvent.click(
       within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
     );
-    const dialog = await screen.findByRole('dialog', {
-      name: ProjectsI18nKeys.ActionsDeleteConfirmTitle,
+    const drawer = await screen.findByRole('dialog', {
+      name: ButtonsI18nKeys.Delete,
     });
 
     expect(
-      within(dialog).getByText(
-        ProjectsI18nKeys.ActionsDeleteConfirmWithChatsDescription,
-      ),
-    ).toBeTruthy();
-  });
-
-  it('stops saying the chats are deleted too once the list deleted them all', async () => {
-    vi.mocked(getProject).mockResolvedValue(details({ conversationCount: 1 }));
-    renderAt();
-    await screen.findByRole('heading', { level: 1, name: 'q4' });
-
-    await userEvent.click(
-      screen.getByRole('button', { name: 'delete a chat' }),
-    );
-    const menu = await openMenu();
-    await userEvent.click(
-      within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
-    );
-    const dialog = await screen.findByRole('dialog', {
-      name: ProjectsI18nKeys.ActionsDeleteConfirmTitle,
-    });
-
-    expect(
-      within(dialog).getByText(
-        ProjectsI18nKeys.ActionsDeleteConfirmDescription,
-      ),
-    ).toBeTruthy();
+      within(drawer)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual([
+      CatalogI18nKeys.DetailsDeleteConsequenceSharedConfigurations,
+      CatalogI18nKeys.DetailsDeleteConsequenceUsersLoseAccess,
+      BasicI18nKeys.ConsequenceCannotBeUndone,
+    ]);
   });
 
   it('fills the main column with the project chats', async () => {
@@ -687,7 +669,7 @@ describe('ProjectViewPage', () => {
       within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
     );
     const dialog = await screen.findByRole('dialog', {
-      name: ProjectsI18nKeys.ActionsDeleteConfirmTitle,
+      name: ButtonsI18nKeys.Delete,
     });
     await userEvent.click(
       within(dialog).getByRole('button', { name: ButtonsI18nKeys.Delete }),
@@ -882,7 +864,7 @@ describe('ProjectViewPage', () => {
         within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
       );
       const dialog = await screen.findByRole('dialog', {
-        name: ProjectsI18nKeys.ActionsDeleteConfirmTitle,
+        name: ButtonsI18nKeys.Delete,
       });
       await userEvent.click(
         within(dialog).getByRole('button', { name: ButtonsI18nKeys.Delete }),

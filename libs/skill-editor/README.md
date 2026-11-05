@@ -46,8 +46,8 @@ import '@epam/ai-dial-skill-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.72`
-- `@epam/ai-dial-react-file-manager` `^0.4.0-dev.25`
+- `@epam/ai-dial-ui-kit` `^0.16.0`
+- `@epam/ai-dial-react-file-manager` `^0.4.0`
 - `@epam/ai-dial-chat-shared` `*`
 
 ## Components
@@ -146,6 +146,22 @@ host that loads asynchronously should memoise it and produce a new object only
 once the data has arrived. The root `SKILL.md` node is synthesised internally
 and is always present, first, and selected by default — it never appears in
 the `files` prop and never exposes a rename/move/delete affordance.
+
+### Folder preview
+
+Selecting a folder fills the main pane with a breadcrumb trail
+(`Skill › agents › reviewers`) and the folder's direct children: folders first,
+then files, each sorted by name, with an item count on each folder row. A
+folder that exists only through deeper file paths is listed too. An empty folder
+shows an empty state instead of a list. Activating a row or a crumb selects that
+node and expands the folders leading to it in the Files tree; the root crumb
+returns to `SKILL.md`. Text comes from `labels.folderPreviewRootLabel`,
+`folderPreviewBreadcrumbAriaLabel`, `folderPreviewOverflowAriaLabel`,
+`folderPreviewListAriaLabel`, `folderEmptyTitle`, `folderEmptyDescription` and
+`folderItemCountLabel`; colors from `colors.folderRowBorder` and
+`colors.folderRowHoverBackground` (the count text takes `colors.helperText`);
+the count's type step from `typography.folderItemCountClassName` (default
+`'dial-tiny-text'`).
 
 ### Adding files and folders
 

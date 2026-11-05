@@ -66,6 +66,23 @@ describe('CONFIG_DEFINITIONS', () => {
     });
   });
 
+  it('contains the content.additionalLocales entry with the expected shape', () => {
+    const entry = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === 'content.additionalLocales',
+    );
+
+    expect(entry).toMatchObject({
+      key: 'content.additionalLocales',
+      type: 'config',
+      valueType: 'json',
+      visibility: 'client',
+      defaultValue: [],
+      critical: false,
+      owner: 'chat-team',
+      envVar: 'ADDITIONAL_CONTENT_LOCALES',
+    });
+  });
+
   it('contains the features.responsesApiEnabled entry with server-only visibility and no role gating', () => {
     const entry = CONFIG_DEFINITIONS.find(
       (definition) => definition.key === 'features.responsesApiEnabled',

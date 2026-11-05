@@ -73,7 +73,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     <article {...rest}>{children}</article>
   ),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  Spinner: () => <div role="progressbar" />,
+  Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
+    <div role="progressbar" aria-label={ariaLabel} />
+  ),
   Skeleton: ({ color }: { color?: string }) => (
     <div data-skeleton data-color={color} />
   ),
@@ -210,7 +212,9 @@ describe('ScheduledTasks', () => {
   it('shows a spinner and no other content when isLoading', () => {
     renderScheduledTasks({ isLoading: true, items: [buildItem()] });
 
-    expect(screen.getByRole('progressbar')).toBeTruthy();
+    expect(
+      screen.getByRole('progressbar', { name: 'Loading scheduled tasks' }),
+    ).toBeTruthy();
     expect(screen.queryByText('Competitor Updates')).toBeNull();
   });
 

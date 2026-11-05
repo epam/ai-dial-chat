@@ -121,6 +121,7 @@ export interface BackgroundStartParams {
   onReadyToStream: () => void;
   clientChannelId?: string;
   timezone?: string;
+  lang?: string;
   jobTitle?: string;
   /** The conversation version read at request start; reused for the placeholder write. */
   storedConversation?: VersionedConversation;
@@ -187,6 +188,7 @@ export class BackgroundGenerationService {
       placeholderMessage,
       params.clientChannelId,
       params.timezone,
+      params.lang,
       undefined,
       placeholder.conversation.id,
       undefined,
@@ -580,6 +582,7 @@ export class BackgroundGenerationService {
         context.token,
         signal,
         message,
+        undefined,
         undefined,
         undefined,
         undefined,

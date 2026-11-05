@@ -45,16 +45,28 @@ optional.
 
 ### PublishPanel
 
-Scrollable body of the Publish flow: entity summary row, destination folder picker with search, callouts, author, credentials and access rules. It does not render publish history; use `PublishHistoryList` directly to show history in a custom layout.
+Scrollable body of the Publish flow, in two views like the save panel. The main view (`PublishPanelView.Main`) shows the entity summary row, a destination row — the committed path as one truncating name, or `noFolderSelectedLabel`, with a Change/Choose button — then the callouts, author, credentials and access rules. The folder view (`PublishPanelView.ChangeFolder`) shows only the folder search and tree, bound to `pendingFolderPath`. The host owns the view switch, header and footer; `usePublishFolderView` holds that state. Switching views moves focus into the folder view and back to the Change button. It does not render publish history; use `PublishHistoryList` directly to show history in a custom layout.
 
 ```tsx
-import { PublishPanel } from '@epam/ai-dial-publish-panel';
+import {
+  PublishPanel,
+  usePublishFolderView,
+} from '@epam/ai-dial-publish-panel';
+
+const folderView = usePublishFolderView({
+  isOpen,
+  selectedFolderPath,
+  onSelectedFolderPathChange: setSelectedFolderPath,
+});
 
 <PublishPanel
+  view={folderView.view}
+  onChangeFolderClick={folderView.openFolderView}
   resource={{ title: 'Q3 planning notes' }}
   folderItems={folderItems}
   selectedFolderPath={selectedFolderPath}
-  onSelectedFolderPathChange={setSelectedFolderPath}
+  pendingFolderPath={folderView.pendingFolderPath}
+  onPendingFolderPathChange={folderView.setPendingFolderPath}
   onCreateFolder={handleCreateFolder}
   hasExistingPublicationInFolder={false}
   hasWriteAccess
@@ -68,7 +80,7 @@ import { PublishPanel } from '@epam/ai-dial-publish-panel';
 ```
 
 `author` is the publication's display author, rendered as a text field between
-the folder tree and the access-rules section. It is a controlled value like
+the destination row and the access-rules section. It is a controlled value like
 `rules`: pass `usePublishFlow`'s `author`/`setAuthor` straight through. An
 empty author is a valid state and never blocks submission — the host decides
 what an unset author means (both AI DIAL Chat hosts omit the field from the
@@ -79,8 +91,9 @@ arrives through `usePublishFlow`'s `defaultAuthor`.
 Override its copy through `labels.authorLabel`, `labels.authorPlaceholder`, and
 `labels.authorHint`.
 
-Typography comes from three class props: `summaryTitleClassName` and
-`headingClassName` (both `'dial-body-semi-text'`), and
+Typography comes from four class props: `summaryTitleClassName` and
+`headingClassName` (both `'dial-body-semi-text'`), `destinationClassName`
+(`'dial-small-semi-text'`) for the destination path, and
 `calloutFolderNameClassName` (`'dial-small-paragraph-semi-text'`) for the folder
 name emphasised in the replace-warning and no-access callouts.
 `StandalonePublishPanel` forwards them as `panelSummaryTitleClassName`,
@@ -99,8 +112,9 @@ through. The checkbox is disabled while `isSubmitting` is `true`.
 ```tsx
 <PublishPanel
   resource={{ title: item.name, version: item.version }}
+  onChangeFolderClick={openFolderView}
   folderItems={folderItems}
-  onSelectedFolderPathChange={setSelectedFolderPath}
+  onPendingFolderPathChange={setPendingFolderPath}
   onCreateFolder={handleCreateFolder}
   hasExistingPublicationInFolder={false}
   hasWriteAccess
@@ -126,8 +140,8 @@ by the kit, so it must state what ticking the box does rather than restate the
 label.
 
 Add `type` (and optionally `iconUrl`) to `resource` to get the richer entity
-summary row — icon, type label, name, and a current-version tag — rendered by
-`ResourceSummary` from `@epam/ai-dial-chat-shared`. `libs/catalog`'s
+summary row — icon, type label, and the name followed by its version — rendered
+by `ResourceSummary` from `@epam/ai-dial-chat-shared`. `libs/catalog`'s
 `DetailsPanel` uses this for versioned catalog entities:
 
 ```tsx
@@ -138,9 +152,8 @@ summary row — icon, type label, name, and a current-version tag — rendered b
     type: item.type,
     iconUrl: item.iconUrl,
   }}
-  labels={{ summaryVersionLabel: t(...) }}
   {...rest}
-/>;
+/>
 ```
 
 For any other custom summary, pass `renderSummary={() => <CustomHeader />}`; it
@@ -148,7 +161,7 @@ replaces the default title-only row and is ignored once `resource.type` is set.
 
 ### StandalonePublishPanel
 
-Standalone end-edge slide-in shell for the Publish flow: backdrop, header with Close, the `PublishPanel` body, and a pinned `PublishFooter`. The shell is the UI kit's `SideDrawer`, so focus is kept inside while it is open and Escape or a backdrop press closes it; `returnFocusRef` still decides where focus lands afterwards, and `colors` themes the backdrop, panel, divider, scrollbar and title.
+Standalone end-edge slide-in shell for the Publish flow: backdrop, header with Close, the `PublishPanel` body, and a pinned `PublishFooter`. It drives the drill-in itself through `usePublishFolderView`: Change opens the folder view titled `labels.changeFolderTitle` with a Back button, the footer turns into Cancel and Select, and only Select calls `onSelectedFolderPathChange`. The shell is the UI kit's `SideDrawer`, so focus is kept inside while it is open and Escape or a backdrop press closes it; `returnFocusRef` still decides where focus lands afterwards, and `colors` themes the backdrop, panel, divider, scrollbar and title.
 
 While open it behaves as a modal dialog: it takes focus on mount, cycles Tab and Shift+Tab within itself, closes on Escape, and returns focus to `returnFocusRef` on close. Tab is left alone while focus sits outside the panel, so the folder-row menus and the rule source picker it renders through portals stay keyboard-operable. While closed it is `inert`, so nothing inside it is reachable.
 
@@ -177,7 +190,7 @@ import { StandalonePublishPanel } from '@epam/ai-dial-publish-panel';
 
 ### PublishFooter
 
-Pinned action row with Cancel and Publish/Update buttons. The submit button reads `Update version {version}` when `hasExistingPublicationInFolder` is true, unless `allowReplace` is `false` — pass the same `allowReplace` the panel gets when the backend cannot overwrite an existing publication.
+Pinned action row with Cancel and Publish/Update buttons; with `view={PublishPanelView.ChangeFolder}` it renders Cancel and Select (`onSelectFolder`, `isSelectFolderDisabled`, `labels.selectFolderLabel`) instead. The submit button reads `Update version {version}` when `hasExistingPublicationInFolder` is true, unless `allowReplace` is `false` — pass the same `allowReplace` the panel gets when the backend cannot overwrite an existing publication.
 
 ```tsx
 import { PublishFooter } from '@epam/ai-dial-publish-panel';
@@ -221,6 +234,76 @@ import { PublishFoldersTree } from '@epam/ai-dial-publish-panel';
   searchQuery={searchQuery}
 />;
 ```
+
+#### Multi-root mode
+
+Pass `roots` (a list of `FolderDestinationRoot`: `key`, `label`, `items`, and optional `canCreateFolders`, `expandedPaths`, `onExpandedPathsChange`, `loadingPaths`) to render one always-expanded top-level node per root, in the given order, instead of the single `rootLabel` root. Selection then travels as a `FolderDestination` (`{ rootKey, path }`, where `path: []` is the root itself) through `destination` / `onDestinationChange`, and a confirmed new folder reaches `onCreateDestinationFolder(rootKey, parentPath, name)`. Folders are name-ordered inside each root, search filters every root, a new name is validated against its siblings in the same root, and a root with `canCreateFolders: false` offers no create actions. `items`, `selectedPath`, `onSelectedPathChange`, `onCreateFolder`, `rootLabel`, `expandedPaths` and `loadingPaths` are ignored in this mode — each root carries its own.
+
+```tsx
+import {
+  PublishFoldersTree,
+  type FolderDestination,
+} from '@epam/ai-dial-publish-panel';
+
+<PublishFoldersTree
+  roots={[
+    {
+      key: 'personal',
+      label: 'Personal',
+      items: personal.folderItems,
+      expandedPaths: personal.expandedPaths,
+      onExpandedPathsChange: personal.onExpandedPathsChange,
+      loadingPaths: personal.loadingPaths,
+    },
+    { key: 'organization', label: 'Organization', items: organizationItems },
+  ]}
+  destination={destination}
+  onDestinationChange={setDestination}
+  onCreateDestinationFolder={handleCreateFolder}
+  searchQuery={searchQuery}
+/>;
+```
+
+### SaveToFolderPanel / StandaloneSaveToFolderPanel
+
+The "save to a folder, optionally as a new version" flow. `StandaloneSaveToFolderPanel` is an end-edge `SideDrawer` with two views:
+
+- **Main** — the entity summary (`ResourceSummary`), the committed destination as a folder name with the file manager's folder icon (`FolderName`, the path joined with `/`) and a small **Change** action, an optional version choice, and a Cancel / Save footer.
+- **Change folder** — a back button, folder search and the multi-root `PublishFoldersTree`, with a Cancel / Select footer. A destination picked here is pending until Select commits it through `onDestinationChange`; Back and Cancel discard it. While a folder of a root with `hasAccessRules` is pending and `accessRules` (`SaveToFolderAccessRulesProps`) is passed, `PublishAccessRules` renders below the tree for that folder; `onPendingDestinationChange` tells the host which folder is pending — including the reset to `destination` on entering and leaving the view — so it can load that folder's existing rules.
+
+The version section renders only when `version` (`SaveToFolderVersionProps`) is passed: a `RadioGroup` of "Keep version {version}" and "Save as new version", the latter revealing a required version input whose error the host supplies as `newVersionError`. Pass no `version` for an unversioned resource. `submitError` is announced through an assertive `LiveRegion`; `foldersError` shows above the tree with a Retry action when `onRetryFolders` is given. Every control is disabled while `isSubmitting`.
+
+The drawer is named by `labels.title` in both views; switching views moves focus to the new view's heading, and leaving the folder view returns it to Change. `SaveToFolderPanel` is the controlled body (`view`, `pendingDestination`, `onPendingDestinationChange`, `onChangeFolderClick`) for a host that renders its own shell. The panel never decides what a destination means — saving, moving and publishing are the host's.
+
+```tsx
+import {
+  SaveVersionMode,
+  StandaloneSaveToFolderPanel,
+} from '@epam/ai-dial-publish-panel';
+
+<StandaloneSaveToFolderPanel
+  isOpen={isOpen}
+  onClose={close}
+  onSubmit={save}
+  isSubmitDisabled={Boolean(versionError)}
+  resource={{ title: 'Design Review Agent', version: '1.0.0' }}
+  roots={roots}
+  destination={destination}
+  onDestinationChange={setDestination}
+  onCreateFolder={handleCreateFolder}
+  version={{
+    versionMode,
+    onVersionModeChange: setVersionMode,
+    currentVersion: '1.0.0',
+    newVersion,
+    onNewVersionChange: setNewVersion,
+    newVersionError: versionError,
+  }}
+  labels={{ title: 'Save QuickApp' }}
+/>;
+```
+
+Copy comes from `labels` (`StandaloneSaveToFolderPanelLabels`: `title`, `changeFolderTitle`, `closeAriaLabel`, `backAriaLabel`, `cancelLabel`, `saveLabel`, `savingLabel`, `selectLabel`) and `panelLabels` (`SaveToFolderPanelLabels`), each with an English default. Colors come from `colors` (`StandaloneSaveToFolderPanelColors`: `backdropBackground`, `panelBackground`, `panelBorder`, `dividerBorder`, `scrollbarThumb`, `titleText`) and `panelStyles.colors` (`SaveToFolderPanelColors`: `headingText`, `destinationText` and the `summary*` colors). `titleClassName` and `headingClassName` default to `'dial-body-semi-text'`, and `destinationClassName` (the destination path) to `'dial-small-semi-text'`. `SaveToFolderView` (`Main`, `ChangeFolder`) and `SaveVersionMode` (`Keep`, `New`) are exported.
 
 ### PublishHistoryList
 
@@ -287,6 +370,33 @@ from history or the selected folder — a folder whose previous publication
 carried shared credentials still opens with the option cleared. The argument
 is additive, so a host callback declaring only the first four parameters stays
 assignable and keeps behaving as it did.
+
+### usePublishFolderView
+
+Holds the publish panel's main/folder view switch and the folder picked in the folder view before Select commits it. Every opening (`isOpen` turning `true`) starts on the main view, and `backToMain` discards the pending folder.
+
+```tsx
+import { usePublishFolderView } from '@epam/ai-dial-publish-panel';
+
+const {
+  view,
+  pendingFolderPath,
+  setPendingFolderPath,
+  openFolderView,
+  backToMain,
+  selectFolder,
+} = usePublishFolderView({
+  isOpen,
+  selectedFolderPath: publishFlow.selectedFolderPath,
+  onSelectedFolderPathChange: publishFlow.setSelectedFolderPath,
+});
+```
+
+## Enums
+
+### PublishPanelView
+
+`Main` (summary, destination row, author, credentials and rules) and `ChangeFolder` (folder search and tree).
 
 ## Utilities
 

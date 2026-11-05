@@ -70,6 +70,7 @@ vi.mock('../../../context/NotificationContext', () => ({
 }));
 
 vi.mock('../../../server-api/skills.api', () => ({
+  moveSkill: vi.fn(),
   createSkill: vi.fn(),
   updateSkill: vi.fn(),
   downloadSkill: vi.fn(),

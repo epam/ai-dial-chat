@@ -1,4 +1,5 @@
 import type {
+  ResourceIdResponseDto,
   SkillFileDeleteResponseDto,
   SkillFileListResponseDto,
   SkillFileUploadResponseDto,
@@ -206,3 +207,10 @@ export const deleteSkillGroupingFolder = (
     { bucket, path, ifMatch },
     signal ? { signal } : undefined,
   );
+
+/** Moves one of the caller's skills into `folderPath` (plain text, `''` for the root); resolves with its new id. */
+export const moveSkill = (
+  path: string,
+  folderPath: string,
+): Promise<ResourceIdResponseDto> =>
+  skillsApi.moveSkill({ moveSkillDto: { path, folderPath } });

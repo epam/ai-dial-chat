@@ -3,6 +3,9 @@ import {
   TextRefinementPurpose,
 } from '@epam/ai-dial-chat-api-client';
 import {
+  createPromptCreateAdapter,
+  createPromptFolderLister,
+  createPromptSaveAdapter,
   getApiErrorDetails,
   PROMPT_CONTENT_MAX_LENGTH,
   PROMPT_DESCRIPTION_MAX_LENGTH,
@@ -12,8 +15,11 @@ import {
   validatePromptContent,
   validatePromptDescription,
   validatePromptName,
+  type ResourceSaveAdapter,
+  type ResourceSaveResult,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   PromptEditor as PromptEditorForm,
   type PromptEditorErrors,
@@ -22,7 +28,15 @@ import {
 } from '@epam/ai-dial-prompt-editor';
 import { EditorThemes } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  lazy,
+  memo,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import RequireCatalogCreation from '../../components/RequireCatalogCreation/RequireCatalogCreation';
@@ -40,11 +54,8 @@ import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
 import { useUiFeature } from '../../hooks/useUiFeature';
-import {
-  createPrompt,
-  getPrompt,
-  updatePrompt,
-} from '../../server-api/prompts.api';
+import { promptsApi } from '../../server-api/api-client';
+import { getPrompt, updatePrompt } from '../../server-api/prompts.api';
 import { CatalogCreationDecision } from '../../types/catalog-creation';
 import { EditorQuery } from '../../types/editor-query';
 import {
@@ -53,6 +64,20 @@ import {
 } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
+
+const listPromptFolders = createPromptFolderLister(promptsApi);
+
+/* Loaded on the first Save of an edit session, so opening the editor fetches no folder listing. */
+const ResourceSavePanelContainer = lazy(
+  async () =>
+    import('../../components/ResourceSavePanelContainer/ResourceSavePanelContainer'),
+);
+
+/** What the Save panel needs for the save it was opened for. */
+interface PromptSaveRequest {
+  adapter: ResourceSaveAdapter;
+  name: string;
+}
 
 const PromptEditorPage: FC = () => {
   const { t } = useTranslation();
@@ -77,6 +102,13 @@ const PromptEditorPage: FC = () => {
   const [loadError, setLoadError] = useState<unknown>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  /* Only the user's own prompt saves through the Save panel: moving acts on the caller's bucket. */
+  const [loadedPrompt, setLoadedPrompt] = useState<{
+    isMy: boolean;
+    folderPath: string[];
+  }>();
+  const [saveRequest, setSaveRequest] = useState<PromptSaveRequest>();
+  const [isSavePanelOpen, setIsSavePanelOpen] = useState(false);
   /* Reported by the form; passing `onDirtyChange` also turns its own guard off. */
   const [isDirty, setIsDirty] = useState(false);
   const { allowNextNavigation } = useBuilderLeaveGuard({ isDirty });
@@ -106,6 +138,10 @@ const PromptEditorPage: FC = () => {
           name: dto.name,
           description: dto.description ?? '',
           content: dto.content,
+        });
+        setLoadedPrompt({
+          isMy: dto.isMy === true,
+          folderPath: dto.folderId ? dto.folderId.split('/') : [],
         });
       } catch (err) {
         if (!cancelled.value) setLoadError(err);
@@ -222,31 +258,54 @@ const PromptEditorPage: FC = () => {
         return;
       }
       setErrors({});
-      setIsSaving(true);
 
       const trimmedName = name.trim();
 
+      /* A new prompt, or the user's own, saves through the panel; a shared one saves in place. */
+      if (!isEditMode) {
+        setSaveRequest({
+          adapter: createPromptCreateAdapter({
+            promptsApi,
+            body: {
+              name: trimmedName,
+              description: description || undefined,
+              content,
+            },
+          }),
+          name: trimmedName,
+        });
+        setIsSavePanelOpen(true);
+        return;
+      }
+      if (promptId != null && loadedPrompt?.isMy) {
+        setSaveRequest({
+          adapter: createPromptSaveAdapter({
+            promptsApi,
+            promptId,
+            body: { name: trimmedName, description, content },
+          }),
+          name: trimmedName,
+        });
+        setIsSavePanelOpen(true);
+        return;
+      }
+
+      setIsSaving(true);
+
       try {
-        if (!isEditMode) {
-          await createPrompt({
-            name: trimmedName,
-            description: description || undefined,
-            content,
-          });
-        } else {
-          const updateBody = {
-            name: trimmedName,
-            description,
-            content,
-          };
-          await updatePrompt(promptId as string, updateBody);
-        }
+        await updatePrompt(promptId as string, {
+          name: trimmedName,
+          description,
+          content,
+        });
 
         await refetchPrompts();
         notifyOperationSuccess(
           NotifiableEntity.Prompt,
-          isEditMode ? EntityOperation.Edited : EntityOperation.Created,
-          { name: trimmedName },
+          EntityOperation.Edited,
+          {
+            name: trimmedName,
+          },
         );
         allowNextNavigation();
         navigate(returnUrl);
@@ -269,6 +328,7 @@ const PromptEditorPage: FC = () => {
       creationDecision,
       isSaving,
       isEditMode,
+      loadedPrompt,
       promptId,
       refetchPrompts,
       notifyOperationSuccess,
@@ -277,6 +337,22 @@ const PromptEditorPage: FC = () => {
       navigate,
       returnUrl,
     ],
+  );
+
+  const handleSavePanelClose = useCallback(() => setIsSavePanelOpen(false), []);
+  /* Every outcome reaching here saved the prompt; the panel has already notified. */
+  const handleSavePanelSaved = useCallback(
+    (_result: ResourceSaveResult) => {
+      const leaveEditor = async () => {
+        // Best-effort: brings the saved prompt into the catalog list.
+        await refetchPrompts().catch(() => undefined);
+        setIsSavePanelOpen(false);
+        allowNextNavigation();
+        navigate(returnUrl);
+      };
+      void leaveEditor();
+    },
+    [allowNextNavigation, navigate, refetchPrompts, returnUrl],
   );
 
   const onRefineDescription = useTextRefinementCallback(
@@ -341,6 +417,24 @@ const PromptEditorPage: FC = () => {
         onRefineDescription={onRefineDescription}
         onRefineInstructions={onRefineInstructions}
       />
+      {saveRequest && (
+        <Suspense fallback={null}>
+          <ResourceSavePanelContainer
+            isOpen={isSavePanelOpen}
+            onClose={handleSavePanelClose}
+            adapter={saveRequest.adapter}
+            listPersonalFolders={listPromptFolders}
+            resourceId={promptId ?? ''}
+            currentFolderPath={loadedPrompt?.folderPath ?? []}
+            resourceName={saveRequest.name}
+            resourceType={CatalogEntityType.Prompt}
+            typeLabel={t(CatalogI18nKeys.CreatePrompt)}
+            notifiableEntity={NotifiableEntity.Prompt}
+            canPublish
+            onSaved={handleSavePanelSaved}
+          />
+        </Suspense>
+      )}
     </RequireCatalogCreation>
   );
 };

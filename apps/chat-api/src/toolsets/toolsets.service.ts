@@ -32,6 +32,10 @@ export class ToolsetsService {
   createToolset = this.mutationService.createToolset.bind(this.mutationService);
   updateToolset = this.mutationService.updateToolset.bind(this.mutationService);
   deleteToolset = this.mutationService.deleteToolset.bind(this.mutationService);
+  listToolsetFolders = this.mutationService.listToolsetFolders.bind(
+    this.mutationService,
+  );
+  moveToolset = this.mutationService.moveToolset.bind(this.mutationService);
 
   // Auth
   loginToolset = this.authService.loginToolset.bind(this.authService);

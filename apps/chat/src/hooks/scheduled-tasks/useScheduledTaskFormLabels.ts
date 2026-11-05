@@ -2,21 +2,22 @@ import { ScheduledTaskRepeat } from '@epam/ai-dial-scheduled-tasks';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   EditorI18nKeys,
   ScheduledTasksI18nKeys,
+  UnsavedChangesI18nKeys,
 } from '../../constants/translation-keys';
+import { useLanguage } from '../language/useLanguage';
 import { useTextRefinementLabels } from '../useTextRefinementLabels';
-
-/** Week counts offered by the Custom repeat's "Every" dropdown. */
-const EVERY_WEEKS_COUNTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
 /** APScheduler-convention day values (`'0'` Monday – `'6'` Sunday) for the Custom repeat's day row. */
 const CUSTOM_DAY_VALUES = ['0', '1', '2', '3', '4', '5', '6'] as const;
 
 /** Keeps create/edit form copy and repeat options identical at the app edge. */
 export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const { displayLanguage } = useLanguage();
   const refinementLabels = useTextRefinementLabels();
   return useMemo(
     () => ({
@@ -68,11 +69,7 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
           }[key],
         ),
       })),
-      everyLabel: t(ScheduledTasksI18nKeys.CreateEveryLabel),
-      everyWeekOptions: EVERY_WEEKS_COUNTS.map((count) => ({
-        value: String(count),
-        label: t(ScheduledTasksI18nKeys.CreateEveryWeeksOption, { count }),
-      })),
+      daysOfWeekLabel: t(ScheduledTasksI18nKeys.CreateDaysOfWeekLabel),
       /* 2023-01-02 is a Monday; the APScheduler day value counts Monday-first,
        * so the reference lands on each segment's own day. Both formatters run
        * in UTC so the localized weekday is the segment's day, not the local
@@ -81,11 +78,11 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
         const dayDate = new Date(Date.UTC(2023, 0, 2 + Number(value)));
         return {
           value,
-          shortLabel: new Intl.DateTimeFormat(i18n.language, {
+          shortLabel: new Intl.DateTimeFormat(displayLanguage, {
             weekday: 'narrow',
             timeZone: 'UTC',
           }).format(dayDate),
-          fullName: new Intl.DateTimeFormat(i18n.language, {
+          fullName: new Intl.DateTimeFormat(displayLanguage, {
             weekday: 'long',
             timeZone: 'UTC',
           }).format(dayDate),
@@ -103,6 +100,7 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
       modelOrAgentLabel: t(ScheduledTasksI18nKeys.CreateModelOrAgentLabel),
       descriptionLabel: t(ScheduledTasksI18nKeys.CreateDescriptionLabel),
       instructionsLabel: t(ScheduledTasksI18nKeys.CreateInstructionsLabel),
+      editorLoadingAriaLabel: t(BasicI18nKeys.Loading),
       cancelButtonLabel: t(ButtonsI18nKeys.Cancel),
       createButtonLabel: t(
         mode === 'create' ? ButtonsI18nKeys.Create : ButtonsI18nKeys.Save,
@@ -112,7 +110,12 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
           ? ScheduledTasksI18nKeys.CreateSubmittingLabel
           : ButtonsI18nKeys.Saving,
       ),
+      discardTitle: t(UnsavedChangesI18nKeys.Title),
+      discardMessage: t(UnsavedChangesI18nKeys.Message),
+      discardConfirmLabel: t(UnsavedChangesI18nKeys.ConfirmLabel),
+      discardConfirmMobileLabel: t(UnsavedChangesI18nKeys.ConfirmLabelMobile),
+      discardCancelLabel: t(UnsavedChangesI18nKeys.CancelLabel),
     }),
-    [mode, t, i18n.language, refinementLabels],
+    [mode, t, displayLanguage, refinementLabels],
   );
 };

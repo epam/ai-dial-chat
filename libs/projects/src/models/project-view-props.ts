@@ -34,6 +34,8 @@ export interface ProjectViewLabels {
   editLabel: string;
   /** Accessible name of the more-actions menu trigger. */
   moreActionsLabel: string;
+  /** Accessible name of the close button of the phone actions sheet. Defaults to `'Close'`. */
+  closeLabel?: string;
   /** Share action label. */
   shareLabel: string;
   /** Download action label. */
@@ -70,6 +72,8 @@ export interface ProjectViewLabels {
   notFoundLabel: string;
   /** Label of the action that returns to the projects list. */
   browseProjectsLabel: string;
+  /** Accessible label of the loading spinner. Defaults to `'Loading project'`. */
+  loadingAriaLabel?: string;
 }
 
 /**

@@ -29,7 +29,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
       onChange={(e) => onChange?.(e.target.value)}
     />
   ),
-  Spinner: () => <div role="progressbar" />,
+  Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
+    <div role="progressbar" aria-label={ariaLabel} />
+  ),
 }));
 
 const labels: ProjectViewLabels = {
@@ -296,6 +298,36 @@ describe('ProjectView', () => {
     ]);
   });
 
+  it('opens the more-actions menu as a bottom sheet on a phone', async () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    try {
+      const onEdit = vi.fn();
+      renderView({ onEdit });
+
+      const [, mobileTrigger] = screen.getAllByRole('button', {
+        name: 'More actions',
+      });
+      await userEvent.click(mobileTrigger);
+
+      const sheet = await screen.findByRole('dialog', {
+        name: 'More actions',
+      });
+      await userEvent.click(
+        within(sheet).getByRole('menuitem', { name: 'Edit' }),
+      );
+      expect(onEdit).toHaveBeenCalledOnce();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('renders instruction headings on the panel scale, not the page scale', () => {
     renderView();
 
@@ -372,7 +404,9 @@ describe('ProjectView', () => {
   it('shows the loading state', () => {
     renderView({ project: null, isLoading: true });
 
-    expect(screen.getByRole('progressbar')).toBeTruthy();
+    expect(
+      screen.getByRole('progressbar', { name: 'Loading project' }),
+    ).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Pin' })).toBeNull();
   });
 

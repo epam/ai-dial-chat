@@ -411,7 +411,7 @@ The Projects lib and page SHALL meet the layout, RTL, accessibility and memoisat
 
 When `onCreateProject` is supplied, the `Projects` lib component SHALL render two **New project** buttons, both labelled `labels.createProjectLabel` and both calling `onCreateProject`:
 
-- **Header button:** under `desktop:`, a primary kit `Button` without an icon, on the inline end of the title row. On mobile, where there is no title row, it is a round 40px primary kit `Button` showing only an `IconPlus`, named by `labels.createProjectLabel` through `aria-label`, floating 16px from the bottom inline-end corner of the page. Either form is rendered in every content state.
+- **Header button:** under `desktop:`, a primary kit `Button` without an icon, on the inline end of the title row. On mobile, where there is no title row, it is a round 40px primary kit `Button` showing only an `IconPlus`, named by `labels.createProjectLabel` through `aria-label`, floating 16px from the bottom inline-end corner of the page. The page root is `size-full min-h-0 flex-1` (like the catalog root), so it never grows past the space its parent gives it: a long list scrolls inside the page and the floating button stays inside the viewport. Either form is rendered in every content state.
 - **Empty-state button:** a secondary kit `Button` without an icon, passed as the `action` of the empty-state `PanelEmptyState`, so it renders only in the Empty state. It does not render in the no-results, error or incomplete states.
 
 When `onCreateProject` is omitted, neither button renders.

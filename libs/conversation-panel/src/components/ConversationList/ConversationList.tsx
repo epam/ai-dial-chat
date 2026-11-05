@@ -102,6 +102,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
       getActions: getProjectActions,
       onActionMenuOpen: onProjectActionMenuOpen,
       activeProjectId,
+      conversationRowVariant: projectConversationVariant,
     } = pinnedProjects ?? {};
 
     /*
@@ -479,6 +480,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
         seeAllLabel,
         seeAllAriaLabel,
         rowVariant,
+        projectConversationVariant,
         styles: {
           groupHeaderClassName: typography?.groupHeaderClassName,
           itemTitleClassName: typography?.itemTitleClassName,
@@ -515,6 +517,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
         seeAllLabel,
         seeAllAriaLabel,
         rowVariant,
+        projectConversationVariant,
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,
         typography?.unreadItemTitleClassName,
