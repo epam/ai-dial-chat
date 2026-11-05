@@ -999,9 +999,6 @@ given, and every visible string comes from their props, with English defaults
 where one exists. `OverviewTab` also takes an optional
 `sectionContainerClassName` for the wrapper around each section's table
 (default `'px-6'`), so a host surface with its own padding can pass `''`.
-`ContentTab` likewise takes `sectionClassName` (default `'px-6'`) for its
-description, file selector and body; the divider under the description and the
-scroll area carry no side padding, so they span the full width.
 
 `getCatalogDetailsTabs` (also on `@epam/ai-dial-catalog/mapping`) returns the
 tabs the panel would show for an item, in order: About unless the item is

@@ -146,13 +146,15 @@ describe('ContentTab', () => {
     );
 
     /* Scroll ownership is a CSS layout contract; jsdom cannot measure overflow. */
-    // eslint-disable-next-line testing-library/no-node-access
-    const scrollArea = screen.getByText('a very long description').closest('.overflow-y-auto');
+    /* eslint-disable testing-library/no-node-access */
+    const scrollArea = screen
+      .getByText('a very long description')
+      .closest('.overflow-y-auto');
     expect(scrollArea).toBeTruthy();
-    // eslint-disable-next-line testing-library/no-node-access
-    expect(screen.getByText('a very long prompt body').closest('.overflow-y-auto')).toBe(scrollArea);
-    // eslint-disable-next-line testing-library/no-node-access
-    expect(screen.getByText('a very long prompt body').closest('.overflow-auto')).toBeNull();
+    const body = screen.getByText('a very long prompt body');
+    expect(body.closest('.overflow-y-auto')).toBe(scrollArea);
+    expect(body.closest('.overflow-auto')).toBeNull();
+    /* eslint-enable testing-library/no-node-access */
   });
 
   it('renders no copy control', () => {
@@ -199,8 +201,14 @@ describe('ContentTab — file selector', () => {
     );
 
     const selector = screen.getByRole('button', { name: 'SKILL.md' });
-    expect(screen.getByText('Skill description').compareDocumentPosition(selector) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(selector.compareDocumentPosition(screen.getByText('File content')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      screen.getByText('Skill description').compareDocumentPosition(selector) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      selector.compareDocumentPosition(screen.getByText('File content')) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it('keeps the file selector sticky at the top of the shared scroll area', () => {
@@ -209,12 +217,14 @@ describe('ContentTab — file selector', () => {
     );
 
     /* Sticky positioning has no semantic query or layout engine in jsdom. */
-    // eslint-disable-next-line testing-library/no-node-access
-    const stickyRow = screen.getByRole('button', { name: 'SKILL.md' }).closest('.sticky');
+    /* eslint-disable testing-library/no-node-access */
+    const stickyRow = screen
+      .getByRole('button', { name: 'SKILL.md' })
+      .closest('.sticky');
     expect(stickyRow).toBeTruthy();
     expect(stickyRow?.className).toContain('top-0');
-    // eslint-disable-next-line testing-library/no-node-access
     expect(stickyRow?.closest('.overflow-y-auto')).toBeTruthy();
+    /* eslint-enable testing-library/no-node-access */
   });
 
   it('renders no selector when the item carries no files', () => {

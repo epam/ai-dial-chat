@@ -77,8 +77,6 @@ export interface ContentTabProps {
   detailsStyles?: ItemDetailsStyles;
   /** Code-block, table and formula labels forwarded to the markdown body and the plain-text code preview. Defaults to the renderer's English labels. */
   markdownLabels?: CatalogMarkdownLabels;
-  /** CSS class applied to the description, file selector and body, so the divider and scroll area span the full width. Defaults to `'px-6'`. */
-  sectionClassName?: string;
 }
 
 /**
@@ -108,7 +106,6 @@ export const ContentTab: FC<ContentTabProps> = ({
   renderFileTree,
   detailsStyles,
   markdownLabels,
-  sectionClassName = 'px-6',
 }) => {
   const bodyClassName =
     detailsStyles?.typography?.contentClassName ?? 'dial-small-text';
@@ -201,8 +198,7 @@ export const ContentTab: FC<ContentTabProps> = ({
         <>
           <p
             className={mergeClasses(
-              'm-0 shrink-0 wrap-break-word',
-              sectionClassName,
+              'm-0 shrink-0 px-6 wrap-break-word',
               bodyClassName,
             )}
           >
@@ -215,8 +211,7 @@ export const ContentTab: FC<ContentTabProps> = ({
       {hasFileChoice && (
         <div
           className={mergeClasses(
-            'sticky top-0 z-10 flex min-h-10 shrink-0 items-center gap-3',
-            sectionClassName,
+            'sticky top-0 z-10 flex min-h-10 shrink-0 items-center gap-3 px-6',
             styles.fileSelector,
           )}
         >
@@ -275,8 +270,7 @@ export const ContentTab: FC<ContentTabProps> = ({
         role={hasFileChoice ? 'region' : undefined}
         aria-labelledby={hasFileChoice ? fileSelectorTriggerId : undefined}
         className={mergeClasses(
-          'min-w-0 shrink-0 text-start',
-          sectionClassName,
+          'min-w-0 shrink-0 px-6 text-start',
           /* Viewport-based viewers still get a full tab-height surface, but
            * it scrolls with the description instead of shrinking below it. */
           filePreviewContent != null && 'min-h-full',
