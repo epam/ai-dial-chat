@@ -70,6 +70,7 @@ describe('mapProjectDetailsToViewModel', () => {
     contentVersion: '"cv1"',
     conversationCount: 0,
     canEdit: true,
+    canManage: true,
   };
 
   it('keeps the texts and infers each context file type from its name', () => {

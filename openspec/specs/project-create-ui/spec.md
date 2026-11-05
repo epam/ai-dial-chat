@@ -108,11 +108,12 @@ Its props:
 | `onCancel` | `() => void` |
 | `onSubmit` | `() => void` |
 | `isSubmitting` | optional `boolean`, default `false` |
-| `labels` | `ProjectCreateFormLabels` |
+| `isNameReadOnly` | optional `boolean`, default `false`; see "The Name field can be read-only" |
+| `labels` | `ProjectCreateFormLabels`, including the optional `nameReadOnlyHint` |
 | `markdownEditorTheme` | optional `EditorThemes` |
 | `styles` | optional `ProjectCreateFormStyles`, applied via `buildCssVars` |
 
-Every declared prop SHALL be read. The same component serves the edit page (`project-edit-ui`). The host changes only the strings it already owns (`labels.title`, `labels.createLabel`, `labels.submittingLabel`, `labels.creatingStatus`) and passes stored files.
+Every declared prop SHALL be read. The same component serves the edit page (`project-edit-ui`). The host changes only the strings it already owns (`labels.title`, `labels.createLabel`, `labels.submittingLabel`, `labels.creatingStatus`, and `labels.nameReadOnlyHint` when it locks the name), passes stored files, and sets `isNameReadOnly` for a caller who may not rename.
 
 `ProjectCreatePage` supplies the host-owned pieces:
 
@@ -120,6 +121,8 @@ Every declared prop SHALL be read. The same component serves the edit page (`pro
 - the Instructions refinement callback, from `useTextRefinementCallback`;
 - `onPickFromFileManager`, from `useProjectFileManagerPicker`;
 - every string, from `useProjectCreateFormLabels`, which formats the limits named in `labels.dropZoneHint` and the too-large message with `formatFileSize` from `@epam/ai-dial-chat-shared`.
+
+`ProjectCreatePage` never sets `isNameReadOnly`.
 
 #### Scenario: Lib has no host integration knowledge
 
@@ -417,3 +420,31 @@ No new client telemetry event SHALL be added. Project creation is observed throu
 
 - **WHEN** a create request completes with `409`
 - **THEN** the HTTP lifecycle metric for `POST /api/v1/projects` records status `409`
+
+### Requirement: The Name field can be read-only
+
+`ProjectCreateForm` SHALL accept `isNameReadOnly?: boolean` (default `false`) and `labels.nameReadOnlyHint?: string` (English default "Only the project owner can rename it."). With `isNameReadOnly`:
+
+- **The input.** The Name `Input` renders `values.name` with the native `readOnly` attribute, not `disabled`, so it stays in the tab order and screen readers announce it as read-only. It keeps its visible label and `required`. `onFieldChange('name', …)` is never called.
+- **The hint.** The form renders `labels.nameReadOnlyHint` as helper text under the field, with the form's helper typography (`helperClassName`), and gives it an `id`. The input's `aria-describedby` includes that id; when a name error is also shown, it includes both ids.
+- **Validation.** `validateProjectName` still runs on the value and can still disable Submit. In practice it does not, because the host passes a stored, valid name.
+- **Everything else** (instructions, context files, Refine with AI, header and footer buttons) behaves as without the prop.
+
+Without `isNameReadOnly`, the hint does not render and the field behaves as before. The lib does not know why the name is locked: the host decides, and supplies the translated hint.
+
+**RTL impact:** none. The hint is text in normal flow, and it has no directional icon.
+
+#### Scenario: Read-only name
+
+- **WHEN** `ProjectCreateForm` renders with `isNameReadOnly` and `values.name` `research`
+- **THEN** the textbox named by `labels.nameLabel` has the value `research` and is read-only, and the hint text is rendered and linked from its `aria-describedby`
+
+#### Scenario: Typing does not change a read-only name
+
+- **WHEN** the user focuses the read-only Name input and types
+- **THEN** `onFieldChange` is not called
+
+#### Scenario: Editable by default
+
+- **WHEN** the form renders without `isNameReadOnly`
+- **THEN** the Name input is editable, and no hint renders

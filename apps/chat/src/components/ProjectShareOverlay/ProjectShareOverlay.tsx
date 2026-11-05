@@ -1,6 +1,8 @@
 import { makeOutsideInert } from '@epam/ai-dial-chat-shared';
 import { memo, useEffect, useRef, type FC, type MouseEvent } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
+import { ShareI18nKeys } from '../../constants/translation-keys';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 
 /** Props for `ProjectShareOverlay`. */
@@ -16,11 +18,14 @@ interface Props {
  * the same popover to its Share button; the project page and the sidebar open
  * it from a ⋮ menu, which has closed by then, so it is centred on a backdrop
  * instead. The overlay is modal: while it is open, the rest of the page leaves
- * the tab order and the accessibility tree. Project links are view-only, so a
- * shared project stays read-only. Focus returns to the element that was
- * focused when the overlay opened.
+ * the tab order and the accessibility tree. The link may grant view or edit
+ * access: a recipient with edit access changes the instructions and context
+ * and chats in the project, while rename, delete, share and publish stay with
+ * the owner. The notes name the project and its chats, not a deployment.
+ * Focus returns to the element that was focused when the overlay opened.
  */
 const ProjectShareOverlay: FC<Props> = ({ projectId, onClose }) => {
+  const { t } = useTranslation();
   const backdropRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(
     document.activeElement as HTMLElement | null,
@@ -55,7 +60,9 @@ const ProjectShareOverlay: FC<Props> = ({ projectId, onClose }) => {
     >
       <SharePopoverContainer
         itemId={projectId}
-        canEditAccess={false}
+        canEditAccess
+        visibilityNote={t(ShareI18nKeys.VisibilityNoteProject)}
+        visibilityNoteEdit={t(ShareI18nKeys.VisibilityNoteEditProject)}
         onClose={onClose}
       />
     </div>,

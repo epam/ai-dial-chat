@@ -40,6 +40,7 @@ import { ConversationCompletionsResponder } from '../../conversations/streaming/
 import { LANG_HEADER } from '../../conversations/utils/lang-header';
 import { TIMEZONE_HEADER } from '../../conversations/utils/timezone-header';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
+import { ProjectAccessService } from '../access/project-access.service';
 import { ProjectCreateErrorDto } from '../dto/project-create-error.dto';
 import {
   PROJECT_ID_PARAM,
@@ -62,8 +63,8 @@ const CONVERSATION_NAME_PARAM = {
   example: 'gpt-4o__Weekly%20support%20health%20summary__7c1d',
 };
 
-const OWNER_ONLY_FORBIDDEN =
-  "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access";
+const WRITE_FORBIDDEN =
+  'The projectsEnabled feature is not enabled for this user, the caller may not write to the project (`canEdit: false`: a view-only share or an organization project), or DIAL Core denied access';
 const READ_FORBIDDEN =
   'The projectsEnabled feature is not enabled for this user, or DIAL Core denied read access';
 const COMPLETION_PATH_INVALID =
@@ -86,6 +87,7 @@ export class ProjectConversationsController {
   constructor(
     private readonly conversationsService: ProjectConversationsService,
     private readonly completionsResponder: ConversationCompletionsResponder,
+    private readonly accessService: ProjectAccessService,
   ) {}
 
   @Get(':id/conversations')
@@ -171,7 +173,7 @@ export class ProjectConversationsController {
   })
   @ApiResponse({ status: 400, description: 'Invalid id or body' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 403, description: OWNER_ONLY_FORBIDDEN })
+  @ApiResponse({ status: 403, description: WRITE_FORBIDDEN })
   @ApiResponse({ status: 404, description: 'The project does not exist' })
   @ApiResponse({
     status: 413,
@@ -211,7 +213,7 @@ export class ProjectConversationsController {
   })
   @ApiResponse({ status: 400, description: COMPLETION_PATH_INVALID })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 403, description: OWNER_ONLY_FORBIDDEN })
+  @ApiResponse({ status: 403, description: WRITE_FORBIDDEN })
   @ApiResponse({
     status: 404,
     description: 'The project or the conversation does not exist',
@@ -221,7 +223,7 @@ export class ProjectConversationsController {
     description:
       'Another generation is already active for this conversation, or it has a pending background answer',
   })
-  streamProjectCompletion(
+  async streamProjectCompletion(
     @Param() { id }: ProjectIdParamDto,
     @Req() req: Request,
     @Res() res: Response,
@@ -229,7 +231,7 @@ export class ProjectConversationsController {
     @Headers(TIMEZONE_HEADER) timezoneHeader: string | string[] | undefined,
     @Headers(LANG_HEADER) langHeader: string | string[] | undefined,
   ): Promise<void> {
-    const locator = this.resolveWritableLocator(id, dto.path, req);
+    const locator = await this.resolveWritableLocator(id, dto.path, req);
     return this.completionsResponder.streamCompletion(
       req,
       res,
@@ -249,7 +251,7 @@ export class ProjectConversationsController {
   @ApiResponse({ status: 204, description: 'Generation stopped successfully' })
   @ApiResponse({ status: 400, description: COMPLETION_PATH_INVALID })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 403, description: OWNER_ONLY_FORBIDDEN })
+  @ApiResponse({ status: 403, description: WRITE_FORBIDDEN })
   @ApiResponse({
     status: 404,
     description:
@@ -260,13 +262,13 @@ export class ProjectConversationsController {
     description:
       'The stopped state of a background generation could not be saved; Stop can be retried',
   })
-  stopProjectCompletion(
+  async stopProjectCompletion(
     @Param() { id }: ProjectIdParamDto,
     @Req() req: Request,
     @Res() res: Response,
     @Body() dto: StopCompletionDto,
   ): Promise<void> {
-    const locator = this.resolveWritableLocator(id, dto.path, req);
+    const locator = await this.resolveWritableLocator(id, dto.path, req);
     return this.completionsResponder.stopCompletion(req, res, dto, locator);
   }
 
@@ -288,18 +290,18 @@ export class ProjectConversationsController {
   })
   @ApiResponse({ status: 400, description: COMPLETION_PATH_INVALID })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 403, description: OWNER_ONLY_FORBIDDEN })
+  @ApiResponse({ status: 403, description: WRITE_FORBIDDEN })
   @ApiResponse({
     status: 404,
     description: 'No active generation found for the given path',
   })
-  attachToProjectGeneration(
+  async attachToProjectGeneration(
     @Param() { id }: ProjectIdParamDto,
     @Req() req: Request,
     @Res() res: Response,
     @Body() dto: AttachGenerationDto,
   ): Promise<void> {
-    const locator = this.resolveWritableLocator(id, dto.path, req);
+    const locator = await this.resolveWritableLocator(id, dto.path, req);
     return this.completionsResponder.attachToGeneration(req, res, dto, locator);
   }
 
@@ -357,7 +359,7 @@ export class ProjectConversationsController {
     description: 'Invalid id, conversation name or body',
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 403, description: OWNER_ONLY_FORBIDDEN })
+  @ApiResponse({ status: 403, description: WRITE_FORBIDDEN })
   @ApiResponse({
     status: 404,
     description: 'The project or the conversation does not exist',
@@ -407,7 +409,7 @@ export class ProjectConversationsController {
     description: 'Invalid id, conversation name or newTitle',
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 403, description: OWNER_ONLY_FORBIDDEN })
+  @ApiResponse({ status: 403, description: WRITE_FORBIDDEN })
   @ApiResponse({
     status: 404,
     description: 'The project or the conversation does not exist',
@@ -443,7 +445,7 @@ export class ProjectConversationsController {
   @ApiResponse({ status: 204, description: 'The conversation was deleted' })
   @ApiResponse({ status: 400, description: 'Invalid id or conversation name' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 403, description: OWNER_ONLY_FORBIDDEN })
+  @ApiResponse({ status: 403, description: WRITE_FORBIDDEN })
   @ApiResponse({
     status: 404,
     description: 'The project or the conversation does not exist',
@@ -493,17 +495,15 @@ export class ProjectConversationsController {
     );
   }
 
-  /* Owner check first, so a read-only project never reaches Core; then the body path must name a conversation of `:id`. */
-  private resolveWritableLocator(
+  /* Write check first, so a read-only project never reaches the model or a Core write; then the body path must name a conversation of `:id`. */
+  private async resolveWritableLocator(
     id: string,
     path: string,
     req: Request,
-  ): string {
+  ): Promise<string> {
     const project = requireProjectId(id);
-    this.conversationsService.assertOwner(
-      project,
-      (req.user as SessionUser).bucket,
-    );
+    const { at, bucket } = req.user as SessionUser;
+    await this.accessService.assertCanWrite(project, bucket, at);
     return this.conversationsService.resolveCompletionLocator(project, path);
   }
 }

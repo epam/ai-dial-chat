@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -15,6 +14,7 @@ import {
   ConversationReadStateService,
   isProjectConversationUnread,
 } from '../../scheduled-task-unread/conversation-read-state.service';
+import { ProjectAccessService } from '../access/project-access.service';
 import {
   buildProjectConversationLocator,
   fromStrippedProjectConversationPath,
@@ -29,9 +29,10 @@ import { ProjectConversationsListService } from './project-conversations-list.se
  * Conversations stored inside a project. Every operation addresses the
  * conversation by its locator, so the regular conversation services (and
  * through `ConversationPersistenceService` the project store) do the work.
- * Writes are owner-only — the project bucket must be the session bucket,
- * matching `canEdit` — and are refused before any Core call. Each write
- * evicts the listing's cached title.
+ * Writes need `canEdit` (`ProjectAccessService.assertCanWrite`): the owner,
+ * or a recipient the project is shared with with `WRITE`, who may then write
+ * every conversation of the project. A refused write makes no conversation
+ * write. Each write evicts the listing's cached title.
  */
 @Injectable()
 export class ProjectConversationsService {
@@ -42,16 +43,8 @@ export class ProjectConversationsService {
     private readonly store: ProjectConversationStore,
     private readonly listService: ProjectConversationsListService,
     private readonly readStateService: ConversationReadStateService,
+    private readonly accessService: ProjectAccessService,
   ) {}
-
-  /** `403` unless the project is in the caller's own bucket. */
-  assertOwner(project: ParsedProjectId, sessionBucket: string): void {
-    if (project.bucket !== sessionBucket) {
-      throw new ForbiddenException(
-        'Only the owner can write to a project conversation',
-      );
-    }
-  }
 
   /**
    * The locator of a completion, stop or attach body `path` (the locator
@@ -132,7 +125,11 @@ export class ProjectConversationsService {
     accessToken: string,
     sessionBucket: string,
   ): Promise<ConversationResponseDto> {
-    this.assertOwner(project, sessionBucket);
+    await this.accessService.assertCanWrite(
+      project,
+      sessionBucket,
+      accessToken,
+    );
     const { conversation } = buildNewConversation({
       firstMessage: dto.firstMessage,
       deploymentId: dto.deploymentId,
@@ -171,7 +168,11 @@ export class ProjectConversationsService {
     accessToken: string,
     sessionBucket: string,
   ): Promise<ConversationResponseDto> {
-    this.assertOwner(project, sessionBucket);
+    await this.accessService.assertCanWrite(
+      project,
+      sessionBucket,
+      accessToken,
+    );
     const locator = buildProjectConversationLocator(project, name);
     const saved = await this.conversationService.saveClientConversation(
       locator,
@@ -191,7 +192,11 @@ export class ProjectConversationsService {
     accessToken: string,
     sessionBucket: string,
   ): Promise<RenameConversationResponseDto> {
-    this.assertOwner(project, sessionBucket);
+    await this.accessService.assertCanWrite(
+      project,
+      sessionBucket,
+      accessToken,
+    );
     const locator = buildProjectConversationLocator(project, name);
     const wasRead = await this.isReadQuietly(
       project,
@@ -218,7 +223,11 @@ export class ProjectConversationsService {
     accessToken: string,
     sessionBucket: string,
   ): Promise<void> {
-    this.assertOwner(project, sessionBucket);
+    await this.accessService.assertCanWrite(
+      project,
+      sessionBucket,
+      accessToken,
+    );
     const locator = buildProjectConversationLocator(project, name);
     await this.store.deleteConversation(locator, accessToken);
     await this.listService.evict(locator);

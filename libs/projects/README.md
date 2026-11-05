@@ -87,7 +87,7 @@ import {
   getProjectHref={(id) => `/projects/view/${id.slice('projects/'.length)}`}
   locale="en"
   labels={{
-    title: 'All projects',
+    title: 'Projects',
     searchPlaceholder: 'Search projects',
     searchAriaLabel: 'Search projects',
     clearSearchLabel: 'Clear search',
@@ -156,14 +156,14 @@ Only logical properties are used, so the layout follows the inherited `dir`.
 
 Controlled New project form inside the builder-form shell: a header with a back button (mirrored in RTL), the `<h1>` title, **Cancel** and **Create**, moved into a sticky footer on mobile.
 
-- **Name** is required. `validateProjectName` checks it after the field is first blurred; a host `errors.name` (for example a taken name) takes precedence, is announced as an alert, and moves focus back to the field. The error is linked through `aria-describedby`.
+- **Name** is required. `validateProjectName` checks it after the field is first blurred; a host `errors.name` (for example a taken name) takes precedence, is announced as an alert, and moves focus back to the field. The error is linked through `aria-describedby`. With `isNameReadOnly` (default `false`) the input gets the native `readOnly` attribute, so it stays focusable and is announced as read-only, `onFieldChange('name', …)` is never called, and `labels.nameReadOnlyHint` (default `'Only the project owner can rename it.'`) renders under it as a `CaptionText` that the input's `aria-describedby` also names. The lib does not decide who may rename: the host sets the flag.
 - **Instructions** (the kit markdown editor) get a Refine with AI action when `onRefineInstructions` is supplied. The form has no description field.
 - **Context** files come from the kit `FileDropzone` (a click or a drop opens and takes the device picker) or a drag anywhere over the form. `labels.dropZoneLabel` places two link elements in its sentence: an underlined "from device" span — the whole zone opens the device picker — and, when `onPickFromFileManager` is supplied, a "file manager" button that opens the host's picker instead. `labels.dropZoneAriaLabel` names the zone's file input. `checkContextFiles` filters the files against `maxFileBytes` and `maxTotalBytes`; each rejection, and a host `errors.context` after them, shows as the kit drop zone's `errorText` — one per line in the error color, with an error border, linked to the file input through `aria-describedby` / `aria-invalid` — and is announced. Each file renders as an `AttachmentCard` with a named remove button. When the host passes `onContextFileClick`, each card is also a button named `labels.openFileLabel(name)` (optional, defaulting to `Preview {name}`) that reports the card's `ProjectContextFile.id`, and the card whose id equals `selectedContextFileId` renders selected (`aria-pressed`); what a click opens, and where its bytes come from, is the host's decision, so the lib never loads a file. The form shows no capacity meter.
 - **Create** is disabled while the name is invalid, a refinement is pending, or `isSubmitting` is true.
 
 The form shows no unsaved-changes dialog: leaving is the host's decision through `onBack` / `onCancel`.
 
-The same form edits an existing project: the host passes the project's files as `StoredProjectContextFile`s (`size`, `isStored: true`) alongside newly added `Attachment`s, and supplies the edit strings through `labels` (`title`, `createLabel`, `submittingLabel`, `creatingStatus`). Stored files count toward `maxTotalBytes` and render as removable cards; `isStoredContextFile` separates them when the host builds its save request.
+The same form edits an existing project: the host passes the project's files as `StoredProjectContextFile`s (`size`, `isStored: true`) alongside newly added `Attachment`s, and supplies the edit strings through `labels` (`title`, `createLabel`, `submittingLabel`, `creatingStatus`). Stored files count toward `maxTotalBytes` and render as removable cards; `isStoredContextFile` separates them when the host builds its save request. For a caller who may edit but not rename (in `apps/chat`, a recipient of an edit share), the host also passes `isNameReadOnly` and `labels.nameReadOnlyHint`.
 
 ```tsx
 import { ProjectCreateForm } from '@epam/ai-dial-projects';
@@ -185,6 +185,7 @@ import { cloneElement } from 'react';
   onBack={() => {}}
   onCancel={() => {}}
   onSubmit={() => {}}
+  isNameReadOnly={false}
   labels={{
     title: 'New project',
     backLabel: 'Back',
@@ -233,7 +234,7 @@ import { cloneElement } from 'react';
 />;
 ```
 
-`labels.submittingLabel` (defaults to `createLabel`), `labels.dropZoneAriaLabel`, `labels.dropOverlayTitle` / `dropOverlaySubtitle` and `labels.refinement` (`TextRefinementLabels`) are optional. A host with i18n can fill `dropZoneLabel` with its rich-text interpolation instead of `cloneElement` — `apps/chat` uses `react-i18next`'s `Trans` with `components={{ device: fromDevice, manager: fileManager }}`. `markdownEditorTheme` sets the editor theme.
+`labels.submittingLabel` (defaults to `createLabel`), `labels.nameReadOnlyHint` (defaults to `'Only the project owner can rename it.'`), `labels.dropZoneAriaLabel`, `labels.dropOverlayTitle` / `dropOverlaySubtitle` and `labels.refinement` (`TextRefinementLabels`) are optional. A host with i18n can fill `dropZoneLabel` with its rich-text interpolation instead of `cloneElement` — `apps/chat` uses `react-i18next`'s `Trans` with `components={{ device: fromDevice, manager: fileManager }}`. `markdownEditorTheme` sets the editor theme.
 
 `styles.colors` overrides the CSS custom properties:
 

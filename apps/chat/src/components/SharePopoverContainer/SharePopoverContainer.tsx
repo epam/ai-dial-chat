@@ -19,6 +19,10 @@ interface Props {
   canEditAccess: boolean;
   /** Whether the item being shared is a QuickApp; shows the nested-items warning note when true. */
   isQuickApp?: boolean;
+  /** Replaces the default deployment-worded view note, e.g. with a project's own wording. */
+  visibilityNote?: string;
+  /** Replaces the default deployment-worded note shown while edit access is selected. */
+  visibilityNoteEdit?: string;
   /** Called when the popover should close. */
   onClose: () => void;
 }
@@ -32,6 +36,8 @@ const SharePopoverContainer: FC<Props> = ({
   itemId,
   canEditAccess,
   isQuickApp = false,
+  visibilityNote,
+  visibilityNoteEdit,
   onClose,
 }) => {
   const { t } = useTranslation();
@@ -55,8 +61,9 @@ const SharePopoverContainer: FC<Props> = ({
         accessAriaLabel: t(ShareI18nKeys.AccessAriaLabel),
         accessViewLabel: t(BasicI18nKeys.CanView),
         accessEditLabel: t(BasicI18nKeys.CanEdit),
-        visibilityNote: t(ShareI18nKeys.VisibilityNote),
-        visibilityNoteEdit: t(ShareI18nKeys.VisibilityNoteEdit),
+        visibilityNote: visibilityNote ?? t(ShareI18nKeys.VisibilityNote),
+        visibilityNoteEdit:
+          visibilityNoteEdit ?? t(ShareI18nKeys.VisibilityNoteEdit),
         nestedItemsNote: isQuickApp
           ? t(ShareI18nKeys.NestedItemsNote)
           : undefined,

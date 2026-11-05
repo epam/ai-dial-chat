@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ShareI18nKeys } from '../../../constants/translation-keys';
 import ProjectShareOverlay from '../ProjectShareOverlay';
 
 const { mockContainer } = vi.hoisted(() => ({
@@ -18,6 +19,10 @@ const { mockContainer } = vi.hoisted(() => ({
   ),
 }));
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 vi.mock('../../SharePopoverContainer/SharePopoverContainer', () => ({
   default: mockContainer,
 }));
@@ -27,14 +32,16 @@ describe('ProjectShareOverlay', () => {
     vi.clearAllMocks();
   });
 
-  it('opens a view-only share popover for the project', () => {
+  it('offers view and edit access with the project notes', () => {
     render(<ProjectShareOverlay projectId="projects/b/q4" onClose={vi.fn()} />);
 
     expect(screen.getByRole('dialog', { name: 'Share' })).toBeTruthy();
     expect(mockContainer).toHaveBeenCalledWith(
       expect.objectContaining({
         itemId: 'projects/b/q4',
-        canEditAccess: false,
+        canEditAccess: true,
+        visibilityNote: ShareI18nKeys.VisibilityNoteProject,
+        visibilityNoteEdit: ShareI18nKeys.VisibilityNoteEditProject,
       }),
       undefined,
     );

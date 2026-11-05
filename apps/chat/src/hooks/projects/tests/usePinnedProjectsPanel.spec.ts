@@ -72,6 +72,7 @@ const details = (
   contentVersion: 'v1',
   conversationCount: 2,
   canEdit: true,
+  canManage: true,
   ...overrides,
 });
 
@@ -318,9 +319,29 @@ describe('usePinnedProjectsPanel', () => {
       ]);
     });
 
-    it('offers a share recipient Unpin only', async () => {
+    it('offers a share recipient with edit access Unpin and Edit', async () => {
       mocks.client.getProject.mockResolvedValue(
-        details({ canEdit: false, source: ProjectSource.Shared }),
+        details({
+          canEdit: true,
+          canManage: false,
+          source: ProjectSource.Shared,
+        }),
+      );
+      const { result } = renderPanel();
+
+      expect((await actionsOf(result)).map(({ key }) => key)).toEqual([
+        'unpin',
+        'edit',
+      ]);
+    });
+
+    it('offers a view-only share recipient Unpin only', async () => {
+      mocks.client.getProject.mockResolvedValue(
+        details({
+          canEdit: false,
+          canManage: false,
+          source: ProjectSource.Shared,
+        }),
       );
       const { result } = renderPanel();
 

@@ -810,7 +810,7 @@
   },
   "projects": {
     "page": {
-      "title": "All projects",
+      "title": "Projects",
       "newProject": "New project"
     },
     "toolbar": {
@@ -921,6 +921,7 @@
       "title": "Edit project",
       "saving": "Saving…",
       "savingStatus": "Saving project…",
+      "nameReadOnlyHint": "Only the project owner can rename it.",
       "toast": {
         "success": "Project \"{{name}}\" saved",
         "error": "Could not save the project",
@@ -1421,6 +1422,8 @@
     "visibilityNote": "This deployment and its updates will be visible to users with the link.",
     "visibilityNoteEdit": "Anyone with the link will be able to view and edit this deployment.",
     "visibilityNoteConversation": "This conversation and its updates will be visible to users with the link.",
+    "visibilityNoteProject": "This project, its chats and its updates will be visible to users with the link.",
+    "visibilityNoteEditProject": "Anyone with the link will be able to view and edit this project and chat in it.",
     "nestedItemsNote": "Nested items such as prompts and files aren't shared automatically — share them separately so the app works correctly.",
     "copiedButtonLabel": "Copied",
     "linkAriaLabel": "Share link",

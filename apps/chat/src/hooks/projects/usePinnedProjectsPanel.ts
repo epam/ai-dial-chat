@@ -213,15 +213,19 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
           void handleUnpin(group.id);
         },
       };
-      if (!projectsById.get(group.id)?.canEdit) return [unpin];
+      const project = projectsById.get(group.id);
+      /* `canEdit` (the owner or a share with edit access) offers Edit; `canManage` (the owner) adds Publish, Share and Delete. */
+      if (!project?.canEdit) return [unpin];
+      const edit: DropdownItem = {
+        key: 'edit',
+        label: t(ButtonsI18nKeys.Edit),
+        icon: renderMenuIcon(IconPencilMinus),
+        onClick: () => onOpenRoute(getProjectEditRoute(group.id)),
+      };
+      if (!project.canManage) return [unpin, edit];
       return [
         unpin,
-        {
-          key: 'edit',
-          label: t(ButtonsI18nKeys.Edit),
-          icon: renderMenuIcon(IconPencilMinus),
-          onClick: () => onOpenRoute(getProjectEditRoute(group.id)),
-        },
+        edit,
         {
           key: 'publish',
           label: t(ButtonsI18nKeys.Publish),

@@ -13,6 +13,7 @@ import {
   useTextRefinement,
 } from '@epam/ai-dial-chat-shared';
 import {
+  CaptionText,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   ErrorText,
@@ -59,6 +60,7 @@ const MarkdownEditor = lazy(async () => {
 });
 
 const DEFAULT_OPEN_FILE_LABEL = (name: string): string => `Preview ${name}`;
+const DEFAULT_NAME_READ_ONLY_HINT = 'Only the project owner can rename it.';
 
 /** Presentational New and Edit project form: name, instructions and context files, including stored ones when editing. */
 export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
@@ -78,6 +80,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   onCancel,
   onSubmit,
   isSubmitting = false,
+  isNameReadOnly = false,
   labels,
   markdownEditorTheme,
   className,
@@ -86,6 +89,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   const nameId = useId();
   const nameErrorId = useId();
   const nameValidationErrorId = useId();
+  const nameHintId = useId();
   const instructionsId = useId();
   const contextLabelId = useId();
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -110,9 +114,13 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
       : undefined);
   const isCreateDisabled = nameCheck != null || isSubmitting || isRefining;
   /* A host error lives in the always-mounted alert; inline validation has its own, non-announcing element. */
-  let nameDescribedBy: string | undefined;
-  if (errors.name) nameDescribedBy = nameErrorId;
-  else if (nameError) nameDescribedBy = nameValidationErrorId;
+  let nameErrorDescribedBy: string | undefined;
+  if (errors.name) nameErrorDescribedBy = nameErrorId;
+  else if (nameError) nameErrorDescribedBy = nameValidationErrorId;
+  const nameDescribedBy =
+    [isNameReadOnly && nameHintId, nameErrorDescribedBy]
+      .filter(Boolean)
+      .join(' ') || undefined;
 
   /* A host error on Name (a taken name) sends focus back to the field. */
   useEffect(() => {
@@ -268,16 +276,27 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
               id={nameId}
               inputRef={nameInputRef}
               value={values.name}
-              onChange={(value) => onFieldChange('name', value ?? '')}
+              onChange={(value) => {
+                if (!isNameReadOnly) onFieldChange('name', value ?? '');
+              }}
               onBlur={() => setIsNameTouched(true)}
               placeholder={labels.namePlaceholder}
               labelProps={{ label: labels.nameLabel, required: true }}
               required
               aria-required
+              /* `readOnly`, not `disabled`: the value stays focusable and is announced as read-only. */
+              readOnly={isNameReadOnly}
               invalid={Boolean(nameError)}
               aria-invalid={Boolean(nameError)}
               aria-describedby={nameDescribedBy}
             />
+            {isNameReadOnly && (
+              <CaptionText
+                id={nameHintId}
+                className={helperClassName}
+                text={labels.nameReadOnlyHint ?? DEFAULT_NAME_READ_ONLY_HINT}
+              />
+            )}
             {/* Mounted before a host error (a taken name) arrives, so it is announced; out of the column gap while empty. Inline validation stays outside it, under its own id. */}
             <ErrorText
               announce={LiveRegionPoliteness.Assertive}

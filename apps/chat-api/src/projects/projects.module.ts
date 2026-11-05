@@ -3,6 +3,7 @@ import { AppConfigModule } from '../app-config/app-config.module';
 import { ConversationModule } from '../conversations/conversation.module';
 import { ScheduledTaskUnreadModule } from '../scheduled-task-unread/scheduled-task-unread.module';
 import { UserConfigModule } from '../user-config/user-config.module';
+import { ProjectAccessService } from './access/project-access.service';
 import { ProjectArtifactsListService } from './artifacts/projects-artifacts-list.service';
 import { ProjectConversationsListService } from './conversations/project-conversations-list.service';
 import { ProjectConversationsController } from './conversations/project-conversations.controller';
@@ -25,6 +26,7 @@ import { ProjectsWatchService } from './watch/projects-watch.service';
   ],
   controllers: [ProjectsController, ProjectConversationsController],
   providers: [
+    ProjectAccessService,
     ProjectsService,
     ProjectsCreateService,
     ProjectsDownloadService,

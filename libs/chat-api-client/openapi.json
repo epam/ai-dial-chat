@@ -10340,7 +10340,7 @@
     },
     "/api/v1/projects/{id}": {
       "get": {
-        "description": "Returns one project's name, description, instructions, context files with their sizes, and the ETag of the version they were read from. The BFF reads the project archive from DIAL Core, because project metadata carries no file sizes; `canEdit` is true only for a project in the caller's own bucket.",
+        "description": "Returns one project's name, description, instructions, context files with their sizes, and the ETag of the version they were read from. The BFF reads the project archive from DIAL Core, because project metadata carries no file sizes. `canEdit` is true for the owner and for a recipient the project is shared with with WRITE; `canManage` (rename, delete, share, publish) is true only for a project in the caller's own bucket.",
         "operationId": "getProject",
         "parameters": [
           {
@@ -10407,7 +10407,7 @@
         "tags": ["projects"]
       },
       "put": {
-        "description": "Saves the name, description, instructions and context of a project in one conditional DIAL Core write: the BFF rebuilds PROJECT.md, keeps every stored context file not listed in `removedFileNames`, adds the `files` parts, carries the stored conversations over, and writes the whole project conditioned on the fresh snapshot's ETag, retrying a concurrent conversation write while `If-Match` still names the `contentVersion`. A different name then moves the project in its folder and keeps the caller's pin. Only a project in the caller's own bucket can be saved. Every domain rejection carries a ProjectCreateErrorCode.",
+        "description": "Saves the name, description, instructions and context of a project in one conditional DIAL Core write: the BFF rebuilds PROJECT.md, keeps every stored context file not listed in `removedFileNames`, adds the `files` parts, carries the stored conversations over, and writes the whole project conditioned on the fresh snapshot's ETag, retrying a concurrent conversation write while `If-Match` still names the `contentVersion`. A different name then moves the project in its folder and keeps the caller's pin. The owner and a recipient the project is shared with with WRITE may save; only the owner may rename. Every domain rejection carries a ProjectCreateErrorCode.",
         "operationId": "updateProject",
         "parameters": [
           {
@@ -10495,7 +10495,7 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access"
+            "description": "The projectsEnabled feature is not enabled for this user; the caller may not write to the project (`canEdit: false`); a caller other than the owner changed the name; or DIAL Core denied access"
           },
           "404": {
             "description": "The project does not exist"
@@ -11001,7 +11001,7 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access"
+            "description": "The projectsEnabled feature is not enabled for this user, the caller may not write to the project (`canEdit: false`: a view-only share or an organization project), or DIAL Core denied access"
           },
           "404": {
             "description": "The project does not exist"
@@ -11152,7 +11152,7 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access"
+            "description": "The projectsEnabled feature is not enabled for this user, the caller may not write to the project (`canEdit: false`: a view-only share or an organization project), or DIAL Core denied access"
           },
           "404": {
             "description": "The project or the conversation does not exist"
@@ -11216,7 +11216,7 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access"
+            "description": "The projectsEnabled feature is not enabled for this user, the caller may not write to the project (`canEdit: false`: a view-only share or an organization project), or DIAL Core denied access"
           },
           "404": {
             "description": "No active generation found for this principal for the given path and generationId"
@@ -11273,7 +11273,7 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access"
+            "description": "The projectsEnabled feature is not enabled for this user, the caller may not write to the project (`canEdit: false`: a view-only share or an organization project), or DIAL Core denied access"
           },
           "404": {
             "description": "No active generation found for the given path"
@@ -11406,7 +11406,7 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access"
+            "description": "The projectsEnabled feature is not enabled for this user, the caller may not write to the project (`canEdit: false`: a view-only share or an organization project), or DIAL Core denied access"
           },
           "404": {
             "description": "The project or the conversation does not exist"
@@ -11493,7 +11493,7 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access"
+            "description": "The projectsEnabled feature is not enabled for this user, the caller may not write to the project (`canEdit: false`: a view-only share or an organization project), or DIAL Core denied access"
           },
           "404": {
             "description": "The project or the conversation does not exist"
@@ -11555,7 +11555,7 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access"
+            "description": "The projectsEnabled feature is not enabled for this user, the caller may not write to the project (`canEdit: false`: a view-only share or an organization project), or DIAL Core denied access"
           },
           "404": {
             "description": "The project or the conversation does not exist"
@@ -19849,7 +19849,12 @@
           "canEdit": {
             "type": "boolean",
             "example": true,
-            "description": "Whether the caller may edit, delete, share and publish the project — `true` only in the caller's own bucket."
+            "description": "Whether the caller may change the project's instructions and context files and write its conversations — `true` in the caller's own bucket, and for a project shared with them with `WRITE`."
+          },
+          "canManage": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether the caller may rename, delete, share and publish the project — `true` only in the caller's own bucket. Implies `canEdit`."
           }
         },
         "required": [
@@ -19864,7 +19869,8 @@
           "etag",
           "contentVersion",
           "conversationCount",
-          "canEdit"
+          "canEdit",
+          "canManage"
         ]
       },
       "ProjectCreateErrorCode": {
