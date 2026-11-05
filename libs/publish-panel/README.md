@@ -264,6 +264,30 @@ import {
 />;
 ```
 
+#### Org-unit folders
+
+Pass `isOrgUnitFolder(folderPath, rootKey?)` to mark DIAL Core org units: a
+matching folder shows `OrgUnitFolderIcon` from `@epam/ai-dial-chat-shared`
+instead of the folder icon, named by `orgUnitLabel` (default
+`'Organization unit'`) and filled by `styles.colors.orgUnitIcon`. `folderPath`
+is relative to its root. `rootKey` is set only in multi-root mode. The bucket
+root is never marked.
+
+- `PublishPanel` and `StandalonePublishPanel` forward `isOrgUnitFolder(folderPath)`, with the label in `PublishPanelLabels.orgUnitLabel`.
+- `SaveToFolderPanel` and `StandaloneSaveToFolderPanel` forward `isOrgUnitFolder(folderPath, rootKey)`, with the label in `SaveToFolderPanelLabels.orgUnitLabel`.
+
+```tsx
+<PublishFoldersTree
+  items={folderItems}
+  selectedPath={selectedPath}
+  onSelectedPathChange={setSelectedPath}
+  onCreateFolder={handleCreateFolder}
+  searchQuery={searchQuery}
+  isOrgUnitFolder={(path) => unitPaths.has(path.join('/'))}
+  orgUnitLabel="Organization unit"
+/>
+```
+
 ### SaveToFolderPanel / StandaloneSaveToFolderPanel
 
 The "save to a folder, optionally as a new version" flow. `StandaloneSaveToFolderPanel` is an end-edge `SideDrawer` with two views:

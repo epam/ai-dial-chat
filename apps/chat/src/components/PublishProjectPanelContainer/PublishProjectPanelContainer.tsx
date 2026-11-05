@@ -24,6 +24,7 @@ import {
   ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
+import { useOrgUnitDestinationPredicate } from '../../hooks/publish/useOrgUnitDestinationPredicate';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
@@ -177,6 +178,8 @@ const PublishProjectPanelContainer: FC<Props> = ({
     }
   };
 
+  const { isOrgUnitDestination } = useOrgUnitDestinationPredicate(isOpen);
+
   return (
     <StandalonePublishPanel
       isOpen={isOpen}
@@ -189,6 +192,7 @@ const PublishProjectPanelContainer: FC<Props> = ({
       expandedPaths={expandedPaths}
       onExpandedPathsChange={onExpandedPathsChange}
       loadingPaths={loadingPaths}
+      isOrgUnitFolder={isOrgUnitDestination}
       hasExistingPublicationInFolder={
         publishFlow.hasExistingPublicationInFolder
       }

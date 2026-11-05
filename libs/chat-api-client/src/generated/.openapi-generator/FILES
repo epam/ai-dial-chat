@@ -16,6 +16,7 @@ src/apis/FilesApi.ts
 src/apis/HealthApi.ts
 src/apis/ModelsApi.ts
 src/apis/OfflineCredentialsApi.ts
+src/apis/OrgUnitsApi.ts
 src/apis/ProjectsApi.ts
 src/apis/PromptsApi.ts
 src/apis/PublishApi.ts

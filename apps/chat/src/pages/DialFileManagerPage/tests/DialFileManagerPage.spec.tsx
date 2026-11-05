@@ -12,6 +12,7 @@ import {
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
@@ -33,6 +34,17 @@ const { mockUseDialFilePreview, mockOnFileClick } = vi.hoisted(() => ({
 
 vi.mock('../../../hooks/files/useDialFilePreview', () => ({
   useDialFilePreview: mockUseDialFilePreview,
+}));
+
+const { mockIsOrgUnitFolder } = vi.hoisted(() => ({
+  mockIsOrgUnitFolder: vi.fn((_path: string) => false),
+}));
+
+vi.mock('../../../context/OrgUnitsContext', () => ({
+  useOrgUnitsContext: () => ({
+    ensureUnits: vi.fn(),
+    isOrgUnitFolder: mockIsOrgUnitFolder,
+  }),
 }));
 
 vi.mock('../../../context/NotificationContext', () => ({
@@ -106,6 +118,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
     }: {
       items?: { path: string }[];
       gridOptions?: {
+        getItemIcon?: (item: { path: string }) => ReactNode;
         actionLabels?: Partial<Record<DialFileManagerActions, string>>;
         containerClassName?: string;
         filterable?: boolean;
@@ -192,6 +205,9 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         )}
       >
         {items?.length ?? 0} items
+        {items?.map((item) => (
+          <span key={item.path}>{gridOptions?.getItemIcon?.(item)}</span>
+        ))}
         <div role="group" aria-label="tabs">
           {treeOptions?.tabs?.map((tab) => (
             <button
@@ -630,6 +646,49 @@ describe('DialFileManagerPage', () => {
       ).toEqual(expect.arrayContaining(['shadow-none', 'rounded-none']));
       expect(manager.getAttribute('data-grid-filterable')).toBe('false');
       expect(manager.getAttribute('data-grid-no-header-borders')).toBe('true');
+    });
+  });
+
+  describe('DialFileManagerPage — org-unit folders', () => {
+    const orgFolder = (path: string) => ({
+      id: path,
+      name: path.split('/').pop() ?? path,
+      path,
+      parentPath: path.slice(0, path.lastIndexOf('/')),
+      nodeType: DialFileNodeType.FOLDER,
+      folderId: 'public',
+    });
+
+    beforeEach(() => {
+      mockUseDialFileManager.mockReturnValue({
+        ...defaultHookResult,
+        items: [
+          orgFolder('/basic.organization/Acme'),
+          orgFolder('/basic.organization/Reports'),
+          orgFolder('/My files/Acme'),
+        ],
+      });
+    });
+
+    it('marks only the unit folder under the Organization root with the org-unit icon', () => {
+      mockIsOrgUnitFolder.mockImplementation((path) => path === 'Acme/');
+
+      render(<DialFileManagerPage />);
+
+      expect(
+        screen.getAllByRole('img', { name: 'dialFileManager.orgUnit' }),
+      ).toHaveLength(1);
+      expect(mockIsOrgUnitFolder).not.toHaveBeenCalledWith('My files/Acme/');
+    });
+
+    it('shows no org-unit icon when the org units are off or failed to load', () => {
+      mockIsOrgUnitFolder.mockReturnValue(false);
+
+      render(<DialFileManagerPage />);
+
+      expect(
+        screen.queryByRole('img', { name: 'dialFileManager.orgUnit' }),
+      ).toBeNull();
     });
   });
 });

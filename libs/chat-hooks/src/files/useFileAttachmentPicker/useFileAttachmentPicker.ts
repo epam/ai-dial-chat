@@ -13,7 +13,10 @@ import {
 } from '@epam/ai-dial-react-file-manager';
 import { useCallback, useMemo, useState } from 'react';
 import { mimeTypesToDialFileAcceptTypes } from '../attachment-types';
-import { DIAL_FILE_MANAGER_SECTION_TABS } from '../dial-file-manager.model';
+import {
+  DIAL_FILE_MANAGER_SECTION_TABS,
+  type DialFileManagerSection,
+} from '../dial-file-manager.model';
 import type {
   UseDialFileManagerOptions,
   UseDialFileManagerResult,
@@ -71,6 +74,8 @@ export interface UseFileAttachmentPickerResult {
   isFileTypeAllowed: (contentType: string) => boolean;
   /** Accepted upload MIME types; forward to `FileManagerAttachModal`'s `allowedFileTypes` prop. */
   allowedFileTypes: DialFileAcceptType[] | undefined;
+  /** Source sections the picker browses, for mapping a row's virtual path back to its bucket path with `toSectionApiPath`. */
+  sections: DialFileManagerSection[];
 }
 
 /**
@@ -206,5 +211,6 @@ export const useFileAttachmentPicker = ({
     isRowSelectable,
     isFileTypeAllowed,
     allowedFileTypes,
+    sections,
   };
 };

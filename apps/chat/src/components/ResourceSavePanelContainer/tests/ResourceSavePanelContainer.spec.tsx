@@ -19,6 +19,17 @@ import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { NotifiableEntity } from '../../../types/entity-notification';
 import ResourceSavePanelContainer from '../ResourceSavePanelContainer';
 
+const { mockIsOrgUnitFolder } = vi.hoisted(() => ({
+  mockIsOrgUnitFolder: vi.fn((_path: string) => false),
+}));
+
+vi.mock('../../../context/OrgUnitsContext', () => ({
+  useOrgUnitsContext: () => ({
+    ensureUnits: vi.fn(),
+    isOrgUnitFolder: mockIsOrgUnitFolder,
+  }),
+}));
+
 const panelProps = vi.fn();
 const notifySaved = vi.fn();
 

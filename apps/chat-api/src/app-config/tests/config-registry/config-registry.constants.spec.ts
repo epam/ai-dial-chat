@@ -167,6 +167,22 @@ describe('CONFIG_DEFINITIONS', () => {
     expect(entry).not.toHaveProperty('allowedRolesEnvVar');
   });
 
+  it('contains the client-visible features.orgUnitsEnabled entry, off by default', () => {
+    const entry = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === 'features.orgUnitsEnabled',
+    );
+
+    expect(entry).toMatchObject({
+      key: 'features.orgUnitsEnabled',
+      type: 'feature',
+      valueType: 'boolean',
+      visibility: 'client',
+      defaultValue: false,
+      critical: false,
+      envVar: 'ORG_UNITS_ENABLED',
+    });
+  });
+
   it('contains the client-visible features.usageLimitsControl entry, off by default', () => {
     const entry = CONFIG_DEFINITIONS.find(
       (definition) => definition.key === 'features.usageLimitsControl',

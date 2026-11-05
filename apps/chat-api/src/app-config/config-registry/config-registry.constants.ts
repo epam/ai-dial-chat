@@ -476,6 +476,19 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'USAGE_LIMITS_CONTROL_ENABLED',
   },
   {
+    key: 'features.orgUnitsEnabled',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the chat reads the DIAL Core org units and marks unit folders ' +
+      'with their own icon in the file manager and the publish destination trees. Off by default.',
+    owner: 'chat-team',
+    envVar: 'ORG_UNITS_ENABLED',
+  },
+  {
     key: 'uiFeatures.enabledUiFeatures',
     type: 'config',
     valueType: 'json',

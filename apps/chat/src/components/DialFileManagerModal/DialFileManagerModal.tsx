@@ -33,6 +33,7 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useOrgUnitFolderPredicate } from '../../hooks/files/useOrgUnitFolderPredicate';
 import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 import { useDialFileManagerHostOptions } from '../DialFileManagerShell/useDialFileManagerHostOptions';
@@ -142,6 +143,7 @@ const DialFileManagerModal: FC<Props> = ({
     isRowSelectable,
     isFileTypeAllowed,
     allowedFileTypes,
+    sections,
   } = useFileAttachmentPicker({
     fileManagerOptions: hostOptions,
     bucket,
@@ -412,6 +414,7 @@ const DialFileManagerModal: FC<Props> = ({
       ),
       metadataSizeLabel: t(DialFileManagerI18nKeys.MetadataSizeLabel),
       metadataAuthorLabel: t(DialFileManagerI18nKeys.MetadataAuthorLabel),
+      orgUnit: t(DialFileManagerI18nKeys.OrgUnit),
     }),
     [
       title,
@@ -443,6 +446,8 @@ const DialFileManagerModal: FC<Props> = ({
     ],
   );
 
+  const isOrgUnitFolder = useOrgUnitFolderPredicate(sections);
+
   return (
     <>
       <FileManagerAttachModal
@@ -472,6 +477,7 @@ const DialFileManagerModal: FC<Props> = ({
         allowedFileTypes={allowedFileTypes}
         autoSelectUploadedItems={autoSelectUploadedItems}
         oversizedUploadMessage={oversizedUploadMessage}
+        isOrgUnitFolder={isOrgUnitFolder}
       />
       {unshareConfirmation}
     </>

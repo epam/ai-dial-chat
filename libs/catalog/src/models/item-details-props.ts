@@ -580,6 +580,8 @@ export interface DetailsPanelProps {
   getPublishHistory?: (item: CatalogItem) => Promise<PublishHistoryEntry[]>;
   /** Root-level destination folder nodes offered by the publish flow. */
   publishFolderItems?: PublishFolderNode[];
+  /** Whether a publish destination folder is a DIAL Core org unit; a matching folder shows the org-unit icon. */
+  isPublishOrgUnitFolder?: (folderPath: string[]) => boolean;
   /**
    * Externally-controlled set of expanded publish-folder path keys
    * (`path.join('/')`). Pass this together with `onPublishExpandedPathsChange`

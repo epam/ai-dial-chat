@@ -16,6 +16,7 @@ import { FavoriteApplicationsProvider } from './context/FavoriteApplicationsCont
 import { GenerationProvider } from './context/GenerationContext';
 import { IsolatedModelViewProvider } from './context/IsolatedModelViewContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { OrgUnitsProvider } from './context/OrgUnitsContext';
 import { OverlayModeGate } from './context/overlay/OverlayContext';
 import { PromptsProvider } from './context/PromptsContext';
 import { SkillsProvider } from './context/SkillsContext';
@@ -71,7 +72,9 @@ const AppRoot: FC = () => (
                                                   <ConversationDataSourceProvider>
                                                     <VisualizerMessageProvider>
                                                       <UnsavedChangesProvider>
-                                                        <App />
+                                                        <OrgUnitsProvider>
+                                                          <App />
+                                                        </OrgUnitsProvider>
                                                       </UnsavedChangesProvider>
                                                     </VisualizerMessageProvider>
                                                   </ConversationDataSourceProvider>

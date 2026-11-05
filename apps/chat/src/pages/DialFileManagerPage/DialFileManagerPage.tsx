@@ -34,6 +34,7 @@ import {
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDialFilePreview } from '../../hooks/files/useDialFilePreview';
+import { useOrgUnitFolderPredicate } from '../../hooks/files/useOrgUnitFolderPredicate';
 import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 
@@ -300,6 +301,7 @@ const DialFileManagerPage: FC = () => {
       ),
       metadataSizeLabel: t(DialFileManagerI18nKeys.MetadataSizeLabel),
       metadataAuthorLabel: t(DialFileManagerI18nKeys.MetadataAuthorLabel),
+      orgUnit: t(DialFileManagerI18nKeys.OrgUnit),
     }),
     [
       t,
@@ -311,6 +313,8 @@ const DialFileManagerPage: FC = () => {
       searchPlaceholderByTab,
     ],
   );
+
+  const isOrgUnitFolder = useOrgUnitFolderPredicate(sections);
 
   /* The shell paints its surface with `--dfms-surface`; the page's card is the
      surface at every width, so the shell goes transparent. */
@@ -333,6 +337,7 @@ const DialFileManagerPage: FC = () => {
         onTableFileClick={onFileClick}
         previewExtensions={previewExtensions}
         treeContainerClassName={TREE_PANEL_CLASS_NAME}
+        isOrgUnitFolder={isOrgUnitFolder}
       />
     </div>
   );

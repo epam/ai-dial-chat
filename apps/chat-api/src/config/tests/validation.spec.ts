@@ -374,6 +374,22 @@ describe('validate', () => {
     expect(config.DEFAULT_DEPLOYMENT_PINNED).toBe(expected);
   });
 
+  it('defaults ORG_UNITS_ENABLED to false when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.ORG_UNITS_ENABLED).toBe(false);
+  });
+
+  it.each([
+    ['true', true],
+    ['false', false],
+  ])('parses ORG_UNITS_ENABLED=%s as %s', (rawValue, expected) => {
+    const config = validate({
+      ...baseConfig,
+      ORG_UNITS_ENABLED: rawValue,
+    });
+    expect(config.ORG_UNITS_ENABLED).toBe(expected);
+  });
+
   it('defaults USAGE_LIMITS_CONTROL_ENABLED to false when unset', () => {
     const config = validate({ ...baseConfig });
     expect(config.USAGE_LIMITS_CONTROL_ENABLED).toBe(false);
