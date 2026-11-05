@@ -23,10 +23,12 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
-import { useResourceSaveNotification } from '../../hooks/resource-save/useResourceSaveNotification';
+import {
+  type SaveNotifiableEntity,
+  useResourceSaveNotification,
+} from '../../hooks/resource-save/useResourceSaveNotification';
 import { getPublishRules } from '../../server-api/publish-rules.api';
 import { publishCatalogEntity } from '../../server-api/publish.api';
-import type { NotifiableEntity } from '../../types/entity-notification';
 import {
   getAccessRulesLabels,
   getPublishPanelCommonLabels,
@@ -56,7 +58,7 @@ interface Props {
   /** Translated resource type for the panel title, e.g. "QuickApp". */
   typeLabel: string;
   /** Entity the notifications name. */
-  notifiableEntity: NotifiableEntity;
+  notifiableEntity: SaveNotifiableEntity;
   /** Schema display name, for `NotifiableEntity.SchemaApp` copy. */
   notificationType?: string;
   /** Whether the user may publish this resource, which offers the Organization root. */

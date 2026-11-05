@@ -5,7 +5,14 @@ import {
 } from '@epam/ai-dial-chat-api-client';
 import { FilterTab } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
-import { act, renderHook, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -106,12 +113,20 @@ const loadedProjects = async (result: {
   return pinned;
 };
 
-const clickItem = (items: DropdownItem[], key: string) =>
-  act(() => {
-    (
-      items.find((item) => item.key === key) as { onClick: () => void }
-    ).onClick();
-  });
+/* Clicks a real button so the item's onClick gets the React event the menu would pass. */
+const clickItem = (items: DropdownItem[], key: string) => {
+  const onClick = items.find((item) => item.key === key)?.onClick;
+  if (onClick == null) throw new Error(`No clickable "${key}" item`);
+  const { unmount } = render(
+    createElement(
+      'button',
+      { type: 'button', onClick: (domEvent) => onClick({ key, domEvent }) },
+      key,
+    ),
+  );
+  fireEvent.click(screen.getByRole('button', { name: key }));
+  unmount();
+};
 
 describe('usePinnedProjectsPanel', () => {
   beforeEach(() => {

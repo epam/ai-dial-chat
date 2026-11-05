@@ -15,15 +15,25 @@ import {
   EntityOperation,
   type NotifiableEntity,
 } from '../../types/entity-notification';
+import type { CatalogNotifiableEntity } from '../../utils/entity-notification';
 import { getPublishFolderLabel } from '../../utils/publish';
 import { useOperationNotification } from '../useOperationNotification';
+
+/**
+ * Entities the Save panel saves: every catalog kind with Created, Edited and
+ * PublishRequested copy. Models are published, never saved through the panel.
+ */
+export type SaveNotifiableEntity = Exclude<
+  CatalogNotifiableEntity,
+  NotifiableEntity.Model
+>;
 
 /** Parameters for {@link useResourceSaveNotification}. */
 export interface UseResourceSaveNotificationParams {
   /** Display name, interpolated into notifications. */
   resourceName: string;
   /** Entity the success notifications name. */
-  notifiableEntity: NotifiableEntity;
+  notifiableEntity: SaveNotifiableEntity;
   /** Schema display name, for `NotifiableEntity.SchemaApp` copy. */
   notificationType?: string;
 }
