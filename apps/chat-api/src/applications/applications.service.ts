@@ -248,7 +248,7 @@ export class ApplicationsService {
         throw new BadGatewayException('DIAL Core returned an empty bucket');
       }
 
-      const version = body.version ?? '1.0.0';
+      const version = body.version ?? DEFAULT_RESOURCE_VERSION;
 
       if (body.createOnly) {
         await this.assertNoDuplicateIdentity(userSub, accessToken, bucket, {

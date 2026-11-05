@@ -2,6 +2,7 @@ import { ConflictException } from '@nestjs/common';
 import { HIDDEN_FILE } from '../../constants/dial.constants';
 import type { LocalizedText } from '../types/localized-text';
 import { ResourceNameConflictCode } from '../types/resource-name-conflict-code';
+import { resolveLocalizedValue } from './localized-value';
 import { safeDecodeURIComponent } from './uri';
 
 /** Version DIAL Core resources are written with when the caller sends none. */
@@ -78,12 +79,8 @@ export const getResourceIdentityTabs = (
  * of its primary locale, so this deterministic rule stands in for it.
  * @param displayName - stored display name, if any
  */
-export const resolveDisplayedName = (displayName?: LocalizedText): string => {
-  if (displayName == null) return '';
-  if (typeof displayName === 'string') return displayName.trim();
-  const values = Object.values(displayName);
-  return (displayName['en'] ?? values[0] ?? '').trim();
-};
+export const resolveDisplayedName = (displayName?: LocalizedText): string =>
+  (resolveLocalizedValue(displayName, 'en') ?? '').trim();
 
 /**
  * The plain folder path of a resource id: the segments between the bucket and

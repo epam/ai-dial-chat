@@ -1,8 +1,10 @@
 import { SEMVER_VERSION_PATTERN } from '@epam/ai-dial-builder-form';
 import type { ResourceFoldersResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
+  ResourceNameConflictKind,
   ResourceSaveVersionError,
   useResourceSavePanel,
+  withResourceNameConflictMessages,
   type ResourceSaveAdapter,
   type ResourceSaveChoice,
   type ResourceSaveResult,
@@ -31,7 +33,7 @@ import {
   getAccessRulesLabels,
   getPublishPanelCommonLabels,
 } from '../../utils/publish';
-import { withResourceNameConflictMessages } from '../../utils/resource-name-conflict';
+import { RESOURCE_NAME_CONFLICT_KEYS } from '../../utils/resource-name-conflict';
 
 interface Props {
   /** Whether the panel is open. */
@@ -91,7 +93,15 @@ const ResourceSavePanelContainer: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const adapter = useMemo(
-    () => withResourceNameConflictMessages(editorAdapter, (key) => t(key)),
+    () =>
+      withResourceNameConflictMessages(editorAdapter, {
+        [ResourceNameConflictKind.Agent]: t(
+          RESOURCE_NAME_CONFLICT_KEYS[ResourceNameConflictKind.Agent],
+        ),
+        [ResourceNameConflictKind.Toolset]: t(
+          RESOURCE_NAME_CONFLICT_KEYS[ResourceNameConflictKind.Toolset],
+        ),
+      }),
     [editorAdapter, t],
   );
   const {
