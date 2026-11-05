@@ -154,8 +154,10 @@ describe('ResourceSavePanelContainer', () => {
     );
   });
 
-  it('notifies and reports a finished save', () => {
-    const onSaved = vi.fn();
+  it('reports a finished save before notifying, so the toast follows the redirect', () => {
+    const calls: string[] = [];
+    const onSaved = vi.fn(() => calls.push('onSaved'));
+    notifySaved.mockImplementation(() => calls.push('notify'));
     renderContainer({ onSaved });
     const result = {
       outcome: ResourceSaveOutcome.Saved,
@@ -176,6 +178,7 @@ describe('ResourceSavePanelContainer', () => {
 
     expect(notifySaved).toHaveBeenCalledWith(result, choice);
     expect(onSaved).toHaveBeenCalledWith(result);
+    expect(calls).toEqual(['onSaved', 'notify']);
   });
 
   it('renders the panel with the flow state and the title naming the resource type', () => {

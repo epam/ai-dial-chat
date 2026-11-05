@@ -2078,7 +2078,7 @@
     "newVersionPlaceholder": "Enter new version",
     "versionInvalid": "Use a version like 1.0.0.",
     "versionUnchanged": "Enter a version other than {{version}}.",
-    "versionExists": "Version {{version}} already exists in this folder.",
+    "versionExists": "Version {{version}} already exists. Enter another version.",
     "versionReadOnlyTooltip": "To change the version, choose “Save as new version” when you save.",
     "foldersLoadFailed": "Folders could not be loaded.",
     "saveFailed": "Saving failed. Please try again.",
@@ -2086,6 +2086,8 @@
     "newVersionSavedTitle": "New version saved",
     "newVersionSaved": "“{{name}}” was saved as version {{version}}.",
     "savedButMoveFailed": "“{{name}}” was saved, but it could not be moved to {{folder}}.",
-    "savedButPublishFailed": "“{{name}}” was saved, but the publish request failed."
+    "savedButPublishFailed": "“{{name}}” was saved, but the publish request failed.",
+    "savedButPublishFailedReason": "“{{name}}” was saved, but the publish request failed: {{reason}}",
+    "savedButAlreadyPublished": "“{{name}}” was saved, but this version is already published in {{folder}}. Choose another folder or save as a new version."
   }
 }

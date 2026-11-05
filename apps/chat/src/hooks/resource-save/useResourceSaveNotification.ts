@@ -1,4 +1,5 @@
 import {
+  getApiErrorDetails,
   ResourceSaveOutcome,
   SaveDestinationRoot,
   type ResourceSaveChoice,
@@ -38,6 +39,29 @@ export const useResourceSaveNotification = ({
   const { showErrorNotification, showSuccessNotification } = useNotification();
   const { notifyOperationSuccess } = useOperationNotification();
 
+  /* Names why the publish failed: a 409 means this version is already in that Organization folder. */
+  const notifyPublishFailed = useCallback(
+    async (error: unknown, folderPath: string[]) => {
+      const { message, status, traceId } = await getApiErrorDetails(error);
+      let text = t(ResourceSavePanelI18nKeys.SavedButPublishFailed, {
+        name: resourceName,
+      });
+      if (status === 409) {
+        text = t(ResourceSavePanelI18nKeys.SavedButAlreadyPublished, {
+          name: resourceName,
+          folder: getPublishFolderLabel(folderPath, t),
+        });
+      } else if (message) {
+        text = t(ResourceSavePanelI18nKeys.SavedButPublishFailedReason, {
+          name: resourceName,
+          reason: message,
+        });
+      }
+      showErrorNotification({ message: text, requestId: traceId });
+    },
+    [resourceName, showErrorNotification, t],
+  );
+
   return useCallback(
     (result: ResourceSaveResult, choice: ResourceSaveChoice) => {
       const folderPath = choice.destination.path;
@@ -57,11 +81,7 @@ export const useResourceSaveNotification = ({
         return;
       }
       if (result.outcome === ResourceSaveOutcome.SavedButPublishFailed) {
-        showErrorNotification({
-          message: t(ResourceSavePanelI18nKeys.SavedButPublishFailed, {
-            name: resourceName,
-          }),
-        });
+        void notifyPublishFailed(result.error, folderPath);
         return;
       }
       if (result.isPublished) {
@@ -92,6 +112,7 @@ export const useResourceSaveNotification = ({
       notifiableEntity,
       notificationType,
       notifyOperationSuccess,
+      notifyPublishFailed,
       resourceName,
       showErrorNotification,
       showSuccessNotification,

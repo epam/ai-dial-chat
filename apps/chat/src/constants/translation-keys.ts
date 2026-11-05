@@ -1880,4 +1880,6 @@ export enum ResourceSavePanelI18nKeys {
   NewVersionSaved = 'resourceSavePanel.newVersionSaved',
   SavedButMoveFailed = 'resourceSavePanel.savedButMoveFailed',
   SavedButPublishFailed = 'resourceSavePanel.savedButPublishFailed',
+  SavedButPublishFailedReason = 'resourceSavePanel.savedButPublishFailedReason',
+  SavedButAlreadyPublished = 'resourceSavePanel.savedButAlreadyPublished',
 }

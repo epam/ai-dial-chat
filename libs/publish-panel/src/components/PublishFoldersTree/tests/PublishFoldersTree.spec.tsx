@@ -664,6 +664,54 @@ describe('PublishFoldersTree', () => {
       ).toBeNull();
     });
 
+    it('rejects a nested duplicate whose sibling loads after the editor opened', async () => {
+      const onCreateDestinationFolder = vi.fn();
+      const unloaded: FolderDestinationRoot[] = [
+        {
+          key: 'personal',
+          label: 'Personal',
+          items: [{ path: ['Design'], name: 'Design' }],
+        },
+      ];
+      const { rerender } = renderMultiRoot({
+        roots: unloaded,
+        destination: { rootKey: 'personal', path: ['Design'] },
+        onCreateDestinationFolder,
+      });
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Create new folder' }),
+      );
+      // The editor keeps the callbacks it opened with.
+      const { onRenameValidate, onCreateFolderSave } = capturedProps.current!;
+
+      rerender(
+        <PublishFoldersTree
+          searchQuery=""
+          roots={[
+            {
+              ...unloaded[0],
+              items: [
+                {
+                  path: ['Design'],
+                  name: 'Design',
+                  children: [{ path: ['Design', 'Audit'], name: 'Audit' }],
+                },
+              ],
+            },
+          ]}
+          destination={{ rootKey: 'personal', path: ['Design'] }}
+          onDestinationChange={vi.fn()}
+          onCreateDestinationFolder={onCreateDestinationFolder}
+        />,
+      );
+
+      expect(onRenameValidate?.('audit', {} as never)).toBe(
+        'A folder with this name already exists.',
+      );
+      act(() => onCreateFolderSave?.('Audit'));
+      expect(onCreateDestinationFolder).not.toHaveBeenCalled();
+    });
+
     it('omits "Add sibling" on a root node', () => {
       renderMultiRoot();
       const menuItems = capturedProps.current?.getContextMenuItems?.(

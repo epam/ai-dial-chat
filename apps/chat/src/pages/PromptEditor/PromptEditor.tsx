@@ -340,17 +340,14 @@ const PromptEditorPage: FC = () => {
   );
 
   const handleSavePanelClose = useCallback(() => setIsSavePanelOpen(false), []);
-  /* Every outcome reaching here saved the prompt; the panel has already notified. */
+  /* Every outcome reaching here saved the prompt; the panel notifies once this returns. */
   const handleSavePanelSaved = useCallback(
     (_result: ResourceSaveResult) => {
-      const leaveEditor = async () => {
-        // Best-effort: brings the saved prompt into the catalog list.
-        await refetchPrompts().catch(() => undefined);
-        setIsSavePanelOpen(false);
-        allowNextNavigation();
-        navigate(returnUrl);
-      };
-      void leaveEditor();
+      // Best-effort and not awaited: the catalog picks the saved prompt up when it lands.
+      void refetchPrompts().catch(() => undefined);
+      setIsSavePanelOpen(false);
+      allowNextNavigation();
+      navigate(returnUrl);
     },
     [allowNextNavigation, navigate, refetchPrompts, returnUrl],
   );
