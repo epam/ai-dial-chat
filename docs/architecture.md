@@ -206,6 +206,15 @@ locale resolution, and reset-time formatting still come from host-supplied callb
 or parameters. An additional adapter needs its own equivalent justification in its
 change's design; this is not permission to move arbitrary product rules into a library.
 
+The OAuth popup flow in `libs/chat-hooks/src/oauth/` owns one storage key,
+`TOOLSET_REDIRECT_STATE_KEY`. The initiator writes the redirect state into the
+popup's own `sessionStorage` before navigating it to the provider, and
+`useOAuthCallbackCompletion` reads and removes it on the host's callback route
+in the same popup. Both ends live in the library and the host never sees the
+key, so it is an exception to the storage-key rule, not host persistence. The
+state holds flow-correlation values only, never a token or an authorization
+code. No other storage key in a library is covered.
+
 The usage-limit banner follows the same boundary: `useUsageLimitBanner` and its parts
 (`useDeploymentUsageLimits`, `useRefreshUsageAfterGeneration`, `useUsageLimitBannerDismissal`,
 `selectUsageBannerSource`, `formatUsageResetTime`, `formatUsageResetShort`) live in
