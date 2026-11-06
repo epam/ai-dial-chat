@@ -377,7 +377,7 @@ describe('usePinnedProjectsPanel', () => {
 
       await waitFor(() =>
         expect(mocks.showErrorNotification).toHaveBeenCalledWith(
-          expect.objectContaining({ message: 'projects.actions.pinError' }),
+          expect.objectContaining({ message: 'projects.actions.unpinError' }),
         ),
       );
     });

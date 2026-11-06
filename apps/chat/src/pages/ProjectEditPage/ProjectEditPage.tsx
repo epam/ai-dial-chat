@@ -51,6 +51,7 @@ import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
+import { resolveProjectFileDownloadUrl } from '../../utils/dial-file';
 import { mapProjectCreateError } from '../../utils/project-create-errors';
 import { toProjectContextFileAttachment } from '../../utils/project-file-preview';
 import NotFoundPage from '../NotFound/NotFound';
@@ -116,6 +117,7 @@ const ProjectEditPage: FC = () => {
   const {
     selectedContextFileId,
     onContextFileClick: handleContextFileClick,
+    onContextFileDownload: handleContextFileDownload,
     closeIfRemoved,
   } = useProjectFilePreview({
     scope: projectId ?? '',
@@ -124,6 +126,7 @@ const ProjectEditPage: FC = () => {
     closeCanvas,
     startRequest: startCanvasRequest,
     resolveContextAttachment,
+    resolveDownloadUrl: resolveProjectFileDownloadUrl,
   });
 
   const { save, isSubmitting } = useSaveProject(projectsClient);
@@ -309,6 +312,7 @@ const ProjectEditPage: FC = () => {
         contextFiles={contextFiles}
         onContextFilesChange={handleContextFilesChange}
         onContextFileClick={handleContextFileClick}
+        onContextFileDownload={handleContextFileDownload}
         selectedContextFileId={selectedContextFileId}
         allowedExtensions={allowedExtensions}
         maxFileBytes={maxFileBytes}

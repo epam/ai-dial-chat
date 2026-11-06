@@ -289,6 +289,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     generationPersistenceErrorMessage: t(
       ChatI18nKeys.GenerationPersistenceError,
     ),
+    generationInterruptedMessage: t(ChatI18nKeys.GenerationInterrupted),
     onStreamError: logConversationStreamError,
   });
 

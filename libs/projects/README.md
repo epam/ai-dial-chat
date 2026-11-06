@@ -158,7 +158,7 @@ Controlled New project form inside the builder-form shell: a header with a back 
 
 - **Name** is required. `validateProjectName` checks it after the field is first blurred; a host `errors.name` (for example a taken name) takes precedence, is announced as an alert, and moves focus back to the field when editable. The error is linked through `aria-describedby`. With `isNameReadOnly` (default `false`) the input gets the native `readOnly` and `disabled` attributes, so it cannot be edited and is skipped in the tab order. `onFieldChange('name', …)` is never called. `labels.nameReadOnlyHint` (default `"The project name can't be changed after creation"`) is the input's hover tooltip and renders under it as a `CaptionText` that the input's `aria-describedby` also names, keeping the explanation available on touch devices. The lib does not decide when to lock the name: the host sets the flag.
 - **Instructions** (the kit markdown editor) get a Refine with AI action when `onRefineInstructions` is supplied. The form has no description field.
-- **Context** files come from the kit `FileDropzone` (a click or a drop opens and takes the device picker) or a drag anywhere over the form. `labels.dropZoneLabel` places two link elements in its sentence: an underlined "from device" span — the whole zone opens the device picker — and, when `onPickFromFileManager` is supplied, a "file manager" button that opens the host's picker instead. `labels.dropZoneAriaLabel` names the zone's file input. `checkContextFiles` filters the files against `maxFileBytes` and `maxTotalBytes`; each rejection, and a host `errors.context` after them, shows as the kit drop zone's `errorText` — one per line in the error color, with an error border, linked to the file input through `aria-describedby` / `aria-invalid` — and is announced. Each file renders as an `AttachmentCard` with a named remove button. When the host passes `onContextFileClick`, each card is also a button named `labels.openFileLabel(name)` (optional, defaulting to `Preview {name}`) that reports the card's `ProjectContextFile.id`, and the card whose id equals `selectedContextFileId` renders selected (`aria-pressed`); what a click opens, and where its bytes come from, is the host's decision, so the lib never loads a file. The form shows no capacity meter.
+- **Context** files come from the kit `FileDropzone` (a click or a drop opens and takes the device picker) or a drag anywhere over the form. `labels.dropZoneLabel` places two link elements in its sentence: an underlined "from device" span — the whole zone opens the device picker — and, when `onPickFromFileManager` is supplied, a "file manager" button that opens the host's picker instead. `labels.dropZoneAriaLabel` names the zone's file input. `checkContextFiles` filters the files against `maxFileBytes` and `maxTotalBytes`; each rejection, and a host `errors.context` after them, shows as the kit drop zone's `errorText` — one per line in the error color, with an error border, linked to the file input through `aria-describedby` / `aria-invalid` — and is announced. Each file renders as an `AttachmentCard` with a named remove button. When the host passes `onContextFileClick`, each card is also a button named `labels.openFileLabel(name)` (optional, defaulting to `Preview {name}`) that reports the card's `ProjectContextFile.id`, and the card whose id equals `selectedContextFileId` renders selected (`aria-pressed`); what a click opens, and where its bytes come from, is the host's decision, so the lib never loads a file. When the host passes `onContextFileDownload`, each card also shows a download button named `labels.downloadFileLabel(name)` (optional, defaulting to `Download {name}`) that reports the card's `ProjectContextFile.id`; the lib downloads nothing itself. The form shows no capacity meter.
 - **Create** is disabled while the name is invalid, a refinement is pending, or `isSubmitting` is true.
 
 The form shows no unsaved-changes dialog: leaving is the host's decision through `onBack` / `onCancel`.
@@ -177,6 +177,7 @@ import { cloneElement } from 'react';
   contextFiles={[]}
   onContextFilesChange={(files) => {}}
   onContextFileClick={(id) => {}}
+  onContextFileDownload={(id) => {}}
   selectedContextFileId={undefined}
   allowedExtensions={['csv', 'pdf', 'xlsx']}
   maxFileBytes={1048576}
@@ -217,6 +218,7 @@ import { cloneElement } from 'react';
     dropZoneHint: 'File formats .csv, .pdf, .xlsx (max 1 MB)',
     removeFileLabel: (name) => `Remove ${name}`,
     openFileLabel: (name) => `Preview ${name}`,
+    downloadFileLabel: (name) => `Download ${name}`,
     fileRejections: {
       [ContextFileRejection.UnsupportedType]: (name) =>
         `${name}: this file format isn't supported`,
@@ -260,7 +262,7 @@ A project's home page: a header with back (its arrow mirrored in RTL), the name 
 
 `mainContent` fills a main column rendered before the Details panel (stacked above it on mobile), named by `mainContentLabel` (default `'Project content'`), with its content centered at a 748px max width; without it the panel stays on the inline end. While the panel sits beside the main column on desktop, the header stays in place and each column scrolls on its own; stacked, both scroll together below the header. The host puts its own content there, such as a chat input and a `ProjectConversationList`.
 
-Activating a context card calls `onContextFileClick` with the file's name, and the card whose name equals `selectedContextFileId` renders selected (`aria-pressed`). The lib downloads and opens nothing: the host decides, for example by previewing the file in a canvas beside the page. While such a preview takes the inline end, the host sets `isDetailsStacked` (default `false`) so the Details panel and its cards move below the main column at every width, with a top border instead of the inline-start one, and stay reachable.
+Activating a context card calls `onContextFileClick` with the file's name, and the card whose name equals `selectedContextFileId` renders selected (`aria-pressed`). When the host passes `onContextFileDownload`, each card also shows a download button named `labels.downloadFileLabel(name)` (optional, defaulting to `Download {name}`) that calls it with the file's name. The lib downloads and opens nothing: the host decides, for example by previewing the file in a canvas beside the page. While such a preview takes the inline end, the host sets `isDetailsStacked` (default `false`) so the Details panel and its cards move below the main column at every width, with a top border instead of the inline-start one, and stay reachable.
 
 Read-only mode is the host omitting `onPublish`, `onEdit`, `onShare` and `onDelete`: each hides its action. Exactly one state renders — loading (`isLoading`), error with Retry (`hasError`), not found with a way back (`isNotFound`), or the loaded `project`.
 
@@ -282,6 +284,7 @@ import { ProjectView } from '@epam/ai-dial-projects';
   onEdit={() => {}}
   onDownload={() => {}}
   onContextFileClick={(id) => {}}
+  onContextFileDownload={(id) => {}}
   selectedContextFileId={undefined}
   isDetailsStacked={false}
   onRetry={() => {}}
@@ -307,6 +310,7 @@ import { ProjectView } from '@epam/ai-dial-projects';
     emptyContextLabel: 'No context files',
     noContextMatchesLabel: 'No files match your search',
     openFileLabel: (name) => `Preview ${name}`,
+    downloadFileLabel: (name) => `Download ${name}`,
     errorLabel: 'Could not load the project',
     retryLabel: 'Retry',
     notFoundLabel: 'Project not found',
@@ -368,7 +372,7 @@ An item with `isUnread: true` shows its title in `unreadRowTitleClassName` and a
 
 ### ProjectConversationsPanel
 
-A project's chat column for `ProjectView.mainContent`: the host's chat input (`composer`, any node), then the host's `outputs` node (any node, typically `ProjectOutputs`; nothing renders in its place when it is unset), then `ProjectConversationList`; `hasOutputs` (default `false`) tells it that `outputs` shows content, so an empty list drops its "No outputs or chats yet" state, plus the rename dialog (a labelled input seeded with the title, an inline error for an empty name, Cancel and Save buttons, Enter to save, the trimmed value sent to `onRename`) and the delete confirmation. `hasMore`, `isLoadingMore` and `onLoadMore` pass through to the list, and so do `listTypography` and `listColors` (as its `typography` and `colors`). A rename or delete dialog whose row disappears from `items` (a live refresh) closes, and focus moves to the list. Both dialogs return focus to the row's ⋮ trigger when they close; after a delete, whose row is gone, focus moves to the row now in its place, the one before it, or the list. They stay open, and cannot be closed, while the host's promise is pending, and stay open while it rejects, so the host only reports the failure. Omitting `onRename` and `onDelete` makes it read-only.
+A project's chat column for `ProjectView.mainContent`: the host's chat input (`composer`, any node), then the host's `outputs` node (any node, typically `ProjectOutputs`; nothing renders in its place when it is unset), then `ProjectConversationList`; `hasOutputs` (default `false`) tells it that `outputs` shows content, so an empty list drops its "No outputs or chats yet" state, plus the rename dialog (a labelled input seeded with the title, an inline error for an empty name, Cancel and Save buttons, Enter to save, the trimmed value sent to `onRename`) and the delete confirmation. `hasMore`, `isLoadingMore` and `onLoadMore` pass through to the list, and so do `listTypography` and `listColors` (as its `typography` and `colors`). A rename or delete dialog whose row disappears from `items` (a live refresh) closes, and focus moves to the list. Both dialogs return focus to the row's ⋮ trigger when they close; after a delete, whose row is gone, focus moves to the row now in its place, the one before it, or the list. They stay open, and cannot be closed, while the host's promise is pending, and stay open while it rejects, so the host only reports the failure. With `onGenerateTitle` (`(id) => Promise<string>`), the rename dialog also shows a sparkles button (`labels.renameWithAiLabel`, default `'Rename with AI'`) that fills the input with the returned title without saving it; a rejection shows `labels.renameWithAiError` (default `'Could not generate a name. Try again.'`), and a late answer after the dialog closed or reopened is ignored. Omitting `onGenerateTitle` hides the button. Omitting `onRename` and `onDelete` makes it read-only.
 
 ```tsx
 import { ProjectConversationsPanel } from '@epam/ai-dial-projects';
@@ -380,6 +384,7 @@ import { ProjectConversationsPanel } from '@epam/ai-dial-projects';
   onRetry={() => {}}
   onOpen={(id) => {}}
   onRename={async (id, newTitle) => {}}
+  onGenerateTitle={async (id) => 'Suggested title'}
   onDelete={async (id) => {}}
   labels={{
     list: {
@@ -399,6 +404,8 @@ import { ProjectConversationsPanel } from '@epam/ai-dial-projects';
     renameEmptyError: 'Enter a chat name',
     renameSaveLabel: 'Save',
     renameCancelLabel: 'Cancel',
+    renameWithAiLabel: 'Rename with AI',
+    renameWithAiError: 'Could not generate a name. Try again.',
     deleteTitle: (title) => `Delete "${title}"?`,
     deleteDescription: 'The chat will be deleted. This cannot be undone.',
   }}

@@ -89,6 +89,7 @@ const ProjectConversationsSection: FC<Props> = ({
     retry,
     loadMore,
     rename,
+    generateTitle,
     remove,
     markViewed,
   } = conversations;
@@ -344,6 +345,7 @@ const ProjectConversationsSection: FC<Props> = ({
         onLoadMore={handleLoadMore}
         onOpen={handleOpen}
         onRename={canEdit ? handleRename : undefined}
+        onGenerateTitle={canEdit ? generateTitle : undefined}
         onDelete={canEdit ? handleDelete : undefined}
         labels={labels}
       />

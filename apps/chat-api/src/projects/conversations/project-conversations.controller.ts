@@ -29,6 +29,7 @@ import type { SessionUser } from '../../auth/session/session.types';
 import { ApiDialCoreErrors } from '../../common/dial/api-dial-core-errors.decorator';
 import { AttachGenerationDto } from '../../conversations/dto/attach-generation.dto';
 import { CreateConversationDto } from '../../conversations/dto/create-conversation.dto';
+import { GenerateTitleResponseDto } from '../../conversations/dto/generate-title.dto';
 import {
   RenameConversationBodyDto,
   RenameConversationResponseDto,
@@ -431,6 +432,52 @@ export class ProjectConversationsController {
       at,
       bucket,
     );
+  }
+
+  @Post(':id/conversations/:conversationName/generate-title')
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'generateProjectConversationTitle',
+    summary:
+      'Generate an LLM-based title suggestion for a project conversation',
+    description:
+      'Generates a title with the operator-configured utility model from the most recent messages. The suggestion is returned but NOT persisted; the caller confirms the rename separately.',
+  })
+  @ApiParam(PROJECT_ID_PARAM)
+  @ApiParam(CONVERSATION_NAME_PARAM)
+  @ApiDialCoreErrors()
+  @ApiResponse({
+    status: 200,
+    description: 'Generated title suggestion',
+    type: GenerateTitleResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid id or conversation name, or no content to title',
+  })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 403, description: WRITE_FORBIDDEN })
+  @ApiResponse({
+    status: 404,
+    description: 'The project or the conversation does not exist',
+  })
+  @ApiResponse({ status: 502, description: 'LLM title generation failed' })
+  @ApiResponse({
+    status: 503,
+    description: 'LLM title generation unavailable or timed out',
+  })
+  async generateProjectConversationTitle(
+    @Param() { id, conversationName }: ProjectConversationParamDto,
+    @Req() req: Request,
+  ): Promise<GenerateTitleResponseDto> {
+    const { at, bucket } = req.user as SessionUser;
+    const name = await this.conversationsService.generateTitle(
+      requireProjectId(id),
+      conversationName,
+      at,
+      bucket,
+    );
+    return { name };
   }
 
   @Delete(':id/conversations/:conversationName')

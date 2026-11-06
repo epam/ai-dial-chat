@@ -23,6 +23,7 @@ import type {
   MoveResourceDto,
   ResourceFoldersResponseDto,
   ResourceIdResponseDto,
+  ResourceNameConflictDto,
   UpdateApplicationBodyDto,
   UpdatedApplicationDto,
 } from '../models/index';

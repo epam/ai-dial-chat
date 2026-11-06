@@ -60,7 +60,11 @@ const ProjectsPage: FC = () => {
       } catch (err) {
         const { traceId } = await getApiErrorDetails(err);
         showErrorNotification({
-          message: t(ProjectsI18nKeys.ActionsPinError),
+          message: t(
+            isPinned
+              ? ProjectsI18nKeys.ActionsPinError
+              : ProjectsI18nKeys.ActionsUnpinError,
+          ),
           requestId: traceId,
         });
       }

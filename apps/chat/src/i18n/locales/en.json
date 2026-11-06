@@ -40,6 +40,7 @@
     "streamError": "Something went wrong while generating the response. Try again in a moment.",
     "generationConflict": "A response is already being generated in this conversation, possibly in another browser tab. Wait for it to finish or stop it before sending another message.",
     "generationPersistenceError": "The response could not be saved. It is still shown here, but may be lost if you reload or leave this page. Copy it before continuing.",
+    "generationInterrupted": "No answer was received for this message. The response may have been interrupted. Try again.",
     "conversationReloadErrorTitle": "Couldn't refresh this conversation",
     "conversationReloadError": "Your response is still shown here. We couldn't load the latest conversation from the server.",
     "retryConversationReload": "Retry loading",
@@ -866,7 +867,8 @@
         "dropOverlayTitle": "Upload files",
         "dropOverlaySubtitle": "Drop files here to add them to this project",
         "remove": "Remove {{name}}",
-        "open": "Preview {{name}}"
+        "open": "Preview {{name}}",
+        "download": "Download {{name}}"
       },
       "status": {
         "added_one": "{{count}} file added",
@@ -915,7 +917,8 @@
     "actions": {
       "deleteError": "Could not delete the project",
       "downloadError": "Could not download",
-      "pinError": "Could not update the pin"
+      "pinError": "Could not pin the project. Please try again.",
+      "unpinError": "Could not unpin the project. Please try again."
     },
     "edit": {
       "title": "Edit project",
@@ -1505,6 +1508,8 @@
     "error": {
       "createFailed": "Failed to create application. Please try again.",
       "nameConflict": "An application with this name and version already exists.",
+      "nameConflictAgent": "An agent with this name and version already exists in this folder.",
+      "nameConflictToolset": "A toolset with this name and version already exists in this folder.",
       "saveFailed": "Failed to save application settings. Please try again.",
       "saveTimeout": "Saving timed out. Please try again.",
       "settingsNotReady": "The Settings editor did not report readiness. Please reload and try again."
