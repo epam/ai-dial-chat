@@ -1,4 +1,5 @@
 import type { UnpublishConfirmationDialogLabels } from '@epam/ai-dial-publish-panel';
+import type { ParseKeys } from 'i18next';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -6,18 +7,21 @@ import {
   ButtonsI18nKeys,
 } from '../../constants/translation-keys';
 
+/** A key of the app's `translation` namespace, so `t()` stays type-checked. */
+type TranslationKey = ParseKeys<'translation'>;
+
 /** The feature-specific translation keys of one unpublish surface. */
 interface UnpublishConfirmationKeys {
   /** Dialog title. */
-  title: string;
+  title: TranslationKey;
   /** Single-folder message; interpolates `name` and `folder`. */
-  confirmMessage: string;
+  confirmMessage: TranslationKey;
   /** Pick-a-folder message; interpolates `name`. */
-  selectFolderMessage: string;
+  selectFolderMessage: TranslationKey;
   /** Accessible name of the folder radio group. */
-  folderGroupAriaLabel: string;
+  folderGroupAriaLabel: TranslationKey;
   /** Status announced while the request runs. */
-  requestingStatus: string;
+  requestingStatus: TranslationKey;
 }
 
 /** Translated `UnpublishConfirmationDialog` labels: the surface's own copy plus the shared buttons and root folder name. */

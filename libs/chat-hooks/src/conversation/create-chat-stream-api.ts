@@ -13,6 +13,10 @@ const GENERATION_CONFLICT_STATUS = 409;
 export const DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE =
   'The response could not be saved. It is still shown here, but may be lost if you reload or leave this page. Copy it before continuing.';
 
+/** Safe fallback for hosts that do not supply a translated interrupted-generation text. */
+export const DEFAULT_GENERATION_INTERRUPTED_ERROR_MESSAGE =
+  'No answer was received for this message. The response may have been interrupted. Try again.';
+
 /** Terminal markers the rejected write of a stopped, aborted, or failed answer carried. */
 export interface GenerationPersistenceTerminalMarker {
   /** Error text the failed write stored; `''` asks the host for its localized fallback. */

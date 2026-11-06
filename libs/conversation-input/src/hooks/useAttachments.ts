@@ -118,16 +118,18 @@ export const useAttachments = ({
       const isAudio = file.type.startsWith('audio/');
       const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
       const playUrl = isAudio ? URL.createObjectURL(file) : undefined;
+      let type = AttachmentType.File;
+      if (isImage) {
+        type = AttachmentType.Image;
+      } else if (isAudio) {
+        type = AttachmentType.Audio;
+      }
       return {
         id: generateAttachmentId(),
         name: file.name,
         contentType: file.type,
         file,
-        type: isImage
-          ? AttachmentType.Image
-          : isAudio
-            ? AttachmentType.Audio
-            : AttachmentType.File,
+        type,
         status: RequestStatus.Idle,
         previewUrl,
         playUrl,

@@ -166,6 +166,39 @@ describe('ToolsetsListingService', () => {
       expect(spy).not.toHaveBeenCalled();
     });
 
+    it('reads DIAL Core again and refills the cache when refresh is requested', async () => {
+      const { dialClient, userConfigService, deploymentsService } = makeDeps();
+      const cacheManager = {
+        get: vi.fn().mockResolvedValue(mockCachedList),
+        set: vi.fn(),
+      };
+      const service = new ToolsetsListingService(
+        dialClient,
+        cacheManager as never,
+        userConfigService as never,
+        deploymentsService as never,
+      );
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'getToolSets')
+        .mockResolvedValue(okResponse(mockList));
+
+      const result = await service.listToolsets(
+        'user1',
+        'token-abc',
+        'bucket',
+        true,
+      );
+
+      expect(spy).toHaveBeenCalledOnce();
+      expect(cacheManager.get).not.toHaveBeenCalled();
+      expect(cacheManager.set).toHaveBeenCalledWith(
+        'toolsets:list:user1',
+        expect.anything(),
+        30000,
+      );
+      expect(result).toEqual(mockEnrichedList);
+    });
+
     it('sets isInstalled=true for installed toolsets from user config', async () => {
       const { service, userConfigService } = makeService();
       userConfigService.getInstalledIds.mockResolvedValue({

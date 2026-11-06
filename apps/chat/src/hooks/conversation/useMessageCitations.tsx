@@ -68,6 +68,23 @@ interface UseMessageCitationsParams extends Pick<
   >['handleAttachmentClick'];
 }
 
+/* Declared rather than inferred: the inferred type reaches `Components` in
+   `react-markdown/lib`, which declaration emit cannot name (TS2883). */
+export interface UseMessageCitationsResult {
+  citationCard: ReturnType<typeof useCitationCard>;
+  messageTextStyles: typeof MESSAGE_TEXT_STYLES;
+  markdownClassNames: typeof COMPACT_MARKDOWN_CLASS_NAMES | undefined;
+  processedContent: ReturnType<
+    typeof useCitationMarkdownComponents
+  >['processedContent'];
+  markdownComponents: ReturnType<
+    typeof useCitationMarkdownComponents
+  >['markdownComponents'];
+  renderStageCitation: ReturnType<typeof useCitationTagRenderer>;
+  displayStages: ReturnType<typeof prepareStageCitations>;
+  copyContent: string;
+}
+
 /**
  * Citations for one message: its annotations merged with the conversation's
  * fallback pool, the citation card and preview/open-in-browser callbacks,
@@ -82,7 +99,7 @@ export const useMessageCitations = ({
   fallbackCitationGroups,
   isCompactTypography,
   handleAttachmentClick,
-}: UseMessageCitationsParams) => {
+}: UseMessageCitationsParams): UseMessageCitationsResult => {
   const { t } = useTranslation();
   const { openCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
 

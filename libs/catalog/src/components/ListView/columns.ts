@@ -1,6 +1,7 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { ColDef } from 'ag-grid-community';
 import { CatalogItem } from '../../models/catalog-item';
+import { ListViewColumnKey } from '../../types/list-view-column';
 import { getCatalogItemDisplayType } from '../../utils/catalog-tabs';
 import styles from './ListView.module.scss';
 import { EntityTypeCellRenderer } from './Renders/EntityTypeCellRenderer';
@@ -8,9 +9,6 @@ import { FolderCellRenderer } from './Renders/FolderCellRenderer';
 import { NameCellRenderer } from './Renders/NameCellRenderer';
 import { StarCellRenderer } from './Renders/StarCellRenderer';
 import { TagsCellRenderer } from './Renders/TagsCellRenderer';
-
-/** The optional built-in `ListView` columns a host can independently show or hide per entity type. */
-export type ListViewColumnKey = 'folder' | 'tags' | 'favorite';
 
 /**
  * Per-column rule resolving whether an optional `ListView` column renders for
@@ -43,7 +41,7 @@ const resolveColumnVisibility = (
   type: CatalogEntityType,
   columnVisibility?: ListViewColumnVisibility,
 ): Record<ListViewColumnKey, boolean> => {
-  const keys: ListViewColumnKey[] = ['folder', 'tags', 'favorite'];
+  const keys: ListViewColumnKey[] = Object.values(ListViewColumnKey);
   return Object.fromEntries(
     keys.map((key) => [
       key,

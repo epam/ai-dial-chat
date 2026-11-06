@@ -73,7 +73,7 @@ frontend hosted elsewhere) and `ai-dial-chat-mcp-app-sandbox`
 
 ### Typechecking and verification
 
-Every project with a `typecheck` target (32 as of this writing, out of 33
+Every project with a `typecheck` target (36 as of this writing, out of 39
 projects total) runs `tsc --build --emitDeclarationOnly` and is checked by the
 same command whether the target is inferred by `@nx/vite` or `@nx/js/typescript`.
 `nx.json`'s `targetDefaults.typecheck` gives every one of those targets the
@@ -104,6 +104,12 @@ format`, `npm run lint --fix` and `npm run test` only — none of those
   typechecks. **Open:** making that check a required status check is a
   branch-protection setting administered outside this repository; the job's
   existence does not by itself enforce it (see the Decision Log).
+- Guard: `npm run typecheck:targets:test` (`tools/typecheck-targets.spec.mjs`)
+  runs in the same CI job before the typecheck and fails, naming the project,
+  when a `typecheck` target is disabled. `@nx/js/typescript` replaces the
+  target with an echo that exits `0` when a project tsconfig sets
+  `"noEmit": true`, so no project tsconfig may set it. `apps/chat` was checked
+  by nothing until its `tsconfig.spec.json` dropped `noEmit`.
 
 ## Architecture Layers
 
@@ -199,6 +205,15 @@ The adaptation is shared across DIAL-Core-backed hosts; translated strings, icon
 locale resolution, and reset-time formatting still come from host-supplied callbacks
 or parameters. An additional adapter needs its own equivalent justification in its
 change's design; this is not permission to move arbitrary product rules into a library.
+
+The OAuth popup flow in `libs/chat-hooks/src/oauth/` owns one storage key,
+`TOOLSET_REDIRECT_STATE_KEY`. The initiator writes the redirect state into the
+popup's own `sessionStorage` before navigating it to the provider, and
+`useOAuthCallbackCompletion` reads and removes it on the host's callback route
+in the same popup. Both ends live in the library and the host never sees the
+key, so it is an exception to the storage-key rule, not host persistence. The
+state holds flow-correlation values only, never a token or an authorization
+code. No other storage key in a library is covered.
 
 The usage-limit banner follows the same boundary: `useUsageLimitBanner` and its parts
 (`useDeploymentUsageLimits`, `useRefreshUsageAfterGeneration`, `useUsageLimitBannerDismissal`,
@@ -549,6 +564,7 @@ apps/chat-api/src/
 ├── applications/           # Application CRUD
 ├── application-schemas/    # Application schema metadata
 ├── skills/  toolsets/  prompts/          # Catalog entity domains
+├── resource-identity/      # Shared duplicate name+version check used by applications and toolsets
 ├── files/  assets/                       # File storage and static assets
 ├── share/  publish/                      # Sharing and publication flows
 ├── scheduled-tasks/  scheduled-task-unread/
@@ -615,7 +631,7 @@ A project conversation is the file `conversations/{name}` inside the project (a 
 - **Persistence routing.** `ConversationPersistenceService` hands every project locator to `ProjectConversationStore`, so streaming, background generation and naming run unforked. Core can only condition a project file write on the project's aggregate ETag, so the store's version token is a content hash of the file, and a `412` from a write to another file re-checks the hash and retries.
 - **Completions.** `ConversationCompletionsResponder` owns the SSE side of completions, stop and attach for both controllers. A project chat's model calls carry the `x-project-id` header (DIAL Core forwards it to the deployment on Chat Completions and Responses, background replay included) and nothing else: the BFF adds no system message or attachment, so the deployment resolves the project's instructions and context from that header itself.
 - **App.** `ProjectChatPage` provides a project `ConversationDataSourceContext` value to `ConversationPage`; the project view's main column (`ProjectView.mainContent`) holds the embedded composer and the `ProjectConversationList`.
-- **Live view.** `ProjectViewPage` watches its one project through `POST /api/v1/projects/watch` with `useProjectWatch` (`libs/chat-hooks`, sharing `runProjectWatch` with `useProjects`). An `UPDATE` whose etag the page has not loaded triggers one silent refresh of the details and the Chats list at a time (plus one trailing refresh); a `DELETE`, or a refresh that answers `404`, shows a toast and returns to `/projects`. The page owns `useProjectConversations` and hands it to `ProjectConversationsSection`.
+- **Live view.** `ProjectViewPage` watches its one project through `POST /api/v1/projects/watch` with `useProjectWatch` (`libs/chat-hooks`, sharing `runProjectWatch` with `useProjects`). An `UPDATE` whose etag the page has not loaded triggers one silent refresh of the details and the Chats list at a time (plus one trailing refresh); a `DELETE`, or a refresh that answers `404`, shows a toast and returns to `/projects`. From the moment a new chat starts being created until the page leaves for it, the page holds that refresh (`onChatCreateStart` / `onChatCreateFailed` on `ProjectConversationsSection`), because the navigation would cancel it; a failed create resumes with one refresh if an event was held back. The page owns `useProjectConversations` and hands it to `ProjectConversationsSection`.
 - **Publish / Unpublish.** `ProjectViewPage` offers exactly one of Publish and Unpublish, and neither until `useProjectUnpublish` (`apps/chat/src/hooks/projects/`, over `useUnpublishableFolders` from `libs/chat-hooks`) settles: the owner gets Unpublish once the project's catalog publish history (`entityType: project`) lists a live folder; on a public copy an administrator gets it outright and anyone else only when `GET /api/v1/catalog/project/{id}/unpublish-access` confirms they published it. Confirming goes through `UnpublishConfirmationDialog` (`libs/publish-panel`, shared with the conversation panel; the app fills its labels with `useUnpublishConfirmationLabels`) and `POST /api/v1/catalog/project/{id}/unpublish`. `libs/projects` receives only `onUnpublish`.
 - **Sidebar tree.** Behind `projectsEnabled`, the sidebar's Pinned section lists every pinned project (`UserConfigContext.pinnedProjectIds` order) before the pinned chats, each with its 10 newest chats and a See all row when it has more. `usePinnedProjectChats` (`libs/chat-hooks`) reads `getProject` and `GET …/conversations` per pin and follows the loaded pins with **one** `POST /api/v1/projects/watch` stream through `runProjectWatch` (a pin whose first load failed is retried with backoff and stays out of the watch, which the BFF rejects over an unreadable project), refreshing a changed project silently (one refresh per project at a time, plus one trailing run), dropping a deleted one and refreshing all after a reconnect. The app adapter `usePinnedProjectsPanel` (`apps/chat/src/hooks/projects/`) maps the snapshots to `ConversationListSection`'s `pinnedProjects`, opens routes through `ConversationPanelView`'s `onOpenRoute` (which closes the mobile drawer), unpins a project deleted elsewhere through `setPinnedProject`, and offers Unpin plus, for an owner, Edit, Publish, Share and Delete; `PinnedProjectActionOverlays` hosts their overlays beside the panel's other dialogs, and a delete leaves the route only while it shows that project. A tab on a pinned project's view page therefore holds two project watch streams, the page's and the tree's.
 - **Unread.** `GET …/conversations` items carry `isUnread`, computed per reader from `projectConversationIds` in their own `.client_data/.viewed-conversations.json` (project id → conversation id → the content hash last viewed) and the regular read-before baseline. `PATCH /api/v1/projects/:id/conversations/:conversationName/viewed` stores the current hash. The app marks a chat viewed when its row is opened and, through the project data source's `listSync` (`shouldMarkOpenChatViewed`), when `ConversationPage` has it loaded with no generation running; both pages share one serialized write queue in `apps/chat/src/hooks/projects/projects-client.ts`, which notifies `subscribeProjectConversationViewed` listeners after each successful write so the sidebar tree clears that chat's dot too.

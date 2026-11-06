@@ -15,6 +15,7 @@ import {
   useMemo,
   useState,
   type FC,
+  type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
@@ -209,6 +210,43 @@ const ScheduledTasksPage: FC = () => {
    * unreliably. */
   const isBannerSlotEmpty = !isLimitedAccess && bannerState == null;
 
+  let banner: ReactNode;
+  if (isLimitedAccess) {
+    banner = (
+      <ScheduledTasksLimitedAccessBanner
+        title={t(ScheduledTasksI18nKeys.LimitedAccessBannerTitle)}
+        body={t(ScheduledTasksI18nKeys.LimitedAccessBannerBody)}
+      />
+    );
+  } else if (bannerState != null) {
+    banner = (
+      <ScheduledTasksLoginBanner
+        state={bannerState}
+        title={t(ScheduledTasksI18nKeys.OfflineCredentialsBannerTitle)}
+        body={t(ScheduledTasksI18nKeys.OfflineCredentialsBannerBody)}
+        loginButtonLabel={t(ButtonsI18nKeys.LogIn)}
+        retryButtonLabel={t(ButtonsI18nKeys.Retry)}
+        loggingInLabel={t(
+          ScheduledTasksI18nKeys.OfflineCredentialsBannerLoggingInLabel,
+        )}
+        popupBlockedMessage={t(
+          ScheduledTasksI18nKeys.OfflineCredentialsBannerPopupBlockedMessage,
+        )}
+        cancelledMessage={t(
+          ScheduledTasksI18nKeys.OfflineCredentialsBannerCancelledMessage,
+        )}
+        timeoutMessage={t(
+          ScheduledTasksI18nKeys.OfflineCredentialsBannerTimeoutMessage,
+        )}
+        failedMessage={t(
+          ScheduledTasksI18nKeys.OfflineCredentialsBannerFailedMessage,
+        )}
+        liveAnnouncement={liveAnnouncement}
+        onLogIn={connect ? logIn : undefined}
+      />
+    );
+  }
+
   return (
     <>
       <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
@@ -232,39 +270,7 @@ const ScheduledTasksPage: FC = () => {
         onLoadMore={loadMore}
         onRetryLoadMore={retryLoadMore}
         onCardClick={handleCardClick}
-        banner={
-          isLimitedAccess ? (
-            <ScheduledTasksLimitedAccessBanner
-              title={t(ScheduledTasksI18nKeys.LimitedAccessBannerTitle)}
-              body={t(ScheduledTasksI18nKeys.LimitedAccessBannerBody)}
-            />
-          ) : bannerState != null ? (
-            <ScheduledTasksLoginBanner
-              state={bannerState}
-              title={t(ScheduledTasksI18nKeys.OfflineCredentialsBannerTitle)}
-              body={t(ScheduledTasksI18nKeys.OfflineCredentialsBannerBody)}
-              loginButtonLabel={t(ButtonsI18nKeys.LogIn)}
-              retryButtonLabel={t(ButtonsI18nKeys.Retry)}
-              loggingInLabel={t(
-                ScheduledTasksI18nKeys.OfflineCredentialsBannerLoggingInLabel,
-              )}
-              popupBlockedMessage={t(
-                ScheduledTasksI18nKeys.OfflineCredentialsBannerPopupBlockedMessage,
-              )}
-              cancelledMessage={t(
-                ScheduledTasksI18nKeys.OfflineCredentialsBannerCancelledMessage,
-              )}
-              timeoutMessage={t(
-                ScheduledTasksI18nKeys.OfflineCredentialsBannerTimeoutMessage,
-              )}
-              failedMessage={t(
-                ScheduledTasksI18nKeys.OfflineCredentialsBannerFailedMessage,
-              )}
-              liveAnnouncement={liveAnnouncement}
-              onLogIn={connect ? logIn : undefined}
-            />
-          ) : undefined
-        }
+        banner={banner}
       />
     </>
   );

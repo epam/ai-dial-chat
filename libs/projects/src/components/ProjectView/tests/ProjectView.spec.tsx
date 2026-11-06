@@ -322,6 +322,7 @@ describe('ProjectView', () => {
     );
 
     expect(items.map((item) => item.textContent)).toEqual([
+      'Pin',
       'Publish',
       'Edit',
       'Share',
@@ -341,7 +342,7 @@ describe('ProjectView', () => {
     expect(onPublish).not.toHaveBeenCalled();
   });
 
-  it('leads the mobile more-actions menu with a non-danger Unpublish', async () => {
+  it('puts a non-danger Unpublish in the mobile menu where Publish sits', async () => {
     const onUnpublish = vi.fn();
     renderView({ onUnpublish });
 
@@ -353,14 +354,15 @@ describe('ProjectView', () => {
     const items = within(menu).getAllByRole('menuitem');
 
     expect(items.map((item) => item.textContent)).toEqual([
+      'Pin',
       'Unpublish',
       'Edit',
       'Share',
       'Download',
       'Delete',
     ]);
-    expect(items[0].className).not.toMatch(/danger|error/);
-    await userEvent.click(items[0]);
+    expect(items[1].className).not.toMatch(/danger|error/);
+    await userEvent.click(items[1]);
     expect(onUnpublish).toHaveBeenCalledOnce();
   });
 
@@ -405,7 +407,7 @@ describe('ProjectView', () => {
       await userEvent.click(mobileTrigger);
 
       const sheet = await screen.findByRole('dialog', {
-        name: 'More actions',
+        name: 'Q4 launch',
       });
       await userEvent.click(
         within(sheet).getByRole('menuitem', { name: 'Edit' }),

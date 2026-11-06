@@ -34,7 +34,7 @@ Each diagnostic is fixed in the narrowest way: correct a type, add a missing fie
 
 ### D3 — The guard reads the project graph, not tsconfig files
 
-`tools/typecheck-targets.spec.mjs` runs `nx graph --file=<tmp>.json`. For every node with a `typecheck` target, it asserts that the target's command does not contain the disabled-target text. It also asserts that the target runs `tsc`.
+`tools/typecheck-targets.spec.mjs` builds the graph with `createProjectGraphAsync` from `@nx/devkit`, as `tools/module-boundaries.spec.mjs` does. For every node with a `typecheck` target, it asserts that the target's command does not contain the disabled-target text. It also asserts that the target runs `tsc`.
 
 Checking the graph, not just grepping for `noEmit`, also catches any future reason Nx might disable an inferred target. The guard is a `node --test` file next to `tools/module-boundaries.spec.mjs`, and runs as a step of the existing CI `typecheck` job.
 

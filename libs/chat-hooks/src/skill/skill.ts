@@ -120,7 +120,11 @@ export const normalizeSkillName = (input: string): string => {
 };
 
 /** Skill editor text fields with a length limit. */
-export type SkillTextField = 'name' | 'description' | 'instructions';
+export enum SkillTextField {
+  Name = 'name',
+  Description = 'description',
+  Instructions = 'instructions',
+}
 
 /** Length limit of each skill editor text field. */
 export const SKILL_TEXT_FIELD_MAX_LENGTHS: Record<SkillTextField, number> = {

@@ -20,6 +20,7 @@ import {
   ResourceFoldersResponseDto,
   ResourceIdResponseDto,
 } from '../common/dto/resource-folder.dto';
+import { ResourceNameConflictDto } from '../common/dto/resource-name-conflict.dto';
 import {
   DialToolsetDto,
   DialToolsetListResponseDto,
@@ -147,7 +148,9 @@ export class ToolsetsController {
   @ApiResponse({ status: 404, description: 'Toolset not found' })
   @ApiResponse({
     status: 409,
-    description: 'A toolset with the same name already exists in the folder',
+    description:
+      'The target folder already holds an own toolset with the same displayed name and version (`code` `name-taken-toolset`), or a toolset with the same leaf',
+    type: ResourceNameConflictDto,
   })
   @ApiResponse({
     status: 502,
@@ -239,7 +242,12 @@ export class ToolsetsController {
     description: 'Not authenticated — valid session cookie required',
   })
   @ApiResponse({ status: 403, description: 'Caller lacks permission' })
-  @ApiResponse({ status: 409, description: 'Toolset name already taken' })
+  @ApiResponse({
+    status: 409,
+    description:
+      'Another own entity in the folder and Toolsets tab already has this name and version (`code` `name-taken-agent` or `name-taken-toolset`), or, without a `code`, every candidate storage path is taken',
+    type: ResourceNameConflictDto,
+  })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
@@ -281,6 +289,12 @@ export class ToolsetsController {
   })
   @ApiResponse({ status: 403, description: 'Caller lacks permission' })
   @ApiResponse({ status: 404, description: 'Toolset not found' })
+  @ApiResponse({
+    status: 409,
+    description:
+      'The new name and version are already held by another own entity in the same folder and Toolsets tab (`code` `name-taken-agent` or `name-taken-toolset`)',
+    type: ResourceNameConflictDto,
+  })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',

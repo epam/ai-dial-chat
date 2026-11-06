@@ -135,6 +135,15 @@ export const useConversationPanelItems = ({
         : '';
 
       const taskPresentation = resolveTaskPresentation?.(item);
+      const resolveUnreadFields = () => {
+        if (taskPresentation != null) {
+          return {
+            leadingIcon: taskPresentation.leadingIcon,
+            isUnread: taskPresentation.isUnread,
+          };
+        }
+        return item.isUnread ? { leadingIcon: undefined, isUnread: true } : {};
+      };
 
       return {
         id,
@@ -149,14 +158,7 @@ export const useConversationPanelItems = ({
             ? ConversationKind.Task
             : ConversationKind.Chat,
         href: resolveHref(id),
-        ...(taskPresentation != null
-          ? {
-              leadingIcon: taskPresentation.leadingIcon,
-              isUnread: taskPresentation.isUnread,
-            }
-          : item.isUnread
-            ? { leadingIcon: undefined, isUnread: true }
-            : {}),
+        ...resolveUnreadFields(),
       };
     },
     [

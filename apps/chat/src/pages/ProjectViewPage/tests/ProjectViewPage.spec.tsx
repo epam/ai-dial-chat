@@ -1,7 +1,9 @@
 import {
   ProjectSource,
+  PublishHistoryEntryDtoEntityTypeEnum,
   ResponseError,
   type ProjectDetailsDto,
+  type PublishHistoryEntryDto,
 } from '@epam/ai-dial-chat-api-client';
 import { triggerBrowserDownload } from '@epam/ai-dial-chat-hooks/utils';
 import { render, screen, waitFor, within } from '@testing-library/react';
@@ -118,6 +120,8 @@ vi.mock(
       canEdit,
       conversations,
       onConversationDeleted,
+      onChatCreateStart,
+      onChatCreateFailed,
       outputs,
       hasOutputs,
     }: {
@@ -125,6 +129,8 @@ vi.mock(
       canEdit: boolean;
       conversations: { items: { title: string; isUnread?: boolean }[] };
       onConversationDeleted?: () => void;
+      onChatCreateStart?: () => void;
+      onChatCreateFailed?: () => void;
       outputs?: ReactNode;
       hasOutputs?: boolean;
     }) => (
@@ -141,6 +147,12 @@ vi.mock(
         </ul>
         <button type="button" onClick={onConversationDeleted}>
           delete a chat
+        </button>
+        <button type="button" onClick={onChatCreateStart}>
+          start chat create
+        </button>
+        <button type="button" onClick={onChatCreateFailed}>
+          fail chat create
         </button>
       </>
     ),
@@ -400,17 +412,18 @@ describe('ProjectViewPage', () => {
   });
 
   describe('unpublish', () => {
-    const historyEntry = (folderPath: string) => ({
+    const historyEntry = (folderPath: string): PublishHistoryEntryDto => ({
       entityId: PROJECT_ID,
-      entityType: 'project' as never,
+      entityType: PublishHistoryEntryDtoEntityTypeEnum.Project,
       folderPath,
       version: '',
       publishedAt: '2026-11-01T10:00:00Z',
       publishedBy: 'Owner',
+      publishCredentials: false,
     });
 
     it('shows neither Publish nor Unpublish until the publish state settles', async () => {
-      let resolveHistory!: (entries: ReturnType<typeof historyEntry>[]) => void;
+      let resolveHistory!: (entries: PublishHistoryEntryDto[]) => void;
       vi.mocked(getCatalogPublishHistory).mockReturnValue(
         new Promise((resolve) => {
           resolveHistory = resolve;
@@ -1057,6 +1070,132 @@ describe('ProjectViewPage', () => {
           message: ProjectsI18nKeys.ViewDeletedElsewhere,
         }),
       );
+    });
+
+    it('does not refresh on events while a chat is being created', async () => {
+      const { watch } = await renderWatched();
+      await userEvent.click(
+        screen.getByRole('button', { name: 'start chat create' }),
+      );
+      vi.mocked(getProject).mockClear();
+      vi.mocked(listProjectConversations).mockClear();
+      vi.mocked(listProjectArtifacts).mockClear();
+
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 1,
+        etag: '"e2"',
+      });
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 2,
+        etag: '"e3"',
+      });
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(getProject).not.toHaveBeenCalled();
+      expect(listProjectConversations).not.toHaveBeenCalled();
+      expect(listProjectArtifacts).not.toHaveBeenCalled();
+    });
+
+    it('runs one refresh when creating a chat failed after events were held back', async () => {
+      const { watch } = await renderWatched();
+      await userEvent.click(
+        screen.getByRole('button', { name: 'start chat create' }),
+      );
+      vi.mocked(getProject).mockClear();
+      vi.mocked(listProjectConversations).mockClear();
+      vi.mocked(listProjectArtifacts).mockClear();
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 1,
+        etag: '"e2"',
+      });
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 2,
+        etag: '"e3"',
+      });
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'fail chat create' }),
+      );
+
+      await waitFor(() => expect(getProject).toHaveBeenCalledOnce());
+      expect(listProjectConversations).toHaveBeenCalledOnce();
+      expect(listProjectArtifacts).toHaveBeenCalledOnce();
+    });
+
+    it('sends no refresh when creating a chat failed and no event arrived', async () => {
+      await renderWatched();
+      await userEvent.click(
+        screen.getByRole('button', { name: 'start chat create' }),
+      );
+      vi.mocked(getProject).mockClear();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'fail chat create' }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(getProject).not.toHaveBeenCalled();
+    });
+
+    it('refreshes on events again after a failed create was resumed', async () => {
+      const { watch } = await renderWatched();
+      await userEvent.click(
+        screen.getByRole('button', { name: 'start chat create' }),
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: 'fail chat create' }),
+      );
+      vi.mocked(getProject).mockClear();
+
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 3,
+        etag: '"e4"',
+      });
+
+      await waitFor(() => expect(getProject).toHaveBeenCalledOnce());
+    });
+
+    it('refreshes on events again once the route names another project', async () => {
+      const first = createWatchStream();
+      const second = createWatchStream();
+      vi.mocked(watchProjects)
+        .mockResolvedValueOnce(first.stream)
+        .mockResolvedValueOnce(second.stream);
+      const { router } = renderAt();
+      await screen.findByText('c1');
+      await waitFor(() => expect(watchProjects).toHaveBeenCalledOnce());
+      await userEvent.click(
+        screen.getByRole('button', { name: 'start chat create' }),
+      );
+
+      const otherId = 'projects/a1b2c3/marketing/q5';
+      vi.mocked(getProject).mockResolvedValue(
+        details({ id: otherId, name: 'q5', path: 'marketing/q5' }),
+      );
+      await router.navigate('/projects/view/a1b2c3/marketing/q5');
+      await screen.findByRole('heading', { level: 1, name: 'q5' });
+      await waitFor(() => expect(watchProjects).toHaveBeenCalledTimes(2));
+      vi.mocked(getProject).mockClear();
+
+      second.send({
+        id: otherId,
+        action: 'UPDATE',
+        timestamp: 5,
+        etag: '"e9"',
+      });
+
+      await waitFor(() => expect(getProject).toHaveBeenCalledOnce());
     });
 
     it('closes the watch when the user leaves the page', async () => {

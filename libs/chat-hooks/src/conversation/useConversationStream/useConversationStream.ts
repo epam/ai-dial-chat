@@ -7,6 +7,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   DEFAULT_GENERATION_CONFLICT_MESSAGE,
+  DEFAULT_GENERATION_INTERRUPTED_ERROR_MESSAGE,
   DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE,
 } from '../create-chat-stream-api';
 import { restoreBufferedMessage } from './buffered-generation';
@@ -57,6 +58,7 @@ export const useConversationStream = ({
   onStopError,
   generationConflictMessage = DEFAULT_GENERATION_CONFLICT_MESSAGE,
   generationPersistenceErrorMessage = DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE,
+  generationInterruptedMessage = DEFAULT_GENERATION_INTERRUPTED_ERROR_MESSAGE,
   onStreamError,
   batchChunksPerFrame = false,
 }: UseConversationStreamParams): UseConversationStreamResult => {
@@ -130,6 +132,7 @@ export const useConversationStream = ({
         removeStreamingPath,
         isPathDisplayed,
         generationPersistenceErrorMessage,
+        generationInterruptedMessage,
         frameScheduler: batchChunksPerFrame ? frameScheduler : undefined,
         stoppedGenerationIdsRef,
         rememberResumedGenerationId,
@@ -145,6 +148,7 @@ export const useConversationStream = ({
       isPathDisplayed,
       transport,
       generationPersistenceErrorMessage,
+      generationInterruptedMessage,
       batchChunksPerFrame,
       frameScheduler,
       rememberResumedGenerationId,
@@ -297,6 +301,7 @@ export const useConversationStream = ({
         return;
       resumeGeneration(currentConversationId, conversation, {
         trackAttachGenerationId: true,
+        shouldMarkOrphanedAsInterrupted: true,
       });
     },
     [activeGenerationIdsRef, resumeGeneration],

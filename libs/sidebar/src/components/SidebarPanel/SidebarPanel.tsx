@@ -281,17 +281,20 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
     />
   ) : null;
 
+  const resolveWrapperStyle = () => {
+    if (isBoundedOverlay) return { width: boundedSize.width };
+    return shouldSetInlineWidth ? { width: panelWidth } : undefined;
+  };
+  const resolveResizableWidth = () => {
+    if (isBoundedOverlay) return boundedSize.width;
+    return isOpen ? animationMaxWidth || currentWidthRef.current : undefined;
+  };
+
   return (
     <div
       ref={wrapperRef}
       inert={isBoundedOverlay && !isOpen}
-      style={
-        isBoundedOverlay
-          ? { width: boundedSize.width }
-          : shouldSetInlineWidth
-            ? { width: panelWidth }
-            : undefined
-      }
+      style={resolveWrapperStyle()}
       className={mergeClasses(
         'h-full shrink-0 gap-3 overflow-hidden shadow-sm',
         orientation === SidebarOrientation.Left &&
@@ -323,13 +326,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
         enabled={(resizable ?? false) && isOpen}
         side={resizableSide}
         ariaLabel={labels.resizeLabel ?? 'Resize panel'}
-        width={
-          isBoundedOverlay
-            ? boundedSize.width
-            : isOpen
-              ? animationMaxWidth || currentWidthRef.current
-              : undefined
-        }
+        width={resolveResizableWidth()}
         defaultWidth={isBoundedOverlay ? boundedSize.width : defaultWidth}
         minWidth={isBoundedOverlay ? boundedSize.minWidth : minWidth}
         maxWidth={isBoundedOverlay ? boundedSize.maxWidth : maxWidth}

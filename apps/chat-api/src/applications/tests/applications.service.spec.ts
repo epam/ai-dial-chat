@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DeploymentsService } from '../../deployments/deployments.service';
 import { DeploymentsDetailsService } from '../../deployments/details/deployments-details.service';
 import type { DialClientService } from '../../dial/dial-client.service';
+import { ResourceIdentityService } from '../../resource-identity/resource-identity.service';
 import { ApplicationsService } from '../applications.service';
 import type { ApplicationsResponseDto } from '../dto/application.dto';
 import type { CreateApplicationBodyDto } from '../dto/create-application.dto';
@@ -28,7 +29,9 @@ function makeDeps() {
   const dialClient = {
     client: {
       getApplications: vi.fn(),
-      getUserBucket: vi.fn(),
+      getUserBucket: vi
+        .fn()
+        .mockResolvedValue(okResponse({ bucket: 'test-bucket' })),
       saveCustomApplication: vi.fn(),
       getCustomApplication: vi.fn(),
       deleteCustomApplication: vi.fn(),
@@ -48,6 +51,7 @@ function makeDeps() {
 
   const deploymentsService = {
     invalidateListCache: vi.fn().mockResolvedValue(undefined),
+    listDeployments: vi.fn().mockResolvedValue({ deployments: [] }),
   } as unknown as DeploymentsService;
 
   const deploymentsDetailsService = {
@@ -62,6 +66,22 @@ function makeDeps() {
   };
 }
 
+function makeToolsetsListing() {
+  return {
+    listToolsets: vi.fn().mockResolvedValue({ data: [] }),
+  };
+}
+
+function makeIdentity(
+  deploymentsService: DeploymentsService,
+  toolsetsListing = makeToolsetsListing(),
+) {
+  return new ResourceIdentityService(
+    deploymentsService,
+    toolsetsListing as never,
+  );
+}
+
 function makeService() {
   const {
     dialClient,
@@ -69,17 +89,20 @@ function makeService() {
     deploymentsService,
     deploymentsDetailsService,
   } = makeDeps();
+  const toolsetsListing = makeToolsetsListing();
   const service = new ApplicationsService(
     dialClient,
     cacheManager as never,
     deploymentsService,
     deploymentsDetailsService,
+    makeIdentity(deploymentsService, toolsetsListing),
   );
   return {
     service,
     cacheManager,
     deploymentsService,
     deploymentsDetailsService,
+    toolsetsListing,
   };
 }
 
@@ -123,6 +146,7 @@ describe('ApplicationsService', () => {
         cacheManager as never,
         deploymentsService,
         deploymentsDetailsService,
+        makeIdentity(deploymentsService),
       );
       const spy = vi
         .spyOn(
@@ -152,6 +176,7 @@ describe('ApplicationsService', () => {
         cacheManager as never,
         deploymentsService,
         deploymentsDetailsService,
+        makeIdentity(deploymentsService),
       );
       vi.spyOn(
         (service['dialClient'] as DialClientService).client,
@@ -266,6 +291,174 @@ describe('ApplicationsService', () => {
 
       return { getUserBucketSpy, saveCustomApplicationSpy };
     };
+
+    describe('duplicate identity', () => {
+      const ownAgent = (
+        overrides: Record<string, unknown> = {},
+      ): Record<string, unknown> => ({
+        id: 'applications/test-bucket/My%20App__1.0.0',
+        type: 'application',
+        displayName: 'My App',
+        displayVersion: '1.0.0',
+        interfaces: ['chat'],
+        isMy: true,
+        ...overrides,
+      });
+
+      it('rejects a second agent with the same name and version and writes nothing', async () => {
+        const { service, deploymentsService, cacheManager } = makeService();
+        const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+        vi.mocked(deploymentsService.listDeployments).mockResolvedValue({
+          deployments: [ownAgent()],
+        } as never);
+
+        const error = await service
+          .createApplication('user1', 'token', { ...body, createOnly: true })
+          .catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(ConflictException);
+        expect((error as ConflictException).getResponse()).toMatchObject({
+          code: 'name-taken-agent',
+        });
+        expect(saveCustomApplicationSpy).not.toHaveBeenCalled();
+        expect(cacheManager.del).not.toHaveBeenCalled();
+      });
+
+      it('reads the deployments list fresh', async () => {
+        const { service, deploymentsService } = makeService();
+        mockCreateApplicationSdk(service);
+
+        await service.createApplication('user1', 'token', {
+          ...body,
+          createOnly: true,
+        });
+
+        expect(deploymentsService.listDeployments).toHaveBeenCalledWith(
+          'user1',
+          'token',
+          'test-bucket',
+          undefined,
+          true,
+        );
+      });
+
+      it('accepts the same name and version in a different folder', async () => {
+        const { service, deploymentsService } = makeService();
+        const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+        vi.mocked(deploymentsService.listDeployments).mockResolvedValue({
+          deployments: [
+            ownAgent({
+              id: 'applications/test-bucket/Design/My%20App__1.0.0',
+            }),
+          ],
+        } as never);
+
+        await service.createApplication('user1', 'token', {
+          ...body,
+          createOnly: true,
+          folderPath: 'Research',
+        });
+
+        expect(saveCustomApplicationSpy).toHaveBeenCalledOnce();
+      });
+
+      it('accepts a different version of the same name', async () => {
+        const { service, deploymentsService } = makeService();
+        const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+        vi.mocked(deploymentsService.listDeployments).mockResolvedValue({
+          deployments: [ownAgent()],
+        } as never);
+
+        await service.createApplication('user1', 'token', {
+          ...body,
+          version: '1.1.0',
+          createOnly: true,
+        });
+
+        expect(saveCustomApplicationSpy).toHaveBeenCalledOnce();
+      });
+
+      it('ignores an own toolset with the same name because it competes in another tab', async () => {
+        const { service, deploymentsService, toolsetsListing } = makeService();
+        const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+        vi.mocked(deploymentsService.listDeployments).mockResolvedValue({
+          deployments: [],
+        } as never);
+
+        await service.createApplication('user1', 'token', {
+          ...body,
+          createOnly: true,
+        });
+
+        expect(saveCustomApplicationSpy).toHaveBeenCalledOnce();
+        expect(toolsetsListing.listToolsets).not.toHaveBeenCalled();
+      });
+
+      it('reuses a name freed by a rename at the next free path', async () => {
+        const { service, deploymentsService } = makeService();
+        const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+        saveCustomApplicationSpy
+          .mockResolvedValueOnce(errResponse(412))
+          .mockResolvedValueOnce(okResponse({}));
+        vi.mocked(deploymentsService.listDeployments).mockResolvedValue({
+          deployments: [ownAgent({ displayName: 'My App renamed' })],
+        } as never);
+
+        const result = await service.createApplication('user1', 'token', {
+          ...body,
+          createOnly: true,
+        });
+
+        expect(result).toEqual({
+          id: 'applications/test-bucket/My%20App-2__1.0.0',
+        });
+      });
+
+      it('answers the coded 409 when a concurrent create took the same identity', async () => {
+        const { service, deploymentsService, cacheManager } = makeService();
+        const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+        saveCustomApplicationSpy.mockResolvedValue(errResponse(412));
+        vi.mocked(deploymentsService.listDeployments)
+          .mockResolvedValueOnce({ deployments: [] } as never)
+          .mockResolvedValue({ deployments: [ownAgent()] } as never);
+
+        const error = await service
+          .createApplication('user1', 'token', { ...body, createOnly: true })
+          .catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(ConflictException);
+        expect((error as ConflictException).getResponse()).toMatchObject({
+          code: 'name-taken-agent',
+        });
+        expect(saveCustomApplicationSpy).toHaveBeenCalledOnce();
+        expect(cacheManager.del).not.toHaveBeenCalled();
+      });
+
+      it('does not check a create that is not create-only', async () => {
+        const { service, deploymentsService } = makeService();
+        mockCreateApplicationSdk(service);
+
+        await service.createApplication('user1', 'token', body);
+
+        expect(deploymentsService.listDeployments).not.toHaveBeenCalled();
+      });
+
+      it('writes nothing when the deployments read fails', async () => {
+        const { service, deploymentsService } = makeService();
+        const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+        vi.mocked(deploymentsService.listDeployments).mockRejectedValue(
+          new ServiceUnavailableException(),
+        );
+
+        await expect(
+          service.createApplication('user1', 'token', {
+            ...body,
+            createOnly: true,
+          }),
+        ).rejects.toBeInstanceOf(ServiceUnavailableException);
+        expect(saveCustomApplicationSpy).not.toHaveBeenCalled();
+      });
+    });
 
     it('creates at the next free path when the name path is already taken', async () => {
       const { service, cacheManager } = makeService();
@@ -764,6 +957,161 @@ describe('ApplicationsService', () => {
       return { getCustomApplicationSpy, saveCustomApplicationSpy };
     };
 
+    describe('duplicate identity', () => {
+      const entry = (overrides: Record<string, unknown>) => ({
+        type: 'application',
+        displayVersion: '0.0.1',
+        isMy: true,
+        ...overrides,
+      });
+      const selfEntry = (interfaces: string[] = ['chat']) =>
+        entry({
+          id,
+          displayName: 'My App',
+          interfaces,
+        });
+
+      it('does not read deployments when name and version stay the same', async () => {
+        const { service, deploymentsService } = makeService();
+        const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(service);
+
+        await service.updateApplication('user1', 'token', id, {
+          name: 'My App',
+          description: 'New description',
+        });
+
+        expect(deploymentsService.listDeployments).not.toHaveBeenCalled();
+        expect(saveCustomApplicationSpy).toHaveBeenCalledOnce();
+      });
+
+      it('rejects a rename into the identity of another own agent and writes nothing', async () => {
+        const { service, deploymentsService } = makeService();
+        const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(service);
+        vi.mocked(deploymentsService.listDeployments).mockResolvedValue({
+          deployments: [
+            selfEntry(),
+            entry({
+              id: 'applications/test-bucket/Taken__0.0.1',
+              displayName: 'Taken',
+              interfaces: ['chat'],
+            }),
+          ],
+        } as never);
+
+        const error = await service
+          .updateApplication('user1', 'token', id, { name: 'Taken' })
+          .catch((e: unknown) => e);
+
+        expect((error as ConflictException).getResponse()).toMatchObject({
+          code: 'name-taken-agent',
+        });
+        expect(saveCustomApplicationSpy).not.toHaveBeenCalled();
+      });
+
+      it('rejects a version change into an existing version of the same name', async () => {
+        const { service, deploymentsService } = makeService();
+        mockUpdateApplicationSdk(service);
+        vi.mocked(deploymentsService.listDeployments).mockResolvedValue({
+          deployments: [
+            selfEntry(),
+            entry({
+              id: 'applications/test-bucket/My%20App__1.1.0',
+              displayName: 'My App',
+              displayVersion: '1.1.0',
+              interfaces: ['chat'],
+            }),
+          ],
+        } as never);
+
+        await expect(
+          service.updateApplication('user1', 'token', id, {
+            name: 'My App',
+            version: '1.1.0',
+          }),
+        ).rejects.toBeInstanceOf(ConflictException);
+      });
+
+      it('checks a dual-interface application against the toolsets as well', async () => {
+        const { service, deploymentsService, toolsetsListing } = makeService();
+        mockUpdateApplicationSdk(service);
+        vi.mocked(deploymentsService.listDeployments).mockResolvedValue({
+          deployments: [selfEntry(['chat', 'mcp'])],
+        } as never);
+        vi.mocked(toolsetsListing.listToolsets).mockResolvedValue({
+          data: [
+            {
+              id: 'toolsets/test-bucket/Search__0.0.1',
+              displayName: 'Search',
+              displayVersion: '0.0.1',
+              isMy: true,
+            },
+          ],
+        } as never);
+
+        const error = await service
+          .updateApplication('user1', 'token', id, { name: 'Search' })
+          .catch((e: unknown) => e);
+
+        expect((error as ConflictException).getResponse()).toMatchObject({
+          code: 'name-taken-toolset',
+        });
+      });
+
+      it('does not read toolsets for a chat-only application', async () => {
+        const { service, deploymentsService, toolsetsListing } = makeService();
+        mockUpdateApplicationSdk(service);
+        vi.mocked(deploymentsService.listDeployments).mockResolvedValue({
+          deployments: [selfEntry(['chat'])],
+        } as never);
+
+        await service.updateApplication('user1', 'token', id, {
+          name: 'Search',
+        });
+
+        expect(toolsetsListing.listToolsets).not.toHaveBeenCalled();
+      });
+
+      it('compares an application missing from the list with the agents tab only', async () => {
+        const { service, deploymentsService, toolsetsListing } = makeService();
+        mockUpdateApplicationSdk(service);
+        vi.mocked(deploymentsService.listDeployments).mockResolvedValue({
+          deployments: [
+            entry({
+              id: 'applications/test-bucket/Taken__0.0.1',
+              displayName: 'Taken',
+              interfaces: ['chat'],
+            }),
+          ],
+        } as never);
+
+        await expect(
+          service.updateApplication('user1', 'token', id, { name: 'Taken' }),
+        ).rejects.toBeInstanceOf(ConflictException);
+        expect(toolsetsListing.listToolsets).not.toHaveBeenCalled();
+      });
+
+      it('does not check an application the caller does not own', async () => {
+        const { service, deploymentsService } = makeService();
+        const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(service);
+        vi.mocked(deploymentsService.listDeployments).mockResolvedValue({
+          deployments: [
+            { ...selfEntry(), isMy: false },
+            entry({
+              id: 'applications/test-bucket/Taken__0.0.1',
+              displayName: 'Taken',
+              interfaces: ['chat'],
+            }),
+          ],
+        } as never);
+
+        await service.updateApplication('user1', 'token', id, {
+          name: 'Taken',
+        });
+
+        expect(saveCustomApplicationSpy).toHaveBeenCalledOnce();
+      });
+    });
+
     it('merges General-step fields, persists at the same path, and invalidates caches', async () => {
       const {
         service,
@@ -1252,6 +1600,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
       cacheManager as never,
       deploymentsService,
       deploymentsDetailsService,
+      makeIdentity(deploymentsService),
     );
 
     return { sdkClient, applicationsService, deploymentsDetailsService };
@@ -1419,6 +1768,112 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
         '',
         expect.anything(),
       );
+    });
+
+    describe('fork and move duplicate identity', () => {
+      const entry = (id: string, overrides: Record<string, unknown> = {}) => ({
+        id,
+        type: 'application',
+        displayName: 'agent',
+        displayVersion: '1.0.0',
+        interfaces: ['chat'],
+        isMy: true,
+        ...overrides,
+      });
+
+      it('rejects a move into a folder that already holds the same identity', async () => {
+        const { service, deploymentsService } = makeService();
+        withBucket(service);
+        vi.mocked(deploymentsService.listDeployments).mockResolvedValue({
+          deployments: [
+            entry('applications/b1/agent__1.0.0'),
+            entry('applications/b1/Design/other__1.0.0'),
+          ],
+        } as never);
+
+        const error = await service
+          .moveApplication(
+            'user1',
+            'token',
+            'applications/b1/agent__1.0.0',
+            'Design',
+          )
+          .catch((e: unknown) => e);
+
+        expect((error as ConflictException).getResponse()).toMatchObject({
+          code: 'name-taken-agent',
+        });
+        expect(client(service).moveResource).not.toHaveBeenCalled();
+      });
+
+      it('rejects a fork to a version that already exists in the folder', async () => {
+        const { service, deploymentsService } = makeService();
+        withBucket(service);
+        vi.mocked(deploymentsService.listDeployments).mockResolvedValue({
+          deployments: [
+            entry('applications/b1/agent__1.0.0'),
+            entry('applications/b1/Design/agent__1.1.1', {
+              displayVersion: '1.1.1',
+            }),
+          ],
+        } as never);
+
+        const error = await service
+          .forkApplicationVersion(
+            'user1',
+            'token',
+            'applications/b1/agent__1.0.0',
+            { version: '1.1.1', folderPath: 'Design' },
+          )
+          .catch((e: unknown) => e);
+
+        expect((error as ConflictException).getResponse()).toMatchObject({
+          code: 'name-taken-agent',
+        });
+        expect(client(service).copyResource).not.toHaveBeenCalled();
+      });
+
+      it('rejects a fork onto the source identity because the source stays in place', async () => {
+        const { service, deploymentsService } = makeService();
+        withBucket(service);
+        vi.mocked(deploymentsService.listDeployments).mockResolvedValue({
+          deployments: [entry('applications/b1/agent__1.0.0')],
+        } as never);
+
+        await expect(
+          service.forkApplicationVersion(
+            'user1',
+            'token',
+            'applications/b1/agent__1.0.0',
+            { version: '1.0.0', folderPath: '' },
+          ),
+        ).rejects.toBeInstanceOf(ConflictException);
+      });
+
+      it('forks to a free version', async () => {
+        const { service, deploymentsService } = makeService();
+        withBucket(service);
+        vi.mocked(deploymentsService.listDeployments).mockResolvedValue({
+          deployments: [entry('applications/b1/agent__1.0.0')],
+        } as never);
+        client(service).copyResource.mockResolvedValue({
+          response: { status: 200 },
+        } as never);
+        client(service).getCustomApplication.mockResolvedValue({
+          data: { displayName: 'agent', displayVersion: '1.0.0' },
+          response: { status: 200, headers: new Headers({ etag: 'e1' }) },
+        } as never);
+        client(service).saveCustomApplication.mockResolvedValue(okResponse({}));
+
+        await expect(
+          service.forkApplicationVersion(
+            'user1',
+            'token',
+            'applications/b1/agent__1.0.0',
+            { version: '1.1.1', folderPath: '' },
+          ),
+        ).resolves.toEqual({ id: 'applications/b1/agent__1.1.1' });
+      });
     });
 
     it('moves an own application into a folder and invalidates caches', async () => {

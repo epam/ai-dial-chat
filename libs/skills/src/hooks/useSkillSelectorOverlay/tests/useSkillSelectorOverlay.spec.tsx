@@ -6,6 +6,7 @@ import type { ChatSkillProps } from '../../../models/chat-skill-props';
 import type { SkillListingEntry } from '../../../models/favorite-skill-item';
 import type { SkillCatalogModalProps } from '../../../models/skill-catalog-modal-props';
 import type { UseSkillSelectorOverlayOptions } from '../../../models/skill-selector-overlay';
+import { ChatSkillDetailsTrigger } from '../../../types/chat-skill-details-trigger';
 import { SkillUnresolvedReason } from '../../../types/skill-unresolved-reason';
 import { useSkillSelectorOverlay } from '../useSkillSelectorOverlay';
 
@@ -147,7 +148,7 @@ describe('useSkillSelectorOverlay', () => {
     const { result } = renderHook(() =>
       useSkillSelectorOverlay({
         ...baseOptions,
-        activeMentionDetailsTrigger: 'click',
+        activeMentionDetailsTrigger: ChatSkillDetailsTrigger.Click,
       }),
     );
 
@@ -219,7 +220,7 @@ describe('useSkillSelectorOverlay', () => {
     const { result } = renderHook(() =>
       useSkillSelectorOverlay({
         ...baseOptions,
-        historyDetailsTrigger: 'click',
+        historyDetailsTrigger: ChatSkillDetailsTrigger.Click,
       }),
     );
 

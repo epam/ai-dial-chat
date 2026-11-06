@@ -7,7 +7,7 @@ Slicing strategy: **vertical**. Slice 1 makes the lib able to render the action;
 - [x] 1.1 Add `onUnpublish?: () => void` to `ProjectViewProps` and `unpublishLabel?: string` (doc: "Unpublish action label. Defaults to `'Unpublish'`.") to `ProjectViewLabels` in `libs/projects/src/models/project-view-props.ts`.
 - [x] 1.2 In `libs/projects/src/components/ProjectView/ProjectView.tsx`: when `onUnpublish` is set, render a desktop `NeutralButton` with `IconWorldOff` and push a non-danger `unpublish` menu item first in `buildMenuItems(true)`; suppress both Publish placements. Logical classes only; do not mirror the icon.
 - [x] 1.3 Architecture guard: confirm `libs/projects` gains no `/api` path, generated-client/server-api import, app context, auth/env/feature-flag access, i18n import or entity-type knowledge.
-- [x] 1.4 Tests in `libs/projects/src/components/ProjectView/tests/ProjectView.spec.tsx`: Unpublish replaces Publish (desktop button + mobile menu first item), default label `'Unpublish'`, host label override, no Unpublish without the callback, not a danger item. Query by role and name.
+- [x] 1.4 Tests in `libs/projects/src/components/ProjectView/tests/ProjectView.spec.tsx`: Unpublish replaces Publish (desktop button + mobile menu slot after Pin), default label `'Unpublish'`, host label override, no Unpublish without the callback, not a danger item. Query by role and name.
 - [x] 1.5 Update `libs/projects/README.md`: `onUnpublish` in the props list and read-only note, `unpublishLabel` in the labels example.
 
 **Verification:** `npm run test:file -- libs/projects/src/components/ProjectView/tests/ProjectView.spec.tsx`; then `npm run verify:changed`.

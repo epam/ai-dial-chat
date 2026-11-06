@@ -9,7 +9,7 @@
 When `onUnpublish` is supplied, `ProjectView` SHALL render an Unpublish action in exactly the places Publish renders today:
 
 - on desktop, a header `NeutralButton` labelled `labels.unpublishLabel` with `IconWorldOff` (`@tabler/icons-react`) at `DIAL_ICON_SIZE.MD`, `stroke={DIAL_KIT_ICON_STROKE}`, `aria-hidden`, hidden below `desktop:`;
-- on mobile, the first item of the ⋮ `ActionMenu` (key `unpublish`), with `IconWorldOff` at `DIAL_ICON_SIZE.SM`.
+- on mobile, the ⋮ `ActionMenu` item in Publish's position, right after Pin (key `unpublish`), with `IconWorldOff` at `DIAL_ICON_SIZE.SM`.
 
 Publish and Unpublish SHALL be mutually exclusive: when `onUnpublish` is supplied, Publish SHALL NOT render, whatever `onPublish` is. The Unpublish item SHALL NOT use the `danger` treatment — it removes the published copy only, and the project itself is untouched.
 
@@ -20,11 +20,11 @@ The lib SHALL perform no request and SHALL know nothing about publish history, o
 - **GIVEN** `ProjectView` renders with both `onPublish` and `onUnpublish`
 - **THEN** an `Unpublish` button renders in the header and no `Publish` button or menu item renders
 
-#### Scenario: Unpublish leads the mobile menu
+#### Scenario: Unpublish takes Publish's place in the mobile menu
 
 - **GIVEN** `onUnpublish` is supplied on a mobile viewport
 - **WHEN** the ⋮ menu opens
-- **THEN** `Unpublish` is its first item, before Edit and Share, with a non-danger treatment
+- **THEN** `Unpublish` follows Pin and precedes Edit and Share, with a non-danger treatment
 
 #### Scenario: Host label overrides the default
 

@@ -333,12 +333,12 @@ const ScheduledTaskDetailPage: FC = () => {
     }
   }, [statusFeedback, t]);
 
-  const runStatusMessage =
-    statusFeedback === ScheduledTaskRunStatusFeedback.Unavailable
-      ? t(ScheduledTasksI18nKeys.DetailRunStatusUnavailable)
-      : statusFeedback === ScheduledTaskRunStatusFeedback.Delayed
-        ? t(ScheduledTasksI18nKeys.DetailRunStatusDelayed)
-        : undefined;
+  let runStatusMessage: string | undefined;
+  if (statusFeedback === ScheduledTaskRunStatusFeedback.Unavailable) {
+    runStatusMessage = t(ScheduledTasksI18nKeys.DetailRunStatusUnavailable);
+  } else if (statusFeedback === ScheduledTaskRunStatusFeedback.Delayed) {
+    runStatusMessage = t(ScheduledTasksI18nKeys.DetailRunStatusDelayed);
+  }
   const runItems: ScheduledTaskRunItem[] = useMemo(
     () => mapScheduledTaskRunDtosToItems(mergedRunDtos, t, conversations),
     [mergedRunDtos, t, conversations],
@@ -685,17 +685,20 @@ const ScheduledTaskDetailPage: FC = () => {
       if (details.status === 409) {
         setIsStartRejectedAsDeleted(true);
       }
+      let message: string;
+      if (details.status === 404) {
+        message = t(ScheduledTasksI18nKeys.DetailStartNotFound);
+      } else if (details.status === 409) {
+        message = t(ScheduledTasksI18nKeys.DetailStartDeleted);
+      } else {
+        message = resolveScheduledTaskErrorMessage(
+          details,
+          ScheduledTasksI18nKeys.DetailStartError,
+          t,
+        );
+      }
       showErrorNotification({
-        message:
-          details.status === 404
-            ? t(ScheduledTasksI18nKeys.DetailStartNotFound)
-            : details.status === 409
-              ? t(ScheduledTasksI18nKeys.DetailStartDeleted)
-              : resolveScheduledTaskErrorMessage(
-                  details,
-                  ScheduledTasksI18nKeys.DetailStartError,
-                  t,
-                ),
+        message,
         requestId: details.traceId,
       });
     } finally {
