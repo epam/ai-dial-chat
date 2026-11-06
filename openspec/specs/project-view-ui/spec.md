@@ -110,6 +110,7 @@ Props:
 | `onDownload` | `() => void` |
 | `onContextFileClick` | `(id: string) => void`, called with a context file's name when the user activates its card; the host decides what opens |
 | `selectedContextFileId` | optional `string`: the name of the context file whose card renders selected |
+| `onContextFileDownload` | optional `(id: string) => void`, called with a context file's name from its card's download button; the cards show no download button when omitted |
 | `isDetailsStacked` | optional `boolean`, default `false`: renders the Details panel below the main column at every width, instead of beside it on `desktop` |
 | `onRetry` | `() => void` |
 | `onBrowseProjects` | `() => void` |
@@ -310,7 +311,7 @@ Changing the access in the popover requests a new link, as for catalog entities 
 | --- | --- |
 | `onEdit` | `project.canEdit` |
 | `onPublish`, `onShare`, `onDelete` | `project.canManage` |
-| `onTogglePin`, `onDownload`, `onContextFileClick` | always |
+| `onTogglePin`, `onDownload`, `onContextFileClick`, `onContextFileDownload` | always |
 
 `PublishProjectPanelContainer` mounts only while `project.canManage`, as `ProjectShareOverlay` and `ProjectDeleteConfirmation` open only through `onShare` and `onDelete`. So a recipient with edit access (`canEdit: true`, `canManage: false`) sees Edit, and neither Publish, Share nor Delete.
 

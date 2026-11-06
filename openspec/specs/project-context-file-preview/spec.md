@@ -177,11 +177,13 @@ The canvas closes when the `pathname` changes, as on every route (`useConversati
 | --- | --- | --- |
 | `ProjectView` | `onContextFileClick` | `(id: string) => void`, replaces `onOpenFile`; `id` is the file name |
 | `ProjectView` | `selectedContextFileId` | optional `string` |
+| `ProjectView` | `onContextFileDownload` | optional `(id: string) => void`; `id` is the file name. Cards show no download button when omitted |
 | `ProjectView` | `isDetailsStacked` | optional `boolean`, default `false`: renders the Details panel below the main column at every width |
 | `ProjectCreateForm` | `onContextFileClick` | optional `(id: string) => void`; `id` is `ProjectContextFile.id`. Cards are not clickable when omitted |
 | `ProjectCreateForm` | `selectedContextFileId` | optional `string` |
+| `ProjectCreateForm` | `onContextFileDownload` | optional `(id: string) => void`; `id` is `ProjectContextFile.id`. Cards show no download button when omitted |
 
-Each context card receives `onClick` and `isSelected={id === selectedContextFileId}` on `AttachmentCard`. `ProjectCreateFormLabels` gains an optional `openFileLabel: (name: string) => string`, the accessible name of a clickable card, defaulting to `Preview {name}`; `ProjectViewLabels.openFileLabel` already exists for the view page.
+Each context card receives `onClick` and `isSelected={id === selectedContextFileId}` on `AttachmentCard`. `ProjectCreateFormLabels` gains an optional `openFileLabel: (name: string) => string`, the accessible name of a clickable card, defaulting to `Preview {name}`; `ProjectViewLabels.openFileLabel` already exists for the view page. Each card also receives `onDownload={onContextFileDownload}`, and `ProjectCreateFormLabels` and `ProjectViewLabels` gain an optional `downloadFileLabel: (name: string) => string`, the accessible name of that button, defaulting to `Download {name}`.
 
 The lib SHALL NOT import `@epam/ai-dial-attachment-canvas`, build a REST path, load bytes, or use `react-i18next`. How a file is opened and where its bytes come from are decided by the app. The `libs/projects` README documents the new props, and every declared prop is read.
 
@@ -204,6 +206,32 @@ The lib SHALL NOT import `@epam/ai-dial-attachment-canvas`, build a REST path, l
 
 - **WHEN** `libs/projects/src` is searched for imports of `@epam/ai-dial-attachment-canvas` and `react-i18next`
 - **THEN** none occurs
+
+### Requirement: A context file card shows its full name and downloads its file without opening it
+
+A clickable `AttachmentCard` file tile (`libs/attachment-input/src/components/AttachmentCard/Attachments/File.tsx`) SHALL show the full file name, extension included, in a kit `Tooltip` on its action button while the two-line name is clamped, and no tooltip while the name fits; the clamp is measured with `useIsVerticallyClamped` from `@epam/ai-dial-chat-shared`. The action button covers the tile, so a tooltip on the name element itself never receives the pointer.
+
+On the New project, edit and view pages, each context card SHALL carry a download button. `useProjectFilePreview` (`libs/chat-hooks/src/project/use-project-file-preview.ts`) returns `onContextFileDownload(cardId)`, which resolves the card through `resolveContextAttachment` and calls `downloadProjectFileAttachment`: a file added in this session downloads from its own `File` with no request, and a stored file downloads from the URL the host's `resolveDownloadUrl` returns for its locator (`resolveProjectFileDownloadUrl` in `apps/chat/src/utils/dial-file.ts`). Downloading neither opens nor closes the canvas and does not mark the form as changed.
+
+#### Scenario: Clamped name
+
+- **WHEN** a context card's name is clamped and the user hovers or focuses the card
+- **THEN** a tooltip shows the full file name
+
+#### Scenario: Name that fits
+
+- **WHEN** a context card's whole name fits on the card
+- **THEN** hovering the card shows no tooltip
+
+#### Scenario: Download an unsaved file
+
+- **WHEN** the user activates the download button of a card added in the form but not saved yet
+- **THEN** the browser downloads the local file and no request is sent
+
+#### Scenario: Download a stored file
+
+- **WHEN** the user activates the download button of a stored context file card
+- **THEN** the browser downloads it from the project file endpoint, and the canvas keeps its state
 
 ### Requirement: Preview is operable by keyboard and screen reader and is RTL-safe
 

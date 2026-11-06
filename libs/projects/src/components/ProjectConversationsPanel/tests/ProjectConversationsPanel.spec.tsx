@@ -113,6 +113,46 @@ describe('ProjectConversationsPanel', () => {
     );
   });
 
+  it('fills the rename input with the AI title', async () => {
+    const onGenerateTitle = vi.fn(async () => 'AI title');
+    renderPanel({ onRename: vi.fn(), onGenerateTitle });
+
+    await openRowMenu('Rename');
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Rename with AI' }),
+    );
+
+    await waitFor(() =>
+      expect(
+        (screen.getByLabelText('Chat name') as HTMLInputElement).value,
+      ).toBe('AI title'),
+    );
+    expect(onGenerateTitle).toHaveBeenCalledWith('c1');
+  });
+
+  it('shows an error when the AI title fails and hides the button without a handler', async () => {
+    const onGenerateTitle = vi.fn(async () => {
+      throw new Error('failed');
+    });
+    renderPanel({ onRename: vi.fn(), onGenerateTitle });
+
+    await openRowMenu('Rename');
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Rename with AI' }),
+    );
+    expect(
+      await screen.findByText('Could not generate a name. Try again.'),
+    ).toBeTruthy();
+  });
+
+  it('has no AI button when onGenerateTitle is omitted', async () => {
+    renderPanel({ onRename: vi.fn() });
+
+    await openRowMenu('Rename');
+    await screen.findByLabelText('Chat name');
+    expect(screen.queryByRole('button', { name: 'Rename with AI' })).toBeNull();
+  });
+
   it('keeps the rename dialog open when the host rejects', async () => {
     const onRename = vi.fn(async () => {
       throw new Error('failed');

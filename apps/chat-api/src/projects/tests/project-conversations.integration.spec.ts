@@ -65,6 +65,7 @@ const buildApp = async (
     getConversation: vi.fn(),
     saveClientConversation: vi.fn(),
     renameConversation: vi.fn(),
+    generateTitle: vi.fn(),
     streamCompletion: vi.fn(),
     stopBackgroundGeneration: vi.fn(),
     resolveBackgroundAttach: vi.fn(),
@@ -177,10 +178,33 @@ describe('ProjectConversationsController (integration)', () => {
     await request(app.getHttpServer())
       .delete(`/api/v1/projects/${SHARED}/conversations/x`)
       .expect(403);
+    await request(app.getHttpServer())
+      .post(`/api/v1/projects/${SHARED}/conversations/x/generate-title`)
+      .expect(403);
 
+    expect(built.conversationService.generateTitle).not.toHaveBeenCalled();
     expect(built.client.uploadProjectFile).not.toHaveBeenCalled();
     expect(built.client.deleteProjectFile).not.toHaveBeenCalled();
     expect(built.conversationService.streamCompletion).not.toHaveBeenCalled();
+  });
+
+  it('generates a title for a recipient with WRITE from the project conversation locator', async () => {
+    const built = await buildApp(true, ['READ', 'WRITE']);
+    app = built.app;
+    built.conversationService.generateTitle.mockResolvedValue('Greeting');
+
+    const res = await request(app.getHttpServer())
+      .post(
+        `/api/v1/projects/${SHARED}/conversations/gpt-4o__Hi__1/generate-title`,
+      )
+      .expect(200);
+
+    expect(res.body).toEqual({ name: 'Greeting' });
+    expect(built.conversationService.generateTitle).toHaveBeenCalledWith(
+      'projects/z9y8x7/research/conversations/gpt-4o__Hi__1',
+      USER.at,
+      USER.bucket,
+    );
   });
 
   it('lets a recipient with WRITE create a chat in the owner bucket', async () => {

@@ -66,6 +66,8 @@ export interface ProjectViewLabels {
   noContextMatchesLabel: string;
   /** Accessible name of a context file card, e.g. "Preview tickets.csv". */
   openFileLabel: (name: string) => string;
+  /** Accessible name of a context file card's download button; read only when `onContextFileDownload` is set. Defaults to `Download {name}`, e.g. "Download tickets.csv". */
+  downloadFileLabel?: (name: string) => string;
   /** Shown when the project could not be loaded. */
   errorLabel: string;
   /** Retry action label. */
@@ -155,6 +157,8 @@ export interface ProjectViewProps {
   onDownload: () => void;
   /** Called with a file name when the user activates its context card; the host decides what that opens. */
   onContextFileClick: (id: string) => void;
+  /** Called with a file name from its context card's download button; the cards show no download button when omitted. */
+  onContextFileDownload?: (id: string) => void;
   /** Name of the context file whose card renders selected; no card is selected when unset. */
   selectedContextFileId?: string;
   /** Renders the Details panel below the main column at every width instead of beside it on desktop. Defaults to `false`. */
