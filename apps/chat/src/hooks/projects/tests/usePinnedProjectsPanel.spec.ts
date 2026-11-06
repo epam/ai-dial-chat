@@ -341,6 +341,21 @@ describe('usePinnedProjectsPanel', () => {
       ]);
     });
 
+    it('marks Delete as a danger item and leaves the others plain', async () => {
+      const { result } = renderPanel();
+
+      const items = await actionsOf(result);
+
+      expect(items.find(({ key }) => key === 'delete')?.className).toBe(
+        'text-error',
+      );
+      expect(
+        items
+          .filter(({ key }) => key !== 'delete')
+          .every(({ className }) => className == null),
+      ).toBe(true);
+    });
+
     it('offers a share recipient with edit access Unpin and Edit', async () => {
       mocks.client.getProject.mockResolvedValue(
         details({

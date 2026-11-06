@@ -87,6 +87,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       icon?: React.ReactNode;
       onClick?: () => void;
       onMouseDown?: React.MouseEventHandler<HTMLButtonElement>;
+      className?: string;
     }
   >(
     (
@@ -97,6 +98,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         icon,
         onClick,
         onMouseDown,
+        className,
       },
       ref,
     ) => (
@@ -107,6 +109,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         aria-controls={ariaControls}
         onClick={onClick}
         onMouseDown={onMouseDown}
+        className={className}
       >
         {icon}
       </button>
@@ -249,6 +252,15 @@ describe('ProjectRow', () => {
     expect(button.classList.contains('pe-2')).toBe(true);
   });
 
+  it('keeps the row highlight while the trigger is hovered and gives the trigger its own hover', () => {
+    renderRow({ getActions: actions });
+
+    expect(screen.getAllByRole('listitem')[0].className).toMatch(/row/);
+    expect(
+      screen.getByRole('button', { name: 'More actions' }).className,
+    ).toMatch(/trigger/);
+  });
+
   it('renders no actions trigger without actions', () => {
     renderRow({ getActions: () => [] });
 
@@ -378,18 +390,18 @@ describe('ProjectRow — collapse toggle', () => {
   it('keeps the row highlight on the whole row while the chevron is hovered', () => {
     renderRow({});
 
-    expect(screen.getByRole('listitem').className).toMatch(/projectRow/);
-    expect(screen.getByRole('button', { name: 'Support' }).className).toMatch(
-      /projectButton/,
-    );
+    expect(screen.getAllByRole('listitem')[0].className).toMatch(/row/);
+    expect(
+      screen.getByRole('button', { name: 'Collapse project' }).className,
+    ).toMatch(/trigger/);
   });
 
   it('leaves the active row on its own highlight', () => {
     renderRow({ isActive: true });
 
-    expect(
-      screen.getByRole('button', { name: 'Support' }).className,
-    ).not.toMatch(/projectButton/);
+    expect(screen.getByRole('button', { name: 'Support' }).className).toMatch(
+      /itemActive/,
+    );
   });
 
   it('keeps the chevron outside the project link', () => {
@@ -534,10 +546,48 @@ describe('ProjectSeeAllRow', () => {
     expect(onSeeAll).toHaveBeenCalledWith('p1');
   });
 
-  it('renders no actions trigger', () => {
+  it('renders no actions trigger without actions', () => {
     renderRow();
 
     expect(screen.queryByRole('button', { name: 'More actions' })).toBeNull();
+  });
+
+  it('renders the project actions trigger with the host label and items', () => {
+    renderRow({ getActions: actions, actionsLabel: 'Project actions' });
+
+    expect(
+      screen.getByRole('button', { name: 'Project actions' }),
+    ).toBeTruthy();
+    const menu = screen.getByRole('list', { name: 'menu items' });
+    expect(within(menu).getByText('Unpin')).toBeTruthy();
+    expect(within(menu).getByText('Edit')).toBeTruthy();
+  });
+
+  it('reports the trigger when the actions menu opens', () => {
+    const onActionMenuOpen = vi.fn();
+    renderRow({ getActions: actions, onActionMenuOpen });
+
+    const trigger = screen.getByRole('button', { name: 'More actions' });
+    fireEvent.click(trigger);
+
+    expect(onActionMenuOpen).toHaveBeenCalledWith(project, trigger);
+  });
+
+  it('keeps the row highlight while the trigger is hovered and gives the trigger its own hover', () => {
+    renderRow({ getActions: actions });
+
+    expect(screen.getAllByRole('listitem')[0].className).toMatch(/row/);
+    expect(
+      screen.getByRole('button', { name: 'More actions' }).className,
+    ).toMatch(/trigger/);
+  });
+
+  it('does not activate See all when the actions trigger is clicked', () => {
+    renderRow({ getActions: actions });
+
+    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+
+    expect(onSeeAll).not.toHaveBeenCalled();
   });
 
   it('starts its text at the inline start', () => {

@@ -33,9 +33,9 @@ export interface PinnedProjects {
   onSeeAll: (projectId: string) => void;
   /** Called with the project id when its chevron is activated; no chevron renders when absent. */
   onToggleProject?: (projectId: string) => void;
-  /** Builds the ⋮ actions of a project row; no trigger renders when absent or empty. */
+  /** Builds the ⋮ actions of a project, for its project row and its See all row; no trigger renders when absent or empty. */
   getActions?: (project: PinnedProjectGroup) => DropdownItem[];
-  /** Called when the ⋮ menu of a project row opens; receives the trigger button. */
+  /** Called when the ⋮ menu of a project row or of its See all row opens; receives the trigger button. */
   onActionMenuOpen?: (
     project: PinnedProjectGroup,
     trigger: HTMLButtonElement,

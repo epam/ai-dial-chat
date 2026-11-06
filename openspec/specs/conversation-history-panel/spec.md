@@ -962,6 +962,18 @@ While titles are pending, the panel SHALL distinguish a provisional empty search
 - **WHEN** the user changes the search query
 - **THEN** filtering is recalculated against current titles without retaining a match from the old query
 
+### Requirement: Hovering a row's actions trigger keeps the row highlight
+
+The ⋮ trigger of a conversation, project or See all row is a sibling of the row's button, so the highlight SHALL follow the row (`li`), not the button. While the pointer is over the trigger:
+
+- the row keeps the hover highlight (`--cp-item-hover`), except an active row or a row whose menu is open, which keep their active highlight (`--cp-item-active`);
+- the trigger itself gets a round background (`--cp-trigger-bg`) and the accent icon color (`--cp-trigger-icon`), the same look it has while its menu is open.
+
+#### Scenario: Hover the trigger
+
+- **WHEN** the pointer moves from a row onto its ⋮ trigger
+- **THEN** the row stays highlighted and the trigger shows its round background
+
 ### Requirement: Visible conversation IDs guide initial enrichment priority
 
 `ConversationList` in `libs/conversation-panel/src/components/ConversationList/ConversationList.tsx` and its public `ConversationListSection`/`ConversationPanel` containers SHALL support optional `onVisibleConversationIdsChange(ids: string[]): void`. It SHALL report distinct conversation IDs in actual visible virtual-row order, excluding group headers and overscan-only rows, and report an empty set when no rows are visible. Stable callbacks and memoized ID sequences SHALL prevent notifications when the sequence is unchanged.
@@ -1021,9 +1033,9 @@ interface PinnedProjects {
   onSelectConversation: (conversationId: string, projectId: string) => void;
   /** Called when a See all row is activated. */
   onSeeAll: (projectId: string) => void;
-  /** Builds the ⋮ actions of a project row; no trigger renders when absent or empty. */
+  /** Builds the ⋮ actions of a project row and of its See all row; no trigger renders when absent or empty. */
   getActions?: (project: PinnedProjectGroup) => DropdownItem[];
-  /** Called when the ⋮ menu of a project row opens; receives the trigger button. */
+  /** Called when the ⋮ menu of a project row or of its See all row opens; receives the trigger button. */
   onActionMenuOpen?: (
     project: PinnedProjectGroup,
     trigger: HTMLButtonElement,
@@ -1039,7 +1051,7 @@ interface PinnedProjects {
 
 1. **Project row.** It has the project icon (default Tabler `IconBriefcase`, 16px glyph in the 24px slot, `aria-hidden`, `DIAL_KIT_ICON_STROKE`, in the `textSecondary` color), the name truncated through `Highlight`, and the ⋮ trigger when `getActions` returns items.
 2. **One nested row per conversation.** By default it is an `Indicator` row (status point, title, `aria-current` when it matches `activeConversationId`) without a ⋮ trigger. With `conversationRowVariant: ConversationRowVariant.Avatar` it is the panel's own `Avatar` row instead — the deployment avatar or `leadingIcon`, the title, and the trailing unread dot — still without a ⋮ trigger or drag, and with the same indent and guide line.
-3. **A See all row, when `hasMore` is set.** Its visible text is `labels.seeAllLabel` (default `'See all'`) in the `textSecondary` color, and its accessible name is `labels.seeAllAriaLabel(name)` (default `` `See all chats in ${name}` ``). It is only a link to the project: it has no ⋮ trigger, whatever `getActions` returns.
+3. **A See all row, when `hasMore` is set.** Its visible text is `labels.seeAllLabel` (default `'See all'`) in the `textSecondary` color, and its accessible name is `labels.seeAllAriaLabel(name)` (default `` `See all chats in ${name}` ``). It shows the project's ⋮ trigger when `getActions` returns items: the same items and the same `onActionMenuOpen` as the project row, per the Figma frame "Chat - Project - See all" (node `17:14375`).
 
 The Pinned header SHALL render when the section has at least one visible project or pinned conversation. Collapsing it hides the project rows too.
 

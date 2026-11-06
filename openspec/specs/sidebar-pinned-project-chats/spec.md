@@ -237,7 +237,7 @@ The adapter subscribes to the viewed-write listener of `projects-client.ts` (see
 
 ### Requirement: The project row's menu offers the caller's project actions
 
-The adapter SHALL build `getActions` for project rows (the See all row is only a link and has no menu) with these entries, in this order:
+The adapter SHALL build `getActions` for project rows and See all rows (the same items for both) with these entries, in this order:
 
 | Item | Shown | Behaviour |
 | --- | --- | --- |
@@ -245,7 +245,7 @@ The adapter SHALL build `getActions` for project rows (the See all row is only a
 | Edit (`ButtonsI18nKeys.Edit`) | `project.canEdit` | opens `getProjectEditRoute(id)` through `onOpenRoute` |
 | Publish (`ButtonsI18nKeys.Publish`) | `project.canManage` | opens `PublishProjectPanelContainer` for the project, returning focus to the row's ⋮ trigger on close |
 | Share (`ButtonsI18nKeys.Share`) | `project.canManage` | opens `ProjectShareOverlay` for the project |
-| Delete (`ButtonsI18nKeys.Delete`) | `project.canManage` | opens `ProjectDeleteConfirmation`, the side panel `ProjectViewPage` uses |
+| Delete (`ButtonsI18nKeys.Delete`) | `project.canManage` | opens `ProjectDeleteConfirmation`, the side panel `ProjectViewPage` uses. Its label and icon use the error color (`text-error`), as Delete does in a chat's menu. |
 
 `project` is the snapshot's `ProjectDetailsDto` (`usePinnedProjectChats`). So:
 
@@ -266,6 +266,12 @@ The adapter SHALL build `getActions` for project rows (the See all row is only a
 
 - **WHEN** the owner opens the ⋮ of their own pinned project
 - **THEN** Unpin, Edit, Publish, Share and Delete are offered, in that order
+
+#### Scenario: See all menu
+
+- **GIVEN** a pinned project shows a See all row
+- **WHEN** the owner opens the ⋮ of the See all row
+- **THEN** the same items are offered as on the project row, and Delete is shown in the error color
 
 #### Scenario: Editor menu
 

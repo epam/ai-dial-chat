@@ -1133,7 +1133,7 @@ describe('ConversationList — pinned projects', () => {
     expect(getNestedButton().className).not.toMatch(/itemIndicator/);
   });
 
-  it('offers the project actions on the project row only, not on See all', () => {
+  it('offers the project actions on the project row and on See all', () => {
     renderList({
       projects: [makeProject({ conversations: tenChats, hasMore: true })],
       getActions: () => [{ key: 'unpin', label: 'Unpin' }],
@@ -1145,10 +1145,10 @@ describe('ConversationList — pinned projects', () => {
       }),
     ).toBeTruthy();
     expect(
-      within(getListItem('See all')).queryByRole('button', {
+      within(getListItem('See all')).getByRole('button', {
         name: 'More actions',
       }),
-    ).toBeNull();
+    ).toBeTruthy();
   });
 
   it('renders ten nested rows and a See all row with their levels and positions', () => {

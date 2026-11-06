@@ -85,10 +85,7 @@ const ProjectRowComponent: FC<ProjectRowProps> = ({
   return (
     <li
       aria-level={1}
-      className={mergeClasses(
-        'group/conversation relative',
-        projectStyles.projectRow,
-      )}
+      className={mergeClasses('group/conversation relative', styles.row)}
     >
       <RowLink
         href={project.href}
@@ -131,7 +128,6 @@ const ProjectRowComponent: FC<ProjectRowProps> = ({
           styles.item,
           styles.itemIndicator,
           (isActive || isMenuOpen) && styles.itemActive,
-          !(isActive || isMenuOpen) && projectStyles.projectButton,
         )}
       />
       {isToggleable && (
@@ -171,6 +167,7 @@ const ProjectRowComponent: FC<ProjectRowProps> = ({
             aria-controls={listId}
             className={mergeClasses(
               'size-6! min-h-0! min-w-0! rounded-full! p-1!',
+              styles.trigger,
               projectStyles.chevron,
             )}
             onMouseDown={handleChevronMouseDown}

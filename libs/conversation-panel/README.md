@@ -349,9 +349,9 @@ const pinnedProjects: PinnedProjects = {
 - **Callbacks.** A project row calls `onSelectProject(id)`, a nested row
   `onSelectConversation(conversationId, projectId)` — never the list's own
   `onSelectConversation` — and a See all row `onSeeAll(id)`. `getActions`
-  builds the ⋮ items of the project row; no trigger renders when it returns
-  none. The See all row is only a link and never has a trigger. `onActionMenuOpen(project, trigger)` reports
-  the trigger, for focus to return to after an overlay.
+  builds the ⋮ items of the project, shown on its project row and on its See all
+  row; no trigger renders when it returns none. `onActionMenuOpen(project, trigger)`
+  reports the trigger of either row, for focus to return to after an overlay.
 - **Collapsing.** The lib stores no collapse state: the host owns it and passes
   `isExpanded` per project (absent means expanded) and `onToggleProject(id)`.
   With `onToggleProject` set, the project row's 24px leading slot shows the

@@ -57,11 +57,14 @@ import {
   subscribeProjectConversationViewed,
 } from './projects-client';
 
-/* The Unpin item shows the pinned state it removes, as on a pinned chat. */
-const renderMenuIcon = (icon: Icon, isFilled = false) =>
+/* A menu item's icon: Unpin shows the pinned state it removes, as on a pinned chat; Delete takes the error color. */
+const renderMenuIcon = (
+  icon: Icon,
+  { isFilled = false, isDanger = false } = {},
+) =>
   createElement(icon, {
     size: DIAL_ICON_SIZE.MD,
-    className: 'text-secondary',
+    className: isDanger ? 'text-error' : 'text-secondary',
     ...(isFilled ? {} : { stroke: DIAL_KIT_ICON_STROKE }),
     'aria-hidden': true,
   });
@@ -268,7 +271,7 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
       const unpin: DropdownItem = {
         key: 'unpin',
         label: t(ButtonsI18nKeys.Unpin),
-        icon: renderMenuIcon(IconPinnedFilled, true),
+        icon: renderMenuIcon(IconPinnedFilled, { isFilled: true }),
         onClick: () => {
           void handleUnpin(group.id);
         },
@@ -301,7 +304,8 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
         {
           key: 'delete',
           label: t(ButtonsI18nKeys.Delete),
-          icon: renderMenuIcon(IconTrashX),
+          icon: renderMenuIcon(IconTrashX, { isDanger: true }),
+          className: 'text-error',
           onClick: () => openAction(PinnedProjectActionKind.Delete, group.id),
         },
       ];

@@ -117,6 +117,9 @@ export const RowRenderer = ({
           onSeeAll={onSeeAll}
           label={seeAllLabel}
           ariaLabel={seeAllAriaLabel}
+          getActions={getProjectActions}
+          onActionMenuOpen={onProjectActionMenuOpen}
+          actionsLabel={actionsLabel}
           titleClassName={styles?.itemTitleClassName}
         />
       </div>
