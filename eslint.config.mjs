@@ -12,12 +12,34 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 // Every `type:ui` lib's package name, read from the Nx tags so new feature libs are covered.
+/*
+ * Absolute workspace root. Blocks whose globs are written from the repo root
+ * set it as `basePath`, so they match whether ESLint runs from the root or
+ * from a project folder (`nx lint` runs `eslint .` there, where a bare
+ * `libs/*` glob would match nothing).
+ */
+const workspaceRoot = fileURLToPath(new URL('.', import.meta.url));
+
 const uiLibPackageNames = readdirSync(new URL('./libs', import.meta.url))
   .map((dir) => new URL(`./libs/${dir}/package.json`, import.meta.url))
   .filter((manifestUrl) => existsSync(manifestUrl))
   .map((manifestUrl) => JSON.parse(readFileSync(manifestUrl, 'utf8')))
   .filter((manifest) => manifest.nx?.tags?.includes('type:ui'))
   .map((manifest) => manifest.name);
+
+/*
+ * Host-agnostic packages that describe DIAL Core's data shapes and that
+ * AGENTS.md lets chat-hooks depend on ("Library isolation"). Their hooks — the
+ * attachment canvas context, annotation grouping — are part of that data
+ * layer, so the chat-hooks hooks guard below does not cover them.
+ */
+const chatHooksDataPackageNames = [
+  '@epam/ai-dial-chat-shared',
+  '@epam/ai-dial-share',
+  '@epam/ai-dial-quotations',
+  '@epam/ai-dial-source-panel',
+  '@epam/ai-dial-attachment-canvas',
+];
 
 const relativeImportExtensionPattern = {
   regex: '^\\.{1,2}/.+\\.(?:js|jsx|ts|tsx)$',
@@ -245,6 +267,7 @@ export default [
      * kit `LiveRegion` is always mounted; kit components that take a `role`
      * prop (`Notification`, `ErrorText`) are capitalised and not matched.
      */
+    basePath: workspaceRoot,
     files: ['apps/*/src/**/*.tsx', 'libs/*/src/**/*.tsx'],
     ignores: [
       '**/*.spec.tsx',
@@ -272,6 +295,7 @@ export default [
      * fixture must not reach for the generated API client directly. This block
      * must come after the general one above, which also sets this rule.
      */
+    basePath: workspaceRoot,
     files: ['tools/*-consumer-fixture/src/**/*.{ts,tsx,js,jsx}'],
     rules: {
       'no-restricted-imports': [
@@ -298,6 +322,7 @@ export default [
      * build that lib's props, but never its hooks: it holds non-rendering
      * code only. Like the fixture block, this must follow the general block.
      */
+    basePath: workspaceRoot,
     files: ['libs/chat-hooks/src/**/*.{ts,tsx}'],
     ignores: ['**/*.spec.*', '**/tests/**'],
     rules: {
@@ -307,7 +332,9 @@ export default [
           patterns: [
             relativeImportExtensionPattern,
             {
-              group: uiLibPackageNames.flatMap((name) => [name, `${name}/*`]),
+              group: uiLibPackageNames
+                .filter((name) => !chatHooksDataPackageNames.includes(name))
+                .flatMap((name) => [name, `${name}/*`]),
               importNamePattern: '^use[A-Z]',
               message:
                 "chat-hooks may import a feature lib's types, enums and pure functions, not its hooks.",
@@ -323,6 +350,7 @@ export default [
      * AGENTS.md "Library isolation"); any other feature lib takes behaviour
      * through props and callbacks instead.
      */
+    basePath: workspaceRoot,
     files: ['libs/*/src/**/*.{ts,tsx}'],
     ignores: ['libs/chat-hooks/**', 'libs/toolset-editor/**'],
     rules: {
