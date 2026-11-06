@@ -110,8 +110,8 @@ export interface RowRendererData {
   onSelectProjectConversation: (id: string) => void;
   /** Called with the project `id` when a See all row is activated. */
   onSeeAll: (projectId: string) => void;
-  /** Called with the project `id` when a project row's chevron is activated. */
-  onToggleProject?: (projectId: string) => void;
+  /** Called with the project `id` and the state the chevron asks for when a project row's chevron is activated. */
+  onToggleProject?: (projectId: string, isExpanded: boolean) => void;
   /** Builds the ⋮ actions of a project row. */
   getProjectActions?: (project: PinnedProjectGroup) => DropdownItem[];
   /** Called when a project row's ⋮ menu opens. */

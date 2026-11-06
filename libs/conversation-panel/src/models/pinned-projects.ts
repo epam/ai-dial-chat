@@ -31,8 +31,8 @@ export interface PinnedProjects {
   onSelectConversation: (conversationId: string, projectId: string) => void;
   /** Called when a See all row is activated. */
   onSeeAll: (projectId: string) => void;
-  /** Called with the project id when its chevron is activated; no chevron renders when absent. */
-  onToggleProject?: (projectId: string) => void;
+  /** Called with the project id and the state the chevron asks for (`true` expands, `false` collapses) when it is activated; no chevron renders when absent. */
+  onToggleProject?: (projectId: string, isExpanded: boolean) => void;
   /** Builds the ⋮ actions of a project, for its project row and its See all row; no trigger renders when absent or empty. */
   getActions?: (project: PinnedProjectGroup) => DropdownItem[];
   /** Called when the ⋮ menu of a project row or of its See all row opens; receives the trigger button. */

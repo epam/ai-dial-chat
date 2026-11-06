@@ -477,7 +477,7 @@ describe('usePinnedProjectsPanel', () => {
       const view = renderPanel();
       const pinned = await loadedProjects(view.result);
 
-      act(() => pinned.onToggleProject?.(P));
+      act(() => pinned.onToggleProject?.(P, false));
 
       await waitFor(() =>
         expect(view.result.current.pinnedProjects?.projects[0].isExpanded).toBe(
@@ -500,7 +500,7 @@ describe('usePinnedProjectsPanel', () => {
       const pinned = await loadedProjects(result);
       expect(pinned.projects[0].isExpanded).toBe(false);
 
-      act(() => pinned.onToggleProject?.(P));
+      act(() => pinned.onToggleProject?.(P, true));
 
       await waitFor(() =>
         expect(result.current.pinnedProjects?.projects[0].isExpanded).toBe(
@@ -520,7 +520,7 @@ describe('usePinnedProjectsPanel', () => {
       expect(await expanded(result)).toBe(true);
       expect(JSON.parse(stored() ?? 'null')).toEqual([P]);
 
-      act(() => result.current.pinnedProjects?.onToggleProject?.(P));
+      act(() => result.current.pinnedProjects?.onToggleProject?.(P, false));
 
       await waitFor(() =>
         expect(result.current.pinnedProjects?.projects[0].isExpanded).toBe(
@@ -528,6 +528,30 @@ describe('usePinnedProjectsPanel', () => {
         ),
       );
       expect(JSON.parse(stored() ?? 'null')).toEqual([P]);
+    });
+
+    it('keeps a stored collapsed project collapsed when the panel asks to collapse it', async () => {
+      localStorage.setItem(
+        StorageKey.CollapsedPinnedProjects,
+        JSON.stringify([P]),
+      );
+      const { result } = renderPanel();
+      const pinned = await loadedProjects(result);
+
+      act(() => pinned.onToggleProject?.(P, false));
+
+      await waitFor(() => expect(stored()).toBe(JSON.stringify([P])));
+      expect(result.current.pinnedProjects?.projects[0].isExpanded).toBe(false);
+    });
+
+    it('does not duplicate an id when the panel asks to expand an already expanded project', async () => {
+      const { result } = renderPanel();
+      const pinned = await loadedProjects(result);
+
+      act(() => pinned.onToggleProject?.(P, true));
+
+      expect(await expanded(result)).toBe(true);
+      expect(JSON.parse(stored() ?? '[]')).toEqual([]);
     });
 
     it('removes stored ids of projects that are no longer pinned once the user config has loaded', async () => {
@@ -585,7 +609,7 @@ describe('usePinnedProjectsPanel', () => {
         throw new Error('quota');
       });
 
-      act(() => pinned.onToggleProject?.(P));
+      act(() => pinned.onToggleProject?.(P, false));
 
       await waitFor(() =>
         expect(result.current.pinnedProjects?.projects[0].isExpanded).toBe(

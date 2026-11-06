@@ -34,8 +34,8 @@ export interface ProjectRowProps {
   listId?: string;
   /** Called with the project `id` when the row is activated. */
   onSelectProject: (projectId: string) => void;
-  /** Called with the project `id` when the chevron is activated. The chevron renders only when set. */
-  onToggleProject?: (projectId: string) => void;
+  /** Called with the project `id` and the state the chevron asks for (`true` expands, `false` collapses) when it is activated. The chevron renders only when set. */
+  onToggleProject?: (projectId: string, isExpanded: boolean) => void;
   /** Current search query — matched text in the name is highlighted. Defaults to `''`. */
   searchQuery?: string;
   /** Builds the ⋮ actions of the project. When absent or empty, the trigger is not rendered. */
@@ -81,6 +81,22 @@ const ProjectRowComponent: FC<ProjectRowProps> = ({
     event.preventDefault();
   const hasUnread =
     !isExpanded && project.conversations.some((item) => item.isUnread);
+  const unreadIndicator = hasUnread ? (
+    <span className="flex size-6 shrink-0 items-center justify-center">
+      <span
+        className={mergeClasses(
+          'size-[7.11px] rounded-full',
+          styles.unreadDot,
+          hasActions &&
+            (isMenuOpen
+              ? 'opacity-0'
+              : 'group-focus-within/conversation:opacity-0 group-hover/conversation:opacity-0'),
+        )}
+        aria-hidden
+      />
+      <span className="sr-only">{unreadIndicatorLabel}</span>
+    </span>
+  ) : undefined;
 
   return (
     <li
@@ -116,6 +132,7 @@ const ProjectRowComponent: FC<ProjectRowProps> = ({
             maxLines={1}
           />
         }
+        iconAfter={unreadIndicator}
         textClassName="min-w-0 flex-1"
         aria-current={isActive ? 'page' : undefined}
         className={mergeClasses(
@@ -171,29 +188,9 @@ const ProjectRowComponent: FC<ProjectRowProps> = ({
               projectStyles.chevron,
             )}
             onMouseDown={handleChevronMouseDown}
-            onClick={() => onToggleProject(project.id)}
+            onClick={() => onToggleProject(project.id, !isExpanded)}
           />
         </div>
-      )}
-      {hasUnread && (
-        <span
-          className={mergeClasses(
-            'pointer-events-none absolute inset-y-0 inset-e-2 flex w-6 items-center justify-center',
-            hasActions &&
-              (isMenuOpen
-                ? 'opacity-0'
-                : 'group-focus-within/conversation:opacity-0 group-hover/conversation:opacity-0'),
-          )}
-        >
-          <span
-            className={mergeClasses(
-              'size-[7.11px] rounded-full',
-              styles.unreadDot,
-            )}
-            aria-hidden
-          />
-          <span className="sr-only">{unreadIndicatorLabel}</span>
-        </span>
       )}
       {hasActions && (
         <RowActionsMenu
@@ -208,5 +205,5 @@ const ProjectRowComponent: FC<ProjectRowProps> = ({
   );
 };
 
-/** A pinned project row of the Pinned section: icon, name and ⋮ actions. */
+/** A pinned project row of the Pinned section: icon or chevron toggle, name, unread dot of a collapsed project and ⋮ actions. */
 export const ProjectRow = memo(ProjectRowComponent);

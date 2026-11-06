@@ -1202,9 +1202,9 @@ The change adds no user-visible strings (the See all text is host-translated thr
 
 ### Requirement: A pinned project's row collapses and expands its chats
 
-`PinnedProjectGroup` (`libs/conversation-panel/src/models/pinned-projects.ts`) SHALL gain `isExpanded?: boolean` — an absent value means expanded — and `PinnedProjects` SHALL gain `onToggleProject?: (projectId: string) => void`. `ConversationListLabels` (`libs/conversation-panel/src/models/conversation-list.ts`) SHALL gain `expandProjectLabel?: string` (default `'Expand project'`) and `collapseProjectLabel?: string` (default `'Collapse project'`), and `ConversationPanelLabels` carries them through. The lib stores no collapse state: the host owns it, and the lib SHALL NOT read storage, the route, the language or feature keys for it.
+`PinnedProjectGroup` (`libs/conversation-panel/src/models/pinned-projects.ts`) SHALL gain `isExpanded?: boolean` — an absent value means expanded — and `PinnedProjects` SHALL gain `onToggleProject?: (projectId: string, isExpanded: boolean) => void`. `ConversationListLabels` (`libs/conversation-panel/src/models/conversation-list.ts`) SHALL gain `expandProjectLabel?: string` (default `'Expand project'`) and `collapseProjectLabel?: string` (default `'Collapse project'`), and `ConversationPanelLabels` carries them through. The lib stores no collapse state: the host owns it, and the lib SHALL NOT read storage, the route, the language or feature keys for it.
 
-**Toggle.** When `onToggleProject` is set, a project row SHALL render a chevron toggle in front of the project name, as a separate `<button type="button">` outside the row's link, so a click or Enter/Space on it only calls `onToggleProject(project.id)`: it does not call `onSelectProject`, does not navigate, and does not change the active chat.
+**Toggle.** When `onToggleProject` is set, a project row SHALL render a chevron toggle in front of the project name, as a separate `<button type="button">` outside the row's link, so a click or Enter/Space on it only calls `onToggleProject(project.id, isExpanded)`, where `isExpanded` is the state it asks for (`true` when the project shows collapsed, `false` when it shows expanded, including a project the search override shows expanded): it does not call `onSelectProject`, does not navigate, and does not change the active chat.
 
 - The button has `aria-expanded` (`true` while the project's chats are shown), `aria-controls` set to the `id` of the list container, as the group header toggles do, and an accessible name from `collapseProjectLabel` while expanded and `expandProjectLabel` while collapsed.
 - The icon is `aria-hidden` and drawn with `DIAL_KIT_ICON_STROKE`. It points down while expanded and inline-end while collapsed; the inline-end chevron carries `rtl:scale-x-[-1]`.
@@ -1214,9 +1214,9 @@ The change adds no user-visible strings (the See all text is host-translated thr
 
 **Collapsed.** A project is collapsed when `isExpanded` is `false` and no search override applies. A collapsed project renders only its row: its nested chat rows, guide line and See all row are not rendered, and the rows of every later section move up. Its ⋮ trigger works as in the expanded state. The Pinned header, the project order and the other filters are unchanged.
 
-**Search override.** While `searchQuery` is non-empty and at least one chat of the project matches it, the project SHALL render expanded whatever `isExpanded` says, with the matching chats as the existing search rule defines. A project that matches only by name keeps the state the host gave it. The override is derived, is never reported through `onToggleProject` and ends with the query.
+**Search override.** While `searchQuery` is non-empty and at least one chat of the project matches it, the project SHALL render expanded whatever `isExpanded` says, with the matching chats as the existing search rule defines. A project that matches only by name keeps the state the host gave it. The override is derived, is never reported through `onToggleProject` and ends with the query. A press on the chevron of a project the override shows expanded asks to collapse it (`isExpanded: false`).
 
-**Unread.** A collapsed project with at least one chat whose `isUnread` is `true` SHALL show the unread dot in the row's trailing slot, with the visually hidden `labels.unreadIndicatorLabel`, hidden while the ⋮ trigger is shown (hover, focus within, open menu), as on a conversation row. An expanded project shows no such dot, since its chats are visible. The dot reflects the chats the host passed in `conversations`.
+**Unread.** A collapsed project with at least one chat whose `isUnread` is `true` SHALL show the unread dot in the row's trailing slot, rendered through the row link's `iconAfter` as on a conversation row, so the slot is reserved and a long name truncates before it and the visually hidden `labels.unreadIndicatorLabel` is part of the link's accessible name. The dot is hidden while the ⋮ trigger is shown (hover, focus within, open menu), as on a conversation row. An expanded project shows no such dot, since its chats are visible. The dot reflects the chats the host passed in `conversations`.
 
 **Scroll.** Because a collapsed project removes its rows, the list SHALL scroll to the active conversation once it is shown again, through the existing scroll-to-active behaviour.
 
@@ -1228,7 +1228,7 @@ The change adds no feature gate, no telemetry and no cache. Memoisation: a host 
 
 - **GIVEN** a project P with chats C1 and C2 and `hasMore: true`, expanded
 - **WHEN** the user activates P's chevron
-- **THEN** `onToggleProject(P)` is called once, `onSelectProject` is not, and the host's next render with `isExpanded: false` shows only P's row, with the sections below it moved up
+- **THEN** `onToggleProject(P, false)` is called once, `onSelectProject` is not, and the host's next render with `isExpanded: false` shows only P's row, with the sections below it moved up
 
 #### Scenario: The leading slot at rest and on hover
 
@@ -1246,7 +1246,7 @@ The change adds no feature gate, no telemetry and no cache. Memoisation: a host 
 #### Scenario: Keyboard
 
 - **WHEN** the chevron has focus and the user presses Enter or Space
-- **THEN** `onToggleProject(P)` is called and no navigation happens
+- **THEN** `onToggleProject(P, false)` is called and no navigation happens
 
 #### Scenario: The menu works while collapsed
 
@@ -1258,6 +1258,12 @@ The change adds no feature gate, no telemetry and no cache. Memoisation: a host 
 
 - **GIVEN** the document direction is `rtl` and P is collapsed
 - **THEN** the chevron is mirrored with `rtl:scale-x-[-1]`
+
+#### Scenario: Collapse a project the search shows open
+
+- **GIVEN** P is collapsed and the search shows it expanded because a chat matches
+- **WHEN** the user activates P's chevron
+- **THEN** `onToggleProject(P, false)` is called, so the host keeps P collapsed once the query ends
 
 #### Scenario: Search shows a chat of a collapsed project
 

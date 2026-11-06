@@ -153,9 +153,7 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
   );
   const collapsedSet = useMemo(() => new Set(collapsedIds), [collapsedIds]);
   /* The project of the most recently opened chat, shown expanded without a write. */
-  const [revealedIds, setRevealedIds] = useState<ReadonlySet<string>>(
-    () => new Set(),
-  );
+  const [revealedId, setRevealedId] = useState<string>();
   const chatProjectId = chatRoute?.projectId;
   const revealedChatRef = useRef<string | undefined>(undefined);
   useEffect(() => {
@@ -165,7 +163,7 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
     }
     if (revealedChatRef.current === activeConversationId) return;
     revealedChatRef.current = activeConversationId;
-    setRevealedIds(new Set([chatProjectId]));
+    setRevealedId(chatProjectId);
   }, [activeConversationId, chatProjectId]);
 
   /* `pinnedProjectIds` is empty until the user config has loaded, so an earlier pass would erase every stored id. */
@@ -176,21 +174,19 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
     if (kept.length !== collapsedIds.length) setCollapsedIds(kept);
   }, [isEnabled, status, pinnedProjectIds, collapsedIds, setCollapsedIds]);
 
+  /* The panel reports the state the user asked for, so a search override it owns cannot make the host store the opposite. */
   const handleToggleProject = useCallback(
-    (projectId: string) => {
-      const isCollapsed = collapsedSet.has(projectId);
-      if (isCollapsed && !revealedIds.has(projectId)) {
+    (projectId: string, shouldExpand: boolean) => {
+      if (shouldExpand) {
         setCollapsedIds(collapsedIds.filter((id) => id !== projectId));
         return;
       }
-      if (!isCollapsed) setCollapsedIds([...collapsedIds, projectId]);
-      setRevealedIds((current) => {
-        const next = new Set(current);
-        next.delete(projectId);
-        return next;
-      });
+      if (!collapsedIds.includes(projectId)) {
+        setCollapsedIds([...collapsedIds, projectId]);
+      }
+      setRevealedId((current) => (current === projectId ? undefined : current));
     },
-    [collapsedSet, collapsedIds, revealedIds, setCollapsedIds],
+    [collapsedIds, setCollapsedIds],
   );
 
   const projectsById = useMemo(
@@ -207,8 +203,7 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
         href: getProjectViewRoute(project.id),
         source: mapProjectSourceToFilterTab(project.source),
         hasMore,
-        isExpanded:
-          !collapsedSet.has(project.id) || revealedIds.has(project.id),
+        isExpanded: !collapsedSet.has(project.id) || revealedId === project.id,
         conversations: chats.map((chat) => ({
           id: chat.id,
           title: chat.title,
@@ -218,7 +213,7 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
             : {}),
         })),
       })),
-    [projects, activeConversationId, collapsedSet, revealedIds],
+    [projects, activeConversationId, collapsedSet, revealedId],
   );
 
   const handleOpenProject = useCallback(

@@ -1245,7 +1245,7 @@ describe('ConversationList — pinned projects', () => {
       expect(onSelectConversation).not.toHaveBeenCalled();
     });
 
-    it('passes the toggle callback the project id', () => {
+    it('passes the toggle callback the project id and the state it asks for', () => {
       const onToggleProject = vi.fn();
       renderList({
         projects: [makeProject({ isExpanded: false })],
@@ -1258,7 +1258,7 @@ describe('ConversationList — pinned projects', () => {
         }),
       );
 
-      expect(onToggleProject).toHaveBeenCalledWith('p1');
+      expect(onToggleProject).toHaveBeenCalledWith('p1', true);
     });
 
     it('uses the host labels for the chevron', () => {
@@ -1306,6 +1306,25 @@ describe('ConversationList — pinned projects', () => {
         }),
       ).toBeTruthy();
       expect(onToggleProject).not.toHaveBeenCalled();
+    });
+
+    it('asks to collapse a project that the search shows open', () => {
+      const onToggleProject = vi.fn();
+      renderList(
+        {
+          projects: [makeProject({ isExpanded: false })],
+          onToggleProject,
+        },
+        { searchQuery: 'billing' },
+      );
+
+      fireEvent.click(
+        within(getListItem('Support')).getByRole('button', {
+          name: 'Collapse project',
+        }),
+      );
+
+      expect(onToggleProject).toHaveBeenCalledWith('p1', false);
     });
 
     it('keeps a project collapsed when only its name matches the search', () => {

@@ -32,6 +32,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   },
   Button: ({
     iconBefore,
+    iconAfter,
     label,
     'aria-current': ariaCurrent,
     'aria-label': ariaLabel,
@@ -40,6 +41,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     tabIndex,
   }: {
     iconBefore?: React.ReactNode;
+    iconAfter?: React.ReactNode;
     label?: React.ReactNode;
     'aria-current'?: React.AriaAttributes['aria-current'];
     'aria-label'?: string;
@@ -56,6 +58,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     >
       {iconBefore}
       {label}
+      {iconAfter}
     </button>
   ),
   Dropdown: ({
@@ -354,9 +357,17 @@ describe('ProjectRow — collapse toggle', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Collapse project' }));
 
-    expect(onToggleProject).toHaveBeenCalledWith('p1');
+    expect(onToggleProject).toHaveBeenCalledWith('p1', false);
     expect(onToggleProject).toHaveBeenCalledOnce();
     expect(onSelectProject).not.toHaveBeenCalled();
+  });
+
+  it('asks to expand a collapsed project', () => {
+    renderRow({ isExpanded: false });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand project' }));
+
+    expect(onToggleProject).toHaveBeenCalledWith('p1', true);
   });
 
   it('shows the chevron instead of the project icon on mobile, where there is no hover', () => {
@@ -431,6 +442,22 @@ describe('ProjectRow — collapse toggle', () => {
     });
 
     expect(screen.getByText('Unread')).toBeTruthy();
+  });
+
+  it('names the project link after its unread state', () => {
+    renderRow({
+      isExpanded: false,
+      project: {
+        ...project,
+        conversations: [{ id: 'c1', title: 'Weekly summary', isUnread: true }],
+      },
+    });
+
+    expect(
+      within(screen.getByRole('link', { name: 'Support Unread' })).getByText(
+        'Unread',
+      ),
+    ).toBeTruthy();
   });
 
   it('uses the host label for the unread dot', () => {

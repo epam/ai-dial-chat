@@ -89,3 +89,11 @@ Two `ConversationListLabels` fields (`expandProjectLabel`, `collapseProjectLabel
 ## Open Questions
 
 None.
+
+## Revision after review
+
+Three decisions above changed in review, and the main specs describe the result:
+
+- `onToggleProject` carries the requested state: `onToggleProject(projectId, isExpanded)`. A callback with the id alone made the host guess what the user saw, and it could not see the search override the lib owns, so a press under that override stored the opposite state.
+- The reveal is one optional id (`revealedId`), not a `Set`, since it only ever holds one project.
+- The unread dot of a collapsed project goes through the row link's `iconAfter`, as on a conversation row, so the slot is reserved and its label is part of the link's accessible name.

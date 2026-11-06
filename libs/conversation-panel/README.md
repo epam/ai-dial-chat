@@ -353,7 +353,9 @@ const pinnedProjects: PinnedProjects = {
   row; no trigger renders when it returns none. `onActionMenuOpen(project, trigger)`
   reports the trigger of either row, for focus to return to after an overlay.
 - **Collapsing.** The lib stores no collapse state: the host owns it and passes
-  `isExpanded` per project (absent means expanded) and `onToggleProject(id)`.
+  `isExpanded` per project (absent means expanded) and
+  `onToggleProject(id, isExpanded)`, where `isExpanded` is the state the chevron
+  asks for.
   With `onToggleProject` set, the project row's 24px leading slot shows the
   briefcase at rest and, while the row is hovered, focused within or its menu is
   open, a chevron button instead; on `mobile` (below 1280px, where there is no
@@ -362,13 +364,14 @@ const pinnedProjects: PinnedProjects = {
   mirrored in RTL), with a round background under the pointer while the row
   keeps its own highlight. A pointer press does not move focus to it, so it hides
   again when the pointer leaves. The button sits
-  outside the row's link, so it only calls `onToggleProject(id)`: it neither
+  outside the row's link, so it only calls `onToggleProject(id, isExpanded)`: it neither
   calls `onSelectProject` nor navigates. It has `aria-expanded`, `aria-controls`
   pointing at the list container, and the name `labels.expandProjectLabel`
   (default `'Expand project'`) or `labels.collapseProjectLabel` (default
   `'Collapse project'`). A collapsed project renders only its row, so the
   sections after it move up; its ⋮ menu still works. A collapsed project with an
-  unread chat shows the unread dot in the row's trailing slot, hidden while the
+  unread chat shows the unread dot in the row's trailing slot (the link's `iconAfter`, so a
+  long name truncates before it and its label is part of the link's name), hidden while the
   ⋮ trigger shows. While `searchQuery` matches one of a collapsed project's
   chats the project renders expanded without calling `onToggleProject`; a match
   on its name alone does not expand it. Without `onToggleProject` no chevron

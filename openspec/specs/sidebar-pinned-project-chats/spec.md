@@ -345,10 +345,10 @@ The tree SHALL follow these rules:
 
 **Temporary expansion.** A project SHALL also show expanded, without any write to storage, when the app revealed it:
 
-- when the open chat changes to a chat of a collapsed project (the project id comes from the `ProjectChat` route), the project is revealed once, so the highlighted chat is visible. The reveal holds one project: opening a chat of another project replaces it, and leaving the chat routes keeps it until the page reloads. The user can collapse it again afterwards, and the reveal does not repeat until the open chat changes;
+- when the open chat changes to a chat of a collapsed project (the project id comes from the `ProjectChat` route), the project is revealed once, so the highlighted chat is visible. The reveal holds one project id: opening a chat of another project replaces it, and leaving the chat routes keeps it until the page reloads. The user can collapse it again afterwards, and the reveal does not repeat until the open chat changes;
 - a search that matches a chat of the project, which the list derives itself.
 
-**Toggling.** `onToggleProject(id)` flips what the user sees. Collapsing an expanded project (stored or revealed) adds the id to the stored ids and ends its reveal. Expanding a collapsed project removes the id from the stored ids. Toggling neither navigates nor changes the active chat.
+**Toggling.** `onToggleProject(id, isExpanded)` sets the state the user asked for, so the app never infers it from the list's own overrides. Collapsing (`false`) adds the id to the stored ids unless it is there, and ends its reveal. Expanding (`true`) removes the id from the stored ids. Toggling neither navigates nor changes the active chat.
 
 **Pruning.** The app SHALL remove from the stored ids every id that is not in `pinnedProjectIds`, and write only when at least one id was removed. The pass runs only while `projectsEnabled` is on and the user config has finished loading, because `pinnedProjectIds` is empty before that and an early pass would erase every stored id. It compares with the pins, not with the projects that loaded, so a project whose read failed keeps its state.
 

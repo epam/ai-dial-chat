@@ -833,7 +833,7 @@ describe('ConversationPanel — pinned projects', () => {
       screen.getByRole('button', { name: 'Expand project' }),
     );
 
-    expect(onToggleProject).toHaveBeenCalledWith('p1');
+    expect(onToggleProject).toHaveBeenCalledWith('p1', true);
     expect(pinnedProjects.onSelectProject).not.toHaveBeenCalled();
   });
 
