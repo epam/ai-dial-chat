@@ -157,6 +157,34 @@ describe('ProjectCreateForm', () => {
       expect(getCreateButton().hasAttribute('disabled')).toBe(false);
     });
 
+    it('disables Create while the host reports a name error and re-enables it once cleared', () => {
+      const { rerender, props } = renderForm({
+        values: { ...EMPTY_VALUES, name: 'Handbook' },
+        errors: { name: 'A project with this name already exists' },
+      });
+      expect(getCreateButton().hasAttribute('disabled')).toBe(true);
+
+      rerender(
+        <ProjectCreateForm
+          {...props}
+          values={{ ...EMPTY_VALUES, name: 'Handbook 2' }}
+          errors={{}}
+        />,
+      );
+
+      expect(getCreateButton().hasAttribute('disabled')).toBe(false);
+    });
+
+    it('keeps Create enabled for a read-only name even with a host name error', () => {
+      renderForm({
+        values: { ...EMPTY_VALUES, name: 'Handbook' },
+        errors: { name: 'A project with this name already exists' },
+        isNameReadOnly: true,
+      });
+
+      expect(getCreateButton().hasAttribute('disabled')).toBe(false);
+    });
+
     it('calls onSubmit when Create is activated on a valid form', async () => {
       const { props } = renderForm({
         values: { ...EMPTY_VALUES, name: 'Handbook' },
