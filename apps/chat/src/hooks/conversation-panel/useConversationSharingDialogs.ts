@@ -1,5 +1,9 @@
 import { type ConversationListItemDto } from '@epam/ai-dial-chat-api-client';
-import { useAsyncConfirmDialog } from '@epam/ai-dial-chat-hooks';
+import {
+  type UnpublishConfirmationPayload,
+  useAsyncConfirmDialog,
+  useUnpublishConfirmation,
+} from '@epam/ai-dial-chat-hooks';
 import { useShareRecipientsCount } from '@epam/ai-dial-chat-hooks/sharing';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -65,23 +69,6 @@ export const useConversationSharingDialogs = ({
     confirm: confirmRevokeDialog,
   } = useAsyncConfirmDialog<string>();
 
-  const {
-    pending: pendingUnpublish,
-    isPending: isUnpublishPending,
-    isRunning: isUnpublishing,
-    open: openUnpublishDialog,
-    close: closeUnpublishDialog,
-    confirm: confirmUnpublishDialog,
-  } = useAsyncConfirmDialog<{
-    path: string;
-    title: string;
-    folders: string[];
-  }>();
-  /* Set only when the conversation is published to more than one folder. */
-  const [selectedUnpublishFolder, setSelectedUnpublishFolder] = useState<
-    string | null
-  >(null);
-
   const [pendingShareConversationPath, setPendingShareConversationPath] =
     useState<string | null>(null);
 
@@ -110,8 +97,6 @@ export const useConversationSharingDialogs = ({
   const publishPanelHistory = getPublishHistory(
     pendingPublishConversation?.path ?? '',
   );
-
-  const unpublishFolders = pendingUnpublish?.folders ?? [];
 
   const handleClosePublishPanel = useCallback(() => {
     setPendingPublishConversation(null);
@@ -174,62 +159,40 @@ export const useConversationSharingDialogs = ({
     return item?.title ?? item?.id ?? '';
   }, [items, pendingRevokeId]);
 
+  const runUnpublish = useCallback(
+    async (
+      { path, name }: UnpublishConfirmationPayload & { path: string },
+      folderPath: string,
+    ) => {
+      try {
+        await unpublishConversation(path, folderPath);
+      } catch (error) {
+        showPublishError(error, EntityOperation.UnpublishRequested);
+        /* Swallowed so the dialog closes instead of staying open. */
+        return;
+      }
+
+      /*
+       * No `refreshConversations()`: nothing about the caller's own list
+       * changed, and the published copy survives until an admin approves the
+       * removal — the same reason publish success does not refresh either.
+       */
+      notifyOperationSuccess(
+        NotifiableEntity.Conversation,
+        EntityOperation.UnpublishRequested,
+        { name, folder: getPublishFolderLabel(folderPath, t) },
+      );
+    },
+    [showPublishError, notifyOperationSuccess, t],
+  );
+  const { open: openUnpublishDialog, dialog: unpublishDialog } =
+    useUnpublishConfirmation(runUnpublish);
+
   /*
    * Unlike unshare, revoking leaves the conversation in the owner's own list —
    * only other people lose access — so there is nothing to navigate away from.
    * `refreshConversations` runs purely so any share-derived indicator settles.
    */
-  const handleCloseUnpublishDialog = useCallback(() => {
-    if (isUnpublishing) return;
-    closeUnpublishDialog();
-    setSelectedUnpublishFolder(null);
-  }, [isUnpublishing, closeUnpublishDialog]);
-
-  const handleConfirmUnpublish = useCallback(async () => {
-    await confirmUnpublishDialog(
-      async ({ path, title, folders }) => {
-        /* One published folder needs no choice; several require a pick, which
-         * the disabled confirm button already enforces. */
-        const folderPath =
-          selectedUnpublishFolder != null
-            ? folders.find((folder) => folder === selectedUnpublishFolder)
-            : folders[0];
-        /* `folderPath` is legitimately `''` for a conversation published at
-         * the public root, so this must reject "not found" (`undefined`),
-         * not every falsy value — an `if (!folderPath)` check here silently
-         * dropped every unpublish request for a root-folder publication. */
-        if (folderPath == null) return;
-
-        try {
-          await unpublishConversation(path, folderPath);
-        } catch (error) {
-          showPublishError(error, EntityOperation.UnpublishRequested);
-          /* Swallow so confirm() calls close() instead of keeping the dialog open. */
-          return;
-        }
-
-        /*
-         * No `refreshConversations()`: nothing about the caller's own list
-         * changed, and the published copy survives until an admin approves the
-         * removal — the same reason publish success does not refresh either.
-         */
-        notifyOperationSuccess(
-          NotifiableEntity.Conversation,
-          EntityOperation.UnpublishRequested,
-          { name: title, folder: getPublishFolderLabel(folderPath, t) },
-        );
-      },
-      () => '',
-    );
-    setSelectedUnpublishFolder(null);
-  }, [
-    confirmUnpublishDialog,
-    selectedUnpublishFolder,
-    showPublishError,
-    notifyOperationSuccess,
-    t,
-  ]);
-
   const handleConfirmRevoke = useCallback(async () => {
     await confirmRevokeDialog(
       async (idToRevoke) => {
@@ -272,20 +235,16 @@ export const useConversationSharingDialogs = ({
   }, [isRevoking, closeRevokeDialog]);
 
   return {
-    pendingUnpublish,
     isUnsharePending,
     isUnsharing,
     unshareError,
     isRevokePending,
     isRevoking,
     revokeError,
-    isUnpublishPending,
-    isUnpublishing,
     openUnshareDialog,
     openRevokeDialog,
     openUnpublishDialog,
-    selectedUnpublishFolder,
-    setSelectedUnpublishFolder,
+    unpublishDialog,
     pendingShareConversationPath,
     setPendingShareConversationPath,
     pendingPublishConversation,
@@ -295,15 +254,12 @@ export const useConversationSharingDialogs = ({
     requestPublishHistory,
     getPublishHistory,
     publishPanelHistory,
-    unpublishFolders,
     pendingUnshareTitle,
     pendingRevokeTitle,
     handleCloseSharePopover,
     handleClosePublishPanel,
     handleConfirmUnshare,
     handleCloseUnshareDialog,
-    handleConfirmUnpublish,
-    handleCloseUnpublishDialog,
     handleConfirmRevoke,
     handleCloseRevokeDialog,
   };

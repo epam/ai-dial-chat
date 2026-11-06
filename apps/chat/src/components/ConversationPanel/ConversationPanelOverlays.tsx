@@ -103,31 +103,24 @@ const ConversationPanelOverlays: FC<ConversationPanelOverlaysProps> = ({
     handleCloseRenameDialog,
   } = editDialogs;
   const {
-    pendingUnpublish,
     isUnsharePending,
     isUnsharing,
     unshareError,
     isRevokePending,
     isRevoking,
     revokeError,
-    isUnpublishPending,
-    isUnpublishing,
-    selectedUnpublishFolder,
-    setSelectedUnpublishFolder,
     pendingShareConversationPath,
     pendingPublishConversation,
     publishPanelHistory,
-    unpublishFolders,
     pendingUnshareTitle,
     pendingRevokeTitle,
     handleCloseSharePopover,
     handleClosePublishPanel,
     handleConfirmUnshare,
     handleCloseUnshareDialog,
-    handleConfirmUnpublish,
-    handleCloseUnpublishDialog,
     handleConfirmRevoke,
     handleCloseRevokeDialog,
+    unpublishDialog,
   } = sharingDialogs;
 
   return (
@@ -192,15 +185,8 @@ const ConversationPanelOverlays: FC<ConversationPanelOverlaysProps> = ({
       </DeleteConfirmationDialog>
 
       <UnpublishConfirmationDialog
-        isOpen={isUnpublishPending}
-        name={pendingUnpublish?.title ?? ''}
-        folders={unpublishFolders}
-        selectedFolder={selectedUnpublishFolder}
-        onSelectedFolderChange={setSelectedUnpublishFolder}
-        isLoading={isUnpublishing}
+        {...unpublishDialog}
         labels={unpublishLabels}
-        onConfirm={handleConfirmUnpublish}
-        onClose={handleCloseUnpublishDialog}
       />
 
       <ConfirmationPopup

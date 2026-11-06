@@ -82,7 +82,6 @@ interface UseConversationRowActionsParams {
   openUnshareDialog: SharingDialogs['openUnshareDialog'];
   openRevokeDialog: SharingDialogs['openRevokeDialog'];
   openUnpublishDialog: SharingDialogs['openUnpublishDialog'];
-  setSelectedUnpublishFolder: SharingDialogs['setSelectedUnpublishFolder'];
   setPendingShareConversationPath: SharingDialogs['setPendingShareConversationPath'];
   setPendingPublishConversation: SharingDialogs['setPendingPublishConversation'];
   requestRecipientsCount: SharingDialogs['requestRecipientsCount'];
@@ -116,7 +115,6 @@ export const useConversationRowActions = ({
   openUnshareDialog,
   openRevokeDialog,
   openUnpublishDialog,
-  setSelectedUnpublishFolder,
   setPendingShareConversationPath,
   setPendingPublishConversation,
   requestRecipientsCount,
@@ -478,11 +476,10 @@ export const useConversationRowActions = ({
                   />
                 ),
                 onClick: () => {
-                  setSelectedUnpublishFolder(null);
                   openUnpublishDialog(
                     {
                       path: conversationPath,
-                      title: panelItem.title,
+                      name: panelItem.title,
                       folders: publishedFolders,
                     },
                     rowActionsTriggerRef.current,
@@ -565,7 +562,6 @@ export const useConversationRowActions = ({
       openUnpublishDialog,
       setPendingShareConversationPath,
       setPendingPublishConversation,
-      setSelectedUnpublishFolder,
     ],
   );
 

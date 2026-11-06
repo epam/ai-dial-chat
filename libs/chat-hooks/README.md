@@ -776,6 +776,28 @@ const { isResolved, folders, refresh } = useUnpublishableFolders(
 );
 ```
 
+`useUnpublishConfirmation(runUnpublish)` (root and `./catalog`) owns the confirmation that follows. It keeps the pending entity (`{ name, folders }` plus whatever the host needs, such as an id or a path) and, when there are several folders, the user's pick. It returns `{ open, pending, dialog }`. `open(payload, returnFocusTo?)` opens it with no folder picked. `dialog` spreads straight into `UnpublishConfirmationDialog` from `@epam/ai-dial-publish-panel`.
+
+On confirm, the hook resolves the picked folder, or the only folder when there is one, and calls `runUnpublish(payload, folderPath)`. The public root is sent as `''`. A pick that is not among the folders sends nothing. The dialog closes when `runUnpublish` resolves and stays open when it rejects. While the request runs, `onClose` does nothing. The request, its notifications and any refresh stay with the host, inside `runUnpublish`.
+
+```tsx
+import { useUnpublishConfirmation } from '@epam/ai-dial-chat-hooks/catalog';
+import { UnpublishConfirmationDialog } from '@epam/ai-dial-publish-panel';
+
+const { open, dialog } = useUnpublishConfirmation(
+  async (
+    { id }: { id: string; name: string; folders: string[] },
+    folderPath,
+  ) => {
+    await unpublishProject(id, folderPath);
+  },
+);
+
+open({ id: project.id, name: project.name, folders: ['Team/Reports', ''] });
+
+<UnpublishConfirmationDialog {...dialog} labels={labels} />;
+```
+
 ```tsx
 import {
   ProjectRefreshOutcome,
