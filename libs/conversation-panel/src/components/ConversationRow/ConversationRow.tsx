@@ -229,6 +229,7 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
       {...nestedRowProps}
       className={mergeClasses(
         'group/conversation relative',
+        styles.row,
         nestedRowProps?.className,
         isDragging && 'cursor-grabbing opacity-50',
         isDropTarget && isDropAllowed && 'rounded',

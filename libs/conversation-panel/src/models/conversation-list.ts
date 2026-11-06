@@ -106,6 +106,10 @@ export interface ConversationListLabels {
   seeAllLabel?: string;
   /** Builds the accessible name of a pinned project's See all row from the project name. Defaults to `` (name) => `See all chats in ${name}` ``. */
   seeAllAriaLabel?: (name: string) => string;
+  /** Accessible name of the chevron of a collapsed pinned project. Defaults to `'Expand project'`. */
+  expandProjectLabel?: string;
+  /** Accessible name of the chevron of an expanded pinned project. Defaults to `'Collapse project'`. */
+  collapseProjectLabel?: string;
 }
 
 /** Props accepted by `ConversationList`. */

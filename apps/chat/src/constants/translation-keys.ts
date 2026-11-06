@@ -942,6 +942,8 @@ export enum ConversationPanelI18nKeys {
   ChatsAndTasks = 'conversationPanel.chatsAndTasks',
   SeeAll = 'conversationPanel.seeAll',
   SeeAllProjectChats = 'conversationPanel.seeAllProjectChats',
+  ExpandProject = 'conversationPanel.expandProject',
+  CollapseProject = 'conversationPanel.collapseProject',
   SearchOpen = 'conversationPanel.search.open',
   SearchClose = 'conversationPanel.search.close',
   Empty = 'conversationPanel.empty',

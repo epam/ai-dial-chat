@@ -49,16 +49,22 @@ import { useUserConfig } from '../../context/UserConfigContext';
 import type { PinnedProjectActionState } from '../../models/pinned-project-action';
 import { PinnedProjectActionKind } from '../../types/pinned-project-action';
 import { ROUTES } from '../../types/routes';
+import { StorageKey } from '../../types/storage-key';
+import { UserConfigStatus } from '../../types/user-config-status';
+import useLocalStorage from '../useLocalStorage';
 import {
   projectsClient,
   subscribeProjectConversationViewed,
 } from './projects-client';
 
-/* The Unpin item shows the pinned state it removes, as on a pinned chat. */
-const renderMenuIcon = (icon: Icon, isFilled = false) =>
+/* A menu item's icon: Unpin shows the pinned state it removes, as on a pinned chat; Delete takes the error color. */
+const renderMenuIcon = (
+  icon: Icon,
+  { isFilled = false, isDanger = false } = {},
+) =>
   createElement(icon, {
     size: DIAL_ICON_SIZE.MD,
-    className: 'text-secondary',
+    className: isDanger ? 'text-error' : 'text-secondary',
     ...(isFilled ? {} : { stroke: DIAL_KIT_ICON_STROKE }),
     'aria-hidden': true,
   });
@@ -91,7 +97,7 @@ export interface PinnedProjectActionOverlay {
 export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
   const { t } = useTranslation();
   const isEnabled = useFeatureFlag('projectsEnabled');
-  const { pinnedProjectIds, setPinnedProject, replacePinnedProjectId } =
+  const { pinnedProjectIds, setPinnedProject, replacePinnedProjectId, status } =
     useUserConfig();
   const { showErrorNotification } = useNotification();
 
@@ -132,6 +138,57 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
     return subscribeProjectConversationViewed(markViewed);
   }, [isEnabled, markViewed]);
 
+  /* Only a click on a chevron writes these ids; a project with no entry is expanded. */
+  const [storedIds, setCollapsedIds] = useLocalStorage<string[]>(
+    StorageKey.CollapsedPinnedProjects,
+    [],
+  );
+  /* `useLocalStorage` only guards the JSON, so a hand-edited or foreign value of another shape must not reach the list code. */
+  const collapsedIds = useMemo(
+    () =>
+      Array.isArray(storedIds)
+        ? storedIds.filter((id): id is string => typeof id === 'string')
+        : [],
+    [storedIds],
+  );
+  const collapsedSet = useMemo(() => new Set(collapsedIds), [collapsedIds]);
+  /* The project of the most recently opened chat, shown expanded without a write. */
+  const [revealedId, setRevealedId] = useState<string>();
+  const chatProjectId = chatRoute?.projectId;
+  const revealedChatRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (activeConversationId == null || chatProjectId == null) {
+      revealedChatRef.current = undefined;
+      return;
+    }
+    if (revealedChatRef.current === activeConversationId) return;
+    revealedChatRef.current = activeConversationId;
+    setRevealedId(chatProjectId);
+  }, [activeConversationId, chatProjectId]);
+
+  /* `pinnedProjectIds` is empty until the user config has loaded, so an earlier pass would erase every stored id. */
+  useEffect(() => {
+    if (!isEnabled || status !== UserConfigStatus.Ready) return;
+    const pinned = new Set(pinnedProjectIds);
+    const kept = collapsedIds.filter((id) => pinned.has(id));
+    if (kept.length !== collapsedIds.length) setCollapsedIds(kept);
+  }, [isEnabled, status, pinnedProjectIds, collapsedIds, setCollapsedIds]);
+
+  /* The panel reports the state the user asked for, so a search override it owns cannot make the host store the opposite. */
+  const handleToggleProject = useCallback(
+    (projectId: string, shouldExpand: boolean) => {
+      if (shouldExpand) {
+        setCollapsedIds(collapsedIds.filter((id) => id !== projectId));
+        return;
+      }
+      if (!collapsedIds.includes(projectId)) {
+        setCollapsedIds([...collapsedIds, projectId]);
+      }
+      setRevealedId((current) => (current === projectId ? undefined : current));
+    },
+    [collapsedIds, setCollapsedIds],
+  );
+
   const projectsById = useMemo(
     () => new Map(projects.map((entry) => [entry.project.id, entry.project])),
     [projects],
@@ -146,6 +203,7 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
         href: getProjectViewRoute(project.id),
         source: mapProjectSourceToFilterTab(project.source),
         hasMore,
+        isExpanded: !collapsedSet.has(project.id) || revealedId === project.id,
         conversations: chats.map((chat) => ({
           id: chat.id,
           title: chat.title,
@@ -155,7 +213,7 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
             : {}),
         })),
       })),
-    [projects, activeConversationId],
+    [projects, activeConversationId, collapsedSet, revealedId],
   );
 
   const handleOpenProject = useCallback(
@@ -208,7 +266,7 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
       const unpin: DropdownItem = {
         key: 'unpin',
         label: t(ButtonsI18nKeys.Unpin),
-        icon: renderMenuIcon(IconPinnedFilled, true),
+        icon: renderMenuIcon(IconPinnedFilled, { isFilled: true }),
         onClick: () => {
           void handleUnpin(group.id);
         },
@@ -241,7 +299,8 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
         {
           key: 'delete',
           label: t(ButtonsI18nKeys.Delete),
-          icon: renderMenuIcon(IconTrashX),
+          icon: renderMenuIcon(IconTrashX, { isDanger: true }),
+          className: 'text-error',
           onClick: () => openAction(PinnedProjectActionKind.Delete, group.id),
         },
       ];
@@ -257,6 +316,7 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
             onSelectProject: handleOpenProject,
             onSelectConversation: handleSelectConversation,
             onSeeAll: handleOpenProject,
+            onToggleProject: handleToggleProject,
             getActions,
             onActionMenuOpen: handleActionMenuOpen,
             activeProjectId,
@@ -267,6 +327,7 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
       groups,
       handleOpenProject,
       handleSelectConversation,
+      handleToggleProject,
       getActions,
       handleActionMenuOpen,
       activeProjectId,

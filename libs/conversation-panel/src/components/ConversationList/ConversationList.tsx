@@ -35,6 +35,7 @@ import {
   getOverscanCount,
   getRowHeight,
   getSkeletonWidth,
+  isProjectExpanded,
   isSameIdSequence,
   SKELETON_ROW_COUNT,
 } from '../../utils/conversation-row';
@@ -93,12 +94,15 @@ export const ConversationList: FC<ConversationListProps> = memo(
       unreadIndicatorLabel,
       seeAllLabel,
       seeAllAriaLabel,
+      expandProjectLabel,
+      collapseProjectLabel,
     } = labels;
     const {
       projects: pinnedProjectGroups,
       onSelectProject,
       onSelectConversation: onSelectPinnedProjectConversation,
       onSeeAll,
+      onToggleProject,
       getActions: getProjectActions,
       onActionMenuOpen: onProjectActionMenuOpen,
       activeProjectId,
@@ -416,7 +420,12 @@ export const ConversationList: FC<ConversationListProps> = memo(
         });
         if (expandedGroups.has(group.key)) {
           for (const project of groupProjects) {
-            rows.push(...buildProjectRows(project));
+            rows.push(
+              ...buildProjectRows(
+                project,
+                isProjectExpanded(project, searchQuery),
+              ),
+            );
           }
           for (const item of group.items) {
             rows.push({ kind: VirtualRowKind.Item, item, groupKey: group.key });
@@ -424,7 +433,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
         }
       }
       return rows;
-    }, [groups, visibleProjects, expandedGroups]);
+    }, [groups, visibleProjects, expandedGroups, searchQuery]);
 
     useEffect(() => {
       if (!activeConversationId) return;
@@ -475,10 +484,13 @@ export const ConversationList: FC<ConversationListProps> = memo(
         onSelectProject: handleSelectProject,
         onSelectProjectConversation: handleSelectProjectConversation,
         onSeeAll: handleSeeAll,
+        onToggleProject,
         getProjectActions,
         onProjectActionMenuOpen,
         seeAllLabel,
         seeAllAriaLabel,
+        expandProjectLabel,
+        collapseProjectLabel,
         rowVariant,
         projectConversationVariant,
         styles: {
@@ -512,10 +524,13 @@ export const ConversationList: FC<ConversationListProps> = memo(
         handleSelectProject,
         handleSelectProjectConversation,
         handleSeeAll,
+        onToggleProject,
         getProjectActions,
         onProjectActionMenuOpen,
         seeAllLabel,
         seeAllAriaLabel,
+        expandProjectLabel,
+        collapseProjectLabel,
         rowVariant,
         projectConversationVariant,
         typography?.groupHeaderClassName,

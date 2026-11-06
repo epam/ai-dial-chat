@@ -40,6 +40,9 @@ export const RowRenderer = ({
   onProjectActionMenuOpen,
   seeAllLabel,
   seeAllAriaLabel,
+  onToggleProject,
+  expandProjectLabel,
+  collapseProjectLabel,
   styles,
   rowVariant = ConversationRowVariant.Avatar,
   projectConversationVariant = ConversationRowVariant.Indicator,
@@ -88,11 +91,17 @@ export const RowRenderer = ({
         <ProjectRow
           project={row.project}
           isActive={row.project.id === activeProjectId}
+          isExpanded={row.isExpanded}
+          listId={listId}
           onSelectProject={onSelectProject}
+          onToggleProject={onToggleProject}
           searchQuery={searchQuery}
           getActions={getProjectActions}
           onActionMenuOpen={onProjectActionMenuOpen}
           actionsLabel={actionsLabel}
+          expandLabel={expandProjectLabel}
+          collapseLabel={collapseProjectLabel}
+          unreadIndicatorLabel={unreadIndicatorLabel}
           titleClassName={styles?.itemTitleClassName}
         />
       </div>
@@ -108,6 +117,9 @@ export const RowRenderer = ({
           onSeeAll={onSeeAll}
           label={seeAllLabel}
           ariaLabel={seeAllAriaLabel}
+          getActions={getProjectActions}
+          onActionMenuOpen={onProjectActionMenuOpen}
+          actionsLabel={actionsLabel}
           titleClassName={styles?.itemTitleClassName}
         />
       </div>
