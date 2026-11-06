@@ -115,6 +115,22 @@ export interface FileManagerAttachModalProps {
   titleClassName?: string;
   /** Typography class of the header description. Defaults to `'dial-small-text'`. */
   descriptionClassName?: string;
+  /**
+   * Classes merged last onto the dialog, so they win over its size defaults
+   * (`max-w-[1600px]!`, `h-[min(900px,100dvh)]!`) when written with the same
+   * `!` modifier — e.g. `max-w-[1330px]! rounded-2xl`.
+   */
+  dialogClassName?: string;
+  /**
+   * Classes for the folders-tree panel, forwarded to `DialFileManagerShell`.
+   * Replaces the panel's default classes (including its width), so include
+   * `shrink-0` and an explicit width. Omit to keep the default panel.
+   */
+  treeContainerClassName?: string;
+  /** Whether the header is separated from the body by a divider. Defaults to `true`. */
+  showHeaderDivider?: boolean;
+  /** Whether the footer is separated from the body by a divider. Defaults to `true`. */
+  showFooterDivider?: boolean;
 }
 
 /** File-manager modal with Popup chrome and an Attach footer. Selection and tab state are controlled by the host. */
@@ -149,6 +165,10 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
     colors,
     titleClassName = 'dial-h1-text',
     descriptionClassName = 'dial-small-text',
+    dialogClassName,
+    treeContainerClassName,
+    showHeaderDivider = true,
+    showFooterDivider = true,
   }) => {
     const { items, isLoading, searchResults } = controller;
 
@@ -320,6 +340,7 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
         className={mergeClasses(
           'flex h-[min(900px,100dvh)]! w-full max-w-[1600px]! flex-col mobile:h-full! mobile:max-w-full! mobile:rounded-none',
           styles.popup,
+          dialogClassName,
         )}
         overlayClassName="mobile:p-0"
         overlayStyle={buildCssVars({
@@ -327,8 +348,8 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
           '--fmam-title': colors?.title,
           '--fmam-shadow': colors?.shadow,
         })}
-        headerDivider
-        footerDivider
+        headerDivider={showHeaderDivider}
+        footerDivider={showFooterDivider}
         onClose={onClose}
         mainButtons={[
           {
@@ -352,6 +373,7 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
             selectedPaths={selectedPaths}
             onSelectedPathsChange={handleSelectedPathsChange}
             variant={variant}
+            treeContainerClassName={treeContainerClassName}
             /* The modal is a raised layer; the picker sits on it, not on the base layer. */
             styles={{
               colors: {
