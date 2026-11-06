@@ -1,3 +1,4 @@
+import { MessageRole } from '@epam/ai-dial-chat-shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { StopCompletionError } from '../../create-chat-stream-api';
@@ -7,6 +8,7 @@ import type {
 } from '../useConversationStream';
 import {
   createStreamTestTransport,
+  makeConversation,
   useHookHarness,
 } from './conversation-stream-harness';
 
@@ -230,6 +232,61 @@ describe('useConversationStream', () => {
       });
 
       expect(onStopError).toHaveBeenCalledWith(NOT_FOUND);
+    });
+  });
+
+  describe('Stop for a generation held by a live foreground marker', () => {
+    it("sends the marker's generation id when this page cannot attach to it", async () => {
+      const markerId = '9d1e2f3a-4b5c-4d6e-8f70-81a2b3c4d5e6';
+      const initial = makeConversation({
+        messages: [
+          { role: MessageRole.User, content: 'question', timestamp: 't0' },
+          {
+            role: MessageRole.Assistant,
+            content: '',
+            timestamp: 't1',
+            foregroundGeneration: {
+              generationId: markerId,
+              startedAt: 1,
+              expiresAt: Date.now() + 60_000,
+            },
+          },
+        ],
+      });
+      vi.mocked(transport.attachToGeneration).mockRejectedValue(
+        new Error('404'),
+      );
+      vi.mocked(transport.getConversation).mockResolvedValue(initial);
+      vi.mocked(transport.watchConversation).mockResolvedValue(
+        new ReadableStream<Uint8Array>({
+          start() {
+            /* stays open: the other participant is still generating */
+          },
+        }),
+      );
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          initialConversation: initial,
+        }),
+      );
+
+      act(() =>
+        result.current.stream.resumeIfAwaitingGeneration(
+          'bucket/conv',
+          initial,
+        ),
+      );
+      await waitFor(() => expect(result.current.stream.isStreaming).toBe(true));
+      await waitFor(() =>
+        expect(result.current.stream.canStopStreaming).toBe(true),
+      );
+      act(() => result.current.stream.handleStop());
+
+      expect(transport.stopCompletion).toHaveBeenCalledWith(
+        expect.objectContaining({ generationId: markerId, path: 'conv' }),
+      );
     });
   });
 });

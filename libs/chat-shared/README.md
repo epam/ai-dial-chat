@@ -168,6 +168,7 @@ import type {
   Stage,
   Annotation,
   BackgroundGeneration,
+  ForegroundGeneration,
 } from '@epam/ai-dial-chat-shared';
 import type {
   DeploymentItem,
@@ -187,6 +188,10 @@ import {
 ### Background generation marker
 
 `Message.backgroundGeneration?: BackgroundGeneration` is present only on an assistant message produced by a DIAL Core background Responses job. It carries `generationId` (the message's identity across saves), `status` (`BackgroundGenerationStatus`: `Pending`, `Completed`, `Stopped`, `Failed`) and `startedAt` (epoch ms). The backend owns it; a message whose status is `Pending` is still being generated.
+
+### Foreground generation marker
+
+`Message.foregroundGeneration?: ForegroundGeneration` is present only while a Chat Completions or stateless Responses generation produces an assistant message. It carries `generationId`, `startedAt`, `expiresAt` and the optional `stopRequestedAt` (all times in epoch ms). The backend owns it and removes it with the generation's terminal write. While `expiresAt` is in the future, the message is being generated elsewhere — in another tab, on another device, or by another participant of a shared project — and the backend refuses every other generation in the conversation.
 
 ### Stage parent references
 

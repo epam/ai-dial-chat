@@ -53,7 +53,7 @@ export class GenerationPersistenceError extends Error {
 
 /** Fallback text of a {@link GenerationConflictError} when no message is supplied. */
 export const DEFAULT_GENERATION_CONFLICT_MESSAGE =
-  'A response is already being generated in this conversation. Wait for it to finish or stop it before sending another message.';
+  'A response is already being generated in this conversation. Wait for it to finish before sending another message.';
 
 /**
  * Reported through `onError` when the backend rejects a completion because

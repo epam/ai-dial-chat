@@ -35,7 +35,7 @@ import { ConversationPublishAttachmentsService } from './conversation-publish-at
 import type { ConversationMessageDto } from './dto/conversation-message.dto';
 import { PublishConversationResultDto } from './dto/publish-conversation-result.dto';
 import { UnpublishConversationResultDto } from './dto/unpublish-conversation-result.dto';
-import { findPendingBackgroundMessage } from './generation/background-message';
+import { findActiveGeneration } from './generation/foreground-generation';
 import {
   assertModelNotHidden,
   getConversationModelId,
@@ -126,10 +126,11 @@ export class ConversationPublishService {
     }
 
     /*
-     * DIAL Core copies the stored file itself, so a copy published now would keep
-     * a `pending` background message that no viewer can ever resolve.
+     * DIAL Core copies the stored file itself, so a copy published now would keep a
+     * `pending` background message or a live foreground marker that no viewer can ever
+     * resolve (`foreground-generation-lock`).
      */
-    if (findPendingBackgroundMessage(conversation)) {
+    if (findActiveGeneration(conversation)) {
       throw new ConflictException(PUBLISH_WHILE_GENERATING_MESSAGE);
     }
 

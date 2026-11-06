@@ -102,6 +102,7 @@ const makeController = (
     {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
     } as unknown as ConversationService,
     generationService,
   );

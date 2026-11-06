@@ -259,6 +259,7 @@ when telemetry is disabled, or when both metric and trace exporters are disabled
 | `generation_stream_duration_{bucket,sum,count}`     | Upstream relay duration in seconds; `generation_api`, `outcome`. |
 | `generation_capability_resolution_total`            | `outcome`; `generation_api` only when resolved.                  |
 | `generation_responses_unknown_events_total`         | Unrecognized events by sanitized `event_type`.                   |
+| `generation_foreground_outcomes_total`              | Stored-lock outcomes of non-background generations; `outcome`.   |
 
 - These cover conversation generation, not the separate `/chat/completions` endpoint.
   `generation_api` is `responses` or `chat_completions`; there are no model/deployment labels.
@@ -267,6 +268,10 @@ when telemetry is disabled, or when both metric and trace exporters are disabled
   not prove a saved conversation.
 - First delta starts before the upstream call, after preflight, and records at relay end only
   if nonempty text appeared. Tool-only output is excluded; this is not browser latency.
+- `generation_foreground_outcomes_total` counts the `foregroundGeneration` marker's outcomes:
+  `start_conflict` (a second sender refused), `expired_takeover`, `start_failed`,
+  `terminal_skipped`, `terminal_conflict`, `stop_stored`, `lock_lost`, `released_before_stream`
+  and `release_failed`. A rising `release_failed` or `terminal_conflict` points at storage.
 - Capability failures have no API label. Unknown-event series appear only after an event;
   an empty panel is normal. Event types are truncated to 64 characters, not a finite allowlist.
 

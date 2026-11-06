@@ -72,6 +72,7 @@ describe('ConversationController (integration)', () => {
     markConversationViewed: ReturnType<typeof vi.fn>;
     resolveBackgroundAttach: ReturnType<typeof vi.fn>;
     stopBackgroundGeneration: ReturnType<typeof vi.fn>;
+    stopForegroundGeneration: ReturnType<typeof vi.fn>;
     saveClientConversation: ReturnType<typeof vi.fn>;
     getConversation: ReturnType<typeof vi.fn>;
   };
@@ -80,6 +81,7 @@ describe('ConversationController (integration)', () => {
     service = {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
       createConversation: vi.fn(),
       listConversations: vi.fn(),
       getConversationTitles: vi.fn(),
@@ -1106,9 +1108,12 @@ describe('ConversationController (integration)', () => {
      */
     it('returns 409 for a same-principal, same-path submit arriving while the prior generation is finalizing, before an SSE 200 opens', async () => {
       const path = 'test-bucket/gpt-4o__Hello__uuid';
-      const realGenerationService = new ConversationGenerationService({
-        get: () => undefined,
-      } as unknown as ConfigService<EnvironmentVariables>);
+      const realGenerationService = new ConversationGenerationService(
+        {
+          get: () => undefined,
+        } as unknown as ConfigService<EnvironmentVariables>,
+        0,
+      );
       const existingLease = realGenerationService.register(
         `c:${TEST_USER.sid}`,
         path,
@@ -1119,6 +1124,7 @@ describe('ConversationController (integration)', () => {
       const streamingStub = {
         resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
         stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+        stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
         streamCompletion: vi.fn().mockImplementation(async function* (
           streamPath: string,
           _at: string,

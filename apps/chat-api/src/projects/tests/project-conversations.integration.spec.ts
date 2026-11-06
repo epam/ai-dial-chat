@@ -13,7 +13,10 @@ import { FeatureGuard } from '../../app-config/feature-flags/feature.guard';
 import { AuthSource } from '../../auth/auth-source.enum';
 import type { SessionUser } from '../../auth/session/session.types';
 import { ConversationService } from '../../conversations/conversation.service';
-import { ConversationGenerationService } from '../../conversations/generation/conversation-generation.service';
+import {
+  GENERATION_SHUTDOWN_FLUSH_MS,
+  ConversationGenerationService,
+} from '../../conversations/generation/conversation-generation.service';
 import { ProjectConversationStore } from '../../conversations/persistence/project-conversation.store';
 import { ConversationCompletionsResponder } from '../../conversations/streaming/conversation-completions.responder';
 import { DialClientService } from '../../dial/dial-client.service';
@@ -68,6 +71,7 @@ const buildApp = async (
     generateTitle: vi.fn(),
     streamCompletion: vi.fn(),
     stopBackgroundGeneration: vi.fn(),
+    stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
     resolveBackgroundAttach: vi.fn(),
   };
   const readState = {
@@ -87,6 +91,7 @@ const buildApp = async (
       ProjectConversationStore,
       ConversationCompletionsResponder,
       ConversationGenerationService,
+      { provide: GENERATION_SHUTDOWN_FLUSH_MS, useValue: 0 },
       { provide: DialClientService, useValue: { client } },
       { provide: ConversationService, useValue: conversationService },
       {

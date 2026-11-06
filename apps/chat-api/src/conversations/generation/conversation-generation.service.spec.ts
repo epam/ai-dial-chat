@@ -18,6 +18,7 @@ import {
   GenerationStatus,
   type GenerationLease,
 } from './conversation-generation.service';
+import { FOREGROUND_SHUTDOWN_FLUSH_MS } from './foreground-generation';
 import { GenerationPreparationStep } from './generation.types';
 
 /*
@@ -52,6 +53,24 @@ const makeConfigService = (
     get: vi.fn((key: keyof EnvironmentVariables) => overrides[key]),
   }) as unknown as ConfigService<EnvironmentVariables>;
 
+/*
+ * Shutdown waits up to FOREGROUND_SHUTDOWN_FLUSH_MS for foreground workers to settle
+ * their own entries; these entries have no worker, so the bound is run on a fake clock.
+ */
+const destroyNow = async (
+  generations: ConversationGenerationService,
+): Promise<void> => {
+  const wasFake = vi.isFakeTimers();
+  if (!wasFake) vi.useFakeTimers();
+  try {
+    const destroyed = generations.onModuleDestroy();
+    await vi.advanceTimersByTimeAsync(FOREGROUND_SHUTDOWN_FLUSH_MS);
+    await destroyed;
+  } finally {
+    if (!wasFake) vi.useRealTimers();
+  }
+};
+
 describe('ConversationGenerationService', () => {
   let service: ConversationGenerationService;
 
@@ -59,8 +78,141 @@ describe('ConversationGenerationService', () => {
     service = new ConversationGenerationService(makeConfigService());
   });
 
-  afterEach(() => {
-    service.onModuleDestroy();
+  afterEach(async () => {
+    await destroyNow(service);
+  });
+
+  describe('shutdown flush of foreground entries', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('delivers stopped at once and waits for the worker to settle its own entry', async () => {
+      vi.useFakeTimers();
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      const onTerminal = vi.fn();
+      service.attach(OWNER_KEY, PATH)!.emitter.on('terminal', onTerminal);
+
+      let isDestroyed = false;
+      const destroyed = service.onModuleDestroy().then(() => {
+        isDestroyed = true;
+      });
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(onTerminal).toHaveBeenCalledExactlyOnceWith({ type: 'stopped' });
+      expect(service.getCancellation(lease)).toEqual({
+        requested: true,
+        reason: GenerationCancelReason.Shutdown,
+      });
+      expect(isDestroyed).toBe(false);
+
+      service.error(lease);
+      await destroyed;
+
+      expect(onTerminal).toHaveBeenCalledOnce();
+      expect(service.getStatus(OWNER_KEY, PATH)).toBeUndefined();
+    });
+
+    it('releases an entry whose worker never settles once the bound elapses', async () => {
+      vi.useFakeTimers();
+      service.register(OWNER_KEY, PATH, GENERATION_ID);
+
+      let isDestroyed = false;
+      const destroyed = service.onModuleDestroy().then(() => {
+        isDestroyed = true;
+      });
+      await vi.advanceTimersByTimeAsync(FOREGROUND_SHUTDOWN_FLUSH_MS - 1);
+      expect(isDestroyed).toBe(false);
+      expect(service.getStatus(OWNER_KEY, PATH)).toBeDefined();
+
+      await vi.advanceTimersByTimeAsync(1);
+      await destroyed;
+
+      expect(service.getStatus(OWNER_KEY, PATH)).toBeUndefined();
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('detaches a background entry at once without waiting', async () => {
+      vi.useFakeTimers();
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.setBackground(lease, true);
+
+      await service.onModuleDestroy();
+
+      expect(service.getStatus(OWNER_KEY, PATH)).toBeUndefined();
+    });
+  });
+
+  describe('storage-authorized Stop', () => {
+    it("aborts another principal's active foreground entry as a user stop", () => {
+      const lease = service.register(
+        OWNER_KEY,
+        PATH,
+        GENERATION_ID,
+        `bucket-a/${PATH}`,
+      );
+
+      expect(service.abortByGeneration(`bucket-a/${PATH}`, GENERATION_ID)).toBe(
+        true,
+      );
+
+      expect(lease.abortController.signal.aborted).toBe(true);
+      expect(service.getCancellation(lease)).toEqual({
+        requested: true,
+        reason: GenerationCancelReason.UserStop,
+      });
+    });
+
+    it("never aborts a same-named conversation in another user's bucket", () => {
+      const victim = service.register(
+        OWNER_KEY,
+        PATH,
+        GENERATION_ID,
+        `bucket-a/${PATH}`,
+      );
+      const attacker = service.register(
+        OTHER_OWNER_KEY,
+        PATH,
+        GENERATION_ID,
+        `bucket-b/${PATH}`,
+      );
+
+      expect(service.abortByGeneration(`bucket-b/${PATH}`, GENERATION_ID)).toBe(
+        true,
+      );
+
+      expect(victim.abortController.signal.aborted).toBe(false);
+      expect(attacker.abortController.signal.aborted).toBe(true);
+    });
+
+    it('changes nothing for an unknown id, a background entry or an entry already cancelled', () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      expect(service.abortByGeneration(PATH, 'other-gen-id')).toBe(false);
+      expect(service.abortByGeneration('other-path', GENERATION_ID)).toBe(
+        false,
+      );
+
+      service.setBackground(lease, true);
+      expect(service.abortByGeneration(PATH, GENERATION_ID)).toBe(false);
+      service.setBackground(lease, false);
+
+      service.cancel(lease, GenerationCancelReason.LockLost);
+      expect(service.abortByGeneration(PATH, GENERATION_ID)).toBe(false);
+      expect(service.getCancellation(lease)?.reason).toBe(
+        GenerationCancelReason.LockLost,
+      );
+    });
+
+    it('records a user stop the worker found stored on its marker', () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+
+      service.requestUserStop(lease);
+
+      expect(service.getCancellation(lease)?.reason).toBe(
+        GenerationCancelReason.UserStop,
+      );
+      expect(lease.abortController.signal.aborted).toBe(true);
+    });
   });
 
   describe('hasLocalForegroundGeneration', () => {
@@ -366,7 +518,7 @@ describe('ConversationGenerationService', () => {
       warn.mockRestore();
     });
 
-    it('identifies a max-duration abort the same way', () => {
+    it('identifies a max-duration abort the same way', async () => {
       const warn = vi
         .spyOn(Logger.prototype, 'warn')
         .mockImplementation(() => undefined);
@@ -385,7 +537,7 @@ describe('ConversationGenerationService', () => {
       expect(line).not.toContain(HEADER_OWNER_KEY);
       expect(line).toMatch(/owner=[0-9a-f]{12}\b/);
 
-      timed.onModuleDestroy();
+      await destroyNow(timed);
       warn.mockRestore();
     });
   });
@@ -437,7 +589,7 @@ describe('ConversationGenerationService', () => {
         .reduce((sum, point) => sum + point.value, 0);
       expect(total).toBe(2);
 
-      timed.onModuleDestroy();
+      await destroyNow(timed);
       stopMetrics();
       await meterProvider.shutdown();
     });
@@ -720,7 +872,7 @@ describe('ConversationGenerationService', () => {
       expect(await readState('settling')).toBe(0);
       expect(() => tracked.register(OWNER_KEY, PATH, 'gen-2')).not.toThrow();
 
-      tracked.onModuleDestroy();
+      await destroyNow(tracked);
       stopMetrics();
       await meterProvider.shutdown();
     });
@@ -910,12 +1062,12 @@ describe('ConversationGenerationService', () => {
       timed.complete(lease);
       expect(() => timed.register(OWNER_KEY, PATH, 'gen-2')).not.toThrow();
 
-      timed.onModuleDestroy();
+      await destroyNow(timed);
       stopMetrics();
       await meterProvider.shutdown();
     });
 
-    it('does not cancel or duplicate the write when it later succeeds', () => {
+    it('does not cancel or duplicate the write when it later succeeds', async () => {
       const timed = new ConversationGenerationService(
         makeConfigService({ GENERATION_FINALIZE_TIMEOUT_MS: 5000 }),
       );
@@ -926,7 +1078,7 @@ describe('ConversationGenerationService', () => {
       expect(lease.abortController.signal.aborted).toBe(false);
       timed.complete(lease);
       expect(timed.getStatus(OWNER_KEY, PATH)).toBeUndefined();
-      timed.onModuleDestroy();
+      await destroyNow(timed);
     });
   });
 
@@ -950,7 +1102,7 @@ describe('ConversationGenerationService', () => {
     });
 
     afterEach(async () => {
-      timed.onModuleDestroy();
+      await destroyNow(timed);
       stopMetrics();
       await meterProvider.shutdown();
       vi.useRealTimers();
@@ -1097,7 +1249,7 @@ describe('ConversationGenerationService', () => {
     });
 
     afterEach(async () => {
-      service.onModuleDestroy();
+      await destroyNow(service);
       stopMetrics();
       await meterProvider.shutdown();
       vi.useRealTimers();
@@ -1232,8 +1384,8 @@ describe('ConversationGenerationService', () => {
       attachment.emitter.on('terminal', onTerminal);
       getAttachment(OTHER_OWNER_KEY).emitter.on('terminal', secondOnTerminal);
 
-      service.onModuleDestroy();
-      service.onModuleDestroy();
+      await destroyNow(service);
+      await destroyNow(service);
 
       expect(lease.abortController.signal.aborted).toBe(true);
       expect(secondLease.abortController.signal.aborted).toBe(true);
@@ -1275,8 +1427,8 @@ describe('ConversationGenerationService', () => {
         });
 
       try {
-        expect(() => service.onModuleDestroy()).not.toThrow();
-        service.onModuleDestroy();
+        await expect(destroyNow(service)).resolves.toBeUndefined();
+        await destroyNow(service);
 
         expect(throwingSubscriber).toHaveBeenCalledExactlyOnceWith({
           type: 'stopped',
@@ -1360,14 +1512,14 @@ describe('ConversationGenerationService', () => {
       ],
       [
         'shutdown after stop',
-        (_lease: GenerationLease) => {
+        async (_lease: GenerationLease) => {
           service.abort(OWNER_KEY, PATH, GENERATION_ID);
-          service.onModuleDestroy();
+          await destroyNow(service);
         },
       ],
     ])(
       '%s delivers exactly one terminal event and releases once',
-      (_label, run) => {
+      async (_label, run) => {
         service = new ConversationGenerationService(
           makeConfigService({ MAX_GENERATION_DURATION_MS: 1000 }),
         );
@@ -1379,13 +1531,13 @@ describe('ConversationGenerationService', () => {
         attachment.emitter.on('terminal', disconnected);
         attachment.emitter.off('terminal', disconnected);
 
-        run(lease);
+        await run(lease);
 
         expect(onTerminal).toHaveBeenCalledOnce();
         expect(disconnected).not.toHaveBeenCalled();
         expect(service.getStatus(OWNER_KEY, PATH)).toBeUndefined();
         expect(vi.getTimerCount()).toBe(0);
-        service.onModuleDestroy();
+        await destroyNow(service);
       },
     );
 

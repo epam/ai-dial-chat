@@ -244,6 +244,58 @@ describe('ConversationPublishService', () => {
       );
     });
 
+    it.each([
+      ['rejects with 409', Date.now() + 60_000, true],
+      ['publishes', Date.now() - 1, false],
+    ])(
+      '%s for a conversation whose foreground marker expires at %s',
+      async (_label, expiresAt, isRefused) => {
+        const { service, dialClient } = makeService();
+        vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+          okResponse({
+            name: 'Generating',
+            messages: [
+              {
+                role: 'assistant',
+                content: '',
+                timestamp: 't',
+                foregroundGeneration: {
+                  generationId: '9d1e2f3a-4b5c-4d6e-8f70-81a2b3c4d5e6',
+                  startedAt: 1,
+                  expiresAt,
+                },
+              },
+            ],
+          }),
+        );
+
+        const outcome = await service
+          .publish(
+            'token-abc',
+            'bucket-123',
+            'my-conversation-abc',
+            'Organization/Data Science',
+            'Test User',
+          )
+          .then(
+            () => undefined,
+            (err: unknown) => err,
+          );
+
+        if (isRefused) {
+          expect(outcome).toMatchObject({
+            status: 409,
+            message: PUBLISH_WHILE_GENERATING_MESSAGE,
+          });
+          expect(dialClient.client.createPublication).not.toHaveBeenCalled();
+        } else {
+          expect(outcome).not.toMatchObject({
+            message: PUBLISH_WHILE_GENERATING_MESSAGE,
+          });
+        }
+      },
+    );
+
     it('rejects with 409 while an answer is still being generated in the background, and publishes nothing', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(

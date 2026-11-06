@@ -21,11 +21,15 @@ import {
 } from '../dto/conversation-message.dto';
 import { BackgroundGenerationService } from '../generation/background-generation.service';
 import { neutralizeForeignPendingMessages } from '../generation/background-message';
-import { ConversationGenerationService } from '../generation/conversation-generation.service';
+import {
+  ConversationGenerationService,
+  GENERATION_SHUTDOWN_FLUSH_MS,
+} from '../generation/conversation-generation.service';
 import {
   CoreResponseResultKind,
   type CoreResponsesClient,
 } from '../generation/core-responses.client';
+import { ForegroundStopResult } from '../generation/foreground-message';
 import { ResponsesAdapter } from '../generation/responses.adapter';
 import {
   runConditionalUpdate,
@@ -174,6 +178,8 @@ describe('POST /conversations/completions/attach — background generations', ()
                 generationId,
                 content,
               ),
+            /* No foreground marker exists in these conversations. */
+            stopForegroundGeneration: async () => ForegroundStopResult.NotFound,
             saveClientConversation: async (
               path: string,
               token: string,
@@ -195,6 +201,7 @@ describe('POST /conversations/completions/attach — background generations', ()
         },
         { provide: ConfigService, useValue: { get: vi.fn() } },
         ConversationGenerationService,
+        { provide: GENERATION_SHUTDOWN_FLUSH_MS, useValue: 0 },
       ],
     }).compile();
     app = module.createNestApplication();
@@ -651,7 +658,7 @@ describe('POST /conversations/completions/attach — background generations', ()
       expect(fallbackSave).not.toHaveBeenCalled();
     });
 
-    it('keeps the unconditional save when the conversation cannot be read', async () => {
+    it('answers 503 instead of an unfenced save when the conversation cannot be read', async () => {
       store = makeStore([]);
       vi.mocked(store.persistence.readConversationWithEtag).mockRejectedValue(
         new Error('storage down'),
@@ -659,9 +666,9 @@ describe('POST /conversations/completions/attach — background generations', ()
       await startApp();
       const body = { id: `test-bucket/${PATH}`, name: 'c', messages: [user] };
 
-      await save(body).expect(200);
+      await save(body).expect(503);
 
-      expect(fallbackSave).toHaveBeenCalledWith(body);
+      expect(fallbackSave).not.toHaveBeenCalled();
     });
   });
 });

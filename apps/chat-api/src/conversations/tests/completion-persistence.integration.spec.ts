@@ -50,6 +50,8 @@ describe('completion persistence over HTTP', () => {
   let core: Server;
   let registry: ConversationGenerationService;
   let stored: ConversationResponseDto;
+  /* DIAL Core's version of `stored`, returned as its ETag and checked against If-Match. */
+  let storedVersion: number;
   let terminalStatus: number;
   let coreTime: number;
   let writes: { body: ConversationResponseDto; authorization?: string }[];
@@ -58,6 +60,7 @@ describe('completion persistence over HTTP', () => {
   let modelCalls: number;
   let holdConversationReads: boolean;
   let holdConversationWrites: boolean;
+  let holdModelResponse: boolean;
   let heldRequests: (() => void)[];
   /* Lowered only by the bounded-preparation tests, before the app is built. */
   let preparationTimeoutMs = 30_000;
@@ -86,6 +89,7 @@ describe('completion persistence over HTTP', () => {
 
   beforeEach(async () => {
     terminalStatus = 200;
+    storedVersion = 1;
     coreTime = 0;
     writes = [];
     terminalEvents = [];
@@ -93,6 +97,7 @@ describe('completion persistence over HTTP', () => {
     modelCalls = 0;
     holdConversationReads = false;
     holdConversationWrites = false;
+    holdModelResponse = false;
     heldRequests = [];
     stored = {
       id: 'bucket/test-path',
@@ -138,6 +143,9 @@ describe('completion persistence over HTTP', () => {
       }
       if (url.pathname.includes('/chat/completions')) {
         modelCalls += 1;
+        if (holdModelResponse) {
+          await new Promise<void>((release) => heldRequests.push(release));
+        }
         const attachment = registry.attach('c:test-session', 'test-path');
         attachment?.emitter.on('terminal', (event: GenerationTerminalEvent) =>
           terminalEvents.push(event),
@@ -152,6 +160,7 @@ describe('completion persistence over HTTP', () => {
       }
       if (url.pathname.includes('/conversations/')) {
         if (req.method === 'GET') {
+          res.setHeader('ETag', `"v${storedVersion}"`);
           res.end(JSON.stringify(stored));
           return;
         }
@@ -164,7 +173,18 @@ describe('completion persistence over HTTP', () => {
             );
             return;
           }
+          const ifMatch = req.headers['if-match'];
+          if (ifMatch != null && ifMatch !== `"v${storedVersion}"`) {
+            res
+              .writeHead(412)
+              .end(
+                JSON.stringify({ error: { message: 'precondition failed' } }),
+              );
+            return;
+          }
           stored = JSON.parse(body) as ConversationResponseDto;
+          storedVersion += 1;
+          res.setHeader('ETag', `"v${storedVersion}"`);
           res.end(JSON.stringify(stored));
           return;
         }
@@ -250,6 +270,14 @@ describe('completion persistence over HTTP', () => {
   });
 
   afterEach(async () => {
+    /*
+     * Shutdown waits for foreground workers to settle; a request the fixture still holds
+     * would keep its worker pending until the flush bound.
+     */
+    holdConversationReads = false;
+    holdConversationWrites = false;
+    holdModelResponse = false;
+    heldRequests.forEach((release) => release());
     await app?.close();
     if (core) {
       core.closeAllConnections();
@@ -271,26 +299,32 @@ describe('completion persistence over HTTP', () => {
       })
       .expect(200);
 
+  /*
+   * The terminal write re-reads the conversation before writing it, so an expired token
+   * is already refused on that read and no second PUT is sent; a storage failure is the
+   * PUT's own status.
+   */
   it.each([
-    [401, 401],
-    [503, 502],
+    [401, 401, 1],
+    [503, 502, 2],
   ])(
     'reports HTTP %i on the terminal write after delivering text and stages',
-    async (status, reportedStatus) => {
+    async (status, reportedStatus, writeCount) => {
       terminalStatus = status;
       const response = await complete();
       expect(response.text).toContain('Visible answer');
       expect(response.text).toContain('Visible step');
-      expect(writes).toHaveLength(2);
+      expect(writes).toHaveLength(writeCount);
       expect(writes[0].body.messages.at(-1)?.content).toBe('');
-      expect(writes[1].body.messages.at(-1)?.content).toBe('Visible answer');
-      expect(
-        writes[1].body.messages.at(-1)?.custom_content?.stages,
-      ).toHaveLength(1);
-      expect(writes.map((write) => write.authorization)).toEqual([
-        'Bearer expiring-token',
-        'Bearer expiring-token',
-      ]);
+      if (writeCount === 2) {
+        expect(writes[1].body.messages.at(-1)?.content).toBe('Visible answer');
+        expect(
+          writes[1].body.messages.at(-1)?.custom_content?.stages,
+        ).toHaveLength(1);
+      }
+      expect(writes.map((write) => write.authorization)).toEqual(
+        Array(writeCount).fill('Bearer expiring-token'),
+      );
       expect(stored.messages.at(-1)?.content).toBe('');
       expect(stored.messages.at(-1)?.custom_content?.stages ?? []).toEqual([]);
       expect(registry.attach('c:test-session', 'test-path')).toBeUndefined();
@@ -351,6 +385,27 @@ describe('completion persistence over HTTP', () => {
       },
       { index: 9, name: 'Read', parent_stage_index: 4, status: 'failed' },
     ]);
+  });
+
+  it('leaves no marker in storage when the app shuts down while an answer streams', async () => {
+    holdModelResponse = true;
+    const completion = complete().then(
+      () => undefined,
+      () => undefined,
+    );
+    await vi.waitFor(() => expect(heldRequests).toHaveLength(1));
+    expect(stored.messages.at(-1)?.foregroundGeneration).toBeDefined();
+
+    const closing = app.close();
+    heldRequests.forEach((release) => release());
+    await closing;
+    app = undefined as unknown as INestApplication;
+    await completion;
+
+    const answer = stored.messages.at(-1);
+    expect(answer).not.toHaveProperty('foregroundGeneration');
+    expect(answer?.streamErrorMessage).toBe('');
+    expect(writes).toHaveLength(2);
   });
 
   describe('bounded preparation', () => {
@@ -468,18 +523,28 @@ describe('completion persistence over HTTP', () => {
       expect(stoppedMessage?.streamErrorMessage).toBeUndefined();
     });
 
-    it('makes the abandoned start-state save the only write, with no terminal save after it settles', async () => {
+    it('releases the marker of an abandoned start-state save once it lands, with no terminal save', async () => {
       holdConversationWrites = true;
 
       await postCompletion().expect(503);
       expect(writes).toHaveLength(1);
 
+      holdConversationWrites = false;
       heldRequests.forEach((release) => release());
       await waitForKeyRelease();
 
-      expect(writes).toHaveLength(1);
-      expect(writes[0].body.messages.at(-1)?.content).toBe('');
+      expect(writes).toHaveLength(2);
+      expect(
+        writes[0].body.messages.at(-1)?.foregroundGeneration,
+      ).toMatchObject({
+        generationId: COMPLETION_BODY.generationId,
+      });
+      const released = writes[1].body.messages.at(-1);
+      expect(released?.content).toBe('');
+      expect(released).not.toHaveProperty('foregroundGeneration');
+      expect(released?.streamErrorMessage).toBe('');
       expect(modelCalls).toBe(0);
+      await postCompletion().expect(200);
     });
   });
 });

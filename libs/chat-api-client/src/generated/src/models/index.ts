@@ -2258,6 +2258,12 @@ export interface ConversationMessageDto {
    */
   backgroundGeneration?: BackgroundGenerationDto;
   /**
+   * Present only while a Chat Completions or stateless Responses generation is producing this assistant message. Server-owned: it holds the conversation until expiresAt, and client saves cannot create, change or drop it.
+   * @type {ForegroundGenerationDto}
+   * @memberof ConversationMessageDto
+   */
+  foregroundGeneration?: ForegroundGenerationDto;
+  /**
    * Deployment that produced this message. Present on assistant and status messages.
    * @type {string}
    * @memberof ConversationMessageDto
@@ -5636,6 +5642,37 @@ export interface FileUploadResponseDto {
    * @memberof FileUploadResponseDto
    */
   url: string;
+}
+/**
+ *
+ * @export
+ * @interface ForegroundGenerationDto
+ */
+export interface ForegroundGenerationDto {
+  /**
+   * Client-supplied generation id of the request that started the generation; identifies this message across writes.
+   * @type {string}
+   * @memberof ForegroundGenerationDto
+   */
+  generationId: string;
+  /**
+   * Server time (epoch ms) at which the start-state write was built.
+   * @type {number}
+   * @memberof ForegroundGenerationDto
+   */
+  startedAt: number;
+  /**
+   * Server time (epoch ms) after which the marker no longer holds the conversation.
+   * @type {number}
+   * @memberof ForegroundGenerationDto
+   */
+  expiresAt: number;
+  /**
+   * Server time (epoch ms) at which a Stop was stored on the marker; the generation stops at its next re-read.
+   * @type {number}
+   * @memberof ForegroundGenerationDto
+   */
+  stopRequestedAt?: number;
 }
 /**
  *

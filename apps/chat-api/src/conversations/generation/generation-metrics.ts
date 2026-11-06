@@ -90,3 +90,28 @@ export const backgroundGenerationOutcomesTotal = meter.createCounter(
       'Lifecycle outcomes of DIAL Core background Responses generations, by reason.',
   },
 );
+
+/** Outcomes of the stored lock a Chat Completions or stateless Responses generation holds. */
+export enum ForegroundGenerationOutcome {
+  StartConflict = 'start_conflict',
+  ExpiredTakeover = 'expired_takeover',
+  StartFailed = 'start_failed',
+  TerminalSkipped = 'terminal_skipped',
+  TerminalConflict = 'terminal_conflict',
+  StopStored = 'stop_stored',
+  LockLost = 'lock_lost',
+  ReleasedBeforeStream = 'released_before_stream',
+  ReleaseFailed = 'release_failed',
+}
+
+/*
+ * One point per foreground lock outcome, tagged only with the outcome — never
+ * with content, principal, path or generation id.
+ */
+export const foregroundGenerationOutcomesTotal = meter.createCounter(
+  'generation.foreground.outcomes',
+  {
+    description:
+      'Outcomes of the stored lock held by Chat Completions and stateless Responses generations, by reason.',
+  },
+);

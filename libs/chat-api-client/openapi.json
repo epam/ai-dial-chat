@@ -4256,10 +4256,10 @@
             "description": "Not authenticated"
           },
           "404": {
-            "description": "No active generation found for this principal for the given path and generationId"
+            "description": "No active generation the caller may stop for the given path and generationId"
           },
           "503": {
-            "description": "The stopped state of a background generation could not be saved; the generation keeps running and Stop can be retried"
+            "description": "The Stop could not be saved for a background generation or on a foreground generation marker; the generation keeps running and Stop can be retried"
           }
         },
         "summary": "Stop an active generation",
@@ -11268,10 +11268,10 @@
             "description": "The projectsEnabled feature is not enabled for this user, the caller may not write to the project (`canEdit: false`: a view-only share or an organization project), or DIAL Core denied access"
           },
           "404": {
-            "description": "No active generation found for this principal for the given path and generationId"
+            "description": "No active generation the caller may stop for the given path and generationId"
           },
           "503": {
-            "description": "The stopped state of a background generation could not be saved; Stop can be retried"
+            "description": "The Stop could not be saved for a background generation or on a foreground generation marker; the generation keeps running and Stop can be retried"
           }
         },
         "summary": "Stop a generation of a project conversation",
@@ -16233,6 +16233,32 @@
         },
         "required": ["generationId", "status", "startedAt"]
       },
+      "ForegroundGenerationDto": {
+        "type": "object",
+        "properties": {
+          "generationId": {
+            "type": "string",
+            "description": "Client-supplied generation id of the request that started the generation; identifies this message across writes.",
+            "example": "4b2c8f1e-7d3a-4c5b-9e2f-0a1b2c3d4e5f"
+          },
+          "startedAt": {
+            "type": "number",
+            "description": "Server time (epoch ms) at which the start-state write was built.",
+            "example": 1793875200000
+          },
+          "expiresAt": {
+            "type": "number",
+            "description": "Server time (epoch ms) after which the marker no longer holds the conversation.",
+            "example": 1793877120000
+          },
+          "stopRequestedAt": {
+            "type": "number",
+            "description": "Server time (epoch ms) at which a Stop was stored on the marker; the generation stops at its next re-read.",
+            "example": 1793875260000
+          }
+        },
+        "required": ["generationId", "startedAt", "expiresAt"]
+      },
       "ConversationMessageDto": {
         "type": "object",
         "properties": {
@@ -16272,6 +16298,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/BackgroundGenerationDto"
+              }
+            ]
+          },
+          "foregroundGeneration": {
+            "description": "Present only while a Chat Completions or stateless Responses generation is producing this assistant message. Server-owned: it holds the conversation until expiresAt, and client saves cannot create, change or drop it.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ForegroundGenerationDto"
               }
             ]
           },
