@@ -24,16 +24,13 @@ import {
 import {
   DEFAULT_RESOURCE_VERSION,
   ResourceIdentityTab,
-  buildResourceNameConflict,
-  findDuplicateIdentity,
   getResourceIdentityFolder,
   resolveDisplayedName,
   type ResourceIdentityCandidate,
 } from '../../common/utils/resource-identity';
-import { toResourceIdentityEntries } from '../../common/utils/resource-identity-sources';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
-import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
+import { ResourceIdentityService } from '../../resource-identity/resource-identity.service';
 import { ToolsetAuthType } from '../dto/toolset-body.dto';
 import type {
   CreateToolsetBodyDto,
@@ -62,47 +59,8 @@ export class ToolsetsMutationService {
   constructor(
     private readonly dialClient: DialClientService,
     private readonly listingService: ToolsetsListingService,
-    private readonly deploymentsService: DeploymentsService,
+    private readonly identityService: ResourceIdentityService,
   ) {}
-
-  /**
-   * Rejects a write that would give a toolset the displayed name and version
-   * of another own entity in the Toolsets tab and the same folder. Reads
-   * toolsets and deployments fresh, because the duplicate may be seconds old.
-   * @param userSub - session user the lists are cached under
-   * @param accessToken - bearer token for DIAL Core
-   * @param bucket - the caller's own bucket
-   * @param candidate - identity the write is about to apply
-   * @param selfId - id of the toolset being updated, skipped in the comparison
-   */
-  private async assertNoDuplicateIdentity(
-    userSub: string,
-    accessToken: string,
-    bucket: string,
-    candidate: ResourceIdentityCandidate,
-    selfId?: string,
-  ): Promise<void> {
-    const [toolsets, deployments] = await Promise.all([
-      this.listingService.listToolsets(userSub, accessToken, bucket, true),
-      this.deploymentsService.listDeployments(
-        userSub,
-        accessToken,
-        bucket,
-        undefined,
-        true,
-      ),
-    ]);
-    const duplicate = findDuplicateIdentity({
-      candidate,
-      tabs: [ResourceIdentityTab.Toolsets],
-      entries: toResourceIdentityEntries(
-        deployments.deployments,
-        toolsets.data,
-      ),
-      selfId,
-    });
-    if (duplicate) throw buildResourceNameConflict(duplicate);
-  }
 
   /**
    * For an existing own toolset, rejects a rename, version change or move that
@@ -124,13 +82,12 @@ export class ToolsetsMutationService {
     selfId: string,
     change: Partial<ResourceIdentityCandidate>,
   ): Promise<void> {
-    const toolsets = await this.listingService.listToolsets(
+    const toolsets = await this.identityService.listFreshToolsets(
       userSub,
       accessToken,
       bucket,
-      true,
     );
-    const self = toolsets.data.find((item) => item.id === selfId);
+    const self = toolsets.find((item) => item.id === selfId);
     if (self?.isMy !== true) return;
 
     const current = {
@@ -151,23 +108,15 @@ export class ToolsetsMutationService {
       return;
     }
 
-    const deployments = await this.deploymentsService.listDeployments(
+    await this.identityService.assertUnique({
       userSub,
       accessToken,
       bucket,
-      undefined,
-      true,
-    );
-    const duplicate = findDuplicateIdentity({
       candidate: next,
       tabs: [ResourceIdentityTab.Toolsets],
-      entries: toResourceIdentityEntries(
-        deployments.deployments,
-        toolsets.data,
-      ),
       selfId,
+      toolsets,
     });
-    if (duplicate) throw buildResourceNameConflict(duplicate);
   }
 
   private async tryGetCustomToolsetAuthSettings(
@@ -204,13 +153,15 @@ export class ToolsetsMutationService {
       );
       const version = body.version ?? DEFAULT_TOOLSET_VERSION;
       const folderPath = body.folderPath ?? '';
-      if (body.createOnly) {
-        await this.assertNoDuplicateIdentity(userSub, accessToken, bucket, {
-          folder: folderPath,
-          name: body.name,
-          version,
+      const assertUnique = () =>
+        this.identityService.assertUnique({
+          userSub,
+          accessToken,
+          bucket,
+          candidate: { folder: folderPath, name: body.name, version },
+          tabs: [ResourceIdentityTab.Toolsets],
         });
-      }
+      if (body.createOnly) await assertUnique();
 
       /*
        * The SDK types `displayName`/`description` as plain `string`; DIAL
@@ -227,7 +178,10 @@ export class ToolsetsMutationService {
        * toolset the user now sees under another name. Once the identity check
        * has passed, a create-only request moves on to the next free path
        * instead of refusing a name nothing visible owns; each try is still
-       * atomic via `If-None-Match`, so no existing toolset is overwritten.
+       * atomic via `If-None-Match`, so no existing toolset is overwritten. A
+       * `412` can also mean a concurrent create just took the same identity,
+       * so the check runs again on fresh lists before the next candidate and
+       * only a path held under a different identity moves on.
        */
       const maxAttempts = body.createOnly ? MAX_CREATE_PATH_ATTEMPTS : 1;
       let path = '';
@@ -253,6 +207,7 @@ export class ToolsetsMutationService {
         );
         if (!response.error) break;
         if (body.createOnly && response.response.status === 412) {
+          await assertUnique();
           if (attempt < maxAttempts) continue;
           throw new ConflictException('Toolset version already exists');
         }

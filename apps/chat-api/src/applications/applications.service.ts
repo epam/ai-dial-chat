@@ -46,18 +46,15 @@ import {
   DEFAULT_RESOURCE_VERSION,
   ResourceIdentityKind,
   ResourceIdentityTab,
-  buildResourceNameConflict,
-  findDuplicateIdentity,
   getResourceIdentityFolder,
   getResourceIdentityTabs,
   resolveDisplayedName,
 } from '../common/utils/resource-identity';
-import { toResourceIdentityEntries } from '../common/utils/resource-identity-sources';
 import { DeploymentsService } from '../deployments/deployments.service';
 import { DeploymentsDetailsService } from '../deployments/details/deployments-details.service';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
-import { ToolsetsListingService } from '../toolsets/listing/toolsets-listing.service';
+import { ResourceIdentityService } from '../resource-identity/resource-identity.service';
 import type {
   CommitApplicationVersionDto,
   ForkApplicationVersionDto,
@@ -84,18 +81,17 @@ export class ApplicationsService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly deploymentsService: DeploymentsService,
     private readonly deploymentsDetailsService: DeploymentsDetailsService,
-    private readonly toolsetsListingService: ToolsetsListingService,
+    private readonly identityService: ResourceIdentityService,
   ) {}
 
   /**
    * Rejects a write that would give an application the displayed name and
    * version of another own entity in the same folder and a shared catalog tab.
-   * Both lists are read fresh because a duplicate may be seconds old. A new
-   * application competes as an agent; an existing one competes in the tabs its
-   * `interfaces` place it in, read from its entry in the deployments list (a
-   * stored body carries none), and toolsets are read only for the Toolsets tab.
-   * A name or version the write does not set is taken from that entry, and an
-   * application the caller does not own is not checked.
+   * A new application competes as an agent; an existing one competes in the
+   * tabs its `interfaces` place it in, read from its entry in the deployments
+   * list (a stored body carries none). A name or version the write does not set
+   * is taken from that entry, and an application the caller does not own is not
+   * checked.
    * @param userSub - session user the lists are cached under
    * @param accessToken - bearer token for DIAL Core
    * @param bucket - the caller's own bucket
@@ -112,17 +108,15 @@ export class ApplicationsService {
     sourceId?: string,
     excludeSource = true,
   ): Promise<void> {
-    const deployments = await this.deploymentsService.listDeployments(
+    const deployments = await this.identityService.listFreshDeployments(
       userSub,
       accessToken,
       bucket,
-      undefined,
-      true,
     );
     const source =
       sourceId == null
         ? undefined
-        : deployments.deployments.find((item) => item.id === sourceId);
+        : deployments.find((item) => item.id === sourceId);
     if (source?.isMy === false) return;
 
     const name =
@@ -130,23 +124,10 @@ export class ApplicationsService {
       (source == null ? undefined : resolveDisplayedName(source.displayName));
     if (name == null) return;
 
-    const tabs = source
-      ? getResourceIdentityTabs(
-          ResourceIdentityKind.Application,
-          source.interfaces,
-        )
-      : [ResourceIdentityTab.Agents];
-    const toolsets = tabs.includes(ResourceIdentityTab.Toolsets)
-      ? (
-          await this.toolsetsListingService.listToolsets(
-            userSub,
-            accessToken,
-            bucket,
-            true,
-          )
-        ).data
-      : [];
-    const duplicate = findDuplicateIdentity({
+    await this.identityService.assertUnique({
+      userSub,
+      accessToken,
+      bucket,
       candidate: {
         folder: candidate.folder,
         name,
@@ -155,11 +136,15 @@ export class ApplicationsService {
           source?.displayVersion ??
           DEFAULT_RESOURCE_VERSION,
       },
-      tabs,
-      entries: toResourceIdentityEntries(deployments.deployments, toolsets),
+      tabs: source
+        ? getResourceIdentityTabs(
+            ResourceIdentityKind.Application,
+            source.interfaces,
+          )
+        : [ResourceIdentityTab.Agents],
       selfId: excludeSource ? sourceId : undefined,
+      deployments,
     });
-    if (duplicate) throw buildResourceNameConflict(duplicate);
   }
 
   private async getUserBucket(
@@ -250,13 +235,13 @@ export class ApplicationsService {
 
       const version = body.version ?? DEFAULT_RESOURCE_VERSION;
 
-      if (body.createOnly) {
-        await this.assertNoDuplicateIdentity(userSub, accessToken, bucket, {
+      const assertUnique = () =>
+        this.assertNoDuplicateIdentity(userSub, accessToken, bucket, {
           folder: body.folderPath ?? '',
           name: body.name,
           version,
         });
-      }
+      if (body.createOnly) await assertUnique();
 
       const {
         endpoint,
@@ -327,6 +312,9 @@ export class ApplicationsService {
        * sees under another name. Instead of rejecting a name nothing visible
        * owns, a create-only request moves on to the next free path; each try
        * is still atomic via `If-None-Match`, so no existing app is overwritten.
+       * A `412` can also mean a concurrent create just took the same identity,
+       * so the check runs again on fresh lists before the next candidate and
+       * only a path held under a different identity moves on.
        */
       const maxAttempts = body.createOnly ? MAX_CREATE_PATH_ATTEMPTS : 1;
       let appPath = '';
@@ -350,6 +338,7 @@ export class ApplicationsService {
         );
         if (!response.error) break;
         if (body.createOnly && response.response.status === 412) {
+          await assertUnique();
           if (attempt < maxAttempts) continue;
           throw new ConflictException('Application name already taken');
         }

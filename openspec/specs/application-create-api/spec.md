@@ -178,9 +178,11 @@ that check passes, on Core's 412 precondition failure the BFF
 SHALL retry at the next candidate path (`<name>-2__<version>`, `<name>-3__<version>`, …,
 up to 20 candidates in total), each attempt again with `If-None-Match: *`, keeping the
 display name the caller supplied and returning the `id` of the path actually created.
-The retry therefore only places a new application next to an entity whose displayed
-identity differs (a renamed application still holding the original path) or next to a
-concurrent create that raced the check.
+Before each next candidate the duplicate check SHALL run again on fresh lists: when the
+path is held by an entity with the same displayed identity (a concurrent create that
+raced the first check) the BFF SHALL respond with the coded `409` instead, and the retry
+only places a new application next to an entity whose displayed identity differs (a
+renamed application still holding the original path).
 Only when every candidate is taken SHALL the BFF respond 409, without invalidating caches.
 Any other Core error is not retried. Omitting the option retains legacy unconditional
 write semantics.

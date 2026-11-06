@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../../dial/dial-client.service';
+import { ResourceIdentityService } from '../../../resource-identity/resource-identity.service';
 import {
   ToolsetAuthType,
   ToolsetTransport,
@@ -80,7 +81,7 @@ function makeWriteService() {
   const service = new ToolsetsMutationService(
     dialClient,
     listingService,
-    identityDeployments as never,
+    new ResourceIdentityService(identityDeployments as never, listingService),
   );
   return {
     service,
@@ -1095,7 +1096,7 @@ describe('ToolsetsMutationService', () => {
         expect(cacheManager.del).toHaveBeenCalledWith('toolsets:list:user1');
       });
 
-      it('places a racing create at the next free path inside the same folder', async () => {
+      it('places a create whose path is held under another identity at the next free path inside the same folder', async () => {
         const { service } = makeWriteService();
         client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
         client(service)
@@ -1110,6 +1111,33 @@ describe('ToolsetsMutationService', () => {
         expect(result).toEqual({
           id: 'toolsets/test-bucket/Design/old-2__1.0.0',
         });
+      });
+
+      it('answers the coded 409 when a concurrent create took the same identity', async () => {
+        const { service, listToolsetsSpy, cacheManager } = makeWriteService();
+        client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+        client(service).saveToolSet.mockResolvedValue(errResponse(412));
+        listToolsetsSpy.mockResolvedValueOnce({ data: [] }).mockResolvedValue({
+          data: [
+            {
+              id: 'toolsets/test-bucket/old__1.0.0',
+              displayName: 'old',
+              displayVersion: '1.0.0',
+              isMy: true,
+            },
+          ],
+        } as never);
+
+        const error = await service
+          .createToolset('user1', 'token', createOnlyBody)
+          .catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(ConflictException);
+        expect((error as ConflictException).getResponse()).toMatchObject({
+          code: 'name-taken-toolset',
+        });
+        expect(client(service).saveToolSet).toHaveBeenCalledTimes(1);
+        expect(cacheManager.del).not.toHaveBeenCalled();
       });
 
       it('answers the path-only 409 without a code once every candidate is taken', async () => {

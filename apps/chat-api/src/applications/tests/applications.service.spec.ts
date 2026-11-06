@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DeploymentsService } from '../../deployments/deployments.service';
 import { DeploymentsDetailsService } from '../../deployments/details/deployments-details.service';
 import type { DialClientService } from '../../dial/dial-client.service';
+import { ResourceIdentityService } from '../../resource-identity/resource-identity.service';
 import { ApplicationsService } from '../applications.service';
 import type { ApplicationsResponseDto } from '../dto/application.dto';
 import type { CreateApplicationBodyDto } from '../dto/create-application.dto';
@@ -71,6 +72,16 @@ function makeToolsetsListing() {
   };
 }
 
+function makeIdentity(
+  deploymentsService: DeploymentsService,
+  toolsetsListing = makeToolsetsListing(),
+) {
+  return new ResourceIdentityService(
+    deploymentsService,
+    toolsetsListing as never,
+  );
+}
+
 function makeService() {
   const {
     dialClient,
@@ -84,7 +95,7 @@ function makeService() {
     cacheManager as never,
     deploymentsService,
     deploymentsDetailsService,
-    toolsetsListing as never,
+    makeIdentity(deploymentsService, toolsetsListing),
   );
   return {
     service,
@@ -135,7 +146,7 @@ describe('ApplicationsService', () => {
         cacheManager as never,
         deploymentsService,
         deploymentsDetailsService,
-        makeToolsetsListing() as never,
+        makeIdentity(deploymentsService),
       );
       const spy = vi
         .spyOn(
@@ -165,7 +176,7 @@ describe('ApplicationsService', () => {
         cacheManager as never,
         deploymentsService,
         deploymentsDetailsService,
-        makeToolsetsListing() as never,
+        makeIdentity(deploymentsService),
       );
       vi.spyOn(
         (service['dialClient'] as DialClientService).client,
@@ -401,6 +412,26 @@ describe('ApplicationsService', () => {
         expect(result).toEqual({
           id: 'applications/test-bucket/My%20App-2__1.0.0',
         });
+      });
+
+      it('answers the coded 409 when a concurrent create took the same identity', async () => {
+        const { service, deploymentsService, cacheManager } = makeService();
+        const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+        saveCustomApplicationSpy.mockResolvedValue(errResponse(412));
+        vi.mocked(deploymentsService.listDeployments)
+          .mockResolvedValueOnce({ deployments: [] } as never)
+          .mockResolvedValue({ deployments: [ownAgent()] } as never);
+
+        const error = await service
+          .createApplication('user1', 'token', { ...body, createOnly: true })
+          .catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(ConflictException);
+        expect((error as ConflictException).getResponse()).toMatchObject({
+          code: 'name-taken-agent',
+        });
+        expect(saveCustomApplicationSpy).toHaveBeenCalledOnce();
+        expect(cacheManager.del).not.toHaveBeenCalled();
       });
 
       it('does not check a create that is not create-only', async () => {
@@ -1569,7 +1600,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
       cacheManager as never,
       deploymentsService,
       deploymentsDetailsService,
-      makeToolsetsListing() as never,
+      makeIdentity(deploymentsService),
     );
 
     return { sdkClient, applicationsService, deploymentsDetailsService };

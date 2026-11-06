@@ -193,12 +193,19 @@ The check SHALL read the caller's current own-bucket toolsets and deployments wi
 serving a result cached before the request, so a duplicate created moments earlier is
 seen. A failure to read either source SHALL fail the write with the same status mapping as
 that read (it SHALL NOT silently skip the check). Concurrent writes that both pass the
-check are not serialised; the path-level protection still prevents overwriting.
+check are not serialised, but a create-only write that meets a taken path (`412`) SHALL run
+the check again on fresh lists before trying the next candidate path, so a racing create
+with the same identity gets the coded `409` instead of a silent duplicate at the next path.
 
 #### Scenario: Fresh read
 
 - **WHEN** an agent was created 5 seconds ago and a second create with the same identity arrives
 - **THEN** the second create is rejected as a duplicate
+
+#### Scenario: Racing create with the same identity
+
+- **WHEN** two create-only writes with the same name, version and folder both pass the first check and the second receives `412`
+- **THEN** the second runs the check again, sees the first entity and responds with the coded `409`, and nothing is written at the next free path
 
 #### Scenario: Listing fails
 

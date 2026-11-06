@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DeploymentsModule } from '../deployments/deployments.module';
+import { ResourceIdentityModule } from '../resource-identity/resource-identity.module';
 import { UserConfigModule } from '../user-config/user-config.module';
 import { ToolsetsAuthService } from './auth/toolsets-auth.service';
 import { ToolsetsListingModule } from './listing/toolsets-listing.module';
@@ -10,7 +11,12 @@ import { ToolsetsController } from './toolsets.controller';
 import { ToolsetsService } from './toolsets.service';
 
 @Module({
-  imports: [UserConfigModule, DeploymentsModule, ToolsetsListingModule],
+  imports: [
+    UserConfigModule,
+    DeploymentsModule,
+    ToolsetsListingModule,
+    ResourceIdentityModule,
+  ],
   controllers: [ToolsetsController, McpAppController],
   providers: [
     ToolsetsService,
