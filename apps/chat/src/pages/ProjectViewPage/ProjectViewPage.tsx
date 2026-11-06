@@ -95,9 +95,37 @@ const ProjectViewPage: FC = () => {
     ]);
     if (outcome === ProjectRefreshOutcome.NotFound) handleDeletedElsewhere();
   }, [handleDeletedElsewhere, refresh, refreshArtifacts, refreshConversations]);
+  /*
+   * A created chat opens right away, and the page's own writes would only
+   * trigger refreshes that the navigation cancels. A created chat always
+   * navigates to the chat route, which unmounts this page, so the hold is
+   * released only when the create fails or the route names another project.
+   */
+  const isCreatingChatRef = useRef(false);
+  const hasMissedChangeRef = useRef(false);
+  useEffect(() => {
+    isCreatingChatRef.current = false;
+    hasMissedChangeRef.current = false;
+  }, [projectId]);
+  const handleLiveChange = useCallback(async () => {
+    if (isCreatingChatRef.current) {
+      hasMissedChangeRef.current = true;
+      return;
+    }
+    await handleProjectChanged();
+  }, [handleProjectChanged]);
+  const handleChatCreateStart = useCallback(() => {
+    isCreatingChatRef.current = true;
+  }, []);
+  const handleChatCreateFailed = useCallback(() => {
+    isCreatingChatRef.current = false;
+    if (!hasMissedChangeRef.current) return;
+    hasMissedChangeRef.current = false;
+    void handleProjectChanged();
+  }, [handleProjectChanged]);
   useProjectWatch(projectsClient, project?.id ?? null, {
     etag: project?.etag,
-    onChange: handleProjectChanged,
+    onChange: handleLiveChange,
     onDelete: handleDeletedElsewhere,
   });
   const labels = useProjectViewLabels();
@@ -244,6 +272,8 @@ const ProjectViewPage: FC = () => {
               canEdit={canEdit}
               conversations={conversations}
               onConversationDeleted={handleConversationDeleted}
+              onChatCreateStart={handleChatCreateStart}
+              onChatCreateFailed={handleChatCreateFailed}
               /* An Outputs section with files or an error is content of its own, so no "no outputs" empty state under it. */
               hasOutputs={outputItems.length > 0 || artifacts.hasError}
               /* Always mounted: it shows nothing until there are outputs or an error, and keeps its live region in place. */
