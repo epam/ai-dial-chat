@@ -99,6 +99,7 @@ export const useProjectConversations = (
     | 'listProjectConversations'
     | 'getProjectConversationTitles'
     | 'renameProjectConversation'
+    | 'generateProjectConversationTitle'
     | 'deleteProjectConversation'
     | 'markProjectConversationViewed'
   >,
@@ -295,6 +296,14 @@ export const useProjectConversations = (
     [client],
   );
 
+  const generateTitle = useCallback(
+    async (id: string) => {
+      const { name } = await client.generateProjectConversationTitle(id);
+      return name;
+    },
+    [client],
+  );
+
   const remove = useCallback(
     async (id: string) => {
       await client.deleteProjectConversation(id);
@@ -330,6 +339,7 @@ export const useProjectConversations = (
     retry,
     loadMore,
     rename,
+    generateTitle,
     remove,
     refresh,
     markViewed,

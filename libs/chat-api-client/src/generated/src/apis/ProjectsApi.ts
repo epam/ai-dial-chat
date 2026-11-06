@@ -18,6 +18,7 @@ import type {
   ConversationResponseDto,
   CreateConversationDto,
   CreateProjectResponseDto,
+  GenerateTitleResponseDto,
   ListProjectsResponseDto,
   ProjectArtifactListResponseDto,
   ProjectConversationListResponseDto,
@@ -74,6 +75,11 @@ export interface DownloadProjectArtifactRequest {
 export interface DownloadProjectFileRequest {
   id: string;
   fileName: string;
+}
+
+export interface GenerateProjectConversationTitleRequest {
+  id: string;
+  conversationName: string;
 }
 
 export interface GetProjectRequest {
@@ -726,6 +732,79 @@ export class ProjectsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<Blob> {
     const response = await this.downloadProjectFileRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Generates a title with the operator-configured utility model from the most recent messages. The suggestion is returned but NOT persisted; the caller confirms the rename separately.
+   * Generate an LLM-based title suggestion for a project conversation
+   */
+  async generateProjectConversationTitleRaw(
+    requestParameters: GenerateProjectConversationTitleRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<GenerateTitleResponseDto>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling generateProjectConversationTitle().',
+      );
+    }
+
+    if (requestParameters['conversationName'] == null) {
+      throw new runtime.RequiredError(
+        'conversationName',
+        'Required parameter "conversationName" was null or undefined when calling generateProjectConversationTitle().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/conversations/{conversationName}/generate-title`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'conversationName'}}`,
+      encodeURIComponent(String(requestParameters['conversationName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<GenerateTitleResponseDto>(response);
+  }
+
+  /**
+   * Generates a title with the operator-configured utility model from the most recent messages. The suggestion is returned but NOT persisted; the caller confirms the rename separately.
+   * Generate an LLM-based title suggestion for a project conversation
+   */
+  async generateProjectConversationTitle(
+    requestParameters: GenerateProjectConversationTitleRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<GenerateTitleResponseDto> {
+    const response = await this.generateProjectConversationTitleRaw(
       requestParameters,
       initOverrides,
     );

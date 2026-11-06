@@ -81,6 +81,7 @@ export * from './hooks/useIsMobile';
 export * from './hooks/useIsPhone';
 export * from './hooks/useIsTablet';
 export * from './hooks/useIsTextClipped';
+export * from './hooks/useIsVerticallyClamped';
 export * from './hooks/useTextRefinement';
 export * from './hooks/useUnsavedChangesGuard';
 export * from './hooks/useUnsavedChangesLeaveGuard';

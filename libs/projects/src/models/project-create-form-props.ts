@@ -81,6 +81,8 @@ export interface ProjectCreateFormLabels {
   removeFileLabel: (name: string) => string;
   /** Accessible name of a clickable file card; read only when `onContextFileClick` is set. Defaults to `Preview {name}`, e.g. "Preview tickets.csv". */
   openFileLabel?: (name: string) => string;
+  /** Accessible name of a file card's download button; read only when `onContextFileDownload` is set. Defaults to `Download {name}`, e.g. "Download tickets.csv". */
+  downloadFileLabel?: (name: string) => string;
   /** Message per client-side file rejection, given the file name; shown as the drop zone's error, one per line. */
   fileRejections: Record<ContextFileRejection, (name: string) => string>;
   /** Announced after files are added, e.g. "2 files added". */
@@ -145,6 +147,8 @@ export interface ProjectCreateFormProps {
   onContextFilesChange: (files: ProjectContextFile[]) => void;
   /** Called with a card's `ProjectContextFile.id` when the user activates it; the cards are not clickable when omitted. */
   onContextFileClick?: (id: string) => void;
+  /** Called with a card's `ProjectContextFile.id` from its download button; the cards show no download button when omitted. */
+  onContextFileDownload?: (id: string) => void;
   /** `ProjectContextFile.id` of the card that renders selected; no card is selected when unset. */
   selectedContextFileId?: string;
   /** Lower-case extensions, without a dot, accepted as context files. */

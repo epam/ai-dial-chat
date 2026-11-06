@@ -3,6 +3,7 @@ import type {
   ConversationResponseDto,
   ProjectConversationListResponseDto,
   ProjectConversationTitlesResponseDto,
+  GenerateTitleResponseDto,
   RenameConversationResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 import type { RequestSkill } from '@epam/ai-dial-chat-shared';
@@ -64,6 +65,12 @@ export const renameProjectConversation = (
   newTitle: string,
 ): Promise<RenameConversationResponseDto> =>
   projectsRequests.renameProjectConversation(conversationId, newTitle);
+
+/** Suggests a title for a project conversation without saving it. */
+export const generateProjectConversationTitle = (
+  conversationId: string,
+): Promise<GenerateTitleResponseDto> =>
+  projectsRequests.generateProjectConversationTitle(conversationId);
 
 /** Deletes a project conversation. */
 export const deleteProjectConversation = (

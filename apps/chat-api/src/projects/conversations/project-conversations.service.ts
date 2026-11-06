@@ -217,6 +217,25 @@ export class ProjectConversationsService {
     return renamed;
   }
 
+  /** Suggests a title from the conversation's messages without saving it; needs write access, like a rename. */
+  async generateTitle(
+    project: ParsedProjectId,
+    name: string,
+    accessToken: string,
+    sessionBucket: string,
+  ): Promise<string> {
+    await this.accessService.assertCanWrite(
+      project,
+      sessionBucket,
+      accessToken,
+    );
+    return this.conversationService.generateTitle(
+      buildProjectConversationLocator(project, name),
+      accessToken,
+      sessionBucket,
+    );
+  }
+
   async deleteConversation(
     project: ParsedProjectId,
     name: string,
