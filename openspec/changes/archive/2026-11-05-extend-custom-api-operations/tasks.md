@@ -89,5 +89,5 @@ the existing custom-api specs green, which is the backward-compatibility guarant
 
 - [ ] 7.1 Follow-up (out of scope, consumer side): the DIAL Loop editor's change moving its runner and
       Teams calls onto these operations.
-- [ ] 7.2 `npm run verify:full`; `npm exec nx build chat-api`.
+- [x] 7.2 `npm run verify:full`; `npm exec nx build chat-api`. Waived locally: `verify:full` (typecheck + lint + tests on all projects) was covered by CI on PR #9772 head `98bec0c` — "Workspace lint and typecheck (all projects)" and "run_tests / test / code_checks" pass ([run](https://github.com/epam/ai-dial-chat/actions/runs/42120459208)). `chat-api` builds in "Build BFF image (validation only)" in the same run.
       — Locally: `nx test chat-api` 252 files / 5397 tests green, `nx build chat-api`, chat-api-client build/lint and `openapi:check` green. `verify:full` stops on `nx sync` (the worktree links the main checkout's node_modules, so library references look stale) — run it in CI / a fresh checkout.

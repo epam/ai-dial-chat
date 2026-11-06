@@ -1137,6 +1137,7 @@ import {
   DeploymentSize,
   DetailsConfirmationKind,
   LimitRowLayout,
+  ListViewColumnKey,
   CatalogPricingUnit,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
@@ -1173,6 +1174,11 @@ DetailsConfirmationKind.Unpublish; // 'unpublish'
  */
 CatalogPricingUnit.Token; // 'token'
 CatalogPricingUnit.Character; // 'character'
+
+// The list view's optional columns — the keys of `columnVisibility`.
+ListViewColumnKey.Folder; // 'folder'
+ListViewColumnKey.Tags; // 'tags'
+ListViewColumnKey.Favorite; // 'favorite'
 ```
 
 ### Details-panel confirmations
@@ -1608,11 +1614,11 @@ for that.
 
 ### Overriding which list-view columns show per tab
 
-The list view's optional columns — `folder`, `tags`, and `favorite` — each
-have a built-in default rule (`folder` hides for `CatalogEntityType.Model`;
-`tags` and `favorite` are always shown). `columnVisibility` replaces any of
+The list view's optional columns — `ListViewColumnKey.Folder`, `Tags` and
+`Favorite` — each have a built-in default rule (`Folder` hides for
+`CatalogEntityType.Model`; `Tags` and `Favorite` are always shown). `columnVisibility` replaces any of
 these per column, given the active tab's `type`; columns left out of the map
-keep their default. `favorite`'s resolved visibility is additionally combined
+keep their default. `Favorite`'s resolved visibility is additionally combined
 (AND) with `isReadonly`.
 
 ```tsx
@@ -1622,9 +1628,9 @@ keep their default. `favorite`'s resolved visibility is additionally combined
   // The star itself is still gated per-row by isFavoriteVisible — this only
   // decides whether the list view's "Favorite" column exists at all.
   columnVisibility={{
-    favorite: (type) => type !== CatalogEntityType.Model,
+    [ListViewColumnKey.Favorite]: (type) => type !== CatalogEntityType.Model,
     // Also drop Tags for Skills — this app's skills carry no topics.
-    tags: (type) => type !== CatalogEntityType.Skill,
+    [ListViewColumnKey.Tags]: (type) => type !== CatalogEntityType.Skill,
   }}
 />
 ```

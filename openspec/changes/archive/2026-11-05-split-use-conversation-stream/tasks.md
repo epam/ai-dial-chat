@@ -49,4 +49,4 @@ Slicing: one extraction per slice. After each slice, run the stream specs, `gene
   - The validators pass. `validate:docs` needed the re-export written as an explicit `export type { … }` list, because its export resolver does not read `export type * from`.
   Re-run in the main checkout, without the junctioned `node_modules`: `nx run @epam/ai-dial-chat-hooks:typecheck` with its 20 dependency tasks passes with no errors. Lint has 0 errors, and the build passes. The stream specs (212) and the caller specs (54) pass.
 
-- [ ] 6.3 Run `npm run verify:full` once.
+- [x] 6.3 Run `npm run verify:full` once. Waived locally: `verify:full` (typecheck + lint + tests on all projects) was covered by CI on PR #9772 head `98bec0c` — "Workspace lint and typecheck (all projects)" and "run_tests / test / code_checks" pass ([run](https://github.com/epam/ai-dial-chat/actions/runs/42120459208)).
