@@ -89,6 +89,34 @@ On an `UPDATE` (or `CREATE`) event for the watched project, `useProjectWatch` SH
 - **WHEN** the user has typed `ticket` in the context search and a refresh completes
 - **THEN** the search field still holds `ticket`, and the filtered list reflects the refreshed files
 
+### Requirement: Starting a chat holds the live refresh while the page leaves for it
+
+Creating a chat writes to the watched project, so its own events would start refreshes that the move to the chat page cancels. `ProjectViewPage` SHALL therefore hold the refresh from the moment the chat input starts creating a chat:
+
+- `ProjectConversationsSection` calls its optional `onChatCreateStart` before the first create request, and its optional `onChatCreateFailed` when the create failed before any chat existed. Neither is called when the chat exists, even if saving its settings failed, because the section opens the chat in that case.
+- While held, the page's `onChange` sends no request and only remembers that an event arrived. The hold is a ref, so it never reopens the stream. The hold lasts until the page unmounts, so no refresh starts between the chat being created and the route change. A created chat always navigates to the chat route, which unmounts the page; the hold, and any remembered event, is also cleared when the route names another project, because the page instance is reused across project ids.
+- On `onChatCreateFailed` the hold ends. If an event was held back, one refresh of the details, the Chats list and the Outputs runs, and none runs otherwise.
+
+#### Scenario: Events during a chat create send no requests
+
+- **WHEN** the user sends the first message, `onChatCreateStart` ran, and two `UPDATE` events with new etags arrive before the page leaves
+- **THEN** `getProject`, `listProjectConversations` and `listProjectArtifacts` are not called
+
+#### Scenario: A failed create resumes with one refresh
+
+- **WHEN** events were held back and the create then fails, so `onChatCreateFailed` is called
+- **THEN** each of the three reads is called once, and the next event refreshes as usual
+
+#### Scenario: Another project clears the hold
+
+- **WHEN** `onChatCreateStart` ran and the route then changes to another project id
+- **THEN** an `UPDATE` for the new project refreshes as usual
+
+#### Scenario: A failed create with no event sends nothing
+
+- **WHEN** the create fails and no event arrived meanwhile
+- **THEN** no refresh request is sent
+
 ### Requirement: A DELETE shows a toast and leaves the page
 
 On a `DELETE` event for the watched project, `useProjectWatch` SHALL close the stream, cancel any pending trailing refresh, and call `options.onDelete()` once.

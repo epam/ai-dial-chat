@@ -215,6 +215,7 @@ The section renders:
 
 **First message.** Submitting the input SHALL:
 
+0. call the optional `onChatCreateStart` prop, so the page holds its live refresh (see the `project-view-live-updates` capability); when the create fails before any chat exists, call the optional `onChatCreateFailed` prop, and never call it once the chat exists;
 1. call `createProjectConversation(projectId, …)` with the same fields `ConversationRoute`'s `handleCreateConversation` sends;
 2. save the prompt, temperature and response format through `saveProjectConversation`;
 3. `navigate(getProjectConversationRoute(conversation.id), { state: { conversation } })`.
