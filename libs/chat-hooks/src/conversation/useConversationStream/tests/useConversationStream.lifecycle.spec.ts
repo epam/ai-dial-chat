@@ -1,6 +1,7 @@
 import { MessageRole, type Conversation } from '@epam/ai-dial-chat-shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_GENERATION_INTERRUPTED_ERROR_MESSAGE } from '../../create-chat-stream-api';
 import type {
   ConversationStreamTransport,
   StreamCompletionOptions,
@@ -71,6 +72,77 @@ describe('useConversationStream', () => {
         expect.any(AbortSignal),
       );
       expect(transport.watchConversation).toHaveBeenCalledOnce();
+    });
+
+    /** A watch stream that never delivers an update: nothing is producing the answer. */
+    const openWatchStream = () =>
+      new ReadableStream<Uint8Array>({
+        start() {
+          /* stays open: no update arrives */
+        },
+      });
+
+    it('releases the chat and shows the host text when attach finds nothing and the stored copy is still the placeholder', async () => {
+      transport.watchConversation = vi
+        .fn()
+        .mockResolvedValue(openWatchStream());
+      transport.getConversation = vi
+        .fn()
+        .mockResolvedValue(makeAwaitingConversation());
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          initialConversation: makeAwaitingConversation(),
+          generationInterruptedMessage: 'Interrupted',
+        }),
+      );
+
+      act(() => {
+        result.current.stream.resumeIfAwaitingGeneration(
+          'bucket/conv',
+          makeAwaitingConversation(),
+        );
+      });
+      expect(result.current.stream.isStreaming).toBe(true);
+
+      await waitFor(() =>
+        expect(result.current.stream.isStreaming).toBe(false),
+      );
+      expect(result.current.stream.canStopStreaming).toBe(false);
+      expect(result.current.conversation?.messages[1].streamErrorMessage).toBe(
+        'Interrupted',
+      );
+      expect(transport.stopCompletion).not.toHaveBeenCalled();
+    });
+
+    it('shows the English default text when the host passes no interrupted text', async () => {
+      transport.watchConversation = vi
+        .fn()
+        .mockResolvedValue(openWatchStream());
+      transport.getConversation = vi
+        .fn()
+        .mockResolvedValue(makeAwaitingConversation());
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          initialConversation: makeAwaitingConversation(),
+        }),
+      );
+
+      act(() => {
+        result.current.stream.resumeIfAwaitingGeneration(
+          'bucket/conv',
+          makeAwaitingConversation(),
+        );
+      });
+
+      await waitFor(() =>
+        expect(
+          result.current.conversation?.messages[1].streamErrorMessage,
+        ).toBe(DEFAULT_GENERATION_INTERRUPTED_ERROR_MESSAGE),
+      );
     });
 
     it('attaches to the live replay: applies the snapshot and chunks progressively, then reloads on the terminal event', async () => {

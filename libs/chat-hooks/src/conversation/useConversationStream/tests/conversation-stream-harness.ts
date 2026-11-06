@@ -49,6 +49,7 @@ export const useHookHarness = ({
   initialConversation?: Conversation;
   generationConflictMessage?: string;
   generationPersistenceErrorMessage?: string;
+  generationInterruptedMessage?: string;
   onStreamError?: (error: Error) => void;
   batchChunksPerFrame?: boolean;
   /** Overrides the `AbortController` `startGeneration` returns, so a test can abort it directly to simulate a host-driven stop. */
