@@ -37,10 +37,10 @@ export const useDismissibleTools = ({
   const visibleTools = useMemo(() => {
     const tools = toolsMenuItems ?? [];
     /*
-     * A phone composer has no room for a chip per tool, so only tools that
-     * are switched on stay visible; the rest are added from `+` → Tools.
+     * A phone composer has no room for tool chips at all (#9618): tools are
+     * toggled only from `+` → Tools, whose rows carry the on/off state.
      */
-    if (isPhone) return tools.filter((tool) => tool.isSelected);
+    if (isPhone) return [];
     if (!canRemoveTools) return tools;
     return tools.filter(
       (tool) => tool.isSelected || !dismissedToolIds.includes(tool.id),

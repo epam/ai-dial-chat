@@ -180,10 +180,10 @@ describe('Input — tool chips on a phone', () => {
     expect(screen.queryByRole('button', { name: 'Deep Research' })).toBeNull();
   });
 
-  it('keeps the chip of a tool that is switched on', () => {
+  it('hides the chip of a tool that is switched on', () => {
     renderInput([buildTool('deep_research', 'Deep Research', true)]);
 
-    expect(screen.getByRole('button', { name: 'Deep Research' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Deep Research' })).toBeNull();
   });
 
   it('keeps the + button for tools even when chips are not removable', () => {
