@@ -17,6 +17,7 @@ import type {
   ResourceFoldersResponseDto,
   ResourceIdResponseDto,
 } from '../common/dto/resource-folder.dto';
+import type { LocalizedText } from '../common/types/localized-text';
 import { isQuickAppSchema } from '../common/utils/application-schema';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import {
@@ -36,10 +37,24 @@ import {
   transferDialResource,
 } from '../common/utils/dial-resource-transfer';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
+import {
+  MAX_CREATE_PATH_ATTEMPTS,
+  RESOURCE_VERSION_SEPARATOR,
+  buildNextFreeLeaf,
+} from '../common/utils/next-free-path';
+import {
+  DEFAULT_RESOURCE_VERSION,
+  ResourceIdentityKind,
+  ResourceIdentityTab,
+  getResourceIdentityFolder,
+  getResourceIdentityTabs,
+  resolveDisplayedName,
+} from '../common/utils/resource-identity';
 import { DeploymentsService } from '../deployments/deployments.service';
 import { DeploymentsDetailsService } from '../deployments/details/deployments-details.service';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
+import { ResourceIdentityService } from '../resource-identity/resource-identity.service';
 import type {
   CommitApplicationVersionDto,
   ForkApplicationVersionDto,
@@ -57,25 +72,6 @@ import { hoistApplicationFields } from './utils/application-body-mapping';
 
 type DialApplication = components['schemas']['Application'];
 
-/*
- * How many storage paths a create-only request tries before giving up with
- * 409: the original `name__version`, then `name-2__version` up to this count.
- */
-const MAX_CREATE_PATH_ATTEMPTS = 20;
-
-/** Separates an application's name from its version in its storage path. */
-const APPLICATION_VERSION_SEPARATOR = '__';
-
-/** Storage path of the `attempt`-th (1-based) create-only candidate. */
-const buildApplicationPath = (
-  name: string,
-  version: string,
-  attempt: number,
-): string => {
-  const baseName = attempt === 1 ? name : `${name}-${attempt}`;
-  return `${baseName}${APPLICATION_VERSION_SEPARATOR}${version}`;
-};
-
 @Injectable()
 export class ApplicationsService {
   private readonly logger = new Logger(ApplicationsService.name);
@@ -85,7 +81,71 @@ export class ApplicationsService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly deploymentsService: DeploymentsService,
     private readonly deploymentsDetailsService: DeploymentsDetailsService,
+    private readonly identityService: ResourceIdentityService,
   ) {}
+
+  /**
+   * Rejects a write that would give an application the displayed name and
+   * version of another own entity in the same folder and a shared catalog tab.
+   * A new application competes as an agent; an existing one competes in the
+   * tabs its `interfaces` place it in, read from its entry in the deployments
+   * list (a stored body carries none). A name or version the write does not set
+   * is taken from that entry, and an application the caller does not own is not
+   * checked.
+   * @param userSub - session user the lists are cached under
+   * @param accessToken - bearer token for DIAL Core
+   * @param bucket - the caller's own bucket
+   * @param candidate - folder, and the name and version when the write sets them
+   * @param sourceId - id of the existing application the write starts from, if any
+   * @param excludeSource - skip the source itself in the comparison (an update
+   *   or move rewrites it; a fork leaves it in place beside the new copy)
+   */
+  private async assertNoDuplicateIdentity(
+    userSub: string,
+    accessToken: string,
+    bucket: string,
+    candidate: { folder: string; name?: string; version?: string },
+    sourceId?: string,
+    excludeSource = true,
+  ): Promise<void> {
+    const deployments = await this.identityService.listFreshDeployments(
+      userSub,
+      accessToken,
+      bucket,
+    );
+    const source =
+      sourceId == null
+        ? undefined
+        : deployments.find((item) => item.id === sourceId);
+    if (source?.isMy === false) return;
+
+    const name =
+      candidate.name ??
+      (source == null ? undefined : resolveDisplayedName(source.displayName));
+    if (name == null) return;
+
+    await this.identityService.assertUnique({
+      userSub,
+      accessToken,
+      bucket,
+      candidate: {
+        folder: candidate.folder,
+        name,
+        version:
+          candidate.version ??
+          source?.displayVersion ??
+          DEFAULT_RESOURCE_VERSION,
+      },
+      tabs: source
+        ? getResourceIdentityTabs(
+            ResourceIdentityKind.Application,
+            source.interfaces,
+          )
+        : [ResourceIdentityTab.Agents],
+      selfId: excludeSource ? sourceId : undefined,
+      deployments,
+    });
+  }
 
   private async getUserBucket(
     authHeaders: ReturnType<typeof getBearerAuthHeaders>,
@@ -173,7 +233,15 @@ export class ApplicationsService {
         throw new BadGatewayException('DIAL Core returned an empty bucket');
       }
 
-      const version = body.version ?? '1.0.0';
+      const version = body.version ?? DEFAULT_RESOURCE_VERSION;
+
+      const assertUnique = () =>
+        this.assertNoDuplicateIdentity(userSub, accessToken, bucket, {
+          folder: body.folderPath ?? '',
+          name: body.name,
+          version,
+        });
+      if (body.createOnly) await assertUnique();
 
       const {
         endpoint,
@@ -244,12 +312,15 @@ export class ApplicationsService {
        * sees under another name. Instead of rejecting a name nothing visible
        * owns, a create-only request moves on to the next free path; each try
        * is still atomic via `If-None-Match`, so no existing app is overwritten.
+       * A `412` can also mean a concurrent create just took the same identity,
+       * so the check runs again on fresh lists before the next candidate and
+       * only a path held under a different identity moves on.
        */
       const maxAttempts = body.createOnly ? MAX_CREATE_PATH_ATTEMPTS : 1;
       let appPath = '';
       let encodedPath = '';
       for (let attempt = 1; ; attempt++) {
-        appPath = buildApplicationPath(body.name, version, attempt);
+        appPath = buildNextFreeLeaf(body.name, version, attempt);
         encodedPath = buildFolderResourcePath(
           body.folderPath ?? '',
           encodeURIComponent(appPath),
@@ -267,6 +338,7 @@ export class ApplicationsService {
         );
         if (!response.error) break;
         if (body.createOnly && response.response.status === 412) {
+          await assertUnique();
           if (attempt < maxAttempts) continue;
           throw new ConflictException('Application name already taken');
         }
@@ -331,6 +403,31 @@ export class ApplicationsService {
           existingResponse.response.status,
           `get application "${applicationName}"`,
           this.logger,
+        );
+      }
+
+      const stored = existingResponse.data as DialApplication;
+      /*
+       * A stored display name is a string or a locale map; the SDK types it
+       * narrower than DIAL Core writes it, so it is widened here.
+       */
+      const storedName = resolveDisplayedName(
+        stored.displayName as LocalizedText,
+      );
+      const storedVersion = stored.displayVersion ?? DEFAULT_RESOURCE_VERSION;
+      const nextVersion = body.version ?? storedVersion;
+      if (body.name.trim() !== storedName || nextVersion !== storedVersion) {
+        const applicationId = `applications/${bucket}/${path}`;
+        await this.assertNoDuplicateIdentity(
+          userSub,
+          accessToken,
+          await this.getUserBucket(authHeaders, 'get user bucket'),
+          {
+            folder: getResourceIdentityFolder(applicationId),
+            name: body.name,
+            version: nextVersion,
+          },
+          applicationId,
         );
       }
 
@@ -663,6 +760,13 @@ export class ApplicationsService {
         path: buildFolderResourcePath(folderPath, getResourceLeaf(source.path)),
       };
       if (destination.path !== source.path) {
+        await this.assertNoDuplicateIdentity(
+          userSub,
+          accessToken,
+          source.bucket,
+          { folder: folderPath },
+          `applications/${source.bucket}/${source.path}`,
+        );
         await transferDialResource({
           client: this.dialClient.client,
           operation: 'moveResource',
@@ -706,14 +810,22 @@ export class ApplicationsService {
       );
       // The name itself may contain the separator; the version follows the last one.
       const leaf = getResourceLeaf(source.path);
-      const separatorIndex = leaf.lastIndexOf(APPLICATION_VERSION_SEPARATOR);
+      const separatorIndex = leaf.lastIndexOf(RESOURCE_VERSION_SEPARATOR);
       const baseName =
         separatorIndex === -1 ? leaf : leaf.slice(0, separatorIndex);
+      await this.assertNoDuplicateIdentity(
+        userSub,
+        accessToken,
+        source.bucket,
+        { folder: body.folderPath, version: body.version },
+        `applications/${source.bucket}/${source.path}`,
+        false,
+      );
       snapshot = {
         bucket: source.bucket,
         path: buildFolderResourcePath(
           body.folderPath,
-          `${baseName}${APPLICATION_VERSION_SEPARATOR}${encodeURIComponent(body.version)}`,
+          `${baseName}${RESOURCE_VERSION_SEPARATOR}${encodeURIComponent(body.version)}`,
         ),
       };
       await transferDialResource({

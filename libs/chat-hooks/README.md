@@ -5246,6 +5246,14 @@ Each one takes a configured generated client and never creates one:
 - **`createSkillFolderLister(skillsApi, bucket)`** returns the
   `listPersonalFolders` for skills: the grouping folders of one level, across
   every listing page.
+- **`withResourceNameConflictMessages(adapter, messages)`** wraps the create,
+  in-place and new-version steps of any `ResourceSaveAdapter` so that a `409`
+  rejecting a duplicate name and version reaches the Save panel as a
+  `ResourceSaveError` carrying `messages[kind]`. `messages` holds one already
+  translated string per `ResourceNameConflictKind` (`Agent` or `Toolset`).
+  Moving a saved resource is left untouched, and any other failure passes
+  through. **`getResourceNameConflictKind(error)`** returns that kind for such
+  a `409`, or `undefined`.
 
 The client parameters are typed as the narrow `Pick`s
 `ResourceSaveApplicationsApi`, `ResourceSaveToolsetsApi`,

@@ -10,6 +10,10 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  ResourceIdentityKind,
+  buildResourceNameConflict,
+} from '../../common/utils/resource-identity';
 import type {
   DialToolsetDto,
   DialToolsetListResponseDto,
@@ -297,6 +301,38 @@ describe('ToolsetsController — write operations (integration)', () => {
       );
     });
 
+    it('answers 409 with the name-taken code when the service rejects a duplicate identity', async () => {
+      service.createToolset.mockRejectedValue(
+        buildResourceNameConflict({
+          id: 'applications/b/search__1.0.0',
+          kind: ResourceIdentityKind.Application,
+        }),
+      );
+
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/toolsets')
+        .send({ ...validBody, createOnly: true })
+        .expect(409);
+
+      expect(response.body).toMatchObject({
+        statusCode: 409,
+        code: 'name-taken-agent',
+      });
+    });
+
+    it('answers 409 without a code when every candidate path is taken', async () => {
+      service.createToolset.mockRejectedValue(
+        new ConflictException('Toolset version already exists'),
+      );
+
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/toolsets')
+        .send({ ...validBody, createOnly: true })
+        .expect(409);
+
+      expect(response.body).not.toHaveProperty('code');
+    });
+
     it('returns 400 for a traversal folderPath', async () => {
       await request(app.getHttpServer())
         .post('/api/v1/toolsets')
@@ -335,6 +371,20 @@ describe('ToolsetsController — write operations (integration)', () => {
   });
 
   describe('POST /api/v1/toolsets/:toolsetName/move', () => {
+    it('returns 409 with the name-taken code when the folder holds the same identity', async () => {
+      service.moveToolset.mockRejectedValue(
+        buildResourceNameConflict({
+          id: 'toolsets/b/search__1.0.0',
+          kind: ResourceIdentityKind.Toolset,
+        }),
+      );
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/toolsets/my-toolset/move')
+        .send({ folderPath: 'Search' })
+        .expect(409);
+      expect(res.body).toMatchObject({ code: 'name-taken-toolset' });
+    });
+
     it('returns 200 with the new id', async () => {
       const res = await request(app.getHttpServer())
         .post('/api/v1/toolsets/toolsets%2Fb%2Fmy__0.0.1/move')
@@ -367,6 +417,20 @@ describe('ToolsetsController — write operations (integration)', () => {
   });
 
   describe('PATCH /api/v1/toolsets/:toolsetName', () => {
+    it('returns 409 with the name-taken code when a rename takes another identity', async () => {
+      service.updateToolset.mockRejectedValue(
+        buildResourceNameConflict({
+          id: 'toolsets/b/search__1.0.0',
+          kind: ResourceIdentityKind.Toolset,
+        }),
+      );
+      const res = await request(app.getHttpServer())
+        .patch('/api/v1/toolsets/my-toolset')
+        .send(validBody)
+        .expect(409);
+      expect(res.body).toMatchObject({ code: 'name-taken-toolset' });
+    });
+
     it('returns 200 with the updated id for a valid body', async () => {
       const res = await request(app.getHttpServer())
         .patch('/api/v1/toolsets/my-toolset')
