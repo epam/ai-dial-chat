@@ -5,12 +5,13 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import {
   findDeploymentByIdOrReference,
-  getPublicCatalogEntityFolderPath,
   isPublicCatalogEntityId,
   mapPublishHistoryEntryDto,
+  resolveUnpublishableFolders,
   toPublishEntityType,
   toPublishRuleDto,
   findSchemaDisplayName,
+  type UnpublishableFoldersClient,
 } from '@epam/ai-dial-chat-hooks';
 import type {
   PublicationRule,
@@ -29,6 +30,12 @@ import { EntityOperation } from '../../types/entity-notification';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import { getPublishFolderLabel } from '../../utils/publish';
 import type { useOperationNotification } from '../useOperationNotification';
+
+/* Built from the named wrappers, not `publishApiClient`, so tests that mock those wrappers keep covering this path. */
+const unpublishableFoldersClient: UnpublishableFoldersClient = {
+  getCatalogPublishHistory,
+  getCatalogUnpublishAccess,
+};
 
 interface UseCatalogPublishingParams {
   deployments: DeploymentItemDto[];
@@ -146,25 +153,21 @@ export const useCatalogPublishing = ({
        * that reads the rest, never opens for a public item.
        *
        * The entry exists only to give Unpublish its folder, so it is offered
-       * only to someone who may unpublish the copy: an administrator outright,
-       * anyone else when the backend confirms they published it. A failed
-       * lookup rejects, which the panel treats as "hidden, retry next open".
+       * only to someone who may unpublish the copy — decided by
+       * `resolveUnpublishableFolders`, shared with the project view page. A
+       * failed lookup rejects, which the panel treats as "hidden, retry next open".
        */
       if (isPublicCatalogEntityId(item.id)) {
-        if (!isAdmin) {
-          const { canUnpublish } = await getCatalogUnpublishAccess(
-            entityType,
-            item.id,
-          );
-          if (!canUnpublish) return [];
-        }
-        return [
-          {
-            version: item.version,
-            publishedAt: item.updatedAt ?? Date.now(),
-            folderPath: getPublicCatalogEntityFolderPath(item.id),
-          },
-        ];
+        const folders = await resolveUnpublishableFolders(
+          unpublishableFoldersClient,
+          { entityType, entityId: item.id, isOwner: false },
+          isAdmin,
+        );
+        return folders.map((folderPath) => ({
+          version: item.version,
+          publishedAt: item.updatedAt ?? Date.now(),
+          folderPath,
+        }));
       }
       const entries = await getCatalogPublishHistory(entityType, item.id);
       return entries.map(mapPublishHistoryEntryDto);

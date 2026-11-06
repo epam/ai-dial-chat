@@ -14,6 +14,7 @@ import {
   useProjectWatch,
 } from '@epam/ai-dial-chat-hooks/project';
 import { ProjectOutputs, ProjectView } from '@epam/ai-dial-projects';
+import { UnpublishConfirmationDialog } from '@epam/ai-dial-publish-panel';
 import {
   memo,
   useCallback,
@@ -36,13 +37,16 @@ import {
 } from '../../constants/routes';
 import { ProjectsI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
+import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useUserConfig } from '../../context/UserConfigContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { projectsClient } from '../../hooks/projects/projects-client';
 import { useProjectActions } from '../../hooks/projects/useProjectActions';
 import { useProjectOutputsLabels } from '../../hooks/projects/useProjectOutputsLabels';
+import { useProjectUnpublish } from '../../hooks/projects/useProjectUnpublish';
 import { useProjectViewLabels } from '../../hooks/projects/useProjectViewLabels';
+import { useUnpublishConfirmationLabels } from '../../hooks/publish/useUnpublishConfirmationLabels';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { resolveProjectFileDownloadUrl } from '../../utils/dial-file';
@@ -221,6 +225,22 @@ const ProjectViewPage: FC = () => {
     setIsPublishOpen(true);
   }, []);
   const handleClosePublish = useCallback(() => setIsPublishOpen(false), []);
+  const { user } = useUser();
+  const unpublish = useProjectUnpublish({
+    project,
+    isAdmin: user?.isAdmin ?? false,
+  });
+  /* Exactly one of Publish and Unpublish, and neither until the publish state settles. */
+  const hasPublishedFolders = unpublish.publishedFolders.length > 0;
+  const shouldOfferPublish =
+    canManage && unpublish.isPublishStateResolved && !hasPublishedFolders;
+  const unpublishLabels = useUnpublishConfirmationLabels({
+    title: ProjectsI18nKeys.UnpublishConfirmTitle,
+    confirmMessage: ProjectsI18nKeys.UnpublishConfirmMessage,
+    selectFolderMessage: ProjectsI18nKeys.UnpublishSelectFolderMessage,
+    folderGroupAriaLabel: ProjectsI18nKeys.UnpublishFolderGroupAriaLabel,
+    requestingStatus: ProjectsI18nKeys.UnpublishRequestingStatus,
+  });
   const { togglePin, downloadArchive, confirmDelete } = actions;
   const handleTogglePin = useCallback(() => {
     void togglePin();
@@ -253,7 +273,10 @@ const ProjectViewPage: FC = () => {
         onContextSearchQueryChange={setContextSearchQuery}
         onBack={handleBrowseProjects}
         onTogglePin={handleTogglePin}
-        onPublish={canManage ? handlePublish : undefined}
+        onPublish={shouldOfferPublish ? handlePublish : undefined}
+        onUnpublish={
+          hasPublishedFolders ? unpublish.requestUnpublish : undefined
+        }
         onEdit={canEdit ? handleEdit : undefined}
         onShare={canManage ? handleShare : undefined}
         onDelete={canManage ? actions.requestDelete : undefined}
@@ -306,9 +329,14 @@ const ProjectViewPage: FC = () => {
           projectName={project.name}
           conversationCount={conversationCount}
           onClose={handleClosePublish}
+          onPublished={unpublish.refreshPublishState}
           returnFocusRef={publishTriggerRef}
         />
       )}
+      <UnpublishConfirmationDialog
+        {...unpublish.dialog}
+        labels={unpublishLabels}
+      />
       {project && (
         <ProjectDeleteConfirmation
           isOpen={actions.isDeleteOpen}

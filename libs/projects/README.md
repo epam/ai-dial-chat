@@ -260,11 +260,13 @@ import { cloneElement } from 'react';
 
 A project's home page: a header with back (its arrow mirrored in RTL), the name (an `<h1>`, truncated with a tooltip), a Pin button (`IconPin` with `labels.pinLabel`, or a crossed-out `IconPin` with `labels.unpinLabel` while `isPinned`, still focusable while `isPinPending`), Publish and Edit buttons with icons and a ⋮ menu (Share, Download, Delete, each with an icon), then a Details panel — an `<aside>` headed by an `<h2>`, a 488px column on the inline end on desktop framed only by an inline-start border (a top border when stacked under the header on mobile) — with the description, the instructions rendered as markdown, and the context: a search that filters and highlights the files and announces the match count, and one `AttachmentCard` per file. The view shows no capacity meter. On mobile, Publish and Edit move into the ⋮ menu.
 
+When the host supplies `onUnpublish`, an Unpublish action (`IconWorldOff`, `labels.unpublishLabel`, default `'Unpublish'`) takes Publish's place in both placements and Publish is not rendered, whatever `onPublish` is. The lib knows nothing about publish history or who may unpublish: the host decides and passes one callback or the other.
+
 `mainContent` fills a main column rendered before the Details panel (stacked above it on mobile), named by `mainContentLabel` (default `'Project content'`), with its content centered at a 748px max width; without it the panel stays on the inline end. While the panel sits beside the main column on desktop, the header stays in place and each column scrolls on its own; stacked, both scroll together below the header. The host puts its own content there, such as a chat input and a `ProjectConversationList`.
 
 Activating a context card calls `onContextFileClick` with the file's name, and the card whose name equals `selectedContextFileId` renders selected (`aria-pressed`). When the host passes `onContextFileDownload`, each card also shows a download button named `labels.downloadFileLabel(name)` (optional, defaulting to `Download {name}`) that calls it with the file's name. The lib downloads and opens nothing: the host decides, for example by previewing the file in a canvas beside the page. While such a preview takes the inline end, the host sets `isDetailsStacked` (default `false`) so the Details panel and its cards move below the main column at every width, with a top border instead of the inline-start one, and stay reachable.
 
-Read-only mode is the host omitting `onPublish`, `onEdit`, `onShare` and `onDelete`: each hides its action. Exactly one state renders — loading (`isLoading`), error with Retry (`hasError`), not found with a way back (`isNotFound`), or the loaded `project`.
+Read-only mode is the host omitting `onPublish`, `onUnpublish`, `onEdit`, `onShare` and `onDelete`: each hides its action. Exactly one state renders — loading (`isLoading`), error with Retry (`hasError`), not found with a way back (`isNotFound`), or the loaded `project`.
 
 ```tsx
 import { ProjectView } from '@epam/ai-dial-projects';
@@ -294,6 +296,7 @@ import { ProjectView } from '@epam/ai-dial-projects';
     pinLabel: 'Pin',
     unpinLabel: 'Unpin',
     publishLabel: 'Publish',
+    unpublishLabel: 'Unpublish',
     editLabel: 'Edit',
     moreActionsLabel: 'More actions',
     shareLabel: 'Share',

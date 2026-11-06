@@ -96,7 +96,11 @@ vi.mock('react-i18next', () => ({
 const mockShowNotification = vi.fn();
 const mockRememberPublishFolder = vi.fn();
 
-const renderContainer = (onClose = vi.fn(), conversationCount?: number) => {
+const renderContainer = (
+  onClose = vi.fn(),
+  conversationCount?: number,
+  onPublished = vi.fn(),
+) => {
   render(
     <PublishProjectPanelContainer
       isOpen
@@ -104,9 +108,10 @@ const renderContainer = (onClose = vi.fn(), conversationCount?: number) => {
       projectName="q4-launch"
       conversationCount={conversationCount}
       onClose={onClose}
+      onPublished={onPublished}
     />,
   );
-  return { onClose };
+  return { onClose, onPublished };
 };
 
 describe('PublishProjectPanelContainer', () => {
@@ -204,6 +209,18 @@ describe('PublishProjectPanelContainer', () => {
     expect(mockShowNotification).toHaveBeenCalled();
   });
 
+  it('tells the host after a successful publish so it can re-read the publish state', async () => {
+    vi.mocked(publishCatalogEntity).mockResolvedValue({} as never);
+    const { onPublished } = renderContainer();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Marketing' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    await waitFor(() => expect(onPublished).toHaveBeenCalledOnce());
+  });
+
   it('omits an empty author so the backend falls back to the session name', async () => {
     vi.mocked(publishCatalogEntity).mockResolvedValue({} as never);
     renderContainer();
@@ -231,6 +248,19 @@ describe('PublishProjectPanelContainer', () => {
 
     await waitFor(() => expect(mockShowPublishError).toHaveBeenCalled());
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('does not tell the host about a failed publish', async () => {
+    vi.mocked(publishCatalogEntity).mockRejectedValue(new Error('denied'));
+    const { onPublished } = renderContainer();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Marketing' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    await waitFor(() => expect(mockShowPublishError).toHaveBeenCalled());
+    expect(onPublished).not.toHaveBeenCalled();
   });
 
   describe('PublishProjectPanelContainer — chats warning', () => {
