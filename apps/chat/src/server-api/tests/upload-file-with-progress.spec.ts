@@ -1,4 +1,5 @@
 import type { FileUploadResponseDto } from '@epam/ai-dial-chat-api-client';
+import { DialFilesApiUploadMode } from '@epam/ai-dial-chat-hooks';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { uploadFileWithProgress } from '../upload-file-with-progress';
 
@@ -94,7 +95,7 @@ describe('uploadFileWithProgress', () => {
     const file = new File(['data'], 'q3.csv', { type: 'text/csv' });
 
     await uploadFileWithProgress('Abc123', 'reports/q3.csv', file, {
-      uploadMode: 'create-only',
+      uploadMode: DialFilesApiUploadMode.CreateOnly,
     });
 
     const [xhr] = MockXMLHttpRequest.instances;

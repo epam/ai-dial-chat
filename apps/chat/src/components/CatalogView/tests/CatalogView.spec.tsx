@@ -736,6 +736,7 @@ describe('CatalogView', () => {
         appVersion: '0.0.1',
         asrModelId: null,
         transcribeSizeLimitBytes: 5 * 1024 * 1024,
+        additionalContentLocales: [],
         defaultDeploymentId: null,
         dialCoreExternalUrl: 'https://dial.example.com',
         mcpAppSandboxUrl: null,

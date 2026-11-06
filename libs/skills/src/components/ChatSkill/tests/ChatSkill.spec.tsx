@@ -1,6 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ChatSkillDetailsTrigger } from '../../../types/chat-skill-details-trigger';
 import { SkillUnresolvedReason } from '../../../types/skill-unresolved-reason';
 import { ChatSkill } from '../ChatSkill';
 import styles from '../ChatSkill.module.scss';
@@ -28,7 +29,7 @@ describe('ChatSkill', () => {
           name="summarize"
           path="skills/bucket/summarize"
           unresolvedReason={SkillUnresolvedReason.NotShared}
-          detailsTrigger="click"
+          detailsTrigger={ChatSkillDetailsTrigger.Click}
           onViewDetails={vi.fn()}
         />
         <button>Outside</button>
@@ -75,7 +76,7 @@ describe('ChatSkill', () => {
         name="summarize"
         path="skills/bucket/summarize"
         description="Summarizes the supplied text."
-        detailsTrigger="click"
+        detailsTrigger={ChatSkillDetailsTrigger.Click}
         onViewDetails={onViewDetails}
       />,
     );
@@ -103,7 +104,7 @@ describe('ChatSkill', () => {
           name="summarize"
           path="skills/bucket/summarize"
           description="Summarizes the supplied text."
-          detailsTrigger="click"
+          detailsTrigger={ChatSkillDetailsTrigger.Click}
           onViewDetails={vi.fn()}
         />,
       );
@@ -127,7 +128,7 @@ describe('ChatSkill', () => {
         path="skills/bucket/summarize"
         description="Summarizes the supplied text."
         unresolvedReason={SkillUnresolvedReason.Deleted}
-        detailsTrigger="click"
+        detailsTrigger={ChatSkillDetailsTrigger.Click}
         onViewDetails={vi.fn()}
       />,
     );
@@ -152,7 +153,7 @@ describe('ChatSkill', () => {
         path="skills/bucket/summarize"
         description="Summarizes the supplied text."
         unresolvedReason={SkillUnresolvedReason.NotShared}
-        detailsTrigger="click"
+        detailsTrigger={ChatSkillDetailsTrigger.Click}
         onViewDetails={vi.fn()}
       />,
     );
@@ -176,7 +177,7 @@ describe('ChatSkill', () => {
         name="summarize"
         path="skills/bucket/summarize"
         unresolvedReason={SkillUnresolvedReason.NotShared}
-        detailsTrigger="click"
+        detailsTrigger={ChatSkillDetailsTrigger.Click}
         onViewDetails={vi.fn()}
       />,
     );
@@ -290,7 +291,7 @@ describe('ChatSkill — slash width', () => {
         name="summarize"
         path="skills/bucket/summarize"
         description="Summarizes the supplied text."
-        detailsTrigger="click"
+        detailsTrigger={ChatSkillDetailsTrigger.Click}
         onViewDetails={vi.fn()}
       />,
     );

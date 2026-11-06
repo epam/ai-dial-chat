@@ -582,9 +582,15 @@ control characters, description 500, instructions 50000 — so a host can
 surface an over-limit value while the user is still typing:
 
 ```ts
-import { validateScheduledTaskTextField } from '@epam/ai-dial-scheduled-tasks/validation';
+import {
+  ScheduledTaskTextField,
+  validateScheduledTaskTextField,
+} from '@epam/ai-dial-scheduled-tasks/validation';
 
-const code = validateScheduledTaskTextField('displayName', values.displayName);
+const code = validateScheduledTaskTextField(
+  ScheduledTaskTextField.DisplayName,
+  values.displayName,
+);
 ```
 
 ## Public class names

@@ -118,7 +118,7 @@ describe('useResourceSaveNotification', () => {
   });
 
   it('reports a failed publish after a successful save as an error', async () => {
-    vi.mocked(getApiErrorDetails).mockResolvedValue({});
+    vi.mocked(getApiErrorDetails).mockResolvedValue({ message: null });
     renderNotify()(
       makeResult({ outcome: ResourceSaveOutcome.SavedButPublishFailed }),
       choice,
@@ -135,6 +135,7 @@ describe('useResourceSaveNotification', () => {
 
   it('says the version is already published in the folder when the publish conflicts', async () => {
     vi.mocked(getApiErrorDetails).mockResolvedValue({
+      message: null,
       status: 409,
       traceId: 'trace-1',
     });

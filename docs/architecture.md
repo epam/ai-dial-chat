@@ -73,7 +73,7 @@ frontend hosted elsewhere) and `ai-dial-chat-mcp-app-sandbox`
 
 ### Typechecking and verification
 
-Every project with a `typecheck` target (32 as of this writing, out of 33
+Every project with a `typecheck` target (36 as of this writing, out of 39
 projects total) runs `tsc --build --emitDeclarationOnly` and is checked by the
 same command whether the target is inferred by `@nx/vite` or `@nx/js/typescript`.
 `nx.json`'s `targetDefaults.typecheck` gives every one of those targets the
@@ -104,6 +104,12 @@ format`, `npm run lint --fix` and `npm run test` only — none of those
   typechecks. **Open:** making that check a required status check is a
   branch-protection setting administered outside this repository; the job's
   existence does not by itself enforce it (see the Decision Log).
+- Guard: `npm run typecheck:targets:test` (`tools/typecheck-targets.spec.mjs`)
+  runs in the same CI job before the typecheck and fails, naming the project,
+  when a `typecheck` target is disabled. `@nx/js/typescript` replaces the
+  target with an echo that exits `0` when a project tsconfig sets
+  `"noEmit": true`, so no project tsconfig may set it. `apps/chat` was checked
+  by nothing until its `tsconfig.spec.json` dropped `noEmit`.
 
 ## Architecture Layers
 
@@ -199,6 +205,15 @@ The adaptation is shared across DIAL-Core-backed hosts; translated strings, icon
 locale resolution, and reset-time formatting still come from host-supplied callbacks
 or parameters. An additional adapter needs its own equivalent justification in its
 change's design; this is not permission to move arbitrary product rules into a library.
+
+The OAuth popup flow in `libs/chat-hooks/src/oauth/` owns one storage key,
+`TOOLSET_REDIRECT_STATE_KEY`. The initiator writes the redirect state into the
+popup's own `sessionStorage` before navigating it to the provider, and
+`useOAuthCallbackCompletion` reads and removes it on the host's callback route
+in the same popup. Both ends live in the library and the host never sees the
+key, so it is an exception to the storage-key rule, not host persistence. The
+state holds flow-correlation values only, never a token or an authorization
+code. No other storage key in a library is covered.
 
 The usage-limit banner follows the same boundary: `useUsageLimitBanner` and its parts
 (`useDeploymentUsageLimits`, `useRefreshUsageAfterGeneration`, `useUsageLimitBannerDismissal`,

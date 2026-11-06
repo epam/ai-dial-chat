@@ -219,6 +219,26 @@ export default [
   },
   {
     /*
+     * `.claude/rules/all-ts.md`: never a ternary inside a ternary. The glob is
+     * project-relative (`**\/src/**`) so it also applies under each project's
+     * own `eslint .`; `libs/celebrations` turns it off in its own config,
+     * since refactors leave that code alone.
+     */
+    files: ['**/src/**/*.{ts,tsx}'],
+    ignores: [
+      '**/*.spec.ts',
+      '**/*.spec.tsx',
+      '**/tests/**',
+      '**/stories/**',
+      '**/*.stories.tsx',
+      'libs/celebrations/**',
+    ],
+    rules: {
+      'no-nested-ternary': 'error',
+    },
+  },
+  {
+    /*
      * A hand-rolled `role="status"`/`role="alert"` is usually rendered in the
      * same commit as its text, which screen readers announce late or not at
      * all (`.claude/rules/a11y.md` "Status feedback for dynamic content"). The

@@ -23,6 +23,7 @@ import {
   ENTITY_DESCRIPTION_MAX_LENGTH,
   ENTITY_NAME_MAX_LENGTH,
 } from '@epam/ai-dial-chat-shared';
+import { McpDeploymentKind } from '@epam/ai-dial-mcp-apps';
 import type {
   ToolsetAuthActions,
   ToolsetAuthFormData,
@@ -367,7 +368,8 @@ const ToolsetApplicationEditor: FC = () => {
   }, [config.dialCoreExternalUrl]);
 
   const listToolNames = useCallback(
-    (toolsetId: string) => mcpAppsApiClient.listToolNames(toolsetId, 'toolset'),
+    (toolsetId: string) =>
+      mcpAppsApiClient.listToolNames(toolsetId, McpDeploymentKind.Toolset),
     [],
   );
 

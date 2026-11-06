@@ -135,7 +135,14 @@ describe('ProjectConversationsSection', () => {
       }),
     );
     vi.mocked(listProjectConversations).mockResolvedValue({
-      items: [{ id: CHAT_ID, name: 'gpt-4o__Old__1', title: 'Old title' }],
+      items: [
+        {
+          id: CHAT_ID,
+          name: 'gpt-4o__Old__1',
+          title: 'Old title',
+          isUnread: false,
+        },
+      ],
     });
   });
 

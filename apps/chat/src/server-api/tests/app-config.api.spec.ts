@@ -28,6 +28,7 @@ describe('app-config API', () => {
         asrModelId: null,
         announcements: [],
         transcribeSizeLimitBytes: 5 * 1024 * 1024,
+        additionalContentLocales: [],
         fileManagerTabs: ['my_files', 'shared', 'organization'],
         overlayEnabled: false,
         overlayAllowedOrigins: [],

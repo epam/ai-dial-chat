@@ -127,10 +127,8 @@ export type {
   ListViewStyles,
   ListViewTypography,
 } from './models/list-props';
-export type {
-  ListViewColumnKey,
-  ListViewColumnVisibility,
-} from './components/ListView/columns';
+export type { ListViewColumnVisibility } from './components/ListView/columns';
+export { ListViewColumnKey } from './types/list-view-column';
 
 export { FavoriteCard } from './components/Favorites/FavoriteCard';
 export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';

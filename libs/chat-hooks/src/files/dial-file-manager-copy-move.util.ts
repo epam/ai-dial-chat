@@ -15,6 +15,11 @@ import { getVirtualPathName } from './dial-file-manager-path.util';
 import type { PreparedCopyMoveItem } from './dial-file-manager.model';
 import { virtualPathToApiPath } from './resolve-dial-file-api-path';
 
+const normalizeNodePath = (path: string, isFolder: boolean): string => {
+  if (!isFolder) return path.replace(/\/$/, '');
+  return path.endsWith('/') ? path : `${path}/`;
+};
+
 /** Builds the `copyFiles` DTOs (with their destination display name) for `onCopyFiles`. */
 export const prepareCopyItems = (
   copiedItems: DialCopiedItem[],
@@ -37,16 +42,8 @@ export const prepareCopyItems = (
       destinationName,
       dto: {
         bucket,
-        sourcePath: isFolder
-          ? sourcePath.endsWith('/')
-            ? sourcePath
-            : `${sourcePath}/`
-          : sourcePath.replace(/\/$/, ''),
-        destinationPath: isFolder
-          ? destinationPath.endsWith('/')
-            ? destinationPath
-            : `${destinationPath}/`
-          : destinationPath.replace(/\/$/, ''),
+        sourcePath: normalizeNodePath(sourcePath, isFolder),
+        destinationPath: normalizeNodePath(destinationPath, isFolder),
         overwrite: item.overwrite === true,
         nodeType: isFolder
           ? CopyItemDtoNodeTypeEnum.Folder
@@ -92,16 +89,11 @@ export const prepareMoveRenameItems = (
       item.destinationUrl,
       destinationPath,
     );
-    const normalizedSourcePath = isFolder
-      ? sourcePath.endsWith('/')
-        ? sourcePath
-        : `${sourcePath}/`
-      : sourcePath.replace(/\/$/, '');
-    const normalizedDestinationPath = isFolder
-      ? destinationPath.endsWith('/')
-        ? destinationPath
-        : `${destinationPath}/`
-      : destinationPath.replace(/\/$/, '');
+    const normalizedSourcePath = normalizeNodePath(sourcePath, isFolder);
+    const normalizedDestinationPath = normalizeNodePath(
+      destinationPath,
+      isFolder,
+    );
     return {
       isFolder,
       name,

@@ -1,6 +1,7 @@
 import { MessageRole, type Message } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import type { McpAppToolRef } from '../../models/mcp-apps';
+import { McpAppToolDiscovery, McpDeploymentKind } from '../../types/mcp-apps';
 import { findMcpAppForMessage } from '../mcp-app';
 
 const indirectTool: McpAppToolRef = {
@@ -8,14 +9,14 @@ const indirectTool: McpAppToolRef = {
   resourceUri: 'ui://entity-card/index.html',
   toolName: 'Entity_MCP_Server_show_entity_card',
   mcpToolName: 'show_entity_card',
-  kind: 'toolset',
-  discovery: 'indirect',
+  kind: McpDeploymentKind.Toolset,
+  discovery: McpAppToolDiscovery.Indirect,
 };
 
 const directTool: McpAppToolRef = {
   ...indirectTool,
   toolName: 'show_entity_card',
-  discovery: 'direct',
+  discovery: McpAppToolDiscovery.Direct,
 };
 
 const makeMessage = (

@@ -197,16 +197,19 @@ export const useExternalServiceLogin = ({
         );
         if (outcome.type === OfflineCredentialsLoginOutcomeType.Success) {
           const refreshed = await getExternalService(appId, serviceId);
-          return {
-            type:
-              refreshed.appLevelAuthStatus ===
-              ExternalServiceAuthStatus.SignedIn
-                ? ExternalServiceLoginOutcomeType.Success
-                : refreshed.appLevelAuthStatus ===
-                    ExternalServiceAuthStatus.SignedOut
-                  ? ExternalServiceLoginOutcomeType.AdminConsentRequired
-                  : ExternalServiceLoginOutcomeType.Failure,
-          };
+          if (
+            refreshed.appLevelAuthStatus === ExternalServiceAuthStatus.SignedIn
+          ) {
+            return { type: ExternalServiceLoginOutcomeType.Success };
+          }
+          if (
+            refreshed.appLevelAuthStatus === ExternalServiceAuthStatus.SignedOut
+          ) {
+            return {
+              type: ExternalServiceLoginOutcomeType.AdminConsentRequired,
+            };
+          }
+          return { type: ExternalServiceLoginOutcomeType.Failure };
         }
         if (outcome.type === OfflineCredentialsLoginOutcomeType.Cancelled) {
           return { type: ExternalServiceLoginOutcomeType.Cancelled };
@@ -386,12 +389,15 @@ export const useExternalServiceLogin = ({
   const login = useCallback(
     (
       params: ExternalServiceLoginParams,
-    ): Promise<ExternalServiceLoginOutcome> =>
-      params.authenticationType === ExternalServiceAuthType.DialNative
-        ? loginWithDialNative(params)
-        : params.authenticationType === ExternalServiceAuthType.OAuth
-          ? loginWithOAuth(params)
-          : loginWithApiKey(params),
+    ): Promise<ExternalServiceLoginOutcome> => {
+      if (params.authenticationType === ExternalServiceAuthType.DialNative) {
+        return loginWithDialNative(params);
+      }
+      if (params.authenticationType === ExternalServiceAuthType.OAuth) {
+        return loginWithOAuth(params);
+      }
+      return loginWithApiKey(params);
+    },
     [loginWithDialNative, loginWithOAuth, loginWithApiKey],
   );
 

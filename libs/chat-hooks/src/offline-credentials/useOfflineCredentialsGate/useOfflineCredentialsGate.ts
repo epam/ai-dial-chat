@@ -105,13 +105,15 @@ export const useOfflineCredentialsGate = ({
           schedulerServiceConsent,
         } = mapOfflineCredentialsResponse(response);
 
-        setStatus(
-          connected
-            ? OfflineCredentialsGateStatus.Hidden
-            : available
+        if (connected) {
+          setStatus(OfflineCredentialsGateStatus.Hidden);
+        } else {
+          setStatus(
+            available
               ? OfflineCredentialsGateStatus.Available
               : OfflineCredentialsGateStatus.Unavailable,
-        );
+          );
+        }
         setConnect(connectSettings);
         setConnected(connected);
         setSchedulerServiceConsent(schedulerServiceConsent);
