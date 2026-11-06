@@ -23,6 +23,26 @@
   bottom: 5px;
 }
 
+/*
+ * The chevron is a sibling of the row button, not a child, so hovering it takes
+ * `:hover` off the button. The row highlight follows the row instead, and the
+ * chevron adds its own round background on top, as the design shows.
+ */
+.projectRow:hover .projectButton {
+  background: var(--cp-item-hover, var(--bg-control-accent-alpha, #2764d90f));
+}
+
+.chevron.chevron:hover {
+  background: var(
+    --cp-trigger-bg,
+    var(--bg-control-accent-alpha-active, #2764d933)
+  );
+}
+
+.chevron:hover .projectIcon {
+  color: var(--cp-trigger-icon, var(--text-accent, #1d4ed8));
+}
+
 .seeAllText,
 .projectIcon {
   color: var(--cp-text-secondary, var(--text-secondary, #57647a));

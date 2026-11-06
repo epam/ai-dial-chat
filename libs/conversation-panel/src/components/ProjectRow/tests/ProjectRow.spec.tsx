@@ -80,10 +80,38 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   GhostIconButton: React.forwardRef<
     HTMLButtonElement,
-    { 'aria-label'?: string; onClick?: () => void }
-  >(({ 'aria-label': ariaLabel, onClick }, ref) => (
-    <button ref={ref} aria-label={ariaLabel} onClick={onClick} />
-  )),
+    {
+      'aria-label'?: string;
+      'aria-expanded'?: boolean;
+      'aria-controls'?: string;
+      icon?: React.ReactNode;
+      onClick?: () => void;
+      onMouseDown?: React.MouseEventHandler<HTMLButtonElement>;
+    }
+  >(
+    (
+      {
+        'aria-label': ariaLabel,
+        'aria-expanded': ariaExpanded,
+        'aria-controls': ariaControls,
+        icon,
+        onClick,
+        onMouseDown,
+      },
+      ref,
+    ) => (
+      <button
+        ref={ref}
+        aria-label={ariaLabel}
+        aria-expanded={ariaExpanded}
+        aria-controls={ariaControls}
+        onClick={onClick}
+        onMouseDown={onMouseDown}
+      >
+        {icon}
+      </button>
+    ),
+  ),
 }));
 
 vi.mock('@epam/ai-dial-chat-shared', () => ({
@@ -107,6 +135,16 @@ vi.mock('@tabler/icons-react', () => ({
       className={className}
       strokeWidth={stroke}
     />
+  ),
+  IconChevronDown: ({ className }: { className?: string }) => (
+    <span aria-hidden="true" className={className}>
+      chevron-down
+    </span>
+  ),
+  IconChevronRight: ({ className }: { className?: string }) => (
+    <span aria-hidden="true" className={className}>
+      chevron-right
+    </span>
   ),
   IconDotsVertical: () => <span aria-hidden="true" />,
 }));
@@ -236,6 +274,182 @@ describe('ProjectRow', () => {
     const menu = screen.getByRole('list', { name: 'menu items' });
     expect(within(menu).getByText('Unpin')).toBeTruthy();
     expect(within(menu).getByText('Edit')).toBeTruthy();
+  });
+});
+
+describe('ProjectRow — collapse toggle', () => {
+  const onSelectProject = vi.fn();
+  const onToggleProject = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const renderRow = (props: Partial<React.ComponentProps<typeof ProjectRow>>) =>
+    render(
+      <ProjectRow
+        project={project}
+        isActive={false}
+        onSelectProject={onSelectProject}
+        onToggleProject={onToggleProject}
+        listId="list-1"
+        {...props}
+      />,
+    );
+
+  it('renders no chevron without a toggle callback', () => {
+    renderRow({ onToggleProject: undefined });
+
+    expect(
+      screen.queryByRole('button', { name: 'Collapse project' }),
+    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Expand project' })).toBeNull();
+  });
+
+  it('names the chevron after the action and points it at the list while expanded', () => {
+    renderRow({ isExpanded: true });
+
+    const toggle = screen.getByRole('button', { name: 'Collapse project' });
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(toggle.getAttribute('aria-controls')).toBe('list-1');
+    expect(within(toggle).getByText('chevron-down')).toBeTruthy();
+  });
+
+  it('names the chevron after the action and mirrors its inline-end arrow while collapsed', () => {
+    renderRow({ isExpanded: false });
+
+    const toggle = screen.getByRole('button', { name: 'Expand project' });
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(within(toggle).getByText('chevron-right').className).toContain(
+      'rtl:scale-x-[-1]',
+    );
+  });
+
+  it('uses the host labels for the chevron', () => {
+    renderRow({
+      isExpanded: false,
+      expandLabel: 'Show project chats',
+      collapseLabel: 'Hide project chats',
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'Show project chats' }),
+    ).toBeTruthy();
+  });
+
+  it('toggles the project without opening it', () => {
+    renderRow({});
+
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse project' }));
+
+    expect(onToggleProject).toHaveBeenCalledWith('p1');
+    expect(onToggleProject).toHaveBeenCalledOnce();
+    expect(onSelectProject).not.toHaveBeenCalled();
+  });
+
+  it('shows the chevron instead of the project icon on mobile, where there is no hover', () => {
+    renderRow({});
+
+    const toggle = screen.getByRole('button', { name: 'Collapse project' });
+    expect(toggle.parentElement?.className).toContain('mobile:opacity-100');
+    expect(
+      screen.getByRole('img', { hidden: true }).parentElement?.className,
+    ).toContain('mobile:opacity-0');
+  });
+
+  it('keeps the project icon on mobile when there is no toggle', () => {
+    renderRow({ onToggleProject: undefined });
+
+    expect(
+      screen.getByRole('img', { hidden: true }).parentElement?.className,
+    ).not.toContain('mobile:opacity-0');
+  });
+
+  it('does not move focus to the chevron on a pointer press', () => {
+    renderRow({});
+
+    const notPrevented = fireEvent.mouseDown(
+      screen.getByRole('button', { name: 'Collapse project' }),
+    );
+
+    expect(notPrevented).toBe(false);
+  });
+
+  it('keeps the row highlight on the whole row while the chevron is hovered', () => {
+    renderRow({});
+
+    expect(screen.getByRole('listitem').className).toMatch(/projectRow/);
+    expect(screen.getByRole('button', { name: 'Support' }).className).toMatch(
+      /projectButton/,
+    );
+  });
+
+  it('leaves the active row on its own highlight', () => {
+    renderRow({ isActive: true });
+
+    expect(
+      screen.getByRole('button', { name: 'Support' }).className,
+    ).not.toMatch(/projectButton/);
+  });
+
+  it('keeps the chevron outside the project link', () => {
+    renderRow({});
+
+    expect(
+      within(screen.getByRole('link')).queryByRole('button', {
+        name: 'Collapse project',
+      }),
+    ).toBeNull();
+  });
+
+  it('keeps the actions menu available while collapsed', () => {
+    renderRow({ isExpanded: false, getActions: actions });
+
+    expect(screen.getByRole('button', { name: 'More actions' })).toBeTruthy();
+    expect(screen.getByText('Unpin')).toBeTruthy();
+  });
+
+  it('shows the unread dot of a collapsed project with an unread chat', () => {
+    renderRow({
+      isExpanded: false,
+      project: {
+        ...project,
+        conversations: [{ id: 'c1', title: 'Weekly summary', isUnread: true }],
+      },
+    });
+
+    expect(screen.getByText('Unread')).toBeTruthy();
+  });
+
+  it('uses the host label for the unread dot', () => {
+    renderRow({
+      isExpanded: false,
+      unreadIndicatorLabel: 'New chats',
+      project: {
+        ...project,
+        conversations: [{ id: 'c1', title: 'Weekly summary', isUnread: true }],
+      },
+    });
+
+    expect(screen.getByText('New chats')).toBeTruthy();
+  });
+
+  it('shows no unread dot when the collapsed project has only read chats', () => {
+    renderRow({ isExpanded: false });
+
+    expect(screen.queryByText('Unread')).toBeNull();
+  });
+
+  it('shows no unread dot while the project is expanded', () => {
+    renderRow({
+      isExpanded: true,
+      project: {
+        ...project,
+        conversations: [{ id: 'c1', title: 'Weekly summary', isUnread: true }],
+      },
+    });
+
+    expect(screen.queryByText('Unread')).toBeNull();
   });
 });
 

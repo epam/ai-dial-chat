@@ -2,11 +2,17 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  ElementSize,
+  GhostIconButton,
   Highlight,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
-import { IconBriefcase } from '@tabler/icons-react';
-import { memo, type FC } from 'react';
+import {
+  IconBriefcase,
+  IconChevronDown,
+  IconChevronRight,
+} from '@tabler/icons-react';
+import { memo, type FC, type MouseEvent } from 'react';
 import { useRowActions } from '../../hooks/useRowActions';
 import type { PinnedProjectGroup } from '../../models/pinned-projects';
 import { ConversationRowVariant } from '../../types/conversation-row-variant';
@@ -22,8 +28,14 @@ export interface ProjectRowProps {
   project: PinnedProjectGroup;
   /** Whether this project is the one the host currently shows. */
   isActive: boolean;
+  /** Whether the project's chats are shown. Defaults to `true`. */
+  isExpanded?: boolean;
+  /** `id` of the list container the chevron controls, referenced by its `aria-controls`. */
+  listId?: string;
   /** Called with the project `id` when the row is activated. */
   onSelectProject: (projectId: string) => void;
+  /** Called with the project `id` when the chevron is activated. The chevron renders only when set. */
+  onToggleProject?: (projectId: string) => void;
   /** Current search query — matched text in the name is highlighted. Defaults to `''`. */
   searchQuery?: string;
   /** Builds the ⋮ actions of the project. When absent or empty, the trigger is not rendered. */
@@ -35,6 +47,12 @@ export interface ProjectRowProps {
   ) => void;
   /** Accessible label for the actions trigger button. Defaults to `"More actions"`. */
   actionsLabel?: string;
+  /** Accessible name of the chevron of a collapsed project. Defaults to `"Expand project"`. */
+  expandLabel?: string;
+  /** Accessible name of the chevron of an expanded project. Defaults to `"Collapse project"`. */
+  collapseLabel?: string;
+  /** Accessible (visually hidden) label announced for the unread dot of a collapsed project. Defaults to `"Unread"`. */
+  unreadIndicatorLabel?: string;
   /** Typography class for the project name. Defaults to `'dial-small-text'`. */
   titleClassName?: string;
 }
@@ -42,23 +60,49 @@ export interface ProjectRowProps {
 const ProjectRowComponent: FC<ProjectRowProps> = ({
   project,
   isActive,
+  isExpanded = true,
+  listId,
   onSelectProject,
+  onToggleProject,
   searchQuery = '',
   getActions,
   onActionMenuOpen,
   actionsLabel = 'More actions',
+  expandLabel = 'Expand project',
+  collapseLabel = 'Collapse project',
+  unreadIndicatorLabel = 'Unread',
   titleClassName = 'dial-small-text',
 }) => {
   const { menuItems, hasActions, isMenuOpen, handleOpenChange, handleOpen } =
     useRowActions(project, getActions, onActionMenuOpen);
+  const isToggleable = onToggleProject != null;
+  /* A pointer click must not leave focus on the chevron, or `focus-within` would keep it and the ⋮ shown after the pointer leaves. */
+  const handleChevronMouseDown = (event: MouseEvent<HTMLButtonElement>) =>
+    event.preventDefault();
+  const hasUnread =
+    !isExpanded && project.conversations.some((item) => item.isUnread);
 
   return (
-    <li aria-level={1} className="group/conversation relative">
+    <li
+      aria-level={1}
+      className={mergeClasses(
+        'group/conversation relative',
+        projectStyles.projectRow,
+      )}
+    >
       <RowLink
         href={project.href}
         onSelect={() => onSelectProject(project.id)}
         iconBefore={
-          <span className="flex size-6 shrink-0 items-center justify-center">
+          <span
+            className={mergeClasses(
+              'flex size-6 shrink-0 items-center justify-center',
+              isToggleable &&
+                (isMenuOpen
+                  ? 'opacity-0'
+                  : 'group-focus-within/conversation:opacity-0 group-hover/conversation:opacity-0 mobile:opacity-0'),
+            )}
+          >
             <IconBriefcase
               size={DIAL_ICON_SIZE.SM}
               stroke={DIAL_KIT_ICON_STROKE}
@@ -87,8 +131,73 @@ const ProjectRowComponent: FC<ProjectRowProps> = ({
           styles.item,
           styles.itemIndicator,
           (isActive || isMenuOpen) && styles.itemActive,
+          !(isActive || isMenuOpen) && projectStyles.projectButton,
         )}
       />
+      {isToggleable && (
+        <div
+          className={mergeClasses(
+            'absolute inset-y-0 inset-s-2 flex items-center',
+            isMenuOpen
+              ? 'opacity-100'
+              : 'opacity-0 group-focus-within/conversation:opacity-100 group-hover/conversation:opacity-100 mobile:opacity-100',
+          )}
+        >
+          <GhostIconButton
+            type="button"
+            icon={
+              isExpanded ? (
+                <IconChevronDown
+                  size={DIAL_ICON_SIZE.SM}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                  className={projectStyles.projectIcon}
+                  aria-hidden
+                />
+              ) : (
+                <IconChevronRight
+                  size={DIAL_ICON_SIZE.SM}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                  className={mergeClasses(
+                    projectStyles.projectIcon,
+                    'rtl:scale-x-[-1]',
+                  )}
+                  aria-hidden
+                />
+              )
+            }
+            size={ElementSize.Small}
+            aria-label={isExpanded ? collapseLabel : expandLabel}
+            aria-expanded={isExpanded}
+            aria-controls={listId}
+            className={mergeClasses(
+              'size-6! min-h-0! min-w-0! rounded-full! p-1!',
+              projectStyles.chevron,
+            )}
+            onMouseDown={handleChevronMouseDown}
+            onClick={() => onToggleProject(project.id)}
+          />
+        </div>
+      )}
+      {hasUnread && (
+        <span
+          className={mergeClasses(
+            'pointer-events-none absolute inset-y-0 inset-e-2 flex w-6 items-center justify-center',
+            hasActions &&
+              (isMenuOpen
+                ? 'opacity-0'
+                : 'group-focus-within/conversation:opacity-0 group-hover/conversation:opacity-0'),
+          )}
+        >
+          <span
+            className={mergeClasses(
+              'size-[7.11px] rounded-full',
+              styles.unreadDot,
+            )}
+            aria-hidden
+          />
+          <span className="sr-only">{unreadIndicatorLabel}</span>
+        </span>
+      )}
       {hasActions && (
         <RowActionsMenu
           items={menuItems}

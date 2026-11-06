@@ -80,6 +80,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       unreadIndicatorLabel,
       seeAllLabel,
       seeAllAriaLabel,
+      expandProjectLabel,
+      collapseProjectLabel,
       closeAriaLabel,
     } = labels;
     const [searchQuery, setSearchQuery] = useState('');
@@ -120,6 +122,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         unreadIndicatorLabel,
         seeAllLabel,
         seeAllAriaLabel,
+        expandProjectLabel,
+        collapseProjectLabel,
       }),
       [
         emptyLabel,
@@ -135,6 +139,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         unreadIndicatorLabel,
         seeAllLabel,
         seeAllAriaLabel,
+        expandProjectLabel,
+        collapseProjectLabel,
       ],
     );
 

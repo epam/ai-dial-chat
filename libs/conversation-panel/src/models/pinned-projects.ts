@@ -17,6 +17,8 @@ export interface PinnedProjectGroup {
   conversations: ConversationItem[];
   /** Renders a See all row after `conversations`. */
   hasMore: boolean;
+  /** Whether the project's chats are shown. Defaults to `true`; a search matching one of its chats shows them whatever this says. */
+  isExpanded?: boolean;
 }
 
 /** The project trees of the Pinned section and their callbacks. */
@@ -29,6 +31,8 @@ export interface PinnedProjects {
   onSelectConversation: (conversationId: string, projectId: string) => void;
   /** Called when a See all row is activated. */
   onSeeAll: (projectId: string) => void;
+  /** Called with the project id when its chevron is activated; no chevron renders when absent. */
+  onToggleProject?: (projectId: string) => void;
   /** Builds the ⋮ actions of a project row; no trigger renders when absent or empty. */
   getActions?: (project: PinnedProjectGroup) => DropdownItem[];
   /** Called when the ⋮ menu of a project row opens; receives the trigger button. */

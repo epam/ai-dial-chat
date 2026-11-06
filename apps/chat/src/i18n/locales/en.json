@@ -511,6 +511,8 @@
     "chatsAndTasks": "Chats and tasks",
     "seeAll": "See all",
     "seeAllProjectChats": "See all chats in {{name}}",
+    "expandProject": "Expand project",
+    "collapseProject": "Collapse project",
     "search": {
       "open": "Search chats",
       "close": "Close search"

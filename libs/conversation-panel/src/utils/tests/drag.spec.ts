@@ -233,7 +233,7 @@ describe('drag helpers — pinned project rows', () => {
   };
   const rows: VirtualRow[] = [
     makeHeader(FilterTab.Pinned),
-    { kind: VirtualRowKind.Project, project },
+    { kind: VirtualRowKind.Project, project, isExpanded: true },
     {
       kind: VirtualRowKind.ProjectConversation,
       item: project.conversations[0],

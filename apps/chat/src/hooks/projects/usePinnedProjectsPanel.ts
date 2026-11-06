@@ -49,6 +49,9 @@ import { useUserConfig } from '../../context/UserConfigContext';
 import type { PinnedProjectActionState } from '../../models/pinned-project-action';
 import { PinnedProjectActionKind } from '../../types/pinned-project-action';
 import { ROUTES } from '../../types/routes';
+import { StorageKey } from '../../types/storage-key';
+import { UserConfigStatus } from '../../types/user-config-status';
+import useLocalStorage from '../useLocalStorage';
 import {
   projectsClient,
   subscribeProjectConversationViewed,
@@ -91,7 +94,7 @@ export interface PinnedProjectActionOverlay {
 export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
   const { t } = useTranslation();
   const isEnabled = useFeatureFlag('projectsEnabled');
-  const { pinnedProjectIds, setPinnedProject, replacePinnedProjectId } =
+  const { pinnedProjectIds, setPinnedProject, replacePinnedProjectId, status } =
     useUserConfig();
   const { showErrorNotification } = useNotification();
 
@@ -132,6 +135,61 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
     return subscribeProjectConversationViewed(markViewed);
   }, [isEnabled, markViewed]);
 
+  /* Only a click on a chevron writes these ids; a project with no entry is expanded. */
+  const [storedIds, setCollapsedIds] = useLocalStorage<string[]>(
+    StorageKey.CollapsedPinnedProjects,
+    [],
+  );
+  /* `useLocalStorage` only guards the JSON, so a hand-edited or foreign value of another shape must not reach the list code. */
+  const collapsedIds = useMemo(
+    () =>
+      Array.isArray(storedIds)
+        ? storedIds.filter((id): id is string => typeof id === 'string')
+        : [],
+    [storedIds],
+  );
+  const collapsedSet = useMemo(() => new Set(collapsedIds), [collapsedIds]);
+  /* The project of the most recently opened chat, shown expanded without a write. */
+  const [revealedIds, setRevealedIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const chatProjectId = chatRoute?.projectId;
+  const revealedChatRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (activeConversationId == null || chatProjectId == null) {
+      revealedChatRef.current = undefined;
+      return;
+    }
+    if (revealedChatRef.current === activeConversationId) return;
+    revealedChatRef.current = activeConversationId;
+    setRevealedIds(new Set([chatProjectId]));
+  }, [activeConversationId, chatProjectId]);
+
+  /* `pinnedProjectIds` is empty until the user config has loaded, so an earlier pass would erase every stored id. */
+  useEffect(() => {
+    if (!isEnabled || status !== UserConfigStatus.Ready) return;
+    const pinned = new Set(pinnedProjectIds);
+    const kept = collapsedIds.filter((id) => pinned.has(id));
+    if (kept.length !== collapsedIds.length) setCollapsedIds(kept);
+  }, [isEnabled, status, pinnedProjectIds, collapsedIds, setCollapsedIds]);
+
+  const handleToggleProject = useCallback(
+    (projectId: string) => {
+      const isCollapsed = collapsedSet.has(projectId);
+      if (isCollapsed && !revealedIds.has(projectId)) {
+        setCollapsedIds(collapsedIds.filter((id) => id !== projectId));
+        return;
+      }
+      if (!isCollapsed) setCollapsedIds([...collapsedIds, projectId]);
+      setRevealedIds((current) => {
+        const next = new Set(current);
+        next.delete(projectId);
+        return next;
+      });
+    },
+    [collapsedSet, collapsedIds, revealedIds, setCollapsedIds],
+  );
+
   const projectsById = useMemo(
     () => new Map(projects.map((entry) => [entry.project.id, entry.project])),
     [projects],
@@ -146,6 +204,8 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
         href: getProjectViewRoute(project.id),
         source: mapProjectSourceToFilterTab(project.source),
         hasMore,
+        isExpanded:
+          !collapsedSet.has(project.id) || revealedIds.has(project.id),
         conversations: chats.map((chat) => ({
           id: chat.id,
           title: chat.title,
@@ -155,7 +215,7 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
             : {}),
         })),
       })),
-    [projects, activeConversationId],
+    [projects, activeConversationId, collapsedSet, revealedIds],
   );
 
   const handleOpenProject = useCallback(
@@ -257,6 +317,7 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
             onSelectProject: handleOpenProject,
             onSelectConversation: handleSelectConversation,
             onSeeAll: handleOpenProject,
+            onToggleProject: handleToggleProject,
             getActions,
             onActionMenuOpen: handleActionMenuOpen,
             activeProjectId,
@@ -267,6 +328,7 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
       groups,
       handleOpenProject,
       handleSelectConversation,
+      handleToggleProject,
       getActions,
       handleActionMenuOpen,
       activeProjectId,

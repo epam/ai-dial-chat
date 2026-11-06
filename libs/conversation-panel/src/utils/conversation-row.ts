@@ -16,6 +16,7 @@ import type {
 import type { RowRendererData, VirtualRow } from '../models/virtual-row';
 import { ConversationRowVariant } from '../types/conversation-row-variant';
 import { VirtualRowKind } from '../types/virtual-row';
+import { matchesSearch } from './conversation-filter';
 
 /** Number of skeleton placeholder rows shown while conversations are loading. */
 export const SKELETON_ROW_COUNT = 15;
@@ -119,10 +120,25 @@ export const isSameIdSequence = (left: string[], right: string[]): boolean =>
   left.length === right.length &&
   left.every((id, index) => id === right[index]);
 
-/** Returns a pinned project's rows: the project row, one row per conversation and the See all row when `hasMore` is set. */
-export const buildProjectRows = (project: PinnedProjectGroup): VirtualRow[] => {
+/** Returns whether a pinned project shows its chats: not collapsed by the host, or a search matches one of its chats. */
+export const isProjectExpanded = (
+  project: PinnedProjectGroup,
+  searchQuery: string,
+): boolean =>
+  project.isExpanded !== false ||
+  (searchQuery !== '' &&
+    project.conversations.some((item) => matchesSearch(item, searchQuery)));
+
+/** Returns a pinned project's rows: the project row, and when `isExpanded` one row per conversation and the See all row when `hasMore` is set. */
+export const buildProjectRows = (
+  project: PinnedProjectGroup,
+  isExpanded = true,
+): VirtualRow[] => {
+  const rows: VirtualRow[] = [
+    { kind: VirtualRowKind.Project, project, isExpanded },
+  ];
+  if (!isExpanded) return rows;
   const setSize = project.conversations.length + (project.hasMore ? 1 : 0);
-  const rows: VirtualRow[] = [{ kind: VirtualRowKind.Project, project }];
   project.conversations.forEach((item, index) => {
     rows.push({
       kind: VirtualRowKind.ProjectConversation,
