@@ -750,7 +750,8 @@ and newest first; on a public copy (`{type}/public/…`) an administrator gets i
 folder outright and anyone else only when `getCatalogUnpublishAccess` answers
 `canUnpublish: true`; anyone else gets none. `isResolved` stays `false` while the
 lookup for the current `target` runs, so a host can withhold Publish and Unpublish
-until it settles; a failed lookup settles as no folders, and `refresh()` re-runs it
+until it settles; a failed first lookup settles as no folders, a failed `refresh()` keeps
+the folders already reported, and `refresh()` re-runs it
 while keeping the folders already reported. `client` is a `PublishApiClient`
 (`createPublishApiClient`) and must be referentially stable. The confirmation, the
 unpublish request and its notifications stay with the host.

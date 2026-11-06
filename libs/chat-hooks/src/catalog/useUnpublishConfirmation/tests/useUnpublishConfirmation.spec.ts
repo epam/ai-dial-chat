@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   type UnpublishConfirmationPayload,
   useUnpublishConfirmation,
-} from '../use-unpublish-confirmation';
+} from '../useUnpublishConfirmation';
 
 type Payload = UnpublishConfirmationPayload & { id: string };
 

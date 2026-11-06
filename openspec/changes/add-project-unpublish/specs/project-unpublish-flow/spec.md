@@ -38,7 +38,7 @@ The lib SHALL perform no request and SHALL know nothing about publish history, o
 
 ### Requirement: chat-hooks decides who is offered Unpublish
 
-The decision SHALL live in `libs/chat-hooks` (`libs/chat-hooks/src/catalog/use-unpublishable-folders.ts`), exported from the root and `./catalog` entry points, because it is pure logic over DIAL Core publish data that every DIAL-Core-backed host needs as-is. It is generic over the catalog entity type, so the catalog flow can adopt it later. It lives under `./catalog` rather than `./project` so the `./project` entry point gains no `@epam/ai-dial-publish-panel` peer.
+The decision SHALL live in `libs/chat-hooks` — the resolver in `libs/chat-hooks/src/catalog/unpublishable-folders.ts`, the hook in `libs/chat-hooks/src/catalog/useUnpublishableFolders/useUnpublishableFolders.ts` — exported from the root and `./catalog` entry points, because it is pure logic over DIAL Core publish data that every DIAL-Core-backed host needs as-is. It is generic over the catalog entity type, so the catalog flow can adopt it later. It lives under `./catalog` rather than `./project` so the `./project` entry point gains no `@epam/ai-dial-publish-panel` peer.
 
 - `resolveUnpublishableFolders(client, target, isAdmin)` returns `Promise<string[][]>` and rejects when a request fails.
 - `useUnpublishableFolders(client, target, isAdmin)` returns `{ isResolved, folders, refresh }`.
@@ -64,7 +64,8 @@ Resolution states of `useUnpublishableFolders`:
 | No lookup needed (rows 2 and 4) | `true` once the effect runs, with no request | as in the table |
 | Lookup in flight | `false` | `[]` |
 | Resolved | `true` | as in the table |
-| Failed | `true` | `[]` — no notification is raised |
+| First lookup failed | `true` | `[]` — no notification is raised |
+| `refresh()` failed for the same entity | `true` | unchanged — the folders already reported stay, so Unpublish does not flip back to Publish while the copy is live |
 
 The lookup runs when the entity type, id, `isOwner`, `isAdmin` or `client` changes, inside `useEffect` with a cancelled flag so a response for a previous entity cannot land on the next one. `refresh()` re-runs it without clearing the folders already reported. `refresh` is `useCallback`-memoised and the result `useMemo`-memoised.
 
@@ -106,6 +107,12 @@ The app adapter `useProjectUnpublish` (`apps/chat/src/hooks/projects/useProjectU
 
 - **GIVEN** the history request rejects
 - **THEN** `isResolved` is `true`, `folders` is `[]`, and no notification is shown
+
+#### Scenario: A failed refresh keeps the folders
+
+- **GIVEN** the folders resolved to `[['Organization', 'Data']]`
+- **WHEN** `refresh()` runs and the lookup rejects
+- **THEN** `isResolved` stays `true` and `folders` is still `[['Organization', 'Data']]`
 
 #### Scenario: Switching entities discards the previous response
 

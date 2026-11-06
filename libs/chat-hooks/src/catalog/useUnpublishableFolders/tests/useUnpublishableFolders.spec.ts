@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   resolveUnpublishableFolders,
   type UnpublishTarget,
-  useUnpublishableFolders,
-} from '../use-unpublishable-folders';
+} from '../../unpublishable-folders';
+import { useUnpublishableFolders } from '../useUnpublishableFolders';
 
 const OWN_ID = 'projects/bucket-1/Sales';
 const PUBLIC_ID = 'projects/public/Data/Sales';
@@ -188,6 +188,23 @@ describe('useUnpublishableFolders', () => {
     });
 
     expect(result.current.folders).toEqual([]);
+  });
+
+  it('keeps the folders when a refresh fails', async () => {
+    client.getCatalogPublishHistory.mockResolvedValueOnce([
+      historyEntry('Organization/Data'),
+    ]);
+    const { result } = renderFolders(own);
+    await waitFor(() => expect(result.current.folders).toHaveLength(1));
+    client.getCatalogPublishHistory.mockRejectedValueOnce(new Error('down'));
+
+    await act(async () => {
+      result.current.refresh();
+    });
+
+    expect(client.getCatalogPublishHistory).toHaveBeenCalledTimes(2);
+    expect(result.current.isResolved).toBe(true);
+    expect(result.current.folders).toEqual([['Organization', 'Data']]);
   });
 
   it('keeps the folders shown while a refresh runs', async () => {

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useAsyncConfirmDialog } from '../conversation/useAsyncConfirmDialog/useAsyncConfirmDialog';
+import { useAsyncConfirmDialog } from '../../conversation/useAsyncConfirmDialog/useAsyncConfirmDialog';
 
 /** The entity an unpublish confirmation is open for. */
 export interface UnpublishConfirmationPayload {
