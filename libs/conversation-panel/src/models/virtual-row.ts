@@ -31,6 +31,8 @@ interface ProjectRow {
   kind: VirtualRowKind.Project;
   /** The project to render. */
   project: PinnedProjectGroup;
+  /** Whether the project's chats are shown, search included. */
+  isExpanded: boolean;
 }
 
 /** A conversation row nested under a pinned project row. */
@@ -108,6 +110,8 @@ export interface RowRendererData {
   onSelectProjectConversation: (id: string) => void;
   /** Called with the project `id` when a See all row is activated. */
   onSeeAll: (projectId: string) => void;
+  /** Called with the project `id` and the state the chevron asks for when a project row's chevron is activated. */
+  onToggleProject?: (projectId: string, isExpanded: boolean) => void;
   /** Builds the ⋮ actions of a project row. */
   getProjectActions?: (project: PinnedProjectGroup) => DropdownItem[];
   /** Called when a project row's ⋮ menu opens. */
@@ -119,6 +123,10 @@ export interface RowRendererData {
   seeAllLabel?: string;
   /** Builds the accessible name of a See all row from the project name. */
   seeAllAriaLabel?: (name: string) => string;
+  /** Accessible name of the chevron of a collapsed project. */
+  expandProjectLabel?: string;
+  /** Accessible name of the chevron of an expanded project. */
+  collapseProjectLabel?: string;
   /** Typography/class overrides applied to virtual row elements. */
   styles?: RowStyles;
   /** Presentation of conversation rows and group headers. Defaults to `ConversationRowVariant.Avatar`. */

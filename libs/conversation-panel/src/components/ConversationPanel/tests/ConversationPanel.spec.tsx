@@ -24,6 +24,21 @@ vi.mock('@epam/ai-dial-ui-kit', async () => ({
   mergeClasses: (...args: (string | undefined | false | null)[]) =>
     args.filter(Boolean).join(' '),
   DIAL_ICON_SIZE: { SM: 16, LG: 24 },
+  GhostIconButton: ({
+    onClick,
+    'aria-label': ariaLabel,
+    'aria-expanded': ariaExpanded,
+  }: {
+    onClick?: () => void;
+    'aria-label'?: string;
+    'aria-expanded'?: boolean;
+  }) => (
+    <button
+      aria-label={ariaLabel}
+      aria-expanded={ariaExpanded}
+      onClick={onClick}
+    />
+  ),
   GhostButton: ({
     onClick,
     label,
@@ -803,6 +818,36 @@ describe('ConversationPanel — pinned projects', () => {
 
     const link = screen.getByRole('link', { name: 'All chats of Support' });
     expect(within(link).getByText('Show all')).toBeTruthy();
+  });
+
+  it('collapses a project through the panel and reports its toggle', async () => {
+    const onToggleProject = vi.fn();
+    const pinnedProjects = makePinnedProjects({ onToggleProject });
+    pinnedProjects.projects[0].isExpanded = false;
+    renderPanel(pinnedProjects);
+
+    expect(screen.queryByText('Weekly summary')).toBeNull();
+    expect(screen.queryByRole('link', { name: /See all/ })).toBeNull();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Expand project' }),
+    );
+
+    expect(onToggleProject).toHaveBeenCalledWith('p1', true);
+    expect(pinnedProjects.onSelectProject).not.toHaveBeenCalled();
+  });
+
+  it('uses the project toggle labels passed through the panel labels', () => {
+    renderPanel(makePinnedProjects({ onToggleProject: vi.fn() }), {
+      labels: {
+        ...BASE_PROPS.labels,
+        collapseProjectLabel: 'Hide project chats',
+      },
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'Hide project chats' }),
+    ).toBeTruthy();
   });
 
   it('falls back to the default See all labels', () => {

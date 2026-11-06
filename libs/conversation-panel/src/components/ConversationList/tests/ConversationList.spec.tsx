@@ -104,10 +104,31 @@ vi.mock('@epam/ai-dial-ui-kit', async () => ({
   Dropdown: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   GhostIconButton: React.forwardRef<
     HTMLButtonElement,
-    { 'aria-label'?: string }
-  >(({ 'aria-label': ariaLabel }, ref) => (
-    <button ref={ref} aria-label={ariaLabel} />
-  )),
+    {
+      'aria-label'?: string;
+      'aria-expanded'?: boolean;
+      'aria-controls'?: string;
+      onClick?: () => void;
+    }
+  >(
+    (
+      {
+        'aria-label': ariaLabel,
+        'aria-expanded': ariaExpanded,
+        'aria-controls': ariaControls,
+        onClick,
+      },
+      ref,
+    ) => (
+      <button
+        ref={ref}
+        aria-label={ariaLabel}
+        aria-expanded={ariaExpanded}
+        aria-controls={ariaControls}
+        onClick={onClick}
+      />
+    ),
+  ),
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Skeleton: () => null,
   SkeletonVariant: { Circular: 'circular' },
@@ -1112,7 +1133,7 @@ describe('ConversationList — pinned projects', () => {
     expect(getNestedButton().className).not.toMatch(/itemIndicator/);
   });
 
-  it('offers the project actions on the project row only, not on See all', () => {
+  it('offers the project actions on the project row and on See all', () => {
     renderList({
       projects: [makeProject({ conversations: tenChats, hasMore: true })],
       getActions: () => [{ key: 'unpin', label: 'Unpin' }],
@@ -1124,10 +1145,10 @@ describe('ConversationList — pinned projects', () => {
       }),
     ).toBeTruthy();
     expect(
-      within(getListItem('See all')).queryByRole('button', {
+      within(getListItem('See all')).getByRole('button', {
         name: 'More actions',
       }),
-    ).toBeNull();
+    ).toBeTruthy();
   });
 
   it('renders ten nested rows and a See all row with their levels and positions', () => {
@@ -1164,6 +1185,184 @@ describe('ConversationList — pinned projects', () => {
     expect(titles[0]).toContain('Pinned');
     expect(projectIndex).toBeGreaterThan(0);
     expect(pinnedIndex).toBeGreaterThan(projectIndex);
+  });
+
+  describe('collapsing a project', () => {
+    it('renders only the project row of a collapsed project and keeps the rows after it', () => {
+      renderList({
+        projects: [makeProject({ isExpanded: false })],
+        onToggleProject: vi.fn(),
+      });
+
+      expect(getListItem('Support')).toBeTruthy();
+      expect(screen.queryByText('Weekly summary')).toBeNull();
+      expect(screen.queryByText('Billing reply')).toBeNull();
+      expect(screen.queryByText('See all')).toBeNull();
+      expect(getListItem('Pinned chat')).toBeTruthy();
+    });
+
+    it('renders the nested rows of a project whose isExpanded is not set', () => {
+      renderList({
+        projects: [makeProject()],
+        onToggleProject: vi.fn(),
+      });
+
+      expect(screen.getByText('Weekly summary')).toBeTruthy();
+      expect(screen.getByText('See all')).toBeTruthy();
+    });
+
+    it('collapses only the project whose isExpanded is false', () => {
+      renderList({
+        projects: [
+          makeProject({ isExpanded: false }),
+          makeProject({
+            id: 'p2',
+            name: 'Sales',
+            conversations: [{ id: 'm1', title: 'Quarterly numbers' }],
+            hasMore: false,
+          }),
+        ],
+        onToggleProject: vi.fn(),
+      });
+
+      expect(screen.queryByText('Weekly summary')).toBeNull();
+      expect(screen.getByText('Quarterly numbers')).toBeTruthy();
+    });
+
+    it('reports the toggled project id and does not open it', () => {
+      const { onSelectProject, onSelectConversation } = renderList({
+        projects: [makeProject()],
+        onToggleProject: vi.fn(),
+      });
+
+      fireEvent.click(
+        within(getListItem('Support')).getByRole('button', {
+          name: 'Collapse project',
+        }),
+      );
+
+      expect(onSelectProject).not.toHaveBeenCalled();
+      expect(onSelectConversation).not.toHaveBeenCalled();
+    });
+
+    it('passes the toggle callback the project id and the state it asks for', () => {
+      const onToggleProject = vi.fn();
+      renderList({
+        projects: [makeProject({ isExpanded: false })],
+        onToggleProject,
+      });
+
+      fireEvent.click(
+        within(getListItem('Support')).getByRole('button', {
+          name: 'Expand project',
+        }),
+      );
+
+      expect(onToggleProject).toHaveBeenCalledWith('p1', true);
+    });
+
+    it('uses the host labels for the chevron', () => {
+      renderList(
+        { projects: [makeProject()], onToggleProject: vi.fn() },
+        {
+          labels: {
+            ...LABELS,
+            collapseProjectLabel: 'Hide project chats',
+          },
+        },
+      );
+
+      expect(
+        within(getListItem('Support')).getByRole('button', {
+          name: 'Hide project chats',
+        }),
+      ).toBeTruthy();
+    });
+
+    it('renders no chevron without a toggle callback', () => {
+      renderList({ projects: [makeProject({ isExpanded: false })] });
+
+      expect(
+        screen.queryByRole('button', { name: 'Expand project' }),
+      ).toBeNull();
+      expect(screen.queryByText('Weekly summary')).toBeNull();
+    });
+
+    it('shows a chat that matches the search inside a collapsed project without calling the toggle', () => {
+      const onToggleProject = vi.fn();
+      renderList(
+        {
+          projects: [makeProject({ isExpanded: false })],
+          onToggleProject,
+        },
+        { searchQuery: 'billing' },
+      );
+
+      expect(screen.getByText('Billing reply')).toBeTruthy();
+      expect(screen.queryByText('Weekly summary')).toBeNull();
+      expect(
+        within(getListItem('Support')).getByRole('button', {
+          name: 'Collapse project',
+        }),
+      ).toBeTruthy();
+      expect(onToggleProject).not.toHaveBeenCalled();
+    });
+
+    it('asks to collapse a project that the search shows open', () => {
+      const onToggleProject = vi.fn();
+      renderList(
+        {
+          projects: [makeProject({ isExpanded: false })],
+          onToggleProject,
+        },
+        { searchQuery: 'billing' },
+      );
+
+      fireEvent.click(
+        within(getListItem('Support')).getByRole('button', {
+          name: 'Collapse project',
+        }),
+      );
+
+      expect(onToggleProject).toHaveBeenCalledWith('p1', false);
+    });
+
+    it('keeps a project collapsed when only its name matches the search', () => {
+      renderList(
+        {
+          projects: [makeProject({ isExpanded: false })],
+          onToggleProject: vi.fn(),
+        },
+        { searchQuery: 'support' },
+      );
+
+      expect(getListItem('Support')).toBeTruthy();
+      expect(screen.queryByText('Weekly summary')).toBeNull();
+      expect(screen.queryByText('Billing reply')).toBeNull();
+    });
+
+    it('collapses the project again once the search is cleared', () => {
+      const props = {
+        ...BASE_PROPS,
+        conversations: [pinned],
+        rowVariant: ConversationRowVariant.Indicator,
+        pinnedProjects: {
+          projects: [makeProject({ isExpanded: false })],
+          onSelectProject: vi.fn(),
+          onSelectConversation: vi.fn(),
+          onSeeAll: vi.fn(),
+          onToggleProject: vi.fn(),
+        },
+      };
+      const { rerender } = render(
+        <ConversationList {...props} searchQuery="billing" />,
+      );
+      expect(screen.getByText('Billing reply')).toBeTruthy();
+
+      rerender(<ConversationList {...props} searchQuery="" />);
+
+      expect(screen.queryByText('Billing reply')).toBeNull();
+    });
   });
 
   it('renders no See all row without more chats', () => {

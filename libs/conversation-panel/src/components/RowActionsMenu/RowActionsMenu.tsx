@@ -77,6 +77,7 @@ const RowActionsMenuComponent: FC<RowActionsMenuProps> = ({
           className={mergeClasses(
             /* A 24px box around the 16px glyph (4px padding). */
             isIndicator && 'size-6! min-h-0! min-w-0! p-1!',
+            styles.trigger,
             isOpen && styles.triggerActive,
           )}
         />

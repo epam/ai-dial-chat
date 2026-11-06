@@ -23,6 +23,11 @@
   bottom: 5px;
 }
 
+/* The chevron's round hover background is `styles.trigger`; only its glyph color is local. */
+.chevron:hover .projectIcon {
+  color: var(--cp-trigger-icon, var(--text-accent, #1d4ed8));
+}
+
 .seeAllText,
 .projectIcon {
   color: var(--cp-text-secondary, var(--text-secondary, #57647a));

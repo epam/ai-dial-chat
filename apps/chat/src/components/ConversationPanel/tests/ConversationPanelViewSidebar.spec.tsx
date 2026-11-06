@@ -699,6 +699,19 @@ describe('ConversationPanelView', () => {
       );
     });
 
+    it('translates the project toggle labels', () => {
+      renderSidebar();
+
+      const labels = sectionProps.current?.labels as {
+        expandProjectLabel: string;
+        collapseProjectLabel: string;
+      };
+      expect(labels.expandProjectLabel).toBe('conversationPanel.expandProject');
+      expect(labels.collapseProjectLabel).toBe(
+        'conversationPanel.collapseProject',
+      );
+    });
+
     it('mounts the action overlays with the adapter state, out of the sidebar', () => {
       const actionOverlay = { action: null, project: null, onClose: vi.fn() };
       pinnedPanel.hook.mockReturnValue({ ...emptyPinnedPanel, actionOverlay });

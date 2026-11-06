@@ -13,4 +13,5 @@ export enum StorageKey {
   PublishDestinationFolders = 'publishDestinationFolders',
   ConversationDrafts = 'conversationDrafts',
   NavigationSidebarExpanded = 'navigationSidebarExpanded',
+  CollapsedPinnedProjects = 'collapsedPinnedProjects',
 }
