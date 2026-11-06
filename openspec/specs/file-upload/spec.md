@@ -54,7 +54,7 @@ raw backslashes, leading slashes, and traversal segments remain invalid.
 
 **Generated-client impact:** none from this change — request and response shapes, status codes and `operationId` are unchanged. Generated method `filesApi.uploadFile({ file, bucket, path, uploadMode? })`. Frontend callers in `apps/chat/src/server-api/files.api.ts` (via `createFilesApiClient` from `@epam/ai-dial-chat-hooks`) and `upload-file-with-progress.ts` (via `createUploadFileWithProgress`) pass `uploadMode` through.
 
-**XHR progress path:** `uploadFileWithProgress` in `apps/chat/src/server-api/upload-file-with-progress.ts` is built by `createUploadFileWithProgress` (`libs/chat-hooks/src/files/create-upload-file-with-progress.ts`), which SHALL add `uploadMode` to the `FormData` when provided via `UploadFileWithProgressOptions`. The `UploadFileWithProgressOptions` type (`libs/chat-hooks/src/files/create-files-api.ts`) carries `uploadMode?: UploadMode` (`'overwrite' | 'create-only'`).
+**XHR progress path:** `uploadFileWithProgress` in `apps/chat/src/server-api/upload-file-with-progress.ts` is built by `createUploadFileWithProgress` (`libs/chat-hooks/src/files/create-upload-file-with-progress.ts`), which SHALL add `uploadMode` to the `FormData` when provided via `UploadFileWithProgressOptions`. The `UploadFileWithProgressOptions` type (`libs/chat-hooks/src/files/create-files-api.ts`) carries `uploadMode?: DialFilesApiUploadMode` — the one upload-mode string enum `libs/chat-hooks` exports (`Overwrite = 'overwrite'`, `CreateOnly = 'create-only'`), also used by `DialFilesApiUploadOptions`.
 
 #### Scenario: Successful overwrite upload
 - **WHEN** an authenticated user sends `POST /api/v1/files` with `uploadMode: 'overwrite'` (or omits the field)
