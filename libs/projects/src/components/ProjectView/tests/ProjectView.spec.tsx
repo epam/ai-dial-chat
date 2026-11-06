@@ -322,6 +322,7 @@ describe('ProjectView', () => {
     );
 
     expect(items.map((item) => item.textContent)).toEqual([
+      'Pin',
       'Publish',
       'Edit',
       'Share',
@@ -349,7 +350,7 @@ describe('ProjectView', () => {
       await userEvent.click(mobileTrigger);
 
       const sheet = await screen.findByRole('dialog', {
-        name: 'More actions',
+        name: 'Q4 launch',
       });
       await userEvent.click(
         within(sheet).getByRole('menuitem', { name: 'Edit' }),
