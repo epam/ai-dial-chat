@@ -465,4 +465,73 @@ describe('useConversationStream', () => {
       );
     });
   });
+
+  describe("another participant's foreground generation", () => {
+    it('keeps the chat generating while the marker is live, then shows the saved answer', async () => {
+      const question = {
+        role: MessageRole.User,
+        content: 'question',
+        timestamp: 't0',
+      };
+      const running = makeConversation({
+        messages: [
+          question,
+          {
+            role: MessageRole.Assistant,
+            content: '',
+            timestamp: 't1',
+            foregroundGeneration: {
+              generationId: '9d1e2f3a-4b5c-4d6e-8f70-81a2b3c4d5e6',
+              startedAt: 1,
+              expiresAt: Date.now() + 60_000,
+            },
+          },
+        ],
+      });
+      const answered = makeConversation({
+        messages: [
+          question,
+          { role: MessageRole.Assistant, content: 'answer', timestamp: 't1' },
+        ],
+      });
+      const watch = makeAttachStream();
+      vi.mocked(transport.attachToGeneration).mockRejectedValue(
+        new Error('404'),
+      );
+      vi.mocked(transport.watchConversation).mockResolvedValue(watch.stream);
+      vi.mocked(transport.getConversation).mockResolvedValue(running);
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          initialConversation: running,
+          generationInterruptedMessage: 'Interrupted',
+        }),
+      );
+
+      act(() =>
+        result.current.stream.resumeIfAwaitingGeneration(
+          'bucket/conv',
+          running,
+        ),
+      );
+      await waitFor(() =>
+        expect(transport.watchConversation).toHaveBeenCalled(),
+      );
+      await waitFor(() => expect(transport.getConversation).toHaveBeenCalled());
+
+      expect(result.current.stream.isStreaming).toBe(true);
+      expect(
+        result.current.conversation?.messages[1].streamErrorMessage,
+      ).toBeUndefined();
+
+      vi.mocked(transport.getConversation).mockResolvedValue(answered);
+      watch.emit({ action: 'UPDATE' });
+
+      await waitFor(() =>
+        expect(result.current.conversation?.messages[1].content).toBe('answer'),
+      );
+      expect(result.current.stream.isStreaming).toBe(false);
+    });
+  });
 });

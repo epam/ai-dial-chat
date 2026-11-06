@@ -11,7 +11,10 @@ import { ClientChannelService } from '../../client-channel/client-channel.servic
 import { ConversationGenerationController } from '../../conversations/conversation-generation.controller';
 import { ConversationWatchController } from '../../conversations/conversation-watch.controller';
 import { ConversationService } from '../../conversations/conversation.service';
-import { ConversationGenerationService } from '../../conversations/generation/conversation-generation.service';
+import {
+  GENERATION_SHUTDOWN_FLUSH_MS,
+  ConversationGenerationService,
+} from '../../conversations/generation/conversation-generation.service';
 import { ConversationCompletionsResponder } from '../../conversations/streaming/conversation-completions.responder';
 import {
   initializeRuntimeMetrics,
@@ -352,6 +355,8 @@ describe('SSE subscription metrics', () => {
         providers: [
           ConversationCompletionsResponder,
           ConversationGenerationService,
+          /* The registered entry has no worker to settle it during shutdown. */
+          { provide: GENERATION_SHUTDOWN_FLUSH_MS, useValue: 0 },
           { provide: ConfigService, useValue: { get: () => 1_800_000 } },
           {
             provide: ConversationService,

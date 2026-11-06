@@ -52,6 +52,10 @@ import {
   type CoreResponseResult,
 } from './core-responses.client';
 import {
+  findActiveGeneration,
+  neutralizeForegroundMarkers,
+} from './foreground-generation';
+import {
   BackgroundGenerationOutcome,
   backgroundGenerationOutcomesTotal,
 } from './generation-metrics';
@@ -60,7 +64,7 @@ import { ResponsesAdapter } from './responses.adapter';
 
 /** Returned when a new generation is started while another one holds the conversation. */
 export const GENERATION_ACTIVE_MESSAGE =
-  'A generation is already active for this conversation. Stop it before starting a new one.';
+  'A response is already being generated in this conversation. Wait for it to finish before sending another message.';
 
 /** A `pending` message without a `responseId` older than this is an interrupted start. */
 export const BACKGROUND_START_TIMEOUT_MS = 120_000;
@@ -386,13 +390,19 @@ export class BackgroundGenerationService {
         params.bucket,
         (stored) => {
           if (!stored?.etag) return null;
-          if (findPendingBackgroundMessage(stored.conversation)) {
+          /* A live foreground marker holds the conversation as well (`foreground-generation-lock`). */
+          if (findActiveGeneration(stored.conversation)) {
             throw new ConflictException(GENERATION_ACTIVE_MESSAGE);
           }
           const { conversation, assistantMessageIndex } =
             buildConversationHistory(
               params.mode,
-              stored.conversation,
+              {
+                ...stored.conversation,
+                messages: neutralizeForegroundMarkers(
+                  stored.conversation.messages,
+                ),
+              },
               params.message,
               params.messageIndex,
               params.customContent,
@@ -772,20 +782,21 @@ export class BackgroundGenerationService {
 
   /**
    * Saves a client-sent conversation body on the latest stored version with
-   * `If-Match` (see {@link mergeClientMessages} for how background messages are kept),
-   * so it never overwrites a placeholder or a final answer written in between. Resolves
-   * `null` when the conversation cannot be read, so the caller keeps its unconditional
-   * save. When conflicts persist, {@link updateConversationUnlessPending} saves a
-   * conversation without a pending background message unconditionally; one with a
-   * pending message (or stored without an `ETag`) cannot be protected and makes the save
-   * fail with `503`.
+   * `If-Match` (see {@link mergeClientMessages} for how background and foreground
+   * generation messages are kept), so it never overwrites a placeholder or a final answer
+   * written in between. A conversation that does not exist yet is created. A read that
+   * fails makes the save fail with `503`: without the stored version the backend cannot
+   * tell whether a running generation would be overwritten. When conflicts persist,
+   * {@link updateConversationUnlessPending} saves a conversation without an active
+   * generation unconditionally; one with an active generation (or stored without an
+   * `ETag`) cannot be protected and makes the save fail with `503`.
    * @param context - conversation location and the saving request's token
    * @param conversation - body sent by the client
    */
   async saveClientConversation(
     context: BackgroundRequestContext,
     conversation: ConversationResponseDto,
-  ): Promise<ConversationResponseDto | null> {
+  ): Promise<ConversationResponseDto> {
     let isRead = false;
     let result: ConditionalUpdateResult;
     try {
@@ -799,7 +810,7 @@ export class BackgroundGenerationService {
           if (
             stored &&
             !stored.etag &&
-            findPendingBackgroundMessage(stored.conversation)
+            findActiveGeneration(stored.conversation)
           ) {
             throw new ServiceUnavailableException(
               'The conversation could not be saved safely; retry shortly.',
@@ -821,9 +832,11 @@ export class BackgroundGenerationService {
     } catch (err) {
       if (isRead) throw err;
       this.logger.warn(
-        `Client save read failed; using the unconditional save — path: ${context.conversationPath}: ${err instanceof Error ? err.name : 'unknown'}`,
+        `Client save read failed; refusing an unfenced save — path: ${context.conversationPath}: ${err instanceof Error ? err.name : 'unknown'}`,
       );
-      return null;
+      throw new ServiceUnavailableException(
+        'The conversation could not be saved safely; retry shortly.',
+      );
     }
     if (result.status !== ConditionalUpdateStatus.Saved) {
       throw new ServiceUnavailableException(

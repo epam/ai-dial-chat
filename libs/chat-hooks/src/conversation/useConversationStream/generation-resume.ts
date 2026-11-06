@@ -57,6 +57,23 @@ export const findPendingBackgroundMessageIndex = (
   );
 
 /**
+ * Index of the conversation's message whose `foregroundGeneration` marker is still live
+ * at `now` (its `expiresAt` is later), or -1. A live marker means the answer is being
+ * generated in another tab, on another device, or by another participant.
+ * @param conversation - conversation to inspect
+ * @param now - the client's clock, epoch ms
+ */
+export const findLiveForegroundMessageIndex = (
+  conversation: Conversation,
+  now: number = Date.now(),
+): number =>
+  conversation.messages.findIndex(
+    (message) =>
+      message.foregroundGeneration != null &&
+      now < message.foregroundGeneration.expiresAt,
+  );
+
+/**
  * True when the conversation has a pending background message, or its last
  * message is an unresolved assistant placeholder: the backend only persists a
  * conversation at generation start (empty placeholder) and at generation end
@@ -68,6 +85,7 @@ export const isAwaitingGenerationResume = (
   conversation: Conversation,
 ): boolean => {
   if (findPendingBackgroundMessageIndex(conversation) !== -1) return true;
+  if (findLiveForegroundMessageIndex(conversation) !== -1) return true;
   const lastMessage = conversation.messages[conversation.messages.length - 1];
   return (
     !!lastMessage &&
@@ -270,9 +288,16 @@ export const createResumeIfAwaitingGeneration = ({
     const pendingBackgroundIndex =
       findPendingBackgroundMessageIndex(conversation);
     const isBackground = pendingBackgroundIndex !== -1;
-    const messageIndex = isBackground
-      ? pendingBackgroundIndex
-      : conversation.messages.length - 1;
+    /* Another tab, device or participant is generating this message (`foregroundGeneration`). */
+    const liveForegroundIndex = isBackground
+      ? -1
+      : findLiveForegroundMessageIndex(conversation);
+    let messageIndex = conversation.messages.length - 1;
+    if (isBackground) {
+      messageIndex = pendingBackgroundIndex;
+    } else if (liveForegroundIndex !== -1) {
+      messageIndex = liveForegroundIndex;
+    }
     const resumedBuffer: BufferedGeneration = {
       generationId: RESUME_BUFFER_GENERATION_ID,
       messageIndex,
@@ -313,6 +338,16 @@ export const createResumeIfAwaitingGeneration = ({
       stoppedGenerationIdsRef?.current.delete(generationId);
       forgetResumedGenerationId?.(conversationPath, generationId);
     };
+    /*
+     * A live marker names the generation, so Stop can reach it even when this page cannot
+     * attach to it (another principal or instance); an attach snapshot's id replaces it.
+     */
+    if (liveForegroundIndex !== -1) {
+      rememberAttachGenerationId(
+        conversation.messages[liveForegroundIndex].foregroundGeneration
+          ?.generationId,
+      );
+    }
 
     /*
      * Nothing is left to preserve and nothing is producing the answer: the stored
@@ -325,6 +360,7 @@ export const createResumeIfAwaitingGeneration = ({
       !!result &&
       result.messages.length - 1 === messageIndex &&
       findPendingBackgroundMessageIndex(result) === -1 &&
+      findLiveForegroundMessageIndex(result) === -1 &&
       isAwaitingGenerationResume(result) &&
       !hasGeneratedPayload(resumedBuffer.message);
 

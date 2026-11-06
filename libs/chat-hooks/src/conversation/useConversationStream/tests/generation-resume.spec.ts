@@ -10,6 +10,7 @@ import type { BufferedGeneration } from '../buffered-generation';
 import {
   createResumeIfAwaitingGeneration,
   fetchConversationForRecovery,
+  findLiveForegroundMessageIndex,
   findPendingBackgroundMessageIndex,
   isAwaitingGenerationResume,
 } from '../generation-resume';
@@ -1436,5 +1437,164 @@ describe('attach-supplied generation id', () => {
         false,
       ),
     );
+  });
+});
+
+describe('live foreground marker', () => {
+  const CONVERSATION_ID = 'bucket/gpt-4o__Hello';
+  const PATH = 'gpt-4o__Hello';
+  const MARKER_ID = '9d1e2f3a-4b5c-4d6e-8f70-81a2b3c4d5e6';
+  const INTERRUPTED = 'Interrupted';
+  const user = {
+    role: MessageRole.User,
+    content: 'Hello',
+    timestamp: new Date().toISOString(),
+  };
+  const marked = (expiresAt: number) => ({
+    role: MessageRole.Assistant,
+    content: '',
+    timestamp: new Date().toISOString(),
+    foregroundGeneration: { generationId: MARKER_ID, startedAt: 1, expiresAt },
+  });
+  const status = {
+    role: MessageRole.Status,
+    content: '',
+    timestamp: new Date().toISOString(),
+  };
+  const live = () =>
+    makeConversation({ messages: [user, marked(Date.now() + 60_000)] });
+  const answered = () =>
+    makeConversation({
+      messages: [
+        user,
+        {
+          role: MessageRole.Assistant,
+          content: 'Final answer',
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    });
+
+  describe('detection', () => {
+    it('finds the live marker at any position', () => {
+      const conversation = makeConversation({
+        messages: [user, marked(Date.now() + 60_000), status],
+      } as never);
+
+      expect(findLiveForegroundMessageIndex(conversation)).toBe(1);
+      expect(isAwaitingGenerationResume(conversation)).toBe(true);
+    });
+
+    it('ignores an expired marker, leaving the placeholder rule to decide', () => {
+      const conversation = makeConversation({
+        messages: [user, marked(Date.now() - 1), status],
+      } as never);
+
+      expect(findLiveForegroundMessageIndex(conversation)).toBe(-1);
+      expect(isAwaitingGenerationResume(conversation)).toBe(false);
+    });
+  });
+
+  const makeHarness = (
+    getConversation: ConversationStreamTransport['getConversation'],
+  ) => {
+    let displayed: Conversation | null = live();
+    const setConversation = vi.fn((update: unknown) => {
+      displayed =
+        typeof update === 'function'
+          ? (update as (prev: Conversation | null) => Conversation | null)(
+              displayed,
+            )
+          : (update as Conversation);
+    });
+    const removeStreamingPath = vi.fn();
+    const rememberResumedGenerationId = vi.fn();
+    const forgetResumedGenerationId = vi.fn();
+    const transport: ConversationStreamTransport = {
+      streamCompletion: vi.fn(),
+      stopCompletion: vi.fn(),
+      attachToGeneration: vi.fn().mockRejectedValue(new Error('404')),
+      watchConversation: vi.fn().mockRejectedValue(new Error('no watch')),
+      getConversation,
+    };
+    const resume = createResumeIfAwaitingGeneration({
+      transport,
+      setConversation: setConversation as never,
+      conversationRef: { current: null },
+      resumingPathsRef: { current: new Set<string>() },
+      bufferedGenerationsRef: {
+        current: new Map<string, BufferedGeneration>(),
+      },
+      addStreamingPath: vi.fn(),
+      removeStreamingPath,
+      isPathDisplayed: () => true,
+      generationInterruptedMessage: INTERRUPTED,
+      rememberResumedGenerationId,
+      forgetResumedGenerationId,
+      stoppedGenerationIdsRef: { current: new Set<string>() },
+    });
+    return {
+      resume,
+      removeStreamingPath,
+      rememberResumedGenerationId,
+      forgetResumedGenerationId,
+      getDisplayed: () => displayed,
+    };
+  };
+
+  it('never shows another participant’s running answer as interrupted', async () => {
+    const harness = makeHarness(vi.fn().mockResolvedValue(live()));
+
+    harness.resume(CONVERSATION_ID, live(), {
+      shouldMarkOrphanedAsInterrupted: true,
+      trackAttachGenerationId: true,
+    });
+
+    await vi.waitFor(() =>
+      expect(harness.removeStreamingPath).toHaveBeenCalledWith(PATH),
+    );
+    expect(
+      harness.getDisplayed()?.messages[1].streamErrorMessage,
+    ).toBeUndefined();
+  });
+
+  it('shows the saved answer once the marker is gone', async () => {
+    const harness = makeHarness(vi.fn().mockResolvedValue(answered()));
+
+    harness.resume(CONVERSATION_ID, live(), {
+      shouldMarkOrphanedAsInterrupted: true,
+    });
+
+    await vi.waitFor(() =>
+      expect(harness.getDisplayed()?.messages[1].content).toBe('Final answer'),
+    );
+    expect(
+      harness.getDisplayed()?.messages[1].streamErrorMessage,
+    ).toBeUndefined();
+  });
+
+  it('offers Stop with the marker’s id and drops it once the resume settles', async () => {
+    const harness = makeHarness(vi.fn().mockResolvedValue(answered()));
+
+    harness.resume(CONVERSATION_ID, live(), { trackAttachGenerationId: true });
+
+    expect(harness.rememberResumedGenerationId).toHaveBeenCalledWith(
+      PATH,
+      MARKER_ID,
+    );
+    await vi.waitFor(() =>
+      expect(harness.forgetResumedGenerationId).toHaveBeenCalledWith(
+        PATH,
+        MARKER_ID,
+      ),
+    );
+  });
+
+  it('keeps Stop hidden during a conflict handover, which does not track ids', () => {
+    const harness = makeHarness(vi.fn().mockResolvedValue(live()));
+
+    harness.resume(CONVERSATION_ID, live());
+
+    expect(harness.rememberResumedGenerationId).not.toHaveBeenCalled();
   });
 });

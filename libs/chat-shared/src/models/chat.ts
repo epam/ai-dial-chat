@@ -78,6 +78,22 @@ export interface BackgroundGeneration {
   startedAt: number;
 }
 
+/**
+ * Server-owned marker on the assistant message a Chat Completions or stateless Responses
+ * generation is producing. While `expiresAt` is in the future, another tab, device or
+ * participant is generating this message; the backend refuses every other generation.
+ */
+export interface ForegroundGeneration {
+  /** Client-supplied generation id of the request that started the generation. */
+  generationId: string;
+  /** Server time (epoch ms) at which the start-state write was built. */
+  startedAt: number;
+  /** Server time (epoch ms) after which the marker no longer holds the conversation. */
+  expiresAt: number;
+  /** Server time (epoch ms) at which a Stop was stored on the marker, if one was. */
+  stopRequestedAt?: number;
+}
+
 /** Permitted scalar/array types for a single form field value. */
 export type MessageFormValueType = number | string | boolean | string[];
 
@@ -165,6 +181,8 @@ export interface Message {
   wasStoppedByUser?: boolean;
   /** Set on an assistant message produced by a DIAL Core background job; absent on every other message. */
   backgroundGeneration?: BackgroundGeneration;
+  /** Set while a Chat Completions or stateless Responses generation produces this assistant message; removed by its terminal write. */
+  foregroundGeneration?: ForegroundGeneration;
   /** Allows extra SDK-level properties to pass through when serializing to DIAL Core. */
   [key: string]: unknown;
 }

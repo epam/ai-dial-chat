@@ -22,6 +22,7 @@ import { ConversationGenerationController } from '../conversation-generation.con
 import { ConversationService } from '../conversation.service';
 import type { SendCompletionDto } from '../dto/send-completion.dto';
 import {
+  GENERATION_SHUTDOWN_FLUSH_MS,
   ConversationGenerationService,
   GenerationStatus,
   type GenerationLease,
@@ -69,6 +70,7 @@ describe('POST /conversations/completions (integration)', () => {
     markConversationUnviewed: ReturnType<typeof vi.fn>;
     resolveBackgroundAttach?: ReturnType<typeof vi.fn>;
     stopBackgroundGeneration?: ReturnType<typeof vi.fn>;
+    stopForegroundGeneration?: ReturnType<typeof vi.fn>;
   };
   let mockGenerationService: {
     register: ReturnType<typeof vi.fn>;
@@ -85,6 +87,7 @@ describe('POST /conversations/completions (integration)', () => {
       markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
       streamCompletion: vi.fn().mockImplementation(async function* (
         _path,
         _at,
@@ -560,6 +563,7 @@ describe('POST /conversations/completions — backpressure-driven detachment (di
     const mockService = {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
       markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
       streamCompletion: vi.fn().mockImplementation(async function* (
         ...args: unknown[]
@@ -637,12 +641,21 @@ describe('POST /conversations/completions/stop (integration)', () => {
     complete: ReturnType<typeof vi.fn>;
     error: ReturnType<typeof vi.fn>;
     getStatus: ReturnType<typeof vi.fn>;
+    abortByGeneration: ReturnType<typeof vi.fn>;
+  };
+  let mockService: {
+    stopBackgroundGeneration: ReturnType<typeof vi.fn>;
+    stopForegroundGeneration: ReturnType<typeof vi.fn>;
+    resolveBackgroundAttach: ReturnType<typeof vi.fn>;
+    markConversationUnviewed: ReturnType<typeof vi.fn>;
+    streamCompletion: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
-    const mockService = {
+    mockService = {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
       markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
       streamCompletion: vi.fn(),
     };
@@ -654,6 +667,7 @@ describe('POST /conversations/completions/stop (integration)', () => {
       complete: vi.fn(),
       error: vi.fn(),
       getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
+      abortByGeneration: vi.fn().mockReturnValue(false),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -755,6 +769,90 @@ describe('POST /conversations/completions/stop (integration)', () => {
       })
       .expect(400);
   });
+
+  describe('a foreground generation held by its stored marker', () => {
+    const stop = () =>
+      request(app.getHttpServer())
+        .post('/conversations/completions/stop')
+        .send({
+          generationId: VALID_STOP_GENERATION_ID,
+          path: 'test-bucket/gpt-4o__Hello__uuid',
+        });
+
+    it('returns 204 after storing the Stop on the marker and aborts a local generation of another principal', async () => {
+      mockService.stopForegroundGeneration.mockResolvedValue('stored');
+
+      await stop().expect(204);
+
+      expect(mockService.stopForegroundGeneration).toHaveBeenCalledWith(
+        'test-bucket/gpt-4o__Hello__uuid',
+        TEST_USER.at,
+        TEST_USER.bucket,
+        VALID_STOP_GENERATION_ID,
+      );
+      expect(mockGenerationService.abortByGeneration).toHaveBeenCalledWith(
+        'test-bucket/gpt-4o__Hello__uuid',
+        VALID_STOP_GENERATION_ID,
+      );
+      expect(mockGenerationService.abort).not.toHaveBeenCalled();
+    });
+
+    it('returns 204 without a second write when the marker already carries a Stop', async () => {
+      mockService.stopForegroundGeneration.mockResolvedValue(
+        'already_requested',
+      );
+
+      await stop().expect(204);
+
+      expect(mockGenerationService.abortByGeneration).toHaveBeenCalledWith(
+        'test-bucket/gpt-4o__Hello__uuid',
+        VALID_STOP_GENERATION_ID,
+      );
+    });
+
+    it('matches a local generation on the bucket-qualified path when the client posts it bucket-relative', async () => {
+      mockService.stopForegroundGeneration.mockResolvedValue('stored');
+
+      await request(app.getHttpServer())
+        .post('/conversations/completions/stop')
+        .send({
+          generationId: VALID_STOP_GENERATION_ID,
+          path: 'gpt-4o__Hello__uuid',
+        })
+        .expect(204);
+
+      expect(mockGenerationService.abortByGeneration).toHaveBeenCalledWith(
+        'test-bucket/gpt-4o__Hello__uuid',
+        VALID_STOP_GENERATION_ID,
+      );
+    });
+
+    it('returns 503 when the Stop could not be stored', async () => {
+      mockService.stopForegroundGeneration.mockResolvedValue('failed');
+
+      await stop().expect(503);
+
+      expect(mockGenerationService.abort).not.toHaveBeenCalled();
+    });
+
+    it('falls back to the registry and returns 404 when no live marker carries the id', async () => {
+      mockService.stopForegroundGeneration.mockResolvedValue('not_found');
+      mockGenerationService.abort.mockReturnValue(false);
+
+      await stop().expect(404);
+
+      expect(mockGenerationService.abort).toHaveBeenCalledOnce();
+    });
+
+    it('does not consult the marker when this instance runs the caller own generation', async () => {
+      mockGenerationService.hasLocalForegroundGeneration.mockReturnValue(true);
+
+      await stop().expect(204);
+
+      expect(mockService.stopForegroundGeneration).not.toHaveBeenCalled();
+      expect(mockGenerationService.abort).toHaveBeenCalledOnce();
+    });
+  });
 });
 
 describe('completions endpoints — header-authenticated (bearer) caller', () => {
@@ -764,6 +862,7 @@ describe('completions endpoints — header-authenticated (bearer) caller', () =>
     markConversationUnviewed: ReturnType<typeof vi.fn>;
     resolveBackgroundAttach?: ReturnType<typeof vi.fn>;
     stopBackgroundGeneration?: ReturnType<typeof vi.fn>;
+    stopForegroundGeneration?: ReturnType<typeof vi.fn>;
   };
   let mockGenerationService: {
     register: ReturnType<typeof vi.fn>;
@@ -779,6 +878,7 @@ describe('completions endpoints — header-authenticated (bearer) caller', () =>
     mockService = {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
       markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
       streamCompletion: vi.fn().mockImplementation(async function* (
         ...args: unknown[]
@@ -925,6 +1025,7 @@ describe('generation ownership isolation (real registry)', () => {
     const mockService = {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
       markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
       streamCompletion: vi.fn().mockImplementation(async function* (
         ...args: unknown[]
@@ -946,6 +1047,7 @@ describe('generation ownership isolation (real registry)', () => {
         { provide: ConversationService, useValue: mockService },
         { provide: ConfigService, useValue: { get: vi.fn() } },
         ConversationGenerationService,
+        { provide: GENERATION_SHUTDOWN_FLUSH_MS, useValue: 0 },
       ],
     }).compile();
 

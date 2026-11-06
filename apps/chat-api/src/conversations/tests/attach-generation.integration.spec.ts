@@ -20,7 +20,10 @@ import {
   ConversationMessageDto,
   ConversationMessageRole,
 } from '../dto/conversation-message.dto';
-import { ConversationGenerationService } from '../generation/conversation-generation.service';
+import {
+  GENERATION_SHUTDOWN_FLUSH_MS,
+  ConversationGenerationService,
+} from '../generation/conversation-generation.service';
 import { ConversationCompletionsResponder } from '../streaming/conversation-completions.responder';
 
 const TEST_USER = {
@@ -88,6 +91,7 @@ describe('POST /conversations/completions/attach (integration)', () => {
       streamCompletion: vi.fn(),
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -97,6 +101,7 @@ describe('POST /conversations/completions/attach (integration)', () => {
         { provide: ConversationService, useValue: mockService },
         { provide: ConfigService, useValue: { get: vi.fn() } },
         ConversationGenerationService,
+        { provide: GENERATION_SHUTDOWN_FLUSH_MS, useValue: 0 },
       ],
     }).compile();
 
@@ -322,6 +327,7 @@ describe('POST /conversations/completions/attach — header-authenticated caller
       streamCompletion: vi.fn(),
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -331,6 +337,7 @@ describe('POST /conversations/completions/attach — header-authenticated caller
         { provide: ConversationService, useValue: mockService },
         { provide: ConfigService, useValue: { get: vi.fn() } },
         ConversationGenerationService,
+        { provide: GENERATION_SHUTDOWN_FLUSH_MS, useValue: 0 },
       ],
     }).compile();
 
@@ -426,6 +433,7 @@ describe('POST /conversations/completions/attach — retained entry after the fi
       streamCompletion: vi.fn(),
       resolveBackgroundAttach,
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -444,6 +452,7 @@ describe('POST /conversations/completions/attach — retained entry after the fi
           },
         },
         ConversationGenerationService,
+        { provide: GENERATION_SHUTDOWN_FLUSH_MS, useValue: 0 },
       ],
     }).compile();
 
