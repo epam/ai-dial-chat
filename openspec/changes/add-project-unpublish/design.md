@@ -39,9 +39,11 @@ While the lookup runs the page passes neither `onPublish` nor `onUnpublish`. The
 
 A failed lookup settles as no folders: an owner gets Publish back (today's behaviour), a public copy shows nothing. No toast: the user did not ask for history.
 
-### D4. One shared confirmation dialog in the app
+### D4. One shared confirmation dialog in `libs/publish-panel`
 
-`UnpublishConfirmationDialog` (`apps/chat/src/components/UnpublishConfirmationDialog/UnpublishConfirmationDialog.tsx`) lifts the body `ConversationPanelOverlays.tsx` renders inline. It takes copy as strings/formatters (`title`, `confirmMessage(name, folder)`, `selectFolderMessage(name)`, `folderGroupAriaLabel`, `loadingStatusLabel`) so each caller keeps its own keys. It uses `t()` only for the shared `buttons.unpublish` / `buttons.cancel` labels and `getPublishFolderLabel`, so it is an app component, not a lib one.
+`UnpublishConfirmationDialog` (`libs/publish-panel/src/components/UnpublishConfirmationDialog/UnpublishConfirmationDialog.tsx`) lifts the body `ConversationPanelOverlays.tsx` rendered inline. It reads no app context, so under `apps.md` "Presentational components belong to libs" it lives in the publish lib, next to the other publish surfaces; `publish-panel` already peers `@epam/ai-dial-chat-shared` (for `ConfirmationDialog`) and the kit, so no peer is added. Every string comes from `UnpublishConfirmationDialogLabels` with an English default (`title`, `confirmLabel`, `cancelLabel`, `rootFolderLabel`, `folderGroupAriaLabel`, `loadingStatusLabel`, `confirmMessage(name, folder)`, `selectFolderMessage(name)`); the option typography is `optionClassName` (default `'dial-small-text'`) and its color `colors.optionText`. The app fills the labels with `useUnpublishConfirmationLabels` (`apps/chat/src/hooks/publish/useUnpublishConfirmationLabels.ts`), passing each surface's own keys.
+
+*Alternative (first iteration):* an app component that called `t()` for the buttons and the root folder name. Rejected in review: those three strings were its only tie to the app.
 
 The conversation panel is migrated in the same change (`apps.md` "Dedupe inside the app too"), with its strings untouched; its existing tests guard the behaviour.
 

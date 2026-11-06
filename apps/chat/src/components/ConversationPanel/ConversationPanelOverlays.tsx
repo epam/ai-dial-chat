@@ -1,5 +1,6 @@
 import { DeleteConfirmationDialog } from '@epam/ai-dial-chat-shared';
 import { RenameConversationPopup } from '@epam/ai-dial-conversation-panel';
+import { UnpublishConfirmationDialog } from '@epam/ai-dial-publish-panel';
 import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
@@ -24,11 +25,11 @@ import { useConversationEditDialogs } from '../../hooks/conversation-panel/useCo
 import { useConversationSharingDialogs } from '../../hooks/conversation-panel/useConversationSharingDialogs';
 import { useConversationTransfer } from '../../hooks/conversation-panel/useConversationTransfer';
 import { usePinnedProjectsPanel } from '../../hooks/projects/usePinnedProjectsPanel';
+import { useUnpublishConfirmationLabels } from '../../hooks/publish/useUnpublishConfirmationLabels';
 import { useDeleteConfirmationLabels } from '../../hooks/useDeleteConfirmationLabels';
 import PinnedProjectActionOverlays from '../PinnedProjectActionOverlays/PinnedProjectActionOverlays';
 import { loadPublishConversationPanel } from '../PublishConversationPanelContainer/load-publish-conversation-panel';
 import ShareConversationPopoverContainer from '../ShareConversationPopoverContainer/ShareConversationPopoverContainer';
-import UnpublishConfirmationDialog from '../UnpublishConfirmationDialog/UnpublishConfirmationDialog';
 
 const PublishConversationPanelContainer = lazy(loadPublishConversationPanel);
 
@@ -64,6 +65,13 @@ const ConversationPanelOverlays: FC<ConversationPanelOverlaysProps> = ({
   isConversationsPublishingEnabled,
 }) => {
   const { t } = useTranslation();
+  const unpublishLabels = useUnpublishConfirmationLabels({
+    title: ConversationUnpublishI18nKeys.ConfirmTitle,
+    confirmMessage: ConversationUnpublishI18nKeys.ConfirmMessage,
+    selectFolderMessage: ConversationUnpublishI18nKeys.SelectFolderMessage,
+    folderGroupAriaLabel: ConversationUnpublishI18nKeys.FolderGroupAriaLabel,
+    requestingStatus: ConversationUnpublishI18nKeys.RequestingStatus,
+  });
   const {
     importFileInputRef,
     handleImportFileChange,
@@ -185,22 +193,12 @@ const ConversationPanelOverlays: FC<ConversationPanelOverlaysProps> = ({
 
       <UnpublishConfirmationDialog
         isOpen={isUnpublishPending}
-        title={t(ConversationUnpublishI18nKeys.ConfirmTitle)}
         name={pendingUnpublish?.title ?? ''}
         folders={unpublishFolders}
         selectedFolder={selectedUnpublishFolder}
         onSelectedFolderChange={setSelectedUnpublishFolder}
         isLoading={isUnpublishing}
-        confirmMessage={(name, folder) =>
-          t(ConversationUnpublishI18nKeys.ConfirmMessage, { name, folder })
-        }
-        selectFolderMessage={(name) =>
-          t(ConversationUnpublishI18nKeys.SelectFolderMessage, { name })
-        }
-        folderGroupAriaLabel={t(
-          ConversationUnpublishI18nKeys.FolderGroupAriaLabel,
-        )}
-        loadingStatusLabel={t(ConversationUnpublishI18nKeys.RequestingStatus)}
+        labels={unpublishLabels}
         onConfirm={handleConfirmUnpublish}
         onClose={handleCloseUnpublishDialog}
       />

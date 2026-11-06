@@ -14,6 +14,7 @@ import {
   useProjectWatch,
 } from '@epam/ai-dial-chat-hooks/project';
 import { ProjectOutputs, ProjectView } from '@epam/ai-dial-projects';
+import { UnpublishConfirmationDialog } from '@epam/ai-dial-publish-panel';
 import {
   memo,
   useCallback,
@@ -30,7 +31,6 @@ import ProjectDeleteConfirmation from '../../components/ProjectDeleteConfirmatio
 import ProjectShareOverlay from '../../components/ProjectShareOverlay/ProjectShareOverlay';
 import PublishProjectPanelContainer from '../../components/PublishProjectPanelContainer/PublishProjectPanelContainer';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
-import UnpublishConfirmationDialog from '../../components/UnpublishConfirmationDialog/UnpublishConfirmationDialog';
 import {
   getProjectEditRoute,
   parseProjectRouteParams,
@@ -46,6 +46,7 @@ import { useProjectActions } from '../../hooks/projects/useProjectActions';
 import { useProjectOutputsLabels } from '../../hooks/projects/useProjectOutputsLabels';
 import { useProjectUnpublish } from '../../hooks/projects/useProjectUnpublish';
 import { useProjectViewLabels } from '../../hooks/projects/useProjectViewLabels';
+import { useUnpublishConfirmationLabels } from '../../hooks/publish/useUnpublishConfirmationLabels';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
 import {
@@ -202,16 +203,13 @@ const ProjectViewPage: FC = () => {
   const hasPublishedFolders = unpublish.publishedFolders.length > 0;
   const shouldOfferPublish =
     canManage && unpublish.isPublishStateResolved && !hasPublishedFolders;
-  const formatUnpublishMessage = useCallback(
-    (name: string, folder: string) =>
-      t(ProjectsI18nKeys.UnpublishConfirmMessage, { name, folder }),
-    [t],
-  );
-  const formatUnpublishSelectFolderMessage = useCallback(
-    (name: string) =>
-      t(ProjectsI18nKeys.UnpublishSelectFolderMessage, { name }),
-    [t],
-  );
+  const unpublishLabels = useUnpublishConfirmationLabels({
+    title: ProjectsI18nKeys.UnpublishConfirmTitle,
+    confirmMessage: ProjectsI18nKeys.UnpublishConfirmMessage,
+    selectFolderMessage: ProjectsI18nKeys.UnpublishSelectFolderMessage,
+    folderGroupAriaLabel: ProjectsI18nKeys.UnpublishFolderGroupAriaLabel,
+    requestingStatus: ProjectsI18nKeys.UnpublishRequestingStatus,
+  });
   const { togglePin, downloadArchive, confirmDelete } = actions;
   const handleTogglePin = useCallback(() => {
     void togglePin();
@@ -303,11 +301,7 @@ const ProjectViewPage: FC = () => {
       )}
       <UnpublishConfirmationDialog
         {...unpublish.dialog}
-        title={t(ProjectsI18nKeys.UnpublishConfirmTitle)}
-        confirmMessage={formatUnpublishMessage}
-        selectFolderMessage={formatUnpublishSelectFolderMessage}
-        folderGroupAriaLabel={t(ProjectsI18nKeys.UnpublishFolderGroupAriaLabel)}
-        loadingStatusLabel={t(ProjectsI18nKeys.UnpublishRequestingStatus)}
+        labels={unpublishLabels}
       />
       {project && (
         <ProjectDeleteConfirmation

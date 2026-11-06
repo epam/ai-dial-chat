@@ -17,7 +17,7 @@ Mirror the application (catalog) unpublish flow on the project view page. **No b
    - **Own project** (`project.canManage`): load `getCatalogPublishHistory(Project, id)`; ≥ 1 live folder → Unpublish replaces Publish.
    - **Public copy** (`projects/public/…`, `isPublicCatalogEntityId`): an administrator gets a synthesised single-folder entry outright; anyone else only when `getCatalogUnpublishAccess(Project, id)` answers `canUnpublish: true`.
    - While the lookup is outstanding neither Publish nor Unpublish is passed, so the header never flashes one and swaps to the other (the catalog's [#9500](https://github.com/epam/ai-dial-chat/issues/9500) lesson). A failed lookup settles as "no folders" (Publish for an owner, nothing on a public copy).
-3. **Confirmation** — a `ConfirmationDialog` (`@epam/ai-dial-chat-shared`) with a `RadioGroup` when the project is published to several folders, as the conversation flow does. The dialog body moves into a shared app component `UnpublishConfirmationDialog` used by both the conversation panel and the project page, so the two copies do not drift.
+3. **Confirmation** — a `ConfirmationDialog` (`@epam/ai-dial-chat-shared`) with a `RadioGroup` when the project is published to several folders, as the conversation flow does. The dialog body moves into `UnpublishConfirmationDialog` in `libs/publish-panel`, used by both the conversation panel and the project page, so the two copies do not drift.
 4. **Result** — success raises `notifyOperationSuccess(NotifiableEntity.Project, EntityOperation.UnpublishRequested, { name, folder })`; failure reuses `usePublishErrorNotification(error, EntityOperation.UnpublishRequested)`.
 
 Closest models: `apps/chat/src/hooks/useCatalogPublishing/useCatalogPublishing.ts` (who may unpublish, history synthesis for public copies), `apps/chat/src/components/ConversationPanel/ConversationPanelOverlays.tsx` (the confirmation dialog), `apps/chat/src/components/ProjectDeleteConfirmation/ProjectDeleteConfirmation.tsx` (project page overlay shape).
@@ -41,6 +41,7 @@ Closest models: `apps/chat/src/hooks/useCatalogPublishing/useCatalogPublishing.t
 
 - **Touches a shared lib** (`libs/projects`): one optional prop and one optional label; additive, no host-owned knowledge enters the lib. Ownership, admin status, history and the endpoint stay out of `libs/projects`: the decision is in `libs/chat-hooks` behind an injected client, the wiring in `apps/chat`, and `ProjectView` sees only the presence of `onUnpublish`.
 - **Touches `libs/chat-hooks`**: one new module under `catalog/` with two additive exports (root and `./catalog`); no new dependency or peer, and `./project` is unchanged.
+- **Touches `libs/publish-panel`**: one additive component, `UnpublishConfirmationDialog`, with its `*Labels`/`*Colors`/`*Props` types; strings by prop with English defaults, no new dependency or peer.
 - **Touches the conversation panel** (`ConversationPanelOverlays.tsx`) only to swap its inline dialog for the shared `UnpublishConfirmationDialog` with identical strings and behaviour.
 - No new context; the state is page-local to `ProjectViewPage` through the hook.
 

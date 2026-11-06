@@ -146,9 +146,9 @@ After a successful publish through `PublishProjectPanelContainer` (its new `onPu
 
 ### Requirement: Project unpublish confirms in a dialog with a folder choice
 
-Selecting Unpublish SHALL open `UnpublishConfirmationDialog` (`apps/chat/src/components/UnpublishConfirmationDialog/UnpublishConfirmationDialog.tsx`), a new app component that renders `ConfirmationDialog` (`@epam/ai-dial-chat-shared`) with `variant={ConfirmationPopupVariant.Danger}` and, when there are several folders, a kit `RadioGroup` — the body `ConversationPanelOverlays.tsx` renders inline today, lifted into one component.
+Selecting Unpublish SHALL open `UnpublishConfirmationDialog` (`libs/publish-panel/src/components/UnpublishConfirmationDialog/UnpublishConfirmationDialog.tsx`), a new `@epam/ai-dial-publish-panel` component that renders `ConfirmationDialog` (`@epam/ai-dial-chat-shared`) with `variant={ConfirmationPopupVariant.Danger}` and, when there are several folders, a kit `RadioGroup` — the body `ConversationPanelOverlays.tsx` renders inline today, lifted into one component.
 
-Props: `isOpen`, `title`, `name`, `folders: string[]` (joined paths), `selectedFolder: string | null`, `onSelectedFolderChange`, `isLoading`, `confirmMessage: (name, folder) => string`, `selectFolderMessage: (name) => string`, `folderGroupAriaLabel`, `loadingStatusLabel`, `onConfirm`, `onClose`. Folder labels use `getPublishFolderLabel` (`apps/chat/src/utils/publish.ts`), so the public root reads as the translated Organization label. The confirm and cancel labels are `t(ButtonsI18nKeys.Unpublish)` and `t(ButtonsI18nKeys.Cancel)`.
+Props: `isOpen`, `name`, `folders: string[]` (joined paths), `selectedFolder: string | null`, `onSelectedFolderChange`, `isLoading`, `labels` (`UnpublishConfirmationDialogLabels`), `optionClassName`, `colors`, `onConfirm`, `onClose`. A folder is labelled by its last segment, and the public root (`''`) by `labels.rootFolderLabel`. The app fills `labels` through `useUnpublishConfirmationLabels`: the confirm and cancel labels are `t(ButtonsI18nKeys.Unpublish)` and `t(ButtonsI18nKeys.Cancel)`, and the root folder is `t(BasicI18nKeys.Organization)`.
 
 Body rules, identical to the conversation flow:
 

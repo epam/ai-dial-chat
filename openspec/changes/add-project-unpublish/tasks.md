@@ -12,13 +12,13 @@ Slicing strategy: **vertical**. Slice 1 makes the lib able to render the action;
 
 **Verification:** `npm run test:file -- libs/projects/src/components/ProjectView/tests/ProjectView.spec.tsx`; then `npm run verify:changed`.
 
-## 2. App: shared `UnpublishConfirmationDialog`, conversation panel migrated
+## 2. Lib: shared `UnpublishConfirmationDialog`, conversation panel migrated
 
-- [x] 2.1 Create `apps/chat/src/components/UnpublishConfirmationDialog/UnpublishConfirmationDialog.tsx` (`Props`, `memo` default export) rendering `ConfirmationDialog` + `RadioGroup` exactly as `ConversationPanelOverlays.tsx` does today, with copy passed as `title`, `confirmMessage(name, folder)`, `selectFolderMessage(name)`, `folderGroupAriaLabel`, `loadingStatusLabel`; confirm/cancel from `ButtonsI18nKeys.Unpublish`/`Cancel`; folder labels via `getPublishFolderLabel`.
-- [x] 2.2 Replace the inline dialog in `apps/chat/src/components/ConversationPanel/ConversationPanelOverlays.tsx` with the component, passing the existing `ConversationUnpublishI18nKeys.*` strings. No behaviour or string change.
-- [x] 2.3 Tests in `apps/chat/src/components/UnpublishConfirmationDialog/tests/UnpublishConfirmationDialog.spec.tsx`: one folder → message names it and confirm enabled; several → radio group named, none selected, confirm disabled until a pick; root folder labelled Organization; loading disables both buttons and announces the status; Cancel calls `onClose`.
+- [x] 2.1 Create `libs/publish-panel/src/components/UnpublishConfirmationDialog/UnpublishConfirmationDialog.tsx` rendering `ConfirmationDialog` + `RadioGroup` as `ConversationPanelOverlays.tsx` did, with every string from `UnpublishConfirmationDialogLabels` (English defaults), `optionClassName` (default `'dial-small-text'`) and `colors.optionText`; export it and its types from `libs/publish-panel/src/index.ts`, document it in `libs/publish-panel/README.md`. The app fills the labels with `apps/chat/src/hooks/publish/useUnpublishConfirmationLabels.ts`.
+- [x] 2.2 Replace the inline dialog in `apps/chat/src/components/ConversationPanel/ConversationPanelOverlays.tsx` with the lib component, passing the existing `ConversationUnpublishI18nKeys.*` strings through `useUnpublishConfirmationLabels`. No behaviour or string change.
+- [x] 2.3 Tests in `libs/publish-panel/src/components/UnpublishConfirmationDialog/tests/UnpublishConfirmationDialog.spec.tsx`: one folder → message names it and confirm enabled; several → radio group named, none selected, confirm disabled until a pick; root folder labelled Organization; loading disables both buttons and announces the status; Cancel calls `onClose`.
 
-**Verification:** `npm run test:file -- apps/chat/src/components/UnpublishConfirmationDialog/tests/UnpublishConfirmationDialog.spec.tsx apps/chat/src/components/ConversationPanel/tests/ConversationPanelView.spec.tsx`; then `npm run verify:changed`.
+**Verification:** `npm run test:file -- libs/publish-panel/src/components/UnpublishConfirmationDialog/tests/UnpublishConfirmationDialog.spec.tsx apps/chat/src/components/ConversationPanel/tests/ConversationPanelView.spec.tsx`; then `npm run verify:changed`.
 
 ## 3. App: project page end to end
 
