@@ -331,6 +331,63 @@ describe('ProjectView', () => {
     ]);
   });
 
+  it('offers Unpublish in place of Publish when onUnpublish is supplied', async () => {
+    const onUnpublish = vi.fn();
+    const onPublish = vi.fn();
+    renderView({ onPublish, onUnpublish });
+
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Unpublish' }));
+    expect(onUnpublish).toHaveBeenCalledOnce();
+    expect(onPublish).not.toHaveBeenCalled();
+  });
+
+  it('puts a non-danger Unpublish in the mobile menu where Publish sits', async () => {
+    const onUnpublish = vi.fn();
+    renderView({ onUnpublish });
+
+    const [, mobileTrigger] = screen.getAllByRole('button', {
+      name: 'More actions',
+    });
+    await userEvent.click(mobileTrigger);
+    const menu = await screen.findByRole('menu');
+    const items = within(menu).getAllByRole('menuitem');
+
+    expect(items.map((item) => item.textContent)).toEqual([
+      'Pin',
+      'Unpublish',
+      'Edit',
+      'Share',
+      'Download',
+      'Delete',
+    ]);
+    expect(items[1].className).not.toMatch(/danger|error/);
+    await userEvent.click(items[1]);
+    expect(onUnpublish).toHaveBeenCalledOnce();
+  });
+
+  it('uses the host Unpublish label when one is supplied', () => {
+    renderView({
+      onUnpublish: vi.fn(),
+      labels: { ...labels, unpublishLabel: 'Retirer' },
+    });
+
+    expect(screen.getByRole('button', { name: 'Retirer' })).toBeTruthy();
+  });
+
+  it('renders no Unpublish control without onUnpublish', async () => {
+    renderView();
+
+    expect(screen.queryByRole('button', { name: 'Unpublish' })).toBeNull();
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'More actions' })[1],
+    );
+    const menu = await screen.findByRole('menu');
+    expect(
+      within(menu).queryByRole('menuitem', { name: 'Unpublish' }),
+    ).toBeNull();
+  });
+
   it('opens the more-actions menu as a bottom sheet on a phone', async () => {
     vi.stubGlobal(
       'matchMedia',

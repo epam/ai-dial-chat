@@ -31,6 +31,7 @@ import {
   IconPin,
   IconShare,
   IconTrashX,
+  IconWorldOff,
   IconWorldShare,
   type TablerIcon,
 } from '@tabler/icons-react';
@@ -69,6 +70,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   onBack,
   onTogglePin,
   onPublish,
+  onUnpublish,
   onEdit,
   onShare,
   onDelete,
@@ -131,6 +133,9 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
     };
   }, [bodyClassName, instructionsHeadingClassName]);
 
+  /* Unpublish takes Publish's slot: the two are never offered together. */
+  const unpublishLabel = labels.unpublishLabel ?? 'Unpublish';
+
   /* `aria-disabled` rather than `disabled`: a natively disabled button drops
    * keyboard focus to <body> while the pin change is saved. */
   const handleTogglePin = () => {
@@ -154,7 +159,14 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
         onClick: handleTogglePin,
       });
     }
-    if (includePrimary && onPublish) {
+    if (includePrimary && onUnpublish) {
+      items.push({
+        key: 'unpublish',
+        label: unpublishLabel,
+        icon: renderMenuIcon(IconWorldOff),
+        onClick: onUnpublish,
+      });
+    } else if (includePrimary && onPublish) {
       items.push({
         key: 'publish',
         label: labels.publishLabel,
@@ -379,7 +391,21 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
           onClick={handleTogglePin}
           className="hidden shrink-0 desktop:inline-flex"
         />
-        {onPublish && (
+        {onUnpublish && (
+          <NeutralButton
+            label={unpublishLabel}
+            iconBefore={
+              <IconWorldOff
+                size={DIAL_ICON_SIZE.MD}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
+            onClick={onUnpublish}
+            className="hidden shrink-0 desktop:inline-flex"
+          />
+        )}
+        {!onUnpublish && onPublish && (
           <NeutralButton
             label={labels.publishLabel}
             iconBefore={

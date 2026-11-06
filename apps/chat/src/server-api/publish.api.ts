@@ -10,7 +10,8 @@ import { publishApi } from './api-client';
 export type CatalogPublishEntityType = PublishCatalogEntityEntityTypeEnum;
 export const CatalogPublishEntityType = PublishCatalogEntityEntityTypeEnum;
 
-const publishApiClient = createPublishApiClient(publishApi);
+/** The configured publish requests, for chat-hooks hooks that take a `PublishApiClient`; module-level, so referentially stable. */
+export const publishApiClient = createPublishApiClient(publishApi);
 
 export const publishCatalogEntity = publishApiClient.publishCatalogEntity;
 export const unpublishCatalogEntity = publishApiClient.unpublishCatalogEntity;

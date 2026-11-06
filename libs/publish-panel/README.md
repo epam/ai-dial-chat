@@ -329,6 +329,41 @@ displays or accepts a credential value.
 />
 ```
 
+### UnpublishConfirmationDialog
+
+Confirms an unpublish request. One published folder is confirmed directly. When there are several folders, the user must pick one in a radio group before Unpublish is enabled. While `isLoading`, both buttons stay rendered and disabled, and the footer announces `loadingStatusLabel`.
+
+```tsx
+import { UnpublishConfirmationDialog } from '@epam/ai-dial-publish-panel';
+
+<UnpublishConfirmationDialog
+  isOpen={isOpen}
+  name="Sales report"
+  folders={['Team/Reports', '']}
+  selectedFolder={selectedFolder}
+  onSelectedFolderChange={setSelectedFolder}
+  isLoading={isUnpublishing}
+  labels={{ title: 'Unpublish project?' }}
+  onConfirm={handleConfirm}
+  onClose={handleClose}
+/>;
+```
+
+`folders` are `/`-joined paths. A folder is shown by its last segment, and the public root (`''`) by `labels.rootFolderLabel`.
+
+Copy comes from `labels` (`UnpublishConfirmationDialogLabels`). Each field has an English default:
+
+- `title`: `'Unpublish?'`
+- `confirmLabel`: `'Unpublish'`
+- `cancelLabel`: `'Cancel'`
+- `rootFolderLabel`: `'Organization'`
+- `folderGroupAriaLabel`: `'Published folders'`
+- `loadingStatusLabel`: `'Requesting unpublish…'`
+- `confirmMessage(name, folder)`: `Unpublish "{name}" from "{folder}"?`
+- `selectFolderMessage(name)`: `Choose which folder to unpublish "{name}" from.`
+
+Folder options use the typography class `optionClassName` (default `'dial-small-text'`). Their text color is `colors.optionText` (`UnpublishConfirmationDialogColors`, falling back to `--text-primary`).
+
 ## Hooks
 
 ### usePublishFlow

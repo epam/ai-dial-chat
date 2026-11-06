@@ -100,6 +100,13 @@ export type {
   FolderDestinationRoot,
 } from './models/folder-destination';
 
+export { UnpublishConfirmationDialog } from './components/UnpublishConfirmationDialog/UnpublishConfirmationDialog';
+export type {
+  UnpublishConfirmationDialogColors,
+  UnpublishConfirmationDialogLabels,
+  UnpublishConfirmationDialogProps,
+} from './models/unpublish-confirmation-dialog';
+
 export { SaveToFolderView, SaveVersionMode } from './types/save-to-folder';
 export { SaveToFolderPanel } from './components/SaveToFolderPanel/SaveToFolderPanel';
 export { StandaloneSaveToFolderPanel } from './components/SaveToFolderPanel/StandaloneSaveToFolderPanel';

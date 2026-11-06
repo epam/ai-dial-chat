@@ -115,6 +115,12 @@ export const toFolderPathKey = (path: string[]): string => path.join('/');
 export const fromFolderPathKey = (pathKey: string): string[] =>
   pathKey.split('/').filter(Boolean);
 
+/** Returns the last segment of a `/`-joined folder path, or `rootLabel` for the public root (`''`). */
+export const getFolderDisplayName = (
+  pathKey: string,
+  rootLabel: string,
+): string => fromFolderPathKey(pathKey).at(-1) ?? rootLabel;
+
 /** Converts `PublishFolderNode[]` to the `DialFile[]` shape `DialFoldersTree` requires. */
 export const toDialFileTree = (items: PublishFolderNode[]): DialFile[] =>
   items.map((node) => {

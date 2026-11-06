@@ -58,6 +58,8 @@ interface Props {
   conversationCount?: number;
   /** Called when the panel should be dismissed. */
   onClose: () => void;
+  /** Called after a publish request succeeds, so the host can re-read the project's publish state. */
+  onPublished?: () => void;
   /** Publish trigger that receives focus after dismissal. */
   returnFocusRef?: RefObject<HTMLElement | null>;
 }
@@ -75,6 +77,7 @@ const PublishProjectPanelContainer: FC<Props> = ({
   projectName,
   conversationCount = 0,
   onClose,
+  onPublished,
   returnFocusRef,
 }) => {
   const { t } = useTranslation();
@@ -157,6 +160,7 @@ const PublishProjectPanelContainer: FC<Props> = ({
         EntityOperation.PublishRequested,
         { name: projectName, folder: getPublishFolderLabel(folderPath, t) },
       );
+      onPublished?.();
     },
     onPublishError: (_item, _folderPath, error) => showPublishError(error),
     onFetchExistingRules: (folderPath) => getPublishRules(folderPath.join('/')),
