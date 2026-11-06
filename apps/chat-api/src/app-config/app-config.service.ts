@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { resolveAppVersion } from '../common/utils/app-version';
 import { EnvironmentVariables } from '../config/environment.config';
+import { ExplicitEnvironment } from '../config/explicit-environment';
 import type { AppConfigEvalContext } from './app-config.types';
 import {
   evaluateCatalogCreationPolicy,
@@ -21,6 +22,7 @@ import {
 } from './client-config.mapper';
 import { CompositeConfigProvider } from './config-registry/composite-config.provider';
 import { CONFIG_DEFINITIONS } from './config-registry/config-registry.constants';
+import { applyDeploymentRoleGate } from './deployment-role-gate';
 import type { ClientConfigResponseDto } from './dto/client-config-response.dto';
 import { FeatureKey } from './feature-flags/feature-key.enum';
 
@@ -37,6 +39,7 @@ export class AppConfigService {
     private readonly compositeProvider: CompositeConfigProvider,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly configService: ConfigService<EnvironmentVariables>,
+    private readonly explicitEnvironment: ExplicitEnvironment,
   ) {
     this.catalogCreationPolicy = normalizeCatalogCreationPolicy(
       this.configService.get('CATALOG_CREATION_ROLES', { infer: true }),
@@ -48,7 +51,7 @@ export class AppConfigService {
     key: string,
     context: AppConfigEvalContext,
   ): Promise<unknown | undefined> {
-    return this.compositeProvider.resolve(key, context);
+    return this.resolveSelected(key, context);
   }
 
   async getClientConfig(
@@ -77,7 +80,7 @@ export class AppConfigService {
     const config = createDefaultClientConfig();
 
     for (const def of clientDefinitions) {
-      const value = await this.compositeProvider.resolve(def.key, context);
+      const value = await this.resolveSelected(def.key, context);
       const resolved = value ?? def.defaultValue;
 
       if (def.type === 'feature') {
@@ -136,7 +139,7 @@ export class AppConfigService {
     }
 
     try {
-      const value = await this.compositeProvider.resolve(key, context);
+      const value = await this.resolveSelected(key, context);
       return value === true;
     } catch (err) {
       this.logger.error(
@@ -155,11 +158,49 @@ export class AppConfigService {
   private async resolveConfiguredVersion(
     context: AppConfigEvalContext,
   ): Promise<string> {
-    const resolved = await this.compositeProvider.resolve(
-      'app.version',
-      context,
-    );
+    const resolved = await this.resolveSelected('app.version', context);
     return resolveAppVersion(typeof resolved === 'string' ? resolved : null);
+  }
+
+  /**
+   * Selects a value through the provider chain, then applies the policy that
+   * holds for every source: the feature's deployment role gate. Every
+   * resolution path of this service goes through here.
+   */
+  private async resolveSelected(
+    key: string,
+    context: AppConfigEvalContext,
+  ): Promise<unknown | undefined> {
+    const selected = await this.compositeProvider.resolve(key, context);
+    const allowedRoles = this.readAllowedRoles(key);
+    const gated = applyDeploymentRoleGate(
+      selected,
+      allowedRoles,
+      context.roles,
+    );
+    if (gated !== selected) {
+      this.logger.debug(
+        `Key "${key}" restricted: user roles [${(context.roles ?? []).join(', ')}] not in allowed [${(allowedRoles ?? []).join(', ')}]`,
+      );
+    }
+    return gated;
+  }
+
+  /** The explicitly configured allowed-roles list of a feature, if any. */
+  private readAllowedRoles(key: string): readonly string[] | undefined {
+    const rolesVariable = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === key,
+    )?.allowedRolesEnvVar;
+    if (!rolesVariable || !this.explicitEnvironment.isExplicit(rolesVariable)) {
+      return undefined;
+    }
+    const roles: unknown = this.configService.get(rolesVariable, {
+      infer: true,
+    });
+    return Array.isArray(roles) &&
+      roles.every((role) => typeof role === 'string')
+      ? roles
+      : undefined;
   }
 
   private getClientConfigCacheKey(context: AppConfigEvalContext): string {

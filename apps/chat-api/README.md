@@ -4236,6 +4236,7 @@ apps/chat-api/src/
 ├── <domain>/                # One folder per domain from the table above, each with
 │                            #   *.controller.ts, *.service.ts, *.module.ts, dto/, *.spec.ts
 ├── openapi-spec.ts          # Spec emission entry point
+├── managed-config-schema.ts # Config Studio schema generator entry point
 └── main.ts                  # Application bootstrap
 ```
 
@@ -4429,7 +4430,19 @@ npm exec nx build chat-api
 
 # After an endpoint contract change
 npm run openapi && npm run openapi:check
+
+# After a managed registry entry change (Nx target chat-api:managed-config-schema)
+npm run managed-config-schema
 ```
+
+`npm run managed-config-schema` regenerates the Config Studio schema of the
+current managed-config version in `managed-config-schema/` (next to `src/`) and
+its `index.json`. It reads only `CONFIG_DEFINITIONS` and the
+`app-config/managed-config/` modules, never the environment.
+`app-config/tests/managed-config/managed-config-artifact.spec.ts` fails when the
+committed files differ from the registry; see
+[Managed configuration schema](../../docs/managed-config-schema.md) for the
+classification, versioning and upload-verification rules.
 
 Tests are co-located as `*.spec.ts` next to the source — `@nestjs/testing` for
 units, `supertest` for e2e. A domain's tests cover the happy path, every thrown
@@ -4895,6 +4908,7 @@ regenerated output — never hand-edit generated files.
 - [Legacy Chat Migration Guide](../../docs/legacy-chat-migration-guide.md) — what happens to a legacy deployment's variables
 - [Theme Customization](../../docs/theme-customization.md)
 - [Responses API Integration](../../docs/responses-api-integration.md)
+- [Managed configuration schema](../../docs/managed-config-schema.md) — the Config Studio contract generated from the config registry
 - [NestJS best practices for this app](../../.claude/rules/nestjs-best-practices.md)
 - [NestJS Documentation](https://docs.nestjs.com/)
 - [AI DIAL SDK](https://github.com/epam/ai-dial-sdk)

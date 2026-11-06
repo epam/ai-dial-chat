@@ -7,11 +7,16 @@ import {
   CatalogCreationType,
   type CatalogCreationRolesConfig,
 } from '../../config/catalog-creation.types';
+import { ExplicitEnvironment } from '../../config/explicit-environment';
 import { AppConfigService } from '../app-config.service';
 import type { AppConfigEvalContext } from '../app-config.types';
 import type { CompositeConfigProvider } from '../config-registry/composite-config.provider';
 import { CONFIG_DEFINITIONS } from '../config-registry/config-registry.constants';
 import { FeatureKey } from '../feature-flags/feature-key.enum';
+import {
+  buildResolutionStack,
+  type RawEnvironment,
+} from './config-registry/env-resolution.fixtures';
 
 const ctx: AppConfigEvalContext = { appId: 'chat-ui' };
 
@@ -46,6 +51,7 @@ function makeService(
         UTILITY_MODEL: model,
         CATALOG_CREATION_ROLES: catalogCreationRoles,
       }),
+      ExplicitEnvironment.of([]),
     ),
     cacheManager,
     compositeProvider,
@@ -1836,6 +1842,7 @@ describe('AppConfigService', () => {
           set: vi.fn(),
         } as never,
         new ConfigService(),
+        ExplicitEnvironment.of([]),
       );
 
       const result = await service.resolveValue('asr.modelId', ctx);
@@ -1846,5 +1853,174 @@ describe('AppConfigService', () => {
         ctx,
       );
     });
+  });
+
+  describe('deployment role gate', () => {
+    /* The provider chain selects `true` for every key; only the gate,
+     * applied after selection, can turn a feature off. */
+    const makeGatedService = (
+      held: Record<string, unknown>,
+      explicit: readonly string[] = Object.keys(held),
+    ) => {
+      const compositeProvider = {
+        resolve: vi.fn(async () => true),
+      } as unknown as CompositeConfigProvider;
+      const store = new Map<string, unknown>();
+      return new AppConfigService(
+        compositeProvider,
+        {
+          get: vi.fn(async (key: string) => store.get(key)),
+          set: vi.fn(async (key: string, value: unknown) => {
+            store.set(key, value);
+          }),
+        } as never,
+        new ConfigService(held),
+        ExplicitEnvironment.of(explicit),
+      );
+    };
+    const restricted = { SCHEDULED_TASKS_ENABLED_ROLES: ['beta'] };
+
+    it.each([
+      ['allowed', { ...ctx, userId: 'u1', roles: ['beta'] }, true],
+      ['restricted', { ...ctx, userId: 'u2', roles: ['staff'] }, false],
+      ['anonymous', ctx, false],
+    ])(
+      'applies the gate to a %s caller on every resolution path',
+      async (_name, context, expected) => {
+        const service = makeGatedService(restricted);
+
+        expect(
+          await service.isEnabled(FeatureKey.ScheduledTasksEnabled, context),
+        ).toBe(expected);
+        expect(
+          await service.resolveValue('features.scheduledTasksEnabled', context),
+        ).toBe(expected);
+        expect(
+          (await service.getClientConfig(context)).features
+            .scheduledTasksEnabled,
+        ).toBe(expected);
+      },
+    );
+
+    it('returns the selected value for every caller when no restriction is configured', async () => {
+      const service = makeGatedService({});
+
+      expect(
+        await service.isEnabled(FeatureKey.ScheduledTasksEnabled, ctx),
+      ).toBe(true);
+      expect(
+        await service.isEnabled(FeatureKey.ScheduledTasksEnabled, {
+          ...ctx,
+          roles: ['staff'],
+        }),
+      ).toBe(true);
+    });
+
+    it('ignores a role list that was not set explicitly', async () => {
+      const service = makeGatedService(restricted, []);
+
+      expect(
+        await service.isEnabled(FeatureKey.ScheduledTasksEnabled, ctx),
+      ).toBe(true);
+    });
+
+    it('treats an empty role list as unrestricted', async () => {
+      const service = makeGatedService({ SCHEDULED_TASKS_ENABLED_ROLES: [] });
+
+      expect(
+        await service.isEnabled(FeatureKey.ScheduledTasksEnabled, ctx),
+      ).toBe(true);
+    });
+
+    it('gates only the feature that declares the roles variable', async () => {
+      const service = makeGatedService(restricted);
+
+      expect(await service.isEnabled(FeatureKey.ProjectsEnabled, ctx)).toBe(
+        true,
+      );
+      expect(await service.resolveValue('asr.modelId', ctx)).toBe(true);
+    });
+  });
+
+  describe('managed classification', () => {
+    const MANAGED_FIELDS = ['managed', 'localOnly', 'managedContract'] as const;
+
+    /* Resolves every client-config field and every feature flag through the
+     * real ENV chain, without the time-dependent metadata. */
+    const snapshotResolution = async (env: RawEnvironment) => {
+      const { service } = buildResolutionStack(env);
+      const contexts = [
+        ctx,
+        { ...ctx, userId: 'u1', roles: ['beta'] },
+        { ...ctx, userId: 'u2', roles: ['staff'] },
+      ];
+      const results: unknown[] = [];
+      for (const context of contexts) {
+        const { metadata: _metadata, ...response } =
+          await service.getClientConfig(context);
+        const flags: Record<string, boolean> = {};
+        for (const key of Object.values(FeatureKey)) {
+          flags[key] = await service.isEnabled(key, context);
+        }
+        results.push({ response, flags });
+      }
+      return results;
+    };
+
+    const withManagedFieldsStripped = async <T>(
+      run: () => Promise<T>,
+    ): Promise<T> => {
+      const saved = CONFIG_DEFINITIONS.map((definition) =>
+        MANAGED_FIELDS.map((field) => [field, definition[field]] as const),
+      );
+      for (const definition of CONFIG_DEFINITIONS) {
+        for (const field of MANAGED_FIELDS) {
+          delete definition[field];
+        }
+      }
+      try {
+        return await run();
+      } finally {
+        CONFIG_DEFINITIONS.forEach((definition, index) => {
+          for (const [field, value] of saved[index]) {
+            if (value !== undefined) {
+              Object.assign(definition, { [field]: value });
+            }
+          }
+        });
+      }
+    };
+
+    it.each<[string, RawEnvironment]>([
+      ['an empty environment', {}],
+      [
+        'managed keys set through ENV',
+        {
+          ANNOUNCEMENT_TITLE: 'Maintenance',
+          ANNOUNCEMENT_DESCRIPTION: 'Tonight',
+          ANNOUNCEMENTS: '[{"title":"A"}]',
+          WELCOME_SCREEN_DESCRIPTION: 'Welcome',
+          FILE_MANAGER_AVAILABLE_TABS: 'shared',
+          USAGE_LIMITS_WARNING_THRESHOLD_PERCENT: '80',
+          USAGE_LIMITS_CONTROL_ENABLED: 'true',
+          SCHEDULED_TASKS_ENABLED: 'true',
+          SCHEDULED_TASKS_ENABLED_ROLES: 'beta',
+        },
+      ],
+    ])(
+      'resolves identically with and without managed metadata for %s',
+      async (_name, env) => {
+        vi.spyOn(console, 'info').mockImplementation(() => undefined);
+        const withMetadata = await snapshotResolution(env);
+        const stripped = await withManagedFieldsStripped(() =>
+          snapshotResolution(env),
+        );
+
+        expect(
+          CONFIG_DEFINITIONS.filter((d) => d.managed === true),
+        ).toHaveLength(7);
+        expect(stripped).toEqual(withMetadata);
+      },
+    );
   });
 });

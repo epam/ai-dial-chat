@@ -1,43 +1,60 @@
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { plainToInstance } from 'class-transformer';
-import { validateSync } from 'class-validator';
-import {
-  canonicalizeContentLocales,
-  parseContentLocaleList,
-} from '../../config/content-locales';
-import { extractOrigin, isOriginAllowedForIframe } from '../../config/csp';
 import type { EnvironmentVariables } from '../../config/environment.config';
-import type {
-  AppConfigEvalContext,
-  ConfigDefinition,
-  ConfigProvider,
-} from '../app-config.types';
-import { ApplicationVisualizerDto } from '../dto/application-visualizer.dto';
-import { CustomVisualizerDto } from '../dto/custom-visualizer.dto';
+import { ExplicitEnvironment } from '../../config/explicit-environment';
+import type { AppConfigEvalContext, ConfigProvider } from '../app-config.types';
+import type { AdmissionLog } from '../env-admission/admission-log';
+import { admitAnnouncements } from '../env-admission/announcements.admission';
+import {
+  admitContentLocales,
+  isLegacyContentLocalesInEffect,
+} from '../env-admission/content-locales.admission';
+import { admitCustomVariables } from '../env-admission/custom-variables.admission';
+import { admitFileManagerTabs } from '../env-admission/file-manager-tabs.admission';
+import { admitPublicationFilterSources } from '../env-admission/publication-filter-sources.admission';
+import {
+  admitApplicationVisualizers,
+  admitCustomVisualizers,
+} from '../env-admission/visualizers.admission';
+import {
+  CAPABILITY_FEATURE_KEYS,
+  deriveCapabilityFeature,
+  type CapabilityInputs,
+} from '../feature-capabilities';
 import { CONFIG_DEFINITIONS } from './config-registry.constants';
-
-const FILE_MANAGER_ALLOWED_TABS = ['all', 'my_files', 'shared', 'organization'];
 
 @Injectable()
 export class EnvConfigProvider implements ConfigProvider, OnModuleInit {
   private readonly logger = new Logger(EnvConfigProvider.name);
+  /* Bound here so admission messages keep this provider's Logger context. */
+  private readonly admissionLog: AdmissionLog = {
+    warn: (message) => this.logger.warn(message),
+    error: (message) => this.logger.error(message),
+  };
 
   constructor(
     private readonly configService: ConfigService<EnvironmentVariables>,
+    private readonly explicitEnvironment: ExplicitEnvironment,
   ) {}
 
   onModuleInit(): void {
-    if (this.isLegacyContentLocalesInEffect()) {
+    if (
+      isLegacyContentLocalesInEffect(
+        this.configService.get('ADDITIONAL_CONTENT_LOCALES', { infer: true }),
+        this.configService.get('AVAILABLE_LOCALES', { infer: true }),
+      )
+    ) {
       this.logger.warn(
         'AVAILABLE_LOCALES is deprecated; rename it to ADDITIONAL_CONTENT_LOCALES. It is read only while ADDITIONAL_CONTENT_LOCALES is unset.',
       );
     }
   }
 
+  /* `context` is part of the provider contract; ENV values do not vary by
+   * caller now that role gating runs after selection. */
   async resolve(
     key: string,
-    context: AppConfigEvalContext,
+    _context: AppConfigEvalContext,
   ): Promise<unknown | undefined> {
     const definition = CONFIG_DEFINITIONS.find((d) => d.key === key);
     if (!definition) {
@@ -49,137 +66,79 @@ export class EnvConfigProvider implements ConfigProvider, OnModuleInit {
       return eventId === 'none' ? null : eventId;
     }
 
-    // features.asrEnabled is derived from ASR_MODEL presence, not a direct env var
-    if (key === 'features.asrEnabled') {
-      const asrModel = this.configService.get('ASR_MODEL', { infer: true });
-      if (asrModel == null) return undefined;
-      return this.applyRoleGating(definition, context, true);
-    }
-
-    // features.llmConversationNaming requires UTILITY_MODEL, DIAL_API_KEY, and explicit opt-in
-    if (key === 'features.llmConversationNaming') {
-      const utilityModel = this.configService.get('UTILITY_MODEL', {
-        infer: true,
-      });
-      const dialApiKey = this.configService.get('DIAL_API_KEY', {
-        infer: true,
-      });
-      if (!utilityModel || !dialApiKey) return undefined;
-      const enabled = this.configService.get(
-        'LLM_CONVERSATION_NAMING_ENABLED',
-        {
-          infer: true,
-        },
-      );
-      return enabled === true;
-    }
-
-    // features.footer is derived from FOOTER_HTML_MESSAGE presence
-    if (key === 'features.footer') {
-      const footerHtml = this.configService.get('FOOTER_HTML_MESSAGE', {
-        infer: true,
-      });
-      if (footerHtml == null) return undefined;
-      return true;
+    /* features.asrEnabled, features.llmConversationNaming and features.footer
+     * are derived from local capabilities, not read from a variable of their
+     * own. Role gating is not applied here: AppConfigService applies it after
+     * selection, for every source. */
+    if (CAPABILITY_FEATURE_KEYS.some((featureKey) => featureKey === key)) {
+      return deriveCapabilityFeature(key, this.readCapabilityInputs());
     }
 
     // fileManager.availableTabs is validated against a fixed allow-list, dropping unknown ids
     if (key === 'fileManager.availableTabs') {
-      const availableTabs = this.configService.get(
-        'FILE_MANAGER_AVAILABLE_TABS',
-        { infer: true },
+      return admitFileManagerTabs(
+        this.configService.get('FILE_MANAGER_AVAILABLE_TABS', { infer: true }),
       );
-      if (!availableTabs?.length) return undefined;
-      const filtered = availableTabs.filter((tab) =>
-        FILE_MANAGER_ALLOWED_TABS.includes(tab),
-      );
-      if (!filtered.length) return undefined;
-      return filtered;
     }
 
     // publish.publicationFilterSources falls back to the registry default when unset/empty
     if (key === 'publish.publicationFilterSources') {
-      const sources = this.configService.get('PUBLICATION_FILTER_SOURCES', {
-        infer: true,
-      });
-      if (!sources?.length) {
-        return undefined;
-      }
-      return sources;
+      return admitPublicationFilterSources(
+        this.configService.get('PUBLICATION_FILTER_SOURCES', { infer: true }),
+      );
     }
 
     /*
      * content.additionalLocales: ADDITIONAL_CONTENT_LOCALES wins whenever it is
      * present (even empty); the deprecated AVAILABLE_LOCALES is read only when
-     * it is absent. The primary locale is not filtered here — the frontend owns it.
+     * it is absent.
      */
     if (key === 'content.additionalLocales') {
-      const codes = this.getContentLocaleList();
-      return codes === undefined
-        ? undefined
-        : canonicalizeContentLocales(codes);
+      return admitContentLocales(
+        this.configService.get('ADDITIONAL_CONTENT_LOCALES', { infer: true }),
+        this.configService.get('AVAILABLE_LOCALES', { infer: true }),
+      );
     }
 
-    // customVisualizers is a JSON array requiring full parse + per-entry validation
     if (key === 'customVisualizers') {
-      const raw = this.configService.get('CUSTOM_VISUALIZERS', {
-        infer: true,
-      });
-      if (!raw) {
-        return undefined;
-      }
-      return this.parseCustomVisualizers(raw);
+      return admitCustomVisualizers(
+        this.configService.get('CUSTOM_VISUALIZERS', { infer: true }),
+        this.admissionLog,
+      );
     }
 
-    /* applicationVisualizers is a JSON object keyed by application id, so it
-     * needs the same parse + per-entry validation as customVisualizers, with
-     * object rather than array semantics. */
     if (key === 'applicationVisualizers') {
-      const raw = this.configService.get('APPLICATION_VISUALIZERS', {
-        infer: true,
-      });
-      if (!raw) {
-        return undefined;
-      }
-      return this.parseApplicationVisualizers(raw);
+      return admitApplicationVisualizers(
+        this.configService.get('APPLICATION_VISUALIZERS', { infer: true }),
+        this.configService.get('ALLOWED_IFRAME_ORIGINS', { infer: true }) ?? [],
+        this.admissionLog,
+      );
     }
 
     /* ANNOUNCEMENTS is a JSON array. The generic path below would hand the raw
-     * string straight through — `isValidType` does not check 'json' — so it has
-     * to be parsed here, like customVisualizers. Entry-level validation stays in
-     * AppConfigService. */
+     * string straight through — `isValidType` does not check 'json' — so it is
+     * admitted here, like customVisualizers. Entry-level validation stays in
+     * the shared client-config normalization. */
     if (key === 'announcement.items') {
-      const raw = this.configService.get('ANNOUNCEMENTS', { infer: true });
-      if (!raw) {
-        return undefined;
-      }
-      return this.parseAnnouncements(raw);
+      return admitAnnouncements(
+        this.configService.get('ANNOUNCEMENTS', { infer: true }),
+        this.admissionLog,
+      );
     }
 
     if (key === 'customVariables') {
-      const raw = this.configService.get('CUSTOM_CLIENT_VARIABLES', {
-        infer: true,
-      });
-      if (!raw?.trim()) return undefined;
-      try {
-        const parsed: unknown = JSON.parse(raw);
-        if (
-          parsed !== null &&
-          typeof parsed === 'object' &&
-          !Array.isArray(parsed)
-        ) {
-          return parsed;
-        }
-      } catch {
-        /* Do not include the payload or parser message in logs. */
-      }
-      this.logger.warn(
-        'CUSTOM_CLIENT_VARIABLES must be a JSON object; using an empty object',
+      return admitCustomVariables(
+        this.configService.get('CUSTOM_CLIENT_VARIABLES', { infer: true }),
+        this.admissionLog,
       );
-      return undefined;
     }
 
-    if (!definition.envVar) {
+    /* A variable that only holds its typed default is not an operator value,
+     * so the next provider (the registry default) applies. */
+    if (
+      !definition.envVar ||
+      !this.explicitEnvironment.isExplicit(definition.envVar)
+    ) {
       return undefined;
     }
 
@@ -195,41 +154,22 @@ export class EnvConfigProvider implements ConfigProvider, OnModuleInit {
       return undefined;
     }
 
-    return this.applyRoleGating(definition, context, rawValue);
+    return rawValue;
   }
 
-  /**
-   * When `definition.allowedRolesEnvVar` is set and the env var is non-empty,
-   * the resolved value is only returned for users whose roles include at least
-   * one entry from the allowed list. An absent or empty roles env var means
-   * the feature is unrestricted (all users receive the value).
-   */
-  private applyRoleGating(
-    definition: ConfigDefinition,
-    context: AppConfigEvalContext,
-    resolvedValue: unknown,
-  ): unknown {
-    if (!definition.allowedRolesEnvVar) {
-      return resolvedValue;
-    }
-
-    const allowedRoles = this.configService.get(definition.allowedRolesEnvVar, {
-      infer: true,
-    }) as string[] | undefined;
-
-    if (!allowedRoles?.length) {
-      return resolvedValue; // no restriction configured
-    }
-
-    const userRoles = context.roles ?? [];
-    if (allowedRoles.some((r) => userRoles.includes(r))) {
-      return resolvedValue;
-    }
-
-    this.logger.debug(
-      `Key "${definition.key}" restricted: user roles [${userRoles.join(', ')}] not in allowed [${allowedRoles.join(', ')}]`,
-    );
-    return false;
+  private readCapabilityInputs(): CapabilityInputs {
+    return {
+      asrModel: this.configService.get('ASR_MODEL', { infer: true }),
+      utilityModel: this.configService.get('UTILITY_MODEL', { infer: true }),
+      dialApiKey: this.configService.get('DIAL_API_KEY', { infer: true }),
+      llmConversationNamingEnabled: this.configService.get(
+        'LLM_CONVERSATION_NAMING_ENABLED',
+        { infer: true },
+      ),
+      footerHtmlMessage: this.configService.get('FOOTER_HTML_MESSAGE', {
+        infer: true,
+      }),
+    };
   }
 
   private isValidType(key: string, value: unknown, valueType: string): boolean {
@@ -247,287 +187,5 @@ export class EnvConfigProvider implements ConfigProvider, OnModuleInit {
       return typeof value === 'string';
     }
     return true;
-  }
-
-  /**
-   * Parses `ANNOUNCEMENTS` fail-open: invalid JSON or a non-array resolves to
-   * `undefined` so the registry default (an empty list) applies and the pill
-   * simply stays hidden. Per-entry validation happens in `AppConfigService`.
-   */
-  private parseAnnouncements(raw: string): unknown[] | undefined {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      this.logger.error(
-        'ANNOUNCEMENTS is not valid JSON; resolving to an empty list',
-      );
-      return undefined;
-    }
-
-    if (!Array.isArray(parsed)) {
-      this.logger.error(
-        'ANNOUNCEMENTS must be a JSON array; resolving to an empty list',
-      );
-      return undefined;
-    }
-
-    return parsed;
-  }
-
-  private readContentLocaleVariable(
-    name: 'ADDITIONAL_CONTENT_LOCALES' | 'AVAILABLE_LOCALES',
-  ): string[] | undefined {
-    const value: unknown = this.configService.get(name, { infer: true });
-    return parseContentLocaleList(value, {
-      stripLegacyDecoration: name === 'AVAILABLE_LOCALES',
-    });
-  }
-
-  private isLegacyContentLocalesInEffect(): boolean {
-    return (
-      this.readContentLocaleVariable('ADDITIONAL_CONTENT_LOCALES') ===
-        undefined &&
-      this.readContentLocaleVariable('AVAILABLE_LOCALES') !== undefined
-    );
-  }
-
-  private getContentLocaleList(): string[] | undefined {
-    return (
-      this.readContentLocaleVariable('ADDITIONAL_CONTENT_LOCALES') ??
-      this.readContentLocaleVariable('AVAILABLE_LOCALES')
-    );
-  }
-
-  /**
-   * Parses `CUSTOM_VISUALIZERS` fail-open: invalid JSON or a non-array
-   * yields `[]`; each entry is validated independently, so one malformed
-   * entry never drops the others. Unrecognized fields on an entry (e.g.
-   * deferred `development`-only fields) are logged and ignored, never
-   * causing the entry itself to be dropped.
-   */
-  private parseCustomVisualizers(raw: string): CustomVisualizerDto[] {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      this.logger.error(
-        'CUSTOM_VISUALIZERS is not valid JSON; resolving to an empty registry',
-      );
-      return [];
-    }
-
-    if (!Array.isArray(parsed)) {
-      this.logger.error(
-        'CUSTOM_VISUALIZERS must be a JSON array; resolving to an empty registry',
-      );
-      return [];
-    }
-
-    const entries: CustomVisualizerDto[] = [];
-
-    parsed.forEach((rawEntry: unknown, index: number) => {
-      if (typeof rawEntry !== 'object' || rawEntry === null) {
-        this.logger.error(
-          `CUSTOM_VISUALIZERS[${index}] is not an object; dropping entry`,
-        );
-        return;
-      }
-
-      const dto = plainToInstance(CustomVisualizerDto, rawEntry);
-      const errors = validateSync(dto);
-      if (errors.length > 0) {
-        this.logger.error(
-          `CUSTOM_VISUALIZERS[${index}] failed validation, dropping entry: ${errors
-            .map((error) => Object.values(error.constraints ?? {}).join(', '))
-            .join('; ')}`,
-        );
-        return;
-      }
-
-      if (
-        dto.contentType
-          .split(',')
-          .map((mime) => mime.trim())
-          .filter((mime) => mime.length > 0).length === 0
-      ) {
-        this.logger.error(
-          `CUSTOM_VISUALIZERS[${index}] has no usable MIME type in "contentType"; dropping entry`,
-        );
-        return;
-      }
-
-      // `title` needs no check beyond @IsNotEmpty() above: it is an opaque
-      // postMessage namespace, and a whitespace-only value is a legitimate
-      // `appName` for some deployed visualizers, so it is never trimmed.
-      const knownFields = new Set([
-        'title',
-        'description',
-        'icon',
-        'contentType',
-        'url',
-        'requestTimeout',
-        'width',
-        'height',
-        'mobileHeight',
-        'passAuthInfo',
-        'passExplicitToken',
-      ]);
-      const unknownKeys = Object.keys(rawEntry as object).filter(
-        (k) => !knownFields.has(k),
-      );
-      if (unknownKeys.length > 0) {
-        this.logger.warn(
-          `CUSTOM_VISUALIZERS[${index}] contains unrecognized fields that will be ignored: ${unknownKeys.join(', ')}`,
-        );
-      }
-
-      entries.push({
-        title: dto.title,
-        description: dto.description,
-        icon: dto.icon,
-        contentType: dto.contentType,
-        url: dto.url,
-        requestTimeout: dto.requestTimeout,
-        width: dto.width,
-        height: dto.height,
-        mobileHeight: dto.mobileHeight,
-        passAuthInfo: dto.passAuthInfo,
-        passExplicitToken: dto.passExplicitToken,
-      });
-    });
-
-    return entries;
-  }
-
-  /**
-   * Parses `APPLICATION_VISUALIZERS` fail-open: invalid JSON or a value that
-   * is not a plain object (an array included) yields `{}`; each entry is
-   * validated independently, so one malformed entry never drops the others.
-   * Unrecognized fields on an entry (e.g. the legacy `expanded` flag that 1.0
-   * has no successor for) are logged and ignored, never causing the entry itself
-   * to be dropped.
-   */
-  private parseApplicationVisualizers(
-    raw: string,
-  ): Record<string, ApplicationVisualizerDto> {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      this.logger.error(
-        'APPLICATION_VISUALIZERS is not valid JSON; resolving to an empty registry',
-      );
-      return {};
-    }
-
-    if (
-      typeof parsed !== 'object' ||
-      parsed === null ||
-      Array.isArray(parsed)
-    ) {
-      this.logger.error(
-        'APPLICATION_VISUALIZERS must be a JSON object keyed by application id; resolving to an empty registry',
-      );
-      return {};
-    }
-
-    const allowedIframeOrigins =
-      this.configService.get('ALLOWED_IFRAME_ORIGINS', { infer: true }) ?? [];
-
-    /* Prototype-less: an operator key of `__proto__` would otherwise mutate
-     * the accumulator's prototype instead of adding an entry. */
-    const entries: Record<string, ApplicationVisualizerDto> = Object.create(
-      null,
-    ) as Record<string, ApplicationVisualizerDto>;
-
-    Object.entries(parsed as Record<string, unknown>).forEach(
-      ([applicationId, rawEntry]) => {
-        if (typeof rawEntry !== 'object' || rawEntry === null) {
-          this.logger.error(
-            `APPLICATION_VISUALIZERS["${applicationId}"] is not an object; dropping entry`,
-          );
-          return;
-        }
-
-        const dto = plainToInstance(ApplicationVisualizerDto, rawEntry);
-        const errors = validateSync(dto);
-        if (errors.length > 0) {
-          this.logger.error(
-            `APPLICATION_VISUALIZERS["${applicationId}"] failed validation, dropping entry: ${errors
-              .map((error) => Object.values(error.constraints ?? {}).join(', '))
-              .join('; ')}`,
-          );
-          return;
-        }
-
-        /* `contentType` is optional here, so the "no usable MIME" check only
-         * applies when the field is present — an absent one legitimately
-         * means "claim every attachment that carries a URL". */
-        if (
-          dto.contentType != null &&
-          dto.contentType
-            .split(',')
-            .map((mime) => mime.trim())
-            .filter((mime) => mime.length > 0).length === 0
-        ) {
-          this.logger.error(
-            `APPLICATION_VISUALIZERS["${applicationId}"] has no usable MIME type in "contentType"; dropping entry`,
-          );
-          return;
-        }
-
-        // `title` needs no check beyond @IsNotEmpty() above: it is an opaque
-        // postMessage namespace, and a whitespace-only value is a legitimate
-        // `appName` for some deployed visualizers, so it is never trimmed.
-        const knownFields = new Set([
-          'title',
-          'description',
-          'icon',
-          'contentType',
-          'url',
-          'requestTimeout',
-          'width',
-          'height',
-          'mobileHeight',
-          'passAuthInfo',
-          'passExplicitToken',
-          'borderless',
-          'withoutTitle',
-        ]);
-        const unknownKeys = Object.keys(rawEntry as object).filter(
-          (k) => !knownFields.has(k),
-        );
-        if (unknownKeys.length > 0) {
-          this.logger.warn(
-            `APPLICATION_VISUALIZERS["${applicationId}"] contains unrecognized fields that will be ignored: ${unknownKeys.join(', ')}`,
-          );
-        }
-
-        if (!isOriginAllowedForIframe(dto.url, allowedIframeOrigins)) {
-          this.logger.warn(
-            `APPLICATION_VISUALIZERS["${applicationId}"] points at ${extractOrigin(dto.url) ?? dto.url}, which is not listed in ALLOWED_IFRAME_ORIGINS; the browser will block the iframe unless that URL is same-origin with the app`,
-          );
-        }
-
-        entries[applicationId] = {
-          title: dto.title,
-          description: dto.description,
-          icon: dto.icon,
-          contentType: dto.contentType,
-          url: dto.url,
-          requestTimeout: dto.requestTimeout,
-          width: dto.width,
-          height: dto.height,
-          mobileHeight: dto.mobileHeight,
-          passAuthInfo: dto.passAuthInfo,
-          passExplicitToken: dto.passExplicitToken,
-          borderless: dto.borderless,
-          withoutTitle: dto.withoutTitle,
-        };
-      },
-    );
-
-    return entries;
   }
 }

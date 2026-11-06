@@ -4,7 +4,94 @@ import {
   DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
 } from '../../projects/constants/project-context.constants';
 import type { ConfigDefinition } from '../app-config.types';
+import { FILE_MANAGER_ALLOWED_TABS } from '../env-admission/file-manager-tabs.admission';
+import {
+  LocalOnlyReason,
+  ManagedSchemaType,
+  type ManagedValueSchema,
+} from '../managed-config/managed-config.types';
 import { CelebrationDeliveryMode } from '../types/celebration-delivery';
+
+/* Non-blank: at least one non-whitespace character. */
+const NON_BLANK_PATTERN = '\\S';
+/* http/https, matched case-insensitively by character classes because the
+ * schema carries no regex flags. */
+const HTTP_URL_PATTERN = '^[Hh][Tt][Tt][Pp][Ss]?://[^\\s]+$';
+
+const boundedText = (
+  maxLength: number,
+  annotations: Pick<ManagedValueSchema, 'title' | 'description'> & {
+    readonly order?: number;
+  } = {},
+): ManagedValueSchema => ({
+  type: ManagedSchemaType.String,
+  minLength: 1,
+  maxLength,
+  pattern: NON_BLANK_PATTERN,
+  ...(annotations.title === undefined ? {} : { title: annotations.title }),
+  ...(annotations.description === undefined
+    ? {}
+    : { description: annotations.description }),
+  ...(annotations.order === undefined
+    ? {}
+    : { 'dial:meta': { 'dial:propertyOrder': annotations.order } }),
+});
+
+const ANNOUNCEMENT_TITLE_SCHEMA = boundedText(200);
+const ANNOUNCEMENT_DESCRIPTION_SCHEMA = boundedText(2000);
+const WELCOME_SCREEN_DESCRIPTION_SCHEMA = boundedText(1000);
+
+/* Mirrors the shared announcement normalizer: at most 10 entries of
+ * { title, description?, link?: { label, href } } with an http(s) href. */
+const ANNOUNCEMENT_ITEMS_SCHEMA: ManagedValueSchema = {
+  type: ManagedSchemaType.Array,
+  maxItems: 10,
+  items: {
+    type: ManagedSchemaType.Object,
+    additionalProperties: false,
+    required: ['title'],
+    properties: {
+      title: boundedText(200, { title: 'Title', order: 1 }),
+      description: boundedText(2000, {
+        title: 'Description',
+        description: 'Sanitized to a safe HTML subset.',
+        order: 2,
+      }),
+      link: {
+        type: ManagedSchemaType.Object,
+        additionalProperties: false,
+        required: ['label', 'href'],
+        title: 'Link',
+        'dial:meta': { 'dial:propertyOrder': 3 },
+        properties: {
+          label: boundedText(100, { title: 'Label', order: 1 }),
+          href: {
+            type: ManagedSchemaType.String,
+            maxLength: 2048,
+            pattern: HTTP_URL_PATTERN,
+            title: 'URL',
+            description: 'Absolute http or https URL.',
+            'dial:meta': { 'dial:propertyOrder': 2 },
+          },
+        },
+      },
+    },
+  },
+};
+
+const FILE_MANAGER_TABS_SCHEMA: ManagedValueSchema = {
+  type: ManagedSchemaType.Array,
+  minItems: 1,
+  maxItems: FILE_MANAGER_ALLOWED_TABS.length,
+  uniqueItems: true,
+  items: { type: ManagedSchemaType.String, enum: FILE_MANAGER_ALLOWED_TABS },
+};
+
+const USAGE_WARNING_THRESHOLD_SCHEMA: ManagedValueSchema = {
+  type: ManagedSchemaType.Integer,
+  minimum: 1,
+  maximum: 99,
+};
 
 export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
   {
@@ -18,6 +105,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Deployment ID of the ASR model used for transcription. Null when ASR_MODEL is not configured.',
     owner: 'chat-team',
     envVar: 'ASR_MODEL',
+    localOnly: LocalOnlyReason.Capability,
   },
   {
     key: 'asr.transcribeSizeLimitBytes',
@@ -30,6 +118,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Maximum audio file size in bytes accepted by the transcription endpoint.',
     owner: 'chat-team',
     envVar: 'TRANSCRIBE_SIZE_LIMIT_BYTES',
+    localOnly: LocalOnlyReason.BackendEnforcedLimit,
   },
   {
     key: 'customVariables',
@@ -42,6 +131,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Public, client-owned configuration values. Keys have no BFF-defined semantics.',
     owner: 'chat-team',
     envVar: 'CUSTOM_CLIENT_VARIABLES',
+    localOnly: LocalOnlyReason.Opaque,
   },
   {
     key: 'deployments.defaultDeploymentId',
@@ -66,6 +156,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Public-facing DIAL Core base URL that browsers can reach directly, used to build client-side MCP endpoint links. Null when DIAL_CORE_EXTERNAL_URL is not configured. Distinct from the internal DIAL_CORE_URL, which is never exposed to clients.',
     owner: 'chat-team',
     envVar: 'DIAL_CORE_EXTERNAL_URL',
+    localOnly: LocalOnlyReason.DeploymentTopology,
   },
   {
     key: 'mcpApps.sandboxUrl',
@@ -78,6 +169,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Isolated-origin URL of the deployed MCP Apps sandbox-proxy app (apps/mcp-app-sandbox). Null when MCP_APP_SANDBOX_URL is not configured — the "Open App" trigger and auto-open simply do not appear.',
     owner: 'chat-team',
     envVar: 'MCP_APP_SANDBOX_URL',
+    localOnly: LocalOnlyReason.DeploymentTopology,
   },
   {
     key: 'mcpApps.theme',
@@ -126,6 +218,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Version string shown in the footer version label and substituted for the %%VERSION%% footer token. Sourced from CHAT_VERSION so CI/CD can stamp the deployed build; falls back to the workspace root package.json version — the one the release pipeline stamps — when unset or blank.',
     owner: 'chat-team',
     envVar: 'CHAT_VERSION',
+    localOnly: LocalOnlyReason.BuildMetadata,
   },
   {
     key: 'announcement.html',
@@ -138,6 +231,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Passed through verbatim and sanitized client-side to <a>, <b>, <strong>, <em>, <u>, <br>, <span>, <p>; style attributes are stripped. Null/empty hides the banner. Sourced from ANNOUNCEMENT_HTML_MESSAGE.',
     owner: 'chat-team',
     envVar: 'ANNOUNCEMENT_HTML_MESSAGE',
+    localOnly: LocalOnlyReason.SecurityPolicy,
   },
   {
     key: 'announcement.title',
@@ -150,6 +244,14 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Operator-authored plain-text heading shown in bold at the start of the announcement banner line. Rendered as text, never as markup. Null/blank omits the heading. Sourced from ANNOUNCEMENT_TITLE.',
     owner: 'chat-team',
     envVar: 'ANNOUNCEMENT_TITLE',
+    managed: true,
+    managedContract: {
+      title: 'Announcement title',
+      description:
+        'Plain-text heading at the start of the announcement banner. Never rendered as markup.',
+      order: 10,
+      value: ANNOUNCEMENT_TITLE_SCHEMA,
+    },
   },
   {
     key: 'announcement.description',
@@ -162,6 +264,14 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Operator-authored supporting copy shown after the announcement banner title. Sanitized server-side to a safe HTML subset. Null/blank omits the description. Sourced from ANNOUNCEMENT_DESCRIPTION.',
     owner: 'chat-team',
     envVar: 'ANNOUNCEMENT_DESCRIPTION',
+    managed: true,
+    managedContract: {
+      title: 'Announcement description',
+      description:
+        'Supporting banner copy. Sanitized to a safe HTML subset before it reaches browsers.',
+      order: 11,
+      value: ANNOUNCEMENT_DESCRIPTION_SCHEMA,
+    },
   },
   {
     key: 'announcement.items',
@@ -174,6 +284,14 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'List of announcements shown in the popover behind the banner\'s "+N announcements" pill. JSON array of { title, description?, link?: { label, href } }. Entries with a blank title, or with a link whose label is blank or whose href is not http/https, are dropped with a warning. Empty (pill hidden) when ANNOUNCEMENTS is unset or malformed; boot never fails on bad config.',
     owner: 'chat-team',
     envVar: 'ANNOUNCEMENTS',
+    managed: true,
+    managedContract: {
+      title: 'Announcements',
+      description:
+        'Entries behind the banner\'s "+N announcements" pill, at most 10.',
+      order: 12,
+      value: ANNOUNCEMENT_ITEMS_SCHEMA,
+    },
   },
   {
     key: 'welcomeScreen.description',
@@ -186,6 +304,14 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Operator-authored plain-text copy shown below the greeting heading on the new-chat start screen. Rendered as text, never as markup. Null/blank hides it. Sourced from WELCOME_SCREEN_DESCRIPTION.',
     owner: 'chat-team',
     envVar: 'WELCOME_SCREEN_DESCRIPTION',
+    managed: true,
+    managedContract: {
+      title: 'Welcome text',
+      description:
+        'Plain-text copy below the greeting on the new-chat screen. Never rendered as markup.',
+      order: 20,
+      value: WELCOME_SCREEN_DESCRIPTION_SCHEMA,
+    },
   },
   {
     key: 'footer.html',
@@ -209,6 +335,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     description:
       'Whether the footer HTML message area is shown. Automatically enabled when FOOTER_HTML_MESSAGE is set.',
     owner: 'chat-team',
+    localOnly: LocalOnlyReason.Derived,
   },
   {
     key: 'features.asrEnabled',
@@ -221,6 +348,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Whether ASR (Automatic Speech Recognition) transcription is enabled. Derived from ASR_MODEL presence. Set ASR_ENABLED_ROLES to restrict to specific roles.',
     owner: 'chat-team',
     allowedRolesEnvVar: 'ASR_ENABLED_ROLES',
+    localOnly: LocalOnlyReason.Capability,
   },
   {
     key: 'utility.modelId',
@@ -233,6 +361,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Deployment ID of the utility model used for server-side tasks such as LLM conversation naming. Null when UTILITY_MODEL is not configured.',
     owner: 'chat-team',
     envVar: 'UTILITY_MODEL',
+    localOnly: LocalOnlyReason.Capability,
   },
   {
     key: 'features.llmConversationNaming',
@@ -244,6 +373,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     description:
       'Whether LLM-based conversation naming runs after the first assistant reply. Derived from UTILITY_MODEL and DIAL_API_KEY presence plus LLM_CONVERSATION_NAMING_ENABLED=true.',
     owner: 'chat-team',
+    localOnly: LocalOnlyReason.Capability,
   },
   {
     key: 'features.responsesApiEnabled',
@@ -256,6 +386,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Server-side kill switch for routing eligible generations through the OpenAI Responses API. Even when a deployment reports features.responsesApi=true, Responses is only used when this flag is also true. Defaults to false. Not exposed to the frontend client-config endpoint (visibility: server). Role-based rollout (RESPONSES_API_ENABLED_ROLES) is not implemented — out of scope.',
     owner: 'chat-team',
     envVar: 'RESPONSES_API_ENABLED',
+    localOnly: LocalOnlyReason.Capability,
   },
   {
     key: 'features.responsesBackgroundEnabled',
@@ -268,6 +399,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Server-side switch for starting eligible Responses generations as DIAL Core background jobs (background: true, store: true). Requires features.responsesApiEnabled, the deployment capability features.responsesApi, and "openaiResponses" in the deployment interfaces. Affects only how new generations start: in-flight background jobs stay recoverable, stoppable and finalizable when it is off. Defaults to false. Not exposed to the frontend client-config endpoint (visibility: server). Requires DIAL Core >= 0.48.0.',
     owner: 'chat-team',
     envVar: 'RESPONSES_BACKGROUND_ENABLED',
+    localOnly: LocalOnlyReason.Capability,
   },
   {
     key: 'ui.activeEventId',
@@ -304,6 +436,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Where celebration scenes come from: bundled (compiled scenes only, no celebration request) or prefer-external (allowlisted scenes and admitted events from external packs served by /api/v1/celebrations). Sourced from UI_EVENT_DELIVERY_MODE; bundled by default.',
     owner: 'chat-team',
     envVar: 'UI_EVENT_DELIVERY_MODE',
+    localOnly: LocalOnlyReason.SecurityPolicy,
   },
   {
     key: 'ui.celebrationDelivery.revision',
@@ -316,6 +449,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Operator revision of the celebration delivery policy; a change restarts a playing scene. Sourced from UI_EVENT_DELIVERY_REVISION; "0" by default.',
     owner: 'chat-team',
     envVar: 'UI_EVENT_DELIVERY_REVISION',
+    localOnly: LocalOnlyReason.SecurityPolicy,
   },
   {
     key: 'ui.celebrationDelivery.externalScenes',
@@ -328,6 +462,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Scenes of compiled celebration events that may come from an external pack, as eventId/sceneId pairs. Sourced from UI_EVENT_EXTERNAL_SCENES (comma-separated, at most 64); empty by default.',
     owner: 'chat-team',
     envVar: 'UI_EVENT_EXTERNAL_SCENES',
+    localOnly: LocalOnlyReason.SecurityPolicy,
   },
   {
     key: 'ui.celebrationDelivery.externalEvents',
@@ -340,6 +475,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Celebration event IDs without a compiled module that may come entirely from an external pack. Sourced from UI_EVENT_EXTERNAL_EVENTS (comma-separated, at most 64); empty by default.',
     owner: 'chat-team',
     envVar: 'UI_EVENT_EXTERNAL_EVENTS',
+    localOnly: LocalOnlyReason.SecurityPolicy,
   },
   {
     key: 'overlay.enabled',
@@ -352,6 +488,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Whether the chat-overlay embedded runtime mode is reachable. Distinct from ALLOWED_IFRAME_ORIGINS: has no effect unless at least one origin is also allowlisted there.',
     owner: 'chat-team',
     envVar: 'OVERLAY_ENABLED',
+    localOnly: LocalOnlyReason.SecurityPolicy,
   },
   {
     key: 'documents.allowedConnectOrigins',
@@ -364,6 +501,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'External connection origins permitted by CSP. PDF previews may use browser credentials for matching HTTP(S) origins.',
     owner: 'chat-team',
     envVar: 'ALLOWED_CONNECT_ORIGINS',
+    localOnly: LocalOnlyReason.SecurityPolicy,
   },
   {
     key: 'overlay.allowedOrigins',
@@ -376,6 +514,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Host origins allowed to embed this app, exposed to the client for self-diagnosis. Sourced from ALLOWED_IFRAME_ORIGINS, the same list that drives CSP frame-ancestors/frame-src.',
     owner: 'chat-team',
     envVar: 'ALLOWED_IFRAME_ORIGINS',
+    localOnly: LocalOnlyReason.SecurityPolicy,
   },
   {
     key: 'fileManager.availableTabs',
@@ -388,6 +527,13 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Which File Manager tabs are shown to users. Defaults to the All tab plus the three source tabs when FILE_MANAGER_AVAILABLE_TABS is unset or resolves to no valid ids.',
     owner: 'chat-team',
     envVar: 'FILE_MANAGER_AVAILABLE_TABS',
+    managed: true,
+    managedContract: {
+      title: 'File Manager tabs',
+      description: 'File Manager tabs shown to users, in order.',
+      order: 30,
+      value: FILE_MANAGER_TABS_SCHEMA,
+    },
   },
   {
     key: 'features.liveChatInteraction',
@@ -461,6 +607,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'that renders it. Off by default; port of the legacy ALLOW_VISUALIZER_SEND_MESSAGES.',
     owner: 'chat-team',
     envVar: 'ALLOW_VISUALIZER_SEND_MESSAGES',
+    localOnly: LocalOnlyReason.SecurityPolicy,
   },
   {
     key: 'features.usageLimitsControl',
@@ -474,6 +621,13 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'next to the model selector. Off by default.',
     owner: 'chat-team',
     envVar: 'USAGE_LIMITS_CONTROL_ENABLED',
+    managed: true,
+    managedContract: {
+      title: 'Usage-limits control',
+      description:
+        'Shows the token and cost usage-limits control next to the model selector.',
+      order: 1,
+    },
   },
   {
     key: 'uiFeatures.enabledUiFeatures',
@@ -498,6 +652,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Registry of MIME type → visualizer iframe URL mappings. An attachment whose MIME type matches an entry opens in the AttachmentCanvas rendered by that visualizer instead of the default preview. The origin of each entry URL must also be listed in ALLOWED_IFRAME_ORIGINS, which is the sole source of CSP frame-src; otherwise the browser blocks the iframe. Empty (feature dark) when CUSTOM_VISUALIZERS is unset. Invalid JSON or invalid entries are dropped with an error log; boot never fails on malformed config.',
     owner: 'chat-team',
     envVar: 'CUSTOM_VISUALIZERS',
+    localOnly: LocalOnlyReason.SecurityPolicy,
   },
   {
     key: 'applicationVisualizers',
@@ -510,6 +665,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Registry of application id → grouped visualizer mappings, keyed by the effective deployment id of a message. Every attachment the entry claims is delivered to one iframe together via SEND_GROUPED_VISUALIZE_DATA, rendered inline in the message with an expand-to-canvas control. An entry may declare a comma-separated contentType to claim only those MIME types; when it is omitted, every attachment carrying a URL is claimed, and unclaimed attachments render as ordinary tiles. Takes precedence over CUSTOM_VISUALIZERS for the attachments it claims. The origin of each entry URL must also be listed in ALLOWED_IFRAME_ORIGINS, which is the sole source of CSP frame-src; otherwise the browser blocks the iframe. Empty (feature dark) when APPLICATION_VISUALIZERS is unset. Invalid JSON, a non-object value, or invalid entries are dropped with an error log; boot never fails on malformed config.',
     owner: 'chat-team',
     envVar: 'APPLICATION_VISUALIZERS',
+    localOnly: LocalOnlyReason.SecurityPolicy,
   },
   {
     key: 'publish.publicationFilterSources',
@@ -546,6 +702,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Maximum attachment/upload file size in bytes, surfaced to the client so it can reject an oversized file before attempting to upload it. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that already bounds the POST /api/v1/files Multer limit — so the frontend pre-check and the backend enforcement can never diverge.',
     owner: 'chat-team',
     envVar: 'FILE_UPLOAD_MAX_BYTES',
+    localOnly: LocalOnlyReason.BackendEnforcedLimit,
   },
   {
     key: 'projects.contextFileMaxBytes',
@@ -558,6 +715,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Maximum size in bytes of one project context file. Sourced from PROJECT_CONTEXT_FILE_MAX_BYTES, the same variable POST /api/v1/projects enforces, so the New project form rejects an oversized file before uploading it.',
     owner: 'chat-team',
     envVar: 'PROJECT_CONTEXT_FILE_MAX_BYTES',
+    localOnly: LocalOnlyReason.BackendEnforcedLimit,
   },
   {
     key: 'projects.contextTotalMaxBytes',
@@ -570,6 +728,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       "Maximum combined size in bytes of a project's context files — the New project form's capacity. Sourced from PROJECT_CONTEXT_TOTAL_MAX_BYTES, which POST /api/v1/projects enforces.",
     owner: 'chat-team',
     envVar: 'PROJECT_CONTEXT_TOTAL_MAX_BYTES',
+    localOnly: LocalOnlyReason.BackendEnforcedLimit,
   },
   {
     key: 'projects.contextAllowedExtensions',
@@ -582,6 +741,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Lower-case file extensions, without a dot, accepted as project context files. Sourced from PROJECT_CONTEXT_ALLOWED_EXTENSIONS, which POST /api/v1/projects enforces.',
     owner: 'chat-team',
     envVar: 'PROJECT_CONTEXT_ALLOWED_EXTENSIONS',
+    localOnly: LocalOnlyReason.BackendEnforcedLimit,
   },
   {
     key: 'usageLimits.warningThresholdPercent',
@@ -594,5 +754,13 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Percentage (1–99) of a capped day/week/month token or cost limit at which the composer shows its usage banner above the input. Governs the banner only — the usage dial and the Settings → Usage page keep their fixed 75% running-low mark.',
     owner: 'chat-team',
     envVar: 'USAGE_LIMITS_WARNING_THRESHOLD_PERCENT',
+    managed: true,
+    managedContract: {
+      title: 'Usage warning threshold (%)',
+      description:
+        'Percentage of a capped token or cost limit at which the composer shows its usage banner.',
+      order: 40,
+      value: USAGE_WARNING_THRESHOLD_SCHEMA,
+    },
   },
 ];

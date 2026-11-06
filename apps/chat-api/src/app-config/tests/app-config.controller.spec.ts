@@ -18,6 +18,7 @@ import {
   CatalogCreationType,
   type CatalogCreationRolesConfig,
 } from '../../config/catalog-creation.types';
+import { ExplicitEnvironment } from '../../config/explicit-environment';
 import { AppConfigController } from '../app-config.controller';
 import { AppConfigService } from '../app-config.service';
 import { CompositeConfigProvider } from '../config-registry/composite-config.provider';
@@ -376,6 +377,7 @@ describe('AppConfigController catalogCreationPermissions (integration)', () => {
         provide: ConfigService,
         useValue: new ConfigService({ CATALOG_CREATION_ROLES: policy }),
       },
+      { provide: ExplicitEnvironment, useValue: ExplicitEnvironment.of([]) },
     ]);
     return app;
   };

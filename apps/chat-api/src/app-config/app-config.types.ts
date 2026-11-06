@@ -1,4 +1,8 @@
 import type { EnvironmentVariables } from '../config/environment.config';
+import type {
+  LocalOnlyReason,
+  ManagedKeyContract,
+} from './managed-config/managed-config.types';
 
 export interface ConfigDefinition {
   key: string;
@@ -15,6 +19,16 @@ export interface ConfigDefinition {
    *  entry. When absent or empty, the feature is unrestricted (visible to all). */
   allowedRolesEnvVar?: keyof EnvironmentVariables;
   expiresAt?: string;
+  /**
+   * Whether the key is part of the exported Config Studio contract. Defaults
+   * to `false`. Exporting is not activation: no value is read from a managed
+   * source because of this flag. Mutually exclusive with `localOnly`.
+   */
+  managed?: boolean;
+  /** Why the key can never be managed; it is then never exported. */
+  localOnly?: LocalOnlyReason;
+  /** What a managed key exports; required when `managed` is `true`. */
+  managedContract?: ManagedKeyContract;
 }
 
 export interface AppConfigEvalContext {
