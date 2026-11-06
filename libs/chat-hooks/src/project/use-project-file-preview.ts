@@ -1,8 +1,10 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { useCallback } from 'react';
 import {
+  downloadProjectFileAttachment,
   fromProjectOutputCardId,
   fromProjectPreviewKey,
+  type ProjectFileDownloadUrlResolver,
   toProjectOutputCardId,
   toProjectPreviewKey,
 } from './project-file-preview';
@@ -33,6 +35,8 @@ export interface UseProjectFilePreviewOptions {
   resolveContextAttachment: (cardId: string) => DisplayAttachment | undefined;
   /** Returns the attachment to open for an output name; omit it where outputs are not shown. */
   resolveOutputAttachment?: (name: string) => DisplayAttachment | undefined;
+  /** Resolves a stored file's locator to its download URL; when omitted, only files added in this session download. */
+  resolveDownloadUrl?: ProjectFileDownloadUrlResolver;
 }
 
 /** Selection state and stable card callbacks of the project file preview. */
@@ -47,6 +51,8 @@ export interface UseProjectFilePreviewResult {
   onContextFileClick: (cardId: string) => void;
   /** Opens an output, or closes the canvas when that output is already open. */
   onOutputClick: (name: string) => void;
+  /** Downloads a context card's file without opening it in the canvas. */
+  onContextFileDownload: (cardId: string) => void;
   /** Closes the canvas when the open context card is no longer among the page's cards. */
   closeIfRemoved: (cards: readonly { id: string }[]) => void;
 }
@@ -60,6 +66,7 @@ export const useProjectFilePreview = ({
   startRequest,
   resolveContextAttachment,
   resolveOutputAttachment,
+  resolveDownloadUrl,
 }: UseProjectFilePreviewOptions): UseProjectFilePreviewResult => {
   const selectedCardId = fromProjectPreviewKey(scope, attachmentId);
   /* An output's card id is `artifacts/{name}`, which no context file name can match. */
@@ -116,6 +123,15 @@ export const useProjectFilePreview = ({
     ],
   );
 
+  const onContextFileDownload = useCallback(
+    (cardId: string) => {
+      const attachment = resolveContextAttachment(cardId);
+      if (!attachment) return;
+      downloadProjectFileAttachment(attachment, resolveDownloadUrl);
+    },
+    [resolveContextAttachment, resolveDownloadUrl],
+  );
+
   const closeIfRemoved = useCallback(
     (cards: readonly { id: string }[]) => {
       /* Removing the file the canvas shows closes it. */
@@ -135,6 +151,7 @@ export const useProjectFilePreview = ({
     selectedOutputName,
     onContextFileClick,
     onOutputClick,
+    onContextFileDownload,
     closeIfRemoved,
   };
 };

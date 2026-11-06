@@ -224,7 +224,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-projects` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.4.0
+- `@epam/ai-dial-react-file-manager` ^0.4.1
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
@@ -232,7 +232,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-ui-kit` ^0.16.0
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.2
-- `@epam/pdf-highlighter-kit` ^0.0.19
+- `@epam/pdf-highlighter-kit` ^0.0.21
 
 `@epam/ai-dial-chat-api-client` is **not** a peer. Every entry that calls DIAL Core
 imports a runtime enum from it (`SendCompletionDtoModeEnum`,
@@ -555,6 +555,11 @@ so an output never shares a card id with a context file, and
 (it carries the `File`), a stored file or output gets `url` from the
 `ProjectFileLocatorBuilder` the host passes. The locator scheme and its mapping
 to the project file endpoints stay with the host.
+`downloadProjectFileAttachment(attachment, resolveDownloadUrl)` downloads such
+an attachment: a file added in the session from the `File` it carries, with no
+request, and a stored one from the URL the host's
+`ProjectFileDownloadUrlResolver` returns for its locator. It returns whether a
+download started.
 
 ```ts
 import {
@@ -580,8 +585,12 @@ Edit project and project view pages share, the project analogue of
 `resolveContextAttachment(cardId)`, plus `resolveOutputAttachment(name)` where
 outputs are shown. It derives `selectedCardId`, `selectedContextFileId` and
 `selectedOutputName` from the canvas, so there is no second state to keep in
-step, and returns `onContextFileClick`, `onOutputClick` and
-`closeIfRemoved(cards)`. Activating the open card closes the canvas, a card the
+step, and returns `onContextFileClick`, `onOutputClick`,
+`onContextFileDownload(cardId)` and `closeIfRemoved(cards)`.
+`onContextFileDownload` passes the card's resolved attachment to
+`downloadProjectFileAttachment` with the optional `resolveDownloadUrl` option;
+without it only files added in the session download. It never touches the
+canvas. Activating the open card closes the canvas, a card the
 host resolves to nothing is ignored, and `closeIfRemoved` closes the canvas only
 when the open context card is no longer among `cards`. Callbacks keep their
 identity while their inputs do; memoise `resolveContextAttachment` and
@@ -604,15 +613,21 @@ const resolveContextAttachment = useCallback(
   },
   [files, projectId],
 );
-const { selectedContextFileId, onContextFileClick, closeIfRemoved } =
-  useProjectFilePreview({
-    scope: projectId,
-    attachmentId,
-    openAttachment: openAttachmentCanvas,
-    closeCanvas,
-    startRequest,
-    resolveContextAttachment,
-  });
+const {
+  selectedContextFileId,
+  onContextFileClick,
+  onContextFileDownload,
+  closeIfRemoved,
+} = useProjectFilePreview({
+  scope: projectId,
+  attachmentId,
+  openAttachment: openAttachmentCanvas,
+  closeCanvas,
+  startRequest,
+  resolveContextAttachment,
+  /* Host-owned: maps a locator to the endpoint that streams the file. */
+  resolveDownloadUrl: (locator) => `/files/${encodeURIComponent(locator)}`,
+});
 ```
 
 `useProjectDraft` (root and `./project`) owns the state of the New project and

@@ -8,28 +8,36 @@ import {
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConversationScroll } from '../useConversationScroll';
 
-/* jsdom has no ResizeObserver; the stub records callbacks so a test can
- * simulate content growth with `triggerResize`. */
-const resizeCallbacks = new Set<() => void>();
-const triggerResize = () => {
+/*
+ * jsdom has no ResizeObserver; the stub records each observer's targets so a
+ * test can simulate a resize with `triggerResize` — of every observed element,
+ * or only of `target` when one is given.
+ */
+const resizeObservers = new Set<ResizeObserverMock>();
+const triggerResize = (target?: Element) => {
   act(() => {
-    resizeCallbacks.forEach((callback) => callback());
+    resizeObservers.forEach((observer) => {
+      if (target == null || observer.targets.has(target)) observer.callback();
+    });
   });
 };
 
 class ResizeObserverMock {
-  private readonly callback: () => void;
+  readonly callback: () => void;
+  readonly targets = new Set<Element>();
   constructor(callback: () => void) {
     this.callback = callback;
   }
-  observe() {
-    resizeCallbacks.add(this.callback);
+  observe(target: Element) {
+    this.targets.add(target);
+    resizeObservers.add(this);
   }
-  unobserve() {
-    // No-op in JSDOM.
+  unobserve(target: Element) {
+    this.targets.delete(target);
   }
   disconnect() {
-    resizeCallbacks.delete(this.callback);
+    this.targets.clear();
+    resizeObservers.delete(this);
   }
 }
 vi.stubGlobal('ResizeObserver', ResizeObserverMock);
@@ -375,6 +383,56 @@ describe('useConversationScroll', () => {
         />,
       );
       triggerResize();
+
+      expect(scrollToMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('viewport shrink after a history load', () => {
+    /* The message input below the list grows after the open, shrinking the scroller by 154px (#9701). */
+    const SHRUNK_CONTAINER_HEIGHT = CONTAINER_HEIGHT - 154;
+
+    const shrinkViewport = (scrollContainer: HTMLDivElement) => {
+      Object.defineProperty(scrollContainer, 'clientHeight', {
+        configurable: true,
+        value: SHRUNK_CONTAINER_HEIGHT,
+      });
+      triggerResize(scrollContainer);
+    };
+
+    it('keeps the content bottom in view when the scroller shrinks after reaching the bottom', () => {
+      const view = render(
+        <ScrollHarness
+          conversationId="conversation-a"
+          messages={makeMessages(6)}
+        />,
+      );
+      const scrollContainer = getScrollContainer(view.container);
+      fireEvent.scroll(scrollContainer);
+      scrollToMock.mockClear();
+
+      shrinkViewport(scrollContainer);
+
+      expect(scrollToMock).toHaveBeenCalledWith({
+        top: 1_200 - SHRUNK_CONTAINER_HEIGHT,
+        behavior: 'instant',
+      });
+    });
+
+    it('leaves the position alone when the scroller shrinks after the user scrolled up', () => {
+      const view = render(
+        <ScrollHarness
+          conversationId="conversation-a"
+          messages={makeMessages(6)}
+        />,
+      );
+      const scrollContainer = getScrollContainer(view.container);
+      fireEvent.scroll(scrollContainer);
+      scrollContainer.scrollTop = 200;
+      fireEvent.scroll(scrollContainer);
+      scrollToMock.mockClear();
+
+      shrinkViewport(scrollContainer);
 
       expect(scrollToMock).not.toHaveBeenCalled();
     });

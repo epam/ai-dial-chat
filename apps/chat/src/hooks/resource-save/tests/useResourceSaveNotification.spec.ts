@@ -1,4 +1,5 @@
 import {
+  getApiErrorDetails,
   ResourceSaveOutcome,
   SaveDestinationRoot,
   type ResourceSaveChoice,
@@ -6,7 +7,7 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import { SaveVersionMode } from '@epam/ai-dial-publish-panel';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   CatalogI18nKeys,
@@ -18,6 +19,10 @@ import { NotifiableEntity } from '../../../types/entity-notification';
 import { useResourceSaveNotification } from '../useResourceSaveNotification';
 
 vi.mock('../../../context/NotificationContext');
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>()),
+  getApiErrorDetails: vi.fn(),
+}));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -112,16 +117,65 @@ describe('useResourceSaveNotification', () => {
     );
   });
 
-  it('reports a failed publish after a successful save as an error', () => {
+  it('reports a failed publish after a successful save as an error', async () => {
+    vi.mocked(getApiErrorDetails).mockResolvedValue({});
     renderNotify()(
       makeResult({ outcome: ResourceSaveOutcome.SavedButPublishFailed }),
       choice,
     );
-    expect(showNotification).toHaveBeenCalledWith(
-      expect.objectContaining({
-        variant: NotificationVariant.Error,
-        message: `${ResourceSavePanelI18nKeys.SavedButPublishFailed}|${JSON.stringify({ name: 'Agent' })}`,
-      }),
+    await waitFor(() =>
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: NotificationVariant.Error,
+          message: `${ResourceSavePanelI18nKeys.SavedButPublishFailed}|${JSON.stringify({ name: 'Agent' })}`,
+        }),
+      ),
+    );
+  });
+
+  it('says the version is already published in the folder when the publish conflicts', async () => {
+    vi.mocked(getApiErrorDetails).mockResolvedValue({
+      status: 409,
+      traceId: 'trace-1',
+    });
+    renderNotify()(
+      makeResult({ outcome: ResourceSaveOutcome.SavedButPublishFailed }),
+      {
+        ...choice,
+        destination: {
+          rootKey: SaveDestinationRoot.Organization,
+          path: ['EPAM'],
+        },
+      },
+    );
+    await waitFor(() =>
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: NotificationVariant.Error,
+          message: expect.stringContaining(
+            ResourceSavePanelI18nKeys.SavedButAlreadyPublished,
+          ),
+          requestId: 'trace-1',
+        }),
+      ),
+    );
+  });
+
+  it('includes the server reason for any other publish failure', async () => {
+    vi.mocked(getApiErrorDetails).mockResolvedValue({
+      status: 400,
+      message: 'Rules are invalid',
+    });
+    renderNotify()(
+      makeResult({ outcome: ResourceSaveOutcome.SavedButPublishFailed }),
+      choice,
+    );
+    await waitFor(() =>
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: `${ResourceSavePanelI18nKeys.SavedButPublishFailedReason}|${JSON.stringify({ name: 'Agent', reason: 'Rules are invalid' })}`,
+        }),
+      ),
     );
   });
 });

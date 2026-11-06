@@ -45,7 +45,7 @@ Peers:
 - `react` ^19.2.8
 - `react-dom` ^19.2.8 (`NotificationStack` portals into `document.body`)
 - `@epam/ai-dial-ui-kit` ^0.16.0
-- `@epam/ai-dial-react-file-manager` ^0.4.0
+- `@epam/ai-dial-react-file-manager` ^0.4.1
 
 Installed for you as dependencies: `ag-grid-community`, `@tabler/icons-react`, `react-markdown`,
 `react-syntax-highlighter`, `remark-breaks`, `remark-gfm`, `remark-math`, `rehype-katex`,
@@ -1212,6 +1212,27 @@ const { ref, isClipped } = useIsTextClipped<HTMLSpanElement>(
 </span>;
 ```
 
+### useIsVerticallyClamped
+
+`useIsVerticallyClamped(content)` reports whether a `line-clamp-*` (or any
+`overflow: hidden`) element, or one of its direct children such as the kit
+`Highlight` span, hides part of its text vertically, so a caller can show the
+full text in a tooltip only when something is cut off. It re-measures when the
+element resizes and when `content` changes.
+
+```tsx
+import { useIsVerticallyClamped } from '@epam/ai-dial-chat-shared';
+import { Tooltip } from '@epam/ai-dial-ui-kit';
+
+const { ref, isClamped } = useIsVerticallyClamped<HTMLSpanElement>(name);
+
+<Tooltip asChild tooltip={name} hideTooltip={!isClamped}>
+  <span ref={ref} className="line-clamp-2">
+    {name}
+  </span>
+</Tooltip>;
+```
+
 ### useUnsavedChangesGuard
 
 `useUnsavedChangesGuard(isDirty)` defers a "leave the form" action until the user confirms discarding. `guard(action)` runs `action` at once when `isDirty` is `false`; otherwise it stores the action and sets `isConfirmOpen`. `confirm()` closes the confirmation and runs the stored action, `dismiss()` closes it and drops the action. While `isDirty` is `true` the hook also registers a `beforeunload` listener so the browser warns before the page unloads. The hook renders nothing — pair it with a confirmation such as `ConfirmationDialog`, and compute `isDirty` yourself.
@@ -1525,7 +1546,7 @@ import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
 
 ### DialFileManagerShellStyles
 
-Color overrides for the shell, passed as `styles`. `colors.surface` sets the background of the shell's surface and of the grid area (`--dfms-surface`, default `--bg-layer-base`). A host can instead set `--dfms-surface` on any ancestor, which is how a responsive value is applied. In the attach variant, `colors.treeBackground` and `colors.treeBorder` color the folder tree and its divider (`--dfms-tree-bg` / `--dfms-tree-border`, default `--bg-layer-raised` / `--stroke-tertiary`), and `colors.overlayBackdrop` colors the scrim behind the operation spinner (`--dfms-overlay-backdrop`, default `--bg-backdrop`). `operationLoader` (`OperationLoaderModalColors`) is forwarded to the copy/move `OperationLoaderModal`, and `operationLoaderTextClassName` sets its progress-line type (default `'dial-small-text'`).
+Color overrides for the shell, passed as `styles`. `colors.surface` sets the background of the shell's surface and of the grid area (`--dfms-surface`, default `--bg-layer-base`). A host can instead set `--dfms-surface` on any ancestor, which is how a responsive value is applied. In the attach variant, `colors.treeBackground`, `colors.treeBorder` and `colors.treeShadow` color the folder tree, its divider and the shadow on its end edge (`--dfms-tree-bg` / `--dfms-tree-border` / `--dfms-tree-shadow`, default `--bg-layer-raised` / `--stroke-tertiary` / 10% blue), and `colors.overlayBackdrop` colors the scrim behind the operation spinner (`--dfms-overlay-backdrop`, default `--bg-backdrop`). `operationLoader` (`OperationLoaderModalColors`) is forwarded to the copy/move `OperationLoaderModal`, and `operationLoaderTextClassName` sets its progress-line type (default `'dial-small-text'`).
 
 ```ts
 import type { DialFileManagerShellStyles } from '@epam/ai-dial-chat-shared';
@@ -1589,7 +1610,7 @@ import type { FileManagerAttachModalLabels } from '@epam/ai-dial-chat-shared';
 // … plus every DialFileManagerShellLabels field
 ```
 
-`colors` (`FileManagerAttachModalColors`) sets the dialog background — also used as the file-manager surface inside it — and the title color shown with a header description (`background` / `title`, default `--bg-layer-raised` / `--text-primary`). `titleClassName` and `descriptionClassName` set the type of that title and description (default `'dial-h1-text'` / `'dial-small-text'`).
+`colors` (`FileManagerAttachModalColors`) sets the dialog background — also used as the file-manager surface inside it —, the title color shown with a header description and the dialog's drop-shadow color (`background` / `title` / `shadow`, default `--bg-layer-raised` / `--text-primary` / 16% black). The header and footer are separated from the body by a divider. `titleClassName` and `descriptionClassName` set the type of that title and description (default `'dial-h1-text'` / `'dial-small-text'`).
 
 ### FileManagerSelectableNode
 

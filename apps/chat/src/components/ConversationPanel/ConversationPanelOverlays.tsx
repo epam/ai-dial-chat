@@ -19,7 +19,6 @@ import { lazy, Suspense, type FC, type RefObject } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { CONFIRMATION_BOLD_COMPONENTS } from '../../constants/confirmation-copy';
 import {
-  BasicI18nKeys,
   ButtonsI18nKeys,
   ConversationImportI18nKeys,
   ConversationPanelI18nKeys,
@@ -32,12 +31,10 @@ import { usePinnedProjectsPanel } from '../../hooks/projects/usePinnedProjectsPa
 import { useDeleteConfirmationLabels } from '../../hooks/useDeleteConfirmationLabels';
 import { getPublishFolderLabel } from '../../utils/publish';
 import PinnedProjectActionOverlays from '../PinnedProjectActionOverlays/PinnedProjectActionOverlays';
+import { loadPublishConversationPanel } from '../PublishConversationPanelContainer/load-publish-conversation-panel';
 import ShareConversationPopoverContainer from '../ShareConversationPopoverContainer/ShareConversationPopoverContainer';
 
-const PublishConversationPanelContainer = lazy(
-  () =>
-    import('../PublishConversationPanelContainer/PublishConversationPanelContainer'),
-);
+const PublishConversationPanelContainer = lazy(loadPublishConversationPanel);
 
 interface ConversationPanelOverlaysProps {
   transfer: ReturnType<typeof useConversationTransfer>;
@@ -319,19 +316,10 @@ const ConversationPanelOverlays: FC<ConversationPanelOverlaysProps> = ({
 
       {isConversationsPublishingEnabled &&
         pendingPublishConversation !== null && (
-          <Suspense
-            fallback={
-              <Popup
-                open
-                header={t(ButtonsI18nKeys.Publish)}
-                onClose={handleClosePublishPanel}
-              >
-                {/* Not a live region: the dialog mounts with this text, so
-                    opening it already reads it; mark the content busy. */}
-                <p aria-busy="true">{t(BasicI18nKeys.Loading)}</p>
-              </Popup>
-            }
-          >
+          /* No fallback: a stand-in dialog flashed before the side panel on
+           * the first publish after a page load (#9742, TC-41). The row menu
+           * preloads the chunk, so the panel is usually ready by the click. */
+          <Suspense fallback={null}>
             <PublishConversationPanelContainer
               isOpen
               conversationPath={pendingPublishConversation.path}

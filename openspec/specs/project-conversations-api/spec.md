@@ -284,10 +284,12 @@ Status codes:
 | `GET /api/v1/projects/:id/conversations/:conversationName` | `getProjectConversation` | – | `200` `ConversationResponseDto` |
 | `PUT /api/v1/projects/:id/conversations/:conversationName` | `saveProjectConversation` | `SaveConversationBodyDto` | `200` `ConversationResponseDto` |
 | `PATCH /api/v1/projects/:id/conversations/:conversationName` | `renameProjectConversation` | `RenameConversationBodyDto` (`newTitle`) | `200` `RenameConversationResponseDto` |
+| `POST /api/v1/projects/:id/conversations/:conversationName/generate-title` | `generateProjectConversationTitle` | none | `200` `GenerateTitleResponseDto` (`name`; not persisted) |
 | `DELETE /api/v1/projects/:id/conversations/:conversationName` | `deleteProjectConversation` | – | `204` |
 
 - **Create** builds the name as `ConversationLifecycleService` does for a top-level conversation, in the project's `conversations/`. It writes with `If-Match: *`, because the trailing UUID makes a collision negligible, and returns the stored body.
 - **Save** uses `updateConversationUnlessPending`, so a client save never overwrites a pending background message. This is the semantics of `PUT /api/v1/conversations`.
+- **Generate title** awaits `assertCanWrite`, then suggests a title with the same utility model and naming prompt as `POST /api/v1/conversations/generate-title`, which itself rejects project locators. It saves nothing.
 - **Rename** rewrites the body's `name` (with `llmNamingDone: true`) at the same file name, as a top-level rename does: Core cannot move a file inside a complex resource.
 - **Delete** calls `deleteProjectFile` with `If-Match: *`. A missing file is `404`.
 
@@ -323,7 +325,7 @@ Status codes:
 | `413` | `project-storage-full`. |
 | `429` / `502` / `503` | Upstream, including a failed permission lookup on a write. |
 
-**Generated-client impact:** `ProjectsApi.createProjectConversation`, `getProjectConversation`, `saveProjectConversation`, `renameProjectConversation` and `deleteProjectConversation`, all normal methods. None changes shape.
+**Generated-client impact:** `ProjectsApi.createProjectConversation`, `getProjectConversation`, `saveProjectConversation`, `renameProjectConversation`, `generateProjectConversationTitle` and `deleteProjectConversation`, all normal methods. None changes shape.
 
 #### Scenario: Create from the first message
 

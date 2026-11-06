@@ -132,6 +132,16 @@ describe('PublishFoldersTree', () => {
     ).toEqual(['Shared/Data Science']);
   });
 
+  it('passes the trimmed query to the tree for highlighting while filtering', () => {
+    renderTree({ searchQuery: '  data  ' });
+    expect(capturedProps.current?.searchQuery).toBe('data');
+  });
+
+  it('passes no highlight query without a search', () => {
+    renderTree({ searchQuery: '   ' });
+    expect(capturedProps.current?.searchQuery).toBeUndefined();
+  });
+
   it('passes a no-results empty state title when search matches nothing, and omits the root node', () => {
     renderTree({ searchQuery: 'zzz_nonexistent_zzz' });
     expect(capturedProps.current?.emptyStateTitle).toBe(
@@ -662,6 +672,54 @@ describe('PublishFoldersTree', () => {
       expect(
         capturedProps.current?.onRenameValidate?.('EPAM', {} as never),
       ).toBeNull();
+    });
+
+    it('rejects a nested duplicate whose sibling loads after the editor opened', async () => {
+      const onCreateDestinationFolder = vi.fn();
+      const unloaded: FolderDestinationRoot[] = [
+        {
+          key: 'personal',
+          label: 'Personal',
+          items: [{ path: ['Design'], name: 'Design' }],
+        },
+      ];
+      const { rerender } = renderMultiRoot({
+        roots: unloaded,
+        destination: { rootKey: 'personal', path: ['Design'] },
+        onCreateDestinationFolder,
+      });
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Create new folder' }),
+      );
+      // The editor keeps the callbacks it opened with.
+      const { onRenameValidate, onCreateFolderSave } = capturedProps.current!;
+
+      rerender(
+        <PublishFoldersTree
+          searchQuery=""
+          roots={[
+            {
+              ...unloaded[0],
+              items: [
+                {
+                  path: ['Design'],
+                  name: 'Design',
+                  children: [{ path: ['Design', 'Audit'], name: 'Audit' }],
+                },
+              ],
+            },
+          ]}
+          destination={{ rootKey: 'personal', path: ['Design'] }}
+          onDestinationChange={vi.fn()}
+          onCreateDestinationFolder={onCreateDestinationFolder}
+        />,
+      );
+
+      expect(onRenameValidate?.('audit', {} as never)).toBe(
+        'A folder with this name already exists.',
+      );
+      act(() => onCreateFolderSave?.('Audit'));
+      expect(onCreateDestinationFolder).not.toHaveBeenCalled();
     });
 
     it('omits "Add sibling" on a root node', () => {

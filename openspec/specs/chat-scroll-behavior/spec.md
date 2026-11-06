@@ -87,6 +87,10 @@ The streamed-markdown renderer MAY reveal appended plain text gradually while `i
 - **WHEN** an existing conversation is opened and its content grows after the scroll to the bottom has started (markdown or code rendering, a long message expanding), before the user scrolls up
 - **THEN** the view ends within the near-bottom threshold of the new content bottom, so the last reply is fully visible and the scroll-to-bottom button is not shown
 
+#### Scenario: Message list shrinks after a conversation is opened from history
+- **WHEN** an existing conversation is opened and, after the scroll to the bottom, the message list's own viewport gets shorter because the message input below it grows, before the user scrolls up
+- **THEN** the view still ends within the near-bottom threshold of the content bottom, so the last reply and its action bar are not left hidden below the shortened viewport
+
 ---
 
 ### Requirement: Streaming Never Forces the Scroll Position
@@ -95,7 +99,7 @@ While an assistant response is streaming, the conversation view SHALL NOT move t
 
 This is a literal implementation of "does not auto-scroll line-by-line": there is no conditional or pinned auto-follow — a prior implementation that auto-followed only while the user was "already at the bottom" was found (via live testing) to resume within the first couple of streamed tokens every time, since the still-short response initially measures as near-bottom by the visibility threshold. Removing conditional auto-follow from the anchored turn was simpler and matches the literal requirement.
 
-One bottom-follow remains, for content growth outside an anchored turn: the hook records the last-known at-bottom state in `wasAtBottomRef` (updated by `updateScrollButtonVisibility`), and its content `ResizeObserver` calls `scrollToBottom(true)` when the viewport was at the bottom and no anchor spacer is active (`isSpacerActiveRef`). This keeps late-rendering content such as an inline MCP app preview or a slow image in view; it never runs while an anchor spacer reserves scroll room. Scroll events fired mid-way through the smooth scroll that follows a history load or a message-count change report "not at the bottom", so that scroll also sets `isFollowingBottomRef`, which makes the observer follow as well; the flag clears when the user scrolls up, a response starts streaming, a turn is anchored, or the conversation changes. The scroll-to-bottom button does not set it.
+One bottom-follow remains, for content growth outside an anchored turn: the hook records the last-known at-bottom state in `wasAtBottomRef` (updated by `updateScrollButtonVisibility`), and its `ResizeObserver`, which watches both the content and the scroll container (the container shrinks when the message input below it grows), calls `scrollToBottom(true)` when the viewport was at the bottom and no anchor spacer is active (`isSpacerActiveRef`). This keeps late-rendering content such as an inline MCP app preview or a slow image in view; it never runs while an anchor spacer reserves scroll room. Scroll events fired mid-way through the smooth scroll that follows a history load or a message-count change report "not at the bottom", so that scroll also sets `isFollowingBottomRef`, which makes the observer follow as well; the flag clears when the user scrolls up, a response starts streaming, a turn is anchored, or the conversation changes. The scroll-to-bottom button does not set it.
 
 #### Scenario: Response streams while anchored near the top
 - **WHEN** the assistant response is streaming after the view anchored the sent/regenerated/edited message near the top

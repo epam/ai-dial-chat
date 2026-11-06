@@ -690,6 +690,22 @@ describe('project hooks', () => {
         undefined,
       );
     });
+
+    it('reports a failed unpin as its own error', async () => {
+      const host = { ...handlers(), isPinned: true };
+      host.setPinned.mockRejectedValue(new Error('down'));
+      const { result } = renderHook(() =>
+        useProjectActions(client, details, host),
+      );
+
+      await act(() => result.current.togglePin());
+
+      expect(host.setPinned).toHaveBeenCalledWith(PROJECT_ID, false);
+      expect(host.onError).toHaveBeenCalledWith(
+        ProjectActionError.Unpin,
+        undefined,
+      );
+    });
   });
 });
 

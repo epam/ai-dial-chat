@@ -353,17 +353,19 @@ export const useConversationScroll = <T>({
   }, [handleScroll]);
 
   /*
-   * Streaming grows content without firing a native scroll event. Observe
-   * content size so the button reflects newly hidden content below the fold.
+   * Streaming grows content and a growing sibling (the message input) shrinks
+   * the scroller, both without firing a native scroll event. Observe both so
+   * the bottom stays followed and the button reflects content below the fold.
    */
   useEffect(() => {
+    const container = containerRef.current;
     const content = contentRef.current;
     if (!content) return;
     const observer = new ResizeObserver(() => {
       /*
-       * Follows a still-at-bottom viewport down when content grows outside
-       * an active turn (e.g. an MCP app preview finishing its async
-       * load/resize) — see `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D25. Skipped while the spacer owns
+       * Follows a still-at-bottom viewport down when content grows, or the
+       * viewport shrinks, outside an active turn (e.g. an MCP app preview
+       * finishing its async load/resize) — see `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D25. Skipped while the spacer owns
        * scroll position (an in-progress turn is anchored to its own top,
        * not to the bottom).
        */
@@ -378,6 +380,7 @@ export const useConversationScroll = <T>({
       updateScrollButtonVisibility();
     });
     observer.observe(content);
+    if (container) observer.observe(container);
     return () => observer.disconnect();
   }, [
     clampScrollToVisibleContent,

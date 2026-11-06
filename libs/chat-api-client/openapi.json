@@ -11632,6 +11632,78 @@
         "tags": ["projects"]
       }
     },
+    "/api/v1/projects/{id}/conversations/{conversationName}/generate-title": {
+      "post": {
+        "description": "Generates a title with the operator-configured utility model from the most recent messages. The suggestion is returned but NOT persisted; the caller confirms the rename separately.",
+        "operationId": "generateProjectConversationTitle",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          },
+          {
+            "name": "conversationName",
+            "required": true,
+            "in": "path",
+            "description": "File name of the conversation under the project `conversations/` folder, URL-encoded.",
+            "schema": {
+              "example": "gpt-4o__Weekly%20support%20health%20summary__7c1d",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Generated title suggestion",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateTitleResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid id or conversation name, or no content to title"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, the caller may not write to the project (`canEdit: false`: a view-only share or an organization project), or DIAL Core denied access"
+          },
+          "404": {
+            "description": "The project or the conversation does not exist"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "LLM title generation failed"
+          },
+          "503": {
+            "description": "LLM title generation unavailable or timed out"
+          }
+        },
+        "summary": "Generate an LLM-based title suggestion for a project conversation",
+        "tags": ["projects"]
+      }
+    },
     "/api/v1/projects/{id}/conversations/{conversationName}/viewed": {
       "patch": {
         "description": "Records the conversation's current version as seen by the caller, in the caller's own read state, so it is not reported unread until it changes. Any reader of the project may call it.",

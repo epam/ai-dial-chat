@@ -307,24 +307,42 @@ describe('ProjectCreateForm', () => {
 
       const input = screen.getByRole('textbox', { name: /Name/ });
       expect(input.hasAttribute('readonly')).toBe(false);
+      expect(input.hasAttribute('disabled')).toBe(false);
       expect(
-        screen.queryByText('Only the project owner can rename it.'),
+        screen.queryByText("The project name can't be changed after creation"),
       ).toBeNull();
     });
   });
 
   describe('read-only name', () => {
-    it('shows the stored name read-only with the default hint linked to it', () => {
+    it('disables the stored name with the default hint linked to it', () => {
       renderForm({
         values: { ...EMPTY_VALUES, name: 'research' },
         isNameReadOnly: true,
       });
 
       const input = screen.getByRole('textbox', { name: /Name/ });
-      const hint = screen.getByText('Only the project owner can rename it.');
+      const hint = screen.getByText(
+        "The project name can't be changed after creation",
+      );
       expect((input as HTMLInputElement).value).toBe('research');
       expect(input.hasAttribute('readonly')).toBe(true);
+      expect(input.hasAttribute('disabled')).toBe(true);
       expect(input.getAttribute('aria-describedby')).toBe(hint.id);
+    });
+
+    it('shows the name lock explanation in a tooltip on hover', async () => {
+      renderForm({
+        values: { ...EMPTY_VALUES, name: 'research' },
+        isNameReadOnly: true,
+        labels: { ...LABELS, nameReadOnlyHint: 'This name is permanent' },
+      });
+
+      await userEvent.hover(screen.getByRole('textbox', { name: /Name/ }));
+
+      expect((await screen.findByRole('tooltip')).textContent).toBe(
+        'This name is permanent',
+      );
     });
 
     it('uses the host hint and links it next to a name error', () => {
@@ -351,6 +369,9 @@ describe('ProjectCreateForm', () => {
       });
 
       await userEvent.type(screen.getByRole('textbox', { name: /Name/ }), 'a');
+      fireEvent.change(screen.getByRole('textbox', { name: /Name/ }), {
+        target: { value: 'renamed' },
+      });
 
       expect(props.onFieldChange).not.toHaveBeenCalledWith(
         'name',
@@ -535,6 +556,44 @@ describe('ProjectCreateForm', () => {
       expect(
         screen.getByRole('button', { name: 'Preview tickets.csv' }),
       ).toBeTruthy();
+    });
+
+    it('reports the card id through onContextFileDownload without previewing it', async () => {
+      const files = stageFiles([makeFile('tickets.csv', 10)]);
+      const onContextFileClick = vi.fn();
+      const onContextFileDownload = vi.fn();
+      renderForm({
+        contextFiles: files,
+        onContextFileClick,
+        onContextFileDownload,
+        labels: { ...LABELS, downloadFileLabel: (name) => `Save ${name}` },
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Save tickets.csv' }),
+      );
+
+      expect(onContextFileDownload).toHaveBeenCalledOnce();
+      expect(onContextFileDownload).toHaveBeenCalledWith(files[0].id);
+      expect(onContextFileClick).not.toHaveBeenCalled();
+    });
+
+    it('names a card download button "Download" when the host supplies no downloadFileLabel', () => {
+      const files = stageFiles([makeFile('tickets.csv', 10)]);
+      renderForm({ contextFiles: files, onContextFileDownload: vi.fn() });
+
+      expect(
+        screen.getByRole('button', { name: 'Download tickets.csv' }),
+      ).toBeTruthy();
+    });
+
+    it('shows no card download button when onContextFileDownload is omitted', () => {
+      const files = stageFiles([makeFile('tickets.csv', 10)]);
+      renderForm({ contextFiles: files, onContextFileClick: vi.fn() });
+
+      expect(
+        screen.queryByRole('button', { name: 'Download tickets.csv' }),
+      ).toBeNull();
     });
 
     it('keeps the cards unclickable when onContextFileClick is omitted', () => {

@@ -60,7 +60,10 @@ const MarkdownEditor = lazy(async () => {
 });
 
 const DEFAULT_OPEN_FILE_LABEL = (name: string): string => `Preview ${name}`;
-const DEFAULT_NAME_READ_ONLY_HINT = 'Only the project owner can rename it.';
+const DEFAULT_DOWNLOAD_FILE_LABEL = (name: string): string =>
+  `Download ${name}`;
+const DEFAULT_NAME_READ_ONLY_HINT =
+  "The project name can't be changed after creation";
 
 /** Presentational New and Edit project form: name, instructions and context files, including stored ones when editing. */
 export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
@@ -70,6 +73,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   contextFiles,
   onContextFilesChange,
   onContextFileClick,
+  onContextFileDownload,
   selectedContextFileId,
   allowedExtensions,
   maxFileBytes,
@@ -107,6 +111,8 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   const isRefining = instructionsRefinement.isPending;
 
   const nameCheck = validateProjectName(values.name);
+  const nameReadOnlyHint =
+    labels.nameReadOnlyHint ?? DEFAULT_NAME_READ_ONLY_HINT;
   const nameError =
     errors.name ??
     (isNameTouched && nameCheck != null
@@ -122,10 +128,10 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
       .filter(Boolean)
       .join(' ') || undefined;
 
-  /* A host error on Name (a taken name) sends focus back to the field. */
+  /* A host error on Name sends focus back only when the field is editable. */
   useEffect(() => {
-    if (errors.name) nameInputRef.current?.focus();
-  }, [errors.name]);
+    if (errors.name && !isNameReadOnly) nameInputRef.current?.focus();
+  }, [errors.name, isNameReadOnly]);
 
   const accept = useMemo(
     () => allowedExtensions.map((extension) => `.${extension}`).join(','),
@@ -159,6 +165,8 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
     useFileDropSurface(addFiles);
 
   const openFileLabel = labels.openFileLabel ?? DEFAULT_OPEN_FILE_LABEL;
+  const downloadFileLabel =
+    labels.downloadFileLabel ?? DEFAULT_DOWNLOAD_FILE_LABEL;
 
   const handleRemoveFile = (id: string) => {
     const removed = contextFiles.find((file) => file.id === id);
@@ -284,8 +292,9 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
               labelProps={{ label: labels.nameLabel, required: true }}
               required
               aria-required
-              /* `readOnly`, not `disabled`: the value stays focusable and is announced as read-only. */
               readOnly={isNameReadOnly}
+              disabled={isNameReadOnly}
+              tooltipText={isNameReadOnly ? nameReadOnlyHint : undefined}
               invalid={Boolean(nameError)}
               aria-invalid={Boolean(nameError)}
               aria-describedby={nameDescribedBy}
@@ -294,7 +303,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
               <CaptionText
                 id={nameHintId}
                 className={helperClassName}
-                text={labels.nameReadOnlyHint ?? DEFAULT_NAME_READ_ONLY_HINT}
+                text={nameReadOnlyHint}
               />
             )}
             {/* Mounted before a host error (a taken name) arrives, so it is announced; out of the column gap while empty. Inline validation stays outside it, under its own id. */}
@@ -402,9 +411,11 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
                           : file.id === selectedContextFileId
                       }
                       onRemove={handleRemoveFile}
+                      onDownload={onContextFileDownload}
                       labels={{
                         removeLabel: labels.removeFileLabel(file.name),
                         clickLabel: openFileLabel(file.name),
+                        downloadLabel: downloadFileLabel(file.name),
                       }}
                     />
                   </li>

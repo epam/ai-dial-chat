@@ -258,6 +258,27 @@ describe('ProjectsPage', () => {
     );
   });
 
+  it('reports an unpin that could not be saved', async () => {
+    userConfig.pinnedProjectIds = ['projects/public/handbook'];
+    userConfig.setPinnedProject.mockRejectedValue(new Error('offline'));
+    vi.mocked(listProjects).mockResolvedValue(listing);
+    useFeatureFlagMock.mockReturnValue(true);
+    renderPage();
+
+    const card = await screen.findByRole('article', { name: 'Handbook' });
+    await userEvent.click(
+      within(card).getByRole('button', { name: ButtonsI18nKeys.Pin }),
+    );
+
+    await vi.waitFor(() =>
+      expect(notifications.showErrorNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: ProjectsI18nKeys.ActionsUnpinError,
+        }),
+      ),
+    );
+  });
+
   it('opens a project from its card', async () => {
     vi.mocked(listProjects).mockResolvedValue(listing);
     useFeatureFlagMock.mockReturnValue(true);

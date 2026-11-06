@@ -4,6 +4,7 @@ import {
   MarkdownRenderer,
   MarkdownRendererClassNames,
   mergeClasses,
+  useIsVerticallyClamped,
 } from '@epam/ai-dial-chat-shared';
 import {
   CardShell,
@@ -24,7 +25,6 @@ import {
   useState,
 } from 'react';
 import { CATALOG_CLASS } from '../../constants/public-class-names';
-import { useIsVerticallyClamped } from '../../hooks/useIsVerticallyClamped/useIsVerticallyClamped';
 import type { CardProps } from '../../models/card-props';
 import { DeploymentSize } from '../../types/deployment-icon-size';
 import { getCatalogItemDisplayType } from '../../utils/catalog-tabs';

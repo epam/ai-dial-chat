@@ -702,6 +702,9 @@ describe('ProjectViewPage', () => {
       vi.mocked(watchProjects).mockResolvedValue(watch.stream);
       const view = renderAt();
       await screen.findByRole('heading', { level: 1, name: 'q4' });
+      /* The chats' silent refresh skips while their first load is pending,
+       * so an event sent before it settles would be dropped. */
+      await screen.findByText('c1');
       await waitFor(() =>
         expect(watchProjects).toHaveBeenCalledWith(
           [PROJECT_ID],

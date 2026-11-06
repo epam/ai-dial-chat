@@ -9,7 +9,7 @@ import {
   type Attachment,
 } from '@epam/ai-dial-chat-shared';
 import type { ProjectContextFile } from '@epam/ai-dial-projects';
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -69,6 +69,7 @@ interface FakeFormProps {
   contextFiles: ProjectContextFile[];
   onContextFilesChange: (files: ProjectContextFile[]) => void;
   onContextFileClick?: (id: string) => void;
+  onContextFileDownload?: (id: string) => void;
   selectedContextFileId?: string;
   onCancel: () => void;
   onSubmit: () => void;
@@ -89,9 +90,20 @@ vi.mock('@epam/ai-dial-projects', async (importOriginal) => ({
           aria-label="name"
           value={props.values.name}
           readOnly={props.isNameReadOnly}
-          onChange={(event) => props.onFieldChange('name', event.target.value)}
+          disabled={props.isNameReadOnly}
+          onChange={(event) => {
+            if (!props.isNameReadOnly)
+              props.onFieldChange('name', event.target.value);
+          }}
         />
         {props.isNameReadOnly && <p>{props.labels.nameReadOnlyHint}</p>}
+        <textarea
+          aria-label="instructions"
+          value={props.values.instructions}
+          onChange={(event) =>
+            props.onFieldChange('instructions', event.target.value)
+          }
+        />
         <ul>
           {props.contextFiles.map((file) => (
             <li key={file.id}>
@@ -102,6 +114,12 @@ vi.mock('@epam/ai-dial-projects', async (importOriginal) => ({
                 onClick={() => props.onContextFileClick?.(file.id)}
               >
                 {`Preview ${file.name}`}
+              </button>
+              <button
+                type="button"
+                onClick={() => props.onContextFileDownload?.(file.id)}
+              >
+                {`Download ${file.name}`}
               </button>
               <button
                 type="button"
@@ -199,8 +217,8 @@ const renderAt = (path = '/projects/edit/my-bucket/q4') =>
     [path],
   );
 
-const typeName = (value: string) =>
-  fireEvent.change(screen.getByRole('textbox', { name: 'name' }), {
+const typeInstructions = (value: string) =>
+  fireEvent.change(screen.getByRole('textbox', { name: 'instructions' }), {
     target: { value },
   });
 
@@ -316,6 +334,56 @@ describe('ProjectEditPage', () => {
         .calls[0] as unknown as [{ file: File; url?: string }];
       expect(opened.file.name).toBe('retro.pdf');
       expect(opened.url).toBeUndefined();
+    });
+
+    it('downloads a stored file from the project file endpoint without opening the canvas', async () => {
+      const clicked: HTMLAnchorElement[] = [];
+      const click = vi
+        .spyOn(HTMLAnchorElement.prototype, 'click')
+        .mockImplementation(function (this: HTMLAnchorElement) {
+          clicked.push(this);
+        });
+      await openEditor();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Download tickets.csv' }),
+      );
+
+      expect(clicked).toHaveLength(1);
+      expect(clicked[0].getAttribute('href')).toBe(
+        `/api/v1/projects/${encodeURIComponent(PROJECT_ID)}/files/tickets.csv`,
+      );
+      expect(clicked[0].download).toBe('tickets.csv');
+      expect(getCanvas().textContent).toBe('closed');
+      click.mockRestore();
+    });
+
+    it('downloads a file added in the session from its local File without a request', async () => {
+      const createObjectURL = vi.fn(() => 'blob:retro');
+      Object.defineProperty(URL, 'createObjectURL', {
+        configurable: true,
+        value: createObjectURL,
+      });
+      Object.defineProperty(URL, 'revokeObjectURL', {
+        configurable: true,
+        value: vi.fn(),
+      });
+      const click = vi
+        .spyOn(HTMLAnchorElement.prototype, 'click')
+        .mockImplementation(() => undefined);
+      await openEditor();
+      await userEvent.click(screen.getByRole('button', { name: 'add file' }));
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Download retro.pdf' }),
+      );
+
+      expect(createObjectURL).toHaveBeenCalledOnce();
+      expect((createObjectURL.mock.calls[0] as unknown as [File])[0].name).toBe(
+        'retro.pdf',
+      );
+      expect(click).toHaveBeenCalledOnce();
+      click.mockRestore();
     });
 
     it('marks only the open file selected', async () => {
@@ -453,7 +521,10 @@ describe('ProjectEditPage', () => {
     expect(
       screen.getByText(ProjectsI18nKeys.EditNameReadOnlyHint),
     ).toBeTruthy();
-    await userEvent.click(screen.getByRole('button', { name: 'add file' }));
+    expect(
+      screen.getByRole('textbox', { name: 'name' }).hasAttribute('disabled'),
+    ).toBe(true);
+    typeInstructions('Updated instructions');
     await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     await waitFor(() =>
@@ -462,19 +533,44 @@ describe('ProjectEditPage', () => {
       ),
     );
     const [, fields] = vi.mocked(updateProject).mock.calls[0];
-    expect(fields).toMatchObject({ name: 'q4' });
+    expect(fields).toMatchObject({
+      name: 'q4',
+      instructions: 'Updated instructions',
+    });
   });
 
-  it('keeps the name editable for the owner', async () => {
+  it('locks the name for the owner without blocking instructions edits', async () => {
     renderAt();
     await screen.findByRole('heading', { name: ProjectsI18nKeys.EditTitle });
 
+    const nameInput = screen.getByRole('textbox', { name: 'name' });
+    expect(nameInput.hasAttribute('disabled')).toBe(true);
+    await userEvent.type(nameInput, 'renamed');
+    expect(formProps.current?.values.name).toBe('q4');
     expect(
-      screen.getByRole('textbox', { name: 'name' }).hasAttribute('readonly'),
-    ).toBe(false);
-    expect(
-      screen.queryByText(ProjectsI18nKeys.EditNameReadOnlyHint),
-    ).toBeNull();
+      screen.getByText(ProjectsI18nKeys.EditNameReadOnlyHint),
+    ).toBeTruthy();
+    typeInstructions('Updated instructions');
+    expect(formProps.current?.values.instructions).toBe('Updated instructions');
+  });
+
+  it('saves the loaded name even if the draft name is changed externally', async () => {
+    vi.mocked(updateProject).mockResolvedValue({
+      id: 'projects/my-bucket/q4',
+      name: 'q4',
+      bucket: 'my-bucket',
+      path: 'q4',
+      etag: '"e2"',
+      isPinned: false,
+    });
+    renderAt();
+    await screen.findByRole('heading', { name: ProjectsI18nKeys.EditTitle });
+
+    act(() => formProps.current?.onFieldChange('name', 'renamed'));
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await waitFor(() => expect(updateProject).toHaveBeenCalledOnce());
+    expect(vi.mocked(updateProject).mock.calls[0][1].name).toBe('q4');
   });
 
   it('sends the contentVersion, not the ETag a chat write changed', async () => {
@@ -492,8 +588,7 @@ describe('ProjectEditPage', () => {
     const { router } = renderAt();
     await screen.findByRole('heading', { name: ProjectsI18nKeys.EditTitle });
 
-    typeName('q4 renamed');
-    typeName('q4');
+    typeInstructions('Updated instructions');
     await userEvent.click(
       screen.getByRole('button', { name: 'remove survey.xlsx' }),
     );
@@ -507,7 +602,7 @@ describe('ProjectEditPage', () => {
     expect(vi.mocked(updateProject).mock.calls[0][4]).toBe('"cv1"');
   });
 
-  it('opens the renamed project and keeps its pin', async () => {
+  it('follows a changed response id and keeps its pin', async () => {
     vi.mocked(updateProject).mockResolvedValue({
       id: 'projects/my-bucket/Q4 launch',
       name: 'Q4 launch',
@@ -519,7 +614,7 @@ describe('ProjectEditPage', () => {
     const { router } = renderAt();
     await screen.findByRole('heading', { name: ProjectsI18nKeys.EditTitle });
 
-    typeName(' Q4 launch ');
+    typeInstructions('Updated instructions');
     await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     await waitFor(() =>
@@ -527,7 +622,7 @@ describe('ProjectEditPage', () => {
         '/projects/view/my-bucket/Q4%20launch',
       ),
     );
-    expect(vi.mocked(updateProject).mock.calls[0][1].name).toBe('Q4 launch');
+    expect(vi.mocked(updateProject).mock.calls[0][1].name).toBe('q4');
     expect(userConfig.replacePinnedProjectId).toHaveBeenCalledWith(
       'projects/my-bucket/q4',
       'projects/my-bucket/Q4 launch',
@@ -548,7 +643,7 @@ describe('ProjectEditPage', () => {
     const { router } = renderAt();
     await screen.findByRole('heading', { name: ProjectsI18nKeys.EditTitle });
 
-    typeName('Q4 launch');
+    typeInstructions('Updated instructions');
     await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     await waitFor(() =>
@@ -569,7 +664,7 @@ describe('ProjectEditPage', () => {
     renderAt();
     await screen.findByRole('heading', { name: ProjectsI18nKeys.EditTitle });
 
-    typeName('Handbook');
+    typeInstructions('Updated instructions');
     await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     await waitFor(() =>
@@ -588,7 +683,7 @@ describe('ProjectEditPage', () => {
     renderAt();
     await screen.findByRole('heading', { name: ProjectsI18nKeys.EditTitle });
 
-    typeName('Handbook');
+    typeInstructions('Updated instructions');
     await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     expect((await screen.findByRole('alert')).textContent).toBe(
@@ -604,7 +699,7 @@ describe('ProjectEditPage', () => {
     renderAt();
     await screen.findByRole('heading', { name: ProjectsI18nKeys.EditTitle });
 
-    typeName('Draft name');
+    typeInstructions('Draft instructions');
     await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     await waitFor(() => expect(showNotificationMock).toHaveBeenCalled());
@@ -613,7 +708,7 @@ describe('ProjectEditPage', () => {
       message: ProjectsI18nKeys.ErrorsChangedElsewhere,
     });
     expect(notification.action).toBeTruthy();
-    expect(formProps.current?.values.name).toBe('Draft name');
+    expect(formProps.current?.values.instructions).toBe('Draft instructions');
   });
 
   it('puts a file rejection under Context', async () => {

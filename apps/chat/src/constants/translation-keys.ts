@@ -467,6 +467,7 @@ export enum ProjectsI18nKeys {
   CreateContextDropOverlaySubtitle = 'projects.create.context.dropOverlaySubtitle',
   CreateContextRemove = 'projects.create.context.remove',
   CreateContextOpen = 'projects.create.context.open',
+  CreateContextDownload = 'projects.create.context.download',
   CreateStatusAdded = 'projects.create.status.added',
   CreateStatusRemoved = 'projects.create.status.removed',
   CreateStatusCreating = 'projects.create.status.creating',
@@ -529,6 +530,7 @@ export enum ProjectsI18nKeys {
   ActionsDeleteError = 'projects.actions.deleteError',
   ActionsDownloadError = 'projects.actions.downloadError',
   ActionsPinError = 'projects.actions.pinError',
+  ActionsUnpinError = 'projects.actions.unpinError',
   EditTitle = 'projects.edit.title',
   EditSaving = 'projects.edit.saving',
   EditSavingStatus = 'projects.edit.savingStatus',
@@ -1882,4 +1884,6 @@ export enum ResourceSavePanelI18nKeys {
   NewVersionSaved = 'resourceSavePanel.newVersionSaved',
   SavedButMoveFailed = 'resourceSavePanel.savedButMoveFailed',
   SavedButPublishFailed = 'resourceSavePanel.savedButPublishFailed',
+  SavedButPublishFailedReason = 'resourceSavePanel.savedButPublishFailedReason',
+  SavedButAlreadyPublished = 'resourceSavePanel.savedButAlreadyPublished',
 }

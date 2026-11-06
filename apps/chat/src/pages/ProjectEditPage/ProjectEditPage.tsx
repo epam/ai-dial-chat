@@ -51,6 +51,7 @@ import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
+import { resolveProjectFileDownloadUrl } from '../../utils/dial-file';
 import { mapProjectCreateError } from '../../utils/project-create-errors';
 import { toProjectContextFileAttachment } from '../../utils/project-file-preview';
 import NotFoundPage from '../NotFound/NotFound';
@@ -116,6 +117,7 @@ const ProjectEditPage: FC = () => {
   const {
     selectedContextFileId,
     onContextFileClick: handleContextFileClick,
+    onContextFileDownload: handleContextFileDownload,
     closeIfRemoved,
   } = useProjectFilePreview({
     scope: projectId ?? '',
@@ -124,6 +126,7 @@ const ProjectEditPage: FC = () => {
     closeCanvas,
     startRequest: startCanvasRequest,
     resolveContextAttachment,
+    resolveDownloadUrl: resolveProjectFileDownloadUrl,
   });
 
   const { save, isSubmitting } = useSaveProject(projectsClient);
@@ -193,7 +196,7 @@ const ProjectEditPage: FC = () => {
 
   const handleSubmit = useCallback(async () => {
     if (project == null) return;
-    const name = values.name.trim();
+    const name = project.name;
     const outcome = await save({
       id: project.id,
       fields: { ...values, name },
@@ -309,6 +312,7 @@ const ProjectEditPage: FC = () => {
         contextFiles={contextFiles}
         onContextFilesChange={handleContextFilesChange}
         onContextFileClick={handleContextFileClick}
+        onContextFileDownload={handleContextFileDownload}
         selectedContextFileId={selectedContextFileId}
         allowedExtensions={allowedExtensions}
         maxFileBytes={maxFileBytes}
@@ -321,8 +325,7 @@ const ProjectEditPage: FC = () => {
         onCancel={handleLeave}
         onSubmit={handleFormSubmit}
         isSubmitting={isSubmitting}
-        /* Only the owner renames: a share recipient with edit access saves the stored name. */
-        isNameReadOnly={!project.canManage}
+        isNameReadOnly
         labels={labels}
         markdownEditorTheme={markdownEditorTheme}
       />
