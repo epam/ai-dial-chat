@@ -1,5 +1,6 @@
 import {
   CatalogCreationType,
+  ResourceNameConflictCode,
   TextRefinementPurpose,
   type DeploymentDetailsDto,
 } from '@epam/ai-dial-chat-api-client';
@@ -16,6 +17,7 @@ import { useState } from 'react';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  AppsEditorI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
   CustomAppI18nKeys,
@@ -482,6 +484,41 @@ describe('ApplicationEditorPage — custom app', () => {
         ),
       );
       expect(createApplication).not.toHaveBeenCalled();
+    });
+
+    it('shows the duplicate message on the Name field when a rename takes another identity', async () => {
+      vi.mocked(getDeploymentDetails).mockResolvedValue({
+        id: APP_ID,
+        type: 'application',
+        applicationDetails: { endpoint: 'https://api.example.com/chat' },
+      } as DeploymentDetailsDto);
+      vi.mocked(updateApplication).mockRejectedValue(
+        Object.assign(new Error('Conflict'), {
+          response: new Response(
+            JSON.stringify({
+              statusCode: 409,
+              code: ResourceNameConflictCode.NameTakenAgent,
+            }),
+            {
+              status: 409,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
+        }),
+      );
+      renderPage(editEntry);
+      await waitFor(() =>
+        expect((getCompletionUrlInput() as HTMLInputElement).value).toBe(
+          'https://api.example.com/chat',
+        ),
+      );
+      await user.type(getNameInput(), 'Taken');
+
+      await user.click(getAction(ButtonsI18nKeys.Save));
+
+      expect(
+        await screen.findByText(AppsEditorI18nKeys.ErrorNameConflictAgent),
+      ).toBeTruthy();
     });
 
     describe('Save panel for an own custom app', () => {

@@ -118,7 +118,10 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
     (isNameTouched && nameCheck != null
       ? labels.nameErrors[nameCheck]
       : undefined);
-  const isCreateDisabled = nameCheck != null || isSubmitting || isRefining;
+  /* A host name error clears when the name is edited, which a read-only name cannot be, so it must not block Create there. */
+  const hasHostNameError = !isNameReadOnly && Boolean(errors.name);
+  const isCreateDisabled =
+    nameCheck != null || hasHostNameError || isSubmitting || isRefining;
   /* A host error lives in the always-mounted alert; inline validation has its own, non-announcing element. */
   let nameErrorDescribedBy: string | undefined;
   if (errors.name) nameErrorDescribedBy = nameErrorId;

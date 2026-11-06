@@ -549,6 +549,7 @@ apps/chat-api/src/
 ├── applications/           # Application CRUD
 ├── application-schemas/    # Application schema metadata
 ├── skills/  toolsets/  prompts/          # Catalog entity domains
+├── resource-identity/      # Shared duplicate name+version check used by applications and toolsets
 ├── files/  assets/                       # File storage and static assets
 ├── share/  publish/                      # Sharing and publication flows
 ├── scheduled-tasks/  scheduled-task-unread/

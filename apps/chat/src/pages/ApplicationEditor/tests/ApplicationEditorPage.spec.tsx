@@ -1,10 +1,14 @@
-import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
+import {
+  CatalogCreationType,
+  ResourceNameConflictCode,
+} from '@epam/ai-dial-chat-api-client';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  AppsEditorI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
   CustomAppI18nKeys,
@@ -277,6 +281,64 @@ describe('ApplicationEditorPage', () => {
       ),
     );
     expect(screen.queryByText('Catalog')).toBeNull();
+  });
+
+  describe('409 from a create', () => {
+    const conflict = (code?: string) =>
+      Object.assign(new Error('Conflict'), {
+        response: new Response(JSON.stringify({ statusCode: 409, code }), {
+          status: 409,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      });
+    const submitFakeApp = async () => {
+      renderFakeKind();
+      await user.type(
+        screen.getByLabelText(EditorI18nKeys.NameLabel, { exact: false }),
+        'Fake app',
+      );
+      await user.type(screen.getByLabelText('fake-endpoint'), 'https://x.test');
+      await user.click(getAction(ButtonsI18nKeys.Create));
+    };
+
+    it('shows the agent duplicate message on the Name field and as a notification', async () => {
+      mockCreate.mockRejectedValue(
+        conflict(ResourceNameConflictCode.NameTakenAgent),
+      );
+
+      await submitFakeApp();
+
+      expect(
+        await screen.findByText(AppsEditorI18nKeys.ErrorNameConflictAgent),
+      ).toBeTruthy();
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: AppsEditorI18nKeys.ErrorNameConflictAgent,
+        }),
+      );
+    });
+
+    it('names a toolset when the toolset holds the identity', async () => {
+      mockCreate.mockRejectedValue(
+        conflict(ResourceNameConflictCode.NameTakenToolset),
+      );
+
+      await submitFakeApp();
+
+      expect(
+        await screen.findByText(AppsEditorI18nKeys.ErrorNameConflictToolset),
+      ).toBeTruthy();
+    });
+
+    it('keeps the path-only message for a 409 without a code', async () => {
+      mockCreate.mockRejectedValue(conflict());
+
+      await submitFakeApp();
+
+      expect(
+        await screen.findByText(AppsEditorI18nKeys.ErrorNameConflict),
+      ).toBeTruthy();
+    });
   });
 });
 

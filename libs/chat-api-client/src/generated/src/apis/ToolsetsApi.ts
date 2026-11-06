@@ -25,6 +25,7 @@ import type {
   MutatedToolsetDto,
   ResourceFoldersResponseDto,
   ResourceIdResponseDto,
+  ResourceNameConflictDto,
   ToolsetAuthResultDto,
   ToolsetBodyDto,
   ToolsetLoginBodyDto,
