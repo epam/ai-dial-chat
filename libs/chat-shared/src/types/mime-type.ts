@@ -17,6 +17,16 @@ export enum MIMEType {
   TypeScript = 'text/typescript',
   /** CSV spreadsheet data. */
   CSV = 'text/csv',
+  /** JSX source. */
+  JSX = 'text/jsx',
+  /** TSX source. */
+  TSX = 'text/tsx',
+  /** PHP source. */
+  PHP = 'text/x-php',
+  /** Rust source. */
+  Rust = 'text/x-rustsrc',
+  /** Vue single-file component. */
+  Vue = 'text/x-vue',
 
   // Data formats
   /** JSON data. */
@@ -29,6 +39,28 @@ export enum MIMEType {
   ZIP = 'application/zip',
   /** GZIP-compressed data. */
   GZIP = 'application/gzip',
+  /** RAR archive. */
+  RAR = 'application/vnd.rar',
+  /** 7-Zip archive. */
+  SevenZip = 'application/x-7z-compressed',
+  /** TAR archive. */
+  TAR = 'application/x-tar',
+  /** SQL script. */
+  SQL = 'application/sql',
+
+  // Office documents
+  /** Legacy Word document (`.doc`). */
+  DOC = 'application/msword',
+  /** Word document (`.docx`). */
+  DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  /** Legacy Excel workbook (`.xls`). */
+  XLS = 'application/vnd.ms-excel',
+  /** Excel workbook (`.xlsx`). */
+  XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  /** Legacy PowerPoint presentation (`.ppt`). */
+  PPT = 'application/vnd.ms-powerpoint',
+  /** PowerPoint presentation (`.pptx`). */
+  PPTX = 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
 
   // Images
   /** JPEG raster image. */

@@ -22,6 +22,7 @@ import {
 } from 'react';
 import { defaultStyles, JsonView } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
+import { BODY_CONTAINER_CLASS_NAMES } from '../../constants/canvas-body';
 import type { AttachmentCanvasBodyProps } from '../../models/attachment-canvas';
 import {
   AttachmentContentType,
@@ -232,40 +233,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     [stylesProp],
   );
 
-  const bodyContainerClassName = useMemo(() => {
-    switch (content.type) {
-      case AttachmentContentType.Image:
-      case AttachmentContentType.Audio:
-      case AttachmentContentType.Unsupported:
-      case AttachmentContentType.Error:
-        return 'h-full overflow-auto p-4 flex items-center justify-center';
-      case AttachmentContentType.Json:
-        return 'h-full overflow-auto';
-      case AttachmentContentType.Pdf:
-      case AttachmentContentType.Ooxml:
-      case AttachmentContentType.Visualizer:
-      case AttachmentContentType.GroupedVisualizer:
-      case AttachmentContentType.McpApp:
-      case AttachmentContentType.Code:
-      case AttachmentContentType.Html:
-        return 'h-full overflow-hidden';
-      /*
-       * A markdown document flows as tall as its content, so the body root is
-       * the scroller. `MarkdownTable` is the opposite case — a single table
-       * that fills the panel and scrolls inside its own wrapper — so it keeps
-       * the clipped flex column. The scroller carries no padding of its own:
-       * a code block's sticky header pins to the scroller's padding edge, so
-       * padding here would leave a strip above the pinned header where the
-       * scrolled code shows through. The inset sits on an inner wrapper.
-       */
-      case AttachmentContentType.Markdown:
-        return 'h-full overflow-auto';
-      case AttachmentContentType.MarkdownTable:
-        return 'flex h-full min-h-0 flex-col overflow-hidden p-4';
-      default:
-        return 'h-full overflow-auto p-4';
-    }
-  }, [content.type]);
+  const bodyContainerClassName = BODY_CONTAINER_CLASS_NAMES[content.type];
 
   const renderedContent = useMemo(() => {
     switch (content.type) {
