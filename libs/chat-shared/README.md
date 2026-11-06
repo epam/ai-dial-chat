@@ -1615,7 +1615,7 @@ import type { FileManagerAttachModalLabels } from '@epam/ai-dial-chat-shared';
 // … plus every DialFileManagerShellLabels field
 ```
 
-`colors` (`FileManagerAttachModalColors`) sets the dialog background — also used as the file-manager surface inside it —, the title color shown with a header description and the dialog's drop-shadow color (`background` / `title` / `shadow`, default `--bg-layer-raised` / `--text-primary` / 16% black). The header and footer are separated from the body by a divider. `titleClassName` and `descriptionClassName` set the type of that title and description (default `'dial-h1-text'` / `'dial-small-text'`).
+`colors` (`FileManagerAttachModalColors`) sets the dialog background — also used as the file-manager surface inside it —, the title color shown with a header description and the dialog's drop-shadow color (`background` / `title` / `shadow`, default `--bg-layer-raised` / `--text-primary` / 16% black). The header and footer are separated from the body by a divider unless `showHeaderDivider={false}` / `showFooterDivider={false}`. `dialogClassName` is merged last onto the dialog, so a `!`-modified class overrides its size defaults (e.g. `max-w-[1330px]!`), and `treeContainerClassName` is forwarded to the shell to restyle the folders-tree panel (include `shrink-0` and a width). `titleClassName` and `descriptionClassName` set the type of that title and description (default `'dial-h1-text'` / `'dial-small-text'`).
 
 ### FileManagerSelectableNode
 
