@@ -43,6 +43,8 @@ export const useProjectViewLabels = (): ProjectViewLabels => {
       noContextMatchesLabel: t(ProjectsI18nKeys.ViewNoContextMatches),
       openFileLabel: (name: string) =>
         t(ProjectsI18nKeys.ViewOpenFile, { name }),
+      downloadFileLabel: (name: string) =>
+        t(ProjectsI18nKeys.CreateContextDownload, { name }),
       errorLabel: t(ProjectsI18nKeys.ViewError),
       retryLabel: t(ButtonsI18nKeys.Retry),
       notFoundLabel: t(ProjectsI18nKeys.ViewNotFound),

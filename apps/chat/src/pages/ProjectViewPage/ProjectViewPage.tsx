@@ -49,6 +49,7 @@ import { useProjectViewLabels } from '../../hooks/projects/useProjectViewLabels'
 import { useUnpublishConfirmationLabels } from '../../hooks/publish/useUnpublishConfirmationLabels';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
+import { resolveProjectFileDownloadUrl } from '../../utils/dial-file';
 import {
   toProjectOutputAttachment,
   toStoredProjectFileAttachment,
@@ -148,6 +149,7 @@ const ProjectViewPage: FC = () => {
     selectedOutputName,
     selectedContextFileId,
     onContextFileClick: handleContextFileClick,
+    onContextFileDownload: handleContextFileDownload,
     onOutputClick: handleOpenOutput,
   } = useProjectFilePreview({
     scope: projectId ?? '',
@@ -157,6 +159,7 @@ const ProjectViewPage: FC = () => {
     startRequest: startCanvasRequest,
     resolveContextAttachment,
     resolveOutputAttachment,
+    resolveDownloadUrl: resolveProjectFileDownloadUrl,
   });
   /* `canEdit`: change the content and write the chats (the owner, or a share with edit access); `canManage`: rename, delete, share and publish (the owner only). */
   const canEdit = project?.canEdit ?? false;
@@ -251,6 +254,7 @@ const ProjectViewPage: FC = () => {
         onDelete={canManage ? actions.requestDelete : undefined}
         onDownload={handleDownload}
         onContextFileClick={handleContextFileClick}
+        onContextFileDownload={handleContextFileDownload}
         selectedContextFileId={selectedContextFileId}
         isDetailsStacked={selectedCardId != null}
         onRetry={retry}

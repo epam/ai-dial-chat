@@ -18,8 +18,8 @@ import {
   restoreBufferedMessage,
 } from './buffered-generation';
 import { getConversationPath } from './conversation-path';
+import type { ConversationStreamTransport } from './conversation-stream.types';
 import type { FrameScheduler } from './frame-scheduler';
-import type { ConversationStreamTransport } from './useConversationStream';
 
 /**
  * True when the assistant message carries anything the backend's finalize save

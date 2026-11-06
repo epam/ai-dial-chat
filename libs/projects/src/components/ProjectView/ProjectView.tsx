@@ -54,6 +54,9 @@ const toDisplayAttachment = (
   status: RequestStatus.Idle,
 });
 
+const DEFAULT_DOWNLOAD_FILE_LABEL = (name: string): string =>
+  `Download ${name}`;
+
 /** Project home page: a header with the project actions and a Details panel with description, instructions and context. */
 const ProjectViewComponent: FC<ProjectViewProps> = ({
   project,
@@ -73,6 +76,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   onDelete,
   onDownload,
   onContextFileClick,
+  onContextFileDownload,
   selectedContextFileId,
   isDetailsStacked = false,
   onRetry,
@@ -83,6 +87,8 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   styles: viewStyles,
 }) => {
   const { colors, typography } = viewStyles ?? {};
+  const downloadFileLabel =
+    labels.downloadFileLabel ?? DEFAULT_DOWNLOAD_FILE_LABEL;
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const panelTitleClassName =
     typography?.panelTitleClassName ?? 'dial-body-semi-text';
@@ -293,8 +299,12 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
                   attachment={toDisplayAttachment(file)}
                   searchQuery={trimmedQuery}
                   onClick={onContextFileClick}
+                  onDownload={onContextFileDownload}
                   isSelected={file.name === selectedContextFileId}
-                  labels={{ clickLabel: labels.openFileLabel(file.name) }}
+                  labels={{
+                    clickLabel: labels.openFileLabel(file.name),
+                    downloadLabel: downloadFileLabel(file.name),
+                  }}
                 />
               </li>
             ))}

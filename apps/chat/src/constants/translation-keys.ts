@@ -467,6 +467,7 @@ export enum ProjectsI18nKeys {
   CreateContextDropOverlaySubtitle = 'projects.create.context.dropOverlaySubtitle',
   CreateContextRemove = 'projects.create.context.remove',
   CreateContextOpen = 'projects.create.context.open',
+  CreateContextDownload = 'projects.create.context.download',
   CreateStatusAdded = 'projects.create.status.added',
   CreateStatusRemoved = 'projects.create.status.removed',
   CreateStatusCreating = 'projects.create.status.creating',

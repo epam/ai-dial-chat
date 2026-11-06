@@ -21,6 +21,10 @@ export interface ProjectConversationsPanelLabels {
   renameSaveLabel: string;
   /** Label of the rename dialog's cancel button. Defaults to `'Cancel'`. */
   renameCancelLabel?: string;
+  /** Accessible name and tooltip of the rename dialog's AI-title button. Defaults to `'Rename with AI'`. */
+  renameWithAiLabel?: string;
+  /** Inline error when the AI title could not be generated. Defaults to `'Could not generate a name. Try again.'`. */
+  renameWithAiError?: string;
   /** Title of the delete confirmation, built from the chat title. */
   deleteTitle: (title: string) => string;
   /** Body of the delete confirmation. */
@@ -55,6 +59,8 @@ export interface ProjectConversationsPanelProps {
   onOpen: (id: string) => void;
   /** Renames a conversation; the dialog stays open while it rejects. Rename is hidden when omitted. */
   onRename?: (id: string, newTitle: string) => Promise<void>;
+  /** Suggests a title for a conversation; the rename dialog shows its AI-title button only when this is set. */
+  onGenerateTitle?: (id: string) => Promise<string>;
   /** Deletes a conversation; the dialog stays open while it rejects. Delete is hidden when omitted. */
   onDelete?: (id: string) => Promise<void>;
   /** Localized labels. */

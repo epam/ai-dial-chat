@@ -1212,6 +1212,27 @@ const { ref, isClipped } = useIsTextClipped<HTMLSpanElement>(
 </span>;
 ```
 
+### useIsVerticallyClamped
+
+`useIsVerticallyClamped(content)` reports whether a `line-clamp-*` (or any
+`overflow: hidden`) element, or one of its direct children such as the kit
+`Highlight` span, hides part of its text vertically, so a caller can show the
+full text in a tooltip only when something is cut off. It re-measures when the
+element resizes and when `content` changes.
+
+```tsx
+import { useIsVerticallyClamped } from '@epam/ai-dial-chat-shared';
+import { Tooltip } from '@epam/ai-dial-ui-kit';
+
+const { ref, isClamped } = useIsVerticallyClamped<HTMLSpanElement>(name);
+
+<Tooltip asChild tooltip={name} hideTooltip={!isClamped}>
+  <span ref={ref} className="line-clamp-2">
+    {name}
+  </span>
+</Tooltip>;
+```
+
 ### useUnsavedChangesGuard
 
 `useUnsavedChangesGuard(isDirty)` defers a "leave the form" action until the user confirms discarding. `guard(action)` runs `action` at once when `isDirty` is `false`; otherwise it stores the action and sets `isConfirmOpen`. `confirm()` closes the confirmation and runs the stored action, `dismiss()` closes it and drops the action. While `isDirty` is `true` the hook also registers a `beforeunload` listener so the browser warns before the page unloads. The hook renders nothing — pair it with a confirmation such as `ConfirmationDialog`, and compute `isDirty` yourself.

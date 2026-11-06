@@ -18,6 +18,8 @@ export default [
              * devDependencies, not part of this package's runtime contract.
              */
             '{projectRoot}/e2e-fixtures/**/*.mjs',
+            /* Shared spec fixtures (e.g. the conversation-stream harness) are test code: excluded from the lib build, so their `vitest` import is not a runtime dependency. */
+            '{projectRoot}/src/**/tests/**',
           ],
           ignoredDependencies: [
             /*

@@ -69,6 +69,7 @@ interface FakeFormProps {
   contextFiles: ProjectContextFile[];
   onContextFilesChange: (files: ProjectContextFile[]) => void;
   onContextFileClick?: (id: string) => void;
+  onContextFileDownload?: (id: string) => void;
   selectedContextFileId?: string;
   onCancel: () => void;
   onSubmit: () => void;
@@ -113,6 +114,12 @@ vi.mock('@epam/ai-dial-projects', async (importOriginal) => ({
                 onClick={() => props.onContextFileClick?.(file.id)}
               >
                 {`Preview ${file.name}`}
+              </button>
+              <button
+                type="button"
+                onClick={() => props.onContextFileDownload?.(file.id)}
+              >
+                {`Download ${file.name}`}
               </button>
               <button
                 type="button"
@@ -327,6 +334,56 @@ describe('ProjectEditPage', () => {
         .calls[0] as unknown as [{ file: File; url?: string }];
       expect(opened.file.name).toBe('retro.pdf');
       expect(opened.url).toBeUndefined();
+    });
+
+    it('downloads a stored file from the project file endpoint without opening the canvas', async () => {
+      const clicked: HTMLAnchorElement[] = [];
+      const click = vi
+        .spyOn(HTMLAnchorElement.prototype, 'click')
+        .mockImplementation(function (this: HTMLAnchorElement) {
+          clicked.push(this);
+        });
+      await openEditor();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Download tickets.csv' }),
+      );
+
+      expect(clicked).toHaveLength(1);
+      expect(clicked[0].getAttribute('href')).toBe(
+        `/api/v1/projects/${encodeURIComponent(PROJECT_ID)}/files/tickets.csv`,
+      );
+      expect(clicked[0].download).toBe('tickets.csv');
+      expect(getCanvas().textContent).toBe('closed');
+      click.mockRestore();
+    });
+
+    it('downloads a file added in the session from its local File without a request', async () => {
+      const createObjectURL = vi.fn(() => 'blob:retro');
+      Object.defineProperty(URL, 'createObjectURL', {
+        configurable: true,
+        value: createObjectURL,
+      });
+      Object.defineProperty(URL, 'revokeObjectURL', {
+        configurable: true,
+        value: vi.fn(),
+      });
+      const click = vi
+        .spyOn(HTMLAnchorElement.prototype, 'click')
+        .mockImplementation(() => undefined);
+      await openEditor();
+      await userEvent.click(screen.getByRole('button', { name: 'add file' }));
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Download retro.pdf' }),
+      );
+
+      expect(createObjectURL).toHaveBeenCalledOnce();
+      expect((createObjectURL.mock.calls[0] as unknown as [File])[0].name).toBe(
+        'retro.pdf',
+      );
+      expect(click).toHaveBeenCalledOnce();
+      click.mockRestore();
     });
 
     it('marks only the open file selected', async () => {
