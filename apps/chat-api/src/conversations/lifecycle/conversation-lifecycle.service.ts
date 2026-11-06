@@ -32,6 +32,7 @@ import {
   neutralizeForeignPendingMessages,
   updateConversationUnlessPending,
 } from '../generation/background-message';
+import { neutralizeForegroundMarkers } from '../generation/foreground-generation';
 import { ConversationTitleCacheService } from '../listing/conversation-title-cache.service';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
 import { PublishedFolderAttachmentsService } from '../published-folder-attachments.service';
@@ -456,7 +457,9 @@ export class ConversationLifecycleService {
           headers: getBearerAuthHeaders(token),
           body: {
             ...resolvedSource,
-            messages: neutralizeForeignPendingMessages(resolvedSource.messages),
+            messages: neutralizeForegroundMarkers(
+              neutralizeForeignPendingMessages(resolvedSource.messages),
+            ),
             id: `${sessionBucket}/${decodedDestinationSubPath}`,
             folderId,
             name: uniqueTitle,

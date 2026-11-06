@@ -2,9 +2,11 @@ import { createHash } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import {
   ConflictException,
+  Inject,
   Injectable,
   Logger,
   OnModuleDestroy,
+  Optional,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { EnvironmentVariables } from '../../config/environment.config';
@@ -17,6 +19,7 @@ import {
   ConversationMessageDto,
   ConversationMessageRole,
 } from '../dto/conversation-message.dto';
+import { FOREGROUND_SHUTDOWN_FLUSH_MS } from './foreground-generation';
 import type { GenerationPreparationStep } from './generation.types';
 import { GENERATION_PERSISTENCE_ERROR } from './persistence-error';
 
@@ -24,8 +27,19 @@ const STALE_ENTRY_FLOOR_MS = 30 * 60 * 1000; // 30 minutes
 const STALE_GRACE_MS = 60 * 1000; // 1 minute
 /* Enough digest to correlate one principal's entries across log lines. */
 const OWNER_DIGEST_LENGTH = 12;
-const DEFAULT_MAX_GENERATION_DURATION_MS = 1_800_000; // 30 minutes
-const DEFAULT_GENERATION_FINALIZE_TIMEOUT_MS = 60_000; // 1 minute
+
+/**
+ * Injection token overriding how long shutdown waits for foreground workers; defaults to
+ * `FOREGROUND_SHUTDOWN_FLUSH_MS`. Tests whose entries have no worker provide `0`.
+ */
+export const GENERATION_SHUTDOWN_FLUSH_MS = Symbol(
+  'GENERATION_SHUTDOWN_FLUSH_MS',
+);
+
+/** Default of `MAX_GENERATION_DURATION_MS`. */
+export const DEFAULT_MAX_GENERATION_DURATION_MS = 1_800_000; // 30 minutes
+/** Default of `GENERATION_FINALIZE_TIMEOUT_MS`. */
+export const DEFAULT_GENERATION_FINALIZE_TIMEOUT_MS = 60_000; // 1 minute
 
 /**
  * Persisted-marker status, preserved unchanged in meaning — mapped by
@@ -56,6 +70,8 @@ export enum GenerationCancelReason {
   StaleExpiry = 'stale_expiry',
   MaxDuration = 'max_duration',
   Shutdown = 'shutdown',
+  /** The generation's stored `foregroundGeneration` marker is gone (`foreground-generation-lock`). */
+  LockLost = 'lock_lost',
 }
 
 /**
@@ -181,6 +197,15 @@ interface GenerationEntry {
    * caller supplied.
    */
   logLabel: string;
+  /**
+   * Bucket-qualified conversation path. A personal path in the key is bucket-relative,
+   * so two users' conversations can share it; a cross-principal Stop must match this
+   * instead (`foreground-generation-lock`).
+   */
+  resourcePath: string;
+  /** Resolves once the entry's key is released, by its worker or by shutdown. */
+  settled: Promise<void>;
+  resolveSettled: () => void;
 }
 
 /**
@@ -210,9 +235,16 @@ export class ConversationGenerationService implements OnModuleDestroy {
   private readonly maxGenerationDurationMs: number;
   private readonly staleThresholdMs: number;
   private readonly finalizeTimeoutMs: number;
+  private readonly shutdownFlushMs: number;
   private nextOperationId = 1;
 
-  constructor(configService: ConfigService<EnvironmentVariables>) {
+  constructor(
+    configService: ConfigService<EnvironmentVariables>,
+    @Optional()
+    @Inject(GENERATION_SHUTDOWN_FLUSH_MS)
+    shutdownFlushMs: number = FOREGROUND_SHUTDOWN_FLUSH_MS,
+  ) {
+    this.shutdownFlushMs = shutdownFlushMs ?? FOREGROUND_SHUTDOWN_FLUSH_MS;
     this.maxGenerationDurationMs =
       configService.get('MAX_GENERATION_DURATION_MS', { infer: true }) ??
       DEFAULT_MAX_GENERATION_DURATION_MS;
@@ -282,6 +314,7 @@ export class ConversationGenerationService implements OnModuleDestroy {
     this.entriesByOperationId.delete(entry.operationId);
     entry.lifecycleState = GenerationLifecycleState.Released;
     entry.metrics.finish();
+    entry.resolveSettled();
   }
 
   /**
@@ -300,17 +333,40 @@ export class ConversationGenerationService implements OnModuleDestroy {
     this.releaseKey(entry);
   }
 
-  onModuleDestroy(): void {
+  async onModuleDestroy(): Promise<void> {
     /*
      * Shutdown has its own contract, verified separately from stale
-     * cancellation and never reused as eviction (`generation-registry`, D5):
-     * there is no worker left to await, so every entry is settled here
-     * directly, unconditionally, and makes no claim about an in-flight
-     * persistence write.
+     * cancellation and never reused as eviction (`generation-registry`, D5).
+     * Every entry is aborted and its subscribers get `stopped` at once. A
+     * background entry is settled directly: its job keeps running in DIAL Core.
+     * A foreground entry keeps its key while its worker writes its stored
+     * marker away (`foreground-generation-lock`); Nest runs this hook before it
+     * closes the HTTP server, so that write can still reach DIAL Core. After
+     * the flush bound every remaining entry is settled directly, with no claim
+     * about a write still in flight.
      */
+    const pending: Promise<void>[] = [];
     for (const entry of [...this.registry.values()]) {
       entry.cancelReason ??= GenerationCancelReason.Shutdown;
       entry.abortController.abort();
+      if (entry.isBackground) {
+        this.settle(entry, { type: 'stopped' });
+        continue;
+      }
+      this.releaseResources(entry, { type: 'stopped' });
+      pending.push(entry.settled);
+    }
+    if (pending.length > 0) {
+      let timer: NodeJS.Timeout | undefined;
+      await Promise.race([
+        Promise.all(pending),
+        new Promise<void>((resolve) => {
+          timer = setTimeout(resolve, this.shutdownFlushMs);
+        }),
+      ]);
+      clearTimeout(timer);
+    }
+    for (const entry of [...this.registry.values()]) {
       this.settle(entry, { type: 'stopped' });
     }
   }
@@ -366,10 +422,19 @@ export class ConversationGenerationService implements OnModuleDestroy {
     this.releaseResources(entry, outcome);
   }
 
+  /**
+   * Registers a generation under `ownerKey`+`path`.
+   * @param ownerKey - principal key of the caller
+   * @param path - conversation path the client posted; the second half of the key
+   * @param generationId - client-supplied generation id
+   * @param resourcePath - bucket-qualified conversation path, which a storage-authorized
+   * Stop matches (`abortByGeneration`); defaults to `path`
+   */
   register(
     ownerKey: string,
     path: string,
     generationId: string,
+    resourcePath: string = path,
   ): GenerationLease {
     this.requestCancellationForExpired();
 
@@ -390,8 +455,15 @@ export class ConversationGenerationService implements OnModuleDestroy {
      */
     emitter.setMaxListeners(0);
 
+    let resolveSettled: () => void = () => undefined;
+    const settled = new Promise<void>((resolve) => {
+      resolveSettled = resolve;
+    });
     const entry: GenerationEntry = {
+      settled,
+      resolveSettled,
       key,
+      resourcePath,
       generationId,
       operationId,
       abortController,
@@ -557,6 +629,61 @@ export class ConversationGenerationService implements OnModuleDestroy {
     entry.metrics.setState(toGaugeState(entry.lifecycleState));
     entry.abortController.abort();
     return true;
+  }
+
+  /**
+   * Aborts the active foreground entry for the conversation resource `resourcePath`
+   * carrying `generationId`, whatever principal owns it, as a user stop. Called only
+   * after a Stop was stored on that generation's marker with the stopping caller's own
+   * token, which is the authorization (`generation-registry`). Leaves `register`,
+   * `abort` and `attach` principal-scoped.
+   * @param resourcePath - bucket-qualified conversation path, as passed to `register`
+   * @param generationId - client-supplied generation id
+   */
+  abortByGeneration(resourcePath: string, generationId: string): boolean {
+    for (const entry of this.registry.values()) {
+      if (
+        entry.resourcePath === resourcePath &&
+        entry.generationId === generationId &&
+        !entry.isBackground &&
+        entry.lifecycleState === GenerationLifecycleState.Active
+      ) {
+        this.requestCancellation(entry, GenerationCancelReason.UserStop);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Lease-scoped user stop, for a Stop the worker found stored on its marker. A no-op
+   * unless the lease's entry is still active.
+   * @param lease - the generation's lease
+   */
+  requestUserStop(lease: GenerationLease): void {
+    this.cancel(lease, GenerationCancelReason.UserStop);
+  }
+
+  /**
+   * Lease-scoped cancellation with an explicit reason. A no-op unless the lease's entry
+   * is still active.
+   * @param lease - the generation's lease
+   * @param reason - why the generation is cancelled
+   */
+  cancel(lease: GenerationLease, reason: GenerationCancelReason): void {
+    const entry = this.resolveByLease(lease);
+    if (entry?.lifecycleState !== GenerationLifecycleState.Active) return;
+    this.requestCancellation(entry, reason);
+  }
+
+  private requestCancellation(
+    entry: GenerationEntry,
+    reason: GenerationCancelReason,
+  ): void {
+    entry.cancelReason = reason;
+    entry.lifecycleState = GenerationLifecycleState.CancelRequested;
+    entry.metrics.setState(toGaugeState(entry.lifecycleState));
+    entry.abortController.abort();
   }
 
   /**

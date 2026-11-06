@@ -346,6 +346,40 @@ describe('ConversationLifecycleService', () => {
       expect(pendingMessage.backgroundGeneration.status).toBe('pending');
     });
 
+    it('writes a live foreground marker to the copy as interrupted and leaves the original untouched', async () => {
+      const markedMessage = {
+        role: 'assistant',
+        content: '',
+        timestamp: 't',
+        foregroundGeneration: {
+          generationId: '9d1e2f3a-4b5c-4d6e-8f70-81a2b3c4d5e6',
+          startedAt: 1,
+          expiresAt: Date.now() + 60_000,
+        },
+      };
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: { ...SHARED_CONVERSATION, messages: [markedMessage] },
+      } as never);
+      const saveSpy = vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__New%20chat',
+        'test-token',
+        'test-bucket',
+      );
+
+      const body = (
+        saveSpy.mock.calls[0][2] as unknown as {
+          body: { messages: Array<Record<string, unknown>> };
+        }
+      ).body;
+      expect(body.messages[0]).not.toHaveProperty('foregroundGeneration');
+      expect(body.messages[0].streamErrorMessage).toBe('');
+      expect(markedMessage.foregroundGeneration).toBeDefined();
+    });
+
     it('stores the folder attachments resolved for a conversation read from the public bucket', async () => {
       mockGetConversation();
       mockPublishedFolderAttachments.resolve.mockImplementation(
