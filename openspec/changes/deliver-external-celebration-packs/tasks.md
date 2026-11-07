@@ -213,6 +213,6 @@ Nothing changes behavior until slice 10 wires the host, and the default policy s
 
 ## 13. Follow-ups (out of scope, record only)
 
-- [ ] 13.1 File a follow-up for S5: `GET /api/v1/themes` with camelCase normalization (the mapping table in `celebration-pack-contracts`, including the `model-garden-*` drop), the `ThemeContext` migration, `colorScheme`, and theme bindings to packs from `celebrations/index.json`.
-- [ ] 13.2 File a follow-up to confirm ingress rate limiting for `/api/v1/celebrations*` in production deployments (design Open Question 4).
-- [ ] 13.3 Update the scope and acceptance criteria of issue #9221: `/api/v1/celebrations*` instead of `/api/v1/themes*`, and the `snowman-delivery` pilot instead of `sleigh`.
+- [x] 13.1 Record the S5 follow-up: `GET /api/v1/themes` with camelCase normalization (the mapping table in `celebration-pack-contracts`, including the `model-garden-*` drop), the `ThemeContext` migration, `colorScheme`, and theme bindings to packs from `celebrations/index.json`. (2026-11-07: added to the existing S5 issue #9224 as a comment instead of a new issue.)
+- [x] 13.2 Record the follow-up to confirm ingress rate limiting for `/api/v1/celebrations*` in production deployments (design Open Question 4). (2026-11-07: added to the S8 rollout issue #9227 as a checklist comment instead of a separate issue.)
+- [x] 13.3 Update the scope and acceptance criteria of issue #9221: `/api/v1/celebrations*` instead of `/api/v1/themes*`, and the `bullfinch-couriers` added-scene pilot (design D10, D13) instead of `sleigh`.
