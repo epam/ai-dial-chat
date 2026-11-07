@@ -130,18 +130,18 @@ Nothing changes behavior until slice 10 wires the host, and the default policy s
 
 ## 9. App API wrapper
 
-- [ ] 9.1 Add the generated `CelebrationsApi` singleton (`celebrationsApi`) to `apps/chat/src/server-api/api-client.ts`.
-- [ ] 9.2 Implement `apps/chat/src/server-api/celebrations.api.ts` with these functions. They send no `If-None-Match`.
+- [x] 9.1 Add the generated `CelebrationsApi` singleton (`celebrationsApi`) to `apps/chat/src/server-api/api-client.ts`.
+- [x] 9.2 Implement `apps/chat/src/server-api/celebrations.api.ts` with these functions. They send no `If-None-Match`.
   - `getCelebrationCatalog(signal)`
   - `getCelebrationPack(packId, version, signal)`
   - `loadCelebrationAssetJson(assetId, signal)`, which uses `getCelebrationAssetRaw` and `JSON.parse`
   - `getCelebrationAssetUrl(assetId)`, which builds `/api/v1/celebrations/assets/{id}` with `encodeURIComponent`
-- [ ] 9.3 Tests in `apps/chat/src/server-api/tests/celebrations.api.spec.ts`: the signal is forwarded, a non-2xx rejects, and the URL is encoded.
+- [x] 9.3 Tests in `apps/chat/src/server-api/tests/celebrations.api.spec.ts`: the signal is forwarded, a non-2xx rejects, and the URL is encoded.
   - Verification: `npm run test:file -- apps/chat/src/server-api/tests/celebrations.api.spec.ts`
 
 ## 10. App pack resolution and host composition
 
-- [ ] 10.1 Implement `apps/chat/src/hooks/celebration/useCelebrationPacks.ts`, following `useFavicon` for JSDoc, the `AbortController` and the cancelled flag:
+- [x] 10.1 Implement `apps/chat/src/hooks/celebration/useCelebrationPacks.ts`, following `useFavicon` for JSDoc, the `AbortController` and the cancelled flag:
   - zero-request short-circuit cases
   - resolution from the index `defaults[eventId]`
   - capability, allowlist, known-ID and `event`-block filtering
@@ -149,12 +149,12 @@ Nothing changes behavior until slice 10 wires the host, and the default policy s
   - a page-lifetime memo for manifests and parsed animation data
   - memoised `events`, `labels`, loaders and `packKey`
   - fixed `import('@epam/ai-dial-celebrations/packs')` / `new-year` loaders only
-- [ ] 10.2 Add the `@epam/ai-dial-celebrations/packs` alias to `apps/chat/vite.config.mts` beside `/halloween` and `/new-year` (subpaths before the bare alias). Update `apps/chat/src/context/CelebrationHost.tsx`:
+- [x] 10.2 Add the `@epam/ai-dial-celebrations/packs` alias to `apps/chat/vite.config.mts` beside `/halloween` and `/new-year` (subpaths before the bare alias). Update `apps/chat/src/context/CelebrationHost.tsx`:
   - use `useCelebrationPacks`
   - build the composite `resetKey` string (route key, event, mode, policy revision, catalog revision, `packKey`, theme ID, color scheme, `i18n.dir()`, layout, selection revision `none`)
   - merge pack labels into `labels`
   - keep the `ANCHORS` and the guard comment
-- [ ] 10.3 Hook tests in `apps/chat/src/hooks/celebration/tests/useCelebrationPacks.spec.ts`:
+- [x] 10.3 Hook tests in `apps/chat/src/hooks/celebration/tests/useCelebrationPacks.spec.ts`:
   - `bundled`, `UI_EVENT=none` and a non-allowlisted scene make no request
   - a `GET /api/v1/celebrations` `503` keeps the bundled event
   - an unsupported capability keeps the bundled event
@@ -164,32 +164,48 @@ Nothing changes behavior until slice 10 wires the host, and the default policy s
   - stable identities across an unrelated re-render
   - locale fallback
   - Verification: `npm run test:file -- apps/chat/src/hooks/celebration/tests/useCelebrationPacks.spec.ts`
-- [ ] 10.4 Host tests in `apps/chat/src/context/tests/CelebrationHost.spec.tsx` and `CelebrationHost.integration.spec.tsx`:
+- [x] 10.4 Host tests in `apps/chat/src/context/tests/CelebrationHost.spec.tsx` and `CelebrationHost.integration.spec.tsx`:
   - the default policy behaves as today
   - an allowlisted `snowman-delivery` renders the external scene, while `penguin-star` and the `happy new year` → `gift-wrapping` path stay bundled
   - a theme, direction or layout change cancels the playing scene
   - a language change does not
   - the `company-anniversary` trigger is reachable by role and name and plays on Enter
   - Verification: `npm run test:file -- apps/chat/src/context/tests/CelebrationHost.spec.tsx`, `npm run test:file -- apps/chat/src/context/tests/CelebrationHost.integration.spec.tsx`
-- [ ] 10.5 RTL check: under `dir="rtl"` the external `mirror` scene flips and the static trigger keeps logical spacing. Cover this in the host integration spec.
-- [ ] 10.6 i18n: no new `en.json` keys. Confirm that the replaced scene still shows `newYear.snowmanDeliveryToastMessage` and that `npm run validate:specs` reports no missing translation keys.
+- [x] 10.5 RTL check: under `dir="rtl"` the external `mirror` scene flips and the static trigger keeps logical spacing. Cover this in the host integration spec.
+- [x] 10.6 i18n: no new `en.json` keys. Confirm that the replaced scene still shows `newYear.snowmanDeliveryToastMessage` and that `npm run validate:specs` reports no missing translation keys.
 
 ## 11. Browser coverage and full verification
 
-- [ ] 11.1 Extend `libs/celebrations/browser-tests/celebrations-baseline.browser.spec.mjs` with Storybook scenarios for `LottieScene`:
+- [x] 11.1 Extend `libs/celebrations/browser-tests/celebrations-baseline.browser.spec.mjs` with Storybook scenarios for `LottieScene`:
   - slow loader → poster
   - broken asset → poster
   - mid-playback failure → nothing and no replay
   - a stale late resolution after cancel
   - replay reuses cached data
   - the static trigger by keyboard
-- [ ] 11.2 Update `docs/architecture.md` for the composite `resetKey` and the app-owned pack resolution in the celebrations section, and run `npm run validate:docs`.
-- [ ] 11.3 Run `npm run spec:impact` and resolve any reported celebration spec drift.
-- [ ] 11.4 Run `npm run verify:full` once.
+- [x] 11.2 Update `docs/architecture.md` for the composite `resetKey` and the app-owned pack resolution in the celebrations section, and run `npm run validate:docs`.
+- [x] 11.3 Run `npm run spec:impact` and resolve any reported celebration spec drift.
+- [x] 11.4 Run `npm run verify:full` once. (2026-11-07: typecheck, lint and format pass; `test:full` passes after clearing the stale, gitignored `tools/attachment-canvas-consumer-fixture/.npm-cache` that predated `@epam/ai-dial-react-pdf-highlighter@0.3.1`.)
+
+## 11a. Operator-added pack scenes (design D13)
+
+- [x] 11a.1 Add `addCelebrationScenes(event, scenes, labels?)` to `libs/celebrations/src/utils/celebration-descriptor-event.ts`, export it from the `packs` entry, and test that it appends only unknown IDs to `scenes` and `clickSceneIds`, keeps the secret pool and decor behaviors, never overrides a bundled label, and returns the same event when nothing is added. Document it in `libs/celebrations/README.md`.
+  - Verification: `npm run test:file -- libs/celebrations/src/utils/tests/celebration-descriptor-event.spec.tsx`
+- [x] 11a.2 In `apps/chat/src/hooks/celebration/useCelebrationPacks.ts`, compose a known event with `replaceCelebrationScenes` and then `addCelebrationScenes` using the pack's English labels. Update the hook and host tests: an allowlisted unknown ID is added to the click pool with its pack toast, an unlisted one is ignored, and the bundled snowman stays when only `bullfinch-couriers` is allowlisted.
+  - Verification: `npm run test:file -- apps/chat/src/hooks/celebration/tests/useCelebrationPacks.spec.ts`, `npm run test:file -- apps/chat/src/context/tests/CelebrationHost.integration.spec.tsx`
+- [x] 11a.3 Update `apps/chat-api/README.md`, `apps/chat-api/.env.template` and `docs/architecture.md` so `UI_EVENT_EXTERNAL_SCENES` says it replaces or adds scenes. Run `npm run validate:docs` and `npm run validate:specs`.
+- [x] 11a.4 In the themes repository, let `scripts/check-celebration-packs.mjs` accept a known-event scene ID the bundled event lacks as an addition that needs an `en` label, and publish `bullfinch-couriers` under that ID.
 
 ## 12. Themes repository (`epam/ai-dial-chat-themes`, separate PR)
 
-- [ ] 12.1 Author `snowman-delivery` desktop and mobile Lottie (12 s playback, `viewport-stage-v1`, authoring-profile subset, light/dark-neutral) and a static SVG poster. Author a `company-anniversary` `confetti` clip, its poster and an icon.
+- [ ] 12.1 Author the pilot clips (design D10):
+  - "Bullfinch couriers", added as `new-year/bullfinch-couriers` (design D10, D13): desktop 1440×260 and mobile 390×200 Lottie (14 s playback, 16.5 s lifetime, `viewport-stage-v1`, `align: bottom`, `mirror`, authoring-profile subset, light/dark-neutral) and a static SVG poster with both birds and the bitten star
+  - block the near-drop beat (4–5.2 s) first and review it at actual size before the full timeline
+  - artwork in the SnowmanDelivery language (design D10): ink outlines, offset light/shade shapes, faces for alarm, stern and smug, no gradients; three key poses reviewed as a static sheet before animating
+  - visual criteria at actual size on light and dark backgrounds: leader and young bird read as different characters; the ribbon stays attached to both feet while carried; the star swings from the grip and lands upright; the bite and the double take read; both birds leave and the bitten star stays
+  - budgets per variant: ≤ 24 layers (mobile 22), ≤ 900 keyframes (mobile 800), ≤ 2500 vertices, ≤ 120 KiB (mobile 110 KiB), ≤ 350 generated SVG nodes (mobile 320), rendered with `lottie_light` without errors
+  - a `company-anniversary` `confetti` clip, its poster and an icon
+  - Measured (`new-year-default@1.0.0` as proposed in the themes PR; measured on the local stand as 1.0.4, `lottie_light` 5.13.0 in Chromium): both variants 19 layers, 775 keyframes, no gradients, 104.6 KB, at most 311 generated SVG nodes, no render errors; poster 79 KB. Size was cut to fit by rounding to 0.1 px, step keys for faces and a single ribbon stroke. Frames and close-ups reviewed on light and dark backgrounds. Normal-speed playback in the app and a design review are still open. Local iterations were bumped to 1.0.4 to bypass the immutable cache; the PR resets it to 1.0.0 because nothing has been published yet. After publication, each artwork revision is a new pack version, because a published version is immutable and browsers cache it for a year.
 - [ ] 12.2 Publish `static/celebrations/new-year-default/1.0.0/` and `static/celebrations/company-anniversary/1.0.0/` with hashed file names and `manifest.json`, plus `static/celebrations/index.json` with `schemaVersion`, `revision`, `packs` and `defaults`. Do not change `static/config.json`.
 - [ ] 12.3 Add `scripts/check-celebration-packs.mjs`, porting the S0 `check-contract-examples.mjs` rules to the index and manifests, and run it in that repository's CI.
 - [ ] 12.4 Add only new locations to `nginx/themes.conf.template`: `= /celebrations/index.json` gets `public, max-age=60, must-revalidate`, and `/celebrations/` gets `public, max-age=31536000, immutable`. Leave the existing rules untouched. Document the publication order (resources → manifest → `celebrations/index.json`) in that repository's README.
@@ -197,6 +213,6 @@ Nothing changes behavior until slice 10 wires the host, and the default policy s
 
 ## 13. Follow-ups (out of scope, record only)
 
-- [ ] 13.1 File a follow-up for S5: `GET /api/v1/themes` with camelCase normalization (the mapping table in `celebration-pack-contracts`, including the `model-garden-*` drop), the `ThemeContext` migration, `colorScheme`, and theme bindings to packs from `celebrations/index.json`.
-- [ ] 13.2 File a follow-up to confirm ingress rate limiting for `/api/v1/celebrations*` in production deployments (design Open Question 4).
-- [ ] 13.3 Update the scope and acceptance criteria of issue #9221: `/api/v1/celebrations*` instead of `/api/v1/themes*`, and the `snowman-delivery` pilot instead of `sleigh`.
+- [x] 13.1 Record the S5 follow-up: `GET /api/v1/themes` with camelCase normalization (the mapping table in `celebration-pack-contracts`, including the `model-garden-*` drop), the `ThemeContext` migration, `colorScheme`, and theme bindings to packs from `celebrations/index.json`. (2026-11-07: added to the existing S5 issue #9224 as a comment instead of a new issue.)
+- [x] 13.2 Record the follow-up to confirm ingress rate limiting for `/api/v1/celebrations*` in production deployments (design Open Question 4). (2026-11-07: added to the S8 rollout issue #9227 as a checklist comment instead of a separate issue.)
+- [x] 13.3 Update the scope and acceptance criteria of issue #9221: `/api/v1/celebrations*` instead of `/api/v1/themes*`, and the `bullfinch-couriers` added-scene pilot (design D10, D13) instead of `sleigh`.
