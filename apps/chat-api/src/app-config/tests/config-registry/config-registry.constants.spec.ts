@@ -1,5 +1,18 @@
+import { getMetadataStorage } from 'class-validator';
 import { describe, expect, it } from 'vitest';
+import { EnvironmentVariables } from '../../../config/environment.config';
 import { CONFIG_DEFINITIONS } from '../../config-registry/config-registry.constants';
+import {
+  isManagedKey,
+  localOnlyReasonOf,
+  managedKeyOf,
+} from '../../managed-config/key-management';
+import {
+  KeyManagementKind,
+  LocalOnlyReason,
+  ManagedSchemaType,
+  type ManagedValueSchema,
+} from '../../managed-config/managed-config.types';
 
 describe('CONFIG_DEFINITIONS', () => {
   it('contains the customVisualizers entry with the expected shape', () => {
@@ -276,5 +289,173 @@ describe('CONFIG_DEFINITIONS', () => {
         (definition) => definition.key === 'features.halloweenEnabled',
       ),
     ).toBe(false);
+  });
+});
+
+/* Every name EnvironmentVariables declares, from its validation metadata. */
+const ENVIRONMENT_VARIABLE_NAMES: readonly string[] = [
+  ...new Set(
+    getMetadataStorage()
+      .getTargetValidationMetadatas(EnvironmentVariables, '', true, false)
+      .map((metadata) => metadata.propertyName),
+  ),
+];
+
+const MANAGED_1_0_0_KEYS = [
+  'announcement.description',
+  'announcement.items',
+  'announcement.title',
+  'features.usageLimitsControl',
+  'fileManager.availableTabs',
+  'usageLimits.warningThresholdPercent',
+  'welcomeScreen.description',
+];
+
+/* Every string either has an upper length bound or an enum, and every array
+ * an upper item bound, at every nesting level. */
+const collectUnboundedNodes = (
+  schema: ManagedValueSchema,
+  path: string,
+): string[] => {
+  switch (schema.type) {
+    case ManagedSchemaType.String:
+      return 'enum' in schema || typeof schema.maxLength === 'number'
+        ? []
+        : [path];
+    case ManagedSchemaType.Array:
+      return [
+        ...(typeof schema.maxItems === 'number' ? [] : [path]),
+        ...collectUnboundedNodes(schema.items, `${path}/items`),
+      ];
+    case ManagedSchemaType.Object:
+      return Object.entries(schema.properties).flatMap(([name, child]) =>
+        collectUnboundedNodes(child, `${path}/${name}`),
+      );
+    default:
+      return [];
+  }
+};
+
+describe('CONFIG_DEFINITIONS managed classification', () => {
+  const managed = CONFIG_DEFINITIONS.filter(isManagedKey);
+  const valueSchemaOf = (definition: (typeof CONFIG_DEFINITIONS)[number]) =>
+    definition.management?.kind === KeyManagementKind.ManagedConfig
+      ? definition.management.contract.value
+      : undefined;
+
+  it('declares every key once', () => {
+    const keys = CONFIG_DEFINITIONS.map((definition) => definition.key);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it('declares exactly the 48 known keys: 7 managed, 27 local-only and 14 eligible', () => {
+    expect(CONFIG_DEFINITIONS).toHaveLength(48);
+    expect(managed).toHaveLength(7);
+    expect(
+      CONFIG_DEFINITIONS.filter((d) => localOnlyReasonOf(d) !== undefined),
+    ).toHaveLength(27);
+    expect(
+      CONFIG_DEFINITIONS.filter((d) => d.management === undefined),
+    ).toHaveLength(14);
+  });
+
+  it('manages a config key as config and a feature as feature', () => {
+    for (const definition of managed) {
+      expect(definition.management?.kind, definition.key).toBe(
+        definition.type === 'feature'
+          ? KeyManagementKind.ManagedFeature
+          : KeyManagementKind.ManagedConfig,
+      );
+    }
+  });
+
+  it('declares a value schema for every managed json key', () => {
+    const managedJson = managed.filter((d) => d.valueType === 'json');
+    expect(managedJson.length).toBeGreaterThan(0);
+    for (const definition of managedJson) {
+      expect(valueSchemaOf(definition), definition.key).toBeDefined();
+    }
+  });
+
+  it('bounds every managed string and array', () => {
+    for (const definition of CONFIG_DEFINITIONS) {
+      const value = valueSchemaOf(definition);
+      if (value) {
+        expect(collectUnboundedNodes(value, definition.key)).toEqual([]);
+      }
+    }
+  });
+
+  it('keeps environment variable names out of operator descriptions', () => {
+    expect(ENVIRONMENT_VARIABLE_NAMES.length).toBeGreaterThan(100);
+    for (const definition of managed) {
+      const text = JSON.stringify(managedKeyOf(definition)?.contract);
+      for (const name of ENVIRONMENT_VARIABLE_NAMES) {
+        expect(text.includes(name), `${definition.key} mentions ${name}`).toBe(
+          false,
+        );
+      }
+    }
+  });
+
+  it('manages exactly the seven 1.0.0 keys', () => {
+    expect(managed.map((d) => d.key).sort()).toEqual(MANAGED_1_0_0_KEYS);
+  });
+
+  it('gives every managed key in a section a distinct display order', () => {
+    for (const type of ['config', 'feature'] as const) {
+      const orders = managed
+        .filter((d) => d.type === type)
+        .map((d) => managedKeyOf(d)?.contract.order);
+      expect(new Set(orders).size).toBe(orders.length);
+    }
+  });
+
+  it.each([
+    ['asr.modelId', LocalOnlyReason.Capability],
+    ['features.asrEnabled', LocalOnlyReason.Capability],
+    ['utility.modelId', LocalOnlyReason.Capability],
+    ['features.llmConversationNaming', LocalOnlyReason.Capability],
+    ['features.responsesApiEnabled', LocalOnlyReason.Capability],
+    ['features.responsesBackgroundEnabled', LocalOnlyReason.Capability],
+    ['dialCore.externalUrl', LocalOnlyReason.DeploymentTopology],
+    ['mcpApps.sandboxUrl', LocalOnlyReason.DeploymentTopology],
+    ['overlay.enabled', LocalOnlyReason.SecurityPolicy],
+    ['overlay.allowedOrigins', LocalOnlyReason.SecurityPolicy],
+    ['documents.allowedConnectOrigins', LocalOnlyReason.SecurityPolicy],
+    ['customVisualizers', LocalOnlyReason.SecurityPolicy],
+    ['applicationVisualizers', LocalOnlyReason.SecurityPolicy],
+    ['features.visualizerSendMessages', LocalOnlyReason.SecurityPolicy],
+    ['ui.celebrationDelivery.mode', LocalOnlyReason.SecurityPolicy],
+    ['ui.celebrationDelivery.revision', LocalOnlyReason.SecurityPolicy],
+    ['ui.celebrationDelivery.externalScenes', LocalOnlyReason.SecurityPolicy],
+    ['ui.celebrationDelivery.externalEvents', LocalOnlyReason.SecurityPolicy],
+    ['announcement.html', LocalOnlyReason.SecurityPolicy],
+    ['asr.transcribeSizeLimitBytes', LocalOnlyReason.BackendEnforcedLimit],
+    ['attachments.maxFileSizeBytes', LocalOnlyReason.BackendEnforcedLimit],
+    ['projects.contextFileMaxBytes', LocalOnlyReason.BackendEnforcedLimit],
+    ['projects.contextTotalMaxBytes', LocalOnlyReason.BackendEnforcedLimit],
+    ['projects.contextAllowedExtensions', LocalOnlyReason.BackendEnforcedLimit],
+    ['app.version', LocalOnlyReason.BuildMetadata],
+    ['features.footer', LocalOnlyReason.Derived],
+    ['customVariables', LocalOnlyReason.Opaque],
+  ])('marks %s local-only as %s', (key, reason) => {
+    const definition = CONFIG_DEFINITIONS.find((entry) => entry.key === key);
+    expect(definition && localOnlyReasonOf(definition)).toBe(reason);
+  });
+
+  it.each([
+    'features.scheduledTasksEnabled',
+    'features.projectsEnabled',
+    'footer.html',
+    'uiFeatures.enabledUiFeatures',
+  ])('keeps the excluded candidate %s eligible but unmanaged', (key) => {
+    const definition = CONFIG_DEFINITIONS.find((entry) => entry.key === key);
+    expect(definition).toBeDefined();
+    expect(definition?.management).toBeUndefined();
+  });
+
+  it('never manages a key that reads DIAL_CORE_URL', () => {
+    expect(managed.filter((d) => d.envVar === 'DIAL_CORE_URL')).toEqual([]);
   });
 });

@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import {
+  ArrayMaxSize,
   IsArray,
   IsBoolean,
   IsOptional,
@@ -14,7 +15,26 @@ import {
   IsBcp47LocaleList,
   parseContentLocaleList,
 } from '../content-locales';
-import { IFRAME_ORIGIN_PATTERN } from './env-patterns';
+import { APP_ID_PATTERN, IFRAME_ORIGIN_PATTERN } from './env-patterns';
+
+/** The identifiers a deployment serves when `CLIENT_CONFIG_APP_IDS` is absent or blank. */
+export const DEFAULT_CLIENT_CONFIG_APP_IDS: readonly string[] = ['chat-ui'];
+
+/** The most identifiers one deployment may serve. */
+export const MAX_CLIENT_CONFIG_APP_IDS = 16;
+
+/*
+ * Splits a comma-separated list, trims each entry, and drops blank and
+ * repeated entries while keeping the first occurrence's position.
+ */
+const parseUniqueCommaList = (value: unknown): string[] => [
+  ...new Set(
+    String(value)
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0),
+  ),
+];
 
 /** Values forwarded to the client: announcements, deployment defaults, visualizers, overlay and UI features. */
 export class ClientUiEnv {
@@ -78,6 +98,28 @@ export class ClientUiEnv {
   })
   @IsString({ each: true })
   HIDDEN_ENTITY_TAGS?: string[] = [];
+
+  /*
+   * The application identifiers `GET /api/v1/client-config` accepts as
+   * `appId`. A blank value means the default, so an empty Helm value cannot
+   * lock every frontend out.
+   */
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null) return [...DEFAULT_CLIENT_CONFIG_APP_IDS];
+    const ids = parseUniqueCommaList(value);
+    return ids.length > 0 ? ids : [...DEFAULT_CLIENT_CONFIG_APP_IDS];
+  })
+  @IsArray()
+  @ArrayMaxSize(MAX_CLIENT_CONFIG_APP_IDS, {
+    message: `CLIENT_CONFIG_APP_IDS must list at most ${MAX_CLIENT_CONFIG_APP_IDS} application identifiers`,
+  })
+  @Matches(APP_ID_PATTERN, {
+    each: true,
+    message:
+      'Each CLIENT_CONFIG_APP_IDS entry must be a lowercase application identifier of 1-63 characters (a-z, 0-9 and hyphens, not starting with a hyphen)',
+  })
+  CLIENT_CONFIG_APP_IDS?: string[] = [...DEFAULT_CLIENT_CONFIG_APP_IDS];
 
   @IsOptional()
   @IsUrl({ require_tld: false })

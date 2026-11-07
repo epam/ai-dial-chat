@@ -1,0 +1,261 @@
+{
+  "appId": "chat-ui",
+  "schemaVersion": "1.0.0",
+  "schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "urn:dial:chat-ui:managed-config:1.0.0",
+    "title": "DIAL Chat managed configuration",
+    "description": "Values published through Config Studio for one chat-ui instance. A Chat deployment applies them only when its managed reading is enabled; an explicit deployment environment override still wins, and omitted keys use the application default.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["config", "features"],
+    "properties": {
+      "config": {
+        "type": "object",
+        "additionalProperties": false,
+        "title": "Configuration",
+        "properties": {
+          "announcement.title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "\\S",
+            "title": "Announcement title",
+            "description": "Plain-text heading at the start of the announcement banner. Never rendered as markup.",
+            "dial:meta": {
+              "dial:propertyOrder": 10
+            }
+          },
+          "announcement.description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "pattern": "\\S",
+            "title": "Announcement description",
+            "description": "Supporting banner copy. Sanitized to a safe HTML subset before it reaches browsers.",
+            "dial:meta": {
+              "dial:propertyOrder": 11
+            }
+          },
+          "announcement.items": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["title"],
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "\\S",
+                  "title": "Title",
+                  "dial:meta": {
+                    "dial:propertyOrder": 1
+                  }
+                },
+                "description": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000,
+                  "pattern": "\\S",
+                  "title": "Description",
+                  "description": "Sanitized to a safe HTML subset.",
+                  "dial:meta": {
+                    "dial:propertyOrder": 2
+                  }
+                },
+                "link": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["label", "href"],
+                  "title": "Link",
+                  "dial:meta": {
+                    "dial:propertyOrder": 3
+                  },
+                  "properties": {
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100,
+                      "pattern": "\\S",
+                      "title": "Label",
+                      "dial:meta": {
+                        "dial:propertyOrder": 1
+                      }
+                    },
+                    "href": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://[^\\s]+$",
+                      "title": "URL",
+                      "description": "Absolute http or https URL.",
+                      "dial:meta": {
+                        "dial:propertyOrder": 2
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "default": [],
+            "title": "Announcements",
+            "description": "Entries behind the banner's \"+N announcements\" pill, at most 10.",
+            "dial:meta": {
+              "dial:propertyOrder": 12
+            }
+          },
+          "welcomeScreen.description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "pattern": "\\S",
+            "title": "Welcome text",
+            "description": "Plain-text copy below the greeting on the new-chat screen. Never rendered as markup.",
+            "dial:meta": {
+              "dial:propertyOrder": 20
+            }
+          },
+          "fileManager.availableTabs": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": ["all", "my_files", "shared", "organization"]
+            },
+            "default": ["all", "my_files", "shared", "organization"],
+            "title": "File Manager tabs",
+            "description": "File Manager tabs shown to users, in order.",
+            "dial:meta": {
+              "dial:propertyOrder": 30
+            }
+          },
+          "usageLimits.warningThresholdPercent": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 99,
+            "default": 75,
+            "title": "Usage warning threshold (%)",
+            "description": "Percentage of a capped token or cost limit at which the composer shows its usage banner.",
+            "dial:meta": {
+              "dial:propertyOrder": 40
+            }
+          }
+        },
+        "dial:meta": {
+          "dial:propertyOrder": 1
+        }
+      },
+      "features": {
+        "type": "object",
+        "additionalProperties": false,
+        "title": "Features",
+        "properties": {
+          "features.usageLimitsControl": {
+            "$ref": "#/$defs/featureState",
+            "title": "Usage-limits control",
+            "description": "Shows the token and cost usage-limits control next to the model selector.",
+            "dial:meta": {
+              "dial:propertyOrder": 1
+            }
+          }
+        },
+        "dial:meta": {
+          "dial:propertyOrder": 2
+        }
+      }
+    },
+    "dial:semanticConstraints": [
+      {
+        "code": "calendar_date",
+        "pointer": "/$defs/utcTimestamp",
+        "description": "The date and time must exist in the proleptic Gregorian calendar."
+      },
+      {
+        "code": "window_order",
+        "pointer": "/$defs/featureState/properties/availability",
+        "description": "When both are present, startsAt must be earlier than endsAt."
+      }
+    ],
+    "$defs": {
+      "utcTimestamp": {
+        "type": "string",
+        "maxLength": 30,
+        "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]{1,3})?Z$",
+        "title": "UTC timestamp",
+        "description": "RFC 3339 instant in UTC (Z suffix), for example 2026-11-01T08:00:00Z."
+      },
+      "role": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128,
+        "pattern": "^[^\\s,]+$"
+      },
+      "featureState": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["enabled"],
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "dial:meta": {
+              "dial:propertyOrder": 1
+            }
+          },
+          "availability": {
+            "type": "object",
+            "additionalProperties": false,
+            "minProperties": 1,
+            "title": "Availability window",
+            "description": "startsAt is inclusive, endsAt exclusive; omit a boundary for no limit. startsAt must precede endsAt.",
+            "properties": {
+              "startsAt": {
+                "$ref": "#/$defs/utcTimestamp",
+                "title": "Starts at",
+                "dial:meta": {
+                  "dial:propertyOrder": 1
+                }
+              },
+              "endsAt": {
+                "$ref": "#/$defs/utcTimestamp",
+                "title": "Ends at",
+                "dial:meta": {
+                  "dial:propertyOrder": 2
+                }
+              }
+            },
+            "dial:meta": {
+              "dial:propertyOrder": 2
+            }
+          },
+          "targeting": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["roles"],
+            "title": "Targeting",
+            "description": "Users need at least one listed verified role. Omit targeting for no restriction.",
+            "properties": {
+              "roles": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 50,
+                "uniqueItems": true,
+                "items": {
+                  "$ref": "#/$defs/role"
+                },
+                "title": "Roles"
+              }
+            },
+            "dial:meta": {
+              "dial:propertyOrder": 3
+            }
+          }
+        }
+      }
+    }
+  }
+}

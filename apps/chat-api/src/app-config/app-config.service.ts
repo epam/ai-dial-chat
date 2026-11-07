@@ -8,6 +8,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { resolveAppVersion } from '../common/utils/app-version';
+import { DEFAULT_CLIENT_CONFIG_APP_IDS } from '../config/env/client-ui.env';
 import { EnvironmentVariables } from '../config/environment.config';
 import type { AppConfigEvalContext } from './app-config.types';
 import {
@@ -21,6 +22,7 @@ import {
 } from './client-config.mapper';
 import { CompositeConfigProvider } from './config-registry/composite-config.provider';
 import { CONFIG_DEFINITIONS } from './config-registry/config-registry.constants';
+import { applyDeploymentRoleGate } from './deployment-role-gate';
 import type { ClientConfigResponseDto } from './dto/client-config-response.dto';
 import { FeatureKey } from './feature-flags/feature-key.enum';
 
@@ -32,6 +34,8 @@ export class AppConfigService {
   private readonly logger = new Logger(AppConfigService.name);
   /* Normalized once, so an empty-rule warning is logged at startup only. */
   private readonly catalogCreationPolicy: CatalogCreationPolicy;
+  /* The `appId` values `getClientConfig` serves (`CLIENT_CONFIG_APP_IDS`). */
+  private readonly servedAppIds: ReadonlySet<string>;
 
   constructor(
     private readonly compositeProvider: CompositeConfigProvider,
@@ -42,18 +46,29 @@ export class AppConfigService {
       this.configService.get('CATALOG_CREATION_ROLES', { infer: true }),
       (message) => this.logger.warn(message),
     );
+    const servedAppIds = this.configService.get('CLIENT_CONFIG_APP_IDS', {
+      infer: true,
+    });
+    this.servedAppIds = new Set(
+      servedAppIds?.length ? servedAppIds : DEFAULT_CLIENT_CONFIG_APP_IDS,
+    );
   }
 
   async resolveValue(
     key: string,
     context: AppConfigEvalContext,
   ): Promise<unknown | undefined> {
-    return this.compositeProvider.resolve(key, context);
+    return this.resolveSelected(key, context);
   }
 
   async getClientConfig(
     context: AppConfigEvalContext,
   ): Promise<ClientConfigResponseDto> {
+    /* Before the cache lookup, so an unserved identifier never gets an entry.
+     * The response itself does not depend on which served identifier asked. */
+    if (!this.servedAppIds.has(context.appId)) {
+      throw new BadRequestException('Unknown appId');
+    }
     const cacheKey = this.getClientConfigCacheKey(context);
     const cached =
       await this.cacheManager.get<ClientConfigResponseDto>(cacheKey);
@@ -77,7 +92,7 @@ export class AppConfigService {
     const config = createDefaultClientConfig();
 
     for (const def of clientDefinitions) {
-      const value = await this.compositeProvider.resolve(def.key, context);
+      const value = await this.resolveSelected(def.key, context);
       const resolved = value ?? def.defaultValue;
 
       if (def.type === 'feature') {
@@ -136,7 +151,7 @@ export class AppConfigService {
     }
 
     try {
-      const value = await this.compositeProvider.resolve(key, context);
+      const value = await this.resolveSelected(key, context);
       return value === true;
     } catch (err) {
       this.logger.error(
@@ -155,11 +170,46 @@ export class AppConfigService {
   private async resolveConfiguredVersion(
     context: AppConfigEvalContext,
   ): Promise<string> {
-    const resolved = await this.compositeProvider.resolve(
-      'app.version',
-      context,
-    );
+    const resolved = await this.resolveSelected('app.version', context);
     return resolveAppVersion(typeof resolved === 'string' ? resolved : null);
+  }
+
+  /**
+   * Selects a value through the provider chain, then applies the policy that
+   * holds for every source: the feature's deployment role gate. Every
+   * resolution path of this service goes through here.
+   */
+  private async resolveSelected(
+    key: string,
+    context: AppConfigEvalContext,
+  ): Promise<unknown | undefined> {
+    const selected = await this.compositeProvider.resolve(key, context);
+    const allowedRoles = this.readAllowedRoles(key);
+    const gated = applyDeploymentRoleGate(
+      selected,
+      allowedRoles,
+      context.roles,
+    );
+    if (gated !== selected) {
+      this.logger.debug(
+        `Key "${key}" restricted: user roles [${(context.roles ?? []).join(', ')}] not in allowed [${(allowedRoles ?? []).join(', ')}]`,
+      );
+    }
+    return gated;
+  }
+
+  /**
+   * The allowed-roles list of a feature, if it declares one. An unset roles
+   * variable holds its typed default, an empty list, which means no
+   * restriction.
+   */
+  private readAllowedRoles(key: string): readonly string[] | undefined {
+    const rolesVariable = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === key,
+    )?.allowedRolesEnvVar;
+    return rolesVariable
+      ? this.configService.get(rolesVariable, { infer: true })
+      : undefined;
   }
 
   private getClientConfigCacheKey(context: AppConfigEvalContext): string {

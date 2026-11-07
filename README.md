@@ -361,6 +361,18 @@ contract — run these after any change to a `chat-api` controller or DTO.
 | `npm run postman`         | Generate the Postman collection from the current spec |
 | `npm run postman:refresh` | Regenerate the spec and then the Postman collection   |
 
+### Managed configuration schema
+
+Config Studio validates `chat-ui` publications against a schema generated from
+the `chat-api` configuration registry and committed in
+`apps/chat-api/managed-config-schema/`. Regenerate it after changing a managed
+registry entry; a test fails when the committed files drift. See
+[docs/managed-config-schema.md](docs/managed-config-schema.md).
+
+| Command                         | Description                                                                                         |
+| ------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `npm run managed-config-schema` | Regenerate the current schema version and `index.json` (Nx target `chat-api:managed-config-schema`) |
+
 ### Publishing & docs validation
 
 | Command                       | Description                                         |
