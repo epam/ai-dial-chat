@@ -208,6 +208,28 @@ The trusted source of a version is its file and `index.json` entry at an
    tag's `index.json`. Any difference means the uploaded schema is not the
    released artifact.
 
+## Application identifiers
+
+A BFF deployment serves the identifiers listed in `CLIENT_CONFIG_APP_IDS`
+(default `chat-ui`), and `GET /api/v1/client-config` accepts only those as
+`appId`. Each identifier uses the pattern Config Studio enforces for an
+instance's `appId`, `^[a-z0-9][a-z0-9-]{0,62}$`, so each served identifier can
+map to its own Config Studio instance.
+
+- Only `chat-ui` has Chat-owned typed fields, and this repository publishes
+  only the `chat-ui` schema. Launchpad, Models Garden and Config Studio own
+  their contracts and schemas in their own repositories.
+- Today every served identifier receives the same ENV-driven `features` and
+  `config`, with its own echoed `appId` and its own cache entry.
+- Server-side feature gates (`FeatureGuard`, text refinement) always evaluate
+  as `chat-ui`, because they protect Chat BFF endpoints.
+
+The runtime reader does not exist yet. When it is added, `chat-ui` values will
+feed the existing typed fields under this schema, and a payload published for
+another served identifier will be returned unchanged in a new optional
+`appConfig` field. The BFF will check that payload's identity, schema hash and
+size but not its schema. The application validates it against its own contract.
+
 ## Not authorized by this contract
 
 Committing the artifact files is part of Chat's normal pull-request process.

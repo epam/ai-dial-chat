@@ -32,6 +32,7 @@ function makeService(
   ) => Promise<unknown | undefined>,
   model?: string,
   catalogCreationRoles?: CatalogCreationRolesConfig,
+  servedAppIds?: string[],
 ) {
   const compositeProvider = {
     resolve: vi.fn(resolveImpl),
@@ -50,6 +51,7 @@ function makeService(
       new ConfigService({
         UTILITY_MODEL: model,
         CATALOG_CREATION_ROLES: catalogCreationRoles,
+        CLIENT_CONFIG_APP_IDS: servedAppIds,
       }),
       ExplicitEnvironment.of([]),
     ),
@@ -1221,6 +1223,64 @@ describe('AppConfigService', () => {
       expect(result.metadata).toBeDefined();
       expect(typeof result.metadata?.resolvedAt).toBe('string');
       expect(result.metadata?.cacheTtlSeconds).toBe(60);
+    });
+
+    describe('served application identifiers', () => {
+      const makeServing = (servedAppIds?: string[]) =>
+        makeService(async () => undefined, undefined, undefined, servedAppIds);
+
+      it.each([undefined, []])(
+        'serves only chat-ui when the list is %j',
+        async (servedAppIds) => {
+          const { service, cacheManager, compositeProvider } =
+            makeServing(servedAppIds);
+
+          await expect(
+            service.getClientConfig({ appId: 'chat-ui' }),
+          ).resolves.toMatchObject({ appId: 'chat-ui' });
+          cacheManager.get.mockClear();
+          vi.mocked(compositeProvider.resolve).mockClear();
+
+          await expect(
+            service.getClientConfig({ appId: 'launchpad' }),
+          ).rejects.toThrow(new BadRequestException('Unknown appId'));
+          expect(cacheManager.get).not.toHaveBeenCalled();
+          expect(compositeProvider.resolve).not.toHaveBeenCalled();
+        },
+      );
+
+      it('rejects an unlisted identifier before the cache lookup', async () => {
+        const { service, cacheManager } = makeServing(['launchpad', 'chat-ui']);
+
+        await expect(
+          service.getClientConfig({ appId: 'models-garden' }),
+        ).rejects.toBeInstanceOf(BadRequestException);
+        expect(cacheManager.get).not.toHaveBeenCalled();
+        expect(cacheManager.set).not.toHaveBeenCalled();
+      });
+
+      it('returns the same values to every served identifier, each echoing its own appId', async () => {
+        const { service, cacheManager } = makeServing(['launchpad', 'chat-ui']);
+        const context = { userId: 'user-1', roles: ['viewer'] };
+
+        const launchpad = await service.getClientConfig({
+          ...context,
+          appId: 'launchpad',
+        });
+        const chat = await service.getClientConfig({
+          ...context,
+          appId: 'chat-ui',
+        });
+
+        expect(launchpad.appId).toBe('launchpad');
+        expect(chat.appId).toBe('chat-ui');
+        expect(launchpad.features).toEqual(chat.features);
+        expect(launchpad.config).toEqual(chat.config);
+        expect(cacheManager.set.mock.calls.map(([key]) => key)).toEqual([
+          'app-config:client:launchpad:user:user-1:roles:viewer',
+          'app-config:client:chat-ui:user:user-1:roles:viewer',
+        ]);
+      });
     });
 
     it('caches resolved config for the same user and roles', async () => {

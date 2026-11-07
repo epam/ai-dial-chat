@@ -151,3 +151,61 @@ describe('validate - explicit environment presence', () => {
     expect(names.has('CORS_ORIGIN')).toBe(false);
   });
 });
+
+describe('validate - CLIENT_CONFIG_APP_IDS', () => {
+  it.each([undefined, '', ' , '])('defaults %j to chat-ui', (value) => {
+    const config = validate({
+      ...validBaseConfig,
+      ...(value === undefined ? {} : { CLIENT_CONFIG_APP_IDS: value }),
+    });
+
+    expect(config.CLIENT_CONFIG_APP_IDS).toEqual(['chat-ui']);
+  });
+
+  it('trims entries and drops repeats, keeping the first position', () => {
+    const config = validate({
+      ...validBaseConfig,
+      CLIENT_CONFIG_APP_IDS: ' launchpad , chat-ui,launchpad ,,',
+    });
+
+    expect(config.CLIENT_CONFIG_APP_IDS).toEqual(['launchpad', 'chat-ui']);
+  });
+
+  it('accepts a 63-character identifier', () => {
+    const id = `a${'b'.repeat(62)}`;
+    const config = validate({ ...validBaseConfig, CLIENT_CONFIG_APP_IDS: id });
+
+    expect(config.CLIENT_CONFIG_APP_IDS).toEqual([id]);
+  });
+
+  it.each(['chat-ui,Bad_Id', '-x', `a${'b'.repeat(63)}`, 'chat ui'])(
+    'fails startup for %j, naming only the variable',
+    (value) => {
+      const secret = 'a'.repeat(64);
+      let message = '';
+      try {
+        validate({ ...validBaseConfig, CLIENT_CONFIG_APP_IDS: value });
+      } catch (error) {
+        message = (error as Error).message;
+      }
+
+      expect(message).toMatch(/^Environment validation failed:/);
+      expect(message).toContain('CLIENT_CONFIG_APP_IDS');
+      expect(message).not.toContain(secret);
+      expect(message).not.toContain('dial-core.example.com');
+    },
+  );
+
+  it('allows 16 identifiers and rejects 17', () => {
+    const ids = (count: number) =>
+      Array.from({ length: count }, (_, index) => `app-${index}`).join(',');
+
+    expect(
+      validate({ ...validBaseConfig, CLIENT_CONFIG_APP_IDS: ids(16) })
+        .CLIENT_CONFIG_APP_IDS,
+    ).toHaveLength(16);
+    expect(() =>
+      validate({ ...validBaseConfig, CLIENT_CONFIG_APP_IDS: ids(17) }),
+    ).toThrow(/CLIENT_CONFIG_APP_IDS must list at most 16/);
+  });
+});

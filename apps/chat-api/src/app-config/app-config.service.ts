@@ -8,6 +8,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { resolveAppVersion } from '../common/utils/app-version';
+import { DEFAULT_CLIENT_CONFIG_APP_IDS } from '../config/env/client-ui.env';
 import { EnvironmentVariables } from '../config/environment.config';
 import { ExplicitEnvironment } from '../config/explicit-environment';
 import type { AppConfigEvalContext } from './app-config.types';
@@ -34,6 +35,8 @@ export class AppConfigService {
   private readonly logger = new Logger(AppConfigService.name);
   /* Normalized once, so an empty-rule warning is logged at startup only. */
   private readonly catalogCreationPolicy: CatalogCreationPolicy;
+  /* The `appId` values `getClientConfig` serves (`CLIENT_CONFIG_APP_IDS`). */
+  private readonly servedAppIds: ReadonlySet<string>;
 
   constructor(
     private readonly compositeProvider: CompositeConfigProvider,
@@ -44,6 +47,12 @@ export class AppConfigService {
     this.catalogCreationPolicy = normalizeCatalogCreationPolicy(
       this.configService.get('CATALOG_CREATION_ROLES', { infer: true }),
       (message) => this.logger.warn(message),
+    );
+    const servedAppIds = this.configService.get('CLIENT_CONFIG_APP_IDS', {
+      infer: true,
+    });
+    this.servedAppIds = new Set(
+      servedAppIds?.length ? servedAppIds : DEFAULT_CLIENT_CONFIG_APP_IDS,
     );
   }
 
@@ -57,6 +66,11 @@ export class AppConfigService {
   async getClientConfig(
     context: AppConfigEvalContext,
   ): Promise<ClientConfigResponseDto> {
+    /* Before the cache lookup, so an unserved identifier never gets an entry.
+     * The response itself does not depend on which served identifier asked. */
+    if (!this.servedAppIds.has(context.appId)) {
+      throw new BadRequestException('Unknown appId');
+    }
     const cacheKey = this.getClientConfigCacheKey(context);
     const cached =
       await this.cacheManager.get<ClientConfigResponseDto>(cacheKey);
