@@ -48,6 +48,23 @@ export const replaceCelebrationScenes = (
   };
 };
 
+/** Returns a copy of `event` with the scenes it does not define appended to its scenes and click pool; bundled labels win over `labels`. */
+export const addCelebrationScenes = (
+  event: CelebrationEvent,
+  scenes: readonly CelebrationScene[],
+  labels: Readonly<Record<string, string>> = {},
+): CelebrationEvent => {
+  const existing = new Set(event.scenes.map(({ id }) => id));
+  const added = scenes.filter(({ id }) => !existing.has(id));
+  if (!added.length) return event;
+  return {
+    ...event,
+    scenes: [...event.scenes, ...added],
+    clickSceneIds: [...event.clickSceneIds, ...added.map(({ id }) => id)],
+    labels: { ...labels, ...event.labels },
+  };
+};
+
 const createStaticTrigger = (
   labelId: string,
   imageUrl: string | undefined,
