@@ -67,7 +67,6 @@ export const buildResolutionStack = (raw: RawEnvironment): ResolutionStack => {
     composite,
     createMemoryCache() as never,
     configService,
-    explicitEnvironment,
   );
   return { provider, service };
 };

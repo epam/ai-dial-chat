@@ -12,26 +12,35 @@ and no running Chat deployment.
 
 ## Export is not activation
 
-`managed: true` puts a key into the exported contract and nothing else. Chat
-has no managed-config reader today. No resolved value, client-config field,
-feature-flag result or cache entry depends on the flag, and a test strips every
-managed field from the registry and compares the results. Activation (shadow
-reads, then per-key opt-in) will be its own deployment control. That change
-must not treat `managed` as permission to read.
+A managed `management` entry puts a key into the exported contract and nothing
+else. Chat has no managed-config reader today. No effective value,
+client-config field, feature-flag result or cache entry depends on it, and a
+test strips `management` from every registry entry and compares the results.
+The one provider-level difference is that a blank managed text from ENV
+resolves to `undefined` instead of `""` (see
+[Related environment resolution](#related-environment-resolution)); the
+client-config field is `null` either way. Activation (shadow reads, then
+per-key opt-in) will be its own deployment control. That change must not treat
+a managed classification as permission to read.
 
 The schema's root description tells operators that a deployment applies the
 values only once its managed reading is enabled.
 
 ## Classifying a registry key
 
-Every `ConfigDefinition` is in exactly one class. A registry test fails when a
-key is unclassified or in two classes.
+Every `ConfigDefinition` is in exactly one class, set by its single
+`management` field. The field is a discriminated union, so a key cannot be in
+two classes, and a managed config key cannot omit its value schema. The
+helpers live in `managed-config/key-management.ts`.
 
-| Class                  | Registry fields                         | Exported |
-| ---------------------- | --------------------------------------- | -------- |
-| Managed                | `managed: true` and a `managedContract` | Yes      |
-| Local-only             | `localOnly: LocalOnlyReason.<Reason>`   | Never    |
-| Eligible but unmanaged | neither                                 | No       |
+| Class                  | `management`                             | Exported |
+| ---------------------- | ---------------------------------------- | -------- |
+| Managed config key     | `managedConfigKey({ title, …, value })`  | Yes      |
+| Managed feature        | `managedFeatureKey({ title, … })`        | Yes      |
+| Local-only             | `localOnlyKey(LocalOnlyReason.<Reason>)` | Never    |
+| Eligible but unmanaged | absent                                   | No       |
+
+A registry test fails when a managed kind does not match the entry's `type`.
 
 A key is local-only when a remote value would bypass a local dependency:
 
@@ -55,21 +64,23 @@ each needs its own schema version.
 
 ### Opting a key in
 
-1. Set `managed: true` and add a `managedContract` to the key's registry entry:
+1. Set the key's `management` to `managedConfigKey({ … })` for a config key or
+   `managedFeatureKey({ … })` for a feature:
    - `title`: an operator-facing English label;
    - `description`: operator-facing English help, with no environment-variable
      name, environment value, secret or deployment URL (a test checks every
      `EnvironmentVariables` name);
    - `order`: the position within its section;
    - `isHidden`: optional, exported as `isHidden: true`;
-   - `value`: a `ManagedValueSchema`. It is required for a config key and
-     absent for a feature, whose value is always a feature state.
+   - `value` (config keys only): a `ManagedValueSchema`. A feature has none,
+     because its value is always a feature state.
 2. Bound every string (`maxLength` or `enum`) and every array (`maxItems`).
    `ManagedValueSchema` allows only keywords Studio's Ajv enforces with
    `validateFormats: false`. It has no `$ref`, `$id` or `format`.
 3. Bump `MANAGED_CONFIG_SCHEMA_VERSION` (see below), add the new version to
    `SUPPORTED_MANAGED_CONFIG_SCHEMA_VERSIONS`, and run
-   `npm run managed-config-schema`.
+   `npm run managed-config-schema`. It prints the new version's hash; pin it by
+   hand in `PINNED_MANAGED_CONFIG_SCHEMA_SHA256`.
 4. Add the version's contract fixtures under
    `apps/chat-api/src/app-config/tests/managed-config/fixtures/`.
 
@@ -108,8 +119,8 @@ undeclared is rejected.
   `calendar_date` (the date exists) and `window_order` (`startsAt` before
   `endsAt`).
 - Identity, schema version and revision are not in the payload. Studio's
-  revision envelope carries them, and `checkManagedSnapshot` defines the checks
-  a future reader applies.
+  revision envelope carries them. The checks a reader applies to that envelope
+  belong to the reader change.
 
 ## Artifact and index
 
@@ -147,7 +158,9 @@ registry and the managed-config modules. It starts no Nest application and
 reads no environment variable, `.env` file or `ConfigService` value, so nothing
 from the machine running it reaches the artifact. It regenerates the current
 version, reads older committed versions back unchanged, and rewrites
-`index.json`:
+`index.json`. It refuses to write a version pinned in
+`PINNED_MANAGED_CONFIG_SCHEMA_SHA256` (`managed-config.constants.ts`) whose
+generated hash differs from its pin:
 
 ```sh
 npm run managed-config-schema   # nx run chat-api:managed-config-schema
@@ -161,7 +174,9 @@ npm run managed-config-schema   # nx run chat-api:managed-config-schema
   its index entry);
 - the index does not list exactly the committed files;
 - `current` is not the highest version;
-- `supported` differs from `SUPPORTED_MANAGED_CONFIG_SCHEMA_VERSIONS`.
+- `supported` differs from `SUPPORTED_MANAGED_CONFIG_SCHEMA_VERSIONS`;
+- the committed versions and hashes differ from
+  `PINNED_MANAGED_CONFIG_SCHEMA_SHA256`.
 
 ## Versioning
 
@@ -188,12 +203,14 @@ enforces three rules:
 Rule 3 is a fixture-based check of the superset rule, not a proof. Review
 stays responsible for semantics.
 
-**Released versions are frozen.** A version that was part of a Chat release
-tag is never edited; a correction is a new version. The hash test catches an
-edit without its index entry. Changing both the file and its index entry is a
-review-blocking change, because tests cannot see Git history. A future reader
-also rejects any snapshot whose `schemaSha256` differs from Chat's own hash for
-that version.
+**Pinned versions are frozen.** Every committed version's hash is pinned by
+hand in `PINNED_MANAGED_CONFIG_SCHEMA_SHA256`, which the generator never
+writes. A correction, an annotation change included, is a new version with its
+own pin. The generator refuses to rewrite a pinned version, the hash test
+catches a file edited without its index entry, and the pin test catches a file
+and index entry edited together. Changing a pin is the only way to change a
+committed version, and it is a review-blocking change once the version has
+been part of a Chat release tag.
 
 ## Verifying an upload
 
@@ -227,7 +244,7 @@ map to its own Config Studio instance.
 The runtime reader does not exist yet. When it is added, `chat-ui` values will
 feed the existing typed fields under this schema, and a payload published for
 another served identifier will be returned unchanged in a new optional
-`appConfig` field. The BFF will check that payload's identity, schema hash and
+`appConfig` field. The BFF will check that payload's identity, revision and
 size but not its schema. The application validates it against its own contract.
 
 ## Not authorized by this contract
@@ -247,13 +264,16 @@ selected, with unchanged effective values:
 
 - `validate()` (`apps/chat-api/src/config/validation.ts`) records which
   variables were present in the raw environment. `EnvConfigProvider` returns a
-  value from a key's own variable, or reads its allowed-roles variable, only
-  when the variable is explicit. A typed default such as
-  `SCHEDULED_TASKS_ENABLED = false` therefore falls through to the registry
-  default.
+  value from a key's own variable only when the variable is explicit. A typed
+  default such as `SCHEDULED_TASKS_ENABLED = false` therefore falls through to
+  the registry default.
+- A managed text set to an empty or whitespace-only string resolves to
+  `undefined`, so a variable a chart templates as `""` cannot shadow a
+  lower-priority source. The client mapping hides blank and null alike.
 - Environment parsing lives in pure functions under
   `apps/chat-api/src/app-config/env-admission/`, and the capability rules
   (ASR, conversation naming, footer) in `feature-capabilities.ts`.
 - `AppConfigService` applies the deployment role gate
   (`deployment-role-gate.ts`) once, after selection, on every resolution path.
-  No source can bypass it by returning `true`.
+  No source can bypass it by returning `true`. An absent roles variable holds
+  its typed default, an empty list, which means no restriction.

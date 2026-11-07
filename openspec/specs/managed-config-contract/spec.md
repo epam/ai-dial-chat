@@ -2,29 +2,29 @@
 
 ## Purpose
 
-Which configuration registry keys Chat exports to DIAL Config Studio as managed values, which keys stay local-only and why, the `{ config, features }` payload shape and its value constraints, and the snapshot identity checks a future runtime reader applies. Export is not activation: no runtime value depends on the managed flag.
+Which configuration registry keys Chat exports to DIAL Config Studio as managed values, which keys stay local-only and why, and the `{ config, features }` payload shape and its value constraints. Export is not activation: no runtime value depends on the managed classification.
 
 ## Requirements
 ### Requirement: Managed opt-in is explicit and separate from activation
 
-A registry key SHALL be part of the managed contract only when its definition sets `managed: true`. The default SHALL be unmanaged. A managed key SHALL declare a `managedContract` with an operator-facing English `title` and `description`, a numeric display `order`, an optional `isHidden` flag, and a value schema when the key is not a feature, and SHALL NOT be local-only. A key with `valueType: 'json'` SHALL be managed only with a declared value schema. Marking a key managed SHALL NOT change any resolved value, client-config field, feature-flag result or cache entry; the runtime reads no managed source until a later change adds activation. Operator-facing descriptions SHALL NOT contain environment-variable names, environment values, secrets, or deployment URLs.
+A registry key SHALL be part of the managed contract only when its definition's `management` is a managed config key (`managedConfigKey`) or a managed feature (`managedFeatureKey`). The default SHALL be unmanaged (`management` absent). `management` SHALL be one discriminated value, so a key cannot be both managed and local-only. A managed key's contract SHALL carry an operator-facing English `title` and `description`, a numeric display `order` and an optional `isHidden` flag; a managed config key's contract SHALL also carry a value schema, and a managed feature's contract SHALL NOT, because a feature's value is always a feature state. A managed config key SHALL belong to a `type: 'config'` entry and a managed feature to a `type: 'feature'` entry. Marking a key managed SHALL NOT change any effective resolved value, client-config field, feature-flag result or cache entry; the runtime reads no managed source until a later change adds activation. Operator-facing descriptions SHALL NOT contain environment-variable names, environment values, secrets, or deployment URLs.
 
 **Feature flag:** Not gated. **RTL impact:** None. **i18n impact:** None — operator titles and descriptions are schema annotations rendered by Config Studio, not Chat UI strings.
 
 #### Scenario: Default is unmanaged
 
-- **WHEN** a registry entry has no `managed` field
+- **WHEN** a registry entry has no `management` field
 - **THEN** it is absent from the exported schema
 
-#### Scenario: Managed JSON key without a schema is rejected
+#### Scenario: Managed config key without a schema does not compile
 
-- **WHEN** an entry with `valueType: 'json'` sets `managed: true` without a value schema
-- **THEN** the registry rule test fails
+- **WHEN** an entry declares `managedConfigKey` with a contract that has no `value`
+- **THEN** the TypeScript build fails
 
-#### Scenario: Managed and local-only together are rejected
+#### Scenario: Managed kind that does not match the entry type is rejected
 
-- **WHEN** an entry sets both `managed: true` and `localOnly`
-- **THEN** the registry rule test fails
+- **WHEN** a `type: 'config'` entry is declared with `managedFeatureKey`
+- **THEN** the registry rule test fails and the generator throws
 
 #### Scenario: Description leaks an environment variable name
 
@@ -33,7 +33,7 @@ A registry key SHALL be part of the managed contract only when its definition se
 
 ### Requirement: Local-only keys are classified with a reason and never exported
 
-A key that depends on a local capability, credential, deployment topology, security policy, backend-enforced limit, build metadata, a derivation from another local value, or opaque client-owned JSON SHALL be marked `localOnly` with one of the reasons `capability`, `deployment-topology`, `security-policy`, `backend-enforced-limit`, `build-metadata`, `derived` or `opaque`. Local-only keys SHALL never appear in the exported schema, so a payload that contains one is rejected as an unknown key. Every current registry key SHALL be classified, and at least the following SHALL be local-only: `asr.modelId`, `features.asrEnabled`, `utility.modelId` and `features.llmConversationNaming` as `capability`; `dialCore.externalUrl` and `mcpApps.sandboxUrl` as `deployment-topology`; `overlay.allowedOrigins`, `documents.allowedConnectOrigins`, `customVisualizers`, `applicationVisualizers` and `announcement.html` as `security-policy`; `attachments.maxFileSizeBytes` and the project context limits as `backend-enforced-limit`; `app.version` as `build-metadata`; `features.footer` as `derived`; and `customVariables` as `opaque`.
+A key that depends on a local capability, credential, deployment topology, security policy, backend-enforced limit, build metadata, a derivation from another local value, or opaque client-owned JSON SHALL be classified with `localOnlyKey` and one of the reasons `capability`, `deployment-topology`, `security-policy`, `backend-enforced-limit`, `build-metadata`, `derived` or `opaque`. Local-only keys SHALL never appear in the exported schema, so a payload that contains one is rejected as an unknown key. Every current registry key SHALL be classified, and at least the following SHALL be local-only: `asr.modelId`, `features.asrEnabled`, `utility.modelId` and `features.llmConversationNaming` as `capability`; `dialCore.externalUrl` and `mcpApps.sandboxUrl` as `deployment-topology`; `overlay.allowedOrigins`, `documents.allowedConnectOrigins`, `customVisualizers`, `applicationVisualizers` and `announcement.html` as `security-policy`; `attachments.maxFileSizeBytes` and the project context limits as `backend-enforced-limit`; `app.version` as `build-metadata`; `features.footer` as `derived`; and `customVariables` as `opaque`.
 
 **RTL impact:** None. **i18n impact:** None.
 
@@ -146,46 +146,3 @@ Schema version 1.0.0 SHALL contain exactly these managed keys: `announcement.tit
 
 - **WHEN** the registry is inspected
 - **THEN** `features.scheduledTasksEnabled`, `features.projectsEnabled`, `footer.html` and `uiFeatures.enabledUiFeatures` are eligible but unmanaged
-
-### Requirement: Snapshot identity acceptance for a runtime consumer
-
-Chat SHALL provide a pure check, performing no I/O and not wired to any reader, that a future runtime consumer applies to a published snapshot `{ instanceId, appId, environment, schemaVersion, schemaSha256, revisionId, sha256, publishedAt, payload }` before using it. The snapshot SHALL be accepted only when:
-
-- `appId` is `chat-ui`;
-- `instanceId` equals the configured instance;
-- `environment` equals the configured environment when one is configured;
-- `schemaVersion` is in the build's supported list;
-- `schemaSha256` equals the canonical hash of Chat's own artifact for that version;
-- `revisionId` and `sha256` are non-empty;
-- the canonical payload is at most 57,344 bytes;
-- a `revisionId` seen before still carries the same `sha256`.
-
-Each rejection SHALL return a distinct code: `app_mismatch`, `instance_mismatch`, `environment_mismatch`, `unsupported_schema`, `schema_hash_mismatch`, `invalid_identity`, `payload_too_large`, or `revision_changed`. Payload schema and semantic validation are separate checks with their own issues.
-
-**RTL impact:** None. **i18n impact:** None. **Observability:** None in this change; the check returns codes and logs nothing.
-
-#### Scenario: Matching snapshot
-
-- **WHEN** a snapshot for the configured instance names `schemaVersion` `1.0.0` with the hash from `index.json`
-- **THEN** the check returns ok
-
-#### Scenario: Same version, different schema
-
-- **WHEN** a snapshot names `schemaVersion` `1.0.0` but a different `schemaSha256`
-- **THEN** the check returns `schema_hash_mismatch`
-
-#### Scenario: Another instance
-
-- **WHEN** the snapshot's `instanceId` is `chat-prod` while the configured instance is `chat-dev`
-- **THEN** the check returns `instance_mismatch`
-
-#### Scenario: Unsupported version
-
-- **WHEN** the snapshot names `2.0.0`, which this build does not list
-- **THEN** the check returns `unsupported_schema`
-
-#### Scenario: Rewritten revision
-
-- **WHEN** a snapshot repeats an already seen `revisionId` with a different `sha256`
-- **THEN** the check returns `revision_changed`
-

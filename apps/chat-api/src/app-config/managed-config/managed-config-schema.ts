@@ -1,7 +1,10 @@
 import type { ConfigDefinition } from '../app-config.types';
 import { MANAGED_CONFIG_APP_ID } from './managed-config.constants';
 import {
+  KeyManagementKind,
   ManagedSchemaType,
+  type ManagedConfigKeyContract,
+  type ManagedKeyAnnotations,
   type ManagedValueSchema,
 } from './managed-config.types';
 
@@ -188,41 +191,81 @@ const registryDefault = (definition: ConfigDefinition): JsonSchemaObject => {
   return { default: defaultValue };
 };
 
-const keyAnnotations = (definition: ConfigDefinition): JsonSchemaObject => {
-  const contract = definition.managedContract;
-  if (!contract) {
-    throw new TypeError(`${definition.key} is managed without a contract`);
-  }
-  return {
-    title: contract.title,
-    description: contract.description,
-    ...(contract.isHidden ? { isHidden: true } : {}),
-    ...meta(contract.order),
-  };
-};
+const keyAnnotations = (
+  annotations: ManagedKeyAnnotations,
+): JsonSchemaObject => ({
+  title: annotations.title,
+  description: annotations.description,
+  ...(annotations.isHidden ? { isHidden: true } : {}),
+  ...meta(annotations.order),
+});
 
-const configProperty = (definition: ConfigDefinition): JsonSchemaObject => {
-  const value = definition.managedContract?.value;
-  if (!value) {
-    throw new TypeError(`${definition.key} is managed without a value schema`);
-  }
-  return {
-    ...toJsonSchema(value),
-    ...registryDefault(definition),
-    ...keyAnnotations(definition),
-  };
-};
+const configProperty = (
+  definition: ConfigDefinition,
+  contract: ManagedConfigKeyContract,
+): JsonSchemaObject => ({
+  ...toJsonSchema(contract.value),
+  ...registryDefault(definition),
+  ...keyAnnotations(contract),
+});
 
 /* Per-key title/description are siblings of the reference; SchemaRenderer
  * merges them over the shared definition. */
-const featureProperty = (definition: ConfigDefinition): JsonSchemaObject => ({
+const featureProperty = (
+  annotations: ManagedKeyAnnotations,
+): JsonSchemaObject => ({
   $ref: '#/$defs/featureState',
-  ...keyAnnotations(definition),
+  ...keyAnnotations(annotations),
 });
 
-const byOrder = (left: ConfigDefinition, right: ConfigDefinition): number =>
-  (left.managedContract?.order ?? 0) - (right.managedContract?.order ?? 0) ||
-  left.key.localeCompare(right.key, 'en');
+interface ManagedEntry<Contract extends ManagedKeyAnnotations> {
+  readonly definition: ConfigDefinition;
+  readonly contract: Contract;
+}
+
+/* A managed kind must match the definition's own type, so a config contract
+ * never lands in the features section or the other way round. */
+const assertType = (
+  definition: ConfigDefinition,
+  type: ConfigDefinition['type'],
+): void => {
+  if (definition.type !== type) {
+    throw new TypeError(
+      `${definition.key} is a ${definition.type} managed as a ${type}`,
+    );
+  }
+};
+
+const byDisplayOrder = (
+  left: ManagedEntry<ManagedKeyAnnotations>,
+  right: ManagedEntry<ManagedKeyAnnotations>,
+): number =>
+  left.contract.order - right.contract.order ||
+  left.definition.key.localeCompare(right.definition.key, 'en');
+
+const configEntries = (
+  definitions: readonly ConfigDefinition[],
+): ManagedEntry<ManagedConfigKeyContract>[] =>
+  definitions
+    .flatMap((definition) => {
+      const { management } = definition;
+      if (management?.kind !== KeyManagementKind.ManagedConfig) return [];
+      assertType(definition, 'config');
+      return [{ definition, contract: management.contract }];
+    })
+    .sort(byDisplayOrder);
+
+const featureEntries = (
+  definitions: readonly ConfigDefinition[],
+): ManagedEntry<ManagedKeyAnnotations>[] =>
+  definitions
+    .flatMap((definition) => {
+      const { management } = definition;
+      if (management?.kind !== KeyManagementKind.ManagedFeature) return [];
+      assertType(definition, 'feature');
+      return [{ definition, contract: management.contract }];
+    })
+    .sort(byDisplayOrder);
 
 /** The root `$id` of a schema version. */
 export const managedConfigSchemaId = (schemaVersion: string): string =>
@@ -238,13 +281,8 @@ export const buildManagedConfigSchema = (
   definitions: readonly ConfigDefinition[],
   schemaVersion: string,
 ): JsonSchemaObject => {
-  const managed = definitions.filter((definition) => definition.managed);
-  const config = managed
-    .filter((definition) => definition.type === 'config')
-    .sort(byOrder);
-  const features = managed
-    .filter((definition) => definition.type === 'feature')
-    .sort(byOrder);
+  const config = configEntries(definitions);
+  const features = featureEntries(definitions);
 
   return {
     $schema: JSON_SCHEMA_DIALECT,
@@ -260,9 +298,9 @@ export const buildManagedConfigSchema = (
         additionalProperties: false,
         title: 'Configuration',
         properties: Object.fromEntries(
-          config.map((definition) => [
+          config.map(({ definition, contract }) => [
             definition.key,
-            configProperty(definition),
+            configProperty(definition, contract),
           ]),
         ),
         ...meta(1),
@@ -272,9 +310,9 @@ export const buildManagedConfigSchema = (
         additionalProperties: false,
         title: 'Features',
         properties: Object.fromEntries(
-          features.map((definition) => [
+          features.map(({ definition, contract }) => [
             definition.key,
-            featureProperty(definition),
+            featureProperty(contract),
           ]),
         ),
         ...meta(2),

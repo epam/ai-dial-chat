@@ -26,7 +26,11 @@ import {
  *   the registry default applies one step later;
  * - since role gating moved after selection into AppConfigService, the
  *   provider returns the ungated value for a restricted or anonymous caller
- *   (role-gate rows with `roles beta`), and the gate turns it off later.
+ *   (role-gate rows with `roles beta`), and the gate turns it off later;
+ * - a blank managed text (`empty` rows of `announcement.title`,
+ *   `announcement.description` and `welcomeScreen.description`) resolves to
+ *   `undefined` at the provider instead of `''`, so it cannot shadow a
+ *   lower-priority source; the client mapping hides blank and null alike.
  * The effective value of every row is the one recorded before both changes.
  */
 
@@ -118,7 +122,7 @@ const KEY_EXPECTATIONS: Readonly<
       provider: ' Maintenance ',
       effective: 'Maintenance',
     },
-    [EnvCaseName.Empty]: { provider: '', effective: null },
+    [EnvCaseName.Empty]: { provider: undefined, effective: null },
   },
   'announcement.description': {
     [EnvCaseName.Absent]: { provider: undefined, effective: null },
@@ -126,7 +130,7 @@ const KEY_EXPECTATIONS: Readonly<
       provider: 'Tonight <script>x</script><b>only</b>',
       effective: 'Tonight <b>only</b>',
     },
-    [EnvCaseName.Empty]: { provider: '', effective: null },
+    [EnvCaseName.Empty]: { provider: undefined, effective: null },
   },
   'announcement.items': {
     [EnvCaseName.Absent]: { provider: undefined, effective: [] },
@@ -147,7 +151,7 @@ const KEY_EXPECTATIONS: Readonly<
   'welcomeScreen.description': {
     [EnvCaseName.Absent]: { provider: undefined, effective: null },
     [EnvCaseName.NonDefault]: { provider: 'Welcome', effective: 'Welcome' },
-    [EnvCaseName.Empty]: { provider: '', effective: null },
+    [EnvCaseName.Empty]: { provider: undefined, effective: null },
   },
   'footer.html': {
     [EnvCaseName.Absent]: { provider: undefined, effective: '' },

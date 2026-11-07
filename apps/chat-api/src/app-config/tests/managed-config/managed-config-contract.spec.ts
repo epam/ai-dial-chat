@@ -4,6 +4,7 @@ import type { ErrorObject } from 'ajv';
 import { describe, expect, it } from 'vitest';
 import { CONFIG_DEFINITIONS } from '../../config-registry/config-registry.constants';
 import { canonicalByteLength } from '../../managed-config/canonical-json';
+import { localOnlyReasonOf } from '../../managed-config/key-management';
 import type { ManagedConfigArtifact } from '../../managed-config/managed-config-artifact';
 import { MAX_MANAGED_PAYLOAD_BYTES } from '../../managed-config/managed-config.constants';
 import { createStudioAjv } from './studio-contract.fixtures';
@@ -75,27 +76,28 @@ describe('managed-config 1.0.0 contract', () => {
     );
   });
 
-  it.each(CONFIG_DEFINITIONS.filter((definition) => definition.localOnly))(
-    'rejects the local-only key $key as unknown',
-    (definition) => {
-      const section = definition.type === 'feature' ? 'features' : 'config';
-      const value = definition.type === 'feature' ? { enabled: true } : 'x';
-      expect(
-        errorsOf({
-          config: {},
-          features: {},
-          [section]: { [definition.key]: value },
-        }),
-      ).toContainEqual({
-        keyword: 'additionalProperties',
-        instancePath: `/${section}`,
-      });
-    },
-  );
+  it.each(
+    CONFIG_DEFINITIONS.filter(
+      (definition) => localOnlyReasonOf(definition) !== undefined,
+    ),
+  )('rejects the local-only key $key as unknown', (definition) => {
+    const section = definition.type === 'feature' ? 'features' : 'config';
+    const value = definition.type === 'feature' ? { enabled: true } : 'x';
+    expect(
+      errorsOf({
+        config: {},
+        features: {},
+        [section]: { [definition.key]: value },
+      }),
+    ).toContainEqual({
+      keyword: 'additionalProperties',
+      instancePath: `/${section}`,
+    });
+  });
 
   it.each(
     CONFIG_DEFINITIONS.filter(
-      (definition) => !definition.managed && !definition.localOnly,
+      (definition) => definition.management === undefined,
     ),
   )(
     'rejects the unmanaged key $key until a version exports it',

@@ -117,8 +117,8 @@ export type ManagedValueSchema =
   | ManagedArraySchema
   | ManagedObjectSchema;
 
-/** What a managed registry key exports into the Config Studio schema. */
-export interface ManagedKeyContract {
+/** What every managed key exports besides its value constraints. */
+export interface ManagedKeyAnnotations {
   /** Operator-facing English label (the schema `title`). */
   readonly title: string;
   /**
@@ -131,69 +131,44 @@ export interface ManagedKeyContract {
   readonly order: number;
   /** Whether Config Studio hides the field (exported as `isHidden: true`). */
   readonly isHidden?: boolean;
-  /**
-   * The value constraints. Required for a config key, absent for a feature,
-   * whose value is always a `ManagedFeatureState`.
-   */
-  readonly value?: ManagedValueSchema;
 }
 
-/** When a managed feature is available; at least one boundary is present. */
-export interface ManagedAvailability {
-  /** Inclusive start, a UTC timestamp `YYYY-MM-DDTHH:MM:SS[.fff]Z`. */
-  readonly startsAt?: string;
-  /** Exclusive end, a UTC timestamp `YYYY-MM-DDTHH:MM:SS[.fff]Z`. */
-  readonly endsAt?: string;
+/** What a managed config key exports: its annotations and value constraints. */
+export interface ManagedConfigKeyContract extends ManagedKeyAnnotations {
+  /** The value constraints. */
+  readonly value: ManagedValueSchema;
 }
 
-/** Who a managed feature is for; omitted targeting means everyone. */
-export interface ManagedTargeting {
-  /** 1–50 distinct verified role names; a user needs at least one. */
-  readonly roles: readonly string[];
+/** How a registry key relates to the Config Studio contract. */
+export enum KeyManagementKind {
+  /** A config key exported with its own value schema. */
+  ManagedConfig = 'managed-config',
+  /** A feature exported with the shared feature-state schema. */
+  ManagedFeature = 'managed-feature',
+  /** A key that can never be managed; it is never exported. */
+  LocalOnly = 'local-only',
 }
 
-/** The published state of one managed feature. */
-export interface ManagedFeatureState {
-  /** Whether the feature is on, within `availability` and `targeting`. */
-  readonly enabled: boolean;
-  /** Optional availability window. */
-  readonly availability?: ManagedAvailability;
-  /** Optional role targeting. */
-  readonly targeting?: ManagedTargeting;
+/** A config key in the exported contract. */
+export interface ManagedConfigKey {
+  readonly kind: KeyManagementKind.ManagedConfig;
+  readonly contract: ManagedConfigKeyContract;
 }
 
-/**
- * A managed publication. Members are keyed by full registry keys; an omitted
- * key means the publication supplies no value for it.
- */
-export interface ManagedConfigPayload {
-  /** Plain JSON values of managed config keys, never `null`. */
-  readonly config: Readonly<Record<string, unknown>>;
-  /** States of managed features. */
-  readonly features: Readonly<Record<string, ManagedFeatureState>>;
+/** A feature in the exported contract; its value is always a feature state. */
+export interface ManagedFeatureKey {
+  readonly kind: KeyManagementKind.ManagedFeature;
+  readonly contract: ManagedKeyAnnotations;
+}
+
+/** A key that stays local, with the dependency a remote value would bypass. */
+export interface LocalOnlyKey {
+  readonly kind: KeyManagementKind.LocalOnly;
+  readonly reason: LocalOnlyReason;
 }
 
 /**
- * A published snapshot as Config Studio's runtime read returns it. Identity
- * lives in this envelope, not in the payload.
+ * A registry key's classification. Absent means eligible but unmanaged: the
+ * key could be managed by a future schema version but is not exported today.
  */
-export interface ManagedConfigSnapshot {
-  /** The Config Studio runner instance. */
-  readonly instanceId: string;
-  /** The Config Studio application id; `chat-ui` for Chat. */
-  readonly appId: string;
-  /** The instance's environment label, when it has one. */
-  readonly environment?: string;
-  /** The schema version the payload was validated against. */
-  readonly schemaVersion: string;
-  /** Canonical SHA-256 of that schema. */
-  readonly schemaSha256: string;
-  /** Immutable publication revision. */
-  readonly revisionId: string;
-  /** Canonical SHA-256 of the payload. */
-  readonly sha256: string;
-  /** Publication time. */
-  readonly publishedAt: string;
-  /** The published values. */
-  readonly payload: unknown;
-}
+export type KeyManagement = ManagedConfigKey | ManagedFeatureKey | LocalOnlyKey;

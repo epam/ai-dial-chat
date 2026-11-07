@@ -17,6 +17,7 @@ import {
 import {
   MANAGED_CONFIG_SCHEMA_VERSION,
   MAX_MANAGED_SCHEMA_BYTES,
+  PINNED_MANAGED_CONFIG_SCHEMA_SHA256,
   SUPPORTED_MANAGED_CONFIG_SCHEMA_VERSIONS,
 } from '../../managed-config/managed-config.constants';
 import {
@@ -27,9 +28,10 @@ import {
 
 /*
  * Ties the committed artifacts in apps/chat-api/managed-config-schema to the
- * registry. A released version is never edited: regenerate with
- * `npm run managed-config-schema` after a registry change, and bump
- * MANAGED_CONFIG_SCHEMA_VERSION when the contract changes.
+ * registry. A pinned version is never edited: regenerate with
+ * `npm run managed-config-schema` after a registry change, bump
+ * MANAGED_CONFIG_SCHEMA_VERSION when the contract changes, and pin the new
+ * version's hash by hand.
  */
 const ARTIFACT_DIRECTORY = join(__dirname, '../../../../managed-config-schema');
 const FIXTURE_DIRECTORY = join(__dirname, 'fixtures');
@@ -102,6 +104,17 @@ describe('committed managed-config artifacts', () => {
       expect(entry?.schemaSha256).toBe(canonicalSha256(artifact.schema));
       expect(entry?.canonicalBytes).toBe(canonicalByteLength(artifact.schema));
     }
+  });
+
+  it('pins every committed version to its hand-written hash', () => {
+    expect(
+      Object.fromEntries(
+        index.versions.map((entry) => [
+          entry.schemaVersion,
+          entry.schemaSha256,
+        ]),
+      ),
+    ).toEqual(PINNED_MANAGED_CONFIG_SCHEMA_SHA256);
   });
 
   it('lists exactly the committed files in the index', () => {

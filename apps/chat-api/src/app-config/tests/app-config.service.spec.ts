@@ -7,12 +7,12 @@ import {
   CatalogCreationType,
   type CatalogCreationRolesConfig,
 } from '../../config/catalog-creation.types';
-import { ExplicitEnvironment } from '../../config/explicit-environment';
 import { AppConfigService } from '../app-config.service';
 import type { AppConfigEvalContext } from '../app-config.types';
 import type { CompositeConfigProvider } from '../config-registry/composite-config.provider';
 import { CONFIG_DEFINITIONS } from '../config-registry/config-registry.constants';
 import { FeatureKey } from '../feature-flags/feature-key.enum';
+import { isManagedKey } from '../managed-config/key-management';
 import {
   buildResolutionStack,
   type RawEnvironment,
@@ -53,7 +53,6 @@ function makeService(
         CATALOG_CREATION_ROLES: catalogCreationRoles,
         CLIENT_CONFIG_APP_IDS: servedAppIds,
       }),
-      ExplicitEnvironment.of([]),
     ),
     cacheManager,
     compositeProvider,
@@ -1902,7 +1901,6 @@ describe('AppConfigService', () => {
           set: vi.fn(),
         } as never,
         new ConfigService(),
-        ExplicitEnvironment.of([]),
       );
 
       const result = await service.resolveValue('asr.modelId', ctx);
@@ -1918,10 +1916,7 @@ describe('AppConfigService', () => {
   describe('deployment role gate', () => {
     /* The provider chain selects `true` for every key; only the gate,
      * applied after selection, can turn a feature off. */
-    const makeGatedService = (
-      held: Record<string, unknown>,
-      explicit: readonly string[] = Object.keys(held),
-    ) => {
+    const makeGatedService = (held: Record<string, unknown>) => {
       const compositeProvider = {
         resolve: vi.fn(async () => true),
       } as unknown as CompositeConfigProvider;
@@ -1935,7 +1930,6 @@ describe('AppConfigService', () => {
           }),
         } as never,
         new ConfigService(held),
-        ExplicitEnvironment.of(explicit),
       );
     };
     const restricted = { SCHEDULED_TASKS_ENABLED_ROLES: ['beta'] };
@@ -1976,14 +1970,6 @@ describe('AppConfigService', () => {
       ).toBe(true);
     });
 
-    it('ignores a role list that was not set explicitly', async () => {
-      const service = makeGatedService(restricted, []);
-
-      expect(
-        await service.isEnabled(FeatureKey.ScheduledTasksEnabled, ctx),
-      ).toBe(true);
-    });
-
     it('treats an empty role list as unrestricted', async () => {
       const service = makeGatedService({ SCHEDULED_TASKS_ENABLED_ROLES: [] });
 
@@ -2003,7 +1989,7 @@ describe('AppConfigService', () => {
   });
 
   describe('managed classification', () => {
-    const MANAGED_FIELDS = ['managed', 'localOnly', 'managedContract'] as const;
+    const MANAGED_FIELDS = ['management'] as const;
 
     /* Resolves every client-config field and every feature flag through the
      * real ENV chain, without the time-dependent metadata. */
@@ -2067,6 +2053,14 @@ describe('AppConfigService', () => {
           SCHEDULED_TASKS_ENABLED_ROLES: 'beta',
         },
       ],
+      [
+        'blank managed text set through ENV',
+        {
+          ANNOUNCEMENT_TITLE: '',
+          ANNOUNCEMENT_DESCRIPTION: '   ',
+          WELCOME_SCREEN_DESCRIPTION: '',
+        },
+      ],
     ])(
       'resolves identically with and without managed metadata for %s',
       async (_name, env) => {
@@ -2076,9 +2070,7 @@ describe('AppConfigService', () => {
           snapshotResolution(env),
         );
 
-        expect(
-          CONFIG_DEFINITIONS.filter((d) => d.managed === true),
-        ).toHaveLength(7);
+        expect(CONFIG_DEFINITIONS.filter(isManagedKey)).toHaveLength(7);
         expect(stripped).toEqual(withMetadata);
       },
     );

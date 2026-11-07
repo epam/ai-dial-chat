@@ -10,7 +10,6 @@ import type { Cache } from 'cache-manager';
 import { resolveAppVersion } from '../common/utils/app-version';
 import { DEFAULT_CLIENT_CONFIG_APP_IDS } from '../config/env/client-ui.env';
 import { EnvironmentVariables } from '../config/environment.config';
-import { ExplicitEnvironment } from '../config/explicit-environment';
 import type { AppConfigEvalContext } from './app-config.types';
 import {
   evaluateCatalogCreationPolicy,
@@ -42,7 +41,6 @@ export class AppConfigService {
     private readonly compositeProvider: CompositeConfigProvider,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly configService: ConfigService<EnvironmentVariables>,
-    private readonly explicitEnvironment: ExplicitEnvironment,
   ) {
     this.catalogCreationPolicy = normalizeCatalogCreationPolicy(
       this.configService.get('CATALOG_CREATION_ROLES', { infer: true }),
@@ -200,20 +198,17 @@ export class AppConfigService {
     return gated;
   }
 
-  /** The explicitly configured allowed-roles list of a feature, if any. */
+  /**
+   * The allowed-roles list of a feature, if it declares one. An unset roles
+   * variable holds its typed default, an empty list, which means no
+   * restriction.
+   */
   private readAllowedRoles(key: string): readonly string[] | undefined {
     const rolesVariable = CONFIG_DEFINITIONS.find(
       (definition) => definition.key === key,
     )?.allowedRolesEnvVar;
-    if (!rolesVariable || !this.explicitEnvironment.isExplicit(rolesVariable)) {
-      return undefined;
-    }
-    const roles: unknown = this.configService.get(rolesVariable, {
-      infer: true,
-    });
-    return Array.isArray(roles) &&
-      roles.every((role) => typeof role === 'string')
-      ? roles
+    return rolesVariable
+      ? this.configService.get(rolesVariable, { infer: true })
       : undefined;
   }
 

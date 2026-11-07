@@ -80,7 +80,7 @@ Each schema version SHALL be committed in `apps/chat-api/managed-config-schema/`
 - **WHEN** Chat's canonicalizer hashes the fixed vector
 - **THEN** the digest is `b69925e54531b6b61268fda5dca74b8d1eb6d566616ec5932258abac6c9edde0`
 
-### Requirement: Committed artifacts stay tied to the registry and released versions stay frozen
+### Requirement: Committed artifacts stay tied to the registry and pinned versions stay frozen
 
 A test in the default test run SHALL fail in any of these cases:
 
@@ -88,9 +88,10 @@ A test in the default test run SHALL fail in any of these cases:
 - any committed version file does not hash to its `index.json` entry;
 - the index does not list exactly the committed files;
 - `current` is not the highest listed version;
-- `supported` differs from the build's supported-version list.
+- `supported` differs from the build's supported-version list;
+- the committed versions and their `schemaSha256` differ from `PINNED_MANAGED_CONFIG_SCHEMA_SHA256`, a hand-edited constant the generator never writes.
 
-A version that is part of a Chat release SHALL never be modified; any correction SHALL be a new version.
+A pinned version SHALL never be modified; any correction, an annotation change included, SHALL be a new version with its own pin. The generator SHALL refuse to write a pinned version whose generated hash differs from its pin.
 
 **RTL impact:** None. **i18n impact:** None.
 
@@ -98,6 +99,11 @@ A version that is part of a Chat release SHALL never be modified; any correction
 
 - **WHEN** a managed key's bound is changed in the registry and the artifact is not regenerated
 - **THEN** the artifact test fails
+
+#### Scenario: Pinned version regenerated in place
+
+- **WHEN** a managed key's operator description changes in the registry without a version bump and `npm run managed-config-schema` runs
+- **THEN** the generator fails, naming the pinned and the generated hash, and writes nothing
 
 #### Scenario: Released file edited alone
 

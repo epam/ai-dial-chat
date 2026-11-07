@@ -21,6 +21,7 @@ import {
   deriveCapabilityFeature,
   type CapabilityInputs,
 } from '../feature-capabilities';
+import { isManagedKey } from '../managed-config/key-management';
 import { CONFIG_DEFINITIONS } from './config-registry.constants';
 
 @Injectable()
@@ -151,6 +152,17 @@ export class EnvConfigProvider implements ConfigProvider, OnModuleInit {
       this.logger.warn(
         `Config key "${key}" has a type mismatch: expected ${definition.valueType}, got ${typeof rawValue}`,
       );
+      return undefined;
+    }
+
+    /* A blank managed text carries no operator intent: the client mapping
+     * hides blank and null alike. Returning it would let a variable a chart
+     * templates as "" shadow every lower-priority source. */
+    if (
+      isManagedKey(definition) &&
+      typeof rawValue === 'string' &&
+      rawValue.trim() === ''
+    ) {
       return undefined;
     }
 

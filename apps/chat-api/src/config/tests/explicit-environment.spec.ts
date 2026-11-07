@@ -40,15 +40,6 @@ describe('collectExplicitEnvironment', () => {
     ).toBe(true);
   });
 
-  it('returns a set that cannot be modified', () => {
-    const names = collectExplicitEnvironment({ A: '1' }) as Set<string>;
-
-    expect(() => names.add('B')).toThrow(TypeError);
-    expect(() => names.delete('A')).toThrow(TypeError);
-    expect(() => names.clear()).toThrow(TypeError);
-    expect([...names]).toEqual(['A']);
-  });
-
   it('does not keep a reference to the raw object', () => {
     const raw: Record<string, unknown> = { A: '1' };
     const names = collectExplicitEnvironment(raw);

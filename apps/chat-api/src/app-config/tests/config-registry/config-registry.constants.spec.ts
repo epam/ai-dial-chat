@@ -3,6 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { EnvironmentVariables } from '../../../config/environment.config';
 import { CONFIG_DEFINITIONS } from '../../config-registry/config-registry.constants';
 import {
+  isManagedKey,
+  localOnlyReasonOf,
+  managedKeyOf,
+} from '../../managed-config/key-management';
+import {
+  KeyManagementKind,
   LocalOnlyReason,
   ManagedSchemaType,
   type ManagedValueSchema,
@@ -331,78 +337,49 @@ const collectUnboundedNodes = (
 };
 
 describe('CONFIG_DEFINITIONS managed classification', () => {
-  it('classifies every key exactly once', () => {
-    for (const definition of CONFIG_DEFINITIONS) {
-      const classes = [
-        definition.managed === true,
-        definition.localOnly !== undefined,
-      ].filter(Boolean);
-      expect(classes.length, definition.key).toBeLessThanOrEqual(1);
-    }
+  const managed = CONFIG_DEFINITIONS.filter(isManagedKey);
+  const valueSchemaOf = (definition: (typeof CONFIG_DEFINITIONS)[number]) =>
+    definition.management?.kind === KeyManagementKind.ManagedConfig
+      ? definition.management.contract.value
+      : undefined;
+
+  it('declares every key once', () => {
     const keys = CONFIG_DEFINITIONS.map((definition) => definition.key);
     expect(new Set(keys).size).toBe(keys.length);
   });
 
   it('declares exactly the 48 known keys: 7 managed, 27 local-only and 14 eligible', () => {
     expect(CONFIG_DEFINITIONS).toHaveLength(48);
-    expect(CONFIG_DEFINITIONS.filter((d) => d.managed === true)).toHaveLength(
-      7,
-    );
+    expect(managed).toHaveLength(7);
     expect(
-      CONFIG_DEFINITIONS.filter((d) => d.localOnly !== undefined),
+      CONFIG_DEFINITIONS.filter((d) => localOnlyReasonOf(d) !== undefined),
     ).toHaveLength(27);
     expect(
-      CONFIG_DEFINITIONS.filter(
-        (d) => d.managed !== true && d.localOnly === undefined,
-      ),
+      CONFIG_DEFINITIONS.filter((d) => d.management === undefined),
     ).toHaveLength(14);
   });
 
-  it('gives every managed key a contract and never marks it local-only', () => {
-    for (const definition of CONFIG_DEFINITIONS.filter(
-      (d) => d.managed === true,
-    )) {
-      expect(definition.managedContract, definition.key).toBeDefined();
-      expect(definition.localOnly, definition.key).toBeUndefined();
-    }
-  });
-
-  it('gives a contract only to managed keys', () => {
-    for (const definition of CONFIG_DEFINITIONS.filter(
-      (d) => d.managed !== true,
-    )) {
-      expect(definition.managedContract, definition.key).toBeUndefined();
-    }
-  });
-
-  it('declares a value schema for every managed config key and none for a feature', () => {
-    for (const definition of CONFIG_DEFINITIONS.filter(
-      (d) => d.managed === true,
-    )) {
-      if (definition.type === 'feature') {
-        expect(
-          definition.managedContract?.value,
-          definition.key,
-        ).toBeUndefined();
-      } else {
-        expect(definition.managedContract?.value, definition.key).toBeDefined();
-      }
+  it('manages a config key as config and a feature as feature', () => {
+    for (const definition of managed) {
+      expect(definition.management?.kind, definition.key).toBe(
+        definition.type === 'feature'
+          ? KeyManagementKind.ManagedFeature
+          : KeyManagementKind.ManagedConfig,
+      );
     }
   });
 
   it('declares a value schema for every managed json key', () => {
-    const managedJson = CONFIG_DEFINITIONS.filter(
-      (d) => d.managed === true && d.valueType === 'json',
-    );
+    const managedJson = managed.filter((d) => d.valueType === 'json');
     expect(managedJson.length).toBeGreaterThan(0);
     for (const definition of managedJson) {
-      expect(definition.managedContract?.value, definition.key).toBeDefined();
+      expect(valueSchemaOf(definition), definition.key).toBeDefined();
     }
   });
 
   it('bounds every managed string and array', () => {
     for (const definition of CONFIG_DEFINITIONS) {
-      const value = definition.managedContract?.value;
+      const value = valueSchemaOf(definition);
       if (value) {
         expect(collectUnboundedNodes(value, definition.key)).toEqual([]);
       }
@@ -411,10 +388,8 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
 
   it('keeps environment variable names out of operator descriptions', () => {
     expect(ENVIRONMENT_VARIABLE_NAMES.length).toBeGreaterThan(100);
-    for (const definition of CONFIG_DEFINITIONS) {
-      const contract = definition.managedContract;
-      if (!contract) continue;
-      const text = JSON.stringify(contract);
+    for (const definition of managed) {
+      const text = JSON.stringify(managedKeyOf(definition)?.contract);
       for (const name of ENVIRONMENT_VARIABLE_NAMES) {
         expect(text.includes(name), `${definition.key} mentions ${name}`).toBe(
           false,
@@ -424,18 +399,14 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
   });
 
   it('manages exactly the seven 1.0.0 keys', () => {
-    expect(
-      CONFIG_DEFINITIONS.filter((d) => d.managed === true)
-        .map((d) => d.key)
-        .sort(),
-    ).toEqual(MANAGED_1_0_0_KEYS);
+    expect(managed.map((d) => d.key).sort()).toEqual(MANAGED_1_0_0_KEYS);
   });
 
   it('gives every managed key in a section a distinct display order', () => {
     for (const type of ['config', 'feature'] as const) {
-      const orders = CONFIG_DEFINITIONS.filter(
-        (d) => d.managed === true && d.type === type,
-      ).map((d) => d.managedContract?.order);
+      const orders = managed
+        .filter((d) => d.type === type)
+        .map((d) => managedKeyOf(d)?.contract.order);
       expect(new Set(orders).size).toBe(orders.length);
     }
   });
@@ -469,10 +440,8 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     ['features.footer', LocalOnlyReason.Derived],
     ['customVariables', LocalOnlyReason.Opaque],
   ])('marks %s local-only as %s', (key, reason) => {
-    expect(
-      CONFIG_DEFINITIONS.find((definition) => definition.key === key)
-        ?.localOnly,
-    ).toBe(reason);
+    const definition = CONFIG_DEFINITIONS.find((entry) => entry.key === key);
+    expect(definition && localOnlyReasonOf(definition)).toBe(reason);
   });
 
   it.each([
@@ -482,18 +451,11 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     'uiFeatures.enabledUiFeatures',
   ])('keeps the excluded candidate %s eligible but unmanaged', (key) => {
     const definition = CONFIG_DEFINITIONS.find((entry) => entry.key === key);
-    expect(definition?.managed).toBeUndefined();
-    expect(definition?.localOnly).toBeUndefined();
+    expect(definition).toBeDefined();
+    expect(definition?.management).toBeUndefined();
   });
 
   it('never manages a key that reads DIAL_CORE_URL', () => {
-    expect(
-      CONFIG_DEFINITIONS.filter(
-        (definition) =>
-          definition.managed === true &&
-          (definition.envVar === 'DIAL_CORE_URL' ||
-            definition.allowedRolesEnvVar === 'DIAL_CORE_URL'),
-      ),
-    ).toEqual([]);
+    expect(managed.filter((d) => d.envVar === 'DIAL_CORE_URL')).toEqual([]);
   });
 });

@@ -7,7 +7,8 @@
  * managed-config modules: no Nest application starts, and no environment
  * variable, `.env` file or ConfigService value is read, so nothing from the
  * machine running it can reach the artifact. Older committed versions are
- * read back unchanged, because a released version is never regenerated.
+ * read back unchanged, and a version pinned in
+ * `PINNED_MANAGED_CONFIG_SCHEMA_SHA256` is never rewritten with another hash.
  */
 import { readdir, readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
@@ -18,7 +19,10 @@ import {
   managedConfigArtifactFileName,
   type ManagedConfigArtifact,
 } from './app-config/managed-config/managed-config-artifact';
-import { MANAGED_CONFIG_SCHEMA_VERSION } from './app-config/managed-config/managed-config.constants';
+import {
+  MANAGED_CONFIG_SCHEMA_VERSION,
+  PINNED_MANAGED_CONFIG_SCHEMA_SHA256,
+} from './app-config/managed-config/managed-config.constants';
 
 const outputDirectory = join(__dirname, '..', 'managed-config-schema');
 const INDEX_FILE = 'index.json';
@@ -61,12 +65,26 @@ const generate = async (): Promise<void> => {
       `MANAGED_CONFIG_SCHEMA_VERSION ${MANAGED_CONFIG_SCHEMA_VERSION} is older than the committed ${index.current}`,
     );
   }
+  const generated = index.versions.find(
+    (entry) => entry.schemaVersion === current.schemaVersion,
+  );
+  const pinned = PINNED_MANAGED_CONFIG_SCHEMA_SHA256[current.schemaVersion];
+  if (pinned !== undefined && generated?.schemaSha256 !== pinned) {
+    throw new Error(
+      `Schema ${current.schemaVersion} is pinned to ${pinned}, but the registry now generates ${generated?.schemaSha256}. Bump MANAGED_CONFIG_SCHEMA_VERSION instead of changing a pinned version.`,
+    );
+  }
 
   await writeFile(
     join(outputDirectory, managedConfigArtifactFileName(current.schemaVersion)),
     toFileContent(current),
   );
   await writeFile(join(outputDirectory, INDEX_FILE), toFileContent(index));
+  if (pinned === undefined) {
+    console.info(
+      `Pin ${current.schemaVersion} in PINNED_MANAGED_CONFIG_SCHEMA_SHA256: '${generated?.schemaSha256}'`,
+    );
+  }
 };
 
 generate().catch((error: unknown) => {

@@ -5,30 +5,16 @@
  */
 export const EXPLICIT_ENVIRONMENT_PROPERTY = '__explicitEnvironment';
 
-const READ_ONLY_SET_METHODS = ['add', 'delete', 'clear'] as const;
-
-const toReadOnlySet = (names: Iterable<string>): ReadonlySet<string> => {
-  const frozen = new Set(names);
-  for (const method of READ_ONLY_SET_METHODS) {
-    Object.defineProperty(frozen, method, {
-      value: () => {
-        throw new TypeError('The explicit environment is read-only');
-      },
-    });
-  }
-  return Object.freeze(frozen);
-};
-
 /**
  * Returns the names of the variables an operator actually set: every entry of
  * the raw environment (process variables merged with loaded `.env` files)
  * whose value is defined, before class initializers apply. An empty string
- * counts as set. The returned set cannot be modified.
+ * counts as set.
  */
 export const collectExplicitEnvironment = (
   raw: Readonly<Record<string, unknown>>,
 ): ReadonlySet<string> =>
-  toReadOnlySet(Object.keys(raw).filter((name) => raw[name] !== undefined));
+  new Set(Object.keys(raw).filter((name) => raw[name] !== undefined));
 
 /**
  * Stores the explicit names on the validated environment object returned by
@@ -67,7 +53,7 @@ export class ExplicitEnvironment {
 
   /** An environment in which exactly `names` are set. */
   static of(names: Iterable<string>): ExplicitEnvironment {
-    const set = toReadOnlySet(names);
+    const set: ReadonlySet<string> = new Set(names);
     return new ExplicitEnvironment((name) => set.has(name));
   }
 

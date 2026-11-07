@@ -2,6 +2,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CONFIG_DEFINITIONS } from '../../config-registry/config-registry.constants';
 import { canonicalByteLength } from '../../managed-config/canonical-json';
 import {
+  isManagedKey,
+  managedConfigKey,
+} from '../../managed-config/key-management';
+import {
   buildManagedConfigArtifact,
   buildManagedConfigIndex,
 } from '../../managed-config/managed-config-artifact';
@@ -16,6 +20,7 @@ import {
   MAX_MANAGED_SCHEMA_BYTES,
   SUPPORTED_MANAGED_CONFIG_SCHEMA_VERSIONS,
 } from '../../managed-config/managed-config.constants';
+import { KeyManagementKind } from '../../managed-config/managed-config.types';
 import {
   createStudioAjv,
   findStudioStructuralViolations,
@@ -99,7 +104,7 @@ describe('buildManagedConfigSchema', () => {
       ...Object.keys(propertiesOf(generate(), 'features')),
     ]);
     for (const definition of CONFIG_DEFINITIONS) {
-      if (definition.managed !== true) {
+      if (!isManagedKey(definition)) {
         expect(exported.has(definition.key), definition.key).toBe(false);
       }
     }
@@ -123,10 +128,13 @@ describe('buildManagedConfigSchema', () => {
   it('emits isHidden only for a hidden key', () => {
     const hidden = CONFIG_DEFINITIONS.map((definition) =>
       definition.key === 'welcomeScreen.description' &&
-      definition.managedContract
+      definition.management?.kind === KeyManagementKind.ManagedConfig
         ? {
             ...definition,
-            managedContract: { ...definition.managedContract, isHidden: true },
+            management: managedConfigKey({
+              ...definition.management.contract,
+              isHidden: true,
+            }),
           }
         : definition,
     );
