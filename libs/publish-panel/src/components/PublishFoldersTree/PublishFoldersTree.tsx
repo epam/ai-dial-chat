@@ -310,9 +310,30 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     );
   };
 
+  /*
+   * "Add child" on a folder whose children are not listed yet expands it,
+   * which makes the host fetch them. Opening the editor right away would let
+   * a name be confirmed before that listing lands, when the parent still
+   * looks empty — so a duplicate of an existing child passed the check. The
+   * editor therefore opens once the parent is no longer loading (the parent
+   * row shows the host's loading indicator meanwhile), with a default name
+   * that is unique among the children that actually exist.
+   */
+  const [pendingCreateParentPath, setPendingCreateParentPath] = useState<
+    string[] | null
+  >(null);
+  if (
+    pendingCreateParentPath != null &&
+    !loadingPaths?.has(toFolderPathKey(pendingCreateParentPath))
+  ) {
+    setPendingCreateParentPath(null);
+    setCreatingParentPath(pendingCreateParentPath);
+    setCreatingFolderName(resolveNewFolderName(pendingCreateParentPath));
+  }
+
   const beginCreatingFolder = (parentPath: string[]) => {
-    setCreatingParentPath(parentPath);
-    setCreatingFolderName(resolveNewFolderName(parentPath));
+    setCreatingParentPath(null);
+    setPendingCreateParentPath(parentPath);
     lastLiveValidationErrorRef.current = null;
     isCancellingRef.current = false;
     const parentKey = toFolderPathKey(parentPath);

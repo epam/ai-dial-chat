@@ -245,11 +245,18 @@ export const usePublishFolders = ({
     ]);
   }, [cache, rememberedFolderKeys, createdFolderKeys]);
 
+  /* Fetches are tracked by API path (`A/B/`); the tree keys folders as `A/B`. */
+  const loadingFolderKeys = useMemo(
+    () =>
+      new Set([...loadingPaths].map((apiPath) => apiPath.replace(/\/$/, ''))),
+    [loadingPaths],
+  );
+
   return {
     folderItems,
     expandedPaths,
     loadedPaths,
-    loadingPaths,
+    loadingPaths: loadingFolderKeys,
     onExpandedPathsChange,
     onCreatePublishFolder,
     rememberPublishFolder,
