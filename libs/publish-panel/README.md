@@ -221,7 +221,7 @@ import { PublishAccessRules } from '@epam/ai-dial-publish-panel';
 
 ### PublishFoldersTree
 
-Destination folder tree with search, lazy expansion, and inline folder creation (trailing button and per-row context menu). Folders are displayed in name order at every level, and filtering is suspended while the inline create row is open so creating a folder from a search that matched nothing works (the unmatched query becomes the pre-filled name).
+Destination folder tree with search, lazy expansion, and inline folder creation (trailing button and per-row context menu). Folders are displayed in name order at every level, and filtering is suspended while the inline create row is open so creating a folder from a search that matched nothing works (the unmatched query becomes the pre-filled name). Creating a folder under a parent listed in `loadingPaths` (as "Add child" on a collapsed folder makes it) opens the inline editor only once that parent leaves `loadingPaths`, so the name is checked against the children that actually exist; `loadingPaths` must therefore use the same `/`-joined keys as the folder paths.
 
 ```tsx
 import { PublishFoldersTree } from '@epam/ai-dial-publish-panel';

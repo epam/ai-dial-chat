@@ -722,6 +722,55 @@ describe('PublishFoldersTree', () => {
       expect(onCreateDestinationFolder).not.toHaveBeenCalled();
     });
 
+    it('opens the new-folder editor only once the parent has loaded, so an existing child is a duplicate', async () => {
+      const onCreateDestinationFolder = vi.fn();
+      const design: FolderDestinationRoot = {
+        key: 'personal',
+        label: 'Personal',
+        items: [{ path: ['Design'], name: 'Design' }],
+        loadingPaths: new Set(['Design']),
+      };
+      const renderWith = (root: FolderDestinationRoot) => (
+        <PublishFoldersTree
+          searchQuery=""
+          roots={[root]}
+          destination={{ rootKey: 'personal', path: ['Design'] }}
+          onDestinationChange={vi.fn()}
+          onCreateDestinationFolder={onCreateDestinationFolder}
+        />
+      );
+      const { rerender } = render(renderWith(design));
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Create new folder' }),
+      );
+      expect(capturedProps.current?.createdFolderPath).toBeNull();
+
+      rerender(
+        renderWith({
+          ...design,
+          loadingPaths: new Set(),
+          items: [
+            {
+              path: ['Design'],
+              name: 'Design',
+              children: [
+                { path: ['Design', 'New folder'], name: 'New folder' },
+              ],
+            },
+          ],
+        }),
+      );
+
+      expect(capturedProps.current?.createdFolderPath).toBe(':personal/Design');
+      expect(capturedProps.current?.newFolderDefaultName).toBe('New folder 2');
+      expect(
+        capturedProps.current?.onRenameValidate?.('new folder', {} as never),
+      ).toBe('A folder with this name already exists.');
+      act(() => capturedProps.current?.onCreateFolderSave?.('New folder'));
+      expect(onCreateDestinationFolder).not.toHaveBeenCalled();
+    });
+
     it('omits "Add sibling" on a root node', () => {
       renderMultiRoot();
       const menuItems = capturedProps.current?.getContextMenuItems?.(

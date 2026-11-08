@@ -56,7 +56,7 @@ const makeOrganization = (): UsePublishFoldersResult => ({
   folderItems: [{ path: ['EPAM'], name: 'EPAM' }],
   expandedPaths: new Set<string>(),
   loadedPaths: new Set<string>(),
-  loadingPaths: new Set(['EPAM/']),
+  loadingPaths: new Set(['EPAM']),
   onExpandedPathsChange: vi.fn(),
   onCreatePublishFolder: vi.fn().mockResolvedValue(undefined),
   rememberPublishFolder: vi.fn(),
