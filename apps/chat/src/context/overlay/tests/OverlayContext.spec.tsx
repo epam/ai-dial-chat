@@ -9,8 +9,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthStatus } from '../../../types/auth-status';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import { useAppConfig as mockUseAppConfig } from '../../tests/app-config-context-mock';
+import type { ConversationListBridge } from '../bridges';
 import {
-  type ConversationListBridge,
   OverlayProvider,
   shouldDeferOverlayModeUntilConfigReady,
   useOptionalOverlay,
@@ -857,6 +857,143 @@ describe('OverlayContext', () => {
       });
     });
 
+    describe('request dispatch', () => {
+      const makeActiveBridge = () => ({
+        getMessages: vi.fn(() => ({ messages: [] })),
+        sendMessage: vi.fn().mockResolvedValue({ messages: [] }),
+        setInputContent: vi.fn(),
+        setSystemPrompt: vi.fn().mockResolvedValue({ systemPrompt: 'sp' }),
+        setTemperature: vi.fn().mockResolvedValue({ temperature: 0.4 }),
+      });
+
+      const responseFor = (
+        postMessageSpy: ReturnType<typeof vi.spyOn>,
+        requestId: string,
+      ) =>
+        (postMessageSpy.mock.calls as Array<[unknown, unknown?]>)
+          .map(
+            ([message]) =>
+              message as {
+                type?: string;
+                requestId?: string;
+                payload?: unknown;
+                error?: { code: OverlayRequestErrorCode; message: string };
+              },
+          )
+          .find((message) => message.requestId === requestId);
+
+      const setup = () => {
+        const { result } = renderHook(() => useOverlay(), { wrapper });
+        establishHostDomain();
+        const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+        const bridge = makeActiveBridge();
+        act(() => {
+          result.current.registerActiveConversationBridge(bridge, 'conv-1');
+        });
+        return { bridge, postMessageSpy };
+      };
+
+      it.each([
+        {
+          type: OverlayRequestType.SetInputContent,
+          payload: { content: 'draft' },
+          method: 'setInputContent' as const,
+          args: ['draft'],
+          response: undefined,
+        },
+        {
+          type: OverlayRequestType.SetSystemPrompt,
+          payload: { systemPrompt: 'Be brief' },
+          method: 'setSystemPrompt' as const,
+          args: ['Be brief'],
+          response: { systemPrompt: 'sp' },
+        },
+        {
+          type: OverlayRequestType.SetTemperature,
+          payload: { temperature: 0.4 },
+          method: 'setTemperature' as const,
+          args: [0.4],
+          response: { temperature: 0.4 },
+        },
+        {
+          type: OverlayRequestType.SendMessage,
+          payload: { content: 'hi' },
+          method: 'sendMessage' as const,
+          args: ['hi'],
+          response: { messages: [] },
+        },
+      ])(
+        'forwards $type to the bridge and posts its result',
+        async ({ type, payload, method, args, response }) => {
+          const { bridge, postMessageSpy } = setup();
+
+          dispatchFromHost({ type, requestId: 'req', payload });
+
+          await waitFor(() => {
+            expect(bridge[method]).toHaveBeenCalledWith(...args);
+            expect(responseFor(postMessageSpy, 'req')).toEqual({
+              type: `${type}/RESPONSE`,
+              requestId: 'req',
+              payload: response,
+            });
+          });
+        },
+      );
+
+      it.each([
+        {
+          type: OverlayRequestType.SetInputContent,
+          payload: { content: 1 },
+          method: 'setInputContent' as const,
+        },
+        {
+          type: OverlayRequestType.SetSystemPrompt,
+          payload: {},
+          method: 'setSystemPrompt' as const,
+        },
+        {
+          type: OverlayRequestType.SetTemperature,
+          payload: { temperature: 'hot' },
+          method: 'setTemperature' as const,
+        },
+        {
+          type: OverlayRequestType.SetTemperature,
+          payload: { temperature: Number.POSITIVE_INFINITY },
+          method: 'setTemperature' as const,
+        },
+      ])(
+        'rejects a malformed $type payload with INVALID_PAYLOAD',
+        ({ type, payload, method }) => {
+          const { bridge, postMessageSpy } = setup();
+
+          dispatchFromHost({ type, requestId: 'bad', payload });
+
+          expect(bridge[method]).not.toHaveBeenCalled();
+          expect(responseFor(postMessageSpy, 'bad')?.error).toEqual({
+            code: OverlayRequestErrorCode.InvalidPayload,
+            message: `The request payload does not match the ${type} contract.`,
+          });
+        },
+      );
+
+      it('reports a synchronous bridge throw as REQUEST_EXECUTION_FAILED', () => {
+        const { bridge, postMessageSpy } = setup();
+        bridge.getMessages.mockImplementation(() => {
+          throw new Error('boom');
+        });
+
+        dispatchFromHost({
+          type: OverlayRequestType.GetMessages,
+          requestId: 'throws',
+        });
+
+        expect(responseFor(postMessageSpy, 'throws')?.error).toEqual({
+          code: OverlayRequestErrorCode.RequestExecutionFailed,
+          message: 'boom',
+        });
+      });
+    });
+
     it('responds immediately when an active-conversation method is called from the empty composer', () => {
       const { result } = renderHook(() => useOverlay(), { wrapper });
       establishHostDomain();
@@ -1407,6 +1544,100 @@ describe('OverlayContext', () => {
       });
 
       expect(bridge.renameConversation).not.toHaveBeenCalled();
+    });
+
+    describe('request dispatch', () => {
+      const errorFor = (
+        postMessageSpy: ReturnType<typeof vi.spyOn>,
+        requestId: string,
+      ) =>
+        (
+          responsesFor(postMessageSpy, requestId)[0] as unknown as
+            | { error?: { code: OverlayRequestErrorCode; message: string } }
+            | undefined
+        )?.error;
+
+      const setup = (bridge = makeListBridge()) => {
+        const { result } = renderHook(() => useOverlay(), { wrapper });
+        establishHostDomain();
+        const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+        act(() => {
+          result.current.registerConversationListBridge(bridge);
+        });
+        return { bridge, postMessageSpy };
+      };
+
+      it('forwards CREATE_CONVERSATION without a payload as undefined options', async () => {
+        const { bridge } = setup();
+
+        dispatchFromHost({
+          type: OverlayRequestType.CreateConversation,
+          requestId: 'create-empty',
+        });
+
+        await waitFor(() => {
+          expect(bridge.createConversation).toHaveBeenCalledWith({
+            deploymentId: undefined,
+            firstMessage: undefined,
+          });
+        });
+      });
+
+      it.each([
+        {
+          type: OverlayRequestType.CreateConversation,
+          payload: { deploymentId: 1 },
+          method: 'createConversation' as const,
+        },
+        {
+          type: OverlayRequestType.DeleteConversation,
+          payload: {},
+          method: 'deleteConversation' as const,
+        },
+        {
+          type: OverlayRequestType.RenameConversation,
+          payload: { id: 'conv-1' },
+          method: 'renameConversation' as const,
+        },
+        {
+          type: OverlayRequestType.SelectConversation,
+          payload: { id: 7 },
+          method: 'selectConversation' as const,
+        },
+      ])(
+        'rejects a malformed $type payload with INVALID_PAYLOAD',
+        ({ type, payload, method }) => {
+          const { bridge, postMessageSpy } = setup();
+
+          dispatchFromHost({ type, requestId: 'bad', payload });
+
+          expect(bridge[method]).not.toHaveBeenCalled();
+          expect(errorFor(postMessageSpy, 'bad')).toEqual({
+            code: OverlayRequestErrorCode.InvalidPayload,
+            message: `The request payload does not match the ${type} contract.`,
+          });
+        },
+      );
+
+      it('reports a synchronous bridge throw as REQUEST_EXECUTION_FAILED', () => {
+        const { postMessageSpy } = setup(
+          makeListBridge({
+            getConversations: () => {
+              throw new Error('list failed');
+            },
+          }),
+        );
+
+        dispatchFromHost({
+          type: OverlayRequestType.GetConversations,
+          requestId: 'throws',
+        });
+
+        expect(errorFor(postMessageSpy, 'throws')).toEqual({
+          code: OverlayRequestErrorCode.RequestExecutionFailed,
+          message: 'list failed',
+        });
+      });
     });
 
     it('ignores conversation-list requests from an untrusted origin', () => {

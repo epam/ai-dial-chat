@@ -260,7 +260,7 @@ apps/chat/src/
 ├── components/            # ~39 PascalCase folders, each with a tests/ subfolder
 ├── context/               # React Context providers + consumer hooks
 │   ├── auth/              # UserContext
-│   ├── overlay/           # OverlayContext — embedded-mode protocol handling
+│   ├── overlay/           # OverlayContext — embedded-mode protocol handling; handlers/ holds the request routes and bridge handler tables
 │   └── *.tsx              # AppConfig, Theme, UiFeatures, Conversations, …
 ├── hooks/                 # Custom hooks, grouped by domain folder
 ├── pages/                 # Route-level screens
