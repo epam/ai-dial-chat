@@ -1,4 +1,4 @@
-Branch: `refactor/attachment-content-type-registry` (PR #9783, shared with F7), in the worktree `C:/projects/wt-f7`. Its `node_modules` overlays the main checkout's and points `@epam/*` at the worktree's own libs.
+Branch: `refactor/overlay-request-handler-map`, from `development` (after F7 merged as #9783), in the worktree `C:/projects/wt-f7`. Its `node_modules` overlays the main checkout's and points `@epam/*` at the worktree's own libs.
 
 ## 1. Characterization
 
