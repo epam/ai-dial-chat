@@ -33,6 +33,9 @@ ENV KEEP_ALIVE_TIMEOUT=61000
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 -G nodejs nextjs
 
+# Refresh npm bundled in the base image (fixes undici / brace-expansion CVEs)
+RUN npm install -g npm@11 && npm cache clean --force
+
 COPY --chown=nextjs:nodejs --from=run_dependencies /app/dist/apps/chat ./
 
 USER nextjs
