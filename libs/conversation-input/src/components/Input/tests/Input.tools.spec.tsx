@@ -174,16 +174,54 @@ describe('Input — tool chips on a phone', () => {
     mockUseIsPhone.mockReturnValue(true);
   });
 
-  it('hides the chip of a tool that is switched off', () => {
-    renderInput([buildTool('deep_research', 'Deep Research')]);
+  it('renders one summary chip instead of a chip per tool', () => {
+    renderInput([
+      buildTool('deep_research', 'Deep Research', true),
+      buildTool('web_search', 'Web Search'),
+    ]);
 
     expect(screen.queryByRole('button', { name: 'Deep Research' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Web Search' })).toBeNull();
+    const chip = screen.getByRole('button', { name: 'Tools: 1 of 2 on' });
+    expect(chip.textContent).toBe('Tools1');
   });
 
-  it('hides the chip of a tool that is switched on', () => {
-    renderInput([buildTool('deep_research', 'Deep Research', true)]);
+  it('shows no count while every tool is off', () => {
+    renderInput([buildTool('deep_research', 'Deep Research')]);
 
-    expect(screen.queryByRole('button', { name: 'Deep Research' })).toBeNull();
+    const chip = screen.getByRole('button', { name: 'Tools: 0 of 1 on' });
+    expect(chip.textContent).toBe('Tools');
+  });
+
+  it('opens the tools sheet from the summary chip and toggles a tool there', async () => {
+    const onToolToggle = vi.fn();
+    renderInput([buildTool('deep_research', 'Deep Research')], onToolToggle);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Tools: 0 of 1 on' }),
+    );
+    await userEvent.click(
+      await screen.findByRole('menuitemcheckbox', { name: 'Deep Research' }),
+    );
+
+    expect(onToolToggle).toHaveBeenCalledWith('deep_research');
+  });
+
+  it('names the summary chip through toolsChipLabels.summaryLabel', () => {
+    render(
+      <Input
+        onSend={vi.fn()}
+        toolsMenuItems={[buildTool('deep_research', 'Deep Research', true)]}
+        onToolToggle={vi.fn()}
+        toolsChipLabels={{
+          summaryLabel: (selected, total) => `Инструменты ${selected}/${total}`,
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Инструменты 1/1' }),
+    ).toBeTruthy();
   });
 
   it('keeps the + button for tools even when chips are not removable', () => {

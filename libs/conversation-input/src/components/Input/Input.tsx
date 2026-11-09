@@ -32,7 +32,9 @@ import { useTextInsertion } from '../../hooks/useTextInsertion';
 import { VoiceRecordingMode } from '../../hooks/useVoiceRecorder';
 import { ActionRowLayout, SendOnEnter } from '../../models/Input';
 import type { InputHandle, InputProps } from '../../models/Input';
+import { ToolsBottomSheet } from '../ToolsBottomSheet/ToolsBottomSheet';
 import { ToolsChips } from '../ToolsChips/ToolsChips';
+import { ToolsSummaryChip } from '../ToolsChips/ToolsSummaryChip';
 import { VoiceBar } from '../VoiceBar/VoiceBar';
 import { SendButton } from './Buttons/SendButton';
 import { StopButton } from './Buttons/StopButton';
@@ -320,9 +322,9 @@ export const Input = forwardRef<InputHandle, InputProps>(
     const { visibleTools, handleToolDismiss } = useDismissibleTools({
       toolsMenuItems,
       canRemoveTools,
-      isPhone,
       onToolToggle,
     });
+    const [isToolsSheetOpen, setIsToolsSheetOpen] = useState(false);
 
     const hasModelSelected =
       deployments === undefined || selectedDeploymentId != null;
@@ -511,25 +513,59 @@ export const Input = forwardRef<InputHandle, InputProps>(
      * a chip down to its icon. `max-w-full` still lets one over-long chip
      * truncate its label.
      */
-    const chipsNode = visibleTools.length > 0 && onToolToggle != null && (
+    const phoneTools = toolsMenuItems ?? [];
+    /*
+     * A row of per-tool chips does not fit a phone composer (#9618), so a
+     * phone shows one chip with the number of switched-on tools; tapping it
+     * opens the Tools sheet, whose rows carry each tool's on/off state.
+     */
+    const phoneChipsNode = phoneTools.length > 0 && onToolToggle != null && (
       <div
         className={mergeClasses(
-          'min-w-0',
-          isInlineActionRow ? 'flex-1' : 'max-w-full flex-[1_0_auto]',
+          'max-w-full min-w-0 flex-[1_0_auto]',
           CONVERSATION_INPUT_CLASS.toolsChips,
         )}
       >
-        <ToolsChips
-          items={visibleTools}
+        <ToolsSummaryChip
+          items={phoneTools}
+          title={toolsMenuTitle}
+          summaryLabel={toolsChipLabels?.summaryLabel}
+          onClick={() => setIsToolsSheetOpen(true)}
+        />
+        <ToolsBottomSheet
+          isOpen={isToolsSheetOpen}
+          onClose={() => setIsToolsSheetOpen(false)}
+          closeLabel={menuCloseLabel}
+          style={cssVars}
+          title={toolsMenuTitle}
+          items={phoneTools}
           onToolToggle={onToolToggle}
-          onToolDismiss={handleToolDismiss}
-          canRemove={canRemoveTools}
-          removeLabel={toolsChipLabels?.removeLabel}
-          stateOnLabel={toolsChipLabels?.stateOnLabel}
-          stateOffLabel={toolsChipLabels?.stateOffLabel}
         />
       </div>
     );
+
+    const desktopChipsNode = visibleTools.length > 0 &&
+      onToolToggle != null && (
+        <div
+          className={mergeClasses(
+            'min-w-0',
+            isInlineActionRow ? 'flex-1' : 'max-w-full flex-[1_0_auto]',
+            CONVERSATION_INPUT_CLASS.toolsChips,
+          )}
+        >
+          <ToolsChips
+            items={visibleTools}
+            onToolToggle={onToolToggle}
+            onToolDismiss={handleToolDismiss}
+            canRemove={canRemoveTools}
+            removeLabel={toolsChipLabels?.removeLabel}
+            stateOnLabel={toolsChipLabels?.stateOnLabel}
+            stateOffLabel={toolsChipLabels?.stateOffLabel}
+          />
+        </div>
+      );
+
+    const chipsNode = isPhone ? phoneChipsNode : desktopChipsNode;
 
     return (
       <div

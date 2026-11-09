@@ -1637,7 +1637,8 @@
     "menuTitle": "Tools",
     "removeTool": "Remove {{label}}",
     "stateOn": "On",
-    "stateOff": "Off"
+    "stateOff": "Off",
+    "summary": "Tools: {{selected}} of {{total}} on"
   },
   "conversationInput": {
     "usageLimits": {

@@ -340,6 +340,8 @@ const ProjectConversationsSection: FC<Props> = ({
                 removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
                 stateOnLabel: t(ToolsI18nKeys.StateOn),
                 stateOffLabel: t(ToolsI18nKeys.StateOff),
+                summaryLabel: (selected: number, total: number) =>
+                  t(ToolsI18nKeys.Summary, { selected, total }),
               }}
             />
           ) : undefined

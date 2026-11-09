@@ -1579,6 +1579,7 @@ export enum ToolsI18nKeys {
   RemoveTool = 'tools.removeTool',
   StateOn = 'tools.stateOn',
   StateOff = 'tools.stateOff',
+  Summary = 'tools.summary',
 }
 
 export enum ConversationInputI18nKeys {
