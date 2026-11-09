@@ -365,6 +365,7 @@ describe('ProjectConversationsSection', () => {
       ProjectsI18nKeys.ChatsRenameInputLabel,
     );
     await userEvent.clear(input);
+    /* Save stays disabled for an empty name, so Enter is what surfaces the error. */
     expect(
       (
         screen.getByRole('button', {
@@ -372,7 +373,6 @@ describe('ProjectConversationsSection', () => {
         }) as HTMLButtonElement
       ).disabled,
     ).toBe(true);
-    /* Save is off for an empty name, so Enter is the path that reports it. */
     await userEvent.type(input, '{Enter}');
     expect(
       await screen.findByText(ProjectsI18nKeys.ChatsRenameEmpty),
