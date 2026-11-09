@@ -908,6 +908,50 @@ const PinnedProjectsTree = () => {
 };
 ```
 
+`isProjectSharedWithMe(project)` is `true` when the project's `source` is
+`shared` and the caller cannot manage it: they may drop it from their list but
+not delete it. `getPinnedProjectMenuActions(project)` returns the
+`PinnedProjectMenuAction` values a pinned project's menu offers the caller, in
+display order: `Unpin`, then `Edit` with edit access, then `Publish`, `Share`
+and `Delete` for the owner. A shared project the caller cannot manage ends
+with `RemoveFromMyList`, and a project that is not loaded offers `Unpin` only.
+The host maps each action to its label, icon and handler.
+
+`useProjectRemoveFromList(project, handlers)` discards only the caller's own
+access (`handlers.discardShared`), then unpins the project
+(`handlers.setPinned(id, false)`). It returns `{ isRemoving, confirmRemove }`,
+and a second `confirmRemove` while one is pending sends nothing. On success it
+calls `onSettled`, then `onRemoved(project)`; a failed unpin calls
+`onUnpinFailed(project)` and still counts as removed. When the discard rejects
+it calls `onError(project, requestId)` and `onSettled`, and nothing else.
+Messages, notifications and navigation stay with the host.
+
+```tsx
+import {
+  PinnedProjectMenuAction,
+  getPinnedProjectMenuActions,
+  isProjectSharedWithMe,
+  useProjectRemoveFromList,
+} from '@epam/ai-dial-chat-hooks/project';
+
+const RemoveSharedProject = ({ project, closeDialog }) => {
+  const { isRemoving, confirmRemove } = useProjectRemoveFromList(project, {
+    discardShared: (id) => discardSharedItem(id),
+    setPinned: setPinnedProject,
+    onUnpinFailed: ({ id }) => forgetPin(id),
+    onRemoved: ({ name }) => showToast(`Removed ${name}`),
+    onError: (_project, requestId) => showError(requestId),
+    onSettled: closeDialog,
+  });
+  // …
+};
+
+const canRemove = isProjectSharedWithMe(project);
+const offersRemove = getPinnedProjectMenuActions(project).includes(
+  PinnedProjectMenuAction.RemoveFromMyList,
+);
+```
+
 ```tsx
 // ./offline-credentials — no peer beyond react
 import { useOfflineCredentialsGate } from '@epam/ai-dial-chat-hooks/offline-credentials';

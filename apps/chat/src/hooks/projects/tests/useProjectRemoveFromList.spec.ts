@@ -36,9 +36,6 @@ vi.mock('../../../context/UserConfigContext', () => ({
 vi.mock('../../../server-api/share.api', () => ({
   discardSharedCatalogItem: vi.fn(),
 }));
-vi.mock('@epam/ai-dial-chat-hooks', () => ({
-  getApiErrorDetails: vi.fn().mockResolvedValue({ traceId: 'trace-1' }),
-}));
 
 const project: ProjectDetailsDto = {
   id: 'projects/owner/q4',
@@ -110,7 +107,7 @@ describe('useProjectRemoveFromList', () => {
     expect(mocks.showSuccessNotification).toHaveBeenCalledOnce();
   });
 
-  it('shows an error with the trace id and changes nothing when the discard fails', async () => {
+  it('shows an error and changes nothing when the discard fails', async () => {
     vi.mocked(discardSharedCatalogItem).mockRejectedValue(new Error('403'));
     const onSettled = vi.fn();
     const { result } = renderHook(() =>
@@ -120,7 +117,9 @@ describe('useProjectRemoveFromList', () => {
     await act(() => result.current.confirmRemove());
 
     expect(mocks.showErrorNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ requestId: 'trace-1' }),
+      expect.objectContaining({
+        message: 'catalog.details.unshare.error',
+      }),
     );
     expect(mocks.setPinnedProject).not.toHaveBeenCalled();
     expect(mocks.navigate).not.toHaveBeenCalled();

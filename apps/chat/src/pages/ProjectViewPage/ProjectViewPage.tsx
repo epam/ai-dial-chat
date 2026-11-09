@@ -6,6 +6,7 @@ import {
 import {
   mapProjectArtifactsToOutputs,
   mapProjectDetailsToViewModel,
+  isProjectSharedWithMe,
   ProjectRefreshOutcome,
   useProject,
   useProjectArtifacts,
@@ -56,7 +57,6 @@ import {
   toProjectOutputAttachment,
   toStoredProjectFileAttachment,
 } from '../../utils/project-file-preview';
-import { isProjectSharedWithMe } from '../../utils/project-sharing';
 import NotFoundPage from '../NotFound/NotFound';
 
 const ProjectViewPage: FC = () => {

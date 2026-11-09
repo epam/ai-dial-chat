@@ -29,7 +29,7 @@ The lib SHALL perform no request and SHALL know nothing about sharing, ownership
 
 ### Requirement: Only projects shared with the user are removable
 
-The app SHALL treat a project as removable from the user's list when, and only when, its `source` is `ProjectSource.Shared` and `canManage` is `false`. An owned project (`canManage: true`) and a public project (source `organization`) SHALL NOT offer the action in any surface. The pinned menu SHALL read these fields from the project the Pinned section already loaded (`projectsById` in `usePinnedProjectsPanel`); the view page SHALL read them from the loaded `ProjectDetailsDto`.
+`isProjectSharedWithMe` in `libs/chat-hooks/src/project/project-sharing.ts` (exported from `@epam/ai-dial-chat-hooks/project`) SHALL treat a project as removable from the user's list when, and only when, its `source` is `ProjectSource.Shared` and `canManage` is `false`. An owned project (`canManage: true`) and a public project (source `organization`) SHALL NOT offer the action in any surface. The same file's `getPinnedProjectMenuActions` SHALL return the `PinnedProjectMenuAction` values a pinned project's menu offers (Unpin, Edit, Publish, Share, Delete, RemoveFromMyList) in display order, and `usePinnedProjectsPanel` SHALL map each to its label, icon and handler using the project the Pinned section already loaded (`projectsById`); the view page SHALL read them from the loaded `ProjectDetailsDto`.
 
 #### Scenario: Shared project is removable
 
@@ -72,7 +72,7 @@ For a removable project, the ⋮ menu of a pinned project (`getActions` in `apps
 
 ### Requirement: Confirmation precedes the discard and states its consequences
 
-Both surfaces SHALL show one shared confirmation (`ConfirmationDialog` from `@epam/ai-dial-chat-shared`, non-danger variant) titled `ButtonsI18nKeys.RemoveFromMyList`, naming the project and listing the consequences: the user loses access, other people keep theirs, a new invitation is needed to regain access. While the discard is pending the confirm button SHALL show a loading state and reject duplicate submissions. Cancel and dismiss SHALL send nothing.
+Both surfaces SHALL show one shared confirmation: the lib component `ProjectRemoveFromListConfirmation` of `@epam/ai-dial-projects` (a non-danger `ConfirmationDialog` from `@epam/ai-dial-chat-shared` that takes every string through optional `labels` with English defaults), filled by a thin app adapter with translations, titled `ButtonsI18nKeys.RemoveFromMyList`, naming the project and listing the consequences: the user loses access, other people keep theirs, a new invitation is needed to regain access. While the discard is pending the confirm button SHALL show a loading state and reject duplicate submissions. Cancel and dismiss SHALL send nothing.
 
 #### Scenario: Cancel sends nothing
 
@@ -86,7 +86,7 @@ Both surfaces SHALL show one shared confirmation (`ConfirmationDialog` from `@ep
 
 ### Requirement: Discard removes only the caller's access
 
-On confirm the app SHALL call `discardSharedCatalogItem(project.id)` (`apps/chat/src/server-api/share.api.ts`), i.e. `POST /api/v1/share/discard` with `{ "itemId": "projects/{bucket}/{path}" }`. No new endpoint, DTO or generated-client change is required: `DiscardSharedCatalogItemDto` already accepts the `projects/` prefix, and the call is not wrapped by a `Raw` method. The owner's project and other recipients' access SHALL be unchanged.
+The discard, unpin and error ordering SHALL live in `useProjectRemoveFromList` of `libs/chat-hooks/src/project/use-project-remove-from-list.ts`, which receives `discardShared`, `setPinned`, `onRemoved`, `onError`, `onUnpinFailed` and `onSettled` from the host and sends nothing twice while pending; the app adapter `apps/chat/src/hooks/projects/useProjectRemoveFromList.ts` supplies them. On confirm the app SHALL call `discardSharedCatalogItem(project.id)` (`apps/chat/src/server-api/share.api.ts`), i.e. `POST /api/v1/share/discard` with `{ "itemId": "projects/{bucket}/{path}" }`. No new endpoint, DTO or generated-client change is required: `DiscardSharedCatalogItemDto` already accepts the `projects/` prefix, and the call is not wrapped by a `Raw` method. The owner's project and other recipients' access SHALL be unchanged.
 
 On success the app SHALL: show a success notification naming the project; remove the project from the user's pins (`replacePinnedProjectId(project.id, null)`); refresh the Pinned section and the Projects list so the project disappears; and, when the current route shows that project (view, edit or chat), navigate to `ROUTES.Projects` with `replace: true`. A removal from the sidebar while another route is open SHALL keep that route.
 

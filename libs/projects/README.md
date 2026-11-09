@@ -471,6 +471,23 @@ import { ProjectChatHeader } from '@epam/ai-dial-projects';
 />;
 ```
 
+### ProjectRemoveFromListConfirmation
+
+The confirmation before a project shared with the user leaves their list, to pair with `ProjectView`'s `onRemoveFromMyList`: a non-danger `ConfirmationDialog` (the project name in an identity row, a message, the consequences, Cancel and the confirming button). While `isRemoving` (default `false`) both actions are blocked and `labels.removingStatusLabel` is announced. The lib sends no request: the host confirms, discards the share and closes the dialog. Every `labels` field is optional and falls back to English: `title` and `confirmLabel` (`'Remove from My List'`), `cancelLabel` (`'Cancel'`), `removingStatusLabel` (`'Removing…'`), `consequences` (three lines about losing access, others keeping theirs and needing a new invitation) and `message(projectName)` (a sentence with the name in bold).
+
+```tsx
+import { ProjectRemoveFromListConfirmation } from '@epam/ai-dial-projects';
+
+<ProjectRemoveFromListConfirmation
+  isOpen={isOpen}
+  projectName="Q4 launch"
+  isRemoving={isRemoving}
+  onConfirm={() => {}}
+  onClose={() => {}}
+  labels={{ cancelLabel: 'Cancel' }}
+/>;
+```
+
 ## Utilities
 
 ### validateProjectName

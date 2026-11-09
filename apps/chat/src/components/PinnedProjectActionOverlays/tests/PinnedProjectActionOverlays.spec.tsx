@@ -47,10 +47,6 @@ vi.mock('../../../context/NotificationContext', () => ({
 vi.mock('../../../server-api/share.api', () => ({
   discardSharedCatalogItem: vi.fn(),
 }));
-vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>()),
-  getApiErrorDetails: vi.fn().mockResolvedValue({ traceId: 'trace-1' }),
-}));
 vi.mock('../../../hooks/useOperationNotification', () => ({
   useOperationNotification: () => ({
     notifyOperationSuccess: mocks.notifyOperationSuccess,
@@ -250,7 +246,9 @@ describe('PinnedProjectActionOverlays', () => {
 
       await waitFor(() =>
         expect(mocks.showErrorNotification).toHaveBeenCalledWith(
-          expect.objectContaining({ requestId: 'trace-1' }),
+          expect.objectContaining({
+            message: 'catalog.details.unshare.error:Support',
+          }),
         ),
       );
       expect(mocks.setPinnedProject).not.toHaveBeenCalled();

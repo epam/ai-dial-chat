@@ -1,6 +1,5 @@
 import type { ProjectDetailsDto } from '@epam/ai-dial-chat-api-client';
-import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
-import { useCallback, useRef, useState } from 'react';
+import { useProjectRemoveFromList as useSharedProjectRemoveFromList } from '@epam/ai-dial-chat-hooks/project';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { CatalogI18nKeys } from '../../constants/translation-keys';
@@ -18,10 +17,9 @@ interface UseProjectRemoveFromListOptions {
 }
 
 /**
- * Drops a project shared with the user from their own list: discards only
- * the caller's access, unpins the project, toasts the outcome and, unless
- * told otherwise, leaves for the Projects list. The owner's project and the
- * other recipients' access are untouched.
+ * App adapter of the shared `useProjectRemoveFromList`: discards through the
+ * share API, unpins through the user config, toasts the outcome and, unless
+ * told otherwise, leaves for the Projects list.
  *
  * @param project - The project to remove, or `null` while none is chosen.
  * @param options - Navigation and settle behaviour.
@@ -34,56 +32,27 @@ export const useProjectRemoveFromList = (
   const navigate = useNavigate();
   const { showSuccessNotification, showErrorNotification } = useNotification();
   const { setPinnedProject, replacePinnedProjectId } = useUserConfig();
-  const [isRemoving, setIsRemoving] = useState(false);
-  /* A second confirm lands before the first render shows `isRemoving`. */
-  const isInFlightRef = useRef(false);
 
-  const confirmRemove = useCallback(async () => {
-    if (project == null || isInFlightRef.current) return;
-    isInFlightRef.current = true;
-    setIsRemoving(true);
-    try {
-      await discardSharedCatalogItem(project.id);
-    } catch (err) {
-      const { traceId } = await getApiErrorDetails(err);
+  return useSharedProjectRemoveFromList(project, {
+    discardShared: discardSharedCatalogItem,
+    setPinned: setPinnedProject,
+    onUnpinFailed: (removed) => replacePinnedProjectId(removed.id, null),
+    onRemoved: (removed) => {
+      showSuccessNotification({
+        title: t(CatalogI18nKeys.DetailsUnshareSuccessTitle),
+        message: t(CatalogI18nKeys.DetailsUnshareSuccess, {
+          name: removed.name,
+        }),
+      });
+      /* Replace the entry, so Back does not reopen the removed project. */
+      if (leaveOnRemove) navigate(ROUTES.Projects, { replace: true });
+    },
+    onError: (failed, requestId) =>
       showErrorNotification({
         title: t(CatalogI18nKeys.DetailsUnshareErrorTitle),
-        message: t(CatalogI18nKeys.DetailsUnshareError, {
-          name: project.name,
-        }),
-        requestId: traceId,
-      });
-      isInFlightRef.current = false;
-      setIsRemoving(false);
-      onSettled?.();
-      return;
-    }
-    /* The pin is only housekeeping: a failed write is mirrored locally so the entry still leaves the sidebar. */
-    try {
-      await setPinnedProject(project.id, false);
-    } catch {
-      replacePinnedProjectId(project.id, null);
-    }
-    showSuccessNotification({
-      title: t(CatalogI18nKeys.DetailsUnshareSuccessTitle),
-      message: t(CatalogI18nKeys.DetailsUnshareSuccess, { name: project.name }),
-    });
-    isInFlightRef.current = false;
-    setIsRemoving(false);
-    onSettled?.();
-    /* Replace the entry, so Back does not reopen the removed project. */
-    if (leaveOnRemove) navigate(ROUTES.Projects, { replace: true });
-  }, [
-    project,
-    leaveOnRemove,
-    navigate,
+        message: t(CatalogI18nKeys.DetailsUnshareError, { name: failed.name }),
+        requestId,
+      }),
     onSettled,
-    replacePinnedProjectId,
-    setPinnedProject,
-    showErrorNotification,
-    showSuccessNotification,
-    t,
-  ]);
-
-  return { isRemoving, confirmRemove };
+  });
 };

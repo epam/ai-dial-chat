@@ -1,9 +1,7 @@
 import {
-  ConfirmationDialog,
-  ConfirmationIdentityRow,
-  ResourceSummary,
-} from '@epam/ai-dial-chat-shared';
-import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
+  ProjectRemoveFromListConfirmation as LibProjectRemoveFromListConfirmation,
+  type ProjectRemoveFromListConfirmationLabels,
+} from '@epam/ai-dial-projects';
 import { memo, useMemo, type FC } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { CONFIRMATION_BOLD_COMPONENTS } from '../../constants/confirmation-copy';
@@ -26,7 +24,7 @@ interface Props {
   onClose: () => void;
 }
 
-/** The confirmation before a project shared with the user leaves their list; the same on the project view page and in the sidebar. */
+/** Adapter of the lib's `ProjectRemoveFromListConfirmation`: fills its labels with the app's translations, the same on the project view page and in the sidebar. */
 const ProjectRemoveFromListConfirmation: FC<Props> = ({
   isOpen,
   projectName,
@@ -35,39 +33,36 @@ const ProjectRemoveFromListConfirmation: FC<Props> = ({
   onClose,
 }) => {
   const { t } = useTranslation();
-  const consequences = useMemo(
-    () => [
-      t(CatalogI18nKeys.DetailsUnshareConsequenceYouLoseAccess),
-      t(CatalogI18nKeys.DetailsUnshareConsequenceOthersKeepAccess),
-      t(CatalogI18nKeys.DetailsUnshareConsequenceNeedNewInvitation),
-    ],
+  const labels = useMemo<ProjectRemoveFromListConfirmationLabels>(
+    () => ({
+      title: t(ButtonsI18nKeys.RemoveFromMyList),
+      confirmLabel: t(ButtonsI18nKeys.RemoveFromMyList),
+      cancelLabel: t(ButtonsI18nKeys.Cancel),
+      removingStatusLabel: t(CatalogI18nKeys.DetailsUnshareRemovingStatus),
+      consequences: [
+        t(CatalogI18nKeys.DetailsUnshareConsequenceYouLoseAccess),
+        t(CatalogI18nKeys.DetailsUnshareConsequenceOthersKeepAccess),
+        t(CatalogI18nKeys.DetailsUnshareConsequenceNeedNewInvitation),
+      ],
+      message: (name) => (
+        <Trans
+          i18nKey={CatalogI18nKeys.DetailsUnshareConfirmMessage}
+          values={{ name }}
+          components={CONFIRMATION_BOLD_COMPONENTS}
+        />
+      ),
+    }),
     [t],
   );
 
   return (
-    <ConfirmationDialog
-      open={isOpen}
-      title={t(ButtonsI18nKeys.RemoveFromMyList)}
-      variant={ConfirmationPopupVariant.Info}
-      identity={
-        <ResourceSummary>
-          <ConfirmationIdentityRow name={projectName} />
-        </ResourceSummary>
-      }
-      message={
-        <Trans
-          i18nKey={CatalogI18nKeys.DetailsUnshareConfirmMessage}
-          values={{ name: projectName }}
-          components={CONFIRMATION_BOLD_COMPONENTS}
-        />
-      }
-      consequences={consequences}
-      confirmLabel={t(ButtonsI18nKeys.RemoveFromMyList)}
-      cancelLabel={t(ButtonsI18nKeys.Cancel)}
-      isLoading={isRemoving}
-      loadingStatusLabel={t(CatalogI18nKeys.DetailsUnshareRemovingStatus)}
+    <LibProjectRemoveFromListConfirmation
+      isOpen={isOpen}
+      projectName={projectName}
+      isRemoving={isRemoving}
       onConfirm={onConfirm}
       onClose={onClose}
+      labels={labels}
     />
   );
 };
