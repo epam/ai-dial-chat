@@ -56,6 +56,9 @@ const PinnedProjectActionOverlays: FC<Props> = ({
   /* The removal ends its own action once the request settles, so the dialog closes on success and on failure. */
   const { isRemoving, confirmRemove } = useProjectRemoveFromList(removeTarget, {
     leaveOnRemove: removeTarget != null && removeTarget.id === routeProjectId,
+    onFailed: () => {
+      if (removeTarget != null) onProjectChanged(removeTarget.id);
+    },
     onSettled: onClose,
   });
   const handleConfirmRemove = useCallback(() => {

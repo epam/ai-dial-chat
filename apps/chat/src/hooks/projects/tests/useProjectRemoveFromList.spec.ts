@@ -6,6 +6,7 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { discardSharedCatalogItem } from '../../../server-api/share.api';
 import { ROUTES } from '../../../types/routes';
+import { subscribeProjectListChanged } from '../projects-client';
 import { useProjectRemoveFromList } from '../useProjectRemoveFromList';
 
 const mocks = vi.hoisted(() => ({
@@ -80,6 +81,36 @@ describe('useProjectRemoveFromList', () => {
       replace: true,
     });
     expect(result.current.isRemoving).toBe(false);
+  });
+
+  it('tells the Projects list to re-read after a removal', async () => {
+    vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+    const listener = vi.fn();
+    const unsubscribe = subscribeProjectListChanged(listener);
+    const { result } = renderHook(() =>
+      useProjectRemoveFromList(project, { leaveOnRemove: false }),
+    );
+
+    await act(() => result.current.confirmRemove());
+    unsubscribe();
+
+    expect(listener).toHaveBeenCalledOnce();
+  });
+
+  it('re-reads the project and the list when the discard fails', async () => {
+    vi.mocked(discardSharedCatalogItem).mockRejectedValue(new Error('403'));
+    const listener = vi.fn();
+    const unsubscribe = subscribeProjectListChanged(listener);
+    const onFailed = vi.fn();
+    const { result } = renderHook(() =>
+      useProjectRemoveFromList(project, { onFailed }),
+    );
+
+    await act(() => result.current.confirmRemove());
+    unsubscribe();
+
+    expect(onFailed).toHaveBeenCalledOnce();
+    expect(listener).toHaveBeenCalledOnce();
   });
 
   it('keeps the route when leaveOnRemove is false', async () => {

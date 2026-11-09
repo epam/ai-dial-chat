@@ -177,6 +177,20 @@ describe('useProjects — live updates', () => {
     expect(loadingStates.slice(loadedAt)).not.toContain(true);
   });
 
+  it('re-reads the list on refresh without the loading state', async () => {
+    client.listProjects
+      .mockResolvedValueOnce(listing(dto(ALPHA), dto(BETA)))
+      .mockResolvedValueOnce(listing(dto(BETA)));
+    client.watchProjects.mockRejectedValue(new Error('no watch'));
+    const { result } = renderHook(() => useProjects(client, true));
+    await waitFor(() => expect(result.current.projects).toHaveLength(2));
+
+    await act(() => result.current.refresh());
+
+    expect(result.current.projects.map(({ id }) => id)).toEqual([BETA]);
+    expect(result.current.isLoading).toBe(false);
+  });
+
   it('aborts the watch on unmount', async () => {
     client.listProjects.mockResolvedValue(listing(dto(ALPHA)));
     client.watchProjects.mockResolvedValue(createWatchStream().stream);

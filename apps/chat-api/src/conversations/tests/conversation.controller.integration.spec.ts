@@ -184,7 +184,7 @@ describe('ConversationController (integration)', () => {
     it('accepts encoded deployment slashes and literal percent escapes', async () => {
       const ids = [
         'conversations/public/applications/public/Team%2FApp__0.0.1__hello',
-        'conversations/other-bucket/applications/public/pg-agent%255F%255F1.0.0__New%20chat',
+        'conversations/other-bucket/applications/public/sample-agent%255F%255F1.0.0__New%20chat',
       ];
       service.getConversationTitles.mockResolvedValue({ items: [] });
       await request(app.getHttpServer())

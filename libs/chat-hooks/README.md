@@ -508,6 +508,8 @@ successful load it watches the first 1000 listed ids:
 
 A client without `watchProjects` gets a one-off load, as before.
 
+`useProjects` also returns `refresh()`, which re-reads the list without the loading state and keeps the current list when the request fails. Use it for a change the watch cannot report, such as the caller dropping a shared project from their list (DIAL Core emits no `DELETE` event for that).
+
 `useProjectConversations` reads a project's whole conversation list once,
 because DIAL Core cannot page it in display order, and pages it locally:
 `items` holds the first 20 rows and `hasMore` tells whether more are loaded.

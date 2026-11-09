@@ -46,14 +46,17 @@ export const useProjectRemoveFromList = (
     if (project == null || isInFlightRef.current) return;
     isInFlightRef.current = true;
     setIsRemoving(true);
+    const settle = () => {
+      isInFlightRef.current = false;
+      setIsRemoving(false);
+      onSettled?.();
+    };
     try {
       await discardShared(project.id);
     } catch (err) {
       const { traceId } = await getApiErrorDetails(err);
-      isInFlightRef.current = false;
-      setIsRemoving(false);
       onError(project, traceId);
-      onSettled?.();
+      settle();
       return;
     }
     /* The pin is only housekeeping: a failed write must not turn the removal into an error. */
@@ -62,9 +65,7 @@ export const useProjectRemoveFromList = (
     } catch {
       onUnpinFailed?.(project);
     }
-    isInFlightRef.current = false;
-    setIsRemoving(false);
-    onSettled?.();
+    settle();
     onRemoved(project);
   }, [
     project,

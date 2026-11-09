@@ -248,9 +248,10 @@ const ProjectViewPage: FC = () => {
   const isSharedWithMe = isProjectSharedWithMe(project);
   const handleCloseRemove = useCallback(() => setIsRemoveOpen(false), []);
   const handleRequestRemove = useCallback(() => setIsRemoveOpen(true), []);
-  const { isRemoving, confirmRemove } = useProjectRemoveFromList(project, {
-    onSettled: handleCloseRemove,
-  });
+  const { isRemoving, confirmRemove } = useProjectRemoveFromList(
+    isSharedWithMe ? project : null,
+    { onFailed: retry, onSettled: handleCloseRemove },
+  );
   const handleConfirmRemove = useCallback(() => {
     void confirmRemove();
   }, [confirmRemove]);
