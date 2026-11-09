@@ -422,14 +422,27 @@ describe('ProjectViewPage', () => {
       publishCredentials: false,
     });
 
-    it('shows neither Publish nor Unpublish until the publish state settles', async () => {
-      let resolveHistory!: (entries: PublishHistoryEntryDto[]) => void;
-      vi.mocked(getCatalogPublishHistory).mockReturnValue(
-        new Promise((resolve) => {
-          resolveHistory = resolve;
+    const givenPublicCopy = () =>
+      vi.mocked(getProject).mockResolvedValue(
+        details({
+          id: 'projects/public/Data/q4',
+          bucket: 'public',
+          path: 'Data/q4',
+          source: ProjectSource.Organization,
+          canEdit: false,
+          canManage: false,
         }),
       );
-      renderAt();
+
+    it('shows neither Publish nor Unpublish on a public copy until the publish state settles', async () => {
+      let resolveAccess!: (access: { canUnpublish: boolean }) => void;
+      givenPublicCopy();
+      vi.mocked(getCatalogUnpublishAccess).mockReturnValue(
+        new Promise((resolve) => {
+          resolveAccess = resolve;
+        }),
+      );
+      renderAt('/projects/view/public/Data/q4');
       await screen.findByRole('heading', { level: 1, name: 'q4' });
 
       expect(
@@ -439,13 +452,28 @@ describe('ProjectViewPage', () => {
         screen.queryByRole('button', { name: ButtonsI18nKeys.Unpublish }),
       ).toBeNull();
 
-      resolveHistory([historyEntry('Organization/Data')]);
+      resolveAccess({ canUnpublish: true });
       expect(
         await screen.findByRole('button', { name: ButtonsI18nKeys.Unpublish }),
       ).toBeTruthy();
       expect(
         screen.queryByRole('button', { name: ButtonsI18nKeys.Publish }),
       ).toBeNull();
+    });
+
+    it('keeps offering Publish, never Unpublish, on a personal project that has a published copy', async () => {
+      vi.mocked(getCatalogPublishHistory).mockResolvedValue([
+        historyEntry('Organization/Data'),
+      ]);
+      renderAt();
+
+      expect(
+        await screen.findByRole('button', { name: ButtonsI18nKeys.Publish }),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: ButtonsI18nKeys.Unpublish }),
+      ).toBeNull();
+      expect(getCatalogPublishHistory).not.toHaveBeenCalled();
     });
 
     it('offers Publish to the owner of an unpublished project', async () => {
@@ -481,16 +509,7 @@ describe('ProjectViewPage', () => {
 
     it('offers Unpublish on a public copy to an administrator', async () => {
       session.user.isAdmin = true;
-      vi.mocked(getProject).mockResolvedValue(
-        details({
-          id: 'projects/public/Data/q4',
-          bucket: 'public',
-          path: 'Data/q4',
-          source: ProjectSource.Organization,
-          canEdit: false,
-          canManage: false,
-        }),
-      );
+      givenPublicCopy();
       renderAt('/projects/view/public/Data/q4');
 
       expect(
@@ -500,11 +519,10 @@ describe('ProjectViewPage', () => {
     });
 
     it('confirms and requests unpublish of the project from its folder', async () => {
-      vi.mocked(getCatalogPublishHistory).mockResolvedValue([
-        historyEntry('Organization/Data'),
-      ]);
+      session.user.isAdmin = true;
+      givenPublicCopy();
       vi.mocked(unpublishCatalogEntity).mockResolvedValue({} as never);
-      renderAt();
+      renderAt('/projects/view/public/Data/q4');
 
       await userEvent.click(
         await screen.findByRole('button', { name: ButtonsI18nKeys.Unpublish }),
@@ -522,8 +540,8 @@ describe('ProjectViewPage', () => {
       await waitFor(() =>
         expect(unpublishCatalogEntity).toHaveBeenCalledWith(
           'project',
-          PROJECT_ID,
-          { folderPath: 'Organization/Data' },
+          'projects/public/Data/q4',
+          { folderPath: 'Data' },
         ),
       );
       await waitFor(() =>

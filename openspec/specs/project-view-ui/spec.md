@@ -378,7 +378,7 @@ It submits through `publishCatalogEntity({ entityType: CatalogPublishEntityType.
 
 `CatalogPublishEntityType` in `libs/chat-hooks/src/catalog/publish.ts` SHALL gain `'project'`. `CatalogEntityType` in `libs/chat-shared` is not changed.
 
-The page passes `onPublish` only once the project's publish state has settled with no live folder; a published project offers Unpublish in its place (see `project-unpublish-flow`).
+The page passes `onPublish` only once the project's publish state has settled with no live folder; a public copy offers Unpublish in its place, while the owner's personal project keeps Publish whether or not it has a published copy (see `project-unpublish-flow`).
 
 **Chats warning.** DIAL Core publishes a project as a whole, `conversations/` included. When `conversationCount > 0`, the container renders a kit `Notification` with the warning variant through `StandalonePublishPanel`'s `renderSummary`, after the resource title, so `libs/publish-panel` is not changed.
 

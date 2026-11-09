@@ -75,9 +75,9 @@ The lookup runs when the entity type, id, `isOwner`, `isAdmin` or `client` chang
 
 The server-side history (`publish-history:{entityType}:{entityId}`, 60 s) and unpublish-access (`unpublish-access:{bucket}:{entityType}:{entityId}`, 60 s) caches already exist in `PublishService`; the client adds no cache. The BFF drops the history entry on a successful publish/unpublish, which is when the host calls `refresh()`.
 
-The app adapter `useProjectUnpublish` (`apps/chat/src/hooks/projects/useProjectUnpublish.ts`) SHALL call `useUnpublishableFolders(publishApiClient, { entityType: Project, entityId: project.id, isOwner: project.canManage }, isAdmin)`, with `publishApiClient` exported from `apps/chat/src/server-api/publish.api.ts` and `isAdmin` from `useUser().user?.isAdmin` (`apps/chat/src/context/auth/UserContext.tsx`). It exposes the result as `isPublishStateResolved`, `publishedFolders` and `refreshPublishState`, and owns only the confirmation dialog state, the unpublish request and its notifications. No context is introduced; the state is page-local. Its `requestUnpublish` and confirm/close handlers are `useCallback`-memoised and its result `useMemo`-memoised.
+The app adapter `useProjectUnpublish` (`apps/chat/src/hooks/projects/useProjectUnpublish.ts`) SHALL call `useUnpublishableFolders(publishApiClient, { entityType: Project, entityId: project.id, isOwner: false }, isAdmin)`, with `publishApiClient` exported from `apps/chat/src/server-api/publish.api.ts` and `isAdmin` from `useUser().user?.isAdmin` (`apps/chat/src/context/auth/UserContext.tsx`). It exposes the result as `isPublishStateResolved`, `publishedFolders` and `refreshPublishState`, and owns only the confirmation dialog state, the unpublish request and its notifications. `isOwner` is always `false` here, whatever `project.canManage` says: a personal project can be published any number of times, to different folders or under different versions, so it never offers Unpublish and keeps offering Publish; Unpublish belongs to the published copy (a public id), for an administrator or the user the BFF confirms published it. No context is introduced; the state is page-local. Its `requestUnpublish` and confirm/close handlers are `useCallback`-memoised and its result `useMemo`-memoised.
 
-#### Scenario: Owner of a published project
+#### Scenario: Owner of a published entity (generic hook)
 
 - **GIVEN** `isOwner: true` and history resolves to one entry in `Organization/Data`
 - **THEN** `folders` is `[['Organization', 'Data']]` and `isResolved` is `true`
@@ -136,19 +136,17 @@ The app adapter `useProjectUnpublish` (`apps/chat/src/hooks/projects/useProjectU
 
 So the header never shows Publish and then swaps it for Unpublish on load; the slot appears once, settled. This refines the `onPublish` row of the `project-view-ui` gating table: `onPublish` still requires `canManage`, and additionally a settled lookup with no live folder.
 
-After a successful publish through `PublishProjectPanelContainer` (its new `onPublished` callback), the page calls `refreshPublishState()`, so a published project offers Unpublish without a reload.
+After a successful publish through `PublishProjectPanelContainer` (its new `onPublished` callback), the page calls `refreshPublishState()`. The personal project keeps offering Publish, because publishing is repeatable to other folders or under other versions; the refresh matters only where a lookup has folders to report, i.e. a public copy.
 
-#### Scenario: No flash while loading
+#### Scenario: Personal project that has a published copy keeps Publish
 
-- **GIVEN** the owner opens a published project and history has not resolved
-- **THEN** neither Publish nor Unpublish renders
-- **WHEN** history resolves with one folder
-- **THEN** Unpublish renders, and Publish never rendered
+- **GIVEN** the owner opens their personal project (not a public id) that is also published
+- **THEN** no publish-history request is made, Publish renders and Unpublish never does
 
-#### Scenario: Publishing then offers Unpublish
+#### Scenario: Published copy offers Unpublish
 
-- **WHEN** the owner publishes the project and the request succeeds
-- **THEN** the publish state is re-fetched and, once it lists the folder, Unpublish replaces Publish
+- **GIVEN** a public copy opened by an administrator, or by the user the BFF confirms published it
+- **THEN** Unpublish renders once the lookup resolves, and neither it nor Publish rendered before
 
 #### Scenario: Recipient of a share sees neither
 
@@ -204,11 +202,11 @@ The project page passes:
 
 Confirming SHALL call `unpublishCatalogEntity(CatalogPublishEntityType.Project, project.id, { folderPath })` (`apps/chat/src/server-api/publish.api.ts`, the positional wrapper from `createPublishApiClient`), where `folderPath` is the selected folder (or the only one) joined with `/` — `''` for the public root, which SHALL be sent rather than treated as "no folder". No `version` is sent: a project is unversioned.
 
-Example request (owner, one folder):
+Example request (a public copy, one folder):
 
 ```http
-POST /api/v1/catalog/project/projects%2F{bucket}%2FSales/unpublish
-{ "folderPath": "Organization/Data" }
+POST /api/v1/catalog/project/projects%2Fpublic%2FData%2FSales/unpublish
+{ "folderPath": "Data" }
 ```
 
 On success the dialog closes and exactly one notification is raised: `notifyOperationSuccess(NotifiableEntity.Project, EntityOperation.UnpublishRequested, { name, folder: getPublishFolderLabel(folderPath, t) })`, using new entries in `apps/chat/src/utils/entity-notification.ts`. The hook then calls its own `refreshPublishState()`; because a pending removal keeps the folder live, Unpublish stays until an administrator approves.
@@ -226,12 +224,12 @@ New `en.json` keys, with `EntityNotificationsI18nKeys` members:
 
 #### Scenario: Confirming issues the request
 
-- **WHEN** the owner confirms unpublish for a project published to `Organization/Data`
-- **THEN** `unpublishCatalogEntity` is called with `Project`, the project id and `{ folderPath: 'Organization/Data' }`
+- **WHEN** an administrator, or the publisher the BFF confirms, confirms unpublish on the public copy `projects/public/Data/q4`
+- **THEN** `unpublishCatalogEntity` is called with `Project`, that id and `{ folderPath: 'Data' }`
 
 #### Scenario: Root-folder publication is unpublished
 
-- **GIVEN** the project is published at the public root
+- **GIVEN** the public copy sits at the public root
 - **WHEN** the user confirms
 - **THEN** the request is sent with `folderPath: ''`
 

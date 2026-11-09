@@ -770,7 +770,8 @@ const { isResolved, folders, refresh } = useUnpublishableFolders(
     ? {
         entityType: 'project',
         entityId: project.id,
-        isOwner: project.canManage,
+        // false: a personal project keeps offering Publish; only its public copy offers Unpublish
+        isOwner: false,
       }
     : null,
   user.isAdmin,
