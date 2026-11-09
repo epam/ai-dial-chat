@@ -135,25 +135,38 @@ vi.mock('@epam/ai-dial-ui-kit', async () => ({
   Button: ({
     onClick,
     label,
+    href,
     className,
     'aria-current': ariaCurrent,
     'aria-label': ariaLabel,
   }: {
-    onClick?: () => void;
+    onClick?: React.MouseEventHandler;
     label?: React.ReactNode;
+    href?: string;
     className?: string;
     'aria-current'?: React.AriaAttributes['aria-current'];
     'aria-label'?: string;
-  }) => (
-    <button
-      onClick={onClick}
-      className={className}
-      aria-current={ariaCurrent}
-      aria-label={ariaLabel}
-    >
-      {label}
-    </button>
-  ),
+  }) =>
+    href !== undefined ? (
+      <a
+        href={href}
+        onClick={onClick}
+        className={className}
+        aria-current={ariaCurrent}
+        aria-label={ariaLabel}
+      >
+        {label}
+      </a>
+    ) : (
+      <button
+        onClick={onClick}
+        className={className}
+        aria-current={ariaCurrent}
+        aria-label={ariaLabel}
+      >
+        {label}
+      </button>
+    ),
   Highlight: ({ text }: { text: string }) => {
     rowRenderLog.push(text);
     return <span>{text}</span>;
@@ -1114,9 +1127,9 @@ describe('ConversationList — pinned projects', () => {
         }}
       />,
     );
-    /* The mocked kit button keeps its class, which is all the variant leaves on a row here. */
+    /* The mocked kit link keeps its class, which is all the variant leaves on a row here. */
     const getNestedButton = () =>
-      within(getListItem('Weekly summary')).getByRole('button');
+      within(getListItem('Weekly summary')).getByRole('link');
     expect(getNestedButton().className).toMatch(/itemIndicator/);
 
     rerender(
@@ -1450,12 +1463,12 @@ describe('ConversationList — pinned projects', () => {
 
     expect(
       screen
-        .getByRole('button', { name: 'Support' })
+        .getByRole('link', { name: 'Support' })
         .getAttribute('aria-current'),
     ).toBe('page');
     expect(
       screen
-        .getByRole('button', { name: 'Billing reply' })
+        .getByRole('link', { name: 'Billing reply' })
         .getAttribute('aria-current'),
     ).toBe('page');
   });

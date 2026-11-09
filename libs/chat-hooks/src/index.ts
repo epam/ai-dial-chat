@@ -105,6 +105,8 @@ export * from './project/use-project-conversations';
 export * from './project/use-pinned-project-chats';
 export * from './project/use-project-artifacts';
 export * from './project/use-project-actions';
+export * from './project/project-sharing';
+export * from './project/use-project-remove-from-list';
 export * from './shared/serialized-writer';
 /*
  * Re-exported so consumers of the gate result can name the consent enum

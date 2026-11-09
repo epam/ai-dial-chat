@@ -24,8 +24,6 @@ interface UnpublishableProject {
   id: string;
   /** The project name, shown in the confirmation and the notification. */
   name: string;
-  /** Whether the caller owns the project (rename, delete, share, publish). */
-  canManage: boolean;
 }
 
 /** Inputs of `useProjectUnpublish`. */
@@ -52,9 +50,13 @@ export const useProjectUnpublish = ({ project, isAdmin }: Params) => {
 
   const projectId = project?.id ?? null;
   const projectName = project?.name ?? '';
-  const canManage = project?.canManage ?? false;
 
-  /* Who may unpublish is decided in chat-hooks; this hook adds the dialog, the request and the toasts. */
+  /*
+   * Who may unpublish is decided in chat-hooks; this hook adds the dialog, the request and the toasts.
+   * `isOwner` is always false: Unpublish belongs to the published copy only. An owner's personal
+   * project keeps offering Publish however many copies it has, because it can be published any
+   * number of times, to different folders or under different versions (#9800).
+   */
   const target = useMemo(
     () =>
       projectId == null
@@ -62,9 +64,9 @@ export const useProjectUnpublish = ({ project, isAdmin }: Params) => {
         : {
             entityType: CatalogPublishEntityType.Project,
             entityId: projectId,
-            isOwner: canManage,
+            isOwner: false,
           },
-    [canManage, projectId],
+    [projectId],
   );
   const {
     isResolved: isPublishStateResolved,

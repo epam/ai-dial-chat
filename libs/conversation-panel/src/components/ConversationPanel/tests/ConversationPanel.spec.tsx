@@ -138,18 +138,38 @@ vi.mock('@epam/ai-dial-ui-kit', async () => ({
   Button: ({
     onClick,
     label,
+    href,
     className,
     'aria-current': ariaCurrent,
+    'aria-label': ariaLabel,
   }: {
-    onClick?: () => void;
+    onClick?: React.MouseEventHandler;
     label?: React.ReactNode;
+    href?: string;
     className?: string;
     'aria-current'?: React.AriaAttributes['aria-current'];
-  }) => (
-    <button onClick={onClick} className={className} aria-current={ariaCurrent}>
-      {label}
-    </button>
-  ),
+    'aria-label'?: string;
+  }) =>
+    href !== undefined ? (
+      <a
+        href={href}
+        onClick={onClick}
+        className={className}
+        aria-current={ariaCurrent}
+        aria-label={ariaLabel}
+      >
+        {label}
+      </a>
+    ) : (
+      <button
+        onClick={onClick}
+        className={className}
+        aria-current={ariaCurrent}
+        aria-label={ariaLabel}
+      >
+        {label}
+      </button>
+    ),
   Highlight: ({ text }: { text: string }) => {
     rowRenderLog.push(text);
     return <span>{text}</span>;
