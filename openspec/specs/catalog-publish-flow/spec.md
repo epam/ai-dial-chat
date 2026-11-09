@@ -117,7 +117,7 @@ In addition to the trailing "Create new folder" button, `PublishFoldersTree` SHA
 - **THEN** only "Add child" is offered — "Add sibling" is not, since the root has no parent
 
 ### Requirement: Inline folder creation validates the name client-side
-Before invoking `onCreatePublishFolder`, `PublishFoldersTree` SHALL validate the confirmed name via `validateFolderName` (exported from `@epam/ai-dial-publish-panel`, relocated from `libs/catalog/src/utils/publish-folder-tree.ts`) and reject: an empty (post-trim) name, a name containing `..` or any of the forbidden characters `/ \ : ; , = { } &  "`, and a name duplicating a sibling folder (case-insensitive). This mirrors the backend's `IsValidFilePath` path-traversal rule so an invalid destination is rejected in the UI instead of only failing the network request. The same validator SHALL be wired as `DialFoldersTree`'s `onRenameValidate` prop, which the file-manager tree also invokes for the create-folder row, so the input shows an inline error and blocks Save while invalid.
+Before invoking `onCreatePublishFolder`, `PublishFoldersTree` SHALL validate the confirmed name via `validateFolderName` (exported from `@epam/ai-dial-publish-panel`, relocated from `libs/catalog/src/utils/publish-folder-tree.ts`) and reject: an empty (post-trim) name, a name containing `..` or any of the forbidden characters `/ \ : ; , = { } &  "`, a name duplicating a sibling folder (case-insensitive), and a name equal to its parent folder's name (case-insensitive; a root has no parent name, so a top-level folder may share the root label). This mirrors the backend's `IsValidFilePath` path-traversal rule so an invalid destination is rejected in the UI instead of only failing the network request. The same validator SHALL be wired as `DialFoldersTree`'s `onRenameValidate` prop, which the file-manager tree also invokes for the create-folder row, so the input shows an inline error and blocks Save while invalid.
 
 #### Scenario: User enters a path-traversal or forbidden-character folder name
 - **WHEN** the user types `../EscapeFolder` (or any name containing `..` or a forbidden character) into the inline create row and confirms
@@ -126,6 +126,10 @@ Before invoking `onCreatePublishFolder`, `PublishFoldersTree` SHALL validate the
 #### Scenario: User enters an empty folder name
 - **WHEN** the user confirms an empty or whitespace-only name in the inline create row
 - **THEN** an inline validation error is shown and `onCreatePublishFolder` is NOT called
+
+#### Scenario: User names a child folder like its parent
+- **WHEN** the user creates a folder inside `test` and confirms the name `test` (in any letter case)
+- **THEN** the inline error "A folder cannot have the same name as its parent folder." is shown and `onCreatePublishFolder` is NOT called
 
 ### Requirement: Publish visibility is scoped to editable entities
 The catalog Header's Publish action SHALL only be shown (`isPublishVisible`) when the current catalog item is user-owned/editable, in addition to the entity-type gate: `isPublishVisible` (`apps/chat/src/hooks/useCatalogPublishing/useCatalogPublishing.ts`) is `item.isMyApp && toPublishEntityType(item.type) != null`, and `toPublishEntityType` (`libs/chat-hooks/src/catalog/publish.ts`) maps Model, Toolset, Agent (Application), Prompt and Skill. This is a client-side UI gate only; it does not replace server-side write-access enforcement.

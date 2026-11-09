@@ -66,6 +66,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
     createFolderEmptyNameError,
     createFolderInvalidNameError,
     createFolderDuplicateNameError,
+    createFolderSameAsParentNameError,
     retryLabel = 'Retry',
   } = panelLabels;
   const { colors, folderTree: folderTreeStyles } = panelStyles;
@@ -139,6 +140,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
           emptyFolderNameError={createFolderEmptyNameError}
           invalidFolderNameError={createFolderInvalidNameError}
           duplicateFolderNameError={createFolderDuplicateNameError}
+          sameAsParentFolderNameError={createFolderSameAsParentNameError}
           styles={folderTreeStyles}
         />
         {/* Rules are scoped to the folder picked above, so they sit with the tree, as in the Publish panel. */}

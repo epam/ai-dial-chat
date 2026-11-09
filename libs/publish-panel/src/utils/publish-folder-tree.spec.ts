@@ -241,6 +241,7 @@ describe('validateFolderName', () => {
     empty: 'empty',
     invalid: 'invalid',
     duplicate: 'duplicate',
+    sameAsParent: 'same-as-parent',
   };
 
   it('returns null for a valid, non-duplicate name', () => {
@@ -275,6 +276,23 @@ describe('validateFolderName', () => {
     expect(validateFolderName('shared', ['Shared'], messages)).toBe(
       'duplicate',
     );
+  });
+
+  it('returns the same-as-parent message for a case-insensitive parent name match', () => {
+    expect(validateFolderName(' TEST ', [], messages, 'test')).toBe(
+      'same-as-parent',
+    );
+  });
+
+  it('falls back to the duplicate message when no same-as-parent message is given', () => {
+    const { sameAsParent: _omitted, ...withoutSameAsParent } = messages;
+    expect(validateFolderName('test', [], withoutSameAsParent, 'test')).toBe(
+      'duplicate',
+    );
+  });
+
+  it('accepts the name when there is no parent', () => {
+    expect(validateFolderName('test', [], messages)).toBeNull();
   });
 });
 

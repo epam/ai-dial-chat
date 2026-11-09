@@ -227,6 +227,9 @@ const PublishProjectPanelContainer: FC<Props> = ({
         createFolderDuplicateNameError: t(
           ProjectsI18nKeys.PublishDuplicateFolderNameError,
         ),
+        createFolderSameAsParentNameError: t(
+          ProjectsI18nKeys.PublishSameAsParentFolderNameError,
+        ),
         submitError: t(PublishI18nKeys.SubmitErrorCallout),
         rootFolderLabel: t(BasicI18nKeys.Organization),
         accessRulesLabels: getAccessRulesLabels(t),

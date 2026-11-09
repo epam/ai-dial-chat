@@ -123,6 +123,8 @@ Both surfaces build the `McpUiHostContext` sent on `ui/initialize` with `useMcpA
 
 The MCP UI CSS variables are mapped from the chat's own design tokens in `apps/chat/src/styles.scss`, so a mounted app picks up the current theme.
 
+The canvas keeps the `hostContext` it was opened with, so `apps/chat/src/components/McpAppCanvasContainer/McpAppCanvasContainer.tsx` passes the live `'fullscreen'` host context to `AttachmentCanvasContainer` as `mcpAppHostContext`. A theme or locale change then reaches an app that is already open in the canvas as `ui/notifications/host-context-changed`, the same way the inline preview gets it, without remounting the iframe; a change that lands while the app is still loading is replayed once it initializes.
+
 `styleExtensions` is a custom field outside the MCP Apps standard: `styles.variables` accepts only the standard names, so the chat sends additional variables beside it, as `{ variables: { '--button-radius': …, … } }`. It carries the button corner radii (`--button-radius`, `--button-radius-small`), the primary button gradient (`--button-primary-gradient-start`/`-end`, plus `-hover-` and `-active-` stops) and the primary button label colour (`--button-primary-text`). Each is read from the chat's `--mcp-ext-<name>` variable in `apps/chat/src/styles/mcp-app-ui-vars.scss`. An app that does not know the field ignores it.
 
 ## Caching

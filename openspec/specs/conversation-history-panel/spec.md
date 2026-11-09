@@ -112,7 +112,7 @@ When `item.iconTooltip` is provided and `item.isIconLoading` is `false` or `unde
 - **WHEN** the user middle-clicks (scroll wheel click) a conversation row
 - **THEN** the browser opens the conversation URL (`item.href`) in a new tab through the row's native `<a>` link
 
-`ConversationItem` SHALL include an optional `href?: string` field — a browser-navigable URL for the conversation. When `href` is set, `ConversationRow` wraps the row `Button` in a native `<a href={item.href} className="contents">`: a plain click is `preventDefault`-ed and calls `onSelectConversation(id)`, and a middle-click uses the browser's native link behaviour to open the URL in a new tab (there are no `mousedown`/`auxclick` handlers and no `window.open` call). The inner `Button` gets `tabIndex={-1}` so the link is the single focus stop. `ConversationPanelView` in `apps/chat` SHALL populate `href` using `getConversationRoute(id)` for each item.
+`ConversationItem` SHALL include an optional `href?: string` field — a browser-navigable URL for the conversation. When `href` is set, `ConversationRow` renders the row as one kit `Button` with `href={item.href}`, which the kit draws as a native `<a>` (no wrapper element, no nested button, no `display: contents`, so the link is focusable and the single focus stop): a plain click is `preventDefault`-ed and calls `onSelectConversation(id)`, while a middle-click or a click with Ctrl, Meta, Shift or Alt uses the browser's native link behaviour to open the URL in a new tab or window (there are no `mousedown`/`auxclick` handlers and no `window.open` call). `ConversationPanelView` in `apps/chat` SHALL populate `href` using `getConversationRoute(id)` for each item.
 
 #### Scenario: Empty state is shown when no conversations
 
@@ -1078,6 +1078,7 @@ The Pinned header SHALL render when the section has at least one visible project
 **Accessibility**
 
 - The list keeps `role="list"`. Every row stays a `listitem` and a single tab stop: its link, followed by its ⋮ trigger when shown.
+- A project row, a nested row and a See all row SHALL each be reachable with Tab through their own `<a>`: the link SHALL NOT be rendered with `display: contents`, which a browser skips when moving focus.
 - Project rows SHALL carry `aria-level="1"`.
 - Nested and See all rows SHALL carry `aria-level="2"`, `aria-setsize` (conversations plus See all) and `aria-posinset`, so assistive technology hears the nesting and position without a roving-focus tree widget.
 - A project row matching `activeProjectId`, and a nested row matching `activeConversationId`, get `aria-current="page"`.

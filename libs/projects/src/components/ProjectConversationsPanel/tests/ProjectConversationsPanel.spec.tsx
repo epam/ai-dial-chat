@@ -92,6 +92,23 @@ describe('ProjectConversationsPanel', () => {
     ).toBeNull();
   });
 
+  it('keeps Save disabled until the name is changed', async () => {
+    const onRename = vi.fn(async () => undefined);
+    renderPanel({ onRename });
+
+    await openRowMenu('Rename');
+    const input = await screen.findByLabelText('Chat name');
+    const save = screen.getByRole('button', { name: 'Save' });
+    expect((save as HTMLButtonElement).disabled).toBe(true);
+
+    await userEvent.type(input, '  ');
+    expect((save as HTMLButtonElement).disabled).toBe(true);
+
+    await userEvent.type(input, '!');
+    expect((save as HTMLButtonElement).disabled).toBe(false);
+    expect(onRename).not.toHaveBeenCalled();
+  });
+
   it('refuses an empty name and renames with the trimmed one', async () => {
     const onRename = vi.fn(async () => undefined);
     renderPanel({ onRename });
@@ -99,7 +116,11 @@ describe('ProjectConversationsPanel', () => {
     await openRowMenu('Rename');
     const input = await screen.findByLabelText('Chat name');
     await userEvent.clear(input);
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(
+      (screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    await userEvent.type(input, '{Enter}');
     expect(await screen.findByText('Enter a chat name')).toBeTruthy();
 
     await userEvent.type(input, '  Login article ');
@@ -160,7 +181,8 @@ describe('ProjectConversationsPanel', () => {
     renderPanel({ onRename });
 
     await openRowMenu('Rename');
-    await userEvent.click(await screen.findByRole('button', { name: 'Save' }));
+    await userEvent.type(await screen.findByLabelText('Chat name'), ' 2');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(onRename).toHaveBeenCalled());
     expect(screen.getByRole('dialog', { name: 'Rename chat' })).toBeTruthy();
@@ -233,7 +255,8 @@ describe('ProjectConversationsPanel', () => {
     renderPanel({ onRename });
 
     await openRowMenu('Rename');
-    await userEvent.click(await screen.findByRole('button', { name: 'Save' }));
+    await userEvent.type(await screen.findByLabelText('Chat name'), ' 2');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(onRename).toHaveBeenCalled());
 
     const cancel = screen.getByRole('button', { name: 'Cancel' });

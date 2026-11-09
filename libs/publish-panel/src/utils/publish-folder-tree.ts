@@ -145,13 +145,16 @@ export interface FolderNameValidationMessages {
   invalid: string;
   /** Shown when a sibling folder already has this name (case-insensitive). */
   duplicate: string;
+  /** Shown when the name equals the parent folder's name (case-insensitive). Falls back to `duplicate`. */
+  sameAsParent?: string;
 }
 
-/** Returns an error message from `messages`, or `null` when `rawValue` is a valid non-duplicate folder name for the publish destination tree. */
+/** Returns an error message from `messages`, or `null` when `rawValue` is a valid folder name for the publish destination tree: not a duplicate of a sibling and not the name of its parent folder (`parentName`, omitted for a root). */
 export const validateFolderName = (
   rawValue: string,
   siblingNames: string[],
   messages: FolderNameValidationMessages,
+  parentName?: string,
 ): string | null => {
   const trimmed = rawValue.trim();
   if (!trimmed) {
@@ -164,6 +167,9 @@ export const validateFolderName = (
     siblingNames.some((name) => name.toLowerCase() === trimmed.toLowerCase())
   ) {
     return messages.duplicate;
+  }
+  if (parentName?.toLowerCase() === trimmed.toLowerCase()) {
+    return messages.sameAsParent ?? messages.duplicate;
   }
   return null;
 };

@@ -183,6 +183,9 @@ const PublishConversationPanelContainer: FC<Props> = ({
         createFolderDuplicateNameError: t(
           ConversationPublishI18nKeys.DuplicateFolderNameError,
         ),
+        createFolderSameAsParentNameError: t(
+          ConversationPublishI18nKeys.SameAsParentFolderNameError,
+        ),
         submitError: t(PublishI18nKeys.SubmitErrorCallout),
         rootFolderLabel: t(BasicI18nKeys.Organization),
         accessRulesLabels: getAccessRulesLabels(t),

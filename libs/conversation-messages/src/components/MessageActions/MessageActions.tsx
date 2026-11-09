@@ -126,7 +126,10 @@ export const MessageActions: FC<MessageActionsProps> = ({
       style={cssVars}
       className={mergeClasses(
         'flex items-center gap-1',
-        !isAlwaysVisible && 'opacity-0 group-hover:opacity-100',
+        /* `invisible`, not `opacity-0`: a transparent button still takes the
+           pointer and keyboard focus, so a hidden toolbar showed its tooltips
+           (#9803). Hidden buttons take neither, and are not announced. */
+        !isAlwaysVisible && 'invisible group-hover:visible',
         className,
       )}
     >

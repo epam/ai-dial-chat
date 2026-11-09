@@ -37,6 +37,11 @@ export type {
   ProjectOutputsStyles,
   ProjectOutputsTypography,
 } from './models/project-outputs-props';
+export { ProjectRemoveFromListConfirmation } from './components/ProjectRemoveFromListConfirmation/ProjectRemoveFromListConfirmation';
+export type {
+  ProjectRemoveFromListConfirmationLabels,
+  ProjectRemoveFromListConfirmationProps,
+} from './models/project-remove-from-list-confirmation-props';
 export { ProjectChatHeader } from './components/ProjectChatHeader/ProjectChatHeader';
 export type { ProjectChatHeaderProps } from './models/project-chat-header-props';
 export type {
