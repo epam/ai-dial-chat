@@ -27,7 +27,10 @@ const ChatLayout: FC = () => {
     <div className="relative flex min-h-0 flex-1 flex-col">
       <div
         className={mergeClasses(
-          'hidden grid-cols-[1fr_auto_1fr] items-center gap-2 px-2 desktop:grid',
+          'hidden items-center gap-2 px-2 desktop:grid',
+          isHeaderLogoShown
+            ? 'grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]'
+            : 'grid-cols-[minmax(0,1fr)_auto_auto]',
           isRootRoute ? 'absolute inset-x-0 top-0 z-10 h-16' : 'h-16 shrink-0',
         )}
       >
