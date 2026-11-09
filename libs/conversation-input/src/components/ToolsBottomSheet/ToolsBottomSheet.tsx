@@ -14,8 +14,8 @@ import styles from './ToolsBottomSheet.module.scss';
 export interface ToolsBottomSheetProps {
   /** Controls sheet visibility. */
   isOpen: boolean;
-  /** Called when the back arrow is tapped — returns to the previous sheet. */
-  onBack: () => void;
+  /** Called when the back arrow is tapped — returns to the previous sheet. When omitted, no back arrow is shown. */
+  onBack?: () => void;
   /** Accessible label for the back arrow button. Defaults to `'Back'`. */
   backLabel?: string;
   /** Called when the close (x) button is tapped — dismisses the sheet entirely. */
