@@ -101,7 +101,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
     return { ...hostContext, containerDimensions: containerSize };
   }, [hostContext, containerSize]);
 
-  const { appBridge, hasFailed } = useMcpAppBridge(
+  const { appBridge, hasFailed, replayHostContext } = useMcpAppBridge(
     content,
     containerRef,
     liveHostContext,
@@ -135,6 +135,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
           onSizeChanged={() => setStatus(RendererStatus.Ready)}
           onInitialized={(appInfo) => {
             setStatus(RendererStatus.Ready);
+            replayHostContext();
             if (appInfo.appVersion != null) onAppInfo?.(appInfo.appVersion);
           }}
           onError={(error) => {

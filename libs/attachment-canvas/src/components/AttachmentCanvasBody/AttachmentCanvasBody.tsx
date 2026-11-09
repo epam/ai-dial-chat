@@ -236,6 +236,12 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
 
   const bodyContainerClassName = BODY_CONTAINER_CLASS_NAMES[content.type];
 
+  /* Scoped to MCP App content so a theme change does not rebuild the body of any other content type. */
+  const activeMcpAppHostContext =
+    content.type === AttachmentContentType.McpApp
+      ? mcpAppHostContext
+      : undefined;
+
   const renderedContent = useMemo(() => {
     switch (content.type) {
       case AttachmentContentType.PlainText:
@@ -470,7 +476,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             content={content}
             loadingLabel={loadingLabel}
             onAppInfo={onAppInfo}
-            hostContext={mcpAppHostContext}
+            hostContext={activeMcpAppHostContext}
           />
         );
       case AttachmentContentType.Unsupported:
@@ -532,7 +538,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     hidePdfToolbar,
     configurePdfWorker,
     onAppInfo,
-    mcpAppHostContext,
+    activeMcpAppHostContext,
     onRetry,
     pdfThumbnailsLabel,
     pdfShowThumbnailsLabel,

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { McpAppCanvasContent } from '../../../models/attachment-canvas';
 import { AttachmentContentType } from '../../../types/attachment-canvas';
@@ -23,10 +23,13 @@ interface BridgeDouble {
   setNotificationHandler: (schema: unknown, handler: unknown) => void;
   setHostContext: (context: unknown) => void;
   close: () => Promise<void>;
+  transport?: unknown;
+  options?: { hostContext?: unknown };
 }
 
 interface AppFrameDouble {
   onError?: (error: Error) => void;
+  onInitialized?: (appInfo: { appVersion?: unknown }) => void;
   sandbox?: { url: URL };
 }
 
@@ -43,14 +46,21 @@ vi.mock('@mcp-ui/client', () => ({
         handler as BridgeDouble['notificationHandler'];
     }
     /* Present so the bridge hook treats the transport as connected and pushes host-context changes. */
-    transport = {};
+    transport: unknown = {};
+    options?: { hostContext?: unknown };
     setHostContext(context: unknown) {
       setHostContextSpy(context);
     }
     close() {
       return closeSpy();
     }
-    constructor() {
+    constructor(
+      _client: unknown,
+      _info: unknown,
+      _capabilities: unknown,
+      options?: { hostContext?: unknown },
+    ) {
+      this.options = options;
       bridges.push(this as unknown as BridgeDouble);
     }
   },
@@ -294,7 +304,7 @@ describe('McpAppCanvasRenderer', () => {
         />,
       );
 
-      expect(setHostContextSpy).toHaveBeenCalledTimes(1);
+      expect(setHostContextSpy).toHaveBeenCalledOnce();
       expect(setHostContextSpy).toHaveBeenCalledWith(
         expect.objectContaining({ theme: 'light' }),
       );
@@ -321,6 +331,49 @@ describe('McpAppCanvasRenderer', () => {
       );
 
       expect(setHostContextSpy).not.toHaveBeenCalled();
+    });
+
+    it('seeds the bridge from the live hostContext prop, not the content snapshot', async () => {
+      render(
+        <McpAppCanvasRenderer
+          content={{ ...baseContent, hostContext: darkContext }}
+          hostContext={lightContext}
+        />,
+      );
+      await waitFor(() => expect(bridges).toHaveLength(1));
+
+      expect(bridges[0].options?.hostContext).toEqual(
+        expect.objectContaining({ theme: 'light' }),
+      );
+    });
+
+    it('does not push a change that lands before the transport connects and sends it once the app initializes', async () => {
+      const { rerender } = render(
+        <McpAppCanvasRenderer
+          content={baseContent}
+          hostContext={darkContext}
+        />,
+      );
+      await waitFor(() => expect(bridges).toHaveLength(1));
+      const [bridge] = bridges;
+      bridge.transport = undefined;
+      setHostContextSpy.mockClear();
+
+      rerender(
+        <McpAppCanvasRenderer
+          content={baseContent}
+          hostContext={lightContext}
+        />,
+      );
+      expect(setHostContextSpy).not.toHaveBeenCalled();
+
+      bridge.transport = {};
+      act(() => appFrames.at(-1)?.onInitialized?.({}));
+
+      expect(setHostContextSpy).toHaveBeenCalledOnce();
+      expect(setHostContextSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ theme: 'light' }),
+      );
     });
 
     it('falls back to content.hostContext when no hostContext prop is passed', async () => {
