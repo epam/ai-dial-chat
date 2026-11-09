@@ -1,7 +1,4 @@
-import {
-  AttachmentCanvasContainer,
-  useAttachmentCanvas,
-} from '@epam/ai-dial-attachment-canvas';
+import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import { clearAttachmentCache } from '@epam/ai-dial-chat-hooks/file-manager-canvas';
 import { useAppVersionCheck } from '@epam/ai-dial-chat-hooks/utils';
 import {
@@ -42,6 +39,7 @@ import ConversationSourcesPanel from '../components/ConversationSourcesPanel/Con
 import { RouteErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
 import Header from '../components/Header/Header';
 import SourcesSidebarToggle from '../components/Header/SourcesSidebarToggle';
+import McpAppCanvasContainer from '../components/McpAppCanvasContainer/McpAppCanvasContainer';
 import SidebarNavigation from '../components/Navigation/SidebarNavigation';
 import NewVersionFallback from '../components/NewVersionFallback/NewVersionFallback';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
@@ -611,7 +609,7 @@ const App: FC = () => {
         {(isFileManagerRoute ||
           isProjectPageRoute ||
           (isConversationRoute && isAttachmentsManagerEnabled)) && (
-          <AttachmentCanvasContainer
+          <McpAppCanvasContainer
             loadPdf={loadPdf}
             onVisualizerSendMessage={handleCanvasVisualizerSendMessage}
             labels={{

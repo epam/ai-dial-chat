@@ -3,7 +3,13 @@ import {
   McpUiHostContextChangedNotificationSchema,
   type McpUiHostContext,
 } from '@modelcontextprotocol/ext-apps/app-bridge';
-import { type RefObject, useEffect, useRef, useState } from 'react';
+import {
+  type RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import type {
   McpAppCanvasContent,
   McpAppDisplayMode,
@@ -115,6 +121,8 @@ export interface UseMcpAppBridgeResult {
   appBridge: AppBridge | null;
   /** Whether creating the bridge threw, so the caller can render its error state. */
   hasFailed: boolean;
+  /** Pushes the latest host context to the app; call it once the app finishes initializing so a change that landed during loading is not lost. */
+  replayHostContext: () => void;
 }
 
 /**
@@ -125,7 +133,7 @@ export interface UseMcpAppBridgeResult {
  *
  * @param content MCP app content whose callbacks answer the app's requests.
  * @param containerRef Element containing the sandbox iframe `AppFrame` mounts.
- * @param liveHostContext Host context to push to the app whenever it changes.
+ * @param liveHostContext Host context that seeds the bridge, is pushed to the app whenever it changes, and is re-sent through `replayHostContext` once the app initializes.
  */
 export const useMcpAppBridge = (
   content: McpAppCanvasContent,
@@ -140,6 +148,16 @@ export const useMcpAppBridge = (
   const contentRef = useRef(content);
   useEffect(() => {
     contentRef.current = content;
+  });
+
+  /*
+   * The bridge is created once, but the host context keeps changing, so the
+   * seed and the post-handshake replay below read the latest value through
+   * this ref instead of the stale one the creation effect closed over.
+   */
+  const liveHostContextRef = useRef(liveHostContext);
+  useEffect(() => {
+    liveHostContextRef.current = liveHostContext;
   });
 
   const [appBridge, setAppBridge] = useState<AppBridge | null>(null);
@@ -159,16 +177,18 @@ export const useMcpAppBridge = (
        */
       /* Seeds `ui/initialize`'s `containerDimensions` synchronously — see `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D20. */
       const rect = containerRef.current?.getBoundingClientRect();
+      const seedHostContext =
+        liveHostContextRef.current ?? contentRef.current.hostContext;
       const initialHostContext =
         rect != null && rect.width > 0 && rect.height > 0
           ? {
-              ...contentRef.current.hostContext,
+              ...seedHostContext,
               containerDimensions: {
                 width: Math.round(rect.width),
                 height: Math.round(rect.height),
               },
             }
-          : contentRef.current.hostContext;
+          : seedHostContext;
       bridge = new AppBridge(
         null,
         contentRef.current.hostInfo ?? DEFAULT_HOST_INFO,
@@ -248,5 +268,19 @@ export const useMcpAppBridge = (
     }
   }, [appBridge, liveHostContext]);
 
-  return { appBridge, hasFailed };
+  /*
+   * A change that landed before the transport connected could not be pushed
+   * (`setHostContext` throws `Not connected`), so the app would keep the seed
+   * until the next change. `AppFrame` owns the bridge's `oninitialized`
+   * handler, so the caller replays from `AppFrame`'s `onInitialized` instead;
+   * `setHostContext` sends only the keys that differ from what the app got.
+   */
+  const replayHostContext = useCallback(() => {
+    const latest = liveHostContextRef.current;
+    if (appBridge != null && appBridge.transport != null && latest != null) {
+      appBridge.setHostContext(latest);
+    }
+  }, [appBridge]);
+
+  return { appBridge, hasFailed, replayHostContext };
 };

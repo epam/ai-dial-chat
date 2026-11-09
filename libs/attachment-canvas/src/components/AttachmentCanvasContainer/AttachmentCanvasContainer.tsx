@@ -2,6 +2,7 @@ import {
   copyToClipboard,
   type CodeBlockTheme,
 } from '@epam/ai-dial-chat-shared';
+import type { McpUiHostContext } from '@modelcontextprotocol/ext-apps/app-bridge';
 import { memo, useCallback, type FC, type ReactNode } from 'react';
 import { useAttachmentCanvas } from '../../context/AttachmentCanvasContext';
 import type {
@@ -51,6 +52,8 @@ export interface AttachmentCanvasContainerProps {
   configurePdfWorker?: () => void | Promise<void>;
   /** Called with the message text when a `Visualizer` or `GroupedVisualizer` iframe posts `SEND_MESSAGE`. Forwarded to `VisualizerCanvasRenderer` as `onSendMessage`; when omitted, those messages are ignored. */
   onVisualizerSendMessage?: (content: string) => void;
+  /** Live host context for a mounted MCP App; replaces the `hostContext` captured when the canvas opened so theme and locale changes reach the app. */
+  mcpAppHostContext?: McpUiHostContext;
 }
 
 /** Context-connected container that renders `AttachmentCanvas` with download support. */
@@ -69,6 +72,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
       loadPdf,
       configurePdfWorker,
       onVisualizerSendMessage,
+      mcpAppHostContext,
     }) => {
       const {
         ariaLabel = 'Attachment preview',
@@ -218,6 +222,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           configurePdfWorker={configurePdfWorker}
           loadPdf={loadPdf}
           onVisualizerSendMessage={onVisualizerSendMessage}
+          mcpAppHostContext={mcpAppHostContext}
         />
       );
     },
