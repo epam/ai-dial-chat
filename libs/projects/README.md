@@ -262,11 +262,13 @@ A project's home page: a header with back (its arrow mirrored in RTL), the name 
 
 When the host supplies `onUnpublish`, an Unpublish action (`IconWorldOff`, `labels.unpublishLabel`, default `'Unpublish'`) takes Publish's place in both placements and Publish is not rendered, whatever `onPublish` is. The lib knows nothing about publish history or who may unpublish: the host decides and passes one callback or the other.
 
+When the host supplies `onRemoveFromMyList` (a project shared with the user, which they cannot delete), a non-danger "Remove from My List" item (`IconTrashX`, `labels.removeFromMyListLabel`, default `'Remove from My List'`) sits in the ⋮ menu where Delete sits for an owner. The lib sends no request and knows nothing about sharing: the host decides who may remove and confirms before acting.
+
 `mainContent` fills a main column rendered before the Details panel (stacked above it on mobile), named by `mainContentLabel` (default `'Project content'`), with its content centered at a 748px max width; without it the panel stays on the inline end. While the panel sits beside the main column on desktop, the header stays in place and each column scrolls on its own; stacked, both scroll together below the header. The host puts its own content there, such as a chat input and a `ProjectConversationList`.
 
 Activating a context card calls `onContextFileClick` with the file's name, and the card whose name equals `selectedContextFileId` renders selected (`aria-pressed`). When the host passes `onContextFileDownload`, each card also shows a download button named `labels.downloadFileLabel(name)` (optional, defaulting to `Download {name}`) that calls it with the file's name. The lib downloads and opens nothing: the host decides, for example by previewing the file in a canvas beside the page. While such a preview takes the inline end, the host sets `isDetailsStacked` (default `false`) so the Details panel and its cards move below the main column at every width, with a top border instead of the inline-start one, and stay reachable.
 
-Read-only mode is the host omitting `onPublish`, `onUnpublish`, `onEdit`, `onShare` and `onDelete`: each hides its action. Exactly one state renders — loading (`isLoading`), error with Retry (`hasError`), not found with a way back (`isNotFound`), or the loaded `project`.
+Read-only mode is the host omitting `onPublish`, `onUnpublish`, `onEdit`, `onShare`, `onDelete` and `onRemoveFromMyList`: each hides its action. Exactly one state renders — loading (`isLoading`), error with Retry (`hasError`), not found with a way back (`isNotFound`), or the loaded `project`.
 
 ```tsx
 import { ProjectView } from '@epam/ai-dial-projects';
@@ -466,6 +468,23 @@ import { ProjectChatHeader } from '@epam/ai-dial-projects';
     event.preventDefault();
   }}
   backLabel="Back to Q4 launch"
+/>;
+```
+
+### ProjectRemoveFromListConfirmation
+
+The confirmation before a project shared with the user leaves their list, to pair with `ProjectView`'s `onRemoveFromMyList`: a non-danger `ConfirmationDialog` (the project name in an identity row, a message, the consequences, Cancel and the confirming button). While `isRemoving` (default `false`) both actions are blocked and `labels.removingStatusLabel` is announced. The lib sends no request: the host confirms, discards the share and closes the dialog. Every `labels` field is optional and falls back to English: `title` and `confirmLabel` (`'Remove from My List'`), `cancelLabel` (`'Cancel'`), `removingStatusLabel` (`'Removing…'`), `consequences` (three lines about losing access, others keeping theirs and needing a new invitation) and `message(projectName)` (a sentence with the name in bold).
+
+```tsx
+import { ProjectRemoveFromListConfirmation } from '@epam/ai-dial-projects';
+
+<ProjectRemoveFromListConfirmation
+  isOpen={isOpen}
+  projectName="Q4 launch"
+  isRemoving={isRemoving}
+  onConfirm={() => {}}
+  onClose={() => {}}
+  labels={{ cancelLabel: 'Cancel' }}
 />;
 ```
 

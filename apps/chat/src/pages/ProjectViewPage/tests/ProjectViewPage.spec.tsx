@@ -40,6 +40,7 @@ import {
   getCatalogUnpublishAccess,
   unpublishCatalogEntity,
 } from '../../../server-api/publish.api';
+import { discardSharedCatalogItem } from '../../../server-api/share.api';
 import ProjectViewPage from '../ProjectViewPage';
 
 vi.mock(
@@ -57,6 +58,9 @@ const userConfig = vi.hoisted(() => ({
 }));
 vi.mock('../../../context/UserConfigContext', () => ({
   useUserConfig: () => userConfig,
+}));
+vi.mock('../../../server-api/share.api', () => ({
+  discardSharedCatalogItem: vi.fn(),
 }));
 vi.mock('../../../server-api/projects.api', () => ({
   getProject: vi.fn(),
@@ -296,6 +300,92 @@ describe('ProjectViewPage', () => {
     expect(
       within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Download }),
     ).toBeTruthy();
+  });
+
+  it('removes a shared project from the list after confirmation and returns to the list', async () => {
+    vi.mocked(getProject).mockResolvedValue(
+      details({
+        source: ProjectSource.Shared,
+        canEdit: false,
+        canManage: false,
+      }),
+    );
+    vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+    const { router } = renderAt();
+    await screen.findByRole('heading', { level: 1, name: 'q4' });
+
+    const menu = await openMenu();
+    await userEvent.click(
+      within(menu).getByRole('menuitem', {
+        name: ButtonsI18nKeys.RemoveFromMyList,
+      }),
+    );
+    expect(discardSharedCatalogItem).not.toHaveBeenCalled();
+    const dialog = await screen.findByRole('dialog', {
+      name: ButtonsI18nKeys.RemoveFromMyList,
+    });
+    await userEvent.click(
+      within(dialog).getByRole('button', {
+        name: ButtonsI18nKeys.RemoveFromMyList,
+      }),
+    );
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/projects'),
+    );
+    expect(discardSharedCatalogItem).toHaveBeenCalledOnce();
+    expect(discardSharedCatalogItem).toHaveBeenCalledWith(PROJECT_ID);
+    expect(userConfig.setPinnedProject).toHaveBeenCalledWith(PROJECT_ID, false);
+  });
+
+  it('stays on the project when removing a shared project fails', async () => {
+    vi.mocked(getProject).mockResolvedValue(
+      details({
+        source: ProjectSource.Shared,
+        canEdit: false,
+        canManage: false,
+      }),
+    );
+    vi.mocked(discardSharedCatalogItem).mockRejectedValue(new Error('403'));
+    const { router } = renderAt();
+    await screen.findByRole('heading', { level: 1, name: 'q4' });
+
+    const menu = await openMenu();
+    await userEvent.click(
+      within(menu).getByRole('menuitem', {
+        name: ButtonsI18nKeys.RemoveFromMyList,
+      }),
+    );
+    const dialog = await screen.findByRole('dialog', {
+      name: ButtonsI18nKeys.RemoveFromMyList,
+    });
+    await userEvent.click(
+      within(dialog).getByRole('button', {
+        name: ButtonsI18nKeys.RemoveFromMyList,
+      }),
+    );
+
+    await waitFor(() => expect(showNotificationMock).toHaveBeenCalled());
+    expect(router.state.location.pathname).toBe(
+      '/projects/view/a1b2c3/marketing/q4',
+    );
+    expect(userConfig.setPinnedProject).not.toHaveBeenCalled();
+  });
+
+  it('offers Delete and not Remove from My List for an owned project', async () => {
+    renderAt();
+    await screen.findByRole('heading', { level: 1, name: 'q4' });
+
+    const menu = await openMenu();
+
+    expect(
+      within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
+    ).toBeTruthy();
+    expect(
+      within(menu).queryByRole('menuitem', {
+        name: ButtonsI18nKeys.RemoveFromMyList,
+      }),
+    ).toBeNull();
   });
 
   it('lets a shared editor edit and chat but not publish, share or delete', async () => {

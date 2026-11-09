@@ -16,7 +16,7 @@ At 768–1279px, right panels consume too much space and menus still open as pho
 
 ### Non-goals
 
-No changes to navigation or conversation-panel layout/open-state behavior, general dialogs/editors/forms, backend APIs, feature availability, or the separate chat_pg_copy repository. No new context or persistence. Preserve the existing `.mcp.json` modification.
+No changes to navigation or conversation-panel layout/open-state behavior, general dialogs/editors/forms, backend APIs, feature availability, or any separate downstream repository. No new context or persistence. Preserve the existing `.mcp.json` modification.
 
 ## Capabilities
 
@@ -34,7 +34,7 @@ No changes to navigation or conversation-panel layout/open-state behavior, gener
 
 ## Impact
 
-Shared libraries are intentionally affected; this is broader than an app-only CSS adjustment. Follow `libs/chat-shared/src/hooks/useIsMobile.ts:15` for media subscriptions and `libs/sidebar/src/components/SidebarPanel/SidebarPanel.tsx:25` for panel sizing/animation. Reuse existing `SideDrawer` compositions in catalog and publish-panel. App adapters (`apps/chat/src/app/app.tsx`, source/skill/publication containers) retain routes, integration callbacks and state ownership. Libraries receive presentation, widths, labels and callbacks without host contexts or storage knowledge. Existing API inputs remain supported, including other consumers such as pg-chat. No new visible strings, translation keys, backend endpoints, telemetry, cache or feature flags.
+Shared libraries are intentionally affected; this is broader than an app-only CSS adjustment. Follow `libs/chat-shared/src/hooks/useIsMobile.ts:15` for media subscriptions and `libs/sidebar/src/components/SidebarPanel/SidebarPanel.tsx:25` for panel sizing/animation. Reuse existing `SideDrawer` compositions in catalog and publish-panel. App adapters (`apps/chat/src/app/app.tsx`, source/skill/publication containers) retain routes, integration callbacks and state ownership. Libraries receive presentation, widths, labels and callbacks without host contexts or storage knowledge. Existing API inputs remain supported, including other downstream consumers. No new visible strings, translation keys, backend endpoints, telemetry, cache or feature flags.
 
 ### Alternatives
 
