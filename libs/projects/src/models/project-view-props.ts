@@ -44,6 +44,8 @@ export interface ProjectViewLabels {
   downloadLabel: string;
   /** Delete action label. */
   deleteLabel: string;
+  /** Remove-from-my-list action label. Defaults to `'Remove from My List'`. */
+  removeFromMyListLabel?: string;
   /** Heading and accessible name of the Details panel. */
   detailsLabel: string;
   /** Description section heading. */
@@ -153,6 +155,8 @@ export interface ProjectViewProps {
   onShare?: () => void;
   /** Called from the Delete action; the action is hidden when omitted. */
   onDelete?: () => void;
+  /** Called from the Remove from My List action, offered to a recipient in place of Delete; the action is hidden when omitted. */
+  onRemoveFromMyList?: () => void;
   /** Called from the Download action. */
   onDownload: () => void;
   /** Called with a file name when the user activates its context card; the host decides what that opens. */

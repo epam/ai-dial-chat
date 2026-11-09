@@ -28,6 +28,7 @@ export const useProjectViewLabels = (): ProjectViewLabels => {
       shareLabel: t(ButtonsI18nKeys.Share),
       downloadLabel: t(ButtonsI18nKeys.Download),
       deleteLabel: t(ButtonsI18nKeys.Delete),
+      removeFromMyListLabel: t(ButtonsI18nKeys.RemoveFromMyList),
       detailsLabel: t(ProjectsI18nKeys.ViewDetails),
       descriptionLabel: t(ProjectsI18nKeys.ViewDescription),
       instructionsLabel: t(ProjectsI18nKeys.ViewInstructions),

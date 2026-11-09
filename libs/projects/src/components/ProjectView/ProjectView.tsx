@@ -74,6 +74,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   onEdit,
   onShare,
   onDelete,
+  onRemoveFromMyList,
   onDownload,
   onContextFileClick,
   onContextFileDownload,
@@ -196,6 +197,14 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
       icon: renderMenuIcon(IconDownload),
       onClick: onDownload,
     });
+    if (onRemoveFromMyList) {
+      items.push({
+        key: 'removeFromMyList',
+        label: labels.removeFromMyListLabel ?? 'Remove from My List',
+        icon: renderMenuIcon(IconTrashX),
+        onClick: onRemoveFromMyList,
+      });
+    }
     if (onDelete) {
       items.push({
         key: 'delete',

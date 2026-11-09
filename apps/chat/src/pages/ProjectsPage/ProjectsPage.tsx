@@ -6,7 +6,14 @@ import {
   ProjectsSortKey,
   type ProjectsLabels,
 } from '@epam/ai-dial-projects';
-import { memo, useCallback, useMemo, useState, type FC } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
@@ -20,7 +27,10 @@ import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useUserConfig } from '../../context/UserConfigContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { projectsClient } from '../../hooks/projects/projects-client';
+import {
+  projectsClient,
+  subscribeProjectListChanged,
+} from '../../hooks/projects/projects-client';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
 import NotFoundPage from '../NotFound/NotFound';
@@ -30,8 +40,10 @@ const ProjectsPage: FC = () => {
   const { language } = useLanguage();
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('projectsEnabled');
-  const { projects, incompleteSources, isLoading, hasError, retry } =
+  const { projects, incompleteSources, isLoading, hasError, retry, refresh } =
     useProjects(projectsClient, isEnabled);
+  /* A project removed from the list elsewhere, e.g. from the sidebar, emits no watch event. */
+  useEffect(() => subscribeProjectListChanged(() => void refresh()), [refresh]);
   const { pinnedProjectIds, setPinnedProject } = useUserConfig();
   const { showErrorNotification } = useNotification();
   const projectItems = useMemo(() => {
