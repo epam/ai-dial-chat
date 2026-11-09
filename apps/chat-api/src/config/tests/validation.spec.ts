@@ -116,10 +116,10 @@ describe('validate', () => {
     },
   );
 
-  it('defaults CSP rollout to report-only and accepts explicit enforcement', () => {
-    expect(validate({ ...baseConfig }).CSP_MODE).toBe('report-only');
-    expect(validate({ ...baseConfig, CSP_MODE: 'enforce' }).CSP_MODE).toBe(
-      'enforce',
+  it('defaults CSP to enforcement and accepts an explicit report-only rollback', () => {
+    expect(validate({ ...baseConfig }).CSP_MODE).toBe('enforce');
+    expect(validate({ ...baseConfig, CSP_MODE: 'report-only' }).CSP_MODE).toBe(
+      'report-only',
     );
   });
 

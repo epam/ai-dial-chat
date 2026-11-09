@@ -81,7 +81,7 @@ describe('buildPermissionsPolicyHeader', () => {
   it('delegates to self plus a single allowlisted origin', () => {
     expect(
       buildPermissionsPolicyHeader(['https://quickapps.example.com']),
-    ).toBe('local-network-access=(self https://quickapps.example.com)');
+    ).toBe('local-network-access=(self "https://quickapps.example.com")');
   });
 
   it('delegates to self plus every allowlisted origin', () => {
@@ -91,7 +91,7 @@ describe('buildPermissionsPolicyHeader', () => {
         'https://skills.example.com',
       ]),
     ).toBe(
-      'local-network-access=(self https://quickapps.example.com https://skills.example.com)',
+      'local-network-access=(self "https://quickapps.example.com" "https://skills.example.com")',
     );
   });
 });

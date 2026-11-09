@@ -413,8 +413,8 @@ Configured at startup:
 - `helmet` — security headers (CSP, HSTS, `Referrer-Policy: strict-origin-when-cross-origin`,
   etc.). Generic responses do not allow WebAssembly. App-owned frontend middleware gives chat HTML
   a fresh style nonce and its required WebAssembly permission, while the PDF worker receives a
-  separate worker policy. `CSP_MODE` controls report-only rollout versus strict
-  enforcement. `ALLOWED_CONNECT_ORIGINS` extends `connect-src` for trusted external
+  separate worker policy. `CSP_MODE` selects strict enforcement (default) or a report-only
+  compatibility rollback. `ALLOWED_CONNECT_ORIGINS` extends `connect-src` for trusted external
   document previews in both policies; remote-server CORS still applies. The same
   list reaches the app through client config. The app supplies a PDF loader that
   enables browser credentials for matching external HTTP(S) origins and rejects

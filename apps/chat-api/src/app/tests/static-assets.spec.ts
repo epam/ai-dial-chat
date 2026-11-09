@@ -467,17 +467,13 @@ describe('static assets serving', () => {
     },
   );
 
-  it('allows a legacy build with a warning when CSP mode is omitted', async () => {
+  it('enforces by default, rejecting a legacy build when CSP mode is omitted', async () => {
     await writeFile(
       join(staticRoot, 'index.html'),
       '<html>legacy build</html>',
     );
-    const warn = vi
-      .spyOn(Logger.prototype, 'warn')
-      .mockImplementation(() => undefined);
     await expect(
       createFrontendMiddleware({ frontendRootPath: staticRoot }),
-    ).resolves.toBeTypeOf('function');
-    expect(warn).toHaveBeenCalledTimes(1);
+    ).rejects.toThrow('Rebuild the frontend');
   });
 });

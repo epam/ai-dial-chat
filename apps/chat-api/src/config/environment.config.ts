@@ -45,7 +45,7 @@ export const IFRAME_ORIGIN_PATTERN =
 export class EnvironmentVariables {
   @IsOptional()
   @IsEnum(CspMode)
-  CSP_MODE?: CspMode = CspMode.ReportOnly;
+  CSP_MODE?: CspMode = CspMode.Enforce;
 
   @IsOptional()
   @IsUrl({
