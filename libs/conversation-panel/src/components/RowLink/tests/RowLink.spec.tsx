@@ -118,4 +118,18 @@ describe('RowLink', () => {
 
     expect(onSelect).toHaveBeenCalledOnce();
   });
+
+  it('calls onSelect for a Ctrl-click when href is absent, since there is no URL to open in a new tab', () => {
+    const onSelect = vi.fn();
+    render(<RowLink onSelect={onSelect} label="q4" aria-label="Open q4" />);
+
+    const click = new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      ctrlKey: true,
+    });
+    screen.getByRole('button', { name: 'Open q4' }).dispatchEvent(click);
+
+    expect(onSelect).toHaveBeenCalledOnce();
+  });
 });
