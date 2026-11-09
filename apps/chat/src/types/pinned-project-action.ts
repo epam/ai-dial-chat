@@ -6,4 +6,6 @@ export enum PinnedProjectActionKind {
   Share = 'share',
   /** The delete confirmation. */
   Delete = 'delete',
+  /** The confirmation before a project shared with the user leaves their list. */
+  RemoveFromMyList = 'removeFromMyList',
 }

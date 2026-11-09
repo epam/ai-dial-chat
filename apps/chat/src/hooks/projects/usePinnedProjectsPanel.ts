@@ -51,6 +51,7 @@ import { PinnedProjectActionKind } from '../../types/pinned-project-action';
 import { ROUTES } from '../../types/routes';
 import { StorageKey } from '../../types/storage-key';
 import { UserConfigStatus } from '../../types/user-config-status';
+import { isProjectSharedWithMe } from '../../utils/project-sharing';
 import useLocalStorage from '../useLocalStorage';
 import {
   projectsClient,
@@ -272,15 +273,27 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
         },
       };
       const project = projectsById.get(group.id);
+      /* A project shared with the user can also leave their list; the owner's project never offers it. */
+      const removeFromMyList: DropdownItem[] = isProjectSharedWithMe(project)
+        ? [
+            {
+              key: 'removeFromMyList',
+              label: t(ButtonsI18nKeys.RemoveFromMyList),
+              icon: renderMenuIcon(IconTrashX),
+              onClick: () =>
+                openAction(PinnedProjectActionKind.RemoveFromMyList, group.id),
+            },
+          ]
+        : [];
       /* `canEdit` (the owner or a share with edit access) offers Edit; `canManage` (the owner) adds Publish, Share and Delete. */
-      if (!project?.canEdit) return [unpin];
+      if (!project?.canEdit) return [unpin, ...removeFromMyList];
       const edit: DropdownItem = {
         key: 'edit',
         label: t(ButtonsI18nKeys.Edit),
         icon: renderMenuIcon(IconPencilMinus),
         onClick: () => onOpenRoute(getProjectEditRoute(group.id)),
       };
-      if (!project.canManage) return [unpin, edit];
+      if (!project.canManage) return [unpin, edit, ...removeFromMyList];
       return [
         unpin,
         edit,

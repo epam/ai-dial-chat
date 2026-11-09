@@ -9,6 +9,7 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PinnedProjectActionState } from '../../../models/pinned-project-action';
 import { deleteProject } from '../../../server-api/projects.api';
+import { discardSharedCatalogItem } from '../../../server-api/share.api';
 import {
   EntityOperation,
   NotifiableEntity,
@@ -22,6 +23,8 @@ const P = 'projects/bucket/support';
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   showErrorNotification: vi.fn(),
+  showSuccessNotification: vi.fn(),
+  setPinnedProject: vi.fn(),
   notifyOperationSuccess: vi.fn(),
   replacePinnedProjectId: vi.fn(),
 }));
@@ -38,7 +41,15 @@ vi.mock('react-i18next', () => ({
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => ({
     showErrorNotification: mocks.showErrorNotification,
+    showSuccessNotification: mocks.showSuccessNotification,
   }),
+}));
+vi.mock('../../../server-api/share.api', () => ({
+  discardSharedCatalogItem: vi.fn(),
+}));
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>()),
+  getApiErrorDetails: vi.fn().mockResolvedValue({ traceId: 'trace-1' }),
 }));
 vi.mock('../../../hooks/useOperationNotification', () => ({
   useOperationNotification: () => ({
@@ -48,7 +59,7 @@ vi.mock('../../../hooks/useOperationNotification', () => ({
 vi.mock('../../../context/UserConfigContext', () => ({
   useUserConfig: () => ({
     pinnedProjectIds: [P],
-    setPinnedProject: vi.fn(),
+    setPinnedProject: mocks.setPinnedProject,
     replacePinnedProjectId: mocks.replacePinnedProjectId,
   }),
 }));
@@ -162,6 +173,88 @@ describe('PinnedProjectActionOverlays', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe('Remove from My List', () => {
+    const shared: ProjectDetailsDto = {
+      ...project,
+      source: ProjectSource.Shared,
+      canEdit: false,
+      canManage: false,
+    };
+
+    beforeEach(() => {
+      mocks.setPinnedProject.mockResolvedValue(undefined);
+    });
+
+    it('asks for confirmation before discarding anything', () => {
+      renderOverlays({
+        action: open(PinnedProjectActionKind.RemoveFromMyList),
+        project: shared,
+      });
+
+      expect(
+        screen.getByRole('dialog', { name: 'buttons.removeFromMyList' }),
+      ).toBeTruthy();
+      expect(discardSharedCatalogItem).not.toHaveBeenCalled();
+    });
+
+    it('discards the share, unpins, closes and keeps an unrelated route', async () => {
+      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+      const { onClose } = renderOverlays({
+        action: open(PinnedProjectActionKind.RemoveFromMyList),
+        project: shared,
+        routeProjectId: 'projects/bucket/other',
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'buttons.removeFromMyList' }),
+      );
+
+      await waitFor(() => expect(onClose).toHaveBeenCalled());
+      expect(discardSharedCatalogItem).toHaveBeenCalledWith(P);
+      expect(mocks.setPinnedProject).toHaveBeenCalledWith(P, false);
+      expect(mocks.showSuccessNotification).toHaveBeenCalledOnce();
+      expect(mocks.navigate).not.toHaveBeenCalled();
+    });
+
+    it('leaves for the Projects list when the route shows the project', async () => {
+      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+      renderOverlays({
+        action: open(PinnedProjectActionKind.RemoveFromMyList),
+        project: shared,
+        routeProjectId: P,
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'buttons.removeFromMyList' }),
+      );
+
+      await waitFor(() =>
+        expect(mocks.navigate).toHaveBeenCalledWith(ROUTES.Projects, {
+          replace: true,
+        }),
+      );
+    });
+
+    it('shows an error and keeps the pin when the discard fails', async () => {
+      vi.mocked(discardSharedCatalogItem).mockRejectedValue(new Error('403'));
+      renderOverlays({
+        action: open(PinnedProjectActionKind.RemoveFromMyList),
+        project: shared,
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'buttons.removeFromMyList' }),
+      );
+
+      await waitFor(() =>
+        expect(mocks.showErrorNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ requestId: 'trace-1' }),
+        ),
+      );
+      expect(mocks.setPinnedProject).not.toHaveBeenCalled();
+    });
   });
 
   it('renders nothing without an action', () => {

@@ -356,7 +356,7 @@ describe('usePinnedProjectsPanel', () => {
       ).toBe(true);
     });
 
-    it('offers a share recipient with edit access Unpin and Edit', async () => {
+    it('offers a share recipient with edit access Unpin, Edit and Remove from My List', async () => {
       mocks.client.getProject.mockResolvedValue(
         details({
           canEdit: true,
@@ -369,10 +369,11 @@ describe('usePinnedProjectsPanel', () => {
       expect((await actionsOf(result)).map(({ key }) => key)).toEqual([
         'unpin',
         'edit',
+        'removeFromMyList',
       ]);
     });
 
-    it('offers a view-only share recipient Unpin only', async () => {
+    it('offers a view-only share recipient Unpin and Remove from My List', async () => {
       mocks.client.getProject.mockResolvedValue(
         details({
           canEdit: false,
@@ -382,9 +383,49 @@ describe('usePinnedProjectsPanel', () => {
       );
       const { result } = renderPanel();
 
+      const items = await actionsOf(result);
+
+      expect(items.map(({ key }) => key)).toEqual([
+        'unpin',
+        'removeFromMyList',
+      ]);
+      expect(items[1].label).toBe('buttons.removeFromMyList');
+      expect(items[1].className).toBeUndefined();
+    });
+
+    it('never offers Remove from My List for an organization project the user cannot manage', async () => {
+      mocks.client.getProject.mockResolvedValue(
+        details({
+          canEdit: false,
+          canManage: false,
+          source: ProjectSource.Organization,
+        }),
+      );
+      const { result } = renderPanel();
+
       expect((await actionsOf(result)).map(({ key }) => key)).toEqual([
         'unpin',
       ]);
+    });
+
+    it('opens the confirmation for Remove from My List without removing anything', async () => {
+      mocks.client.getProject.mockResolvedValue(
+        details({
+          canEdit: false,
+          canManage: false,
+          source: ProjectSource.Shared,
+        }),
+      );
+      const { result } = renderPanel();
+      const items = await actionsOf(result);
+
+      clickItem(items, 'removeFromMyList');
+
+      expect(result.current.actionOverlay.action).toEqual({
+        kind: PinnedProjectActionKind.RemoveFromMyList,
+        projectId: P,
+        isOpen: true,
+      });
     });
 
     it('removes the tree on Unpin', async () => {
