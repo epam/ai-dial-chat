@@ -365,9 +365,15 @@ describe('ProjectConversationsSection', () => {
       ProjectsI18nKeys.ChatsRenameInputLabel,
     );
     await userEvent.clear(input);
-    await userEvent.click(
-      screen.getByRole('button', { name: ButtonsI18nKeys.Save }),
-    );
+    expect(
+      (
+        screen.getByRole('button', {
+          name: ButtonsI18nKeys.Save,
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+    /* Save is off for an empty name, so Enter is the path that reports it. */
+    await userEvent.type(input, '{Enter}');
     expect(
       await screen.findByText(ProjectsI18nKeys.ChatsRenameEmpty),
     ).toBeTruthy();
