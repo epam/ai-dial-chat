@@ -198,6 +198,9 @@ const ResourceSavePanelContainer: FC<Props> = ({
       createFolderDuplicateNameError: t(
         ConversationPublishI18nKeys.DuplicateFolderNameError,
       ),
+      createFolderSameAsParentNameError: t(
+        ConversationPublishI18nKeys.SameAsParentFolderNameError,
+      ),
       retryLabel: t(ButtonsI18nKeys.Retry),
     }),
     [

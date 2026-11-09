@@ -63,6 +63,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   emptyFolderNameError = 'Folder name cannot be empty.',
   invalidFolderNameError = 'Folder name contains invalid characters.',
   duplicateFolderNameError = 'A folder with this name already exists.',
+  sameAsParentFolderNameError = 'A folder cannot have the same name as its parent folder.',
   rootLabel = 'Organization',
   expandedPaths: controlledExpandedPaths,
   onExpandedPathsChange,
@@ -273,7 +274,14 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     empty: emptyFolderNameError,
     invalid: invalidFolderNameError,
     duplicate: duplicateFolderNameError,
+    sameAsParent: sameAsParentFolderNameError,
   };
+
+  /* The name a new folder under `parentPath` may not take; a root (single-root `[]` or a multi-root token) has none. */
+  const getParentFolderName = (parentPath: string[]): string | undefined =>
+    rootKeys.includes(toFolderPathKey(parentPath))
+      ? undefined
+      : parentPath.at(-1);
 
   const canCreateUnder = (parentPath: string[]): boolean => {
     if (!roots) return true;
@@ -304,9 +312,13 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     const isQueryUsableAsName =
       hasNoSearchMatches &&
       validateFolderName(trimmedQuery, [], folderNameErrors) == null;
+    const parentName = getParentFolderName(parentPath);
     return getUniqueFolderName(
       isQueryUsableAsName ? trimmedQuery : newFolderDefaultName,
-      getSiblingFolderNames(treeItems, parentPath),
+      [
+        ...getSiblingFolderNames(treeItems, parentPath),
+        ...(parentName ? [parentName] : []),
+      ],
     );
   };
 
@@ -400,6 +412,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
       rawValue,
       getSiblingFolderNames(treeItemsRef.current, creatingParentPath),
       folderNameErrors,
+      getParentFolderName(creatingParentPath),
     );
     lastLiveValidationErrorRef.current = error;
     return error;

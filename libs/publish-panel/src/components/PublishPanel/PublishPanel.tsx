@@ -92,6 +92,8 @@ export interface PublishPanelLabels {
   createFolderInvalidNameError?: string;
   /** Inline error shown while creating a folder whose name duplicates a sibling. */
   createFolderDuplicateNameError?: string;
+  /** Inline error shown while creating a folder named like its parent folder. */
+  createFolderSameAsParentNameError?: string;
   /** Label used for the bucket root as a destination and as `{folder}` in callouts when it is selected. Default: `'Organization'`. */
   rootFolderLabel?: string;
   /** Text overrides for the access-rules section. */
@@ -275,6 +277,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     createFolderEmptyNameError,
     createFolderInvalidNameError,
     createFolderDuplicateNameError,
+    createFolderSameAsParentNameError,
     rootFolderLabel = 'Organization',
     accessRulesLabels,
     searchPlaceholder,
@@ -391,6 +394,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           emptyFolderNameError={createFolderEmptyNameError}
           invalidFolderNameError={createFolderInvalidNameError}
           duplicateFolderNameError={createFolderDuplicateNameError}
+          sameAsParentFolderNameError={createFolderSameAsParentNameError}
           rootLabel={rootFolderLabel}
           styles={folderTreeStyles}
         />
