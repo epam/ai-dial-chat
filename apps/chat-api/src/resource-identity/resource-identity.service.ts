@@ -105,6 +105,6 @@ export class ResourceIdentityService {
       entries: toResourceIdentityEntries(deployments, toolsets),
       selfId,
     });
-    if (duplicate) throw buildResourceNameConflict(duplicate);
+    if (duplicate) throw buildResourceNameConflict(duplicate, tabs);
   }
 }

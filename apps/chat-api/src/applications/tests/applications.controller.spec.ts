@@ -13,6 +13,7 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ResourceIdentityKind,
+  ResourceIdentityTab,
   buildResourceNameConflict,
 } from '../../common/utils/resource-identity';
 import { ApplicationsController } from '../applications.controller';
@@ -238,10 +239,13 @@ describe('ApplicationsController (integration)', () => {
 
     it('returns 409 with the name-taken code when the service rejects a duplicate identity', async () => {
       service.createApplication.mockRejectedValue(
-        buildResourceNameConflict({
-          id: 'applications/b/my__1.0.0',
-          kind: ResourceIdentityKind.Application,
-        }),
+        buildResourceNameConflict(
+          {
+            id: 'applications/b/my__1.0.0',
+            kind: ResourceIdentityKind.Application,
+          },
+          [ResourceIdentityTab.Agents],
+        ),
       );
       const response = await request(app.getHttpServer())
         .post('/api/v1/applications')
@@ -284,10 +288,13 @@ describe('ApplicationsController (integration)', () => {
 
     it('returns 409 with the name-taken code when a rename takes another identity', async () => {
       service.updateApplication.mockRejectedValue(
-        buildResourceNameConflict({
-          id: 'applications/b/my__1.0.0',
-          kind: ResourceIdentityKind.Application,
-        }),
+        buildResourceNameConflict(
+          {
+            id: 'applications/b/my__1.0.0',
+            kind: ResourceIdentityKind.Application,
+          },
+          [ResourceIdentityTab.Agents],
+        ),
       );
       const res = await request(app.getHttpServer())
         .patch('/api/v1/applications/my-app')
@@ -512,10 +519,13 @@ describe('ApplicationsController (integration)', () => {
 
     it('returns 409 with the name-taken code when the folder holds the same identity', async () => {
       service.moveApplication.mockRejectedValue(
-        buildResourceNameConflict({
-          id: 'applications/b/my__1.0.0',
-          kind: ResourceIdentityKind.Application,
-        }),
+        buildResourceNameConflict(
+          {
+            id: 'applications/b/my__1.0.0',
+            kind: ResourceIdentityKind.Application,
+          },
+          [ResourceIdentityTab.Agents],
+        ),
       );
       const res = await request(app.getHttpServer())
         .post('/api/v1/applications/my-app/move')
@@ -566,10 +576,13 @@ describe('ApplicationsController (integration)', () => {
 
     it('returns 409 with the name-taken code when the version is taken by another entity', async () => {
       service.forkApplicationVersion.mockRejectedValue(
-        buildResourceNameConflict({
-          id: 'applications/b/my__1.0.0',
-          kind: ResourceIdentityKind.Application,
-        }),
+        buildResourceNameConflict(
+          {
+            id: 'applications/b/my__1.0.0',
+            kind: ResourceIdentityKind.Application,
+          },
+          [ResourceIdentityTab.Agents],
+        ),
       );
       const res = await request(app.getHttpServer())
         .post('/api/v1/applications/my-app/versions')
