@@ -80,7 +80,7 @@ export const createFrontendMiddleware = async ({
   allowedIframeOrigins = [],
   allowedConnectOrigins = [],
   secureTransport = true,
-  cspMode = CspMode.ReportOnly,
+  cspMode = CspMode.Enforce,
   reportUri,
   apiPrefix = 'api',
 }: FrontendMiddlewareOptions = {}): Promise<RequestHandler> => {

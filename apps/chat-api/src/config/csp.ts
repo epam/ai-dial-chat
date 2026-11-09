@@ -104,12 +104,14 @@ export const buildDownloadFrameAncestorsDirective = (
  * `/apps-editor` embedded schema iframe — and any window it opens, such as
  * an identity-provider login popup — request the Local Network Access
  * permission needed when the embedded app's or its identity provider's
- * origin resolves to a private/internal IP address.
+ * origin resolves to a private/internal IP address. Each origin is a quoted
+ * Structured Fields string, as the header grammar requires; browsers discard
+ * a bare origin as an invalid allowlist item.
  */
 export const buildPermissionsPolicyHeader = (
   allowedIframeOrigins: string[],
 ): string =>
-  `local-network-access=(self${allowedIframeOrigins.map((origin) => ` ${origin}`).join('')})`;
+  `local-network-access=(self${allowedIframeOrigins.map((origin) => ` "${origin}"`).join('')})`;
 
 /**
  * Builds the Helmet options used by `main.ts`'s security-headers middleware.
