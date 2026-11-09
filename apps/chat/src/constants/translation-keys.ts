@@ -546,6 +546,7 @@ export enum ProjectsI18nKeys {
   PublishEmptyFolderNameError = 'projects.publish.emptyFolderNameError',
   PublishInvalidFolderNameError = 'projects.publish.invalidFolderNameError',
   PublishDuplicateFolderNameError = 'projects.publish.duplicateFolderNameError',
+  PublishSameAsParentFolderNameError = 'projects.publish.sameAsParentFolderNameError',
   UnpublishConfirmTitle = 'projects.unpublish.confirmTitle',
   UnpublishConfirmMessage = 'projects.unpublish.confirmMessage',
   UnpublishSelectFolderMessage = 'projects.unpublish.selectFolderMessage',
@@ -1013,6 +1014,7 @@ export enum ConversationPublishI18nKeys {
   EmptyFolderNameError = 'conversationPublish.emptyFolderNameError',
   InvalidFolderNameError = 'conversationPublish.invalidFolderNameError',
   DuplicateFolderNameError = 'conversationPublish.duplicateFolderNameError',
+  SameAsParentFolderNameError = 'conversationPublish.sameAsParentFolderNameError',
 }
 
 /** Strings shared by every publish flow (conversations and catalog entities). */
