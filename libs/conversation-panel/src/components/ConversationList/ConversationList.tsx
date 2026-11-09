@@ -438,22 +438,25 @@ export const ConversationList: FC<ConversationListProps> = memo(
     useEffect(() => {
       if (!activeConversationId) return;
 
-      if (lastScrolledIdRef.current === activeConversationId) return;
-
       const index = virtualRows.findIndex(
         (row) =>
           (row.kind === VirtualRowKind.Item ||
             row.kind === VirtualRowKind.ProjectConversation) &&
           row.item.id === activeConversationId,
       );
-      if (index >= 0) {
-        listRef.current?.scrollToRow({
-          index,
-          align: 'smart',
-          behavior: 'smooth',
-        });
-        lastScrolledIdRef.current = activeConversationId;
+      if (index < 0) {
+        /* The row is hidden (its project is collapsed, or a search filters it out); forget it so showing it again scrolls to it. */
+        lastScrolledIdRef.current = null;
+        return;
       }
+      if (lastScrolledIdRef.current === activeConversationId) return;
+
+      listRef.current?.scrollToRow({
+        index,
+        align: 'smart',
+        behavior: 'smooth',
+      });
+      lastScrolledIdRef.current = activeConversationId;
     }, [activeConversationId, groups, expandedGroups, virtualRows]);
 
     /* Read at drag time so `onDragStart` keeps its identity across list
