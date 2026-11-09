@@ -245,6 +245,8 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
   ),
 }));
 
+const scrollToRow = vi.hoisted(() => vi.fn());
+
 vi.mock('react-window', () => ({
   List: ({
     rowComponent: RowComponent,
@@ -252,7 +254,9 @@ vi.mock('react-window', () => ({
     rowProps,
     role,
     onRowsRendered,
+    listRef,
   }: {
+    listRef?: { current: unknown };
     rowComponent: React.ComponentType<Record<string, unknown>>;
     rowCount: number;
     rowProps: Record<string, unknown>;
@@ -263,6 +267,7 @@ vi.mock('react-window', () => ({
     ) => void;
     [key: string]: unknown;
   }) => {
+    if (listRef) listRef.current = { scrollToRow };
     /* Reports the test's viewport, plus every row as overscan. */
     React.useEffect(() => {
       if (!renderedRange.current) return;
@@ -1325,6 +1330,38 @@ describe('ConversationList — pinned projects', () => {
       );
 
       expect(onToggleProject).toHaveBeenCalledWith('p1', false);
+    });
+
+    it('scrolls to the active chat again when its project is expanded after being collapsed', () => {
+      scrollToRow.mockClear();
+      const props = {
+        ...BASE_PROPS,
+        conversations: [pinned],
+        rowVariant: ConversationRowVariant.Indicator,
+        activeConversationId: 'n2',
+      };
+      const makeProjects = (isExpanded: boolean): PinnedProjects => ({
+        projects: [makeProject({ isExpanded })],
+        onSelectProject: vi.fn(),
+        onSelectConversation: vi.fn(),
+        onSeeAll: vi.fn(),
+      });
+      const { rerender } = render(
+        <ConversationList {...props} pinnedProjects={makeProjects(true)} />,
+      );
+      expect(scrollToRow).toHaveBeenCalledOnce();
+
+      rerender(
+        <ConversationList {...props} pinnedProjects={makeProjects(false)} />,
+      );
+      expect(scrollToRow).toHaveBeenCalledOnce();
+      expect(screen.queryByText('Billing reply')).toBeNull();
+
+      rerender(
+        <ConversationList {...props} pinnedProjects={makeProjects(true)} />,
+      );
+      expect(screen.getByText('Billing reply')).toBeTruthy();
+      expect(scrollToRow).toHaveBeenCalledTimes(2);
     });
 
     it('keeps a project collapsed when only its name matches the search', () => {
