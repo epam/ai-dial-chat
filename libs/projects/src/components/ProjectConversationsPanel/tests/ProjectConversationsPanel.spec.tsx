@@ -47,6 +47,17 @@ const openRowMenu = async (item: 'Rename' | 'Delete') => {
   await userEvent.click(await screen.findByRole('menuitem', { name: item }));
 };
 
+/* The dialog moves its initial focus asynchronously; typing before it has lands keystrokes outside the input. */
+const openRenameDialog = async () => {
+  await openRowMenu('Rename');
+  const dialog = await screen.findByRole('dialog', { name: 'Rename chat' });
+  await waitFor(() =>
+    // eslint-disable-next-line testing-library/no-node-access -- focus placement has no query
+    expect(dialog.contains(document.activeElement)).toBe(true),
+  );
+  return screen.getByLabelText('Chat name');
+};
+
 describe('ProjectConversationsPanel', () => {
   it('drops the Chats empty state while the outputs slot shows content', () => {
     renderPanel({ items: [], hasOutputs: true, outputs: <p>outputs</p> });
@@ -96,8 +107,7 @@ describe('ProjectConversationsPanel', () => {
     const onRename = vi.fn(async () => undefined);
     renderPanel({ onRename });
 
-    await openRowMenu('Rename');
-    const input = await screen.findByLabelText('Chat name');
+    const input = await openRenameDialog();
     const save = screen.getByRole('button', { name: 'Save' });
     expect((save as HTMLButtonElement).disabled).toBe(true);
 
@@ -113,8 +123,7 @@ describe('ProjectConversationsPanel', () => {
     const onRename = vi.fn(async () => undefined);
     renderPanel({ onRename });
 
-    await openRowMenu('Rename');
-    const input = await screen.findByLabelText('Chat name');
+    const input = await openRenameDialog();
     await userEvent.clear(input);
     expect(
       (screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement)
@@ -180,8 +189,7 @@ describe('ProjectConversationsPanel', () => {
     });
     renderPanel({ onRename });
 
-    await openRowMenu('Rename');
-    await userEvent.type(await screen.findByLabelText('Chat name'), ' 2');
+    await userEvent.type(await openRenameDialog(), ' 2');
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(onRename).toHaveBeenCalled());
@@ -228,14 +236,7 @@ describe('ProjectConversationsPanel', () => {
     const onRename = vi.fn(async () => undefined);
     renderPanel({ onRename });
 
-    await openRowMenu('Rename');
-    const dialog = await screen.findByRole('dialog', { name: 'Rename chat' });
-    /* The dialog moves its initial focus asynchronously; type only once it has. */
-    await waitFor(() =>
-      // eslint-disable-next-line testing-library/no-node-access -- focus placement has no query
-      expect(dialog.contains(document.activeElement)).toBe(true),
-    );
-    const input = screen.getByLabelText('Chat name');
+    const input = await openRenameDialog();
     await userEvent.clear(input);
     await userEvent.type(input, 'Login article{Enter}');
 
@@ -254,8 +255,7 @@ describe('ProjectConversationsPanel', () => {
     );
     renderPanel({ onRename });
 
-    await openRowMenu('Rename');
-    await userEvent.type(await screen.findByLabelText('Chat name'), ' 2');
+    await userEvent.type(await openRenameDialog(), ' 2');
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(onRename).toHaveBeenCalled());
 
