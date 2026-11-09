@@ -560,7 +560,8 @@ Example: `POST …/applications%2Fb1%2Fagent__1.0.0/versions` `{"version":"1.1.0
 - **Move** compares the application's identity in the target folder, excluding itself.
 
 A duplicate SHALL answer `409` with `code` `name-taken-agent` or `name-taken-toolset`,
-according to the conflicting entity, and write nothing. The codes are the enum defined by
+as `resource-name-uniqueness` defines (by the tab of the saved
+application, then the conflicting entity), and write nothing. The codes are the enum defined by
 `resource-name-uniqueness`. `createApplication`, `updateApplication`,
 `forkApplicationVersion` and `moveApplication` keep their operation ids and DTOs; their
 documented `409` responses SHALL describe both conflict shapes and the generated client
