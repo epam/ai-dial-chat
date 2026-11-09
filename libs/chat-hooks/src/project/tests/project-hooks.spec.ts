@@ -230,12 +230,19 @@ describe('project hooks', () => {
       rows(from, count, { isTitlePending: true });
 
     it('loads, renames and removes rows in place', async () => {
-      client.listProjectConversations.mockResolvedValue({
-        items: [
-          { id: 'c1', name: 'n1', title: 'First', author: 'Valery' },
-          { id: 'c2', name: 'n2', title: 'Second' },
-        ],
-      });
+      client.listProjectConversations
+        .mockResolvedValueOnce({
+          items: [
+            { id: 'c1', name: 'n1', title: 'First', author: 'Valery' },
+            { id: 'c2', name: 'n2', title: 'Second' },
+          ],
+        })
+        .mockResolvedValue({
+          items: [
+            { id: 'c1', name: 'n1', title: 'Renamed', author: 'Valery' },
+            { id: 'c2', name: 'n2', title: 'Second' },
+          ],
+        });
       client.renameProjectConversation.mockResolvedValue({ name: 'Renamed' });
       client.deleteProjectConversation.mockResolvedValue(undefined);
       const { result } = renderHook(() =>
@@ -244,6 +251,9 @@ describe('project hooks', () => {
       await waitFor(() => expect(result.current.isLoading).toBe(false));
 
       await act(() => result.current.rename('c1', 'Renamed'));
+      await waitFor(() =>
+        expect(client.listProjectConversations).toHaveBeenCalledTimes(2),
+      );
       await act(() => result.current.remove('c2'));
 
       expect(result.current.items).toEqual([
@@ -252,6 +262,29 @@ describe('project hooks', () => {
       expect(client.listProjectConversations).toHaveBeenCalledWith(
         PROJECT_ID,
         expect.any(AbortSignal),
+      );
+    });
+
+    it('re-reads the list after a rename so a read reported mid-rename does not leave the chat unread', async () => {
+      client.listProjectConversations
+        .mockResolvedValueOnce({
+          items: [row('c1', { isUnread: true, updatedAt: 20 })],
+        })
+        .mockResolvedValue({
+          items: [row('c1', { title: 'Renamed', updatedAt: 20 })],
+        });
+      client.renameProjectConversation.mockResolvedValue({ name: 'Renamed' });
+      const { result } = renderHook(() =>
+        useProjectConversations(client, PROJECT_ID),
+      );
+      await waitFor(() => expect(result.current.items[0]?.isUnread).toBe(true));
+
+      await act(() => result.current.rename('c1', 'Renamed'));
+
+      await waitFor(() =>
+        expect(result.current.items).toEqual([
+          { id: 'c1', title: 'Renamed', authorName: undefined },
+        ]),
       );
     });
 
