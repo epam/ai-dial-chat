@@ -19,6 +19,14 @@ import { useUiFeature } from '../../../hooks/useUiFeature';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import DefaultAgentSelect from '../DefaultAgentSelect/DefaultAgentSelect';
 
+/*
+ * Kit 0.16.1 draws the option list with `shadow-md` only, which fades into the
+ * light settings panel, so the next field's border reads as sticking out from
+ * under the open list. A hairline border keeps the list's edge visible until
+ * the kit's overlay surface carries one itself; drop this then.
+ */
+const SELECT_LIST_CLASS_NAME = 'border border-tertiary';
+
 interface Props {
   theme: string;
   onThemeChange: (theme: string) => void;
@@ -159,6 +167,7 @@ const PreferencesFields: FC<Props> = ({
       {!isResolvingRows && isThemeRowShown && (
         <Select
           labelProps={{ label: t(SettingsI18nKeys.Theme) }}
+          listClassName={SELECT_LIST_CLASS_NAME}
           options={themeOptions}
           value={theme}
           onChange={(next) => onThemeChange(next as string)}
@@ -167,6 +176,7 @@ const PreferencesFields: FC<Props> = ({
       {!isResolvingRows && isLanguageRowShown && (
         <Select
           labelProps={{ label: t(SettingsI18nKeys.Language) }}
+          listClassName={SELECT_LIST_CLASS_NAME}
           options={languageOptions}
           value={selectedLanguage}
           onChange={(next) => onLanguageChange(next as string)}
@@ -175,6 +185,7 @@ const PreferencesFields: FC<Props> = ({
       {!isResolvingRows && isKeyboardRowShown && (
         <Select
           labelProps={{ label: t(SettingsI18nKeys.KeyboardShortcuts) }}
+          listClassName={SELECT_LIST_CLASS_NAME}
           options={keyboardOptions}
           value={keyboard}
           onChange={(next) => onKeyboardChange(next as SendOnEnter)}
