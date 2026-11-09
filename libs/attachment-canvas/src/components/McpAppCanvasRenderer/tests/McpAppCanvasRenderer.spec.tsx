@@ -27,10 +27,12 @@ interface BridgeDouble {
 
 interface AppFrameDouble {
   onError?: (error: Error) => void;
+  sandbox?: { url: URL };
 }
 
 const bridges: BridgeDouble[] = [];
 const closeSpy = vi.fn(() => Promise.resolve());
+const setHostContextSpy = vi.fn();
 /* Captures each render's props so a test can invoke `onError` the way a real sandboxed app failure would. */
 const appFrames: AppFrameDouble[] = [];
 
@@ -40,8 +42,10 @@ vi.mock('@mcp-ui/client', () => ({
       (this as unknown as BridgeDouble).notificationHandler =
         handler as BridgeDouble['notificationHandler'];
     }
-    setHostContext() {
-      /* no-op: the component only needs the call to not throw */
+    /* Present so the bridge hook treats the transport as connected and pushes host-context changes. */
+    transport = {};
+    setHostContext(context: unknown) {
+      setHostContextSpy(context);
     }
     close() {
       return closeSpy();
@@ -79,6 +83,7 @@ describe('McpAppCanvasRenderer', () => {
     bridges.length = 0;
     appFrames.length = 0;
     closeSpy.mockClear();
+    setHostContextSpy.mockClear();
     /* `window` is shared across tests, so its spies must not accumulate calls. */
     vi.restoreAllMocks();
   });
@@ -262,6 +267,73 @@ describe('McpAppCanvasRenderer', () => {
       unmount();
 
       expect(closeSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('McpAppCanvasRenderer — live host context', () => {
+    const darkContext = { theme: 'dark' } as McpAppCanvasContent['hostContext'];
+    const lightContext = {
+      theme: 'light',
+    } as McpAppCanvasContent['hostContext'];
+
+    it('pushes a changed hostContext prop to the app without recreating the bridge or the frame', async () => {
+      const { rerender } = render(
+        <McpAppCanvasRenderer
+          content={{ ...baseContent, hostContext: darkContext }}
+          hostContext={darkContext}
+        />,
+      );
+      await waitFor(() => expect(bridges).toHaveLength(1));
+      const sandboxBefore = appFrames.at(-1)?.sandbox;
+      setHostContextSpy.mockClear();
+
+      rerender(
+        <McpAppCanvasRenderer
+          content={{ ...baseContent, hostContext: darkContext }}
+          hostContext={lightContext}
+        />,
+      );
+
+      expect(setHostContextSpy).toHaveBeenCalledTimes(1);
+      expect(setHostContextSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ theme: 'light' }),
+      );
+      expect(bridges).toHaveLength(1);
+      expect(closeSpy).not.toHaveBeenCalled();
+      expect(appFrames.at(-1)?.sandbox).toBe(sandboxBefore);
+    });
+
+    it('does not push again when the hostContext prop keeps its identity', async () => {
+      const { rerender } = render(
+        <McpAppCanvasRenderer
+          content={baseContent}
+          hostContext={darkContext}
+        />,
+      );
+      await waitFor(() => expect(bridges).toHaveLength(1));
+      setHostContextSpy.mockClear();
+
+      rerender(
+        <McpAppCanvasRenderer
+          content={{ ...baseContent }}
+          hostContext={darkContext}
+        />,
+      );
+
+      expect(setHostContextSpy).not.toHaveBeenCalled();
+    });
+
+    it('falls back to content.hostContext when no hostContext prop is passed', async () => {
+      render(
+        <McpAppCanvasRenderer
+          content={{ ...baseContent, hostContext: darkContext }}
+        />,
+      );
+      await waitFor(() => expect(bridges).toHaveLength(1));
+
+      expect(setHostContextSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ theme: 'dark' }),
+      );
     });
   });
 

@@ -141,6 +141,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
   onAppInfo,
   onRetry,
   onVisualizerSendMessage,
+  mcpAppHostContext,
 }) => {
   const {
     colors,
@@ -469,6 +470,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             content={content}
             loadingLabel={loadingLabel}
             onAppInfo={onAppInfo}
+            hostContext={mcpAppHostContext}
           />
         );
       case AttachmentContentType.Unsupported:
@@ -530,6 +532,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     hidePdfToolbar,
     configurePdfWorker,
     onAppInfo,
+    mcpAppHostContext,
     onRetry,
     pdfThumbnailsLabel,
     pdfShowThumbnailsLabel,

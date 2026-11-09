@@ -5,6 +5,7 @@ import {
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { AppFrame } from '@mcp-ui/client';
+import type { McpUiHostContext } from '@modelcontextprotocol/ext-apps/app-bridge';
 import type { Implementation } from '@modelcontextprotocol/sdk/types.js';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { type FC, useEffect, useMemo, useRef, useState } from 'react';
@@ -22,6 +23,8 @@ export interface McpAppCanvasRendererProps {
   loadingLabel?: string;
   /** Called once the mounted app completes its `ui/initialize` handshake, with its declared name/version. Omitted when the app didn't declare an `appInfo`. */
   onAppInfo?: (appInfo: Implementation) => void;
+  /** Live host context pushed to the app on every change. Replaces `content.hostContext`, which is only a snapshot taken when the canvas opened. */
+  hostContext?: McpUiHostContext;
 }
 
 enum RendererStatus {
@@ -44,11 +47,13 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
   errorLabel = 'Failed to load app',
   loadingLabel = 'Loading…',
   onAppInfo,
+  hostContext: liveHostContextProp,
 }) => {
   const [status, setStatus] = useState<RendererStatus>(RendererStatus.Loading);
   /* `AppFrame`'s `onError` message, shown as a detail line under `errorLabel` — trust boundary discussed in `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D23. */
   const [errorDetail, setErrorDetail] = useState<string>();
-  const { html, sandboxUrl, toolInput, toolResult, hostContext } = content;
+  const { html, sandboxUrl, toolInput, toolResult } = content;
+  const hostContext = liveHostContextProp ?? content.hostContext;
   /*
    * `AppFrame` re-creates its sandbox iframe whenever `sandbox.url` changes
    * identity (its mount effect depends on the object itself, not just
