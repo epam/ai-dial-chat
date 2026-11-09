@@ -23,7 +23,7 @@ export enum ApplicationLogLevel {
 export class ServerEnv {
   @IsOptional()
   @IsEnum(CspMode)
-  CSP_MODE?: CspMode = CspMode.ReportOnly;
+  CSP_MODE?: CspMode = CspMode.Enforce;
 
   @IsOptional()
   @IsUrl({
