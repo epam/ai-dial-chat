@@ -25,7 +25,7 @@
     "react-syntax-highlighter": "^16.1.2",
     "@epam/ai-dial-react-pdf-highlighter": "0.3.1",
     "@epam/ai-dial-visualizer-connector": "*",
-    "@epam/pdf-highlighter-kit": "^0.0.21",
+    "@epam/pdf-highlighter-kit": "^0.0.22",
     "@mcp-ui/client": "^7.1.1",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "@modelcontextprotocol/ext-apps": "1.7.5",
