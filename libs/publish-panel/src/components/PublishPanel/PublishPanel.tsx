@@ -33,6 +33,8 @@ import {
   PublishFolderNode,
   PublishResourceSummary,
 } from '../../models/publish';
+import type { PublishDependenciesLabels } from '../../models/publish-dependencies-list';
+import type { PublishDependency } from '../../models/publish-dependency';
 import type { PublishPanelStyles } from '../../models/publish-panel-styles';
 import { PublishPanelView } from '../../types/publish-panel';
 import { derivePublishState } from '../../utils/publish-state';
@@ -40,6 +42,7 @@ import {
   PublishAccessRules,
   PublishAccessRulesLabels,
 } from '../PublishAccessRules/PublishAccessRules';
+import { PublishDependenciesList } from '../PublishDependenciesList/PublishDependenciesList';
 import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
 import styles from './PublishPanel.module.scss';
 
@@ -98,6 +101,8 @@ export interface PublishPanelLabels {
   rootFolderLabel?: string;
   /** Text overrides for the access-rules section. */
   accessRulesLabels?: PublishAccessRulesLabels;
+  /** Text overrides for the private-dependencies section. */
+  dependenciesLabels?: PublishDependenciesLabels;
 }
 
 /** Props for {@link PublishPanel}. */
@@ -115,6 +120,11 @@ export interface PublishPanelProps {
    * working.
    */
   renderSummary?: () => ReactNode;
+  /**
+   * Resources the item refers to that are not in the public bucket, listed read-only under the summary row.
+   * Omit it to leave the section out; pass an empty array to keep it mounted for a later list, which is announced when it appears.
+   */
+  dependencies?: PublishDependency[];
   /** Which view to show: the main form or the destination folder tree. Default: `PublishPanelView.Main`. */
   view?: PublishPanelView;
   /** Called when the user asks to open the folder view from the destination row. */
@@ -211,6 +221,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   onChangeFolderClick,
   resource,
   renderSummary,
+  dependencies,
   folderItems,
   selectedFolderPath,
   pendingFolderPath,
@@ -244,6 +255,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     colors,
     folderTree: folderTreeStyles,
     accessRules: accessRulesStyles,
+    dependencies: dependenciesStyles,
   } = stylesProp;
   const cssVars = {
     ...buildCssVars({
@@ -280,6 +292,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     createFolderSameAsParentNameError,
     rootFolderLabel = 'Organization',
     accessRulesLabels,
+    dependenciesLabels,
     searchPlaceholder,
     clearSearchAriaLabel,
     authorLabel = 'Author',
@@ -541,6 +554,15 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           />
         </div>
       </section>
+
+      {dependencies != null && (
+        <PublishDependenciesList
+          dependencies={dependencies}
+          labels={dependenciesLabels}
+          headingClassName={headingClassName}
+          styles={dependenciesStyles}
+        />
+      )}
     </div>
   );
 };

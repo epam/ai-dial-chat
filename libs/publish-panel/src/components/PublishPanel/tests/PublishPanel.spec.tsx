@@ -9,6 +9,7 @@ import {
   PublishFolderNode,
   PublishResourceSummary,
 } from '../../../models/publish';
+import { PublishDependencyType } from '../../../models/publish-dependency';
 import { PublishPanelView } from '../../../types/publish-panel';
 import { PublishPanel } from '../PublishPanel';
 
@@ -525,5 +526,71 @@ describe('PublishPanel — public class names', () => {
     expect(container.firstElementChild!.classList).toContain(
       PUBLISH_PANEL_CLASS.panel,
     );
+  });
+});
+
+describe('PublishPanel — private dependencies', () => {
+  const dependencies = [
+    {
+      id: 'prompts/b/Greeting',
+      name: 'Greeting',
+      type: PublishDependencyType.Prompt,
+      location: 'Support',
+    },
+    {
+      id: 'toolsets/b/Search__1.0.0',
+      name: 'Search',
+      version: '1.0.0',
+      type: PublishDependencyType.Toolset,
+      location: '',
+    },
+  ];
+
+  it('lists the dependencies as the last section of the panel', () => {
+    renderPanel({ dependencies });
+
+    const region = screen.getByRole('region', { name: 'Private dependencies' });
+    const folderHeading = screen.getByRole('heading', {
+      name: 'Publish to folder',
+    });
+    expect(
+      folderHeading.compareDocumentPosition(region) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.getByText('Greeting')).toBeTruthy();
+    expect(screen.getByText('Search')).toBeTruthy();
+  });
+
+  it('renders no section for an empty list', () => {
+    renderPanel({ dependencies: [] });
+
+    expect(
+      screen.queryByRole('region', { name: 'Private dependencies' }),
+    ).toBeNull();
+  });
+
+  it('renders no section when no list is supplied', () => {
+    renderPanel();
+
+    expect(
+      screen.queryByRole('region', { name: 'Private dependencies' }),
+    ).toBeNull();
+  });
+
+  it('shows host labels passed through the panel labels', () => {
+    renderPanel({
+      dependencies,
+      labels: { dependenciesLabels: { title: 'Not public yet' } },
+    });
+
+    expect(screen.getByRole('region', { name: 'Not public yet' })).toBeTruthy();
+  });
+
+  it('does not render the section in the folder view', () => {
+    renderPanel({ dependencies, view: PublishPanelView.ChangeFolder });
+
+    expect(
+      screen.queryByRole('region', { name: 'Private dependencies' }),
+    ).toBeNull();
   });
 });

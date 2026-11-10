@@ -277,4 +277,25 @@ describe('StandalonePublishPanel', () => {
       expect.objectContaining({ author: 'DIAL Team', onAuthorChange }),
     );
   });
+
+  it('forwards the dependencies to the panel body unchanged and still submits', async () => {
+    const dependencies = [
+      {
+        id: 'prompts/b/Greeting',
+        name: 'Greeting',
+        type: 'prompt' as never,
+        location: '',
+      },
+    ];
+    const onSubmit = vi.fn();
+    publishPanelProps.mockClear();
+
+    renderPanel({ dependencies, onSubmit });
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    expect(publishPanelProps).toHaveBeenCalledWith(
+      expect.objectContaining({ dependencies }),
+    );
+    expect(onSubmit).toHaveBeenCalledOnce();
+  });
 });
