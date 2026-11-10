@@ -1537,6 +1537,7 @@ describe('AppConfigService', () => {
         'announcementTitle',
         'announcementDescription',
         'announcements',
+        'onboardingHints',
         'welcomeScreenDescription',
         'footerHtmlMessage',
         'enabledUiFeatures',

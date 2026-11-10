@@ -10,6 +10,7 @@ import { ApplicationVisualizerDto } from './application-visualizer.dto';
 import { CatalogCreationPermissionsDto } from './catalog-creation-permissions.dto';
 import { CelebrationDeliveryDto } from './celebration-delivery.dto';
 import { CustomVisualizerDto } from './custom-visualizer.dto';
+import { OnboardingHintDto } from './onboarding-hint.dto';
 
 /* ApplicationVisualizerDto is reachable only through an additionalProperties
  * $ref, which Swagger does not follow when collecting schemas, so the model
@@ -206,6 +207,13 @@ export class ClientConfigDto {
     type: [AnnouncementItemDto],
   })
   announcements!: AnnouncementItemDto[];
+
+  @ApiProperty({
+    description:
+      'Onboarding hints the client shows once, step by step, to a user who has not seen them, in configured order. Empty when ONBOARDING_HINTS is unset or contained no valid entries.',
+    type: [OnboardingHintDto],
+  })
+  onboardingHints!: OnboardingHintDto[];
 
   @ApiPropertyOptional({
     description:

@@ -12,6 +12,7 @@ import type {
 import type { ClientConfigDto } from './dto/client-config-response.dto';
 import { normalizeEnabledUiFeatures } from './enabled-ui-features.normalizer';
 import { sanitizeAnnouncementHtml, sanitizeFooterHtml } from './html-sanitizer';
+import { normalizeOnboardingHints } from './onboarding-hints.normalizer';
 import { toNullableText } from './text.util';
 import { CelebrationDeliveryMode } from './types/celebration-delivery';
 
@@ -158,6 +159,7 @@ export const createDefaultClientConfig = (): MappedClientConfig => ({
   announcementTitle: null,
   announcementDescription: null,
   announcements: [],
+  onboardingHints: [],
   welcomeScreenDescription: null,
   footerHtmlMessage: '',
   enabledUiFeatures: null,
@@ -288,6 +290,12 @@ export const CLIENT_CONFIG_MAPPINGS: ReadonlyMap<string, ClientConfigMapping> =
       'announcement.items',
       defineMapping('announcements', ({ resolved, warn }) =>
         normalizeAnnouncements(resolved, warn),
+      ),
+    ],
+    [
+      'onboarding.hints',
+      defineMapping('onboardingHints', ({ resolved, warn }) =>
+        normalizeOnboardingHints(resolved, warn),
       ),
     ],
     [

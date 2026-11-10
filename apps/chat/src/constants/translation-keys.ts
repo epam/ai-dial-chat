@@ -1239,6 +1239,15 @@ export enum AnnouncementsPopoverI18nKeys {
   OpensInNewTab = 'announcementsPopover.opensInNewTab',
 }
 
+export enum OnboardingTourI18nKeys {
+  StepCounter = 'onboardingTour.stepCounter',
+  Next = 'onboardingTour.next',
+  Back = 'onboardingTour.back',
+  Done = 'onboardingTour.done',
+  Skip = 'onboardingTour.skip',
+  Close = 'onboardingTour.close',
+}
+
 export enum FooterMessageI18nKeys {
   RegionAriaLabel = 'footerMessage.regionAriaLabel',
   VersionAriaLabel = 'footerMessage.versionAriaLabel',

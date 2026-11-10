@@ -27,6 +27,7 @@ describe('app-config API', () => {
         appVersion: '0.0.1',
         asrModelId: null,
         announcements: [],
+        onboardingHints: [],
         transcribeSizeLimitBytes: 5 * 1024 * 1024,
         additionalContentLocales: [],
         fileManagerTabs: ['my_files', 'shared', 'organization'],
