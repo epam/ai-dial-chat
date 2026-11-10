@@ -109,18 +109,18 @@ export class ConversationCompletionsResponder {
      * accepted edge case. The service call is best effort and never rejects.
      */
     let pendingUnview = undefined as Promise<void> | undefined;
-    const stream = this.conversationService.streamCompletion(
-      path,
-      at,
+    const stream = this.conversationService.streamCompletion({
+      conversationPath: path,
+      token: at,
       bucket,
-      dto.generationId,
-      dto.mode,
-      dto.message,
-      dto.messageIndex,
-      dto.model,
-      dto.custom_content,
+      generationId: dto.generationId,
+      mode: dto.mode,
+      message: dto.message,
+      messageIndex: dto.messageIndex,
+      model: dto.model,
+      customContent: dto.custom_content,
       ownerKey,
-      () => {
+      onReadyToStream: () => {
         startSseResponse(res);
         startKeepalive();
         if (isUnreadTracked) {
@@ -132,11 +132,11 @@ export class ConversationCompletionsResponder {
         }
       },
       sub,
-      dto.clientChannelId,
+      clientChannelId: dto.clientChannelId,
       timezone,
       lang,
-      getJobTitleClaim(claims),
-    );
+      jobTitle: getJobTitleClaim(claims),
+    });
 
     /*
      * This generation is backend-owned and independent of the originating
