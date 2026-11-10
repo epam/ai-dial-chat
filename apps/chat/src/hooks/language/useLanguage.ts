@@ -10,8 +10,6 @@ export const DEFAULT_LANGUAGE = 'en';
 
 export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
   { code: DEFAULT_LANGUAGE, nativeName: 'English' },
-  // LOCAL ONLY — shows the Language row in Settings; do not commit.
-  { code: 'ar', nativeName: 'العربية' },
 ];
 
 export const useLanguage = () => {
