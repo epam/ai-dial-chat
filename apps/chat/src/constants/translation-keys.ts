@@ -1037,6 +1037,15 @@ export enum PublishI18nKeys {
   AddChildFolder = 'publish.addChildFolder',
   UpdateVersion = 'publish.updateVersion',
   PublishingInProgress = 'publish.publishingInProgress',
+  DependenciesTitle = 'publish.dependenciesTitle',
+  DependenciesDescription = 'publish.dependenciesDescription',
+  DependenciesAnnouncement = 'publish.dependenciesAnnouncement',
+  DependenciesRootLocation = 'publish.dependenciesRootLocation',
+  DependenciesTypeApplication = 'publish.dependenciesTypeApplication',
+  DependenciesTypeToolset = 'publish.dependenciesTypeToolset',
+  DependenciesTypePrompt = 'publish.dependenciesTypePrompt',
+  DependenciesTypeSkill = 'publish.dependenciesTypeSkill',
+  DependenciesTypeFile = 'publish.dependenciesTypeFile',
 }
 
 export enum PublishAccessRulesI18nKeys {

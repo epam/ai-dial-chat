@@ -1,10 +1,14 @@
-import type { PublishHistoryEntryDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  PublishHistoryEntryDto,
+  ResourceDependencyDto,
+} from '@epam/ai-dial-chat-api-client';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
   getPublicCatalogEntityFolderPath,
   isPublicCatalogEntityId,
   mapPublishHistoryEntryDto,
+  mapResourceDependencyDto,
   toPublishEntityType,
 } from '../publish';
 
@@ -153,5 +157,92 @@ describe('getPublicCatalogEntityFolderPath', () => {
         'applications/my-bucket/Data Science/Revenue bot',
       ),
     ).toEqual([]);
+  });
+});
+
+describe('mapResourceDependencyDto', () => {
+  it.each(['application', 'toolset', 'prompt', 'skill', 'file'] as const)(
+    'keeps the %s type',
+    (type) => {
+      const dto: ResourceDependencyDto = {
+        id: `${type}s/b/x`,
+        name: 'x',
+        type,
+        location: '',
+      };
+
+      expect(mapResourceDependencyDto(dto).type).toBe(type);
+    },
+  );
+
+  it('carries the version and the folder path of a versioned dependency', () => {
+    expect(
+      mapResourceDependencyDto({
+        id: 'toolsets/b/Team/Search__1.0.0',
+        name: 'Search',
+        version: '1.0.0',
+        type: 'toolset',
+        location: 'Team',
+      }),
+    ).toEqual({
+      id: 'toolsets/b/Team/Search__1.0.0',
+      name: 'Search',
+      version: '1.0.0',
+      type: 'toolset',
+      location: 'Team',
+    });
+  });
+
+  it('leaves the version out for an unversioned dependency', () => {
+    const result = mapResourceDependencyDto({
+      id: 'prompts/b/Hi',
+      name: 'Hi',
+      type: 'prompt',
+      location: '',
+    });
+
+    expect('version' in result).toBe(false);
+    expect(result.location).toBe('');
+  });
+
+  it('adds the icon the host resolves for the entry', () => {
+    const dto: ResourceDependencyDto = {
+      id: 'toolsets/b/Search__1.0.0',
+      name: 'Search',
+      version: '1.0.0',
+      type: 'toolset',
+      location: '',
+    };
+
+    expect(
+      mapResourceDependencyDto(dto, () => '/icons/search.png').iconUrl,
+    ).toBe('/icons/search.png');
+  });
+
+  it('leaves the icon out when the host resolves none', () => {
+    const result = mapResourceDependencyDto(
+      { id: 'prompts/b/Hi', name: 'Hi', type: 'prompt', location: '' },
+      () => undefined,
+    );
+
+    expect('iconUrl' in result).toBe(false);
+  });
+
+  it('marks a file whose id ends with a slash as a folder', () => {
+    const folder = mapResourceDependencyDto({
+      id: 'files/other/docs/',
+      name: 'docs',
+      type: 'file',
+      location: '',
+    });
+    const file = mapResourceDependencyDto({
+      id: 'files/other/docs/a.txt',
+      name: 'a.txt',
+      type: 'file',
+      location: 'docs',
+    });
+
+    expect(folder.isFolder).toBe(true);
+    expect('isFolder' in file).toBe(false);
   });
 });

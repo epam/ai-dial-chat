@@ -7,6 +7,8 @@ import { UserConfigModule } from '../user-config/user-config.module';
 import { ConversationGenerationController } from './conversation-generation.controller';
 import { CONVERSATION_PERSISTENCE } from './conversation-persistence.port';
 import { ConversationPublishAttachmentsService } from './conversation-publish-attachments.service';
+import { ConversationPublishDependenciesController } from './conversation-publish-dependencies.controller';
+import { ConversationPublishDependenciesService } from './conversation-publish-dependencies.service';
 import { ConversationPublishController } from './conversation-publish.controller';
 import { ConversationPublishService } from './conversation-publish.service';
 import { ConversationTitlesController } from './conversation-titles.controller';
@@ -45,6 +47,7 @@ import { ConversationStreamingService } from './streaming/conversation-streaming
     ConversationTitlesController,
     ConversationWatchController,
     ConversationPublishController,
+    ConversationPublishDependenciesController,
   ],
   providers: [
     ConversationService,
@@ -65,6 +68,7 @@ import { ConversationStreamingService } from './streaming/conversation-streaming
     ConversationGenerationService,
     ConversationPublishService,
     ConversationPublishAttachmentsService,
+    ConversationPublishDependenciesService,
     PublishedFolderAttachmentsService,
     ChatCompletionsAdapter,
     GenerationApiSelector,

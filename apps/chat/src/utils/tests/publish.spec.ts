@@ -1,7 +1,14 @@
+import { PublishDependencyType } from '@epam/ai-dial-publish-panel';
 import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
-import { BasicI18nKeys } from '../../constants/translation-keys';
-import { getPublishFolderLabel } from '../publish';
+import {
+  BasicI18nKeys,
+  PublishI18nKeys,
+} from '../../constants/translation-keys';
+import {
+  getPublishDependenciesLabels,
+  getPublishFolderLabel,
+} from '../publish';
 
 const t = ((key: string) => key) as unknown as TFunction;
 
@@ -28,5 +35,41 @@ describe('getPublishFolderLabel', () => {
 
   it('falls back to the root label for an empty joined path', () => {
     expect(getPublishFolderLabel('', t)).toBe(BasicI18nKeys.Organization);
+  });
+});
+
+describe('getPublishDependenciesLabels', () => {
+  const echoT = ((key: string, options?: { count?: number }) =>
+    options?.count == null
+      ? key
+      : `${key}:${options.count}`) as unknown as TFunction;
+
+  it('translates the title, description and root label', () => {
+    const labels = getPublishDependenciesLabels(echoT);
+
+    expect(labels.title).toBe(PublishI18nKeys.DependenciesTitle);
+    expect(labels.description).toBe(PublishI18nKeys.DependenciesDescription);
+    expect(labels.rootLocation).toBe(PublishI18nKeys.DependenciesRootLocation);
+  });
+
+  it('translates a label for every kind of dependency', () => {
+    const { typeLabels } = getPublishDependenciesLabels(echoT);
+
+    expect(typeLabels).toEqual({
+      [PublishDependencyType.Application]:
+        PublishI18nKeys.DependenciesTypeApplication,
+      [PublishDependencyType.Toolset]: PublishI18nKeys.DependenciesTypeToolset,
+      [PublishDependencyType.Prompt]: PublishI18nKeys.DependenciesTypePrompt,
+      [PublishDependencyType.Skill]: PublishI18nKeys.DependenciesTypeSkill,
+      [PublishDependencyType.File]: PublishI18nKeys.DependenciesTypeFile,
+    });
+  });
+
+  it('passes the count to the announcement so the language can pluralise it', () => {
+    const { getAnnouncement } = getPublishDependenciesLabels(echoT);
+
+    expect(getAnnouncement?.(3)).toBe(
+      `${PublishI18nKeys.DependenciesAnnouncement}:3`,
+    );
   });
 });

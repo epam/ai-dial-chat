@@ -1,11 +1,15 @@
 import {
+  mapResourceDependencyDto,
+  usePublishDependencies,
+} from '@epam/ai-dial-chat-hooks';
+import {
   PublishHistoryEntry,
   PublishResourceSummary,
   StandalonePublishPanel,
   usePublishFlow,
 } from '@epam/ai-dial-publish-panel';
 import type { FC, RefObject } from 'react';
-import { memo, useEffect } from 'react';
+import { memo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BasicI18nKeys,
@@ -15,11 +19,15 @@ import {
   ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
+import { usePublishDependencyIconResolver } from '../../hooks/publish/usePublishDependencyIconResolver';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
-import { publishConversation } from '../../server-api/conversation-publish.api';
+import {
+  getConversationPublishDependencies,
+  publishConversation,
+} from '../../server-api/conversation-publish.api';
 import { getPublishRules } from '../../server-api/publish-rules.api';
 import {
   EntityOperation,
@@ -28,6 +36,7 @@ import {
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
+  getPublishDependenciesLabels,
   getPublishFooterProgressLabels,
   getPublishPanelCommonLabels,
   getPublishFolderLabel,
@@ -93,6 +102,21 @@ const PublishConversationPanelContainer: FC<Props> = ({
 
   const resource: PublishResourceSummary = { title: conversationTitle };
 
+  const resolveDependencyIcon = usePublishDependencyIconResolver();
+  const loadDependencies = useCallback(
+    async (path: string) =>
+      (await getConversationPublishDependencies(path)).dependencies.map(
+        (dependency) =>
+          mapResourceDependencyDto(dependency, resolveDependencyIcon),
+      ),
+    [resolveDependencyIcon],
+  );
+  const dependencies = usePublishDependencies({
+    isOpen,
+    entityId: conversationPath,
+    loadDependencies,
+  });
+
   const publishFlow = usePublishFlow<PublishResourceSummary>({
     item: resource,
     history,
@@ -142,6 +166,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
     <StandalonePublishPanel
       isOpen={isOpen}
       resource={resource}
+      dependencies={dependencies}
       folderItems={publishFlow.folderItems}
       selectedFolderPath={publishFlow.selectedFolderPath}
       onSelectedFolderPathChange={publishFlow.setSelectedFolderPath}
@@ -189,6 +214,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
         submitError: t(PublishI18nKeys.SubmitErrorCallout),
         rootFolderLabel: t(BasicI18nKeys.Organization),
         accessRulesLabels: getAccessRulesLabels(t),
+        dependenciesLabels: getPublishDependenciesLabels(t),
         ...getPublishAuthorLabels(t),
         ...getPublishPanelCommonLabels(t),
       }}

@@ -329,6 +329,44 @@ displays or accepts a credential value.
 />
 ```
 
+### PublishDependenciesList
+
+Read-only list of the resources the item being published refers to that are not in the public bucket, so the publisher can publish those too. `PublishPanel` and `StandalonePublishPanel` render it as the last section of the main view when you pass `dependencies`; it renders nothing visible while the list is empty, and the hidden live region it keeps mounted announces the count when the list appears later.
+
+```tsx
+import {
+  PublishDependencyType,
+  StandalonePublishPanel,
+  type PublishDependency,
+} from '@epam/ai-dial-publish-panel';
+
+const dependencies: PublishDependency[] = [
+  {
+    id: 'prompts/my-bucket/Support/Greeting',
+    name: 'Greeting',
+    type: PublishDependencyType.Prompt,
+    location: 'Support',
+  },
+  {
+    id: 'toolsets/my-bucket/Search__1.0.0',
+    name: 'Search',
+    version: '1.0.0',
+    type: PublishDependencyType.Toolset,
+    location: '',
+  },
+];
+
+<StandalonePublishPanel
+  {...publishPanelProps}
+  dependencies={dependencies}
+  labels={{ dependenciesLabels: { title: 'Private dependencies' } }}
+/>;
+```
+
+The list is informational: rows are not interactive, and it never changes what the submit button does. The library receives the list as data and knows nothing of how it was found. A `PublishDependency` is `{ id, name, version?, type, location, iconUrl?, isFolder? }`, with `type` a `PublishDependencyType` (`Application`, `Toolset`, `Prompt`, `Skill`, `File`), shown as text next to the folder. `iconUrl` is the already-resolved icon of the entity: an application, toolset, prompt or skill shows it in `DeploymentIcon`, or the initials of its name when there is none, and a `File` shows the UI kit's `FileIcon`, whose glyph is picked from the extension in `name` (the folder glyph when `isFolder` is `true`). `location` is the folder path inside the owner's bucket, empty at the bucket root.
+
+Copy comes from `PublishPanelLabels.dependenciesLabels` (`PublishDependenciesLabels`): `title` (default `'Private dependencies'`), `description`, `rootLocation` (default `'Root folder'`), `typeLabels` (default `'Application'`, `'Toolset'`, `'Prompt'`, `'Skill'`, `'File'`) and `getAnnouncement(count)`, the screen-reader text for the count, so a host can pluralise it in its own language. Colors come from `PublishPanelStyles.dependencies.colors` (`PublishDependenciesColors`: `headingText`, `nameText`, `metaText`, falling back to `--text-primary` and `--text-secondary`). `PublishDependenciesList` can also be used on its own; it then takes `labels`, `styles`, and the typography classes `headingClassName` (default `'dial-body-semi-text'`), `nameClassName` (default `'dial-small-semi-text'`) and `metaClassName` (default `'dial-small-text'`).
+
 ### UnpublishConfirmationDialog
 
 Confirms an unpublish request. One published folder is confirmed directly. When there are several folders, the user must pick one in a radio group before Unpublish is enabled. While `isLoading`, both buttons stay rendered and disabled, and the footer announces `loadingStatusLabel`.
@@ -429,6 +467,10 @@ const {
 
 ## Enums
 
+### PublishDependencyType
+
+`Application`, `Toolset`, `Prompt`, `Skill` and `File`: the kind of a `PublishDependency`, which picks its default type label.
+
 ### PublishPanelView
 
 `Main` (summary, destination row, author, credentials and rules) and `ChangeFolder` (folder search and tree).
@@ -488,14 +530,18 @@ they are hashed at build time — nor through DOM order or ARIA attributes, whic
 are structure and accessibility contracts rather than styling ones. Selected
 elements therefore carry a stable public class.
 
-| Key     | Class                      | Element                                                |
-| ------- | -------------------------- | ------------------------------------------------------ |
-| `panel` | `dial-publish-panel-panel` | The panel body, which carries the themed CSS variables |
+| Key                | Class                                  | Element                                                |
+| ------------------ | -------------------------------------- | ------------------------------------------------------ |
+| `panel`            | `dial-publish-panel-panel`             | The panel body, which carries the themed CSS variables |
+| `dependencies`     | `dial-publish-panel-dependencies`      | The private-dependencies section                       |
+| `dependenciesList` | `dial-publish-panel-dependencies-list` | The list inside the private-dependencies section       |
+| `dependenciesItem` | `dial-publish-panel-dependencies-item` | One row of the private-dependencies list               |
 
 ```tsx
 import { PUBLISH_PANEL_CLASS } from '@epam/ai-dial-publish-panel';
 
 PUBLISH_PANEL_CLASS.panel; // 'dial-publish-panel-panel'
+PUBLISH_PANEL_CLASS.dependencies; // 'dial-publish-panel-dependencies'
 ```
 
 The classes carry no declarations of their own: nothing in `styles.css`

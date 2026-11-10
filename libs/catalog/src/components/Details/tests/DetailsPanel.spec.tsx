@@ -2,6 +2,8 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   PublicationRule,
   PublicationRuleFunction,
+  PublishDependency,
+  PublishDependencyType,
   PublishFolderNode,
   PublishHistoryEntry,
 } from '@epam/ai-dial-publish-panel';
@@ -325,8 +327,10 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       publishCredentials,
       onPublishCredentialsChange,
       allowReplace,
+      dependencies,
     }: {
       allowReplace?: boolean;
+      dependencies?: PublishDependency[];
       onChangeFolderClick: () => void;
       onPendingFolderPathChange: (path: string[]) => void;
       onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
@@ -343,6 +347,12 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       <div>
         <span>Publish panel</span>
         <span>panelAllowReplace:{String(allowReplace)}</span>
+        <span>
+          dependencies:
+          {dependencies == null
+            ? 'none'
+            : dependencies.map((dependency) => dependency.name).join(',')}
+        </span>
         <span>author:{author}</span>
         <button onClick={() => onAuthorChange('DIAL Team')}>Set author</button>
         <span>ruleSourceOptions:{ruleSourceOptions.join(',')}</span>
@@ -466,6 +476,88 @@ describe('DetailsPanel — republishing an existing version', () => {
 
     expect(screen.getByText('panelAllowReplace:false')).toBeTruthy();
     expect(screen.getByText('footerAllowReplace:false')).toBeTruthy();
+  });
+});
+
+describe('DetailsPanel — private dependencies', () => {
+  const dependency = (name: string): PublishDependency => ({
+    id: `prompts/b/${name}`,
+    name,
+    type: PublishDependencyType.Prompt,
+    location: '',
+  });
+
+  it('passes the resolved dependencies to the publish panel when Publish opens', async () => {
+    const getPublishDependencies = vi
+      .fn()
+      .mockResolvedValue([dependency('Greeting')]);
+    renderPanel({ getPublishDependencies });
+
+    await openPublish();
+
+    expect(await screen.findByText('dependencies:Greeting')).toBeTruthy();
+    expect(getPublishDependencies).toHaveBeenCalledWith(item);
+  });
+
+  it('does not look dependencies up before Publish opens', () => {
+    const getPublishDependencies = vi.fn().mockResolvedValue([]);
+    renderPanel({ getPublishDependencies });
+
+    expect(getPublishDependencies).not.toHaveBeenCalled();
+  });
+
+  it('shows an empty list and no error when the lookup rejects', async () => {
+    const getPublishDependencies = vi
+      .fn()
+      .mockRejectedValue(new Error('offline'));
+    renderPanel({ getPublishDependencies });
+
+    await openPublish();
+
+    await waitFor(() => expect(getPublishDependencies).toHaveBeenCalledOnce());
+    expect(screen.getByText('dependencies:')).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('hands the panel no list when the host supplies no lookup', async () => {
+    renderPanel();
+
+    await openPublish();
+
+    expect(screen.getByText('dependencies:none')).toBeTruthy();
+  });
+
+  it("never shows one item's list for another item", async () => {
+    let resolveFirst: (list: PublishDependency[]) => void = () => {
+      /* replaced synchronously by the promise executor below */
+    };
+    const getPublishDependencies = vi.fn(
+      (requested: CatalogItem): Promise<PublishDependency[]> =>
+        requested.id === item.id
+          ? new Promise<PublishDependency[]>((resolve) => {
+              resolveFirst = resolve;
+            })
+          : Promise.resolve([dependency('Other')]),
+    );
+    const { rerender } = renderPanel({ getPublishDependencies });
+    await openPublish();
+
+    rerender(
+      <DetailsPanel
+        item={makeItem({ id: '2', name: 'Second' })}
+        isOpen
+        onClose={vi.fn()}
+        publishFolderItems={folderItems}
+        onPublish={vi.fn().mockResolvedValue(undefined)}
+        getPublishDependencies={getPublishDependencies}
+      />,
+    );
+    await openPublish();
+    expect(await screen.findByText('dependencies:Other')).toBeTruthy();
+    await act(async () => resolveFirst([dependency('Stale')]));
+
+    expect(screen.getByText('dependencies:Other')).toBeTruthy();
+    expect(screen.queryByText('dependencies:Stale')).toBeNull();
   });
 });
 
