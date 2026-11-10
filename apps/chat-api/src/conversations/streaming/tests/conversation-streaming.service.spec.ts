@@ -210,7 +210,7 @@ describe('ConversationStreamingService', () => {
     lang?: string,
     jobTitle?: string,
   ) => {
-    const stream = service.streamCompletion(
+    const stream = service.streamCompletion({
       conversationPath,
       token,
       bucket,
@@ -219,20 +219,20 @@ describe('ConversationStreamingService', () => {
       message,
       messageIndex,
       model,
-      customContent as never,
-      sessionId,
-      () => {
+      customContent: customContent as never,
+      ownerKey: sessionId,
+      onReadyToStream: () => {
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
         res.flushHeaders();
       },
-      'user1',
+      sub: 'user1',
       clientChannelId,
       timezone,
       lang,
       jobTitle,
-    );
+    });
     for await (const chunk of stream) {
       res.write(chunk);
     }
@@ -2364,20 +2364,18 @@ describe('ConversationStreamingService', () => {
         response: new Response(neverEndingStream, { status: 200 }),
       } as never);
 
-      const stream = service.streamCompletion(
-        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
-        'test-token',
-        'test-bucket',
-        'test-gen-id',
-        CompletionMode.Append,
-        'Hello',
-        undefined,
-        'gpt-4o',
-        undefined,
-        'test-session-id',
-        () => undefined,
-        'user1',
-      );
+      const stream = service.streamCompletion({
+        conversationPath: 'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        token: 'test-token',
+        bucket: 'test-bucket',
+        generationId: 'test-gen-id',
+        mode: CompletionMode.Append,
+        message: 'Hello',
+        model: 'gpt-4o',
+        ownerKey: 'test-session-id',
+        onReadyToStream: () => undefined,
+        sub: 'user1',
+      });
 
       /*
        * `ConversationGenerationController.streamCompletion` no longer abandons its
@@ -2616,20 +2614,18 @@ describe('ConversationStreamingService', () => {
         response: new Response(neverEndingStream, { status: 200 }),
       } as never);
 
-      const stream = service.streamCompletion(
-        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
-        'test-token',
-        'test-bucket',
-        'test-gen-id',
-        CompletionMode.Append,
-        'Hello',
-        undefined,
-        'gpt-4o',
-        undefined,
-        'test-session-id',
-        () => undefined,
-        'user1',
-      );
+      const stream = service.streamCompletion({
+        conversationPath: 'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        token: 'test-token',
+        bucket: 'test-bucket',
+        generationId: 'test-gen-id',
+        mode: CompletionMode.Append,
+        message: 'Hello',
+        model: 'gpt-4o',
+        ownerKey: 'test-session-id',
+        onReadyToStream: () => undefined,
+        sub: 'user1',
+      });
 
       for await (const _chunk of stream) {
         /*
