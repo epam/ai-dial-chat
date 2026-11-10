@@ -18,17 +18,20 @@ This mirrors DIAL Core's own `GET /v1/deployments/{deployment_name}/mcp/resource
 
 - `toolsetName` (path, string) — the toolset ID, validated by `GetToolsetDto` (`@IsSafeToolsetName`; slash-separated names are percent-encoded as `%2F`). The validator rejects raw whitespace, so a toolset whose name contains spaces SHALL be sent with each segment percent-encoded (`Entity%20MCP%20Server__1.0.0`); `createMcpAppsApiClient` normalizes the id with `normalizeToolsetId` before the request, whether the caller passes the encoded or the raw form.
 - `resourceUri` (query, string) — the `ui://` URI, as discovered per-tool from Core's `tools/list` `_meta.ui.resourceUri` (see the `mcp-app-trigger` capability's tool-discovery requirement; `Stage` carries no such field) and passed through by the caller; validated with `@Matches` against a `ui://` scheme allowlist regex before the call to Core is made (same check Core itself does).
-- Auth: the caller SHALL already have access to the toolset in the current conversation, reusing the same session check as the existing toolset invocation path (`toolset-authentication` capability) — no new grant is introduced.
+- Auth: the caller SHALL already have access to the toolset in the current conversation, reusing the same session check as the existing toolset invocation path (`toolset-authentication` capability) — no new grant is introduced. The check runs when the request reaches DIAL Core, so a response served from the server-side cache (see **Caching** below) skips it.
 - **Response is a raw passthrough of Core's response — NOT a JSON DTO.** `chat-api` streams Core's response body unchanged and forwards its `Content-Type` (one of Core's allowed MIME types: `text/html`, `text/plain`, `text/css`, `application/json`, `image/svg+xml`, `image/png`, `image/jpeg`, `image/gif`, `image/webp`), `Content-Security-Policy`, and `X-Content-Type-Options` headers verbatim. There is no `html`/`allowedOrigins`/`permissions` field to synthesize — Core's endpoint doesn't return one.
 - `400 BadRequestException` — `resourceUri` fails validation, or Core rejects it as not `ui://`-scheme.
 - `403 ForbiddenException` — caller lacks access to the toolset, or Core's consent check denies it.
 - `404 NotFoundException` — `toolsetName` does not exist, or Core reports the deployment has no MCP config / no such resource.
-- `502 BadGatewayException` — Core reports an upstream MCP fetch/mimetype/empty-body failure, or Core itself is unreachable.
+- `502 BadGatewayException` — Core answers with a `5xx` or another unexpected status (an upstream MCP fetch/mimetype/empty-body failure).
+- `503 ServiceUnavailableException` — Core is unreachable, or the request exceeds its 60 s timeout (`handleDialFetchError` in `apps/chat-api/src/common/dial/dial-error.mapper.ts`). `502` is never used for these two cases.
 - `429` — Core's own rate limiter tripped; `chat-api` forwards the `Retry-After` header if present.
 
 **OpenAPI / generated client:** `operationIdFactory` → `getToolsetMcpAppResource`. Because the response has a variable `Content-Type` rather than a fixed JSON schema, the `200` response is documented only as `description: 'HTML widget content'` with no content schema (mirroring how Core's own `docs/open_api_core.yaml` documents this route). The frontend reads it through the generated client's `getToolsetMcpAppResourceRaw` method. `apps/chat/src/server-api/mcp-apps.ts` only builds `mcpAppsApiClient = createMcpAppsApiClient(toolsetsApi)`; the call itself lives in `libs/chat-hooks/src/mcp-apps/mcp-apps-api-client.ts` as `fetchResourceHtml(toolsetId, resourceUri)`, which calls `getToolsetMcpAppResourceRaw({ toolsetName, resourceUri })`, resolves to `raw.text()`, and throws `McpAppResourceFetchError` (carrying the HTTP status) on a non-OK response. It is consumed by `useOpenMcpAppCanvas` (`mcp-app-trigger`) to build `McpAppCanvasContent.html` for `@mcp-ui/client`'s `AppRenderer` (see `design.md` D3; the resource is fetched via JS, never loaded as an iframe `src`).
 
 **Caching:** cache key `mcp-apps:resource:${toolsetId}:${resourceUri}`, TTL `30000ms` (matching the `cached-dial-list-request` default), invalidated only by TTL expiry — a `ui://` resource for a given toolset+URI is treated as effectively static content, mirroring how visualizer URLs are operator-static. Uses `withCachedDialRequest`, caching the raw body + `Content-Type` pair, so a repeated `fetchResourceHtml` for the same toolset and URI within the TTL is served without a call to Core.
+
+The cache is **shared across users, on purpose**: the key carries no user identity, and a hit is returned before any call to DIAL Core. Consequently the access check applies only on a cache miss, and for up to the TTL a user without access to the toolset (or one whose access was just revoked) can receive a copy another user fetched. This is accepted because a `ui://` resource is a static widget template — per-call data reaches the app through `toolInput`/`toolResult`, never through this HTML — and the browser keeps its own per-conversation cache anyway (`docs/mcp-apps.md`). Revisit the key (add the user) if a resource ever carries per-user content or the access check must hold on every request.
 
 #### Scenario: Successful resource fetch
 
@@ -78,13 +81,16 @@ Response (`200`) `McpAppToolCallResponseDto { result: unknown }` — unwrapped f
 - `403 ForbiddenException` — caller lacks access to the toolset, or `toolName` is not among the tools the owning MCP session actually exposes (checked server-side against a `tools/list` call, not trusted from the request).
 - `404 NotFoundException` — unknown `toolsetName`.
 - `429` — DIAL Core rate-limits the request; the BFF forwards the status and `Retry-After` header when present.
-- `502 BadGatewayException` — Core's proxied `tools/call` returns a JSON-RPC `error`, fails, or times out.
+- `502 BadGatewayException` — Core's proxied `tools/call` returns a JSON-RPC `error`, or Core answers with a `5xx` or another unexpected status.
+- `503 ServiceUnavailableException` — Core is unreachable, the call exceeds its 60 s timeout, or Core answers with a body that is not valid JSON-RPC. `502` is never used for these cases.
+
+**Session handshake fallback (temporary):** some MCP servers behind Core's generic MCP proxy reject any method until the Streamable HTTP `initialize` handshake is done and the returned `Mcp-Session-Id` is echoed back. `McpAppService` therefore sends each JSON-RPC request directly first. Only when Core answers `400` or `404` — the transport's signal for a missing or invalid session — does it run `initialize` plus `notifications/initialized` and re-send the same request once, with the session headers. Every other failure (a `5xx`, a JSON-RPC error, a timeout) is surfaced untouched. Session ids are not cached between requests. This applies to `tools/list` and `tools/call` alike, and the retried `tools/call` can therefore reach the MCP server twice if Core answers `400`/`404` for a reason other than a missing session after the tool already ran. That residual risk is accepted for now: it works around DIAL Core not yet fully supporting MCP sessions for apps, and this fallback SHALL be revisited — ideally removed — once Core supports them natively.
 
 **OpenAPI / generated client:** `operationIdFactory` → `callToolsetMcpAppTool`. Frontend caller: `callTool(toolsetId, toolName, args, kind)` in `libs/chat-hooks/src/mcp-apps/mcp-apps-api-client.ts`, which calls the normal generated `callToolsetMcpAppTool` method and returns its `result`; `useOpenMcpAppCanvas` awaits it from `McpAppCanvasContent.onToolCall`. The app supplies the configured client through `apps/chat/src/server-api/mcp-apps.ts` (`createMcpAppsApiClient(toolsetsApi)`).
 
 **No caching** — every call is a live, potentially side-effecting tool invocation.
 
-**Observability:** emit a metric (via the existing `MetricsInterceptor` pattern) tagged by `toolsetId` and `toolName` for call count and latency, and a `Logger` warning on every `403`/`502` outcome (never logging `arguments` contents, which may carry user data).
+**Observability:** call count and latency come from the global `MetricsInterceptor`, which records every request on the shared `http.server.request.duration` histogram tagged by method, route and status code; there is no per-`toolsetId`/`toolName` tag, which would add high-cardinality labels. A `Logger` warning is written on every `403`/`502` outcome (never logging `arguments` contents, which may carry user data).
 
 #### Scenario: Successful tool-call forwarding
 
@@ -103,8 +109,18 @@ Response (`200`) `McpAppToolCallResponseDto { result: unknown }` — unwrapped f
 
 #### Scenario: Upstream failure surfaces as 502
 
-- **WHEN** the upstream MCP session's `tools/call` errors or times out
+- **WHEN** the upstream MCP session's `tools/call` returns a JSON-RPC `error`, or Core answers with a `5xx`
 - **THEN** the response is `502` and no partial `result` is returned
+
+#### Scenario: Timeout or unreachable Core surfaces as 503
+
+- **WHEN** the proxied `tools/call` exceeds its 60 s timeout, Core cannot be reached, or Core's answer cannot be parsed as JSON-RPC
+- **THEN** the response is `503` and no partial `result` is returned
+
+#### Scenario: Missing session triggers one handshake and one re-send
+
+- **WHEN** Core answers a direct `tools/call` with `400` or `404`, and the `initialize` handshake then succeeds
+- **THEN** the same `tools/call` is re-sent once with the negotiated session headers, and any other failure is returned without a retry
 
 ---
 
@@ -115,7 +131,7 @@ Response (`200`) `McpAppToolCallResponseDto { result: unknown }` — unwrapped f
 - `GET /api/v1/toolsets/mcp-apps/tools` (operationId `listMcpAppTools`) — returns `ListMcpAppToolsResponseDto { tools }`, only the tools that declare `_meta.ui.resourceUri`.
 - `GET /api/v1/toolsets/mcp-apps/tool-names` (operationId `listMcpToolNames`) — returns `ListMcpToolNamesResponseDto { toolNames }`, every tool name unfiltered (used by the toolset editor's "Allowed tools" picker).
 
-Both document `400` (invalid `deploymentId` or `kind`), `401`, `404` (deployment not found), and `502` (proxied `tools/list` failed). The frontend calls them through `listAppTools` and `listToolNames` in `libs/chat-hooks/src/mcp-apps/mcp-apps-api-client.ts`.
+Both document `400` (invalid `deploymentId` or `kind`), `401`, `404` (deployment not found), `502` (Core answered the proxied `tools/list` with a JSON-RPC error or a `5xx`), and `503` (Core unreachable, timed out, or answered with an unparsable body). The frontend calls them through `listAppTools` and `listToolNames` in `libs/chat-hooks/src/mcp-apps/mcp-apps-api-client.ts`.
 
 #### Scenario: Only MCP Apps-capable tools are listed
 

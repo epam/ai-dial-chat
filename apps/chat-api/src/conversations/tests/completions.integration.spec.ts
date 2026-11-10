@@ -28,6 +28,7 @@ import {
   type GenerationLease,
 } from '../generation/conversation-generation.service';
 import { ConversationCompletionsResponder } from '../streaming/conversation-completions.responder';
+import type { StreamCompletionRequest } from '../streaming/stream-completion-request';
 import { createConversationGenerationController } from './conversation-controller.fixture';
 
 const TEST_USER = {
@@ -88,19 +89,9 @@ describe('POST /conversations/completions (integration)', () => {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
       stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
-      streamCompletion: vi.fn().mockImplementation(async function* (
-        _path,
-        _at,
-        _bucket,
-        _genId,
-        _mode,
-        _msg,
-        _msgIdx,
-        _model,
-        _cc,
-        _sid,
-        onReadyToStream: () => void,
-      ) {
+      streamCompletion: vi.fn().mockImplementation(async function* ({
+        onReadyToStream,
+      }: StreamCompletionRequest) {
         onReadyToStream();
         yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
         yield Buffer.from('data: [DONE]\n\n');
@@ -161,17 +152,17 @@ describe('POST /conversations/completions (integration)', () => {
 
     expect(res.text).toContain('data: [DONE]');
     expect(mockService.streamCompletion).toHaveBeenCalledOnce();
-    const [path, at, bucket, genId, mode, message, , model, , ownerKey] =
-      mockService.streamCompletion.mock.calls[0];
-    expect(path).toBe(VALID_COMPLETION_BODY.path);
-    expect(at).toBe(TEST_USER.at);
-    expect(bucket).toBe(TEST_USER.bucket);
-    expect(genId).toBe(VALID_COMPLETION_BODY.generationId);
-    expect(mode).toBe('append');
-    expect(message).toBe('Hello');
-    expect(model).toBe('gpt-4o');
-    expect(ownerKey).toBe(`c:${TEST_USER.sid}`);
-    expect(mockService.streamCompletion.mock.calls[0][13]).toBeUndefined();
+    const streamRequest: StreamCompletionRequest =
+      mockService.streamCompletion.mock.calls[0][0];
+    expect(streamRequest.conversationPath).toBe(VALID_COMPLETION_BODY.path);
+    expect(streamRequest.token).toBe(TEST_USER.at);
+    expect(streamRequest.bucket).toBe(TEST_USER.bucket);
+    expect(streamRequest.generationId).toBe(VALID_COMPLETION_BODY.generationId);
+    expect(streamRequest.mode).toBe('append');
+    expect(streamRequest.message).toBe('Hello');
+    expect(streamRequest.model).toBe('gpt-4o');
+    expect(streamRequest.ownerKey).toBe(`c:${TEST_USER.sid}`);
+    expect(streamRequest.timezone).toBeUndefined();
   });
 
   /* Firefox keeps the fetch() promise pending until the first body byte
@@ -181,7 +172,7 @@ describe('POST /conversations/completions (integration)', () => {
     mockService.streamCompletion.mockImplementation(async function* (
       ...args: unknown[]
     ) {
-      (args[10] as () => void)();
+      (args[0] as StreamCompletionRequest).onReadyToStream();
       yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
     });
 
@@ -204,7 +195,7 @@ describe('POST /conversations/completions (integration)', () => {
       .expect(200);
 
     expect(mockService.streamCompletion).toHaveBeenCalledOnce();
-    expect(mockService.streamCompletion.mock.calls[0][13]).toBe(
+    expect(mockService.streamCompletion.mock.calls[0][0].timezone).toBe(
       'Europe/Warsaw',
     );
   });
@@ -232,7 +223,7 @@ describe('POST /conversations/completions (integration)', () => {
       .expect(200);
 
     expect(mockService.streamCompletion).toHaveBeenCalledOnce();
-    expect(mockService.streamCompletion.mock.calls[0][14]).toBe('en');
+    expect(mockService.streamCompletion.mock.calls[0][0].lang).toBe('en');
   });
 
   it.each([
@@ -340,7 +331,7 @@ describe('POST /conversations/completions (integration)', () => {
     mockService.streamCompletion.mockImplementation(async function* (
       ...args: unknown[]
     ) {
-      (args[10] as () => void)();
+      (args[0] as StreamCompletionRequest).onReadyToStream();
       yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
       throw new Error('upstream exploded');
     });
@@ -421,7 +412,8 @@ describe('POST /conversations/completions (integration)', () => {
       .expect(200);
 
     expect(mockService.streamCompletion).toHaveBeenCalledOnce();
-    const [, , , , mode, , msgIdx] = mockService.streamCompletion.mock.calls[0];
+    const { mode, messageIndex: msgIdx } =
+      mockService.streamCompletion.mock.calls[0][0];
     expect(mode).toBe('regenerate');
     expect(msgIdx).toBe(2);
   });
@@ -435,7 +427,7 @@ describe('POST /conversations/completions (integration)', () => {
     mockService.streamCompletion.mockImplementation(async function* (
       ...args: unknown[]
     ) {
-      (args[10] as () => void)();
+      (args[0] as StreamCompletionRequest).onReadyToStream();
       yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
       // Holds the generator open past the first chunk so the client can
       // disconnect before the stream would otherwise finish on its own.
@@ -510,7 +502,7 @@ describe('POST /conversations/completions (integration)', () => {
       // Simulates the browser closing before setup finishes — no headers
       // have been sent yet.
       res.emit('close');
-      (args[10] as () => void)();
+      (args[0] as StreamCompletionRequest).onReadyToStream();
       yield Buffer.from('data: [DONE]\n\n');
       reachedNaturalEnd = true;
     });
@@ -568,7 +560,7 @@ describe('POST /conversations/completions — backpressure-driven detachment (di
       streamCompletion: vi.fn().mockImplementation(async function* (
         ...args: unknown[]
       ) {
-        (args[10] as () => void)();
+        (args[0] as StreamCompletionRequest).onReadyToStream();
         for (let i = 0; i < totalChunks; i += 1) {
           yield Buffer.alloc(chunkSize, 'x');
         }
@@ -883,7 +875,7 @@ describe('completions endpoints — header-authenticated (bearer) caller', () =>
       streamCompletion: vi.fn().mockImplementation(async function* (
         ...args: unknown[]
       ) {
-        (args[10] as () => void)();
+        (args[0] as StreamCompletionRequest).onReadyToStream();
         yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
         yield Buffer.from('data: [DONE]\n\n');
       }),
@@ -943,7 +935,7 @@ describe('completions endpoints — header-authenticated (bearer) caller', () =>
     expect(res.headers['content-type']).toContain('text/event-stream');
     expect(res.text).toContain('data: [DONE]');
     expect(mockService.streamCompletion).toHaveBeenCalledOnce();
-    expect(mockService.streamCompletion.mock.calls[0][9]).toBe(
+    expect(mockService.streamCompletion.mock.calls[0][0].ownerKey).toBe(
       `h:${HEADER_USER.providerId}:${HEADER_USER.sub}`,
     );
   });
@@ -1027,15 +1019,18 @@ describe('generation ownership isolation (real registry)', () => {
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
       stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
       markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
-      streamCompletion: vi.fn().mockImplementation(async function* (
-        ...args: unknown[]
-      ) {
+      streamCompletion: vi.fn().mockImplementation(async function* ({
+        ownerKey,
+        conversationPath,
+        generationId,
+        onReadyToStream,
+      }: StreamCompletionRequest) {
         currentLease = generationService.register(
-          args[9] as string,
-          args[0] as string,
-          args[3] as string,
+          ownerKey,
+          conversationPath,
+          generationId,
         );
-        (args[10] as () => void)();
+        onReadyToStream();
         yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
       }),
     };

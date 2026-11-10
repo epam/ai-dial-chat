@@ -232,7 +232,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-ui-kit` ^0.16.0
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.2
-- `@epam/pdf-highlighter-kit` ^0.0.21
+- `@epam/pdf-highlighter-kit` ^0.0.22
 
 `@epam/ai-dial-chat-api-client` is **not** a peer. Every entry that calls DIAL Core
 imports a runtime enum from it (`SendCompletionDtoModeEnum`,
@@ -743,6 +743,35 @@ the history empty when a read fails (the backend still refuses a duplicate), and
 ignores a read that finishes after the panel closed or `entityId` changed. The
 request and its mapping to `PublishHistoryEntry` (for the catalog endpoint,
 `mapPublishHistoryEntryDto`) stay with the host.
+
+`usePublishDependencies({ isOpen, entityId, loadDependencies })` (root and `./catalog`)
+returns the `PublishDependency[]` a publish panel lists as resources the item refers to
+that are not in the public bucket. It follows `usePublishHistory`: it reads through your
+`loadDependencies(entityId)` each time `isOpen` turns true, leaves the list empty when a
+read fails (the list only informs, publishing does not depend on it), ignores a read that
+finishes after the panel closed or `entityId` changed, and never returns another entity's
+list. For a catalog entity the request is `createPublishApiClient(publishApi)
+.getCatalogPublishDependencies(entityType, entityId)`; both it and the conversation
+request map each entry with `mapResourceDependencyDto`, and stay with the host. Pass `createPublishDependencyIconResolver({ deployments, toolsets, resolveIconUrl })` as its second argument to give an application or toolset the icon of the entity the host has already loaded, with no extra request; an entry the lists do not hold has none.
+
+```ts
+import {
+  createPublishApiClient,
+  mapResourceDependencyDto,
+  usePublishDependencies,
+} from '@epam/ai-dial-chat-hooks';
+
+const publishClient = createPublishApiClient(publishApi);
+
+const dependencies = usePublishDependencies({
+  isOpen,
+  entityId: 'applications/my-bucket/Support agent__1.0.0',
+  loadDependencies: async (entityId) =>
+    (
+      await publishClient.getCatalogPublishDependencies('application', entityId)
+    ).dependencies.map(mapResourceDependencyDto),
+});
+```
 
 `useUnpublishableFolders(client, target, isAdmin)` (root and `./catalog`) reports
 the folders the caller may request removal of one published entity from, as
@@ -4602,9 +4631,9 @@ const overview = buildSkillOverview(
 );
 ```
 
-### toPublishEntityType / mapPublishHistoryEntryDto / mapPublishConversationResultDto
+### toPublishEntityType / mapPublishHistoryEntryDto / mapPublishConversationResultDto / mapResourceDependencyDto
 
-Maps a catalog entity type to the publish API's entity-type path param (`CatalogPublishEntityType`), and maps publish-history API responses into the publish panel's `PublishHistoryEntry` model.
+Maps a catalog entity type to the publish API's entity-type path param (`CatalogPublishEntityType`), maps publish-history API responses into the publish panel's `PublishHistoryEntry` model, and maps a publish-dependencies API entry (`ResourceDependencyDto`) into the panel's `PublishDependency` model.
 
 ```ts
 import { toPublishEntityType } from '@epam/ai-dial-chat-hooks';

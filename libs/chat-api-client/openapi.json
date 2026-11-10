@@ -4740,6 +4740,44 @@
         "tags": ["conversations"]
       }
     },
+    "/api/v1/conversations/publish-dependencies": {
+      "get": {
+        "description": "Returns the direct references of an owned conversation that are not in the public bucket: its model or add-ons when they are applications or toolsets, the skills its messages use, and attachment files that belong to another user. Files in the author’s own bucket are not listed, because they are published with the conversation. The list is advisory: when it cannot be resolved the response is an empty list rather than an error.",
+        "operationId": "getConversationPublishDependencies",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "gpt-4o__My Conversation__UUID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The conversation’s private dependencies, possibly empty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceDependenciesResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid path"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          }
+        },
+        "summary": "List the private dependencies of a conversation",
+        "tags": ["conversations"]
+      }
+    },
     "/api/v1/prompts": {
       "get": {
         "description": "Returns all catalog-visible prompts in one response. Organisation prompts are always read-only.",
@@ -8926,6 +8964,62 @@
           }
         },
         "summary": "Get publish history for a catalog entity",
+        "tags": ["publish"]
+      }
+    },
+    "/api/v1/catalog/{entityType}/{entityId}/publish-dependencies": {
+      "get": {
+        "description": "Returns the direct references of a catalog entity (Toolset, Application, Prompt, Skill or Project) that are not in the public bucket, so the publisher can publish them too before the published copy reaches its audience. Resources that publishing already carries along (the application icon and its declared files) are not listed, and a dependency’s own dependencies are not followed. The list is advisory: when it cannot be resolved the response is an empty list rather than an error. Kinds that reference no other resource always return an empty list.",
+        "operationId": "getCatalogPublishDependencies",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": true,
+            "in": "path",
+            "description": "Catalog entity kind.",
+            "schema": {
+              "example": "toolset",
+              "type": "string",
+              "enum": [
+                "model",
+                "toolset",
+                "application",
+                "prompt",
+                "skill",
+                "project"
+              ]
+            }
+          },
+          {
+            "name": "entityId",
+            "required": true,
+            "in": "path",
+            "description": "The entity's DIAL Core resource path, used directly as the Publication API `sourceUrl`.",
+            "schema": {
+              "example": "tool-abc123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The entity’s private dependencies, possibly empty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceDependenciesResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid entityType or entityId"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          }
+        },
+        "summary": "List the private dependencies of a catalog entity",
         "tags": ["publish"]
       }
     },
@@ -17169,6 +17263,49 @@
           }
         },
         "required": ["path", "folderPath", "requestedAt", "requestedBy"]
+      },
+      "ResourceDependencyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The dependency's DIAL Core resource url, as stored in the reference.",
+            "example": "prompts/bucket-123/Support/Greeting"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name, percent-decoded, without a trailing `__version`.",
+            "example": "Greeting"
+          },
+          "version": {
+            "type": "string",
+            "description": "Present only for a versioned dependency.",
+            "example": "1.0.0"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["application", "toolset", "prompt", "skill", "file"],
+            "example": "prompt"
+          },
+          "location": {
+            "type": "string",
+            "description": "Percent-decoded folder path of the dependency inside its owner's bucket; empty at the bucket root.",
+            "example": "Support"
+          }
+        },
+        "required": ["id", "name", "type", "location"]
+      },
+      "ResourceDependenciesResultDto": {
+        "type": "object",
+        "properties": {
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceDependencyDto"
+            }
+          }
+        },
+        "required": ["dependencies"]
       },
       "PromptResponseDto": {
         "type": "object",

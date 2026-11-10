@@ -6,6 +6,7 @@ import {
   PublishFolderNode,
   PublishResourceSummary,
 } from '../../models/publish';
+import type { PublishDependency } from '../../models/publish-dependency';
 import type { PublishPanelStyles } from '../../models/publish-panel-styles';
 import { PublishPanelView } from '../../types/publish-panel';
 import { derivePublishState } from '../../utils/publish-state';
@@ -43,6 +44,8 @@ export interface StandalonePublishPanelProps {
    * See `PublishPanel`'s `renderSummary` prop.
    */
   renderSummary?: () => ReactNode;
+  /** Resources the item refers to that are not in the public bucket; see `PublishPanel`'s `dependencies` prop. Text and colours ride `labels` and `styles`. */
+  dependencies?: PublishDependency[];
   /** Destination folders available for selection. */
   folderItems: PublishFolderNode[];
   /** Currently selected destination folder path. `undefined` means nothing selected; `[]` means the bucket root. */
@@ -135,6 +138,7 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   isOpen,
   resource,
   renderSummary,
+  dependencies,
   folderItems,
   selectedFolderPath,
   onSelectedFolderPathChange,
@@ -309,6 +313,7 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
           <PublishPanel
             resource={resource}
             renderSummary={renderSummary}
+            dependencies={dependencies}
             view={folderView.view}
             onChangeFolderClick={folderView.openFolderView}
             folderItems={folderItems}
