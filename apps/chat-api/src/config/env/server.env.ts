@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNumber,
@@ -24,6 +25,16 @@ export class ServerEnv {
   @IsOptional()
   @IsEnum(CspMode)
   CSP_MODE?: CspMode = CspMode.Enforce;
+
+  @IsOptional()
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  CSP_ALLOW_STYLE_ATTRIBUTES?: boolean = false;
 
   @IsOptional()
   @IsUrl({

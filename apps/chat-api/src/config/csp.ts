@@ -12,6 +12,7 @@ interface CspOptions {
   nonce?: string;
   allowWasm?: boolean;
   allowInlineStyles?: boolean;
+  allowStyleAttributes?: boolean;
   reportOnly?: boolean;
   reportUri?: string;
 }
@@ -140,6 +141,7 @@ export const createHelmetOptions = (
     nonce,
     allowWasm = false,
     allowInlineStyles = false,
+    allowStyleAttributes = false,
     reportOnly = false,
     reportUri,
   }: CspOptions = {},
@@ -158,7 +160,15 @@ export const createHelmetOptions = (
         ...(allowInlineStyles ? ["'unsafe-inline'"] : []),
         ...(!allowInlineStyles && nonce ? [`'nonce-${nonce}'`] : []),
       ],
-      styleSrcAttr: [allowInlineStyles ? "'unsafe-inline'" : "'none'"],
+      /* Inline `style="..."` attributes cannot carry a nonce. Embedded editors such as
+       * Monaco (the Quick Apps JSON editor) position every line with one, so they
+       * render broken under `'none'`. `<style>` elements stay nonce-only, and the
+       * flag is opt-in (`CSP_ALLOW_STYLE_ATTRIBUTES`). */
+      styleSrcAttr: [
+        allowInlineStyles || allowStyleAttributes
+          ? "'unsafe-inline'"
+          : "'none'",
+      ],
       /* `data:` covers fonts the bundler inlines as base64 data URIs. */
       fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
       scriptSrc: [

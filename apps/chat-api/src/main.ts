@@ -193,6 +193,9 @@ async function bootstrap() {
       allowedConnectOrigins,
       secureTransport,
       cspMode: configService.get('CSP_MODE', { infer: true }),
+      allowStyleAttributes: configService.get('CSP_ALLOW_STYLE_ATTRIBUTES', {
+        infer: true,
+      }),
       reportUri: configService.get('CSP_REPORT_URI', { infer: true }),
       overlaySandboxEnabled: configService.get('OVERLAY_SANDBOX_ENABLED', {
         infer: true,

@@ -4306,6 +4306,13 @@ non-Secure cookies over an unencrypted connection. CORS controls access to the
 response; it does not protect cookies in transit or prevent a simple GET request
 from sending them before the response headers are checked.
 
+`CSP_ALLOW_STYLE_ATTRIBUTES` (default `false`) adds `style-src-attr 'unsafe-inline'`
+to the enforced policy of the HTML shell. Set it to `true` when the served frontend
+bundles Monaco (for example the Quick Apps JSON editor): Monaco writes inline `style`
+attributes, which cannot carry a nonce, so under the default `style-src-attr 'none'`
+its lines lose their positions. It does not touch `style-src` (`<style>` elements stay
+nonce-only) or `script-src`, so inline scripts and event handlers remain blocked.
+
 `CSP_MODE` accepts `enforce` (default) or `report-only`. Report-only mode keeps
 the existing HTML policy enforced and adds the stricter candidate in
 `Content-Security-Policy-Report-Only`. It still permits inline CSS in the enforced
