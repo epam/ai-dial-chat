@@ -9,6 +9,15 @@ export type {
   PublishResourceSummary,
 } from './models/publish';
 
+export { PublishDependencyType } from './models/publish-dependency';
+export type { PublishDependency } from './models/publish-dependency';
+export type {
+  PublishDependenciesColors,
+  PublishDependenciesLabels,
+  PublishDependenciesListProps,
+  PublishDependenciesStyles,
+} from './models/publish-dependencies-list';
+
 // Utils
 export { derivePublishState } from './utils/publish-state';
 export { formatPublishedDate } from './utils/format-published-date';
@@ -56,6 +65,8 @@ export type {
   PublishAccessRulesColors,
   PublishAccessRulesStyles,
 } from './models/publish-access-rules-styles';
+
+export { PublishDependenciesList } from './components/PublishDependenciesList/PublishDependenciesList';
 
 export { PublishHistoryList } from './components/PublishHistoryList/PublishHistoryList';
 export type {

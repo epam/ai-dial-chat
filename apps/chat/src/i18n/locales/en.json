@@ -613,7 +613,17 @@
     "addSiblingFolder": "Add sibling",
     "addChildFolder": "Add child",
     "updateVersion": "Update version {version}",
-    "publishingInProgress": "Publishing…"
+    "publishingInProgress": "Publishing…",
+    "dependenciesTitle": "Private dependencies",
+    "dependenciesDescription": "These resources are still private. This item may not work for others until they are published too.",
+    "dependenciesAnnouncement_one": "{{count}} dependency is not public yet",
+    "dependenciesAnnouncement_other": "{{count}} dependencies are not public yet",
+    "dependenciesRootLocation": "Root folder",
+    "dependenciesTypeApplication": "Application",
+    "dependenciesTypeToolset": "Toolset",
+    "dependenciesTypePrompt": "Prompt",
+    "dependenciesTypeSkill": "Skill",
+    "dependenciesTypeFile": "File"
   },
   "publishAccessRules": {
     "heading": "Allow access if all match",

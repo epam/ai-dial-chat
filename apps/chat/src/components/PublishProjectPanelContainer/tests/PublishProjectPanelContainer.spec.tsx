@@ -11,6 +11,7 @@ import { createNotificationContextValue } from '../../../context/tests/notificat
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { getPublishRules } from '../../../server-api/publish-rules.api';
 import {
+  getCatalogPublishDependencies,
   getCatalogPublishHistory,
   publishCatalogEntity,
 } from '../../../server-api/publish.api';
@@ -38,7 +39,9 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       onSubmit,
       labels,
       renderSummary,
+      dependencies,
     }: {
+      dependencies?: { name: string }[];
       resource?: { title: string };
       renderSummary?: () => ReactNode;
       allowReplace: boolean;
@@ -53,6 +56,10 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       <div role="dialog" aria-label={labels.ariaLabel}>
         {renderSummary ? renderSummary() : <span>{resource?.title}</span>}
         <span>allowReplace:{String(allowReplace)}</span>
+        <span>
+          dependencies:
+          {dependencies?.map((dependency) => dependency.name).join(',')}
+        </span>
         <span>alreadyPublished:{String(hasExistingPublicationInFolder)}</span>
         <button onClick={() => onSelectedFolderPathChange(['Marketing'])}>
           Select Marketing
@@ -68,6 +75,9 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
 });
 
 vi.mock('../../../hooks/publish/usePublishFolders');
+vi.mock('../../../hooks/publish/usePublishDependencyIconResolver', () => ({
+  usePublishDependencyIconResolver: () => () => undefined,
+}));
 vi.mock('../../../hooks/user-profile/useUserProfile', () => ({
   useUserProfile: () => ({ displayName: 'Jane Doe' }),
 }));
@@ -75,6 +85,7 @@ vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../server-api/publish.api')>()),
   publishCatalogEntity: vi.fn(),
   getCatalogPublishHistory: vi.fn(),
+  getCatalogPublishDependencies: vi.fn(),
 }));
 vi.mock('../../../server-api/publish-rules.api');
 vi.mock('../../../context/NotificationContext');
@@ -279,6 +290,36 @@ describe('PublishProjectPanelContainer', () => {
       expect(
         screen.queryByText(ProjectsI18nKeys.PublishChatsWarning),
       ).toBeNull();
+    });
+  });
+
+  describe('private dependencies', () => {
+    it("asks for the project's dependencies and shows none while the list is empty", async () => {
+      vi.mocked(getCatalogPublishDependencies).mockResolvedValue({
+        dependencies: [],
+      });
+
+      renderContainer();
+
+      await waitFor(() =>
+        expect(getCatalogPublishDependencies).toHaveBeenCalledWith(
+          'project',
+          'projects/a1b2c3/q4-launch',
+        ),
+      );
+      expect(screen.getByText('dependencies:')).toBeTruthy();
+    });
+
+    it('passes a supplied list to the panel', async () => {
+      vi.mocked(getCatalogPublishDependencies).mockResolvedValue({
+        dependencies: [
+          { id: 'files/x/a.txt', name: 'a.txt', type: 'file', location: '' },
+        ],
+      });
+
+      renderContainer();
+
+      expect(await screen.findByText('dependencies:a.txt')).toBeTruthy();
     });
   });
 });

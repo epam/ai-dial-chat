@@ -85,6 +85,7 @@ export const Catalog: FC<CatalogProps> = ({
   isPublishVisible,
   isPublishPrimary,
   getPublishHistory,
+  getPublishDependencies,
   publishFolderItems,
   publishExpandedPaths,
   onPublishExpandedPathsChange,
@@ -959,6 +960,7 @@ export const Catalog: FC<CatalogProps> = ({
           isPublishVisible={isPublishVisible}
           isPublishPrimary={isPublishPrimary}
           getPublishHistory={getPublishHistory}
+          getPublishDependencies={getPublishDependencies}
           publishFolderItems={publishFolderItems}
           publishExpandedPaths={publishExpandedPaths}
           onPublishExpandedPathsChange={onPublishExpandedPathsChange}
