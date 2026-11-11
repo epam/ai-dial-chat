@@ -72,7 +72,9 @@ toast over the shared `useSkillFileSystemPicker`).
 
 For owner access revocation, pass `ProjectView.onRevokeAccess` and translate
 `labels.revokeAccessLabel`. The pinned menu exposes
-`PinnedProjectMenuAction.RevokeAccess` for the same owner permission.
+`PinnedProjectMenuAction.RevokeAccess` for the same owner permission when
+`getPinnedProjectMenuActions(project, canRevokeAccess(project.id))` receives
+confirmed recipient eligibility. Omitting the second argument hides revoke.
 `useProjectRevokeAccess(client, project, handlers)` and
 `useProjectShareRecipients(client)` come from `@epam/ai-dial-chat-hooks/project`.
 Pass the same stable, already-configured `ProjectSharingClient` to both hooks;

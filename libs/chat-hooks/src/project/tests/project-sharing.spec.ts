@@ -37,7 +37,10 @@ describe('isProjectSharedWithMe', () => {
 describe('getPinnedProjectMenuActions', () => {
   it('offers the owner every action but Remove from My List', () => {
     expect(
-      getPinnedProjectMenuActions(project(ProjectSource.Personal, true, true)),
+      getPinnedProjectMenuActions(
+        project(ProjectSource.Personal, true, true),
+        true,
+      ),
     ).toEqual([
       PinnedProjectMenuAction.Unpin,
       PinnedProjectMenuAction.Edit,
@@ -46,6 +49,29 @@ describe('getPinnedProjectMenuActions', () => {
       PinnedProjectMenuAction.RevokeAccess,
       PinnedProjectMenuAction.Delete,
     ]);
+  });
+
+  it('hides revoke for an owner until recipients are confirmed', () => {
+    const owned = project(ProjectSource.Personal, true, true);
+    expect(getPinnedProjectMenuActions(owned)).not.toContain(
+      PinnedProjectMenuAction.RevokeAccess,
+    );
+    expect(getPinnedProjectMenuActions(owned, false)).not.toContain(
+      PinnedProjectMenuAction.RevokeAccess,
+    );
+  });
+
+  it('never offers revoke to a non-owner even with a positive recipient count', () => {
+    for (const candidate of [
+      project(ProjectSource.Shared, true, false),
+      project(ProjectSource.Shared, false, false),
+      project(ProjectSource.Organization, false, false),
+      undefined,
+    ]) {
+      expect(getPinnedProjectMenuActions(candidate, true)).not.toContain(
+        PinnedProjectMenuAction.RevokeAccess,
+      );
+    }
   });
 
   it('offers an editor with a share Unpin, Edit and Remove from My List', () => {

@@ -319,13 +319,10 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
             openAction(PinnedProjectActionKind.RemoveFromMyList, group.id),
         },
       };
-      return getPinnedProjectMenuActions(projectsById.get(group.id))
-        .filter(
-          (action) =>
-            action !== PinnedProjectMenuAction.RevokeAccess ||
-            canRevokeAccess(group.id),
-        )
-        .map((action) => items[action]);
+      return getPinnedProjectMenuActions(
+        projectsById.get(group.id),
+        canRevokeAccess(group.id),
+      ).map((action) => items[action]);
     },
     [handleUnpin, onOpenRoute, openAction, projectsById, canRevokeAccess, t],
   );

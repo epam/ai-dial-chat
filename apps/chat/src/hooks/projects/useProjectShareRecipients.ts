@@ -1,5 +1,4 @@
 import {
-  notifyProjectAccessRevoked as notifyRevoked,
   useProjectShareRecipients as useSharedProjectShareRecipients,
   type ProjectSharingClient,
 } from '@epam/ai-dial-chat-hooks/project';
@@ -14,10 +13,6 @@ export const projectSharingClient: ProjectSharingClient = {
   revokeSharedAccess: ({ revokeSharedAccessDto }) =>
     revokeSharedAccess(revokeSharedAccessDto.itemId),
 };
-
-/** Updates menus using the app's sharing client. */
-export const notifyProjectAccessRevoked = (projectId: string) =>
-  notifyRevoked(projectSharingClient, projectId);
 
 /** Binds reusable recipient state to the app's configured client. */
 export const useProjectShareRecipients = () =>

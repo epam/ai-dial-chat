@@ -3,6 +3,7 @@ import {
   ResponseError,
   type ProjectDetailsDto,
 } from '@epam/ai-dial-chat-api-client';
+import { notifyProjectAccessRevoked } from '@epam/ai-dial-chat-hooks/project';
 import { FilterTab } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import {
@@ -21,7 +22,7 @@ import { PinnedProjectActionKind } from '../../../types/pinned-project-action';
 import { StorageKey } from '../../../types/storage-key';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import { usePinnedProjectsPanel } from '../usePinnedProjectsPanel';
-import { notifyProjectAccessRevoked } from '../useProjectShareRecipients';
+import { projectSharingClient } from '../useProjectShareRecipients';
 
 vi.mock('../../../server-api/share.api', () => ({
   getShareRecipientsCount: vi.fn(async () => ({
@@ -370,7 +371,7 @@ describe('usePinnedProjectsPanel', () => {
     it('hides revoke after access is revoked and after a zero-recipient lookup', async () => {
       const { result } = renderPanel();
       await actionsOf(result);
-      act(() => notifyProjectAccessRevoked(P));
+      act(() => notifyProjectAccessRevoked(projectSharingClient, P));
       expect((await actionsOf(result)).map((item) => item.key)).not.toContain(
         'revokeAccess',
       );

@@ -572,3 +572,19 @@ Pass `isOpen`, `projectName`, optional `isRevoking`, `onConfirm`, `onClose` and
 formatter, consequences, confirm/cancel and pending status, with English defaults.
 The component performs no requests and consumes no DTOs. Pending state blocks
 confirmation and dismissal through the shared accessible confirmation dialog.
+
+Default values of `ProjectRevokeAccessConfirmationLabels`:
+
+| Field                  | English default                                                                        |
+| ---------------------- | -------------------------------------------------------------------------------------- |
+| `title`                | `Revoke access`                                                                        |
+| `confirmLabel`         | `Revoke access`                                                                        |
+| `cancelLabel`          | `Cancel`                                                                               |
+| `revokingStatusLabel`  | `Revoking access�`                                                                     |
+| `message(projectName)` | Revoke shared access to **{projectName}**? Anyone you shared it with will lose access. |
+| `consequences[0]`      | `People you shared with will lose access`                                              |
+| `consequences[1]`      | `Existing share links will stop working`                                               |
+| `consequences[2]`      | `Your own copy will remain available`                                                  |
+
+Supply translated values for every field, including the entire `consequences`
+array. The library uses these defaults only when the corresponding label is omitted.

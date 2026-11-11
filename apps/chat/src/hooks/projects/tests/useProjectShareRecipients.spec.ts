@@ -1,8 +1,9 @@
+import { notifyProjectAccessRevoked } from '@epam/ai-dial-chat-hooks/project';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getShareRecipientsCount } from '../../../server-api/share.api';
 import {
-  notifyProjectAccessRevoked,
+  projectSharingClient,
   useProjectShareRecipients,
 } from '../useProjectShareRecipients';
 
@@ -63,7 +64,7 @@ describe('useProjectShareRecipients', () => {
     act(() => {
       first.current.requestRecipients('projects/owner/q4');
       first.current.requestRecipients('projects/owner/q4');
-      notifyProjectAccessRevoked('projects/owner/q4');
+      notifyProjectAccessRevoked(projectSharingClient, 'projects/owner/q4');
     });
     expect(getShareRecipientsCount).toHaveBeenCalledOnce();
     await act(async () => {

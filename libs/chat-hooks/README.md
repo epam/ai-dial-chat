@@ -6874,7 +6874,10 @@ isoValue and resetsAtMs. The shortened formatter and parent defaults are unchang
 Downstream can select the explicit policies instead of copying these algorithms.
 
 The project entry point's `getPinnedProjectMenuActions` includes
-`PinnedProjectMenuAction.RevokeAccess` after Share for owners. Hosts map this
+`PinnedProjectMenuAction.RevokeAccess` after Share for owners only when its
+second argument, `canRevokeAccess`, is true. It defaults to false; pass
+`canRevokeAccess(project.id)` from `useProjectShareRecipients` after a confirmed
+positive count. Other actions keep their existing ownership rules. Hosts map this
 action to their confirmation and revoke request; recipients retain the
 existing Remove from My List flow.
 
