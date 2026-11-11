@@ -131,7 +131,11 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
   const { projects, markViewed, refresh } = usePinnedProjectChats(
     projectsClient,
     pinnedProjectIds,
-    { enabled: isEnabled, onProjectDeleted: handleProjectDeleted },
+    {
+      enabled: isEnabled,
+      onProjectDeleted: handleProjectDeleted,
+      activeConversationId,
+    },
   );
 
   /* A chat read on a project page loses its dot here too. */

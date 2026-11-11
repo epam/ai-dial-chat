@@ -874,7 +874,7 @@ const ProjectPage = () => {
 };
 ```
 
-`usePinnedProjectChats(client, projectIds, { enabled, onProjectDeleted })`
+`usePinnedProjectChats(client, projectIds, { enabled, onProjectDeleted, activeConversationId? })`
 loads the trees a sidebar shows for pinned projects. For each id it reads the
 details (`getProject`) and the listing (`listProjectConversations`) in
 parallel, keeps the first `PINNED_PROJECT_CHATS_LIMIT` (10) chats newest first
@@ -884,6 +884,11 @@ pending titles in one `getProjectConversationTitles` call. It returns
 `PinnedProjectChats[]` (`project`, `chats` of `PinnedProjectChat` — `id`,
 `title`, `isUnread?` — and `hasMore`) in `projectIds` order, without the ids
 whose load failed.
+
+When `activeConversationId` names a chat that is not among a project's newest
+chats, it replaces the last of the kept ones and comes last, so the list stays
+at `PINNED_PROJECT_CHATS_LIMIT` and the open chat is listed whenever it is in
+the project's listing.
 
 - A `404` from `getProject` drops the project and calls `onProjectDeleted(id)`
   once. Any other details failure on the first load keeps it out and retries

@@ -158,6 +158,78 @@ describe('usePinnedProjectChats', () => {
       expect(project.hasMore).toBe(true);
     });
 
+    describe('active chat', () => {
+      it('lists the open chat past the newest ones in the last slot', async () => {
+        listProjectConversations.mockResolvedValue({ items: chats(P, 12) });
+        const { result } = renderPinned([P], {
+          activeConversationId: `${P}/conversations/c12`,
+        });
+        await loaded(result);
+
+        const [project] = result.current.projects;
+        expect(project.chats).toHaveLength(PINNED_PROJECT_CHATS_LIMIT);
+        expect(project.chats.map(({ title }) => title)).toEqual([
+          ...chats(P, 9).map(({ title }) => title),
+          'Chat 12',
+        ]);
+        expect(project.hasMore).toBe(true);
+      });
+
+      it('leaves the list as it is when the open chat is among the newest', async () => {
+        listProjectConversations.mockResolvedValue({ items: chats(P, 12) });
+        const { result } = renderPinned([P], {
+          activeConversationId: `${P}/conversations/c3`,
+        });
+        await loaded(result);
+
+        expect(result.current.projects[0].chats.map(({ id }) => id)).toEqual(
+          chats(P, 10).map(({ id }) => id),
+        );
+      });
+
+      it('follows the open chat without a new request', async () => {
+        listProjectConversations.mockResolvedValue({ items: chats(P, 12) });
+        const { result, rerender, initial } = renderPinned();
+        await loaded(result);
+        listProjectConversations.mockClear();
+
+        rerender({
+          projectIds: [P],
+          opts: { ...initial, activeConversationId: `${P}/conversations/c11` },
+        });
+        expect(result.current.projects[0].chats[9].title).toBe('Chat 11');
+
+        rerender({ projectIds: [P], opts: initial });
+        expect(result.current.projects[0].chats[9].title).toBe('Chat 10');
+        expect(listProjectConversations).not.toHaveBeenCalled();
+      });
+
+      it('resolves the pending title of the open chat', async () => {
+        const items = chats(P, 12).map((item, index) =>
+          index === 11 ? { ...item, isTitlePending: true } : item,
+        );
+        listProjectConversations.mockResolvedValue({ items });
+        getProjectConversationTitles.mockResolvedValue({
+          items: [
+            { ...items[11], title: 'Resolved 12', isTitlePending: false },
+          ],
+        });
+        const { result } = renderPinned([P], {
+          activeConversationId: items[11].id,
+        });
+        await loaded(result);
+
+        await waitFor(() =>
+          expect(result.current.projects[0].chats[9].title).toBe('Resolved 12'),
+        );
+        expect(getProjectConversationTitles).toHaveBeenCalledWith(
+          P,
+          ['c12'],
+          expect.any(AbortSignal),
+        );
+      });
+    });
+
     it('reports no more for exactly ten chats', async () => {
       listProjectConversations.mockResolvedValue({ items: chats(P, 10) });
       const { result } = renderPinned();

@@ -27,6 +27,8 @@ export interface PinnedProjectChatsOptions {
   enabled: boolean;
   /** The project no longer exists (a watch `DELETE`, or `404` on a read). Called at most once per id. */
   onProjectDeleted: (projectId: string) => void;
+  /** Id of the chat the host has open. When it is not among the newest chats of its project, it takes the last slot of that project's list, so the list never exceeds `PINNED_PROJECT_CHATS_LIMIT`. */
+  activeConversationId?: string;
 }
 
 /** A chat listed under a pinned project. */
@@ -43,7 +45,7 @@ export interface PinnedProjectChat {
 export interface PinnedProjectChats {
   /** The project's details as last read; `canEdit`, `canManage`, `contentVersion` and `conversationCount` feed the host's actions. */
   project: ProjectDetailsDto;
-  /** At most `PINNED_PROJECT_CHATS_LIMIT` chats, newest first. */
+  /** At most `PINNED_PROJECT_CHATS_LIMIT` chats, newest first; an open chat past the newest ones replaces the last of them and comes last. */
   chats: PinnedProjectChat[];
   /** The project has more chats than `chats` holds. */
   hasMore: boolean;
@@ -63,7 +65,7 @@ export interface PinnedProjectChatsResult {
 
 interface PinnedProjectsState {
   /** Loaded projects by id. */
-  snapshots: Map<string, PinnedProjectChats>;
+  snapshots: Map<string, StoredProjectChats>;
   /** Ids whose first load settled, loaded or not. */
   settled: Set<string>;
   /** Sorted, joined ids of the loaded projects the watch follows; it moves to a new set only once that whole set settled. */
@@ -75,7 +77,14 @@ interface FetchedProject {
   project: ProjectDetailsDto;
   /** The kept listing items, titles resolved where possible. */
   items: ProjectConversationItemDto[];
+  /** The listing items past the kept ones, so an open chat among them can be listed. */
+  overflow: ProjectConversationItemDto[];
   hasMore: boolean;
+}
+
+/* A loaded project with the chats past its limit, which only the open chat can surface. */
+interface StoredProjectChats extends PinnedProjectChats {
+  overflow: ProjectConversationItemDto[];
 }
 
 /* One silent refresh in flight per project; events during it collapse into one trailing run. */
@@ -92,6 +101,31 @@ const EMPTY_STATE: PinnedProjectsState = {
 };
 
 const NO_PROJECTS: PinnedProjectChats[] = [];
+
+/*
+ * The chats a project lists: its newest chats, and the open chat in the last
+ * slot when it is none of them.
+ */
+const withActiveChat = (
+  { overflow, chats, ...rest }: StoredProjectChats,
+  activeConversationId: string | undefined,
+): PinnedProjectChats => {
+  if (
+    activeConversationId == null ||
+    chats.some((chat) => chat.id === activeConversationId)
+  ) {
+    return { ...rest, chats };
+  }
+  const active = overflow.find((item) => item.id === activeConversationId);
+  if (active == null) return { ...rest, chats };
+  return {
+    ...rest,
+    chats: [
+      ...chats.slice(0, PINNED_PROJECT_CHATS_LIMIT - 1),
+      { id: active.id, title: active.title },
+    ],
+  };
+};
 
 /*
  * The watch key of the loaded ids of `tracked` once every id of it settled, or
@@ -165,7 +199,11 @@ export const usePinnedProjectChats = (
     | 'watchProjects'
   >,
   projectIds: string[],
-  { enabled, onProjectDeleted }: PinnedProjectChatsOptions,
+  {
+    enabled,
+    onProjectDeleted,
+    activeConversationId,
+  }: PinnedProjectChatsOptions,
 ): PinnedProjectChatsResult => {
   const [state, setState] = useState<PinnedProjectsState>(EMPTY_STATE);
   const stateRef = useRef(state);
@@ -221,6 +259,7 @@ export const usePinnedProjectChats = (
       return {
         project: details.value,
         items: kept,
+        overflow: items.slice(PINNED_PROJECT_CHATS_LIMIT),
         hasMore: items.length > PINNED_PROJECT_CHATS_LIMIT,
       };
     },
@@ -229,13 +268,19 @@ export const usePinnedProjectChats = (
 
   /* Applies the viewed marks at settle time, so a mark set while the read was in flight wins. */
   const toSettledSnapshot = useCallback(
-    ({ project, items, hasMore }: FetchedProject): PinnedProjectChats => {
+    ({
+      project,
+      items,
+      overflow,
+      hasMore,
+    }: FetchedProject): StoredProjectChats => {
       for (const { id, updatedAt } of items) {
         updatedAtRef.current.set(id, updatedAt);
       }
       return {
         project,
         hasMore,
+        overflow,
         chats: items.map((item) => ({
           id: item.id,
           title: item.title,
@@ -502,7 +547,7 @@ export const usePinnedProjectChats = (
       updatedAtRef.current.get(conversationId),
     );
     setState((prev) => {
-      let snapshots: Map<string, PinnedProjectChats> | undefined;
+      let snapshots: Map<string, StoredProjectChats> | undefined;
       for (const [id, snapshot] of prev.snapshots) {
         if (
           !snapshot.chats.some(
@@ -533,10 +578,46 @@ export const usePinnedProjectChats = (
       if (seen.has(id)) continue;
       seen.add(id);
       const snapshot = state.snapshots.get(id);
-      if (snapshot) ordered.push(snapshot);
+      if (snapshot)
+        ordered.push(withActiveChat(snapshot, activeConversationId));
     }
     return ordered;
-  }, [enabled, projectIds, state.snapshots]);
+  }, [enabled, projectIds, state.snapshots, activeConversationId]);
+
+  /* An open chat past the kept ones may list with its file name; its title is read once it opens. */
+  useEffect(() => {
+    if (!enabled || activeConversationId == null) return;
+    for (const [projectId, snapshot] of state.snapshots) {
+      const pending = snapshot.overflow.find(
+        (item) => item.id === activeConversationId && item.isTitlePending,
+      );
+      if (pending == null) continue;
+      const controller = new AbortController();
+      client
+        .getProjectConversationTitles(
+          projectId,
+          [pending.name],
+          controller.signal,
+        )
+        .then(({ items: resolved }) => {
+          if (controller.signal.aborted) return;
+          setState((prev) => {
+            const current = prev.snapshots.get(projectId);
+            if (current == null) return prev;
+            const snapshots = new Map(prev.snapshots);
+            snapshots.set(projectId, {
+              ...current,
+              overflow: mergeTitles(current.overflow, resolved),
+            });
+            return { ...prev, snapshots };
+          });
+        })
+        .catch(() => {
+          /* The file-name title stays. */
+        });
+      return () => controller.abort();
+    }
+  }, [client, enabled, activeConversationId, state.snapshots]);
 
   return { projects, isLoading, markViewed, refresh: requestRefresh };
 };
