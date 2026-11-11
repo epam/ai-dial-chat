@@ -25,6 +25,7 @@ export const useProjectViewLabels = (): ProjectViewLabels => {
       editLabel: t(ButtonsI18nKeys.Edit),
       moreActionsLabel: t(ButtonsI18nKeys.MoreActions),
       closeLabel: t(ButtonsI18nKeys.Close),
+      revokeAccessLabel: t(ButtonsI18nKeys.RevokeAccess),
       shareLabel: t(ButtonsI18nKeys.Share),
       downloadLabel: t(ButtonsI18nKeys.Download),
       deleteLabel: t(ButtonsI18nKeys.Delete),

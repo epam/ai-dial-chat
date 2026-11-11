@@ -5,6 +5,7 @@ import { useProjectRemoveFromList } from '../../hooks/projects/useProjectRemoveF
 import { PinnedProjectActionKind } from '../../types/pinned-project-action';
 import ProjectDeleteConfirmation from '../ProjectDeleteConfirmation/ProjectDeleteConfirmation';
 import ProjectRemoveFromListConfirmation from '../ProjectRemoveFromListConfirmation/ProjectRemoveFromListConfirmation';
+import ProjectRevokeAccessConfirmation from '../ProjectRevokeAccessConfirmation/ProjectRevokeAccessConfirmation';
 import ProjectShareOverlay from '../ProjectShareOverlay/ProjectShareOverlay';
 import PublishProjectPanelContainer from '../PublishProjectPanelContainer/PublishProjectPanelContainer';
 
@@ -85,6 +86,13 @@ const PinnedProjectActionOverlays: FC<Props> = ({
 
   return (
     <>
+      {isOpenAction(PinnedProjectActionKind.RevokeAccess) &&
+        project.canManage && (
+          <ProjectRevokeAccessConfirmation
+            project={project}
+            onClose={onClose}
+          />
+        )}
       {isShareOpen && (
         <ProjectShareOverlay projectId={project.id} onClose={onClose} />
       )}
