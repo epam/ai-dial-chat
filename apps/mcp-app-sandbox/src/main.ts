@@ -1,3 +1,9 @@
+/*
+ * Must stay the first import: `otel-sdk.ts` starts the OpenTelemetry Node SDK before Nest or
+ * Express can `require()` Node's `http` module. Relies on `webpack.config.js`'s
+ * `optimization: false` preserving import order.
+ */
+import './telemetry/otel-sdk';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -7,6 +13,7 @@ import { EnvironmentVariables } from './config/environment.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableShutdownHooks();
   /*
    * Explicit deny-by-default CORS: this route is only ever navigated to as
    * an iframe `src` (validated by its own Referer allowlist), never fetched
