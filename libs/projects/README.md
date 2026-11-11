@@ -553,3 +553,22 @@ Why a context file was not added: `UnsupportedType` (`'unsupported-type'`), `Too
 - `ProjectOutputsProps`, `ProjectOutputItem`, `ProjectOutputsLabels` — the props, cards (`{ name, contentType }`) and strings of `ProjectOutputs`.
 - `ProjectOutputsStyles`, `ProjectOutputsColors`, `ProjectOutputsTypography` — style overrides of `ProjectOutputs`.
 - `ProjectChatHeaderProps` — the props of `ProjectChatHeader`.
+
+### Revoke project access
+
+Supply `ProjectView.onRevokeAccess` to show Revoke access in both action menus;
+`labels.revokeAccessLabel` overrides its English default. The host decides
+ownership, presents confirmation and performs the request. Omit the callback
+for recipients and other users who cannot manage the project.
+
+`onActionMenuOpenChange` reports open/close for both responsive menus. Hosts can
+refresh recipient counts there and omit `onRevokeAccess` when the count is zero.
+
+### Project revoke confirmation
+
+`ProjectRevokeAccessConfirmation` is a presentational destructive confirmation.
+Pass `isOpen`, `projectName`, optional `isRevoking`, `onConfirm`, `onClose` and
+`labels` (`ProjectRevokeAccessConfirmationLabels`). Labels cover title, message
+formatter, consequences, confirm/cancel and pending status, with English defaults.
+The component performs no requests and consumes no DTOs. Pending state blocks
+confirmation and dismissal through the shared accessible confirmation dialog.

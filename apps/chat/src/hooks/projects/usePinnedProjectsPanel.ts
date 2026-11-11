@@ -20,6 +20,7 @@ import {
   IconPinnedFilled,
   IconShare,
   IconTrashX,
+  IconUserOff,
   IconWorldShare,
   type Icon,
 } from '@tabler/icons-react';
@@ -58,6 +59,7 @@ import {
   projectsClient,
   subscribeProjectConversationViewed,
 } from './projects-client';
+import { useProjectShareRecipients } from './useProjectShareRecipients';
 
 /* A menu item's icon: Unpin shows the pinned state it removes, as on a pinned chat; Delete takes the error color. */
 const renderMenuIcon = (
@@ -231,12 +233,14 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
   );
 
   const [action, setAction] = useState<PinnedProjectActionState | null>(null);
+  const { requestRecipients, canRevokeAccess } = useProjectShareRecipients();
   const actionTriggerRef = useRef<HTMLButtonElement | null>(null);
   const handleActionMenuOpen = useCallback(
     (group: PinnedProjectGroup, trigger: HTMLButtonElement) => {
       actionTriggerRef.current = trigger;
+      if (projectsById.get(group.id)?.canManage) requestRecipients(group.id);
     },
-    [],
+    [projectsById, requestRecipients],
   );
   const openAction = useCallback(
     (kind: PinnedProjectActionKind, projectId: string) =>
@@ -293,6 +297,13 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
           icon: renderMenuIcon(IconShare),
           onClick: () => openAction(PinnedProjectActionKind.Share, group.id),
         },
+        [PinnedProjectMenuAction.RevokeAccess]: {
+          key: PinnedProjectMenuAction.RevokeAccess,
+          label: t(ButtonsI18nKeys.RevokeAccess),
+          icon: renderMenuIcon(IconUserOff),
+          onClick: () =>
+            openAction(PinnedProjectActionKind.RevokeAccess, group.id),
+        },
         [PinnedProjectMenuAction.Delete]: {
           key: PinnedProjectMenuAction.Delete,
           label: t(ButtonsI18nKeys.Delete),
@@ -308,11 +319,15 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
             openAction(PinnedProjectActionKind.RemoveFromMyList, group.id),
         },
       };
-      return getPinnedProjectMenuActions(projectsById.get(group.id)).map(
-        (action) => items[action],
-      );
+      return getPinnedProjectMenuActions(projectsById.get(group.id))
+        .filter(
+          (action) =>
+            action !== PinnedProjectMenuAction.RevokeAccess ||
+            canRevokeAccess(group.id),
+        )
+        .map((action) => items[action]);
     },
-    [handleUnpin, onOpenRoute, openAction, projectsById, t],
+    [handleUnpin, onOpenRoute, openAction, projectsById, canRevokeAccess, t],
   );
 
   const pinnedProjects = useMemo<PinnedProjects | undefined>(

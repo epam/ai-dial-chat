@@ -16,10 +16,19 @@ import {
 import { createElement, type ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getShareRecipientsCount } from '../../../server-api/share.api';
 import { PinnedProjectActionKind } from '../../../types/pinned-project-action';
 import { StorageKey } from '../../../types/storage-key';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import { usePinnedProjectsPanel } from '../usePinnedProjectsPanel';
+import { notifyProjectAccessRevoked } from '../useProjectShareRecipients';
+
+vi.mock('../../../server-api/share.api', () => ({
+  getShareRecipientsCount: vi.fn(async () => ({
+    itemId: 'projects/owner/q4',
+    recipientsCount: 1,
+  })),
+}));
 
 const P = 'projects/bucket/support';
 const C1 = `${P}/conversations/c1`;
@@ -135,6 +144,10 @@ const clickItem = (items: DropdownItem[], key: string) => {
 describe('usePinnedProjectsPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getShareRecipientsCount).mockResolvedValue({
+      itemId: P,
+      recipientsCount: 1,
+    });
     mocks.isEnabled = true;
     mocks.pinnedProjectIds = [P];
     mocks.status = UserConfigStatus.Ready;
@@ -323,6 +336,17 @@ describe('usePinnedProjectsPanel', () => {
     it('offers the owner Unpin, Edit, Publish, Share and Delete in that order', async () => {
       const { result } = renderPanel();
 
+      expect((await actionsOf(result)).map((item) => item.key)).not.toContain(
+        'revokeAccess',
+      );
+      const pinned = await loadedProjects(result);
+      await act(async () =>
+        pinned.onActionMenuOpen?.(
+          pinned.projects[0],
+          document.createElement('button'),
+        ),
+      );
+
       const items = await actionsOf(result);
 
       expect(items.map(({ key }) => key)).toEqual([
@@ -330,6 +354,7 @@ describe('usePinnedProjectsPanel', () => {
         'edit',
         'publish',
         'share',
+        'revokeAccess',
         'delete',
       ]);
       expect(items.map(({ label }) => label)).toEqual([
@@ -337,8 +362,35 @@ describe('usePinnedProjectsPanel', () => {
         'buttons.edit',
         'buttons.publish',
         'buttons.share',
+        'buttons.revokeAccess',
         'buttons.delete',
       ]);
+    });
+
+    it('hides revoke after access is revoked and after a zero-recipient lookup', async () => {
+      const { result } = renderPanel();
+      await actionsOf(result);
+      act(() => notifyProjectAccessRevoked(P));
+      expect((await actionsOf(result)).map((item) => item.key)).not.toContain(
+        'revokeAccess',
+      );
+      vi.mocked(getShareRecipientsCount).mockResolvedValue({
+        itemId: 'projects/owner/q4',
+        recipientsCount: 0,
+      });
+      const pinned = await loadedProjects(result);
+      act(() =>
+        pinned.onActionMenuOpen?.(
+          pinned.projects[0],
+          document.createElement('button'),
+        ),
+      );
+      await waitFor(() =>
+        expect(getShareRecipientsCount).toHaveBeenCalledWith(P),
+      );
+      expect((await actionsOf(result)).map((item) => item.key)).not.toContain(
+        'revokeAccess',
+      );
     });
 
     it('marks Delete as a danger item and leaves the others plain', async () => {
@@ -472,13 +524,16 @@ describe('usePinnedProjectsPanel', () => {
     it.each([
       ['publish', PinnedProjectActionKind.Publish],
       ['share', PinnedProjectActionKind.Share],
+      ['revokeAccess', PinnedProjectActionKind.RevokeAccess],
       ['delete', PinnedProjectActionKind.Delete],
     ])('opens the %s overlay for the project', async (key, kind) => {
       const { result } = renderPanel();
       const pinned = await loadedProjects(result);
       const trigger = document.createElement('button');
-      act(() => pinned.onActionMenuOpen?.(pinned.projects[0], trigger));
-      const items = pinned.getActions?.(pinned.projects[0]) ?? [];
+      await act(async () =>
+        pinned.onActionMenuOpen?.(pinned.projects[0], trigger),
+      );
+      const items = await actionsOf(result);
 
       clickItem(items, key);
 

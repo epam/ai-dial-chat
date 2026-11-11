@@ -1164,3 +1164,10 @@ parent defaults remain preserve/current-offset. See the chat-hooks README for co
 The reusable-workflows consumer fixture packs the dependency closure outside the workspace;
 publication and downstream migration remain separate actions. Downstream must implement
 ExternalService callback dispatch with consent forwarding before adopting login orchestration.
+
+Project access revocation keeps non-rendering state and configured sharing
+operations in `libs/chat-hooks/src/project/` and the presentational
+`ProjectRevokeAccessConfirmation` in `libs/projects`. App adapters supply the
+configured client, translations and notification callbacks. Recipient-state
+notifications are scoped to the configured client instance. See
+[Projects reuse](projects-reuse.md) for the public contracts.

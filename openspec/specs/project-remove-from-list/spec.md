@@ -1,7 +1,7 @@
 # project-remove-from-list Specification
 
 ## Purpose
-Lets a user drop a project that was shared with them from their own list, without affecting the owner or other recipients: the `ProjectView` action, the eligibility rule, the pinned-menu and view-page entry points, the confirmation, the discard call and its after-effects.
+Lets a user drop a project that was shared with them from their own list, without affecting the owner or other recipients: the `ProjectView` action, the eligibility rule, the pinned-menu and view-page entry points, the confirmation, the discard call and its after-effects. Also defines the owner-only revoke-access action, which removes recipients' access while preserving the owner's project.
 
 ## Requirements
 ### Requirement: ProjectView offers "Remove from My List" when the host supplies it
@@ -29,7 +29,7 @@ The lib SHALL perform no request and SHALL know nothing about sharing, ownership
 
 ### Requirement: Only projects shared with the user are removable
 
-`isProjectSharedWithMe` in `libs/chat-hooks/src/project/project-sharing.ts` (exported from `@epam/ai-dial-chat-hooks/project`) SHALL treat a project as removable from the user's list when, and only when, its `source` is `ProjectSource.Shared` and `canManage` is `false`. An owned project (`canManage: true`) and a public project (source `organization`) SHALL NOT offer the action in any surface. The same file's `getPinnedProjectMenuActions` SHALL return the `PinnedProjectMenuAction` values a pinned project's menu offers (Unpin, Edit, Publish, Share, Delete, RemoveFromMyList) in display order, and `usePinnedProjectsPanel` SHALL map each to its label, icon and handler using the project the Pinned section already loaded (`projectsById`); the view page SHALL read them from the loaded `ProjectDetailsDto`.
+`isProjectSharedWithMe` in `libs/chat-hooks/src/project/project-sharing.ts` (exported from `@epam/ai-dial-chat-hooks/project`) SHALL treat a project as removable from the user's list when, and only when, its `source` is `ProjectSource.Shared` and `canManage` is `false`. An owned project (`canManage: true`) and a public project (source `organization`) SHALL NOT offer the action in any surface. The same file's `getPinnedProjectMenuActions` SHALL return the `PinnedProjectMenuAction` values a pinned project's menu offers (Unpin, Edit, Publish, Share, RevokeAccess, Delete, RemoveFromMyList) in display order, and `usePinnedProjectsPanel` SHALL map each to its label, icon and handler using the project the Pinned section already loaded (`projectsById`); the view page SHALL read them from the loaded `ProjectDetailsDto`.
 
 #### Scenario: Shared project is removable
 
@@ -120,3 +120,70 @@ The action label SHALL reuse `ButtonsI18nKeys.RemoveFromMyList`, and the confirm
 
 - **WHEN** a keyboard user opens the pinned ⋮ menu, selects the action and cancels with Escape
 - **THEN** focus returns to the ⋮ trigger
+
+### Requirement: Owners can revoke project access
+
+The owner SHALL be offered Revoke access in the project view action menu (desktop and mobile) and the pinned-project menu. Eligibility SHALL follow the loaded project's `canManage`; recipients, including editors, and organization projects without management rights SHALL NOT offer it. The backend independently checks ownership.
+
+`ProjectView` SHALL accept optional `onRevokeAccess` and `ProjectViewLabels.revokeAccessLabel` (English default: 'Revoke access'). The library renders the action only when its callback is supplied and contains no API, ownership, routing or i18n integration. `getPinnedProjectMenuActions` in `libs/chat-hooks/src/project/project-sharing.ts` SHALL include `PinnedProjectMenuAction.RevokeAccess` after Share for owners.
+
+`apps/chat/src/components/ProjectRevokeAccessConfirmation/ProjectRevokeAccessConfirmation.tsx` SHALL name the project and explain that recipients lose access, share links stop working, and the owner's copy remains. It SHALL use the existing destructive confirmation with keyboard navigation, focus return, and pre-mounted live feedback. Pending requests SHALL block confirmation and dismissal. Mobile and RTL behavior inherit the existing components without physical layout properties.
+
+`libs/chat-hooks/src/project/use-project-revoke-access.ts` owns mutation state and SHALL call the configured client supplied by the caller with the full project id. The app adapter `apps/chat/src/hooks/projects/useProjectRevokeAccess.ts` supplies translated notifications and the configured operations from `apps/chat/src/server-api/share.api.ts`. The existing normal generated `ShareApi.revokeSharedAccess` method uses `RevokeSharedAccessDto` and `RevokeSharedAccessResponseDto`: `POST /api/v1/share/revoke`, request `{"itemId":"projects/owner/q4"}`, response `{"success":true}`. No new endpoint or generated-client change is required; existing validation, authentication, ownership and upstream-error handling apply.
+
+The action SHALL reuse `buttons.revokeAccess`, `buttons.cancel` and existing `catalog.details.revokeShare.*` confirmation, consequence, status, success and error translations. It inherits `projectsEnabled` gating with no new cache, TTL, flag or telemetry. Success SHALL close the dialog and notify without deleting the project, changing pins or navigating. Failure SHALL notify with a request trace id when available and keep the confirmation available for retry. Mutation callbacks use `useCallback`; a ref blocks duplicate in-flight requests.
+
+#### Scenario: Owner revokes from either surface
+
+- **GIVEN** a project with `canManage: true`
+- **WHEN** the owner opens Revoke access from its page or pinned menu and confirms
+- **THEN** the full project id is sent to the revoke endpoint once
+- **AND** success closes the confirmation while preserving the owner's project, route and pin
+
+#### Scenario: Recipient cannot revoke others' access
+
+- **GIVEN** a shared project with `canManage: false`, including one with `canEdit: true`
+- **THEN** neither surface offers Revoke access
+- **AND** Remove from My List remains available with its existing semantics
+
+#### Scenario: Cancellation and request failure
+
+- **WHEN** the owner cancels before confirming
+- **THEN** no revoke request is sent
+- **WHEN** a confirmed request fails
+- **THEN** an error notification is shown and the confirmation can be retried
+- **AND** no navigation, unpin or project deletion occurs
+
+### Requirement: Revoke visibility follows current recipients
+
+The app SHALL request the existing share recipient count when either project actions menu opens, only for a project the caller can manage. Revoke access SHALL be hidden by default, including before and during the initial lookup. Only a confirmed positive count SHALL offer it. A zero count or failed lookup SHALL hide it. Reopening a menu SHALL refresh the count, so a newly accepted share can restore the action.
+
+`libs/chat-hooks/src/project/use-project-share-recipients.ts` owns per-mounted-surface counts keyed by project id, with no persistent cache or TTL. Successful revoke SHALL immediately set that project's count to zero in every mounted project menu using the same configured client. Different client instances SHALL be isolated. In-flight count responses started before revoke SHALL be discarded. Failure or cancellation SHALL NOT clear counts. Unmounting SHALL unsubscribe and ignore pending results.
+
+The host SHALL pass `ProjectView.onActionMenuOpenChange` to request current eligibility for both responsive menus; the library SHALL only forward this callback, with no sharing API knowledge. Pinned menus use their existing open callback. The existing generated recipient-count endpoint and DTOs are unchanged.
+
+#### Scenario: Successful revoke updates both menus
+
+- **GIVEN** the owner sees Revoke access for a shared project
+- **WHEN** revoke succeeds from either surface
+- **THEN** both menus hide the action immediately
+- **AND** an older recipient-count response cannot restore it
+
+#### Scenario: Reload and sharing again
+
+- **WHEN** a menu opens after a page reload and its recipient count resolves to zero
+- **THEN** Revoke access is hidden
+- **WHEN** a later menu open resolves to a positive count after a new share is accepted
+- **THEN** Revoke access is offered again
+
+### Requirement: Reusable project revoke contracts
+
+The project entry point of `libs/chat-hooks` SHALL export `ProjectSharingClient`, `useProjectShareRecipients`, `useProjectRevokeAccess`, `ProjectRevokeAccessHandlers` and `notifyProjectAccessRevoked`. Both hooks take an already-configured stable client; the package SHALL NOT create clients or access app contexts, i18n, routing, auth or environment configuration. Success and error notifications are host callbacks.
+
+`libs/projects/src/components/ProjectRevokeAccessConfirmation/ProjectRevokeAccessConfirmation.tsx` SHALL own the presentational dialog with `ProjectRevokeAccessConfirmationProps` and `ProjectRevokeAccessConfirmationLabels`. It receives the name, open/pending state and confirmation/dismissal callbacks, with English defaults for every label. It SHALL contain no generated DTOs, client calls, hooks from chat-hooks or i18n. The app component supplies translations and connects the mutation hook. Shared confirmation components retain styling, responsive layout, keyboard behavior and live feedback.
+
+#### Scenario: Independent configured clients
+
+- **GIVEN** menus using two different configured sharing clients
+- **WHEN** a project is revoked through one client
+- **THEN** only menus using that client clear their recipient state

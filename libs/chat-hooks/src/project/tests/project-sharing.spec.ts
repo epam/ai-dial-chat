@@ -43,6 +43,7 @@ describe('getPinnedProjectMenuActions', () => {
       PinnedProjectMenuAction.Edit,
       PinnedProjectMenuAction.Publish,
       PinnedProjectMenuAction.Share,
+      PinnedProjectMenuAction.RevokeAccess,
       PinnedProjectMenuAction.Delete,
     ]);
   });

@@ -21,6 +21,8 @@ export enum PinnedProjectMenuAction {
   Publish = 'publish',
   /** Opens the share popover. */
   Share = 'share',
+  /** Opens the owner's revoke-access confirmation. */
+  RevokeAccess = 'revokeAccess',
   /** Opens the delete confirmation. */
   Delete = 'delete',
   /** Opens the confirmation that drops a shared project from the caller's list. */
@@ -55,6 +57,7 @@ export const getPinnedProjectMenuActions = (
     PinnedProjectMenuAction.Edit,
     PinnedProjectMenuAction.Publish,
     PinnedProjectMenuAction.Share,
+    PinnedProjectMenuAction.RevokeAccess,
     PinnedProjectMenuAction.Delete,
   ];
 };
