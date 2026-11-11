@@ -62,10 +62,33 @@ the shared `useUnsavedChangesLeaveGuard` from `@epam/ai-dial-chat-shared`), the 
 file-manager modal, every `*Labels` hook that resolves strings through i18n, and
 the translation of each error and toast. Its pages call the shared hooks directly
 with the app's `projectsClient`
-(`apps/chat/src/hooks/projects/projects-client.ts`); only `useProjectActions`
-stays as an adapter, because it binds pins, notifications and navigation. The
+(`apps/chat/src/hooks/projects/projects-client.ts`). Action and sharing adapters
+bind configured operations, pins, notifications and navigation to the shared hooks. The
 bindings that remain are thin: `apps/chat/src/utils/project-file-preview.ts`
 (the locator scheme), `apps/chat/src/utils/project-conversation-data-source.ts`
 (stream base path, CSRF store, routes, viewed-mark queue) and
 `apps/chat/src/hooks/projects/useProjectFileManagerPicker.ts` (download and
 toast over the shared `useSkillFileSystemPicker`).
+
+For owner access revocation, pass `ProjectView.onRevokeAccess` and translate
+`labels.revokeAccessLabel`. The pinned menu exposes
+`PinnedProjectMenuAction.RevokeAccess` for the same owner permission when
+`getPinnedProjectMenuActions(project, canRevokeAccess(project.id))` receives
+confirmed recipient eligibility. Omitting the second argument hides revoke.
+`useProjectRevokeAccess(client, project, handlers)` and
+`useProjectShareRecipients(client)` come from `@epam/ai-dial-chat-hooks/project`.
+Pass the same stable, already-configured `ProjectSharingClient` to both hooks;
+success synchronizes recipient state only among menus using that client.
+`handlers.onRevoked(project)` and `handlers.onError(project, requestId)` keep
+notifications and dialog state outside the library.
+`ProjectRevokeAccessConfirmation` from `@epam/ai-dial-projects` receives
+`isOpen`, `projectName`, `isRevoking`, `onConfirm`, `onClose` and translated
+`labels`. App adapters bind configured operations and translations.
+Success preserves the owner's project, pins and route. Failure keeps the
+confirmation available for retry. Recipients continue to use Remove from My List.
+
+Use `ProjectView.onActionMenuOpenChange` to refresh host-owned action eligibility
+when either responsive menu opens. DIAL Chat requests the share recipient count,
+shows Revoke access only for a confirmed positive count (hidden initially, at zero,
+and on lookup failure), and updates both mounted menus immediately after
+successful revoke. Every menu open refreshes the count, including after re-sharing.

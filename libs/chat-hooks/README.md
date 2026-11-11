@@ -6872,3 +6872,28 @@ UsageResetOffsetPolicy.CurrentOffset retains the viewer's formatting-time offset
 UsageResetOffsetPolicy.ResetInstant uses the offset at the reset boundary. Both preserve
 isoValue and resetsAtMs. The shortened formatter and parent defaults are unchanged.
 Downstream can select the explicit policies instead of copying these algorithms.
+
+The project entry point's `getPinnedProjectMenuActions` includes
+`PinnedProjectMenuAction.RevokeAccess` after Share for owners only when its
+second argument, `canRevokeAccess`, is true. It defaults to false; pass
+`canRevokeAccess(project.id)` from `useProjectShareRecipients` after a confirmed
+positive count. Other actions keep their existing ownership rules. Hosts map this
+action to their confirmation and revoke request; recipients retain the
+existing Remove from My List flow.
+
+### Project access revocation
+
+The project entry point exports `useProjectShareRecipients(client)` and
+`useProjectRevokeAccess(client, project, handlers)`. Supply the same stable,
+already-configured `ProjectSharingClient` (the `ShareApi` recipient-count and revoke
+operations) to both. No authentication or transport configuration occurs here.
+
+Recipient state returns `requestRecipients(projectId)` for menu-open refreshes
+and `canRevokeAccess(projectId)`, false until a positive count is confirmed.
+Revoke state returns `isRevoking` and `confirmRevoke()`, guards ownership and
+duplicate requests, and updates all menus on the same client after success.
+`ProjectRevokeAccessHandlers.onRevoked(project)` and
+`onError(project, requestId)` carry notifications and dialog lifecycle.
+`notifyProjectAccessRevoked(client, projectId)` supports revokes performed
+outside the hook. Client instances have isolated subscriptions; unmounting
+unsubscribes and discards pending responses. No persistent cache is created.
