@@ -57,7 +57,7 @@ interface CachedTitle {
   /** Time of the body's last message; absent in an entry cached before it was kept, or for a chat without dated messages. */
   lastMessageAt?: number;
   /** The body was read for this entry, so an absent `lastMessageAt` is final and needs no re-read. */
-  hasActivity?: boolean;
+  hasActivity?: true;
 }
 
 /** A title and the version it was read from; the version is unknown when the body could not be read. */
@@ -161,7 +161,6 @@ export class ProjectConversationsListService {
       accessToken,
       sessionBucket,
     );
-    const files = listed.sort(newestFirst);
     /*
      * A published copy is read-only and its files all carry the time of the
      * copy, so the file order is meaningless there: every body is read and the
@@ -170,6 +169,7 @@ export class ProjectConversationsListService {
     const isPublished =
       resolveProjectSource(project.bucket, sessionBucket) ===
       ProjectSource.Organization;
+    const files = isPublished ? listed : listed.sort(newestFirst);
     const resolvedCount = isPublished ? files.length : LIST_RESOLVED_COUNT;
     const [head, tail] = await Promise.all([
       mapWithConcurrency(
