@@ -1,16 +1,16 @@
+import type {
+  FolderDestination,
+  FolderDestinationRoot,
+  FolderDestinationTreeStyles,
+} from '@epam/ai-dial-folder-destination-panel';
 import type { CSSProperties, Ref, RefObject } from 'react';
 import type { PublishAccessRulesLabels } from '../components/PublishAccessRules/PublishAccessRules';
 import type {
   SaveToFolderView,
   SaveVersionMode,
 } from '../types/save-to-folder';
-import type {
-  FolderDestination,
-  FolderDestinationRoot,
-} from './folder-destination';
 import type { PublicationRule, PublishResourceSummary } from './publish';
 import type { PublishAccessRulesStyles } from './publish-access-rules-styles';
-import type { PublishFoldersTreeStyles } from './publish-folders-tree';
 
 /** Text overrides for the body of the save-to-folder panel. */
 export interface SaveToFolderPanelLabels {
@@ -73,7 +73,7 @@ export interface SaveToFolderPanelStyles {
   /** Color overrides. */
   colors?: SaveToFolderPanelColors;
   /** Style overrides forwarded to the folder tree. */
-  folderTree?: PublishFoldersTreeStyles;
+  folderTree?: FolderDestinationTreeStyles;
   /** Additional CSS custom properties applied to the body root. */
   cssVars?: CSSProperties;
 }

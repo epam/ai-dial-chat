@@ -1507,7 +1507,7 @@ The two components that render the grid — `DialFileManagerShell` and `FileMana
 
 ### DialFileManagerShell
 
-Full-featured file-manager grid (backed by `@epam/ai-dial-react-file-manager`) that binds a `FileManagerController` to the complete set of file-management actions. The shell owns the grid rendering, search, upload progress modal, operation loader modal, and bulk-action toolbar. Tabs, active tab, selection, destination picker, and browser-download callback are explicit host props.
+Full-featured file-manager grid (backed by `@epam/ai-dial-react-file-manager`) that binds a `FileManagerController` to the complete set of file-management actions. The shell owns the grid rendering, search, upload progress modal, operation loader modal, and bulk-action toolbar. Tabs, active tab, selection, the optional `onDestinationRequest` handler and the browser-download callback are explicit host props. The shell renders no Copy/Move destination UI: when the user starts Copy or Move it forwards the file manager's `DialDestinationRequest` to `onDestinationRequest`, and the host shows its own destination panel (for example `FolderDestinationPanel` from `@epam/ai-dial-folder-destination-panel`) and calls `request.confirm(destinationFolder)` or `request.cancel()`. Without the handler the shell does not offer Copy and Move.
 
 ```tsx
 import {
@@ -1533,7 +1533,7 @@ import { DialFileManagerShell } from '@epam/ai-dial-chat-shared/file-manager';
 
 ### FileManagerController
 
-Structural interface consumed by `DialFileManagerShell`. Contains exactly the fields of `UseDialFileManagerResult` that the shell reads. A `UseDialFileManagerResult` (or `UseDialFileManagerSectionsResult`) value is structurally assignable to this interface without a cast. Tabs, active tab, selection, destination picker, and host callbacks are outside this contract.
+Structural interface consumed by `DialFileManagerShell`. Contains exactly the fields of `UseDialFileManagerResult` that the shell reads. A `UseDialFileManagerResult` (or `UseDialFileManagerSectionsResult`) value is structurally assignable to this interface without a cast. Tabs, active tab, selection, the destination request handler, and host callbacks are outside this contract.
 
 The optional `sectionTab` is the source tab of the browsed folder when the host shows the combined All tab. The shell gates its per-tab behaviour — the upload-archive toolbar entry, the root empty state — on `sectionTab ?? activeTab`, while `activeTab` stays the tab-strip value and the `treeHeaderByTab` key.
 

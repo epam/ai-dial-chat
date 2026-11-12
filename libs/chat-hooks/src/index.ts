@@ -182,6 +182,7 @@ export * from './files/dial-file-manager.model';
 export * from './files/dial-file-manager-copy-move.util';
 export * from './files/dial-file-manager-mapping.util';
 export * from './files/dial-file-manager-path.util';
+export * from './files/dial-file-manager-destination.util';
 export * from './files/attachment-types';
 export * from './files/create-files-api';
 export * from './files/create-upload-file-with-progress';
@@ -276,6 +277,7 @@ export * from './conversation/useConversationDiscovery/useConversationDiscovery'
 export * from './scheduled-task/useScheduledTaskSkillDisplayNames/useScheduledTaskSkillDisplayNames';
 export * from './skill-editor/useSkillFileSystemPicker/useSkillFileSystemPicker';
 export * from './files/useFileAttachmentModalState/useFileAttachmentModalState';
+export * from './files/useFileManagerDestination/useFileManagerDestination';
 export * from './files/useDialFilePreview/useDialFilePreview';
 export * from './conversation/useEntityPreselection/useEntityPreselection';
 export * from './viewport-layout/canvas-width';

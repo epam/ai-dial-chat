@@ -107,6 +107,9 @@
     },
     {
       "path": "./libs/celebrations"
+    },
+    {
+      "path": "./libs/folder-destination-panel"
     }
   ],
   "compilerOptions": {

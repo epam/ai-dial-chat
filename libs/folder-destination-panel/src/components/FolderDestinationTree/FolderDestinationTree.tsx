@@ -12,8 +12,8 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconFolderPlus, IconPlus } from '@tabler/icons-react';
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
-import type { PublishFolderNode } from '../../models/publish';
-import type { PublishFoldersTreeProps } from '../../models/publish-folders-tree';
+import type { FolderDestinationTreeProps } from '../../models/folder-destination-tree';
+import type { FolderNode } from '../../models/folder-tree';
 import {
   buildRootedFolderTree,
   fromRootedPath,
@@ -32,18 +32,18 @@ import {
   toDialFileTree,
   toFolderPathKey,
   validateFolderName,
-} from '../../utils/publish-folder-tree';
-import styles from './PublishFoldersTree.module.scss';
+} from '../../utils/folder-tree';
+import styles from './FolderDestinationTree.module.scss';
 
 const CANCEL_CREATING_FOLDER_ATTRIBUTE = 'data-cancel-creating-folder';
 
 /* The single-root tree's root node path key. */
 const SINGLE_ROOT_KEY = '';
 
-const EMPTY_ITEMS: PublishFolderNode[] = [];
+const EMPTY_ITEMS: FolderNode[] = [];
 
-/** Destination folder tree for the Publish flow, ordered by folder name at every level, with search, folder creation (trailing button and context menu), a disabled state, and an optional multi-root mode. */
-export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
+/** Destination folder tree ordered by folder name at every level, with search, folder creation (trailing button and context menu), a disabled state, and an optional multi-root mode. */
+export const FolderDestinationTree: FC<FolderDestinationTreeProps> = ({
   items = EMPTY_ITEMS,
   selectedPath: selectedPathProp,
   onSelectedPathChange,
@@ -64,7 +64,8 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   invalidFolderNameError = 'Folder name contains invalid characters.',
   duplicateFolderNameError = 'A folder with this name already exists.',
   sameAsParentFolderNameError = 'A folder cannot have the same name as its parent folder.',
-  rootLabel = 'Organization',
+  rootLabel = 'Root',
+  collapsibleRoots = false,
   expandedPaths: controlledExpandedPaths,
   onExpandedPathsChange,
   loadingPaths: loadingPathsProp,
@@ -72,7 +73,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
 }) => {
   const cssVars = {
     ...buildCssVars({
-      '--pft-divider': stylesProp.colors?.divider,
+      '--fdt-divider': stylesProp.colors?.divider,
     }),
     ...stylesProp.cssVars,
   };
@@ -140,12 +141,21 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     [roots, loadingPathsProp],
   );
 
+  /* Roots the user collapsed; only tracked when roots are collapsible. */
+  const [collapsedRootKeys, setCollapsedRootKeys] = useState<Set<string>>(
+    () => new Set(),
+  );
+
   /*
-   * Root nodes are always kept expanded so their children stay visible. Their
+   * Root nodes stay expanded unless the tree lets the user collapse them. Their
    * keys are stripped before the set reaches the host, because a root is not
    * a real folder path the host can fetch children for.
    */
   const handleExpandedPathsChange = (next: Set<string>) => {
+    /* A search forces every root open, so a toggle during one is not the user collapsing a root. */
+    if (collapsibleRoots && !isFiltering) {
+      setCollapsedRootKeys(new Set(rootKeys.filter((key) => !next.has(key))));
+    }
     const withoutRoots = new Set(next);
     for (const key of rootKeys) withoutRoots.delete(key);
     if (roots) {
@@ -229,10 +239,19 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   const treeExpandedPaths = useMemo(
     () =>
       new Set([
-        ...rootKeys,
+        ...(collapsibleRoots && !isFiltering
+          ? rootKeys.filter((key) => !collapsedRootKeys.has(key))
+          : rootKeys),
         ...(isFiltering ? searchExpandedPaths : expandedPaths),
       ]),
-    [rootKeys, isFiltering, searchExpandedPaths, expandedPaths],
+    [
+      collapsibleRoots,
+      collapsedRootKeys,
+      rootKeys,
+      isFiltering,
+      searchExpandedPaths,
+      expandedPaths,
+    ],
   );
 
   const childFiles = useMemo<DialFile[]>(

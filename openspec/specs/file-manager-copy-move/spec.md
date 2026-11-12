@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The copy and move endpoints, folder expansion via pagination, and their wiring into `useDialFileManager`.
+The copy and move endpoints, folder expansion via pagination, their wiring into `useDialFileManager`, and how the file manager hands the destination choice to the host.
 
 ## Requirements
 
@@ -434,6 +434,22 @@ Successful cross-folder moves SHALL surface a success event via `onOperationSucc
 
 - **WHEN** `onMoveToFiles` is called with a cross-folder moved item containing `overwrite: true`
 - **THEN** the corresponding `MoveItemDto` sent to `moveFiles` contains `overwrite: true`
+
+---
+
+### Requirement: The destination is chosen by the host, not by the file manager package
+
+`@epam/ai-dial-react-file-manager` SHALL NOT render a destination popup for Copy or Move. Choosing Copy or Move on one or more items SHALL call the host's `onDestinationRequest` with a `DialDestinationRequest` (`mode`, `items`, `sourceFolder`, `confirm(destinationFolder)`, `cancel()`). The package SHALL run name-conflict resolution (Replace or Duplicate) itself when `confirm` is called, against the newest listing, and then call `onCopyFiles` or `onMoveToFiles` with the resolved items, exactly as described by the requirements above; `cancel` SHALL end the request without calling either. The destination panel, the preloading of destination folders and the choice of a valid destination are specified in [file-manager-folder-picker](../file-manager-folder-picker/spec.md). Without `onDestinationRequest` the package does nothing on Copy or Move, and `DialFileManagerShell` offers neither action.
+
+#### Scenario: Confirm continues into the copy handler
+
+- **WHEN** the host calls `confirm('/My files/archive')` on a Copy request and the destination has no name clash
+- **THEN** `onCopyFiles` is called once with the items and that destination folder
+
+#### Scenario: Cancel runs no operation
+
+- **WHEN** the host calls `cancel()` on a request
+- **THEN** neither `onCopyFiles` nor `onMoveToFiles` is called
 
 ---
 

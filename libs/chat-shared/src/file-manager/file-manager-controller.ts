@@ -16,7 +16,7 @@ import type {
 /**
  * Structural view contract consumed by `DialFileManagerShell`. Contains exactly
  * the fields of `UseDialFileManagerResult` that the shell reads, with the same
- * names and types. Tabs, active tab, selection, destination-picker options, and
+ * names and types. Tabs, active tab, selection, the destination request, and
  * host integration callbacks are explicit component props outside this contract.
  *
  * A `UseDialFileManagerResult` value is structurally assignable to this
@@ -51,9 +51,7 @@ export interface FileManagerController {
   loadedPaths: Set<string>;
   /** Tree: called by DialFileManager when a folder is expanded/collapsed. */
   onExpandedPathsChange: (paths: Set<string>) => void;
-  /** Destination folder popup: preloads the browsed folder without changing the outer grid path. */
-  onFolderPopupPathChange: (nextPath?: string) => void;
-  /** Destination folder popup: normalized virtual paths currently being preloaded. */
+  /** Folders being preloaded for the host's destination picker, as normalized virtual paths; shown as loading in the tree. */
   folderPopupLoadingPaths: Set<string>;
 
   /** Upload: start a new batch. */

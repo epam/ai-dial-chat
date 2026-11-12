@@ -1,0 +1,35 @@
+/*
+ * The panel is the UI kit's `SideDrawer`, which paints its backdrop, panel,
+ * header rule and text with single-class utilities; the doubled classes keep
+ * the `--fdp-*` overrides ahead of them whichever stylesheet loads last.
+ */
+.backdrop.backdrop {
+  background: var(--fdp-backdrop-bg, var(--bg-backdrop, #161b2d4d));
+}
+
+.panel.panel {
+  background: var(--fdp-panel-bg, var(--bg-layer-raised, #fcfcfc));
+  border-inline-start-color: var(
+    --fdp-panel-border,
+    var(--stroke-secondary, #d1dbea)
+  );
+}
+
+.divider.divider {
+  border-block-end: 1px solid
+    var(--fdp-divider-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+.footer {
+  border-color: var(--fdp-divider-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+.content {
+  scrollbar-width: thin;
+  scrollbar-color: var(--fdp-scrollbar-thumb, var(--stroke-secondary, #d1dbea))
+    transparent;
+}
+
+.title.title {
+  color: var(--fdp-title-text, var(--text-primary, #161b2d));
+}

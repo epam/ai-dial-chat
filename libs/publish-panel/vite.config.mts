@@ -13,6 +13,7 @@ const REQUIRED_PUBLISHED_STYLE_MARKERS = [
 ] as const;
 const EXTERNAL_PEER_NAMES = [
   '@epam/ai-dial-chat-shared',
+  '@epam/ai-dial-folder-destination-panel',
   '@epam/ai-dial-react-file-manager',
 ];
 const isExternalPeerImport = createIsExternalPeerImport(EXTERNAL_PEER_NAMES);
@@ -72,6 +73,14 @@ export default defineConfig(({ command }) => ({
      * affects this lib's own production build.
      */
     alias: {
+      '@epam/ai-dial-folder-destination-panel/styles.css': path.resolve(
+        import.meta.dirname,
+        '../folder-destination-panel/src/styles.css',
+      ),
+      '@epam/ai-dial-folder-destination-panel': path.resolve(
+        import.meta.dirname,
+        '../folder-destination-panel/src/index.ts',
+      ),
       '@epam/ai-dial-chat-shared': path.resolve(
         import.meta.dirname,
         '../chat-shared/src/index.ts',

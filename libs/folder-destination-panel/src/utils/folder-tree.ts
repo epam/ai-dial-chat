@@ -1,5 +1,5 @@
 import { DialFile, DialFileNodeType } from '@epam/ai-dial-ui-kit';
-import { PublishFolderNode } from '../models/publish';
+import { FolderNode } from '../models/folder-tree';
 
 /**
  * Returns the subset of `items` whose name matches `query`, or that contain a
@@ -7,15 +7,15 @@ import { PublishFolderNode } from '../models/publish';
  * descendants. Matching is case-insensitive substring matching.
  */
 export const filterFolderTree = (
-  items: PublishFolderNode[],
+  items: FolderNode[],
   query: string,
-): PublishFolderNode[] => {
+): FolderNode[] => {
   const trimmed = query.trim().toLowerCase();
   if (!trimmed) {
     return items;
   }
 
-  return items.reduce<PublishFolderNode[]>((acc, node) => {
+  return items.reduce<FolderNode[]>((acc, node) => {
     const filteredChildren = node.children
       ? filterFolderTree(node.children, query)
       : undefined;
@@ -39,9 +39,7 @@ const compareFolderNames = (a: string, b: string): number =>
   a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true });
 
 /** Returns `items` ordered by folder name at every level; the input array and its nodes are left untouched. */
-export const sortFolderTree = (
-  items: PublishFolderNode[],
-): PublishFolderNode[] =>
+export const sortFolderTree = (items: FolderNode[]): FolderNode[] =>
   [...items]
     .sort((a, b) => compareFolderNames(a.name, b.name))
     .map((node) =>
@@ -51,10 +49,10 @@ export const sortFolderTree = (
     );
 
 const withFolderPath = (
-  items: PublishFolderNode[],
+  items: FolderNode[],
   path: string[],
   parentPath: string[],
-): PublishFolderNode[] => {
+): FolderNode[] => {
   const [name, ...rest] = path;
   if (name == null) {
     return items;
@@ -93,16 +91,16 @@ const withFolderPath = (
  * nodes and their children are preserved as-is.
  */
 export const mergeFolderPaths = (
-  items: PublishFolderNode[],
+  items: FolderNode[],
   paths: string[][],
-): PublishFolderNode[] =>
+): FolderNode[] =>
   paths.reduce(
     (acc, path) => (path.length ? withFolderPath(acc, path, []) : acc),
     items,
   );
 
 /** Returns every folder path (joined by "/") in `items`, recursively. */
-export const collectFolderKeys = (items: PublishFolderNode[]): string[] =>
+export const collectFolderKeys = (items: FolderNode[]): string[] =>
   items.flatMap((node) => [
     node.path.join('/'),
     ...(node.children ? collectFolderKeys(node.children) : []),
@@ -121,8 +119,8 @@ export const getFolderDisplayName = (
   rootLabel: string,
 ): string => fromFolderPathKey(pathKey).at(-1) ?? rootLabel;
 
-/** Converts `PublishFolderNode[]` to the `DialFile[]` shape `DialFoldersTree` requires. */
-export const toDialFileTree = (items: PublishFolderNode[]): DialFile[] =>
+/** Converts `FolderNode[]` to the `DialFile[]` shape `DialFoldersTree` requires. */
+export const toDialFileTree = (items: FolderNode[]): DialFile[] =>
   items.map((node) => {
     const path = toFolderPathKey(node.path);
     return {
@@ -134,7 +132,7 @@ export const toDialFileTree = (items: PublishFolderNode[]): DialFile[] =>
     };
   });
 
-/** Characters forbidden in a publish destination folder name, mirroring the backend's path validation rules. */
+/** Characters forbidden in a destination folder name, mirroring the backend's path validation rules. */
 const FORBIDDEN_FOLDER_NAME_CHARS_RE = /[/\\:;,={}&"]/;
 
 /** Error messages returned by {@link validateFolderName} for each rejection reason. */
@@ -149,7 +147,7 @@ export interface FolderNameValidationMessages {
   sameAsParent?: string;
 }
 
-/** Returns an error message from `messages`, or `null` when `rawValue` is a valid folder name for the publish destination tree: not a duplicate of a sibling and not the name of its parent folder (`parentName`, omitted for a root). */
+/** Returns an error message from `messages`, or `null` when `rawValue` is a valid folder name for the destination tree: not a duplicate of a sibling and not the name of its parent folder (`parentName`, omitted for a root). */
 export const validateFolderName = (
   rawValue: string,
   siblingNames: string[],
@@ -194,16 +192,14 @@ export const getUniqueFolderName = (
 
 /** Names of the direct children of the folder at `parentPath` (root siblings when empty). */
 export const getSiblingFolderNames = (
-  items: PublishFolderNode[],
+  items: FolderNode[],
   parentPath: string[],
 ): string[] => {
   if (parentPath.length === 0) {
     return items.map((node) => node.name);
   }
   const parentKey = toFolderPathKey(parentPath);
-  const findNode = (
-    nodes: PublishFolderNode[],
-  ): PublishFolderNode | undefined => {
+  const findNode = (nodes: FolderNode[]): FolderNode | undefined => {
     for (const node of nodes) {
       if (toFolderPathKey(node.path) === parentKey) {
         return node;

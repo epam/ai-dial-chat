@@ -6,7 +6,7 @@ Publish-to-folder UI and state flow shared by catalog entity publish and convers
 
 `@epam/ai-dial-publish-panel` implements the "Publish to folder" experience used across AI DIAL Chat: a destination-folder picker with search and inline folder creation, a pinned submit/cancel footer, a standalone `PublishHistoryList`, and the `usePublishFlow` hook that manages folder selection, optimistic folder creation, and submit state. The library has no knowledge of any specific host domain model — it only knows `PublishFlowItem` (anything with an optional `version`) and `PublishResourceSummary` (a title/icon/version-only display shape). A host that needs a richer entity-specific summary (e.g. an icon and type badge for a catalog entity) supplies it via the `renderSummary` render-slot instead of the library reaching into a host-specific type. This is what lets both `libs/catalog`'s `DetailsPanel` (versioned catalog entities: Applications, Toolsets, Models) and `apps/chat`'s conversation publish flow (unversioned conversations) share the exact same folder-picker and submit UX without either one depending on the other's domain models.
 
-Use this library whenever a host application needs the "publish to a folder, optionally as a new version" UX; use the lower-level `PublishFoldersTree`/`PublishHistoryList` directly only when assembling a custom layout around them.
+Use this library whenever a host application needs the "publish to a folder, optionally as a new version" UX; use the lower-level `PublishHistoryList` directly only when assembling a custom layout around them.
 
 ## Installation
 
@@ -35,9 +35,9 @@ import '@epam/ai-dial-publish-panel/styles.css';
 - `react`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
-- `@epam/ai-dial-react-file-manager`
+- `@epam/ai-dial-react-file-manager` (required by `@epam/ai-dial-folder-destination-panel`, which renders its folder tree)
 
-`@epam/ai-dial-chat-shared` is kept external by the library build — a
+The destination folder tree comes from `@epam/ai-dial-folder-destination-panel`, a regular dependency that installs with this package; its styles are included in `@epam/ai-dial-publish-panel/styles.css`. `@epam/ai-dial-chat-shared` is kept external by the library build — a
 consumer's own bundler resolves it, so installing it is required rather than
 optional.
 
@@ -219,57 +219,16 @@ import { PublishAccessRules } from '@epam/ai-dial-publish-panel';
 />;
 ```
 
-### PublishFoldersTree
+### Folder tree
 
-Destination folder tree with search, lazy expansion, and inline folder creation (trailing button and per-row context menu). Folders are displayed in name order at every level, and filtering is suspended while the inline create row is open so creating a folder from a search that matched nothing works (the unmatched query becomes the pre-filled name). Creating a folder under a parent listed in `loadingPaths` (as "Add child" on a collapsed folder makes it) opens the inline editor only once that parent leaves `loadingPaths`, so the name is checked against the children that actually exist; `loadingPaths` must therefore use the same `/`-joined keys as the folder paths. A new folder may not take its parent folder's name (case-insensitive) — the editor shows `sameAsParentFolderNameError` (`createFolderSameAsParentNameError` on `PublishPanel` / `SaveToFolderPanel`), and the default name skips it; a folder directly under a root may share the root's label.
-
-```tsx
-import { PublishFoldersTree } from '@epam/ai-dial-publish-panel';
-
-<PublishFoldersTree
-  items={folderItems}
-  selectedPath={selectedPath}
-  onSelectedPathChange={setSelectedPath}
-  onCreateFolder={handleCreateFolder}
-  searchQuery={searchQuery}
-/>;
-```
-
-#### Multi-root mode
-
-Pass `roots` (a list of `FolderDestinationRoot`: `key`, `label`, `items`, and optional `canCreateFolders`, `expandedPaths`, `onExpandedPathsChange`, `loadingPaths`) to render one always-expanded top-level node per root, in the given order, instead of the single `rootLabel` root. Selection then travels as a `FolderDestination` (`{ rootKey, path }`, where `path: []` is the root itself) through `destination` / `onDestinationChange`, and a confirmed new folder reaches `onCreateDestinationFolder(rootKey, parentPath, name)`. Folders are name-ordered inside each root, search filters every root, a new name is validated against its siblings in the same root, and a root with `canCreateFolders: false` offers no create actions. `items`, `selectedPath`, `onSelectedPathChange`, `onCreateFolder`, `rootLabel`, `expandedPaths` and `loadingPaths` are ignored in this mode — each root carries its own.
-
-```tsx
-import {
-  PublishFoldersTree,
-  type FolderDestination,
-} from '@epam/ai-dial-publish-panel';
-
-<PublishFoldersTree
-  roots={[
-    {
-      key: 'personal',
-      label: 'Personal',
-      items: personal.folderItems,
-      expandedPaths: personal.expandedPaths,
-      onExpandedPathsChange: personal.onExpandedPathsChange,
-      loadingPaths: personal.loadingPaths,
-    },
-    { key: 'organization', label: 'Organization', items: organizationItems },
-  ]}
-  destination={destination}
-  onDestinationChange={setDestination}
-  onCreateDestinationFolder={handleCreateFolder}
-  searchQuery={searchQuery}
-/>;
-```
+The destination folder tree (`FolderDestinationTree`, formerly `PublishFoldersTree`) and the folder helpers (`sortFolderTree`, `toFolderPathKey`, `validateFolderName`, …) live in `@epam/ai-dial-folder-destination-panel`, so a feature that is not publishing can use them without this library. `PublishPanel` renders the tree for you; this package still re-exports the helpers and the `FolderDestination` / `FolderDestinationRoot` types for existing imports. See that package's README for the tree's props and its multi-root mode. `PublishPanel` and `StandalonePublishPanel` still own their own drawer and main/change-folder views and share only the tree; only the Save flow below is built on that package's `FolderDestinationPanel`.
 
 ### SaveToFolderPanel / StandaloneSaveToFolderPanel
 
-The "save to a folder, optionally as a new version" flow. `StandaloneSaveToFolderPanel` is an end-edge `SideDrawer` with two views:
+The "save to a folder, optionally as a new version" flow. `StandaloneSaveToFolderPanel` adapts `FolderDestinationPanel` from `@epam/ai-dial-folder-destination-panel` — it supplies the version section and access rules through that panel's `mainSections` and `renderFolderViewFooter` slots, and maps `onSubmit`, `isSubmitDisabled`, `saveLabel` and `savingLabel` onto its `action`. It is an end-edge `SideDrawer` with two views:
 
 - **Main** — the entity summary (`ResourceSummary`), the committed destination as a folder name with the file manager's folder icon (`FolderName`, the path joined with `/`) and a small **Change** action, an optional version choice, and a Cancel / Save footer.
-- **Change folder** — a back button, folder search and the multi-root `PublishFoldersTree`, with a Cancel / Select footer. A destination picked here is pending until Select commits it through `onDestinationChange`; Back and Cancel discard it. While a folder of a root with `hasAccessRules` is pending and `accessRules` (`SaveToFolderAccessRulesProps`) is passed, `PublishAccessRules` renders below the tree for that folder; `onPendingDestinationChange` tells the host which folder is pending — including the reset to `destination` on entering and leaving the view — so it can load that folder's existing rules.
+- **Change folder** — a back button, folder search and the multi-root `FolderDestinationTree`, with a Cancel / Select footer. A destination picked here is pending until Select commits it through `onDestinationChange`; Back and Cancel discard it. While a folder of a root with `hasAccessRules` is pending and `accessRules` (`SaveToFolderAccessRulesProps`) is passed, `PublishAccessRules` renders below the tree for that folder; `onPendingDestinationChange` tells the host which folder is pending — including the reset to `destination` on entering and leaving the view — so it can load that folder's existing rules.
 
 The version section renders only when `version` (`SaveToFolderVersionProps`) is passed: a `RadioGroup` of "Keep version {version}" and "Save as new version", the latter revealing a required version input whose error the host supplies as `newVersionError`. Pass no `version` for an unversioned resource. `submitError` is announced through an assertive `LiveRegion`; `foldersError` shows above the tree with a Retry action when `onRetryFolders` is given. Every control is disabled while `isSubmitting`.
 

@@ -2,8 +2,8 @@ import type {
   FolderDestination,
   FolderDestinationRoot,
 } from '../models/folder-destination';
-import type { PublishFolderNode } from '../models/publish';
-import { sortFolderTree, toFolderPathKey } from './publish-folder-tree';
+import type { FolderNode } from '../models/folder-tree';
+import { sortFolderTree, toFolderPathKey } from './folder-tree';
 
 /*
  * A multi-root tree is rendered as one combined tree whose top-level nodes
@@ -37,10 +37,7 @@ export const fromRootedPath = (
   return rootKey == null ? undefined : { rootKey, path };
 };
 
-const prefixNodes = (
-  nodes: PublishFolderNode[],
-  token: string,
-): PublishFolderNode[] =>
+const prefixNodes = (nodes: FolderNode[], token: string): FolderNode[] =>
   nodes.map((node) => ({
     ...node,
     path: [token, ...node.path],
@@ -50,7 +47,7 @@ const prefixNodes = (
 /** Returns one top-level node per root, in the given order, with each root's folders sorted by name and re-pathed under its token. */
 export const buildRootedFolderTree = (
   roots: FolderDestinationRoot[],
-): PublishFolderNode[] =>
+): FolderNode[] =>
   roots.map((root) => {
     const token = toRootToken(root.key);
     return {

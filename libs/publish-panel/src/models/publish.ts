@@ -1,14 +1,8 @@
 import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import type { FolderNode } from '@epam/ai-dial-folder-destination-panel';
 
 /** A single folder in the "publish to folder" destination tree. */
-export interface PublishFolderNode {
-  /** Full path segments to this folder, outermost first. Also serves as the unique key. */
-  path: string[];
-  /** Display name of this folder (its last path segment). */
-  name: string;
-  /** Child folders, if any. */
-  children?: PublishFolderNode[];
-}
+export type PublishFolderNode = FolderNode;
 
 /**
  * A previously published version of a catalog entity, or a previous

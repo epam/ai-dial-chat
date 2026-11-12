@@ -1,0 +1,13 @@
+.heading {
+  color: var(--fdpb-heading-text, var(--text-primary, #161b2d));
+}
+
+.destination {
+  color: var(--fdpb-destination-text, var(--text-secondary, #57647a));
+}
+
+.treeScroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--fdp-scrollbar-thumb, var(--stroke-secondary, #d1dbea))
+    transparent;
+}

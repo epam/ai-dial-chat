@@ -1,6 +1,6 @@
 import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
 import { describe, expect, it } from 'vitest';
-import { PublishFolderNode } from '../models/publish';
+import { FolderNode } from '../../models/folder-tree';
 import {
   collectFolderKeys,
   filterFolderTree,
@@ -12,9 +12,9 @@ import {
   toDialFileTree,
   toFolderPathKey,
   validateFolderName,
-} from './publish-folder-tree';
+} from '../folder-tree';
 
-const tree: PublishFolderNode[] = [
+const tree: FolderNode[] = [
   {
     path: ['Shared'],
     name: 'Shared',
@@ -94,7 +94,7 @@ describe('sortFolderTree', () => {
   });
 
   it('orders nested children too', () => {
-    const unsorted: PublishFolderNode[] = [
+    const unsorted: FolderNode[] = [
       {
         path: ['Shared'],
         name: 'Shared',
@@ -110,7 +110,7 @@ describe('sortFolderTree', () => {
   });
 
   it('compares digits numerically so "Report 2" precedes "Report 10"', () => {
-    const unsorted: PublishFolderNode[] = [
+    const unsorted: FolderNode[] = [
       { path: ['Report 10'], name: 'Report 10' },
       { path: ['Report 2'], name: 'Report 2' },
     ];
@@ -121,7 +121,7 @@ describe('sortFolderTree', () => {
   });
 
   it('leaves the input array and its nodes untouched', () => {
-    const input: PublishFolderNode[] = [
+    const input: FolderNode[] = [
       { path: ['b'], name: 'b' },
       { path: ['a'], name: 'a' },
     ];

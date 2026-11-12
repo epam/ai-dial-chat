@@ -3,28 +3,28 @@ import type {
   FolderDestination,
   FolderDestinationRoot,
 } from './folder-destination';
-import type { PublishFolderNode } from './publish';
+import type { FolderNode } from './folder-tree';
 
-/** Color overrides for the publish destination folder tree. */
-export interface PublishFoldersTreeColors {
+/** Color overrides for the destination folder tree. */
+export interface FolderDestinationTreeColors {
   /** Divider color above the folder-creation controls. Defaults to `--stroke-tertiary`. */
   divider?: string;
 }
 
-/** Style overrides for the publish destination folder tree. */
-export interface PublishFoldersTreeStyles {
+/** Style overrides for the destination folder tree. */
+export interface FolderDestinationTreeStyles {
   /** Color overrides. */
-  colors?: PublishFoldersTreeColors;
+  colors?: FolderDestinationTreeColors;
   /** Additional class name applied to the component root. */
   className?: string;
   /** Additional CSS custom properties applied to the component root. */
   cssVars?: CSSProperties;
 }
 
-/** Props for the publish destination folder tree. */
-export interface PublishFoldersTreeProps {
+/** Props for the destination folder tree. */
+export interface FolderDestinationTreeProps {
   /** Root-level folder nodes of the single-root tree. Ignored when `roots` is set. Defaults to `[]`. */
-  items?: PublishFolderNode[];
+  items?: FolderNode[];
   /** Currently selected destination path of the single-root tree; `undefined` means no selection and `[]` means the bucket root. Ignored when `roots` is set. */
   selectedPath?: string[];
   /** Called when the selected destination of the single-root tree changes. */
@@ -45,6 +45,8 @@ export interface PublishFoldersTreeProps {
   ) => Promise<void>;
   /** Host-owned search query used to filter the tree. */
   searchQuery: string;
+  /** Lets the user collapse and expand the root nodes of the tree. Roots start expanded, and a search expands them again. Defaults to `false`, which keeps every root expanded. */
+  collapsibleRoots?: boolean;
   /** Disables every control. Defaults to `false`. */
   disabled?: boolean;
   /** Label for the folder-creation trigger. Defaults to `'Create new folder'`. */
@@ -67,7 +69,7 @@ export interface PublishFoldersTreeProps {
   duplicateFolderNameError?: string;
   /** Validation message for a new folder named like its parent folder. Defaults to `'A folder cannot have the same name as its parent folder.'`. */
   sameAsParentFolderNameError?: string;
-  /** Label for the selectable bucket root of the single-root tree. Ignored when `roots` is set. Defaults to `'Organization'`. */
+  /** Label for the selectable bucket root of the single-root tree. Ignored when `roots` is set. Defaults to `'Root'`. */
   rootLabel?: string;
   /** Externally controlled expanded folder path keys of the single-root tree; use `FolderDestinationRoot.expandedPaths` in multi-root mode. */
   expandedPaths?: Set<string>;
@@ -76,5 +78,5 @@ export interface PublishFoldersTreeProps {
   /** Folder path keys of the single-root tree currently being fetched by the host; use `FolderDestinationRoot.loadingPaths` in multi-root mode. */
   loadingPaths?: Set<string>;
   /** Style overrides. */
-  styles?: PublishFoldersTreeStyles;
+  styles?: FolderDestinationTreeStyles;
 }

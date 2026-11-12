@@ -156,6 +156,14 @@ export default defineConfig(({ command }) => ({
         import.meta.dirname,
         '../projects/src/index.ts',
       ),
+      '@epam/ai-dial-folder-destination-panel/styles.css': path.resolve(
+        import.meta.dirname,
+        '../folder-destination-panel/src/styles.css',
+      ),
+      '@epam/ai-dial-folder-destination-panel': path.resolve(
+        import.meta.dirname,
+        '../folder-destination-panel/src/index.ts',
+      ),
       '@epam/ai-dial-publish-panel': path.resolve(
         import.meta.dirname,
         '../publish-panel/src/index.ts',

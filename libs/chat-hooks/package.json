@@ -171,6 +171,7 @@
     "@epam/ai-dial-chat-overlay": "*",
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-conversation-input": "*",
+    "@epam/ai-dial-folder-destination-panel": "*",
     "@epam/ai-dial-mcp-apps": "*",
     "@epam/ai-dial-projects": "*",
     "@epam/ai-dial-publish-panel": "*",
@@ -202,6 +203,9 @@
       "optional": true
     },
     "@epam/ai-dial-conversation-input": {
+      "optional": true
+    },
+    "@epam/ai-dial-folder-destination-panel": {
       "optional": true
     },
     "@epam/ai-dial-mcp-apps": {

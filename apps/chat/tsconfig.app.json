@@ -115,6 +115,9 @@
       "path": "../../libs/publish-panel/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/folder-destination-panel/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/skill-editor/tsconfig.lib.json"
     },
     {

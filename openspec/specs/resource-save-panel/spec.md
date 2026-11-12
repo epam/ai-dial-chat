@@ -101,7 +101,7 @@ i18n keys: `ResourceSavePanelI18nKeys.VersionInvalid`, `VersionUnchanged`, `Vers
 
 - a header with a back button (mirrored arrow in RTL, `aria-label` from `ButtonsI18nKeys.Back`) and the title `ResourceSavePanelI18nKeys.ChangeFolderTitle`;
 - the kit `Search` (`ResourceSavePanelI18nKeys.SearchFolders`), with matches rendered through `Highlight`;
-- `PublishFoldersTree` in multi-root mode with two roots, in this order:
+- `FolderDestinationTree` in multi-root mode with two roots, in this order:
   1. `SaveDestinationRoot.Personal` (`libs/chat-hooks/src/catalog/resource-save.ts`), labelled `ResourceSavePanelI18nKeys.PersonalRoot`. It holds the user's folders for that resource type, loaded lazily through `useResourceFolders` (`@epam/ai-dial-chat-hooks`) with the listing operation the editor passes to `ResourceSavePanelContainer` as `listPersonalFolders`;
   2. `SaveDestinationRoot.Organization`, labelled with the existing publish root label. It holds the public bucket folders from `apps/chat/src/hooks/publish/usePublishFolders.ts`. It renders only when the user could publish this item (own item and a publishable type).
 - a footer with Cancel and Select (`ButtonsI18nKeys.Select`).

@@ -118,7 +118,6 @@ const makeController = (
     expandedPaths: new Set<string>(),
     loadedPaths: new Set<string>(),
     onExpandedPathsChange: vi.fn(),
-    onFolderPopupPathChange: vi.fn(),
     folderPopupLoadingPaths: new Set<string>(),
     onUploadFiles: vi.fn(),
     onUploadArchive: vi.fn(),

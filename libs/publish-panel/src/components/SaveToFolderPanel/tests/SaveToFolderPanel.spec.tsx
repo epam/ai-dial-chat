@@ -1,7 +1,7 @@
+import type { FolderDestinationRoot } from '@epam/ai-dial-folder-destination-panel';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import type { FolderDestinationRoot } from '../../../models/folder-destination';
 import type { SaveToFolderPanelProps } from '../../../models/save-to-folder-panel';
 import {
   SaveToFolderView,
@@ -11,28 +11,31 @@ import { SaveToFolderPanel } from '../SaveToFolderPanel';
 
 const treeProps = vi.fn();
 
-vi.mock('../../PublishFoldersTree/PublishFoldersTree', () => ({
-  PublishFoldersTree: (props: {
-    onDestinationChange: (destination: unknown) => void;
-    searchQuery: string;
-  }) => {
-    treeProps(props);
-    return (
-      <div role="tree" aria-label="Folders">
-        <button
-          onClick={() =>
-            props.onDestinationChange({
-              rootKey: 'organization',
-              path: ['EPAM'],
-            })
-          }
-        >
-          EPAM
-        </button>
-      </div>
-    );
-  },
-}));
+vi.mock(
+  '../../../../../folder-destination-panel/src/components/FolderDestinationTree/FolderDestinationTree',
+  () => ({
+    FolderDestinationTree: (props: {
+      onDestinationChange: (destination: unknown) => void;
+      searchQuery: string;
+    }) => {
+      treeProps(props);
+      return (
+        <div role="tree" aria-label="Folders">
+          <button
+            onClick={() =>
+              props.onDestinationChange({
+                rootKey: 'organization',
+                path: ['EPAM'],
+              })
+            }
+          >
+            EPAM
+          </button>
+        </div>
+      );
+    },
+  }),
+);
 
 const roots: FolderDestinationRoot[] = [
   { key: 'personal', label: 'Personal', items: [] },

@@ -13,6 +13,7 @@ import {
 import {
   DialFileManagerTabs,
   useDialFileManagerTabs,
+  type DialDestinationRequest,
 } from '@epam/ai-dial-react-file-manager';
 import {
   NOT_ALLOWED_SYMBOLS,
@@ -25,6 +26,7 @@ import DialFileManagerShell from '../../components/DialFileManagerShell/DialFile
 import { useDialFileManagerHostOptions } from '../../components/DialFileManagerShell/useDialFileManagerHostOptions';
 import { getFileDeleteConfirmTitle } from '../../components/FileDeleteConfirmContent/file-delete-confirm-title';
 import FileDeleteConfirmContent from '../../components/FileDeleteConfirmContent/FileDeleteConfirmContent';
+import FileManagerDestinationPanelContainer from '../../components/FileManagerDestinationPanelContainer/FileManagerDestinationPanelContainer';
 import { useFileUnshareConfirmation } from '../../components/FileUnshareConfirmation/useFileUnshareConfirmation';
 import {
   BasicI18nKeys,
@@ -105,6 +107,23 @@ const DialFileManagerPage: FC = () => {
 
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(
     () => new Set(),
+  );
+  /* The id keys the panel, so a new request never inherits the picks of the previous one. */
+  const [destinationRequest, setDestinationRequest] = useState<{
+    id: number;
+    request: DialDestinationRequest;
+  } | null>(null);
+  const handleDestinationRequest = useCallback(
+    (request: DialDestinationRequest) =>
+      setDestinationRequest((previous) => ({
+        id: (previous?.id ?? 0) + 1,
+        request,
+      })),
+    [],
+  );
+  const handleDestinationPanelClose = useCallback(
+    () => setDestinationRequest(null),
+    [],
   );
 
   /* Moving between All-tab sections changes the listing under the selection, so drop it. */
@@ -236,29 +255,6 @@ const DialFileManagerPage: FC = () => {
       copyLabel: t(DialFileManagerI18nKeys.CopyAction),
       moveLabel: t(DialFileManagerI18nKeys.MoveAction),
       duplicateLabel: t(ButtonsI18nKeys.Duplicate),
-      addFolderLabel: t(DialFileManagerI18nKeys.FolderPickerAddFolderLabel),
-      hiddenFilesSwitcherLabel: t(DialFileManagerI18nKeys.HiddenFiles),
-      getCopyHeader: (count, name) =>
-        count === 1
-          ? t(DialFileManagerI18nKeys.CopyHeaderSingle, { name })
-          : t(DialFileManagerI18nKeys.CopyHeaderMultiple, { count }),
-      getMoveHeader: (count, name) =>
-        count === 1
-          ? t(DialFileManagerI18nKeys.MoveHeaderSingle, { name })
-          : t(DialFileManagerI18nKeys.MoveHeaderMultiple, { count }),
-      moveSourceDisabledTooltip: t(
-        DialFileManagerI18nKeys.MoveSourceDisabledTooltip,
-      ),
-      movedIntoItselfTooltip: t(DialFileManagerI18nKeys.MovedIntoItselfTooltip),
-      folderPickerLoadingTooltip: t(
-        DialFileManagerI18nKeys.FolderPickerLoadingTooltip,
-      ),
-      folderPickerEmptyStateTitle: t(
-        DialFileManagerI18nKeys.FolderPickerEmptyStateTitle,
-      ),
-      folderPickerEmptyStateDescription: t(
-        DialFileManagerI18nKeys.FolderPickerEmptyStateDescription,
-      ),
       copyingLabel: t(DialFileManagerI18nKeys.CopyingLabel),
       movingLabel: t(DialFileManagerI18nKeys.MovingLabel),
       operationLoaderCopyTitle: t(
@@ -333,7 +329,16 @@ const DialFileManagerPage: FC = () => {
         onTableFileClick={onFileClick}
         previewExtensions={previewExtensions}
         treeContainerClassName={TREE_PANEL_CLASS_NAME}
+        onDestinationRequest={handleDestinationRequest}
       />
+      {destinationRequest && (
+        <FileManagerDestinationPanelContainer
+          key={destinationRequest.id}
+          request={destinationRequest.request}
+          hookResult={controller}
+          onClose={handleDestinationPanelClose}
+        />
+      )}
     </div>
   );
 

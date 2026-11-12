@@ -3,10 +3,10 @@ import {
   ConfirmationDialog,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
+import { getFolderDisplayName } from '@epam/ai-dial-folder-destination-panel';
 import { ConfirmationPopupVariant, RadioGroup } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import type { UnpublishConfirmationDialogProps } from '../../models/unpublish-confirmation-dialog';
-import { getFolderDisplayName } from '../../utils/publish-folder-tree';
 import styles from './UnpublishConfirmationDialog.module.scss';
 
 const defaultConfirmMessage = (name: string, folder: string): string =>

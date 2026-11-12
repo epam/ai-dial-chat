@@ -3,6 +3,7 @@ import {
   mergeClasses,
   ResourceSummary,
 } from '@epam/ai-dial-chat-shared';
+import { FolderDestinationTree } from '@epam/ai-dial-folder-destination-panel';
 import {
   Checkbox,
   DIAL_ICON_SIZE,
@@ -40,7 +41,6 @@ import {
   PublishAccessRules,
   PublishAccessRulesLabels,
 } from '../PublishAccessRules/PublishAccessRules';
-import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
 import styles from './PublishPanel.module.scss';
 
 /** Matches the publish endpoints' own `author` limit, so the field cannot compose a request the backend rejects. */
@@ -377,7 +377,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             aria-label={searchPlaceholder}
           />
         </div>
-        <PublishFoldersTree
+        <FolderDestinationTree
           items={folderItems}
           selectedPath={pendingFolderPath}
           onSelectedPathChange={onPendingFolderPathChange}

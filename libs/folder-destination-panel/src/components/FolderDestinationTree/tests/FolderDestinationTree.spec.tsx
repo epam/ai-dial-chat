@@ -5,9 +5,9 @@ import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { FolderDestinationRoot } from '../../../models/folder-destination';
-import { PublishFolderNode } from '../../../models/publish';
-import { PublishFoldersTree } from '../PublishFoldersTree';
-import styles from '../PublishFoldersTree.module.scss';
+import { FolderNode } from '../../../models/folder-tree';
+import { FolderDestinationTree } from '../FolderDestinationTree';
+import styles from '../FolderDestinationTree.module.scss';
 
 const capturedProps: {
   current: ComponentProps<
@@ -42,7 +42,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
   };
 });
 
-const items: PublishFolderNode[] = [
+const items: FolderNode[] = [
   {
     path: ['Shared'],
     name: 'Shared',
@@ -52,10 +52,10 @@ const items: PublishFolderNode[] = [
 ];
 
 const renderTree = (
-  props?: Partial<ComponentProps<typeof PublishFoldersTree>>,
+  props?: Partial<ComponentProps<typeof FolderDestinationTree>>,
 ) =>
   render(
-    <PublishFoldersTree
+    <FolderDestinationTree
       items={items}
       searchQuery=""
       onSelectedPathChange={vi.fn()}
@@ -64,8 +64,8 @@ const renderTree = (
     />,
   );
 
-describe('PublishFoldersTree', () => {
-  it('converts PublishFolderNode[] to DialFile[] with showFiles disabled, wrapped under the root node', () => {
+describe('FolderDestinationTree', () => {
+  it('converts FolderNode[] to DialFile[] with showFiles disabled, wrapped under the root node', () => {
     renderTree();
     expect(capturedProps.current?.showFiles).toBe(false);
     expect(capturedProps.current?.items.map((f) => f.path)).toEqual(['']);
@@ -226,7 +226,7 @@ describe('PublishFoldersTree', () => {
       renderTree();
       const rootFile: DialFile = {
         path: '',
-        name: 'Organization',
+        name: 'Root',
         folderId: '',
         nodeType: DialFileNodeType.FOLDER,
       };
@@ -318,14 +318,14 @@ describe('PublishFoldersTree', () => {
       clickMenuItem(
         capturedProps.current?.getContextMenuItems?.({
           path: '',
-          name: 'Organization',
+          name: 'Root',
           folderId: '',
           nodeType: DialFileNodeType.FOLDER,
         }) ?? [],
         'add-child',
       );
       expect(
-        capturedProps.current?.onRenameValidate?.('Organization', {} as never),
+        capturedProps.current?.onRenameValidate?.('Root', {} as never),
       ).toBeNull();
     });
   });
@@ -344,7 +344,7 @@ describe('PublishFoldersTree', () => {
   });
 
   it('resolves a unique default name when a sibling already uses the default "New folder" name', async () => {
-    const itemsWithDefaultNameTaken: PublishFolderNode[] = [
+    const itemsWithDefaultNameTaken: FolderNode[] = [
       ...items,
       { path: ['New folder'], name: 'New folder' },
     ];
@@ -507,7 +507,7 @@ describe('PublishFoldersTree', () => {
   describe('root selection', () => {
     it('renders the bucket root as a tree node with the default label', () => {
       renderTree();
-      expect(screen.getByText('Organization')).toBeTruthy();
+      expect(screen.getByText('Root')).toBeTruthy();
     });
 
     it('renders the bucket root as a tree node with a custom label', () => {
@@ -518,14 +518,14 @@ describe('PublishFoldersTree', () => {
     it('selects the root (empty array) when the root node is clicked', async () => {
       const onSelectedPathChange = vi.fn();
       renderTree({ onSelectedPathChange });
-      await userEvent.click(screen.getByText('Organization'));
+      await userEvent.click(screen.getByText('Root'));
       expect(onSelectedPathChange).toHaveBeenCalledWith([]);
     });
 
     it('deselects (undefined) when clicking the already-selected root node', async () => {
       const onSelectedPathChange = vi.fn();
       renderTree({ selectedPath: [], onSelectedPathChange });
-      await userEvent.click(screen.getByText('Organization'));
+      await userEvent.click(screen.getByText('Root'));
       expect(onSelectedPathChange).toHaveBeenCalledWith(undefined);
     });
 
@@ -615,10 +615,10 @@ describe('PublishFoldersTree', () => {
     ];
 
     const renderMultiRoot = (
-      props?: Partial<ComponentProps<typeof PublishFoldersTree>>,
+      props?: Partial<ComponentProps<typeof FolderDestinationTree>>,
     ) =>
       render(
-        <PublishFoldersTree
+        <FolderDestinationTree
           roots={roots}
           searchQuery=""
           onDestinationChange={vi.fn()}
@@ -626,6 +626,104 @@ describe('PublishFoldersTree', () => {
           {...props}
         />,
       );
+
+    describe('collapsible roots', () => {
+      it('keeps every root expanded when roots are not collapsible', () => {
+        renderMultiRoot();
+        act(() =>
+          capturedProps.current?.onExpandedPathsChange?.(
+            new Set([':organization']),
+          ),
+        );
+
+        expect(capturedProps.current?.expandedPaths).toEqual(
+          new Set([':personal', ':organization']),
+        );
+      });
+
+      it('starts with every root expanded', () => {
+        renderMultiRoot({ collapsibleRoots: true });
+
+        expect(capturedProps.current?.expandedPaths).toEqual(
+          new Set([':personal', ':organization']),
+        );
+      });
+
+      it('collapses a root when the user collapses it', () => {
+        renderMultiRoot({ collapsibleRoots: true });
+
+        act(() =>
+          capturedProps.current?.onExpandedPathsChange?.(
+            new Set([':organization']),
+          ),
+        );
+
+        expect(capturedProps.current?.expandedPaths).toEqual(
+          new Set([':organization']),
+        );
+      });
+
+      it('expands a collapsed root again', () => {
+        renderMultiRoot({ collapsibleRoots: true });
+        act(() =>
+          capturedProps.current?.onExpandedPathsChange?.(
+            new Set([':organization']),
+          ),
+        );
+
+        act(() =>
+          capturedProps.current?.onExpandedPathsChange?.(
+            new Set([':organization', ':personal']),
+          ),
+        );
+
+        expect(capturedProps.current?.expandedPaths).toEqual(
+          new Set([':personal', ':organization']),
+        );
+      });
+
+      it('does not remember a root toggled while a search is active', () => {
+        const { rerender } = renderMultiRoot({
+          collapsibleRoots: true,
+          searchQuery: 'Design',
+        });
+        act(() =>
+          capturedProps.current?.onExpandedPathsChange?.(
+            new Set([':organization']),
+          ),
+        );
+
+        rerender(
+          <FolderDestinationTree
+            roots={roots}
+            searchQuery=""
+            collapsibleRoots
+            onDestinationChange={vi.fn()}
+            onCreateDestinationFolder={vi.fn()}
+          />,
+        );
+
+        expect(capturedProps.current?.expandedPaths).toEqual(
+          new Set([':personal', ':organization']),
+        );
+      });
+
+      it('never forwards a root key to the root onExpandedPathsChange', () => {
+        const onExpandedPathsChange = vi.fn();
+        renderMultiRoot({
+          collapsibleRoots: true,
+          roots: roots.map((root) => ({ ...root, onExpandedPathsChange })),
+        });
+
+        act(() =>
+          capturedProps.current?.onExpandedPathsChange?.(
+            new Set([':personal', ':personal/Design']),
+          ),
+        );
+
+        expect(onExpandedPathsChange).toHaveBeenCalledWith(new Set(['Design']));
+      });
+    });
 
     const rootFile = (key: string, name: string): DialFile => ({
       path: `:${key}`,
@@ -761,7 +859,7 @@ describe('PublishFoldersTree', () => {
       const { onRenameValidate, onCreateFolderSave } = capturedProps.current!;
 
       rerender(
-        <PublishFoldersTree
+        <FolderDestinationTree
           searchQuery=""
           roots={[
             {
@@ -797,7 +895,7 @@ describe('PublishFoldersTree', () => {
         loadingPaths: new Set(['Design']),
       };
       const renderWith = (root: FolderDestinationRoot) => (
-        <PublishFoldersTree
+        <FolderDestinationTree
           searchQuery=""
           roots={[root]}
           destination={{ rootKey: 'personal', path: ['Design'] }}
