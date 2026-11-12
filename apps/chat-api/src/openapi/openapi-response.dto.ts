@@ -419,6 +419,13 @@ export class DialToolsetDto {
   displayVersion?: string;
 
   @ApiPropertyOptional({
+    description:
+      'Identifies the versions of one toolset saved in one folder: the folder plus the base name without the `__<version>` suffix of the stored id. Absent for an id without a version suffix.',
+    example: 'Search/Web search',
+  })
+  versionGroupId?: string;
+
+  @ApiPropertyOptional({
     example: 'My toolset description',
     ...LOCALIZED_TEXT_SCHEMA,
   })

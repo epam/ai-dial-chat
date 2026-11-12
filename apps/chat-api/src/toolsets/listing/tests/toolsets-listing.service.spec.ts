@@ -217,6 +217,26 @@ describe('ToolsetsListingService', () => {
       });
     });
 
+    it('gives the versions of one toolset the same versionGroupId', async () => {
+      const { service } = makeService();
+      const toolset = (id: string) => ({ ...rawMockToolset, id, toolset: id });
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
+        okResponse({
+          data: [
+            toolset('toolsets/bucket/Search__1.0.0'),
+            toolset('toolsets/bucket/Search__2.0.0'),
+            toolset('toolsets/bucket/Other/Search__1.0.0'),
+            toolset('toolsets/bucket/Plain'),
+          ],
+        }),
+      );
+
+      const result = await service.listToolsets('user1', 'token-abc', 'bucket');
+
+      const groups = result.data.map((item) => item.versionGroupId);
+      expect(groups).toEqual(['Search', 'Search', 'Other/Search', undefined]);
+    });
+
     it('sets isMy=true when bucket appears as a toolset path segment', async () => {
       const { service } = makeService();
       vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(

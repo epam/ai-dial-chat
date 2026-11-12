@@ -1,4 +1,5 @@
 import { getResourceDisplayNameFallback } from '../../common/utils/resource-name';
+import { getVersionGroupId } from '../../common/utils/version-group';
 import type {
   DeploymentFeaturesDetailsDto,
   ModelCatalogPropertiesDto,
@@ -284,6 +285,10 @@ export const mapToDeploymentItem = (
     iconUrl: raw.icon_url,
     description: raw.description,
     displayVersion: raw.display_version,
+    versionGroupId:
+      type === DeploymentItemType.Application
+        ? getVersionGroupId(raw.id)
+        : undefined,
     reference: raw.reference,
     isFeatured:
       featuredIds.has(raw.id) ||

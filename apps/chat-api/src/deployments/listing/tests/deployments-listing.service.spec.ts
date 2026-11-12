@@ -388,6 +388,49 @@ describe('DeploymentsListingService', () => {
       expect(result.deployments[0].inputAttachmentTypes).toBeUndefined();
     });
 
+    it('gives the versions of one application in one folder the same versionGroupId', async () => {
+      const { service, sdkClient } = makeService();
+      const app = (id: string) => ({ ...mockApplication, id });
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          app('applications/abc/Design/Review__1.0.0'),
+          app('applications/abc/Design/Review__1.1.0'),
+          app('applications/abc/Research/Review__1.0.0'),
+          app('applications/abc/Design/a__b__2.0'),
+          mockModel,
+        ],
+      });
+
+      const { deployments } = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+
+      const groups = deployments.map((d) => d.versionGroupId);
+      expect(groups[0]).toBe('Design/Review');
+      expect(groups[1]).toBe(groups[0]);
+      expect(groups[2]).toBe('Research/Review');
+      expect(groups[3]).toBe('Design/a__b');
+    });
+
+    it('leaves versionGroupId absent for a model and for an application without a version suffix', async () => {
+      const { service } = makeService();
+
+      const { deployments } = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+
+      expect(deployments.map((d) => d.versionGroupId)).toEqual([
+        undefined,
+        undefined,
+      ]);
+    });
+
     it('maps reference from DIAL Core', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({

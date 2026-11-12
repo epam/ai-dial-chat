@@ -559,6 +559,22 @@ describe('ApplicationsService', () => {
       });
     });
 
+    it('clears the list caches after a create-only save so the new version shows in the next listing', async () => {
+      const { service, cacheManager, deploymentsService } = makeService();
+      mockCreateApplicationSdk(service);
+
+      await service.createApplication('user1', 'token', {
+        ...body,
+        createOnly: true,
+        version: '2.0.0',
+      });
+
+      expect(cacheManager.del).toHaveBeenCalledWith('applications:list:user1');
+      expect(deploymentsService.invalidateListCache).toHaveBeenCalledWith(
+        'user1',
+      );
+    });
+
     it('creates at the bucket root when folderPath is empty', async () => {
       const { service } = makeService();
       const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
@@ -2138,6 +2154,30 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
       );
     });
 
+    it('clears the list caches after a fork so the new version shows in the next listing', async () => {
+      const { service, cacheManager, deploymentsService } = makeService();
+      withBucket(service);
+      client(service).copyResource.mockResolvedValue({
+        response: { status: 200 },
+      } as never);
+      client(service).getCustomApplication.mockResolvedValue(
+        appResponse({ displayVersion: '1.0.0' }, 'e1'),
+      );
+      client(service).saveCustomApplication.mockResolvedValue(okResponse({}));
+
+      await service.forkApplicationVersion(
+        'user1',
+        'token',
+        'applications/b1/agent__1.0.0',
+        { version: '1.1.0', folderPath: '' },
+      );
+
+      expect(cacheManager.del).toHaveBeenCalledWith('applications:list:user1');
+      expect(deploymentsService.invalidateListCache).toHaveBeenCalledWith(
+        'user1',
+      );
+    });
+
     it('keeps a separator inside the name when forking', async () => {
       const { service } = makeService();
       withBucket(service);
@@ -2205,6 +2245,27 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
           { version: '1.1.0', folderPath: '' },
         ),
       ).rejects.toBeInstanceOf(ConflictException);
+    });
+
+    it('clears the list caches after a commit so the new version shows in the next listing', async () => {
+      const { service, cacheManager, deploymentsService } = makeService();
+      withBucket(service);
+      client(service).getCustomApplication.mockResolvedValue(
+        appResponse({ displayVersion: '1.0.0' }, 'e1'),
+      );
+      client(service).saveCustomApplication.mockResolvedValue(okResponse({}));
+
+      await service.commitApplicationVersion(
+        'user1',
+        'token',
+        'applications/b1/agent__1.0.0',
+        { snapshotId: 'applications/b1/agent__1.1.0' },
+      );
+
+      expect(cacheManager.del).toHaveBeenCalledWith('applications:list:user1');
+      expect(deploymentsService.invalidateListCache).toHaveBeenCalledWith(
+        'user1',
+      );
     });
 
     it('commits by moving the edits to the snapshot first and then restoring the source', async () => {

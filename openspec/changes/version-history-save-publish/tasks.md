@@ -18,10 +18,10 @@ Group 3 needs group 2; group 4 needs group 3. The departures from the issue are 
 
 ## 2. versionGroupId on the listings
 
-- [ ] 2.1 Add the pure function (decoded folder + base name split at the last `RESOURCE_VERSION_SEPARATOR`; no group when there is no suffix) under `apps/chat-api/src/common/utils/` with a spec covering shared group, other folder, a name containing `__`, percent-encoded ids and a raw `+`, rename stability, no version suffix and a model; verify with `npm run test:file -- <new spec path>`.
-- [ ] 2.2 Add optional `versionGroupId` (`@ApiPropertyOptional`) to `DeploymentItemDto` and `DialToolsetDto`, set it in the deployments and toolsets mappers, and verify with `npm run test:file -- apps/chat-api/src/deployments/listing/tests/deployments-listing.service.spec.ts` and `npm run test:file -- apps/chat-api/src/toolsets/listing/tests/toolsets-listing.service.spec.ts`.
-- [ ] 2.3 Add tests that an application fork, commit, create-only and a toolset create-only clear the list caches (`invalidateAfterWrite`; `ToolsetsListingService.invalidateCaches`), so the new version shows in the next listing; verify with `npm run test:file -- apps/chat-api/src/applications/tests/applications.service.spec.ts` and `npm run test:file -- apps/chat-api/src/toolsets/tests/toolsets.service.spec.ts`.
-- [ ] 2.4 Run `npm run openapi` and `npm run openapi:check`, build and lint `chat-api-client`, and confirm the diff only adds the optional field.
+- [x] 2.1 Add the pure function (decoded folder + base name split at the last `RESOURCE_VERSION_SEPARATOR`; no group when there is no suffix) under `apps/chat-api/src/common/utils/` with a spec covering shared group, other folder, a name containing `__`, percent-encoded ids and a raw `+`, rename stability, no version suffix and a model; verify with `npm run test:file -- <new spec path>`.
+- [x] 2.2 Add optional `versionGroupId` (`@ApiPropertyOptional`) to `DeploymentItemDto` and `DialToolsetDto`, set it in the deployments and toolsets mappers, and verify with `npm run test:file -- apps/chat-api/src/deployments/listing/tests/deployments-listing.service.spec.ts` and `npm run test:file -- apps/chat-api/src/toolsets/listing/tests/toolsets-listing.service.spec.ts`.
+- [x] 2.3 Add tests that an application fork, commit, create-only and a toolset create-only clear the list caches (`invalidateAfterWrite`; `ToolsetsListingService.invalidateCaches`), so the new version shows in the next listing; verify with `npm run test:file -- apps/chat-api/src/applications/tests/applications.service.spec.ts` and `npm run test:file -- apps/chat-api/src/toolsets/tests/toolsets.service.spec.ts`.
+- [x] 2.4 Run `npm run openapi` and `npm run openapi:check`, build and lint `chat-api-client`, and confirm the diff only adds the optional field.
 
 ## 3. version-statuses endpoint
 
