@@ -4541,6 +4541,12 @@ export interface DialModelDto {
    */
   responsesDefaults?: { [key: string]: unknown };
   /**
+   * Curated catalog display metadata from DIAL Core, forwarded as sent
+   * @type {{ [key: string]: unknown }}
+   * @memberof DialModelDto
+   */
+  catalogProperties?: { [key: string]: unknown };
+  /**
    *
    * @type {Array<string>}
    * @memberof DialModelDto
@@ -6540,6 +6546,12 @@ export interface ModelCatalogEntryDto {
    * @memberof ModelCatalogEntryDto
    */
   interfaces?: Array<string>;
+  /**
+   * Known model catalog properties allow-listed from DIAL Core catalog_properties
+   * @type {ModelCatalogPropertiesDto}
+   * @memberof ModelCatalogEntryDto
+   */
+  catalogProperties?: ModelCatalogPropertiesDto;
 }
 /**
  *
