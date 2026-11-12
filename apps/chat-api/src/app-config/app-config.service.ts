@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { resolveAppVersion } from '../common/utils/app-version';
 import { EnvironmentVariables } from '../config/environment.config';
+import { resolveModelCatalogApiKey } from '../models/catalog/model-catalog-key';
 import type { AppConfigEvalContext } from './app-config.types';
 import {
   evaluateCatalogCreationPolicy,
@@ -110,6 +111,8 @@ export class AppConfigService {
         appVersion,
         ...config,
         catalogCreationPermissions,
+        modelCatalogAvailable:
+          resolveModelCatalogApiKey(this.configService) != null,
       },
       metadata: {
         resolvedAt: new Date().toISOString(),
