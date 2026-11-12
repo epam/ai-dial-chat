@@ -21,3 +21,5 @@ export const getCatalogPublishDependencies =
   publishApiClient.getCatalogPublishDependencies;
 export const getCatalogUnpublishAccess =
   publishApiClient.getCatalogUnpublishAccess;
+export const getCatalogVersionStatuses =
+  publishApiClient.getCatalogVersionStatuses;

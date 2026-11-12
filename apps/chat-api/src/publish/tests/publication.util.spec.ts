@@ -3,11 +3,14 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   getPublicationSourceAction,
   getPublicationSourceCredentials,
+  isStatusDetailCandidate,
+  narrowPublicationsForSource,
   PublicationResourceAction,
   PublicationStatus,
   publishesCopy,
   publishesSource,
   removesSource,
+  resolvePublicationDetails,
   resolvePublicationsForSource,
   toPublicationList,
 } from '../publication.util';
@@ -1014,5 +1017,119 @@ describe('publishesCopy', () => {
     expect(
       publishesCopy([removal(1, PublicationStatus.Approved)], COPY_URL),
     ).toBe(false);
+  });
+});
+
+describe('resolvePublicationsForSource, split into detail resolution and narrowing', () => {
+  const at = (
+    url: string,
+    status: PublicationStatus | undefined,
+    action: PublicationResourceAction,
+    createdAt: number,
+  ): ListedPublication => ({
+    url,
+    ...(status ? { status } : {}),
+    targetFolder: 'public/folder/',
+    createdAt,
+    resources: [{ action, sourceUrl: SOURCE_URL }],
+  });
+  const inputs: Record<string, ListedPublication[]> = {
+    approved: [at('p/1', PublicationStatus.Approved, 'ADD' as never, 1)],
+    pending: [at('p/1', PublicationStatus.Pending, 'ADD' as never, 1)],
+    rejected: [at('p/1', PublicationStatus.Rejected, 'ADD' as never, 1)],
+    statusLess: [at('p/1', undefined, 'ADD' as never, 1)],
+    approvedRemoval: [
+      at('p/1', PublicationStatus.Approved, 'ADD' as never, 1),
+      at('p/2', PublicationStatus.Approved, 'DELETE' as never, 2),
+    ],
+    republishAfterRemoval: [
+      at('p/1', PublicationStatus.Approved, 'ADD' as never, 1),
+      at('p/2', PublicationStatus.Approved, 'DELETE' as never, 2),
+      at('p/3', PublicationStatus.Approved, 'ADD' as never, 3),
+    ],
+  };
+  const listOnly = (list: ListedPublication[]): ListedPublication[] =>
+    list.map(({ url, status, targetFolder, createdAt }) => ({
+      url,
+      status,
+      targetFolder,
+      createdAt,
+    }));
+  const lookup = (list: ListedPublication[]) => async (url: string) =>
+    list.find((publication) => publication.url === url) ?? null;
+
+  it.each(Object.keys(inputs))(
+    'returns for the %s input what narrowing the resolved details returns',
+    async (name) => {
+      const list = inputs[name];
+      const viaSource = await resolvePublicationsForSource(
+        listOnly(list),
+        SOURCE_URL,
+        lookup(list),
+      );
+      const viaSplit = narrowPublicationsForSource(
+        await resolvePublicationDetails(listOnly(list), lookup(list)),
+        SOURCE_URL,
+      );
+
+      expect(viaSplit).toEqual(viaSource);
+    },
+  );
+
+  it('drops one failed lookup the same way on both paths', async () => {
+    const list = [
+      at('p/1', PublicationStatus.Approved, 'ADD' as never, 1),
+      at('p/2', PublicationStatus.Approved, 'ADD' as never, 2),
+    ];
+    const fetchPublication = async (url: string) =>
+      url === 'p/1' ? null : (list.find((item) => item.url === url) ?? null);
+
+    const viaSource = await resolvePublicationsForSource(
+      listOnly(list),
+      SOURCE_URL,
+      fetchPublication,
+    );
+
+    expect(viaSource.map((publication) => publication.url)).toEqual(['p/2']);
+    expect(
+      narrowPublicationsForSource(
+        await resolvePublicationDetails(listOnly(list), fetchPublication),
+        SOURCE_URL,
+      ),
+    ).toEqual(viaSource);
+  });
+
+  it('keeps PENDING publications out of the history lookups by default', async () => {
+    const fetchPublication = vi.fn(async () => null);
+
+    await resolvePublicationDetails(
+      [listed('p/1', PublicationStatus.Pending)],
+      fetchPublication,
+    );
+
+    expect(fetchPublication).not.toHaveBeenCalled();
+  });
+
+  it('re-reads a PENDING publication when the statuses predicate is passed, but never a REJECTED one', async () => {
+    const fetchPublication = vi.fn(async (url: string) =>
+      detailed(url, SOURCE_URL),
+    );
+
+    const details = await resolvePublicationDetails(
+      [
+        listed('p/1', PublicationStatus.Pending),
+        listed('p/2', PublicationStatus.Rejected),
+        listed('p/3', PublicationStatus.Approved),
+      ],
+      fetchPublication,
+      undefined,
+      undefined,
+      isStatusDetailCandidate,
+    );
+
+    expect(details.map((publication) => publication.url)).toEqual([
+      'p/1',
+      'p/3',
+    ]);
   });
 });

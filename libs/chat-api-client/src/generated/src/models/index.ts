@@ -1,5 +1,5 @@
 /* tslint:disable */
-/* eslint-disable */
+
 /**
  *
  * @export
@@ -10488,6 +10488,58 @@ export interface UserProfileDto {
    */
   pictureUrl?: string;
 }
+
+/**
+ *
+ * @export
+ */
+export const VersionPublicationStatus = {
+  NotPublished: 'not-published',
+  InReview: 'in-review',
+  Published: 'published',
+  Unknown: 'unknown',
+} as const;
+export type VersionPublicationStatus =
+  (typeof VersionPublicationStatus)[keyof typeof VersionPublicationStatus];
+
+/**
+ *
+ * @export
+ * @interface VersionStatusEntryDto
+ */
+export interface VersionStatusEntryDto {
+  /**
+   * DIAL Core resource id of the version, as the listings return it.
+   * @type {string}
+   * @memberof VersionStatusEntryDto
+   */
+  id: string;
+  /**
+   * Display version of the version; empty when the resource has none.
+   * @type {string}
+   * @memberof VersionStatusEntryDto
+   */
+  version: string;
+  /**
+   *
+   * @type {VersionPublicationStatus}
+   * @memberof VersionStatusEntryDto
+   */
+  status: VersionPublicationStatus;
+  /**
+   * Folders a published version is published to, without the `public/` prefix; empty otherwise.
+   * @type {Array<string>}
+   * @memberof VersionStatusEntryDto
+   */
+  publishedFolders: Array<string>;
+  /**
+   * Display name of the publisher of a published version.
+   * @type {string}
+   * @memberof VersionStatusEntryDto
+   */
+  publishedBy?: string;
+}
+
 /**
  *
  * @export

@@ -32,6 +32,7 @@ import {
   getPublicationSourceCredentials,
   getPublicationSourceTargetUrl,
   publishesCopy,
+  isStatusDetailCandidate,
   resolvePublicationDetails,
   resolvePublicationsForSource,
   toPublicationList,
@@ -48,6 +49,7 @@ import {
   getVersionedTargetResourceName,
   stripPublicTargetFolder,
 } from './publish-target.util';
+import type { StatusPublication } from './version-status.util';
 
 /*
  * This service does NOT inject SkillsLookupService. Skill publication uses the
@@ -56,6 +58,12 @@ import {
  */
 const historyCacheKey = (entityType: CatalogEntityType, entityId: string) =>
   `publish-history:${entityType}:${entityId}`;
+
+/* The caller's resolved own-bucket publications behind the version statuses; cleared by every publish and unpublish. */
+const bucketPublicationsCacheKey = (bucket: string) =>
+  `publish:bucket-publications:${bucket}`;
+
+const BUCKET_PUBLICATIONS_TTL_MS = 60 * 1000;
 
 /* Keyed by the caller's bucket, so one caller's answer is never served to another. */
 const unpublishAccessCacheKey = (
@@ -237,6 +245,7 @@ export class PublishService {
     }
 
     await this.cacheManager.del(historyCacheKey(entityType, entityId));
+    await this.cacheManager.del(bucketPublicationsCacheKey(bucket));
 
     /*
      * Core returns 200 with no parseable body for some auto-approved
@@ -408,6 +417,7 @@ export class PublishService {
     }
 
     await this.cacheManager.del(historyCacheKey(entityType, entityId));
+    await this.cacheManager.del(bucketPublicationsCacheKey(bucket));
 
     /* See the matching comment in `publish` above: `result.data` can be undefined. */
     const publication = result.data;
@@ -545,6 +555,36 @@ export class PublishService {
   }
 
   /**
+   * Every publication in the caller's own bucket that Core did not reject, with
+   * its `resources` resolved — `PENDING` ones included, unlike
+   * `getPublishHistory`. Read once and cached per bucket for 60 s; publish and
+   * unpublish clear it.
+   *
+   * @throws {BadGatewayException} When Core returns an unexpected error
+   * @throws {ServiceUnavailableException} When Core is unreachable or times out
+   */
+  async getBucketPublications(
+    accessToken: string,
+    bucket: string,
+  ): Promise<StatusPublication[]> {
+    const context = 'version statuses publications';
+    return withCachedDialRequest({
+      cacheManager: this.cacheManager,
+      cacheKey: bucketPublicationsCacheKey(bucket),
+      ttlMs: BUCKET_PUBLICATIONS_TTL_MS,
+      context,
+      logger: this.logger,
+      fetch: () =>
+        this.listResolvedPublications(
+          accessToken,
+          bucket,
+          context,
+          isStatusDetailCandidate,
+        ),
+    });
+  }
+
+  /**
    * Every live publication of `sourceUrl` in the caller's bucket, with its
    * `resources` resolved.
    *
@@ -592,12 +632,14 @@ export class PublishService {
     accessToken: string,
     bucket: string,
     context: string,
+    isCandidate?: (status: string | undefined) => boolean,
   ) {
     return resolvePublicationDetails(
       await this.listPublications(accessToken, bucket, context),
       (url) => this.fetchPublication(accessToken, url),
       this.logger,
       context,
+      isCandidate,
     );
   }
 

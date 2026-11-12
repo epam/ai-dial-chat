@@ -100,6 +100,9 @@ describe('PublishService', () => {
       expect(cacheManager.del).toHaveBeenCalledWith(
         'publish-history:toolset:toolsets/bucket-123/tool-abc123__1.2.0',
       );
+      expect(cacheManager.del).toHaveBeenCalledWith(
+        `publish:bucket-publications:${TEST_BUCKET}`,
+      );
     });
 
     it('falls back to the caller-supplied author and the current time when Core returns no parseable publication body', async () => {
@@ -1330,6 +1333,116 @@ describe('PublishService', () => {
           CatalogEntityType.Toolset,
           'toolsets/bucket-123/tool-abc123__1.2.0',
         ),
+      ).rejects.toBeInstanceOf(BadGatewayException);
+    });
+  });
+
+  describe('getBucketPublications', () => {
+    const pending = {
+      url: 'publications/bucket-123/pending',
+      status: 'PENDING',
+      targetFolder: 'public/Organization/',
+    };
+    const approved = {
+      url: 'publications/bucket-123/approved',
+      status: 'APPROVED',
+      targetFolder: 'public/Organization/',
+    };
+    const rejected = {
+      url: 'publications/bucket-123/rejected',
+      status: 'REJECTED',
+      targetFolder: 'public/Organization/',
+    };
+
+    const mockCore = (dialClient: DialClientService) => {
+      vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+        okResponse([pending, approved, rejected]),
+      );
+      vi.spyOn(dialClient.client, 'getPublication').mockImplementation((async ({
+        body,
+      }: {
+        body: { url: string };
+      }) =>
+        okResponse({
+          url: body.url,
+          status: body.url.endsWith('pending') ? 'PENDING' : 'APPROVED',
+          targetFolder: 'public/Organization/',
+          resources: [
+            {
+              action: 'ADD',
+              sourceUrl: 'applications/bucket-123/Review__1.0.0',
+            },
+          ],
+        })) as never);
+    };
+
+    it('reads the publication list once and expands the PENDING and APPROVED ones, never a REJECTED one', async () => {
+      const { service, dialClient, cacheManager } = makeService();
+      cacheManager.get.mockResolvedValue(undefined);
+      mockCore(dialClient);
+
+      const publications = await service.getBucketPublications(
+        'token-abc',
+        TEST_BUCKET,
+      );
+
+      expect(dialClient.client.getPublications).toHaveBeenCalledOnce();
+      expect(dialClient.client.getPublication).toHaveBeenCalledTimes(2);
+      expect(publications.map((publication) => publication.url)).toEqual([
+        pending.url,
+        approved.url,
+      ]);
+    });
+
+    it('caches the resolved publications per bucket for 60 seconds', async () => {
+      const { service, dialClient, cacheManager } = makeService();
+      cacheManager.get.mockResolvedValue(undefined);
+      mockCore(dialClient);
+
+      await service.getBucketPublications('token-abc', TEST_BUCKET);
+
+      expect(cacheManager.set).toHaveBeenCalledWith(
+        `publish:bucket-publications:${TEST_BUCKET}`,
+        expect.any(Array),
+        60_000,
+      );
+    });
+
+    it('serves the cached publications without calling Core', async () => {
+      const { service, dialClient, cacheManager } = makeService();
+      cacheManager.get.mockResolvedValue([approved]);
+      vi.spyOn(dialClient.client, 'getPublications');
+
+      const publications = await service.getBucketPublications(
+        'token-abc',
+        TEST_BUCKET,
+      );
+
+      expect(publications).toEqual([approved]);
+      expect(dialClient.client.getPublications).not.toHaveBeenCalled();
+    });
+
+    it('keeps another bucket in its own cache entry', async () => {
+      const { service, dialClient, cacheManager } = makeService();
+      cacheManager.get.mockResolvedValue(undefined);
+      mockCore(dialClient);
+
+      await service.getBucketPublications('token-abc', 'other-bucket');
+
+      expect(cacheManager.get).toHaveBeenCalledWith(
+        'publish:bucket-publications:other-bucket',
+      );
+    });
+
+    it('maps a Core error for the list to BadGatewayException', async () => {
+      const { service, dialClient, cacheManager } = makeService();
+      cacheManager.get.mockResolvedValue(undefined);
+      vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
+        errResponse(500),
+      );
+
+      await expect(
+        service.getBucketPublications('token-abc', TEST_BUCKET),
       ).rejects.toBeInstanceOf(BadGatewayException);
     });
   });
