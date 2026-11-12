@@ -7,3 +7,10 @@
  */
 export const IFRAME_ORIGIN_PATTERN =
   /^(https?):\/\/(?:\*\.)?[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*(?::\d+)?$/;
+
+/*
+ * An application identifier: lowercase, 1–63 characters, no leading hyphen.
+ * The same rule Config Studio enforces for an instance's `appId`, so every
+ * served identifier can name a Studio instance.
+ */
+export const APP_ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,62}$/;

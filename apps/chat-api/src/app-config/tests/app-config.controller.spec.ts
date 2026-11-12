@@ -1,5 +1,6 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
+  BadRequestException,
   INestApplication,
   ValidationPipe,
   VersioningType,
@@ -18,6 +19,7 @@ import {
   CatalogCreationType,
   type CatalogCreationRolesConfig,
 } from '../../config/catalog-creation.types';
+import { ExplicitEnvironment } from '../../config/explicit-environment';
 import { AppConfigController } from '../app-config.controller';
 import { AppConfigService } from '../app-config.service';
 import { CompositeConfigProvider } from '../config-registry/composite-config.provider';
@@ -203,10 +205,23 @@ describe('AppConfigController (integration)', () => {
       await request(app.getHttpServer()).get('/v1/client-config').expect(400);
     });
 
+    /* A well-formed identifier passes the DTO; the service decides whether
+     * this deployment serves it. */
     it('returns 400 when appId is unknown', async () => {
+      mockService.getClientConfig.mockRejectedValue(
+        new BadRequestException('Unknown appId'),
+      );
+
       await request(app.getHttpServer())
         .get('/v1/client-config?appId=unknown-app')
         .expect(400);
+    });
+
+    it('returns 400 when appId is repeated', async () => {
+      await request(app.getHttpServer())
+        .get('/v1/client-config?appId=chat-ui&appId=chat-ui')
+        .expect(400);
+      expect(mockService.getClientConfig).not.toHaveBeenCalled();
     });
 
     it('response does not contain server-only keys', async () => {
@@ -376,6 +391,7 @@ describe('AppConfigController catalogCreationPermissions (integration)', () => {
         provide: ConfigService,
         useValue: new ConfigService({ CATALOG_CREATION_ROLES: policy }),
       },
+      { provide: ExplicitEnvironment, useValue: ExplicitEnvironment.of([]) },
     ]);
     return app;
   };
@@ -524,4 +540,123 @@ describe('AppConfigController catalogCreationPermissions (integration)', () => {
       );
     },
   );
+});
+
+/*
+ * The real AppConfigService behind the real controller and ValidationPipe:
+ * the DTO checks the identifier's format, the service checks it against the
+ * deployment's CLIENT_CONFIG_APP_IDS.
+ */
+describe('AppConfigController served application identifiers (integration)', () => {
+  let app: INestApplication | undefined;
+  let cacheStore: Map<string, unknown>;
+
+  const buildServingApp = async (servedAppIds?: string[]) => {
+    cacheStore = new Map<string, unknown>();
+    app = await buildApp([
+      AppConfigService,
+      {
+        provide: CompositeConfigProvider,
+        useValue: {
+          resolve: vi.fn(async (key: string) =>
+            key === 'asr.modelId' ? 'whisper-1' : undefined,
+          ),
+        },
+      },
+      {
+        provide: CACHE_MANAGER,
+        useValue: {
+          get: async (key: string) => cacheStore.get(key),
+          set: async (key: string, value: unknown) => {
+            cacheStore.set(key, value);
+          },
+        },
+      },
+      {
+        provide: ConfigService,
+        useValue: new ConfigService({ CLIENT_CONFIG_APP_IDS: servedAppIds }),
+      },
+      { provide: ExplicitEnvironment, useValue: ExplicitEnvironment.of([]) },
+    ]);
+    return app;
+  };
+
+  const getConfig = (server: INestApplication, appId: string) =>
+    request(server.getHttpServer())
+      .get('/v1/client-config')
+      .query({ appId })
+      .set(
+        SESSION_USER_HEADER,
+        sessionHeader({ claims: { dial_roles: ['R'] } }),
+      );
+
+  afterEach(async () => {
+    await app?.close();
+    app = undefined;
+  });
+
+  it.each(['Chat_UI', '-x', `a${'b'.repeat(63)}`, 'chat ui'])(
+    'rejects the malformed identifier %j with a validation message',
+    async (appId) => {
+      const server = await buildServingApp(['chat-ui', 'launchpad']);
+
+      const result = await getConfig(server, appId).expect(400);
+
+      expect(JSON.stringify(result.body.message)).toContain('appId must be');
+      expect(cacheStore.size).toBe(0);
+    },
+  );
+
+  it('rejects a repeated identifier', async () => {
+    const server = await buildServingApp();
+
+    await request(server.getHttpServer())
+      .get('/v1/client-config?appId=chat-ui&appId=chat-ui')
+      .expect(400);
+  });
+
+  it('serves only chat-ui with the default list', async () => {
+    const server = await buildServingApp();
+
+    await getConfig(server, 'chat-ui').expect(200);
+    const result = await getConfig(server, 'launchpad').expect(400);
+
+    expect(result.body.message).toBe('Unknown appId');
+  });
+
+  it('serves every listed identifier with the same values and its own appId', async () => {
+    const server = await buildServingApp(['launchpad', 'chat-ui']);
+
+    const launchpad = await getConfig(server, 'launchpad').expect(200);
+    const chat = await getConfig(server, 'chat-ui').expect(200);
+    await getConfig(server, 'models-garden').expect(400);
+
+    expect(launchpad.body.appId).toBe('launchpad');
+    expect(chat.body.appId).toBe('chat-ui');
+    expect(launchpad.body.config.asrModelId).toBe('whisper-1');
+    expect(launchpad.body.features).toEqual(chat.body.features);
+    expect(launchpad.body.config).toEqual(chat.body.config);
+  });
+
+  it('keeps a separate cache entry per identifier', async () => {
+    const server = await buildServingApp(['launchpad', 'chat-ui']);
+
+    await getConfig(server, 'launchpad').expect(200);
+    await getConfig(server, 'chat-ui').expect(200);
+    const cachedLaunchpad = await getConfig(server, 'launchpad').expect(200);
+
+    expect([...cacheStore.keys()]).toEqual([
+      'app-config:client:launchpad:user:user-1:roles:R',
+      'app-config:client:chat-ui:user:user-1:roles:R',
+    ]);
+    expect(cachedLaunchpad.body.appId).toBe('launchpad');
+  });
+
+  it('keeps the no-store header for another served identifier', async () => {
+    const server = await buildServingApp(['launchpad', 'chat-ui']);
+
+    const result = await getConfig(server, 'launchpad').expect(200);
+
+    expect(result.headers['cache-control']).toBe('private, no-store');
+  });
 });
