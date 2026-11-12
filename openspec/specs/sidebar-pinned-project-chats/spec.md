@@ -28,12 +28,14 @@ interface PinnedProjectChatsOptions {
   enabled: boolean;
   /** The project no longer exists (a watch `DELETE`, or `404` on a read). Called at most once per id. */
   onProjectDeleted: (projectId: string) => void;
+  /** Id of the chat the host has open. When it is not among the newest chats of its project, it takes the last slot of that project's list, so the list never exceeds `PINNED_PROJECT_CHATS_LIMIT`. */
+  activeConversationId?: string;
 }
 
 interface PinnedProjectChats {
   /** The project's details as last read; `canEdit`, `contentVersion` and `conversationCount` feed the host's actions. */
   project: ProjectDetailsDto;
-  /** At most `PINNED_PROJECT_CHATS_LIMIT` chats, newest first. */
+  /** At most `PINNED_PROJECT_CHATS_LIMIT` chats, newest first; an open chat past the newest ones replaces the last of them and comes last. */
   chats: PinnedProjectChat[];
   /** The project has more chats than `chats` holds. */
   hasMore: boolean;
@@ -61,6 +63,7 @@ For every id in `projectIds`, the hook SHALL:
 
 - call `client.getProject(id, signal)` and `client.listProjectConversations(id, signal)` in parallel;
 - keep the first `PINNED_PROJECT_CHATS_LIMIT` listing items, in listing order (newest first), and set `hasMore` when the listing has more items;
+- keep the listing items past them, so an open chat among them can be listed;
 - when any kept item has `isTitlePending`, call `client.getProjectConversationTitles(id, names)` once with the kept pending names. If that call fails, the file-name titles stay.
 
 The hook SHALL also follow these rules:
@@ -77,6 +80,26 @@ The hook SHALL also follow these rules:
 
 - **WHEN** a pinned project's listing has 12 items
 - **THEN** `chats` holds the first 10 in listing order, and `hasMore` is `true`
+
+#### Scenario: The open chat is past the newest ten
+
+- **WHEN** a pinned project's listing has 12 items and `activeConversationId` names the 12th
+- **THEN** `chats` holds the first 9 in listing order followed by the 12th, and `hasMore` is `true`
+
+#### Scenario: The open chat is among the newest ten
+
+- **WHEN** `activeConversationId` names the 3rd of 12 listing items
+- **THEN** `chats` holds the first 10 in listing order
+
+#### Scenario: The open chat changes
+
+- **WHEN** `activeConversationId` changes
+- **THEN** `chats` is recomputed from the last listing without a request
+
+#### Scenario: The open chat has a pending title
+
+- **WHEN** the open chat is past the newest ten and has `isTitlePending: true`
+- **THEN** `getProjectConversationTitles` is called once with its name, and its resolved title replaces the file-name title
 
 #### Scenario: A project with exactly ten chats
 
