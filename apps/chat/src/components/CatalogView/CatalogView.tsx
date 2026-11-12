@@ -52,6 +52,7 @@ import { useCatalogCreationPermissions } from '../../hooks/catalog/useCatalogCre
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
+import { useResourceVersionHistory } from '../../hooks/publish/useResourceVersionHistory';
 import { useSkillArchiveImport } from '../../hooks/skills/useSkillArchiveImport';
 import { useCatalogActiveTabPreference } from '../../hooks/useCatalogActiveTabPreference/useCatalogActiveTabPreference';
 import { useCatalogItemActions } from '../../hooks/useCatalogItemActions/useCatalogItemActions';
@@ -151,6 +152,7 @@ const CatalogView: FC<Props> = ({
   const [searchParams, setSearchParams] = useSearchParams();
   const itemIdParam = searchParams.get(CatalogQuery.ItemId) ?? undefined;
   const [initialDetailsItemId, setInitialDetailsItemId] = useState(itemIdParam);
+  const [publishOpenItem, setPublishOpenItem] = useState<CatalogItem>();
 
   /*
    * `itemId` is a one-shot signal — from a shared-invitation redirect (see
@@ -458,6 +460,19 @@ const CatalogView: FC<Props> = ({
     isAdmin,
   });
 
+  const handlePublishOpenChange = useCallback(
+    (isOpen: boolean, item: CatalogItem) =>
+      setPublishOpenItem(isOpen ? item : undefined),
+    [],
+  );
+  const versionHistory = useResourceVersionHistory(
+    publishOpenItem?.id ?? '',
+    publishOpenItem?.type ?? CatalogEntityType.Agent,
+    publishOpenItem != null,
+  );
+  const publishVersionHistory =
+    publishOpenItem != null ? versionHistory : undefined;
+
   const {
     isShareVisible,
     isUnshareVisible,
@@ -662,6 +677,8 @@ const CatalogView: FC<Props> = ({
         isPublishVisible={isPublishVisible}
         getPublishHistory={getPublishHistory}
         getPublishDependencies={getPublishDependencies}
+        publishVersionHistory={publishVersionHistory}
+        onPublishOpenChange={handlePublishOpenChange}
         resolvePublishDependenciesLabels={(item) =>
           getPublishDependenciesLabels(
             t,

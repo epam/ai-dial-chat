@@ -3038,11 +3038,11 @@ describe('DetailsPanel — versions history', () => {
     const onPublishOpenChange = vi.fn();
     renderPanel({ onPublishOpenChange });
 
-    expect(onPublishOpenChange).toHaveBeenLastCalledWith(false);
+    expect(onPublishOpenChange).toHaveBeenLastCalledWith(false, item);
 
     await openPublish();
 
-    expect(onPublishOpenChange).toHaveBeenLastCalledWith(true);
+    expect(onPublishOpenChange).toHaveBeenLastCalledWith(true, item);
   });
 
   it('reports the sub-view closed when the panel unmounts', async () => {
@@ -3052,6 +3052,6 @@ describe('DetailsPanel — versions history', () => {
 
     unmount();
 
-    expect(onPublishOpenChange).toHaveBeenLastCalledWith(false);
+    expect(onPublishOpenChange).toHaveBeenLastCalledWith(false, item);
   });
 });

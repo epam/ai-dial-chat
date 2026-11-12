@@ -1917,3 +1917,18 @@ export enum ResourceSavePanelI18nKeys {
   SavedButPublishFailedReason = 'resourceSavePanel.savedButPublishFailedReason',
   SavedButAlreadyPublished = 'resourceSavePanel.savedButAlreadyPublished',
 }
+
+export enum VersionHistoryI18nKeys {
+  Heading = 'versionHistory.heading',
+  Current = 'versionHistory.current',
+  NotPublished = 'versionHistory.notPublished',
+  InReview = 'versionHistory.inReview',
+  Published = 'versionHistory.published',
+  PublishedIn = 'versionHistory.publishedIn',
+  StatusUnavailable = 'versionHistory.statusUnavailable',
+  Loading = 'versionHistory.loading',
+  Empty = 'versionHistory.empty',
+  LoadFailed = 'versionHistory.loadFailed',
+  PublishedBy = 'versionHistory.publishedBy',
+  Owner = 'versionHistory.owner',
+}

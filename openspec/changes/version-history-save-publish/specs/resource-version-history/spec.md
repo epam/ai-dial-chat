@@ -88,7 +88,7 @@ Grouping the listing, building the rows and loading the statuses SHALL live in a
 
 The hook SHALL return the folder as segments, and the host SHALL supply the translated root label ("Personal"), so the lib never reads the language. The section SHALL be mobile-first and render correctly at phone width inside the full-width drawer, use logical properties and mirror directional icons for RTL, meet WCAG 2.1 AAA (visible focus, a heading, a list with items, status not conveyed by color alone), and use memoised row data. It SHALL NOT be gated by `ENABLED_FEATURES` or `ENABLED_FEATURES_ROLES`.
 
-i18n keys (names fixed in implementation, namespace `ResourceSavePanelI18nKeys` and the publish panel's own namespace): the section heading, **Current**, **Not published**, **In review**, **Published** (with `{folders}`), "Published by {name}", "by {name}", loading, empty, error and **Retry** copy.
+i18n keys (`VersionHistoryI18nKeys`, `versionHistory.*`, one namespace shared by the Save panel host and the catalog Details publish host, with the existing `ButtonsI18nKeys.Retry` and `CatalogI18nKeys.FolderPersonal` reused): the section heading, **Current**, **Not published**, **In review**, **Published** (with `{folders}`), "Published by {name}", "by {name}", loading, empty, error and **Retry** copy.
 
 #### Scenario: Assistive technology
 - **WHEN** a screen reader reads the section

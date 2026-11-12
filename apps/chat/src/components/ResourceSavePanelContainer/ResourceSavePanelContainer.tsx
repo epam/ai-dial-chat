@@ -27,6 +27,7 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
+import { useResourceVersionHistory } from '../../hooks/publish/useResourceVersionHistory';
 import {
   type SaveNotifiableEntity,
   useResourceSaveNotification,
@@ -227,9 +228,16 @@ const ResourceSavePanelContainer: FC<Props> = ({
     [t, typeLabel],
   );
 
+  const versionHistory = useResourceVersionHistory(
+    resourceId,
+    resourceType,
+    isOpen && currentVersion != null,
+  );
+
   return (
     <StandaloneSaveToFolderPanel
       {...panelProps}
+      versionHistory={versionHistory}
       isOpen={isOpen}
       onClose={onClose}
       returnFocusRef={returnFocusRef}

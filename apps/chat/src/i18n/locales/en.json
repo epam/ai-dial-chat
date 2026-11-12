@@ -2126,5 +2126,19 @@
     "savedButPublishFailed": "“{{name}}” was saved, but the publish request failed.",
     "savedButPublishFailedReason": "“{{name}}” was saved, but the publish request failed: {{reason}}",
     "savedButAlreadyPublished": "“{{name}}” was saved, but this version is already published in {{folder}}. Choose another folder or save as a new version."
+  },
+  "versionHistory": {
+    "heading": "Versions history",
+    "current": "Current",
+    "notPublished": "Not published",
+    "inReview": "In review",
+    "published": "Published",
+    "publishedIn": "Published in {{folders}}",
+    "statusUnavailable": "Status unavailable",
+    "loading": "Loading publication statuses…",
+    "empty": "No saved versions yet.",
+    "loadFailed": "Could not load publication statuses.",
+    "publishedBy": "Published by {{name}}",
+    "owner": "by {{name}}"
   }
 }

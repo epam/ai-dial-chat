@@ -7,6 +7,7 @@ import type {
   PublishFooterLabels,
   PublishHistoryEntry,
   PublishPanelLabels,
+  VersionHistorySectionProps,
 } from '@epam/ai-dial-publish-panel';
 import { DropdownItem, TabModel } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
@@ -237,6 +238,13 @@ export interface CatalogProps {
   resolvePublishApprovalLabels?: (
     item: CatalogItem,
   ) => Pick<PublishPanelLabels, 'adminApprovalTitle' | 'adminApprovalMessage'>;
+  /**
+   * Versions history shown as the last section of the publish panel of the open item, already resolved by the host; see `DetailsPanel`'s `publishVersionHistory`.
+   * The host builds it for the item reported by `onPublishOpenChange`.
+   */
+  publishVersionHistory?: VersionHistorySectionProps;
+  /** Called with `true` and the open item when its publish sub-view opens, and with `false` when it closes; see `DetailsPanel`'s `onPublishOpenChange`. */
+  onPublishOpenChange?: (isOpen: boolean, item: CatalogItem) => void;
   /** Root-level destination folder nodes offered by the publish flow. */
   publishFolderItems?: PublishFolderNode[];
   /**

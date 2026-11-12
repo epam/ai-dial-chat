@@ -1340,9 +1340,10 @@ object of `@epam/ai-dial-publish-panel` for the open item: rows, loading and err
 state, retry, labels and styles, already resolved by the host. The details panel
 forwards it to the publish panel unchanged, so the Versions history section is the
 last section of the panel; omitting it renders the panel as before. The panel adds no
-version input. `onPublishOpenChange(isOpen)` is called with `true` when the publish
-sub-view opens and `false` when it closes or the panel unmounts, so the host can
-load the statuses only while the sub-view is open. The library builds no rows and
+version input. `onPublishOpenChange(isOpen, item)` is called with `true` and the open item when
+the publish sub-view opens and with `false` when it closes or the panel unmounts, so
+the host can build the history for that item and load its statuses only while the
+sub-view is open. `Catalog` takes and forwards both props. The library builds no rows and
 calls no API; `useVersionHistory` in `@epam/ai-dial-chat-hooks` does both on the
 host side.
 

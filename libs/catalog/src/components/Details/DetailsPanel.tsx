@@ -175,14 +175,20 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   const [isCredentialsManagementOpen, setIsCredentialsManagementOpen] =
     useState(false);
 
-  const onPublishOpenChangeRef = useRef(onPublishOpenChange);
+  const publishOpenListenerRef = useRef({ onPublishOpenChange, item });
   useEffect(() => {
-    onPublishOpenChangeRef.current = onPublishOpenChange;
-  }, [onPublishOpenChange]);
+    publishOpenListenerRef.current = { onPublishOpenChange, item };
+  }, [onPublishOpenChange, item]);
   useEffect(() => {
-    onPublishOpenChangeRef.current?.(isPublishOpen);
-    return () => onPublishOpenChangeRef.current?.(false);
-  }, [isPublishOpen]);
+    const { onPublishOpenChange: notify, item: openItem } =
+      publishOpenListenerRef.current;
+    notify?.(isPublishOpen, openItem);
+    return () => {
+      const { onPublishOpenChange: notifyClosed, item: closedItem } =
+        publishOpenListenerRef.current;
+      notifyClosed?.(false, closedItem);
+    };
+  }, [isPublishOpen, item.id]);
 
   useEffect(() => {
     setIsStarred(initialIsStarred);
