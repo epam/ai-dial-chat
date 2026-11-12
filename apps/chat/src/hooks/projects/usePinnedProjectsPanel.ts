@@ -1,7 +1,9 @@
 import type { ProjectDetailsDto } from '@epam/ai-dial-chat-api-client';
 import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 import {
+  getPinnedProjectMenuActions,
   mapProjectSourceToFilterTab,
+  PinnedProjectMenuAction,
   usePinnedProjectChats,
 } from '@epam/ai-dial-chat-hooks/project';
 import type {
@@ -18,6 +20,7 @@ import {
   IconPinnedFilled,
   IconShare,
   IconTrashX,
+  IconUserOff,
   IconWorldShare,
   type Icon,
 } from '@tabler/icons-react';
@@ -56,6 +59,7 @@ import {
   projectsClient,
   subscribeProjectConversationViewed,
 } from './projects-client';
+import { useProjectShareRecipients } from './useProjectShareRecipients';
 
 /* A menu item's icon: Unpin shows the pinned state it removes, as on a pinned chat; Delete takes the error color. */
 const renderMenuIcon = (
@@ -229,12 +233,14 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
   );
 
   const [action, setAction] = useState<PinnedProjectActionState | null>(null);
+  const { requestRecipients, canRevokeAccess } = useProjectShareRecipients();
   const actionTriggerRef = useRef<HTMLButtonElement | null>(null);
   const handleActionMenuOpen = useCallback(
     (group: PinnedProjectGroup, trigger: HTMLButtonElement) => {
       actionTriggerRef.current = trigger;
+      if (projectsById.get(group.id)?.canManage) requestRecipients(group.id);
     },
-    [],
+    [projectsById, requestRecipients],
   );
   const openAction = useCallback(
     (kind: PinnedProjectActionKind, projectId: string) =>
@@ -261,51 +267,64 @@ export const usePinnedProjectsPanel = (onOpenRoute: (path: string) => void) => {
     [setPinnedProject, showErrorNotification, t],
   );
 
+  /* The lib decides which actions a project offers; the app supplies each one's label, icon and handler. */
   const getActions = useCallback(
     (group: PinnedProjectGroup): DropdownItem[] => {
-      const unpin: DropdownItem = {
-        key: 'unpin',
-        label: t(ButtonsI18nKeys.Unpin),
-        icon: renderMenuIcon(IconPinnedFilled, { isFilled: true }),
-        onClick: () => {
-          void handleUnpin(group.id);
+      const items: Record<PinnedProjectMenuAction, DropdownItem> = {
+        [PinnedProjectMenuAction.Unpin]: {
+          key: PinnedProjectMenuAction.Unpin,
+          label: t(ButtonsI18nKeys.Unpin),
+          icon: renderMenuIcon(IconPinnedFilled, { isFilled: true }),
+          onClick: () => {
+            void handleUnpin(group.id);
+          },
         },
-      };
-      const project = projectsById.get(group.id);
-      /* `canEdit` (the owner or a share with edit access) offers Edit; `canManage` (the owner) adds Publish, Share and Delete. */
-      if (!project?.canEdit) return [unpin];
-      const edit: DropdownItem = {
-        key: 'edit',
-        label: t(ButtonsI18nKeys.Edit),
-        icon: renderMenuIcon(IconPencilMinus),
-        onClick: () => onOpenRoute(getProjectEditRoute(group.id)),
-      };
-      if (!project.canManage) return [unpin, edit];
-      return [
-        unpin,
-        edit,
-        {
-          key: 'publish',
+        [PinnedProjectMenuAction.Edit]: {
+          key: PinnedProjectMenuAction.Edit,
+          label: t(ButtonsI18nKeys.Edit),
+          icon: renderMenuIcon(IconPencilMinus),
+          onClick: () => onOpenRoute(getProjectEditRoute(group.id)),
+        },
+        [PinnedProjectMenuAction.Publish]: {
+          key: PinnedProjectMenuAction.Publish,
           label: t(ButtonsI18nKeys.Publish),
           icon: renderMenuIcon(IconWorldShare),
           onClick: () => openAction(PinnedProjectActionKind.Publish, group.id),
         },
-        {
-          key: 'share',
+        [PinnedProjectMenuAction.Share]: {
+          key: PinnedProjectMenuAction.Share,
           label: t(ButtonsI18nKeys.Share),
           icon: renderMenuIcon(IconShare),
           onClick: () => openAction(PinnedProjectActionKind.Share, group.id),
         },
-        {
-          key: 'delete',
+        [PinnedProjectMenuAction.RevokeAccess]: {
+          key: PinnedProjectMenuAction.RevokeAccess,
+          label: t(ButtonsI18nKeys.RevokeAccess),
+          icon: renderMenuIcon(IconUserOff),
+          onClick: () =>
+            openAction(PinnedProjectActionKind.RevokeAccess, group.id),
+        },
+        [PinnedProjectMenuAction.Delete]: {
+          key: PinnedProjectMenuAction.Delete,
           label: t(ButtonsI18nKeys.Delete),
           icon: renderMenuIcon(IconTrashX, { isDanger: true }),
           className: 'text-error',
           onClick: () => openAction(PinnedProjectActionKind.Delete, group.id),
         },
-      ];
+        [PinnedProjectMenuAction.RemoveFromMyList]: {
+          key: PinnedProjectMenuAction.RemoveFromMyList,
+          label: t(ButtonsI18nKeys.RemoveFromMyList),
+          icon: renderMenuIcon(IconTrashX),
+          onClick: () =>
+            openAction(PinnedProjectActionKind.RemoveFromMyList, group.id),
+        },
+      };
+      return getPinnedProjectMenuActions(
+        projectsById.get(group.id),
+        canRevokeAccess(group.id),
+      ).map((action) => items[action]);
     },
-    [handleUnpin, onOpenRoute, openAction, projectsById, t],
+    [handleUnpin, onOpenRoute, openAction, projectsById, canRevokeAccess, t],
   );
 
   const pinnedProjects = useMemo<PinnedProjects | undefined>(

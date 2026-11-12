@@ -31,6 +31,7 @@ import {
   IconPin,
   IconShare,
   IconTrashX,
+  IconUserOff,
   IconWorldOff,
   IconWorldShare,
   type TablerIcon,
@@ -73,7 +74,10 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   onUnpublish,
   onEdit,
   onShare,
+  onRevokeAccess,
+  onActionMenuOpenChange,
   onDelete,
+  onRemoveFromMyList,
   onDownload,
   onContextFileClick,
   onContextFileDownload,
@@ -196,6 +200,22 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
       icon: renderMenuIcon(IconDownload),
       onClick: onDownload,
     });
+    if (onRevokeAccess) {
+      items.push({
+        key: 'revokeAccess',
+        label: labels.revokeAccessLabel ?? 'Revoke access',
+        icon: renderMenuIcon(IconUserOff),
+        onClick: onRevokeAccess,
+      });
+    }
+    if (onRemoveFromMyList) {
+      items.push({
+        key: 'removeFromMyList',
+        label: labels.removeFromMyListLabel ?? 'Remove from My List',
+        icon: renderMenuIcon(IconTrashX),
+        onClick: onRemoveFromMyList,
+      });
+    }
     if (onDelete) {
       items.push({
         key: 'delete',
@@ -211,6 +231,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   const renderMenu = (includePrimary: boolean, className: string) => (
     <div className={className}>
       <ActionMenu
+        onOpenChange={onActionMenuOpenChange}
         items={buildMenuItems(includePrimary)}
         title={
           includePrimary

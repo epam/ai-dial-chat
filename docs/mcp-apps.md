@@ -59,7 +59,7 @@ Every ref keeps two names. `toolName` is the name as it appears in the message (
 
 > The name-prefix match is a temporary heuristic. It will be replaced once the orchestrator reports which toolset a call belongs to.
 >
-> When a public toolset and another toolset share a display name, only the public one is queried. A private copy cannot have `forward_auth_token`, so a call to it reaches the MCP server without the user's identity. This is the same temporary heuristic.
+> When a public toolset and another toolset share a display name, only the public one is queried; two copies of the same visibility are both queried. A private copy cannot have `forward_auth_token`, so a call to it reaches the MCP server without the user's identity. This is the same temporary heuristic.
 
 `kind` (`'toolset'` or `'application'`) on a ref only selects the Core MCP proxy route — `/v1/toolset/{id}/mcp` or `/v1/deployments/{id}/mcp`. A wrong prefix is a `404` from Core.
 
@@ -123,13 +123,15 @@ Both surfaces build the `McpUiHostContext` sent on `ui/initialize` with `useMcpA
 
 The MCP UI CSS variables are mapped from the chat's own design tokens in `apps/chat/src/styles.scss`, so a mounted app picks up the current theme.
 
+The canvas keeps the `hostContext` it was opened with, so `apps/chat/src/components/McpAppCanvasContainer/McpAppCanvasContainer.tsx` passes the live `'fullscreen'` host context to `AttachmentCanvasContainer` as `mcpAppHostContext`. A theme or locale change then reaches an app that is already open in the canvas as `ui/notifications/host-context-changed`, the same way the inline preview gets it, without remounting the iframe; a change that lands while the app is still loading is replayed once it initializes.
+
 `styleExtensions` is a custom field outside the MCP Apps standard: `styles.variables` accepts only the standard names, so the chat sends additional variables beside it, as `{ variables: { '--button-radius': …, … } }`. It carries the button corner radii (`--button-radius`, `--button-radius-small`), the primary button gradient (`--button-primary-gradient-start`/`-end`, plus `-hover-` and `-active-` stops) and the primary button label colour (`--button-primary-text`). Each is read from the chat's `--mcp-ext-<name>` variable in `apps/chat/src/styles/mcp-app-ui-vars.scss`. An app that does not know the field ignores it.
 
 ## Caching
 
 | Layer             | Where                             | Key                                                      | TTL    | Notes                                                                                                                       |
 | ----------------- | --------------------------------- | -------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
-| Resource HTML     | `chat-api`                        | `mcp-apps:resource:${toolsetId}:${resourceUri}`          | 30 s   | `ui://` resources are treated as static.                                                                                    |
+| Resource HTML     | `chat-api`                        | `mcp-apps:resource:${toolsetId}:${resourceUri}`          | 30 s   | `ui://` resources are treated as static. Shared across users: a hit skips the access check for up to the TTL.               |
 | Resource + result | Browser, `useMcpAppResponseCache` | `${conversationId}:${mcpAppCanvasKey(index)}` + seed key | 15 min | Shared by the inline preview and the canvas, so expanding or collapsing never re-fetches. Concurrent loads share one fetch. |
 | Tool calls        | —                                 | —                                                        | —      | Never cached: a `tools/call` may have side effects.                                                                         |
 
@@ -159,7 +161,7 @@ Both iframes use `sandbox="allow-scripts allow-same-origin allow-forms"`. `allow
 
 The sandbox page:
 
-- checks `Origin` (or, without it, `Referer`) against `MCP_APP_SANDBOX_ALLOWED_HOST_ORIGINS` and returns `403` otherwise — an empty list rejects everything;
+- checks `Origin` (or, without it, `Referer`) against `MCP_APP_SANDBOX_ALLOWED_HOST_ORIGINS` and returns `403` otherwise — an empty list rejects everything. Entries are normalized to their origin (`https://chat.example.com/` is read as `https://chat.example.com`);
 - sends a fixed, deliberately **permissive** CSP (`default-src *` with inline and eval) because it cannot know what an app loads — isolation comes from the origin split and from `frame-ancestors` locked to the validated host;
 - is served `Cache-Control: no-store`, since the page embeds the validated host origin.
 
@@ -178,4 +180,6 @@ There is no feature flag. MCP Apps appear whenever a sandbox URL is configured a
 - **Popups are blocked.** Neither iframe's `sandbox` attribute includes `allow-popups`, and `@mcp-ui/client` (7.1.1) hardcodes the outer one. An app's own `window.open` fails; use `ui/open-link` instead. The CSP's `allow-popups` token does not change this.
 - **No per-tool permissions or CSP.** DIAL Core returns no permissions payload, and the sandbox has no per-request CSP override.
 - **Indirect discovery is a name heuristic** (see [Discovery](#1-discovery)); a toolset whose sanitized display name does not prefix the tool-call name is not found.
+- **A failed indirect discovery is not retried.** The toolset is marked as queried before the request, so after a failure its app stays hidden until the deployment changes or the page reloads. Clearing the mark on failure would re-send the request on every `messages` change (for example while a response streams) for a persistent error. Reviewed together with the name heuristic above.
+- **The `initialize` handshake fallback can re-send a `tools/call`.** When Core answers `400`/`404` the BFF runs the MCP session handshake and sends the call once more. It works around Core not yet supporting MCP sessions for apps natively, and is to be revisited when it does.
 - **Only two orchestrator state shapes** (`tool_messages`, `tool_execution_history`) are understood for seeding. Neither is a DIAL Core or MCP Apps guarantee.

@@ -8,7 +8,10 @@ import { useNotification } from '../../../context/NotificationContext';
 import { useAppConfig as useAppConfigMock } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
-import { publishConversation } from '../../../server-api/conversation-publish.api';
+import {
+  getConversationPublishDependencies,
+  publishConversation,
+} from '../../../server-api/conversation-publish.api';
 import { getPublishRules } from '../../../server-api/publish-rules.api';
 import PublishConversationPanelContainer from '../PublishConversationPanelContainer';
 
@@ -41,7 +44,9 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       hasRulesLoadError,
       onClose,
       onSubmit,
+      dependencies,
     }: {
+      dependencies?: { name: string }[];
       resource?: { title: string };
       selectedFolderPath?: string[];
       onSelectedFolderPathChange: (path: string[] | undefined) => void;
@@ -62,6 +67,10 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
     }) => (
       <div role="dialog" aria-label="publish conversation">
         <span>{resource?.title}</span>
+        <span>
+          dependencies:
+          {dependencies?.map((dependency) => dependency.name).join(',')}
+        </span>
         <span>selected:{selectedFolderPath?.join('/') ?? 'none'}</span>
         <span>existing:{String(hasExistingPublicationInFolder)}</span>
         <span>writeAccess:{String(hasWriteAccess)}</span>
@@ -94,6 +103,9 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
 });
 
 vi.mock('../../../hooks/publish/usePublishFolders');
+vi.mock('../../../hooks/publish/usePublishDependencyIconResolver', () => ({
+  usePublishDependencyIconResolver: () => () => undefined,
+}));
 vi.mock('../../../hooks/user-profile/useUserProfile', () => ({
   useUserProfile: () => ({ displayName: 'Daniil Pavlov' }),
 }));
@@ -481,5 +493,47 @@ describe('PublishConversationPanelContainer', () => {
     );
 
     expect(screen.getByText('rules:')).toBeTruthy();
+  });
+
+  describe('private dependencies', () => {
+    it("passes the conversation's dependencies to the panel", async () => {
+      vi.mocked(getConversationPublishDependencies).mockResolvedValue({
+        dependencies: [
+          { id: 'skills/b/Docs', name: 'Docs', type: 'skill', location: '' },
+        ],
+      } as never);
+
+      renderContainer();
+
+      expect(await screen.findByText('dependencies:Docs')).toBeTruthy();
+      expect(getConversationPublishDependencies).toHaveBeenCalledWith(
+        'my-conversation-abc',
+      );
+    });
+
+    it('shows an empty list and still publishes when the lookup fails', async () => {
+      vi.mocked(getConversationPublishDependencies).mockRejectedValue(
+        new Error('offline'),
+      );
+      vi.mocked(publishConversation).mockResolvedValue({} as never);
+      renderContainer();
+
+      await waitFor(() =>
+        expect(getConversationPublishDependencies).toHaveBeenCalledOnce(),
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Select Shared' }),
+      );
+      await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+      expect(screen.getByText('dependencies:')).toBeTruthy();
+      await waitFor(() => expect(publishConversation).toHaveBeenCalledOnce());
+    });
+
+    it('does not look dependencies up while the panel is closed', () => {
+      renderContainer({ isOpen: false });
+
+      expect(getConversationPublishDependencies).not.toHaveBeenCalled();
+    });
   });
 });

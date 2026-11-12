@@ -16,4 +16,13 @@ export * from '../project/use-project-conversations';
 export * from '../project/use-pinned-project-chats';
 export * from '../project/use-project-artifacts';
 export * from '../project/use-project-actions';
+export * from '../project/project-sharing';
+export * from '../project/use-project-remove-from-list';
 export * from '../shared/serialized-writer';
+
+export {
+  notifyProjectAccessRevoked,
+  type ProjectSharingClient,
+} from '../project/project-sharing-client';
+export * from '../project/use-project-share-recipients';
+export * from '../project/use-project-revoke-access';

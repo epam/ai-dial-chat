@@ -1,5 +1,7 @@
 import {
   PublishAccessRulesLabels,
+  PublishDependenciesLabels,
+  PublishDependencyType,
   PublishFooterLabels,
   PublishPanelLabels,
 } from '@epam/ai-dial-publish-panel';
@@ -110,6 +112,26 @@ export const getPublishPanelCommonLabels = (
   noAccessError: t(PublishI18nKeys.NoAccessError),
   addSiblingFolderLabel: t(PublishI18nKeys.AddSiblingFolder),
   addChildFolderLabel: t(PublishI18nKeys.AddChildFolder),
+});
+
+/** Builds the translated labels of the private-dependencies section, shared by every publish panel host. */
+export const getPublishDependenciesLabels = (
+  t: TFunction,
+): PublishDependenciesLabels => ({
+  title: t(PublishI18nKeys.DependenciesTitle),
+  description: t(PublishI18nKeys.DependenciesDescription),
+  rootLocation: t(PublishI18nKeys.DependenciesRootLocation),
+  typeLabels: {
+    [PublishDependencyType.Application]: t(
+      PublishI18nKeys.DependenciesTypeApplication,
+    ),
+    [PublishDependencyType.Toolset]: t(PublishI18nKeys.DependenciesTypeToolset),
+    [PublishDependencyType.Prompt]: t(PublishI18nKeys.DependenciesTypePrompt),
+    [PublishDependencyType.Skill]: t(PublishI18nKeys.DependenciesTypeSkill),
+    [PublishDependencyType.File]: t(PublishI18nKeys.DependenciesTypeFile),
+  },
+  getAnnouncement: (count) =>
+    t(PublishI18nKeys.DependenciesAnnouncement, { count }),
 });
 
 /** Builds the translated Update and in-progress footer labels shared by the conversation and project publish panels. */

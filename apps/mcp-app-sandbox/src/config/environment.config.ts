@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsArray, IsNumber, IsOptional, IsUrl } from 'class-validator';
+import { normalizeOrigin } from './origins';
 
 /** Validated environment variables for the MCP Apps sandbox-proxy app. */
 export class EnvironmentVariables {
@@ -10,7 +11,8 @@ export class EnvironmentVariables {
 
   /**
    * Comma-separated list of allowed host origins (e.g.
-   * `https://chat.example.com`). A request's `Referer` header must resolve
+   * `https://chat.example.com`; a trailing slash, path or default port is
+   * stripped to the bare origin). A request's `Referer` header must resolve
    * to an origin in this list or the sandbox page is not served (403).
    * Left unset at boot is valid — every request is then rejected until an
    * operator configures it, per the "absence isn't failure" posture used
@@ -21,7 +23,8 @@ export class EnvironmentVariables {
     value
       ?.split(',')
       .map((origin) => origin.trim())
-      .filter((origin) => origin.length > 0),
+      .filter((origin) => origin.length > 0)
+      .map(normalizeOrigin),
   )
   @IsArray()
   @IsUrl({ require_tld: false }, { each: true })

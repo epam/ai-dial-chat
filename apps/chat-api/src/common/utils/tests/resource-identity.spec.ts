@@ -281,9 +281,14 @@ describe('findDuplicateIdentity', () => {
 });
 
 describe('buildResourceNameConflict', () => {
-  it('names an agent and carries the agent code', () => {
+  const agents = [ResourceIdentityTab.Agents];
+  const toolsets = [ResourceIdentityTab.Toolsets];
+  const both = [ResourceIdentityTab.Agents, ResourceIdentityTab.Toolsets];
+
+  it('names an agent and carries the agent code when an agent write meets an agent', () => {
     const error = buildResourceNameConflict(
       app('applications/b/X__1.0.0', 'X', '1.0.0'),
+      agents,
     );
     expect(error.getStatus()).toBe(409);
     expect(error.getResponse()).toEqual({
@@ -295,14 +300,37 @@ describe('buildResourceNameConflict', () => {
     });
   });
 
-  it('names a toolset and carries the toolset code', () => {
+  it('names a toolset when a toolset resource holds the identity', () => {
     const error = buildResourceNameConflict(
       toolset('toolsets/b/X__1.0.0', 'X', '1.0.0'),
+      both,
     );
     expect(error.getResponse()).toMatchObject({
       message:
         'A toolset with this name and version already exists in this folder',
       code: ResourceNameConflictCode.NameTakenToolset,
+    });
+  });
+
+  it('names a toolset for a Toolsets-only write even when an application holds the identity', () => {
+    const error = buildResourceNameConflict(
+      app('applications/b/X__1.0.0', 'X', '1.0.0'),
+      toolsets,
+    );
+    expect(error.getResponse()).toMatchObject({
+      message:
+        'A toolset with this name and version already exists in this folder',
+      code: ResourceNameConflictCode.NameTakenToolset,
+    });
+  });
+
+  it('keeps naming the holder for a write that is also an agent', () => {
+    const error = buildResourceNameConflict(
+      app('applications/b/X__1.0.0', 'X', '1.0.0'),
+      both,
+    );
+    expect(error.getResponse()).toMatchObject({
+      code: ResourceNameConflictCode.NameTakenAgent,
     });
   });
 });

@@ -338,6 +338,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
         rowSelection: {
           mode: 'multiRow' as const,
           isRowSelectable: isRowSelectable ?? ((): boolean => true),
+          hideDisabledCheckboxes: true,
         },
       },
       actionLabels: gridActionLabels,

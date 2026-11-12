@@ -34,6 +34,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     iconBefore,
     iconAfter,
     label,
+    href,
     'aria-current': ariaCurrent,
     'aria-label': ariaLabel,
     onClick,
@@ -43,24 +44,39 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     iconBefore?: React.ReactNode;
     iconAfter?: React.ReactNode;
     label?: React.ReactNode;
+    href?: string;
     'aria-current'?: React.AriaAttributes['aria-current'];
     'aria-label'?: string;
-    onClick?: () => void;
+    onClick?: React.MouseEventHandler;
     className?: string;
     tabIndex?: number;
-  }) => (
-    <button
-      aria-current={ariaCurrent}
-      aria-label={ariaLabel}
-      onClick={onClick}
-      className={className}
-      tabIndex={tabIndex}
-    >
-      {iconBefore}
-      {label}
-      {iconAfter}
-    </button>
-  ),
+  }) =>
+    href !== undefined ? (
+      <a
+        href={href}
+        aria-current={ariaCurrent}
+        aria-label={ariaLabel}
+        onClick={onClick}
+        className={className}
+        tabIndex={tabIndex}
+      >
+        {iconBefore}
+        {label}
+        {iconAfter}
+      </a>
+    ) : (
+      <button
+        aria-current={ariaCurrent}
+        aria-label={ariaLabel}
+        onClick={onClick}
+        className={className}
+        tabIndex={tabIndex}
+      >
+        {iconBefore}
+        {label}
+        {iconAfter}
+      </button>
+    ),
   Dropdown: ({
     children,
     items,
@@ -236,7 +252,7 @@ describe('ProjectRow', () => {
 
     expect(
       screen
-        .getByRole('button', { name: 'Support' })
+        .getByRole('link', { name: 'Support' })
         .getAttribute('aria-current'),
     ).toBe('page');
   });
@@ -250,7 +266,7 @@ describe('ProjectRow', () => {
   it('pads the row 8px on both inline sides without actions', () => {
     renderRow({});
 
-    const button = screen.getByRole('button', { name: 'Support' });
+    const button = screen.getByRole('link', { name: 'Support' });
     expect(button.classList.contains('ps-2')).toBe(true);
     expect(button.classList.contains('pe-2')).toBe(true);
   });
@@ -410,7 +426,7 @@ describe('ProjectRow — collapse toggle', () => {
   it('leaves the active row on its own highlight', () => {
     renderRow({ isActive: true });
 
-    expect(screen.getByRole('button', { name: 'Support' }).className).toMatch(
+    expect(screen.getByRole('link', { name: 'Support' }).className).toMatch(
       /itemActive/,
     );
   });

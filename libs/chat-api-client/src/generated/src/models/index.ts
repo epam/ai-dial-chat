@@ -7943,6 +7943,70 @@ export interface RequestSkillDto {
 /**
  *
  * @export
+ * @interface ResourceDependenciesResultDto
+ */
+export interface ResourceDependenciesResultDto {
+  /**
+   *
+   * @type {Array<ResourceDependencyDto>}
+   * @memberof ResourceDependenciesResultDto
+   */
+  dependencies: Array<ResourceDependencyDto>;
+}
+/**
+ *
+ * @export
+ * @interface ResourceDependencyDto
+ */
+export interface ResourceDependencyDto {
+  /**
+   * The dependency's DIAL Core resource url, as stored in the reference.
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  id: string;
+  /**
+   * Display name, percent-decoded, without a trailing `__version`.
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  name: string;
+  /**
+   * Present only for a versioned dependency.
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  version?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  type: ResourceDependencyDtoTypeEnum;
+  /**
+   * Percent-decoded folder path of the dependency inside its owner's bucket; empty at the bucket root.
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  location: string;
+}
+
+/**
+ * @export
+ */
+export const ResourceDependencyDtoTypeEnum = {
+  Application: 'application',
+  Toolset: 'toolset',
+  Prompt: 'prompt',
+  Skill: 'skill',
+  File: 'file',
+} as const;
+export type ResourceDependencyDtoTypeEnum =
+  (typeof ResourceDependencyDtoTypeEnum)[keyof typeof ResourceDependencyDtoTypeEnum];
+
+/**
+ *
+ * @export
  * @interface ResourceFolderDto
  */
 export interface ResourceFolderDto {

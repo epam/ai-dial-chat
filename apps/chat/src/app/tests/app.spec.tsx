@@ -51,6 +51,9 @@ vi.mock('@epam/ai-dial-attachment-canvas', () => ({
   },
   useAttachmentCanvas: () => mocks.canvas,
 }));
+vi.mock('../../hooks/attachment/useMcpAppHostAdapter', () => ({
+  useMcpAppHostAdapter: () => ({ hostContext: undefined }),
+}));
 vi.mock('@epam/ai-dial-chat-hooks/file-manager-canvas', () => ({
   clearAttachmentCache: vi.fn(),
 }));

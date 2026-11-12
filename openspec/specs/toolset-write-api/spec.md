@@ -386,7 +386,8 @@ the deployments list read. A toolset the caller does not own, or one missing fro
 is not compared.
 
 A duplicate SHALL answer `409` with `code` `name-taken-toolset` or `name-taken-agent`
-according to the conflicting entity, and no DIAL Core write. The error codes SHALL be a
+as `resource-name-uniqueness` defines (a toolset write always answers
+`name-taken-toolset`), and no DIAL Core write. The error codes SHALL be a
 Swagger-visible enum so the generated client exposes them. The OpenAPI operations
 `createToolset`, `updateToolset` and `moveToolset` keep their operation ids and DTOs; their
 `409` responses SHALL describe both conflict shapes, and the generated client SHALL be

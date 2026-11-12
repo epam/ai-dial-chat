@@ -4,6 +4,10 @@ export enum PinnedProjectActionKind {
   Publish = 'publish',
   /** The share popover. */
   Share = 'share',
+  /** Opens the owner's revoke-access confirmation. */
+  RevokeAccess = 'revokeAccess',
   /** The delete confirmation. */
   Delete = 'delete',
+  /** The confirmation before a project shared with the user leaves their list. */
+  RemoveFromMyList = 'removeFromMyList',
 }

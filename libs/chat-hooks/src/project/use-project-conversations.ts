@@ -292,8 +292,15 @@ export const useProjectConversations = (
           row.id === id ? { ...row, title: name, isTitlePending: false } : row,
         ),
       }));
+      /*
+       * The rename rewrites the body, and the live update it fires can read the
+       * list before the server has carried the viewer's read state to the new
+       * version, reporting a read chat as unread. Re-reading once the rename
+       * has answered reports the settled state.
+       */
+      void refresh();
     },
-    [client],
+    [client, refresh],
   );
 
   const generateTitle = useCallback(

@@ -135,25 +135,38 @@ vi.mock('@epam/ai-dial-ui-kit', async () => ({
   Button: ({
     onClick,
     label,
+    href,
     className,
     'aria-current': ariaCurrent,
     'aria-label': ariaLabel,
   }: {
-    onClick?: () => void;
+    onClick?: React.MouseEventHandler;
     label?: React.ReactNode;
+    href?: string;
     className?: string;
     'aria-current'?: React.AriaAttributes['aria-current'];
     'aria-label'?: string;
-  }) => (
-    <button
-      onClick={onClick}
-      className={className}
-      aria-current={ariaCurrent}
-      aria-label={ariaLabel}
-    >
-      {label}
-    </button>
-  ),
+  }) =>
+    href !== undefined ? (
+      <a
+        href={href}
+        onClick={onClick}
+        className={className}
+        aria-current={ariaCurrent}
+        aria-label={ariaLabel}
+      >
+        {label}
+      </a>
+    ) : (
+      <button
+        onClick={onClick}
+        className={className}
+        aria-current={ariaCurrent}
+        aria-label={ariaLabel}
+      >
+        {label}
+      </button>
+    ),
   Highlight: ({ text }: { text: string }) => {
     rowRenderLog.push(text);
     return <span>{text}</span>;
@@ -245,6 +258,8 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
   ),
 }));
 
+const scrollToRow = vi.hoisted(() => vi.fn());
+
 vi.mock('react-window', () => ({
   List: ({
     rowComponent: RowComponent,
@@ -252,7 +267,9 @@ vi.mock('react-window', () => ({
     rowProps,
     role,
     onRowsRendered,
+    listRef,
   }: {
+    listRef?: { current: unknown };
     rowComponent: React.ComponentType<Record<string, unknown>>;
     rowCount: number;
     rowProps: Record<string, unknown>;
@@ -263,6 +280,7 @@ vi.mock('react-window', () => ({
     ) => void;
     [key: string]: unknown;
   }) => {
+    if (listRef) listRef.current = { scrollToRow };
     /* Reports the test's viewport, plus every row as overscan. */
     React.useEffect(() => {
       if (!renderedRange.current) return;
@@ -1109,9 +1127,9 @@ describe('ConversationList — pinned projects', () => {
         }}
       />,
     );
-    /* The mocked kit button keeps its class, which is all the variant leaves on a row here. */
+    /* The mocked kit link keeps its class, which is all the variant leaves on a row here. */
     const getNestedButton = () =>
-      within(getListItem('Weekly summary')).getByRole('button');
+      within(getListItem('Weekly summary')).getByRole('link');
     expect(getNestedButton().className).toMatch(/itemIndicator/);
 
     rerender(
@@ -1327,6 +1345,38 @@ describe('ConversationList — pinned projects', () => {
       expect(onToggleProject).toHaveBeenCalledWith('p1', false);
     });
 
+    it('scrolls to the active chat again when its project is expanded after being collapsed', () => {
+      scrollToRow.mockClear();
+      const props = {
+        ...BASE_PROPS,
+        conversations: [pinned],
+        rowVariant: ConversationRowVariant.Indicator,
+        activeConversationId: 'n2',
+      };
+      const makeProjects = (isExpanded: boolean): PinnedProjects => ({
+        projects: [makeProject({ isExpanded })],
+        onSelectProject: vi.fn(),
+        onSelectConversation: vi.fn(),
+        onSeeAll: vi.fn(),
+      });
+      const { rerender } = render(
+        <ConversationList {...props} pinnedProjects={makeProjects(true)} />,
+      );
+      expect(scrollToRow).toHaveBeenCalledOnce();
+
+      rerender(
+        <ConversationList {...props} pinnedProjects={makeProjects(false)} />,
+      );
+      expect(scrollToRow).toHaveBeenCalledOnce();
+      expect(screen.queryByText('Billing reply')).toBeNull();
+
+      rerender(
+        <ConversationList {...props} pinnedProjects={makeProjects(true)} />,
+      );
+      expect(screen.getByText('Billing reply')).toBeTruthy();
+      expect(scrollToRow).toHaveBeenCalledTimes(2);
+    });
+
     it('keeps a project collapsed when only its name matches the search', () => {
       renderList(
         {
@@ -1413,12 +1463,12 @@ describe('ConversationList — pinned projects', () => {
 
     expect(
       screen
-        .getByRole('button', { name: 'Support' })
+        .getByRole('link', { name: 'Support' })
         .getAttribute('aria-current'),
     ).toBe('page');
     expect(
       screen
-        .getByRole('button', { name: 'Billing reply' })
+        .getByRole('link', { name: 'Billing reply' })
         .getAttribute('aria-current'),
     ).toBe('page');
   });

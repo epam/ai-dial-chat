@@ -277,6 +277,57 @@ describe('PublishFoldersTree', () => {
       clickMenuItem(menuItems ?? [], 'add-sibling');
       expect(capturedProps.current?.createdFolderPath).toBe('Shared');
     });
+
+    it('"Add child" rejects a name equal to the parent folder name (#9792)', () => {
+      const onCreateFolder = vi.fn();
+      renderTree({ onCreateFolder });
+      const sharedFile: DialFile = {
+        path: 'Shared',
+        name: 'Shared',
+        folderId: 'Shared',
+        nodeType: DialFileNodeType.FOLDER,
+      };
+      clickMenuItem(
+        capturedProps.current?.getContextMenuItems?.(sharedFile) ?? [],
+        'add-child',
+      );
+      expect(
+        capturedProps.current?.onRenameValidate?.('shared', {} as never),
+      ).toBe('A folder cannot have the same name as its parent folder.');
+      act(() => capturedProps.current?.onCreateFolderSave?.('Shared'));
+      expect(onCreateFolder).not.toHaveBeenCalled();
+    });
+
+    it('"Add child" never pre-fills the parent folder name', () => {
+      renderTree({ newFolderDefaultName: 'Shared' });
+      const sharedFile: DialFile = {
+        path: 'Shared',
+        name: 'Shared',
+        folderId: 'Shared',
+        nodeType: DialFileNodeType.FOLDER,
+      };
+      clickMenuItem(
+        capturedProps.current?.getContextMenuItems?.(sharedFile) ?? [],
+        'add-child',
+      );
+      expect(capturedProps.current?.newFolderDefaultName).toBe('Shared 2');
+    });
+
+    it('lets a top-level folder take the root label as its name', () => {
+      renderTree();
+      clickMenuItem(
+        capturedProps.current?.getContextMenuItems?.({
+          path: '',
+          name: 'Organization',
+          folderId: '',
+          nodeType: DialFileNodeType.FOLDER,
+        }) ?? [],
+        'add-child',
+      );
+      expect(
+        capturedProps.current?.onRenameValidate?.('Organization', {} as never),
+      ).toBeNull();
+    });
   });
 
   it('lets DialFoldersTree render its inline row directly under the selected folder', async () => {
@@ -672,6 +723,21 @@ describe('PublishFoldersTree', () => {
       expect(
         capturedProps.current?.onRenameValidate?.('EPAM', {} as never),
       ).toBeNull();
+      expect(
+        capturedProps.current?.onRenameValidate?.('Personal', {} as never),
+      ).toBeNull();
+    });
+
+    it('rejects a nested folder named like its parent inside a root', async () => {
+      renderMultiRoot({
+        destination: { rootKey: 'personal', path: ['Design'] },
+      });
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Create new folder' }),
+      );
+      expect(
+        capturedProps.current?.onRenameValidate?.('design', {} as never),
+      ).toBe('A folder cannot have the same name as its parent folder.');
     });
 
     it('rejects a nested duplicate whose sibling loads after the editor opened', async () => {
@@ -719,6 +785,55 @@ describe('PublishFoldersTree', () => {
         'A folder with this name already exists.',
       );
       act(() => onCreateFolderSave?.('Audit'));
+      expect(onCreateDestinationFolder).not.toHaveBeenCalled();
+    });
+
+    it('opens the new-folder editor only once the parent has loaded, so an existing child is a duplicate', async () => {
+      const onCreateDestinationFolder = vi.fn();
+      const design: FolderDestinationRoot = {
+        key: 'personal',
+        label: 'Personal',
+        items: [{ path: ['Design'], name: 'Design' }],
+        loadingPaths: new Set(['Design']),
+      };
+      const renderWith = (root: FolderDestinationRoot) => (
+        <PublishFoldersTree
+          searchQuery=""
+          roots={[root]}
+          destination={{ rootKey: 'personal', path: ['Design'] }}
+          onDestinationChange={vi.fn()}
+          onCreateDestinationFolder={onCreateDestinationFolder}
+        />
+      );
+      const { rerender } = render(renderWith(design));
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Create new folder' }),
+      );
+      expect(capturedProps.current?.createdFolderPath).toBeNull();
+
+      rerender(
+        renderWith({
+          ...design,
+          loadingPaths: new Set(),
+          items: [
+            {
+              path: ['Design'],
+              name: 'Design',
+              children: [
+                { path: ['Design', 'New folder'], name: 'New folder' },
+              ],
+            },
+          ],
+        }),
+      );
+
+      expect(capturedProps.current?.createdFolderPath).toBe(':personal/Design');
+      expect(capturedProps.current?.newFolderDefaultName).toBe('New folder 2');
+      expect(
+        capturedProps.current?.onRenameValidate?.('new folder', {} as never),
+      ).toBe('A folder with this name already exists.');
+      act(() => capturedProps.current?.onCreateFolderSave?.('New folder'));
       expect(onCreateDestinationFolder).not.toHaveBeenCalled();
     });
 

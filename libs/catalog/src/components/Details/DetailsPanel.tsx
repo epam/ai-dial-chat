@@ -45,6 +45,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   isPublishVisible,
   isPublishPrimary,
   getPublishHistory,
+  getPublishDependencies,
   publishFolderItems = EMPTY_PUBLISH_FOLDERS,
   publishExpandedPaths,
   onPublishExpandedPathsChange,
@@ -109,6 +110,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     isPublishHistoryResolved,
     requestPublishHistory,
     publishFlow,
+    publishDependencies,
     isPublishCredentialsEligible,
     publishDerived,
     publishedFolders,
@@ -123,6 +125,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     item,
     isReadonly,
     getPublishHistory,
+    getPublishDependencies,
     publishFolderItems,
     hasPublishWriteAccess,
     publishDefaultAuthor,
@@ -381,6 +384,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           <DetailsPublishContent
             item={item}
             publishFlow={publishFlow}
+            publishDependencies={publishDependencies}
             publishFolderView={publishFolderView}
             isPublishCredentialsEligible={isPublishCredentialsEligible}
             publishExpandedPaths={publishExpandedPaths}

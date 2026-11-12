@@ -183,8 +183,9 @@ export class OfflineCredentialsService {
 
   /**
    * Revokes the user's stored offline-credentials grant by proxying DIAL Core
-   * (`POST /v1/user/offline-credentials/signout`). A Core 404 is the
-   * idempotent success state — there was no grant left to revoke.
+   * (`POST /v1/user/offline-credentials/signout`). Core's `200 false` and a
+   * Core 404 are both the idempotent success state — there was no grant left
+   * to revoke.
    */
   async signOut(accessToken: string): Promise<void> {
     const authHeaders = getBearerAuthHeaders(accessToken);
@@ -216,12 +217,14 @@ export class OfflineCredentialsService {
           extractDialErrorMessage(response.error),
         );
       }
-      if (!response.error && !response.data) {
-        return mapDialHttpStatus(
-          502,
-          'sign out offline-credentials (Core reported failure)',
-          this.logger,
-        );
+      /*
+       * Core answers `200` with whether it deleted a record: `false` means
+       * there was no grant to revoke — the same idempotent success as a 404,
+       * not a failure (Core reports a failed delete as a 5xx).
+       */
+      if (response.data === false) {
+        this.logger.debug('No offline-credentials grant left to revoke');
+        return;
       }
       this.logger.debug('Signed out offline-credentials');
     } catch (err) {

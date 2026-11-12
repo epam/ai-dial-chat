@@ -343,7 +343,7 @@ Set `isAudioMessageSupported` to show the microphone. Pass translated `transcrib
 
 Base text input with auto-resize and keyboard shortcut handling. Use directly when a stripped-down input is needed — `ConversationInput` wraps it with the app-facing props it needs. The layout is always two rows: the textarea on its own full-width row, and the action bar (`+` button, tools chips, model selector, send/stop, mic) below it. Pass `hideActionBar` to render only the textarea and the attachment tray.
 
-Below 768px the input renders no tools chips; every tool is toggled from the `+` menu's Tools bottom sheet, which a phone always offers even when `canRemoveTools` is `false`.
+Below 768px the input replaces the tools chip row with one chip that shows `toolsMenuTitle` and the number of switched-on tools (accent-styled while any is on). Tapping it opens the Tools bottom sheet, where each tool is toggled; its accessible name comes from `toolsChipLabels.summaryLabel(selectedCount, totalCount)` (default `Tools: {selected} of {total} on`). The `+` menu still offers Tools on a phone, even when `canRemoveTools` is `false`.
 
 `onChange` (on `Input`, `ConversationInput`, and `EditMessageInput`) fires with the textarea's current value on every change — typing, deleting, pasting, undo/redo — not only on send/save. Omit it to ignore keystrokes between sends, as before this prop existed on `ConversationInput`/`EditMessageInput`; a host tracking live state derived from the draft (e.g. skill-mention anchors that must reconcile as the user edits around them) wires this alongside `activeMentions`/`onBackspaceAtCaret`.
 

@@ -38,6 +38,21 @@ export const projectViewedWriter = createSerializedKeyedWriter((id) =>
 /** Calls `listener` with a project conversation's id after every successful viewed write; returns the function that removes it. */
 export const subscribeProjectConversationViewed = projectViewedWriter.subscribe;
 
+const projectListListeners = new Set<() => void>();
+
+/** Calls `listener` when a change the project watch cannot report happened, such as a shared project leaving the user's list; returns the function that removes it. */
+export const subscribeProjectListChanged = (listener: () => void) => {
+  projectListListeners.add(listener);
+  return () => {
+    projectListListeners.delete(listener);
+  };
+};
+
+/** Tells the mounted Projects list to re-read itself. */
+export const notifyProjectListChanged = () => {
+  for (const listener of [...projectListListeners]) listener();
+};
+
 /*
  * The project requests the chat-hooks project hooks run, resolved through the
  * app's server-api module at call time: one stable object for the hooks'

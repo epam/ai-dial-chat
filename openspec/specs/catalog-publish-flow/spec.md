@@ -117,7 +117,7 @@ In addition to the trailing "Create new folder" button, `PublishFoldersTree` SHA
 - **THEN** only "Add child" is offered — "Add sibling" is not, since the root has no parent
 
 ### Requirement: Inline folder creation validates the name client-side
-Before invoking `onCreatePublishFolder`, `PublishFoldersTree` SHALL validate the confirmed name via `validateFolderName` (exported from `@epam/ai-dial-publish-panel`, relocated from `libs/catalog/src/utils/publish-folder-tree.ts`) and reject: an empty (post-trim) name, a name containing `..` or any of the forbidden characters `/ \ : ; , = { } &  "`, and a name duplicating a sibling folder (case-insensitive). This mirrors the backend's `IsValidFilePath` path-traversal rule so an invalid destination is rejected in the UI instead of only failing the network request. The same validator SHALL be wired as `DialFoldersTree`'s `onRenameValidate` prop, which the file-manager tree also invokes for the create-folder row, so the input shows an inline error and blocks Save while invalid.
+Before invoking `onCreatePublishFolder`, `PublishFoldersTree` SHALL validate the confirmed name via `validateFolderName` (exported from `@epam/ai-dial-publish-panel`, relocated from `libs/catalog/src/utils/publish-folder-tree.ts`) and reject: an empty (post-trim) name, a name containing `..` or any of the forbidden characters `/ \ : ; , = { } &  "`, a name duplicating a sibling folder (case-insensitive), and a name equal to its parent folder's name (case-insensitive; a root has no parent name, so a top-level folder may share the root label). This mirrors the backend's `IsValidFilePath` path-traversal rule so an invalid destination is rejected in the UI instead of only failing the network request. The same validator SHALL be wired as `DialFoldersTree`'s `onRenameValidate` prop, which the file-manager tree also invokes for the create-folder row, so the input shows an inline error and blocks Save while invalid.
 
 #### Scenario: User enters a path-traversal or forbidden-character folder name
 - **WHEN** the user types `../EscapeFolder` (or any name containing `..` or a forbidden character) into the inline create row and confirms
@@ -126,6 +126,10 @@ Before invoking `onCreatePublishFolder`, `PublishFoldersTree` SHALL validate the
 #### Scenario: User enters an empty folder name
 - **WHEN** the user confirms an empty or whitespace-only name in the inline create row
 - **THEN** an inline validation error is shown and `onCreatePublishFolder` is NOT called
+
+#### Scenario: User names a child folder like its parent
+- **WHEN** the user creates a folder inside `test` and confirms the name `test` (in any letter case)
+- **THEN** the inline error "A folder cannot have the same name as its parent folder." is shown and `onCreatePublishFolder` is NOT called
 
 ### Requirement: Publish visibility is scoped to editable entities
 The catalog Header's Publish action SHALL only be shown (`isPublishVisible`) when the current catalog item is user-owned/editable, in addition to the entity-type gate: `isPublishVisible` (`apps/chat/src/hooks/useCatalogPublishing/useCatalogPublishing.ts`) is `item.isMyApp && toPublishEntityType(item.type) != null`, and `toPublishEntityType` (`libs/chat-hooks/src/catalog/publish.ts`) maps Model, Toolset, Agent (Application), Prompt and Skill. This is a client-side UI gate only; it does not replace server-side write-access enforcement.
@@ -450,3 +454,36 @@ The synthesised single-entry history a public copy's own id produces (`isPublicC
 - **GIVEN** the item's id addresses the `public` bucket, so history is synthesised from the id rather than fetched
 - **WHEN** that entry is produced
 - **THEN** its `publishCredentials` is unset and no marker is rendered
+
+### Requirement: The catalog publish flow shows the entity's private dependencies
+
+`libs/catalog` SHALL accept an optional `getPublishDependencies?: (item: CatalogItem) => Promise<PublishDependency[]>` on `CatalogProps` and on `DetailsPanelProps` (beside `getPublishHistory` in `libs/catalog/src/models/catalog-props.ts` and `libs/catalog/src/models/item-details-props.ts`), and SHALL pass the resolved list to the shared panel as `dependencies` through `DetailsPublishContent`. The details panel owns the loading state in `useDetailsPublish` (`libs/catalog/src/components/Details/hooks/useDetailsPublish.ts`), as it does for the publish history: the lookup runs each time the publish sub-view opens, a response that arrives after the panel closed or the item changed is ignored, and another item's list is never shown. A rejected read leaves the list empty and shows no error. A host that omits the prop renders today's panel. `libs/catalog` does not import `@epam/ai-dial-chat-hooks`.
+
+`apps/chat` SHALL supply the callback from `apps/chat/src/hooks/useCatalogPublishing/useCatalogPublishing.ts`, calling `getCatalogPublishDependencies` from `apps/chat/src/server-api/publish.api.ts` and mapping the DTO with the `libs/chat-hooks` mapper, and SHALL supply the translated text through the existing `publishLabels` (as `PublishPanelLabels.dependenciesLabels`); no separate labels prop is added to `libs/catalog`. `libs/catalog` SHALL NOT build an endpoint path, import the generated client or read app context.
+
+The project publish panel (`apps/chat/src/components/PublishProjectPanelContainer/PublishProjectPanelContainer.tsx`) SHALL load the list with `usePublishDependencies` from `@epam/ai-dial-chat-hooks` (the app may import it) and the same entity-type route with `CatalogPublishEntityType.Project`, which resolves to an empty list, so it shows no section today and shows one without further wiring if projects gain references.
+
+i18n keys: `publish.dependenciesTitle`, `publish.dependenciesDescription`, `publish.dependenciesAnnouncement` (i18next plural forms `_one` and `_other`, resolved by the host's `getAnnouncement(count)`), `publish.dependenciesRootLocation`, `publish.dependenciesTypeApplication`, `publish.dependenciesTypeToolset`, `publish.dependenciesTypePrompt`, `publish.dependenciesTypeSkill`, `publish.dependenciesTypeFile`; each also added to the `PublishI18nKeys` enum in `translation-keys.ts`.
+
+#### Scenario: Application with a private prompt shows the section
+- **GIVEN** the catalog host resolves one private prompt for the application being published
+- **WHEN** the user opens Publish in the details panel
+- **THEN** the panel lists that prompt in its dependencies section
+
+#### Scenario: Read fails
+- **GIVEN** the dependencies request rejects
+- **WHEN** the publish sub-view opens
+- **THEN** no section or error is shown and the user can publish as before
+
+#### Scenario: Another item opens
+- **GIVEN** dependencies were loaded for item A
+- **WHEN** the user opens Publish for item B before B's list resolves
+- **THEN** A's list is never shown for B
+
+#### Scenario: Toolset shows nothing
+- **WHEN** the user opens Publish for a toolset
+- **THEN** no dependencies section is rendered
+
+#### Scenario: Project publish panel
+- **WHEN** the user opens Publish for a project
+- **THEN** the project container loads the list with `usePublishDependencies` and renders no section while the list is empty

@@ -1,5 +1,7 @@
 # Backend observability
 
+The standalone MCP Apps sandbox proxy has its own, smaller opt-in setup (HTTP server metrics only); see the [sandbox README](../apps/mcp-app-sandbox/README.md#observability).
+
 The backend exports OpenTelemetry metrics, traces, and logs. For environment variables and
 defaults, see the [backend README](../apps/chat-api/README.md#observability).
 
