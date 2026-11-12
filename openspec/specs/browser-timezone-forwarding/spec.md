@@ -69,6 +69,11 @@ The existing response statuses remain `200` (SSE), `400`, `401`, `403`, `404`, `
 - **WHEN** an otherwise valid completion request omits `X-Timezone`
 - **THEN** the endpoint starts the SSE completion with no timezone value
 
+#### Scenario: Empty timezone is rejected
+
+- **WHEN** the request contains `X-Timezone` with an empty value
+- **THEN** the endpoint returns `400 Bad Request` and does not call DIAL Core; an empty value counts as invalid, not missing
+
 #### Scenario: Invalid timezone syntax is rejected
 
 - **WHEN** `X-Timezone` contains whitespace, control characters, repeated separators, or characters outside the allowlist
