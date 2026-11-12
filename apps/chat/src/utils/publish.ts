@@ -1,3 +1,4 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   PublishAccessRulesLabels,
   PublishDependenciesLabels,
@@ -114,6 +115,38 @@ export const getPublishPanelCommonLabels = (
   addChildFolderLabel: t(PublishI18nKeys.AddChildFolder),
 });
 
+/** Keys of the lowercase nouns that can name what is being published in the dependencies warning. */
+export type PublishDependenciesEntityKey =
+  | PublishI18nKeys.DependenciesEntityApplication
+  | PublishI18nKeys.DependenciesEntityConversation
+  | PublishI18nKeys.DependenciesEntityProject
+  | PublishI18nKeys.DependenciesEntityToolset
+  | PublishI18nKeys.DependenciesEntityPrompt
+  | PublishI18nKeys.DependenciesEntitySkill
+  | PublishI18nKeys.DependenciesEntityItem;
+
+/**
+ * Picks the noun that names a catalog item of the given type in the dependencies warning.
+ * Types without a dedicated noun (models) fall back to the generic "item".
+ * @param type - entity type of the catalog item being published
+ */
+export const getPublishDependenciesEntityKey = (
+  type: CatalogEntityType,
+): PublishDependenciesEntityKey => {
+  switch (type) {
+    case CatalogEntityType.Agent:
+      return PublishI18nKeys.DependenciesEntityApplication;
+    case CatalogEntityType.Toolset:
+      return PublishI18nKeys.DependenciesEntityToolset;
+    case CatalogEntityType.Prompt:
+      return PublishI18nKeys.DependenciesEntityPrompt;
+    case CatalogEntityType.Skill:
+      return PublishI18nKeys.DependenciesEntitySkill;
+    default:
+      return PublishI18nKeys.DependenciesEntityItem;
+  }
+};
+
 /**
  * Builds the translated labels of the private-dependencies section, shared by every publish panel host.
  * @param t - translation function
@@ -121,7 +154,7 @@ export const getPublishPanelCommonLabels = (
  */
 export const getPublishDependenciesLabels = (
   t: TFunction,
-  entityKey: PublishI18nKeys,
+  entityKey: PublishDependenciesEntityKey,
 ): PublishDependenciesLabels => ({
   title: t(PublishI18nKeys.DependenciesTitle),
   description: t(PublishI18nKeys.DependenciesDescription, {

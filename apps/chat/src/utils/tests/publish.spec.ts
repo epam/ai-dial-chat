@@ -1,3 +1,4 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { PublishDependencyType } from '@epam/ai-dial-publish-panel';
 import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
@@ -6,6 +7,7 @@ import {
   PublishI18nKeys,
 } from '../../constants/translation-keys';
 import {
+  getPublishDependenciesEntityKey,
   getPublishDependenciesLabels,
   getPublishFolderLabel,
 } from '../publish';
@@ -39,15 +41,24 @@ describe('getPublishFolderLabel', () => {
 });
 
 describe('getPublishDependenciesLabels', () => {
-  const echoT = ((
+  const ENTITY_NOUNS: Record<string, string> = {
+    [PublishI18nKeys.DependenciesEntityConversation]: 'conversation',
+    [PublishI18nKeys.DependenciesEntityApplication]: 'application',
+  };
+
+  const echo = (
     key: string,
     options?: { count?: number; entity?: string },
-  ) =>
-    options?.entity != null
-      ? `${key}:${options.entity}`
-      : options?.count == null
-        ? key
-        : `${key}:${options.count}`) as unknown as TFunction;
+  ): string => {
+    if (options?.entity != null) {
+      return `${key}:${options.entity}`;
+    }
+    if (options?.count != null) {
+      return `${key}:${options.count}`;
+    }
+    return ENTITY_NOUNS[key] ?? key;
+  };
+  const echoT = echo as unknown as TFunction;
 
   it('translates the title and splices the entity into the description', () => {
     const labels = getPublishDependenciesLabels(
@@ -57,7 +68,7 @@ describe('getPublishDependenciesLabels', () => {
 
     expect(labels.title).toBe(PublishI18nKeys.DependenciesTitle);
     expect(labels.description).toBe(
-      `${PublishI18nKeys.DependenciesDescription}:${PublishI18nKeys.DependenciesEntityConversation}`,
+      `${PublishI18nKeys.DependenciesDescription}:conversation`,
     );
   });
 
@@ -86,5 +97,17 @@ describe('getPublishDependenciesLabels', () => {
     expect(getAnnouncement?.(3)).toBe(
       `${PublishI18nKeys.DependenciesAnnouncement}:3`,
     );
+  });
+});
+
+describe('getPublishDependenciesEntityKey', () => {
+  it.each([
+    [CatalogEntityType.Agent, PublishI18nKeys.DependenciesEntityApplication],
+    [CatalogEntityType.Toolset, PublishI18nKeys.DependenciesEntityToolset],
+    [CatalogEntityType.Prompt, PublishI18nKeys.DependenciesEntityPrompt],
+    [CatalogEntityType.Skill, PublishI18nKeys.DependenciesEntitySkill],
+    [CatalogEntityType.Model, PublishI18nKeys.DependenciesEntityItem],
+  ])('names a %s item with its own noun', (type, key) => {
+    expect(getPublishDependenciesEntityKey(type)).toBe(key);
   });
 });

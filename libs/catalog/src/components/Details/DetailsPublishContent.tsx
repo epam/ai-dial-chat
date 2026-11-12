@@ -17,6 +17,7 @@ export interface DetailsPublishContentProps extends Pick<
   | 'onPublishExpandedPathsChange'
   | 'publishLoadingPaths'
   | 'publishLabels'
+  | 'resolvePublishDependenciesLabels'
 > {
   /** Rule source options, with the panel default already applied. */
   ruleSourceOptions: string[];
@@ -42,6 +43,7 @@ export const DetailsPublishContent: FC<DetailsPublishContentProps> = ({
   publishLoadingPaths,
   ruleSourceOptions,
   publishLabels,
+  resolvePublishDependenciesLabels,
 }) => (
   <div className="p-4 desktop:p-[22px]">
     <PublishPanel
@@ -81,7 +83,17 @@ export const DetailsPublishContent: FC<DetailsPublishContentProps> = ({
       ruleSourceOptions={ruleSourceOptions}
       isRulesLoading={publishFlow.isRulesLoading}
       hasRulesLoadError={publishFlow.hasRulesLoadError}
-      labels={publishLabels}
+      labels={
+        resolvePublishDependenciesLabels
+          ? {
+              ...publishLabels,
+              dependenciesLabels: {
+                ...publishLabels?.dependenciesLabels,
+                ...resolvePublishDependenciesLabels(item),
+              },
+            }
+          : publishLabels
+      }
       dependencies={publishDependencies}
     />
   </div>
