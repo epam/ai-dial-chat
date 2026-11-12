@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: General step validation — name and version
-`CustomAppEditor` SHALL validate metadata through `useMetadataForm` with `validateVersionPattern: true`, i.e. the shared resource version rule (`resource-version-pattern`). `name` is required. A non-empty version must match that rule: 1 to 64 letters, digits, underscores, dots, plus signs or hyphens, not ending with a dot (e.g. `0.0.1`, `beta-2`).
+`CustomAppEditor` SHALL validate metadata through `useMetadataForm` with `validateVersionPattern: true`, i.e. the shared resource version rule (`resource-version-pattern`). `name` is required. A non-empty version must match that rule: 1 to 64 letters, digits, underscores, dots, plus signs or hyphens, not ending with a dot, not containing `__` and not starting with `_` (e.g. `0.0.1`, `beta-2`).
 
 Each field's error SHALL appear once that field has been touched (on blur), independently of the other field. All errors SHALL appear on a submit attempt. The primary button SHALL NOT be disabled for validation reasons. Instead, a submit attempt with invalid metadata SHALL show the errors, focus the first invalid field and send no request.
 
@@ -14,7 +14,7 @@ The version-invalid error message SHALL be `"Version format is invalid (example:
 - **THEN** a name-required error is shown under the Name field
 
 #### Scenario: Version format error on blur
-- **WHEN** the Version field contains a value that breaks the shared rule (e.g. contains a space, ends with a dot, or is longer than 64 characters) and loses focus
+- **WHEN** the Version field contains a value that breaks the shared rule (e.g. contains a space, ends with a dot, contains `__`, starts with `_`, or is longer than 64 characters) and loses focus
 - **THEN** a version-invalid error ("Version format is invalid (example: 0.0.1)") is shown under the Version field
 
 #### Scenario: Submit attempt with invalid metadata

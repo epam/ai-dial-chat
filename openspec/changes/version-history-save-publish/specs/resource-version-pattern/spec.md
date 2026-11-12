@@ -8,7 +8,10 @@ Defines the single rule that decides whether a resource version string is accept
 
 ### Requirement: A version is a free string validated by one rule
 
-A resource version SHALL be a free string, not semver. It SHALL be accepted only when it matches `^(?!.*\.$)[\w.+-]{1,64}$`: one to 64 characters from letters, digits, underscore, dot, plus and hyphen, not ending with a dot. This is the publish-target rule `^(?!\.+$)[\w.+-]{1,64}$` plus a ban on a trailing dot, which also rejects versions made only of dots. A trailing dot is rejected because the version ends the last segment of the stored path (`{name}__{version}`) and DIAL Core answers `400` for a path whose last segment ends with `.`. There SHALL be no ordering between versions and no "greater than the previous version" check anywhere. The default version of a new resource stays `1.0.0` (`DEFAULT_RESOURCE_VERSION` in `apps/chat-api/src/common/utils/resource-identity.ts`).
+A resource version SHALL be a free string, not semver. It SHALL be accepted only when it matches `^(?!.*\.$)(?!.*__)(?!_)[\w.+-]{1,64}$`: one to 64 characters from letters, digits, underscore, dot, plus and hyphen, not ending with a dot, not containing `__` and not starting with `_`. This is the publish-target rule `^(?!\.+$)[\w.+-]{1,64}$` plus three exclusions, each with its own reason, and the code comments on both constants repeat them:
+
+- a trailing dot is rejected (it also rejects versions made only of dots) because the version ends the last segment of the stored path (`{name}__{version}`) and DIAL Core answers `400` for a path whose last segment ends with `.`;
+- `__` and a leading `_` are rejected because `__` is the separator between the name and the version in that path (the issue and `RESOURCE_VERSION_SEPARATOR` in `apps/chat-api/src/common/utils/next-free-path.ts` define it) and every reader splits the path at its last `__`, so a version such as `1__2` would move part of itself into the name (`App__1__2` would be read as name `App__1`, version `2`), and a version such as `_1` would be indistinguishable from a name ending with `_` (`App___1`), splitting the versions of one resource into different groups. There SHALL be no ordering between versions and no "greater than the previous version" check anywhere. The default version of a new resource stays `1.0.0` (`DEFAULT_RESOURCE_VERSION` in `apps/chat-api/src/common/utils/resource-identity.ts`).
 
 The rule SHALL apply to a version the caller supplies in: the create, update and fork-version bodies of applications; the create and update bodies of toolsets; the publish target version; and every UI input that edits a version (the Save panel's new-version input and the Version field of the Quick App, schema app, custom app and toolset editors). A stored version is never re-validated on read; the rule applies only to a version a request supplies.
 
@@ -32,6 +35,10 @@ The rule SHALL apply to a version the caller supplies in: the create, update and
 - **WHEN** the version is `1.0.`, `1.` or `..`
 - **THEN** the UI shows the invalid-version error and the API answers `400`
 
+#### Scenario: The name separator is rejected
+- **WHEN** the version contains `__` (for example `1__2`) or starts with `_` (for example `_1`)
+- **THEN** the UI shows the invalid-version error and the API answers `400`; a version with a single inner or trailing underscore (`1_0`, `v1_`) is accepted
+
 #### Scenario: Forbidden characters are rejected
 - **WHEN** the version contains a space, `/` or `:`
 - **THEN** the UI shows the invalid-version error and the API answers `400`
@@ -42,11 +49,11 @@ The rule SHALL apply to a version the caller supplies in: the create, update and
 
 ### Requirement: The UI never accepts a version the API rejects
 
-For every string, the UI's version check and the API's version check SHALL give the same verdict. `apps/chat-api` is a `type:backend` project and may depend only on `type:backend` libraries, so the rule SHALL be kept as two mirrored constants, one in `apps/chat-api` and one in `@epam/ai-dial-chat-shared`, each commented as the mirror of the other, in the same way as the entity field limits. Both constants SHALL be tested against one shared corpus of accepted and rejected strings, so the two cannot drift. No other copy of the pattern SHALL exist in either surface. A version that passes the UI check SHALL NOT be answered with a validation `400` for its format.
+For every string, the UI's version check and the API's version check SHALL give the same verdict. `apps/chat-api` is a `type:backend` project and may depend only on `type:backend` libraries, so the rule SHALL be kept as two mirrored constants, one in `apps/chat-api` and one in `@epam/ai-dial-chat-shared`, each commented as the mirror of the other, in the same way as the entity field limits. The API holds the only corpus of accepted and rejected strings; the spec of the `@epam/ai-dial-chat-shared` constant reads the API pattern file and the API corpus file, compares the two regular expressions and runs the same corpus, so the two cannot drift. No other copy of the pattern SHALL exist in either surface. A version that passes the UI check SHALL NOT be answered with a validation `400` for its format.
 
 #### Scenario: Same verdict for the same string
-- **WHEN** each string of the corpus is checked by the UI constant and by the API constant
-- **THEN** both give the same verdict, and a test fails if they differ
+- **WHEN** each string of the API corpus is checked by the UI constant and by the API constant
+- **THEN** both give the same verdict, and a test fails if the two regular expressions or their verdicts differ
 
 #### Scenario: No leftover copies
 - **WHEN** the source of the API DTOs, the publish target and the UI editors is searched for a version pattern
@@ -54,7 +61,7 @@ For every string, the UI's version check and the API's version check SHALL give 
 
 ### Requirement: Invalid-version responses name the rule
 
-An API validation failure for a version SHALL answer `400` with a message that states the allowed characters (letters, digits, underscore, dot, plus, hyphen), the 64-character maximum and that a version cannot end with a dot. The three application DTOs, the toolset DTO and the publish target SHALL share the same message.
+An API validation failure for a version SHALL answer `400` with a message that states the allowed characters (letters, digits, underscore, dot, plus, hyphen), the 64-character maximum, that a version cannot end with a dot, and that it cannot contain two underscores in a row or start with an underscore. The three application DTOs, the toolset DTO and the publish target SHALL share the same message.
 
 #### Scenario: Message is the same across endpoints
 - **WHEN** an invalid version is sent to create-application, update-application, fork-version, create-toolset, update-toolset and publish

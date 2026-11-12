@@ -1358,7 +1358,7 @@ import {
 const isNameTooLong = exceedsMaxLength(name.trim(), ENTITY_NAME_MAX_LENGTH);
 const isNameMultiline = hasControlCharacters(name); // line breaks, tabs, NUL, …
 
-// Version rule shared with the chat API: 1-64 of letters, digits, `_`, `.`, `+`, `-`, no trailing dot.
+// Version rule shared with the chat API: 1-64 of letters, digits, `_`, `.`, `+`, `-`; no trailing dot, no `__`, no leading `_` (`__` separates the name from the version in the stored path).
 const isVersionValid = RESOURCE_VERSION_PATTERN.test(version);
 
 // Merge conditional class names — the only supported way to compose classes.

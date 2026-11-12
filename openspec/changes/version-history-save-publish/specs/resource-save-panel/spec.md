@@ -51,7 +51,7 @@ i18n keys: `ResourceSavePanelI18nKeys.VersionInvalid`, `VersionUnchanged`, `Vers
 - **THEN** no format error is shown and Save is enabled
 
 #### Scenario: Invalid version is rejected
-- **WHEN** the user types a version containing a space, ending with a dot, or longer than 64 characters
+- **WHEN** the user types a version containing a space, ending with a dot, containing `__`, starting with `_`, or longer than 64 characters
 - **THEN** the input shows "VersionInvalid" after blur and Save is disabled
 
 #### Scenario: Unchanged version is rejected

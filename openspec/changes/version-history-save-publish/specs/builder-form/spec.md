@@ -38,7 +38,7 @@ have no side effects and SHALL NOT depend on i18n, routing, or network state.
 `validateVersionPattern` SHALL accept either `true` — checking the non-empty version against the
 exported default `VERSION_PATTERN` — or a `RegExp`, checked instead of the default. `VERSION_PATTERN`
 SHALL be the shared resource version rule (`resource-version-pattern`: one to 64 letters, digits,
-underscores, dots, plus signs and hyphens, not ending with a dot), taken from
+underscores, dots, plus signs and hyphens, not ending with a dot, not containing `__` and not starting with `_`), taken from
 `@epam/ai-dial-chat-shared` (`RESOURCE_VERSION_PATTERN`) and re-exported under this name. The library
 SHALL NOT export `SEMVER_VERSION_PATTERN`.
 
@@ -66,7 +66,7 @@ SHALL NOT export `SEMVER_VERSION_PATTERN`.
 - **WHEN** the function is called with `validateVersionPattern: true` and a non-empty version
   containing a character outside `VERSION_PATTERN`
 - **THEN** it returns a version-format error; a version following the shared rule (e.g. `abc` or
-  `beta-2`) produces no error, and a version ending with a dot or longer than 64 characters returns a
+  `beta-2`) produces no error, and a version ending with a dot, containing `__`, starting with `_` or longer than 64 characters returns a
   version-format error
 
 #### Scenario: Stricter version pattern override

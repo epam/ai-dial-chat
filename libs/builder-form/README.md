@@ -494,8 +494,9 @@ const errors = {
 `NAME_PATTERN` allows letters, digits, spaces, underscores, dots, and dashes;
 `VERSION_PATTERN` (the default when `validateVersionPattern: true`) is
 `RESOURCE_VERSION_PATTERN` from `@epam/ai-dial-chat-shared`: 1-64 letters,
-digits, underscores, dots, plus signs and hyphens, not ending with a dot — the
-rule the chat API applies to a version. Pass a `RegExp` instead of `true` for a
+digits, underscores, dots, plus signs and hyphens, not ending with a dot, not
+containing `__` and not starting with `_` (`__` separates the name from the
+version in the stored path) — the rule the chat API applies to a version. Pass a `RegExp` instead of `true` for a
 host that needs a stricter version format (for example dot-separated numeric
 segments). Both patterns are exported so a host can pre-filter input with the
 same rule the validator applies.

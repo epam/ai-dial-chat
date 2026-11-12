@@ -15,7 +15,7 @@ import { DeploymentCreationFieldErrorCode } from '../models/validation';
 /** Allowed characters for the name field: letters, digits, spaces, underscores, dots, dashes. */
 export const NAME_PATTERN = /^[a-zA-Z0-9 _.-]+$/;
 
-/** Default version rule: `RESOURCE_VERSION_PATTERN` from `@epam/ai-dial-chat-shared` (1-64 of letters, digits, `_`, `.`, `+`, `-`, no trailing dot). */
+/** Default version rule: `RESOURCE_VERSION_PATTERN` from `@epam/ai-dial-chat-shared` (1-64 of letters, digits, `_`, `.`, `+`, `-`; no trailing dot, no `__`, no leading `_`). */
 export const VERSION_PATTERN = RESOURCE_VERSION_PATTERN;
 
 /** Version a new deployment's create form opens with; a SemVer 2.0.0 value the host seeds into its create-mode metadata. */
