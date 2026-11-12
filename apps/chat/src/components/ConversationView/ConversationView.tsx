@@ -74,6 +74,7 @@ import {
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useAnchoredMessageActions } from '../../hooks/conversation/useAnchoredMessageActions';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
@@ -405,6 +406,7 @@ const ConversationView: FC<Props> = ({
     config: { maxAttachmentFileSizeBytes },
   } = useAppConfig();
   const isUsageLimitsControlEnabled = useFeatureFlag('usageLimitsControl');
+  const overlay = useOptionalOverlay();
   const isDisallowChangeAgentEnabled = useUiFeature(
     OverlayFeature.DisallowChangeAgent,
   );
@@ -976,6 +978,7 @@ const ConversationView: FC<Props> = ({
                 canRemoveTools={isRemovableToolsEnabled}
                 toolsMenuTitle={toolsMenuTitle}
                 toolsChipLabels={toolsChipLabels}
+                isToolChipRowAllowedOnPhone={overlay != null}
                 pendingDropFiles={
                   !isEditActive ? reply.pendingFiles : undefined
                 }
