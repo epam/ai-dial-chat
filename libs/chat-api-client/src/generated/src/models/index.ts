@@ -469,6 +469,49 @@ export interface ApplicationDto {
    */
   maxInputAttachments?: number;
 }
+
+/**
+ * Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available.
+ * @export
+ */
+export const ApplicationErrorCode = {
+  ApplicationDependentResourceMissing: 'applicationDependentResourceMissing',
+} as const;
+export type ApplicationErrorCode =
+  (typeof ApplicationErrorCode)[keyof typeof ApplicationErrorCode];
+
+/**
+ *
+ * @export
+ * @interface ApplicationErrorDto
+ */
+export interface ApplicationErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ApplicationErrorDto
+   */
+  statusCode: number;
+  /**
+   * HTTP status text. Absent from a plain `403 Forbidden`.
+   * @type {string}
+   * @memberof ApplicationErrorDto
+   */
+  error?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationErrorDto
+   */
+  message: string;
+  /**
+   * Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available.
+   * @type {ApplicationErrorCode}
+   * @memberof ApplicationErrorDto
+   */
+  code?: ApplicationErrorCode;
+}
+
 /**
  *
  * @export
