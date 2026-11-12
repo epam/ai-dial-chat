@@ -464,7 +464,14 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission to create applications in their bucket"
+            "description": "Caller lacks permission to create applications in their bucket, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "DIAL Core resource not found"
@@ -839,7 +846,14 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission"
+            "description": "Caller lacks permission, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Application not found"
@@ -11042,7 +11056,7 @@
     },
     "/api/v1/projects/{id}/conversations": {
       "get": {
-        "description": "Lists every conversation stored in the project's `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.",
+        "description": "Lists every conversation stored in the project's `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves. A published project is the exception: its files all carry the time of the copy, so every body is read, no item is pending, and the conversations are ordered by their last message.",
         "operationId": "listProjectConversations",
         "parameters": [
           {
@@ -13350,6 +13364,38 @@
           }
         },
         "required": ["id"]
+      },
+      "ApplicationErrorCode": {
+        "type": "string",
+        "enum": ["applicationDependentResourceMissing"],
+        "description": "Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available."
+      },
+      "ApplicationErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 403
+          },
+          "error": {
+            "type": "string",
+            "example": "Forbidden",
+            "description": "HTTP status text. Absent from a plain `403 Forbidden`."
+          },
+          "message": {
+            "type": "string",
+            "example": "This application refers to a resource that is no longer available. Remove or replace it to continue."
+          },
+          "code": {
+            "description": "Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApplicationErrorCode"
+              }
+            ]
+          }
+        },
+        "required": ["statusCode", "message"]
       },
       "UpdateApplicationBodyDto": {
         "type": "object",

@@ -15,6 +15,7 @@ import { ApplicationsService } from '../applications.service';
 import type { ApplicationsResponseDto } from '../dto/application.dto';
 import type { CreateApplicationBodyDto } from '../dto/create-application.dto';
 import type { UpdateApplicationBodyDto } from '../dto/update-application.dto';
+import { ApplicationErrorCode } from '../types/application-error-code.enum';
 
 const mockApp = { id: 'my-app', object: 'application', display_name: 'My App' };
 const mockList: ApplicationsResponseDto = { data: [mockApp] };
@@ -22,8 +23,10 @@ const mockList: ApplicationsResponseDto = { data: [mockApp] };
 const okResponse = (data: unknown) =>
   ({ data, response: {} as Response }) as never;
 
-const errResponse = (status: number) =>
-  ({ error: {}, response: { status } as Response }) as never;
+const errResponse = (status: number, error: unknown = {}) =>
+  ({ error, response: { status } as Response }) as never;
+
+const DEPENDENT_RESOURCE_BODY = 'Failed to access application resource';
 
 function makeDeps() {
   const dialClient = {
@@ -793,6 +796,46 @@ describe('ApplicationsService', () => {
       );
     });
 
+    it('returns the coded 403 for a create-only save without retrying', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(
+        service,
+        undefined,
+        errResponse(403, `${DEPENDENT_RESOURCE_BODY} files/b/doc.pdf`),
+      );
+
+      const error = await service
+        .createApplication('u', 't', { ...body, createOnly: true })
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      expect(
+        ((error as ForbiddenException).getResponse() as { code: string }).code,
+      ).toBe(ApplicationErrorCode.DependentResourceMissing);
+      expect(saveCustomApplicationSpy).toHaveBeenCalledOnce();
+    });
+
+    it('throws a coded ForbiddenException without the resource path when Core reports a missing dependency', async () => {
+      const { service } = makeService();
+      mockCreateApplicationSdk(
+        service,
+        undefined,
+        errResponse(403, `${DEPENDENT_RESOURCE_BODY} files/b/folder/doc.pdf`),
+      );
+
+      const error = await service
+        .createApplication('u', 't', body)
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      const response = (error as ForbiddenException).getResponse() as {
+        code: string;
+        message: string;
+      };
+      expect(response.code).toBe(ApplicationErrorCode.DependentResourceMissing);
+      expect(response.message).not.toContain('doc.pdf');
+    });
+
     it('throws HttpException(429) when PUT returns 429', async () => {
       const { service } = makeService();
       mockCreateApplicationSdk(service, undefined, errResponse(429));
@@ -1370,6 +1413,45 @@ describe('ApplicationsService', () => {
       await expect(
         service.updateApplication('u', 't', id, updateBody),
       ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws a coded ForbiddenException without the resource path when Core reports a missing dependency', async () => {
+      const { service } = makeService();
+      mockUpdateApplicationSdk(
+        service,
+        undefined,
+        errResponse(403, `${DEPENDENT_RESOURCE_BODY} files/b/folder/doc.pdf`),
+      );
+
+      const error = await service
+        .updateApplication('u', 't', id, updateBody)
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      const response = (error as ForbiddenException).getResponse() as {
+        code: string;
+        message: string;
+      };
+      expect(response.code).toBe(ApplicationErrorCode.DependentResourceMissing);
+      expect(response.message).not.toContain('doc.pdf');
+    });
+
+    it('keeps the generic 403 when the Core body is another text', async () => {
+      const { service } = makeService();
+      mockUpdateApplicationSdk(
+        service,
+        undefined,
+        errResponse(403, "You don't have an access to: files/b/x.pdf"),
+      );
+
+      const error = await service
+        .updateApplication('u', 't', id, updateBody)
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      expect(
+        (error as ForbiddenException).getResponse() as { code?: string },
+      ).not.toHaveProperty('code');
     });
 
     it('throws BadGatewayException when DIAL Core returns a 5xx while saving', async () => {

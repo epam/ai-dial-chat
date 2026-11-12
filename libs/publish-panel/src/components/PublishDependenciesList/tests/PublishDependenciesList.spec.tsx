@@ -60,10 +60,10 @@ describe('PublishDependenciesList', () => {
     expect(screen.getByText('Search')).toBeTruthy();
   });
 
-  it('shows the root label for a dependency at the bucket root', () => {
+  it('shows only the type for a dependency at the bucket root', () => {
     render(<PublishDependenciesList dependencies={[toolset]} />);
 
-    expect(screen.getByText('Toolset · Root folder')).toBeTruthy();
+    expect(screen.getByText('Toolset')).toBeTruthy();
   });
 
   it('names the section by its heading and warns about the consequence', () => {
@@ -73,7 +73,9 @@ describe('PublishDependenciesList', () => {
       name: 'Private dependencies',
     });
     expect(section.className).toContain(PUBLISH_PANEL_CLASS.dependencies);
-    expect(within(section).getByText(/still private/)).toBeTruthy();
+    expect(
+      within(section).getByText(/depends on personal private resources/),
+    ).toBeTruthy();
   });
 
   it('shows host-supplied labels instead of the English defaults', () => {
@@ -82,7 +84,6 @@ describe('PublishDependenciesList', () => {
         dependencies={[prompt]}
         labels={{
           title: 'Приватные зависимости',
-          rootLocation: 'Корень',
           typeLabels: { [PublishDependencyType.Prompt]: 'Промпт' },
         }}
       />,
