@@ -4,6 +4,7 @@ import { Test } from '@nestjs/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeatureFlagsService } from '../../app-config/feature-flags/feature-flags.service';
 import { FeatureKey } from '../../app-config/feature-flags/feature-key.enum';
+import { UserRolesService } from '../../auth/user-roles.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import {
   TEXT_REFINEMENT_LIMITS,
@@ -45,6 +46,7 @@ describe('TextRefinementService', () => {
   let service: TextRefinementService;
   const send = vi.fn();
   const enabled = vi.fn();
+  const getRoles = vi.fn();
   let config: ConfigService;
   let configValues: Record<string, unknown>;
 
@@ -58,6 +60,7 @@ describe('TextRefinementService', () => {
     );
     send.mockReset().mockResolvedValue(completion());
     enabled.mockReset().mockResolvedValue(true);
+    getRoles.mockReset().mockReturnValue(['author']);
     const module = await Test.createTestingModule({
       providers: [
         TextRefinementService,
@@ -70,6 +73,7 @@ describe('TextRefinementService', () => {
           },
         },
         { provide: FeatureFlagsService, useValue: { isEnabled: enabled } },
+        { provide: UserRolesService, useValue: { getRoles } },
       ],
     }).compile();
     service = module.get(TextRefinementService);
@@ -277,6 +281,25 @@ describe('TextRefinementService', () => {
       expect(send).not.toHaveBeenCalled();
     },
   );
+
+  it("reads the gate's roles through the provider-aware role reader", async () => {
+    const keycloakUser = {
+      ...user,
+      claims: { realm_access: { roles: ['planner'] } },
+    };
+    getRoles.mockReturnValue(['planner']);
+    await service.refineText(
+      { ...dto, purpose: TextRefinementPurpose.ScheduledTaskDescription },
+      keycloakUser,
+      new AbortController().signal,
+    );
+    expect(getRoles).toHaveBeenCalledWith(keycloakUser);
+    expect(enabled).toHaveBeenCalledWith(FeatureKey.ScheduledTasksEnabled, {
+      appId: 'chat-ui',
+      userId: keycloakUser.sub,
+      roles: ['planner'],
+    });
+  });
 
   it('checks no feature for purposes outside a gated domain', async () => {
     await refine();
