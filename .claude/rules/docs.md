@@ -20,8 +20,10 @@ declared in a shipped dependency field, that every `peerDependenciesMeta` key
 names a declared peer, that every version a lib README cites matches its own
 manifest, that `docs/host-install-matrix.md` still matches the manifests it is
 generated from, that every relative markdown link resolves, that every
-name a lib README imports from its own package is actually exported, and that
-a lib's public `dial-*` class names and its README agree in both directions.
+name a lib README imports from its own package is actually exported, that
+a lib's public `dial-*` class names and its README agree in both directions,
+and that no document repeats its H1 or a `##` heading (the sign of a file
+spliced into itself by an unescaped `` $` `` in a `replace` call).
 `npm run lint:check` covers none of this; the PR workflow's
 `validate_agent_docs` job runs it, so a failure here blocks the merge.
 
