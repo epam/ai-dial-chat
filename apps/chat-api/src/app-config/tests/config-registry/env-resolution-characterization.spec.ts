@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { EnvironmentVariables } from '../../../config/environment.config';
 import { PACKAGE_VERSION } from '../../../common/utils/app-version';
+import { EnvironmentVariables } from '../../../config/environment.config';
 import { CONFIG_DEFINITIONS } from '../../config-registry/config-registry.constants';
 import {
   DERIVED_CASES,
