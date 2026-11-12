@@ -18,6 +18,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type FC,
@@ -33,6 +34,7 @@ import {
   TARGET_RECT_MIDDLEWARE,
   targetRect,
 } from '../../utils/floating';
+import { spotlightRadius } from '../../utils/spotlight';
 import { HintCard } from '../HintCard/HintCard';
 import styles from './OnboardingTour.module.scss';
 
@@ -66,6 +68,11 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
   const step = steps[index] ?? null;
   const isOpen = step != null;
   const target = useResolvedTarget(step?.getTarget);
+  /* The outline follows the target's own corners: round for a round button, square for a square panel. */
+  const borderRadius = useMemo(
+    () => (target ? spotlightRadius(target, SPOTLIGHT_PADDING) : undefined),
+    [target],
+  );
 
   /* Remember where focus was before the tour took it, to give it back. */
   useLayoutEffect(() => {
@@ -165,13 +172,14 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
             className={mergeClasses(
               ONBOARDING_TOUR_CLASS.spotlight,
               styles.spotlight,
-              'pointer-events-none absolute rounded-lg border-2',
+              'pointer-events-none absolute border-2',
             )}
             style={{
               top: rect.top - SPOTLIGHT_PADDING,
               left: rect.left - SPOTLIGHT_PADDING,
               width: rect.width + SPOTLIGHT_PADDING * 2,
               height: rect.height + SPOTLIGHT_PADDING * 2,
+              borderRadius,
             }}
           />
         ) : (
