@@ -76,6 +76,16 @@
           "command": "cross-env SWC_NODE_PROJECT=apps/chat-api/tsconfig.app.json node -r @swc-node/register apps/chat-api/src/openapi-spec.ts && npm exec prettier -- --write libs/chat-api-client/openapi.json"
         }
       },
+      "managed-config-schema": {
+        "executor": "nx:run-commands",
+        "outputs": [
+          "{workspaceRoot}/apps/chat-api/managed-config-schema"
+        ],
+        "options": {
+          "cwd": "{workspaceRoot}",
+          "command": "cross-env SWC_NODE_PROJECT=apps/chat-api/tsconfig.app.json node -r @swc-node/register apps/chat-api/src/managed-config-schema.ts && npm exec prettier -- --write apps/chat-api/managed-config-schema"
+        }
+      },
       "openapi-sdk": {
         "executor": "nx:run-commands",
         "dependsOn": [

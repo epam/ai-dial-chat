@@ -241,8 +241,9 @@
             "name": "appId",
             "required": true,
             "in": "query",
-            "description": "Application identifier. Must be a known app ID.",
+            "description": "Application identifier served by this deployment. An identifier the deployment does not serve is rejected with 400.",
             "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
               "example": "chat-ui",
               "type": "string"
             }
@@ -260,7 +261,7 @@
             }
           },
           "400": {
-            "description": "Missing or invalid appId"
+            "description": "Missing, malformed or unserved appId"
           }
         },
         "summary": "Get client-safe application configuration and feature flags",
