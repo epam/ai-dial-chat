@@ -1417,6 +1417,14 @@
     "listAriaLabel": "Announcements",
     "opensInNewTab": "(opens in a new tab)"
   },
+  "onboardingTour": {
+    "stepCounter": "Step {{current}} of {{total}}",
+    "next": "Next",
+    "back": "Back",
+    "done": "Done",
+    "skip": "Skip tour",
+    "close": "Close tour"
+  },
   "notification": {
     "requestId": {
       "label": "Request ID",

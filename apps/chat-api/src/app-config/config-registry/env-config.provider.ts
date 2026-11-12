@@ -153,7 +153,17 @@ export class EnvConfigProvider implements ConfigProvider, OnModuleInit {
       if (!raw) {
         return undefined;
       }
-      return this.parseAnnouncements(raw);
+      return this.parseJsonArray(raw, 'ANNOUNCEMENTS');
+    }
+
+    /* Same JSON-array contract as ANNOUNCEMENTS; entry validation lives in
+     * normalizeOnboardingHints. */
+    if (key === 'onboarding.hints') {
+      const raw = this.configService.get('ONBOARDING_HINTS', { infer: true });
+      if (!raw) {
+        return undefined;
+      }
+      return this.parseJsonArray(raw, 'ONBOARDING_HINTS');
     }
 
     if (key === 'customVariables') {
@@ -250,24 +260,28 @@ export class EnvConfigProvider implements ConfigProvider, OnModuleInit {
   }
 
   /**
-   * Parses `ANNOUNCEMENTS` fail-open: invalid JSON or a non-array resolves to
-   * `undefined` so the registry default (an empty list) applies and the pill
-   * simply stays hidden. Per-entry validation happens in `AppConfigService`.
+   * Parses a JSON-array variable (`ANNOUNCEMENTS`, `ONBOARDING_HINTS`)
+   * fail-open: invalid JSON or a non-array resolves to `undefined` so the
+   * registry default (an empty list) applies and the UI simply stays hidden.
+   * Per-entry validation happens in the mapper's normalizers.
    */
-  private parseAnnouncements(raw: string): unknown[] | undefined {
+  private parseJsonArray(
+    raw: string,
+    envVar: 'ANNOUNCEMENTS' | 'ONBOARDING_HINTS',
+  ): unknown[] | undefined {
     let parsed: unknown;
     try {
       parsed = JSON.parse(raw);
     } catch {
       this.logger.error(
-        'ANNOUNCEMENTS is not valid JSON; resolving to an empty list',
+        `${envVar} is not valid JSON; resolving to an empty list`,
       );
       return undefined;
     }
 
     if (!Array.isArray(parsed)) {
       this.logger.error(
-        'ANNOUNCEMENTS must be a JSON array; resolving to an empty list',
+        `${envVar} must be a JSON array; resolving to an empty list`,
       );
       return undefined;
     }

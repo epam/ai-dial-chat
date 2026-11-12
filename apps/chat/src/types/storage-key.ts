@@ -10,6 +10,7 @@ export enum StorageKey {
   CatalogIsMyAppsActive = 'catalogIsMyAppsActive',
   CatalogActiveTab = 'catalogActiveTab',
   TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
+  SeenOnboardingHints = 'seenOnboardingHints',
   PublishDestinationFolders = 'publishDestinationFolders',
   ConversationDrafts = 'conversationDrafts',
   NavigationSidebarExpanded = 'navigationSidebarExpanded',

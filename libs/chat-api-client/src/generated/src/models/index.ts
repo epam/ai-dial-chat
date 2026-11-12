@@ -1738,6 +1738,12 @@ export interface ClientConfigDto {
    */
   announcements: Array<AnnouncementItemDto>;
   /**
+   * Onboarding hints the client shows once, step by step, to a user who has not seen them, in configured order. Empty when ONBOARDING_HINTS is unset or contained no valid entries.
+   * @type {Array<OnboardingHintDto>}
+   * @memberof ClientConfigDto
+   */
+  onboardingHints: Array<OnboardingHintDto>;
+  /**
    * Plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Null when WELCOME_SCREEN_DESCRIPTION is not configured or is blank.
    * @type {string}
    * @memberof ClientConfigDto
@@ -6775,6 +6781,59 @@ export interface OfflineCredentialsSigninBodyDto {
    */
   redirectUri: string;
 }
+/**
+ *
+ * @export
+ * @interface OnboardingHintDto
+ */
+export interface OnboardingHintDto {
+  /**
+   * Stable identifier of the hint. The client remembers which ids a user has seen, so changing an id shows that hint again. Letters, digits, ".", "_" and "-", at most 64 characters; duplicates after the first are dropped server-side.
+   * @type {string}
+   * @memberof OnboardingHintDto
+   */
+  id: string;
+  /**
+   * The UI element the hint points at. A closed list; the client resolves it and skips the hint when that element is not on screen.
+   * @type {OnboardingHintTarget}
+   * @memberof OnboardingHintDto
+   */
+  target: OnboardingHintTarget;
+  /**
+   * Hint heading. Plain text; never interpreted as markup. Entries without one are dropped server-side.
+   * @type {string}
+   * @memberof OnboardingHintDto
+   */
+  title: string;
+  /**
+   * Supporting copy under the heading. Plain text; never interpreted as markup. Null when unset or blank.
+   * @type {string}
+   * @memberof OnboardingHintDto
+   */
+  description: string | null;
+}
+
+/**
+ * The UI element the hint points at. A closed list; the client resolves it and skips the hint when that element is not on screen.
+ * @export
+ */
+export const OnboardingHintTarget = {
+  NewChat: 'new-chat',
+  Navigation: 'navigation',
+  Projects: 'projects',
+  ScheduledTasks: 'scheduled-tasks',
+  Catalog: 'catalog',
+  FileManager: 'file-manager',
+  ConversationInput: 'conversation-input',
+  AddAttachment: 'add-attachment',
+  CatalogCreate: 'catalog-create',
+  CatalogSearch: 'catalog-search',
+  CatalogTabs: 'catalog-tabs',
+  CatalogViewMode: 'catalog-view-mode',
+} as const;
+export type OnboardingHintTarget =
+  (typeof OnboardingHintTarget)[keyof typeof OnboardingHintTarget];
+
 /**
  *
  * @export
