@@ -34,7 +34,7 @@ Originally forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui) 
 ![ai-dial-chat](./docs/ai-dial-chat.png)
 
 > [!IMPORTANT]
-> This repository is managed as monorepo by [NX](https://nx.dev/) tools.
+> This repository is managed as monorepo by [NX](https://nx.dev/) tools
 
 ---
 
