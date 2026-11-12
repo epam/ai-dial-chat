@@ -258,7 +258,10 @@ const PublishProjectPanelContainer: FC<Props> = ({
         submitError: t(PublishI18nKeys.SubmitErrorCallout),
         rootFolderLabel: t(BasicI18nKeys.Organization),
         accessRulesLabels: getAccessRulesLabels(t),
-        dependenciesLabels: getPublishDependenciesLabels(t),
+        dependenciesLabels: getPublishDependenciesLabels(
+          t,
+          PublishI18nKeys.DependenciesEntityProject,
+        ),
         ...getPublishAuthorLabels(t),
         ...getPublishPanelCommonLabels(t),
       }}

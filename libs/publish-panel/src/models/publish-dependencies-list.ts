@@ -8,10 +8,8 @@ import type {
 export interface PublishDependenciesLabels {
   /** Section heading. Default: `'Private dependencies'`. */
   title?: string;
-  /** Warning shown under the heading: why a private dependency matters. */
+  /** Warning shown under the heading: why a private dependency matters; the host names the published entity in it. Default: a generic text about "this item". */
   description?: string;
-  /** Label for a dependency that sits at the root of its owner's bucket. Default: `'Root folder'`. */
-  rootLocation?: string;
   /** Label per kind of dependency. Defaults: `'Application'`, `'Toolset'`, `'Prompt'`, `'Skill'`, `'File'`. */
   typeLabels?: Partial<Record<PublishDependencyType, string>>;
   /** Text announced to screen readers when the section appears or its count changes; receives the count. */

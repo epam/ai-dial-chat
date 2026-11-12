@@ -69,8 +69,7 @@ const renderDependencyIcon = (dependency: PublishDependency) => (
 
 const DEFAULT_TITLE = 'Private dependencies';
 const DEFAULT_DESCRIPTION =
-  'These resources are still private. This item may not work for others until they are published too.';
-const DEFAULT_ROOT_LOCATION = 'Root folder';
+  'This item depends on personal private resources (listed below). After publishing, other users may not be able to use it fully, or may run into problems.';
 
 const defaultAnnouncement = (count: number): string =>
   `${count} ${count === 1 ? 'dependency is' : 'dependencies are'} not public yet`;
@@ -93,7 +92,6 @@ export const PublishDependenciesList: FC<PublishDependenciesListProps> = ({
   const {
     title = DEFAULT_TITLE,
     description = DEFAULT_DESCRIPTION,
-    rootLocation = DEFAULT_ROOT_LOCATION,
     typeLabels = {},
     getAnnouncement = defaultAnnouncement,
   }: PublishDependenciesLabels = labels;
@@ -176,7 +174,9 @@ export const PublishDependenciesList: FC<PublishDependenciesListProps> = ({
                         styles.meta,
                       )}
                     >
-                      {typeLabel} · {dependency.location || rootLocation}
+                      {dependency.location
+                        ? `${typeLabel} · ${dependency.location}`
+                        : typeLabel}
                     </span>
                   </div>
                 </li>
