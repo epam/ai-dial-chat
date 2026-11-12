@@ -91,6 +91,14 @@ arrives through `usePublishFlow`'s `defaultAuthor`.
 Override its copy through `labels.authorLabel`, `labels.authorPlaceholder`, and
 `labels.authorHint`.
 
+When a folder is selected, the user can publish to it and the version is not
+already there, the panel shows an info callout under the destination row saying
+the publication needs an administrator's approval. Its copy is
+`labels.adminApprovalTitle` (default `'Admin approval required'`) and
+`labels.adminApprovalMessage`; the default message says "it will appear in the
+folder", so a host replaces it to name the entity being published. The replace,
+no-access and submit-error callouts take its place when they apply.
+
 Typography comes from four class props: `summaryTitleClassName` and
 `headingClassName` (both `'dial-body-semi-text'`), `destinationClassName`
 (`'dial-small-semi-text'`) for the destination path, and

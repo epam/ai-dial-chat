@@ -18,6 +18,7 @@ export interface DetailsPublishContentProps extends Pick<
   | 'publishLoadingPaths'
   | 'publishLabels'
   | 'resolvePublishDependenciesLabels'
+  | 'resolvePublishApprovalLabels'
 > {
   /** Rule source options, with the panel default already applied. */
   ruleSourceOptions: string[];
@@ -44,6 +45,7 @@ export const DetailsPublishContent: FC<DetailsPublishContentProps> = ({
   ruleSourceOptions,
   publishLabels,
   resolvePublishDependenciesLabels,
+  resolvePublishApprovalLabels,
 }) => (
   <div className="p-4 desktop:p-[22px]">
     <PublishPanel
@@ -83,17 +85,16 @@ export const DetailsPublishContent: FC<DetailsPublishContentProps> = ({
       ruleSourceOptions={ruleSourceOptions}
       isRulesLoading={publishFlow.isRulesLoading}
       hasRulesLoadError={publishFlow.hasRulesLoadError}
-      labels={
-        resolvePublishDependenciesLabels
-          ? {
-              ...publishLabels,
-              dependenciesLabels: {
-                ...publishLabels?.dependenciesLabels,
-                ...resolvePublishDependenciesLabels(item),
-              },
-            }
-          : publishLabels
-      }
+      labels={{
+        ...publishLabels,
+        ...resolvePublishApprovalLabels?.(item),
+        ...(resolvePublishDependenciesLabels && {
+          dependenciesLabels: {
+            ...publishLabels?.dependenciesLabels,
+            ...resolvePublishDependenciesLabels(item),
+          },
+        }),
+      }}
       dependencies={publishDependencies}
     />
   </div>
