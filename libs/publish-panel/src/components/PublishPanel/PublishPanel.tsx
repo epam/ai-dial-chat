@@ -81,6 +81,10 @@ export interface PublishPanelLabels {
   noAccessError?: string;
   /** Error callout body shown when the most recent submit attempt failed. */
   submitError?: string;
+  /** Heading of the informational callout stating the publication needs an administrator's approval. Default: `'Admin approval required'`. */
+  adminApprovalTitle?: string;
+  /** Body of the informational callout under `adminApprovalTitle`. Default: `'We’ll send a request to your organization’s admin. If approved, it will appear in the folder.'`; a host replaces it to name the entity being published. */
+  adminApprovalMessage?: string;
   /** Message shown when a folder search query matches no folders; `{query}` is replaced. */
   folderEmptyStateLabel?: string;
   /** Label for the per-row context menu action that creates a folder alongside the clicked folder. */
@@ -282,6 +286,8 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     replaceWarning = 'Version {version} is already published in {folder}. Publishing will replace it.',
     noAccessError = "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
     submitError = 'Publishing failed. Please try again.',
+    adminApprovalTitle = 'Admin approval required',
+    adminApprovalMessage = 'We’ll send a request to your organization’s admin. If approved, it will appear in the folder.',
     folderEmptyStateLabel,
     addSiblingFolderLabel,
     addChildFolderLabel,
@@ -487,6 +493,16 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             onClick={onChangeFolderClick}
           />
         </div>
+        {derived.calloutKind === PublishCalloutKind.Info && (
+          <div className="my-4">
+            <Notification
+              type={NotificationType.SectionMessage}
+              variant={NotificationVariant.Info}
+              title={adminApprovalTitle}
+              message={adminApprovalMessage}
+            />
+          </div>
+        )}
         {derived.calloutKind !== PublishCalloutKind.None &&
           derived.calloutKind !== PublishCalloutKind.Info && (
             <div className="mt-3">
