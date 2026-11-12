@@ -302,7 +302,7 @@ Feature gating: none.
 
 The dependency list SHALL NOT include files that publishing the conversation already carries along (files in the author's own bucket); see `publish-dependencies-api` for exactly what is listed.
 
-Strings reuse the keys defined for the catalog flow (`publish.dependencies*`), through one shared `getPublishDependenciesLabels(t)` helper, so every flow reads the same. The translated text is passed in the `panelLabels` of `StandalonePublishPanel` (`PublishPanelLabels.dependenciesLabels`).
+Strings reuse the keys defined for the catalog flow (`publish.dependencies*`), through one shared `getPublishDependenciesLabels(t, entityKey)` helper, so every flow reads the same; the conversation host passes `PublishI18nKeys.DependenciesEntityConversation`, so the warning names a conversation. The translated text is passed in the `panelLabels` of `StandalonePublishPanel` (`PublishPanelLabels.dependenciesLabels`).
 
 #### Scenario: Conversation with a private application shows the section
 - **GIVEN** the conversation's model is a private application
