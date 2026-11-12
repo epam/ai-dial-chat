@@ -447,8 +447,19 @@ describe('validate', () => {
 
   it.each([
     ['true', true],
+    ['TRUE', true],
+    ['1', true],
+    ['yes', true],
+    [' true ', true],
     ['false', false],
-  ])('parses CSP_ALLOW_STYLE_ATTRIBUTES=%s as %s', (rawValue, expected) => {
+    ['false ', false],
+    ['false\r', false],
+    ['0', false],
+    ['no', false],
+    ['off', false],
+    ['disabled', false],
+    ['', false],
+  ])('parses CSP_ALLOW_STYLE_ATTRIBUTES=%j as %s', (rawValue, expected) => {
     const config = validate({
       ...baseConfig,
       CSP_ALLOW_STYLE_ATTRIBUTES: rawValue,

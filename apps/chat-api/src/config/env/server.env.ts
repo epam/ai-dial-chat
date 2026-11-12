@@ -31,7 +31,9 @@ export class ServerEnv {
     const raw = (obj as Record<string, unknown>)[key];
     if (raw == null) return undefined;
     if (typeof raw === 'boolean') return raw;
-    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+    /* Fail closed: this flag relaxes the CSP, so only an explicit truthy value
+     * turns it on. */
+    return ['true', '1', 'yes'].includes(String(raw).trim().toLowerCase());
   })
   @IsBoolean()
   CSP_ALLOW_STYLE_ATTRIBUTES?: boolean = false;
