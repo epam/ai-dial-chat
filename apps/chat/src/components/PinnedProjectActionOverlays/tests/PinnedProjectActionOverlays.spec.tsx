@@ -9,7 +9,10 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PinnedProjectActionState } from '../../../models/pinned-project-action';
 import { deleteProject } from '../../../server-api/projects.api';
-import { discardSharedCatalogItem } from '../../../server-api/share.api';
+import {
+  discardSharedCatalogItem,
+  revokeSharedAccess,
+} from '../../../server-api/share.api';
 import {
   EntityOperation,
   NotifiableEntity,
@@ -46,6 +49,7 @@ vi.mock('../../../context/NotificationContext', () => ({
 }));
 vi.mock('../../../server-api/share.api', () => ({
   discardSharedCatalogItem: vi.fn(),
+  revokeSharedAccess: vi.fn(),
 }));
 vi.mock('../../../hooks/useOperationNotification', () => ({
   useOperationNotification: () => ({
@@ -269,6 +273,39 @@ describe('PinnedProjectActionOverlays', () => {
     expect(screen.getByRole('dialog', { name: 'share project' })).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'Close share' }));
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('revokes from the pinned menu while keeping the route and pin', async () => {
+    vi.mocked(revokeSharedAccess).mockResolvedValue({ success: true });
+    const { onClose } = renderOverlays({
+      action: open(PinnedProjectActionKind.RevokeAccess),
+    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.revokeAccess' }),
+    );
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(revokeSharedAccess).toHaveBeenCalledWith(P);
+    expect(mocks.navigate).not.toHaveBeenCalled();
+    expect(mocks.setPinnedProject).not.toHaveBeenCalled();
+  });
+
+  it('cancels revoke without sending a request', async () => {
+    const { onClose } = renderOverlays({
+      action: open(PinnedProjectActionKind.RevokeAccess),
+    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.cancel' }),
+    );
+    expect(onClose).toHaveBeenCalled();
+    expect(revokeSharedAccess).not.toHaveBeenCalled();
+  });
+
+  it('does not open revoke for a recipient', () => {
+    renderOverlays({
+      action: open(PinnedProjectActionKind.RevokeAccess),
+      project: { ...project, canManage: false },
+    });
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('opens the publish panel and returns focus to the row trigger', () => {

@@ -241,8 +241,9 @@
             "name": "appId",
             "required": true,
             "in": "query",
-            "description": "Application identifier. Must be a known app ID.",
+            "description": "Application identifier served by this deployment. An identifier the deployment does not serve is rejected with 400.",
             "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
               "example": "chat-ui",
               "type": "string"
             }
@@ -260,7 +261,7 @@
             }
           },
           "400": {
-            "description": "Missing or invalid appId"
+            "description": "Missing, malformed or unserved appId"
           }
         },
         "summary": "Get client-safe application configuration and feature flags",
@@ -464,7 +465,14 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission to create applications in their bucket"
+            "description": "Caller lacks permission to create applications in their bucket, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "DIAL Core resource not found"
@@ -839,7 +847,14 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission"
+            "description": "Caller lacks permission, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Application not found"
@@ -1878,6 +1893,113 @@
           }
         },
         "summary": "Get model by name",
+        "tags": ["models"]
+      }
+    },
+    "/api/v1/model-catalog": {
+      "get": {
+        "description": "Returns the DIAL Core models visible to the server-side MODEL_CATALOG_API_KEY, including models the caller's own roles cannot access. Display data only: GET /api/v1/models still decides what the user can use, and Core invocation settings (defaults, responses_defaults, max_retry_attempts, tokenizer_model) are omitted. One server-side cache entry, shared by all users, is kept for 5 minutes.",
+        "operationId": "listModelCatalog",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the model catalog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelCatalogListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DIAL Core rejected the request as invalid"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "404": {
+            "description": "The model catalog is not configured on this deployment"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core rejected the catalog key, or is unreachable or timed out"
+          }
+        },
+        "summary": "List the model catalog",
+        "tags": ["models"]
+      }
+    },
+    "/api/v1/model-catalog/{modelName}": {
+      "get": {
+        "description": "Returns one model from the cached model catalog, without a separate DIAL Core call. A model hidden from the catalog key answers 404, never 403, so its existence is not revealed.",
+        "operationId": "getModelCatalogEntry",
+        "parameters": [
+          {
+            "name": "modelName",
+            "required": true,
+            "in": "path",
+            "description": "Model name (alphanumeric, dash, underscore, dot, colon, and at-sign only)",
+            "schema": {
+              "example": "gpt-4o",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the catalog model",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelCatalogEntryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid model name — disallowed characters"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "404": {
+            "description": "The model catalog is not configured, or the model is not in the catalog"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core rejected the catalog key, or is unreachable or timed out"
+          }
+        },
+        "summary": "Get a model from the catalog",
         "tags": ["models"]
       }
     },
@@ -11042,7 +11164,7 @@
     },
     "/api/v1/projects/{id}/conversations": {
       "get": {
-        "description": "Lists every conversation stored in the project's `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.",
+        "description": "Lists every conversation stored in the project's `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves. A published project is the exception: its files all carry the time of the copy, so every body is read, no item is pending, and the conversations are ordered by their last message.",
         "operationId": "listProjectConversations",
         "parameters": [
           {
@@ -12933,6 +13055,11 @@
                 "$ref": "#/components/schemas/CatalogCreationPermissionsDto"
               }
             ]
+          },
+          "modelCatalogAvailable": {
+            "type": "boolean",
+            "description": "Whether GET /api/v1/model-catalog is configured (MODEL_CATALOG_API_KEY is set). Missing means unavailable. Never carries the key.",
+            "example": false
           }
         },
         "required": [
@@ -13350,6 +13477,38 @@
           }
         },
         "required": ["id"]
+      },
+      "ApplicationErrorCode": {
+        "type": "string",
+        "enum": ["applicationDependentResourceMissing"],
+        "description": "Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available."
+      },
+      "ApplicationErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 403
+          },
+          "error": {
+            "type": "string",
+            "example": "Forbidden",
+            "description": "HTTP status text. Absent from a plain `403 Forbidden`."
+          },
+          "message": {
+            "type": "string",
+            "example": "This application refers to a resource that is no longer available. Remove or replace it to continue."
+          },
+          "code": {
+            "description": "Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApplicationErrorCode"
+              }
+            ]
+          }
+        },
+        "required": ["statusCode", "message"]
       },
       "UpdateApplicationBodyDto": {
         "type": "object",
@@ -14811,6 +14970,133 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/DialModelDto"
+            }
+          }
+        },
+        "required": ["data"]
+      },
+      "ModelCatalogEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "dial.gemini-3-flash-preview"
+          },
+          "object": {
+            "type": "string",
+            "example": "model"
+          },
+          "model": {
+            "type": "string",
+            "example": "dial.gemini-3-flash-preview"
+          },
+          "display_name": {
+            "example": "Gemini 3 Flash",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "display_version": {
+            "type": "string",
+            "example": "test"
+          },
+          "icon_url": {
+            "type": "string",
+            "example": "Gemini.svg"
+          },
+          "description": {
+            "example": "A multimodal model combining reasoning and efficiency.",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "reference": {
+            "type": "string",
+            "example": "dial.gemini-3-flash-preview"
+          },
+          "owner": {
+            "type": "string",
+            "example": "organization-owner"
+          },
+          "status": {
+            "type": "string",
+            "example": "succeeded"
+          },
+          "created_at": {
+            "type": "number",
+            "example": 1779372048383
+          },
+          "updated_at": {
+            "type": "number",
+            "example": 1779372138434
+          },
+          "features": {
+            "$ref": "#/components/schemas/DialModelFeaturesDto"
+          },
+          "input_attachment_types": {
+            "example": ["image/png", "application/pdf"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "max_input_attachments": {
+            "type": "number",
+            "example": 5
+          },
+          "description_keywords": {
+            "example": ["Text Generation", "Image Recognition"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lifecycle_status": {
+            "type": "string",
+            "example": "generally-available"
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/DialModelCapabilitiesDto"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/DialModelLimitsDto"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/DialModelPricingDto"
+          },
+          "interfaces": {
+            "example": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["id", "object"]
+      },
+      "ModelCatalogListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelCatalogEntryDto"
             }
           }
         },

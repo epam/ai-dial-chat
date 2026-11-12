@@ -40,7 +40,11 @@ import {
   getCatalogUnpublishAccess,
   unpublishCatalogEntity,
 } from '../../../server-api/publish.api';
-import { discardSharedCatalogItem } from '../../../server-api/share.api';
+import {
+  discardSharedCatalogItem,
+  getShareRecipientsCount,
+  revokeSharedAccess,
+} from '../../../server-api/share.api';
 import ProjectViewPage from '../ProjectViewPage';
 
 vi.mock(
@@ -61,6 +65,11 @@ vi.mock('../../../context/UserConfigContext', () => ({
 }));
 vi.mock('../../../server-api/share.api', () => ({
   discardSharedCatalogItem: vi.fn(),
+  revokeSharedAccess: vi.fn(),
+  getShareRecipientsCount: vi.fn(async () => ({
+    itemId: 'projects/owner/q4',
+    recipientsCount: 1,
+  })),
 }));
 vi.mock('../../../server-api/projects.api', () => ({
   getProject: vi.fn(),
@@ -298,6 +307,11 @@ describe('ProjectViewPage', () => {
       within(menu).queryByRole('menuitem', { name: ButtonsI18nKeys.Share }),
     ).toBeNull();
     expect(
+      within(menu).queryByRole('menuitem', {
+        name: ButtonsI18nKeys.RevokeAccess,
+      }),
+    ).toBeNull();
+    expect(
       within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Download }),
     ).toBeTruthy();
   });
@@ -370,6 +384,47 @@ describe('ProjectViewPage', () => {
       '/projects/view/a1b2c3/marketing/q4',
     );
     expect(userConfig.setPinnedProject).not.toHaveBeenCalled();
+  });
+
+  it('revokes access after confirmation without removing the owner project or its pin', async () => {
+    vi.mocked(revokeSharedAccess).mockResolvedValue({ success: true });
+    const { router } = renderAt();
+    await screen.findByRole('heading', { level: 1, name: 'q4' });
+    const path = router.state.location.pathname;
+    await userEvent.click(
+      within(await openMenu()).getByRole('menuitem', {
+        name: ButtonsI18nKeys.RevokeAccess,
+      }),
+    );
+    expect(revokeSharedAccess).not.toHaveBeenCalled();
+    const dialog = await screen.findByRole('dialog', {
+      name: CatalogI18nKeys.DetailsRevokeShareConfirmTitle,
+    });
+    await userEvent.click(
+      within(dialog).getByRole('button', {
+        name: ButtonsI18nKeys.RevokeAccess,
+      }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('dialog', {
+          name: CatalogI18nKeys.DetailsRevokeShareConfirmTitle,
+        }),
+      ).toBeNull(),
+    );
+    expect(revokeSharedAccess).toHaveBeenCalledWith(PROJECT_ID);
+    vi.mocked(getShareRecipientsCount).mockResolvedValue({
+      itemId: 'projects/owner/q4',
+      recipientsCount: 0,
+    });
+    expect(
+      within(await openMenu()).queryByRole('menuitem', {
+        name: ButtonsI18nKeys.RevokeAccess,
+      }),
+    ).toBeNull();
+    expect(router.state.location.pathname).toBe(path);
+    expect(userConfig.setPinnedProject).not.toHaveBeenCalled();
+    expect(deleteProject).not.toHaveBeenCalled();
   });
 
   it('offers Delete and not Remove from My List for an owned project', async () => {

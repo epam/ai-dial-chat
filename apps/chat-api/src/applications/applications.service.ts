@@ -69,6 +69,7 @@ import type {
   UpdatedApplicationDto,
 } from './dto/update-application.dto';
 import { hoistApplicationFields } from './utils/application-body-mapping';
+import { throwApplicationSaveError } from './utils/application-save-error';
 
 type DialApplication = components['schemas']['Application'];
 
@@ -342,8 +343,9 @@ export class ApplicationsService {
           if (attempt < maxAttempts) continue;
           throw new ConflictException('Application name already taken');
         }
-        return mapDialHttpStatus(
+        return throwApplicationSaveError(
           response.response.status,
+          response.error,
           'create application',
           this.logger,
         );
@@ -516,8 +518,9 @@ export class ApplicationsService {
       );
 
       if (saveResponse.error) {
-        return mapDialHttpStatus(
+        return throwApplicationSaveError(
           saveResponse.response.status,
+          saveResponse.error,
           `update application "${applicationName}"`,
           this.logger,
         );

@@ -2,19 +2,36 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../../config/environment.config';
+import { ExplicitEnvironment } from '../../../config/explicit-environment';
 import type { AppConfigEvalContext } from '../../app-config.types';
 import { EnvConfigProvider } from '../../config-registry/env-config.provider';
 import { CelebrationDeliveryMode } from '../../types/celebration-delivery';
 
 const ctx: AppConfigEvalContext = { appId: 'chat-ui' };
 
-function makeProvider(envOverrides: Partial<EnvironmentVariables> = {}) {
+/**
+ * `envOverrides` are the values ConfigService holds. By default each defined
+ * one counts as explicitly set; pass `explicit` to model a typed default that
+ * ConfigService holds although the operator never set the variable.
+ */
+function makeProvider(
+  envOverrides: Partial<EnvironmentVariables> = {},
+  explicit: readonly string[] = Object.keys(envOverrides).filter(
+    (key) => envOverrides[key as keyof EnvironmentVariables] !== undefined,
+  ),
+) {
   const configService = {
     get: vi.fn(
       (key: string) => envOverrides[key as keyof EnvironmentVariables],
     ),
   } as unknown as ConfigService<EnvironmentVariables>;
-  return { provider: new EnvConfigProvider(configService), configService };
+  return {
+    provider: new EnvConfigProvider(
+      configService,
+      ExplicitEnvironment.of(explicit),
+    ),
+    configService,
+  };
 }
 
 describe('EnvConfigProvider', () => {
@@ -190,15 +207,15 @@ describe('EnvConfigProvider', () => {
         );
       });
 
-      it('returns false when user has no roles and ASR_ENABLED_ROLES is set', async () => {
+      it('does not gate a caller without roles; AppConfigService applies the gate', async () => {
         const { provider } = makeProvider({
           ASR_MODEL: 'whisper-1',
           ASR_ENABLED_ROLES: ['admin'],
         });
-        expect(await provider.resolve('features.asrEnabled', ctx)).toBe(false);
+        expect(await provider.resolve('features.asrEnabled', ctx)).toBe(true);
       });
 
-      it('returns false when user roles do not intersect with ASR_ENABLED_ROLES', async () => {
+      it('does not gate non-intersecting roles; AppConfigService applies the gate', async () => {
         const { provider } = makeProvider({
           ASR_MODEL: 'whisper-1',
           ASR_ENABLED_ROLES: ['admin'],
@@ -208,7 +225,7 @@ describe('EnvConfigProvider', () => {
           roles: ['viewer'],
         };
         expect(await provider.resolve('features.asrEnabled', ctxWithRole)).toBe(
-          false,
+          true,
         );
       });
     });
@@ -255,7 +272,7 @@ describe('EnvConfigProvider', () => {
         ).toBe(true);
       });
 
-      it('returns false when user roles do not intersect with the allowed roles', async () => {
+      it('does not gate non-intersecting roles; AppConfigService applies the gate', async () => {
         const { provider } = makeProvider({
           LIVE_CHAT_INTERACTION_ENABLED: true,
           LIVE_CHAT_INTERACTION_ENABLED_ROLES: ['admin'],
@@ -266,7 +283,7 @@ describe('EnvConfigProvider', () => {
         };
         expect(
           await provider.resolve('features.liveChatInteraction', ctxWithRole),
-        ).toBe(false);
+        ).toBe(true);
       });
     });
   });
@@ -312,7 +329,7 @@ describe('EnvConfigProvider', () => {
         ).toBe(true);
       });
 
-      it('returns false when user roles do not intersect with the allowed roles', async () => {
+      it('does not gate non-intersecting roles; AppConfigService applies the gate', async () => {
         const { provider } = makeProvider({
           SCHEDULED_TASKS_ENABLED: true,
           SCHEDULED_TASKS_ENABLED_ROLES: ['admin'],
@@ -323,7 +340,7 @@ describe('EnvConfigProvider', () => {
         };
         expect(
           await provider.resolve('features.scheduledTasksEnabled', ctxWithRole),
-        ).toBe(false);
+        ).toBe(true);
       });
     });
   });
@@ -343,7 +360,7 @@ describe('EnvConfigProvider', () => {
       ).toBeUndefined();
     });
 
-    it('returns false when user roles do not intersect with PROJECTS_ENABLED_ROLES', async () => {
+    it('does not gate roles outside PROJECTS_ENABLED_ROLES; AppConfigService applies the gate', async () => {
       const { provider } = makeProvider({
         PROJECTS_ENABLED: true,
         PROJECTS_ENABLED_ROLES: ['projects-beta'],
@@ -351,7 +368,7 @@ describe('EnvConfigProvider', () => {
       const ctxWithRole: AppConfigEvalContext = { ...ctx, roles: ['viewer'] };
       expect(
         await provider.resolve('features.projectsEnabled', ctxWithRole),
-      ).toBe(false);
+      ).toBe(true);
     });
 
     it('returns true when user holds a role listed in PROJECTS_ENABLED_ROLES', async () => {
@@ -869,6 +886,55 @@ describe('EnvConfigProvider', () => {
     });
   });
 
+  describe('explicit presence', () => {
+    it.each([
+      ['features.scheduledTasksEnabled', { SCHEDULED_TASKS_ENABLED: false }],
+      [
+        'usageLimits.warningThresholdPercent',
+        { USAGE_LIMITS_WARNING_THRESHOLD_PERCENT: 75 },
+      ],
+      [
+        'ui.celebrationsEnabledByDefault',
+        { UI_EVENT_ENABLED_BY_DEFAULT: true },
+      ],
+      [
+        'asr.transcribeSizeLimitBytes',
+        { TRANSCRIBE_SIZE_LIMIT_BYTES: 5242880 },
+      ],
+    ] as const)(
+      'returns undefined for %s when only the typed default is held',
+      async (key, held) => {
+        const { provider } = makeProvider(held, []);
+        expect(await provider.resolve(key, ctx)).toBeUndefined();
+      },
+    );
+
+    it('returns an explicit value that equals the default', async () => {
+      const { provider } = makeProvider({
+        USAGE_LIMITS_WARNING_THRESHOLD_PERCENT: 75,
+      });
+      expect(
+        await provider.resolve('usageLimits.warningThresholdPercent', ctx),
+      ).toBe(75);
+    });
+
+    it('ignores a role list that only holds its typed default', async () => {
+      const { provider } = makeProvider(
+        {
+          SCHEDULED_TASKS_ENABLED: true,
+          SCHEDULED_TASKS_ENABLED_ROLES: ['beta'],
+        },
+        ['SCHEDULED_TASKS_ENABLED'],
+      );
+      expect(
+        await provider.resolve('features.scheduledTasksEnabled', {
+          ...ctx,
+          roles: ['staff'],
+        }),
+      ).toBe(true);
+    });
+  });
+
   describe('unknown key', () => {
     it('returns undefined for an unknown key', async () => {
       const { provider } = makeProvider();
@@ -884,7 +950,10 @@ describe('EnvConfigProvider', () => {
           return undefined;
         }),
       } as unknown as ConfigService<EnvironmentVariables>;
-      const provider = new EnvConfigProvider(configService);
+      const provider = new EnvConfigProvider(
+        configService,
+        ExplicitEnvironment.of(['TRANSCRIBE_SIZE_LIMIT_BYTES']),
+      );
       const loggerWarnSpy = vi.spyOn(provider['logger'], 'warn');
 
       const result = await provider.resolve(

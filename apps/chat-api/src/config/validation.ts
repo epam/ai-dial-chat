@@ -5,6 +5,10 @@ import {
   PROJECT_MANIFEST_MAX_BYTES,
 } from '../projects/constants/project-context.constants';
 import { EnvironmentVariables } from './environment.config';
+import {
+  attachExplicitEnvironment,
+  collectExplicitEnvironment,
+} from './explicit-environment';
 
 /*
  * The largest PROJECT_CONTEXT_TOTAL_MAX_BYTES a project can be edited at:
@@ -80,5 +84,10 @@ export const validate = (rawConfig: Record<string, unknown>) => {
     validatedConfig.DIAL_CORE_URL,
   );
 
-  return validatedConfig;
+  /* Presence comes from the raw input, before class initializers and the
+   * callback-URL fallbacks above, so a typed default is never explicit. */
+  return attachExplicitEnvironment(
+    validatedConfig,
+    collectExplicitEnvironment(rawConfig),
+  );
 };

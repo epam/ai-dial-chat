@@ -1308,7 +1308,13 @@ sub-view opens and lists the result read-only under the summary row; a rejected
 lookup shows an empty list and no error, a response that arrives after the panel
 closed or the item changed is ignored, and omitting the prop renders the panel as
 before. Its text arrives through the existing `publishLabels` (as
-`dependenciesLabels`), so no extra labels prop exists. The request, its endpoint
+`dependenciesLabels`). The optional `resolvePublishDependenciesLabels(item)`
+(on `DetailsPanel` and `Catalog`) returns dependency labels for the item being
+published, merged over `publishLabels.dependenciesLabels`, so a host can name
+the item's kind in the warning; omitting it uses `publishLabels` as is.
+Likewise `resolvePublishApprovalLabels(item)` returns the `adminApprovalTitle` and
+`adminApprovalMessage` of the publish panel's admin-approval banner for the item,
+merged over `publishLabels`. The request, its endpoint
 and its mapping to `PublishDependency` stay with the host (see
 `usePublishDependencies` and `mapResourceDependencyDto` in
 `@epam/ai-dial-chat-hooks`).

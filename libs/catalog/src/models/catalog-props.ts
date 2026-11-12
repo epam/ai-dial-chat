@@ -1,6 +1,7 @@
 import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type {
   PublicationRule,
+  PublishDependenciesLabels,
   PublishDependency,
   PublishFolderNode,
   PublishFooterLabels,
@@ -222,6 +223,20 @@ export interface CatalogProps {
    * publish panel. Called each time the publish sub-view opens; a rejection shows nothing. Omit it to leave the section out.
    */
   getPublishDependencies?: (item: CatalogItem) => Promise<PublishDependency[]>;
+  /**
+   * Resolves the private-dependencies labels for the item being published, merged over
+   * `publishLabels.dependenciesLabels`, so the warning can name what the item is. Omit it to use `publishLabels` as is.
+   */
+  resolvePublishDependenciesLabels?: (
+    item: CatalogItem,
+  ) => PublishDependenciesLabels;
+  /**
+   * Resolves the admin-approval callout text for the item being published, merged over `publishLabels`,
+   * so the message can name what the item is. Omit it to use `publishLabels` as is.
+   */
+  resolvePublishApprovalLabels?: (
+    item: CatalogItem,
+  ) => Pick<PublishPanelLabels, 'adminApprovalTitle' | 'adminApprovalMessage'>;
   /** Root-level destination folder nodes offered by the publish flow. */
   publishFolderItems?: PublishFolderNode[];
   /**

@@ -3,12 +3,10 @@
 ## Purpose
 
 `GET /api/v1/client-config`: the client-safe configuration payload and its fully annotated response DTO.
-
 ## Requirements
-
 ### Requirement: GET /api/v1/client-config returns client-safe configuration
 
-The system SHALL expose `GET /api/v1/client-config` as a versioned business endpoint (version `'1'`). It SHALL accept a required `appId` query parameter, validate it against an allowlist, and return all `visibility='client'` configuration values, including the new `dialCore.externalUrl` key added by the `config-registry-and-env-provider` capability.
+The system SHALL expose `GET /api/v1/client-config` as a versioned business endpoint (version `'1'`). It SHALL accept a required `appId` query parameter that matches `^[a-z0-9][a-z0-9-]{0,62}$` and is one of the application identifiers the deployment serves (`CLIENT_CONFIG_APP_IDS`, default `chat-ui`), and return all `visibility='client'` configuration values, including the new `dialCore.externalUrl` key added by the `config-registry-and-env-provider` capability.
 
 **Authorization:** None required. The endpoint is public and MUST work before authentication.
 
@@ -82,8 +80,23 @@ The system SHALL expose `GET /api/v1/client-config` as a versioned business endp
 
 #### Scenario: Unknown appId returns 400
 
-- **WHEN** `GET /api/v1/client-config?appId=unknown-app` is called
+- **WHEN** `GET /api/v1/client-config?appId=unknown-app` is called and `unknown-app` is not listed in `CLIENT_CONFIG_APP_IDS`
 - **THEN** the response is `400 Bad Request`
+
+#### Scenario: Malformed appId returns 400
+
+- **WHEN** `appId` is `Chat_UI`, `-x`, a 64-character identifier, or is repeated in the query
+- **THEN** the response is `400 Bad Request` with a validation message, before any configuration is resolved
+
+#### Scenario: Another served application
+
+- **WHEN** `CLIENT_CONFIG_APP_IDS=launchpad,chat-ui` and `GET /api/v1/client-config?appId=launchpad` is called
+- **THEN** the response is `200 OK` with `appId` `launchpad`, and its `features` and `config` equal those returned for `appId=chat-ui` under the same environment, session and roles
+
+#### Scenario: Responses are cached per application
+
+- **WHEN** the same user requests `appId=launchpad` and then `appId=chat-ui`
+- **THEN** the two responses use different cache entries, each echoing its own `appId`
 
 #### Scenario: Response does not contain server-only values
 
@@ -99,8 +112,6 @@ The system SHALL expose `GET /api/v1/client-config` as a versioned business endp
 
 - **WHEN** a valid response is returned
 - **THEN** the body MUST NOT contain the value of the internal `DIAL_CORE_URL` environment variable under any key
-
----
 
 ### Requirement: Response DTO is fully annotated for Swagger and generated client
 
@@ -765,3 +776,64 @@ GET /api/v1/client-config?appId=chat-ui
 
 - **WHEN** `npm run openapi` is run
 - **THEN** the generated `ClientConfigDto` type includes `additionalContentLocales: string[]`, and `npm run openapi:check` passes
+
+### Requirement: client-config exposes model catalog availability
+
+`GET /api/v1/client-config` SHALL include `config.modelCatalogAvailable: boolean`. It is `true` when `MODEL_CATALOG_API_KEY` is configured (non-blank after trimming) and `false` otherwise. A frontend can then decide whether to call `GET /api/v1/model-catalog` without probing it (see the `model-catalog` capability).
+
+- `AppConfigService.getClientConfig` (`apps/chat-api/src/app-config/app-config.service.ts`) SHALL assemble the field itself from `ConfigService`, as it does `aiTextRefinementAvailable`. The field is not a config-registry key and has no entry in the mapping module (`apps/chat-api/src/app-config/client-config.mapper.ts`). `MappedClientConfig` SHALL omit it, and the mapper spec's list of service-assembled fields SHALL include it.
+- The service SHALL decide availability with the same key-resolution helper as the catalog service, so the flag and the route can never disagree.
+- The field SHALL be emitted on every response. It SHALL be appended after `catalogCreationPermissions`, so every existing field keeps its position.
+- `ClientConfigDto` SHALL declare it with `@ApiPropertyOptional({ type: Boolean })` and a description stating that a missing value means unavailable, so a client generated against this BFF tolerates an older BFF. The generated `ClientConfigDto` type in `@epam/ai-dial-chat-api-client` gains `modelCatalogAvailable?: boolean`. No frontend caller in `apps/chat` reads it.
+- The value SHALL NOT vary by user, role or `appId`, and SHALL never carry the key. It is cached as part of the existing client-config entry (60-second TTL, unchanged key). The key is read at boot, so no invalidation is needed.
+- No i18n string, UI, RTL impact or feature gate is introduced.
+
+#### Scenario: Key configured
+
+- **GIVEN** `MODEL_CATALOG_API_KEY=catalog-key`
+- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called
+- **THEN** `response.config.modelCatalogAvailable` is `true` and no field of the response contains `catalog-key`
+
+#### Scenario: Key unset or blank
+
+- **GIVEN** `MODEL_CATALOG_API_KEY` is unset, or is `"  "`
+- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called
+- **THEN** `response.config.modelCatalogAvailable` is `false`
+
+#### Scenario: Field order keeps existing positions
+
+- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called with all providers returning `undefined`
+- **THEN** `Object.keys(response.config)` equals the previous list with `modelCatalogAvailable` appended after `catalogCreationPermissions`
+
+#### Scenario: DIAL_API_KEY does not affect the flag
+
+- **GIVEN** `DIAL_API_KEY` is set and `MODEL_CATALOG_API_KEY` is unset
+- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called
+- **THEN** `response.config.modelCatalogAvailable` is `false`
+
+### Requirement: The deployment declares the application identifiers it serves
+
+The backend SHALL read `CLIENT_CONFIG_APP_IDS`, a comma-separated list of application identifiers declared on `ClientUiEnv` in `apps/chat-api/src/config/env/client-ui.env.ts`. Entries SHALL be trimmed, de-duplicated preserving order, and each SHALL match `^[a-z0-9][a-z0-9-]{0,62}$`. A non-matching entry SHALL fail startup with an `Environment validation failed:` message naming the variable. An absent, empty or blank value SHALL mean `["chat-ui"]`. The list SHALL be at most 16 entries. Only `GET /api/v1/client-config` uses the list. Server-side feature evaluation (`FeatureGuard`, text refinement) SHALL keep evaluating with `appId` `chat-ui`, because those gates protect Chat BFF endpoints whichever frontend a deployment serves.
+
+**Feature flag:** Not gated. **RTL impact:** None. **i18n impact:** None. **Cache:** Unchanged key `app-config:client:<appId>:user:<userId>:roles:<roles>`, 60 s TTL; `appId` is already a segment.
+
+#### Scenario: Default serves only Chat
+
+- **WHEN** `CLIENT_CONFIG_APP_IDS` is unset
+- **THEN** `appId=chat-ui` is accepted and `appId=launchpad` is `400 Bad Request`
+
+#### Scenario: Invalid entry fails startup
+
+- **WHEN** `CLIENT_CONFIG_APP_IDS=chat-ui,Bad_Id`
+- **THEN** environment validation fails and names `CLIENT_CONFIG_APP_IDS` without printing other environment values
+
+#### Scenario: Transitional list
+
+- **WHEN** a Launchpad deployment sets `CLIENT_CONFIG_APP_IDS=launchpad,chat-ui` while older Launchpad builds still send `chat-ui`
+- **THEN** both the old and the new builds receive `200 OK`
+
+#### Scenario: Server-side gates keep the Chat contract
+
+- **WHEN** a deployment sets `CLIENT_CONFIG_APP_IDS=launchpad` and a request reaches an endpoint protected by `FeatureGuard`
+- **THEN** the feature is evaluated with `appId` `chat-ui`, exactly as before this change
+

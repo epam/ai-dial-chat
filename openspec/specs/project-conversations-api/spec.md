@@ -164,6 +164,14 @@ A project conversation SHALL be stored as the file `conversations/{name}` inside
 2. sorts them by `updatedAt`, newest first, then by name;
 3. returns all of them. DIAL Core cannot page the folder in this order, so the endpoint takes no `limit` or `offset` and has no `hasMore`; the client pages the list locally.
 
+**Published projects.** Publishing copies the project's files and stamps each copy with the time of the copy, so for a project in the organization bucket (`ProjectSource.Organization`, read-only for every user) the file `updatedAt` no longer tells which chat was active last. The listing of such a project therefore:
+
+- reads every body, not only the 20 newest, so no item carries `isTitlePending`;
+- orders the items by the newest `timestamp` among the body's messages (`getLastMessageTime`, `apps/chat-api/src/projects/utils/project-conversation-activity.util.ts`), newest first, then by name;
+- puts an item without a dated message, or whose body cannot be read, last, in name order.
+
+The items' `updatedAt`, `isUnread` and the personal and shared listings are unchanged. The title cache entry also holds `lastMessageAt` and `hasActivity`; an entry cached without them is read once more for a published project.
+
 **Titles.** Every returned item's `title` is the conversation's display name, resolved for the 20 newest items and for any item whose title is cached:
 
 - An LLM- or user-renamed conversation keeps its file name, so the title is read from the body's `name`.
@@ -238,6 +246,16 @@ Status codes:
 
 - **WHEN** the project holds 22 conversations and none of their titles is cached
 - **THEN** the response holds all 22, the bodies of the 20 newest are read, and the two oldest carry `isTitlePending: true` with their file-name titles
+
+#### Scenario: A published project is ordered by its last message
+
+- **WHEN** a project in the organization bucket holds files that all carry the time of the copy, and their bodies' newest message times differ
+- **THEN** the response lists every conversation with its title read, newest last message first, regardless of the files' `updatedAt`
+
+#### Scenario: A personal or shared project keeps the file order
+
+- **WHEN** a personal project, or one shared by another user, is listed
+- **THEN** the items stay in the order of the files' `updatedAt`, and only the 20 newest bodies are read
 
 #### Scenario: Empty project
 

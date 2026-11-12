@@ -305,3 +305,10 @@ export * from './signin-interrupt/useSigninInterrupt/useSigninInterrupt';
 
 export * from './conversation/useDeploymentChangeTracking';
 export * from './conversation/conversation-data-source';
+
+export {
+  notifyProjectAccessRevoked,
+  type ProjectSharingClient,
+} from './project/project-sharing-client';
+export * from './project/use-project-share-recipients';
+export * from './project/use-project-revoke-access';

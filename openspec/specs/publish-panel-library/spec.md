@@ -378,7 +378,7 @@ When `dependencies` is absent or empty the section SHALL NOT render and SHALL le
 
 - a heading from `dependenciesLabels.title`;
 - a warning `Notification` (ui-kit 2.0 `NotificationType.SectionMessage`, `NotificationVariant.Warning`) whose message is `dependenciesLabels.description`;
-- a list with one row per dependency starting with an icon, then the name with `version` appended when present, and a second line with the type label and the location (`dependenciesLabels.rootLocation` when `location` is empty).
+- a list with one row per dependency starting with an icon, then the name with `version` appended when present, and a second line with the type label and the location, which is omitted together with its separator when `location` is empty.
 
 The section is informational: rows SHALL NOT be interactive, selectable or removable, and the section SHALL NOT change the submit button's enabled state or the callout derivation.
 
@@ -400,9 +400,9 @@ Memoisation: none required; the host keeps the `dependencies` array identity sta
 - **WHEN** a dependency has `version: '1.0.0'` and `name: 'Search'`
 - **THEN** its row shows `Search` with `1.0.0`
 
-#### Scenario: Root-level dependency uses the root label
+#### Scenario: Root-level dependency shows no location
 - **WHEN** a dependency's `location` is `''`
-- **THEN** its row shows `dependenciesLabels.rootLocation`
+- **THEN** its second line shows only the type label, with no separator
 
 #### Scenario: Section does not affect submit
 - **WHEN** the panel has a valid destination and non-empty dependencies
@@ -414,7 +414,7 @@ Memoisation: none required; the host keeps the `dependencies` array identity sta
 
 ### Requirement: The dependencies section is themeable and carries only host-supplied text and data
 
-Every user-visible string of the section SHALL come from `PublishDependenciesLabels` (`title`, `description`, `rootLocation`, `typeLabels` keyed by `PublishDependencyType`, and `getAnnouncement: (count: number) => string`, the function form the repo's libs use for count-dependent text) with English defaults. Every colour SHALL come from `PublishDependenciesColors` as `var(--pp-dependencies-*, fallback)` in the component's `.module.scss`, set through `buildCssVars`, and every `dial-*-text` class SHALL come from `*ClassName` props whose defaults are kit classes. The library SHALL NOT import `react-i18next`, a generated client, a server-api module, an app context, or build an endpoint path; it receives the list as data.
+Every user-visible string of the section SHALL come from `PublishDependenciesLabels` (`title`, `description`, `typeLabels` keyed by `PublishDependencyType`, and `getAnnouncement: (count: number) => string`, the function form the repo's libs use for count-dependent text) with English defaults. Every colour SHALL come from `PublishDependenciesColors` as `var(--pp-dependencies-*, fallback)` in the component's `.module.scss`, set through `buildCssVars`, and every `dial-*-text` class SHALL come from `*ClassName` props whose defaults are kit classes. The library SHALL NOT import `react-i18next`, a generated client, a server-api module, an app context, or build an endpoint path; it receives the list as data.
 
 `PUBLISH_PANEL_CLASS` SHALL gain stable public class names for the section, its list and its rows, and `libs/publish-panel/README.md` SHALL document the new exports, props, labels, colours and class-name table (`npm run validate:docs` checks both directions).
 
@@ -429,3 +429,19 @@ Every user-visible string of the section SHALL come from `PublishDependenciesLab
 #### Scenario: README and class names agree
 - **WHEN** `npm run validate:docs` runs after the change
 - **THEN** it passes, with the new public class names present in the README table
+
+### Requirement: Publish panel shows an admin-approval banner
+
+`PublishPanel` SHALL render the `PublishCalloutKind.Info` state as a ui-kit `Notification` (`NotificationType.SectionMessage`, `NotificationVariant.Info`) with a title and a message, directly below the destination row and above the author field, spaced 16px from both. Its text SHALL come from `PublishPanelLabels.adminApprovalTitle` (default `'Admin approval required'`) and `PublishPanelLabels.adminApprovalMessage`, whose English default does not name an entity; a host SHALL replace it to name what is being published. The replace-warning, no-access and submit-error callouts SHALL take the banner's place when they apply, and no banner SHALL show while no folder is selected or a request is in flight. `libs/catalog` SHALL accept `resolvePublishApprovalLabels(item)` on `Catalog` and `DetailsPanel`, merged over `publishLabels`, so the message can name the item's kind.
+
+#### Scenario: Fresh folder with write access
+- **WHEN** a folder is selected, the user can publish to it and the version is not there yet
+- **THEN** the banner shows with the title and message labels
+
+#### Scenario: Another callout applies
+- **WHEN** the version already exists, the user lacks write access, or the last submit failed
+- **THEN** that callout shows and the banner does not
+
+#### Scenario: Host names the entity
+- **WHEN** the host passes an `adminApprovalMessage` naming an application, conversation or project
+- **THEN** the banner renders that text instead of the English default

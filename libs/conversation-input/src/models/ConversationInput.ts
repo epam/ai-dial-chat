@@ -264,6 +264,12 @@ export interface ConversationInputProps {
    */
   isInlineActionRowAllowedBelowDesktop?: boolean;
   /**
+   * Lets a phone-width composer show the full row of per-tool chips instead of
+   * the single "Tools: N" summary chip. For an embed that is narrow but not a
+   * phone, such as a chat overlay in a desktop page. Defaults to `false`.
+   */
+  isToolChipRowAllowedOnPhone?: boolean;
+  /**
    * Message value. Sets the initial textarea content on mount and syncs the
    * textarea whenever the value changes.
    */
