@@ -108,6 +108,14 @@ export const isAwaitingGenerationResume = (
  */
 const GENERATION_RESUME_WATCH_TIMEOUT_MS = 5 * 60 * 1000;
 
+/*
+ * Delay added after a live foreground marker's `expiresAt` before the watch
+ * re-reads the conversation, so a slightly slow client clock never re-reads
+ * while the marker still holds it. Also the shortest re-read delay, which keeps
+ * a clock that disagrees with the server's from re-reading in a tight loop.
+ */
+const FOREGROUND_EXPIRY_RECHECK_GRACE_MS = 1000;
+
 /**
  * `BufferedGeneration.generationId` for a resumed (not locally-started)
  * generation. `restoreBufferedGeneration`/`startStream`'s `onChunk` staleness
@@ -520,6 +528,7 @@ export const createResumeIfAwaitingGeneration = ({
        * subscription would otherwise wait out the whole timeout. Events
        * arriving meanwhile stay buffered in the stream.
        */
+      let initialCheck: Conversation | undefined;
       try {
         const current = await transport.getConversation(
           safeDecodeURI(currentConversationId),
@@ -531,6 +540,7 @@ export const createResumeIfAwaitingGeneration = ({
           return;
         }
         if (isOrphanedPlaceholder(current)) showInterrupted();
+        initialCheck = current;
       } catch {
         // Keep watching: a later update or the final check resolves it.
       }
@@ -540,6 +550,55 @@ export const createResumeIfAwaitingGeneration = ({
         watchController.abort();
       }, GENERATION_RESUME_WATCH_TIMEOUT_MS);
 
+      /*
+       * A live foreground marker stops holding the conversation when it
+       * expires, but expiry writes nothing, so the watch gets no update for it
+       * (a Stop only shortens the expiry, [#9370](https://github.com/epam/ai-dial-chat/issues/9370)). Re-read once at that moment,
+       * and again for every newer expiry a reload reports, instead of waiting
+       * out the watch timeout. A marker that is still live then keeps the chat
+       * blocked exactly as before.
+       */
+      let expiryTimerId: number | undefined;
+      let scheduledExpiresAt = 0;
+      const scheduleExpiryRecheck = (
+        reloaded: Conversation,
+        isFromExpiryRecheck = false,
+      ) => {
+        window.clearTimeout(expiryTimerId);
+        const markerIndex = findLiveForegroundMessageIndex(reloaded);
+        if (markerIndex === -1) return;
+        const expiresAt =
+          reloaded.messages[markerIndex].foregroundGeneration?.expiresAt;
+        if (expiresAt == null) return;
+        /* A re-read that finds the same expiry still live is left to the watch, so it cannot loop. */
+        if (isFromExpiryRecheck && expiresAt <= scheduledExpiresAt) return;
+        scheduledExpiresAt = expiresAt;
+        const delay = Math.max(
+          expiresAt - Date.now() + FOREGROUND_EXPIRY_RECHECK_GRACE_MS,
+          FOREGROUND_EXPIRY_RECHECK_GRACE_MS,
+        );
+        expiryTimerId = window.setTimeout(async () => {
+          if (resolved || !ownsBuffer()) return;
+          try {
+            const result = await transport.getConversation(
+              safeDecodeURI(currentConversationId),
+            );
+            if (resolved || !ownsBuffer()) return;
+            if (!isAwaitingGenerationResume(result)) {
+              resolved = true;
+              watchController.abort();
+              void stream.cancel().catch(() => undefined);
+              finish(result);
+              return;
+            }
+            scheduleExpiryRecheck(result, true);
+          } catch {
+            // Keep watching: a later update or the watch timeout resolves it.
+          }
+        }, delay);
+      };
+      if (initialCheck) scheduleExpiryRecheck(initialCheck);
+
       try {
         await readSseEvents<{ action?: string }>(stream, async (event) => {
           if (event?.action !== 'UPDATE') return false;
@@ -548,11 +607,13 @@ export const createResumeIfAwaitingGeneration = ({
             const result = await transport.getConversation(
               safeDecodeURI(currentConversationId),
             );
+            if (resolved) return true;
             if (!isAwaitingGenerationResume(result)) {
               finish(result);
               resolved = true;
               return true;
             }
+            scheduleExpiryRecheck(result);
           } catch {
             // Keep watching until stream ends or timeout.
           }
@@ -560,6 +621,7 @@ export const createResumeIfAwaitingGeneration = ({
         });
       } finally {
         clearTimeout(timeoutId);
+        window.clearTimeout(expiryTimerId);
       }
 
       /*
