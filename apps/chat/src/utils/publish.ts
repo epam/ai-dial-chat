@@ -114,13 +114,19 @@ export const getPublishPanelCommonLabels = (
   addChildFolderLabel: t(PublishI18nKeys.AddChildFolder),
 });
 
-/** Builds the translated labels of the private-dependencies section, shared by every publish panel host. */
+/**
+ * Builds the translated labels of the private-dependencies section, shared by every publish panel host.
+ * @param t - translation function
+ * @param entityKey - key of the lowercase noun naming what is being published, spliced into the warning
+ */
 export const getPublishDependenciesLabels = (
   t: TFunction,
+  entityKey: PublishI18nKeys,
 ): PublishDependenciesLabels => ({
   title: t(PublishI18nKeys.DependenciesTitle),
-  description: t(PublishI18nKeys.DependenciesDescription),
-  rootLocation: t(PublishI18nKeys.DependenciesRootLocation),
+  description: t(PublishI18nKeys.DependenciesDescription, {
+    entity: t(entityKey),
+  }),
   typeLabels: {
     [PublishDependencyType.Application]: t(
       PublishI18nKeys.DependenciesTypeApplication,

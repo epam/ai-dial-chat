@@ -39,21 +39,33 @@ describe('getPublishFolderLabel', () => {
 });
 
 describe('getPublishDependenciesLabels', () => {
-  const echoT = ((key: string, options?: { count?: number }) =>
-    options?.count == null
-      ? key
-      : `${key}:${options.count}`) as unknown as TFunction;
+  const echoT = ((
+    key: string,
+    options?: { count?: number; entity?: string },
+  ) =>
+    options?.entity != null
+      ? `${key}:${options.entity}`
+      : options?.count == null
+        ? key
+        : `${key}:${options.count}`) as unknown as TFunction;
 
-  it('translates the title, description and root label', () => {
-    const labels = getPublishDependenciesLabels(echoT);
+  it('translates the title and splices the entity into the description', () => {
+    const labels = getPublishDependenciesLabels(
+      echoT,
+      PublishI18nKeys.DependenciesEntityConversation,
+    );
 
     expect(labels.title).toBe(PublishI18nKeys.DependenciesTitle);
-    expect(labels.description).toBe(PublishI18nKeys.DependenciesDescription);
-    expect(labels.rootLocation).toBe(PublishI18nKeys.DependenciesRootLocation);
+    expect(labels.description).toBe(
+      `${PublishI18nKeys.DependenciesDescription}:${PublishI18nKeys.DependenciesEntityConversation}`,
+    );
   });
 
   it('translates a label for every kind of dependency', () => {
-    const { typeLabels } = getPublishDependenciesLabels(echoT);
+    const { typeLabels } = getPublishDependenciesLabels(
+      echoT,
+      PublishI18nKeys.DependenciesEntityApplication,
+    );
 
     expect(typeLabels).toEqual({
       [PublishDependencyType.Application]:
@@ -66,7 +78,10 @@ describe('getPublishDependenciesLabels', () => {
   });
 
   it('passes the count to the announcement so the language can pluralise it', () => {
-    const { getAnnouncement } = getPublishDependenciesLabels(echoT);
+    const { getAnnouncement } = getPublishDependenciesLabels(
+      echoT,
+      PublishI18nKeys.DependenciesEntityApplication,
+    );
 
     expect(getAnnouncement?.(3)).toBe(
       `${PublishI18nKeys.DependenciesAnnouncement}:3`,

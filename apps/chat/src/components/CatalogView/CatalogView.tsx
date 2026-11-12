@@ -689,7 +689,10 @@ const CatalogView: FC<Props> = ({
           rootFolderLabel: t(BasicI18nKeys.Organization),
           selectFolderLabel: t(ButtonsI18nKeys.Select),
           accessRulesLabels: getAccessRulesLabels(t),
-          dependenciesLabels: getPublishDependenciesLabels(t),
+          dependenciesLabels: getPublishDependenciesLabels(
+            t,
+            PublishI18nKeys.DependenciesEntityApplication,
+          ),
           ...getPublishAuthorLabels(t),
           ...getPublishPanelCommonLabels(t),
         }}
