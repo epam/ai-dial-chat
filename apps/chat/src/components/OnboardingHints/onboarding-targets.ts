@@ -84,6 +84,50 @@ const firstInCatalog = (
     ),
   );
 
+type AnchorResolver = (labels: OnboardingTargetLabels) => HTMLElement | null;
+
+/* One resolver per target. Keyed by the generated enum, so a target added to
+ * chat-api without a resolver here fails the build. The operator-facing
+ * description of each anchor lives in onboarding-anchors.json and is rendered
+ * into docs/onboarding-anchors.md. */
+const ANCHOR_RESOLVERS: Record<OnboardingHintTarget, AnchorResolver> = {
+  /* Anywhere: a sidebar link on desktop, a header button on mobile. */
+  [OnboardingHintTarget.NewChat]: (labels) =>
+    findControl([document], labels.newChat),
+  [OnboardingHintTarget.Navigation]: (labels) =>
+    firstOnScreen(navigations(labels)),
+  [OnboardingHintTarget.Projects]: (labels) =>
+    findControl(navigations(labels), labels.projects),
+  [OnboardingHintTarget.ScheduledTasks]: (labels) =>
+    findControl(navigations(labels), labels.scheduledTasks),
+  [OnboardingHintTarget.Catalog]: (labels) =>
+    findControl(navigations(labels), labels.catalog),
+  [OnboardingHintTarget.FileManager]: (labels) =>
+    findControl(navigations(labels), labels.fileManager),
+  [OnboardingHintTarget.ConversationInput]: () =>
+    firstOnScreen(document.querySelectorAll('#main-content textarea')),
+  [OnboardingHintTarget.AddAttachment]: (labels) =>
+    findControl(mainContent(), labels.addAttachment),
+  [OnboardingHintTarget.CatalogCreate]: (labels) =>
+    findControl(catalogRegions(labels), labels.catalogCreate),
+  [OnboardingHintTarget.CatalogSearch]: (labels) =>
+    firstInCatalog(labels, 'search, [role="search"]'),
+  [OnboardingHintTarget.CatalogTabs]: (labels) =>
+    firstInCatalog(labels, '[role="tablist"]'),
+  [OnboardingHintTarget.CatalogViewMode]: (labels) =>
+    firstInCatalog(
+      labels,
+      '[role="radiogroup"]',
+      (element) =>
+        element.getAttribute('aria-label') === labels.catalogViewMode,
+    ),
+};
+
+/** Every target the app can resolve, in the order the anchor catalog lists them. */
+export const ONBOARDING_ANCHOR_TARGETS = Object.keys(
+  ANCHOR_RESOLVERS,
+) as OnboardingHintTarget[];
+
 /**
  * Finds the on-screen element an onboarding hint points at, or `null` when it
  * is not rendered. Resolution goes through roles and accessible names — the
@@ -93,39 +137,4 @@ const firstInCatalog = (
 export const resolveOnboardingTarget = (
   target: OnboardingHintTarget,
   labels: OnboardingTargetLabels,
-): HTMLElement | null => {
-  switch (target) {
-    case OnboardingHintTarget.NewChat:
-      /* Anywhere: a sidebar link on desktop, a header button on mobile. */
-      return findControl([document], labels.newChat);
-    case OnboardingHintTarget.Navigation:
-      return firstOnScreen(navigations(labels));
-    case OnboardingHintTarget.Projects:
-      return findControl(navigations(labels), labels.projects);
-    case OnboardingHintTarget.ScheduledTasks:
-      return findControl(navigations(labels), labels.scheduledTasks);
-    case OnboardingHintTarget.Catalog:
-      return findControl(navigations(labels), labels.catalog);
-    case OnboardingHintTarget.FileManager:
-      return findControl(navigations(labels), labels.fileManager);
-    case OnboardingHintTarget.ConversationInput:
-      return firstOnScreen(document.querySelectorAll('#main-content textarea'));
-    case OnboardingHintTarget.AddAttachment:
-      return findControl(mainContent(), labels.addAttachment);
-    case OnboardingHintTarget.CatalogCreate:
-      return findControl(catalogRegions(labels), labels.catalogCreate);
-    case OnboardingHintTarget.CatalogSearch:
-      return firstInCatalog(labels, 'search, [role="search"]');
-    case OnboardingHintTarget.CatalogTabs:
-      return firstInCatalog(labels, '[role="tablist"]');
-    case OnboardingHintTarget.CatalogViewMode:
-      return firstInCatalog(
-        labels,
-        '[role="radiogroup"]',
-        (element) =>
-          element.getAttribute('aria-label') === labels.catalogViewMode,
-      );
-    default:
-      return null;
-  }
-};
+): HTMLElement | null => ANCHOR_RESOLVERS[target]?.(labels) ?? null;

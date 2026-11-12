@@ -1,0 +1,74 @@
+[
+  {
+    "target": "new-chat",
+    "page": "Any page",
+    "element": "The New chat control: a sidebar link on desktop, a header button on mobile",
+    "lookup": "The first on-screen button or link named \"New chat\" anywhere on the page"
+  },
+  {
+    "target": "navigation",
+    "page": "Any page with the sidebar open",
+    "element": "The navigation sidebar as a whole",
+    "lookup": "The on-screen `nav` landmark named like the navigation"
+  },
+  {
+    "target": "projects",
+    "page": "Any page with the sidebar open",
+    "element": "The Projects link in the sidebar",
+    "lookup": "A button or link named \"Projects\" inside the navigation landmark"
+  },
+  {
+    "target": "scheduled-tasks",
+    "page": "Any page with the sidebar open",
+    "element": "The Scheduled tasks link in the sidebar",
+    "lookup": "A button or link named \"Scheduled tasks\" inside the navigation landmark"
+  },
+  {
+    "target": "catalog",
+    "page": "Any page with the sidebar open",
+    "element": "The Catalog link in the sidebar",
+    "lookup": "A button or link named \"Catalog\" inside the navigation landmark"
+  },
+  {
+    "target": "file-manager",
+    "page": "Any page with the sidebar open",
+    "element": "The File manager link in the sidebar",
+    "lookup": "A button or link named \"File manager\" inside the navigation landmark"
+  },
+  {
+    "target": "conversation-input",
+    "page": "New chat and conversation",
+    "element": "The message composer's text field",
+    "lookup": "The first on-screen `textarea` inside `#main-content`"
+  },
+  {
+    "target": "add-attachment",
+    "page": "New chat and conversation",
+    "element": "The composer's + button that adds attachments",
+    "lookup": "A button named \"Add\" inside `#main-content`"
+  },
+  {
+    "target": "catalog-create",
+    "page": "Catalog",
+    "element": "The catalog's Create button",
+    "lookup": "A button named \"Create\" inside the catalog `section`"
+  },
+  {
+    "target": "catalog-search",
+    "page": "Catalog",
+    "element": "The catalog's search field",
+    "lookup": "The first `search` element or `role=\"search\"` inside the catalog `section`"
+  },
+  {
+    "target": "catalog-tabs",
+    "page": "Catalog",
+    "element": "The catalog's entity tabs",
+    "lookup": "The first `role=\"tablist\"` inside the catalog `section`"
+  },
+  {
+    "target": "catalog-view-mode",
+    "page": "Catalog",
+    "element": "The catalog's grid/list switch",
+    "lookup": "The `role=\"radiogroup\"` named like the view switch inside the catalog `section`"
+  }
+]

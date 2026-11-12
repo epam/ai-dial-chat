@@ -1131,6 +1131,7 @@ Import direction is enforced by lint. Every Nx project carries exactly one `type
 - [Responses API Integration](responses-api-integration.md)
 - [Observability](observability.md) — telemetry configuration, metric contracts, and Grafana dashboard examples
 - [Host Install Matrix](host-install-matrix.md) — what an embedding host installs per set of libs
+- [Onboarding Anchors](onboarding-anchors.md) — the elements an `ONBOARDING_HINTS` entry can point at
 - [Reusable Chat Workflows](reusable-chat-workflows.md) — skill import, file attachment and prompt selection as public package APIs, and the client application adoption map
 - [Chat API environment variables](../apps/chat-api/README.md#environment-variables) — the full variable reference
 - [Auth subsystem](./auth/)

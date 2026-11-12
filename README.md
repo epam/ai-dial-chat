@@ -490,6 +490,7 @@ the backend's OpenAPI document, and apps consume it through
 - [Theme Customization](docs/theme-customization.md) - Configuring a theme and porting one from the legacy chat
 - [Responses API Integration](docs/responses-api-integration.md) - How the app consumes the DIAL Responses API
 - [Host Install Matrix](docs/host-install-matrix.md) - What an embedding host installs per set of libs
+- [Onboarding Anchors](docs/onboarding-anchors.md) - The elements an `ONBOARDING_HINTS` entry can point at
 - [Reusable Chat Workflows](docs/reusable-chat-workflows.md) - Skill import, file attachment and prompt selection as public package APIs, and the client application adoption map
 - [Authentication (BFF, encrypted cookie)](docs/auth/auth-bff-encrypted-cookie.md) - OIDC login/logout, session cookies, transparent token refresh
 - [Auth Diagrams](docs/auth/auth-diagrams/README.md) - Rendered Mermaid diagrams for every auth flow
