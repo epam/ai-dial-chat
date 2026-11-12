@@ -85,6 +85,8 @@ export const Catalog: FC<CatalogProps> = ({
   isPublishVisible,
   isPublishPrimary,
   getPublishHistory,
+  getPublishDependencies,
+  resolvePublishDependenciesLabels,
   publishFolderItems,
   publishExpandedPaths,
   onPublishExpandedPathsChange,
@@ -760,7 +762,7 @@ export const Catalog: FC<CatalogProps> = ({
       <div
         ref={setScrollBody}
         className={mergeClasses(
-          'flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto',
+          'relative flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto',
           isFloatingCreateVisible && 'pb-16',
         )}
       >
@@ -959,6 +961,8 @@ export const Catalog: FC<CatalogProps> = ({
           isPublishVisible={isPublishVisible}
           isPublishPrimary={isPublishPrimary}
           getPublishHistory={getPublishHistory}
+          getPublishDependencies={getPublishDependencies}
+          resolvePublishDependenciesLabels={resolvePublishDependenciesLabels}
           publishFolderItems={publishFolderItems}
           publishExpandedPaths={publishExpandedPaths}
           onPublishExpandedPathsChange={onPublishExpandedPathsChange}

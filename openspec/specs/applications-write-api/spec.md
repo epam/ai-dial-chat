@@ -40,6 +40,10 @@ declared on the DTO).
 - **WHEN** DIAL Core returns an error status during create
 - **THEN** the endpoint maps it to the corresponding typed HTTP error (e.g. 502/503)
 
+#### Scenario: Create refused because a dependency is missing
+- **WHEN** DIAL Core refuses the save with `403` and a plain-text body starting with `Failed to access application resource`
+- **THEN** the endpoint responds `403 Forbidden` with `code` `applicationDependentResourceMissing` and a fixed message, without the resource path, and any other `403` body keeps the generic `Forbidden`
+
 ### Requirement: Additional-locale translations on create and update
 The create and update request bodies SHALL accept an optional `locales` array of
 `{language, name, description}` entries and an optional `primaryLocale` string. When `locales`
@@ -374,6 +378,10 @@ supplied and this default is not applied, so a flag the caller leaves unset stay
 - **WHEN** DIAL Core returns an error status while fetching or saving the application
 - **THEN** the endpoint maps it to the corresponding typed HTTP error (e.g. `502`/`503`)
 
+#### Scenario: Update refused because a dependency is missing
+- **WHEN** DIAL Core refuses the save with `403` and a plain-text body starting with `Failed to access application resource` (a resource the application depends on, such as a context file, was moved, deleted or unpublished)
+- **THEN** the endpoint responds `403 Forbidden` with `code` `applicationDependentResourceMissing` (`ApplicationErrorCode`) and a fixed message, and never forwards the Core text or the resource path; a `403` with any other body keeps the generic `Forbidden`. DIAL Core gives the case no machine-readable field, so it is detected by prefix match, the same way `isAcceptedUsersLimitError` detects the share-invitation limit
+
 #### Scenario: OpenAPI contract regenerated
 - **WHEN** `UpdateApplicationBodyDto` gains `applicationProperties`
 - **THEN** `npm run openapi` regenerates the spec, `npm run openapi:check` passes, and the
@@ -560,7 +568,8 @@ Example: `POST …/applications%2Fb1%2Fagent__1.0.0/versions` `{"version":"1.1.0
 - **Move** compares the application's identity in the target folder, excluding itself.
 
 A duplicate SHALL answer `409` with `code` `name-taken-agent` or `name-taken-toolset`,
-according to the conflicting entity, and write nothing. The codes are the enum defined by
+as `resource-name-uniqueness` defines (by the tab of the saved
+application, then the conflicting entity), and write nothing. The codes are the enum defined by
 `resource-name-uniqueness`. `createApplication`, `updateApplication`,
 `forkApplicationVersion` and `moveApplication` keep their operation ids and DTOs; their
 documented `409` responses SHALL describe both conflict shapes and the generated client

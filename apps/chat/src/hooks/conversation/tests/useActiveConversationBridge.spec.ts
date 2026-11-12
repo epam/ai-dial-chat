@@ -2,10 +2,8 @@ import { OverlayStageStatus } from '@epam/ai-dial-chat-overlay';
 import { type Conversation, StageStatus } from '@epam/ai-dial-chat-shared';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type {
-  ActiveConversationBridge,
-  OverlayContextType,
-} from '../../../context/overlay/OverlayContext';
+import type { ActiveConversationBridge } from '../../../context/overlay/bridges';
+import type { OverlayContextType } from '../../../context/overlay/OverlayContext';
 import { useOptionalOverlay } from '../../../context/overlay/OverlayContext';
 import { saveConversation } from '../../../server-api/conversations.api';
 import { useActiveConversationBridge } from '../useActiveConversationBridge';

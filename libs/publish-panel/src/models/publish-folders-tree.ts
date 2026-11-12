@@ -65,6 +65,8 @@ export interface PublishFoldersTreeProps {
   invalidFolderNameError?: string;
   /** Validation message for a duplicate folder name. Defaults to `'A folder with this name already exists.'`. */
   duplicateFolderNameError?: string;
+  /** Validation message for a new folder named like its parent folder. Defaults to `'A folder cannot have the same name as its parent folder.'`. */
+  sameAsParentFolderNameError?: string;
   /** Label for the selectable bucket root of the single-root tree. Ignored when `roots` is set. Defaults to `'Organization'`. */
   rootLabel?: string;
   /** Externally controlled expanded folder path keys of the single-root tree; use `FolderDestinationRoot.expandedPaths` in multi-root mode. */

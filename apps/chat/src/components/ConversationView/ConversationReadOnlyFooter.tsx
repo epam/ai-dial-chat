@@ -36,13 +36,18 @@ const ConversationReadOnlyFooter: FC<ConversationReadOnlyFooterProps> = ({
           {t(ConversationPanelI18nKeys.DuplicateUnavailableModel)}
         </p>
       ) : (
-        <NeutralButton
-          label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
-          iconBefore={
-            <IconCopy size={DIAL_ICON_SIZE.MD} stroke={DIAL_KIT_ICON_STROKE} />
-          }
-          onClick={onDuplicateConversation}
-        />
+        onDuplicateConversation && (
+          <NeutralButton
+            label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
+            iconBefore={
+              <IconCopy
+                size={DIAL_ICON_SIZE.MD}
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
+            onClick={onDuplicateConversation}
+          />
+        )
       )}
     </div>
   );

@@ -97,7 +97,7 @@ export class ProjectConversationsController {
     operationId: 'listProjectConversations',
     summary: "List a project's conversations",
     description:
-      "Lists every conversation stored in the project's `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.",
+      "Lists every conversation stored in the project's `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves. A published project is the exception: its files all carry the time of the copy, so every body is read, no item is pending, and the conversations are ordered by their last message.",
   })
   @ApiParam(PROJECT_ID_PARAM)
   @ApiDialCoreErrors()

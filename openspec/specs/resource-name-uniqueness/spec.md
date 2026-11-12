@@ -120,9 +120,12 @@ guards the Toolsets tab, which can only make the check stricter, never looser.
 ### Requirement: Rejection is a 409 with a machine-readable code
 
 A duplicate SHALL be rejected with HTTP `409` before any DIAL Core write, with a JSON error
-body whose `code` is `name-taken-agent` when the conflicting entity is an agent and
-`name-taken-toolset` when it is a toolset, in addition to the framework's `statusCode` and
-`message`. Example:
+body whose `code` names the entity being saved: a write that lives only in the Toolsets tab
+(a toolset, or an application exposing only `mcp`) SHALL always answer `name-taken-toolset`,
+whatever kind of entity holds the identity. Any write that is also an agent (the Agents tab)
+SHALL answer `name-taken-agent` when the conflicting entity is an agent and
+`name-taken-toolset` when it is a toolset. The body also carries the framework's
+`statusCode` and `message`. Example:
 
 ```json
 {
@@ -240,8 +243,18 @@ existing conflict messages already are. No feature flag applies.
 
 #### Scenario: Toolset blocked by an agent
 
-- **WHEN** the Save panel's create of a toolset is answered with `409` and `code` `name-taken-agent`
-- **THEN** the panel stays open, shows "An agent with this name and version already exists in this folder." and the form keeps its values
+- **WHEN** a toolset is created and an agent that also exposes `mcp` already holds its name and version
+- **THEN** the `409` carries `code` `name-taken-toolset`, and the Save panel stays open, shows "A toolset with this name and version already exists in this folder." and the form keeps its values
+
+#### Scenario: Agent blocked by an agent that also exposes mcp
+
+- **WHEN** an agent is saved and another agent exposing `chat` and `mcp` already holds its name and version
+- **THEN** the `409` carries `code` `name-taken-agent`
+
+#### Scenario: Agent that also exposes mcp blocked by a toolset
+
+- **WHEN** an application exposing `chat` and `mcp` is saved and a toolset already holds its name and version
+- **THEN** the `409` carries `code` `name-taken-toolset`
 
 #### Scenario: Rename blocked by another agent
 

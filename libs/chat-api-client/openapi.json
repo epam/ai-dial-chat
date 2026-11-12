@@ -465,7 +465,14 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission to create applications in their bucket"
+            "description": "Caller lacks permission to create applications in their bucket, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "DIAL Core resource not found"
@@ -840,7 +847,14 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission"
+            "description": "Caller lacks permission, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Application not found"
@@ -1973,7 +1987,7 @@
             "description": "DIAL Core resource not found"
           },
           "409": {
-            "description": "Another own entity in the folder and Toolsets tab already has this name and version (`code` `name-taken-agent` or `name-taken-toolset`), or, without a `code`, every candidate storage path is taken",
+            "description": "Another own entity in the folder and Toolsets tab already has this name and version (`code` `name-taken-toolset`), or, without a `code`, every candidate storage path is taken",
             "content": {
               "application/json": {
                 "schema": {
@@ -2256,7 +2270,7 @@
             "description": "Toolset not found"
           },
           "409": {
-            "description": "The new name and version are already held by another own entity in the same folder and Toolsets tab (`code` `name-taken-agent` or `name-taken-toolset`)",
+            "description": "The new name and version are already held by another own entity in the same folder and Toolsets tab (`code` `name-taken-toolset`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -4738,6 +4752,44 @@
           }
         },
         "summary": "Get publish history for a conversation",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/publish-dependencies": {
+      "get": {
+        "description": "Returns the direct references of an owned conversation that are not in the public bucket: its model or add-ons when they are applications or toolsets, the skills its messages use, and attachment files that belong to another user. Files in the author’s own bucket are not listed, because they are published with the conversation. The list is advisory: when it cannot be resolved the response is an empty list rather than an error.",
+        "operationId": "getConversationPublishDependencies",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "gpt-4o__My Conversation__UUID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The conversation’s private dependencies, possibly empty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceDependenciesResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid path"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          }
+        },
+        "summary": "List the private dependencies of a conversation",
         "tags": ["conversations"]
       }
     },
@@ -8930,6 +8982,62 @@
         "tags": ["publish"]
       }
     },
+    "/api/v1/catalog/{entityType}/{entityId}/publish-dependencies": {
+      "get": {
+        "description": "Returns the direct references of a catalog entity (Toolset, Application, Prompt, Skill or Project) that are not in the public bucket, so the publisher can publish them too before the published copy reaches its audience. Resources that publishing already carries along (the application icon and its declared files) are not listed, and a dependency’s own dependencies are not followed. The list is advisory: when it cannot be resolved the response is an empty list rather than an error. Kinds that reference no other resource always return an empty list.",
+        "operationId": "getCatalogPublishDependencies",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": true,
+            "in": "path",
+            "description": "Catalog entity kind.",
+            "schema": {
+              "example": "toolset",
+              "type": "string",
+              "enum": [
+                "model",
+                "toolset",
+                "application",
+                "prompt",
+                "skill",
+                "project"
+              ]
+            }
+          },
+          {
+            "name": "entityId",
+            "required": true,
+            "in": "path",
+            "description": "The entity's DIAL Core resource path, used directly as the Publication API `sourceUrl`.",
+            "schema": {
+              "example": "tool-abc123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The entity’s private dependencies, possibly empty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceDependenciesResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid entityType or entityId"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          }
+        },
+        "summary": "List the private dependencies of a catalog entity",
+        "tags": ["publish"]
+      }
+    },
     "/api/v1/publish/rules": {
       "get": {
         "description": "Returns the exact requested folder's own access-restriction rules by proxying DIAL Core's `getPublicationRules` — ancestor-folder rules in the underlying response are discarded, never returned.",
@@ -10949,7 +11057,7 @@
     },
     "/api/v1/projects/{id}/conversations": {
       "get": {
-        "description": "Lists every conversation stored in the project's `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.",
+        "description": "Lists every conversation stored in the project's `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves. A published project is the exception: its files all carry the time of the copy, so every body is read, no item is pending, and the conversations are ordered by their last message.",
         "operationId": "listProjectConversations",
         "parameters": [
           {
@@ -11884,12 +11992,12 @@
     },
     "/api/v1/offline-credentials/signout": {
       "post": {
-        "description": "Revokes the session user's stored offline-credentials grant by proxying DIAL Core (POST /v1/user/offline-credentials/signout). A Core 404 is treated as idempotent success — there was no grant left to revoke. The authorization token is never logged.",
+        "description": "Revokes the session user's stored offline-credentials grant by proxying DIAL Core (POST /v1/user/offline-credentials/signout). A Core 200 false or 404 is treated as idempotent success — there was no grant left to revoke. The authorization token is never logged.",
         "operationId": "signOutOfflineCredentials",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Signed out successfully (including idempotent Core 404)",
+            "description": "Signed out successfully (including idempotent Core 200 false or 404)",
             "content": {
               "application/json": {
                 "schema": {
@@ -11905,7 +12013,7 @@
             "description": "Caller lacks permission, or neither scheduledTasksEnabled nor liveChatInteraction is enabled"
           },
           "502": {
-            "description": "DIAL Core returned an error response or reported failure"
+            "description": "DIAL Core returned an error response"
           },
           "503": {
             "description": "DIAL Core is unreachable"
@@ -13257,6 +13365,38 @@
           }
         },
         "required": ["id"]
+      },
+      "ApplicationErrorCode": {
+        "type": "string",
+        "enum": ["applicationDependentResourceMissing"],
+        "description": "Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available."
+      },
+      "ApplicationErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 403
+          },
+          "error": {
+            "type": "string",
+            "example": "Forbidden",
+            "description": "HTTP status text. Absent from a plain `403 Forbidden`."
+          },
+          "message": {
+            "type": "string",
+            "example": "This application refers to a resource that is no longer available. Remove or replace it to continue."
+          },
+          "code": {
+            "description": "Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApplicationErrorCode"
+              }
+            ]
+          }
+        },
+        "required": ["statusCode", "message"]
       },
       "UpdateApplicationBodyDto": {
         "type": "object",
@@ -17170,6 +17310,49 @@
           }
         },
         "required": ["path", "folderPath", "requestedAt", "requestedBy"]
+      },
+      "ResourceDependencyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The dependency's DIAL Core resource url, as stored in the reference.",
+            "example": "prompts/bucket-123/Support/Greeting"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name, percent-decoded, without a trailing `__version`.",
+            "example": "Greeting"
+          },
+          "version": {
+            "type": "string",
+            "description": "Present only for a versioned dependency.",
+            "example": "1.0.0"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["application", "toolset", "prompt", "skill", "file"],
+            "example": "prompt"
+          },
+          "location": {
+            "type": "string",
+            "description": "Percent-decoded folder path of the dependency inside its owner's bucket; empty at the bucket root.",
+            "example": "Support"
+          }
+        },
+        "required": ["id", "name", "type", "location"]
+      },
+      "ResourceDependenciesResultDto": {
+        "type": "object",
+        "properties": {
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceDependencyDto"
+            }
+          }
+        },
+        "required": ["dependencies"]
       },
       "PromptResponseDto": {
         "type": "object",

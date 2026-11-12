@@ -193,7 +193,7 @@ describe('MessageBubble', () => {
     const actionsWrapper = screen.getByRole('toolbar', {
       name: 'Message actions',
     });
-    expect(actionsWrapper.className).not.toContain('opacity-0');
+    expect(actionsWrapper.className).not.toMatch(/(^|\s)invisible(\s|$)/);
   });
 
   describe('UserMessageBubble — markdown', () => {

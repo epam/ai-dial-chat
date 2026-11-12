@@ -40,7 +40,7 @@ vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
 }));
 
 const OWN_ID = 'projects/bucket-1/Sales';
-const ownProject = { id: OWN_ID, name: 'Sales', canManage: true };
+const ownProject = { id: OWN_ID, name: 'Sales' };
 
 const givenFolders = (folders: string[][], isResolved = true) => {
   vi.mocked(useUnpublishableFolders).mockReturnValue({
@@ -66,7 +66,7 @@ describe('useProjectUnpublish', () => {
     vi.mocked(unpublishCatalogEntity).mockResolvedValue({} as never);
   });
 
-  it('asks chat-hooks about the project as a project entity', () => {
+  it('never treats the project as owned, so a personal project is not offered Unpublish', () => {
     givenFolders([], false);
 
     const { result } = renderUnpublish();
@@ -76,7 +76,7 @@ describe('useProjectUnpublish', () => {
       {
         entityType: CatalogPublishEntityType.Project,
         entityId: OWN_ID,
-        isOwner: true,
+        isOwner: false,
       },
       true,
     );

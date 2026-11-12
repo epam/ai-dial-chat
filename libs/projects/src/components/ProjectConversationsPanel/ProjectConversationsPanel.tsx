@@ -144,8 +144,12 @@ const ProjectConversationsPanelComponent: FC<
     restoreTriggerFocus();
   }, [isDeleting, restoreTriggerFocus]);
 
+  /* Like the regular chat rename, Save stays off until the name is actually changed. */
+  const isRenameUnchanged =
+    renameRow != null && renameValue.trim() === renameRow.title.trim();
+
   const handleRenameSave = useCallback(async () => {
-    if (!renameRow || !onRename || isRenaming) return;
+    if (!renameRow || !onRename || isRenaming || isRenameUnchanged) return;
     const newTitle = renameValue.trim();
     if (!newTitle) {
       setRenameError(labels.renameEmptyError);
@@ -163,6 +167,7 @@ const ProjectConversationsPanelComponent: FC<
     }
   }, [
     isRenaming,
+    isRenameUnchanged,
     labels.renameEmptyError,
     onRename,
     renameRow,
@@ -223,7 +228,7 @@ const ProjectConversationsPanelComponent: FC<
       {
         label: labels.renameSaveLabel,
         variant: ButtonVariant.Primary,
-        disabled: isRenaming,
+        disabled: isRenaming || isRenameUnchanged || renameValue.trim() === '',
         onClick: () => {
           void handleRenameSave();
         },
@@ -232,7 +237,9 @@ const ProjectConversationsPanelComponent: FC<
     [
       handleRenameClose,
       handleRenameSave,
+      isRenameUnchanged,
       isRenaming,
+      renameValue,
       labels.renameCancelLabel,
       labels.renameSaveLabel,
     ],

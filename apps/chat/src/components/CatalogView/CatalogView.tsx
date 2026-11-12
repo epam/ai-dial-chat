@@ -87,6 +87,8 @@ import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
+  getPublishDependenciesEntityKey,
+  getPublishDependenciesLabels,
   getPublishPanelCommonLabels,
 } from '../../utils/publish';
 import { ApplicationCredentials } from '../ApplicationCredentials/ApplicationCredentials';
@@ -437,6 +439,7 @@ const CatalogView: FC<Props> = ({
 
   const {
     getPublishHistory,
+    getPublishDependencies,
     handlePublish,
     handleUnpublish,
     handlePublishSuccess,
@@ -446,6 +449,7 @@ const CatalogView: FC<Props> = ({
     isUnpublishVisible,
   } = useCatalogPublishing({
     deployments,
+    toolsets,
     schemas,
     rememberPublishFolder,
     notifyOperationSuccess,
@@ -656,6 +660,13 @@ const CatalogView: FC<Props> = ({
         isPrimaryActionVisible={isPrimaryActionVisible}
         isPublishVisible={isPublishVisible}
         getPublishHistory={getPublishHistory}
+        getPublishDependencies={getPublishDependencies}
+        resolvePublishDependenciesLabels={(item) =>
+          getPublishDependenciesLabels(
+            t,
+            getPublishDependenciesEntityKey(item.type),
+          )
+        }
         publishFolderItems={publishFolderItems}
         publishExpandedPaths={publishExpandedPaths}
         onPublishExpandedPathsChange={onPublishExpandedPathsChange}
@@ -685,6 +696,10 @@ const CatalogView: FC<Props> = ({
           rootFolderLabel: t(BasicI18nKeys.Organization),
           selectFolderLabel: t(ButtonsI18nKeys.Select),
           accessRulesLabels: getAccessRulesLabels(t),
+          dependenciesLabels: getPublishDependenciesLabels(
+            t,
+            PublishI18nKeys.DependenciesEntityItem,
+          ),
           ...getPublishAuthorLabels(t),
           ...getPublishPanelCommonLabels(t),
         }}

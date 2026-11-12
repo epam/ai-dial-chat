@@ -450,6 +450,71 @@ describe('ProjectView', () => {
     expect(onDownload).toHaveBeenCalledOnce();
   });
 
+  it('offers revoke access in both menus only when supplied by the host', async () => {
+    const onRevokeAccess = vi.fn();
+    const onActionMenuOpenChange = vi.fn();
+    renderView({ onRevokeAccess, onActionMenuOpenChange });
+    for (const trigger of screen.getAllByRole('button', {
+      name: 'More actions',
+    })) {
+      await userEvent.click(trigger);
+      await userEvent.click(
+        within(await screen.findByRole('menu')).getByRole('menuitem', {
+          name: 'Revoke access',
+        }),
+      );
+    }
+    expect(onRevokeAccess).toHaveBeenCalledTimes(2);
+    expect(onActionMenuOpenChange).toHaveBeenCalledWith(true);
+  });
+
+  it('offers Remove from My List in place of Delete when the host supplies it', async () => {
+    const onRemoveFromMyList = vi.fn();
+    renderView({ onDelete: undefined, onRemoveFromMyList });
+
+    for (const trigger of screen.getAllByRole('button', {
+      name: 'More actions',
+    })) {
+      await userEvent.click(trigger);
+      const menu = await screen.findByRole('menu');
+      expect(
+        within(menu).queryByRole('menuitem', { name: 'Delete' }),
+      ).toBeNull();
+      await userEvent.click(
+        within(menu).getByRole('menuitem', { name: 'Remove from My List' }),
+      );
+    }
+    expect(onRemoveFromMyList).toHaveBeenCalledTimes(2);
+  });
+
+  it('names the Remove from My List action with the host label', async () => {
+    renderView({
+      onDelete: undefined,
+      onRemoveFromMyList: vi.fn(),
+      labels: { ...labels, removeFromMyListLabel: 'Retirer de ma liste' },
+    });
+
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'More actions' })[0],
+    );
+    const menu = await screen.findByRole('menu');
+    expect(
+      within(menu).getByRole('menuitem', { name: 'Retirer de ma liste' }),
+    ).toBeTruthy();
+  });
+
+  it('hides Remove from My List when the callback is omitted', async () => {
+    renderView();
+
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'More actions' })[0],
+    );
+    const menu = await screen.findByRole('menu');
+    expect(
+      within(menu).queryByRole('menuitem', { name: 'Remove from My List' }),
+    ).toBeNull();
+  });
+
   it('hides Publish, Edit, Share and Delete when their callbacks are omitted', async () => {
     renderView({
       onPublish: undefined,

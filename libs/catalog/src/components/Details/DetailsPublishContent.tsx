@@ -1,4 +1,7 @@
-import { PublishPanel } from '@epam/ai-dial-publish-panel';
+import {
+  PublishPanel,
+  type PublishDependency,
+} from '@epam/ai-dial-publish-panel';
 import type { FC } from 'react';
 import type { DetailsPanelProps } from '../../models/item-details-props';
 import { CATALOG_PUBLISH_ALLOWS_REPLACE } from '../../utils/details-panel';
@@ -14,11 +17,14 @@ export interface DetailsPublishContentProps extends Pick<
   | 'onPublishExpandedPathsChange'
   | 'publishLoadingPaths'
   | 'publishLabels'
+  | 'resolvePublishDependenciesLabels'
 > {
   /** Rule source options, with the panel default already applied. */
   ruleSourceOptions: string[];
   /** Publish form state, from `useDetailsPublish`. */
   publishFlow: DetailsPublishState['publishFlow'];
+  /** Private dependencies to list, from `useDetailsPublish`; `undefined` when the host supplies no lookup. */
+  publishDependencies?: PublishDependency[];
   /** Main/change-folder view state, from `useDetailsPublish`. */
   publishFolderView: DetailsPublishState['publishFolderView'];
   /** Whether the item may pass its credentials on to the published copy. */
@@ -29,6 +35,7 @@ export interface DetailsPublishContentProps extends Pick<
 export const DetailsPublishContent: FC<DetailsPublishContentProps> = ({
   item,
   publishFlow,
+  publishDependencies,
   publishFolderView,
   isPublishCredentialsEligible,
   publishExpandedPaths,
@@ -36,6 +43,7 @@ export const DetailsPublishContent: FC<DetailsPublishContentProps> = ({
   publishLoadingPaths,
   ruleSourceOptions,
   publishLabels,
+  resolvePublishDependenciesLabels,
 }) => (
   <div className="p-4 desktop:p-[22px]">
     <PublishPanel
@@ -75,7 +83,18 @@ export const DetailsPublishContent: FC<DetailsPublishContentProps> = ({
       ruleSourceOptions={ruleSourceOptions}
       isRulesLoading={publishFlow.isRulesLoading}
       hasRulesLoadError={publishFlow.hasRulesLoadError}
-      labels={publishLabels}
+      labels={
+        resolvePublishDependenciesLabels
+          ? {
+              ...publishLabels,
+              dependenciesLabels: {
+                ...publishLabels?.dependenciesLabels,
+                ...resolvePublishDependenciesLabels(item),
+              },
+            }
+          : publishLabels
+      }
+      dependencies={publishDependencies}
     />
   </div>
 );

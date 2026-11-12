@@ -469,6 +469,49 @@ export interface ApplicationDto {
    */
   maxInputAttachments?: number;
 }
+
+/**
+ * Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available.
+ * @export
+ */
+export const ApplicationErrorCode = {
+  ApplicationDependentResourceMissing: 'applicationDependentResourceMissing',
+} as const;
+export type ApplicationErrorCode =
+  (typeof ApplicationErrorCode)[keyof typeof ApplicationErrorCode];
+
+/**
+ *
+ * @export
+ * @interface ApplicationErrorDto
+ */
+export interface ApplicationErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ApplicationErrorDto
+   */
+  statusCode: number;
+  /**
+   * HTTP status text. Absent from a plain `403 Forbidden`.
+   * @type {string}
+   * @memberof ApplicationErrorDto
+   */
+  error?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationErrorDto
+   */
+  message: string;
+  /**
+   * Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available.
+   * @type {ApplicationErrorCode}
+   * @memberof ApplicationErrorDto
+   */
+  code?: ApplicationErrorCode;
+}
+
 /**
  *
  * @export
@@ -7940,6 +7983,70 @@ export interface RequestSkillDto {
    */
   url: string;
 }
+/**
+ *
+ * @export
+ * @interface ResourceDependenciesResultDto
+ */
+export interface ResourceDependenciesResultDto {
+  /**
+   *
+   * @type {Array<ResourceDependencyDto>}
+   * @memberof ResourceDependenciesResultDto
+   */
+  dependencies: Array<ResourceDependencyDto>;
+}
+/**
+ *
+ * @export
+ * @interface ResourceDependencyDto
+ */
+export interface ResourceDependencyDto {
+  /**
+   * The dependency's DIAL Core resource url, as stored in the reference.
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  id: string;
+  /**
+   * Display name, percent-decoded, without a trailing `__version`.
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  name: string;
+  /**
+   * Present only for a versioned dependency.
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  version?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  type: ResourceDependencyDtoTypeEnum;
+  /**
+   * Percent-decoded folder path of the dependency inside its owner's bucket; empty at the bucket root.
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  location: string;
+}
+
+/**
+ * @export
+ */
+export const ResourceDependencyDtoTypeEnum = {
+  Application: 'application',
+  Toolset: 'toolset',
+  Prompt: 'prompt',
+  Skill: 'skill',
+  File: 'file',
+} as const;
+export type ResourceDependencyDtoTypeEnum =
+  (typeof ResourceDependencyDtoTypeEnum)[keyof typeof ResourceDependencyDtoTypeEnum];
+
 /**
  *
  * @export

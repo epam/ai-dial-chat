@@ -568,7 +568,7 @@ describe('ToolsetsMutationService', () => {
           .catch((e: unknown) => e);
 
         expect((error as ConflictException).getResponse()).toMatchObject({
-          code: 'name-taken-agent',
+          code: 'name-taken-toolset',
         });
       });
 
@@ -959,7 +959,7 @@ describe('ToolsetsMutationService', () => {
 
         expect(error).toBeInstanceOf(ConflictException);
         expect((error as ConflictException).getResponse()).toMatchObject({
-          code: 'name-taken-agent',
+          code: 'name-taken-toolset',
         });
         expect(client(service).saveToolSet).not.toHaveBeenCalled();
         expect(cacheManager.del).not.toHaveBeenCalled();

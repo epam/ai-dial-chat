@@ -157,5 +157,6 @@ export const useProjects = (
     isLoading: enabled && settled == null,
     hasError: settled?.hasError ?? false,
     retry,
+    refresh: refreshSilently,
   };
 };

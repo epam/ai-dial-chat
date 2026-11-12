@@ -6,6 +6,7 @@ import {
 import {
   mapProjectArtifactsToOutputs,
   mapProjectDetailsToViewModel,
+  isProjectSharedWithMe,
   ProjectRefreshOutcome,
   useProject,
   useProjectArtifacts,
@@ -28,6 +29,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import ProjectConversationsSection from '../../components/ProjectConversationsSection/ProjectConversationsSection';
 import ProjectDeleteConfirmation from '../../components/ProjectDeleteConfirmation/ProjectDeleteConfirmation';
+import ProjectRemoveFromListConfirmation from '../../components/ProjectRemoveFromListConfirmation/ProjectRemoveFromListConfirmation';
+import ProjectRevokeAccessConfirmation from '../../components/ProjectRevokeAccessConfirmation/ProjectRevokeAccessConfirmation';
 import ProjectShareOverlay from '../../components/ProjectShareOverlay/ProjectShareOverlay';
 import PublishProjectPanelContainer from '../../components/PublishProjectPanelContainer/PublishProjectPanelContainer';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
@@ -44,6 +47,8 @@ import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachme
 import { projectsClient } from '../../hooks/projects/projects-client';
 import { useProjectActions } from '../../hooks/projects/useProjectActions';
 import { useProjectOutputsLabels } from '../../hooks/projects/useProjectOutputsLabels';
+import { useProjectRemoveFromList } from '../../hooks/projects/useProjectRemoveFromList';
+import { useProjectShareRecipients } from '../../hooks/projects/useProjectShareRecipients';
 import { useProjectUnpublish } from '../../hooks/projects/useProjectUnpublish';
 import { useProjectViewLabels } from '../../hooks/projects/useProjectViewLabels';
 import { useUnpublishConfirmationLabels } from '../../hooks/publish/useUnpublishConfirmationLabels';
@@ -138,6 +143,10 @@ const ProjectViewPage: FC = () => {
   const [contextSearchQuery, setContextSearchQuery] = useState('');
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isPublishOpen, setIsPublishOpen] = useState(false);
+  const [isRevokeOpen, setIsRevokeOpen] = useState(false);
+  const handleCloseRevoke = useCallback(() => setIsRevokeOpen(false), []);
+  const handleRequestRevoke = useCallback(() => setIsRevokeOpen(true), []);
+  const [isRemoveOpen, setIsRemoveOpen] = useState(false);
   /* The publish panel loads the public folder tree on mount, so it mounts on
    * the first open and then stays mounted for its slide-out animation. */
   const [hasOpenedPublish, setHasOpenedPublish] = useState(false);
@@ -192,6 +201,13 @@ const ProjectViewPage: FC = () => {
   /* `canEdit`: change the content and write the chats (the owner, or a share with edit access); `canManage`: rename, delete, share and publish (the owner only). */
   const canEdit = project?.canEdit ?? false;
   const canManage = project?.canManage ?? false;
+  const { requestRecipients, canRevokeAccess } = useProjectShareRecipients();
+  const handleActionMenuOpenChange = useCallback(
+    (isOpen: boolean) => {
+      if (isOpen && project?.canManage) requestRecipients(project.id);
+    },
+    [project, requestRecipients],
+  );
   /* Chats deleted from the list since `project` was read; a fresh read resets the count. */
   const [deletedChats, setDeletedChats] = useState({ project, count: 0 });
   const deletedChatCount =
@@ -241,6 +257,16 @@ const ProjectViewPage: FC = () => {
     folderGroupAriaLabel: ProjectsI18nKeys.UnpublishFolderGroupAriaLabel,
     requestingStatus: ProjectsI18nKeys.UnpublishRequestingStatus,
   });
+  const isSharedWithMe = isProjectSharedWithMe(project);
+  const handleCloseRemove = useCallback(() => setIsRemoveOpen(false), []);
+  const handleRequestRemove = useCallback(() => setIsRemoveOpen(true), []);
+  const { isRemoving, confirmRemove } = useProjectRemoveFromList(
+    isSharedWithMe ? project : null,
+    { onFailed: retry, onSettled: handleCloseRemove },
+  );
+  const handleConfirmRemove = useCallback(() => {
+    void confirmRemove();
+  }, [confirmRemove]);
   const { togglePin, downloadArchive, confirmDelete } = actions;
   const handleTogglePin = useCallback(() => {
     void togglePin();
@@ -279,7 +305,14 @@ const ProjectViewPage: FC = () => {
         }
         onEdit={canEdit ? handleEdit : undefined}
         onShare={canManage ? handleShare : undefined}
+        onRevokeAccess={
+          canManage && project && canRevokeAccess(project.id)
+            ? handleRequestRevoke
+            : undefined
+        }
+        onActionMenuOpenChange={handleActionMenuOpenChange}
         onDelete={canManage ? actions.requestDelete : undefined}
+        onRemoveFromMyList={isSharedWithMe ? handleRequestRemove : undefined}
         onDownload={handleDownload}
         onContextFileClick={handleContextFileClick}
         onContextFileDownload={handleContextFileDownload}
@@ -316,6 +349,12 @@ const ProjectViewPage: FC = () => {
         mainContentLabel={t(ProjectsI18nKeys.ViewMainContent)}
         labels={labels}
       />
+      {project && canManage && isRevokeOpen && (
+        <ProjectRevokeAccessConfirmation
+          project={project}
+          onClose={handleCloseRevoke}
+        />
+      )}
       {project && isShareOpen && (
         <ProjectShareOverlay
           projectId={project.id}
@@ -337,6 +376,15 @@ const ProjectViewPage: FC = () => {
         {...unpublish.dialog}
         labels={unpublishLabels}
       />
+      {project && isSharedWithMe && (
+        <ProjectRemoveFromListConfirmation
+          isOpen={isRemoveOpen}
+          projectName={project.name}
+          isRemoving={isRemoving}
+          onConfirm={handleConfirmRemove}
+          onClose={handleCloseRemove}
+        />
+      )}
       {project && (
         <ProjectDeleteConfirmation
           isOpen={actions.isDeleteOpen}

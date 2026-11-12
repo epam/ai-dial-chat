@@ -1,10 +1,8 @@
 import type { ConversationListItemDto } from '@epam/ai-dial-chat-api-client';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type {
-  ConversationListBridge,
-  OverlayContextType,
-} from '../../../context/overlay/OverlayContext';
+import type { ConversationListBridge } from '../../../context/overlay/bridges';
+import type { OverlayContextType } from '../../../context/overlay/OverlayContext';
 import { useOptionalOverlay } from '../../../context/overlay/OverlayContext';
 import {
   createConversation as apiCreateConversation,

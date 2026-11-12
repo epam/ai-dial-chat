@@ -78,6 +78,16 @@
             "buildTarget": "mcp-app-sandbox:build:production"
           }
         }
+      },
+      "test": {
+        "executor": "nx:run-commands",
+        "outputs": [
+          "{workspaceRoot}/apps/mcp-app-sandbox/test-output/vitest/coverage"
+        ],
+        "options": {
+          "cwd": "{workspaceRoot}",
+          "command": "vitest run --config apps/mcp-app-sandbox/vitest.config.mts"
+        }
       }
     },
     "tags": [
@@ -89,6 +99,18 @@
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.2.8",
     "@nestjs/platform-express": "^11.2.8",
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/exporter-logs-otlp-http": "^0.223.0",
+    "@opentelemetry/exporter-metrics-otlp-http": "^0.223.0",
+    "@opentelemetry/exporter-prometheus": "^0.223.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.223.0",
+    "@opentelemetry/instrumentation-http": "^0.223.0",
+    "@opentelemetry/resources": "^2.12.0",
+    "@opentelemetry/sdk-logs": "^0.223.0",
+    "@opentelemetry/sdk-metrics": "^2.12.0",
+    "@opentelemetry/sdk-node": "^0.223.0",
+    "@opentelemetry/sdk-trace-base": "^2.12.0",
+    "@opentelemetry/semantic-conventions": "^1.44.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "helmet": "^8.3.0",

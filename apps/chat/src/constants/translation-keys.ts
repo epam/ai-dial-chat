@@ -546,6 +546,7 @@ export enum ProjectsI18nKeys {
   PublishEmptyFolderNameError = 'projects.publish.emptyFolderNameError',
   PublishInvalidFolderNameError = 'projects.publish.invalidFolderNameError',
   PublishDuplicateFolderNameError = 'projects.publish.duplicateFolderNameError',
+  PublishSameAsParentFolderNameError = 'projects.publish.sameAsParentFolderNameError',
   UnpublishConfirmTitle = 'projects.unpublish.confirmTitle',
   UnpublishConfirmMessage = 'projects.unpublish.confirmMessage',
   UnpublishSelectFolderMessage = 'projects.unpublish.selectFolderMessage',
@@ -1013,6 +1014,7 @@ export enum ConversationPublishI18nKeys {
   EmptyFolderNameError = 'conversationPublish.emptyFolderNameError',
   InvalidFolderNameError = 'conversationPublish.invalidFolderNameError',
   DuplicateFolderNameError = 'conversationPublish.duplicateFolderNameError',
+  SameAsParentFolderNameError = 'conversationPublish.sameAsParentFolderNameError',
 }
 
 /** Strings shared by every publish flow (conversations and catalog entities). */
@@ -1035,6 +1037,21 @@ export enum PublishI18nKeys {
   AddChildFolder = 'publish.addChildFolder',
   UpdateVersion = 'publish.updateVersion',
   PublishingInProgress = 'publish.publishingInProgress',
+  DependenciesTitle = 'publish.dependenciesTitle',
+  DependenciesDescription = 'publish.dependenciesDescription',
+  DependenciesAnnouncement = 'publish.dependenciesAnnouncement',
+  DependenciesEntityApplication = 'publish.dependenciesEntityApplication',
+  DependenciesEntityConversation = 'publish.dependenciesEntityConversation',
+  DependenciesEntityProject = 'publish.dependenciesEntityProject',
+  DependenciesEntityToolset = 'publish.dependenciesEntityToolset',
+  DependenciesEntityPrompt = 'publish.dependenciesEntityPrompt',
+  DependenciesEntitySkill = 'publish.dependenciesEntitySkill',
+  DependenciesEntityItem = 'publish.dependenciesEntityItem',
+  DependenciesTypeApplication = 'publish.dependenciesTypeApplication',
+  DependenciesTypeToolset = 'publish.dependenciesTypeToolset',
+  DependenciesTypePrompt = 'publish.dependenciesTypePrompt',
+  DependenciesTypeSkill = 'publish.dependenciesTypeSkill',
+  DependenciesTypeFile = 'publish.dependenciesTypeFile',
 }
 
 export enum PublishAccessRulesI18nKeys {
@@ -1579,6 +1596,7 @@ export enum ToolsI18nKeys {
   RemoveTool = 'tools.removeTool',
   StateOn = 'tools.stateOn',
   StateOff = 'tools.stateOff',
+  Summary = 'tools.summary',
 }
 
 export enum ConversationInputI18nKeys {

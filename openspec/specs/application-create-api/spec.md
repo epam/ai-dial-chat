@@ -208,7 +208,7 @@ The `createApplication` operation and generated client SHALL expose these option
 - **THEN** the renamed app is untouched and the new app is created at the next free path with the display name `Test_QuickApp`
 
 #### Scenario: Same displayed identity is rejected, not suffixed
-- **WHEN** an own app displayed as `Test_QuickApp` version `1.0.0` exists in the same folder and a caller creates another with `createOnly: true`
+- **WHEN** an own agent displayed as `Test_QuickApp` version `1.0.0` exists in the same folder and a caller creates another agent with `createOnly: true`
 - **THEN** the response is `409` with `code` `name-taken-agent` and no `-2` path is created
 
 #### Scenario: Every candidate path is taken

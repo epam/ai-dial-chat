@@ -6,7 +6,7 @@ Post-archive update: at the user's request, the former `apps/chat/browser-tests/
 
 - Right panels: conversation sources; attachment canvas for conversation, file/project previews and MCP content; catalog details; composed skill details; standalone publication drawer.
 - Menus: attachment/actions, Tools and host add-on flyouts; composer model picker (flat and host overlay); deployment form-field picker; catalog Create including the floating trigger; browse view/sort/filter controls.
-- Existing layout hooks, navigation sheets, conversation-panel behavior and editor/form destinations retain the 1280px boundary. No changes in chat_pg_copy. The pre-existing .mcp.json edit was preserved.
+- Existing layout hooks, navigation sheets, conversation-panel behavior and editor/form destinations retain the 1280px boundary. No changes in downstream repositories. The pre-existing .mcp.json edit was preserved.
 
 ## Automated evidence
 

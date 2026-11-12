@@ -131,13 +131,19 @@ export const findDuplicateIdentity = ({
 
 /**
  * The `409` for a duplicate identity, shaped like the project create errors
- * (`statusCode`, `message`, `error`, `code`).
+ * (`statusCode`, `message`, `error`, `code`). A write that lives only in the
+ * Toolsets tab always names a toolset, whatever kind of entity holds the
+ * identity; any other write names the kind of the entity that holds it.
  * @param conflict - the entity that already holds the identity
+ * @param tabs - tabs the written entity belongs to
  */
 export const buildResourceNameConflict = (
   conflict: ResourceIdentityEntry,
+  tabs: readonly ResourceIdentityTab[],
 ): ConflictException => {
-  const isToolset = conflict.kind === ResourceIdentityKind.Toolset;
+  const isToolset =
+    !tabs.includes(ResourceIdentityTab.Agents) ||
+    conflict.kind === ResourceIdentityKind.Toolset;
   return new ConflictException({
     statusCode: 409,
     message: `${isToolset ? 'A toolset' : 'An agent'} with this name and version already exists in this folder`,

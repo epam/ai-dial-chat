@@ -63,6 +63,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   emptyFolderNameError = 'Folder name cannot be empty.',
   invalidFolderNameError = 'Folder name contains invalid characters.',
   duplicateFolderNameError = 'A folder with this name already exists.',
+  sameAsParentFolderNameError = 'A folder cannot have the same name as its parent folder.',
   rootLabel = 'Organization',
   expandedPaths: controlledExpandedPaths,
   onExpandedPathsChange,
@@ -273,7 +274,14 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     empty: emptyFolderNameError,
     invalid: invalidFolderNameError,
     duplicate: duplicateFolderNameError,
+    sameAsParent: sameAsParentFolderNameError,
   };
+
+  /* The name a new folder under `parentPath` may not take; a root (single-root `[]` or a multi-root token) has none. */
+  const getParentFolderName = (parentPath: string[]): string | undefined =>
+    rootKeys.includes(toFolderPathKey(parentPath))
+      ? undefined
+      : parentPath.at(-1);
 
   const canCreateUnder = (parentPath: string[]): boolean => {
     if (!roots) return true;
@@ -304,15 +312,40 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     const isQueryUsableAsName =
       hasNoSearchMatches &&
       validateFolderName(trimmedQuery, [], folderNameErrors) == null;
+    const parentName = getParentFolderName(parentPath);
     return getUniqueFolderName(
       isQueryUsableAsName ? trimmedQuery : newFolderDefaultName,
-      getSiblingFolderNames(treeItems, parentPath),
+      [
+        ...getSiblingFolderNames(treeItems, parentPath),
+        ...(parentName ? [parentName] : []),
+      ],
     );
   };
 
+  /*
+   * "Add child" on a folder whose children are not listed yet expands it,
+   * which makes the host fetch them. Opening the editor right away would let
+   * a name be confirmed before that listing lands, when the parent still
+   * looks empty — so a duplicate of an existing child passed the check. The
+   * editor therefore opens once the parent is no longer loading (the parent
+   * row shows the host's loading indicator meanwhile), with a default name
+   * that is unique among the children that actually exist.
+   */
+  const [pendingCreateParentPath, setPendingCreateParentPath] = useState<
+    string[] | null
+  >(null);
+  if (
+    pendingCreateParentPath != null &&
+    !loadingPaths?.has(toFolderPathKey(pendingCreateParentPath))
+  ) {
+    setPendingCreateParentPath(null);
+    setCreatingParentPath(pendingCreateParentPath);
+    setCreatingFolderName(resolveNewFolderName(pendingCreateParentPath));
+  }
+
   const beginCreatingFolder = (parentPath: string[]) => {
-    setCreatingParentPath(parentPath);
-    setCreatingFolderName(resolveNewFolderName(parentPath));
+    setCreatingParentPath(null);
+    setPendingCreateParentPath(parentPath);
     lastLiveValidationErrorRef.current = null;
     isCancellingRef.current = false;
     const parentKey = toFolderPathKey(parentPath);
@@ -379,6 +412,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
       rawValue,
       getSiblingFolderNames(treeItemsRef.current, creatingParentPath),
       folderNameErrors,
+      getParentFolderName(creatingParentPath),
     );
     lastLiveValidationErrorRef.current = error;
     return error;

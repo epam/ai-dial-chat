@@ -1,0 +1,11 @@
+.heading {
+  color: var(--pp-dependencies-heading-text, var(--text-primary, #161b2d));
+}
+
+.name {
+  color: var(--pp-dependencies-name-text, var(--text-primary, #161b2d));
+}
+
+.meta {
+  color: var(--pp-dependencies-meta-text, var(--text-secondary, #57647a));
+}

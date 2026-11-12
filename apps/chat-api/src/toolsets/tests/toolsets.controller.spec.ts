@@ -12,6 +12,7 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ResourceIdentityKind,
+  ResourceIdentityTab,
   buildResourceNameConflict,
 } from '../../common/utils/resource-identity';
 import type {
@@ -303,10 +304,13 @@ describe('ToolsetsController — write operations (integration)', () => {
 
     it('answers 409 with the name-taken code when the service rejects a duplicate identity', async () => {
       service.createToolset.mockRejectedValue(
-        buildResourceNameConflict({
-          id: 'applications/b/search__1.0.0',
-          kind: ResourceIdentityKind.Application,
-        }),
+        buildResourceNameConflict(
+          {
+            id: 'applications/b/search__1.0.0',
+            kind: ResourceIdentityKind.Application,
+          },
+          [ResourceIdentityTab.Toolsets],
+        ),
       );
 
       const response = await request(app.getHttpServer())
@@ -316,7 +320,7 @@ describe('ToolsetsController — write operations (integration)', () => {
 
       expect(response.body).toMatchObject({
         statusCode: 409,
-        code: 'name-taken-agent',
+        code: 'name-taken-toolset',
       });
     });
 
@@ -373,10 +377,13 @@ describe('ToolsetsController — write operations (integration)', () => {
   describe('POST /api/v1/toolsets/:toolsetName/move', () => {
     it('returns 409 with the name-taken code when the folder holds the same identity', async () => {
       service.moveToolset.mockRejectedValue(
-        buildResourceNameConflict({
-          id: 'toolsets/b/search__1.0.0',
-          kind: ResourceIdentityKind.Toolset,
-        }),
+        buildResourceNameConflict(
+          {
+            id: 'toolsets/b/search__1.0.0',
+            kind: ResourceIdentityKind.Toolset,
+          },
+          [ResourceIdentityTab.Toolsets],
+        ),
       );
       const res = await request(app.getHttpServer())
         .post('/api/v1/toolsets/my-toolset/move')
@@ -419,10 +426,13 @@ describe('ToolsetsController — write operations (integration)', () => {
   describe('PATCH /api/v1/toolsets/:toolsetName', () => {
     it('returns 409 with the name-taken code when a rename takes another identity', async () => {
       service.updateToolset.mockRejectedValue(
-        buildResourceNameConflict({
-          id: 'toolsets/b/search__1.0.0',
-          kind: ResourceIdentityKind.Toolset,
-        }),
+        buildResourceNameConflict(
+          {
+            id: 'toolsets/b/search__1.0.0',
+            kind: ResourceIdentityKind.Toolset,
+          },
+          [ResourceIdentityTab.Toolsets],
+        ),
       );
       const res = await request(app.getHttpServer())
         .patch('/api/v1/toolsets/my-toolset')

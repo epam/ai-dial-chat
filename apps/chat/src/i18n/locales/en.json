@@ -585,7 +585,8 @@
     "alreadyPublishedWarning": "This conversation is already published in {folder}.",
     "emptyFolderNameError": "Folder name cannot be empty.",
     "invalidFolderNameError": "Folder name contains invalid characters.",
-    "duplicateFolderNameError": "A folder with this name already exists."
+    "duplicateFolderNameError": "A folder with this name already exists.",
+    "sameAsParentFolderNameError": "A folder cannot have the same name as its parent folder."
   },
   "conversationUnpublish": {
     "confirmTitle": "Unpublish conversation?",
@@ -612,7 +613,23 @@
     "addSiblingFolder": "Add sibling",
     "addChildFolder": "Add child",
     "updateVersion": "Update version {version}",
-    "publishingInProgress": "Publishing…"
+    "publishingInProgress": "Publishing…",
+    "dependenciesTitle": "Private dependencies",
+    "dependenciesDescription": "This {{entity}} depends on personal private resources (listed below). After publishing, other users may not be able to use it fully, or may run into problems.",
+    "dependenciesAnnouncement_one": "{{count}} dependency is not public yet",
+    "dependenciesAnnouncement_other": "{{count}} dependencies are not public yet",
+    "dependenciesEntityApplication": "application",
+    "dependenciesEntityConversation": "conversation",
+    "dependenciesEntityProject": "project",
+    "dependenciesEntityToolset": "toolset",
+    "dependenciesEntityPrompt": "prompt",
+    "dependenciesEntitySkill": "skill",
+    "dependenciesEntityItem": "item",
+    "dependenciesTypeApplication": "Application",
+    "dependenciesTypeToolset": "Toolset",
+    "dependenciesTypePrompt": "Prompt",
+    "dependenciesTypeSkill": "Skill",
+    "dependenciesTypeFile": "File"
   },
   "publishAccessRules": {
     "heading": "Allow access if all match",
@@ -945,6 +962,7 @@
       "emptyFolderNameError": "Folder name cannot be empty.",
       "invalidFolderNameError": "Folder name contains invalid characters.",
       "duplicateFolderNameError": "A folder with this name already exists.",
+      "sameAsParentFolderNameError": "A folder cannot have the same name as its parent folder.",
       "chatsWarning_one": "The {{count}} chat in this project is published with it.",
       "chatsWarning_other": "The {{count}} chats in this project are published with it."
     },
@@ -1637,7 +1655,8 @@
     "menuTitle": "Tools",
     "removeTool": "Remove {{label}}",
     "stateOn": "On",
-    "stateOff": "Off"
+    "stateOff": "Off",
+    "summary": "Tools: {{selected}} of {{total}} on"
   },
   "conversationInput": {
     "usageLimits": {

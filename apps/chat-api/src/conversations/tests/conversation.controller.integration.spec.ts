@@ -48,6 +48,7 @@ import { ProjectConversationStore } from '../persistence/project-conversation.st
 import { PublishedFolderAttachmentsService } from '../published-folder-attachments.service';
 import { ConversationCompletionsResponder } from '../streaming/conversation-completions.responder';
 import { ConversationStreamingService } from '../streaming/conversation-streaming.service';
+import type { StreamCompletionRequest } from '../streaming/stream-completion-request';
 
 const TEST_USER = {
   sid: 'test-sid',
@@ -184,7 +185,7 @@ describe('ConversationController (integration)', () => {
     it('accepts encoded deployment slashes and literal percent escapes', async () => {
       const ids = [
         'conversations/public/applications/public/Team%2FApp__0.0.1__hello',
-        'conversations/other-bucket/applications/public/pg-agent%255F%255F1.0.0__New%20chat',
+        'conversations/other-bucket/applications/public/sample-agent%255F%255F1.0.0__New%20chat',
       ];
       service.getConversationTitles.mockResolvedValue({ items: [] });
       await request(app.getHttpServer())
@@ -1125,12 +1126,10 @@ describe('ConversationController (integration)', () => {
         resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
         stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
         stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
-        streamCompletion: vi.fn().mockImplementation(async function* (
-          streamPath: string,
-          _at: string,
-          _bucket: string,
-          generationId: string,
-        ) {
+        streamCompletion: vi.fn().mockImplementation(async function* ({
+          conversationPath: streamPath,
+          generationId,
+        }: StreamCompletionRequest) {
           /* Mirrors ConversationStreamingService.streamCompletion's first call. */
           realGenerationService.register(
             `c:${TEST_USER.sid}`,

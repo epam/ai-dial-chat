@@ -128,20 +128,18 @@ const makeHarness = () => {
     config,
   );
   const run = async (path: string) => {
-    const stream = streaming.streamCompletion(
-      path,
-      'token',
-      'a1b2c3',
-      GEN,
-      CompletionMode.Append,
-      'Summarize the tickets',
-      undefined,
-      'gpt-4o',
-      undefined,
-      'c:session',
-      () => undefined,
-      'sub',
-    );
+    const stream = streaming.streamCompletion({
+      conversationPath: path,
+      token: 'token',
+      bucket: 'a1b2c3',
+      generationId: GEN,
+      mode: CompletionMode.Append,
+      message: 'Summarize the tickets',
+      model: 'gpt-4o',
+      ownerKey: 'c:session',
+      onReadyToStream: () => undefined,
+      sub: 'sub',
+    });
     for await (const chunk of stream) void chunk;
   };
   const request = () => {
@@ -373,22 +371,20 @@ describe('two instances sending into one conversation', () => {
     );
     let headersSent = false;
     const send = async (path: string, generationId: string, text: string) => {
-      const stream = streaming.streamCompletion(
-        path,
-        'token',
-        'a1b2c3',
+      const stream = streaming.streamCompletion({
+        conversationPath: path,
+        token: 'token',
+        bucket: 'a1b2c3',
         generationId,
-        CompletionMode.Append,
-        text,
-        undefined,
-        'gpt-4o',
-        undefined,
+        mode: CompletionMode.Append,
+        message: text,
+        model: 'gpt-4o',
         ownerKey,
-        () => {
+        onReadyToStream: () => {
           headersSent = true;
         },
-        'sub',
-      );
+        sub: 'sub',
+      });
       for await (const chunk of stream) void chunk;
     };
     return {

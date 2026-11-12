@@ -917,6 +917,38 @@ describe('FilesController — download', () => {
     );
   });
 
+  it('cancels the DIAL Core body when the client disconnected before piping started', async () => {
+    const server = app.getHttpServer() as ReturnType<typeof createServer>;
+    const onCancel = vi.fn();
+    let resolveDownload: (value: unknown) => void = () => undefined;
+    service.downloadFile.mockReturnValue(
+      new Promise((done) => {
+        resolveDownload = done;
+      }),
+    );
+    /* Answer only after the server has seen the client go away. */
+    server.once('request', (_req: IncomingMessage, res: ServerResponse) => {
+      res.once('close', () =>
+        resolveDownload({
+          stream: new ReadableStream({ cancel: onCancel }),
+          headers: { 'content-type': 'text/html; charset=utf-8' },
+        }),
+      );
+    });
+
+    const client = httpRequest({
+      port: (server.address() as AddressInfo).port,
+      host: '127.0.0.1',
+      path: '/api/v1/files/download?bucket=my-bucket&path=folder%2Fpage.html',
+    });
+    client.on('error', () => undefined);
+    client.end();
+    await vi.waitFor(() => expect(service.downloadFile).toHaveBeenCalled());
+    client.destroy();
+
+    await vi.waitFor(() => expect(onCancel).toHaveBeenCalledOnce());
+  });
+
   it('returns 400 for invalid bucket (contains colon)', async () => {
     await request(app.getHttpServer())
       .get('/api/v1/files/download')

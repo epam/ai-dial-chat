@@ -245,7 +245,7 @@ export class ToolsetsController {
   @ApiResponse({
     status: 409,
     description:
-      'Another own entity in the folder and Toolsets tab already has this name and version (`code` `name-taken-agent` or `name-taken-toolset`), or, without a `code`, every candidate storage path is taken',
+      'Another own entity in the folder and Toolsets tab already has this name and version (`code` `name-taken-toolset`), or, without a `code`, every candidate storage path is taken',
     type: ResourceNameConflictDto,
   })
   @ApiResponse({
@@ -292,7 +292,7 @@ export class ToolsetsController {
   @ApiResponse({
     status: 409,
     description:
-      'The new name and version are already held by another own entity in the same folder and Toolsets tab (`code` `name-taken-agent` or `name-taken-toolset`)',
+      'The new name and version are already held by another own entity in the same folder and Toolsets tab (`code` `name-taken-toolset`)',
     type: ResourceNameConflictDto,
   })
   @ApiResponse({
