@@ -1,5 +1,11 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import type { Cache } from 'cache-manager';
 import type { ListScheduledTaskRunsQueryDto } from './dto/list-scheduled-task-runs-query.dto';
 import type { ListScheduledTaskRunsResponseDto } from './dto/list-scheduled-task-runs.dto';
@@ -73,12 +79,26 @@ export class ScheduledTaskRunsService {
     scheduleId: string,
     runId: string,
   ): Promise<ScheduledTaskRunDto> {
-    const result = await this.upstream.request<UpstreamScheduleRun>(
-      this.upstream.runUrl(scheduleId, runId),
-      'GET',
-      accessToken,
-      `get scheduled task run "${runId}" for "${scheduleId}"`,
-    );
+    let result: UpstreamScheduleRun;
+    try {
+      result = await this.upstream.request<UpstreamScheduleRun>(
+        this.upstream.runUrl(scheduleId, runId),
+        'GET',
+        accessToken,
+        `get scheduled task run "${runId}" for "${scheduleId}"`,
+      );
+    } catch (err) {
+      /*
+       * A run id that passes the BFF allowlist but is not a UUID fails
+       * Scheduler's own id-format check with 422. A GET carries no body to be
+       * unprocessable, so the only thing wrong is that no such run exists:
+       * answer 404 as for any other unknown run.
+       */
+      if (err instanceof UnprocessableEntityException) {
+        throw new NotFoundException(`Scheduled task run "${runId}" not found`);
+      }
+      throw err;
+    }
     return fromUpstreamRun(result);
   }
 
