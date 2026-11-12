@@ -740,6 +740,30 @@ describe('usePinnedProjectChats', () => {
       );
     });
 
+    it('keeps an open chat read after it moves from past the newest into them', async () => {
+      const watch = createWatchStream();
+      watchProjects.mockResolvedValueOnce(watch.stream);
+      const items = chats(P, 12).map((item, index) =>
+        index === 11 ? { ...item, isUnread: true } : item,
+      );
+      listProjectConversations.mockResolvedValue({ items });
+      const { result } = renderPinned([P], {
+        activeConversationId: items[11].id,
+      });
+      await waitFor(() => expect(watchProjects).toHaveBeenCalledOnce());
+      act(() => result.current.markViewed(items[11].id));
+      listProjectConversations.mockResolvedValue({
+        items: [items[11], ...items.slice(0, 11)],
+      });
+
+      act(() => watch.send(update(P, '"b2"')));
+
+      await waitFor(() =>
+        expect(result.current.projects[0].chats[0].id).toBe(items[11].id),
+      );
+      expect(result.current.projects[0].chats[0].isUnread).toBeUndefined();
+    });
+
     it('refreshes one project on demand', async () => {
       const { result } = renderPinned();
       await loaded(result);

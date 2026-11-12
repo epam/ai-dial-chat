@@ -274,7 +274,7 @@ export const usePinnedProjectChats = (
       overflow,
       hasMore,
     }: FetchedProject): StoredProjectChats => {
-      for (const { id, updatedAt } of items) {
+      for (const { id, updatedAt } of [...items, ...overflow]) {
         updatedAtRef.current.set(id, updatedAt);
       }
       return {
@@ -584,40 +584,48 @@ export const usePinnedProjectChats = (
     return ordered;
   }, [enabled, projectIds, state.snapshots, activeConversationId]);
 
-  /* An open chat past the kept ones may list with its file name; its title is read once it opens. */
-  useEffect(() => {
-    if (!enabled || activeConversationId == null) return;
+  const pendingTitle = useMemo(() => {
+    if (!enabled || activeConversationId == null) return undefined;
     for (const [projectId, snapshot] of state.snapshots) {
       const pending = snapshot.overflow.find(
         (item) => item.id === activeConversationId && item.isTitlePending,
       );
-      if (pending == null) continue;
-      const controller = new AbortController();
-      client
-        .getProjectConversationTitles(
-          projectId,
-          [pending.name],
-          controller.signal,
-        )
-        .then(({ items: resolved }) => {
-          if (controller.signal.aborted) return;
-          setState((prev) => {
-            const current = prev.snapshots.get(projectId);
-            if (current == null) return prev;
-            const snapshots = new Map(prev.snapshots);
-            snapshots.set(projectId, {
-              ...current,
-              overflow: mergeTitles(current.overflow, resolved),
-            });
-            return { ...prev, snapshots };
-          });
-        })
-        .catch(() => {
-          /* The file-name title stays. */
-        });
-      return () => controller.abort();
+      if (pending != null) return { projectId, name: pending.name };
     }
-  }, [client, enabled, activeConversationId, state.snapshots]);
+    return undefined;
+  }, [enabled, activeConversationId, state.snapshots]);
+  const pendingProjectId = pendingTitle?.projectId;
+  const pendingName = pendingTitle?.name;
+
+  /* An open chat past the kept ones may list with its file name; its title is read once it opens. */
+  useEffect(() => {
+    if (pendingProjectId == null || pendingName == null) return;
+    const controller = new AbortController();
+    const run = async () => {
+      try {
+        const { items: resolved } = await client.getProjectConversationTitles(
+          pendingProjectId,
+          [pendingName],
+          controller.signal,
+        );
+        if (controller.signal.aborted) return;
+        setState((prev) => {
+          const current = prev.snapshots.get(pendingProjectId);
+          if (current == null) return prev;
+          const snapshots = new Map(prev.snapshots);
+          snapshots.set(pendingProjectId, {
+            ...current,
+            overflow: mergeTitles(current.overflow, resolved),
+          });
+          return { ...prev, snapshots };
+        });
+      } catch {
+        /* The file-name title stays. */
+      }
+    };
+    void run();
+    return () => controller.abort();
+  }, [client, pendingProjectId, pendingName]);
 
   return { projects, isLoading, markViewed, refresh: requestRefresh };
 };
