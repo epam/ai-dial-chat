@@ -12,6 +12,11 @@ import type { AppConfigEvalContext } from '../app-config.types';
 import type { CompositeConfigProvider } from '../config-registry/composite-config.provider';
 import { CONFIG_DEFINITIONS } from '../config-registry/config-registry.constants';
 import { FeatureKey } from '../feature-flags/feature-key.enum';
+import { isManagedKey } from '../managed-config/key-management';
+import {
+  buildResolutionStack,
+  type RawEnvironment,
+} from './config-registry/env-resolution.fixtures';
 
 const ctx: AppConfigEvalContext = { appId: 'chat-ui' };
 
@@ -27,6 +32,7 @@ function makeService(
   ) => Promise<unknown | undefined>,
   model?: string,
   catalogCreationRoles?: CatalogCreationRolesConfig,
+  servedAppIds?: string[],
   modelCatalogApiKey?: string,
 ) {
   const compositeProvider = {
@@ -46,6 +52,7 @@ function makeService(
       new ConfigService({
         UTILITY_MODEL: model,
         CATALOG_CREATION_ROLES: catalogCreationRoles,
+        CLIENT_CONFIG_APP_IDS: servedAppIds,
         MODEL_CATALOG_API_KEY: modelCatalogApiKey,
       }),
     ),
@@ -117,7 +124,13 @@ describe('AppConfigService', () => {
 
       const withCatalogKey = (key: string | undefined) => {
         vi.stubEnv('MODEL_CATALOG_API_KEY', key ?? '');
-        return makeService(async () => undefined, undefined, undefined, key);
+        return makeService(
+          async () => undefined,
+          undefined,
+          undefined,
+          undefined,
+          key,
+        );
       };
 
       it('is true when MODEL_CATALOG_API_KEY is set', async () => {
@@ -1260,6 +1273,64 @@ describe('AppConfigService', () => {
       expect(result.metadata?.cacheTtlSeconds).toBe(60);
     });
 
+    describe('served application identifiers', () => {
+      const makeServing = (servedAppIds?: string[]) =>
+        makeService(async () => undefined, undefined, undefined, servedAppIds);
+
+      it.each([undefined, []])(
+        'serves only chat-ui when the list is %j',
+        async (servedAppIds) => {
+          const { service, cacheManager, compositeProvider } =
+            makeServing(servedAppIds);
+
+          await expect(
+            service.getClientConfig({ appId: 'chat-ui' }),
+          ).resolves.toMatchObject({ appId: 'chat-ui' });
+          cacheManager.get.mockClear();
+          vi.mocked(compositeProvider.resolve).mockClear();
+
+          await expect(
+            service.getClientConfig({ appId: 'launchpad' }),
+          ).rejects.toThrow(new BadRequestException('Unknown appId'));
+          expect(cacheManager.get).not.toHaveBeenCalled();
+          expect(compositeProvider.resolve).not.toHaveBeenCalled();
+        },
+      );
+
+      it('rejects an unlisted identifier before the cache lookup', async () => {
+        const { service, cacheManager } = makeServing(['launchpad', 'chat-ui']);
+
+        await expect(
+          service.getClientConfig({ appId: 'models-garden' }),
+        ).rejects.toBeInstanceOf(BadRequestException);
+        expect(cacheManager.get).not.toHaveBeenCalled();
+        expect(cacheManager.set).not.toHaveBeenCalled();
+      });
+
+      it('returns the same values to every served identifier, each echoing its own appId', async () => {
+        const { service, cacheManager } = makeServing(['launchpad', 'chat-ui']);
+        const context = { userId: 'user-1', roles: ['viewer'] };
+
+        const launchpad = await service.getClientConfig({
+          ...context,
+          appId: 'launchpad',
+        });
+        const chat = await service.getClientConfig({
+          ...context,
+          appId: 'chat-ui',
+        });
+
+        expect(launchpad.appId).toBe('launchpad');
+        expect(chat.appId).toBe('chat-ui');
+        expect(launchpad.features).toEqual(chat.features);
+        expect(launchpad.config).toEqual(chat.config);
+        expect(cacheManager.set.mock.calls.map(([key]) => key)).toEqual([
+          'app-config:client:launchpad:user:user-1:roles:viewer',
+          'app-config:client:chat-ui:user:user-1:roles:viewer',
+        ]);
+      });
+    });
+
     it('caches resolved config for the same user and roles', async () => {
       const { service, cacheManager, compositeProvider } = makeService(
         async () => undefined,
@@ -1890,5 +1961,168 @@ describe('AppConfigService', () => {
         ctx,
       );
     });
+  });
+
+  describe('deployment role gate', () => {
+    /* The provider chain selects `true` for every key; only the gate,
+     * applied after selection, can turn a feature off. */
+    const makeGatedService = (held: Record<string, unknown>) => {
+      const compositeProvider = {
+        resolve: vi.fn(async () => true),
+      } as unknown as CompositeConfigProvider;
+      const store = new Map<string, unknown>();
+      return new AppConfigService(
+        compositeProvider,
+        {
+          get: vi.fn(async (key: string) => store.get(key)),
+          set: vi.fn(async (key: string, value: unknown) => {
+            store.set(key, value);
+          }),
+        } as never,
+        new ConfigService(held),
+      );
+    };
+    const restricted = { SCHEDULED_TASKS_ENABLED_ROLES: ['beta'] };
+
+    it.each([
+      ['allowed', { ...ctx, userId: 'u1', roles: ['beta'] }, true],
+      ['restricted', { ...ctx, userId: 'u2', roles: ['staff'] }, false],
+      ['anonymous', ctx, false],
+    ])(
+      'applies the gate to a %s caller on every resolution path',
+      async (_name, context, expected) => {
+        const service = makeGatedService(restricted);
+
+        expect(
+          await service.isEnabled(FeatureKey.ScheduledTasksEnabled, context),
+        ).toBe(expected);
+        expect(
+          await service.resolveValue('features.scheduledTasksEnabled', context),
+        ).toBe(expected);
+        expect(
+          (await service.getClientConfig(context)).features
+            .scheduledTasksEnabled,
+        ).toBe(expected);
+      },
+    );
+
+    it('returns the selected value for every caller when no restriction is configured', async () => {
+      const service = makeGatedService({});
+
+      expect(
+        await service.isEnabled(FeatureKey.ScheduledTasksEnabled, ctx),
+      ).toBe(true);
+      expect(
+        await service.isEnabled(FeatureKey.ScheduledTasksEnabled, {
+          ...ctx,
+          roles: ['staff'],
+        }),
+      ).toBe(true);
+    });
+
+    it('treats an empty role list as unrestricted', async () => {
+      const service = makeGatedService({ SCHEDULED_TASKS_ENABLED_ROLES: [] });
+
+      expect(
+        await service.isEnabled(FeatureKey.ScheduledTasksEnabled, ctx),
+      ).toBe(true);
+    });
+
+    it('gates only the feature that declares the roles variable', async () => {
+      const service = makeGatedService(restricted);
+
+      expect(await service.isEnabled(FeatureKey.ProjectsEnabled, ctx)).toBe(
+        true,
+      );
+      expect(await service.resolveValue('asr.modelId', ctx)).toBe(true);
+    });
+  });
+
+  describe('managed classification', () => {
+    const MANAGED_FIELDS = ['management'] as const;
+
+    /* Resolves every client-config field and every feature flag through the
+     * real ENV chain, without the time-dependent metadata. */
+    const snapshotResolution = async (env: RawEnvironment) => {
+      const { service } = buildResolutionStack(env);
+      const contexts = [
+        ctx,
+        { ...ctx, userId: 'u1', roles: ['beta'] },
+        { ...ctx, userId: 'u2', roles: ['staff'] },
+      ];
+      const results: unknown[] = [];
+      for (const context of contexts) {
+        const { metadata: _metadata, ...response } =
+          await service.getClientConfig(context);
+        const flags: Record<string, boolean> = {};
+        for (const key of Object.values(FeatureKey)) {
+          flags[key] = await service.isEnabled(key, context);
+        }
+        results.push({ response, flags });
+      }
+      return results;
+    };
+
+    const withManagedFieldsStripped = async <T>(
+      run: () => Promise<T>,
+    ): Promise<T> => {
+      const saved = CONFIG_DEFINITIONS.map((definition) =>
+        MANAGED_FIELDS.map((field) => [field, definition[field]] as const),
+      );
+      for (const definition of CONFIG_DEFINITIONS) {
+        for (const field of MANAGED_FIELDS) {
+          delete definition[field];
+        }
+      }
+      try {
+        return await run();
+      } finally {
+        CONFIG_DEFINITIONS.forEach((definition, index) => {
+          for (const [field, value] of saved[index]) {
+            if (value !== undefined) {
+              Object.assign(definition, { [field]: value });
+            }
+          }
+        });
+      }
+    };
+
+    it.each<[string, RawEnvironment]>([
+      ['an empty environment', {}],
+      [
+        'managed keys set through ENV',
+        {
+          ANNOUNCEMENT_TITLE: 'Maintenance',
+          ANNOUNCEMENT_DESCRIPTION: 'Tonight',
+          ANNOUNCEMENTS: '[{"title":"A"}]',
+          WELCOME_SCREEN_DESCRIPTION: 'Welcome',
+          FILE_MANAGER_AVAILABLE_TABS: 'shared',
+          USAGE_LIMITS_WARNING_THRESHOLD_PERCENT: '80',
+          USAGE_LIMITS_CONTROL_ENABLED: 'true',
+          SCHEDULED_TASKS_ENABLED: 'true',
+          SCHEDULED_TASKS_ENABLED_ROLES: 'beta',
+        },
+      ],
+      [
+        'blank managed text set through ENV',
+        {
+          ANNOUNCEMENT_TITLE: '',
+          ANNOUNCEMENT_DESCRIPTION: '   ',
+          WELCOME_SCREEN_DESCRIPTION: '',
+        },
+      ],
+    ])(
+      'resolves identically with and without managed metadata for %s',
+      async (_name, env) => {
+        vi.spyOn(console, 'info').mockImplementation(() => undefined);
+        const withMetadata = await snapshotResolution(env);
+        const stripped = await withManagedFieldsStripped(() =>
+          snapshotResolution(env),
+        );
+
+        expect(CONFIG_DEFINITIONS.filter(isManagedKey)).toHaveLength(7);
+        expect(stripped).toEqual(withMetadata);
+      },
+    );
   });
 });

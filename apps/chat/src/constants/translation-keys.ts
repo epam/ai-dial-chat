@@ -1026,6 +1026,8 @@ export enum PublishI18nKeys {
   UnpublishFailedMessage = 'publish.unpublishFailedMessage',
   UnpublishNetworkErrorMessage = 'publish.unpublishNetworkErrorMessage',
   SubmitErrorCallout = 'publish.submitErrorCallout',
+  AdminApprovalTitle = 'publish.adminApprovalTitle',
+  AdminApprovalMessage = 'publish.adminApprovalMessage',
   AuthorLabel = 'publish.authorLabel',
   AuthorPlaceholder = 'publish.authorPlaceholder',
   AuthorHint = 'publish.authorHint',

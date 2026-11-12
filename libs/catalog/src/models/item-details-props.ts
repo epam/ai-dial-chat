@@ -592,6 +592,13 @@ export interface DetailsPanelProps {
   resolvePublishDependenciesLabels?: (
     item: CatalogItem,
   ) => PublishDependenciesLabels;
+  /**
+   * Resolves the admin-approval callout text for the item being published, merged over `publishLabels`,
+   * so the message can name what the item is. Omit it to use `publishLabels` as is.
+   */
+  resolvePublishApprovalLabels?: (
+    item: CatalogItem,
+  ) => Pick<PublishPanelLabels, 'adminApprovalTitle' | 'adminApprovalMessage'>;
   /** Root-level destination folder nodes offered by the publish flow. */
   publishFolderItems?: PublishFolderNode[];
   /**
