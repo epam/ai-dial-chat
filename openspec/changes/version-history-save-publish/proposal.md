@@ -56,6 +56,7 @@ To be posted as a comment on the issue (the author edits it if he agrees):
 - i18n: new strings for the section heading, Current, the three statuses, the author lines and the loading/empty/error/retry copy; lib strings come from `*Labels` props with English defaults, the app fills them with `t()`.
 - Docs: `libs/publish-panel/README.md`, `libs/builder-form/README.md`, `libs/chat-hooks/README.md`; `npm run validate:docs` and `npm run validate:specs` must pass.
 - Scope creep flags: touches six shared libs (including `libs/catalog`) and the shared publication util, and leaves `isDetailCandidate` unchanged on purpose.
+- Breaking for consumers of the published `@epam/ai-dial-builder-form` package: it no longer exports `SEMVER_VERSION_PATTERN`, and its default `VERSION_PATTERN` is now the shared rule (README updated). Nothing in this repository still uses the removed export.
 - Behavior change on input validation: applications gain a 64-character cap and accept `+`; applications and toolsets reject a trailing dot, dots-only versions, `__` inside a version and a leading `_`. Existing stored versions longer than 64 characters or ending with a dot would be rejected only when a request supplies them again.
 
 ## Rollback and compatibility

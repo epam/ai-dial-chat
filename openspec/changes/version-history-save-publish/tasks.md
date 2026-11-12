@@ -47,5 +47,5 @@ Group 3 needs group 2; group 4 needs group 3. The departures from the issue are 
 ## 5. Issue comment and integration
 
 - [ ] 5.1 Draft the comment for issue #9844 listing the departures from the proposal's "Departures from the issue" section; show the full text for review, and post it only after explicit approval. The issue text is not edited.
-- [ ] 5.2 After each completed group run `npm run verify:changed`.
-- [ ] 5.3 Close the change with exactly one `npm run verify:full`, plus `npm run build:quiet` when bundling is affected, and `npm run validate:docs` and `npm run validate:specs`.
+- [x] 5.2 After each completed group run `npm run verify:changed`.
+- [x] 5.3 Close the change with exactly one `npm run verify:full`, plus `npm run build:quiet` when bundling is affected, and `npm run validate:docs` and `npm run validate:specs`.

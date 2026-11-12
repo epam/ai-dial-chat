@@ -49,6 +49,7 @@ Library-isolation guard for every lib task: no `/api` path, generated-client imp
 - [Mirrored constants can drift] → shared corpus test on both sides.
 - [Statuses endpoint merged without its consumer] → additive and safe; end to end it is verified only when the hook and the section land, so keep groups 3 and 4 close.
 - [An administrator's decision (Pending to Approved or Rejected) does not pass through publish or unpublish] → In review or Published can lag by up to 60 s; accepted and stated in the spec.
+- [A publication whose detail lookup fails is dropped, so a Pending request can read as Not published until the 60 s cache expires, now bucket-wide; `publish-history` already behaves this way] → accepted; the failure is logged.
 - [`+` in an application version reaches ids that `DEPLOYMENT_ID_PATTERN` validates (it allows `%2B` but no raw `+`), and Core may return a raw `+` in an `id`] → group 1 adds tests that feed ids with a raw `+` and with `%2B` through the id validators, `versionGroupId` and the publish target; if one rejects, fix that validator, and if that is not possible keep `+` out of application versions only.
 - [A 64-character version plus `__` plus a long name can exceed the 255-byte display-name or the 900-byte path limit] → Core or the DTO answers 400; add tests for both and make sure the Save panel shows the server error.
 
