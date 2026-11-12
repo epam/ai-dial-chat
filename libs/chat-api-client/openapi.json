@@ -13379,7 +13379,8 @@
           },
           "error": {
             "type": "string",
-            "example": "Forbidden"
+            "example": "Forbidden",
+            "description": "HTTP status text. Absent from a plain `403 Forbidden`."
           },
           "message": {
             "type": "string",
@@ -13394,7 +13395,7 @@
             ]
           }
         },
-        "required": ["statusCode", "error", "message"]
+        "required": ["statusCode", "message"]
       },
       "UpdateApplicationBodyDto": {
         "type": "object",

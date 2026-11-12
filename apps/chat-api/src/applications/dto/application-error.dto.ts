@@ -7,8 +7,11 @@ export class ApplicationErrorDto {
   @ApiProperty({ example: 403 })
   statusCode!: number;
 
-  @ApiProperty({ example: 'Forbidden' })
-  error!: string;
+  @ApiPropertyOptional({
+    example: 'Forbidden',
+    description: 'HTTP status text. Absent from a plain `403 Forbidden`.',
+  })
+  error?: string;
 
   @ApiProperty({ example: DEPENDENT_RESOURCE_MISSING_MESSAGE })
   message!: string;

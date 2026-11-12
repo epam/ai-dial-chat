@@ -33,8 +33,8 @@ describe('isDependentResourceError', () => {
     ).toBe(false);
   });
 
-  it('rejects a JSON object body even when it carries the text', () => {
-    expect(isDependentResourceError({ message: `${PREFIX} x` })).toBe(false);
+  it('matches a JSON body carrying the text in message', () => {
+    expect(isDependentResourceError({ message: `${PREFIX} x` })).toBe(true);
   });
 
   it('rejects an empty body', () => {

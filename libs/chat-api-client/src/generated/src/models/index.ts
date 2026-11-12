@@ -493,11 +493,11 @@ export interface ApplicationErrorDto {
    */
   statusCode: number;
   /**
-   *
+   * HTTP status text. Absent from a plain `403 Forbidden`.
    * @type {string}
    * @memberof ApplicationErrorDto
    */
-  error: string;
+  error?: string;
   /**
    *
    * @type {string}

@@ -1,5 +1,8 @@
 import { ForbiddenException, type Logger } from '@nestjs/common';
-import { mapDialHttpStatus } from '../../common/dial/dial-error.mapper';
+import {
+  extractDialErrorMessage,
+  mapDialHttpStatus,
+} from '../../common/dial/dial-error.mapper';
 import { ApplicationErrorCode } from '../types/application-error-code.enum';
 
 const FORBIDDEN_STATUS = 403;
@@ -24,8 +27,10 @@ const DEPENDENT_RESOURCE_PREFIX = 'failed to access application resource';
  * @param errorBody - the parsed error body of the failed Core call
  */
 export const isDependentResourceError = (errorBody: unknown): boolean =>
-  typeof errorBody === 'string' &&
-  errorBody.trim().toLowerCase().startsWith(DEPENDENT_RESOURCE_PREFIX);
+  extractDialErrorMessage(errorBody)
+    ?.trim()
+    .toLowerCase()
+    .startsWith(DEPENDENT_RESOURCE_PREFIX) ?? false;
 
 /**
  * Throws the exception for a failed application save: a coded 403 when DIAL
@@ -50,5 +55,5 @@ export const throwApplicationSaveError = (
       message: DEPENDENT_RESOURCE_MISSING_MESSAGE,
     });
   }
-  return mapDialHttpStatus(status, context, logger, errorBody);
+  return mapDialHttpStatus(status, context, logger);
 };
