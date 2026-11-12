@@ -324,6 +324,14 @@ export class ClientConfigDto {
     type: CatalogCreationPermissionsDto,
   })
   catalogCreationPermissions!: CatalogCreationPermissionsDto;
+
+  @ApiPropertyOptional({
+    type: Boolean,
+    description:
+      'Whether GET /api/v1/model-catalog is configured (MODEL_CATALOG_API_KEY is set). Missing means unavailable. Never carries the key.',
+    example: false,
+  })
+  modelCatalogAvailable?: boolean;
 }
 
 export class ClientConfigMetadataDto {
