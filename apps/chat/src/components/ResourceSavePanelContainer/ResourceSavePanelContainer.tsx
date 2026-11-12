@@ -1,4 +1,3 @@
-import { SEMVER_VERSION_PATTERN } from '@epam/ai-dial-builder-form';
 import type { ResourceFoldersResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
   ResourceNameConflictKind,
@@ -10,7 +9,10 @@ import {
   type ResourceSaveResult,
   type UseResourceSavePanelLabels,
 } from '@epam/ai-dial-chat-hooks';
-import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import {
+  type CatalogEntityType,
+  RESOURCE_VERSION_PATTERN,
+} from '@epam/ai-dial-chat-shared';
 import { StandaloneSaveToFolderPanel } from '@epam/ai-dial-publish-panel';
 import type { FC, RefObject } from 'react';
 import { memo, useCallback, useMemo } from 'react';
@@ -151,7 +153,7 @@ const ResourceSavePanelContainer: FC<Props> = ({
     resourceId,
     currentFolderPath,
     currentVersion,
-    versionPattern: SEMVER_VERSION_PATTERN,
+    versionPattern: RESOURCE_VERSION_PATTERN,
     listPersonalFolders,
     organizationFolders: canPublish ? organization : undefined,
     publishClient,

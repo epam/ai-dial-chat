@@ -279,6 +279,27 @@ describe('ResourceSavePanelContainer', () => {
     });
   });
 
+  it('leaves a Core 400 for an over-long path to the panel submit-error path', async () => {
+    const failure = Object.assign(new Error('Bad Request'), {
+      response: new Response(JSON.stringify({ statusCode: 400 }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    });
+    const saveAsNewVersion = vi.fn().mockRejectedValue(failure);
+    renderContainer({
+      adapter: { ...adapter, saveAsNewVersion } as ResourceSaveAdapter,
+    });
+
+    await expect(
+      (
+        lastFlowParams().adapter as {
+          saveAsNewVersion: (v: string, f: string[]) => Promise<unknown>;
+        }
+      ).saveAsNewVersion('v'.repeat(64), []),
+    ).rejects.toBe(failure);
+  });
+
   it('renders the panel with the flow state and the title naming the resource type', () => {
     renderContainer();
     const props = lastPanelProps();

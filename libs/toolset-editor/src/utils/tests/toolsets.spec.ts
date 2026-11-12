@@ -298,6 +298,20 @@ describe('isToolsetAuthValid', () => {
 });
 
 describe('isToolsetFormValid', () => {
+  it.each(['beta-2', '1.0+build5', 'a'.repeat(64)])(
+    'accepts version "%s"',
+    (version) => {
+      expect(isToolsetFormValid({ ...baseForm(), version })).toBe(true);
+    },
+  );
+
+  it.each(['1.0.', '..', 'a'.repeat(65), '1 0'])(
+    'rejects version "%s"',
+    (version) => {
+      expect(isToolsetFormValid({ ...baseForm(), version })).toBe(false);
+    },
+  );
+
   it('accepts a complete form with no auth requirements', () => {
     expect(isToolsetFormValid(baseForm())).toBe(true);
   });

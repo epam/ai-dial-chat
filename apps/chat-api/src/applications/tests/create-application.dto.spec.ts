@@ -1,6 +1,10 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { describe, expect, it } from 'vitest';
+import {
+  ACCEPTED_RESOURCE_VERSIONS,
+  REJECTED_RESOURCE_VERSIONS,
+} from '../../common/validators/resource-version.corpus';
 import { CreateApplicationBodyDto } from '../dto/create-application.dto';
 
 const BASE_BODY = {
@@ -117,4 +121,19 @@ describe('CreateApplicationBodyDto — folderPath', () => {
     const errors = await validateDto({ ...BASE_BODY, folderPath });
     expect(errors.some((e) => e.property === 'folderPath')).toBe(true);
   });
+});
+
+describe('CreateApplicationBodyDto — version', () => {
+  it.each(ACCEPTED_RESOURCE_VERSIONS)('accepts version %s', async (version) => {
+    const errors = await validateDto({ ...BASE_BODY, version });
+    expect(errors.some((e) => e.property === 'version')).toBe(false);
+  });
+
+  it.each(REJECTED_RESOURCE_VERSIONS)(
+    'rejects version "%s"',
+    async (version) => {
+      const errors = await validateDto({ ...BASE_BODY, version });
+      expect(errors.some((e) => e.property === 'version')).toBe(true);
+    },
+  );
 });

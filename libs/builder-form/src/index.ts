@@ -84,7 +84,6 @@ export { DeploymentCreationFieldErrorCode } from './models/validation';
 export {
   DEFAULT_DEPLOYMENT_VERSION,
   NAME_PATTERN,
-  SEMVER_VERSION_PATTERN,
   VERSION_PATTERN,
   validateDeploymentCreationFields,
 } from './utils/validate-deployment-creation-fields';

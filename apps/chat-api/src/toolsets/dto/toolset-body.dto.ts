@@ -37,6 +37,10 @@ import {
   RESOURCE_FOLDER_PATH_VALIDATION_MESSAGE,
 } from '../../common/validators/resource-folder-path.pattern';
 import { IsValidResourceReference } from '../../common/validators/resource-reference.validator';
+import {
+  RESOURCE_VERSION_PATTERN,
+  RESOURCE_VERSION_VALIDATION_MESSAGE,
+} from '../../common/validators/resource-version.pattern';
 import { IsValidFilePath } from '../../files/dto/file-path.validator';
 
 export enum ToolsetTransport {
@@ -59,10 +63,6 @@ export enum ToolsetAuthType {
  */
 const ENDPOINT_URL_PATTERN = /^https?:\/\/[^\s]+$/;
 const ENDPOINT_URL_MESSAGE = 'Must be a valid http(s) URL';
-
-const VERSION_PATTERN = /^[\w.+-]{1,64}$/;
-const VERSION_MESSAGE =
-  'Must contain only word characters, dots, hyphens, and plus signs (max 64 chars)';
 
 export class ToolsetAuthSettingsBodyDto {
   @ApiProperty({ enum: ToolsetAuthType, example: ToolsetAuthType.None })
@@ -146,7 +146,9 @@ export class ToolsetBodyDto {
   @ApiPropertyOptional({ example: '0.0.1' })
   @IsString()
   @IsOptional()
-  @Matches(VERSION_PATTERN, { message: VERSION_MESSAGE })
+  @Matches(RESOURCE_VERSION_PATTERN, {
+    message: RESOURCE_VERSION_VALIDATION_MESSAGE,
+  })
   version?: string;
 
   @ApiPropertyOptional({

@@ -10,6 +10,10 @@ import {
   MaxLength,
   ValidateNested,
 } from 'class-validator';
+import {
+  RESOURCE_VERSION_PATTERN,
+  RESOURCE_VERSION_VALIDATION_MESSAGE,
+} from '../../common/validators/resource-version.pattern';
 import { IsValidFilePath } from '../../files/dto/file-path.validator';
 import {
   CONTROL_CHARACTERS_MESSAGE,
@@ -45,6 +49,9 @@ export class PublishCatalogEntityDto {
   })
   @IsOptional()
   @IsString()
+  @Matches(RESOURCE_VERSION_PATTERN, {
+    message: RESOURCE_VERSION_VALIDATION_MESSAGE,
+  })
   version?: string;
 
   @ApiPropertyOptional({

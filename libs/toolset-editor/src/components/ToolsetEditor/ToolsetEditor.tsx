@@ -480,7 +480,7 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
     ) {
       nextErrors.version =
         validationLabels?.versionInvalid ??
-        'Version may only contain letters, digits, dots, underscores, and dashes';
+        'Version may only contain letters, digits, dots, underscores, plus signs and hyphens, up to 64 characters, and cannot end with a dot';
     }
     return nextErrors;
   }, [dirtyFields, errors, form, labels, metadataErrorCodes, validateSetup]);

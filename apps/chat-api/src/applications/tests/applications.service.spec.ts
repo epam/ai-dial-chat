@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   HttpException,
@@ -652,6 +653,39 @@ describe('ApplicationsService', () => {
       );
     });
 
+    it('encodes a plus sign of the version in the stored path', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+
+      const result = await service.createApplication('user1', 't', {
+        ...body,
+        version: '1.0+build5',
+      });
+
+      expect(result.id).toBe('applications/test-bucket/My%20App__1.0%2Bbuild5');
+      expect(saveCustomApplicationSpy).toHaveBeenCalledWith(
+        expect.anything(),
+        'My%20App__1.0%2Bbuild5',
+        expect.objectContaining({
+          body: expect.objectContaining({ displayVersion: '1.0+build5' }),
+        }),
+      );
+    });
+
+    it('surfaces the Core 400 for a name and 64-character version that exceed the segment limit', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+      saveCustomApplicationSpy.mockResolvedValue(errResponse(400));
+
+      await expect(
+        service.createApplication('user1', 't', {
+          ...body,
+          name: 'n'.repeat(250),
+          version: 'v'.repeat(64),
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
     it('defaults version to 1.0.0 when not provided', async () => {
       const { service } = makeService();
       mockCreateApplicationSdk(service);
@@ -1216,6 +1250,24 @@ describe('ApplicationsService', () => {
         application_type_schema_id: existingApp.application_type_schema_id,
         displayVersion: existingApp.displayVersion,
       });
+    });
+
+    it('keeps a stored version longer than 64 characters when the update omits version', async () => {
+      const { service, deploymentsService } = makeService();
+      const longVersion = 'v'.repeat(70);
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+        service,
+        okResponse({ ...existingApp, displayVersion: longVersion }),
+      );
+
+      await service.updateApplication('user1', 'token', id, {
+        name: 'My App',
+        description: 'New description',
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({ displayVersion: longVersion });
+      expect(deploymentsService.listDeployments).not.toHaveBeenCalled();
     });
 
     it('removes the stored icon when iconUrl is an empty string', async () => {
@@ -2055,6 +2107,34 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
           headers: { Authorization: 'Bearer token', 'If-Match': 'e1' },
           body: { displayVersion: '1.1.0', description: 'pre' },
         },
+      );
+    });
+
+    it('encodes a plus sign of the version in the forked path', async () => {
+      const { service } = makeService();
+      withBucket(service);
+      client(service).copyResource.mockResolvedValue({
+        response: { status: 200 },
+      } as never);
+      client(service).getCustomApplication.mockResolvedValue(
+        appResponse({ displayVersion: '1.0.0' }, 'e1'),
+      );
+      client(service).saveCustomApplication.mockResolvedValue(okResponse({}));
+
+      const result = await service.forkApplicationVersion(
+        'user1',
+        'token',
+        'applications/b1/agent__1.0.0',
+        { version: '1.0+build5', folderPath: '' },
+      );
+
+      expect(result).toEqual({ id: 'applications/b1/agent__1.0%2Bbuild5' });
+      expect(client(service).saveCustomApplication).toHaveBeenCalledWith(
+        'b1',
+        'agent__1.0%2Bbuild5',
+        expect.objectContaining({
+          body: { displayVersion: '1.0+build5' },
+        }),
       );
     });
 

@@ -25,6 +25,7 @@ export * from './utils/annotation';
 export * from './utils/base64-json';
 export * from './utils/string-utils';
 export * from './utils/entity-field-limits';
+export * from './utils/resource-version';
 export * from './utils/merge-class';
 export * from './utils/build-css-vars';
 export * from './utils/message';

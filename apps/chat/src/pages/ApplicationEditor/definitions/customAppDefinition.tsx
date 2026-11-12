@@ -1,7 +1,4 @@
-import {
-  SEMVER_VERSION_PATTERN,
-  type DeploymentCreationFormValues,
-} from '@epam/ai-dial-builder-form';
+import { type DeploymentCreationFormValues } from '@epam/ai-dial-builder-form';
 import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import type {
   CreateApplicationBodyDto,
@@ -177,7 +174,7 @@ export const customAppDefinition = defineApplicationEditor<CustomAppFormData>({
     savingOverlay: CustomAppI18nKeys.SavingOverlayLabel,
     loadingOverlay: CustomAppI18nKeys.LoadingOverlayLabel,
   },
-  metadataValidation: { validateVersionPattern: SEMVER_VERSION_PATTERN },
+  metadataValidation: { validateVersionPattern: true },
   getMetadataLabelOverrides,
   defaultMetadata: DEFAULT_CUSTOM_APP_GENERAL_FORM,
   defaultSetup: DEFAULT_CUSTOM_APP_SETTINGS_FORM,

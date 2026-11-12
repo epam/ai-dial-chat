@@ -476,12 +476,11 @@ import {
   DeploymentCreationFieldErrorCode,
   NAME_PATTERN,
   VERSION_PATTERN,
-  SEMVER_VERSION_PATTERN,
 } from '@epam/ai-dial-builder-form';
 
 const codes = validateDeploymentCreationFields(values, {
   validateNamePattern: true,
-  validateVersionPattern: true, // or: SEMVER_VERSION_PATTERN for a stricter check
+  validateVersionPattern: true, // or pass a RegExp for a stricter check
 });
 
 const errors = {
@@ -493,12 +492,13 @@ const errors = {
 ```
 
 `NAME_PATTERN` allows letters, digits, spaces, underscores, dots, and dashes;
-`VERSION_PATTERN` (the default when `validateVersionPattern: true`) allows
-letters, digits, dots, underscores, and dashes. Pass a `RegExp` instead of
-`true` — e.g. `SEMVER_VERSION_PATTERN`, which requires one or more
-dot-separated numeric segments (`0.0.1`, `2.0`) — for a host that needs a
-stricter version format. All three are exported so a host can pre-filter
-input with the same rule the validator applies.
+`VERSION_PATTERN` (the default when `validateVersionPattern: true`) is
+`RESOURCE_VERSION_PATTERN` from `@epam/ai-dial-chat-shared`: 1-64 letters,
+digits, underscores, dots, plus signs and hyphens, not ending with a dot — the
+rule the chat API applies to a version. Pass a `RegExp` instead of `true` for a
+host that needs a stricter version format (for example dot-separated numeric
+segments). Both patterns are exported so a host can pre-filter input with the
+same rule the validator applies.
 
 `DEFAULT_DEPLOYMENT_VERSION` (`'1.0.0'`) is the version a deployment create
 form opens with. The library never applies it on its own; a host seeds it into
@@ -532,13 +532,12 @@ Pass `submitAttemptCount` to `MetadataForm`'s `focusRequestKey`: focus then move
 import {
   MetadataField,
   MetadataForm,
-  SEMVER_VERSION_PATTERN,
   useMetadataForm,
 } from '@epam/ai-dial-builder-form';
 
 const metadata = useMetadataForm({
   initialValues,
-  validationOptions: { validateVersionPattern: SEMVER_VERSION_PATTERN },
+  validationOptions: { validateVersionPattern: true },
   reseedKey: appId,
 });
 

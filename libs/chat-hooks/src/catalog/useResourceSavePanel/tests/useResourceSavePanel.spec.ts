@@ -218,6 +218,35 @@ describe('useResourceSavePanel', () => {
     expect(result.current.panelProps.isSubmitting).toBe(false);
   });
 
+  it('shows the Core 400 message for an over-long path as a submit error, not as an existing version', async () => {
+    const tooLong = Object.assign(new Error('bad request'), {
+      response: new Response(
+        JSON.stringify({ statusCode: 400, message: 'Path is too long' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } },
+      ),
+    });
+    const adapter = makeAdapter({
+      saveAsNewVersion: vi.fn().mockRejectedValue(tooLong),
+    });
+    const { result, params } = renderPanel({ adapter });
+    act(() =>
+      result.current.panelProps.version?.onVersionModeChange(
+        SaveVersionMode.New,
+      ),
+    );
+    act(() =>
+      result.current.panelProps.version?.onNewVersionChange('1'.repeat(64)),
+    );
+
+    await act(() => result.current.submit());
+
+    await waitFor(() =>
+      expect(result.current.panelProps.submitError).toBe('Path is too long'),
+    );
+    expect(result.current.panelProps.version?.newVersionError).toBeUndefined();
+    expect(params.onSaved).not.toHaveBeenCalled();
+  });
+
   it('shows a submit error for a failed first step and does not report a save', async () => {
     const adapter = makeAdapter({
       saveInPlace: vi.fn().mockRejectedValue(new Error('boom')),

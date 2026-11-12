@@ -17,6 +17,7 @@ import {
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { parseDialApplicationResource } from '../common/utils/dial-application-resource';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
+import { RESOURCE_VERSION_SEPARATOR } from '../common/utils/next-free-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { readPublicationDisplayAuthor } from '../common/utils/user-display-name';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
@@ -76,13 +77,15 @@ const splitEntityNameAndVersion = (
   entityId: string,
 ): { name: string; version: string } => {
   const resourceName = getResourceName(entityId);
-  const separatorIndex = resourceName.lastIndexOf('__');
+  const separatorIndex = resourceName.lastIndexOf(RESOURCE_VERSION_SEPARATOR);
   if (separatorIndex === -1) {
     return { name: safeDecodeURIComponent(resourceName), version: '' };
   }
   return {
     name: safeDecodeURIComponent(resourceName.slice(0, separatorIndex)),
-    version: resourceName.slice(separatorIndex + 2),
+    version: resourceName.slice(
+      separatorIndex + RESOURCE_VERSION_SEPARATOR.length,
+    ),
   };
 };
 

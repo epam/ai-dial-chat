@@ -2,6 +2,10 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { describe, expect, it } from 'vitest';
 import {
+  ACCEPTED_RESOURCE_VERSIONS,
+  REJECTED_RESOURCE_VERSIONS,
+} from '../../common/validators/resource-version.corpus';
+import {
   CatalogEntityParamsDto,
   CatalogEntityType,
 } from '../dto/catalog-entity-params.dto';
@@ -202,4 +206,19 @@ describe('CatalogEntityParamsDto — entityType', () => {
     });
     expect(errors.some((e) => e.property === 'entityType')).toBe(true);
   });
+});
+
+describe('PublishCatalogEntityDto — version', () => {
+  it.each(ACCEPTED_RESOURCE_VERSIONS)('accepts version %s', async (version) => {
+    const errors = await validateDto({ ...BASE_BODY, version });
+    expect(errors.some((e) => e.property === 'version')).toBe(false);
+  });
+
+  it.each(REJECTED_RESOURCE_VERSIONS)(
+    'rejects version "%s"',
+    async (version) => {
+      const errors = await validateDto({ ...BASE_BODY, version });
+      expect(errors.some((e) => e.property === 'version')).toBe(true);
+    },
+  );
 });

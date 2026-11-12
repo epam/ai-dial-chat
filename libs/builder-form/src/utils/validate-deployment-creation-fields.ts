@@ -3,6 +3,7 @@ import {
   ENTITY_NAME_MAX_LENGTH,
   exceedsMaxLength,
   hasControlCharacters,
+  RESOURCE_VERSION_PATTERN,
 } from '@epam/ai-dial-chat-shared';
 import type { DeploymentCreationFormValues } from '../models/deployment-creation-form';
 import type {
@@ -14,11 +15,8 @@ import { DeploymentCreationFieldErrorCode } from '../models/validation';
 /** Allowed characters for the name field: letters, digits, spaces, underscores, dots, dashes. */
 export const NAME_PATTERN = /^[a-zA-Z0-9 _.-]+$/;
 
-/** Allowed characters for the version field: letters, digits, dots, underscores, dashes. */
-export const VERSION_PATTERN = /^[a-zA-Z0-9._-]+$/;
-
-/** Stricter version shape: one or more dot-separated numeric segments (e.g. `0.0.1`). */
-export const SEMVER_VERSION_PATTERN = /^\d+(\.\d+)*$/;
+/** Default version rule: `RESOURCE_VERSION_PATTERN` from `@epam/ai-dial-chat-shared` (1-64 of letters, digits, `_`, `.`, `+`, `-`, no trailing dot). */
+export const VERSION_PATTERN = RESOURCE_VERSION_PATTERN;
 
 /** Version a new deployment's create form opens with; a SemVer 2.0.0 value the host seeds into its create-mode metadata. */
 export const DEFAULT_DEPLOYMENT_VERSION = '1.0.0';
