@@ -47,6 +47,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   getPublishHistory,
   getPublishDependencies,
   resolvePublishDependenciesLabels,
+  resolvePublishApprovalLabels,
   publishFolderItems = EMPTY_PUBLISH_FOLDERS,
   publishExpandedPaths,
   onPublishExpandedPathsChange,
@@ -394,6 +395,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             ruleSourceOptions={ruleSourceOptions}
             publishLabels={publishLabels}
             resolvePublishDependenciesLabels={resolvePublishDependenciesLabels}
+            resolvePublishApprovalLabels={resolvePublishApprovalLabels}
           />
         )}
 

@@ -429,3 +429,19 @@ Every user-visible string of the section SHALL come from `PublishDependenciesLab
 #### Scenario: README and class names agree
 - **WHEN** `npm run validate:docs` runs after the change
 - **THEN** it passes, with the new public class names present in the README table
+
+### Requirement: Publish panel shows an admin-approval banner
+
+`PublishPanel` SHALL render the `PublishCalloutKind.Info` state as a ui-kit `Notification` (`NotificationType.SectionMessage`, `NotificationVariant.Info`) with a title and a message, directly below the destination row and above the author field, spaced 16px from both. Its text SHALL come from `PublishPanelLabels.adminApprovalTitle` (default `'Admin approval required'`) and `PublishPanelLabels.adminApprovalMessage`, whose English default does not name an entity; a host SHALL replace it to name what is being published. The replace-warning, no-access and submit-error callouts SHALL take the banner's place when they apply, and no banner SHALL show while no folder is selected or a request is in flight. `libs/catalog` SHALL accept `resolvePublishApprovalLabels(item)` on `Catalog` and `DetailsPanel`, merged over `publishLabels`, so the message can name the item's kind.
+
+#### Scenario: Fresh folder with write access
+- **WHEN** a folder is selected, the user can publish to it and the version is not there yet
+- **THEN** the banner shows with the title and message labels
+
+#### Scenario: Another callout applies
+- **WHEN** the version already exists, the user lacks write access, or the last submit failed
+- **THEN** that callout shows and the banner does not
+
+#### Scenario: Host names the entity
+- **WHEN** the host passes an `adminApprovalMessage` naming an application, conversation or project
+- **THEN** the banner renders that text instead of the English default

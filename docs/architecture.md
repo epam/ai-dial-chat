@@ -556,6 +556,7 @@ apps/chat-api/src/
 ├── main.ts
 ├── app/                    # Root module (+ unversioned /api/apps controller)
 ├── app-config/             # Client configuration + config registry (/api/v1/client-config)
+│   └── managed-config/     # Config Studio contract generated from the registry; artifacts in apps/chat-api/managed-config-schema/ (docs/managed-config-schema.md)
 ├── auth/                   # OIDC flow, session guard, CSRF guard
 │   ├── csrf/  session/  providers/  keys/  refresh/  bucket/  cookies/  dto/  utils/
 ├── conversations/          # Conversation CRUD, completions, publish

@@ -40,6 +40,9 @@
 //  11. Phantom exports — a name a lib README imports from its own package that
 //      the package does not export (`EntityBadge`, `StageType`, `QrPlaceholder`,
 //      `ConversationGroupProps`).
+//  12. A document copied into itself — an unescaped "$`" in a replacement
+//      string repeated the start of `apps/chat-api/README.md` three times
+//      (#9548), and the copies then diverged under later edits.
 //
 // Usage:
 //   node scripts/validate-docs.mjs          # validate everything
@@ -647,7 +650,9 @@ const declaredPublicClasses = (libDir) => {
   if (!existsSync(path)) return null;
 
   const names = new Set();
-  for (const match of readFileSync(path, 'utf8').matchAll(PUBLIC_CLASS_LITERAL)) {
+  for (const match of readFileSync(path, 'utf8').matchAll(
+    PUBLIC_CLASS_LITERAL,
+  )) {
     names.add(match[1]);
   }
   return names.size > 0 ? names : null;
@@ -655,7 +660,9 @@ const declaredPublicClasses = (libDir) => {
 
 /* `dial-ci-action-row` and `dial-catalog-card` both yield `dial-<seg>-`. */
 const ownPrefixes = (names) =>
-  new Set([...names].map((name) => name.split('-').slice(0, 2).join('-') + '-'));
+  new Set(
+    [...names].map((name) => name.split('-').slice(0, 2).join('-') + '-'),
+  );
 
 const checkPublicClassNames = (src, file, libDir) => {
   const declared = declaredPublicClasses(libDir);
@@ -717,6 +724,61 @@ const checkReadmeImports = (src, file, libDir) => {
   }
 };
 
+/* ── 12. A document contains each of its headings once ── */
+
+/*
+ * Catches a document spliced into itself. An edit inserted with an unescaped
+ * "$`" in a `String.prototype.replace` replacement copies everything before
+ * the match into the file, so its H1 reappears glued to the end of a line
+ * ("`^[a-z]{0,63}# Chat API") and every `##` heading above the edit repeats.
+ * Fenced code blocks are skipped: a shell or Markdown example may
+ * legitimately contain `# …` lines.
+ */
+const checkSingleCopy = (src, file) => {
+  const lines = src.split(/\r?\n/);
+  const prose = [];
+  let fence = null;
+
+  lines.forEach((text, index) => {
+    const marker = text.match(/^\s*(`{3,}|~{3,})/)?.[1];
+    if (marker) {
+      if (fence == null) fence = marker[0];
+      else if (marker[0] === fence) fence = null;
+      return;
+    }
+    if (fence == null) prose.push({ text, line: index + 1 });
+  });
+
+  const h1s = prose.filter(({ text }) => /^#\s/.test(text));
+  if (h1s.length > 1) {
+    fail(
+      file,
+      `more than one H1, at lines ${h1s.map(({ line }) => line).join(', ')}`,
+    );
+  }
+
+  const title = h1s[0]?.text.replace(/^#\s+/, '').trim();
+  if (title) {
+    for (const { text, line } of prose) {
+      if (!/^#\s/.test(text) && text.includes(`# ${title}`)) {
+        fail(
+          file,
+          `line ${line}: the H1 "# ${title}" is glued to the end of a line — the document was probably copied into itself`,
+        );
+      }
+    }
+  }
+
+  const seen = new Map();
+  for (const { text, line } of prose) {
+    const heading = text.match(/^##\s+(.+?)\s*#*\s*$/)?.[1];
+    if (!heading) continue;
+    const first = seen.get(heading);
+    if (first == null) seen.set(heading, line);
+    else fail(file, `line ${line}: "## ${heading}" repeats line ${first}`);
+  }
+};
+
 /* ── Run ── */
 
 const explicitFiles = process.argv.length > 2;
@@ -741,6 +803,7 @@ for (const file of files) {
 
   const src = readFileSync(file, 'utf8');
   checkLinks(src, file);
+  checkSingleCopy(src, file);
 
   const libDir = relative(process.cwd(), resolve(dirname(file)))
     .split(/[\\/]/)
@@ -768,5 +831,5 @@ console.log(
   `Documentation validation passed (${files.length} markdown files).`,
 );
 console.log(
-  'Checks: README coverage and H1/package identity, lib package metadata, lib stylesheet exports, dependency/peer role consistency, unbounded version specs, one range per external package, no test tooling in a published manifest, peer metadata matching declared peers, README version citations, relative links, README imports vs public exports, public dial-* class names vs their README.',
+  'Checks: README coverage and H1/package identity, lib package metadata, lib stylesheet exports, dependency/peer role consistency, unbounded version specs, one range per external package, no test tooling in a published manifest, peer metadata matching declared peers, README version citations, relative links, README imports vs public exports, public dial-* class names vs their README, one copy of every heading.',
 );

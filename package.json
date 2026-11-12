@@ -31,6 +31,7 @@
     "openapi:check": "node tools/openapi/check-client.mjs",
     "openapi:sdk": "nx run chat-api:openapi-sdk",
     "openapi:spec": "nx run chat-api:openapi-spec",
+    "managed-config-schema": "nx run chat-api:managed-config-schema",
     "postman": "node tools/postman/generate-collection.mjs",
     "postman:refresh": "npm run openapi:spec && npm run postman",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",

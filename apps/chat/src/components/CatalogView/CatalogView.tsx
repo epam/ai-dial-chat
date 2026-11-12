@@ -87,6 +87,7 @@ import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
+  getPublishApprovalLabels,
   getPublishDependenciesEntityKey,
   getPublishDependenciesLabels,
   getPublishPanelCommonLabels,
@@ -667,6 +668,12 @@ const CatalogView: FC<Props> = ({
             getPublishDependenciesEntityKey(item.type),
           )
         }
+        resolvePublishApprovalLabels={(item) =>
+          getPublishApprovalLabels(
+            t,
+            getPublishDependenciesEntityKey(item.type),
+          )
+        }
         publishFolderItems={publishFolderItems}
         publishExpandedPaths={publishExpandedPaths}
         onPublishExpandedPathsChange={onPublishExpandedPathsChange}
@@ -697,6 +704,10 @@ const CatalogView: FC<Props> = ({
           selectFolderLabel: t(ButtonsI18nKeys.Select),
           accessRulesLabels: getAccessRulesLabels(t),
           dependenciesLabels: getPublishDependenciesLabels(
+            t,
+            PublishI18nKeys.DependenciesEntityItem,
+          ),
+          ...getPublishApprovalLabels(
             t,
             PublishI18nKeys.DependenciesEntityItem,
           ),
