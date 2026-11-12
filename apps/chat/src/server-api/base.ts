@@ -1,6 +1,7 @@
 export enum ApiEndpoints {
   THEMES = '/api/themes',
   THEME_ICON = '/api/themes/icon',
+  CELEBRATION_ASSETS = '/api/v1/celebrations/assets',
   CHAT_COMPLETIONS = '/api/v1/chat/completions',
   CONVERSATIONS = '/api/v1/conversations',
   PROJECTS = '/api/v1/projects',

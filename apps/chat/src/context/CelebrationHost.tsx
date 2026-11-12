@@ -15,13 +15,22 @@ import {
   HalloweenI18nKeys,
   NewYearI18nKeys,
 } from '../constants/translation-keys';
+import { useCelebrationPacks } from '../hooks/celebration/useCelebrationPacks';
 import { useCelebrationPreference } from '../hooks/celebration/useCelebrationPreference';
+import { DEFAULT_LANGUAGE } from '../hooks/language/useLanguage';
 import { ROUTES } from '../types/routes';
 import { UserConfigStatus } from '../types/user-config-status';
+import {
+  mergeCelebrationLabels,
+  toCelebrationColorScheme,
+} from '../utils/celebration-pack';
 import { useAppConfig } from './AppConfigContext';
 import { useNotification } from './NotificationContext';
+import { useTheme } from './ThemeContext';
 
-/* Only compiled modules can load; configuration never becomes an import path. */
+/* Only compiled modules can load; configuration never becomes an import path.
+   A pack only replaces scenes of these events or, for an admitted external-only
+   event, goes through the fixed `packs` import inside `useCelebrationPacks`. */
 const EVENTS: Readonly<Record<string, CelebrationEventLoader>> = {
   halloween: () => import('@epam/ai-dial-celebrations/halloween'),
   'new-year': () => import('@epam/ai-dial-celebrations/new-year'),
@@ -37,6 +46,9 @@ const ANCHORS: CelebrationAnchors = {
   historyRowLink: `a[href^="${ROUTES.Conversations}/"]`,
   welcomeRegion: '[role="region"]',
 };
+
+/* The host passes no `selection`, so every scene stays enabled. */
+const SELECTION_REVISION = 'none';
 
 /* Label ids are the key suffixes, so every existing key maps onto one label.
    `{{phrase}}` is passed through untouched: i18next would otherwise blank the
@@ -58,8 +70,9 @@ interface Props {
 
 /** Adapts app config, the user's opt-in, routing, i18n and notifications to the celebrations library. */
 export const CelebrationHost: FC<Props> = ({ children }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { status, config } = useAppConfig();
+  const { currentTheme } = useTheme();
   const location = useLocation();
   const { showSuccessNotification } = useNotification();
   const isMobile = useIsMobile();
@@ -71,7 +84,19 @@ export const CelebrationHost: FC<Props> = ({ children }) => {
     location.pathname === ROUTES.Root
       ? config.activeEventId
       : null;
-  const labels = useMemo(
+  const delivery = config.celebrationDelivery;
+  const language = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;
+  const direction = i18n.dir(language);
+  const colorScheme = toCelebrationColorScheme(currentTheme);
+  const packs = useCelebrationPacks({
+    compiledEvents: EVENTS,
+    activeEventId,
+    delivery,
+    colorScheme,
+    direction,
+    language,
+  });
+  const hostLabels = useMemo(
     () => ({
       halloween: toLabels(
         Object.values(HalloweenI18nKeys),
@@ -85,6 +110,26 @@ export const CelebrationHost: FC<Props> = ({ children }) => {
     /* `t` changes identity with the language, which re-translates the labels. */
     [t],
   );
+  const labels = useMemo(
+    () => mergeCelebrationLabels(packs.labels, hostLabels),
+    [packs.labels, hostLabels],
+  );
+  /* Any change here cancels a playing scene and reloads the event, so the
+     next activation uses the current policy, pack, theme, direction and
+     layout. The language alone does not: it only re-translates the labels. */
+  const resetKey = [
+    location.key,
+    activeEventId ?? 'none',
+    delivery.mode,
+    delivery.revision,
+    packs.catalogRevision ?? 'none',
+    packs.packKey,
+    currentTheme,
+    colorScheme,
+    direction,
+    isMobile ? 'mobile' : 'desktop',
+    SELECTION_REVISION,
+  ].join('|');
   const handleNotify = useCallback(
     ({ title, message }: CelebrationNotification) =>
       showSuccessNotification({ title, message }),
@@ -93,9 +138,9 @@ export const CelebrationHost: FC<Props> = ({ children }) => {
 
   return (
     <CelebrationProvider
-      events={EVENTS}
+      events={packs.events}
       activeEventId={activeEventId}
-      resetKey={location.key}
+      resetKey={resetKey}
       labels={labels}
       onNotify={handleNotify}
       isMobile={isMobile}

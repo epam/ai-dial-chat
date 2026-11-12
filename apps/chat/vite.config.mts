@@ -178,6 +178,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/celebrations/src/new-year/index.ts',
       ),
+      '@epam/ai-dial-celebrations/packs': path.resolve(
+        import.meta.dirname,
+        '../../libs/celebrations/src/packs/index.ts',
+      ),
       '@epam/ai-dial-celebrations': path.resolve(
         import.meta.dirname,
         '../../libs/celebrations/src/index.ts',

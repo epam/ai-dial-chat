@@ -133,11 +133,21 @@ The alternative was a second session implementation for external data, which wou
 
 When a known event fails after activation but before playback, the scene shows the external poster and never the bundled scene. The provider has already sent the bundled `snowmanDeliveryToastMessage` notification on activation (`celebrate` in `libs/celebrations/src/context/CelebrationContext.tsx`). Swapping in the bundled scene would need provider changes to suppress a second notification, and the contract only says it MAY. The `celebration-source-selection` delta makes this explicit.
 
-### D10: Snowman-delivery as the pilot, with `viewport-stage-v1` and `mirror`
+### D10: "Bullfinch couriers" as the pilot, added as a fifth New Year scene
 
-The external clip is a self-contained viewport animation. It does not borrow the starter card, so it reads no anchors. `direction: mirror` handles RTL. There are two variants (desktop, mobile), and both are light/dark-neutral. The timing is 12 s of playback within a 15 s lifetime. Authoring follows `celebration-lottie-authoring-profile`: no text layers, no expressions, no images.
+The pack adds `bullfinch-couriers` to the New Year click pool through an operator allowlist entry (D13); the bundled snowman and every other scene stay as they are. The scene has its own toast in the pack labels: "Two couriers, one gingerbread star, only a few bites missing." A static `viewport-stage-v1` clip cannot measure the page or borrow a card, so retelling a bundled story through it would only ever be a weaker copy; a new story is a more honest demonstration of the pack path.
 
-The bundled 27.5 s story stays the fallback. This is deliberately a visual change during the pilot: the external version is simpler. The other options are compared in the proposal.
+**Story (14 s playback, 16.5 s lifetime).** Two bullfinches carry a gingerbread star on a red ribbon from the inline start. The young one tires, lets go with one foot, the star swings down and the leader catches it; both freeze for a beat. They land on a snowy sill drawn along the stage's bottom edge, which `align: bottom` puts on the viewport's bottom edge, the only page geometry a v1 scene knows. The leader bows and presents the star; the young one copies him late. While the leader bows, the young one pecks off one ray. The leader does a double take, stares, softens and pecks a second ray himself. Both take off toward the inline end and leave the bitten star on the sill. The missing bites are the payoff.
+
+**Characters.** The leader is larger, with slow strong wingbeats, an upright body and exact landings. The young one is smaller, with fast flaps, a bobbing body, a sliding landing and late imitation. The ribbon and the star share one clock with the feet: the ribbon is taut while both carry weight and sags as they close in, and the star swings from the grip. References: Halloween Ravens (shared load, tension, release, recoil; `libs/celebrations/src/halloween/utils/halloween-raven-plan.ts`) and SnowmanDelivery (the intention survives the mishap; `SNOWMAN_BEATS`).
+
+**Artwork.** Drawn in the language of the approved SnowmanDelivery rather than as a generic cartoon: the snowman's ink outline (`#22304a`, 1.4), light base fills with offset light and shade shapes for volume instead of gradients, small coal eyes, and emotion carried by brows through separate faces (neutral, alarm, stern, smug). Feathers are slate, the breast rose, the cap coal with a slate edge so it keeps a contour on dark themes. The ribbon is the snowman's gold present ribbon and the star is outlined gingerbread with white icing. No text, masks, filters or gradients. A previous pass in a gradient "UI style" was rejected as not attractive.
+
+**Variants and fallback.** Desktop 1440×290 and mobile 390×220 stages, `fit: contain`, `align: bottom`, `direction: mirror`. Both parent the same scene to one world null scaled 0.9 and 0.6 around the star's resting point, which keeps the flight in the lower band of the start page, below the starter prompts, and never clips the entry or exit. The poster shows both birds on the sill beside the bitten star, so the joke reads without motion.
+
+**Budgets per variant.** At most 24 layers (mobile 22), 900 keyframes (mobile 800), 2500 vertices, 120 KiB of JSON (mobile 110 KiB) and 350 generated SVG nodes (mobile 320). One player, no borrowed UI, no per-frame DOM reads. Wingbeats are authored cycles of four to six keys, not per-frame samples; they are the main keyframe risk.
+
+The bundled snowman is untouched. The other options are compared in the proposal.
 
 ### D11: Themes repository publication and cache split
 
@@ -157,6 +167,14 @@ Publication order: resources, then the manifest, then `celebrations/index.json`.
 
 The alternatives were the `compression` middleware, which is a new dependency and would compress every API response (including SSE streaming, which it can break unless excluded), or leaving it to the ingress, which is not guaranteed in every deployment.
 
+### D13: An operator can add a pack scene to a compiled event
+
+S0 allowed a pack only to replace a bundled scene by ID. In practice that means every external scene for New Year must displace a scene people like: the first pilot replaced the bundled snowman with a different story. The rule now has one operator-owned exception. An `externalScenes` entry that names a scene ID the bundled event does not define adds that pack scene: it is appended to the event's scenes and click pool, uses its own `labelId` from the pack labels, and never joins the secret pool. The library gains `addCelebrationScenes(event, scenes, labels?)` next to `replaceCelebrationScenes`; the app hook calls both in the composed loader, so a scene ID is a replacement or an addition depending only on whether the bundled event defines it.
+
+The protection the rule existed for still holds. A pack cannot add anything by itself: without the allowlist entry the scene is ignored, exactly as before. Pools still only grow through deployment configuration, and the host selection still applies. Rollback is removing the entry; the `resetKey` changes and the event reloads with its bundled pool.
+
+The pilot therefore becomes `new-year/bullfinch-couriers`, an added fifth scene with its own toast, and `new-year/snowman-delivery` stays bundled.
+
 ## Risks / Trade-offs
 
 - [The theme binding (S5) and the pack live in different files, published non-atomically] → An unresolvable binding falls through to the index default and then to bundled. Publication order: pack, then index, then binding in `config.json`.
@@ -164,7 +182,7 @@ The alternatives were the `compression` middleware, which is a new dependency an
 - [A late pack resolution cancels a bundled scene the user just started] → Resolution takes about one RTT after the start page renders, so the window is small. The scene is cosmetic, and the contract accepts the cancellation.
 - [The depth-guard scanner is hand-written, which is a security-relevant parser] → Unit tests cover strings with brackets, escapes, deep nesting and truncated input. The guard only rejects; parsing is still `JSON.parse`.
 - [The 800-element runtime check needs the renderer to exist first] → It runs immediately after `DOMLoaded`, before the first visible frame. Exceeding it counts as a failure before playback, so the poster shows.
-- [The external snowman is visually simpler than the bundled story] → This is a pilot. The default stays `bundled`, and an operator opts in per deployment.
+- [The pilot replaces the snowman story with a different one under the same toast] → This is a pilot. The default stays `bundled`, and an operator opts in per deployment.
 - [The themes repository change lands separately] → Fixtures in `apps/chat-api/src/celebrations/tests/fixtures/` mirror the published layout. End-to-end verification against a real themes host is a separate manual task.
 - [Public endpoints with no in-app rate limit] → Invalid or unknown IDs never reach upstream. Valid IDs are served from the immutable store. The catalog refetches at most once per 60 s per instance. The ingress owns request rate limits.
 
@@ -180,7 +198,7 @@ Rollback: unset the variables, or remove the single allowlist entry. Either chan
 
 ## Open Questions
 
-1. Who authors the external snowman-delivery Lottie (design team, or Claude-generated with review)? Its byte size against the 300 KiB cap is unknown until it exists.
+1. The pilot clips are generated by a scripted Lottie authoring pass and need a design review before any production opt-in. Their size and node counts are recorded in tasks 12.1.
 2. Should `scripts/check-celebration-packs.mjs` emit a JSON Schema (S0 open question 5), and should a copy live in this repository? This change ports the rules only.
-3. The uncommitted change `add-new-year-reindeer-takeoff` adds a fourth New Year scene, `reindeer-takeoff`, and puts it in the secret pool beside `gift-wrapping`. Whichever change archives second must update the New Year invariant in the `celebration-source-selection` "Composition by stable scene ID" requirement. The pilot is unaffected, because the click pool is unchanged.
+3. ~~The uncommitted change `add-new-year-reindeer-takeoff` adds a fourth New Year scene.~~ Resolved: that change archived first (`2026-10-31-add-new-year-reindeer-takeoff`), so this change's "Composition by stable scene ID" invariant now lists four scenes and the `gift-wrapping` / `reindeer-takeoff` secret pool. The pilot is unaffected, because the click pool is unchanged.
 4. Does any production ingress already rate-limit `/api/*`? If not, an operator note is needed before enabling the public v1 endpoints in a large tenant.

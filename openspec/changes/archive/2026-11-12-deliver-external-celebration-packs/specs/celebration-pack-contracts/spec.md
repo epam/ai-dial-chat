@@ -151,7 +151,7 @@ Hashes shortened to `…(64 hex)` in these examples are full lowercase SHA-256 v
 }
 ```
 
-For a known event, `labels` is optional. A label ID that the bundled event already defines keeps resolving from the app's i18n keys and then the bundled English default (see `celebration-lottie-authoring-profile`). The example replaces the bundled `snowman-delivery` and keeps its bundled `snowmanDeliveryToastMessage`, so it declares no `labels`. A known-event manifest MAY declare a scene whose ID the bundled event lacks, but the app ignores it (see `celebration-source-selection`). The former `sleigh` example was superseded because #9631 removed the bundled sleigh.
+For a known event, `labels` is optional. A label ID that the bundled event already defines keeps resolving from the app's i18n keys and then the bundled English default (see `celebration-lottie-authoring-profile`). The example replaces the bundled `snowman-delivery` and keeps its bundled `snowmanDeliveryToastMessage`, so it declares no `labels`. A known-event manifest MAY declare a scene whose ID the bundled event lacks. The app adds it to the event's click pool only when the operator allowlists that `eventId/sceneId`, and ignores it otherwise (see `celebration-source-selection`). Such a scene needs its own `labelId` with an `en` label in the manifest's `labels`. The former `sleigh` example was superseded because #9631 removed the bundled sleigh.
 
 External-only events (no compiled module) SHALL additionally declare these, and known events SHALL NOT declare them:
 

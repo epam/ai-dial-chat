@@ -10,7 +10,7 @@ import {
   CelebrationStageAlign,
   CelebrationStageFit,
 } from '../types/celebration-pack';
-import { createStoryPackLoaders } from './pack-story-loaders';
+import { createStoryPackLoaders, PackStoryLoader } from './pack-story-loaders';
 
 interface LottieScenePlayerProps {
   /** Writing direction supplied to the scene. */
@@ -21,8 +21,8 @@ interface LottieScenePlayerProps {
   fit: CelebrationStageFit;
   /** RTL handling. */
   direction: CelebrationDirectionMode;
-  /** Whether the fixture loader rejects, so the poster shows. */
-  shouldFail: boolean;
+  /** How the fixture loader behaves. */
+  loader: PackStoryLoader;
 }
 
 const LottieScenePlayer: FC<LottieScenePlayerProps> = ({
@@ -30,12 +30,17 @@ const LottieScenePlayer: FC<LottieScenePlayerProps> = ({
   align,
   fit,
   direction,
-  shouldFail,
+  loader,
 }) => {
   const [run, setRun] = useState(0);
+  const [requestCount, setRequestCount] = useState(0);
+  /* One loader set per mode keeps parsed data across replays, as a host does. */
   const loaders = useMemo(
-    () => createStoryPackLoaders(shouldFail),
-    [shouldFail],
+    () =>
+      createStoryPackLoaders(loader, () =>
+        setRequestCount((value) => value + 1),
+      ),
+    [loader],
   );
   const scene = useMemo(
     () =>
@@ -63,12 +68,15 @@ const LottieScenePlayer: FC<LottieScenePlayerProps> = ({
       >
         Replay
       </button>
+      <output className="m-4">Data requests: {requestCount}</output>
+      {/* `data-story-scene-layer` lets the browser checks find the stage. */}
       <div
         aria-hidden="true"
+        data-story-scene-layer
         className="pointer-events-none fixed inset-0 overflow-hidden"
       >
         <LottieScene
-          key={`${run}-${dir}-${align}-${fit}-${direction}-${shouldFail}`}
+          key={`${run}-${dir}-${align}-${fit}-${direction}-${loader}`}
           scene={scene}
           loaders={loaders}
           context={{
@@ -89,7 +97,7 @@ const meta = {
     align: CelebrationStageAlign.Bottom,
     fit: CelebrationStageFit.Contain,
     direction: CelebrationDirectionMode.Mirror,
-    shouldFail: false,
+    loader: PackStoryLoader.Ready,
   },
   argTypes: {
     dir: { control: 'inline-radio', options: ['ltr', 'rtl'] },
@@ -102,6 +110,7 @@ const meta = {
       control: 'inline-radio',
       options: Object.values(CelebrationDirectionMode),
     },
+    loader: { control: 'select', options: Object.values(PackStoryLoader) },
   },
 } satisfies Meta<typeof LottieScenePlayer>;
 
@@ -119,5 +128,10 @@ export const RtlMirror: Story = {
 
 /** The loader rejects before playback, so the poster shows for its duration. */
 export const PosterOnFailure: Story = {
-  args: { shouldFail: true },
+  args: { loader: PackStoryLoader.Broken },
+};
+
+/** The data misses the load deadline, so the poster shows instead. */
+export const PosterOnSlowLoad: Story = {
+  args: { loader: PackStoryLoader.Slow },
 };
