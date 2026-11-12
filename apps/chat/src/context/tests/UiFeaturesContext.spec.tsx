@@ -1,4 +1,7 @@
-import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
+import {
+  CatalogCreationType,
+  CelebrationDeliveryMode,
+} from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
@@ -47,6 +50,12 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       maxAttachmentFileSizeBytes: 536_870_912,
       usageLimitsWarningThresholdPercent: 75,
       celebrationsEnabledByDefault: true,
+      celebrationDelivery: {
+        mode: CelebrationDeliveryMode.Bundled,
+        revision: '0',
+        externalScenes: [],
+        externalEvents: [],
+      },
       projectContextFileMaxBytes: 1_048_576,
       projectContextTotalMaxBytes: 10_485_760,
       projectContextAllowedExtensions: ['csv', 'pdf', 'xlsx'],

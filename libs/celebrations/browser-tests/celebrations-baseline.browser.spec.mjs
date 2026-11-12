@@ -7,6 +7,9 @@
  * reduced-motion / cancelled-load guarantees in the S0 spec, it asserts
  * nothing about the numbers it records.
  *
+ * The `packs:` tests are functional S2 checks of `LottieScene` and the static
+ * trigger in the `Packs/*` stories; they assert behavior and record nothing.
+ *
  * The Nx target runs every test. To run one, call Node directly from
  * libs/celebrations, e.g. `node --test --test-name-pattern='^cat baseline'
  * browser-tests/celebrations-baseline.browser.spec.mjs`.
@@ -735,3 +738,185 @@ for (const scene of Object.keys(SCENES))
       });
     },
   );
+
+/* S2 (#9221): `LottieScene` and the static trigger through the `Packs/*`
+   stories. The fixture clip plays 3 s with a 2 s load deadline and a 3 s
+   poster; see libs/celebrations/src/stories/LottieScene.stories.tsx. */
+const PACK_LAYER = '[data-story-scene-layer]';
+
+const openPackStory = async (browser, base, story, args = '') => {
+  const context = await openContext(browser, 'desktop', false);
+  const page = await context.newPage();
+  const query = args ? `&args=${args}` : '';
+  await page.goto(`${base}/iframe.html?id=${story}&viewMode=story${query}`);
+  return { context, page };
+};
+
+const openPackScene = async (browser, base, args) => {
+  const opened = await openPackStory(
+    browser,
+    base,
+    'packs-lottiescene--playing',
+    args,
+  );
+  await opened.page.locator(PACK_LAYER).waitFor({ state: 'attached' });
+  return opened;
+};
+
+const countIn = (page, selector) =>
+  page.evaluate(
+    ([layer, inner]) =>
+      document.querySelector(layer)?.querySelectorAll(inner).length ?? 0,
+    [PACK_LAYER, selector],
+  );
+
+/* Records when an `svg` enters the scene layer, relative to `performance.now()`. */
+const watchStageInserts = (page) =>
+  page.evaluate((layer) => {
+    window.__stageInserts = [];
+    new MutationObserver((records) => {
+      for (const record of records)
+        for (const node of record.addedNodes)
+          if (
+            node instanceof Element &&
+            (node.tagName === 'svg' || node.querySelector('svg'))
+          )
+            window.__stageInserts.push(performance.now());
+    }).observe(document.querySelector(layer), {
+      childList: true,
+      subtree: true,
+    });
+  }, PACK_LAYER);
+
+test(
+  'packs: a slow loader shows the poster instead of the stage',
+  { timeout: 60_000 },
+  async () => {
+    await withBrowser(async (browser, base) => {
+      const { page } = await openPackScene(browser, base, 'loader:slow');
+      await page
+        .locator(`${PACK_LAYER} img`)
+        .waitFor({ state: 'attached', timeout: 3500 });
+      assert.equal(await countIn(page, 'svg'), 0);
+    });
+  },
+);
+
+test(
+  'packs: a broken asset shows the poster instead of the stage',
+  { timeout: 60_000 },
+  async () => {
+    await withBrowser(async (browser, base) => {
+      const { page } = await openPackScene(browser, base, 'loader:broken');
+      await page
+        .locator(`${PACK_LAYER} img`)
+        .waitFor({ state: 'attached', timeout: 2000 });
+      assert.equal(await countIn(page, 'svg'), 0);
+    });
+  },
+);
+
+test(
+  'packs: a failure after the first frame renders nothing and does not replay',
+  { timeout: 60_000 },
+  async () => {
+    await withBrowser(async (browser, base) => {
+      const { page } = await openPackScene(browser, base);
+      await page
+        .locator(`${PACK_LAYER} svg`)
+        .first()
+        .waitFor({ state: 'attached', timeout: 5000 });
+      await page.waitForTimeout(300);
+      /* A renderer exception mid-playback: lottie reports it as `error`. */
+      await page.evaluate(() => {
+        SVGElement.prototype.setAttribute = () => {
+          throw new Error('Renderer lost');
+        };
+      });
+      /* Well inside the 3 s playback, so only the failure can empty the layer. */
+      await page.waitForFunction(
+        (layer) => !document.querySelector(layer)?.querySelector('svg, img'),
+        PACK_LAYER,
+        { timeout: 1000 },
+      );
+      await watchStageInserts(page);
+      await page.waitForTimeout(3500);
+      assert.equal(await countIn(page, 'svg, img'), 0);
+      assert.deepEqual(await page.evaluate(() => window.__stageInserts), []);
+    });
+  },
+);
+
+test(
+  'packs: a late resolution of a cancelled load is ignored',
+  { timeout: 60_000 },
+  async () => {
+    await withBrowser(async (browser, base) => {
+      const { page } = await openPackScene(
+        browser,
+        base,
+        'loader:ignores-abort',
+      );
+      await watchStageInserts(page);
+      await page.waitForTimeout(300);
+      /* Replay cancels the first load; its loader resolves ~700 ms later anyway. */
+      const replayAt = await page.evaluate(() => performance.now());
+      await page.getByRole('button', { name: 'Replay' }).click();
+      await page
+        .locator(`${PACK_LAYER} svg`)
+        .first()
+        .waitFor({ state: 'attached', timeout: 5000 });
+      await page.waitForTimeout(300);
+      const inserts = await page.evaluate(() => window.__stageInserts);
+      assert.equal(inserts.length, 1, 'only the current load inserts a stage');
+      assert.ok(
+        inserts[0] - replayAt >= 900,
+        `the stage came from the cancelled load (${inserts[0] - replayAt} ms after replay)`,
+      );
+    });
+  },
+);
+
+test(
+  'packs: a replay reuses the cached animation data',
+  { timeout: 60_000 },
+  async () => {
+    await withBrowser(async (browser, base) => {
+      const { page } = await openPackScene(browser, base);
+      const stage = page.locator(`${PACK_LAYER} svg`).first();
+      await stage.waitFor({ state: 'attached', timeout: 5000 });
+      await page.getByRole('button', { name: 'Replay' }).click();
+      await stage.waitFor({ state: 'attached', timeout: 5000 });
+      assert.equal(
+        await page.getByText(/Data requests: \d+/).textContent(),
+        'Data requests: 1',
+      );
+    });
+  },
+);
+
+test(
+  'packs: the static trigger plays from the keyboard',
+  { timeout: 60_000 },
+  async () => {
+    await withBrowser(async (browser, base) => {
+      const { page } = await openPackStory(
+        browser,
+        base,
+        'packs-statictriggerdecoration--default',
+      );
+      const trigger = page.getByRole('button', {
+        name: 'Celebrate ten years',
+      });
+      await trigger.waitFor();
+      await page.keyboard.press('Tab');
+      assert.ok(
+        await trigger.evaluate((node) => node === document.activeElement),
+      );
+      await page.keyboard.press('Enter');
+      await page.getByText('Activated 1 times').waitFor();
+      await page.keyboard.press('Space');
+      await page.getByText('Activated 2 times').waitFor();
+    });
+  },
+);

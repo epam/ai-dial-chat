@@ -2,6 +2,7 @@ import {
   AppConfigApi,
   ApplicationsApi,
   AuthApi,
+  CelebrationsApi,
   ClientChannelApi,
   Configuration,
   ConversationsApi,
@@ -110,3 +111,4 @@ export const externalServicesApi = new ExternalServicesApi(config);
 export const healthApi = new HealthApi(config);
 export const transcriptionApi = new TranscriptionApi(config);
 export const customApiApi = new CustomApiApi(config);
+export const celebrationsApi = new CelebrationsApi(config);
