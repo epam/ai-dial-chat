@@ -120,4 +120,39 @@ describe('useResourceVersionHistory', () => {
 
     expect(getCatalogVersionStatuses).not.toHaveBeenCalled();
   });
+
+  it('returns no section props for a resource missing from the loaded listing or still loading', () => {
+    const { result } = renderHook(() =>
+      useResourceVersionHistory(
+        'applications/b1/Design/Missing__1.0.0',
+        CatalogEntityType.Agent,
+        true,
+      ),
+    );
+
+    expect(result.current).toBeUndefined();
+    expect(getCatalogVersionStatuses).not.toHaveBeenCalled();
+  });
+
+  it('returns no section props for an item that is not the user own', () => {
+    deployments.items.push({
+      id: 'applications/other/Design/Shared__1.0.0',
+      versionGroupId: 'Design/Shared',
+      displayVersion: '1.0.0',
+      updatedAt: 1,
+      owner: 'Someone',
+      isMy: false,
+    });
+
+    const { result } = renderHook(() =>
+      useResourceVersionHistory(
+        'applications/other/Design/Shared__1.0.0',
+        CatalogEntityType.Agent,
+        true,
+      ),
+    );
+    deployments.items.pop();
+
+    expect(result.current).toBeUndefined();
+  });
 });

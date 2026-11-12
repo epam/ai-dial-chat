@@ -129,7 +129,7 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
                   <span
                     className={mergeClasses(
-                      'min-w-0 truncate',
+                      'min-w-0 wrap-anywhere',
                       versionClassName,
                       styles.version,
                     )}

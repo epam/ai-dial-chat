@@ -31,6 +31,8 @@ export interface UseVersionHistoryParams {
 export interface UseVersionHistoryResult {
   /** Saved versions of the resource, newest first; statuses fill in once loaded. */
   rows: VersionHistoryRow[];
+  /** Whether the listing holds any version the section can show; the host renders no section when it is `false`. */
+  hasVersions: boolean;
   /** Whether the statuses are being loaded. */
   isLoading: boolean;
   /** Whether the last statuses request failed. */
@@ -64,6 +66,14 @@ export const useVersionHistory = ({
   const [reloadCount, setReloadCount] = useState(0);
   const [loaded, setLoaded] = useState<LoadedStatuses>();
   const [failedKey, setFailedKey] = useState<string>();
+  const [wasEnabled, setWasEnabled] = useState(isEnabled);
+  if (wasEnabled !== isEnabled) {
+    setWasEnabled(isEnabled);
+    if (!isEnabled) {
+      setLoaded(undefined);
+      setFailedKey(undefined);
+    }
+  }
   const requestKey = `${entityType}:${resourceId}:${reloadCount}`;
   const shouldLoad = isEnabled && hasVersions;
 
@@ -106,5 +116,5 @@ export const useVersionHistory = ({
     setReloadCount((count) => count + 1);
   }, []);
 
-  return { rows, isLoading, hasError, onRetry };
+  return { rows, hasVersions, isLoading, hasError, onRetry };
 };

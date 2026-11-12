@@ -58,17 +58,15 @@ describe('VersionHistorySection — RTL and accessibility', () => {
     expect(screen.getByText('Published in Organization')).toBeTruthy();
   });
 
-  it('lets a long version wrap inside a phone-width container without a fixed width', () => {
+  it('lets a 64-character version wrap instead of cutting it with an ellipsis', () => {
     render(
-      <div style={{ width: 320 }}>
-        <VersionHistorySection
-          rows={[{ ...rows[0], version: 'a'.repeat(64) }]}
-        />
-      </div>,
+      <VersionHistorySection
+        rows={[{ ...rows[0], version: 'a'.repeat(64) }]}
+      />,
     );
 
     const version = screen.getByText('a'.repeat(64));
-    expect(version.className).toMatch(/truncate/);
-    expect(version.getAttribute('style')).toBeNull();
+    expect(version.className).toMatch(/wrap-anywhere/);
+    expect(version.className).not.toMatch(/truncate/);
   });
 });

@@ -55,8 +55,12 @@ Each row SHALL show:
 - **THEN** `2.0.0` is listed without waiting for the listing cache to expire
 
 #### Scenario: Resource that is not the user's own
-- **WHEN** the panel is opened for a resource that belongs to another owner (the Save panel never opens for one; the Publish panel might)
-- **THEN** no row has `isMy === true`, so the section shows its empty state and no status is requested as Not published
+- **WHEN** the panel is opened for a resource that belongs to another owner (the Save panel never opens for one; the Publish panel might), for an id that is not in the loaded listing, or while the listing is still loading
+- **THEN** the host renders no Versions history section and requests no status; the section component's own empty state stays a lib feature for a host that passes empty rows
+
+#### Scenario: Reopening a panel reloads the statuses
+- **WHEN** a panel that loaded the statuses is closed and opened again
+- **THEN** the previous statuses and any previous error are cleared and the loading state shows until the new response arrives
 
 ### Requirement: Statuses load when the panel opens
 

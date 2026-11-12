@@ -15,7 +15,7 @@ import { useVersionHistoryText } from './useVersionHistoryText';
  * @param resourceId - id of the resource being edited or published
  * @param resourceType - catalog type of the resource
  * @param isEnabled - whether the panel showing the section is open
- * @returns the section props, or `undefined` for an unversioned resource type
+ * @returns the section props, or `undefined` for an unversioned resource type and while the listing holds no version the user owns
  */
 export const useResourceVersionHistory = (
   resourceId: string,
@@ -26,18 +26,22 @@ export const useResourceVersionHistory = (
   const { labels, formatters } = useVersionHistoryText();
   const isVersioned = isVersionedCatalogEntityType(resourceType);
   const entityType = toPublishEntityType(resourceType) ?? 'application';
-  const { rows, isLoading, hasError, onRetry } = useVersionHistory({
-    items: entityType === 'toolset' ? toolsets : items,
-    resourceId,
-    entityType,
-    isEnabled: isEnabled && isVersioned,
-    client: publishApiClient,
-    formatters,
-  });
+  const { rows, hasVersions, isLoading, hasError, onRetry } = useVersionHistory(
+    {
+      items: entityType === 'toolset' ? toolsets : items,
+      resourceId,
+      entityType,
+      isEnabled: isEnabled && isVersioned,
+      client: publishApiClient,
+      formatters,
+    },
+  );
 
   return useMemo(
     () =>
-      isVersioned ? { rows, isLoading, hasError, onRetry, labels } : undefined,
-    [isVersioned, rows, isLoading, hasError, onRetry, labels],
+      isVersioned && hasVersions
+        ? { rows, isLoading, hasError, onRetry, labels }
+        : undefined,
+    [isVersioned, hasVersions, rows, isLoading, hasError, onRetry, labels],
   );
 };

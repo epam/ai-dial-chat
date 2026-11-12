@@ -257,4 +257,115 @@ describe('useVersionHistory', () => {
 
     expect(result.current.rows[0].version).toBe('2.0.0');
   });
+
+  it('reports no versions for an own listing it has not loaded yet, an unknown id and a resource of another owner', () => {
+    expect(renderVersionHistory({ items: [] }).result.current.hasVersions).toBe(
+      false,
+    );
+    expect(
+      renderVersionHistory({ resourceId: 'applications/b1/Missing__1' }).result
+        .current.hasVersions,
+    ).toBe(false);
+    expect(
+      renderVersionHistory({
+        resourceId: 'applications/b2/Design/Review__9.0.0',
+      }).result.current.hasVersions,
+    ).toBe(false);
+  });
+
+  it('reports versions for an own resource in the listing', async () => {
+    const { result } = renderVersionHistory();
+
+    expect(result.current.hasVersions).toBe(true);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+  });
+
+  it('ignores the response of a request whose resource changed while it was in flight', async () => {
+    const resolvers: ((entries: VersionStatusEntryDto[]) => void)[] = [];
+    const client = {
+      getCatalogVersionStatuses: vi.fn(
+        () =>
+          new Promise<VersionStatusEntryDto[]>((resolve) => {
+            resolvers.push(resolve);
+          }),
+      ),
+    };
+    const { result, rerender } = renderVersionHistory({ client });
+
+    rerender({ client, resourceId: ID_BETA });
+    await waitFor(() => expect(resolvers).toHaveLength(2));
+    await act(async () =>
+      resolvers[0]([statusEntry(ID_1, VersionPublicationStatus.Published)]),
+    );
+
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.rows.every((row) => row.status === undefined)).toBe(
+      true,
+    );
+
+    await act(async () =>
+      resolvers[1]([statusEntry(ID_BETA, VersionPublicationStatus.InReview)]),
+    );
+
+    expect(result.current.rows.find((row) => row.id === ID_BETA)?.status).toBe(
+      VersionHistoryStatus.InReview,
+    );
+    expect(
+      result.current.rows.find((row) => row.id === ID_1)?.status,
+    ).toBeUndefined();
+  });
+
+  it('shows the loading state again and drops the old statuses when the panel is reopened after a success', async () => {
+    const client = makeClient([
+      statusEntry(ID_1, VersionPublicationStatus.NotPublished),
+    ]);
+    const { result, rerender } = renderVersionHistory({ client });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    rerender({ client, isEnabled: false });
+    expect(result.current.isLoading).toBe(false);
+    rerender({ client, isEnabled: true });
+
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.rows.every((row) => row.status === undefined)).toBe(
+      true,
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(client.getCatalogVersionStatuses).toHaveBeenCalledTimes(2);
+    expect(result.current.rows.find((row) => row.id === ID_1)?.status).toBe(
+      VersionHistoryStatus.NotPublished,
+    );
+  });
+
+  it('clears the error and shows loading when the panel is reopened after a failure', async () => {
+    const client = makeClient([
+      statusEntry(ID_1, VersionPublicationStatus.NotPublished),
+    ]);
+    client.getCatalogVersionStatuses.mockRejectedValueOnce(new Error('boom'));
+    const { result, rerender } = renderVersionHistory({ client });
+    await waitFor(() => expect(result.current.hasError).toBe(true));
+
+    rerender({ client, isEnabled: false });
+    rerender({ client, isEnabled: true });
+
+    expect(result.current.hasError).toBe(false);
+    expect(result.current.isLoading).toBe(true);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.hasError).toBe(false);
+  });
+
+  it('reports the error again when the retry fails too', async () => {
+    const client = makeClient();
+    client.getCatalogVersionStatuses.mockRejectedValue(new Error('boom'));
+    const { result } = renderVersionHistory({ client });
+    await waitFor(() => expect(result.current.hasError).toBe(true));
+
+    act(() => result.current.onRetry());
+
+    expect(result.current.hasError).toBe(false);
+    expect(result.current.isLoading).toBe(true);
+    await waitFor(() => expect(result.current.hasError).toBe(true));
+    expect(result.current.rows).toHaveLength(3);
+    expect(client.getCatalogVersionStatuses).toHaveBeenCalledTimes(2);
+  });
 });
