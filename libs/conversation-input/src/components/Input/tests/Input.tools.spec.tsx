@@ -186,6 +186,26 @@ describe('Input — tool chips on a phone', () => {
     expect(chip.textContent).toBe('Tools1');
   });
 
+  it('renders a chip per tool when isToolChipRowAllowedOnPhone is set', () => {
+    render(
+      <Input
+        onSend={vi.fn()}
+        isToolChipRowAllowedOnPhone
+        toolsMenuItems={[
+          buildTool('deep_research', 'Deep Research', true),
+          buildTool('web_search', 'Web Search'),
+        ]}
+        onToolToggle={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Deep Research' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Web Search' })).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: /Tools: \d+ of \d+ on/ }),
+    ).toBeNull();
+  });
+
   it('shows no count while every tool is off', () => {
     renderInput([buildTool('deep_research', 'Deep Research')]);
 
