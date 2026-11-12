@@ -64,6 +64,9 @@
       "path": "../../libs/starter-buttons/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/onboarding-tour/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/share/tsconfig.lib.json"
     },
     {

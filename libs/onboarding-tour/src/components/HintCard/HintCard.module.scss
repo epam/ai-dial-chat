@@ -1,0 +1,18 @@
+.card {
+  background: var(--ot-card-bg, var(--bg-layer-raised, #fcfcfc));
+  border-color: var(--ot-card-border, var(--stroke-tertiary, #e0e6f0));
+  box-shadow: 1px 10px 25px 12px
+    var(--ot-card-shadow, var(--shadow-lg, #2764d914));
+}
+
+.counter {
+  color: var(--ot-counter-text, var(--text-tertiary, #848e9c));
+}
+
+.title {
+  color: var(--ot-title-text, var(--text-primary, #161b2d));
+}
+
+.description {
+  color: var(--ot-description-text, var(--text-secondary, #57647a));
+}

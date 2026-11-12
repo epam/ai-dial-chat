@@ -1,0 +1,9 @@
+.backdrop {
+  background: var(--ot-backdrop, var(--bg-backdrop, #161b2d4d));
+}
+
+.spotlight {
+  border-color: var(--ot-spotlight-border, var(--stroke-accent, #1d4ed8));
+  /* A huge spread shadow dims everything around the cut-out. */
+  box-shadow: 0 0 0 9999px var(--ot-backdrop, var(--bg-backdrop, #161b2d4d));
+}

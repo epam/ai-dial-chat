@@ -1246,6 +1246,8 @@ export enum OnboardingTourI18nKeys {
   Done = 'onboardingTour.done',
   Skip = 'onboardingTour.skip',
   Close = 'onboardingTour.close',
+  Beacon = 'onboardingTour.beacon',
+  GotIt = 'onboardingTour.gotIt',
 }
 
 export enum FooterMessageI18nKeys {

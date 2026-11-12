@@ -85,6 +85,7 @@ describe('validate', () => {
 
     it.each([
       ['UI_EVENT_DELIVERY_MODE', 'external'],
+      ['ONBOARDING_HINTS_MODE', 'popup'],
       ['UI_EVENT_DELIVERY_REVISION', 'rev 1'],
       ['UI_EVENT_DELIVERY_REVISION', 'x'.repeat(65)],
       ['UI_EVENT_EXTERNAL_SCENES', 'new-year/Snowman'],

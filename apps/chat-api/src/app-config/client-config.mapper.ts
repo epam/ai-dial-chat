@@ -15,6 +15,7 @@ import { sanitizeAnnouncementHtml, sanitizeFooterHtml } from './html-sanitizer';
 import { normalizeOnboardingHints } from './onboarding-hints.normalizer';
 import { toNullableText } from './text.util';
 import { CelebrationDeliveryMode } from './types/celebration-delivery';
+import { OnboardingHintsMode } from './types/onboarding-hints-mode';
 
 const DEFAULT_TRANSCRIBE_SIZE_LIMIT_BYTES = 5 * 1024 * 1024;
 const DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES = 536_870_912;
@@ -160,6 +161,7 @@ export const createDefaultClientConfig = (): MappedClientConfig => ({
   announcementDescription: null,
   announcements: [],
   onboardingHints: [],
+  onboardingHintsMode: OnboardingHintsMode.Tour,
   welcomeScreenDescription: null,
   footerHtmlMessage: '',
   enabledUiFeatures: null,
@@ -296,6 +298,14 @@ export const CLIENT_CONFIG_MAPPINGS: ReadonlyMap<string, ClientConfigMapping> =
       'onboarding.hints',
       defineMapping('onboardingHints', ({ resolved, warn }) =>
         normalizeOnboardingHints(resolved, warn),
+      ),
+    ],
+    [
+      'onboarding.mode',
+      defineMapping('onboardingHintsMode', ({ resolved }) =>
+        resolved === OnboardingHintsMode.Beacons
+          ? OnboardingHintsMode.Beacons
+          : OnboardingHintsMode.Tour,
       ),
     ],
     [

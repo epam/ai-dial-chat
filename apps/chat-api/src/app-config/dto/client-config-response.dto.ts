@@ -5,6 +5,7 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
+import { OnboardingHintsMode } from '../types/onboarding-hints-mode';
 import { AnnouncementItemDto } from './announcement-item.dto';
 import { ApplicationVisualizerDto } from './application-visualizer.dto';
 import { CatalogCreationPermissionsDto } from './catalog-creation-permissions.dto';
@@ -214,6 +215,15 @@ export class ClientConfigDto {
     type: [OnboardingHintDto],
   })
   onboardingHints!: OnboardingHintDto[];
+
+  @ApiProperty({
+    description:
+      'How the client presents onboardingHints: a one-time step-by-step tour, or a beacon on each element that opens its hint on demand. Sourced from ONBOARDING_HINTS_MODE; tour by default.',
+    enum: OnboardingHintsMode,
+    enumName: 'OnboardingHintsMode',
+    example: OnboardingHintsMode.Tour,
+  })
+  onboardingHintsMode!: OnboardingHintsMode;
 
   @ApiPropertyOptional({
     description:

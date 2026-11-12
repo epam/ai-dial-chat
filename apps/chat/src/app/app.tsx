@@ -42,7 +42,7 @@ import SourcesSidebarToggle from '../components/Header/SourcesSidebarToggle';
 import McpAppCanvasContainer from '../components/McpAppCanvasContainer/McpAppCanvasContainer';
 import SidebarNavigation from '../components/Navigation/SidebarNavigation';
 import NewVersionFallback from '../components/NewVersionFallback/NewVersionFallback';
-import OnboardingTour from '../components/OnboardingTour/OnboardingTour';
+import OnboardingHints from '../components/OnboardingHints/OnboardingHints';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
 import { MIN_CONTENT_AREA_WIDTH } from '../constants/layout';
 import {
@@ -328,7 +328,7 @@ const App: FC = () => {
   return (
     <div className="flex size-full flex-col">
       <AnnouncementBanner />
-      <OnboardingTour />
+      <OnboardingHints />
       <div className="relative flex min-h-0 flex-1 flex-row tablet:overflow-hidden">
         <Suspense fallback={null}>
           <SigninInterruptDialog />

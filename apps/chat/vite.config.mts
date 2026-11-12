@@ -182,6 +182,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/celebrations/src/index.ts',
       ),
+      '@epam/ai-dial-onboarding-tour': path.resolve(
+        import.meta.dirname,
+        '../../libs/onboarding-tour/src/index.ts',
+      ),
       '@epam/ai-dial-starter-buttons': path.resolve(
         import.meta.dirname,
         '../../libs/starter-buttons/src/index.ts',

@@ -12516,6 +12516,11 @@
         },
         "required": ["id", "target", "title", "description"]
       },
+      "OnboardingHintsMode": {
+        "type": "string",
+        "enum": ["tour", "beacons"],
+        "description": "How the client presents onboardingHints: a one-time step-by-step tour, or a beacon on each element that opens its hint on demand. Sourced from ONBOARDING_HINTS_MODE; tour by default."
+      },
       "CustomVisualizerDto": {
         "type": "object",
         "properties": {
@@ -12800,6 +12805,15 @@
               "$ref": "#/components/schemas/OnboardingHintDto"
             }
           },
+          "onboardingHintsMode": {
+            "description": "How the client presents onboardingHints: a one-time step-by-step tour, or a beacon on each element that opens its hint on demand. Sourced from ONBOARDING_HINTS_MODE; tour by default.",
+            "example": "tour",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingHintsMode"
+              }
+            ]
+          },
           "welcomeScreenDescription": {
             "type": "string",
             "description": "Plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Null when WELCOME_SCREEN_DESCRIPTION is not configured or is blank.",
@@ -12908,6 +12922,7 @@
           "enabledUiFeatures",
           "announcements",
           "onboardingHints",
+          "onboardingHintsMode",
           "footerHtmlMessage",
           "customVisualizers",
           "applicationVisualizers",
