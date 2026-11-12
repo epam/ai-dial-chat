@@ -40,7 +40,7 @@ interface OnboardingBeaconProps {
   descriptionClassName: string;
 }
 
-/** A pulsing dot at the corner of a hint's target that opens the hint's card. */
+/** A dot at the corner of a hint's target that opens the hint's card. */
 export const OnboardingBeacon: FC<OnboardingBeaconProps> = ({
   hint,
   isOpen,

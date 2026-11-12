@@ -9,7 +9,7 @@ import { OnboardingBeacon } from '../OnboardingBeacon/OnboardingBeacon';
 
 const defaultBeaconLabel = (title: string) => `Show hint: ${title}`;
 
-/** Marks each hint's element with a pulsing beacon that opens the hint's card on demand. */
+/** Marks each hint's element with a beacon that opens the hint's card on demand. */
 export const OnboardingBeacons: FC<OnboardingBeaconsProps> = ({
   hints,
   onDismiss,

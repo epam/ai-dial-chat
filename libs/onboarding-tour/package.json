@@ -1,6 +1,6 @@
 {
   "name": "@epam/ai-dial-onboarding-tour",
-  "description": "Onboarding hints over any page, as a spotlight tour or as pulsing beacons that open a hint on demand",
+  "description": "Onboarding hints over any page, as a spotlight tour or as beacons that open a hint on demand",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",

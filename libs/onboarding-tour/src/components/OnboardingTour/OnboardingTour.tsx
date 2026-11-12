@@ -165,7 +165,7 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
             className={mergeClasses(
               ONBOARDING_TOUR_CLASS.spotlight,
               styles.spotlight,
-              'pointer-events-none absolute rounded-lg border-2 motion-safe:transition-all motion-safe:duration-200',
+              'pointer-events-none absolute rounded-lg border-2',
             )}
             style={{
               top: rect.top - SPOTLIGHT_PADDING,

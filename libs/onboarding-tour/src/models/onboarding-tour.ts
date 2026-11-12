@@ -84,7 +84,7 @@ export interface OnboardingBeaconsLabels {
 
 /** Color overrides of the `OnboardingBeacons` component. */
 export interface OnboardingBeaconsColors extends OnboardingCardColors {
-  /** Fill of the beacon dot and its pulse. Defaults to `--bg-accent-primary`. */
+  /** Fill of the beacon dot. Defaults to `--bg-accent-primary`. */
   beacon?: string;
   /** Ring around the beacon dot that separates it from the page. Defaults to `--bg-layer-0`. */
   beaconRing?: string;

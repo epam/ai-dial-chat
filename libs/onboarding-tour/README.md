@@ -1,10 +1,10 @@
 # @epam/ai-dial-onboarding-tour
 
-Onboarding hints over any page: a guided tour that spotlights one element at a time, or pulsing beacons that open a hint on demand.
+Onboarding hints over any page: a guided tour that spotlights one element at a time, or beacons that open a hint on demand.
 
 ## Overview
 
-`@epam/ai-dial-onboarding-tour` presents operator-authored hints about a page in one of two ways. `OnboardingTour` is a first-visit walkthrough: it dims the page, outlines one element at a time and explains it in a modal hint card with Back/Next/Done, Skip and Escape. `OnboardingBeacons` is the quiet alternative: a small pulsing dot sits on the corner of each element, and pressing it opens the same card next to the element until the user dismisses it with Got it. Both take the same `OnboardingTourStep` objects — a title, an optional description and a `getTarget` callback that returns the element — and both follow their targets through scrolling, resizes and layout shifts.
+`@epam/ai-dial-onboarding-tour` presents operator-authored hints about a page in one of two ways. `OnboardingTour` is a first-visit walkthrough: it dims the page, outlines one element at a time and explains it in a modal hint card with Back/Next/Done, Skip and Escape. `OnboardingBeacons` is the quiet alternative: a small dot sits on the corner of each element, and pressing it opens the same card next to the element until the user dismisses it with Got it. Both take the same `OnboardingTourStep` objects — a title, an optional description and a `getTarget` callback that returns the element — and both follow their targets through scrolling, resizes and layout shifts.
 
 Cards and beacons are positioned with [Floating UI](https://floating-ui.com) (`@floating-ui/react`): a card goes below its target, otherwise above or beside it, start-aligned and kept inside the viewport; the tour card is a bottom sheet on mobile. Focus is managed by Floating UI's `FloatingFocusManager`: the tour card traps focus and gives it back to where it was when the tour started; a beacon's card does not trap focus and returns it to the beacon. A tour step whose target is not on screen is skipped. A beacon whose target is not on screen is not rendered until the target appears, because every target is looked up again whenever the page's DOM changes.
 
@@ -135,7 +135,7 @@ const Beacons = () => {
 | `descriptionClassName` | `string`                  | `'dial-small-paragraph-text'` | Typography of the card description.                                                           |
 | `className`            | `string`                  | —                             | Extra class name(s) on the beacons root.                                                      |
 
-One card is open at a time. Escape, a press outside the card or moving focus out of it closes the card and keeps the beacon. The pulse runs only when the user has not asked for reduced motion. Beacons are 24px buttons rendered at the end of `document.body`, so they come last in the tab order.
+One card is open at a time. Escape, a press outside the card or moving focus out of it closes the card and keeps the beacon. Beacons are static dots with no animation. Beacons are 24px buttons rendered at the end of `document.body`, so they come last in the tab order.
 
 `colors` fields and their defaults: `beacon` (`--bg-accent-primary`), `beaconRing` (`--bg-layer-0`), `beaconFocusOutline` (`--stroke-focus`), and the card fields with the same defaults as the tour.
 

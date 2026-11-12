@@ -196,7 +196,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     defaultValue: OnboardingHintsMode.Tour,
     critical: false,
     description:
-      'How the onboarding hints are presented: tour (a one-time step-by-step tour that dims the page) or beacons (a pulsing beacon on each element that opens its hint on demand). Sourced from ONBOARDING_HINTS_MODE; tour by default.',
+      'How the onboarding hints are presented: tour (a one-time step-by-step tour that dims the page) or beacons (a beacon on each element that opens its hint on demand). Sourced from ONBOARDING_HINTS_MODE; tour by default.',
     owner: 'chat-team',
     envVar: 'ONBOARDING_HINTS_MODE',
   },
