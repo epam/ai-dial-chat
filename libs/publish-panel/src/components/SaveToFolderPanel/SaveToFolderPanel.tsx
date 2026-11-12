@@ -23,6 +23,7 @@ import type { SaveToFolderPanelProps } from '../../models/save-to-folder-panel';
 import { SaveToFolderView, SaveVersionMode } from '../../types/save-to-folder';
 import { PublishAccessRules } from '../PublishAccessRules/PublishAccessRules';
 import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
+import { VersionHistorySection } from '../VersionHistorySection/VersionHistorySection';
 import styles from './SaveToFolderPanel.module.scss';
 
 /** Body of the save-to-folder panel: the summary, destination and version choice, or the destination folder tree. */
@@ -38,6 +39,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
   onPendingDestinationChange,
   version,
   accessRules,
+  versionHistory,
   isSubmitting = false,
   submitError,
   foldersError,
@@ -262,6 +264,13 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
       <LiveRegion politeness={LiveRegionPoliteness.Assertive}>
         {submitError && <ErrorText text={submitError} />}
       </LiveRegion>
+
+      {versionHistory && (
+        <VersionHistorySection
+          headingClassName={headingClassName}
+          {...versionHistory}
+        />
+      )}
     </div>
   );
 };

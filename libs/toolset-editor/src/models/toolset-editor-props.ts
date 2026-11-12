@@ -29,7 +29,7 @@ export interface ToolsetEditorValidationLabels {
   nameControlCharacters?: string;
   /** Message for a description over the shared length limit. Defaults to `'Use 2000 characters or fewer.'`. */
   descriptionTooLong?: string;
-  /** Message for a malformed version. Defaults to `'Version may only contain letters, digits, dots, underscores, plus signs and hyphens, up to 64 characters, and cannot end with a dot'`. */
+  /** Message for a malformed version. Defaults to `'Version may only contain letters, digits, dots, underscores, plus signs and hyphens, up to 64 characters; it cannot end with a dot, contain two underscores in a row, or start with an underscore'`. */
   versionInvalid?: string;
   /** Message for a missing endpoint. Defaults to `'Endpoint is required'`. */
   endpointRequired?: string;

@@ -2744,6 +2744,30 @@ const SkillCatalog = ({
 | `refetch`          | `() => Promise<void>`                  | Re-reads all namespaces and replaces the current state.                    |
 | `mergeSharedSkill` | `(item: SkillMetadataItemDto) => void` | Upserts a skill into `sharedWithMe` by `url`, appending it if not present. |
 
+### useVersionHistory
+
+Builds the Versions history rows of the Save and Publish panels. It selects the caller's own items of an already-loaded deployments or toolsets listing that share the edited resource's `versionGroupId`, sorts them by `updatedAt` (newest first), marks the edited id as current, formats the folder (`rootLabel` plus the folder segments of the id), date and author line through the host `formatters`, and loads the publication statuses in the background through the supplied `client.getCatalogVersionStatuses` while `isEnabled` is `true`. The rows render at once; a failed request keeps them and sets `hasError`, and `onRetry` reloads. A resource that is not the user's own (no row with `isMy === true`) returns no rows and requests nothing. The hook builds no client and no path: the host passes `publishApiClient` from its `createPublishApiClient` and the translated `formatters`.
+
+```tsx
+import { useVersionHistory } from '@epam/ai-dial-chat-hooks';
+
+const { rows, isLoading, hasError, onRetry } = useVersionHistory({
+  items: toolsets,
+  resourceId: toolset.id,
+  entityType: 'toolset',
+  isEnabled: isPanelOpen,
+  client: publishApiClient,
+  formatters,
+});
+
+<PublishPanel
+  {...props}
+  versionHistory={{ rows, isLoading, hasError, onRetry }}
+/>;
+```
+
+`formatters` is `{ rootLabel, formatDate, formatPublishedBy, formatOwner }` (`VersionHistoryFormatters`) and should be referentially stable. The pure `selectVersionGroup` and `buildVersionHistoryRows` it uses are exported too.
+
 ## Usage Utilities
 
 Available from both `@epam/ai-dial-chat-hooks` and `@epam/ai-dial-chat-hooks/usage`.

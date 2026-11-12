@@ -636,3 +636,48 @@ describe('PublishPanel — private dependencies', () => {
     ).toBeNull();
   });
 });
+
+describe('PublishPanel — versions history', () => {
+  const versionHistory = {
+    rows: [
+      { id: 'a', version: '1.0.0', isCurrent: true },
+      { id: 'b', version: 'beta-2', isCurrent: false },
+    ],
+  };
+
+  it('renders the section as the last section of the panel', () => {
+    renderPanel({ versionHistory });
+
+    const region = screen.getByRole('region', { name: 'Versions history' });
+    const folderHeading = screen.getByRole('heading', {
+      name: 'Publish to folder',
+    });
+    expect(
+      folderHeading.compareDocumentPosition(region) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+  });
+
+  it('renders no section when the host supplies no history', () => {
+    renderPanel();
+
+    expect(
+      screen.queryByRole('region', { name: 'Versions history' }),
+    ).toBeNull();
+  });
+
+  it('offers no version input, so publishing uses the saved version', () => {
+    renderPanel({ versionHistory });
+
+    expect(screen.queryByRole('textbox', { name: /version/i })).toBeNull();
+  });
+
+  it('does not render the section in the folder view', () => {
+    renderPanel({ versionHistory, view: PublishPanelView.ChangeFolder });
+
+    expect(
+      screen.queryByRole('region', { name: 'Versions history' }),
+    ).toBeNull();
+  });
+});

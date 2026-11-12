@@ -36,6 +36,7 @@ import {
 import type { PublishDependenciesLabels } from '../../models/publish-dependencies-list';
 import type { PublishDependency } from '../../models/publish-dependency';
 import type { PublishPanelStyles } from '../../models/publish-panel-styles';
+import type { VersionHistorySectionProps } from '../../models/version-history';
 import { PublishPanelView } from '../../types/publish-panel';
 import { derivePublishState } from '../../utils/publish-state';
 import {
@@ -44,6 +45,7 @@ import {
 } from '../PublishAccessRules/PublishAccessRules';
 import { PublishDependenciesList } from '../PublishDependenciesList/PublishDependenciesList';
 import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
+import { VersionHistorySection } from '../VersionHistorySection/VersionHistorySection';
 import styles from './PublishPanel.module.scss';
 
 /** Matches the publish endpoints' own `author` limit, so the field cannot compose a request the backend rejects. */
@@ -129,6 +131,8 @@ export interface PublishPanelProps {
    * Omit it to leave the section out; pass an empty array to keep it mounted for a later list, which is announced when it appears.
    */
   dependencies?: PublishDependency[];
+  /** Versions history shown as the last section of the main view. Omit it to leave the section out. */
+  versionHistory?: VersionHistorySectionProps;
   /** Which view to show: the main form or the destination folder tree. Default: `PublishPanelView.Main`. */
   view?: PublishPanelView;
   /** Called when the user asks to open the folder view from the destination row. */
@@ -226,6 +230,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   resource,
   renderSummary,
   dependencies,
+  versionHistory,
   folderItems,
   selectedFolderPath,
   pendingFolderPath,
@@ -577,6 +582,13 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           labels={dependenciesLabels}
           headingClassName={headingClassName}
           styles={dependenciesStyles}
+        />
+      )}
+
+      {versionHistory != null && (
+        <VersionHistorySection
+          headingClassName={headingClassName}
+          {...versionHistory}
         />
       )}
     </div>

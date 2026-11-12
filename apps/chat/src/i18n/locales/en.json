@@ -1555,7 +1555,7 @@
     "general": {
       "namePlaceholder": "Enter name",
       "descriptionPlaceholder": "Describe what this toolset does",
-      "versionInvalid": "Version may only contain letters, digits, dots, underscores, plus signs and hyphens, up to 64 characters, and cannot end with a dot"
+      "versionInvalid": "Version may only contain letters, digits, dots, underscores, plus signs and hyphens, up to 64 characters; it cannot end with a dot, contain two underscores in a row, or start with an underscore"
     },
     "settings": {
       "endpointCaption": "The HTTPS address where the server accepts MCP requests. Choose the transport under Protocol below.",

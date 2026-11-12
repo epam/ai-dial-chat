@@ -39,5 +39,7 @@ export * from '../catalog/resource-name-conflict';
 export * from '../catalog/resource-save';
 export * from '../catalog/resource-save-adapters';
 export * from '../catalog/useResourceSavePanel/useResourceSavePanel';
+export * from '../catalog/useVersionHistory/useVersionHistory';
+export * from '../catalog/version-history';
 export * from '../skill/useSkillFilePreview';
 export * from '../skill/skill-types';

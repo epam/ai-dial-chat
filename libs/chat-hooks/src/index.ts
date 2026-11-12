@@ -51,6 +51,8 @@ export * from './catalog/resource-name-conflict';
 export * from './catalog/resource-save';
 export * from './catalog/resource-save-adapters';
 export * from './catalog/useResourceSavePanel/useResourceSavePanel';
+export * from './catalog/useVersionHistory/useVersionHistory';
+export * from './catalog/version-history';
 export * from './conversation/announcement-message';
 export * from './conversation/conversation-draft/conversation-draft';
 export * from './conversation/conversation-draft/conversation-draft-store';

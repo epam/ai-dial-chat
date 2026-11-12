@@ -1,0 +1,20 @@
+.heading {
+  color: var(--pp-vh-heading-text, var(--text-primary, #161b2d));
+}
+
+.version {
+  color: var(--pp-vh-version-text, var(--text-primary, #161b2d));
+}
+
+.meta {
+  color: var(--pp-vh-meta-text, var(--text-secondary, #57647a));
+}
+
+.row {
+  border-block-end: 1px solid
+    var(--pp-vh-row-border, var(--stroke-tertiary, #dde1e6));
+
+  &:last-child {
+    border-block-end: 0;
+  }
+}
