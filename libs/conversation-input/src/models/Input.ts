@@ -455,6 +455,12 @@ export interface InputProps {
    */
   isInlineActionRowAllowedBelowDesktop?: boolean;
   /**
+   * Lets a phone-width composer show the full row of per-tool chips instead of
+   * the single "Tools: N" summary chip. For an embed that is narrow but not a
+   * phone, such as a chat overlay in a desktop page. Defaults to `false`.
+   */
+  isToolChipRowAllowedOnPhone?: boolean;
+  /**
    * When provided, replaces the default send/stop/model-selector area with custom content.
    * Receives `canSend` (textarea has non-empty trimmed content) and `onSend` (triggers the
    * same internal send flow as the default send button).

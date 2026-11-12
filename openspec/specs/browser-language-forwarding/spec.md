@@ -8,12 +8,19 @@ Forward the Chat frontend's current UI language to DIAL Core as the `X-Lang` hea
 
 ### Requirement: Application language is attached to conversation completion requests
 
-Immediately before starting a normal conversation completion, the Chat frontend SHALL resolve its current UI language (i18n locale) and send it as the `X-Lang` request header to `POST /api/v1/conversations/completions` when it resolves to a non-empty value. The language SHALL be resolved per request and SHALL NOT be persisted for this purpose beyond the app's existing i18n state. The resolver SHALL be injected into the stream transport `createChatStreamApi` as its optional `getLanguage` dependency; the lib SHALL NOT read browser or app state itself. The transport SHALL omit `X-Lang` entirely when the resolver returns `undefined` or an empty value.
+Immediately before starting a normal conversation completion, the Chat frontend SHALL resolve its current UI language through `getUiLanguage` (`apps/chat/src/i18n/get-ui-language.ts`) and send it as the `X-Lang` request header to `POST /api/v1/conversations/completions` when it resolves to a non-empty value. The language SHALL be resolved per request and SHALL NOT be persisted for this purpose beyond the app's existing i18n state. The resolver SHALL be injected into the stream transport `createChatStreamApi` as its optional `getLanguage` dependency; the lib SHALL NOT read browser or app state itself. The transport SHALL omit `X-Lang` entirely when the resolver returns `undefined` or an empty value.
+
+The forwarded value is i18next's `i18n.language`: the locale the user chose or the browser reported. It is not `i18n.resolvedLanguage`, the locale whose translation bundle is rendered. The two differ when the chosen or detected locale has no registered bundle and the UI falls back to English. In that case the header SHALL carry the chosen or detected locale (for example `ru` or `uk`), not the rendered fallback `en`, because it is the better predictor of the language the user expects documents, names and answers in. A region subtag (for example `en-US`) SHALL be forwarded unchanged.
 
 #### Scenario: App supplies a language
 
 - **WHEN** the app's current locale is `en` and a user starts a conversation completion
 - **THEN** the request to `POST /api/v1/conversations/completions` contains `X-Lang: en`
+
+#### Scenario: Detected locale has no translation bundle
+
+- **WHEN** the browser reports `ru`, no `ru` bundle is registered, and the UI therefore renders in English
+- **THEN** the completion request contains `X-Lang: ru`, not `X-Lang: en`
 
 #### Scenario: Language changes in a long-lived tab
 
@@ -32,7 +39,7 @@ Immediately before starting a normal conversation completion, the Chat frontend 
 
 ### Requirement: Completion endpoint validates the optional language header
 
-The authenticated business endpoint `POST /api/v1/conversations/completions` SHALL accept one optional `X-Lang` header. An accepted value MUST be a single string no longer than 35 characters, and MUST consist only of ASCII letters and digits, with the primary subtag being 2–8 letters and optional `-`-separated subtags of 1–8 alphanumeric characters (a BCP-47-like shape). The BFF SHALL pass an accepted value onward unchanged and SHALL NOT trim, canonicalize, persist, cache, or log it. A missing header SHALL remain valid; a present invalid value SHALL return `400 Bad Request` before DIAL Core is called. The rule is implemented by `assertValidOptionalLang` with `LANG_HEADER`, `LANG_MAX_LENGTH`, and `LANG_PATTERN` in `apps/chat-api/src/conversations/utils/lang-header.ts`.
+The authenticated business endpoint `POST /api/v1/conversations/completions` SHALL accept one optional `X-Lang` header. An accepted value MUST be a single string no longer than 35 characters, and MUST consist only of ASCII letters and digits, with the primary subtag being 2–8 letters and optional `-`-separated subtags of 1–8 alphanumeric characters (a BCP-47-like shape). The BFF SHALL pass an accepted value onward unchanged and SHALL NOT trim, canonicalize, persist, cache, or log it. A missing header SHALL remain valid; a present invalid value SHALL return `400 Bad Request` before DIAL Core is called. A header that is present with an empty value (`X-Lang:`) is invalid, not missing: the frontend never sends it, so an empty value comes only from a malformed client, which the BFF rejects rather than silently dropping. This matches the `X-Timezone` contract. The rule is implemented by `assertValidOptionalLang` with `LANG_HEADER`, `LANG_MAX_LENGTH`, and `LANG_PATTERN` in `apps/chat-api/src/conversations/utils/lang-header.ts`.
 
 #### Scenario: Valid language is accepted
 
@@ -48,6 +55,11 @@ The authenticated business endpoint `POST /api/v1/conversations/completions` SHA
 
 - **WHEN** an otherwise valid completion request omits `X-Lang`
 - **THEN** the endpoint starts the SSE completion with no language value
+
+#### Scenario: Empty language is rejected
+
+- **WHEN** the request contains `X-Lang` with an empty value
+- **THEN** the endpoint returns `400 Bad Request` and does not call DIAL Core
 
 #### Scenario: Invalid language syntax is rejected
 

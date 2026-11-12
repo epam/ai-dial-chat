@@ -13,6 +13,7 @@ import { ConfigService } from '@nestjs/config';
 import { FeatureFlagsService } from '../app-config/feature-flags/feature-flags.service';
 import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
 import type { SessionUser } from '../auth/session/session.types';
+import { UserRolesService } from '../auth/user-roles.service';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { resolvePrompt } from '../common/utils/resolve-prompt';
 import { EnvironmentVariables } from '../config/environment.config';
@@ -72,6 +73,7 @@ export class TextRefinementService {
     private readonly config: ConfigService<EnvironmentVariables>,
     private readonly dialClient: DialClientService,
     private readonly features: FeatureFlagsService,
+    private readonly userRoles: UserRolesService,
   ) {}
 
   async refineText(
@@ -93,14 +95,11 @@ export class TextRefinementService {
     }
     const gate = PURPOSE_FEATURE_GATES[dto.purpose];
     if (gate) {
-      const roles = user.claims['roles'];
       if (
         !(await this.features.isEnabled(gate.feature, {
           appId: 'chat-ui',
           userId: user.sub,
-          roles: Array.isArray(roles)
-            ? roles.filter((role): role is string => typeof role === 'string')
-            : undefined,
+          roles: this.userRoles.getRoles(user),
         }))
       )
         throw new ForbiddenException(gate.message);

@@ -33,6 +33,7 @@ function makeService(
   model?: string,
   catalogCreationRoles?: CatalogCreationRolesConfig,
   servedAppIds?: string[],
+  modelCatalogApiKey?: string,
 ) {
   const compositeProvider = {
     resolve: vi.fn(resolveImpl),
@@ -52,6 +53,7 @@ function makeService(
         UTILITY_MODEL: model,
         CATALOG_CREATION_ROLES: catalogCreationRoles,
         CLIENT_CONFIG_APP_IDS: servedAppIds,
+        MODEL_CATALOG_API_KEY: modelCatalogApiKey,
       }),
     ),
     cacheManager,
@@ -111,6 +113,53 @@ describe('AppConfigService', () => {
           expect(JSON.stringify(result)).not.toContain('refinement-model');
         },
       );
+    });
+
+    describe('modelCatalogAvailable', () => {
+      /* ConfigService resolves process.env first, so stub the key to each
+       * case's value to keep the test hermetic. */
+      afterEach(() => {
+        vi.unstubAllEnvs();
+      });
+
+      const withCatalogKey = (key: string | undefined) => {
+        vi.stubEnv('MODEL_CATALOG_API_KEY', key ?? '');
+        return makeService(
+          async () => undefined,
+          undefined,
+          undefined,
+          undefined,
+          key,
+        );
+      };
+
+      it('is true when MODEL_CATALOG_API_KEY is set', async () => {
+        const { service } = withCatalogKey('catalog-secret-key');
+        const result = await service.getClientConfig(ctx);
+        expect(result.config.modelCatalogAvailable).toBe(true);
+      });
+
+      it.each([undefined, '', '   '])(
+        'is false when MODEL_CATALOG_API_KEY is %j',
+        async (key) => {
+          const { service } = withCatalogKey(key);
+          const result = await service.getClientConfig(ctx);
+          expect(result.config.modelCatalogAvailable).toBe(false);
+        },
+      );
+
+      it('is false when only DIAL_API_KEY is set', async () => {
+        vi.stubEnv('DIAL_API_KEY', 'naming-key');
+        const { service } = withCatalogKey(undefined);
+        const result = await service.getClientConfig(ctx);
+        expect(result.config.modelCatalogAvailable).toBe(false);
+      });
+
+      it('never carries the key in the response', async () => {
+        const { service } = withCatalogKey(' catalog-secret-key ');
+        const result = await service.getClientConfig(ctx);
+        expect(JSON.stringify(result)).not.toContain('catalog-secret-key');
+      });
     });
 
     it('keeps client-owned variables in their own namespace without overriding built-in config', async () => {
@@ -1618,6 +1667,7 @@ describe('AppConfigService', () => {
         'projectContextTotalMaxBytes',
         'projectContextAllowedExtensions',
         'catalogCreationPermissions',
+        'modelCatalogAvailable',
       ]);
       expect(Object.keys(result.features)).toEqual([
         'footer',

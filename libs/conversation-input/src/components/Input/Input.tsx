@@ -106,6 +106,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
       hideActionBar = false,
       actionRowLayout = ActionRowLayout.Stacked,
       isInlineActionRowAllowedBelowDesktop = false,
+      isToolChipRowAllowedOnPhone = false,
       renderFooterActions,
       isInputDisabled = false,
       isModelSelectorDisabled = false,
@@ -565,7 +566,10 @@ export const Input = forwardRef<InputHandle, InputProps>(
         </div>
       );
 
-    const chipsNode = isPhone ? phoneChipsNode : desktopChipsNode;
+    const chipsNode =
+      isPhone && !isToolChipRowAllowedOnPhone
+        ? phoneChipsNode
+        : desktopChipsNode;
 
     return (
       <div

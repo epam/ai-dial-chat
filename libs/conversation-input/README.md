@@ -632,6 +632,8 @@ whose composer is already wide below that width opts the narrower widths in with
 />
 ```
 
+On a phone (< 768px) the tool chips collapse into one "Tools: N" summary chip that opens the tools sheet. An embed that is narrow but not a phone, such as a chat overlay in a desktop page, keeps the per-tool chip row with `isToolChipRowAllowedOnPhone`.
+
 The flag affects the action row alone. The add menu and the model picker keep
 their bottom-sheet presentation below 768px, independently of this flag, so it
 does not turn an embed into
