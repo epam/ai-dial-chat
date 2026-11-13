@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { PACKAGE_VERSION } from '../../../common/utils/app-version';
 import { EnvironmentVariables } from '../../../config/environment.config';
 import { CONFIG_DEFINITIONS } from '../../config-registry/config-registry.constants';
 import {
@@ -104,9 +105,9 @@ const KEY_EXPECTATIONS: Readonly<
     [EnvCaseName.Empty]: { provider: '', effective: '' },
   },
   'app.version': {
-    [EnvCaseName.Absent]: { provider: undefined, effective: '0.0.0' },
+    [EnvCaseName.Absent]: { provider: undefined, effective: PACKAGE_VERSION },
     [EnvCaseName.NonDefault]: { provider: '9.9.9', effective: '9.9.9' },
-    [EnvCaseName.Empty]: { provider: '', effective: '0.0.0' },
+    [EnvCaseName.Empty]: { provider: '', effective: PACKAGE_VERSION },
   },
   'announcement.html': {
     [EnvCaseName.Absent]: { provider: undefined, effective: null },
@@ -157,7 +158,7 @@ const KEY_EXPECTATIONS: Readonly<
     [EnvCaseName.Absent]: { provider: undefined, effective: '' },
     [EnvCaseName.NonDefault]: {
       provider: 'Build %%VERSION%%',
-      effective: 'Build 0.0.0',
+      effective: `Build ${PACKAGE_VERSION}`,
     },
     [EnvCaseName.Empty]: { provider: '', effective: '' },
   },

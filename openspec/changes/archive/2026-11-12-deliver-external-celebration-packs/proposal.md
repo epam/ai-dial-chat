@@ -15,7 +15,7 @@ The S0 pilot was `sleigh`, but #9631 removed the bundled sleigh. The contract on
 
 ## What Changes
 
-- **Themes repository (cross-repository).** Publish a separate celebration index `static/celebrations/index.json`, holding `schemaVersion`, `revision`, `packs` and `defaults`. Under it, publish the immutable `static/celebrations/new-year-default/1.0.0/` (a `snowman-delivery` clip for desktop and mobile, a poster and `manifest.json`) and `static/celebrations/company-anniversary/1.0.0/`, the external-only test event.
+- **Themes repository (cross-repository).** Publish a separate celebration index `static/celebrations/index.json`, holding `schemaVersion`, `revision`, `packs` and `defaults`. Under it, publish the immutable `static/celebrations/new-year-default/1.0.0/` (a `snowman-delivery` slot clip, "Bullfinch couriers", for desktop and mobile, a poster and `manifest.json`; design D10) and `static/celebrations/company-anniversary/1.0.0/`, the external-only test event.
   - **`config.json` and its caching stay as they are.**
   - nginx adds only `/celebrations/` rules: the index gets 60 s, everything else under it is `immutable`.
   - A publication check covers references, bytes and hashes, timing, the player profile, the caps and version retention (current + previous).

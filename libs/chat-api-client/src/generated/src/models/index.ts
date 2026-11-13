@@ -1870,6 +1870,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   catalogCreationPermissions: CatalogCreationPermissionsDto;
+  /**
+   * Whether GET /api/v1/model-catalog is configured (MODEL_CATALOG_API_KEY is set). Missing means unavailable. Never carries the key.
+   * @type {boolean}
+   * @memberof ClientConfigDto
+   */
+  modelCatalogAvailable?: boolean;
 }
 
 /**
@@ -6413,6 +6419,152 @@ export interface ModelCapabilitiesDto {
    * @memberof ModelCapabilitiesDto
    */
   scaleTypes?: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface ModelCatalogEntryDto
+ */
+export interface ModelCatalogEntryDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  object: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  model?: string;
+  /**
+   *
+   * @type {DialModelDtoDisplayName}
+   * @memberof ModelCatalogEntryDto
+   */
+  displayName?: DialModelDtoDisplayName;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  displayVersion?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {DialModelDtoDescription}
+   * @memberof ModelCatalogEntryDto
+   */
+  description?: DialModelDtoDescription;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  reference?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  owner?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  status?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof ModelCatalogEntryDto
+   */
+  createdAt?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof ModelCatalogEntryDto
+   */
+  updatedAt?: number;
+  /**
+   *
+   * @type {DialModelFeaturesDto}
+   * @memberof ModelCatalogEntryDto
+   */
+  features?: DialModelFeaturesDto;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ModelCatalogEntryDto
+   */
+  inputAttachmentTypes?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof ModelCatalogEntryDto
+   */
+  maxInputAttachments?: number;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ModelCatalogEntryDto
+   */
+  descriptionKeywords?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  lifecycleStatus?: string;
+  /**
+   *
+   * @type {DialModelCapabilitiesDto}
+   * @memberof ModelCatalogEntryDto
+   */
+  capabilities?: DialModelCapabilitiesDto;
+  /**
+   *
+   * @type {DialModelLimitsDto}
+   * @memberof ModelCatalogEntryDto
+   */
+  limits?: DialModelLimitsDto;
+  /**
+   *
+   * @type {DialModelPricingDto}
+   * @memberof ModelCatalogEntryDto
+   */
+  pricing?: DialModelPricingDto;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ModelCatalogEntryDto
+   */
+  interfaces?: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface ModelCatalogListResponseDto
+ */
+export interface ModelCatalogListResponseDto {
+  /**
+   *
+   * @type {Array<ModelCatalogEntryDto>}
+   * @memberof ModelCatalogListResponseDto
+   */
+  data: Array<ModelCatalogEntryDto>;
 }
 /**
  *
