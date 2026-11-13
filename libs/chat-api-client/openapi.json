@@ -12656,6 +12656,11 @@
         },
         "required": ["label", "href"]
       },
+      "AnnouncementSeverity": {
+        "type": "string",
+        "enum": ["info", "warning"],
+        "description": "How urgent the announcement is, for clients that mark maintenance or outage notices. Always present: an entry configured without one, or with an unrecognized value, is returned as `info`. Clients should treat a value they do not recognize as `info`, since more levels may be added."
+      },
       "AnnouncementItemDto": {
         "type": "object",
         "properties": {
@@ -12679,9 +12684,18 @@
                 "$ref": "#/components/schemas/AnnouncementLinkDto"
               }
             ]
+          },
+          "severity": {
+            "description": "How urgent the announcement is, for clients that mark maintenance or outage notices. Always present: an entry configured without one, or with an unrecognized value, is returned as `info`. Clients should treat a value they do not recognize as `info`, since more levels may be added.",
+            "example": "warning",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnouncementSeverity"
+              }
+            ]
           }
         },
-        "required": ["title", "description", "link"]
+        "required": ["title", "description", "link", "severity"]
       },
       "CustomVisualizerDto": {
         "type": "object",
