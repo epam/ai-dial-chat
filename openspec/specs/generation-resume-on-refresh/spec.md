@@ -102,6 +102,32 @@ The fallback watch path SHALL be bounded by a module-private timeout constant (`
 - **WHEN** `GENERATION_RESUME_WATCH_TIMEOUT_MS` elapses without a qualifying `UPDATE` event
 - **THEN** the resume watch aborts, performs one final `getConversation`, updates local state with that result, and removes the conversation's path from `streamingPaths`
 
+### Requirement: Resume watch re-reads when a live foreground marker expires
+
+Expiry of a `foregroundGeneration` marker writes nothing, so the watch receives no update for it; a Stop only shortens the expiry (`foreground-generation-lock` "A Stop from any writer is stored on the marker"). While the fallback watch is open and the last read of the conversation holds a live marker, the hook SHALL re-read the conversation once when that marker expires (its `expiresAt` plus a one-second grace, never sooner than one second from the read), and SHALL schedule the same re-read for the newest `expiresAt` every later read reports. When a re-read no longer awaits resume, the hook SHALL abort the watch and settle as for any qualifying update. When the marker is still live, the chat SHALL stay blocked exactly as before.
+
+The re-read SHALL NOT start for a conversation without a live marker, SHALL NOT release the chat while the marker is live, and SHALL do nothing once another generation owns the path or the resume has settled.
+
+#### Scenario: The marker expires without any watch update
+
+- **WHEN** the watch is open and the conversation holds a live marker that later expires, and no `UPDATE` event arrives
+- **THEN** the hook re-reads the conversation shortly after the expiry, applies the result, and removes the path from `streamingPaths`
+
+#### Scenario: A Stop shortens the expiry
+
+- **WHEN** an `UPDATE` reload reports a nearer `expiresAt` than the one the hook was waiting for
+- **THEN** the hook re-reads at the nearer expiry instead of waiting for `GENERATION_RESUME_WATCH_TIMEOUT_MS`
+
+#### Scenario: The marker is still live at the re-read
+
+- **WHEN** the re-read still returns a live marker
+- **THEN** the path stays in `streamingPaths` and no interrupted text is shown
+
+#### Scenario: No marker, no re-read
+
+- **WHEN** the reloaded conversation ends in a placeholder without a live marker
+- **THEN** the hook starts no expiry re-read
+
 ### Requirement: Resume watch continues across navigation, gated by the displayed path
 
 Because `ConversationPage` is not remounted when navigating between conversations (`app-level-generation-manager`), the resume watch SHALL NOT be aborted when the user navigates to a different conversation. It keeps running until it resolves or times out, and — like `startStream`'s `onChunk`/`onComplete`/`onError` — applies its result to `conversation`/`conversationRef` state only when `isPathDisplayed(conversationPath)` is still true; it removes the path from `streamingPaths` unconditionally regardless of which conversation is displayed when it resolves.

@@ -810,6 +810,159 @@ describe('createResumeIfAwaitingGeneration — watch fallback', () => {
   });
 });
 
+describe('createResumeIfAwaitingGeneration — live marker expiry', () => {
+  const CONVERSATION_ID = 'bucket/gpt-4o__Hello';
+  const encoder = new TextEncoder();
+  const NOW = Date.UTC(2026, 10, 11, 14, 0, 0);
+
+  const withMarker = (expiresAt: number): Conversation => {
+    const conversation = makeConversation();
+    conversation.messages[1] = {
+      ...conversation.messages[1],
+      foregroundGeneration: {
+        generationId: 'gen-1',
+        startedAt: NOW,
+        expiresAt,
+      },
+    } as Conversation['messages'][number];
+    return conversation;
+  };
+
+  const settledConversation = (): Conversation =>
+    makeConversation({
+      messages: [
+        {
+          role: MessageRole.User,
+          content: 'Hello',
+          timestamp: new Date().toISOString(),
+        },
+        {
+          role: MessageRole.Assistant,
+          content: '',
+          streamErrorMessage: '',
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    });
+
+  const makeHarness = (
+    getConversation: ConversationStreamTransport['getConversation'],
+  ) => {
+    let controller!: ReadableStreamDefaultController<Uint8Array>;
+    const stream = new ReadableStream<Uint8Array>({
+      start(streamController) {
+        controller = streamController;
+      },
+    });
+    const setConversation = vi.fn();
+    const removeStreamingPath = vi.fn();
+    const transport: ConversationStreamTransport = {
+      streamCompletion: vi.fn(),
+      stopCompletion: vi.fn(),
+      attachToGeneration: vi.fn().mockRejectedValue(new Error('no attach')),
+      watchConversation: vi.fn().mockResolvedValue(stream),
+      getConversation,
+    };
+    const resume = createResumeIfAwaitingGeneration({
+      transport,
+      setConversation,
+      conversationRef: { current: null },
+      resumingPathsRef: { current: new Set<string>() },
+      bufferedGenerationsRef: {
+        current: new Map<string, BufferedGeneration>(),
+      },
+      addStreamingPath: vi.fn(),
+      removeStreamingPath,
+      isPathDisplayed: () => true,
+    });
+    return {
+      resume,
+      setConversation,
+      removeStreamingPath,
+      emitUpdate: () =>
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ action: 'UPDATE' })}\n\n`),
+        ),
+    };
+  };
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('releases the chat when the marker expires without any update from the watch', async () => {
+    vi.useFakeTimers({ now: NOW });
+    const settled = settledConversation();
+    const getConversation = vi
+      .fn()
+      .mockResolvedValueOnce(withMarker(NOW + 60_000))
+      .mockResolvedValue(settled);
+    const { resume, setConversation, removeStreamingPath } =
+      makeHarness(getConversation);
+
+    resume(CONVERSATION_ID, withMarker(NOW + 60_000));
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(getConversation).toHaveBeenCalledTimes(1);
+    expect(removeStreamingPath).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(31_500);
+
+    expect(getConversation).toHaveBeenCalledTimes(2);
+    expect(setConversation).toHaveBeenCalledWith(settled);
+    expect(removeStreamingPath).toHaveBeenCalledOnce();
+  });
+
+  it('follows a shorter expiry that a Stop wrote, instead of waiting for the watch timeout', async () => {
+    vi.useFakeTimers({ now: NOW });
+    const settled = settledConversation();
+    const getConversation = vi
+      .fn()
+      .mockResolvedValueOnce(withMarker(NOW + 30 * 60_000))
+      .mockResolvedValueOnce(withMarker(NOW + 90_000))
+      .mockResolvedValue(settled);
+    const { resume, setConversation, removeStreamingPath, emitUpdate } =
+      makeHarness(getConversation);
+
+    resume(CONVERSATION_ID, withMarker(NOW + 30 * 60_000));
+    await vi.advanceTimersByTimeAsync(10_000);
+    emitUpdate();
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(getConversation).toHaveBeenCalledTimes(2);
+    expect(removeStreamingPath).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(81_000);
+
+    expect(getConversation).toHaveBeenCalledTimes(3);
+    expect(setConversation).toHaveBeenCalledWith(settled);
+    expect(removeStreamingPath).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the chat blocked when the marker is still live at the re-read', async () => {
+    vi.useFakeTimers({ now: NOW });
+    const getConversation = vi
+      .fn()
+      .mockResolvedValue(withMarker(NOW + 10 * 60_000));
+    const { resume, removeStreamingPath } = makeHarness(getConversation);
+
+    resume(CONVERSATION_ID, withMarker(NOW + 10 * 60_000));
+    await vi.advanceTimersByTimeAsync(60_000);
+
+    expect(removeStreamingPath).not.toHaveBeenCalled();
+  });
+
+  it('does not re-read on a timer when the placeholder carries no live marker', async () => {
+    vi.useFakeTimers({ now: NOW });
+    const getConversation = vi.fn().mockResolvedValue(makeConversation());
+    const { resume, removeStreamingPath } = makeHarness(getConversation);
+
+    resume(CONVERSATION_ID, makeConversation());
+    await vi.advanceTimersByTimeAsync(120_000);
+
+    expect(getConversation).toHaveBeenCalledTimes(1);
+    expect(removeStreamingPath).not.toHaveBeenCalled();
+  });
+});
+
 describe('createResumeIfAwaitingGeneration — orphaned placeholder', () => {
   const CONVERSATION_ID = 'bucket/gpt-4o__Hello';
   const PATH = 'gpt-4o__Hello';

@@ -240,6 +240,8 @@ This bounds a marker whose worker is gone without a separate rule. A marker that
 
 The resource is the `path` qualified by the stopping caller's bucket (`qualifySessionConversationPath`), compared with the qualified path the generation registered with. A personal `path` is bucket-relative, so matching on it alone would let a Stop stored on a same-named conversation in one user's bucket abort another user's generation.
 
+**Diagnostics.** When reading or writing the marker throws for a reason other than an access refusal (`403`, `404`), or the write cannot be stored, the backend SHALL log one warning naming the `generationId`, the result, whether the read or the write failed, the error class name and the HTTP status. It SHALL NOT log a token, a message text, a response body or a conversation path, and a plain `not_found` (a generation this instance runs itself) SHALL NOT be logged.
+
 #### Scenario: An editor stops another editor's generation
 
 - **GIVEN** editor E1 is generating in a shared project conversation on instance A
