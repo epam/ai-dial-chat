@@ -6,7 +6,12 @@
   color: var(--pp-vh-version-text, var(--text-primary, #161b2d));
 }
 
-.meta {
+.date {
+  color: var(--pp-vh-date-text, var(--text-primary, #161b2d));
+}
+
+/* The doubled class keeps the lib color ahead of the text color the kit's FolderName applies. */
+.meta.meta {
   color: var(--pp-vh-meta-text, var(--text-secondary, #57647a));
 }
 
@@ -17,4 +22,12 @@
   &:last-child {
     border-block-end: 0;
   }
+}
+
+/* Read from TSX as `styles.skeletonColor` — Skeleton takes a color value, not a class. */
+:export {
+  skeletonColor: var(
+    --pp-vh-skeleton,
+    var(--bg-control-disable-primary, #dce0e8)
+  );
 }

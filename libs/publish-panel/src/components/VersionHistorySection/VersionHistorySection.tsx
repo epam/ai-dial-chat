@@ -4,9 +4,12 @@ import {
   BadgeColor,
   BadgeVariant,
   ErrorText,
+  FolderName,
   LinkButton,
   LiveRegion,
   LiveRegionPoliteness,
+  Skeleton,
+  SkeletonVariant,
 } from '@epam/ai-dial-ui-kit';
 import { useId, type FC } from 'react';
 import {
@@ -43,12 +46,7 @@ const getStatusLabel = (
     case VersionHistoryStatus.Unknown:
       return labels.unknownLabel;
     case VersionHistoryStatus.Published:
-      return row.publishedFolders?.length
-        ? labels.publishedInLabel.replace(
-            '{folders}',
-            row.publishedFolders.join(', '),
-          )
-        : labels.publishedLabel;
+      return labels.publishedLabel;
     default:
       return undefined;
   }
@@ -63,7 +61,8 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
   labels = {},
   headingClassName = 'dial-body-semi-text',
   versionClassName = 'dial-small-semi-text',
-  metaClassName = 'dial-small-text',
+  dateClassName = 'dial-small-text',
+  metaClassName = 'dial-tiny-text',
   styles: stylesProp = {},
 }) => {
   const headingId = useId();
@@ -73,6 +72,8 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
     ...buildCssVars({
       '--pp-vh-heading-text': colors?.headingText,
       '--pp-vh-version-text': colors?.versionText,
+      '--pp-vh-date-text': colors?.dateText,
+      '--pp-vh-skeleton': colors?.skeleton,
       '--pp-vh-meta-text': colors?.metaText,
       '--pp-vh-row-border': colors?.rowBorder,
     }),
@@ -92,12 +93,8 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
         {text.heading}
       </h2>
 
-      <LiveRegion politeness={LiveRegionPoliteness.Polite}>
-        {isLoading && !hasError && (
-          <span className={mergeClasses(metaClassName, styles.meta)}>
-            {text.loadingLabel}
-          </span>
-        )}
+      <LiveRegion visuallyHidden politeness={LiveRegionPoliteness.Polite}>
+        {isLoading && !hasError ? text.loadingLabel : ''}
       </LiveRegion>
       <LiveRegion politeness={LiveRegionPoliteness.Assertive}>
         {hasError && (
@@ -118,15 +115,21 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
         <ul>
           {rows.map((row) => {
             const statusLabel = getStatusLabel(row, text);
-            const meta = [row.folder, row.modifiedAt, row.author]
-              .filter((part): part is string => Boolean(part))
-              .join(' · ');
+            const isStatusPending = !statusLabel && isLoading && !hasError;
+            const publishedIn =
+              row.status === VersionHistoryStatus.Published &&
+              row.publishedFolders?.length
+                ? text.publishedInLabel.replace(
+                    '{folders}',
+                    row.publishedFolders.join(', '),
+                  )
+                : undefined;
             return (
               <li
                 key={row.id}
                 className={mergeClasses('flex flex-col gap-1 py-2', styles.row)}
               >
-                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <div className="flex min-w-0 items-center gap-2">
                   <span
                     className={mergeClasses(
                       'min-w-0 wrap-anywhere',
@@ -143,15 +146,53 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
                       color={BadgeColor.Blue}
                     />
                   )}
-                  {statusLabel && (
-                    <span className="ms-auto">
-                      <Badge label={statusLabel} />
+                  {statusLabel && <Badge label={statusLabel} />}
+                  {isStatusPending && (
+                    <span aria-hidden className="shrink-0">
+                      <Skeleton
+                        variant={SkeletonVariant.Text}
+                        width="84px"
+                        height="24px"
+                        color={styles.skeletonColor}
+                      />
+                    </span>
+                  )}
+                  {row.modifiedAt && (
+                    <span
+                      className={mergeClasses(
+                        'ms-auto shrink-0',
+                        dateClassName,
+                        styles.date,
+                      )}
+                    >
+                      {row.modifiedAt}
                     </span>
                   )}
                 </div>
-                {meta && (
+                {(row.folder || row.author) && (
+                  <div className="flex min-w-0 items-center justify-between gap-2">
+                    {row.folder && (
+                      <FolderName
+                        name={row.folder}
+                        nameClassName={mergeClasses(metaClassName, styles.meta)}
+                      />
+                    )}
+                    {row.author && (
+                      <span
+                        className={mergeClasses(
+                          'ms-auto shrink-0',
+                          metaClassName,
+                          styles.meta,
+                        )}
+                      >
+                        {row.author}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {publishedIn && (
                   <span className={mergeClasses(metaClassName, styles.meta)}>
-                    {meta}
+                    {publishedIn}
                   </span>
                 )}
               </li>

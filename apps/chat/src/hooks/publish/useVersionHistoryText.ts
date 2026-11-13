@@ -40,11 +40,11 @@ export const useVersionHistoryText = (): {
     () => ({
       rootLabel: t(CatalogI18nKeys.FolderPersonal),
       formatDate: (timestamp) =>
-        new Date(timestamp).toLocaleDateString(language, {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        }),
+        new Date(timestamp).toLocaleDateString(
+          /* English uses the day-month-year order of the mockups, e.g. "12 Jul 2026". */
+          language.startsWith('en') ? 'en-GB' : language,
+          { day: '2-digit', month: 'short', year: 'numeric' },
+        ),
       formatPublishedBy: (name) =>
         t(VersionHistoryI18nKeys.PublishedBy, {
           name,

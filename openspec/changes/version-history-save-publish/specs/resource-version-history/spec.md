@@ -30,9 +30,11 @@ Each row SHALL show:
 
 - the version, with a **Current** marker on the version being edited;
 - the publication status: **Not published**, **In review** or **Published** (with the target folders);
-- the folder: `Personal` at the root of the Personal root, otherwise the folder path, formatted like the Save panel's destination (root label and segments joined with " / ");
-- the last modified date;
+- the folder, with the kit folder icon: `Personal` at the root of the Personal root, otherwise the folder path, formatted like the Save panel's destination (root label and segments joined with " / ");
+- the last modified date, as `12 Jul 2026` (day, short month, year) for English;
 - the author: for a Published version, the publisher ("Published by {name}"); otherwise the version's `owner` from the listing ("by {name}"), omitted when the listing has none.
+
+The first line holds the version, the **Current** marker and the status badge, with the date at the far end; the second line holds the folder and the author at the far end; a Published version adds a third line "Published in {folders}" with its target folders, so the badge stays short. Version and date use 14px text, the other lines 12px secondary text, from the kit type scale.
 
 #### Scenario: Rows, order and Current marker
 - **WHEN** the section renders for application `Design Review Agent` that has versions `1.0.0` (updated 12 Jul), `beta-2` (updated 20 Jul) and `1.1.0` (updated 01 Jul), and `1.0.0` is being edited
@@ -80,7 +82,7 @@ Opening a panel that shows the section SHALL load the statuses from the version 
 
 ### Requirement: Loading, empty, error and retry states
 
-The section SHALL have a loading state for the statuses, an empty state (the group has no saved version in the listing), an error state when the statuses request fails, and a **Retry** action in the error state. A statuses failure SHALL NOT hide the version rows. Loading and error messages SHALL be announced through the kit `LiveRegion`, mounted before its text. A failure of the statuses request SHALL NOT disable Save or Publish.
+The section SHALL have a loading state for the statuses, an empty state (the group has no saved version in the listing), an error state when the statuses request fails, and a **Retry** action in the error state. A statuses failure SHALL NOT hide the version rows. While statuses load, each row whose status is missing SHALL show a placeholder of the badge's size in the status slot, so the layout does not move when the badge arrives, and the loading message SHALL be announced through a visually hidden kit `LiveRegion` without being drawn. Error messages SHALL be announced through the kit `LiveRegion`, mounted before its text. A failure of the statuses request SHALL NOT disable Save or Publish.
 
 #### Scenario: Statuses request fails
 - **WHEN** the statuses request fails

@@ -68,7 +68,7 @@ describe('useResourceVersionHistory', () => {
       version: '1.0.0',
       isCurrent: true,
       folder: `${CatalogI18nKeys.FolderPersonal} / Design`,
-      modifiedAt: 'Jul 12, 2026',
+      modifiedAt: '12 Jul 2026',
       author: `${VersionHistoryI18nKeys.Owner}|Ivan Petrov`,
     });
     expect(result.current?.labels?.heading).toBe(

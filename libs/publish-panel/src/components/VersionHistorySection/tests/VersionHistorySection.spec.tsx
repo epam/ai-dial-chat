@@ -71,17 +71,38 @@ describe('VersionHistorySection', () => {
     ).toBeTruthy();
   });
 
-  it('shows the folder, the date and the author line of a row', () => {
+  it('shows the folder, the date and the author of a row on separate parts', () => {
     renderSection();
 
+    const [first, second] = screen.getAllByRole('listitem');
+    expect(within(first).getByText('Personal / Design')).toBeTruthy();
+    expect(within(first).getByText('20 Jul 2026')).toBeTruthy();
+    expect(within(first).getByText('by Ivan Petrov')).toBeTruthy();
+    expect(within(second).getByText('12 Jul 2026')).toBeTruthy();
+    expect(within(second).getByText('Published by Jane Doe')).toBeTruthy();
+  });
+
+  it('keeps the Published badge short and lists the folders on their own line', () => {
+    renderSection();
+
+    const [, second] = screen.getAllByRole('listitem');
+    expect(within(second).getByText('Published')).toBeTruthy();
     expect(
-      screen.getByText(
-        'Personal / Design · 12 Jul 2026 · Published by Jane Doe',
+      within(second).getByText(
+        'Published in Organization/Design, Organization',
       ),
     ).toBeTruthy();
-    expect(
-      screen.getByText('Personal / Design · 20 Jul 2026 · by Ivan Petrov'),
-    ).toBeTruthy();
+  });
+
+  it('keeps the loading message out of the list while statuses load', () => {
+    renderSection({
+      rows: [{ id: 'a', version: '1.0.0', isCurrent: false }],
+      isLoading: true,
+    });
+
+    const item = screen.getByRole('listitem');
+    expect(within(item).queryByText(/Loading publication statuses/)).toBeNull();
+    expect(screen.getByText('Loading publication statuses…')).toBeTruthy();
   });
 
   it('offers no action on a row', () => {

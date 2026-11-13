@@ -42,13 +42,13 @@ export interface VersionHistoryLabels {
   notPublishedLabel?: string;
   /** Status of a version with a request waiting for approval. Defaults to `'In review'`. */
   inReviewLabel?: string;
-  /** Status of a published version that lists no folder. Defaults to `'Published'`. */
+  /** Status badge of a published version. Defaults to `'Published'`. */
   publishedLabel?: string;
-  /** Status of a published version; `{folders}` is replaced by the comma-joined folders. Defaults to `'Published in {folders}'`. */
+  /** Line under a published version; `{folders}` is replaced by the comma-joined folders. Defaults to `'Published in {folders}'`. */
   publishedInLabel?: string;
   /** Status of a version whose publication state cannot be read. Defaults to `'Status unavailable'`. */
   unknownLabel?: string;
-  /** Message shown and announced while statuses load. Defaults to `'Loading publication statuses…'`. */
+  /** Message announced to screen readers while statuses load; a placeholder is drawn in each status slot. Defaults to `'Loading publication statuses…'`. */
   loadingLabel?: string;
   /** Message shown when the group lists no version. Defaults to `'No saved versions yet.'`. */
   emptyLabel?: string;
@@ -64,8 +64,12 @@ export interface VersionHistoryColors {
   headingText?: string;
   /** Version text color. Defaults to `--text-primary`. */
   versionText?: string;
-  /** Folder, date and author text color. Defaults to `--text-secondary`. */
+  /** Last modified date text color. Defaults to `--text-primary`. */
+  dateText?: string;
+  /** Folder, author and published-folders text color. Defaults to `--text-secondary`. */
   metaText?: string;
+  /** Fill of the status placeholder shown while statuses load. Defaults to `--bg-control-disable-primary`. */
+  skeleton?: string;
   /** Border color between rows. Defaults to `--stroke-tertiary`. */
   rowBorder?: string;
 }
@@ -94,7 +98,9 @@ export interface VersionHistorySectionProps {
   headingClassName?: string;
   /** Typography class of each version. Defaults to `'dial-small-semi-text'`. */
   versionClassName?: string;
-  /** Typography class of the folder, date and author line. Defaults to `'dial-small-text'`. */
+  /** Typography class of the last modified date. Defaults to `'dial-small-text'`. */
+  dateClassName?: string;
+  /** Typography class of the folder, author and published-folders lines. Defaults to `'dial-tiny-text'`. */
   metaClassName?: string;
   /** Style overrides. */
   styles?: VersionHistoryStyles;
