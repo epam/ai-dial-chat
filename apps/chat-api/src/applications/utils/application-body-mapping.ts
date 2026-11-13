@@ -38,3 +38,58 @@ export const hoistApplicationFields = (
     remainingProperties,
   };
 };
+
+/**
+ * A stored application as DIAL Core returns it. Core reads both spellings of
+ * a field but answers in snake_case (`display_version`, `display_name`), while
+ * the SDK types only the camelCase keys, so a stored body carries keys the
+ * type does not show.
+ */
+interface StoredApplicationNaming {
+  displayVersion?: string;
+  display_version?: string;
+  displayName?: unknown;
+  display_name?: unknown;
+}
+
+/** Version of a stored application, whichever spelling DIAL Core used. */
+export const getStoredDisplayVersion = (
+  body: StoredApplicationNaming,
+): string | undefined => body.displayVersion ?? body.display_version;
+
+/** Display name of a stored application, whichever spelling DIAL Core used. */
+export const getStoredDisplayName = (body: StoredApplicationNaming): unknown =>
+  body.displayName ?? body.display_name;
+
+/**
+ * Returns a copy of `body` whose only version key is `displayVersion`, so a
+ * stale `display_version` carried over from another stored body can never
+ * win over it. `version` undefined drops both keys.
+ */
+export const withDisplayVersion = <T extends object>(
+  body: T,
+  version: string | undefined,
+): T => {
+  const {
+    display_version: _snake,
+    displayVersion: _camel,
+    ...rest
+  } = body as T & StoredApplicationNaming;
+  return (version == null ? rest : { ...rest, displayVersion: version }) as T;
+};
+
+/**
+ * Returns a copy of `body` whose only name key is `displayName`, so the
+ * stored `display_name` cannot shadow the name being written.
+ */
+export const withDisplayName = <T extends object>(
+  body: T,
+  displayName: unknown,
+): T => {
+  const {
+    display_name: _snake,
+    displayName: _camel,
+    ...rest
+  } = body as T & StoredApplicationNaming;
+  return { ...rest, displayName } as T;
+};

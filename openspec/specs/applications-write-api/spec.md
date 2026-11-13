@@ -527,6 +527,8 @@ The system SHALL expose two endpoints.
 
 Response `200`: `ResourceIdResponseDto { id: snapshotId }`. It returns `409` when either ETag changed between the read and the write.
 
+DIAL Core answers a stored application in snake_case (`display_version`, `display_name`), although the SDK types only the camelCase keys. Fork, commit and update SHALL read the version and the name in either spelling and write only `displayVersion`/`displayName`, so a `display_version` carried over from the other body never overrides the version a side keeps.
+
 Both endpoints:
 
 - invalidate `applications:list:{userSub}` on success;

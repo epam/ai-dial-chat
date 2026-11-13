@@ -68,7 +68,13 @@ import type {
   UpdateApplicationBodyDto,
   UpdatedApplicationDto,
 } from './dto/update-application.dto';
-import { hoistApplicationFields } from './utils/application-body-mapping';
+import {
+  getStoredDisplayName,
+  getStoredDisplayVersion,
+  hoistApplicationFields,
+  withDisplayName,
+  withDisplayVersion,
+} from './utils/application-body-mapping';
 import { throwApplicationSaveError } from './utils/application-save-error';
 
 type DialApplication = components['schemas']['Application'];
@@ -414,9 +420,10 @@ export class ApplicationsService {
        * narrower than DIAL Core writes it, so it is widened here.
        */
       const storedName = resolveDisplayedName(
-        stored.displayName as LocalizedText,
+        getStoredDisplayName(stored) as LocalizedText,
       );
-      const storedVersion = stored.displayVersion ?? DEFAULT_RESOURCE_VERSION;
+      const storedVersion =
+        getStoredDisplayVersion(stored) ?? DEFAULT_RESOURCE_VERSION;
       const nextVersion = body.version ?? storedVersion;
       if (body.name.trim() !== storedName || nextVersion !== storedVersion) {
         const applicationId = `applications/${bucket}/${path}`;
@@ -446,15 +453,15 @@ export class ApplicationsService {
         body.locales,
         body.primaryLocale,
       );
-      const mergedBody: DialApplication = {
-        ...(existingResponse.data as DialApplication),
-        /*
-         * This is a full replacement, not a per-locale merge with whatever
-         * the existing resource had — consistent with every other
-         * General-step field.
-         */
-        displayName: toLocalizedValue(displayName),
-      };
+      /*
+       * The name is a full replacement, not a per-locale merge with whatever
+       * the existing resource had — consistent with every other General-step
+       * field. The stored `display_name` is dropped so it cannot shadow it.
+       */
+      let mergedBody: DialApplication = withDisplayName(
+        stored,
+        toLocalizedValue(displayName),
+      );
       if (description != null)
         mergedBody.description = description as unknown as string;
       /*
@@ -467,7 +474,8 @@ export class ApplicationsService {
       if (body.topics != null && body.topics.length > 0) {
         mergedBody.descriptionKeywords = body.topics;
       }
-      if (body.version != null) mergedBody.displayVersion = body.version;
+      if (body.version != null)
+        mergedBody = withDisplayVersion(mergedBody, body.version);
       if (body.endpoint != null) mergedBody.endpoint = body.endpoint;
       if (body.features != null)
         mergedBody.features = body.features as (typeof mergedBody)['features'];
@@ -851,7 +859,7 @@ export class ApplicationsService {
         await this.writeApplication(
           authHeaders,
           snapshot,
-          { ...copied, displayVersion: body.version },
+          withDisplayVersion(copied, body.version),
           context,
           etag,
         );
@@ -936,10 +944,10 @@ export class ApplicationsService {
       await this.writeApplication(
         authHeaders,
         snapshot,
-        {
-          ...sourceState.body,
-          displayVersion: snapshotState.body.displayVersion,
-        },
+        withDisplayVersion(
+          sourceState.body,
+          getStoredDisplayVersion(snapshotState.body),
+        ),
         context,
         snapshotState.etag,
       );
@@ -947,10 +955,10 @@ export class ApplicationsService {
         await this.writeApplication(
           authHeaders,
           source,
-          {
-            ...snapshotState.body,
-            displayVersion: sourceState.body.displayVersion,
-          },
+          withDisplayVersion(
+            snapshotState.body,
+            getStoredDisplayVersion(sourceState.body),
+          ),
           context,
           sourceState.etag,
         );
