@@ -308,10 +308,12 @@ describe('PinnedProjectActionOverlays', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('opens the publish panel and returns focus to the row trigger', () => {
+  it('opens the publish panel and returns focus to the row trigger', async () => {
     renderOverlays({ action: open(PinnedProjectActionKind.Publish) });
 
-    const panel = screen.getByRole('dialog', { name: 'publish project' });
+    const panel = await screen.findByRole('dialog', {
+      name: 'publish project',
+    });
     expect(panel.getAttribute('data-open')).toBe('true');
     expect(screen.getByText('buttons.moreActions')).toBeTruthy();
   });
@@ -327,16 +329,15 @@ describe('PinnedProjectActionOverlays', () => {
     ).toBeNull();
   });
 
-  it('keeps the publish panel mounted while it slides out', () => {
+  it('keeps the publish panel mounted while it slides out', async () => {
     renderOverlays({
       action: { ...open(PinnedProjectActionKind.Publish), isOpen: false },
     });
 
-    expect(
-      screen
-        .getByRole('dialog', { name: 'publish project' })
-        .getAttribute('data-open'),
-    ).toBe('false');
+    const panel = await screen.findByRole('dialog', {
+      name: 'publish project',
+    });
+    expect(panel.getAttribute('data-open')).toBe('false');
   });
 
   it('confirms a delete with the project view page copy', () => {

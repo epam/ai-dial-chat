@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, type FC } from 'react';
+import { lazy, memo, Suspense, useCallback, useEffect, type FC } from 'react';
 import type { PinnedProjectActionOverlay } from '../../hooks/projects/usePinnedProjectsPanel';
 import { useProjectActions } from '../../hooks/projects/useProjectActions';
 import { useProjectRemoveFromList } from '../../hooks/projects/useProjectRemoveFromList';
@@ -7,7 +7,13 @@ import ProjectDeleteConfirmation from '../ProjectDeleteConfirmation/ProjectDelet
 import ProjectRemoveFromListConfirmation from '../ProjectRemoveFromListConfirmation/ProjectRemoveFromListConfirmation';
 import ProjectRevokeAccessConfirmation from '../ProjectRevokeAccessConfirmation/ProjectRevokeAccessConfirmation';
 import ProjectShareOverlay from '../ProjectShareOverlay/ProjectShareOverlay';
-import PublishProjectPanelContainer from '../PublishProjectPanelContainer/PublishProjectPanelContainer';
+
+/* Lazy: the publish panel pulls the folder tree, the file manager and
+   ag-grid, and this component renders with the sidebar on every page. */
+const PublishProjectPanelContainer = lazy(
+  async () =>
+    import('../PublishProjectPanelContainer/PublishProjectPanelContainer'),
+);
 
 type Props = PinnedProjectActionOverlay;
 
@@ -99,14 +105,16 @@ const PinnedProjectActionOverlays: FC<Props> = ({
       {/* Kept mounted after closing, so the panel slides out. */}
       {action?.kind === PinnedProjectActionKind.Publish &&
         project.canManage && (
-          <PublishProjectPanelContainer
-            isOpen={action.isOpen}
-            projectId={project.id}
-            projectName={project.name}
-            conversationCount={conversationCount}
-            onClose={onClose}
-            returnFocusRef={returnFocusRef}
-          />
+          <Suspense fallback={null}>
+            <PublishProjectPanelContainer
+              isOpen={action.isOpen}
+              projectId={project.id}
+              projectName={project.name}
+              conversationCount={conversationCount}
+              onClose={onClose}
+              returnFocusRef={returnFocusRef}
+            />
+          </Suspense>
         )}
       {removeTarget != null && (
         <ProjectRemoveFromListConfirmation
