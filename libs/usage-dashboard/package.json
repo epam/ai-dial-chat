@@ -3,6 +3,10 @@
   "description": "Presentational aggregate cost-limit cards for the Usage settings dashboard",
   "version": "0.0.1",
   "license": "Apache-2.0",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss"
+  ],
   "private": true,
   "type": "module",
   "main": "./dist/index.js",

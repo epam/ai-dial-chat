@@ -370,8 +370,9 @@ behind `@epam/ai-dial-chat-hooks/conversation-overlay` (the overlay protocol map
 `./conversation` and `./file-manager` resolve neither `@epam/ai-dial-chat-overlay` nor
 `@epam/ai-dial-attachment-canvas`/`@epam/ai-dial-quotations`; `catalog`'s headless item-mapping enums
 and pure functions are isolated behind `@epam/ai-dial-catalog/mapping`, separate
-from the publish-panel-attached UI on catalog's root. The shared, catalog and
-publishing packages declare CSS/SCSS side effects; `chat-hooks` declares its
+from the publish-panel-attached UI on catalog's root. Every other lib declares
+CSS/SCSS side effects only (or `sideEffects: false` when it ships no
+stylesheet); `chat-hooks` declares its
 compiled JavaScript side-effect-free except for a single audited
 `package.json#sideEffects` array naming the `./oauth`/`./file-manager-canvas`
 facades and the stable preserved modules that retain module-scope `EventTarget`/`LRUCache`
