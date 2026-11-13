@@ -69,11 +69,8 @@ import type {
   UpdatedApplicationDto,
 } from './dto/update-application.dto';
 import {
-  getStoredDisplayName,
-  getStoredDisplayVersion,
   hoistApplicationFields,
-  withDisplayName,
-  withDisplayVersion,
+  normalizeStoredApplication,
 } from './utils/application-body-mapping';
 import { throwApplicationSaveError } from './utils/application-save-error';
 
@@ -414,16 +411,15 @@ export class ApplicationsService {
         );
       }
 
-      const stored = existingResponse.data as DialApplication;
+      const stored = normalizeStoredApplication(existingResponse.data);
       /*
        * A stored display name is a string or a locale map; the SDK types it
        * narrower than DIAL Core writes it, so it is widened here.
        */
       const storedName = resolveDisplayedName(
-        getStoredDisplayName(stored) as LocalizedText,
+        stored.displayName as LocalizedText,
       );
-      const storedVersion =
-        getStoredDisplayVersion(stored) ?? DEFAULT_RESOURCE_VERSION;
+      const storedVersion = stored.displayVersion ?? DEFAULT_RESOURCE_VERSION;
       const nextVersion = body.version ?? storedVersion;
       if (body.name.trim() !== storedName || nextVersion !== storedVersion) {
         const applicationId = `applications/${bucket}/${path}`;
@@ -453,15 +449,15 @@ export class ApplicationsService {
         body.locales,
         body.primaryLocale,
       );
-      /*
-       * The name is a full replacement, not a per-locale merge with whatever
-       * the existing resource had — consistent with every other General-step
-       * field. The stored `display_name` is dropped so it cannot shadow it.
-       */
-      let mergedBody: DialApplication = withDisplayName(
-        stored,
-        toLocalizedValue(displayName),
-      );
+      const mergedBody: DialApplication = {
+        ...stored,
+        /*
+         * This is a full replacement, not a per-locale merge with whatever
+         * the existing resource had — consistent with every other
+         * General-step field.
+         */
+        displayName: toLocalizedValue(displayName),
+      };
       if (description != null)
         mergedBody.description = description as unknown as string;
       /*
@@ -474,8 +470,7 @@ export class ApplicationsService {
       if (body.topics != null && body.topics.length > 0) {
         mergedBody.descriptionKeywords = body.topics;
       }
-      if (body.version != null)
-        mergedBody = withDisplayVersion(mergedBody, body.version);
+      if (body.version != null) mergedBody.displayVersion = body.version;
       if (body.endpoint != null) mergedBody.endpoint = body.endpoint;
       if (body.features != null)
         mergedBody.features = body.features as (typeof mergedBody)['features'];
@@ -693,7 +688,7 @@ export class ApplicationsService {
       return mapDialHttpStatus(response.response.status, context, this.logger);
     }
     return {
-      body: response.data as DialApplication,
+      body: normalizeStoredApplication(response.data),
       etag: response.response.headers?.get('etag') ?? undefined,
     };
   }
@@ -859,7 +854,7 @@ export class ApplicationsService {
         await this.writeApplication(
           authHeaders,
           snapshot,
-          withDisplayVersion(copied, body.version),
+          { ...copied, displayVersion: body.version },
           context,
           etag,
         );
@@ -944,10 +939,10 @@ export class ApplicationsService {
       await this.writeApplication(
         authHeaders,
         snapshot,
-        withDisplayVersion(
-          sourceState.body,
-          getStoredDisplayVersion(snapshotState.body),
-        ),
+        {
+          ...sourceState.body,
+          displayVersion: snapshotState.body.displayVersion,
+        },
         context,
         snapshotState.etag,
       );
@@ -955,10 +950,10 @@ export class ApplicationsService {
         await this.writeApplication(
           authHeaders,
           source,
-          withDisplayVersion(
-            snapshotState.body,
-            getStoredDisplayVersion(sourceState.body),
-          ),
+          {
+            ...snapshotState.body,
+            displayVersion: sourceState.body.displayVersion,
+          },
           context,
           sourceState.etag,
         );

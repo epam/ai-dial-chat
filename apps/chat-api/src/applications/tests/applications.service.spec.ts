@@ -1265,6 +1265,40 @@ describe('ApplicationsService', () => {
       });
     });
 
+    it('removes the stored icon when DIAL Core answers it as icon_url and iconUrl is an empty string', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+        service,
+        okResponse({ ...existingApp, icon_url: 'files/test-bucket/icon.png' }),
+      );
+
+      await service.updateApplication('user1', 'token', id, {
+        ...updateBody,
+        iconUrl: '',
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).not.toHaveProperty('iconUrl');
+      expect(sentBody).not.toHaveProperty('icon_url');
+    });
+
+    it('replaces stored description_keywords with the camelCase topics only', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+        service,
+        okResponse({ ...existingApp, description_keywords: ['old'] }),
+      );
+
+      await service.updateApplication('user1', 'token', id, {
+        ...updateBody,
+        topics: ['new'],
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({ descriptionKeywords: ['new'] });
+      expect(sentBody).not.toHaveProperty('description_keywords');
+    });
+
     it('keeps the stored icon when iconUrl is omitted', async () => {
       const { service } = makeService();
       const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
@@ -2243,7 +2277,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
         'agent__1.1.0',
         {
           headers: { Authorization: 'Bearer token' },
-          body: { display_version: '1.1.0', description: 'pre' },
+          body: { displayVersion: '1.1.0', description: 'pre' },
         },
       );
     });

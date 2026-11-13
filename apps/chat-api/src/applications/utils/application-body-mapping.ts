@@ -1,3 +1,7 @@
+import type { components } from '@epam/ai-dial-typescript-sdk';
+
+type DialApplication = components['schemas']['Application'];
+
 /**
  * `endpoint`, `features`, `inputAttachmentTypes`, and `maxInputAttachments` are
  * top-level DIAL Core `Application` fields, not schema-specific configuration.
@@ -40,56 +44,51 @@ export const hoistApplicationFields = (
 };
 
 /**
- * A stored application as DIAL Core returns it. Core reads both spellings of
- * a field but answers in snake_case (`display_version`, `display_name`), while
- * the SDK types only the camelCase keys, so a stored body carries keys the
- * type does not show.
+ * Every camelCase field of the SDK `Application` write schema. DIAL Core
+ * accepts both spellings of these fields but answers a stored application in
+ * snake_case (`display_version`, `icon_url`, `description_keywords`, …),
+ * so each one may arrive under its snake alias.
  */
-interface StoredApplicationNaming {
-  displayVersion?: string;
-  display_version?: string;
-  displayName?: unknown;
-  display_name?: unknown;
-}
+const CAMEL_CASE_APPLICATION_FIELDS = [
+  'baseUrl',
+  'catalogProperties',
+  'catalogSchemaId',
+  'createdAt',
+  'defaultHeaders',
+  'descriptionKeywords',
+  'displayName',
+  'displayVersion',
+  'forwardAuthToken',
+  'iconUrl',
+  'inputAttachmentTypes',
+  'maxInputAttachments',
+  'maxRetryAttempts',
+  'overrideName',
+  'responsesDefaults',
+  'responsesEndpoint',
+  'updatedAt',
+  'userRoles',
+] as const satisfies readonly (keyof DialApplication)[];
 
-/** Version of a stored application, whichever spelling DIAL Core used. */
-export const getStoredDisplayVersion = (
-  body: StoredApplicationNaming,
-): string | undefined => body.displayVersion ?? body.display_version;
-
-/** Display name of a stored application, whichever spelling DIAL Core used. */
-export const getStoredDisplayName = (body: StoredApplicationNaming): unknown =>
-  body.displayName ?? body.display_name;
+const toSnakeCase = (key: string): string =>
+  key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 
 /**
- * Returns a copy of `body` whose only version key is `displayVersion`, so a
- * stale `display_version` carried over from another stored body can never
- * win over it. `version` undefined drops both keys.
+ * Converts a stored application, as DIAL Core returns it, to the camelCase
+ * `Application` shape the SDK types: each snake alias of a camelCase field is
+ * renamed and dropped, so a body built from it carries one key per field and
+ * a stale snake key can never shadow a value written under the camelCase key.
+ * When both spellings are present the camelCase value wins, as it does in
+ * DIAL Core. Snake-only schema fields (`application_properties`,
+ * `application_type_schema_id`, …) are left untouched.
  */
-export const withDisplayVersion = <T extends object>(
-  body: T,
-  version: string | undefined,
-): T => {
-  const {
-    display_version: _snake,
-    displayVersion: _camel,
-    ...rest
-  } = body as T & StoredApplicationNaming;
-  return (version == null ? rest : { ...rest, displayVersion: version }) as T;
-};
-
-/**
- * Returns a copy of `body` whose only name key is `displayName`, so the
- * stored `display_name` cannot shadow the name being written.
- */
-export const withDisplayName = <T extends object>(
-  body: T,
-  displayName: unknown,
-): T => {
-  const {
-    display_name: _snake,
-    displayName: _camel,
-    ...rest
-  } = body as T & StoredApplicationNaming;
-  return { ...rest, displayName } as T;
+export const normalizeStoredApplication = (raw: unknown): DialApplication => {
+  const body: Record<string, unknown> = { ...(raw as Record<string, unknown>) };
+  for (const camelKey of CAMEL_CASE_APPLICATION_FIELDS) {
+    const snakeKey = toSnakeCase(camelKey);
+    if (!(snakeKey in body)) continue;
+    if (body[camelKey] === undefined) body[camelKey] = body[snakeKey];
+    delete body[snakeKey];
+  }
+  return body as DialApplication;
 };
