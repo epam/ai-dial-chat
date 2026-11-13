@@ -141,6 +141,13 @@ describe('VersionHistorySection', () => {
     expect(screen.queryByRole('list')).toBeNull();
   });
 
+  it('announces loading when the section opens already loading, after the region is mounted', () => {
+    renderSection({ isLoading: true });
+
+    const region = screen.getAllByRole('status')[0];
+    expect(region.textContent).toBe('Loading publication statuses…');
+  });
+
   it('announces loading through a live region that was mounted before its text', () => {
     const { rerender } = renderSection();
     const regions = screen.getAllByRole('status');

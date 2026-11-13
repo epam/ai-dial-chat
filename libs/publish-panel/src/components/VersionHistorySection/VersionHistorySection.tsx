@@ -12,7 +12,7 @@ import {
   Skeleton,
   SkeletonVariant,
 } from '@epam/ai-dial-ui-kit';
-import { useId, type FC } from 'react';
+import { useEffect, useId, useState, type FC } from 'react';
 import {
   VersionHistoryStatus,
   type VersionHistoryLabels,
@@ -67,6 +67,9 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
   styles: stylesProp = {},
 }) => {
   const headingId = useId();
+  /* A region mounted together with its text is read late or not at all, so a section that opens already loading names the state one commit after it mounts. */
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => setIsMounted(true), []);
   const text = { ...DEFAULT_LABELS, ...labels };
   const { colors } = stylesProp;
   const cssVars = {
@@ -95,7 +98,7 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
       </h2>
 
       <LiveRegion visuallyHidden politeness={LiveRegionPoliteness.Polite}>
-        {isLoading && !hasError ? text.loadingLabel : ''}
+        {isMounted && isLoading && !hasError ? text.loadingLabel : ''}
       </LiveRegion>
       <LiveRegion politeness={LiveRegionPoliteness.Assertive}>
         {hasError && (
