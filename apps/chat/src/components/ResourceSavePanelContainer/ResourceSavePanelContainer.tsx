@@ -1,4 +1,3 @@
-import { SEMVER_VERSION_PATTERN } from '@epam/ai-dial-builder-form';
 import type { ResourceFoldersResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
   ResourceNameConflictKind,
@@ -10,7 +9,10 @@ import {
   type ResourceSaveResult,
   type UseResourceSavePanelLabels,
 } from '@epam/ai-dial-chat-hooks';
-import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import {
+  type CatalogEntityType,
+  RESOURCE_VERSION_PATTERN,
+} from '@epam/ai-dial-chat-shared';
 import { StandaloneSaveToFolderPanel } from '@epam/ai-dial-publish-panel';
 import type { FC, RefObject } from 'react';
 import { memo, useCallback, useMemo } from 'react';
@@ -25,6 +27,7 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
+import { useResourceVersionHistory } from '../../hooks/publish/useResourceVersionHistory';
 import {
   type SaveNotifiableEntity,
   useResourceSaveNotification,
@@ -151,7 +154,7 @@ const ResourceSavePanelContainer: FC<Props> = ({
     resourceId,
     currentFolderPath,
     currentVersion,
-    versionPattern: SEMVER_VERSION_PATTERN,
+    versionPattern: RESOURCE_VERSION_PATTERN,
     listPersonalFolders,
     organizationFolders: canPublish ? organization : undefined,
     publishClient,
@@ -225,9 +228,16 @@ const ResourceSavePanelContainer: FC<Props> = ({
     [t, typeLabel],
   );
 
+  const versionHistory = useResourceVersionHistory(
+    resourceId,
+    resourceType,
+    isOpen && currentVersion != null,
+  );
+
   return (
     <StandaloneSaveToFolderPanel
       {...panelProps}
+      versionHistory={versionHistory}
       isOpen={isOpen}
       onClose={onClose}
       returnFocusRef={returnFocusRef}

@@ -11,6 +11,7 @@ import type {
 import type { PublicationRule, PublishResourceSummary } from './publish';
 import type { PublishAccessRulesStyles } from './publish-access-rules-styles';
 import type { PublishFoldersTreeStyles } from './publish-folders-tree';
+import type { VersionHistorySectionProps } from './version-history';
 
 /** Text overrides for the body of the save-to-folder panel. */
 export interface SaveToFolderPanelLabels {
@@ -134,6 +135,8 @@ export interface SaveToFolderPanelBaseProps {
   version?: SaveToFolderVersionProps;
   /** Access rules for a destination under a root with `hasAccessRules`; omit to hide the section. */
   accessRules?: SaveToFolderAccessRulesProps;
+  /** Versions history shown as the last section of the main view; omit to hide the section. */
+  versionHistory?: VersionHistorySectionProps;
   /** Whether a save is in flight; every control is disabled meanwhile. Defaults to `false`. */
   isSubmitting?: boolean;
   /** Error from the last save attempt, already translated; announced assertively. */

@@ -580,7 +580,7 @@
             "in": "path",
             "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "my-app__1.0",
               "type": "string"
             }
@@ -660,7 +660,7 @@
             "in": "path",
             "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "my-app__1.0",
               "type": "string"
             }
@@ -740,7 +740,7 @@
             "in": "path",
             "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "my-app__1.0",
               "type": "string"
             }
@@ -813,7 +813,7 @@
             "in": "path",
             "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "my-app__1.0",
               "type": "string"
             }
@@ -898,7 +898,7 @@
             "in": "path",
             "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "my-app__1.0",
               "type": "string"
             }
@@ -3160,7 +3160,7 @@
             "in": "path",
             "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
               "type": "string"
             }
@@ -3226,7 +3226,7 @@
             "in": "path",
             "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
               "type": "string"
             }
@@ -3237,7 +3237,7 @@
             "in": "path",
             "description": "The external service id defined in the application's `external_services` config.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "finhub-api2",
               "type": "string"
             }
@@ -3298,7 +3298,7 @@
             "in": "path",
             "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
               "type": "string"
             }
@@ -3380,7 +3380,7 @@
             "in": "path",
             "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
               "type": "string"
             }
@@ -3447,7 +3447,7 @@
             "in": "path",
             "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
               "type": "string"
             }
@@ -3458,7 +3458,7 @@
             "in": "path",
             "description": "The external service id defined in the application's `external_services` config.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "finhub-api2",
               "type": "string"
             }
@@ -3531,7 +3531,7 @@
             "in": "path",
             "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
               "type": "string"
             }
@@ -3542,7 +3542,7 @@
             "in": "path",
             "description": "The external service id defined in the application's `external_services` config.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "finhub-api2",
               "type": "string"
             }
@@ -9089,6 +9089,89 @@
         "tags": ["publish"]
       }
     },
+    "/api/v1/catalog/{entityType}/{entityId}/version-statuses": {
+      "get": {
+        "description": "Returns one entry per saved version of the application or toolset (same owner, folder and base name) with its publication status: `not-published`, `in-review`, `published` (with its folders and publisher) or `unknown` for a resource owned by another user. Derived from the caller’s own publications in DIAL Core, read once per request, and never from chat-api-side storage. Only applications and toolsets have versions.",
+        "operationId": "getCatalogVersionStatuses",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": true,
+            "in": "path",
+            "description": "Catalog entity kind.",
+            "schema": {
+              "example": "toolset",
+              "type": "string",
+              "enum": [
+                "model",
+                "toolset",
+                "application",
+                "prompt",
+                "skill",
+                "project"
+              ]
+            }
+          },
+          {
+            "name": "entityId",
+            "required": true,
+            "in": "path",
+            "description": "The entity's DIAL Core resource path, used directly as the Publication API `sourceUrl`.",
+            "schema": {
+              "example": "tool-abc123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status of every version in the entity’s version group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VersionStatusEntryDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid entityType or entityId, or an entity type without versions"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "DIAL Core denied access to the resource"
+          },
+          "404": {
+            "description": "No version of the entity exists in the caller’s listing"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get the publication status of every version of an entity",
+        "tags": ["publish"]
+      }
+    },
     "/api/v1/catalog/{entityType}/{entityId}/publish-dependencies": {
       "get": {
         "description": "Returns the direct references of a catalog entity (Toolset, Application, Prompt, Skill or Project) that are not in the public bucket, so the publisher can publish them too before the published copy reaches its audience. Resources that publishing already carries along (the application icon and its declared files) are not listed, and a dependency’s own dependencies are not followed. The list is advisory: when it cannot be resolved the response is an empty list rather than an error. Kinds that reference no other resource always return an empty list.",
@@ -13758,6 +13841,11 @@
             "type": "string",
             "description": "Display version from DIAL Core"
           },
+          "versionGroupId": {
+            "type": "string",
+            "description": "Identifies the versions of one application saved by one owner in one folder: the owner bucket, the folder and the base name without the `__<version>` suffix of the stored id. Absent for models and for ids without a version suffix.",
+            "example": "abc/Design/Review"
+          },
           "isFeatured": {
             "type": "boolean",
             "description": "Whether this deployment is featured (configured via env)"
@@ -15383,6 +15471,11 @@
             "type": "string",
             "example": "0.0.1"
           },
+          "versionGroupId": {
+            "type": "string",
+            "description": "Identifies the versions of one toolset saved by one owner in one folder: the owner bucket, the folder and the base name without the `__<version>` suffix of the stored id. Absent for an id without a version suffix.",
+            "example": "abc/Search/Web search"
+          },
           "description": {
             "example": "My toolset description",
             "oneOf": [
@@ -16564,7 +16657,7 @@
             "example": "applications/catalog/Untitled%20app%201__0.0.1",
             "minLength": 1,
             "maxLength": 256,
-            "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$"
+            "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$"
           },
           "custom_content": {
             "description": "Extra DIAL payload attached to the first user message",
@@ -18586,7 +18679,7 @@
             "description": "Model deployment ID that produced the response",
             "example": "anthropic.claude-v3-sonnet",
             "maxLength": 256,
-            "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$"
+            "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$"
           },
           "rate": {
             "type": "number",
@@ -19784,6 +19877,47 @@
           "publishedBy",
           "publishCredentials"
         ]
+      },
+      "VersionPublicationStatus": {
+        "type": "string",
+        "enum": ["not-published", "in-review", "published", "unknown"]
+      },
+      "VersionStatusEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "DIAL Core resource id of the version, as the listings return it.",
+            "example": "applications/abc/Design/Review__1.0.0"
+          },
+          "version": {
+            "type": "string",
+            "description": "Display version of the version; empty when the resource has none.",
+            "example": "1.0.0"
+          },
+          "status": {
+            "example": "published",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VersionPublicationStatus"
+              }
+            ]
+          },
+          "publishedFolders": {
+            "description": "Folders a published version is published to, without the `public/` prefix; empty otherwise.",
+            "example": ["Organization/Design"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "publishedBy": {
+            "type": "string",
+            "description": "Display name of the publisher of a published version.",
+            "example": "Jane Doe"
+          }
+        },
+        "required": ["id", "version", "status", "publishedFolders"]
       },
       "PublishRulesResultDto": {
         "type": "object",

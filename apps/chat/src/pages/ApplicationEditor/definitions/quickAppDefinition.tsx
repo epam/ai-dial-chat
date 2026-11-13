@@ -1,7 +1,4 @@
-import {
-  SEMVER_VERSION_PATTERN,
-  type DeploymentCreationFormValues,
-} from '@epam/ai-dial-builder-form';
+import { type DeploymentCreationFormValues } from '@epam/ai-dial-builder-form';
 import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import { isQuickAppSchema } from '@epam/ai-dial-chat-hooks';
 import {
@@ -110,7 +107,7 @@ export const quickAppDefinition =
     getTitle: getSchemaAppTitle,
     metadataValidation: {
       validateNamePattern: true,
-      validateVersionPattern: SEMVER_VERSION_PATTERN,
+      validateVersionPattern: true,
     },
     getMetadataLabelOverrides: getSchemaAppMetadataLabelOverrides,
     defaultMetadata: SCHEMA_APP_DEFAULT_METADATA,

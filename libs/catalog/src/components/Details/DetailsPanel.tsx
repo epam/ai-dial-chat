@@ -48,6 +48,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   getPublishDependencies,
   resolvePublishDependenciesLabels,
   resolvePublishApprovalLabels,
+  publishVersionHistory,
+  onPublishOpenChange,
   publishFolderItems = EMPTY_PUBLISH_FOLDERS,
   publishExpandedPaths,
   onPublishExpandedPathsChange,
@@ -172,6 +174,21 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
   const [isCredentialsManagementOpen, setIsCredentialsManagementOpen] =
     useState(false);
+
+  const publishOpenListenerRef = useRef({ onPublishOpenChange, item });
+  useEffect(() => {
+    publishOpenListenerRef.current = { onPublishOpenChange, item };
+  }, [onPublishOpenChange, item]);
+  useEffect(() => {
+    const { onPublishOpenChange: notify, item: openItem } =
+      publishOpenListenerRef.current;
+    notify?.(isPublishOpen, openItem);
+    return () => {
+      const { onPublishOpenChange: notifyClosed, item: closedItem } =
+        publishOpenListenerRef.current;
+      notifyClosed?.(false, closedItem);
+    };
+  }, [isPublishOpen, item.id]);
 
   useEffect(() => {
     setIsStarred(initialIsStarred);
@@ -396,6 +413,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             publishLabels={publishLabels}
             resolvePublishDependenciesLabels={resolvePublishDependenciesLabels}
             resolvePublishApprovalLabels={resolvePublishApprovalLabels}
+            publishVersionHistory={publishVersionHistory}
           />
         )}
 

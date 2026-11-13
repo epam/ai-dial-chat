@@ -375,6 +375,47 @@ The list is informational: rows are not interactive, and it never changes what t
 
 Copy comes from `PublishPanelLabels.dependenciesLabels` (`PublishDependenciesLabels`): `title` (default `'Private dependencies'`), `description` (the host names the published entity in it, such as application or conversation; the default says "this item"), `typeLabels` (default `'Application'`, `'Toolset'`, `'Prompt'`, `'Skill'`, `'File'`) and `getAnnouncement(count)`, the screen-reader text for the count, so a host can pluralise it in its own language. Colors come from `PublishPanelStyles.dependencies.colors` (`PublishDependenciesColors`: `headingText`, `nameText`, `metaText`, falling back to `--text-primary` and `--text-secondary`). `PublishDependenciesList` can also be used on its own; it then takes `labels`, `styles`, and the typography classes `headingClassName` (default `'dial-body-semi-text'`), `nameClassName` (default `'dial-small-semi-text'`) and `metaClassName` (default `'dial-small-text'`).
 
+### VersionHistorySection
+
+Read-only list of the other saved versions of an application or toolset (the version being edited or published is not listed), shown as the last section of `SaveToFolderPanel` and `PublishPanel` (and so of `StandaloneSaveToFolderPanel` and `StandalonePublishPanel`) when the host passes the `versionHistory` prop. Without it neither panel renders the section. Rows carry no action and the section adds no version input: publishing still uses the saved version.
+
+```tsx
+import {
+  VersionHistoryStatus,
+  type VersionHistorySectionProps,
+} from '@epam/ai-dial-publish-panel';
+
+const versionHistory: VersionHistorySectionProps = {
+  rows: [
+    {
+      id: 'applications/b1/Design/Review__beta-2',
+      version: 'beta-2',
+      status: VersionHistoryStatus.NotPublished,
+      folder: 'Personal / Design',
+      modifiedAt: '20 Jul 2026',
+      author: 'by Ivan Petrov',
+    },
+    {
+      id: 'applications/b1/Design/Review__1.0.0',
+      version: '1.0.0',
+      status: VersionHistoryStatus.Published,
+      folder: 'Personal / Design',
+      modifiedAt: '12 Jul 2026',
+      author: 'Published by Jane Doe',
+    },
+  ],
+  isLoading: false,
+  hasError: false,
+  onRetry: reloadStatuses,
+};
+
+<PublishPanel {...publishProps} versionHistory={versionHistory} />;
+```
+
+The library renders the rows it is given, in the given order; the host sorts them (the hook `useVersionHistory` from `@epam/ai-dial-chat-hooks` sorts by last modified time, newest first) and formats the folder, date and author text. Each row has the version and, for a published or in-review version, the status badge on the first line (a not published version has no badge, and the line keeps the badge height so rows do not change height when statuses load) with the date at the far end; the folder (with the kit folder icon) and the author on the second line. A row's `status` is left out while it loads; `VersionHistoryStatus.Unknown` (a version the user does not own) reads as "Status unavailable", never as Not published. `isLoading` draws a placeholder in the status slot of every row whose status has not loaded, so the layout does not shift when the badge arrives, and announces `loadingLabel` to screen readers without showing it; `hasError` shows the error message while the rows stay visible; `onRetry` backs the Retry link. The loading and error messages sit in live regions that are always mounted, so a change after the first render is announced (the error, and the loading message when `isLoading` turns on later); a section that mounts with `isLoading` already `true` announces the loading text one commit after it mounts, so the region exists before its text. With no rows the section shows its own empty message; a host that has nothing to show yet should leave `versionHistory` out instead.
+
+Copy comes from `labels` (`VersionHistoryLabels`): `heading` (default `'Versions history'`), `inReviewLabel` (`'In review'`), `publishedLabel` (`'Published'`, the badge), `unknownLabel` (`'Status unavailable'`), `loadingLabel`, `emptyLabel` (`'No saved versions yet.'`), `errorLabel` and `retryLabel` (`'Retry'`). Colors come from `styles.colors` (`VersionHistoryColors`: `headingText`, `versionText` and `dateText` falling back to `--text-primary`; `metaText` falling back to `--text-secondary`; `skeleton` falling back to `--bg-control-disable-primary`; `rowBorder` falling back to `--stroke-tertiary`). Typography comes from `headingClassName` (default `'dial-body-semi-text'`, or the panel's own heading class), `versionClassName` (default `'dial-small-semi-text'`), `dateClassName` (default `'dial-small-text'`) and `metaClassName` (default `'dial-tiny-text'`). `VersionHistorySection` can also be used on its own.
+
 ### UnpublishConfirmationDialog
 
 Confirms an unpublish request. One published folder is confirmed directly. When there are several folders, the user must pick one in a radio group before Unpublish is enabled. While `isLoading`, both buttons stay rendered and disabled, and the footer announces `loadingStatusLabel`.

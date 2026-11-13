@@ -19,6 +19,7 @@ export interface DetailsPublishContentProps extends Pick<
   | 'publishLabels'
   | 'resolvePublishDependenciesLabels'
   | 'resolvePublishApprovalLabels'
+  | 'publishVersionHistory'
 > {
   /** Rule source options, with the panel default already applied. */
   ruleSourceOptions: string[];
@@ -46,6 +47,7 @@ export const DetailsPublishContent: FC<DetailsPublishContentProps> = ({
   publishLabels,
   resolvePublishDependenciesLabels,
   resolvePublishApprovalLabels,
+  publishVersionHistory,
 }) => (
   <div className="p-4 desktop:p-[22px]">
     <PublishPanel
@@ -96,6 +98,7 @@ export const DetailsPublishContent: FC<DetailsPublishContentProps> = ({
         }),
       }}
       dependencies={publishDependencies}
+      versionHistory={publishVersionHistory}
     />
   </div>
 );

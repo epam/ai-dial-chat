@@ -3,6 +3,8 @@ import {
   ENTITY_NAME_MAX_LENGTH,
   exceedsMaxLength,
   hasControlCharacters,
+  RESOURCE_VERSION_PATTERN,
+  STORED_RESOURCE_VERSION_PATTERN,
 } from '@epam/ai-dial-chat-shared';
 import type { DeploymentCreationFormValues } from '../models/deployment-creation-form';
 import type {
@@ -14,11 +16,24 @@ import { DeploymentCreationFieldErrorCode } from '../models/validation';
 /** Allowed characters for the name field: letters, digits, spaces, underscores, dots, dashes. */
 export const NAME_PATTERN = /^[a-zA-Z0-9 _.-]+$/;
 
-/** Allowed characters for the version field: letters, digits, dots, underscores, dashes. */
-export const VERSION_PATTERN = /^[a-zA-Z0-9._-]+$/;
+/** Default version rule: `RESOURCE_VERSION_PATTERN` from `@epam/ai-dial-chat-shared` (1-64 of letters, digits, `_`, `.`, `+`, `-`; no trailing dot, no `__`, no leading `_`). */
+export const VERSION_PATTERN = RESOURCE_VERSION_PATTERN;
 
-/** Stricter version shape: one or more dot-separated numeric segments (e.g. `0.0.1`). */
-export const SEMVER_VERSION_PATTERN = /^\d+(\.\d+)*$/;
+/** Version rule for a deployment that already exists: `STORED_RESOURCE_VERSION_PATTERN` from `@epam/ai-dial-chat-shared`. */
+export const STORED_VERSION_PATTERN = STORED_RESOURCE_VERSION_PATTERN;
+
+/**
+ * Returns the validation options with the version check switched to `STORED_VERSION_PATTERN` in edit mode, so a version stored under the earlier, looser rules still saves unchanged.
+ * @param options - validation options of the create form
+ * @param isEditMode - whether an existing deployment is being edited
+ */
+export const withStoredVersionRule = (
+  options: DeploymentCreationFormValidationOptions,
+  isEditMode: boolean,
+): DeploymentCreationFormValidationOptions =>
+  isEditMode && options.validateVersionPattern === true
+    ? { ...options, validateVersionPattern: STORED_VERSION_PATTERN }
+    : options;
 
 /** Version a new deployment's create form opens with; a SemVer 2.0.0 value the host seeds into its create-mode metadata. */
 export const DEFAULT_DEPLOYMENT_VERSION = '1.0.0';

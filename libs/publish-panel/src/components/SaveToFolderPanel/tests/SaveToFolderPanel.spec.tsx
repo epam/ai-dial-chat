@@ -218,3 +218,40 @@ describe('SaveToFolderPanel — folder view', () => {
     expect(screen.queryByText(/dependencies/i)).toBeNull();
   });
 });
+
+describe('SaveToFolderPanel — versions history', () => {
+  const versionHistory = {
+    rows: [
+      { id: 'a', version: '1.0.0' },
+      { id: 'b', version: 'beta-2' },
+    ],
+  };
+
+  it('renders the section as the last section of the main view', () => {
+    renderPanel({ version: versionProps(), versionHistory });
+
+    const region = screen.getByRole('region', { name: 'Versions history' });
+    const versionHeading = screen.getByRole('heading', { name: 'Version' });
+    expect(
+      versionHeading.compareDocumentPosition(region) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+  });
+
+  it('renders no section when the host supplies no history', () => {
+    renderPanel({ version: versionProps() });
+
+    expect(
+      screen.queryByRole('region', { name: 'Versions history' }),
+    ).toBeNull();
+  });
+
+  it('does not render the section in the folder view', () => {
+    renderPanel({ versionHistory, view: SaveToFolderView.ChangeFolder });
+
+    expect(
+      screen.queryByRole('region', { name: 'Versions history' }),
+    ).toBeNull();
+  });
+});

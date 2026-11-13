@@ -328,9 +328,11 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       onPublishCredentialsChange,
       allowReplace,
       dependencies,
+      versionHistory,
     }: {
       allowReplace?: boolean;
       dependencies?: PublishDependency[];
+      versionHistory?: { rows: { id: string; version: string }[] };
       onChangeFolderClick: () => void;
       onPendingFolderPathChange: (path: string[]) => void;
       onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
@@ -352,6 +354,12 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
           {dependencies == null
             ? 'none'
             : dependencies.map((dependency) => dependency.name).join(',')}
+        </span>
+        <span>
+          versionHistory:
+          {versionHistory == null
+            ? 'none'
+            : versionHistory.rows.map((row) => row.version).join(',')}
         </span>
         <span>author:{author}</span>
         <button onClick={() => onAuthorChange('DIAL Team')}>Set author</button>
@@ -2999,5 +3007,51 @@ describe('DetailsPanel — empty tabs', () => {
     // AboutTab is mocked in this file as 'about content'.
     expect(screen.getByText('about content')).toBeTruthy();
     expect(screen.queryByText('No data')).toBeNull();
+  });
+});
+
+describe('DetailsPanel — versions history', () => {
+  const versionHistory = {
+    rows: [
+      { id: 'a', version: '1.0.0' },
+      { id: 'b', version: 'beta-2' },
+    ],
+  };
+
+  it('passes the host-resolved history to the publish panel unchanged', async () => {
+    renderPanel({ publishVersionHistory: versionHistory });
+
+    await openPublish();
+
+    expect(screen.getByText('versionHistory:1.0.0,beta-2')).toBeTruthy();
+  });
+
+  it('hands the publish panel no history when the host supplies none', async () => {
+    renderPanel();
+
+    await openPublish();
+
+    expect(screen.getByText('versionHistory:none')).toBeTruthy();
+  });
+
+  it('tells the host when the publish sub-view opens and closes', async () => {
+    const onPublishOpenChange = vi.fn();
+    renderPanel({ onPublishOpenChange });
+
+    expect(onPublishOpenChange).toHaveBeenLastCalledWith(false, item);
+
+    await openPublish();
+
+    expect(onPublishOpenChange).toHaveBeenLastCalledWith(true, item);
+  });
+
+  it('reports the sub-view closed when the panel unmounts', async () => {
+    const onPublishOpenChange = vi.fn();
+    const { unmount } = renderPanel({ onPublishOpenChange });
+    await openPublish();
+
+    unmount();
+
+    expect(onPublishOpenChange).toHaveBeenLastCalledWith(false, item);
   });
 });
