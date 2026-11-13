@@ -303,7 +303,14 @@ export interface AnnouncementItemDto {
    * @memberof AnnouncementItemDto
    */
   link: AnnouncementLinkDto | null;
+  /**
+   * How urgent the announcement is, for clients that mark maintenance or outage notices. Always present: an entry configured without one, or with an unrecognized value, is returned as `info`. Clients should treat a value they do not recognize as `info`, since more levels may be added.
+   * @type {AnnouncementSeverity}
+   * @memberof AnnouncementItemDto
+   */
+  severity: AnnouncementSeverity;
 }
+
 /**
  *
  * @export
@@ -323,6 +330,18 @@ export interface AnnouncementLinkDto {
    */
   href: string;
 }
+
+/**
+ * How urgent the announcement is, for clients that mark maintenance or outage notices. Always present: an entry configured without one, or with an unrecognized value, is returned as `info`. Clients should treat a value they do not recognize as `info`, since more levels may be added.
+ * @export
+ */
+export const AnnouncementSeverity = {
+  Info: 'info',
+  Warning: 'warning',
+} as const;
+export type AnnouncementSeverity =
+  (typeof AnnouncementSeverity)[keyof typeof AnnouncementSeverity];
+
 /**
  *
  * @export
@@ -4541,6 +4560,12 @@ export interface DialModelDto {
    */
   responsesDefaults?: { [key: string]: unknown };
   /**
+   * Curated catalog display metadata from DIAL Core, forwarded as sent
+   * @type {{ [key: string]: unknown }}
+   * @memberof DialModelDto
+   */
+  catalogProperties?: { [key: string]: unknown };
+  /**
    *
    * @type {Array<string>}
    * @memberof DialModelDto
@@ -6540,6 +6565,12 @@ export interface ModelCatalogEntryDto {
    * @memberof ModelCatalogEntryDto
    */
   interfaces?: Array<string>;
+  /**
+   * Known model catalog properties allow-listed from DIAL Core catalog_properties
+   * @type {ModelCatalogPropertiesDto}
+   * @memberof ModelCatalogEntryDto
+   */
+  catalogProperties?: ModelCatalogPropertiesDto;
 }
 /**
  *
