@@ -121,9 +121,23 @@ const colors: McpAppInlinePreviewColors = {
 - `sanitizeToolName(input)` — reproduces the orchestrator's tool-name sanitization (runs of characters outside `[a-zA-Z0-9_-]` become `_`, a leading `_` is added when the name does not start with a letter or `_`, capped at 64 characters), so a toolset display name such as `Entity MCP Server` can be matched against the tool-call name `Entity_MCP_Server_<tool>`. Temporary heuristic until MCP Apps are fully supported.
 - `mcpAppCanvasKey(messageIndex)` — stable per-message cache/canvas key.
 
+## Enums
+
+```ts
+import { McpAppToolDiscovery, McpDeploymentKind } from '@epam/ai-dial-mcp-apps';
+
+// Which of the host's two MCP proxy routes a deployment id resolves through.
+McpDeploymentKind.Toolset; // 'toolset'
+McpDeploymentKind.Application; // 'application' — an application that is itself an MCP server
+
+// How a tool was discovered; only a `Direct` match is live-re-called.
+McpAppToolDiscovery.Direct; // 'direct' — the active deployment is this MCP server
+McpAppToolDiscovery.Indirect; // 'indirect' — matched by a toolset display-name prefix guess
+```
+
 ## Types
 
-- `McpAppToolRef`, `McpAppToolCallSeed`, `McpDeploymentKind`
+- `McpAppToolRef`, `McpAppToolCallSeed`
 - `McpAppHostAdapter`, `FetchMcpAppResourceHtml`, `CallMcpAppTool`
 - `McpAppResponseCache`, `CachedMcpAppResponse`
 - `McpAppInlinePreviewStatus`, `McpAppInlinePreviewState`, `McpAppInlinePreviewProps`

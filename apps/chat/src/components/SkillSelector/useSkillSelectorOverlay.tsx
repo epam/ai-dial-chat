@@ -1,6 +1,7 @@
 import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType, useIsMobile } from '@epam/ai-dial-chat-shared';
 import {
+  ChatSkillDetailsTrigger,
   useSkillSelectorOverlay as useHostAgnosticSkillSelectorOverlay,
   type SkillSelectorOverlayLabels,
   type UseSkillSelectorOverlayResult,
@@ -114,8 +115,8 @@ export const useSkillSelectorOverlay = ({
     labels,
     historyChipLabelClassName,
     /* Skill chips open their description on click or tap, never on hover — in the chat and in the input alike (also covers touch screens, [#9250](https://github.com/epam/ai-dial-chat/issues/9250)). */
-    historyDetailsTrigger: 'click',
-    activeMentionDetailsTrigger: 'click',
+    historyDetailsTrigger: ChatSkillDetailsTrigger.Click,
+    activeMentionDetailsTrigger: ChatSkillDetailsTrigger.Click,
     isRowTooltipHidden: true,
     renderCatalogContent,
     detailsPanelComponent: SkillDetailsPanelContainer,

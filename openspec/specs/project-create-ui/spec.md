@@ -153,6 +153,7 @@ At mobile widths the container moves Cancel and Create into a sticky footer, so 
 Create SHALL be disabled while any of these holds:
 
 - `validateProjectName(values.name.trim())` returns an error;
+- the host reports `errors.name` (for example a taken name) and the name is editable; editing the name clears that error, which re-enables Create, and a read-only name never blocks Create on it;
 - `isSubmitting` is true;
 - a refinement is pending.
 
@@ -162,6 +163,11 @@ While `isSubmitting`, Create shows the kit loading state and its accessible name
 
 - **WHEN** the form first renders
 - **THEN** Create is disabled, and typing `Handbook` into Name enables it
+
+#### Scenario: Create stays disabled while the host reports a name error
+
+- **WHEN** the host passes `errors.name` of `A project with this name already exists` for a valid name
+- **THEN** Create is disabled, and once the host clears the error after the user edits Name, Create is enabled again
 
 #### Scenario: Cancel with unsaved changes asks for confirmation
 

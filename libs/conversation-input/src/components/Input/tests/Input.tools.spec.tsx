@@ -174,15 +174,89 @@ describe('Input — tool chips on a phone', () => {
     mockUseIsPhone.mockReturnValue(true);
   });
 
-  it('hides the chip of a tool that is switched off', () => {
-    renderInput([buildTool('deep_research', 'Deep Research')]);
+  it('renders one summary chip instead of a chip per tool', () => {
+    renderInput([
+      buildTool('deep_research', 'Deep Research', true),
+      buildTool('web_search', 'Web Search'),
+    ]);
 
     expect(screen.queryByRole('button', { name: 'Deep Research' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Web Search' })).toBeNull();
+    const chip = screen.getByRole('button', { name: 'Tools: 1 of 2 on' });
+    expect(chip.textContent).toBe('Tools1');
   });
 
-  it('keeps the chip of a tool that is switched on', () => {
-    renderInput([buildTool('deep_research', 'Deep Research', true)]);
+  it('renders a chip per tool when isToolChipRowAllowedOnPhone is set', () => {
+    render(
+      <Input
+        onSend={vi.fn()}
+        isToolChipRowAllowedOnPhone
+        toolsMenuItems={[
+          buildTool('deep_research', 'Deep Research', true),
+          buildTool('web_search', 'Web Search'),
+        ]}
+        onToolToggle={vi.fn()}
+      />,
+    );
 
+    expect(screen.getByRole('button', { name: 'Deep Research' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Web Search' })).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: /Tools: \d+ of \d+ on/ }),
+    ).toBeNull();
+  });
+
+  it('shows no count while every tool is off', () => {
+    renderInput([buildTool('deep_research', 'Deep Research')]);
+
+    const chip = screen.getByRole('button', { name: 'Tools: 0 of 1 on' });
+    expect(chip.textContent).toBe('Tools');
+  });
+
+  it('opens the tools sheet from the summary chip and toggles a tool there', async () => {
+    const onToolToggle = vi.fn();
+    renderInput([buildTool('deep_research', 'Deep Research')], onToolToggle);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Tools: 0 of 1 on' }),
+    );
+    await userEvent.click(
+      await screen.findByRole('menuitemcheckbox', { name: 'Deep Research' }),
+    );
+
+    expect(onToolToggle).toHaveBeenCalledWith('deep_research');
+  });
+
+  it('names the summary chip through toolsChipLabels.summaryLabel', () => {
+    render(
+      <Input
+        onSend={vi.fn()}
+        toolsMenuItems={[buildTool('deep_research', 'Deep Research', true)]}
+        onToolToggle={vi.fn()}
+        toolsChipLabels={{
+          summaryLabel: (selected, total) => `Инструменты ${selected}/${total}`,
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Инструменты 1/1' }),
+    ).toBeTruthy();
+  });
+
+  it('drops the + button when the chip row is kept and tools are not removable', () => {
+    render(
+      <Input
+        onSend={vi.fn()}
+        hideAttachFile
+        canRemoveTools={false}
+        isToolChipRowAllowedOnPhone
+        toolsMenuItems={[buildTool('deep_research', 'Deep Research')]}
+        onToolToggle={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Add' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Deep Research' })).toBeTruthy();
   });
 

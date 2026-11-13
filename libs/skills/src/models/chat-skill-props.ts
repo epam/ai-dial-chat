@@ -1,3 +1,4 @@
+import type { ChatSkillDetailsTrigger } from '../types/chat-skill-details-trigger';
 import type { SkillUnresolvedReason } from '../types/skill-unresolved-reason';
 import type { SkillInfoTooltipContentColors } from './skill-info-tooltip-content-props';
 
@@ -38,9 +39,6 @@ export interface ChatSkillLabels {
    */
   notSharedTooltipLabel?: string;
 }
-
-/** How a skill chip opens its description card. */
-export type ChatSkillDetailsTrigger = 'hover' | 'click';
 
 /** Props for the ChatSkill component. */
 export interface ChatSkillProps {

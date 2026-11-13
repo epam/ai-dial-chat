@@ -101,6 +101,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   loadPdf,
   configurePdfWorker,
   onVisualizerSendMessage,
+  mcpAppHostContext,
 }) => {
   const [isCopiedText, setIsCopiedText] = useState(false);
   const [isCopiedMarkdown, setIsCopiedMarkdown] = useState(false);
@@ -464,6 +465,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
         loadPdf={loadPdf}
         configurePdfWorker={configurePdfWorker}
         onVisualizerSendMessage={onVisualizerSendMessage}
+        mcpAppHostContext={mcpAppHostContext}
       />
     </SidebarPanel>
   );

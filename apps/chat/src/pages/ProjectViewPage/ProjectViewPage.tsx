@@ -6,6 +6,7 @@ import {
 import {
   mapProjectArtifactsToOutputs,
   mapProjectDetailsToViewModel,
+  isProjectSharedWithMe,
   ProjectRefreshOutcome,
   useProject,
   useProjectArtifacts,
@@ -14,6 +15,7 @@ import {
   useProjectWatch,
 } from '@epam/ai-dial-chat-hooks/project';
 import { ProjectOutputs, ProjectView } from '@epam/ai-dial-projects';
+import { UnpublishConfirmationDialog } from '@epam/ai-dial-publish-panel';
 import {
   memo,
   useCallback,
@@ -27,6 +29,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import ProjectConversationsSection from '../../components/ProjectConversationsSection/ProjectConversationsSection';
 import ProjectDeleteConfirmation from '../../components/ProjectDeleteConfirmation/ProjectDeleteConfirmation';
+import ProjectRemoveFromListConfirmation from '../../components/ProjectRemoveFromListConfirmation/ProjectRemoveFromListConfirmation';
+import ProjectRevokeAccessConfirmation from '../../components/ProjectRevokeAccessConfirmation/ProjectRevokeAccessConfirmation';
 import ProjectShareOverlay from '../../components/ProjectShareOverlay/ProjectShareOverlay';
 import PublishProjectPanelContainer from '../../components/PublishProjectPanelContainer/PublishProjectPanelContainer';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
@@ -36,15 +40,21 @@ import {
 } from '../../constants/routes';
 import { ProjectsI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
+import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useUserConfig } from '../../context/UserConfigContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { projectsClient } from '../../hooks/projects/projects-client';
 import { useProjectActions } from '../../hooks/projects/useProjectActions';
 import { useProjectOutputsLabels } from '../../hooks/projects/useProjectOutputsLabels';
+import { useProjectRemoveFromList } from '../../hooks/projects/useProjectRemoveFromList';
+import { useProjectShareRecipients } from '../../hooks/projects/useProjectShareRecipients';
+import { useProjectUnpublish } from '../../hooks/projects/useProjectUnpublish';
 import { useProjectViewLabels } from '../../hooks/projects/useProjectViewLabels';
+import { useUnpublishConfirmationLabels } from '../../hooks/publish/useUnpublishConfirmationLabels';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
+import { resolveProjectFileDownloadUrl } from '../../utils/dial-file';
 import {
   toProjectOutputAttachment,
   toStoredProjectFileAttachment,
@@ -94,9 +104,37 @@ const ProjectViewPage: FC = () => {
     ]);
     if (outcome === ProjectRefreshOutcome.NotFound) handleDeletedElsewhere();
   }, [handleDeletedElsewhere, refresh, refreshArtifacts, refreshConversations]);
+  /*
+   * A created chat opens right away, and the page's own writes would only
+   * trigger refreshes that the navigation cancels. A created chat always
+   * navigates to the chat route, which unmounts this page, so the hold is
+   * released only when the create fails or the route names another project.
+   */
+  const isCreatingChatRef = useRef(false);
+  const hasMissedChangeRef = useRef(false);
+  useEffect(() => {
+    isCreatingChatRef.current = false;
+    hasMissedChangeRef.current = false;
+  }, [projectId]);
+  const handleLiveChange = useCallback(async () => {
+    if (isCreatingChatRef.current) {
+      hasMissedChangeRef.current = true;
+      return;
+    }
+    await handleProjectChanged();
+  }, [handleProjectChanged]);
+  const handleChatCreateStart = useCallback(() => {
+    isCreatingChatRef.current = true;
+  }, []);
+  const handleChatCreateFailed = useCallback(() => {
+    isCreatingChatRef.current = false;
+    if (!hasMissedChangeRef.current) return;
+    hasMissedChangeRef.current = false;
+    void handleProjectChanged();
+  }, [handleProjectChanged]);
   useProjectWatch(projectsClient, project?.id ?? null, {
     etag: project?.etag,
-    onChange: handleProjectChanged,
+    onChange: handleLiveChange,
     onDelete: handleDeletedElsewhere,
   });
   const labels = useProjectViewLabels();
@@ -105,6 +143,10 @@ const ProjectViewPage: FC = () => {
   const [contextSearchQuery, setContextSearchQuery] = useState('');
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isPublishOpen, setIsPublishOpen] = useState(false);
+  const [isRevokeOpen, setIsRevokeOpen] = useState(false);
+  const handleCloseRevoke = useCallback(() => setIsRevokeOpen(false), []);
+  const handleRequestRevoke = useCallback(() => setIsRevokeOpen(true), []);
+  const [isRemoveOpen, setIsRemoveOpen] = useState(false);
   /* The publish panel loads the public folder tree on mount, so it mounts on
    * the first open and then stays mounted for its slide-out animation. */
   const [hasOpenedPublish, setHasOpenedPublish] = useState(false);
@@ -144,6 +186,7 @@ const ProjectViewPage: FC = () => {
     selectedOutputName,
     selectedContextFileId,
     onContextFileClick: handleContextFileClick,
+    onContextFileDownload: handleContextFileDownload,
     onOutputClick: handleOpenOutput,
   } = useProjectFilePreview({
     scope: projectId ?? '',
@@ -153,10 +196,18 @@ const ProjectViewPage: FC = () => {
     startRequest: startCanvasRequest,
     resolveContextAttachment,
     resolveOutputAttachment,
+    resolveDownloadUrl: resolveProjectFileDownloadUrl,
   });
   /* `canEdit`: change the content and write the chats (the owner, or a share with edit access); `canManage`: rename, delete, share and publish (the owner only). */
   const canEdit = project?.canEdit ?? false;
   const canManage = project?.canManage ?? false;
+  const { requestRecipients, canRevokeAccess } = useProjectShareRecipients();
+  const handleActionMenuOpenChange = useCallback(
+    (isOpen: boolean) => {
+      if (isOpen && project?.canManage) requestRecipients(project.id);
+    },
+    [project, requestRecipients],
+  );
   /* Chats deleted from the list since `project` was read; a fresh read resets the count. */
   const [deletedChats, setDeletedChats] = useState({ project, count: 0 });
   const deletedChatCount =
@@ -190,6 +241,32 @@ const ProjectViewPage: FC = () => {
     setIsPublishOpen(true);
   }, []);
   const handleClosePublish = useCallback(() => setIsPublishOpen(false), []);
+  const { user } = useUser();
+  const unpublish = useProjectUnpublish({
+    project,
+    isAdmin: user?.isAdmin ?? false,
+  });
+  /* Exactly one of Publish and Unpublish, and neither until the publish state settles. */
+  const hasPublishedFolders = unpublish.publishedFolders.length > 0;
+  const shouldOfferPublish =
+    canManage && unpublish.isPublishStateResolved && !hasPublishedFolders;
+  const unpublishLabels = useUnpublishConfirmationLabels({
+    title: ProjectsI18nKeys.UnpublishConfirmTitle,
+    confirmMessage: ProjectsI18nKeys.UnpublishConfirmMessage,
+    selectFolderMessage: ProjectsI18nKeys.UnpublishSelectFolderMessage,
+    folderGroupAriaLabel: ProjectsI18nKeys.UnpublishFolderGroupAriaLabel,
+    requestingStatus: ProjectsI18nKeys.UnpublishRequestingStatus,
+  });
+  const isSharedWithMe = isProjectSharedWithMe(project);
+  const handleCloseRemove = useCallback(() => setIsRemoveOpen(false), []);
+  const handleRequestRemove = useCallback(() => setIsRemoveOpen(true), []);
+  const { isRemoving, confirmRemove } = useProjectRemoveFromList(
+    isSharedWithMe ? project : null,
+    { onFailed: retry, onSettled: handleCloseRemove },
+  );
+  const handleConfirmRemove = useCallback(() => {
+    void confirmRemove();
+  }, [confirmRemove]);
   const { togglePin, downloadArchive, confirmDelete } = actions;
   const handleTogglePin = useCallback(() => {
     void togglePin();
@@ -222,12 +299,23 @@ const ProjectViewPage: FC = () => {
         onContextSearchQueryChange={setContextSearchQuery}
         onBack={handleBrowseProjects}
         onTogglePin={handleTogglePin}
-        onPublish={canManage ? handlePublish : undefined}
+        onPublish={shouldOfferPublish ? handlePublish : undefined}
+        onUnpublish={
+          hasPublishedFolders ? unpublish.requestUnpublish : undefined
+        }
         onEdit={canEdit ? handleEdit : undefined}
         onShare={canManage ? handleShare : undefined}
+        onRevokeAccess={
+          canManage && project && canRevokeAccess(project.id)
+            ? handleRequestRevoke
+            : undefined
+        }
+        onActionMenuOpenChange={handleActionMenuOpenChange}
         onDelete={canManage ? actions.requestDelete : undefined}
+        onRemoveFromMyList={isSharedWithMe ? handleRequestRemove : undefined}
         onDownload={handleDownload}
         onContextFileClick={handleContextFileClick}
+        onContextFileDownload={handleContextFileDownload}
         selectedContextFileId={selectedContextFileId}
         isDetailsStacked={selectedCardId != null}
         onRetry={retry}
@@ -240,6 +328,8 @@ const ProjectViewPage: FC = () => {
               canEdit={canEdit}
               conversations={conversations}
               onConversationDeleted={handleConversationDeleted}
+              onChatCreateStart={handleChatCreateStart}
+              onChatCreateFailed={handleChatCreateFailed}
               /* An Outputs section with files or an error is content of its own, so no "no outputs" empty state under it. */
               hasOutputs={outputItems.length > 0 || artifacts.hasError}
               /* Always mounted: it shows nothing until there are outputs or an error, and keeps its live region in place. */
@@ -259,6 +349,12 @@ const ProjectViewPage: FC = () => {
         mainContentLabel={t(ProjectsI18nKeys.ViewMainContent)}
         labels={labels}
       />
+      {project && canManage && isRevokeOpen && (
+        <ProjectRevokeAccessConfirmation
+          project={project}
+          onClose={handleCloseRevoke}
+        />
+      )}
       {project && isShareOpen && (
         <ProjectShareOverlay
           projectId={project.id}
@@ -272,7 +368,21 @@ const ProjectViewPage: FC = () => {
           projectName={project.name}
           conversationCount={conversationCount}
           onClose={handleClosePublish}
+          onPublished={unpublish.refreshPublishState}
           returnFocusRef={publishTriggerRef}
+        />
+      )}
+      <UnpublishConfirmationDialog
+        {...unpublish.dialog}
+        labels={unpublishLabels}
+      />
+      {project && isSharedWithMe && (
+        <ProjectRemoveFromListConfirmation
+          isOpen={isRemoveOpen}
+          projectName={project.name}
+          isRemoving={isRemoving}
+          onConfirm={handleConfirmRemove}
+          onClose={handleCloseRemove}
         />
       )}
       {project && (

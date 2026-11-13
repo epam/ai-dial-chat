@@ -83,6 +83,8 @@ export const useProjectCreateFormLabels = ({
       removeFileLabel: (name) =>
         t(ProjectsI18nKeys.CreateContextRemove, { name }),
       openFileLabel: (name) => t(ProjectsI18nKeys.CreateContextOpen, { name }),
+      downloadFileLabel: (name) =>
+        t(ProjectsI18nKeys.CreateContextDownload, { name }),
       fileRejections: {
         [ContextFileRejection.UnsupportedType]: (name) =>
           t(ProjectsI18nKeys.CreateErrorUnsupportedType, { name }),

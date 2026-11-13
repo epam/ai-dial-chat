@@ -3,12 +3,10 @@
 ## Purpose
 
 `GET /api/v1/client-config`: the client-safe configuration payload and its fully annotated response DTO.
-
 ## Requirements
-
 ### Requirement: GET /api/v1/client-config returns client-safe configuration
 
-The system SHALL expose `GET /api/v1/client-config` as a versioned business endpoint (version `'1'`). It SHALL accept a required `appId` query parameter, validate it against an allowlist, and return all `visibility='client'` configuration values, including the new `dialCore.externalUrl` key added by the `config-registry-and-env-provider` capability.
+The system SHALL expose `GET /api/v1/client-config` as a versioned business endpoint (version `'1'`). It SHALL accept a required `appId` query parameter that matches `^[a-z0-9][a-z0-9-]{0,62}$` and is one of the application identifiers the deployment serves (`CLIENT_CONFIG_APP_IDS`, default `chat-ui`), and return all `visibility='client'` configuration values, including the new `dialCore.externalUrl` key added by the `config-registry-and-env-provider` capability.
 
 **Authorization:** None required. The endpoint is public and MUST work before authentication.
 
@@ -82,8 +80,23 @@ The system SHALL expose `GET /api/v1/client-config` as a versioned business endp
 
 #### Scenario: Unknown appId returns 400
 
-- **WHEN** `GET /api/v1/client-config?appId=unknown-app` is called
+- **WHEN** `GET /api/v1/client-config?appId=unknown-app` is called and `unknown-app` is not listed in `CLIENT_CONFIG_APP_IDS`
 - **THEN** the response is `400 Bad Request`
+
+#### Scenario: Malformed appId returns 400
+
+- **WHEN** `appId` is `Chat_UI`, `-x`, a 64-character identifier, or is repeated in the query
+- **THEN** the response is `400 Bad Request` with a validation message, before any configuration is resolved
+
+#### Scenario: Another served application
+
+- **WHEN** `CLIENT_CONFIG_APP_IDS=launchpad,chat-ui` and `GET /api/v1/client-config?appId=launchpad` is called
+- **THEN** the response is `200 OK` with `appId` `launchpad`, and its `features` and `config` equal those returned for `appId=chat-ui` under the same environment, session and roles
+
+#### Scenario: Responses are cached per application
+
+- **WHEN** the same user requests `appId=launchpad` and then `appId=chat-ui`
+- **THEN** the two responses use different cache entries, each echoing its own `appId`
 
 #### Scenario: Response does not contain server-only values
 
@@ -99,8 +112,6 @@ The system SHALL expose `GET /api/v1/client-config` as a versioned business endp
 
 - **WHEN** a valid response is returned
 - **THEN** the body MUST NOT contain the value of the internal `DIAL_CORE_URL` environment variable under any key
-
----
 
 ### Requirement: Response DTO is fully annotated for Swagger and generated client
 
@@ -352,7 +363,38 @@ The service SHALL resolve `announcementTitle`, `announcementDescription`, and th
 
 `GET /api/v1/client-config` SHALL include an `announcements` field of type `AnnouncementItemDto[]` in the `config` object of its response, sourced from the `announcement.items` registry key. The field SHALL be `[]` when `ANNOUNCEMENTS` is not configured. Entries SHALL be returned in configured order.
 
-Each entry SHALL carry a `title: string`, a `description: string | null`, and a `link: AnnouncementLinkDto | null` whose link carries a `label: string` and an `href: string`.
+Each entry SHALL carry a `title: string`, a `description: string | null`, a `link: AnnouncementLinkDto | null` whose link carries a `label: string` and an `href: string`, and a `severity: AnnouncementSeverity`.
+
+`severity` SHALL always be present on a returned entry and SHALL be one of `info` or `warning`. The service SHALL resolve it from the configured entry's `severity` key as follows:
+
+- absent or `null` → `info`, with no warning;
+- a string equal to `info` or `warning` after trimming surrounding whitespace and ignoring letter case → that value, in lower case;
+- any other value (an unrecognized or blank string, a number, a boolean, an array, an object) → `info`, with exactly one warning for that entry naming the entry's title and the rejected value.
+
+An unrecognized `severity` SHALL NOT cause the entry to be dropped, unlike a present-but-invalid `link`: severity is presentation metadata, and a typo must never hide an announcement. The severity of an entry that is dropped for another reason (blank title, invalid link) SHALL NOT be evaluated or logged. Severity resolution SHALL happen in `normalizeAnnouncements` (`apps/chat-api/src/app-config/announcements.normalizer.ts`); the env admission step (`apps/chat-api/src/app-config/env-admission/announcements.admission.ts`) SHALL remain unchanged.
+
+Example — `ANNOUNCEMENTS='[{"title":"Upcoming maintenance: DIAL 1.49","description":"Saturday 10:00 UTC","severity":"warning"},{"title":"We have upgraded to DIAL 1.48"}]'` yields:
+
+```json
+{
+  "config": {
+    "announcements": [
+      {
+        "title": "Upcoming maintenance: DIAL 1.49",
+        "description": "Saturday 10:00 UTC",
+        "link": null,
+        "severity": "warning"
+      },
+      {
+        "title": "We have upgraded to DIAL 1.48",
+        "description": null,
+        "link": null,
+        "severity": "info"
+      }
+    ]
+  }
+}
+```
 
 The service SHALL include only entries that satisfy all of:
 
@@ -367,9 +409,9 @@ Every rejected entry SHALL be dropped and logged with a warning naming the entry
 
 The service SHALL validate every configured entry — including entries beyond the supported maximum — before applying the cap: an entry past the maximum that is itself invalid (blank title, or a present-but-invalid link) SHALL still be dropped and logged with its own rejection warning, exactly as an invalid entry within the first N would be. The service SHALL NOT stop processing once N valid entries have been accumulated. The cap-exceeded warning, when the accepted-entry count exceeds the maximum, SHALL be logged last — after every per-entry rejection warning — and SHALL report the total number of entries that passed validation (before truncation), not the number configured or the number returned.
 
-The service SHALL NOT mutate the resolved `announcement.items` value or any of its entry or link objects while validating and normalizing them; the returned `AnnouncementItemDto[]` SHALL be built from new objects. Duplicate entries (byte-for-byte identical title/description/link) in the configured list SHALL each be evaluated independently and, if valid, SHALL each appear in the returned list — the service SHALL NOT deduplicate announcements.
+The service SHALL NOT mutate the resolved `announcement.items` value or any of its entry or link objects while validating and normalizing them; the returned `AnnouncementItemDto[]` SHALL be built from new objects. Duplicate entries (byte-for-byte identical title/description/link/severity) in the configured list SHALL each be evaluated independently and, if valid, SHALL each appear in the returned list — the service SHALL NOT deduplicate announcements.
 
-`AnnouncementItemDto` and `AnnouncementLinkDto` SHALL be declared as classes with `@ApiProperty` metadata on every field, so `@nestjs/swagger` emits runtime metadata and the generated client exposes the shape.
+`AnnouncementItemDto` and `AnnouncementLinkDto` SHALL be declared as classes with `@ApiProperty` metadata on every field, so `@nestjs/swagger` emits runtime metadata and the generated client exposes the shape. `AnnouncementItemDto.severity` SHALL be declared as a required property with `enum` and `enumName: 'AnnouncementSeverity'`, backed by a string enum in `apps/chat-api/src/app-config/dto/`, so the generated `@epam/ai-dial-chat-api-client` exports an `AnnouncementSeverity` const with the members `Info` (`info`) and `Warning` (`warning`) and types `AnnouncementItemDto.severity` with it. The `getClientConfig` operation, its query DTO and its response DTO are otherwise unchanged; frontend callers keep using the normal (non-`Raw`) generated method. The field is additive and SHALL NOT change the per-application response caching.
 
 #### Scenario: A complete announcement is returned
 
@@ -450,6 +492,51 @@ The service SHALL NOT mutate the resolved `announcement.items` value or any of i
 
 - **WHEN** `GET /api/v1/client-config` is called with a non-empty `ANNOUNCEMENTS` value
 - **THEN** resolving `announcement.items` again for a subsequent, independent request returns entries with the same values as the first resolution, unaffected by any normalization performed for the first request
+
+#### Scenario: An entry without severity is returned as info
+
+- **WHEN** an `ANNOUNCEMENTS` entry has a valid title and no `severity` key
+- **THEN** the entry is returned with `severity: "info"` and no severity warning is logged
+
+#### Scenario: A configured value written before severity existed keeps working
+
+- **WHEN** `ANNOUNCEMENTS` holds entries in the pre-existing `{ title, description, link }` shape
+- **THEN** every entry is returned exactly as before, with `severity: "info"` added
+
+#### Scenario: A warning severity is returned
+
+- **WHEN** an entry has `"severity": "warning"`
+- **THEN** that entry is returned with `severity: "warning"`
+
+#### Scenario: Severity is matched without regard to case or surrounding whitespace
+
+- **WHEN** an entry has `"severity": " Warning "`
+- **THEN** that entry is returned with `severity: "warning"` and no severity warning is logged
+
+#### Scenario: A null severity is treated as absent
+
+- **WHEN** an entry has `"severity": null`
+- **THEN** the entry is returned with `severity: "info"` and no severity warning is logged
+
+#### Scenario: An unknown severity falls back to info and is logged once
+
+- **WHEN** an entry titled `Maintenance` has `"severity": "critical"`
+- **THEN** the entry is still present in `config.announcements` with `severity: "info"`, and exactly one warning naming `Maintenance` and `critical` is logged for that entry
+
+#### Scenario: A non-string severity falls back to info
+
+- **WHEN** an entry has `"severity": 2` or `"severity": ""`
+- **THEN** the entry is returned with `severity: "info"` and one warning is logged for that entry
+
+#### Scenario: A dropped entry's severity is not evaluated
+
+- **WHEN** an entry has a blank title and `"severity": "critical"`
+- **THEN** the entry is dropped with its blank-title warning only, and no severity warning is logged for it
+
+#### Scenario: Generated client exposes the severity enum
+
+- **WHEN** `npm run openapi` regenerates `libs/chat-api-client`
+- **THEN** the generated models export `AnnouncementSeverity` with `Info: 'info'` and `Warning: 'warning'`, and `AnnouncementItemDto.severity` is typed `AnnouncementSeverity`
 
 ### Requirement: Custom client variables remain isolated from built-in settings
 
@@ -765,3 +852,64 @@ GET /api/v1/client-config?appId=chat-ui
 
 - **WHEN** `npm run openapi` is run
 - **THEN** the generated `ClientConfigDto` type includes `additionalContentLocales: string[]`, and `npm run openapi:check` passes
+
+### Requirement: client-config exposes model catalog availability
+
+`GET /api/v1/client-config` SHALL include `config.modelCatalogAvailable: boolean`. It is `true` when `MODEL_CATALOG_API_KEY` is configured (non-blank after trimming) and `false` otherwise. A frontend can then decide whether to call `GET /api/v1/model-catalog` without probing it (see the `model-catalog` capability).
+
+- `AppConfigService.getClientConfig` (`apps/chat-api/src/app-config/app-config.service.ts`) SHALL assemble the field itself from `ConfigService`, as it does `aiTextRefinementAvailable`. The field is not a config-registry key and has no entry in the mapping module (`apps/chat-api/src/app-config/client-config.mapper.ts`). `MappedClientConfig` SHALL omit it, and the mapper spec's list of service-assembled fields SHALL include it.
+- The service SHALL decide availability with the same key-resolution helper as the catalog service, so the flag and the route can never disagree.
+- The field SHALL be emitted on every response. It SHALL be appended after `catalogCreationPermissions`, so every existing field keeps its position.
+- `ClientConfigDto` SHALL declare it with `@ApiPropertyOptional({ type: Boolean })` and a description stating that a missing value means unavailable, so a client generated against this BFF tolerates an older BFF. The generated `ClientConfigDto` type in `@epam/ai-dial-chat-api-client` gains `modelCatalogAvailable?: boolean`. No frontend caller in `apps/chat` reads it.
+- The value SHALL NOT vary by user, role or `appId`, and SHALL never carry the key. It is cached as part of the existing client-config entry (60-second TTL, unchanged key). The key is read at boot, so no invalidation is needed.
+- No i18n string, UI, RTL impact or feature gate is introduced.
+
+#### Scenario: Key configured
+
+- **GIVEN** `MODEL_CATALOG_API_KEY=catalog-key`
+- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called
+- **THEN** `response.config.modelCatalogAvailable` is `true` and no field of the response contains `catalog-key`
+
+#### Scenario: Key unset or blank
+
+- **GIVEN** `MODEL_CATALOG_API_KEY` is unset, or is `"  "`
+- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called
+- **THEN** `response.config.modelCatalogAvailable` is `false`
+
+#### Scenario: Field order keeps existing positions
+
+- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called with all providers returning `undefined`
+- **THEN** `Object.keys(response.config)` equals the previous list with `modelCatalogAvailable` appended after `catalogCreationPermissions`
+
+#### Scenario: DIAL_API_KEY does not affect the flag
+
+- **GIVEN** `DIAL_API_KEY` is set and `MODEL_CATALOG_API_KEY` is unset
+- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called
+- **THEN** `response.config.modelCatalogAvailable` is `false`
+
+### Requirement: The deployment declares the application identifiers it serves
+
+The backend SHALL read `CLIENT_CONFIG_APP_IDS`, a comma-separated list of application identifiers declared on `ClientUiEnv` in `apps/chat-api/src/config/env/client-ui.env.ts`. Entries SHALL be trimmed, de-duplicated preserving order, and each SHALL match `^[a-z0-9][a-z0-9-]{0,62}$`. A non-matching entry SHALL fail startup with an `Environment validation failed:` message naming the variable. An absent, empty or blank value SHALL mean `["chat-ui"]`. The list SHALL be at most 16 entries. Only `GET /api/v1/client-config` uses the list. Server-side feature evaluation (`FeatureGuard`, text refinement) SHALL keep evaluating with `appId` `chat-ui`, because those gates protect Chat BFF endpoints whichever frontend a deployment serves.
+
+**Feature flag:** Not gated. **RTL impact:** None. **i18n impact:** None. **Cache:** Unchanged key `app-config:client:<appId>:user:<userId>:roles:<roles>`, 60 s TTL; `appId` is already a segment.
+
+#### Scenario: Default serves only Chat
+
+- **WHEN** `CLIENT_CONFIG_APP_IDS` is unset
+- **THEN** `appId=chat-ui` is accepted and `appId=launchpad` is `400 Bad Request`
+
+#### Scenario: Invalid entry fails startup
+
+- **WHEN** `CLIENT_CONFIG_APP_IDS=chat-ui,Bad_Id`
+- **THEN** environment validation fails and names `CLIENT_CONFIG_APP_IDS` without printing other environment values
+
+#### Scenario: Transitional list
+
+- **WHEN** a Launchpad deployment sets `CLIENT_CONFIG_APP_IDS=launchpad,chat-ui` while older Launchpad builds still send `chat-ui`
+- **THEN** both the old and the new builds receive `200 OK`
+
+#### Scenario: Server-side gates keep the Chat contract
+
+- **WHEN** a deployment sets `CLIENT_CONFIG_APP_IDS=launchpad` and a request reaches an endpoint protected by `FeatureGuard`
+- **THEN** the feature is evaluated with `appId` `chat-ui`, exactly as before this change
+

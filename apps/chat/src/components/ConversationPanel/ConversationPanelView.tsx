@@ -166,7 +166,6 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     openUnshareDialog,
     openRevokeDialog,
     openUnpublishDialog,
-    setSelectedUnpublishFolder,
     setPendingShareConversationPath,
     setPendingPublishConversation,
     requestRecipientsCount,
@@ -314,7 +313,6 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     openUnshareDialog,
     openRevokeDialog,
     openUnpublishDialog,
-    setSelectedUnpublishFolder,
     setPendingShareConversationPath,
     setPendingPublishConversation,
     requestRecipientsCount,
@@ -385,6 +383,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       seeAllLabel: t(ConversationPanelI18nKeys.SeeAll),
       seeAllAriaLabel: (name: string) =>
         t(ConversationPanelI18nKeys.SeeAllProjectChats, { name }),
+      expandProjectLabel: t(ConversationPanelI18nKeys.ExpandProject),
+      collapseProjectLabel: t(ConversationPanelI18nKeys.CollapseProject),
     }),
     [t, filterLabels, groupLabels, unreadIndicatorLabel],
   );

@@ -1,42 +1,32 @@
 import { Button } from '@epam/ai-dial-ui-kit';
-import type { ComponentProps, FC } from 'react';
+import type { ComponentProps, FC, MouseEvent } from 'react';
+import { isModifiedClick } from '../../utils/click';
 
 /** Props for `RowLink`. */
 export interface RowLinkProps extends Omit<
   ComponentProps<typeof Button>,
   'href' | 'onClick' | 'tabIndex'
 > {
-  /** Browser-navigable URL of the row; when set, the link takes focus and a click calls `onSelect` instead of navigating. */
+  /** Browser-navigable URL of the row; when set, the row is a link and a plain click calls `onSelect` instead of navigating. */
   href?: string;
   /** Called when the row is activated. */
   onSelect: () => void;
 }
 
-/** The activatable area of a list row: a link around the row button when `href` is set, the button alone otherwise. */
+/** The activatable area of a list row: one kit `Button`, rendered as a link when `href` is set and as a button otherwise. */
 export const RowLink: FC<RowLinkProps> = ({
   href,
   onSelect,
-  'aria-label': ariaLabel,
   ...buttonProps
-}) => (
-  /* With `href` the link is the one tab stop and carries the name, so
-     middle-click and "open in new tab" work; the button inside only draws
-     the row and leaves the tab order. Without it, the button is the control. */
-  <a
-    href={href}
-    aria-label={href ? ariaLabel : undefined}
-    className="contents"
-    onClick={(e) => {
-      if (!href) return;
-      e.preventDefault();
-      onSelect();
-    }}
-  >
-    <Button
-      {...buttonProps}
-      aria-label={ariaLabel}
-      onClick={href ? undefined : onSelect}
-      tabIndex={href ? -1 : undefined}
-    />
-  </a>
-);
+}) => {
+  /* One element is the tab stop and the link, so middle-click and "open in new tab" keep working. */
+  const handleClick = (event: MouseEvent) => {
+    if (href) {
+      if (event.defaultPrevented || isModifiedClick(event)) return;
+      event.preventDefault();
+    }
+    onSelect();
+  };
+
+  return <Button {...buttonProps} href={href} onClick={handleClick} />;
+};

@@ -22,11 +22,13 @@ import { ConversationGenerationController } from '../conversation-generation.con
 import { ConversationService } from '../conversation.service';
 import type { SendCompletionDto } from '../dto/send-completion.dto';
 import {
+  GENERATION_SHUTDOWN_FLUSH_MS,
   ConversationGenerationService,
   GenerationStatus,
   type GenerationLease,
 } from '../generation/conversation-generation.service';
 import { ConversationCompletionsResponder } from '../streaming/conversation-completions.responder';
+import type { StreamCompletionRequest } from '../streaming/stream-completion-request';
 import { createConversationGenerationController } from './conversation-controller.fixture';
 
 const TEST_USER = {
@@ -69,6 +71,7 @@ describe('POST /conversations/completions (integration)', () => {
     markConversationUnviewed: ReturnType<typeof vi.fn>;
     resolveBackgroundAttach?: ReturnType<typeof vi.fn>;
     stopBackgroundGeneration?: ReturnType<typeof vi.fn>;
+    stopForegroundGeneration?: ReturnType<typeof vi.fn>;
   };
   let mockGenerationService: {
     register: ReturnType<typeof vi.fn>;
@@ -85,19 +88,10 @@ describe('POST /conversations/completions (integration)', () => {
       markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
-      streamCompletion: vi.fn().mockImplementation(async function* (
-        _path,
-        _at,
-        _bucket,
-        _genId,
-        _mode,
-        _msg,
-        _msgIdx,
-        _model,
-        _cc,
-        _sid,
-        onReadyToStream: () => void,
-      ) {
+      stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
+      streamCompletion: vi.fn().mockImplementation(async function* ({
+        onReadyToStream,
+      }: StreamCompletionRequest) {
         onReadyToStream();
         yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
         yield Buffer.from('data: [DONE]\n\n');
@@ -158,17 +152,17 @@ describe('POST /conversations/completions (integration)', () => {
 
     expect(res.text).toContain('data: [DONE]');
     expect(mockService.streamCompletion).toHaveBeenCalledOnce();
-    const [path, at, bucket, genId, mode, message, , model, , ownerKey] =
-      mockService.streamCompletion.mock.calls[0];
-    expect(path).toBe(VALID_COMPLETION_BODY.path);
-    expect(at).toBe(TEST_USER.at);
-    expect(bucket).toBe(TEST_USER.bucket);
-    expect(genId).toBe(VALID_COMPLETION_BODY.generationId);
-    expect(mode).toBe('append');
-    expect(message).toBe('Hello');
-    expect(model).toBe('gpt-4o');
-    expect(ownerKey).toBe(`c:${TEST_USER.sid}`);
-    expect(mockService.streamCompletion.mock.calls[0][13]).toBeUndefined();
+    const streamRequest: StreamCompletionRequest =
+      mockService.streamCompletion.mock.calls[0][0];
+    expect(streamRequest.conversationPath).toBe(VALID_COMPLETION_BODY.path);
+    expect(streamRequest.token).toBe(TEST_USER.at);
+    expect(streamRequest.bucket).toBe(TEST_USER.bucket);
+    expect(streamRequest.generationId).toBe(VALID_COMPLETION_BODY.generationId);
+    expect(streamRequest.mode).toBe('append');
+    expect(streamRequest.message).toBe('Hello');
+    expect(streamRequest.model).toBe('gpt-4o');
+    expect(streamRequest.ownerKey).toBe(`c:${TEST_USER.sid}`);
+    expect(streamRequest.timezone).toBeUndefined();
   });
 
   /* Firefox keeps the fetch() promise pending until the first body byte
@@ -178,7 +172,7 @@ describe('POST /conversations/completions (integration)', () => {
     mockService.streamCompletion.mockImplementation(async function* (
       ...args: unknown[]
     ) {
-      (args[10] as () => void)();
+      (args[0] as StreamCompletionRequest).onReadyToStream();
       yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
     });
 
@@ -201,7 +195,7 @@ describe('POST /conversations/completions (integration)', () => {
       .expect(200);
 
     expect(mockService.streamCompletion).toHaveBeenCalledOnce();
-    expect(mockService.streamCompletion.mock.calls[0][13]).toBe(
+    expect(mockService.streamCompletion.mock.calls[0][0].timezone).toBe(
       'Europe/Warsaw',
     );
   });
@@ -229,7 +223,7 @@ describe('POST /conversations/completions (integration)', () => {
       .expect(200);
 
     expect(mockService.streamCompletion).toHaveBeenCalledOnce();
-    expect(mockService.streamCompletion.mock.calls[0][14]).toBe('en');
+    expect(mockService.streamCompletion.mock.calls[0][0].lang).toBe('en');
   });
 
   it.each([
@@ -337,7 +331,7 @@ describe('POST /conversations/completions (integration)', () => {
     mockService.streamCompletion.mockImplementation(async function* (
       ...args: unknown[]
     ) {
-      (args[10] as () => void)();
+      (args[0] as StreamCompletionRequest).onReadyToStream();
       yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
       throw new Error('upstream exploded');
     });
@@ -418,7 +412,8 @@ describe('POST /conversations/completions (integration)', () => {
       .expect(200);
 
     expect(mockService.streamCompletion).toHaveBeenCalledOnce();
-    const [, , , , mode, , msgIdx] = mockService.streamCompletion.mock.calls[0];
+    const { mode, messageIndex: msgIdx } =
+      mockService.streamCompletion.mock.calls[0][0];
     expect(mode).toBe('regenerate');
     expect(msgIdx).toBe(2);
   });
@@ -432,7 +427,7 @@ describe('POST /conversations/completions (integration)', () => {
     mockService.streamCompletion.mockImplementation(async function* (
       ...args: unknown[]
     ) {
-      (args[10] as () => void)();
+      (args[0] as StreamCompletionRequest).onReadyToStream();
       yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
       // Holds the generator open past the first chunk so the client can
       // disconnect before the stream would otherwise finish on its own.
@@ -507,7 +502,7 @@ describe('POST /conversations/completions (integration)', () => {
       // Simulates the browser closing before setup finishes — no headers
       // have been sent yet.
       res.emit('close');
-      (args[10] as () => void)();
+      (args[0] as StreamCompletionRequest).onReadyToStream();
       yield Buffer.from('data: [DONE]\n\n');
       reachedNaturalEnd = true;
     });
@@ -560,11 +555,12 @@ describe('POST /conversations/completions — backpressure-driven detachment (di
     const mockService = {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
       markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
       streamCompletion: vi.fn().mockImplementation(async function* (
         ...args: unknown[]
       ) {
-        (args[10] as () => void)();
+        (args[0] as StreamCompletionRequest).onReadyToStream();
         for (let i = 0; i < totalChunks; i += 1) {
           yield Buffer.alloc(chunkSize, 'x');
         }
@@ -637,12 +633,21 @@ describe('POST /conversations/completions/stop (integration)', () => {
     complete: ReturnType<typeof vi.fn>;
     error: ReturnType<typeof vi.fn>;
     getStatus: ReturnType<typeof vi.fn>;
+    abortByGeneration: ReturnType<typeof vi.fn>;
+  };
+  let mockService: {
+    stopBackgroundGeneration: ReturnType<typeof vi.fn>;
+    stopForegroundGeneration: ReturnType<typeof vi.fn>;
+    resolveBackgroundAttach: ReturnType<typeof vi.fn>;
+    markConversationUnviewed: ReturnType<typeof vi.fn>;
+    streamCompletion: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
-    const mockService = {
+    mockService = {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
       markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
       streamCompletion: vi.fn(),
     };
@@ -654,6 +659,7 @@ describe('POST /conversations/completions/stop (integration)', () => {
       complete: vi.fn(),
       error: vi.fn(),
       getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
+      abortByGeneration: vi.fn().mockReturnValue(false),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -755,6 +761,90 @@ describe('POST /conversations/completions/stop (integration)', () => {
       })
       .expect(400);
   });
+
+  describe('a foreground generation held by its stored marker', () => {
+    const stop = () =>
+      request(app.getHttpServer())
+        .post('/conversations/completions/stop')
+        .send({
+          generationId: VALID_STOP_GENERATION_ID,
+          path: 'test-bucket/gpt-4o__Hello__uuid',
+        });
+
+    it('returns 204 after storing the Stop on the marker and aborts a local generation of another principal', async () => {
+      mockService.stopForegroundGeneration.mockResolvedValue('stored');
+
+      await stop().expect(204);
+
+      expect(mockService.stopForegroundGeneration).toHaveBeenCalledWith(
+        'test-bucket/gpt-4o__Hello__uuid',
+        TEST_USER.at,
+        TEST_USER.bucket,
+        VALID_STOP_GENERATION_ID,
+      );
+      expect(mockGenerationService.abortByGeneration).toHaveBeenCalledWith(
+        'test-bucket/gpt-4o__Hello__uuid',
+        VALID_STOP_GENERATION_ID,
+      );
+      expect(mockGenerationService.abort).not.toHaveBeenCalled();
+    });
+
+    it('returns 204 without a second write when the marker already carries a Stop', async () => {
+      mockService.stopForegroundGeneration.mockResolvedValue(
+        'already_requested',
+      );
+
+      await stop().expect(204);
+
+      expect(mockGenerationService.abortByGeneration).toHaveBeenCalledWith(
+        'test-bucket/gpt-4o__Hello__uuid',
+        VALID_STOP_GENERATION_ID,
+      );
+    });
+
+    it('matches a local generation on the bucket-qualified path when the client posts it bucket-relative', async () => {
+      mockService.stopForegroundGeneration.mockResolvedValue('stored');
+
+      await request(app.getHttpServer())
+        .post('/conversations/completions/stop')
+        .send({
+          generationId: VALID_STOP_GENERATION_ID,
+          path: 'gpt-4o__Hello__uuid',
+        })
+        .expect(204);
+
+      expect(mockGenerationService.abortByGeneration).toHaveBeenCalledWith(
+        'test-bucket/gpt-4o__Hello__uuid',
+        VALID_STOP_GENERATION_ID,
+      );
+    });
+
+    it('returns 503 when the Stop could not be stored', async () => {
+      mockService.stopForegroundGeneration.mockResolvedValue('failed');
+
+      await stop().expect(503);
+
+      expect(mockGenerationService.abort).not.toHaveBeenCalled();
+    });
+
+    it('falls back to the registry and returns 404 when no live marker carries the id', async () => {
+      mockService.stopForegroundGeneration.mockResolvedValue('not_found');
+      mockGenerationService.abort.mockReturnValue(false);
+
+      await stop().expect(404);
+
+      expect(mockGenerationService.abort).toHaveBeenCalledOnce();
+    });
+
+    it('does not consult the marker when this instance runs the caller own generation', async () => {
+      mockGenerationService.hasLocalForegroundGeneration.mockReturnValue(true);
+
+      await stop().expect(204);
+
+      expect(mockService.stopForegroundGeneration).not.toHaveBeenCalled();
+      expect(mockGenerationService.abort).toHaveBeenCalledOnce();
+    });
+  });
 });
 
 describe('completions endpoints — header-authenticated (bearer) caller', () => {
@@ -764,6 +854,7 @@ describe('completions endpoints — header-authenticated (bearer) caller', () =>
     markConversationUnviewed: ReturnType<typeof vi.fn>;
     resolveBackgroundAttach?: ReturnType<typeof vi.fn>;
     stopBackgroundGeneration?: ReturnType<typeof vi.fn>;
+    stopForegroundGeneration?: ReturnType<typeof vi.fn>;
   };
   let mockGenerationService: {
     register: ReturnType<typeof vi.fn>;
@@ -779,11 +870,12 @@ describe('completions endpoints — header-authenticated (bearer) caller', () =>
     mockService = {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
       markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
       streamCompletion: vi.fn().mockImplementation(async function* (
         ...args: unknown[]
       ) {
-        (args[10] as () => void)();
+        (args[0] as StreamCompletionRequest).onReadyToStream();
         yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
         yield Buffer.from('data: [DONE]\n\n');
       }),
@@ -843,7 +935,7 @@ describe('completions endpoints — header-authenticated (bearer) caller', () =>
     expect(res.headers['content-type']).toContain('text/event-stream');
     expect(res.text).toContain('data: [DONE]');
     expect(mockService.streamCompletion).toHaveBeenCalledOnce();
-    expect(mockService.streamCompletion.mock.calls[0][9]).toBe(
+    expect(mockService.streamCompletion.mock.calls[0][0].ownerKey).toBe(
       `h:${HEADER_USER.providerId}:${HEADER_USER.sub}`,
     );
   });
@@ -925,16 +1017,20 @@ describe('generation ownership isolation (real registry)', () => {
     const mockService = {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
       markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
-      streamCompletion: vi.fn().mockImplementation(async function* (
-        ...args: unknown[]
-      ) {
+      streamCompletion: vi.fn().mockImplementation(async function* ({
+        ownerKey,
+        conversationPath,
+        generationId,
+        onReadyToStream,
+      }: StreamCompletionRequest) {
         currentLease = generationService.register(
-          args[9] as string,
-          args[0] as string,
-          args[3] as string,
+          ownerKey,
+          conversationPath,
+          generationId,
         );
-        (args[10] as () => void)();
+        onReadyToStream();
         yield Buffer.from('data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n');
       }),
     };
@@ -946,6 +1042,7 @@ describe('generation ownership isolation (real registry)', () => {
         { provide: ConversationService, useValue: mockService },
         { provide: ConfigService, useValue: { get: vi.fn() } },
         ConversationGenerationService,
+        { provide: GENERATION_SHUTDOWN_FLUSH_MS, useValue: 0 },
       ],
     }).compile();
 

@@ -232,7 +232,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-ui-kit` ^0.16.0
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.2
-- `@epam/pdf-highlighter-kit` ^0.0.21
+- `@epam/pdf-highlighter-kit` ^0.0.22
 
 `@epam/ai-dial-chat-api-client` is **not** a peer. Every entry that calls DIAL Core
 imports a runtime enum from it (`SendCompletionDtoModeEnum`,
@@ -508,6 +508,8 @@ successful load it watches the first 1000 listed ids:
 
 A client without `watchProjects` gets a one-off load, as before.
 
+`useProjects` also returns `refresh()`, which re-reads the list without the loading state and keeps the current list when the request fails. Use it for a change the watch cannot report, such as the caller dropping a shared project from their list (DIAL Core emits no `DELETE` event for that).
+
 `useProjectConversations` reads a project's whole conversation list once,
 because DIAL Core cannot page it in display order, and pages it locally:
 `items` holds the first 20 rows and `hasMore` tells whether more are loaded.
@@ -555,6 +557,11 @@ so an output never shares a card id with a context file, and
 (it carries the `File`), a stored file or output gets `url` from the
 `ProjectFileLocatorBuilder` the host passes. The locator scheme and its mapping
 to the project file endpoints stay with the host.
+`downloadProjectFileAttachment(attachment, resolveDownloadUrl)` downloads such
+an attachment: a file added in the session from the `File` it carries, with no
+request, and a stored one from the URL the host's
+`ProjectFileDownloadUrlResolver` returns for its locator. It returns whether a
+download started.
 
 ```ts
 import {
@@ -580,8 +587,12 @@ Edit project and project view pages share, the project analogue of
 `resolveContextAttachment(cardId)`, plus `resolveOutputAttachment(name)` where
 outputs are shown. It derives `selectedCardId`, `selectedContextFileId` and
 `selectedOutputName` from the canvas, so there is no second state to keep in
-step, and returns `onContextFileClick`, `onOutputClick` and
-`closeIfRemoved(cards)`. Activating the open card closes the canvas, a card the
+step, and returns `onContextFileClick`, `onOutputClick`,
+`onContextFileDownload(cardId)` and `closeIfRemoved(cards)`.
+`onContextFileDownload` passes the card's resolved attachment to
+`downloadProjectFileAttachment` with the optional `resolveDownloadUrl` option;
+without it only files added in the session download. It never touches the
+canvas. Activating the open card closes the canvas, a card the
 host resolves to nothing is ignored, and `closeIfRemoved` closes the canvas only
 when the open context card is no longer among `cards`. Callbacks keep their
 identity while their inputs do; memoise `resolveContextAttachment` and
@@ -604,15 +615,21 @@ const resolveContextAttachment = useCallback(
   },
   [files, projectId],
 );
-const { selectedContextFileId, onContextFileClick, closeIfRemoved } =
-  useProjectFilePreview({
-    scope: projectId,
-    attachmentId,
-    openAttachment: openAttachmentCanvas,
-    closeCanvas,
-    startRequest,
-    resolveContextAttachment,
-  });
+const {
+  selectedContextFileId,
+  onContextFileClick,
+  onContextFileDownload,
+  closeIfRemoved,
+} = useProjectFilePreview({
+  scope: projectId,
+  attachmentId,
+  openAttachment: openAttachmentCanvas,
+  closeCanvas,
+  startRequest,
+  resolveContextAttachment,
+  /* Host-owned: maps a locator to the endpoint that streams the file. */
+  resolveDownloadUrl: (locator) => `/files/${encodeURIComponent(locator)}`,
+});
 ```
 
 `useProjectDraft` (root and `./project`) owns the state of the New project and
@@ -727,6 +744,93 @@ ignores a read that finishes after the panel closed or `entityId` changed. The
 request and its mapping to `PublishHistoryEntry` (for the catalog endpoint,
 `mapPublishHistoryEntryDto`) stay with the host.
 
+`usePublishDependencies({ isOpen, entityId, loadDependencies })` (root and `./catalog`)
+returns the `PublishDependency[]` a publish panel lists as resources the item refers to
+that are not in the public bucket. It follows `usePublishHistory`: it reads through your
+`loadDependencies(entityId)` each time `isOpen` turns true, leaves the list empty when a
+read fails (the list only informs, publishing does not depend on it), ignores a read that
+finishes after the panel closed or `entityId` changed, and never returns another entity's
+list. For a catalog entity the request is `createPublishApiClient(publishApi)
+.getCatalogPublishDependencies(entityType, entityId)`; both it and the conversation
+request map each entry with `mapResourceDependencyDto`, and stay with the host. Pass `createPublishDependencyIconResolver({ deployments, toolsets, resolveIconUrl })` as its second argument to give an application or toolset the icon of the entity the host has already loaded, with no extra request; an entry the lists do not hold has none.
+
+```ts
+import {
+  createPublishApiClient,
+  mapResourceDependencyDto,
+  usePublishDependencies,
+} from '@epam/ai-dial-chat-hooks';
+
+const publishClient = createPublishApiClient(publishApi);
+
+const dependencies = usePublishDependencies({
+  isOpen,
+  entityId: 'applications/my-bucket/Support agent__1.0.0',
+  loadDependencies: async (entityId) =>
+    (
+      await publishClient.getCatalogPublishDependencies('application', entityId)
+    ).dependencies.map(mapResourceDependencyDto),
+});
+```
+
+`useUnpublishableFolders(client, target, isAdmin)` (root and `./catalog`) reports
+the folders the caller may request removal of one published entity from, as
+`{ isResolved, folders, refresh }`, through `resolveUnpublishableFolders`: an owner
+(`target.isOwner`) gets the live folders from `getCatalogPublishHistory`, de-duplicated
+and newest first; on a public copy (`{type}/public/…`) an administrator gets its
+folder outright and anyone else only when `getCatalogUnpublishAccess` answers
+`canUnpublish: true`; anyone else gets none. `isResolved` stays `false` while the
+lookup for the current `target` runs, so a host can withhold Publish and Unpublish
+until it settles; a failed first lookup settles as no folders, a failed `refresh()` keeps
+the folders already reported, and `refresh()` re-runs it
+while keeping the folders already reported. `client` is a `PublishApiClient`
+(`createPublishApiClient`) and must be referentially stable. The confirmation, the
+unpublish request and its notifications stay with the host.
+
+```ts
+import {
+  createPublishApiClient,
+  useUnpublishableFolders,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const publishClient = createPublishApiClient(publishApi);
+
+const { isResolved, folders, refresh } = useUnpublishableFolders(
+  publishClient,
+  project
+    ? {
+        entityType: 'project',
+        entityId: project.id,
+        // false: a personal project keeps offering Publish; only its public copy offers Unpublish
+        isOwner: false,
+      }
+    : null,
+  user.isAdmin,
+);
+```
+
+`useUnpublishConfirmation(runUnpublish)` (root and `./catalog`) owns the confirmation that follows. It keeps the pending entity (`{ name, folders }` plus whatever the host needs, such as an id or a path) and, when there are several folders, the user's pick. It returns `{ open, pending, dialog }`. `open(payload, returnFocusTo?)` opens it with no folder picked. `dialog` spreads straight into `UnpublishConfirmationDialog` from `@epam/ai-dial-publish-panel`.
+
+On confirm, the hook resolves the picked folder, or the only folder when there is one, and calls `runUnpublish(payload, folderPath)`. The public root is sent as `''`. A pick that is not among the folders sends nothing. The dialog closes when `runUnpublish` resolves and stays open when it rejects. While the request runs, `onClose` does nothing. The request, its notifications and any refresh stay with the host, inside `runUnpublish`.
+
+```tsx
+import { useUnpublishConfirmation } from '@epam/ai-dial-chat-hooks/catalog';
+import { UnpublishConfirmationDialog } from '@epam/ai-dial-publish-panel';
+
+const { open, dialog } = useUnpublishConfirmation(
+  async (
+    { id }: { id: string; name: string; folders: string[] },
+    folderPath,
+  ) => {
+    await unpublishProject(id, folderPath);
+  },
+);
+
+open({ id: project.id, name: project.name, folders: ['Team/Reports', ''] });
+
+<UnpublishConfirmationDialog {...dialog} labels={labels} />;
+```
+
 ```tsx
 import {
   ProjectRefreshOutcome,
@@ -770,7 +874,7 @@ const ProjectPage = () => {
 };
 ```
 
-`usePinnedProjectChats(client, projectIds, { enabled, onProjectDeleted })`
+`usePinnedProjectChats(client, projectIds, { enabled, onProjectDeleted, activeConversationId? })`
 loads the trees a sidebar shows for pinned projects. For each id it reads the
 details (`getProject`) and the listing (`listProjectConversations`) in
 parallel, keeps the first `PINNED_PROJECT_CHATS_LIMIT` (10) chats newest first
@@ -780,6 +884,11 @@ pending titles in one `getProjectConversationTitles` call. It returns
 `PinnedProjectChats[]` (`project`, `chats` of `PinnedProjectChat` — `id`,
 `title`, `isUnread?` — and `hasMore`) in `projectIds` order, without the ids
 whose load failed.
+
+When `activeConversationId` names a chat that is not among a project's newest
+chats, it replaces the last of the kept ones and comes last, so the list stays
+at `PINNED_PROJECT_CHATS_LIMIT` and the open chat is listed whenever it is in
+the project's listing.
 
 - A `404` from `getProject` drops the project and calls `onProjectDeleted(id)`
   once. Any other details failure on the first load keeps it out and retries
@@ -834,6 +943,50 @@ const PinnedProjectsTree = () => {
   );
   // …
 };
+```
+
+`isProjectSharedWithMe(project)` is `true` when the project's `source` is
+`shared` and the caller cannot manage it: they may drop it from their list but
+not delete it. `getPinnedProjectMenuActions(project)` returns the
+`PinnedProjectMenuAction` values a pinned project's menu offers the caller, in
+display order: `Unpin`, then `Edit` with edit access, then `Publish`, `Share`
+and `Delete` for the owner. A shared project the caller cannot manage ends
+with `RemoveFromMyList`, and a project that is not loaded offers `Unpin` only.
+The host maps each action to its label, icon and handler.
+
+`useProjectRemoveFromList(project, handlers)` discards only the caller's own
+access (`handlers.discardShared`), then unpins the project
+(`handlers.setPinned(id, false)`). It returns `{ isRemoving, confirmRemove }`,
+and a second `confirmRemove` while one is pending sends nothing. On success it
+calls `onSettled`, then `onRemoved(project)`; a failed unpin calls
+`onUnpinFailed(project)` and still counts as removed. When the discard rejects
+it calls `onError(project, requestId)` and `onSettled`, and nothing else.
+Messages, notifications and navigation stay with the host.
+
+```tsx
+import {
+  PinnedProjectMenuAction,
+  getPinnedProjectMenuActions,
+  isProjectSharedWithMe,
+  useProjectRemoveFromList,
+} from '@epam/ai-dial-chat-hooks/project';
+
+const RemoveSharedProject = ({ project, closeDialog }) => {
+  const { isRemoving, confirmRemove } = useProjectRemoveFromList(project, {
+    discardShared: (id) => discardSharedItem(id),
+    setPinned: setPinnedProject,
+    onUnpinFailed: ({ id }) => forgetPin(id),
+    onRemoved: ({ name }) => showToast(`Removed ${name}`),
+    onError: (_project, requestId) => showError(requestId),
+    onSettled: closeDialog,
+  });
+  // …
+};
+
+const canRemove = isProjectSharedWithMe(project);
+const offersRemove = getPinnedProjectMenuActions(project).includes(
+  PinnedProjectMenuAction.RemoveFromMyList,
+);
 ```
 
 ```tsx
@@ -1904,18 +2057,19 @@ const ChatPage = ({
 
 **Parameters** (`UseConversationStreamParams`):
 
-| Name                        | Type                                | Description                                                                                                                                                                                                                                                                                                                                                                              |
-| --------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `conversationId`            | `string \| undefined`               | The currently displayed conversation's id.                                                                                                                                                                                                                                                                                                                                               |
-| `state`                     | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.                                                                                                                                                                                                                                                                                                 |
-| `transport`                 | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                                                                                                                                                                                                                                                                                                                  |
-| `generation`                | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership.                                                                                                                                                                                                                                                                                            |
-| `channel`                   | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.                                                                                                                                                                                                                                                                                                     |
-| `overlay`                   | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.                                                                                                                                                                                                                                                                                                     |
-| `onStopError`               | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects, except for a `StopCompletionError` with `status` `404` once the generation has ended locally (see [Stop and the end of a generation](#stop-and-the-end-of-a-generation)).                                                                                                                                                          |
-| `generationConflictMessage` | `string`                            | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`.                                                                                                                                          |
-| `onStreamError`             | `(error: Error) => void`            | Optional. Receives the original error of every failed or interrupted stream, once. The bubble's `streamErrorMessage` carries the host conflict/persistence warning or a `StreamUpstreamError`'s text; other errors set it to `''` so the host shows its localized fallback, and this callback is where the host can log the raw error.                                                   |
-| `batchChunksPerFrame`       | `boolean`                           | Optional, default `false`. Publishes streamed chunks to `setConversation` at most once per animation frame (a 16 ms timer where `requestAnimationFrame` is unavailable). Every chunk still reaches the per-path buffer immediately, and a pending update is flushed before completion, error, stop and a superseding `startStream`, and dropped when the displayed conversation changes. |
+| Name                           | Type                                | Description                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------ | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `conversationId`               | `string \| undefined`               | The currently displayed conversation's id.                                                                                                                                                                                                                                                                                                                                               |
+| `state`                        | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.                                                                                                                                                                                                                                                                                                 |
+| `transport`                    | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                                                                                                                                                                                                                                                                                                                  |
+| `generation`                   | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership.                                                                                                                                                                                                                                                                                            |
+| `channel`                      | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.                                                                                                                                                                                                                                                                                                     |
+| `overlay`                      | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.                                                                                                                                                                                                                                                                                                     |
+| `onStopError`                  | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects, except for a `StopCompletionError` with `status` `404` once the generation has ended locally (see [Stop and the end of a generation](#stop-and-the-end-of-a-generation)).                                                                                                                                                          |
+| `generationConflictMessage`    | `string`                            | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`.                                                                                                                                          |
+| `generationInterruptedMessage` | `string`                            | Optional. Shown on an assistant message whose generation was lost: a reloaded chat whose stored copy still ends in the empty placeholder while attach finds nothing running. Defaults to `DEFAULT_GENERATION_INTERRUPTED_ERROR_MESSAGE`.                                                                                                                                                 |
+| `onStreamError`                | `(error: Error) => void`            | Optional. Receives the original error of every failed or interrupted stream, once. The bubble's `streamErrorMessage` carries the host conflict/persistence warning or a `StreamUpstreamError`'s text; other errors set it to `''` so the host shows its localized fallback, and this callback is where the host can log the raw error.                                                   |
+| `batchChunksPerFrame`          | `boolean`                           | Optional, default `false`. Publishes streamed chunks to `setConversation` at most once per animation frame (a 16 ms timer where `requestAnimationFrame` is unavailable). Every chunk still reaches the per-path buffer immediately, and a pending update is flushed before completion, error, stop and a superseding `startStream`, and dropped when the displayed conversation changes. |
 
 `ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path, content? })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`. A sixth, optional `saveConversation(path, conversation)` saves a conversation at the bucket-stripped `path` and resolves with the saved copy; the hook uses it only for the recovery save described below.
 
@@ -1951,7 +2105,9 @@ When the transport reports a `StreamInterruptedError` — the connection was los
 
 **Stopping a resumed non-background generation.** A resumed generation that is not a background job has no stored id, so the attach stream supplies one: when the `snapshot` event read from `transport.attachToGeneration` carries a `generationId`, `canStopStreaming` becomes `true` and `handleStop` sends that id to `transport.stopCompletion`, so a refreshed page can stop what it rejoined. The id is taken only for a resume started through `resumeIfAwaitingGeneration`: stream recovery keeps using its local id, and a conflict handover (`resumeOnConflict`) keeps `canStopStreaming` `false`. A local id and a stored background id take precedence over it. The id is dropped when the resume settles or when the attach ends without a terminal event and the watch fallback takes over, where Stop stays unavailable; a `snapshot` without the field keeps Stop hidden. The host passes the attach stream through unchanged and needs no extra wiring.
 
-Also exports the standalone `getConversationPath` (strips a conversation id's bucket segment and decodes it) and `isAwaitingGenerationResume` (the placeholder-detection predicate the hook is built on, which also returns `true` for a pending background message) for hosts that need the same checks outside the hook.
+**A lost generation after a reload.** When a page loads a conversation whose last message is the empty placeholder and `resumeIfAwaitingGeneration` finds nothing producing it (attach is unavailable and the stored copy is still the placeholder after the watch opens), the hook stops treating the chat as generating: `isStreaming` and `canStopStreaming` become `false`, so Regenerate, edit and sending work at once, and the message shows `generationInterruptedMessage` as its `streamErrorMessage`. This is display-only: the hook does not save the conversation. The watch keeps running up to its 5-minute bound, so an answer that is saved meanwhile replaces the message, and a generation the user starts on the path takes over. It does not apply while attach is serving a generation, to a pending background message, or when the page holds a partial answer to keep. Because the stored placeholder is unchanged, a reload runs the same check again. A generation running on another instance cannot be told apart from a lost one, so the text says the response may have been interrupted.
+
+Also exports the standalone `getConversationPath` (strips a conversation id's bucket segment and decodes it) and `isAwaitingGenerationResume` (the placeholder-detection predicate the hook is built on, which also returns `true` for a pending background message and for a live `foregroundGeneration` marker — another tab, device or participant generating the answer) for hosts that need the same checks outside the hook.
 
 `generationPersistenceErrorMessage?: string` supplies a host-translated warning
 when the server reports a failed terminal save or a terminal reload still
@@ -4162,7 +4318,7 @@ const { starters, propertyKey, description } = getStartersFromSchema(
 
 Announcement-banner helpers: sanitize operator-supplied HTML, check whether structured (`title`/`description`) or any content is present, and build the content-keyed signature used to track dismissal.
 
-`buildAnnouncementSignature` covers every part of the banner surface: the title, the description, and the `items` entries behind the `+N` pill, whose popover is hidden along with the banner. Editing any of them produces a new signature, so a host that persists it re-shows a banner the user had dismissed. A legacy-only announcement (`html` with no title or description) signs as the raw HTML string, and `items` is left out of the payload when the list is empty — both so signatures stored by earlier builds keep matching.
+`buildAnnouncementSignature` covers every part of the banner surface: the title, the description, and the `items` entries behind the `+N` pill, whose popover is hidden along with the banner. Editing any of them produces a new signature, so a host that persists it re-shows a banner the user had dismissed. An entry's `severity` is not signed: the Chat surfaces do not render it, so changing only the severity leaves a dismissed banner hidden. A legacy-only announcement (`html` with no title or description) signs as the raw HTML string, and `items` is left out of the payload when the list is empty — both so signatures stored by earlier builds keep matching.
 
 The two sanitizers differ in the tags they keep, because the two banner layouts differ. `sanitizeAnnouncementHtml` is for the structured `description`, which renders as one truncating line, so it keeps inline markup only — `a`, `b`, `strong`, `em`, `br`, `span`. `sanitizeAnnouncementMessageHtml` is for the legacy `html` message, a free-standing block, so it additionally keeps `u` and `p`. Both keep `href`, `target` and `rel` on links, drop everything else including `style`, and force `rel="noopener noreferrer"` on any link that already carries `target="_blank"`.
 
@@ -4194,6 +4350,32 @@ buildAnnouncementSignature(content);
 
 sanitizeAnnouncementMessageHtml('<p>Upgraded to <strong>1.47</strong></p>');
 // '<p>Upgraded to <strong>1.47</strong></p>'
+```
+
+### AnnouncementSeverity / mapAnnouncementSeverity
+
+`AnnouncementSeverity` says how urgent an `AnnouncementListItem` is, so a host can mark a maintenance or outage notice — for example with a warning icon before the title. Members: `Info` (`'info'`, an ordinary news item) and `Warning` (`'warning'`). `AnnouncementListItem.severity` is optional; absent means `Info`.
+
+`mapAnnouncementSeverity` converts the generated client's `AnnouncementSeverity` (from an `AnnouncementItemDto`) into the lib enum. It returns `Info` when the value is `null`, `undefined` — as from a backend that predates the field — or a level this build does not know, so a host can switch on the result exhaustively.
+
+```ts
+import type { AnnouncementItemDto } from '@epam/ai-dial-chat-api-client';
+import {
+  type AnnouncementListItem,
+  AnnouncementSeverity,
+  mapAnnouncementSeverity,
+} from '@epam/ai-dial-chat-hooks';
+
+const toListItems = (
+  dtos: readonly AnnouncementItemDto[],
+): AnnouncementListItem[] =>
+  dtos.map((dto) => ({
+    ...dto,
+    severity: mapAnnouncementSeverity(dto.severity),
+  }));
+
+const isWarning = (item: AnnouncementListItem): boolean =>
+  item.severity === AnnouncementSeverity.Warning;
 ```
 
 ### sanitizeFooterHtml / formatAppVersion
@@ -4503,9 +4685,9 @@ const overview = buildSkillOverview(
 );
 ```
 
-### toPublishEntityType / mapPublishHistoryEntryDto / mapPublishConversationResultDto
+### toPublishEntityType / mapPublishHistoryEntryDto / mapPublishConversationResultDto / mapResourceDependencyDto
 
-Maps a catalog entity type to the publish API's entity-type path param (`CatalogPublishEntityType`), and maps publish-history API responses into the publish panel's `PublishHistoryEntry` model.
+Maps a catalog entity type to the publish API's entity-type path param (`CatalogPublishEntityType`), maps publish-history API responses into the publish panel's `PublishHistoryEntry` model, and maps a publish-dependencies API entry (`ResourceDependencyDto`) into the panel's `PublishDependency` model.
 
 ```ts
 import { toPublishEntityType } from '@epam/ai-dial-chat-hooks';
@@ -5254,6 +5436,14 @@ Each one takes a configured generated client and never creates one:
 - **`createSkillFolderLister(skillsApi, bucket)`** returns the
   `listPersonalFolders` for skills: the grouping folders of one level, across
   every listing page.
+- **`withResourceNameConflictMessages(adapter, messages)`** wraps the create,
+  in-place and new-version steps of any `ResourceSaveAdapter` so that a `409`
+  rejecting a duplicate name and version reaches the Save panel as a
+  `ResourceSaveError` carrying `messages[kind]`. `messages` holds one already
+  translated string per `ResourceNameConflictKind` (`Agent` or `Toolset`).
+  Moving a saved resource is left untouched, and any other failure passes
+  through. **`getResourceNameConflictKind(error)`** returns that kind for such
+  a `409`, or `undefined`.
 
 The client parameters are typed as the narrow `Pick`s
 `ResourceSaveApplicationsApi`, `ResourceSaveToolsetsApi`,
@@ -6736,3 +6926,28 @@ UsageResetOffsetPolicy.CurrentOffset retains the viewer's formatting-time offset
 UsageResetOffsetPolicy.ResetInstant uses the offset at the reset boundary. Both preserve
 isoValue and resetsAtMs. The shortened formatter and parent defaults are unchanged.
 Downstream can select the explicit policies instead of copying these algorithms.
+
+The project entry point's `getPinnedProjectMenuActions` includes
+`PinnedProjectMenuAction.RevokeAccess` after Share for owners only when its
+second argument, `canRevokeAccess`, is true. It defaults to false; pass
+`canRevokeAccess(project.id)` from `useProjectShareRecipients` after a confirmed
+positive count. Other actions keep their existing ownership rules. Hosts map this
+action to their confirmation and revoke request; recipients retain the
+existing Remove from My List flow.
+
+### Project access revocation
+
+The project entry point exports `useProjectShareRecipients(client)` and
+`useProjectRevokeAccess(client, project, handlers)`. Supply the same stable,
+already-configured `ProjectSharingClient` (the `ShareApi` recipient-count and revoke
+operations) to both. No authentication or transport configuration occurs here.
+
+Recipient state returns `requestRecipients(projectId)` for menu-open refreshes
+and `canRevokeAccess(projectId)`, false until a positive count is confirmed.
+Revoke state returns `isRevoking` and `confirmRevoke()`, guards ownership and
+duplicate requests, and updates all menus on the same client after success.
+`ProjectRevokeAccessHandlers.onRevoked(project)` and
+`onError(project, requestId)` carry notifications and dialog lifecycle.
+`notifyProjectAccessRevoked(client, projectId)` supports revokes performed
+outside the hook. Client instances have isolated subscriptions; unmounting
+unsubscribes and discards pending responses. No persistent cache is created.

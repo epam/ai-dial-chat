@@ -9,6 +9,15 @@ export type {
   PublishResourceSummary,
 } from './models/publish';
 
+export { PublishDependencyType } from './models/publish-dependency';
+export type { PublishDependency } from './models/publish-dependency';
+export type {
+  PublishDependenciesColors,
+  PublishDependenciesLabels,
+  PublishDependenciesListProps,
+  PublishDependenciesStyles,
+} from './models/publish-dependencies-list';
+
 // Utils
 export { derivePublishState } from './utils/publish-state';
 export { formatPublishedDate } from './utils/format-published-date';
@@ -57,6 +66,8 @@ export type {
   PublishAccessRulesStyles,
 } from './models/publish-access-rules-styles';
 
+export { PublishDependenciesList } from './components/PublishDependenciesList/PublishDependenciesList';
+
 export { PublishHistoryList } from './components/PublishHistoryList/PublishHistoryList';
 export type {
   PublishHistoryListColors,
@@ -99,6 +110,13 @@ export type {
   FolderDestination,
   FolderDestinationRoot,
 } from './models/folder-destination';
+
+export { UnpublishConfirmationDialog } from './components/UnpublishConfirmationDialog/UnpublishConfirmationDialog';
+export type {
+  UnpublishConfirmationDialogColors,
+  UnpublishConfirmationDialogLabels,
+  UnpublishConfirmationDialogProps,
+} from './models/unpublish-confirmation-dialog';
 
 export { SaveToFolderView, SaveVersionMode } from './types/save-to-folder';
 export { SaveToFolderPanel } from './components/SaveToFolderPanel/SaveToFolderPanel';

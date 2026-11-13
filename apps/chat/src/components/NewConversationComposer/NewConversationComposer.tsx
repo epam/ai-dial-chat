@@ -53,6 +53,7 @@ import {
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
@@ -214,6 +215,7 @@ const NewConversationComposer: FC<Props> = ({
     config: { welcomeScreenDescription, maxAttachmentFileSizeBytes },
   } = useAppConfig();
   const isUsageLimitsControlEnabled = useFeatureFlag('usageLimitsControl');
+  const overlay = useOptionalOverlay();
   /* Exactly one usage surface is composed: the dial when the flag is on,
      otherwise the banner above the input. */
   const usageDeploymentId =
@@ -644,6 +646,7 @@ const NewConversationComposer: FC<Props> = ({
           canRemoveTools={isRemovableToolsEnabled}
           toolsMenuTitle={toolsMenuTitle}
           toolsChipLabels={toolsChipLabels}
+          isToolChipRowAllowedOnPhone={overlay != null}
           usageLimitsSlot={
             isUsageLimitsControlEnabled ? (
               <UsageLimitsControl deploymentId={usageDeploymentId} />

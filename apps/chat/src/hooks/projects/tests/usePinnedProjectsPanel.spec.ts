@@ -3,14 +3,33 @@ import {
   ResponseError,
   type ProjectDetailsDto,
 } from '@epam/ai-dial-chat-api-client';
+import { notifyProjectAccessRevoked } from '@epam/ai-dial-chat-hooks/project';
 import { FilterTab } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
-import { act, renderHook, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getShareRecipientsCount } from '../../../server-api/share.api';
 import { PinnedProjectActionKind } from '../../../types/pinned-project-action';
+import { StorageKey } from '../../../types/storage-key';
+import { UserConfigStatus } from '../../../types/user-config-status';
 import { usePinnedProjectsPanel } from '../usePinnedProjectsPanel';
+import { projectSharingClient } from '../useProjectShareRecipients';
+
+vi.mock('../../../server-api/share.api', () => ({
+  getShareRecipientsCount: vi.fn(async () => ({
+    itemId: 'projects/owner/q4',
+    recipientsCount: 1,
+  })),
+}));
 
 const P = 'projects/bucket/support';
 const C1 = `${P}/conversations/c1`;
@@ -19,6 +38,7 @@ const C2 = `${P}/conversations/c2`;
 const mocks = vi.hoisted(() => ({
   isEnabled: true,
   pinnedProjectIds: [] as string[],
+  status: 'ready' as string,
   setPinnedProject: vi.fn(),
   replacePinnedProjectId: vi.fn(),
   showErrorNotification: vi.fn(),
@@ -45,6 +65,7 @@ vi.mock('../../../context/AppConfigContext', () => ({
 vi.mock('../../../context/UserConfigContext', () => ({
   useUserConfig: () => ({
     pinnedProjectIds: mocks.pinnedProjectIds,
+    status: mocks.status,
     setPinnedProject: mocks.setPinnedProject,
     replacePinnedProjectId: mocks.replacePinnedProjectId,
   }),
@@ -106,18 +127,32 @@ const loadedProjects = async (result: {
   return pinned;
 };
 
-const clickItem = (items: DropdownItem[], key: string) =>
-  act(() => {
-    (
-      items.find((item) => item.key === key) as { onClick: () => void }
-    ).onClick();
-  });
+/* Clicks a real button so the item's onClick gets the React event the menu would pass. */
+const clickItem = (items: DropdownItem[], key: string) => {
+  const onClick = items.find((item) => item.key === key)?.onClick;
+  if (onClick == null) throw new Error(`No clickable "${key}" item`);
+  const { unmount } = render(
+    createElement(
+      'button',
+      { type: 'button', onClick: (domEvent) => onClick({ key, domEvent }) },
+      key,
+    ),
+  );
+  fireEvent.click(screen.getByRole('button', { name: key }));
+  unmount();
+};
 
 describe('usePinnedProjectsPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getShareRecipientsCount).mockResolvedValue({
+      itemId: P,
+      recipientsCount: 1,
+    });
     mocks.isEnabled = true;
     mocks.pinnedProjectIds = [P];
+    mocks.status = UserConfigStatus.Ready;
+    localStorage.clear();
     mocks.viewedListeners.clear();
     mocks.client.getProject.mockResolvedValue(details());
     mocks.client.listProjectConversations.mockResolvedValue(listing());
@@ -140,6 +175,7 @@ describe('usePinnedProjectsPanel', () => {
         href: '/projects/view/bucket/support',
         source: FilterTab.Shared,
         hasMore: false,
+        isExpanded: true,
         conversations: [
           {
             id: C1,
@@ -301,6 +337,17 @@ describe('usePinnedProjectsPanel', () => {
     it('offers the owner Unpin, Edit, Publish, Share and Delete in that order', async () => {
       const { result } = renderPanel();
 
+      expect((await actionsOf(result)).map((item) => item.key)).not.toContain(
+        'revokeAccess',
+      );
+      const pinned = await loadedProjects(result);
+      await act(async () =>
+        pinned.onActionMenuOpen?.(
+          pinned.projects[0],
+          document.createElement('button'),
+        ),
+      );
+
       const items = await actionsOf(result);
 
       expect(items.map(({ key }) => key)).toEqual([
@@ -308,6 +355,7 @@ describe('usePinnedProjectsPanel', () => {
         'edit',
         'publish',
         'share',
+        'revokeAccess',
         'delete',
       ]);
       expect(items.map(({ label }) => label)).toEqual([
@@ -315,11 +363,53 @@ describe('usePinnedProjectsPanel', () => {
         'buttons.edit',
         'buttons.publish',
         'buttons.share',
+        'buttons.revokeAccess',
         'buttons.delete',
       ]);
     });
 
-    it('offers a share recipient with edit access Unpin and Edit', async () => {
+    it('hides revoke after access is revoked and after a zero-recipient lookup', async () => {
+      const { result } = renderPanel();
+      await actionsOf(result);
+      act(() => notifyProjectAccessRevoked(projectSharingClient, P));
+      expect((await actionsOf(result)).map((item) => item.key)).not.toContain(
+        'revokeAccess',
+      );
+      vi.mocked(getShareRecipientsCount).mockResolvedValue({
+        itemId: 'projects/owner/q4',
+        recipientsCount: 0,
+      });
+      const pinned = await loadedProjects(result);
+      act(() =>
+        pinned.onActionMenuOpen?.(
+          pinned.projects[0],
+          document.createElement('button'),
+        ),
+      );
+      await waitFor(() =>
+        expect(getShareRecipientsCount).toHaveBeenCalledWith(P),
+      );
+      expect((await actionsOf(result)).map((item) => item.key)).not.toContain(
+        'revokeAccess',
+      );
+    });
+
+    it('marks Delete as a danger item and leaves the others plain', async () => {
+      const { result } = renderPanel();
+
+      const items = await actionsOf(result);
+
+      expect(items.find(({ key }) => key === 'delete')?.className).toBe(
+        'text-error',
+      );
+      expect(
+        items
+          .filter(({ key }) => key !== 'delete')
+          .every(({ className }) => className == null),
+      ).toBe(true);
+    });
+
+    it('offers a share recipient with edit access Unpin, Edit and Remove from My List', async () => {
       mocks.client.getProject.mockResolvedValue(
         details({
           canEdit: true,
@@ -332,10 +422,11 @@ describe('usePinnedProjectsPanel', () => {
       expect((await actionsOf(result)).map(({ key }) => key)).toEqual([
         'unpin',
         'edit',
+        'removeFromMyList',
       ]);
     });
 
-    it('offers a view-only share recipient Unpin only', async () => {
+    it('offers a view-only share recipient Unpin and Remove from My List', async () => {
       mocks.client.getProject.mockResolvedValue(
         details({
           canEdit: false,
@@ -345,9 +436,49 @@ describe('usePinnedProjectsPanel', () => {
       );
       const { result } = renderPanel();
 
+      const items = await actionsOf(result);
+
+      expect(items.map(({ key }) => key)).toEqual([
+        'unpin',
+        'removeFromMyList',
+      ]);
+      expect(items[1].label).toBe('buttons.removeFromMyList');
+      expect(items[1].className).toBeUndefined();
+    });
+
+    it('never offers Remove from My List for an organization project the user cannot manage', async () => {
+      mocks.client.getProject.mockResolvedValue(
+        details({
+          canEdit: false,
+          canManage: false,
+          source: ProjectSource.Organization,
+        }),
+      );
+      const { result } = renderPanel();
+
       expect((await actionsOf(result)).map(({ key }) => key)).toEqual([
         'unpin',
       ]);
+    });
+
+    it('opens the confirmation for Remove from My List without removing anything', async () => {
+      mocks.client.getProject.mockResolvedValue(
+        details({
+          canEdit: false,
+          canManage: false,
+          source: ProjectSource.Shared,
+        }),
+      );
+      const { result } = renderPanel();
+      const items = await actionsOf(result);
+
+      clickItem(items, 'removeFromMyList');
+
+      expect(result.current.actionOverlay.action).toEqual({
+        kind: PinnedProjectActionKind.RemoveFromMyList,
+        projectId: P,
+        isOpen: true,
+      });
     });
 
     it('removes the tree on Unpin', async () => {
@@ -394,13 +525,16 @@ describe('usePinnedProjectsPanel', () => {
     it.each([
       ['publish', PinnedProjectActionKind.Publish],
       ['share', PinnedProjectActionKind.Share],
+      ['revokeAccess', PinnedProjectActionKind.RevokeAccess],
       ['delete', PinnedProjectActionKind.Delete],
     ])('opens the %s overlay for the project', async (key, kind) => {
       const { result } = renderPanel();
       const pinned = await loadedProjects(result);
       const trigger = document.createElement('button');
-      act(() => pinned.onActionMenuOpen?.(pinned.projects[0], trigger));
-      const items = pinned.getActions?.(pinned.projects[0]) ?? [];
+      await act(async () =>
+        pinned.onActionMenuOpen?.(pinned.projects[0], trigger),
+      );
+      const items = await actionsOf(result);
 
       clickItem(items, key);
 
@@ -419,6 +553,167 @@ describe('usePinnedProjectsPanel', () => {
         projectId: P,
         isOpen: false,
       });
+    });
+  });
+  describe('collapsed projects', () => {
+    const CHAT_ROUTE = '/projects/chat/bucket/support/conversations/c1';
+    const stored = () =>
+      localStorage.getItem(StorageKey.CollapsedPinnedProjects);
+    const expanded = async (result: {
+      current: ReturnType<typeof usePinnedProjectsPanel>;
+    }) => (await loadedProjects(result)).projects[0].isExpanded;
+
+    it('shows a project expanded and writes nothing until the user toggles it', async () => {
+      const { result } = renderPanel();
+
+      expect(await expanded(result)).toBe(true);
+      expect(stored()).toBeNull();
+    });
+
+    it('collapses a project on toggle and keeps it collapsed after a reload', async () => {
+      const view = renderPanel();
+      const pinned = await loadedProjects(view.result);
+
+      act(() => pinned.onToggleProject?.(P, false));
+
+      await waitFor(() =>
+        expect(view.result.current.pinnedProjects?.projects[0].isExpanded).toBe(
+          false,
+        ),
+      );
+      expect(JSON.parse(stored() ?? '[]')).toEqual([P]);
+      view.unmount();
+
+      const { result } = renderPanel();
+      expect(await expanded(result)).toBe(false);
+    });
+
+    it('expands a collapsed project on toggle and drops its id', async () => {
+      localStorage.setItem(
+        StorageKey.CollapsedPinnedProjects,
+        JSON.stringify([P]),
+      );
+      const { result } = renderPanel();
+      const pinned = await loadedProjects(result);
+      expect(pinned.projects[0].isExpanded).toBe(false);
+
+      act(() => pinned.onToggleProject?.(P, true));
+
+      await waitFor(() =>
+        expect(result.current.pinnedProjects?.projects[0].isExpanded).toBe(
+          true,
+        ),
+      );
+      expect(JSON.parse(stored() ?? 'null')).toEqual([]);
+    });
+
+    it('shows the project of the open chat expanded without writing, and lets the user collapse it again', async () => {
+      localStorage.setItem(
+        StorageKey.CollapsedPinnedProjects,
+        JSON.stringify([P]),
+      );
+      const { result } = renderPanel(CHAT_ROUTE);
+
+      expect(await expanded(result)).toBe(true);
+      expect(JSON.parse(stored() ?? 'null')).toEqual([P]);
+
+      act(() => result.current.pinnedProjects?.onToggleProject?.(P, false));
+
+      await waitFor(() =>
+        expect(result.current.pinnedProjects?.projects[0].isExpanded).toBe(
+          false,
+        ),
+      );
+      expect(JSON.parse(stored() ?? 'null')).toEqual([P]);
+    });
+
+    it('keeps a stored collapsed project collapsed when the panel asks to collapse it', async () => {
+      localStorage.setItem(
+        StorageKey.CollapsedPinnedProjects,
+        JSON.stringify([P]),
+      );
+      const { result } = renderPanel();
+      const pinned = await loadedProjects(result);
+
+      act(() => pinned.onToggleProject?.(P, false));
+
+      await waitFor(() => expect(stored()).toBe(JSON.stringify([P])));
+      expect(result.current.pinnedProjects?.projects[0].isExpanded).toBe(false);
+    });
+
+    it('does not duplicate an id when the panel asks to expand an already expanded project', async () => {
+      const { result } = renderPanel();
+      const pinned = await loadedProjects(result);
+
+      act(() => pinned.onToggleProject?.(P, true));
+
+      expect(await expanded(result)).toBe(true);
+      expect(JSON.parse(stored() ?? '[]')).toEqual([]);
+    });
+
+    it('removes stored ids of projects that are no longer pinned once the user config has loaded', async () => {
+      localStorage.setItem(
+        StorageKey.CollapsedPinnedProjects,
+        JSON.stringify([P, 'projects/bucket/gone']),
+      );
+      renderPanel();
+
+      await waitFor(() => expect(JSON.parse(stored() ?? 'null')).toEqual([P]));
+    });
+
+    it('keeps every stored id while the user config is still loading', async () => {
+      mocks.status = UserConfigStatus.Loading;
+      mocks.pinnedProjectIds = [];
+      localStorage.setItem(
+        StorageKey.CollapsedPinnedProjects,
+        JSON.stringify([P]),
+      );
+      renderPanel();
+
+      await act(async () => undefined);
+
+      expect(JSON.parse(stored() ?? 'null')).toEqual([P]);
+    });
+
+    it('keeps every stored id while projects are off', async () => {
+      mocks.isEnabled = false;
+      mocks.pinnedProjectIds = [];
+      localStorage.setItem(
+        StorageKey.CollapsedPinnedProjects,
+        JSON.stringify([P]),
+      );
+      renderPanel();
+
+      await act(async () => undefined);
+
+      expect(JSON.parse(stored() ?? 'null')).toEqual([P]);
+    });
+
+    it.each(['null', '{}', '"x"', '[1,"a",null]'])(
+      'ignores a stored value that is not a list of ids (%s)',
+      async (value) => {
+        localStorage.setItem(StorageKey.CollapsedPinnedProjects, value);
+        const { result } = renderPanel();
+
+        expect(await expanded(result)).toBe(true);
+      },
+    );
+
+    it('collapses for the page session when storage cannot be written', async () => {
+      const { result } = renderPanel();
+      const pinned = await loadedProjects(result);
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('quota');
+      });
+
+      act(() => pinned.onToggleProject?.(P, false));
+
+      await waitFor(() =>
+        expect(result.current.pinnedProjects?.projects[0].isExpanded).toBe(
+          false,
+        ),
+      );
+      vi.restoreAllMocks();
     });
   });
 });

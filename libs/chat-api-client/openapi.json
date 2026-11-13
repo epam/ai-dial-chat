@@ -241,8 +241,9 @@
             "name": "appId",
             "required": true,
             "in": "query",
-            "description": "Application identifier. Must be a known app ID.",
+            "description": "Application identifier served by this deployment. An identifier the deployment does not serve is rejected with 400.",
             "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
               "example": "chat-ui",
               "type": "string"
             }
@@ -260,7 +261,7 @@
             }
           },
           "400": {
-            "description": "Missing or invalid appId"
+            "description": "Missing, malformed or unserved appId"
           }
         },
         "summary": "Get client-safe application configuration and feature flags",
@@ -515,13 +516,27 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission to create applications in their bucket"
+            "description": "Caller lacks permission to create applications in their bucket, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "DIAL Core resource not found"
           },
           "409": {
-            "description": "Application name already taken"
+            "description": "Another own entity in the folder and catalog tab already has this name and version (`code` `name-taken-agent` or `name-taken-toolset`), or, without a `code`, every candidate storage path is taken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceNameConflictDto"
+                }
+              }
+            }
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -656,7 +671,14 @@
             "description": "Application not found"
           },
           "409": {
-            "description": "An application with the same name already exists in the folder"
+            "description": "The target folder already holds an own application with the same displayed name and version (`code` `name-taken-agent` or `name-taken-toolset`), or an application with the same leaf",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceNameConflictDto"
+                }
+              }
+            }
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -729,7 +751,14 @@
             "description": "Application not found"
           },
           "409": {
-            "description": "The version already exists in the folder"
+            "description": "The version already exists in the folder (path conflict, no `code`), or another own entity in the folder already has this name and version (`code` `name-taken-agent` or `name-taken-toolset`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceNameConflictDto"
+                }
+              }
+            }
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -869,13 +898,27 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission"
+            "description": "Caller lacks permission, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Application not found"
           },
           "409": {
-            "description": "DIAL Core reported a conflict with the current resource state"
+            "description": "The new name and version are already held by another own entity in the same folder and catalog tab (`code` `name-taken-agent` or `name-taken-toolset`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceNameConflictDto"
+                }
+              }
+            }
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -1904,6 +1947,113 @@
         "tags": ["models"]
       }
     },
+    "/api/v1/model-catalog": {
+      "get": {
+        "description": "Returns the DIAL Core models visible to the server-side MODEL_CATALOG_API_KEY, including models the caller's own roles cannot access. Display data only: GET /api/v1/models still decides what the user can use, and Core invocation settings (defaults, responses_defaults, max_retry_attempts, tokenizer_model) are omitted. One server-side cache entry, shared by all users, is kept for 5 minutes.",
+        "operationId": "listModelCatalog",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the model catalog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelCatalogListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DIAL Core rejected the request as invalid"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "404": {
+            "description": "The model catalog is not configured on this deployment"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core rejected the catalog key, or is unreachable or timed out"
+          }
+        },
+        "summary": "List the model catalog",
+        "tags": ["models"]
+      }
+    },
+    "/api/v1/model-catalog/{modelName}": {
+      "get": {
+        "description": "Returns one model from the cached model catalog, without a separate DIAL Core call. A model hidden from the catalog key answers 404, never 403, so its existence is not revealed.",
+        "operationId": "getModelCatalogEntry",
+        "parameters": [
+          {
+            "name": "modelName",
+            "required": true,
+            "in": "path",
+            "description": "Model name (alphanumeric, dash, underscore, dot, colon, and at-sign only)",
+            "schema": {
+              "example": "gpt-4o",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the catalog model",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelCatalogEntryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid model name — disallowed characters"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "404": {
+            "description": "The model catalog is not configured, or the model is not in the catalog"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core rejected the catalog key, or is unreachable or timed out"
+          }
+        },
+        "summary": "Get a model from the catalog",
+        "tags": ["models"]
+      }
+    },
     "/api/v1/toolsets": {
       "get": {
         "description": "Returns the list of DIAL Core toolsets visible to the authenticated session user. Proxies GET /openai/toolsets using the caller's session access token. Results are cached server-side for 30 seconds per user; the response carries no client-facing Cache-Control so a browser never serves a stale copy across a login/logout that already invalidated that cache.",
@@ -1995,7 +2145,14 @@
             "description": "DIAL Core resource not found"
           },
           "409": {
-            "description": "Toolset name already taken"
+            "description": "Another own entity in the folder and Toolsets tab already has this name and version (`code` `name-taken-toolset`), or, without a `code`, every candidate storage path is taken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceNameConflictDto"
+                }
+              }
+            }
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -2129,7 +2286,14 @@
             "description": "Toolset not found"
           },
           "409": {
-            "description": "A toolset with the same name already exists in the folder"
+            "description": "The target folder already holds an own toolset with the same displayed name and version (`code` `name-taken-toolset`), or a toolset with the same leaf",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceNameConflictDto"
+                }
+              }
+            }
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -2264,7 +2428,14 @@
             "description": "Toolset not found"
           },
           "409": {
-            "description": "DIAL Core reported a conflict with the current resource state"
+            "description": "The new name and version are already held by another own entity in the same folder and Toolsets tab (`code` `name-taken-toolset`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceNameConflictDto"
+                }
+              }
+            }
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -4258,10 +4429,10 @@
             "description": "Not authenticated"
           },
           "404": {
-            "description": "No active generation found for this principal for the given path and generationId"
+            "description": "No active generation the caller may stop for the given path and generationId"
           },
           "503": {
-            "description": "The stopped state of a background generation could not be saved; the generation keeps running and Stop can be retried"
+            "description": "The Stop could not be saved for a background generation or on a foreground generation marker; the generation keeps running and Stop can be retried"
           }
         },
         "summary": "Stop an active generation",
@@ -4739,6 +4910,44 @@
           }
         },
         "summary": "Get publish history for a conversation",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/publish-dependencies": {
+      "get": {
+        "description": "Returns the direct references of an owned conversation that are not in the public bucket: its model or add-ons when they are applications or toolsets, the skills its messages use, and attachment files that belong to another user. Files in the author’s own bucket are not listed, because they are published with the conversation. The list is advisory: when it cannot be resolved the response is an empty list rather than an error.",
+        "operationId": "getConversationPublishDependencies",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "gpt-4o__My Conversation__UUID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The conversation’s private dependencies, possibly empty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceDependenciesResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid path"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          }
+        },
+        "summary": "List the private dependencies of a conversation",
         "tags": ["conversations"]
       }
     },
@@ -8931,6 +9140,62 @@
         "tags": ["publish"]
       }
     },
+    "/api/v1/catalog/{entityType}/{entityId}/publish-dependencies": {
+      "get": {
+        "description": "Returns the direct references of a catalog entity (Toolset, Application, Prompt, Skill or Project) that are not in the public bucket, so the publisher can publish them too before the published copy reaches its audience. Resources that publishing already carries along (the application icon and its declared files) are not listed, and a dependency’s own dependencies are not followed. The list is advisory: when it cannot be resolved the response is an empty list rather than an error. Kinds that reference no other resource always return an empty list.",
+        "operationId": "getCatalogPublishDependencies",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": true,
+            "in": "path",
+            "description": "Catalog entity kind.",
+            "schema": {
+              "example": "toolset",
+              "type": "string",
+              "enum": [
+                "model",
+                "toolset",
+                "application",
+                "prompt",
+                "skill",
+                "project"
+              ]
+            }
+          },
+          {
+            "name": "entityId",
+            "required": true,
+            "in": "path",
+            "description": "The entity's DIAL Core resource path, used directly as the Publication API `sourceUrl`.",
+            "schema": {
+              "example": "tool-abc123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The entity’s private dependencies, possibly empty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceDependenciesResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid entityType or entityId"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          }
+        },
+        "summary": "List the private dependencies of a catalog entity",
+        "tags": ["publish"]
+      }
+    },
     "/api/v1/publish/rules": {
       "get": {
         "description": "Returns the exact requested folder's own access-restriction rules by proxying DIAL Core's `getPublicationRules` — ancestor-folder rules in the underlying response are discarded, never returned.",
@@ -10950,7 +11215,7 @@
     },
     "/api/v1/projects/{id}/conversations": {
       "get": {
-        "description": "Lists every conversation stored in the project's `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.",
+        "description": "Lists every conversation stored in the project's `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves. A published project is the exception: its files all carry the time of the copy, so every body is read, no item is pending, and the conversations are ordered by their last message.",
         "operationId": "listProjectConversations",
         "parameters": [
           {
@@ -11270,10 +11535,10 @@
             "description": "The projectsEnabled feature is not enabled for this user, the caller may not write to the project (`canEdit: false`: a view-only share or an organization project), or DIAL Core denied access"
           },
           "404": {
-            "description": "No active generation found for this principal for the given path and generationId"
+            "description": "No active generation the caller may stop for the given path and generationId"
           },
           "503": {
-            "description": "The stopped state of a background generation could not be saved; Stop can be retried"
+            "description": "The Stop could not be saved for a background generation or on a foreground generation marker; the generation keeps running and Stop can be retried"
           }
         },
         "summary": "Stop a generation of a project conversation",
@@ -11634,6 +11899,78 @@
         "tags": ["projects"]
       }
     },
+    "/api/v1/projects/{id}/conversations/{conversationName}/generate-title": {
+      "post": {
+        "description": "Generates a title with the operator-configured utility model from the most recent messages. The suggestion is returned but NOT persisted; the caller confirms the rename separately.",
+        "operationId": "generateProjectConversationTitle",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          },
+          {
+            "name": "conversationName",
+            "required": true,
+            "in": "path",
+            "description": "File name of the conversation under the project `conversations/` folder, URL-encoded.",
+            "schema": {
+              "example": "gpt-4o__Weekly%20support%20health%20summary__7c1d",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Generated title suggestion",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateTitleResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid id or conversation name, or no content to title"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, the caller may not write to the project (`canEdit: false`: a view-only share or an organization project), or DIAL Core denied access"
+          },
+          "404": {
+            "description": "The project or the conversation does not exist"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "LLM title generation failed"
+          },
+          "503": {
+            "description": "LLM title generation unavailable or timed out"
+          }
+        },
+        "summary": "Generate an LLM-based title suggestion for a project conversation",
+        "tags": ["projects"]
+      }
+    },
     "/api/v1/projects/{id}/conversations/{conversationName}/viewed": {
       "patch": {
         "description": "Records the conversation's current version as seen by the caller, in the caller's own read state, so it is not reported unread until it changes. Any reader of the project may call it.",
@@ -11813,12 +12150,12 @@
     },
     "/api/v1/offline-credentials/signout": {
       "post": {
-        "description": "Revokes the session user's stored offline-credentials grant by proxying DIAL Core (POST /v1/user/offline-credentials/signout). A Core 404 is treated as idempotent success — there was no grant left to revoke. The authorization token is never logged.",
+        "description": "Revokes the session user's stored offline-credentials grant by proxying DIAL Core (POST /v1/user/offline-credentials/signout). A Core 200 false or 404 is treated as idempotent success — there was no grant left to revoke. The authorization token is never logged.",
         "operationId": "signOutOfflineCredentials",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Signed out successfully (including idempotent Core 404)",
+            "description": "Signed out successfully (including idempotent Core 200 false or 404)",
             "content": {
               "application/json": {
                 "schema": {
@@ -11834,7 +12171,7 @@
             "description": "Caller lacks permission, or neither scheduledTasksEnabled nor liveChatInteraction is enabled"
           },
           "502": {
-            "description": "DIAL Core returned an error response or reported failure"
+            "description": "DIAL Core returned an error response"
           },
           "503": {
             "description": "DIAL Core is unreachable"
@@ -12370,6 +12707,11 @@
         },
         "required": ["label", "href"]
       },
+      "AnnouncementSeverity": {
+        "type": "string",
+        "enum": ["info", "warning"],
+        "description": "How urgent the announcement is, for clients that mark maintenance or outage notices. Always present: an entry configured without one, or with an unrecognized value, is returned as `info`. Clients should treat a value they do not recognize as `info`, since more levels may be added."
+      },
       "AnnouncementItemDto": {
         "type": "object",
         "properties": {
@@ -12393,9 +12735,18 @@
                 "$ref": "#/components/schemas/AnnouncementLinkDto"
               }
             ]
+          },
+          "severity": {
+            "description": "How urgent the announcement is, for clients that mark maintenance or outage notices. Always present: an entry configured without one, or with an unrecognized value, is returned as `info`. Clients should treat a value they do not recognize as `info`, since more levels may be added.",
+            "example": "warning",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnouncementSeverity"
+              }
+            ]
           }
         },
-        "required": ["title", "description", "link"]
+        "required": ["title", "description", "link", "severity"]
       },
       "CustomVisualizerDto": {
         "type": "object",
@@ -12769,6 +13120,11 @@
                 "$ref": "#/components/schemas/CatalogCreationPermissionsDto"
               }
             ]
+          },
+          "modelCatalogAvailable": {
+            "type": "boolean",
+            "description": "Whether GET /api/v1/model-catalog is configured (MODEL_CATALOG_API_KEY is set). Missing means unavailable. Never carries the key.",
+            "example": false
           }
         },
         "required": [
@@ -13037,6 +13393,37 @@
         },
         "required": ["id"]
       },
+      "ResourceNameConflictCode": {
+        "type": "string",
+        "enum": ["name-taken-agent", "name-taken-toolset"],
+        "description": "Kind of the entity that already holds the displayed name and version."
+      },
+      "ResourceNameConflictDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 409
+          },
+          "message": {
+            "type": "string",
+            "example": "An agent with this name and version already exists in this folder"
+          },
+          "error": {
+            "type": "string",
+            "example": "Conflict"
+          },
+          "code": {
+            "description": "Kind of the entity that already holds the displayed name and version.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResourceNameConflictCode"
+              }
+            ]
+          }
+        },
+        "required": ["statusCode", "message", "error"]
+      },
       "ForkApplicationVersionDto": {
         "type": "object",
         "properties": {
@@ -13203,6 +13590,38 @@
           }
         },
         "required": ["id"]
+      },
+      "ApplicationErrorCode": {
+        "type": "string",
+        "enum": ["applicationDependentResourceMissing"],
+        "description": "Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available."
+      },
+      "ApplicationErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 403
+          },
+          "error": {
+            "type": "string",
+            "example": "Forbidden",
+            "description": "HTTP status text. Absent from a plain `403 Forbidden`."
+          },
+          "message": {
+            "type": "string",
+            "example": "This application refers to a resource that is no longer available. Remove or replace it to continue."
+          },
+          "code": {
+            "description": "Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApplicationErrorCode"
+              }
+            ]
+          }
+        },
+        "required": ["statusCode", "message"]
       },
       "UpdateApplicationBodyDto": {
         "type": "object",
@@ -14115,6 +14534,48 @@
         },
         "required": ["id", "type"]
       },
+      "BudgetStatsDto": {
+        "type": "object",
+        "properties": {
+          "costObject": {
+            "type": "string",
+            "example": "example-project",
+            "description": "The cost object the budget applies in. A cost object can hold several budgets, so more than one entry may carry the same value."
+          },
+          "policy": {
+            "type": "string",
+            "example": "example-policy",
+            "description": "The path of the budget's policy."
+          },
+          "priority": {
+            "type": "integer",
+            "example": 10,
+            "description": "The priority of the budget's policy, lower first; absent when the policy sets none."
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Example policy",
+            "description": "The human-readable name of the budget's policy; absent when the policy sets none. Use `policy` as the identifier — the display name need not be unique."
+          },
+          "day": {
+            "description": "The budget's limit and the caller's spend against it for the current UTC day. A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LimitStatsDto"
+              }
+            ]
+          },
+          "month": {
+            "description": "The budget's limit and the caller's spend against it for the current UTC month. A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LimitStatsDto"
+              }
+            ]
+          }
+        },
+        "required": ["costObject", "policy", "day", "month"]
+      },
       "UserLimitStatsResponseDto": {
         "type": "object",
         "properties": {
@@ -14156,6 +14617,13 @@
                 "$ref": "#/components/schemas/LimitStatsDto"
               }
             ]
+          },
+          "budgets": {
+            "description": "The caller's spend against each spending budget that applies to them, in DIAL Core's order. A cost object can hold several budgets, so entries may share a `costObject`. The budgets are reported separately from, and are not merged into, the top-level `minuteCostStats`/`dayCostStats`/`weekCostStats`/`monthCostStats`. An empty array means DIAL Core reported no applicable budget (spending limits are off, no budget matches the caller, or the caller is an API key); an absent field means DIAL Core does not report budgets at all (an older DIAL Core). A window `total` at or above 9007199254740992 (2^53) represents the upstream \"unlimited\" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio. The BFF forwards the array verbatim.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BudgetStatsDto"
+            }
           }
         }
       },
@@ -14619,6 +15087,11 @@
             "type": "object",
             "additionalProperties": true
           },
+          "catalog_properties": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Curated catalog display metadata from DIAL Core, forwarded as sent"
+          },
           "description_keywords": {
             "example": ["Text Generation", "Image Recognition"],
             "type": "array",
@@ -14664,6 +15137,141 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/DialModelDto"
+            }
+          }
+        },
+        "required": ["data"]
+      },
+      "ModelCatalogEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "dial.gemini-3-flash-preview"
+          },
+          "object": {
+            "type": "string",
+            "example": "model"
+          },
+          "model": {
+            "type": "string",
+            "example": "dial.gemini-3-flash-preview"
+          },
+          "display_name": {
+            "example": "Gemini 3 Flash",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "display_version": {
+            "type": "string",
+            "example": "test"
+          },
+          "icon_url": {
+            "type": "string",
+            "example": "Gemini.svg"
+          },
+          "description": {
+            "example": "A multimodal model combining reasoning and efficiency.",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "reference": {
+            "type": "string",
+            "example": "dial.gemini-3-flash-preview"
+          },
+          "owner": {
+            "type": "string",
+            "example": "organization-owner"
+          },
+          "status": {
+            "type": "string",
+            "example": "succeeded"
+          },
+          "created_at": {
+            "type": "number",
+            "example": 1779372048383
+          },
+          "updated_at": {
+            "type": "number",
+            "example": 1779372138434
+          },
+          "features": {
+            "$ref": "#/components/schemas/DialModelFeaturesDto"
+          },
+          "input_attachment_types": {
+            "example": ["image/png", "application/pdf"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "max_input_attachments": {
+            "type": "number",
+            "example": 5
+          },
+          "description_keywords": {
+            "example": ["Text Generation", "Image Recognition"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lifecycle_status": {
+            "type": "string",
+            "example": "generally-available"
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/DialModelCapabilitiesDto"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/DialModelLimitsDto"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/DialModelPricingDto"
+          },
+          "interfaces": {
+            "example": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "catalog_properties": {
+            "description": "Known model catalog properties allow-listed from DIAL Core catalog_properties",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ModelCatalogPropertiesDto"
+              }
+            ]
+          }
+        },
+        "required": ["id", "object"]
+      },
+      "ModelCatalogListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelCatalogEntryDto"
             }
           }
         },
@@ -16180,6 +16788,32 @@
         },
         "required": ["generationId", "status", "startedAt"]
       },
+      "ForegroundGenerationDto": {
+        "type": "object",
+        "properties": {
+          "generationId": {
+            "type": "string",
+            "description": "Client-supplied generation id of the request that started the generation; identifies this message across writes.",
+            "example": "4b2c8f1e-7d3a-4c5b-9e2f-0a1b2c3d4e5f"
+          },
+          "startedAt": {
+            "type": "number",
+            "description": "Server time (epoch ms) at which the start-state write was built.",
+            "example": 1793875200000
+          },
+          "expiresAt": {
+            "type": "number",
+            "description": "Server time (epoch ms) after which the marker no longer holds the conversation.",
+            "example": 1793877120000
+          },
+          "stopRequestedAt": {
+            "type": "number",
+            "description": "Server time (epoch ms) at which a Stop was stored on the marker; the generation stops at its next re-read.",
+            "example": 1793875260000
+          }
+        },
+        "required": ["generationId", "startedAt", "expiresAt"]
+      },
       "ConversationMessageDto": {
         "type": "object",
         "properties": {
@@ -16219,6 +16853,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/BackgroundGenerationDto"
+              }
+            ]
+          },
+          "foregroundGeneration": {
+            "description": "Present only while a Chat Completions or stateless Responses generation is producing this assistant message. Server-owned: it holds the conversation until expiresAt, and client saves cannot create, change or drop it.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ForegroundGenerationDto"
               }
             ]
           },
@@ -17082,6 +17724,49 @@
           }
         },
         "required": ["path", "folderPath", "requestedAt", "requestedBy"]
+      },
+      "ResourceDependencyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The dependency's DIAL Core resource url, as stored in the reference.",
+            "example": "prompts/bucket-123/Support/Greeting"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name, percent-decoded, without a trailing `__version`.",
+            "example": "Greeting"
+          },
+          "version": {
+            "type": "string",
+            "description": "Present only for a versioned dependency.",
+            "example": "1.0.0"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["application", "toolset", "prompt", "skill", "file"],
+            "example": "prompt"
+          },
+          "location": {
+            "type": "string",
+            "description": "Percent-decoded folder path of the dependency inside its owner's bucket; empty at the bucket root.",
+            "example": "Support"
+          }
+        },
+        "required": ["id", "name", "type", "location"]
+      },
+      "ResourceDependenciesResultDto": {
+        "type": "object",
+        "properties": {
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceDependencyDto"
+            }
+          }
+        },
+        "required": ["dependencies"]
       },
       "PromptResponseDto": {
         "type": "object",

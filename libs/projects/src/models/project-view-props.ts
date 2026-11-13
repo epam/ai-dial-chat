@@ -30,6 +30,8 @@ export interface ProjectViewLabels {
   unpinLabel: string;
   /** Publish action label. */
   publishLabel: string;
+  /** Unpublish action label. Defaults to `'Unpublish'`. */
+  unpublishLabel?: string;
   /** Edit action label. */
   editLabel: string;
   /** Accessible name of the more-actions menu trigger. */
@@ -38,10 +40,14 @@ export interface ProjectViewLabels {
   closeLabel?: string;
   /** Share action label. */
   shareLabel: string;
+  /** Revoke access action label. Defaults to 'Revoke access'. */
+  revokeAccessLabel?: string;
   /** Download action label. */
   downloadLabel: string;
   /** Delete action label. */
   deleteLabel: string;
+  /** Remove-from-my-list action label. Defaults to `'Remove from My List'`. */
+  removeFromMyListLabel?: string;
   /** Heading and accessible name of the Details panel. */
   detailsLabel: string;
   /** Description section heading. */
@@ -64,6 +70,8 @@ export interface ProjectViewLabels {
   noContextMatchesLabel: string;
   /** Accessible name of a context file card, e.g. "Preview tickets.csv". */
   openFileLabel: (name: string) => string;
+  /** Accessible name of a context file card's download button; read only when `onContextFileDownload` is set. Defaults to `Download {name}`, e.g. "Download tickets.csv". */
+  downloadFileLabel?: (name: string) => string;
   /** Shown when the project could not be loaded. */
   errorLabel: string;
   /** Retry action label. */
@@ -141,16 +149,26 @@ export interface ProjectViewProps {
   onTogglePin: () => void;
   /** Called from the Publish action; the action is hidden when omitted. */
   onPublish?: () => void;
+  /** Called from the Unpublish action, which replaces Publish; the action is hidden when omitted. */
+  onUnpublish?: () => void;
   /** Called from the Edit action; the action is hidden when omitted. */
   onEdit?: () => void;
   /** Called from the Share action; the action is hidden when omitted. */
   onShare?: () => void;
+  /** Opens the owner's revoke confirmation; hidden when omitted. */
+  onRevokeAccess?: () => void;
+  /** Notifies the host when either actions menu opens or closes, for fresh action eligibility. */
+  onActionMenuOpenChange?: (isOpen: boolean) => void;
   /** Called from the Delete action; the action is hidden when omitted. */
   onDelete?: () => void;
+  /** Called from the Remove from My List action, offered to a recipient in place of Delete; the action is hidden when omitted. */
+  onRemoveFromMyList?: () => void;
   /** Called from the Download action. */
   onDownload: () => void;
   /** Called with a file name when the user activates its context card; the host decides what that opens. */
   onContextFileClick: (id: string) => void;
+  /** Called with a file name from its context card's download button; the cards show no download button when omitted. */
+  onContextFileDownload?: (id: string) => void;
   /** Name of the context file whose card renders selected; no card is selected when unset. */
   selectedContextFileId?: string;
   /** Renders the Details panel below the main column at every width instead of beside it on desktop. Defaults to `false`. */

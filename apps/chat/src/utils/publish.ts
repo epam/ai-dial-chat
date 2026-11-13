@@ -1,5 +1,8 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   PublishAccessRulesLabels,
+  PublishDependenciesLabels,
+  PublishDependencyType,
   PublishFooterLabels,
   PublishPanelLabels,
 } from '@epam/ai-dial-publish-panel';
@@ -110,6 +113,79 @@ export const getPublishPanelCommonLabels = (
   noAccessError: t(PublishI18nKeys.NoAccessError),
   addSiblingFolderLabel: t(PublishI18nKeys.AddSiblingFolder),
   addChildFolderLabel: t(PublishI18nKeys.AddChildFolder),
+});
+
+/** Keys of the lowercase nouns that can name what is being published in the dependencies warning. */
+export type PublishDependenciesEntityKey =
+  | PublishI18nKeys.DependenciesEntityApplication
+  | PublishI18nKeys.DependenciesEntityConversation
+  | PublishI18nKeys.DependenciesEntityProject
+  | PublishI18nKeys.DependenciesEntityToolset
+  | PublishI18nKeys.DependenciesEntityPrompt
+  | PublishI18nKeys.DependenciesEntitySkill
+  | PublishI18nKeys.DependenciesEntityItem;
+
+/**
+ * Picks the noun that names a catalog item of the given type in the dependencies warning.
+ * Types without a dedicated noun (models) fall back to the generic "item".
+ * @param type - entity type of the catalog item being published
+ */
+export const getPublishDependenciesEntityKey = (
+  type: CatalogEntityType,
+): PublishDependenciesEntityKey => {
+  switch (type) {
+    case CatalogEntityType.Agent:
+      return PublishI18nKeys.DependenciesEntityApplication;
+    case CatalogEntityType.Toolset:
+      return PublishI18nKeys.DependenciesEntityToolset;
+    case CatalogEntityType.Prompt:
+      return PublishI18nKeys.DependenciesEntityPrompt;
+    case CatalogEntityType.Skill:
+      return PublishI18nKeys.DependenciesEntitySkill;
+    default:
+      return PublishI18nKeys.DependenciesEntityItem;
+  }
+};
+
+/**
+ * Builds the translated admin-approval callout labels, naming what is being published.
+ * @param t - translation function
+ * @param entityKey - key of the lowercase noun naming what is being published, spliced into the message
+ */
+export const getPublishApprovalLabels = (
+  t: TFunction,
+  entityKey: PublishDependenciesEntityKey,
+): Pick<PublishPanelLabels, 'adminApprovalTitle' | 'adminApprovalMessage'> => ({
+  adminApprovalTitle: t(PublishI18nKeys.AdminApprovalTitle),
+  adminApprovalMessage: t(PublishI18nKeys.AdminApprovalMessage, {
+    entity: t(entityKey),
+  }),
+});
+
+/**
+ * Builds the translated labels of the private-dependencies section, shared by every publish panel host.
+ * @param t - translation function
+ * @param entityKey - key of the lowercase noun naming what is being published, spliced into the warning
+ */
+export const getPublishDependenciesLabels = (
+  t: TFunction,
+  entityKey: PublishDependenciesEntityKey,
+): PublishDependenciesLabels => ({
+  title: t(PublishI18nKeys.DependenciesTitle),
+  description: t(PublishI18nKeys.DependenciesDescription, {
+    entity: t(entityKey),
+  }),
+  typeLabels: {
+    [PublishDependencyType.Application]: t(
+      PublishI18nKeys.DependenciesTypeApplication,
+    ),
+    [PublishDependencyType.Toolset]: t(PublishI18nKeys.DependenciesTypeToolset),
+    [PublishDependencyType.Prompt]: t(PublishI18nKeys.DependenciesTypePrompt),
+    [PublishDependencyType.Skill]: t(PublishI18nKeys.DependenciesTypeSkill),
+    [PublishDependencyType.File]: t(PublishI18nKeys.DependenciesTypeFile),
+  },
+  getAnnouncement: (count) =>
+    t(PublishI18nKeys.DependenciesAnnouncement, { count }),
 });
 
 /** Builds the translated Update and in-progress footer labels shared by the conversation and project publish panels. */

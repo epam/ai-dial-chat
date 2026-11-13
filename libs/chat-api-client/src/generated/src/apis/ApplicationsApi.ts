@@ -14,6 +14,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApplicationErrorDto,
   ApplicationSchemasResponseDto,
   ApplicationsResponseDto,
   CommitApplicationVersionDto,
@@ -23,6 +24,7 @@ import type {
   MoveResourceDto,
   ResourceFoldersResponseDto,
   ResourceIdResponseDto,
+  ResourceNameConflictDto,
   UpdateApplicationBodyDto,
   UpdatedApplicationDto,
 } from '../models/index';

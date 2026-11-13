@@ -1,9 +1,14 @@
 import type {
   PublishConversationResultDto,
   PublishHistoryEntryDto,
+  ResourceDependencyDto,
 } from '@epam/ai-dial-chat-api-client';
 import { CatalogEntityType, PUBLIC_BUCKET } from '@epam/ai-dial-chat-shared';
-import type { PublishHistoryEntry } from '@epam/ai-dial-publish-panel';
+import type {
+  PublishDependency,
+  PublishDependencyType,
+  PublishHistoryEntry,
+} from '@epam/ai-dial-publish-panel';
 import { safeDecodeURIComponent } from '../shared/string-utils';
 
 /**
@@ -73,3 +78,29 @@ export const mapPublishConversationResultDto = (
   publishedAt: Date.parse(dto.publishedAt),
   folderPath: dto.folderPath.split('/').filter(Boolean),
 });
+
+/**
+ * Maps a publish-dependencies API response entry to the publish panel's
+ * `PublishDependency` model. The two `type` sets hold the same string values;
+ * the enum is only a type here so this module takes no runtime dependency on the
+ * optional `@epam/ai-dial-publish-panel` peer. A file whose url ends with `/` is
+ * a folder attachment.
+ * @param dto - one entry of a publish-dependencies response
+ * @param resolveIconUrl - the host's lookup of a displayable icon URL for the entry, e.g. from
+ * {@link createPublishDependencyIconResolver}; omitted when the host shows no icons
+ */
+export const mapResourceDependencyDto = (
+  dto: ResourceDependencyDto,
+  resolveIconUrl?: (dto: ResourceDependencyDto) => string | undefined,
+): PublishDependency => {
+  const iconUrl = resolveIconUrl?.(dto);
+  return {
+    id: dto.id,
+    name: dto.name,
+    ...(dto.version == null ? {} : { version: dto.version }),
+    type: dto.type as unknown as PublishDependencyType,
+    location: dto.location,
+    ...(iconUrl == null ? {} : { iconUrl }),
+    ...(dto.type === 'file' && dto.id.endsWith('/') ? { isFolder: true } : {}),
+  };
+};

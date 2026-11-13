@@ -1,10 +1,4 @@
-import {
-  ConflictException,
-  HttpException,
-  Injectable,
-  Logger,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
@@ -18,8 +12,6 @@ import {
   ConversationMessageDto,
   ConversationMessageRole,
 } from '../dto/conversation-message.dto';
-import { MessageCustomContentDto } from '../dto/message-custom-content.dto';
-import { CompletionMode } from '../dto/send-completion.dto';
 import {
   BackgroundGenerationService,
   BackgroundStartResult,
@@ -27,39 +19,38 @@ import {
   type BackgroundAttachPlan,
   type BackgroundStopResult,
 } from '../generation/background-generation.service';
-import {
-  findPendingBackgroundMessage,
-  neutralizeForeignPendingMessages,
-  type StoredMessage,
-} from '../generation/background-message';
+import type { StoredMessage } from '../generation/background-message';
 import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
 import {
   ConversationGenerationService,
+  DEFAULT_GENERATION_FINALIZE_TIMEOUT_MS,
+  DEFAULT_MAX_GENERATION_DURATION_MS,
   GenerationCancelReason,
   GenerationStatus,
   type GenerationLease,
 } from '../generation/conversation-generation.service';
+import { findActiveGeneration } from '../generation/foreground-generation';
+import type { ForegroundStopResult } from '../generation/foreground-message';
 import { GenerationApi } from '../generation/generation-api';
 import { GenerationApiSelector } from '../generation/generation-api-selector.service';
 import {
+  ForegroundGenerationOutcome,
+  foregroundGenerationOutcomesTotal,
   generationCapabilityResolutionTotal,
   generationRequestsTotal,
   generationStreamDuration,
   generationTimeToFirstDelta,
 } from '../generation/generation-metrics';
 import {
+  type GenerationApiSelection,
   GenerationPreparationStep,
   type GenerationRelayOutcome,
   type GenerationRelayTiming,
 } from '../generation/generation.types';
-import {
-  buildGenerationPersistenceError,
-  type GenerationPersistenceTerminalMarker,
-} from '../generation/persistence-error';
+import { buildGenerationPersistenceError } from '../generation/persistence-error';
 import { ResponsesAdapter } from '../generation/responses.adapter';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
 import { buildConversationHistory } from '../utils/conversation-history-builder';
-import { mergeHtmlTagAnnotationsIntoViewState } from '../utils/conversation-view-state.server';
 import {
   buildConversationUrl,
   buildProjectHeadersForPath,
@@ -67,41 +58,60 @@ import {
   resolveConversationLocation,
 } from '../utils/conversation.utils';
 import { assertModelNotHidden } from '../utils/hidden-model';
+import {
+  ForegroundGenerationLock,
+  type ForegroundMarkerLocation,
+  type ForegroundPersistenceFailure,
+  type ForegroundStartState,
+  type ForegroundStartWrite,
+  type ForegroundTerminalStatus,
+} from './foreground-generation-lock';
+import {
+  GenerationPreparation,
+  GenerationPreparationInterruptedException,
+  GenerationShutdownInterruptedException,
+  isSettledByWorker,
+  isStartWriteOutcomeUnknown,
+  type PreparationDeadline,
+} from './generation-preparation';
+import type { StreamCompletionRequest } from './stream-completion-request';
 
 const DEFAULT_GENERATION_PREPARATION_TIMEOUT_MS = 30_000;
-const PREPARATION_EXPIRED = Symbol('preparation-expired');
 
-/*
- * Raised when preparation stops without its step having failed: it outlived
- * `GENERATION_PREPARATION_TIMEOUT_MS`, or shutdown released the entry. Its own
- * type lets the pre-stream `catch` blocks tell it apart from a step that
- * rejected: a rejected step is finished and releases the key at once, while
- * an abandoned one may still write, so its key is released only when it
- * settles (`generation-registry`).
- */
-class GenerationPreparationInterruptedException extends ServiceUnavailableException {}
-
-/** One generation's preparation bound: a single timer raced by each step. */
-interface PreparationDeadline {
-  /**
-   * Starts `operation` and awaits it unless the deadline elapses first, in
-   * which case the preparation is abandoned and
-   * `GenerationPreparationInterruptedException` is thrown. Also throws it when
-   * the step resolved after shutdown released the entry, so nothing further
-   * runs. A step that rejects rethrows its own error.
-   */
-  run<T>(
-    step: GenerationPreparationStep,
-    operation: () => Promise<T>,
-  ): Promise<T>;
-  /** Clears the timer; idempotent. */
-  end(): void;
+/** The result of the preparation steps that run before any write. */
+interface PreparedGeneration {
+  capabilities: GenerationApiSelection;
+  /** The conversation as read, with its stored version when one is known. */
+  readConversation: ConversationResponseDto;
+  storedConversation: VersionedConversation | undefined;
 }
+
+/** The terminal write a relay outcome maps to. */
+interface TerminalWrite {
+  status: ForegroundTerminalStatus;
+  partialMessage: StoredMessage;
+}
+
+/**
+ * The answer as it stands when a generation ends without a terminal relay outcome:
+ * a user stop keeps it as stopped, anything else marks it interrupted.
+ */
+const toInterruptedWrite = (
+  message: StoredMessage,
+  wasStopped: boolean,
+): TerminalWrite => ({
+  status: wasStopped ? GenerationStatus.Stopped : GenerationStatus.Error,
+  partialMessage: {
+    ...message,
+    ...(wasStopped ? { wasStoppedByUser: true } : { streamErrorMessage: '' }),
+  } as ConversationMessageDto,
+});
 
 @Injectable()
 export class ConversationStreamingService {
   private readonly logger = new Logger(ConversationStreamingService.name);
-  private readonly preparationTimeoutMs: number;
+  private readonly preparation: GenerationPreparation;
+  private readonly foregroundLock: ForegroundGenerationLock;
 
   constructor(
     private readonly dialClient: DialClientService,
@@ -114,105 +124,26 @@ export class ConversationStreamingService {
     private readonly backgroundGeneration: BackgroundGenerationService,
     configService: ConfigService<EnvironmentVariables>,
   ) {
-    this.preparationTimeoutMs =
+    this.preparation = new GenerationPreparation(
+      generationService,
+      this.logger,
       configService.get('GENERATION_PREPARATION_TIMEOUT_MS', { infer: true }) ??
-      DEFAULT_GENERATION_PREPARATION_TIMEOUT_MS;
-  }
-
-  /**
-   * Arms the preparation bound for `lease`. When it elapses while a step is
-   * pending, the worker stops waiting and runs nothing further; the registry
-   * releases the entry's subscribers but keeps its key until that step
-   * settles, because a `Promise.race` does not stop a remote write
-   * (`generation-registry`).
-   * @param lease - the preparing generation's lease
-   */
-  private startPreparationDeadline(
-    lease: GenerationLease,
-  ): PreparationDeadline {
-    let isExpired = false;
-    let timer: NodeJS.Timeout | undefined;
-    const expired = new Promise<typeof PREPARATION_EXPIRED>((resolve) => {
-      timer = setTimeout(() => {
-        isExpired = true;
-        resolve(PREPARATION_EXPIRED);
-      }, this.preparationTimeoutMs);
-    });
-    const end = (): void => clearTimeout(timer);
-
-    const abandon = (
-      step: GenerationPreparationStep,
-      pending?: Promise<unknown>,
-    ): never => {
-      end();
-      this.generationService.abandonPreparation(lease, step);
-      if (pending) {
-        void this.releaseAfterAbandonedStep(lease, step, pending);
-      } else {
-        /* Nothing was dispatched, so nothing can still write. */
-        this.generationService.error(lease);
-      }
-      throw new GenerationPreparationInterruptedException(
-        'Generation preparation timed out',
-      );
-    };
-    /* Only shutdown releases a preparing entry underneath its worker. */
-    const assertStillOwned = (): void => {
-      if (this.generationService.getCancellation(lease)) return;
-      end();
-      throw new GenerationPreparationInterruptedException(
-        'Generation preparation was interrupted by shutdown',
-      );
-    };
-
-    return {
-      end,
-      run: async <T>(
-        step: GenerationPreparationStep,
-        operation: () => Promise<T>,
-      ): Promise<T> => {
-        if (isExpired) return abandon(step);
-        const pending = operation();
-        let result: T | typeof PREPARATION_EXPIRED;
-        try {
-          result = await Promise.race([pending, expired]);
-        } catch (err) {
-          /*
-           * A rejected step keeps its own error even when shutdown released
-           * the entry meanwhile; callers that continue after a rejection
-           * check ownership themselves.
-           */
-          end();
-          throw err;
-        }
-        if (result === PREPARATION_EXPIRED) return abandon(step, pending);
-        assertStillOwned();
-        return result;
+        DEFAULT_GENERATION_PREPARATION_TIMEOUT_MS,
+    );
+    this.foregroundLock = new ForegroundGenerationLock(
+      persistenceService,
+      generationService,
+      this.logger,
+      {
+        maxGenerationDurationMs:
+          configService.get('MAX_GENERATION_DURATION_MS', { infer: true }) ??
+          DEFAULT_MAX_GENERATION_DURATION_MS,
+        finalizeTimeoutMs:
+          configService.get('GENERATION_FINALIZE_TIMEOUT_MS', {
+            infer: true,
+          }) ?? DEFAULT_GENERATION_FINALIZE_TIMEOUT_MS,
       },
-    };
-  }
-
-  /**
-   * Frees an abandoned preparation's key once its pending step resolves or
-   * rejects — the only point at which it can no longer write. The step's
-   * result is discarded; a rejection is logged rather than left unhandled.
-   * @param lease - the abandoned generation's lease
-   * @param step - the step that was pending at the deadline
-   * @param pending - that step's promise
-   */
-  private async releaseAfterAbandonedStep(
-    lease: GenerationLease,
-    step: GenerationPreparationStep,
-    pending: Promise<unknown>,
-  ): Promise<void> {
-    try {
-      await pending;
-      this.logger.debug(`Abandoned preparation step settled: ${step}`);
-    } catch (err) {
-      this.logger.warn(`Abandoned preparation step failed: ${step}`, err);
-    } finally {
-      this.generationService.error(lease);
-    }
+    );
   }
 
   /**
@@ -261,36 +192,47 @@ export class ConversationStreamingService {
 
   /**
    * Saves a conversation body sent by a client with a conditional write that protects
-   * a pending background message (see `BackgroundGenerationService.saveClientConversation`).
-   * A new conversation, or storage without an `ETag`, keeps the unconditional save.
+   * an active background or foreground generation (see
+   * `BackgroundGenerationService.saveClientConversation`). A conversation that does not
+   * exist yet is created; a stored version that cannot be read makes the save fail with
+   * `503` instead of writing unconditionally.
    * @param conversationPath - conversation path relative to `bucket`
    * @param token - saving request's bearer token
    * @param bucket - caller's session bucket
    * @param conversation - body sent by the client
    */
-  async saveClientConversation(
+  saveClientConversation(
     conversationPath: string,
     token: string,
     bucket: string,
     conversation: ConversationResponseDto,
   ): Promise<ConversationResponseDto> {
-    const protectedSave =
-      await this.backgroundGeneration.saveClientConversation(
-        { conversationPath, token, bucket },
-        conversation,
-      );
-    return (
-      protectedSave ??
-      this.persistenceService.saveConversation(
-        conversationPath,
-        token,
-        bucket,
-        {
-          ...conversation,
-          messages: neutralizeForeignPendingMessages(conversation.messages),
-        },
-      )
+    return this.backgroundGeneration.saveClientConversation(
+      { conversationPath, token, bucket },
+      conversation,
     );
+  }
+
+  /**
+   * Stores a Stop on the live marker of a foreground generation that may run on another
+   * instance or under another principal (`foreground-generation-lock`).
+   * @param conversationPath - conversation path relative to `bucket`
+   * @param token - stopping request's bearer token
+   * @param bucket - stopping caller's session bucket
+   * @param generationId - generation id posted by the client
+   */
+  stopForegroundGeneration(
+    conversationPath: string,
+    token: string,
+    bucket: string,
+    generationId: string,
+  ): Promise<ForegroundStopResult> {
+    return this.foregroundLock.storeStop({
+      conversationPath,
+      token,
+      bucket,
+      generationId,
+    });
   }
 
   async watchConversation(
@@ -349,40 +291,93 @@ export class ConversationStreamingService {
    * `onReadyToStream` when the SSE response headers should be sent
    * (`res.setHeader(...)` / `res.flushHeaders()`); the caller then writes
    * each yielded chunk to the response and ends it once iteration completes.
+   *
+   * Steps: `prepareGeneration` (hidden-model check, capabilities, read), the
+   * background path when the model supports it, `saveStartState` (the marker
+   * write), then `relayAndFinalize` (stream and terminal write).
    */
   async *streamCompletion(
-    conversationPath: string,
-    token: string,
-    bucket: string,
-    generationId: string,
-    mode: CompletionMode,
-    message: string | undefined,
-    messageIndex: number | undefined,
-    model: string,
-    customContent: MessageCustomContentDto | undefined,
-    ownerKey: string,
-    onReadyToStream: () => void,
-    sub: string,
-    clientChannelId?: string,
-    timezone?: string,
-    lang?: string,
-    jobTitle?: string,
+    request: StreamCompletionRequest,
   ): AsyncGenerator<Uint8Array | string, void, void> {
+    const { conversationPath, bucket, generationId, mode, model } = request;
     this.logger.debug(
       `streamCompletion start — model: ${model}, bucket: ${bucket}, path: ${conversationPath}, mode: ${mode}`,
     );
 
     const lease: GenerationLease = this.generationService.register(
-      ownerKey,
+      request.ownerKey,
       conversationPath,
       generationId,
+      qualifySessionConversationPath(conversationPath, bucket),
     );
-    let preparation = this.startPreparationDeadline(lease);
+    let preparation = this.preparation.start(lease);
+    const prepared = await this.prepareGeneration(request, lease, preparation);
 
-    let generationApi: GenerationApi;
-    let isBackground: boolean;
-    let temperatureSupported: boolean;
-    let reasoningEfforts: string[] | undefined;
+    if (prepared.capabilities.isBackground) {
+      /* The background path owns its placeholder save and its own bounds. */
+      preparation.end();
+      this.generationService.setBackground(lease, true);
+      let backgroundResult: BackgroundStartResult;
+      try {
+        backgroundResult = yield* this.backgroundGeneration.startAndRelay({
+          lease,
+          conversationPath,
+          token: request.token,
+          bucket,
+          generationId,
+          mode,
+          message: request.message,
+          messageIndex: request.messageIndex,
+          model,
+          customContent: request.customContent,
+          temperatureSupported: prepared.capabilities.temperatureSupported,
+          reasoningEfforts: prepared.capabilities.reasoningEfforts,
+          onReadyToStream: request.onReadyToStream,
+          clientChannelId: request.clientChannelId,
+          timezone: request.timezone,
+          lang: request.lang,
+          jobTitle: request.jobTitle,
+          storedConversation: prepared.storedConversation,
+        });
+      } catch (err) {
+        this.generationService.error(
+          lease,
+          err instanceof Error ? err.message : undefined,
+        );
+        throw err;
+      }
+      if (backgroundResult === BackgroundStartResult.Handled) return;
+      this.generationService.setBackground(lease, false);
+      /* The stateless fallback's start-state save gets its own bound. */
+      preparation = this.preparation.start(lease);
+    }
+
+    const startState = await this.saveStartState(
+      request,
+      lease,
+      preparation,
+      prepared,
+    );
+    yield* this.relayAndFinalize(
+      request,
+      lease,
+      preparation,
+      prepared.capabilities,
+      startState,
+    );
+  }
+
+  /**
+   * Runs the preparation steps that precede any write: the hidden-model check,
+   * capability resolution, and the conversation read with its one-active-generation
+   * check. A failure settles the registry entry unless an abandoned step still owns it.
+   */
+  private async prepareGeneration(
+    request: StreamCompletionRequest,
+    lease: GenerationLease,
+    preparation: PreparationDeadline,
+  ): Promise<PreparedGeneration> {
+    const { conversationPath, token, bucket, model } = request;
     try {
       /*
        * `model` is the one the user has selected now, so switching a
@@ -398,16 +393,12 @@ export class ConversationStreamingService {
           `stream a completion for "${conversationPath}"`,
         ),
       );
+      let capabilities: GenerationApiSelection;
       try {
-        ({
-          generationApi,
-          isBackground,
-          temperatureSupported,
-          reasoningEfforts,
-        } = await preparation.run(
+        capabilities = await preparation.run(
           GenerationPreparationStep.CapabilityResolution,
-          () => this.generationApiSelector.select(sub, model, token),
-        ));
+          () => this.generationApiSelector.select(request.sub, model, token),
+        );
       } catch (err) {
         /* Counted here only, so a hidden-model failure is not a resolution failure. */
         generationCapabilityResolutionTotal.add(1, { outcome: 'failed' });
@@ -415,46 +406,37 @@ export class ConversationStreamingService {
       }
       generationCapabilityResolutionTotal.add(1, {
         outcome: 'resolved',
-        'generation.api': generationApi,
+        'generation.api': capabilities.generationApi,
       });
-    } catch (err) {
-      preparation.end();
-      if (!(err instanceof GenerationPreparationInterruptedException)) {
-        this.generationService.error(
-          lease,
-          err instanceof Error ? err.message : undefined,
-        );
-      }
-      throw err;
-    }
 
-    let startState: ReturnType<typeof buildConversationHistory>;
-    let storedConversation: VersionedConversation | undefined;
-    try {
-      const { conversation: fetchedConversation, stored } =
-        await preparation.run(GenerationPreparationStep.ConversationRead, () =>
+      const { conversation, stored } = await preparation.run(
+        GenerationPreparationStep.ConversationRead,
+        () =>
           this.persistenceService.getConversationWithStoredVersion(
             qualifySessionConversationPath(conversationPath, bucket),
             token,
             bucket,
           ),
-        );
-      storedConversation = stored;
+      );
       /*
-       * One pending background generation per conversation, whatever the flags: a
-       * background job keeps running in DIAL Core without a registry entry here.
+       * One active generation per conversation, whatever the flags or the caller: a
+       * background job keeps running in DIAL Core without a registry entry here, and
+       * a foreground marker may belong to another principal or instance
+       * (`foreground-generation-lock`).
        */
-      if (findPendingBackgroundMessage(fetchedConversation)) {
+      if (findActiveGeneration(conversation)) {
+        foregroundGenerationOutcomesTotal.add(1, {
+          outcome: ForegroundGenerationOutcome.StartConflict,
+        });
         throw new ConflictException(GENERATION_ACTIVE_MESSAGE);
       }
-      startState = buildConversationHistory(
-        mode,
-        fetchedConversation,
-        message,
-        messageIndex,
-        customContent,
-        model,
-      );
+      /* Validates the request against the read version before anything is written. */
+      this.buildHistory(request, conversation);
+      return {
+        capabilities,
+        readConversation: conversation,
+        storedConversation: stored,
+      };
     } catch (err) {
       /*
        * Release the just-registered entry so a failure before streaming starts
@@ -464,7 +446,7 @@ export class ConversationStreamingService {
        * releases the key only then.
        */
       preparation.end();
-      if (!(err instanceof GenerationPreparationInterruptedException)) {
+      if (isSettledByWorker(err)) {
         this.generationService.error(
           lease,
           err instanceof Error ? err.message : undefined,
@@ -472,170 +454,143 @@ export class ConversationStreamingService {
       }
       throw err;
     }
+  }
 
-    if (isBackground) {
-      /* The background path owns its placeholder save and its own bounds. */
-      preparation.end();
-      this.generationService.setBackground(lease, true);
-      let backgroundResult: BackgroundStartResult;
-      try {
-        backgroundResult = yield* this.backgroundGeneration.startAndRelay({
-          lease,
-          conversationPath,
-          token,
-          bucket,
-          generationId,
-          mode,
-          message,
-          messageIndex,
-          model,
-          customContent,
-          temperatureSupported,
-          reasoningEfforts,
-          onReadyToStream,
-          clientChannelId,
-          timezone,
-          lang,
-          jobTitle,
-          storedConversation,
-        });
-      } catch (err) {
-        this.generationService.error(
-          lease,
-          err instanceof Error ? err.message : undefined,
-        );
-        throw err;
-      }
-      if (backgroundResult === BackgroundStartResult.Handled) return;
-      this.generationService.setBackground(lease, false);
-      /* The stateless fallback's start-state save gets its own bound. */
-      preparation = this.startPreparationDeadline(lease);
-    }
+  private buildHistory(
+    request: StreamCompletionRequest,
+    conversation: ConversationResponseDto,
+  ): ForegroundStartState {
+    return buildConversationHistory(
+      request.mode,
+      conversation,
+      request.message,
+      request.messageIndex,
+      request.customContent,
+      request.model,
+    );
+  }
 
-    const { conversation: startConversation, assistantMessageIndex } =
-      startState;
-
+  /**
+   * Stores the start state with this generation's marker. Without the marker the
+   * terminal write could not find its own message, so any failure ends the request
+   * before SSE headers (`foreground-generation-lock`).
+   */
+  private async saveStartState(
+    request: StreamCompletionRequest,
+    lease: GenerationLease,
+    preparation: PreparationDeadline,
+    prepared: PreparedGeneration,
+  ): Promise<ForegroundStartState> {
+    const startWrite: ForegroundStartWrite = {
+      conversationPath: request.conversationPath,
+      token: request.token,
+      bucket: request.bucket,
+      generationId: request.generationId,
+      build: (conversation) => this.buildHistory(request, conversation),
+    };
+    const { readConversation, storedConversation } = prepared;
     try {
-      await preparation.run(GenerationPreparationStep.StartStateSave, () =>
-        this.persistenceService.saveConversation(
-          conversationPath,
-          token,
-          bucket,
-          startConversation,
-        ),
+      return await preparation.run(
+        GenerationPreparationStep.StartStateSave,
+        () =>
+          this.foregroundLock.writeStartState(
+            startWrite,
+            storedConversation
+              ? {
+                  conversation: readConversation,
+                  etag: storedConversation.etag,
+                }
+              : undefined,
+          ),
+        async (error) => {
+          if (error === undefined || isStartWriteOutcomeUnknown(error)) {
+            await this.foregroundLock.releaseMarker(startWrite);
+          }
+        },
       );
     } catch (err) {
-      /* Abandoned, not failed: the write may still land, so nothing else may run. */
+      /* Shutdown after the start state was stored: release the marker, then settle. */
+      if (err instanceof GenerationShutdownInterruptedException) {
+        await this.foregroundLock.releaseMarker(startWrite);
+        this.generationService.error(lease);
+        throw err;
+      }
+      /*
+       * Abandoned, not failed: the write may still land, so nothing else may run here;
+       * the abandoned-step hook releases its marker once it settles.
+       */
       if (err instanceof GenerationPreparationInterruptedException) throw err;
-      /* Shutdown released the entry while the save ran: stop rather than stream. */
-      if (!this.generationService.getCancellation(lease)) throw err;
-      this.logger.warn(
-        'Failed to save start-state conversation, continuing stream',
-        err,
+      preparation.end();
+      foregroundGenerationOutcomesTotal.add(1, {
+        outcome:
+          err instanceof ConflictException
+            ? ForegroundGenerationOutcome.StartConflict
+            : ForegroundGenerationOutcome.StartFailed,
+      });
+      if (isStartWriteOutcomeUnknown(err)) {
+        await this.foregroundLock.releaseMarker(startWrite);
+      }
+      this.generationService.error(
+        lease,
+        err instanceof Error ? err.message : undefined,
       );
+      throw err;
     }
+  }
 
+  /**
+   * Sends the SSE headers, relays the upstream stream and writes the terminal state.
+   * A persistence failure of that write is reported as a final SSE error event.
+   */
+  private async *relayAndFinalize(
+    request: StreamCompletionRequest,
+    lease: GenerationLease,
+    preparation: PreparationDeadline,
+    capabilities: GenerationApiSelection,
+    startState: ForegroundStartState,
+  ): AsyncGenerator<Uint8Array | string, void, void> {
+    const { generationApi } = capabilities;
+    const { conversation: startConversation, assistantMessageIndex } =
+      startState;
     const messagesForCompletion = startConversation.messages.slice(
       0,
       assistantMessageIndex,
     );
-
-    const configuration =
-      customContent?.configuration_value ??
-      messagesForCompletion
-        .filter((m) => m.custom_content?.configuration_value)
-        .at(-1)?.custom_content?.configuration_value;
-
     const sentMessageCount = messagesForCompletion.filter(
       (m) => m.role !== ConversationMessageRole.Status,
     ).length;
     this.logger.debug(
-      `streamCompletion sending ${sentMessageCount} message(s) to model: ${model}`,
+      `streamCompletion sending ${sentMessageCount} message(s) to model: ${request.model}`,
     );
 
+    const location: ForegroundMarkerLocation = {
+      conversationPath: request.conversationPath,
+      token: request.token,
+      bucket: request.bucket,
+      generationId: request.generationId,
+    };
     preparation.end();
-    onReadyToStream();
+    request.onReadyToStream();
+    /* A Stop stored on the marker by another writer or instance reaches this worker here. */
+    const stopRereads = this.foregroundLock.startRereads(lease, location);
 
     const assembledMessage = {
       ...startConversation.messages[assistantMessageIndex],
     };
     this.generationService.seedAssembledMessage(lease, assembledMessage);
-    const publishChunk = (
-      rawChunk: unknown,
-      message: ConversationMessageDto,
-    ) => {
-      this.generationService.applyChunk(lease, rawChunk, message);
-    };
 
-    let persistenceFailed = false;
-    let persistenceFailureStatus: number | undefined;
-    let persistenceFailureMarker:
-      GenerationPersistenceTerminalMarker | undefined;
-    const finalize = async (
-      status:
-        | GenerationStatus.Done
-        | GenerationStatus.Stopped
-        | GenerationStatus.Error,
-      partialMessage: StoredMessage,
-    ): Promise<void> => {
-      let customViewState = startConversation.customViewState;
-      try {
-        customViewState = mergeHtmlTagAnnotationsIntoViewState(
-          startConversation.customViewState,
-          partialMessage.custom_content?.annotations,
-        );
-      } catch (err) {
-        this.logger.warn(
-          'Failed to merge annotations into customViewState',
-          err,
-        );
-      }
-
-      const finalConversation = {
-        ...startConversation,
-        messages: [
-          ...startConversation.messages.slice(0, assistantMessageIndex),
-          partialMessage,
-        ],
-        ...(customViewState !== undefined ? { customViewState } : {}),
-      };
-      /*
-       * Record that the terminal write has been dispatched before awaiting
-       * it (generation-registry, D5): a cancellation arriving after this
-       * point is recorded for telemetry only and never adds, replaces, or
-       * cancels this — the only — write attempt.
-       */
-      this.generationService.beginFinalizing(lease);
-      try {
-        await this.persistenceService.saveConversation(
-          conversationPath,
-          token,
-          bucket,
-          finalConversation,
-        );
-      } catch (err) {
-        this.logger.warn(`Failed to save ${status} conversation`, err);
-        persistenceFailed = true;
-        persistenceFailureStatus =
-          err instanceof HttpException ? err.getStatus() : undefined;
-        /* A stopped, aborted, or failed answer is reported with the terminal
-         * markers this write carried, so a client recovery save stores the same
-         * outcome instead of an answer that reads as completed ([#9370](https://github.com/epam/ai-dial-chat/issues/9370)). */
-        persistenceFailureMarker =
-          status === GenerationStatus.Done
-            ? undefined
-            : {
-                streamErrorMessage: partialMessage.streamErrorMessage,
-                wasStoppedByUser: partialMessage.wasStoppedByUser,
-              };
-        this.generationService.persistenceFailed(lease);
-        return;
-      }
-      if (status === GenerationStatus.Done) {
-        this.generationService.complete(lease);
-      } else {
-        this.generationService.error(lease, partialMessage.streamErrorMessage);
-      }
+    let persistenceFailure: ForegroundPersistenceFailure | undefined;
+    const finalize = async ({
+      status,
+      partialMessage,
+    }: TerminalWrite): Promise<void> => {
+      stopRereads();
+      persistenceFailure = await this.foregroundLock.writeTerminalState(
+        lease,
+        location,
+        status,
+        partialMessage,
+      );
     };
 
     const streamStartedAt = Date.now();
@@ -645,54 +600,17 @@ export class ConversationStreamingService {
      * preparation is finalized through the `aborted` outcome without
      * dispatching any upstream request (`backend-owned-generation-persistence`).
      */
-    const isCancelledBeforeRelay = lease.abortController.signal.aborted;
-    let relayIterator:
-      | AsyncGenerator<Uint8Array | string, GenerationRelayOutcome, void>
-      | undefined;
-    if (!isCancelledBeforeRelay) {
-      relayIterator =
-        generationApi === GenerationApi.Responses
-          ? this.responsesAdapter.stream(
-              this.responsesAdapter.buildRequest({
-                model,
-                startConversation,
-                messagesForCompletion,
-                temperatureSupported,
-                reasoningEfforts,
-                configuration,
-              }),
-              token,
-              lease.abortController.signal,
-              assembledMessage,
-              clientChannelId,
-              timezone,
-              lang,
-              timing,
-              startConversation.id,
-              publishChunk,
-              jobTitle,
-              { extraHeaders: buildProjectHeadersForPath(conversationPath) },
-            )
-          : this.chatCompletionsAdapter.stream({
-              model,
-              requestBody: this.chatCompletionsAdapter.buildRequest({
-                startConversation,
-                messagesForCompletion,
-                temperatureSupported,
-                configuration,
-              }),
-              token,
-              signal: lease.abortController.signal,
-              initialAssembledMessage: assembledMessage,
-              context: { clientChannelId, timezone, lang, jobTitle },
-              timing,
-              conversationId: startConversation.id,
-              onChunkApplied: publishChunk,
-              options: {
-                extraHeaders: buildProjectHeadersForPath(conversationPath),
-              },
-            });
-    }
+    const relayIterator = lease.abortController.signal.aborted
+      ? undefined
+      : this.openRelay(
+          request,
+          lease,
+          capabilities,
+          startState,
+          messagesForCompletion,
+          assembledMessage,
+          timing,
+        );
     let relayCompletedNormally = false;
     try {
       let relayResult: GenerationRelayOutcome = {
@@ -709,76 +627,18 @@ export class ConversationStreamingService {
       }
       relayCompletedNormally = true;
 
-      generationRequestsTotal.add(1, {
-        'generation.api': generationApi,
-        outcome: relayResult.outcome,
-      });
-      if (timing.firstDeltaAt != null) {
-        generationTimeToFirstDelta.record(
-          (timing.firstDeltaAt - streamStartedAt) / 1000,
-          { 'generation.api': generationApi },
-        );
-      }
-      generationStreamDuration.record((Date.now() - streamStartedAt) / 1000, {
-        'generation.api': generationApi,
-        outcome: relayResult.outcome,
-      });
-
-      switch (relayResult.outcome) {
-        case 'rejected': {
-          const errored = {
-            ...relayResult.assembledMessage,
-            custom_content: {
-              ...relayResult.assembledMessage.custom_content,
-              event_type: undefined,
-            } as never,
-            streamErrorMessage: relayResult.errorMessage,
-          };
-          await finalize(GenerationStatus.Error, errored);
-          break;
-        }
-        case 'completed':
-          await finalize(GenerationStatus.Done, relayResult.assembledMessage);
-          break;
-        case 'aborted': {
-          const wasStopped =
-            this.generationService.getCancellation(lease)?.reason ===
-            GenerationCancelReason.UserStop;
-          const partialMsg = {
-            ...relayResult.assembledMessage,
-            ...(wasStopped
-              ? { wasStoppedByUser: true }
-              : { streamErrorMessage: '' }),
-          } as ConversationMessageDto;
-          await finalize(
-            wasStopped ? GenerationStatus.Stopped : GenerationStatus.Error,
-            partialMsg,
-          );
-          break;
-        }
-        case 'error': {
-          this.logger.error(
-            'DIAL Core streamCompletion failed',
-            relayResult.error,
-          );
-          /*
-           * Only upstream-supplied text reaches the user. A thrown error's
-           * message (e.g. undici's `terminated`) is transport detail: it is
-           * logged above and persisted as '' so the frontend shows its
-           * localized fallback ([#8979](https://github.com/epam/ai-dial-chat/issues/8979)).
-           */
-          const partialMsg = {
-            ...relayResult.assembledMessage,
-            streamErrorMessage: relayResult.displayMessage ?? '',
-          } as ConversationMessageDto;
-          await finalize(GenerationStatus.Error, partialMsg);
-          break;
-        }
-      }
-      if (persistenceFailed) {
-        yield `data: ${JSON.stringify({ error: buildGenerationPersistenceError(persistenceFailureStatus, persistenceFailureMarker) })}\n\n`;
+      this.recordRelayMetrics(
+        generationApi,
+        relayResult,
+        streamStartedAt,
+        timing,
+      );
+      await finalize(this.toTerminalWrite(lease, relayResult));
+      if (persistenceFailure) {
+        yield `data: ${JSON.stringify({ error: buildGenerationPersistenceError(persistenceFailure.status, persistenceFailure.marker) })}\n\n`;
       }
     } finally {
+      stopRereads();
       /*
        * Reached only when the consuming `for await` (the controller's) is
        * abandoned for a reason other than the relay loop above reaching a
@@ -791,7 +651,7 @@ export class ConversationStreamingService {
        * independent of the originating browser connection), so a closed
        * response alone never abandons this loop. `.return()` injected by a
        * genuinely abandoned consumer unwinds this generator at its current
-       * `yield`, skipping the `switch` above entirely, so without this
+       * `yield`, skipping the terminal mapping above entirely, so without this
        * branch the registry entry would never be released outside the
        * 30-minute stale sweep. Abort defensively (idempotent) so the
        * upstream relay notices and stops even if the caller's own
@@ -799,22 +659,158 @@ export class ConversationStreamingService {
        */
       if (!relayCompletedNormally) {
         lease.abortController.abort();
-        const wasStopped =
-          this.generationService.getCancellation(lease)?.reason ===
-          GenerationCancelReason.UserStop;
-        const currentAssembledMessage =
-          this.generationService.getAssembledMessage(lease) ?? assembledMessage;
-        const partialMsg = {
-          ...currentAssembledMessage,
-          ...(wasStopped
-            ? { wasStoppedByUser: true }
-            : { streamErrorMessage: '' }),
-        } as ConversationMessageDto;
         await finalize(
-          wasStopped ? GenerationStatus.Stopped : GenerationStatus.Error,
-          partialMsg,
+          toInterruptedWrite(
+            this.generationService.getAssembledMessage(lease) ??
+              assembledMessage,
+            this.wasStoppedByUser(lease),
+          ),
         );
       }
+    }
+  }
+
+  /** Starts the upstream relay through the adapter of the resolved generation API. */
+  private openRelay(
+    request: StreamCompletionRequest,
+    lease: GenerationLease,
+    capabilities: GenerationApiSelection,
+    { conversation: startConversation }: ForegroundStartState,
+    messagesForCompletion: ConversationMessageDto[],
+    assembledMessage: ConversationMessageDto,
+    timing: GenerationRelayTiming,
+  ): AsyncGenerator<Uint8Array | string, GenerationRelayOutcome, void> {
+    const { model, token, clientChannelId, timezone, lang, jobTitle } = request;
+    const configuration =
+      request.customContent?.configuration_value ??
+      messagesForCompletion
+        .filter((m) => m.custom_content?.configuration_value)
+        .at(-1)?.custom_content?.configuration_value;
+    const publishChunk = (
+      rawChunk: unknown,
+      message: ConversationMessageDto,
+    ) => {
+      this.generationService.applyChunk(lease, rawChunk, message);
+    };
+    const extraHeaders = buildProjectHeadersForPath(request.conversationPath);
+
+    if (capabilities.generationApi === GenerationApi.Responses) {
+      return this.responsesAdapter.stream(
+        this.responsesAdapter.buildRequest({
+          model,
+          startConversation,
+          messagesForCompletion,
+          temperatureSupported: capabilities.temperatureSupported,
+          reasoningEfforts: capabilities.reasoningEfforts,
+          configuration,
+        }),
+        token,
+        lease.abortController.signal,
+        assembledMessage,
+        clientChannelId,
+        timezone,
+        lang,
+        timing,
+        startConversation.id,
+        publishChunk,
+        jobTitle,
+        { extraHeaders },
+      );
+    }
+    return this.chatCompletionsAdapter.stream({
+      model,
+      requestBody: this.chatCompletionsAdapter.buildRequest({
+        startConversation,
+        messagesForCompletion,
+        temperatureSupported: capabilities.temperatureSupported,
+        configuration,
+      }),
+      token,
+      signal: lease.abortController.signal,
+      initialAssembledMessage: assembledMessage,
+      context: { clientChannelId, timezone, lang, jobTitle },
+      timing,
+      conversationId: startConversation.id,
+      onChunkApplied: publishChunk,
+      options: { extraHeaders },
+    });
+  }
+
+  private recordRelayMetrics(
+    generationApi: GenerationApi,
+    relayResult: GenerationRelayOutcome,
+    streamStartedAt: number,
+    timing: GenerationRelayTiming,
+  ): void {
+    generationRequestsTotal.add(1, {
+      'generation.api': generationApi,
+      outcome: relayResult.outcome,
+    });
+    if (timing.firstDeltaAt != null) {
+      generationTimeToFirstDelta.record(
+        (timing.firstDeltaAt - streamStartedAt) / 1000,
+        { 'generation.api': generationApi },
+      );
+    }
+    generationStreamDuration.record((Date.now() - streamStartedAt) / 1000, {
+      'generation.api': generationApi,
+      outcome: relayResult.outcome,
+    });
+  }
+
+  private wasStoppedByUser(lease: GenerationLease): boolean {
+    return (
+      this.generationService.getCancellation(lease)?.reason ===
+      GenerationCancelReason.UserStop
+    );
+  }
+
+  /** Maps a terminal relay outcome to the status and answer the terminal write stores. */
+  private toTerminalWrite(
+    lease: GenerationLease,
+    relayResult: GenerationRelayOutcome,
+  ): TerminalWrite {
+    switch (relayResult.outcome) {
+      case 'rejected':
+        return {
+          status: GenerationStatus.Error,
+          partialMessage: {
+            ...relayResult.assembledMessage,
+            custom_content: {
+              ...relayResult.assembledMessage.custom_content,
+              event_type: undefined,
+            } as never,
+            streamErrorMessage: relayResult.errorMessage,
+          },
+        };
+      case 'completed':
+        return {
+          status: GenerationStatus.Done,
+          partialMessage: relayResult.assembledMessage,
+        };
+      case 'aborted':
+        return toInterruptedWrite(
+          relayResult.assembledMessage,
+          this.wasStoppedByUser(lease),
+        );
+      case 'error':
+        this.logger.error(
+          'DIAL Core streamCompletion failed',
+          relayResult.error,
+        );
+        /*
+         * Only upstream-supplied text reaches the user. A thrown error's
+         * message (e.g. undici's `terminated`) is transport detail: it is
+         * logged above and persisted as '' so the frontend shows its
+         * localized fallback ([#8979](https://github.com/epam/ai-dial-chat/issues/8979)).
+         */
+        return {
+          status: GenerationStatus.Error,
+          partialMessage: {
+            ...relayResult.assembledMessage,
+            streamErrorMessage: relayResult.displayMessage ?? '',
+          } as ConversationMessageDto,
+        };
     }
   }
 }

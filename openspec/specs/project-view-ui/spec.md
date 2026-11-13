@@ -110,6 +110,7 @@ Props:
 | `onDownload` | `() => void` |
 | `onContextFileClick` | `(id: string) => void`, called with a context file's name when the user activates its card; the host decides what opens |
 | `selectedContextFileId` | optional `string`: the name of the context file whose card renders selected |
+| `onContextFileDownload` | optional `(id: string) => void`, called with a context file's name from its card's download button; the cards show no download button when omitted |
 | `isDetailsStacked` | optional `boolean`, default `false`: renders the Details panel below the main column at every width, instead of beside it on `desktop` |
 | `onRetry` | `() => void` |
 | `onBrowseProjects` | `() => void` |
@@ -310,7 +311,7 @@ Changing the access in the popover requests a new link, as for catalog entities 
 | --- | --- |
 | `onEdit` | `project.canEdit` |
 | `onPublish`, `onShare`, `onDelete` | `project.canManage` |
-| `onTogglePin`, `onDownload`, `onContextFileClick` | always |
+| `onTogglePin`, `onDownload`, `onContextFileClick`, `onContextFileDownload` | always |
 
 `PublishProjectPanelContainer` mounts only while `project.canManage`, as `ProjectShareOverlay` and `ProjectDeleteConfirmation` open only through `onShare` and `onDelete`. So a recipient with edit access (`canEdit: true`, `canManage: false`) sees Edit, and neither Publish, Share nor Delete.
 
@@ -373,9 +374,11 @@ Every key SHALL exist in every locale file.
 - `StandalonePublishPanel` from `@epam/ai-dial-publish-panel`;
 - `usePublishFolders`, `usePublishErrorNotification` and `getPublishRules`.
 
-It submits through `publishCatalogEntity({ entityType: CatalogPublishEntityType.Project, entityId: projectId, publishCatalogEntityDto })` from `apps/chat/src/server-api/publish.api.ts`. On success it calls `notifyOperationSuccess(NotifiableEntity.Project, EntityOperation.PublishRequested, { name })`. Its strings come from `projects.publish.*` keys, plus the shared publish keys where they exist.
+It submits through `publishCatalogEntity({ entityType: CatalogPublishEntityType.Project, entityId: projectId, publishCatalogEntityDto })` from `apps/chat/src/server-api/publish.api.ts`. On success it calls `notifyOperationSuccess(NotifiableEntity.Project, EntityOperation.PublishRequested, { name })`, then the optional `onPublished?: () => void` prop, which `ProjectViewPage` uses to re-fetch the project's publish state (see `project-unpublish-flow`). Its strings come from `projects.publish.*` keys, plus the shared publish keys where they exist.
 
 `CatalogPublishEntityType` in `libs/chat-hooks/src/catalog/publish.ts` SHALL gain `'project'`. `CatalogEntityType` in `libs/chat-shared` is not changed.
+
+The page passes `onPublish` only once the project's publish state has settled with no live folder; a public copy offers Unpublish in its place, while the owner's personal project keeps Publish whether or not it has a published copy (see `project-unpublish-flow`).
 
 **Chats warning.** DIAL Core publishes a project as a whole, `conversations/` included. When `conversationCount > 0`, the container renders a kit `Notification` with the warning variant through `StandalonePublishPanel`'s `renderSummary`, after the resource title, so `libs/publish-panel` is not changed.
 
@@ -387,6 +390,11 @@ It submits through `publishCatalogEntity({ entityType: CatalogPublishEntityType.
 
 - **WHEN** the user selects a folder and submits
 - **THEN** `POST /api/v1/catalog/project/{encoded id}/publish` is sent, and a "publish requested" toast is shown
+
+#### Scenario: Publish success notifies the page
+
+- **WHEN** the publish request succeeds
+- **THEN** `onPublished` is called once, after the success notification
 
 #### Scenario: Chats warning on a project with chats
 

@@ -22,7 +22,12 @@ export * from './catalog/map-prompt-to-catalog-item';
 export * from './catalog/map-skill-to-catalog-item';
 export * from './catalog/mcp-endpoint-url';
 export * from './catalog/publish';
+export * from './catalog/publish-dependency-icons';
 export * from './catalog/use-publish-history';
+export * from './catalog/use-publish-dependencies';
+export * from './catalog/unpublishable-folders';
+export * from './catalog/useUnpublishableFolders/useUnpublishableFolders';
+export * from './catalog/useUnpublishConfirmation/useUnpublishConfirmation';
 export * from './catalog/catalog-derivations';
 export * from './catalog/catalog-entity-kind';
 export * from './catalog/favorite-entity-type';
@@ -42,6 +47,7 @@ export * from './catalog/useFavoriteEntitiesState/useFavoriteEntitiesState';
 export * from './catalog/usePublishFolders/usePublishFolders';
 export * from './catalog/useResourceFolders/useResourceFolders';
 export * from './catalog/resource-folder';
+export * from './catalog/resource-name-conflict';
 export * from './catalog/resource-save';
 export * from './catalog/resource-save-adapters';
 export * from './catalog/useResourceSavePanel/useResourceSavePanel';
@@ -101,6 +107,8 @@ export * from './project/use-project-conversations';
 export * from './project/use-pinned-project-chats';
 export * from './project/use-project-artifacts';
 export * from './project/use-project-actions';
+export * from './project/project-sharing';
+export * from './project/use-project-remove-from-list';
 export * from './shared/serialized-writer';
 /*
  * Re-exported so consumers of the gate result can name the consent enum
@@ -297,6 +305,13 @@ export * from './signin-interrupt/useSigninInterrupt/useSigninInterrupt';
 
 export * from './conversation/useDeploymentChangeTracking';
 export * from './conversation/conversation-data-source';
+
+export {
+  notifyProjectAccessRevoked,
+  type ProjectSharingClient,
+} from './project/project-sharing-client';
+export * from './project/use-project-share-recipients';
+export * from './project/use-project-revoke-access';
 export * from './org-units/types';
 export * from './org-units/models';
 export * from './org-units/useOrgUnits/useOrgUnits';

@@ -201,7 +201,7 @@ The section renders:
    - The panel renders `composer`, then `outputs`, then `ProjectConversationList`, with no wrapper of its own around `outputs`, so the host's node sits in the column's flow. The panel knows nothing about outputs beyond the slot and its `hasOutputs` flag (default `false`), which it passes to the list as `isEmptyStateShown={!hasOutputs}`.
    - `ProjectViewPage` sets `hasOutputs` while the Outputs section shows files or its error, so a project with outputs but no chats does not say "No outputs or chats yet".
 3. **`ProjectConversationList`**, fed by the `conversations` prop.
-   - The hook owns `{ items, isLoading, hasError, hasMore, isLoadingMore, retry, loadMore, rename, remove, refresh, markViewed }` in local state. It follows the `useFavicon` pattern: `AbortController` cleanup, async/await.
+   - The hook owns `{ items, isLoading, hasError, hasMore, isLoadingMore, retry, loadMore, rename, generateTitle, remove, refresh, markViewed }` in local state. It follows the `useFavicon` pattern: `AbortController` cleanup, async/await.
    - DIAL Core cannot page a project's conversations in display order, so the hook reads the whole list once (`listProjectConversations(projectId, signal)`, no paging) and pages it locally: `items` is the first 20 rows, as in the design (node `23:24330`), and `hasMore` is whether more rows are loaded than shown. While `hasMore`, the list ends with a See more link (`buttons.seeMore`).
    - `loadMore` shows the next 20 rows. When any of them carries `isTitlePending`, it first reads their titles with `getProjectConversationTitles(projectId, names, signal)` (`POST /api/v1/projects/:id/conversations/titles`), with `isLoadingMore` set meanwhile, so no row shows its file-name title. Without pending rows it makes no request. A failed read rejects, keeps the rows shown so far, and the host shows `projects.chats.error`.
    - Items map from `ProjectConversationItemDto` (`title`, `author` → `authorName`, `isUnread`).
@@ -215,6 +215,7 @@ The section renders:
 
 **First message.** Submitting the input SHALL:
 
+0. call the optional `onChatCreateStart` prop, so the page holds its live refresh (see the `project-view-live-updates` capability); when the create fails before any chat exists, call the optional `onChatCreateFailed` prop, and never call it once the chat exists;
 1. call `createProjectConversation(projectId, …)` with the same fields `ConversationRoute`'s `handleCreateConversation` sends;
 2. save the prompt, temperature and response format through `saveProjectConversation`;
 3. `navigate(getProjectConversationRoute(conversation.id), { state: { conversation } })`.
@@ -223,7 +224,7 @@ The section renders:
 
 **Row actions:**
 - `onOpen` (every reader) calls `conversations.markViewed(id)`, then navigates to the project chat route.
-- `onRename` (when `project.canEdit`) opens a kit `Popup` named `projects.chats.renameTitle`, with a labelled `Input` seeded with the title and Save and Cancel buttons (`buttons.save`, `buttons.cancel`). Save, or Enter in the input, trims the value, refuses an empty one inline (`projects.chats.renameEmpty`), and calls `renameProjectConversation`.
+- `onRename` (when `project.canEdit`) opens a kit `Popup` named `projects.chats.renameTitle`, with a labelled `Input` seeded with the title and Save and Cancel buttons (`buttons.save`, `buttons.cancel`). Save, or Enter in the input, trims the value, refuses an empty one inline (`projects.chats.renameEmpty`), and calls `renameProjectConversation`. The dialog also has a sparkles button (`conversationPanel.rename.renameWithAiLabel`) that fills the input with the title from `generateProjectConversationTitle` without saving it; a failure shows `conversationPanel.rename.renameWithAiError` inline.
 - `onDelete` (when `project.canEdit`) opens `DeleteConfirmationDialog` with `projects.chats.deleteConfirmTitle` (`{{title}}`) and `projects.chats.deleteConfirmDescription`, then calls `deleteProjectConversation`.
 
 Success updates the list in place and shows a toast. Failure shows `projects.chats.renameError` or `projects.chats.deleteError`. Neither dialog can be closed while its request is pending. When a refresh removes the row a rename or delete dialog was opened for, the dialog closes and focus moves to the list.

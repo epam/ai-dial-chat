@@ -20,10 +20,16 @@ import { BackgroundGenerationService } from '../../generation/background-generat
 import { ChatCompletionsAdapter } from '../../generation/chat-completions.adapter';
 import {
   ConversationGenerationService,
+  DEFAULT_GENERATION_FINALIZE_TIMEOUT_MS,
   GenerationCancelReason,
   type GenerationLease,
 } from '../../generation/conversation-generation.service';
 import { CoreResponsesClient } from '../../generation/core-responses.client';
+import {
+  FOREGROUND_REREAD_INTERVAL_MS,
+  buildForegroundStopReleaseMs,
+} from '../../generation/foreground-generation';
+import { ForegroundStopResult } from '../../generation/foreground-message';
 import { GenerationApiSelector } from '../../generation/generation-api-selector.service';
 import {
   generationCapabilityResolutionTotal,
@@ -112,6 +118,63 @@ const textToStream = (chunks: string[]): ReadableStream<Uint8Array> => {
   });
 };
 
+/*
+ * The SDK mocks below return fixed bodies, often without an ETag header. Storage is
+ * consistent and DIAL Core always returns an ETag, so a conditional writer's re-read
+ * must see what was written last and every read carries a version: this shim gives
+ * the real persistence service that behaviour without rewriting each SDK mock.
+ */
+const installStorageConsistency = (
+  persistence: ConversationPersistenceService,
+): void => {
+  let lastWritten: unknown;
+  let version = 0;
+  const realGetWithVersion =
+    persistence.getConversationWithStoredVersion.bind(persistence);
+  const realRead = persistence.readConversationWithEtag.bind(persistence);
+  const realSaveIfMatch = persistence.saveConversationIfMatch.bind(persistence);
+  const realSave = persistence.saveConversation.bind(persistence);
+  vi.spyOn(persistence, 'getConversationWithStoredVersion').mockImplementation(
+    async (...args) => {
+      const result = await realGetWithVersion(...args);
+      return {
+        ...result,
+        stored: { ...result.stored, etag: result.stored.etag ?? '"v0"' },
+      };
+    },
+  );
+  vi.spyOn(persistence, 'readConversationWithEtag').mockImplementation(
+    async (...args) => {
+      if (lastWritten !== undefined) {
+        return {
+          conversation: structuredClone(lastWritten) as never,
+          etag: `"w${version}"`,
+        };
+      }
+      const stored = await realRead(...args);
+      return stored && { ...stored, etag: stored.etag ?? '"v0"' };
+    },
+  );
+  vi.spyOn(persistence, 'saveConversationIfMatch').mockImplementation(
+    async (...args) => {
+      const result = await realSaveIfMatch(...args);
+      if (result.isSaved) {
+        lastWritten = structuredClone(args[3]);
+        version += 1;
+      }
+      return result;
+    },
+  );
+  vi.spyOn(persistence, 'saveConversation').mockImplementation(
+    async (...args) => {
+      const result = await realSave(...args);
+      lastWritten = structuredClone(args[3]);
+      version += 1;
+      return result;
+    },
+  );
+};
+
 describe('ConversationStreamingService', () => {
   let service: ConversationStreamingService;
   let chatCompletionsAdapter: ChatCompletionsAdapter;
@@ -147,7 +210,7 @@ describe('ConversationStreamingService', () => {
     lang?: string,
     jobTitle?: string,
   ) => {
-    const stream = service.streamCompletion(
+    const stream = service.streamCompletion({
       conversationPath,
       token,
       bucket,
@@ -156,20 +219,20 @@ describe('ConversationStreamingService', () => {
       message,
       messageIndex,
       model,
-      customContent as never,
-      sessionId,
-      () => {
+      customContent: customContent as never,
+      ownerKey: sessionId,
+      onReadyToStream: () => {
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
         res.flushHeaders();
       },
-      'user1',
+      sub: 'user1',
       clientChannelId,
       timezone,
       lang,
       jobTitle,
-    );
+    });
     for await (const chunk of stream) {
       res.write(chunk);
     }
@@ -209,6 +272,8 @@ describe('ConversationStreamingService', () => {
       applyChunk: vi.fn(),
       attach: vi.fn(),
       abandonPreparation: vi.fn(),
+      requestUserStop: vi.fn(),
+      cancel: vi.fn(),
     } as unknown as ConversationGenerationService;
     mockDeploymentsService = {
       getDeploymentDetails: vi.fn().mockResolvedValue({
@@ -234,6 +299,7 @@ describe('ConversationStreamingService', () => {
       new ConversationTitleCacheService(),
       new ProjectConversationStore(mockDialClient),
     );
+    installStorageConsistency(persistenceService);
     chatCompletionsAdapter = new ChatCompletionsAdapter(mockDialClient);
     service = new ConversationStreamingService(
       mockDialClient,
@@ -2298,20 +2364,18 @@ describe('ConversationStreamingService', () => {
         response: new Response(neverEndingStream, { status: 200 }),
       } as never);
 
-      const stream = service.streamCompletion(
-        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
-        'test-token',
-        'test-bucket',
-        'test-gen-id',
-        CompletionMode.Append,
-        'Hello',
-        undefined,
-        'gpt-4o',
-        undefined,
-        'test-session-id',
-        () => undefined,
-        'user1',
-      );
+      const stream = service.streamCompletion({
+        conversationPath: 'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        token: 'test-token',
+        bucket: 'test-bucket',
+        generationId: 'test-gen-id',
+        mode: CompletionMode.Append,
+        message: 'Hello',
+        model: 'gpt-4o',
+        ownerKey: 'test-session-id',
+        onReadyToStream: () => undefined,
+        sub: 'user1',
+      });
 
       /*
        * `ConversationGenerationController.streamCompletion` no longer abandons its
@@ -2550,20 +2614,18 @@ describe('ConversationStreamingService', () => {
         response: new Response(neverEndingStream, { status: 200 }),
       } as never);
 
-      const stream = service.streamCompletion(
-        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
-        'test-token',
-        'test-bucket',
-        'test-gen-id',
-        CompletionMode.Append,
-        'Hello',
-        undefined,
-        'gpt-4o',
-        undefined,
-        'test-session-id',
-        () => undefined,
-        'user1',
-      );
+      const stream = service.streamCompletion({
+        conversationPath: 'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        token: 'test-token',
+        bucket: 'test-bucket',
+        generationId: 'test-gen-id',
+        mode: CompletionMode.Append,
+        message: 'Hello',
+        model: 'gpt-4o',
+        ownerKey: 'test-session-id',
+        onReadyToStream: () => undefined,
+        sub: 'user1',
+      });
 
       for await (const _chunk of stream) {
         /*
@@ -3585,6 +3647,38 @@ describe('ConversationStreamingService', () => {
         expect(sendSpy).not.toHaveBeenCalled();
         expect(res.flushHeaders).not.toHaveBeenCalled();
       });
+
+      it('releases the stored marker when shutdown interrupts right after the start-state save', async () => {
+        vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+          data: TEST_CONVERSATION,
+        } as never);
+        const save = createDeferred<unknown>();
+        const saveSpy = vi
+          .spyOn(mockDialClient.client, 'saveConversation')
+          .mockResolvedValue({ data: {} } as never)
+          .mockImplementationOnce(() => save.promise as never);
+        const sendSpy = mockCompletedRelay();
+        const res = makeMockRes();
+
+        const run = startPreparingStream(res);
+        await vi.waitFor(() => expect(saveSpy).toHaveBeenCalled());
+        void realGenerationService.onModuleDestroy();
+        save.resolve({ data: {} });
+
+        await expect(run).rejects.toBeInstanceOf(ServiceUnavailableException);
+        expect(saveSpy).toHaveBeenCalledTimes(2);
+        expect(
+          savedMessages(saveSpy, 0).at(-1)?.foregroundGeneration,
+        ).toBeDefined();
+        const released = savedMessages(saveSpy, 1).at(-1);
+        expect(released).not.toHaveProperty('foregroundGeneration');
+        expect(released?.streamErrorMessage).toBe('');
+        expect(sendSpy).not.toHaveBeenCalled();
+        expect(res.flushHeaders).not.toHaveBeenCalled();
+        expect(
+          realGenerationService.getStatus('test-session-id', PREPARING_PATH),
+        ).toBeUndefined();
+      });
     });
 
     describe('bounded preparation', () => {
@@ -3883,7 +3977,7 @@ describe('ConversationStreamingService', () => {
           ).toThrow(ConflictException);
         });
 
-        it('releases the key once a late start-state save succeeds, with no further write from the worker', async () => {
+        it('releases the marker and then the key once a late start-state save succeeds', async () => {
           const { save, saveSpy } = deferStartStateSave();
           const sendSpy = mockCompletedRelay();
           const res = makeMockRes();
@@ -3894,7 +3988,14 @@ describe('ConversationStreamingService', () => {
           save.resolve({ data: {} });
           await vi.advanceTimersByTimeAsync(0);
 
-          expect(saveSpy).toHaveBeenCalledOnce();
+          expect(saveSpy).toHaveBeenCalledTimes(2);
+          const released = (
+            saveSpy.mock.calls[1][2] as unknown as {
+              body: { messages: Record<string, unknown>[] };
+            }
+          ).body.messages.at(-1);
+          expect(released).not.toHaveProperty('foregroundGeneration');
+          expect(released?.streamErrorMessage).toBe('');
           expect(sendSpy).not.toHaveBeenCalled();
           expect(() =>
             realGenerationService.register(
@@ -3905,21 +4006,492 @@ describe('ConversationStreamingService', () => {
           ).not.toThrow();
         });
 
-        it('still streams when the start-state save rejects before the deadline', async () => {
-          const saveSpy = vi
-            .spyOn(mockDialClient.client, 'saveConversation')
+        it('fails before streaming and releases the key when the start-state save rejects before the deadline', async () => {
+          vi.spyOn(mockDialClient.client, 'saveConversation')
             .mockResolvedValue({ data: {} } as never)
             .mockRejectedValueOnce(new Error('Core down'));
-          mockCompletedRelay();
+          const sendSpy = mockCompletedRelay();
           const res = makeMockRes();
 
-          await startPreparingStream(res);
+          const err = await startCapturing(res);
 
-          expect(res.flushHeaders).toHaveBeenCalledOnce();
-          expect(saveSpy).toHaveBeenCalledTimes(2);
+          expect(err).toBeInstanceOf(Error);
+          expect(res.flushHeaders).not.toHaveBeenCalled();
+          expect(sendSpy).not.toHaveBeenCalled();
           expect(vi.getTimerCount()).toBe(0);
+          expect(() =>
+            realGenerationService.register(
+              'test-session-id',
+              PREPARING_PATH,
+              'another-gen-id',
+            ),
+          ).not.toThrow();
         });
       });
+    });
+  });
+  describe('streamCompletion — foreground generation lock', () => {
+    const PATH = 'gpt-4o__Test__11111111-1111-1111-1111-111111111111';
+    const GEN = 'test-gen-id';
+    const OTHER_GEN = '9d1e2f3a-4b5c-4d6e-8f70-81a2b3c4d5e6';
+    const NOW = Date.now();
+
+    interface CoreState {
+      body: Record<string, unknown> | undefined;
+      version: number;
+      beforeSave?: () => void;
+    }
+
+    /* DIAL Core's compare-and-set: a write with a stale If-Match is a 412. */
+    const installCoreStorage = (
+      initial: Record<string, unknown>,
+    ): CoreState => {
+      const state: CoreState = { body: structuredClone(initial), version: 1 };
+      vi.spyOn(mockDialClient.client, 'getConversation').mockImplementation(
+        (async () =>
+          state.body
+            ? {
+                data: structuredClone(state.body),
+                response: new Response(null, {
+                  status: 200,
+                  headers: { ETag: `"v${state.version}"` },
+                }),
+              }
+            : {
+                error: { message: 'Not found' },
+                response: new Response(null, { status: 404 }),
+              }) as never,
+      );
+      vi.spyOn(mockDialClient.client, 'saveConversation').mockImplementation(
+        (async (_bucket: string, _path: string, init: never) => {
+          const { headers, body } = init as {
+            headers: Record<string, string>;
+            body: Record<string, unknown>;
+          };
+          const hook = state.beforeSave;
+          state.beforeSave = undefined;
+          hook?.();
+          const ifMatch = headers['If-Match'];
+          if (ifMatch != null && ifMatch !== `"v${state.version}"`) {
+            return {
+              error: { message: 'Precondition failed' },
+              response: new Response(null, { status: 412 }),
+            };
+          }
+          state.body = structuredClone(body);
+          state.version += 1;
+          return {
+            data: body,
+            response: new Response(null, {
+              status: 200,
+              headers: { ETag: `"v${state.version}"` },
+            }),
+          };
+        }) as never,
+      );
+      return state;
+    };
+
+    const markedAnswer = (generationId: string, expiresAt: number) => ({
+      role: ConversationMessageRole.Assistant,
+      content: '',
+      timestamp: 't1',
+      foregroundGeneration: { generationId, startedAt: NOW, expiresAt },
+    });
+    const question = {
+      role: ConversationMessageRole.User,
+      content: 'Earlier question',
+      timestamp: 't0',
+    };
+
+    const mockRelay = (onSend?: () => void) =>
+      vi
+        .spyOn(mockDialClient.client, 'sendChatCompletionRequest')
+        .mockImplementation((async () => {
+          onSend?.();
+          return {
+            response: new Response(
+              textToStream([
+                'data: {"id":"resp-1","choices":[{"delta":{"content":"Hello"}}]}\n\n',
+                'data: [DONE]\n\n',
+              ]),
+              {
+                status: 200,
+                headers: { 'Content-Type': 'text/event-stream' },
+              },
+            ),
+          };
+        }) as never);
+
+    const run = (res = makeMockRes()) =>
+      runStreamCompletion(
+        PATH,
+        'test-token',
+        'test-bucket',
+        GEN,
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      ).then(
+        () => undefined,
+        (err: unknown) => err,
+      );
+
+    const lastMessage = (state: CoreState) =>
+      (state.body?.messages as Record<string, unknown>[]).at(-1);
+
+    beforeEach(() => {
+      /* These cases drive DIAL Core's own versioning instead of the shared shim. */
+      for (const method of [
+        'getConversationWithStoredVersion',
+        'readConversationWithEtag',
+        'saveConversationIfMatch',
+        'saveConversation',
+      ] as const) {
+        vi.mocked(persistenceService[method]).mockRestore();
+      }
+    });
+
+    it('refuses a conversation another generation holds, before any write', async () => {
+      const state = installCoreStorage({
+        ...TEST_CONVERSATION,
+        messages: [question, markedAnswer(OTHER_GEN, NOW + 60_000)],
+      });
+      const sendSpy = mockRelay();
+      const res = makeMockRes();
+
+      const err = await run(res);
+
+      expect(err).toBeInstanceOf(ConflictException);
+      expect(mockDialClient.client.saveConversation).not.toHaveBeenCalled();
+      expect(sendSpy).not.toHaveBeenCalled();
+      expect(res.flushHeaders).not.toHaveBeenCalled();
+      expect(state.version).toBe(1);
+      expect(mockGenerationService.error).toHaveBeenCalledOnce();
+    });
+
+    it('refuses the start when another generation stores its marker between the read and the write', async () => {
+      const state = installCoreStorage({ ...TEST_CONVERSATION, messages: [] });
+      state.beforeSave = () => {
+        state.body = {
+          ...TEST_CONVERSATION,
+          messages: [question, markedAnswer(OTHER_GEN, Date.now() + 60_000)],
+        };
+        state.version += 1;
+      };
+      const sendSpy = mockRelay();
+
+      const err = await run();
+
+      expect(err).toBeInstanceOf(ConflictException);
+      expect(sendSpy).not.toHaveBeenCalled();
+      expect(lastMessage(state)?.foregroundGeneration).toMatchObject({
+        generationId: OTHER_GEN,
+      });
+    });
+
+    it('takes over an expired marker and marks its answer interrupted', async () => {
+      const state = installCoreStorage({
+        ...TEST_CONVERSATION,
+        messages: [question, markedAnswer(OTHER_GEN, NOW - 1)],
+      });
+      mockRelay();
+
+      expect(await run()).toBeUndefined();
+
+      const messages = state.body?.messages as Record<string, unknown>[];
+      expect(messages[1]).not.toHaveProperty('foregroundGeneration');
+      expect(messages[1].streamErrorMessage).toBe('');
+      expect(messages.at(-1)).toMatchObject({ content: 'Hello' });
+      expect(messages.at(-1)).not.toHaveProperty('foregroundGeneration');
+    });
+
+    it('stores the marker with the start state and removes it with the final answer', async () => {
+      const state = installCoreStorage({ ...TEST_CONVERSATION, messages: [] });
+      let startState: Record<string, unknown> | undefined;
+      mockRelay(() => {
+        startState = lastMessage(state);
+      });
+
+      await run();
+
+      expect(startState?.foregroundGeneration).toMatchObject({
+        generationId: GEN,
+      });
+      expect(lastMessage(state)).toMatchObject({ content: 'Hello' });
+      expect(lastMessage(state)).not.toHaveProperty('foregroundGeneration');
+      expect(mockGenerationService.complete).toHaveBeenCalledOnce();
+    });
+
+    it('keeps a rename made while the answer streams', async () => {
+      const state = installCoreStorage({ ...TEST_CONVERSATION, messages: [] });
+      mockRelay(() => {
+        state.body = { ...state.body, name: 'Renamed' };
+        state.version += 1;
+      });
+
+      await run();
+
+      expect(state.body?.name).toBe('Renamed');
+      expect(lastMessage(state)).toMatchObject({ content: 'Hello' });
+    });
+
+    it('keeps a customViewState key written while the answer streams', async () => {
+      const state = installCoreStorage({ ...TEST_CONVERSATION, messages: [] });
+      mockRelay(() => {
+        state.body = { ...state.body, customViewState: { layout: 'wide' } };
+        state.version += 1;
+      });
+
+      await run();
+
+      expect(state.body?.customViewState).toMatchObject({ layout: 'wide' });
+    });
+
+    it('does not re-create a conversation deleted while the answer streams', async () => {
+      const state = installCoreStorage({ ...TEST_CONVERSATION, messages: [] });
+      mockRelay(() => {
+        state.body = undefined;
+      });
+      const res = makeMockRes();
+
+      await run(res);
+
+      expect(state.body).toBeUndefined();
+      expect(mockDialClient.client.saveConversation).toHaveBeenCalledOnce();
+      const written = res.getWritten();
+      expect(written).toContain('conversation_save_failed');
+      expect(written).not.toContain('"status"');
+      expect(mockGenerationService.persistenceFailed).toHaveBeenCalledOnce();
+      expect(mockGenerationService.complete).not.toHaveBeenCalled();
+    });
+
+    it('releases a start write that DIAL Core stored although the BFF saw a failure', async () => {
+      const state = installCoreStorage({ ...TEST_CONVERSATION, messages: [] });
+      const realSave = vi
+        .mocked(mockDialClient.client.saveConversation)
+        .getMockImplementation() as (...args: never[]) => Promise<unknown>;
+      vi.mocked(mockDialClient.client.saveConversation).mockImplementationOnce(
+        (async (...args: never[]) => {
+          await realSave(...args);
+          return {
+            error: { message: 'Gateway timeout' },
+            response: new Response(null, { status: 504 }),
+          };
+        }) as never,
+      );
+      const sendSpy = mockRelay();
+
+      const err = await run();
+
+      expect(err).toBeInstanceOf(Error);
+      expect(sendSpy).not.toHaveBeenCalled();
+      expect(lastMessage(state)).not.toHaveProperty('foregroundGeneration');
+      expect(lastMessage(state)?.streamErrorMessage).toBe('');
+    });
+
+    describe('while the answer streams', () => {
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      /* A model response that stays open until the test releases it. */
+      const mockHeldRelay = () => {
+        let release: () => void = () => undefined;
+        const held = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        const encoder = new TextEncoder();
+        vi.spyOn(
+          mockDialClient.client,
+          'sendChatCompletionRequest',
+        ).mockResolvedValue({
+          response: new Response(
+            new ReadableStream<Uint8Array>({
+              async start(controller) {
+                controller.enqueue(
+                  encoder.encode(
+                    'data: {"id":"resp-1","choices":[{"delta":{"content":"Hel"}}]}\n\n',
+                  ),
+                );
+                await held;
+                controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                controller.close();
+              },
+            }),
+            { status: 200, headers: { 'Content-Type': 'text/event-stream' } },
+          ),
+        } as never);
+        return () => release();
+      };
+
+      it('stops as a user stop when another writer stored a Stop on the marker', async () => {
+        vi.useFakeTimers();
+        const state = installCoreStorage({
+          ...TEST_CONVERSATION,
+          messages: [],
+        });
+        const release = mockHeldRelay();
+        const outcome = run();
+        await vi.waitFor(() =>
+          expect(
+            mockDialClient.client.sendChatCompletionRequest,
+          ).toHaveBeenCalled(),
+        );
+        const message = lastMessage(state) as {
+          foregroundGeneration: Record<string, unknown>;
+        };
+        message.foregroundGeneration.stopRequestedAt = Date.now();
+        state.version += 1;
+
+        await vi.advanceTimersByTimeAsync(FOREGROUND_REREAD_INTERVAL_MS);
+
+        expect(mockGenerationService.requestUserStop).toHaveBeenCalledOnce();
+        expect(mockGenerationService.cancel).not.toHaveBeenCalled();
+        release();
+        await outcome;
+      });
+
+      it('ends at once when the marker is gone', async () => {
+        vi.useFakeTimers();
+        const state = installCoreStorage({
+          ...TEST_CONVERSATION,
+          messages: [],
+        });
+        const release = mockHeldRelay();
+        const outcome = run();
+        await vi.waitFor(() =>
+          expect(
+            mockDialClient.client.sendChatCompletionRequest,
+          ).toHaveBeenCalled(),
+        );
+        state.body = undefined;
+
+        await vi.advanceTimersByTimeAsync(FOREGROUND_REREAD_INTERVAL_MS);
+
+        expect(mockGenerationService.cancel).toHaveBeenCalledWith(
+          expect.anything(),
+          GenerationCancelReason.LockLost,
+        );
+        release();
+        await outcome;
+      });
+
+      it('makes no re-read once the answer is finalized', async () => {
+        vi.useFakeTimers();
+        installCoreStorage({ ...TEST_CONVERSATION, messages: [] });
+        mockRelay();
+
+        await run();
+        const reads = vi.mocked(mockDialClient.client.getConversation).mock
+          .calls.length;
+        await vi.advanceTimersByTimeAsync(3 * FOREGROUND_REREAD_INTERVAL_MS);
+
+        expect(
+          vi.mocked(mockDialClient.client.getConversation).mock.calls,
+        ).toHaveLength(reads);
+        expect(mockGenerationService.requestUserStop).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('stopForegroundGeneration', () => {
+      const stop = () =>
+        service.stopForegroundGeneration(
+          PATH,
+          'test-token',
+          'test-bucket',
+          OTHER_GEN,
+        );
+
+      it('stores the Stop on a live marker and shortens its expiry', async () => {
+        const state = installCoreStorage({
+          ...TEST_CONVERSATION,
+          messages: [question, markedAnswer(OTHER_GEN, Date.now() + 3_600_000)],
+        });
+
+        expect(await stop()).toBe(ForegroundStopResult.Stored);
+
+        const marker = lastMessage(state)?.foregroundGeneration as {
+          stopRequestedAt?: number;
+          expiresAt: number;
+        };
+        expect(marker.stopRequestedAt).toBeTypeOf('number');
+        expect(marker.expiresAt).toBeLessThanOrEqual(
+          (marker.stopRequestedAt as number) +
+            buildForegroundStopReleaseMs(
+              DEFAULT_GENERATION_FINALIZE_TIMEOUT_MS,
+            ),
+        );
+      });
+
+      it('accepts a repeated Stop without writing again', async () => {
+        installCoreStorage({
+          ...TEST_CONVERSATION,
+          messages: [
+            question,
+            {
+              ...markedAnswer(OTHER_GEN, Date.now() + 60_000),
+              foregroundGeneration: {
+                generationId: OTHER_GEN,
+                startedAt: NOW,
+                expiresAt: Date.now() + 60_000,
+                stopRequestedAt: Date.now(),
+              },
+            },
+          ],
+        });
+
+        expect(await stop()).toBe(ForegroundStopResult.AlreadyRequested);
+        expect(mockDialClient.client.saveConversation).not.toHaveBeenCalled();
+      });
+
+      it('finds nothing to stop without a live marker carrying the id', async () => {
+        installCoreStorage({
+          ...TEST_CONVERSATION,
+          messages: [question, markedAnswer(OTHER_GEN, NOW - 1)],
+        });
+
+        expect(await stop()).toBe(ForegroundStopResult.NotFound);
+        expect(mockDialClient.client.saveConversation).not.toHaveBeenCalled();
+      });
+
+      it('discloses nothing when the caller may not read the conversation', async () => {
+        vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+          error: { message: 'Forbidden' },
+          response: new Response(null, { status: 403 }),
+        } as never);
+
+        expect(await stop()).toBe(ForegroundStopResult.NotFound);
+      });
+
+      it('reports a failure when the Stop cannot be stored', async () => {
+        installCoreStorage({
+          ...TEST_CONVERSATION,
+          messages: [question, markedAnswer(OTHER_GEN, Date.now() + 60_000)],
+        });
+        vi.mocked(mockDialClient.client.saveConversation).mockResolvedValue({
+          error: { message: 'Core down' },
+          response: new Response(null, { status: 500 }),
+        } as never);
+
+        expect(await stop()).toBe(ForegroundStopResult.Failed);
+      });
+    });
+
+    it('makes no release write when a refused start stored nothing', async () => {
+      installCoreStorage({
+        ...TEST_CONVERSATION,
+        messages: [question, markedAnswer(OTHER_GEN, NOW + 60_000)],
+      });
+      mockRelay();
+
+      await run();
+
+      expect(mockDialClient.client.saveConversation).not.toHaveBeenCalled();
     });
   });
 });

@@ -33,6 +33,8 @@ import {
   PublishFolderNode,
   PublishResourceSummary,
 } from '../../models/publish';
+import type { PublishDependenciesLabels } from '../../models/publish-dependencies-list';
+import type { PublishDependency } from '../../models/publish-dependency';
 import type { PublishPanelStyles } from '../../models/publish-panel-styles';
 import { PublishPanelView } from '../../types/publish-panel';
 import { derivePublishState } from '../../utils/publish-state';
@@ -40,6 +42,7 @@ import {
   PublishAccessRules,
   PublishAccessRulesLabels,
 } from '../PublishAccessRules/PublishAccessRules';
+import { PublishDependenciesList } from '../PublishDependenciesList/PublishDependenciesList';
 import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
 import styles from './PublishPanel.module.scss';
 
@@ -78,6 +81,10 @@ export interface PublishPanelLabels {
   noAccessError?: string;
   /** Error callout body shown when the most recent submit attempt failed. */
   submitError?: string;
+  /** Heading of the informational callout stating the publication needs an administrator's approval. Default: `'Admin approval required'`. */
+  adminApprovalTitle?: string;
+  /** Body of the informational callout under `adminApprovalTitle`. Default: `'We’ll send a request to your organization’s admin. If approved, it will appear in the folder.'`; a host replaces it to name the entity being published. */
+  adminApprovalMessage?: string;
   /** Message shown when a folder search query matches no folders; `{query}` is replaced. */
   folderEmptyStateLabel?: string;
   /** Label for the per-row context menu action that creates a folder alongside the clicked folder. */
@@ -92,10 +99,14 @@ export interface PublishPanelLabels {
   createFolderInvalidNameError?: string;
   /** Inline error shown while creating a folder whose name duplicates a sibling. */
   createFolderDuplicateNameError?: string;
+  /** Inline error shown while creating a folder named like its parent folder. */
+  createFolderSameAsParentNameError?: string;
   /** Label used for the bucket root as a destination and as `{folder}` in callouts when it is selected. Default: `'Organization'`. */
   rootFolderLabel?: string;
   /** Text overrides for the access-rules section. */
   accessRulesLabels?: PublishAccessRulesLabels;
+  /** Text overrides for the private-dependencies section. */
+  dependenciesLabels?: PublishDependenciesLabels;
 }
 
 /** Props for {@link PublishPanel}. */
@@ -113,6 +124,11 @@ export interface PublishPanelProps {
    * working.
    */
   renderSummary?: () => ReactNode;
+  /**
+   * Resources the item refers to that are not in the public bucket, listed read-only under the summary row.
+   * Omit it to leave the section out; pass an empty array to keep it mounted for a later list, which is announced when it appears.
+   */
+  dependencies?: PublishDependency[];
   /** Which view to show: the main form or the destination folder tree. Default: `PublishPanelView.Main`. */
   view?: PublishPanelView;
   /** Called when the user asks to open the folder view from the destination row. */
@@ -209,6 +225,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   onChangeFolderClick,
   resource,
   renderSummary,
+  dependencies,
   folderItems,
   selectedFolderPath,
   pendingFolderPath,
@@ -242,6 +259,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     colors,
     folderTree: folderTreeStyles,
     accessRules: accessRulesStyles,
+    dependencies: dependenciesStyles,
   } = stylesProp;
   const cssVars = {
     ...buildCssVars({
@@ -268,6 +286,8 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     replaceWarning = 'Version {version} is already published in {folder}. Publishing will replace it.',
     noAccessError = "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
     submitError = 'Publishing failed. Please try again.',
+    adminApprovalTitle = 'Admin approval required',
+    adminApprovalMessage = 'We’ll send a request to your organization’s admin. If approved, it will appear in the folder.',
     folderEmptyStateLabel,
     addSiblingFolderLabel,
     addChildFolderLabel,
@@ -275,8 +295,10 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     createFolderEmptyNameError,
     createFolderInvalidNameError,
     createFolderDuplicateNameError,
+    createFolderSameAsParentNameError,
     rootFolderLabel = 'Organization',
     accessRulesLabels,
+    dependenciesLabels,
     searchPlaceholder,
     clearSearchAriaLabel,
     authorLabel = 'Author',
@@ -391,6 +413,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           emptyFolderNameError={createFolderEmptyNameError}
           invalidFolderNameError={createFolderInvalidNameError}
           duplicateFolderNameError={createFolderDuplicateNameError}
+          sameAsParentFolderNameError={createFolderSameAsParentNameError}
           rootLabel={rootFolderLabel}
           styles={folderTreeStyles}
         />
@@ -470,6 +493,16 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             onClick={onChangeFolderClick}
           />
         </div>
+        {derived.calloutKind === PublishCalloutKind.Info && (
+          <div className="my-4">
+            <Notification
+              type={NotificationType.SectionMessage}
+              variant={NotificationVariant.Info}
+              title={adminApprovalTitle}
+              message={adminApprovalMessage}
+            />
+          </div>
+        )}
         {derived.calloutKind !== PublishCalloutKind.None &&
           derived.calloutKind !== PublishCalloutKind.Info && (
             <div className="mt-3">
@@ -537,6 +570,15 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           />
         </div>
       </section>
+
+      {dependencies != null && (
+        <PublishDependenciesList
+          dependencies={dependencies}
+          labels={dependenciesLabels}
+          headingClassName={headingClassName}
+          styles={dependenciesStyles}
+        />
+      )}
     </div>
   );
 };

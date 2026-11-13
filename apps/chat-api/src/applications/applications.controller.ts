@@ -21,7 +21,9 @@ import {
   ResourceFoldersResponseDto,
   ResourceIdResponseDto,
 } from '../common/dto/resource-folder.dto';
+import { ResourceNameConflictDto } from '../common/dto/resource-name-conflict.dto';
 import { ApplicationsService } from './applications.service';
+import { ApplicationErrorDto } from './dto/application-error.dto';
 import {
   CommitApplicationVersionDto,
   ForkApplicationVersionDto,
@@ -149,7 +151,8 @@ export class ApplicationsController {
   @ApiResponse({
     status: 409,
     description:
-      'An application with the same name already exists in the folder',
+      'The target folder already holds an own application with the same displayed name and version (`code` `name-taken-agent` or `name-taken-toolset`), or an application with the same leaf',
+    type: ResourceNameConflictDto,
   })
   @ApiResponse({
     status: 502,
@@ -204,7 +207,9 @@ export class ApplicationsController {
   @ApiResponse({ status: 404, description: 'Application not found' })
   @ApiResponse({
     status: 409,
-    description: 'The version already exists in the folder',
+    description:
+      'The version already exists in the folder (path conflict, no `code`), or another own entity in the folder already has this name and version (`code` `name-taken-agent` or `name-taken-toolset`)',
+    type: ResourceNameConflictDto,
   })
   @ApiResponse({
     status: 502,
@@ -313,9 +318,15 @@ export class ApplicationsController {
   @ApiResponse({
     status: 403,
     description:
-      'Caller lacks permission to create applications in their bucket',
+      'Caller lacks permission to create applications in their bucket, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available',
+    type: ApplicationErrorDto,
   })
-  @ApiResponse({ status: 409, description: 'Application name already taken' })
+  @ApiResponse({
+    status: 409,
+    description:
+      'Another own entity in the folder and catalog tab already has this name and version (`code` `name-taken-agent` or `name-taken-toolset`), or, without a `code`, every candidate storage path is taken',
+    type: ResourceNameConflictDto,
+  })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response or an empty bucket',
@@ -359,8 +370,19 @@ export class ApplicationsController {
     status: 401,
     description: 'Not authenticated — valid session cookie required',
   })
-  @ApiResponse({ status: 403, description: 'Caller lacks permission' })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Caller lacks permission, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available',
+    type: ApplicationErrorDto,
+  })
   @ApiResponse({ status: 404, description: 'Application not found' })
+  @ApiResponse({
+    status: 409,
+    description:
+      'The new name and version are already held by another own entity in the same folder and catalog tab (`code` `name-taken-agent` or `name-taken-toolset`)',
+    type: ResourceNameConflictDto,
+  })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',

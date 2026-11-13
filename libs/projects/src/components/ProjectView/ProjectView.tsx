@@ -31,6 +31,8 @@ import {
   IconPin,
   IconShare,
   IconTrashX,
+  IconUserOff,
+  IconWorldOff,
   IconWorldShare,
   type TablerIcon,
 } from '@tabler/icons-react';
@@ -53,6 +55,9 @@ const toDisplayAttachment = (
   status: RequestStatus.Idle,
 });
 
+const DEFAULT_DOWNLOAD_FILE_LABEL = (name: string): string =>
+  `Download ${name}`;
+
 /** Project home page: a header with the project actions and a Details panel with description, instructions and context. */
 const ProjectViewComponent: FC<ProjectViewProps> = ({
   project,
@@ -66,11 +71,16 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   onBack,
   onTogglePin,
   onPublish,
+  onUnpublish,
   onEdit,
   onShare,
+  onRevokeAccess,
+  onActionMenuOpenChange,
   onDelete,
+  onRemoveFromMyList,
   onDownload,
   onContextFileClick,
+  onContextFileDownload,
   selectedContextFileId,
   isDetailsStacked = false,
   onRetry,
@@ -81,6 +91,8 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   styles: viewStyles,
 }) => {
   const { colors, typography } = viewStyles ?? {};
+  const downloadFileLabel =
+    labels.downloadFileLabel ?? DEFAULT_DOWNLOAD_FILE_LABEL;
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const panelTitleClassName =
     typography?.panelTitleClassName ?? 'dial-body-semi-text';
@@ -125,8 +137,17 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
     };
   }, [bodyClassName, instructionsHeadingClassName]);
 
+  /* Unpublish takes Publish's slot: the two are never offered together. */
+  const unpublishLabel = labels.unpublishLabel ?? 'Unpublish';
+
+  /* `aria-disabled` rather than `disabled`: a natively disabled button drops
+   * keyboard focus to <body> while the pin change is saved. */
+  const handleTogglePin = () => {
+    if (!isPinPending) onTogglePin();
+  };
+
   /* The same actions in two placements: on desktop Publish and Edit are
-   * header buttons, on mobile they lead the ⋮ menu. CSS hides one copy, so
+   * header buttons, on mobile Pin, Publish and Edit lead the ⋮ menu, whose sheet is titled with the project name. CSS hides one copy, so
    * the hidden one is out of the accessibility tree too. */
   const renderMenuIcon = (Icon: TablerIcon) => (
     <Icon size={DIAL_ICON_SIZE.SM} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
@@ -134,7 +155,22 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
 
   const buildMenuItems = (includePrimary: boolean): DropdownItem[] => {
     const items: DropdownItem[] = [];
-    if (includePrimary && onPublish) {
+    if (includePrimary) {
+      items.push({
+        key: 'pin',
+        label: isPinned ? labels.unpinLabel : labels.pinLabel,
+        icon: isPinned ? renderMenuIcon(IconPinOff) : renderMenuIcon(IconPin),
+        onClick: handleTogglePin,
+      });
+    }
+    if (includePrimary && onUnpublish) {
+      items.push({
+        key: 'unpublish',
+        label: unpublishLabel,
+        icon: renderMenuIcon(IconWorldOff),
+        onClick: onUnpublish,
+      });
+    } else if (includePrimary && onPublish) {
       items.push({
         key: 'publish',
         label: labels.publishLabel,
@@ -164,6 +200,22 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
       icon: renderMenuIcon(IconDownload),
       onClick: onDownload,
     });
+    if (onRevokeAccess) {
+      items.push({
+        key: 'revokeAccess',
+        label: labels.revokeAccessLabel ?? 'Revoke access',
+        icon: renderMenuIcon(IconUserOff),
+        onClick: onRevokeAccess,
+      });
+    }
+    if (onRemoveFromMyList) {
+      items.push({
+        key: 'removeFromMyList',
+        label: labels.removeFromMyListLabel ?? 'Remove from My List',
+        icon: renderMenuIcon(IconTrashX),
+        onClick: onRemoveFromMyList,
+      });
+    }
     if (onDelete) {
       items.push({
         key: 'delete',
@@ -179,8 +231,13 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   const renderMenu = (includePrimary: boolean, className: string) => (
     <div className={className}>
       <ActionMenu
+        onOpenChange={onActionMenuOpenChange}
         items={buildMenuItems(includePrimary)}
-        title={labels.moreActionsLabel}
+        title={
+          includePrimary
+            ? (project?.name ?? labels.moreActionsLabel)
+            : labels.moreActionsLabel
+        }
         closeLabel={labels.closeLabel}
         matchReferenceWidth={false}
         listClassName="w-[200px]"
@@ -198,12 +255,6 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
       </ActionMenu>
     </div>
   );
-
-  /* `aria-disabled` rather than `disabled`: a natively disabled button drops
-   * keyboard focus to <body> while the pin change is saved. */
-  const handleTogglePin = () => {
-    if (!isPinPending) onTogglePin();
-  };
 
   const renderState = () => {
     if (isLoading) {
@@ -281,8 +332,12 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
                   attachment={toDisplayAttachment(file)}
                   searchQuery={trimmedQuery}
                   onClick={onContextFileClick}
+                  onDownload={onContextFileDownload}
                   isSelected={file.name === selectedContextFileId}
-                  labels={{ clickLabel: labels.openFileLabel(file.name) }}
+                  labels={{
+                    clickLabel: labels.openFileLabel(file.name),
+                    downloadLabel: downloadFileLabel(file.name),
+                  }}
                 />
               </li>
             ))}
@@ -355,9 +410,23 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
           }
           aria-disabled={isPinPending || undefined}
           onClick={handleTogglePin}
-          className="shrink-0"
+          className="hidden shrink-0 desktop:inline-flex"
         />
-        {onPublish && (
+        {onUnpublish && (
+          <NeutralButton
+            label={unpublishLabel}
+            iconBefore={
+              <IconWorldOff
+                size={DIAL_ICON_SIZE.MD}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
+            onClick={onUnpublish}
+            className="hidden shrink-0 desktop:inline-flex"
+          />
+        )}
+        {!onUnpublish && onPublish && (
           <NeutralButton
             label={labels.publishLabel}
             iconBefore={

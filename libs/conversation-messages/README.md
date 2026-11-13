@@ -158,6 +158,8 @@ import { AssistantMessageBubble } from '@epam/ai-dial-conversation-messages';
   hasThinkingPlaceholder={stages.length === 0}
   starters={starters}
   onSelectStarter={handleSelectStarter}
+  // Read-only transcripts keep the buttons visible but inert.
+  isStarterSelectionDisabled={isReadOnly}
   deploymentIconUrl={deployment.iconUrl}
   deploymentDisplayName={deployment.displayName}
   labels={{

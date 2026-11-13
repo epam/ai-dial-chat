@@ -137,6 +137,12 @@ export interface UseConversationStreamParams {
   /** Host-translated warning shown when the received answer could not be saved. */
   generationPersistenceErrorMessage?: string;
   /**
+   * Host-translated text shown on an assistant message whose generation was lost: a reloaded
+   * chat whose stored copy still ends in the empty placeholder while attach finds nothing
+   * running. Defaults to {@link DEFAULT_GENERATION_INTERRUPTED_ERROR_MESSAGE}.
+   */
+  generationInterruptedMessage?: string;
+  /**
    * Receives the original error of every failed stream. The hook shows only
    * host-supplied or upstream-supplied text on the message bubble and hides
    * transport detail (e.g. `Failed to fetch`), so this is where the host can

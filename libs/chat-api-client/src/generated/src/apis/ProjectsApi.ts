@@ -18,6 +18,7 @@ import type {
   ConversationResponseDto,
   CreateConversationDto,
   CreateProjectResponseDto,
+  GenerateTitleResponseDto,
   ListProjectsResponseDto,
   ProjectArtifactListResponseDto,
   ProjectConversationListResponseDto,
@@ -74,6 +75,11 @@ export interface DownloadProjectArtifactRequest {
 export interface DownloadProjectFileRequest {
   id: string;
   fileName: string;
+}
+
+export interface GenerateProjectConversationTitleRequest {
+  id: string;
+  conversationName: string;
 }
 
 export interface GetProjectRequest {
@@ -733,6 +739,79 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
+   * Generates a title with the operator-configured utility model from the most recent messages. The suggestion is returned but NOT persisted; the caller confirms the rename separately.
+   * Generate an LLM-based title suggestion for a project conversation
+   */
+  async generateProjectConversationTitleRaw(
+    requestParameters: GenerateProjectConversationTitleRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<GenerateTitleResponseDto>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling generateProjectConversationTitle().',
+      );
+    }
+
+    if (requestParameters['conversationName'] == null) {
+      throw new runtime.RequiredError(
+        'conversationName',
+        'Required parameter "conversationName" was null or undefined when calling generateProjectConversationTitle().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/conversations/{conversationName}/generate-title`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'conversationName'}}`,
+      encodeURIComponent(String(requestParameters['conversationName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<GenerateTitleResponseDto>(response);
+  }
+
+  /**
+   * Generates a title with the operator-configured utility model from the most recent messages. The suggestion is returned but NOT persisted; the caller confirms the rename separately.
+   * Generate an LLM-based title suggestion for a project conversation
+   */
+  async generateProjectConversationTitle(
+    requestParameters: GenerateProjectConversationTitleRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<GenerateTitleResponseDto> {
+    const response = await this.generateProjectConversationTitleRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
    * Returns one project\'s name, description, instructions, context files with their sizes, and the ETag of the version they were read from. The BFF reads the project archive from DIAL Core, because project metadata carries no file sizes. `canEdit` is true for the owner and for a recipient the project is shared with with WRITE; `canManage` (rename, delete, share, publish) is true only for a project in the caller\'s own bucket.
    * Get a project
    */
@@ -1001,7 +1080,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Lists every conversation stored in the project\'s `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.
+   * Lists every conversation stored in the project\'s `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves. A published project is the exception: its files all carry the time of the copy, so every body is read, no item is pending, and the conversations are ordered by their last message.
    * List a project\'s conversations
    */
   async listProjectConversationsRaw(
@@ -1050,7 +1129,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Lists every conversation stored in the project\'s `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.
+   * Lists every conversation stored in the project\'s `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves. A published project is the exception: its files all carry the time of the copy, so every body is read, no item is pending, and the conversations are ordered by their last message.
    * List a project\'s conversations
    */
   async listProjectConversations(

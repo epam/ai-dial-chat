@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { ConflictException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FeatureFlagsService } from '../../app-config/feature-flags/feature-flags.service';
@@ -21,7 +21,10 @@ import {
 } from '../generation/core-responses.client';
 import { GenerationApiSelector } from '../generation/generation-api-selector.service';
 import { ResponsesAdapter } from '../generation/responses.adapter';
-import type { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
+import {
+  runConditionalUpdate,
+  type ConversationPersistenceService,
+} from '../persistence/conversation-persistence.service';
 import { ConversationStreamingService } from '../streaming/conversation-streaming.service';
 
 const LOCATOR = 'projects/a1b2c3/support-quality/conversations/gpt-4o__Hi__1';
@@ -62,11 +65,28 @@ const makeHarness = () => {
     client,
     dialApiVersion: '2024-02-01',
   } as unknown as DialClientService;
+  /* Storage is consistent: a conditional writer's re-read sees what was written last. */
+  let current = structuredClone(stored);
   const persistence = {
     getConversationWithStoredVersion: vi.fn(async () => ({
-      conversation: structuredClone(stored),
-      stored: { conversation: structuredClone(stored), etag: '"sha256:x"' },
+      conversation: structuredClone(current),
+      stored: { conversation: structuredClone(current), etag: '"sha256:x"' },
     })),
+    readConversationWithEtag: vi.fn(async () => ({
+      conversation: structuredClone(current),
+      etag: '"sha256:x"',
+    })),
+    saveConversationIfMatch: vi.fn(
+      async (
+        _p: string,
+        _t: string,
+        _b: string,
+        body: ConversationResponseDto,
+      ) => {
+        current = structuredClone(body);
+        return { isSaved: true, conversation: body };
+      },
+    ),
     saveConversation: vi.fn(
       async (
         _p: string,
@@ -74,8 +94,16 @@ const makeHarness = () => {
         _b: string,
         body: ConversationResponseDto,
       ) => {
+        current = structuredClone(body);
         return body;
       },
+    ),
+    updateConversation: vi.fn(
+      (
+        ...args: Parameters<
+          ConversationPersistenceService['updateConversation']
+        >
+      ) => runConditionalUpdate(persistence as never, ...args),
     ),
   } as unknown as ConversationPersistenceService;
   const deployments = {
@@ -100,20 +128,18 @@ const makeHarness = () => {
     config,
   );
   const run = async (path: string) => {
-    const stream = streaming.streamCompletion(
-      path,
-      'token',
-      'a1b2c3',
-      GEN,
-      CompletionMode.Append,
-      'Summarize the tickets',
-      undefined,
-      'gpt-4o',
-      undefined,
-      'c:session',
-      () => undefined,
-      'sub',
-    );
+    const stream = streaming.streamCompletion({
+      conversationPath: path,
+      token: 'token',
+      bucket: 'a1b2c3',
+      generationId: GEN,
+      mode: CompletionMode.Append,
+      message: 'Summarize the tickets',
+      model: 'gpt-4o',
+      ownerKey: 'c:session',
+      onReadyToStream: () => undefined,
+      sub: 'sub',
+    });
     for await (const chunk of stream) void chunk;
   };
   const request = () => {
@@ -248,5 +274,236 @@ describe('project conversation background replay', () => {
         'x-project-id': 'projects/a1b2c3/support-quality',
       },
     );
+  });
+});
+
+/*
+ * Two BFF instances (each with its own process-local registry) sharing one versioned
+ * store that behaves like DIAL Core's compare-and-set: the issue #9731 scenario.
+ */
+describe('two instances sending into one conversation', () => {
+  interface SharedStore {
+    current: ConversationResponseDto;
+    version: number;
+    /* Runs once, before the next conditional write is checked. */
+    beforeWrite?: () => Promise<void>;
+  }
+
+  const makeSharedStore = (path: string): SharedStore => ({
+    current: {
+      id: path,
+      folderId: 'projects/a1b2c3/support-quality',
+      name: 'Hi',
+      prompt: '',
+      messages: [],
+    } as unknown as ConversationResponseDto,
+    version: 1,
+  });
+
+  const makeInstance = (store: SharedStore, ownerKey: string) => {
+    const read = () => ({
+      conversation: structuredClone(store.current),
+      etag: `"v${store.version}"`,
+    });
+    const persistence = {
+      getConversationWithStoredVersion: vi.fn(async () => {
+        const stored = read();
+        return { conversation: stored.conversation, stored };
+      }),
+      readConversationWithEtag: vi.fn(async () => read()),
+      saveConversationIfMatch: vi.fn(
+        async (
+          _p: string,
+          _t: string,
+          _b: string,
+          body: ConversationResponseDto,
+          etag: string,
+        ) => {
+          const hook = store.beforeWrite;
+          store.beforeWrite = undefined;
+          await hook?.();
+          if (etag !== `"v${store.version}"`) return { isSaved: false };
+          store.current = structuredClone(body);
+          store.version += 1;
+          return { isSaved: true, conversation: body };
+        },
+      ),
+      saveConversation: vi.fn(),
+      updateConversation: vi.fn(
+        (
+          ...args: Parameters<
+            ConversationPersistenceService['updateConversation']
+          >
+        ) => runConditionalUpdate(persistence as never, ...args),
+      ),
+    } as unknown as ConversationPersistenceService;
+    const client = {
+      sendChatCompletionRequest: vi.fn(async () => ({
+        response: sse([
+          `data: {"choices":[{"delta":{"content":"Answer for ${ownerKey}"}}]}\n\n`,
+          'data: [DONE]\n\n',
+        ]),
+      })),
+    };
+    const dial = {
+      client,
+      dialApiVersion: '2024-02-01',
+    } as unknown as DialClientService;
+    const deployments = {
+      resolveDeploymentItem: vi.fn().mockResolvedValue(null),
+      getDeploymentDetails: vi.fn().mockResolvedValue({
+        modelDetails: { features: { chatCompletion: true } },
+      }),
+    } as unknown as DeploymentsService;
+    const config = new ConfigService<EnvironmentVariables>({});
+    const streaming = new ConversationStreamingService(
+      dial,
+      new ConversationGenerationService(config),
+      persistence,
+      deployments,
+      new ResponsesAdapter(dial),
+      new ChatCompletionsAdapter(dial),
+      new GenerationApiSelector(deployments, {
+        isEnabled: vi.fn().mockResolvedValue(false),
+      } as unknown as FeatureFlagsService),
+      {} as BackgroundGenerationService,
+      config,
+    );
+    let headersSent = false;
+    const send = async (path: string, generationId: string, text: string) => {
+      const stream = streaming.streamCompletion({
+        conversationPath: path,
+        token: 'token',
+        bucket: 'a1b2c3',
+        generationId,
+        mode: CompletionMode.Append,
+        message: text,
+        model: 'gpt-4o',
+        ownerKey,
+        onReadyToStream: () => {
+          headersSent = true;
+        },
+        sub: 'sub',
+      });
+      for await (const chunk of stream) void chunk;
+    };
+    return {
+      send: (path: string, generationId: string, text: string) =>
+        send(path, generationId, text).then(
+          () => undefined,
+          (err: unknown) => err,
+        ),
+      client,
+      headersSent: () => headersSent,
+    };
+  };
+
+  const OWNER_GEN = 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb';
+  const EDITOR_GEN = 'cccccccc-cccc-4ccc-cccc-cccccccccccc';
+
+  beforeEach(() => {
+    vi.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it.each([
+    [
+      'a project conversation, owner and editor',
+      LOCATOR,
+      'c:owner',
+      'c:editor',
+    ],
+    [
+      'a personal conversation, two cookie sessions of one user',
+      TOP_LEVEL,
+      'c:session-laptop',
+      'c:session-phone',
+    ],
+  ])(
+    'lets exactly one of two senders that read the same version generate in %s',
+    async (_case, path, firstOwner, secondOwner) => {
+      const store = makeSharedStore(path);
+      const first = makeInstance(store, firstOwner);
+      const second = makeInstance(store, secondOwner);
+      let secondOutcome: Promise<unknown> | undefined;
+      let releaseSecondModel: () => void = () => undefined;
+      const secondStreaming = new Promise<void>((resolve) => {
+        vi.mocked(
+          second.client.sendChatCompletionRequest,
+        ).mockImplementationOnce(async () => {
+          resolve();
+          await new Promise<void>((release) => {
+            releaseSecondModel = release;
+          });
+          return {
+            response: sse([
+              `data: {"choices":[{"delta":{"content":"Answer for ${secondOwner}"}}]}\n\n`,
+              'data: [DONE]\n\n',
+            ]),
+          };
+        });
+      });
+      /*
+       * Both senders read the same version: the second one stores its start state and
+       * starts streaming before the first sender's start write is checked.
+       */
+      store.beforeWrite = async () => {
+        secondOutcome = second.send(path, EDITOR_GEN, 'Second question');
+        await secondStreaming;
+      };
+
+      const firstOutcome = await first.send(path, OWNER_GEN, 'First question');
+      releaseSecondModel();
+
+      expect(firstOutcome).toBeInstanceOf(ConflictException);
+      expect(await secondOutcome).toBeUndefined();
+      expect(first.headersSent()).toBe(false);
+      expect(first.client.sendChatCompletionRequest).not.toHaveBeenCalled();
+      expect(store.current.messages.map((message) => message.content)).toEqual([
+        'Second question',
+        `Answer for ${secondOwner}`,
+      ]);
+      expect(store.current.messages.at(-1)).not.toHaveProperty(
+        'foregroundGeneration',
+      );
+    },
+  );
+
+  it('refuses a sender that reads after the other start state was stored, and keeps both exchanges intact', async () => {
+    const store = makeSharedStore(LOCATOR);
+    const owner = makeInstance(store, 'c:owner');
+    const editor = makeInstance(store, 'c:editor');
+    let editorOutcome: unknown;
+    vi.mocked(owner.client.sendChatCompletionRequest).mockImplementationOnce(
+      async () => {
+        editorOutcome = await editor.send(
+          LOCATOR,
+          EDITOR_GEN,
+          'Editor question',
+        );
+        return {
+          response: sse([
+            'data: {"choices":[{"delta":{"content":"Owner answer"}}]}\n\n',
+            'data: [DONE]\n\n',
+          ]),
+        };
+      },
+    );
+
+    expect(
+      await owner.send(LOCATOR, OWNER_GEN, 'Owner question'),
+    ).toBeUndefined();
+
+    expect(editorOutcome).toBeInstanceOf(ConflictException);
+    expect(editor.client.sendChatCompletionRequest).not.toHaveBeenCalled();
+    expect(store.current.messages.map((message) => message.content)).toEqual([
+      'Owner question',
+      'Owner answer',
+    ]);
   });
 });

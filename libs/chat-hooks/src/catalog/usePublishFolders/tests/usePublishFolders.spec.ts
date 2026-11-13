@@ -62,6 +62,27 @@ describe('usePublishFolders', () => {
     });
   });
 
+  it('reports a folder being fetched by its tree key, without the API trailing slash', async () => {
+    let resolveOrg: (value: ListFilesResponseDto) => void = () => undefined;
+    listPublicFiles = vi.fn(({ path }: { path?: string }) =>
+      path === 'Org/'
+        ? new Promise<ListFilesResponseDto>((resolve) => {
+            resolveOrg = resolve;
+          })
+        : Promise.resolve(response([makeFolder('Org')])),
+    );
+    const { result } = render();
+    await waitFor(() => expect(result.current.folderItems).toHaveLength(1));
+
+    act(() => {
+      result.current.onExpandedPathsChange(new Set(['Org']));
+    });
+
+    expect(result.current.loadingPaths).toEqual(new Set(['Org']));
+    await act(async () => resolveOrg(response([])));
+    expect(result.current.loadingPaths).toEqual(new Set());
+  });
+
   it('fetches a folder the first time it is expanded and caches it after', async () => {
     const { result } = render();
     await waitFor(() => expect(result.current.folderItems).toHaveLength(1));

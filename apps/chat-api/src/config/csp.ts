@@ -12,6 +12,7 @@ interface CspOptions {
   nonce?: string;
   allowWasm?: boolean;
   allowInlineStyles?: boolean;
+  allowStyleAttributes?: boolean;
   reportOnly?: boolean;
   reportUri?: string;
 }
@@ -104,12 +105,14 @@ export const buildDownloadFrameAncestorsDirective = (
  * `/apps-editor` embedded schema iframe — and any window it opens, such as
  * an identity-provider login popup — request the Local Network Access
  * permission needed when the embedded app's or its identity provider's
- * origin resolves to a private/internal IP address.
+ * origin resolves to a private/internal IP address. Each origin is a quoted
+ * Structured Fields string, as the header grammar requires; browsers discard
+ * a bare origin as an invalid allowlist item.
  */
 export const buildPermissionsPolicyHeader = (
   allowedIframeOrigins: string[],
 ): string =>
-  `local-network-access=(self${allowedIframeOrigins.map((origin) => ` ${origin}`).join('')})`;
+  `local-network-access=(self${allowedIframeOrigins.map((origin) => ` "${origin}"`).join('')})`;
 
 /**
  * Builds the Helmet options used by `main.ts`'s security-headers middleware.
@@ -138,6 +141,7 @@ export const createHelmetOptions = (
     nonce,
     allowWasm = false,
     allowInlineStyles = false,
+    allowStyleAttributes = false,
     reportOnly = false,
     reportUri,
   }: CspOptions = {},
@@ -156,7 +160,15 @@ export const createHelmetOptions = (
         ...(allowInlineStyles ? ["'unsafe-inline'"] : []),
         ...(!allowInlineStyles && nonce ? [`'nonce-${nonce}'`] : []),
       ],
-      styleSrcAttr: [allowInlineStyles ? "'unsafe-inline'" : "'none'"],
+      /* Inline `style="..."` attributes cannot carry a nonce. Embedded editors such as
+       * Monaco (the Quick Apps JSON editor) position every line with one, so they
+       * render broken under `'none'`. `<style>` elements stay nonce-only, and the
+       * flag is opt-in (`CSP_ALLOW_STYLE_ATTRIBUTES`). */
+      styleSrcAttr: [
+        allowInlineStyles || allowStyleAttributes
+          ? "'unsafe-inline'"
+          : "'none'",
+      ],
       /* `data:` covers fonts the bundler inlines as base64 data URIs. */
       fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
       scriptSrc: [

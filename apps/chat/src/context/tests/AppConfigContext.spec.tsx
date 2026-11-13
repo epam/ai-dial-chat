@@ -1,7 +1,9 @@
 import {
+  AnnouncementSeverity as AnnouncementSeverityDto,
   CatalogCreationType,
   type ClientConfigResponseDto,
 } from '@epam/ai-dial-chat-api-client';
+import { AnnouncementSeverity } from '@epam/ai-dial-chat-hooks';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createElement, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -338,6 +340,59 @@ describe('AppConfigContext', () => {
     expect(result.current.config.announcements).toHaveLength(1);
     expect(result.current.config.announcements[0].title).toBe(
       'Upgraded to DIAL 1.43',
+    );
+  });
+
+  it('maps each announcement severity onto the lib enum and keeps the other fields', async () => {
+    const link = { label: 'Details', href: 'https://dialx.ai' };
+    mockGetClientConfig.mockResolvedValue({
+      appId: 'chat-ui',
+      features: {},
+      config: {
+        announcements: [
+          {
+            title: 'Upcoming maintenance',
+            description: 'Saturday 10:00 UTC',
+            link,
+            severity: AnnouncementSeverityDto.Warning,
+          },
+        ],
+      },
+      metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
+    } as unknown as ClientConfigResponseDto);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+
+    expect(result.current.config.announcements).toEqual([
+      {
+        title: 'Upcoming maintenance',
+        description: 'Saturday 10:00 UTC',
+        link,
+        severity: AnnouncementSeverity.Warning,
+      },
+    ]);
+  });
+
+  it('reports info for an announcement the backend sends without a severity', async () => {
+    mockGetClientConfig.mockResolvedValue({
+      appId: 'chat-ui',
+      features: {},
+      config: {
+        announcements: [{ title: 'News', description: null, link: null }],
+      },
+      metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
+    } as unknown as ClientConfigResponseDto);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+
+    expect(result.current.config.announcements[0].severity).toBe(
+      AnnouncementSeverity.Info,
     );
   });
 

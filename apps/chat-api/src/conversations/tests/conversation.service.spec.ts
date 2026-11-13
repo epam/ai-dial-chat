@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ConversationService } from '../conversation.service';
 import { CompletionMode } from '../dto/send-completion.dto';
+import type { StreamCompletionRequest } from '../streaming/stream-completion-request';
 
 /*
  * ConversationService is a pure delegation facade — its business logic now
@@ -37,6 +38,7 @@ describe('ConversationService facade', () => {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       saveClientConversation: vi.fn().mockResolvedValue('client-save'),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
       watchConversation: vi.fn().mockResolvedValue('streaming-watch'),
     };
     const conversationNamingService = {
@@ -279,39 +281,24 @@ describe('ConversationService facade', () => {
     const onReadyToStream = vi.fn();
 
     const chunks: (string | Uint8Array)[] = [];
-    for await (const chunk of service.streamCompletion(
-      'path',
-      'token',
-      'bucket',
-      'gen-id',
-      CompletionMode.Append,
-      'message',
-      undefined,
-      'model',
-      undefined,
-      'session-id',
+    const request: StreamCompletionRequest = {
+      conversationPath: 'path',
+      token: 'token',
+      bucket: 'bucket',
+      generationId: 'gen-id',
+      mode: CompletionMode.Append,
+      message: 'message',
+      model: 'model',
+      ownerKey: 'session-id',
       onReadyToStream,
-      'user-id',
-      'channel-id',
-    )) {
+      sub: 'user-id',
+      clientChannelId: 'channel-id',
+    };
+    for await (const chunk of service.streamCompletion(request)) {
       chunks.push(chunk);
     }
 
-    expect(streamingService.streamCompletion).toHaveBeenCalledWith(
-      'path',
-      'token',
-      'bucket',
-      'gen-id',
-      CompletionMode.Append,
-      'message',
-      undefined,
-      'model',
-      undefined,
-      'session-id',
-      onReadyToStream,
-      'user-id',
-      'channel-id',
-    );
+    expect(streamingService.streamCompletion).toHaveBeenCalledWith(request);
     expect(chunks).toHaveLength(1);
   });
 

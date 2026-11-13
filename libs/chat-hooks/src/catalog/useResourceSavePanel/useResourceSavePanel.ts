@@ -99,10 +99,6 @@ export interface UseResourceSavePanelResult {
   submit: () => Promise<void>;
 }
 
-/* `usePublishFolders` keys loading folders by API path (`a/b/`); the tree takes plain path keys. */
-const toFolderKeys = (apiPaths: Set<string>): Set<string> =>
-  new Set([...apiPaths].map((apiPath) => apiPath.replace(/\/$/, '')));
-
 /**
  * Owns the Save panel's flow for one resource — the Personal and
  * Organization destination tree, the version choice, the Organization
@@ -286,13 +282,6 @@ export const useResourceSavePanel = ({
   ]);
   const handleSubmit = useCallback(() => void submit(), [submit]);
 
-  const organizationLoadingPaths = useMemo(
-    () =>
-      organizationFolders
-        ? toFolderKeys(organizationFolders.loadingPaths)
-        : undefined,
-    [organizationFolders],
-  );
   const { personalRoot: personalRootLabel, organizationRoot } = labels;
   const roots = useMemo<FolderDestinationRoot[]>(() => {
     const personalRoot: FolderDestinationRoot = {
@@ -312,13 +301,12 @@ export const useResourceSavePanel = ({
         items: organizationFolders.folderItems,
         expandedPaths: organizationFolders.expandedPaths,
         onExpandedPathsChange: organizationFolders.onExpandedPathsChange,
-        loadingPaths: organizationLoadingPaths,
+        loadingPaths: organizationFolders.loadingPaths,
         hasAccessRules: true,
       },
     ];
   }, [
     organizationFolders,
-    organizationLoadingPaths,
     organizationRoot,
     personal.expandedPaths,
     personal.folderItems,

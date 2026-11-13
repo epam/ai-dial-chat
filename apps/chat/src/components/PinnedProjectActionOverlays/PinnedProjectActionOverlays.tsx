@@ -1,8 +1,11 @@
 import { memo, useCallback, useEffect, type FC } from 'react';
 import type { PinnedProjectActionOverlay } from '../../hooks/projects/usePinnedProjectsPanel';
 import { useProjectActions } from '../../hooks/projects/useProjectActions';
+import { useProjectRemoveFromList } from '../../hooks/projects/useProjectRemoveFromList';
 import { PinnedProjectActionKind } from '../../types/pinned-project-action';
 import ProjectDeleteConfirmation from '../ProjectDeleteConfirmation/ProjectDeleteConfirmation';
+import ProjectRemoveFromListConfirmation from '../ProjectRemoveFromListConfirmation/ProjectRemoveFromListConfirmation';
+import ProjectRevokeAccessConfirmation from '../ProjectRevokeAccessConfirmation/ProjectRevokeAccessConfirmation';
 import ProjectShareOverlay from '../ProjectShareOverlay/ProjectShareOverlay';
 import PublishProjectPanelContainer from '../PublishProjectPanelContainer/PublishProjectPanelContainer';
 
@@ -48,6 +51,21 @@ const PinnedProjectActionOverlays: FC<Props> = ({
       onDeleteOpenChange: handleDeleteOpenChange,
     });
 
+  const removeTarget = isOpenAction(PinnedProjectActionKind.RemoveFromMyList)
+    ? project
+    : null;
+  /* The removal ends its own action once the request settles, so the dialog closes on success and on failure. */
+  const { isRemoving, confirmRemove } = useProjectRemoveFromList(removeTarget, {
+    leaveOnRemove: removeTarget != null && removeTarget.id === routeProjectId,
+    onFailed: () => {
+      if (removeTarget != null) onProjectChanged(removeTarget.id);
+    },
+    onSettled: onClose,
+  });
+  const handleConfirmRemove = useCallback(() => {
+    void confirmRemove();
+  }, [confirmRemove]);
+
   /* A project that left the tree (unpinned or deleted elsewhere) ends its
      action, so it cannot reopen by itself if the project comes back. */
   const isActionOpen = action?.isOpen === true;
@@ -68,6 +86,13 @@ const PinnedProjectActionOverlays: FC<Props> = ({
 
   return (
     <>
+      {isOpenAction(PinnedProjectActionKind.RevokeAccess) &&
+        project.canManage && (
+          <ProjectRevokeAccessConfirmation
+            project={project}
+            onClose={onClose}
+          />
+        )}
       {isShareOpen && (
         <ProjectShareOverlay projectId={project.id} onClose={onClose} />
       )}
@@ -83,6 +108,15 @@ const PinnedProjectActionOverlays: FC<Props> = ({
             returnFocusRef={returnFocusRef}
           />
         )}
+      {removeTarget != null && (
+        <ProjectRemoveFromListConfirmation
+          isOpen
+          projectName={project.name}
+          isRemoving={isRemoving}
+          onConfirm={handleConfirmRemove}
+          onClose={onClose}
+        />
+      )}
       {deleteTarget != null && (
         <ProjectDeleteConfirmation
           isOpen={isDeleteOpen}

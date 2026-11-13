@@ -128,27 +128,33 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
 
   const isIndicator = variant === ConversationRowVariant.Indicator;
 
-  const avatar = item.leadingIcon ? (
-    <span className="flex size-6 shrink-0 items-center justify-center">
-      {item.leadingIcon}
-    </span>
-  ) : item.isIconLoading ? (
-    <Skeleton
-      variant={SkeletonVariant.Circular}
-      width={DIAL_ICON_SIZE.LG}
-      height={DIAL_ICON_SIZE.LG}
-      color={styles.skeletonColor}
-      aria-hidden
-    />
-  ) : (
-    <DeploymentIcon
-      src={item.iconUrl}
-      size={DIAL_ICON_SIZE.LG}
-      initialsName={item.iconTooltip ?? ''}
-      labels={deploymentIconLabels}
-      styles={deploymentIconStyles}
-    />
-  );
+  const renderAvatar = () => {
+    if (item.leadingIcon) {
+      return (
+        <span className="flex size-6 shrink-0 items-center justify-center">
+          {item.leadingIcon}
+        </span>
+      );
+    }
+    return item.isIconLoading ? (
+      <Skeleton
+        variant={SkeletonVariant.Circular}
+        width={DIAL_ICON_SIZE.LG}
+        height={DIAL_ICON_SIZE.LG}
+        color={styles.skeletonColor}
+        aria-hidden
+      />
+    ) : (
+      <DeploymentIcon
+        src={item.iconUrl}
+        size={DIAL_ICON_SIZE.LG}
+        initialsName={item.iconTooltip ?? ''}
+        labels={deploymentIconLabels}
+        styles={deploymentIconStyles}
+      />
+    );
+  };
+  const avatar = renderAvatar();
 
   const buttonPaddingEnd = getButtonPaddingEnd(hasActions, isMenuOpen, variant);
 
@@ -223,6 +229,7 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
       {...nestedRowProps}
       className={mergeClasses(
         'group/conversation relative',
+        styles.row,
         nestedRowProps?.className,
         isDragging && 'cursor-grabbing opacity-50',
         isDropTarget && isDropAllowed && 'rounded',

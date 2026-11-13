@@ -60,6 +60,8 @@ const MarkdownEditor = lazy(async () => {
 });
 
 const DEFAULT_OPEN_FILE_LABEL = (name: string): string => `Preview ${name}`;
+const DEFAULT_DOWNLOAD_FILE_LABEL = (name: string): string =>
+  `Download ${name}`;
 const DEFAULT_NAME_READ_ONLY_HINT =
   "The project name can't be changed after creation";
 
@@ -71,6 +73,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   contextFiles,
   onContextFilesChange,
   onContextFileClick,
+  onContextFileDownload,
   selectedContextFileId,
   allowedExtensions,
   maxFileBytes,
@@ -115,7 +118,10 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
     (isNameTouched && nameCheck != null
       ? labels.nameErrors[nameCheck]
       : undefined);
-  const isCreateDisabled = nameCheck != null || isSubmitting || isRefining;
+  /* A host name error clears when the name is edited, which a read-only name cannot be, so it must not block Create there. */
+  const hasHostNameError = !isNameReadOnly && Boolean(errors.name);
+  const isCreateDisabled =
+    nameCheck != null || hasHostNameError || isSubmitting || isRefining;
   /* A host error lives in the always-mounted alert; inline validation has its own, non-announcing element. */
   let nameErrorDescribedBy: string | undefined;
   if (errors.name) nameErrorDescribedBy = nameErrorId;
@@ -162,6 +168,8 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
     useFileDropSurface(addFiles);
 
   const openFileLabel = labels.openFileLabel ?? DEFAULT_OPEN_FILE_LABEL;
+  const downloadFileLabel =
+    labels.downloadFileLabel ?? DEFAULT_DOWNLOAD_FILE_LABEL;
 
   const handleRemoveFile = (id: string) => {
     const removed = contextFiles.find((file) => file.id === id);
@@ -406,9 +414,11 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
                           : file.id === selectedContextFileId
                       }
                       onRemove={handleRemoveFile}
+                      onDownload={onContextFileDownload}
                       labels={{
                         removeLabel: labels.removeFileLabel(file.name),
                         clickLabel: openFileLabel(file.name),
+                        downloadLabel: downloadFileLabel(file.name),
                       }}
                     />
                   </li>

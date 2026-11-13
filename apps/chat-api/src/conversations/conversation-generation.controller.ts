@@ -107,12 +107,12 @@ export class ConversationGenerationController {
   @ApiResponse({
     status: 503,
     description:
-      'The stopped state of a background generation could not be saved; the generation keeps running and Stop can be retried',
+      'The Stop could not be saved for a background generation or on a foreground generation marker; the generation keeps running and Stop can be retried',
   })
   @ApiResponse({
     status: 404,
     description:
-      'No active generation found for this principal for the given path and generationId',
+      'No active generation the caller may stop for the given path and generationId',
   })
   stopCompletion(
     @Req() req: Request,

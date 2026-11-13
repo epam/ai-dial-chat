@@ -16,6 +16,7 @@ export enum ChatI18nKeys {
   StreamError = 'chat.streamError',
   GenerationConflict = 'chat.generationConflict',
   GenerationPersistenceError = 'chat.generationPersistenceError',
+  GenerationInterrupted = 'chat.generationInterrupted',
   ConversationReloadErrorTitle = 'chat.conversationReloadErrorTitle',
   ConversationReloadError = 'chat.conversationReloadError',
   RetryConversationReload = 'chat.retryConversationReload',
@@ -467,6 +468,7 @@ export enum ProjectsI18nKeys {
   CreateContextDropOverlaySubtitle = 'projects.create.context.dropOverlaySubtitle',
   CreateContextRemove = 'projects.create.context.remove',
   CreateContextOpen = 'projects.create.context.open',
+  CreateContextDownload = 'projects.create.context.download',
   CreateStatusAdded = 'projects.create.status.added',
   CreateStatusRemoved = 'projects.create.status.removed',
   CreateStatusCreating = 'projects.create.status.creating',
@@ -544,6 +546,12 @@ export enum ProjectsI18nKeys {
   PublishEmptyFolderNameError = 'projects.publish.emptyFolderNameError',
   PublishInvalidFolderNameError = 'projects.publish.invalidFolderNameError',
   PublishDuplicateFolderNameError = 'projects.publish.duplicateFolderNameError',
+  PublishSameAsParentFolderNameError = 'projects.publish.sameAsParentFolderNameError',
+  UnpublishConfirmTitle = 'projects.unpublish.confirmTitle',
+  UnpublishConfirmMessage = 'projects.unpublish.confirmMessage',
+  UnpublishSelectFolderMessage = 'projects.unpublish.selectFolderMessage',
+  UnpublishFolderGroupAriaLabel = 'projects.unpublish.folderGroupAriaLabel',
+  UnpublishRequestingStatus = 'projects.unpublish.requestingStatus',
 }
 
 export enum ScheduledTasksI18nKeys {
@@ -935,6 +943,8 @@ export enum ConversationPanelI18nKeys {
   ChatsAndTasks = 'conversationPanel.chatsAndTasks',
   SeeAll = 'conversationPanel.seeAll',
   SeeAllProjectChats = 'conversationPanel.seeAllProjectChats',
+  ExpandProject = 'conversationPanel.expandProject',
+  CollapseProject = 'conversationPanel.collapseProject',
   SearchOpen = 'conversationPanel.search.open',
   SearchClose = 'conversationPanel.search.close',
   Empty = 'conversationPanel.empty',
@@ -1004,6 +1014,7 @@ export enum ConversationPublishI18nKeys {
   EmptyFolderNameError = 'conversationPublish.emptyFolderNameError',
   InvalidFolderNameError = 'conversationPublish.invalidFolderNameError',
   DuplicateFolderNameError = 'conversationPublish.duplicateFolderNameError',
+  SameAsParentFolderNameError = 'conversationPublish.sameAsParentFolderNameError',
 }
 
 /** Strings shared by every publish flow (conversations and catalog entities). */
@@ -1015,6 +1026,8 @@ export enum PublishI18nKeys {
   UnpublishFailedMessage = 'publish.unpublishFailedMessage',
   UnpublishNetworkErrorMessage = 'publish.unpublishNetworkErrorMessage',
   SubmitErrorCallout = 'publish.submitErrorCallout',
+  AdminApprovalTitle = 'publish.adminApprovalTitle',
+  AdminApprovalMessage = 'publish.adminApprovalMessage',
   AuthorLabel = 'publish.authorLabel',
   AuthorPlaceholder = 'publish.authorPlaceholder',
   AuthorHint = 'publish.authorHint',
@@ -1026,6 +1039,21 @@ export enum PublishI18nKeys {
   AddChildFolder = 'publish.addChildFolder',
   UpdateVersion = 'publish.updateVersion',
   PublishingInProgress = 'publish.publishingInProgress',
+  DependenciesTitle = 'publish.dependenciesTitle',
+  DependenciesDescription = 'publish.dependenciesDescription',
+  DependenciesAnnouncement = 'publish.dependenciesAnnouncement',
+  DependenciesEntityApplication = 'publish.dependenciesEntityApplication',
+  DependenciesEntityConversation = 'publish.dependenciesEntityConversation',
+  DependenciesEntityProject = 'publish.dependenciesEntityProject',
+  DependenciesEntityToolset = 'publish.dependenciesEntityToolset',
+  DependenciesEntityPrompt = 'publish.dependenciesEntityPrompt',
+  DependenciesEntitySkill = 'publish.dependenciesEntitySkill',
+  DependenciesEntityItem = 'publish.dependenciesEntityItem',
+  DependenciesTypeApplication = 'publish.dependenciesTypeApplication',
+  DependenciesTypeToolset = 'publish.dependenciesTypeToolset',
+  DependenciesTypePrompt = 'publish.dependenciesTypePrompt',
+  DependenciesTypeSkill = 'publish.dependenciesTypeSkill',
+  DependenciesTypeFile = 'publish.dependenciesTypeFile',
 }
 
 export enum PublishAccessRulesI18nKeys {
@@ -1422,6 +1450,8 @@ export enum AppsEditorI18nKeys {
   PreviewGreetingAriaLabel = 'appsEditor.previewChat.greetingAriaLabel',
   ErrorCreateFailed = 'appsEditor.error.createFailed',
   ErrorNameConflict = 'appsEditor.error.nameConflict',
+  ErrorNameConflictAgent = 'appsEditor.error.nameConflictAgent',
+  ErrorNameConflictToolset = 'appsEditor.error.nameConflictToolset',
   ErrorSaveFailed = 'appsEditor.error.saveFailed',
   ErrorSaveTimeout = 'appsEditor.error.saveTimeout',
   ErrorSettingsNotReady = 'appsEditor.error.settingsNotReady',
@@ -1568,6 +1598,7 @@ export enum ToolsI18nKeys {
   RemoveTool = 'tools.removeTool',
   StateOn = 'tools.stateOn',
   StateOff = 'tools.stateOff',
+  Summary = 'tools.summary',
 }
 
 export enum ConversationInputI18nKeys {
@@ -1730,6 +1761,8 @@ export enum EntityNotificationsI18nKeys {
   ProjectDownloaded = 'entityNotifications.project.downloaded',
   ProjectPublishRequestedTitle = 'entityNotifications.project.publishRequestedTitle',
   ProjectPublishRequested = 'entityNotifications.project.publishRequested',
+  ProjectUnpublishRequestedTitle = 'entityNotifications.project.unpublishRequestedTitle',
+  ProjectUnpublishRequested = 'entityNotifications.project.unpublishRequested',
   ConversationDeletedTitle = 'entityNotifications.conversation.deletedTitle',
   ConversationDeleted = 'entityNotifications.conversation.deleted',
   ConversationPublishRequestedTitle = 'entityNotifications.conversation.publishRequestedTitle',

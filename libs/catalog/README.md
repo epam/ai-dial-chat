@@ -1137,6 +1137,7 @@ import {
   DeploymentSize,
   DetailsConfirmationKind,
   LimitRowLayout,
+  ListViewColumnKey,
   CatalogPricingUnit,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
@@ -1173,6 +1174,11 @@ DetailsConfirmationKind.Unpublish; // 'unpublish'
  */
 CatalogPricingUnit.Token; // 'token'
 CatalogPricingUnit.Character; // 'character'
+
+// The list view's optional columns — the keys of `columnVisibility`.
+ListViewColumnKey.Folder; // 'folder'
+ListViewColumnKey.Tags; // 'tags'
+ListViewColumnKey.Favorite; // 'favorite'
 ```
 
 ### Details-panel confirmations
@@ -1290,6 +1296,40 @@ Through `Catalog`, the same two callbacks are `onUnpublish` and
   onUnpublish={handleUnpublish}
   isUnpublishVisible={(candidate) => candidate.isMyApp === true}
   detailsTexts={{ unpublishLabel: t('buttons.unpublish') }}
+/>
+```
+
+### Private dependencies in the publish panel
+
+`getPublishDependencies(item)` (on `DetailsPanel` and `Catalog`) resolves the
+resources the item refers to that are not in the public bucket, as the publish
+panel's `PublishDependency[]`. The details panel calls it each time its publish
+sub-view opens and lists the result read-only under the summary row; a rejected
+lookup shows an empty list and no error, a response that arrives after the panel
+closed or the item changed is ignored, and omitting the prop renders the panel as
+before. Its text arrives through the existing `publishLabels` (as
+`dependenciesLabels`). The optional `resolvePublishDependenciesLabels(item)`
+(on `DetailsPanel` and `Catalog`) returns dependency labels for the item being
+published, merged over `publishLabels.dependenciesLabels`, so a host can name
+the item's kind in the warning; omitting it uses `publishLabels` as is.
+Likewise `resolvePublishApprovalLabels(item)` returns the `adminApprovalTitle` and
+`adminApprovalMessage` of the publish panel's admin-approval banner for the item,
+merged over `publishLabels`. The request, its endpoint
+and its mapping to `PublishDependency` stay with the host (see
+`usePublishDependencies` and `mapResourceDependencyDto` in
+`@epam/ai-dial-chat-hooks`).
+
+```tsx
+<DetailsPanel
+  item={item}
+  isOpen
+  onClose={handleClose}
+  getPublishDependencies={async (candidate) =>
+    (await fetchPublishDependencies(candidate.id)).map(mapResourceDependencyDto)
+  }
+  publishLabels={{
+    dependenciesLabels: { title: t('catalog.publish.dependencies.title') },
+  }}
 />
 ```
 
@@ -1608,11 +1648,11 @@ for that.
 
 ### Overriding which list-view columns show per tab
 
-The list view's optional columns — `folder`, `tags`, and `favorite` — each
-have a built-in default rule (`folder` hides for `CatalogEntityType.Model`;
-`tags` and `favorite` are always shown). `columnVisibility` replaces any of
+The list view's optional columns — `ListViewColumnKey.Folder`, `Tags` and
+`Favorite` — each have a built-in default rule (`Folder` hides for
+`CatalogEntityType.Model`; `Tags` and `Favorite` are always shown). `columnVisibility` replaces any of
 these per column, given the active tab's `type`; columns left out of the map
-keep their default. `favorite`'s resolved visibility is additionally combined
+keep their default. `Favorite`'s resolved visibility is additionally combined
 (AND) with `isReadonly`.
 
 ```tsx
@@ -1622,9 +1662,9 @@ keep their default. `favorite`'s resolved visibility is additionally combined
   // The star itself is still gated per-row by isFavoriteVisible — this only
   // decides whether the list view's "Favorite" column exists at all.
   columnVisibility={{
-    favorite: (type) => type !== CatalogEntityType.Model,
+    [ListViewColumnKey.Favorite]: (type) => type !== CatalogEntityType.Model,
     // Also drop Tags for Skills — this app's skills carry no topics.
-    tags: (type) => type !== CatalogEntityType.Skill,
+    [ListViewColumnKey.Tags]: (type) => type !== CatalogEntityType.Skill,
   }}
 />
 ```

@@ -2,10 +2,15 @@ import { DeleteConfirmationDialog } from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
   ButtonVariant,
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  GhostIconButton,
   Input,
   Popup,
   PopupSize,
+  Spinner,
 } from '@epam/ai-dial-ui-kit';
+import { IconSparkles } from '@tabler/icons-react';
 import {
   type FC,
   type KeyboardEvent,
@@ -36,6 +41,7 @@ const ProjectConversationsPanelComponent: FC<
   onLoadMore,
   onOpen,
   onRename,
+  onGenerateTitle,
   onDelete,
   labels,
   listTypography,
@@ -48,6 +54,9 @@ const ProjectConversationsPanelComponent: FC<
   const [renameValue, setRenameValue] = useState('');
   const [renameError, setRenameError] = useState<string | undefined>();
   const [isRenaming, setIsRenaming] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  /* Bumped when the dialog closes or reopens, so a late answer never fills another dialog. */
+  const generationIdRef = useRef(0);
   const [deleteRow, setDeleteRow] =
     useState<ProjectConversationListItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -107,6 +116,8 @@ const ProjectConversationsPanelComponent: FC<
     (id: string) => {
       rememberTrigger();
       const item = findItem(id);
+      generationIdRef.current += 1;
+      setIsGenerating(false);
       setRenameRow(item);
       setRenameValue(item?.title ?? '');
       setRenameError(undefined);
@@ -122,6 +133,8 @@ const ProjectConversationsPanelComponent: FC<
   );
   const handleRenameClose = useCallback(() => {
     if (isRenaming) return;
+    generationIdRef.current += 1;
+    setIsGenerating(false);
     setRenameRow(null);
     restoreTriggerFocus();
   }, [isRenaming, restoreTriggerFocus]);
@@ -131,8 +144,12 @@ const ProjectConversationsPanelComponent: FC<
     restoreTriggerFocus();
   }, [isDeleting, restoreTriggerFocus]);
 
+  /* Like the regular chat rename, Save stays off until the name is actually changed. */
+  const isRenameUnchanged =
+    renameRow != null && renameValue.trim() === renameRow.title.trim();
+
   const handleRenameSave = useCallback(async () => {
-    if (!renameRow || !onRename || isRenaming) return;
+    if (!renameRow || !onRename || isRenaming || isRenameUnchanged) return;
     const newTitle = renameValue.trim();
     if (!newTitle) {
       setRenameError(labels.renameEmptyError);
@@ -150,12 +167,31 @@ const ProjectConversationsPanelComponent: FC<
     }
   }, [
     isRenaming,
+    isRenameUnchanged,
     labels.renameEmptyError,
     onRename,
     renameRow,
     renameValue,
     restoreTriggerFocus,
   ]);
+  const handleGenerateTitle = useCallback(async () => {
+    if (!renameRow || !onGenerateTitle || isGenerating) return;
+    const generationId = ++generationIdRef.current;
+    setIsGenerating(true);
+    setRenameError(undefined);
+    try {
+      const generated = await onGenerateTitle(renameRow.id);
+      if (generationId !== generationIdRef.current) return;
+      setRenameValue(generated);
+    } catch {
+      if (generationId !== generationIdRef.current) return;
+      setRenameError(
+        labels.renameWithAiError ?? 'Could not generate a name. Try again.',
+      );
+    } finally {
+      if (generationId === generationIdRef.current) setIsGenerating(false);
+    }
+  }, [isGenerating, labels.renameWithAiError, onGenerateTitle, renameRow]);
   const handleRenameKeyDown = useCallback(
     (event: KeyboardEvent<HTMLInputElement>) => {
       if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
@@ -192,7 +228,7 @@ const ProjectConversationsPanelComponent: FC<
       {
         label: labels.renameSaveLabel,
         variant: ButtonVariant.Primary,
-        disabled: isRenaming,
+        disabled: isRenaming || isRenameUnchanged || renameValue.trim() === '',
         onClick: () => {
           void handleRenameSave();
         },
@@ -201,7 +237,9 @@ const ProjectConversationsPanelComponent: FC<
     [
       handleRenameClose,
       handleRenameSave,
+      isRenameUnchanged,
       isRenaming,
+      renameValue,
       labels.renameCancelLabel,
       labels.renameSaveLabel,
     ],
@@ -237,19 +275,47 @@ const ProjectConversationsPanelComponent: FC<
           mainButtons={renameButtons}
           onClose={handleRenameClose}
         >
-          <div className="px-6 py-4">
-            <Input
-              id={renameInputId}
-              value={renameValue}
-              labelProps={{ label: labels.renameInputLabel }}
-              error={renameError}
-              disabled={isRenaming}
-              onKeyDown={handleRenameKeyDown}
-              onChange={(value) => {
-                setRenameValue(value ?? '');
-                setRenameError(undefined);
-              }}
-            />
+          <div className="flex items-end gap-2 px-6 py-4">
+            <div className="min-w-0 flex-1">
+              <Input
+                id={renameInputId}
+                value={renameValue}
+                labelProps={{ label: labels.renameInputLabel }}
+                error={renameError}
+                disabled={isRenaming}
+                onKeyDown={handleRenameKeyDown}
+                onChange={(value) => {
+                  setRenameValue(value ?? '');
+                  setRenameError(undefined);
+                }}
+              />
+            </div>
+            {onGenerateTitle && (
+              <GhostIconButton
+                aria-label={labels.renameWithAiLabel ?? 'Rename with AI'}
+                tooltipProps={{
+                  tooltip: labels.renameWithAiLabel ?? 'Rename with AI',
+                }}
+                disabled={isGenerating || isRenaming}
+                aria-busy={isGenerating}
+                onClick={() => {
+                  void handleGenerateTitle();
+                }}
+                icon={
+                  isGenerating ? (
+                    <span className="flex" aria-hidden>
+                      <Spinner size={DIAL_ICON_SIZE.MD} />
+                    </span>
+                  ) : (
+                    <IconSparkles
+                      size={DIAL_ICON_SIZE.MD}
+                      stroke={DIAL_KIT_ICON_STROKE}
+                      aria-hidden
+                    />
+                  )
+                }
+              />
+            )}
           </div>
         </Popup>
       )}

@@ -112,7 +112,7 @@ When `item.iconTooltip` is provided and `item.isIconLoading` is `false` or `unde
 - **WHEN** the user middle-clicks (scroll wheel click) a conversation row
 - **THEN** the browser opens the conversation URL (`item.href`) in a new tab through the row's native `<a>` link
 
-`ConversationItem` SHALL include an optional `href?: string` field — a browser-navigable URL for the conversation. When `href` is set, `ConversationRow` wraps the row `Button` in a native `<a href={item.href} className="contents">`: a plain click is `preventDefault`-ed and calls `onSelectConversation(id)`, and a middle-click uses the browser's native link behaviour to open the URL in a new tab (there are no `mousedown`/`auxclick` handlers and no `window.open` call). The inner `Button` gets `tabIndex={-1}` so the link is the single focus stop. `ConversationPanelView` in `apps/chat` SHALL populate `href` using `getConversationRoute(id)` for each item.
+`ConversationItem` SHALL include an optional `href?: string` field — a browser-navigable URL for the conversation. When `href` is set, `ConversationRow` renders the row as one kit `Button` with `href={item.href}`, which the kit draws as a native `<a>` (no wrapper element, no nested button, no `display: contents`, so the link is focusable and the single focus stop): a plain click is `preventDefault`-ed and calls `onSelectConversation(id)`, while a middle-click or a click with Ctrl, Meta, Shift or Alt uses the browser's native link behaviour to open the URL in a new tab or window (there are no `mousedown`/`auxclick` handlers and no `window.open` call). `ConversationPanelView` in `apps/chat` SHALL populate `href` using `getConversationRoute(id)` for each item.
 
 #### Scenario: Empty state is shown when no conversations
 
@@ -962,6 +962,18 @@ While titles are pending, the panel SHALL distinguish a provisional empty search
 - **WHEN** the user changes the search query
 - **THEN** filtering is recalculated against current titles without retaining a match from the old query
 
+### Requirement: Hovering a row's actions trigger keeps the row highlight
+
+The ⋮ trigger of a conversation, project or See all row is a sibling of the row's button, so the highlight SHALL follow the row (`li`), not the button. While the pointer is over the trigger:
+
+- the row keeps the hover highlight (`--cp-item-hover`), except an active row or a row whose menu is open, which keep their active highlight (`--cp-item-active`);
+- the trigger itself gets a round background (`--cp-trigger-bg`) and the accent icon color (`--cp-trigger-icon`), the same look it has while its menu is open.
+
+#### Scenario: Hover the trigger
+
+- **WHEN** the pointer moves from a row onto its ⋮ trigger
+- **THEN** the row stays highlighted and the trigger shows its round background
+
 ### Requirement: Visible conversation IDs guide initial enrichment priority
 
 `ConversationList` in `libs/conversation-panel/src/components/ConversationList/ConversationList.tsx` and its public `ConversationListSection`/`ConversationPanel` containers SHALL support optional `onVisibleConversationIdsChange(ids: string[]): void`. It SHALL report distinct conversation IDs in actual visible virtual-row order, excluding group headers and overscan-only rows, and report an empty set when no rows are visible. Stable callbacks and memoized ID sequences SHALL prevent notifications when the sequence is unchanged.
@@ -1021,9 +1033,9 @@ interface PinnedProjects {
   onSelectConversation: (conversationId: string, projectId: string) => void;
   /** Called when a See all row is activated. */
   onSeeAll: (projectId: string) => void;
-  /** Builds the ⋮ actions of a project row; no trigger renders when absent or empty. */
+  /** Builds the ⋮ actions of a project row and of its See all row; no trigger renders when absent or empty. */
   getActions?: (project: PinnedProjectGroup) => DropdownItem[];
-  /** Called when the ⋮ menu of a project row opens; receives the trigger button. */
+  /** Called when the ⋮ menu of a project row or of its See all row opens; receives the trigger button. */
   onActionMenuOpen?: (
     project: PinnedProjectGroup,
     trigger: HTMLButtonElement,
@@ -1039,7 +1051,7 @@ interface PinnedProjects {
 
 1. **Project row.** It has the project icon (default Tabler `IconBriefcase`, 16px glyph in the 24px slot, `aria-hidden`, `DIAL_KIT_ICON_STROKE`, in the `textSecondary` color), the name truncated through `Highlight`, and the ⋮ trigger when `getActions` returns items.
 2. **One nested row per conversation.** By default it is an `Indicator` row (status point, title, `aria-current` when it matches `activeConversationId`) without a ⋮ trigger. With `conversationRowVariant: ConversationRowVariant.Avatar` it is the panel's own `Avatar` row instead — the deployment avatar or `leadingIcon`, the title, and the trailing unread dot — still without a ⋮ trigger or drag, and with the same indent and guide line.
-3. **A See all row, when `hasMore` is set.** Its visible text is `labels.seeAllLabel` (default `'See all'`) in the `textSecondary` color, and its accessible name is `labels.seeAllAriaLabel(name)` (default `` `See all chats in ${name}` ``). It is only a link to the project: it has no ⋮ trigger, whatever `getActions` returns.
+3. **A See all row, when `hasMore` is set.** Its visible text is `labels.seeAllLabel` (default `'See all'`) in the `textSecondary` color, and its accessible name is `labels.seeAllAriaLabel(name)` (default `` `See all chats in ${name}` ``). It shows the project's ⋮ trigger when `getActions` returns items: the same items and the same `onActionMenuOpen` as the project row, per the Figma frame "Chat - Project - See all" (node `17:14375`).
 
 The Pinned header SHALL render when the section has at least one visible project or pinned conversation. Collapsing it hides the project rows too.
 
@@ -1066,6 +1078,7 @@ The Pinned header SHALL render when the section has at least one visible project
 **Accessibility**
 
 - The list keeps `role="list"`. Every row stays a `listitem` and a single tab stop: its link, followed by its ⋮ trigger when shown.
+- A project row, a nested row and a See all row SHALL each be reachable with Tab through their own `<a>`: the link SHALL NOT be rendered with `display: contents`, which a browser skips when moving focus.
 - Project rows SHALL carry `aria-level="1"`.
 - Nested and See all rows SHALL carry `aria-level="2"`, `aria-setsize` (conversations plus See all) and `aria-posinset`, so assistive technology hears the nesting and position without a roving-focus tree widget.
 - A project row matching `activeProjectId`, and a nested row matching `activeConversationId`, get `aria-current="page"`.
@@ -1187,3 +1200,90 @@ The change adds no user-visible strings (the See all text is host-translated thr
 
 - **WHEN** the panel re-renders with new `conversations` and the same `labels` field values
 - **THEN** the labels object handed to the list is the same reference, including the See all fields
+
+### Requirement: A pinned project's row collapses and expands its chats
+
+`PinnedProjectGroup` (`libs/conversation-panel/src/models/pinned-projects.ts`) SHALL gain `isExpanded?: boolean` — an absent value means expanded — and `PinnedProjects` SHALL gain `onToggleProject?: (projectId: string, isExpanded: boolean) => void`. `ConversationListLabels` (`libs/conversation-panel/src/models/conversation-list.ts`) SHALL gain `expandProjectLabel?: string` (default `'Expand project'`) and `collapseProjectLabel?: string` (default `'Collapse project'`), and `ConversationPanelLabels` carries them through. The lib stores no collapse state: the host owns it, and the lib SHALL NOT read storage, the route, the language or feature keys for it.
+
+**Toggle.** When `onToggleProject` is set, a project row SHALL render a chevron toggle in front of the project name, as a separate `<button type="button">` outside the row's link, so a click or Enter/Space on it only calls `onToggleProject(project.id, isExpanded)`, where `isExpanded` is the state it asks for (`true` when the project shows collapsed, `false` when it shows expanded, including a project the search override shows expanded): it does not call `onSelectProject`, does not navigate, and does not change the active chat.
+
+- The button has `aria-expanded` (`true` while the project's chats are shown), `aria-controls` set to the `id` of the list container, as the group header toggles do, and an accessible name from `collapseProjectLabel` while expanded and `expandProjectLabel` while collapsed.
+- The icon is `aria-hidden` and drawn with `DIAL_KIT_ICON_STROKE`. It points down while expanded and inline-end while collapsed; the inline-end chevron carries `rtl:scale-x-[-1]`.
+- The button is a 24px target with a round hover background, a separate hit target from the row, whose own hover highlights the whole row and shows the ⋮ trigger.
+- The chevron shares the row's 24px leading slot with the project icon. At rest, expanded or collapsed, the slot shows the project icon. While the row is hovered, has focus within, or its menu is open, the slot shows the chevron instead, and it stays reachable by keyboard while hidden. On `mobile` (below 1280px, where there is no hover) the slot always shows the chevron instead of the project icon, so the state stays readable; the ⋮ trigger and the unread dot behave as on the panel's other rows. Hovering the chevron adds its round background without removing the row's own hover highlight, and a pointer press on it does not leave it focused, so it hides again once the pointer leaves.
+- With `onToggleProject` absent the row renders as before: no chevron, and every project shows its chats.
+
+**Collapsed.** A project is collapsed when `isExpanded` is `false` and no search override applies. A collapsed project renders only its row: its nested chat rows, guide line and See all row are not rendered, and the rows of every later section move up. Its ⋮ trigger works as in the expanded state. The Pinned header, the project order and the other filters are unchanged.
+
+**Search override.** While `searchQuery` is non-empty and at least one chat of the project matches it, the project SHALL render expanded whatever `isExpanded` says, with the matching chats as the existing search rule defines. A project that matches only by name keeps the state the host gave it. The override is derived, is never reported through `onToggleProject` and ends with the query. A press on the chevron of a project the override shows expanded asks to collapse it (`isExpanded: false`).
+
+**Unread.** A collapsed project with at least one chat whose `isUnread` is `true` SHALL show the unread dot in the row's trailing slot, rendered through the row link's `iconAfter` as on a conversation row, so the slot is reserved and a long name truncates before it and the visually hidden `labels.unreadIndicatorLabel` is part of the link's accessible name. The dot is hidden while the ⋮ trigger is shown (hover, focus within, open menu), as on a conversation row. An expanded project shows no such dot, since its chats are visible. The dot reflects the chats the host passed in `conversations`.
+
+**Scroll.** Because a collapsed project removes its rows, the list SHALL scroll to the active conversation once it is shown again, through the existing scroll-to-active behaviour.
+
+The change adds no feature gate, no telemetry and no cache. Memoisation: a host passes a referentially stable `pinnedProjects` and rebuilds a group only when its rows or its `isExpanded` change; the project row stays memoised. RTL: the chevron is the only directional icon and is mirrored as above; layout uses logical properties. Strings reach the lib only through the two labels above.
+
+`libs/conversation-panel/README.md` SHALL document `isExpanded`, `onToggleProject` and the two labels.
+
+#### Scenario: Collapsing a project
+
+- **GIVEN** a project P with chats C1 and C2 and `hasMore: true`, expanded
+- **WHEN** the user activates P's chevron
+- **THEN** `onToggleProject(P, false)` is called once, `onSelectProject` is not, and the host's next render with `isExpanded: false` shows only P's row, with the sections below it moved up
+
+#### Scenario: The leading slot at rest and on hover
+
+- **GIVEN** P is collapsed, and then expanded
+- **WHEN** the pointer is away from P's row
+- **THEN** the leading slot shows the project icon in both states
+- **WHEN** the pointer enters the row
+- **THEN** the slot shows the chevron in P's current state, the ⋮ trigger shows, and hovering the chevron adds its round background
+
+#### Scenario: The chevron reports its state
+
+- **WHEN** P is expanded, and then collapsed
+- **THEN** the chevron has `aria-expanded="true"` and the name "Collapse project", then `aria-expanded="false"` and the name "Expand project", and its `aria-controls` is the list's `id` in both
+
+#### Scenario: Keyboard
+
+- **WHEN** the chevron has focus and the user presses Enter or Space
+- **THEN** `onToggleProject(P, false)` is called and no navigation happens
+
+#### Scenario: The menu works while collapsed
+
+- **GIVEN** P is collapsed and `getActions` returns items
+- **WHEN** the user opens P's ⋮ menu
+- **THEN** the menu opens with the same items as when expanded
+
+#### Scenario: RTL
+
+- **GIVEN** the document direction is `rtl` and P is collapsed
+- **THEN** the chevron is mirrored with `rtl:scale-x-[-1]`
+
+#### Scenario: Collapse a project the search shows open
+
+- **GIVEN** P is collapsed and the search shows it expanded because a chat matches
+- **WHEN** the user activates P's chevron
+- **THEN** `onToggleProject(P, false)` is called, so the host keeps P collapsed once the query ends
+
+#### Scenario: Search shows a chat of a collapsed project
+
+- **GIVEN** P is collapsed with a chat titled "Billing reply"
+- **WHEN** the user types "billing"
+- **THEN** P renders expanded with "Billing reply", `onToggleProject` is not called, and clearing the query collapses P again
+
+#### Scenario: Search matching only the project name
+
+- **GIVEN** P is collapsed and named "Support", and none of its chats matches "support"
+- **WHEN** the user types "support"
+- **THEN** P's row renders and its chats do not
+
+#### Scenario: Unread chats in a collapsed project
+
+- **GIVEN** P is collapsed and one of its chats has `isUnread: true`
+- **THEN** P's row shows the unread dot with the label "Unread", and an expanded P shows none
+
+#### Scenario: Without a toggle callback
+
+- **WHEN** `pinnedProjects.onToggleProject` is omitted
+- **THEN** no chevron renders and every project shows its chats

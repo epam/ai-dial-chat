@@ -26,6 +26,15 @@
 }
 
 /*
+ * The ⋮ trigger is a sibling of the row button, not a child, so hovering it
+ * takes `:hover` off the button. The row highlight follows the row (`li`)
+ * instead and stays while the trigger is hovered.
+ */
+.row:hover .item:not(.itemActive) {
+  background: var(--cp-item-hover, var(--bg-control-accent-alpha, #2764d90f));
+}
+
+/*
  * `Indicator` rows are pills. `--cp-row-radius` still wins, so a host that
  * sets it keeps its own radius under either variant.
  */
@@ -51,11 +60,14 @@
     var(--cp-drop-zone-ring, var(--stroke-accent, #1d4ed8));
 }
 
+/* The trigger's own round background, while hovered and while its menu is open. */
+.trigger.trigger:hover,
 .triggerActive {
   background: var(
     --cp-trigger-bg,
     var(--bg-control-accent-alpha-active, #2764d933)
   );
+
   .triggerIcon {
     color: var(--cp-trigger-icon, var(--text-accent, #1d4ed8));
   }

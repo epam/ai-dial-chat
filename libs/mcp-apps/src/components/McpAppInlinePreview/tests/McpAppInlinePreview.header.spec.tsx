@@ -7,6 +7,10 @@ import type {
   McpAppResponseCache,
   McpAppToolRef,
 } from '../../../models/mcp-apps';
+import {
+  McpAppToolDiscovery,
+  McpDeploymentKind,
+} from '../../../types/mcp-apps';
 import { McpAppInlinePreview } from '../McpAppInlinePreview';
 
 vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
@@ -32,8 +36,8 @@ const match: McpAppToolRef = {
   resourceUri: 'ui://weather',
   toolName: 'weather',
   mcpToolName: 'weather',
-  kind: 'toolset',
-  discovery: 'direct',
+  kind: McpDeploymentKind.Toolset,
+  discovery: McpAppToolDiscovery.Direct,
 };
 
 const response: CachedMcpAppResponse = { html: '<p>app</p>' };

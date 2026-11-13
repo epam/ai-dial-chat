@@ -29,6 +29,7 @@ import type { SessionUser } from '../../auth/session/session.types';
 import { ApiDialCoreErrors } from '../../common/dial/api-dial-core-errors.decorator';
 import { AttachGenerationDto } from '../../conversations/dto/attach-generation.dto';
 import { CreateConversationDto } from '../../conversations/dto/create-conversation.dto';
+import { GenerateTitleResponseDto } from '../../conversations/dto/generate-title.dto';
 import {
   RenameConversationBodyDto,
   RenameConversationResponseDto,
@@ -96,7 +97,7 @@ export class ProjectConversationsController {
     operationId: 'listProjectConversations',
     summary: "List a project's conversations",
     description:
-      "Lists every conversation stored in the project's `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.",
+      "Lists every conversation stored in the project's `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves. A published project is the exception: its files all carry the time of the copy, so every body is read, no item is pending, and the conversations are ordered by their last message.",
   })
   @ApiParam(PROJECT_ID_PARAM)
   @ApiDialCoreErrors()
@@ -255,12 +256,12 @@ export class ProjectConversationsController {
   @ApiResponse({
     status: 404,
     description:
-      'No active generation found for this principal for the given path and generationId',
+      'No active generation the caller may stop for the given path and generationId',
   })
   @ApiResponse({
     status: 503,
     description:
-      'The stopped state of a background generation could not be saved; Stop can be retried',
+      'The Stop could not be saved for a background generation or on a foreground generation marker; the generation keeps running and Stop can be retried',
   })
   async stopProjectCompletion(
     @Param() { id }: ProjectIdParamDto,
@@ -431,6 +432,52 @@ export class ProjectConversationsController {
       at,
       bucket,
     );
+  }
+
+  @Post(':id/conversations/:conversationName/generate-title')
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'generateProjectConversationTitle',
+    summary:
+      'Generate an LLM-based title suggestion for a project conversation',
+    description:
+      'Generates a title with the operator-configured utility model from the most recent messages. The suggestion is returned but NOT persisted; the caller confirms the rename separately.',
+  })
+  @ApiParam(PROJECT_ID_PARAM)
+  @ApiParam(CONVERSATION_NAME_PARAM)
+  @ApiDialCoreErrors()
+  @ApiResponse({
+    status: 200,
+    description: 'Generated title suggestion',
+    type: GenerateTitleResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid id or conversation name, or no content to title',
+  })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 403, description: WRITE_FORBIDDEN })
+  @ApiResponse({
+    status: 404,
+    description: 'The project or the conversation does not exist',
+  })
+  @ApiResponse({ status: 502, description: 'LLM title generation failed' })
+  @ApiResponse({
+    status: 503,
+    description: 'LLM title generation unavailable or timed out',
+  })
+  async generateProjectConversationTitle(
+    @Param() { id, conversationName }: ProjectConversationParamDto,
+    @Req() req: Request,
+  ): Promise<GenerateTitleResponseDto> {
+    const { at, bucket } = req.user as SessionUser;
+    const name = await this.conversationsService.generateTitle(
+      requireProjectId(id),
+      conversationName,
+      at,
+      bucket,
+    );
+    return { name };
   }
 
   @Delete(':id/conversations/:conversationName')

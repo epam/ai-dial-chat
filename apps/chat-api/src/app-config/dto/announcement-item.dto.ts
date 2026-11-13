@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { AnnouncementSeverity } from './announcement-severity.enum';
 
 export class AnnouncementLinkDto {
   @ApiProperty({
@@ -40,4 +41,13 @@ export class AnnouncementItemDto {
     type: AnnouncementLinkDto,
   })
   link!: AnnouncementLinkDto | null;
+
+  @ApiProperty({
+    description:
+      'How urgent the announcement is, for clients that mark maintenance or outage notices. Always present: an entry configured without one, or with an unrecognized value, is returned as `info`. Clients should treat a value they do not recognize as `info`, since more levels may be added.',
+    enum: AnnouncementSeverity,
+    enumName: 'AnnouncementSeverity',
+    example: AnnouncementSeverity.Warning,
+  })
+  severity!: AnnouncementSeverity;
 }

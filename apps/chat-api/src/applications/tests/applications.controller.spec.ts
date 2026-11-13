@@ -11,6 +11,11 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  ResourceIdentityKind,
+  ResourceIdentityTab,
+  buildResourceNameConflict,
+} from '../../common/utils/resource-identity';
 import { ApplicationsController } from '../applications.controller';
 import { ApplicationsService } from '../applications.service';
 import type { ApplicationsResponseDto } from '../dto/application.dto';
@@ -232,6 +237,26 @@ describe('ApplicationsController (integration)', () => {
         .expect(409);
     });
 
+    it('returns 409 with the name-taken code when the service rejects a duplicate identity', async () => {
+      service.createApplication.mockRejectedValue(
+        buildResourceNameConflict(
+          {
+            id: 'applications/b/my__1.0.0',
+            kind: ResourceIdentityKind.Application,
+          },
+          [ResourceIdentityTab.Agents],
+        ),
+      );
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/applications')
+        .send({ ...validBody, createOnly: true })
+        .expect(409);
+      expect(response.body).toMatchObject({
+        statusCode: 409,
+        code: 'name-taken-agent',
+      });
+    });
+
     it('returns 503 when service throws ServiceUnavailableException', async () => {
       service.createApplication.mockRejectedValue(
         new ServiceUnavailableException(),
@@ -259,6 +284,23 @@ describe('ApplicationsController (integration)', () => {
         'my-app',
         validBody,
       );
+    });
+
+    it('returns 409 with the name-taken code when a rename takes another identity', async () => {
+      service.updateApplication.mockRejectedValue(
+        buildResourceNameConflict(
+          {
+            id: 'applications/b/my__1.0.0',
+            kind: ResourceIdentityKind.Application,
+          },
+          [ResourceIdentityTab.Agents],
+        ),
+      );
+      const res = await request(app.getHttpServer())
+        .patch('/api/v1/applications/my-app')
+        .send(validBody)
+        .expect(409);
+      expect(res.body).toMatchObject({ code: 'name-taken-agent' });
     });
 
     it('forwards an empty iconUrl to the service as an explicit clear', async () => {
@@ -475,6 +517,23 @@ describe('ApplicationsController (integration)', () => {
         .expect(409);
     });
 
+    it('returns 409 with the name-taken code when the folder holds the same identity', async () => {
+      service.moveApplication.mockRejectedValue(
+        buildResourceNameConflict(
+          {
+            id: 'applications/b/my__1.0.0',
+            kind: ResourceIdentityKind.Application,
+          },
+          [ResourceIdentityTab.Agents],
+        ),
+      );
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/applications/my-app/move')
+        .send({ folderPath: 'Design' })
+        .expect(409);
+      expect(res.body).toMatchObject({ code: 'name-taken-agent' });
+    });
+
     it('returns 403 when the application belongs to another user', async () => {
       service.moveApplication.mockRejectedValue(new ForbiddenException());
       await request(app.getHttpServer())
@@ -513,6 +572,23 @@ describe('ApplicationsController (integration)', () => {
         .post('/api/v1/applications/my-app/versions')
         .send({ version: '1.1.0', folderPath: '' })
         .expect(409);
+    });
+
+    it('returns 409 with the name-taken code when the version is taken by another entity', async () => {
+      service.forkApplicationVersion.mockRejectedValue(
+        buildResourceNameConflict(
+          {
+            id: 'applications/b/my__1.0.0',
+            kind: ResourceIdentityKind.Application,
+          },
+          [ResourceIdentityTab.Agents],
+        ),
+      );
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/applications/my-app/versions')
+        .send({ version: '1.1.0', folderPath: '' })
+        .expect(409);
+      expect(res.body).toMatchObject({ code: 'name-taken-agent' });
     });
   });
 

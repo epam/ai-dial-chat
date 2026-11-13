@@ -1,6 +1,8 @@
 import {
   mapPublishHistoryEntryDto,
+  mapResourceDependencyDto,
   toPublishRuleDto,
+  usePublishDependencies,
   usePublishHistory,
 } from '@epam/ai-dial-chat-hooks';
 import {
@@ -24,6 +26,7 @@ import {
   ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
+import { usePublishDependencyIconResolver } from '../../hooks/publish/usePublishDependencyIconResolver';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
@@ -31,6 +34,7 @@ import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { getPublishRules } from '../../server-api/publish-rules.api';
 import {
   CatalogPublishEntityType,
+  getCatalogPublishDependencies,
   getCatalogPublishHistory,
   publishCatalogEntity,
 } from '../../server-api/publish.api';
@@ -41,6 +45,8 @@ import {
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
+  getPublishApprovalLabels,
+  getPublishDependenciesLabels,
   getPublishFooterProgressLabels,
   getPublishPanelCommonLabels,
   getPublishFolderLabel,
@@ -58,6 +64,8 @@ interface Props {
   conversationCount?: number;
   /** Called when the panel should be dismissed. */
   onClose: () => void;
+  /** Called after a publish request succeeds, so the host can re-read the project's publish state. */
+  onPublished?: () => void;
   /** Publish trigger that receives focus after dismissal. */
   returnFocusRef?: RefObject<HTMLElement | null>;
 }
@@ -75,6 +83,7 @@ const PublishProjectPanelContainer: FC<Props> = ({
   projectName,
   conversationCount = 0,
   onClose,
+  onPublished,
   returnFocusRef,
 }) => {
   const { t } = useTranslation();
@@ -135,6 +144,25 @@ const PublishProjectPanelContainer: FC<Props> = ({
     loadHistory,
   });
 
+  const resolveDependencyIcon = usePublishDependencyIconResolver();
+  const loadDependencies = useCallback(
+    async (id: string) =>
+      (
+        await getCatalogPublishDependencies(
+          CatalogPublishEntityType.Project,
+          id,
+        )
+      ).dependencies.map((dependency) =>
+        mapResourceDependencyDto(dependency, resolveDependencyIcon),
+      ),
+    [resolveDependencyIcon],
+  );
+  const dependencies = usePublishDependencies({
+    isOpen,
+    entityId: projectId,
+    loadDependencies,
+  });
+
   const publishFlow = usePublishFlow<PublishResourceSummary>({
     item: resource,
     history,
@@ -157,6 +185,7 @@ const PublishProjectPanelContainer: FC<Props> = ({
         EntityOperation.PublishRequested,
         { name: projectName, folder: getPublishFolderLabel(folderPath, t) },
       );
+      onPublished?.();
     },
     onPublishError: (_item, _folderPath, error) => showPublishError(error),
     onFetchExistingRules: (folderPath) => getPublishRules(folderPath.join('/')),
@@ -182,6 +211,7 @@ const PublishProjectPanelContainer: FC<Props> = ({
       isOpen={isOpen}
       resource={resource}
       renderSummary={renderSummary}
+      dependencies={dependencies}
       folderItems={publishFlow.folderItems}
       selectedFolderPath={publishFlow.selectedFolderPath}
       onSelectedFolderPathChange={publishFlow.setSelectedFolderPath}
@@ -223,9 +253,20 @@ const PublishProjectPanelContainer: FC<Props> = ({
         createFolderDuplicateNameError: t(
           ProjectsI18nKeys.PublishDuplicateFolderNameError,
         ),
+        createFolderSameAsParentNameError: t(
+          ProjectsI18nKeys.PublishSameAsParentFolderNameError,
+        ),
         submitError: t(PublishI18nKeys.SubmitErrorCallout),
         rootFolderLabel: t(BasicI18nKeys.Organization),
         accessRulesLabels: getAccessRulesLabels(t),
+        dependenciesLabels: getPublishDependenciesLabels(
+          t,
+          PublishI18nKeys.DependenciesEntityProject,
+        ),
+        ...getPublishApprovalLabels(
+          t,
+          PublishI18nKeys.DependenciesEntityProject,
+        ),
         ...getPublishAuthorLabels(t),
         ...getPublishPanelCommonLabels(t),
       }}

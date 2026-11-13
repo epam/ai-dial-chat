@@ -99,6 +99,7 @@ export const useProjectConversations = (
     | 'listProjectConversations'
     | 'getProjectConversationTitles'
     | 'renameProjectConversation'
+    | 'generateProjectConversationTitle'
     | 'deleteProjectConversation'
     | 'markProjectConversationViewed'
   >,
@@ -291,6 +292,21 @@ export const useProjectConversations = (
           row.id === id ? { ...row, title: name, isTitlePending: false } : row,
         ),
       }));
+      /*
+       * The rename rewrites the body, and the live update it fires can read the
+       * list before the server has carried the viewer's read state to the new
+       * version, reporting a read chat as unread. Re-reading once the rename
+       * has answered reports the settled state.
+       */
+      void refresh();
+    },
+    [client, refresh],
+  );
+
+  const generateTitle = useCallback(
+    async (id: string) => {
+      const { name } = await client.generateProjectConversationTitle(id);
+      return name;
     },
     [client],
   );
@@ -330,6 +346,7 @@ export const useProjectConversations = (
     retry,
     loadMore,
     rename,
+    generateTitle,
     remove,
     refresh,
     markViewed,

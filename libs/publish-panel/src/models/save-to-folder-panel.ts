@@ -50,6 +50,8 @@ export interface SaveToFolderPanelLabels {
   createFolderInvalidNameError?: string;
   /** Inline error for a new folder name that duplicates a sibling. */
   createFolderDuplicateNameError?: string;
+  /** Inline error for a new folder named like its parent folder. */
+  createFolderSameAsParentNameError?: string;
   /** Label of the action that retries a failed folder listing. Defaults to `'Retry'`. */
   retryLabel?: string;
 }

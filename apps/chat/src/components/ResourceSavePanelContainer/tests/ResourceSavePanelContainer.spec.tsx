@@ -1,4 +1,6 @@
+import { ResourceNameConflictCode } from '@epam/ai-dial-chat-api-client';
 import {
+  ResourceSaveError,
   ResourceSaveOutcome,
   ResourceSaveVersionError,
   SaveDestinationRoot,
@@ -12,6 +14,7 @@ import { SaveVersionMode } from '@epam/ai-dial-publish-panel';
 import { render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  AppsEditorI18nKeys,
   CatalogI18nKeys,
   ResourceSavePanelI18nKeys,
 } from '../../../constants/translation-keys';
@@ -179,6 +182,101 @@ describe('ResourceSavePanelContainer', () => {
     expect(notifySaved).toHaveBeenCalledWith(result, choice);
     expect(onSaved).toHaveBeenCalledWith(result);
     expect(calls).toEqual(['onSaved', 'notify']);
+  });
+
+  describe('duplicate name and version', () => {
+    const conflictError = (code?: string) =>
+      Object.assign(new Error('Conflict'), {
+        response: new Response(JSON.stringify({ statusCode: 409, code }), {
+          status: 409,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      });
+    const flowAdapter = () => lastFlowParams().adapter;
+
+    it('turns an agent duplicate on a new version into an inline panel message', async () => {
+      const saveAsNewVersion = vi
+        .fn()
+        .mockRejectedValue(
+          conflictError(ResourceNameConflictCode.NameTakenAgent),
+        );
+      renderContainer({
+        adapter: { ...adapter, saveAsNewVersion } as ResourceSaveAdapter,
+      });
+
+      const error = await (
+        flowAdapter() as {
+          saveAsNewVersion: (v: string, f: string[]) => Promise<unknown>;
+        }
+      )
+        .saveAsNewVersion('1.1.0', [])
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ResourceSaveError);
+      expect((error as Error).message).toBe(
+        AppsEditorI18nKeys.ErrorNameConflictAgent,
+      );
+    });
+
+    it('names a toolset when the toolset holds the identity', async () => {
+      const saveInPlace = vi
+        .fn()
+        .mockRejectedValue(
+          conflictError(ResourceNameConflictCode.NameTakenToolset),
+        );
+      renderContainer({
+        adapter: { ...adapter, saveInPlace } as ResourceSaveAdapter,
+      });
+
+      const error = await (
+        flowAdapter() as { saveInPlace: () => Promise<unknown> }
+      )
+        .saveInPlace()
+        .catch((e: unknown) => e);
+
+      expect((error as Error).message).toBe(
+        AppsEditorI18nKeys.ErrorNameConflictToolset,
+      );
+    });
+
+    it('turns a create-only duplicate into the same inline message', async () => {
+      const createIn = vi
+        .fn()
+        .mockRejectedValue(
+          conflictError(ResourceNameConflictCode.NameTakenAgent),
+        );
+      renderContainer({
+        adapter: {
+          publishEntityType: 'application',
+          isVersioned: false,
+          createIn,
+        } as ResourceSaveAdapter,
+      });
+
+      const error = await (
+        flowAdapter() as { createIn: (f: string[]) => Promise<unknown> }
+      )
+        .createIn([])
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ResourceSaveError);
+    });
+
+    it('leaves a 409 without a duplicate code to the panel', async () => {
+      const failure = conflictError();
+      const saveAsNewVersion = vi.fn().mockRejectedValue(failure);
+      renderContainer({
+        adapter: { ...adapter, saveAsNewVersion } as ResourceSaveAdapter,
+      });
+
+      await expect(
+        (
+          flowAdapter() as {
+            saveAsNewVersion: (v: string, f: string[]) => Promise<unknown>;
+          }
+        ).saveAsNewVersion('1.1.0', []),
+      ).rejects.toBe(failure);
+    });
   });
 
   it('renders the panel with the flow state and the title naming the resource type', () => {

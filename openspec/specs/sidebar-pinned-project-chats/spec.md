@@ -28,12 +28,14 @@ interface PinnedProjectChatsOptions {
   enabled: boolean;
   /** The project no longer exists (a watch `DELETE`, or `404` on a read). Called at most once per id. */
   onProjectDeleted: (projectId: string) => void;
+  /** Id of the chat the host has open. When it is not among the newest chats of its project, it takes the last slot of that project's list, so the list never exceeds `PINNED_PROJECT_CHATS_LIMIT`. */
+  activeConversationId?: string;
 }
 
 interface PinnedProjectChats {
   /** The project's details as last read; `canEdit`, `contentVersion` and `conversationCount` feed the host's actions. */
   project: ProjectDetailsDto;
-  /** At most `PINNED_PROJECT_CHATS_LIMIT` chats, newest first. */
+  /** At most `PINNED_PROJECT_CHATS_LIMIT` chats, newest first; an open chat past the newest ones replaces the last of them and comes last. */
   chats: PinnedProjectChat[];
   /** The project has more chats than `chats` holds. */
   hasMore: boolean;
@@ -61,6 +63,7 @@ For every id in `projectIds`, the hook SHALL:
 
 - call `client.getProject(id, signal)` and `client.listProjectConversations(id, signal)` in parallel;
 - keep the first `PINNED_PROJECT_CHATS_LIMIT` listing items, in listing order (newest first), and set `hasMore` when the listing has more items;
+- keep the listing items past them, so an open chat among them can be listed;
 - when any kept item has `isTitlePending`, call `client.getProjectConversationTitles(id, names)` once with the kept pending names. If that call fails, the file-name titles stay.
 
 The hook SHALL also follow these rules:
@@ -77,6 +80,26 @@ The hook SHALL also follow these rules:
 
 - **WHEN** a pinned project's listing has 12 items
 - **THEN** `chats` holds the first 10 in listing order, and `hasMore` is `true`
+
+#### Scenario: The open chat is past the newest ten
+
+- **WHEN** a pinned project's listing has 12 items and `activeConversationId` names the 12th
+- **THEN** `chats` holds the first 9 in listing order followed by the 12th, and `hasMore` is `true`
+
+#### Scenario: The open chat is among the newest ten
+
+- **WHEN** `activeConversationId` names the 3rd of 12 listing items
+- **THEN** `chats` holds the first 10 in listing order
+
+#### Scenario: The open chat changes
+
+- **WHEN** `activeConversationId` changes
+- **THEN** `chats` is recomputed from the last listing without a request
+
+#### Scenario: The open chat has a pending title
+
+- **WHEN** the open chat is past the newest ten and has `isTitlePending: true`
+- **THEN** `getProjectConversationTitles` is called once with its name, and its resolved title replaces the file-name title
 
 #### Scenario: A project with exactly ten chats
 
@@ -237,7 +260,7 @@ The adapter subscribes to the viewed-write listener of `projects-client.ts` (see
 
 ### Requirement: The project row's menu offers the caller's project actions
 
-The adapter SHALL build `getActions` for project rows (the See all row is only a link and has no menu) with these entries, in this order:
+The adapter SHALL build `getActions` for project rows and See all rows (the same items for both) with these entries, in this order:
 
 | Item | Shown | Behaviour |
 | --- | --- | --- |
@@ -245,7 +268,7 @@ The adapter SHALL build `getActions` for project rows (the See all row is only a
 | Edit (`ButtonsI18nKeys.Edit`) | `project.canEdit` | opens `getProjectEditRoute(id)` through `onOpenRoute` |
 | Publish (`ButtonsI18nKeys.Publish`) | `project.canManage` | opens `PublishProjectPanelContainer` for the project, returning focus to the row's ⋮ trigger on close |
 | Share (`ButtonsI18nKeys.Share`) | `project.canManage` | opens `ProjectShareOverlay` for the project |
-| Delete (`ButtonsI18nKeys.Delete`) | `project.canManage` | opens `ProjectDeleteConfirmation`, the side panel `ProjectViewPage` uses |
+| Delete (`ButtonsI18nKeys.Delete`) | `project.canManage` | opens `ProjectDeleteConfirmation`, the side panel `ProjectViewPage` uses. Its label and icon use the error color (`text-error`), as Delete does in a chat's menu. |
 
 `project` is the snapshot's `ProjectDetailsDto` (`usePinnedProjectChats`). So:
 
@@ -266,6 +289,12 @@ The adapter SHALL build `getActions` for project rows (the See all row is only a
 
 - **WHEN** the owner opens the ⋮ of their own pinned project
 - **THEN** Unpin, Edit, Publish, Share and Delete are offered, in that order
+
+#### Scenario: See all menu
+
+- **GIVEN** a pinned project shows a See all row
+- **WHEN** the owner opens the ⋮ of the See all row
+- **THEN** the same items are offered as on the project row, and Delete is shown in the error color
 
 #### Scenario: Editor menu
 
@@ -296,19 +325,26 @@ The adapter SHALL build `getActions` for project rows (the See all row is only a
 
 ### Requirement: Pinned project strings flow through react-i18next
 
-`apps/chat` SHALL add two keys to `apps/chat/src/i18n/locales/en.json` and to every other locale file, with English placeholders, plus the matching `ConversationPanelI18nKeys` members in `apps/chat/src/constants/translation-keys.ts`:
+`apps/chat` SHALL add four keys to `apps/chat/src/i18n/locales/en.json`, the only locale file, plus the matching `ConversationPanelI18nKeys` members in `apps/chat/src/constants/translation-keys.ts`:
 
 | Key | Enum member | English |
 | --- | --- | --- |
 | `conversationPanel.seeAll` | `ConversationPanelI18nKeys.SeeAll` | `See all` |
 | `conversationPanel.seeAllProjectChats` | `ConversationPanelI18nKeys.SeeAllProjectChats` | `See all chats in {{name}}` |
+| `conversationPanel.expandProject` | `ConversationPanelI18nKeys.ExpandProject` | `Expand project` |
+| `conversationPanel.collapseProject` | `ConversationPanelI18nKeys.CollapseProject` | `Collapse project` |
 
-The adapter passes them as the list's `seeAllLabel` and `seeAllAriaLabel`. Menu items reuse `ButtonsI18nKeys.Unpin`, `Edit`, `Publish`, `Share` and `Delete`. The ⋮ trigger reuses the existing `actionsLabel` (`ButtonsI18nKeys.MoreActions`). No other string is added.
+The adapter passes them as the list's `seeAllLabel`, `seeAllAriaLabel`, `expandProjectLabel` and `collapseProjectLabel`. Menu items reuse `ButtonsI18nKeys.Unpin`, `Edit`, `Publish`, `Share` and `Delete`. The ⋮ trigger reuses the existing `actionsLabel` (`ButtonsI18nKeys.MoreActions`). The unread dot reuses the panel's existing unread label. No other string is added.
 
 #### Scenario: Translated See all
 
 - **WHEN** the UI language is not English
 - **THEN** the See all row shows `t(ConversationPanelI18nKeys.SeeAll)`, and its accessible name is `t(ConversationPanelI18nKeys.SeeAllProjectChats, { name })`
+
+#### Scenario: Translated chevron label
+
+- **WHEN** the UI language is not English
+- **THEN** the chevron's accessible name is `t(ConversationPanelI18nKeys.CollapseProject)` while its project is expanded, and `t(ConversationPanelI18nKeys.ExpandProject)` while collapsed
 
 ### Requirement: The pinned project tree adds no flag, metric or cache
 
@@ -323,3 +359,58 @@ The tree SHALL follow these rules:
 
 - **WHEN** `npm run openapi:check` runs on this change
 - **THEN** it passes with no diff
+
+### Requirement: The app owns, persists and prunes the collapsed state of pinned projects
+
+`usePinnedProjectsPanel` (`apps/chat/src/hooks/projects/usePinnedProjectsPanel.ts`) SHALL own the collapse state of the pinned projects and pass each group's `isExpanded` and the tree's `onToggleProject` to the list (see the `conversation-history-panel` capability). `libs/chat-hooks` and `libs/conversation-panel` store nothing.
+
+**What is stored.** The ids of the projects the user collapsed are stored as a JSON string array in `localStorage` under the new `StorageKey.CollapsedPinnedProjects` (`apps/chat/src/types/storage-key.ts`), through the app's `useLocalStorage` hook. A project with no entry is expanded, so a newly pinned project is expanded and needs no write. Storage that cannot be read or written SHALL fall back to in-memory state without an error. Only a click on the chevron writes it.
+
+**Temporary expansion.** A project SHALL also show expanded, without any write to storage, when the app revealed it:
+
+- when the open chat changes to a chat of a collapsed project (the project id comes from the `ProjectChat` route), the project is revealed once, so the highlighted chat is visible. The reveal holds one project id: opening a chat of another project replaces it, and leaving the chat routes keeps it until the page reloads. The user can collapse it again afterwards, and the reveal does not repeat until the open chat changes;
+- a search that matches a chat of the project, which the list derives itself.
+
+**Toggling.** `onToggleProject(id, isExpanded)` sets the state the user asked for, so the app never infers it from the list's own overrides. Collapsing (`false`) adds the id to the stored ids unless it is there, and ends its reveal. Expanding (`true`) removes the id from the stored ids. Toggling neither navigates nor changes the active chat.
+
+**Pruning.** The app SHALL remove from the stored ids every id that is not in `pinnedProjectIds`, and write only when at least one id was removed. The pass runs only while `projectsEnabled` is on and the user config has finished loading, because `pinnedProjectIds` is empty before that and an early pass would erase every stored id. It compares with the pins, not with the projects that loaded, so a project whose read failed keeps its state.
+
+**Memoisation:** the adapter's `pinnedProjects` keeps its identity until a row, an `isExpanded` value, the active project or a callback changes, and its callbacks are `useCallback`s. **Gating:** `FeatureKey.ProjectsEnabled` only, as for the tree. **RTL, telemetry, cache, backend:** none beyond the list's; no BFF or OpenAPI change.
+
+#### Scenario: A collapse survives a reload
+
+- **GIVEN** P is expanded
+- **WHEN** the user collapses P and reloads the page
+- **THEN** `collapsedPinnedProjects` holds P's id and P renders collapsed
+
+#### Scenario: An untouched project is expanded
+
+- **WHEN** the user pins P and nothing is stored for it
+- **THEN** P renders expanded and nothing is written
+
+#### Scenario: Opening a chat of a collapsed project
+
+- **GIVEN** P is collapsed and the user opens a chat of P from the Chats list of its page
+- **THEN** P renders expanded with the chat highlighted, and the stored ids are unchanged
+
+#### Scenario: Collapsing the project of the open chat
+
+- **GIVEN** P was revealed for the open chat
+- **WHEN** the user activates P's chevron
+- **THEN** P collapses, its id is stored, and it stays collapsed until the open chat changes
+
+#### Scenario: A stale id is pruned
+
+- **GIVEN** the stored ids are `[P, Q]` and only P is pinned
+- **WHEN** the user config has loaded
+- **THEN** the stored ids become `[P]`
+
+#### Scenario: Nothing is pruned before the user config loads
+
+- **GIVEN** the stored ids are `[P]` and the user config is still loading
+- **THEN** the stored ids stay `[P]`
+
+#### Scenario: Unavailable storage
+
+- **WHEN** reading or writing `localStorage` throws and the user collapses P
+- **THEN** P collapses for the page session and no error is shown

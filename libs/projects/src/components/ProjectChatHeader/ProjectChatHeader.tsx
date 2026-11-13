@@ -21,7 +21,7 @@ const ProjectChatHeaderComponent: FC<ProjectChatHeaderProps> = ({
   <nav
     aria-label={backLabel}
     className={mergeClasses(
-      'flex min-w-0 shrink-0 items-center gap-2 border-b px-4 py-2',
+      'flex max-w-full min-w-0 shrink-0 items-center gap-2 border-b px-4 py-2',
       className,
     )}
   >
@@ -40,7 +40,7 @@ const ProjectChatHeaderComponent: FC<ProjectChatHeaderProps> = ({
     <a
       href={projectHref}
       onClick={onProjectLinkClick}
-      className="min-w-0 hover:underline focus-visible:underline"
+      className="block min-w-0 hover:underline focus-visible:underline"
     >
       <EllipsisTooltip
         text={projectName}

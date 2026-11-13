@@ -7,6 +7,7 @@ import {
   createProjectConversation,
   deleteProjectConversation,
   getProjectConversation,
+  generateProjectConversationTitle,
   getProjectConversationTitles,
   listProjectConversations,
   markProjectConversationViewed,
@@ -36,6 +37,21 @@ export const projectViewedWriter = createSerializedKeyedWriter((id) =>
 
 /** Calls `listener` with a project conversation's id after every successful viewed write; returns the function that removes it. */
 export const subscribeProjectConversationViewed = projectViewedWriter.subscribe;
+
+const projectListListeners = new Set<() => void>();
+
+/** Calls `listener` when a change the project watch cannot report happened, such as a shared project leaving the user's list; returns the function that removes it. */
+export const subscribeProjectListChanged = (listener: () => void) => {
+  projectListListeners.add(listener);
+  return () => {
+    projectListListeners.delete(listener);
+  };
+};
+
+/** Tells the mounted Projects list to re-read itself. */
+export const notifyProjectListChanged = () => {
+  for (const listener of [...projectListListeners]) listener();
+};
 
 /*
  * The project requests the chat-hooks project hooks run, resolved through the
@@ -88,6 +104,8 @@ export const projectsClient: ProjectsApiClient = {
   getProjectConversation: (...args) => getProjectConversation(...args),
   saveProjectConversation: (...args) => saveProjectConversation(...args),
   renameProjectConversation: (...args) => renameProjectConversation(...args),
+  generateProjectConversationTitle: (...args) =>
+    generateProjectConversationTitle(...args),
   deleteProjectConversation: (...args) => deleteProjectConversation(...args),
   markProjectConversationViewed: (id) => projectViewedWriter.enqueue(id),
   attachToProjectGeneration: (...args) => attachToProjectGeneration(...args),

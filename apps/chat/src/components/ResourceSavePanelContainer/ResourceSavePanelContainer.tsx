@@ -1,8 +1,10 @@
 import { SEMVER_VERSION_PATTERN } from '@epam/ai-dial-builder-form';
 import type { ResourceFoldersResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
+  ResourceNameConflictKind,
   ResourceSaveVersionError,
   useResourceSavePanel,
+  withResourceNameConflictMessages,
   type ResourceSaveAdapter,
   type ResourceSaveChoice,
   type ResourceSaveResult,
@@ -23,14 +25,17 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
-import { useResourceSaveNotification } from '../../hooks/resource-save/useResourceSaveNotification';
+import {
+  type SaveNotifiableEntity,
+  useResourceSaveNotification,
+} from '../../hooks/resource-save/useResourceSaveNotification';
 import { getPublishRules } from '../../server-api/publish-rules.api';
 import { publishCatalogEntity } from '../../server-api/publish.api';
-import type { NotifiableEntity } from '../../types/entity-notification';
 import {
   getAccessRulesLabels,
   getPublishPanelCommonLabels,
 } from '../../utils/publish';
+import { RESOURCE_NAME_CONFLICT_KEYS } from '../../utils/resource-name-conflict';
 
 interface Props {
   /** Whether the panel is open. */
@@ -56,7 +61,7 @@ interface Props {
   /** Translated resource type for the panel title, e.g. "QuickApp". */
   typeLabel: string;
   /** Entity the notifications name. */
-  notifiableEntity: NotifiableEntity;
+  notifiableEntity: SaveNotifiableEntity;
   /** Schema display name, for `NotifiableEntity.SchemaApp` copy. */
   notificationType?: string;
   /** Whether the user may publish this resource, which offers the Organization root. */
@@ -73,7 +78,7 @@ const publishClient = { publishCatalogEntity, getPublishRules };
 const ResourceSavePanelContainer: FC<Props> = ({
   isOpen,
   onClose,
-  adapter,
+  adapter: editorAdapter,
   listPersonalFolders,
   resourceId,
   currentFolderPath,
@@ -89,6 +94,18 @@ const ResourceSavePanelContainer: FC<Props> = ({
   returnFocusRef,
 }) => {
   const { t } = useTranslation();
+  const adapter = useMemo(
+    () =>
+      withResourceNameConflictMessages(editorAdapter, {
+        [ResourceNameConflictKind.Agent]: t(
+          RESOURCE_NAME_CONFLICT_KEYS[ResourceNameConflictKind.Agent],
+        ),
+        [ResourceNameConflictKind.Toolset]: t(
+          RESOURCE_NAME_CONFLICT_KEYS[ResourceNameConflictKind.Toolset],
+        ),
+      }),
+    [editorAdapter, t],
+  );
   const {
     config: { publicationFilterSources },
   } = useAppConfig();
@@ -180,6 +197,9 @@ const ResourceSavePanelContainer: FC<Props> = ({
       ),
       createFolderDuplicateNameError: t(
         ConversationPublishI18nKeys.DuplicateFolderNameError,
+      ),
+      createFolderSameAsParentNameError: t(
+        ConversationPublishI18nKeys.SameAsParentFolderNameError,
       ),
       retryLabel: t(ButtonsI18nKeys.Retry),
     }),

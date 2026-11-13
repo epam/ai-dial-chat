@@ -4,11 +4,13 @@ import type {
 } from '@epam/ai-dial-chat-shared';
 import {
   AttachmentType,
-  FileExtension,
-  MIMEType,
   stripUrlQueryAndFragment,
 } from '@epam/ai-dial-chat-shared';
 import { useCallback, useEffect, useRef } from 'react';
+import {
+  EXTENSION_RESOLVERS,
+  MIME_TYPE_RESOLVERS,
+} from '../../constants/open-routing';
 import {
   useAttachmentCanvas,
   useCanvasRequestStarter,
@@ -242,40 +244,17 @@ export const useOpenAttachmentCanvas = (
         );
       }
 
-      switch (contentType) {
-        case MIMEType.PDF: {
-          const content = await resolvers.resolvePdfContent(attachment);
-          return commitCanvas(
-            content ??
-              createUnsupportedCanvasContent(
-                resolvers.resolveContentUrl(attachment),
-              ),
-            attachment.name,
-            canvasAttachmentId,
-          );
-        }
-        case MIMEType.Markdown: {
-          const content = await resolvers.resolveMarkdownContent(attachment);
-          return commitCanvas(
-            content ??
-              createUnsupportedCanvasContent(
-                resolvers.resolveContentUrl(attachment),
-              ),
-            attachment.name,
-            canvasAttachmentId,
-          );
-        }
-        case MIMEType.JSON: {
-          const content = await resolvers.resolveJsonContent(attachment);
-          return commitCanvas(
-            content ??
-              createUnsupportedCanvasContent(
-                resolvers.resolveContentUrl(attachment),
-              ),
-            attachment.name,
-            canvasAttachmentId,
-          );
-        }
+      const mimeTypeResolver = MIME_TYPE_RESOLVERS[contentType];
+      if (mimeTypeResolver != null) {
+        const content = await resolvers[mimeTypeResolver](attachment);
+        return commitCanvas(
+          content ??
+            createUnsupportedCanvasContent(
+              resolvers.resolveContentUrl(attachment),
+            ),
+          attachment.name,
+          canvasAttachmentId,
+        );
       }
 
       const fileName = attachment.name ?? '';
@@ -298,23 +277,11 @@ export const useOpenAttachmentCanvas = (
         );
       }
 
-      switch (ext) {
-        case FileExtension.Markdown:
-        case FileExtension.MarkdownAlt: {
-          const content = await resolvers.resolveMarkdownContent(attachment);
-          if (content == null) return false;
-          return commitCanvas(content, attachment.name, canvasAttachmentId);
-        }
-        case FileExtension.JSON: {
-          const content = await resolvers.resolveJsonContent(attachment);
-          if (content == null) return false;
-          return commitCanvas(content, attachment.name, canvasAttachmentId);
-        }
-        case FileExtension.PDF: {
-          const content = await resolvers.resolvePdfContent(attachment);
-          if (content == null) return false;
-          return commitCanvas(content, attachment.name, canvasAttachmentId);
-        }
+      const extensionResolver = EXTENSION_RESOLVERS[ext];
+      if (extensionResolver != null) {
+        const content = await resolvers[extensionResolver](attachment);
+        if (content == null) return false;
+        return commitCanvas(content, attachment.name, canvasAttachmentId);
       }
 
       /*

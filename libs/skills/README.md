@@ -547,7 +547,7 @@ from the render. The chips render beside the bubble's first text line, so
 pass `historyChipLabelClassName` with the label class the bubbles' body text
 uses, keeping the chips' height matched to that line. History chips open
 their tooltip on hover and keyboard focus by default; pass
-`historyDetailsTrigger: 'click'` on touch layouts, where hover never fires, so
+`historyDetailsTrigger: ChatSkillDetailsTrigger.Click` on touch layouts, where hover never fires, so
 a tap opens it instead.
 
 A live-composing mention also renders as a real `ChatSkill` chip — with
@@ -597,6 +597,16 @@ const options = buildSkillSelectorOptions(skills, sharedWithMe, publicSkills);
 Merges skill listings (each `{ url, name }[]` or `undefined`) into one
 `SkillSelectorOption` per URL, for `SkillSelectorField`'s `skills`. A URL listed
 twice keeps its first position and takes the later listing's name.
+
+## Enums
+
+```tsx
+import { ChatSkillDetailsTrigger } from '@epam/ai-dial-skills';
+
+// `historyDetailsTrigger` — what opens a history chip's details tooltip.
+ChatSkillDetailsTrigger.Hover; // 'hover' — hover and keyboard focus, the default
+ChatSkillDetailsTrigger.Click; // 'click' — a tap or click, for touch layouts
+```
 
 ## Types
 

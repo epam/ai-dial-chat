@@ -1,7 +1,9 @@
 import {
   ProjectSource,
+  PublishHistoryEntryDtoEntityTypeEnum,
   ResponseError,
   type ProjectDetailsDto,
+  type PublishHistoryEntryDto,
 } from '@epam/ai-dial-chat-api-client';
 import { triggerBrowserDownload } from '@epam/ai-dial-chat-hooks/utils';
 import { render, screen, waitFor, within } from '@testing-library/react';
@@ -33,6 +35,16 @@ import {
   listProjectArtifacts,
   watchProjects,
 } from '../../../server-api/projects.api';
+import {
+  getCatalogPublishHistory,
+  getCatalogUnpublishAccess,
+  unpublishCatalogEntity,
+} from '../../../server-api/publish.api';
+import {
+  discardSharedCatalogItem,
+  getShareRecipientsCount,
+  revokeSharedAccess,
+} from '../../../server-api/share.api';
 import ProjectViewPage from '../ProjectViewPage';
 
 vi.mock(
@@ -51,6 +63,14 @@ const userConfig = vi.hoisted(() => ({
 vi.mock('../../../context/UserConfigContext', () => ({
   useUserConfig: () => userConfig,
 }));
+vi.mock('../../../server-api/share.api', () => ({
+  discardSharedCatalogItem: vi.fn(),
+  revokeSharedAccess: vi.fn(),
+  getShareRecipientsCount: vi.fn(async () => ({
+    itemId: 'projects/owner/q4',
+    recipientsCount: 1,
+  })),
+}));
 vi.mock('../../../server-api/projects.api', () => ({
   getProject: vi.fn(),
   deleteProject: vi.fn(),
@@ -58,6 +78,25 @@ vi.mock('../../../server-api/projects.api', () => ({
   listProjectArtifacts: vi.fn(),
   watchProjects: vi.fn(),
 }));
+const session = vi.hoisted(() => ({ user: { isAdmin: false } }));
+vi.mock('../../../context/auth/UserContext', () => ({
+  useUser: () => session,
+}));
+/* The page's unpublish lookup goes through `publishApiClient`; the named exports are the same mocks. */
+const publishMocks = vi.hoisted(() => ({
+  getCatalogPublishHistory: vi.fn(),
+  getCatalogUnpublishAccess: vi.fn(),
+}));
+vi.mock('../../../server-api/publish.api', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../../server-api/publish.api')>();
+  return {
+    ...actual,
+    ...publishMocks,
+    publishApiClient: { ...actual.publishApiClient, ...publishMocks },
+    unpublishCatalogEntity: vi.fn(),
+  };
+});
 vi.mock('../../../server-api/project-conversations.api', () => ({
   listProjectConversations: vi.fn(),
   markProjectConversationViewed: vi.fn(),
@@ -94,6 +133,8 @@ vi.mock(
       canEdit,
       conversations,
       onConversationDeleted,
+      onChatCreateStart,
+      onChatCreateFailed,
       outputs,
       hasOutputs,
     }: {
@@ -101,6 +142,8 @@ vi.mock(
       canEdit: boolean;
       conversations: { items: { title: string; isUnread?: boolean }[] };
       onConversationDeleted?: () => void;
+      onChatCreateStart?: () => void;
+      onChatCreateFailed?: () => void;
       outputs?: ReactNode;
       hasOutputs?: boolean;
     }) => (
@@ -117,6 +160,12 @@ vi.mock(
         </ul>
         <button type="button" onClick={onConversationDeleted}>
           delete a chat
+        </button>
+        <button type="button" onClick={onChatCreateStart}>
+          start chat create
+        </button>
+        <button type="button" onClick={onChatCreateFailed}>
+          fail chat create
         </button>
       </>
     ),
@@ -190,6 +239,8 @@ describe('ProjectViewPage', () => {
       items: [],
     });
     vi.mocked(listProjectArtifacts).mockResolvedValue({ items: [] });
+    session.user.isAdmin = false;
+    vi.mocked(getCatalogPublishHistory).mockResolvedValue([]);
   });
 
   it('renders NotFound without a request when the flag is off', () => {
@@ -256,8 +307,140 @@ describe('ProjectViewPage', () => {
       within(menu).queryByRole('menuitem', { name: ButtonsI18nKeys.Share }),
     ).toBeNull();
     expect(
+      within(menu).queryByRole('menuitem', {
+        name: ButtonsI18nKeys.RevokeAccess,
+      }),
+    ).toBeNull();
+    expect(
       within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Download }),
     ).toBeTruthy();
+  });
+
+  it('removes a shared project from the list after confirmation and returns to the list', async () => {
+    vi.mocked(getProject).mockResolvedValue(
+      details({
+        source: ProjectSource.Shared,
+        canEdit: false,
+        canManage: false,
+      }),
+    );
+    vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+    const { router } = renderAt();
+    await screen.findByRole('heading', { level: 1, name: 'q4' });
+
+    const menu = await openMenu();
+    await userEvent.click(
+      within(menu).getByRole('menuitem', {
+        name: ButtonsI18nKeys.RemoveFromMyList,
+      }),
+    );
+    expect(discardSharedCatalogItem).not.toHaveBeenCalled();
+    const dialog = await screen.findByRole('dialog', {
+      name: ButtonsI18nKeys.RemoveFromMyList,
+    });
+    await userEvent.click(
+      within(dialog).getByRole('button', {
+        name: ButtonsI18nKeys.RemoveFromMyList,
+      }),
+    );
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/projects'),
+    );
+    expect(discardSharedCatalogItem).toHaveBeenCalledOnce();
+    expect(discardSharedCatalogItem).toHaveBeenCalledWith(PROJECT_ID);
+    expect(userConfig.setPinnedProject).toHaveBeenCalledWith(PROJECT_ID, false);
+  });
+
+  it('stays on the project when removing a shared project fails', async () => {
+    vi.mocked(getProject).mockResolvedValue(
+      details({
+        source: ProjectSource.Shared,
+        canEdit: false,
+        canManage: false,
+      }),
+    );
+    vi.mocked(discardSharedCatalogItem).mockRejectedValue(new Error('403'));
+    const { router } = renderAt();
+    await screen.findByRole('heading', { level: 1, name: 'q4' });
+
+    const menu = await openMenu();
+    await userEvent.click(
+      within(menu).getByRole('menuitem', {
+        name: ButtonsI18nKeys.RemoveFromMyList,
+      }),
+    );
+    const dialog = await screen.findByRole('dialog', {
+      name: ButtonsI18nKeys.RemoveFromMyList,
+    });
+    await userEvent.click(
+      within(dialog).getByRole('button', {
+        name: ButtonsI18nKeys.RemoveFromMyList,
+      }),
+    );
+
+    await waitFor(() => expect(showNotificationMock).toHaveBeenCalled());
+    expect(router.state.location.pathname).toBe(
+      '/projects/view/a1b2c3/marketing/q4',
+    );
+    expect(userConfig.setPinnedProject).not.toHaveBeenCalled();
+  });
+
+  it('revokes access after confirmation without removing the owner project or its pin', async () => {
+    vi.mocked(revokeSharedAccess).mockResolvedValue({ success: true });
+    const { router } = renderAt();
+    await screen.findByRole('heading', { level: 1, name: 'q4' });
+    const path = router.state.location.pathname;
+    await userEvent.click(
+      within(await openMenu()).getByRole('menuitem', {
+        name: ButtonsI18nKeys.RevokeAccess,
+      }),
+    );
+    expect(revokeSharedAccess).not.toHaveBeenCalled();
+    const dialog = await screen.findByRole('dialog', {
+      name: CatalogI18nKeys.DetailsRevokeShareConfirmTitle,
+    });
+    await userEvent.click(
+      within(dialog).getByRole('button', {
+        name: ButtonsI18nKeys.RevokeAccess,
+      }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('dialog', {
+          name: CatalogI18nKeys.DetailsRevokeShareConfirmTitle,
+        }),
+      ).toBeNull(),
+    );
+    expect(revokeSharedAccess).toHaveBeenCalledWith(PROJECT_ID);
+    vi.mocked(getShareRecipientsCount).mockResolvedValue({
+      itemId: 'projects/owner/q4',
+      recipientsCount: 0,
+    });
+    expect(
+      within(await openMenu()).queryByRole('menuitem', {
+        name: ButtonsI18nKeys.RevokeAccess,
+      }),
+    ).toBeNull();
+    expect(router.state.location.pathname).toBe(path);
+    expect(userConfig.setPinnedProject).not.toHaveBeenCalled();
+    expect(deleteProject).not.toHaveBeenCalled();
+  });
+
+  it('offers Delete and not Remove from My List for an owned project', async () => {
+    renderAt();
+    await screen.findByRole('heading', { level: 1, name: 'q4' });
+
+    const menu = await openMenu();
+
+    expect(
+      within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
+    ).toBeTruthy();
+    expect(
+      within(menu).queryByRole('menuitem', {
+        name: ButtonsI18nKeys.RemoveFromMyList,
+      }),
+    ).toBeNull();
   });
 
   it('lets a shared editor edit and chat but not publish, share or delete', async () => {
@@ -346,7 +529,7 @@ describe('ProjectViewPage', () => {
     await screen.findByRole('heading', { level: 1, name: 'q4' });
 
     await userEvent.click(
-      screen.getByRole('button', { name: ButtonsI18nKeys.Publish }),
+      await screen.findByRole('button', { name: ButtonsI18nKeys.Publish }),
     );
     expect(screen.getByRole('dialog', { name: 'publish' }).textContent).toBe(
       PROJECT_ID,
@@ -367,10 +550,153 @@ describe('ProjectViewPage', () => {
 
     expect(screen.queryByText('publish panel mounted')).toBeNull();
     await userEvent.click(
-      screen.getByRole('button', { name: ButtonsI18nKeys.Publish }),
+      await screen.findByRole('button', { name: ButtonsI18nKeys.Publish }),
     );
 
     expect(screen.getByRole('dialog', { name: 'publish' })).toBeTruthy();
+  });
+
+  describe('unpublish', () => {
+    const historyEntry = (folderPath: string): PublishHistoryEntryDto => ({
+      entityId: PROJECT_ID,
+      entityType: PublishHistoryEntryDtoEntityTypeEnum.Project,
+      folderPath,
+      version: '',
+      publishedAt: '2026-11-01T10:00:00Z',
+      publishedBy: 'Owner',
+      publishCredentials: false,
+    });
+
+    const givenPublicCopy = () =>
+      vi.mocked(getProject).mockResolvedValue(
+        details({
+          id: 'projects/public/Data/q4',
+          bucket: 'public',
+          path: 'Data/q4',
+          source: ProjectSource.Organization,
+          canEdit: false,
+          canManage: false,
+        }),
+      );
+
+    it('shows neither Publish nor Unpublish on a public copy until the publish state settles', async () => {
+      let resolveAccess!: (access: { canUnpublish: boolean }) => void;
+      givenPublicCopy();
+      vi.mocked(getCatalogUnpublishAccess).mockReturnValue(
+        new Promise((resolve) => {
+          resolveAccess = resolve;
+        }),
+      );
+      renderAt('/projects/view/public/Data/q4');
+      await screen.findByRole('heading', { level: 1, name: 'q4' });
+
+      expect(
+        screen.queryByRole('button', { name: ButtonsI18nKeys.Publish }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole('button', { name: ButtonsI18nKeys.Unpublish }),
+      ).toBeNull();
+
+      resolveAccess({ canUnpublish: true });
+      expect(
+        await screen.findByRole('button', { name: ButtonsI18nKeys.Unpublish }),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: ButtonsI18nKeys.Publish }),
+      ).toBeNull();
+    });
+
+    it('keeps offering Publish, never Unpublish, on a personal project that has a published copy', async () => {
+      vi.mocked(getCatalogPublishHistory).mockResolvedValue([
+        historyEntry('Organization/Data'),
+      ]);
+      renderAt();
+
+      expect(
+        await screen.findByRole('button', { name: ButtonsI18nKeys.Publish }),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: ButtonsI18nKeys.Unpublish }),
+      ).toBeNull();
+      expect(getCatalogPublishHistory).not.toHaveBeenCalled();
+    });
+
+    it('offers Publish to the owner of an unpublished project', async () => {
+      renderAt();
+
+      expect(
+        await screen.findByRole('button', { name: ButtonsI18nKeys.Publish }),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: ButtonsI18nKeys.Unpublish }),
+      ).toBeNull();
+    });
+
+    it('offers neither to a shared editor', async () => {
+      vi.mocked(getProject).mockResolvedValue(
+        details({
+          source: ProjectSource.Shared,
+          canEdit: true,
+          canManage: false,
+        }),
+      );
+      renderAt();
+      await screen.findByRole('button', { name: ButtonsI18nKeys.Edit });
+
+      expect(
+        screen.queryByRole('button', { name: ButtonsI18nKeys.Publish }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole('button', { name: ButtonsI18nKeys.Unpublish }),
+      ).toBeNull();
+      expect(getCatalogPublishHistory).not.toHaveBeenCalled();
+    });
+
+    it('offers Unpublish on a public copy to an administrator', async () => {
+      session.user.isAdmin = true;
+      givenPublicCopy();
+      renderAt('/projects/view/public/Data/q4');
+
+      expect(
+        await screen.findByRole('button', { name: ButtonsI18nKeys.Unpublish }),
+      ).toBeTruthy();
+      expect(getCatalogUnpublishAccess).not.toHaveBeenCalled();
+    });
+
+    it('confirms and requests unpublish of the project from its folder', async () => {
+      session.user.isAdmin = true;
+      givenPublicCopy();
+      vi.mocked(unpublishCatalogEntity).mockResolvedValue({} as never);
+      renderAt('/projects/view/public/Data/q4');
+
+      await userEvent.click(
+        await screen.findByRole('button', { name: ButtonsI18nKeys.Unpublish }),
+      );
+      const dialog = await screen.findByRole('dialog', {
+        name: ProjectsI18nKeys.UnpublishConfirmTitle,
+      });
+      expect(
+        within(dialog).getByText(ProjectsI18nKeys.UnpublishConfirmMessage),
+      ).toBeTruthy();
+      await userEvent.click(
+        within(dialog).getByRole('button', { name: ButtonsI18nKeys.Unpublish }),
+      );
+
+      await waitFor(() =>
+        expect(unpublishCatalogEntity).toHaveBeenCalledWith(
+          'project',
+          'projects/public/Data/q4',
+          { folderPath: 'Data' },
+        ),
+      );
+      await waitFor(() =>
+        expect(
+          screen.queryByRole('dialog', {
+            name: ProjectsI18nKeys.UnpublishConfirmTitle,
+          }),
+        ).toBeNull(),
+      );
+    });
   });
 
   it('deletes after confirmation with the loaded contentVersion and returns to the list', async () => {
@@ -907,6 +1233,132 @@ describe('ProjectViewPage', () => {
           message: ProjectsI18nKeys.ViewDeletedElsewhere,
         }),
       );
+    });
+
+    it('does not refresh on events while a chat is being created', async () => {
+      const { watch } = await renderWatched();
+      await userEvent.click(
+        screen.getByRole('button', { name: 'start chat create' }),
+      );
+      vi.mocked(getProject).mockClear();
+      vi.mocked(listProjectConversations).mockClear();
+      vi.mocked(listProjectArtifacts).mockClear();
+
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 1,
+        etag: '"e2"',
+      });
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 2,
+        etag: '"e3"',
+      });
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(getProject).not.toHaveBeenCalled();
+      expect(listProjectConversations).not.toHaveBeenCalled();
+      expect(listProjectArtifacts).not.toHaveBeenCalled();
+    });
+
+    it('runs one refresh when creating a chat failed after events were held back', async () => {
+      const { watch } = await renderWatched();
+      await userEvent.click(
+        screen.getByRole('button', { name: 'start chat create' }),
+      );
+      vi.mocked(getProject).mockClear();
+      vi.mocked(listProjectConversations).mockClear();
+      vi.mocked(listProjectArtifacts).mockClear();
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 1,
+        etag: '"e2"',
+      });
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 2,
+        etag: '"e3"',
+      });
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'fail chat create' }),
+      );
+
+      await waitFor(() => expect(getProject).toHaveBeenCalledOnce());
+      expect(listProjectConversations).toHaveBeenCalledOnce();
+      expect(listProjectArtifacts).toHaveBeenCalledOnce();
+    });
+
+    it('sends no refresh when creating a chat failed and no event arrived', async () => {
+      await renderWatched();
+      await userEvent.click(
+        screen.getByRole('button', { name: 'start chat create' }),
+      );
+      vi.mocked(getProject).mockClear();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'fail chat create' }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(getProject).not.toHaveBeenCalled();
+    });
+
+    it('refreshes on events again after a failed create was resumed', async () => {
+      const { watch } = await renderWatched();
+      await userEvent.click(
+        screen.getByRole('button', { name: 'start chat create' }),
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: 'fail chat create' }),
+      );
+      vi.mocked(getProject).mockClear();
+
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 3,
+        etag: '"e4"',
+      });
+
+      await waitFor(() => expect(getProject).toHaveBeenCalledOnce());
+    });
+
+    it('refreshes on events again once the route names another project', async () => {
+      const first = createWatchStream();
+      const second = createWatchStream();
+      vi.mocked(watchProjects)
+        .mockResolvedValueOnce(first.stream)
+        .mockResolvedValueOnce(second.stream);
+      const { router } = renderAt();
+      await screen.findByText('c1');
+      await waitFor(() => expect(watchProjects).toHaveBeenCalledOnce());
+      await userEvent.click(
+        screen.getByRole('button', { name: 'start chat create' }),
+      );
+
+      const otherId = 'projects/a1b2c3/marketing/q5';
+      vi.mocked(getProject).mockResolvedValue(
+        details({ id: otherId, name: 'q5', path: 'marketing/q5' }),
+      );
+      await router.navigate('/projects/view/a1b2c3/marketing/q5');
+      await screen.findByRole('heading', { level: 1, name: 'q5' });
+      await waitFor(() => expect(watchProjects).toHaveBeenCalledTimes(2));
+      vi.mocked(getProject).mockClear();
+
+      second.send({
+        id: otherId,
+        action: 'UPDATE',
+        timestamp: 5,
+        etag: '"e9"',
+      });
+
+      await waitFor(() => expect(getProject).toHaveBeenCalledOnce());
     });
 
     it('closes the watch when the user leaves the page', async () => {

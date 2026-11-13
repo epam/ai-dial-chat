@@ -35,7 +35,7 @@ receive a shared application nonce setting, never a global DOM patch.
 
 ### Requirement: Staged enforcement and reporting
 
-`CSP_MODE` SHALL accept only `report-only` and `enforce`, defaulting to `report-only`.
+`CSP_MODE` SHALL accept only `report-only` and `enforce`, defaulting to `enforce`.
 Report-only mode SHALL retain the prior enforced HTML policy and emit the candidate
 strict policy. Enforce mode SHALL enforce the candidate. A configured, validated
 `CSP_REPORT_URI` SHALL enable legacy and Reporting API delivery to that destination.
@@ -46,11 +46,11 @@ strict policy. Enforce mode SHALL enforce the candidate. A configured, validated
   restrictions remain enforced
 
 #### Scenario: Enforcement enabled
-- **WHEN** enforce mode is active
+- **WHEN** enforce mode is active, explicitly or by default
 - **THEN** the enforced policy does not contain `'unsafe-inline'` or `'unsafe-eval'`
 
 #### Scenario: Legacy frontend during rollout
-- **WHEN** report-only mode is active, explicitly or by default, and chat or an
+- **WHEN** report-only mode is explicitly set and chat or an
   enabled overlay sandbox has HTML without the nonce marker
 - **THEN** the server starts and logs one warning per legacy template requesting
   a frontend rebuild before enforcement
@@ -58,7 +58,8 @@ strict policy. Enforce mode SHALL enforce the candidate. A configured, validated
   strict report-only candidate, retaining inline JavaScript and eval restrictions
 
 #### Scenario: Legacy frontend with enforcement requested
-- **WHEN** enforce mode is active and chat or an enabled overlay sandbox has HTML
+- **WHEN** enforce mode is active, explicitly or by default, and chat or an
+  enabled overlay sandbox has HTML
   without the nonce marker
 - **THEN** startup fails with a rebuild error without downgrading the CSP mode
 

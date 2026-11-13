@@ -60,7 +60,11 @@ export interface ScheduledTaskValidationOptions {
 }
 
 /** Scheduled-task form fields that carry free text with a length limit. */
-export type ScheduledTaskTextField = 'displayName' | 'description' | 'prompt';
+export enum ScheduledTaskTextField {
+  DisplayName = 'displayName',
+  Description = 'description',
+  Prompt = 'prompt',
+}
 
 /**
  * Checks one free-text field against its length limit (and, for the display
@@ -73,7 +77,7 @@ export const validateScheduledTaskTextField = (
 ): ScheduledTaskValidationErrorCode | undefined => {
   const trimmed = value?.trim() ?? '';
   switch (field) {
-    case 'displayName':
+    case ScheduledTaskTextField.DisplayName:
       if (exceedsMaxLength(trimmed, ENTITY_NAME_MAX_LENGTH)) {
         return ScheduledTaskValidationErrorCode.DisplayNameTooLong;
       }
@@ -81,11 +85,11 @@ export const validateScheduledTaskTextField = (
         return ScheduledTaskValidationErrorCode.DisplayNameControlCharacters;
       }
       return undefined;
-    case 'description':
+    case ScheduledTaskTextField.Description:
       return exceedsMaxLength(trimmed, DESCRIPTION_MAX_LENGTH)
         ? ScheduledTaskValidationErrorCode.DescriptionTooLong
         : undefined;
-    case 'prompt':
+    case ScheduledTaskTextField.Prompt:
       return exceedsMaxLength(trimmed, ENTITY_INSTRUCTIONS_MAX_LENGTH)
         ? ScheduledTaskValidationErrorCode.PromptTooLong
         : undefined;
@@ -158,7 +162,7 @@ export const validateScheduledTaskFormValues = (
   if (!values.displayName.trim()) {
     errors.displayName = ScheduledTaskValidationErrorCode.DisplayNameRequired;
   } else {
-    setTextFieldError('displayName', values.displayName);
+    setTextFieldError(ScheduledTaskTextField.DisplayName, values.displayName);
   }
   if (!values.modelId.trim()) {
     errors.modelId = ScheduledTaskValidationErrorCode.ModelRequired;
@@ -167,7 +171,7 @@ export const validateScheduledTaskFormValues = (
     errors.prompt =
       ScheduledTaskValidationErrorCode.InstructionsOrSkillRequired;
   } else {
-    setTextFieldError('prompt', values.prompt);
+    setTextFieldError(ScheduledTaskTextField.Prompt, values.prompt);
   }
   if (
     values.skillUrls?.some((url) =>
@@ -176,7 +180,7 @@ export const validateScheduledTaskFormValues = (
   ) {
     errors.skillUrls = ScheduledTaskValidationErrorCode.SkillUnsupported;
   }
-  setTextFieldError('description', values.description);
+  setTextFieldError(ScheduledTaskTextField.Description, values.description);
 
   if (values.repeat === ScheduledTaskRepeat.OneTime) {
     const runAtTime = values.runAt ? new Date(values.runAt).getTime() : NaN;

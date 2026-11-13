@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 interface UseDismissibleToolsParams {
   toolsMenuItems: ToolMenuItem[] | undefined;
   canRemoveTools: boolean;
-  isPhone: boolean;
   onToolToggle: ((toolId: string) => void) | undefined;
 }
 
@@ -16,7 +15,6 @@ interface UseDismissibleToolsParams {
 export const useDismissibleTools = ({
   toolsMenuItems,
   canRemoveTools,
-  isPhone,
   onToolToggle,
 }: UseDismissibleToolsParams) => {
   /*
@@ -36,16 +34,11 @@ export const useDismissibleTools = ({
 
   const visibleTools = useMemo(() => {
     const tools = toolsMenuItems ?? [];
-    /*
-     * A phone composer has no room for a chip per tool, so only tools that
-     * are switched on stay visible; the rest are added from `+` → Tools.
-     */
-    if (isPhone) return tools.filter((tool) => tool.isSelected);
     if (!canRemoveTools) return tools;
     return tools.filter(
       (tool) => tool.isSelected || !dismissedToolIds.includes(tool.id),
     );
-  }, [toolsMenuItems, dismissedToolIds, canRemoveTools, isPhone]);
+  }, [toolsMenuItems, dismissedToolIds, canRemoveTools]);
 
   const handleToolDismiss = useCallback(
     (toolId: string) => {

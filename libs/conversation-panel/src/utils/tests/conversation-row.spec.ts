@@ -6,15 +6,18 @@ import {
   INDICATOR_ITEM_ROW_HEIGHT,
   ITEM_ROW_HEIGHT,
 } from '../../constants/virtual-list';
+import type { PinnedProjectGroup } from '../../models/pinned-projects';
 import type { RowRendererData } from '../../models/virtual-row';
 import { ConversationRowVariant } from '../../types/conversation-row-variant';
 import { VirtualRowKind } from '../../types/virtual-row';
 import {
+  buildProjectRows,
   getButtonPaddingEnd,
   getNestedRowProps,
   getOverscanCount,
   getRowHeight,
   getSkeletonWidth,
+  isProjectExpanded,
   SKELETON_ROW_COUNT,
 } from '../conversation-row';
 
@@ -135,7 +138,7 @@ describe('getRowHeight', () => {
         isFirstNested: true,
         isLastNested: true,
       },
-      { kind: VirtualRowKind.Project, project },
+      { kind: VirtualRowKind.Project, project, isExpanded: true },
     ];
 
     expect(getRowHeight(0, makeRowProps(rows))).toBe(INDICATOR_ITEM_ROW_HEIGHT);
@@ -217,5 +220,68 @@ describe('getNestedRowProps', () => {
 
     expect(className).toMatch(/guideLineLast/);
     expect(className).not.toMatch(/guideLineFirst/);
+  });
+});
+
+describe('buildProjectRows', () => {
+  const project: PinnedProjectGroup = {
+    id: 'p1',
+    name: 'Support',
+    conversations: [
+      { id: 'c1', title: 'Weekly summary' },
+      { id: 'c2', title: 'Billing reply' },
+    ],
+    hasMore: true,
+  };
+
+  it('returns the project row, its chats and See all while expanded', () => {
+    expect(buildProjectRows(project, true).map((row) => row.kind)).toEqual([
+      VirtualRowKind.Project,
+      VirtualRowKind.ProjectConversation,
+      VirtualRowKind.ProjectConversation,
+      VirtualRowKind.ProjectSeeAll,
+    ]);
+  });
+
+  it('expands by default', () => {
+    expect(buildProjectRows(project)).toHaveLength(4);
+  });
+
+  it('returns only the project row while collapsed', () => {
+    const rows = buildProjectRows(project, false);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      kind: VirtualRowKind.Project,
+      isExpanded: false,
+    });
+  });
+});
+
+describe('isProjectExpanded', () => {
+  const project: PinnedProjectGroup = {
+    id: 'p1',
+    name: 'Support',
+    conversations: [{ id: 'c1', title: 'Billing reply' }],
+    hasMore: false,
+    isExpanded: false,
+  };
+
+  it('treats a project with no isExpanded as expanded', () => {
+    expect(isProjectExpanded({ ...project, isExpanded: undefined }, '')).toBe(
+      true,
+    );
+  });
+
+  it('keeps a collapsed project collapsed without a search', () => {
+    expect(isProjectExpanded(project, '')).toBe(false);
+  });
+
+  it('expands a collapsed project while a search matches one of its chats', () => {
+    expect(isProjectExpanded(project, 'billing')).toBe(true);
+  });
+
+  it('keeps a collapsed project collapsed when the search matches only its name', () => {
+    expect(isProjectExpanded(project, 'support')).toBe(false);
   });
 });

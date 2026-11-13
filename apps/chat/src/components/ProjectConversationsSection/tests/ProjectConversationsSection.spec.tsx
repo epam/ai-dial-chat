@@ -93,6 +93,8 @@ const PROJECT_ID = 'projects/a1b2c3/q4';
 const CHAT_ID = `${PROJECT_ID}/conversations/gpt-4o__Old__1`;
 const showNotification = vi.fn();
 const restoreDefaultSelection = vi.fn();
+const onChatCreateStart = vi.fn();
+const onChatCreateFailed = vi.fn();
 
 /* The page owns the list state; the harness plays the page. */
 const SectionHarness = ({ canEdit }: { canEdit: boolean }) => {
@@ -103,6 +105,8 @@ const SectionHarness = ({ canEdit }: { canEdit: boolean }) => {
       projectName="Q4 launch"
       canEdit={canEdit}
       conversations={conversations}
+      onChatCreateStart={onChatCreateStart}
+      onChatCreateFailed={onChatCreateFailed}
     />
   );
 };
@@ -135,7 +139,14 @@ describe('ProjectConversationsSection', () => {
       }),
     );
     vi.mocked(listProjectConversations).mockResolvedValue({
-      items: [{ id: CHAT_ID, name: 'gpt-4o__Old__1', title: 'Old title' }],
+      items: [
+        {
+          id: CHAT_ID,
+          name: 'gpt-4o__Old__1',
+          title: 'Old title',
+          isUnread: false,
+        },
+      ],
     });
   });
 
@@ -199,6 +210,31 @@ describe('ProjectConversationsSection', () => {
       expect.objectContaining({ prompt: 'Be brief', temperature: 0.5 }),
     );
     expect(restoreDefaultSelection).toHaveBeenCalled();
+    expect(onChatCreateStart).toHaveBeenCalledOnce();
+    expect(onChatCreateFailed).not.toHaveBeenCalled();
+  });
+
+  it('tells the page a chat is being created before the first request goes out', async () => {
+    const created = { id: `${PROJECT_ID}/conversations/gpt-4o__Draft__2` };
+    vi.mocked(createProjectConversation).mockImplementation(async () => {
+      expect(onChatCreateStart).toHaveBeenCalledOnce();
+      return created as never;
+    });
+    vi.mocked(saveProjectConversation).mockResolvedValue(created as never);
+    const { router } = renderSection();
+
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: ChatI18nKeys.Placeholder,
+      }),
+    );
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        '/projects/chat/a1b2c3/q4/conversations/gpt-4o__Draft__2',
+      ),
+    );
+    expect(createProjectConversation).toHaveBeenCalledOnce();
   });
 
   it('still opens the new chat when saving its settings fails, without an error toast', async () => {
@@ -220,6 +256,7 @@ describe('ProjectConversationsSection', () => {
     );
     expect(showNotification).not.toHaveBeenCalled();
     expect(composerMenus.seedSkillMentions).not.toHaveBeenCalled();
+    expect(onChatCreateFailed).not.toHaveBeenCalled();
   });
 
   it('reports a full project and stays on the page', async () => {
@@ -249,6 +286,8 @@ describe('ProjectConversationsSection', () => {
       'Draft an article',
       [{ id: 'skills/a1b2c3/tone' }],
     );
+    expect(onChatCreateStart).toHaveBeenCalledOnce();
+    expect(onChatCreateFailed).toHaveBeenCalledOnce();
   });
 
   it('shows the chats without the input or row menus when read-only', async () => {
@@ -326,9 +365,15 @@ describe('ProjectConversationsSection', () => {
       ProjectsI18nKeys.ChatsRenameInputLabel,
     );
     await userEvent.clear(input);
-    await userEvent.click(
-      screen.getByRole('button', { name: ButtonsI18nKeys.Save }),
-    );
+    /* Save stays disabled for an empty name, so Enter is what surfaces the error. */
+    expect(
+      (
+        screen.getByRole('button', {
+          name: ButtonsI18nKeys.Save,
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+    await userEvent.type(input, '{Enter}');
     expect(
       await screen.findByText(ProjectsI18nKeys.ChatsRenameEmpty),
     ).toBeTruthy();

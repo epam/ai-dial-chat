@@ -114,6 +114,8 @@ export class ConversationService {
   );
   stopBackgroundGeneration =
     this.streamingService.stopBackgroundGeneration.bind(this.streamingService);
+  stopForegroundGeneration =
+    this.streamingService.stopForegroundGeneration.bind(this.streamingService);
 
   // Thin pass-throughs to already-independent services — each needs one
   // line of glue (path qualification / URL building), so it stays a method

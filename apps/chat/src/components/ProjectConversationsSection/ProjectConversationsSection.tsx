@@ -60,6 +60,10 @@ interface Props {
   conversations: ProjectConversationsState;
   /** Called after a chat is deleted, so the page can keep its chat count current. */
   onConversationDeleted?: () => void;
+  /** Called before a new chat is created, so the page can hold its live refresh while the app leaves for that chat. */
+  onChatCreateStart?: () => void;
+  /** Called when creating a chat failed before any chat existed, so the page can resume its live refresh. */
+  onChatCreateFailed?: () => void;
   /** The page's Outputs section, rendered between the chat input and the Chats list; omitted when unset. */
   outputs?: ReactNode;
   /** Whether the Outputs section shows content, so an empty Chats list hides its "No outputs or chats yet" state. */
@@ -72,6 +76,8 @@ const ProjectConversationsSection: FC<Props> = ({
   canEdit,
   conversations,
   onConversationDeleted,
+  onChatCreateStart,
+  onChatCreateFailed,
   outputs,
   hasOutputs,
 }) => {
@@ -89,6 +95,7 @@ const ProjectConversationsSection: FC<Props> = ({
     retry,
     loadMore,
     rename,
+    generateTitle,
     remove,
     markViewed,
   } = conversations;
@@ -179,6 +186,7 @@ const ProjectConversationsSection: FC<Props> = ({
       const skillsForSend = selectedSkills;
       resetSkillMentions();
       let isCreated = false;
+      onChatCreateStart?.();
       try {
         await createProjectChat(
           projectsClient,
@@ -204,6 +212,7 @@ const ProjectConversationsSection: FC<Props> = ({
       } catch (error) {
         /* A chat that exists but lost its settings was opened above; nothing else to report. */
         if (isCreated) throw error;
+        onChatCreateFailed?.();
         seedSkillMentions(message, skillsForSend);
         const { failure, requestId } =
           await classifyProjectChatCreateError(error);
@@ -221,6 +230,8 @@ const ProjectConversationsSection: FC<Props> = ({
     },
     [
       navigate,
+      onChatCreateFailed,
+      onChatCreateStart,
       project,
       projectId,
       resetSkillMentions,
@@ -329,6 +340,8 @@ const ProjectConversationsSection: FC<Props> = ({
                 removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
                 stateOnLabel: t(ToolsI18nKeys.StateOn),
                 stateOffLabel: t(ToolsI18nKeys.StateOff),
+                summaryLabel: (selected: number, total: number) =>
+                  t(ToolsI18nKeys.Summary, { selected, total }),
               }}
             />
           ) : undefined
@@ -344,6 +357,7 @@ const ProjectConversationsSection: FC<Props> = ({
         onLoadMore={handleLoadMore}
         onOpen={handleOpen}
         onRename={canEdit ? handleRename : undefined}
+        onGenerateTitle={canEdit ? generateTitle : undefined}
         onDelete={canEdit ? handleDelete : undefined}
         labels={labels}
       />

@@ -1,6 +1,7 @@
 export enum ApiEndpoints {
   THEMES = '/api/themes',
   THEME_ICON = '/api/themes/icon',
+  CELEBRATION_ASSETS = '/api/v1/celebrations/assets',
   CHAT_COMPLETIONS = '/api/v1/chat/completions',
   CONVERSATIONS = '/api/v1/conversations',
   PROJECTS = '/api/v1/projects',
@@ -207,6 +208,10 @@ const request = async <TResponse>(
   const { body, headers, responseHandler, ...restOptions } = options;
   const isFormData = body instanceof FormData;
   const csrfTokenForRequest = _csrfToken;
+  let requestBody: FormData | string | undefined;
+  if (body != null) {
+    requestBody = isFormData ? body : JSON.stringify(body);
+  }
 
   const response = await fetch(url, {
     ...restOptions,
@@ -217,7 +222,7 @@ const request = async <TResponse>(
       ...(method !== 'GET' && _csrfToken ? { 'X-CSRF-Token': _csrfToken } : {}),
       ...(headers ?? {}),
     },
-    body: body == null ? undefined : isFormData ? body : JSON.stringify(body),
+    body: requestBody,
   });
 
   const rotatedCsrf = response.headers.get('x-csrf-token');

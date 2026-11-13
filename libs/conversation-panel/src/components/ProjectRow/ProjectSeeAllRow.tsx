@@ -1,11 +1,18 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
+import { useRowActions } from '../../hooks/useRowActions';
 import type {
   NestedRowPosition,
   PinnedProjectGroup,
 } from '../../models/pinned-projects';
-import { getNestedRowProps } from '../../utils/conversation-row';
+import { ConversationRowVariant } from '../../types/conversation-row-variant';
+import {
+  getButtonPaddingEnd,
+  getNestedRowProps,
+} from '../../utils/conversation-row';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
+import { RowActionsMenu } from '../RowActionsMenu/RowActionsMenu';
 import { RowLink } from '../RowLink/RowLink';
 import projectStyles from './ProjectRow.module.scss';
 
@@ -21,6 +28,15 @@ export interface ProjectSeeAllRowProps {
   label?: string;
   /** Builds the accessible name of the row from the project name. Defaults to `` (name) => `See all chats in ${name}` ``. */
   ariaLabel?: (name: string) => string;
+  /** Builds the ⋮ actions of the project, the same items its project row offers. When absent or empty, the trigger is not rendered. */
+  getActions?: (project: PinnedProjectGroup) => DropdownItem[];
+  /** Called when the ⋮ menu opens; receives the trigger button. */
+  onActionMenuOpen?: (
+    project: PinnedProjectGroup,
+    trigger: HTMLButtonElement,
+  ) => void;
+  /** Accessible label for the actions trigger button. Defaults to `"More actions"`. */
+  actionsLabel?: string;
   /** Typography class for the row text. Defaults to `'dial-small-text'`. */
   titleClassName?: string;
 }
@@ -33,14 +49,23 @@ const ProjectSeeAllRowComponent: FC<ProjectSeeAllRowProps> = ({
   onSeeAll,
   label = 'See all',
   ariaLabel = defaultAriaLabel,
+  getActions,
+  onActionMenuOpen,
+  actionsLabel = 'More actions',
   titleClassName = 'dial-small-text',
 }) => {
+  const { menuItems, hasActions, isMenuOpen, handleOpenChange, handleOpen } =
+    useRowActions(project, getActions, onActionMenuOpen);
   const nestedRowProps = getNestedRowProps(position);
 
   return (
     <li
       {...nestedRowProps}
-      className={mergeClasses('relative', nestedRowProps.className)}
+      className={mergeClasses(
+        'group/conversation relative',
+        styles.row,
+        nestedRowProps.className,
+      )}
     >
       <RowLink
         href={project.href}
@@ -60,14 +85,29 @@ const ProjectSeeAllRowComponent: FC<ProjectSeeAllRowProps> = ({
         aria-label={ariaLabel(project.name)}
         textClassName="min-w-0 flex-1"
         className={mergeClasses(
-          'h-8 w-full justify-start py-2 ps-2 pe-2 after:pointer-events-none',
+          'h-8 w-full justify-start py-2 ps-2 after:pointer-events-none',
+          getButtonPaddingEnd(
+            hasActions,
+            isMenuOpen,
+            ConversationRowVariant.Indicator,
+          ),
           styles.item,
           styles.itemIndicator,
+          isMenuOpen && styles.itemActive,
         )}
       />
+      {hasActions && (
+        <RowActionsMenu
+          items={menuItems}
+          isOpen={isMenuOpen}
+          onOpenChange={handleOpenChange}
+          onOpen={handleOpen}
+          actionsLabel={actionsLabel}
+        />
+      )}
     </li>
   );
 };
 
-/** The See all link closing a pinned project's nested chats; it has no actions. */
+/** The See all link closing a pinned project's nested chats, with the project's ⋮ actions. */
 export const ProjectSeeAllRow = memo(ProjectSeeAllRowComponent);

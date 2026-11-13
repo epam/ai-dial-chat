@@ -168,6 +168,7 @@ import type {
   Stage,
   Annotation,
   BackgroundGeneration,
+  ForegroundGeneration,
 } from '@epam/ai-dial-chat-shared';
 import type {
   DeploymentItem,
@@ -187,6 +188,10 @@ import {
 ### Background generation marker
 
 `Message.backgroundGeneration?: BackgroundGeneration` is present only on an assistant message produced by a DIAL Core background Responses job. It carries `generationId` (the message's identity across saves), `status` (`BackgroundGenerationStatus`: `Pending`, `Completed`, `Stopped`, `Failed`) and `startedAt` (epoch ms). The backend owns it; a message whose status is `Pending` is still being generated.
+
+### Foreground generation marker
+
+`Message.foregroundGeneration?: ForegroundGeneration` is present only while a Chat Completions or stateless Responses generation produces an assistant message. It carries `generationId`, `startedAt`, `expiresAt` and the optional `stopRequestedAt` (all times in epoch ms). The backend owns it and removes it with the generation's terminal write. While `expiresAt` is in the future, the message is being generated elsewhere — in another tab, on another device, or by another participant of a shared project — and the backend refuses every other generation in the conversation.
 
 ### Stage parent references
 
@@ -1236,6 +1241,27 @@ const { ref, isClipped } = useIsTextClipped<HTMLSpanElement>(
 </span>;
 ```
 
+### useIsVerticallyClamped
+
+`useIsVerticallyClamped(content)` reports whether a `line-clamp-*` (or any
+`overflow: hidden`) element, or one of its direct children such as the kit
+`Highlight` span, hides part of its text vertically, so a caller can show the
+full text in a tooltip only when something is cut off. It re-measures when the
+element resizes and when `content` changes.
+
+```tsx
+import { useIsVerticallyClamped } from '@epam/ai-dial-chat-shared';
+import { Tooltip } from '@epam/ai-dial-ui-kit';
+
+const { ref, isClamped } = useIsVerticallyClamped<HTMLSpanElement>(name);
+
+<Tooltip asChild tooltip={name} hideTooltip={!isClamped}>
+  <span ref={ref} className="line-clamp-2">
+    {name}
+  </span>
+</Tooltip>;
+```
+
 ### useUnsavedChangesGuard
 
 `useUnsavedChangesGuard(isDirty)` defers a "leave the form" action until the user confirms discarding. `guard(action)` runs `action` at once when `isDirty` is `false`; otherwise it stores the action and sets `isConfirmOpen`. `confirm()` closes the confirmation and runs the stored action, `dismiss()` closes it and drops the action. While `isDirty` is `true` the hook also registers a `beforeunload` listener so the browser warns before the page unloads. The hook renders nothing — pair it with a confirmation such as `ConfirmationDialog`, and compute `isDirty` yourself.
@@ -1613,7 +1639,7 @@ import type { FileManagerAttachModalLabels } from '@epam/ai-dial-chat-shared';
 // … plus every DialFileManagerShellLabels field
 ```
 
-`colors` (`FileManagerAttachModalColors`) sets the dialog background — also used as the file-manager surface inside it —, the title color shown with a header description and the dialog's drop-shadow color (`background` / `title` / `shadow`, default `--bg-layer-raised` / `--text-primary` / 16% black). The header and footer are separated from the body by a divider. `titleClassName` and `descriptionClassName` set the type of that title and description (default `'dial-h1-text'` / `'dial-small-text'`).
+`colors` (`FileManagerAttachModalColors`) sets the dialog background — also used as the file-manager surface inside it —, the title color shown with a header description and the dialog's drop-shadow color (`background` / `title` / `shadow`, default `--bg-layer-raised` / `--text-primary` / 16% black). The header and footer are separated from the body by a divider unless `showHeaderDivider={false}` / `showFooterDivider={false}`. `dialogClassName` is merged last onto the dialog, so a `!`-modified class overrides its size defaults (e.g. `max-w-[1330px]!`), and `treeContainerClassName` is forwarded to the shell to restyle the folders-tree panel (include `shrink-0` and a width). `titleClassName` and `descriptionClassName` set the type of that title and description (default `'dial-h1-text'` / `'dial-small-text'`).
 
 ### FileManagerSelectableNode
 

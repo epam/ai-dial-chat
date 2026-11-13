@@ -37,6 +37,11 @@ export type {
   ProjectOutputsStyles,
   ProjectOutputsTypography,
 } from './models/project-outputs-props';
+export { ProjectRemoveFromListConfirmation } from './components/ProjectRemoveFromListConfirmation/ProjectRemoveFromListConfirmation';
+export type {
+  ProjectRemoveFromListConfirmationLabels,
+  ProjectRemoveFromListConfirmationProps,
+} from './models/project-remove-from-list-confirmation-props';
 export { ProjectChatHeader } from './components/ProjectChatHeader/ProjectChatHeader';
 export type { ProjectChatHeaderProps } from './models/project-chat-header-props';
 export type {
@@ -77,3 +82,9 @@ export {
   PROJECT_NAME_MAX_BYTES,
   validateProjectName,
 } from './utils/project-name';
+
+export { ProjectRevokeAccessConfirmation } from './components/ProjectRevokeAccessConfirmation/ProjectRevokeAccessConfirmation';
+export type {
+  ProjectRevokeAccessConfirmationProps,
+  ProjectRevokeAccessConfirmationLabels,
+} from './models/project-revoke-access-confirmation-props';

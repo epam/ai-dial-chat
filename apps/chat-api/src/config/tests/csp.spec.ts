@@ -81,7 +81,7 @@ describe('buildPermissionsPolicyHeader', () => {
   it('delegates to self plus a single allowlisted origin', () => {
     expect(
       buildPermissionsPolicyHeader(['https://quickapps.example.com']),
-    ).toBe('local-network-access=(self https://quickapps.example.com)');
+    ).toBe('local-network-access=(self "https://quickapps.example.com")');
   });
 
   it('delegates to self plus every allowlisted origin', () => {
@@ -91,7 +91,7 @@ describe('buildPermissionsPolicyHeader', () => {
         'https://skills.example.com',
       ]),
     ).toBe(
-      'local-network-access=(self https://quickapps.example.com https://skills.example.com)',
+      'local-network-access=(self "https://quickapps.example.com" "https://skills.example.com")',
     );
   });
 });
@@ -142,6 +142,23 @@ describe('Helmet security headers', () => {
     expect(policy).toContain("style-src-attr 'none'");
     expect(policy).toContain("object-src 'none'");
     expect(policy).toContain("base-uri 'self'");
+  });
+
+  it('allows inline style attributes only when opted in, keeping the nonce on style elements', async () => {
+    app = await createTestApp([], true, {
+      nonce: 'approved-nonce',
+      allowStyleAttributes: true,
+    });
+    const response = await request(app.getHttpServer())
+      .get('/ping')
+      .expect(200);
+    const directives = response.headers['content-security-policy'].split(';');
+    expect(directives).toContain("style-src-attr 'unsafe-inline'");
+    expect(directives).toContain(
+      "style-src 'self' https://fonts.googleapis.com 'nonce-approved-nonce'",
+    );
+    expect(directives).toContain("script-src 'self'");
+    expect(directives).toContain("script-src-attr 'none'");
   });
 
   it('allows the approved style nonce without authorizing inline scripts', async () => {

@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNumber,
@@ -23,7 +24,19 @@ export enum ApplicationLogLevel {
 export class ServerEnv {
   @IsOptional()
   @IsEnum(CspMode)
-  CSP_MODE?: CspMode = CspMode.ReportOnly;
+  CSP_MODE?: CspMode = CspMode.Enforce;
+
+  @IsOptional()
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    /* Fail closed: this flag relaxes the CSP, so only an explicit truthy value
+     * turns it on. */
+    return ['true', '1', 'yes'].includes(String(raw).trim().toLowerCase());
+  })
+  @IsBoolean()
+  CSP_ALLOW_STYLE_ATTRIBUTES?: boolean = false;
 
   @IsOptional()
   @IsUrl({

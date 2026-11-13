@@ -38,8 +38,9 @@
     "placeholder": "How can I help you today?",
     "streamErrorTitle": "Couldn't finish this response",
     "streamError": "Something went wrong while generating the response. Try again in a moment.",
-    "generationConflict": "A response is already being generated in this conversation, possibly in another browser tab. Wait for it to finish or stop it before sending another message.",
+    "generationConflict": "A response is already being generated in this conversation. Wait for it to finish before sending another message.",
     "generationPersistenceError": "The response could not be saved. It is still shown here, but may be lost if you reload or leave this page. Copy it before continuing.",
+    "generationInterrupted": "No answer was received for this message. The response may have been interrupted. Try again.",
     "conversationReloadErrorTitle": "Couldn't refresh this conversation",
     "conversationReloadError": "Your response is still shown here. We couldn't load the latest conversation from the server.",
     "retryConversationReload": "Retry loading",
@@ -510,6 +511,8 @@
     "chatsAndTasks": "Chats and tasks",
     "seeAll": "See all",
     "seeAllProjectChats": "See all chats in {{name}}",
+    "expandProject": "Expand project",
+    "collapseProject": "Collapse project",
     "search": {
       "open": "Search chats",
       "close": "Close search"
@@ -582,7 +585,8 @@
     "alreadyPublishedWarning": "This conversation is already published in {folder}.",
     "emptyFolderNameError": "Folder name cannot be empty.",
     "invalidFolderNameError": "Folder name contains invalid characters.",
-    "duplicateFolderNameError": "A folder with this name already exists."
+    "duplicateFolderNameError": "A folder with this name already exists.",
+    "sameAsParentFolderNameError": "A folder cannot have the same name as its parent folder."
   },
   "conversationUnpublish": {
     "confirmTitle": "Unpublish conversation?",
@@ -599,6 +603,8 @@
     "unpublishFailedMessage": "The unpublish request was not submitted. Please try again.",
     "unpublishNetworkErrorMessage": "The unpublish request was not submitted because your internet connection was lost. Please check your connection and try again.",
     "submitErrorCallout": "Publishing failed. Please try again.",
+    "adminApprovalTitle": "Admin approval required",
+    "adminApprovalMessage": "We’ll send a request to your organization’s admin. If approved, your {{entity}} will appear in the folder.",
     "authorLabel": "Author",
     "authorPlaceholder": "Author name",
     "authorHint": "Shown as the publication's author. Defaults to you — replace it to credit a team instead.",
@@ -609,7 +615,23 @@
     "addSiblingFolder": "Add sibling",
     "addChildFolder": "Add child",
     "updateVersion": "Update version {version}",
-    "publishingInProgress": "Publishing…"
+    "publishingInProgress": "Publishing…",
+    "dependenciesTitle": "Private dependencies",
+    "dependenciesDescription": "This {{entity}} depends on personal private resources (listed below). After publishing, other users may not be able to use it fully, or may run into problems.",
+    "dependenciesAnnouncement_one": "{{count}} dependency is not public yet",
+    "dependenciesAnnouncement_other": "{{count}} dependencies are not public yet",
+    "dependenciesEntityApplication": "application",
+    "dependenciesEntityConversation": "conversation",
+    "dependenciesEntityProject": "project",
+    "dependenciesEntityToolset": "toolset",
+    "dependenciesEntityPrompt": "prompt",
+    "dependenciesEntitySkill": "skill",
+    "dependenciesEntityItem": "item",
+    "dependenciesTypeApplication": "Application",
+    "dependenciesTypeToolset": "Toolset",
+    "dependenciesTypePrompt": "Prompt",
+    "dependenciesTypeSkill": "Skill",
+    "dependenciesTypeFile": "File"
   },
   "publishAccessRules": {
     "heading": "Allow access if all match",
@@ -866,7 +888,8 @@
         "dropOverlayTitle": "Upload files",
         "dropOverlaySubtitle": "Drop files here to add them to this project",
         "remove": "Remove {{name}}",
-        "open": "Preview {{name}}"
+        "open": "Preview {{name}}",
+        "download": "Download {{name}}"
       },
       "status": {
         "added_one": "{{count}} file added",
@@ -941,8 +964,16 @@
       "emptyFolderNameError": "Folder name cannot be empty.",
       "invalidFolderNameError": "Folder name contains invalid characters.",
       "duplicateFolderNameError": "A folder with this name already exists.",
+      "sameAsParentFolderNameError": "A folder cannot have the same name as its parent folder.",
       "chatsWarning_one": "The {{count}} chat in this project is published with it.",
       "chatsWarning_other": "The {{count}} chats in this project are published with it."
+    },
+    "unpublish": {
+      "confirmTitle": "Unpublish project?",
+      "confirmMessage": "Unpublish \"{{name}}\" from \"{{folder}}\"? The request is submitted for admin approval.",
+      "selectFolderMessage": "Choose which folder to unpublish \"{{name}}\" from. The request is submitted for admin approval.",
+      "folderGroupAriaLabel": "Published folders",
+      "requestingStatus": "Requesting unpublish…"
     },
     "chats": {
       "title": "Chats",
@@ -1506,6 +1537,8 @@
     "error": {
       "createFailed": "Failed to create application. Please try again.",
       "nameConflict": "An application with this name and version already exists.",
+      "nameConflictAgent": "An agent with this name and version already exists in this folder.",
+      "nameConflictToolset": "A toolset with this name and version already exists in this folder.",
       "saveFailed": "Failed to save application settings. Please try again.",
       "saveTimeout": "Saving timed out. Please try again.",
       "settingsNotReady": "The Settings editor did not report readiness. Please reload and try again."
@@ -1624,7 +1657,8 @@
     "menuTitle": "Tools",
     "removeTool": "Remove {{label}}",
     "stateOn": "On",
-    "stateOff": "Off"
+    "stateOff": "Off",
+    "summary": "Tools: {{selected}} of {{total}} on"
   },
   "conversationInput": {
     "usageLimits": {
@@ -1953,7 +1987,9 @@
       "downloadedTitle": "Project downloaded successfully",
       "downloaded": "Project \"{{name}}\" is saved on your device.",
       "publishRequestedTitle": "Project publish requested",
-      "publishRequested": "Publish request for project \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+      "publishRequested": "Publish request for project \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Project unpublish requested",
+      "unpublishRequested": "Unpublish request for project \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     }
   },
   "usage": {

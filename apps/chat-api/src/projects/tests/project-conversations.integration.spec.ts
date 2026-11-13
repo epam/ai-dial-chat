@@ -13,9 +13,13 @@ import { FeatureGuard } from '../../app-config/feature-flags/feature.guard';
 import { AuthSource } from '../../auth/auth-source.enum';
 import type { SessionUser } from '../../auth/session/session.types';
 import { ConversationService } from '../../conversations/conversation.service';
-import { ConversationGenerationService } from '../../conversations/generation/conversation-generation.service';
+import {
+  GENERATION_SHUTDOWN_FLUSH_MS,
+  ConversationGenerationService,
+} from '../../conversations/generation/conversation-generation.service';
 import { ProjectConversationStore } from '../../conversations/persistence/project-conversation.store';
 import { ConversationCompletionsResponder } from '../../conversations/streaming/conversation-completions.responder';
+import type { StreamCompletionRequest } from '../../conversations/streaming/stream-completion-request';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationReadStateService } from '../../scheduled-task-unread/conversation-read-state.service';
 import { ProjectAccessService } from '../access/project-access.service';
@@ -65,8 +69,10 @@ const buildApp = async (
     getConversation: vi.fn(),
     saveClientConversation: vi.fn(),
     renameConversation: vi.fn(),
+    generateTitle: vi.fn(),
     streamCompletion: vi.fn(),
     stopBackgroundGeneration: vi.fn(),
+    stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
     resolveBackgroundAttach: vi.fn(),
   };
   const readState = {
@@ -86,6 +92,7 @@ const buildApp = async (
       ProjectConversationStore,
       ConversationCompletionsResponder,
       ConversationGenerationService,
+      { provide: GENERATION_SHUTDOWN_FLUSH_MS, useValue: 0 },
       { provide: DialClientService, useValue: { client } },
       { provide: ConversationService, useValue: conversationService },
       {
@@ -177,10 +184,33 @@ describe('ProjectConversationsController (integration)', () => {
     await request(app.getHttpServer())
       .delete(`/api/v1/projects/${SHARED}/conversations/x`)
       .expect(403);
+    await request(app.getHttpServer())
+      .post(`/api/v1/projects/${SHARED}/conversations/x/generate-title`)
+      .expect(403);
 
+    expect(built.conversationService.generateTitle).not.toHaveBeenCalled();
     expect(built.client.uploadProjectFile).not.toHaveBeenCalled();
     expect(built.client.deleteProjectFile).not.toHaveBeenCalled();
     expect(built.conversationService.streamCompletion).not.toHaveBeenCalled();
+  });
+
+  it('generates a title for a recipient with WRITE from the project conversation locator', async () => {
+    const built = await buildApp(true, ['READ', 'WRITE']);
+    app = built.app;
+    built.conversationService.generateTitle.mockResolvedValue('Greeting');
+
+    const res = await request(app.getHttpServer())
+      .post(
+        `/api/v1/projects/${SHARED}/conversations/gpt-4o__Hi__1/generate-title`,
+      )
+      .expect(200);
+
+    expect(res.body).toEqual({ name: 'Greeting' });
+    expect(built.conversationService.generateTitle).toHaveBeenCalledWith(
+      'projects/z9y8x7/research/conversations/gpt-4o__Hi__1',
+      USER.at,
+      USER.bucket,
+    );
   });
 
   it('lets a recipient with WRITE create a chat in the owner bucket', async () => {
@@ -203,7 +233,8 @@ describe('ProjectConversationsController (integration)', () => {
     app = built.app;
     built.conversationService.streamCompletion.mockImplementation(
       async function* (..._args: unknown[]) {
-        const onReady = _args[10] as () => void;
+        const { onReadyToStream: onReady } =
+          _args[0] as StreamCompletionRequest;
         onReady();
         yield 'data: {}\n\n';
       },
@@ -220,9 +251,9 @@ describe('ProjectConversationsController (integration)', () => {
       })
       .expect(200);
 
-    const [locator, token] = built.conversationService.streamCompletion.mock
-      .calls[0] as unknown as [string, string];
-    expect(locator).toBe('projects/z9y8x7/research/conversations/x');
+    const { conversationPath, token } = built.conversationService
+      .streamCompletion.mock.calls[0][0] as StreamCompletionRequest;
+    expect(conversationPath).toBe('projects/z9y8x7/research/conversations/x');
     expect(token).toBe(USER.at);
   });
 
@@ -414,7 +445,8 @@ describe('ProjectConversationsController (integration)', () => {
     app = built.app;
     built.conversationService.streamCompletion.mockImplementation(
       async function* (..._args: unknown[]) {
-        const onReady = _args[10] as () => void;
+        const { onReadyToStream: onReady } =
+          _args[0] as StreamCompletionRequest;
         onReady();
         yield 'data: {}\n\n';
       },
@@ -431,23 +463,23 @@ describe('ProjectConversationsController (integration)', () => {
       })
       .expect(200);
 
-    expect(built.conversationService.streamCompletion).toHaveBeenCalledWith(
-      'projects/a1b2c3/q4/conversations/x',
-      USER.at,
-      USER.bucket,
-      GENERATION_ID,
-      'append',
-      'Hi',
-      undefined,
-      'gpt-4o',
-      undefined,
-      OWNER_KEY,
-      expect.any(Function),
-      USER.sub,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-    );
+    expect(built.conversationService.streamCompletion).toHaveBeenCalledWith({
+      conversationPath: 'projects/a1b2c3/q4/conversations/x',
+      token: USER.at,
+      bucket: USER.bucket,
+      generationId: GENERATION_ID,
+      mode: 'append',
+      message: 'Hi',
+      messageIndex: undefined,
+      model: 'gpt-4o',
+      customContent: undefined,
+      ownerKey: OWNER_KEY,
+      onReadyToStream: expect.any(Function),
+      sub: USER.sub,
+      clientChannelId: undefined,
+      timezone: undefined,
+      lang: undefined,
+      jobTitle: undefined,
+    });
   });
 });

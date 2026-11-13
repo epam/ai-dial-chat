@@ -10,6 +10,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PinnedProjectActionState } from '../../../models/pinned-project-action';
 import { deleteProject } from '../../../server-api/projects.api';
 import {
+  discardSharedCatalogItem,
+  revokeSharedAccess,
+} from '../../../server-api/share.api';
+import {
   EntityOperation,
   NotifiableEntity,
 } from '../../../types/entity-notification';
@@ -22,6 +26,8 @@ const P = 'projects/bucket/support';
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   showErrorNotification: vi.fn(),
+  showSuccessNotification: vi.fn(),
+  setPinnedProject: vi.fn(),
   notifyOperationSuccess: vi.fn(),
   replacePinnedProjectId: vi.fn(),
 }));
@@ -38,7 +44,12 @@ vi.mock('react-i18next', () => ({
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => ({
     showErrorNotification: mocks.showErrorNotification,
+    showSuccessNotification: mocks.showSuccessNotification,
   }),
+}));
+vi.mock('../../../server-api/share.api', () => ({
+  discardSharedCatalogItem: vi.fn(),
+  revokeSharedAccess: vi.fn(),
 }));
 vi.mock('../../../hooks/useOperationNotification', () => ({
   useOperationNotification: () => ({
@@ -48,7 +59,7 @@ vi.mock('../../../hooks/useOperationNotification', () => ({
 vi.mock('../../../context/UserConfigContext', () => ({
   useUserConfig: () => ({
     pinnedProjectIds: [P],
-    setPinnedProject: vi.fn(),
+    setPinnedProject: mocks.setPinnedProject,
     replacePinnedProjectId: mocks.replacePinnedProjectId,
   }),
 }));
@@ -164,6 +175,90 @@ describe('PinnedProjectActionOverlays', () => {
     vi.clearAllMocks();
   });
 
+  describe('Remove from My List', () => {
+    const shared: ProjectDetailsDto = {
+      ...project,
+      source: ProjectSource.Shared,
+      canEdit: false,
+      canManage: false,
+    };
+
+    beforeEach(() => {
+      mocks.setPinnedProject.mockResolvedValue(undefined);
+    });
+
+    it('asks for confirmation before discarding anything', () => {
+      renderOverlays({
+        action: open(PinnedProjectActionKind.RemoveFromMyList),
+        project: shared,
+      });
+
+      expect(
+        screen.getByRole('dialog', { name: 'buttons.removeFromMyList' }),
+      ).toBeTruthy();
+      expect(discardSharedCatalogItem).not.toHaveBeenCalled();
+    });
+
+    it('discards the share, unpins, closes and keeps an unrelated route', async () => {
+      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+      const { onClose } = renderOverlays({
+        action: open(PinnedProjectActionKind.RemoveFromMyList),
+        project: shared,
+        routeProjectId: 'projects/bucket/other',
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'buttons.removeFromMyList' }),
+      );
+
+      await waitFor(() => expect(onClose).toHaveBeenCalled());
+      expect(discardSharedCatalogItem).toHaveBeenCalledWith(P);
+      expect(mocks.setPinnedProject).toHaveBeenCalledWith(P, false);
+      expect(mocks.showSuccessNotification).toHaveBeenCalledOnce();
+      expect(mocks.navigate).not.toHaveBeenCalled();
+    });
+
+    it('leaves for the Projects list when the route shows the project', async () => {
+      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+      renderOverlays({
+        action: open(PinnedProjectActionKind.RemoveFromMyList),
+        project: shared,
+        routeProjectId: P,
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'buttons.removeFromMyList' }),
+      );
+
+      await waitFor(() =>
+        expect(mocks.navigate).toHaveBeenCalledWith(ROUTES.Projects, {
+          replace: true,
+        }),
+      );
+    });
+
+    it('shows an error and keeps the pin when the discard fails', async () => {
+      vi.mocked(discardSharedCatalogItem).mockRejectedValue(new Error('403'));
+      renderOverlays({
+        action: open(PinnedProjectActionKind.RemoveFromMyList),
+        project: shared,
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'buttons.removeFromMyList' }),
+      );
+
+      await waitFor(() =>
+        expect(mocks.showErrorNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: 'catalog.details.unshare.error:Support',
+          }),
+        ),
+      );
+      expect(mocks.setPinnedProject).not.toHaveBeenCalled();
+    });
+  });
+
   it('renders nothing without an action', () => {
     renderOverlays();
 
@@ -178,6 +273,39 @@ describe('PinnedProjectActionOverlays', () => {
     expect(screen.getByRole('dialog', { name: 'share project' })).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'Close share' }));
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('revokes from the pinned menu while keeping the route and pin', async () => {
+    vi.mocked(revokeSharedAccess).mockResolvedValue({ success: true });
+    const { onClose } = renderOverlays({
+      action: open(PinnedProjectActionKind.RevokeAccess),
+    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.revokeAccess' }),
+    );
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(revokeSharedAccess).toHaveBeenCalledWith(P);
+    expect(mocks.navigate).not.toHaveBeenCalled();
+    expect(mocks.setPinnedProject).not.toHaveBeenCalled();
+  });
+
+  it('cancels revoke without sending a request', async () => {
+    const { onClose } = renderOverlays({
+      action: open(PinnedProjectActionKind.RevokeAccess),
+    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.cancel' }),
+    );
+    expect(onClose).toHaveBeenCalled();
+    expect(revokeSharedAccess).not.toHaveBeenCalled();
+  });
+
+  it('does not open revoke for a recipient', () => {
+    renderOverlays({
+      action: open(PinnedProjectActionKind.RevokeAccess),
+      project: { ...project, canManage: false },
+    });
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('opens the publish panel and returns focus to the row trigger', () => {
