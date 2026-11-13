@@ -19,9 +19,11 @@ describe('useVersionHistoryText', () => {
     ).toBe('12 Jul 2026');
   });
 
-  it('keeps the folders placeholder in the published-in label for the section to fill', () => {
+  it('joins the published folders for the published-in line with the language list separator', () => {
     const { result } = renderHook(() => useVersionHistoryText());
 
-    expect(result.current.labels.publishedInLabel).toContain('{folders}');
+    expect(
+      result.current.formatters.formatPublishedIn(['Org/Design', 'Org']),
+    ).toContain('Org/Design, Org');
   });
 });

@@ -14,7 +14,7 @@ const rows: VersionHistoryRow[] = [
     id: 'a',
     version: '1.0.0',
     status: VersionHistoryStatus.Published,
-    publishedFolders: ['Organization'],
+    publishedIn: 'Published in Organization',
     folder: 'Personal',
     modifiedAt: '12 Jul 2026',
     author: 'Published by Jane Doe',

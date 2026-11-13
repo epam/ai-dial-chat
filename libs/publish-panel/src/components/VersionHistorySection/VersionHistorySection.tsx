@@ -25,7 +25,6 @@ const DEFAULT_LABELS = {
   notPublishedLabel: 'Not published',
   inReviewLabel: 'In review',
   publishedLabel: 'Published',
-  publishedInLabel: 'Published in {folders}',
   unknownLabel: 'Status unavailable',
   loadingLabel: 'Loading publication statuses…',
   emptyLabel: 'No saved versions yet.',
@@ -122,14 +121,6 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
           {rows.map((row) => {
             const statusLabel = getStatusLabel(row, text);
             const isStatusPending = !statusLabel && isLoading && !hasError;
-            const publishedIn =
-              row.status === VersionHistoryStatus.Published &&
-              row.publishedFolders?.length
-                ? text.publishedInLabel.replace(
-                    '{folders}',
-                    () => row.publishedFolders?.join(', ') ?? '',
-                  )
-                : undefined;
             return (
               <li
                 key={row.id}
@@ -188,7 +179,7 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
                     )}
                   </div>
                 )}
-                {publishedIn && (
+                {row.publishedIn && (
                   <span
                     className={mergeClasses(
                       'self-end text-end',
@@ -196,7 +187,7 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
                       styles.meta,
                     )}
                   >
-                    {publishedIn}
+                    {row.publishedIn}
                   </span>
                 )}
               </li>

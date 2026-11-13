@@ -48,6 +48,7 @@ const formatters: VersionHistoryFormatters = {
   formatDate: (timestamp) => `d${timestamp}`,
   formatPublishedBy: (name) => `Published by ${name}`,
   formatOwner: (name) => `by ${name}`,
+  formatPublishedIn: (folders) => `Published in ${folders.join(' + ')}`,
 };
 
 const statusEntry = (
@@ -163,7 +164,7 @@ describe('useVersionHistory', () => {
     );
     expect(byId[ID_BETA]).toMatchObject({
       status: VersionHistoryStatus.Published,
-      publishedFolders: ['Organization/Design'],
+      publishedIn: 'Published in Organization/Design',
       author: 'Published by Jane Doe',
     });
     expect(byId[ID_11]).toMatchObject({

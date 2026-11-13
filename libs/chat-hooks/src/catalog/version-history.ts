@@ -13,7 +13,7 @@ import { parseResourceFolderPath } from './resource-folder';
 export interface VersionHistoryListingItem {
   /** Resource id as the listing returns it. */
   id: string;
-  /** Key shared by every version of one resource saved in one folder. */
+  /** Key shared by every version of one resource saved by one owner in one folder. */
   versionGroupId?: string;
   /** Display version of the item. */
   displayVersion?: string;
@@ -35,6 +35,8 @@ export interface VersionHistoryFormatters {
   formatPublishedBy: (name: string) => string;
   /** Builds the author line of any other version, e.g. `by {name}`. */
   formatOwner: (name: string) => string;
+  /** Builds the line that names the folders a published version is published to, e.g. `Published in {folders}`. */
+  formatPublishedIn: (folders: string[]) => string;
 }
 
 const STATUS_BY_DTO: Record<VersionPublicationStatus, VersionHistoryStatus> = {
@@ -93,7 +95,11 @@ export const buildVersionHistoryRows = (
         id: item.id,
         version: item.displayVersion ?? '',
         status,
-        publishedFolders: entry?.publishedFolders,
+        publishedIn:
+          status === VersionHistoryStatus.Published &&
+          entry?.publishedFolders?.length
+            ? formatters.formatPublishedIn(entry.publishedFolders)
+            : undefined,
         folder: [
           formatters.rootLabel,
           ...parseResourceFolderPath(item.id),

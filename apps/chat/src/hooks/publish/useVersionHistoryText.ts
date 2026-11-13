@@ -23,10 +23,6 @@ export const useVersionHistoryText = (): {
       notPublishedLabel: t(VersionHistoryI18nKeys.NotPublished),
       inReviewLabel: t(VersionHistoryI18nKeys.InReview),
       publishedLabel: t(VersionHistoryI18nKeys.Published),
-      publishedInLabel: t(VersionHistoryI18nKeys.PublishedIn, {
-        folders: '{folders}',
-        interpolation: { escapeValue: false },
-      }),
       unknownLabel: t(VersionHistoryI18nKeys.StatusUnavailable),
       loadingLabel: t(VersionHistoryI18nKeys.Loading),
       emptyLabel: t(VersionHistoryI18nKeys.Empty),
@@ -48,6 +44,14 @@ export const useVersionHistoryText = (): {
       formatPublishedBy: (name) =>
         t(VersionHistoryI18nKeys.PublishedBy, {
           name,
+          interpolation: { escapeValue: false },
+        }),
+      formatPublishedIn: (folders) =>
+        t(VersionHistoryI18nKeys.PublishedIn, {
+          folders: new Intl.ListFormat(displayLanguage, {
+            style: 'short',
+            type: 'unit',
+          }).format(folders),
           interpolation: { escapeValue: false },
         }),
       formatOwner: (name) =>

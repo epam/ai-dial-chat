@@ -31,6 +31,7 @@ const formatters: VersionHistoryFormatters = {
   formatDate: (timestamp) => `d${timestamp}`,
   formatPublishedBy: (name) => `Published by ${name}`,
   formatOwner: (name) => `by ${name}`,
+  formatPublishedIn: (folders) => `Published in ${folders.join(' + ')}`,
 };
 
 const client = { getCatalogVersionStatuses: vi.fn().mockResolvedValue([]) };

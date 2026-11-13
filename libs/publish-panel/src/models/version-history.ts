@@ -20,8 +20,8 @@ export interface VersionHistoryRow {
   version: string;
   /** Publication state; omit while it is still loading. */
   status?: VersionHistoryStatus;
-  /** Folders a published version is published to. */
-  publishedFolders?: string[];
+  /** Line that names the folders a published version is published to, already formatted and translated by the host. */
+  publishedIn?: string;
   /** Folder the version is saved in, already formatted by the host. */
   folder?: string;
   /** Last modified date, already formatted by the host. */
@@ -40,8 +40,6 @@ export interface VersionHistoryLabels {
   inReviewLabel?: string;
   /** Status badge of a published version. Defaults to `'Published'`. */
   publishedLabel?: string;
-  /** Line under a published version; `{folders}` is replaced by the comma-joined folders. Defaults to `'Published in {folders}'`. */
-  publishedInLabel?: string;
   /** Status of a version whose publication state cannot be read. Defaults to `'Status unavailable'`. */
   unknownLabel?: string;
   /** Message announced to screen readers while statuses load; a placeholder is drawn in each status slot. Defaults to `'Loading publication statuses…'`. */
