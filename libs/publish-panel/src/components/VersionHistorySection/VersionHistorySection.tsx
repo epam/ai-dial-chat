@@ -4,6 +4,7 @@ import {
   BadgeColor,
   BadgeVariant,
   ElementSize,
+  EllipsisTooltip,
   ErrorText,
   FolderName,
   LinkButton,
@@ -138,15 +139,14 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
                 className={mergeClasses('flex flex-col gap-1 py-2', styles.row)}
               >
                 <div className="flex min-w-0 items-center gap-2">
-                  <span
+                  <EllipsisTooltip
+                    text={row.version}
                     className={mergeClasses(
-                      'min-w-0 wrap-anywhere',
+                      'flex-initial!',
                       versionClassName,
                       styles.version,
                     )}
-                  >
-                    {row.version}
-                  </span>
+                  />
                   {row.isCurrent && (
                     <Badge
                       label={text.currentLabel}

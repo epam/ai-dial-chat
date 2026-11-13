@@ -58,7 +58,7 @@ describe('VersionHistorySection — RTL and accessibility', () => {
     expect(screen.getByText('Published in Organization')).toBeTruthy();
   });
 
-  it('lets a 64-character version wrap instead of cutting it with an ellipsis', () => {
+  it('keeps a 64-character version on one line and cuts it with an ellipsis', () => {
     render(
       <VersionHistorySection
         rows={[{ ...rows[0], version: 'a'.repeat(64) }]}
@@ -66,7 +66,7 @@ describe('VersionHistorySection — RTL and accessibility', () => {
     );
 
     const version = screen.getByText('a'.repeat(64));
-    expect(version.className).toMatch(/wrap-anywhere/);
-    expect(version.className).not.toMatch(/truncate/);
+    expect(version.className).toMatch(/truncate/);
+    expect(version.className).not.toMatch(/wrap-anywhere/);
   });
 });
