@@ -1,5 +1,7 @@
 import {
+  STORED_VERSION_PATTERN,
   validateDeploymentCreationFields,
+  type DeploymentCreationFormValidationOptions,
   type DeploymentCreationFormValues,
 } from '@epam/ai-dial-builder-form';
 import { ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
@@ -140,13 +142,23 @@ export const isToolsetAuthValid = (
   return true;
 };
 
+/** Returns the metadata validation options of the editor: a new toolset's version creates a path and takes the strict rule, an existing toolset's stored version keeps the earlier, looser one. */
+export const getToolsetMetadataValidationOptions = (
+  isEditMode: boolean,
+): DeploymentCreationFormValidationOptions => ({
+  validateVersionPattern: isEditMode ? STORED_VERSION_PATTERN : true,
+});
+
 /** Returns whether the editor form can be saved without surfacing validation errors. */
 export const isToolsetFormValid = (
   form: ToolsetFormData,
   isEditMode = false,
 ): boolean =>
   Object.keys(
-    validateDeploymentCreationFields(form, { validateVersionPattern: true }),
+    validateDeploymentCreationFields(
+      form,
+      getToolsetMetadataValidationOptions(isEditMode),
+    ),
   ).length === 0 &&
   isValidEndpointUrl(form.endpoint) &&
   isToolsetAuthValid(form.auth, isEditMode);

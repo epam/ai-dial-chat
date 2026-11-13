@@ -19,7 +19,7 @@ lib itself creates), and never resolves a translation (every string arrives via
 optional `labels` groups with English defaults). Validation delegates the
 name/version checks to `@epam/ai-dial-builder-form`'s
 `validateDeploymentCreationFields`, so the toolset editor and the Quick/Custom
-App editors share one field contract. A version must be 1-64 letters, digits, underscores, dots, plus signs or hyphens; it cannot end with a dot, contain two underscores in a row, or start with an underscore (`RESOURCE_VERSION_PATTERN` from `@epam/ai-dial-chat-shared`, the rule the chat API applies).
+App editors share one field contract. A version must be 1-64 letters, digits, underscores, dots, plus signs or hyphens; it cannot end with a dot, contain two underscores in a row, or start with an underscore (`RESOURCE_VERSION_PATTERN` from `@epam/ai-dial-chat-shared`, the rule the chat API applies to a new version). An existing toolset keeps the looser `STORED_RESOURCE_VERSION_PATTERN` (1-64 of the same characters), so a version stored under the earlier rules saves unchanged.
 
 `SettingsForm`, `AuthSection`, and `ConnectMcpUrlContent` are internal — they
 are rendered by `ToolsetEditor` and are not exported. Only their `*Labels`

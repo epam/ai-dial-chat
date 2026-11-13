@@ -34,7 +34,7 @@ Each row SHALL show:
 - the last modified date, as `12 Jul 2026` (day, short month, year) for English;
 - the author: for a Published version, the publisher ("Published by {name}"); otherwise the version's `owner` from the listing ("by {name}"), omitted when the listing has none.
 
-The first line holds the version and the status badge, with the date at the far end; the second line holds the folder and the author at the far end; a Published version adds a third line "Published in {folders}", aligned to the end under the author, with its target folders, so the badge stays short. Version and date use 14px text, the other lines 12px secondary text, from the kit type scale. A version that does not fit stays on one line, cut with an ellipsis, and the kit ellipsis tooltip shows the whole version on hover and focus.
+The first line holds the version and the status badge, with the date at the far end; the second line holds the folder and the author at the far end; a Published version adds a third line "Published in {folders}", aligned to the end under the author, with its target folders, so the badge stays short. The host formats that line (translation and list separator), like the folder, date and author, and the section only renders the string it is given. Version and date use 14px text, the other lines 12px secondary text, from the kit type scale. A version that does not fit stays on one line, cut with an ellipsis, and the kit ellipsis tooltip shows the whole version on hover and focus.
 
 #### Scenario: Rows and order without the open version
 - **WHEN** the section renders for application `Design Review Agent` that has versions `1.0.0` (updated 12 Jul), `beta-2` (updated 20 Jul) and `1.1.0` (updated 01 Jul), and `1.0.0` is being edited

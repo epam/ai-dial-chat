@@ -2,8 +2,8 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { describe, expect, it } from 'vitest';
 import {
-  ACCEPTED_RESOURCE_VERSIONS,
-  REJECTED_RESOURCE_VERSIONS,
+  ACCEPTED_STORED_RESOURCE_VERSIONS,
+  REJECTED_STORED_RESOURCE_VERSIONS,
 } from '../../common/validators/resource-version.corpus';
 import { UpdateApplicationBodyDto } from '../dto/update-application.dto';
 
@@ -177,12 +177,15 @@ describe('UpdateApplicationBodyDto', () => {
 });
 
 describe('UpdateApplicationBodyDto — version', () => {
-  it.each(ACCEPTED_RESOURCE_VERSIONS)('accepts version %s', async (version) => {
-    const errors = await validateDto({ ...BASE_BODY, version });
-    expect(errors.some((e) => e.property === 'version')).toBe(false);
-  });
+  it.each(ACCEPTED_STORED_RESOURCE_VERSIONS)(
+    'accepts version %s',
+    async (version) => {
+      const errors = await validateDto({ ...BASE_BODY, version });
+      expect(errors.some((e) => e.property === 'version')).toBe(false);
+    },
+  );
 
-  it.each(REJECTED_RESOURCE_VERSIONS)(
+  it.each(REJECTED_STORED_RESOURCE_VERSIONS)(
     'rejects version "%s"',
     async (version) => {
       const errors = await validateDto({ ...BASE_BODY, version });

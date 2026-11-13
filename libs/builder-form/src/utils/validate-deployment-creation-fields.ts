@@ -4,6 +4,7 @@ import {
   exceedsMaxLength,
   hasControlCharacters,
   RESOURCE_VERSION_PATTERN,
+  STORED_RESOURCE_VERSION_PATTERN,
 } from '@epam/ai-dial-chat-shared';
 import type { DeploymentCreationFormValues } from '../models/deployment-creation-form';
 import type {
@@ -17,6 +18,9 @@ export const NAME_PATTERN = /^[a-zA-Z0-9 _.-]+$/;
 
 /** Default version rule: `RESOURCE_VERSION_PATTERN` from `@epam/ai-dial-chat-shared` (1-64 of letters, digits, `_`, `.`, `+`, `-`; no trailing dot, no `__`, no leading `_`). */
 export const VERSION_PATTERN = RESOURCE_VERSION_PATTERN;
+
+/** Version rule for a deployment that already exists: `STORED_RESOURCE_VERSION_PATTERN` from `@epam/ai-dial-chat-shared` (1-64 of letters, digits, `_`, `.`, `+`, `-`). Pass it as `validateVersionPattern` in edit mode, so a version stored under the earlier, looser rules still saves unchanged. */
+export const STORED_VERSION_PATTERN = STORED_RESOURCE_VERSION_PATTERN;
 
 /** Version a new deployment's create form opens with; a SemVer 2.0.0 value the host seeds into its create-mode metadata. */
 export const DEFAULT_DEPLOYMENT_VERSION = '1.0.0';

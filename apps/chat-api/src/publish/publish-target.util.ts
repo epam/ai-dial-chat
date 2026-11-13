@@ -1,7 +1,7 @@
 import { encodePlainDialResourcePath } from '../common/utils/encode-dial-path';
 import { RESOURCE_VERSION_SEPARATOR } from '../common/utils/next-free-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
-import { RESOURCE_VERSION_PATTERN } from '../common/validators/resource-version.pattern';
+import { STORED_RESOURCE_VERSION_PATTERN } from '../common/validators/resource-version.pattern';
 
 /*
  * Confirmed against DIAL Core's own OpenAPI spec (`/v1/ops/publication/create`
@@ -234,7 +234,7 @@ export const getVersionedTargetResourceName = (
     !VERSIONED_RESOURCE_PREFIXES.has(resourceTypePrefix) ||
     separatorIndex === -1 ||
     !version ||
-    !RESOURCE_VERSION_PATTERN.test(version)
+    !STORED_RESOURCE_VERSION_PATTERN.test(version)
   ) {
     return resourceName;
   }

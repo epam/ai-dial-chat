@@ -90,6 +90,8 @@ describe('getVersionedTargetResourceName', () => {
     ['applications', 'my-app__0.0.1', '2.0.0-beta.1', 'my-app__2.0.0-beta.1'],
     ['toolsets', 'my-tool__1.0.0', '1.0.0+build.5', 'my-tool__1.0.0%2Bbuild.5'],
     ['applications', 'my-app__1.0+b1', '2.0+b2', 'my-app__2.0%2Bb2'],
+    ['toolsets', 'my-tool__1.0.0', '_beta', 'my-tool___beta'],
+    ['toolsets', 'my-tool__1.0.0', '1__2', 'my-tool__1__2'],
   ])(
     'replaces the version suffix of a %s resource name',
     (prefix, name, version, expected) => {
@@ -105,7 +107,6 @@ describe('getVersionedTargetResourceName', () => {
     ['toolsets', 'no-suffix', '1.0.1'],
     ['toolsets', 'my-tool__1.0.0', undefined],
     ['toolsets', 'my-tool__1.0.0', '../evil'],
-    ['toolsets', 'my-tool__1.0.0', '1.0.'],
     ['applications', 'my-app__1.0.0', '..'],
     ['applications', 'my-app__1.0.0', 'a'.repeat(65)],
   ])('keeps %s "%s" unchanged for version %s', (prefix, name, version) => {

@@ -40,6 +40,8 @@ import { IsValidResourceReference } from '../../common/validators/resource-refer
 import {
   RESOURCE_VERSION_PATTERN,
   RESOURCE_VERSION_VALIDATION_MESSAGE,
+  STORED_RESOURCE_VERSION_PATTERN,
+  STORED_RESOURCE_VERSION_VALIDATION_MESSAGE,
 } from '../../common/validators/resource-version.pattern';
 import { IsValidFilePath } from '../../files/dto/file-path.validator';
 
@@ -146,8 +148,8 @@ export class ToolsetBodyDto {
   @ApiPropertyOptional({ example: '0.0.1' })
   @IsString()
   @IsOptional()
-  @Matches(RESOURCE_VERSION_PATTERN, {
-    message: RESOURCE_VERSION_VALIDATION_MESSAGE,
+  @Matches(STORED_RESOURCE_VERSION_PATTERN, {
+    message: STORED_RESOURCE_VERSION_VALIDATION_MESSAGE,
   })
   version?: string;
 
@@ -237,6 +239,15 @@ export class ToolsetBodyDto {
 
 /** Create body: the shared toolset fields plus where and how to create it. */
 export class CreateToolsetBodyDto extends ToolsetBodyDto {
+  /* A create writes a new path `{name}__{version}`, so it takes the strict rule on top of the stored one an update uses. */
+  @ApiPropertyOptional({ example: '0.0.1' })
+  @IsString()
+  @IsOptional()
+  @Matches(RESOURCE_VERSION_PATTERN, {
+    message: RESOURCE_VERSION_VALIDATION_MESSAGE,
+  })
+  override version?: string;
+
   @ApiPropertyOptional({
     example: 'Search',
     description:

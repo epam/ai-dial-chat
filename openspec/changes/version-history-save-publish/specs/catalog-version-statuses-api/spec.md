@@ -18,7 +18,7 @@ The backend SHALL expose `GET /api/v1/catalog/{entityType}/{entityId}/version-st
 ]
 ```
 
-The wire values of `status` are `published`, `in-review`, `not-published` and `unknown`. The group SHALL be resolved from the deployments listing (applications) or the toolsets listing (toolsets): the items sharing the entity's `versionGroupId` and owner bucket, read through the existing cached listing without an extra DIAL Core call. `version` SHALL be the item's `displayVersion`; clients join statuses to their rows by `id`.
+The wire values of `status` are `published`, `in-review`, `not-published` and `unknown`. The group SHALL be resolved from the deployments listing (applications) or the toolsets listing (toolsets): the items sharing the entity's `versionGroupId` (which already carries the owner bucket), read through the existing cached listing without an extra DIAL Core call. `version` SHALL be the item's `displayVersion`; clients join statuses to their rows by `id`.
 
 Errors: `400` for an invalid `entityType` or `entityId` (same allowlist validation as `publish-history`), `401` without a session, `404` when no version of the entity exists in the listing, `502` when DIAL Core returns an error, `503` when DIAL Core is unavailable or times out. The OpenAPI operation SHALL be `getCatalogVersionStatuses`, with a response DTO class (`VersionStatusEntryDto`), called by the frontend through the normal generated method via a thin wrapper in `apps/chat/src/server-api/`.
 

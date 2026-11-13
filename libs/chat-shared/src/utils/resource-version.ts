@@ -14,3 +14,13 @@
 
 /** Accepts a resource version of 1-64 letters, digits, `_`, `.`, `+` or `-` that does not end with a dot, does not contain `__` and does not start with `_`. */
 export const RESOURCE_VERSION_PATTERN = /^(?!.*\.$)(?!.*__)(?!_)[\w.+-]{1,64}$/;
+
+/*
+ * Mirror of `STORED_RESOURCE_VERSION_PATTERN` in the same API file: the rule
+ * for a version that already exists or does not create a path (an update, a
+ * publish), so a version stored under the earlier, looser rules still saves
+ * unchanged and publishes.
+ */
+
+/** Accepts a version of 1-64 letters, digits, `_`, `.`, `+` or `-` that is not made of dots only. */
+export const STORED_RESOURCE_VERSION_PATTERN = /^(?!\.+$)[\w.+-]{1,64}$/;

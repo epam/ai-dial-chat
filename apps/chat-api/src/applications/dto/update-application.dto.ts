@@ -28,8 +28,8 @@ import {
 } from '../../common/validators/locale-code.pattern';
 import { IsValidResourceReference } from '../../common/validators/resource-reference.validator';
 import {
-  RESOURCE_VERSION_PATTERN,
-  RESOURCE_VERSION_VALIDATION_MESSAGE,
+  STORED_RESOURCE_VERSION_PATTERN,
+  STORED_RESOURCE_VERSION_VALIDATION_MESSAGE,
 } from '../../common/validators/resource-version.pattern';
 
 /*
@@ -89,8 +89,8 @@ export class UpdateApplicationBodyDto {
   @ApiPropertyOptional({ example: '1.0.0' })
   @IsString()
   @IsOptional()
-  @Matches(RESOURCE_VERSION_PATTERN, {
-    message: RESOURCE_VERSION_VALIDATION_MESSAGE,
+  @Matches(STORED_RESOURCE_VERSION_PATTERN, {
+    message: STORED_RESOURCE_VERSION_VALIDATION_MESSAGE,
   })
   version?: string;
 

@@ -1,7 +1,10 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { RESOURCE_VERSION_PATTERN } from '../resource-version';
+import {
+  RESOURCE_VERSION_PATTERN,
+  STORED_RESOURCE_VERSION_PATTERN,
+} from '../resource-version';
 
 const findRepoRoot = (): string => {
   let directory = process.cwd();
@@ -32,6 +35,8 @@ const readCorpusList = (name: string): string[] => {
 
 const ACCEPTED = readCorpusList('ACCEPTED_RESOURCE_VERSIONS');
 const REJECTED = readCorpusList('REJECTED_RESOURCE_VERSIONS');
+const ACCEPTED_STORED = readCorpusList('ACCEPTED_STORED_RESOURCE_VERSIONS');
+const REJECTED_STORED = readCorpusList('REJECTED_STORED_RESOURCE_VERSIONS');
 
 describe('RESOURCE_VERSION_PATTERN', () => {
   it('has the same source as the API constant', () => {
@@ -54,5 +59,31 @@ describe('RESOURCE_VERSION_PATTERN', () => {
 
   it.each(REJECTED)('rejects %j', (version) => {
     expect(RESOURCE_VERSION_PATTERN.test(version)).toBe(false);
+  });
+});
+
+describe('STORED_RESOURCE_VERSION_PATTERN', () => {
+  it('has the same source as the API constant', () => {
+    const match =
+      /export const STORED_RESOURCE_VERSION_PATTERN = \/(.*)\/;/.exec(
+        readValidatorSource('resource-version.pattern.ts'),
+      );
+    expect(match).not.toBeNull();
+    expect(STORED_RESOURCE_VERSION_PATTERN.source).toBe(match?.[1]);
+    expect(STORED_RESOURCE_VERSION_PATTERN.flags).toBe('');
+  });
+
+  it.each(ACCEPTED_STORED)('accepts %j', (version) => {
+    expect(STORED_RESOURCE_VERSION_PATTERN.test(version)).toBe(true);
+  });
+
+  it.each(REJECTED_STORED)('rejects %j', (version) => {
+    expect(STORED_RESOURCE_VERSION_PATTERN.test(version)).toBe(false);
+  });
+
+  it('accepts everything the strict rule accepts', () => {
+    for (const version of ACCEPTED) {
+      expect(STORED_RESOURCE_VERSION_PATTERN.test(version)).toBe(true);
+    }
   });
 });

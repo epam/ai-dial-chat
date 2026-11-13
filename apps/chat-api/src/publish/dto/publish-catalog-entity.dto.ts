@@ -11,8 +11,8 @@ import {
   ValidateNested,
 } from 'class-validator';
 import {
-  RESOURCE_VERSION_PATTERN,
-  RESOURCE_VERSION_VALIDATION_MESSAGE,
+  STORED_RESOURCE_VERSION_PATTERN,
+  STORED_RESOURCE_VERSION_VALIDATION_MESSAGE,
 } from '../../common/validators/resource-version.pattern';
 import { IsValidFilePath } from '../../files/dto/file-path.validator';
 import {
@@ -49,8 +49,8 @@ export class PublishCatalogEntityDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(RESOURCE_VERSION_PATTERN, {
-    message: RESOURCE_VERSION_VALIDATION_MESSAGE,
+  @Matches(STORED_RESOURCE_VERSION_PATTERN, {
+    message: STORED_RESOURCE_VERSION_VALIDATION_MESSAGE,
   })
   version?: string;
 

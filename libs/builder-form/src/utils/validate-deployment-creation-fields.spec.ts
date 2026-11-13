@@ -7,6 +7,7 @@ import type { DeploymentCreationFormValues } from '../models/deployment-creation
 import { DeploymentCreationFieldErrorCode } from '../models/validation';
 import {
   DEFAULT_DEPLOYMENT_VERSION,
+  STORED_VERSION_PATTERN,
   validateDeploymentCreationFields,
 } from './validate-deployment-creation-fields';
 
@@ -139,6 +140,24 @@ describe('validateDeploymentCreationFields', () => {
     );
     expect(errors.version).toBeUndefined();
   });
+
+  it.each(['_beta', '1.0.', '1__2'])(
+    'accepts the stored version "%s" with STORED_VERSION_PATTERN but not with the default rule',
+    (version) => {
+      expect(
+        validateDeploymentCreationFields(
+          { ...baseValues, version },
+          { validateVersionPattern: STORED_VERSION_PATTERN },
+        ).version,
+      ).toBeUndefined();
+      expect(
+        validateDeploymentCreationFields(
+          { ...baseValues, version },
+          { validateVersionPattern: true },
+        ).version,
+      ).toBe(DeploymentCreationFieldErrorCode.InvalidFormat);
+    },
+  );
 
   it('does not flag an empty version even when the pattern check is enabled', () => {
     const errors = validateDeploymentCreationFields(

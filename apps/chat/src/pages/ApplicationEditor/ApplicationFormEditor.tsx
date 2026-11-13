@@ -3,6 +3,7 @@ import {
   EntityEditor,
   MetadataField,
   MetadataForm,
+  STORED_VERSION_PATTERN,
   useMetadataForm,
 } from '@epam/ai-dial-builder-form';
 import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
@@ -149,9 +150,21 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
         : definition.defaultMetadata,
     [deployment, definition.defaultMetadata],
   );
+  /* A new application's version creates a path and takes the strict rule; an existing one keeps the looser rule of the version it was stored with. */
+  const metadataValidationOptions = useMemo(
+    () =>
+      isEditMode &&
+      definition.metadataValidation.validateVersionPattern === true
+        ? {
+            ...definition.metadataValidation,
+            validateVersionPattern: STORED_VERSION_PATTERN,
+          }
+        : definition.metadataValidation,
+    [definition.metadataValidation, isEditMode],
+  );
   const metadata = useMetadataForm({
     initialValues: metadataInitialValues,
-    validationOptions: definition.metadataValidation,
+    validationOptions: metadataValidationOptions,
     reseedKey: wasCreatedThisSession ? undefined : deployment?.id,
   });
 

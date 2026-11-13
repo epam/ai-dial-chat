@@ -312,6 +312,21 @@ describe('isToolsetFormValid', () => {
     },
   );
 
+  it.each(['_beta', '1.0.', '1__2'])(
+    'rejects the new version "%s" but saves it unchanged for an existing toolset',
+    (version) => {
+      expect(isToolsetFormValid({ ...baseForm(), version })).toBe(false);
+      expect(isToolsetFormValid({ ...baseForm(), version }, true)).toBe(true);
+    },
+  );
+
+  it.each(['a'.repeat(65), '..', '1 0'])(
+    'still rejects "%s" for an existing toolset',
+    (version) => {
+      expect(isToolsetFormValid({ ...baseForm(), version }, true)).toBe(false);
+    },
+  );
+
   it('accepts a complete form with no auth requirements', () => {
     expect(isToolsetFormValid(baseForm())).toBe(true);
   });

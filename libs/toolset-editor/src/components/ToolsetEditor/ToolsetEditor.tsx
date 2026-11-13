@@ -4,7 +4,6 @@ import {
   MetadataField,
   MetadataForm,
   useMetadataForm,
-  type DeploymentCreationFormValidationOptions,
 } from '@epam/ai-dial-builder-form';
 import {
   getApiErrorDetails,
@@ -28,6 +27,7 @@ import type {
   ToolsetFormErrors,
 } from '../../models/toolset-form';
 import {
+  getToolsetMetadataValidationOptions,
   isToolsetFormValid,
   isValidEndpointUrl,
   isValidOAuthResource,
@@ -53,10 +53,6 @@ const SETUP_ERROR_FIELDS: (keyof ToolsetFormErrors)[] = [
 ];
 
 const SETUP_ERROR_FIELD_SET = new Set<string>(SETUP_ERROR_FIELDS);
-
-const METADATA_VALIDATION_OPTIONS: DeploymentCreationFormValidationOptions = {
-  validateVersionPattern: true,
-};
 
 type ToolsetDirtyFields = Partial<Record<keyof ToolsetFormErrors, true>>;
 
@@ -121,9 +117,13 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
     () => pickToolsetMetadata(initialForm),
     [initialForm],
   );
+  const metadataValidationOptions = useMemo(
+    () => getToolsetMetadataValidationOptions(isEditMode),
+    [isEditMode],
+  );
   const metadata = useMetadataForm({
     initialValues: metadataInitialValues,
-    validationOptions: METADATA_VALIDATION_OPTIONS,
+    validationOptions: metadataValidationOptions,
     reseedKey: seed.key,
   });
   const {
