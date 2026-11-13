@@ -151,7 +151,35 @@ describe('ModelCatalogService', () => {
       expect(result.data[0]).not.toHaveProperty('catalog_schema_id');
     });
 
-    it('keeps only the recognised string catalog properties', async () => {
+    it('copies the provider and lifecycle dates as Core sends them', async () => {
+      const { service, getModels } = makeService();
+      getModels.mockResolvedValue(
+        okResponse({
+          data: [
+            {
+              ...gpt,
+              provider: 'Azure',
+              deprecation_date: 'Q4 2026',
+              end_of_service: '2027-03-31',
+            },
+            claude,
+          ],
+        }),
+      );
+
+      const [gptEntry, claudeEntry] = (await service.listCatalog()).data;
+
+      expect(gptEntry).toMatchObject({
+        provider: 'Azure',
+        deprecation_date: 'Q4 2026',
+        end_of_service: '2027-03-31',
+      });
+      expect(claudeEntry).not.toHaveProperty('provider');
+      expect(claudeEntry).not.toHaveProperty('deprecation_date');
+      expect(claudeEntry).not.toHaveProperty('end_of_service');
+    });
+
+    it('keeps only the recognised string catalog properties, without provider', async () => {
       const { service, getModels } = makeService();
       getModels.mockResolvedValue(
         okResponse({
@@ -173,15 +201,15 @@ describe('ModelCatalogService', () => {
       const [entry] = (await service.listCatalog()).data;
 
       expect(entry.catalog_properties).toEqual({
-        provider: 'Azure',
         vendor: 'OpenAI',
         knowledgeCutoffDate: '2023-10-01',
       });
+      expect(entry.catalog_properties).not.toHaveProperty('provider');
       expect(entry.catalog_properties?.license).toBeUndefined();
       expect(entry.catalog_properties).not.toHaveProperty('internalNote');
     });
 
-    it('omits catalog properties when Core sends none or nothing recognised', async () => {
+    it('omits catalog properties when Core sends none or nothing recognised besides provider', async () => {
       const { service, getModels } = makeService();
       getModels.mockResolvedValue(
         okResponse({
@@ -193,13 +221,18 @@ describe('ModelCatalogService', () => {
               object: 'model',
               catalog_properties: { internalNote: 'x', provider: 42 },
             },
+            {
+              id: 'gemini-pro',
+              object: 'model',
+              catalog_properties: { provider: 'Google' },
+            },
           ],
         }),
       );
 
       const { data } = await service.listCatalog();
 
-      expect(data).toHaveLength(3);
+      expect(data).toHaveLength(4);
       for (const entry of data) {
         expect(entry).not.toHaveProperty('catalog_properties');
       }
@@ -389,14 +422,20 @@ describe('ModelCatalogService', () => {
       );
     });
 
-    it('returns the entry with its allowlisted catalog properties', async () => {
+    it('returns the entry with its provider, lifecycle dates and allowlisted catalog properties', async () => {
       const { service, getModels } = makeService();
       getModels.mockResolvedValue(
         okResponse({
           data: [
             {
               ...gpt,
-              catalog_properties: { provider: 'Azure', internalNote: 'x' },
+              provider: 'Azure',
+              end_of_service: '2027-03-31',
+              catalog_properties: {
+                provider: 'Legacy',
+                vendor: 'OpenAI',
+                internalNote: 'x',
+              },
             },
           ],
         }),
@@ -404,7 +443,12 @@ describe('ModelCatalogService', () => {
 
       const entry = await service.getCatalogEntry('gpt-4o');
 
-      expect(entry.catalog_properties).toEqual({ provider: 'Azure' });
+      expect(entry).toMatchObject({
+        provider: 'Azure',
+        end_of_service: '2027-03-31',
+      });
+      expect(entry.catalog_properties).toEqual({ vendor: 'OpenAI' });
+      expect(entry.catalog_properties).not.toHaveProperty('provider');
       expect(entry.catalog_properties).not.toHaveProperty('internalNote');
     });
 

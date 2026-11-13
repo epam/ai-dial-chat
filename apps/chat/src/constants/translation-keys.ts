@@ -293,6 +293,8 @@ export enum CatalogI18nKeys {
   EntityDetailsParameters = 'catalog.entityDetails.parameters',
   EntityDetailsHostedBy = 'catalog.entityDetails.hostedBy',
   EntityDetailsReleaseDate = 'catalog.entityDetails.releaseDate',
+  EntityDetailsDeprecationDate = 'catalog.entityDetails.deprecationDate',
+  EntityDetailsEndOfService = 'catalog.entityDetails.endOfService',
   EntityDetailsContextWindow = 'catalog.entityDetails.contextWindow',
   EntityDetailsMaxOutputTokens = 'catalog.entityDetails.maxOutputTokens',
   EntityDetailsInputModalities = 'catalog.entityDetails.inputModalities',

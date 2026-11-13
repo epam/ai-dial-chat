@@ -247,6 +247,27 @@ export class DialModelDto {
   @ApiPropertyOptional({ example: 'generally-available' })
   lifecycle_status?: string;
 
+  @ApiPropertyOptional({
+    description:
+      'Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated',
+    example: 'Azure',
+  })
+  provider?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated',
+    example: '2026-12-31',
+  })
+  deprecation_date?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated',
+    example: '2027-03-31',
+  })
+  end_of_service?: string;
+
   @ApiPropertyOptional({ type: () => DialModelCapabilitiesDto })
   capabilities?: DialModelCapabilitiesDto;
 
