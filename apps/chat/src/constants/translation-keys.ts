@@ -1920,7 +1920,6 @@ export enum ResourceSavePanelI18nKeys {
 
 export enum VersionHistoryI18nKeys {
   Heading = 'versionHistory.heading',
-  Current = 'versionHistory.current',
   NotPublished = 'versionHistory.notPublished',
   InReview = 'versionHistory.inReview',
   Published = 'versionHistory.published',

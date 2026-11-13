@@ -305,7 +305,7 @@ describe('ResourceSavePanelContainer', () => {
 
   describe('versions history', () => {
     const versionHistory = {
-      rows: [{ id: 'a', version: '1.0.0', isCurrent: true }],
+      rows: [{ id: 'a', version: '1.0.0' }],
     };
 
     it('hands the hook result to the panel as the versionHistory prop', () => {

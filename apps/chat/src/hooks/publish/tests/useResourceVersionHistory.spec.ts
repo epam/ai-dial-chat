@@ -19,6 +19,14 @@ const deployments = {
       owner: 'Ivan Petrov',
       isMy: true,
     },
+    {
+      id: 'applications/b1/Design/Review__2.0.0',
+      versionGroupId: 'Design/Review',
+      displayVersion: '2.0.0',
+      updatedAt: Date.UTC(2026, 6, 20),
+      owner: 'Ivan Petrov',
+      isMy: true,
+    },
   ],
   toolsets: [
     {
@@ -26,6 +34,13 @@ const deployments = {
       versionGroupId: 'Search',
       displayVersion: '2.0.0',
       updatedAt: Date.UTC(2026, 6, 1),
+      isMy: true,
+    },
+    {
+      id: 'toolsets/b1/Search__3.0.0',
+      versionGroupId: 'Search',
+      displayVersion: '3.0.0',
+      updatedAt: Date.UTC(2026, 6, 2),
       isMy: true,
     },
   ],
@@ -56,7 +71,7 @@ describe('useResourceVersionHistory', () => {
     getCatalogVersionStatuses.mockResolvedValue([]);
   });
 
-  it('builds the application rows from the loaded deployments with translated text', async () => {
+  it('builds the rows of the other application versions from the loaded deployments with translated text', async () => {
     const { result } = renderHook(() =>
       useResourceVersionHistory(
         'applications/b1/Design/Review__1.0.0',
@@ -65,11 +80,11 @@ describe('useResourceVersionHistory', () => {
       ),
     );
 
+    expect(result.current?.rows).toHaveLength(1);
     expect(result.current?.rows[0]).toMatchObject({
-      version: '1.0.0',
-      isCurrent: true,
+      version: '2.0.0',
       folder: `${CatalogI18nKeys.FolderPersonal} / Design`,
-      modifiedAt: '12 Jul 2026',
+      modifiedAt: '20 Jul 2026',
       author: `${VersionHistoryI18nKeys.Owner}|Ivan Petrov`,
     });
     expect(result.current?.labels?.heading).toBe(
@@ -88,7 +103,7 @@ describe('useResourceVersionHistory', () => {
       ),
     );
 
-    expect(result.current?.rows.map((row) => row.version)).toEqual(['2.0.0']);
+    expect(result.current?.rows.map((row) => row.version)).toEqual(['3.0.0']);
     await waitFor(() =>
       expect(getCatalogVersionStatuses).toHaveBeenCalledWith(
         'toolset',
@@ -130,6 +145,29 @@ describe('useResourceVersionHistory', () => {
         true,
       ),
     );
+
+    expect(result.current).toBeUndefined();
+    expect(getCatalogVersionStatuses).not.toHaveBeenCalled();
+  });
+
+  it('returns no section props when the open version is the only one', () => {
+    deployments.items.push({
+      id: 'applications/b1/Design/Single__1.0.0',
+      versionGroupId: 'Design/Single',
+      displayVersion: '1.0.0',
+      updatedAt: 1,
+      owner: 'Ivan Petrov',
+      isMy: true,
+    });
+
+    const { result } = renderHook(() =>
+      useResourceVersionHistory(
+        'applications/b1/Design/Single__1.0.0',
+        CatalogEntityType.Agent,
+        true,
+      ),
+    );
+    deployments.items.pop();
 
     expect(result.current).toBeUndefined();
     expect(getCatalogVersionStatuses).not.toHaveBeenCalled();

@@ -22,23 +22,27 @@ The Save panel and the Publish panel of a versioned resource (Quick App, custom 
 - **WHEN** either panel opens for a prompt or a skill
 - **THEN** no Versions history section is rendered
 
-### Requirement: The history lists the saved versions of the resource in its folder
+### Requirement: The history lists the other saved versions of the resource in its folder
 
-The section SHALL list the items of the already-loaded deployments or toolsets listing that share the edited resource's `versionGroupId` and have `isMy === true`. It SHALL make no extra DIAL Core call for the list, and no client SHALL parse `__` out of an id. Versions saved to other folders SHALL NOT be listed. The displayed version SHALL come from `displayVersion`, not from the id suffix. Rows SHALL be sorted by last modified date (`updatedAt`), newest first, never by version.
+The section SHALL list the items of the already-loaded deployments or toolsets listing that share the edited resource's `versionGroupId` and have `isMy === true`, without the version being edited or published: that version is not listed and no row carries a marker for it. When no other version remains, the host SHALL render no Versions history section at all (no heading, no empty message) and SHALL request no status. It SHALL make no extra DIAL Core call for the list, and no client SHALL parse `__` out of an id. Versions saved to other folders SHALL NOT be listed. The displayed version SHALL come from `displayVersion`, not from the id suffix. Rows SHALL be sorted by last modified date (`updatedAt`), newest first, never by version.
 
 Each row SHALL show:
 
-- the version, with a **Current** marker on the version being edited;
+- the version;
 - the publication status: **Not published**, **In review** or **Published** (with the target folders);
 - the folder, with the kit folder icon: `Personal` at the root of the Personal root, otherwise the folder path, formatted like the Save panel's destination (root label and segments joined with " / ");
 - the last modified date, as `12 Jul 2026` (day, short month, year) for English;
 - the author: for a Published version, the publisher ("Published by {name}"); otherwise the version's `owner` from the listing ("by {name}"), omitted when the listing has none.
 
-The first line holds the version, the **Current** marker and the status badge, with the date at the far end; the second line holds the folder and the author at the far end; a Published version adds a third line "Published in {folders}", aligned to the end under the author, with its target folders, so the badge stays short. Version and date use 14px text, the other lines 12px secondary text, from the kit type scale. A version that does not fit stays on one line, cut with an ellipsis, and the kit ellipsis tooltip shows the whole version on hover and focus.
+The first line holds the version and the status badge, with the date at the far end; the second line holds the folder and the author at the far end; a Published version adds a third line "Published in {folders}", aligned to the end under the author, with its target folders, so the badge stays short. Version and date use 14px text, the other lines 12px secondary text, from the kit type scale. A version that does not fit stays on one line, cut with an ellipsis, and the kit ellipsis tooltip shows the whole version on hover and focus.
 
-#### Scenario: Rows, order and Current marker
+#### Scenario: Rows and order without the open version
 - **WHEN** the section renders for application `Design Review Agent` that has versions `1.0.0` (updated 12 Jul), `beta-2` (updated 20 Jul) and `1.1.0` (updated 01 Jul), and `1.0.0` is being edited
-- **THEN** the rows are `beta-2`, `1.0.0`, `1.1.0`, and only `1.0.0` carries **Current**
+- **THEN** the rows are `beta-2` and `1.1.0`, and `1.0.0` is not listed
+
+#### Scenario: Only one version
+- **WHEN** a panel opens for a resource whose version group holds no other version
+- **THEN** no Versions history section is rendered and no status request is made
 
 #### Scenario: Folder is shown as a path
 - **WHEN** the resource lives in Personal folder `Design / Audit`
@@ -58,7 +62,7 @@ The first line holds the version, the **Current** marker and the status badge, w
 
 #### Scenario: Resource that is not the user's own
 - **WHEN** the panel is opened for a resource that belongs to another owner (the Save panel never opens for one; the Publish panel might), for an id that is not in the loaded listing, or while the listing is still loading
-- **THEN** the host renders no Versions history section and requests no status; the section component's own empty state stays a lib feature for a host that passes empty rows
+- **THEN** the host renders no Versions history section and requests no status; the section component's own empty state stays a lib feature for a host that passes empty rows; the same holds when the version being edited is the only one
 
 #### Scenario: Reopening a panel reloads the statuses
 - **WHEN** a panel that loaded the statuses is closed and opened again
@@ -66,7 +70,7 @@ The first line holds the version, the **Current** marker and the status badge, w
 
 ### Requirement: Statuses load when the panel opens
 
-Opening a panel that shows the section SHALL load the statuses from the version statuses endpoint in the background; the rows SHALL render at once with the version, Current marker, folder, date and owner, and each status SHALL appear when the response arrives. A version with status unknown (a resource the user does not own) SHALL NOT be shown as Not published. A private resource that was never published SHALL list every version as Not published, with no error.
+Opening a panel that shows the section SHALL load the statuses from the version statuses endpoint in the background; the rows SHALL render at once with the version, folder, date and owner, and each status SHALL appear when the response arrives. A version with status unknown (a resource the user does not own) SHALL NOT be shown as Not published. A private resource that was never published SHALL list every version as Not published, with no error.
 
 #### Scenario: Statuses arrive after the rows
 - **WHEN** a panel opens
@@ -94,7 +98,7 @@ Grouping the listing, building the rows and loading the statuses SHALL live in a
 
 The hook SHALL return the folder as segments, and the host SHALL supply the translated root label ("Personal"), so the lib never reads the language. The section SHALL be mobile-first and render correctly at phone width inside the full-width drawer, use logical properties and mirror directional icons for RTL, meet WCAG 2.1 AAA (visible focus, a heading, a list with items, status not conveyed by color alone), and use memoised row data. It SHALL NOT be gated by `ENABLED_FEATURES` or `ENABLED_FEATURES_ROLES`.
 
-i18n keys (`VersionHistoryI18nKeys`, `versionHistory.*`, one namespace shared by the Save panel host and the catalog Details publish host, with the existing `ButtonsI18nKeys.Retry` and `CatalogI18nKeys.FolderPersonal` reused): the section heading, **Current**, **Not published**, **In review**, **Published** (with `{folders}`), "Published by {name}", "by {name}", loading, empty, error and **Retry** copy.
+i18n keys (`VersionHistoryI18nKeys`, `versionHistory.*`, one namespace shared by the Save panel host and the catalog Details publish host, with the existing `ButtonsI18nKeys.Retry` and `CatalogI18nKeys.FolderPersonal` reused): the section heading, **Not published**, **In review**, **Published** (with `{folders}`), "Published by {name}", "by {name}", loading, empty, error and **Retry** copy.
 
 #### Scenario: Assistive technology
 - **WHEN** a screen reader reads the section

@@ -11,7 +11,9 @@ import {
 } from '../useVersionHistorySection';
 
 const APP_ID = 'applications/b1/Design/Review__1.0.0';
+const APP_OTHER_ID = 'applications/b1/Design/Review__2.0.0';
 const TOOLSET_ID = 'toolsets/b1/Design/Search__1.0.0';
+const TOOLSET_OTHER_ID = 'toolsets/b1/Design/Search__2.0.0';
 
 const listed = (
   id: string,
@@ -39,8 +41,14 @@ const renderSection = (props: Partial<UseVersionHistorySectionParams> = {}) =>
       resourceId: APP_ID,
       resourceType: CatalogEntityType.Agent,
       isEnabled: true,
-      applications: [listed(APP_ID, 'Design/Review')],
-      toolsets: [listed(TOOLSET_ID, 'Design/Search')],
+      applications: [
+        listed(APP_ID, 'Design/Review'),
+        listed(APP_OTHER_ID, 'Design/Review'),
+      ],
+      toolsets: [
+        listed(TOOLSET_ID, 'Design/Search'),
+        listed(TOOLSET_OTHER_ID, 'Design/Search'),
+      ],
       client,
       labels: { heading: 'History' },
       formatters,
@@ -49,10 +57,10 @@ const renderSection = (props: Partial<UseVersionHistorySectionParams> = {}) =>
   );
 
 describe('useVersionHistorySection', () => {
-  it('returns the section props for an application from the applications listing', () => {
+  it('returns the other versions of an application from the applications listing', () => {
     const { result } = renderSection();
 
-    expect(result.current?.rows.map((row) => row.id)).toEqual([APP_ID]);
+    expect(result.current?.rows.map((row) => row.id)).toEqual([APP_OTHER_ID]);
     expect(result.current?.labels?.heading).toBe('History');
   });
 
@@ -62,7 +70,9 @@ describe('useVersionHistorySection', () => {
       resourceType: CatalogEntityType.Toolset,
     });
 
-    expect(result.current?.rows.map((row) => row.id)).toEqual([TOOLSET_ID]);
+    expect(result.current?.rows.map((row) => row.id)).toEqual([
+      TOOLSET_OTHER_ID,
+    ]);
   });
 
   it('returns nothing for an unversioned resource type', () => {
@@ -75,6 +85,14 @@ describe('useVersionHistorySection', () => {
 
   it('returns nothing while the listing holds no version the user owns', () => {
     const { result } = renderSection({ applications: [] });
+
+    expect(result.current).toBeUndefined();
+  });
+
+  it('returns nothing when the open version is the only one', () => {
+    const { result } = renderSection({
+      applications: [listed(APP_ID, 'Design/Review')],
+    });
 
     expect(result.current).toBeUndefined();
   });

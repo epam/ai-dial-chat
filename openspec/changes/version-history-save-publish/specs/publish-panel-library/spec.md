@@ -13,8 +13,8 @@ The package SHALL export a versions history section component that renders rows 
 - **THEN** no Versions history section is rendered
 
 #### Scenario: Section renders handed rows
-- **WHEN** the section receives three rows, one flagged current
-- **THEN** it renders three rows in the given order and one **Current** marker, with no action on any row
+- **WHEN** the section receives three rows
+- **THEN** it renders three rows in the given order, with no action on any row
 
 #### Scenario: Error keeps the rows
 - **WHEN** the section receives rows and an error flag for the statuses

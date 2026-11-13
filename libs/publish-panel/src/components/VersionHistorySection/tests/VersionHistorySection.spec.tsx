@@ -11,7 +11,6 @@ const rows: VersionHistoryRow[] = [
   {
     id: 'a',
     version: 'beta-2',
-    isCurrent: false,
     status: VersionHistoryStatus.NotPublished,
     folder: 'Personal / Design',
     modifiedAt: '20 Jul 2026',
@@ -20,7 +19,6 @@ const rows: VersionHistoryRow[] = [
   {
     id: 'b',
     version: '1.0.0',
-    isCurrent: true,
     status: VersionHistoryStatus.Published,
     publishedFolders: ['Organization/Design', 'Organization'],
     folder: 'Personal / Design',
@@ -30,7 +28,6 @@ const rows: VersionHistoryRow[] = [
   {
     id: 'c',
     version: '1.1.0',
-    isCurrent: false,
     status: VersionHistoryStatus.InReview,
   },
 ];
@@ -51,14 +48,6 @@ describe('VersionHistorySection', () => {
       expect.stringContaining('1.0.0'),
       expect.stringContaining('1.1.0'),
     ]);
-  });
-
-  it('marks only the current version', () => {
-    renderSection();
-
-    expect(screen.getAllByText('Current')).toHaveLength(1);
-    const [, second] = screen.getAllByRole('listitem');
-    expect(within(second).getByText('Current')).toBeTruthy();
   });
 
   it('reads each status as text, with the folders of a published version', () => {
@@ -96,7 +85,7 @@ describe('VersionHistorySection', () => {
 
   it('keeps the loading message out of the list while statuses load', () => {
     renderSection({
-      rows: [{ id: 'a', version: '1.0.0', isCurrent: false }],
+      rows: [{ id: 'a', version: '1.0.0' }],
       isLoading: true,
     });
 
@@ -113,7 +102,7 @@ describe('VersionHistorySection', () => {
   });
 
   it('shows no status for a row whose status has not loaded yet', () => {
-    renderSection({ rows: [{ id: 'a', version: '1.0.0', isCurrent: false }] });
+    renderSection({ rows: [{ id: 'a', version: '1.0.0' }] });
 
     expect(screen.queryByText('Not published')).toBeNull();
   });
@@ -124,7 +113,6 @@ describe('VersionHistorySection', () => {
         {
           id: 'a',
           version: '1.0.0',
-          isCurrent: false,
           status: VersionHistoryStatus.Unknown,
         },
       ],
@@ -176,11 +164,11 @@ describe('VersionHistorySection', () => {
 
   it('takes every string from labels', () => {
     renderSection({
-      labels: { heading: 'Historia', currentLabel: 'Actual' },
+      labels: { heading: 'Historia', notPublishedLabel: 'No publicada' },
     });
 
     expect(screen.getByRole('heading', { name: 'Historia' })).toBeTruthy();
-    expect(screen.getByText('Actual')).toBeTruthy();
+    expect(screen.getByText('No publicada')).toBeTruthy();
   });
 
   it('renders at phone width without a fixed width on a row', () => {

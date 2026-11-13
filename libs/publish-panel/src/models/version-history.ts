@@ -18,8 +18,6 @@ export interface VersionHistoryRow {
   id: string;
   /** Version text as the user knows it. */
   version: string;
-  /** Whether this is the version being edited or published. */
-  isCurrent: boolean;
   /** Publication state; omit while it is still loading. */
   status?: VersionHistoryStatus;
   /** Folders a published version is published to. */
@@ -36,8 +34,6 @@ export interface VersionHistoryRow {
 export interface VersionHistoryLabels {
   /** Section heading. Defaults to `'Versions history'`. */
   heading?: string;
-  /** Marker of the version being edited or published. Defaults to `'Current'`. */
-  currentLabel?: string;
   /** Status of a version with no publication. Defaults to `'Not published'`. */
   notPublishedLabel?: string;
   /** Status of a version with a request waiting for approval. Defaults to `'In review'`. */

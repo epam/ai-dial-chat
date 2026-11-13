@@ -6,7 +6,7 @@ import type { PublishApiClient } from '../create-publish-api';
 import type { CatalogPublishEntityType } from '../publish';
 import {
   buildVersionHistoryRows,
-  selectVersionGroup,
+  selectOtherVersions,
   type VersionHistoryFormatters,
   type VersionHistoryListingItem,
 } from '../version-history';
@@ -29,9 +29,9 @@ export interface UseVersionHistoryParams {
 
 /** Result of {@link useVersionHistory}. */
 export interface UseVersionHistoryResult {
-  /** Saved versions of the resource, newest first; statuses fill in once loaded. */
+  /** The other saved versions of the resource, newest first; statuses fill in once loaded. */
   rows: VersionHistoryRow[];
-  /** Whether the listing holds any version the section can show; the host renders no section when it is `false`. */
+  /** Whether the listing holds another version the section can show; the host renders no section when it is `false`. */
   hasVersions: boolean;
   /** Whether the statuses are being loaded. */
   isLoading: boolean;
@@ -47,7 +47,7 @@ interface LoadedStatuses {
 }
 
 /**
- * Groups the listing by `versionGroupId`, builds the Versions history rows and loads their publication statuses in the background while the panel is open.
+ * Groups the listing by `versionGroupId`, builds the Versions history rows of the other versions and loads their publication statuses in the background while the panel is open.
  * @param params - listing items, edited resource, open state, client and formatters
  */
 export const useVersionHistory = ({
@@ -59,7 +59,7 @@ export const useVersionHistory = ({
   formatters,
 }: UseVersionHistoryParams): UseVersionHistoryResult => {
   const group = useMemo(
-    () => selectVersionGroup(items, resourceId),
+    () => selectOtherVersions(items, resourceId),
     [items, resourceId],
   );
   const hasVersions = group.length > 0;
@@ -105,9 +105,8 @@ export const useVersionHistory = ({
   }, [shouldLoad, client, entityType, resourceId, requestKey]);
 
   const rows = useMemo(
-    () =>
-      buildVersionHistoryRows(group, resourceId, loaded?.statuses, formatters),
-    [group, resourceId, loaded, formatters],
+    () => buildVersionHistoryRows(group, loaded?.statuses, formatters),
+    [group, loaded, formatters],
   );
   const hasError = shouldLoad && failedKey === requestKey;
   const isLoading = shouldLoad && !hasError && loaded?.key !== requestKey;

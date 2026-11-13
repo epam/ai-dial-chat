@@ -2746,7 +2746,7 @@ const SkillCatalog = ({
 
 ### useVersionHistory
 
-Builds the Versions history rows of the Save and Publish panels. It selects the caller's own items of an already-loaded deployments or toolsets listing that share the edited resource's `versionGroupId`, sorts them by `updatedAt` (newest first), marks the edited id as current, formats the folder (`rootLabel` plus the folder segments of the id), date and author line through the host `formatters`, and loads the publication statuses in the background through the supplied `client.getCatalogVersionStatuses` while `isEnabled` is `true`. The rows render at once; a failed request keeps them and sets `hasError`, and `onRetry` reloads. A resource that is not the user's own (no row with `isMy === true`), an id missing from the listing, or a listing still loading returns no rows, `hasVersions: false`, and requests nothing: the host should then render no section. Closing the panel (`isEnabled: false`) clears the loaded statuses and any error, so reopening shows the loading state again. The hook builds no client and no path: the host passes `publishApiClient` from its `createPublishApiClient` and the translated `formatters`.
+Builds the Versions history rows of the Save and Publish panels. It selects the caller's own items of an already-loaded deployments or toolsets listing that share the edited resource's `versionGroupId`, leaves the edited version itself out, sorts the others by `updatedAt` (newest first), formats the folder (`rootLabel` plus the folder segments of the id), date and author line through the host `formatters`, and loads the publication statuses in the background through the supplied `client.getCatalogVersionStatuses` while `isEnabled` is `true`. The rows render at once; a failed request keeps them and sets `hasError`, and `onRetry` reloads. A resource that is not the user's own (no row with `isMy === true`), an id missing from the listing, a listing still loading, or a resource with no other saved version returns no rows, `hasVersions: false`, and requests nothing: the host should then render no section. Closing the panel (`isEnabled: false`) clears the loaded statuses and any error, so reopening shows the loading state again. The hook builds no client and no path: the host passes `publishApiClient` from its `createPublishApiClient` and the translated `formatters`.
 
 ```tsx
 import { useVersionHistory } from '@epam/ai-dial-chat-hooks';
@@ -2766,11 +2766,11 @@ const { rows, isLoading, hasError, onRetry } = useVersionHistory({
 />;
 ```
 
-`formatters` is `{ rootLabel, formatDate, formatPublishedBy, formatOwner }` (`VersionHistoryFormatters`) and should be referentially stable. The pure `selectVersionGroup` and `buildVersionHistoryRows` it uses are exported too.
+`formatters` is `{ rootLabel, formatDate, formatPublishedBy, formatOwner }` (`VersionHistoryFormatters`) and should be referentially stable. The pure `selectOtherVersions` and `buildVersionHistoryRows` it uses are exported too.
 
 ### useVersionHistorySection / isVersionedCatalogEntityType
 
-`useVersionHistorySection` wraps `useVersionHistory` for a host that holds both listings. It takes `resourceId`, `resourceType` (a `CatalogEntityType`), `isEnabled`, the `applications` and `toolsets` listing items, the `client`, the translated `labels` and the `formatters`, picks the listing by type, and returns ready `VersionHistorySectionProps` (`rows`, `isLoading`, `hasError`, `onRetry`, `labels`), or `undefined` for an unversioned type, an empty `resourceId`, and while the listing holds no version the user owns. `isVersionedCatalogEntityType(type)` is `true` for applications (`CatalogEntityType.Agent`) and toolsets.
+`useVersionHistorySection` wraps `useVersionHistory` for a host that holds both listings. It takes `resourceId`, `resourceType` (a `CatalogEntityType`), `isEnabled`, the `applications` and `toolsets` listing items, the `client`, the translated `labels` and the `formatters`, picks the listing by type, and returns ready `VersionHistorySectionProps` (`rows`, `isLoading`, `hasError`, `onRetry`, `labels`), or `undefined` for an unversioned type, an empty `resourceId`, and while the listing holds no other version the user owns. `isVersionedCatalogEntityType(type)` is `true` for applications (`CatalogEntityType.Agent`) and toolsets.
 
 ```tsx
 import { useVersionHistorySection } from '@epam/ai-dial-chat-hooks';

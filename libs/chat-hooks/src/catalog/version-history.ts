@@ -45,11 +45,11 @@ const STATUS_BY_DTO: Record<VersionPublicationStatus, VersionHistoryStatus> = {
 };
 
 /**
- * Selects the saved versions of `resourceId` from a listing: the caller's own items that share its `versionGroupId`.
+ * Selects the other saved versions of `resourceId` from a listing: the caller's own items that share its `versionGroupId`, without the version itself.
  * @param items - deployments or toolsets listing items
  * @param resourceId - id of the resource being edited or published
  */
-export const selectVersionGroup = <T extends VersionHistoryListingItem>(
+export const selectOtherVersions = <T extends VersionHistoryListingItem>(
   items: readonly T[],
   resourceId: string,
 ): T[] => {
@@ -58,28 +58,26 @@ export const selectVersionGroup = <T extends VersionHistoryListingItem>(
   const edited = items.find(
     (item) => safeDecodeURIComponent(item.id) === decodedId,
   );
-  if (edited?.isMy !== true) return [];
-  if (edited.versionGroupId == null) return [edited];
+  if (edited?.isMy !== true || edited.versionGroupId == null) return [];
   return items.filter(
     (item) =>
-      item.isMy === true && item.versionGroupId === edited.versionGroupId,
+      item !== edited &&
+      item.isMy === true &&
+      item.versionGroupId === edited.versionGroupId,
   );
 };
 
 /**
  * Builds the Versions history rows, newest first by last modified time.
- * @param group - items of one version group, from {@link selectVersionGroup}
- * @param resourceId - id of the resource being edited, marked as current
+ * @param group - the other versions of the resource, from {@link selectOtherVersions}
  * @param statuses - statuses by item id; omit while they load
  * @param formatters - host text and date formatting
  */
 export const buildVersionHistoryRows = (
   group: readonly VersionHistoryListingItem[],
-  resourceId: string,
   statuses: ReadonlyMap<string, VersionStatusEntryDto> | undefined,
   formatters: VersionHistoryFormatters,
 ): VersionHistoryRow[] => {
-  const decodedId = safeDecodeURIComponent(resourceId);
   return [...group]
     .sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))
     .map((item) => {
@@ -94,7 +92,6 @@ export const buildVersionHistoryRows = (
       return {
         id: item.id,
         version: item.displayVersion ?? '',
-        isCurrent: safeDecodeURIComponent(item.id) === decodedId,
         status,
         publishedFolders: entry?.publishedFolders,
         folder: [

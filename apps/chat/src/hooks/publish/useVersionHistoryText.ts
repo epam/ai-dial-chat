@@ -20,7 +20,6 @@ export const useVersionHistoryText = (): {
   const labels = useMemo<VersionHistoryLabels>(
     () => ({
       heading: t(VersionHistoryI18nKeys.Heading),
-      currentLabel: t(VersionHistoryI18nKeys.Current),
       notPublishedLabel: t(VersionHistoryI18nKeys.NotPublished),
       inReviewLabel: t(VersionHistoryI18nKeys.InReview),
       publishedLabel: t(VersionHistoryI18nKeys.Published),

@@ -85,17 +85,14 @@ const renderVersionHistory = (props: Partial<UseVersionHistoryParams> = {}) => {
 };
 
 describe('useVersionHistory', () => {
-  it('lists the versions of the group newest first and marks the edited one as current', async () => {
+  it('lists the other versions of the group newest first, without the edited one', async () => {
     const { result } = renderVersionHistory();
 
     expect(result.current.rows.map((row) => row.version)).toEqual([
       'beta-2',
-      '1.0.0',
       '1.1.0',
     ]);
-    expect(
-      result.current.rows.filter((row) => row.isCurrent).map((row) => row.id),
-    ).toEqual([ID_1]);
+    expect(result.current.rows.map((row) => row.id)).not.toContain(ID_1);
     await waitFor(() => expect(result.current.isLoading).toBe(false));
   });
 
@@ -117,11 +114,11 @@ describe('useVersionHistory', () => {
       items: [...filtered, { ...item(ID_11, '1.1.0', 100), owner: undefined }],
     });
 
-    expect(result.current.rows).toHaveLength(3);
+    expect(result.current.rows).toHaveLength(2);
     await waitFor(() => expect(result.current.isLoading).toBe(false));
   });
 
-  it('keeps a shared resource of another owner out of an own group that shares its versionGroupId', async () => {
+  it('keeps a shared resource of another owner out of the list of an own resource that shares its versionGroupId', async () => {
     const own = item('applications/me/Folder/App__2', '2', 200, {
       versionGroupId: 'Folder/App',
     });
@@ -134,8 +131,8 @@ describe('useVersionHistory', () => {
       resourceId: own.id,
     });
 
-    expect(result.current.rows.map((row) => row.id)).toEqual([own.id]);
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.rows).toEqual([]);
+    expect(result.current.hasVersions).toBe(false);
   });
 
   it('formats the folder with the host root label and the date through the host formatter', async () => {
@@ -151,11 +148,10 @@ describe('useVersionHistory', () => {
 
   it('uses the publisher as the author of a published version and the owner of the others', async () => {
     const client = makeClient([
-      statusEntry(ID_1, VersionPublicationStatus.Published, {
+      statusEntry(ID_BETA, VersionPublicationStatus.Published, {
         publishedFolders: ['Organization/Design'],
         publishedBy: 'Jane Doe',
       }),
-      statusEntry(ID_BETA, VersionPublicationStatus.NotPublished),
       statusEntry(ID_11, VersionPublicationStatus.InReview),
     ]);
     const { result } = renderVersionHistory({ client });
@@ -165,22 +161,21 @@ describe('useVersionHistory', () => {
     const byId = Object.fromEntries(
       result.current.rows.map((row) => [row.id, row]),
     );
-    expect(byId[ID_1]).toMatchObject({
+    expect(byId[ID_BETA]).toMatchObject({
       status: VersionHistoryStatus.Published,
       publishedFolders: ['Organization/Design'],
       author: 'Published by Jane Doe',
     });
-    expect(byId[ID_BETA]).toMatchObject({
-      status: VersionHistoryStatus.NotPublished,
+    expect(byId[ID_11]).toMatchObject({
+      status: VersionHistoryStatus.InReview,
       author: 'by Ivan Petrov',
     });
-    expect(byId[ID_11].status).toBe(VersionHistoryStatus.InReview);
   });
 
   it('renders the rows at once and loads the statuses in the background', async () => {
     const { result, client } = renderVersionHistory();
 
-    expect(result.current.rows).toHaveLength(3);
+    expect(result.current.rows).toHaveLength(2);
     expect(result.current.rows.every((row) => row.status === undefined)).toBe(
       true,
     );
@@ -194,13 +189,13 @@ describe('useVersionHistory', () => {
 
   it('keeps the unknown status as unknown, never as not published', async () => {
     const client = makeClient([
-      statusEntry(ID_1, VersionPublicationStatus.Unknown),
+      statusEntry(ID_BETA, VersionPublicationStatus.Unknown),
     ]);
     const { result } = renderVersionHistory({ client });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(result.current.rows.find((row) => row.id === ID_1)?.status).toBe(
+    expect(result.current.rows.find((row) => row.id === ID_BETA)?.status).toBe(
       VersionHistoryStatus.Unknown,
     );
   });
@@ -225,13 +220,13 @@ describe('useVersionHistory', () => {
 
   it('keeps the rows on failure, reports the error and recovers on retry', async () => {
     const client = makeClient([
-      statusEntry(ID_1, VersionPublicationStatus.NotPublished),
+      statusEntry(ID_BETA, VersionPublicationStatus.NotPublished),
     ]);
     client.getCatalogVersionStatuses.mockRejectedValueOnce(new Error('boom'));
     const { result } = renderVersionHistory({ client });
 
     await waitFor(() => expect(result.current.hasError).toBe(true));
-    expect(result.current.rows).toHaveLength(3);
+    expect(result.current.rows).toHaveLength(2);
     expect(result.current.isLoading).toBe(false);
 
     act(() => result.current.onRetry());
@@ -239,7 +234,7 @@ describe('useVersionHistory', () => {
     await waitFor(() => expect(result.current.hasError).toBe(false));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(client.getCatalogVersionStatuses).toHaveBeenCalledTimes(2);
-    expect(result.current.rows.find((row) => row.id === ID_1)?.status).toBe(
+    expect(result.current.rows.find((row) => row.id === ID_BETA)?.status).toBe(
       VersionHistoryStatus.NotPublished,
     );
   });
@@ -304,10 +299,10 @@ describe('useVersionHistory', () => {
     );
 
     await act(async () =>
-      resolvers[1]([statusEntry(ID_BETA, VersionPublicationStatus.InReview)]),
+      resolvers[1]([statusEntry(ID_11, VersionPublicationStatus.InReview)]),
     );
 
-    expect(result.current.rows.find((row) => row.id === ID_BETA)?.status).toBe(
+    expect(result.current.rows.find((row) => row.id === ID_11)?.status).toBe(
       VersionHistoryStatus.InReview,
     );
     expect(
@@ -317,7 +312,7 @@ describe('useVersionHistory', () => {
 
   it('shows the loading state again and drops the old statuses when the panel is reopened after a success', async () => {
     const client = makeClient([
-      statusEntry(ID_1, VersionPublicationStatus.NotPublished),
+      statusEntry(ID_BETA, VersionPublicationStatus.NotPublished),
     ]);
     const { result, rerender } = renderVersionHistory({ client });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -332,7 +327,7 @@ describe('useVersionHistory', () => {
     );
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(client.getCatalogVersionStatuses).toHaveBeenCalledTimes(2);
-    expect(result.current.rows.find((row) => row.id === ID_1)?.status).toBe(
+    expect(result.current.rows.find((row) => row.id === ID_BETA)?.status).toBe(
       VersionHistoryStatus.NotPublished,
     );
   });
@@ -365,7 +360,20 @@ describe('useVersionHistory', () => {
     expect(result.current.hasError).toBe(false);
     expect(result.current.isLoading).toBe(true);
     await waitFor(() => expect(result.current.hasError).toBe(true));
-    expect(result.current.rows).toHaveLength(3);
+    expect(result.current.rows).toHaveLength(2);
     expect(client.getCatalogVersionStatuses).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports no versions and requests nothing when the edited version is the only one', () => {
+    const client = makeClient();
+    const { result } = renderVersionHistory({
+      client,
+      items: [item(ID_1, '1.0.0', 200)],
+    });
+
+    expect(result.current.rows).toEqual([]);
+    expect(result.current.hasVersions).toBe(false);
+    expect(result.current.isLoading).toBe(false);
+    expect(client.getCatalogVersionStatuses).not.toHaveBeenCalled();
   });
 });

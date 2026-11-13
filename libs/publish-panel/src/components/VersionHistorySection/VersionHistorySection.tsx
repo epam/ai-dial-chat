@@ -1,8 +1,6 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   Badge,
-  BadgeColor,
-  BadgeVariant,
   ElementSize,
   EllipsisTooltip,
   ErrorText,
@@ -24,7 +22,6 @@ import styles from './VersionHistorySection.module.scss';
 
 const DEFAULT_LABELS = {
   heading: 'Versions history',
-  currentLabel: 'Current',
   notPublishedLabel: 'Not published',
   inReviewLabel: 'In review',
   publishedLabel: 'Published',
@@ -147,13 +144,6 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
                       styles.version,
                     )}
                   />
-                  {row.isCurrent && (
-                    <Badge
-                      label={text.currentLabel}
-                      variant={BadgeVariant.Filled}
-                      color={BadgeColor.Blue}
-                    />
-                  )}
                   {statusLabel && <Badge label={statusLabel} />}
                   {isStatusPending && (
                     <span aria-hidden className="shrink-0">

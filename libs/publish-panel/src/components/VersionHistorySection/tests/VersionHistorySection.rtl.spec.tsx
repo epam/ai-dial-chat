@@ -13,7 +13,6 @@ const rows: VersionHistoryRow[] = [
   {
     id: 'a',
     version: '1.0.0',
-    isCurrent: true,
     status: VersionHistoryStatus.Published,
     publishedFolders: ['Organization'],
     folder: 'Personal',

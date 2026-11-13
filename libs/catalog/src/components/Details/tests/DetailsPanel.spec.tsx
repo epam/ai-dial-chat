@@ -3013,8 +3013,8 @@ describe('DetailsPanel — empty tabs', () => {
 describe('DetailsPanel — versions history', () => {
   const versionHistory = {
     rows: [
-      { id: 'a', version: '1.0.0', isCurrent: true },
-      { id: 'b', version: 'beta-2', isCurrent: false },
+      { id: 'a', version: '1.0.0' },
+      { id: 'b', version: 'beta-2' },
     ],
   };
 
