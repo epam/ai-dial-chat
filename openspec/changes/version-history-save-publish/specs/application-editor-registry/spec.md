@@ -9,14 +9,14 @@
 - **`CustomApp`**:
   - `AllAtOnce` strategy, `idQueryParam: ToolsetEditorQuery.Id`, with `loadSetup` and `update`.
   - Setup: `CustomAppSetup`, which holds the four fields of `custom-app-editor` "CustomAppSettingsForm fields".
-  - Validation: `validateVersionPattern: true`, i.e. the shared resource version rule (`resource-version-pattern`).
+  - Validation: `validateVersionPattern: true`, i.e. the shared resource version rule (`resource-version-pattern`); the editor switches it to `STORED_VERSION_PATTERN` in edit mode.
   - Confirmation: `customApp.saveConfirm.*`, shown only when `needsConfirmation` finds the features data invalid.
   - Title: `customApp.createTitle` / `customApp.editTitle`.
 - **`QuickApp`** (every schema with an embedded editor):
   - `MetadataFirst` strategy, `idQueryParam: AppsEditorQuery.AppId`, notification target from `resolveSchemaNotificationTarget`.
   - Setup: `QuickAppSetup`, which holds the schema `editorUrl` iframe.
   - Preview: `QuickAppPreview` (hosting `AppPreviewChat`), available only for the Quick Apps schema, behind the `basic.preview` header button.
-  - Validation: `validateNamePattern: true` and `validateVersionPattern: true`, i.e. the shared resource version rule (`resource-version-pattern`).
+  - Validation: `validateNamePattern: true` and `validateVersionPattern: true`, i.e. the shared resource version rule (`resource-version-pattern`); the editor switches it to `STORED_VERSION_PATTERN` in edit mode.
   - Title: `getSchemaAppTitle`, interpolating the schema `displayName` into `appsEditor.createTitle` / `appsEditor.editTitle`.
 - **`SchemaApp`** (schemas without an embedded editor):
   - `AllAtOnce` strategy, `idQueryParam: AppsEditorQuery.AppId`, notification target from `resolveSchemaNotificationTarget`.

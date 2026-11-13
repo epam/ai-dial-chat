@@ -28,16 +28,16 @@ The strict rule SHALL apply to a version a request supplies in: the create and f
 - **THEN** the id validators (`DEPLOYMENT_ID_PATTERN`, `isSafeResourceId`, `isSafeDeploymentId`) accept it; traversal segments stay rejected
 
 #### Scenario: Over-long version is rejected
-- **WHEN** a version of 65 characters is supplied to any write path or UI input
+- **WHEN** a version of 65 characters is supplied to a write path or UI input of either rule
 - **THEN** the UI shows the invalid-version error and the API answers `400`; a 64-character version is accepted
 
-#### Scenario: Trailing dot is rejected
-- **WHEN** the version is `1.0.`, `1.` or `..`
+#### Scenario: Trailing dot is rejected for a new version
+- **WHEN** the version of a request that creates a path is `1.0.` or `1.`, or any request carries `..`
 - **THEN** the UI shows the invalid-version error and the API answers `400`
 
-#### Scenario: The name separator is rejected
-- **WHEN** the version contains `__` (for example `1__2`) or starts with `_` (for example `_1`)
-- **THEN** the UI shows the invalid-version error and the API answers `400`; a version with a single inner or trailing underscore (`1_0`, `v1_`) is accepted
+#### Scenario: The name separator is rejected for a new version
+- **WHEN** the version of a request that creates a path contains `__` (for example `1__2`) or starts with `_` (for example `_1`)
+- **THEN** the UI shows the invalid-version error and the API answers `400`; a version with a single inner or trailing underscore (`1_0`, `v1_`) is accepted, and an update or a publish of a stored version with these characters is accepted (see the stored rule)
 
 #### Scenario: Forbidden characters are rejected
 - **WHEN** the version contains a space, `/` or `:`

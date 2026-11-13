@@ -477,6 +477,7 @@ import {
   NAME_PATTERN,
   STORED_VERSION_PATTERN,
   VERSION_PATTERN,
+  withStoredVersionRule,
 } from '@epam/ai-dial-builder-form';
 
 const codes = validateDeploymentCreationFields(values, {
@@ -497,7 +498,7 @@ const errors = {
 `RESOURCE_VERSION_PATTERN` from `@epam/ai-dial-chat-shared`: 1-64 letters,
 digits, underscores, dots, plus signs and hyphens, not ending with a dot, not
 containing `__` and not starting with `_` (`__` separates the name from the
-version in the stored path) — the rule the chat API applies to a version. `STORED_VERSION_PATTERN` is `STORED_RESOURCE_VERSION_PATTERN` from the same package: 1-64 of the same characters without the three exclusions. Pass it as `validateVersionPattern` in edit mode, where the stored path keeps its version and only the display version is written, so a version saved under the earlier, looser rules is not rejected. Pass a `RegExp` instead of `true` for a
+version in the stored path) — the rule the chat API applies to a version. `STORED_VERSION_PATTERN` is `STORED_RESOURCE_VERSION_PATTERN` from the same package: 1-64 of the same characters without the three exclusions. `withStoredVersionRule(options, isEditMode)` returns the options with `validateVersionPattern: true` switched to it in edit mode, so a host does not repeat that choice. Pass it as `validateVersionPattern` in edit mode, where the stored path keeps its version and only the display version is written, so a version saved under the earlier, looser rules is not rejected. Pass a `RegExp` instead of `true` for a
 host that needs a stricter version format (for example dot-separated numeric
 segments). Both patterns are exported so a host can pre-filter input with the
 same rule the validator applies.

@@ -9,6 +9,7 @@ import {
   DEFAULT_DEPLOYMENT_VERSION,
   STORED_VERSION_PATTERN,
   validateDeploymentCreationFields,
+  withStoredVersionRule,
 } from './validate-deployment-creation-fields';
 
 const baseValues: DeploymentCreationFormValues = {
@@ -187,5 +188,28 @@ describe('DEFAULT_DEPLOYMENT_VERSION', () => {
       { validateVersionPattern: NUMERIC_VERSION_PATTERN },
     );
     expect(errors.version).toBeUndefined();
+  });
+});
+
+describe('withStoredVersionRule', () => {
+  it('switches the default version check to the stored rule in edit mode', () => {
+    expect(
+      withStoredVersionRule({ validateVersionPattern: true }, true),
+    ).toEqual({ validateVersionPattern: STORED_VERSION_PATTERN });
+  });
+
+  it('keeps the options of a create form', () => {
+    const options = { validateVersionPattern: true };
+
+    expect(withStoredVersionRule(options, false)).toBe(options);
+  });
+
+  it('keeps a host regular expression and the other options in edit mode', () => {
+    const options = {
+      validateNamePattern: true,
+      validateVersionPattern: NUMERIC_VERSION_PATTERN,
+    };
+
+    expect(withStoredVersionRule(options, true)).toBe(options);
   });
 });
