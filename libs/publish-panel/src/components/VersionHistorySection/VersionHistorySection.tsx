@@ -126,7 +126,7 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
               row.publishedFolders?.length
                 ? text.publishedInLabel.replace(
                     '{folders}',
-                    row.publishedFolders.join(', '),
+                    () => row.publishedFolders?.join(', ') ?? '',
                   )
                 : undefined;
             return (
