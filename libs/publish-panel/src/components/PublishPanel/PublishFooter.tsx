@@ -4,6 +4,7 @@ import {
   Spinner,
   GhostButton,
   NeutralButton,
+  PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import { PublishPanelView } from '../../types/publish-panel';
@@ -119,7 +120,7 @@ export const PublishFooter: FC<PublishFooterProps> = ({
           onClick={onSelectFolder}
         />
       ) : (
-        <NeutralButton
+        <PrimaryButton
           label={submitLabel}
           className="mobile:flex-1"
           disabled={isSubmitDisabled}
