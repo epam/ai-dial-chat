@@ -191,7 +191,13 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
                   </div>
                 )}
                 {publishedIn && (
-                  <span className={mergeClasses(metaClassName, styles.meta)}>
+                  <span
+                    className={mergeClasses(
+                      'self-end text-end',
+                      metaClassName,
+                      styles.meta,
+                    )}
+                  >
                     {publishedIn}
                   </span>
                 )}
