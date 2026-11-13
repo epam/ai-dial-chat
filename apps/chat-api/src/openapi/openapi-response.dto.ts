@@ -550,6 +550,56 @@ export class LimitStatsDto {
   resetsAt?: string;
 }
 
+export class BudgetStatsDto {
+  @ApiProperty({
+    example: 'example-project',
+    description:
+      'The cost object the budget applies in. A cost object can hold several budgets, so more ' +
+      'than one entry may carry the same value.',
+  })
+  costObject!: string;
+
+  @ApiProperty({
+    example: 'example-policy',
+    description: "The path of the budget's policy.",
+  })
+  policy!: string;
+
+  @ApiPropertyOptional({
+    type: 'integer',
+    example: 10,
+    description:
+      "The priority of the budget's policy, lower first; absent when the policy sets none.",
+  })
+  priority?: number;
+
+  @ApiPropertyOptional({
+    example: 'Example policy',
+    description:
+      "The human-readable name of the budget's policy; absent when the policy sets none. " +
+      'Use `policy` as the identifier — the display name need not be unique.',
+  })
+  displayName?: string;
+
+  @ApiProperty({
+    type: () => LimitStatsDto,
+    description:
+      "The budget's limit and the caller's spend against it for the current UTC day. A `total` " +
+      'at or above 9007199254740992 (2^53) is the unlimited sentinel — see ' +
+      'UserLimitStatsResponseDto.minuteCostStats.',
+  })
+  day!: LimitStatsDto;
+
+  @ApiProperty({
+    type: () => LimitStatsDto,
+    description:
+      "The budget's limit and the caller's spend against it for the current UTC month. A " +
+      '`total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see ' +
+      'UserLimitStatsResponseDto.minuteCostStats.',
+  })
+  month!: LimitStatsDto;
+}
+
 export class DeploymentLimitsResponseDto {
   @ApiPropertyOptional({ type: () => LimitStatsDto })
   hourRequestStats?: LimitStatsDto;
@@ -635,6 +685,22 @@ export class UserLimitStatsResponseDto {
       'minuteCostStats for the unlimited-sentinel and global-vs-per-deployment scope notes.',
   })
   monthCostStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({
+    type: () => [BudgetStatsDto],
+    description:
+      "The caller's spend against each spending budget that applies to them, in DIAL Core's " +
+      'order. A cost object can hold several budgets, so entries may share a `costObject`. The ' +
+      'budgets are reported separately from, and are not merged into, the top-level ' +
+      '`minuteCostStats`/`dayCostStats`/`weekCostStats`/`monthCostStats`. An empty array means ' +
+      'DIAL Core reported no applicable budget (spending limits are off, no budget matches the ' +
+      'caller, or the caller is an API key); an absent field means DIAL Core does not report ' +
+      'budgets at all (an older DIAL Core). A window `total` at or above 9007199254740992 ' +
+      '(2^53) represents the upstream "unlimited" sentinel (`Long.MAX_VALUE`, which exceeds ' +
+      '`Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a ' +
+      'used/total ratio. The BFF forwards the array verbatim.',
+  })
+  budgets?: BudgetStatsDto[];
 }
 
 export class ThemeDto {
