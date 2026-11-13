@@ -139,7 +139,7 @@
   "dependencies": {
     "@epam/ai-dial-react-file-manager": "0.4.1",
     "@epam/ai-dial-react-pdf-highlighter": "0.3.1",
-    "@epam/ai-dial-ui-kit": "0.16.1",
+    "@epam/ai-dial-ui-kit": "0.16.2",
     "@epam/pdf-highlighter-kit": "^0.0.22",
     "@fontsource-variable/inter": "5.3.0",
     "@mcp-ui/client": "^7.1.1",
