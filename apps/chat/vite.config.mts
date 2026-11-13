@@ -297,6 +297,39 @@ export default defineConfig(() => ({
     commonjsOptions: {
       transformMixedEsModules: true,
     },
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          /*
+           * Heavy packages that only lazy routes and modals use get chunks of
+           * their own. Without a group, rolldown co-locates small shared
+           * modules (a Tabler icon, a kit chip group) with the file manager,
+           * so the entry imports that chunk and executes the whole file
+           * manager plus ag-grid (~1.4 MB) on every first paint.
+           * `includeDependenciesRecursively: false` keeps each group to the
+           * package itself: by default a group also captures its dependencies
+           * (kit components, icons), which the entry needs, and the entry
+           * then imports the group again. Neither package imports app code,
+           * so the split cannot form a chunk cycle. Tests match JS only: the
+           * file manager's global stylesheet is imported by `main.tsx`, and a
+           * captured CSS module would leave the entry a side-effect import of
+           * the group chunk.
+           */
+          groups: [
+            {
+              name: 'ag-grid',
+              test: /[\\/]node_modules[\\/](?:.+[\\/])?ag-grid-(?:community|react)[\\/].*\.m?js$/,
+              includeDependenciesRecursively: false,
+            },
+            {
+              name: 'file-manager',
+              test: /[\\/]node_modules[\\/]@epam[\\/]ai-dial-react-file-manager[\\/].*\.m?js$/,
+              includeDependenciesRecursively: false,
+            },
+          ],
+        },
+      },
+    },
   },
   test: {
     name: '@epam/chat',

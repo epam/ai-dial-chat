@@ -3,6 +3,10 @@
   "description": "Presentational builder form shells, editor layouts, and shared deployment field sets for composing and editing DIAL entities",
   "version": "0.0.1",
   "license": "Apache-2.0",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss"
+  ],
   "private": true,
   "type": "module",
   "main": "./dist/index.js",

@@ -1,3 +1,6 @@
+/* Self-hosted variable Inter (weights 100–900, `font-display: swap`); its
+ * `unicode-range` subsets mean a browser fetches only the scripts on the page. */
+import '@fontsource-variable/inter/wght.css';
 import '@epam/ai-dial-ui-kit/styles.css';
 import '@epam/ai-dial-react-file-manager/styles.css';
 import { StrictMode } from 'react';

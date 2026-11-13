@@ -156,7 +156,6 @@ export const createHelmetOptions = (
       objectSrc: ["'none'"],
       styleSrc: [
         "'self'",
-        'https://fonts.googleapis.com',
         ...(allowInlineStyles ? ["'unsafe-inline'"] : []),
         ...(!allowInlineStyles && nonce ? [`'nonce-${nonce}'`] : []),
       ],
@@ -169,8 +168,9 @@ export const createHelmetOptions = (
           ? "'unsafe-inline'"
           : "'none'",
       ],
-      /* `data:` covers fonts the bundler inlines as base64 data URIs. */
-      fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+      /* Inter is self-hosted from `/assets`; `data:` covers fonts the
+       * bundler inlines as base64 data URIs. */
+      fontSrc: ["'self'", 'data:'],
       scriptSrc: [
         "'self'",
         /* This permission belongs to the executing document/worker, never
