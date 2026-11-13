@@ -441,6 +441,32 @@ describe('validate', () => {
     expect(config.ALLOW_VISUALIZER_SEND_MESSAGES).toBe(expected);
   });
 
+  it('defaults CSP_ALLOW_STYLE_ATTRIBUTES to false when unset', () => {
+    expect(validate({ ...baseConfig }).CSP_ALLOW_STYLE_ATTRIBUTES).toBe(false);
+  });
+
+  it.each([
+    ['true', true],
+    ['TRUE', true],
+    ['1', true],
+    ['yes', true],
+    [' true ', true],
+    ['false', false],
+    ['false ', false],
+    ['false\r', false],
+    ['0', false],
+    ['no', false],
+    ['off', false],
+    ['disabled', false],
+    ['', false],
+  ])('parses CSP_ALLOW_STYLE_ATTRIBUTES=%j as %s', (rawValue, expected) => {
+    const config = validate({
+      ...baseConfig,
+      CSP_ALLOW_STYLE_ATTRIBUTES: rawValue,
+    });
+    expect(config.CSP_ALLOW_STYLE_ATTRIBUTES).toBe(expected);
+  });
+
   it('defaults OVERLAY_SANDBOX_ENABLED to false when unset', () => {
     const config = validate({ ...baseConfig });
     expect(config.OVERLAY_SANDBOX_ENABLED).toBe(false);

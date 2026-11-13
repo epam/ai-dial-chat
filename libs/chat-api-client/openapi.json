@@ -12739,6 +12739,11 @@
         },
         "required": ["label", "href"]
       },
+      "AnnouncementSeverity": {
+        "type": "string",
+        "enum": ["info", "warning"],
+        "description": "How urgent the announcement is, for clients that mark maintenance or outage notices. Always present: an entry configured without one, or with an unrecognized value, is returned as `info`. Clients should treat a value they do not recognize as `info`, since more levels may be added."
+      },
       "AnnouncementItemDto": {
         "type": "object",
         "properties": {
@@ -12762,9 +12767,18 @@
                 "$ref": "#/components/schemas/AnnouncementLinkDto"
               }
             ]
+          },
+          "severity": {
+            "description": "How urgent the announcement is, for clients that mark maintenance or outage notices. Always present: an entry configured without one, or with an unrecognized value, is returned as `info`. Clients should treat a value they do not recognize as `info`, since more levels may be added.",
+            "example": "warning",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnouncementSeverity"
+              }
+            ]
           }
         },
-        "required": ["title", "description", "link"]
+        "required": ["title", "description", "link", "severity"]
       },
       "CustomVisualizerDto": {
         "type": "object",
@@ -14509,6 +14523,48 @@
         },
         "required": ["id", "type"]
       },
+      "BudgetStatsDto": {
+        "type": "object",
+        "properties": {
+          "costObject": {
+            "type": "string",
+            "example": "example-project",
+            "description": "The cost object the budget applies in. A cost object can hold several budgets, so more than one entry may carry the same value."
+          },
+          "policy": {
+            "type": "string",
+            "example": "example-policy",
+            "description": "The path of the budget's policy."
+          },
+          "priority": {
+            "type": "integer",
+            "example": 10,
+            "description": "The priority of the budget's policy, lower first; absent when the policy sets none."
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Example policy",
+            "description": "The human-readable name of the budget's policy; absent when the policy sets none. Use `policy` as the identifier — the display name need not be unique."
+          },
+          "day": {
+            "description": "The budget's limit and the caller's spend against it for the current UTC day. A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LimitStatsDto"
+              }
+            ]
+          },
+          "month": {
+            "description": "The budget's limit and the caller's spend against it for the current UTC month. A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LimitStatsDto"
+              }
+            ]
+          }
+        },
+        "required": ["costObject", "policy", "day", "month"]
+      },
       "UserLimitStatsResponseDto": {
         "type": "object",
         "properties": {
@@ -14550,6 +14606,13 @@
                 "$ref": "#/components/schemas/LimitStatsDto"
               }
             ]
+          },
+          "budgets": {
+            "description": "The caller's spend against each spending budget that applies to them, in DIAL Core's order. A cost object can hold several budgets, so entries may share a `costObject`. The budgets are reported separately from, and are not merged into, the top-level `minuteCostStats`/`dayCostStats`/`weekCostStats`/`monthCostStats`. An empty array means DIAL Core reported no applicable budget (spending limits are off, no budget matches the caller, or the caller is an API key); an absent field means DIAL Core does not report budgets at all (an older DIAL Core). A window `total` at or above 9007199254740992 (2^53) represents the upstream \"unlimited\" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio. The BFF forwards the array verbatim.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BudgetStatsDto"
+            }
           }
         }
       },
@@ -15013,6 +15076,11 @@
             "type": "object",
             "additionalProperties": true
           },
+          "catalog_properties": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Curated catalog display metadata from DIAL Core, forwarded as sent"
+          },
           "description_keywords": {
             "example": ["Text Generation", "Image Recognition"],
             "type": "array",
@@ -15174,6 +15242,14 @@
             "items": {
               "type": "string"
             }
+          },
+          "catalog_properties": {
+            "description": "Known model catalog properties allow-listed from DIAL Core catalog_properties",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ModelCatalogPropertiesDto"
+              }
+            ]
           }
         },
         "required": ["id", "object"]

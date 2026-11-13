@@ -43,6 +43,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   hasThinkingPlaceholder = true,
   starters,
   onSelectStarter,
+  isStarterSelectionDisabled = false,
   deploymentIconUrl,
   deploymentDisplayName,
   markdownComponents,
@@ -293,6 +294,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                 <NeutralButton
                   label={starter.title}
                   className="min-w-[40px]"
+                  disabled={isStarterSelectionDisabled}
                   onClick={() => onSelectStarter(starter)}
                 />
               </div>

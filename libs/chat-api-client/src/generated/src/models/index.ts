@@ -303,7 +303,14 @@ export interface AnnouncementItemDto {
    * @memberof AnnouncementItemDto
    */
   link: AnnouncementLinkDto | null;
+  /**
+   * How urgent the announcement is, for clients that mark maintenance or outage notices. Always present: an entry configured without one, or with an unrecognized value, is returned as `info`. Clients should treat a value they do not recognize as `info`, since more levels may be added.
+   * @type {AnnouncementSeverity}
+   * @memberof AnnouncementItemDto
+   */
+  severity: AnnouncementSeverity;
 }
+
 /**
  *
  * @export
@@ -323,6 +330,18 @@ export interface AnnouncementLinkDto {
    */
   href: string;
 }
+
+/**
+ * How urgent the announcement is, for clients that mark maintenance or outage notices. Always present: an entry configured without one, or with an unrecognized value, is returned as `info`. Clients should treat a value they do not recognize as `info`, since more levels may be added.
+ * @export
+ */
+export const AnnouncementSeverity = {
+  Info: 'info',
+  Warning: 'warning',
+} as const;
+export type AnnouncementSeverity =
+  (typeof AnnouncementSeverity)[keyof typeof AnnouncementSeverity];
+
 /**
  *
  * @export
@@ -932,6 +951,49 @@ export const BackgroundGenerationStatus = {
 export type BackgroundGenerationStatus =
   (typeof BackgroundGenerationStatus)[keyof typeof BackgroundGenerationStatus];
 
+/**
+ *
+ * @export
+ * @interface BudgetStatsDto
+ */
+export interface BudgetStatsDto {
+  /**
+   * The cost object the budget applies in. A cost object can hold several budgets, so more than one entry may carry the same value.
+   * @type {string}
+   * @memberof BudgetStatsDto
+   */
+  costObject: string;
+  /**
+   * The path of the budget's policy.
+   * @type {string}
+   * @memberof BudgetStatsDto
+   */
+  policy: string;
+  /**
+   * The priority of the budget's policy, lower first; absent when the policy sets none.
+   * @type {number}
+   * @memberof BudgetStatsDto
+   */
+  priority?: number;
+  /**
+   * The human-readable name of the budget's policy; absent when the policy sets none. Use `policy` as the identifier — the display name need not be unique.
+   * @type {string}
+   * @memberof BudgetStatsDto
+   */
+  displayName?: string;
+  /**
+   * The budget's limit and the caller's spend against it for the current UTC day. A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.
+   * @type {LimitStatsDto}
+   * @memberof BudgetStatsDto
+   */
+  day: LimitStatsDto;
+  /**
+   * The budget's limit and the caller's spend against it for the current UTC month. A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.
+   * @type {LimitStatsDto}
+   * @memberof BudgetStatsDto
+   */
+  month: LimitStatsDto;
+}
 /**
  *
  * @export
@@ -4547,6 +4609,12 @@ export interface DialModelDto {
    */
   responsesDefaults?: { [key: string]: unknown };
   /**
+   * Curated catalog display metadata from DIAL Core, forwarded as sent
+   * @type {{ [key: string]: unknown }}
+   * @memberof DialModelDto
+   */
+  catalogProperties?: { [key: string]: unknown };
+  /**
    *
    * @type {Array<string>}
    * @memberof DialModelDto
@@ -6552,6 +6620,12 @@ export interface ModelCatalogEntryDto {
    * @memberof ModelCatalogEntryDto
    */
   interfaces?: Array<string>;
+  /**
+   * Known model catalog properties allow-listed from DIAL Core catalog_properties
+   * @type {ModelCatalogPropertiesDto}
+   * @memberof ModelCatalogEntryDto
+   */
+  catalogProperties?: ModelCatalogPropertiesDto;
 }
 /**
  *
@@ -10596,6 +10670,12 @@ export interface UserLimitStatsResponseDto {
    * @memberof UserLimitStatsResponseDto
    */
   monthCostStats?: LimitStatsDto;
+  /**
+   * The caller's spend against each spending budget that applies to them, in DIAL Core's order. A cost object can hold several budgets, so entries may share a `costObject`. The budgets are reported separately from, and are not merged into, the top-level `minuteCostStats`/`dayCostStats`/`weekCostStats`/`monthCostStats`. An empty array means DIAL Core reported no applicable budget (spending limits are off, no budget matches the caller, or the caller is an API key); an absent field means DIAL Core does not report budgets at all (an older DIAL Core). A window `total` at or above 9007199254740992 (2^53) represents the upstream "unlimited" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio. The BFF forwards the array verbatim.
+   * @type {Array<BudgetStatsDto>}
+   * @memberof UserLimitStatsResponseDto
+   */
+  budgets?: Array<BudgetStatsDto>;
 }
 /**
  *
