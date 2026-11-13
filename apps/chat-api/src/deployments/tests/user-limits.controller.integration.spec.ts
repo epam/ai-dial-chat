@@ -32,8 +32,8 @@ const TEST_USER = {
  * `USAGE_WITH_BUDGETS` adds DIAL Core's `budgets[]` (epam/ai-dial-core#2188)
  * to the first fixture, in the shape `UserBudgetsApiTest` asserts upstream:
  * two budgets in the same cost object (ordered by priority), one budget whose
- * policy sets no priority, fractional spend, a sentinel window total, and
- * `resetsAt` on both the day and month windows.
+ * policy sets neither a priority nor a display name, fractional spend, a
+ * sentinel window total, and `resetsAt` on both the day and month windows.
  */
 const UNLIMITED_SENTINEL = 9223372036854776000;
 
@@ -126,6 +126,7 @@ const USAGE_WITH_BUDGETS = {
       costObject: 'projA',
       policy: 'org-wide',
       priority: 1,
+      displayName: 'Organization-wide',
       day: { total: 50, used: 0.42641085, resetsAt: '2026-09-16T00:00:00Z' },
       month: { total: 500, used: 2.3991724, resetsAt: '2026-10-01T00:00:00Z' },
     },
@@ -133,6 +134,7 @@ const USAGE_WITH_BUDGETS = {
       costObject: 'projA',
       policy: 'team',
       priority: 2,
+      displayName: 'Team',
       day: {
         total: UNLIMITED_SENTINEL,
         used: 0.42641085,
@@ -373,6 +375,16 @@ describe('UserLimitsController (integration)', () => {
       const res = await request(app.getHttpServer()).get(path).expect(200);
 
       expect(res.body.budgets[2]).not.toHaveProperty('priority');
+    });
+
+    it('forwards displayName verbatim and omits it on a policy that sets none', async () => {
+      service[method].mockResolvedValue(USAGE_WITH_BUDGETS);
+
+      const res = await request(app.getHttpServer()).get(path).expect(200);
+
+      expect(res.body.budgets[0].displayName).toBe('Organization-wide');
+      expect(res.body.budgets[1].displayName).toBe('Team');
+      expect(res.body.budgets[2]).not.toHaveProperty('displayName');
     });
 
     it('keeps an empty budgets array empty', async () => {
