@@ -5,7 +5,7 @@ import { useVersionHistoryText } from '../useVersionHistoryText';
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, params?: Record<string, unknown>) =>
-      params?.folders != null ? `${key}|${params.folders}` : key,
+      params?.name != null ? `${key}|${params.name}` : key,
     i18n: { language: 'en', resolvedLanguage: 'en' },
   }),
 }));
@@ -17,13 +17,5 @@ describe('useVersionHistoryText', () => {
     expect(
       result.current.formatters.formatDate(Date.UTC(2026, 6, 12, 12)),
     ).toBe('12 Jul 2026');
-  });
-
-  it('joins the published folders for the published-in line with the language list separator', () => {
-    const { result } = renderHook(() => useVersionHistoryText());
-
-    expect(
-      result.current.formatters.formatPublishedIn(['Org/Design', 'Org']),
-    ).toContain('Org/Design, Org');
   });
 });

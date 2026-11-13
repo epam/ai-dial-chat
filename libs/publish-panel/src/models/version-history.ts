@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 
 /** Publication state of one saved version, as the host resolved it. */
 export enum VersionHistoryStatus {
-  /** No live or pending publication of the version. */
+  /** No live or pending publication of the version; the section draws no badge for it. */
   NotPublished = 'not-published',
   /** A publication request of the version is waiting for an administrator. */
   InReview = 'in-review',
@@ -20,8 +20,6 @@ export interface VersionHistoryRow {
   version: string;
   /** Publication state; omit while it is still loading. */
   status?: VersionHistoryStatus;
-  /** Line that names the folders a published version is published to, already formatted and translated by the host. */
-  publishedIn?: string;
   /** Folder the version is saved in, already formatted by the host. */
   folder?: string;
   /** Last modified date, already formatted by the host. */
@@ -34,8 +32,6 @@ export interface VersionHistoryRow {
 export interface VersionHistoryLabels {
   /** Section heading. Defaults to `'Versions history'`. */
   heading?: string;
-  /** Status of a version with no publication. Defaults to `'Not published'`. */
-  notPublishedLabel?: string;
   /** Status of a version with a request waiting for approval. Defaults to `'In review'`. */
   inReviewLabel?: string;
   /** Status badge of a published version. Defaults to `'Published'`. */
@@ -60,7 +56,7 @@ export interface VersionHistoryColors {
   versionText?: string;
   /** Last modified date text color. Defaults to `--text-primary`. */
   dateText?: string;
-  /** Folder, author and published-folders text color. Defaults to `--text-secondary`. */
+  /** Folder and author text color. Defaults to `--text-secondary`. */
   metaText?: string;
   /** Fill of the status placeholder shown while statuses load. Defaults to `--bg-control-disable-primary`. */
   skeleton?: string;
@@ -94,7 +90,7 @@ export interface VersionHistorySectionProps {
   versionClassName?: string;
   /** Typography class of the last modified date. Defaults to `'dial-small-text'`. */
   dateClassName?: string;
-  /** Typography class of the folder, author and published-folders lines. Defaults to `'dial-tiny-text'`. */
+  /** Typography class of the folder and author lines. Defaults to `'dial-tiny-text'`. */
   metaClassName?: string;
   /** Style overrides. */
   styles?: VersionHistoryStyles;

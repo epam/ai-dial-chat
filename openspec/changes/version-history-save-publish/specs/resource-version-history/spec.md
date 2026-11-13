@@ -29,12 +29,12 @@ The section SHALL list the items of the already-loaded deployments or toolsets l
 Each row SHALL show:
 
 - the version;
-- the publication status: **Not published**, **In review** or **Published** (with the target folders);
+- the publication status as a badge: **In review** or **Published**; a Not published version shows no badge (the API still reports `not-published` and the target `publishedFolders`; the section does not draw them);
 - the folder, with the kit folder icon: `Personal` at the root of the Personal root, otherwise the folder path, formatted like the Save panel's destination (root label and segments joined with " / ");
 - the last modified date, as `12 Jul 2026` (day, short month, year) for English;
 - the author: for a Published version, the publisher ("Published by {name}"); otherwise the version's `owner` from the listing ("by {name}"), omitted when the listing has none.
 
-The first line holds the version and the status badge, with the date at the far end; the second line holds the folder and the author at the far end; a Published version adds a third line "Published in {folders}", aligned to the end under the author, with its target folders, so the badge stays short. The host formats that line (translation and list separator), like the folder, date and author, and the section only renders the string it is given. Version and date use 14px text, the other lines 12px secondary text, from the kit type scale. A version that does not fit stays on one line, cut with an ellipsis, and the kit ellipsis tooltip shows the whole version on hover and focus.
+The first line holds the version and the status badge, with the date at the far end; the second line holds the folder and the author at the far end. The first line keeps the height of the badge in every state, so a row does not change height when its status arrives or has no badge. The host formats the folder, date and author, and the section only renders the strings it is given. Version and date use 14px text, the other lines 12px secondary text, from the kit type scale. A version that does not fit stays on one line, cut with an ellipsis, and the kit ellipsis tooltip shows the whole version on hover and focus.
 
 #### Scenario: Rows and order without the open version
 - **WHEN** the section renders for application `Design Review Agent` that has versions `1.0.0` (updated 12 Jul), `beta-2` (updated 20 Jul) and `1.1.0` (updated 01 Jul), and `1.0.0` is being edited
@@ -70,7 +70,7 @@ The first line holds the version and the status badge, with the date at the far 
 
 ### Requirement: Statuses load when the panel opens
 
-Opening a panel that shows the section SHALL load the statuses from the version statuses endpoint in the background; the rows SHALL render at once with the version, folder, date and owner, and each status SHALL appear when the response arrives. A version with status unknown (a resource the user does not own) SHALL NOT be shown as Not published. A private resource that was never published SHALL list every version as Not published, with no error.
+Opening a panel that shows the section SHALL load the statuses from the version statuses endpoint in the background; the rows SHALL render at once with the version, folder, date and owner, and each status SHALL appear when the response arrives. A version with status unknown (a resource the user does not own) SHALL read as unavailable, not as a version without a badge. A private resource that was never published SHALL list every version without a badge, with no error.
 
 #### Scenario: Statuses arrive after the rows
 - **WHEN** a panel opens
@@ -78,11 +78,11 @@ Opening a panel that shows the section SHALL load the statuses from the version 
 
 #### Scenario: Never-published private resource
 - **WHEN** the statuses response says Not published for every version
-- **THEN** every row reads **Not published** and no error is shown
+- **THEN** no row shows a badge, no error is shown and the rows keep the same height
 
 #### Scenario: Unknown status
 - **WHEN** the statuses response has unknown for a version
-- **THEN** that row does not read **Not published**
+- **THEN** that row reads **Status unavailable**
 
 ### Requirement: Loading, empty, error and retry states
 

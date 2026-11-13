@@ -35,8 +35,6 @@ export interface VersionHistoryFormatters {
   formatPublishedBy: (name: string) => string;
   /** Builds the author line of any other version, e.g. `by {name}`. */
   formatOwner: (name: string) => string;
-  /** Builds the line that names the folders a published version is published to, e.g. `Published in {folders}`. */
-  formatPublishedIn: (folders: string[]) => string;
 }
 
 const STATUS_BY_DTO: Record<VersionPublicationStatus, VersionHistoryStatus> = {
@@ -95,11 +93,6 @@ export const buildVersionHistoryRows = (
         id: item.id,
         version: item.displayVersion ?? '',
         status,
-        publishedIn:
-          status === VersionHistoryStatus.Published &&
-          entry?.publishedFolders?.length
-            ? formatters.formatPublishedIn(entry.publishedFolders)
-            : undefined,
         folder: [
           formatters.rootLabel,
           ...parseResourceFolderPath(item.id),

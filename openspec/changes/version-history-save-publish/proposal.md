@@ -74,7 +74,7 @@ Aliases (Production, Staging), the Move aliases block, dependency impact summary
 - The deployments and toolsets listings keep their shape; the only change is the additive `versionGroupId`.
 - The section lists the other versions of the resource with date, status, folder and author, newest first; it is absent when there is no other version.
 - A version saved with Save as new version appears in the section without waiting for the cache to expire.
-- A private resource that was never published lists its versions as Not published, with no error.
+- A private resource that was never published lists its versions without a badge, with no error.
 - Loading the statuses reads the bucket's publication list once, not once per version.
 - Publishing uses the saved version; publishing an already-published version is still blocked.
 - Unit tests for `versionGroupId`, the statuses endpoint (happy path, Pending/Approved/Rejected mapping, 404, validation), the hook and the lib components; OpenAPI and the generated client are current; `npm run validate:docs` and `npm run validate:specs` pass.

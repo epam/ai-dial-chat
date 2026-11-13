@@ -20,7 +20,6 @@ const rows: VersionHistoryRow[] = [
     id: 'b',
     version: '1.0.0',
     status: VersionHistoryStatus.Published,
-    publishedIn: 'Published in Organization/Design, Organization',
     folder: 'Personal / Design',
     modifiedAt: '12 Jul 2026',
     author: 'Published by Jane Doe',
@@ -50,14 +49,15 @@ describe('VersionHistorySection', () => {
     ]);
   });
 
-  it('reads each status as text, with the folders of a published version', () => {
+  it('reads the In review and Published statuses as text and draws no badge for a not published version', () => {
     renderSection();
 
-    expect(screen.getByText('Not published')).toBeTruthy();
     expect(screen.getByText('In review')).toBeTruthy();
-    expect(
-      screen.getByText('Published in Organization/Design, Organization'),
-    ).toBeTruthy();
+    expect(screen.getByText('Published')).toBeTruthy();
+    expect(screen.queryByText('Not published')).toBeNull();
+    const [first] = screen.getAllByRole('listitem');
+    expect(within(first).getByText('beta-2')).toBeTruthy();
+    expect(within(first).getByText('20 Jul 2026')).toBeTruthy();
   });
 
   it('shows the folder, the date and the author of a row on separate parts', () => {
@@ -69,18 +69,6 @@ describe('VersionHistorySection', () => {
     expect(within(first).getByText('by Ivan Petrov')).toBeTruthy();
     expect(within(second).getByText('12 Jul 2026')).toBeTruthy();
     expect(within(second).getByText('Published by Jane Doe')).toBeTruthy();
-  });
-
-  it('keeps the Published badge short and lists the folders on their own line', () => {
-    renderSection();
-
-    const [, second] = screen.getAllByRole('listitem');
-    expect(within(second).getByText('Published')).toBeTruthy();
-    expect(
-      within(second).getByText(
-        'Published in Organization/Design, Organization',
-      ),
-    ).toBeTruthy();
   });
 
   it('keeps the loading message out of the list while statuses load', () => {
@@ -105,6 +93,24 @@ describe('VersionHistorySection', () => {
     renderSection({ rows: [{ id: 'a', version: '1.0.0' }] });
 
     expect(screen.queryByText('Not published')).toBeNull();
+    expect(screen.queryByText('Published')).toBeNull();
+  });
+
+  it('keeps the first line of every row at the badge height so a loaded row does not change height', () => {
+    renderSection({
+      rows: [
+        { id: 'a', version: '1.0.0' },
+        {
+          id: 'b',
+          version: '2.0.0',
+          status: VersionHistoryStatus.NotPublished,
+        },
+      ],
+    });
+
+    screen.getAllByRole('listitem').forEach((item) => {
+      expect(item.firstElementChild?.className).toMatch(/min-h-6/);
+    });
   });
 
   it('does not present an unknown status as Not published', () => {
@@ -164,11 +170,11 @@ describe('VersionHistorySection', () => {
 
   it('takes every string from labels', () => {
     renderSection({
-      labels: { heading: 'Historia', notPublishedLabel: 'No publicada' },
+      labels: { heading: 'Historia', inReviewLabel: 'En revisión' },
     });
 
     expect(screen.getByRole('heading', { name: 'Historia' })).toBeTruthy();
-    expect(screen.getByText('No publicada')).toBeTruthy();
+    expect(screen.getByText('En revisión')).toBeTruthy();
   });
 
   it('renders at phone width without a fixed width on a row', () => {

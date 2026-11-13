@@ -2129,10 +2129,8 @@
   },
   "versionHistory": {
     "heading": "Versions history",
-    "notPublished": "Not published",
     "inReview": "In review",
     "published": "Published",
-    "publishedIn": "Published in {{folders}}",
     "statusUnavailable": "Status unavailable",
     "loading": "Loading publication statuses…",
     "empty": "No saved versions yet.",

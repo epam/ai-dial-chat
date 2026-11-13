@@ -14,7 +14,6 @@ const rows: VersionHistoryRow[] = [
     id: 'a',
     version: '1.0.0',
     status: VersionHistoryStatus.Published,
-    publishedIn: 'Published in Organization',
     folder: 'Personal',
     modifiedAt: '12 Jul 2026',
     author: 'Published by Jane Doe',
@@ -54,7 +53,7 @@ describe('VersionHistorySection — RTL and accessibility', () => {
     expect(
       screen.getByRole('region', { name: 'Versions history' }),
     ).toBeTruthy();
-    expect(screen.getByText('Published in Organization')).toBeTruthy();
+    expect(screen.getByText('Published')).toBeTruthy();
   });
 
   it('keeps a 64-character version on one line and cuts it with an ellipsis', () => {

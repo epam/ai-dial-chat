@@ -2766,7 +2766,7 @@ const { rows, isLoading, hasError, onRetry } = useVersionHistory({
 />;
 ```
 
-`formatters` is `{ rootLabel, formatDate, formatPublishedBy, formatOwner, formatPublishedIn }` (`formatPublishedIn(folders)` builds the whole `Published in …` line, list separator included) (`VersionHistoryFormatters`) and should be referentially stable. The pure `selectOtherVersions` and `buildVersionHistoryRows` it uses are exported too.
+`formatters` is `{ rootLabel, formatDate, formatPublishedBy, formatOwner }` (`VersionHistoryFormatters`) and should be referentially stable. The pure `selectOtherVersions` and `buildVersionHistoryRows` it uses are exported too.
 
 ### useVersionHistorySection / isVersionedCatalogEntityType
 

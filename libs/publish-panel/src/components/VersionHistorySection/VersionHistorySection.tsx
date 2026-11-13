@@ -22,7 +22,6 @@ import styles from './VersionHistorySection.module.scss';
 
 const DEFAULT_LABELS = {
   heading: 'Versions history',
-  notPublishedLabel: 'Not published',
   inReviewLabel: 'In review',
   publishedLabel: 'Published',
   unknownLabel: 'Status unavailable',
@@ -37,8 +36,6 @@ const getStatusLabel = (
   labels: Required<VersionHistoryLabels>,
 ): string | undefined => {
   switch (row.status) {
-    case VersionHistoryStatus.NotPublished:
-      return labels.notPublishedLabel;
     case VersionHistoryStatus.InReview:
       return labels.inReviewLabel;
     case VersionHistoryStatus.Unknown:
@@ -120,13 +117,14 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
         <ul>
           {rows.map((row) => {
             const statusLabel = getStatusLabel(row, text);
-            const isStatusPending = !statusLabel && isLoading && !hasError;
+            const isStatusPending =
+              row.status == null && isLoading && !hasError;
             return (
               <li
                 key={row.id}
                 className={mergeClasses('flex flex-col gap-1 py-2', styles.row)}
               >
-                <div className="flex min-w-0 items-center gap-2">
+                <div className="flex min-h-6 min-w-0 items-center gap-2">
                   <EllipsisTooltip
                     text={row.version}
                     className={mergeClasses(
@@ -178,17 +176,6 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
                       </span>
                     )}
                   </div>
-                )}
-                {row.publishedIn && (
-                  <span
-                    className={mergeClasses(
-                      'self-end text-end',
-                      metaClassName,
-                      styles.meta,
-                    )}
-                  >
-                    {row.publishedIn}
-                  </span>
                 )}
               </li>
             );

@@ -20,7 +20,6 @@ export const useVersionHistoryText = (): {
   const labels = useMemo<VersionHistoryLabels>(
     () => ({
       heading: t(VersionHistoryI18nKeys.Heading),
-      notPublishedLabel: t(VersionHistoryI18nKeys.NotPublished),
       inReviewLabel: t(VersionHistoryI18nKeys.InReview),
       publishedLabel: t(VersionHistoryI18nKeys.Published),
       unknownLabel: t(VersionHistoryI18nKeys.StatusUnavailable),
@@ -44,14 +43,6 @@ export const useVersionHistoryText = (): {
       formatPublishedBy: (name) =>
         t(VersionHistoryI18nKeys.PublishedBy, {
           name,
-          interpolation: { escapeValue: false },
-        }),
-      formatPublishedIn: (folders) =>
-        t(VersionHistoryI18nKeys.PublishedIn, {
-          folders: new Intl.ListFormat(displayLanguage, {
-            style: 'short',
-            type: 'unit',
-          }).format(folders),
           interpolation: { escapeValue: false },
         }),
       formatOwner: (name) =>
