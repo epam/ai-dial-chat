@@ -22,7 +22,6 @@ import {
   ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
-import { useOrgUnitDestinationPredicate } from '../../hooks/publish/useOrgUnitDestinationPredicate';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import { useResourceSaveNotification } from '../../hooks/resource-save/useResourceSaveNotification';
 import { getPublishRules } from '../../server-api/publish-rules.api';
@@ -173,7 +172,6 @@ const ResourceSavePanelContainer: FC<Props> = ({
       cancelCreatingFolderLabel: t(ButtonsI18nKeys.Cancel),
       addSiblingFolderLabel: commonLabels.addSiblingFolderLabel,
       addChildFolderLabel: commonLabels.addChildFolderLabel,
-      orgUnitLabel: commonLabels.orgUnitLabel,
       createFolderEmptyNameError: t(
         ConversationPublishI18nKeys.EmptyFolderNameError,
       ),
@@ -189,7 +187,6 @@ const ResourceSavePanelContainer: FC<Props> = ({
       commonLabels.addChildFolderLabel,
       commonLabels.addSiblingFolderLabel,
       commonLabels.clearSearchAriaLabel,
-      commonLabels.orgUnitLabel,
       currentVersion,
       t,
     ],
@@ -208,8 +205,6 @@ const ResourceSavePanelContainer: FC<Props> = ({
     [t, typeLabel],
   );
 
-  const { isOrgUnitDestinationInRoot } = useOrgUnitDestinationPredicate(isOpen);
-
   return (
     <StandaloneSaveToFolderPanel
       {...panelProps}
@@ -219,7 +214,6 @@ const ResourceSavePanelContainer: FC<Props> = ({
       resource={resource}
       panelLabels={panelLabels}
       labels={labels}
-      isOrgUnitFolder={isOrgUnitDestinationInRoot}
     />
   );
 };

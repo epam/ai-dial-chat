@@ -1161,7 +1161,6 @@
   "dialFileManager": {
     "attach": "Attach",
     "empty": "This folder is empty",
-    "orgUnit": "Organization unit",
     "error": "Failed to load files",
     "hiddenFiles": "Hidden files",
     "showHiddenFiles": "Show hidden files",

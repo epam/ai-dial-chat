@@ -54,7 +54,7 @@ export const useOrgUnits = ({
       setUnits(result.units);
       setStatus(OrgUnitsStatus.Ready);
     } catch {
-      /* A failed read only withholds an icon, so it is not reported to the user.
+      /* A failed read only withholds the unit answer, so it is not reported to the user.
        * The BFF never caches a failure, so the next ensureUnits() may retry it. */
       hasRequested.current = false;
       if (!isMounted.current) return;

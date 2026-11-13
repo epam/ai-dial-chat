@@ -42,7 +42,6 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
   submitError,
   foldersError,
   onRetryFolders,
-  isOrgUnitFolder,
   panelLabels = {},
   panelStyles = {},
   headingClassName = 'dial-body-semi-text',
@@ -61,7 +60,6 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
     clearSearchAriaLabel = 'Clear search',
     folderEmptyStateLabel,
     createFolderLabel,
-    orgUnitLabel,
     cancelCreatingFolderLabel,
     addSiblingFolderLabel,
     addChildFolderLabel,
@@ -104,16 +102,6 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
 
   const headingClass = mergeClasses(headingClassName, styles.heading);
 
-  /* The tree is always multi-root here, so every folder it asks about has a root. */
-  const isOrgUnitFolderInRoot = useMemo(
-    () =>
-      isOrgUnitFolder == null
-        ? undefined
-        : (folderPath: string[], rootKey?: string) =>
-            rootKey != null && isOrgUnitFolder(folderPath, rootKey),
-    [isOrgUnitFolder],
-  );
-
   if (view === SaveToFolderView.ChangeFolder) {
     return (
       <div className="flex flex-col gap-3" style={cssVars}>
@@ -151,8 +139,6 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
           emptyFolderNameError={createFolderEmptyNameError}
           invalidFolderNameError={createFolderInvalidNameError}
           duplicateFolderNameError={createFolderDuplicateNameError}
-          isOrgUnitFolder={isOrgUnitFolderInRoot}
-          orgUnitLabel={orgUnitLabel}
           styles={folderTreeStyles}
         />
         {/* Rules are scoped to the folder picked above, so they sit with the tree, as in the Publish panel. */}

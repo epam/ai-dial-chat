@@ -10,8 +10,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   hasSamePaths,
   resolveSectionByPath,
-  toRoutableSections,
   unionPathSets,
+  withRoutableRootLabels,
 } from '../dial-file-manager-path.util';
 import {
   DIAL_FILE_MANAGER_SECTION_TABS,
@@ -56,7 +56,12 @@ export const useDialFileManagerSections = ({
 }: UseDialFileManagerSectionsOptions): UseDialFileManagerSectionsResult => {
   /* Paths are routed by their first segment, so every root label must be a unique, slash-free segment. */
   const enabledSections = useMemo(
-    () => toRoutableSections(sections),
+    () =>
+      withRoutableRootLabels(
+        sections.filter((section) =>
+          DIAL_FILE_MANAGER_SECTION_TABS.includes(section.tab),
+        ),
+      ),
     [sections],
   );
   const isAll = activeTab === DialFileManagerTabs.All;

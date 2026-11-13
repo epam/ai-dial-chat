@@ -94,8 +94,6 @@ export interface PublishPanelLabels {
   createFolderDuplicateNameError?: string;
   /** Label used for the bucket root as a destination and as `{folder}` in callouts when it is selected. Default: `'Organization'`. */
   rootFolderLabel?: string;
-  /** Accessible name and tooltip of the org-unit icon in the folder view. Defaults to `'Organization unit'`. */
-  orgUnitLabel?: string;
   /** Text overrides for the access-rules section. */
   accessRulesLabels?: PublishAccessRulesLabels;
 }
@@ -143,8 +141,6 @@ export interface PublishPanelProps {
   onExpandedPathsChange?: (paths: Set<string>) => void;
   /** Folder path keys currently being fetched by the host. */
   loadingPaths?: Set<string>;
-  /** Whether a destination folder is a DIAL Core org unit; a matching folder shows the org-unit icon. */
-  isOrgUnitFolder?: (folderPath: string[]) => boolean;
   /**
    * Whether `selectedFolderPath` already has this publication — this exact
    * version, for a versioned `resource`, or any prior entry at all, for an
@@ -221,7 +217,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   expandedPaths,
   onExpandedPathsChange,
   loadingPaths,
-  isOrgUnitFolder,
   hasExistingPublicationInFolder,
   hasWriteAccess,
   isSubmitting,
@@ -281,7 +276,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     createFolderInvalidNameError,
     createFolderDuplicateNameError,
     rootFolderLabel = 'Organization',
-    orgUnitLabel,
     accessRulesLabels,
     searchPlaceholder,
     clearSearchAriaLabel,
@@ -398,8 +392,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           invalidFolderNameError={createFolderInvalidNameError}
           duplicateFolderNameError={createFolderDuplicateNameError}
           rootLabel={rootFolderLabel}
-          isOrgUnitFolder={isOrgUnitFolder}
-          orgUnitLabel={orgUnitLabel}
           styles={folderTreeStyles}
         />
       </div>

@@ -59,7 +59,6 @@ export * from './utils/initials';
 export * from './utils/avatar-color';
 export * from './components/ActionMenu/ActionMenu';
 export * from './components/PanelEmptyState/PanelEmptyState';
-export * from './components/OrgUnitFolderIcon/OrgUnitFolderIcon';
 export * from './components/NewVersionAlert/NewVersionAlert';
 export * from './components/NotificationStack/NotificationStack';
 export * from './components/ItemHeader/ItemHeader';

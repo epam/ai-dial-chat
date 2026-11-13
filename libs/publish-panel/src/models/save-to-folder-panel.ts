@@ -38,8 +38,6 @@ export interface SaveToFolderPanelLabels {
   folderEmptyStateLabel?: string;
   /** Label of the trailing folder-creation button. Defaults to `'Create new folder'`. */
   createFolderLabel?: string;
-  /** Accessible name and tooltip of the org-unit icon in the folder view. Defaults to `'Organization unit'`. */
-  orgUnitLabel?: string;
   /** Label of the action that cancels folder creation. Defaults to `'Cancel'`. */
   cancelCreatingFolderLabel?: string;
   /** Label of the context-menu action that creates a sibling folder. Defaults to `'Add sibling'`. */
@@ -142,8 +140,6 @@ export interface SaveToFolderPanelBaseProps {
   foldersError?: string;
   /** Called when the user retries a failed folder listing. */
   onRetryFolders?: () => void;
-  /** Whether a destination folder is a DIAL Core org unit; a matching folder shows the org-unit icon. `rootKey` names the destination root. */
-  isOrgUnitFolder?: (folderPath: string[], rootKey: string) => boolean;
   /** Text overrides for the body. */
   panelLabels?: SaveToFolderPanelLabels;
   /** Style overrides for the body. */

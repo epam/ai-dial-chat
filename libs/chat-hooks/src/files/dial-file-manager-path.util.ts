@@ -6,12 +6,10 @@ import {
 } from '@epam/ai-dial-react-file-manager';
 import { safeDecodeURI, stripTrailingSlashes } from '../shared/string-utils';
 import {
-  DIAL_FILE_MANAGER_SECTION_TABS,
   PATH_SEPARATOR_REGEXP,
   type DialFileManagerSection,
   type SharedRootMeta,
 } from './dial-file-manager.model';
-import { virtualPathToApiPath } from './resolve-dial-file-api-path';
 
 export const hasForbiddenNameSymbols = (
   name: string,
@@ -230,36 +228,4 @@ export const withRoutableRootLabels = <TSection extends DialFileManagerSection>(
       ? section
       : { ...section, rootLabel };
   });
-};
-
-/** Returns the source-tab `sections` with routable root labels — the roots `useDialFileManagerSections` actually renders. */
-export const toRoutableSections = <TSection extends DialFileManagerSection>(
-  sections: readonly TSection[],
-): TSection[] =>
-  withRoutableRootLabels(
-    sections.filter((section) =>
-      DIAL_FILE_MANAGER_SECTION_TABS.includes(section.tab),
-    ),
-  );
-
-/**
- * Returns the bucket-relative folder of a row under `tab`'s root
- * (`/Organization/Acme/Risk` → `Acme/Risk/`), or `undefined` for a row under
- * another root and for the root itself.
- */
-export const toSectionApiPath = (
-  virtualPath: string,
-  sections: readonly DialFileManagerSection[],
-  tab: DialFileManagerSection['tab'],
-): string | undefined => {
-  const section = resolveSectionByPath(
-    virtualPath,
-    toRoutableSections(sections),
-  );
-  if (section?.tab !== tab) return undefined;
-  const withLeadingSlash = virtualPath.startsWith('/')
-    ? virtualPath
-    : `/${virtualPath}`;
-  const apiPath = virtualPathToApiPath(withLeadingSlash, section.rootLabel);
-  return apiPath === '' ? undefined : apiPath;
 };

@@ -987,10 +987,6 @@ useEffect(() => ensureUnits(), [ensureUnits]);
 const isUnit = status === OrgUnitsStatus.Ready && isOrgUnitFolder('Acme');
 ```
 
-To ask about a file-manager row, map its virtual path back to the public
-bucket with `toSectionApiPath(row.path, sections, DialFileManagerTabs.Organization)`
-(see [virtualPathToApiPath / resolveDialFileApiPath](#virtualpathtoapipath--resolvedialfileapipath)).
-
 ### useUsageLimitBanner
 
 Everything the composer usage-limit banner needs except its rendering: fetches the selected deployment's own usage and the caller's account usage, refreshes both once after each generation ends, picks the day/week/month token limit (from the deployment) or cost budget (from the account) closest to its cap, translates the limit and reset sentences, and tracks tab-lifetime dismissal. Spread the returned `banner` onto `UsageLimitBannerView` from `@epam/ai-dial-conversation-input`. Available from the root and from `@epam/ai-dial-chat-hooks/usage-limits`; needs the optional `@epam/ai-dial-conversation-input` peer (it supplies the `UsageLimitBannerSeverity` enum at runtime).
@@ -2965,7 +2961,6 @@ const {
   isRowSelectable,
   isFileTypeAllowed,
   allowedFileTypes,
-  sections,
 } = useFileAttachmentPicker({
   fileManagerOptions, // the same options useDialFileManager accepts, minus bucket/activeTab/rootLabel/variant/forbiddenSymbolsRegExp
   bucket,
@@ -2999,7 +2994,7 @@ const {
 
 **Parameters** (`UseFileAttachmentPickerOptions`): `fileManagerOptions`, `bucket`, and `tabLabels` are required; `forbiddenSymbolsRegExp`, `allowedTabs`, `initialTab` (defaults to `DialFileManagerTabs.MyFiles`), `allowedTypes`, `maxSelectableFileSize`, and `canAttachFolders` (defaults to `false`) are optional.
 
-**Returns** (`UseFileAttachmentPickerResult`): `controller` (the composed `UseDialFileManagerResult`), `activeTab`, `tabs`, `onTabChange`, `selectedPaths`, `onSelectedPathsChange`, `isRowSelectable`, `isFileTypeAllowed`, `allowedFileTypes`, `sections` (the source sections it browses, for `toSectionApiPath`).
+**Returns** (`UseFileAttachmentPickerResult`): `controller` (the composed `UseDialFileManagerResult`), `activeTab`, `tabs`, `onTabChange`, `selectedPaths`, `onSelectedPathsChange`, `isRowSelectable`, `isFileTypeAllowed`, `allowedFileTypes`.
 
 ### useDialFileMutations
 
@@ -3216,23 +3211,6 @@ import { getParentFolderPath } from '@epam/ai-dial-chat-shared';
 
 resolveDialFileApiPath(file, bucket, rootLabel);
 getParentFolderPath('reports/file.txt'); // 'reports/'
-```
-
-`toRoutableSections(sections)` returns the source-tab sections with the root
-labels `useDialFileManagerSections` actually renders: an empty,
-slash-containing or repeated label becomes the tab id. `toSectionApiPath(virtualPath, sections, tab)`
-resolves a row against those roots and returns its bucket-relative folder, or
-`undefined` for a row under another root and for the root itself.
-
-```ts
-import { toSectionApiPath } from '@epam/ai-dial-chat-hooks';
-import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
-
-toSectionApiPath(
-  '/Organization/Acme/Risk',
-  [{ tab: DialFileManagerTabs.Organization, rootLabel: 'Organization' }],
-  DialFileManagerTabs.Organization,
-); // 'Acme/Risk/'
 ```
 
 ### dialFileToAttachment / dialFilesToAttachments / dialFolderPathToAttachment

@@ -16,8 +16,6 @@ export interface DialFileManagerShellColors {
   treeShadow?: string;
   /** Scrim behind the spinner shown while an overlay operation runs. Defaults to `--bg-backdrop`. */
   overlayBackdrop?: string;
-  /** Fill of the org-unit icon on unit folders. Defaults to `--stroke-gradient-1`. */
-  orgUnitIcon?: string;
 }
 
 /** Style overrides for `DialFileManagerShell`. */

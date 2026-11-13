@@ -1,8 +1,4 @@
-import {
-  buildCssVars,
-  mergeClasses,
-  OrgUnitFolderIcon,
-} from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DialFile,
   DialFileNodeType,
@@ -15,7 +11,7 @@ import {
   GhostButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconFolderPlus, IconPlus } from '@tabler/icons-react';
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import type { PublishFolderNode } from '../../models/publish';
 import type { PublishFoldersTreeProps } from '../../models/publish-folders-tree';
 import {
@@ -68,8 +64,6 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   invalidFolderNameError = 'Folder name contains invalid characters.',
   duplicateFolderNameError = 'A folder with this name already exists.',
   rootLabel = 'Organization',
-  isOrgUnitFolder,
-  orgUnitLabel,
   expandedPaths: controlledExpandedPaths,
   onExpandedPathsChange,
   loadingPaths: loadingPathsProp,
@@ -417,26 +411,6 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     selectPath(isSelected ? undefined : fromFolderPathKey(file.path));
   };
 
-  const orgUnitIconColor = stylesProp.colors?.orgUnitIcon;
-  const getItemIcon = useCallback(
-    (file: DialFile) => {
-      if (isOrgUnitFolder == null || file.nodeType !== DialFileNodeType.FOLDER)
-        return undefined;
-      const segments = fromFolderPathKey(file.path);
-      const target = isMultiRoot
-        ? fromRootedPath(segments)
-        : { rootKey: undefined, path: segments };
-      if (target == null || target.path.length === 0) return undefined;
-      return isOrgUnitFolder(target.path, target.rootKey) ? (
-        <OrgUnitFolderIcon
-          label={orgUnitLabel}
-          colors={{ icon: orgUnitIconColor }}
-        />
-      ) : undefined;
-    },
-    [isOrgUnitFolder, isMultiRoot, orgUnitLabel, orgUnitIconColor],
-  );
-
   return (
     <div
       style={cssVars}
@@ -456,7 +430,6 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
           onExpandedPathsChange={handleExpandedPathsChange}
           loadingPaths={loadingPaths}
           onItemClick={handleItemClick}
-          getItemIcon={getItemIcon}
           getContextMenuItems={getFolderContextMenuItems}
           createdFolderPath={createdFolderPath}
           newFolderDefaultName={creatingFolderName}

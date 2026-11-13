@@ -142,7 +142,6 @@ const fakeUseFileAttachmentPicker = (
       ),
     allowedFileTypes:
       options.allowedTypes as UseFileAttachmentPickerResult['allowedFileTypes'],
-    sections: [],
   };
 };
 
@@ -154,17 +153,6 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
     useFileAttachmentPicker: vi.fn(),
   };
 });
-
-const { mockIsOrgUnitFolder } = vi.hoisted(() => ({
-  mockIsOrgUnitFolder: vi.fn((_path: string) => false),
-}));
-
-vi.mock('../../../context/OrgUnitsContext', () => ({
-  useOrgUnitsContext: () => ({
-    ensureUnits: vi.fn(),
-    isOrgUnitFolder: mockIsOrgUnitFolder,
-  }),
-}));
 
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => createNotificationContextValue(mockShowNotification),

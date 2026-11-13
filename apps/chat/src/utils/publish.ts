@@ -7,7 +7,6 @@ import type { TFunction } from 'i18next';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
-  DialFileManagerI18nKeys,
   PublishAccessRulesI18nKeys,
   PublishI18nKeys,
   ResourceSavePanelI18nKeys,
@@ -101,7 +100,6 @@ export const getPublishPanelCommonLabels = (
   | 'noAccessError'
   | 'addSiblingFolderLabel'
   | 'addChildFolderLabel'
-  | 'orgUnitLabel'
 > => ({
   folderLabel: t(PublishI18nKeys.FolderLabel),
   destinationAriaLabel: t(ResourceSavePanelI18nKeys.DestinationAriaLabel),
@@ -112,7 +110,6 @@ export const getPublishPanelCommonLabels = (
   noAccessError: t(PublishI18nKeys.NoAccessError),
   addSiblingFolderLabel: t(PublishI18nKeys.AddSiblingFolder),
   addChildFolderLabel: t(PublishI18nKeys.AddChildFolder),
-  orgUnitLabel: t(DialFileManagerI18nKeys.OrgUnit),
 });
 
 /** Builds the translated Update and in-progress footer labels shared by the conversation and project publish panels. */

@@ -44,8 +44,6 @@ export interface EmptyStateCopy {
  * today; a future standalone page) resolves these via its own i18n.
  */
 export interface DialFileManagerShellLabels {
-  /** Accessible name and tooltip of the icon on org-unit folders. Defaults to `'Organization unit'`. */
-  orgUnit?: string;
   /** Error message shown when the current folder listing fails. */
   errorMessage: string;
   /** Label for the retry button shown alongside the error message. */

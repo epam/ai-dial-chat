@@ -17,9 +17,9 @@ interface Props {
 }
 
 /**
- * Shares one org-unit read between the file manager and the publish panels.
+ * Shares one org-unit read between all consumers.
  * Nothing is fetched on mount: a consumer calls `ensureUnits()` when it first
- * renders, so a session that opens neither surface never asks DIAL Core.
+ * needs the answer, so a session with no consumer never asks DIAL Core.
  * While the `orgUnitsEnabled` feature flag is off, `ensureUnits()` does nothing
  * and no folder is a unit.
  */

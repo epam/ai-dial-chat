@@ -57,8 +57,6 @@ export interface StandalonePublishPanelProps {
   onExpandedPathsChange?: (paths: Set<string>) => void;
   /** Folder path keys currently being fetched by the host. */
   loadingPaths?: Set<string>;
-  /** Whether a destination folder is a DIAL Core org unit; forwarded to `PublishPanel`. */
-  isOrgUnitFolder?: (folderPath: string[]) => boolean;
   /** Whether `selectedFolderPath` already has this publication. */
   hasExistingPublicationInFolder: boolean;
   /** Whether the current user can publish to `selectedFolderPath`. */
@@ -144,7 +142,6 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   expandedPaths,
   onExpandedPathsChange,
   loadingPaths,
-  isOrgUnitFolder,
   hasExistingPublicationInFolder,
   hasWriteAccess,
   isSubmitting,
@@ -322,7 +319,6 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
             expandedPaths={expandedPaths}
             onExpandedPathsChange={onExpandedPathsChange}
             loadingPaths={loadingPaths}
-            isOrgUnitFolder={isOrgUnitFolder}
             hasExistingPublicationInFolder={hasExistingPublicationInFolder}
             hasWriteAccess={hasWriteAccess}
             isSubmitting={isSubmitting}

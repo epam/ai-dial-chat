@@ -696,23 +696,6 @@ import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
 />;
 ```
 
-### OrgUnitFolderIcon
-
-Icon that marks a folder as a DIAL Core org unit: Tabler `IconSitemapFilled`
-at `DIAL_ICON_SIZE.MD` (the folder icon's size) in the folder icon's fill,
-`--stroke-gradient-1`, so a unit reads as a folder of its own kind. Its
-element is a `role="img"` named by `label` (default `'Organization unit'`),
-and the kit `Tooltip` shows the same text on hover. `colors.icon` sets the fill through `--oufi-icon`. The
-glyph is symmetric, so it is never mirrored in RTL. `DialFileManagerShell` and
-the publish destination tree render it for you; use it directly only in a
-custom folder list.
-
-```tsx
-import { OrgUnitFolderIcon } from '@epam/ai-dial-chat-shared';
-
-<OrgUnitFolderIcon label={t('dialFileManager.orgUnit')} />;
-```
-
 ### Org-unit folders
 
 `OrgUnit` (`id`, `name`, `displayName`, `path`, `folder`) is a DIAL Core org
@@ -736,13 +719,6 @@ const folders = toOrgUnitFolderSet(units as OrgUnit[]);
 isOrgUnitFolder(folders, 'Acme/US Risk'); // true
 normalizeOrgUnitFolder('public/Acme/US%20Risk/'); // 'Acme/US Risk/'
 ```
-
-`DialFileManagerShell` (and `FileManagerAttachModal`, which forwards it) takes
-an optional `isOrgUnitFolder?: (item: DialFile) => boolean`. A matching folder
-shows `OrgUnitFolderIcon` in the tree and the grid. Its name comes from
-`DialFileManagerShellLabels.orgUnit` and its fill from
-`DialFileManagerShellColors.orgUnitIcon`. Files never get the icon, and
-without the prop nothing changes.
 
 ### NewVersionAlert
 
