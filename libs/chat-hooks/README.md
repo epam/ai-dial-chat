@@ -4295,7 +4295,7 @@ const { starters, propertyKey, description } = getStartersFromSchema(
 
 Announcement-banner helpers: sanitize operator-supplied HTML, check whether structured (`title`/`description`) or any content is present, and build the content-keyed signature used to track dismissal.
 
-`buildAnnouncementSignature` covers every part of the banner surface: the title, the description, and the `items` entries behind the `+N` pill, whose popover is hidden along with the banner. Editing any of them produces a new signature, so a host that persists it re-shows a banner the user had dismissed. A legacy-only announcement (`html` with no title or description) signs as the raw HTML string, and `items` is left out of the payload when the list is empty — both so signatures stored by earlier builds keep matching.
+`buildAnnouncementSignature` covers every part of the banner surface: the title, the description, and the `items` entries behind the `+N` pill, whose popover is hidden along with the banner. Editing any of them produces a new signature, so a host that persists it re-shows a banner the user had dismissed. An entry's `severity` is not signed: the Chat surfaces do not render it, so changing only the severity leaves a dismissed banner hidden. A legacy-only announcement (`html` with no title or description) signs as the raw HTML string, and `items` is left out of the payload when the list is empty — both so signatures stored by earlier builds keep matching.
 
 The two sanitizers differ in the tags they keep, because the two banner layouts differ. `sanitizeAnnouncementHtml` is for the structured `description`, which renders as one truncating line, so it keeps inline markup only — `a`, `b`, `strong`, `em`, `br`, `span`. `sanitizeAnnouncementMessageHtml` is for the legacy `html` message, a free-standing block, so it additionally keeps `u` and `p`. Both keep `href`, `target` and `rel` on links, drop everything else including `style`, and force `rel="noopener noreferrer"` on any link that already carries `target="_blank"`.
 
@@ -4327,6 +4327,32 @@ buildAnnouncementSignature(content);
 
 sanitizeAnnouncementMessageHtml('<p>Upgraded to <strong>1.47</strong></p>');
 // '<p>Upgraded to <strong>1.47</strong></p>'
+```
+
+### AnnouncementSeverity / mapAnnouncementSeverity
+
+`AnnouncementSeverity` says how urgent an `AnnouncementListItem` is, so a host can mark a maintenance or outage notice — for example with a warning icon before the title. Members: `Info` (`'info'`, an ordinary news item) and `Warning` (`'warning'`). `AnnouncementListItem.severity` is optional; absent means `Info`.
+
+`mapAnnouncementSeverity` converts the generated client's `AnnouncementSeverity` (from an `AnnouncementItemDto`) into the lib enum. It returns `Info` when the value is `null`, `undefined` — as from a backend that predates the field — or a level this build does not know, so a host can switch on the result exhaustively.
+
+```ts
+import type { AnnouncementItemDto } from '@epam/ai-dial-chat-api-client';
+import {
+  type AnnouncementListItem,
+  AnnouncementSeverity,
+  mapAnnouncementSeverity,
+} from '@epam/ai-dial-chat-hooks';
+
+const toListItems = (
+  dtos: readonly AnnouncementItemDto[],
+): AnnouncementListItem[] =>
+  dtos.map((dto) => ({
+    ...dto,
+    severity: mapAnnouncementSeverity(dto.severity),
+  }));
+
+const isWarning = (item: AnnouncementListItem): boolean =>
+  item.severity === AnnouncementSeverity.Warning;
 ```
 
 ### sanitizeFooterHtml / formatAppVersion

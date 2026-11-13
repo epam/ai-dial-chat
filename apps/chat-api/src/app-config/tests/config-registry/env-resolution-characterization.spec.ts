@@ -144,6 +144,7 @@ const KEY_EXPECTATIONS: Readonly<
           title: 'A',
           description: null,
           link: { label: 'Read', href: 'https://a.example.com' },
+          severity: 'info',
         },
       ],
     },
@@ -891,6 +892,7 @@ const PARSER_EXPECTATIONS: Readonly<Record<string, LoggedOutcome>> = {
         title: 'A',
         description: '<b>B</b>',
         link: { label: 'Read', href: 'https://a.example.com' },
+        severity: 'info',
       },
     ],
     logs: [],
@@ -916,7 +918,9 @@ const PARSER_EXPECTATIONS: Readonly<Record<string, LoggedOutcome>> = {
       { title: 'Bad link', link: { label: 'x', href: 'javascript:alert(1)' } },
       'text',
     ],
-    effective: [{ title: 'Ok', description: null, link: null }],
+    effective: [
+      { title: 'Ok', description: null, link: null, severity: 'info' },
+    ],
     logs: [
       'warn: Ignoring announcement entry with a blank or missing title',
       'warn: Ignoring announcement "Bad link": link.href is not an http(s) URL: javascript:alert(1)',
