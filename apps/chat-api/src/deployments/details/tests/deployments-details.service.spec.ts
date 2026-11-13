@@ -617,7 +617,6 @@ describe('DeploymentsDetailsService', () => {
             cache_read: { rate: '0.001' },
           },
           catalogProperties: {
-            provider: 'Provider',
             vendor: 'Vendor',
             license: 'License',
             knowledgeCutoffDate: '2026-08-17',
@@ -625,8 +624,78 @@ describe('DeploymentsDetailsService', () => {
           },
         },
       });
+      expect(result.modelDetails?.catalogProperties).not.toHaveProperty(
+        'provider',
+      );
       expect(sdkClient.getApplication).not.toHaveBeenCalled();
       expect(sdkClient.getToolset).not.toHaveBeenCalled();
+    });
+
+    it('forwards the model provider, deprecation date and end of service from DIAL Core', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(
+        okResponse({
+          id: 'gpt-4o',
+          provider: 'Azure',
+          deprecation_date: '2026-12-31',
+          end_of_service: '2027-03-31',
+          catalog_properties: { provider: 'Legacy', vendor: 'OpenAI' },
+        }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'gpt-4o',
+        'token',
+      );
+
+      expect(result.modelDetails).toMatchObject({
+        provider: 'Azure',
+        deprecationDate: '2026-12-31',
+        endOfService: '2027-03-31',
+      });
+      expect(result.modelDetails?.catalogProperties).toEqual({
+        vendor: 'OpenAI',
+      });
+      expect(result.modelDetails?.catalogProperties).not.toHaveProperty(
+        'provider',
+      );
+    });
+
+    it('omits the model provider and lifecycle dates when DIAL Core does not send them', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(okResponse({ id: 'gpt-4o' }));
+
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'gpt-4o',
+        'token',
+      );
+      const body = JSON.parse(JSON.stringify(result)) as typeof result;
+
+      expect(body.modelDetails).not.toHaveProperty('provider');
+      expect(body.modelDetails).not.toHaveProperty('deprecationDate');
+      expect(body.modelDetails).not.toHaveProperty('endOfService');
+    });
+
+    it('omits a model catalogProperties whose only key is provider', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(
+        okResponse({
+          id: 'gpt-4o',
+          catalog_properties: { provider: 'Legacy' },
+        }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'gpt-4o',
+        'token',
+      );
+      const body = JSON.parse(JSON.stringify(result)) as typeof result;
+
+      expect(body.modelDetails).not.toHaveProperty('catalogProperties');
+      expect(body.modelDetails).not.toHaveProperty('provider');
     });
 
     it('dispatches to getApplication, maps owner/features/inputAttachmentTypes, and excludes function.env/source_folder/target_folder', async () => {
@@ -915,12 +984,14 @@ describe('DeploymentsDetailsService', () => {
       );
 
       expect(result.applicationDetails?.catalogProperties).toEqual({
-        provider: 'Provider',
         vendor: 'Vendor',
         license: 'License',
         knowledgeCutoffDate: '2026-08-17',
         parameters: '100B',
       });
+      expect(result.applicationDetails?.catalogProperties).not.toHaveProperty(
+        'provider',
+      );
     });
 
     it('omits catalogProperties for an application when no recognized string value is present', async () => {
@@ -1091,12 +1162,14 @@ describe('DeploymentsDetailsService', () => {
       );
 
       expect(result.toolsetDetails?.catalogProperties).toEqual({
-        provider: 'Provider',
         vendor: 'Vendor',
         license: 'License',
         knowledgeCutoffDate: '2026-08-17',
         parameters: '100B',
       });
+      expect(result.toolsetDetails?.catalogProperties).not.toHaveProperty(
+        'provider',
+      );
     });
 
     it('omits catalogProperties for a toolset when no recognized string value is present', async () => {

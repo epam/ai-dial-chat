@@ -30,8 +30,8 @@ describe('mapEntityDetailsToCatalogDetails', () => {
           id: 'als-regre-19-adapter',
           type: 'model',
           modelDetails: {
+            provider: 'Provider',
             catalogProperties: {
-              provider: 'Provider',
               vendor: 'Vendor',
               license: 'License',
               knowledgeCutoffDate: '2026-08-17',
@@ -59,6 +59,135 @@ describe('mapEntityDetailsToCatalogDetails', () => {
           ],
         },
       ]);
+    });
+
+    it('renders the deprecation date and end of service after the release date', () => {
+      const createdAt = new Date(2025, 0, 15).getTime();
+      const dto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
+        {
+          id: 'gpt-4o',
+          type: 'model',
+          modelDetails: {
+            provider: 'Azure',
+            createdAt,
+            deprecationDate: '2026-12-31',
+            endOfService: '2027-03-31',
+            limits: { maxTotalTokens: 128000 },
+          },
+        };
+
+      const result = mapEntityDetailsToCatalogDetails(
+        mapDeploymentDetailsDtoToEntityDetails(dto),
+      );
+
+      expect(result.overview?.sections).toEqual([
+        {
+          title: 'Specification',
+          specs: [
+            { label: 'Provider', value: 'Azure' },
+            {
+              label: 'Release date',
+              value: new Date(createdAt).toLocaleDateString(),
+            },
+            {
+              label: 'Deprecation date',
+              value: new Date(2026, 11, 31).toLocaleDateString(),
+            },
+            {
+              label: 'End of service',
+              value: new Date(2027, 2, 31).toLocaleDateString(),
+            },
+            { label: 'Context window', value: '128K tokens' },
+          ],
+        },
+      ]);
+    });
+
+    it('renders no lifecycle rows when the dates are absent', () => {
+      const dto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
+        {
+          id: 'gpt-4o',
+          type: 'model',
+          modelDetails: { provider: 'Azure' },
+        };
+
+      const result = mapEntityDetailsToCatalogDetails(
+        mapDeploymentDetailsDtoToEntityDetails(dto),
+      );
+
+      expect(result.overview?.sections).toEqual([
+        {
+          title: 'Specification',
+          specs: [{ label: 'Provider', value: 'Azure' }],
+        },
+      ]);
+    });
+
+    it('builds a Specification section from the end of service alone', () => {
+      const dto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
+        {
+          id: 'gpt-4o',
+          type: 'model',
+          modelDetails: { endOfService: '2027-03-31' },
+        };
+
+      const result = mapEntityDetailsToCatalogDetails(
+        mapDeploymentDetailsDtoToEntityDetails(dto),
+      );
+
+      expect(result.overview?.sections).toEqual([
+        {
+          title: 'Specification',
+          specs: [
+            {
+              label: 'End of service',
+              value: new Date(2027, 2, 31).toLocaleDateString(),
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('shows a deprecation date that is not YYYY-MM-DD verbatim', () => {
+      const dto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
+        {
+          id: 'gpt-4o',
+          type: 'model',
+          modelDetails: { deprecationDate: 'Q4 2026' },
+        };
+
+      const result = mapEntityDetailsToCatalogDetails(
+        mapDeploymentDetailsDtoToEntityDetails(dto),
+      );
+
+      expect(result.overview?.sections[0]?.specs).toEqual([
+        { label: 'Deprecation date', value: 'Q4 2026' },
+      ]);
+    });
+
+    it('uses host-supplied labels for the lifecycle rows only', () => {
+      const dto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
+        {
+          id: 'gpt-4o',
+          type: 'model',
+          modelDetails: {
+            provider: 'Azure',
+            deprecationDate: '2026-12-31',
+            endOfService: '2027-03-31',
+          },
+        };
+
+      const result = mapEntityDetailsToCatalogDetails(
+        mapDeploymentDetailsDtoToEntityDetails(dto),
+        {
+          deprecationDate: 'Date de dépréciation',
+          endOfService: 'Fin de service',
+        },
+      );
+
+      expect(
+        result.overview?.sections[0]?.specs.map((spec) => spec.label),
+      ).toEqual(['Provider', 'Date de dépréciation', 'Fin de service']);
     });
 
     it('renders a Skills row as the last Capabilities entry when skillsSupported is true', () => {
@@ -118,7 +247,6 @@ describe('mapEntityDetailsToCatalogDetails', () => {
           type: 'application',
           applicationDetails: {
             catalogProperties: {
-              provider: 'Provider',
               vendor: 'Vendor',
               license: 'License',
               knowledgeCutoffDate: '2026-08-17',
@@ -135,7 +263,6 @@ describe('mapEntityDetailsToCatalogDetails', () => {
         {
           title: 'Specification',
           specs: [
-            { label: 'Provider', value: 'Provider' },
             { label: 'Vendor', value: 'Vendor' },
             { label: 'License', value: 'License' },
             {
@@ -462,7 +589,6 @@ describe('mapEntityDetailsToCatalogDetails', () => {
           type: 'toolset',
           toolsetDetails: {
             catalogProperties: {
-              provider: 'Provider',
               vendor: 'Vendor',
               license: 'License',
               knowledgeCutoffDate: '2026-08-17',
@@ -479,7 +605,6 @@ describe('mapEntityDetailsToCatalogDetails', () => {
         {
           title: 'Specification',
           specs: [
-            { label: 'Provider', value: 'Provider' },
             { label: 'Vendor', value: 'Vendor' },
             { label: 'License', value: 'License' },
             {
@@ -560,7 +685,7 @@ describe('mapEntityDetailsToCatalogDetails — host-supplied labels', () => {
       type: 'model',
       modelDetails: {
         owner: 'OpenAI',
-        catalogProperties: { provider: 'OpenAI' },
+        provider: 'OpenAI',
       },
     };
   const toolsetDto: Parameters<
@@ -570,7 +695,7 @@ describe('mapEntityDetailsToCatalogDetails — host-supplied labels', () => {
     type: 'toolset',
     toolsetDetails: {
       owner: 'Search Inc.',
-      catalogProperties: { provider: 'Search Inc.' },
+      catalogProperties: { vendor: 'Search Inc.' },
     },
   };
 
@@ -582,9 +707,11 @@ describe('mapEntityDetailsToCatalogDetails — host-supplied labels', () => {
       provider: 'Provider',
       hostedBy: 'Hosted by',
       knowledgeCutoffDate: 'Knowledge cutoff date',
+      deprecationDate: 'Deprecation date',
+      endOfService: 'End of service',
       oauthScopes: 'OAuth scopes',
     });
-    expect(Object.keys(DEFAULT_ENTITY_DETAILS_LABELS)).toHaveLength(24);
+    expect(Object.keys(DEFAULT_ENTITY_DETAILS_LABELS)).toHaveLength(26);
   });
 
   it.each([
@@ -610,7 +737,7 @@ describe('mapEntityDetailsToCatalogDetails — host-supplied labels', () => {
         ),
     );
     expect(specification?.specs.map((spec) => spec.label)).toContain(
-      'Provider',
+      'Hébergé par',
     );
   });
 });

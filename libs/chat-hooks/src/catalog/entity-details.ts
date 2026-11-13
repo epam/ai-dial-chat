@@ -32,6 +32,7 @@ export interface ModelCapabilities {
 
 /** Catalog-facing specification fields for a model deployment. */
 export interface ModelSpecification {
+  /** Provider that hosts the model, from DIAL Core's top-level model `provider`, e.g. `Azure`. */
   provider?: string;
   vendor?: string;
   license?: string;
@@ -42,6 +43,10 @@ export interface ModelSpecification {
   inputTypes?: string[];
   hostedBy?: string;
   createdAt?: number;
+  /** Date the model is deprecated but still served, as DIAL Core sends it (documented as `YYYY-MM-DD`). */
+  deprecationDate?: string;
+  /** Date the provider stops serving the model, as DIAL Core sends it (documented as `YYYY-MM-DD`). */
+  endOfService?: string;
 }
 
 /** One priced unit for a model deployment. */
@@ -79,7 +84,6 @@ export interface ModelEntityDetails {
 
 /** Catalog-facing specification fields for an agent (application) deployment. */
 export interface AgentSpecification {
-  provider?: string;
   vendor?: string;
   license?: string;
   knowledgeCutoffDate?: string;
@@ -139,7 +143,6 @@ export interface ToolsetAuthStatusDetails {
 
 /** Catalog-facing specification fields for a toolset. */
 export interface ToolsetSpecification {
-  provider?: string;
   vendor?: string;
   license?: string;
   knowledgeCutoffDate?: string;

@@ -161,7 +161,7 @@ export const redactApplicationFunctionEnv = (raw: unknown): unknown => {
  */
 /**
  * Allow-lists `catalog_properties` (schema-driven, identical shape across
- * model/application/toolset DIAL Core responses) to the five recognized
+ * model/application/toolset DIAL Core responses) to the four recognized
  * string fields shown in the catalog Overview panel. Unknown keys and
  * non-string values are dropped; the result is omitted entirely rather than
  * returned as an empty object when nothing recognized remains.
@@ -172,7 +172,6 @@ export const mapCatalogProperties = (
   if (!isRecord(raw)) return undefined;
 
   const properties = {
-    provider: getString(raw, 'provider'),
     vendor: getString(raw, 'vendor'),
     license: getString(raw, 'license'),
     knowledgeCutoffDate: getString(raw, 'knowledgeCutoffDate'),

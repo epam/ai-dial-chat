@@ -55,11 +55,12 @@ The endpoint:
 - SHALL return `404 Not Found` when `MODEL_CATALOG_API_KEY` is not configured, without calling DIAL Core
 - MUST proxy to `GET <DIAL_CORE_URL>/openai/models` through the `@epam/ai-dial-typescript-sdk` client's `getModels` (`DialClientService`), sending `Api-Key: <MODEL_CATALOG_API_KEY>` and never the session's bearer token
 - SHALL return `200 OK` with `{ "data": ModelCatalogEntryDto[] }` (`ModelCatalogListResponseDto` in `apps/chat-api/src/models/dto/model-catalog-response.dto.ts`). Each entry SHALL carry only the display fields listed in `MODEL_CATALOG_ENTRY_FIELDS`, copied from Core's entry, plus `catalog_properties` as described below. Core's invocation settings (`defaults`, `responses_defaults`, `max_retry_attempts`, `tokenizer_model`), `catalog_schema_id`, and any field the list does not name SHALL be dropped, because the catalog shows models the caller cannot use. `ModelCatalogEntryDto` is a `PickType` of `DialModelDto` over the same list, so the Swagger schema and the runtime projection of the copied fields cannot drift. Core entries that are not objects or have no string `id` SHALL be dropped with a `warn` log. It SHALL NOT add per-user fields (for example an `accessible` flag), filter by the caller's roles, or merge in the caller's own model list
-- SHALL reduce Core's `catalog_properties` with `mapCatalogProperties` (`apps/chat-api/src/deployments/utils/deployment-mapper.util.ts`), the allowlist that `deployment-details-api` already uses, and return the result as `catalog_properties` typed `ModelCatalogPropertiesDto` (`apps/chat-api/src/deployments/dto/deployment-details.dto.ts`). Only `provider`, `vendor`, `license`, `knowledgeCutoffDate` and `parameters` with string values SHALL be kept. Unknown keys and non-string values SHALL be dropped. `catalog_properties` SHALL be omitted when Core sends none, sends a value that is not an object, or sends no recognised string key. `catalog_properties` is not a member of `MODEL_CATALOG_ENTRY_FIELDS`. `ModelCatalogEntryDto` declares it on its own as `@ApiPropertyOptional({ type: () => ModelCatalogPropertiesDto })`
+- SHALL copy Core's top-level `provider`, `deprecation_date` and `end_of_service` as Core sends them. All three are members of `MODEL_CATALOG_ENTRY_FIELDS`, and each SHALL be absent from an entry whose Core model does not carry it. The BFF SHALL NOT parse, validate or default them: `provider` is free-form text and the two dates are documented by Core as `YYYY-MM-DD`, but Core does not validate them. They are display data, so they fit the catalog's display-only rule
+- SHALL reduce Core's `catalog_properties` with `mapCatalogProperties` (`apps/chat-api/src/deployments/utils/deployment-mapper.util.ts`), the allowlist that `deployment-details-api` already uses, and return the result as `catalog_properties` typed `ModelCatalogPropertiesDto` (`apps/chat-api/src/deployments/dto/deployment-details.dto.ts`). Only `vendor`, `license`, `knowledgeCutoffDate` and `parameters` with string values SHALL be kept. `catalog_properties.provider` is not part of the allowlist: the top-level `provider` is the model's provider. Unknown keys and non-string values SHALL be dropped. `catalog_properties` SHALL be omitted when Core sends none, sends a value that is not an object, or sends no recognised string key (a `provider`-only object counts as none). `catalog_properties` is not a member of `MODEL_CATALOG_ENTRY_FIELDS`. `ModelCatalogEntryDto` declares it on its own as `@ApiPropertyOptional({ type: () => ModelCatalogPropertiesDto })`
 - MUST set `Cache-Control: private, max-age=300` on a `200` response
-- SHALL have the OpenAPI `operationId` `listModelCatalog`. The generated SDK method is `ModelsApi.listModelCatalog()`, there is no request DTO, and the response DTO is `ModelCatalogListResponseDto`. Its generated `ModelCatalogEntryDto` SHALL include `catalogProperties?: ModelCatalogPropertiesDto` (the generated client camelCases property names; the wire name is `catalog_properties`)
+- SHALL have the OpenAPI `operationId` `listModelCatalog`. The generated SDK method is `ModelsApi.listModelCatalog()`, there is no request DTO, and the response DTO is `ModelCatalogListResponseDto`. Its generated `ModelCatalogEntryDto` SHALL include `provider?: string`, `deprecationDate?: string`, `endOfService?: string` and `catalogProperties?: ModelCatalogPropertiesDto`, whose generated type has no `provider` (the generated client camelCases property names; the wire names are `provider`, `deprecation_date`, `end_of_service` and `catalog_properties`)
 
-`DialModelDto` (`apps/chat-api/src/openapi/openapi-response.dto.ts`) SHALL declare `catalog_properties` as an optional free-form object (`type: 'object', additionalProperties: true`), so `PickType` can name it and the `GET /api/v1/models` schema documents what that route already forwards. The runtime body of `GET /api/v1/models` SHALL NOT change.
+`DialModelDto` (`apps/chat-api/src/openapi/openapi-response.dto.ts`) SHALL declare `catalog_properties` as an optional free-form object (`type: 'object', additionalProperties: true`), and `provider`, `deprecation_date` and `end_of_service` as optional strings with `@ApiPropertyOptional` descriptions and examples (`'Azure'`, `'2026-12-31'`, `'2027-03-31'`), so `PickType` can name them and the `GET /api/v1/models` schema documents what that route already forwards. The runtime body of `GET /api/v1/models` SHALL NOT change: it keeps forwarding Core's model objects as sent, including any `catalog_properties.provider`.
 
 Example:
 
@@ -77,8 +78,10 @@ Cookie: <session cookie>
       "display_name": "GPT-4o",
       "description": "Restricted to the research role",
       "pricing": { "unit": "token", "prompt": "0.000005", "completion": "0.000015" },
+      "provider": "Azure",
+      "deprecation_date": "2026-12-31",
+      "end_of_service": "2027-03-31",
       "catalog_properties": {
-        "provider": "Azure",
         "vendor": "OpenAI",
         "knowledgeCutoffDate": "2023-10-01"
       }
@@ -103,13 +106,20 @@ Cookie: <session cookie>
 
 - **GIVEN** DIAL Core returns `gpt-4o` with `catalog_properties: { "provider": "Azure", "vendor": "OpenAI", "knowledgeCutoffDate": "2023-10-01", "license": { "name": "MIT" }, "internalNote": "x" }`
 - **WHEN** a signed-in user calls `GET /api/v1/model-catalog`
-- **THEN** the `gpt-4o` entry carries `catalog_properties: { "provider": "Azure", "vendor": "OpenAI", "knowledgeCutoffDate": "2023-10-01" }`, with no `license` and no `internalNote`
+- **THEN** the `gpt-4o` entry carries `catalog_properties: { "vendor": "OpenAI", "knowledgeCutoffDate": "2023-10-01" }`, with no `provider`, no `license` and no `internalNote`
 
 #### Scenario: Entry without catalog properties omits the field
 
-- **GIVEN** DIAL Core returns `gpt-4o` with no `catalog_properties`, and `claude-opus` with `catalog_properties: { "internalNote": "x" }`
+- **GIVEN** DIAL Core returns `gpt-4o` with no `catalog_properties`, `claude-opus` with `catalog_properties: { "internalNote": "x" }`, and `gemini-pro` with `catalog_properties: { "provider": "Google" }`
 - **WHEN** a signed-in user calls `GET /api/v1/model-catalog`
-- **THEN** neither entry has a `catalog_properties` key
+- **THEN** none of the three entries has a `catalog_properties` key
+
+#### Scenario: Provider and lifecycle dates are copied as Core sends them
+
+- **GIVEN** DIAL Core returns `gpt-4o` with `provider: "Azure"`, `deprecation_date: "Q4 2026"` and `end_of_service: "2027-03-31"`, and `claude-opus` with none of the three
+- **WHEN** a signed-in user calls `GET /api/v1/model-catalog`
+- **THEN** the `gpt-4o` entry carries the three values unchanged, including the non-ISO `deprecation_date`
+- **AND** the `claude-opus` entry has no `provider`, `deprecation_date` or `end_of_service` key
 
 #### Scenario: Unauthenticated request is rejected
 
@@ -126,7 +136,7 @@ Cookie: <session cookie>
 
 - **GIVEN** `MODEL_CATALOG_API_KEY` is set
 - **WHEN** the same user calls `GET /api/v1/models`
-- **THEN** the BFF still proxies with the session's bearer token, uses cache key `models:list:<user.sub>` with a 30-second TTL, and returns only the models the user's roles allow, each with the `catalog_properties` Core sent, unfiltered
+- **THEN** the BFF still proxies with the session's bearer token, uses cache key `models:list:<user.sub>` with a 30-second TTL, and returns only the models the user's roles allow, each with the `catalog_properties` Core sent, unfiltered, and with `provider`, `deprecation_date` and `end_of_service` when Core sent them
 
 ---
 
@@ -173,7 +183,7 @@ The endpoint:
 - MUST validate `modelName` with `GetModelDto` (`apps/chat-api/src/models/dto/get-model.dto.ts`) and return `400 Bad Request` for a name that fails its allowlist `@Matches`, before any catalog work
 - SHALL return `404 Not Found` when `MODEL_CATALOG_API_KEY` is not configured
 - SHALL return `404 Not Found` when no catalog entry has `id === modelName`. That includes a model that exists in Core but is hidden from the key's roles
-- SHALL return `200 OK` with the cached entry (`ModelCatalogEntryDto`), already reduced to its display fields, including the allowlisted `catalog_properties` when present
+- SHALL return `200 OK` with the cached entry (`ModelCatalogEntryDto`), already reduced to its display fields, including `provider`, `deprecation_date`, `end_of_service` and the allowlisted `catalog_properties` when present
 - MUST set `Cache-Control: private, max-age=300` on a `200` response
 - SHALL return the list route's errors unchanged when the underlying catalog fetch fails
 - SHALL have the OpenAPI `operationId` `getModelCatalogEntry`. The generated SDK method is `ModelsApi.getModelCatalogEntry({ modelName })`, the request DTO is the `GetModelDto` path parameter, and the response DTO is `ModelCatalogEntryDto`
@@ -190,7 +200,9 @@ Cookie: <session cookie>
   "id": "gpt-4o",
   "object": "model",
   "display_name": "GPT-4o",
-  "catalog_properties": { "provider": "Azure", "vendor": "OpenAI" }
+  "provider": "Azure",
+  "end_of_service": "2027-03-31",
+  "catalog_properties": { "vendor": "OpenAI" }
 }
 ```
 
@@ -200,11 +212,11 @@ Cookie: <session cookie>
 - **WHEN** a signed-in user calls `GET /api/v1/model-catalog/gpt-4o`
 - **THEN** the BFF returns `200` with the `gpt-4o` entry and makes no DIAL Core request
 
-#### Scenario: Detail entry carries catalog properties
+#### Scenario: Detail entry carries provider, lifecycle dates and catalog properties
 
-- **GIVEN** DIAL Core returned `gpt-4o` with `catalog_properties: { "provider": "Azure", "internalNote": "x" }` when the catalog was cached
+- **GIVEN** DIAL Core returned `gpt-4o` with `provider: "Azure"`, `end_of_service: "2027-03-31"` and `catalog_properties: { "provider": "Legacy", "vendor": "OpenAI", "internalNote": "x" }` when the catalog was cached
 - **WHEN** a signed-in user calls `GET /api/v1/model-catalog/gpt-4o`
-- **THEN** the entry carries `catalog_properties: { "provider": "Azure" }`
+- **THEN** the entry carries `provider: "Azure"`, `end_of_service: "2027-03-31"` and `catalog_properties: { "vendor": "OpenAI" }`
 
 #### Scenario: Model not in the catalog
 

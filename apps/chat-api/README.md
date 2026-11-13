@@ -1043,11 +1043,15 @@ is not configured, and expose `config.modelCatalogAvailable` on
   display fields (`MODEL_CATALOG_ENTRY_FIELDS`), so Core's invocation settings
   (`defaults`, `responses_defaults`, `max_retry_attempts`, `tokenizer_model`),
   `catalog_schema_id` and any field Core adds later never reach the browser.
+  Core's model `provider`, `deprecation_date` and `end_of_service` are copied as
+  sent: free-form text and, per Core, `YYYY-MM-DD` dates, neither validated.
   `catalog_properties` goes through the same allowlist as
   `GET /api/v1/deployments/details` (`mapCatalogProperties`): only string
-  `provider`, `vendor`, `license`, `knowledgeCutoffDate` and `parameters` are kept,
-  and the field is omitted when none remains. Entries without a string `id` are
-  dropped. The BFF adds no per-user flag.
+  `vendor`, `license`, `knowledgeCutoffDate` and `parameters` are kept, and the
+  field is omitted when none remains. `catalog_properties.provider` is not part of
+  the allowlist on any route, so set a model's provider in Core's top-level
+  `provider` field instead. Entries without a string `id` are dropped. The BFF
+  adds no per-user flag.
 - **Cache.** One entry per BFF instance, shared by all users and kept for 5
   minutes. `ModelCatalogService` holds it itself rather than in the shared
   `CACHE_MANAGER`, whose 100-entry LRU would let per-user entries evict it early.

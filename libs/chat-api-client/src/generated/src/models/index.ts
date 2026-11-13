@@ -4584,6 +4584,24 @@ export interface DialModelDto {
    */
   lifecycleStatus?: string;
   /**
+   * Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  provider?: string;
+  /**
+   * Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  deprecationDate?: string;
+  /**
+   * Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  endOfService?: string;
+  /**
    *
    * @type {DialModelCapabilitiesDto}
    * @memberof DialModelDto
@@ -6542,6 +6560,24 @@ export interface ModelCatalogEntryDto {
    */
   lifecycleStatus?: string;
   /**
+   * Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  provider?: string;
+  /**
+   * Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  deprecationDate?: string;
+  /**
+   * Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  endOfService?: string;
+  /**
    *
    * @type {DialModelCapabilitiesDto}
    * @memberof ModelCatalogEntryDto
@@ -6592,12 +6628,6 @@ export interface ModelCatalogListResponseDto {
  */
 export interface ModelCatalogPropertiesDto {
   /**
-   * Model provider for catalog display
-   * @type {string}
-   * @memberof ModelCatalogPropertiesDto
-   */
-  provider?: string;
-  /**
    * Model vendor for catalog display
    * @type {string}
    * @memberof ModelCatalogPropertiesDto
@@ -6640,6 +6670,24 @@ export interface ModelDetailsDto {
    * @memberof ModelDetailsDto
    */
   lifecycleStatus?: string;
+  /**
+   * Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated
+   * @type {string}
+   * @memberof ModelDetailsDto
+   */
+  provider?: string;
+  /**
+   * Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof ModelDetailsDto
+   */
+  deprecationDate?: string;
+  /**
+   * Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof ModelDetailsDto
+   */
+  endOfService?: string;
   /**
    * Name of the model whose tokenization algorithm this model uses
    * @type {string}

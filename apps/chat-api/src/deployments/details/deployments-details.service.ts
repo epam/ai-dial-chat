@@ -327,6 +327,9 @@ export class DeploymentsDetailsService {
             }
           : undefined,
         lifecycleStatus: raw.lifecycle_status,
+        provider: raw.provider,
+        deprecationDate: raw.deprecation_date,
+        endOfService: raw.end_of_service,
         tokenizerModel: raw.tokenizer_model,
         limits: limits
           ? {

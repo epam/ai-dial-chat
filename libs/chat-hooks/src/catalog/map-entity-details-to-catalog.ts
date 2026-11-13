@@ -93,6 +93,10 @@ export interface EntityDetailsLabels {
   hostedBy: string;
   /** Default: `'Release date'`. */
   releaseDate: string;
+  /** Default: `'Deprecation date'`. */
+  deprecationDate: string;
+  /** Default: `'End of service'`. */
+  endOfService: string;
   /** Default: `'Context window'`. */
   contextWindow: string;
   /** Default: `'Max output tokens'`. */
@@ -131,6 +135,8 @@ export const DEFAULT_ENTITY_DETAILS_LABELS: EntityDetailsLabels = {
   parameters: 'Parameters',
   hostedBy: 'Hosted by',
   releaseDate: 'Release date',
+  deprecationDate: 'Deprecation date',
+  endOfService: 'End of service',
   contextWindow: 'Context window',
   maxOutputTokens: 'Max output tokens',
   inputModalities: 'Input modalities',
@@ -194,6 +200,16 @@ const mapModelDetails = (
       specs.push({
         label: labels.releaseDate,
         value: formatCalendarDate(s.createdAt),
+      });
+    if (s.deprecationDate != null)
+      specs.push({
+        label: labels.deprecationDate,
+        value: formatCatalogDate(s.deprecationDate),
+      });
+    if (s.endOfService != null)
+      specs.push({
+        label: labels.endOfService,
+        value: formatCatalogDate(s.endOfService),
       });
     if (s.contextWindowTokens != null)
       specs.push({
@@ -325,8 +341,6 @@ const mapAgentDetails = (
     const { specification: s } = data;
     const specs: OverviewSection['specs'] = [];
 
-    if (s.provider != null)
-      specs.push({ label: labels.provider, value: s.provider });
     if (s.vendor != null) specs.push({ label: labels.vendor, value: s.vendor });
     if (s.license != null)
       specs.push({ label: labels.license, value: s.license });
@@ -470,8 +484,6 @@ const mapToolsetDetails = (
 
     if (s.authentication != null)
       specs.push({ label: labels.authentication, value: s.authentication });
-    if (s.provider != null)
-      specs.push({ label: labels.provider, value: s.provider });
     if (s.vendor != null) specs.push({ label: labels.vendor, value: s.vendor });
     if (s.license != null)
       specs.push({ label: labels.license, value: s.license });
@@ -730,6 +742,9 @@ const mapModelDetailsDto = (
     inputAttachmentTypes,
     defaultMaxTokens,
     createdAt,
+    provider,
+    deprecationDate,
+    endOfService,
   } = dto.modelDetails ?? {};
 
   const hasSpecification =
@@ -737,6 +752,9 @@ const mapModelDetailsDto = (
     catalogProperties != null ||
     owner != null ||
     createdAt != null ||
+    provider != null ||
+    deprecationDate != null ||
+    endOfService != null ||
     (inputAttachmentTypes?.length ?? 0) > 0;
 
   return {
@@ -745,7 +763,7 @@ const mapModelDetailsDto = (
       capabilities: mapFeaturesToCapabilities(features),
       specification: hasSpecification
         ? {
-            provider: catalogProperties?.provider,
+            provider,
             vendor: catalogProperties?.vendor,
             license: catalogProperties?.license,
             knowledgeCutoffDate: catalogProperties?.knowledgeCutoffDate,
@@ -755,6 +773,8 @@ const mapModelDetailsDto = (
             inputTypes: inputAttachmentTypes,
             hostedBy: owner,
             createdAt,
+            deprecationDate,
+            endOfService,
           }
         : undefined,
       pricing: mapPricingDto(pricing),
@@ -787,7 +807,6 @@ const mapApplicationDetailsDto = (
       capabilities: mapFeaturesToCapabilities(features),
       specification: hasSpecification
         ? {
-            provider: catalogProperties?.provider,
             vendor: catalogProperties?.vendor,
             license: catalogProperties?.license,
             knowledgeCutoffDate: catalogProperties?.knowledgeCutoffDate,
@@ -866,7 +885,6 @@ const mapToolsetDetailsDto = (
               authentication: isKnownToolsetAuthType(authenticationType)
                 ? authenticationType
                 : undefined,
-              provider: toolsetDetails.catalogProperties?.provider,
               vendor: toolsetDetails.catalogProperties?.vendor,
               license: toolsetDetails.catalogProperties?.license,
               knowledgeCutoffDate:

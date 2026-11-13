@@ -14136,10 +14136,6 @@
       "ModelCatalogPropertiesDto": {
         "type": "object",
         "properties": {
-          "provider": {
-            "type": "string",
-            "description": "Model provider for catalog display"
-          },
           "vendor": {
             "type": "string",
             "description": "Model vendor for catalog display"
@@ -14169,6 +14165,21 @@
           "lifecycleStatus": {
             "type": "string",
             "description": "Lifecycle status of the model"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated",
+            "example": "Azure"
+          },
+          "deprecationDate": {
+            "type": "string",
+            "description": "Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated",
+            "example": "2026-12-31"
+          },
+          "endOfService": {
+            "type": "string",
+            "description": "Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated",
+            "example": "2027-03-31"
           },
           "tokenizerModel": {
             "type": "string",
@@ -14959,6 +14970,21 @@
             "type": "string",
             "example": "generally-available"
           },
+          "provider": {
+            "type": "string",
+            "description": "Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated",
+            "example": "Azure"
+          },
+          "deprecation_date": {
+            "type": "string",
+            "description": "Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated",
+            "example": "2026-12-31"
+          },
+          "end_of_service": {
+            "type": "string",
+            "description": "Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated",
+            "example": "2027-03-31"
+          },
           "capabilities": {
             "$ref": "#/components/schemas/DialModelCapabilitiesDto"
           },
@@ -15089,6 +15115,21 @@
           "lifecycle_status": {
             "type": "string",
             "example": "generally-available"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated",
+            "example": "Azure"
+          },
+          "deprecation_date": {
+            "type": "string",
+            "description": "Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated",
+            "example": "2026-12-31"
+          },
+          "end_of_service": {
+            "type": "string",
+            "description": "Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated",
+            "example": "2027-03-31"
           },
           "capabilities": {
             "$ref": "#/components/schemas/DialModelCapabilitiesDto"
