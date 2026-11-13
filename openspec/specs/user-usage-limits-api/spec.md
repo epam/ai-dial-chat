@@ -274,6 +274,7 @@ the caller's spend against one budget that applies to them.
 | `costObject` | `string`        | yes      | The cost object the budget is assigned in; several entries MAY share one value      |
 | `policy`     | `string`        | yes      | The path of the budget's policy                                                      |
 | `priority`   | `integer`       | no       | The policy's priority, lower first; absent when the policy sets none                |
+| `displayName` | `string`       | no       | The policy's human-readable name; absent when the policy sets none. Not an identifier — `policy` is |
 | `day`        | `LimitStatsDto` | yes      | Spend against the budget in the current UTC day (`total`, `used`, optional `resetsAt`)   |
 | `month`      | `LimitStatsDto` | yes      | Spend against the budget in the current UTC month (`total`, `used`, optional `resetsAt`) |
 
@@ -323,6 +324,7 @@ map upstream errors through `mapDialHttpStatus` / `handleDialFetchError`. No rol
       "costObject": "example-project",
       "policy": "org-wide",
       "priority": 1,
+      "displayName": "Organization-wide",
       "day": { "total": 50, "used": 14.2, "resetsAt": "2026-11-14T00:00:00Z" },
       "month": { "total": 2000, "used": 171.4, "resetsAt": "2026-12-01T00:00:00Z" }
     },
@@ -345,6 +347,11 @@ map upstream errors through `mapDialHttpStatus` / `handleDialFetchError`. No rol
 
 - **WHEN** a DIAL Core budget entry has no `priority`
 - **THEN** the corresponding entry in the BFF response has no `priority` key, rather than `null` or a default value
+
+#### Scenario: Optional display name is forwarded or stays absent
+
+- **WHEN** one DIAL Core budget entry has `displayName: "Organization-wide"` and another has no `displayName`
+- **THEN** the first BFF entry carries the same `displayName` string, and the second has no `displayName` key, rather than `null`, an empty string, or the `policy` value
 
 #### Scenario: Fractional spend, reset times and the sentinel are forwarded verbatim
 
@@ -376,7 +383,7 @@ The committed OpenAPI artifact `libs/chat-api-client/openapi.json` and the gener
 
 - The OpenAPI document SHALL contain a `BudgetStatsDto` schema with required `costObject`
   (string), `policy` (string), `day` and `month` (`$ref` to `LimitStatsDto`), and optional
-  `priority` (integer). `UserLimitStatsResponseDto.budgets` SHALL be an optional array whose
+  `priority` (integer) and `displayName` (string). `UserLimitStatsResponseDto.budgets` SHALL be an optional array whose
   items `$ref` `BudgetStatsDto`.
 - The generated model `UserLimitStatsResponseDto` SHALL declare `budgets?: Array<BudgetStatsDto>`,
   and `BudgetStatsDto` SHALL be exported from the package entry point.
@@ -391,7 +398,7 @@ The committed OpenAPI artifact `libs/chat-api-client/openapi.json` and the gener
 #### Scenario: OpenAPI schema describes budgets
 
 - **WHEN** the Swagger document is built from the `chat-api` controllers
-- **THEN** `components.schemas.BudgetStatsDto` exists with `required` containing `costObject`, `policy`, `day` and `month` but not `priority`, and `components.schemas.UserLimitStatsResponseDto.properties.budgets` is an array of `BudgetStatsDto` that is not in that schema's `required`
+- **THEN** `components.schemas.BudgetStatsDto` exists with `required` containing `costObject`, `policy`, `day` and `month` but not `priority` or `displayName`, and `components.schemas.UserLimitStatsResponseDto.properties.budgets` is an array of `BudgetStatsDto` that is not in that schema's `required`
 
 #### Scenario: Both generated methods expose the budget type
 

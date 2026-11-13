@@ -542,8 +542,8 @@ describe('DeploymentsDetailsService', () => {
 
   /*
    * DIAL Core's `budgets[]` (epam/ai-dial-core#2188) must reach the caller
-   * untouched: same entries, same order, `priority` absent where Core omits
-   * it, and an absent `budgets` kept distinct from `[]`. Drives the real SDK
+   * untouched: same entries, same order, `priority` and `displayName` absent
+   * where Core omits them, and an absent `budgets` kept distinct from `[]`. Drives the real SDK
    * client so its JSON parsing is part of what is asserted.
    */
   describe.each(['getUserLimits', 'getUserUsage'] as const)(
@@ -577,6 +577,7 @@ describe('DeploymentsDetailsService', () => {
           costObject: 'projA',
           policy: 'org-wide',
           priority: 1,
+          displayName: 'Organization-wide',
           day: {
             total: 50,
             used: 14.2,
@@ -592,6 +593,7 @@ describe('DeploymentsDetailsService', () => {
           costObject: 'projA',
           policy: 'team',
           priority: 2,
+          displayName: 'Team',
           day: {
             total: UNLIMITED_SENTINEL,
             used: 14.2,
@@ -650,6 +652,12 @@ describe('DeploymentsDetailsService', () => {
           ['projB', 'project'],
         ]);
         expect(result.budgets?.[2]).not.toHaveProperty('priority');
+        expect(result.budgets?.map((b) => b.displayName)).toEqual([
+          'Organization-wide',
+          'Team',
+          undefined,
+        ]);
+        expect(result.budgets?.[2]).not.toHaveProperty('displayName');
         expect(result.budgets?.[1].day.total).toBe(UNLIMITED_SENTINEL);
       });
 

@@ -552,6 +552,14 @@ export class BudgetStatsDto {
   })
   priority?: number;
 
+  @ApiPropertyOptional({
+    example: 'Example policy',
+    description:
+      "The human-readable name of the budget's policy; absent when the policy sets none. " +
+      'Use `policy` as the identifier — the display name need not be unique.',
+  })
+  displayName?: string;
+
   @ApiProperty({
     type: () => LimitStatsDto,
     description:
