@@ -3,6 +3,7 @@ import {
   Badge,
   BadgeColor,
   BadgeVariant,
+  ElementSize,
   ErrorText,
   FolderName,
   LinkButton,
@@ -101,7 +102,11 @@ export const VersionHistorySection: FC<VersionHistorySectionProps> = ({
           <div className="flex flex-wrap items-center gap-2">
             <ErrorText text={text.errorLabel} />
             {onRetry && (
-              <LinkButton label={text.retryLabel} onClick={onRetry} />
+              <LinkButton
+                label={text.retryLabel}
+                size={ElementSize.Small}
+                onClick={onRetry}
+              />
             )}
           </div>
         )}
