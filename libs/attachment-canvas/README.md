@@ -80,6 +80,15 @@ on `CodeContent` itself, to customize those strings. Opening a non-PDF
 attachment never triggers the PDF import, and a plaintext code attachment
 never triggers the syntax-highlighter import.
 
+`AttachmentCanvasBody` loads its MCP App renderer the same way: the
+`McpAppCanvasRenderer` module, and with it `@mcp-ui/client`, the MCP SDK and
+their `zod` schemas, is imported the first time the canvas shows
+`AttachmentContentType.McpApp`. The pending, failure and retry states reuse
+`loadingLabel`, `loadErrorLabel` and `loadErrorRetryLabel`. A host that builds
+from source and does not import `McpAppCanvasRenderer` itself keeps that chain
+out of its initial bundle; the published `dist/index.js` still carries it,
+because `McpAppCanvasRenderer` is also a public export.
+
 The library never configures `pdfjs-dist`'s worker itself —
 `GlobalWorkerOptions.workerSrc` is a global shared by every `pdfjs-dist`
 consumer in the host app, so deciding it is the host's responsibility, not

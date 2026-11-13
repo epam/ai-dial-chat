@@ -90,8 +90,11 @@ describe('publish-ready package artifact size', () => {
      * `@epam/ai-dial-react-pdf-highlighter` 0.3.1) ships a ~3.1 KB larger
      * pdf-highlight-viewer.css, inlined into dist/PdfContent.css; measured at 253,637.
      * Raised from 254_500: the live `mcpAppHostContext` prop threaded through the container,
-     * panel, body and MCP App renderer, plus its README paragraph; measured at 255,672. */
-    expect(artifact.unpackedSize).toBeLessThanOrEqual(256_500);
+     * panel, body and MCP App renderer, plus its README paragraph; measured at 255,672.
+     * Raised from 256_500: `AttachmentCanvasBody` loads `McpAppCanvasRenderer` lazily behind a
+     * `LazyContentBoundary` with retry, plus its README paragraph; measured at 256,958 before
+     * the README paragraph. */
+    expect(artifact.unpackedSize).toBeLessThanOrEqual(258_000);
   });
 
   it('contains no private OOXML renderer or worker chunks', () => {
