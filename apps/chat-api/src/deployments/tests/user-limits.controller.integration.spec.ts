@@ -28,6 +28,12 @@ const TEST_USER = {
  * per-deployment stats as well as top-level ones; a mix of finite and sentinel
  * top-level cost totals. The BFF is a pass-through proxy, so the only thing
  * under test is that neither shape is altered on the way out.
+ *
+ * `USAGE_WITH_BUDGETS` adds DIAL Core's `budgets[]` (epam/ai-dial-core#2188)
+ * to the first fixture, in the shape `UserBudgetsApiTest` asserts upstream:
+ * two budgets in the same cost object (ordered by priority), one budget whose
+ * policy sets no priority, fractional spend, a sentinel window total, and
+ * `resetsAt` on both the day and month windows.
  */
 const UNLIMITED_SENTINEL = 9223372036854776000;
 
@@ -111,6 +117,36 @@ const USAGE_WITHOUT_RESETS_AT = {
   dayCostStats: { total: 110, used: 0.42641085 },
   weekCostStats: { total: UNLIMITED_SENTINEL, used: 1.7928459 },
   monthCostStats: { total: 500, used: 2.3991724 },
+};
+
+const USAGE_WITH_BUDGETS = {
+  ...USAGE_WITH_RESETS_AT,
+  budgets: [
+    {
+      costObject: 'projA',
+      policy: 'org-wide',
+      priority: 1,
+      day: { total: 50, used: 0.42641085, resetsAt: '2026-09-16T00:00:00Z' },
+      month: { total: 500, used: 2.3991724, resetsAt: '2026-10-01T00:00:00Z' },
+    },
+    {
+      costObject: 'projA',
+      policy: 'team',
+      priority: 2,
+      day: {
+        total: UNLIMITED_SENTINEL,
+        used: 0.42641085,
+        resetsAt: '2026-09-16T00:00:00Z',
+      },
+      month: { total: 200, used: 2.3991724, resetsAt: '2026-10-01T00:00:00Z' },
+    },
+    {
+      costObject: 'projB',
+      policy: 'project',
+      day: { total: 10, used: 0.0048335, resetsAt: '2026-09-16T00:00:00Z' },
+      month: { total: 100, used: 0.0178885, resetsAt: '2026-10-01T00:00:00Z' },
+    },
+  ],
 };
 
 async function buildApp(service: unknown): Promise<INestApplication> {
@@ -294,6 +330,69 @@ describe('UserLimitsController (integration)', () => {
       expect(
         res.body.deployments['gpt-5.2-2025-12-11'].dayTokenStats,
       ).not.toHaveProperty('resetsAt');
+    });
+  });
+
+  describe.each([
+    ['limits', 'getUserLimits'],
+    ['usage', 'getUserUsage'],
+  ] as const)('GET /api/v1/user/%s budgets', (route, method) => {
+    const path = `/api/v1/user/${route}`;
+
+    it('returns every budget in DIAL Core order with the legacy stats unchanged', async () => {
+      service[method].mockResolvedValue(USAGE_WITH_BUDGETS);
+
+      const res = await request(app.getHttpServer()).get(path).expect(200);
+
+      expect(res.body).toEqual(USAGE_WITH_BUDGETS);
+      expect(
+        res.body.budgets.map(
+          (budget: { costObject: string; policy: string }) => [
+            budget.costObject,
+            budget.policy,
+          ],
+        ),
+      ).toEqual([
+        ['projA', 'org-wide'],
+        ['projA', 'team'],
+        ['projB', 'project'],
+      ]);
+      expect(res.body.budgets[1].day.total).toBe(UNLIMITED_SENTINEL);
+      expect(res.body.budgets[2].day.used).toBe(0.0048335);
+      expect(res.body.budgets[0].month.resetsAt).toBe('2026-10-01T00:00:00Z');
+      expect(res.body.deployments).toEqual(USAGE_WITH_RESETS_AT.deployments);
+      expect(res.body.dayCostStats).toEqual(USAGE_WITH_RESETS_AT.dayCostStats);
+      expect(res.body.monthCostStats).toEqual(
+        USAGE_WITH_RESETS_AT.monthCostStats,
+      );
+    });
+
+    it('omits priority on a budget whose policy sets none', async () => {
+      service[method].mockResolvedValue(USAGE_WITH_BUDGETS);
+
+      const res = await request(app.getHttpServer()).get(path).expect(200);
+
+      expect(res.body.budgets[2]).not.toHaveProperty('priority');
+    });
+
+    it('keeps an empty budgets array empty', async () => {
+      service[method].mockResolvedValue({
+        ...USAGE_WITH_RESETS_AT,
+        budgets: [],
+      });
+
+      const res = await request(app.getHttpServer()).get(path).expect(200);
+
+      expect(res.body).toHaveProperty('budgets', []);
+    });
+
+    it('returns no budgets key for an older DIAL Core response without it', async () => {
+      service[method].mockResolvedValue(USAGE_WITH_RESETS_AT);
+
+      const res = await request(app.getHttpServer()).get(path).expect(200);
+
+      expect(res.body).toEqual(USAGE_WITH_RESETS_AT);
+      expect(res.body).not.toHaveProperty('budgets');
     });
   });
 
