@@ -111,3 +111,65 @@ export interface OnboardingBeaconsProps {
   /** Extra class name(s) merged onto the beacons root. */
   className?: string;
 }
+
+/** One anchor shown by `OnboardingAnchorMap`. */
+export interface OnboardingAnchor {
+  /** Name of the anchor, shown in its tag and in the list of anchors not on the page. */
+  id: string;
+  /** Returns the anchor's element, or `null` when it is not on screen; called again whenever the page changes. */
+  getTarget: () => HTMLElement | null;
+}
+
+/** User-visible strings of the `OnboardingAnchorMap` component. */
+export interface OnboardingAnchorMapLabels {
+  /** Panel heading, given how many anchors are on screen out of all of them. Defaults to `` (found, total) => `${found} of ${total} anchors on this page` ``. */
+  summary?: (found: number, total: number) => string;
+  /** Heading above the anchors that are not on screen. Defaults to `'Not on this page'`. */
+  missingHeading?: string;
+  /** Text shown when every anchor is on screen. Defaults to `'Every anchor is on this page'`. */
+  noneMissing?: string;
+  /** Accessible label of the panel's close button. Defaults to `'Close anchor view'`. */
+  close?: string;
+}
+
+/** Color overrides of the `OnboardingAnchorMap` component. */
+export interface OnboardingAnchorMapColors {
+  /** Dashed outline around each anchor. Defaults to `--stroke-accent`. */
+  outline?: string;
+  /** Background of each anchor's name tag. Defaults to `--bg-layer-raised`. */
+  tagBackground?: string;
+  /** Text of each anchor's name tag. Defaults to `--text-accent`. */
+  tagText?: string;
+  /** Panel background. Defaults to `--bg-layer-raised`. */
+  panelBackground?: string;
+  /** Panel border. Defaults to `--stroke-tertiary`. */
+  panelBorder?: string;
+  /** Panel drop shadow color. Defaults to `--shadow-lg`. */
+  panelShadow?: string;
+  /** Panel heading text. Defaults to `--text-primary`. */
+  panelText?: string;
+  /** Panel list text. Defaults to `--text-secondary`. */
+  panelMutedText?: string;
+}
+
+/** Props for the `OnboardingAnchorMap` component. */
+export interface OnboardingAnchorMapProps {
+  /** Anchors to outline; one that is not on screen is listed in the panel instead. */
+  anchors: OnboardingAnchor[];
+  /** Called when the panel's close button is pressed. */
+  onClose: () => void;
+  /** Text direction of the tags and the panel. Defaults to the direction inherited from the document. */
+  dir?: 'ltr' | 'rtl';
+  /** User-visible strings; each missing field falls back to its English default. */
+  labels?: OnboardingAnchorMapLabels;
+  /** Color overrides, applied as CSS custom properties on the map root. */
+  colors?: OnboardingAnchorMapColors;
+  /** Typography class of each anchor's name tag. Defaults to `'dial-tiny-semi-text'`. */
+  tagClassName?: string;
+  /** Typography class of the panel heading. Defaults to `'dial-small-semi-text'`. */
+  summaryClassName?: string;
+  /** Typography class of the panel's list and its heading. Defaults to `'dial-tiny-text'`. */
+  itemClassName?: string;
+  /** Extra class name(s) merged onto the map root. */
+  className?: string;
+}

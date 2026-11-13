@@ -24,3 +24,15 @@ export const ONBOARDING_BEACONS_CLASS = {
   /** Each beacon button. */
   beacon: 'dial-onboarding-beacons-beacon',
 } as const;
+
+/** Public, host-addressable class names of `OnboardingAnchorMap`. */
+export const ONBOARDING_ANCHOR_MAP_CLASS = {
+  /** The fixed layer holding every outline, tag and the panel. */
+  root: 'dial-onboarding-anchor-map-root',
+  /** The dashed outline around each anchor on screen. */
+  outline: 'dial-onboarding-anchor-map-outline',
+  /** The name tag above each outline. */
+  tag: 'dial-onboarding-anchor-map-tag',
+  /** The panel listing the anchors that are not on screen. */
+  panel: 'dial-onboarding-anchor-map-panel',
+} as const;

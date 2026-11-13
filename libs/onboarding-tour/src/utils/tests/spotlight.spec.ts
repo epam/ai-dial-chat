@@ -26,9 +26,15 @@ describe('spotlightRadius', () => {
     );
   });
 
-  it('keeps square corners square', () => {
+  it('rounds the outline of a square element to the minimum radius', () => {
     expect(spotlightRadius(elementWithRadius('0px'), 6)).toBe(
-      '0px 0px 0px 0px',
+      '8px 8px 8px 8px',
+    );
+  });
+
+  it('never goes below the minimum radius for a barely rounded element', () => {
+    expect(spotlightRadius(elementWithRadius('1px'), 6)).toBe(
+      '8px 8px 8px 8px',
     );
   });
 
@@ -40,7 +46,7 @@ describe('spotlightRadius', () => {
 
   it('follows corners that differ', () => {
     expect(spotlightRadius(elementWithRadius('4px 0px 12px 0px'), 6)).toBe(
-      '10px 0px 18px 0px',
+      '10px 8px 18px 8px',
     );
   });
 });

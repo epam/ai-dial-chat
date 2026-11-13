@@ -1,0 +1,14 @@
+.panel {
+  background: var(--oam-panel-bg, var(--bg-layer-raised, #fcfcfc));
+  border-color: var(--oam-panel-border, var(--stroke-tertiary, #e0e6f0));
+  box-shadow: 1px 10px 25px 12px
+    var(--oam-panel-shadow, var(--shadow-lg, #2764d914));
+}
+
+.summary {
+  color: var(--oam-panel-text, var(--text-primary, #161b2d));
+}
+
+.item {
+  color: var(--oam-panel-muted-text, var(--text-secondary, #57647a));
+}

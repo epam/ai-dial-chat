@@ -44,6 +44,9 @@ vi.mock('react-i18next', () => ({
       if (options?.title != null) {
         return `${key}:${options.title}`;
       }
+      if (options?.found != null) {
+        return `${key}:${options.found}/${options.total}`;
+      }
       return options ? `${key}:${options.current}/${options.total}` : key;
     },
     i18n: { dir: () => 'ltr' },
@@ -292,6 +295,28 @@ describe('OnboardingHints', () => {
           name: 'onboardingTour.beacon:Start a chat',
         }),
       ).toBeNull();
+    });
+  });
+
+  describe('anchor view', () => {
+    it('outlines the anchors instead of starting the tour', async () => {
+      await startTour('/?onboarding-anchors');
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(screen.getByText('new-chat')).toBeTruthy();
+      expect(
+        screen.getByRole('region', {
+          name: 'onboardingTour.anchorsSummary:2/12',
+        }),
+      ).toBeTruthy();
+    });
+
+    it('closes and drops the URL parameter', async () => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      await startTour('/?onboarding-anchors');
+      await user.click(
+        screen.getByRole('button', { name: 'onboardingTour.anchorsClose' }),
+      );
+      expect(screen.queryByRole('region')).toBeNull();
     });
   });
 });

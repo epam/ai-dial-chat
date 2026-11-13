@@ -139,13 +139,51 @@ One card is open at a time. Escape, a press outside the card or moving focus out
 
 `colors` fields and their defaults: `beacon` (`--bg-accent-primary`), `beaconRing` (`--bg-layer-0`), `beaconFocusOutline` (`--stroke-focus`), and the card fields with the same defaults as the tour.
 
+### OnboardingAnchorMap
+
+An authoring aid rather than an onboarding surface: it draws a dashed outline with the anchor's name over every anchor on screen and lists, in a panel at the bottom end corner, the anchors the page does not render. Clicks pass through the outlines, so the page stays usable while the map is shown; only the panel takes pointer input.
+
+```tsx
+import { OnboardingAnchorMap } from '@epam/ai-dial-onboarding-tour';
+
+<OnboardingAnchorMap
+  anchors={[
+    {
+      id: 'new-chat',
+      getTarget: () => document.querySelector<HTMLElement>('#new-chat'),
+    },
+  ]}
+  onClose={closeAnchorView}
+  labels={{
+    summary: (found, total) => `${found} of ${total} anchors on this page`,
+    missingHeading: 'Not on this page',
+    noneMissing: 'Every anchor is on this page',
+    close: 'Close anchor view',
+  }}
+/>;
+```
+
+| Prop               | Type                        | Default                  | Description                                                        |
+| ------------------ | --------------------------- | ------------------------ | ------------------------------------------------------------------ |
+| `anchors`          | `OnboardingAnchor[]`        | —                        | `{ id, getTarget }` per anchor; `id` is the name shown in its tag. |
+| `onClose`          | `() => void`                | —                        | Called when the panel's close button is pressed.                   |
+| `dir`              | `'ltr' \| 'rtl'`            | inherited                | Direction of the tags and the panel.                               |
+| `labels`           | `OnboardingAnchorMapLabels` | English                  | `summary`, `missingHeading`, `noneMissing`, `close`.               |
+| `colors`           | `OnboardingAnchorMapColors` | theme tokens             | See below.                                                         |
+| `tagClassName`     | `string`                    | `'dial-tiny-semi-text'`  | Typography of each name tag.                                       |
+| `summaryClassName` | `string`                    | `'dial-small-semi-text'` | Typography of the panel heading.                                   |
+| `itemClassName`    | `string`                    | `'dial-tiny-text'`       | Typography of the panel's list and its heading.                    |
+| `className`        | `string`                    | —                        | Extra class name(s) on the map root.                               |
+
+`colors` fields and their defaults: `outline` (`--stroke-accent`), `tagBackground` (`--bg-layer-raised`), `tagText` (`--text-accent`), `panelBackground` (`--bg-layer-raised`), `panelBorder` (`--stroke-tertiary`), `panelShadow` (`--shadow-lg`), `panelText` (`--text-primary`), `panelMutedText` (`--text-secondary`).
+
 ## Types
 
-`OnboardingTourStep`, `OnboardingTourProps`, `OnboardingTourLabels`, `OnboardingTourColors`, `OnboardingBeaconsProps`, `OnboardingBeaconsLabels`, `OnboardingBeaconsColors`, and `OnboardingCardColors` — the card colors both components share.
+`OnboardingTourStep`, `OnboardingTourProps`, `OnboardingTourLabels`, `OnboardingTourColors`, `OnboardingBeaconsProps`, `OnboardingBeaconsLabels`, `OnboardingBeaconsColors`, `OnboardingCardColors` — the card colors the tour and the beacons share — and `OnboardingAnchor`, `OnboardingAnchorMapProps`, `OnboardingAnchorMapLabels`, `OnboardingAnchorMapColors`.
 
 ## Public class names
 
-A host cannot style the tour or the beacons through their CSS-module locals, which are hashed at build time. These elements carry a stable public class, exported as `ONBOARDING_TOUR_CLASS` and `ONBOARDING_BEACONS_CLASS`.
+A host cannot style the tour or the beacons through their CSS-module locals, which are hashed at build time. These elements carry a stable public class, exported as `ONBOARDING_TOUR_CLASS`, `ONBOARDING_BEACONS_CLASS` and `ONBOARDING_ANCHOR_MAP_CLASS`.
 
 | Key         | Class                            | Element                                                      |
 | ----------- | -------------------------------- | ------------------------------------------------------------ |
@@ -157,5 +195,12 @@ A host cannot style the tour or the beacons through their CSS-module locals, whi
 | -------- | -------------------------------- | ----------------------------------------- |
 | `root`   | `dial-onboarding-beacons-root`   | The element holding every beacon and card |
 | `beacon` | `dial-onboarding-beacons-beacon` | Each beacon button                        |
+
+| Key       | Class                                | Element                                         |
+| --------- | ------------------------------------ | ----------------------------------------------- |
+| `root`    | `dial-onboarding-anchor-map-root`    | The fixed layer holding every outline and panel |
+| `outline` | `dial-onboarding-anchor-map-outline` | The dashed outline around each anchor on screen |
+| `tag`     | `dial-onboarding-anchor-map-tag`     | The name tag above each outline                 |
+| `panel`   | `dial-onboarding-anchor-map-panel`   | The panel listing the anchors not on screen     |
 
 The classes carry no declarations of their own. Renaming one, or moving it to a different element, is a breaking change. The convention is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).

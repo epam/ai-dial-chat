@@ -1248,6 +1248,10 @@ export enum OnboardingTourI18nKeys {
   Close = 'onboardingTour.close',
   Beacon = 'onboardingTour.beacon',
   GotIt = 'onboardingTour.gotIt',
+  AnchorsSummary = 'onboardingTour.anchorsSummary',
+  AnchorsMissing = 'onboardingTour.anchorsMissing',
+  AnchorsNoneMissing = 'onboardingTour.anchorsNoneMissing',
+  AnchorsClose = 'onboardingTour.anchorsClose',
 }
 
 export enum FooterMessageI18nKeys {

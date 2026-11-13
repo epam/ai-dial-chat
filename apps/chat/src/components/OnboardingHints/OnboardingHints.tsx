@@ -1,8 +1,11 @@
 import { OnboardingHintsMode } from '@epam/ai-dial-chat-api-client';
 import { useIsMobile } from '@epam/ai-dial-chat-shared';
 import {
+  OnboardingAnchorMap,
   OnboardingBeacons,
   OnboardingTour,
+  type OnboardingAnchor,
+  type OnboardingAnchorMapLabels,
   type OnboardingBeaconsLabels,
   type OnboardingTourLabels,
   type OnboardingTourStep,
@@ -16,7 +19,7 @@ import {
   type FC,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router';
+import { useLocation, useSearchParams } from 'react-router';
 import {
   ButtonsI18nKeys,
   CatalogI18nKeys,
@@ -28,6 +31,7 @@ import useLocalStorage from '../../hooks/useLocalStorage';
 import { StorageKey } from '../../types/storage-key';
 import { UserConfigStatus } from '../../types/user-config-status';
 import {
+  ONBOARDING_ANCHOR_TARGETS,
   resolveOnboardingTarget,
   type OnboardingTargetLabels,
 } from './onboarding-targets';
@@ -39,6 +43,10 @@ export const ONBOARDING_RETRY_INTERVAL_MS = 500;
 const ONBOARDING_RETRY_ATTEMPTS = 20;
 
 const NO_STEPS: OnboardingTourStep[] = [];
+
+/* `?onboarding-anchors` in the URL outlines every anchor on the page instead
+ * of showing hints, so an operator can see what a hint's target points at. */
+export const ONBOARDING_ANCHORS_PARAM = 'onboarding-anchors';
 
 /**
  * First-visit onboarding: feeds the operator-configured `onboardingHints`
@@ -53,6 +61,8 @@ const OnboardingHints: FC = () => {
   const { status, config } = useAppConfig();
   const isMobile = useIsMobile();
   const { pathname } = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isAnchorView = searchParams.has(ONBOARDING_ANCHORS_PARAM);
   const [seenIds, setSeenIds] = useLocalStorage<string[]>(
     StorageKey.SeenOnboardingHints,
     [],
@@ -97,6 +107,25 @@ const OnboardingHints: FC = () => {
     [t],
   );
 
+  const anchorMapLabels = useMemo<OnboardingAnchorMapLabels>(
+    () => ({
+      summary: (found, total) =>
+        t(OnboardingTourI18nKeys.AnchorsSummary, { found, total }),
+      missingHeading: t(OnboardingTourI18nKeys.AnchorsMissing),
+      noneMissing: t(OnboardingTourI18nKeys.AnchorsNoneMissing),
+      close: t(OnboardingTourI18nKeys.AnchorsClose),
+    }),
+    [t],
+  );
+  const anchors = useMemo<OnboardingAnchor[]>(
+    () =>
+      ONBOARDING_ANCHOR_TARGETS.map((target) => ({
+        id: target,
+        getTarget: () => resolveOnboardingTarget(target, targetLabels),
+      })),
+    [targetLabels],
+  );
+
   const isBeacons = config.onboardingHintsMode === OnboardingHintsMode.Beacons;
   const pendingHints = useMemo(
     () => config.onboardingHints.filter((hint) => !seenIds.includes(hint.id)),
@@ -122,6 +151,7 @@ const OnboardingHints: FC = () => {
   const isRunning = steps.length > 0;
   useEffect(() => {
     if (
+      isAnchorView ||
       isBeacons ||
       isRunning ||
       status !== UserConfigStatus.Ready ||
@@ -144,7 +174,7 @@ const OnboardingHints: FC = () => {
     };
     timer = window.setTimeout(tryStart, ONBOARDING_START_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [isBeacons, isRunning, status, pendingSteps, pathname]);
+  }, [isAnchorView, isBeacons, isRunning, status, pendingSteps, pathname]);
 
   const handleFinish = useCallback(
     (shownIds: string[]) => {
@@ -161,6 +191,30 @@ const OnboardingHints: FC = () => {
     (id: string) => setSeenIds([...seenIds.filter((seen) => seen !== id), id]),
     [seenIds, setSeenIds],
   );
+
+  const handleCloseAnchorView = useCallback(
+    () =>
+      setSearchParams(
+        (current) => {
+          const next = new URLSearchParams(current);
+          next.delete(ONBOARDING_ANCHORS_PARAM);
+          return next;
+        },
+        { replace: true },
+      ),
+    [setSearchParams],
+  );
+
+  if (isAnchorView) {
+    return (
+      <OnboardingAnchorMap
+        anchors={anchors}
+        onClose={handleCloseAnchorView}
+        dir={i18n.dir()}
+        labels={anchorMapLabels}
+      />
+    );
+  }
 
   if (isBeacons) {
     /* Beacons need no start delay: the lib looks each target up again as

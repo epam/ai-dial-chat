@@ -1,0 +1,9 @@
+.outline {
+  border-color: var(--oam-outline, var(--stroke-accent, #1d4ed8));
+}
+
+.tag {
+  background: var(--oam-tag-bg, var(--bg-layer-raised, #fcfcfc));
+  color: var(--oam-tag-text, var(--text-accent, #1d4ed8));
+  border: 1px solid var(--oam-outline, var(--stroke-accent, #1d4ed8));
+}

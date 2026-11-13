@@ -18,6 +18,17 @@ it is on screen: it has a box, sits outside an `inert` subtree and is not
 - **Beacons** (`ONBOARDING_HINTS_MODE=beacons`) — a beacon appears as soon
   as its element is rendered.
 
+## Seeing the anchors on a page
+
+Open any chat page with `?onboarding-anchors` in the URL (for example
+`/catalog?onboarding-anchors`). Instead of the hints, the chat outlines
+every anchor on screen with its `target` name and lists, in a panel at the
+bottom corner, the anchors that page does not render. The page stays
+usable, so you can open the sidebar or switch tabs and watch the list
+change. Close the panel to drop the parameter.
+
+## Anchors
+
 | `target`             | Page                           | What is highlighted                                                        | How the chat finds it                                                           |
 | -------------------- | ------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `new-chat`           | Any page                       | The New chat control: a sidebar link on desktop, a header button on mobile | The first on-screen button or link named "New chat" anywhere on the page        |
