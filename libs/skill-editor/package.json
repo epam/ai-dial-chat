@@ -3,6 +3,10 @@
   "description": "Host-agnostic form for authoring a DIAL Skill, with an inline supporting-file tree",
   "version": "0.0.1",
   "license": "Apache-2.0",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss"
+  ],
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
