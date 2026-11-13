@@ -190,14 +190,6 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/catalog/src/index.ts',
       ),
-      '@epam/ai-dial-folder-destination-panel/styles.css': path.resolve(
-        import.meta.dirname,
-        '../../libs/folder-destination-panel/src/styles.css',
-      ),
-      '@epam/ai-dial-folder-destination-panel': path.resolve(
-        import.meta.dirname,
-        '../../libs/folder-destination-panel/src/index.ts',
-      ),
       // Source components import their CSS Modules; do not prefix-match the public CSS subpath.
       '@epam/ai-dial-publish-panel/styles.css': path.resolve(
         import.meta.dirname,

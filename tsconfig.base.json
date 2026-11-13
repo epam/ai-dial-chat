@@ -38,9 +38,6 @@
       "@epam/ai-dial-prompt-editor/*": ["./libs/prompt-editor/*"],
       "@epam/ai-dial-prompts/*": ["./libs/prompts/*"],
       "@epam/ai-dial-skills/*": ["./libs/skills/*"],
-      "@epam/ai-dial-folder-destination-panel/*": [
-        "./libs/folder-destination-panel/*"
-      ],
       "@epam/ai-dial-publish-panel/*": ["./libs/publish-panel/*"],
       "@epam/ai-dial-share/*": ["./libs/share/*"],
       "@epam/ai-dial-source-panel/*": ["./libs/source-panel/*"],

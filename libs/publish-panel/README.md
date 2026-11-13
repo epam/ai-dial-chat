@@ -35,9 +35,9 @@ import '@epam/ai-dial-publish-panel/styles.css';
 - `react`
 - `@epam/ai-dial-chat-shared`
 - `@epam/ai-dial-ui-kit`
-- `@epam/ai-dial-react-file-manager` (required by `@epam/ai-dial-folder-destination-panel`, which renders its folder tree)
+- `@epam/ai-dial-react-file-manager` (renders the destination folder tree and the `FolderDestinationPanel` the Save flow is built on)
 
-The destination folder tree comes from `@epam/ai-dial-folder-destination-panel`, a regular dependency that installs with this package; its styles are included in `@epam/ai-dial-publish-panel/styles.css`. `@epam/ai-dial-chat-shared` is kept external by the library build — a
+The destination folder tree and `FolderDestinationPanel` come from `@epam/ai-dial-react-file-manager`, so its `styles.css` must be imported by the host. `@epam/ai-dial-chat-shared` is kept external by the library build — a
 consumer's own bundler resolves it, so installing it is required rather than
 optional.
 
@@ -221,11 +221,11 @@ import { PublishAccessRules } from '@epam/ai-dial-publish-panel';
 
 ### Folder tree
 
-The destination folder tree (`FolderDestinationTree`, formerly `PublishFoldersTree`) and the folder helpers (`sortFolderTree`, `toFolderPathKey`, `validateFolderName`, …) live in `@epam/ai-dial-folder-destination-panel`, so a feature that is not publishing can use them without this library. `PublishPanel` renders the tree for you; this package still re-exports the helpers and the `FolderDestination` / `FolderDestinationRoot` types for existing imports. See that package's README for the tree's props and its multi-root mode. `PublishPanel` and `StandalonePublishPanel` still own their own drawer and main/change-folder views and share only the tree; only the Save flow below is built on that package's `FolderDestinationPanel`.
+The destination folder tree (`FolderDestinationTree`, formerly `PublishFoldersTree`) and the folder helpers (`sortFolderTree`, `toFolderPathKey`, `validateFolderName`, …) live in `@epam/ai-dial-react-file-manager`, so a feature that is not publishing can use them without this library. `PublishPanel` renders the tree for you; this package still re-exports the helpers and the `FolderDestination` / `FolderDestinationRoot` types for existing imports. See that package's documentation for the tree's props and its multi-root mode. `PublishPanel` and `StandalonePublishPanel` still own their own drawer and main/change-folder views and share only the tree; only the Save flow below is built on that package's `FolderDestinationPanel`, to which it passes the entity header as the item's `summary`.
 
 ### SaveToFolderPanel / StandaloneSaveToFolderPanel
 
-The "save to a folder, optionally as a new version" flow. `StandaloneSaveToFolderPanel` adapts `FolderDestinationPanel` from `@epam/ai-dial-folder-destination-panel` — it supplies the version section and access rules through that panel's `mainSections` and `renderFolderViewFooter` slots, and maps `onSubmit`, `isSubmitDisabled`, `saveLabel` and `savingLabel` onto its `action`. It is an end-edge `SideDrawer` with two views:
+The "save to a folder, optionally as a new version" flow. `StandaloneSaveToFolderPanel` adapts `FolderDestinationPanel` from `@epam/ai-dial-react-file-manager` — it supplies the version section and access rules through that panel's `mainSections` and `renderFolderViewFooter` slots, and maps `onSubmit`, `isSubmitDisabled`, `saveLabel` and `savingLabel` onto its `action`. It is an end-edge `SideDrawer` with two views:
 
 - **Main** — the entity summary (`ResourceSummary`), the committed destination as a folder name with the file manager's folder icon (`FolderName`, the path joined with `/`) and a small **Change** action, an optional version choice, and a Cancel / Save footer.
 - **Change folder** — a back button, folder search and the multi-root `FolderDestinationTree`, with a Cancel / Select footer. A destination picked here is pending until Select commits it through `onDestinationChange`; Back and Cancel discard it. While a folder of a root with `hasAccessRules` is pending and `accessRules` (`SaveToFolderAccessRulesProps`) is passed, `PublishAccessRules` renders below the tree for that folder; `onPendingDestinationChange` tells the host which folder is pending — including the reset to `destination` on entering and leaving the view — so it can load that folder's existing rules.

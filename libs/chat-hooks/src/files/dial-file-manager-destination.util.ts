@@ -2,13 +2,11 @@ import type {
   FolderDestination,
   FolderDestinationRoot,
   FolderNode,
-} from '@epam/ai-dial-folder-destination-panel';
+  DialFile,
+} from '@epam/ai-dial-react-file-manager';
 import {
   fromFolderPathKey,
   toFolderPathKey,
-} from '@epam/ai-dial-folder-destination-panel';
-import type { DialFile } from '@epam/ai-dial-react-file-manager';
-import {
   DialFileNodeType,
   DialFilePermission,
   DestinationFolderMode,

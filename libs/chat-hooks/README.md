@@ -117,7 +117,7 @@ form's "File manager" source uses it with `T = File`. A host that imports it fro
 
 ### Pending attachment results
 
-`useFileManagerDestination` (root and `./file-manager`) drives a folder destination panel for a file-manager Copy or Move: it turns the file manager's `items` into destination roots, opens the hierarchy along the source folder's path, preloads a folder when it is picked (`onDestinationChange`) or expanded, reports whether the destination is loading or restricted (`DestinationRestriction`: the source folder, or a moved folder's own subtree), and creates folders under the chosen parent. Pass the `DialDestinationRequest` the file manager raised plus the controller's `items`, `folderPopupLoadingPaths`, `onFolderPopupPathChange` and `onCreateFolder`; the host renders `FolderDestinationPanel` (Inline layout) and calls `request.confirm` / `request.cancel`. `@epam/ai-dial-react-file-manager` ships no destination UI; `DialDestinationRequest` comes from the release that follows `0.4.1`.
+`useFileManagerDestination` (root and `./file-manager`) drives a folder destination panel for a file-manager Copy or Move: it turns the file manager's `items` into destination roots, opens the hierarchy along the source folder's path, preloads a folder when it is picked (`onDestinationChange`) or expanded, reports whether the destination is loading or restricted (`DestinationRestriction`: the source folder, or a moved folder's own subtree), and creates folders under the chosen parent. Pass the `DialDestinationRequest` the file manager raised plus the controller's `items`, `folderPopupLoadingPaths`, `onFolderPopupPathChange` and `onCreateFolder`; the host renders `FolderDestinationPanel` from `@epam/ai-dial-react-file-manager` (Inline layout) and calls `request.confirm` / `request.cancel`. `DialDestinationRequest` and the panel come from the `@epam/ai-dial-react-file-manager` release that follows `0.4.1`.
 
 `useFileAttachmentModalState` (root and `./file-manager`) accepts `bucket` and
 optional `resolvePreviewUrl`. It exposes modal open/close actions,
@@ -222,7 +222,6 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-chat-overlay` \*
 - `@epam/ai-dial-chat-shared` \*
 - `@epam/ai-dial-conversation-input` \*
-- `@epam/ai-dial-folder-destination-panel` \*
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-projects` \*
 - `@epam/ai-dial-publish-panel` \*
@@ -291,7 +290,7 @@ whether you need to `npm install` it.
 | `./conversation-overlay`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-chat-overlay`                                                                                           | —                                                               |
 | `./conversation-transfer` | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                               |
 | `./conversation-sources`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-quotations`                                                                                             | `@epam/ai-dial-source-panel`                                    |
-| `./file-manager`          | `@epam/ai-dial-react-file-manager`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-folder-destination-panel`                   | —                                                               |
+| `./file-manager`          | `@epam/ai-dial-react-file-manager`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`                                                             | —                                                               |
 | `./file-manager-canvas`   | `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-quotations`, `@epam/ai-dial-chat-shared`                                                          | `@epam/pdf-highlighter-kit`, `@epam/ai-dial-react-file-manager` |
 | `./source-content`        | —                                                                                                                                                   | —                                                               |
 | `./catalog`               | `@epam/ai-dial-catalog`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-publish-panel`, `@epam/ai-dial-skill-editor` | —                                                               |

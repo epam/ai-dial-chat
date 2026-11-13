@@ -1,5 +1,5 @@
 import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import type { FolderNode } from '@epam/ai-dial-folder-destination-panel';
+import type { FolderNode } from '@epam/ai-dial-react-file-manager';
 
 /** A single folder in the "publish to folder" destination tree. */
 export type PublishFolderNode = FolderNode;

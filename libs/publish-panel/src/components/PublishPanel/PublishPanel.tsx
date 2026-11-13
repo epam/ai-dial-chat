@@ -3,7 +3,7 @@ import {
   mergeClasses,
   ResourceSummary,
 } from '@epam/ai-dial-chat-shared';
-import { FolderDestinationTree } from '@epam/ai-dial-folder-destination-panel';
+import { FolderDestinationTree } from '@epam/ai-dial-react-file-manager';
 import {
   Checkbox,
   DIAL_ICON_SIZE,

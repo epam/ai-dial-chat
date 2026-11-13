@@ -1,6 +1,7 @@
-import { FolderDestinationPanel } from '@epam/ai-dial-folder-destination-panel';
+import { FolderDestinationPanel } from '@epam/ai-dial-react-file-manager';
 import { FC } from 'react';
 import type { StandaloneSaveToFolderPanelProps } from '../../models/save-to-folder-panel';
+import { toFolderDestinationItem } from '../../utils/to-folder-destination-item';
 import { useSaveToFolderSlots } from '../../utils/use-save-to-folder-slots';
 
 /** End-edge slide-in panel for saving a resource to a chosen folder, with a summary view and a folder view. */
@@ -31,7 +32,7 @@ export const StandaloneSaveToFolderPanel: FC<
   return (
     <FolderDestinationPanel
       {...panelProps}
-      item={resource}
+      item={toFolderDestinationItem(resource)}
       labels={{ title: 'Save', ...drawerLabels }}
       action={{
         label: saveLabel,

@@ -2,8 +2,6 @@ import {
   toFolderPathKey,
   type FolderDestination,
   type FolderDestinationRoot,
-} from '@epam/ai-dial-folder-destination-panel';
-import type {
   DialDestinationRequest,
   DialFile,
   DialUploadFileItem,

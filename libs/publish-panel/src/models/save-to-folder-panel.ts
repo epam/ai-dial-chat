@@ -2,7 +2,7 @@ import type {
   FolderDestination,
   FolderDestinationRoot,
   FolderDestinationTreeStyles,
-} from '@epam/ai-dial-folder-destination-panel';
+} from '@epam/ai-dial-react-file-manager';
 import type { CSSProperties, Ref, RefObject } from 'react';
 import type { PublishAccessRulesLabels } from '../components/PublishAccessRules/PublishAccessRules';
 import type {

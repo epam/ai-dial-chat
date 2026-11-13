@@ -3,7 +3,7 @@ import {
   ConfirmationDialog,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { getFolderDisplayName } from '@epam/ai-dial-folder-destination-panel';
+import { getFolderDisplayName } from '@epam/ai-dial-react-file-manager';
 import { ConfirmationPopupVariant, RadioGroup } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import type { UnpublishConfirmationDialogProps } from '../../models/unpublish-confirmation-dialog';

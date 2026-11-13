@@ -1,5 +1,5 @@
-import type { FolderDestinationRoot } from '@epam/ai-dial-folder-destination-panel';
-import { render, screen } from '@testing-library/react';
+import type { FolderDestinationRoot } from '@epam/ai-dial-react-file-manager';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { SaveToFolderPanelProps } from '../../../models/save-to-folder-panel';
@@ -9,37 +9,13 @@ import {
 } from '../../../types/save-to-folder';
 import { SaveToFolderPanel } from '../SaveToFolderPanel';
 
-const treeProps = vi.fn();
-
-vi.mock(
-  '../../../../../folder-destination-panel/src/components/FolderDestinationTree/FolderDestinationTree',
-  () => ({
-    FolderDestinationTree: (props: {
-      onDestinationChange: (destination: unknown) => void;
-      searchQuery: string;
-    }) => {
-      treeProps(props);
-      return (
-        <div role="tree" aria-label="Folders">
-          <button
-            onClick={() =>
-              props.onDestinationChange({
-                rootKey: 'organization',
-                path: ['EPAM'],
-              })
-            }
-          >
-            EPAM
-          </button>
-        </div>
-      );
-    },
-  }),
-);
-
 const roots: FolderDestinationRoot[] = [
   { key: 'personal', label: 'Personal', items: [] },
-  { key: 'organization', label: 'Organization', items: [] },
+  {
+    key: 'organization',
+    label: 'Organization',
+    items: [{ path: ['EPAM'], name: 'EPAM' }],
+  },
 ];
 
 const renderPanel = (props: Partial<SaveToFolderPanelProps> = {}) =>
@@ -166,12 +142,8 @@ describe('SaveToFolderPanel — folder view', () => {
     expect(
       screen.getByRole('textbox', { name: 'Search folders' }),
     ).toBeTruthy();
-    expect(treeProps).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        roots,
-        destination: { rootKey: 'personal', path: [] },
-      }),
-    );
+    expect(screen.getByRole('treeitem', { name: 'Personal' })).toBeTruthy();
+    expect(screen.getByRole('treeitem', { name: 'Organization' })).toBeTruthy();
   });
 
   it('reports a pending selection, not a committed one', async () => {
@@ -182,7 +154,9 @@ describe('SaveToFolderPanel — folder view', () => {
       onPendingDestinationChange,
       onDestinationChange,
     });
-    await userEvent.click(screen.getByRole('button', { name: 'EPAM' }));
+    await userEvent.click(
+      within(screen.getByRole('treeitem', { name: 'EPAM' })).getByText('EPAM'),
+    );
     expect(onPendingDestinationChange).toHaveBeenCalledWith({
       rootKey: 'organization',
       path: ['EPAM'],
@@ -190,15 +164,13 @@ describe('SaveToFolderPanel — folder view', () => {
     expect(onDestinationChange).not.toHaveBeenCalled();
   });
 
-  it('forwards the search query to the tree', async () => {
+  it('filters the tree by the search query', async () => {
     renderPanel({ view: SaveToFolderView.ChangeFolder });
     await userEvent.type(
       screen.getByRole('textbox', { name: 'Search folders' }),
       'del',
     );
-    expect(treeProps).toHaveBeenLastCalledWith(
-      expect.objectContaining({ searchQuery: 'del' }),
-    );
+    expect(screen.queryByRole('treeitem', { name: 'EPAM' })).toBeNull();
   });
 
   it('shows a folder load error with a retry action', async () => {

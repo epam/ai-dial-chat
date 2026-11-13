@@ -3,8 +3,6 @@ import {
   FolderDestinationItemIcon,
   FolderDestinationLayout,
   type FolderDestinationPanelProps,
-} from '@epam/ai-dial-folder-destination-panel';
-import {
   DestinationFolderMode,
   DialFileNodeType,
   DialFilePermission,
@@ -18,9 +16,9 @@ import FileManagerDestinationPanelContainer from '../FileManagerDestinationPanel
 
 const panelProps = vi.fn<(props: FolderDestinationPanelProps) => void>();
 
-vi.mock('@epam/ai-dial-folder-destination-panel', async (importOriginal) => ({
+vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => ({
   ...(await importOriginal<
-    typeof import('@epam/ai-dial-folder-destination-panel')
+    typeof import('@epam/ai-dial-react-file-manager')
   >()),
   FolderDestinationPanel: (props: FolderDestinationPanelProps) => {
     panelProps(props);

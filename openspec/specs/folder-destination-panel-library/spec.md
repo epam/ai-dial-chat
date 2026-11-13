@@ -2,18 +2,18 @@
 
 ## Purpose
 
-`libs/folder-destination-panel` (`@epam/ai-dial-folder-destination-panel`) owns the destination folder tree and the side panel that shows an item next to the hierarchy of folders it can go to, so features other than publishing can use them.
+`@epam/ai-dial-react-file-manager` owns the destination folder tree and the side panel that shows an item next to the hierarchy of folders it can go to, so features other than publishing can use them. The components live in that package, in its own repository, not in this workspace; this spec records what the workspace relies on. The package once existed here as `libs/folder-destination-panel`, which was removed when the components moved.
 
 ## Requirements
 
-### Requirement: The folder tree and destination panel live in their own library
+### Requirement: The folder tree and destination panel come from the file manager package
 
-`libs/folder-destination-panel/src/index.ts` SHALL export `FolderDestinationTree`, `FolderDestinationPanel`, `FolderDestinationPanelBody`, the folder helpers (`sortFolderTree`, `filterFolderTree`, `toFolderPathKey`, `fromFolderPathKey`, `validateFolderName` and the rest listed in its README) and the `FolderNode`, `FolderDestination` and `FolderDestinationRoot` types. `libs/publish-panel` SHALL depend on it as a regular dependency and SHALL NOT own a copy of the tree. A library that is not about publishing SHALL import the tree and panel from this library, never from `libs/publish-panel`. The package is a regular dependency of `libs/publish-panel`, which re-exports its helpers, and an optional peer of `@epam/ai-dial-chat-hooks`, whose file-manager entry point uses its types; a host that imports it directly installs it once, because the publish-panel dependency is a workspace placeholder that publishing rewrites to the same release.
+`@epam/ai-dial-react-file-manager` SHALL export `FolderDestinationTree`, `FolderDestinationPanel`, `FolderDestinationPanelBody`, the folder helpers (`sortFolderTree`, `filterFolderTree`, `toFolderPathKey`, `fromFolderPathKey`, `validateFolderName` and the rest) and the `FolderNode`, `FolderDestination` and `FolderDestinationRoot` types. `libs/publish-panel` SHALL NOT own a copy of the tree, and a library that is not about publishing SHALL import the tree and panel from the file manager package, never from `libs/publish-panel`. `@epam/ai-dial-react-file-manager` is a peer of `libs/publish-panel` and `libs/chat-hooks`, which re-export or use these helpers and types, and a host imports its `styles.css` once for the panel and tree styles.
 
 #### Scenario: Publish panel renders the shared tree
 
 - **WHEN** `PublishPanel` renders its destination picker
-- **THEN** it renders `FolderDestinationTree` from `@epam/ai-dial-folder-destination-panel`
+- **THEN** it renders `FolderDestinationTree` from `@epam/ai-dial-react-file-manager`
 
 ### Requirement: The panel renders its own primary button from a host-supplied action
 
@@ -26,7 +26,7 @@
 
 ### Requirement: Host content fits around the folder picker through slots
 
-`FolderDestinationPanel` SHALL render `mainSections` in the main view below the destination, and SHALL call `renderFolderViewFooter` with the pending destination to render content below the tree in the folder view. The library SHALL NOT know what that content is; `libs/publish-panel` uses the slots for its version choice and access rules.
+`FolderDestinationPanel` SHALL render `mainSections` in the main view below the destination, and SHALL call `renderFolderViewFooter` with the pending destination to render content below the tree in the folder view. The panel SHALL NOT know what that content is; `libs/publish-panel` uses the slots for its version choice and access rules.
 
 #### Scenario: Footer receives the pending destination
 
@@ -37,7 +37,7 @@
 
 ### Requirement: The tree is a standalone destination picker
 
-`FolderDestinationTree` SHALL render `DialFoldersTree` from `@epam/ai-dial-react-file-manager` (a peer of this library, which is why the picker depends on the file manager package) with folders only. It SHALL:
+`FolderDestinationTree` SHALL render `DialFoldersTree` from `@epam/ai-dial-react-file-manager` (the picker is part of the same package) with folders only. It SHALL:
 
 - order folders by name at every level (case-insensitive, digit-aware), whatever order the host passes `items` in;
 - in single-root mode render the bucket root as a selectable top-level node labelled `rootLabel` (default `'Root'`), where the path `[]` is the root itself and `undefined` means nothing is selected; in multi-root mode (`roots`) render one top-level node per root and report selection as a `FolderDestination`;
@@ -78,9 +78,9 @@ A host that needs to react to a pick therefore uses `onDestinationChange` in the
 
 ---
 
-### Requirement: The library carries no publish knowledge except one host flag
+### Requirement: The panel carries no publish or catalog knowledge except one host flag
 
-The library SHALL NOT know publishing, saving, copying or moving. Its root model SHALL carry `FolderDestinationRoot.hasAccessRules` only as a host flag that the library never reads, because `@epam/ai-dial-publish-panel` needs it round-tripped on the roots it passes in. Its stylesheet variables SHALL use the `--fdt-` (tree) and `--fdp-` (panel) prefixes, and no default label SHALL name a publishing concept.
+The panel SHALL NOT know publishing, saving, copying, moving or catalog entities. Its root model SHALL carry `FolderDestinationRoot.hasAccessRules` only as a host flag that the panel never reads, because `@epam/ai-dial-publish-panel` needs it round-tripped on the roots it passes in. Its stylesheet variables SHALL use the `--fdt-` (tree) and `--fdp-` (panel) prefixes, and no default label SHALL name a publishing concept. The summary row of an item SHALL be the item's `title` (with an optional `iconKind`), or the host's `summary` node when given: `@epam/ai-dial-publish-panel` renders the catalog entity header (icon, type and version) itself and passes it as `summary` (`toFolderDestinationItem` in `libs/publish-panel/src/utils/to-folder-destination-item.tsx`).
 
 #### Scenario: Default root label is neutral
 
@@ -91,7 +91,7 @@ The library SHALL NOT know publishing, saving, copying or moving. Its root model
 
 ### Requirement: The panel is the destination UI for the file manager's request callback
 
-`@epam/ai-dial-react-file-manager` ships no Copy or Move destination UI; it calls the host's `onDestinationRequest` with a `DialDestinationRequest`. The host SHALL show `FolderDestinationPanel` in the `FolderDestinationLayout.Inline` layout for that request, driven by `useFileManagerDestination` from `@epam/ai-dial-chat-hooks` (`libs/chat-hooks/src/files/useFileManagerDestination/useFileManagerDestination.ts`), whose `onDestinationChange` commits a pick. The hook derives the opening destination and the expanded path from the items, so items that arrive after the request are honoured, and it preloads whichever folder is the destination, including the one the panel opens on. The host keys the panel by request so a new request never inherits the previous one's picks. The callback API exists in the file manager release that follows `0.4.1` (its changelog entry "Copy/Move destination UI is the host's"); the manifests still declare `^0.4.1` and SHALL be raised to that release when it is published.
+`DialFileManager` shows no Copy or Move popup of its own; it calls the host's `onDestinationRequest` with a `DialDestinationRequest`. The host SHALL show `FolderDestinationPanel` from the same package in the `FolderDestinationLayout.Inline` layout for that request, driven by `useFileManagerDestination` from `@epam/ai-dial-chat-hooks` (`libs/chat-hooks/src/files/useFileManagerDestination/useFileManagerDestination.ts`), whose `onDestinationChange` commits a pick. The hook derives the opening destination and the expanded path from the items, so items that arrive after the request are honoured, and it preloads whichever folder is the destination, including the one the panel opens on. The host keys the panel by request so a new request never inherits the previous one's picks. The callback API and the destination components exist in the file manager release that follows `0.4.1`; the manifests still declare `^0.4.1` and SHALL be raised to that release when it is published.
 
 #### Scenario: Copy uses the shared panel
 

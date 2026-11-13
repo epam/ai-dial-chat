@@ -37,9 +37,6 @@
       "path": "../quotations/tsconfig.lib.json"
     },
     {
-      "path": "../folder-destination-panel/tsconfig.lib.json"
-    },
-    {
       "path": "../publish-panel/tsconfig.lib.json"
     },
     {

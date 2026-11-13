@@ -1,7 +1,7 @@
 import type {
   FolderDestination,
   FolderDestinationPanelBodyLabels,
-} from '@epam/ai-dial-folder-destination-panel';
+} from '@epam/ai-dial-react-file-manager';
 import { ReactNode, useCallback } from 'react';
 import { PublishAccessRules } from '../components/PublishAccessRules/PublishAccessRules';
 import { SaveToFolderVersionSection } from '../components/SaveToFolderPanel/SaveToFolderVersionSection';

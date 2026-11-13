@@ -1,4 +1,4 @@
-import type { FolderDestinationTreeStyles } from '@epam/ai-dial-folder-destination-panel';
+import type { FolderDestinationTreeStyles } from '@epam/ai-dial-react-file-manager';
 import type { CSSProperties } from 'react';
 import type { PublishAccessRulesStyles } from './publish-access-rules-styles';
 

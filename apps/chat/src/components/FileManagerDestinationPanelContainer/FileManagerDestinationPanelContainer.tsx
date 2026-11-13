@@ -7,7 +7,7 @@ import {
   FolderDestinationItemIcon,
   FolderDestinationLayout,
   FolderDestinationPanel,
-} from '@epam/ai-dial-folder-destination-panel';
+} from '@epam/ai-dial-react-file-manager';
 import {
   DestinationFolderMode,
   DialFileNodeType,

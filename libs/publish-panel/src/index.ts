@@ -1,5 +1,3 @@
-import '@epam/ai-dial-folder-destination-panel/styles.css';
-
 // Models
 export { PublishCalloutKind, PublicationRuleFunction } from './models/publish';
 export type {
@@ -26,7 +24,7 @@ export type {
   UsePublishFlowOptions,
   UsePublishFlowResult,
 } from './utils/use-publish-flow';
-/* Folder helpers and types live in `@epam/ai-dial-folder-destination-panel`; they are re-exported so existing imports keep resolving. */
+/* Folder helpers and types live in `@epam/ai-dial-react-file-manager`; they are re-exported so existing imports keep resolving. */
 export {
   collectFolderKeys,
   filterFolderTree,
@@ -38,8 +36,8 @@ export {
   toDialFileTree,
   toFolderPathKey,
   validateFolderName,
-} from '@epam/ai-dial-folder-destination-panel';
-export type { FolderNameValidationMessages } from '@epam/ai-dial-folder-destination-panel';
+} from '@epam/ai-dial-react-file-manager';
+export type { FolderNameValidationMessages } from '@epam/ai-dial-react-file-manager';
 
 // Components
 export { PublishAccessRuleEditor } from './components/PublishAccessRuleEditor/PublishAccessRuleEditor';
@@ -94,7 +92,7 @@ export { PUBLISH_PANEL_CLASS } from './constants/public-class-names';
 export type {
   FolderDestination,
   FolderDestinationRoot,
-} from '@epam/ai-dial-folder-destination-panel';
+} from '@epam/ai-dial-react-file-manager';
 
 export { UnpublishConfirmationDialog } from './components/UnpublishConfirmationDialog/UnpublishConfirmationDialog';
 export type {
