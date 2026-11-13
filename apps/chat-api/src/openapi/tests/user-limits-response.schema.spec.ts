@@ -40,12 +40,16 @@ describe('UserLimitStatsResponseDto OpenAPI schema', () => {
       expect.arrayContaining(['costObject', 'policy', 'day', 'month']),
     );
     expect(budget.required).not.toContain('priority');
+    expect(budget.required).not.toContain('displayName');
     expect(budget.properties?.['costObject']).toMatchObject({
       type: 'string',
     });
     expect(budget.properties?.['policy']).toMatchObject({ type: 'string' });
     expect(budget.properties?.['priority']).toMatchObject({
       type: 'integer',
+    });
+    expect(budget.properties?.['displayName']).toMatchObject({
+      type: 'string',
     });
   });
 

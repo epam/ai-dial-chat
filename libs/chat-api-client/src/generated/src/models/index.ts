@@ -976,6 +976,12 @@ export interface BudgetStatsDto {
    */
   priority?: number;
   /**
+   * The human-readable name of the budget's policy; absent when the policy sets none. Use `policy` as the identifier — the display name need not be unique.
+   * @type {string}
+   * @memberof BudgetStatsDto
+   */
+  displayName?: string;
+  /**
    * The budget's limit and the caller's spend against it for the current UTC day. A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.
    * @type {LimitStatsDto}
    * @memberof BudgetStatsDto
