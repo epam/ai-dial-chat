@@ -3,7 +3,10 @@ import {
   type CatalogCreationPermissionsDto,
   type CelebrationDeliveryDto,
 } from '@epam/ai-dial-chat-api-client';
-import type { AnnouncementListItem } from '@epam/ai-dial-chat-hooks';
+import {
+  type AnnouncementListItem,
+  mapAnnouncementSeverity,
+} from '@epam/ai-dial-chat-hooks';
 import {
   DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
   DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
@@ -214,7 +217,10 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             announcementDescription:
               response.config?.announcementDescription ?? null,
             announcements: Array.isArray(response.config?.announcements)
-              ? response.config.announcements
+              ? response.config.announcements.map((item) => ({
+                  ...item,
+                  severity: mapAnnouncementSeverity(item.severity),
+                }))
               : [],
             welcomeScreenDescription:
               response.config?.welcomeScreenDescription ?? null,

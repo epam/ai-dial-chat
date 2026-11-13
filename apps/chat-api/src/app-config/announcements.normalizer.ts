@@ -2,6 +2,7 @@ import type {
   AnnouncementItemDto,
   AnnouncementLinkDto,
 } from './dto/announcement-item.dto';
+import { AnnouncementSeverity } from './dto/announcement-severity.enum';
 import { sanitizeAnnouncementHtml } from './html-sanitizer';
 import { toNullableText } from './text.util';
 
@@ -44,10 +45,38 @@ const parseAnnouncementLink = (
   return { label: parsedLabel, href: href.trim() };
 };
 
+const ANNOUNCEMENT_SEVERITIES: ReadonlySet<string> = new Set(
+  Object.values(AnnouncementSeverity),
+);
+
+const isAnnouncementSeverity = (value: string): value is AnnouncementSeverity =>
+  ANNOUNCEMENT_SEVERITIES.has(value);
+
+/* Severity is presentation metadata, so an unrecognized value is reported to
+ * the caller rather than rejecting the entry: a typo must never hide an
+ * announcement. Case and surrounding whitespace are forgiven because operators
+ * hand-write this in Helm values; the result is always the canonical value. */
+const parseAnnouncementSeverity = (
+  raw: unknown,
+): AnnouncementSeverity | AnnouncementRejection => {
+  if (raw == null) {
+    return AnnouncementSeverity.Info;
+  }
+  if (typeof raw === 'string') {
+    const normalized = raw.trim().toLowerCase();
+    if (isAnnouncementSeverity(normalized)) {
+      return normalized;
+    }
+  }
+  return { reason: `unknown severity ${JSON.stringify(raw)}` };
+};
+
 /**
  * Normalizes the operator-authored announcements list. Bad entries are
  * dropped with a warning rather than throwing: a typo in a Helm values file
- * must never take down `/api/v1/client-config`.
+ * must never take down `/api/v1/client-config`. The one exception is an
+ * unrecognized `severity`: the entry is kept as `info` and the value is
+ * logged, so a typo never hides an announcement.
  *
  * Takes a `warn` callback rather than a logger, following the
  * `normalizeEnabledUiFeatures` pattern in `enabled-ui-features.normalizer.ts`:
@@ -74,7 +103,10 @@ export const normalizeAnnouncements = (
       continue;
     }
 
-    const { title, description, link } = entry as Record<string, unknown>;
+    const { title, description, link, severity } = entry as Record<
+      string,
+      unknown
+    >;
 
     const parsedTitle = toNullableText(title);
     if (!parsedTitle) {
@@ -91,6 +123,18 @@ export const normalizeAnnouncements = (
       continue;
     }
 
+    /* Evaluated only once the entry is known to survive, so a dropped entry
+     * never logs a second, severity-specific warning. */
+    const parsedSeverity = parseAnnouncementSeverity(severity);
+    let resolvedSeverity = AnnouncementSeverity.Info;
+    if (typeof parsedSeverity === 'object') {
+      warn(
+        `Announcement "${parsedTitle}": ${parsedSeverity.reason}; using "${AnnouncementSeverity.Info}"`,
+      );
+    } else {
+      resolvedSeverity = parsedSeverity;
+    }
+
     const rawDescription = toNullableText(description);
 
     items.push({
@@ -99,6 +143,7 @@ export const normalizeAnnouncements = (
         ? sanitizeAnnouncementHtml(rawDescription)
         : null,
       link: parsedLink,
+      severity: resolvedSeverity,
     });
   }
 

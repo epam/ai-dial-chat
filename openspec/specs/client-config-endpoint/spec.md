@@ -363,7 +363,38 @@ The service SHALL resolve `announcementTitle`, `announcementDescription`, and th
 
 `GET /api/v1/client-config` SHALL include an `announcements` field of type `AnnouncementItemDto[]` in the `config` object of its response, sourced from the `announcement.items` registry key. The field SHALL be `[]` when `ANNOUNCEMENTS` is not configured. Entries SHALL be returned in configured order.
 
-Each entry SHALL carry a `title: string`, a `description: string | null`, and a `link: AnnouncementLinkDto | null` whose link carries a `label: string` and an `href: string`.
+Each entry SHALL carry a `title: string`, a `description: string | null`, a `link: AnnouncementLinkDto | null` whose link carries a `label: string` and an `href: string`, and a `severity: AnnouncementSeverity`.
+
+`severity` SHALL always be present on a returned entry and SHALL be one of `info` or `warning`. The service SHALL resolve it from the configured entry's `severity` key as follows:
+
+- absent or `null` → `info`, with no warning;
+- a string equal to `info` or `warning` after trimming surrounding whitespace and ignoring letter case → that value, in lower case;
+- any other value (an unrecognized or blank string, a number, a boolean, an array, an object) → `info`, with exactly one warning for that entry naming the entry's title and the rejected value.
+
+An unrecognized `severity` SHALL NOT cause the entry to be dropped, unlike a present-but-invalid `link`: severity is presentation metadata, and a typo must never hide an announcement. The severity of an entry that is dropped for another reason (blank title, invalid link) SHALL NOT be evaluated or logged. Severity resolution SHALL happen in `normalizeAnnouncements` (`apps/chat-api/src/app-config/announcements.normalizer.ts`); the env admission step (`apps/chat-api/src/app-config/env-admission/announcements.admission.ts`) SHALL remain unchanged.
+
+Example — `ANNOUNCEMENTS='[{"title":"Upcoming maintenance: DIAL 1.49","description":"Saturday 10:00 UTC","severity":"warning"},{"title":"We have upgraded to DIAL 1.48"}]'` yields:
+
+```json
+{
+  "config": {
+    "announcements": [
+      {
+        "title": "Upcoming maintenance: DIAL 1.49",
+        "description": "Saturday 10:00 UTC",
+        "link": null,
+        "severity": "warning"
+      },
+      {
+        "title": "We have upgraded to DIAL 1.48",
+        "description": null,
+        "link": null,
+        "severity": "info"
+      }
+    ]
+  }
+}
+```
 
 The service SHALL include only entries that satisfy all of:
 
@@ -378,9 +409,9 @@ Every rejected entry SHALL be dropped and logged with a warning naming the entry
 
 The service SHALL validate every configured entry — including entries beyond the supported maximum — before applying the cap: an entry past the maximum that is itself invalid (blank title, or a present-but-invalid link) SHALL still be dropped and logged with its own rejection warning, exactly as an invalid entry within the first N would be. The service SHALL NOT stop processing once N valid entries have been accumulated. The cap-exceeded warning, when the accepted-entry count exceeds the maximum, SHALL be logged last — after every per-entry rejection warning — and SHALL report the total number of entries that passed validation (before truncation), not the number configured or the number returned.
 
-The service SHALL NOT mutate the resolved `announcement.items` value or any of its entry or link objects while validating and normalizing them; the returned `AnnouncementItemDto[]` SHALL be built from new objects. Duplicate entries (byte-for-byte identical title/description/link) in the configured list SHALL each be evaluated independently and, if valid, SHALL each appear in the returned list — the service SHALL NOT deduplicate announcements.
+The service SHALL NOT mutate the resolved `announcement.items` value or any of its entry or link objects while validating and normalizing them; the returned `AnnouncementItemDto[]` SHALL be built from new objects. Duplicate entries (byte-for-byte identical title/description/link/severity) in the configured list SHALL each be evaluated independently and, if valid, SHALL each appear in the returned list — the service SHALL NOT deduplicate announcements.
 
-`AnnouncementItemDto` and `AnnouncementLinkDto` SHALL be declared as classes with `@ApiProperty` metadata on every field, so `@nestjs/swagger` emits runtime metadata and the generated client exposes the shape.
+`AnnouncementItemDto` and `AnnouncementLinkDto` SHALL be declared as classes with `@ApiProperty` metadata on every field, so `@nestjs/swagger` emits runtime metadata and the generated client exposes the shape. `AnnouncementItemDto.severity` SHALL be declared as a required property with `enum` and `enumName: 'AnnouncementSeverity'`, backed by a string enum in `apps/chat-api/src/app-config/dto/`, so the generated `@epam/ai-dial-chat-api-client` exports an `AnnouncementSeverity` const with the members `Info` (`info`) and `Warning` (`warning`) and types `AnnouncementItemDto.severity` with it. The `getClientConfig` operation, its query DTO and its response DTO are otherwise unchanged; frontend callers keep using the normal (non-`Raw`) generated method. The field is additive and SHALL NOT change the per-application response caching.
 
 #### Scenario: A complete announcement is returned
 
@@ -461,6 +492,51 @@ The service SHALL NOT mutate the resolved `announcement.items` value or any of i
 
 - **WHEN** `GET /api/v1/client-config` is called with a non-empty `ANNOUNCEMENTS` value
 - **THEN** resolving `announcement.items` again for a subsequent, independent request returns entries with the same values as the first resolution, unaffected by any normalization performed for the first request
+
+#### Scenario: An entry without severity is returned as info
+
+- **WHEN** an `ANNOUNCEMENTS` entry has a valid title and no `severity` key
+- **THEN** the entry is returned with `severity: "info"` and no severity warning is logged
+
+#### Scenario: A configured value written before severity existed keeps working
+
+- **WHEN** `ANNOUNCEMENTS` holds entries in the pre-existing `{ title, description, link }` shape
+- **THEN** every entry is returned exactly as before, with `severity: "info"` added
+
+#### Scenario: A warning severity is returned
+
+- **WHEN** an entry has `"severity": "warning"`
+- **THEN** that entry is returned with `severity: "warning"`
+
+#### Scenario: Severity is matched without regard to case or surrounding whitespace
+
+- **WHEN** an entry has `"severity": " Warning "`
+- **THEN** that entry is returned with `severity: "warning"` and no severity warning is logged
+
+#### Scenario: A null severity is treated as absent
+
+- **WHEN** an entry has `"severity": null`
+- **THEN** the entry is returned with `severity: "info"` and no severity warning is logged
+
+#### Scenario: An unknown severity falls back to info and is logged once
+
+- **WHEN** an entry titled `Maintenance` has `"severity": "critical"`
+- **THEN** the entry is still present in `config.announcements` with `severity: "info"`, and exactly one warning naming `Maintenance` and `critical` is logged for that entry
+
+#### Scenario: A non-string severity falls back to info
+
+- **WHEN** an entry has `"severity": 2` or `"severity": ""`
+- **THEN** the entry is returned with `severity: "info"` and one warning is logged for that entry
+
+#### Scenario: A dropped entry's severity is not evaluated
+
+- **WHEN** an entry has a blank title and `"severity": "critical"`
+- **THEN** the entry is dropped with its blank-title warning only, and no severity warning is logged for it
+
+#### Scenario: Generated client exposes the severity enum
+
+- **WHEN** `npm run openapi` regenerates `libs/chat-api-client`
+- **THEN** the generated models export `AnnouncementSeverity` with `Info: 'info'` and `Warning: 'warning'`, and `AnnouncementItemDto.severity` is typed `AnnouncementSeverity`
 
 ### Requirement: Custom client variables remain isolated from built-in settings
 

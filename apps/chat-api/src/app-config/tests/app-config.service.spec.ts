@@ -11,6 +11,7 @@ import { AppConfigService } from '../app-config.service';
 import type { AppConfigEvalContext } from '../app-config.types';
 import type { CompositeConfigProvider } from '../config-registry/composite-config.provider';
 import { CONFIG_DEFINITIONS } from '../config-registry/config-registry.constants';
+import { AnnouncementSeverity } from '../dto/announcement-severity.enum';
 import { FeatureKey } from '../feature-flags/feature-key.enum';
 import { isManagedKey } from '../managed-config/key-management';
 import {
@@ -775,6 +776,23 @@ describe('AppConfigService', () => {
         label: 'Changelog',
         href: 'https://dialx.ai',
       });
+    });
+
+    it('returns each announcement with its resolved severity', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.items'
+          ? [
+              { title: 'Upcoming maintenance', severity: 'warning' },
+              { title: 'We have upgraded to DIAL 1.48' },
+            ]
+          : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.announcements.map((item) => item.severity)).toEqual([
+        AnnouncementSeverity.Warning,
+        AnnouncementSeverity.Info,
+      ]);
     });
 
     it('keeps an announcement that carries no link', async () => {
