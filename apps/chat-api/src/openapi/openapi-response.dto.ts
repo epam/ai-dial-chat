@@ -228,6 +228,14 @@ export class DialModelDto {
   responses_defaults?: Record<string, unknown>;
 
   @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: true,
+    description:
+      'Curated catalog display metadata from DIAL Core, forwarded as sent',
+  })
+  catalog_properties?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
     type: [String],
     example: ['Text Generation', 'Image Recognition'],
   })

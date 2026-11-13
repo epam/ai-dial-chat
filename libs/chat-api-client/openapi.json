@@ -14939,6 +14939,11 @@
             "type": "object",
             "additionalProperties": true
           },
+          "catalog_properties": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Curated catalog display metadata from DIAL Core, forwarded as sent"
+          },
           "description_keywords": {
             "example": ["Text Generation", "Image Recognition"],
             "type": "array",
@@ -15100,6 +15105,14 @@
             "items": {
               "type": "string"
             }
+          },
+          "catalog_properties": {
+            "description": "Known model catalog properties allow-listed from DIAL Core catalog_properties",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ModelCatalogPropertiesDto"
+              }
+            ]
           }
         },
         "required": ["id", "object"]
