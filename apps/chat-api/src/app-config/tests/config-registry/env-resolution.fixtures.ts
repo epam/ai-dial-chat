@@ -379,6 +379,12 @@ export const ENV_KEY_CASES: readonly EnvKeyCase[] = [
     nonDefault: 'true',
   },
   {
+    key: 'features.orgUnitsEnabled',
+    variable: 'ORG_UNITS_ENABLED',
+    typedDefault: 'false',
+    nonDefault: 'true',
+  },
+  {
     key: 'uiFeatures.enabledUiFeatures',
     variable: 'ENABLED_UI_FEATURES',
     typedDefault: '',

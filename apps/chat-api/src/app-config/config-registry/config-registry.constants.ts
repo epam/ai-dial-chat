@@ -629,6 +629,19 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     }),
   },
   {
+    key: 'features.orgUnitsEnabled',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the chat reads the DIAL Core org units to tell which public ' +
+      'folders are units. Off by default.',
+    owner: 'chat-team',
+    envVar: 'ORG_UNITS_ENABLED',
+  },
+  {
     key: 'uiFeatures.enabledUiFeatures',
     type: 'config',
     valueType: 'json',

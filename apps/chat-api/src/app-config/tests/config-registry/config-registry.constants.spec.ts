@@ -180,6 +180,22 @@ describe('CONFIG_DEFINITIONS', () => {
     expect(entry).not.toHaveProperty('allowedRolesEnvVar');
   });
 
+  it('contains the client-visible features.orgUnitsEnabled entry, off by default', () => {
+    const entry = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === 'features.orgUnitsEnabled',
+    );
+
+    expect(entry).toMatchObject({
+      key: 'features.orgUnitsEnabled',
+      type: 'feature',
+      valueType: 'boolean',
+      visibility: 'client',
+      defaultValue: false,
+      critical: false,
+      envVar: 'ORG_UNITS_ENABLED',
+    });
+  });
+
   it('contains the client-visible features.usageLimitsControl entry, off by default', () => {
     const entry = CONFIG_DEFINITIONS.find(
       (definition) => definition.key === 'features.usageLimitsControl',
@@ -348,15 +364,15 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it('declares exactly the 48 known keys: 7 managed, 27 local-only and 14 eligible', () => {
-    expect(CONFIG_DEFINITIONS).toHaveLength(48);
+  it('declares exactly the 49 known keys: 7 managed, 27 local-only and 15 eligible', () => {
+    expect(CONFIG_DEFINITIONS).toHaveLength(49);
     expect(managed).toHaveLength(7);
     expect(
       CONFIG_DEFINITIONS.filter((d) => localOnlyReasonOf(d) !== undefined),
     ).toHaveLength(27);
     expect(
       CONFIG_DEFINITIONS.filter((d) => d.management === undefined),
-    ).toHaveLength(14);
+    ).toHaveLength(15);
   });
 
   it('manages a config key as config and a feature as feature', () => {

@@ -1696,6 +1696,7 @@ describe('AppConfigService', () => {
         'defaultDeploymentPinned',
         'visualizerSendMessages',
         'usageLimitsControl',
+        'orgUnitsEnabled',
       ]);
     });
 

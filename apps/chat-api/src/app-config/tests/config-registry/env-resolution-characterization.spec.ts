@@ -305,6 +305,12 @@ const KEY_EXPECTATIONS: Readonly<
     [EnvCaseName.NonDefault]: { provider: true, effective: true },
     [EnvCaseName.Empty]: { provider: true, effective: true },
   },
+  'features.orgUnitsEnabled': {
+    [EnvCaseName.Absent]: { provider: undefined, effective: false },
+    [EnvCaseName.TypedDefault]: { provider: false, effective: false },
+    [EnvCaseName.NonDefault]: { provider: true, effective: true },
+    [EnvCaseName.Empty]: { provider: true, effective: true },
+  },
   'uiFeatures.enabledUiFeatures': {
     [EnvCaseName.Absent]: { provider: undefined, effective: null },
     [EnvCaseName.TypedDefault]: { provider: undefined, effective: null },
