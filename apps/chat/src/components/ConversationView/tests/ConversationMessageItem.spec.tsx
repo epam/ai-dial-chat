@@ -1331,6 +1331,69 @@ describe('ConversationMessageItem', () => {
     });
   });
 
+  describe('ConversationMessageItem — form buttons', () => {
+    const ASSISTANT_WITH_BUTTONS: Message = {
+      role: MessageRole.Assistant,
+      content: 'Pick one',
+      timestamp: '2024-01-01T00:00:01Z',
+      custom_content: {
+        form_schema: {
+          type: 'object',
+          properties: {
+            button: {
+              'dial:widget': 'buttons',
+              oneOf: [
+                {
+                  const: 0,
+                  title: 'Approve',
+                  'dial:widgetOptions': {
+                    populateText: 'Approve',
+                    submit: true,
+                    confirmationMessage: null,
+                  },
+                },
+              ],
+            },
+          },
+        },
+      },
+    } as Message;
+
+    const renderWithButtons = (
+      onSelectStarter: () => void,
+      isStarterSelectionDisabled?: boolean,
+    ) =>
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={ASSISTANT_WITH_BUTTONS}
+          index={1}
+          onSelectStarter={onSelectStarter}
+          isStarterSelectionDisabled={isStarterSelectionDisabled}
+        />,
+      );
+
+    it('forwards a form button click to onSelectStarter', async () => {
+      const onSelectStarter = vi.fn();
+      renderWithButtons(onSelectStarter);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Approve' }));
+
+      expect(onSelectStarter).toHaveBeenCalledOnce();
+    });
+
+    it('renders the form buttons disabled when isStarterSelectionDisabled is set (#6878)', async () => {
+      const onSelectStarter = vi.fn();
+      renderWithButtons(onSelectStarter, true);
+
+      const button = screen.getByRole('button', { name: 'Approve' });
+      await userEvent.click(button);
+
+      expect((button as HTMLButtonElement).disabled).toBe(true);
+      expect(onSelectStarter).not.toHaveBeenCalled();
+    });
+  });
+
   describe('ConversationMessageItem — message action gates', () => {
     const ASSISTANT_MESSAGE: Message = {
       role: MessageRole.Assistant,
