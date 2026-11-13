@@ -207,6 +207,8 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   starters?: StarterOption[];
   /** Fires with the clicked `StarterOption`. */
   onSelectStarter?: (starter: StarterOption) => void;
+  /** When `true`, the quick-reply buttons render disabled and `onSelectStarter` never fires. Defaults to `false`. */
+  isStarterSelectionDisabled?: boolean;
   /** Content rendered between the message body and the actions bar (e.g. a stages panel). */
   afterContent?: ReactNode;
   /** When `false`, no thinking placeholder renders while streaming before the first token, so `afterContent` starts level with the avatar. Defaults to `true`. */
