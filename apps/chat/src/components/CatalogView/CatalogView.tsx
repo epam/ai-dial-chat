@@ -470,8 +470,6 @@ const CatalogView: FC<Props> = ({
     publishOpenItem?.type ?? CatalogEntityType.Agent,
     publishOpenItem != null,
   );
-  const publishVersionHistory =
-    publishOpenItem != null ? versionHistory : undefined;
 
   const {
     isShareVisible,
@@ -677,7 +675,7 @@ const CatalogView: FC<Props> = ({
         isPublishVisible={isPublishVisible}
         getPublishHistory={getPublishHistory}
         getPublishDependencies={getPublishDependencies}
-        publishVersionHistory={publishVersionHistory}
+        publishVersionHistory={versionHistory}
         onPublishOpenChange={handlePublishOpenChange}
         resolvePublishDependenciesLabels={(item) =>
           getPublishDependenciesLabels(

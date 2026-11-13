@@ -627,11 +627,11 @@ vi.mock(
   }),
 );
 
+/* The real hook returns nothing for the empty id the catalog passes while no publish panel is open. */
 vi.mock('../../../hooks/publish/useResourceVersionHistory', () => ({
-  useResourceVersionHistory: vi.fn((resourceId: string) => ({
-    rows: [],
-    resourceId,
-  })),
+  useResourceVersionHistory: vi.fn((resourceId: string) =>
+    resourceId === '' ? undefined : { rows: [], resourceId },
+  ),
 }));
 vi.mock('../../../hooks/publish/usePublishFolders', () => ({
   usePublishFolders: vi.fn(),
