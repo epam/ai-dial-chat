@@ -40,6 +40,7 @@ export const ACCEPTED_STORED_RESOURCE_VERSIONS: readonly string[] = [
   '1.0.0',
   'beta-2',
   'a'.repeat(64),
+  'a'.repeat(65),
   '_beta',
   '1.0.',
   '1__2',
@@ -50,7 +51,6 @@ export const ACCEPTED_STORED_RESOURCE_VERSIONS: readonly string[] = [
 /** Versions `STORED_RESOURCE_VERSION_PATTERN` rejects. */
 export const REJECTED_STORED_RESOURCE_VERSIONS: readonly string[] = [
   '',
-  'a'.repeat(65),
   '.',
   '..',
   '1 0',

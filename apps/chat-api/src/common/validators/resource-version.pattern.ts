@@ -23,12 +23,15 @@ export const RESOURCE_VERSION_VALIDATION_MESSAGE =
  * The rule for a version that already exists or does not create a path: an
  * update (which rewrites only `displayVersion`; the stored path keeps the
  * version the resource was created with) and a publish (which resends the
- * stored version). It is the previous toolset and publish-target rule, so a
- * version stored under the earlier, looser rules, such as `_beta` or `1__2`,
- * can still be saved unchanged and published. Mirrored in
- * `@epam/ai-dial-chat-shared` as `STORED_RESOURCE_VERSION_PATTERN`.
+ * stored version). It accepts every version the earlier rules stored, so
+ * `_beta`, `1__2`, `1.0.` and a long application version (the earlier
+ * application rule had no length limit) still save unchanged and publish.
+ * Mirrored in `@epam/ai-dial-chat-shared` as `STORED_RESOURCE_VERSION_PATTERN`.
  */
-export const STORED_RESOURCE_VERSION_PATTERN = /^(?!\.+$)[\w.+-]{1,64}$/;
+export const STORED_RESOURCE_VERSION_PATTERN = /^(?!\.+$)[\w.+-]+$/;
 
 export const STORED_RESOURCE_VERSION_VALIDATION_MESSAGE =
-  'Version must be 1-64 characters: letters, digits, underscores, dots, plus signs and hyphens';
+  'Version must contain only letters, digits, underscores, dots, plus signs and hyphens';
+
+/** Longest version the publish target name carries; a longer stored version publishes under the source name. */
+export const MAX_TARGET_VERSION_LENGTH = 64;

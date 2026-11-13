@@ -27,8 +27,8 @@ The strict rule SHALL apply to a version a request supplies in: the create and f
 - **WHEN** an endpoint receives an application or toolset id whose version has a plus sign, raw (`my-app__1.0+build5`, as DIAL Core emits it) or percent-encoded (`my-app__1.0%2Bbuild5`)
 - **THEN** the id validators (`DEPLOYMENT_ID_PATTERN`, `isSafeResourceId`, `isSafeDeploymentId`) accept it; traversal segments stay rejected
 
-#### Scenario: Over-long version is rejected
-- **WHEN** a version of 65 characters is supplied to a write path or UI input of either rule
+#### Scenario: Over-long new version is rejected
+- **WHEN** a version of 65 characters is supplied to a request or UI input that creates a path
 - **THEN** the UI shows the invalid-version error and the API answers `400`; a 64-character version is accepted
 
 #### Scenario: Trailing dot is rejected for a new version
@@ -43,13 +43,13 @@ The strict rule SHALL apply to a version a request supplies in: the create and f
 - **WHEN** the version contains a space, `/` or `:`
 - **THEN** the UI shows the invalid-version error and the API answers `400`
 
-#### Scenario: A stored version longer than the cap is not rewritten
-- **WHEN** an update request for an application whose stored version is longer than 64 characters omits `version`
-- **THEN** the update succeeds and the stored version is unchanged
+#### Scenario: A stored version longer than 64 characters is saved unchanged
+- **WHEN** an application whose stored version is longer than 64 characters is saved from its editor without changing the version
+- **THEN** the editor shows no version error and the update request is accepted
 
 ### Requirement: A stored version keeps the earlier, looser rule
 
-A version that already exists, or that does not create a path, SHALL be accepted when it matches `^(?!\.+$)[\w.+-]{1,64}$` (`STORED_RESOURCE_VERSION_PATTERN`; one to 64 characters from letters, digits, underscore, dot, plus and hyphen, not made of dots only). This rule applies to the update bodies of applications and toolsets (an update rewrites only `displayVersion` and the stored path keeps the version the resource was created with, so the version never reaches the path), to the publish version (the publish resends the stored version), and to the version field of the edit form of every application and toolset editor. A version stored under the earlier rules, such as `_beta` or `1__2`, therefore still saves unchanged and publishes. It is mirrored as `STORED_RESOURCE_VERSION_PATTERN` in `@epam/ai-dial-chat-shared` and covered by the same corpus and parity spec. Every version the strict rule accepts is accepted by this one.
+A version that already exists, or that does not create a path, SHALL be accepted when it matches `^(?!\.+$)[\w.+-]+$` (`STORED_RESOURCE_VERSION_PATTERN`; letters, digits, underscore, dot, plus and hyphen, not made of dots only, with no length limit because the earlier application rule had none). This rule applies to the update bodies of applications and toolsets (an update rewrites only `displayVersion` and the stored path keeps the version the resource was created with, so the version never reaches the path), to the publish version (the publish resends the stored version), and to the version field of the edit form of every application and toolset editor. A version stored under the earlier rules, such as `_beta`, `1__2` or an application version longer than 64 characters, therefore still saves unchanged and publishes (a publish target name carries at most 64 characters of version; a longer one publishes under the source name, as before). The publish DTO now rejects a version outside the stored rule (for example one with a space or a non-ASCII character) with `400`; before this change it only checked that the field was a string. It is mirrored as `STORED_RESOURCE_VERSION_PATTERN` in `@epam/ai-dial-chat-shared` and covered by the same corpus and parity spec. Every version the strict rule accepts is accepted by this one.
 
 #### Scenario: A stored version outside the strict rule is saved unchanged
 - **WHEN** a toolset stored with version `_beta` (or `1__2`, or `1.0.`) is saved from its editor without changing the version
