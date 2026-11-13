@@ -234,7 +234,12 @@ describe('ToolsetsListingService', () => {
       const result = await service.listToolsets('user1', 'token-abc', 'bucket');
 
       const groups = result.data.map((item) => item.versionGroupId);
-      expect(groups).toEqual(['Search', 'Search', 'Other/Search', undefined]);
+      expect(groups).toEqual([
+        'bucket/Search',
+        'bucket/Search',
+        'bucket/Other/Search',
+        undefined,
+      ]);
     });
 
     it('sets isMy=true when bucket appears as a toolset path segment', async () => {

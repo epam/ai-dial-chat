@@ -410,10 +410,10 @@ describe('DeploymentsListingService', () => {
       );
 
       const groups = deployments.map((d) => d.versionGroupId);
-      expect(groups[0]).toBe('Design/Review');
+      expect(groups[0]).toBe('abc/Design/Review');
       expect(groups[1]).toBe(groups[0]);
-      expect(groups[2]).toBe('Research/Review');
-      expect(groups[3]).toBe('Design/a__b');
+      expect(groups[2]).toBe('abc/Research/Review');
+      expect(groups[3]).toBe('abc/Design/a__b');
     });
 
     it('leaves versionGroupId absent for a model and for an application without a version suffix', async () => {

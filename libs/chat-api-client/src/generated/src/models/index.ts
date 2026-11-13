@@ -4158,7 +4158,7 @@ export interface DeploymentItemDto {
    */
   displayVersion?: string;
   /**
-   * Identifies the versions of one application saved in one folder: the folder plus the base name without the `__<version>` suffix of the stored id. Absent for models and for ids without a version suffix.
+   * Identifies the versions of one application saved by one owner in one folder: the owner bucket, the folder and the base name without the `__<version>` suffix of the stored id. Absent for models and for ids without a version suffix.
    * @type {string}
    * @memberof DeploymentItemDto
    */
@@ -4969,7 +4969,7 @@ export interface DialToolsetDto {
    */
   displayVersion?: string;
   /**
-   * Identifies the versions of one toolset saved in one folder: the folder plus the base name without the `__<version>` suffix of the stored id. Absent for an id without a version suffix.
+   * Identifies the versions of one toolset saved by one owner in one folder: the owner bucket, the folder and the base name without the `__<version>` suffix of the stored id. Absent for an id without a version suffix.
    * @type {string}
    * @memberof DialToolsetDto
    */

@@ -114,16 +114,11 @@ export class VersionStatusesService {
     }
 
     const groupId = getVersionGroupId(entityId);
-    const ownerBucket = getResourceBucket(entityId);
     const decodedEntityId = safeDecodeURIComponent(entityId);
-    return items.filter((item) => {
-      if (groupId == null) {
-        return safeDecodeURIComponent(item.id) === decodedEntityId;
-      }
-      return (
-        getVersionGroupId(item.id) === groupId &&
-        getResourceBucket(item.id) === ownerBucket
-      );
-    });
+    return items.filter((item) =>
+      groupId == null
+        ? safeDecodeURIComponent(item.id) === decodedEntityId
+        : getVersionGroupId(item.id) === groupId,
+    );
   }
 }
