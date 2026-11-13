@@ -154,9 +154,7 @@ describe('Helmet security headers', () => {
       .expect(200);
     const directives = response.headers['content-security-policy'].split(';');
     expect(directives).toContain("style-src-attr 'unsafe-inline'");
-    expect(directives).toContain(
-      "style-src 'self' https://fonts.googleapis.com 'nonce-approved-nonce'",
-    );
+    expect(directives).toContain("style-src 'self' 'nonce-approved-nonce'");
     expect(directives).toContain("script-src 'self'");
     expect(directives).toContain("script-src-attr 'none'");
   });
@@ -168,9 +166,7 @@ describe('Helmet security headers', () => {
       .expect(200);
     const directives = response.headers['content-security-policy'].split(';');
     expect(directives).toContain("script-src 'self'");
-    expect(directives).toContain(
-      "style-src 'self' https://fonts.googleapis.com 'nonce-approved-nonce'",
-    );
+    expect(directives).toContain("style-src 'self' 'nonce-approved-nonce'");
   });
 
   it("sends frame-ancestors 'none' and keeps X-Frame-Options when the allowlist is empty", async () => {
