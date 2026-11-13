@@ -12,6 +12,7 @@ import {
 } from '../../common/dial/dial-error.mapper';
 import { getApiKeyAuthHeaders } from '../../common/utils/auth-header';
 import { EnvironmentVariables } from '../../config/environment.config';
+import { mapCatalogProperties } from '../../deployments/utils/deployment-mapper.util';
 import { DialClientService } from '../../dial/dial-client.service';
 import {
   MODEL_CATALOG_ENTRY_FIELDS,
@@ -34,7 +35,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value != null && !Array.isArray(value);
 
 /* Copies only the display fields, so invocation settings and any field Core
- * adds later never reach users who cannot use the model. */
+ * adds later never reach users who cannot use the model. `catalog_properties`
+ * goes through the same allowlist as `/deployments/details` and is left out
+ * when nothing recognised remains. */
 const toCatalogEntry = (
   model: Record<string, unknown>,
 ): ModelCatalogEntryDto => {
@@ -43,6 +46,10 @@ const toCatalogEntry = (
     if (model[field] !== undefined) {
       entry[field] = model[field];
     }
+  }
+  const catalogProperties = mapCatalogProperties(model.catalog_properties);
+  if (catalogProperties) {
+    entry.catalog_properties = catalogProperties;
   }
   return entry as unknown as ModelCatalogEntryDto;
 };

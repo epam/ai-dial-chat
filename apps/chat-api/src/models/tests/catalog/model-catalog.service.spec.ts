@@ -130,6 +130,7 @@ describe('ModelCatalogService', () => {
               responses_defaults: { temperature: 0 },
               max_retry_attempts: 3,
               tokenizer_model: 'gpt-4',
+              catalog_schema_id: 'https://example.com/schemas/model',
               upstreams: [{ key: 'upstream-secret' }],
             },
           ],
@@ -147,6 +148,61 @@ describe('ModelCatalogService', () => {
           },
         ],
       });
+      expect(result.data[0]).not.toHaveProperty('catalog_schema_id');
+    });
+
+    it('keeps only the recognised string catalog properties', async () => {
+      const { service, getModels } = makeService();
+      getModels.mockResolvedValue(
+        okResponse({
+          data: [
+            {
+              ...gpt,
+              catalog_properties: {
+                provider: 'Azure',
+                vendor: 'OpenAI',
+                knowledgeCutoffDate: '2023-10-01',
+                license: { name: 'MIT' },
+                internalNote: 'do not show',
+              },
+            },
+          ],
+        }),
+      );
+
+      const [entry] = (await service.listCatalog()).data;
+
+      expect(entry.catalog_properties).toEqual({
+        provider: 'Azure',
+        vendor: 'OpenAI',
+        knowledgeCutoffDate: '2023-10-01',
+      });
+      expect(entry.catalog_properties?.license).toBeUndefined();
+      expect(entry.catalog_properties).not.toHaveProperty('internalNote');
+    });
+
+    it('omits catalog properties when Core sends none or nothing recognised', async () => {
+      const { service, getModels } = makeService();
+      getModels.mockResolvedValue(
+        okResponse({
+          data: [
+            gpt,
+            { ...claude, catalog_properties: 'Azure' },
+            {
+              id: 'gemini',
+              object: 'model',
+              catalog_properties: { internalNote: 'x', provider: 42 },
+            },
+          ],
+        }),
+      );
+
+      const { data } = await service.listCatalog();
+
+      expect(data).toHaveLength(3);
+      for (const entry of data) {
+        expect(entry).not.toHaveProperty('catalog_properties');
+      }
     });
 
     it('drops entries without a string id', async () => {
@@ -331,6 +387,25 @@ describe('ModelCatalogService', () => {
       await expect(service.getCatalogEntry('claude-opus')).resolves.toEqual(
         claude,
       );
+    });
+
+    it('returns the entry with its allowlisted catalog properties', async () => {
+      const { service, getModels } = makeService();
+      getModels.mockResolvedValue(
+        okResponse({
+          data: [
+            {
+              ...gpt,
+              catalog_properties: { provider: 'Azure', internalNote: 'x' },
+            },
+          ],
+        }),
+      );
+
+      const entry = await service.getCatalogEntry('gpt-4o');
+
+      expect(entry.catalog_properties).toEqual({ provider: 'Azure' });
+      expect(entry.catalog_properties).not.toHaveProperty('internalNote');
     });
 
     it('returns 404 for a model that is not in the catalog', async () => {
