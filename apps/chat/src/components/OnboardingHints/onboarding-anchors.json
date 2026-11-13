@@ -1,15 +1,21 @@
 [
   {
+    "target": "navigation",
+    "page": "Any page with the sidebar open",
+    "element": "The navigation sidebar as a whole",
+    "lookup": "The on-screen `nav` landmark named like the navigation"
+  },
+  {
     "target": "new-chat",
     "page": "Any page",
     "element": "The New chat control: a sidebar link on desktop, a header button on mobile",
     "lookup": "The first on-screen button or link named \"New chat\" anywhere on the page"
   },
   {
-    "target": "navigation",
-    "page": "Any page with the sidebar open",
-    "element": "The navigation sidebar as a whole",
-    "lookup": "The on-screen `nav` landmark named like the navigation"
+    "target": "sidebar-toggle",
+    "page": "Any page",
+    "element": "The sidebar collapse button on desktop, the navigation menu button in the mobile header",
+    "lookup": "A button named \"Sidebar\" inside the navigation landmark, else a button named \"Navigation menu\" inside `#main-content`"
   },
   {
     "target": "projects",
@@ -36,16 +42,118 @@
     "lookup": "A button or link named \"File manager\" inside the navigation landmark"
   },
   {
+    "target": "chats",
+    "page": "Any page with the sidebar expanded",
+    "element": "The sidebar's chats section with the conversation list",
+    "lookup": "The `section` named \"Chats and tasks\" inside the navigation landmark"
+  },
+  {
+    "target": "chats-search",
+    "page": "Any page with the sidebar expanded",
+    "element": "The chats section's search: its button, or the field once search is open",
+    "lookup": "A button named \"Search chats\" inside the chats section, else the `search` element there"
+  },
+  {
+    "target": "chats-filter",
+    "page": "Any page with the sidebar expanded",
+    "element": "The chats section's filter button",
+    "lookup": "A button named \"Filter chats\" inside the chats section"
+  },
+  {
+    "target": "user-menu",
+    "page": "Any page with the sidebar open",
+    "element": "The user menu at the bottom of the sidebar",
+    "lookup": "A button inside the navigation landmark whose name contains \"Signed in as\""
+  },
+  {
+    "target": "usage",
+    "page": "Any page with the sidebar open",
+    "element": "The Usage link at the bottom of the sidebar",
+    "lookup": "A link named \"Usage\" inside the navigation landmark"
+  },
+  {
     "target": "conversation-input",
-    "page": "New chat and conversation",
+    "page": "New chat, conversation and project view",
     "element": "The message composer's text field",
     "lookup": "The first on-screen `textarea` inside `#main-content`"
   },
   {
     "target": "add-attachment",
-    "page": "New chat and conversation",
+    "page": "New chat, conversation and project view",
     "element": "The composer's + button that adds attachments",
-    "lookup": "A button named \"Add\" inside `#main-content`"
+    "lookup": "A button named \"Add\" in the region, section or form around the on-screen composer field; nothing on a page without a composer"
+  },
+  {
+    "target": "send-message",
+    "page": "New chat, conversation and project view",
+    "element": "The composer's send button",
+    "lookup": "A button named \"Send message\" around the on-screen composer field; replaced by Stop while a reply streams"
+  },
+  {
+    "target": "model-selector",
+    "page": "New chat, conversation and project view",
+    "element": "The composer's model selector",
+    "lookup": "A button inside `#main-content` named \"Select model\", or \"Select model: \" followed by the chosen model"
+  },
+  {
+    "target": "voice-input",
+    "page": "New chat, conversation and project view",
+    "element": "The composer's dictation button, when voice input is available",
+    "lookup": "A button named \"Dictate\" around the on-screen composer field"
+  },
+  {
+    "target": "conversation-starters",
+    "page": "New chat",
+    "element": "The starter prompts, when the selected model has any",
+    "lookup": "The `role=\"list\"` named \"Conversation starters\" inside `#main-content`"
+  },
+  {
+    "target": "conversation-messages",
+    "page": "Conversation",
+    "element": "The conversation's message log",
+    "lookup": "The `role=\"log\"` named \"Conversation messages\" inside `#main-content`"
+  },
+  {
+    "target": "sources-panel-toggle",
+    "page": "Conversation",
+    "element": "The button that opens the sources panel",
+    "lookup": "A button named \"Open panel\" inside `#main-content`; absent while the panel is open"
+  },
+  {
+    "target": "projects-create",
+    "page": "Projects",
+    "element": "The New project button",
+    "lookup": "The first on-screen button named \"New project\" inside `#main-content`"
+  },
+  {
+    "target": "projects-search",
+    "page": "Projects",
+    "element": "The projects search field",
+    "lookup": "The `search` element around the input named \"Search projects\" inside `#main-content`"
+  },
+  {
+    "target": "project-chats",
+    "page": "Project view",
+    "element": "The project's chats section, with its composer",
+    "lookup": "The `section` named \"Project chats\" inside `#main-content`, once the project has loaded"
+  },
+  {
+    "target": "project-details",
+    "page": "Project view",
+    "element": "The project's details panel",
+    "lookup": "The `aside` labelled \"Details\" inside `#main-content`, once the project has loaded"
+  },
+  {
+    "target": "scheduled-tasks-create",
+    "page": "Scheduled tasks",
+    "element": "The New task button",
+    "lookup": "A button named \"New task\" inside `#main-content`"
+  },
+  {
+    "target": "scheduled-tasks-search",
+    "page": "Scheduled tasks",
+    "element": "The scheduled tasks search field",
+    "lookup": "The `search` element around the input named \"Search scheduled tasks by name\" inside `#main-content`"
   },
   {
     "target": "catalog-create",
@@ -70,5 +178,11 @@
     "page": "Catalog",
     "element": "The catalog's grid/list switch",
     "lookup": "The `role=\"radiogroup\"` named like the view switch inside the catalog `section`"
+  },
+  {
+    "target": "settings-sections",
+    "page": "Settings",
+    "element": "The settings page's section tabs",
+    "lookup": "The `role=\"tablist\"` labelled \"Settings\" inside `#main-content`"
   }
 ]

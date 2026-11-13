@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
 import { StorageKey } from '../../../types/storage-key';
 import { UserConfigStatus } from '../../../types/user-config-status';
+import { ONBOARDING_ANCHOR_TARGETS } from '../onboarding-targets';
 import OnboardingHints, {
   ONBOARDING_RETRY_INTERVAL_MS,
   ONBOARDING_START_DELAY_MS,
@@ -305,7 +306,7 @@ describe('OnboardingHints', () => {
       expect(screen.getByText('new-chat')).toBeTruthy();
       expect(
         screen.getByRole('region', {
-          name: 'onboardingTour.anchorsSummary:2/12',
+          name: `onboardingTour.anchorsSummary:2/${ONBOARDING_ANCHOR_TARGETS.length}`,
         }),
       ).toBeTruthy();
     });

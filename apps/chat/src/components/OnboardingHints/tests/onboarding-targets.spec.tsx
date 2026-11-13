@@ -16,6 +16,26 @@ const labels: OnboardingTargetLabels = {
   addAttachment: 'Add',
   catalogCreate: 'Create',
   catalogViewMode: 'View mode',
+  sendMessage: 'Send message',
+  modelSelector: 'Select model',
+  voiceInput: 'Dictate',
+  conversationStarters: 'Conversation starters',
+  conversationMessages: 'Conversation messages',
+  sourcesPanelToggle: 'Open panel',
+  sidebarToggle: 'Sidebar',
+  mobileMenu: 'Navigation menu',
+  chats: 'Chats and tasks',
+  chatsSearch: 'Search chats',
+  chatsFilter: 'Filter chats',
+  signedInAs: 'Signed in as',
+  usage: 'Usage',
+  projectsCreate: 'New project',
+  projectsSearch: 'Search projects',
+  projectChats: 'Project chats',
+  projectDetails: 'Details',
+  scheduledTasksCreate: 'New task',
+  scheduledTasksSearch: 'Search scheduled tasks by name',
+  settings: 'Settings',
 };
 
 const Page = ({ inertNav = false }: { inertNav?: boolean }) => (
@@ -44,6 +64,60 @@ const Page = ({ inertNav = false }: { inertNav?: boolean }) => (
       </section>
     </main>
   </>
+);
+
+/* Every other surface at once: the sidebar with its chats section and
+ * footer, a conversation, and the projects, project, scheduled tasks and
+ * settings pages' controls. */
+const AppPage = () => (
+  <>
+    <nav aria-label="Main navigation">
+      <button type="button" aria-label="Sidebar" />
+      <section aria-label="Chats and tasks">
+        <button type="button">Chats and tasks</button>
+        <button type="button" aria-label="Search chats" />
+        <button type="button" aria-label="Filter chats" />
+      </section>
+      <a href="/usage" aria-label="Usage" />
+      <button type="button" aria-label="Signed in as ann@example.com" />
+    </nav>
+    <main id="main-content">
+      <div role="log" aria-label="Conversation messages" />
+      <button type="button" aria-label="Open panel" />
+      <div role="region" aria-label="Message input">
+        <textarea aria-label="Message" />
+        <button type="button" aria-label="Add" />
+        <button type="button" aria-label="Dictate" />
+        <button type="button" aria-label="Send message" />
+        <button type="button" aria-label="Select model: GPT-4o" />
+      </div>
+      <div role="list" aria-label="Conversation starters" />
+      <button type="button">New project</button>
+      <div role="search">
+        <input aria-label="Search projects" />
+      </div>
+      <section aria-label="Project chats" />
+      <aside aria-labelledby="details-heading">
+        <h2 id="details-heading">Details</h2>
+      </aside>
+      <button type="button">New task</button>
+      <div role="search">
+        <input aria-label="Search scheduled tasks by name" />
+      </div>
+      <h2 id="settings-heading">Settings</h2>
+      <div role="tablist" aria-labelledby="settings-heading" />
+    </main>
+  </>
+);
+
+/* The file manager: a page-level "Add" button and no composer. */
+const FileManagerPage = () => (
+  <main id="main-content">
+    <button type="button">Add</button>
+    <header>
+      <button type="button" aria-label="Navigation menu" />
+    </header>
+  </main>
 );
 
 /* The root page: the same controls exist, but not in a catalog region. */
@@ -140,5 +214,116 @@ describe('resolveOnboardingTarget', () => {
     expect(
       resolveOnboardingTarget(OnboardingHintTarget.Projects, labels),
     ).toBeNull();
+  });
+
+  describe('across the app', () => {
+    it.each([
+      [OnboardingHintTarget.SendMessage, 'button', 'Send message'],
+      [OnboardingHintTarget.VoiceInput, 'button', 'Dictate'],
+      [OnboardingHintTarget.ModelSelector, 'button', 'Select model: GPT-4o'],
+      [OnboardingHintTarget.SourcesPanelToggle, 'button', 'Open panel'],
+      [OnboardingHintTarget.SidebarToggle, 'button', 'Sidebar'],
+      [OnboardingHintTarget.ChatsSearch, 'button', 'Search chats'],
+      [OnboardingHintTarget.ChatsFilter, 'button', 'Filter chats'],
+      [OnboardingHintTarget.UserMenu, 'button', 'Signed in as ann@example.com'],
+      [OnboardingHintTarget.Usage, 'link', 'Usage'],
+      [OnboardingHintTarget.ProjectsCreate, 'button', 'New project'],
+      [OnboardingHintTarget.ScheduledTasksCreate, 'button', 'New task'],
+      [OnboardingHintTarget.Chats, 'region', 'Chats and tasks'],
+      [OnboardingHintTarget.ProjectChats, 'region', 'Project chats'],
+      [OnboardingHintTarget.ProjectDetails, 'complementary', 'Details'],
+      [
+        OnboardingHintTarget.ConversationStarters,
+        'list',
+        'Conversation starters',
+      ],
+      [
+        OnboardingHintTarget.ConversationMessages,
+        'log',
+        'Conversation messages',
+      ],
+      [OnboardingHintTarget.SettingsSections, 'tablist', 'Settings'],
+    ] as const)('finds %s', (target, role, name) => {
+      render(<AppPage />);
+      expect(resolveOnboardingTarget(target, labels)).toBe(
+        screen.getByRole(role, { name }),
+      );
+    });
+
+    it.each([
+      [OnboardingHintTarget.ProjectsSearch, 'Search projects'],
+      [
+        OnboardingHintTarget.ScheduledTasksSearch,
+        'Search scheduled tasks by name',
+      ],
+    ])('finds the %s wrapper around its named input', (target, name) => {
+      render(<AppPage />);
+      const search = screen
+        .getAllByRole('search')
+        .find((element) => within(element).queryByRole('textbox', { name }));
+      expect(resolveOnboardingTarget(target, labels)).toBe(search);
+    });
+
+    it('finds the composer controls only around the composer', () => {
+      render(<AppPage />);
+      const composer = screen.getByRole('region', { name: 'Message input' });
+      expect(
+        resolveOnboardingTarget(OnboardingHintTarget.AddAttachment, labels),
+      ).toBe(within(composer).getByRole('button', { name: 'Add' }));
+    });
+
+    it('finds no composer control on a page without a composer', () => {
+      render(<FileManagerPage />);
+      expect(
+        resolveOnboardingTarget(OnboardingHintTarget.AddAttachment, labels),
+      ).toBeNull();
+      expect(
+        resolveOnboardingTarget(OnboardingHintTarget.SendMessage, labels),
+      ).toBeNull();
+    });
+
+    it('falls back to the mobile menu button for the sidebar toggle', () => {
+      render(<FileManagerPage />);
+      expect(
+        resolveOnboardingTarget(OnboardingHintTarget.SidebarToggle, labels),
+      ).toBe(screen.getByRole('button', { name: 'Navigation menu' }));
+    });
+
+    it('matches the model selector before a model is chosen', () => {
+      render(
+        <main id="main-content">
+          <button type="button" aria-label="Select model" />
+        </main>,
+      );
+      expect(
+        resolveOnboardingTarget(OnboardingHintTarget.ModelSelector, labels),
+      ).toBe(screen.getByRole('button', { name: 'Select model' }));
+    });
+
+    it('finds no user menu without the fixed part of its name', () => {
+      render(<AppPage />);
+      expect(
+        resolveOnboardingTarget(OnboardingHintTarget.UserMenu, {
+          ...labels,
+          signedInAs: '',
+        }),
+      ).toBeNull();
+    });
+
+    it('finds no chats control while the sidebar is collapsed', () => {
+      render(
+        <nav aria-label="Main navigation">
+          <section aria-label="Chats and tasks" inert>
+            <button type="button" aria-label="Search chats" />
+          </section>
+        </nav>,
+      );
+      expect(
+        resolveOnboardingTarget(OnboardingHintTarget.Chats, labels),
+      ).toBeNull();
+      expect(
+        resolveOnboardingTarget(OnboardingHintTarget.ChatsSearch, labels),
+      ).toBeNull();
+    });
   });
 });

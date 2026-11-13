@@ -21,10 +21,19 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useLocation, useSearchParams } from 'react-router';
 import {
+  AuthI18nKeys,
+  BasicI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
+  ChatI18nKeys,
+  ConversationPanelI18nKeys,
+  DeploymentSelectorI18nKeys,
   NavigationI18nKeys,
   OnboardingTourI18nKeys,
+  ProjectsI18nKeys,
+  ScheduledTasksI18nKeys,
+  SidebarI18nKeys,
+  VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -81,6 +90,27 @@ const OnboardingHints: FC = () => {
     addAttachment: t(ButtonsI18nKeys.Add),
     catalogCreate: t(ButtonsI18nKeys.Create),
     catalogViewMode: t(CatalogI18nKeys.ViewToggleLabel),
+    sendMessage: t(ChatI18nKeys.SendMessage),
+    modelSelector: t(DeploymentSelectorI18nKeys.AriaLabel),
+    voiceInput: t(VoiceRecordingI18nKeys.MicLabel),
+    conversationStarters: t(ChatI18nKeys.ConversationStarters),
+    conversationMessages: t(ChatI18nKeys.ConversationMessages),
+    sourcesPanelToggle: t(SidebarI18nKeys.ToggleOpen),
+    sidebarToggle: t(NavigationI18nKeys.Sidebar),
+    mobileMenu: t(NavigationI18nKeys.Menu),
+    chats: t(ConversationPanelI18nKeys.ChatsAndTasks),
+    chatsSearch: t(ConversationPanelI18nKeys.SearchOpen),
+    chatsFilter: t(ConversationPanelI18nKeys.FilterGroupAriaLabel),
+    /* The trigger reads "Signed in as <email>"; keep the fixed part. */
+    signedInAs: t(AuthI18nKeys.SignedInAs, { email: '' }).trim(),
+    usage: t(BasicI18nKeys.Usage),
+    projectsCreate: t(ProjectsI18nKeys.PageNewProject),
+    projectsSearch: t(ProjectsI18nKeys.SearchAriaLabel),
+    projectChats: t(ProjectsI18nKeys.ViewMainContent),
+    projectDetails: t(ProjectsI18nKeys.ViewDetails),
+    scheduledTasksCreate: t(ScheduledTasksI18nKeys.CreateButtonLabel),
+    scheduledTasksSearch: t(ScheduledTasksI18nKeys.SearchAriaLabel),
+    settings: t(BasicI18nKeys.Settings),
   } satisfies OnboardingTargetLabels);
   const targetLabels = useMemo(
     () => JSON.parse(targetLabelsKey) as OnboardingTargetLabels,
