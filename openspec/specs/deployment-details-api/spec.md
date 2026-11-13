@@ -136,13 +136,16 @@ This closes a race observed as an unstable toolset login/logout indicator: a det
 
 `DeploymentDetailsDto` SHALL be a strongly typed Swagger DTO, structurally aligned with `libs/chat-hooks/src/catalog/entity-details.ts`'s `ModelEntityDetails` / `AgentEntityDetails` / `ToolsetEntityDetails` split so the frontend mapping step is a field-by-field transcription. It excludes most fields already returned by the list endpoint's `DeploymentItemDto` (`description`, `iconUrl`, `displayVersion`, `interfaces`, `topics`, `updatedAt`) — those are supplied to the UI via the already-loaded `CatalogItem`, not duplicated here. The exception is `applicationDetails.displayName`, which the code does return.
 
-`ModelCatalogPropertiesDto` (`catalogProperties`) is `{ provider?, vendor?, license?, knowledgeCutoffDate?, parameters? }`, read as strings from DIAL Core's `catalog_properties` by `mapCatalogProperties` (`deployments/utils/deployment-mapper.util.ts`) and omitted when none of the five is present.
+`ModelCatalogPropertiesDto` (`catalogProperties`) is `{ vendor?, license?, knowledgeCutoffDate?, parameters? }`, read as strings from DIAL Core's `catalog_properties` by `mapCatalogProperties` (`deployments/utils/deployment-mapper.util.ts`) and omitted when none of the four is present. `catalog_properties.provider` is not read for any entity type. A model's provider is `modelDetails.provider` (below). Applications and toolsets have no provider field, because DIAL Core added the top-level `provider` to models only.
 
 - `id: string` — the requested deployment id
 - `type: 'model' | 'application' | 'toolset'` — resolved discriminator
 - `modelDetails?: ModelDetailsDto` — present only when `type === 'model'`:
   - `capabilities?: { completion?: boolean; chatCompletion?: boolean; embeddings?: boolean; fineTune?: boolean; inference?: boolean; scaleTypes?: string[] }` — from `ModelOpenAi.capabilities`
   - `lifecycleStatus?: string`
+  - `provider?: string` — from DIAL Core's top-level `provider` (free-form, e.g. `AWS`, `Google`, `Azure`)
+  - `deprecationDate?: string` — from `deprecation_date`; documented by Core as `YYYY-MM-DD`, forwarded verbatim without validation
+  - `endOfService?: string` — from `end_of_service`; same rules as `deprecationDate`
   - `tokenizerModel?: string`
   - `limits?: { maxTotalTokens?: number; maxPromptTokens?: number; maxCompletionTokens?: number }`
   - `pricing?: Record<string, string | ModelPricingRateDto>` — `unit` names the billing unit; scalar prices and recursive conditional pricing trees from DIAL Core are forwarded verbatim. `ModelPricingRateDto` is `{ rate?: string; test?: object; ifTrue?: string | ModelPricingRateDto; ifFalse?: string | ModelPricingRateDto }`: a branch is either a per-unit price string or a nested tree, and the OpenAPI schema SHALL declare both (`oneOf`), so the generated client types the branches as `ModelPricingRateDtoIfTrue` / `ModelPricingRateDtoIfFalse` (`ModelPricingRateDto | string`)
@@ -198,12 +201,34 @@ This closes a race observed as an unstable toolset login/logout indicator: a det
   - `createdAt?: number`
 - `DeploymentFeaturesDetailsDto` — shared feature-flag shape reused by all three detail types (DIAL Core's runtime `features` payload extends one common schema): `rate`, `mcp`, `tokenize`, `truncatePrompt`, `hasConfigurationSchema` (named to avoid an OpenAPI-generator collision with the generated client's own `Configuration` runtime class — the raw field is `configuration`), `systemPrompt`, `tools`, `seed`, `urlAttachments`, `folderAttachments`, `allowResume`, `accessibleByPerRequestKey`, `contentParts`, `temperature`, `cache`, `autoCaching`, `parallelToolCalls`, `assistantAttachmentsInRequest`, `chatCompletion`, `responsesApi`, `skillsSupported` (from DIAL Core's `skills_supported`, PR #1976 — whether the deployment accepts custom skills), `maxTokensSupported`, `maxCompletionTokensSupported`, `customTemperatureSupported`, `reasoningEfforts?: string[]` — all read defensively off the raw untyped payload (`mapDeploymentFeatures` in `deployments/utils/deployment-mapper.util.ts`) since the SDK's typed `DeploymentFeatures` shape declares fewer flags than DIAL Core actually returns. `skillsSupported` follows the same defensive boolean rule as its neighbors: absent or non-boolean source values map to `undefined`, never throw.
 
+The three model fields `provider`, `deprecationDate` and `endOfService` SHALL be read from the typed `ModelData` of `@epam/ai-dial-typescript-sdk` (`0.3.0-dev.3` or later), with no cast and no defensive `getString` read. Each SHALL be absent from the JSON body when Core omits it. Regenerating `@epam/ai-dial-chat-api-client` SHALL add the three optional properties to `ModelDetailsDto` and remove `provider` from `ModelCatalogPropertiesDto`. `operationId: getDeploymentDetails` and `DeploymentsApi.getDeploymentDetails({ deployment })` do not change. The response still uses the user-scoped details cache (`deployments:details:<userSub>:<deployment>`, 60-second TTL), with unchanged invalidation.
+
 No `any` types are allowed in the success response shape.
 
 #### Scenario: Best-effort all-tools fetch failure does not fail the request
 
 - **WHEN** `GET /v1/toolset/{id}/tools` returns a non-2xx response or throws
 - **THEN** the endpoint still responds 200 with the rest of `toolsetDetails` populated, and `allToolNames` is omitted
+
+#### Scenario: Model provider and lifecycle dates are forwarded
+
+- **WHEN** DIAL Core returns a model with `provider: "Azure"`, `deprecation_date: "2026-12-31"` and `end_of_service: "2027-03-31"`
+- **THEN** `modelDetails` carries `provider: "Azure"`, `deprecationDate: "2026-12-31"` and `endOfService: "2027-03-31"`
+
+#### Scenario: Absent lifecycle fields are omitted
+
+- **WHEN** DIAL Core returns a model with none of `provider`, `deprecation_date` or `end_of_service`
+- **THEN** the response's `modelDetails` has no `provider`, `deprecationDate` or `endOfService` key, and every other field is unchanged
+
+#### Scenario: catalog_properties.provider is never forwarded
+
+- **WHEN** DIAL Core returns a model, an application or a toolset with `catalog_properties: { "provider": "Legacy", "vendor": "OpenAI" }`
+- **THEN** the branch's `catalogProperties` is `{ "vendor": "OpenAI" }`, and a model's `provider` comes only from Core's top-level `provider`
+
+#### Scenario: A provider-only catalog_properties omits catalogProperties
+
+- **WHEN** DIAL Core returns a model with no top-level `provider` and `catalog_properties: { "provider": "Legacy" }`
+- **THEN** `modelDetails` has neither `provider` nor `catalogProperties`
 
 #### Scenario: Model details omit application/toolset fields
 

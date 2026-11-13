@@ -339,6 +339,8 @@
       "parameters": "Parameters",
       "hostedBy": "Hosted by",
       "releaseDate": "Release date",
+      "deprecationDate": "Deprecation date",
+      "endOfService": "End of service",
       "contextWindow": "Context window",
       "maxOutputTokens": "Max output tokens",
       "inputModalities": "Input modalities",
