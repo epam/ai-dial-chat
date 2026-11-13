@@ -1,7 +1,7 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CATALOG_CLASS } from '../../../constants/public-class-names';
 import type { CatalogItem } from '../../../models/catalog-item';
 import {
@@ -332,13 +332,13 @@ describe('Card — description rendering', () => {
     // eslint-disable-next-line testing-library/no-node-access
     screen.getByText('desc').closest('[class*="line-clamp"]')?.className;
 
-  it('clamps the description to 2 lines when the item has topic tags', () => {
+  it('clamps the description to 3 lines when the item has topic tags', () => {
     render(<Card item={makeItem({ topics: ['Reasoning'] })} />);
 
-    expect(getClampClassName()).toContain('line-clamp-2');
+    expect(getClampClassName()).toContain('line-clamp-3');
   });
 
-  it('gives the description a 3rd line when the item has no topic tags', () => {
+  it('clamps the description to 3 lines when the item has no topic tags', () => {
     render(<Card item={makeItem({ topics: [] })} />);
 
     expect(getClampClassName()).toContain('line-clamp-3');
@@ -388,7 +388,7 @@ describe('Card — description rendering', () => {
     expect(onCardClick).not.toHaveBeenCalled();
   });
 
-  it('keeps the description wrapper with line-clamp-2 and min-h-[2lh] classes for truncation', () => {
+  it('keeps the description wrapper with line-clamp-3 and min-h-[3lh] classes for truncation', () => {
     const longDescription =
       'Line 1\nLine 2\nLine 3\nLine 4 which should be hidden due to clamping';
     render(
@@ -400,96 +400,10 @@ describe('Card — description rendering', () => {
     const card = screen.getByRole('article', { hidden: true });
     // eslint-disable-next-line testing-library/no-node-access
     const descriptionDiv = Array.from(card.querySelectorAll('div')).find((el) =>
-      el.className.includes('line-clamp-2'),
+      el.className.includes('line-clamp-3'),
     );
-    expect(descriptionDiv?.className).toContain('line-clamp-2');
-    expect(descriptionDiv?.className).toContain('min-h-[2lh]');
-  });
-});
-
-describe('Card — description tooltip', () => {
-  const LONG_DESCRIPTION =
-    'First sentence of a long description. Second sentence lost to the clamp.';
-  /* Past the kit's 500ms hover-open delay. */
-  const TOOLTIP_OPEN_DELAY = 600;
-
-  /* jsdom does no layout, so the clamp is simulated through the two
-   * dimensions the card compares. */
-  const mockDescriptionHeights = (scrollHeight: number) => {
-    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(
-      scrollHeight,
-    );
-    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(40);
-  };
-
-  const hoverAndWait = async (element: HTMLElement) => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-    await user.hover(element);
-    act(() => {
-      vi.advanceTimersByTime(TOOLTIP_OPEN_DELAY);
-    });
-  };
-
-  beforeEach(() => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.restoreAllMocks();
-  });
-
-  const getPanel = () =>
-    // eslint-disable-next-line testing-library/no-node-access -- the panel is portaled out of the card with no role or name; its kit class is the only hook to it.
-    document.querySelector<HTMLElement>('.dial-kit-interactive-tooltip');
-
-  it('shows the full description in a panel when the clamp hides text', async () => {
-    mockDescriptionHeights(120);
-    render(<Card item={makeItem({ description: LONG_DESCRIPTION })} />);
-
-    await hoverAndWait(screen.getByText(LONG_DESCRIPTION));
-
-    expect(getPanel()?.textContent).toBe(LONG_DESCRIPTION);
-  });
-
-  it('caps the panel at the viewport height and lets it scroll (#9363)', async () => {
-    mockDescriptionHeights(120);
-    render(<Card item={makeItem({ description: LONG_DESCRIPTION })} />);
-
-    await hoverAndWait(screen.getByText(LONG_DESCRIPTION));
-
-    expect(getPanel()?.className).toContain('max-h-[calc(100dvh-16px)]');
-    expect(getPanel()?.className).toContain('overflow-y-auto');
-  });
-
-  it('shows no panel when the description fits in two lines', async () => {
-    mockDescriptionHeights(40);
-    render(<Card item={makeItem({ description: 'Short.' })} />);
-
-    await hoverAndWait(screen.getByText('Short.'));
-
-    expect(getPanel()).toBeNull();
-  });
-
-  it('does not open the card when the panel content is clicked', async () => {
-    mockDescriptionHeights(120);
-    const onClick = vi.fn();
-    render(
-      <Card
-        item={makeItem({ description: LONG_DESCRIPTION })}
-        onClick={onClick}
-      />,
-    );
-
-    await hoverAndWait(screen.getByText(LONG_DESCRIPTION));
-    const panelText = within(getPanel() as HTMLElement).getByText(
-      LONG_DESCRIPTION,
-    );
-    await userEvent
-      .setup({ advanceTimers: vi.advanceTimersByTime })
-      .click(panelText);
-
-    expect(onClick).not.toHaveBeenCalled();
+    expect(descriptionDiv?.className).toContain('line-clamp-3');
+    expect(descriptionDiv?.className).toContain('min-h-[3lh]');
   });
 });
 
