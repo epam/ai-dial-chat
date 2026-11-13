@@ -1117,6 +1117,29 @@ setRefreshToken((token) => token + 1);
 | `isLoading`  | `boolean`                                | `true` while a fetch is in flight, including a refresh.                                                                   |
 | `usageError` | `Error \| undefined`                     | Set when the `getUserUsage` call rejects.                                                                                 |
 
+### useOrgUnits
+
+Loads the current user's DIAL Core org units once, on demand, and answers
+which public-bucket folders are units. The host supplies `listOrgUnits`
+(resolving `{ enabled, units }`), so the hook never builds a client. Nothing
+is read until `ensureUnits()` is called. Later calls do nothing, except after a
+failed read, when the next call reads again. Status
+is the `OrgUnitsStatus` enum: `Idle`, `Loading`, `Ready`, `Disabled` (Core
+has org units off) or `Error` (the read failed; nothing is reported). Until
+the status is `Ready`, `isOrgUnitFolder` returns `false`. Available from the
+root and `./utils`.
+
+```tsx
+import { OrgUnitsStatus, useOrgUnits } from '@epam/ai-dial-chat-hooks';
+
+const { status, ensureUnits, isOrgUnitFolder } = useOrgUnits({
+  listOrgUnits, // host-configured fetch
+});
+
+useEffect(() => ensureUnits(), [ensureUnits]);
+const isUnit = status === OrgUnitsStatus.Ready && isOrgUnitFolder('Acme');
+```
+
 ### useUsageLimitBanner
 
 Everything the composer usage-limit banner needs except its rendering: fetches the selected deployment's own usage and the caller's account usage, refreshes both once after each generation ends, picks the day/week/month token limit (from the deployment) or cost budget (from the account) closest to its cap, translates the limit and reset sentences, and tracks tab-lifetime dismissal. Spread the returned `banner` onto `UsageLimitBannerView` from `@epam/ai-dial-conversation-input`. Available from the root and from `@epam/ai-dial-chat-hooks/usage-limits`; needs the optional `@epam/ai-dial-conversation-input` peer (it supplies the `UsageLimitBannerSeverity` enum at runtime).

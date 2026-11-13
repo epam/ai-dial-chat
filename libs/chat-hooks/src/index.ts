@@ -312,3 +312,6 @@ export {
 } from './project/project-sharing-client';
 export * from './project/use-project-share-recipients';
 export * from './project/use-project-revoke-access';
+export * from './org-units/types';
+export * from './org-units/models';
+export * from './org-units/useOrgUnits/useOrgUnits';

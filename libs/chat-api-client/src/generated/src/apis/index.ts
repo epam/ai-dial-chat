@@ -14,6 +14,7 @@ export * from './FilesApi';
 export * from './HealthApi';
 export * from './ModelsApi';
 export * from './OfflineCredentialsApi';
+export * from './OrgUnitsApi';
 export * from './ProjectsApi';
 export * from './PromptsApi';
 export * from './PublishApi';

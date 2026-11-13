@@ -383,6 +383,57 @@
         "tags": ["applications"]
       }
     },
+    "/api/v1/org-units": {
+      "get": {
+        "description": "Returns the DIAL Core org units the authenticated user may see, flat and parents first. `enabled` is false when DIAL Core has org units turned off. Answers 403 while the `features.orgUnitsEnabled` flag is off. Results are cached server-side for 60 seconds per user.",
+        "operationId": "listOrgUnits",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the org units",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgUnitsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DIAL Core rejected the request as invalid"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "The `features.orgUnitsEnabled` flag is off, or DIAL Core refused the org-units read"
+          },
+          "404": {
+            "description": "DIAL Core resource not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "List the org units visible to the caller",
+        "tags": ["org-units"]
+      }
+    },
     "/api/v1/applications": {
       "get": {
         "description": "Returns the list of DIAL Core applications visible to the authenticated session user. Proxies GET /openai/applications using the caller's session access token. Results are cached server-side for 30 seconds per user.",
@@ -13190,6 +13241,54 @@
           }
         },
         "required": ["schemas"]
+      },
+      "OrgUnitDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Core unit id",
+            "example": "u-risk"
+          },
+          "name": {
+            "type": "string",
+            "description": "Unit name; also the last segment of its folder",
+            "example": "US Risk"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Display name; falls back to `name` when Core has none",
+            "example": "US Risk"
+          },
+          "path": {
+            "type": "string",
+            "description": "Decoded unit address without a trailing slash",
+            "example": "public/Acme/US Risk"
+          },
+          "folder": {
+            "type": "string",
+            "description": "Unit folder exactly as DIAL Core returns it: url-encoded, with a trailing slash",
+            "example": "public/Acme/US%20Risk/"
+          }
+        },
+        "required": ["id", "name", "displayName", "path", "folder"]
+      },
+      "OrgUnitsResponseDto": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "`false` when DIAL Core has org units turned off",
+            "example": true
+          },
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrgUnitDto"
+            }
+          }
+        },
+        "required": ["enabled", "units"]
       },
       "ApplicationDto": {
         "type": "object",

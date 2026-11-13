@@ -701,6 +701,30 @@ import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
 />;
 ```
 
+### Org-unit folders
+
+`OrgUnit` (`id`, `name`, `displayName`, `path`, `folder`) is a DIAL Core org
+unit. Pure helpers match a unit against a public-bucket path. A unit's Core
+`folder` is url-encoded and rooted at `public/`; `normalizeOrgUnitFolder`
+decodes it and drops that root. The path passed to `isOrgUnitFolder` is the
+decoded, public-relative path the file manager and the publish tree show, so it
+is not decoded again and a top-level folder named `public` stays a folder. Core's
+`public/Acme/US%20Risk/` therefore matches the tree path `Acme/US Risk`. A folder
+_inside_ a unit is not a unit, and `Risk/` never matches `Risk2/`.
+
+```ts
+import {
+  isOrgUnitFolder,
+  normalizeOrgUnitFolder,
+  toOrgUnitFolderSet,
+  type OrgUnit,
+} from '@epam/ai-dial-chat-shared';
+
+const folders = toOrgUnitFolderSet(units as OrgUnit[]);
+isOrgUnitFolder(folders, 'Acme/US Risk'); // true
+normalizeOrgUnitFolder('public/Acme/US%20Risk/'); // 'Acme/US Risk/'
+```
+
 ### NewVersionAlert
 
 Kit `StateScreen` preset shown instead of the app once a newer build has been
