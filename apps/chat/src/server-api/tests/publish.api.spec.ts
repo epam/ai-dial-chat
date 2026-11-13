@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { publishApi } from '../api-client';
 import {
   CatalogPublishEntityType,
-  getCatalogVersionStatuses,
   publishCatalogEntity,
   unpublishCatalogEntity,
 } from '../publish.api';
@@ -14,7 +13,6 @@ vi.mock('../api-client', () => ({
     publishCatalogEntity: vi.fn(),
     unpublishCatalogEntity: vi.fn(),
     getCatalogPublishHistory: vi.fn(),
-    getCatalogVersionStatuses: vi.fn(),
   },
 }));
 
@@ -166,30 +164,5 @@ describe('unpublishCatalogEntity', () => {
 
     expect(result.requestedAt).toBe('2026-08-13T10:00:00.000Z');
     expect(result).not.toHaveProperty('publishedAt');
-  });
-
-  it('reads the version statuses through the generated client', async () => {
-    const statuses = [
-      {
-        id: 'applications/b/Design/Review__1.0.0',
-        version: '1.0.0',
-        status: 'published' as const,
-        publishedFolders: ['Organization'],
-      },
-    ];
-    vi.mocked(publishApi.getCatalogVersionStatuses).mockResolvedValue(
-      statuses as never,
-    );
-
-    const result = await getCatalogVersionStatuses(
-      CatalogPublishEntityType.Application,
-      'applications/b/Design/Review__1.0.0',
-    );
-
-    expect(publishApi.getCatalogVersionStatuses).toHaveBeenCalledWith({
-      entityType: CatalogPublishEntityType.Application,
-      entityId: 'applications/b/Design/Review__1.0.0',
-    });
-    expect(result).toBe(statuses);
   });
 });

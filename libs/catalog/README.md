@@ -1353,7 +1353,7 @@ host side.
   isOpen
   onClose={handleClose}
   publishVersionHistory={history}
-  onPublishOpenChange={setIsPublishOpen}
+  onPublishOpenChange={(isOpen) => setIsPublishOpen(isOpen)}
 />
 ```
 

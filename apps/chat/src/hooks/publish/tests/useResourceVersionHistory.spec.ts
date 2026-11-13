@@ -6,7 +6,7 @@ import {
   CatalogI18nKeys,
   VersionHistoryI18nKeys,
 } from '../../../constants/translation-keys';
-import { getCatalogVersionStatuses } from '../../../server-api/publish.api';
+import { publishApiClient } from '../../../server-api/publish.api';
 import { useResourceVersionHistory } from '../useResourceVersionHistory';
 
 const deployments = {
@@ -31,15 +31,16 @@ const deployments = {
   ],
 };
 
+const getCatalogVersionStatuses = vi.mocked(
+  publishApiClient.getCatalogVersionStatuses,
+);
+
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => deployments,
 }));
 vi.mock('../../../server-api/publish.api', () => {
   const getCatalogVersionStatuses = vi.fn();
-  return {
-    getCatalogVersionStatuses,
-    publishApiClient: { getCatalogVersionStatuses },
-  };
+  return { publishApiClient: { getCatalogVersionStatuses } };
 });
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -51,8 +52,8 @@ vi.mock('react-i18next', () => ({
 
 describe('useResourceVersionHistory', () => {
   beforeEach(() => {
-    vi.mocked(getCatalogVersionStatuses).mockReset();
-    vi.mocked(getCatalogVersionStatuses).mockResolvedValue([]);
+    getCatalogVersionStatuses.mockReset();
+    getCatalogVersionStatuses.mockResolvedValue([]);
   });
 
   it('builds the application rows from the loaded deployments with translated text', async () => {

@@ -7,14 +7,15 @@ import {
   CatalogI18nKeys,
   VersionHistoryI18nKeys,
 } from '../../constants/translation-keys';
+import { useLanguage } from '../language/useLanguage';
 
 /** Translated labels and formatters of the Versions history section, shared by every panel that shows it. */
 export const useVersionHistoryText = (): {
   labels: VersionHistoryLabels;
   formatters: VersionHistoryFormatters;
 } => {
-  const { t, i18n } = useTranslation();
-  const { language } = i18n;
+  const { t } = useTranslation();
+  const { displayLanguage } = useLanguage();
 
   const labels = useMemo<VersionHistoryLabels>(
     () => ({
@@ -42,7 +43,7 @@ export const useVersionHistoryText = (): {
       formatDate: (timestamp) =>
         new Date(timestamp).toLocaleDateString(
           /* English uses the day-month-year order of the mockups, e.g. "12 Jul 2026". */
-          language.startsWith('en') ? 'en-GB' : language,
+          displayLanguage.startsWith('en') ? 'en-GB' : displayLanguage,
           { day: '2-digit', month: 'short', year: 'numeric' },
         ),
       formatPublishedBy: (name) =>
@@ -56,7 +57,7 @@ export const useVersionHistoryText = (): {
           interpolation: { escapeValue: false },
         }),
     }),
-    [t, language],
+    [t, displayLanguage],
   );
 
   return { labels, formatters };

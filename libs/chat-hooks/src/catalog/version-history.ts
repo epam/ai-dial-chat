@@ -53,6 +53,7 @@ export const selectVersionGroup = <T extends VersionHistoryListingItem>(
   items: readonly T[],
   resourceId: string,
 ): T[] => {
+  if (resourceId === '') return [];
   const decodedId = safeDecodeURIComponent(resourceId);
   const edited = items.find(
     (item) => safeDecodeURIComponent(item.id) === decodedId,

@@ -1,13 +1,8 @@
-import {
-  toPublishEntityType,
-  useVersionHistory,
-} from '@epam/ai-dial-chat-hooks';
+import { useVersionHistorySection } from '@epam/ai-dial-chat-hooks';
 import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { VersionHistorySectionProps } from '@epam/ai-dial-publish-panel';
-import { useMemo } from 'react';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { publishApiClient } from '../../server-api/publish.api';
-import { isVersionedCatalogEntityType } from '../../utils/version-history';
 import { useVersionHistoryText } from './useVersionHistoryText';
 
 /**
@@ -24,24 +19,14 @@ export const useResourceVersionHistory = (
 ): VersionHistorySectionProps | undefined => {
   const { items, toolsets } = useDeployments();
   const { labels, formatters } = useVersionHistoryText();
-  const isVersioned = isVersionedCatalogEntityType(resourceType);
-  const entityType = toPublishEntityType(resourceType) ?? 'application';
-  const { rows, hasVersions, isLoading, hasError, onRetry } = useVersionHistory(
-    {
-      items: entityType === 'toolset' ? toolsets : items,
-      resourceId,
-      entityType,
-      isEnabled: isEnabled && isVersioned,
-      client: publishApiClient,
-      formatters,
-    },
-  );
-
-  return useMemo(
-    () =>
-      isVersioned && hasVersions
-        ? { rows, isLoading, hasError, onRetry, labels }
-        : undefined,
-    [isVersioned, hasVersions, rows, isLoading, hasError, onRetry, labels],
-  );
+  return useVersionHistorySection({
+    resourceId,
+    resourceType,
+    isEnabled,
+    applications: items,
+    toolsets,
+    client: publishApiClient,
+    labels,
+    formatters,
+  });
 };

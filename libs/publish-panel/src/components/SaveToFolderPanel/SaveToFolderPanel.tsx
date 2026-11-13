@@ -265,7 +265,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
         {submitError && <ErrorText text={submitError} />}
       </LiveRegion>
 
-      {versionHistory && (
+      {versionHistory != null && (
         <VersionHistorySection
           headingClassName={headingClassName}
           {...versionHistory}

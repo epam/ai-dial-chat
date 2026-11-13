@@ -2768,6 +2768,27 @@ const { rows, isLoading, hasError, onRetry } = useVersionHistory({
 
 `formatters` is `{ rootLabel, formatDate, formatPublishedBy, formatOwner }` (`VersionHistoryFormatters`) and should be referentially stable. The pure `selectVersionGroup` and `buildVersionHistoryRows` it uses are exported too.
 
+### useVersionHistorySection / isVersionedCatalogEntityType
+
+`useVersionHistorySection` wraps `useVersionHistory` for a host that holds both listings. It takes `resourceId`, `resourceType` (a `CatalogEntityType`), `isEnabled`, the `applications` and `toolsets` listing items, the `client`, the translated `labels` and the `formatters`, picks the listing by type, and returns ready `VersionHistorySectionProps` (`rows`, `isLoading`, `hasError`, `onRetry`, `labels`), or `undefined` for an unversioned type, an empty `resourceId`, and while the listing holds no version the user owns. `isVersionedCatalogEntityType(type)` is `true` for applications (`CatalogEntityType.Agent`) and toolsets.
+
+```tsx
+import { useVersionHistorySection } from '@epam/ai-dial-chat-hooks';
+
+const versionHistory = useVersionHistorySection({
+  resourceId: item.id,
+  resourceType: item.type,
+  isEnabled: isPublishOpen,
+  applications: deployments,
+  toolsets,
+  client: publishApiClient,
+  labels,
+  formatters,
+});
+
+<PublishPanel {...props} versionHistory={versionHistory} />;
+```
+
 ## Usage Utilities
 
 Available from both `@epam/ai-dial-chat-hooks` and `@epam/ai-dial-chat-hooks/usage`.
