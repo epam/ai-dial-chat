@@ -483,8 +483,8 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     defaultValue: false,
     critical: false,
     description:
-      'Whether the chat reads the DIAL Core org units and marks unit folders ' +
-      'with their own icon in the file manager and the publish destination trees. Off by default.',
+      'Whether the chat reads the DIAL Core org units to tell which public ' +
+      'folders are units. Off by default.',
     owner: 'chat-team',
     envVar: 'ORG_UNITS_ENABLED',
   },
