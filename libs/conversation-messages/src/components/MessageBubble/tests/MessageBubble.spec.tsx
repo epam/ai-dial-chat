@@ -13,6 +13,7 @@ import {
   waitFor,
   within,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BubblePosition } from '../../../types/bubble-position';
 import { AssistantMessageBubble } from '../AssistantMessageBubble';
@@ -940,6 +941,53 @@ describe('MessageBubble', () => {
       render(<AssistantMessageBubble text="Hello" />);
       expect(screen.queryByAltText('')).toBeNull();
       expect(screen.queryByText(/GPT/)).toBeNull();
+    });
+  });
+
+  describe('AssistantMessageBubble — starters', () => {
+    const STARTERS = [
+      {
+        const: 0,
+        title: 'Approve',
+        'dial:widgetOptions': {
+          populateText: 'Approve',
+          submit: true,
+          confirmationMessage: null,
+        },
+      },
+    ];
+
+    it('fires onSelectStarter with the clicked starter', async () => {
+      const onSelectStarter = vi.fn();
+      render(
+        <AssistantMessageBubble
+          text="Pick one"
+          starters={STARTERS}
+          onSelectStarter={onSelectStarter}
+        />,
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: 'Approve' }));
+
+      expect(onSelectStarter).toHaveBeenCalledWith(STARTERS[0]);
+    });
+
+    it('renders the starters disabled and ignores clicks when isStarterSelectionDisabled is set', async () => {
+      const onSelectStarter = vi.fn();
+      render(
+        <AssistantMessageBubble
+          text="Pick one"
+          starters={STARTERS}
+          onSelectStarter={onSelectStarter}
+          isStarterSelectionDisabled
+        />,
+      );
+
+      const button = screen.getByRole('button', { name: 'Approve' });
+      await userEvent.click(button);
+
+      expect((button as HTMLButtonElement).disabled).toBe(true);
+      expect(onSelectStarter).not.toHaveBeenCalled();
     });
   });
 
