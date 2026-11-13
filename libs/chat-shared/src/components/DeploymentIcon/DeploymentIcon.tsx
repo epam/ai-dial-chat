@@ -116,10 +116,16 @@ export const DeploymentIcon: FC<DeploymentIconProps> = ({
         </div>
       ) : (
         <div className="size-full">
+          {/* Lazy + async decode: a catalog page renders dozens of icons, most
+              below the fold; the intrinsic size reserves the box. */}
           <img
             ref={imgRef}
             src={displayedSrc}
             alt=""
+            width={size}
+            height={size}
+            loading="lazy"
+            decoding="async"
             className="size-full object-contain"
           />
         </div>
