@@ -1,6 +1,5 @@
 import { normalizeMimeType } from '@epam/ai-dial-chat-shared';
 import type { DialFileAcceptType } from '@epam/ai-dial-react-file-manager';
-import { extension as getMimeExtension } from 'mime-types';
 
 const ALL_FILES_ACCEPT_TYPE: DialFileAcceptType = '*/*';
 
@@ -48,23 +47,3 @@ export const mimeTypesToFileAccept = (types?: string[]): string | undefined => {
   }
   return dialFileAcceptTypes.join(',');
 };
-
-/** Formats MIME types as a human-readable, comma-separated list of dotted extensions (or the MIME type itself for wildcards). */
-export const mimeTypesToAttachmentExtensionLabels = (types: string[]): string =>
-  types
-    .map((type) => {
-      if (type.endsWith('/*')) {
-        return type;
-      }
-
-      const canonicalType = normalizeMimeType(type);
-      const extension = getMimeExtension(canonicalType);
-
-      if (extension !== false) {
-        return `.${extension}`;
-      }
-
-      const subtype = canonicalType.split('/')[1];
-      return subtype != null ? `.${subtype.toLowerCase()}` : type;
-    })
-    .join(', ');
