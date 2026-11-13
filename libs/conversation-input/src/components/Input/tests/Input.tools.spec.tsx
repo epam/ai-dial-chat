@@ -244,6 +244,22 @@ describe('Input — tool chips on a phone', () => {
     ).toBeTruthy();
   });
 
+  it('drops the + button when the chip row is kept and tools are not removable', () => {
+    render(
+      <Input
+        onSend={vi.fn()}
+        hideAttachFile
+        canRemoveTools={false}
+        isToolChipRowAllowedOnPhone
+        toolsMenuItems={[buildTool('deep_research', 'Deep Research')]}
+        onToolToggle={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Add' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Deep Research' })).toBeTruthy();
+  });
+
   it('keeps the + button for tools even when chips are not removable', () => {
     render(
       <Input

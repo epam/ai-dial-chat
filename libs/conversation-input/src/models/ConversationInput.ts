@@ -265,7 +265,7 @@ export interface ConversationInputProps {
   isInlineActionRowAllowedBelowDesktop?: boolean;
   /**
    * Lets a phone-width composer show the full row of per-tool chips instead of
-   * the single "Tools: N" summary chip. For an embed that is narrow but not a
+   * the single "Tools: N" summary chip, and leaves the `+` menu without its Tools entry. For an embed that is narrow but not a
    * phone, such as a chat overlay in a desktop page. Defaults to `false`.
    */
   isToolChipRowAllowedOnPhone?: boolean;
