@@ -4,6 +4,10 @@ import {
   RESOURCE_FOLDER_PATH_PATTERN,
   RESOURCE_FOLDER_PATH_VALIDATION_MESSAGE,
 } from '../../common/validators/resource-folder-path.pattern';
+import {
+  RESOURCE_VERSION_PATTERN,
+  RESOURCE_VERSION_VALIDATION_MESSAGE,
+} from '../../common/validators/resource-version.pattern';
 import { IsSafeResourceId } from '../../common/validators/safe-resource-id.validator';
 import { IsValidFilePath } from '../../files/dto/file-path.validator';
 
@@ -12,9 +16,8 @@ export class ForkApplicationVersionDto {
   @ApiProperty({ example: '1.1.0', description: 'The new version' })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^[a-zA-Z0-9._-]+$/, {
-    message:
-      'version must contain only letters, digits, dots, underscores, and dashes',
+  @Matches(RESOURCE_VERSION_PATTERN, {
+    message: RESOURCE_VERSION_VALIDATION_MESSAGE,
   })
   version!: string;
 

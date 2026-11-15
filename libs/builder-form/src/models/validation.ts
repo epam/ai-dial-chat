@@ -27,8 +27,8 @@ export interface DeploymentCreationFormValidationOptions {
   /**
    * Whether to reject a non-empty version that doesn't match a pattern.
    * `true` checks against the default `VERSION_PATTERN`; passing a `RegExp`
-   * checks against that pattern instead (e.g. `SEMVER_VERSION_PATTERN` for a
-   * host that requires a strict dot-separated numeric version).
+   * checks against that pattern instead (e.g. a stricter pattern for a
+   * host that requires a dot-separated numeric version).
    */
   validateVersionPattern?: boolean | RegExp;
 }

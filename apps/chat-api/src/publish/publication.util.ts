@@ -214,6 +214,15 @@ const isDetailCandidate = (status: string | undefined): boolean =>
   status == null || status === PublicationStatus.Approved;
 
 /*
+ * Detail-lookup candidates of the version statuses: `isDetailCandidate` plus
+ * `PENDING`, which statuses report as In review while `publish-history` skips
+ * it. A separate predicate keeps `isDetailCandidate` (and so the history)
+ * unchanged.
+ */
+export const isStatusDetailCandidate = (status: string | undefined): boolean =>
+  isDetailCandidate(status) || status === PublicationStatus.Pending;
+
+/*
  * Whether a removal has actually taken effect, which requires Core to say so
  * outright — deliberately stricter than `isDetailCandidate`. Cancelling an
  * `ADD` on an *assumed* approval is the more expensive mistake: it would hide
@@ -347,14 +356,31 @@ export const resolvePublicationsForSource = async <T extends PublicationLike>(
   fetchPublication: (url: string) => Promise<T | null>,
   logger?: Logger,
   context?: string,
-): Promise<T[]> => {
-  const referencing = await resolvePublicationDetails(
-    publications,
-    fetchPublication,
+): Promise<T[]> =>
+  narrowPublicationsForSource(
+    await resolvePublicationDetails(
+      publications,
+      fetchPublication,
+      logger,
+      context,
+    ),
+    sourceUrl,
     logger,
     context,
   );
 
+/**
+ * Narrows publications whose full record is already known (see
+ * `resolvePublicationDetails`) to those `sourceUrl` is *currently* published
+ * by, applying approved removals exactly as `resolvePublicationsForSource`
+ * documents. Splitting it out lets one detail read serve many sources.
+ */
+export const narrowPublicationsForSource = <T extends PublicationLike>(
+  referencing: T[],
+  sourceUrl: string,
+  logger?: Logger,
+  context?: string,
+): T[] => {
   /*
    * An undateable approved removal wins over everything in its folder
    * (`+Infinity`) and an undateable `ADD` loses to any removal (`0`): a
@@ -516,13 +542,15 @@ export const publishesCopy = (
  * The publications whose full record — `resources` included — is known:
  * those already carrying `resources`, plus every `APPROVED` (or unlabelled)
  * one re-read through `fetchPublication`, in batches. A failed lookup drops
- * that one publication.
+ * that one publication. `isCandidate` decides which statuses are re-read; it
+ * defaults to `APPROVED` and unlabelled.
  */
 export const resolvePublicationDetails = async <T extends PublicationLike>(
   publications: T[],
   fetchPublication: (url: string) => Promise<T | null>,
   logger?: Logger,
   context?: string,
+  isCandidate: (status: string | undefined) => boolean = isDetailCandidate,
 ): Promise<T[]> => {
   const resolved: (T | null)[] = publications.map(() => null);
   const candidates: { index: number; url: string }[] = [];
@@ -532,7 +560,7 @@ export const resolvePublicationDetails = async <T extends PublicationLike>(
       resolved[index] = publication;
       return;
     }
-    if (!isDetailCandidate(publication.status)) {
+    if (!isCandidate(publication.status)) {
       return;
     }
     if (!publication.url) {
