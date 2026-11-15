@@ -1,16 +1,44 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import type { FC, ForwardRefExoticComponent, Ref, RefAttributes } from 'react';
-import QRCode, { type QRCodeProps } from 'react-qr-code';
+import {
+  type ComponentType,
+  type FC,
+  type ForwardRefExoticComponent,
+  lazy,
+  type Ref,
+  type RefAttributes,
+  Suspense,
+  useMemo,
+} from 'react';
+import type { QRCodeProps } from 'react-qr-code';
 import cssStyles from './QrCode.module.scss';
 
 /*
+ * react-qr-code (and its qrcode-generator engine) is only needed once the QR
+ * view of the share popover opens, so it loads through a dynamic import. The
+ * factory runs per mount, so reopening the view after a failed chunk fetch
+ * tries again; a failure leaves the labelled frame empty instead of throwing.
+ *
  * react-qr-code's typings declare a class component, but at runtime it is a
  * `forwardRef` that hands the ref straight to its `<svg>` — which is the element
  * `svgRef` promises its caller.
  */
-const QRCodeSvg = QRCode as unknown as ForwardRefExoticComponent<
+type QrCodeSvgComponent = ComponentType<
   QRCodeProps & RefAttributes<SVGSVGElement>
 >;
+
+const createQrCodeSvg = () =>
+  lazy<QrCodeSvgComponent>(async () => {
+    try {
+      const module = await import('react-qr-code');
+      return {
+        default: module.default as unknown as ForwardRefExoticComponent<
+          QRCodeProps & RefAttributes<SVGSVGElement>
+        >,
+      };
+    } catch {
+      return { default: () => null };
+    }
+  });
 
 /** All user-visible strings in {@link QrCodeProps}. */
 export interface QrCodeLabels {
@@ -49,6 +77,7 @@ export interface QrCodeProps {
 /** QR code rendering of the share link, scannable to open it on another device. */
 export const QrCode: FC<QrCodeProps> = ({ value, labels, styles, svgRef }) => {
   const { colors } = styles ?? {};
+  const QRCodeSvg = useMemo(createQrCodeSvg, []);
 
   const cssVars = buildCssVars({
     '--qr-border': colors?.borderColor,
@@ -66,15 +95,18 @@ export const QrCode: FC<QrCodeProps> = ({ value, labels, styles, svgRef }) => {
         cssStyles.container,
       )}
     >
-      <QRCodeSvg
-        ref={svgRef}
-        value={value}
-        size={128}
-        bgColor="transparent"
-        fgColor="currentColor"
-        aria-hidden
-        className={mergeClasses('size-full', cssStyles.qrColor)}
-      />
+      {/* The frame keeps its size while the code loads, so nothing shifts. */}
+      <Suspense fallback={null}>
+        <QRCodeSvg
+          ref={svgRef}
+          value={value}
+          size={128}
+          bgColor="transparent"
+          fgColor="currentColor"
+          aria-hidden
+          className={mergeClasses('size-full', cssStyles.qrColor)}
+        />
+      </Suspense>
     </div>
   );
 };
