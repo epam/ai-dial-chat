@@ -45,8 +45,10 @@
  * Outline-only selected state, as on the grid `Card`: no shadow, no tint, a
  * 1.5px accent stroke. The half pixel freed from `CardShell`'s 2px border goes
  * back into the padding (`p-5` on `FavoriteCard`) so the content stays put.
+ * The doubled class beats the kit's own `border-2 border-transparent p-5`
+ * utilities on the same element.
  */
-.selectedCard {
+.selectedCard.selectedCard {
   border-width: 1.5px;
   border-color: var(--cat-fav-selected-border, var(--stroke-accent, #1d4ed8));
   padding: calc(1.25rem + 0.5px);
