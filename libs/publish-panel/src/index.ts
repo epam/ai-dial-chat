@@ -66,6 +66,16 @@ export type {
   PublishAccessRulesStyles,
 } from './models/publish-access-rules-styles';
 
+export { VersionHistorySection } from './components/VersionHistorySection/VersionHistorySection';
+export { VersionHistoryStatus } from './models/version-history';
+export type {
+  VersionHistoryColors,
+  VersionHistoryLabels,
+  VersionHistoryRow,
+  VersionHistorySectionProps,
+  VersionHistoryStyles,
+} from './models/version-history';
+
 export { PublishDependenciesList } from './components/PublishDependenciesList/PublishDependenciesList';
 
 export { PublishHistoryList } from './components/PublishHistoryList/PublishHistoryList';

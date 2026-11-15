@@ -298,6 +298,35 @@ describe('isToolsetAuthValid', () => {
 });
 
 describe('isToolsetFormValid', () => {
+  it.each(['beta-2', '1.0+build5', 'a'.repeat(64)])(
+    'accepts version "%s"',
+    (version) => {
+      expect(isToolsetFormValid({ ...baseForm(), version })).toBe(true);
+    },
+  );
+
+  it.each(['1.0.', '..', 'a'.repeat(65), '1 0'])(
+    'rejects version "%s"',
+    (version) => {
+      expect(isToolsetFormValid({ ...baseForm(), version })).toBe(false);
+    },
+  );
+
+  it.each(['_beta', '1.0.', '1__2', 'a'.repeat(65)])(
+    'rejects the new version "%s" but saves it unchanged for an existing toolset',
+    (version) => {
+      expect(isToolsetFormValid({ ...baseForm(), version })).toBe(false);
+      expect(isToolsetFormValid({ ...baseForm(), version }, true)).toBe(true);
+    },
+  );
+
+  it.each(['..', '1 0', '1/0'])(
+    'still rejects "%s" for an existing toolset',
+    (version) => {
+      expect(isToolsetFormValid({ ...baseForm(), version }, true)).toBe(false);
+    },
+  );
+
   it('accepts a complete form with no auth requirements', () => {
     expect(isToolsetFormValid(baseForm())).toBe(true);
   });

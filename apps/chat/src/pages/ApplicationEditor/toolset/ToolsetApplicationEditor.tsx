@@ -272,8 +272,9 @@ const ToolsetApplicationEditor: FC = () => {
         setIsOwnToolset(true);
       }
       settlePendingPersist(result.savedId);
+      void refetchToolsets().catch(() => undefined);
     },
-    [settlePendingPersist],
+    [refetchToolsets, settlePendingPersist],
   );
   // A persist still waiting on the panel must not hang the editor after unmount.
   useEffect(() => () => settlePendingPersist(null), [settlePendingPersist]);

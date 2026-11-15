@@ -1366,6 +1366,8 @@ import {
   ENTITY_NAME_MAX_LENGTH,
   ENTITY_DESCRIPTION_MAX_LENGTH,
   ENTITY_INSTRUCTIONS_MAX_LENGTH,
+  RESOURCE_VERSION_PATTERN,
+  STORED_RESOURCE_VERSION_PATTERN,
   exceedsMaxLength,
   hasControlCharacters,
   sanitizeConversationName,
@@ -1380,6 +1382,12 @@ import {
 // applications, scheduled tasks): name 256, description 2000, instructions 50000.
 const isNameTooLong = exceedsMaxLength(name.trim(), ENTITY_NAME_MAX_LENGTH);
 const isNameMultiline = hasControlCharacters(name); // line breaks, tabs, NUL, …
+
+// Version rule shared with the chat API: 1-64 of letters, digits, `_`, `.`, `+`, `-`; no trailing dot, no `__`, no leading `_` (`__` separates the name from the version in the stored path).
+const isVersionValid = RESOURCE_VERSION_PATTERN.test(version);
+
+// Rule for a version that already exists or does not create a path (an update, a publish): the same characters with no length limit and without the three exclusions, so a version stored under the earlier rules still saves.
+const isStoredVersionValid = STORED_RESOURCE_VERSION_PATTERN.test(version);
 
 // Merge conditional class names — the only supported way to compose classes.
 // Conflicting utilities collapse to the last one, including the workspace

@@ -19,6 +19,7 @@ import {
   ResourceSavePanelI18nKeys,
 } from '../../../constants/translation-keys';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
+import { useResourceVersionHistory } from '../../../hooks/publish/useResourceVersionHistory';
 import { NotifiableEntity } from '../../../types/entity-notification';
 import ResourceSavePanelContainer from '../ResourceSavePanelContainer';
 
@@ -48,6 +49,7 @@ vi.mock('../../../server-api/publish.api', () => ({
   publishCatalogEntity: vi.fn(),
 }));
 vi.mock('../../../hooks/publish/usePublishFolders');
+vi.mock('../../../hooks/publish/useResourceVersionHistory');
 vi.mock('../../../hooks/resource-save/useResourceSaveNotification', () => ({
   useResourceSaveNotification: () => notifySaved,
 }));
@@ -121,6 +123,7 @@ describe('ResourceSavePanelContainer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(usePublishFolders).mockReturnValue(organizationFolders);
+    vi.mocked(useResourceVersionHistory).mockReturnValue(undefined);
     vi.mocked(useResourceSavePanel).mockReturnValue({
       panelProps: flowPanelProps,
       submit: vi.fn(),
@@ -276,6 +279,75 @@ describe('ResourceSavePanelContainer', () => {
           }
         ).saveAsNewVersion('1.1.0', []),
       ).rejects.toBe(failure);
+    });
+  });
+
+  it('leaves a Core 400 for an over-long path to the panel submit-error path', async () => {
+    const failure = Object.assign(new Error('Bad Request'), {
+      response: new Response(JSON.stringify({ statusCode: 400 }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    });
+    const saveAsNewVersion = vi.fn().mockRejectedValue(failure);
+    renderContainer({
+      adapter: { ...adapter, saveAsNewVersion } as ResourceSaveAdapter,
+    });
+
+    await expect(
+      (
+        lastFlowParams().adapter as {
+          saveAsNewVersion: (v: string, f: string[]) => Promise<unknown>;
+        }
+      ).saveAsNewVersion('v'.repeat(64), []),
+    ).rejects.toBe(failure);
+  });
+
+  describe('versions history', () => {
+    const versionHistory = {
+      rows: [{ id: 'a', version: '1.0.0' }],
+    };
+
+    it('hands the hook result to the panel as the versionHistory prop', () => {
+      vi.mocked(useResourceVersionHistory).mockReturnValue(versionHistory);
+
+      renderContainer();
+
+      expect(lastPanelProps().versionHistory).toBe(versionHistory);
+    });
+
+    it('asks for the history of the saved resource while the panel is open', () => {
+      renderContainer();
+
+      expect(useResourceVersionHistory).toHaveBeenLastCalledWith(
+        'applications/b1/agent__1.0.0',
+        CatalogEntityType.Agent,
+        true,
+      );
+    });
+
+    it('does not load the history while the panel is closed', () => {
+      renderContainer({ isOpen: false });
+
+      expect(useResourceVersionHistory).toHaveBeenLastCalledWith(
+        'applications/b1/agent__1.0.0',
+        CatalogEntityType.Agent,
+        false,
+      );
+    });
+
+    it('does not load the history for an unversioned resource', () => {
+      renderContainer({
+        currentVersion: undefined,
+        resourceType: CatalogEntityType.Prompt,
+      });
+
+      expect(useResourceVersionHistory).toHaveBeenLastCalledWith(
+        'applications/b1/agent__1.0.0',
+        CatalogEntityType.Prompt,
+        false,
+      );
+      expect(lastPanelProps().versionHistory).toBeUndefined();
     });
   });
 

@@ -1,3 +1,4 @@
+import { RESOURCE_VERSION_SEPARATOR } from '../../common/utils/next-free-path';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
 import { PUBLIC_BUCKET } from '../../constants/dial.constants';
 import {
@@ -19,8 +20,6 @@ const VERSIONED_TYPES = new Set([
   ResourceDependencyType.Application,
   ResourceDependencyType.Toolset,
 ]);
-
-const VERSION_SEPARATOR = '__';
 
 /** Legacy form of a folder attachment url: `metadata/` in front of the `files/` url. */
 const LEGACY_METADATA_PREFIX = 'metadata/';
@@ -70,7 +69,7 @@ export const toResourceDependency = (
   if (lastSegment == null) return undefined;
 
   const location = path.slice(0, -1).map(safeDecodeURIComponent).join('/');
-  const separatorIndex = lastSegment.lastIndexOf(VERSION_SEPARATOR);
+  const separatorIndex = lastSegment.lastIndexOf(RESOURCE_VERSION_SEPARATOR);
   if (!VERSIONED_TYPES.has(type) || separatorIndex === -1) {
     return {
       id: normalizedUrl,
@@ -82,7 +81,9 @@ export const toResourceDependency = (
   return {
     id: normalizedUrl,
     name: safeDecodeURIComponent(lastSegment.slice(0, separatorIndex)),
-    version: lastSegment.slice(separatorIndex + VERSION_SEPARATOR.length),
+    version: lastSegment.slice(
+      separatorIndex + RESOURCE_VERSION_SEPARATOR.length,
+    ),
     type,
     location,
   };

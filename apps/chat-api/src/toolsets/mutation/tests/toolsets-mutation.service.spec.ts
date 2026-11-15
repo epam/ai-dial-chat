@@ -885,6 +885,20 @@ describe('ToolsetsMutationService', () => {
       );
     });
 
+    it('clears the toolsets list cache after a create-only save so the new version shows in the next listing', async () => {
+      const { service, cacheManager } = makeWriteService();
+      client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
+      client(service).saveToolSet.mockResolvedValue(mutationSdkOk);
+
+      await service.createToolset('user1', 'token', {
+        ...baseBody,
+        version: '1.1.0',
+        createOnly: true,
+      });
+
+      expect(cacheManager.del).toHaveBeenCalledWith('toolsets:list:user1');
+    });
+
     it('never sends folderPath or createOnly to DIAL Core', async () => {
       const { service } = makeWriteService();
       client(service).getUserBucket.mockResolvedValue(bucketSdkOk);
