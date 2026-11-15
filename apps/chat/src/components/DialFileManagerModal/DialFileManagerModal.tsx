@@ -39,7 +39,7 @@ import { useDialFileManagerHostOptions } from '../DialFileManagerShell/useDialFi
 import { getFileDeleteConfirmTitle } from '../FileDeleteConfirmContent/file-delete-confirm-title';
 import { useFileUnshareConfirmation } from '../FileUnshareConfirmation/useFileUnshareConfirmation';
 
-interface Props {
+export interface Props {
   isOpen: boolean;
   onClose: () => void;
   onAttach: (result: AttachResult) => void;

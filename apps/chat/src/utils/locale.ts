@@ -34,26 +34,32 @@ export const resolveLocalizedText = (
 ): string => resolveLocalizedTextLib(value, activeLocale, PRIMARY_LOCALE);
 
 /**
- * Locale codes offered as translation targets in the "Add locale" popup.
- * Deliberately separate from `SUPPORTED_LANGUAGES` (the UI's own
- * display-language switcher, which only lists languages with a full
- * `<code>.json` translation bundle): a content locale is user-authored data
- * attached to a toolset/application, not an app UI string, so it never
- * requires a UI translation file to be offered here.
+ * Names a content locale code in its own language (`de` → `Deutsch`), falling
+ * back to the uppercased code when `Intl.DisplayNames` cannot resolve it. An
+ * autonym does not change with the viewer's UI language.
  */
-const ADDITIONAL_CONTENT_LOCALE_CODES: string[] = [];
+export const getLocaleDisplayName = (code: string): string => {
+  const fallback = code.toUpperCase();
+  try {
+    const name = new Intl.DisplayNames([code], { type: 'language' }).of(code);
+    if (!name || name.toLowerCase() === code.toLowerCase()) return fallback;
+    return name;
+  } catch {
+    return fallback;
+  }
+};
 
 /**
  * Selectable additional-locale options for the "Add locale" popup: every
- * content locale except the fixed primary one, which is already the primary
- * Name/Description field.
+ * configured content locale (`AppConfigContext`'s `additionalContentLocales`)
+ * except the fixed primary one, which is already the primary Name/Description
+ * field. Content locales are deliberately separate from `SUPPORTED_LANGUAGES`:
+ * they are user-authored data and never need a UI translation bundle.
  */
-export const buildAdditionalLocaleOptions =
-  (): DeploymentCreationFormLocaleOption[] =>
-    buildAdditionalLocaleOptionsLib(
-      ADDITIONAL_CONTENT_LOCALE_CODES,
-      PRIMARY_LOCALE,
-    );
+export const buildAdditionalLocaleOptions = (
+  codes: string[],
+): DeploymentCreationFormLocaleOption[] =>
+  buildAdditionalLocaleOptionsLib(codes, PRIMARY_LOCALE, getLocaleDisplayName);
 
 /** Translated labels for the "Add locale" summary row and popup, sourced from shared button strings where they already exist. */
 export const buildLocaleFieldLabels = (

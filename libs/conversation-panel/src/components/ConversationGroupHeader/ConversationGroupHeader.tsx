@@ -127,6 +127,7 @@ export const ConversationGroupHeader: FC<ConversationGroupHeaderProps> = ({
         isIndicator ? 'px-2' : 'py-1 pe-3',
         className,
         styles.groupHeader,
+        isIndicator && styles.groupHeaderIndicator,
         isDragOver && styles.dropZoneActive,
       )}
     >

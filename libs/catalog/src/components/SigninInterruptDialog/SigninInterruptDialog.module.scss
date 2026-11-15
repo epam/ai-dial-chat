@@ -1,0 +1,22 @@
+// Colors are CSS-var-driven so consumers can theme the sign-in interrupt dialog.
+// Layout and spacing live in Tailwind classes in the TSX.
+
+.description {
+  color: var(--cat-signin-description-text, var(--text-secondary, #57647a));
+}
+
+.row {
+  border-color: var(--cat-signin-row-border, var(--stroke-primary, #57647a));
+}
+
+.name {
+  color: var(--cat-signin-name-text, var(--text-primary, #161b2d));
+}
+
+.error {
+  color: var(--cat-signin-error-text, var(--text-error, #ae2f2f));
+}
+
+.hint {
+  color: var(--cat-signin-hint-text, var(--text-secondary, #57647a));
+}

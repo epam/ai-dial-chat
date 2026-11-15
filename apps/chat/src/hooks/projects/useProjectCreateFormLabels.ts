@@ -7,6 +7,7 @@ import {
 import { createElement, useMemo } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   ProjectsI18nKeys,
 } from '../../constants/translation-keys';
@@ -61,6 +62,7 @@ export const useProjectCreateFormLabels = ({
       instructionsPlaceholder: t(
         ProjectsI18nKeys.CreateInstructionsPlaceholder,
       ),
+      editorLoadingAriaLabel: t(BasicI18nKeys.Loading),
       contextLabel: t(ProjectsI18nKeys.CreateContextLabel),
       dropZoneLabel: ({ fromDevice, fileManager }) =>
         createElement(Trans, {
@@ -81,6 +83,8 @@ export const useProjectCreateFormLabels = ({
       removeFileLabel: (name) =>
         t(ProjectsI18nKeys.CreateContextRemove, { name }),
       openFileLabel: (name) => t(ProjectsI18nKeys.CreateContextOpen, { name }),
+      downloadFileLabel: (name) =>
+        t(ProjectsI18nKeys.CreateContextDownload, { name }),
       fileRejections: {
         [ContextFileRejection.UnsupportedType]: (name) =>
           t(ProjectsI18nKeys.CreateErrorUnsupportedType, { name }),

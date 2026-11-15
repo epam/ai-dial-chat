@@ -1,20 +1,27 @@
-import type { ConversationGenerationService } from '../conversation-generation.service';
-import { ConversationController } from '../conversation.controller';
+import { ConversationGenerationController } from '../conversation-generation.controller';
+import { ConversationWatchController } from '../conversation-watch.controller';
 import type { ConversationService } from '../conversation.service';
+import type { ConversationGenerationService } from '../generation/conversation-generation.service';
 import { ConversationCompletionsResponder } from '../streaming/conversation-completions.responder';
 
 /**
- * Builds a `ConversationController` outside Nest, wiring the completions
- * responder to the same service and generation doubles the test passes.
+ * Builds a `ConversationGenerationController` outside Nest, wiring the
+ * completions responder to the same service and generation doubles the test
+ * passes.
  */
-export const createConversationController = (
+export const createConversationGenerationController = (
   conversationService: unknown,
   generationService: unknown,
-): ConversationController =>
-  new ConversationController(
-    conversationService as ConversationService,
+): ConversationGenerationController =>
+  new ConversationGenerationController(
     new ConversationCompletionsResponder(
       conversationService as ConversationService,
       generationService as ConversationGenerationService,
     ),
   );
+
+/** Builds a `ConversationWatchController` outside Nest over a service double. */
+export const createConversationWatchController = (
+  conversationService: unknown,
+): ConversationWatchController =>
+  new ConversationWatchController(conversationService as ConversationService);

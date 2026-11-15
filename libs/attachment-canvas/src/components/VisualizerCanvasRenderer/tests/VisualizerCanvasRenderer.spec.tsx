@@ -112,11 +112,13 @@ describe('VisualizerCanvasRenderer', () => {
 
     renderComponent({ errorLabel: 'Failed to load visualizer' });
 
-    expect(
-      (await screen.findByText('Failed to load visualizer')).getAttribute(
-        'role',
-      ),
-    ).toBe('status');
+    await waitFor(() =>
+      expect(
+        screen
+          .getAllByRole('status')
+          .some((region) => region.textContent === 'Failed to load visualizer'),
+      ).toBe(true),
+    );
   });
 
   it('shows an error state when ready rejects', async () => {
@@ -124,11 +126,13 @@ describe('VisualizerCanvasRenderer', () => {
 
     renderComponent({ errorLabel: 'Failed to load visualizer' });
 
-    expect(
-      (await screen.findByText('Failed to load visualizer')).getAttribute(
-        'role',
-      ),
-    ).toBe('status');
+    await waitFor(() =>
+      expect(
+        screen
+          .getAllByRole('status')
+          .some((region) => region.textContent === 'Failed to load visualizer'),
+      ).toBe(true),
+    );
     expect(sendMock).not.toHaveBeenCalled();
   });
 
@@ -139,6 +143,17 @@ describe('VisualizerCanvasRenderer', () => {
 
     expect(screen.queryByText('Failed to load visualizer')).toBeNull();
     expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it('names the spinner with loadingLabel and hides the visible copy from assistive tech', () => {
+    readyMock.mockReturnValue(new Promise(() => undefined));
+
+    renderComponent({ loadingLabel: 'Preparing chart…' });
+
+    expect(screen.getByRole('img', { name: 'Preparing chart…' })).toBeTruthy();
+    expect(
+      screen.getByText('Preparing chart…').getAttribute('aria-hidden'),
+    ).toBe('true');
   });
 });
 
@@ -341,10 +356,12 @@ describe('VisualizerCanvasRenderer — grouped content', () => {
 
     renderGrouped({ errorLabel: 'Failed to load visualizer' });
 
-    expect(
-      (await screen.findByText('Failed to load visualizer')).getAttribute(
-        'role',
-      ),
-    ).toBe('status');
+    await waitFor(() =>
+      expect(
+        screen
+          .getAllByRole('status')
+          .some((region) => region.textContent === 'Failed to load visualizer'),
+      ).toBe(true),
+    );
   });
 });

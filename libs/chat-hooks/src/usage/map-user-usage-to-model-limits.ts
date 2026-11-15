@@ -183,16 +183,18 @@ const buildOverallCostPeriodStatus = (
   const status = getOverallCostStatus(overallStats);
   const reset = formatResetTime(overallStats?.resetsAt);
   const periodLabel = t(period.labelKey).toLocaleLowerCase(activeLocale);
-  const tooltipLabel =
-    status === ModelLimitStatus.LimitReached
-      ? t(USAGE_MODEL_LIMITS_I18N_KEYS.overallCostLimitReachedTooltip, {
-          period: periodLabel,
-        })
-      : status === ModelLimitStatus.RunningLow
-        ? t(USAGE_MODEL_LIMITS_I18N_KEYS.overallCostLimitRunningLowTooltip, {
-            period: periodLabel,
-          })
-        : undefined;
+  let tooltipLabel: string | undefined;
+  if (status === ModelLimitStatus.LimitReached) {
+    tooltipLabel = t(
+      USAGE_MODEL_LIMITS_I18N_KEYS.overallCostLimitReachedTooltip,
+      { period: periodLabel },
+    );
+  } else if (status === ModelLimitStatus.RunningLow) {
+    tooltipLabel = t(
+      USAGE_MODEL_LIMITS_I18N_KEYS.overallCostLimitRunningLowTooltip,
+      { period: periodLabel },
+    );
+  }
 
   return {
     status,

@@ -145,6 +145,8 @@ export interface ToolsChipLabels {
   stateOnLabel?: string;
   /** Visible state text shown after the tool label while the tool is off, e.g. `"OFF"`. Renders only when `stateOnLabel` is also set. */
   stateOffLabel?: string;
+  /** Returns the accessible name of the single tools chip a phone shows in place of the chip row. Receives the switched-on and total tool counts. Defaults to `"Tools: {selected} of {total} on"`. */
+  summaryLabel?: (selectedCount: number, totalCount: number) => string;
 }
 
 /** A host-injected overlay entry for the `+` menu: a menu item whose submenu renders host-owned content. */
@@ -452,6 +454,12 @@ export interface InputProps {
    * `false`.
    */
   isInlineActionRowAllowedBelowDesktop?: boolean;
+  /**
+   * Lets a phone-width composer show the full row of per-tool chips instead of
+   * the single "Tools: N" summary chip, and leaves the `+` menu without its Tools entry. For an embed that is narrow but not a
+   * phone, such as a chat overlay in a desktop page. Defaults to `false`.
+   */
+  isToolChipRowAllowedOnPhone?: boolean;
   /**
    * When provided, replaces the default send/stop/model-selector area with custom content.
    * Receives `canSend` (textarea has non-empty trimmed content) and `onSend` (triggers the

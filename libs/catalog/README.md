@@ -27,7 +27,7 @@ It already includes the styles of the publish flow from `@epam/ai-dial-publish-p
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.71 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.16.0 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 
 `ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
@@ -88,6 +88,7 @@ import { DeploymentSelectorField } from '@epam/ai-dial-catalog';
     emptyLabel: 'No models',
     errorLabel: 'Could not load models',
     browseLabel: 'Browse',
+    panelAriaLabel: 'Select model',
   }}
   labelledById="model-label"
   onSelect={setSelectedId}
@@ -104,7 +105,10 @@ also supply a decorative `icon` and a `description`, both rendered in the row.
 `renderPanel(onClose)` replaces the default searchable list. The resulting panel
 is passed to `renderOverlay(panel, open, onClose)` when a host supplies a sheet;
 otherwise it appears in the default dropdown. These slots compose together.
-Pass `ariaHasPopup="dialog"` for a sheet (the default is `"listbox"`). The same
+The default dropdown is a `dialog` named by `labels.panelAriaLabel` (default
+`'Select model'`), and its trigger reports `aria-haspopup="dialog"`.
+`ariaHasPopup` applies to a `renderOverlay` sheet only: pass `"dialog"` for a
+sheet (the default is `"listbox"`). The same
 field handles selection display, disabled state and keyboard/pointer activation
 in both layouts; favorites and catalog integration remain host-owned panel content.
 
@@ -482,6 +486,11 @@ const searchInputRef = useRef<HTMLInputElement>(null);
 />;
 ```
 
+#### Loading
+
+While `isLoading` is set, `Catalog` renders only a `Spinner` named by
+`titles.loadingLabel` (default `'Loading…'`).
+
 ### CardGrid
 
 Virtualized grid view of catalog cards. Switching views preserves the hidden
@@ -807,6 +816,14 @@ import { Favorites } from '@epam/ai-dial-catalog';
 
 A single favorite tile, exported for hosts composing their own favorites layout.
 
+A clickable `FavoriteCard` (and the browse-grid `Card`) stays an unroled
+`<article>`: the pointer clicks the card itself, and keyboard and
+screen-reader users reach it through a visually hidden native `<button>`
+named after the item, placed before the star. Its focus draws a ring around
+the card — `focusOutlineColor` on `FavoriteCard`, `styles.colors.focusOutline`
+on `Card` (vars `--fc-focus-outline` / `--cg-focus-outline`, default
+`--stroke-focus`).
+
 ### Filter / TopicTag
 
 Filter sidebar and topic label components.
@@ -1123,6 +1140,7 @@ import {
   DeploymentSize,
   DetailsConfirmationKind,
   LimitRowLayout,
+  ListViewColumnKey,
   CatalogPricingUnit,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
@@ -1159,6 +1177,11 @@ DetailsConfirmationKind.Unpublish; // 'unpublish'
  */
 CatalogPricingUnit.Token; // 'token'
 CatalogPricingUnit.Character; // 'character'
+
+// The list view's optional columns — the keys of `columnVisibility`.
+ListViewColumnKey.Folder; // 'folder'
+ListViewColumnKey.Tags; // 'tags'
+ListViewColumnKey.Favorite; // 'favorite'
 ```
 
 ### Details-panel confirmations
@@ -1276,6 +1299,40 @@ Through `Catalog`, the same two callbacks are `onUnpublish` and
   onUnpublish={handleUnpublish}
   isUnpublishVisible={(candidate) => candidate.isMyApp === true}
   detailsTexts={{ unpublishLabel: t('buttons.unpublish') }}
+/>
+```
+
+### Private dependencies in the publish panel
+
+`getPublishDependencies(item)` (on `DetailsPanel` and `Catalog`) resolves the
+resources the item refers to that are not in the public bucket, as the publish
+panel's `PublishDependency[]`. The details panel calls it each time its publish
+sub-view opens and lists the result read-only under the summary row; a rejected
+lookup shows an empty list and no error, a response that arrives after the panel
+closed or the item changed is ignored, and omitting the prop renders the panel as
+before. Its text arrives through the existing `publishLabels` (as
+`dependenciesLabels`). The optional `resolvePublishDependenciesLabels(item)`
+(on `DetailsPanel` and `Catalog`) returns dependency labels for the item being
+published, merged over `publishLabels.dependenciesLabels`, so a host can name
+the item's kind in the warning; omitting it uses `publishLabels` as is.
+Likewise `resolvePublishApprovalLabels(item)` returns the `adminApprovalTitle` and
+`adminApprovalMessage` of the publish panel's admin-approval banner for the item,
+merged over `publishLabels`. The request, its endpoint
+and its mapping to `PublishDependency` stay with the host (see
+`usePublishDependencies` and `mapResourceDependencyDto` in
+`@epam/ai-dial-chat-hooks`).
+
+```tsx
+<DetailsPanel
+  item={item}
+  isOpen
+  onClose={handleClose}
+  getPublishDependencies={async (candidate) =>
+    (await fetchPublishDependencies(candidate.id)).map(mapResourceDependencyDto)
+  }
+  publishLabels={{
+    dependenciesLabels: { title: t('catalog.publish.dependencies.title') },
+  }}
 />
 ```
 
@@ -1408,12 +1465,18 @@ changing shape mid-interaction.
 An item whose body is one of several files supplies `promptContent.files` as
 a `CatalogContentTreeNode[]` — a folder/file union, folders nesting further
 `items` — and the `selectedFileId` the body belongs to. The Content tab then
-renders a hierarchical file selector above the body (a `Dropdown` trigger
+renders a hierarchical file selector below the description and above the body (a `Dropdown` trigger
 showing the open file's basename, its overlay a folder/file tree the lib owns
 and draws itself), alongside a file count. **The selector appears only when
 the tree contains two or more file nodes, at any depth** — a single file,
 however deep it sits, is the body itself, so a selector with one option is
 noise.
+
+The description, selector and file content share one scroll area below the
+tabs. When the description scrolls away, the selector sticks to the top of
+that area on the panel's themed background. Built-in text and Markdown flow
+with the tab; a host-rendered preview gets at least one tab-height surface so
+viewport-based viewers are not squeezed by a long description.
 
 Every node's `id` is opaque to the lib: a file's `id` round-trips to
 `onLoadContentFile` unchanged, and a folder's `id` only keys the selector's
@@ -1588,11 +1651,11 @@ for that.
 
 ### Overriding which list-view columns show per tab
 
-The list view's optional columns — `folder`, `tags`, and `favorite` — each
-have a built-in default rule (`folder` hides for `CatalogEntityType.Model`;
-`tags` and `favorite` are always shown). `columnVisibility` replaces any of
+The list view's optional columns — `ListViewColumnKey.Folder`, `Tags` and
+`Favorite` — each have a built-in default rule (`Folder` hides for
+`CatalogEntityType.Model`; `Tags` and `Favorite` are always shown). `columnVisibility` replaces any of
 these per column, given the active tab's `type`; columns left out of the map
-keep their default. `favorite`'s resolved visibility is additionally combined
+keep their default. `Favorite`'s resolved visibility is additionally combined
 (AND) with `isReadonly`.
 
 ```tsx
@@ -1602,9 +1665,9 @@ keep their default. `favorite`'s resolved visibility is additionally combined
   // The star itself is still gated per-row by isFavoriteVisible — this only
   // decides whether the list view's "Favorite" column exists at all.
   columnVisibility={{
-    favorite: (type) => type !== CatalogEntityType.Model,
+    [ListViewColumnKey.Favorite]: (type) => type !== CatalogEntityType.Model,
     // Also drop Tags for Skills — this app's skills carry no topics.
-    tags: (type) => type !== CatalogEntityType.Skill,
+    [ListViewColumnKey.Tags]: (type) => type !== CatalogEntityType.Skill,
   }}
 />
 ```
@@ -1860,12 +1923,71 @@ The slot appears below the item header in the open, editable, normal details vie
 A host adapter can render `ApplicationCredentials` here and reuse it in another
 surface. The host decides which items qualify and supplies API/authentication
 behavior and translations; `useApplicationCredentials` from
-`@epam/ai-dial-chat-hooks` can own metadata loading with host-configured clients.
+`@epam/ai-dial-chat-hooks` can own metadata loading with host-configured clients,
+and its `useApplicationCredentialActions` the `onLogin` / `onLogout` callbacks.
 Existing toolset `onLogin` / `onLogout` contracts are unchanged.
 
 The public `DeploymentSelectorField` restores focus through the input's
 supported `onFocus` event and never requires a private input ref or DOM query.
 Its keyboard and Browse behavior is exercised by the packed scheduler consumer.
+
+### SigninInterruptDialog
+
+`SigninInterruptDialog` is the non-dismissible popup a host shows while a running
+application or toolset waits for the user to sign in mid-flow. Each
+`SigninInterruptDialogRow` renders the resource name and version, an optional
+password-type API key field, an always-mounted assertive region for its
+`errorMessage` with a Retry action, an optional DIAL-native hint, and Decline /
+Log in actions — or the no-credentials label when `requiresNoCredentials` is set.
+A processing row is `aria-busy`, its controls are disabled and Log in shows a
+spinner. `Decline all` renders only while more than one row is listed, the
+offline-use consent checkbox only when `isOfflineUsageConsentShown` is set, and
+`statusMessage` is announced in a visually hidden polite region. An empty `rows`
+list renders nothing.
+
+The component holds no state and knows no DIAL Core data: the host resolves the
+rows, translates errors and the status message, and supplies the callbacks.
+`useSigninInterrupt` from `@epam/ai-dial-chat-hooks` produces everything it needs
+from pending client-channel events.
+
+```tsx
+import { SigninInterruptDialog } from '@epam/ai-dial-catalog';
+
+<SigninInterruptDialog
+  rows={[
+    {
+      id: 'evt-1',
+      displayName: 'Notion',
+      displayVersion: '1.0',
+      apiKey,
+      isProcessing: false,
+      canSubmitLogin: apiKey.trim().length > 0,
+      requiresApiKey: true,
+      requiresNoCredentials: false,
+      showDialNativeHint: false,
+    },
+  ]}
+  statusMessage={statusMessage}
+  isOfflineUsageConsentShown
+  offlineUsageConsent={offlineUsageConsent}
+  onOfflineUsageConsentChange={setOfflineUsageConsent}
+  onApiKeyChange={(rowId, value) => setApiKey(value)}
+  onLogin={(rowId) => login(rowId)}
+  onDecline={(rowId) => decline(rowId)}
+  onDeclineAll={declineAll}
+/>;
+```
+
+`labels` (`SigninInterruptDialogLabels`) overrides `title`, `description`,
+`declineAll`, `decline`, `logIn`, `retry`, `apiKeyLabel`, `apiKeyPlaceholder`,
+`dialNativeHint`, `noCredentialsRequired`, `offlineUsageConsent` and
+`offlineUsageConsentHint`; each defaults to its English text. `colors`
+(`SigninInterruptDialogColors`) sets `rowBorder` (`--stroke-primary`), `nameText`
+(`--text-primary`), `errorText` (`--text-error`), `hintText` and `descriptionText`
+(both `--text-secondary`) as `--cat-signin-*` custom properties inside the popup.
+Typography props: `descriptionClassName` (`'dial-small-text'`), `nameClassName`
+(`'dial-body-semi-text'`), `errorClassName` (`'dial-small-text'`) and
+`hintClassName` (`'dial-small-text'`).
 
 ## Responsive menus and details
 

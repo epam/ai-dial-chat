@@ -15,7 +15,7 @@ import {
   resolveTransportKind,
 } from './http-lifecycle-metrics';
 import { resolveRouteTemplate } from './http-metrics';
-import { parseOtelConfig } from './otel-config';
+import { parseOtelConfig, SingleSignalExporter } from './otel-config';
 import {
   RequestTimingPhase,
   RequestTimingState,
@@ -51,7 +51,8 @@ export const createRequestTimingMiddleware = (
   const config = parseOtelConfig(env);
   if (
     config.disabled ||
-    (config.metricsExporters.length === 0 && config.tracesExporter === 'none')
+    (config.metricsExporters.length === 0 &&
+      config.tracesExporter === SingleSignalExporter.None)
   ) {
     return (_req, _res, next) => next();
   }

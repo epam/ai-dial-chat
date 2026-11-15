@@ -49,6 +49,8 @@ export const buildEntityDetailsLabels = (
   parameters: t(CatalogI18nKeys.EntityDetailsParameters),
   hostedBy: t(CatalogI18nKeys.EntityDetailsHostedBy),
   releaseDate: t(CatalogI18nKeys.EntityDetailsReleaseDate),
+  deprecationDate: t(CatalogI18nKeys.EntityDetailsDeprecationDate),
+  endOfService: t(CatalogI18nKeys.EntityDetailsEndOfService),
   contextWindow: t(CatalogI18nKeys.EntityDetailsContextWindow),
   maxOutputTokens: t(CatalogI18nKeys.EntityDetailsMaxOutputTokens),
   inputModalities: t(CatalogI18nKeys.EntityDetailsInputModalities),

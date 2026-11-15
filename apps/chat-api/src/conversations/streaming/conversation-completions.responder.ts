@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { resolvePrincipalKey } from '../../auth/session/principal-key';
 import {
@@ -19,15 +24,18 @@ import {
   SseSubscriptionKind,
   trackSseSubscription,
 } from '../../telemetry/runtime-metrics';
-import {
-  ConversationGenerationService,
-  type GenerationTerminalEvent,
-} from '../conversation-generation.service';
 import { ConversationService } from '../conversation.service';
 import type { AttachGenerationDto } from '../dto/attach-generation.dto';
 import type { SendCompletionDto } from '../dto/send-completion.dto';
 import type { StopCompletionDto } from '../dto/stop-completion.dto';
 import { BackgroundStopResult } from '../generation/background-generation.service';
+import {
+  ConversationGenerationService,
+  type GenerationTerminalEvent,
+} from '../generation/conversation-generation.service';
+import { ForegroundStopResult } from '../generation/foreground-message';
+import { qualifySessionConversationPath } from '../utils/conversation.utils';
+import { assertValidOptionalLang } from '../utils/lang-header';
 import { assertValidOptionalTimezone } from '../utils/timezone-header';
 import {
   completionResponseTerminations,
@@ -57,7 +65,7 @@ const SSE_ATTACH_MAX_BUFFERED_BYTES = 1024 * 1024;
 /**
  * The HTTP side of completions, stop and attach: SSE framing, keepalive,
  * backpressure detach and bounded release around `ConversationService`.
- * `ConversationController` and the project conversations controller both
+ * `ConversationGenerationController` and the project conversations controller both
  * delegate here, with the conversation path already validated, so a project
  * conversation streams exactly like a top-level one. The path is also the
  * generation-registry key, so completions, stop and attach must receive the
@@ -82,6 +90,7 @@ export class ConversationCompletionsResponder {
     res: Response,
     dto: SendCompletionDto,
     timezoneHeader: string | string[] | undefined,
+    langHeader: string | string[] | undefined,
     path: string,
     { isUnreadTracked = false }: { isUnreadTracked?: boolean } = {},
   ): Promise<void> {
@@ -89,6 +98,7 @@ export class ConversationCompletionsResponder {
     const { at, bucket, claims, sub } = user;
     const ownerKey = resolvePrincipalKey(user, req.authSource);
     const timezone = assertValidOptionalTimezone(timezoneHeader);
+    const lang = assertValidOptionalLang(langHeader);
     /*
      * Set when the generation is accepted (`onReadyToStream`), so a request
      * rejected before it starts (409, validation) leaves the viewed ids alone.
@@ -99,18 +109,18 @@ export class ConversationCompletionsResponder {
      * accepted edge case. The service call is best effort and never rejects.
      */
     let pendingUnview = undefined as Promise<void> | undefined;
-    const stream = this.conversationService.streamCompletion(
-      path,
-      at,
+    const stream = this.conversationService.streamCompletion({
+      conversationPath: path,
+      token: at,
       bucket,
-      dto.generationId,
-      dto.mode,
-      dto.message,
-      dto.messageIndex,
-      dto.model,
-      dto.custom_content,
+      generationId: dto.generationId,
+      mode: dto.mode,
+      message: dto.message,
+      messageIndex: dto.messageIndex,
+      model: dto.model,
+      customContent: dto.custom_content,
       ownerKey,
-      () => {
+      onReadyToStream: () => {
         startSseResponse(res);
         startKeepalive();
         if (isUnreadTracked) {
@@ -122,10 +132,11 @@ export class ConversationCompletionsResponder {
         }
       },
       sub,
-      dto.clientChannelId,
+      clientChannelId: dto.clientChannelId,
       timezone,
-      getJobTitleClaim(claims),
-    );
+      lang,
+      jobTitle: getJobTitleClaim(claims),
+    });
 
     /*
      * This generation is backend-owned and independent of the originating
@@ -310,6 +321,36 @@ export class ConversationCompletionsResponder {
         /* When this instance also runs the relay, end it now: Core cancel is not
            always honoured, and the stopping tab must not keep receiving tokens. */
         this.generationService.abort(ownerKey, path, dto.generationId);
+        res.status(204).end();
+        return;
+      }
+      /*
+       * A foreground generation of another principal or instance is stopped through its
+       * stored marker; the write, made with this caller's token, is the authorization
+       * (`foreground-generation-lock`).
+       */
+      const foregroundStop =
+        await this.conversationService.stopForegroundGeneration(
+          path,
+          at,
+          bucket,
+          dto.generationId,
+        );
+      if (foregroundStop === ForegroundStopResult.Failed) {
+        throw new ServiceUnavailableException(
+          'The generation could not be stopped; retry shortly.',
+        );
+      }
+      if (foregroundStop !== ForegroundStopResult.NotFound) {
+        /*
+         * Stored now or by an earlier Stop: end a local generation at once rather than
+         * at its next re-read. Matched on the caller's bucket-qualified resource, so a
+         * same-named conversation in another user's bucket is never touched.
+         */
+        this.generationService.abortByGeneration(
+          qualifySessionConversationPath(path, bucket),
+          dto.generationId,
+        );
         res.status(204).end();
         return;
       }

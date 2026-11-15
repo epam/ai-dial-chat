@@ -30,7 +30,7 @@ const WATCH_UPDATE_FRAME = 'data: {"action":"UPDATE"}\n\n';
 export interface ProjectConversationDataSourceOptions {
   /** The project's DIAL id. */
   projectId: string;
-  /** Whether the caller owns the project; a conversation opens read-only without it. */
+  /** Whether the caller may write the project's chats (the owner, or a recipient with edit access); a conversation opens read-only without it. */
   canEdit: boolean;
   /** Configured project requests, from `createProjectsApiClient`; only the conversation requests are used. */
   client: Pick<
@@ -53,7 +53,7 @@ export interface ProjectConversationDataSourceOptions {
     getExitRoute: () => string;
   };
   /** The queue viewed marks go through, shared with the host's other pages so they write one at a time. */
-  viewedWriter: SerializedKeyedWriter;
+  viewedWriter: Pick<SerializedKeyedWriter, 'enqueue' | 'drop'>;
   /** Translation key of the toast shown when the conversation cannot be loaded; the host resolves it. */
   notFoundMessageKey?: string;
 }

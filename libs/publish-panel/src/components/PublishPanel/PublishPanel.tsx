@@ -5,13 +5,27 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   Checkbox,
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  ElementSize,
+  FolderName,
+  GhostButton,
   Input,
   Notification,
   NotificationType,
   NotificationVariant,
   Search,
 } from '@epam/ai-dial-ui-kit';
-import { FC, ReactNode, useId, useMemo, useState } from 'react';
+import { IconFolder } from '@tabler/icons-react';
+import {
+  FC,
+  ReactNode,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { PUBLISH_PANEL_CLASS } from '../../constants/public-class-names';
 import {
   PublicationRule,
@@ -19,12 +33,16 @@ import {
   PublishFolderNode,
   PublishResourceSummary,
 } from '../../models/publish';
+import type { PublishDependenciesLabels } from '../../models/publish-dependencies-list';
+import type { PublishDependency } from '../../models/publish-dependency';
 import type { PublishPanelStyles } from '../../models/publish-panel-styles';
+import { PublishPanelView } from '../../types/publish-panel';
 import { derivePublishState } from '../../utils/publish-state';
 import {
   PublishAccessRules,
   PublishAccessRulesLabels,
 } from '../PublishAccessRules/PublishAccessRules';
+import { PublishDependenciesList } from '../PublishDependenciesList/PublishDependenciesList';
 import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
 import styles from './PublishPanel.module.scss';
 
@@ -33,8 +51,16 @@ const MAX_AUTHOR_LENGTH = 200;
 
 /** Text overrides for all user-visible strings in {@link PublishPanel}. */
 export interface PublishPanelLabels {
-  /** Label above the destination folder picker. Default: `'Publish to folder'`. */
+  /** Heading above the destination row, and the accessible name of the folder view. Default: `'Publish to folder'`. */
   folderLabel?: string;
+  /** Accessible name of the destination row. Default: `'Destination folder'`. */
+  destinationAriaLabel?: string;
+  /** Destination row text while no folder is selected. Default: `'No folder selected'`. */
+  noFolderSelectedLabel?: string;
+  /** Label of the action that opens the folder view once a folder is selected. Default: `'Change'`. */
+  changeFolderLabel?: string;
+  /** Label of the action that opens the folder view while no folder is selected. Default: `'Choose'`. */
+  chooseFolderLabel?: string;
   /** Placeholder for the folder search input. Default: `'Search folders'`. */
   searchPlaceholder?: string;
   /** Accessible label for the search input's clear button. Default: `'Clear search'`. */
@@ -55,6 +81,10 @@ export interface PublishPanelLabels {
   noAccessError?: string;
   /** Error callout body shown when the most recent submit attempt failed. */
   submitError?: string;
+  /** Heading of the informational callout stating the publication needs an administrator's approval. Default: `'Admin approval required'`. */
+  adminApprovalTitle?: string;
+  /** Body of the informational callout under `adminApprovalTitle`. Default: `'We’ll send a request to your organization’s admin. If approved, it will appear in the folder.'`; a host replaces it to name the entity being published. */
+  adminApprovalMessage?: string;
   /** Message shown when a folder search query matches no folders; `{query}` is replaced. */
   folderEmptyStateLabel?: string;
   /** Label for the per-row context menu action that creates a folder alongside the clicked folder. */
@@ -69,12 +99,14 @@ export interface PublishPanelLabels {
   createFolderInvalidNameError?: string;
   /** Inline error shown while creating a folder whose name duplicates a sibling. */
   createFolderDuplicateNameError?: string;
+  /** Inline error shown while creating a folder named like its parent folder. */
+  createFolderSameAsParentNameError?: string;
   /** Label used for the bucket root as a destination and as `{folder}` in callouts when it is selected. Default: `'Organization'`. */
   rootFolderLabel?: string;
-  /** Version tag text in the entity-header summary row; `{version}` is replaced. Default: `'Version {version} · current'`. */
-  summaryVersionLabel?: string;
   /** Text overrides for the access-rules section. */
   accessRulesLabels?: PublishAccessRulesLabels;
+  /** Text overrides for the private-dependencies section. */
+  dependenciesLabels?: PublishDependenciesLabels;
 }
 
 /** Props for {@link PublishPanel}. */
@@ -92,16 +124,27 @@ export interface PublishPanelProps {
    * working.
    */
   renderSummary?: () => ReactNode;
+  /**
+   * Resources the item refers to that are not in the public bucket, listed read-only under the summary row.
+   * Omit it to leave the section out; pass an empty array to keep it mounted for a later list, which is announced when it appears.
+   */
+  dependencies?: PublishDependency[];
+  /** Which view to show: the main form or the destination folder tree. Default: `PublishPanelView.Main`. */
+  view?: PublishPanelView;
+  /** Called when the user asks to open the folder view from the destination row. */
+  onChangeFolderClick: () => void;
   /** Destination folders available for selection. */
   folderItems: PublishFolderNode[];
   /**
-   * Currently selected destination folder path. `undefined` means nothing
-   * is selected; `[]` means the bucket root itself is selected (a distinct,
-   * valid destination).
+   * Committed destination folder path shown in the destination row.
+   * `undefined` means nothing is selected; `[]` means the bucket root itself
+   * is selected (a distinct, valid destination).
    */
   selectedFolderPath?: string[];
-  /** Called when the user selects a destination folder or the root; `undefined` when deselected. */
-  onSelectedFolderPathChange: (path: string[] | undefined) => void;
+  /** Folder highlighted in the folder view before the host commits it; `undefined` when none. */
+  pendingFolderPath?: string[];
+  /** Called when the user picks a folder or the root in the folder view; `undefined` when deselected. */
+  onPendingFolderPathChange: (path: string[] | undefined) => void;
   /** Called when the user confirms a new folder name. */
   onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
   /**
@@ -168,19 +211,25 @@ export interface PublishPanelProps {
   summaryTitleClassName?: string;
   /** Typography class for the "Publish to folder" section heading. Default: `'dial-body-semi-text'`. */
   headingClassName?: string;
+  /** Typography class for the destination folder path. Default: `'dial-small-semi-text'`. */
+  destinationClassName?: string;
   /** Typography class for the folder name emphasised inside the replace-warning and no-access callouts. Default: `'dial-small-paragraph-semi-text'`. */
   calloutFolderNameClassName?: string;
   /** Style overrides. */
   styles?: PublishPanelStyles;
 }
 
-/** Scrollable body of the Publish flow: entity summary, destination folder picker with callout, author, credentials and access rules. */
+/** Scrollable body of the Publish flow: entity summary, destination row with callout, author, credentials and access rules, or the destination folder tree. */
 export const PublishPanel: FC<PublishPanelProps> = ({
+  view = PublishPanelView.Main,
+  onChangeFolderClick,
   resource,
   renderSummary,
+  dependencies,
   folderItems,
   selectedFolderPath,
-  onSelectedFolderPathChange,
+  pendingFolderPath,
+  onPendingFolderPathChange,
   onCreateFolder,
   expandedPaths,
   onExpandedPathsChange,
@@ -202,6 +251,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   labels = {},
   summaryTitleClassName = 'dial-body-semi-text',
   headingClassName = 'dial-body-semi-text',
+  destinationClassName = 'dial-small-semi-text',
   calloutFolderNameClassName = 'dial-small-paragraph-semi-text',
   styles: stylesProp = {},
 }) => {
@@ -209,11 +259,13 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     colors,
     folderTree: folderTreeStyles,
     accessRules: accessRulesStyles,
+    dependencies: dependenciesStyles,
   } = stylesProp;
   const cssVars = {
     ...buildCssVars({
       '--pp-summary-title-text': colors?.summaryTitleText,
       '--pp-heading-text': colors?.headingText,
+      '--pp-destination-text': colors?.destinationText,
     }),
     ...stylesProp.cssVars,
   };
@@ -223,16 +275,19 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   const summaryColors = {
     border: colors?.summaryBorder,
     background: colors?.summaryBackground,
-    versionTagBorder: colors?.summaryVersionTagBorder,
-    versionTagBackground: colors?.summaryVersionTagBackground,
-    versionTagText: colors?.summaryVersionTagText,
   };
 
   const {
     folderLabel = 'Publish to folder',
+    destinationAriaLabel = 'Destination folder',
+    noFolderSelectedLabel = 'No folder selected',
+    changeFolderLabel = 'Change',
+    chooseFolderLabel = 'Choose',
     replaceWarning = 'Version {version} is already published in {folder}. Publishing will replace it.',
     noAccessError = "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
     submitError = 'Publishing failed. Please try again.',
+    adminApprovalTitle = 'Admin approval required',
+    adminApprovalMessage = 'We’ll send a request to your organization’s admin. If approved, it will appear in the folder.',
     folderEmptyStateLabel,
     addSiblingFolderLabel,
     addChildFolderLabel,
@@ -240,9 +295,10 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     createFolderEmptyNameError,
     createFolderInvalidNameError,
     createFolderDuplicateNameError,
+    createFolderSameAsParentNameError,
     rootFolderLabel = 'Organization',
-    summaryVersionLabel,
     accessRulesLabels,
+    dependenciesLabels,
     searchPlaceholder,
     clearSearchAriaLabel,
     authorLabel = 'Author',
@@ -256,9 +312,27 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   /* The kit associates the field with its visible label through this id, so the label is real rather than an aria-label. */
   const authorFieldId = useId();
 
+  const changeFolderButtonRef = useRef<HTMLButtonElement>(null);
+  const folderViewRef = useRef<HTMLDivElement>(null);
+
   const handleSearchChange = (value?: string) => {
     setSearchQuery(value ?? '');
   };
+
+  /*
+   * Switching views moves focus into the folder view, and leaving it hands
+   * focus back to the button that opened it, as the save panel does.
+   */
+  const previousViewRef = useRef(view);
+  useEffect(() => {
+    if (previousViewRef.current === view) return;
+    previousViewRef.current = view;
+    if (view === PublishPanelView.ChangeFolder) {
+      folderViewRef.current?.focus({ preventScroll: true });
+    } else {
+      changeFolderButtonRef.current?.focus({ preventScroll: true });
+    }
+  }, [view]);
 
   const isFolderSelected = selectedFolderPath != null;
 
@@ -300,39 +374,20 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     </span>
   );
 
-  return (
-    <div
-      className={mergeClasses('flex flex-col gap-5', PUBLISH_PANEL_CLASS.panel)}
-      style={cssVars}
-    >
-      {resource?.type != null ? (
-        <ResourceSummary
-          item={{
-            type: resource.type,
-            name: resource.title,
-            version: resource.version ?? '',
-            iconUrl: resource.iconUrl,
-          }}
-          versionLabel={summaryVersionLabel}
-          colors={summaryColors}
-        />
-      ) : (
-        <ResourceSummary colors={summaryColors}>
-          {defaultSummary}
-        </ResourceSummary>
-      )}
-
-      <div>
-        <div
-          className={mergeClasses(
-            'mb-2',
-            headingClassName,
-            styles.sectionHeading,
-          )}
-        >
-          {folderLabel}
-        </div>
-        <div role="search" className="mb-3">
+  if (view === PublishPanelView.ChangeFolder) {
+    return (
+      <div
+        ref={folderViewRef}
+        tabIndex={-1}
+        role="group"
+        aria-label={folderLabel}
+        className={mergeClasses(
+          'flex flex-col gap-3 outline-none',
+          PUBLISH_PANEL_CLASS.panel,
+        )}
+        style={cssVars}
+      >
+        <div role="search">
           <Search
             value={searchQuery}
             onChange={handleSearchChange}
@@ -343,8 +398,8 @@ export const PublishPanel: FC<PublishPanelProps> = ({
         </div>
         <PublishFoldersTree
           items={folderItems}
-          selectedPath={selectedFolderPath}
-          onSelectedPathChange={onSelectedFolderPathChange}
+          selectedPath={pendingFolderPath}
+          onSelectedPathChange={onPendingFolderPathChange}
           onCreateFolder={onCreateFolder}
           expandedPaths={expandedPaths}
           onExpandedPathsChange={onExpandedPathsChange}
@@ -358,9 +413,96 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           emptyFolderNameError={createFolderEmptyNameError}
           invalidFolderNameError={createFolderInvalidNameError}
           duplicateFolderNameError={createFolderDuplicateNameError}
+          sameAsParentFolderNameError={createFolderSameAsParentNameError}
           rootLabel={rootFolderLabel}
           styles={folderTreeStyles}
         />
+      </div>
+    );
+  }
+
+  const destinationClass = mergeClasses(
+    destinationClassName,
+    styles.destination,
+  );
+
+  return (
+    <div
+      className={mergeClasses('flex flex-col gap-5', PUBLISH_PANEL_CLASS.panel)}
+      style={cssVars}
+    >
+      {resource?.type != null ? (
+        <ResourceSummary
+          item={{
+            type: resource.type,
+            name: resource.title,
+            version: resource.version ?? '',
+            iconUrl: resource.iconUrl,
+          }}
+          hasVersionTag={false}
+          colors={summaryColors}
+        />
+      ) : (
+        <ResourceSummary colors={summaryColors}>
+          {defaultSummary}
+        </ResourceSummary>
+      )}
+
+      <section>
+        <h2
+          className={mergeClasses(
+            'mb-2',
+            headingClassName,
+            styles.sectionHeading,
+          )}
+        >
+          {folderLabel}
+        </h2>
+        {/* Drill-in row, as in the save panel: the whole path is one truncating name and the button opens the folder view. */}
+        <div className="flex min-w-0 items-center gap-2">
+          <div
+            role="group"
+            aria-label={destinationAriaLabel}
+            className="min-w-0 flex-1"
+          >
+            {isFolderSelected ? (
+              <FolderName
+                name={[rootFolderLabel, ...selectedFolderPath].join(' / ')}
+                nameClassName={destinationClass}
+              />
+            ) : (
+              <span
+                className={mergeClasses('block truncate', destinationClass)}
+              >
+                {noFolderSelectedLabel}
+              </span>
+            )}
+          </div>
+          <GhostButton
+            ref={changeFolderButtonRef}
+            size={ElementSize.Small}
+            label={isFolderSelected ? changeFolderLabel : chooseFolderLabel}
+            iconBefore={
+              <IconFolder
+                size={DIAL_ICON_SIZE.SM}
+                stroke={DIAL_KIT_ICON_STROKE}
+                aria-hidden
+              />
+            }
+            disabled={isSubmitting}
+            onClick={onChangeFolderClick}
+          />
+        </div>
+        {derived.calloutKind === PublishCalloutKind.Info && (
+          <div className="my-4">
+            <Notification
+              type={NotificationType.SectionMessage}
+              variant={NotificationVariant.Info}
+              title={adminApprovalTitle}
+              message={adminApprovalMessage}
+            />
+          </div>
+        )}
         {derived.calloutKind !== PublishCalloutKind.None &&
           derived.calloutKind !== PublishCalloutKind.Info && (
             <div className="mt-3">
@@ -427,7 +569,16 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             styles={accessRulesStyles}
           />
         </div>
-      </div>
+      </section>
+
+      {dependencies != null && (
+        <PublishDependenciesList
+          dependencies={dependencies}
+          labels={dependenciesLabels}
+          headingClassName={headingClassName}
+          styles={dependenciesStyles}
+        />
+      )}
     </div>
   );
 };

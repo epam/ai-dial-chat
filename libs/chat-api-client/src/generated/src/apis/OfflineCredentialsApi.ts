@@ -139,7 +139,7 @@ export class OfflineCredentialsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Revokes the session user\'s stored offline-credentials grant by proxying DIAL Core (POST /v1/user/offline-credentials/signout). A Core 404 is treated as idempotent success — there was no grant left to revoke. The authorization token is never logged.
+   * Revokes the session user\'s stored offline-credentials grant by proxying DIAL Core (POST /v1/user/offline-credentials/signout). A Core 200 false or 404 is treated as idempotent success — there was no grant left to revoke. The authorization token is never logged.
    * Sign out offline credentials
    */
   async signOutOfflineCredentialsRaw(
@@ -176,7 +176,7 @@ export class OfflineCredentialsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Revokes the session user\'s stored offline-credentials grant by proxying DIAL Core (POST /v1/user/offline-credentials/signout). A Core 404 is treated as idempotent success — there was no grant left to revoke. The authorization token is never logged.
+   * Revokes the session user\'s stored offline-credentials grant by proxying DIAL Core (POST /v1/user/offline-credentials/signout). A Core 200 false or 404 is treated as idempotent success — there was no grant left to revoke. The authorization token is never logged.
    * Sign out offline credentials
    */
   async signOutOfflineCredentials(

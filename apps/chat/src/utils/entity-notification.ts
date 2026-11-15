@@ -261,6 +261,10 @@ export const ENTITY_OPERATION_NOTIFICATIONS = {
       titleKey: EntityNotificationsI18nKeys.ProjectPublishRequestedTitle,
       messageKey: EntityNotificationsI18nKeys.ProjectPublishRequested,
     },
+    [EntityOperation.UnpublishRequested]: {
+      titleKey: EntityNotificationsI18nKeys.ProjectUnpublishRequestedTitle,
+      messageKey: EntityNotificationsI18nKeys.ProjectUnpublishRequested,
+    },
   },
 } as const satisfies Record<
   NotifiableEntity,

@@ -24,14 +24,16 @@
 }
 
 /* An unpinned toggle appears with the card's hover or keyboard focus; where
- * nothing can hover (touch), it stays visible. */
+ * nothing can hover (touch), it stays visible. `:focus-visible`, not
+ * `:focus-within`: a mouse click leaves focus on the toggle, which would keep
+ * a just-unpinned toggle shown after the pointer leaves the card. */
 @media (hover: hover) {
   .pinToggleIdle {
     opacity: 0;
   }
 
   .card:hover .pinToggleIdle,
-  .card:focus-within .pinToggleIdle {
+  .card:has(:focus-visible) .pinToggleIdle {
     opacity: 1;
   }
 }

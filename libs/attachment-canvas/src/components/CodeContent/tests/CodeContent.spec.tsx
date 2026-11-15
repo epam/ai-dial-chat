@@ -122,12 +122,17 @@ describe('CodeContent', () => {
       />,
     );
 
-    expect(screen.getByRole('status')).toBeTruthy();
+    expect(
+      screen
+        .getAllByRole('status')
+        .some((region) =>
+          region.textContent?.includes('Loading syntax highlighting…'),
+        ),
+    ).toBe(true);
     expect(screen.getByText('const x = 1;')).toBeTruthy();
-    expect(screen.getByText('Loading syntax highlighting…')).toBeTruthy();
 
     await waitFor(() => {
-      expect(screen.queryByRole('status')).toBeNull();
+      expect(screen.queryByText('Loading syntax highlighting…')).toBeNull();
     });
   });
 });

@@ -73,7 +73,7 @@ export interface MessageActionsProps {
   role?: MessageRole;
   /** Extra class(es) on the root element. */
   className?: string;
-  /** Shows actions permanently instead of on group hover only. */
+  /** Shows actions permanently; otherwise the toolbar is hidden (no pointer, focus or tooltips) until an ancestor `group` is hovered. */
   isAlwaysVisible?: boolean;
   /** Disables every action button in the toolbar. Defaults to `false`. */
   isDisabled?: boolean;

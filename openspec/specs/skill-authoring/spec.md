@@ -143,22 +143,27 @@ Whether typed manually or imported by dropping a `SKILL.md` file, the manifest s
 - **THEN** the `filePaths` array sent to `createSkill` does not include `SKILL.md`, and `skillManifest` is the page's own generated text, not the imported file's untouched bytes
 
 ### Requirement: Create-time atomicity via createSkill; no preflight
-Before calling `createSkill` in create mode, the `SkillEditor` page SHALL NOT perform a `listSkills` preflight check. It SHALL call `createSkill(bucket, path, skillManifest, filePaths, files)` directly. The BFF's `createSkill` sends `If-None-Match: '*'` to DIAL Core (its verified real create-only mechanism — read directly from DIAL Core's `EtagHeader` source, not inferred from an incomplete generated SDK type) and translates an upstream `412` collision to `409 Conflict`, which the page treats as the sole "a skill with this name already exists" case.
+Before calling `createSkill` in create mode, the `SkillEditor` page SHALL NOT perform a `listSkills` preflight check. Create SHALL open the Save panel (see the `resource-save-panel` capability); on the panel's Save the page SHALL call `createSkill(bucket, path, skillManifest, filePaths, files)` directly, where `path` is the chosen Personal folder followed by the normalized name. The BFF's `createSkill` sends `If-None-Match: '*'` to DIAL Core (its verified real create-only mechanism — read directly from DIAL Core's `EtagHeader` source, not inferred from an incomplete generated SDK type) and translates an upstream `412` collision to `409 Conflict`, which the page treats as the sole "a skill with this name already exists" case.
 
 #### Scenario: Create proceeds directly to createSkill
-- **WHEN** a user submits the create form
-- **THEN** the page calls `createSkill(bucket, path, skillManifest, filePaths, files)` immediately, with no preceding `listSkills` call
+- **WHEN** a user submits the create form and confirms the Save panel with Personal `team-a`
+- **THEN** the page calls `createSkill(bucket, 'team-a/<normalized name>', skillManifest, filePaths, files)` immediately, with no preceding `listSkills` call
 
 #### Scenario: Create collision surfaces as a naming conflict
 - **WHEN** `createSkill` rejects with `409 Conflict`
-- **THEN** the page shows "A skill with this name already exists" as an inline Name-field error and does not clear other field values
+- **THEN** the Save panel shows "A skill with this name already exists", stays open, and the form keeps its field values
 
 #### Scenario: Successful create navigates on 201
 - **WHEN** `createSkill` resolves successfully
-- **THEN** the page treats the resulting `201 Created` response as success, refetches the skills listing, shows a success notification, and navigates to `ROUTES.Catalog` with `itemId=skills/<bucket>/<path>`
+- **THEN** the skills listing is refetched, the panel shows the Created notification, and the page navigates to `ROUTES.Catalog` with `itemId=skills/<bucket>/<path>`
 
 ### Requirement: HTTP error mapping for `createSkill`
-The `SkillEditor` page SHALL interpret `createSkill` failures as follows and render a corresponding inline or notification error, keeping the form's field values intact for retry: `400` → the server's own validation message, shown verbatim when present; `409` → naming conflict (inline Name-field error, offering retry with a different name); `413` → the package is too large (inline `skillEditor.error.archiveTooLarge`, "This skill package is too large to upload."); `503` → service unavailable (inline, alongside a Retry action which resubmits the same in-memory manifest/files without rebuilding anything). Retry is offered only for a failure a plain re-send can clear: the other statuses above name something wrong with the submission itself, and re-sending it unchanged would fail the same way, so they render as text alone.
+The `SkillEditor` page SHALL interpret `createSkill` failures as follows and keep the form's field values intact: `400` → the server's own validation message, shown verbatim when present; `409` → naming conflict (`skillEditor.error.nameConflict`, retried with a different name); `413` → the package is too large (`skillEditor.error.archiveTooLarge`, "This skill package is too large to upload."); `503` → service unavailable (`skillEditor.error.serviceUnavailable`). The statuses other than `503` describe a problem with the submission itself, so resending it unchanged would fail again.
+
+Where the message appears depends on the submit path of `useSkillEditorSubmit` in `libs/chat-hooks/src/skill/useSkillEditorSubmit.ts`:
+
+- **Save panel path:** the host passes `onSaveRequest`. In `apps/chat`, `apps/chat/src/pages/SkillEditor/SkillEditor.tsx` does this for every new skill. `toSaveError` maps the status to a `ResourceSaveError` carrying the message above, and the Save panel shows it as its "First step fails" state (see `resource-save-panel`): the panel stays open, its controls are enabled again, and the failure is announced assertively. No separate Retry action is rendered for any status. Pressing the panel's Save again calls the adapter's `createIn` again with the manifest, file paths and file blobs that `buildPanelAdapter` built when Create was pressed, so nothing is rebuilt.
+- **Inline path:** the host passes no `onSaveRequest`. The message is shown inline next to the form actions through `submitError`. A `503` also sets `isSubmitErrorRetryable`, and the editor renders a Retry action whose `retrySubmit` resubmits the cached in-memory manifest and files without rebuilding them. Retry is offered only for `503`; the other statuses render as text alone.
 
 #### Scenario: 400 shows the server's real message
 - **WHEN** `createSkill` rejects with `400` and a message body (e.g. "Skill must contain a SKILL.md at its root")
@@ -166,14 +171,22 @@ The `SkillEditor` page SHALL interpret `createSkill` failures as follows and ren
 
 #### Scenario: 413 response shows a size-specific message
 - **WHEN** `createSkill` rejects with `413`
-- **THEN** the page shows the inline "This skill package is too large to upload." message, and does not clear the user's field values
+- **THEN** the page shows the "This skill package is too large to upload." message, and does not clear the user's field values
 
-#### Scenario: 503 response offers retry without rebuilding anything
-- **WHEN** `createSkill` rejects with `503`
-- **THEN** the page shows a retry action that resubmits the exact same in-memory manifest/files rather than reconstructing them from current form state
+#### Scenario: 503 in the Save panel is retried with the panel's Save
+- **WHEN** the user creates a skill through the Save panel and `createSkill` rejects with `503`
+- **THEN** the panel stays open with `skillEditor.error.serviceUnavailable` announced assertively, no Retry action is rendered, the form keeps its values, and pressing the panel's Save again sends a second `createSkill` request with the same arguments as the first
+
+#### Scenario: Pressing Create again rebuilds the panel payload
+- **WHEN** `createSkill` rejects with `503` in the Save panel, and the user closes the panel, replaces a supporting file's bytes and presses Create again
+- **THEN** a new adapter is built from the current form values and files, so the next Save sends the new bytes
+
+#### Scenario: 503 response on the inline path offers retry without rebuilding anything
+- **WHEN** the host passes no `onSaveRequest` and `createSkill` rejects with `503`
+- **THEN** the page shows a Retry action that resubmits the exact same in-memory manifest/files rather than reconstructing them from current form state
 
 #### Scenario: A file replaced after the failure invalidates the cached payload
-- **WHEN** `createSkill` rejects with `503` and the user then replaces a supporting file's bytes before retrying
+- **WHEN** on the inline path `createSkill` rejects with `503` and the user then replaces a supporting file's bytes before retrying
 - **THEN** the retry rebuilds the payload with the new bytes, because `useSkillEditorSubmit` fingerprints `contentRevisions` together with the form values and file paths
 
 ### Requirement: Name, Description, and Instructions are all required

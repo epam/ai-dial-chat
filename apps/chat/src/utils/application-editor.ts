@@ -12,6 +12,7 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import type { JsonSchema } from '@epam/ai-dial-ui-kit';
 import type {
+  ApplicationCreateOptions,
   ApplicationEditorContext,
   ApplicationEditorDefinition,
   ApplicationNotificationTarget,
@@ -41,6 +42,14 @@ export const areSetupValuesEqual = (a: unknown, b: unknown): boolean =>
   toStableJson(a) === toStableJson(b);
 
 /** Erases a kind's setup type so it can sit in the shared registry. */
+/** Returns the create request's `folderPath` field for `options`, or no field for the bucket root. */
+export const toFolderPathField = (
+  options?: ApplicationCreateOptions,
+): { folderPath?: string } =>
+  options?.folderPath?.length
+    ? { folderPath: options.folderPath.join('/') }
+    : {};
+
 export const defineApplicationEditor = <TSetup extends ApplicationSetupValues>(
   definition: ApplicationEditorFormDefinition<TSetup>,
 ): ApplicationEditorFormDefinition<ApplicationSetupValues> =>

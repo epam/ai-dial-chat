@@ -42,3 +42,34 @@
     line-clamp: 2;
   }
 }
+
+/* Stretched button: the title's `::after` covers the card, so the whole card
+ * is the click target while the button stays its single tab stop. */
+.cardButton {
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+/* Painted above the button's `::after`, so the title's truncation tooltip
+ * still receives the pointer. */
+.aboveButton {
+  position: relative;
+  z-index: 1;
+}
+
+.interactive {
+  cursor: pointer;
+
+  &:has(.cardButton:focus-visible) {
+    outline: 2px solid var(--stc-focus-outline, var(--stroke-focus, #161b2d));
+    outline-offset: 2px;
+  }
+}

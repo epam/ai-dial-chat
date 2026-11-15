@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type {
   DeploymentCreationFormLocaleEntry,
   DeploymentCreationFormLocaleLabels,
@@ -55,28 +55,6 @@ describe('DeploymentLocalesField', () => {
       />,
     );
     expect(container.innerHTML).toBe('');
-  });
-
-  it('renders nothing when there are no selectable languages, even with stored locales', () => {
-    const onChange = vi.fn();
-    const { container } = render(
-      <DeploymentLocalesField
-        value={[
-          {
-            id: 'locale-de',
-            language: 'de',
-            name: 'Mein Toolset',
-            description: '',
-          },
-        ]}
-        onChange={onChange}
-        availableLocaleOptions={[]}
-        labels={labels}
-      />,
-    );
-    expect(container.innerHTML).toBe('');
-    // Hiding the control must not clear the stored entries.
-    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('marks both the language and the name field as required', async () => {
@@ -205,5 +183,135 @@ describe('DeploymentLocalesField', () => {
         .getByRole('button', { name: 'Add locale' })
         .hasAttribute('disabled'),
     ).toBe(true);
+  });
+
+  describe('retained entries', () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    const italianEntry: DeploymentCreationFormLocaleEntry = {
+      id: 'locale-it',
+      language: 'it',
+      name: 'Il mio toolset',
+      description: '',
+    };
+
+    const renderRetained = ({
+      options = [{ code: 'de', label: 'Deutsch' }],
+      value = [italianEntry],
+      onChange = vi.fn(),
+      dir,
+    }: {
+      options?: DeploymentCreationFormLocaleOption[];
+      value?: DeploymentCreationFormLocaleEntry[];
+      onChange?: (entries: DeploymentCreationFormLocaleEntry[]) => void;
+      dir?: 'ltr' | 'rtl';
+    } = {}) =>
+      render(
+        <div dir={dir}>
+          <DeploymentLocalesField
+            value={value}
+            onChange={onChange}
+            availableLocaleOptions={options}
+            formatLocaleLabel={(code) => (code === 'it' ? 'italiano' : code)}
+            labels={labels}
+          />
+        </div>,
+      );
+
+    it('keeps the control visible with "Add locale" disabled when only a retained entry exists', async () => {
+      const onChange = vi.fn();
+      renderRetained({ options: [], onChange });
+
+      expect(screen.getByText('Locales: [IT]')).toBeTruthy();
+      await user.click(screen.getByRole('button', { name: 'Edit locales' }));
+      expect(
+        screen
+          .getByRole('button', { name: 'Add locale' })
+          .hasAttribute('disabled'),
+      ).toBe(true);
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('labels the retained code through formatLocaleLabel and never offers it to a new row', async () => {
+      /* jsdom has no IntersectionObserver; the kit dropdown list observes its items. */
+      vi.stubGlobal(
+        'IntersectionObserver',
+        class {
+          observe = vi.fn();
+          unobserve = vi.fn();
+          disconnect = vi.fn();
+        },
+      );
+      renderRetained();
+      await user.click(screen.getByRole('button', { name: 'Edit locales' }));
+
+      const retainedRow = screen.getByRole('group', { name: 'Locale 1' });
+      expect(
+        within(retainedRow).getByRole<HTMLInputElement>('combobox', {
+          name: 'Language (required)',
+        }).value,
+      ).toBe('italiano');
+
+      await user.click(screen.getByRole('button', { name: 'Add locale' }));
+      const newRow = screen.getByRole('group', { name: 'Locale 2' });
+      await user.click(
+        within(newRow).getByRole('combobox', { name: 'Language (required)' }),
+      );
+      const offered = screen
+        .getAllByRole('option')
+        .map((option) => option.textContent);
+      expect(offered).toContain('Deutsch');
+      expect(offered).not.toContain('italiano');
+      expect(
+        within(newRow).getByRole<HTMLInputElement>('combobox', {
+          name: 'Language (required)',
+        }).value,
+      ).toBe('Deutsch');
+    });
+
+    it('does not count a retained row toward the "Add locale" limit', async () => {
+      renderRetained();
+      await user.click(screen.getByRole('button', { name: 'Edit locales' }));
+
+      const addLocale = screen.getByRole('button', { name: 'Add locale' });
+      expect(addLocale.hasAttribute('disabled')).toBe(false);
+      await user.click(addLocale);
+      expect(
+        screen
+          .getByRole('button', { name: 'Add locale' })
+          .hasAttribute('disabled'),
+      ).toBe(true);
+    });
+
+    it('saves without the retained entry once it is deleted', async () => {
+      const onChange = vi.fn();
+      renderRetained({ options: [], onChange });
+      await user.click(screen.getByRole('button', { name: 'Edit locales' }));
+      await user.click(screen.getByRole('button', { name: 'Delete locale 1' }));
+      await user.click(screen.getByRole('button', { name: 'Save' }));
+
+      expect(onChange).toHaveBeenCalledWith([]);
+    });
+
+    it('shows codes in the summary when options carry language names', () => {
+      renderRetained({
+        value: [{ ...italianEntry, id: 'locale-de', language: 'de' }],
+      });
+      expect(screen.getByText('Locales: [DE]')).toBeTruthy();
+    });
+
+    it('keeps the accessible name of a retained row select in RTL', async () => {
+      renderRetained({ dir: 'rtl' });
+      await user.click(screen.getByRole('button', { name: 'Edit locales' }));
+
+      expect(
+        within(screen.getByRole('group', { name: 'Locale 1' })).getByRole(
+          'combobox',
+          { name: 'Language (required)' },
+        ),
+      ).toBeTruthy();
+    });
   });
 });

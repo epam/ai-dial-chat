@@ -6,6 +6,7 @@ import {
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  downloadProjectFileAttachment,
   toProjectOutputCardId,
   toProjectPreviewKey,
 } from '../project-file-preview';
@@ -13,6 +14,11 @@ import {
   useProjectFilePreview,
   type UseProjectFilePreviewOptions,
 } from '../use-project-file-preview';
+
+vi.mock('../project-file-preview', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../project-file-preview')>()),
+  downloadProjectFileAttachment: vi.fn(() => true),
+}));
 
 const SCOPE = 'projects/b/q4';
 
@@ -201,6 +207,31 @@ describe('useProjectFilePreview', () => {
     });
   });
 
+  describe('onContextFileDownload', () => {
+    it('downloads the attachment the host resolves for the card through the host resolver', () => {
+      const resolveDownloadUrl = vi.fn();
+      const { result } = render({ resolveDownloadUrl });
+
+      result.current.onContextFileDownload('tickets.csv');
+
+      expect(resolveContextAttachment).toHaveBeenCalledWith('tickets.csv');
+      expect(downloadProjectFileAttachment).toHaveBeenCalledWith(
+        attachment('tickets.csv'),
+        resolveDownloadUrl,
+      );
+      expect(openAttachment).not.toHaveBeenCalled();
+      expect(closeCanvas).not.toHaveBeenCalled();
+    });
+
+    it('ignores a card the host resolves to nothing', () => {
+      const { result } = render();
+
+      result.current.onContextFileDownload('missing.csv');
+
+      expect(downloadProjectFileAttachment).not.toHaveBeenCalled();
+    });
+  });
+
   describe('callback identity', () => {
     it('keeps its callbacks across re-renders with unchanged inputs', () => {
       const { result, rerender } = render({ attachmentId: key('a.csv') });
@@ -211,6 +242,9 @@ describe('useProjectFilePreview', () => {
       expect(result.current.onContextFileClick).toBe(before.onContextFileClick);
       expect(result.current.onOutputClick).toBe(before.onOutputClick);
       expect(result.current.closeIfRemoved).toBe(before.closeIfRemoved);
+      expect(result.current.onContextFileDownload).toBe(
+        before.onContextFileDownload,
+      );
     });
   });
 });

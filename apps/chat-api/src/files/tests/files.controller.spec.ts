@@ -33,6 +33,7 @@ import {
 } from '../../config/csp';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import type { DialClientService } from '../../dial/dial-client.service';
+import { streamingFetch } from '../../dial/streaming-fetch';
 import { ArchiveUploadInterceptor } from '../archive-upload.interceptor';
 import { FileUploadInterceptor } from '../file-upload.interceptor';
 import { FilesController } from '../files.controller';
@@ -488,6 +489,7 @@ describe('FilesController — uploadFileContent (DIAL Core stubbed)', () => {
     const dialClient = {
       baseUrl: `http://127.0.0.1:${corePort}`,
       fetchCore: globalThis.fetch,
+      uploadCore: streamingFetch,
     } as unknown as DialClientService;
     const uploadConfig = {
       get: (key: string) =>
@@ -498,6 +500,7 @@ describe('FilesController — uploadFileContent (DIAL Core stubbed)', () => {
     const filesService = new FilesService(
       unused,
       uploadService,
+      unused,
       unused,
       unused,
       unused,
@@ -912,6 +915,38 @@ describe('FilesController — download', () => {
       'folder/file.pdf',
       TEST_USER.at,
     );
+  });
+
+  it('cancels the DIAL Core body when the client disconnected before piping started', async () => {
+    const server = app.getHttpServer() as ReturnType<typeof createServer>;
+    const onCancel = vi.fn();
+    let resolveDownload: (value: unknown) => void = () => undefined;
+    service.downloadFile.mockReturnValue(
+      new Promise((done) => {
+        resolveDownload = done;
+      }),
+    );
+    /* Answer only after the server has seen the client go away. */
+    server.once('request', (_req: IncomingMessage, res: ServerResponse) => {
+      res.once('close', () =>
+        resolveDownload({
+          stream: new ReadableStream({ cancel: onCancel }),
+          headers: { 'content-type': 'text/html; charset=utf-8' },
+        }),
+      );
+    });
+
+    const client = httpRequest({
+      port: (server.address() as AddressInfo).port,
+      host: '127.0.0.1',
+      path: '/api/v1/files/download?bucket=my-bucket&path=folder%2Fpage.html',
+    });
+    client.on('error', () => undefined);
+    client.end();
+    await vi.waitFor(() => expect(service.downloadFile).toHaveBeenCalled());
+    client.destroy();
+
+    await vi.waitFor(() => expect(onCancel).toHaveBeenCalledOnce());
   });
 
   it('returns 400 for invalid bucket (contains colon)', async () => {

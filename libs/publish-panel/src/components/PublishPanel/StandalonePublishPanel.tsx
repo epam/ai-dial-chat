@@ -6,8 +6,11 @@ import {
   PublishFolderNode,
   PublishResourceSummary,
 } from '../../models/publish';
+import type { PublishDependency } from '../../models/publish-dependency';
 import type { PublishPanelStyles } from '../../models/publish-panel-styles';
+import { PublishPanelView } from '../../types/publish-panel';
 import { derivePublishState } from '../../utils/publish-state';
+import { usePublishFolderView } from '../../utils/use-publish-folder-view';
 import { PublishFooter, PublishFooterLabels } from './PublishFooter';
 import { PublishPanel, PublishPanelLabels } from './PublishPanel';
 import styles from './StandalonePublishPanel.module.scss';
@@ -16,6 +19,10 @@ import styles from './StandalonePublishPanel.module.scss';
 export interface StandalonePublishPanelLabels {
   /** Header title. Default: `'Publish'`. */
   title?: string;
+  /** Header title in the folder view. Default: `'Change folder'`. */
+  changeFolderTitle?: string;
+  /** Accessible label for the header's Back button in the folder view. Default: `'Back'`. */
+  backAriaLabel?: string;
   /** Accessible label for the panel's `role="dialog"`. Default: `'Publish'`. */
   ariaLabel?: string;
   /** Accessible label for the header's Close button. Default: `'Close'`. */
@@ -37,11 +44,13 @@ export interface StandalonePublishPanelProps {
    * See `PublishPanel`'s `renderSummary` prop.
    */
   renderSummary?: () => ReactNode;
+  /** Resources the item refers to that are not in the public bucket; see `PublishPanel`'s `dependencies` prop. Text and colours ride `labels` and `styles`. */
+  dependencies?: PublishDependency[];
   /** Destination folders available for selection. */
   folderItems: PublishFolderNode[];
   /** Currently selected destination folder path. `undefined` means nothing selected; `[]` means the bucket root. */
   selectedFolderPath?: string[];
-  /** Called when the user selects a destination folder or the root; `undefined` when deselected. */
+  /** Called when the user confirms a destination folder or the root with Select in the folder view. */
   onSelectedFolderPathChange: (path: string[] | undefined) => void;
   /** Called when the user confirms a new folder name. */
   onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
@@ -124,11 +133,12 @@ export interface StandalonePublishPanelColors {
   titleText?: string;
 }
 
-/** Standalone end-edge slide-in panel for the Publish flow: full-screen backdrop, entity summary, folder picker, and pinned footer. */
+/** Standalone end-edge slide-in panel for the Publish flow: full-screen backdrop, entity summary, destination row with a drill-in folder view, and pinned footer. */
 export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   isOpen,
   resource,
   renderSummary,
+  dependencies,
   folderItems,
   selectedFolderPath,
   onSelectedFolderPathChange,
@@ -179,9 +189,18 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   );
   const {
     title = 'Publish',
+    changeFolderTitle = 'Change folder',
+    backAriaLabel = 'Back',
     ariaLabel = 'Publish',
     closeAriaLabel = 'Close',
   } = labels;
+
+  const folderView = usePublishFolderView({
+    isOpen,
+    selectedFolderPath,
+    onSelectedFolderPathChange,
+  });
+  const isFolderView = folderView.view === PublishPanelView.ChangeFolder;
 
   const derived = useMemo(
     () =>
@@ -264,10 +283,13 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
             styles.title,
           )}
         >
-          {title}
+          {isFolderView ? changeFolderTitle : title}
         </span>
       }
       ariaLabel={ariaLabel}
+      onBack={isFolderView ? folderView.backToMain : undefined}
+      backAriaLabel={backAriaLabel}
+      backDisabled={isSubmitting}
       closeAriaLabel={closeAriaLabel}
       closeDisabled={isSubmitting}
       style={cssVars}
@@ -291,9 +313,13 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
           <PublishPanel
             resource={resource}
             renderSummary={renderSummary}
+            dependencies={dependencies}
+            view={folderView.view}
+            onChangeFolderClick={folderView.openFolderView}
             folderItems={folderItems}
             selectedFolderPath={selectedFolderPath}
-            onSelectedFolderPathChange={onSelectedFolderPathChange}
+            pendingFolderPath={folderView.pendingFolderPath}
+            onPendingFolderPathChange={folderView.setPendingFolderPath}
             onCreateFolder={onCreateFolder}
             expandedPaths={expandedPaths}
             onExpandedPathsChange={onExpandedPathsChange}
@@ -325,8 +351,11 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
         allowReplace={allowReplace}
         isSubmitDisabled={derived.isSubmitDisabled}
         isSubmitLoading={derived.isSubmitLoading}
-        onCancel={onClose}
+        onCancel={isFolderView ? folderView.backToMain : onClose}
         onSubmit={onSubmit}
+        view={folderView.view}
+        onSelectFolder={folderView.selectFolder}
+        isSelectFolderDisabled={folderView.pendingFolderPath == null}
         labels={footerLabels}
       />
     </SideDrawer>

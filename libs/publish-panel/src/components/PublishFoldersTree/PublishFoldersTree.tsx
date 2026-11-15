@@ -12,7 +12,16 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconFolderPlus, IconPlus } from '@tabler/icons-react';
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
+import type { PublishFolderNode } from '../../models/publish';
 import type { PublishFoldersTreeProps } from '../../models/publish-folders-tree';
+import {
+  buildRootedFolderTree,
+  fromRootedPath,
+  getRootTokenKeys,
+  joinRootedKeys,
+  splitRootedKeys,
+  toRootedPath,
+} from '../../utils/folder-destination';
 import {
   collectFolderKeys,
   filterFolderTree,
@@ -28,12 +37,21 @@ import styles from './PublishFoldersTree.module.scss';
 
 const CANCEL_CREATING_FOLDER_ATTRIBUTE = 'data-cancel-creating-folder';
 
-/** Destination folder tree for the Publish flow, ordered by folder name at every level, with search, folder creation (trailing button and context menu), and a disabled state. */
+/* The single-root tree's root node path key. */
+const SINGLE_ROOT_KEY = '';
+
+const EMPTY_ITEMS: PublishFolderNode[] = [];
+
+/** Destination folder tree for the Publish flow, ordered by folder name at every level, with search, folder creation (trailing button and context menu), a disabled state, and an optional multi-root mode. */
 export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
-  items,
-  selectedPath,
+  items = EMPTY_ITEMS,
+  selectedPath: selectedPathProp,
   onSelectedPathChange,
   onCreateFolder,
+  roots,
+  destination,
+  onDestinationChange,
+  onCreateDestinationFolder,
   searchQuery,
   disabled = false,
   createFolderLabel = 'Create new folder',
@@ -45,10 +63,11 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   emptyFolderNameError = 'Folder name cannot be empty.',
   invalidFolderNameError = 'Folder name contains invalid characters.',
   duplicateFolderNameError = 'A folder with this name already exists.',
+  sameAsParentFolderNameError = 'A folder cannot have the same name as its parent folder.',
   rootLabel = 'Organization',
   expandedPaths: controlledExpandedPaths,
   onExpandedPathsChange,
-  loadingPaths,
+  loadingPaths: loadingPathsProp,
   styles: stylesProp = {},
 }) => {
   const cssVars = {
@@ -56,6 +75,39 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
       '--pft-divider': stylesProp.colors?.divider,
     }),
     ...stylesProp.cssVars,
+  };
+
+  const isMultiRoot = roots != null;
+  /* Every node in multi-root mode lives under a root token (see `folder-destination.ts`). */
+  const treeItems = useMemo(
+    () => (roots ? buildRootedFolderTree(roots) : items),
+    [roots, items],
+  );
+  /*
+   * "Add child" expands a parent whose children may still be loading. The
+   * inline editor can hold on to the validate/confirm callbacks from when it
+   * opened, so they read the tree through this ref: a sibling that lands
+   * after the editor opened still counts as a duplicate.
+   */
+  const treeItemsRef = useRef(treeItems);
+  useEffect(() => {
+    treeItemsRef.current = treeItems;
+  }, [treeItems]);
+  const rootKeys = useMemo(
+    () => (roots ? getRootTokenKeys(roots) : [SINGLE_ROOT_KEY]),
+    [roots],
+  );
+  let selectedPath = selectedPathProp;
+  if (isMultiRoot) {
+    selectedPath = destination ? toRootedPath(destination) : undefined;
+  }
+
+  const selectPath = (path: string[] | undefined) => {
+    if (isMultiRoot) {
+      onDestinationChange?.(path ? fromRootedPath(path) : undefined);
+    } else {
+      onSelectedPathChange?.(path);
+    }
   };
 
   const [internalExpandedPaths, setInternalExpandedPaths] = useState<
@@ -68,19 +120,44 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
         ) ?? [],
       ),
   );
-  const expandedPaths = controlledExpandedPaths ?? internalExpandedPaths;
+  const multiRootExpandedPaths = useMemo(
+    () =>
+      roots
+        ? new Set([
+            ...internalExpandedPaths,
+            ...joinRootedKeys(roots, (root) => root.expandedPaths),
+          ])
+        : undefined,
+    [roots, internalExpandedPaths],
+  );
+  const expandedPaths =
+    multiRootExpandedPaths ?? controlledExpandedPaths ?? internalExpandedPaths;
+  const loadingPaths = useMemo(
+    () =>
+      roots
+        ? joinRootedKeys(roots, (root) => root.loadingPaths)
+        : loadingPathsProp,
+    [roots, loadingPathsProp],
+  );
+
   /*
-   * The root node's own path key ('') is always kept expanded so its
-   * children stay visible. It is stripped before the set reaches the host
-   * because '' is not a real folder path the host can fetch children for.
+   * Root nodes are always kept expanded so their children stay visible. Their
+   * keys are stripped before the set reaches the host, because a root is not
+   * a real folder path the host can fetch children for.
    */
   const handleExpandedPathsChange = (next: Set<string>) => {
-    const withoutRoot = new Set(next);
-    withoutRoot.delete('');
-    if (onExpandedPathsChange) {
-      onExpandedPathsChange(withoutRoot);
+    const withoutRoots = new Set(next);
+    for (const key of rootKeys) withoutRoots.delete(key);
+    if (roots) {
+      setInternalExpandedPaths(withoutRoots);
+      const byRoot = splitRootedKeys(roots, withoutRoots);
+      for (const root of roots) {
+        root.onExpandedPathsChange?.(byRoot.get(root.key) ?? new Set());
+      }
+    } else if (onExpandedPathsChange) {
+      onExpandedPathsChange(withoutRoots);
     } else {
-      setInternalExpandedPaths(withoutRoot);
+      setInternalExpandedPaths(withoutRoots);
     }
   };
   const [creatingParentPath, setCreatingParentPath] = useState<string[] | null>(
@@ -126,8 +203,8 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   const isCreatingFolder = creatingParentPath != null;
 
   const matchingItems = useMemo(
-    () => filterFolderTree(items, searchQuery),
-    [items, searchQuery],
+    () => filterFolderTree(treeItems, searchQuery),
+    [treeItems, searchQuery],
   );
   const hasNoSearchMatches =
     trimmedQuery.length > 0 && matchingItems.length === 0;
@@ -139,18 +216,23 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
    */
   const isFiltering = !isCreatingFolder && trimmedQuery.length > 0;
 
-  const visibleItems = useMemo(
-    () => sortFolderTree(isFiltering ? matchingItems : items),
-    [isFiltering, matchingItems, items],
-  );
+  const visibleItems = useMemo(() => {
+    const shown = isFiltering ? matchingItems : treeItems;
+    // Multi-root items are already sorted inside each root; the roots keep the host's order.
+    return isMultiRoot ? shown : sortFolderTree(shown);
+  }, [isFiltering, matchingItems, treeItems, isMultiRoot]);
 
   const searchExpandedPaths = useMemo(
-    () => new Set(['', ...collectFolderKeys(visibleItems)]),
-    [visibleItems],
+    () => new Set([...rootKeys, ...collectFolderKeys(visibleItems)]),
+    [rootKeys, visibleItems],
   );
   const treeExpandedPaths = useMemo(
-    () => new Set(['', ...(isFiltering ? searchExpandedPaths : expandedPaths)]),
-    [isFiltering, searchExpandedPaths, expandedPaths],
+    () =>
+      new Set([
+        ...rootKeys,
+        ...(isFiltering ? searchExpandedPaths : expandedPaths),
+      ]),
+    [rootKeys, isFiltering, searchExpandedPaths, expandedPaths],
   );
 
   const childFiles = useMemo<DialFile[]>(
@@ -162,23 +244,27 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
    * The bucket root is a real, always-expanded top-level tree node (matching
    * the file manager's own root-node pattern) so it is selectable exactly
    * like any folder — `path: ''` maps to `selectedPath: []` via
-   * `fromFolderPathKey`/`toFolderPathKey`. Omitted while a search matches
+   * `fromFolderPathKey`/`toFolderPathKey`. In multi-root mode the roots
+   * themselves are the top-level nodes. Omitted while a search matches
    * nothing so `emptyStateDescription` can render instead.
    */
   const dialFiles = useMemo<DialFile[]>(() => {
     if (isFiltering && childFiles.length === 0) {
       return [];
     }
+    if (isMultiRoot) {
+      return childFiles;
+    }
     return [
       {
-        path: '',
+        path: SINGLE_ROOT_KEY,
         name: rootLabel,
-        folderId: '',
+        folderId: SINGLE_ROOT_KEY,
         nodeType: DialFileNodeType.FOLDER,
         items: childFiles,
       },
     ];
-  }, [childFiles, rootLabel, isFiltering]);
+  }, [childFiles, rootLabel, isFiltering, isMultiRoot]);
 
   const createdFolderPath = creatingParentPath
     ? toFolderPathKey(creatingParentPath)
@@ -188,7 +274,34 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     empty: emptyFolderNameError,
     invalid: invalidFolderNameError,
     duplicate: duplicateFolderNameError,
+    sameAsParent: sameAsParentFolderNameError,
   };
+
+  /* The name a new folder under `parentPath` may not take; a root (single-root `[]` or a multi-root token) has none. */
+  const getParentFolderName = (parentPath: string[]): string | undefined =>
+    rootKeys.includes(toFolderPathKey(parentPath))
+      ? undefined
+      : parentPath.at(-1);
+
+  const canCreateUnder = (parentPath: string[]): boolean => {
+    if (!roots) return true;
+    const target = fromRootedPath(parentPath);
+    const root = roots.find((candidate) => candidate.key === target?.rootKey);
+    return root != null && root.canCreateFolders !== false;
+  };
+
+  /* The parent the trailing "Create new folder" button creates under, or `undefined` when none accepts new folders. */
+  const resolveTrailingCreateParent = (): string[] | undefined => {
+    if (!roots) return selectedPath ?? [];
+    if (selectedPath && canCreateUnder(selectedPath)) return selectedPath;
+    const firstCreatable = roots.find(
+      (root) => root.canCreateFolders !== false,
+    );
+    return firstCreatable
+      ? toRootedPath({ rootKey: firstCreatable.key, path: [] })
+      : undefined;
+  };
+  const trailingCreateParent = resolveTrailingCreateParent();
 
   /*
    * A query that matched no folder reads as "the folder I want doesn't exist
@@ -199,15 +312,40 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     const isQueryUsableAsName =
       hasNoSearchMatches &&
       validateFolderName(trimmedQuery, [], folderNameErrors) == null;
+    const parentName = getParentFolderName(parentPath);
     return getUniqueFolderName(
       isQueryUsableAsName ? trimmedQuery : newFolderDefaultName,
-      getSiblingFolderNames(items, parentPath),
+      [
+        ...getSiblingFolderNames(treeItems, parentPath),
+        ...(parentName ? [parentName] : []),
+      ],
     );
   };
 
+  /*
+   * "Add child" on a folder whose children are not listed yet expands it,
+   * which makes the host fetch them. Opening the editor right away would let
+   * a name be confirmed before that listing lands, when the parent still
+   * looks empty — so a duplicate of an existing child passed the check. The
+   * editor therefore opens once the parent is no longer loading (the parent
+   * row shows the host's loading indicator meanwhile), with a default name
+   * that is unique among the children that actually exist.
+   */
+  const [pendingCreateParentPath, setPendingCreateParentPath] = useState<
+    string[] | null
+  >(null);
+  if (
+    pendingCreateParentPath != null &&
+    !loadingPaths?.has(toFolderPathKey(pendingCreateParentPath))
+  ) {
+    setPendingCreateParentPath(null);
+    setCreatingParentPath(pendingCreateParentPath);
+    setCreatingFolderName(resolveNewFolderName(pendingCreateParentPath));
+  }
+
   const beginCreatingFolder = (parentPath: string[]) => {
-    setCreatingParentPath(parentPath);
-    setCreatingFolderName(resolveNewFolderName(parentPath));
+    setCreatingParentPath(null);
+    setPendingCreateParentPath(parentPath);
     lastLiveValidationErrorRef.current = null;
     isCancellingRef.current = false;
     const parentKey = toFolderPathKey(parentPath);
@@ -216,8 +354,9 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     }
   };
 
-  const handleStartCreatingFolder = () =>
-    beginCreatingFolder(selectedPath ?? []);
+  const handleStartCreatingFolder = () => {
+    if (trailingCreateParent) beginCreatingFolder(trailingCreateParent);
+  };
 
   /**
    * Per-row context menu, mirroring the file manager's "Add sibling" /
@@ -226,10 +365,14 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
    * `startTreeChildFolderCreation` in `@epam/ai-dial-react-file-manager`'s `FileManager`
    * — not exported from the package, so reimplemented here against the
    * public `getContextMenuItems` prop instead). "Add sibling" is omitted for
-   * the root node, which has no parent to create a sibling under.
+   * a root node, which has no parent to create a sibling under, and a root
+   * that does not accept new folders offers neither action.
    */
   const getFolderContextMenuItems = (file: DialFile): DropdownItem[] => {
     const childPath = fromFolderPathKey(file.path);
+    if (!canCreateUnder(childPath)) {
+      return [];
+    }
     const items: DropdownItem[] = [
       {
         key: 'add-child',
@@ -244,7 +387,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
         onClick: () => beginCreatingFolder(childPath),
       },
     ];
-    if (file.path !== '') {
+    if (!rootKeys.includes(file.path)) {
       items.push({
         key: 'add-sibling',
         label: addSiblingFolderLabel,
@@ -267,8 +410,9 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     }
     const error = validateFolderName(
       rawValue,
-      getSiblingFolderNames(items, creatingParentPath),
+      getSiblingFolderNames(treeItemsRef.current, creatingParentPath),
       folderNameErrors,
+      getParentFolderName(creatingParentPath),
     );
     lastLiveValidationErrorRef.current = error;
     return error;
@@ -282,8 +426,13 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     const priorLiveError = lastLiveValidationErrorRef.current;
     const error = validateNewFolderName(rawValue) ?? priorLiveError;
     if (!error) {
-      void onCreateFolder(creatingParentPath, trimmed);
-      onSelectedPathChange([...creatingParentPath, trimmed]);
+      const parent = roots ? fromRootedPath(creatingParentPath) : undefined;
+      if (parent) {
+        void onCreateDestinationFolder?.(parent.rootKey, parent.path, trimmed);
+      } else {
+        void onCreateFolder?.(creatingParentPath, trimmed);
+      }
+      selectPath([...creatingParentPath, trimmed]);
     }
     setCreatingParentPath(null);
   };
@@ -293,7 +442,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   const handleItemClick = (file: DialFile) => {
     const isSelected =
       selectedPath != null && toFolderPathKey(selectedPath) === file.path;
-    onSelectedPathChange(isSelected ? undefined : fromFolderPathKey(file.path));
+    selectPath(isSelected ? undefined : fromFolderPathKey(file.path));
   };
 
   return (
@@ -321,6 +470,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
           onCreateFolderSave={handleConfirmCreatingFolder}
           onCreateFolderCancel={handleCancelCreatingFolder}
           onRenameValidate={(value) => validateNewFolderName(value)}
+          searchQuery={isFiltering ? trimmedQuery : undefined}
           emptyStateTitle={
             isFiltering
               ? noResultsLabel.replace('{query}', trimmedQuery)
@@ -349,7 +499,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
               stroke={DIAL_KIT_ICON_STROKE}
             />
           }
-          disabled={disabled || isCreatingFolder}
+          disabled={disabled || isCreatingFolder || !trailingCreateParent}
         />
         {isCreatingFolder && (
           <GhostButton

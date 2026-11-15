@@ -43,6 +43,7 @@ import CustomViewerFrame from '../../components/CustomViewer/CustomViewerFrame';
 import ScheduledTaskConversationBanner from '../../components/ScheduledTaskConversationBanner/ScheduledTaskConversationBanner';
 import { normalizeConversationId } from '../../constants/routes';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationI18nKeys,
@@ -447,6 +448,7 @@ export const ConversationPage: FC<Props> = ({
     generationPersistenceErrorMessage: t(
       ChatI18nKeys.GenerationPersistenceError,
     ),
+    generationInterruptedMessage: t(ChatI18nKeys.GenerationInterrupted),
     onStreamError: logConversationStreamError,
     /* One commit per frame while a reply streams, not one per network read. */
     batchChunksPerFrame: true,
@@ -705,7 +707,12 @@ export const ConversationPage: FC<Props> = ({
           const { traceId } = await getApiErrorDetails(error);
           if (signal.aborted) return;
           showErrorNotification({
-            message: t(notFoundMessageKey ?? ChatI18nKeys.ConversationNotFound),
+            /* The data source's key is an opaque string, so it needs a default. */
+            message: notFoundMessageKey
+              ? t(notFoundMessageKey, {
+                  defaultValue: t(ChatI18nKeys.ConversationNotFound),
+                })
+              : t(ChatI18nKeys.ConversationNotFound),
             requestId: traceId,
           });
         }
@@ -927,6 +934,8 @@ export const ConversationPage: FC<Props> = ({
       removeLabel: (label: string) => t(ToolsI18nKeys.RemoveTool, { label }),
       stateOnLabel: t(ToolsI18nKeys.StateOn),
       stateOffLabel: t(ToolsI18nKeys.StateOff),
+      summaryLabel: (selected: number, total: number) =>
+        t(ToolsI18nKeys.Summary, { selected, total }),
     }),
     [t],
   );
@@ -1005,7 +1014,7 @@ export const ConversationPage: FC<Props> = ({
   if (isFetching || (conversation && isCustomViewerResolving))
     return (
       <div className="flex size-full items-center justify-center">
-        <Spinner />
+        <Spinner ariaLabel={t(BasicI18nKeys.Loading)} />
       </div>
     );
 

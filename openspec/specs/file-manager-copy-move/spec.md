@@ -170,7 +170,7 @@ When `nodeType === "folder"`, the BFF SHALL recursively list all files under the
 
 **Partial failure**: if any individual `copyResource` call fails, the overall folder result is `success: false` with `error: "Partial copy"`. Already-copied files remain at their new paths (no rollback).
 
-**Concurrency**: individual file copies within a folder are issued sequentially (matches `renameFolderItem`/`deleteFolderItem` — no concurrency constant is introduced). Multiple top-level batch items run in parallel via `Promise.all`.
+**Concurrency**: individual file copies within a folder are issued sequentially (the shared `runFolderFanOut` step used by the rename/copy/move transfer pipeline and by `deleteFolderItem` — no concurrency constant is introduced). Multiple top-level batch items run in parallel via `Promise.all`.
 
 **Mapping rule**: for a file at `child.path` under `srcPrefix`, the destination path is `destPrefix + child.path.slice(srcPrefix.length)`.
 
@@ -516,3 +516,4 @@ Copy and cross-folder move SHALL NOT be gated behind `ENABLED_FEATURES` / `ENABL
 
 - **WHEN** a user with WRITE permission uses the file manager
 - **THEN** `onCopyFiles` and the cross-folder-move branch of `onMoveToFiles` are available without checking any `ENABLED_FEATURES` entry
+

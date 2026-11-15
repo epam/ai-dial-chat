@@ -54,6 +54,8 @@ export interface McpAppInlinePreviewProps {
   actionsGroupAriaLabel?: string;
   /** Message shown when the resource fails to load or the app fails to initialize. */
   loadErrorLabel: string;
+  /** Accessible label of the spinner shown while the app loads. Defaults to `'Loading app'`. */
+  loadingAriaLabel?: string;
   /**
    * Whether this message's MCP App is currently open in the full-width
    * canvas. When `true`, the header stays (so the tool/app identity is still
@@ -81,6 +83,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   reloadAriaLabel,
   actionsGroupAriaLabel = 'MCP app actions',
   loadErrorLabel,
+  loadingAriaLabel = 'Loading app',
   isOpenedInCanvas = false,
   openedInCanvasLabel,
   colors,
@@ -88,7 +91,6 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
 }) => {
   const {
     headerNameClassName = 'dial-tiny-lead-semi-text',
-    versionClassName = 'dial-caption-text',
     messageClassName = 'dial-body-text',
   } = typography ?? {};
   /* Populated once `ui/initialize` completes; reset per `cacheKey` — see mcp-app-trigger spec.md. */
@@ -132,6 +134,11 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
     return null;
   }
 
+  let statusText = '';
+  if (isOpenedInCanvas) statusText = openedInCanvasLabel;
+  else if (status === McpAppInlinePreviewStatus.Error)
+    statusText = loadErrorLabel;
+
   return (
     <div
       style={cssVars}
@@ -163,11 +170,6 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
                   className="mx-1.5 inline-block h-3 w-0 border-s border-current align-middle"
                 />
                 <span className={headerNameClassName}>{appInfo.name}</span>
-                {appInfo.version && (
-                  <span className={mergeClasses(versionClassName, 'ms-2')}>
-                    {appInfo.version}
-                  </span>
-                )}
               </>
             ) : (
               <span className={headerNameClassName}>{match.mcpToolName}</span>
@@ -207,9 +209,9 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
         </div>
       </div>
       <div className="relative min-h-[100px] w-full">
-        {/* Always mounted so the polite region exists before the canvas opens. */}
+        {/* Always mounted so the polite region exists before the canvas opens or the load fails. */}
         <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
-          {isOpenedInCanvas ? openedInCanvasLabel : ''}
+          {statusText}
         </LiveRegion>
         {isOpenedInCanvas ? (
           <div
@@ -230,7 +232,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
           <>
             {status === McpAppInlinePreviewStatus.Loading && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <Spinner />
+                <Spinner ariaLabel={loadingAriaLabel} />
               </div>
             )}
             {status === McpAppInlinePreviewStatus.Error && (
@@ -242,7 +244,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
                   className={styles.errorIcon}
                 />
                 <p
-                  role="status"
+                  aria-hidden
                   className={mergeClasses(
                     messageClassName,
                     'text-center',

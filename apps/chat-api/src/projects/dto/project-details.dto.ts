@@ -70,8 +70,16 @@ export class ProjectDetailsDto extends ProjectDto {
   @ApiProperty({
     example: true,
     description:
-      "Whether the caller may edit, delete, share and publish the project — `true` only in the caller's own bucket.",
+      "Whether the caller may change the project's instructions and context files and write its conversations — `true` in the caller's own bucket, and for a project shared with them with `WRITE`.",
   })
   @IsBoolean()
   canEdit!: boolean;
+
+  @ApiProperty({
+    example: true,
+    description:
+      "Whether the caller may rename, delete, share and publish the project — `true` only in the caller's own bucket. Implies `canEdit`.",
+  })
+  @IsBoolean()
+  canManage!: boolean;
 }

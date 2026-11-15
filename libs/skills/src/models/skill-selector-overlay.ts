@@ -5,10 +5,8 @@ import type {
   MenuOverlayConfig,
 } from '@epam/ai-dial-conversation-input';
 import type { ComponentType, ReactNode } from 'react';
-import type {
-  ChatSkillColors,
-  ChatSkillDetailsTrigger,
-} from './chat-skill-props';
+import type { ChatSkillDetailsTrigger } from '../types/chat-skill-details-trigger';
+import type { ChatSkillColors } from './chat-skill-props';
 import type { SkillListingEntry } from './favorite-skill-item';
 import type { FavoriteSkillsPanelLabels } from './favorite-skills-panel-props';
 

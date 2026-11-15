@@ -1343,7 +1343,27 @@ describe('ScheduledTaskDetailPage', () => {
     ).toBeTruthy();
   });
 
-  it('renders the every-N-weeks repeats label for a custom schedule', async () => {
+  it('renders the weekly repeats label for a custom weekday list', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Mon, Wed, Fri report',
+      trigger: {
+        cron: {
+          fields: { hour: '9', minute: '0', day_of_week: '0,2,4' },
+        },
+      },
+    });
+    renderDetailPage();
+
+    expect(
+      await screen.findByText(
+        'repeatsLabel:scheduledTasks.card.scheduleWeeklyAt',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('renders the generic repeats label for a week-step schedule', async () => {
     useFeatureFlagMock.mockReturnValue(true);
     getScheduledTaskMock.mockResolvedValue({
       id: 'sched_123',
@@ -1363,7 +1383,7 @@ describe('ScheduledTaskDetailPage', () => {
 
     expect(
       await screen.findByText(
-        'repeatsLabel:scheduledTasks.card.scheduleEveryNWeeks',
+        'repeatsLabel:scheduledTasks.card.scheduleRecurringFallback',
       ),
     ).toBeTruthy();
   });

@@ -30,7 +30,6 @@ const scheduleLabels: ScheduledTaskScheduleLabels = {
   hourlyAt: (minute) => `hourlyAt:${minute}`,
   dailyAt: (time) => `dailyAt:${time}`,
   weeklyAt: (day, time) => `weeklyAt:${day}|${time}`,
-  everyNWeeks: (count, day, time) => `everyNWeeks:${count}|${day}|${time}`,
   monthlyAt: (day, time) => `monthlyAt:${day}|${time}`,
   invalid: 'invalid',
   recurringFallback: 'recurringFallback',
@@ -150,7 +149,23 @@ describe('toScheduledTaskItem', () => {
     expect(result.scheduleLabel).toBe('weeklyAt:Monday|09:00');
   });
 
-  it('formats an every-N-weeks cron trigger through everyNWeeks', () => {
+  it('formats a weekday list through weeklyAt as one locale list', () => {
+    const result = toScheduledTaskItem(
+      buildDto({
+        trigger: {
+          cron: { fields: { hour: '9', minute: '0', day_of_week: '0,2,4' } },
+        },
+      }),
+      scheduleLabels,
+      { locale: 'en', timeZone: 'UTC' },
+    );
+
+    expect(result.scheduleLabel).toBe(
+      'weeklyAt:Monday, Wednesday, and Friday|09:00',
+    );
+  });
+
+  it('falls back to the recurring label for any week step', () => {
     const result = toScheduledTaskItem(
       buildDto({
         trigger: {
@@ -168,7 +183,7 @@ describe('toScheduledTaskItem', () => {
       { locale: 'en' },
     );
 
-    expect(result.scheduleLabel).toBe('everyNWeeks:2|Tuesday|09:00');
+    expect(result.scheduleLabel).toBe('recurringFallback');
   });
 
   it('falls back to the recurring label for a week expression outside the editor range', () => {

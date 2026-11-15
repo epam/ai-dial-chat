@@ -18,10 +18,16 @@ import type {
   PublishHistoryEntryDto,
   PublishResultDto,
   PublishRulesResultDto,
+  ResourceDependenciesResultDto,
   UnpublishAccessDto,
   UnpublishCatalogEntityDto,
   UnpublishResultDto,
 } from '../models/index';
+
+export interface GetCatalogPublishDependenciesRequest {
+  entityType: GetCatalogPublishDependenciesEntityTypeEnum;
+  entityId: string;
+}
 
 export interface GetCatalogPublishHistoryRequest {
   entityType: GetCatalogPublishHistoryEntityTypeEnum;
@@ -53,6 +59,79 @@ export interface UnpublishCatalogEntityRequest {
  *
  */
 export class PublishApi extends runtime.BaseAPI {
+  /**
+   * Returns the direct references of a catalog entity (Toolset, Application, Prompt, Skill or Project) that are not in the public bucket, so the publisher can publish them too before the published copy reaches its audience. Resources that publishing already carries along (the application icon and its declared files) are not listed, and a dependency’s own dependencies are not followed. The list is advisory: when it cannot be resolved the response is an empty list rather than an error. Kinds that reference no other resource always return an empty list.
+   * List the private dependencies of a catalog entity
+   */
+  async getCatalogPublishDependenciesRaw(
+    requestParameters: GetCatalogPublishDependenciesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ResourceDependenciesResultDto>> {
+    if (requestParameters['entityType'] == null) {
+      throw new runtime.RequiredError(
+        'entityType',
+        'Required parameter "entityType" was null or undefined when calling getCatalogPublishDependencies().',
+      );
+    }
+
+    if (requestParameters['entityId'] == null) {
+      throw new runtime.RequiredError(
+        'entityId',
+        'Required parameter "entityId" was null or undefined when calling getCatalogPublishDependencies().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/catalog/{entityType}/{entityId}/publish-dependencies`;
+    urlPath = urlPath.replace(
+      `{${'entityType'}}`,
+      encodeURIComponent(String(requestParameters['entityType'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'entityId'}}`,
+      encodeURIComponent(String(requestParameters['entityId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ResourceDependenciesResultDto>(response);
+  }
+
+  /**
+   * Returns the direct references of a catalog entity (Toolset, Application, Prompt, Skill or Project) that are not in the public bucket, so the publisher can publish them too before the published copy reaches its audience. Resources that publishing already carries along (the application icon and its declared files) are not listed, and a dependency’s own dependencies are not followed. The list is advisory: when it cannot be resolved the response is an empty list rather than an error. Kinds that reference no other resource always return an empty list.
+   * List the private dependencies of a catalog entity
+   */
+  async getCatalogPublishDependencies(
+    requestParameters: GetCatalogPublishDependenciesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ResourceDependenciesResultDto> {
+    const response = await this.getCatalogPublishDependenciesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
   /**
    * Returns every folder this catalog entity has been published to, most recent first, derived from DIAL Core\'s Publication API (`getPublications`) — never from chat-api-side storage.
    * Get publish history for a catalog entity
@@ -428,6 +507,19 @@ export class PublishApi extends runtime.BaseAPI {
   }
 }
 
+/**
+ * @export
+ */
+export const GetCatalogPublishDependenciesEntityTypeEnum = {
+  Model: 'model',
+  Toolset: 'toolset',
+  Application: 'application',
+  Prompt: 'prompt',
+  Skill: 'skill',
+  Project: 'project',
+} as const;
+export type GetCatalogPublishDependenciesEntityTypeEnum =
+  (typeof GetCatalogPublishDependenciesEntityTypeEnum)[keyof typeof GetCatalogPublishDependenciesEntityTypeEnum];
 /**
  * @export
  */

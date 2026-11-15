@@ -174,10 +174,10 @@ describe('validate', () => {
     },
   );
 
-  it('defaults CSP rollout to report-only and accepts explicit enforcement', () => {
-    expect(validate({ ...baseConfig }).CSP_MODE).toBe('report-only');
-    expect(validate({ ...baseConfig, CSP_MODE: 'enforce' }).CSP_MODE).toBe(
-      'enforce',
+  it('defaults CSP to enforcement and accepts an explicit report-only rollback', () => {
+    expect(validate({ ...baseConfig }).CSP_MODE).toBe('enforce');
+    expect(validate({ ...baseConfig, CSP_MODE: 'report-only' }).CSP_MODE).toBe(
+      'report-only',
     );
   });
 
@@ -374,6 +374,22 @@ describe('validate', () => {
     expect(config.DEFAULT_DEPLOYMENT_PINNED).toBe(expected);
   });
 
+  it('defaults ORG_UNITS_ENABLED to false when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.ORG_UNITS_ENABLED).toBe(false);
+  });
+
+  it.each([
+    ['true', true],
+    ['false', false],
+  ])('parses ORG_UNITS_ENABLED=%s as %s', (rawValue, expected) => {
+    const config = validate({
+      ...baseConfig,
+      ORG_UNITS_ENABLED: rawValue,
+    });
+    expect(config.ORG_UNITS_ENABLED).toBe(expected);
+  });
+
   it('defaults USAGE_LIMITS_CONTROL_ENABLED to false when unset', () => {
     const config = validate({ ...baseConfig });
     expect(config.USAGE_LIMITS_CONTROL_ENABLED).toBe(false);
@@ -441,6 +457,32 @@ describe('validate', () => {
     expect(config.ALLOW_VISUALIZER_SEND_MESSAGES).toBe(expected);
   });
 
+  it('defaults CSP_ALLOW_STYLE_ATTRIBUTES to false when unset', () => {
+    expect(validate({ ...baseConfig }).CSP_ALLOW_STYLE_ATTRIBUTES).toBe(false);
+  });
+
+  it.each([
+    ['true', true],
+    ['TRUE', true],
+    ['1', true],
+    ['yes', true],
+    [' true ', true],
+    ['false', false],
+    ['false ', false],
+    ['false\r', false],
+    ['0', false],
+    ['no', false],
+    ['off', false],
+    ['disabled', false],
+    ['', false],
+  ])('parses CSP_ALLOW_STYLE_ATTRIBUTES=%j as %s', (rawValue, expected) => {
+    const config = validate({
+      ...baseConfig,
+      CSP_ALLOW_STYLE_ATTRIBUTES: rawValue,
+    });
+    expect(config.CSP_ALLOW_STYLE_ATTRIBUTES).toBe(expected);
+  });
+
   it('defaults OVERLAY_SANDBOX_ENABLED to false when unset', () => {
     const config = validate({ ...baseConfig });
     expect(config.OVERLAY_SANDBOX_ENABLED).toBe(false);
@@ -496,6 +538,53 @@ describe('validate', () => {
         PUBLICATION_FILTER_SOURCES: 'a'.repeat(201),
       }),
     ).toThrow(/Environment validation failed/);
+  });
+
+  describe('content locales', () => {
+    it('accepts a comma-separated list of BCP-47 tags', () => {
+      expect(
+        validate({
+          ...baseConfig,
+          ADDITIONAL_CONTENT_LOCALES: 'de, ar,pt-BR,zh-Hant',
+        }).ADDITIONAL_CONTENT_LOCALES,
+      ).toEqual(['de', 'ar', 'pt-BR', 'zh-Hant']);
+    });
+
+    it('leaves both variables undefined when absent', () => {
+      const config = validate({ ...baseConfig });
+
+      expect(config.ADDITIONAL_CONTENT_LOCALES).toBeUndefined();
+      expect(config.AVAILABLE_LOCALES).toBeUndefined();
+    });
+
+    it('resolves a present but empty value to an empty list', () => {
+      expect(
+        validate({ ...baseConfig, ADDITIONAL_CONTENT_LOCALES: '' })
+          .ADDITIONAL_CONTENT_LOCALES,
+      ).toEqual([]);
+    });
+
+    it.each(['de,not a tag', 'e$', `de,${'a'.repeat(36)}`, 'de,en-'])(
+      'rejects ADDITIONAL_CONTENT_LOCALES=%j at startup',
+      (value) => {
+        expect(() =>
+          validate({ ...baseConfig, ADDITIONAL_CONTENT_LOCALES: value }),
+        ).toThrow(/ADDITIONAL_CONTENT_LOCALES/);
+      },
+    );
+
+    it('strips 0.x brackets and quotes from AVAILABLE_LOCALES', () => {
+      expect(
+        validate({ ...baseConfig, AVAILABLE_LOCALES: '["ar","en"]' })
+          .AVAILABLE_LOCALES,
+      ).toEqual(['ar', 'en']);
+    });
+
+    it('rejects a malformed AVAILABLE_LOCALES entry at startup', () => {
+      expect(() =>
+        validate({ ...baseConfig, AVAILABLE_LOCALES: 'en,e$' }),
+      ).toThrow(/AVAILABLE_LOCALES/);
+    });
   });
 
   describe('header bearer-token auth env vars', () => {

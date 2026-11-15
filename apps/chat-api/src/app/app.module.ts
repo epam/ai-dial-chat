@@ -13,6 +13,7 @@ import { MetricsInterceptor } from '../common/interceptors/metrics.interceptor';
 import { validate } from '../config/validation';
 import { ConversationModule } from '../conversations/conversation.module';
 import { CustomApiModule } from '../custom-api/custom-api.module';
+import { DeploymentRouteModule } from '../deployment-route/deployment-route.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
 import { DialCoreModule } from '../dial/dial-core.module';
 import { ExternalServicesModule } from '../external-services/external-services.module';
@@ -20,6 +21,7 @@ import { FilesModule } from '../files/files.module';
 import { HealthController } from '../health/health.controller';
 import { ModelsModule } from '../models/models.module';
 import { OfflineCredentialsModule } from '../offline-credentials/offline-credentials.module';
+import { OrgUnitsModule } from '../org-units/org-units.module';
 import { ProjectsModule } from '../projects/projects.module';
 import { PromptModule } from '../prompts/prompt.module';
 import { PublishModule } from '../publish/publish.module';
@@ -51,6 +53,7 @@ import { createAppCacheOptions } from './cache.config';
     DialCoreModule,
     AppConfigModule,
     ApplicationSchemasModule,
+    OrgUnitsModule,
     ApplicationsModule,
     DeploymentsModule,
     ModelsModule,
@@ -74,6 +77,7 @@ import { createAppCacheOptions } from './cache.config';
     SkillsModule,
     TextRefinementModule,
     CustomApiModule,
+    DeploymentRouteModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

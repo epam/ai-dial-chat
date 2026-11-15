@@ -5,6 +5,7 @@ export * from '../files/dial-file-manager-copy-move.util';
 export * from '../files/dial-file-manager-mapping.util';
 export * from '../files/dial-file-manager-path.util';
 export * from '../files/attachment-types';
+export * from '../files/attachment-type-labels';
 export * from '../files/create-files-api';
 export * from '../files/create-upload-file-with-progress';
 export * from '../files/annotation';

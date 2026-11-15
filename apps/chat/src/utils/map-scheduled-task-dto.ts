@@ -21,8 +21,6 @@ const buildScheduleLabels = (t: TFunction): ScheduledTaskScheduleLabels => ({
   hourlyAt: (minute) => t(Keys.CardScheduleHourlyAt, { minute }),
   dailyAt: (time) => t(Keys.CardScheduleDailyAt, { time }),
   weeklyAt: (day, time) => t(Keys.CardScheduleWeeklyAt, { day, time }),
-  everyNWeeks: (count, day, time) =>
-    t(Keys.CardScheduleEveryNWeeks, { count, day, time }),
   monthlyAt: (day, time) => t(Keys.CardScheduleMonthlyAt, { day, time }),
   invalid: t(Keys.EditInvalidScheduleLabel),
   recurringFallback: t(Keys.CardScheduleRecurringFallback),

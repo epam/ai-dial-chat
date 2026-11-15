@@ -1,6 +1,7 @@
 import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
+import { DEFAULT_LANGUAGE } from '../hooks/language/useLanguage';
 import en from './locales/en.json';
 
 const RTL_LANGUAGES = new Set(['ar', 'he', 'fa', 'ur']);
@@ -11,7 +12,7 @@ const RTL_LANGUAGES = new Set(['ar', 'he', 'fa', 'ur']);
  * must describe the text actually rendered, so use the resolved language.
  */
 const applyDocumentDirection = () => {
-  const lang = i18n.resolvedLanguage ?? 'en';
+  const lang = i18n.resolvedLanguage ?? DEFAULT_LANGUAGE;
   const base = lang.split('-')[0];
   document.documentElement.lang = lang;
   document.documentElement.dir = RTL_LANGUAGES.has(base) ? 'rtl' : 'ltr';
@@ -24,7 +25,7 @@ i18n
     resources: {
       en: { translation: en },
     },
-    fallbackLng: 'en',
+    fallbackLng: DEFAULT_LANGUAGE,
     interpolation: {
       escapeValue: false,
     },

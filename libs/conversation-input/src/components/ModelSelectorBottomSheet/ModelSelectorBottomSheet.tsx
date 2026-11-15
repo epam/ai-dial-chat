@@ -13,7 +13,13 @@ import {
   Search,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
-import { type CSSProperties, type FC, useEffect, useState } from 'react';
+import {
+  type CSSProperties,
+  type FC,
+  type ReactNode,
+  useEffect,
+  useState,
+} from 'react';
 import { List, type RowComponentProps } from 'react-window';
 import { CONVERSATION_INPUT_CLASS } from '../../constants/public-class-names';
 import type { ModelMenuStyles } from '../../models/Input';
@@ -234,6 +240,44 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
     '--ci-sheet-selected-text': menuColors?.selectedItemText,
   });
 
+  let listContent: ReactNode;
+  if (isLoading) {
+    listContent = <ModelSelectorSkeletonRows />;
+  } else if (stateLabel) {
+    listContent = (
+      <div
+        role="list"
+        className={mergeClasses(styles.stateLabel, labelClassName, 'px-4 py-4')}
+      >
+        {stateLabel}
+      </div>
+    );
+  } else {
+    listContent = (
+      <List<ModelRowData>
+        role="list"
+        className="overflow-y-auto"
+        style={{
+          height: Math.min(filtered.length, MAX_VISIBLE_ROWS) * ROW_HEIGHT,
+        }}
+        rowComponent={ModelRow}
+        rowCount={filtered.length}
+        rowHeight={ROW_HEIGHT}
+        rowProps={{
+          items: filtered,
+          selectedDeploymentId,
+          labelClassName,
+          query,
+          itemClassName: menuStyles?.itemClassName,
+          selectedItemClassName: menuStyles?.selectedItemClassName,
+          hasSelectedBackground: !!menuColors?.selectedItemBackground,
+          hasSelectedText: !!menuColors?.selectedItemText,
+          onSelect: handleSelect,
+        }}
+      />
+    );
+  }
+
   return (
     <BottomSheetShell
       isOpen={isOpen}
@@ -282,42 +326,7 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
         )}
 
         {/* List */}
-        {isLoading ? (
-          <ModelSelectorSkeletonRows />
-        ) : stateLabel ? (
-          <div
-            role="list"
-            className={mergeClasses(
-              styles.stateLabel,
-              labelClassName,
-              'px-4 py-4',
-            )}
-          >
-            {stateLabel}
-          </div>
-        ) : (
-          <List<ModelRowData>
-            role="list"
-            className="overflow-y-auto"
-            style={{
-              height: Math.min(filtered.length, MAX_VISIBLE_ROWS) * ROW_HEIGHT,
-            }}
-            rowComponent={ModelRow}
-            rowCount={filtered.length}
-            rowHeight={ROW_HEIGHT}
-            rowProps={{
-              items: filtered,
-              selectedDeploymentId,
-              labelClassName,
-              query,
-              itemClassName: menuStyles?.itemClassName,
-              selectedItemClassName: menuStyles?.selectedItemClassName,
-              hasSelectedBackground: !!menuColors?.selectedItemBackground,
-              hasSelectedText: !!menuColors?.selectedItemText,
-              onSelect: handleSelect,
-            }}
-          />
-        )}
+        {listContent}
       </div>
     </BottomSheetShell>
   );

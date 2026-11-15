@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { BackgroundGenerationDto } from './background-generation.dto';
+import { ForegroundGenerationDto } from './foreground-generation.dto';
 import { MessageCustomContentDto } from './message-custom-content.dto';
 
 export enum ConversationMessageRole {
@@ -99,6 +100,16 @@ export class ConversationMessageDto {
   @ValidateNested()
   @Type(() => BackgroundGenerationDto)
   backgroundGeneration?: BackgroundGenerationDto;
+
+  @ApiPropertyOptional({
+    type: () => ForegroundGenerationDto,
+    description:
+      'Present only while a Chat Completions or stateless Responses generation is producing this assistant message. Server-owned: it holds the conversation until expiresAt, and client saves cannot create, change or drop it.',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ForegroundGenerationDto)
+  foregroundGeneration?: ForegroundGenerationDto;
 
   @ApiPropertyOptional({
     description:

@@ -27,14 +27,31 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       children,
       open,
       renderOverlay,
+      overlayRole = actual.DropdownOverlayRole.Menu,
     }: {
       children: ReactNode;
       open?: boolean;
       renderOverlay?: () => ReactNode;
+      overlayRole?: string;
     }) => (
       <div>
         {children}
-        {open && renderOverlay && createPortal(renderOverlay(), document.body)}
+        {open &&
+          renderOverlay &&
+          createPortal(
+            /* Mirrors the kit: the overlay takes `overlayRole`, and `none`
+               leaves it without one. */
+            <div
+              role={
+                overlayRole === actual.DropdownOverlayRole.None
+                  ? undefined
+                  : overlayRole
+              }
+            >
+              {renderOverlay()}
+            </div>,
+            document.body,
+          )}
       </div>
     ),
   };
@@ -123,6 +140,15 @@ describe('Input — command menu keyboard navigation', () => {
     );
     expect(textarea.getAttribute('aria-activedescendant')).toBeNull();
     expect(screen.getByRole('group', { name: 'Skills' })).toBeTruthy();
+  });
+
+  it('wraps the host listbox in an overlay with no role of its own', () => {
+    const { textarea } = renderWithMenu();
+    openMenu(textarea);
+
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByRole('listbox', { name: 'Skills list' })).toBeTruthy();
   });
 
   it('moves the active option with ArrowDown/ArrowUp, wrapping at both ends', () => {

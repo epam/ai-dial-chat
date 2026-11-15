@@ -7,9 +7,8 @@ export {
   type McpAppInlinePreviewState,
 } from './hooks/useMcpAppInlinePreview/useMcpAppInlinePreview';
 export { useMcpAppResponseCache } from './hooks/useMcpAppResponseCache/useMcpAppResponseCache';
+export { McpAppToolDiscovery, McpDeploymentKind } from './types/mcp-apps';
 export type {
-  McpDeploymentKind,
-  McpAppToolDiscovery,
   McpAppToolRef,
   McpAppToolCallSeed,
   FetchMcpAppResourceHtml,

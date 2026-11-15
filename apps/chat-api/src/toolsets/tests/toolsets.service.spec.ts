@@ -21,6 +21,8 @@ describe('ToolsetsService facade', () => {
       createToolset: vi.fn().mockResolvedValue('mutation-create'),
       updateToolset: vi.fn().mockResolvedValue('mutation-update'),
       deleteToolset: vi.fn().mockResolvedValue(undefined),
+      listToolsetFolders: vi.fn().mockResolvedValue('mutation-folders'),
+      moveToolset: vi.fn().mockResolvedValue('mutation-move'),
     };
     const authService = {
       loginToolset: vi.fn().mockResolvedValue(undefined),
@@ -105,6 +107,27 @@ describe('ToolsetsService facade', () => {
       body,
     );
     expect(result).toBe('mutation-create');
+  });
+
+  it('delegates listToolsetFolders and moveToolset to ToolsetsMutationService', async () => {
+    const { service, mutationService } = makeService();
+
+    await expect(service.listToolsetFolders('token', 'Search')).resolves.toBe(
+      'mutation-folders',
+    );
+    await expect(
+      service.moveToolset('sub', 'token', 'my-toolset', 'Search'),
+    ).resolves.toBe('mutation-move');
+    expect(mutationService.listToolsetFolders).toHaveBeenCalledWith(
+      'token',
+      'Search',
+    );
+    expect(mutationService.moveToolset).toHaveBeenCalledWith(
+      'sub',
+      'token',
+      'my-toolset',
+      'Search',
+    );
   });
 
   it('delegates updateToolset to ToolsetsMutationService', async () => {

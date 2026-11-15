@@ -3,6 +3,7 @@ import {
   DIAL_KIT_ICON_STROKE,
   Spinner,
   LiveRegion,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import type { XlsxSelectionContext } from '@silurus/ooxml/xlsx';
 import { IconAlertTriangle } from '@tabler/icons-react';
@@ -285,6 +286,8 @@ interface OoxmlContentProps {
   highlightsLabel?: string;
   /** Status announced once the cited location has been brought into view. Defaults to `'Scrolled to the cited location'`. */
   highlightNavigatedLabel?: string;
+  /** Accessible name of the loading spinner. Defaults to `'Loading…'`. */
+  loadingLabel?: string;
 }
 
 /** Renders DOCX, XLSX, PPTX, and CSV attachments with `@silurus/ooxml`, optionally highlighting cited locations. */
@@ -297,6 +300,7 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
   formulaValueClassName,
   highlightsLabel = 'Cited locations',
   highlightNavigatedLabel = 'Scrolled to the cited location',
+  loadingLabel = 'Loading…',
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -610,17 +614,19 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
       <LiveRegion visuallyHidden>
         {hasNavigated ? highlightNavigatedLabel : ''}
       </LiveRegion>
+      {/* Mounted before the overlay, so the load failure is announced when it replaces the spinner. */}
+      <LiveRegion politeness={LiveRegionPoliteness.Assertive} visuallyHidden>
+        {!isLoading && hasError ? loadErrorLabel : ''}
+      </LiveRegion>
       {(isLoading || hasError) && (
         <div
-          role={hasError ? 'alert' : undefined}
-          aria-live="polite"
           className={mergeClasses(
             'absolute inset-0 flex items-center justify-center',
             styles.statusOverlay,
           )}
         >
           {isLoading ? (
-            <Spinner size={48} />
+            <Spinner size={48} ariaLabel={loadingLabel} />
           ) : (
             <div className="flex flex-col items-center gap-2">
               <IconAlertTriangle
@@ -629,7 +635,9 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
                 stroke={DIAL_KIT_ICON_STROKE}
                 className={styles.errorIcon}
               />
-              <p className="text-center">{loadErrorLabel}</p>
+              <p aria-hidden className="text-center">
+                {loadErrorLabel}
+              </p>
             </div>
           )}
         </div>

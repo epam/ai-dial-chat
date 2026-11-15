@@ -2,7 +2,7 @@
 
 ### Problem
 
-`@epam/ai-dial-projects` and `@epam/ai-dial-chat-hooks/project` already carry the Projects UI and its requests (`docs/projects-reuse.md`), yet every host still re-implements the same orchestration around them. `apps/chat` holds roughly 1,200 lines of project glue that contains no host knowledge (routes, i18n, contexts, `server-api`) in large stretches, and a second host (`pg-chat`) has just copied all of it file by file. Copies drift: the next fix to the preview toggle, the create-chat flow or the chat polling has to be made twice, and the second host only learns about it by diffing.
+`@epam/ai-dial-projects` and `@epam/ai-dial-chat-hooks/project` already carry the Projects UI and its requests (`docs/projects-reuse.md`), yet every host still re-implements the same orchestration around them. `apps/chat` holds roughly 1,200 lines of project glue that contains no host knowledge (routes, i18n, contexts, `server-api`) in large stretches, and a second host has just copied all of it file by file. Copies drift: the next fix to the preview toggle, the create-chat flow or the chat polling has to be made twice, and the second host only learns about it by diffing.
 
 Measured duplication in `apps/chat/src` (each block is host-agnostic once its callbacks are injected):
 
@@ -37,7 +37,7 @@ Extract each block into `libs/chat-hooks` as an additive, host-agnostic API, in 
 
 - No move of pages, containers, `*Labels` hooks, `useBuilderLeaveGuard`, the composer menus, `project-create-errors` key mapping, or any JSX. Those depend on `t()`, router, notifications or app contexts.
 - No new UI, string, accessibility behaviour or RTL change; no backend or OpenAPI change.
-- No registry publication. `pg-chat` adopts the published version afterwards; its own removal of the `projects.api` / `project-conversations.api` / `projects-client` delegation layers is tracked separately in that repository.
+- No registry publication. A downstream host adopts the published version afterwards; its own removal of the `projects.api` / `project-conversations.api` / `projects-client` delegation layers is tracked separately in that repository.
 - No new package, no new peer on any entry point.
 
 ### Alternatives
@@ -78,4 +78,4 @@ None. `project-context-file-preview`, `project-create-ui`, `project-edit-ui`, `p
 
 ### Backward compatibility and rollback
 
-Not breaking. All additions are new exports; no existing export is renamed or removed. `apps/chat` keeps its current module paths until their last importer moves, and `ConversationDataSource` keeps its shape (only `notFoundMessageKey`'s type widens from a key enum to `string`). A slice reverts by restoring its adapter and removing its export; there is no persisted-data, API or backend migration. Registry publication and `pg-chat` adoption are separate release steps.
+Not breaking. All additions are new exports; no existing export is renamed or removed. `apps/chat` keeps its current module paths until their last importer moves, and `ConversationDataSource` keeps its shape (only `notFoundMessageKey`'s type widens from a key enum to `string`). A slice reverts by restoring its adapter and removing its export; there is no persisted-data, API or backend migration. Registry publication and downstream adoption are separate release steps.

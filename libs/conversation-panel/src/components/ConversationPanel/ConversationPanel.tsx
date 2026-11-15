@@ -49,6 +49,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     onActiveFilterChange,
     isFilterTabsHidden = false,
     hiddenSources,
+    pinnedProjects,
   }) => {
     const {
       colors,
@@ -77,6 +78,10 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       groupLabels,
       actionsLabel,
       unreadIndicatorLabel,
+      seeAllLabel,
+      seeAllAriaLabel,
+      expandProjectLabel,
+      collapseProjectLabel,
       closeAriaLabel,
     } = labels;
     const [searchQuery, setSearchQuery] = useState('');
@@ -115,6 +120,10 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         groupLabels,
         actionsLabel,
         unreadIndicatorLabel,
+        seeAllLabel,
+        seeAllAriaLabel,
+        expandProjectLabel,
+        collapseProjectLabel,
       }),
       [
         emptyLabel,
@@ -128,6 +137,10 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         groupLabels,
         actionsLabel,
         unreadIndicatorLabel,
+        seeAllLabel,
+        seeAllAriaLabel,
+        expandProjectLabel,
+        collapseProjectLabel,
       ],
     );
 
@@ -233,6 +246,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           onActionMenuOpen={onActionMenuOpen}
           onMoveConversation={onMoveConversation}
           onVisibleConversationIdsChange={onVisibleConversationIdsChange}
+          pinnedProjects={pinnedProjects}
           styles={listStyles}
         />
       </SidebarPanel>

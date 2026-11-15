@@ -55,26 +55,32 @@ export const ScheduledTaskHistorySection: FC<
     : 'pt-2';
   const loadMoreErrorText =
     labels.historyLoadMoreErrorLabel ?? labels.historyErrorLabel;
-  const footer = loadMoreError ? (
-    <li className={footerClassName}>
-      <p>{loadMoreErrorText}</p>
-      {onRetryLoadMore && (
+  const renderFooter = () => {
+    if (loadMoreError) {
+      return (
+        <li className={footerClassName}>
+          <p>{loadMoreErrorText}</p>
+          {onRetryLoadMore && (
+            <GhostButton
+              label={labels.historyRetryLabel}
+              onClick={onRetryLoadMore}
+              disabled={isLoadingMore}
+            />
+          )}
+        </li>
+      );
+    }
+    return onLoadMore && hasMore && labels.historyShowMoreLabel ? (
+      <li className={footerClassName}>
         <GhostButton
-          label={labels.historyRetryLabel}
-          onClick={onRetryLoadMore}
+          label={labels.historyShowMoreLabel}
+          onClick={onLoadMore}
           disabled={isLoadingMore}
         />
-      )}
-    </li>
-  ) : onLoadMore && hasMore && labels.historyShowMoreLabel ? (
-    <li className={footerClassName}>
-      <GhostButton
-        label={labels.historyShowMoreLabel}
-        onClick={onLoadMore}
-        disabled={isLoadingMore}
-      />
-    </li>
-  ) : undefined;
+      </li>
+    ) : undefined;
+  };
+  const footer = renderFooter();
 
   const nextRun = nextRunLabel ? (
     <p className={mergeClasses(runTimestampClassName, styles.subtitleText)}>

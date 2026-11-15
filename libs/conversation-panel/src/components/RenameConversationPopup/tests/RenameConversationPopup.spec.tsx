@@ -90,7 +90,11 @@ vi.mock('@epam/ai-dial-ui-kit', async () => ({
       {error && <p id="input-error">{error}</p>}
     </>
   ),
-  Spinner: () => <span role="status">Loading</span>,
+  Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
+    <span role="status" aria-label={ariaLabel ?? 'Loading'}>
+      Loading
+    </span>
+  ),
   DIAL_ICON_SIZE: { SM: 18, MD: 20 },
   GhostIconButton: ({
     icon,
@@ -212,7 +216,7 @@ describe('RenameConversationPopup', () => {
 
   it('replaces the fields and actions with a loader while isSaving is true', () => {
     render(<RenameConversationPopup {...DEFAULT_PROPS} isSaving={true} />);
-    expect(screen.getByRole('status')).toBeTruthy();
+    expect(screen.getByRole('status', { name: 'Saving' })).toBeTruthy();
     expect(screen.queryByRole('textbox')).toBeNull();
     expect(
       screen.queryByRole('button', { name: DEFAULT_LABELS.saveLabel }),
@@ -220,6 +224,17 @@ describe('RenameConversationPopup', () => {
     expect(
       screen.queryByRole('button', { name: DEFAULT_LABELS.cancelLabel }),
     ).toBeNull();
+  });
+
+  it('names the saving spinner with labels.savingLabel', () => {
+    render(
+      <RenameConversationPopup
+        {...DEFAULT_PROPS}
+        labels={{ ...DEFAULT_LABELS, savingLabel: 'Enregistrement' }}
+        isSaving={true}
+      />,
+    );
+    expect(screen.getByRole('status', { name: 'Enregistrement' })).toBeTruthy();
   });
 
   it('keeps the failure alert mounted while saving and fills it when the save fails', () => {

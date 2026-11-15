@@ -5,6 +5,17 @@
 .tree {
   border-color: var(--dfms-tree-border, var(--stroke-tertiary, #e0e6f0));
   background: var(--dfms-tree-bg, var(--bg-layer-raised, #fcfcfc));
+  /*
+   * A shadow on the end edge only: the clip keeps it from spilling past the
+   * panel's top, bottom and start edge, so it runs the panel's full height.
+   */
+  box-shadow: 4px 0 8px 0 var(--dfms-tree-shadow, rgb(39 100 217 / 10%));
+  clip-path: inset(0 -12px 0 0);
+
+  :global([dir='rtl']) & {
+    box-shadow: -4px 0 8px 0 var(--dfms-tree-shadow, rgb(39 100 217 / 10%));
+    clip-path: inset(0 0 0 -12px);
+  }
 }
 
 .overlay {

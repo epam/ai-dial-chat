@@ -90,7 +90,7 @@ Dismissal SHALL be persistent, not session-scoped: a dismissed announcement SHAL
 
 The signature SHALL be computed by a shared, host-agnostic helper (`buildAnnouncementSignature`, exported from `@epam/ai-dial-chat-hooks`) and SHALL be deterministic for a given announcement payload. Browser-storage access SHALL stay at the app edge — the `useAnnouncementDismissal` hook under `apps/chat/src/hooks/` — because libraries must not read or write browser storage directly.
 
-When the announcement consists only of the legacy `announcementHtml` (no title, no description), the signature SHALL be exactly that HTML string, so dismissals recorded before the structured fields existed remain valid without a storage migration. When structured content is present, the signature SHALL be a JSON payload covering the title, the description, and — only when `config.announcements` is non-empty — the announcements-popover entries behind the count pill (each rebuilt field by field as `title`, `description`, `link` so operator key order does not churn it); the legacy `announcementHtml` is excluded, matching the fact that a structured banner never renders it. Leaving `items` out when the list is empty keeps signatures stored before the popover existed valid.
+When the announcement consists only of the legacy `announcementHtml` (no title, no description), the signature SHALL be exactly that HTML string, so dismissals recorded before the structured fields existed remain valid without a storage migration. When structured content is present, the signature SHALL be a JSON payload covering the title, the description, and — only when `config.announcements` is non-empty — the announcements-popover entries behind the count pill (each rebuilt field by field as `title`, `description`, `link` so operator key order does not churn it); the legacy `announcementHtml` is excluded, matching the fact that a structured banner never renders it. Leaving `items` out when the list is empty keeps signatures stored before the popover existed valid. An entry's `severity` SHALL NOT be part of the signature: the Chat banner and popover do not render it, and adding it would change the stored signature of every deployment that configures `ANNOUNCEMENTS`, re-showing banners users already dismissed.
 
 #### Scenario: Closing hides the banner and persists the signature
 
@@ -130,6 +130,16 @@ When the announcement consists only of the legacy `announcementHtml` (no title, 
 #### Scenario: A pre-existing legacy dismissal survives the upgrade
 
 - **WHEN** `localStorage["textOfClosedAnnouncement"]` holds a message string dismissed before the structured fields existed, and the deployment still configures only `ANNOUNCEMENT_HTML_MESSAGE` with that same string
+- **THEN** the banner stays hidden after the upgrade, with no storage migration performed
+
+#### Scenario: Severity does not change the signature
+
+- **WHEN** two announcement payloads are identical except that one popover entry has `severity: AnnouncementSeverity.Warning` in one and `AnnouncementSeverity.Info` (or no `severity`) in the other
+- **THEN** `buildAnnouncementSignature` returns the same string for both
+
+#### Scenario: Upgrading to a backend that returns severity keeps existing dismissals
+
+- **WHEN** a user dismissed a structured banner with popover entries before `severity` existed, and the backend now returns the same entries with `severity: "info"`
 - **THEN** the banner stays hidden after the upgrade, with no storage migration performed
 
 ---

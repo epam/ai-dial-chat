@@ -31,6 +31,7 @@ const project = (
   contentVersion: '"cv1"',
   conversationCount: 0,
   canEdit: true,
+  canManage: true,
   ...overrides,
 });
 

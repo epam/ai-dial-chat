@@ -1,6 +1,5 @@
 import {
   BadGatewayException,
-  ForbiddenException,
   HttpException,
   Injectable,
   Logger,
@@ -17,6 +16,7 @@ import { PUBLIC_BUCKET } from '../constants/dial.constants';
 import { DialClientService } from '../dial/dial-client.service';
 import { ConversationReadStateService } from '../scheduled-task-unread/conversation-read-state.service';
 import { UserConfigService } from '../user-config/user-config.service';
+import { ProjectAccessService } from './access/project-access.service';
 import { PROJECT_WRITE_ATTEMPTS } from './constants/project-context.constants';
 import {
   type ProjectCreateInput,
@@ -38,6 +38,10 @@ import {
   ProjectsSnapshotService,
 } from './snapshot/projects-snapshot.service';
 import { ProjectCreateErrorCode } from './types/project-create-error-code.enum';
+import {
+  type ProjectAccess,
+  resolveProjectSource,
+} from './utils/project-access.util';
 import {
   projectChanged,
   projectConflict,
@@ -87,16 +91,6 @@ const SOURCE_PRECEDENCE = [
 
 const isProject = (item: ProjectDto | null): item is ProjectDto => item != null;
 
-/** The listing's source rule, applied to one project's bucket. */
-export const resolveProjectSource = (
-  bucket: string,
-  sessionBucket: string,
-): ProjectSource => {
-  if (bucket === sessionBucket) return ProjectSource.Personal;
-  if (bucket === PUBLIC_BUCKET) return ProjectSource.Organization;
-  return ProjectSource.Shared;
-};
-
 /** Parses an id the param DTO already validated; a miss is still a `404`. */
 export const requireProjectId = (id: string): ParsedProjectId => {
   const parsed = parseProjectId(id);
@@ -114,6 +108,7 @@ export class ProjectsService {
     private readonly snapshotService: ProjectsSnapshotService,
     private readonly userConfigService: UserConfigService,
     private readonly readStateService: ConversationReadStateService,
+    private readonly accessService: ProjectAccessService,
   ) {}
 
   /**
@@ -124,8 +119,10 @@ export class ProjectsService {
    * aggregate ETag; its `412` (a write in between) re-reads and tries again,
    * up to `PROJECT_WRITE_ATTEMPTS` deletes, then `409 project-changed`. A
    * missing `If-Match`, `*` or a list of tags is refused before any Core
-   * call, so this API never deletes unconditionally, and so is a project
-   * outside the caller's own bucket (`403`), matching `canEdit`. The
+   * call, so this API never deletes unconditionally, and so is a caller
+   * other than the owner (`ProjectAccessService.assertCanManage`, `403`),
+   * matching `canManage`: a share recipient never deletes, even with
+   * `WRITE`, which would be enough for Core. The
    * project's conversations go with it. The caller's pin is then removed as
    * a best effort — the delete has already committed.
    */
@@ -136,9 +133,7 @@ export class ProjectsService {
     accessToken: string,
   ): Promise<void> {
     const parsed = requireProjectId(id);
-    if (parsed.bucket !== sessionBucket) {
-      throw new ForbiddenException('Only the owner can delete a project');
-    }
+    this.accessService.assertCanManage(parsed, sessionBucket);
     const expectedVersion = requireSingleIfMatch(ifMatch);
     const signal = AbortSignal.timeout(DELETE_TIMEOUT_MS);
 
@@ -249,9 +244,10 @@ export class ProjectsService {
    * one deadline that a client disconnect (`signal`) also ends. When either
    * read fails the other is aborted, so a failed metadata read does not
    * leave the archive buffering. The name is the last path segment, as in
-   * the listing; `canEdit` holds only in the caller's own bucket, because
-   * project share links are view-only and public projects change only
-   * through publication.
+   * the listing. `canEdit` and `canManage` come from `ProjectAccessService`:
+   * for a shared project its lookup runs alongside the two reads but outside
+   * the sibling-failure controller, so a failed lookup opens the project
+   * read-only instead of failing the read.
    */
   async getProject(
     id: string,
@@ -277,7 +273,27 @@ export class ProjectsService {
         throw err;
       }
     };
-    const [metadata, snapshot] = await Promise.all([
+    const resolveAccessQuietly = async (): Promise<ProjectAccess> => {
+      try {
+        return await this.accessService.resolveAccess(
+          parsed,
+          sessionBucket,
+          accessToken,
+          readSignal,
+        );
+      } catch (err) {
+        /* A lookup cut short by a failed sibling read or a departed client
+         * opens nothing: the request ends with that read's error instead, so
+         * only a lookup that failed on its own is logged. */
+        if (!siblingFailure.signal.aborted && !signal?.aborted) {
+          this.logger.warn(
+            `Project access lookup failed; the project opens read-only (${err instanceof Error ? err.name : 'unknown error'})`,
+          );
+        }
+        return { canEdit: false, canManage: false };
+      }
+    };
+    const [metadata, snapshot, access] = await Promise.all([
       abortSiblingOnFailure(
         this.readProjectMetadata(
           parsed,
@@ -295,6 +311,7 @@ export class ProjectsService {
           readSignal,
         ),
       ),
+      resolveAccessQuietly(),
     ]);
     const source = resolveProjectSource(parsed.bucket, sessionBucket);
 
@@ -309,7 +326,7 @@ export class ProjectsService {
       createdAt: metadata.createdAt,
       updatedAt: metadata.updatedAt,
       ...this.describeSnapshot(snapshot),
-      canEdit: source === ProjectSource.Personal,
+      ...access,
     };
   }
 

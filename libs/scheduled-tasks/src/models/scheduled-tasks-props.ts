@@ -42,6 +42,8 @@ export interface ScheduledTasksLabels {
   errorLabel: string;
   /** Label for the retry action shown when `error` is set. */
   retryLabel: string;
+  /** Accessible label of the first-page loading spinner shown while `isLoading` is `true`. Defaults to `'Loading scheduled tasks'`. */
+  loadingAriaLabel?: string;
   /** Announced via `aria-live` while a load-more fetch is in flight (`isLoadingMore`). Optional — no announcement is made when omitted. */
   loadingMoreLabel?: string;
   loadMoreErrorLabel?: string;

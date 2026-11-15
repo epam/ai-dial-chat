@@ -261,7 +261,10 @@ the neutral `--bg-layer-sunken` surface, recoloured by `colors.background`), wit
 reset sentence after it. `UsageLimitBannerSeverity.Warning` renders the kit's
 filled warning icon and `UsageLimitBannerSeverity.Reached` its filled error icon.
 Both announce politely through `role="status"`, because the banner reports
-state rather than replying to an action.
+state rather than replying to an action. A banner mounted together with its
+text is not announced reliably, so a host that shows it conditionally should
+keep a kit `LiveRegion` mounted around it and pass `isLiveRegion={false}` —
+the root then takes `role="none"` and the host's region is the only one.
 
 The component holds no state and knows nothing about usage data. The host
 decides when to render it and passes every string already translated and
@@ -339,6 +342,8 @@ Stop finalizes the file and releases the microphone before awaiting recognition.
 Set `isAudioMessageSupported` to show the microphone. Pass translated `transcribingLabel` (default `Transcribing audio…`) and `voiceErrorLabel` (default `Voice input failed`) for processing status and fallback failures, plus the existing microphone/stop/discard labels.
 
 Base text input with auto-resize and keyboard shortcut handling. Use directly when a stripped-down input is needed — `ConversationInput` wraps it with the app-facing props it needs. The layout is always two rows: the textarea on its own full-width row, and the action bar (`+` button, tools chips, model selector, send/stop, mic) below it. Pass `hideActionBar` to render only the textarea and the attachment tray.
+
+Below 768px the input replaces the tools chip row with one chip that shows `toolsMenuTitle` and the number of switched-on tools (accent-styled while any is on). Tapping it opens the Tools bottom sheet, where each tool is toggled; its accessible name comes from `toolsChipLabels.summaryLabel(selectedCount, totalCount)` (default `Tools: {selected} of {total} on`). The `+` menu still offers Tools on a phone, even when `canRemoveTools` is `false`.
 
 `onChange` (on `Input`, `ConversationInput`, and `EditMessageInput`) fires with the textarea's current value on every change — typing, deleting, pasting, undo/redo — not only on send/save. Omit it to ignore keystrokes between sends, as before this prop existed on `ConversationInput`/`EditMessageInput`; a host tracking live state derived from the draft (e.g. skill-mention anchors that must reconcile as the user edits around them) wires this alongside `activeMentions`/`onBackspaceAtCaret`.
 
@@ -502,8 +507,9 @@ The model-selector menu carries its own set:
 
 `dial-ci-model-menu` lands on three different presentations, so scope your rule
 if you need to distinguish them: the desktop dropdown (a Floating UI portal), a
-host-supplied `modelPickerOverlay` dropdown, and the mobile bottom sheet (a
-`role="dialog"`). The portal renders outside the composer's DOM subtree, which
+host-supplied `modelPickerOverlay` dropdown (a `role="dialog"` named by
+`modelSelectorLabels.ariaLabel`, since the host panel is more than a menu), and
+the mobile bottom sheet (a `role="dialog"`). The portal renders outside the composer's DOM subtree, which
 is why the menu needs a class of its own rather than a descendant selector from
 `dial-ci-wrapper`.
 
@@ -625,6 +631,8 @@ whose composer is already wide below that width opts the narrower widths in with
   onSend={handleSend}
 />
 ```
+
+On a phone (< 768px) the tool chips collapse into one "Tools: N" summary chip that opens the tools sheet. An embed that is narrow but not a phone, such as a chat overlay in a desktop page, keeps the per-tool chip row with `isToolChipRowAllowedOnPhone`.
 
 The flag affects the action row alone. The add menu and the model picker keep
 their bottom-sheet presentation below 768px, independently of this flag, so it

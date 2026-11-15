@@ -45,12 +45,13 @@ vi.mock('../../Conversation/Conversation', () => ({
   },
 }));
 
-const project = (canEdit: boolean, bucket = 'a1b2c3') => ({
+/* The owner manages; a share recipient never does, with or without edit access. */
+const project = (canEdit: boolean, bucket = 'a1b2c3', canManage = canEdit) => ({
   id: `projects/${bucket}/q4`,
   name: 'Q4 launch',
   bucket,
   path: 'q4',
-  source: canEdit ? ProjectSource.Personal : ProjectSource.Shared,
+  source: canManage ? ProjectSource.Personal : ProjectSource.Shared,
   description: '',
   instructions: '',
   contextFiles: [],
@@ -58,6 +59,7 @@ const project = (canEdit: boolean, bucket = 'a1b2c3') => ({
   contentVersion: '"cv1"',
   conversationCount: 1,
   canEdit,
+  canManage,
 });
 
 /* Stands in for `ChatLayout`: a top bar whose start cell is offered to the page. */
@@ -189,6 +191,16 @@ describe('ProjectChatPage', () => {
 
     expect(
       await screen.findByText(/read-only:true duplicate:false/),
+    ).toBeTruthy();
+  });
+
+  it('opens a shared project conversation writable for an editor', async () => {
+    vi.mocked(getProject).mockResolvedValue(project(true, 'z9y8x7', false));
+
+    renderAt('/projects/chat/z9y8x7/q4/conversations/x');
+
+    expect(
+      await screen.findByText(/read-only:false duplicate:false/),
     ).toBeTruthy();
   });
 

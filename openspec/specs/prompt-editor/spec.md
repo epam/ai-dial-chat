@@ -5,7 +5,6 @@
 The prompt create/edit screen: the `@epam/ai-dial-prompt-editor` lib that owns the flat name/description/Instructions form, the lazy-loaded feature-gated route, create and update behaviour, and client validation mirroring the backend DTO constraints.
 
 ## Requirements
-
 ### Requirement: The editor's UI lives in `@epam/ai-dial-prompt-editor`
 
 `PromptEditor` SHALL use `EntityEditor` from `@epam/ai-dial-builder-form` as its outer shell, the same shell every entity editor uses. `@epam/ai-dial-builder-form` SHALL be listed under `dependencies` (not `peerDependencies`) in `libs/prompt-editor/package.json`.
@@ -89,61 +88,30 @@ When `OverlayFeature.Prompts` is disabled the route SHALL redirect to `ROUTES.Ca
 
 ### Requirement: The editor creates and updates prompts
 
-**Revised (see design.md D16):** `createPrompt` SHALL no longer send a `folderId` — new prompts land at root, since the screen has no folder control to derive one from. `updatePrompt` was already folder-agnostic and is unchanged.
+Create SHALL open the Save panel (see the `resource-save-panel` capability). On the panel's Save, the prompt SHALL be created through `promptsApi.createPrompt({ createPromptDto: { name, description, content, folderId } })` (`createPromptCreateAdapter` in `@epam/ai-dial-chat-hooks`), where `folderId` is the chosen Personal folder as a plain path and is omitted for the root; an Organization destination creates it at the root and then publishes it there. An update of the user's own prompt also goes through the panel (see "The editor moves a prompt through the Save panel"). An update of a writable shared prompt SHALL call `updatePrompt(id, { name, description, content })` directly, where `id` is the prompt's full resource path exactly as loaded; there is no separate owner-bucket argument to thread through.
 
-Create SHALL call `createPrompt({ name, description, content })`. An update — personal or shared — SHALL call `updatePrompt(id, { name, description, content })`, where `id` is the prompt's full resource path exactly as loaded; there is no separate owner-bucket argument to thread through. The update payload carries the form's current name, description, and content values.
+On success the page SHALL call `refetchPrompts()` and navigate back only after the refetch settles; the panel shows the success notification (`EntityOperation.Created` / `EntityOperation.Edited`). A failed create or panel save is shown inside the panel, and the form keeps every value. A failed in-place update of a shared prompt shows an inline name error on `409`, and otherwise `showErrorNotification` with `promptEditor.saveError`.
 
-On success the page SHALL call `refetchPrompts()`, show the shared success notification via `notifyOperationSuccess(NotifiableEntity.Prompt, EntityOperation.Created | EntityOperation.Edited, { name })`, and navigate back only after the refetch settles. A non-409 failure shows `showErrorNotification` with `promptEditor.saveError`.
+#### Scenario: Creating a prompt in a folder
+
+- **WHEN** the user fills name `summarize`, content `Summarize:`, clicks Create and confirms the panel with Personal `Work`
+- **THEN** `createPrompt({ createPromptDto: { name: 'summarize', content: 'Summarize:', folderId: 'Work' } })` is dispatched
+- **AND** the prompt appears in the catalog's Prompts tab under `Work`
 
 #### Scenario: Creating a root-level prompt
 
-- **WHEN** the user fills name `summarize`, content `Summarize:`, and saves
-- **THEN** `createPrompt({ name: 'summarize', content: 'Summarize:' })` is dispatched
-- **AND** on 201 the prompt appears in the catalog's Prompts tab under the Personal folder
-
-#### Scenario: Updating content only
-
-- **WHEN** the user edits only the content field and saves
-- **THEN** `updatePrompt(id, { name: <current name>, description: <current description>, content: <new value> })` is dispatched
-- **AND** no `movePrompt` call is made
-
-#### Scenario: Renaming a prompt
-
-- **WHEN** the user changes the name and saves
-- **THEN** `updatePrompt(id, { name: <new name> })` is dispatched and the prompt's `id` changes to reflect the new path within the same bucket
+- **WHEN** the user creates a prompt and confirms the panel with the Personal root
+- **THEN** the create request carries no `folderId`
 
 #### Scenario: Saving a writable shared prompt uses the same call shape as a personal one
 
 - **WHEN** the user saves changes to `prompts/owner-bucket/Work/AI/summarize`
-- **THEN** `updatePrompt('prompts/owner-bucket/Work/AI/summarize', <body>)` is dispatched — identical in shape to the personal-prompt update call, with no separate owner-bucket argument
+- **THEN** `updatePrompt('prompts/owner-bucket/Work/AI/summarize', <body>)` is dispatched directly, with no Save panel and no separate owner-bucket argument
 
-#### Scenario: Duplicate name shows an inline field error
+#### Scenario: A failed create keeps the form
 
-- **WHEN** the save request responds `409`
-- **THEN** an inline error is shown on the name field, the form stays open with the user's input intact, and no navigation occurs
-
-#### Scenario: Save failure keeps the form open
-
-- **WHEN** the save request responds `502`
-- **THEN** an error notification with the request id is shown, the form retains every entered value, and the user can retry
-
----
-
-### Requirement: The editor screen does not move or manage prompt folders
-
-**Superseded (see design.md D16).** `PromptEditor` SHALL expose no folder-management affordance. The two requirements this change originally shipped here — "The editor moves prompts between folders" and "The editor manages prompt folders" — described folder move/create/rename/delete dispatched from `PromptEditor`'s own folder picker. The approved Figma layout has no folder control on this screen, so none of that is reachable from `/prompt-editor` any more: `apps/chat/src/pages/PromptEditor/PromptEditor.tsx` does not call `movePrompt`, `createPromptFolder`, `renamePromptFolder`, or `deletePromptFolder`.
-
-The create/rename/delete behavior itself still exists, unchanged, in `PromptFolderField` (`libs/prompt-editor`) — see that component's own tests (`PromptFolderField.spec.tsx`, 13 passing) — for a host that composes the widget into a different screen. Nothing currently does.
-
-#### Scenario: The editor screen has no folder affordance
-
-- **WHEN** the user opens `/prompt-editor` in create or edit mode
-- **THEN** no folder picker, folder create/rename/delete control, or move-related error is rendered anywhere on the page
-
-#### Scenario: A prompt's folder is unaffected by editing it
-
-- **WHEN** the user edits and saves a prompt that lives in `Work/AI`
-- **THEN** `updatePrompt` is dispatched with the current form fields, no `movePrompt` call is made, and the prompt's `id` (and therefore its folder) is unchanged unless the name itself changed
+- **WHEN** the create request fails during the panel's Save
+- **THEN** the panel shows the error, no navigation occurs, and the form retains every entered value
 
 ---
 
@@ -240,3 +208,24 @@ The app page (`apps/chat/src/pages/PromptEditor/PromptEditor.tsx`) SHALL:
 #### Scenario: Default behaviour unchanged
 - **WHEN** the host omits `onDirtyChange` and the user activates Cancel after editing
 - **THEN** the lib's built-in "Discard unsaved changes?" confirmation opens as before
+
+### Requirement: The editor moves a prompt through the Save panel
+In edit mode, `PromptEditor` (`apps/chat/src/pages/PromptEditor/PromptEditor.tsx`) SHALL open the Save panel on Save. The panel has no Version section (prompts are unversioned). On confirm:
+
+- it SHALL dispatch `updatePrompt` with the current form fields;
+- when the chosen Personal folder differs from the saved prompt's folder, it SHALL then call the existing `movePrompt` (`POST /api/v1/prompts/move`) with the id returned by the update;
+- when an Organization folder is chosen, it SHALL publish the updated prompt there instead of moving it.
+
+The page body SHALL still render no inline folder picker, and no folder create, rename or delete control.
+
+#### Scenario: Editing without changing the folder
+- **WHEN** the user edits a prompt in `Work/AI` and confirms the Save panel with destination "Personal › Work › AI"
+- **THEN** `updatePrompt` is dispatched and no `movePrompt` call is made
+
+#### Scenario: Moving a prompt on save
+- **WHEN** the user edits a prompt in `Work/AI` and confirms the panel with destination "Personal › Archive"
+- **THEN** `updatePrompt` is dispatched, then `movePrompt` moves the prompt to `Archive`
+
+#### Scenario: Page body has no folder affordance
+- **WHEN** the user opens `/prompt-editor` in create or edit mode
+- **THEN** no folder picker or folder create/rename/delete control is rendered on the page itself

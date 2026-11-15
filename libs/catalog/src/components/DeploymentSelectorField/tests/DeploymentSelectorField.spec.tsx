@@ -43,6 +43,25 @@ describe('DeploymentSelectorField', () => {
     await waitFor(() => expect(trigger.matches(':focus')).toBe(true));
   });
 
+  it('opens the default panel as a named dialog announced by the trigger', async () => {
+    const user = userEvent.setup();
+    renderField({
+      labels: {
+        searchPlaceholder: 'Search',
+        searchAriaLabel: 'Search models',
+        emptyLabel: 'Nothing here',
+        errorLabel: 'Error',
+        panelAriaLabel: 'Pick a model',
+      },
+    });
+    const trigger = screen.getByRole('combobox');
+    expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+    await user.click(trigger);
+    const dialog = await screen.findByRole('dialog', { name: 'Pick a model' });
+    expect(within(dialog).getByRole('listbox')).toBeTruthy();
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
   it('keeps Browse available when records are empty', async () => {
     const onBrowse = vi.fn();
     const user = userEvent.setup();

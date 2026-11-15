@@ -149,11 +149,17 @@ describe('ApplicationCredentials', () => {
     expect(native.getByRole('status').textContent).toBe('Signed in');
   });
 
-  it('reports a load failure as page state, not an alert', () => {
-    render(<ApplicationCredentials {...props()} hasError />);
-    expect(
-      screen.getByText('Unable to load credentials').getAttribute('role'),
-    ).toBe('status');
+  it('announces a load failure through the status region mounted while loading', () => {
+    const { rerender } = render(
+      <ApplicationCredentials {...props()} services={[]} isLoading />,
+    );
+    const region = screen
+      .getAllByRole('status')
+      .find((node) => node.textContent === '');
+    expect(region).toBeTruthy();
+    rerender(<ApplicationCredentials {...props()} services={[]} hasError />);
+    expect(region?.isConnected).toBe(true);
+    expect(region?.textContent).toBe('Unable to load credentials');
     expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
   });

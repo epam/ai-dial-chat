@@ -27,10 +27,11 @@ import type {
 } from './dto/revoke-access.dto';
 import type { UploadArchiveResponseDto } from './dto/upload-archive.dto';
 import type { FileUploadResponseDto } from './dto/upload-file-response.dto';
-import type { UploadMode } from './dto/upload-file.dto';
 import { FilesFolderService } from './folder/files-folder.service';
 import { FilesListingService } from './listing/files-listing.service';
 import { FilesSharingService } from './sharing/files-sharing.service';
+import type { UploadMode } from './types/upload-mode.enum';
+import { FilesArchiveUploadService } from './upload/files-archive-upload.service';
 import type {
   StreamedUploadFile,
   UploadedArchiveFile,
@@ -54,6 +55,7 @@ export class FilesService {
     private readonly filesArchiveDownloadService: FilesArchiveDownloadService,
     private readonly filesSharingService: FilesSharingService,
     private readonly filesBatchOperationsService: FilesBatchOperationsService,
+    private readonly filesArchiveUploadService: FilesArchiveUploadService,
   ) {}
 
   uploadFile(
@@ -96,7 +98,7 @@ export class FilesService {
     archiveFile: UploadedArchiveFile,
     token: string,
   ): Promise<UploadArchiveResponseDto> {
-    return this.filesUploadService.uploadArchive(
+    return this.filesArchiveUploadService.uploadArchive(
       bucket,
       destinationPath,
       archiveFile,

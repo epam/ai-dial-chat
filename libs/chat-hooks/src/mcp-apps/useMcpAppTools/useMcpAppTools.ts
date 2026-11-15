@@ -7,7 +7,8 @@ import {
   collectToolCallNames,
   sanitizeToolName,
   type McpAppToolRef,
-  type McpDeploymentKind,
+  McpAppToolDiscovery,
+  McpDeploymentKind,
 } from '@epam/ai-dial-mcp-apps';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { isPublicToolsetId } from '../../oauth/toolset-id';
@@ -72,7 +73,10 @@ export const useMcpAppTools = (
       return;
     }
     const deploymentId = deployment.id;
-    const kind: McpDeploymentKind = deployment.type;
+    const kind =
+      deployment.type === 'toolset'
+        ? McpDeploymentKind.Toolset
+        : McpDeploymentKind.Application;
 
     const loadDirectTools = async () => {
       try {
@@ -84,7 +88,7 @@ export const useMcpAppTools = (
             toolName,
             mcpToolName: toolName,
             kind,
-            discovery: 'direct',
+            discovery: McpAppToolDiscovery.Direct,
           })),
         );
       } catch {
@@ -119,7 +123,10 @@ export const useMcpAppTools = (
       const results = await Promise.all(
         candidateToolsets.map(async (toolset) => {
           try {
-            const tools = await client.listAppTools(toolset.id, 'toolset');
+            const tools = await client.listAppTools(
+              toolset.id,
+              McpDeploymentKind.Toolset,
+            );
             return tools.map(({ resourceUri, toolName }) => ({
               toolsetId: toolset.id,
               resourceUri,
@@ -127,8 +134,8 @@ export const useMcpAppTools = (
                 `${toolset.displayName ?? toolset.id}_${toolName}`,
               ),
               mcpToolName: toolName,
-              kind: 'toolset' as McpDeploymentKind,
-              discovery: 'indirect' as const,
+              kind: McpDeploymentKind.Toolset,
+              discovery: McpAppToolDiscovery.Indirect,
             }));
           } catch {
             return [];

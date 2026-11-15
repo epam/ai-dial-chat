@@ -60,11 +60,11 @@ describe('ConversationTitlesService', () => {
   it.each(['bucket', 'public', 'shared-owner'])(
     'reads the correct %s bucket and preserves literal escapes',
     async (bucket) => {
-      const resourceId = `conversations/${bucket}/applications/public/pg/pg-agent%255F%255F1.0.0__New%20chat`;
+      const resourceId = `conversations/${bucket}/applications/public/sample/sample-agent%255F%255F1.0.0__New%20chat`;
       await service.getConversationTitles([resourceId], 'token');
       expect(getConversation).toHaveBeenCalledWith(
         bucket,
-        'applications/public/pg/pg-agent%255F%255F1.0.0__New%20chat',
+        'applications/public/sample/sample-agent%255F%255F1.0.0__New%20chat',
         expect.anything(),
       );
     },

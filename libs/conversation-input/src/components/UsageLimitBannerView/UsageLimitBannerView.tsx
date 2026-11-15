@@ -28,6 +28,7 @@ export const UsageLimitBannerView: FC<UsageLimitBannerViewProps> = ({
   closeAriaLabel = 'Close notification',
   limitTextClassName = 'dial-small-paragraph-semi-text',
   resetTextClassName = 'dial-small-paragraph-text',
+  isLiveRegion = true,
   className,
   colors,
 }) => {
@@ -58,10 +59,12 @@ export const UsageLimitBannerView: FC<UsageLimitBannerViewProps> = ({
      reports state on page load and after streaming, not a reply to an action,
      so it must not interrupt. The sunken fill keeps the neutral section-message
      surface while the variant still tints the glyph. The kit's own close button
-     has a fixed English name, so a lib-owned `CloseButton` takes its place. */
+     has a fixed English name, so a lib-owned `CloseButton` takes its place.
+     `role="none"` keeps a host's always-mounted region the only one, since
+     the kit would otherwise default warning/error to `alert`. */
   return (
     <Notification
-      role="status"
+      role={isLiveRegion ? 'status' : 'none'}
       variant={SEVERITY_VARIANTS[severity]}
       type={NotificationType.SectionMessage}
       title={resetSentence ? limitSentence : undefined}

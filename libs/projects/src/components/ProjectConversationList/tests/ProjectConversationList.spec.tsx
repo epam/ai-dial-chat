@@ -47,6 +47,52 @@ describe('ProjectConversationList', () => {
     document.documentElement.dir = 'ltr';
   });
 
+  it('renders the trailing node of an item inside its row button', () => {
+    renderList({
+      items: [
+        {
+          id: 'c1',
+          title: 'Weekly summary',
+          isUnread: true,
+          leading: <b>Avatar</b>,
+          trailing: <i>Badge</i>,
+        },
+      ],
+    });
+
+    const row = screen.getByRole('button', { name: /Weekly summary/ });
+    expect(within(row).getByText('Badge')).toBeTruthy();
+    // eslint-disable-next-line testing-library/no-node-access -- the dot is a decorative span with no role
+    expect(row.querySelector('[class*="unreadDot"]')).toBeNull();
+  });
+
+  it('draws the unread dot at the end of the row when a leading node replaces the status point', () => {
+    renderList({
+      items: [
+        {
+          id: 'c1',
+          title: 'Weekly summary',
+          isUnread: true,
+          leading: <b>A</b>,
+        },
+      ],
+    });
+
+    const row = screen.getByRole('button', { name: /Weekly summary/ });
+    // eslint-disable-next-line testing-library/no-node-access -- the dot is a decorative span with no role
+    expect(row.querySelectorAll('[class*="unreadDot"]')).toHaveLength(1);
+    expect(row.lastElementChild?.className).toContain('size-6');
+  });
+
+  it('renders the leading node of an item inside its row button', () => {
+    renderList({
+      items: [{ id: 'c1', title: 'Weekly summary', leading: <b>Avatar</b> }],
+    });
+
+    const row = screen.getByRole('button', { name: /Weekly summary/ });
+    expect(within(row).getByText('Avatar')).toBeTruthy();
+  });
+
   it('names the section by its heading and each row by its title and author', () => {
     renderList();
 

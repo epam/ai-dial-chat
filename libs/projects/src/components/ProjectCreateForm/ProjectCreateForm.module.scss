@@ -11,6 +11,11 @@
   white-space: pre-line;
 }
 
+/* The doubled class beats the kit's `bg-layer-base`; a disabled or drag-active zone keeps the kit's own background. */
+.dropZone.dropZone:not(:global(.border-accent), :global(.cursor-not-allowed)) {
+  background: var(--pcf-dropzone-bg, var(--bg-layer-raised, #d1dbea));
+}
+
 .label {
   color: var(--pcf-label-text, var(--text-secondary, #57647a));
 }

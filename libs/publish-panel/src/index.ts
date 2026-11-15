@@ -9,10 +9,25 @@ export type {
   PublishResourceSummary,
 } from './models/publish';
 
+export { PublishDependencyType } from './models/publish-dependency';
+export type { PublishDependency } from './models/publish-dependency';
+export type {
+  PublishDependenciesColors,
+  PublishDependenciesLabels,
+  PublishDependenciesListProps,
+  PublishDependenciesStyles,
+} from './models/publish-dependencies-list';
+
 // Utils
 export { derivePublishState } from './utils/publish-state';
 export { formatPublishedDate } from './utils/format-published-date';
 export { usePublishFlow } from './utils/use-publish-flow';
+export { usePublishFolderView } from './utils/use-publish-folder-view';
+export type {
+  UsePublishFolderViewOptions,
+  UsePublishFolderViewResult,
+} from './utils/use-publish-folder-view';
+export { PublishPanelView } from './types/publish-panel';
 export type {
   PublishFlowItem,
   UsePublishFlowOptions,
@@ -51,6 +66,8 @@ export type {
   PublishAccessRulesStyles,
 } from './models/publish-access-rules-styles';
 
+export { PublishDependenciesList } from './components/PublishDependenciesList/PublishDependenciesList';
+
 export { PublishHistoryList } from './components/PublishHistoryList/PublishHistoryList';
 export type {
   PublishHistoryListColors,
@@ -88,3 +105,31 @@ export type {
   StandalonePublishPanelLabels,
 } from './components/PublishPanel/StandalonePublishPanel';
 export { PUBLISH_PANEL_CLASS } from './constants/public-class-names';
+
+export type {
+  FolderDestination,
+  FolderDestinationRoot,
+} from './models/folder-destination';
+
+export { UnpublishConfirmationDialog } from './components/UnpublishConfirmationDialog/UnpublishConfirmationDialog';
+export type {
+  UnpublishConfirmationDialogColors,
+  UnpublishConfirmationDialogLabels,
+  UnpublishConfirmationDialogProps,
+} from './models/unpublish-confirmation-dialog';
+
+export { SaveToFolderView, SaveVersionMode } from './types/save-to-folder';
+export { SaveToFolderPanel } from './components/SaveToFolderPanel/SaveToFolderPanel';
+export { StandaloneSaveToFolderPanel } from './components/SaveToFolderPanel/StandaloneSaveToFolderPanel';
+export type {
+  SaveToFolderAccessRulesProps,
+  SaveToFolderPanelBaseProps,
+  SaveToFolderPanelColors,
+  SaveToFolderPanelLabels,
+  SaveToFolderPanelProps,
+  SaveToFolderPanelStyles,
+  SaveToFolderVersionProps,
+  StandaloneSaveToFolderPanelColors,
+  StandaloneSaveToFolderPanelLabels,
+  StandaloneSaveToFolderPanelProps,
+} from './models/save-to-folder-panel';

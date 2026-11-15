@@ -1,16 +1,10 @@
+import { ApplicationCredentials as CredentialsForms } from '@epam/ai-dial-catalog';
 import {
-  ApplicationCredentials as CredentialsForms,
-  type ApplicationCredentialLoginParams,
-} from '@epam/ai-dial-catalog';
-import {
-  buildApplicationCredentialLoginParams,
-  ExternalServiceAuthType,
-  ExternalServiceCredentialsLevel,
-  ExternalServiceLoginOutcomeType,
   mapApplicationCredentials,
+  useApplicationCredentialActions,
   useApplicationCredentials,
 } from '@epam/ai-dial-chat-hooks';
-import { useCallback, useMemo, type FC } from 'react';
+import { useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ApplicationCredentialsI18nKeys,
@@ -46,64 +40,20 @@ export const ApplicationCredentials: FC<ApplicationCredentialsProps> = ({
       offlineCredentialsClient: offlineCredentialsApi,
     });
 
-  const handleLogin = useCallback(
-    async (serviceId: string, params: ApplicationCredentialLoginParams) => {
-      const service = services.find((candidate) => candidate.id === serviceId);
-      if (!service) return false;
-      let outcome;
-      try {
-        outcome = await login(
-          buildApplicationCredentialLoginParams(appId, service, params),
-        );
-      } catch {
-        throw new Error(t(ToolsetSigninI18nKeys.ErrorLoginFailed));
-      }
-      if (outcome.type === ExternalServiceLoginOutcomeType.Success) {
-        await refresh();
-        return true;
-      }
-      if (outcome.type === ExternalServiceLoginOutcomeType.Cancelled)
-        return false;
-      const keys = {
-        [ExternalServiceLoginOutcomeType.Failure]:
-          ToolsetSigninI18nKeys.ErrorLoginFailed,
-        [ExternalServiceLoginOutcomeType.PopupBlocked]:
-          ToolsetSigninI18nKeys.ErrorPopupBlocked,
-        [ExternalServiceLoginOutcomeType.AdminConsentRequired]:
-          ToolsetSigninI18nKeys.AdminConsentRequired,
-        [ExternalServiceLoginOutcomeType.OfflineUnavailable]:
-          ToolsetSigninI18nKeys.OfflineUnavailable,
-      };
-      throw new Error(
-        t(keys[outcome.type] ?? ToolsetSigninI18nKeys.ErrorLoginFailed),
-      );
+  const { onLogin, onLogout } = useApplicationCredentialActions({
+    appId,
+    services,
+    login,
+    signOutExternalService,
+    refresh,
+    labels: {
+      loginFailed: t(ToolsetSigninI18nKeys.ErrorLoginFailed),
+      popupBlocked: t(ToolsetSigninI18nKeys.ErrorPopupBlocked),
+      adminConsentRequired: t(ToolsetSigninI18nKeys.AdminConsentRequired),
+      offlineUnavailable: t(ToolsetSigninI18nKeys.OfflineUnavailable),
+      logoutFailed: t(ToolsetEditorI18nKeys.ErrorLogoutFailed),
     },
-    [appId, services, login, refresh, t],
-  );
-
-  const handleLogout = useCallback(
-    async (serviceId: string) => {
-      const service = services.find((candidate) => candidate.id === serviceId);
-      if (
-        !service ||
-        service.authenticationType === ExternalServiceAuthType.DialNative
-      )
-        return;
-      try {
-        await signOutExternalService(appId, serviceId, {
-          credentialsLevel: ExternalServiceCredentialsLevel.User,
-          authenticationType: service.authenticationType as Exclude<
-            ExternalServiceAuthType,
-            ExternalServiceAuthType.DialNative
-          >,
-        });
-      } catch {
-        throw new Error(t(ToolsetEditorI18nKeys.ErrorLogoutFailed));
-      }
-      await refresh();
-    },
-    [appId, services, refresh, t],
-  );
+  });
 
   const dialNativeHint = t(ToolsetSigninI18nKeys.DialNativeHint);
   const credentials = useMemo(
@@ -123,8 +73,8 @@ export const ApplicationCredentials: FC<ApplicationCredentialsProps> = ({
       hasError={hasError}
       showEmptyState={showEmptyState}
       onRetry={refresh}
-      onLogin={handleLogin}
-      onLogout={handleLogout}
+      onLogin={onLogin}
+      onLogout={onLogout}
       texts={{
         title: t(ApplicationCredentialsI18nKeys.Title),
         loading: t(BasicI18nKeys.Loading),

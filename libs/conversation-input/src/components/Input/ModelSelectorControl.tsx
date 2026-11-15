@@ -9,6 +9,7 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
+  DropdownOverlayRole,
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown } from '@tabler/icons-react';
@@ -208,6 +209,10 @@ export const ModelSelectorControl: FC<Props> = ({
         onOpenChange={setIsModelSheetOpen}
         trigger={[]}
         outsideClosable
+        /* The host panel holds a search field, its own menu of rows and a
+           footer button, so the overlay is a dialog rather than a menu. */
+        overlayRole={DropdownOverlayRole.Dialog}
+        overlayAriaLabel={modelSelectorLabels?.ariaLabel ?? 'Select model'}
         renderOverlay={() =>
           modelPickerOverlay(() => setIsModelSheetOpen(false))
         }

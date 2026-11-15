@@ -1,5 +1,4 @@
 import { extractDialErrorMessage } from '../../common/dial/dial-error.mapper';
-import type { GenerationTerminalEvent } from '../conversation-generation.service';
 import {
   BackgroundGenerationStatus,
   type BackgroundGenerationDto,
@@ -8,6 +7,7 @@ import type {
   ServerOwnedMessageFields,
   StoredMessage,
 } from './background-message';
+import type { GenerationTerminalEvent } from './conversation-generation.service';
 import { CoreResponseStatus, type CoreResponse } from './core-responses.client';
 import {
   RESPONSES_FAILED_MESSAGE,

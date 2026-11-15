@@ -38,8 +38,9 @@
     "placeholder": "How can I help you today?",
     "streamErrorTitle": "Couldn't finish this response",
     "streamError": "Something went wrong while generating the response. Try again in a moment.",
-    "generationConflict": "A response is already being generated in this conversation, possibly in another browser tab. Wait for it to finish or stop it before sending another message.",
+    "generationConflict": "A response is already being generated in this conversation. Wait for it to finish before sending another message.",
     "generationPersistenceError": "The response could not be saved. It is still shown here, but may be lost if you reload or leave this page. Copy it before continuing.",
+    "generationInterrupted": "No answer was received for this message. The response may have been interrupted. Try again.",
     "conversationReloadErrorTitle": "Couldn't refresh this conversation",
     "conversationReloadError": "Your response is still shown here. We couldn't load the latest conversation from the server.",
     "retryConversationReload": "Retry loading",
@@ -338,6 +339,8 @@
       "parameters": "Parameters",
       "hostedBy": "Hosted by",
       "releaseDate": "Release date",
+      "deprecationDate": "Deprecation date",
+      "endOfService": "End of service",
       "contextWindow": "Context window",
       "maxOutputTokens": "Max output tokens",
       "inputModalities": "Input modalities",
@@ -508,6 +511,10 @@
   "conversationPanel": {
     "updatingTitles": "Updating conversation names…",
     "chatsAndTasks": "Chats and tasks",
+    "seeAll": "See all",
+    "seeAllProjectChats": "See all chats in {{name}}",
+    "expandProject": "Expand project",
+    "collapseProject": "Collapse project",
     "search": {
       "open": "Search chats",
       "close": "Close search"
@@ -580,7 +587,8 @@
     "alreadyPublishedWarning": "This conversation is already published in {folder}.",
     "emptyFolderNameError": "Folder name cannot be empty.",
     "invalidFolderNameError": "Folder name contains invalid characters.",
-    "duplicateFolderNameError": "A folder with this name already exists."
+    "duplicateFolderNameError": "A folder with this name already exists.",
+    "sameAsParentFolderNameError": "A folder cannot have the same name as its parent folder."
   },
   "conversationUnpublish": {
     "confirmTitle": "Unpublish conversation?",
@@ -597,16 +605,35 @@
     "unpublishFailedMessage": "The unpublish request was not submitted. Please try again.",
     "unpublishNetworkErrorMessage": "The unpublish request was not submitted because your internet connection was lost. Please check your connection and try again.",
     "submitErrorCallout": "Publishing failed. Please try again.",
+    "adminApprovalTitle": "Admin approval required",
+    "adminApprovalMessage": "We’ll send a request to your organization’s admin. If approved, your {{entity}} will appear in the folder.",
     "authorLabel": "Author",
     "authorPlaceholder": "Author name",
     "authorHint": "Shown as the publication's author. Defaults to you — replace it to credit a team instead.",
     "folderLabel": "Publish to folder",
+    "noFolderSelected": "No folder selected",
+    "chooseFolder": "Choose",
     "noAccessError": "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
     "addSiblingFolder": "Add sibling",
     "addChildFolder": "Add child",
-    "summaryVersion": "Version {version} · current",
     "updateVersion": "Update version {version}",
-    "publishingInProgress": "Publishing…"
+    "publishingInProgress": "Publishing…",
+    "dependenciesTitle": "Private dependencies",
+    "dependenciesDescription": "This {{entity}} depends on personal private resources (listed below). After publishing, other users may not be able to use it fully, or may run into problems.",
+    "dependenciesAnnouncement_one": "{{count}} dependency is not public yet",
+    "dependenciesAnnouncement_other": "{{count}} dependencies are not public yet",
+    "dependenciesEntityApplication": "application",
+    "dependenciesEntityConversation": "conversation",
+    "dependenciesEntityProject": "project",
+    "dependenciesEntityToolset": "toolset",
+    "dependenciesEntityPrompt": "prompt",
+    "dependenciesEntitySkill": "skill",
+    "dependenciesEntityItem": "item",
+    "dependenciesTypeApplication": "Application",
+    "dependenciesTypeToolset": "Toolset",
+    "dependenciesTypePrompt": "Prompt",
+    "dependenciesTypeSkill": "Skill",
+    "dependenciesTypeFile": "File"
   },
   "publishAccessRules": {
     "heading": "Allow access if all match",
@@ -788,7 +815,10 @@
     "marker": {
       "label": "{{source}}",
       "labelWithOverflow": "{{source}} +{{count}}",
-      "ariaLabel": "Citation from {{source}}"
+      "ariaLabel": "Citation from {{source}}",
+      "labelWithPage": "{{source}}, p. {{page}}",
+      "labelWithPageAndOverflow": "{{source}}, p. {{page}} +{{count}}",
+      "ariaLabelWithPage": "Citation from {{source}}, page {{page}}"
     },
     "popup": {
       "switcher": "{{current}}/{{total}}",
@@ -804,7 +834,7 @@
   },
   "projects": {
     "page": {
-      "title": "All projects",
+      "title": "Projects",
       "newProject": "New project"
     },
     "toolbar": {
@@ -860,7 +890,8 @@
         "dropOverlayTitle": "Upload files",
         "dropOverlaySubtitle": "Drop files here to add them to this project",
         "remove": "Remove {{name}}",
-        "open": "Preview {{name}}"
+        "open": "Preview {{name}}",
+        "download": "Download {{name}}"
       },
       "status": {
         "added_one": "{{count}} file added",
@@ -907,18 +938,16 @@
       "mainContent": "Project chats"
     },
     "actions": {
-      "deleteConfirmTitle": "Delete \"{{name}}\"?",
-      "deleteConfirmDescription": "The project and its context files will be deleted. This cannot be undone.",
       "deleteError": "Could not delete the project",
       "downloadError": "Could not download",
-      "pinError": "Could not update the pin",
-      "deleteConfirmWithChatsDescription_one": "The project, its context files and its {{count}} chat will be deleted. This cannot be undone.",
-      "deleteConfirmWithChatsDescription_other": "The project, its context files and its {{count}} chats will be deleted. This cannot be undone."
+      "pinError": "Could not pin the project. Please try again.",
+      "unpinError": "Could not unpin the project. Please try again."
     },
     "edit": {
       "title": "Edit project",
       "saving": "Saving…",
       "savingStatus": "Saving project…",
+      "nameReadOnlyHint": "The project name can't be changed after creation",
       "toast": {
         "success": "Project \"{{name}}\" saved",
         "error": "Could not save the project",
@@ -937,8 +966,16 @@
       "emptyFolderNameError": "Folder name cannot be empty.",
       "invalidFolderNameError": "Folder name contains invalid characters.",
       "duplicateFolderNameError": "A folder with this name already exists.",
+      "sameAsParentFolderNameError": "A folder cannot have the same name as its parent folder.",
       "chatsWarning_one": "The {{count}} chat in this project is published with it.",
       "chatsWarning_other": "The {{count}} chats in this project are published with it."
+    },
+    "unpublish": {
+      "confirmTitle": "Unpublish project?",
+      "confirmMessage": "Unpublish \"{{name}}\" from \"{{folder}}\"? The request is submitted for admin approval.",
+      "selectFolderMessage": "Choose which folder to unpublish \"{{name}}\" from. The request is submitted for admin approval.",
+      "folderGroupAriaLabel": "Published folders",
+      "requestingStatus": "Requesting unpublish…"
     },
     "chats": {
       "title": "Chats",
@@ -1010,8 +1047,6 @@
       "scheduleHourlyAt": "Hourly, {{minute}} min past the hour",
       "scheduleEveryNMinutes_one": "Every minute",
       "scheduleEveryNMinutes_other": "Every {{count}} minutes",
-      "scheduleEveryNWeeks_one": "Every week on {{day}} at {{time}}",
-      "scheduleEveryNWeeks_other": "Every {{count}} weeks on {{day}} at {{time}}",
       "scheduleOnceAt": "Once on {{date}}",
       "scheduleRecurringFallback": "Recurring schedule"
     },
@@ -1030,13 +1065,12 @@
       "repeatWeekly": "Weekly",
       "repeatMonthly": "Monthly",
       "repeatCustom": "Custom",
-      "everyLabel": "Every",
-      "everyWeeksOption_one": "{{count}} week",
-      "everyWeeksOption_other": "{{count}} weeks",
       "timeLabel": "Time",
       "timeInvalid": "Enter a valid time",
       "dayOfWeekLabel": "Day",
       "dayOfWeekRequired": "Day of week is required",
+      "daysOfWeekLabel": "Days",
+      "daysOfWeekRequired": "Select at least one day",
       "dayOfMonthLabel": "Day of month",
       "dayOfMonthRequired": "Day of month is required",
       "minuteLabel": "Minutes past the hour",
@@ -1124,7 +1158,6 @@
     "conversationBanner": {
       "loadingLabel": "Loading task details…",
       "unavailableLabel": "Task details are unavailable",
-      "retryAriaLabel": "Retry loading task details",
       "taskDetailsLabel": "Task details",
       "taskDetailsAriaLabel": "View task details for {{taskName}}"
     },
@@ -1423,6 +1456,8 @@
     "visibilityNote": "This deployment and its updates will be visible to users with the link.",
     "visibilityNoteEdit": "Anyone with the link will be able to view and edit this deployment.",
     "visibilityNoteConversation": "This conversation and its updates will be visible to users with the link.",
+    "visibilityNoteProject": "This project, its chats and its updates will be visible to users with the link.",
+    "visibilityNoteEditProject": "Anyone with the link will be able to view and edit this project and chat in it.",
     "nestedItemsNote": "Nested items such as prompts and files aren't shared automatically — share them separately so the app works correctly.",
     "copiedButtonLabel": "Copied",
     "linkAriaLabel": "Share link",
@@ -1504,6 +1539,8 @@
     "error": {
       "createFailed": "Failed to create application. Please try again.",
       "nameConflict": "An application with this name and version already exists.",
+      "nameConflictAgent": "An agent with this name and version already exists in this folder.",
+      "nameConflictToolset": "A toolset with this name and version already exists in this folder.",
       "saveFailed": "Failed to save application settings. Please try again.",
       "saveTimeout": "Saving timed out. Please try again.",
       "settingsNotReady": "The Settings editor did not report readiness. Please reload and try again."
@@ -1622,7 +1659,8 @@
     "menuTitle": "Tools",
     "removeTool": "Remove {{label}}",
     "stateOn": "On",
-    "stateOff": "Off"
+    "stateOff": "Off",
+    "summary": "Tools: {{selected}} of {{total}} on"
   },
   "conversationInput": {
     "usageLimits": {
@@ -1728,6 +1766,16 @@
     "loadingAriaLabel": "Loading skill",
     "instructionsLoadingAriaLabel": "Loading",
     "supportingFileNote": "This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.",
+    "folderPreview": {
+      "rootLabel": "Skill",
+      "breadcrumbAriaLabel": "Folder path",
+      "overflowAriaLabel": "Show hidden path segments",
+      "listAriaLabel": "Folder content",
+      "emptyTitle": "This folder is empty",
+      "emptyDescription": "Use Add to upload files or create a subfolder.",
+      "itemCount_one": "{{count}} item",
+      "itemCount_other": "{{count}} items"
+    },
     "bucketMissingTitle": "Can't create a skill right now",
     "bucketMissingMessage": "We couldn't determine your storage location. Please sign in again or try later.",
     "error": {
@@ -1941,7 +1989,9 @@
       "downloadedTitle": "Project downloaded successfully",
       "downloaded": "Project \"{{name}}\" is saved on your device.",
       "publishRequestedTitle": "Project publish requested",
-      "publishRequested": "Publish request for project \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
+      "publishRequested": "Publish request for project \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it.",
+      "unpublishRequestedTitle": "Project unpublish requested",
+      "unpublishRequested": "Unpublish request for project \"{{name}}\" was submitted for folder \"{{folder}}\". It will be removed once an admin approves it."
     }
   },
   "usage": {
@@ -2040,6 +2090,7 @@
     "title": "Discard unsaved changes?",
     "message": "You have unsaved changes. Leaving now will discard them.",
     "confirmLabel": "Discard changes",
+    "confirmLabelMobile": "Discard",
     "cancelLabel": "Keep editing"
   },
   "urlPreselection": {
@@ -2053,5 +2104,29 @@
     "skillsLoadFailedMessage": "The skill list could not be loaded, so the requested skill was not added.",
     "promptUnavailableTitle": "Prompt unavailable",
     "promptUnavailableMessage": "The requested prompt could not be loaded."
+  },
+  "resourceSavePanel": {
+    "title": "Save {{type}}",
+    "saveToFolderHeading": "Save to folder",
+    "changeFolder": "Change",
+    "changeFolderTitle": "Change folder",
+    "destinationAriaLabel": "Destination folder",
+    "keepVersion": "Keep version {{version}}",
+    "saveAsNewVersion": "Save as new version",
+    "newVersionLabel": "New version",
+    "newVersionPlaceholder": "Enter new version",
+    "versionInvalid": "Use a version like 1.0.0.",
+    "versionUnchanged": "Enter a version other than {{version}}.",
+    "versionExists": "Version {{version}} already exists. Enter another version.",
+    "versionReadOnlyTooltip": "To change the version, choose “Save as new version” when you save.",
+    "foldersLoadFailed": "Folders could not be loaded.",
+    "saveFailed": "Saving failed. Please try again.",
+    "commitFailed": "Version {{version}} was created, but your changes stayed in version {{currentVersion}}. Save again to move them.",
+    "newVersionSavedTitle": "New version saved",
+    "newVersionSaved": "“{{name}}” was saved as version {{version}}.",
+    "savedButMoveFailed": "“{{name}}” was saved, but it could not be moved to {{folder}}.",
+    "savedButPublishFailed": "“{{name}}” was saved, but the publish request failed.",
+    "savedButPublishFailedReason": "“{{name}}” was saved, but the publish request failed: {{reason}}",
+    "savedButAlreadyPublished": "“{{name}}” was saved, but this version is already published in {{folder}}. Choose another folder or save as a new version."
   }
 }

@@ -303,7 +303,14 @@ export interface AnnouncementItemDto {
    * @memberof AnnouncementItemDto
    */
   link: AnnouncementLinkDto | null;
+  /**
+   * How urgent the announcement is, for clients that mark maintenance or outage notices. Always present: an entry configured without one, or with an unrecognized value, is returned as `info`. Clients should treat a value they do not recognize as `info`, since more levels may be added.
+   * @type {AnnouncementSeverity}
+   * @memberof AnnouncementItemDto
+   */
+  severity: AnnouncementSeverity;
 }
+
 /**
  *
  * @export
@@ -323,6 +330,18 @@ export interface AnnouncementLinkDto {
    */
   href: string;
 }
+
+/**
+ * How urgent the announcement is, for clients that mark maintenance or outage notices. Always present: an entry configured without one, or with an unrecognized value, is returned as `info`. Clients should treat a value they do not recognize as `info`, since more levels may be added.
+ * @export
+ */
+export const AnnouncementSeverity = {
+  Info: 'info',
+  Warning: 'warning',
+} as const;
+export type AnnouncementSeverity =
+  (typeof AnnouncementSeverity)[keyof typeof AnnouncementSeverity];
+
 /**
  *
  * @export
@@ -469,6 +488,49 @@ export interface ApplicationDto {
    */
   maxInputAttachments?: number;
 }
+
+/**
+ * Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available.
+ * @export
+ */
+export const ApplicationErrorCode = {
+  ApplicationDependentResourceMissing: 'applicationDependentResourceMissing',
+} as const;
+export type ApplicationErrorCode =
+  (typeof ApplicationErrorCode)[keyof typeof ApplicationErrorCode];
+
+/**
+ *
+ * @export
+ * @interface ApplicationErrorDto
+ */
+export interface ApplicationErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ApplicationErrorDto
+   */
+  statusCode: number;
+  /**
+   * HTTP status text. Absent from a plain `403 Forbidden`.
+   * @type {string}
+   * @memberof ApplicationErrorDto
+   */
+  error?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationErrorDto
+   */
+  message: string;
+  /**
+   * Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available.
+   * @type {ApplicationErrorCode}
+   * @memberof ApplicationErrorDto
+   */
+  code?: ApplicationErrorCode;
+}
+
 /**
  *
  * @export
@@ -889,6 +951,49 @@ export const BackgroundGenerationStatus = {
 export type BackgroundGenerationStatus =
   (typeof BackgroundGenerationStatus)[keyof typeof BackgroundGenerationStatus];
 
+/**
+ *
+ * @export
+ * @interface BudgetStatsDto
+ */
+export interface BudgetStatsDto {
+  /**
+   * The cost object the budget applies in. A cost object can hold several budgets, so more than one entry may carry the same value.
+   * @type {string}
+   * @memberof BudgetStatsDto
+   */
+  costObject: string;
+  /**
+   * The path of the budget's policy.
+   * @type {string}
+   * @memberof BudgetStatsDto
+   */
+  policy: string;
+  /**
+   * The priority of the budget's policy, lower first; absent when the policy sets none.
+   * @type {number}
+   * @memberof BudgetStatsDto
+   */
+  priority?: number;
+  /**
+   * The human-readable name of the budget's policy; absent when the policy sets none. Use `policy` as the identifier — the display name need not be unique.
+   * @type {string}
+   * @memberof BudgetStatsDto
+   */
+  displayName?: string;
+  /**
+   * The budget's limit and the caller's spend against it for the current UTC day. A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.
+   * @type {LimitStatsDto}
+   * @memberof BudgetStatsDto
+   */
+  day: LimitStatsDto;
+  /**
+   * The budget's limit and the caller's spend against it for the current UTC month. A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.
+   * @type {LimitStatsDto}
+   * @memberof BudgetStatsDto
+   */
+  month: LimitStatsDto;
+}
 /**
  *
  * @export
@@ -1774,6 +1879,12 @@ export interface ClientConfigDto {
    */
   publicationFilterSources: Array<string>;
   /**
+   * Additional content locales (canonical BCP-47 tags) a toolset's or application's Name/Description can be translated into. Sourced from ADDITIONAL_CONTENT_LOCALES, or the deprecated AVAILABLE_LOCALES when that is absent; empty when neither is set. May include the primary locale, which the client drops.
+   * @type {Array<string>}
+   * @memberof ClientConfigDto
+   */
+  additionalContentLocales: Array<string>;
+  /**
    * Maximum attachment/upload file size in bytes. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that bounds the POST /api/v1/files Multer limit — so the client can reject an oversized file before attempting to upload it.
    * @type {number}
    * @memberof ClientConfigDto
@@ -1821,6 +1932,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   catalogCreationPermissions: CatalogCreationPermissionsDto;
+  /**
+   * Whether GET /api/v1/model-catalog is configured (MODEL_CATALOG_API_KEY is set). Missing means unavailable. Never carries the key.
+   * @type {boolean}
+   * @memberof ClientConfigDto
+   */
+  modelCatalogAvailable?: boolean;
 }
 
 /**
@@ -1882,6 +1999,19 @@ export interface ClientConfigResponseDto {
    * @memberof ClientConfigResponseDto
    */
   metadata?: ClientConfigMetadataDto;
+}
+/**
+ *
+ * @export
+ * @interface CommitApplicationVersionDto
+ */
+export interface CommitApplicationVersionDto {
+  /**
+   * Full id of the snapshot `forkApplicationVersion` returned. Must be in the caller's own bucket.
+   * @type {string}
+   * @memberof CommitApplicationVersionDto
+   */
+  snapshotId: string;
 }
 /**
  *
@@ -2238,6 +2368,12 @@ export interface ConversationMessageDto {
    * @memberof ConversationMessageDto
    */
   backgroundGeneration?: BackgroundGenerationDto;
+  /**
+   * Present only while a Chat Completions or stateless Responses generation is producing this assistant message. Server-owned: it holds the conversation until expiresAt, and client saves cannot create, change or drop it.
+   * @type {ForegroundGenerationDto}
+   * @memberof ConversationMessageDto
+   */
+  foregroundGeneration?: ForegroundGenerationDto;
   /**
    * Deployment that produced this message. Present on assistant and status messages.
    * @type {string}
@@ -2989,6 +3125,12 @@ export interface CreateApplicationBodyDto {
    */
   createOnly?: boolean;
   /**
+   * Plain-text personal folder to create the application in, relative to the caller's bucket. Omit or leave empty for the root. createOnly candidates stay in this folder.
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  folderPath?: string;
+  /**
    * Store applicationProperties verbatim, including schema-specific features. Use top-level attachment fields for Core capabilities.
    * @type {boolean}
    * @memberof CreateApplicationBodyDto
@@ -3277,6 +3419,108 @@ export const CreateShareLinkDtoAccessEnum = {
 } as const;
 export type CreateShareLinkDtoAccessEnum =
   (typeof CreateShareLinkDtoAccessEnum)[keyof typeof CreateShareLinkDtoAccessEnum];
+
+/**
+ *
+ * @export
+ * @interface CreateToolsetBodyDto
+ */
+export interface CreateToolsetBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  version?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  description?: string;
+  /**
+   * An absolute https?:// URL, or a DIAL file id (files/{bucket}/{path}) picked through the file manager.
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof CreateToolsetBodyDto
+   */
+  topics?: Array<string>;
+  /**
+   *
+   * @type {Array<LocaleTextEntryDto>}
+   * @memberof CreateToolsetBodyDto
+   */
+  locales?: Array<LocaleTextEntryDto>;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  primaryLocale?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  endpoint: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  transport: CreateToolsetBodyDtoTransportEnum;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof CreateToolsetBodyDto
+   */
+  allowedTools?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  reference?: string;
+  /**
+   *
+   * @type {ToolsetAuthSettingsBodyDto}
+   * @memberof CreateToolsetBodyDto
+   */
+  authSettings: ToolsetAuthSettingsBodyDto;
+  /**
+   * Plain-text personal folder to create the toolset in, relative to the caller's bucket. Omit or leave empty for the root.
+   * @type {string}
+   * @memberof CreateToolsetBodyDto
+   */
+  folderPath?: string;
+  /**
+   * Never overwrite an existing toolset: answer 409 when `{name}__{version}` is already taken in the folder.
+   * @type {boolean}
+   * @memberof CreateToolsetBodyDto
+   */
+  createOnly?: boolean;
+}
+
+/**
+ * @export
+ */
+export const CreateToolsetBodyDtoTransportEnum = {
+  Http: 'HTTP',
+  Sse: 'SSE',
+} as const;
+export type CreateToolsetBodyDtoTransportEnum =
+  (typeof CreateToolsetBodyDtoTransportEnum)[keyof typeof CreateToolsetBodyDtoTransportEnum];
 
 /**
  *
@@ -4359,6 +4603,12 @@ export interface DialModelDto {
    */
   responsesDefaults?: { [key: string]: unknown };
   /**
+   * Curated catalog display metadata from DIAL Core, forwarded as sent
+   * @type {{ [key: string]: unknown }}
+   * @memberof DialModelDto
+   */
+  catalogProperties?: { [key: string]: unknown };
+  /**
    *
    * @type {Array<string>}
    * @memberof DialModelDto
@@ -4376,6 +4626,24 @@ export interface DialModelDto {
    * @memberof DialModelDto
    */
   lifecycleStatus?: string;
+  /**
+   * Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  provider?: string;
+  /**
+   * Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  deprecationDate?: string;
+  /**
+   * Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  endOfService?: string;
   /**
    *
    * @type {DialModelCapabilitiesDto}
@@ -5513,6 +5781,56 @@ export interface FileUploadResponseDto {
 /**
  *
  * @export
+ * @interface ForegroundGenerationDto
+ */
+export interface ForegroundGenerationDto {
+  /**
+   * Client-supplied generation id of the request that started the generation; identifies this message across writes.
+   * @type {string}
+   * @memberof ForegroundGenerationDto
+   */
+  generationId: string;
+  /**
+   * Server time (epoch ms) at which the start-state write was built.
+   * @type {number}
+   * @memberof ForegroundGenerationDto
+   */
+  startedAt: number;
+  /**
+   * Server time (epoch ms) after which the marker no longer holds the conversation.
+   * @type {number}
+   * @memberof ForegroundGenerationDto
+   */
+  expiresAt: number;
+  /**
+   * Server time (epoch ms) at which a Stop was stored on the marker; the generation stops at its next re-read.
+   * @type {number}
+   * @memberof ForegroundGenerationDto
+   */
+  stopRequestedAt?: number;
+}
+/**
+ *
+ * @export
+ * @interface ForkApplicationVersionDto
+ */
+export interface ForkApplicationVersionDto {
+  /**
+   * The new version
+   * @type {string}
+   * @memberof ForkApplicationVersionDto
+   */
+  version: string;
+  /**
+   * Plain-text personal folder for the new version, relative to the caller's bucket. Empty string is the root.
+   * @type {string}
+   * @memberof ForkApplicationVersionDto
+   */
+  folderPath: string;
+}
+/**
+ *
+ * @export
  * @interface GenerateTitleResponseDto
  */
 export interface GenerateTitleResponseDto {
@@ -6179,15 +6497,179 @@ export interface ModelCapabilitiesDto {
 /**
  *
  * @export
+ * @interface ModelCatalogEntryDto
+ */
+export interface ModelCatalogEntryDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  object: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  model?: string;
+  /**
+   *
+   * @type {DialModelDtoDisplayName}
+   * @memberof ModelCatalogEntryDto
+   */
+  displayName?: DialModelDtoDisplayName;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  displayVersion?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {DialModelDtoDescription}
+   * @memberof ModelCatalogEntryDto
+   */
+  description?: DialModelDtoDescription;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  reference?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  owner?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  status?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof ModelCatalogEntryDto
+   */
+  createdAt?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof ModelCatalogEntryDto
+   */
+  updatedAt?: number;
+  /**
+   *
+   * @type {DialModelFeaturesDto}
+   * @memberof ModelCatalogEntryDto
+   */
+  features?: DialModelFeaturesDto;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ModelCatalogEntryDto
+   */
+  inputAttachmentTypes?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof ModelCatalogEntryDto
+   */
+  maxInputAttachments?: number;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ModelCatalogEntryDto
+   */
+  descriptionKeywords?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  lifecycleStatus?: string;
+  /**
+   * Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  provider?: string;
+  /**
+   * Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  deprecationDate?: string;
+  /**
+   * Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  endOfService?: string;
+  /**
+   *
+   * @type {DialModelCapabilitiesDto}
+   * @memberof ModelCatalogEntryDto
+   */
+  capabilities?: DialModelCapabilitiesDto;
+  /**
+   *
+   * @type {DialModelLimitsDto}
+   * @memberof ModelCatalogEntryDto
+   */
+  limits?: DialModelLimitsDto;
+  /**
+   *
+   * @type {DialModelPricingDto}
+   * @memberof ModelCatalogEntryDto
+   */
+  pricing?: DialModelPricingDto;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ModelCatalogEntryDto
+   */
+  interfaces?: Array<string>;
+  /**
+   * Known model catalog properties allow-listed from DIAL Core catalog_properties
+   * @type {ModelCatalogPropertiesDto}
+   * @memberof ModelCatalogEntryDto
+   */
+  catalogProperties?: ModelCatalogPropertiesDto;
+}
+/**
+ *
+ * @export
+ * @interface ModelCatalogListResponseDto
+ */
+export interface ModelCatalogListResponseDto {
+  /**
+   *
+   * @type {Array<ModelCatalogEntryDto>}
+   * @memberof ModelCatalogListResponseDto
+   */
+  data: Array<ModelCatalogEntryDto>;
+}
+/**
+ *
+ * @export
  * @interface ModelCatalogPropertiesDto
  */
 export interface ModelCatalogPropertiesDto {
-  /**
-   * Model provider for catalog display
-   * @type {string}
-   * @memberof ModelCatalogPropertiesDto
-   */
-  provider?: string;
   /**
    * Model vendor for catalog display
    * @type {string}
@@ -6231,6 +6713,24 @@ export interface ModelDetailsDto {
    * @memberof ModelDetailsDto
    */
   lifecycleStatus?: string;
+  /**
+   * Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated
+   * @type {string}
+   * @memberof ModelDetailsDto
+   */
+  provider?: string;
+  /**
+   * Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof ModelDetailsDto
+   */
+  deprecationDate?: string;
+  /**
+   * Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof ModelDetailsDto
+   */
+  endOfService?: string;
   /**
    * Name of the model whose tokenization algorithm this model uses
    * @type {string}
@@ -6487,6 +6987,38 @@ export interface MovePromptDto {
 /**
  *
  * @export
+ * @interface MoveResourceDto
+ */
+export interface MoveResourceDto {
+  /**
+   * Plain-text destination folder relative to the caller's bucket. Empty string moves the resource to the root.
+   * @type {string}
+   * @memberof MoveResourceDto
+   */
+  folderPath: string;
+}
+/**
+ *
+ * @export
+ * @interface MoveSkillDto
+ */
+export interface MoveSkillDto {
+  /**
+   * Plain-text destination folder relative to the caller's bucket. Empty string moves the resource to the root.
+   * @type {string}
+   * @memberof MoveSkillDto
+   */
+  folderPath: string;
+  /**
+   * The skill's resource path within the caller's own bucket
+   * @type {string}
+   * @memberof MoveSkillDto
+   */
+  path: string;
+}
+/**
+ *
+ * @export
  * @interface MutatedToolsetDto
  */
 export interface MutatedToolsetDto {
@@ -6559,6 +7091,62 @@ export interface OfflineCredentialsSigninBodyDto {
    * @memberof OfflineCredentialsSigninBodyDto
    */
   redirectUri: string;
+}
+/**
+ *
+ * @export
+ * @interface OrgUnitDto
+ */
+export interface OrgUnitDto {
+  /**
+   * Core unit id
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  id: string;
+  /**
+   * Unit name; also the last segment of its folder
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  name: string;
+  /**
+   * Display name; falls back to `name` when Core has none
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  displayName: string;
+  /**
+   * Decoded unit address without a trailing slash
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  path: string;
+  /**
+   * Unit folder exactly as DIAL Core returns it: url-encoded, with a trailing slash
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  folder: string;
+}
+/**
+ *
+ * @export
+ * @interface OrgUnitsResponseDto
+ */
+export interface OrgUnitsResponseDto {
+  /**
+   * `false` when DIAL Core has org units turned off
+   * @type {boolean}
+   * @memberof OrgUnitsResponseDto
+   */
+  enabled: boolean;
+  /**
+   *
+   * @type {Array<OrgUnitDto>}
+   * @memberof OrgUnitsResponseDto
+   */
+  units: Array<OrgUnitDto>;
 }
 /**
  *
@@ -6863,11 +7451,17 @@ export interface ProjectDetailsDto {
    */
   conversationCount: number;
   /**
-   * Whether the caller may edit, delete, share and publish the project — `true` only in the caller's own bucket.
+   * Whether the caller may change the project's instructions and context files and write its conversations — `true` in the caller's own bucket, and for a project shared with them with `WRITE`.
    * @type {boolean}
    * @memberof ProjectDetailsDto
    */
   canEdit: boolean;
+  /**
+   * Whether the caller may rename, delete, share and publish the project — `true` only in the caller's own bucket. Implies `canEdit`.
+   * @type {boolean}
+   * @memberof ProjectDetailsDto
+   */
+  canManage: boolean;
 }
 
 /**
@@ -7719,6 +8313,159 @@ export interface RequestSkillDto {
    */
   url: string;
 }
+/**
+ *
+ * @export
+ * @interface ResourceDependenciesResultDto
+ */
+export interface ResourceDependenciesResultDto {
+  /**
+   *
+   * @type {Array<ResourceDependencyDto>}
+   * @memberof ResourceDependenciesResultDto
+   */
+  dependencies: Array<ResourceDependencyDto>;
+}
+/**
+ *
+ * @export
+ * @interface ResourceDependencyDto
+ */
+export interface ResourceDependencyDto {
+  /**
+   * The dependency's DIAL Core resource url, as stored in the reference.
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  id: string;
+  /**
+   * Display name, percent-decoded, without a trailing `__version`.
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  name: string;
+  /**
+   * Present only for a versioned dependency.
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  version?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  type: ResourceDependencyDtoTypeEnum;
+  /**
+   * Percent-decoded folder path of the dependency inside its owner's bucket; empty at the bucket root.
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  location: string;
+}
+
+/**
+ * @export
+ */
+export const ResourceDependencyDtoTypeEnum = {
+  Application: 'application',
+  Toolset: 'toolset',
+  Prompt: 'prompt',
+  Skill: 'skill',
+  File: 'file',
+} as const;
+export type ResourceDependencyDtoTypeEnum =
+  (typeof ResourceDependencyDtoTypeEnum)[keyof typeof ResourceDependencyDtoTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ResourceFolderDto
+ */
+export interface ResourceFolderDto {
+  /**
+   * Folder name, decoded
+   * @type {string}
+   * @memberof ResourceFolderDto
+   */
+  name: string;
+  /**
+   * Plain-text folder path relative to the bucket
+   * @type {string}
+   * @memberof ResourceFolderDto
+   */
+  path: string;
+}
+/**
+ *
+ * @export
+ * @interface ResourceFoldersResponseDto
+ */
+export interface ResourceFoldersResponseDto {
+  /**
+   *
+   * @type {Array<ResourceFolderDto>}
+   * @memberof ResourceFoldersResponseDto
+   */
+  folders: Array<ResourceFolderDto>;
+}
+/**
+ *
+ * @export
+ * @interface ResourceIdResponseDto
+ */
+export interface ResourceIdResponseDto {
+  /**
+   * Full resource id `{type}/{bucket}/{path}`
+   * @type {string}
+   * @memberof ResourceIdResponseDto
+   */
+  id: string;
+}
+
+/**
+ * Kind of the entity that already holds the displayed name and version.
+ * @export
+ */
+export const ResourceNameConflictCode = {
+  NameTakenAgent: 'name-taken-agent',
+  NameTakenToolset: 'name-taken-toolset',
+} as const;
+export type ResourceNameConflictCode =
+  (typeof ResourceNameConflictCode)[keyof typeof ResourceNameConflictCode];
+
+/**
+ *
+ * @export
+ * @interface ResourceNameConflictDto
+ */
+export interface ResourceNameConflictDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ResourceNameConflictDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {string}
+   * @memberof ResourceNameConflictDto
+   */
+  message: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ResourceNameConflictDto
+   */
+  error: string;
+  /**
+   * Kind of the entity that already holds the displayed name and version.
+   * @type {ResourceNameConflictCode}
+   * @memberof ResourceNameConflictDto
+   */
+  code?: ResourceNameConflictCode;
+}
+
 /**
  *
  * @export
@@ -10015,6 +10762,12 @@ export interface UserLimitStatsResponseDto {
    * @memberof UserLimitStatsResponseDto
    */
   monthCostStats?: LimitStatsDto;
+  /**
+   * The caller's spend against each spending budget that applies to them, in DIAL Core's order. A cost object can hold several budgets, so entries may share a `costObject`. The budgets are reported separately from, and are not merged into, the top-level `minuteCostStats`/`dayCostStats`/`weekCostStats`/`monthCostStats`. An empty array means DIAL Core reported no applicable budget (spending limits are off, no budget matches the caller, or the caller is an API key); an absent field means DIAL Core does not report budgets at all (an older DIAL Core). A window `total` at or above 9007199254740992 (2^53) represents the upstream "unlimited" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio. The BFF forwards the array verbatim.
+   * @type {Array<BudgetStatsDto>}
+   * @memberof UserLimitStatsResponseDto
+   */
+  budgets?: Array<BudgetStatsDto>;
 }
 /**
  *

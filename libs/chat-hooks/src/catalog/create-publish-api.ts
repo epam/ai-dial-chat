@@ -4,6 +4,7 @@ import type {
   PublishHistoryEntryDto,
   PublishResultDto,
   PublishRuleDto,
+  ResourceDependenciesResultDto,
   UnpublishAccessDto,
   UnpublishCatalogEntityDto,
   UnpublishResultDto,
@@ -48,6 +49,15 @@ export interface PublishApiClient {
     entityType: CatalogPublishEntityType,
     entityId: string,
   ) => Promise<PublishHistoryEntryDto[]>;
+  /**
+   * Reads the direct dependencies of one catalog entity that are not in the
+   * public bucket. Advisory: the backend answers an empty list when it cannot
+   * resolve them.
+   */
+  getCatalogPublishDependencies: (
+    entityType: CatalogPublishEntityType,
+    entityId: string,
+  ) => Promise<ResourceDependenciesResultDto>;
   /** Reads whether the caller may request removal of one catalog entity. */
   getCatalogUnpublishAccess: (
     entityType: CatalogPublishEntityType,
@@ -80,6 +90,8 @@ export const createPublishApiClient = (
     }),
   getCatalogPublishHistory: (entityType, entityId) =>
     publishApi.getCatalogPublishHistory({ entityType, entityId }),
+  getCatalogPublishDependencies: (entityType, entityId) =>
+    publishApi.getCatalogPublishDependencies({ entityType, entityId }),
   getCatalogUnpublishAccess: (entityType, entityId) =>
     publishApi.getCatalogUnpublishAccess({ entityType, entityId }),
   getPublishRules: async (folderPath) => {

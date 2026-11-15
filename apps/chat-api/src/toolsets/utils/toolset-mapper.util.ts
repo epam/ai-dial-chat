@@ -6,6 +6,7 @@ import {
   toLocalizedValue,
 } from '../../common/utils/compose-localized-fields';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
+import { DEFAULT_RESOURCE_VERSION } from '../../common/utils/resource-identity';
 import { getResourceDisplayNameFallback } from '../../common/utils/resource-name';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
 import { HIDDEN_FILE } from '../../constants/dial.constants';
@@ -22,7 +23,7 @@ import {
 import { ToolsetAuthType } from '../dto/toolset-body.dto';
 import type { ToolsetBodyDto } from '../dto/toolset-body.dto';
 
-export const DEFAULT_TOOLSET_VERSION = '1.0.0';
+export const DEFAULT_TOOLSET_VERSION = DEFAULT_RESOURCE_VERSION;
 export const TOOLSET_RESOURCE_PREFIX = 'toolsets/';
 
 export type DialAuthSettings = components['schemas']['ResourceAuthSettings'];

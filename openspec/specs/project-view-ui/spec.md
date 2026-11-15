@@ -110,6 +110,7 @@ Props:
 | `onDownload` | `() => void` |
 | `onContextFileClick` | `(id: string) => void`, called with a context file's name when the user activates its card; the host decides what opens |
 | `selectedContextFileId` | optional `string`: the name of the context file whose card renders selected |
+| `onContextFileDownload` | optional `(id: string) => void`, called with a context file's name from its card's download button; the cards show no download button when omitted |
 | `isDetailsStacked` | optional `boolean`, default `false`: renders the Details panel below the main column at every width, instead of beside it on `desktop` |
 | `onRetry` | `() => void` |
 | `onBrowseProjects` | `() => void` |
@@ -171,9 +172,11 @@ The `ProjectView` header SHALL render, in inline order:
   - while `isPinPending` it is `aria-disabled` and ignores activation but stays focusable, so keyboard focus is not dropped to `<body>`;
   - it calls `onTogglePin`;
 - a Publish `NeutralButton` (`IconWorldShare`, `labels.publishLabel`) and an Edit `NeutralButton` (`IconPencilMinus`, `labels.editLabel`), when their callbacks are supplied;
-- a ⋮ kit `Dropdown` triggered by a `GhostIconButton` named `labels.moreActionsLabel`, with items Share (when `onShare`, `IconShare`), Download (`IconDownload`) and Delete (when `onDelete`, `IconTrashX`, danger). Every item carries its icon, and Publish and Edit keep theirs in the mobile menu. The dropdown is keyboard-operable: Enter, Space and the arrow keys come from the kit.
+- a ⋮ `ActionMenu` (`@epam/ai-dial-chat-shared`) triggered by a `GhostIconButton` named `labels.moreActionsLabel`: the kit `Dropdown` on tablet and desktop, and on a phone (`useIsPhone`, below 768px) a bottom sheet titled `labels.moreActionsLabel` and closed by `labels.closeLabel` (default `'Close'`), with items Share (when `onShare`, `IconShare`), Download (`IconDownload`) and Delete (when `onDelete`, `IconTrashX`, danger). Every item carries its icon, and Publish and Edit keep theirs in the mobile menu. The dropdown is keyboard-operable: Enter, Space and the arrow keys come from the kit.
 
-On `mobile`, Publish and Edit move into the ⋮ menu (before Share). The lib renders both placements and hides one through the `mobile:` / `desktop:` variants, so it never needs `useIsMobile`.
+The header has a bottom border (`--pv-border`) on `desktop` only; on `mobile` it has none, and the stacked Details panel's top border is the divider below the main column.
+
+On `mobile`, Publish and Edit move into the ⋮ menu (before Share). The lib renders both placements and hides one through the `mobile:` / `desktop:` variants; only the ⋮ menu's presentation (dropdown or sheet) reads `useIsPhone`.
 
 `ProjectViewPage` wires the callbacks:
 
@@ -181,7 +184,7 @@ On `mobile`, Publish and Edit move into the ⋮ menu (before Share). The lib ren
 - `onEdit` navigates to `getProjectEditRoute(id)`;
 - `onTogglePin` calls `setPinnedProject(id, !isPinned)` from `useUserConfig()`;
 - `onDownload` downloads the archive (see the actions requirement);
-- `onShare` opens `ProjectShareOverlay`, and the page behind it is `inert` while it is open; `onPublish` opens `PublishProjectPanelContainer`, which mounts on the first open and loads the project's publish history on each open, so a folder already holding the project is flagged;
+- `onShare` opens `ProjectShareOverlay`, which portals to the body and makes the rest of the page `inert` while it is open; `onPublish` opens `PublishProjectPanelContainer`, which mounts on the first open and loads the project's publish history on each open, so a folder already holding the project is flagged;
 - `onDelete` opens the delete confirmation.
 
 Every handler is memoised with `useCallback`.
@@ -284,19 +287,42 @@ The error and not-found titles are announced through `role="alert"`.
 
 **Delete.**
 
-- The page opens `DeleteConfirmationDialog` (`@epam/ai-dial-chat-shared`). Its title is `projects.actions.deleteConfirmTitle` (interpolating `{{name}}`), and its labels are the shared confirm and cancel labels. Its body is:
-  - `projects.actions.deleteConfirmDescription` when the loaded project has `conversationCount: 0`;
-  - otherwise `projects.actions.deleteConfirmWithChatsDescription`, pluralised by `count` (`_one` / `_other`), which says the project's chats are deleted too.
-- Confirming calls `deleteProject(id, contentVersion)`, and the dialog shows `isLoading` while the request runs.
+- The page opens `ProjectDeleteConfirmation` (`apps/chat/src/components/ProjectDeleteConfirmation/ProjectDeleteConfirmation.tsx`), the app's one project delete confirmation, which renders `DeleteConfirmationDrawer` (`@epam/ai-dial-chat-shared`) — the side panel the catalog shows for an item — with a danger identity card (`identityVariant={ConfirmationPopupVariant.Danger}`) holding the project name. Its title is `buttons.delete`, and its labels are the shared confirm, cancel and close labels. It has one body whatever the chat count: the `catalog.details.delete.confirmMessage` message ("Are you sure you want to delete **name**? This action is permanent and cannot be undone."), the consequences `catalog.details.delete.consequenceSharedConfigurations` and `catalog.details.delete.consequenceUsersLoseAccess`, and the final "Cannot be undone" bullet.
+- Confirming calls `deleteProject(id, contentVersion)`, and the drawer shows `isLoading` while the request runs.
 - **Success:** `notifyOperationSuccess(NotifiableEntity.Project, EntityOperation.Deleted, { name })`, then `replacePinnedProjectId(id, null)` (the BFF already removed the pin), then `navigate(ROUTES.Projects, { replace: true })`, so Back does not reopen the deleted project.
-- **`409 project-changed`:** close the dialog, show `showErrorNotification` with `projects.errors.changedElsewhere`, and call `retry()`.
-- **Other failures:** `showErrorNotification` with `projects.actions.deleteError`. The dialog stays open.
+- **`409 project-changed`:** close the drawer, show `showErrorNotification` with `projects.errors.changedElsewhere`, and call `retry()`.
+- **Other failures:** `showErrorNotification` with `projects.actions.deleteError`. The drawer stays open.
 
-**Share.** `SharePopoverContainer` is rendered with `itemId={id}` and `canEditAccess={false}`.
+**Share.** `ProjectShareOverlay` (`apps/chat/src/components/ProjectShareOverlay/ProjectShareOverlay.tsx`) renders `SharePopoverContainer` with:
+
+- `itemId={id}`;
+- `canEditAccess` set, so the popover offers the View / Edit access dropdown. Edit creates a link with `ShareLinkAccess.View` and `ShareLinkAccess.Edit`, which the BFF turns into `READ` + `WRITE`;
+- `visibilityNote={t(ShareI18nKeys.VisibilityNoteProject)}` and `visibilityNoteEdit={t(ShareI18nKeys.VisibilityNoteEditProject)}`, so the notes name a project and its chats, not a deployment.
+
+`SharePopoverContainer` (`apps/chat/src/components/SharePopoverContainer/SharePopoverContainer.tsx`) gains optional `visibilityNote?: string` and `visibilityNoteEdit?: string` props. Each one, when set, replaces its default (`ShareI18nKeys.VisibilityNote`, `ShareI18nKeys.VisibilityNoteEdit`). The catalog passes neither, so its popover is unchanged.
+
+Changing the access in the popover requests a new link, as for catalog entities (`useShareLink`). A link already handed out keeps the permissions it was created with, and the existing revoke flow removes every recipient's access.
 
 **Publish.** `PublishProjectPanelContainer` is rendered with `projectId`, `projectName`, `conversationCount`, `onClose` and `returnFocusRef` (the Publish trigger).
 
-**Gating.** `onPublish`, `onEdit`, `onShare` and `onDelete` are passed to `ProjectView` only when `project.canEdit` is `true`. Pin and Download are always passed.
+**Gating.** The page reads two flags from the loaded `ProjectDetailsDto`:
+
+| Callback passed to `ProjectView` | Passed when |
+| --- | --- |
+| `onEdit` | `project.canEdit` |
+| `onPublish`, `onShare`, `onDelete` | `project.canManage` |
+| `onTogglePin`, `onDownload`, `onContextFileClick`, `onContextFileDownload` | always |
+
+`PublishProjectPanelContainer` mounts only while `project.canManage`, as `ProjectShareOverlay` and `ProjectDeleteConfirmation` open only through `onShare` and `onDelete`. So a recipient with edit access (`canEdit: true`, `canManage: false`) sees Edit, and neither Publish, Share nor Delete.
+
+New `en.json` keys, with matching `ShareI18nKeys` members:
+
+| Key | `ShareI18nKeys` member | English |
+| --- | --- | --- |
+| `share.visibilityNoteProject` | `VisibilityNoteProject` | This project, its chats and its updates will be visible to users with the link. |
+| `share.visibilityNoteEditProject` | `VisibilityNoteEditProject` | Anyone with the link will be able to view and edit this project and chat in it. |
+
+Every key SHALL exist in every locale file.
 
 `NotifiableEntity` (`apps/chat/src/types/entity-notification.ts`) gains `Project`, with its entries in `apps/chat/src/utils/entity-notification.ts`.
 
@@ -305,20 +331,31 @@ The error and not-found titles are announced through `role="alert"`.
 - **WHEN** the user chooses Delete, then confirms
 - **THEN** `deleteProject` is called with the loaded `contentVersion`, a success toast is shown, and the router is at `/projects`
 
-#### Scenario: Delete confirmation mentions chats
+#### Scenario: Delete confirmation is a side panel
 
-- **WHEN** the loaded project has `conversationCount: 3`, and the user chooses Delete
-- **THEN** the dialog body is `projects.actions.deleteConfirmWithChatsDescription_other` with `count: 3`
+- **WHEN** the user chooses Delete
+- **THEN** a side panel named `buttons.delete` opens with the catalog delete message and the bullets `catalog.details.delete.consequenceSharedConfigurations`, `catalog.details.delete.consequenceUsersLoseAccess` and the final "Cannot be undone"
 
 #### Scenario: Delete on a changed project
 
 - **WHEN** `deleteProject` rejects with `409` and `code: 'project-changed'`
 - **THEN** the "changed by someone else" toast is shown, and the project is reloaded
 
-#### Scenario: Shared project is read-only
+#### Scenario: View-only project is read-only
 
-- **WHEN** the loaded project has `canEdit: false`
+- **WHEN** the loaded project has `canEdit: false` and `canManage: false`
 - **THEN** Edit, Delete, Share and Publish are absent, and Pin and Download work
+
+#### Scenario: A shared editor edits but does not manage
+
+- **WHEN** the loaded project has `source: 'shared'`, `canEdit: true` and `canManage: false`
+- **THEN** Edit is offered, Publish, Share and Delete are absent, and Pin and Download work
+
+#### Scenario: The owner shares with edit access
+
+- **WHEN** the owner chooses Share on their project
+- **THEN** the popover shows the access dropdown and the note `share.visibilityNoteProject`
+- **AND** choosing Can edit requests a link with access `['view', 'edit']` and shows `share.visibilityNoteEditProject`
 
 #### Scenario: Download the archive
 
@@ -337,9 +374,11 @@ The error and not-found titles are announced through `role="alert"`.
 - `StandalonePublishPanel` from `@epam/ai-dial-publish-panel`;
 - `usePublishFolders`, `usePublishErrorNotification` and `getPublishRules`.
 
-It submits through `publishCatalogEntity({ entityType: CatalogPublishEntityType.Project, entityId: projectId, publishCatalogEntityDto })` from `apps/chat/src/server-api/publish.api.ts`. On success it calls `notifyOperationSuccess(NotifiableEntity.Project, EntityOperation.PublishRequested, { name })`. Its strings come from `projects.publish.*` keys, plus the shared publish keys where they exist.
+It submits through `publishCatalogEntity({ entityType: CatalogPublishEntityType.Project, entityId: projectId, publishCatalogEntityDto })` from `apps/chat/src/server-api/publish.api.ts`. On success it calls `notifyOperationSuccess(NotifiableEntity.Project, EntityOperation.PublishRequested, { name })`, then the optional `onPublished?: () => void` prop, which `ProjectViewPage` uses to re-fetch the project's publish state (see `project-unpublish-flow`). Its strings come from `projects.publish.*` keys, plus the shared publish keys where they exist.
 
 `CatalogPublishEntityType` in `libs/chat-hooks/src/catalog/publish.ts` SHALL gain `'project'`. `CatalogEntityType` in `libs/chat-shared` is not changed.
+
+The page passes `onPublish` only once the project's publish state has settled with no live folder; a public copy offers Unpublish in its place, while the owner's personal project keeps Publish whether or not it has a published copy (see `project-unpublish-flow`).
 
 **Chats warning.** DIAL Core publishes a project as a whole, `conversations/` included. When `conversationCount > 0`, the container renders a kit `Notification` with the warning variant through `StandalonePublishPanel`'s `renderSummary`, after the resource title, so `libs/publish-panel` is not changed.
 
@@ -351,6 +390,11 @@ It submits through `publishCatalogEntity({ entityType: CatalogPublishEntityType.
 
 - **WHEN** the user selects a folder and submits
 - **THEN** `POST /api/v1/catalog/project/{encoded id}/publish` is sent, and a "publish requested" toast is shown
+
+#### Scenario: Publish success notifies the page
+
+- **WHEN** the publish request succeeds
+- **THEN** `onPublished` is called once, after the success notification
 
 #### Scenario: Chats warning on a project with chats
 
@@ -369,7 +413,7 @@ It submits through `publishCatalogEntity({ entityType: CatalogPublishEntityType.
 **Reused keys:**
 
 - `buttons.back` (back);
-- `buttons.publish`, `buttons.edit`, `buttons.download`, `buttons.delete`, `buttons.retry`, `buttons.cancel`;
+- `buttons.publish`, `buttons.edit`, `buttons.download`, `buttons.delete`, `buttons.retry`, `buttons.cancel`, `buttons.close`;
 - `basic.clearSearch`.
 
 **New generic keys** in `en.json`, with matching `ButtonsI18nKeys` members:
@@ -401,8 +445,6 @@ It submits through `publishCatalogEntity({ entityType: CatalogPublishEntityType.
 
 | Key | English |
 | --- | --- |
-| `projects.actions.deleteConfirmTitle` | `Delete "{{name}}"?` |
-| `projects.actions.deleteConfirmDescription` | The project and its context files will be deleted. This cannot be undone. |
 | `projects.actions.deleteError` | Could not delete the project |
 | `projects.actions.downloadError` | Could not download |
 
@@ -443,7 +485,7 @@ The project view page and `ProjectView` SHALL meet the following contract.
 - Every icon-only button has an accessible name.
 - Pin names its action ("Pin" / "Unpin") instead of using `aria-pressed`.
 - The ⋮ menu is keyboard-operable.
-- The delete confirmation is a labeled dialog (`DeleteConfirmationDialog`, whose title names it).
+- The delete confirmation is a labeled dialog (`DeleteConfirmationDrawer`, whose title names it); its close control, Cancel, Escape and a backdrop press are blocked while the delete is in flight.
 - Context search results are announced through the `aria-live` status.
 - Every Tabler icon uses `stroke={DIAL_KIT_ICON_STROKE}` and `aria-hidden`.
 - Focus returns to the Publish or ⋮ trigger when the publish panel or share popover closes.

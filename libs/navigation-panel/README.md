@@ -123,8 +123,9 @@ still owns the toggle that sets `isOpen`, the backdrop if it wants one, and
 closing on navigation. A drawer with no backdrop leaves the page behind it
 reachable by Tab and screen readers, so the host should make that page `inert`
 while the drawer is open. If the opener sits inside that page, the browser moves
-focus off it as the page becomes inert, so the drawer records the page body and
-closing leaves focus there instead of on the opener.
+focus off it to the page body as the page becomes inert; the drawer then returns
+focus on closing to the element whose `aria-controls` names its `id`, so give the
+toggle that attribute.
 
 Each item is one link: `renderLink(item, children, linkProps)` receives the icon and the label as `children` and the `className` and `aria-current` the link must carry, so spread `linkProps` onto the element you render. No control is nested inside it. Collapsed, the label stays in the link as screen-reader text and a tooltip shows it on hover and keyboard focus. Without `renderLink` each item is a plain `<a href={item.href}>`.
 

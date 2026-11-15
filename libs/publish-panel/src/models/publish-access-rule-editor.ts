@@ -35,18 +35,16 @@ export interface PublishAccessRuleEditorLabels {
   saveLabel?: string;
   /** Cancel action label. Defaults to `'Cancel'`. */
   cancelLabel?: string;
-  /** Dialog accessible label. Defaults to `'Add access rule'`. */
+  /** Accessible name of the editor — the bottom sheet below the desktop breakpoint, the inline group on desktop. Defaults to `'Add access rule'`. */
   dialogAriaLabel?: string;
 }
 
 /** Color overrides for the access-rule editor. */
 export interface PublishAccessRuleEditorColors {
-  /** Full-screen mobile background. Defaults to `--bg-layer-sunken`. */
+  /** Bottom-sheet background below the desktop breakpoint. Defaults to `--bg-layer-sunken`. */
   mobileBackground?: string;
   /** Desktop panel background. Defaults to `--bg-layer-base`. */
   background?: string;
-  /** Validation error text color. Defaults to `--text-error`. */
-  errorText?: string;
   /** Picker border color. Defaults to `--stroke-tertiary`. */
   selectBorder?: string;
   /** Picker hover border color. Defaults to `--stroke-secondary`. */
@@ -61,7 +59,7 @@ export interface PublishAccessRuleEditorColors {
 export interface PublishAccessRuleEditorStyles {
   /** Color overrides. */
   colors?: PublishAccessRuleEditorColors;
-  /** Additional CSS custom properties applied to the editor root. */
+  /** Additional CSS custom properties applied to the editor root (the sheet panel below the desktop breakpoint). */
   cssVars?: CSSProperties;
 }
 
@@ -79,8 +77,6 @@ export interface PublishAccessRuleEditorProps {
   maxTargets?: number;
   /** Text overrides. */
   labels?: PublishAccessRuleEditorLabels;
-  /** Typography class for validation errors. Defaults to `'dial-tiny-text'`. */
-  errorClassName?: string;
   /** Style overrides. */
   styles?: PublishAccessRuleEditorStyles;
 }

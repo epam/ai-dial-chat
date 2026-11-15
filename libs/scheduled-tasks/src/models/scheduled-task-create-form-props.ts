@@ -11,14 +11,6 @@ export interface ScheduledTaskRepeatOption {
   label: string;
 }
 
-/** One option in the Custom repeat's "Every" week-count dropdown. */
-export interface ScheduledTaskEveryWeekOption {
-  /** Option value: the week-count string `'1'`–`'10'`. */
-  value: string;
-  /** Localized display label, e.g. "1 week" / "2 weeks". */
-  label: string;
-}
-
 /** One weekday segment in the Custom repeat's day-of-week control. */
 export interface ScheduledTaskCustomDayOption {
   /** Segment value: the APScheduler-convention day string `'0'` (Monday) – `'6'` (Sunday). */
@@ -37,7 +29,7 @@ export interface ScheduledTaskCreateFormValues {
   repeat: ScheduledTaskRepeat;
   /** Local datetime-local input value used when `repeat` is `'oneTime'`. */
   runAt?: string;
-  /** `HH:mm` time-of-day used when `repeat` is `'daily'`, `'weekly'`, or `'monthly'`. */
+  /** `HH:mm` time-of-day used when `repeat` is `'daily'`, `'weekly'`, `'monthly'`, or `'custom'`. */
   time: string;
   /** Day of week (`'0'`-`'6'`) used when `repeat` is `'weekly'`. */
   dayOfWeek?: string;
@@ -45,8 +37,8 @@ export interface ScheduledTaskCreateFormValues {
   dayOfMonth?: string;
   /** Minute of the hour (`'0'`-`'59'`) used when `repeat` is `'hourly'`. */
   minute?: string;
-  /** Week-count (`'1'`-`'10'`) used when `repeat` is `'custom'`. */
-  everyWeeks?: string;
+  /** Days of week (`'0'` Monday – `'6'` Sunday, sorted Monday first) used when `repeat` is `'custom'`. */
+  daysOfWeek?: string[];
   /** Window-start boundary: a whole local day as `YYYY-MM-DD`. Ignored when `repeat` is `'oneTime'`. */
   startDate?: string;
   /** Window-end boundary: a whole local day as `YYYY-MM-DD`. Ignored when `repeat` is `'oneTime'`. */
@@ -71,6 +63,8 @@ export interface ScheduledTaskCreateFormErrors {
   time?: string;
   /** Error shown under the day-of-week field. */
   dayOfWeek?: string;
+  /** Error shown under the Custom days-of-week button row. */
+  daysOfWeek?: string;
   /** Error shown under the day-of-month field. */
   dayOfMonth?: string;
   /** Error shown under the minute field. */
@@ -109,7 +103,7 @@ export interface ScheduledTaskCreateFormLabels extends TextRefinementLabels {
   runAtLabel: string;
   /** Placeholder shown in the run-at picker when unset. */
   runAtPlaceholder: string;
-  /** Time-of-day field label (shown when `repeat` is "daily", "weekly", or "monthly"). */
+  /** Time-of-day field label (shown when `repeat` is "daily", "weekly", "monthly", or "custom"). */
   timeLabel: string;
   /** Validation message shown under the time field when its visible draft is not a complete `HH:mm` value. */
   timeInvalidLabel: string;
@@ -123,11 +117,9 @@ export interface ScheduledTaskCreateFormLabels extends TextRefinementLabels {
   dayOfMonthLabel: string;
   /** Minute field label (shown when `repeat` is "hourly"). */
   minuteLabel: string;
-  /** "Every" field label for the Custom repeat's week-count dropdown. */
-  everyLabel: string;
-  /** Options rendered in the Custom repeat's "Every" dropdown ("1 week"…"10 weeks"). */
-  everyWeekOptions: ScheduledTaskEveryWeekOption[];
-  /** Weekday segments for the Custom repeat's day-of-week control, Monday-first. */
+  /** Label of the Custom repeat's days-of-week button row, e.g. "Days". */
+  daysOfWeekLabel: string;
+  /** Weekday buttons of the Custom repeat's days-of-week row, Monday-first. */
   customDayOptions: ScheduledTaskCustomDayOption[];
   /** Start-date field label (shown when `repeat` is not "oneTime"; the field itself is optional, so this label carries no required marker). */
   startDateLabel: string;
@@ -147,6 +139,8 @@ export interface ScheduledTaskCreateFormLabels extends TextRefinementLabels {
   skillLabel?: string;
   /** Optional placeholder forwarded to the Instructions editor. */
   instructionsPlaceholder?: string;
+  /** Accessible label of the spinner shown while the Instructions editor loads. Defaults to `'Loading editor'`. */
+  editorLoadingAriaLabel?: string;
   /** Label for the Cancel action. */
   cancelButtonLabel: string;
   /** Label for the Save action (submits the create form). */
@@ -157,6 +151,8 @@ export interface ScheduledTaskCreateFormLabels extends TextRefinementLabels {
   discardTitle?: string;
   /** Body of the discard confirmation. Defaults to `'You have unsaved changes. Leaving now will discard them.'`. */
   discardMessage?: string;
+  /** Label of the discard confirmation's confirming action below the desktop breakpoint. Defaults to `'Discard'`. */
+  discardConfirmMobileLabel?: string;
   /** Label of the discard confirmation's confirming action. Defaults to `'Discard changes'`. */
   discardConfirmLabel?: string;
   /** Label of the discard confirmation's cancel action. Defaults to `'Keep editing'`. */

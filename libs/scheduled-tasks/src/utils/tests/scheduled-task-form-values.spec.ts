@@ -53,4 +53,24 @@ describe('hasScheduledTaskFormChanges', () => {
       ),
     ).toBe(true);
   });
+
+  it('compares custom days as a list', () => {
+    const custom = {
+      ...baseValues,
+      repeat: ScheduledTaskRepeat.Custom,
+      daysOfWeek: ['0', '2'],
+    };
+    expect(
+      hasScheduledTaskFormChanges(
+        { ...custom, daysOfWeek: ['0', '2'] },
+        custom,
+      ),
+    ).toBe(false);
+    expect(
+      hasScheduledTaskFormChanges(
+        { ...custom, daysOfWeek: ['0', '2', '4'] },
+        custom,
+      ),
+    ).toBe(true);
+  });
 });

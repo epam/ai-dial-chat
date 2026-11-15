@@ -1,0 +1,16 @@
+.list {
+  border-color: var(--se-folder-row-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+.row {
+  border-color: var(--se-folder-row-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+.row:hover,
+.row:focus-visible {
+  background: var(--se-folder-row-hover-bg, var(--bg-layer-sunken, #eef1f7));
+}
+
+.count {
+  color: var(--se-helper-text-color, var(--text-secondary, #57647a));
+}

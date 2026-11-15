@@ -260,7 +260,7 @@ describe('AttachmentCanvas', () => {
       render(
         <AttachmentCanvas {...defaultProps} content={visualizerContent} />,
       );
-      expect(screen.getByRole('status')).toBeDefined();
+      expect(screen.getAllByRole('status').length).toBeGreaterThan(0);
     });
 
     it('still renders the fileName as the panel title', () => {

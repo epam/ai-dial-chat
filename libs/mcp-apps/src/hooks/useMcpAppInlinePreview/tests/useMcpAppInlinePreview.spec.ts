@@ -7,6 +7,10 @@ import {
   type McpAppToolCallSeed,
   type McpAppToolRef,
 } from '../../../models/mcp-apps';
+import {
+  McpAppToolDiscovery,
+  McpDeploymentKind,
+} from '../../../types/mcp-apps';
 import { useMcpAppInlinePreview } from '../useMcpAppInlinePreview';
 
 const match: McpAppToolRef = {
@@ -14,8 +18,8 @@ const match: McpAppToolRef = {
   resourceUri: 'ui://entity-card/index.html',
   toolName: 'entity_show_entity_card',
   mcpToolName: 'show_entity_card',
-  kind: 'toolset',
-  discovery: 'indirect',
+  kind: McpDeploymentKind.Toolset,
+  discovery: McpAppToolDiscovery.Indirect,
 };
 
 const makeCache = (): McpAppResponseCache => {

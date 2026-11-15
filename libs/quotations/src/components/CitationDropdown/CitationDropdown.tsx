@@ -1,6 +1,6 @@
 import type { Annotation } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Dropdown } from '@epam/ai-dial-ui-kit';
+import { Dropdown, DropdownOverlayRole } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, useCallback, useId, useMemo } from 'react';
 import { QUOTATIONS_CLASS } from '../../constants/public-class-names';
 import { useCitationCardContext } from '../../context/CitationCardContext';
@@ -152,12 +152,15 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
    * previewing directly — while the dropdown still handles outside-press and
    * Escape dismissal, focus return, and `bottom-end` alignment with the
    * marker. The panel surface is stripped because the card paints its own.
+   * `DropdownOverlayRole.None` because the card carries its own `dialog`
+   * role; the default `menu` would wrap a dialog in a menu.
    */
   return (
     <Dropdown
       open={isOpen}
       onOpenChange={handleOpenChange}
       trigger={[]}
+      overlayRole={DropdownOverlayRole.None}
       placement="bottom-end"
       matchReferenceWidth={false}
       className={mergeClasses('ms-1 inline-flex align-middle', styles.trigger)}

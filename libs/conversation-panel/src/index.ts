@@ -32,6 +32,10 @@ export type {
   FilterEmptyLabels,
 } from './models/conversation-list';
 export type {
+  PinnedProjectGroup,
+  PinnedProjects,
+} from './models/pinned-projects';
+export type {
   ConversationMove,
   ConversationPanelProps,
   ConversationPanelStyles,

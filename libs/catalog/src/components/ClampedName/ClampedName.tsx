@@ -1,7 +1,9 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  mergeClasses,
+  useIsVerticallyClamped,
+} from '@epam/ai-dial-chat-shared';
 import { Highlight, Tooltip } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
-import { useIsVerticallyClamped } from '../../hooks/useIsVerticallyClamped/useIsVerticallyClamped';
 
 /** Props for `ClampedName`. */
 export interface ClampedNameProps {

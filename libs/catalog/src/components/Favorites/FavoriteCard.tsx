@@ -1,6 +1,6 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { CardShell, ElementSize } from '@epam/ai-dial-ui-kit';
-import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
+import { FC, MouseEvent, useState } from 'react';
 import { CATALOG_CLASS } from '../../constants/public-class-names';
 import { AppIdentityColors } from '../../models/app-identity-styles';
 import { CatalogItem } from '../../models/catalog-item';
@@ -40,6 +40,8 @@ export interface FavoriteCardProps {
   isSelected?: boolean;
   /** Accessible label for the logged-out warning icon on the entity avatar, and the text shown in its hover tooltip. Default: `'Authorize to use this toolset.'`. */
   credentialsBadgeLoggedOutLabel?: string;
+  /** Keyboard focus outline of a clickable card. Fallback: `--stroke-focus`. */
+  focusOutlineColor?: string;
 }
 
 /** Compact favorite card: logo + type + name + version + last-used, star aligned right. */
@@ -58,6 +60,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
   removeFromFavoritesAriaLabel = 'Remove from favorites',
   isSelected = false,
   credentialsBadgeLoggedOutLabel,
+  focusOutlineColor,
 }) => {
   const [isStarred, setIsStarred] = useState(initialIsStarred);
   const [isLeaving, setIsLeaving] = useState(false);
@@ -75,31 +78,24 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
 
   const handleClick = onClick && !isLeaving ? () => onClick(item) : undefined;
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLElement>) => {
-      if (!onClick || isLeaving) return;
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        onClick(item);
-      }
-    },
-    [onClick, item, isLeaving],
-  );
-
+  /* `CardShell` renders an `<article>`, which may not take `role="button"`
+   * (axe `aria-allowed-role`), and the star inside would be nested in it
+   * (`nested-interactive`). The pointer clicks the card itself; keyboard and
+   * screen-reader users get the visually hidden native button below, whose
+   * click bubbles to the same handler. */
   return (
     <CardShell
       data-card-id={item.id}
-      role={handleClick != null ? 'button' : undefined}
-      tabIndex={handleClick != null ? 0 : undefined}
       aria-label={item.name}
+      style={buildCssVars({ '--fc-focus-outline': focusOutlineColor })}
       className={mergeClasses(
         'box-border min-w-0 cursor-pointer flex-row items-center gap-3 p-5 text-start',
+        styles.favoriteCard,
         isLeaving && styles.cardLeaving,
         isSelected && styles.selectedCard,
         CATALOG_CLASS.favoriteCard,
       )}
       onClick={handleClick}
-      onKeyDown={handleKeyDown}
       onAnimationEnd={
         isLeaving
           ? (e) => {
@@ -108,6 +104,15 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
           : undefined
       }
     >
+      {handleClick != null && (
+        <button
+          type="button"
+          className={mergeClasses('sr-only', styles.cardButton)}
+        >
+          {item.name}
+        </button>
+      )}
+
       {/* The star sits on AppIdentity's meta row rather than in a column of
           its own, so the name gets the card's full text width (#9325). */}
       <AppIdentity

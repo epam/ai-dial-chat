@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import type { DialClientService } from '../../dial/dial-client.service';
 import type { UserConfigService } from '../../user-config/user-config.service';
+import { ProjectAccessService } from '../access/project-access.service';
 import { PROJECT_WRITE_ATTEMPTS } from '../constants/project-context.constants';
 import { ProjectsCreateService } from '../create/projects-create.service';
 import type {
@@ -15,6 +16,19 @@ import { parseProjectId } from '../utils/project-id.util';
 
 const USER_BUCKET = 'a1b2c3';
 const PROJECT = parseProjectId('projects/a1b2c3/marketing/q4')!;
+const requireProject = (id: string) => {
+  const parsed = parseProjectId(id);
+  if (parsed == null) throw new Error(`Invalid project id ${id}`);
+  return parsed;
+};
+const SHARED_PROJECT = requireProject('projects/z9y8x7/research');
+const sharedWithMe = (permissions: string[]) => ({
+  data: {
+    resources: [{ nodeType: 'ITEM', url: SHARED_PROJECT.id, permissions }],
+  },
+  error: undefined,
+  response: { status: 200 },
+});
 const MIB = 1_048_576;
 const config = {
   get: () => undefined,
@@ -67,6 +81,7 @@ const makeService = ({
   metadata = [missing, found] as unknown[],
   pinnedIds = [] as string[],
   onUpload = () => undefined as void,
+  shared = sharedWithMe(['READ']) as unknown,
 } = {}) => {
   const metadataQueue = [...metadata];
   const client = {
@@ -75,6 +90,7 @@ const makeService = ({
       return upload;
     }),
     moveResource: vi.fn(async (..._args: unknown[]) => move),
+    getSharedResources: vi.fn(async (..._args: unknown[]) => shared),
     listProjectMetadata: vi.fn(async (..._args: unknown[]) => {
       const next = metadataQueue.shift() ?? found;
       if (next instanceof Error) throw next;
@@ -88,12 +104,14 @@ const makeService = ({
   const readState = { renameProject: vi.fn(async () => undefined) };
   const snapshotQueue = [...snapshots];
   const read = vi.fn(async () => snapshotQueue.shift() ?? snapshot);
+  const dialClient = { client } as unknown as DialClientService;
   const service = new ProjectsUpdateService(
-    { client } as unknown as DialClientService,
+    dialClient,
     new ProjectsCreateService(config),
     { read } as unknown as ProjectsSnapshotService,
     userConfig as unknown as UserConfigService,
     readState as never,
+    new ProjectAccessService(dialClient),
   );
   return { service, client, userConfig, read, readState };
 };
@@ -145,6 +163,7 @@ describe('ProjectsUpdateService', () => {
 
     expect(client.uploadProjectFolder).toHaveBeenCalledOnce();
     expect(client.moveResource).not.toHaveBeenCalled();
+    expect(client.getSharedResources).not.toHaveBeenCalled();
     const parts = uploadedParts(client);
     expect(parts.headers['If-Match']).toBe('"e1"');
     expect(parts.names.sort()).toEqual([
@@ -792,25 +811,110 @@ describe('ProjectsUpdateService', () => {
     expect(logged).toContain('added=1');
     expect(logged).not.toMatch(/Secret|retro|tickets|token|a1b2c3/);
   });
-  it('refuses a project outside the caller bucket before any Core call', async () => {
+  it('refuses a view-only recipient after the permission lookup and before reading the project', async () => {
     const { service, read, client } = makeService();
 
     await expect(
       service.updateProject(
-        {
-          ...PROJECT,
-          id: 'projects/other-bucket/marketing/q4',
-          bucket: 'other-bucket',
-        },
-        { name: 'q4' },
+        SHARED_PROJECT,
+        { name: 'research' },
         [],
         '"cv1"',
         USER_BUCKET,
         'token',
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(client.getSharedResources).toHaveBeenCalledOnce();
     expect(read).not.toHaveBeenCalled();
     expect(client.uploadProjectFolder).not.toHaveBeenCalled();
+  });
+
+  it('saves a recipient with WRITE into the owner bucket without moving it', async () => {
+    const { service, client, read } = makeService({
+      shared: sharedWithMe(['READ', 'WRITE']),
+    });
+
+    const result = await service.updateProject(
+      SHARED_PROJECT,
+      { name: 'research', instructions: 'Cite every figure.' },
+      [],
+      '"cv1"',
+      USER_BUCKET,
+      'token',
+    );
+
+    expect(read).toHaveBeenCalledWith(
+      'z9y8x7',
+      'research',
+      'token',
+      USER_BUCKET,
+      expect.any(AbortSignal),
+    );
+    const [bucket] = client.uploadProjectFolder.mock.calls[0] as [string];
+    expect(bucket).toBe('z9y8x7');
+    expect(client.moveResource).not.toHaveBeenCalled();
+    expect(result.id).toBe(SHARED_PROJECT.id);
+  });
+
+  it('refuses a rename by a recipient with WRITE before any Core call', async () => {
+    const { service, client, read } = makeService({
+      shared: sharedWithMe(['READ', 'WRITE']),
+    });
+
+    await expect(
+      service.updateProject(
+        SHARED_PROJECT,
+        { name: 'Research 2025' },
+        [],
+        '"cv1"',
+        USER_BUCKET,
+        'token',
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(client.getSharedResources).not.toHaveBeenCalled();
+    expect(read).not.toHaveBeenCalled();
+    expect(client.uploadProjectFolder).not.toHaveBeenCalled();
+  });
+
+  it('refuses an organization project before any Core call', async () => {
+    const { service, client, read } = makeService();
+
+    await expect(
+      service.updateProject(
+        requireProject('projects/public/handbook'),
+        { name: 'handbook' },
+        [],
+        '"cv1"',
+        USER_BUCKET,
+        'token',
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(client.getSharedResources).not.toHaveBeenCalled();
+    expect(read).not.toHaveBeenCalled();
+  });
+
+  it('reports a failed permission lookup as an upstream error, not 403', async () => {
+    const { service, read } = makeService({
+      shared: {
+        data: undefined,
+        error: { message: 'down' },
+        response: { status: 503 },
+      },
+    });
+
+    const { status } = await errorOf(
+      service.updateProject(
+        SHARED_PROJECT,
+        { name: 'research' },
+        [],
+        '"cv1"',
+        USER_BUCKET,
+        'token',
+      ),
+    );
+
+    expect(status).toBe(502);
+    expect(read).not.toHaveBeenCalled();
   });
 
   it.each(['*', '"e1", "e2"', '  '])(

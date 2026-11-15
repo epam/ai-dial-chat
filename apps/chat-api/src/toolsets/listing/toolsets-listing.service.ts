@@ -173,14 +173,21 @@ export class ToolsetsListingService {
     );
   }
 
+  /**
+   * Lists the toolsets visible to the caller, served from a 30 s cache.
+   * @param refresh - read DIAL Core again instead of the cache; the duplicate
+   *   check needs a toolset created moments ago
+   */
   async listToolsets(
     userSub: string,
     accessToken: string,
     bucket: string,
+    refresh = false,
   ): Promise<DialToolsetListResponseDto> {
     const cacheKey = `toolsets:list:${userSub}`;
-    const cached =
-      await this.cacheManager.get<DialToolsetListResponseDto>(cacheKey);
+    const cached = refresh
+      ? undefined
+      : await this.cacheManager.get<DialToolsetListResponseDto>(cacheKey);
     if (cached) {
       this.logger.debug(`Cache hit for toolsets list (sub: ${userSub})`);
       return {

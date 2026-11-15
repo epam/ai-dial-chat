@@ -177,9 +177,11 @@ describe('ScheduledTaskRunHistoryList', () => {
     );
 
     expect(
-      screen.getByText('Failed to load history').getAttribute('role'),
-    ).toBe('status');
-    expect(screen.queryByRole('alert')).toBeNull();
+      screen
+        .getAllByRole('status')
+        .some((region) => region.textContent === 'Failed to load history'),
+    ).toBe(true);
+    expect(screen.getByRole('alert').textContent).toBe('');
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledOnce();
   });

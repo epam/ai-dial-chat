@@ -152,9 +152,15 @@ import { FilterTab } from '@epam/ai-dial-chat-shared';
 `ConversationRowVariant.Indicator` draws a leading status dot instead — hollow
 when read, filled with a semi-bold title when unread — and renders neither the
 avatar nor `leadingIcon`; the visually hidden `unreadIndicatorLabel` is still
-announced. The hollow dot's border is `colors.indicatorDot`
-(`--cp-indicator-dot`). Row and group-header heights follow the variant. `ConversationPanel`
-always renders `Avatar` rows.
+announced. Both dots are 7.11px; the hollow one has a 1.5px border in
+`colors.indicatorDot` (`--cp-indicator-dot`). Row and group-header heights
+follow the variant, and so does the group-header color: `colors.textSecondary`
+(`--cp-text-secondary`) falls back to `--text-secondary` over `Indicator` rows
+and to `--text-tertiary` over `Avatar` rows. `ConversationPanel`
+always renders `Avatar` rows. An `Indicator` row has 8px inline padding on both
+sides (`ps-2`, and `pe-2` without actions), so its 24px dot slot sits under the
+8px-padded group label; while the actions trigger shows, the end padding is
+`pe-9`. `Avatar` rows keep `ps-3` and `pe-3`.
 
 `styles.typography.fontClassName` puts one typography class on the list root, which rows
 and group headers inherit unless they set their own (`groupHeaderClassName`,
@@ -279,6 +285,145 @@ a chat. Row actions, `onActionMenuOpen`, `onMoveConversation` and
 and `styles.header` / `styles.list` to the matching component. `listClassName`
 is merged onto the list root, for a host anchor. The section fills the height
 its parent gives it, with the list scrolling inside.
+
+### Pinned projects
+
+`pinnedProjects` (on `ConversationList`, `ConversationListSection` and
+`ConversationPanel`) renders host-supplied project trees at the top of the Pinned group, before the pinned
+conversations. The list does not trim, sort or fetch: each project renders as a
+project row (briefcase icon, name, ⋮ actions), one nested row per
+conversation in the given order (`Indicator` by default; `conversationRowVariant: ConversationRowVariant.Avatar` gives them the deployment avatar or `leadingIcon` and a trailing unread dot, like the panel's own rows, at the 36px row height), and a See all row when `hasMore` is set. The
+rows are never draggable nor drop targets. A project collapses through its own
+chevron when the host passes `onToggleProject` (see below); collapsing the Pinned
+group hides every project with the rest of it.
+
+```tsx
+import {
+  ConversationListSection,
+  type PinnedProjects,
+} from '@epam/ai-dial-conversation-panel';
+import { FilterTab } from '@epam/ai-dial-chat-shared';
+
+const pinnedProjects: PinnedProjects = {
+  projects: [
+    {
+      id: 'projects/bucket/support',
+      name: 'Support',
+      href: '/projects/view/bucket/support',
+      source: FilterTab.MyChats,
+      conversations: [
+        {
+          id: 'projects/bucket/support/conversations/c1',
+          title: 'Billing reply',
+          href: '/projects/chat/bucket/support/conversations/c1',
+          isUnread: true,
+        },
+      ],
+      hasMore: true,
+      isExpanded: !collapsedProjectIds.has('projects/bucket/support'),
+    },
+  ],
+  onSelectProject: openProject,
+  onSelectConversation: (conversationId, projectId) =>
+    openProjectChat(conversationId, projectId),
+  onSeeAll: openProject,
+  onToggleProject: toggleProject,
+  getActions: (project) => [
+    { key: 'unpin', label: 'Unpin', onClick: () => unpin(project.id) },
+  ],
+  activeProjectId,
+};
+
+<ConversationListSection
+  conversations={conversations}
+  onSelectConversation={openConversation}
+  pinnedProjects={pinnedProjects}
+  labels={{
+    ...sectionLabels,
+    seeAllLabel: 'See all',
+    seeAllAriaLabel: (name) => `See all chats in ${name}`,
+  }}
+/>;
+```
+
+- **Callbacks.** A project row calls `onSelectProject(id)`, a nested row
+  `onSelectConversation(conversationId, projectId)` — never the list's own
+  `onSelectConversation` — and a See all row `onSeeAll(id)`. `getActions`
+  builds the ⋮ items of the project, shown on its project row and on its See all
+  row; no trigger renders when it returns none. `onActionMenuOpen(project, trigger)`
+  reports the trigger of either row, for focus to return to after an overlay.
+- **Collapsing.** The lib stores no collapse state: the host owns it and passes
+  `isExpanded` per project (absent means expanded) and
+  `onToggleProject(id, isExpanded)`, where `isExpanded` is the state the chevron
+  asks for.
+  With `onToggleProject` set, the project row's 24px leading slot shows the
+  briefcase at rest and, while the row is hovered, focused within or its menu is
+  open, a chevron button instead; on `mobile` (below 1280px, where there is no
+  hover) the slot always shows it in place of the briefcase, so the state is
+  always readable. The chevron is down when expanded, inline-end when collapsed,
+  mirrored in RTL), with a round background under the pointer while the row
+  keeps its own highlight. A pointer press does not move focus to it, so it hides
+  again when the pointer leaves. The button sits
+  outside the row's link, so it only calls `onToggleProject(id, isExpanded)`: it neither
+  calls `onSelectProject` nor navigates. It has `aria-expanded`, `aria-controls`
+  pointing at the list container, and the name `labels.expandProjectLabel`
+  (default `'Expand project'`) or `labels.collapseProjectLabel` (default
+  `'Collapse project'`). A collapsed project renders only its row, so the
+  sections after it move up; its ⋮ menu still works. A collapsed project with an
+  unread chat shows the unread dot in the row's trailing slot (the link's `iconAfter`, so a
+  long name truncates before it and its label is part of the link's name), hidden while the
+  ⋮ trigger shows. While `searchQuery` matches one of a collapsed project's
+  chats the project renders expanded without calling `onToggleProject`; a match
+  on its name alone does not expand it. Without `onToggleProject` no chevron
+  renders and every project shows its chats.
+- **Current location.** The row of `activeProjectId` and the nested row of
+  `activeConversationId` get `aria-current="page"`.
+- **Search and filters.** While `searchQuery` is non-empty, a project whose
+  name matches keeps all its rows; otherwise it keeps only the matching
+  conversations and drops its See all row, and a project with no match is
+  hidden. Names and titles are highlighted with `Highlight`. The Origin filter
+  keeps a project under `FilterTab.All` and the tab equal to its `source`
+  (default `FilterTab.MyChats`), `hiddenSources` removes it, and
+  `ConversationTypeFilter.Task` hides every project. A list whose only rows are
+  projects is not empty.
+- **Layout.** Every row is 32px with a 2px gap (36px for nested chats in the `Avatar` variant). Nested and See all rows are
+  indented 28px (`ps-7`); a 1px guide line at `inset-inline-start: 20px` (the
+  centre of the project icon) runs from 5px below the first nested row's top
+  to 5px above the last one's bottom. Its color is
+  `colors.projectGuideLine` (`--cp-project-guide-line`, default
+  `var(--stroke-tertiary, #e0e6f0)`). The See all text and the briefcase icon use
+  `colors.textSecondary` (`--cp-text-secondary`, default `--text-secondary`), and project names and See all
+  text use `typography.itemTitleClassName`. Indent and line use logical
+  properties, so they mirror in RTL; the briefcase is not mirrored.
+- **Accessibility.** Project rows carry `aria-level="1"`; nested and See all
+  rows `aria-level="2"`, `aria-posinset` and `aria-setsize` (conversations plus
+  See all). The See all row's accessible name is
+  `labels.seeAllAriaLabel(name)` (default `` `See all chats in ${name}` ``),
+  its visible text `labels.seeAllLabel` (default `'See all'`). A row focused
+  with the keyboard is tinted like a hovered one.
+
+In `ConversationPanel` the prop works the same way: the panel forwards it, and
+`labels.seeAllLabel` and `labels.seeAllAriaLabel`, to its list, and its own
+search field and filter chips drive the list's `searchQuery` and
+`activeFilter`, so they filter the project trees as above. The panel is
+memoized: pass a referentially stable `pinnedProjects` object and
+`seeAllAriaLabel` (for example from `useMemo` and `useCallback`), or it
+re-renders on every host render.
+
+```tsx
+<ConversationPanel
+  conversations={conversations}
+  isOpen={isPanelOpen}
+  onSelectConversation={openConversation}
+  onNewChat={handleNewChat}
+  pinnedProjects={pinnedProjects}
+  labels={{
+    ...panelLabels,
+    seeAllLabel: 'See all',
+    seeAllAriaLabel: (name) => `See all chats in ${name}`,
+  }}
+/>
+```
 
 ### Corner radii
 
@@ -455,8 +600,15 @@ import type {
   ConversationListSectionLabels,
   ConversationListSectionStyles,
   FilterLabels,
+  PinnedProjectGroup,
+  PinnedProjects,
 } from '@epam/ai-dial-conversation-panel';
 ```
+
+`PinnedProjectGroup` (`id`, `name`, `href?`, `source?`, `conversations`,
+`hasMore`, `isExpanded?`) and `PinnedProjects` (`projects`, `onSelectProject`,
+`onSelectConversation`, `onSeeAll`, `onToggleProject?`, `getActions?`, `onActionMenuOpen?`,
+`activeProjectId?`, `conversationRowVariant?`) are described under [Pinned projects](#pinned-projects).
 
 ### ConversationItem
 
@@ -522,7 +674,7 @@ Payload for a completed drag-and-drop move: the dragged `draggedId`, the
 
 The floating queue that shows export/import job progress is no longer part of
 this package: it is the UI kit's generic `TransferQueue`
-(`@epam/ai-dial-ui-kit` `^0.16.0-dev.71`). A host maps its
+(`@epam/ai-dial-ui-kit` `^0.16.0`). A host maps its
 `ConversationTransferJob`s (from `@epam/ai-dial-chat-shared`) onto
 `TransferQueueItem`s — `id`, `fileName` as `name`, the status, `progress.percent`
 as `percent`, and the translated failure or warning reason as `message` — and
@@ -574,6 +726,7 @@ const labels: RenameConversationPopupLabels = {
 | `nameTooLongError`  | `string` | Error shown when the trimmed name exceeds 255 UTF-8 bytes |
 | `saveLabel`         | `string` | Label for the save/confirm button                         |
 | `cancelLabel`       | `string` | Label for the cancel button                               |
+| `savingLabel`       | `string` | Optional spinner name while saving; defaults `'Saving'`   |
 
 ### RenameConversationPopupStyles
 

@@ -928,11 +928,16 @@ export const useDialFileMutations = ({
           : renameOutcome.results.filter((r) => !r.success).length;
         const moveWasAborted = moveOutcome.threw && moveOutcome.aborted;
         const moveTotal = moveWasAborted ? 0 : moveDtos.length;
-        const moveFailedCount = moveWasAborted
-          ? 0
-          : moveOutcome.threw
-            ? moveDtos.length
-            : moveOutcome.results.filter((r) => !r.success).length;
+        let moveFailedCount: number;
+        if (moveWasAborted) {
+          moveFailedCount = 0;
+        } else if (moveOutcome.threw) {
+          moveFailedCount = moveDtos.length;
+        } else {
+          moveFailedCount = moveOutcome.results.filter(
+            (r) => !r.success,
+          ).length;
+        }
         const moveSuccessCount = moveOutcome.threw
           ? 0
           : moveOutcome.results.filter((r) => r.success).length;

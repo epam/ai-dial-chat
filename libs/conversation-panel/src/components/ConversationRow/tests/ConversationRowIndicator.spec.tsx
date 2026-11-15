@@ -173,10 +173,49 @@ describe('ConversationRow — Indicator variant', () => {
     ).toBe('page');
   });
 
+  it('draws the read and the unread dot at the same 7.11px size', () => {
+    const { container, rerender } = renderIndicator();
+    /* The dot is an aria-hidden span with no role; only its classes identify it. */
+    /* eslint-disable testing-library/no-container, testing-library/no-node-access -- see above */
+    const getDot = () => container.querySelector('.rounded-full');
+    /* eslint-enable testing-library/no-container, testing-library/no-node-access */
+    expect(getDot()?.className).toContain('size-[7.11px]');
+    expect(getDot()?.className).toMatch(/indicatorDot/);
+
+    rerender(
+      <ConversationRow
+        item={{ ...baseItem, isUnread: true }}
+        isActive={false}
+        onSelectConversation={vi.fn()}
+        variant={ConversationRowVariant.Indicator}
+      />,
+    );
+
+    expect(getDot()?.className).toContain('size-[7.11px]');
+    expect(getDot()?.className).toMatch(/unreadDot/);
+  });
+
   it('keeps the row actions trigger', () => {
     renderIndicator();
 
     expect(screen.getByRole('button', { name: 'More actions' })).toBeTruthy();
+  });
+
+  it('pads an Indicator row without actions 8px on both inline sides', () => {
+    render(
+      <ConversationRow
+        item={baseItem}
+        isActive={false}
+        onSelectConversation={vi.fn()}
+        variant={ConversationRowVariant.Indicator}
+      />,
+    );
+
+    const button = screen.getByRole('button', { name: 'My chat' });
+    expect(button.classList.contains('ps-2')).toBe(true);
+    expect(button.classList.contains('pe-2')).toBe(true);
+    expect(button.classList.contains('ps-0')).toBe(false);
+    expect(button.classList.contains('pe-3')).toBe(false);
   });
 
   it('keeps the deployment avatar in the default variant', () => {

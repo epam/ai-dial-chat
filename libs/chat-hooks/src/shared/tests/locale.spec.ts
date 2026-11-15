@@ -35,6 +35,24 @@ describe('buildAdditionalLocaleOptions', () => {
   it('returns an empty array when every code is the primary locale', () => {
     expect(buildAdditionalLocaleOptions(['en'], 'en')).toEqual([]);
   });
+
+  it('labels options with the uppercased code by default', () => {
+    expect(buildAdditionalLocaleOptions(['pt-BR'], 'en')).toEqual([
+      { code: 'pt-BR', label: 'PT-BR' },
+    ]);
+  });
+
+  it('labels options through a host-supplied resolver', () => {
+    expect(
+      buildAdditionalLocaleOptions(['de'], 'en', (code) => code + '!'),
+    ).toEqual([{ code: 'de', label: 'de!' }]);
+  });
+
+  it('drops only an exact primary-locale match', () => {
+    expect(buildAdditionalLocaleOptions(['en', 'en-GB'], 'en')).toEqual([
+      { code: 'en-GB', label: 'EN-GB' },
+    ]);
+  });
 });
 
 describe('resolveLocalizedText', () => {

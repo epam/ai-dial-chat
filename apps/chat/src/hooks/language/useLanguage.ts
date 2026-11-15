@@ -5,8 +5,11 @@ export interface SupportedLanguage {
   nativeName: string;
 }
 
+/** Language the UI falls back to when no translation bundle matches the detected one. */
+export const DEFAULT_LANGUAGE = 'en';
+
 export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
-  { code: 'en', nativeName: 'English' },
+  { code: DEFAULT_LANGUAGE, nativeName: 'English' },
 ];
 
 export const useLanguage = () => {
@@ -17,7 +20,12 @@ export const useLanguage = () => {
   };
 
   return {
+    /* The detected language (e.g. the browser's `ru`), even when the UI fell
+     * back to another bundle; it still selects user-authored content locales. */
     language: i18n.language,
+    /* The language of the text actually rendered — pass it to `Intl`
+     * formatters so dates and weekday names match the surrounding copy. */
+    displayLanguage: i18n.resolvedLanguage ?? DEFAULT_LANGUAGE,
     changeLanguage,
   };
 };

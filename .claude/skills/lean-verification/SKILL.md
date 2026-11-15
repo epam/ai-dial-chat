@@ -39,6 +39,26 @@ affected checks for a completed slice. A successful affected run may execute no
 task when only docs or agent configuration changed, so it is not a substitute
 for the final full gate.
 
+## Verifying in a git worktree
+
+A worktree that shares the main checkout's `node_modules` through a junction
+or symlink verifies the wrong tree unless you point Nx at it:
+
+- Set `NX_WORKSPACE_ROOT_PATH` to the worktree (and `NX_DAEMON=false`) for
+  every Nx command. An inherited value runs lint, tests and typecheck against
+  the main checkout, which can be on another branch, and still reports
+  success. Confirm that the Vitest `RUN` line shows the worktree path.
+- Through the shared `node_modules`, `@nx/dependency-checks`, `import/order`,
+  "The workspace is out of sync" and bare `tsc` (which resolves `@epam/*` into
+  the main checkout) report errors that are not in the change. Do not run
+  `nx sync` and do not "fix" them: lint the changed files with
+  `node node_modules/eslint/bin/eslint.js <files>`, run the affected specs, and
+  leave the full typecheck to CI.
+- Before removing the worktree, remove the link first (`cmd /c rmdir
+<worktree>\node_modules` on Windows, `rm <worktree>/node_modules` elsewhere),
+  then `git worktree remove`. `git worktree remove --force` and `rm -rf`
+  follow the link and empty the main checkout's `node_modules`.
+
 ## Verification cadence
 
 Batch related edits for one task-list item before re-verifying. Do not rerun a

@@ -4,9 +4,9 @@ import {
   AttachmentType,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ATTACHMENT_INPUT_CLASS } from '../../../constants/public-class-names';
 import { AttachmentCard } from '../AttachmentCard';
 
@@ -174,7 +174,10 @@ describe('AttachmentCard — corner actions in the error state', () => {
       />,
     );
 
-    screen.getByRole('button', { name: 'Download attachment' }).focus();
+    /* The tile button is a tooltip trigger, and the tooltip tracks its focus. */
+    act(() => {
+      screen.getByRole('button', { name: 'Download attachment' }).focus();
+    });
     await user.keyboard('{Enter}');
     expect(onClick).toHaveBeenCalledWith('a1');
   });
@@ -264,6 +267,58 @@ describe('AttachmentCard — long filename', () => {
     expect(name.className).toContain('w-full');
     expect(name.className).toContain('wrap-break-word');
     expect(name.className).toContain('line-clamp-2');
+  });
+});
+
+/*
+ * A clickable tile is covered by its action button, so the name's own `title`
+ * never sees the pointer; the full name rides on the button in a tooltip
+ * while the clamp cuts it off (#9623).
+ */
+describe('AttachmentCard — clamped name tooltip', () => {
+  const longFile: DisplayAttachment = {
+    id: 'a9',
+    name: 'quarterly-support-tickets-export-final-v2.csv',
+    contentType: 'text/csv',
+    type: AttachmentType.File,
+    status: RequestStatus.Idle,
+  };
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  const hoverTile = async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    render(
+      <AttachmentCard
+        attachment={longFile}
+        onClick={vi.fn()}
+        labels={{ clickLabel: 'Preview file' }}
+      />,
+    );
+    await userEvent
+      .setup({ advanceTimers: vi.advanceTimersByTime })
+      .hover(screen.getByRole('button', { name: 'Preview file' }));
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+  };
+
+  it('shows the full file name when the tile is hovered while the name is clamped', async () => {
+    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(48);
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(32);
+
+    await hoverTile();
+
+    expect(screen.getByRole('tooltip').textContent).toBe(longFile.name);
+  });
+
+  it('shows no tooltip while the whole name fits', async () => {
+    await hoverTile();
+
+    expect(screen.queryByRole('tooltip')).toBeNull();
   });
 });
 

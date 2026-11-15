@@ -1,4 +1,4 @@
-import { Popup, Spinner } from '@epam/ai-dial-ui-kit';
+import { LiveRegion, Popup, Spinner } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
@@ -39,15 +39,16 @@ export const OperationLoaderModal: FC<OperationLoaderModalProps> = ({
     overlayStyle={buildCssVars({ '--olm-text': colors?.text })}
     mainButtons={[{ label: cancelLabel, onClick: onCancel }]}
   >
-    <div
-      aria-live="polite"
-      className="flex flex-col items-center gap-4 px-6 py-4 text-center"
-    >
-      <Spinner size={32} fullWidth={false} ariaLabel={title} />
-      <div className="flex flex-col gap-1">
+    <div className="flex flex-col items-center gap-4 px-6 py-4 text-center">
+      {/* The title below names the state; the spinner is a status region of
+       * its own, so it is hidden to avoid announcing the title twice. */}
+      <span aria-hidden>
+        <Spinner size={32} fullWidth={false} />
+      </span>
+      <LiveRegion className="flex flex-col gap-1">
         <div>{title}</div>
         <div className={mergeClasses(textClassName, styles.text)}>{text}</div>
-      </div>
+      </LiveRegion>
     </div>
   </Popup>
 );

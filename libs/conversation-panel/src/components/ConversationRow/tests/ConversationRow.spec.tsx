@@ -209,6 +209,19 @@ describe('ConversationRow', () => {
     expect(onActionMenuOpen).toHaveBeenCalledWith(baseItem, trigger);
   });
 
+  it('keeps the row highlight on the row element while the trigger is hovered', () => {
+    render(
+      <ConversationRow
+        item={baseItem}
+        isActive={false}
+        onSelectConversation={vi.fn()}
+        getActions={() => [{ key: 'publish', label: 'Publish' }]}
+      />,
+    );
+
+    expect(screen.getAllByRole('listitem')[0].className).toMatch(/row/);
+  });
+
   describe('memoisation', () => {
     it('does not rebuild the action items when re-rendered with the same props', () => {
       const getActions = vi.fn(() => [{ key: 'pin', label: 'Pin' }]);

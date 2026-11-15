@@ -19,6 +19,19 @@ describe('UploadFileContentQueryDto', () => {
     expect(errors).toHaveLength(0);
   });
 
+  it('rejects an unknown uploadMode with the allowed values in order', async () => {
+    const errors = await validateDto({
+      bucket: 'Abc123',
+      path: 'file.bin',
+      uploadMode: 'bogus',
+    });
+    expect(errors.map((error) => error.constraints)).toEqual([
+      {
+        isIn: 'uploadMode must be one of the following values: overwrite, create-only',
+      },
+    ]);
+  });
+
   it('passes without the optional contentType and uploadMode', async () => {
     const errors = await validateDto({ bucket: 'Abc123', path: 'file.bin' });
     expect(errors).toHaveLength(0);

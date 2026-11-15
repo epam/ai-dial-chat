@@ -2,9 +2,10 @@ import {
   buildCssVars,
   mergeClasses,
   TAG_INPUT_TAG_CLASS_NAME,
+  useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import {
-  ErrorText,
+  BottomSheet,
   GhostButton,
   Highlight,
   Input,
@@ -42,7 +43,7 @@ const isValidRegex = (pattern: string): boolean => {
   }
 };
 
-/** Edits one access rule inline on desktop or in a full-screen mobile step. */
+/** Edits one access rule inline on desktop or in a bottom sheet below the desktop breakpoint. */
 export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
   sourceOptions,
   onSave,
@@ -50,14 +51,13 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
   disabled = false,
   maxTargets = MAX_TARGETS_DEFAULT,
   labels = {},
-  errorClassName = 'dial-tiny-text',
   styles: stylesProp = {},
 }) => {
+  const isMobile = useIsMobile();
   const cssVars = {
     ...buildCssVars({
       '--pare-mobile-bg': stylesProp.colors?.mobileBackground,
       '--pare-bg': stylesProp.colors?.background,
-      '--pare-error-text': stylesProp.colors?.errorText,
       '--pare-select-border': stylesProp.colors?.selectBorder,
       '--pare-select-border-hover': stylesProp.colors?.selectBorderHover,
       '--pare-select-border-open': stylesProp.colors?.selectBorderOpen,
@@ -86,19 +86,19 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
     dialogAriaLabel = 'Add access rule',
   } = labels;
 
-  const patternErrorId = useId();
+  const patternElementId = useId();
   const sourceElementId = useId();
   const functionElementId = useId();
   const targetsElementId = useId();
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const groupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     /*
-     * Moves focus into the newly opened editor, matching the WAI-ARIA dialog
-     * pattern; focus is restored to the trigger by the host on close.
+     * Moves focus into the newly opened inline editor; focus is restored to
+     * the trigger by the host on close. The bottom sheet manages its own focus.
      */
-    dialogRef.current?.focus();
-  }, []);
+    if (!isMobile) groupRef.current?.focus();
+  }, [isMobile]);
 
   const [source, setSource] = useState<string>();
   const [ruleFunction, setRuleFunction] = useState<PublicationRuleFunction>();
@@ -205,6 +205,9 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
     });
   };
 
+  const isPatternErrorShown =
+    (pattern.length > 0 || hasAttemptedSave) && !isPatternValid;
+
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') {
       /*
@@ -217,22 +220,8 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
     }
   };
 
-  return (
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-    <div
-      ref={dialogRef}
-      role="dialog"
-      aria-modal="true"
-      aria-label={dialogAriaLabel}
-      tabIndex={-1}
-      onKeyDown={handleKeyDown}
-      style={cssVars}
-      className={mergeClasses(
-        'fixed inset-0 z-60 flex flex-col gap-3 overflow-y-auto p-4',
-        'desktop:static desktop:z-auto desktop:flex-none desktop:overflow-visible desktop:rounded-lg desktop:p-3',
-        styles.dialog,
-      )}
-    >
+  const fields = (
+    <>
       <Select
         id={sourceElementId}
         labelProps={{ label: sourceLabel }}
@@ -273,35 +262,15 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
       />
 
       {isRegex ? (
-        <div>
-          <Input
-            id={`${patternErrorId}-input`}
-            labelProps={{ label: patternLabel }}
-            placeholder={patternPlaceholder}
-            value={pattern}
-            onChange={(value) => setPattern(value ?? '')}
-            invalid={
-              (pattern.length > 0 || hasAttemptedSave) && !isPatternValid
-            }
-            aria-describedby={
-              (pattern.length > 0 || hasAttemptedSave) && !isPatternValid
-                ? patternErrorId
-                : undefined
-            }
-            disabled={disabled}
-          />
-          {(pattern.length > 0 || hasAttemptedSave) && !isPatternValid && (
-            <ErrorText
-              id={patternErrorId}
-              className={mergeClasses(
-                'mt-1 block',
-                errorClassName,
-                styles.error,
-              )}
-              text={invalidRegexError}
-            />
-          )}
-        </div>
+        <Input
+          id={patternElementId}
+          labelProps={{ label: patternLabel }}
+          placeholder={patternPlaceholder}
+          value={pattern}
+          onChange={(value) => setPattern(value ?? '')}
+          error={isPatternErrorShown ? invalidRegexError : undefined}
+          disabled={disabled}
+        />
       ) : (
         <TagInput
           id={targetsElementId}
@@ -344,6 +313,39 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
           disabled={disabled}
         />
       </div>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <BottomSheet
+        open
+        onClose={onCancel}
+        ariaLabel={dialogAriaLabel}
+        style={cssVars}
+        className={styles.sheet}
+        bodyClassName="flex flex-col gap-3 p-4"
+      >
+        {fields}
+      </BottomSheet>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+    <div
+      ref={groupRef}
+      role="group"
+      aria-label={dialogAriaLabel}
+      tabIndex={-1}
+      onKeyDown={handleKeyDown}
+      style={cssVars}
+      className={mergeClasses(
+        'flex flex-none flex-col gap-3 rounded-lg p-3',
+        styles.inline,
+      )}
+    >
+      {fields}
     </div>
   );
 };

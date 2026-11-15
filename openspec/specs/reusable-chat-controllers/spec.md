@@ -63,7 +63,7 @@ No backend endpoint, generated-client change, new feature flag, telemetry event 
 
 ### Requirement: Selected skill name resolution
 
-`chat-hooks/scheduled-tasks` SHALL export `useScheduledTaskSkillDisplayNames` accepting selected URLs, listed metadata and a metadata loader with AbortSignal. It SHALL own only selection-scoped results; the adapter in `apps/chat/src/hooks/scheduled-tasks/useScheduledTaskSkillDisplayNames.ts` SHALL provide contexts and API calls. There SHALL be no shared cache or TTL: results are invalidated by selection/listing changes or unmount.
+`chat-hooks/scheduled-tasks` SHALL export `useScheduledTaskSkillDisplayNames` accepting selected URLs, listed metadata and a metadata loader with AbortSignal. It SHALL own only selection-scoped results; a host adapter SHALL provide the listing and the configured metadata call. `apps/chat` does not use this hook: it resolves selected skill names, together with their availability, through its own `useScheduledTaskSkillDetails` in `apps/chat/src/hooks/scheduled-tasks/useUnavailableScheduledTaskSkills.ts`. There SHALL be no shared cache or TTL: results are invalidated by selection/listing changes or unmount.
 
 #### Scenario: Partial metadata availability
 

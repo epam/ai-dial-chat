@@ -216,7 +216,7 @@ The lib SHALL render the visible projects as a list (`<ul>` with one `<li>` per 
 
 - when `updatedAt` is set, the last-updated time relative to the reference time, in a `<time>` element whose `dateTime` is the ISO timestamp, formatted with `Intl.RelativeTimeFormat(locale)` in the largest whole unit (e.g. `49 minutes ago`, `1 week ago`; under a minute reads `now`);
 - the name, through `Highlight` with `maxLines={1}`;
-- in the card's top inline-end corner, inside the card padding (the first row keeps clear of it), after the name in reading order: when the host passes `onTogglePin(id, isPinned)`, a kit `GhostIconButton` (`ElementSize.Small`) named by `labels.pinLabel` (default `'Pin'`) with `aria-pressed={isPinned}`, showing `IconPinFilled` when pinned and `IconPin` otherwise. It is painted above the stretched link, so its click never opens the project. An unpinned card's toggle is shown on card hover or focus within the card, and always where the pointer cannot hover. Without `onTogglePin`, a pinned card shows an `IconPinFilled` marker (`aria-hidden`) followed by visually hidden `labels.pinnedLabel` text;
+- in the card's top inline-end corner, inside the card padding (the first row keeps clear of it), after the name in reading order: when the host passes `onTogglePin(id, isPinned)`, a kit `GhostIconButton` (`ElementSize.Small`) named by `labels.pinLabel` (default `'Pin'`) with `aria-pressed={isPinned}`, showing `IconPinFilled` when pinned and `IconPin` otherwise. It is painted above the stretched link, so its click never opens the project. An unpinned card's toggle is shown on card hover or keyboard focus within the card (`:focus-visible`, so focus a mouse click leaves on the toggle does not keep it shown), and always where the pointer cannot hover. Without `onTogglePin`, a pinned card shows an `IconPinFilled` marker (`aria-hidden`) followed by visually hidden `labels.pinnedLabel` text;
 - the kit `FolderPath`, with no divider above it, named by `labels.folderPathLabel`, whose segments are `labels.sourceLabels[source]` followed by the `/`-separated `parentPath` folders.
 
 The reference time SHALL be taken from `Date.now()` again whenever the `projects` prop reference changes, and kept otherwise (`Projects` in `libs/projects/src/components/Projects/Projects.tsx`). A project updated while the page is open therefore reads `now` rather than a time relative to when the page was mounted. With an unchanged `projects` reference, the times stay a snapshot and do not tick.
@@ -229,7 +229,7 @@ Without those props, cards are not interactive: no link, button or `tabIndex`.
 
 The **New project** buttons are specified separately, in "Projects page offers New project in the header and the empty state".
 
-**RTL impact:** the pin marker or toggle sits in the top inline-end corner through logical properties (`inset-e-*`, `pe-*`), so it moves to the left in RTL, and the icon is not mirrored. **i18n impact:** `projects.card.pinned` ("Pinned"); `ProjectsPage` fills `labels.pinLabel` from `ButtonsI18nKeys.Pin` and reports a failed pin with `projects.actions.pinError`, both existing keys.
+**RTL impact:** the pin marker or toggle sits in the top inline-end corner through logical properties (`inset-e-*`, `pe-*`), so it moves to the left in RTL, and the icon is not mirrored. **i18n impact:** `projects.card.pinned` ("Pinned"); `ProjectsPage` fills `labels.pinLabel` from `ButtonsI18nKeys.Pin` and reports a failed pin with `projects.actions.pinError` and a failed unpin with `projects.actions.unpinError`.
 
 #### Scenario: Card content
 
@@ -241,10 +241,20 @@ The **New project** buttons are specified separately, in "Projects page offers N
 - **WHEN** a project has no `updatedAt`
 - **THEN** its card renders no `<time>` element
 
-#### Scenario: Nested project shows its folders
+#### Scenario: Root project shows only its source
 
-- **WHEN** a project has `source: ProjectSource.Personal` and `parentPath: 'marketing/2026'`
-- **THEN** its folder path reads Personal, then `marketing`, then `2026`
+- **WHEN** a project has `source: ProjectSource.Personal` and no `parentPath`
+- **THEN** its folder path reads only Personal
+
+#### Scenario: Project in a folder shows its folders
+
+- **WHEN** a project written to its bucket outside Chat has `source: ProjectSource.Organization` and `parentPath: 'marketing/2026'`
+- **THEN** its folder path reads Organization, then `marketing`, then `2026`
+
+#### Scenario: Unpinned toggle hides after a mouse unpin
+
+- **WHEN** the user unpins a card with the mouse and moves the pointer off the card
+- **THEN** the card's pin toggle is hidden again, although it still holds focus
 
 #### Scenario: Clicking a card opens the project
 
@@ -264,7 +274,7 @@ The **New project** buttons are specified separately, in "Projects page offers N
 #### Scenario: Pinning from the list
 
 - **WHEN** the Projects page passes `onTogglePin`, and the user activates the pin toggle of an unpinned card
-- **THEN** `onTogglePin(id, true)` is called, the project does not open, and the app pins it through `UserConfigContext` `setPinnedProject`; a failure rolls the pin back and shows the `projects.actions.pinError` notification
+- **THEN** `onTogglePin(id, true)` is called, the project does not open, and the app pins it through `UserConfigContext` `setPinnedProject`; a failure rolls the pin back and shows the `projects.actions.pinError` notification (`projects.actions.unpinError` when unpinning)
 
 #### Scenario: A live update reads as now
 
@@ -318,7 +328,7 @@ The title, the subtitle (when `labels.subtitle` is set) and the toolbar (search 
 
 Every user-visible string SHALL be resolved in `ProjectsPage` with `useTranslation().t()` and passed to the lib as a plain string. The keys live in a new `projects` namespace in `apps/chat/src/i18n/locales/en.json` and are referenced through a `ProjectsI18nKeys` enum in `apps/chat/src/constants/translation-keys.ts`:
 
-- `projects.page.title` ("All projects")
+- `projects.page.title` ("Projects")
 - `projects.toolbar.searchPlaceholder`
 - `projects.toolbar.searchAriaLabel`
 - `projects.toolbar.sortNewest`
@@ -342,6 +352,11 @@ The sort control label reuses `ButtonsI18nKeys.Sort`, the retry label reuses `Bu
 - **WHEN** the change is applied
 - **THEN** every `projects.*` key listed above exists in `en.json` and in `ProjectsI18nKeys`
 - **AND** the keys `projects.page.subtitle`, `projects.toolbar.sortLabel`, `projects.toolbar.clearSearchLabel`, `projects.error.retry` and `projects.card.updatedAt` SHALL NOT exist
+
+#### Scenario: The page title matches its navigation entry
+
+- **WHEN** `ProjectsPage` renders in English
+- **THEN** its `<h1>` reads "Projects", the same text as the `navigation.projects` entry that opens the page
 
 ### Requirement: Projects page is mobile-first, RTL-safe and meets WCAG 2.1 AAA
 
@@ -411,7 +426,7 @@ The Projects lib and page SHALL meet the layout, RTL, accessibility and memoisat
 
 When `onCreateProject` is supplied, the `Projects` lib component SHALL render two **New project** buttons, both labelled `labels.createProjectLabel` and both calling `onCreateProject`:
 
-- **Header button:** under `desktop:`, a primary kit `Button` without an icon, on the inline end of the title row. On mobile, where there is no title row, it is a round 40px primary kit `Button` showing only an `IconPlus`, named by `labels.createProjectLabel` through `aria-label`, floating 16px from the bottom inline-end corner of the page. Either form is rendered in every content state.
+- **Header button:** under `desktop:`, a primary kit `Button` without an icon, on the inline end of the title row. On mobile, where there is no title row, it is a round 40px primary kit `Button` showing only an `IconPlus`, named by `labels.createProjectLabel` through `aria-label`, floating 16px from the bottom inline-end corner of the page. The page root is `size-full min-h-0 flex-1` (like the catalog root), so it never grows past the space its parent gives it: a long list scrolls inside the page and the floating button stays inside the viewport. Either form is rendered in every content state.
 - **Empty-state button:** a secondary kit `Button` without an icon, passed as the `action` of the empty-state `PanelEmptyState`, so it renders only in the Empty state. It does not render in the no-results, error or incomplete states.
 
 When `onCreateProject` is omitted, neither button renders.

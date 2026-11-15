@@ -13,6 +13,7 @@ import {
   waitFor,
   within,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BubblePosition } from '../../../types/bubble-position';
 import { AssistantMessageBubble } from '../AssistantMessageBubble';
@@ -193,7 +194,7 @@ describe('MessageBubble', () => {
     const actionsWrapper = screen.getByRole('toolbar', {
       name: 'Message actions',
     });
-    expect(actionsWrapper.className).not.toContain('opacity-0');
+    expect(actionsWrapper.className).not.toMatch(/(^|\s)invisible(\s|$)/);
   });
 
   describe('UserMessageBubble — markdown', () => {
@@ -943,6 +944,53 @@ describe('MessageBubble', () => {
     });
   });
 
+  describe('AssistantMessageBubble — starters', () => {
+    const STARTERS = [
+      {
+        const: 0,
+        title: 'Approve',
+        'dial:widgetOptions': {
+          populateText: 'Approve',
+          submit: true,
+          confirmationMessage: null,
+        },
+      },
+    ];
+
+    it('fires onSelectStarter with the clicked starter', async () => {
+      const onSelectStarter = vi.fn();
+      render(
+        <AssistantMessageBubble
+          text="Pick one"
+          starters={STARTERS}
+          onSelectStarter={onSelectStarter}
+        />,
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: 'Approve' }));
+
+      expect(onSelectStarter).toHaveBeenCalledWith(STARTERS[0]);
+    });
+
+    it('renders the starters disabled and ignores clicks when isStarterSelectionDisabled is set', async () => {
+      const onSelectStarter = vi.fn();
+      render(
+        <AssistantMessageBubble
+          text="Pick one"
+          starters={STARTERS}
+          onSelectStarter={onSelectStarter}
+          isStarterSelectionDisabled
+        />,
+      );
+
+      const button = screen.getByRole('button', { name: 'Approve' });
+      await userEvent.click(button);
+
+      expect((button as HTMLButtonElement).disabled).toBe(true);
+      expect(onSelectStarter).not.toHaveBeenCalled();
+    });
+  });
+
   describe('AssistantMessageBubble — inline-start slot', () => {
     const skillSlot = <span>/Summarizer</span>;
 
@@ -1036,6 +1084,34 @@ describe('MessageBubble', () => {
 
       expect(screen.queryByText('Thinking…')).toBeNull();
       expect(screen.getByText('Stages')).toBeTruthy();
+    });
+
+    it('mounts the live region before the first token and keeps the same node once text streams in', () => {
+      const { container, rerender } = render(
+        <AssistantMessageBubble
+          isStreaming
+          hasThinkingPlaceholder={false}
+          afterContent={<span>Stages</span>}
+        />,
+      );
+
+      const region = getTextContainer(container);
+      expect(region).toBeTruthy();
+      expect(region?.textContent).toBe('');
+      expect(region?.className).toContain('absolute');
+
+      rerender(
+        <AssistantMessageBubble
+          text="First token"
+          isStreaming
+          hasThinkingPlaceholder={false}
+          afterContent={<span>Stages</span>}
+        />,
+      );
+
+      expect(getTextContainer(container)).toBe(region);
+      expect(region?.getAttribute('aria-atomic')).toBe('false');
+      expect(region?.className).toContain('relative');
     });
 
     it('renders the slot on its own line for a message with no text at all', () => {

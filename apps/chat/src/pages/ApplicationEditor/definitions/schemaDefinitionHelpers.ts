@@ -45,14 +45,24 @@ export const getSchemaId = ({
 }: ApplicationEditorContext): string =>
   searchParams.get(AppsEditorQuery.Schema) ?? '';
 
+/** Returns the schema's display name, or the default type name when it is unknown. */
+export const getSchemaAppTypeName = (ctx: ApplicationEditorContext): string => {
+  const schemaId = getSchemaId(ctx);
+  const schema = ctx.schemas.find((item) => item.id === schemaId);
+  return schema?.displayName || ctx.t(AppsEditorI18nKeys.DefaultTypeName);
+};
+
+/** Keeps the version read-only while editing: it changes only through the Save panel's "Save as new version". */
+export const getVersionLockedInEditMode = (isEditMode: boolean) => ({
+  isVersionReadOnly: isEditMode,
+});
+
 /** Returns the page title naming the schema's display name, or the default type name when it is unknown. */
 export const getSchemaAppTitle = (
   ctx: ApplicationEditorContext,
   isEditMode: boolean,
 ) => {
-  const schemaId = getSchemaId(ctx);
-  const schema = ctx.schemas.find((item) => item.id === schemaId);
-  const type = schema?.displayName || ctx.t(AppsEditorI18nKeys.DefaultTypeName);
+  const type = getSchemaAppTypeName(ctx);
   return isEditMode
     ? ctx.t(AppsEditorI18nKeys.EditTitle, { type })
     : ctx.t(AppsEditorI18nKeys.CreateTitle, { type });

@@ -15,47 +15,129 @@ import {
  * (see `resolveOoxmlCanvasContent`), so it never carries the original file's
  * extension. Fall back to the MIME type implied by `content.format`. */
 const RENDERER_MIME_TYPES: Record<OoxmlFileType, string> = {
-  [OoxmlFileType.Docx]:
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  [OoxmlFileType.Xlsx]:
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  [OoxmlFileType.Pptx]:
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  [OoxmlFileType.Docx]: MIMEType.DOCX,
+  [OoxmlFileType.Xlsx]: MIMEType.XLSX,
+  [OoxmlFileType.Pptx]: MIMEType.PPTX,
   [OoxmlFileType.Csv]: MIMEType.CSV,
 };
 
-/** Returns true if the given canvas content can be downloaded. */
-export const isDownloadable = (content: AttachmentCanvasContent): boolean => {
-  switch (content.type) {
-    case AttachmentContentType.PlainText:
-    case AttachmentContentType.Markdown:
-    case AttachmentContentType.Json:
-    case AttachmentContentType.Image:
-    case AttachmentContentType.Audio:
-    case AttachmentContentType.Pdf:
-    case AttachmentContentType.Ooxml:
-    case AttachmentContentType.Code:
-      return true;
-    case AttachmentContentType.Html:
-      return content.url != null;
-    /*
-     * A standalone table's download action lives in its own inline header
-     * (CSV, via its localized table labels), not the generic download button.
-     */
-    case AttachmentContentType.MarkdownTable:
-    case AttachmentContentType.Visualizer:
-    case AttachmentContentType.GroupedVisualizer:
-    case AttachmentContentType.McpApp:
-      return false;
-    case AttachmentContentType.Unsupported:
-      return content.url != null;
-    case AttachmentContentType.Error:
-      return (
-        content.errorType !== AttachmentErrorType.Forbidden &&
-        content.url != null
-      );
-  }
+type ContentOf<T extends AttachmentContentType> = Extract<
+  AttachmentCanvasContent,
+  { type: T }
+>;
+
+/** URL and MIME type hint used to derive a file extension when the display name lacks one. */
+interface ContentUrlAndMimeType {
+  url: string | undefined;
+  mimeType: string | undefined;
+}
+
+/** How one content type is downloaded. */
+interface DownloadStrategy<C> {
+  isDownloadable: (content: C) => boolean;
+  urlAndMimeType: (content: C) => ContentUrlAndMimeType;
+  download: (content: C, name: string) => void;
+}
+
+const always = () => true;
+const never = () => false;
+
+/* Text kinds are downloaded from memory; an empty body downloads nothing. */
+const textStrategy = (
+  mimeType: MIMEType,
+): DownloadStrategy<{ text: string }> => ({
+  isDownloadable: always,
+  urlAndMimeType: () => ({ url: undefined, mimeType }),
+  download: (content, name) => {
+    if (content.text === '') return;
+    triggerBlobDownload(new Blob([content.text], { type: mimeType }), name);
+  },
+});
+
+/* URL kinds are downloaded through an anchor; without a URL there is nothing to download. */
+const urlStrategy = <C extends { url?: string }>(
+  isDownloadable: (content: C) => boolean,
+  mimeType?: (content: C) => string | undefined,
+): DownloadStrategy<C> => ({
+  isDownloadable,
+  urlAndMimeType: (content) => ({
+    url: content.url,
+    mimeType: mimeType?.(content),
+  }),
+  download: (content, name) => {
+    if (content.url != null && isDownloadable(content)) {
+      triggerAnchorDownload(content.url, name);
+    }
+  },
+});
+
+const NOT_DOWNLOADABLE: DownloadStrategy<unknown> = {
+  isDownloadable: never,
+  urlAndMimeType: () => ({ url: undefined, mimeType: undefined }),
+  download: () => undefined,
 };
+
+/*
+ * One entry per content type, so a new `AttachmentContentType` does not
+ * compile until its download behaviour is decided here.
+ */
+const DOWNLOAD_STRATEGIES: {
+  [T in AttachmentContentType]: DownloadStrategy<ContentOf<T>>;
+} = {
+  [AttachmentContentType.PlainText]: textStrategy(MIMEType.Plain),
+  [AttachmentContentType.Markdown]: textStrategy(MIMEType.Markdown),
+  [AttachmentContentType.Code]: textStrategy(MIMEType.Plain),
+  [AttachmentContentType.Json]: {
+    isDownloadable: always,
+    urlAndMimeType: () => ({ url: undefined, mimeType: MIMEType.JSON }),
+    download: (content, name) =>
+      triggerBlobDownload(
+        new Blob([JSON.stringify(content.value, null, 2)], {
+          type: MIMEType.JSON,
+        }),
+        name,
+      ),
+  },
+  [AttachmentContentType.Image]: urlStrategy(always),
+  [AttachmentContentType.Audio]: urlStrategy(always, (c) => c.mimeType),
+  [AttachmentContentType.Pdf]: urlStrategy(always, () => MIMEType.PDF),
+  [AttachmentContentType.Ooxml]: urlStrategy(
+    always,
+    (c) => RENDERER_MIME_TYPES[c.format],
+  ),
+  [AttachmentContentType.Html]: urlStrategy(
+    (c) => c.url != null,
+    () => MIMEType.HTML,
+  ),
+  [AttachmentContentType.Unsupported]: urlStrategy((c) => c.url != null),
+  [AttachmentContentType.Error]: urlStrategy(
+    (c) => c.errorType !== AttachmentErrorType.Forbidden && c.url != null,
+  ),
+  /*
+   * A standalone table's download action lives in its own inline header
+   * (CSV, via its localized table labels), not the generic download button.
+   */
+  [AttachmentContentType.MarkdownTable]: {
+    ...NOT_DOWNLOADABLE,
+    urlAndMimeType: () => ({ url: undefined, mimeType: MIMEType.Markdown }),
+  },
+  [AttachmentContentType.Visualizer]: NOT_DOWNLOADABLE,
+  [AttachmentContentType.GroupedVisualizer]: NOT_DOWNLOADABLE,
+  [AttachmentContentType.McpApp]: NOT_DOWNLOADABLE,
+};
+
+/* TypeScript cannot correlate a union key with its own mapped entry, so the
+ * lookup is widened once here; each entry is typed against its own content. */
+const strategyFor = (
+  content: AttachmentCanvasContent,
+): DownloadStrategy<AttachmentCanvasContent> =>
+  DOWNLOAD_STRATEGIES[
+    content.type
+  ] as DownloadStrategy<AttachmentCanvasContent>;
+
+/** Returns true if the given canvas content can be downloaded. */
+export const isDownloadable = (content: AttachmentCanvasContent): boolean =>
+  strategyFor(content).isDownloadable(content);
 
 /** Fetches a URL and returns its response body as a `Blob`. */
 export const fetchBlobFromUrl = async (url: string): Promise<Blob> => {
@@ -64,107 +146,13 @@ export const fetchBlobFromUrl = async (url: string): Promise<Blob> => {
   return r.blob();
 };
 
-/*
- * Returns the URL and MIME type hint that best describe `content` for the
- * purposes of deriving a file extension when the display name lacks one.
- */
-const getContentUrlAndMimeType = (
-  content: AttachmentCanvasContent,
-): { url: string | undefined; mimeType: string | undefined } => {
-  switch (content.type) {
-    case AttachmentContentType.Image:
-      return { url: content.url, mimeType: undefined };
-    case AttachmentContentType.Audio:
-      return { url: content.url, mimeType: content.mimeType };
-    case AttachmentContentType.Pdf:
-      return { url: content.url, mimeType: MIMEType.PDF };
-    case AttachmentContentType.Ooxml:
-      return {
-        url: content.url,
-        mimeType: RENDERER_MIME_TYPES[content.format],
-      };
-    case AttachmentContentType.Html:
-      return { url: content.url, mimeType: MIMEType.HTML };
-    case AttachmentContentType.Unsupported:
-    case AttachmentContentType.Error:
-      return { url: content.url, mimeType: undefined };
-    case AttachmentContentType.PlainText:
-    case AttachmentContentType.Code:
-      return { url: undefined, mimeType: MIMEType.Plain };
-    case AttachmentContentType.Markdown:
-    case AttachmentContentType.MarkdownTable:
-      return { url: undefined, mimeType: MIMEType.Markdown };
-    case AttachmentContentType.Json:
-      return { url: undefined, mimeType: MIMEType.JSON };
-    default:
-      return { url: undefined, mimeType: undefined };
-  }
-};
-
 /** Triggers a browser download for the given canvas content. */
 export const downloadAttachmentContent = (
   content: AttachmentCanvasContent,
   fileName?: string,
 ): void => {
-  const { url: contentUrl, mimeType: contentMimeType } =
-    getContentUrlAndMimeType(content);
-  const name = ensureDownloadFilename(
-    fileName ?? 'attachment',
-    contentUrl,
-    contentMimeType,
-  );
-  switch (content.type) {
-    case AttachmentContentType.PlainText:
-      if (content.text === '') return;
-      triggerBlobDownload(
-        new Blob([content.text], { type: MIMEType.Plain }),
-        name,
-      );
-      return;
-    case AttachmentContentType.Markdown:
-      if (content.text === '') return;
-      triggerBlobDownload(
-        new Blob([content.text], { type: MIMEType.Markdown }),
-        name,
-      );
-      return;
-    case AttachmentContentType.Json:
-      triggerBlobDownload(
-        new Blob([JSON.stringify(content.value, null, 2)], {
-          type: MIMEType.JSON,
-        }),
-        name,
-      );
-      return;
-    case AttachmentContentType.Image:
-    case AttachmentContentType.Audio:
-    case AttachmentContentType.Pdf:
-    case AttachmentContentType.Ooxml:
-      triggerAnchorDownload(content.url, name);
-      return;
-    case AttachmentContentType.Code:
-      if (content.text === '') return;
-      triggerBlobDownload(
-        new Blob([content.text], { type: MIMEType.Plain }),
-        name,
-      );
-      return;
-    case AttachmentContentType.Html:
-      if (content.url == null) return;
-      triggerAnchorDownload(content.url, name);
-      return;
-    /* Not downloadable — see `isDownloadable`. */
-    case AttachmentContentType.MarkdownTable:
-    case AttachmentContentType.Visualizer:
-    case AttachmentContentType.McpApp:
-      return;
-    case AttachmentContentType.Unsupported:
-      if (content.url == null) return;
-      triggerAnchorDownload(content.url, name);
-      return;
-    case AttachmentContentType.Error:
-      if (!isDownloadable(content) || content.url == null) return;
-      triggerAnchorDownload(content.url, name);
-      return;
-  }
+  const strategy = strategyFor(content);
+  const { url, mimeType } = strategy.urlAndMimeType(content);
+  const name = ensureDownloadFilename(fileName ?? 'attachment', url, mimeType);
+  strategy.download(content, name);
 };

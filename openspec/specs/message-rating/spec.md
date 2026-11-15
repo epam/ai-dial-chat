@@ -205,19 +205,19 @@ When the user clicks Dislike on an assistant message that is **not already disli
 
 In read-only conversations, the Dislike button is not rendered, so the modal cannot be triggered.
 
-**Component:** `apps/chat/src/components/ConversationView/Rate/NegativeFeedbackModal.tsx`
+**Component:** `NegativeFeedbackModal` in `libs/conversation-messages/src/components/NegativeFeedbackModal/NegativeFeedbackModal.tsx` (exported from `@epam/ai-dial-conversation-messages`). The app adapter `apps/chat/src/components/ConversationView/Rate/NegativeFeedbackModal.tsx` passes the translated `labels` (including `categoryLabels`) and `isCommentEnabled` from the `OverlayFeature.DislikeComment` UI feature.
 
 **State:** each host page holds `pendingDislikeMessageIndex: number | null` (same pattern as `pendingDeleteIndex`). On submit it calls the chat-hooks `handleRateMessage(index, MessageRating.Dislike, comment)`, whose signature is `(messageIndex: number, rating: MessageRating | null, comment?: string) => Promise<boolean>` and which forwards `comment` to `rateApi.rateMessage`.
 
 **Modal contents:**
 - Title: **"Send negative feedback"**
-- Required `Select` labelled **"What type of feedback you want to give? \*"** with the following options defined in `apps/chat/src/constants/feedback-categories.ts`:
+- Required `Select` labelled **"What type of feedback you want to give? \*"** with the following options, in this order, defined by the lib's `NegativeFeedbackCategory` enum in `libs/conversation-messages/src/types/negative-feedback-category.ts` (each member's value is the text submitted):
   - "UI bug"
   - "Overactive refusal"
   - "Incomplete response"
   - "Should have triggered thinking"
   - "Should have searched the web"
-- Optional `Textarea` with placeholder **"Type an optional comment to your feedback"**, rendered only when the `OverlayFeature.DislikeComment` UI feature is enabled (it is in the default feature list)
+- Optional `Textarea` with placeholder **"Type an optional comment to your feedback"**, rendered only when `isCommentEnabled` is `true` (the lib default); `apps/chat` passes the `OverlayFeature.DislikeComment` UI feature, which is in the default feature list
 - A **"Send"** button (`ButtonsI18nKeys.Send`) supplied as a 2.0 `Popup` `mainButtons` entry with `ButtonVariant.Primary` — disabled until a category is selected
 - Close (×) icon button
 

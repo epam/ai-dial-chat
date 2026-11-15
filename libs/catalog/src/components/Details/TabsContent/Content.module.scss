@@ -7,6 +7,10 @@
   color: var(--cat-details-file-count-text, var(--text-secondary, #57647a));
 }
 
+.fileSelector {
+  background: var(--cat-details-bg, var(--bg-layer-raised, #fcfcfc));
+}
+
 .body {
   color: var(--cat-details-content-text, var(--text-primary, #161b2d));
 

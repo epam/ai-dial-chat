@@ -85,6 +85,9 @@ export const Catalog: FC<CatalogProps> = ({
   isPublishVisible,
   isPublishPrimary,
   getPublishHistory,
+  getPublishDependencies,
+  resolvePublishDependenciesLabels,
+  resolvePublishApprovalLabels,
   publishFolderItems,
   publishExpandedPaths,
   onPublishExpandedPathsChange,
@@ -690,7 +693,7 @@ export const Catalog: FC<CatalogProps> = ({
   if (isLoading) {
     return (
       <div className="flex size-full min-h-0 flex-1 items-center justify-center">
-        <Spinner />
+        <Spinner ariaLabel={titles?.loadingLabel ?? 'Loading…'} />
       </div>
     );
   }
@@ -760,7 +763,7 @@ export const Catalog: FC<CatalogProps> = ({
       <div
         ref={setScrollBody}
         className={mergeClasses(
-          'flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto',
+          'relative flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto',
           isFloatingCreateVisible && 'pb-16',
         )}
       >
@@ -959,6 +962,9 @@ export const Catalog: FC<CatalogProps> = ({
           isPublishVisible={isPublishVisible}
           isPublishPrimary={isPublishPrimary}
           getPublishHistory={getPublishHistory}
+          getPublishDependencies={getPublishDependencies}
+          resolvePublishDependenciesLabels={resolvePublishDependenciesLabels}
+          resolvePublishApprovalLabels={resolvePublishApprovalLabels}
           publishFolderItems={publishFolderItems}
           publishExpandedPaths={publishExpandedPaths}
           onPublishExpandedPathsChange={onPublishExpandedPathsChange}

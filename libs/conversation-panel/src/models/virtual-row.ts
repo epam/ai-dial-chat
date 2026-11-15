@@ -3,6 +3,7 @@ import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { ConversationRowVariant } from '../types/conversation-row-variant';
 import { VirtualRowKind } from '../types/virtual-row';
 import type { ConversationItem } from './panel-props';
+import type { NestedRowPosition, PinnedProjectGroup } from './pinned-projects';
 
 /** A collapsible group header row in the virtual list. */
 interface GroupHeaderRow {
@@ -24,8 +25,43 @@ interface ConversationItemRow {
   groupKey: FilterTab;
 }
 
+/** A pinned project row at the top of the Pinned section. */
+interface ProjectRow {
+  /** Row discriminant. */
+  kind: VirtualRowKind.Project;
+  /** The project to render. */
+  project: PinnedProjectGroup;
+  /** Whether the project's chats are shown, search included. */
+  isExpanded: boolean;
+}
+
+/** A conversation row nested under a pinned project row. */
+interface ProjectConversationRow extends NestedRowPosition {
+  /** Row discriminant. */
+  kind: VirtualRowKind.ProjectConversation;
+  /** The conversation to render. */
+  item: ConversationItem;
+  /** Id of the project the conversation is listed under. */
+  projectId: string;
+}
+
+/** The See all row closing a pinned project's nested rows. */
+interface ProjectSeeAllRow extends NestedRowPosition {
+  /** Row discriminant. */
+  kind: VirtualRowKind.ProjectSeeAll;
+  /** The project whose chats the row opens. */
+  project: PinnedProjectGroup;
+  /** Id of the project, the same as `project.id`. */
+  projectId: string;
+}
+
 /** Union of all possible virtual row shapes. */
-export type VirtualRow = GroupHeaderRow | ConversationItemRow;
+export type VirtualRow =
+  | GroupHeaderRow
+  | ConversationItemRow
+  | ProjectRow
+  | ProjectConversationRow
+  | ProjectSeeAllRow;
 
 /** Typography/class overrides applied to virtual row elements. */
 interface RowStyles {
@@ -66,10 +102,37 @@ export interface RowRendererData {
   actionsLabel?: string;
   /** Accessible (visually hidden) label announced for the unread indicator dot. */
   unreadIndicatorLabel?: string;
+  /** Id of the project the host currently shows. */
+  activeProjectId?: string;
+  /** Called with the project `id` when a project row is activated. */
+  onSelectProject: (projectId: string) => void;
+  /** Called with the conversation `id` when a row nested under a project is activated. */
+  onSelectProjectConversation: (id: string) => void;
+  /** Called with the project `id` when a See all row is activated. */
+  onSeeAll: (projectId: string) => void;
+  /** Called with the project `id` and the state the chevron asks for when a project row's chevron is activated. */
+  onToggleProject?: (projectId: string, isExpanded: boolean) => void;
+  /** Builds the ⋮ actions of a project row. */
+  getProjectActions?: (project: PinnedProjectGroup) => DropdownItem[];
+  /** Called when a project row's ⋮ menu opens. */
+  onProjectActionMenuOpen?: (
+    project: PinnedProjectGroup,
+    trigger: HTMLButtonElement,
+  ) => void;
+  /** Visible text of a See all row. */
+  seeAllLabel?: string;
+  /** Builds the accessible name of a See all row from the project name. */
+  seeAllAriaLabel?: (name: string) => string;
+  /** Accessible name of the chevron of a collapsed project. */
+  expandProjectLabel?: string;
+  /** Accessible name of the chevron of an expanded project. */
+  collapseProjectLabel?: string;
   /** Typography/class overrides applied to virtual row elements. */
   styles?: RowStyles;
   /** Presentation of conversation rows and group headers. Defaults to `ConversationRowVariant.Avatar`. */
   rowVariant?: ConversationRowVariant;
+  /** Presentation of the chats nested under a pinned project. Defaults to `ConversationRowVariant.Indicator`. */
+  projectConversationVariant?: ConversationRowVariant;
   /** Id of the conversation currently being dragged. `null` when no drag is in progress. */
   draggingId: string | null;
   /** Id of the row (item or group header sentinel) currently under the drag cursor. */

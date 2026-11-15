@@ -1,9 +1,11 @@
 import { FilterTab } from '@epam/ai-dial-chat-shared';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { CONVERSATION_PANEL_CLASS } from '../../../constants/public-class-names';
 import { ConversationItem } from '../../../models/panel-props';
+import type { PinnedProjects } from '../../../models/pinned-projects';
 import { ConversationPanel } from '../ConversationPanel';
 
 /* Records one entry per ConversationRow body render (its title renders once). */
@@ -22,6 +24,21 @@ vi.mock('@epam/ai-dial-ui-kit', async () => ({
   mergeClasses: (...args: (string | undefined | false | null)[]) =>
     args.filter(Boolean).join(' '),
   DIAL_ICON_SIZE: { SM: 16, LG: 24 },
+  GhostIconButton: ({
+    onClick,
+    'aria-label': ariaLabel,
+    'aria-expanded': ariaExpanded,
+  }: {
+    onClick?: () => void;
+    'aria-label'?: string;
+    'aria-expanded'?: boolean;
+  }) => (
+    <button
+      aria-label={ariaLabel}
+      aria-expanded={ariaExpanded}
+      onClick={onClick}
+    />
+  ),
   GhostButton: ({
     onClick,
     label,
@@ -121,18 +138,38 @@ vi.mock('@epam/ai-dial-ui-kit', async () => ({
   Button: ({
     onClick,
     label,
+    href,
     className,
     'aria-current': ariaCurrent,
+    'aria-label': ariaLabel,
   }: {
-    onClick?: () => void;
+    onClick?: React.MouseEventHandler;
     label?: React.ReactNode;
+    href?: string;
     className?: string;
     'aria-current'?: React.AriaAttributes['aria-current'];
-  }) => (
-    <button onClick={onClick} className={className} aria-current={ariaCurrent}>
-      {label}
-    </button>
-  ),
+    'aria-label'?: string;
+  }) =>
+    href !== undefined ? (
+      <a
+        href={href}
+        onClick={onClick}
+        className={className}
+        aria-current={ariaCurrent}
+        aria-label={ariaLabel}
+      >
+        {label}
+      </a>
+    ) : (
+      <button
+        onClick={onClick}
+        className={className}
+        aria-current={ariaCurrent}
+        aria-label={ariaLabel}
+      >
+        {label}
+      </button>
+    ),
   Highlight: ({ text }: { text: string }) => {
     rowRenderLog.push(text);
     return <span>{text}</span>;
@@ -249,6 +286,7 @@ vi.mock('@tabler/icons-react', () => ({
       IconCaretRightFilled: () => <span>caret-right-filled</span>,
       IconMessageCircle: () => <span>message-circle</span>,
       IconSearchOff: () => <span>search-off</span>,
+      IconBriefcase: () => <span>briefcase</span>,
     },
     {
       get: (target, key: string) =>
@@ -686,5 +724,195 @@ describe('ConversationPanel — navigation re-renders', () => {
         .getByRole('button', { name: 'Second chat' })
         .getAttribute('aria-current'),
     ).toBe('page');
+  });
+});
+
+describe('ConversationPanel — pinned projects', () => {
+  const seeAllAriaLabel = (name: string) => `All chats of ${name}`;
+
+  const makePinnedProjects = (
+    overrides: Partial<PinnedProjects> = {},
+  ): PinnedProjects => ({
+    projects: [
+      {
+        id: 'p1',
+        name: 'Support',
+        href: '/projects/p1',
+        conversations: [
+          { id: 'n1', title: 'Weekly summary', href: '/projects/p1/n1' },
+          { id: 'n2', title: 'Billing reply', href: '/projects/p1/n2' },
+        ],
+        hasMore: true,
+      },
+    ],
+    onSelectProject: vi.fn(),
+    onSelectConversation: vi.fn(),
+    onSeeAll: vi.fn(),
+    ...overrides,
+  });
+
+  const renderPanel = (
+    pinnedProjects: PinnedProjects | undefined,
+    props: Partial<React.ComponentProps<typeof ConversationPanel>> = {},
+  ) =>
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={items}
+        pinnedProjects={pinnedProjects}
+        {...props}
+      />,
+    );
+
+  it('renders a pinned project with its chats and a See all row', () => {
+    renderPanel(makePinnedProjects());
+
+    expect(screen.getByText('Support')).toBeTruthy();
+    expect(screen.getByText('Weekly summary')).toBeTruthy();
+    expect(screen.getByText('Billing reply')).toBeTruthy();
+    expect(
+      screen.getByRole('link', { name: 'See all chats in Support' }),
+    ).toBeTruthy();
+    expect(screen.getByText('Pinned chat')).toBeTruthy();
+  });
+
+  it('calls the project callbacks and not the panel callback when project rows are activated', async () => {
+    const pinnedProjects = makePinnedProjects();
+    const onSelectConversation = vi.fn();
+    renderPanel(pinnedProjects, { onSelectConversation });
+
+    await userEvent.click(screen.getByRole('link', { name: 'Support' }));
+    await userEvent.click(screen.getByRole('link', { name: 'Weekly summary' }));
+    await userEvent.click(
+      screen.getByRole('link', { name: 'See all chats in Support' }),
+    );
+
+    expect(pinnedProjects.onSelectProject).toHaveBeenCalledWith('p1');
+    expect(pinnedProjects.onSelectConversation).toHaveBeenCalledWith(
+      'n1',
+      'p1',
+    );
+    expect(pinnedProjects.onSeeAll).toHaveBeenCalledWith('p1');
+    expect(onSelectConversation).not.toHaveBeenCalled();
+  });
+
+  it('filters the project chats by the panel search text and drops See all', async () => {
+    renderPanel(makePinnedProjects());
+
+    await userEvent.type(screen.getByRole('searchbox'), 'billing');
+
+    expect(screen.getByText('Support')).toBeTruthy();
+    expect(screen.getByText('Billing reply')).toBeTruthy();
+    expect(screen.queryByText('Weekly summary')).toBeNull();
+    expect(screen.queryByRole('link', { name: /See all/ })).toBeNull();
+  });
+
+  it('hides a project whose source does not match the selected filter chip', async () => {
+    const pinnedProjects = makePinnedProjects();
+    pinnedProjects.projects[0].source = FilterTab.Shared;
+    renderPanel(pinnedProjects);
+
+    expect(screen.getByText('Support')).toBeTruthy();
+
+    await userEvent.click(screen.getByText('My chats', { selector: 'button' }));
+
+    expect(screen.queryByText('Support')).toBeNull();
+  });
+
+  it('excludes a project whose source is listed in hiddenSources', () => {
+    const pinnedProjects = makePinnedProjects();
+    pinnedProjects.projects[0].source = FilterTab.Organization;
+    renderPanel(pinnedProjects, { hiddenSources: [FilterTab.Organization] });
+
+    expect(screen.queryByText('Support')).toBeNull();
+  });
+
+  it('uses the See all labels passed through the panel labels', () => {
+    renderPanel(makePinnedProjects(), {
+      labels: {
+        ...BASE_PROPS.labels,
+        seeAllLabel: 'Show all',
+        seeAllAriaLabel,
+      },
+    });
+
+    const link = screen.getByRole('link', { name: 'All chats of Support' });
+    expect(within(link).getByText('Show all')).toBeTruthy();
+  });
+
+  it('collapses a project through the panel and reports its toggle', async () => {
+    const onToggleProject = vi.fn();
+    const pinnedProjects = makePinnedProjects({ onToggleProject });
+    pinnedProjects.projects[0].isExpanded = false;
+    renderPanel(pinnedProjects);
+
+    expect(screen.queryByText('Weekly summary')).toBeNull();
+    expect(screen.queryByRole('link', { name: /See all/ })).toBeNull();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Expand project' }),
+    );
+
+    expect(onToggleProject).toHaveBeenCalledWith('p1', true);
+    expect(pinnedProjects.onSelectProject).not.toHaveBeenCalled();
+  });
+
+  it('uses the project toggle labels passed through the panel labels', () => {
+    renderPanel(makePinnedProjects({ onToggleProject: vi.fn() }), {
+      labels: {
+        ...BASE_PROPS.labels,
+        collapseProjectLabel: 'Hide project chats',
+      },
+    });
+
+    expect(
+      screen.getByRole('button', { name: 'Hide project chats' }),
+    ).toBeTruthy();
+  });
+
+  it('falls back to the default See all labels', () => {
+    renderPanel(makePinnedProjects());
+
+    const link = screen.getByRole('link', { name: 'See all chats in Support' });
+    expect(within(link).getByText('See all')).toBeTruthy();
+  });
+
+  it('renders no project rows without pinnedProjects', () => {
+    renderPanel(undefined);
+
+    expect(screen.queryByText('Support')).toBeNull();
+    expect(screen.getByText('Pinned chat')).toBeTruthy();
+  });
+
+  it('keeps the list rows still when the labels object is rebuilt with the same values', () => {
+    const pinnedProjects = makePinnedProjects();
+    const getActions = vi.fn((_item: ConversationItem): never[] => []);
+    const { rerender } = renderPanel(pinnedProjects, {
+      getActions,
+      labels: {
+        ...BASE_PROPS.labels,
+        seeAllLabel: 'Show all',
+        seeAllAriaLabel,
+      },
+    });
+    rowRenderLog.length = 0;
+    getActions.mockClear();
+
+    rerender(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={items}
+        pinnedProjects={pinnedProjects}
+        getActions={getActions}
+        labels={{
+          ...BASE_PROPS.labels,
+          seeAllLabel: 'Show all',
+          seeAllAriaLabel,
+        }}
+      />,
+    );
+
+    expect(rowRenderLog).toEqual([]);
+    expect(getActions).not.toHaveBeenCalled();
   });
 });

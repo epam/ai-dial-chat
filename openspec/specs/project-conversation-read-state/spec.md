@@ -173,7 +173,7 @@ Logs carry the outcome only, never ids, names or versions.
 - **Delete:** after `deleteConversation`, remove `projectConversationIds[projectId][locator]` from the caller's file.
 - **Rename (title only; the file name does not change):** before the rename, compute whether the conversation is read for the caller under the unread rule. If it was, store its new content hash after the save, so the user's own rename does not turn their chat unread. A chat that was unread stays unread.
 
-- **Background display name:** when `ConversationNamingService` (`apps/chat-api/src/conversations/conversation-naming.service.ts`) writes the LLM title of a project chat after its first answer, `ConversationReadStateService.carryProjectConversationViewed` moves the caller's stored version from the version before that write to the one after it. Nothing is written when the caller had viewed another version, or none. So an owner who watched the first answer does not find the chat unread once it has been named.
+- **Background display name:** when `ConversationNamingService` (`apps/chat-api/src/conversations/naming/conversation-naming.service.ts`) writes the LLM title of a project chat after its first answer, `ConversationReadStateService.carryProjectConversationViewed` moves the caller's stored version from the version before that write to the one after it. Nothing is written when the caller had viewed another version, or none. So an owner who watched the first answer does not find the chat unread once it has been named.
 
 Only the caller's own file is changed. Other readers keep their entries:
 
@@ -204,6 +204,7 @@ The app SHALL create one module-level serialized writer for project viewed marks
 - At most one write runs at a time, in call order, and a write for an id already queued is not queued twice.
 - `drop(id)` removes a queued (not yet started) write for that id.
 - A failed write rejects only its own caller, and the queue continues.
+- `subscribe(listener)` calls `listener` with the key of every write that succeeded, before that write's callers resume, and returns the function that removes it.
 
 It mirrors the `viewedWriteQueueRef` serialization of `markConversationViewed` in `apps/chat/src/context/ConversationsContext.tsx`. `projectsClient.markProjectConversationViewed` goes through it, so `ProjectViewPage` and `ProjectChatPage` share one queue across route changes.
 
@@ -265,3 +266,30 @@ Project read state SHALL meet the following cross-cutting contract.
 
 - **WHEN** `projectsEnabled` is off for the caller
 - **THEN** `PATCH …/viewed` answers `403`
+
+### Requirement: Successful project viewed writes notify app listeners
+
+`apps/chat/src/hooks/projects/projects-client.ts` SHALL export `subscribeProjectConversationViewed(listener: (conversationId: string) => void): () => void`, which is `projectViewedWriter.subscribe`. `projectsClient.markProjectConversationViewed(id)` SHALL await `projectViewedWriter.enqueue(id)`, and a successful write calls every subscribed listener with `id`. The returned function removes the listener.
+
+- A failed write notifies no listener and still rejects its own caller, as before.
+- A write dropped by `drop(id)` notifies no listener.
+- A listener that throws does not stop the others, nor the caller's promise.
+- The listener registry belongs to the writer: `createSerializedKeyedWriter` in `libs/chat-hooks/src/shared/serialized-writer.ts` keeps it, and the app owns only the module-level writer instance. `createProjectConversationDataSource` takes only the writer's `enqueue` and `drop`.
+
+The sidebar's pinned-project tree subscribes (see the `sidebar-pinned-project-chats` capability), so a chat marked viewed by `ProjectChatPage` or by the project view's Chats list loses its dot in the sidebar too.
+
+#### Scenario: A mark from the project chat page reaches the sidebar
+
+- **GIVEN** a listener is subscribed
+- **WHEN** `ProjectChatPage` marks chat C viewed and the `PATCH …/viewed` succeeds
+- **THEN** the listener is called once with C
+
+#### Scenario: A failed write notifies nobody
+
+- **WHEN** the `PATCH …/viewed` for C fails
+- **THEN** no listener is called, and the caller's promise rejects
+
+#### Scenario: Unsubscribing
+
+- **WHEN** the function returned by `subscribeProjectConversationViewed` is called and C is then marked viewed
+- **THEN** the removed listener is not called

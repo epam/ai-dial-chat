@@ -13,6 +13,7 @@ import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AttachmentCanvasI18nKeys,
+  BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
   AttachmentsI18nKeys,
@@ -105,6 +106,7 @@ export const SkillFilePreview: FC<Props> = ({ state, onRetry }) => {
               codeBlockDownloadLabel: t(ButtonsI18nKeys.Download),
               tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
               mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
+              loadingLabel: t(BasicI18nKeys.Loading),
             }}
             codeBlockTheme={
               currentTheme === ThemeId.Dark

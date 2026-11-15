@@ -42,6 +42,17 @@ export type ConversationTitleOutcome =
       isTimeout: boolean;
     };
 
+/* Maps a failed title read to the error the whole batch reports. */
+const toBatchTitleFailure = (failure: HttpException): HttpException => {
+  if (failure.getStatus() === 429) {
+    return new ServiceUnavailableException(
+      'DIAL Core title reads are rate limited',
+    );
+  }
+  if (failure.getStatus() >= 500) return failure;
+  return new BadGatewayException('DIAL Core rejected a title read');
+};
+
 @Injectable()
 export class ConversationTitlesService {
   private readonly logger = new Logger(ConversationTitlesService.name);
@@ -88,14 +99,7 @@ export class ConversationTitlesService {
         if (outcome.kind === ConversationTitleOutcomeKind.Failed) {
           const { failure } = outcome;
           if (failure instanceof UnauthorizedException) throw failure;
-          const upstreamFailure =
-            failure.getStatus() === 429
-              ? new ServiceUnavailableException(
-                  'DIAL Core title reads are rate limited',
-                )
-              : failure.getStatus() >= 500
-                ? failure
-                : new BadGatewayException('DIAL Core rejected a title read');
+          const upstreamFailure = toBatchTitleFailure(failure);
           if (
             !batchFailure ||
             upstreamFailure instanceof ServiceUnavailableException

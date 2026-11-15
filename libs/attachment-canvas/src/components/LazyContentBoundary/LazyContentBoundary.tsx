@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Button, Spinner } from '@epam/ai-dial-ui-kit';
-import { Component, Suspense, type FC, type ReactNode } from 'react';
+import { Button, LiveRegion, Spinner } from '@epam/ai-dial-ui-kit';
+import { Component, Suspense, useState, type FC, type ReactNode } from 'react';
 import styles from './LazyContentBoundary.module.scss';
 
 /** User-visible strings for {@link LazyContentBoundary}. All fields have English defaults. */
@@ -38,7 +38,7 @@ export interface LazyContentBoundaryProps {
    */
   pendingContent?: ReactNode;
   /**
-   * Rendered above the `role="status"` retry message when the lazy import
+   * Rendered above the retry message when the lazy import
    * fails — e.g. a plain-text fallback that stays usable while retry is
    * offered. Omitted by default.
    */
@@ -60,6 +60,7 @@ export const LazyContentPending: FC<LazyContentPendingProps> = ({
   pendingContent,
 }) => (
   <div
+    // eslint-disable-next-line no-restricted-syntax -- the pending state is the first thing mounted in its slot; a Suspense fallback cannot host a region mounted earlier
     role="status"
     aria-live="polite"
     className="flex h-full items-center justify-center"
@@ -82,7 +83,11 @@ interface LazyContentErrorProps {
   errorLabelClassName?: string;
 }
 
-/** Accessible retry state shared by lazy imports and asynchronous runtime preparation. */
+/**
+ * Retry state shared by lazy imports and asynchronous runtime preparation.
+ * The visible message is hidden from assistive tech: the caller announces
+ * `errorLabel` through a `LiveRegion` it keeps mounted across states.
+ */
 export const LazyContentError: FC<LazyContentErrorProps> = ({
   errorLabel,
   retryLabel,
@@ -94,7 +99,7 @@ export const LazyContentError: FC<LazyContentErrorProps> = ({
     {errorContent}
     <div className="flex flex-col items-center gap-3 text-center">
       <p
-        role="status"
+        aria-hidden
         className={mergeClasses(errorLabelClassName, styles.errorLabel)}
       >
         {errorLabel}
@@ -104,26 +109,41 @@ export const LazyContentError: FC<LazyContentErrorProps> = ({
   </div>
 );
 
-interface LazyContentBoundaryState {
+interface LazyContentErrorCatcherProps {
+  /** The lazy-loaded subtree, wrapped in its `Suspense`. */
+  children: ReactNode;
+  /** Changing this value clears a previously caught error. */
+  retryKey: number;
+  /** Rendered in place of `children` after the import rejects. */
+  errorFallback: ReactNode;
+  /** Called once the wrapped import has rejected. */
+  onError: () => void;
+}
+
+interface LazyContentErrorCatcherState {
   /** Whether the wrapped lazy import has thrown (a rejected dynamic import). */
   hasError: boolean;
 }
 
-/**
- * Wraps a `lazy()`-loaded component with an accessible pending state
- * (`role="status"`) and a retryable failure state (`role="status"`).
+/*
+ * React remounts every child of an error boundary when it catches, so the
+ * announcing `LiveRegion` lives in `LazyContentBoundary`, outside this class.
  */
-export class LazyContentBoundary extends Component<
-  LazyContentBoundaryProps,
-  LazyContentBoundaryState
+class LazyContentErrorCatcher extends Component<
+  LazyContentErrorCatcherProps,
+  LazyContentErrorCatcherState
 > {
-  override state: LazyContentBoundaryState = { hasError: false };
+  override state: LazyContentErrorCatcherState = { hasError: false };
 
-  static getDerivedStateFromError(): LazyContentBoundaryState {
+  static getDerivedStateFromError(): LazyContentErrorCatcherState {
     return { hasError: true };
   }
 
-  override componentDidUpdate(prevProps: LazyContentBoundaryProps): void {
+  override componentDidCatch(): void {
+    this.props.onError();
+  }
+
+  override componentDidUpdate(prevProps: LazyContentErrorCatcherProps): void {
     /*
      * `retryKey` changes only when the caller has already recreated its
      * `lazy()` reference (see the prop's doc), so it's safe to clear the
@@ -136,42 +156,59 @@ export class LazyContentBoundary extends Component<
   }
 
   override render(): ReactNode {
-    const {
-      children,
-      onRetry,
-      pendingContent,
-      errorContent,
-      errorLabelClassName,
-      labels: {
-        loadingLabel = 'Loading…',
-        errorLabel = 'Failed to load content',
-        retryLabel = 'Retry',
-      } = {},
-    } = this.props;
+    return this.state.hasError ? this.props.errorFallback : this.props.children;
+  }
+}
 
-    if (this.state.hasError) {
-      return (
-        <LazyContentError
-          errorLabel={errorLabel}
-          retryLabel={retryLabel}
-          onRetry={onRetry}
-          errorContent={errorContent}
-          errorLabelClassName={errorLabelClassName}
-        />
-      );
-    }
+/**
+ * Wraps a `lazy()`-loaded component with an accessible pending state
+ * (`role="status"`) and a retryable failure state announced through an
+ * always-mounted `LiveRegion`.
+ */
+export const LazyContentBoundary: FC<LazyContentBoundaryProps> = ({
+  children,
+  retryKey,
+  onRetry,
+  pendingContent,
+  errorContent,
+  errorLabelClassName,
+  labels: {
+    loadingLabel = 'Loading…',
+    errorLabel = 'Failed to load content',
+    retryLabel = 'Retry',
+  } = {},
+}) => {
+  const [failedRetryKey, setFailedRetryKey] = useState<number | null>(null);
+  const hasError = failedRetryKey === retryKey;
 
-    return (
-      <Suspense
-        fallback={
-          <LazyContentPending
-            loadingLabel={loadingLabel}
-            pendingContent={pendingContent}
+  return (
+    <>
+      {/* Mounted while the import is pending or rendered, so a later failure is announced. */}
+      <LiveRegion visuallyHidden>{hasError ? errorLabel : ''}</LiveRegion>
+      <LazyContentErrorCatcher
+        retryKey={retryKey}
+        onError={() => setFailedRetryKey(retryKey)}
+        errorFallback={
+          <LazyContentError
+            errorLabel={errorLabel}
+            retryLabel={retryLabel}
+            onRetry={onRetry}
+            errorContent={errorContent}
+            errorLabelClassName={errorLabelClassName}
           />
         }
       >
-        {children}
-      </Suspense>
-    );
-  }
-}
+        <Suspense
+          fallback={
+            <LazyContentPending
+              loadingLabel={loadingLabel}
+              pendingContent={pendingContent}
+            />
+          }
+        >
+          {children}
+        </Suspense>
+      </LazyContentErrorCatcher>
+    </>
+  );
+};

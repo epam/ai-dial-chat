@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Protects unsaved work in every builder reached from the Catalog **Create** button (Quick Apps and other schema apps, Custom App, Toolset, Skill, Prompt) and in the Scheduled task create/edit form. A single router-level leave guard (`useBuilderLeaveGuard` on react-router's `useBlocker`) and one shared "Discard unsaved changes?" dialog owned by `UnsavedChangesContext` cover navigation-rail clicks, the mobile navigation sheet, browser Back/Forward, the builder's own Back/Cancel, and Log out.
+Protects unsaved work in every builder reached from the Catalog **Create** button (Quick Apps and other schema apps, Custom App, Toolset, Skill, Prompt) and in the Scheduled task create/edit form. A single router-level leave guard (`useBuilderLeaveGuard` on react-router's `useBlocker`) and one shared "Discard unsaved changes?" dialog owned by `UnsavedChangesProvider` (`@epam/ai-dial-chat-shared`, mounted by the app's `UnsavedChangesContext` adapter) cover navigation-rail clicks, the mobile navigation sheet, browser Back/Forward, the builder's own Back/Cancel, and Log out.
 
 ## Requirements
 
@@ -28,9 +28,9 @@ The guard applies in both create and edit mode. It SHALL NOT be gated behind `EN
 
 ### Requirement: Unsaved-changes context owns the dialog
 
-`UnsavedChangesContext` (`apps/chat/src/context/UnsavedChangesContext.tsx`) SHALL follow the `ThemeContext` pattern: `createContext<T | undefined>(undefined)`, a memoised value, and a consumer hook `useUnsavedChanges()` that throws a clear error when used outside the provider.
+The guard state and dialog SHALL live in `libs/chat-shared`, so every DIAL-Core-backed host shares them: `UnsavedChangesProvider` (`libs/chat-shared/src/components/UnsavedChangesProvider/UnsavedChangesProvider.tsx`) and its contexts (`libs/chat-shared/src/components/UnsavedChangesProvider/unsaved-changes-context.ts`) follow the `ThemeContext` pattern: `createContext<T | undefined>(undefined)`, a memoised value, and a consumer hook `useUnsavedChanges()` that throws a clear error when used outside the provider. The lib knows no router and no i18n; it takes its strings through an `UnsavedChangesLabels` `labels` prop with English defaults.
 
-`UnsavedChangesProvider` SHALL be mounted inside the authenticated tree in `apps/chat/src/AppRoot.tsx`, above `<App />`, so that both the builder pages and `SidebarNavigation` are descendants. It owns:
+The app's `UnsavedChangesProvider` (`apps/chat/src/context/UnsavedChangesContext.tsx`) SHALL be a thin adapter that mounts the shared provider with `t()`-translated labels. It SHALL be mounted inside the authenticated tree in `apps/chat/src/AppRoot.tsx`, above `<App />`, so that both the builder pages and `SidebarNavigation` are descendants. The shared provider owns:
 
 - the active registration: whether a builder is mounted and dirty;
 - the single dialog instance and the action that runs on confirm;
@@ -52,6 +52,8 @@ The context value SHALL expose:
 ### Requirement: Leave-guard hook blocks navigation while dirty
 
 The app hook `useBuilderLeaveGuard({ isDirty })` (`apps/chat/src/hooks/unsaved-changes/useBuilderLeaveGuard.ts`) SHALL be the only caller of react-router's `useBlocker`. Each builder page SHALL call it exactly once. It returns `{ allowNextNavigation(): void }`.
+
+The app hook SHALL hold only the router edge: the `useBlocker` call and the pathname/search comparison. Registration, the ref-backed predicate with its one-shot bypass, the unload warning and the stale-dialog close SHALL come from the router-agnostic `useUnsavedChangesLeaveGuard` (`libs/chat-shared/src/hooks/useUnsavedChangesLeaveGuard.ts`) and `useUnsavedChangesLeaveConfirmation` (`libs/chat-shared/src/hooks/useUnsavedChangesLeaveConfirmation.ts`), so a second host adopts the same behaviour with its own blocker.
 
 **Registration.** The hook SHALL register `isDirty` with `UnsavedChangesContext` while the page is mounted, and SHALL unregister on unmount. It SHALL keep the latest `isDirty` in a ref, so that the blocker predicate reads it synchronously at navigation time.
 
@@ -81,6 +83,11 @@ Blocking covers PUSH, REPLACE and POP (browser Back/Forward). A blocked transiti
 #### Scenario: Browser Back is blocked
 - **WHEN** `isDirty` is `true` and the user presses the browser Back button
 - **THEN** the dialog opens and the URL stays on the builder route
+
+#### Scenario: Shortened confirming action on a mobile screen
+
+- **WHEN** the dialog opens on a viewport below the desktop breakpoint
+- **THEN** the confirming button reads "Discard" (`unsavedChanges.confirmLabelMobile`) instead of "Discard changes", and the cancelling button is unchanged
 
 #### Scenario: Discard changes continues to the chosen destination
 - **WHEN** the dialog was opened by clicking the Scheduler nav item and the user chooses Discard changes
@@ -124,13 +131,14 @@ A control that does not leave the page SHALL NOT open the dialog. An example is 
 
 ### Requirement: Two-option unsaved-changes dialog
 
-The provider SHALL render `ConfirmationDialog` from `@epam/ai-dial-chat-shared` with `ConfirmationPopupVariant.Danger`, using these strings:
+The shared provider SHALL render `ConfirmationDialog` from `@epam/ai-dial-chat-shared` with `ConfirmationPopupVariant.Danger`. The app SHALL fill every `UnsavedChangesLabels` field with these strings; the lib's English defaults match the copy:
 
 | Element | Key | English copy |
 |---|---|---|
 | Title | `unsavedChanges.title` | "Discard unsaved changes?" |
 | Message | `unsavedChanges.message` | "You have unsaved changes. Leaving now will discard them." |
 | Confirming action | `unsavedChanges.confirmLabel` | "Discard changes" |
+| Confirming action below the desktop breakpoint (`useIsMobile`) | `unsavedChanges.confirmLabelMobile` | "Discard" |
 | Cancelling action | `unsavedChanges.cancelLabel` | "Keep editing" |
 
 There SHALL be no third action.
@@ -235,9 +243,10 @@ All dialog strings SHALL go through `react-i18next`. The keys SHALL live in `app
 - `unsavedChanges.title`: "Discard unsaved changes?"
 - `unsavedChanges.message`: "You have unsaved changes. Leaving now will discard them."
 - `unsavedChanges.confirmLabel`: "Discard changes"
+- `unsavedChanges.confirmLabelMobile`: "Discard"
 - `unsavedChanges.cancelLabel`: "Keep editing"
 
-The former `skillEditor.unsavedChanges*` keys, and the prompt and scheduled-task `discard*` label wiring that reused them, SHALL be removed from the app.
+The former `skillEditor.unsavedChanges*` keys, and the prompt `discard*` label wiring that reused them, SHALL be removed from the app. The scheduled-task form's `discard*` labels (`useScheduledTaskFormLabels`) are filled from these same `unsavedChanges.*` keys, so both dialogs share one copy, including the shortened mobile action.
 
 #### Scenario: Strings are translated
 - **WHEN** the dialog renders

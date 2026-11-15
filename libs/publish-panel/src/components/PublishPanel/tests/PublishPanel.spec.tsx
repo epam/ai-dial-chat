@@ -9,6 +9,8 @@ import {
   PublishFolderNode,
   PublishResourceSummary,
 } from '../../../models/publish';
+import { PublishDependencyType } from '../../../models/publish-dependency';
+import { PublishPanelView } from '../../../types/publish-panel';
 import { PublishPanel } from '../PublishPanel';
 
 interface MockDropdownItem {
@@ -85,7 +87,8 @@ const renderPanel = (props?: Partial<ComponentProps<typeof PublishPanel>>) =>
     <PublishPanel
       resource={resource}
       folderItems={folderItems}
-      onSelectedFolderPathChange={vi.fn()}
+      onChangeFolderClick={vi.fn()}
+      onPendingFolderPathChange={vi.fn()}
       onCreateFolder={vi.fn()}
       hasExistingPublicationInFolder={false}
       hasWriteAccess={true}
@@ -113,10 +116,11 @@ describe('PublishPanel', () => {
     expect(screen.queryByText('ali.deepseek-v4-flash')).toBeNull();
   });
 
-  it('renders the entity-header row with a version tag when the resource has a type', () => {
+  it('renders the entity-header row with the version inline after the name when the resource has a type', () => {
     renderPanel({ resource: { ...resource, type: CatalogEntityType.Model } });
     expect(screen.getByText(CatalogEntityType.Model)).toBeTruthy();
-    expect(screen.getByText('Version 4.0.1 · current')).toBeTruthy();
+    expect(screen.getByText('4.0.1')).toBeTruthy();
+    expect(screen.queryByText(/· current/)).toBeNull();
   });
 
   it('ignores renderSummary once the resource carries a type', () => {
@@ -215,12 +219,99 @@ describe('PublishPanel', () => {
   });
 
   it('forwards the translated folder-creation cancel label', async () => {
-    renderPanel({ labels: { cancelCreatingFolderLabel: 'Discard folder' } });
+    renderPanel({
+      view: PublishPanelView.ChangeFolder,
+      labels: { cancelCreatingFolderLabel: 'Discard folder' },
+    });
     await userEvent.click(
       screen.getByRole('button', { name: 'Create new folder' }),
     );
 
     expect(screen.getByRole('button', { name: 'Discard folder' })).toBeTruthy();
+  });
+
+  describe('destination row', () => {
+    it('shows the placeholder and a Choose action while no folder is selected', () => {
+      renderPanel();
+
+      const row = screen.getByRole('group', { name: 'Destination folder' });
+      expect(row.textContent).toBe('No folder selected');
+      expect(screen.getByRole('button', { name: 'Choose' })).toBeTruthy();
+    });
+
+    it('shows the full path under the root label once a folder is selected', () => {
+      renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
+
+      expect(
+        screen.getByRole('group', { name: 'Destination folder' }).textContent,
+      ).toContain('Organization / Shared / Data Science');
+      expect(screen.getByRole('button', { name: 'Change' })).toBeTruthy();
+    });
+
+    it('calls onChangeFolderClick when the action is pressed', async () => {
+      const onChangeFolderClick = vi.fn();
+      renderPanel({ onChangeFolderClick });
+
+      await userEvent.click(screen.getByRole('button', { name: 'Choose' }));
+
+      expect(onChangeFolderClick).toHaveBeenCalledOnce();
+    });
+
+    it('renders no folder tree or search in the main view', () => {
+      renderPanel();
+
+      expect(screen.queryByRole('search')).toBeNull();
+      expect(
+        screen.queryByRole('button', { name: 'Create new folder' }),
+      ).toBeNull();
+    });
+  });
+
+  describe('folder view', () => {
+    it('renders the search and the tree without the form fields', () => {
+      renderPanel({ view: PublishPanelView.ChangeFolder });
+
+      expect(
+        screen.getByRole('group', { name: 'Publish to folder' }),
+      ).toBeTruthy();
+      expect(screen.getByRole('search')).toBeTruthy();
+      expect(screen.getByText('Shared')).toBeTruthy();
+      expect(screen.queryByRole('textbox', { name: /Author/ })).toBeNull();
+      expect(screen.queryByText('Allow access if all match')).toBeNull();
+    });
+
+    it('moves focus into the folder view and back to the action on return', () => {
+      const { rerender } = renderPanel();
+      const props = {
+        resource,
+        folderItems,
+        onChangeFolderClick: vi.fn(),
+        onPendingFolderPathChange: vi.fn(),
+        onCreateFolder: vi.fn(),
+        hasExistingPublicationInFolder: false,
+        hasWriteAccess: true,
+        isSubmitting: false,
+        author: '',
+        onAuthorChange: vi.fn(),
+        rules: [],
+        onRulesChange: vi.fn(),
+        ruleSourceOptions: [],
+      };
+
+      rerender(
+        <PublishPanel {...props} view={PublishPanelView.ChangeFolder} />,
+      );
+      expect(
+        screen
+          .getByRole('group', { name: 'Publish to folder' })
+          .matches(':focus'),
+      ).toBe(true);
+
+      rerender(<PublishPanel {...props} view={PublishPanelView.Main} />);
+      expect(
+        screen.getByRole('button', { name: 'Choose' }).matches(':focus'),
+      ).toBe(true);
+    });
   });
 
   it('renders the access-rules section inside the folder block', () => {
@@ -312,6 +403,48 @@ describe('PublishPanel', () => {
     expect(
       screen.getByText('Publishing failed. Please try again.'),
     ).toBeTruthy();
+  });
+
+  it('shows the admin-approval banner for a fresh folder the user can publish to', () => {
+    renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
+    expect(screen.getByText('Admin approval required')).toBeTruthy();
+    expect(screen.getByText(/We’ll send a request/)).toBeTruthy();
+  });
+
+  it('takes the admin-approval banner text from labels', () => {
+    renderPanel({
+      selectedFolderPath: ['Shared', 'Data Science'],
+      labels: {
+        adminApprovalTitle: 'Custom title',
+        adminApprovalMessage: 'Your application will appear in the folder.',
+      },
+    });
+    expect(screen.getByText('Custom title')).toBeTruthy();
+    expect(
+      screen.getByText('Your application will appear in the folder.'),
+    ).toBeTruthy();
+  });
+
+  it.each([
+    ['no folder is selected', {}],
+    [
+      'the version already exists',
+      {
+        selectedFolderPath: ['Shared'],
+        hasExistingPublicationInFolder: true,
+      },
+    ],
+    [
+      'the user lacks write access',
+      { selectedFolderPath: ['Shared'], hasWriteAccess: false },
+    ],
+    [
+      'the last submit failed',
+      { selectedFolderPath: ['Shared'], hasSubmitError: true },
+    ],
+  ])('hides the admin-approval banner when %s', (_, props) => {
+    renderPanel(props);
+    expect(screen.queryByText('Admin approval required')).toBeNull();
   });
 
   it('hides the callout while submitting', () => {
@@ -435,5 +568,71 @@ describe('PublishPanel — public class names', () => {
     expect(container.firstElementChild!.classList).toContain(
       PUBLISH_PANEL_CLASS.panel,
     );
+  });
+});
+
+describe('PublishPanel — private dependencies', () => {
+  const dependencies = [
+    {
+      id: 'prompts/b/Greeting',
+      name: 'Greeting',
+      type: PublishDependencyType.Prompt,
+      location: 'Support',
+    },
+    {
+      id: 'toolsets/b/Search__1.0.0',
+      name: 'Search',
+      version: '1.0.0',
+      type: PublishDependencyType.Toolset,
+      location: '',
+    },
+  ];
+
+  it('lists the dependencies as the last section of the panel', () => {
+    renderPanel({ dependencies });
+
+    const region = screen.getByRole('region', { name: 'Private dependencies' });
+    const folderHeading = screen.getByRole('heading', {
+      name: 'Publish to folder',
+    });
+    expect(
+      folderHeading.compareDocumentPosition(region) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.getByText('Greeting')).toBeTruthy();
+    expect(screen.getByText('Search')).toBeTruthy();
+  });
+
+  it('renders no section for an empty list', () => {
+    renderPanel({ dependencies: [] });
+
+    expect(
+      screen.queryByRole('region', { name: 'Private dependencies' }),
+    ).toBeNull();
+  });
+
+  it('renders no section when no list is supplied', () => {
+    renderPanel();
+
+    expect(
+      screen.queryByRole('region', { name: 'Private dependencies' }),
+    ).toBeNull();
+  });
+
+  it('shows host labels passed through the panel labels', () => {
+    renderPanel({
+      dependencies,
+      labels: { dependenciesLabels: { title: 'Not public yet' } },
+    });
+
+    expect(screen.getByRole('region', { name: 'Not public yet' })).toBeTruthy();
+  });
+
+  it('does not render the section in the folder view', () => {
+    renderPanel({ dependencies, view: PublishPanelView.ChangeFolder });
+
+    expect(
+      screen.queryByRole('region', { name: 'Private dependencies' }),
+    ).toBeNull();
   });
 });

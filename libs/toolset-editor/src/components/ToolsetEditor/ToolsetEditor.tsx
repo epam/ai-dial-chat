@@ -89,10 +89,12 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
   onNotifyError,
   avatarPicker,
   availableLocaleOptions,
+  formatLocaleLabel,
   onRefineDescription,
   labels,
   colors,
   typography,
+  isVersionReadOnly = false,
 }) => {
   const isEditMode = Boolean(toolsetId);
   const [draftToolsetId, setDraftToolsetId] = useState('');
@@ -521,8 +523,11 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
           onChange={handleChange}
           avatarPicker={avatarPicker}
           availableLocaleOptions={availableLocaleOptions}
+          formatLocaleLabel={formatLocaleLabel}
           renderDescription={renderRefinableDescription}
           labels={metadataLabels}
+          isVersionReadOnly={isVersionReadOnly}
+          versionReadOnlyTooltip={labels?.versionReadOnlyTooltip}
         />
       }
       setup={

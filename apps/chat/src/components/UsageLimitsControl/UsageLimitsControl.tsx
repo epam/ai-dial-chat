@@ -6,6 +6,7 @@ import {
 import {
   findWorstCappedRow,
   formatUsageResetTime,
+  getGaugeNeedleAngle,
   mapDeploymentLimitsToInput,
   type UsageLimitsApi,
   useDeploymentUsageLimits,
@@ -44,7 +45,6 @@ import { getDeploymentUsage } from '../../server-api/deployment-limits';
 import { getUserUsage } from '../../server-api/user-limits';
 import { ROUTES } from '../../types/routes';
 import { resolveLocalizedText } from '../../utils/locale';
-import { getGaugeNeedleAngle } from '../../utils/usage-limits';
 import styles from './UsageLimitsControl.module.scss';
 
 /* The deployment's own token stats and the account's cost budget, each from

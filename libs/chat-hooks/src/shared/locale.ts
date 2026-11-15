@@ -103,12 +103,17 @@ export const decomposeLocalizedFields = (
 /**
  * Selectable additional-locale options for a locale-picker popup, drawn from
  * `additionalLocaleCodes` and excluding whichever code is already the
- * primary Name/Description field.
+ * primary Name/Description field (exact match only, so `en-GB` stays
+ * offerable next to a primary `en`).
+ *
+ * @param formatLabel - Names each option. Defaults to the uppercased code
+ *   (`pt-BR` → `PT-BR`); a host passes a resolver to show language names.
  */
 export const buildAdditionalLocaleOptions = (
   additionalLocaleCodes: string[],
   primaryLocale: string,
+  formatLabel: (code: string) => string = (code) => code.toUpperCase(),
 ): LocaleOption[] =>
   additionalLocaleCodes
     .filter((code) => code !== primaryLocale)
-    .map((code) => ({ code, label: code.toUpperCase() }));
+    .map((code) => ({ code, label: formatLabel(code) }));

@@ -152,8 +152,20 @@ warning. A failed read alone establishes neither success nor failure of saving.
 ## Feature loading
 
 The app uses automatic chunk splitting, UI Kit `/grid` and `/editors` imports,
-the shared `/file-manager` entry and a lazy conversation publishing panel.
-Heavy feature engines load when their features are activated.
+the shared `/file-manager` entry and lazy conversation and pinned-project
+publishing panels. Heavy feature engines load when their features are
+activated.
+
+Three things keep them off the first paint:
+
+- Every lib declares `sideEffects` in its `package.json` (CSS/SCSS only, or
+  `false`), so importing one symbol from a lib's root barrel does not keep
+  every other module of that barrel.
+- `vite.config.mts` gives `ag-grid-*` and `@epam/ai-dial-react-file-manager`
+  their own chunk groups (`build.rolldownOptions.output.codeSplitting`), so
+  small shared modules are never co-located with them.
+- Inter is self-hosted through `@fontsource-variable/inter`, imported in
+  `main.tsx`; the page loads no third-party stylesheet.
 
 ## Celebration events
 
@@ -210,8 +222,8 @@ configuration.
 
 Deploy this build together with the backend. See the backend's
 [CSP rollout and reporting settings](../chat-api/README.md#content-security-policy).
-Legacy builds without the nonce marker can run with `CSP_MODE=report-only` and a
-startup warning; rebuild with nonce support before enabling `enforce`.
+Legacy builds without the nonce marker need an explicit `CSP_MODE=report-only` and log a
+startup warning; the default `enforce` mode rejects them at startup.
 The Vite development server does not enforce the production policy; validate
 using built assets served by the backend before enabling enforcement.
 

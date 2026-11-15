@@ -10,6 +10,12 @@ const NESTJS_RESOLVE_ALIASES = {
   '@nestjs/microservices/microservices-module': false,
   '@nestjs/microservices': false,
   'class-transformer/storage': false,
+  /* Webpack resolves `class-transformer` to its `esm5` build via the "module"
+   * field, while `@nestjs/mapped-types` (IntersectionType/PartialType/…)
+   * reads `class-transformer/cjs/storage`. Two module copies mean two
+   * metadata storages, so `@Transform` decorators were not inherited by
+   * composed classes such as `EnvironmentVariables`. Pin one copy. */
+  'class-transformer$': require.resolve('class-transformer/cjs/index.js'),
   '@fastify/static': false,
 };
 

@@ -13,6 +13,10 @@ const GENERATION_CONFLICT_STATUS = 409;
 export const DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE =
   'The response could not be saved. It is still shown here, but may be lost if you reload or leave this page. Copy it before continuing.';
 
+/** Safe fallback for hosts that do not supply a translated interrupted-generation text. */
+export const DEFAULT_GENERATION_INTERRUPTED_ERROR_MESSAGE =
+  'No answer was received for this message. The response may have been interrupted. Try again.';
+
 /** Terminal markers the rejected write of a stopped, aborted, or failed answer carried. */
 export interface GenerationPersistenceTerminalMarker {
   /** Error text the failed write stored; `''` asks the host for its localized fallback. */
@@ -49,7 +53,7 @@ export class GenerationPersistenceError extends Error {
 
 /** Fallback text of a {@link GenerationConflictError} when no message is supplied. */
 export const DEFAULT_GENERATION_CONFLICT_MESSAGE =
-  'A response is already being generated in this conversation. Wait for it to finish or stop it before sending another message.';
+  'A response is already being generated in this conversation. Wait for it to finish before sending another message.';
 
 /**
  * Reported through `onError` when the backend rejects a completion because
@@ -131,6 +135,8 @@ export interface CreateChatStreamApiDeps {
   completionsBasePath: string;
   /** Resolves the caller's current timezone, attached as `X-Timezone` when non-empty. */
   getTimezone?: () => string | undefined;
+  /** Resolves the caller's current UI language, attached as `X-Lang` when non-empty. */
+  getLanguage?: () => string | undefined;
   /** `fetch` implementation to issue requests through. Defaults to the global `fetch`. */
   fetchImpl?: typeof fetch;
   /**
@@ -349,6 +355,7 @@ export const createChatStreamApi = (
       let response: Response;
       try {
         const timezone = deps.getTimezone?.();
+        const language = deps.getLanguage?.();
         response = await doFetch(`${completionsBasePath}/completions`, {
           method: 'POST',
           credentials: 'include',
@@ -359,6 +366,7 @@ export const createChatStreamApi = (
               ? { 'X-CSRF-Token': deps.getCsrfToken() as string }
               : {}),
             ...(timezone ? { 'X-Timezone': timezone } : {}),
+            ...(language ? { 'X-Lang': language } : {}),
           },
           body: JSON.stringify({
             path,

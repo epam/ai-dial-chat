@@ -54,6 +54,7 @@ import { useSkillSelectorOverlay } from '../../../components/SkillSelector/useSk
 import StarterButtons from '../../../components/StarterButtons/StarterButtons';
 import {
   AppsEditorI18nKeys,
+  BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
   RateI18nKeys,
@@ -288,6 +289,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     generationPersistenceErrorMessage: t(
       ChatI18nKeys.GenerationPersistenceError,
     ),
+    generationInterruptedMessage: t(ChatI18nKeys.GenerationInterrupted),
     onStreamError: logConversationStreamError,
   });
 
@@ -560,7 +562,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         aria-label={t(AppsEditorI18nKeys.PreviewChatAriaLabel)}
         className="flex size-full items-center justify-center"
       >
-        <Spinner />
+        <Spinner ariaLabel={t(BasicI18nKeys.Loading)} />
       </div>
     );
   }

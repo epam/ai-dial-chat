@@ -2,6 +2,7 @@ import type { ProjectDetailsDto } from '@epam/ai-dial-chat-api-client';
 import {
   ProjectActionError,
   useProjectActions as useSharedProjectActions,
+  type ProjectActionsHandlers,
 } from '@epam/ai-dial-chat-hooks/project';
 import { triggerBrowserDownload } from '@epam/ai-dial-chat-hooks/utils';
 import { useCallback } from 'react';
@@ -20,23 +21,41 @@ import { projectsClient } from './projects-client';
 
 const ERROR_MESSAGES: Record<ProjectActionError, ProjectsI18nKeys> = {
   [ProjectActionError.Pin]: ProjectsI18nKeys.ActionsPinError,
+  [ProjectActionError.Unpin]: ProjectsI18nKeys.ActionsUnpinError,
   [ProjectActionError.Download]: ProjectsI18nKeys.ActionsDownloadError,
   [ProjectActionError.Delete]: ProjectsI18nKeys.ActionsDeleteError,
   [ProjectActionError.ChangedElsewhere]:
     ProjectsI18nKeys.ErrorsChangedElsewhere,
 };
 
+/** How the app's project actions behave around a delete. */
+interface ProjectActionsOptions extends Pick<
+  ProjectActionsHandlers,
+  'isDeleteOpen' | 'onDeleteOpenChange'
+> {
+  /** Leaves for the Projects list after a delete; `false` keeps the current route. Defaults to `true`. */
+  leaveOnDelete?: boolean;
+}
+
 /**
  * App adapter of the shared `useProjectActions`: pins through the user
  * config, toasts through the notification context, and leaves for the
- * Projects list after a delete.
+ * Projects list after a delete unless `leaveOnDelete` is `false`. A caller
+ * that owns the delete dialog state passes `isDeleteOpen` and
+ * `onDeleteOpenChange`.
  *
  * @param project - The loaded project, or `null` while none is loaded.
  * @param onReload - Re-reads the project, e.g. `useProject().retry`.
+ * @param options - Delete behaviour; leaves for the Projects list by default.
  */
 export const useProjectActions = (
   project: ProjectDetailsDto | null,
   onReload: () => void,
+  {
+    leaveOnDelete = true,
+    isDeleteOpen,
+    onDeleteOpenChange,
+  }: ProjectActionsOptions = {},
 ) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -66,10 +85,11 @@ export const useProjectActions = (
       /* The BFF already removed the pin; mirror it so a recreated project of
        * the same name does not show as pinned. */
       replacePinnedProjectId(deleted.id, null);
+      if (!leaveOnDelete) return;
       /* Replace the deleted project's entry, so Back does not reopen it. */
       navigate(ROUTES.Projects, { replace: true });
     },
-    [navigate, notifyOperationSuccess, replacePinnedProjectId],
+    [leaveOnDelete, navigate, notifyOperationSuccess, replacePinnedProjectId],
   );
   const handleError = useCallback(
     (error: ProjectActionError, requestId?: string) =>
@@ -85,5 +105,7 @@ export const useProjectActions = (
     onDeleted: handleDeleted,
     onError: handleError,
     onReload,
+    isDeleteOpen,
+    onDeleteOpenChange,
   });
 };

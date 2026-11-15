@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PublicationRuleFunction } from '../../../models/publish';
 import { PublishAccessRuleEditor } from '../PublishAccessRuleEditor';
 
@@ -132,7 +132,7 @@ describe('PublishAccessRuleEditor', () => {
       },
     });
 
-    const dialog = screen.getByRole('dialog');
+    const dialog = screen.getByRole('group', { name: 'Add access rule' });
     expect(dialog.style.getPropertyValue('--pare-select-border')).toBe(
       '#123456',
     );
@@ -320,7 +320,9 @@ describe('PublishAccessRuleEditor', () => {
 
   it('cancels the in-progress rule on Escape', () => {
     const { onCancel } = renderEditor();
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    fireEvent.keyDown(screen.getByRole('group', { name: 'Add access rule' }), {
+      key: 'Escape',
+    });
     expect(onCancel).toHaveBeenCalledOnce();
   });
 
@@ -329,15 +331,68 @@ describe('PublishAccessRuleEditor', () => {
     document.addEventListener('keydown', hostKeyDownHandler);
     try {
       renderEditor();
-      fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+      fireEvent.keyDown(
+        screen.getByRole('group', { name: 'Add access rule' }),
+        { key: 'Escape' },
+      );
       expect(hostKeyDownHandler).not.toHaveBeenCalled();
     } finally {
       document.removeEventListener('keydown', hostKeyDownHandler);
     }
   });
 
-  it('moves focus into the dialog when it opens', () => {
+  it('renders inline as a named group without modal semantics on desktop', () => {
     renderEditor();
-    expect(screen.getByRole('dialog').matches(':focus')).toBe(true);
+    const group = screen.getByRole('group', { name: 'Add access rule' });
+    expect(group.getAttribute('aria-modal')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('moves focus into the editor when it opens', () => {
+    renderEditor();
+    expect(
+      screen.getByRole('group', { name: 'Add access rule' }).matches(':focus'),
+    ).toBe(true);
+  });
+});
+
+describe('PublishAccessRuleEditor — mobile', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const stubMobileViewport = () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string) => ({
+        matches: query.includes('max-width'),
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+  };
+
+  it('opens in a bottom sheet named by dialogAriaLabel', () => {
+    stubMobileViewport();
+    renderEditor();
+    expect(
+      screen.getByRole('dialog', { name: 'Add access rule' }),
+    ).toBeTruthy();
+    expect(screen.queryByRole('group', { name: 'Add access rule' })).toBeNull();
+  });
+
+  it('applies the mobile background override on the sheet', () => {
+    stubMobileViewport();
+    renderEditor({ styles: { colors: { mobileBackground: '#abcdef' } } });
+    const sheet = screen.getByRole('dialog', { name: 'Add access rule' });
+    expect(sheet.style.getPropertyValue('--pare-mobile-bg')).toBe('#abcdef');
+  });
+
+  it('calls onCancel when the sheet is dismissed with Escape', async () => {
+    stubMobileViewport();
+    const { onCancel } = renderEditor();
+    await userEvent.keyboard('{Escape}');
+    expect(onCancel).toHaveBeenCalled();
   });
 });

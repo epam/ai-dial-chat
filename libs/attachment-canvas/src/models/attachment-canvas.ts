@@ -519,6 +519,8 @@ export interface AttachmentCanvasLabels {
   ooxmlHighlightsLabel?: string;
   /** Status announced once navigation to the selected OOXML citation highlight completes. Defaults to `'Scrolled to the cited location'`. */
   ooxmlHighlightNavigatedLabel?: string;
+  /** Accessible name of the content loading spinners. Defaults to `'Loading…'`. */
+  loadingLabel?: string;
 }
 
 /** Props for the AttachmentCanvas component. */
@@ -585,6 +587,12 @@ export interface AttachmentCanvasProps {
   configurePdfWorker?: () => void | Promise<void>;
   /** Called with the message text when a `Visualizer` or `GroupedVisualizer` iframe posts `SEND_MESSAGE`. Forwarded to `VisualizerCanvasRenderer` as `onSendMessage`; when omitted, those messages are ignored. */
   onVisualizerSendMessage?: (content: string) => void;
+  /**
+   * Live host context for a mounted MCP App. When set it replaces the
+   * `McpAppCanvasContent.hostContext` captured when the canvas opened, so
+   * a theme or locale change reaches the app without reopening the canvas.
+   */
+  mcpAppHostContext?: McpUiHostContext;
 }
 
 /** User-visible strings for `AttachmentCanvasBody`'s content states. */
@@ -618,6 +626,7 @@ export type AttachmentCanvasBodyLabels = Pick<
   | 'mathScrollRegionAriaLabel'
   | 'ooxmlHighlightsLabel'
   | 'ooxmlHighlightNavigatedLabel'
+  | 'loadingLabel'
 >;
 
 /** Props for the `AttachmentCanvasBody` component. */
@@ -673,4 +682,10 @@ export interface AttachmentCanvasBodyProps {
   configurePdfWorker?: () => void | Promise<void>;
   /** Called with the message text when a `Visualizer` or `GroupedVisualizer` iframe posts `SEND_MESSAGE`. Forwarded to `VisualizerCanvasRenderer` as `onSendMessage`; when omitted, those messages are ignored. */
   onVisualizerSendMessage?: (content: string) => void;
+  /**
+   * Live host context for a mounted MCP App. When set it replaces the
+   * `McpAppCanvasContent.hostContext` captured when the canvas opened, so
+   * a theme or locale change reaches the app without reopening the canvas.
+   */
+  mcpAppHostContext?: McpUiHostContext;
 }

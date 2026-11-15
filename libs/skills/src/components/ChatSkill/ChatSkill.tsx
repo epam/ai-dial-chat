@@ -8,6 +8,7 @@ import { useLayoutEffect, useState, type FC } from 'react';
 import { SKILLS_CLASS } from '../../constants/public-class-names';
 import { SKILL_INFO_TOOLTIP_CONTENT_CLASS_NAME } from '../../constants/skill-info-tooltip';
 import type { ChatSkillProps } from '../../models/chat-skill-props';
+import { ChatSkillDetailsTrigger } from '../../types/chat-skill-details-trigger';
 import { SkillInfoTooltipContent } from '../SkillInfoTooltipContent/SkillInfoTooltipContent';
 import styles from './ChatSkill.module.scss';
 
@@ -24,7 +25,7 @@ export const ChatSkill: FC<ChatSkillProps> = ({
   unresolvedReason,
   labelClassName = 'dial-body-paragraph-text',
   colors,
-  detailsTrigger = 'hover',
+  detailsTrigger = ChatSkillDetailsTrigger.Hover,
   onViewDetails,
   labels = {},
 }) => {
@@ -48,7 +49,7 @@ export const ChatSkill: FC<ChatSkillProps> = ({
     '--sk-chip-unsupported-label': colors?.unsupportedLabel,
     '--sk-chip-unsupported-bg': colors?.unsupportedBackground,
   });
-  const isClickTriggered = detailsTrigger === 'click';
+  const isClickTriggered = detailsTrigger === ChatSkillDetailsTrigger.Click;
 
   const handleViewDetails = () => {
     setTooltipGeneration((generation) => generation + 1);

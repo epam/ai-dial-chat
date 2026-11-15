@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 /** One conversation row of the {@link ProjectConversationList}. */
 export interface ProjectConversationListItem {
   /** Conversation id, passed back to the callbacks. */
@@ -8,6 +10,10 @@ export interface ProjectConversationListItem {
   authorName?: string;
   /** Whether the conversation changed since the viewer last opened it. Defaults to `false`. */
   isUnread?: boolean;
+  /** Host-rendered leading visual, such as the deployment avatar; replaces the status point. Defaults to the status point. */
+  leading?: ReactNode;
+  /** Host-rendered visual at the end of the row button, such as an unread indicator; replaces the default unread dot shown beside `leading`. Defaults to that dot. */
+  trailing?: ReactNode;
 }
 
 /** Localized labels used by the {@link ProjectConversationList} component. */
@@ -18,6 +24,8 @@ export interface ProjectConversationListLabels {
   openLabel: (title: string, authorName?: string) => string;
   /** Accessible name of a row's more-actions trigger. */
   moreActionsLabel: (title: string) => string;
+  /** Accessible name of the close button of the phone actions sheet. Defaults to `'Close'`. */
+  closeLabel?: string;
   /** Rename menu item label. */
   renameLabel: string;
   /** Delete menu item label. */

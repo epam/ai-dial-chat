@@ -8,13 +8,14 @@ import type {
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthSource } from '../../auth/auth-source.enum';
 import { SSE_RELEASE_TIMEOUT_MS } from '../../common/utils/sse';
+import { ConversationService } from '../conversation.service';
+import type { SendCompletionDto } from '../dto/send-completion.dto';
 import {
   ConversationGenerationService,
   GenerationStatus,
-} from '../conversation-generation.service';
-import { ConversationService } from '../conversation.service';
-import type { SendCompletionDto } from '../dto/send-completion.dto';
-import { createConversationController } from './conversation-controller.fixture';
+} from '../generation/conversation-generation.service';
+import type { StreamCompletionRequest } from '../streaming/stream-completion-request';
+import { createConversationGenerationController } from './conversation-controller.fixture';
 
 /*
  * Lifecycle of the downstream completion response itself — distinct from
@@ -57,8 +58,6 @@ const VALID_COMPLETION_BODY = {
 const CHUNK_SIZE = 64 * 1024;
 /** 20 * 64 KiB = 1.25 MiB, past `SSE_COMPLETION_MAX_BUFFERED_BYTES`. */
 const CHUNKS_PAST_LIMIT = 20;
-/** The `onReadyToStream` callback's position in `streamCompletion`'s argument list. */
-const ON_READY_TO_STREAM_ARG = 10;
 
 const makeGenerationService = () => ({
   register: vi.fn().mockReturnValue(new AbortController()),
@@ -87,7 +86,7 @@ const makeStreamingService = (
   streamCompletion: vi.fn().mockImplementation(async function* (
     ...args: unknown[]
   ) {
-    (args[ON_READY_TO_STREAM_ARG] as () => void)();
+    (args[0] as StreamCompletionRequest).onReadyToStream();
     for (let index = 0; index < chunkCount; index += 1) {
       yield Buffer.alloc(CHUNK_SIZE, 'x');
       if (index === 0) onFirstChunk?.();
@@ -170,7 +169,7 @@ const makeController = (
   streamingService: ReturnType<typeof makeStreamingService>,
   generationService: ReturnType<typeof makeGenerationService>,
 ) =>
-  createConversationController(
+  createConversationGenerationController(
     streamingService as unknown as ConversationService,
     generationService as unknown as ConversationGenerationService,
   );
@@ -200,7 +199,13 @@ describe('completion-response-lifecycle', () => {
       const handled = makeController(
         streamingService,
         generationService,
-      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+      ).streamCompletion(
+        TEST_REQUEST,
+        res,
+        VALID_COMPLETION_BODY,
+        undefined,
+        undefined,
+      );
 
       await waitUntil(() => events.includes('end'), 'the response to be ended');
 
@@ -236,7 +241,13 @@ describe('completion-response-lifecycle', () => {
       const handled = makeController(
         streamingService,
         generationService,
-      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+      ).streamCompletion(
+        TEST_REQUEST,
+        res,
+        VALID_COMPLETION_BODY,
+        undefined,
+        undefined,
+      );
 
       await waitUntil(() => events.includes('end'), 'the response to be ended');
       // The peer starts reading again after `end()`, so the queue drains and
@@ -274,7 +285,13 @@ describe('completion-response-lifecycle', () => {
       await makeController(
         streamingService,
         generationService,
-      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+      ).streamCompletion(
+        TEST_REQUEST,
+        res,
+        VALID_COMPLETION_BODY,
+        undefined,
+        undefined,
+      );
 
       // Every chunk plus the `: init` comment reached the client.
       expect(writeSpy).toHaveBeenCalledTimes(CHUNKS_PAST_LIMIT + 1);
@@ -298,7 +315,13 @@ describe('completion-response-lifecycle', () => {
       await makeController(
         streamingService,
         generationService,
-      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+      ).streamCompletion(
+        TEST_REQUEST,
+        res,
+        VALID_COMPLETION_BODY,
+        undefined,
+        undefined,
+      );
 
       // The generator still ran to its natural end and persisted.
       expect(events).toContain('persisted');
@@ -334,6 +357,7 @@ describe('completion-response-lifecycle', () => {
         writable as unknown as ExpressResponse,
         VALID_COMPLETION_BODY,
         undefined,
+        undefined,
       );
 
       expect(order.indexOf('unviewed')).toBeGreaterThan(-1);
@@ -358,9 +382,9 @@ describe('completion-response-lifecycle', () => {
         streamCompletion: vi.fn().mockImplementation(async function* (
           ...args: unknown[]
         ) {
-          (args[ON_READY_TO_STREAM_ARG] as () => void)();
+          (args[0] as StreamCompletionRequest).onReadyToStream();
           throw new Error('upstream failed before the first chunk');
-          // eslint-disable-next-line no-unreachable
+
           yield Buffer.alloc(1);
         }),
       };
@@ -373,6 +397,7 @@ describe('completion-response-lifecycle', () => {
           TEST_REQUEST,
           writable as unknown as ExpressResponse,
           VALID_COMPLETION_BODY,
+          undefined,
           undefined,
         ),
       ).rejects.toThrow('upstream failed');
@@ -414,7 +439,7 @@ describe('completion-response-lifecycle', () => {
         streamCompletion: vi.fn().mockImplementation(async function* (
           ...args: unknown[]
         ) {
-          (args[ON_READY_TO_STREAM_ARG] as () => void)();
+          (args[0] as StreamCompletionRequest).onReadyToStream();
           for (const chunk of chunks) {
             await new Promise<void>((resolve) => releases.push(resolve));
             yield Buffer.from(chunk);
@@ -440,7 +465,13 @@ describe('completion-response-lifecycle', () => {
       const handled = makeController(
         service as unknown as ReturnType<typeof makeStreamingService>,
         makeGenerationService(),
-      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+      ).streamCompletion(
+        TEST_REQUEST,
+        res,
+        VALID_COMPLETION_BODY,
+        undefined,
+        undefined,
+      );
 
       await releaseNext();
       await vi.advanceTimersByTimeAsync(40_000);
@@ -461,7 +492,13 @@ describe('completion-response-lifecycle', () => {
       const handled = makeController(
         service as unknown as ReturnType<typeof makeStreamingService>,
         makeGenerationService(),
-      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+      ).streamCompletion(
+        TEST_REQUEST,
+        res,
+        VALID_COMPLETION_BODY,
+        undefined,
+        undefined,
+      );
 
       await releaseNext();
       await vi.advanceTimersByTimeAsync(KEEPALIVE_INTERVAL_MS * 2);
@@ -487,7 +524,13 @@ describe('completion-response-lifecycle', () => {
       const handled = makeController(
         service as unknown as ReturnType<typeof makeStreamingService>,
         makeGenerationService(),
-      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+      ).streamCompletion(
+        TEST_REQUEST,
+        res,
+        VALID_COMPLETION_BODY,
+        undefined,
+        undefined,
+      );
 
       await releaseNext();
       (res as unknown as Writable).emit('close');
@@ -516,7 +559,13 @@ describe('completion-response-lifecycle', () => {
         makeController(
           service as unknown as ReturnType<typeof makeStreamingService>,
           makeGenerationService(),
-        ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined),
+        ).streamCompletion(
+          TEST_REQUEST,
+          res,
+          VALID_COMPLETION_BODY,
+          undefined,
+          undefined,
+        ),
       ).rejects.toBe(conflict);
       await vi.advanceTimersByTimeAsync(KEEPALIVE_INTERVAL_MS * 2);
 
@@ -534,7 +583,13 @@ describe('completion-response-lifecycle', () => {
       const handled = makeController(
         service as unknown as ReturnType<typeof makeStreamingService>,
         makeGenerationService(),
-      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+      ).streamCompletion(
+        TEST_REQUEST,
+        res,
+        VALID_COMPLETION_BODY,
+        undefined,
+        undefined,
+      );
 
       await releaseNext();
       expect(vi.getTimerCount()).toBe(1);
@@ -640,6 +695,7 @@ describe('completion-response-lifecycle', () => {
             req as unknown as ExpressRequest,
             res as unknown as ExpressResponse,
             VALID_COMPLETION_BODY,
+            undefined,
             undefined,
           )
           .catch(() => undefined);

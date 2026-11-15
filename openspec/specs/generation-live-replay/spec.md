@@ -13,7 +13,7 @@ start.
 
 ### Requirement: Backend retains in-flight assistant message content per active generation
 
-`ConversationGenerationService`'s registry entry (`apps/chat-api/src/conversations/conversation-generation.service.ts`) SHALL retain the current assembled assistant `ConversationMessageDto` for each active generation, updated every time `ConversationStreamingService.streamCompletion`'s relay loop (`ChatCompletionsAdapter.stream` or `ResponsesAdapter.stream`) applies a chunk via `applyChunkToMessage`. This retained content SHALL include merged `custom_content.stages`, matching exactly what the assembled message would contain if inspected at that instant.
+`ConversationGenerationService`'s registry entry (`apps/chat-api/src/conversations/generation/conversation-generation.service.ts`) SHALL retain the current assembled assistant `ConversationMessageDto` for each active generation, updated every time `ConversationStreamingService.streamCompletion`'s relay loop (`ChatCompletionsAdapter.stream` or `ResponsesAdapter.stream`) applies a chunk via `applyChunkToMessage`. This retained content SHALL include merged `custom_content.stages`, matching exactly what the assembled message would contain if inspected at that instant.
 
 #### Scenario: Assembled message reflects the latest chunk
 
@@ -72,7 +72,7 @@ The endpoint SHALL support more than one concurrent subscriber for the same acti
 
 The exception is a conversation at that path that contains a background message with `status: "pending"`. There the endpoint SHALL behave as `background-responses-generation` "Any instance recovers a pending background message on attach" and "A start interrupted before responseId was saved is marked failed after 2 minutes" define. The background recovery SHALL read the conversation from the caller's own bucket, so another principal's conversation is never read.
 
-For both retained cases, `ConversationController.attachToGeneration` (`apps/chat-api/src/conversations/conversation.controller.ts`) SHALL keep routing the request to the registry without reading the conversation, as it does for any local non-background entry. It SHALL respond `404` before any SSE header is sent: it SHALL start no keepalive timer, add no emitter listener, and add no `dial_chat_sse_active{kind="generation_attach"}` contribution. Repeated attaches SHALL receive the same `404`.
+For both retained cases, `ConversationGenerationController.attachToGeneration` (`apps/chat-api/src/conversations/conversation-generation.controller.ts`) SHALL keep routing the request to the registry without reading the conversation, as it does for any local non-background entry. It SHALL respond `404` before any SSE header is sent: it SHALL start no keepalive timer, add no emitter listener, and add no `dial_chat_sse_active{kind="generation_attach"}` contribution. Repeated attaches SHALL receive the same `404`.
 
 The status code, the error message, the OpenAPI document and the generated client (`operationId` `attachToGeneration`) are unchanged. Every client of this endpoint treats `404` as "fall back to the `watch`-based terminal check", and so observes the eventual save through `POST /api/v1/conversations/watch`. If no save ever arrives, that check ends at its own bound. Not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`. No i18n, RTL or accessibility impact, and no new telemetry.
 

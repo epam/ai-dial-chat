@@ -4,6 +4,7 @@ import {
   TextRefinementPurpose,
 } from '@epam/ai-dial-chat-api-client';
 import {
+  createSkillFolderLister,
   isValidSkillRelativePath,
   parseSkillResourceUrl,
   SkillEditorLoadState,
@@ -16,9 +17,15 @@ import {
   type SkillEditorSubmitClient,
   type SkillEditorSubmitMessages,
   type SkillEditorSubmitNotification,
+  type ResourceSaveAdapter,
+  type ResourceSaveResult,
   type SkillFileActionsMessages,
 } from '@epam/ai-dial-chat-hooks';
-import { formatFileSize, PUBLIC_BUCKET } from '@epam/ai-dial-chat-shared';
+import {
+  CatalogEntityType,
+  formatFileSize,
+  PUBLIC_BUCKET,
+} from '@epam/ai-dial-chat-shared';
 import {
   SkillEditor as SkillEditorForm,
   type SkillEditorLabels,
@@ -38,7 +45,15 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import type { FC } from 'react';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  lazy,
+  memo,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
 import RequireCatalogCreation from '../../components/RequireCatalogCreation/RequireCatalogCreation';
@@ -61,11 +76,13 @@ import { useSkillFileSystemPicker } from '../../hooks/skills/useSkillFileSystemP
 import { useBuilderLeaveGuard } from '../../hooks/unsaved-changes/useBuilderLeaveGuard';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
+import { skillsApi } from '../../server-api/api-client';
 import {
   createSkill,
   downloadSkill,
   downloadSkillFile,
   listSkillFiles,
+  moveSkill,
   updateSkill,
 } from '../../server-api/skills.api';
 import { CatalogCreationDecision } from '../../types/catalog-creation';
@@ -88,6 +105,18 @@ const skillEditorLoadClient: SkillEditorLoadClient = {
  * retry included) then has no way to create, without knowing why. */
 const blockedCreateSkill: SkillEditorSubmitClient['createSkill'] = () =>
   Promise.reject(new Error('Skill creation is not allowed'));
+
+/* Loaded on the first Save, so opening the editor fetches no folder listing. */
+const ResourceSavePanelContainer = lazy(
+  async () =>
+    import('../../components/ResourceSavePanelContainer/ResourceSavePanelContainer'),
+);
+
+/** What the Save panel needs for the save it was opened for. */
+interface SkillSaveRequest {
+  adapter: ResourceSaveAdapter;
+  name: string;
+}
 
 /* Stands in for the skill path while creating a skill that has none yet, so a
  * create-mode preview is still scoped to its own resource. */
@@ -141,6 +170,7 @@ const SkillEditorPage: FC = () => {
     () => ({
       createSkill: isCreationAllowed ? createSkill : blockedCreateSkill,
       updateSkill,
+      moveSkill,
     }),
     [isCreationAllowed],
   );
@@ -201,6 +231,42 @@ const SkillEditorPage: FC = () => {
       navigate(url);
     },
     [allowNextNavigation, navigate],
+  );
+  /*
+   * A new skill, or the user's own, saves through the Save panel, which picks
+   * the folder and may publish it; a skill shared with the user saves in
+   * place, because moving acts on the caller's own bucket.
+   */
+  const isSavePanelFlow =
+    !isEditMode ||
+    (personalBucket != null && skillResource?.bucket === personalBucket);
+  const [saveRequest, setSaveRequest] = useState<SkillSaveRequest>();
+  const [isSavePanelOpen, setIsSavePanelOpen] = useState(false);
+  const handleSaveRequest = useCallback(
+    (adapter: ResourceSaveAdapter, values: SkillEditorValues) => {
+      setSaveRequest({ adapter, name: values.name.trim() });
+      setIsSavePanelOpen(true);
+    },
+    [],
+  );
+  const handleSavePanelClose = useCallback(() => setIsSavePanelOpen(false), []);
+  const handleSavePanelSaved = useCallback(
+    (result: ResourceSaveResult) => {
+      setIsSavePanelOpen(false);
+      handleSubmitNavigate(
+        result.isCreated
+          ? `${ROUTES.Catalog}?${new URLSearchParams({ itemId: result.savedId }).toString()}`
+          : returnUrl,
+      );
+    },
+    [handleSubmitNavigate, returnUrl],
+  );
+  const listSkillFolders = useMemo(
+    () =>
+      personalBucket
+        ? createSkillFolderLister(skillsApi, personalBucket)
+        : undefined,
+    [personalBucket],
   );
   const [pendingReload, setPendingReload] = useState(false);
   const [hasReturnedToManifest, setHasReturnedToManifest] = useState(false);
@@ -337,6 +403,7 @@ const SkillEditorPage: FC = () => {
     messages: submitMessages,
     onNavigate: handleSubmitNavigate,
     onNotify: handleSubmitNotification,
+    onSaveRequest: isSavePanelFlow ? handleSaveRequest : undefined,
   });
 
   /*
@@ -419,8 +486,17 @@ const SkillEditorPage: FC = () => {
     retryLoad();
   }, [clearConflict, retryLoad]);
 
-  const labels = useMemo<SkillEditorLabels>(
-    () => ({
+  const labels = useMemo<SkillEditorLabels>(() => {
+    const resolveLoadErrorMessage = () => {
+      if (loadState === SkillEditorLoadState.Forbidden) {
+        return t(SkillEditorI18nKeys.LoadErrorForbidden);
+      }
+      if (loadState === SkillEditorLoadState.NotFound) {
+        return t(SkillEditorI18nKeys.LoadErrorNotFound);
+      }
+      return t(SkillEditorI18nKeys.LoadError);
+    };
+    return {
       ...refinementLabels,
       filesHeading: t(SkillEditorI18nKeys.FilesHeading),
       filesTreeAriaLabel: t(SkillEditorI18nKeys.FilesTreeAriaLabel),
@@ -458,18 +534,27 @@ const SkillEditorPage: FC = () => {
         : t(ButtonsI18nKeys.Create),
       cancelLabel: t(ButtonsI18nKeys.Cancel),
       retryLabel: t(ButtonsI18nKeys.Retry),
-      loadErrorMessage:
-        loadState === SkillEditorLoadState.Forbidden
-          ? t(SkillEditorI18nKeys.LoadErrorForbidden)
-          : loadState === SkillEditorLoadState.NotFound
-            ? t(SkillEditorI18nKeys.LoadErrorNotFound)
-            : t(SkillEditorI18nKeys.LoadError),
+      loadErrorMessage: resolveLoadErrorMessage(),
       savingStatusLabel: t(ButtonsI18nKeys.Saving),
       loadingAriaLabel: t(SkillEditorI18nKeys.LoadingAriaLabel),
       instructionsLoadingAriaLabel: t(
         SkillEditorI18nKeys.InstructionsLoadingAriaLabel,
       ),
       supportingFileNote: t(SkillEditorI18nKeys.SupportingFileNote),
+      folderPreviewRootLabel: t(SkillEditorI18nKeys.FolderPreviewRootLabel),
+      folderPreviewBreadcrumbAriaLabel: t(
+        SkillEditorI18nKeys.FolderPreviewBreadcrumbAriaLabel,
+      ),
+      folderPreviewOverflowAriaLabel: t(
+        SkillEditorI18nKeys.FolderPreviewOverflowAriaLabel,
+      ),
+      folderPreviewListAriaLabel: t(
+        SkillEditorI18nKeys.FolderPreviewListAriaLabel,
+      ),
+      folderEmptyTitle: t(SkillEditorI18nKeys.FolderEmptyTitle),
+      folderEmptyDescription: t(SkillEditorI18nKeys.FolderEmptyDescription),
+      folderItemCountLabel: (count: number) =>
+        t(SkillEditorI18nKeys.FolderItemCount, { count }),
       reloadLatestLabel: t(SkillEditorI18nKeys.ReloadLatestLabel),
       uploadDialogTitle: t(SkillEditorI18nKeys.UploadDialogTitle),
       uploadDialogCloseAriaLabel: t(ButtonsI18nKeys.Close),
@@ -507,9 +592,8 @@ const SkillEditorPage: FC = () => {
       ),
       createFolderCloseAriaLabel: t(ButtonsI18nKeys.Close),
       createFolderConfirmLabel: t(ButtonsI18nKeys.Create),
-    }),
-    [t, isEditMode, loadState, refinementLabels],
-  );
+    };
+  }, [t, isEditMode, loadState, refinementLabels]);
 
   if (!bucket) {
     return (
@@ -628,6 +712,31 @@ const SkillEditorPage: FC = () => {
           onCancel={() => resolveManifestImport(false)}
           onClose={() => resolveManifestImport(false)}
         />
+
+        {saveRequest && listSkillFolders && (
+          <Suspense fallback={null}>
+            <ResourceSavePanelContainer
+              isOpen={isSavePanelOpen}
+              onClose={handleSavePanelClose}
+              adapter={saveRequest.adapter}
+              listPersonalFolders={listSkillFolders}
+              resourceId={
+                isEditMode && bucket && skillPath
+                  ? `skills/${bucket}/${skillPath}`
+                  : ''
+              }
+              currentFolderPath={
+                isEditMode && skillPath ? skillPath.split('/').slice(0, -1) : []
+              }
+              resourceName={saveRequest.name}
+              resourceType={CatalogEntityType.Skill}
+              typeLabel={t(CatalogI18nKeys.CreateSkill)}
+              notifiableEntity={NotifiableEntity.Skill}
+              canPublish
+              onSaved={handleSavePanelSaved}
+            />
+          </Suspense>
+        )}
       </div>
     </RequireCatalogCreation>
   );

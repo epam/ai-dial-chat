@@ -7,6 +7,7 @@ import type {
   ConversationListLabels,
   ConversationListTypography,
 } from './conversation-list';
+import type { PinnedProjects } from './pinned-projects';
 
 /** Labels for each filter tab. */
 export interface FilterLabels {
@@ -214,6 +215,8 @@ export interface ConversationPanelProps {
    * visible under `All`.
    */
   hiddenSources?: FilterTab[];
+  /** Project trees rendered at the top of the Pinned section, with their callbacks. Pass a referentially stable object: the panel is memoized. */
+  pinnedProjects?: PinnedProjects;
 }
 
 /** Describes a completed drag-and-drop move in the conversation panel. */

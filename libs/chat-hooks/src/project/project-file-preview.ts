@@ -1,7 +1,10 @@
 import {
   type DisplayAttachment,
+  ensureDownloadFilename,
   getAttachmentTypeFromMime,
   RequestStatus,
+  triggerAnchorDownload,
+  triggerBlobDownload,
 } from '@epam/ai-dial-chat-shared';
 import {
   isStoredContextFile,
@@ -28,6 +31,11 @@ export type ProjectFileLocatorBuilder = (
   projectId: string,
   name: string,
 ) => string;
+
+/** Resolves a project file locator to the URL that downloads it, or `undefined` when the host serves no download for it. The host owns the endpoints. */
+export type ProjectFileDownloadUrlResolver = (
+  locator: string,
+) => string | undefined;
 
 /** Returns the canvas key of a project file, `{scope}::{id}`; the scope keeps one file name in two projects apart. */
 export const toProjectPreviewKey = (scope: string, id: string): string =>
@@ -90,4 +98,25 @@ export const toProjectContextFileAttachment = (
   return projectId == null
     ? undefined
     : toStoredProjectFileAttachment(file, projectId, toLocator);
+};
+
+/** Downloads a project file attachment, a file added in this session from its own `File` and a stored one from the URL the host resolves for its locator; returns whether a download started. */
+export const downloadProjectFileAttachment = (
+  attachment: DisplayAttachment,
+  resolveDownloadUrl: ProjectFileDownloadUrlResolver | undefined,
+): boolean => {
+  const { name, url, contentType } = attachment;
+  const fileName = ensureDownloadFilename(name, url, contentType);
+
+  /* A file added in this session is not uploaded yet, so it downloads from the browser `File` it carries. */
+  if ('file' in attachment && attachment.file instanceof Blob) {
+    triggerBlobDownload(attachment.file, fileName);
+    return true;
+  }
+
+  const downloadUrl = url == null ? undefined : resolveDownloadUrl?.(url);
+  if (downloadUrl == null) return false;
+
+  triggerAnchorDownload(downloadUrl, fileName);
+  return true;
 };

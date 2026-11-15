@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
+  ConversationPanelI18nKeys,
   ProjectsI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeleteConfirmationLabels } from '../useDeleteConfirmationLabels';
@@ -23,6 +24,8 @@ export const useProjectConversationsPanelLabels =
         renameEmptyError: t(ProjectsI18nKeys.ChatsRenameEmpty),
         renameSaveLabel: t(ButtonsI18nKeys.Save),
         renameCancelLabel: t(ButtonsI18nKeys.Cancel),
+        renameWithAiLabel: t(ConversationPanelI18nKeys.RenameWithAiLabel),
+        renameWithAiError: t(ConversationPanelI18nKeys.RenameWithAiError),
         deleteTitle: (title) =>
           t(ProjectsI18nKeys.ChatsDeleteConfirmTitle, { title }),
         deleteDescription: t(ProjectsI18nKeys.ChatsDeleteConfirmDescription),

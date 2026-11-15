@@ -3,6 +3,7 @@ import {
   attachmentsToDtos,
   findDeploymentByIdOrReference,
   getApiErrorDetails,
+  getCleanedLocationTarget,
   getConversationPath,
   getQuickAppConversationStarters,
   getStarterConversationText,
@@ -64,7 +65,6 @@ import {
 import { ROUTES } from '../../types/routes';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
-import { getCleanedLocationTarget } from '../../utils/url-cleanup';
 
 /*
  * TODO: rename page and component
@@ -580,6 +580,8 @@ const ConversationRoute: FC = () => {
           removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
           stateOnLabel: t(ToolsI18nKeys.StateOn),
           stateOffLabel: t(ToolsI18nKeys.StateOff),
+          summaryLabel: (selected: number, total: number) =>
+            t(ToolsI18nKeys.Summary, { selected, total }),
         }}
       >
         {customViewer ? (

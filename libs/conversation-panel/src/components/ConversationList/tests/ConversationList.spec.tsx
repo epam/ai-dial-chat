@@ -4,7 +4,12 @@ import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CONVERSATION_PANEL_CLASS } from '../../../constants/public-class-names';
 import { ConversationItem } from '../../../models/panel-props';
+import type {
+  PinnedProjectGroup,
+  PinnedProjects,
+} from '../../../models/pinned-projects';
 import { ConversationTypeFilter } from '../../../types/conversation-kind';
+import { ConversationRowVariant } from '../../../types/conversation-row-variant';
 import { ConversationList } from '../ConversationList';
 
 /* The visible row range the mocked virtual list reports; `null` reports nothing. */
@@ -97,24 +102,71 @@ vi.mock('@epam/ai-dial-ui-kit', async () => ({
   EllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
   ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
   Dropdown: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  GhostIconButton: React.forwardRef<
+    HTMLButtonElement,
+    {
+      'aria-label'?: string;
+      'aria-expanded'?: boolean;
+      'aria-controls'?: string;
+      onClick?: () => void;
+    }
+  >(
+    (
+      {
+        'aria-label': ariaLabel,
+        'aria-expanded': ariaExpanded,
+        'aria-controls': ariaControls,
+        onClick,
+      },
+      ref,
+    ) => (
+      <button
+        ref={ref}
+        aria-label={ariaLabel}
+        aria-expanded={ariaExpanded}
+        aria-controls={ariaControls}
+        onClick={onClick}
+      />
+    ),
+  ),
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Skeleton: () => null,
   SkeletonVariant: { Circular: 'circular' },
   Button: ({
     onClick,
     label,
+    href,
     className,
     'aria-current': ariaCurrent,
+    'aria-label': ariaLabel,
   }: {
-    onClick?: () => void;
+    onClick?: React.MouseEventHandler;
     label?: React.ReactNode;
+    href?: string;
     className?: string;
     'aria-current'?: React.AriaAttributes['aria-current'];
-  }) => (
-    <button onClick={onClick} className={className} aria-current={ariaCurrent}>
-      {label}
-    </button>
-  ),
+    'aria-label'?: string;
+  }) =>
+    href !== undefined ? (
+      <a
+        href={href}
+        onClick={onClick}
+        className={className}
+        aria-current={ariaCurrent}
+        aria-label={ariaLabel}
+      >
+        {label}
+      </a>
+    ) : (
+      <button
+        onClick={onClick}
+        className={className}
+        aria-current={ariaCurrent}
+        aria-label={ariaLabel}
+      >
+        {label}
+      </button>
+    ),
   Highlight: ({ text }: { text: string }) => {
     rowRenderLog.push(text);
     return <span>{text}</span>;
@@ -206,6 +258,8 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
   ),
 }));
 
+const scrollToRow = vi.hoisted(() => vi.fn());
+
 vi.mock('react-window', () => ({
   List: ({
     rowComponent: RowComponent,
@@ -213,7 +267,9 @@ vi.mock('react-window', () => ({
     rowProps,
     role,
     onRowsRendered,
+    listRef,
   }: {
+    listRef?: { current: unknown };
     rowComponent: React.ComponentType<Record<string, unknown>>;
     rowCount: number;
     rowProps: Record<string, unknown>;
@@ -224,6 +280,7 @@ vi.mock('react-window', () => ({
     ) => void;
     [key: string]: unknown;
   }) => {
+    if (listRef) listRef.current = { scrollToRow };
     /* Reports the test's viewport, plus every row as overscan. */
     React.useEffect(() => {
       if (!renderedRange.current) return;
@@ -258,6 +315,8 @@ vi.mock('@tabler/icons-react', () => ({
       IconCaretRightFilled: () => <span>caret-right-filled</span>,
       IconMessageCircle: () => <span>message-circle</span>,
       IconSearchOff: () => <span>search-off</span>,
+      IconBriefcase: () => <span aria-hidden="true" />,
+      IconDotsVertical: () => <span aria-hidden="true" />,
     },
     {
       get: (target, key: string) =>
@@ -412,6 +471,28 @@ describe('ConversationList', () => {
     ['Pinned', 'My chats', 'Shared', 'Organization'].forEach((heading) => {
       expect(screen.getByText(heading)).toBeTruthy();
     });
+  });
+
+  it('gives group headers the secondary color class only over Indicator rows', () => {
+    const { rerender } = render(
+      <ConversationList {...BASE_PROPS} conversations={items} />,
+    );
+    /* The icon mocks put their names into the header's, so match the label. */
+    const getHeader = () =>
+      screen
+        .getAllByRole('button')
+        .find((button) => within(button).queryByText('Pinned') != null);
+    expect(getHeader()?.className).not.toMatch(/groupHeaderIndicator/);
+
+    rerender(
+      <ConversationList
+        {...BASE_PROPS}
+        conversations={items}
+        rowVariant={ConversationRowVariant.Indicator}
+      />,
+    );
+
+    expect(getHeader()?.className).toMatch(/groupHeaderIndicator/);
   });
 
   it('stamps the list root with the public list class', () => {
@@ -961,5 +1042,526 @@ describe('ConversationList — visible conversation IDs', () => {
     expect(screen.getByRole('status').textContent).toBe(
       'Updating conversation names',
     );
+  });
+});
+
+describe('ConversationList — pinned projects', () => {
+  const makeProject = (
+    overrides: Partial<PinnedProjectGroup> = {},
+  ): PinnedProjectGroup => ({
+    id: 'p1',
+    name: 'Support',
+    href: '/projects/p1',
+    conversations: [
+      { id: 'n1', title: 'Weekly summary', href: '/projects/p1/n1' },
+      { id: 'n2', title: 'Billing reply', href: '/projects/p1/n2' },
+    ],
+    hasMore: true,
+    ...overrides,
+  });
+
+  const tenChats = Array.from({ length: 10 }, (_, index) => ({
+    id: `n${index + 1}`,
+    title: `Nested ${index + 1}`,
+  }));
+
+  const pinned: ConversationItem = {
+    id: 'c4',
+    title: 'Pinned chat',
+    isPinned: true,
+    source: FilterTab.MyChats,
+  };
+
+  const renderList = (
+    pinnedProjects: Partial<PinnedProjects> & {
+      projects: PinnedProjectGroup[];
+    },
+    props: Partial<React.ComponentProps<typeof ConversationList>> = {},
+  ) => {
+    const callbacks = {
+      onSelectProject: vi.fn(),
+      onSelectConversation: vi.fn(),
+      onSeeAll: vi.fn(),
+    };
+    const onSelectConversation = vi.fn();
+    const onMoveConversation = vi.fn();
+    render(
+      <ConversationList
+        {...BASE_PROPS}
+        conversations={[pinned]}
+        onSelectConversation={onSelectConversation}
+        onMoveConversation={onMoveConversation}
+        rowVariant={ConversationRowVariant.Indicator}
+        pinnedProjects={{ ...callbacks, ...pinnedProjects }}
+        {...props}
+      />,
+    );
+    return { ...callbacks, onSelectConversation, onMoveConversation };
+  };
+
+  /** The `li` whose text includes `text`. */
+  const getListItem = (text: string): HTMLElement => {
+    const row = screen
+      .getAllByRole('listitem')
+      .find(
+        (item) =>
+          item.tagName === 'LI' && within(item).queryByText(text) != null,
+      );
+    if (!row) throw new Error(`No list item with "${text}"`);
+    return row;
+  };
+
+  it('draws nested chats as Indicator rows unless the Avatar variant is set', () => {
+    const { rerender } = render(
+      <ConversationList
+        {...BASE_PROPS}
+        conversations={[pinned]}
+        onSelectConversation={vi.fn()}
+        onMoveConversation={vi.fn()}
+        rowVariant={ConversationRowVariant.Indicator}
+        pinnedProjects={{
+          projects: [makeProject({ hasMore: false })],
+          onSelectProject: vi.fn(),
+          onSelectConversation: vi.fn(),
+          onSeeAll: vi.fn(),
+        }}
+      />,
+    );
+    /* The mocked kit link keeps its class, which is all the variant leaves on a row here. */
+    const getNestedButton = () =>
+      within(getListItem('Weekly summary')).getByRole('link');
+    expect(getNestedButton().className).toMatch(/itemIndicator/);
+
+    rerender(
+      <ConversationList
+        {...BASE_PROPS}
+        conversations={[pinned]}
+        onSelectConversation={vi.fn()}
+        onMoveConversation={vi.fn()}
+        rowVariant={ConversationRowVariant.Indicator}
+        pinnedProjects={{
+          projects: [makeProject({ hasMore: false })],
+          conversationRowVariant: ConversationRowVariant.Avatar,
+          onSelectProject: vi.fn(),
+          onSelectConversation: vi.fn(),
+          onSeeAll: vi.fn(),
+        }}
+      />,
+    );
+    expect(getNestedButton().className).not.toMatch(/itemIndicator/);
+  });
+
+  it('offers the project actions on the project row and on See all', () => {
+    renderList({
+      projects: [makeProject({ conversations: tenChats, hasMore: true })],
+      getActions: () => [{ key: 'unpin', label: 'Unpin' }],
+    });
+
+    expect(
+      within(getListItem('Support')).getByRole('button', {
+        name: 'More actions',
+      }),
+    ).toBeTruthy();
+    expect(
+      within(getListItem('See all')).getByRole('button', {
+        name: 'More actions',
+      }),
+    ).toBeTruthy();
+  });
+
+  it('renders ten nested rows and a See all row with their levels and positions', () => {
+    renderList({
+      projects: [makeProject({ conversations: tenChats, hasMore: true })],
+    });
+
+    expect(getListItem('Support').getAttribute('aria-level')).toBe('1');
+    tenChats.forEach((chat, index) => {
+      const row = getListItem(chat.title);
+      expect(row.getAttribute('aria-level')).toBe('2');
+      expect(row.getAttribute('aria-posinset')).toBe(String(index + 1));
+      expect(row.getAttribute('aria-setsize')).toBe('11');
+    });
+    const seeAll = getListItem('See all');
+    expect(seeAll.getAttribute('aria-level')).toBe('2');
+    expect(seeAll.getAttribute('aria-posinset')).toBe('11');
+    expect(seeAll.getAttribute('aria-setsize')).toBe('11');
+    expect(
+      screen.getByRole('link', { name: 'See all chats in Support' }),
+    ).toBeTruthy();
+  });
+
+  it('renders the project rows before the pinned conversations', () => {
+    renderList({ projects: [makeProject()] });
+
+    const titles = screen
+      .getAllByRole('listitem')
+      .map((item) => item.textContent ?? '');
+    const projectIndex = titles.findIndex((text) => text.includes('Support'));
+    const pinnedIndex = titles.findIndex((text) =>
+      text.includes('Pinned chat'),
+    );
+    expect(titles[0]).toContain('Pinned');
+    expect(projectIndex).toBeGreaterThan(0);
+    expect(pinnedIndex).toBeGreaterThan(projectIndex);
+  });
+
+  describe('collapsing a project', () => {
+    it('renders only the project row of a collapsed project and keeps the rows after it', () => {
+      renderList({
+        projects: [makeProject({ isExpanded: false })],
+        onToggleProject: vi.fn(),
+      });
+
+      expect(getListItem('Support')).toBeTruthy();
+      expect(screen.queryByText('Weekly summary')).toBeNull();
+      expect(screen.queryByText('Billing reply')).toBeNull();
+      expect(screen.queryByText('See all')).toBeNull();
+      expect(getListItem('Pinned chat')).toBeTruthy();
+    });
+
+    it('renders the nested rows of a project whose isExpanded is not set', () => {
+      renderList({
+        projects: [makeProject()],
+        onToggleProject: vi.fn(),
+      });
+
+      expect(screen.getByText('Weekly summary')).toBeTruthy();
+      expect(screen.getByText('See all')).toBeTruthy();
+    });
+
+    it('collapses only the project whose isExpanded is false', () => {
+      renderList({
+        projects: [
+          makeProject({ isExpanded: false }),
+          makeProject({
+            id: 'p2',
+            name: 'Sales',
+            conversations: [{ id: 'm1', title: 'Quarterly numbers' }],
+            hasMore: false,
+          }),
+        ],
+        onToggleProject: vi.fn(),
+      });
+
+      expect(screen.queryByText('Weekly summary')).toBeNull();
+      expect(screen.getByText('Quarterly numbers')).toBeTruthy();
+    });
+
+    it('reports the toggled project id and does not open it', () => {
+      const { onSelectProject, onSelectConversation } = renderList({
+        projects: [makeProject()],
+        onToggleProject: vi.fn(),
+      });
+
+      fireEvent.click(
+        within(getListItem('Support')).getByRole('button', {
+          name: 'Collapse project',
+        }),
+      );
+
+      expect(onSelectProject).not.toHaveBeenCalled();
+      expect(onSelectConversation).not.toHaveBeenCalled();
+    });
+
+    it('passes the toggle callback the project id and the state it asks for', () => {
+      const onToggleProject = vi.fn();
+      renderList({
+        projects: [makeProject({ isExpanded: false })],
+        onToggleProject,
+      });
+
+      fireEvent.click(
+        within(getListItem('Support')).getByRole('button', {
+          name: 'Expand project',
+        }),
+      );
+
+      expect(onToggleProject).toHaveBeenCalledWith('p1', true);
+    });
+
+    it('uses the host labels for the chevron', () => {
+      renderList(
+        { projects: [makeProject()], onToggleProject: vi.fn() },
+        {
+          labels: {
+            ...LABELS,
+            collapseProjectLabel: 'Hide project chats',
+          },
+        },
+      );
+
+      expect(
+        within(getListItem('Support')).getByRole('button', {
+          name: 'Hide project chats',
+        }),
+      ).toBeTruthy();
+    });
+
+    it('renders no chevron without a toggle callback', () => {
+      renderList({ projects: [makeProject({ isExpanded: false })] });
+
+      expect(
+        screen.queryByRole('button', { name: 'Expand project' }),
+      ).toBeNull();
+      expect(screen.queryByText('Weekly summary')).toBeNull();
+    });
+
+    it('shows a chat that matches the search inside a collapsed project without calling the toggle', () => {
+      const onToggleProject = vi.fn();
+      renderList(
+        {
+          projects: [makeProject({ isExpanded: false })],
+          onToggleProject,
+        },
+        { searchQuery: 'billing' },
+      );
+
+      expect(screen.getByText('Billing reply')).toBeTruthy();
+      expect(screen.queryByText('Weekly summary')).toBeNull();
+      expect(
+        within(getListItem('Support')).getByRole('button', {
+          name: 'Collapse project',
+        }),
+      ).toBeTruthy();
+      expect(onToggleProject).not.toHaveBeenCalled();
+    });
+
+    it('asks to collapse a project that the search shows open', () => {
+      const onToggleProject = vi.fn();
+      renderList(
+        {
+          projects: [makeProject({ isExpanded: false })],
+          onToggleProject,
+        },
+        { searchQuery: 'billing' },
+      );
+
+      fireEvent.click(
+        within(getListItem('Support')).getByRole('button', {
+          name: 'Collapse project',
+        }),
+      );
+
+      expect(onToggleProject).toHaveBeenCalledWith('p1', false);
+    });
+
+    it('scrolls to the active chat again when its project is expanded after being collapsed', () => {
+      scrollToRow.mockClear();
+      const props = {
+        ...BASE_PROPS,
+        conversations: [pinned],
+        rowVariant: ConversationRowVariant.Indicator,
+        activeConversationId: 'n2',
+      };
+      const makeProjects = (isExpanded: boolean): PinnedProjects => ({
+        projects: [makeProject({ isExpanded })],
+        onSelectProject: vi.fn(),
+        onSelectConversation: vi.fn(),
+        onSeeAll: vi.fn(),
+      });
+      const { rerender } = render(
+        <ConversationList {...props} pinnedProjects={makeProjects(true)} />,
+      );
+      expect(scrollToRow).toHaveBeenCalledOnce();
+
+      rerender(
+        <ConversationList {...props} pinnedProjects={makeProjects(false)} />,
+      );
+      expect(scrollToRow).toHaveBeenCalledOnce();
+      expect(screen.queryByText('Billing reply')).toBeNull();
+
+      rerender(
+        <ConversationList {...props} pinnedProjects={makeProjects(true)} />,
+      );
+      expect(screen.getByText('Billing reply')).toBeTruthy();
+      expect(scrollToRow).toHaveBeenCalledTimes(2);
+    });
+
+    it('keeps a project collapsed when only its name matches the search', () => {
+      renderList(
+        {
+          projects: [makeProject({ isExpanded: false })],
+          onToggleProject: vi.fn(),
+        },
+        { searchQuery: 'support' },
+      );
+
+      expect(getListItem('Support')).toBeTruthy();
+      expect(screen.queryByText('Weekly summary')).toBeNull();
+      expect(screen.queryByText('Billing reply')).toBeNull();
+    });
+
+    it('collapses the project again once the search is cleared', () => {
+      const props = {
+        ...BASE_PROPS,
+        conversations: [pinned],
+        rowVariant: ConversationRowVariant.Indicator,
+        pinnedProjects: {
+          projects: [makeProject({ isExpanded: false })],
+          onSelectProject: vi.fn(),
+          onSelectConversation: vi.fn(),
+          onSeeAll: vi.fn(),
+          onToggleProject: vi.fn(),
+        },
+      };
+      const { rerender } = render(
+        <ConversationList {...props} searchQuery="billing" />,
+      );
+      expect(screen.getByText('Billing reply')).toBeTruthy();
+
+      rerender(<ConversationList {...props} searchQuery="" />);
+
+      expect(screen.queryByText('Billing reply')).toBeNull();
+    });
+  });
+
+  it('renders no See all row without more chats', () => {
+    renderList({ projects: [makeProject({ hasMore: false })] });
+
+    expect(screen.queryByText('See all')).toBeNull();
+    expect(getListItem('Billing reply').getAttribute('aria-setsize')).toBe('2');
+  });
+
+  it('renders only the project row for a project with no chats', () => {
+    renderList({
+      projects: [makeProject({ conversations: [], hasMore: false })],
+    });
+
+    expect(getListItem('Support')).toBeTruthy();
+    expect(
+      screen
+        .getAllByRole('listitem')
+        .filter((item) => item.getAttribute('aria-level') === '2'),
+    ).toHaveLength(0);
+  });
+
+  it('calls the project callbacks and never the list selection for nested rows', () => {
+    const calls: string[] = [];
+    const { onSelectConversation } = renderList({
+      projects: [makeProject()],
+      onSelectProject: (id) => calls.push(`project:${id}`),
+      onSelectConversation: (id, projectId) =>
+        calls.push(`chat:${id}:${projectId}`),
+      onSeeAll: (id) => calls.push(`see-all:${id}`),
+    });
+
+    fireEvent.click(screen.getByRole('link', { name: 'Support' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Billing reply' }));
+    fireEvent.click(
+      screen.getByRole('link', { name: 'See all chats in Support' }),
+    );
+
+    expect(calls).toEqual(['project:p1', 'chat:n2:p1', 'see-all:p1']);
+    expect(onSelectConversation).not.toHaveBeenCalled();
+  });
+
+  it('marks the active project and the active nested chat as the current page', () => {
+    renderList(
+      { projects: [makeProject()], activeProjectId: 'p1' },
+      { activeConversationId: 'n2' },
+    );
+
+    expect(
+      screen
+        .getByRole('link', { name: 'Support' })
+        .getAttribute('aria-current'),
+    ).toBe('page');
+    expect(
+      screen
+        .getByRole('link', { name: 'Billing reply' })
+        .getAttribute('aria-current'),
+    ).toBe('page');
+  });
+
+  it('keeps only the matching chats and no See all row on a chat search', () => {
+    renderList({ projects: [makeProject()] }, { searchQuery: 'billing' });
+
+    expect(getListItem('Support')).toBeTruthy();
+    expect(screen.getByText('Billing reply')).toBeTruthy();
+    expect(screen.queryByText('Weekly summary')).toBeNull();
+    expect(screen.queryByText('See all')).toBeNull();
+  });
+
+  it('keeps every listed chat and See all on a project name search', () => {
+    renderList({ projects: [makeProject()] }, { searchQuery: 'supp' });
+
+    expect(screen.getByText('Weekly summary')).toBeTruthy();
+    expect(screen.getByText('Billing reply')).toBeTruthy();
+    expect(screen.getByText('See all')).toBeTruthy();
+  });
+
+  it('hides every project under the Task type filter', () => {
+    renderList(
+      { projects: [makeProject()] },
+      {
+        conversations: [{ ...pinned, kind: ConversationKind.Task }],
+        activeTypeFilter: ConversationTypeFilter.Task,
+      },
+    );
+
+    expect(screen.queryByText('Support')).toBeNull();
+    expect(screen.getByText('Pinned chat')).toBeTruthy();
+  });
+
+  it('does not treat a list of only project rows as empty', () => {
+    renderList({ projects: [makeProject()] }, { conversations: [] });
+
+    expect(screen.queryByText('No conversations yet')).toBeNull();
+    expect(screen.getByText('Pinned')).toBeTruthy();
+    expect(getListItem('Support')).toBeTruthy();
+  });
+
+  it('hides the project rows when the Pinned section collapses', () => {
+    renderList({ projects: [makeProject()] });
+
+    fireEvent.click(screen.getByText('Pinned'));
+
+    expect(screen.queryByText('Support')).toBeNull();
+    expect(screen.queryByText('Billing reply')).toBeNull();
+  });
+
+  it('makes no project row draggable and starts no move from one', () => {
+    const { onMoveConversation } = renderList({ projects: [makeProject()] });
+
+    for (const text of ['Support', 'Billing reply', 'See all']) {
+      expect(getListItem(text).getAttribute('draggable')).toBeNull();
+    }
+    fireEvent.dragStart(getListItem('Billing reply'));
+    fireEvent.drop(getListItem('Pinned chat'));
+    fireEvent.drop(getListItem('Support'));
+
+    expect(onMoveConversation).not.toHaveBeenCalled();
+  });
+
+  it('indents nested rows and draws the guide line with logical classes only', () => {
+    renderList({ projects: [makeProject()] });
+
+    const first = getListItem('Weekly summary');
+    const seeAll = getListItem('See all');
+    expect(first.className).toContain('ps-7');
+    expect(first.className).toMatch(/guideLine/);
+    expect(first.className).toMatch(/guideLineFirst/);
+    expect(seeAll.className).toMatch(/guideLineLast/);
+    for (const row of [first, getListItem('Billing reply'), seeAll]) {
+      expect(row.className).not.toMatch(/\b(pl|pr|ml|mr|left|right)-/);
+    }
+  });
+
+  it('renders the same rows as before without pinned projects', () => {
+    render(
+      <ConversationList
+        {...BASE_PROPS}
+        conversations={items}
+        rowVariant={ConversationRowVariant.Indicator}
+      />,
+    );
+
+    expect(
+      screen
+        .getAllByRole('listitem')
+        .filter((item) => item.hasAttribute('aria-level')),
+    ).toHaveLength(0);
+    expect(screen.queryByText('See all')).toBeNull();
+    expect(screen.getAllByRole('listitem')).toHaveLength(10);
   });
 });

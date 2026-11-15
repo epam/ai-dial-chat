@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   INestApplication,
   NotFoundException,
   ServiceUnavailableException,
@@ -10,6 +11,11 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  ResourceIdentityKind,
+  ResourceIdentityTab,
+  buildResourceNameConflict,
+} from '../../common/utils/resource-identity';
 import { ApplicationsController } from '../applications.controller';
 import { ApplicationsService } from '../applications.service';
 import type { ApplicationsResponseDto } from '../dto/application.dto';
@@ -69,6 +75,10 @@ describe('ApplicationsController (integration)', () => {
     createApplication: ReturnType<typeof vi.fn>;
     updateApplication: ReturnType<typeof vi.fn>;
     deleteApplication: ReturnType<typeof vi.fn>;
+    listApplicationFolders: ReturnType<typeof vi.fn>;
+    moveApplication: ReturnType<typeof vi.fn>;
+    forkApplicationVersion: ReturnType<typeof vi.fn>;
+    commitApplicationVersion: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -77,6 +87,18 @@ describe('ApplicationsController (integration)', () => {
       createApplication: vi.fn().mockResolvedValue(createdApp),
       updateApplication: vi.fn().mockResolvedValue(updatedApp),
       deleteApplication: vi.fn().mockResolvedValue(undefined),
+      listApplicationFolders: vi
+        .fn()
+        .mockResolvedValue({ folders: [{ name: 'Design', path: 'Design' }] }),
+      moveApplication: vi
+        .fn()
+        .mockResolvedValue({ id: 'applications/b1/Design/agent__1.0.0' }),
+      forkApplicationVersion: vi
+        .fn()
+        .mockResolvedValue({ id: 'applications/b1/agent__1.1.0' }),
+      commitApplicationVersion: vi
+        .fn()
+        .mockResolvedValue({ id: 'applications/b1/agent__1.1.0' }),
     };
     app = await buildApp(service);
   });
@@ -215,6 +237,26 @@ describe('ApplicationsController (integration)', () => {
         .expect(409);
     });
 
+    it('returns 409 with the name-taken code when the service rejects a duplicate identity', async () => {
+      service.createApplication.mockRejectedValue(
+        buildResourceNameConflict(
+          {
+            id: 'applications/b/my__1.0.0',
+            kind: ResourceIdentityKind.Application,
+          },
+          [ResourceIdentityTab.Agents],
+        ),
+      );
+      const response = await request(app.getHttpServer())
+        .post('/api/v1/applications')
+        .send({ ...validBody, createOnly: true })
+        .expect(409);
+      expect(response.body).toMatchObject({
+        statusCode: 409,
+        code: 'name-taken-agent',
+      });
+    });
+
     it('returns 503 when service throws ServiceUnavailableException', async () => {
       service.createApplication.mockRejectedValue(
         new ServiceUnavailableException(),
@@ -242,6 +284,23 @@ describe('ApplicationsController (integration)', () => {
         'my-app',
         validBody,
       );
+    });
+
+    it('returns 409 with the name-taken code when a rename takes another identity', async () => {
+      service.updateApplication.mockRejectedValue(
+        buildResourceNameConflict(
+          {
+            id: 'applications/b/my__1.0.0',
+            kind: ResourceIdentityKind.Application,
+          },
+          [ResourceIdentityTab.Agents],
+        ),
+      );
+      const res = await request(app.getHttpServer())
+        .patch('/api/v1/applications/my-app')
+        .send(validBody)
+        .expect(409);
+      expect(res.body).toMatchObject({ code: 'name-taken-agent' });
     });
 
     it('forwards an empty iconUrl to the service as an explicit clear', async () => {
@@ -387,6 +446,186 @@ describe('ApplicationsController (integration)', () => {
       await request(app.getHttpServer())
         .delete('/api/v1/applications/my-app')
         .expect(503);
+    });
+  });
+
+  describe('GET /api/v1/applications/folders', () => {
+    it('returns the folders under the requested path', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/applications/folders')
+        .query({ path: 'Design' })
+        .expect(200);
+      expect(res.body).toEqual({
+        folders: [{ name: 'Design', path: 'Design' }],
+      });
+      expect(service.listApplicationFolders).toHaveBeenCalledWith(
+        TEST_USER.at,
+        'Design',
+      );
+    });
+
+    it('lists the root when path is omitted', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/applications/folders')
+        .expect(200);
+      expect(service.listApplicationFolders).toHaveBeenCalledWith(
+        TEST_USER.at,
+        '',
+      );
+    });
+
+    it('returns 400 for a traversal path without calling the service', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/applications/folders')
+        .query({ path: '../other' })
+        .expect(400);
+      expect(service.listApplicationFolders).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('POST /api/v1/applications/:applicationName/move', () => {
+    it('returns 200 with the new id', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/applications/applications%2Fb1%2Fagent__1.0.0/move')
+        .send({ folderPath: 'Design' })
+        .expect(200);
+      expect(res.body).toEqual({ id: 'applications/b1/Design/agent__1.0.0' });
+      expect(service.moveApplication).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        'applications/b1/agent__1.0.0',
+        'Design',
+      );
+    });
+
+    it.each(['../escape', 'trailing/', 'a//b'])(
+      'returns 400 for the folder path %j',
+      async (folderPath) => {
+        await request(app.getHttpServer())
+          .post('/api/v1/applications/my-app/move')
+          .send({ folderPath })
+          .expect(400);
+        expect(service.moveApplication).not.toHaveBeenCalled();
+      },
+    );
+
+    it('returns 409 when the target exists', async () => {
+      service.moveApplication.mockRejectedValue(new ConflictException());
+      await request(app.getHttpServer())
+        .post('/api/v1/applications/my-app/move')
+        .send({ folderPath: 'Design' })
+        .expect(409);
+    });
+
+    it('returns 409 with the name-taken code when the folder holds the same identity', async () => {
+      service.moveApplication.mockRejectedValue(
+        buildResourceNameConflict(
+          {
+            id: 'applications/b/my__1.0.0',
+            kind: ResourceIdentityKind.Application,
+          },
+          [ResourceIdentityTab.Agents],
+        ),
+      );
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/applications/my-app/move')
+        .send({ folderPath: 'Design' })
+        .expect(409);
+      expect(res.body).toMatchObject({ code: 'name-taken-agent' });
+    });
+
+    it('returns 403 when the application belongs to another user', async () => {
+      service.moveApplication.mockRejectedValue(new ForbiddenException());
+      await request(app.getHttpServer())
+        .post('/api/v1/applications/my-app/move')
+        .send({ folderPath: '' })
+        .expect(403);
+    });
+  });
+
+  describe('POST /api/v1/applications/:applicationName/versions', () => {
+    it('returns 201 with the snapshot id', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/applications/my-app/versions')
+        .send({ version: '1.1.0', folderPath: '' })
+        .expect(201);
+      expect(res.body).toEqual({ id: 'applications/b1/agent__1.1.0' });
+      expect(service.forkApplicationVersion).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        'my-app',
+        { version: '1.1.0', folderPath: '' },
+      );
+    });
+
+    it('returns 400 for a version with forbidden characters', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/applications/my-app/versions')
+        .send({ version: '1.1/../x', folderPath: '' })
+        .expect(400);
+      expect(service.forkApplicationVersion).not.toHaveBeenCalled();
+    });
+
+    it('returns 409 when the version exists', async () => {
+      service.forkApplicationVersion.mockRejectedValue(new ConflictException());
+      await request(app.getHttpServer())
+        .post('/api/v1/applications/my-app/versions')
+        .send({ version: '1.1.0', folderPath: '' })
+        .expect(409);
+    });
+
+    it('returns 409 with the name-taken code when the version is taken by another entity', async () => {
+      service.forkApplicationVersion.mockRejectedValue(
+        buildResourceNameConflict(
+          {
+            id: 'applications/b/my__1.0.0',
+            kind: ResourceIdentityKind.Application,
+          },
+          [ResourceIdentityTab.Agents],
+        ),
+      );
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/applications/my-app/versions')
+        .send({ version: '1.1.0', folderPath: '' })
+        .expect(409);
+      expect(res.body).toMatchObject({ code: 'name-taken-agent' });
+    });
+  });
+
+  describe('POST /api/v1/applications/:applicationName/versions/commit', () => {
+    it('returns 200 with the new version id', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/applications/my-app/versions/commit')
+        .send({ snapshotId: 'applications/b1/agent__1.1.0' })
+        .expect(200);
+      expect(res.body).toEqual({ id: 'applications/b1/agent__1.1.0' });
+      expect(service.commitApplicationVersion).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        'my-app',
+        { snapshotId: 'applications/b1/agent__1.1.0' },
+      );
+    });
+
+    it.each(['toolsets/b1/x', 'applications/b1/../x', ''])(
+      'returns 400 for the snapshot id %j',
+      async (snapshotId) => {
+        await request(app.getHttpServer())
+          .post('/api/v1/applications/my-app/versions/commit')
+          .send({ snapshotId })
+          .expect(400);
+        expect(service.commitApplicationVersion).not.toHaveBeenCalled();
+      },
+    );
+
+    it('returns 409 when a resource changed during commit', async () => {
+      service.commitApplicationVersion.mockRejectedValue(
+        new ConflictException(),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/applications/my-app/versions/commit')
+        .send({ snapshotId: 'applications/b1/agent__1.1.0' })
+        .expect(409);
     });
   });
 });

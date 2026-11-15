@@ -5,6 +5,7 @@ import {
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
+import { BuilderFormActionsOrder } from '../../models/builder-form-actions-order';
 import type { BuilderFormActionsProps } from '../../models/builder-form-actions-props';
 
 /** The form's cancel/submit action pair — in the header on desktop, in the mobile sticky footer. */
@@ -16,37 +17,46 @@ export const BuilderFormActions: FC<BuilderFormActionsProps> = ({
   isSubmitDisabled = false,
   isSubmitting = false,
   buttonClassName,
-}) => (
-  <>
+  order = BuilderFormActionsOrder.CancelFirst,
+}) => {
+  const cancelButton = (
     <NeutralButton
       label={labels.cancelButtonLabel}
       onClick={onCancel}
       disabled={isCancelDisabled}
       className={buttonClassName}
     />
-    {/*
-     * The submit button is disabled both while a submit is in flight and
-     * while the form is simply incomplete, so `disabled` alone cannot tell
-     * the two apart. The spinner, `aria-busy` and the live region rendered
-     * by the header are what distinguish "working" from "not ready yet".
-     *
-     * The spinner is hidden from assistive tech so the button keeps
-     * `submitButtonLabel` as its accessible name — a name that changed
-     * mid-submit would be read as a different control.
-     */}
-    <PrimaryButton
-      label={labels.submitButtonLabel}
-      onClick={onSubmit}
-      disabled={isSubmitDisabled}
-      aria-busy={isSubmitting}
-      className={buttonClassName}
-      iconBefore={
-        isSubmitting ? (
-          <span aria-hidden>
-            <Spinner size={DIAL_ICON_SIZE.SM} />
-          </span>
-        ) : undefined
-      }
-    />
-  </>
-);
+  );
+
+  /* The DOM order is the tab order, so the pair is swapped here rather than reordered with CSS. */
+  return (
+    <>
+      {order === BuilderFormActionsOrder.CancelFirst && cancelButton}
+      {/*
+       * The submit button is disabled both while a submit is in flight and
+       * while the form is simply incomplete, so `disabled` alone cannot tell
+       * the two apart. The spinner, `aria-busy` and the live region rendered
+       * by the header are what distinguish "working" from "not ready yet".
+       *
+       * The spinner is hidden from assistive tech so the button keeps
+       * `submitButtonLabel` as its accessible name — a name that changed
+       * mid-submit would be read as a different control.
+       */}
+      <PrimaryButton
+        label={labels.submitButtonLabel}
+        onClick={onSubmit}
+        disabled={isSubmitDisabled}
+        aria-busy={isSubmitting}
+        className={buttonClassName}
+        iconBefore={
+          isSubmitting ? (
+            <span aria-hidden>
+              <Spinner size={DIAL_ICON_SIZE.SM} />
+            </span>
+          ) : undefined
+        }
+      />
+      {order === BuilderFormActionsOrder.SubmitFirst && cancelButton}
+    </>
+  );
+};

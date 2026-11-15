@@ -91,6 +91,32 @@ describe('ModelSelectorControl — mobile', () => {
   });
 });
 
+describe('ModelSelectorControl — desktop modelPickerOverlay', () => {
+  it('renders the host overlay in a named dialog rather than a menu', async () => {
+    const user = userEvent.setup({ delay: null });
+
+    render(
+      <ModelSelectorControl
+        deployments={makeDeployments()}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={vi.fn()}
+        modelSelectorLabels={{ ariaLabel: 'Select model' }}
+        isStreaming={false}
+        isMobile={false}
+        style={{}}
+        modelPickerOverlay={() => <input aria-label="Search models" />}
+      />,
+    );
+
+    const trigger = screen.getByRole('button', { name: /Select model/ });
+    await user.click(trigger);
+
+    const dialog = await screen.findByRole('dialog', { name: 'Select model' });
+    expect(dialog.contains(screen.getByLabelText('Search models'))).toBe(true);
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+});
+
 describe('ModelSelectorControl — streaming', () => {
   const renderControl = (
     overrides: Partial<{ isStreaming: boolean; isMobile: boolean }> = {},

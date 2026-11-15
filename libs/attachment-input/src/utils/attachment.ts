@@ -3,6 +3,7 @@ import {
   AttachmentType,
   getBaseMimeType,
   MIME_TYPE_EXT_MAP,
+  MIMEType,
   normalizeMimeType,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
@@ -131,89 +132,67 @@ export const isMimeTypeAllowed = (
   });
 };
 
+/*
+ * Built on first use rather than at module load: hosts' tests mock
+ * `@tabler/icons-react` with only the icons they render, and a module-level
+ * table would read every glyph on import.
+ */
+const createImageTypeIcons = (): Partial<Record<string, Icon>> => ({
+  [MIMEType.JPEG]: IconFileTypeJpg,
+  [MIMEType.PNG]: IconFileTypePng,
+  [MIMEType.SVG]: IconFileTypeSvg,
+  [MIMEType.BMP]: IconFileTypeBmp,
+});
+
+const createMimeTypeIcons = (): Partial<Record<string, Icon>> => ({
+  // Documents
+  [MIMEType.PDF]: IconFileTypePdf,
+  [MIMEType.DOC]: IconFileTypeDoc,
+  [MIMEType.DOCX]: IconFileTypeDocx,
+  [MIMEType.PPT]: IconFileTypePpt,
+  [MIMEType.PPTX]: IconFileTypePpt,
+  [MIMEType.XLS]: IconFileTypeXls,
+  [MIMEType.XLSX]: IconFileTypeXls,
+  // Archives
+  [MIMEType.ZIP]: IconFileTypeZip,
+  [MIMEType.RAR]: IconFileTypeZip,
+  [MIMEType.SevenZip]: IconFileTypeZip,
+  [MIMEType.GZIP]: IconFileTypeZip,
+  [MIMEType.TAR]: IconFileTypeZip,
+  // Data / markup
+  [MIMEType.CSV]: IconFileTypeCsv,
+  [MIMEType.Plain]: IconFileTypeTxt,
+  [MIMEType.HTML]: IconFileTypeHtml,
+  [MIMEType.XHTML]: IconFileTypeHtml,
+  [MIMEType.XML]: IconFileTypeXml,
+  [MIMEType.SQL]: IconFileTypeSql,
+  // Web / code
+  [MIMEType.JavaScript]: IconFileTypeJs,
+  [MIMEType.JSX]: IconFileTypeJsx,
+  [MIMEType.TypeScript]: IconFileTypeTs,
+  [MIMEType.TSX]: IconFileTypeTsx,
+  [MIMEType.CSS]: IconFileTypeCss,
+  [MIMEType.PHP]: IconFileTypePhp,
+  [MIMEType.Rust]: IconFileTypeRs,
+  [MIMEType.Vue]: IconFileTypeVue,
+});
+
+let imageTypeIcons: Partial<Record<string, Icon>> | undefined;
+let mimeTypeIcons: Partial<Record<string, Icon>> | undefined;
+
 /** Returns the Tabler icon component for a given MIME content type, or `IconFile` for unknown types. Aliases resolve to their canonical type first. */
 export const getAttachmentIcon = (rawContentType: string): Icon => {
   if (!rawContentType) return IconFile;
   const contentType = normalizeMimeType(rawContentType);
   // Broad category checks first
   if (contentType.startsWith('image/')) {
-    switch (contentType) {
-      case 'image/jpeg':
-        return IconFileTypeJpg;
-      case 'image/png':
-        return IconFileTypePng;
-      case 'image/svg+xml':
-        return IconFileTypeSvg;
-      case 'image/bmp':
-        return IconFileTypeBmp;
-      default:
-        return IconPhoto;
-    }
+    imageTypeIcons ??= createImageTypeIcons();
+    return imageTypeIcons[contentType] ?? IconPhoto;
   }
-
   if (contentType.startsWith('video/')) return IconVideo;
   if (contentType.startsWith('audio/')) return IconMusic;
-
-  // Specific MIME type switch
-  switch (contentType) {
-    // Documents
-    case 'application/pdf':
-      return IconFileTypePdf;
-    case 'application/msword':
-      return IconFileTypeDoc;
-    case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-      return IconFileTypeDocx;
-    case 'application/vnd.ms-powerpoint':
-      return IconFileTypePpt;
-    case 'application/vnd.openxmlformats-officedocument.presentationml.presentation':
-      return IconFileTypePpt;
-    case 'application/vnd.ms-excel':
-      return IconFileTypeXls;
-    case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-      return IconFileTypeXls;
-
-    // Archives
-    case 'application/zip':
-    case 'application/vnd.rar':
-    case 'application/x-7z-compressed':
-    case 'application/gzip':
-    case 'application/x-tar':
-      return IconFileTypeZip;
-
-    // Data / markup
-    case 'text/csv':
-      return IconFileTypeCsv;
-    case 'text/plain':
-      return IconFileTypeTxt;
-    case 'text/html':
-    case 'application/xhtml+xml':
-      return IconFileTypeHtml;
-    case 'application/xml':
-      return IconFileTypeXml;
-    case 'application/sql':
-      return IconFileTypeSql;
-
-    // Web / code
-    case 'text/javascript':
-      return IconFileTypeJs;
-    case 'text/jsx':
-      return IconFileTypeJsx;
-    case 'text/typescript':
-      return IconFileTypeTs;
-    case 'text/tsx':
-      return IconFileTypeTsx;
-    case 'text/css':
-      return IconFileTypeCss;
-    case 'text/x-php':
-      return IconFileTypePhp;
-    case 'text/x-rustsrc':
-      return IconFileTypeRs;
-    case 'text/x-vue':
-      return IconFileTypeVue;
-
-    default:
-      return IconFile;
-  }
+  mimeTypeIcons ??= createMimeTypeIcons();
+  return mimeTypeIcons[contentType] ?? IconFile;
 };
 
 const getBottomIcon = (attachment: DisplayAttachment): Icon => {

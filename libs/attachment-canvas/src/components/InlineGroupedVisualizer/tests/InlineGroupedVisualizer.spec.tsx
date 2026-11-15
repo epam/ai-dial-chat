@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GroupedVisualizerCanvasContent } from '../../../models/attachment-canvas';
@@ -171,10 +171,12 @@ describe('InlineGroupedVisualizer', () => {
 
     renderComponent({ errorLabel: 'Failed to load visualizer' });
 
-    expect(
-      (await screen.findByText('Failed to load visualizer')).getAttribute(
-        'role',
-      ),
-    ).toBe('status');
+    await waitFor(() =>
+      expect(
+        screen
+          .getAllByRole('status')
+          .some((region) => region.textContent === 'Failed to load visualizer'),
+      ).toBe(true),
+    );
   });
 });

@@ -1,5 +1,6 @@
 import type {
   PublishConversationResultDto,
+  ResourceDependenciesResultDto,
   UnpublishConversationResultDto,
 } from '@epam/ai-dial-chat-api-client';
 import { toPublishRuleDto } from '@epam/ai-dial-chat-hooks';
@@ -48,3 +49,13 @@ export const getConversationPublishHistory = (
   path: string,
 ): Promise<PublishConversationResultDto[]> =>
   conversationsApi.getConversationPublishHistory({ path });
+
+/**
+ * Reads the resources a conversation refers to that are not in the public
+ * bucket. Advisory: the backend answers an empty list when it cannot resolve
+ * them, so a publisher is never blocked by this lookup.
+ */
+export const getConversationPublishDependencies = (
+  path: string,
+): Promise<ResourceDependenciesResultDto> =>
+  conversationsApi.getConversationPublishDependencies({ path });

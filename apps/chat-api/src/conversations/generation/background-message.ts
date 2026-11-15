@@ -10,16 +10,22 @@ import {
   ConversationMessageRole,
   type ConversationMessageDto,
 } from '../dto/conversation-message.dto';
+import {
+  findActiveGeneration,
+  findLiveForegroundMessage,
+  neutralizeForegroundMarkers,
+} from './foreground-generation';
 
 /**
- * Message fields only the backend may write while a background generation owns the
- * message. Every other field (for example `rating`) is client-owned.
+ * Message fields only the backend may write while a generation owns the message. Every
+ * other field (for example `rating`) is client-owned.
  */
 export const SERVER_OWNED_MESSAGE_FIELDS = [
   'content',
   'custom_content',
   'responseId',
   'backgroundGeneration',
+  'foregroundGeneration',
   'streamErrorMessage',
   'wasStoppedByUser',
 ] as const;
@@ -198,8 +204,9 @@ export const updatePendingBackgroundMessage = async (params: {
 
 /**
  * Applies `update` with `If-Match` through `updateConversation`. When conflicts persist,
- * reads the latest version once more: one holding a pending background message stays
- * a `Conflict`, because only `If-Match` keeps that message safe; any other one is saved
+ * reads the latest version once more: one holding an active generation (a pending
+ * background message or a live foreground marker) stays a `Conflict`, because only
+ * `If-Match` keeps that message safe; any other one is saved
  * from that read unconditionally, the last-writer-wins save used before fencing.
  * @param persistence - conversation persistence port
  * @param conversationPath - conversation path relative to `bucket`
@@ -231,7 +238,7 @@ export const updateConversationUnlessPending = async (
     token,
     bucket,
   );
-  if (findPendingBackgroundMessage(latest?.conversation)) return result;
+  if (findActiveGeneration(latest?.conversation)) return result;
   const body = update(latest);
   if (!body) return { status: ConditionalUpdateStatus.Skipped };
   return {
@@ -359,5 +366,80 @@ export const mergeClientMessages = (
       );
     }
   }
-  return neutralizeForeignPendingMessages(merged, pendingGenerationId);
+  return mergeForegroundMessages(
+    neutralizeForeignPendingMessages(merged, pendingGenerationId),
+    storedMessages,
+    Date.now(),
+  );
+};
+
+/**
+ * Applies the foreground rules of a client save (`foreground-generation-lock`) to messages
+ * already merged for background messages: a stored live `foregroundGeneration` keeps its
+ * server-owned fields and marker (its copy is the body message with the same id, or the
+ * unmarked assistant message at its position; a body without one gets the stored
+ * messages back through it), a stale copy of a finished foreground answer takes the
+ * stored answer while the body still lines up with storage, and every other marker in
+ * the body is neutralized.
+ * @param merged - body messages after the background merge
+ * @param storedMessages - messages currently in storage
+ * @param now - the reading instance's clock
+ */
+const mergeForegroundMessages = (
+  merged: StoredMessage[],
+  storedMessages: StoredMessage[],
+  now: number,
+): StoredMessage[] => {
+  const result = [...merged];
+  const live = findLiveForegroundMessage({ messages: storedMessages }, now);
+  const liveGenerationId = live?.message.foregroundGeneration?.generationId;
+  const isAligned = (index: number): boolean =>
+    result.length === storedMessages.length &&
+    result[index - 1]?.content === storedMessages[index - 1]?.content;
+  result.forEach((message, index) => {
+    const generationId = message.foregroundGeneration?.generationId;
+    if (generationId == null || generationId === liveGenerationId) return;
+    const stored = storedMessages[index];
+    if (
+      isAligned(index) &&
+      stored?.role === ConversationMessageRole.Assistant &&
+      stored.foregroundGeneration == null &&
+      stored.backgroundGeneration == null
+    ) {
+      result[index] = withServerOwnedFields(
+        message,
+        pickServerOwnedFields(stored),
+      );
+    }
+  });
+  if (live && liveGenerationId) {
+    const storedFields = pickServerOwnedFields(live.message as StoredMessage);
+    const copyIndex = result.findIndex(
+      (message) =>
+        message.foregroundGeneration?.generationId === liveGenerationId,
+    );
+    const atPosition = result[live.index];
+    if (copyIndex !== -1) {
+      result[copyIndex] = withServerOwnedFields(
+        result[copyIndex],
+        storedFields,
+      );
+    } else if (
+      atPosition?.role === ConversationMessageRole.Assistant &&
+      atPosition.backgroundGeneration == null &&
+      atPosition.foregroundGeneration == null
+    ) {
+      result[live.index] = withServerOwnedFields(atPosition, storedFields);
+    } else if (atPosition?.role === ConversationMessageRole.Assistant) {
+      result[live.index] = live.message as StoredMessage;
+    } else {
+      const insertAt = Math.min(live.index, result.length);
+      result.splice(
+        insertAt,
+        0,
+        ...storedMessages.slice(insertAt, live.index + 1),
+      );
+    }
+  }
+  return neutralizeForegroundMarkers(result, liveGenerationId);
 };

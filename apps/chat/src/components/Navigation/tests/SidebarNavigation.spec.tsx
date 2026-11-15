@@ -39,6 +39,7 @@ const viewport = vi.hoisted(() => ({ isMobile: false }));
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useIsMobile: () => viewport.isMobile,
+  useUnsavedChanges: () => useUnsavedChangesMock(),
 }));
 
 /* The shipped locale list is data, not behaviour under test: the app ships
@@ -213,9 +214,6 @@ vi.mock('../../LogoutConfirmation/LogoutConfirmationModal', () => ({
 }));
 
 const useUnsavedChangesMock = vi.fn();
-vi.mock('../../../context/UnsavedChangesContext', () => ({
-  useUnsavedChanges: () => useUnsavedChangesMock(),
-}));
 
 vi.mock('../../../server-api/auth.api', () => ({
   logout: vi.fn(),

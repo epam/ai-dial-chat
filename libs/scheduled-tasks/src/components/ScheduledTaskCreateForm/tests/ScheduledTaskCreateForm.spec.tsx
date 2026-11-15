@@ -186,7 +186,11 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     showTimezone,
     minDate,
     mode,
+    invalid,
+    ariaDescribedBy,
   }: {
+    invalid?: boolean;
+    ariaDescribedBy?: string;
     id?: string;
     labelProps?: { label: ReactNode; required?: boolean };
     value?: Date | string | null;
@@ -214,6 +218,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
           onChange={(e) => onChange(e.target.value || null)}
           onBlur={onBlur}
           disabled={disabled}
+          aria-invalid={invalid || undefined}
+          aria-describedby={ariaDescribedBy}
         />
       </label>
       {mode === 'datetime' && <span>isDateTimeMode</span>}
@@ -358,12 +364,7 @@ const buildFormProps = (
     dayOfWeekLabel: 'Day',
     dayOfMonthLabel: 'Day of month',
     minuteLabel: 'Minute',
-    everyLabel: 'Every',
-    everyWeekOptions: [
-      { value: '1', label: '1 week' },
-      { value: '2', label: '2 weeks' },
-      { value: '3', label: '3 weeks' },
-    ],
+    daysOfWeekLabel: 'Days',
     customDayOptions: [
       { value: '0', shortLabel: 'M', fullName: 'Monday' },
       { value: '1', shortLabel: 'T', fullName: 'Tuesday' },
@@ -729,7 +730,7 @@ describe('ScheduledTaskCreateForm', () => {
       );
     });
 
-    it('clears both boundaries when switching to Custom', async () => {
+    it('keeps both boundaries when switching to Custom', async () => {
       const onFieldChange = vi.fn();
       await renderForm({
         onFieldChange,
@@ -746,15 +747,14 @@ describe('ScheduledTaskCreateForm', () => {
 
       await selectRepeat(ScheduledTaskRepeat.Custom);
 
+      expect(onFieldChange).toHaveBeenCalledOnce();
       expect(onFieldChange).toHaveBeenCalledWith(
         'repeat',
         ScheduledTaskRepeat.Custom,
       );
-      expect(onFieldChange).toHaveBeenCalledWith('startDate', '');
-      expect(onFieldChange).toHaveBeenCalledWith('endDate', '');
     });
 
-    it('clears both boundaries when switching from Custom to a day-based repeat', async () => {
+    it('keeps both boundaries when switching from Custom to a day-based repeat', async () => {
       const onFieldChange = vi.fn();
       await renderForm({
         onFieldChange,
@@ -764,8 +764,7 @@ describe('ScheduledTaskCreateForm', () => {
           modelId: 'gpt-4o',
           prompt: 'Summarize',
           repeat: ScheduledTaskRepeat.Custom,
-          everyWeeks: '2',
-          dayOfWeek: '0',
+          daysOfWeek: ['0'],
           startDate: '2026-09-22',
           endDate: '2026-09-23',
         },
@@ -774,12 +773,11 @@ describe('ScheduledTaskCreateForm', () => {
 
       await selectRepeat(ScheduledTaskRepeat.Daily);
 
+      expect(onFieldChange).toHaveBeenCalledOnce();
       expect(onFieldChange).toHaveBeenCalledWith(
         'repeat',
         ScheduledTaskRepeat.Daily,
       );
-      expect(onFieldChange).toHaveBeenCalledWith('startDate', '');
-      expect(onFieldChange).toHaveBeenCalledWith('endDate', '');
     });
   });
 
@@ -792,93 +790,106 @@ describe('ScheduledTaskCreateForm', () => {
       modelId: 'gpt-4o',
       prompt: 'Summarize',
       repeat: ScheduledTaskRepeat.Custom,
-      everyWeeks: '2',
-      dayOfWeek: '0',
+      daysOfWeek: ['0'],
     };
 
-    it('renders the Every dropdown, Time field, and a labeled day button row in that order', async () => {
+    it('renders the Time field, a labeled day button row and the boundary pickers in that order', async () => {
       await renderForm({ values: customValues });
 
-      expect(screen.getByLabelText('Every')).toBeTruthy();
-      expect(screen.getByText('Day *')).toBeTruthy();
-      expect(screen.getByRole('group', { name: 'Day *' })).toBeTruthy();
+      expect(screen.queryByLabelText('Every')).toBeNull();
+      expect(screen.getByText('Days *')).toBeTruthy();
+      expect(screen.getByRole('group', { name: 'Days *' })).toBeTruthy();
       expect(screen.getByRole('button', { name: 'Monday' })).toBeTruthy();
-      expect(screen.getByLabelText('Time *')).toBeTruthy();
-      expect(screen.queryByLabelText('Start date')).toBeNull();
-      expect(screen.queryByLabelText('End date')).toBeNull();
 
-      /* The day row sits below the Time field. */
+      /* The day row sits below the Time field and above the boundaries. */
       const timeField = screen.getByLabelText('Time *');
-      const dayRow = screen.getByRole('group', { name: 'Day *' });
+      const dayRow = screen.getByRole('group', { name: 'Days *' });
+      const startDate = screen.getByLabelText('Start date');
+      expect(screen.getByLabelText('End date')).toBeTruthy();
       expect(timeField.compareDocumentPosition(dayRow)).toBe(
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+      expect(dayRow.compareDocumentPosition(startDate)).toBe(
         Node.DOCUMENT_POSITION_FOLLOWING,
       );
     });
 
-    it('reports the selected week count through onFieldChange', async () => {
+    it('adds a day in APScheduler convention and keeps the list sorted Monday first', async () => {
       const onFieldChange = vi.fn();
-      await renderForm({ onFieldChange, values: customValues });
+      await renderForm({
+        onFieldChange,
+        values: { ...customValues, daysOfWeek: ['4'] },
+      });
 
-      await user.selectOptions(
-        screen.getByLabelText('Every') as HTMLSelectElement,
-        '3',
-      );
-
-      expect(onFieldChange).toHaveBeenCalledWith('everyWeeks', '3');
-    });
-
-    it('reports the selected day in APScheduler convention and ignores re-selecting it', async () => {
-      const onFieldChange = vi.fn();
-      await renderForm({ onFieldChange, values: customValues });
-
-      const monday = screen.getByRole('button', { name: 'Monday' });
-      expect(monday.getAttribute('aria-pressed')).toBe('true');
+      const friday = screen.getByRole('button', { name: 'Friday' });
+      expect(friday.getAttribute('aria-pressed')).toBe('true');
       /* 40x40px circular: the fixed width plus the round corners. */
-      expect(monday.className).toContain('w-10');
-      expect(monday.className).toContain('rounded-full');
+      expect(friday.className).toContain('w-10');
+      expect(friday.className).toContain('rounded-full');
       expect(
         screen
-          .getByRole('button', { name: 'Wednesday' })
+          .getByRole('button', { name: 'Monday' })
           .getAttribute('aria-pressed'),
       ).toBe('false');
 
-      await user.click(screen.getByRole('button', { name: 'Wednesday' }));
-      expect(onFieldChange).toHaveBeenCalledWith('dayOfWeek', '2');
-
-      onFieldChange.mockClear();
       await user.click(screen.getByRole('button', { name: 'Monday' }));
-      expect(onFieldChange).not.toHaveBeenCalledWith(
-        'dayOfWeek',
-        expect.anything(),
-      );
+
+      expect(onFieldChange).toHaveBeenCalledWith('daysOfWeek', ['0', '4']);
     });
 
-    it('disables Save until the custom day is selected', async () => {
-      const values = { ...customValues, dayOfWeek: undefined };
+    it('removes a selected day but keeps the only selected day', async () => {
+      const onFieldChange = vi.fn();
+      const view = await renderForm({
+        onFieldChange,
+        values: { ...customValues, daysOfWeek: ['0', '2'] },
+      });
+
+      await user.click(screen.getByRole('button', { name: 'Wednesday' }));
+      expect(onFieldChange).toHaveBeenCalledWith('daysOfWeek', ['0']);
+
+      view.rerender(
+        <ScheduledTaskCreateForm
+          {...buildFormProps({ onFieldChange, values: customValues })}
+        />,
+      );
+      onFieldChange.mockClear();
+      await user.click(screen.getByRole('button', { name: 'Monday' }));
+      expect(onFieldChange).not.toHaveBeenCalled();
+    });
+
+    it('disables Save until a custom day is selected', async () => {
+      const values = { ...customValues, daysOfWeek: [] };
       const view = await renderForm({ values });
       expect(getSaveButtons().every((button) => button.disabled)).toBe(true);
 
-      /* A selected day re-enables Save (the host updates values.dayOfWeek). */
+      /* A selected day re-enables Save (the host updates values.daysOfWeek). */
       view.rerender(
         <ScheduledTaskCreateForm
-          {...buildFormProps({ values: { ...values, dayOfWeek: '0' } })}
+          {...buildFormProps({ values: { ...values, daysOfWeek: ['0'] } })}
         />,
       );
       expect(getSaveButtons().every((button) => !button.disabled)).toBe(true);
     });
 
-    it('renders the day-of-week error below the day row', async () => {
+    it('renders the days-of-week error below the day row', async () => {
       await renderForm({
-        values: { ...customValues, dayOfWeek: undefined },
-        errors: { dayOfWeek: 'Day of week is required' },
+        values: { ...customValues, daysOfWeek: [] },
+        errors: { daysOfWeek: 'Select at least one day' },
       });
 
-      const error = screen.getByText('Day of week is required');
+      const error = screen.getByText('Select at least one day');
       expect(
         screen
           .getByRole('button', { name: 'Monday' })
           .getAttribute('aria-describedby'),
       ).toBe(error.id);
+    });
+
+    it('uses only logical direction utilities on the day row', async () => {
+      await renderForm({ values: customValues });
+
+      const dayRow = screen.getByRole('group', { name: 'Days *' });
+      expect(dayRow.className).not.toMatch(/\b(ml|mr|pl|pr|left|right)-/);
     });
   });
 
@@ -906,6 +917,31 @@ describe('ScheduledTaskCreateForm', () => {
     await renderForm();
 
     expect(screen.getByText('Model or Agent *')).toBeTruthy();
+  });
+
+  it('links the time picker to errors.time through ariaDescribedBy', async () => {
+    await renderForm({ errors: { time: 'Enter a valid time' } });
+
+    const error = screen.getByText('Enter a valid time');
+    const input = screen.getByLabelText(/^Time/);
+    expect(input.getAttribute('aria-describedby')).toBe(error.id);
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('links the day-of-week picker to errors.dayOfWeek through ariaDescribedBy', async () => {
+    await renderForm({
+      values: {
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Weekly,
+        dayOfWeek: '0',
+      },
+      errors: { dayOfWeek: 'Choose a day' },
+    });
+
+    const error = screen.getByText('Choose a day');
+    expect(screen.getByLabelText(/^Day/).getAttribute('aria-describedby')).toBe(
+      error.id,
+    );
   });
 
   it('renders errors.modelId below the modelSelector slot', async () => {

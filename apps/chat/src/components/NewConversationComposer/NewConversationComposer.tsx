@@ -50,10 +50,10 @@ import {
   FileDndI18nKeys,
   VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
-import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
@@ -215,6 +215,7 @@ const NewConversationComposer: FC<Props> = ({
     config: { welcomeScreenDescription, maxAttachmentFileSizeBytes },
   } = useAppConfig();
   const isUsageLimitsControlEnabled = useFeatureFlag('usageLimitsControl');
+  const overlay = useOptionalOverlay();
   /* Exactly one usage surface is composed: the dial when the flag is on,
      otherwise the banner above the input. */
   const usageDeploymentId =
@@ -315,7 +316,6 @@ const NewConversationComposer: FC<Props> = ({
     filesApi,
     bucket,
     onNetworkError: handleNetworkUploadError,
-    debounceMs: NETWORK_ERROR_DEBOUNCE_MS,
   });
 
   /*
@@ -532,6 +532,8 @@ const NewConversationComposer: FC<Props> = ({
           </Suspense>
         )}
         <ConversationInput
+          /* Embedded in a host page the host owns the gutters: no extra inline or block padding on mobile. */
+          className={isEmbeddedLayout ? 'px-0 py-0 desktop:p-5' : undefined}
           onSend={handleSend}
           onUploadAttachment={handleUploadAttachment}
           onAttachmentsChange={handleAttachmentsChange}
@@ -644,6 +646,7 @@ const NewConversationComposer: FC<Props> = ({
           canRemoveTools={isRemovableToolsEnabled}
           toolsMenuTitle={toolsMenuTitle}
           toolsChipLabels={toolsChipLabels}
+          isToolChipRowAllowedOnPhone={overlay != null}
           usageLimitsSlot={
             isUsageLimitsControlEnabled ? (
               <UsageLimitsControl deploymentId={usageDeploymentId} />

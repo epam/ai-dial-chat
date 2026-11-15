@@ -18,20 +18,24 @@ import {
 import { List, type ListImperativeAPI } from 'react-window';
 import { CONVERSATION_PANEL_CLASS } from '../../constants/public-class-names';
 import type { ConversationListProps } from '../../models/conversation-list';
+import type { PinnedProjectGroup } from '../../models/pinned-projects';
 import type { RowRendererData, VirtualRow } from '../../models/virtual-row';
 import { ConversationTypeFilter } from '../../types/conversation-kind';
 import { ConversationRowVariant } from '../../types/conversation-row-variant';
 import { VirtualRowKind } from '../../types/virtual-row';
 import {
+  filterPinnedProjects,
   matchesKind,
   matchesSearch,
   matchesTab,
 } from '../../utils/conversation-filter';
 import {
+  buildProjectRows,
   getConversationIdsInRange,
   getOverscanCount,
   getRowHeight,
   getSkeletonWidth,
+  isProjectExpanded,
   isSameIdSequence,
   SKELETON_ROW_COUNT,
 } from '../../utils/conversation-row';
@@ -48,6 +52,8 @@ const ALL_GROUP_KEYS = new Set<string>([
   FilterTab.Shared,
   FilterTab.Organization,
 ]);
+
+const NO_PROJECTS: PinnedProjectGroup[] = [];
 
 /** Virtualized, grouped, collapsible list of conversations without any panel chrome. */
 export const ConversationList: FC<ConversationListProps> = memo(
@@ -68,6 +74,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
     onActionMenuOpen,
     onMoveConversation,
     onVisibleConversationIdsChange,
+    pinnedProjects,
     styles,
     id,
     className,
@@ -85,7 +92,22 @@ export const ConversationList: FC<ConversationListProps> = memo(
       groupLabels,
       actionsLabel,
       unreadIndicatorLabel,
+      seeAllLabel,
+      seeAllAriaLabel,
+      expandProjectLabel,
+      collapseProjectLabel,
     } = labels;
+    const {
+      projects: pinnedProjectGroups,
+      onSelectProject,
+      onSelectConversation: onSelectPinnedProjectConversation,
+      onSeeAll,
+      onToggleProject,
+      getActions: getProjectActions,
+      onActionMenuOpen: onProjectActionMenuOpen,
+      activeProjectId,
+      conversationRowVariant: projectConversationVariant,
+    } = pinnedProjects ?? {};
 
     /*
      * Dropped before any tab/search filtering so a hidden source never
@@ -206,6 +228,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
       '--cp-skeleton-color': colors?.skeletonColor,
       '--cp-unread-dot': colors?.unreadDot,
       '--cp-indicator-dot': colors?.indicatorDot,
+      '--cp-project-guide-line': colors?.projectGuideLine,
       '--cp-list-font-family': typography?.fontFamily,
     });
 
@@ -278,6 +301,53 @@ export const ConversationList: FC<ConversationListProps> = memo(
       ],
     );
 
+    const visibleProjects = useMemo(
+      () =>
+        pinnedProjectGroups
+          ? filterPinnedProjects(pinnedProjectGroups, {
+              searchQuery,
+              activeFilter,
+              activeTypeFilter,
+              hiddenSources,
+            })
+          : NO_PROJECTS,
+      [
+        pinnedProjectGroups,
+        searchQuery,
+        activeFilter,
+        activeTypeFilter,
+        hiddenSources,
+      ],
+    );
+
+    const projectIdByConversationId = useMemo(() => {
+      const ids = new Map<string, string>();
+      for (const project of visibleProjects) {
+        for (const item of project.conversations) ids.set(item.id, project.id);
+      }
+      return ids;
+    }, [visibleProjects]);
+
+    const handleSelectProject = useCallback(
+      (projectId: string) => onSelectProject?.(projectId),
+      [onSelectProject],
+    );
+
+    const handleSelectProjectConversation = useCallback(
+      (conversationId: string) => {
+        const projectId = projectIdByConversationId.get(conversationId);
+        if (projectId != null) {
+          onSelectPinnedProjectConversation?.(conversationId, projectId);
+        }
+      },
+      [projectIdByConversationId, onSelectPinnedProjectConversation],
+    );
+
+    const handleSeeAll = useCallback(
+      (projectId: string) => onSeeAll?.(projectId),
+      [onSeeAll],
+    );
+
     const pinnedItems = useMemo(
       () => filteredItems.filter((item) => item.isPinned),
       [filteredItems],
@@ -339,39 +409,54 @@ export const ConversationList: FC<ConversationListProps> = memo(
     const virtualRows = useMemo(() => {
       const rows: VirtualRow[] = [];
       for (const group of groups) {
-        if (group.items.length === 0) continue;
+        /* Project trees open the Pinned section, before its conversations. */
+        const groupProjects =
+          group.key === FilterTab.Pinned ? visibleProjects : NO_PROJECTS;
+        if (group.items.length === 0 && groupProjects.length === 0) continue;
         rows.push({
           kind: VirtualRowKind.Header,
           groupKey: group.key,
           label: group.label,
         });
         if (expandedGroups.has(group.key)) {
+          for (const project of groupProjects) {
+            rows.push(
+              ...buildProjectRows(
+                project,
+                isProjectExpanded(project, searchQuery),
+              ),
+            );
+          }
           for (const item of group.items) {
             rows.push({ kind: VirtualRowKind.Item, item, groupKey: group.key });
           }
         }
       }
       return rows;
-    }, [groups, expandedGroups]);
+    }, [groups, visibleProjects, expandedGroups, searchQuery]);
 
     useEffect(() => {
       if (!activeConversationId) return;
 
-      if (lastScrolledIdRef.current === activeConversationId) return;
-
       const index = virtualRows.findIndex(
         (row) =>
-          row.kind === VirtualRowKind.Item &&
+          (row.kind === VirtualRowKind.Item ||
+            row.kind === VirtualRowKind.ProjectConversation) &&
           row.item.id === activeConversationId,
       );
-      if (index >= 0) {
-        listRef.current?.scrollToRow({
-          index,
-          align: 'smart',
-          behavior: 'smooth',
-        });
-        lastScrolledIdRef.current = activeConversationId;
+      if (index < 0) {
+        /* The row is hidden (its project is collapsed, or a search filters it out); forget it so showing it again scrolls to it. */
+        lastScrolledIdRef.current = null;
+        return;
       }
+      if (lastScrolledIdRef.current === activeConversationId) return;
+
+      listRef.current?.scrollToRow({
+        index,
+        align: 'smart',
+        behavior: 'smooth',
+      });
+      lastScrolledIdRef.current = activeConversationId;
     }, [activeConversationId, groups, expandedGroups, virtualRows]);
 
     /* Read at drag time so `onDragStart` keeps its identity across list
@@ -398,7 +483,19 @@ export const ConversationList: FC<ConversationListProps> = memo(
         onActionMenuOpen,
         actionsLabel,
         unreadIndicatorLabel,
+        activeProjectId,
+        onSelectProject: handleSelectProject,
+        onSelectProjectConversation: handleSelectProjectConversation,
+        onSeeAll: handleSeeAll,
+        onToggleProject,
+        getProjectActions,
+        onProjectActionMenuOpen,
+        seeAllLabel,
+        seeAllAriaLabel,
+        expandProjectLabel,
+        collapseProjectLabel,
         rowVariant,
+        projectConversationVariant,
         styles: {
           groupHeaderClassName: typography?.groupHeaderClassName,
           itemTitleClassName: typography?.itemTitleClassName,
@@ -426,7 +523,19 @@ export const ConversationList: FC<ConversationListProps> = memo(
         onActionMenuOpen,
         actionsLabel,
         unreadIndicatorLabel,
+        activeProjectId,
+        handleSelectProject,
+        handleSelectProjectConversation,
+        handleSeeAll,
+        onToggleProject,
+        getProjectActions,
+        onProjectActionMenuOpen,
+        seeAllLabel,
+        seeAllAriaLabel,
+        expandProjectLabel,
+        collapseProjectLabel,
         rowVariant,
+        projectConversationVariant,
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,
         typography?.unreadItemTitleClassName,
@@ -448,7 +557,9 @@ export const ConversationList: FC<ConversationListProps> = memo(
       searchQuery !== '' ||
       activeFilter !== FilterTab.All ||
       activeTypeFilter !== ConversationTypeFilter.All;
-    const isListEmpty = filteredItems.length === 0;
+    /* A list whose only rows are project trees is not empty. */
+    const isListEmpty =
+      filteredItems.length === 0 && visibleProjects.length === 0;
     const isNoResults = isListEmpty && isNarrowed;
     const isEmpty = isListEmpty && !isNarrowed;
     /* A tab that alone narrows the list has no query to rephrase: the host can

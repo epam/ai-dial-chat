@@ -5,6 +5,7 @@ export type { LottieSceneProps } from '../components/LottieScene/LottieScene';
 export { StaticTriggerDecoration } from '../components/StaticTriggerDecoration/StaticTriggerDecoration';
 export type { StaticTriggerDecorationProps } from '../components/StaticTriggerDecoration/StaticTriggerDecoration';
 export {
+  addCelebrationScenes,
   createCelebrationEventFromDescriptor,
   createCelebrationSceneFromDescriptor,
   replaceCelebrationScenes,

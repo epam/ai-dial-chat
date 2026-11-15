@@ -7,6 +7,7 @@
  *   node .claude/skills/ui-kit-review/scan-diff.mjs              # working tree vs HEAD
  *   node .claude/skills/ui-kit-review/scan-diff.mjs --base origin/development
  *   node .claude/skills/ui-kit-review/scan-diff.mjs --pr 1234    # needs `gh`
+ *   node .claude/skills/ui-kit-review/scan-diff.mjs --all        # every tracked file at HEAD
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
@@ -22,6 +23,11 @@ const LEGACY_ALLOWLIST = new Set([
   'DialPagination',
   'DialFileName',
   'DialInputPopup',
+  /* File-manager data types. */
+  'DialCopiedItem',
+  'DialDeletedItem',
+  'DialUploadFileItem',
+  'DialFilePermission',
 ]);
 
 /* Files whose custom typography is an accepted exception: the 404 hero numeral
@@ -44,9 +50,15 @@ const SIGNALS = [
        multi-line import list. */
     re: /(?:^|[\s({])<(Dial[A-Z]\w*)[\s/>]|^\s*(Dial[A-Z]\w*),?\s*$/,
     hint: '1.0 kit component — confirm a 2.0 replacement via MCP (searchEntity shows "Use instead")',
-    skip: (line, match) =>
-      LEGACY_ALLOWLIST.has(match[1] ?? match[2]) ||
-      /DialFileManager|DialFoldersTree/.test(line),
+    /* Generated API DTOs (`DialToolsetDto`) are not 1.0 components. */
+    skip: (line, match) => {
+      const name = match[1] ?? match[2];
+      return (
+        LEGACY_ALLOWLIST.has(name) ||
+        /Dto$/.test(name) ||
+        /DialFileManager|DialFoldersTree/.test(line)
+      );
+    },
   },
   {
     id: 'error-text-markup',
@@ -96,7 +108,10 @@ const SIGNALS = [
   {
     id: 'hand-rolled-popover',
     scope: SOURCE,
-    re: /addEventListener\(\s*['"](pointerdown|mousedown|keydown)['"]|getBoundingClientRect\(/,
+    /* Document/window listeners only: `getBoundingClientRect` is nearly always
+       measurement (virtualization, scroll, celebration animation) and buried
+       every real hit in a whole-repo audit. */
+    re: /(?:document|window)\.addEventListener\(\s*['"](pointerdown|mousedown|keydown)['"]/,
     hint: 'outside-click / Escape / manual positioning — Dropdown (renderOverlay), Popup, InteractiveTooltip',
   },
   {
@@ -179,16 +194,30 @@ const readKitTypography = () => {
 };
 
 const parseArgs = (argv) => {
-  const args = { base: null, pr: null };
+  const args = { base: null, pr: null, all: false };
   for (let i = 0; i < argv.length; i += 1) {
     if (argv[i] === '--base') args.base = argv[(i += 1)];
     else if (argv[i] === '--pr') args.pr = argv[(i += 1)];
+    else if (argv[i] === '--all') args.all = true;
   }
   return args;
 };
 
-const readDiff = ({ base, pr }) => {
-  const options = { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 };
+const readDiff = ({ base, pr, all }) => {
+  const options = { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 };
+  if (all) {
+    /* HEAD against the empty tree reports every tracked line as added. */
+    const emptyTree = execFileSync(
+      'git',
+      ['hash-object', '-t', 'tree', '--stdin'],
+      { ...options, input: '' },
+    ).trim();
+    return execFileSync(
+      'git',
+      ['diff', '--unified=0', emptyTree, 'HEAD'],
+      options,
+    );
+  }
   if (pr) {
     return execFileSync('gh', ['pr', 'diff', pr], options);
   }
@@ -281,6 +310,33 @@ const scan = (diff, typography) => {
           match[1] ? `${entry}  [${match[1]}]` : entry,
         );
       }
+    }
+
+    const nearby = (from, to) =>
+      lines
+        .slice(Math.max(0, index + from), index + to)
+        .filter((other) => other.path === path)
+        .map((other) => other.text)
+        .join('\n');
+
+    if (/\brenderOverlay=/.test(text) && !/overlayRole=/.test(nearby(-25, 5))) {
+      add(
+        'dropdown-overlay-role',
+        'renderOverlay without overlayRole — the overlay is role="menu"; set DropdownOverlayRole.Dialog (+ overlayAriaLabel) or None unless it holds only menu items',
+        entry,
+      );
+    }
+
+    if (
+      /<Spinner\b/.test(text) &&
+      !/ariaLabel=|aria-hidden/.test(jsxTagText(lines, index)) &&
+      !/aria-hidden/.test(nearby(-2, 0))
+    ) {
+      add(
+        'spinner-name',
+        'Spinner without ariaLabel announces English "Loading" — pass ariaLabel from a *Labels prop, or wrap it in <span aria-hidden> inside an already named element',
+        entry,
+      );
     }
 
     if (

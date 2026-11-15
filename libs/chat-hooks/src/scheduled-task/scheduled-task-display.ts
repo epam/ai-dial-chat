@@ -26,10 +26,8 @@ export interface ScheduledTaskScheduleLabels {
   hourlyAt: (minute: string) => string;
   /** A daily run at `time` (`HH:mm`). */
   dailyAt: (time: string) => string;
-  /** A weekly run on the weekday name `day` at `time`. */
+  /** A weekly run on `day` — one weekday name, or several joined as a locale list — at `time`. */
   weeklyAt: (day: string, time: string) => string;
-  /** A run every `count` weeks on the weekday name `day` at `time`. */
-  everyNWeeks: (count: number, day: string, time: string) => string;
   /** A monthly run on day-of-month `day` at `time`. */
   monthlyAt: (day: string, time: string) => string;
   /** Label for a trigger that cannot be read. */
@@ -119,6 +117,12 @@ const formatWeekday = (dayOfWeek: string | undefined, locale?: string) =>
     new Date(Date.UTC(2023, 0, 2 + Number(dayOfWeek))),
   );
 
+/* Several weekdays read as one locale list, e.g. "Monday, Wednesday and Friday". */
+const formatWeekdays = (daysOfWeek: string[], locale?: string) =>
+  new Intl.ListFormat(locale, { type: 'conjunction' }).format(
+    daysOfWeek.map((dayOfWeek) => formatWeekday(dayOfWeek, locale)),
+  );
+
 const isSameDay = (a: Date, b: Date): boolean =>
   a.getFullYear() === b.getFullYear() &&
   a.getMonth() === b.getMonth() &&
@@ -151,13 +155,10 @@ export const formatScheduledTaskScheduleLabel = (
       return labels.dailyAt(time);
     case Kind.Weekly:
       return labels.weeklyAt(
-        formatWeekday(description.dayOfWeek, locale),
-        time,
-      );
-    case Kind.EveryNWeeks:
-      return labels.everyNWeeks(
-        description.intervalWeeks ?? 0,
-        formatWeekday(description.dayOfWeek, locale),
+        formatWeekdays(
+          description.daysOfWeek ?? [description.dayOfWeek ?? ''],
+          locale,
+        ),
         time,
       );
     case Kind.Monthly:

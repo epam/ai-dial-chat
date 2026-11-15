@@ -351,15 +351,19 @@ describe('MessageActions', () => {
     expect(container.firstElementChild?.className).toContain('my-custom-class');
   });
 
-  it('hides actions by default (opacity-0)', () => {
+  it('hides actions by default with visibility, so their tooltips cannot open', () => {
     const { container } = render(<MessageActions onEdit={vi.fn()} />);
-    expect(container.firstElementChild?.className).toContain('opacity-0');
+    const className = container.firstElementChild?.className ?? '';
+    expect(className).toMatch(/(^|\s)invisible(\s|$)/);
+    expect(className).not.toContain('opacity-0');
   });
 
-  it('does not apply opacity-0 when isAlwaysVisible is true', () => {
+  it('does not hide actions when isAlwaysVisible is true', () => {
     const { container } = render(
       <MessageActions onEdit={vi.fn()} isAlwaysVisible />,
     );
-    expect(container.firstElementChild?.className).not.toContain('opacity-0');
+    expect(container.firstElementChild?.className).not.toMatch(
+      /(^|\s)invisible(\s|$)/,
+    );
   });
 });

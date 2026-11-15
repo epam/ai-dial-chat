@@ -42,7 +42,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
       </span>
     );
   },
-  Spinner: () => <div role="progressbar" />,
+  Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
+    <div role="progressbar" aria-label={ariaLabel} />
+  ),
   /* ButtonDropdown is deliberately NOT mocked: choosing an order through the
      real menu is the behaviour under test. */
 }));
@@ -239,7 +241,9 @@ describe('Projects', () => {
   it('shows a spinner and announces nothing while loading', () => {
     render(<Harness isLoading />);
 
-    expect(screen.getByRole('progressbar')).toBeTruthy();
+    expect(
+      screen.getByRole('progressbar', { name: 'Loading projects' }),
+    ).toBeTruthy();
     expect(screen.queryByRole('list')).toBeNull();
     expect(status().textContent).toBe('');
   });

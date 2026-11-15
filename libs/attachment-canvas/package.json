@@ -4,6 +4,10 @@
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -23,19 +27,19 @@
     "@tabler/icons-react": "^3.50.0",
     "react-json-view-lite": "^2.5.0",
     "react-syntax-highlighter": "^16.1.2",
-    "@epam/ai-dial-react-pdf-highlighter": "0.3.0-dev.6",
+    "@epam/ai-dial-react-pdf-highlighter": "0.3.1",
     "@epam/ai-dial-visualizer-connector": "*",
-    "@epam/pdf-highlighter-kit": "^0.0.19",
+    "@epam/pdf-highlighter-kit": "^0.0.22",
     "@mcp-ui/client": "^7.1.1",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "@modelcontextprotocol/ext-apps": "1.7.5",
     "zod": "^4.6.6",
-    "pdfjs-dist": "^5.6.205",
+    "pdfjs-dist": "^6.5.438",
     "@epam/ai-dial-sidebar": "*"
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-ui-kit": "^0.16.0-dev.71",
+    "@epam/ai-dial-ui-kit": "^0.16.0",
     "react": "^19.2.8"
   },
   "nx": {

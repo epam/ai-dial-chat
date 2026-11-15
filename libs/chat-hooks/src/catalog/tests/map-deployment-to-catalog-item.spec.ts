@@ -177,13 +177,13 @@ describe('mapDeploymentToCatalogItem', () => {
     expect(result.folder).toEqual(['Shared']);
   });
 
-  it('keeps the Personal folder for an owned application', () => {
+  it('shows an owned application under Personal with its own folders, without the bucket', () => {
     const result = mapItem({
       ...baseDeployment,
       applicationFolder: 'applications/internal-owner-bucket/team',
     });
 
-    expect(result.folder).toEqual(['Personal']);
+    expect(result.folder).toEqual(['Personal', 'team']);
   });
 
   it('keeps readable nested folders for a public application', () => {
@@ -515,7 +515,7 @@ describe('mapToolsetToCatalogItem', () => {
     expect(result.folder).toEqual([]);
   });
 
-  it('places a toolset owned by the current user under the Personal folder', () => {
+  it('shows an owned toolset under Personal with its own folders, without the bucket', () => {
     const result = mapItem(
       {
         id: 'toolsets/bucket/folder/salesforce',
@@ -525,7 +525,7 @@ describe('mapToolsetToCatalogItem', () => {
       { folderLabels },
     );
 
-    expect(result.folder).toEqual(['Personal']);
+    expect(result.folder).toEqual(['Personal', 'folder']);
   });
 
   it('shows the Shared folder for a shared toolset with no nested folder', () => {

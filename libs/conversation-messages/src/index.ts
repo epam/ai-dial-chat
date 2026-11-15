@@ -6,6 +6,12 @@ export { StatusMessageBubble } from './components/MessageBubble/StatusMessageBub
 export { MessageActions } from './components/MessageActions/MessageActions';
 export { MessageSelectionReply } from './components/MessageSelectionReply/MessageSelectionReply';
 export { ConversationStartTimestamp } from './components/ConversationStartTimestamp/ConversationStartTimestamp';
+export { NegativeFeedbackModal } from './components/NegativeFeedbackModal/NegativeFeedbackModal';
+export type {
+  NegativeFeedbackModalLabels,
+  NegativeFeedbackModalProps,
+} from './models/negative-feedback-modal';
+export { NegativeFeedbackCategory } from './types/negative-feedback-category';
 export { BubblePosition } from './types/bubble-position';
 export type {
   MessageBubbleProps,

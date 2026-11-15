@@ -80,8 +80,21 @@ describe('publish-ready package artifact size', () => {
      * `jsonCollapsedClassName`, `errorMessageClassName`, `CodeContent`/`PdfContent`/
      * `LazyContentBoundary` class props) plus their README lines; measured at 246,709.
      * Raised from 247_500: Retry for a failed file load (`onRetry`, `retryCanvas`,
-     * `loadErrorRetryLabel`) plus its README paragraph; measured at 248,632. */
-    expect(artifact.unpackedSize).toBeLessThanOrEqual(249_500);
+     * `loadErrorRetryLabel`) plus its README paragraph; measured at 248,632.
+     * Raised from 249_500: always-mounted `LiveRegion`s for load failures (LazyContentBoundary split
+     * into a region-owning wrapper and an inner error catcher, PdfContent, MCP App, visualizer and
+     * OOXML overlays); measured at 249,691.
+     * Raised from 250_500: the translatable `loadingLabel` threaded to every canvas `Spinner`
+     * plus its README lines; measured at 250,527.
+     * Raised from 251_500: `@epam/pdf-highlighter-kit` 0.0.21 (required by
+     * `@epam/ai-dial-react-pdf-highlighter` 0.3.1) ships a ~3.1 KB larger
+     * pdf-highlight-viewer.css, inlined into dist/PdfContent.css; measured at 253,637.
+     * Raised from 254_500: the live `mcpAppHostContext` prop threaded through the container,
+     * panel, body and MCP App renderer, plus its README paragraph; measured at 255,672.
+     * Raised from 256_500: `AttachmentCanvasBody` loads `McpAppCanvasRenderer` lazily behind a
+     * `LazyContentBoundary` with retry, plus its README paragraph; measured at 256,958 before
+     * the README paragraph. */
+    expect(artifact.unpackedSize).toBeLessThanOrEqual(258_000);
   });
 
   it('contains no private OOXML renderer or worker chunks', () => {

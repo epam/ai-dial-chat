@@ -1,4 +1,5 @@
 import {
+  ActionMenu,
   buildCssVars,
   mergeClasses,
   PanelEmptyState,
@@ -6,13 +7,13 @@ import {
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  Dropdown,
   type DropdownItem,
   ElementSize,
   EllipsisTooltip,
   GhostButton,
   GhostIconButton,
   LinkButton,
+  LiveRegion,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconDotsVertical } from '@tabler/icons-react';
@@ -85,18 +86,20 @@ const ConversationRow: FC<RowProps> = ({
         className="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-3 text-start focus-visible:outline-2 focus-visible:-outline-offset-2"
         onClick={() => onOpen(item.id)}
       >
-        {/* The status point: an outline when read, filled when unread. */}
-        <span
-          aria-hidden
-          className="flex size-4 shrink-0 items-center justify-center"
-        >
+        {/* The host's leading visual, else the status point: an outline when read, filled when unread. */}
+        {item.leading ?? (
           <span
-            className={mergeClasses(
-              'size-[7.11px] rounded-full',
-              isUnread ? styles.unreadDot : styles.readDot,
-            )}
-          />
-        </span>
+            aria-hidden
+            className="flex size-4 shrink-0 items-center justify-center"
+          >
+            <span
+              className={mergeClasses(
+                'size-[7.11px] rounded-full',
+                isUnread ? styles.unreadDot : styles.readDot,
+              )}
+            />
+          </span>
+        )}
         <EllipsisTooltip
           text={item.title}
           className={mergeClasses(
@@ -104,6 +107,21 @@ const ConversationRow: FC<RowProps> = ({
             isUnread ? unreadRowTitleClassName : rowTitleClassName,
           )}
         />
+        {/* The host's trailing visual, else — beside a host `leading` node, which replaces the status point — the unread dot. */}
+        {item.trailing ??
+          (isUnread && item.leading != null && (
+            <span
+              aria-hidden
+              className="flex size-6 shrink-0 items-center justify-center"
+            >
+              <span
+                className={mergeClasses(
+                  'size-[7.11px] rounded-full',
+                  styles.unreadDot,
+                )}
+              />
+            </span>
+          ))}
       </button>
       {isUnread && (
         <span id={unreadId} className="sr-only">
@@ -111,8 +129,10 @@ const ConversationRow: FC<RowProps> = ({
         </span>
       )}
       {menuItems.length > 0 && (
-        <Dropdown
+        <ActionMenu
           items={menuItems}
+          title={labels.moreActionsLabel(item.title)}
+          closeLabel={labels.closeLabel}
           placement="bottom-end"
           onOpenChange={setIsMenuOpen}
         >
@@ -133,7 +153,7 @@ const ConversationRow: FC<RowProps> = ({
               />
             }
           />
-        </Dropdown>
+        </ActionMenu>
       )}
     </li>
   );
@@ -176,22 +196,18 @@ const ProjectConversationListComponent: FC<ProjectConversationListProps> = ({
   const renderBody = () => {
     if (isLoading) {
       return (
-        <div role="status" className="flex justify-center py-6">
-          {/* The kit spinner is a status of its own; the region below carries the localized text instead. */}
+        <div className="flex justify-center py-6">
+          {/* The kit spinner is a status of its own; the section's live region carries the localized text instead. */}
           <span aria-hidden>
             <Spinner />
           </span>
-          <span className="sr-only">{labels.loadingLabel}</span>
         </div>
       );
     }
     if (hasError) {
       return (
-        <div
-          role="status"
-          className="flex flex-col items-center gap-3 py-6 text-center"
-        >
-          <p className={mergeClasses('m-0', messageClassName)}>
+        <div className="flex flex-col items-center gap-3 py-6 text-center">
+          <p aria-hidden className={mergeClasses('m-0', messageClassName)}>
             {labels.errorLabel}
           </p>
           <GhostButton label={labels.retryLabel} onClick={onRetry} />
@@ -200,7 +216,7 @@ const ProjectConversationListComponent: FC<ProjectConversationListProps> = ({
     }
     if (isEmpty) {
       return (
-        <div role="status">
+        <div aria-hidden>
           <PanelEmptyState
             label={labels.emptyTitle}
             description={labels.emptyDescription}
@@ -236,6 +252,20 @@ const ProjectConversationListComponent: FC<ProjectConversationListProps> = ({
     );
   };
 
+  const renderStatus = () => {
+    if (isLoading) return labels.loadingLabel;
+    if (hasError) return labels.errorLabel;
+    if (isEmpty) {
+      return (
+        <>
+          <span>{labels.emptyTitle}</span>{' '}
+          <span>{labels.emptyDescription}</span>
+        </>
+      );
+    }
+    return null;
+  };
+
   if (isEmpty && !isEmptyStateShown) return null;
 
   return (
@@ -250,6 +280,8 @@ const ProjectConversationListComponent: FC<ProjectConversationListProps> = ({
           {labels.title}
         </h2>
       )}
+      {/* Mounted across loading, error and empty so each state is announced when it replaces the previous one. */}
+      <LiveRegion visuallyHidden>{renderStatus()}</LiveRegion>
       {renderBody()}
     </section>
   );

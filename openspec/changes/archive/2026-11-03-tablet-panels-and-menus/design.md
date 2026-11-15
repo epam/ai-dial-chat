@@ -30,7 +30,7 @@ No independent MCP right-panel shell was found: MCP content uses attachment canv
 
 Goals: deterministic 768px menu policy; bounded tablet right overlays; unchanged 1280px layout semantics; reusable library APIs; automated boundary and lifecycle verification.
 
-Non-goals: navigation/conversation-panel redesign, global desktop migration, changes in chat_pg_copy, dependency upgrades, new backend/state providers or persistence.
+Non-goals: navigation/conversation-panel redesign, global desktop migration, changes in downstream repositories, dependency upgrades, new backend/state providers or persistence.
 
 ## Decisions
 

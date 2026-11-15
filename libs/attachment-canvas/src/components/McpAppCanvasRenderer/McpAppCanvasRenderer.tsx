@@ -1,6 +1,11 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_KIT_ICON_STROKE,
+  LiveRegion,
+  Spinner,
+} from '@epam/ai-dial-ui-kit';
 import { AppFrame } from '@mcp-ui/client';
+import type { McpUiHostContext } from '@modelcontextprotocol/ext-apps/app-bridge';
 import type { Implementation } from '@modelcontextprotocol/sdk/types.js';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { type FC, useEffect, useMemo, useRef, useState } from 'react';
@@ -14,8 +19,12 @@ export interface McpAppCanvasRendererProps {
   content: McpAppCanvasContent;
   /** Message shown when the app fails to initialize. Defaults to `'Failed to load app'`. */
   errorLabel?: string;
+  /** Accessible name of the loading spinner. Defaults to `'Loading…'`. */
+  loadingLabel?: string;
   /** Called once the mounted app completes its `ui/initialize` handshake, with its declared name/version. Omitted when the app didn't declare an `appInfo`. */
   onAppInfo?: (appInfo: Implementation) => void;
+  /** Live host context pushed to the app on every change. Replaces `content.hostContext`, which is only a snapshot taken when the canvas opened. */
+  hostContext?: McpUiHostContext;
 }
 
 enum RendererStatus {
@@ -36,12 +45,15 @@ enum RendererStatus {
 export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
   content,
   errorLabel = 'Failed to load app',
+  loadingLabel = 'Loading…',
   onAppInfo,
+  hostContext: liveHostContextProp,
 }) => {
   const [status, setStatus] = useState<RendererStatus>(RendererStatus.Loading);
   /* `AppFrame`'s `onError` message, shown as a detail line under `errorLabel` — trust boundary discussed in `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D23. */
   const [errorDetail, setErrorDetail] = useState<string>();
-  const { html, sandboxUrl, toolInput, toolResult, hostContext } = content;
+  const { html, sandboxUrl, toolInput, toolResult } = content;
+  const hostContext = liveHostContextProp ?? content.hostContext;
   /*
    * `AppFrame` re-creates its sandbox iframe whenever `sandbox.url` changes
    * identity (its mount effect depends on the object itself, not just
@@ -89,7 +101,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
     return { ...hostContext, containerDimensions: containerSize };
   }, [hostContext, containerSize]);
 
-  const { appBridge, hasFailed } = useMcpAppBridge(
+  const { appBridge, hasFailed, replayHostContext } = useMcpAppBridge(
     content,
     containerRef,
     liveHostContext,
@@ -123,6 +135,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
           onSizeChanged={() => setStatus(RendererStatus.Ready)}
           onInitialized={(appInfo) => {
             setStatus(RendererStatus.Ready);
+            replayHostContext();
             if (appInfo.appVersion != null) onAppInfo?.(appInfo.appVersion);
           }}
           onError={(error) => {
@@ -138,9 +151,13 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
             styles.loadingOverlay,
           )}
         >
-          <Spinner />
+          <Spinner ariaLabel={loadingLabel} />
         </div>
       )}
+      {/* Mounted before the overlay so the failure is announced when it appears. */}
+      <LiveRegion visuallyHidden>
+        {isErrored && [errorLabel, errorDetail].filter(Boolean).join('. ')}
+      </LiveRegion>
       {isErrored && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4">
           <IconAlertTriangle
@@ -150,7 +167,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
             className={styles.errorIcon}
           />
           <p
-            role="status"
+            aria-hidden
             className={mergeClasses('text-center', styles.statusLabel)}
           >
             {errorLabel}

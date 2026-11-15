@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The BFF side of chats stored inside a project: the `projects/{bucket}/{path}/conversations/{name}` locator, `ProjectConversationStore` behind `ConversationPersistenceService`, the flag-gated owner-writable endpoints under `/api/v1/projects/:id/conversations`, completions through the regular generation pipeline, and the `x-project-id` header that is the only project context a model call carries.
+The BFF side of chats stored inside a project: the `projects/{bucket}/{path}/conversations/{name}` locator, `ProjectConversationStore` behind `ConversationPersistenceService`, the flag-gated endpoints under `/api/v1/projects/:id/conversations`, writable by the owner and by recipients with `WRITE`, completions through the regular generation pipeline, and the `x-project-id` header that is the only project context a model call carries.
 
 ## Requirements
 
@@ -87,7 +87,7 @@ A project conversation SHALL be stored as the file `conversations/{name}` inside
 - **WHEN** Core answers `uploadProjectFile` with `413`
 - **THEN** the request fails with `413` and `code: 'project-storage-full'`
 
-### Requirement: Project conversation endpoints are flag-gated and owner-writable
+### Requirement: Project conversation endpoints are flag-gated and writable by project editors
 
 `ProjectConversationsController` (`apps/chat-api/src/projects/conversations/project-conversations.controller.ts`) SHALL be registered by `ProjectsModule`, which imports `ConversationModule` (and `ConversationModule` exports `ConversationService` for it):
 
@@ -97,9 +97,22 @@ A project conversation SHALL be stored as the file `conversations/{name}` inside
   - `:conversationName` is validated by `ProjectConversationParamDto` (`apps/chat-api/src/projects/conversations/dto/project-conversation-param.dto.ts`), which uses `IsSafeDialPathSegment` and a `DIAL_PATH_SEGMENT_MAX_BYTES` (1024-byte) UTF-8 cap. The entity-name rule does not fit a stored file name: it wraps a title of up to 255 bytes in the deployment id, which may contain `:`, and a UUID, so a chat started with a long message has a longer name.
   - The BFF builds the locator from both.
 - **Completion bodies.** The `path` in completion, stop and attach bodies SHALL equal the locator without its leading `projects/`, i.e. `{bucket}/{projectPath}/conversations/{name}`, which is the path the app's stream hook derives from the conversation id. The BFF re-prefixes it and requires the result to parse as a locator under `:id`, otherwise `400`. The path is also the generation-registry key, so stop and attach find the generation.
-- **Writes.** Create, save, rename, delete and completions SHALL be refused with `403` before any Core call when the project's bucket is not the session bucket, matching `canEdit` in `GET /api/v1/projects/:id`.
-- **Reads.** List and get go to Core with the caller's token, so a shared or organization project's conversations can be read.
-- **Only entry point.** The regular conversation routes SHALL refuse a project conversation locator with `400`, so the gating and owner check above cannot be bypassed. `IsNotProjectConversationLocator` (`apps/chat-api/src/conversations/dto/not-project-conversation-locator.validator.ts`) sits on the `path` of `ConversationPathDto` (and so of every query DTO extending it), `SendCompletionDto`, `StopCompletionDto`, `AttachGenerationDto` and `WatchConversationBodyDto`. A project completion body carries the locator without `projects/`, so it passes.
+- **Writes.** Create, save, rename, delete, completions, stop and attach SHALL first await `ProjectAccessService.assertCanWrite(project, sessionBucket, accessToken)` (see the `project-detail-api` capability). That is the same rule as `canEdit` in `GET /api/v1/projects/:id`:
+  - the owner passes with no Core call;
+  - an organization project is `403` with no Core call;
+  - a shared project passes only when the caller holds `WRITE`; without it the answer is `403` after the one `getSharedResources` lookup, before any conversation write or model call;
+  - a failed lookup is the mapped upstream error, never `403`.
+
+  `ProjectConversationsService` calls it first in each write, and the controller's `resolveWritableLocator` awaits it before resolving the body path. The lookup has its own deadline (see the `project-detail-api` capability), because these routes pass no signal and the completion check runs before the generation's preparation deadline starts.
+- **Equal rights for editors.** Every caller who passes the check may write every conversation of the project, including one another caller started: Core grants `WRITE` to the whole project and records no per-conversation rule. A write stores the file in the project's bucket, with the caller's token. An editor MAY therefore also stop a generation another editor started, through the generation's stored marker (`foreground-generation-lock`). Attach stays scoped to the principal that started the generation.
+- **Concurrent writers are serialized in storage.** A generation in a project conversation holds it through its `foregroundGeneration` marker or its pending background marker, written conditionally as `foreground-generation-lock` and `background-responses-generation` define. A second caller's completion is therefore refused with `409` on any instance while the first generation runs, and the first generation's terminal write applies only to its own message. Each conditional write uses `ProjectConversationStore.saveConversationIfMatch`, at a cost of 3 Core calls per attempt:
+  - the project metadata for its aggregate `ETag`;
+  - the file for its content hash;
+  - the write with `If-Match` on the aggregate `ETag`.
+
+  Because Core checks `If-Match` against the whole project, a write to another file of the project between the read and the write also causes a repeat, up to `PROJECT_CONVERSATION_WRITE_ATTEMPTS`.
+- **Reads.** List and get go to Core with the caller's token, so a shared or organization project's conversations can be read. Marking a conversation viewed stays open to every reader (see the `project-conversation-read-state` capability).
+- **Only entry point.** The regular conversation routes SHALL refuse a project conversation locator with `400`, so the gating and the access check above cannot be bypassed. `IsNotProjectConversationLocator` (`apps/chat-api/src/conversations/dto/not-project-conversation-locator.validator.ts`) sits on the `path` of `ConversationPathDto` (and so of every query DTO extending it), `SendCompletionDto`, `StopCompletionDto`, `AttachGenerationDto` and `WatchConversationBodyDto`. A project completion body carries the locator without `projects/`, so it passes.
 - **OpenAPI.** Every route documents every status with `@ApiResponse`, and success responses name a DTO class.
 
 #### Scenario: Flag off
@@ -107,9 +120,25 @@ A project conversation SHALL be stored as the file `conversations/{name}` inside
 - **WHEN** `projectsEnabled` is false and `GET /api/v1/projects/{id}/conversations` is called
 - **THEN** the response is `403`
 
-#### Scenario: Writing to a shared project
+#### Scenario: Writing to a view-only shared project
 
-- **WHEN** a user whose bucket is `a1b2c3` calls `POST /api/v1/projects/projects%2Fz9y8x7%2Fresearch/conversations`
+- **WHEN** a user whose bucket is `a1b2c3` calls `POST /api/v1/projects/projects%2Fz9y8x7%2Fresearch/conversations`, and `getSharedResources` lists the project with `permissions: ['READ']`
+- **THEN** the response is `403`, the only Core call is `getSharedResources`, and no `uploadProjectFile` call is made
+
+#### Scenario: An editor creates a conversation in a shared project
+
+- **WHEN** the same call is made, and `getSharedResources` lists the project with `permissions: ['READ', 'WRITE']`
+- **THEN** the response is `201`, and `uploadProjectFile` is called with bucket `z9y8x7` and the caller's token
+
+#### Scenario: Two editors send into one project conversation at the same time
+
+- **GIVEN** the owner and an editor both open the same project conversation on a non-background model
+- **WHEN** both post a completion at the same time
+- **THEN** exactly one generation streams, the other request receives `409` before SSE headers, and after a reload the stored conversation holds the streaming caller's question and answer
+
+#### Scenario: Writing to an organization project
+
+- **WHEN** a user calls `POST /api/v1/projects/projects%2Fpublic%2Fhandbook/conversations`
 - **THEN** the response is `403`, and no Core call is made
 
 #### Scenario: Path outside the addressed project
@@ -134,6 +163,14 @@ A project conversation SHALL be stored as the file `conversations/{name}` inside
 1. keeps file items that are direct children of `conversations/`;
 2. sorts them by `updatedAt`, newest first, then by name;
 3. returns all of them. DIAL Core cannot page the folder in this order, so the endpoint takes no `limit` or `offset` and has no `hasMore`; the client pages the list locally.
+
+**Published projects.** Publishing copies the project's files and stamps each copy with the time of the copy, so for a project in the organization bucket (`ProjectSource.Organization`, read-only for every user) the file `updatedAt` no longer tells which chat was active last. The listing of such a project therefore:
+
+- reads every body, not only the 20 newest, so no item carries `isTitlePending`;
+- orders the items by the newest `timestamp` among the body's messages (`getLastMessageTime`, `apps/chat-api/src/projects/utils/project-conversation-activity.util.ts`), newest first, then by name;
+- puts an item without a dated message, or whose body cannot be read, last, in name order.
+
+The items' `updatedAt`, `isUnread` and the personal and shared listings are unchanged. The title cache entry also holds `lastMessageAt` and `hasActivity`; an entry cached without them is read once more for a published project.
 
 **Titles.** Every returned item's `title` is the conversation's display name, resolved for the 20 newest items and for any item whose title is cached:
 
@@ -210,6 +247,16 @@ Status codes:
 - **WHEN** the project holds 22 conversations and none of their titles is cached
 - **THEN** the response holds all 22, the bodies of the 20 newest are read, and the two oldest carry `isTitlePending: true` with their file-name titles
 
+#### Scenario: A published project is ordered by its last message
+
+- **WHEN** a project in the organization bucket holds files that all carry the time of the copy, and their bodies' newest message times differ
+- **THEN** the response lists every conversation with its title read, newest last message first, regardless of the files' `updatedAt`
+
+#### Scenario: A personal or shared project keeps the file order
+
+- **WHEN** a personal project, or one shared by another user, is listed
+- **THEN** the items stay in the order of the files' `updatedAt`, and only the 20 newest bodies are read
+
 #### Scenario: Empty project
 
 - **WHEN** Core answers the listing with `404` for `conversations/` on an existing project
@@ -266,10 +313,12 @@ Status codes:
 | `GET /api/v1/projects/:id/conversations/:conversationName` | `getProjectConversation` | – | `200` `ConversationResponseDto` |
 | `PUT /api/v1/projects/:id/conversations/:conversationName` | `saveProjectConversation` | `SaveConversationBodyDto` | `200` `ConversationResponseDto` |
 | `PATCH /api/v1/projects/:id/conversations/:conversationName` | `renameProjectConversation` | `RenameConversationBodyDto` (`newTitle`) | `200` `RenameConversationResponseDto` |
+| `POST /api/v1/projects/:id/conversations/:conversationName/generate-title` | `generateProjectConversationTitle` | none | `200` `GenerateTitleResponseDto` (`name`; not persisted) |
 | `DELETE /api/v1/projects/:id/conversations/:conversationName` | `deleteProjectConversation` | – | `204` |
 
 - **Create** builds the name as `ConversationLifecycleService` does for a top-level conversation, in the project's `conversations/`. It writes with `If-Match: *`, because the trailing UUID makes a collision negligible, and returns the stored body.
 - **Save** uses `updateConversationUnlessPending`, so a client save never overwrites a pending background message. This is the semantics of `PUT /api/v1/conversations`.
+- **Generate title** awaits `assertCanWrite`, then suggests a title with the same utility model and naming prompt as `POST /api/v1/conversations/generate-title`, which itself rejects project locators. It saves nothing.
 - **Rename** rewrites the body's `name` (with `llmNamingDone: true`) at the same file name, as a top-level rename does: Core cannot move a file inside a complex resource.
 - **Delete** calls `deleteProjectFile` with `If-Match: *`. A missing file is `404`.
 
@@ -299,13 +348,13 @@ Status codes:
 | `200` / `201` / `204` | Success. |
 | `400` | Invalid `:id`, `:conversationName` or body. |
 | `401` | No valid session. |
-| `403` | The flag is off, the project is not in the caller's own bucket (writes), or Core denied access. |
+| `403` | The flag is off, the caller may not write to the project (writes; `canEdit: false`), or Core denied access. |
 | `404` | No such project or conversation. |
 | `409` | Save or rename met a pending background message, or a persistent conflict. |
 | `413` | `project-storage-full`. |
-| `429` / `502` / `503` | Upstream. |
+| `429` / `502` / `503` | Upstream, including a failed permission lookup on a write. |
 
-**Generated-client impact:** `ProjectsApi.createProjectConversation`, `getProjectConversation`, `saveProjectConversation`, `renameProjectConversation` and `deleteProjectConversation`, all normal methods.
+**Generated-client impact:** `ProjectsApi.createProjectConversation`, `getProjectConversation`, `saveProjectConversation`, `renameProjectConversation`, `generateProjectConversationTitle` and `deleteProjectConversation`, all normal methods. None changes shape.
 
 #### Scenario: Create from the first message
 
@@ -316,6 +365,11 @@ Status codes:
 
 - **WHEN** the owner renames a project conversation to `Login article`
 - **THEN** the stored body's `name` is `Login article`, and no file is created or deleted
+
+#### Scenario: An editor deletes a chat the owner started
+
+- **WHEN** a recipient with `WRITE` deletes `projects/z9y8x7/research/conversations/x`, which the owner created
+- **THEN** `deleteProjectFile` is called with bucket `z9y8x7`, and the response is `204`
 
 #### Scenario: Delete a missing conversation
 
@@ -330,7 +384,7 @@ Status codes:
 - `POST /api/v1/projects/:id/conversations/completions/stop` (`stopProjectCompletion`, body `StopCompletionDto`);
 - `POST /api/v1/projects/:id/conversations/completions/attach` (`attachToProjectGeneration`, body `AttachGenerationDto`, SSE).
 
-Each handler checks access and the path, then calls the same `ConversationService` method as the `/api/v1/conversations/completions…` handler, with the locator as the path. The SSE framing, the `onReady` flush, client-disconnect handling, hidden-model checks, background generation, stop and attach therefore behave exactly as for a top-level conversation.
+Each handler first awaits the write-access check, then checks the path, then calls the same `ConversationService` method as the `/api/v1/conversations/completions…` handler, with the locator as the path. The SSE framing, the `onReady` flush, client-disconnect handling, hidden-model checks, background generation, stop and attach therefore behave exactly as for a top-level conversation. A refused check answers before the SSE stream opens.
 
 Watching (`POST /api/v1/conversations/watch`) is not offered for project conversations: Core resource subscriptions for a file inside a complex resource are not verified.
 
@@ -341,10 +395,15 @@ Watching (`POST /api/v1/conversations/watch`) is not offered for project convers
 - **WHEN** a completion is streaming with `path: 'a1b2c3/q4/conversations/x'`, and stop is called with the same path
 - **THEN** the generation registered under that path is stopped
 
-#### Scenario: Completion on a read-only project
+#### Scenario: Completion on a view-only project
 
-- **WHEN** a user whose bucket is `a1b2c3` posts a completion for `projects/z9y8x7/research`
-- **THEN** the response is `403`, and no Core call is made
+- **WHEN** a user whose bucket is `a1b2c3` posts a completion for `projects/z9y8x7/research`, and `getSharedResources` lists the project with `permissions: ['READ']`
+- **THEN** the response is `403`, no model is called, and no Core write is made
+
+#### Scenario: An editor's completion streams
+
+- **WHEN** the listed permissions are `['READ', 'WRITE']`
+- **THEN** the completion streams as for the owner, and the answer is saved into `projects/z9y8x7/research/conversations/{name}`
 
 ### Requirement: Project completions carry only the project id
 

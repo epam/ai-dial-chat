@@ -88,6 +88,7 @@ const makeService = ({
       new ProjectsSnapshotService(dialClient),
       {} as UserConfigService,
       {} as never,
+      {} as never,
     ),
     client,
   };
@@ -442,6 +443,7 @@ describe('ProjectsService', () => {
           new ProjectsCreateService(config),
           new ProjectsSnapshotService(dialClient),
           {} as UserConfigService,
+          {} as never,
           {} as never,
         ),
         upload,

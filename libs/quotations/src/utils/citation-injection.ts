@@ -140,14 +140,15 @@ const escapeMarkdownText = (text: string): string =>
 
 /**
  * Returns `content` with every supported `<cit data-id="…"></cit>` element
- * that resolves to a group replaced by that group's `sourceName` as plain
- * Markdown text — the label its citation marker shows on screen. Unresolved
- * tags are left untouched.
+ * that resolves to a group replaced by `formatLabel(group)` — by default the
+ * group's `sourceName` — as plain Markdown text. Unresolved tags are left
+ * untouched.
  */
 export const replaceCitTagsWithSourceNames = (
   content: string,
   groups: AnnotationGroup[],
   fallbackGroups: AnnotationGroup[] = [],
+  formatLabel: (group: AnnotationGroup) => string = (group) => group.sourceName,
 ): string => {
   if (!content.includes('<cit')) return content;
 
@@ -166,7 +167,7 @@ export const replaceCitTagsWithSourceNames = (
       const group = citGroupsByTagId.get(
         doubleQuotedId ?? singleQuotedId ?? '',
       );
-      return group ? escapeMarkdownText(group.sourceName) : markup;
+      return group ? escapeMarkdownText(formatLabel(group)) : markup;
     },
   );
 };

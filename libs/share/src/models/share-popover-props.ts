@@ -124,7 +124,7 @@ export interface SharePopoverProps {
   error: Error | null;
   /** Current access levels granted to link holders. */
   access: ShareLinkAccess[];
-  /** True for editable entity types (Agent, Application, Skill, Toolset); false for Model. */
+  /** True for editable entity types (Agent, Application, Skill, Toolset, Project); false for Model and Conversation. */
   canEditAccess: boolean;
   /** Called when the user selects a different access level. */
   onAccessChange: (access: ShareLinkAccess[]) => void;

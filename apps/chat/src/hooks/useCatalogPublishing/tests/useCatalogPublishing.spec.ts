@@ -8,6 +8,7 @@ import { BasicI18nKeys } from '../../../constants/translation-keys';
 import { getPublishRules } from '../../../server-api/publish-rules.api';
 import {
   CatalogPublishEntityType,
+  getCatalogPublishDependencies,
   getCatalogPublishHistory,
   getCatalogUnpublishAccess,
   publishCatalogEntity,
@@ -24,6 +25,7 @@ vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
   publishCatalogEntity: vi.fn(),
   unpublishCatalogEntity: vi.fn(),
   getCatalogPublishHistory: vi.fn().mockResolvedValue([]),
+  getCatalogPublishDependencies: vi.fn(),
   getCatalogUnpublishAccess: vi.fn(),
 }));
 
@@ -503,6 +505,98 @@ describe('useCatalogPublishing', () => {
           }),
         ),
       ).toBe(false);
+    });
+  });
+
+  describe('getPublishDependencies', () => {
+    it('reads the dependencies of an application and maps each entry to the panel model', async () => {
+      vi.mocked(getCatalogPublishDependencies).mockResolvedValue({
+        dependencies: [
+          {
+            id: 'toolsets/b/Search__1.0.0',
+            name: 'Search',
+            version: '1.0.0',
+            type: 'toolset',
+            location: 'Team',
+          },
+        ],
+      });
+      const item = makeCatalogItem({
+        id: 'applications/b/Agent__1.0.0',
+        type: CatalogEntityType.Agent,
+      });
+      const { result } = renderPublishing();
+
+      const dependencies = await result.current.getPublishDependencies(item);
+
+      expect(getCatalogPublishDependencies).toHaveBeenCalledWith(
+        CatalogPublishEntityType.Application,
+        'applications/b/Agent__1.0.0',
+      );
+      expect(dependencies).toEqual([
+        {
+          id: 'toolsets/b/Search__1.0.0',
+          name: 'Search',
+          version: '1.0.0',
+          type: 'toolset',
+          location: 'Team',
+        },
+      ]);
+    });
+
+    it('gives a dependency the icon of the loaded entity it names', async () => {
+      vi.mocked(getCatalogPublishDependencies).mockResolvedValue({
+        dependencies: [
+          {
+            id: 'applications/b/Helper__1.0.0',
+            name: 'Helper',
+            version: '1.0.0',
+            type: 'application',
+            location: '',
+          },
+          { id: 'prompts/b/Hi', name: 'Hi', type: 'prompt', location: '' },
+        ],
+      });
+      const { result } = renderPublishing({
+        deployments: [
+          { id: 'applications/b/Helper__1.0.0', iconUrl: 'helper.png' },
+        ] as DeploymentItemDto[],
+      });
+
+      const dependencies = await result.current.getPublishDependencies(
+        makeCatalogItem({
+          id: 'applications/b/Agent__1.0.0',
+          type: CatalogEntityType.Agent,
+        }),
+      );
+
+      expect(dependencies[0].iconUrl).toBeTruthy();
+      expect(dependencies[1].iconUrl).toBeUndefined();
+    });
+
+    it('resolves nothing for a public copy without a request', async () => {
+      const { result } = renderPublishing();
+
+      const dependencies = await result.current.getPublishDependencies(
+        makeCatalogItem({
+          id: PUBLIC_AGENT_ID,
+          type: CatalogEntityType.Agent,
+        }),
+      );
+
+      expect(dependencies).toEqual([]);
+      expect(getCatalogPublishDependencies).not.toHaveBeenCalled();
+    });
+
+    it('rejects when the request fails so the panel can show an empty list', async () => {
+      vi.mocked(getCatalogPublishDependencies).mockRejectedValue(
+        new Error('offline'),
+      );
+      const { result } = renderPublishing();
+
+      await expect(
+        result.current.getPublishDependencies(makeCatalogItem()),
+      ).rejects.toThrow('offline');
     });
   });
 

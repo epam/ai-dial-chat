@@ -11,6 +11,7 @@ import type {
   ConversationListHeaderStyles,
 } from './conversation-list-header';
 import type { ConversationItem, ConversationMove } from './panel-props';
+import type { PinnedProjects } from './pinned-projects';
 
 /** Localised labels for `ConversationListSection`: those of its header and of its list. */
 export interface ConversationListSectionLabels
@@ -65,6 +66,8 @@ export interface ConversationListSectionProps {
   onMoveConversation?: (move: ConversationMove) => void;
   /** Called with the distinct IDs of conversation rows in the visible viewport, in row order, whenever that sequence changes; excludes group headers and overscan rows, and is empty when no rows are visible. */
   onVisibleConversationIdsChange?: (ids: string[]) => void;
+  /** Project trees rendered at the top of the Pinned section, with their callbacks. */
+  pinnedProjects?: PinnedProjects;
   /** Style overrides for the header and the list. */
   styles?: ConversationListSectionStyles;
   /** Extra class name(s) merged onto the list root, e.g. a host anchor. */

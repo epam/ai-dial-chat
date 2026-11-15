@@ -42,6 +42,22 @@ destinations use the prepared fallback name and propagate stream failures. A
 missing response body aborts the writable and rejects. Cancelled destinations
 return the fallback without consuming the response.
 
+### Query-string cleanup
+
+`getCleanedLocationTarget(keys)` returns the `{ search, hash }` of the current
+`window.location` with `keys` dropped from the query string; the remaining
+pairs are kept byte for byte. It reads `window.location` at call time, so a
+host can pass the result to its router's `replace` navigation without relying
+on a router location that may lag. Available from the root and `./utils`.
+
+```ts
+import { getCleanedLocationTarget } from '@epam/ai-dial-chat-hooks/utils';
+
+navigate(getCleanedLocationTarget(['deployment-id', 'skill-id']), {
+  replace: true,
+});
+```
+
 ### Scheduled conversation controllers
 
 The root and `./conversation` export `groupScheduledTaskConversations`,
@@ -208,15 +224,15 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-projects` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.25
+- `@epam/ai-dial-react-file-manager` ^0.4.1
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.71
+- `@epam/ai-dial-ui-kit` ^0.16.0
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.2
-- `@epam/pdf-highlighter-kit` ^0.0.19
+- `@epam/pdf-highlighter-kit` ^0.0.22
 
 `@epam/ai-dial-chat-api-client` is **not** a peer. Every entry that calls DIAL Core
 imports a runtime enum from it (`SendCompletionDtoModeEnum`,
@@ -280,6 +296,7 @@ whether you need to `npm install` it.
 | `./skill-editor`          | `@epam/ai-dial-skill-editor`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`                                                                   | `@epam/ai-dial-react-file-manager`                              |
 | `./oauth`                 | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                               |
 | `./offline-credentials`   | —                                                                                                                                                   | —                                                               |
+| `./external-services`     | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                               |
 | `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                     | —                                                               |
 | `./project`               | `@epam/ai-dial-projects`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`                                                                       | —                                                               |
 | `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                               |
@@ -491,6 +508,8 @@ successful load it watches the first 1000 listed ids:
 
 A client without `watchProjects` gets a one-off load, as before.
 
+`useProjects` also returns `refresh()`, which re-reads the list without the loading state and keeps the current list when the request fails. Use it for a change the watch cannot report, such as the caller dropping a shared project from their list (DIAL Core emits no `DELETE` event for that).
+
 `useProjectConversations` reads a project's whole conversation list once,
 because DIAL Core cannot page it in display order, and pages it locally:
 `items` holds the first 20 rows and `hasMore` tells whether more are loaded.
@@ -516,9 +535,14 @@ newest first) and returns `{ items, isLoading, hasError, retry, refresh }`;
 `mapProjectArtifactsToOutputs(items)` turns them into the `ProjectOutputItem`s
 that `ProjectOutputs` from `@epam/ai-dial-projects` renders, with each content
 type inferred from the file name.
-`createSerializedKeyedWriter(write)` returns `{ enqueue, drop }`, a queue that
-runs one write at a time and never queues a key twice, for hosts that mark
-chats viewed from more than one page.
+`createSerializedKeyedWriter(write)` returns `{ enqueue, drop, subscribe }`, a
+queue that runs one write at a time and never queues a key twice, for hosts that
+mark chats viewed from more than one page. `subscribe(listener)` calls
+`listener` with the key of every write that succeeded (a dropped or failed write
+notifies nobody, and a throwing listener stops neither the others nor the
+caller) and returns the function that removes it, so a surface outside the
+project pages, such as the sidebar's `usePinnedProjectChats` tree, can call its
+`markViewed` for marks written elsewhere.
 
 Project file preview helpers (root and `./project`) build the keys and
 attachments a host opens in its attachment canvas, so the New, Edit and view
@@ -533,6 +557,11 @@ so an output never shares a card id with a context file, and
 (it carries the `File`), a stored file or output gets `url` from the
 `ProjectFileLocatorBuilder` the host passes. The locator scheme and its mapping
 to the project file endpoints stay with the host.
+`downloadProjectFileAttachment(attachment, resolveDownloadUrl)` downloads such
+an attachment: a file added in the session from the `File` it carries, with no
+request, and a stored one from the URL the host's
+`ProjectFileDownloadUrlResolver` returns for its locator. It returns whether a
+download started.
 
 ```ts
 import {
@@ -558,8 +587,12 @@ Edit project and project view pages share, the project analogue of
 `resolveContextAttachment(cardId)`, plus `resolveOutputAttachment(name)` where
 outputs are shown. It derives `selectedCardId`, `selectedContextFileId` and
 `selectedOutputName` from the canvas, so there is no second state to keep in
-step, and returns `onContextFileClick`, `onOutputClick` and
-`closeIfRemoved(cards)`. Activating the open card closes the canvas, a card the
+step, and returns `onContextFileClick`, `onOutputClick`,
+`onContextFileDownload(cardId)` and `closeIfRemoved(cards)`.
+`onContextFileDownload` passes the card's resolved attachment to
+`downloadProjectFileAttachment` with the optional `resolveDownloadUrl` option;
+without it only files added in the session download. It never touches the
+canvas. Activating the open card closes the canvas, a card the
 host resolves to nothing is ignored, and `closeIfRemoved` closes the canvas only
 when the open context card is no longer among `cards`. Callbacks keep their
 identity while their inputs do; memoise `resolveContextAttachment` and
@@ -582,15 +615,21 @@ const resolveContextAttachment = useCallback(
   },
   [files, projectId],
 );
-const { selectedContextFileId, onContextFileClick, closeIfRemoved } =
-  useProjectFilePreview({
-    scope: projectId,
-    attachmentId,
-    openAttachment: openAttachmentCanvas,
-    closeCanvas,
-    startRequest,
-    resolveContextAttachment,
-  });
+const {
+  selectedContextFileId,
+  onContextFileClick,
+  onContextFileDownload,
+  closeIfRemoved,
+} = useProjectFilePreview({
+  scope: projectId,
+  attachmentId,
+  openAttachment: openAttachmentCanvas,
+  closeCanvas,
+  startRequest,
+  resolveContextAttachment,
+  /* Host-owned: maps a locator to the endpoint that streams the file. */
+  resolveDownloadUrl: (locator) => `/files/${encodeURIComponent(locator)}`,
+});
 ```
 
 `useProjectDraft` (root and `./project`) owns the state of the New project and
@@ -705,6 +744,93 @@ ignores a read that finishes after the panel closed or `entityId` changed. The
 request and its mapping to `PublishHistoryEntry` (for the catalog endpoint,
 `mapPublishHistoryEntryDto`) stay with the host.
 
+`usePublishDependencies({ isOpen, entityId, loadDependencies })` (root and `./catalog`)
+returns the `PublishDependency[]` a publish panel lists as resources the item refers to
+that are not in the public bucket. It follows `usePublishHistory`: it reads through your
+`loadDependencies(entityId)` each time `isOpen` turns true, leaves the list empty when a
+read fails (the list only informs, publishing does not depend on it), ignores a read that
+finishes after the panel closed or `entityId` changed, and never returns another entity's
+list. For a catalog entity the request is `createPublishApiClient(publishApi)
+.getCatalogPublishDependencies(entityType, entityId)`; both it and the conversation
+request map each entry with `mapResourceDependencyDto`, and stay with the host. Pass `createPublishDependencyIconResolver({ deployments, toolsets, resolveIconUrl })` as its second argument to give an application or toolset the icon of the entity the host has already loaded, with no extra request; an entry the lists do not hold has none.
+
+```ts
+import {
+  createPublishApiClient,
+  mapResourceDependencyDto,
+  usePublishDependencies,
+} from '@epam/ai-dial-chat-hooks';
+
+const publishClient = createPublishApiClient(publishApi);
+
+const dependencies = usePublishDependencies({
+  isOpen,
+  entityId: 'applications/my-bucket/Support agent__1.0.0',
+  loadDependencies: async (entityId) =>
+    (
+      await publishClient.getCatalogPublishDependencies('application', entityId)
+    ).dependencies.map(mapResourceDependencyDto),
+});
+```
+
+`useUnpublishableFolders(client, target, isAdmin)` (root and `./catalog`) reports
+the folders the caller may request removal of one published entity from, as
+`{ isResolved, folders, refresh }`, through `resolveUnpublishableFolders`: an owner
+(`target.isOwner`) gets the live folders from `getCatalogPublishHistory`, de-duplicated
+and newest first; on a public copy (`{type}/public/…`) an administrator gets its
+folder outright and anyone else only when `getCatalogUnpublishAccess` answers
+`canUnpublish: true`; anyone else gets none. `isResolved` stays `false` while the
+lookup for the current `target` runs, so a host can withhold Publish and Unpublish
+until it settles; a failed first lookup settles as no folders, a failed `refresh()` keeps
+the folders already reported, and `refresh()` re-runs it
+while keeping the folders already reported. `client` is a `PublishApiClient`
+(`createPublishApiClient`) and must be referentially stable. The confirmation, the
+unpublish request and its notifications stay with the host.
+
+```ts
+import {
+  createPublishApiClient,
+  useUnpublishableFolders,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const publishClient = createPublishApiClient(publishApi);
+
+const { isResolved, folders, refresh } = useUnpublishableFolders(
+  publishClient,
+  project
+    ? {
+        entityType: 'project',
+        entityId: project.id,
+        // false: a personal project keeps offering Publish; only its public copy offers Unpublish
+        isOwner: false,
+      }
+    : null,
+  user.isAdmin,
+);
+```
+
+`useUnpublishConfirmation(runUnpublish)` (root and `./catalog`) owns the confirmation that follows. It keeps the pending entity (`{ name, folders }` plus whatever the host needs, such as an id or a path) and, when there are several folders, the user's pick. It returns `{ open, pending, dialog }`. `open(payload, returnFocusTo?)` opens it with no folder picked. `dialog` spreads straight into `UnpublishConfirmationDialog` from `@epam/ai-dial-publish-panel`.
+
+On confirm, the hook resolves the picked folder, or the only folder when there is one, and calls `runUnpublish(payload, folderPath)`. The public root is sent as `''`. A pick that is not among the folders sends nothing. The dialog closes when `runUnpublish` resolves and stays open when it rejects. While the request runs, `onClose` does nothing. The request, its notifications and any refresh stay with the host, inside `runUnpublish`.
+
+```tsx
+import { useUnpublishConfirmation } from '@epam/ai-dial-chat-hooks/catalog';
+import { UnpublishConfirmationDialog } from '@epam/ai-dial-publish-panel';
+
+const { open, dialog } = useUnpublishConfirmation(
+  async (
+    { id }: { id: string; name: string; folders: string[] },
+    folderPath,
+  ) => {
+    await unpublishProject(id, folderPath);
+  },
+);
+
+open({ id: project.id, name: project.name, folders: ['Team/Reports', ''] });
+
+<UnpublishConfirmationDialog {...dialog} labels={labels} />;
+```
+
 ```tsx
 import {
   ProjectRefreshOutcome,
@@ -748,6 +874,121 @@ const ProjectPage = () => {
 };
 ```
 
+`usePinnedProjectChats(client, projectIds, { enabled, onProjectDeleted, activeConversationId? })`
+loads the trees a sidebar shows for pinned projects. For each id it reads the
+details (`getProject`) and the listing (`listProjectConversations`) in
+parallel, keeps the first `PINNED_PROJECT_CHATS_LIMIT` (10) chats newest first
+with `hasMore` set when the listing has more, and resolves the kept chats'
+pending titles in one `getProjectConversationTitles` call. It returns
+`{ projects, isLoading, markViewed, refresh }`: `projects` is a
+`PinnedProjectChats[]` (`project`, `chats` of `PinnedProjectChat` — `id`,
+`title`, `isUnread?` — and `hasMore`) in `projectIds` order, without the ids
+whose load failed.
+
+When `activeConversationId` names a chat that is not among a project's newest
+chats, it replaces the last of the kept ones and comes last, so the list stays
+at `PINNED_PROJECT_CHATS_LIMIT` and the open chat is listed whenever it is in
+the project's listing.
+
+- A `404` from `getProject` drops the project and calls `onProjectDeleted(id)`
+  once. Any other details failure on the first load keeps it out and retries
+  after 1, 2, 4, 8 and 16 seconds, then gives up; a failed listing keeps it
+  with no chats.
+- Adding an id loads only that id, removing one drops it, and a reorder only
+  re-sorts. Requests abort on unmount, when `enabled` turns `false`, and for an
+  id that leaves.
+- Once the first load of the id set settles, one `watchProjects` stream
+  follows the sorted ids of the loaded projects (at most 1000); an id that
+  failed to load stays out, since the BFF rejects a watch over an unreadable
+  project. A changed project — an event whose
+  `etag` differs from the loaded one, or has none — is re-read silently, one
+  refresh at a time per project plus one trailing run; a `DELETE` drops it and
+  calls `onProjectDeleted`. A reconnect refreshes every project, and a watch
+  that cannot be opened is not retried for the same ids. A changed id set
+  reopens the stream.
+- `markViewed(conversationId)` clears a chat's unread state locally, with no
+  request, until a later listing reports a newer `updatedAt` — the rule
+  `useProjectConversations().markViewed` follows. `refresh(projectId)` re-reads
+  one project through the same per-project gate.
+- `mapProjectSourceToFilterTab(source)` maps a project's source onto the
+  conversation list's Origin tab (`personal` → `FilterTab.MyChats`).
+
+```tsx
+import {
+  PINNED_PROJECT_CHATS_LIMIT,
+  mapProjectSourceToFilterTab,
+  usePinnedProjectChats,
+  type PinnedProjectChats,
+} from '@epam/ai-dial-chat-hooks/project';
+
+const PinnedProjectsTree = () => {
+  const { projects, isLoading, markViewed } = usePinnedProjectChats(
+    projectsClient,
+    pinnedProjectIds,
+    {
+      enabled: isProjectsEnabled,
+      onProjectDeleted: (id) => unpin(id),
+    },
+  );
+  /* The project pages' viewed writer from above: a chat read there loses its dot here too. */
+  useEffect(() => viewedWriter.subscribe(markViewed), [markViewed]);
+  const groups = projects.map(
+    ({ project, chats, hasMore }: PinnedProjectChats) => ({
+      id: project.id,
+      name: project.name,
+      source: mapProjectSourceToFilterTab(project.source),
+      conversations: chats.slice(0, PINNED_PROJECT_CHATS_LIMIT),
+      hasMore,
+    }),
+  );
+  // …
+};
+```
+
+`isProjectSharedWithMe(project)` is `true` when the project's `source` is
+`shared` and the caller cannot manage it: they may drop it from their list but
+not delete it. `getPinnedProjectMenuActions(project)` returns the
+`PinnedProjectMenuAction` values a pinned project's menu offers the caller, in
+display order: `Unpin`, then `Edit` with edit access, then `Publish`, `Share`
+and `Delete` for the owner. A shared project the caller cannot manage ends
+with `RemoveFromMyList`, and a project that is not loaded offers `Unpin` only.
+The host maps each action to its label, icon and handler.
+
+`useProjectRemoveFromList(project, handlers)` discards only the caller's own
+access (`handlers.discardShared`), then unpins the project
+(`handlers.setPinned(id, false)`). It returns `{ isRemoving, confirmRemove }`,
+and a second `confirmRemove` while one is pending sends nothing. On success it
+calls `onSettled`, then `onRemoved(project)`; a failed unpin calls
+`onUnpinFailed(project)` and still counts as removed. When the discard rejects
+it calls `onError(project, requestId)` and `onSettled`, and nothing else.
+Messages, notifications and navigation stay with the host.
+
+```tsx
+import {
+  PinnedProjectMenuAction,
+  getPinnedProjectMenuActions,
+  isProjectSharedWithMe,
+  useProjectRemoveFromList,
+} from '@epam/ai-dial-chat-hooks/project';
+
+const RemoveSharedProject = ({ project, closeDialog }) => {
+  const { isRemoving, confirmRemove } = useProjectRemoveFromList(project, {
+    discardShared: (id) => discardSharedItem(id),
+    setPinned: setPinnedProject,
+    onUnpinFailed: ({ id }) => forgetPin(id),
+    onRemoved: ({ name }) => showToast(`Removed ${name}`),
+    onError: (_project, requestId) => showError(requestId),
+    onSettled: closeDialog,
+  });
+  // …
+};
+
+const canRemove = isProjectSharedWithMe(project);
+const offersRemove = getPinnedProjectMenuActions(project).includes(
+  PinnedProjectMenuAction.RemoveFromMyList,
+);
+```
+
 ```tsx
 // ./offline-credentials — no peer beyond react
 import { useOfflineCredentialsGate } from '@epam/ai-dial-chat-hooks/offline-credentials';
@@ -758,10 +999,20 @@ const { status, connect, connected, schedulerServiceConsent, refetch } =
 
 ```tsx
 // ./sharing
-import { useShareRecipientsCount } from '@epam/ai-dial-chat-hooks/sharing';
+import {
+  useAcceptShareInvitation,
+  useShareRecipientsCount,
+} from '@epam/ai-dial-chat-hooks/sharing';
 
 const { requestRecipientsCount, getRecipientsCount } =
   useShareRecipientsCount(shareApi);
+
+useAcceptShareInvitation({
+  invitationId,
+  acceptInvitation,
+  onAccepted,
+  onError,
+});
 ```
 
 ```tsx
@@ -865,6 +1116,29 @@ setRefreshToken((token) => token + 1);
 | `usage`      | `UserLimitStatsResponseDto \| undefined` | The fetched stats, or `undefined` until the first response resolves. Retained across a `refreshToken`-triggered re-fetch. |
 | `isLoading`  | `boolean`                                | `true` while a fetch is in flight, including a refresh.                                                                   |
 | `usageError` | `Error \| undefined`                     | Set when the `getUserUsage` call rejects.                                                                                 |
+
+### useOrgUnits
+
+Loads the current user's DIAL Core org units once, on demand, and answers
+which public-bucket folders are units. The host supplies `listOrgUnits`
+(resolving `{ enabled, units }`), so the hook never builds a client. Nothing
+is read until `ensureUnits()` is called. Later calls do nothing, except after a
+failed read, when the next call reads again. Status
+is the `OrgUnitsStatus` enum: `Idle`, `Loading`, `Ready`, `Disabled` (Core
+has org units off) or `Error` (the read failed; nothing is reported). Until
+the status is `Ready`, `isOrgUnitFolder` returns `false`. Available from the
+root and `./utils`.
+
+```tsx
+import { OrgUnitsStatus, useOrgUnits } from '@epam/ai-dial-chat-hooks';
+
+const { status, ensureUnits, isOrgUnitFolder } = useOrgUnits({
+  listOrgUnits, // host-configured fetch
+});
+
+useEffect(() => ensureUnits(), [ensureUnits]);
+const isUnit = status === OrgUnitsStatus.Ready && isOrgUnitFolder('Acme');
+```
 
 ### useUsageLimitBanner
 
@@ -1322,6 +1596,39 @@ const ResizableSidePanel = () => {
 | --------------------- | -------- | ----------------------------------------------------------------------------- |
 | `minContentAreaWidth` | `number` | Minimum pixel width the main content area must retain when the panel is open. |
 
+### useAppVersionCheck
+
+Reports when a long-lived tab runs a build that is no longer deployed, so the
+host can replace the app with a reload prompt. The host passes its health
+request; the hook keeps the first `buildId` as the tab's baseline and flags a
+different one. It also flags a new version at once when Vite fails to load a
+chunk of the running build (`vite:preloadError`). Available from the root and
+from `@epam/ai-dial-chat-hooks/utils`.
+
+```tsx
+import { useAppVersionCheck } from '@epam/ai-dial-chat-hooks/utils';
+
+const checkHealth = (signal: AbortSignal) =>
+  healthApi.check({ cache: 'no-store', signal });
+
+const App = () => {
+  const { isNewVersionAvailable } = useAppVersionCheck({ checkHealth });
+  return isNewVersionAvailable ? <NewVersionFallback /> : <Layout />;
+};
+```
+
+| Option             | Type                                             | Description                                                                                  |
+| ------------------ | ------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `checkHealth`      | `(signal: AbortSignal) => Promise<AppBuildInfo>` | Reads the deployed `buildId`; should bypass HTTP caches. A new function each render is fine. |
+| `pollIntervalMs`   | `number`                                         | Minimum time between checks while the tab is visible. Defaults to `300000` (5 minutes).      |
+| `requestTimeoutMs` | `number`                                         | Time after which one health request is aborted. Defaults to `10000`.                         |
+
+Checks run on mount, on the interval while the tab is visible, when the tab
+becomes visible again (`visibilitychange`, `focus`, `pageshow`), and on the
+first `pointerdown`/`keydown` after an idle period of at least
+`pollIntervalMs`. Only one request is in flight at a time; a missing `buildId`
+or a failed request is ignored. Once a new version is reported, all checks stop.
+
 ### useShareLink
 
 Resolves and manages share-link data for a DIAL Core resource: loading/error state, a stale-response guard, and re-fetch when the requested access levels change. Accepts an already-configured `ShareApi` instance from `@epam/ai-dial-chat-api-client` — the hook owns only the request lifecycle, not the client's base URL, auth, or CSRF setup.
@@ -1450,6 +1757,64 @@ const RevokeAccessMenuItem = ({
 | `invalidateRecipientsCount` | `(itemId: string) => void`                 | Drops the resource's cached result so the next request fetches again. |
 
 `RecipientsCountEntry.status` is a `RecipientsCountStatus` of `Idle` / `Loading` / `Resolved` / `Unknown` (`Unknown` on a failed lookup, so a "Revoke access" action stays reachable without a number).
+
+### useAcceptShareInvitation
+
+Accept flow for the landing route of an opened share link. Accepts the invitation once per mount, awaits `refreshLists`, then hands the backend-resolved summaries to `onSharedItem` (model, application or toolset) and `onSharedSkill`, and finally calls `onAccepted`. The summaries are merged after the refresh, never before or in parallel, so a stale bulk list that does not yet reflect the share cannot overwrite them. Any failure — the accept, the refresh or a callback — reaches `onError` already classified by `resolveAcceptShareInvitationError`. Callbacks are read at call time, so new identities never re-run the accept. The hook takes an already-configured `acceptInvitation` function and owns no routing, notification or copy: the host navigates, shows the notification and passes translated `labels`. Available from the root and from `@epam/ai-dial-chat-hooks/sharing`.
+
+```tsx
+import { useAcceptShareInvitation } from '@epam/ai-dial-chat-hooks/sharing';
+
+useAcceptShareInvitation({
+  invitationId,
+  acceptInvitation: (id) => shareApi.acceptInvitation({ invitationId: id }),
+  refreshLists: () => Promise.all([refetchDeployments(), refetchSkills()]),
+  onSharedItem: mergeSharedItem,
+  onSharedSkill: mergeSharedSkill,
+  onAccepted: ({ itemId }) =>
+    navigate(`/catalog?itemId=${encodeURIComponent(itemId)}`),
+  onError: ({ message, requestId }) => {
+    showErrorNotification({ message, requestId });
+    navigate('/catalog');
+  },
+});
+```
+
+**Parameters** (`UseAcceptShareInvitationOptions`):
+
+| Name               | Type                                                             | Description                                                                                 |
+| ------------------ | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `invitationId`     | `string \| undefined`                                            | Invitation id from the link; nothing is accepted while it is `undefined`.                   |
+| `acceptInvitation` | `(invitationId: string) => Promise<AcceptInvitationResponseDto>` | Already-configured accept call.                                                             |
+| `refreshLists`     | `(response) => Promise<unknown>`                                 | Optional. Refreshes the host's lists before the summaries are merged; skipped when omitted. |
+| `onSharedItem`     | `(item: DeploymentItemDto \| DialToolsetDto) => void`            | Optional. Receives `sharedDeployment ?? sharedToolset` when the backend resolved one.       |
+| `onSharedSkill`    | `(skill: SkillMetadataItemDto) => void`                          | Optional. Receives `sharedSkill` when the backend resolved one.                             |
+| `onAccepted`       | `(response: AcceptInvitationResponseDto) => void`                | Called last on success.                                                                     |
+| `onError`          | `(error: AcceptShareInvitationError) => void`                    | Called with the classified failure.                                                         |
+| `labels`           | `Partial<AcceptShareInvitationErrorLabels>`                      | Optional. Failure sentences; defaults to `DEFAULT_ACCEPT_SHARE_INVITATION_ERROR_LABELS`.    |
+
+**Returns**: nothing.
+
+### resolveAcceptShareInvitationError
+
+`resolveAcceptShareInvitationError(error, labels?)` classifies a failed accept into an `AcceptShareInvitationError` — `{ kind, message, requestId?, itemName?, cause }`. `kind` is an `AcceptShareInvitationErrorKind`:
+
+| Member              | When                                                                          | `message`                                                                  | `requestId` |
+| ------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------- |
+| `NotFound`          | `code` is `ShareInvitationErrorCode.ShareInvitationNotFound`                  | `labels.notFound`                                                          | never       |
+| `UsersLimitReached` | `code` is `ShareInvitationErrorCode.ShareInvitationAcceptedUsersLimitReached` | `labels.usersLimitReached(itemName)`, or `labels.usersLimitReachedUnnamed` | never       |
+| `Failed`            | anything else                                                                 | the API or `Error` message, or `labels.acceptError`                        | trace id    |
+
+Expired and over-the-limit links are expected outcomes, so they carry no Request ID. `DEFAULT_ACCEPT_SHARE_INVITATION_ERROR_LABELS` holds the English defaults (`notFound`, `usersLimitReached`, `usersLimitReachedUnnamed`, `acceptError`). Available from the root and `./sharing`.
+
+```ts
+import { resolveAcceptShareInvitationError } from '@epam/ai-dial-chat-hooks/sharing';
+
+const { kind, message, requestId } = await resolveAcceptShareInvitationError(
+  error,
+  labels,
+);
+```
 
 ### useAttachmentUpload
 
@@ -1692,18 +2057,19 @@ const ChatPage = ({
 
 **Parameters** (`UseConversationStreamParams`):
 
-| Name                        | Type                                | Description                                                                                                                                                                                                                                                                                                                                                                              |
-| --------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `conversationId`            | `string \| undefined`               | The currently displayed conversation's id.                                                                                                                                                                                                                                                                                                                                               |
-| `state`                     | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.                                                                                                                                                                                                                                                                                                 |
-| `transport`                 | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                                                                                                                                                                                                                                                                                                                  |
-| `generation`                | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership.                                                                                                                                                                                                                                                                                            |
-| `channel`                   | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.                                                                                                                                                                                                                                                                                                     |
-| `overlay`                   | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.                                                                                                                                                                                                                                                                                                     |
-| `onStopError`               | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects, except for a `StopCompletionError` with `status` `404` once the generation has ended locally (see [Stop and the end of a generation](#stop-and-the-end-of-a-generation)).                                                                                                                                                          |
-| `generationConflictMessage` | `string`                            | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`.                                                                                                                                          |
-| `onStreamError`             | `(error: Error) => void`            | Optional. Receives the original error of every failed or interrupted stream, once. The bubble's `streamErrorMessage` carries the host conflict/persistence warning or a `StreamUpstreamError`'s text; other errors set it to `''` so the host shows its localized fallback, and this callback is where the host can log the raw error.                                                   |
-| `batchChunksPerFrame`       | `boolean`                           | Optional, default `false`. Publishes streamed chunks to `setConversation` at most once per animation frame (a 16 ms timer where `requestAnimationFrame` is unavailable). Every chunk still reaches the per-path buffer immediately, and a pending update is flushed before completion, error, stop and a superseding `startStream`, and dropped when the displayed conversation changes. |
+| Name                           | Type                                | Description                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------ | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `conversationId`               | `string \| undefined`               | The currently displayed conversation's id.                                                                                                                                                                                                                                                                                                                                               |
+| `state`                        | `ConversationStateAccessor`         | `{ setConversation, conversationRef }` — the shared mutable channel for displayed state.                                                                                                                                                                                                                                                                                                 |
+| `transport`                    | `ConversationStreamTransport`       | Host-owned completion/stop/watch/reload implementation.                                                                                                                                                                                                                                                                                                                                  |
+| `generation`                   | `ConversationGenerationLifecycle`   | `{ startGeneration, completeGeneration }` — host-owned cross-navigation generation ownership.                                                                                                                                                                                                                                                                                            |
+| `channel`                      | `ConversationStreamChannel`         | Optional. `{ channelId, ensureConnected, waitForChannel }` for tool-signin delivery.                                                                                                                                                                                                                                                                                                     |
+| `overlay`                      | `ConversationStreamOverlayNotifier` | Optional. `{ notifyGenerationStart?, notifyGenerationEnd?, notifyStopGenerating? }`.                                                                                                                                                                                                                                                                                                     |
+| `onStopError`                  | `(error: Error) => void`            | Called when the transport's `stopCompletion` rejects, except for a `StopCompletionError` with `status` `404` once the generation has ended locally (see [Stop and the end of a generation](#stop-and-the-end-of-a-generation)).                                                                                                                                                          |
+| `generationConflictMessage`    | `string`                            | Optional. Shown on the message bubble when the transport reports a `GenerationConflictError` — the conversation is already generating, typically in another browser tab of the same session. Defaults to `DEFAULT_GENERATION_CONFLICT_MESSAGE`.                                                                                                                                          |
+| `generationInterruptedMessage` | `string`                            | Optional. Shown on an assistant message whose generation was lost: a reloaded chat whose stored copy still ends in the empty placeholder while attach finds nothing running. Defaults to `DEFAULT_GENERATION_INTERRUPTED_ERROR_MESSAGE`.                                                                                                                                                 |
+| `onStreamError`                | `(error: Error) => void`            | Optional. Receives the original error of every failed or interrupted stream, once. The bubble's `streamErrorMessage` carries the host conflict/persistence warning or a `StreamUpstreamError`'s text; other errors set it to `''` so the host shows its localized fallback, and this callback is where the host can log the raw error.                                                   |
+| `batchChunksPerFrame`          | `boolean`                           | Optional, default `false`. Publishes streamed chunks to `setConversation` at most once per animation frame (a 16 ms timer where `requestAnimationFrame` is unavailable). Every chunk still reaches the per-path buffer immediately, and a pending update is flushed before completion, error, stop and a superseding `startStream`, and dropped when the displayed conversation changes. |
 
 `ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path, content? })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`. A sixth, optional `saveConversation(path, conversation)` saves a conversation at the bucket-stripped `path` and resolves with the saved copy; the hook uses it only for the recovery save described below.
 
@@ -1739,7 +2105,9 @@ When the transport reports a `StreamInterruptedError` — the connection was los
 
 **Stopping a resumed non-background generation.** A resumed generation that is not a background job has no stored id, so the attach stream supplies one: when the `snapshot` event read from `transport.attachToGeneration` carries a `generationId`, `canStopStreaming` becomes `true` and `handleStop` sends that id to `transport.stopCompletion`, so a refreshed page can stop what it rejoined. The id is taken only for a resume started through `resumeIfAwaitingGeneration`: stream recovery keeps using its local id, and a conflict handover (`resumeOnConflict`) keeps `canStopStreaming` `false`. A local id and a stored background id take precedence over it. The id is dropped when the resume settles or when the attach ends without a terminal event and the watch fallback takes over, where Stop stays unavailable; a `snapshot` without the field keeps Stop hidden. The host passes the attach stream through unchanged and needs no extra wiring.
 
-Also exports the standalone `getConversationPath` (strips a conversation id's bucket segment and decodes it) and `isAwaitingGenerationResume` (the placeholder-detection predicate the hook is built on, which also returns `true` for a pending background message) for hosts that need the same checks outside the hook.
+**A lost generation after a reload.** When a page loads a conversation whose last message is the empty placeholder and `resumeIfAwaitingGeneration` finds nothing producing it (attach is unavailable and the stored copy is still the placeholder after the watch opens), the hook stops treating the chat as generating: `isStreaming` and `canStopStreaming` become `false`, so Regenerate, edit and sending work at once, and the message shows `generationInterruptedMessage` as its `streamErrorMessage`. This is display-only: the hook does not save the conversation. The watch keeps running up to its 5-minute bound, so an answer that is saved meanwhile replaces the message, and a generation the user starts on the path takes over. It does not apply while attach is serving a generation, to a pending background message, or when the page holds a partial answer to keep. Because the stored placeholder is unchanged, a reload runs the same check again. A generation running on another instance cannot be told apart from a lost one, so the text says the response may have been interrupted.
+
+Also exports the standalone `getConversationPath` (strips a conversation id's bucket segment and decodes it) and `isAwaitingGenerationResume` (the placeholder-detection predicate the hook is built on, which also returns `true` for a pending background message and for a live `foregroundGeneration` marker — another tab, device or participant generating the answer) for hosts that need the same checks outside the hook.
 
 `generationPersistenceErrorMessage?: string` supplies a host-translated warning
 when the server reports a failed terminal save or a terminal reload still
@@ -3108,7 +3476,7 @@ const uploadFileWithProgress = createUploadFileWithProgress({
 
 ### createChatStreamApi
 
-Builds the streamed-completion transport (`streamCompletion`/`stopCompletion`), parameterized by the host's CSRF state, completions base path, and an optional timezone resolver.
+Builds the streamed-completion transport (`streamCompletion`/`stopCompletion`), parameterized by the host's CSRF state, completions base path, and optional timezone and language resolvers.
 
 ```ts
 import { createChatStreamApi } from '@epam/ai-dial-chat-hooks';
@@ -3118,8 +3486,11 @@ const { streamCompletion, stopCompletion } = createChatStreamApi({
   setCsrfToken,
   completionsBasePath: '/api/v1/conversations',
   getTimezone: getBrowserTimezone,
+  getLanguage: () => i18n.language,
 });
 ```
+
+`getLanguage`, like `getTimezone`, is resolved per request; a non-empty value is sent as the `X-Lang` request header on `POST .../completions` (validated by the chat-api BFF and forwarded to DIAL Core for language-sensitive tools), and an absent value omits the header.
 
 `streamCompletion` reports a `409` from the completions endpoint as a `GenerationConflictError` (message defaulting to `DEFAULT_GENERATION_CONFLICT_MESSAGE`) rather than a generic transport error, so callers can present it as an expected state — the conversation is already generating, typically in another browser tab of the same session. `useConversationStream` uses that distinction to show its `generationConflictMessage`. Both the error class and the default message are exported:
 
@@ -3207,7 +3578,8 @@ text stays with the host.
 a refused `acceptInvitation` call carries in its `AcceptInvitationErrorDto` body,
 or `undefined` when the error is not a `ResponseError`, the body is not JSON or
 the title is empty. The response is cloned, so the body stays readable. Available
-from the root and `./utils`.
+from the root and `./utils`. `resolveAcceptShareInvitationError` (see
+[useAcceptShareInvitation](#useacceptshareinvitation)) already calls it.
 
 ```ts
 import { getAcceptInvitationErrorItemName } from '@epam/ai-dial-chat-hooks';
@@ -3227,16 +3599,19 @@ resolveLocalizedText({ en: 'Name', fr: 'Nom' }, 'fr-FR', 'en'); // 'Nom'
 
 ### composeLocalePayload / decomposeLocalizedFields / buildAdditionalLocaleOptions
 
-Round-trips a deployment-creation form's "Add locale" popup entries against DIAL Core's `LocaleTextEntryDto[]` write payload, and builds the popup's selectable locale options.
+Round-trips a deployment-creation form's "Add locale" popup entries against DIAL Core's `LocaleTextEntryDto[]` write payload, and builds the popup's selectable locale options. `buildAdditionalLocaleOptions(codes, primaryLocale, formatLabel?)` drops the exact `primaryLocale` match (so `en-GB` stays next to `en`) and labels each option with `formatLabel`, which defaults to `code.toUpperCase()`. The host supplies the codes and any language-name resolver; the lib reads no configuration.
 
 ```ts
 import {
+  buildAdditionalLocaleOptions,
   composeLocalePayload,
   decomposeLocalizedFields,
 } from '@epam/ai-dial-chat-hooks';
 
 const payload = composeLocalePayload(otherLocales, 'en'); // LocaleTextEntryDto[] | undefined
 const rows = decomposeLocalizedFields(displayName, description, 'en');
+const options = buildAdditionalLocaleOptions(['en', 'de'], 'en'); // [{ code: 'de', label: 'DE' }]
+const named = buildAdditionalLocaleOptions(['de'], 'en', resolveLanguageName);
 ```
 
 ## Shared Utilities
@@ -3398,6 +3773,57 @@ import { ExternalServiceAuthStatus } from '@epam/ai-dial-chat-hooks';
 
 const isSignedIn =
   service.userLevelAuthStatus === ExternalServiceAuthStatus.SignedIn;
+```
+
+### useSigninInterrupt
+
+Resolves pending `toolset/signin` and `external-service/signin` client-channel events
+(`PendingSigninEvent`) into dialog rows and runs their login, decline and result
+reporting. It fetches metadata missing from `toolsets` once per resource (the fallback
+name renders meanwhile), auto-reports `success` for a `NONE`-auth external service,
+reports `success` for sibling events on the same resource and credentials level after a
+login, always logs in with `forceStale: true`, and calls `refetchToolsets` before
+reporting a toolset login. `login` stays synchronous up to the login call, so an OAuth
+popup opens inside the click. A failed attempt leaves the event pending with a
+`SigninInterruptRowError` (`LoginFailed`, `PopupBlocked`, `DeclineFailed`,
+`AdminConsentRequired`, `OfflineUnavailable`); a cancelled login returns the row to
+`SigninInterruptRowStatus.Idle` without one. `announcement`
+(`SigninInterruptAnnouncementKind.LoginSucceeded` / `Declined` plus the resource name)
+carries the latest resolution for a status region. `offlineUsageConsent` defaults to
+`true`; `isOfflineUsageConsentShown` is `true` while any row uses an API key or OAuth.
+
+The hook never constructs a client and holds no copy: the host passes its configured
+fetch, login and report operations and the locales, and maps errors and announcements
+to its own strings. `SigninInterruptDialog` from `@epam/ai-dial-catalog` renders the
+rows. Available from the root and `./external-services`, together with `SigninRowInfo`,
+`SigninInterruptRow`, `SigninInterruptAnnouncement`, `UseSigninInterruptOptions`,
+`UseSigninInterruptResult` and the row helpers `resolveToolsetSigninRowInfo`,
+`resolveExternalServiceSigninRowInfo` and `getSigninEventResourceKey`.
+
+```tsx
+import {
+  useExternalServiceLogin,
+  useSigninInterrupt,
+} from '@epam/ai-dial-chat-hooks/external-services';
+import { useToolsetLogin } from '@epam/ai-dial-chat-hooks/oauth';
+
+const { login: loginToolset } = useToolsetLogin(toolsetLoginOptions);
+const { login: loginExternalService } = useExternalServiceLogin(
+  externalServiceLoginOptions,
+);
+const { rows, announcement, login, decline, declineAll, changeApiKey } =
+  useSigninInterrupt({
+    pendingEvents,
+    toolsets,
+    activeLocale: language,
+    primaryLocale: 'en',
+    getToolset, // (toolsetId) => Promise<DialToolsetDto>
+    getExternalService, // (appId, serviceName) => Promise<GetExternalServiceResponseDto>
+    loginToolset,
+    loginExternalService,
+    refetchToolsets,
+    reportEvent, // (eventId, 'success' | 'denied') => Promise<unknown>
+  });
 ```
 
 ## OAuth Popup Flow
@@ -3676,7 +4102,7 @@ if (outcome.type === ToolsetLoginOutcomeType.PopupBlocked) {
 
 Runs inside the OAuth callback popup and completes the flow: reads and clears the redirect state from the popup's own `sessionStorage`, removes the authorization code from the visible URL **before** any request, validates the returned `state` against the stored one, performs the exchange through the injected callback, then reports the outcome into the popup URL and over the flow channel until the opener acknowledges it, closing the popup afterwards. It runs its effect once per mount even under StrictMode double-invocation, renders nothing, and produces no user-visible text.
 
-Per-resource-kind dispatch stays in the host page — the hook sees only the one injected `exchange` callback.
+The hook itself has no per-resource-kind branching — it sees only the one injected `exchange` callback. A host serving toolsets, external services and offline credentials through one callback route builds that callback with [`createOAuthCallbackExchange`](#createoauthcallbackexchange); a host with a single resource kind may pass its own.
 
 **Parameters**:
 
@@ -3723,6 +4149,41 @@ const { isInProgress, failureReason } = useOAuthCallbackCompletion({
   callbackPath: '/auth/toolset-signin',
   exchange,
 });
+```
+
+### createOAuthCallbackExchange
+
+`createOAuthCallbackExchange(operations)` returns the `exchange` callback `useOAuthCallbackCompletion` takes, dispatching the authorization code by the stored redirect state's `resourceKind`:
+
+| `resourceKind`       | Operation called                                | Body                                                                                                                               |
+| -------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `Toolset` or absent  | `loginToolset(toolsetId, body)`                 | `url`, `credentialsLevel`, `authenticationType: OAUTH`, `code`, `redirectUri`, `offlineUsageConsent`                               |
+| `ExternalService`    | `signInExternalService(appId, serviceId, body)` | `credentialsLevel`, `authenticationType: OAUTH`, `code`, `redirectUri`, `offlineUsageConsent`; ids parsed from the stored scope id |
+| `OfflineCredentials` | `signInOfflineCredentials(body)`                | `code`, `redirectUri`                                                                                                              |
+
+An external-service scope id that `parseExternalServiceUrl` cannot split resolves `ToolsetOAuthFailureReason.MissingRedirectState` without calling anything. Success resolves `null`; a rejected operation rejects, which the hook reports as `LoginRequestFailed`. The operations (`OAuthCallbackExchangeOperations`) are the host's already-configured sign-in adapters — the lib never builds a client — and their resolved values are ignored. The returned function is stateless, so build it once at module scope. Available from the root and `./oauth`.
+
+```tsx
+import {
+  createOAuthCallbackExchange,
+  useOAuthCallbackCompletion,
+} from '@epam/ai-dial-chat-hooks/oauth';
+
+const exchange = createOAuthCallbackExchange({
+  loginToolset,
+  signInExternalService,
+  signInOfflineCredentials,
+});
+
+const ToolsetAuthCallback = () => {
+  const [searchParams] = useSearchParams();
+  const { isInProgress, failureReason } = useOAuthCallbackCompletion({
+    searchParams,
+    callbackPath: '/auth/toolset-signin',
+    exchange,
+  });
+  // render isInProgress / failureReason with the host's own copy
+};
 ```
 
 ## Toolset Login Events
@@ -3857,7 +4318,7 @@ const { starters, propertyKey, description } = getStartersFromSchema(
 
 Announcement-banner helpers: sanitize operator-supplied HTML, check whether structured (`title`/`description`) or any content is present, and build the content-keyed signature used to track dismissal.
 
-`buildAnnouncementSignature` covers every part of the banner surface: the title, the description, and the `items` entries behind the `+N` pill, whose popover is hidden along with the banner. Editing any of them produces a new signature, so a host that persists it re-shows a banner the user had dismissed. A legacy-only announcement (`html` with no title or description) signs as the raw HTML string, and `items` is left out of the payload when the list is empty — both so signatures stored by earlier builds keep matching.
+`buildAnnouncementSignature` covers every part of the banner surface: the title, the description, and the `items` entries behind the `+N` pill, whose popover is hidden along with the banner. Editing any of them produces a new signature, so a host that persists it re-shows a banner the user had dismissed. An entry's `severity` is not signed: the Chat surfaces do not render it, so changing only the severity leaves a dismissed banner hidden. A legacy-only announcement (`html` with no title or description) signs as the raw HTML string, and `items` is left out of the payload when the list is empty — both so signatures stored by earlier builds keep matching.
 
 The two sanitizers differ in the tags they keep, because the two banner layouts differ. `sanitizeAnnouncementHtml` is for the structured `description`, which renders as one truncating line, so it keeps inline markup only — `a`, `b`, `strong`, `em`, `br`, `span`. `sanitizeAnnouncementMessageHtml` is for the legacy `html` message, a free-standing block, so it additionally keeps `u` and `p`. Both keep `href`, `target` and `rel` on links, drop everything else including `style`, and force `rel="noopener noreferrer"` on any link that already carries `target="_blank"`.
 
@@ -3889,6 +4350,32 @@ buildAnnouncementSignature(content);
 
 sanitizeAnnouncementMessageHtml('<p>Upgraded to <strong>1.47</strong></p>');
 // '<p>Upgraded to <strong>1.47</strong></p>'
+```
+
+### AnnouncementSeverity / mapAnnouncementSeverity
+
+`AnnouncementSeverity` says how urgent an `AnnouncementListItem` is, so a host can mark a maintenance or outage notice — for example with a warning icon before the title. Members: `Info` (`'info'`, an ordinary news item) and `Warning` (`'warning'`). `AnnouncementListItem.severity` is optional; absent means `Info`.
+
+`mapAnnouncementSeverity` converts the generated client's `AnnouncementSeverity` (from an `AnnouncementItemDto`) into the lib enum. It returns `Info` when the value is `null`, `undefined` — as from a backend that predates the field — or a level this build does not know, so a host can switch on the result exhaustively.
+
+```ts
+import type { AnnouncementItemDto } from '@epam/ai-dial-chat-api-client';
+import {
+  type AnnouncementListItem,
+  AnnouncementSeverity,
+  mapAnnouncementSeverity,
+} from '@epam/ai-dial-chat-hooks';
+
+const toListItems = (
+  dtos: readonly AnnouncementItemDto[],
+): AnnouncementListItem[] =>
+  dtos.map((dto) => ({
+    ...dto,
+    severity: mapAnnouncementSeverity(dto.severity),
+  }));
+
+const isWarning = (item: AnnouncementListItem): boolean =>
+  item.severity === AnnouncementSeverity.Warning;
 ```
 
 ### sanitizeFooterHtml / formatAppVersion
@@ -4034,6 +4521,16 @@ const limits = mapDeploymentLimitsToInput(
 import { findWorstCappedRow } from '@epam/ai-dial-chat-hooks/catalog';
 
 const worst = findWorstCappedRow(mapDeploymentLimitsToInput(limits, labels));
+```
+
+### getGaugeNeedleAngle
+
+`getGaugeNeedleAngle(usedPercent)` returns the angle, in degrees clockwise from 12 o'clock, at which a usage dial's needle points: `-135` at 0%, `0` at 50% and `135` at 100%, with the percentage clamped to 0–100. Available from the root and `./usage-limits`.
+
+```ts
+import { getGaugeNeedleAngle } from '@epam/ai-dial-chat-hooks/usage-limits';
+
+const style = { '--usage-angle': getGaugeNeedleAngle(worst.usedPercent) };
 ```
 
 ### mapDeploymentLimitsDtoToCatalogLimits
@@ -4188,9 +4685,9 @@ const overview = buildSkillOverview(
 );
 ```
 
-### toPublishEntityType / mapPublishHistoryEntryDto / mapPublishConversationResultDto
+### toPublishEntityType / mapPublishHistoryEntryDto / mapPublishConversationResultDto / mapResourceDependencyDto
 
-Maps a catalog entity type to the publish API's entity-type path param (`CatalogPublishEntityType`), and maps publish-history API responses into the publish panel's `PublishHistoryEntry` model.
+Maps a catalog entity type to the publish API's entity-type path param (`CatalogPublishEntityType`), maps publish-history API responses into the publish panel's `PublishHistoryEntry` model, and maps a publish-dependencies API entry (`ResourceDependencyDto`) into the panel's `PublishDependency` model.
 
 ```ts
 import { toPublishEntityType } from '@epam/ai-dial-chat-hooks';
@@ -4387,15 +4884,15 @@ run status, and which delete or mutation error applies — and the host supplies
 every word through formatter objects. Available from the root and
 `./scheduled-tasks`.
 
-| Export                                                              | Returns                                                                                                                                      |
-| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output; `options.timeZone` defaults to the browser's, `options.locale` formats dates and weekdays |
-| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                        |
-| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                     |
-| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                  |
-| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                             |
-| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                 |
-| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                  |
+| Export                                                              | Returns                                                                                                                                                                                           |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output; `options.timeZone` defaults to the browser's, `options.locale` formats dates and weekdays (several weekdays are joined with `Intl.ListFormat`) |
+| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                                                                             |
+| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                                                                          |
+| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                                                                       |
+| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                                                                                  |
+| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                                                                      |
+| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                                                                       |
 
 ```ts
 import {
@@ -4412,8 +4909,6 @@ const scheduleLabels: ScheduledTaskScheduleLabels = {
   hourlyAt: (minute) => `Every hour at :${minute}`,
   dailyAt: (time) => `Every day at ${time}`,
   weeklyAt: (day, time) => `Every ${day} at ${time}`,
-  everyNWeeks: (count, day, time) =>
-    `Every ${count} weeks on ${day} at ${time}`,
   monthlyAt: (day, time) => `Monthly on day ${day} at ${time}`,
   invalid: 'Invalid schedule',
   recurringFallback: 'Recurring',
@@ -4464,7 +4959,7 @@ if (result.ok) {
 
 ### getNextCronOccurrence
 
-Returns the next UTC time a cron trigger with a fixed `hour`/`minute` fires after `from` (default: now), honouring its `day_of_week` (APScheduler Monday=0) or `day` (a number or `'last'`) constraint. Returns `undefined` when the fields are not plain values it can evaluate (`*`, ranges, lists). Available from the root and `./scheduled-tasks`.
+Returns the next UTC time a cron trigger with a fixed `hour`/`minute` fires after `from` (default: now), honouring its `day_of_week` (APScheduler Monday=0, one weekday or a comma list such as `'0,2,4'`) or `day` (a number or `'last'`) constraint. Returns `undefined` when the fields are not plain values it can evaluate (`*`, ranges, steps). Available from the root and `./scheduled-tasks`.
 
 ```ts
 import { getNextCronOccurrence } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
@@ -4817,6 +5312,158 @@ const next = rememberPublishFolderKey(storedKeys, toFolderPathKey(folderPath));
 if (next) setStoredKeys(next);
 ```
 
+### useResourceFolders / parseResourceFolderPath
+
+`useResourceFolders({ listFolders, isEnabled })` lazily loads one resource
+type's personal folder tree for a destination picker: the root once
+`isEnabled` (default `true`) is first true, then one listing per expanded
+folder. `listFolders(path)` is the host's already-bound listing operation (a
+plain-text path, `''` for the root) returning a `ResourceFoldersResponseDto`;
+the hook builds no request itself. `onCreateFolder` adds a folder to the
+in-memory tree only, kept across later listings. `hasError` is `true` while
+any folder's last fetch failed, and `retry()` re-fetches those folders. Pass
+`folderItems`, `expandedPaths`, `onExpandedPathsChange` and `loadingPaths` to a
+`FolderDestinationRoot` of `@epam/ai-dial-publish-panel`'s multi-root tree.
+
+`parseResourceFolderPath(id)` returns the decoded folder segments of a personal
+resource id `{type}/{bucket}/{folder…}/{name}` — `[]` at the bucket root or for
+an id that is not a full resource id. Both are available from the root and
+`./catalog`.
+
+```ts
+import {
+  parseResourceFolderPath,
+  useResourceFolders,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const personal = useResourceFolders({
+  listFolders: listApplicationFolders,
+  isEnabled: isPanelOpen,
+});
+const currentFolder = parseResourceFolderPath(application.id);
+```
+
+### useResourceSavePanel / runResourceSave
+
+`useResourceSavePanel(params)` owns the Save panel flow for one resource and
+returns `panelProps` to spread on `StandaloneSaveToFolderPanel` from
+`@epam/ai-dial-publish-panel`, plus `submit()`. It covers:
+
+- the Personal root, loaded through `useResourceFolders`;
+- the Organization root, built from the `organizationFolders` a host gets
+  from `usePublishFolders`; omit it when the user may not publish, and the
+  root is not offered;
+- the version choice, checked against `versionPattern` and reported as a
+  `ResourceSaveVersionError` (`Invalid`, `Unchanged`, `Exists`) that
+  `labels.getVersionError` turns into text;
+- the access rules of the pending Organization folder, fetched with
+  `publishClient.getPublishRules`, and kept while the same folder stays chosen.
+
+The host owns everything else: the resource summary, the panel's own labels,
+`onClose`, and the notification it shows from `onSaved(result, choice)`. The
+hook reads no i18n, app context or storage.
+
+`runResourceSave(adapter, choice, publish)` is the orchestrator the hook runs.
+With an edit adapter (`ResourceEditSaveAdapter`) it saves in place or as a
+new version, then moves into another Personal folder, or publishes to an
+Organization folder. With a create adapter (`ResourceCreateSaveAdapter`, told
+apart by `isResourceCreateAdapter`) it calls `createIn` with the chosen
+Personal folder, or with the root before publishing; the result's `isCreated`
+is then `true`, and the panel offers no version choice. A failure after the save resolves with the
+`ResourceSaveOutcome` `SavedButMoveFailed` or `SavedButPublishFailed`.
+
+The module also exports:
+
+- `SaveDestinationRoot` (`Personal`, `Organization`);
+- the `SavedResource`, `ResourceSaveChoice`, `ResourceSaveResult` and
+  `PublishSavedResource` types;
+- `ResourceSaveError`, for a failure whose message is already translated;
+- `createPublishSavedResource(publishClient)`.
+
+All of it is available from the root and `./catalog`.
+
+```ts
+import { useResourceSavePanel } from '@epam/ai-dial-chat-hooks/catalog';
+
+const { panelProps } = useResourceSavePanel({
+  isOpen,
+  adapter,
+  resourceId: application.id,
+  currentFolderPath: parseResourceFolderPath(application.id),
+  currentVersion: application.version,
+  versionPattern: /^\d+(\.\d+)*$/,
+  listPersonalFolders: listApplicationFolders,
+  organizationFolders: canPublish ? publishFolders : undefined,
+  publishClient,
+  ruleSourceOptions: ['roles'],
+  labels: {
+    personalRoot: 'Personal',
+    organizationRoot: 'Organization',
+    foldersLoadError: 'Folders could not be loaded',
+    saveError: 'Saving failed',
+    getVersionError: (error, version) => `${error}: ${version}`,
+  },
+  onSaved: (result, choice) => notifySaved(result, choice),
+});
+```
+
+### Resource save adapters
+
+These functions build the `ResourceSaveAdapter` for each resource type.
+Each one takes a configured generated client and never creates one:
+
+- **`createEmbeddedApplicationSaveAdapter({ applicationsApi, applicationId, runEmbeddedSave, getCommitFailedMessage })`**
+  is for Quick Apps, whose embedded editor is the only writer. A new version
+  runs in three steps:
+  1. fork the stored application;
+  2. run the editor's save on the original;
+  3. commit, which swaps the two bodies.
+
+  If the save fails, the fork is deleted. If the commit fails, it throws a
+  `ResourceSaveError` with `getCommitFailedMessage(version)`.
+
+- **`createHostApplicationSaveAdapter({ applicationsApi, applicationId, update, createVersion })`**
+  is for applications the host writes itself.
+- **`createToolsetSaveAdapter({ toolsetsApi, toolsetId, body })`** writes a new
+  version with `createOnly: true` into the chosen folder.
+- **`createPromptSaveAdapter({ promptsApi, promptId, body })`** is unversioned:
+  it updates the prompt and then moves it.
+- **`createPromptFolderLister(promptsApi)`** returns the `listPersonalFolders`
+  for prompts, one folder level built from the prompt listing.
+- **`createToolsetCreateAdapter({ toolsetsApi, body })`** and
+  **`createPromptCreateAdapter({ promptsApi, body })`** create a new toolset
+  (create-only) or prompt in the chosen folder.
+- **`createSkillFolderLister(skillsApi, bucket)`** returns the
+  `listPersonalFolders` for skills: the grouping folders of one level, across
+  every listing page.
+- **`withResourceNameConflictMessages(adapter, messages)`** wraps the create,
+  in-place and new-version steps of any `ResourceSaveAdapter` so that a `409`
+  rejecting a duplicate name and version reaches the Save panel as a
+  `ResourceSaveError` carrying `messages[kind]`. `messages` holds one already
+  translated string per `ResourceNameConflictKind` (`Agent` or `Toolset`).
+  Moving a saved resource is left untouched, and any other failure passes
+  through. **`getResourceNameConflictKind(error)`** returns that kind for such
+  a `409`, or `undefined`.
+
+The client parameters are typed as the narrow `Pick`s
+`ResourceSaveApplicationsApi`, `ResourceSaveToolsetsApi`,
+`ResourceSavePromptsApi` and `ResourceSaveSkillsApi`. All of it is available from the root and
+`./catalog`.
+
+```ts
+import {
+  createPromptFolderLister,
+  createToolsetSaveAdapter,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const adapter = createToolsetSaveAdapter({
+  toolsetsApi,
+  toolsetId: toolset.id,
+  body,
+});
+const listPromptFolders = createPromptFolderLister(promptsApi);
+```
+
 ### useCatalogToolsetCredentials
 
 Owns the catalog's toolset credential login/logout flow: wires `useToolsetLogin` (see OAuth Popup Flow) to the host's DIAL Core operations, resolves each outcome to a notification and toolset refetch, and owns the notification copy for every credential level / API-key / org-fallback combination. Every backend call and OAuth callback route arrives as an injected parameter — the hook constructs no client instance and reads no app context or i18n.
@@ -5095,6 +5742,13 @@ const {
   onNotify: (notification) => showNotification(notification),
 });
 ```
+
+Pass `onSaveRequest(adapter, values)` to save through the Save panel (`useResourceSavePanel`). A submit that passes validation then writes nothing itself. Instead it hands the host a `ResourceSaveAdapter`:
+
+- **Create mode:** `createIn(folderPath)` creates the skill under the chosen folder.
+- **Edit mode:** `saveInPlace()` updates the skill with the loaded ETag, and `move(id, folderPath)` calls `client.moveSkill`.
+
+In this mode the hook shows no success notification and does not navigate; the panel does both. Write failures reject with a `ResourceSaveError` whose message is the matching `messages` text. A stale edit (412) still sets `conflict`.
 
 ### useSkillFileActions
 
@@ -5897,8 +6551,47 @@ const outcome = await login(
 );
 ```
 
-`MapApplicationCredentialsOptions` is exported. The host keeps localization,
-the outcome-to-message mapping and logout.
+`MapApplicationCredentialsOptions` is exported. The host keeps localization;
+the login/logout flow is `useApplicationCredentialActions` below.
+
+### useApplicationCredentialActions
+
+Returns the `onLogin` / `onLogout` callbacks of the catalog's
+`ApplicationCredentials` forms. `onLogin(serviceId, params)` builds the request
+with `buildApplicationCredentialLoginParams` and calls the host's `login`: success
+refreshes and resolves `true`; cancellation or an unknown service resolves
+`false`; a blocked popup, missing administrator consent or unavailable offline
+access throws an `Error` with that label, and any other outcome (or a thrown
+`login`) throws `loginFailed`. `onLogout(serviceId)` signs out only `USER`
+credentials through the host's `signOutExternalService`, then refreshes; it
+does nothing for a `DIAL_NATIVE` or unknown service and throws `logoutFailed`
+when sign-out fails. Available from the root and `./catalog`.
+
+```tsx
+import {
+  useApplicationCredentialActions,
+  useApplicationCredentials,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const { services, refresh } = useApplicationCredentials({
+  appId,
+  externalServicesClient,
+  offlineCredentialsClient,
+});
+const { onLogin, onLogout } = useApplicationCredentialActions({
+  appId,
+  services,
+  login, // useExternalServiceLogin(...).login
+  signOutExternalService, // (appId, serviceId, body) => configured client call
+  refresh,
+  labels: { loginFailed: t('toolsetSignin.errorLoginFailed') },
+});
+```
+
+`UseApplicationCredentialActionsParams`, `UseApplicationCredentialActionsResult`,
+`ApplicationCredentialActionsLabels` and
+`DEFAULT_APPLICATION_CREDENTIAL_ACTIONS_LABELS` are exported. Each omitted label
+falls back to its English default. The hook owns no client, localization or UI.
 
 ### useOfflineCredentialsGate
 
@@ -6100,7 +6793,10 @@ displaying local time should explicitly pass
 determines the offset for the existing UTC-storage policy; this is not a
 timezone-aware future scheduler. Numeric weekday values use Monday = 0.
 Hourly `time` is the local minute; daily/weekly/monthly `time` is HH:mm.
-`EveryNMinutes` supplies `intervalMinutes`.
+`EveryNMinutes` supplies `intervalMinutes`. A `Weekly` description also
+carries `daysOfWeek`, every local weekday Monday first, so a `day_of_week`
+list such as `'0,2,4'` (the Custom repeat) is described as one weekly
+schedule. Any `week` constraint is `Custom`.
 
 The scheduler APIs are available from both the root barrel and the
 `/scheduled-tasks` entry; prefer the subpath for a focused dependency graph.
@@ -6230,3 +6926,28 @@ UsageResetOffsetPolicy.CurrentOffset retains the viewer's formatting-time offset
 UsageResetOffsetPolicy.ResetInstant uses the offset at the reset boundary. Both preserve
 isoValue and resetsAtMs. The shortened formatter and parent defaults are unchanged.
 Downstream can select the explicit policies instead of copying these algorithms.
+
+The project entry point's `getPinnedProjectMenuActions` includes
+`PinnedProjectMenuAction.RevokeAccess` after Share for owners only when its
+second argument, `canRevokeAccess`, is true. It defaults to false; pass
+`canRevokeAccess(project.id)` from `useProjectShareRecipients` after a confirmed
+positive count. Other actions keep their existing ownership rules. Hosts map this
+action to their confirmation and revoke request; recipients retain the
+existing Remove from My List flow.
+
+### Project access revocation
+
+The project entry point exports `useProjectShareRecipients(client)` and
+`useProjectRevokeAccess(client, project, handlers)`. Supply the same stable,
+already-configured `ProjectSharingClient` (the `ShareApi` recipient-count and revoke
+operations) to both. No authentication or transport configuration occurs here.
+
+Recipient state returns `requestRecipients(projectId)` for menu-open refreshes
+and `canRevokeAccess(projectId)`, false until a positive count is confirmed.
+Revoke state returns `isRevoking` and `confirmRevoke()`, guards ownership and
+duplicate requests, and updates all menus on the same client after success.
+`ProjectRevokeAccessHandlers.onRevoked(project)` and
+`onError(project, requestId)` carry notifications and dialog lifecycle.
+`notifyProjectAccessRevoked(client, projectId)` supports revokes performed
+outside the hook. Client instances have isolated subscriptions; unmounting
+unsubscribes and discards pending responses. No persistent cache is created.

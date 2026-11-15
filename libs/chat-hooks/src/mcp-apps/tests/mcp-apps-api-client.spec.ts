@@ -1,4 +1,5 @@
 import type { ToolsetsApi } from '@epam/ai-dial-chat-api-client';
+import { McpDeploymentKind } from '@epam/ai-dial-mcp-apps';
 import { describe, expect, it, vi } from 'vitest';
 import { createMcpAppsApiClient } from '../mcp-apps-api-client';
 
@@ -35,7 +36,7 @@ describe('createMcpAppsApiClient', () => {
       ENCODED_TOOLSET_ID,
       'show_entity_card',
       {},
-      'toolset',
+      McpDeploymentKind.Toolset,
     );
 
     expect(callToolsetMcpAppTool).toHaveBeenCalledWith(

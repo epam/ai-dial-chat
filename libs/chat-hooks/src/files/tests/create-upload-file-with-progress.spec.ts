@@ -6,6 +6,7 @@ import {
   createUploadFileWithProgress,
 } from '../create-upload-file-with-progress';
 import { resolveUploadFailureReason } from '../dial-file-manager-mapping.util';
+import { DialFilesApiUploadMode } from '../dial-files-api';
 
 type XhrListener = (event?: ProgressEvent<EventTarget>) => void;
 
@@ -213,7 +214,7 @@ describe('createUploadFileWithProgress', () => {
     const upload = makeUploader({}, () => mock as unknown as XMLHttpRequest);
 
     await upload('Abc123', 'reports/q3.csv', file, {
-      uploadMode: 'create-only',
+      uploadMode: DialFilesApiUploadMode.CreateOnly,
     });
 
     expect(mock.open).toHaveBeenCalledWith('POST', '/api/v1/files');
@@ -243,7 +244,7 @@ describe('createUploadFileWithProgress', () => {
       const file = new File(['data'], 'q3.csv', { type: 'text/csv' });
 
       await makeRawUploader(mock)('Abc123', 'reports/q3.csv', file, {
-        uploadMode: 'create-only',
+        uploadMode: DialFilesApiUploadMode.CreateOnly,
       });
 
       expect(mock.open).toHaveBeenCalledWith(

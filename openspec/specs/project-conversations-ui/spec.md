@@ -74,12 +74,19 @@ The direct server-api calls, the `/conversations` routing and the read-only rule
 - wrap `ConversationPage` in `ConversationDataSourceContext.Provider` with the project value, and pass it the parsed `conversationId` (the page's optional `conversationId` prop; it defaults to the `/conversations/*` splat);
 - render a breadcrumb (`ProjectChatHeader`). On desktop it is portalled into the start cell of `ChatLayout`'s top bar through `ChatLayoutHeaderSlotContext` (`apps/chat/src/context/ChatLayoutHeaderSlotContext.tsx`), beside the sources toggle, with no border of its own; on mobile, where that bar is hidden, it is a bar above the conversation: a back `GhostIconButton` named `projects.chat.backToProject` (with `IconArrowNarrowLeft`, `aria-hidden`, `stroke={DIAL_KIT_ICON_STROKE}`, `rtl:scale-x-[-1]`), then the project name truncated with `EllipsisTooltip`, linking to `getProjectViewRoute(projectId)`.
 
+**Who may write.** `canEdit` is `true` for the owner and for a recipient with edit access (see the `project-detail-api` capability). For both, the project value of `ConversationDataSourceContext` is writable: the input, regenerate, message edit and delete, and rating work as in a regular chat. The conversation is read-only only when `canEdit` is `false` (a view-only recipient or an organization project). `ProjectChatNavigationState.project.canEdit` keeps the same meaning: whether the caller may write the project's chats.
+
 The page owns no conversation state: `ConversationPage` and `GenerationContext` own it, as for a regular chat. The generation-registry key is the stripped path `{bucket}/{projectPath}/conversations/{name}`. It begins with a bucket id and therefore does not collide with a regular bucket-relative path in practice.
 
 #### Scenario: Read-only shared project chat
 
-- **WHEN** a user opens a conversation of a project shared with them
+- **WHEN** a view-only recipient (`canEdit: false`) opens a conversation of a project shared with them
 - **THEN** the conversation renders read-only: no input and no regenerate or edit actions, and no Duplicate action
+
+#### Scenario: A shared editor's chat is writable
+
+- **WHEN** a recipient with edit access (`canEdit: true`, `canManage: false`) opens a conversation the owner started
+- **THEN** the input, regenerate and message edit actions render, and sending a message posts to `POST /api/v1/projects/{id}/conversations/completions`
 
 #### Scenario: Back to project
 
@@ -92,7 +99,7 @@ The page owns no conversation state: `ConversationPage` and `GenerationContext` 
 
 | Prop | Type |
 | --- | --- |
-| `items` | `ProjectConversationListItem[]`, where an item is `{ id: string; title: string; authorName?: string; isUnread?: boolean }` |
+| `items` | `ProjectConversationListItem[]`, where an item is `{ id: string; title: string; authorName?: string; isUnread?: boolean; leading?: ReactNode; trailing?: ReactNode }` |
 | `isLoading` | optional `boolean` |
 | `hasError` | optional `boolean` |
 | `onRetry` | `() => void` |
@@ -111,12 +118,12 @@ The page owns no conversation state: `ConversationPage` and `GenerationContext` 
 - a `<section>` named by its `<h2>` `labels.title` ("Chats"). While the project has no chats (not loading, no error, no items) the heading is not rendered and the section is named by `aria-label={labels.title}` instead, so only the empty state shows, as in the design;
 - the section has `12px` top padding and `8px` between the heading, the rows and the See more link, as in the design (Figma *DIAL Chat 2.0 — Projects*, frame "Chat - View project - Unpinned", node `1:2407`);
 - a `<ul>` with one `<li>` per item, `8px` apart. Each row is a button named `labels.openLabel(title, authorName)`, with `12px` padding, a `12px` radius and `12px` between its parts, containing:
-  - the **status point**, an `aria-hidden` `16px` slot holding a `7.11px` circle: an outline when the chat is read (`.readDot { border: 1.5px solid var(--pcl-read-dot, var(--stroke-secondary, #d1dbea)); }`) and a fill when it is unread (`.unreadDot { background: var(--pcl-unread-dot, var(--text-accent, #1d4ed8)); }`), both in `ProjectConversationList.module.scss`. It replaces the author avatar of the earlier design; the author stays in the accessible name;
+  - the **status point**, an `aria-hidden` `16px` slot holding a `7.11px` circle: an outline when the chat is read (`.readDot { border: 1.5px solid var(--pcl-read-dot, var(--stroke-secondary, #d1dbea)); }`) and a fill when it is unread (`.unreadDot { background: var(--pcl-unread-dot, var(--text-accent, #1d4ed8)); }`), both in `ProjectConversationList.module.scss`. It replaces the author avatar of the earlier design; the author stays in the accessible name. An item's host-rendered `leading` node (a deployment avatar, say) replaces the status point, and the unread state then shows as a `24px` slot at the end of the row button holding the same `.unreadDot` circle, as in the conversation panel's rows; a host `trailing` node replaces that dot;
   - the title in `dial-body-text` (16/24), truncated to one line with `EllipsisTooltip`, or in `typography.unreadRowTitleClassName` when `isUnread`.
 
   A hovered or focused row has the background `.row:hover, .row:focus-within { background: var(--pcl-row-hover, var(--bg-control-accent-alpha-hover, #2764d924)); }` in `ProjectConversationList.module.scss`, set through `colors.rowHoverBackground`.
-- **Unread rows** (`isUnread: true`) follow the indicator rows of `ConversationRow` in `libs/conversation-panel`, which this lib does not import: the filled point and the semibold title. The row button carries `aria-describedby` pointing to a visually hidden `<span>` with `labels.unreadLabel`, so screen readers announce "…, Unread" after the accessible name without changing it. A read row has the outline point and no description. The point is always visible.
-- when `onRename` or `onDelete` is supplied, a ⋮ kit `Dropdown` per row, triggered by a `GhostIconButton` named `labels.moreActionsLabel(title)`, with Rename and Delete. The arrow keys, Enter and Space come from the kit. The design shows rows without a trigger, so on `desktop` the trigger is transparent (`desktop:opacity-0`) until the row is hovered or holds focus, and it stays visible while its menu is open. It stays in the tab order, so focusing it reveals it. On `mobile`, which has no hover, it is always visible.
+- **Unread rows** (`isUnread: true`) follow the indicator rows of `ConversationRow` in `libs/conversation-panel`, which this lib does not import: the filled point and the semibold title. The row button carries `aria-describedby` pointing to a visually hidden `<span>` with `labels.unreadLabel`, so screen readers announce "…, Unread" after the accessible name without changing it. A read row has the outline point and no description. The point is always visible. With a `leading` node the filled point moves to the end of the row.
+- when `onRename` or `onDelete` is supplied, a ⋮ `ActionMenu` (`@epam/ai-dial-chat-shared`) per row, triggered by a `GhostIconButton` named `labels.moreActionsLabel(title)`, with Rename and Delete: the kit `Dropdown` on tablet and desktop, and on a phone a bottom sheet titled `labels.moreActionsLabel(title)` and closed by `labels.closeLabel` (default `'Close'`). The arrow keys, Enter and Space come from the kit. The design shows rows without a trigger, so on `desktop` the trigger is transparent (`desktop:opacity-0`) until the row is hovered or holds focus, and it stays visible while its menu is open. It stays in the tab order, so focusing it reveals it. On `mobile`, which has no hover, it is always visible.
 - with `hasMore` and `onLoadMore`, a kit `LinkButton` (`labels.loadMoreLabel`, default `'See more'`) at the inline start follows the rows, disabled while `isLoadingMore`.
 - **States:**
   - loading: `Spinner` with `labels.loadingLabel`;
@@ -164,6 +171,16 @@ The component's stylesheet ships in the lib's existing `./styles.css` export, an
 - **WHEN** an item has no `isUnread`
 - **THEN** its status point is an outline, no accessible description renders, and the title uses `dial-body-text`
 
+#### Scenario: Leading node replaces the status point
+
+- **WHEN** an item has `leading` and `isUnread: true`
+- **THEN** the `leading` node starts the row button, no status point renders, and the filled unread point sits at the end of the row button; a `trailing` node replaces that point
+
+#### Scenario: Row menu is a bottom sheet on a phone
+
+- **WHEN** the viewport is below 768px and the user activates a row's ⋮ trigger
+- **THEN** a bottom sheet titled `labels.moreActionsLabel(title)` lists Rename and Delete, and choosing one closes it and runs the action
+
 #### Scenario: A row turns unread in place
 
 - **WHEN** a row has keyboard focus and its item changes to `isUnread: true`
@@ -184,7 +201,7 @@ The section renders:
    - The panel renders `composer`, then `outputs`, then `ProjectConversationList`, with no wrapper of its own around `outputs`, so the host's node sits in the column's flow. The panel knows nothing about outputs beyond the slot and its `hasOutputs` flag (default `false`), which it passes to the list as `isEmptyStateShown={!hasOutputs}`.
    - `ProjectViewPage` sets `hasOutputs` while the Outputs section shows files or its error, so a project with outputs but no chats does not say "No outputs or chats yet".
 3. **`ProjectConversationList`**, fed by the `conversations` prop.
-   - The hook owns `{ items, isLoading, hasError, hasMore, isLoadingMore, retry, loadMore, rename, remove, refresh, markViewed }` in local state. It follows the `useFavicon` pattern: `AbortController` cleanup, async/await.
+   - The hook owns `{ items, isLoading, hasError, hasMore, isLoadingMore, retry, loadMore, rename, generateTitle, remove, refresh, markViewed }` in local state. It follows the `useFavicon` pattern: `AbortController` cleanup, async/await.
    - DIAL Core cannot page a project's conversations in display order, so the hook reads the whole list once (`listProjectConversations(projectId, signal)`, no paging) and pages it locally: `items` is the first 20 rows, as in the design (node `23:24330`), and `hasMore` is whether more rows are loaded than shown. While `hasMore`, the list ends with a See more link (`buttons.seeMore`).
    - `loadMore` shows the next 20 rows. When any of them carries `isTitlePending`, it first reads their titles with `getProjectConversationTitles(projectId, names, signal)` (`POST /api/v1/projects/:id/conversations/titles`), with `isLoadingMore` set meanwhile, so no row shows its file-name title. Without pending rows it makes no request. A failed read rejects, keeps the rows shown so far, and the host shows `projects.chats.error`.
    - Items map from `ProjectConversationItemDto` (`title`, `author` → `authorName`, `isUnread`).
@@ -198,6 +215,7 @@ The section renders:
 
 **First message.** Submitting the input SHALL:
 
+0. call the optional `onChatCreateStart` prop, so the page holds its live refresh (see the `project-view-live-updates` capability); when the create fails before any chat exists, call the optional `onChatCreateFailed` prop, and never call it once the chat exists;
 1. call `createProjectConversation(projectId, …)` with the same fields `ConversationRoute`'s `handleCreateConversation` sends;
 2. save the prompt, temperature and response format through `saveProjectConversation`;
 3. `navigate(getProjectConversationRoute(conversation.id), { state: { conversation } })`.
@@ -206,14 +224,16 @@ The section renders:
 
 **Row actions:**
 - `onOpen` (every reader) calls `conversations.markViewed(id)`, then navigates to the project chat route.
-- `onRename` (owner only) opens a kit `Popup` named `projects.chats.renameTitle`, with a labelled `Input` seeded with the title and Save and Cancel buttons (`buttons.save`, `buttons.cancel`). Save, or Enter in the input, trims the value, refuses an empty one inline (`projects.chats.renameEmpty`), and calls `renameProjectConversation`.
-- `onDelete` (owner only) opens `DeleteConfirmationDialog` with `projects.chats.deleteConfirmTitle` (`{{title}}`) and `projects.chats.deleteConfirmDescription`, then calls `deleteProjectConversation`.
+- `onRename` (when `project.canEdit`) opens a kit `Popup` named `projects.chats.renameTitle`, with a labelled `Input` seeded with the title and Save and Cancel buttons (`buttons.save`, `buttons.cancel`). Save, or Enter in the input, trims the value, refuses an empty one inline (`projects.chats.renameEmpty`), and calls `renameProjectConversation`. The dialog also has a sparkles button (`conversationPanel.rename.renameWithAiLabel`) that fills the input with the title from `generateProjectConversationTitle` without saving it; a failure shows `conversationPanel.rename.renameWithAiError` inline.
+- `onDelete` (when `project.canEdit`) opens `DeleteConfirmationDialog` with `projects.chats.deleteConfirmTitle` (`{{title}}`) and `projects.chats.deleteConfirmDescription`, then calls `deleteProjectConversation`.
 
 Success updates the list in place and shows a toast. Failure shows `projects.chats.renameError` or `projects.chats.deleteError`. Neither dialog can be closed while its request is pending. When a refresh removes the row a rename or delete dialog was opened for, the dialog closes and focus moves to the list.
 
 After a delete, the project view's chat count (the delete-project message and the publish warning) drops by one without a reload. A later silent `refresh()` of the project resets the count to the BFF's `conversationCount`.
 
-**Read-only** (`canEdit: false`): no input, and `onRename`/`onDelete` are omitted. The list still opens chats and marks them viewed.
+**Who may write.** `canEdit` is `true` for the owner and for a recipient with edit access. Both get the input and the row menus, and an editor may rename and delete any row, the owner's included, because Core grants `WRITE` to the whole project.
+
+**Read-only** (`canEdit: false`: a view-only recipient or an organization project): no input, and `onRename`/`onDelete` are omitted. The list still opens chats and marks them viewed.
 
 The section labels pass `unreadLabel: t(ConversationPanelI18nKeys.UnreadIndicatorLabel)`, which reuses `conversationPanel.unreadIndicatorLabel`, through `useProjectConversationsPanelLabels`.
 
@@ -236,8 +256,13 @@ Handlers are memoised with `useCallback`, and the mapped items with `useMemo`.
 
 #### Scenario: Shared project shows chats without the input
 
-- **WHEN** a shared project with two conversations is opened
+- **WHEN** a view-only shared project (`canEdit: false`) with two conversations is opened
 - **THEN** the Chats list shows both without row menus, and no chat input renders
+
+#### Scenario: A shared editor gets the input and row menus
+
+- **WHEN** a recipient with edit access opens a shared project with two conversations, one started by the owner
+- **THEN** the chat input renders, and both rows offer Rename and Delete
 
 #### Scenario: Rename from the list
 
@@ -280,8 +305,7 @@ New strings SHALL be added to `apps/chat/src/i18n/locales/en.json` and to `Proje
 - `projects.chats.createError`, `projects.chats.storageFull`;
 - `projects.chat.backToProject` ("Back to {{name}}");
 - `projects.chat.notFound`;
-- `projects.publish.chatsWarning_one` / `_other`;
-- `projects.actions.deleteConfirmWithChatsDescription_one` / `_other`.
+- `projects.publish.chatsWarning_one` / `_other`.
 
 The Rename, Delete, Save, Cancel and Retry labels reuse `buttons.rename`, `buttons.delete`, `buttons.save`, `buttons.cancel` and `buttons.retry`. The See more link takes the new generic key `buttons.seeMore` ("See more", `ButtonsI18nKeys.SeeMore`), because the design's wording differs from `buttons.showMore`. The lib never imports i18n.
 

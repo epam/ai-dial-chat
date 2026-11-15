@@ -1,8 +1,6 @@
-import {
-  AttachmentCanvasContainer,
-  useAttachmentCanvas,
-} from '@epam/ai-dial-attachment-canvas';
+import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import { clearAttachmentCache } from '@epam/ai-dial-chat-hooks/file-manager-canvas';
+import { useAppVersionCheck } from '@epam/ai-dial-chat-hooks/utils';
 import {
   usePanelMaxWidth,
   useViewportWidth,
@@ -41,6 +39,7 @@ import ConversationSourcesPanel from '../components/ConversationSourcesPanel/Con
 import { RouteErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
 import Header from '../components/Header/Header';
 import SourcesSidebarToggle from '../components/Header/SourcesSidebarToggle';
+import McpAppCanvasContainer from '../components/McpAppCanvasContainer/McpAppCanvasContainer';
 import SidebarNavigation from '../components/Navigation/SidebarNavigation';
 import NewVersionFallback from '../components/NewVersionFallback/NewVersionFallback';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
@@ -52,6 +51,7 @@ import {
 } from '../constants/routes';
 import {
   AttachmentCanvasI18nKeys,
+  BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
   SidebarI18nKeys,
@@ -65,9 +65,9 @@ import { usePdfPreviewLoader } from '../hooks/attachment/usePdfPreviewLoader';
 import { useConversationListBridge } from '../hooks/conversation/useConversationListBridge';
 import { useConversationPanelRouteState } from '../hooks/conversation-panel/useConversationPanelRouteState';
 import { useOverlayPendingModel } from '../hooks/overlay/useOverlayPendingModel';
-import { useAppVersionCheck } from '../hooks/useAppVersionCheck/useAppVersionCheck';
 import { useUiFeature } from '../hooks/useUiFeature';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
+import { checkHealth } from '../server-api/health.api';
 import { ApplicationEditorKind } from '../types/application-editor';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
@@ -158,7 +158,7 @@ const App: FC = () => {
   const { currentTheme } = useTheme();
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
-  const { isNewVersionAvailable } = useAppVersionCheck();
+  const { isNewVersionAvailable } = useAppVersionCheck({ checkHealth });
   // TODO: remove in next release
 
   /*
@@ -184,6 +184,9 @@ const App: FC = () => {
   const isFileManagerEnabled = useUiFeature(OverlayFeature.FileManager);
   const isSettingsPageHidden = useUiFeature(OverlayFeature.HideSettingsPage);
   const isUsagePageHidden = useUiFeature(OverlayFeature.HideUsagePage);
+  const isSidebarToggleEnabled = useUiFeature(
+    OverlayFeature.ConversationsPanelToggle,
+  );
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const handleCanvasVisualizerSendMessage = useCanvasVisualizerMessageHandler();
@@ -194,6 +197,7 @@ const App: FC = () => {
     isMobile,
     isCanvasOpen,
     isOpenByDefault: isConversationsSectionOpenByDefault,
+    isToggleEnabled: isSidebarToggleEnabled,
     onCloseCanvas: closeCanvas,
     onCloseSourcesPanel: closeSourcesPanel,
   });
@@ -284,6 +288,17 @@ const App: FC = () => {
     [navigate, isMobile, closeNav],
   );
 
+  /* Same drawer rule as a picked chat, for the sidebar's other routes. */
+  const handleOpenRoute = useCallback(
+    (path: string) => {
+      if (isMobile) {
+        closeNav();
+      }
+      navigate(path);
+    },
+    [navigate, isMobile, closeNav],
+  );
+
   const handleNewChat = useCallback(() => {
     if (isMobile) {
       closeNav();
@@ -300,6 +315,7 @@ const App: FC = () => {
     <ConversationPanelView
       activeConversationId={activeConversationId}
       onSelectConversation={handleSelectConversation}
+      onOpenRoute={handleOpenRoute}
       requestedFilter={panelRequestedFilter}
       onRequestedFilterChange={handlePanelRequestedFilterChange}
       onActiveFilterChange={handlePanelActiveFilterChange}
@@ -593,7 +609,7 @@ const App: FC = () => {
         {(isFileManagerRoute ||
           isProjectPageRoute ||
           (isConversationRoute && isAttachmentsManagerEnabled)) && (
-          <AttachmentCanvasContainer
+          <McpAppCanvasContainer
             loadPdf={loadPdf}
             onVisualizerSendMessage={handleCanvasVisualizerSendMessage}
             labels={{
@@ -666,6 +682,7 @@ const App: FC = () => {
               ooxmlHighlightNavigatedLabel: t(
                 AttachmentCanvasI18nKeys.OoxmlHighlightNavigatedLabel,
               ),
+              loadingLabel: t(BasicI18nKeys.Loading),
             }}
             /* The project pages have no sources panel for the toggle to drive. */
             leftActions={

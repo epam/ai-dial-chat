@@ -474,7 +474,9 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
 
       {isLoading && (
         <div className="flex flex-1 items-center justify-center">
-          <Spinner />
+          <Spinner
+            ariaLabel={labels.loadingAriaLabel ?? 'Loading scheduled task'}
+          />
         </div>
       )}
 

@@ -25,7 +25,10 @@ import {
   getProjectViewRoute,
   parseProjectConversationRouteParams,
 } from '../../constants/routes';
-import { ProjectsI18nKeys } from '../../constants/translation-keys';
+import {
+  BasicI18nKeys,
+  ProjectsI18nKeys,
+} from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useChatLayoutHeaderSlot } from '../../context/ChatLayoutHeaderSlotContext';
 import { ConversationDataSourceContext } from '../../context/ConversationDataSourceContext';
@@ -132,7 +135,7 @@ const ProjectChatPage: FC = () => {
   if (!summary) {
     return (
       <div className="flex size-full items-center justify-center">
-        <Spinner />
+        <Spinner ariaLabel={t(BasicI18nKeys.Loading)} />
       </div>
     );
   }

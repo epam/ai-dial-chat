@@ -5,6 +5,10 @@ import {
 import { act, renderHook } from '@testing-library/react';
 import { createRef } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  isResourceCreateAdapter,
+  ResourceSaveError,
+} from '../../catalog/resource-save-adapter';
 import type { SkillFileContent } from '../skill-file-preview';
 import type {
   SkillEditorSubmitClient,
@@ -368,5 +372,120 @@ describe('useSkillEditorSubmit empty folders', () => {
       .calls[0];
     expect(filePaths).toEqual(['docs/.dial_folder']);
     expect(blobs.map((blob) => blob.size)).toEqual([0]);
+  });
+});
+
+describe('useSkillEditorSubmit with the Save panel', () => {
+  const statusError = (status: number) =>
+    Object.assign(new Error(`status ${status}`), {
+      response: new Response(null, { status }),
+    });
+
+  it('hands a validated create to the panel instead of writing it', async () => {
+    const { client, params } = makeHarness(false);
+    params.onSaveRequest = vi.fn();
+    const { result } = renderHook(() => useSkillEditorSubmit(params));
+
+    await act(async () => {
+      await result.current.handleSubmit(makeValues({ name: 'New skill' }));
+    });
+
+    expect(client.createSkill).not.toHaveBeenCalled();
+    expect(params.onNavigate).not.toHaveBeenCalled();
+    expect(params.onSaveRequest).toHaveBeenCalledOnce();
+    const adapter = vi.mocked(params.onSaveRequest!).mock.lastCall?.[0];
+    if (!adapter || !isResourceCreateAdapter(adapter)) {
+      throw new Error('Expected a create adapter');
+    }
+
+    await expect(adapter.createIn(['team-a'])).resolves.toEqual({
+      id: 'skills/bucket-1/team-a/new-skill',
+    });
+    expect(client.createSkill).toHaveBeenCalledWith(
+      'bucket-1',
+      'team-a/new-skill',
+      expect.any(String),
+      [],
+      [],
+    );
+    expect(params.refetchSkills).toHaveBeenCalledOnce();
+    expect(params.onNotify).not.toHaveBeenCalled();
+  });
+
+  it('turns a 409 on create into the name-conflict message', async () => {
+    const { client, params } = makeHarness(false);
+    vi.mocked(client.createSkill).mockRejectedValue(statusError(409));
+    params.onSaveRequest = vi.fn();
+    const { result } = renderHook(() => useSkillEditorSubmit(params));
+    await act(async () => {
+      await result.current.handleSubmit(makeValues());
+    });
+    const adapter = vi.mocked(params.onSaveRequest!).mock.lastCall?.[0];
+    if (!adapter || !isResourceCreateAdapter(adapter)) {
+      throw new Error('Expected a create adapter');
+    }
+
+    const promise = adapter.createIn([]);
+    await expect(promise).rejects.toBeInstanceOf(ResourceSaveError);
+    await expect(promise).rejects.toThrow(messages.nameConflict);
+  });
+
+  it('saves in place with the loaded ETag and moves through the client', async () => {
+    const { client, params } = makeHarness(true);
+    client.moveSkill = vi
+      .fn()
+      .mockResolvedValue({ id: 'skills/bucket-1/team-a/my-copy' });
+    params.onSaveRequest = vi.fn();
+    const { result } = renderHook(() => useSkillEditorSubmit(params));
+    await act(async () => {
+      await result.current.handleSubmit(makeValues());
+    });
+    const adapter = vi.mocked(params.onSaveRequest!).mock.lastCall?.[0];
+    if (!adapter || isResourceCreateAdapter(adapter)) {
+      throw new Error('Expected an edit adapter');
+    }
+
+    await expect(adapter.saveInPlace()).resolves.toEqual({
+      id: 'skills/bucket-1/my-copy',
+    });
+    expect(vi.mocked(client.updateSkill).mock.lastCall?.[5]).toBe('etag-1');
+    await expect(
+      adapter.move('skills/bucket-1/my-copy', ['team-a']),
+    ).resolves.toEqual({ id: 'skills/bucket-1/team-a/my-copy' });
+    expect(client.moveSkill).toHaveBeenCalledWith('my-copy', 'team-a');
+  });
+
+  it('reports a stale edit as a conflict and as the panel error', async () => {
+    const { client, params } = makeHarness(true);
+    vi.mocked(client.updateSkill).mockRejectedValue(statusError(412));
+    params.onSaveRequest = vi.fn();
+    const { result } = renderHook(() => useSkillEditorSubmit(params));
+    await act(async () => {
+      await result.current.handleSubmit(makeValues());
+    });
+    const adapter = vi.mocked(params.onSaveRequest!).mock.lastCall?.[0];
+    if (!adapter || isResourceCreateAdapter(adapter)) {
+      throw new Error('Expected an edit adapter');
+    }
+
+    await act(async () => {
+      await expect(adapter.saveInPlace()).rejects.toThrow(
+        messages.conflictMessage,
+      );
+    });
+    expect(result.current.conflict).toEqual({
+      message: messages.conflictMessage,
+    });
+  });
+
+  it('keeps validation inline and opens no panel for an invalid form', async () => {
+    const { params } = makeHarness(false);
+    params.onSaveRequest = vi.fn();
+    const { result } = renderHook(() => useSkillEditorSubmit(params));
+    await act(async () => {
+      await result.current.handleSubmit(makeValues({ instructions: '' }));
+    });
+    expect(params.onSaveRequest).not.toHaveBeenCalled();
+    expect(result.current.errors.instructions).toBe(messages.required);
   });
 });

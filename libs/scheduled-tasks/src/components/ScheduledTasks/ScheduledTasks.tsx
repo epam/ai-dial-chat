@@ -216,7 +216,11 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
 
   const renderContent = () => {
     if (isLoading) {
-      return <Spinner />;
+      return (
+        <Spinner
+          ariaLabel={labels.loadingAriaLabel ?? 'Loading scheduled tasks'}
+        />
+      );
     }
 
     if (error) {

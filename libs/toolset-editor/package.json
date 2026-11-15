@@ -3,6 +3,10 @@
   "description": "Host-agnostic form for authoring and editing a DIAL MCP toolset",
   "version": "0.0.1",
   "license": "Apache-2.0",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss"
+  ],
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -25,7 +29,7 @@
   "peerDependencies": {
     "@epam/ai-dial-chat-hooks": "*",
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-ui-kit": "^0.16.0-dev.71",
+    "@epam/ai-dial-ui-kit": "^0.16.0",
     "react": "^19.2.8"
   },
   "nx": {

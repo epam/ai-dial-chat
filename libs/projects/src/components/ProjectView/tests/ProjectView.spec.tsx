@@ -29,7 +29,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
       onChange={(e) => onChange?.(e.target.value)}
     />
   ),
-  Spinner: () => <div role="progressbar" />,
+  Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
+    <div role="progressbar" aria-label={ariaLabel} />
+  ),
 }));
 
 const labels: ProjectViewLabels = {
@@ -169,6 +171,38 @@ describe('ProjectView', () => {
     expect(onContextFileClick).toHaveBeenCalledWith('tickets.csv');
   });
 
+  it('calls onContextFileDownload with the file name from a card download button without opening the file', async () => {
+    const onContextFileDownload = vi.fn();
+    const { onContextFileClick } = renderView({
+      onContextFileDownload,
+      labels: { ...labels, downloadFileLabel: (name) => `Save ${name}` },
+    });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Save tickets.csv' }),
+    );
+
+    expect(onContextFileDownload).toHaveBeenCalledOnce();
+    expect(onContextFileDownload).toHaveBeenCalledWith('tickets.csv');
+    expect(onContextFileClick).not.toHaveBeenCalled();
+  });
+
+  it('names a card download button "Download" when the host supplies no downloadFileLabel', () => {
+    renderView({ onContextFileDownload: vi.fn() });
+
+    expect(
+      screen.getByRole('button', { name: 'Download tickets.csv' }),
+    ).toBeTruthy();
+  });
+
+  it('shows no card download button when onContextFileDownload is omitted', () => {
+    renderView();
+
+    expect(
+      screen.queryByRole('button', { name: 'Download tickets.csv' }),
+    ).toBeNull();
+  });
+
   it('renders only the card named by selectedContextFileId as selected', () => {
     renderView({ selectedContextFileId: 'tickets.csv' });
 
@@ -288,12 +322,100 @@ describe('ProjectView', () => {
     );
 
     expect(items.map((item) => item.textContent)).toEqual([
+      'Pin',
       'Publish',
       'Edit',
       'Share',
       'Download',
       'Delete',
     ]);
+  });
+
+  it('offers Unpublish in place of Publish when onUnpublish is supplied', async () => {
+    const onUnpublish = vi.fn();
+    const onPublish = vi.fn();
+    renderView({ onPublish, onUnpublish });
+
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Unpublish' }));
+    expect(onUnpublish).toHaveBeenCalledOnce();
+    expect(onPublish).not.toHaveBeenCalled();
+  });
+
+  it('puts a non-danger Unpublish in the mobile menu where Publish sits', async () => {
+    const onUnpublish = vi.fn();
+    renderView({ onUnpublish });
+
+    const [, mobileTrigger] = screen.getAllByRole('button', {
+      name: 'More actions',
+    });
+    await userEvent.click(mobileTrigger);
+    const menu = await screen.findByRole('menu');
+    const items = within(menu).getAllByRole('menuitem');
+
+    expect(items.map((item) => item.textContent)).toEqual([
+      'Pin',
+      'Unpublish',
+      'Edit',
+      'Share',
+      'Download',
+      'Delete',
+    ]);
+    expect(items[1].className).not.toMatch(/danger|error/);
+    await userEvent.click(items[1]);
+    expect(onUnpublish).toHaveBeenCalledOnce();
+  });
+
+  it('uses the host Unpublish label when one is supplied', () => {
+    renderView({
+      onUnpublish: vi.fn(),
+      labels: { ...labels, unpublishLabel: 'Retirer' },
+    });
+
+    expect(screen.getByRole('button', { name: 'Retirer' })).toBeTruthy();
+  });
+
+  it('renders no Unpublish control without onUnpublish', async () => {
+    renderView();
+
+    expect(screen.queryByRole('button', { name: 'Unpublish' })).toBeNull();
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'More actions' })[1],
+    );
+    const menu = await screen.findByRole('menu');
+    expect(
+      within(menu).queryByRole('menuitem', { name: 'Unpublish' }),
+    ).toBeNull();
+  });
+
+  it('opens the more-actions menu as a bottom sheet on a phone', async () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+    try {
+      const onEdit = vi.fn();
+      renderView({ onEdit });
+
+      const [, mobileTrigger] = screen.getAllByRole('button', {
+        name: 'More actions',
+      });
+      await userEvent.click(mobileTrigger);
+
+      const sheet = await screen.findByRole('dialog', {
+        name: 'Q4 launch',
+      });
+      await userEvent.click(
+        within(sheet).getByRole('menuitem', { name: 'Edit' }),
+      );
+      expect(onEdit).toHaveBeenCalledOnce();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('renders instruction headings on the panel scale, not the page scale', () => {
@@ -326,6 +448,71 @@ describe('ProjectView', () => {
       within(menu).getByRole('menuitem', { name: 'Download' }),
     );
     expect(onDownload).toHaveBeenCalledOnce();
+  });
+
+  it('offers revoke access in both menus only when supplied by the host', async () => {
+    const onRevokeAccess = vi.fn();
+    const onActionMenuOpenChange = vi.fn();
+    renderView({ onRevokeAccess, onActionMenuOpenChange });
+    for (const trigger of screen.getAllByRole('button', {
+      name: 'More actions',
+    })) {
+      await userEvent.click(trigger);
+      await userEvent.click(
+        within(await screen.findByRole('menu')).getByRole('menuitem', {
+          name: 'Revoke access',
+        }),
+      );
+    }
+    expect(onRevokeAccess).toHaveBeenCalledTimes(2);
+    expect(onActionMenuOpenChange).toHaveBeenCalledWith(true);
+  });
+
+  it('offers Remove from My List in place of Delete when the host supplies it', async () => {
+    const onRemoveFromMyList = vi.fn();
+    renderView({ onDelete: undefined, onRemoveFromMyList });
+
+    for (const trigger of screen.getAllByRole('button', {
+      name: 'More actions',
+    })) {
+      await userEvent.click(trigger);
+      const menu = await screen.findByRole('menu');
+      expect(
+        within(menu).queryByRole('menuitem', { name: 'Delete' }),
+      ).toBeNull();
+      await userEvent.click(
+        within(menu).getByRole('menuitem', { name: 'Remove from My List' }),
+      );
+    }
+    expect(onRemoveFromMyList).toHaveBeenCalledTimes(2);
+  });
+
+  it('names the Remove from My List action with the host label', async () => {
+    renderView({
+      onDelete: undefined,
+      onRemoveFromMyList: vi.fn(),
+      labels: { ...labels, removeFromMyListLabel: 'Retirer de ma liste' },
+    });
+
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'More actions' })[0],
+    );
+    const menu = await screen.findByRole('menu');
+    expect(
+      within(menu).getByRole('menuitem', { name: 'Retirer de ma liste' }),
+    ).toBeTruthy();
+  });
+
+  it('hides Remove from My List when the callback is omitted', async () => {
+    renderView();
+
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'More actions' })[0],
+    );
+    const menu = await screen.findByRole('menu');
+    expect(
+      within(menu).queryByRole('menuitem', { name: 'Remove from My List' }),
+    ).toBeNull();
   });
 
   it('hides Publish, Edit, Share and Delete when their callbacks are omitted', async () => {
@@ -372,16 +559,29 @@ describe('ProjectView', () => {
   it('shows the loading state', () => {
     renderView({ project: null, isLoading: true });
 
-    expect(screen.getByRole('progressbar')).toBeTruthy();
+    expect(
+      screen.getByRole('progressbar', { name: 'Loading project' }),
+    ).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Pin' })).toBeNull();
   });
 
-  it('shows the error state with a retry action', async () => {
-    const { onRetry } = renderView({ project: null, hasError: true });
+  it('announces the load failure through the status region mounted while loading', async () => {
+    const props = { ...baseProps(), project: null };
+    const { rerender } = render(<ProjectView {...props} isLoading />);
+    /* The Spinner is an empty status of its own, so keep every empty region seen while loading. */
+    const emptyRegions = screen
+      .getAllByRole('status')
+      .filter((node) => node.textContent === '');
+
+    rerender(<ProjectView {...props} hasError />);
+    const { onRetry } = props;
 
     expect(
-      screen.getByText('Could not load the project').getAttribute('role'),
-    ).toBe('status');
+      emptyRegions.some(
+        (node) =>
+          node.isConnected && node.textContent === 'Could not load the project',
+      ),
+    ).toBe(true);
     expect(screen.queryByRole('alert')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledOnce();

@@ -38,6 +38,8 @@ export interface UsageLimitBannerViewProps {
   limitTextClassName?: string;
   /** Typography class applied to the reset sentence. Defaults to `'dial-small-paragraph-text'`. */
   resetTextClassName?: string;
+  /** Whether the banner root is its own polite `role="status"` region. Defaults to `true`; pass `false` when the host renders it inside an always-mounted `LiveRegion`. */
+  isLiveRegion?: boolean;
   /** Additional class applied to the banner root, alongside `dial-ci-usage-banner`. */
   className?: string;
   /** Color overrides. */

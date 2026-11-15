@@ -1,3 +1,4 @@
+import { ChatSkillDetailsTrigger } from '@epam/ai-dial-skills';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSkillSelectorOverlay } from '../useSkillSelectorOverlay';
@@ -7,7 +8,12 @@ const state = vi.hoisted(() => ({
   isMobile: false,
 }));
 
-vi.mock('@epam/ai-dial-skills', () => ({
+vi.mock('@epam/ai-dial-skills', async () => ({
+  ChatSkillDetailsTrigger: (
+    await vi.importActual<typeof import('@epam/ai-dial-skills')>(
+      '@epam/ai-dial-skills',
+    )
+  ).ChatSkillDetailsTrigger,
   getSkillFallbackName: (url: string) => url,
   useSkillSelectorOverlay: state.useHostOverlay,
 }));
@@ -46,8 +52,8 @@ describe('useSkillSelectorOverlay', () => {
 
       expect(state.useHostOverlay).toHaveBeenCalledWith(
         expect.objectContaining({
-          historyDetailsTrigger: 'click',
-          activeMentionDetailsTrigger: 'click',
+          historyDetailsTrigger: ChatSkillDetailsTrigger.Click,
+          activeMentionDetailsTrigger: ChatSkillDetailsTrigger.Click,
         }),
       );
     },

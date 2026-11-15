@@ -10,7 +10,10 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { UserConfigI18nKeys } from '../constants/translation-keys';
+import {
+  BasicI18nKeys,
+  UserConfigI18nKeys,
+} from '../constants/translation-keys';
 import {
   getUserConfig,
   pinConversation as apiPinConversation,
@@ -113,13 +116,10 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
   const setPinnedConversation = useCallback(
     async (id: string, isPinned: boolean) => {
       const snapshot = pinnedConversationIds;
-      setPinnedConversationIds((prev) =>
-        isPinned
-          ? prev.includes(id)
-            ? prev
-            : [...prev, id]
-          : prev.filter((x) => x !== id),
-      );
+      setPinnedConversationIds((prev) => {
+        if (!isPinned) return prev.filter((x) => x !== id);
+        return prev.includes(id) ? prev : [...prev, id];
+      });
       try {
         await apiPinConversation(id, isPinned);
       } catch (err) {
@@ -161,13 +161,10 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
   const setInstalledToolset = useCallback(
     async (id: string, isInstalled: boolean) => {
       const snapshot = installedToolsetIds;
-      setInstalledToolsetIds((prev) =>
-        isInstalled
-          ? prev.includes(id)
-            ? prev
-            : [...prev, id]
-          : prev.filter((x) => x !== id),
-      );
+      setInstalledToolsetIds((prev) => {
+        if (!isInstalled) return prev.filter((x) => x !== id);
+        return prev.includes(id) ? prev : [...prev, id];
+      });
       try {
         await updateInstalledToolset(id, isInstalled);
       } catch (err) {
@@ -181,13 +178,10 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
   const setInstalledDeployment = useCallback(
     async (id: string, isInstalled: boolean) => {
       const snapshot = installedDeploymentIds;
-      setInstalledDeploymentIds((prev) =>
-        isInstalled
-          ? prev.includes(id)
-            ? prev
-            : [...prev, id]
-          : prev.filter((x) => x !== id),
-      );
+      setInstalledDeploymentIds((prev) => {
+        if (!isInstalled) return prev.filter((x) => x !== id);
+        return prev.includes(id) ? prev : [...prev, id];
+      });
       try {
         await updateInstalledDeployment(id, isInstalled);
       } catch (err) {
@@ -244,7 +238,7 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
   if (status === UserConfigStatus.Loading) {
     return (
       <div className="flex size-full items-center justify-center">
-        <Spinner />
+        <Spinner ariaLabel={t(BasicI18nKeys.Loading)} />
       </div>
     );
   }

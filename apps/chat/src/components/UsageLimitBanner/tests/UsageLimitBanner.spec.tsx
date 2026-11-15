@@ -226,7 +226,7 @@ describe('UsageLimitBanner', () => {
     setLimits(dayAt(70));
     await renderBanner(DEPLOYMENT_ID);
 
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('status').textContent).toBe('');
   });
 
   it('renders nothing for an agent while the account budget is comfortable', async () => {
@@ -241,14 +241,14 @@ describe('UsageLimitBanner', () => {
 
     expect(mockGetUserUsage).toHaveBeenCalledOnce();
     expect(mockGetDeploymentLimits).not.toHaveBeenCalled();
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('status').textContent).toBe('');
   });
 
   it('follows a custom threshold', async () => {
     setThreshold(90);
     setLimits(dayAt(80));
     const { rerender } = await renderBanner(DEPLOYMENT_ID);
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('status').textContent).toBe('');
 
     setLimits(dayAt(92));
     await remountBanner(rerender, DEPLOYMENT_ID);
@@ -260,14 +260,14 @@ describe('UsageLimitBanner', () => {
     mockGetUserUsage.mockReturnValue(new Promise<never>(() => undefined));
     await renderBanner(DEPLOYMENT_ID);
 
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('status').textContent).toBe('');
   });
 
   it('renders nothing without a deployment', async () => {
     setLimits(dayAt(80));
     await renderBanner(undefined);
 
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('status').textContent).toBe('');
     expect(mockGetDeploymentUsage).not.toHaveBeenCalled();
     expect(mockGetUserUsage).not.toHaveBeenCalled();
   });
@@ -288,11 +288,11 @@ describe('UsageLimitBanner', () => {
       const { rerender } = await renderBanner(DEPLOYMENT_ID);
 
       await user.click(screen.getByRole('button'));
-      expect(screen.queryByRole('status')).toBeNull();
+      expect(screen.getByRole('status').textContent).toBe('');
 
       setLimits(dayAt(85));
       await remountBanner(rerender, DEPLOYMENT_ID);
-      expect(screen.queryByRole('status')).toBeNull();
+      expect(screen.getByRole('status').textContent).toBe('');
 
       setLimits(dayAt(100));
       await remountBanner(rerender, DEPLOYMENT_ID);
@@ -305,7 +305,7 @@ describe('UsageLimitBanner', () => {
       const { rerender } = await renderBanner('gpt-4o');
 
       await user.click(screen.getByRole('button'));
-      expect(screen.queryByRole('status')).toBeNull();
+      expect(screen.getByRole('status').textContent).toBe('');
 
       rerender(<UsageLimitBanner deploymentId="claude" />);
       await settle();
@@ -321,7 +321,7 @@ describe('UsageLimitBanner', () => {
       unmount();
       await renderBanner(DEPLOYMENT_ID);
 
-      expect(screen.queryByRole('status')).toBeNull();
+      expect(screen.getByRole('status').textContent).toBe('');
     });
 
     it('dismisses from the keyboard', async () => {
@@ -332,7 +332,7 @@ describe('UsageLimitBanner', () => {
       await user.tab();
       await user.keyboard('{Enter}');
 
-      expect(screen.queryByRole('status')).toBeNull();
+      expect(screen.getByRole('status').textContent).toBe('');
     });
   });
 

@@ -24,6 +24,7 @@ export const useProjectConversationListLabels =
             : t(ProjectsI18nKeys.ChatsOpenLabelNoAuthor, { title }),
         moreActionsLabel: (title) =>
           t(ProjectsI18nKeys.ChatsMoreActions, { title }),
+        closeLabel: t(ButtonsI18nKeys.Close),
         renameLabel: t(ButtonsI18nKeys.Rename),
         deleteLabel: t(ButtonsI18nKeys.Delete),
         loadingLabel: t(ProjectsI18nKeys.ChatsLoading),

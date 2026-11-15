@@ -1,6 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   Dropdown,
+  DropdownOverlayRole,
   GhostButton,
   Highlight,
   Input,
@@ -39,6 +40,8 @@ export interface DeploymentSelectorFieldLabels {
   emptyLabel: string;
   errorLabel: string;
   browseLabel?: string;
+  /** Accessible name of the default dropdown panel. Defaults to `'Select model'`. */
+  panelAriaLabel?: string;
 }
 
 export interface DeploymentSelectorFieldProps {
@@ -55,7 +58,7 @@ export interface DeploymentSelectorFieldProps {
   isDisabled?: boolean;
   isInvalid?: boolean;
   labelledById?: string;
-  /** Accessible popup role. Use `dialog` for a host-rendered sheet. Defaults to `listbox`. */
+  /** Trigger `aria-haspopup` for a `renderOverlay` sheet; the default dropdown derives `dialog` from its overlay role. Defaults to `listbox`. */
   ariaHasPopup?: AriaAttributes['aria-haspopup'];
   className?: string;
   panelClassName?: string;
@@ -199,7 +202,7 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
       }}
       readOnly
       role="combobox"
-      aria-haspopup={ariaHasPopup}
+      aria-haspopup={renderOverlay ? ariaHasPopup : undefined}
       aria-expanded={isOpen}
       aria-labelledby={labelledById}
       disabled={isDisabled}
@@ -246,6 +249,11 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
       disabled={isDisabled}
       className="w-full"
       listClassName="w-[min(var(--reference-width),calc(100vw-2rem))] max-w-full"
+      /* Search, status regions, listbox and footer: a dialog, not a menu.
+       * Arrow keys still move between the listbox options. */
+      overlayRole={DropdownOverlayRole.Dialog}
+      overlayAriaLabel={labels.panelAriaLabel ?? 'Select model'}
+      optionArrowNavigation
       renderOverlay={() => panel}
     >
       {trigger}

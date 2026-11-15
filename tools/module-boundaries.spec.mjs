@@ -52,6 +52,30 @@ const boundaryErrors = async (
   return result.messages.filter((message) => message.ruleId === ruleId);
 };
 
+/*
+ * `nx lint` runs `eslint .` from the project folder, so a root config block
+ * whose globs are written from the repo root only applies there if it sets
+ * `basePath`. Lint the probe the same way to prove that it does.
+ */
+const projectCwdErrors = async (projectRoot, specifier, importedNames) => {
+  const projectEslint = new ESLint({ cwd: join(workspaceRoot, projectRoot) });
+  const names = importedNames.join(', ');
+  const [result] = await projectEslint.lintText(
+    `import { ${names} } from '${specifier}';\n\nexport { ${names} };\n`,
+    {
+      filePath: join(
+        workspaceRoot,
+        projectRoot,
+        'src',
+        '__module-boundaries-probe__.ts',
+      ),
+    },
+  );
+  return result.messages.filter(
+    (message) => message.ruleId === RESTRICTED_RULE,
+  );
+};
+
 test('a UI lib cannot import the generated API client', async () => {
   const errors = await boundaryErrors(
     'libs/catalog',
@@ -156,6 +180,34 @@ test('toolset-editor may import chat-hooks', async () => {
     ['getApiErrorDetails'],
   );
   assert.deepEqual(errors, []);
+});
+
+test('chat-hooks may call a hook from a package it depends on for data shapes', async () => {
+  const errors = await boundaryErrors(
+    'libs/chat-hooks',
+    '@epam/ai-dial-attachment-canvas',
+    RESTRICTED_RULE,
+    ['useAttachmentCanvas'],
+  );
+  assert.deepEqual(errors, []);
+});
+
+test('the chat-hooks hooks guard applies when lint runs from libs/chat-hooks', async () => {
+  const errors = await projectCwdErrors(
+    'libs/chat-hooks',
+    '@epam/ai-dial-catalog',
+    ['useFavColumns'],
+  );
+  assert.equal(errors.length, 1);
+});
+
+test('the chat-hooks importer guard applies when lint runs from a feature lib', async () => {
+  const errors = await projectCwdErrors(
+    'libs/catalog',
+    '@epam/ai-dial-chat-hooks',
+    ['getApiErrorDetails'],
+  );
+  assert.equal(errors.length, 1);
 });
 
 test('chat-hooks has no .tsx file outside its tests', () => {

@@ -93,6 +93,12 @@ export interface ApplicationEditorContext {
 /** What a kind's `create` resolves to; `MetadataFirst` kinds must return the new id. */
 export type ApplicationCreateResult = { id?: string } | void;
 
+/** Where a create writes, for a create that saves an edited application as a new version. */
+export interface ApplicationCreateOptions {
+  /** Personal folder to create the application in; omitted is the bucket root. */
+  folderPath?: string[];
+}
+
 /** A key of the app's translation resources. */
 export type ApplicationEditorI18nKey = ParseKeys<'translation'>;
 
@@ -184,6 +190,7 @@ export interface ApplicationEditorFormDefinition<TSetup> {
     metadata: DeploymentCreationFormValues,
     setup: TSetup,
     ctx: ApplicationEditorContext,
+    options?: ApplicationCreateOptions,
   ) => Promise<ApplicationCreateResult>;
   /** Updates the application; absent when the Setup handle saves an edited application. */
   update?: (
@@ -191,6 +198,24 @@ export interface ApplicationEditorFormDefinition<TSetup> {
     metadata: DeploymentCreationFormValues,
     setup: TSetup,
   ) => Promise<unknown>;
+  /** Opts the kind into the Save panel for edit-mode Save; absent keeps Save in place. */
+  savePanel?: ApplicationSavePanelConfig;
+  /** Metadata field state that depends on the mode, e.g. a version that is read-only while editing. */
+  getMetadataFieldState?: (
+    isEditMode: boolean,
+  ) => ApplicationMetadataFieldState;
+}
+
+/** How an application kind presents itself in the Save panel. */
+export interface ApplicationSavePanelConfig {
+  /** Returns the translated resource type the panel title names, e.g. the schema's display name. */
+  getTypeLabel: (ctx: ApplicationEditorContext) => string;
+}
+
+/** Metadata field state an application kind derives from the editor mode. */
+export interface ApplicationMetadataFieldState {
+  /** Renders the Version field read-only. */
+  isVersionReadOnly?: boolean;
 }
 
 /** An application kind that renders its own page body (the toolset's auth flow). */

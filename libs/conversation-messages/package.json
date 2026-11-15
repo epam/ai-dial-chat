@@ -4,6 +4,10 @@
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -27,7 +31,7 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-ui-kit": "^0.16.0-dev.71"
+    "@epam/ai-dial-ui-kit": "^0.16.0"
   },
   "nx": {
     "tags": [

@@ -380,15 +380,14 @@ describe('OfflineCredentialsService', () => {
       );
     });
 
-    it('maps a falsy Core response to a 502, never a success', async () => {
+    /* Core answers `200 false` when the user has no stored grant. */
+    it('treats Core resolving false (nothing to revoke) as idempotent success', async () => {
       const { service, dialClient } = makeService();
       vi.mocked(dialClient.client.offlineCredentialsSignOut).mockResolvedValue(
         okResponse(false),
       );
 
-      await expect(service.signOut('token')).rejects.toBeInstanceOf(
-        BadGatewayException,
-      );
+      await expect(service.signOut('token')).resolves.toBeUndefined();
     });
 
     it('propagates a mapped exception for a non-OK Core response other than 404', async () => {

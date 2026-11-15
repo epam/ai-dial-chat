@@ -70,7 +70,12 @@ When rendered, the selector SHALL be a `Dropdown` (from `@epam/ai-dial-ui-kit`) 
 
 Before the user picks anything, "the currently displayed file" SHALL be the node named by `selectedFileId` — the trigger's label and the body SHALL both reflect that node from the moment the Content tab first renders, not only after some later interaction. The lib does not decide which id that is; it only renders whatever `selectedFileId` the host supplied. For a skill, the host resolves the manifest node's actual opaque listing id, which may be the relative `SKILL_MANIFEST_FILE` value or a Core-prefixed path ending in `/files/SKILL.md`.
 
-The Content tab SHALL keep its existing structure otherwise: the selector sits above the description summary, which sits above the body.
+The description summary SHALL precede the selector, which SHALL precede the file body. The whole section below the tab row SHALL share one vertical scroll container, so a long description scrolls away instead of reducing the body to a small fixed area. The selector row SHALL stick to the top of that scroll container once reached and use the panel's themed background so file content does not show through it. The tab row SHALL stay outside that scroll container. This layout SHALL be identical on mobile and desktop and under LTR and RTL.
+
+#### Scenario: A long description scrolls with the file
+
+- **WHEN** a skill has a long description and the user scrolls the Details tab
+- **THEN** the description scrolls away, the file selector pins to the top below the tabs, and the file body continues through the same scroll area
 
 #### Scenario: The trigger and body default to `selectedFileId` before any pick
 

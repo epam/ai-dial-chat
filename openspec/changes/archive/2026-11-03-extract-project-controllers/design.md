@@ -21,7 +21,7 @@ See `proposal.md` for motivation and the measured duplication. Facts that shape 
 
 - Moving anything that needs `t()`, router, contexts, notifications, `server-api` or JSX (pages, containers, `*Labels` hooks, `useBuilderLeaveGuard`, composer menus, `project-create-errors`).
 - Changing the project chat page, the data-source consumer (`ConversationView`) or any visible behaviour.
-- Publishing the package or migrating `pg-chat`.
+- Publishing the package or migrating a downstream host.
 
 ## Decisions
 
@@ -127,7 +127,7 @@ Alternative: leave the data source in the app and move only `watchProjectConvers
 
 ### D10. Collapse the one-line adapters instead of generating them (E)
 
-Seven files in `apps/chat/src/hooks/projects/` are `useShared…(projectsClient, …)`. `AGENTS.md` keeps the client with the host, so those hooks cannot move, but the hop through an adapter can go: pages import the shared hook and pass `projectsClient`. A factory such as `createProjectHooks(client)` was considered and rejected: it is a new public API shape with no precedent in the lib, and it saves no more lines than direct calls. `projects-client.ts` and the two `server-api` wrappers (`projects.api.ts`, `project-conversations.api.ts`) stay as they are. Rebuilding the client from `projectsRequests` was considered and dropped in this change: the wrappers are the app's documented seam, and about nine specs (pages, the section, the data source) mock them, so the collapse would re-target those mocks for no behaviour change. It remains a simplification for `pg-chat`, which has no such seam to keep. `useProjectActions` stays because it wires pins, toasts and navigation.
+Seven files in `apps/chat/src/hooks/projects/` are `useShared…(projectsClient, …)`. `AGENTS.md` keeps the client with the host, so those hooks cannot move, but the hop through an adapter can go: pages import the shared hook and pass `projectsClient`. A factory such as `createProjectHooks(client)` was considered and rejected: it is a new public API shape with no precedent in the lib, and it saves no more lines than direct calls. `projects-client.ts` and the two `server-api` wrappers (`projects.api.ts`, `project-conversations.api.ts`) stay as they are. Rebuilding the client from `projectsRequests` was considered and dropped in this change: the wrappers are the app's documented seam, and about nine specs (pages, the section, the data source) mock them, so the collapse would re-target those mocks for no behaviour change. It remains a simplification for a downstream host, which has no such seam to keep. `useProjectActions` stays because it wires pins, toasts and navigation.
 
 Page specs mock `server-api`, not the adapters, so they are unaffected; the adapter specs are deleted after the cases they alone assert (disabled/no-id, first-render loading, abort on unmount or disable, previous project not returned, `isSubmitting` in flight, status-only failure) are added to the lib specs, so coverage does not drop.
 
@@ -147,7 +147,7 @@ Vertical, one concept per slice, each ending with the host adopting the lib code
 ## Migration Plan
 
 1. Land each slice behind no flag: the library export and the `apps/chat` adoption ship together, so there is never a second copy of the code in the repository.
-2. After the last slice, `pg-chat` bumps to the published version, deletes its copies and keeps its adapters. That follow-up is outside this change.
+2. After the last slice, a downstream host bumps to the published version, deletes its copies and keeps its adapters. That follow-up is outside this change.
 3. Rollback: revert the slice's commit; there is no data, API or schema migration, and no other slice depends on a later one except A2 on A1 and the project data source on B2.
 
 ## Open Questions

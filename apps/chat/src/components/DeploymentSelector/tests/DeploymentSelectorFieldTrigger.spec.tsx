@@ -212,8 +212,13 @@ describe('DeploymentSelectorFieldTrigger', () => {
       rerender(
         <DeploymentSelectorFieldTrigger {...props} className="desktop-host" />,
       );
-      expect(screen.queryByRole('dialog')).toBeNull();
-      expect(await screen.findByText('overlay content')).toBeTruthy();
+      /* Back on desktop the panel moves from the sheet into the dropdown,
+       which is a dialog of its own named by the same label. */
+      const dropdown = await screen.findByRole('dialog', {
+        name: 'deploymentSelector.ariaLabel',
+      });
+      expect(dropdown).not.toBe(sheet);
+      expect(within(dropdown).getByText('overlay content')).toBeTruthy();
       await user.click(screen.getByText('overlay content'));
       expect(screen.queryByText('overlay content')).toBeNull();
     });

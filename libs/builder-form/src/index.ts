@@ -4,6 +4,7 @@ export type {
   BuilderFormContainerStyles,
   BuilderFormContainerColors,
 } from './models/builder-form-container-props';
+export { BuilderFormActionsOrder } from './models/builder-form-actions-order';
 export type { BuilderFormActionsLabels } from './models/builder-form-actions-props';
 export type {
   BuilderFormHeaderLabels,
@@ -89,3 +90,7 @@ export {
 } from './utils/validate-deployment-creation-fields';
 export { BUILDER_FORM_CLASS } from './constants/public-class-names';
 export { DEFAULT_METADATA_FORM_LABELS } from './constants/metadata-form';
+export {
+  AVATAR_ALLOWED_MIME_TYPES,
+  AVATAR_MAX_FILE_SIZE_BYTES,
+} from './constants/avatar-picker';

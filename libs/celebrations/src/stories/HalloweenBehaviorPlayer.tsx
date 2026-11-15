@@ -1,3 +1,4 @@
+import { LiveRegion, LiveRegionElement } from '@epam/ai-dial-ui-kit';
 import { useMemo, useState, type FC } from 'react';
 import {
   CelebrationEnvironmentContext,
@@ -48,9 +49,12 @@ export const HalloweenBehaviorPlayer: FC<HalloweenBehaviorPlayerProps> = ({
           <HalloweenDecor onActivate={() => setClicks((count) => count + 1)} />
         </StoryHostPage>
       </CelebrationEnvironmentContext.Provider>
-      <p role="status" className="fixed inset-e-3 top-3 rounded border p-2">
+      <LiveRegion
+        as={LiveRegionElement.P}
+        className="fixed inset-e-3 top-3 rounded border p-2"
+      >
         Pumpkin clicks: {clicks}
-      </p>
+      </LiveRegion>
     </div>
   );
 };

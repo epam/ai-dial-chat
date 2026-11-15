@@ -80,4 +80,73 @@ describe('createSerializedKeyedWriter', () => {
     await expect(b).resolves.toBeUndefined();
     expect(write.mock.calls).toEqual([['a'], ['b']]);
   });
+
+  describe('subscribe', () => {
+    it('notifies a listener once a write succeeds, before its caller resumes', async () => {
+      const writer = createSerializedKeyedWriter(async () => undefined);
+      const listener = vi.fn();
+      writer.subscribe(listener);
+
+      await writer.enqueue('a');
+
+      expect(listener).toHaveBeenCalledOnce();
+      expect(listener).toHaveBeenCalledWith('a');
+    });
+
+    it('notifies nobody and rejects the caller when the write fails', async () => {
+      const writer = createSerializedKeyedWriter(async () => {
+        throw new Error('offline');
+      });
+      const listener = vi.fn();
+      writer.subscribe(listener);
+
+      await expect(writer.enqueue('a')).rejects.toThrow('offline');
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it('notifies nobody for a dropped write', async () => {
+      const first = deferred();
+      const write = vi
+        .fn<(key: string) => Promise<void>>()
+        .mockReturnValueOnce(first.promise)
+        .mockResolvedValue(undefined);
+      const writer = createSerializedKeyedWriter(write);
+      const listener = vi.fn();
+      writer.subscribe(listener);
+
+      const a = writer.enqueue('a');
+      const b = writer.enqueue('b');
+      writer.drop('b');
+      first.resolve();
+      await Promise.all([a, b]);
+
+      expect(listener).toHaveBeenCalledOnce();
+      expect(listener).toHaveBeenCalledWith('a');
+    });
+
+    it('keeps notifying the others and resolves the caller when a listener throws', async () => {
+      const writer = createSerializedKeyedWriter(async () => undefined);
+      const listener = vi.fn();
+      writer.subscribe(() => {
+        throw new Error('listener bug');
+      });
+      writer.subscribe(listener);
+
+      await expect(writer.enqueue('a')).resolves.toBeUndefined();
+
+      expect(listener).toHaveBeenCalledWith('a');
+    });
+
+    it('stops notifying a removed listener', async () => {
+      const writer = createSerializedKeyedWriter(async () => undefined);
+      const listener = vi.fn();
+      const unsubscribe = writer.subscribe(listener);
+      unsubscribe();
+
+      await writer.enqueue('a');
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -2,10 +2,6 @@ import { ConflictException, ServiceUnavailableException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
 import {
-  ConversationGenerationService,
-  GenerationCancelReason,
-} from '../conversation-generation.service';
-import {
   BackgroundGenerationDto,
   BackgroundGenerationStatus,
 } from '../dto/background-generation.dto';
@@ -23,6 +19,10 @@ import {
   BackgroundStartResult,
   BackgroundStopResult,
 } from './background-generation.service';
+import {
+  ConversationGenerationService,
+  GenerationCancelReason,
+} from './conversation-generation.service';
 import {
   CoreResponseResultKind,
   type CoreResponsesClient,
@@ -552,6 +552,28 @@ describe('BackgroundGenerationService.startAndRelay', () => {
       drain(service.startAndRelay(params() as never)),
     ).rejects.toBeInstanceOf(ConflictException);
     expect(dialClient.client.createResponse).not.toHaveBeenCalled();
+  });
+
+  it('rejects a start while a foreground generation holds the conversation', async () => {
+    const store = makeStore([
+      {
+        role: ConversationMessageRole.Assistant,
+        content: '',
+        timestamp: 't',
+        foregroundGeneration: {
+          generationId: '9d1e2f3a-4b5c-4d6e-8f70-81a2b3c4d5e6',
+          startedAt: 1,
+          expiresAt: Date.now() + 60_000,
+        },
+      } as never,
+    ]);
+    const { service, dialClient } = makeService({ store });
+
+    await expect(
+      drain(service.startAndRelay(params() as never)),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(dialClient.client.createResponse).not.toHaveBeenCalled();
+    expect(store.mocks.saveConversationIfMatch).not.toHaveBeenCalled();
   });
 
   it('retries the placeholder after an unrelated concurrent change instead of rejecting', async () => {
@@ -1116,17 +1138,18 @@ describe('BackgroundGenerationService.saveClientConversation', () => {
     });
   });
 
-  it('resolves null when the conversation cannot be read, so the caller keeps the old save', async () => {
+  it('refuses with 503 and writes nothing when the conversation cannot be read', async () => {
     const store = makeStore([olderAnswer]);
     store.mocks.readConversationWithEtag.mockRejectedValueOnce(
       new Error('storage down'),
     );
     const { service } = makeService({ store });
 
-    expect(
-      await service.saveClientConversation(context, { messages: [] } as never),
-    ).toBeNull();
+    await expect(
+      service.saveClientConversation(context, { messages: [] } as never),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
     expect(store.mocks.saveConversationIfMatch).not.toHaveBeenCalled();
+    expect(store.mocks.saveConversation).not.toHaveBeenCalled();
   });
 
   it('creates a conversation that does not exist yet with the unconditional save', async () => {

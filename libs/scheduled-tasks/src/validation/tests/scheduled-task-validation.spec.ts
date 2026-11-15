@@ -4,6 +4,7 @@ import {
   type ScheduledTaskCreateFormValues,
 } from '../../index';
 import {
+  ScheduledTaskTextField,
   ScheduledTaskValidationErrorCode,
   validateScheduledTaskFormValues,
   validateScheduledTaskTextField,
@@ -76,11 +77,17 @@ describe('validateScheduledTaskFormValues', () => {
       prompt: ScheduledTaskValidationErrorCode.PromptTooLong,
       description: ScheduledTaskValidationErrorCode.DescriptionTooLong,
     });
-    expect(validateScheduledTaskTextField('displayName', 'Daily\treview')).toBe(
-      ScheduledTaskValidationErrorCode.DisplayNameControlCharacters,
-    );
     expect(
-      validateScheduledTaskTextField('displayName', 'a'.repeat(256)),
+      validateScheduledTaskTextField(
+        ScheduledTaskTextField.DisplayName,
+        'Daily\treview',
+      ),
+    ).toBe(ScheduledTaskValidationErrorCode.DisplayNameControlCharacters);
+    expect(
+      validateScheduledTaskTextField(
+        ScheduledTaskTextField.DisplayName,
+        'a'.repeat(256),
+      ),
     ).toBeUndefined();
   });
 
@@ -99,28 +106,53 @@ describe('validateScheduledTaskFormValues', () => {
     ).toBe(ScheduledTaskValidationErrorCode.DayOfMonthInvalid);
   });
 
-  it('requires a valid day of week and time for a custom repeat', () => {
+  it('requires at least one day and a valid time for a custom repeat', () => {
     expect(
       validateScheduledTaskFormValues(
         {
           ...values,
           repeat: ScheduledTaskRepeat.Custom,
-          everyWeeks: '2',
+          daysOfWeek: [],
           time: '',
         },
         { now },
       ),
     ).toEqual({
-      dayOfWeek: ScheduledTaskValidationErrorCode.DayOfWeekInvalid,
+      daysOfWeek: ScheduledTaskValidationErrorCode.DaysOfWeekInvalid,
       time: ScheduledTaskValidationErrorCode.TimeInvalid,
     });
+  });
+
+  it('accepts one or several distinct custom days', () => {
+    for (const daysOfWeek of [['3'], ['0', '2', '4']]) {
+      expect(
+        validateScheduledTaskFormValues(
+          { ...values, repeat: ScheduledTaskRepeat.Custom, daysOfWeek },
+          { now },
+        ),
+      ).toEqual({});
+    }
+  });
+
+  it('rejects unknown or repeated custom days', () => {
+    for (const daysOfWeek of [['7'], ['1', '1']]) {
+      expect(
+        validateScheduledTaskFormValues(
+          { ...values, repeat: ScheduledTaskRepeat.Custom, daysOfWeek },
+          { now },
+        ).daysOfWeek,
+      ).toBe(ScheduledTaskValidationErrorCode.DaysOfWeekInvalid);
+    }
+  });
+
+  it('checks only the single weekday for a weekly repeat', () => {
     expect(
       validateScheduledTaskFormValues(
         {
           ...values,
-          repeat: ScheduledTaskRepeat.Custom,
-          everyWeeks: '2',
+          repeat: ScheduledTaskRepeat.Weekly,
           dayOfWeek: '0',
+          daysOfWeek: [],
         },
         { now },
       ),

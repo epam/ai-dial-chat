@@ -263,11 +263,21 @@ are omitted so quote-only streaming deltas preserve an earlier page.
 - `annotationHighlightId(annotation, fallbackIndex)` — returns the base highlight id for one annotation: `annotation.index` when the wire supplied one, otherwise an id derived from the annotation's own identity (its `cit` tag id plus a digest of its selectors), falling back to `fallbackIndex` only for an annotation carrying none of those. The id is opaque — compare it, never parse it — and a position-derived id is unique only within the list it came from, which is why it is the last resort. A base id is not guaranteed unique — a wire payload may repeat an `index` — so build a list's ids with `annotationHighlightIds`
 - `annotationHighlightIds(annotations)` — returns one id per entry, unique within the list: each entry's `annotationHighlightId` when no earlier entry holds it (so unambiguous wire indices stay `"0"`, `"1"`, …), otherwise that id with a `-<n>` suffix no other entry uses. `annotationsToPdfHighlights` and `libs/chat-hooks`'s Office/PDF canvas mappers use it, so the id selected for a clicked annotation is the one its own highlight carries
 - `getAnnotationPdfPage(annotation)` — returns the page to open from its `pdf_bbox`/`pdf_region` body selectors: the first selector with valid geometry wins, so the page matches its highlight; otherwise the first one with a positive integer `page`, so a page-only selector such as `{ type: 'pdf_region', page: 2 }` still navigates (with no highlight); returns `undefined` when no valid page exists
+- `getCitationGroupPage(group)` — returns the 1-based PDF page a citation marker refers to: `getAnnotationPdfPage(group.primaryAnnotation)`, else the `#page=N` fragment of `group.sourceUrl`. Returns `undefined` when there is no page, or when `group.sourceName` already mentions one (`page 1`, `p. 3`, `pp. 3-5`, `pg 2`, `#page=4`, case-insensitive), so a source that writes the page into its title is not labelled twice. The lib returns only the number, and the host builds the label text:
+
+  ```ts
+  import { getCitationGroupPage } from '@epam/ai-dial-quotations';
+
+  const page = getCitationGroupPage(group);
+  const label =
+    page == null ? group.sourceName : `${group.sourceName}, p. ${page}`;
+  ```
+
 - `injectCitationSentinels(content, groups)` — inserts sentinel strings at character offsets in markdown, for offset-based (non-`html_tag`) groups only
 - `stripCitTagsWhileStreaming(content)` — hides supported paired citation elements while streaming and escapes every other `cit` shape for literal display
 - `prepareCitationContent(content, isStreaming)` — prepares markdown for a surface that renders `<cit>` elements but no offset markers: `stripCitTagsWhileStreaming` while streaming, otherwise escapes every unsupported `cit` shape; never injects sentinels and returns content without `<cit` unchanged
 - `replaceSentinelsInChildren(children, renderMarker)` — replaces sentinels with React nodes in a rendered tree
-- `replaceCitTagsWithSourceNames(content, groups, fallbackGroups?)` — replaces each supported `<cit data-id="…"></cit>` element that resolves to a group (message `groups` first, then `fallbackGroups`) with the group's Markdown-escaped `sourceName`, leaving unresolved tags untouched. Use it before serializing content outside the renderer (e.g. the message Copy action), where the `cit` override never runs and the element would otherwise copy as nothing
+- `replaceCitTagsWithSourceNames(content, groups, fallbackGroups?, formatLabel?)` — replaces each supported `<cit data-id="…"></cit>` element that resolves to a group (message `groups` first, then `fallbackGroups`) with the Markdown-escaped `formatLabel(group)`, leaving unresolved tags untouched. `formatLabel` defaults to `(group) => group.sourceName`; pass the same text the marker shows (e.g. with its page) so copied text matches the pill. Use it before serializing content outside the renderer (e.g. the message Copy action), where the `cit` override never runs and the element would otherwise copy as nothing
 - `getReferenceAttachmentGroups(dtos)` — maps reference-only attachments to synthetic annotation groups
 - `isReferenceOnlyAttachment(dto)` — returns true for RAG/grounding chunks without a direct URL
 - `parsePdfPageReference(url)` — parses a PDF URL with optional `#page=N` fragment

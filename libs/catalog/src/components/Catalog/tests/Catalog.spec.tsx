@@ -34,7 +34,9 @@ const listViewScrollToTop = vi.hoisted(() => vi.fn());
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  Spinner: () => <div role="status" aria-label="Loading" />,
+  Spinner: ({ ariaLabel }: { ariaLabel?: string }) => (
+    <div role="status" aria-label={ariaLabel} />
+  ),
   FabButton: ({
     icon,
     onClick,
@@ -2031,5 +2033,24 @@ describe('Catalog — scroll to top', () => {
     render(<Catalog items={items} favorites={[]} isLoading />);
 
     expect(screen.queryByRole('button', { name: 'Scroll to top' })).toBeNull();
+  });
+
+  it('names the loading spinner with the English default', () => {
+    render(<Catalog items={items} favorites={[]} isLoading />);
+
+    expect(screen.getByRole('status', { name: 'Loading…' })).toBeTruthy();
+  });
+
+  it('names the loading spinner with titles.loadingLabel', () => {
+    render(
+      <Catalog
+        items={items}
+        favorites={[]}
+        isLoading
+        titles={{ loadingLabel: 'Chargement…' }}
+      />,
+    );
+
+    expect(screen.getByRole('status', { name: 'Chargement…' })).toBeTruthy();
   });
 });

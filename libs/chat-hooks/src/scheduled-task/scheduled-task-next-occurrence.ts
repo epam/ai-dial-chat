@@ -14,7 +14,9 @@ const matchesCronDay = (
 ): boolean => {
   if (dayOfWeek != null) {
     /* APScheduler weekdays run Monday=0..Sunday=6; JS `getUTCDay` Sunday=0. */
-    return (Number(dayOfWeek) + 1) % 7 === date.getUTCDay();
+    return dayOfWeek
+      .split(',')
+      .some((day) => (Number(day) + 1) % 7 === date.getUTCDay());
   }
   if (dayOfMonth === CRON_LAST_DAY_OF_MONTH) {
     const nextDay = new Date(date);
@@ -27,9 +29,9 @@ const matchesCronDay = (
 
 /**
  * Returns the next UTC time at which a cron trigger with a fixed
- * `hour`/`minute` fires, honouring its `day_of_week` (Weekly) or `day`
- * (Monthly) constraint. Returns `undefined` when the fields are not plain
- * values this helper can evaluate.
+ * `hour`/`minute` fires, honouring its `day_of_week` (a weekday or a comma
+ * list of weekdays) or `day` (Monthly) constraint. Returns `undefined` when
+ * the fields are not plain values this helper can evaluate.
  */
 export const getNextCronOccurrence = (
   cron: ScheduleCronDto,
@@ -46,7 +48,7 @@ export const getNextCronOccurrence = (
     !minute ||
     !PLAIN_NUMBER.test(hour) ||
     !PLAIN_NUMBER.test(minute) ||
-    (dayOfWeek != null && !/^[0-6]$/.test(dayOfWeek)) ||
+    (dayOfWeek != null && !/^[0-6](?:,[0-6])*$/.test(dayOfWeek)) ||
     (dayOfMonth != null &&
       dayOfMonth !== CRON_LAST_DAY_OF_MONTH &&
       !PLAIN_NUMBER.test(dayOfMonth))

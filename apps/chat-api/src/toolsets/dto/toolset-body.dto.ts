@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsDefined,
   IsEnum,
   IsNotEmpty,
@@ -31,7 +32,12 @@ import {
   OAUTH_RESOURCE_PATTERN,
   OAUTH_RESOURCE_VALIDATION_MESSAGE,
 } from '../../common/validators/oauth-resource.pattern';
+import {
+  RESOURCE_FOLDER_PATH_PATTERN,
+  RESOURCE_FOLDER_PATH_VALIDATION_MESSAGE,
+} from '../../common/validators/resource-folder-path.pattern';
 import { IsValidResourceReference } from '../../common/validators/resource-reference.validator';
+import { IsValidFilePath } from '../../files/dto/file-path.validator';
 
 export enum ToolsetTransport {
   Http = 'HTTP',
@@ -225,6 +231,31 @@ export class ToolsetBodyDto {
   @ValidateNested()
   @Type(() => ToolsetAuthSettingsBodyDto)
   authSettings!: ToolsetAuthSettingsBodyDto;
+}
+
+/** Create body: the shared toolset fields plus where and how to create it. */
+export class CreateToolsetBodyDto extends ToolsetBodyDto {
+  @ApiPropertyOptional({
+    example: 'Search',
+    description:
+      "Plain-text personal folder to create the toolset in, relative to the caller's bucket. Omit or leave empty for the root.",
+  })
+  @IsString()
+  @IsOptional()
+  @IsValidFilePath()
+  @Matches(RESOURCE_FOLDER_PATH_PATTERN, {
+    message: RESOURCE_FOLDER_PATH_VALIDATION_MESSAGE,
+  })
+  folderPath?: string;
+
+  @ApiPropertyOptional({
+    default: false,
+    description:
+      'Never overwrite an existing toolset: answer 409 when `{name}__{version}` is already taken in the folder.',
+  })
+  @IsBoolean()
+  @IsOptional()
+  createOnly?: boolean;
 }
 
 export class MutatedToolsetDto {

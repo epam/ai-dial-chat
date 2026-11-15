@@ -1,3 +1,4 @@
+import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { DeleteConfirmationView } from '../DeleteConfirmationView';
@@ -20,6 +21,24 @@ describe('DeleteConfirmationView', () => {
     expect(screen.getByText('report.pdf')).toBeTruthy();
     expect(screen.getByLabelText('chat')).toBeTruthy();
     expect(screen.getAllByRole('list')).toHaveLength(1);
+  });
+
+  it('tints the identity card only when an identity variant is set', () => {
+    const { rerender } = renderView();
+    /* The tint is a module class on the card, which has no role. */
+    const getCard = () =>
+      // eslint-disable-next-line testing-library/no-node-access
+      screen.getByText('report.pdf').closest('[class*="border"]');
+    expect(getCard()?.className).not.toMatch(/danger/);
+
+    rerender(
+      <DeleteConfirmationView
+        names={['report.pdf']}
+        message="Are you sure?"
+        identityVariant={ConfirmationPopupVariant.Danger}
+      />,
+    );
+    expect(getCard()?.className).toMatch(/danger/);
   });
 
   it('ends the consequences with the "cannot be undone" bullet', () => {

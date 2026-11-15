@@ -93,6 +93,7 @@ const ProjectCreatePage: FC = () => {
   const {
     selectedContextFileId,
     onContextFileClick: handleContextFileClick,
+    onContextFileDownload: handleContextFileDownload,
     closeIfRemoved,
   } = useProjectFilePreview({
     scope: PREVIEW_SCOPE,
@@ -182,6 +183,7 @@ const ProjectCreatePage: FC = () => {
         contextFiles={contextFiles}
         onContextFilesChange={handleContextFilesChange}
         onContextFileClick={handleContextFileClick}
+        onContextFileDownload={handleContextFileDownload}
         selectedContextFileId={selectedContextFileId}
         allowedExtensions={allowedExtensions}
         maxFileBytes={maxFileBytes}

@@ -8,6 +8,7 @@ import { ShareButton } from '../ShareButton';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
+  DropdownOverlayRole: { Menu: 'menu', Dialog: 'dialog', None: 'none' },
   NeutralButton: ({
     label,
     onClick,

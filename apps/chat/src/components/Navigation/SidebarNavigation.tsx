@@ -1,6 +1,6 @@
 import { useCelebration } from '@epam/ai-dial-celebrations';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { useIsMobile } from '@epam/ai-dial-chat-shared';
+import { useIsMobile, useUnsavedChanges } from '@epam/ai-dial-chat-shared';
 import {
   NavigationSidebar,
   NavigationSidebarVariant,
@@ -32,7 +32,6 @@ import {
 import { useUser } from '../../context/auth/UserContext';
 import { useIsolatedModelView } from '../../context/IsolatedModelViewContext';
 import { useTheme } from '../../context/ThemeContext';
-import { useUnsavedChanges } from '../../context/UnsavedChangesContext';
 import { useLogout } from '../../hooks/logout/useLogout';
 import { useMobileSidebarContent } from '../../hooks/navigation/useMobileSidebarContent';
 import { useNavigationItems } from '../../hooks/navigation/useNavigationItems';

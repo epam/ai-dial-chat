@@ -63,7 +63,7 @@ const { status, content, reload } = useMcpAppInlinePreview(
 
 ### `McpAppInlinePreview`
 
-Renders a compact, always-visible preview of a message's matched MCP App, with a header strip above the preview frame (styled like the code block header in `@epam/ai-dial-chat-shared`'s Markdown renderer — a bordered `min-h-10` header) showing the matched tool's `mcpToolName` on the start side, wrapped in `@epam/ai-dial-ui-kit`'s `EllipsisTooltip`, and appending the mounted app's own declared name and version (version smaller) — separated by a vertical divider, not a text character — once its `ui/initialize` handshake completes. With small ghost icon buttons, the end side carries a reload button and an expand-to-canvas button. An app's `ui/request-display-mode` request for `'fullscreen'` expands into the canvas via `onExpand` — the same surface the expand button opens; any other requested mode keeps the preview, and the app is answered with `'inline'`. While `isOpenedInCanvas` is `true`, the header stays but the body shows `openedInCanvasLabel` centered instead of mounting the app.
+Renders a compact, always-visible preview of a message's matched MCP App, with a header strip above the preview frame (styled like the code block header in `@epam/ai-dial-chat-shared`'s Markdown renderer — a bordered `min-h-10` header) showing the matched tool's `mcpToolName` on the start side, wrapped in `@epam/ai-dial-ui-kit`'s `EllipsisTooltip`, and appending the mounted app's own declared name (its version is intentionally not shown, so it is not mistaken for the version of the entity the app displays) — separated by a vertical divider, not a text character — once its `ui/initialize` handshake completes. With small ghost icon buttons, the end side carries a reload button and an expand-to-canvas button. An app's `ui/request-display-mode` request for `'fullscreen'` expands into the canvas via `onExpand` — the same surface the expand button opens; any other requested mode keeps the preview, and the app is answered with `'inline'`. While `isOpenedInCanvas` is `true`, the header stays but the body shows `openedInCanvasLabel` centered instead of mounting the app.
 
 ```tsx
 import { McpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
@@ -79,6 +79,7 @@ import { McpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
   reloadAriaLabel="Reload"
   actionsGroupAriaLabel="MCP app actions"
   loadErrorLabel="Failed to load app"
+  loadingAriaLabel="Loading app"
   openedInCanvasLabel="Opened in canvas"
 />;
 ```
@@ -107,9 +108,8 @@ const colors: McpAppInlinePreviewColors = {
 ```
 
 `typography` (`McpAppInlinePreviewTypography`) sets the type steps:
-`headerNameClassName` (default `'dial-tiny-lead-semi-text'`),
-`versionClassName` (`'dial-caption-text'`) and `messageClassName`
-(`'dial-body-text'`, the "opened in canvas" and load-error messages).
+`headerNameClassName` (default `'dial-tiny-lead-semi-text'`) and
+`messageClassName` (`'dial-body-text'`, the "opened in canvas" and load-error messages).
 
 ## Utilities
 
@@ -121,9 +121,23 @@ const colors: McpAppInlinePreviewColors = {
 - `sanitizeToolName(input)` — reproduces the orchestrator's tool-name sanitization (runs of characters outside `[a-zA-Z0-9_-]` become `_`, a leading `_` is added when the name does not start with a letter or `_`, capped at 64 characters), so a toolset display name such as `Entity MCP Server` can be matched against the tool-call name `Entity_MCP_Server_<tool>`. Temporary heuristic until MCP Apps are fully supported.
 - `mcpAppCanvasKey(messageIndex)` — stable per-message cache/canvas key.
 
+## Enums
+
+```ts
+import { McpAppToolDiscovery, McpDeploymentKind } from '@epam/ai-dial-mcp-apps';
+
+// Which of the host's two MCP proxy routes a deployment id resolves through.
+McpDeploymentKind.Toolset; // 'toolset'
+McpDeploymentKind.Application; // 'application' — an application that is itself an MCP server
+
+// How a tool was discovered; only a `Direct` match is live-re-called.
+McpAppToolDiscovery.Direct; // 'direct' — the active deployment is this MCP server
+McpAppToolDiscovery.Indirect; // 'indirect' — matched by a toolset display-name prefix guess
+```
+
 ## Types
 
-- `McpAppToolRef`, `McpAppToolCallSeed`, `McpDeploymentKind`
+- `McpAppToolRef`, `McpAppToolCallSeed`
 - `McpAppHostAdapter`, `FetchMcpAppResourceHtml`, `CallMcpAppTool`
 - `McpAppResponseCache`, `CachedMcpAppResponse`
 - `McpAppInlinePreviewStatus`, `McpAppInlinePreviewState`, `McpAppInlinePreviewProps`

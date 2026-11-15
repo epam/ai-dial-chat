@@ -24,6 +24,8 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     placeholder,
     inputRef,
     disabled,
+    readOnly,
+    onBlur,
     tooltipText,
     caption,
   }: {
@@ -35,6 +37,8 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     placeholder?: string;
     inputRef?: Ref<HTMLInputElement>;
     disabled?: boolean;
+    readOnly?: boolean;
+    onBlur?: () => void;
     tooltipText?: string;
     caption?: string;
   }) => (
@@ -47,6 +51,8 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
           value={value ?? ''}
           placeholder={placeholder}
           disabled={disabled}
+          readOnly={readOnly}
+          onBlur={onBlur}
           title={tooltipText}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${id}-error` : undefined}
@@ -250,6 +256,45 @@ describe('DeploymentCreationForm', () => {
     );
     expect(screen.getByLabelText('Name').title).toBe('Name cannot be changed');
     expect(screen.getByLabelText('Description *')).toBeTruthy();
+  });
+
+  it('renders a focusable read-only Version that ignores typing and blur', async () => {
+    const onChange = vi.fn();
+    const onVersionBlur = vi.fn();
+    renderComponent(undefined, {}, onChange, vi.fn(), {
+      isVersionReadOnly: true,
+      versionReadOnlyTooltip: 'Use Save as new version',
+      onVersionBlur,
+    });
+    const version = screen.getByLabelText('Version') as HTMLInputElement;
+    expect(version.readOnly).toBe(true);
+    expect(version.disabled).toBe(false);
+    expect(version.title).toBe('Use Save as new version');
+
+    await user.click(version);
+    await user.keyboard('9');
+    await user.tab();
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(onVersionBlur).not.toHaveBeenCalled();
+  });
+
+  it('uses the default tooltip for a read-only Version', () => {
+    renderComponent(undefined, {}, vi.fn(), vi.fn(), {
+      isVersionReadOnly: true,
+    });
+    expect(screen.getByLabelText('Version').title).toBe(
+      'The version is changed with "Save as new version"',
+    );
+  });
+
+  it('keeps Version editable by default', () => {
+    const onChange = vi.fn();
+    renderComponent(undefined, {}, onChange);
+    const version = screen.getByLabelText('Version') as HTMLInputElement;
+    expect(version.readOnly).toBe(false);
+    fireEvent.change(version, { target: { value: '2.0.0' } });
+    expect(onChange).toHaveBeenCalledWith({ version: '2.0.0' });
   });
 
   it('surfaces a description error', () => {

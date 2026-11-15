@@ -9,6 +9,7 @@ import { FilesService } from './files.service';
 import { FilesFolderService } from './folder/files-folder.service';
 import { FilesListingModule } from './listing/files-listing.module';
 import { FilesSharingService } from './sharing/files-sharing.service';
+import { FilesArchiveUploadService } from './upload/files-archive-upload.service';
 import { FilesUploadService } from './upload/files-upload.service';
 
 @Module({
@@ -19,6 +20,7 @@ import { FilesUploadService } from './upload/files-upload.service';
     FileUploadInterceptor,
     FilesService,
     FilesUploadService,
+    FilesArchiveUploadService,
     FilesFolderService,
     FilesDownloadService,
     FilesArchiveDownloadService,

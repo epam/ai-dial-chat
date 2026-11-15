@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import type { FolderDestinationRoot } from '../../../models/folder-destination';
 import { PublishFolderNode } from '../../../models/publish';
 import { PublishFoldersTree } from '../PublishFoldersTree';
 import styles from '../PublishFoldersTree.module.scss';
@@ -129,6 +130,16 @@ describe('PublishFoldersTree', () => {
     expect(
       capturedProps.current?.items[0]?.items?.[0]?.items?.map((f) => f.path),
     ).toEqual(['Shared/Data Science']);
+  });
+
+  it('passes the trimmed query to the tree for highlighting while filtering', () => {
+    renderTree({ searchQuery: '  data  ' });
+    expect(capturedProps.current?.searchQuery).toBe('data');
+  });
+
+  it('passes no highlight query without a search', () => {
+    renderTree({ searchQuery: '   ' });
+    expect(capturedProps.current?.searchQuery).toBeUndefined();
   });
 
   it('passes a no-results empty state title when search matches nothing, and omits the root node', () => {
@@ -265,6 +276,57 @@ describe('PublishFoldersTree', () => {
         capturedProps.current?.getContextMenuItems?.(nestedFile);
       clickMenuItem(menuItems ?? [], 'add-sibling');
       expect(capturedProps.current?.createdFolderPath).toBe('Shared');
+    });
+
+    it('"Add child" rejects a name equal to the parent folder name (#9792)', () => {
+      const onCreateFolder = vi.fn();
+      renderTree({ onCreateFolder });
+      const sharedFile: DialFile = {
+        path: 'Shared',
+        name: 'Shared',
+        folderId: 'Shared',
+        nodeType: DialFileNodeType.FOLDER,
+      };
+      clickMenuItem(
+        capturedProps.current?.getContextMenuItems?.(sharedFile) ?? [],
+        'add-child',
+      );
+      expect(
+        capturedProps.current?.onRenameValidate?.('shared', {} as never),
+      ).toBe('A folder cannot have the same name as its parent folder.');
+      act(() => capturedProps.current?.onCreateFolderSave?.('Shared'));
+      expect(onCreateFolder).not.toHaveBeenCalled();
+    });
+
+    it('"Add child" never pre-fills the parent folder name', () => {
+      renderTree({ newFolderDefaultName: 'Shared' });
+      const sharedFile: DialFile = {
+        path: 'Shared',
+        name: 'Shared',
+        folderId: 'Shared',
+        nodeType: DialFileNodeType.FOLDER,
+      };
+      clickMenuItem(
+        capturedProps.current?.getContextMenuItems?.(sharedFile) ?? [],
+        'add-child',
+      );
+      expect(capturedProps.current?.newFolderDefaultName).toBe('Shared 2');
+    });
+
+    it('lets a top-level folder take the root label as its name', () => {
+      renderTree();
+      clickMenuItem(
+        capturedProps.current?.getContextMenuItems?.({
+          path: '',
+          name: 'Organization',
+          folderId: '',
+          nodeType: DialFileNodeType.FOLDER,
+        }) ?? [],
+        'add-child',
+      );
+      expect(
+        capturedProps.current?.onRenameValidate?.('Organization', {} as never),
+      ).toBeNull();
     });
   });
 
@@ -527,6 +589,321 @@ describe('PublishFoldersTree', () => {
       expect(capturedProps.current?.createdFolderPath).toBe('Shared');
       expect(capturedProps.current?.expandedPaths).toEqual(
         new Set(['', 'Shared']),
+      );
+    });
+  });
+
+  describe('multi-root mode', () => {
+    const roots: FolderDestinationRoot[] = [
+      {
+        key: 'personal',
+        label: 'Personal',
+        items: [
+          { path: ['zeta'], name: 'zeta' },
+          {
+            path: ['Design'],
+            name: 'Design',
+            children: [{ path: ['Design', 'Audit'], name: 'Audit' }],
+          },
+        ],
+      },
+      {
+        key: 'organization',
+        label: 'Organization',
+        items: [{ path: ['EPAM'], name: 'EPAM' }],
+      },
+    ];
+
+    const renderMultiRoot = (
+      props?: Partial<ComponentProps<typeof PublishFoldersTree>>,
+    ) =>
+      render(
+        <PublishFoldersTree
+          roots={roots}
+          searchQuery=""
+          onDestinationChange={vi.fn()}
+          onCreateDestinationFolder={vi.fn()}
+          {...props}
+        />,
+      );
+
+    const rootFile = (key: string, name: string): DialFile => ({
+      path: `:${key}`,
+      name,
+      folderId: `:${key}`,
+      nodeType: DialFileNodeType.FOLDER,
+    });
+
+    it('renders one top-level node per root in the given order, with folders sorted inside each', () => {
+      renderMultiRoot();
+      expect(capturedProps.current?.items.map((file) => file.name)).toEqual([
+        'Personal',
+        'Organization',
+      ]);
+      expect(
+        capturedProps.current?.items[0]?.items?.map((file) => file.name),
+      ).toEqual(['Design', 'zeta']);
+    });
+
+    it('keeps every root expanded', () => {
+      renderMultiRoot();
+      expect(capturedProps.current?.expandedPaths).toEqual(
+        new Set([':personal', ':organization']),
+      );
+    });
+
+    it('reports a folder selection as a destination under its root', async () => {
+      const onDestinationChange = vi.fn();
+      renderMultiRoot({ onDestinationChange });
+      await userEvent.click(screen.getByRole('button', { name: 'EPAM' }));
+      expect(onDestinationChange).toHaveBeenCalledWith({
+        rootKey: 'organization',
+        path: ['EPAM'],
+      });
+    });
+
+    it('reports a root selection as an empty path', async () => {
+      const onDestinationChange = vi.fn();
+      renderMultiRoot({ onDestinationChange });
+      await userEvent.click(screen.getByRole('button', { name: 'Personal' }));
+      expect(onDestinationChange).toHaveBeenCalledWith({
+        rootKey: 'personal',
+        path: [],
+      });
+    });
+
+    it('highlights the selected destination', () => {
+      renderMultiRoot({
+        destination: { rootKey: 'personal', path: ['Design', 'Audit'] },
+      });
+      expect(capturedProps.current?.selectedPath).toBe(
+        ':personal/Design/Audit',
+      );
+    });
+
+    it('filters across all roots', () => {
+      renderMultiRoot({ searchQuery: 'aud' });
+      expect(capturedProps.current?.items.map((file) => file.name)).toEqual([
+        'Personal',
+      ]);
+    });
+
+    it('creates a folder under the selected root and reports it with the root key', async () => {
+      const onCreateDestinationFolder = vi.fn();
+      const onDestinationChange = vi.fn();
+      renderMultiRoot({
+        destination: { rootKey: 'personal', path: ['Design'] },
+        onCreateDestinationFolder,
+        onDestinationChange,
+      });
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Create new folder' }),
+      );
+      expect(capturedProps.current?.createdFolderPath).toBe(':personal/Design');
+      act(() => capturedProps.current?.onCreateFolderSave?.('Reviews'));
+      expect(onCreateDestinationFolder).toHaveBeenCalledWith(
+        'personal',
+        ['Design'],
+        'Reviews',
+      );
+      expect(onDestinationChange).toHaveBeenCalledWith({
+        rootKey: 'personal',
+        path: ['Design', 'Reviews'],
+      });
+    });
+
+    it('validates a new name against siblings inside the same root', async () => {
+      renderMultiRoot({ destination: { rootKey: 'personal', path: [] } });
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Create new folder' }),
+      );
+      expect(
+        capturedProps.current?.onRenameValidate?.('design', {} as never),
+      ).toBe('A folder with this name already exists.');
+      expect(
+        capturedProps.current?.onRenameValidate?.('EPAM', {} as never),
+      ).toBeNull();
+      expect(
+        capturedProps.current?.onRenameValidate?.('Personal', {} as never),
+      ).toBeNull();
+    });
+
+    it('rejects a nested folder named like its parent inside a root', async () => {
+      renderMultiRoot({
+        destination: { rootKey: 'personal', path: ['Design'] },
+      });
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Create new folder' }),
+      );
+      expect(
+        capturedProps.current?.onRenameValidate?.('design', {} as never),
+      ).toBe('A folder cannot have the same name as its parent folder.');
+    });
+
+    it('rejects a nested duplicate whose sibling loads after the editor opened', async () => {
+      const onCreateDestinationFolder = vi.fn();
+      const unloaded: FolderDestinationRoot[] = [
+        {
+          key: 'personal',
+          label: 'Personal',
+          items: [{ path: ['Design'], name: 'Design' }],
+        },
+      ];
+      const { rerender } = renderMultiRoot({
+        roots: unloaded,
+        destination: { rootKey: 'personal', path: ['Design'] },
+        onCreateDestinationFolder,
+      });
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Create new folder' }),
+      );
+      // The editor keeps the callbacks it opened with.
+      const { onRenameValidate, onCreateFolderSave } = capturedProps.current!;
+
+      rerender(
+        <PublishFoldersTree
+          searchQuery=""
+          roots={[
+            {
+              ...unloaded[0],
+              items: [
+                {
+                  path: ['Design'],
+                  name: 'Design',
+                  children: [{ path: ['Design', 'Audit'], name: 'Audit' }],
+                },
+              ],
+            },
+          ]}
+          destination={{ rootKey: 'personal', path: ['Design'] }}
+          onDestinationChange={vi.fn()}
+          onCreateDestinationFolder={onCreateDestinationFolder}
+        />,
+      );
+
+      expect(onRenameValidate?.('audit', {} as never)).toBe(
+        'A folder with this name already exists.',
+      );
+      act(() => onCreateFolderSave?.('Audit'));
+      expect(onCreateDestinationFolder).not.toHaveBeenCalled();
+    });
+
+    it('opens the new-folder editor only once the parent has loaded, so an existing child is a duplicate', async () => {
+      const onCreateDestinationFolder = vi.fn();
+      const design: FolderDestinationRoot = {
+        key: 'personal',
+        label: 'Personal',
+        items: [{ path: ['Design'], name: 'Design' }],
+        loadingPaths: new Set(['Design']),
+      };
+      const renderWith = (root: FolderDestinationRoot) => (
+        <PublishFoldersTree
+          searchQuery=""
+          roots={[root]}
+          destination={{ rootKey: 'personal', path: ['Design'] }}
+          onDestinationChange={vi.fn()}
+          onCreateDestinationFolder={onCreateDestinationFolder}
+        />
+      );
+      const { rerender } = render(renderWith(design));
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Create new folder' }),
+      );
+      expect(capturedProps.current?.createdFolderPath).toBeNull();
+
+      rerender(
+        renderWith({
+          ...design,
+          loadingPaths: new Set(),
+          items: [
+            {
+              path: ['Design'],
+              name: 'Design',
+              children: [
+                { path: ['Design', 'New folder'], name: 'New folder' },
+              ],
+            },
+          ],
+        }),
+      );
+
+      expect(capturedProps.current?.createdFolderPath).toBe(':personal/Design');
+      expect(capturedProps.current?.newFolderDefaultName).toBe('New folder 2');
+      expect(
+        capturedProps.current?.onRenameValidate?.('new folder', {} as never),
+      ).toBe('A folder with this name already exists.');
+      act(() => capturedProps.current?.onCreateFolderSave?.('New folder'));
+      expect(onCreateDestinationFolder).not.toHaveBeenCalled();
+    });
+
+    it('omits "Add sibling" on a root node', () => {
+      renderMultiRoot();
+      const menuItems = capturedProps.current?.getContextMenuItems?.(
+        rootFile('organization', 'Organization'),
+      );
+      expect(menuItems?.map((item) => item.key)).toEqual(['add-child']);
+    });
+
+    it('offers no creation under a root that does not accept folders', () => {
+      renderMultiRoot({
+        roots: [roots[0], { ...roots[1], canCreateFolders: false }],
+        destination: { rootKey: 'organization', path: ['EPAM'] },
+      });
+      expect(
+        capturedProps.current?.getContextMenuItems?.(
+          rootFile('organization', 'Organization'),
+        ),
+      ).toEqual([]);
+      // The trailing button falls back to the first root that accepts folders.
+      expect(
+        screen.getByRole('button', { name: 'Create new folder' }),
+      ).toHaveProperty('disabled', false);
+    });
+
+    it('disables the trailing create button when no root accepts folders', () => {
+      renderMultiRoot({
+        roots: roots.map((root) => ({ ...root, canCreateFolders: false })),
+      });
+      expect(
+        screen.getByRole('button', { name: 'Create new folder' }),
+      ).toHaveProperty('disabled', true);
+    });
+
+    it("splits expanded keys back to each root's own handler", () => {
+      const onPersonalExpanded = vi.fn();
+      const onOrganizationExpanded = vi.fn();
+      renderMultiRoot({
+        roots: [
+          { ...roots[0], onExpandedPathsChange: onPersonalExpanded },
+          { ...roots[1], onExpandedPathsChange: onOrganizationExpanded },
+        ],
+      });
+      act(() =>
+        capturedProps.current?.onExpandedPathsChange?.(
+          new Set([':personal', ':personal/Design', ':organization/EPAM']),
+        ),
+      );
+      expect(onPersonalExpanded).toHaveBeenCalledWith(new Set(['Design']));
+      expect(onOrganizationExpanded).toHaveBeenCalledWith(new Set(['EPAM']));
+    });
+
+    it("joins each root's loading and expanded keys", () => {
+      renderMultiRoot({
+        roots: [
+          {
+            ...roots[0],
+            expandedPaths: new Set(['Design']),
+            loadingPaths: new Set(['Design']),
+          },
+          roots[1],
+        ],
+      });
+      expect(capturedProps.current?.loadingPaths).toEqual(
+        new Set([':personal/Design']),
+      );
+      expect(capturedProps.current?.expandedPaths).toEqual(
+        new Set([':personal', ':organization', ':personal/Design']),
       );
     });
   });

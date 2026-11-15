@@ -29,11 +29,10 @@ Example `200` response:
 {
   "items": [
     {
-      "id": "projects/a1b2c3/marketing/q4-launch",
+      "id": "projects/a1b2c3/q4-launch",
       "name": "q4-launch",
       "bucket": "a1b2c3",
-      "path": "marketing/q4-launch",
-      "parentPath": "marketing",
+      "path": "q4-launch",
       "source": "personal",
       "author": "jane.doe",
       "createdAt": 1790000000000,
@@ -167,6 +166,8 @@ For the personal and organization listings:
 - `id` is `projects/{bucket}/{path}` with no trailing `/`.
 - `parentPath`, `author`, `createdAt` and `updatedAt` are copied when present.
 
+Chat creates every project at the root of its bucket, and a personal project cannot be placed in a folder, so the projects Chat lists normally carry no `parentPath`. The listing is still recursive and the mapper still keeps `parentPath`, so a project that DIAL Core does report inside a folder (one written to the bucket outside Chat) is listed under its full path rather than dropped.
+
 For the shared listing, the mapper:
 
 - keeps only `nodeType === 'ITEM'`;
@@ -191,9 +192,14 @@ DIAL Core sends `createdAt` and `updatedAt` for share-list items starting with t
 
 `ProjectSource` SHALL be a string enum (`Personal = 'personal'`, `Shared = 'shared'`, `Organization = 'organization'`) exposed to Swagger with `enumName: 'ProjectSource'`. `ListProjectsResponseDto` SHALL be a class with `items: ProjectDto[]` (`@ApiProperty({ type: [ProjectDto] })`) and `incompleteSources: ProjectSource[]` (`@ApiProperty({ enum: ProjectSource, enumName: 'ProjectSource', isArray: true })`): the sources that failed or were truncated at the page cap, empty when every source answered in full.
 
+#### Scenario: Root project has no parent path
+
+- **WHEN** the personal listing returns an `ITEM` entry `q4-launch` at the bucket root
+- **THEN** `items` contains `q4-launch` with `path: 'q4-launch'` and no `parentPath`
+
 #### Scenario: Grouping folders are excluded
 
-- **WHEN** a recursive personal listing returns a `FOLDER` entry `marketing/` and an `ITEM` entry `marketing/q4-launch`
+- **WHEN** a recursive listing of a bucket written outside Chat returns a `FOLDER` entry `marketing/` and an `ITEM` entry `marketing/q4-launch`
 - **THEN** `items` contains only `q4-launch`, with `path: 'marketing/q4-launch'` and `parentPath: 'marketing'`
 
 #### Scenario: Malformed entries are skipped

@@ -54,8 +54,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     Standard: 'standard',
     Large: 'large',
   },
-  ErrorText: ({ text }: { text?: string }) =>
-    text ? <span role="alert">{text}</span> : null,
+  /* The kit ErrorText has no live-region role since 0.16. */
+  ErrorText: ({ text, id }: { text?: string; id?: string }) =>
+    text ? <span id={id}>{text}</span> : null,
   Input: ({
     onChange,
     labelProps,

@@ -3,6 +3,7 @@ import { PublicationRuleFunction } from '@epam/ai-dial-publish-panel';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { conversationsApi } from '../api-client';
 import {
+  getConversationPublishDependencies,
   publishConversation,
   unpublishConversation,
 } from '../conversation-publish.api';
@@ -12,6 +13,7 @@ vi.mock('../api-client', () => ({
     publishConversation: vi.fn(),
     unpublishConversation: vi.fn(),
     getConversationPublishHistory: vi.fn(),
+    getConversationPublishDependencies: vi.fn(),
   },
 }));
 
@@ -176,5 +178,25 @@ describe('unpublishConversation', () => {
       path: 'bucket-123/my-conversation',
       publishConversationDto: { folderPath: 'Organization', rules: [] },
     });
+  });
+
+  it('reads the publish dependencies of a conversation by its path', async () => {
+    const result = {
+      dependencies: [
+        { id: 'skills/b/Docs', name: 'Docs', type: 'skill', location: '' },
+      ],
+    } as never;
+    vi.mocked(
+      conversationsApi.getConversationPublishDependencies,
+    ).mockResolvedValue(result);
+
+    const response = await getConversationPublishDependencies(
+      'bucket-123/my-conversation',
+    );
+
+    expect(response).toBe(result);
+    expect(
+      conversationsApi.getConversationPublishDependencies,
+    ).toHaveBeenCalledWith({ path: 'bucket-123/my-conversation' });
   });
 });

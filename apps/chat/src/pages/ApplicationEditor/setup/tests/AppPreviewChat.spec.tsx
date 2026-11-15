@@ -2,7 +2,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AppsEditorI18nKeys } from '../../../../constants/translation-keys';
+import {
+  AppsEditorI18nKeys,
+  BasicI18nKeys,
+} from '../../../../constants/translation-keys';
 import * as DeploymentsContextModule from '../../../../context/DeploymentsContext';
 import { useAppConfig as mockUseAppConfig } from '../../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../../context/tests/notification-context-mock';
@@ -410,7 +413,9 @@ describe('AppPreviewChat', () => {
 
     render(<AppPreviewChat appId="applications/bucket/My App" />);
 
-    expect(screen.getByRole('img', { name: 'Loading' })).toBeTruthy();
+    expect(
+      screen.getByRole('img', { name: BasicI18nKeys.Loading }),
+    ).toBeTruthy();
     expect(screen.queryByLabelText('Intro text')).toBeNull();
 
     resolveDetails({
@@ -420,7 +425,9 @@ describe('AppPreviewChat', () => {
     });
 
     await waitFor(() =>
-      expect(screen.queryByRole('img', { name: 'Loading' })).toBeNull(),
+      expect(
+        screen.queryByRole('img', { name: BasicI18nKeys.Loading }),
+      ).toBeNull(),
     );
     expect(screen.getByLabelText('Intro text')).toBeTruthy();
   });
@@ -428,7 +435,9 @@ describe('AppPreviewChat', () => {
   it('does not show a loading spinner once the deployments list already resolves the app', () => {
     render(<AppPreviewChat appId="applications/bucket/My App" />);
 
-    expect(screen.queryByRole('img', { name: 'Loading' })).toBeNull();
+    expect(
+      screen.queryByRole('img', { name: BasicI18nKeys.Loading }),
+    ).toBeNull();
     expect(screen.getByLabelText('Intro text')).toBeTruthy();
   });
 });

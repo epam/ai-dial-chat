@@ -25,7 +25,7 @@ export const findGroupKeyForItem = (
   for (const row of rows) {
     if (row.kind === VirtualRowKind.Header) {
       currentGroupKey = row.groupKey;
-    } else if (row.item.id === id) {
+    } else if (row.kind === VirtualRowKind.Item && row.item.id === id) {
       return currentGroupKey;
     }
   }
@@ -74,7 +74,7 @@ export const getDropAfterId = (
   for (const row of rows) {
     if (row.kind === VirtualRowKind.Header) {
       inGroup = row.groupKey === targetGroupKey;
-    } else if (inGroup) {
+    } else if (row.kind === VirtualRowKind.Item && inGroup) {
       if (row.item.id === itemId) return prevItemId;
       prevItemId = row.item.id;
     }

@@ -2,6 +2,7 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
+  DropdownOverlayRole,
   NeutralButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconShare } from '@tabler/icons-react';
@@ -91,6 +92,8 @@ export const ShareButton: FC<ShareButtonProps> = ({
       onOpenChange={setIsOpen}
       trigger={[]}
       outsideClosable
+      /* The host's share popover carries its own `dialog` role. */
+      overlayRole={DropdownOverlayRole.None}
       renderOverlay={() => shareOverlay(item, () => setIsOpen(false))}
     >
       {button}

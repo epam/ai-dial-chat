@@ -64,6 +64,48 @@ const buildUploadFailedMessage = (
   }
 };
 
+/** Reasons whose toast is a single message with no interpolated values. */
+const MESSAGE_ONLY_NOTIFICATION_KEYS: Partial<
+  Record<FileManagerNotificationReason, DialFileManagerI18nKeys>
+> = {
+  [FileManagerNotificationReason.FolderLoadFailed]:
+    DialFileManagerI18nKeys.FolderLoadError,
+  [FileManagerNotificationReason.MetadataLoadFailed]:
+    DialFileManagerI18nKeys.GetInfoError,
+  [FileManagerNotificationReason.FolderCreateFailed]:
+    DialFileManagerI18nKeys.FolderCreateError,
+  [FileManagerNotificationReason.DownloadFileFailed]:
+    DialFileManagerI18nKeys.DownloadFileError,
+  [FileManagerNotificationReason.DownloadFilesFailed]:
+    DialFileManagerI18nKeys.DownloadFilesError,
+  [FileManagerNotificationReason.DeleteFailed]:
+    DialFileManagerI18nKeys.DeleteFilesError,
+  [FileManagerNotificationReason.RenameFailed]:
+    DialFileManagerI18nKeys.RenameError,
+  [FileManagerNotificationReason.MoveFailed]: DialFileManagerI18nKeys.MoveError,
+  [FileManagerNotificationReason.CopyFailed]: DialFileManagerI18nKeys.CopyError,
+  [FileManagerNotificationReason.UnshareFailed]:
+    DialFileManagerI18nKeys.UnshareError,
+  [FileManagerNotificationReason.RemoveAccessFailed]:
+    DialFileManagerI18nKeys.RemoveAccessError,
+  [FileManagerNotificationReason.UploadArchiveRequestFailed]:
+    DialFileManagerI18nKeys.UploadArchiveError,
+  [FileManagerNotificationReason.CrossSectionTransferUnsupported]:
+    DialFileManagerI18nKeys.CrossSectionTransferUnsupported,
+};
+
+/** Partial-failure reasons whose message interpolates only the failed item count. */
+const COUNT_MESSAGE_NOTIFICATION_KEYS: Partial<
+  Record<FileManagerNotificationReason, DialFileManagerI18nKeys>
+> = {
+  [FileManagerNotificationReason.RenamePartiallyFailed]:
+    DialFileManagerI18nKeys.RenamePartialError,
+  [FileManagerNotificationReason.MovePartiallyFailed]:
+    DialFileManagerI18nKeys.MovePartialError,
+  [FileManagerNotificationReason.CopyPartiallyFailed]:
+    DialFileManagerI18nKeys.CopyPartialError,
+};
+
 /**
  * Translates a `FileManagerNotification`'s library-owned `reason` into the
  * `{variant, title?, message}` shape `useNotification`'s `showNotification`
@@ -91,26 +133,18 @@ export const buildFileManagerNotificationOptions = (
     return `${joined}${t(DialFileManagerI18nKeys.AndOtherItems, { count: restCount })}`;
   };
 
+  if (reason != null) {
+    const messageKey = MESSAGE_ONLY_NOTIFICATION_KEYS[reason];
+    if (messageKey != null) {
+      return { variant, message: t(messageKey) };
+    }
+    const countMessageKey = COUNT_MESSAGE_NOTIFICATION_KEYS[reason];
+    if (countMessageKey != null) {
+      return { variant, message: t(countMessageKey, { count }) };
+    }
+  }
+
   switch (reason) {
-    case FileManagerNotificationReason.FolderLoadFailed:
-      return { variant, message: t(DialFileManagerI18nKeys.FolderLoadError) };
-    case FileManagerNotificationReason.MetadataLoadFailed:
-      return { variant, message: t(DialFileManagerI18nKeys.GetInfoError) };
-    case FileManagerNotificationReason.FolderCreateFailed:
-      return {
-        variant,
-        message: t(DialFileManagerI18nKeys.FolderCreateError),
-      };
-    case FileManagerNotificationReason.DownloadFileFailed:
-      return {
-        variant,
-        message: t(DialFileManagerI18nKeys.DownloadFileError),
-      };
-    case FileManagerNotificationReason.DownloadFilesFailed:
-      return {
-        variant,
-        message: t(DialFileManagerI18nKeys.DownloadFilesError),
-      };
     case FileManagerNotificationReason.FilesDeleted:
       return {
         variant,
@@ -137,36 +171,6 @@ export const buildFileManagerNotificationOptions = (
               ? t(DialFileManagerI18nKeys.AndOtherItems, { count: restCount })
               : '',
         }),
-      };
-    case FileManagerNotificationReason.DeleteFailed:
-      return { variant, message: t(DialFileManagerI18nKeys.DeleteFilesError) };
-    case FileManagerNotificationReason.RenameFailed:
-      return { variant, message: t(DialFileManagerI18nKeys.RenameError) };
-    case FileManagerNotificationReason.RenamePartiallyFailed:
-      return {
-        variant,
-        message: t(DialFileManagerI18nKeys.RenamePartialError, { count }),
-      };
-    case FileManagerNotificationReason.MoveFailed:
-      return { variant, message: t(DialFileManagerI18nKeys.MoveError) };
-    case FileManagerNotificationReason.MovePartiallyFailed:
-      return {
-        variant,
-        message: t(DialFileManagerI18nKeys.MovePartialError, { count }),
-      };
-    case FileManagerNotificationReason.CopyFailed:
-      return { variant, message: t(DialFileManagerI18nKeys.CopyError) };
-    case FileManagerNotificationReason.CopyPartiallyFailed:
-      return {
-        variant,
-        message: t(DialFileManagerI18nKeys.CopyPartialError, { count }),
-      };
-    case FileManagerNotificationReason.UnshareFailed:
-      return { variant, message: t(DialFileManagerI18nKeys.UnshareError) };
-    case FileManagerNotificationReason.RemoveAccessFailed:
-      return {
-        variant,
-        message: t(DialFileManagerI18nKeys.RemoveAccessError),
       };
     case FileManagerNotificationReason.UploadFailed:
       return {
@@ -196,16 +200,6 @@ export const buildFileManagerNotificationOptions = (
           count,
           files: buildNamesWithRest(),
         }),
-      };
-    case FileManagerNotificationReason.UploadArchiveRequestFailed:
-      return {
-        variant,
-        message: t(DialFileManagerI18nKeys.UploadArchiveError),
-      };
-    case FileManagerNotificationReason.CrossSectionTransferUnsupported:
-      return {
-        variant,
-        message: t(DialFileManagerI18nKeys.CrossSectionTransferUnsupported),
       };
     default:
       return { variant, message: notification.message ?? '' };
@@ -244,20 +238,20 @@ const DUPLICATE_NOTIFICATION_KEYS: TransferNotificationKeys = {
   itemsMessage: DialFileManagerI18nKeys.ItemsDuplicatedToSameFolder,
 };
 
+/** Move and duplicate kinds; every other transfer kind uses the copy keys. */
+const TRANSFER_NOTIFICATION_KEYS: Partial<
+  Record<FileOperationKind, TransferNotificationKeys>
+> = {
+  [FileOperationKind.FileMoved]: MOVE_NOTIFICATION_KEYS,
+  [FileOperationKind.FilesMoved]: MOVE_NOTIFICATION_KEYS,
+  [FileOperationKind.FileDuplicated]: DUPLICATE_NOTIFICATION_KEYS,
+  [FileOperationKind.FilesDuplicated]: DUPLICATE_NOTIFICATION_KEYS,
+};
+
 const getTransferNotificationKeys = (
   kind: FileOperationKind,
-): TransferNotificationKeys => {
-  switch (kind) {
-    case FileOperationKind.FileMoved:
-    case FileOperationKind.FilesMoved:
-      return MOVE_NOTIFICATION_KEYS;
-    case FileOperationKind.FileDuplicated:
-    case FileOperationKind.FilesDuplicated:
-      return DUPLICATE_NOTIFICATION_KEYS;
-    default:
-      return COPY_NOTIFICATION_KEYS;
-  }
-};
+): TransferNotificationKeys =>
+  TRANSFER_NOTIFICATION_KEYS[kind] ?? COPY_NOTIFICATION_KEYS;
 
 const isSingleItemTransfer = (kind: FileOperationKind): boolean =>
   kind === FileOperationKind.FileCopied ||
@@ -365,6 +359,37 @@ export const handleFileOperationSuccess = (
   }
 };
 
+/** Rename and create-folder wording of the validation errors that interpolate nothing. */
+interface ValidationErrorKeys {
+  rename: DialFileManagerI18nKeys;
+  create: DialFileManagerI18nKeys;
+}
+
+const VALIDATION_ERROR_KEYS: Record<
+  Exclude<
+    FileNameValidationErrorReason,
+    FileNameValidationErrorReason.ForbiddenSymbols
+  >,
+  ValidationErrorKeys
+> = {
+  [FileNameValidationErrorReason.Empty]: {
+    rename: DialFileManagerI18nKeys.RenameNameEmpty,
+    create: DialFileManagerI18nKeys.FolderNameEmpty,
+  },
+  [FileNameValidationErrorReason.ReservedName]: {
+    rename: DialFileManagerI18nKeys.RenameReservedName,
+    create: DialFileManagerI18nKeys.FolderNameReserved,
+  },
+  [FileNameValidationErrorReason.TooLong]: {
+    rename: DialFileManagerI18nKeys.RenameNameTooLong,
+    create: DialFileManagerI18nKeys.FolderNameTooLong,
+  },
+  [FileNameValidationErrorReason.DuplicateName]: {
+    rename: DialFileManagerI18nKeys.RenameDuplicateName,
+    create: DialFileManagerI18nKeys.FolderNameDuplicate,
+  },
+};
+
 /**
  * Translates a structured `FileNameValidationError` into the exact message
  * text the pre-extraction `onCreateFolderValidate`/`onRenameValidate`
@@ -380,37 +405,14 @@ export const buildValidationErrorMessage = (
   const isRename = item != null;
   const isFolder = item != null && item.nodeType === DialFileNodeType.FOLDER;
 
-  switch (error.reason) {
-    case FileNameValidationErrorReason.Empty:
-      return t(
-        isRename
-          ? DialFileManagerI18nKeys.RenameNameEmpty
-          : DialFileManagerI18nKeys.FolderNameEmpty,
-      );
-    case FileNameValidationErrorReason.ForbiddenSymbols:
-      return t(
-        isRename && !isFolder
-          ? DialFileManagerI18nKeys.ForbiddenSymbolsTooltip
-          : DialFileManagerI18nKeys.FolderNameInvalidChars,
-        { notAllowedSymbols: error.symbols ?? NOT_ALLOWED_SYMBOLS },
-      );
-    case FileNameValidationErrorReason.ReservedName:
-      return t(
-        isRename
-          ? DialFileManagerI18nKeys.RenameReservedName
-          : DialFileManagerI18nKeys.FolderNameReserved,
-      );
-    case FileNameValidationErrorReason.TooLong:
-      return t(
-        isRename
-          ? DialFileManagerI18nKeys.RenameNameTooLong
-          : DialFileManagerI18nKeys.FolderNameTooLong,
-      );
-    case FileNameValidationErrorReason.DuplicateName:
-      return t(
-        isRename
-          ? DialFileManagerI18nKeys.RenameDuplicateName
-          : DialFileManagerI18nKeys.FolderNameDuplicate,
-      );
+  if (error.reason === FileNameValidationErrorReason.ForbiddenSymbols) {
+    return t(
+      isRename && !isFolder
+        ? DialFileManagerI18nKeys.ForbiddenSymbolsTooltip
+        : DialFileManagerI18nKeys.FolderNameInvalidChars,
+      { notAllowedSymbols: error.symbols ?? NOT_ALLOWED_SYMBOLS },
+    );
   }
+  const keys = VALIDATION_ERROR_KEYS[error.reason];
+  return t(isRename ? keys.rename : keys.create);
 };

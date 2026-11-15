@@ -27,6 +27,7 @@ interface FrontendMiddlewareOptions {
   allowedConnectOrigins?: string[];
   secureTransport?: boolean;
   cspMode?: CspMode;
+  allowStyleAttributes?: boolean;
   reportUri?: string;
   apiPrefix?: string;
 }
@@ -80,7 +81,8 @@ export const createFrontendMiddleware = async ({
   allowedIframeOrigins = [],
   allowedConnectOrigins = [],
   secureTransport = true,
-  cspMode = CspMode.ReportOnly,
+  cspMode = CspMode.Enforce,
+  allowStyleAttributes = false,
   reportUri,
   apiPrefix = 'api',
 }: FrontendMiddlewareOptions = {}): Promise<RequestHandler> => {
@@ -138,6 +140,7 @@ export const createFrontendMiddleware = async ({
       policy({
         nonce,
         allowWasm,
+        allowStyleAttributes,
         reportOnly: monitoring,
         reportUri: reportingUrl,
       })(req, res, () => undefined);

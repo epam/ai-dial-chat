@@ -22,6 +22,7 @@ import {
 } from 'react';
 import { defaultStyles, JsonView } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
+import { BODY_CONTAINER_CLASS_NAMES } from '../../constants/canvas-body';
 import type { AttachmentCanvasBodyProps } from '../../models/attachment-canvas';
 import {
   AttachmentContentType,
@@ -30,7 +31,6 @@ import {
 import { CodeContent } from '../CodeContent/CodeContent';
 import { HtmlContent } from '../HtmlContent/HtmlContent';
 import { LazyContentBoundary } from '../LazyContentBoundary/LazyContentBoundary';
-import { McpAppCanvasRenderer } from '../McpAppCanvasRenderer/McpAppCanvasRenderer';
 import { OoxmlContent } from '../OoxmlContent/OoxmlContent';
 import { VisualizerCanvasRenderer } from '../VisualizerCanvasRenderer/VisualizerCanvasRenderer';
 import styles from './AttachmentCanvasBody.module.scss';
@@ -49,6 +49,18 @@ const createPdfContent = () =>
   lazy(async () => {
     const module = await import('../PdfContent/PdfContent');
     return { default: module.PdfContent };
+  });
+
+/*
+ * `McpAppCanvasRenderer` pulls in `@mcp-ui/client`, the MCP SDK and its
+ * `zod` schemas — the bulk of the canvas's eager JavaScript — although only
+ * an MCP App tool result ever renders it. Lazy for the same reason, and with
+ * the same retry factory shape, as `createPdfContent`.
+ */
+const createMcpAppCanvasRenderer = () =>
+  lazy(async () => {
+    const module = await import('../McpAppCanvasRenderer/McpAppCanvasRenderer');
+    return { default: module.McpAppCanvasRenderer };
   });
 
 interface ImageContentProps {
@@ -129,6 +141,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     mathScrollRegionAriaLabel,
     ooxmlHighlightsLabel,
     ooxmlHighlightNavigatedLabel,
+    loadingLabel = 'Loading…',
   } = {},
   styles: stylesProp,
   codeBlockTheme,
@@ -139,6 +152,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
   onAppInfo,
   onRetry,
   onVisualizerSendMessage,
+  mcpAppHostContext,
 }) => {
   const {
     colors,
@@ -156,6 +170,14 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
   const PdfContent = useMemo(createPdfContent, [pdfRetryKey]);
   const handleRetryPdf = useCallback(() => {
     setPdfRetryKey((key) => key + 1);
+  }, []);
+
+  const [mcpAppRetryKey, setMcpAppRetryKey] = useState(0);
+  const McpAppCanvasRenderer = useMemo(createMcpAppCanvasRenderer, [
+    mcpAppRetryKey,
+  ]);
+  const handleRetryMcpApp = useCallback(() => {
+    setMcpAppRetryKey((key) => key + 1);
   }, []);
 
   /*
@@ -231,40 +253,13 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     [stylesProp],
   );
 
-  const bodyContainerClassName = useMemo(() => {
-    switch (content.type) {
-      case AttachmentContentType.Image:
-      case AttachmentContentType.Audio:
-      case AttachmentContentType.Unsupported:
-      case AttachmentContentType.Error:
-        return 'h-full overflow-auto p-4 flex items-center justify-center';
-      case AttachmentContentType.Json:
-        return 'h-full overflow-auto';
-      case AttachmentContentType.Pdf:
-      case AttachmentContentType.Ooxml:
-      case AttachmentContentType.Visualizer:
-      case AttachmentContentType.GroupedVisualizer:
-      case AttachmentContentType.McpApp:
-      case AttachmentContentType.Code:
-      case AttachmentContentType.Html:
-        return 'h-full overflow-hidden';
-      /*
-       * A markdown document flows as tall as its content, so the body root is
-       * the scroller. `MarkdownTable` is the opposite case — a single table
-       * that fills the panel and scrolls inside its own wrapper — so it keeps
-       * the clipped flex column. The scroller carries no padding of its own:
-       * a code block's sticky header pins to the scroller's padding edge, so
-       * padding here would leave a strip above the pinned header where the
-       * scrolled code shows through. The inset sits on an inner wrapper.
-       */
-      case AttachmentContentType.Markdown:
-        return 'h-full overflow-auto';
-      case AttachmentContentType.MarkdownTable:
-        return 'flex h-full min-h-0 flex-col overflow-hidden p-4';
-      default:
-        return 'h-full overflow-auto p-4';
-    }
-  }, [content.type]);
+  const bodyContainerClassName = BODY_CONTAINER_CLASS_NAMES[content.type];
+
+  /* Scoped to MCP App content so a theme change does not rebuild the body of any other content type. */
+  const activeMcpAppHostContext =
+    content.type === AttachmentContentType.McpApp
+      ? mcpAppHostContext
+      : undefined;
 
   const renderedContent = useMemo(() => {
     switch (content.type) {
@@ -423,6 +418,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             labels={{
               htmlFrameBlockedLabel,
               htmlOpenInNewTabLabel,
+              loadingLabel,
             }}
             isSourceView={isHtmlSourceView}
             title={fileName}
@@ -481,6 +477,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             }
             highlightsLabel={ooxmlHighlightsLabel}
             highlightNavigatedLabel={ooxmlHighlightNavigatedLabel}
+            loadingLabel={loadingLabel}
           />
         );
       case AttachmentContentType.Visualizer:
@@ -493,7 +490,25 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
           />
         );
       case AttachmentContentType.McpApp:
-        return <McpAppCanvasRenderer content={content} onAppInfo={onAppInfo} />;
+        return (
+          <LazyContentBoundary
+            retryKey={mcpAppRetryKey}
+            onRetry={handleRetryMcpApp}
+            errorLabelClassName={typography?.errorMessageClassName}
+            labels={{
+              loadingLabel,
+              errorLabel: loadErrorLabel,
+              retryLabel: loadErrorRetryLabel,
+            }}
+          >
+            <McpAppCanvasRenderer
+              content={content}
+              loadingLabel={loadingLabel}
+              onAppInfo={onAppInfo}
+              hostContext={activeMcpAppHostContext}
+            />
+          </LazyContentBoundary>
+        );
       case AttachmentContentType.Unsupported:
         return (
           <p className={mergeClasses('text-center', styles.statusLabel)}>
@@ -553,6 +568,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     hidePdfToolbar,
     configurePdfWorker,
     onAppInfo,
+    activeMcpAppHostContext,
     onRetry,
     pdfThumbnailsLabel,
     pdfShowThumbnailsLabel,
@@ -566,6 +582,9 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     codeContentErrorLabel,
     codeContentRetryLabel,
     PdfContent,
+    McpAppCanvasRenderer,
+    mcpAppRetryKey,
+    handleRetryMcpApp,
     pdfRetryKey,
     handleRetryPdf,
     pdfReloadKey,
@@ -580,6 +599,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     mathScrollRegionAriaLabel,
     ooxmlHighlightsLabel,
     ooxmlHighlightNavigatedLabel,
+    loadingLabel,
   ]);
 
   return (
@@ -594,7 +614,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         bodyClassName,
       )}
     >
-      {isLoading ? <Spinner /> : renderedContent}
+      {isLoading ? <Spinner ariaLabel={loadingLabel} /> : renderedContent}
     </div>
   );
 };

@@ -29,7 +29,7 @@ export interface ProjectCreateFormErrors {
  * around its link text.
  */
 export interface ProjectDropZoneLinks {
-  /** Underlined text; the whole drop zone opens the device picker. */
+  /** Underlined text that opens the device picker; the rest of the drop zone takes drops but ignores clicks. */
   fromDevice: ReactElement;
   /** Button that opens the host's file manager; absent without `onPickFromFileManager`. */
   fileManager?: ReactElement;
@@ -51,12 +51,16 @@ export interface ProjectCreateFormLabels {
   nameLabel: string;
   /** Name field placeholder, e.g. "Enter project name". */
   namePlaceholder: string;
+  /** Helper text and tooltip for a locked Name field. Defaults to `"The project name can't be changed after creation"`. */
+  nameReadOnlyHint?: string;
   /** Message per client-side name check failure. */
   nameErrors: Record<ProjectNameError, string>;
   /** Instructions field label. */
   instructionsLabel: string;
   /** Instructions editor placeholder. */
   instructionsPlaceholder: string;
+  /** Accessible label of the spinner shown while the instructions editor loads. Defaults to `'Loading editor'`. */
+  editorLoadingAriaLabel?: string;
   /** Context section label. */
   contextLabel: string;
   /**
@@ -77,6 +81,8 @@ export interface ProjectCreateFormLabels {
   removeFileLabel: (name: string) => string;
   /** Accessible name of a clickable file card; read only when `onContextFileClick` is set. Defaults to `Preview {name}`, e.g. "Preview tickets.csv". */
   openFileLabel?: (name: string) => string;
+  /** Accessible name of a file card's download button; read only when `onContextFileDownload` is set. Defaults to `Download {name}`, e.g. "Download tickets.csv". */
+  downloadFileLabel?: (name: string) => string;
   /** Message per client-side file rejection, given the file name; shown as the drop zone's error, one per line. */
   fileRejections: Record<ContextFileRejection, (name: string) => string>;
   /** Announced after files are added, e.g. "2 files added". */
@@ -102,6 +108,8 @@ export interface ProjectCreateFormColors {
   labelText?: string;
   /** Drop zone "from device" and "file manager" links. Fallback: the drop zone text color. */
   linkText?: string;
+  /** Context drop zone background while it is idle. Fallback: `--bg-layer-raised`, then `#d1dbea`. */
+  dropZoneBackground?: string;
 }
 
 /** Typography overrides for the {@link ProjectCreateForm} component. */
@@ -139,6 +147,8 @@ export interface ProjectCreateFormProps {
   onContextFilesChange: (files: ProjectContextFile[]) => void;
   /** Called with a card's `ProjectContextFile.id` when the user activates it; the cards are not clickable when omitted. */
   onContextFileClick?: (id: string) => void;
+  /** Called with a card's `ProjectContextFile.id` from its download button; the cards show no download button when omitted. */
+  onContextFileDownload?: (id: string) => void;
   /** `ProjectContextFile.id` of the card that renders selected; no card is selected when unset. */
   selectedContextFileId?: string;
   /** Lower-case extensions, without a dot, accepted as context files. */
@@ -162,6 +172,8 @@ export interface ProjectCreateFormProps {
   onSubmit: () => void;
   /** Disables Create and shows its loading state. Defaults to `false`. */
   isSubmitting?: boolean;
+  /** Disables the Name field, with `labels.nameReadOnlyHint` as its tooltip and helper text. Defaults to `false`. */
+  isNameReadOnly?: boolean;
   /** Localized labels. */
   labels: ProjectCreateFormLabels;
   /** Theme of the markdown editor. */

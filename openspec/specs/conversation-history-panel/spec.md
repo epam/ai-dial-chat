@@ -112,7 +112,7 @@ When `item.iconTooltip` is provided and `item.isIconLoading` is `false` or `unde
 - **WHEN** the user middle-clicks (scroll wheel click) a conversation row
 - **THEN** the browser opens the conversation URL (`item.href`) in a new tab through the row's native `<a>` link
 
-`ConversationItem` SHALL include an optional `href?: string` field — a browser-navigable URL for the conversation. When `href` is set, `ConversationRow` wraps the row `Button` in a native `<a href={item.href} className="contents">`: a plain click is `preventDefault`-ed and calls `onSelectConversation(id)`, and a middle-click uses the browser's native link behaviour to open the URL in a new tab (there are no `mousedown`/`auxclick` handlers and no `window.open` call). The inner `Button` gets `tabIndex={-1}` so the link is the single focus stop. `ConversationPanelView` in `apps/chat` SHALL populate `href` using `getConversationRoute(id)` for each item.
+`ConversationItem` SHALL include an optional `href?: string` field — a browser-navigable URL for the conversation. When `href` is set, `ConversationRow` renders the row as one kit `Button` with `href={item.href}`, which the kit draws as a native `<a>` (no wrapper element, no nested button, no `display: contents`, so the link is focusable and the single focus stop): a plain click is `preventDefault`-ed and calls `onSelectConversation(id)`, while a middle-click or a click with Ctrl, Meta, Shift or Alt uses the browser's native link behaviour to open the URL in a new tab or window (there are no `mousedown`/`auxclick` handlers and no `window.open` call). `ConversationPanelView` in `apps/chat` SHALL populate `href` using `getConversationRoute(id)` for each item.
 
 #### Scenario: Empty state is shown when no conversations
 
@@ -852,11 +852,19 @@ Every label SHALL be a prop. The root SHALL carry the public class `dial-cp-list
 `ConversationRowVariant` SHALL have the members `Avatar = 'avatar'` (the default, today's rows) and `Indicator = 'indicator'`. `ConversationList` SHALL accept `rowVariant`. `ConversationPanel` SHALL always render `Avatar` rows.
 
 An `Indicator` row SHALL render:
-- a leading dot, hollow when read; when unread, a filled dot in the `unreadDot` color and the title in `dial-small-semi-text`;
+- a leading 7.11px dot, hollow when read (a 1.5px border in the `indicatorDot` color); when unread, a filled dot in the `unreadDot` color and the title in `dial-small-semi-text`;
 - no deployment avatar and no `leadingIcon`;
 - no trailing unread dot.
 
 It SHALL still announce the visually hidden `unreadIndicatorLabel` when unread. Row and group-header heights SHALL follow the variant.
+
+Per the Figma frame "Chat - Project - See all" (`ao2NXcmfF23QrZigbiHC8M`, node `17:14375`), an `Indicator` row SHALL have 8px inline padding on both sides (`ps-2`, and `pe-2` when it has no actions). The 24px dot slot therefore sits under the 8px-padded group label, and the title starts 34px from the row's inline start. While the actions trigger is shown, the end padding stays the `pe-9` that makes room for the trigger. `Avatar` rows keep `ps-3` and their current end padding. The other spacing of the sidebar already matches the design and SHALL stay as it is:
+
+- the 16px list gutter;
+- the 8px gap under the header;
+- the 8px section padding (`INDICATOR_FIRST_GROUP_HEADER_ROW_HEIGHT` 32, `INDICATOR_GROUP_HEADER_ROW_HEIGHT` 40);
+- the 24px group header with `px-2`, whose text is the `textSecondary` color falling back to `--text-secondary` (`Avatar` group headers keep `--text-tertiary`);
+- the 32px row with a 2px gap (`INDICATOR_ITEM_ROW_HEIGHT` 34).
 
 #### Scenario: Unread indicator row
 
@@ -867,6 +875,11 @@ It SHALL still announce the visually hidden `unreadIndicatorLabel` when unread. 
 
 - **WHEN** `ConversationList` renders without `rowVariant`
 - **THEN** rows render with the deployment avatar or `leadingIcon`, exactly as `ConversationPanel` rows do
+
+#### Scenario: Indicator row padding
+
+- **WHEN** an `Indicator` row without actions renders
+- **THEN** its button has `ps-2` and `pe-2`, so the dot slot starts 8px from the row's inline start
 
 ### Requirement: ConversationListSection joins the header and the list
 
@@ -949,6 +962,18 @@ While titles are pending, the panel SHALL distinguish a provisional empty search
 - **WHEN** the user changes the search query
 - **THEN** filtering is recalculated against current titles without retaining a match from the old query
 
+### Requirement: Hovering a row's actions trigger keeps the row highlight
+
+The ⋮ trigger of a conversation, project or See all row is a sibling of the row's button, so the highlight SHALL follow the row (`li`), not the button. While the pointer is over the trigger:
+
+- the row keeps the hover highlight (`--cp-item-hover`), except an active row or a row whose menu is open, which keep their active highlight (`--cp-item-active`);
+- the trigger itself gets a round background (`--cp-trigger-bg`) and the accent icon color (`--cp-trigger-icon`), the same look it has while its menu is open.
+
+#### Scenario: Hover the trigger
+
+- **WHEN** the pointer moves from a row onto its ⋮ trigger
+- **THEN** the row stays highlighted and the trigger shows its round background
+
 ### Requirement: Visible conversation IDs guide initial enrichment priority
 
 `ConversationList` in `libs/conversation-panel/src/components/ConversationList/ConversationList.tsx` and its public `ConversationListSection`/`ConversationPanel` containers SHALL support optional `onVisibleConversationIdsChange(ids: string[]): void`. It SHALL report distinct conversation IDs in actual visible virtual-row order, excluding group headers and overscan-only rows, and report an empty set when no rows are visible. Stable callbacks and memoized ID sequences SHALL prevent notifications when the sequence is unchanged.
@@ -976,3 +1001,289 @@ Hidden/collapsed/filtered-out conversations and older scheduled runs SHALL remai
 
 - **WHEN** two mounted views register visible IDs and one is hidden or unmounted
 - **THEN** only that view's registration is removed and the other view's priority remains
+
+### Requirement: The Pinned section renders host-supplied project trees
+
+`ConversationList` and `ConversationListSection` SHALL accept an optional `pinnedProjects?: PinnedProjects` prop. `ConversationListSection` forwards it. `@epam/ai-dial-conversation-panel` SHALL export these types (`libs/conversation-panel/src/models/pinned-projects.ts`):
+
+```ts
+/** A pinned project and the chats the host chose to list under it. */
+interface PinnedProjectGroup {
+  /** Stable unique id. */
+  id: string;
+  /** Display name. */
+  name: string;
+  /** Browser-navigable URL of the project; when set, middle-click opens it in a new tab. */
+  href?: string;
+  /** Origin tab the project belongs to, for the Origin filter. Defaults to `FilterTab.MyChats`. */
+  source?: FilterTab;
+  /** The chats listed under the project, in display order. */
+  conversations: ConversationItem[];
+  /** Renders a See all row after `conversations`. */
+  hasMore: boolean;
+}
+
+/** The project trees of the Pinned section and their callbacks. */
+interface PinnedProjects {
+  /** Projects in display order, rendered before the pinned conversations. */
+  projects: PinnedProjectGroup[];
+  /** Called when a project row is activated. */
+  onSelectProject: (projectId: string) => void;
+  /** Called when a nested chat row is activated. */
+  onSelectConversation: (conversationId: string, projectId: string) => void;
+  /** Called when a See all row is activated. */
+  onSeeAll: (projectId: string) => void;
+  /** Builds the ⋮ actions of a project row and of its See all row; no trigger renders when absent or empty. */
+  getActions?: (project: PinnedProjectGroup) => DropdownItem[];
+  /** Called when the ⋮ menu of a project row or of its See all row opens; receives the trigger button. */
+  onActionMenuOpen?: (
+    project: PinnedProjectGroup,
+    trigger: HTMLButtonElement,
+  ) => void;
+  /** Id of the project the host currently shows; its row gets `aria-current="page"`. */
+  activeProjectId?: string;
+  /** Presentation of the chats nested under a project. Defaults to `ConversationRowVariant.Indicator`. */
+  conversationRowVariant?: ConversationRowVariant;
+}
+```
+
+**Rendering.** The lib SHALL NOT trim, sort or fetch: it renders exactly what the host passes. With `pinnedProjects` present, the Pinned group SHALL render each visible project, in order, before the pinned conversations, as these rows:
+
+1. **Project row.** It has the project icon (default Tabler `IconBriefcase`, 16px glyph in the 24px slot, `aria-hidden`, `DIAL_KIT_ICON_STROKE`, in the `textSecondary` color), the name truncated through `Highlight`, and the ⋮ trigger when `getActions` returns items.
+2. **One nested row per conversation.** By default it is an `Indicator` row (status point, title, `aria-current` when it matches `activeConversationId`) without a ⋮ trigger. With `conversationRowVariant: ConversationRowVariant.Avatar` it is the panel's own `Avatar` row instead — the deployment avatar or `leadingIcon`, the title, and the trailing unread dot — still without a ⋮ trigger or drag, and with the same indent and guide line.
+3. **A See all row, when `hasMore` is set.** Its visible text is `labels.seeAllLabel` (default `'See all'`) in the `textSecondary` color, and its accessible name is `labels.seeAllAriaLabel(name)` (default `` `See all chats in ${name}` ``). It shows the project's ⋮ trigger when `getActions` returns items: the same items and the same `onActionMenuOpen` as the project row, per the Figma frame "Chat - Project - See all" (node `17:14375`).
+
+The Pinned header SHALL render when the section has at least one visible project or pinned conversation. Collapsing it hides the project rows too.
+
+**Layout**, per the Figma frame "Chat - Project - See all" (`ao2NXcmfF23QrZigbiHC8M`, node `17:14375`):
+
+- Every row is 32px high with a 2px gap: `INDICATOR_ITEM_ROW_HEIGHT` (34); a nested row in the `Avatar` variant is `ITEM_ROW_HEIGHT` (36).
+- The project row has the same 8px inline padding and 2px icon gap as an `Indicator` row.
+- Nested and See all rows are offset 28px from the list's inline start (`padding-inline-start`). The See all row has no icon slot, so its text starts at the 8px row padding; it is start-aligned (`text-start`), since the kit `Button` centres its content.
+- A 1px vertical guide line is drawn at `inset-inline-start: 20px`, the centre of the project icon. Each nested and See all row draws its segment, so the line is continuous across the virtualized rows. The first segment starts 5px below its row's top, and the last segment (See all, or the last chat when there is none) ends 5px above its row's bottom.
+- Its color is the new `ConversationListColors.projectGuideLine` (`--cp-project-guide-line`, fallback `var(--stroke-tertiary, #e0e6f0)`), set with `buildCssVars` and read in the row's `.module.scss`.
+- Titles use `itemTitleClassName` / `unreadItemTitleClassName`, so no new typography prop is added.
+- The rows are new members of `VirtualRowKind`: `Project = 'project'`, `ProjectConversation = 'project-conversation'` and `ProjectSeeAll = 'project-see-all'`.
+
+**Search and filters**
+
+- **Search.** While `searchQuery` is non-empty, a project whose name matches SHALL render with all its conversations and its See all row. Otherwise it renders when at least one conversation title matches, with only the matching conversations and no See all row. A project with no match is hidden. Matches in names and titles are highlighted with `Highlight`.
+- **Origin filter.** A project renders under `FilterTab.All` and under the tab equal to its `source`.
+- **Type filter.** `ConversationTypeFilter.Task` hides every project.
+- **`hiddenSources`.** A project whose `source` is listed there is excluded.
+- **Empty state.** A list whose only rows are projects is not empty.
+
+**Drag and drop.** Project, nested and See all rows SHALL NOT be draggable and SHALL NOT be drop targets. Dragging a pinned conversation over them reports no target, and the Pinned header stays the only Pinned drop zone. Pinned conversations still reorder among themselves.
+
+**Accessibility**
+
+- The list keeps `role="list"`. Every row stays a `listitem` and a single tab stop: its link, followed by its ⋮ trigger when shown.
+- A project row, a nested row and a See all row SHALL each be reachable with Tab through their own `<a>`: the link SHALL NOT be rendered with `display: contents`, which a browser skips when moving focus.
+- Project rows SHALL carry `aria-level="1"`.
+- Nested and See all rows SHALL carry `aria-level="2"`, `aria-setsize` (conversations plus See all) and `aria-posinset`, so assistive technology hears the nesting and position without a roving-focus tree widget.
+- A project row matching `activeProjectId`, and a nested row matching `activeConversationId`, get `aria-current="page"`.
+- The visually hidden `unreadIndicatorLabel` is announced for an unread nested row.
+- Focus-visible styling matches hover on every new row.
+
+**RTL.** Indent, padding and guide line use logical properties only (`padding-inline-start`, `inset-inline-start`, `ps-*`). The briefcase icon is symmetric and is not mirrored.
+
+**Boundary.** The lib SHALL NOT know about DIAL projects, routes, pins or feature keys. Ids, names, `href` values, origin and `hasMore` come from the host, and behaviour goes through the callbacks.
+
+#### Scenario: A project with more chats than listed
+
+- **WHEN** `pinnedProjects.projects` holds P with 10 conversations and `hasMore: true`
+- **THEN** the Pinned section renders P's row, 10 nested rows at `aria-level="2"` with `aria-setsize="11"`, and a See all row at `aria-posinset="11"`
+
+#### Scenario: No See all without more chats
+
+- **WHEN** P has `hasMore: false`
+- **THEN** no See all row renders
+
+#### Scenario: Activating rows
+
+- **WHEN** the user activates P's row, a nested chat C and P's See all row in turn
+- **THEN** `onSelectProject(P)`, `onSelectConversation(C, P)` and `onSeeAll(P)` are called in that order, and `onSelectConversation` of the list is not called
+
+#### Scenario: Searching nested chats
+
+- **GIVEN** P is named "Support" and has chats "Weekly summary" and "Billing reply"
+- **WHEN** the query is "billing"
+- **THEN** P's row and only "Billing reply" render, with "Billing" highlighted, and no See all row renders
+
+#### Scenario: Searching by project name
+
+- **WHEN** the query is "supp"
+- **THEN** P's row renders highlighted with all its listed chats and its See all row
+
+#### Scenario: Task filter
+
+- **WHEN** the Type filter is `Task`
+- **THEN** no project row renders
+
+#### Scenario: Nested rows are not draggable
+
+- **WHEN** the user starts dragging a nested chat row
+- **THEN** no drag starts, and `onMoveConversation` is never called for it
+
+#### Scenario: RTL guide line
+
+- **WHEN** the list renders under `dir="rtl"`
+- **THEN** the nested rows are indented from the right edge, and the guide line sits 20px from the right edge
+
+#### Scenario: No pinned projects
+
+- **WHEN** `pinnedProjects` is absent
+- **THEN** the list renders the same rows as before this change, with no project, nested or See all row
+
+#### Scenario: Nested chats in the Avatar variant
+
+- **WHEN** `pinnedProjects.conversationRowVariant` is `ConversationRowVariant.Avatar`
+- **THEN** each nested chat renders as an `Avatar` row (avatar first, unread dot last) at `ITEM_ROW_HEIGHT`, while the project and See all rows keep `INDICATOR_ITEM_ROW_HEIGHT`
+
+### Requirement: `ConversationPanel` shows host-supplied pinned project trees
+
+`ConversationPanelProps` (`libs/conversation-panel/src/models/panel-props.ts`) SHALL accept an optional `pinnedProjects?: PinnedProjects`, the type exported from `@epam/ai-dial-conversation-panel` and defined by the requirement "The Pinned section renders host-supplied project trees". `ConversationPanel` SHALL forward the value to its inner `ConversationList` by reference, without copying, wrapping or filtering it. The list owns the rendering, so the project rows, nested chat rows and See all rows, their ordering inside the Pinned group, drag and drop rules, `aria-level`/`aria-setsize`/`aria-posinset` and RTL behaviour are exactly those the list defines; `ConversationPanel` adds none of its own.
+
+`ConversationPanel` SHALL also forward `labels.seeAllLabel` and `labels.seeAllAriaLabel` to the list. Both fields already belong to `ConversationPanelLabels` through `ConversationListLabels`; the panel SHALL include them in its memoized list labels object and in that object's dependency list, so the object keeps its identity while the values keep theirs. With either field omitted the list's defaults apply (`'See all'` and `` (name) => `See all chats in ${name}` ``).
+
+The panel's controlled inputs already reach the list, so these hold without panel-specific code:
+
+- **Search.** The panel's search text is the list's `searchQuery`: a project is matched by name or by the titles of its chats, as the list defines.
+- **Filter chips.** The active chip is the list's `activeFilter`, and `hiddenSources` is forwarded, so the Origin filter applies to a project's `source`.
+- **Chrome.** The header, New chat button, search field and filter chips render as without `pinnedProjects`.
+
+With `pinnedProjects` omitted or `undefined`, `ConversationPanel` SHALL render exactly as before. The prop has no state owner inside the panel: the host owns the trees and their callbacks, and the lib SHALL NOT know about DIAL projects, routes, pins or feature keys. The panel is already a `memo` component, so a host SHALL pass a referentially stable `pinnedProjects` (and a stable `seeAllAriaLabel`) to keep it from re-rendering; the lib adds no memoisation of its own beyond the labels object above.
+
+The change adds no user-visible strings (the See all text is host-translated through `labels`), is not gated by `ENABLED_FEATURES` or `ENABLED_FEATURES_ROLES`, adds no cache, and has no telemetry. It adds no direction-specific UI: the rows are the list's own.
+
+`libs/conversation-panel/README.md` SHALL document `pinnedProjects` and the See all labels for `ConversationPanel`.
+
+#### Scenario: A pinned project renders inside the panel
+
+- **GIVEN** `pinnedProjects.projects` holds P named "Support" with chats C1 and C2 and `hasMore: true`
+- **WHEN** `<ConversationPanel pinnedProjects={…} />` renders
+- **THEN** the Pinned group shows P's row, C1 and C2 as nested rows and a See all row, before any pinned conversation, below the panel's New chat button, search field and filter chips
+
+#### Scenario: Activating pinned project rows through the panel
+
+- **WHEN** the user activates P's row, C1 and P's See all row in turn
+- **THEN** `onSelectProject(P)`, `onSelectConversation(C1, P)` and `onSeeAll(P)` are called, and the panel's `onSelectConversation` is not called
+
+#### Scenario: The panel search filters project trees
+
+- **GIVEN** P is named "Support" and has chats "Weekly summary" and "Billing reply"
+- **WHEN** the user types "billing" into the panel's search field
+- **THEN** P's row and only "Billing reply" render, and no See all row renders
+
+#### Scenario: The panel filter chip applies to a project's source
+
+- **GIVEN** P has `source: FilterTab.Shared`
+- **WHEN** the user selects the "My chats" chip
+- **THEN** P does not render, and it renders again under the "All" and "Shared" chips
+
+#### Scenario: See all labels reach the list
+
+- **WHEN** `labels.seeAllLabel` is `'Show all'` and `labels.seeAllAriaLabel` returns `All chats of ${name}`
+- **THEN** P's See all row shows "Show all" and is named "All chats of Support"
+
+#### Scenario: Default See all labels
+
+- **WHEN** `labels` omits `seeAllLabel` and `seeAllAriaLabel`
+- **THEN** the See all row shows "See all" and is named "See all chats in Support"
+
+#### Scenario: No project trees without the prop
+
+- **WHEN** `pinnedProjects` is omitted
+- **THEN** the Pinned group holds only pinned conversations, and the rendered output matches the panel's output before this change
+
+#### Scenario: Labels keep their identity across unrelated renders
+
+- **WHEN** the panel re-renders with new `conversations` and the same `labels` field values
+- **THEN** the labels object handed to the list is the same reference, including the See all fields
+
+### Requirement: A pinned project's row collapses and expands its chats
+
+`PinnedProjectGroup` (`libs/conversation-panel/src/models/pinned-projects.ts`) SHALL gain `isExpanded?: boolean` — an absent value means expanded — and `PinnedProjects` SHALL gain `onToggleProject?: (projectId: string, isExpanded: boolean) => void`. `ConversationListLabels` (`libs/conversation-panel/src/models/conversation-list.ts`) SHALL gain `expandProjectLabel?: string` (default `'Expand project'`) and `collapseProjectLabel?: string` (default `'Collapse project'`), and `ConversationPanelLabels` carries them through. The lib stores no collapse state: the host owns it, and the lib SHALL NOT read storage, the route, the language or feature keys for it.
+
+**Toggle.** When `onToggleProject` is set, a project row SHALL render a chevron toggle in front of the project name, as a separate `<button type="button">` outside the row's link, so a click or Enter/Space on it only calls `onToggleProject(project.id, isExpanded)`, where `isExpanded` is the state it asks for (`true` when the project shows collapsed, `false` when it shows expanded, including a project the search override shows expanded): it does not call `onSelectProject`, does not navigate, and does not change the active chat.
+
+- The button has `aria-expanded` (`true` while the project's chats are shown), `aria-controls` set to the `id` of the list container, as the group header toggles do, and an accessible name from `collapseProjectLabel` while expanded and `expandProjectLabel` while collapsed.
+- The icon is `aria-hidden` and drawn with `DIAL_KIT_ICON_STROKE`. It points down while expanded and inline-end while collapsed; the inline-end chevron carries `rtl:scale-x-[-1]`.
+- The button is a 24px target with a round hover background, a separate hit target from the row, whose own hover highlights the whole row and shows the ⋮ trigger.
+- The chevron shares the row's 24px leading slot with the project icon. At rest, expanded or collapsed, the slot shows the project icon. While the row is hovered, has focus within, or its menu is open, the slot shows the chevron instead, and it stays reachable by keyboard while hidden. On `mobile` (below 1280px, where there is no hover) the slot always shows the chevron instead of the project icon, so the state stays readable; the ⋮ trigger and the unread dot behave as on the panel's other rows. Hovering the chevron adds its round background without removing the row's own hover highlight, and a pointer press on it does not leave it focused, so it hides again once the pointer leaves.
+- With `onToggleProject` absent the row renders as before: no chevron, and every project shows its chats.
+
+**Collapsed.** A project is collapsed when `isExpanded` is `false` and no search override applies. A collapsed project renders only its row: its nested chat rows, guide line and See all row are not rendered, and the rows of every later section move up. Its ⋮ trigger works as in the expanded state. The Pinned header, the project order and the other filters are unchanged.
+
+**Search override.** While `searchQuery` is non-empty and at least one chat of the project matches it, the project SHALL render expanded whatever `isExpanded` says, with the matching chats as the existing search rule defines. A project that matches only by name keeps the state the host gave it. The override is derived, is never reported through `onToggleProject` and ends with the query. A press on the chevron of a project the override shows expanded asks to collapse it (`isExpanded: false`).
+
+**Unread.** A collapsed project with at least one chat whose `isUnread` is `true` SHALL show the unread dot in the row's trailing slot, rendered through the row link's `iconAfter` as on a conversation row, so the slot is reserved and a long name truncates before it and the visually hidden `labels.unreadIndicatorLabel` is part of the link's accessible name. The dot is hidden while the ⋮ trigger is shown (hover, focus within, open menu), as on a conversation row. An expanded project shows no such dot, since its chats are visible. The dot reflects the chats the host passed in `conversations`.
+
+**Scroll.** Because a collapsed project removes its rows, the list SHALL scroll to the active conversation once it is shown again, through the existing scroll-to-active behaviour.
+
+The change adds no feature gate, no telemetry and no cache. Memoisation: a host passes a referentially stable `pinnedProjects` and rebuilds a group only when its rows or its `isExpanded` change; the project row stays memoised. RTL: the chevron is the only directional icon and is mirrored as above; layout uses logical properties. Strings reach the lib only through the two labels above.
+
+`libs/conversation-panel/README.md` SHALL document `isExpanded`, `onToggleProject` and the two labels.
+
+#### Scenario: Collapsing a project
+
+- **GIVEN** a project P with chats C1 and C2 and `hasMore: true`, expanded
+- **WHEN** the user activates P's chevron
+- **THEN** `onToggleProject(P, false)` is called once, `onSelectProject` is not, and the host's next render with `isExpanded: false` shows only P's row, with the sections below it moved up
+
+#### Scenario: The leading slot at rest and on hover
+
+- **GIVEN** P is collapsed, and then expanded
+- **WHEN** the pointer is away from P's row
+- **THEN** the leading slot shows the project icon in both states
+- **WHEN** the pointer enters the row
+- **THEN** the slot shows the chevron in P's current state, the ⋮ trigger shows, and hovering the chevron adds its round background
+
+#### Scenario: The chevron reports its state
+
+- **WHEN** P is expanded, and then collapsed
+- **THEN** the chevron has `aria-expanded="true"` and the name "Collapse project", then `aria-expanded="false"` and the name "Expand project", and its `aria-controls` is the list's `id` in both
+
+#### Scenario: Keyboard
+
+- **WHEN** the chevron has focus and the user presses Enter or Space
+- **THEN** `onToggleProject(P, false)` is called and no navigation happens
+
+#### Scenario: The menu works while collapsed
+
+- **GIVEN** P is collapsed and `getActions` returns items
+- **WHEN** the user opens P's ⋮ menu
+- **THEN** the menu opens with the same items as when expanded
+
+#### Scenario: RTL
+
+- **GIVEN** the document direction is `rtl` and P is collapsed
+- **THEN** the chevron is mirrored with `rtl:scale-x-[-1]`
+
+#### Scenario: Collapse a project the search shows open
+
+- **GIVEN** P is collapsed and the search shows it expanded because a chat matches
+- **WHEN** the user activates P's chevron
+- **THEN** `onToggleProject(P, false)` is called, so the host keeps P collapsed once the query ends
+
+#### Scenario: Search shows a chat of a collapsed project
+
+- **GIVEN** P is collapsed with a chat titled "Billing reply"
+- **WHEN** the user types "billing"
+- **THEN** P renders expanded with "Billing reply", `onToggleProject` is not called, and clearing the query collapses P again
+
+#### Scenario: Search matching only the project name
+
+- **GIVEN** P is collapsed and named "Support", and none of its chats matches "support"
+- **WHEN** the user types "support"
+- **THEN** P's row renders and its chats do not
+
+#### Scenario: Unread chats in a collapsed project
+
+- **GIVEN** P is collapsed and one of its chats has `isUnread: true`
+- **THEN** P's row shows the unread dot with the label "Unread", and an expanded P shows none
+
+#### Scenario: Without a toggle callback
+
+- **WHEN** `pinnedProjects.onToggleProject` is omitted
+- **THEN** no chevron renders and every project shows its chats

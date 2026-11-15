@@ -40,6 +40,10 @@ declared on the DTO).
 - **WHEN** DIAL Core returns an error status during create
 - **THEN** the endpoint maps it to the corresponding typed HTTP error (e.g. 502/503)
 
+#### Scenario: Create refused because a dependency is missing
+- **WHEN** DIAL Core refuses the save with `403` and a plain-text body starting with `Failed to access application resource`
+- **THEN** the endpoint responds `403 Forbidden` with `code` `applicationDependentResourceMissing` and a fixed message, without the resource path, and any other `403` body keeps the generic `Forbidden`
+
 ### Requirement: Additional-locale translations on create and update
 The create and update request bodies SHALL accept an optional `locales` array of
 `{language, name, description}` entries and an optional `primaryLocale` string. When `locales`
@@ -374,6 +378,10 @@ supplied and this default is not applied, so a flag the caller leaves unset stay
 - **WHEN** DIAL Core returns an error status while fetching or saving the application
 - **THEN** the endpoint maps it to the corresponding typed HTTP error (e.g. `502`/`503`)
 
+#### Scenario: Update refused because a dependency is missing
+- **WHEN** DIAL Core refuses the save with `403` and a plain-text body starting with `Failed to access application resource` (a resource the application depends on, such as a context file, was moved, deleted or unpublished)
+- **THEN** the endpoint responds `403 Forbidden` with `code` `applicationDependentResourceMissing` (`ApplicationErrorCode`) and a fixed message, and never forwards the Core text or the resource path; a `403` with any other body keeps the generic `Forbidden`. DIAL Core gives the case no machine-readable field, so it is detected by prefix match, the same way `isAcceptedUsersLimitError` detects the share-invitation limit
+
 #### Scenario: OpenAPI contract regenerated
 - **WHEN** `UpdateApplicationBodyDto` gains `applicationProperties`
 - **THEN** `npm run openapi` regenerates the spec, `npm run openapi:check` passes, and the
@@ -467,3 +475,132 @@ Cookie: session=...
 HTTP/1.1 204 No Content
 ```
 
+### Requirement: List Personal application folders
+The system SHALL expose `GET /api/v1/applications/folders` with optional query `path` (validated with `@IsValidFilePath()`; empty or omitted = root). It returns the FOLDER nodes directly under `applications/{sessionBucket}/{path}/`, listed through the DIAL SDK application-metadata call. Response `200`: `ResourceFoldersResponseDto { folders: { name: string; path: string }[] }`, where `path` is relative to the bucket. The folder list is not cached.
+
+- Generated client: operationId `listApplicationFolders`. Frontend callers use the normal (non-`Raw`) method through `apps/chat/src/server-api/applications.ts`.
+- Errors: `400` invalid path, `401` no session, `502` upstream failure.
+- Authorization: any authenticated session. Only the caller's own bucket is listed.
+
+Example: `GET /api/v1/applications/folders?path=Design` → `200 {"folders":[{"name":"Audit Agents","path":"Design/Audit Agents"}]}`
+
+#### Scenario: Listing the root
+- **WHEN** an authenticated user calls `GET /api/v1/applications/folders`
+- **THEN** the response lists only folder nodes at the root of the user's applications bucket
+
+#### Scenario: Path traversal is rejected
+- **WHEN** the caller passes `path=../other`
+- **THEN** the response is `400` and no upstream call is made
+
+### Requirement: Create application accepts a target folder
+`POST /api/v1/applications` (`CreateApplicationBodyDto`) SHALL accept optional `folderPath: string` (validated with `@IsValidFilePath()`). The storage path SHALL become `{folderPath}/{name}__{version}`, with each segment encoded through `encodeDialResourcePath`. `createOnly` candidates (`name-2__version`, …) are tried inside the same folder. Omitting `folderPath` keeps today's root path.
+
+#### Scenario: Create-only write into a folder
+- **WHEN** a custom app is saved as new version `1.1.0` with `{ folderPath: "Design", createOnly: true }`
+- **THEN** the application is created at `applications/{bucket}/Design/{name}__1.1.0`, or the response is `409` when that path is taken
+
+### Requirement: Move an application to a Personal folder
+The system SHALL expose `POST /api/v1/applications/:applicationName/move` with body `MoveResourceDto { folderPath: string }`. It calls the SDK `moveResource` with `overwrite: false` from the application's current resource URL to `applications/{sessionBucket}/{folderPath}/{leaf}`, where `leaf` is the current last segment. Response `200`: `ResourceIdResponseDto { id }`, the new full id. On success it SHALL invalidate `applications:list:{userSub}`.
+
+- operationId `moveApplication`.
+- Errors: `400` invalid body, `401`, `403` source not in the caller's bucket, `404` source missing, `409` target exists, `502`.
+
+Example: `POST /api/v1/applications/applications%2Fb1%2Fagent__1.0.0/move` `{"folderPath":"Design"}` → `200 {"id":"applications/b1/Design/agent__1.0.0"}`
+
+#### Scenario: Move into a subfolder
+- **WHEN** the owner moves `applications/b1/agent__1.0.0` to `Design`
+- **THEN** the response id is `applications/b1/Design/agent__1.0.0`, and the old id no longer resolves
+
+#### Scenario: Target exists
+- **WHEN** an application with the same leaf already exists in the target folder
+- **THEN** the response is `409` and the source is unchanged
+
+### Requirement: Fork and commit an application version
+The system SHALL expose two endpoints.
+
+**Fork.** `POST /api/v1/applications/:applicationName/versions` with body `ForkApplicationVersionDto { version: string; folderPath: string }`. `version` uses the existing version allowlist `@Matches`, and `folderPath` uses `@IsValidFilePath()`. The BFF SDK-copies (`copyResource`, `overwrite: false`) the stored application to `applications/{sessionBucket}/{folderPath}/{name}__{version}`, then sets `displayVersion` to `version` on the copy. Response `201`: `ResourceIdResponseDto { id }`. It returns `409` when the target exists.
+
+**Commit.** `POST /api/v1/applications/:applicationName/versions/commit` with body `CommitApplicationVersionDto { snapshotId: string }`. `snapshotId` must be an `applications/{sessionBucket}/…` id, else `403`. The BFF reads both applications with their ETags, then:
+
+1. writes the snapshot's body to the source path with the source's `displayVersion`, using `If-Match`;
+2. writes the source's previous body to the snapshot path with the snapshot's `displayVersion`, using `If-Match`.
+
+Response `200`: `ResourceIdResponseDto { id: snapshotId }`. It returns `409` when either ETag changed between the read and the write.
+
+Both endpoints:
+
+- invalidate `applications:list:{userSub}` on success;
+- have operationIds `forkApplicationVersion` and `commitApplicationVersion`;
+- can return `400`, `401`, `403`, `404`, `409` and `502`;
+- log failures with `Logger` and never log bodies or tokens.
+
+Example: `POST …/applications%2Fb1%2Fagent__1.0.0/versions` `{"version":"1.1.0","folderPath":""}` → `201 {"id":"applications/b1/agent__1.1.0"}`
+
+#### Scenario: Fork creates a snapshot with the new version
+- **WHEN** the owner forks `agent__1.0.0` to version `1.1.0` at the root
+- **THEN** `applications/{bucket}/agent__1.1.0` exists with `displayVersion` `1.1.0` and the same body as the stored `agent__1.0.0`
+
+#### Scenario: Commit swaps the bodies
+- **GIVEN** a snapshot `agent__1.1.0` forked before the embedded editor saved edits to `agent__1.0.0`
+- **WHEN** commit runs with that snapshot id
+- **THEN** `agent__1.1.0` holds the edited body with version `1.1.0`, and `agent__1.0.0` holds the pre-edit body with version `1.0.0`
+
+#### Scenario: Concurrent change aborts commit
+- **WHEN** either application's ETag changed after commit read it
+- **THEN** the response is `409`
+
+### Requirement: Application writes reject a duplicate name and version
+
+`POST /api/v1/applications`, `PATCH /api/v1/applications/:applicationName`,
+`POST /api/v1/applications/:applicationName/versions` (fork) and
+`POST /api/v1/applications/:applicationName/move` SHALL apply the duplicate rule of the
+`resource-name-uniqueness` capability before writing:
+
+- **Create** compares the new application with the Agents tab of the caller's own bucket
+  in the target folder (`folderPath`, default the bucket root) when it is create-only.
+- **Update** compares the application's new displayed name and version with every tab its
+  `interfaces` place it in (read from the fresh deployments list entry whose id matches
+  the application; absent means Agents only), only when the name or version differs from
+  the stored body the update already reads, excluding itself. An omitted version keeps the
+  stored version. An application the caller does not own is not compared.
+- **Fork** compares the application's name with the new `version` in the target folder; the
+  source stays in place, so it takes part in the comparison.
+- **Move** compares the application's identity in the target folder, excluding itself.
+
+A duplicate SHALL answer `409` with `code` `name-taken-agent` or `name-taken-toolset`,
+as `resource-name-uniqueness` defines (by the tab of the saved
+application, then the conflicting entity), and write nothing. The codes are the enum defined by
+`resource-name-uniqueness`. `createApplication`, `updateApplication`,
+`forkApplicationVersion` and `moveApplication` keep their operation ids and DTOs; their
+documented `409` responses SHALL describe both conflict shapes and the generated client
+SHALL be regenerated. Frontend callers keep using the same generated methods; a Quick App
+create uses the same `createApplication` call with `createOnly`. A rejected write
+invalidates no cache.
+
+Quick App commit (`POST /api/v1/applications/:applicationName/versions/commit`) writes
+within an identity that fork already validated and SHALL NOT repeat the check.
+
+#### Scenario: Second agent with the same name and version
+
+- **WHEN** an own agent `Planner` version `1.1.1` exists in the bucket root and the caller creates an agent `Planner` version `1.1.1` with `createOnly: true`
+- **THEN** the response is `409` with `code` `name-taken-agent`, and no `Planner-2__1.1.1` is created
+
+#### Scenario: Rename frees the old name
+
+- **WHEN** an own agent created as `Test_QuickApp` was renamed to `Test_QuickApp_new_version` and the caller creates `Test_QuickApp` version `1.0.0`
+- **THEN** the create is accepted at the next free path with displayed name `Test_QuickApp` and the renamed agent is untouched
+
+#### Scenario: Fork to an existing version
+
+- **WHEN** the caller forks own agent `Planner` to version `1.1.1` in a folder that already has an own agent `Planner` version `1.1.1`
+- **THEN** the response is `409` with `code` `name-taken-agent` and nothing is copied
+
+#### Scenario: Dual-interface application renamed
+
+- **WHEN** the caller renames own application `A` (interfaces `chat`, `mcp`) to `B` and an own toolset `B` with the same version exists in the same folder
+- **THEN** the response is `409` with `code` `name-taken-toolset`
+
+#### Scenario: Application absent from the list is renamed
+
+- **WHEN** the caller renames own application `A` and the fresh deployments list has no entry with its id
+- **THEN** the check compares `B` with the Agents tab only

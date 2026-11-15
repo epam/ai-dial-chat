@@ -18,7 +18,13 @@ import {
   IconChevronDown,
   IconCircleX,
 } from '@tabler/icons-react';
-import { type CSSProperties, type FC, useId, useState } from 'react';
+import {
+  type CSSProperties,
+  type FC,
+  type ReactNode,
+  useId,
+  useState,
+} from 'react';
 import type { ScheduledTaskRunHistoryListProps } from '../../models/scheduled-task-run-history-list-props';
 import type { ScheduledTaskRunItem } from '../../models/scheduled-task-run-item';
 import { ScheduledTaskRunStatus } from '../../types/scheduled-task-run-status';
@@ -354,28 +360,28 @@ export const ScheduledTaskRunHistoryList: FC<
       </li>
     ));
 
+  const listStyle = {
+    ...cssVars,
+    '--strhl-row-min-height': listStyles?.rowMinHeight,
+  } as CSSProperties;
+  const isInitialError = !isLoading && error != null && items.length === 0;
+
+  let content: ReactNode;
   if (isLoading && items.length === 0) {
-    return (
+    content = (
       <ul
-        style={
-          {
-            ...cssVars,
-            '--strhl-row-min-height': listStyles?.rowMinHeight,
-          } as CSSProperties
-        }
+        style={listStyle}
         aria-label={labels.historyTitle}
         className="flex flex-col gap-0.5"
       >
         {renderSkeletons(skeletonCount)}
       </ul>
     );
-  }
-
-  if (error && items.length === 0) {
-    return (
+  } else if (isInitialError) {
+    content = (
       <div style={cssVars} className="flex flex-col items-start gap-3">
         <p
-          role="status"
+          aria-hidden
           className={mergeClasses(subtitleClassName, styles.subtitleText)}
         >
           {labels.errorLabel}
@@ -383,10 +389,8 @@ export const ScheduledTaskRunHistoryList: FC<
         <GhostButton label={labels.retryLabel} onClick={onRetry} />
       </div>
     );
-  }
-
-  if (items.length === 0) {
-    return (
+  } else if (items.length === 0) {
+    content = (
       <div style={cssVars} className="w-full py-4">
         <NoDataContent
           title={labels.emptyLabel}
@@ -395,17 +399,10 @@ export const ScheduledTaskRunHistoryList: FC<
         />
       </div>
     );
-  }
-
-  return (
-    <>
+  } else {
+    content = (
       <ul
-        style={
-          {
-            ...cssVars,
-            '--strhl-row-min-height': listStyles?.rowMinHeight,
-          } as CSSProperties
-        }
+        style={listStyle}
         aria-label={labels.historyTitle}
         className="flex flex-col gap-0.5"
       >
@@ -422,13 +419,22 @@ export const ScheduledTaskRunHistoryList: FC<
           footer
         )}
       </ul>
-      {/* The error row mounts with the failure; this region is mounted with the list so the failure is announced. */}
+    );
+  }
+
+  return (
+    <>
+      {content}
+      {/* Both regions stay mounted across every state, so a failure is announced when its row or message appears. */}
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
+        {isInitialError ? labels.errorLabel : ''}
+      </LiveRegion>
       <LiveRegion
         politeness={LiveRegionPoliteness.Assertive}
         visuallyHidden
         as={LiveRegionElement.Span}
       >
-        {error ? labels.errorLabel : ''}
+        {error && items.length > 0 ? labels.errorLabel : ''}
       </LiveRegion>
     </>
   );

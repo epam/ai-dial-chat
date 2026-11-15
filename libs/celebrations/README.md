@@ -151,7 +151,7 @@ export const loadHalloween = async () =>
 
 ### Packs
 
-`@epam/ai-dial-celebrations/packs` renders host-validated pack descriptors. Import it only after a pack has resolved, so `LottieScene` and the static trigger stay out of the main chunk. Its exports are `LottieScene`, `StaticTriggerDecoration`, `createCelebrationSceneFromDescriptor`, `replaceCelebrationScenes` and `createCelebrationEventFromDescriptor`.
+`@epam/ai-dial-celebrations/packs` renders host-validated pack descriptors. Import it only after a pack has resolved, so `LottieScene` and the static trigger stay out of the main chunk. Its exports are `LottieScene`, `StaticTriggerDecoration`, `createCelebrationSceneFromDescriptor`, `replaceCelebrationScenes`, `addCelebrationScenes` and `createCelebrationEventFromDescriptor`.
 
 The host supplies every asset through `CelebrationAssetLoaders`: `loadAnimationData(assetId, signal)` resolves parsed Lottie JSON and must reject on abort; `resolveImageUrl(assetId)` returns an `<img>` URL or `undefined`. The library never calls `fetch`, never imports a URL and never injects markup.
 
@@ -181,6 +181,39 @@ export const loadNewYear = async () => {
       colorScheme: CelebrationColorScheme.Light,
     }),
   ]);
+};
+```
+
+Add a scene the event does not have with `addCelebrationScenes`. It appends only unknown ids to the scenes and the click pool, never to the secret pool, and merges `labels` under the event's own labels, so a bundled label id always wins. The host decides which ids may be added; it returns the same event when nothing is new:
+
+```ts
+import {
+  CelebrationColorScheme,
+  type CelebrationAssetLoaders,
+  type CelebrationSceneDescriptor,
+} from '@epam/ai-dial-celebrations';
+
+declare const couriers: CelebrationSceneDescriptor;
+declare const loaders: CelebrationAssetLoaders;
+
+export const loadNewYearWithCouriers = async () => {
+  const [
+    { addCelebrationScenes, createCelebrationSceneFromDescriptor },
+    { newYearEvent },
+  ] = await Promise.all([
+    import('@epam/ai-dial-celebrations/packs'),
+    import('@epam/ai-dial-celebrations/new-year'),
+  ]);
+  return addCelebrationScenes(
+    newYearEvent,
+    [
+      createCelebrationSceneFromDescriptor(couriers, loaders, {
+        direction: 'ltr',
+        colorScheme: CelebrationColorScheme.Light,
+      }),
+    ],
+    { bullfinchCouriersToastMessage: 'Two couriers, one gingerbread star.' },
+  );
 };
 ```
 

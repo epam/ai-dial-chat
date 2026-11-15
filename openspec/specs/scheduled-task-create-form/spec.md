@@ -95,8 +95,8 @@ It SHALL render:
 - **Run at** — the internal `ScheduledTaskRunAtField` component (`libs/scheduled-tasks/src/components/ScheduledTaskRunAtField`, not re-exported from the package index), wrapping a `Calendar` control (`mode={CalendarMode.DateTime}`, imported from `@epam/ai-dial-ui-kit`) shown when `values.repeat === 'oneTime'`, bound to `values.runAt` (a `datetime-local`-style string) through the field's own `runAtToCalendarValue`/`calendarValueToRunAt` adaptation, with `errors.runAt` rendered below the control in the same inline-error pattern via the field's `errorClassName` prop. The field sets the earliest selectable moment to its mount time — a `minDate` pinned once per mount — so days strictly before the mount date render unselectable in the picker's month grid and activating them fires no `onFieldChange('runAt', …)`; the mount date itself and future days remain selectable. The earliest selectable moment is "now", not "now + lead": the page's existing submit-time lead validation (`runAt` must lead "now") is unchanged and still rejects `now`-ish selections at submit
 - **Time** — a `Calendar` control (`mode={CalendarMode.Time}`, imported from `@epam/ai-dial-ui-kit`) shown when `values.repeat` is `'daily'`, `'weekly'`, `'monthly'`, or `'custom'` (NOT shown for `'hourly'`), bound to `values.time` (`HH:mm` local wall-clock string, validated at app edge)
 - **Day of week** — a `Calendar` control (`mode={CalendarMode.Weekday}`, imported from `@epam/ai-dial-ui-kit`) shown when `values.repeat === 'weekly'`, bound to `values.dayOfWeek` via `dayOfWeekToCalendarValue`/`calendarValueToDayOfWeek` (`libs/scheduled-tasks/src/utils/calendar-value.ts`), which convert between `Calendar`'s ISO weekday value (`"1"`=Monday..`"7"`=Sunday) and `values.dayOfWeek`'s APScheduler-convention string (`"0"`=Monday..`"6"`=Sunday)
-- **Every** — a `Select` control (imported from `@epam/ai-dial-ui-kit`) shown when `values.repeat === 'custom'`, labeled `labels.everyLabel` ("Every"), bound to `values.everyWeeks` (a `"1"`–`"10"` string) with options built from `labels.everyWeekOptions` (`{ value: '1', label: '1 week' }` … `{ value: '10', label: '10 weeks' }`). A dropdown always yields a valid value, so no `errors.everyWeeks` is rendered and no validation error exists for this field
-- **Day of week (custom)** — a row of circular `Button` controls (imported from `@epam/ai-dial-ui-kit`) shown when `values.repeat === 'custom'`, rendered below the Time field under a visible required `Label` carrying the existing `labels.dayOfWeekLabel` ("Day") with a required marker; the Label's host-generated `id` is referenced by the row's `role="group"` via `aria-labelledby`, so the visible label doubles as the group's accessible name (the same Label-id + `aria-labelledby` linkage the Model or Agent field uses). Seven buttons — one per weekday, separated by a 2px gap (`gap-0.5`) — each render `labels.customDayOptions[day].shortLabel` (a single letter, e.g. "M") as the visible label and carry `labels.customDayOptions[day].fullName` as `aria-label`, so assistive tech announces the full day name, not the letter. The selected day's button carries `variant={ButtonVariant.Primary}` and the rest `variant={ButtonVariant.Neutral}`, all with `appearance={ButtonAppearance.Solid}` and a `w-10 rounded-full` class pair fixing each button at 40×40px and circular; each button carries `aria-pressed` reflecting its selection. The row is single-select: activating an unselected button calls `onFieldChange('dayOfWeek', <APScheduler day string>)`; activating the already-selected button is a no-op (the field is required, so there is always exactly one selected day). `errors.dayOfWeek` renders below the row in the same inline-error pattern
+- **Every** — the former Custom week-count `Select` (bound to the former `values.everyWeeks`, options from the former `labels.everyWeekOptions`) is no longer rendered: Custom no longer offers an every-N-weeks interval
+- **Days of week (custom)** — a row of circular `Button` controls (imported from `@epam/ai-dial-ui-kit`) shown when `values.repeat === 'custom'`, rendered below the Time field under a visible required `Label` carrying `labels.daysOfWeekLabel` ("Days") with a required marker; the Label's host-generated `id` is referenced by the row's `role="group"` via `aria-labelledby`, so the visible label doubles as the group's accessible name (the same Label-id + `aria-labelledby` linkage the Model or Agent field uses). Seven buttons — one per weekday, Monday first, separated by a 2px gap (`gap-0.5`) — each render `labels.customDayOptions[day].shortLabel` (a single letter, e.g. "M") as the visible label and carry `labels.customDayOptions[day].fullName` as `aria-label`, so assistive tech announces the full day name, not the letter. Selected buttons carry `variant={ButtonVariant.Primary}` and the rest `variant={ButtonVariant.Neutral}`, all with `appearance={ButtonAppearance.Solid}` and a `w-10 rounded-full` class pair fixing each button at 40×40px and circular; each button carries `aria-pressed` reflecting its selection. The row is a multi-select bound to `values.daysOfWeek: string[]` (APScheduler-convention day strings, `'0'` Monday – `'6'` Sunday, kept sorted Monday first): activating an unselected button calls `onFieldChange('daysOfWeek', <next sorted list>)` with that day added; activating a selected button removes it, except that activating the only selected day is a no-op (the field is required, so at least one day stays selected). `errors.daysOfWeek` renders below the row in the same inline-error pattern
 - **Day of month** — shown when `values.repeat === 'monthly'` (`values.dayOfMonth`)
 - **Minute** — a required text input (matching the `Day of month` field's `Input` pattern) shown when `values.repeat === 'hourly'`, bound to `values.minute` (a `"0"`-`"59"` string); no `Time`, `Day of week`, or `Day of month` field is rendered for `'hourly'`
 - **Model or Agent** — a required field rendering the host-supplied `modelSelector` element in place of a lib-owned selection control, wrapped in the lib's own required-label/error markup (the "Model or Agent" label, a required marker, and `errors.modelId` rendered below the control) using the same visual pattern already used for `Calendar` fields without a built-in `labelProps` (see `withRequiredMarker`). The lib performs no deployment lookup, filtering, or catalog navigation itself — it only renders whatever `modelSelector` the host passes.
@@ -104,11 +104,11 @@ It SHALL render:
 - **Instructions** - markdown editor (`values.prompt`), required only when no skill is selected; its label carries the required marker (red asterisk) exactly while `values.skillUrls` is empty and drops it once a skill is selected, with or without the Refine action
 - **Cancel / Create** actions
 
-When `values.repeat === 'custom'`, the form SHALL render exactly the **Every** dropdown, the **Time** field, and the **Day of week (custom)** button row below it, in that order — and SHALL NOT render the Start date / End date pickers (Custom has no activity window; see "ScheduledTaskCreateForm renders optional Start date / End date pickers for recurring schedules").
+When `values.repeat === 'custom'`, the form SHALL render exactly the **Time** field, the **Days of week (custom)** button row below it, and the optional Start date / End date pickers below the row, in that order (see "ScheduledTaskCreateForm renders optional Start date / End date pickers for recurring schedules"); no Every dropdown renders.
 
 `values` SHALL NOT include a `stream` field, and the form MUST NOT render a stream toggle — streaming is fixed server-side (`stream: true`) and is not a user-configurable option.
 
-`description` is optional and MUST NOT participate in the Create-button required-field guard. The Create action SHALL be disabled while `isSubmitting` or host-supplied `isSubmitDisabled` is `true`, while `errors.modelId` is present, or while `displayName` or `values.modelId` is empty, while both trimmed `prompt` and `values.skillUrls` are empty, while `errors.skillUrls` is present, or — when `values.repeat === 'custom'` — while `values.dayOfWeek` or `values.time` is empty (minimum client-side guard; full validation uses shared checked preparation at the app boundary). `values.modelId` itself continues to be owned and set by the host via the `modelSelector` element's own `onSelect` callback (bound to `onFieldChange('modelId', ...)` by the host, outside the lib) — the lib's required-field guard reads `values.modelId` exactly as it did before this change; only the rendered control changed.
+`description` is optional and MUST NOT participate in the Create-button required-field guard. The Create action SHALL be disabled while `isSubmitting` or host-supplied `isSubmitDisabled` is `true`, while `errors.modelId` is present, or while `displayName` or `values.modelId` is empty, while both trimmed `prompt` and `values.skillUrls` are empty, while `errors.skillUrls` is present, or — when `values.repeat === 'custom'` — while `values.daysOfWeek` is empty or `values.time` is empty (minimum client-side guard; full validation uses shared checked preparation at the app boundary). `values.modelId` itself continues to be owned and set by the host via the `modelSelector` element's own `onSelect` callback (bound to `onFieldChange('modelId', ...)` by the host, outside the lib) — the lib's required-field guard reads `values.modelId` exactly as it did before this change; only the rendered control changed.
 
 The `Run at` and `Time` `Calendar` controls' `onChange` callbacks (inside `ScheduledTaskRunAtField` for `runAt`, in the form for `time`) MUST adapt the ui-kit's `CalendarValue` (`Date | string | null`) into calls to `onFieldChange('runAt', ...)` / `onFieldChange('time', ...)` using the same value shapes the page already consumes (`values.runAt` as a `Date`-constructible value, `values.time` as an `"HH:mm"` string) — this is a UI-control swap, not a change to the `values`/`onFieldChange` contract.
 
@@ -177,16 +177,16 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 #### Scenario: Custom repeat renders the Every dropdown, Time field, and labeled day button row in that order
 
 - **WHEN** `values.repeat === 'custom'`
-- **THEN** the "Every" `Select` renders bound to `values.everyWeeks` with ten options ("1 week"…"10 weeks"), the "Time" `Calendar` (`mode={CalendarMode.Time}`) renders with the timezone hint, and the day-of-week button row renders below it under a visible required "Day" label — seven circular 40×40px `Button`s, the selected day Primary Solid and the rest Neutral Solid, each labeled with its `customDayOptions` short label and carrying its full-name `aria-label` and an `aria-pressed` state, inside a `role="group"` whose accessible name is the visible label — and neither the Start date nor End date picker renders
+- **THEN** the "Time" `Calendar` (`mode={CalendarMode.Time}`) renders with the timezone hint, the days-of-week button row renders below it under a visible required "Days" label — seven circular 40×40px `Button`s, selected days Primary Solid and the rest Neutral Solid, each labeled with its `customDayOptions` short label and carrying its full-name `aria-label` and an `aria-pressed` state, inside a `role="group"` whose accessible name is the visible label — and the Start date / End date pickers render below the row; no Every `Select` renders (the scenario name is historical: the former Every dropdown is no longer rendered)
 
 #### Scenario: Custom day button selection uses the APScheduler day convention
 
-- **WHEN** `values.repeat === 'custom'` and the user activates the Monday button (short label "M")
-- **THEN** `onFieldChange('dayOfWeek', '0')` is called (APScheduler convention), the Monday button becomes the selected one (Primary Solid, `aria-pressed="true"`), and activating Monday again fires no `onFieldChange`
+- **WHEN** `values.repeat === 'custom'` with `values.daysOfWeek = ['2']` (Wednesday) and the user activates the Monday button (short label "M")
+- **THEN** `onFieldChange('daysOfWeek', ['0', '2'])` is called (APScheduler convention, sorted Monday first) and the Monday button shows `aria-pressed="true"`; activating Wednesday afterwards calls `onFieldChange('daysOfWeek', ['0'])`; activating Monday when it is the only selected day fires no `onFieldChange`
 
 #### Scenario: Required-field guard blocks submit until the Custom schedule is complete
 
-- **WHEN** `values.repeat === 'custom'` and either `values.dayOfWeek` or `values.time` is empty
+- **WHEN** `values.repeat === 'custom'` and either `values.daysOfWeek` is empty or `values.time` is empty
 - **THEN** the Create button is disabled, regardless of the other fields being valid
 
 #### Scenario: Form does not expose a stream control
@@ -243,9 +243,9 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 - `repeat === 'daily'`: `trigger = { cron: { fields: { hour, minute } } }`, where `hour`/`minute` are the UTC equivalent of the local `time` the user entered, computed via `buildCronFields` in `libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts` from a reference `Date` set with the local `setHours(hour, minute)` and read back through `getUTCHours()`/`getUTCMinutes()` (the browser's own timezone and DST rules apply; no explicit IANA zone is read)
 - `repeat === 'weekly'`: include `day_of_week` as the UTC-equivalent weekday (shifted ±1, mod 7, relative to the locally-selected `dayOfWeek`, whenever the local→UTC hour conversion crosses a calendar-day boundary), alongside the UTC `hour`/`minute`
 - `repeat === 'monthly'`: include `day` as the local `dayOfMonth` shifted by the UTC calendar-day shift (−1, 0, or +1) of the same conversion, alongside the UTC `hour`/`minute`. The shift is applied to the number, never by rolling a `Date` to that day, so a day the current month lacks (e.g. the 31st in November) is not carried into the next month. A local 1st shifted back emits the APScheduler expression `day: 'last'`, because the UTC predecessor of the 1st is the previous month's last day, whose number varies; a local 31st shifted forward emits `day: '1'`
-- `repeat === 'custom'`: `trigger = { cron: { fields: { week: '*/<everyWeeks>', day_of_week, hour, minute } } }`, where `day_of_week`/`hour`/`minute` are computed exactly as for `'weekly'` (reference `Date` rolled to the locally-selected weekday, local→UTC via getters, including the ±1 day shift when the conversion crosses midnight) and `week` is the literal step expression built from `values.everyWeeks` with no conversion — a week count is timezone-invariant. The `week` field is emitted for every `everyWeeks` value including `1` (`'*/1'`): its presence is what distinguishes a Custom task from a Weekly task on the reverse mapping. No `startDate`/`endDate` is ever sent for `'custom'`, even when stale boundary values linger in form state from a prior cadence selection
+- `repeat === 'custom'`: `trigger = { cron: { fields: { day_of_week, hour, minute }, startDate?, endDate? } }`, where `hour`/`minute` are the UTC equivalents of `values.time` and `day_of_week` is the comma-separated, ascending list of the UTC weekdays of `values.daysOfWeek`. The conversion uses **one** reference `Date` (constructed from the local `hour`/`minute` and rolled to the first selected weekday) and applies its UTC calendar-day shift (−1, 0 or +1) to every selected day, mod 7, so all days share one UTC `hour`/`minute` and one cron entry is always enough. No `week` field is emitted: the former `week: '*/<everyWeeks>'` encoding is no longer produced. The optional `startDate`/`endDate` are converted exactly as for the other day-based repeats (see "Create-task page validates and converts the activity window to UTC boundaries")
 
-This mapping, including the local→UTC conversion for the `'hourly'`/`'daily'`/`'weekly'`/`'monthly'`/`'custom'` fields, MUST remain in `libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts`, reused by app adapters under the existing configured-client/type exception, not duplicated in app pages or presentation libraries. `buildCronFields` MUST use a single reference `Date` and read back UTC getters from it rather than computing the UTC offset by hand: for `'daily'`/`'weekly'`/`'monthly'`/`'custom'`, the reference is constructed from the local `hour`/`minute` (rolled to the matching local weekday for weekly and custom) and `getUTCHours()`/`getUTCMinutes()`/`getUTCDay()` are read back, with the monthly `day` derived from the reference's UTC calendar-day shift as described above; for `'hourly'`, the reference is constructed from local hour `0`/local `minute` and only `getUTCMinutes()` is read back, with `hour` always emitted as the literal `'*'`.
+This mapping, including the local→UTC conversion for the `'hourly'`/`'daily'`/`'weekly'`/`'monthly'`/`'custom'` fields, MUST remain in `libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts`, reused by app adapters under the existing configured-client/type exception, not duplicated in app pages or presentation libraries. `buildCronFields` MUST use a single reference `Date` and read back UTC getters from it rather than computing the UTC offset by hand: for `'daily'`/`'weekly'`/`'monthly'`/`'custom'`, the reference is constructed from the local `hour`/`minute` (rolled to the matching local weekday for weekly, and to the first selected weekday for custom) and `getUTCHours()`/`getUTCMinutes()`/`getUTCDay()` are read back, with the monthly `day` derived from the reference's UTC calendar-day shift as described above; for `'hourly'`, the reference is constructed from local hour `0`/local `minute` and only `getUTCMinutes()` is read back, with `hour` always emitted as the literal `'*'`.
 
 #### Scenario: One-time repeat sends trigger.date
 
@@ -289,34 +289,34 @@ This mapping, including the local→UTC conversion for the `'hourly'`/`'daily'`/
 
 #### Scenario: Custom repeat sends the week step with UTC-converted day and time
 
-- **WHEN** the user selects Repeat = Custom, Every = 2 weeks, Monday, local time `09:00` in a timezone at UTC+2, and submits
-- **THEN** the POST body's `trigger.cron.fields` is `{ week: '*/2', day_of_week: <Monday's APScheduler value>, hour: '7', minute: '0' }` with no `startDate`/`endDate`/`day` keys
+- **WHEN** the user selects Repeat = Custom, Monday, Wednesday and Friday, local time `09:00` in a timezone at UTC+2, and submits
+- **THEN** the POST body's `trigger.cron.fields` is `{ day_of_week: '0,2,4', hour: '7', minute: '0' }` with no `week` or `day` key (the scenario name is historical: the former `week` step is no longer sent)
 
 #### Scenario: Custom repeat shifts day_of_week when the UTC conversion crosses midnight
 
-- **WHEN** the user selects Repeat = Custom with local time `00:30` on Monday in a timezone at UTC+2, so the UTC equivalent falls on Sunday `22:30`
-- **THEN** the POST body's `trigger.cron.fields.day_of_week` is `'6'` (Sunday), `hour` is `'22'`, `minute` is `'30'`, and `week` is unaffected by the conversion
+- **WHEN** the user selects Repeat = Custom with Monday and Wednesday at local time `00:30` in a timezone at UTC+2, so the UTC equivalents fall on Sunday and Tuesday `22:30`
+- **THEN** the POST body's `trigger.cron.fields` is `{ day_of_week: '1,6', hour: '22', minute: '30' }` — every selected day shifts by the same UTC day offset
 
 #### Scenario: Custom every-1-week still emits the week field
 
-- **WHEN** the user selects Repeat = Custom, Every = 1 week, and submits
-- **THEN** the POST body's `trigger.cron.fields.week` is `'*/1'` — the `week` key is present, distinguishing the task from a Weekly-cadence task whose fields never include `week`
+- **WHEN** the user selects Repeat = Custom with any set of days and submits
+- **THEN** the POST body's `trigger.cron.fields` carries no `week` key (the scenario name is historical: the former `'*/1'` marker is no longer emitted; a weekday list is what distinguishes Custom from Weekly on the reverse mapping)
 
 #### Scenario: Custom submit never carries stale boundary values
 
-- **WHEN** the user sets a Start date while `values.repeat === 'weekly'`, then switches `repeat` to `'custom'` and submits
-- **THEN** the POST body's `trigger.cron` contains no `startDate` and no `endDate`
+- **WHEN** the user sets a Start date while `values.repeat === 'weekly'`, switches `repeat` to `'custom'`, and submits
+- **THEN** the Start date stays visible in the Custom pickers and is sent as `trigger.cron.startDate`; after switching to `'oneTime'` instead, no boundary is sent
 
 ### Requirement: Create-task strings flow through react-i18next
 
 Every user-visible string on the create-task page (page title, repeat-field labels, model/instructions/description labels, validation messages, success/error notifications) MUST be resolved via `useTranslation().t()` in the app and passed into the lib as plain strings. The form's field labels and Repeat options are built by the shared `useScheduledTaskFormLabels(mode)` hook (`apps/chat/src/hooks/scheduled-tasks/useScheduledTaskFormLabels.ts`), which both the create (`'create'`) and edit (`'edit'`) pages call. Feature-specific keys live under `scheduledTasks.create.*` in `apps/chat/src/i18n/locales/en.json`, referenced through `ScheduledTasksI18nKeys`. The display name label/required message MUST reuse `EditorI18nKeys.NameLabel` and `EditorI18nKeys.NameRequired`. Length and control-character errors on the display name, description and instructions MUST reuse `EditorI18nKeys.FieldTooLong` (interpolating the exceeded limit as `count`) and `EditorI18nKeys.NameControlCharacters`; there is no scheduled-task-specific length key. Cancel MUST reuse `ButtonsI18nKeys.Cancel`; the submit action MUST reuse `ButtonsI18nKeys.Create` (labeled "Create" — the create page creates a task; the edit page keeps `ButtonsI18nKeys.Save`).
 
-The Custom section's weekday names are NOT translation keys: `useScheduledTaskFormLabels` derives each day's short label and full accessible name from `Intl.DateTimeFormat` in the active locale (weekday `'narrow'` for the visible single letter, weekday `'long'` for the `aria-label`), so the seven-button day row is localized in every supported locale without per-day keys. The week-count option labels use one pluralized key.
+The Custom section's weekday names are NOT translation keys: `useScheduledTaskFormLabels` derives each day's short label and full accessible name from `Intl.DateTimeFormat` in the active locale (weekday `'narrow'` for the visible single letter, weekday `'long'` for the `aria-label`), so the seven-button day row is localized in every supported locale without per-day keys. The row's label uses `scheduledTasks.create.daysOfWeekLabel` ("Days"). The former week-count keys `scheduledTasks.create.everyLabel` and `scheduledTasks.create.everyWeeksOption` are removed with the Every dropdown.
 
 #### Scenario: New keys exist for the Repeat control and model copy
 
 - **WHEN** the change is applied
-- **THEN** `en.json` contains at minimum `scheduledTasks.create.pageTitle`, `scheduledTasks.create.repeatLabel`, `scheduledTasks.create.repeatOneTime`, `scheduledTasks.create.repeatHourly`, `scheduledTasks.create.repeatDaily`, `scheduledTasks.create.repeatWeekly`, `scheduledTasks.create.repeatMonthly`, `scheduledTasks.create.repeatCustom`, `scheduledTasks.create.everyLabel`, `scheduledTasks.create.everyWeeksOption` (with i18next `one`/`other` plurals: "1 week"/"{{count}} weeks"), `scheduledTasks.create.minuteLabel`, `scheduledTasks.create.minuteInvalid`, `scheduledTasks.create.timeLabel`, `scheduledTasks.create.modelOrAgentLabel`, `scheduledTasks.create.modelPlaceholder`, `scheduledTasks.create.instructionsLabel`, `scheduledTasks.create.descriptionLabel`, `scheduledTasks.create.successNotification`, and `scheduledTasks.create.errorNotification`; it no longer needs `scheduleSectionLabel`, `scheduleTypeOnce`, `scheduleTypeRecurring`, `scheduleTypeAriaLabel`, `frequencyLabel`, `frequencyDaily`, `frequencyWeekly`, `frequencyMonthly`, or `streamLabel` keys
+- **THEN** `en.json` contains at minimum `scheduledTasks.create.pageTitle`, `scheduledTasks.create.repeatLabel`, `scheduledTasks.create.repeatOneTime`, `scheduledTasks.create.repeatHourly`, `scheduledTasks.create.repeatDaily`, `scheduledTasks.create.repeatWeekly`, `scheduledTasks.create.repeatMonthly`, `scheduledTasks.create.repeatCustom`, `scheduledTasks.create.daysOfWeekLabel`, `scheduledTasks.create.minuteLabel`, `scheduledTasks.create.minuteInvalid`, `scheduledTasks.create.timeLabel`, `scheduledTasks.create.modelOrAgentLabel`, `scheduledTasks.create.modelPlaceholder`, `scheduledTasks.create.instructionsLabel`, `scheduledTasks.create.descriptionLabel`, `scheduledTasks.create.successNotification`, and `scheduledTasks.create.errorNotification`; it no longer needs `scheduleSectionLabel`, `scheduleTypeOnce`, `scheduleTypeRecurring`, `scheduleTypeAriaLabel`, `frequencyLabel`, `frequencyDaily`, `frequencyWeekly`, `frequencyMonthly`, `streamLabel`, `everyLabel`, or `everyWeeksOption` keys
 
 #### Scenario: Generic labels are reused, not duplicated
 
@@ -327,6 +327,7 @@ The Custom section's weekday names are NOT translation keys: `useScheduledTaskFo
 
 - **WHEN** `useScheduledTaskFormLabels` builds `customDayOptions` for the day-of-week segmented control
 - **THEN** each option's `shortLabel` and `fullName` come from `Intl.DateTimeFormat(<active locale>)` weekday formatting — no hardcoded English day strings and no per-day i18n keys exist for this control
+
 ### Requirement: Create-task page supports RTL and meets AAA accessibility defaults
 
 All directional layout in the create-task header and two-column form MUST use Tailwind logical properties (`ms/me`, `ps/pe`, `text-start/end`) instead of physical ones, per `.claude/rules/rtl.md`. The header's back arrow MUST mirror in RTL via `rtl:scale-x-[-1]`. Every form field MUST have an accessible label distinct from its placeholder. Dropdowns (Repeat, model) MUST expose `aria-expanded` and mark the selected option via `aria-selected`/`aria-current`. Focus-visible styling on the back control, Cancel, and Create MUST match hover feedback per `.claude/rules/a11y.md`.
@@ -392,11 +393,11 @@ endDate?: string;
 
 `ScheduledTaskCreateFormErrors` SHALL have `startDate?: string` and `endDate?: string`. `ScheduledTaskCreateFormLabels` SHALL have `startDateLabel`, `endDateLabel`, `startDatePlaceholder` (default `"Pick start date"`), `endDatePlaceholder` (default `"Pick end date"`). Both fields are optional, so no label renders a required marker.
 
-`ScheduledTaskCreateForm` SHALL render both pickers whenever `values.repeat` is `'hourly'`, `'daily'`, `'weekly'`, or `'monthly'` (the activity window is not restricted to a subset of those cadences) — but SHALL NOT render either picker when `values.repeat` is `'oneTime'` or `'custom'`: a one-time task has no recurrence to bound, and a Custom schedule has no activity window by design (see the Custom repeat requirement in "ScheduledTaskCreateForm lib component matches the BFF create contract"). The pickers are positioned after the cadence's own fields — below **Time** and **Day of week**/**Day of month** when those render, and for `'hourly'` (which renders no Time/Day field) below the **Minute** field. Both pickers render through the internal `ScheduledTaskBoundaryField` component (`libs/scheduled-tasks/src/components/ScheduledTaskBoundaryField`, not re-exported from the package index), which wraps the `Calendar` component from `@epam/ai-dial-ui-kit` and carries the field's label, placeholder, `minDate`, `error`, `errorClassName`, and `disabled` handling.
+`ScheduledTaskCreateForm` SHALL render both pickers whenever `values.repeat` is `'hourly'`, `'daily'`, `'weekly'`, `'monthly'`, or `'custom'` (the activity window is not restricted to a subset of those cadences) — but SHALL NOT render either picker when `values.repeat` is `'oneTime'`: a one-time task has no recurrence to bound. For `'custom'` the pickers render below the days-of-week button row. The pickers are positioned after the cadence's own fields — below **Time** and **Day of week**/**Day of month** when those render, and for `'hourly'` (which renders no Time/Day field) below the **Minute** field. Both pickers render through the internal `ScheduledTaskBoundaryField` component (`libs/scheduled-tasks/src/components/ScheduledTaskBoundaryField`, not re-exported from the package index), which wraps the `Calendar` component from `@epam/ai-dial-ui-kit` and carries the field's label, placeholder, `minDate`, `error`, `errorClassName`, and `disabled` handling.
 
 Every cadence that renders the pair (`'hourly'`, `'daily'`, `'weekly'`, `'monthly'`) uses the same date-only pickers — `mode={CalendarMode.Date}`, `YYYY-MM-DD` values via the `dateValueToCalendarValue`/`calendarValueToDateValue` helpers — sharing one row (`flex flex-row gap-3`, each picker `flex-1`) at every breakpoint; the two fields never stack. `'hourly'` picks no time for its window: its time within the hour is the **Minute** field, and its window is bounded at whole local days (start of the start day, end of the end day), exactly like the day-based repeats.
 
-A repeat switch into or out of `'custom'` clears both boundaries (via `keepWindowBoundaryOnRepeatSwitch` in `libs/scheduled-tasks/src/utils/window-boundary.ts`): Custom renders no boundary pickers, so a carried-over value would be invisible yet remain live in form state (dirty-check noise, silently dropped by the submit mapping) — it is cleared rather than parked. A switch between any two other cadences (including `'hourly'` and a day-based one) keeps both boundaries unchanged: the shape and meaning are the same. Validation (`isValidDateOnly` in `libs/scheduled-tasks/src/validation/scheduled-task-validation.ts`) accepts only the date-only shape, so a boundary carrying a time part is rejected.
+A repeat switch between any two recurring cadences — including into or out of `'custom'`, which now renders the same date-only pickers — keeps both boundaries unchanged: the shape and meaning are the same. The former Custom special case in `keepWindowBoundaryOnRepeatSwitch` (`libs/scheduled-tasks/src/utils/window-boundary.ts`), which cleared both boundaries because Custom rendered no pickers, is removed. Validation (`isValidDateOnly` in `libs/scheduled-tasks/src/validation/scheduled-task-validation.ts`) accepts only the date-only shape, so a boundary carrying a time part is rejected.
 
 Both pickers pin the earliest selectable day at the form's mount date — a `minDate` memoized once per form mount, mirroring the run-at field's pinned earliest moment — so days strictly before the mount date render unselectable and activating them fires no `onFieldChange('startDate'/'endDate', …)`; the mount date itself and future days remain selectable. Errors render with the same inline-error paragraph pattern already used for `runAt`/`time` (`errors.startDate`/`errors.endDate` shown in a `<p>` with `instructionsErrorClassName`).
 
@@ -412,7 +413,7 @@ The lib remains presentational: it performs no timezone conversion, no i18n, and
 #### Scenario: Custom repeat renders no boundary pickers
 
 - **WHEN** `values.repeat === 'custom'`
-- **THEN** neither the Start date nor End date picker renders, even when `values.startDate`/`values.endDate` still hold values in form state
+- **THEN** both the Start date and End date `Calendar` (`mode={CalendarMode.Date}`) pickers render side by side below the days-of-week row, neither carrying a required-field marker (the scenario name is historical: Custom previously rendered no boundary pickers)
 
 #### Scenario: Day-based repeats render the date-only pair in one shared row
 
@@ -431,15 +432,13 @@ The lib remains presentational: it performs no timezone conversion, no i18n, and
 
 #### Scenario: Only a switch into or out of Custom clears the boundaries
 
-- **WHEN** the user sets `startDate` while `values.repeat === 'hourly'`, then switches `repeat` to `'daily'` (or between any two non-Custom cadences)
-- **THEN** only `onFieldChange('repeat', …)` fires — no `onFieldChange('startDate'/'endDate', …)` call, the date-only boundaries stay
-- **WHEN** the user switches `repeat` to or from `'custom'` with boundaries set
-- **THEN** `onFieldChange('startDate', '')` and `onFieldChange('endDate', '')` are called alongside `onFieldChange('repeat', …)`
+- **WHEN** the user sets `startDate` while `values.repeat === 'hourly'`, then switches `repeat` to `'daily'`, then to `'custom'`, then back to `'weekly'`
+- **THEN** only `onFieldChange('repeat', …)` fires on each switch — no `onFieldChange('startDate'/'endDate', …)` call — and the date-only boundaries stay (the scenario name is historical: a switch into or out of Custom no longer clears the boundaries)
 
 #### Scenario: A switch into or out of Custom clears both boundaries
 
 - **WHEN** the user sets `startDate` while `values.repeat === 'weekly'`, then switches `repeat` to `'custom'`
-- **THEN** `onFieldChange('startDate', '')` and `onFieldChange('endDate', '')` are called alongside `onFieldChange('repeat', 'custom')` — Custom renders no boundary pickers, so the value is cleared rather than parked invisibly in form state
+- **THEN** only `onFieldChange('repeat', 'custom')` fires and the Start date stays visible in the Custom pickers (the scenario name is historical: the boundaries are no longer cleared)
 
 #### Scenario: Past days are unselectable in the start/end date pickers
 
@@ -614,13 +613,13 @@ Any new i18n keys this wiring requires (e.g. the placeholder, if not already cov
 
 ### Requirement: Reverse trigger mapping is fail-closed for unsupported or incomplete tasks
 
-Custom editability requires that every non-null cron field belongs to the supported `week`/`day_of_week`/`hour`/`minute` shape. Additional non-null fields, including `month`, `year`, and `second`, SHALL fail closed rather than being discarded on save. Null-valued extra fields remain absent for this check.
+Custom editability requires that every non-null cron field belongs to the supported `day_of_week`/`hour`/`minute` shape. Additional non-null fields, including `week`, `month`, `year`, `second` and `day`, SHALL fail closed rather than being discarded on save. Null-valued extra fields remain absent for this check.
 
 `libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts` SHALL export a reverse mapping function that converts a `ScheduledTaskDto` into `ScheduledTaskCreateFormValues`, inverting `buildCronFields`/`buildCronWindowBoundary`'s UTC→local conversion using the same reference-`Date`-plus-getters technique (browser timezone/DST handling, not manual offset arithmetic). The function SHALL return a discriminated result — success with mapped `values`, or failure with a reason — rather than a value that may itself be invalid. `trigger.cron.fields` MUST be evaluated by presence of a non-`null` value per key, not by key presence alone — DIAL Scheduler always returns every cron field key, using `null` for ones that are not set.
 
 Before applying the existing numeric-hour parsing, the mapper SHALL check for the Hourly shape: when `fields.hour === '*'`, `fields.minute` is present with a purely-numeric value, and neither `day` nor `day_of_week` is present, the mapper SHALL succeed with `values.repeat = 'hourly'` and `values.minute` set to the local minute-of-hour equivalent of the stored UTC minute (via a reference `Date` set with `setUTCHours(0, utcMinute)`, reading back `getMinutes()` — the inverse of the forward `setHours(0, minute)` → `getUTCMinutes()` conversion), with no `time`/`dayOfWeek`/`dayOfMonth` field set. Any other non-numeric `hour` value (cron range/list/step expressions, or `*` combined with a `day`/`day_of_week`) continues to fail closed, same as today.
 
-The mapper SHALL also check for the Custom shape before the extra-key rejection: when `fields.week` is present with a non-`null` value matching exactly `*/N` where `N` is an integer 1–10, `fields.day_of_week` is present with a single plain numeric value, and `fields.hour`/`fields.minute` are present with plain numeric values (and no `day` is set), the mapper SHALL succeed with `values.repeat = 'custom'`, `values.everyWeeks` set to `N`, and `values.dayOfWeek`/`values.time` set to the local equivalents computed exactly as for a Weekly task (the `week` value is a count, not a wall-clock value, and passes through with no conversion). A `week` value in any other shape — a range, a list, a bare number, a step other than 1–10 — continues to fail closed as an unsupported cron shape, because the Custom editor cannot represent it losslessly. A Custom-shape trigger that also carries `startDate`/`endDate` also fails closed: the Custom editor has no boundary fields, so an activity window cannot round-trip losslessly.
+The mapper SHALL also check for the Custom shape before the extra-key rejection: when `fields.day_of_week` is a comma-separated list of two or more distinct plain numeric weekdays (`0`–`6`), `fields.hour`/`fields.minute` are plain numeric values, and no `day` or `week` is set, the mapper SHALL succeed with `values.repeat = 'custom'`, `values.daysOfWeek` set to the local weekdays (the UTC list shifted back by the reference `Date`'s calendar-day shift, mod 7, sorted Monday first) and `values.time` set to the local time, plus `values.startDate`/`values.endDate` hydrated exactly as for the other day-based repeats. A single plain numeric weekday without `week` continues to map to Weekly. Any non-null `week` value — including the `*/N` step written by the former every-N-weeks Custom option, which was never released — fails closed as an unsupported cron shape; no compatibility path is kept.
 
 For the remaining (non-Hourly, non-Custom) shapes, mapping SHALL fail when: the task's `trigger` shape (cron fields with a set, non-`null` value outside `hour`/`minute`/`day`/`day_of_week`/`week`-as-Custom, or both `day` and `day_of_week` set) falls outside what `ScheduledTaskCreateFormValues`'s `repeat`-driven fields can express; `triggerType` does not correspond to a `repeat` value the form supports; or `model` is missing/empty, `prompt` is not a string, or both trimmed `prompt` and `skillUrls` are empty on the DTO. On mapping failure, `ScheduledTaskEditPage` SHALL render a localized, non-destructive error message and SHALL NOT mount `ScheduledTaskCreateForm` in an editable/submittable state — the original task's trigger is never read, coerced, and re-submitted.
 
@@ -651,8 +650,8 @@ For the remaining (non-Hourly, non-Custom) shapes, mapping SHALL fail when: the 
 
 #### Scenario: Custom task round-trips through reverse mapping
 
-- **WHEN** a task's `trigger.cron.fields` is `{ week: '*/2', day_of_week: '6', hour: '22', minute: '30' }` (UTC Sunday) and the local UTC+2 equivalent falls on Monday `00:30`
-- **THEN** the reverse mapper succeeds with `values.repeat = 'custom'`, `values.everyWeeks = '2'`, `values.dayOfWeek = '0'` (Monday), and `values.time = '00:30'` — the week step passes through unconverted
+- **WHEN** a task's `trigger.cron.fields` is `{ day_of_week: '1,6', hour: '22', minute: '30' }` (UTC Tuesday and Sunday) and the local UTC+2 equivalents fall on Wednesday and Monday `00:30`
+- **THEN** the reverse mapper succeeds with `values.repeat = 'custom'`, `values.daysOfWeek = ['0', '2']` (Monday, Wednesday) and `values.time = '00:30'`, and mapping those values forward reproduces the same fields
 
 #### Scenario: A weekly task without a week value still hydrates as Weekly
 
@@ -661,23 +660,23 @@ For the remaining (non-Hourly, non-Custom) shapes, mapping SHALL fail when: the 
 
 #### Scenario: An unsupported week expression fails closed
 
-- **WHEN** a task's `trigger.cron.fields` includes `week: '2-40'`, `week: '1,3'`, or `week: '*/12'`
-- **THEN** the reverse mapper returns a failure result with the unsupported-cron-shape reason, no `ScheduledTaskCreateFormValues` are produced, and the edit page shows the non-destructive "can't be edited here" message with Save unavailable
+- **WHEN** a task's `trigger.cron.fields` includes `week: '*/1'` or `week: '*/2'` (written by the former, never released every-N-weeks Custom option), `week: '2-40'`, `week: '1,3'`, or `week: '*/12'`
+- **THEN** the reverse mapper returns a failure result with the unsupported-cron-shape reason, no `ScheduledTaskCreateFormValues` are produced, and the edit page shows the non-destructive "can't be edited here" message with Save unavailable, while the task stays listed, pausable and deletable
 
 #### Scenario: A custom schedule with an activity window fails closed
 
-- **WHEN** a task's `trigger.cron` carries the Custom field shape and also a `startDate` or `endDate`
-- **THEN** the reverse mapper returns a failure result with the unsupported-cron-shape reason — the Custom editor has no boundary fields, so the window is never silently dropped and re-submitted
+- **WHEN** a task's `trigger.cron` carries the Custom field shape (a weekday list) and also a `startDate` and `endDate`
+- **THEN** the reverse mapper succeeds and hydrates both boundaries into the Custom pickers (the scenario name is historical: Custom previously had no activity window, so a window failed closed)
 
 #### Scenario: A custom schedule with extra cron constraints fails closed
 
-- **WHEN** a task has `{ week: '*/2', day_of_week: '0', hour: '9', minute: '0' }` plus a non-null `month`, `year`, or `second` field
+- **WHEN** a task has `{ day_of_week: '0,2', hour: '9', minute: '0' }` plus a non-null `month`, `year`, `second` or `day` field
 - **THEN** the reverse mapper returns the unsupported-cron-shape failure, so editing an unrelated field cannot remove the extra constraint
 
 #### Scenario: Null-valued extra fields do not prevent Custom editing
 
-- **WHEN** the Custom field shape is accompanied only by null-valued `month`, `year`, `day`, and `second` fields
-- **THEN** the reverse mapper succeeds with `values.repeat = 'custom'` and preserves the week count, local weekday, and local time
+- **WHEN** the Custom field shape is accompanied only by null-valued `month`, `year`, `day`, `week`, and `second` fields
+- **THEN** the reverse mapper succeeds with `values.repeat = 'custom'` and preserves the local weekdays and local time
 
 #### Scenario: Activity-window boundaries round-trip to local date-only values
 
@@ -691,7 +690,7 @@ For the remaining (non-Hourly, non-Custom) shapes, mapping SHALL fail when: the 
 
 #### Scenario: Unsupported cron shape fails closed
 
-- **WHEN** a task's `trigger.cron.fields` encodes a shape the create form's `repeat` control cannot represent (e.g. multiple `day_of_week` values, a field the form has no control for, or `hour: '*'` combined with a set `day`/`day_of_week`)
+- **WHEN** a task's `trigger.cron.fields` encodes a shape the create form's `repeat` control cannot represent (e.g. a `day_of_week` range or step such as `'0-4'` or `'*/2'`, a field the form has no control for, or `hour: '*'` combined with a set `day`/`day_of_week`)
 - **THEN** the reverse mapper returns a failure result, no `ScheduledTaskCreateFormValues` are produced, and the edit page shows a non-destructive "can't be edited here" message with Save unavailable
 
 #### Scenario: Null-valued cron fields are treated as absent, not as unsupported
@@ -972,6 +971,7 @@ The dialog copy SHALL come from the optional labels below, each falling back to 
 | `labels.discardTitle` | "Discard unsaved changes?" |
 | `labels.discardMessage` | "You have unsaved changes. Leaving now will discard them." |
 | `labels.discardConfirmLabel` | "Discard changes" |
+| `labels.discardConfirmMobileLabel` | "Discard" (used below the desktop breakpoint, `useIsMobile`) |
 | `labels.discardCancelLabel` | "Keep editing" |
 
 When `initialValues` is omitted, the form SHALL behave as before: no confirmation and no `beforeunload` listener. This lets a host own unsaved-change handling itself.
@@ -1064,3 +1064,22 @@ No new state, routing, feature gating, observability, or i18n keys are introduce
 
 - **WHEN** the form's labels contract and the app's i18n files are inspected
 - **THEN** `ScheduledTaskCreateFormLabels` has `detailsSectionSubtitle` and no longer has `configurationSectionSubtitle`, and `en.json` contains `scheduledTasks.create.detailsSectionSubtitle` while `scheduledTasks.create.configurationSectionSubtitle` no longer exists
+
+### Requirement: Custom days are validated by the shared schedule validation
+
+When `values.repeat === 'custom'`, `validateScheduledTaskFormValues` SHALL require `values.daysOfWeek` to hold one to seven distinct values from `'0'` to `'6'` and `values.time` to be a valid `HH:mm` time, reporting `errors.daysOfWeek` with a dedicated code; `values.dayOfWeek` SHALL be validated only for Weekly.
+
+#### Scenario: Empty or invalid days are rejected
+
+- **WHEN** a Custom draft has `daysOfWeek` empty, or containing `'7'` or a duplicate
+- **THEN** the validation result has the days-of-week error and Save is blocked
+
+#### Scenario: One selected day is valid
+
+- **WHEN** a Custom draft has `daysOfWeek = ['3']` and a valid time
+- **THEN** the validation result has no days-of-week error (the task reopens as Weekly, see the reverse-mapping requirement)
+
+#### Scenario: Weekly keeps its single-day validation
+
+- **WHEN** `values.repeat === 'weekly'`
+- **THEN** only `values.dayOfWeek` is checked and `values.daysOfWeek` is ignored

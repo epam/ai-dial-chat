@@ -1,13 +1,11 @@
+import { useUnsavedChanges } from '@epam/ai-dial-chat-shared';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { FC } from 'react';
 import { createMemoryRouter, Outlet, RouterProvider } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { UnsavedChangesI18nKeys } from '../../../constants/translation-keys';
-import {
-  UnsavedChangesProvider,
-  useUnsavedChanges,
-} from '../../../context/UnsavedChangesContext';
+import { UnsavedChangesProvider } from '../../../context/UnsavedChangesContext';
 import { useBuilderLeaveGuard } from '../useBuilderLeaveGuard';
 
 const Builder: FC<{ isDirty: boolean }> = ({ isDirty }) => {

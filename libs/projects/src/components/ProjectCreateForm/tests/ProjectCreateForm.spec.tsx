@@ -157,6 +157,34 @@ describe('ProjectCreateForm', () => {
       expect(getCreateButton().hasAttribute('disabled')).toBe(false);
     });
 
+    it('disables Create while the host reports a name error and re-enables it once cleared', () => {
+      const { rerender, props } = renderForm({
+        values: { ...EMPTY_VALUES, name: 'Handbook' },
+        errors: { name: 'A project with this name already exists' },
+      });
+      expect(getCreateButton().hasAttribute('disabled')).toBe(true);
+
+      rerender(
+        <ProjectCreateForm
+          {...props}
+          values={{ ...EMPTY_VALUES, name: 'Handbook 2' }}
+          errors={{}}
+        />,
+      );
+
+      expect(getCreateButton().hasAttribute('disabled')).toBe(false);
+    });
+
+    it('keeps Create enabled for a read-only name even with a host name error', () => {
+      renderForm({
+        values: { ...EMPTY_VALUES, name: 'Handbook' },
+        errors: { name: 'A project with this name already exists' },
+        isNameReadOnly: true,
+      });
+
+      expect(getCreateButton().hasAttribute('disabled')).toBe(false);
+    });
+
     it('calls onSubmit when Create is activated on a valid form', async () => {
       const { props } = renderForm({
         values: { ...EMPTY_VALUES, name: 'Handbook' },
@@ -268,6 +296,21 @@ describe('ProjectCreateForm', () => {
         .forEach((region) => expect(region.textContent).toBe(''));
     });
 
+    it('links the field to the visible inline error, not the empty alert region', async () => {
+      renderForm();
+      const input = screen.getByRole('textbox', { name: /Name/ });
+
+      await userEvent.click(input);
+      await userEvent.tab();
+
+      expect(
+        screen.getByRole('textbox', {
+          name: /Name/,
+          description: 'Name is required',
+        }),
+      ).toBe(input);
+    });
+
     it('moves focus to Name when the host reports a name error', async () => {
       const { props } = renderForm({
         values: { ...EMPTY_VALUES, name: 'Handbook' },
@@ -285,6 +328,83 @@ describe('ProjectCreateForm', () => {
       await userEvent.type(screen.getByRole('textbox', { name: /Name/ }), 'a');
 
       expect(props.onFieldChange).toHaveBeenCalledWith('name', 'a');
+    });
+
+    it('keeps the name editable without a hint by default', () => {
+      renderForm({ values: { ...EMPTY_VALUES, name: 'research' } });
+
+      const input = screen.getByRole('textbox', { name: /Name/ });
+      expect(input.hasAttribute('readonly')).toBe(false);
+      expect(input.hasAttribute('disabled')).toBe(false);
+      expect(
+        screen.queryByText("The project name can't be changed after creation"),
+      ).toBeNull();
+    });
+  });
+
+  describe('read-only name', () => {
+    it('disables the stored name with the default hint linked to it', () => {
+      renderForm({
+        values: { ...EMPTY_VALUES, name: 'research' },
+        isNameReadOnly: true,
+      });
+
+      const input = screen.getByRole('textbox', { name: /Name/ });
+      const hint = screen.getByText(
+        "The project name can't be changed after creation",
+      );
+      expect((input as HTMLInputElement).value).toBe('research');
+      expect(input.hasAttribute('readonly')).toBe(true);
+      expect(input.hasAttribute('disabled')).toBe(true);
+      expect(input.getAttribute('aria-describedby')).toBe(hint.id);
+    });
+
+    it('shows the name lock explanation in a tooltip on hover', async () => {
+      renderForm({
+        values: { ...EMPTY_VALUES, name: 'research' },
+        isNameReadOnly: true,
+        labels: { ...LABELS, nameReadOnlyHint: 'This name is permanent' },
+      });
+
+      await userEvent.hover(screen.getByRole('textbox', { name: /Name/ }));
+
+      expect((await screen.findByRole('tooltip')).textContent).toBe(
+        'This name is permanent',
+      );
+    });
+
+    it('uses the host hint and links it next to a name error', () => {
+      renderForm({
+        values: { ...EMPTY_VALUES, name: 'research' },
+        errors: { name: 'A project with this name already exists' },
+        isNameReadOnly: true,
+        labels: { ...LABELS, nameReadOnlyHint: 'Ask the owner to rename it' },
+      });
+
+      const input = screen.getByRole('textbox', { name: /Name/ });
+      const hint = screen.getByText('Ask the owner to rename it');
+      const error = screen.getByText('A project with this name already exists');
+      expect(input.getAttribute('aria-describedby')?.split(' ')).toEqual([
+        hint.id,
+        error.id,
+      ]);
+    });
+
+    it('never reports typing into a read-only name', async () => {
+      const { props } = renderForm({
+        values: { ...EMPTY_VALUES, name: 'research' },
+        isNameReadOnly: true,
+      });
+
+      await userEvent.type(screen.getByRole('textbox', { name: /Name/ }), 'a');
+      fireEvent.change(screen.getByRole('textbox', { name: /Name/ }), {
+        target: { value: 'renamed' },
+      });
+
+      expect(props.onFieldChange).not.toHaveBeenCalledWith(
+        'name',
+        expect.anything(),
+      );
     });
   });
 
@@ -330,6 +450,18 @@ describe('ProjectCreateForm', () => {
 
       expect(screen.getByText('from device')).toBeTruthy();
       expect(screen.queryByRole('button', { name: 'file manager' })).toBeNull();
+    });
+
+    it('opens the device picker from anywhere on the drop zone, not only the link', async () => {
+      renderForm();
+      const onInputClick = vi.fn();
+      getDropzoneInput().addEventListener('click', onInputClick);
+
+      await userEvent.click(
+        screen.getByText('File formats .csv, .pdf and .xlsx (max 1 MB)'),
+      );
+
+      expect(onInputClick).toHaveBeenCalledOnce();
     });
 
     it('lists and announces files the client rejects', async () => {
@@ -452,6 +584,44 @@ describe('ProjectCreateForm', () => {
       expect(
         screen.getByRole('button', { name: 'Preview tickets.csv' }),
       ).toBeTruthy();
+    });
+
+    it('reports the card id through onContextFileDownload without previewing it', async () => {
+      const files = stageFiles([makeFile('tickets.csv', 10)]);
+      const onContextFileClick = vi.fn();
+      const onContextFileDownload = vi.fn();
+      renderForm({
+        contextFiles: files,
+        onContextFileClick,
+        onContextFileDownload,
+        labels: { ...LABELS, downloadFileLabel: (name) => `Save ${name}` },
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Save tickets.csv' }),
+      );
+
+      expect(onContextFileDownload).toHaveBeenCalledOnce();
+      expect(onContextFileDownload).toHaveBeenCalledWith(files[0].id);
+      expect(onContextFileClick).not.toHaveBeenCalled();
+    });
+
+    it('names a card download button "Download" when the host supplies no downloadFileLabel', () => {
+      const files = stageFiles([makeFile('tickets.csv', 10)]);
+      renderForm({ contextFiles: files, onContextFileDownload: vi.fn() });
+
+      expect(
+        screen.getByRole('button', { name: 'Download tickets.csv' }),
+      ).toBeTruthy();
+    });
+
+    it('shows no card download button when onContextFileDownload is omitted', () => {
+      const files = stageFiles([makeFile('tickets.csv', 10)]);
+      renderForm({ contextFiles: files, onContextFileClick: vi.fn() });
+
+      expect(
+        screen.queryByRole('button', { name: 'Download tickets.csv' }),
+      ).toBeNull();
     });
 
     it('keeps the cards unclickable when onContextFileClick is omitted', () => {
@@ -606,6 +776,27 @@ describe('ProjectCreateForm — layout', () => {
     expect(
       within(context).getByRole('heading', { name: 'Context' }).className,
     ).toContain('dial-tiny-semi-text');
+  });
+
+  it('lists Cancel first in the header and Create first in the mobile footer', () => {
+    renderForm();
+
+    const names = screen
+      .getAllByRole('button', { name: /^(Create|Cancel)$/ })
+      .map((button) => button.textContent);
+
+    expect(names).toEqual(['Cancel', 'Create', 'Create', 'Cancel']);
+  });
+
+  it('paints the idle drop zone with the layer-raised background', () => {
+    const styles = readFileSync(
+      join(__dirname, '../ProjectCreateForm.module.scss'),
+      'utf-8',
+    );
+
+    expect(styles).toMatch(
+      /--pcf-dropzone-bg, var\(--bg-layer-raised, #d1dbea\)/,
+    );
   });
 
   it('renders every file card as an item of one list', () => {

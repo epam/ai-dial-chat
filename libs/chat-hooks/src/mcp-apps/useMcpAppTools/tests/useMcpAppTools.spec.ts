@@ -3,6 +3,7 @@ import type {
   DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
 import type { Message } from '@epam/ai-dial-chat-shared';
+import { McpAppToolDiscovery } from '@epam/ai-dial-mcp-apps';
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { McpAppsApiClient } from '../../mcp-apps-api-client';
@@ -71,7 +72,7 @@ describe('useMcpAppTools indirect discovery', () => {
       toolsetId: TOOLSET_ID,
       toolName: 'Entity_MCP_Server_show_entity_card',
       mcpToolName: 'show_entity_card',
-      discovery: 'indirect',
+      discovery: McpAppToolDiscovery.Indirect,
     });
   });
 

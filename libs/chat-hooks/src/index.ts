@@ -22,7 +22,12 @@ export * from './catalog/map-prompt-to-catalog-item';
 export * from './catalog/map-skill-to-catalog-item';
 export * from './catalog/mcp-endpoint-url';
 export * from './catalog/publish';
+export * from './catalog/publish-dependency-icons';
 export * from './catalog/use-publish-history';
+export * from './catalog/use-publish-dependencies';
+export * from './catalog/unpublishable-folders';
+export * from './catalog/useUnpublishableFolders/useUnpublishableFolders';
+export * from './catalog/useUnpublishConfirmation/useUnpublishConfirmation';
 export * from './catalog/catalog-derivations';
 export * from './catalog/catalog-entity-kind';
 export * from './catalog/favorite-entity-type';
@@ -35,10 +40,17 @@ export * from './catalog/useCatalogItemDetails';
 export * from './catalog/useCatalogToolsetCredentials/useCatalogToolsetCredentials';
 export * from './catalog/application-credentials';
 export * from './catalog/useApplicationCredentials/useApplicationCredentials';
+export * from './catalog/useApplicationCredentialActions/useApplicationCredentialActions';
 export * from './catalog/useSkillItemDetails';
 export * from './catalog/useSkillDetailsPanelData/useSkillDetailsPanelData';
 export * from './catalog/useFavoriteEntitiesState/useFavoriteEntitiesState';
 export * from './catalog/usePublishFolders/usePublishFolders';
+export * from './catalog/useResourceFolders/useResourceFolders';
+export * from './catalog/resource-folder';
+export * from './catalog/resource-name-conflict';
+export * from './catalog/resource-save';
+export * from './catalog/resource-save-adapters';
+export * from './catalog/useResourceSavePanel/useResourceSavePanel';
 export * from './conversation/announcement-message';
 export * from './conversation/conversation-draft/conversation-draft';
 export * from './conversation/conversation-draft/conversation-draft-store';
@@ -55,6 +67,7 @@ export * from './conversation/quick-app-conversation-starters';
 export * from './conversation/stage';
 export * from './conversation/starter-option';
 export * from './oauth/authorize-url';
+export * from './oauth/callback-exchange';
 export * from './oauth/handshake';
 export * from './oauth/models';
 export * from './oauth/popup';
@@ -91,8 +104,11 @@ export * from './project/use-project-watch';
 export * from './project/project-refresh';
 export * from './project/use-project-submit';
 export * from './project/use-project-conversations';
+export * from './project/use-pinned-project-chats';
 export * from './project/use-project-artifacts';
 export * from './project/use-project-actions';
+export * from './project/project-sharing';
+export * from './project/use-project-remove-from-list';
 export * from './shared/serialized-writer';
 /*
  * Re-exported so consumers of the gate result can name the consent enum
@@ -169,6 +185,7 @@ export * from './files/dial-file-manager-copy-move.util';
 export * from './files/dial-file-manager-mapping.util';
 export * from './files/dial-file-manager-path.util';
 export * from './files/attachment-types';
+export * from './files/attachment-type-labels';
 export * from './files/create-files-api';
 export * from './files/create-upload-file-with-progress';
 export * from './files/annotation';
@@ -207,6 +224,10 @@ export * from './shared/string-utils';
 export * from './shared/client-channel';
 export * from './shared/theme-colors';
 export * from './shared/toolset-login-events';
+export * from './share-invitation/models';
+export * from './share-invitation/share-invitation-error';
+export * from './share-invitation/types';
+export * from './share-invitation/useAcceptShareInvitation/useAcceptShareInvitation';
 export * from './useChatSettingsFormConfig/useChatSettingsFormConfig';
 export * from './usePageFileDrag/usePageFileDrag';
 export * from './usePanelMaxWidth/usePanelMaxWidth';
@@ -218,6 +239,7 @@ export * from './usage/map-user-usage-to-model-limits';
 export * from './usage/usage-banner-source';
 export * from './usage/usage-period';
 export * from './usage/usage-reset-time';
+export * from './usage/usage-gauge';
 export * from './usage/useDeploymentUsageLimits/useDeploymentUsageLimits';
 export * from './usage/useRefreshUsageAfterGeneration/useRefreshUsageAfterGeneration';
 export * from './usage/useUsageLimitBanner/useUsageLimitBanner';
@@ -261,6 +283,8 @@ export * from './files/useDialFilePreview/useDialFilePreview';
 export * from './conversation/useEntityPreselection/useEntityPreselection';
 export * from './viewport-layout/canvas-width';
 export * from './shared/usePersistedState/usePersistedState';
+export * from './shared/useAppVersionCheck/useAppVersionCheck';
+export * from './shared/url-cleanup';
 
 export * from './conversation/generation-registry';
 
@@ -275,6 +299,20 @@ export * from './conversation/conversation-list';
 export * from './skill-editor/useSkillFilePreviewSyncController';
 
 export * from './external-services/useExternalServiceLogin';
+export * from './signin-interrupt/models';
+export * from './signin-interrupt/signin-row-info';
+export * from './signin-interrupt/types';
+export * from './signin-interrupt/useSigninInterrupt/useSigninInterrupt';
 
 export * from './conversation/useDeploymentChangeTracking';
 export * from './conversation/conversation-data-source';
+
+export {
+  notifyProjectAccessRevoked,
+  type ProjectSharingClient,
+} from './project/project-sharing-client';
+export * from './project/use-project-share-recipients';
+export * from './project/use-project-revoke-access';
+export * from './org-units/types';
+export * from './org-units/models';
+export * from './org-units/useOrgUnits/useOrgUnits';

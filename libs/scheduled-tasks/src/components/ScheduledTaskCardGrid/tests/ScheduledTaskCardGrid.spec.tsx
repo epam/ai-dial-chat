@@ -128,7 +128,7 @@ describe('ScheduledTaskCardGrid — public class names', () => {
 
     expect(
       closestWithClass(
-        screen.getByRole('group'),
+        screen.getByRole('article'),
         SCHEDULED_TASKS_CLASS.cardGrid,
       ),
     ).toBeTruthy();

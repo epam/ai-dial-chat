@@ -235,6 +235,20 @@ export interface SkillEditorLabels extends TextRefinementLabels {
   loadingAriaLabel?: string;
   /** Accessible label of the spinner shown while the Instructions Markdown editor's chunk is loading. Defaults to `'Loading'`. */
   instructionsLoadingAriaLabel?: string;
+  /** Label of the folder preview's root breadcrumb, which returns to `SKILL.md`. Defaults to `'Skill'`. */
+  folderPreviewRootLabel?: string;
+  /** Accessible name of the folder preview's breadcrumb trail. Defaults to `'Folder path'`. */
+  folderPreviewBreadcrumbAriaLabel?: string;
+  /** Accessible name of the folder preview's "show hidden path segments" button, which appears once the trail is long. Defaults to `'Show hidden path segments'`. */
+  folderPreviewOverflowAriaLabel?: string;
+  /** Accessible name of the folder preview's list of entries. Defaults to `'Folder content'`. */
+  folderPreviewListAriaLabel?: string;
+  /** Headline of the empty-folder state. Defaults to `'This folder is empty'`. */
+  folderEmptyTitle?: string;
+  /** Secondary line of the empty-folder state. Defaults to `'Use Add to upload files or create a subfolder.'`. */
+  folderEmptyDescription?: string;
+  /** Item count shown on a folder row in the preview, given the count. Defaults to `'1 item'` or `'n items'`. */
+  folderItemCountLabel?: (count: number) => string;
   /** Note shown in the main pane when a supporting file (not `SKILL.md` or a folder) is selected. Defaults to a sentence explaining content isn't editable here. */
   supportingFileNote?: string;
   /** Label of the "Reload latest" button rendered next to the host-supplied `conflict.message` in the conflict state. Defaults to `'Reload latest'`. */
@@ -320,6 +334,10 @@ export interface SkillEditorColors {
   uploadInvalidDropZoneBorder?: string;
   /** Border color of each staged row in the upload dialog. Defaults to `--stroke-tertiary`. */
   uploadRowBorder?: string;
+  /** Border color of the folder preview's list and rows. Defaults to `--stroke-tertiary`. */
+  folderRowBorder?: string;
+  /** Background of a folder preview row on hover and keyboard focus. Defaults to `--bg-layer-sunken`. */
+  folderRowHoverBackground?: string;
 }
 
 /** Typography class overrides for `SkillEditor`. */
@@ -344,6 +362,8 @@ export interface SkillEditorTypography {
   dropOverlayTitleClassName?: string;
   /** Typography class applied to the file-drop overlay subtitle. Defaults to `'dial-small-text'`. */
   dropOverlaySubtitleClassName?: string;
+  /** Typography class applied to the item count on a folder preview row. Defaults to `'dial-tiny-text'`. */
+  folderItemCountClassName?: string;
 }
 
 /** Grouped style overrides for `SkillEditor`. */

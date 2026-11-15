@@ -2,6 +2,7 @@ import {
   findDeploymentByIdOrReference,
   findSkillByUrl,
   getApiErrorDetails,
+  getCleanedLocationTarget,
   normalizeDeploymentId,
   parsePromptResourceUrl,
   parseSkillResourceUrl,
@@ -30,10 +31,7 @@ import { useSkills } from '../../context/SkillsContext';
 import { getPrompt, getPublicPrompt } from '../../server-api/prompts.api';
 import { UrlPreselectionQuery } from '../../types/url-preselection';
 import { isDeepLinkableDeployment } from '../../utils/deployments';
-import {
-  getCleanedLocationTarget,
-  getCurrentRouterState,
-} from '../../utils/url-cleanup';
+import { getCurrentRouterState } from '../../utils/url-cleanup';
 import { useUiFeature } from '../useUiFeature';
 
 /** Longest part of a link-supplied id echoed into a notification, so a crafted link cannot show arbitrary long text. */

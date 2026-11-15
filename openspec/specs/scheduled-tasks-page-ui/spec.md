@@ -168,7 +168,6 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 - **WHEN** `ScheduledTasks` renders with a `banner` prop while `isLoading` is `true`, while `error` is set, and while `items` is empty
 - **THEN** the banner renders in each of these states — its visibility does not depend on the content region's loading/error/empty/populated state
 
-
 ### Requirement: ScheduledTaskCard renders a single task with highlighted search matches
 
 `libs/scheduled-tasks` SHALL export a `ScheduledTaskCard` component, rendered on the kit's `CardShell`, showing: a title (highlighting the current search match via the shared `Highlight` component from `@epam/ai-dial-ui-kit`, per `.claude/rules/search-results-highlight.md`), an optional "NEW" badge when `item.isNew` is set, an optional description/prompt-preview line (clamped to three lines from the desktop breakpoint up and to two lines below it, where the card also drops its fixed height and lets the title wrap to two lines; a preview value too long to break at a space — a long URL and the like — SHALL wrap inside the card via `overflow-wrap: anywhere` instead of stretching the card past its grid track, and ordinary words SHALL wrap whole; whitespace in the preview SHALL collapse — line breaks and blank lines in the raw description value do not consume the clamp budget (unlike the detail page's description, which preserves the author's line breaks — see `scheduled-task-detail-page`)), a schedule/status pill, and an optional location breadcrumb built from `locationSegments` through the kit's `FolderPath` (outermost segment first). The card has no overflow menu and no per-task action callbacks: its only callback is `onCardClick`; Edit and Delete are offered only in the detail page header (see `scheduled-task-detail-page`).
@@ -647,26 +646,37 @@ Feature gating is unchanged: the page stays behind the existing `scheduledTasksE
 
 ### Requirement: Custom schedule label renders every-N-weeks copy
 
-`describeScheduledTaskTrigger` (`libs/chat-hooks/src/scheduled-task/scheduled-task-description.ts`) SHALL recognize the Custom repeat shape — `cron.fields` with `week: '*/N'` (N an integer 1–10), a single plain numeric `day_of_week`, and plain numeric `hour`/`minute` — and return a dedicated description kind carrying `intervalWeeks` (N), `dayOfWeek`, and the display-timezone `time`, instead of the generic `Custom` kind with the raw JSON expression. Shapes outside that pattern keep their existing behavior: the generic `Custom` kind (rendered by `buildScheduleLabel` as the `scheduledTasks.card.scheduleRecurringFallback` "Recurring schedule" label) and `Invalid` remain unchanged, so display tolerance stays wider than editability.
+`describeScheduledTaskTrigger` (`libs/chat-hooks/src/scheduled-task/scheduled-task-description.ts`) SHALL describe a cron whose `day_of_week` is a comma-separated list of two or more plain numeric weekdays, with plain numeric `hour`/`minute` and no `day`/`week`, as the Weekly kind carrying the ordered list of display-timezone weekdays (each UTC weekday shifted by the same calendar-day offset as the time) and the display-timezone `time`. The former every-N-weeks description kind (`EveryNWeeks` with `intervalWeeks`) is removed together with the never-released every-N-weeks Custom option: any shape with a non-null `week` value now falls to the generic `Custom` kind. The generic `Custom` kind (rendered as the `scheduledTasks.card.scheduleRecurringFallback` "Recurring schedule" label) and `Invalid` remain unchanged, so display tolerance stays wider than editability.
 
-`buildScheduleLabel` in `apps/chat/src/utils/map-scheduled-task-dto.ts` SHALL render the new kind with a new i18n key `scheduledTasks.card.scheduleEveryNWeeks` (referenced through `ScheduledTasksI18nKeys` in `apps/chat/src/constants/translation-keys.ts`), using i18next `one`/`other` plurals — English `one`: "Every week on {{day}} at {{time}}", `other`: "Every {{count}} weeks on {{day}} at {{time}}" — with the weekday name formatted through the same `Intl.DateTimeFormat`-on-a-fixed-UTC-date technique the Weekly case uses, and the time already localized to the browser's timezone by the descriptor. When additional locale files exist under `apps/chat/src/i18n/locales/`, the key MUST be added there too.
+`formatScheduledTaskScheduleLabel` (`libs/chat-hooks/src/scheduled-task/scheduled-task-display.ts`) SHALL render a Weekly kind with several days through the existing `weeklyAt(day, time)` callback of `ScheduledTaskScheduleLabels`, passing as `day` the full weekday names joined with `Intl.ListFormat` (type `conjunction`) in the `locale` option, each name formatted through the same `Intl.DateTimeFormat`-on-a-fixed-UTC-date technique the single-day Weekly case uses. The `everyNWeeks` callback is removed from `ScheduledTaskScheduleLabels`; the app (`buildScheduleLabels` in `apps/chat/src/utils/map-scheduled-task-dto.ts`) keeps mapping `weeklyAt` to `scheduledTasks.card.scheduleWeeklyAt` ("Every {{day}} at {{time}}") and drops the former `scheduledTasks.card.scheduleEveryNWeeks` key. When additional locale files exist under `apps/chat/src/i18n/locales/`, they MUST stay in sync.
 
 #### Scenario: Every-2-weeks task shows structured copy on the card
 
-- **WHEN** a task's `trigger.cron.fields` is `{ week: '*/2', day_of_week: '1', hour: '7', minute: '0' }` and the browser's timezone is UTC+2
-- **THEN** the card's schedule pill shows "Every 2 weeks on Tuesday at 9:00 AM" (weekday and wall-clock localized), not the raw expression and not the "Recurring schedule" fallback
+- **WHEN** a task's `trigger.cron.fields` is `{ week: '*/2', day_of_week: '1', hour: '7', minute: '0' }` (written by the former, never released every-N-weeks Custom option)
+- **THEN** the card's schedule pill shows the "Recurring schedule" fallback label (the scenario name is historical: the every-N-weeks label was removed)
 
 #### Scenario: Every-1-week custom task reads as weekly
 
 - **WHEN** a task's `trigger.cron.fields` is `{ week: '*/1', day_of_week: '0', hour: '7', minute: '0' }`
-- **THEN** the schedule pill shows the `one` plural ("Every week on Monday at …"), not "Every 1 weeks on Monday at …"
+- **THEN** the schedule pill shows the "Recurring schedule" fallback label (the scenario name is historical: a `week` field is no longer described structurally)
+
+#### Scenario: Several weekdays are listed
+
+- **WHEN** a task's `trigger.cron.fields` is `{ day_of_week: '0,2,4', hour: '7', minute: '0' }` and the browser's timezone is UTC+2
+- **THEN** the schedule pill shows "Every Monday, Wednesday and Friday at 9:00 AM", with the list joined by the active locale's conjunction
+
+#### Scenario: Weekday list shifts with the time across midnight
+
+- **WHEN** a task's `trigger.cron.fields` is `{ day_of_week: '1,6', hour: '22', minute: '30' }` and the browser's timezone is UTC+2
+- **THEN** the schedule pill shows "Every Monday and Wednesday at 12:30 AM", ordered Monday first
 
 #### Scenario: Non-editor week expressions keep the generic fallback
 
-- **WHEN** a task's `trigger.cron.fields` includes `week: '2-40'` or `week: '*/12'`
-- **THEN** the schedule pill shows the existing "Recurring schedule" fallback label, unchanged by this requirement
+- **WHEN** a task's `trigger.cron.fields` includes `week: '2-40'` or `week: '*/12'`, or a `day_of_week` range such as `'0-4'`
+- **THEN** the schedule pill shows the existing "Recurring schedule" fallback label
 
 #### Scenario: Week constraints are not lost in minute-step descriptions
 
 - **WHEN** a task's `trigger.cron.fields` is `{ week: '*/2', hour: '*', minute: '*/5' }`, or the same shape with `hour` omitted
 - **THEN** the descriptor keeps the full expression as `Custom` and the schedule pill shows "Recurring schedule", not "Every 5 minutes", because the schedule does not run in every week
+

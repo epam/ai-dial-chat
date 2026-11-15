@@ -30,6 +30,8 @@ export enum ScheduledTaskValidationErrorCode {
   TimeInvalid = 'timeInvalid',
   MinuteInvalid = 'minuteInvalid',
   DayOfWeekInvalid = 'dayOfWeekInvalid',
+  /** The Custom repeat selects no weekday, an unknown one, or the same one twice. */
+  DaysOfWeekInvalid = 'daysOfWeekInvalid',
   DayOfMonthInvalid = 'dayOfMonthInvalid',
   StartDateInvalid = 'startDateInvalid',
   /** The activity-window start boundary is earlier than the clock — its day earlier than today for a date-only value, its instant earlier than now for a time-carrying one — and differs from the option's original. */
@@ -58,7 +60,11 @@ export interface ScheduledTaskValidationOptions {
 }
 
 /** Scheduled-task form fields that carry free text with a length limit. */
-export type ScheduledTaskTextField = 'displayName' | 'description' | 'prompt';
+export enum ScheduledTaskTextField {
+  DisplayName = 'displayName',
+  Description = 'description',
+  Prompt = 'prompt',
+}
 
 /**
  * Checks one free-text field against its length limit (and, for the display
@@ -71,7 +77,7 @@ export const validateScheduledTaskTextField = (
 ): ScheduledTaskValidationErrorCode | undefined => {
   const trimmed = value?.trim() ?? '';
   switch (field) {
-    case 'displayName':
+    case ScheduledTaskTextField.DisplayName:
       if (exceedsMaxLength(trimmed, ENTITY_NAME_MAX_LENGTH)) {
         return ScheduledTaskValidationErrorCode.DisplayNameTooLong;
       }
@@ -79,11 +85,11 @@ export const validateScheduledTaskTextField = (
         return ScheduledTaskValidationErrorCode.DisplayNameControlCharacters;
       }
       return undefined;
-    case 'description':
+    case ScheduledTaskTextField.Description:
       return exceedsMaxLength(trimmed, DESCRIPTION_MAX_LENGTH)
         ? ScheduledTaskValidationErrorCode.DescriptionTooLong
         : undefined;
-    case 'prompt':
+    case ScheduledTaskTextField.Prompt:
       return exceedsMaxLength(trimmed, ENTITY_INSTRUCTIONS_MAX_LENGTH)
         ? ScheduledTaskValidationErrorCode.PromptTooLong
         : undefined;
@@ -96,6 +102,12 @@ const MINUTE_PATTERN = /^(?:[0-9]|[1-5][0-9])$/;
 const WEEKDAY_PATTERN = /^[0-6]$/;
 const MONTH_DAY_PATTERN = /^(?:[1-9]|[12][0-9]|3[01])$/;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+const isValidDaysOfWeek = (days: string[] | undefined): boolean =>
+  !!days?.length &&
+  days.every((day) => WEEKDAY_PATTERN.test(day)) &&
+  new Set(days).size === days.length;
+
 const isValidDateOnly = (value: string): boolean => {
   if (!DATE_PATTERN.test(value)) return false;
 
@@ -150,7 +162,7 @@ export const validateScheduledTaskFormValues = (
   if (!values.displayName.trim()) {
     errors.displayName = ScheduledTaskValidationErrorCode.DisplayNameRequired;
   } else {
-    setTextFieldError('displayName', values.displayName);
+    setTextFieldError(ScheduledTaskTextField.DisplayName, values.displayName);
   }
   if (!values.modelId.trim()) {
     errors.modelId = ScheduledTaskValidationErrorCode.ModelRequired;
@@ -159,7 +171,7 @@ export const validateScheduledTaskFormValues = (
     errors.prompt =
       ScheduledTaskValidationErrorCode.InstructionsOrSkillRequired;
   } else {
-    setTextFieldError('prompt', values.prompt);
+    setTextFieldError(ScheduledTaskTextField.Prompt, values.prompt);
   }
   if (
     values.skillUrls?.some((url) =>
@@ -168,7 +180,7 @@ export const validateScheduledTaskFormValues = (
   ) {
     errors.skillUrls = ScheduledTaskValidationErrorCode.SkillUnsupported;
   }
-  setTextFieldError('description', values.description);
+  setTextFieldError(ScheduledTaskTextField.Description, values.description);
 
   if (values.repeat === ScheduledTaskRepeat.OneTime) {
     const runAtTime = values.runAt ? new Date(values.runAt).getTime() : NaN;
@@ -191,13 +203,19 @@ export const validateScheduledTaskFormValues = (
     errors.time = ScheduledTaskValidationErrorCode.TimeInvalid;
   }
 
-  /* Weekly picks its day in the weekday Calendar; Custom in the segmented
-   * day row — both store the same APScheduler-convention string. */
-  const isDayOfWeekRepeat =
-    values.repeat === ScheduledTaskRepeat.Weekly ||
-    values.repeat === ScheduledTaskRepeat.Custom;
-  if (isDayOfWeekRepeat && !WEEKDAY_PATTERN.test(values.dayOfWeek ?? '')) {
+  /* Weekly picks one day in the weekday Calendar; Custom picks several in
+   * the day button row — both use the APScheduler-convention day string. */
+  if (
+    values.repeat === ScheduledTaskRepeat.Weekly &&
+    !WEEKDAY_PATTERN.test(values.dayOfWeek ?? '')
+  ) {
     errors.dayOfWeek = ScheduledTaskValidationErrorCode.DayOfWeekInvalid;
+  }
+  if (
+    values.repeat === ScheduledTaskRepeat.Custom &&
+    !isValidDaysOfWeek(values.daysOfWeek)
+  ) {
+    errors.daysOfWeek = ScheduledTaskValidationErrorCode.DaysOfWeekInvalid;
   }
   if (
     values.repeat === ScheduledTaskRepeat.Monthly &&

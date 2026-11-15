@@ -16,11 +16,13 @@ import {
   annotationsToPdfHighlights,
   annotationToOfficeHighlightLocations,
   getAnnotationPdfPage,
+  getCitationGroupPage,
   isDocxRangeSelector,
   isExcelRcRangeSelector,
   isPptxRangeSelector,
   resolveMessageAnnotations,
 } from '../annotation';
+import type { AnnotationGroup } from '../group-annotations-by-source';
 
 const bbox = (overrides: Partial<PdfBBoxSelector> = {}): PdfBBoxSelector => ({
   type: 'pdf_bbox',
@@ -201,6 +203,70 @@ describe('getAnnotationPdfPage', () => {
     ] as unknown as AnnotationSelector[];
     expect(getAnnotationPdfPage(makeAnnotation(selector))).toBeUndefined();
   });
+});
+
+describe('getCitationGroupPage', () => {
+  const makeGroup = (
+    selector?: AnnotationSelector | AnnotationSelector[],
+    overrides: Partial<AnnotationGroup> = {},
+  ): AnnotationGroup => {
+    const annotation = makeAnnotation(selector);
+    return {
+      groupKey: 'files/clm.pdf',
+      sourceUrl: 'files/clm.pdf',
+      sourceName: 'clm.pdf',
+      annotations: [annotation],
+      primaryAnnotation: annotation,
+      ...overrides,
+    };
+  };
+
+  it('returns the page of a pdf_bbox selector', () => {
+    expect(getCitationGroupPage(makeGroup(bbox({ page: 3 })))).toBe(3);
+  });
+
+  it('returns the page of a page-only pdf_region selector', () => {
+    const selector = { type: 'pdf_region', page: 1 } as AnnotationSelector;
+    expect(getCitationGroupPage(makeGroup(selector))).toBe(1);
+  });
+
+  it('falls back to the page fragment of the source URL', () => {
+    expect(
+      getCitationGroupPage(
+        makeGroup(undefined, { sourceUrl: 'files/abc/clm.pdf#page=4' }),
+      ),
+    ).toBe(4);
+  });
+
+  it('returns undefined when neither the selector nor the URL carries a page', () => {
+    expect(getCitationGroupPage(makeGroup())).toBeUndefined();
+  });
+
+  it.each([
+    'clm.pdf, page 1',
+    'report.pdf (p. 3)',
+    'report.pdf, P.3',
+    'report.pdf pp. 3-5',
+    'report.pdf pg 3',
+    'report.pdf#page=4',
+    'report.pdf Page:1',
+  ])(
+    'returns undefined when the source name %j already mentions a page',
+    (sourceName) => {
+      expect(
+        getCitationGroupPage(makeGroup(bbox({ page: 1 }), { sourceName })),
+      ).toBeUndefined();
+    },
+  );
+
+  it.each(['Group1-2.pdf', 'p2p.pdf', 'map3.pdf', 'pptx-2.pdf'])(
+    'returns the page when digits in the source name %j are not a page mention',
+    (sourceName) => {
+      expect(
+        getCitationGroupPage(makeGroup(bbox({ page: 2 }), { sourceName })),
+      ).toBe(2);
+    },
+  );
 });
 
 describe('annotationsToPdfHighlights — pdf_region support', () => {

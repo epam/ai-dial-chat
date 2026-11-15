@@ -8,6 +8,7 @@ import type {
   ProjectConversationListResponseDto,
   ProjectConversationTitlesResponseDto,
   ProjectDetailsDto,
+  GenerateTitleResponseDto,
   RenameConversationResponseDto,
   UpdateProjectResponseDto,
 } from '@epam/ai-dial-chat-api-client';
@@ -90,6 +91,10 @@ export interface ProjectsConfiguredClient {
     conversationName: string;
     renameConversationBodyDto: { newTitle: string };
   }) => Promise<RenameConversationResponseDto>;
+  generateProjectConversationTitle: (request: {
+    id: string;
+    conversationName: string;
+  }) => Promise<GenerateTitleResponseDto>;
   deleteProjectConversation: (request: {
     id: string;
     conversationName: string;
@@ -201,6 +206,10 @@ export interface ProjectsApiClient {
     conversationId: string,
     newTitle: string,
   ) => Promise<RenameConversationResponseDto>;
+  /** Suggests a title for the conversation without saving it. */
+  generateProjectConversationTitle: (
+    conversationId: string,
+  ) => Promise<GenerateTitleResponseDto>;
   deleteProjectConversation: (conversationId: string) => Promise<void>;
   /** Records that the caller has seen the conversation's current version; a host without it keeps no read state. */
   markProjectConversationViewed?: (conversationId: string) => Promise<void>;
@@ -353,6 +362,10 @@ export const createProjectsApiClient = (
       ...requireConversationParts(conversationId),
       renameConversationBodyDto: { newTitle },
     }),
+  generateProjectConversationTitle: (conversationId) =>
+    client.generateProjectConversationTitle(
+      requireConversationParts(conversationId),
+    ),
   deleteProjectConversation: (conversationId) =>
     client.deleteProjectConversation(requireConversationParts(conversationId)),
   markProjectConversationViewed: (conversationId) =>

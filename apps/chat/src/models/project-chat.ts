@@ -4,7 +4,7 @@ export interface ProjectChatProjectSummary {
   id: string;
   /** The project's display name, for the chat header. */
   name: string;
-  /** Whether the caller owns the project and may write to its chats. */
+  /** Whether the caller may write the project's chats: the owner, or a recipient with edit access. */
   canEdit: boolean;
 }
 

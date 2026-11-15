@@ -173,7 +173,7 @@ An `unsupported` preview SHALL render `texts.contentFileUnsupportedLabel` as pla
 
 `DetailsPanelProps` and `CatalogProps` SHALL additionally accept `renderContentFilePreview?: (fileId: string, fileName: string) => ReactNode`, and `Catalog` SHALL forward it unchanged. The callback SHALL receive the picked tree node's opaque id and resolved basename. `libs/catalog` SHALL NOT pass a bucket, skill path, MIME type, API response, or any other host integration detail.
 
-When `renderContentFilePreview` is supplied and a non-base file is picked, its returned node SHALL fill the Content tab's preview body and SHALL take precedence over both `onLoadContentFilePreview` and `onLoadContentFile`; neither async callback SHALL run for that pick. The preview body container SHALL use `min-h-0`, `flex-1`, and `overflow-hidden` so a host renderer that owns its internal scrolling can occupy the available mobile or desktop panel height without nested horizontal overflow.
+When `renderContentFilePreview` is supplied and a non-base file is picked, its returned node SHALL fill the Content tab's preview body and SHALL take precedence over both `onLoadContentFilePreview` and `onLoadContentFile`; neither async callback SHALL run for that pick. The preview body SHALL scroll with the description and sticky file selector in the tab's shared scroll area, without shrinking to the height left below a long description. A host-rendered preview SHALL receive at least one tab-height surface for viewport-based viewers; those viewers MAY retain their own internal navigation and scrolling. The preview body SHALL use `min-w-0` to avoid nested horizontal overflow.
 
 The base file named by `selectedFileId` SHALL continue to render `promptContent.content` through the built-in Markdown path and SHALL NOT invoke `renderContentFilePreview`. This preserves the skill requirement that `SKILL.md` shows parsed instructions only.
 
@@ -190,7 +190,7 @@ The base file named by `selectedFileId` SHALL continue to render `promptContent.
 #### Scenario: Host renderer owns internal scrolling at mobile width
 
 - **WHEN** the host renderer is displayed in the detailed sidebar at 360px
-- **THEN** it stays within the Content tab's `min-w-0`/`min-h-0` body and does not force the panel wider
+- **THEN** it stays within the Content tab's `min-w-0` body and does not force the panel wider; the surrounding description and selector scroll with the tab rather than consuming the viewer's height
 
 ---
 

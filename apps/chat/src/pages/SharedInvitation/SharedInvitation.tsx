@@ -1,9 +1,8 @@
-import { ShareInvitationErrorCode } from '@epam/ai-dial-chat-api-client';
 import {
-  getAcceptInvitationErrorItemName,
-  getApiErrorDetails,
+  useAcceptShareInvitation,
+  type AcceptShareInvitationErrorLabels,
 } from '@epam/ai-dial-chat-hooks';
-import { FC, memo, useEffect, useRef } from 'react';
+import { FC, memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
@@ -32,10 +31,10 @@ const getDefaultTargetRoute = (itemId: string): string => {
 
 /**
  * Landing route for an opened share link. Silently accepts the invitation
- * via the backend, then redirects to the shared item — the catalog by
- * default, or wherever `getTargetRoute` points for other resource kinds
- * (e.g. conversations). Shows nothing but a loading spinner — there is no
- * confirm step.
+ * via the backend (`useAcceptShareInvitation`), then redirects to the shared
+ * item — the catalog by default, or wherever `getTargetRoute` points for
+ * other resource kinds (e.g. conversations). Shows nothing but a loading
+ * spinner — there is no confirm step.
  */
 const SharedInvitationPage: FC<Props> = ({
   getTargetRoute = getDefaultTargetRoute,
@@ -56,91 +55,50 @@ const SharedInvitationPage: FC<Props> = ({
    */
   const { refetchPrompts } = usePrompts();
   const { invitationId } = useParams<{ invitationId: string }>();
-  const hasStartedRef = useRef(false);
 
-  useEffect(() => {
-    if (!invitationId || hasStartedRef.current) return;
-    hasStartedRef.current = true;
+  /*
+   * The catalog's details panel only opens for `itemId` if it can find a
+   * matching entry in the already-loaded deployments/toolsets/skills/prompts
+   * list (see `Catalog`'s `initialDetailsItemId` effect).
+   */
+  const refreshCatalog = useCallback(
+    () =>
+      Promise.all([
+        refetchDeployments(),
+        refetchToolsets(),
+        refetchSkills(),
+        refetchPrompts(),
+      ]),
+    [refetchDeployments, refetchToolsets, refetchSkills, refetchPrompts],
+  );
 
-    const accept = async () => {
-      try {
-        const { itemId, sharedDeployment, sharedToolset, sharedSkill } =
-          await acceptInvitation(invitationId);
-        /*
-         * The catalog's details panel only opens for `itemId` if it can find
-         * a matching entry in the already-loaded deployments/toolsets/skills
-         * list (see `Catalog`'s `initialDetailsItemId` effect). DIAL Core
-         * doesn't guarantee a bulk list refresh already reflects a
-         * just-granted share, so the refetch below can still come back
-         * without the new item. `mergeSharedItem`/`mergeSharedSkill` run
-         * after it (not before/in parallel) so the backend-resolved item
-         * always wins over a stale refetch instead of being overwritten by
-         * it.
-         */
-        if (shouldRefreshCatalog) {
-          await Promise.all([
-            refetchDeployments(),
-            refetchToolsets(),
-            refetchSkills(),
-            refetchPrompts(),
-          ]);
-        }
-        const sharedItem = sharedDeployment ?? sharedToolset;
-        if (sharedItem) mergeSharedItem(sharedItem);
-        if (sharedSkill) mergeSharedSkill(sharedSkill);
-        navigate(getTargetRoute(itemId), { replace: true });
-      } catch (err) {
-        const {
-          message: errorMessage,
-          traceId,
-          code,
-        } = await getApiErrorDetails(err);
-        /*
-         * Expired and over-the-limit links are expected outcomes, not faults,
-         * so they get a user-facing sentence and no Request ID.
-         */
-        if (code === ShareInvitationErrorCode.ShareInvitationNotFound) {
-          showErrorNotification({
-            message: t(ShareI18nKeys.InvitationNotFound),
-          });
-        } else if (
-          code ===
-          ShareInvitationErrorCode.ShareInvitationAcceptedUsersLimitReached
-        ) {
-          const itemName = await getAcceptInvitationErrorItemName(err);
-          showErrorNotification({
-            message: itemName
-              ? t(ShareI18nKeys.InvitationUsersLimitReached, {
-                  name: itemName,
-                })
-              : t(ShareI18nKeys.InvitationUsersLimitReachedUnnamed),
-          });
-        } else {
-          showErrorNotification({
-            message: errorMessage ?? t(ShareI18nKeys.InvitationAcceptError),
-            requestId: traceId,
-          });
-        }
-        navigate(errorFallbackRoute, { replace: true });
-      }
-    };
+  const labels = useMemo<AcceptShareInvitationErrorLabels>(
+    () => ({
+      notFound: t(ShareI18nKeys.InvitationNotFound),
+      usersLimitReached: (name) =>
+        t(ShareI18nKeys.InvitationUsersLimitReached, { name }),
+      usersLimitReachedUnnamed: t(
+        ShareI18nKeys.InvitationUsersLimitReachedUnnamed,
+      ),
+      acceptError: t(ShareI18nKeys.InvitationAcceptError),
+    }),
+    [t],
+  );
 
-    void accept();
-  }, [
+  useAcceptShareInvitation({
     invitationId,
-    navigate,
-    showErrorNotification,
-    t,
-    getTargetRoute,
-    errorFallbackRoute,
-    shouldRefreshCatalog,
-    refetchDeployments,
-    refetchToolsets,
-    mergeSharedItem,
-    refetchSkills,
-    mergeSharedSkill,
-    refetchPrompts,
-  ]);
+    acceptInvitation,
+    refreshLists: shouldRefreshCatalog ? refreshCatalog : undefined,
+    onSharedItem: mergeSharedItem,
+    onSharedSkill: mergeSharedSkill,
+    onAccepted: ({ itemId }) =>
+      navigate(getTargetRoute(itemId), { replace: true }),
+    onError: ({ message, requestId }) => {
+      showErrorNotification({ message, requestId });
+      navigate(errorFallbackRoute, { replace: true });
+    },
+    labels,
+  });
 
   return <RouteFallback />;
 };

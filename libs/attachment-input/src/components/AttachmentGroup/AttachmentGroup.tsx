@@ -61,7 +61,12 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
   const isMixed = hasImages && hasFiles;
   const isCollapsible = attachments.length >= ATTACHMENT_COLLAPSE_THRESHOLD;
 
-  const HeaderIcon = isMixed ? IconPaperclip : hasImages ? IconPhoto : IconFile;
+  let HeaderIcon = IconFile;
+  if (isMixed) {
+    HeaderIcon = IconPaperclip;
+  } else if (hasImages) {
+    HeaderIcon = IconPhoto;
+  }
   const headerLabel = getHeaderLabel(attachments.length);
 
   const isDownloadable = (attachment: DisplayAttachment): boolean =>

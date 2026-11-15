@@ -45,7 +45,11 @@ const getWidthClassName = (isDrawer: boolean, isCollapsed: boolean): string => {
 };
 
 /* A column keeps its place in the layout and animates its width; a drawer is
-   fixed to the start edge and slides in from it (RTL-aware). */
+   fixed to the start edge and slides in from it (RTL-aware). Only closing
+   transitions `visibility`, so the drawer stays visible while it slides out:
+   an opening drawer turns visible at once, because a transition would hold it
+   `hidden` for the frame in which it takes focus, and the browser drops a
+   `focus()` on a hidden element. */
 const getRootClassName = (isDrawer: boolean, isOpen: boolean): string => {
   if (!isDrawer) {
     return mergeClasses(
@@ -55,10 +59,25 @@ const getRootClassName = (isDrawer: boolean, isOpen: boolean): string => {
   }
   return mergeClasses(
     'fixed inset-y-0 inset-s-0 z-50 flex flex-col overflow-hidden shadow-sm outline-none',
-    'transition-[transform,visibility] duration-200 ease-in-out motion-reduce:transition-none',
+    'duration-200 ease-in-out motion-reduce:transition-none',
     isOpen
-      ? 'visible translate-x-0'
-      : 'invisible ltr:-translate-x-full rtl:translate-x-full',
+      ? 'visible translate-x-0 transition-transform'
+      : 'invisible ltr:-translate-x-full rtl:translate-x-full transition-[transform,visibility]',
+  );
+};
+
+/* The control to return focus to when the drawer closes: the focused element,
+   or — when the host made the opener's page `inert` as the drawer opened and
+   the browser moved focus to the body — the control whose `aria-controls`
+   names the drawer. */
+const getFocusReturnTarget = (drawerId: string): HTMLElement | null => {
+  const active = document.activeElement;
+  if (active instanceof HTMLElement && active !== document.body) return active;
+  const controls = document.querySelectorAll<HTMLElement>('[aria-controls]');
+  return (
+    Array.from(controls).find((element) =>
+      element.getAttribute('aria-controls')?.split(/\s+/).includes(drawerId),
+    ) ?? null
   );
 };
 
@@ -100,16 +119,13 @@ export const NavigationSidebar: FC<NavigationSidebarProps> = memo(
       wasOpenRef.current = isOpen;
       if (!isDrawer) return;
       if (isOpen && !wasOpen) {
-        returnFocusRef.current =
-          document.activeElement instanceof HTMLElement
-            ? document.activeElement
-            : null;
+        returnFocusRef.current = getFocusReturnTarget(sidebarId);
         rootRef.current?.focus();
       } else if (!isOpen && wasOpen) {
         returnFocusRef.current?.focus();
         returnFocusRef.current = null;
       }
-    }, [isDrawer, isOpen]);
+    }, [isDrawer, isOpen, sidebarId]);
 
     const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
       /* React bubbles events through portals, so an Escape from a dialog or

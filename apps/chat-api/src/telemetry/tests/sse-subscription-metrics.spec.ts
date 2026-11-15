@@ -8,9 +8,13 @@ import { FeatureGuard } from '../../app-config/feature-flags/feature.guard';
 import { AuthSource } from '../../auth/auth-source.enum';
 import { ClientChannelController } from '../../client-channel/client-channel.controller';
 import { ClientChannelService } from '../../client-channel/client-channel.service';
-import { ConversationGenerationService } from '../../conversations/conversation-generation.service';
-import { ConversationController } from '../../conversations/conversation.controller';
+import { ConversationGenerationController } from '../../conversations/conversation-generation.controller';
+import { ConversationWatchController } from '../../conversations/conversation-watch.controller';
 import { ConversationService } from '../../conversations/conversation.service';
+import {
+  GENERATION_SHUTDOWN_FLUSH_MS,
+  ConversationGenerationService,
+} from '../../conversations/generation/conversation-generation.service';
 import { ConversationCompletionsResponder } from '../../conversations/streaming/conversation-completions.responder';
 import {
   initializeRuntimeMetrics,
@@ -72,7 +76,8 @@ describe('SSE subscription metrics', () => {
   let stopMetrics: () => void;
   let response: TestResponse;
   let clientChannel: ClientChannelController;
-  let conversations: ConversationController;
+  let watchController: ConversationWatchController;
+  let generationController: ConversationGenerationController;
   const subscribe = vi.fn();
   const watch = vi.fn();
   const attach = vi.fn();
@@ -86,7 +91,11 @@ describe('SSE subscription metrics', () => {
     );
     response = new TestResponse();
     module = await Test.createTestingModule({
-      controllers: [ClientChannelController, ConversationController],
+      controllers: [
+        ClientChannelController,
+        ConversationGenerationController,
+        ConversationWatchController,
+      ],
       providers: [
         ConversationCompletionsResponder,
         { provide: ClientChannelService, useValue: { subscribe } },
@@ -110,7 +119,8 @@ describe('SSE subscription metrics', () => {
       .useValue({ canActivate: () => true })
       .compile();
     clientChannel = module.get(ClientChannelController);
-    conversations = module.get(ConversationController);
+    watchController = module.get(ConversationWatchController);
+    generationController = module.get(ConversationGenerationController);
   });
 
   afterEach(async () => {
@@ -145,7 +155,7 @@ describe('SSE subscription metrics', () => {
             response as unknown as Response,
             undefined,
           )
-        : conversations.watchConversation(
+        : watchController.watchConversation(
             request,
             response as unknown as Response,
             {
@@ -248,7 +258,7 @@ describe('SSE subscription metrics', () => {
 
   describe('generation attachment', () => {
     const invoke = () =>
-      conversations.attachToGeneration(
+      generationController.attachToGeneration(
         request,
         response as unknown as Response,
         {
@@ -341,10 +351,12 @@ describe('SSE subscription metrics', () => {
 
     it('closes live attachments and releases their count when the generation module shuts down', async () => {
       const generationModule = await Test.createTestingModule({
-        controllers: [ConversationController],
+        controllers: [ConversationGenerationController],
         providers: [
           ConversationCompletionsResponder,
           ConversationGenerationService,
+          /* The registered entry has no worker to settle it during shutdown. */
+          { provide: GENERATION_SHUTDOWN_FLUSH_MS, useValue: 0 },
           { provide: ConfigService, useValue: { get: () => 1_800_000 } },
           {
             provide: ConversationService,
@@ -362,7 +374,7 @@ describe('SSE subscription metrics', () => {
         const service = generationModule.get(ConversationGenerationService);
         service.register(OWNER_KEY, 'test-path', 'test-generation');
         await generationModule
-          .get(ConversationController)
+          .get(ConversationGenerationController)
           .attachToGeneration(request, response as unknown as Response, {
             path: 'test-path',
           });

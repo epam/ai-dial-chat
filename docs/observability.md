@@ -1,5 +1,7 @@
 # Backend observability
 
+The standalone MCP Apps sandbox proxy has its own, smaller opt-in setup (HTTP server metrics only); see the [sandbox README](../apps/mcp-app-sandbox/README.md#observability).
+
 The backend exports OpenTelemetry metrics, traces, and logs. For environment variables and
 defaults, see the [backend README](../apps/chat-api/README.md#observability).
 
@@ -231,7 +233,8 @@ and its population/boundary differs from the raw HTTP listener. All three phases
 together, including zero Core time for requests without Core calls; `total = core + chat`.
 
 The [Core observer](../apps/chat-api/src/telemetry/core-request-timing.ts) tags the shared
-`DialClientService.fetchCore` transport, including SDK calls and direct Core escape hatches.
+`DialClientService.fetchCore` transport, including SDK calls and direct Core escape hatches, and
+the `DialClientService.uploadCore` transport used for streamed file uploads.
 Undici request creation starts an interval; body completion or error ends it. This includes
 client queueing/connection establishment and transfer, not just the wait for headers.
 Failures before request creation accrue no Core interval. Other upstream fetches are excluded.
@@ -258,6 +261,7 @@ when telemetry is disabled, or when both metric and trace exporters are disabled
 | `generation_stream_duration_{bucket,sum,count}`     | Upstream relay duration in seconds; `generation_api`, `outcome`. |
 | `generation_capability_resolution_total`            | `outcome`; `generation_api` only when resolved.                  |
 | `generation_responses_unknown_events_total`         | Unrecognized events by sanitized `event_type`.                   |
+| `generation_foreground_outcomes_total`              | Stored-lock outcomes of non-background generations; `outcome`.   |
 
 - These cover conversation generation, not the separate `/chat/completions` endpoint.
   `generation_api` is `responses` or `chat_completions`; there are no model/deployment labels.
@@ -266,6 +270,10 @@ when telemetry is disabled, or when both metric and trace exporters are disabled
   not prove a saved conversation.
 - First delta starts before the upstream call, after preflight, and records at relay end only
   if nonempty text appeared. Tool-only output is excluded; this is not browser latency.
+- `generation_foreground_outcomes_total` counts the `foregroundGeneration` marker's outcomes:
+  `start_conflict` (a second sender refused), `expired_takeover`, `start_failed`,
+  `terminal_skipped`, `terminal_conflict`, `stop_stored`, `lock_lost`, `released_before_stream`
+  and `release_failed`. A rising `release_failed` or `terminal_conflict` points at storage.
 - Capability failures have no API label. Unknown-event series appear only after an event;
   an empty panel is normal. Event types are truncated to 64 characters, not a finite allowlist.
 

@@ -4,7 +4,6 @@
 Specifies `apps/chat/src/pages/SkillEditor/SkillEditor.tsx`'s edit-mode behavior: the `?id=...` route, ETag-gated load, frontmatter/file preservation, save via `updateSkill` with no ZIP rebuild, stale-edit conflict handling, immutable Name/path, dirty-navigation guard, and edit-specific labels. The page wires its load, submit and file-action logic through `useSkillEditorLoad`, `useSkillEditorSubmit` and `useSkillFileActions` from `@epam/ai-dial-chat-hooks` (`libs/chat-hooks/src/skill/`), passing the `apps/chat/src/server-api/skills.api.ts` wrappers in as already-configured clients.
 
 ## Requirements
-
 ### Requirement: `/skill-editor?id=...` route switches the page to edit mode
 
 A non-empty `id` SHALL switch the page to edit mode. A full `skills/{ownerBucket}/{path}` id SHALL be parsed and used directly, enabling personal and writable shared skills to load from their real owner bucket. A legacy bucket-relative id SHALL continue to resolve against the current user's bucket. A public-bucket or malformed id SHALL be treated as an invalid load target and SHALL never be passed to `downloadSkill` or `updateSkill`.
@@ -115,6 +114,8 @@ A folder marker is an entry whose final path segment is `.dial_folder` (`HIDDEN_
 ### Requirement: Edit save sends manifest/files via updateSkill with the loaded ETag; no ZIP
 On save in edit mode, the page SHALL merge the edited `name`/`description` into the *original* frontmatter object loaded at task-load time (unknown fields untouched), serialize that merged object plus the current instructions into `SKILL.md` text (no ZIP rebuild), and SHALL call `updateSkill(bucket, path, skillManifest, filePaths, files, ifMatch: <the ETag loaded at page-load or after the last successful save>)` — `filePaths`/`files` covering every entry in the in-memory supporting-file map (edited entries with their new bytes, untouched entries passed through byte-for-byte). On a successful response, the page SHALL replace its stored ETag with the one DIAL Core returns, so a subsequent save within the same session guards against changes made since *that* save, not the original load.
 
+For a skill in the user's own bucket, Save SHALL first open the Save panel (see the `resource-save-panel` capability), and `updateSkill` runs on the panel's Save; a different Personal folder then moves the skill through `POST /api/v1/skills/move`, and an Organization folder publishes it. A skill in another user's bucket SHALL call `updateSkill` directly, without the panel.
+
 #### Scenario: Save sends the loaded ETag via updateSkill
 - **WHEN** a user saves an edit immediately after a successful load
 - **THEN** `updateSkill` is called with `ifMatch` equal to the ETag read from the load response's `ETag` header, and no ZIP is constructed
@@ -126,6 +127,10 @@ On save in edit mode, the page SHALL merge the edited `name`/`description` into 
 #### Scenario: Untouched binary files remain byte-identical
 - **WHEN** a user edits only the Description field and saves, without touching a supporting `assets/logo.png` file
 - **THEN** the `files` part submitted for `assets/logo.png` is byte-identical to what was originally loaded
+
+#### Scenario: An own skill moves on save
+- **WHEN** the user saves their skill `docs-helper` and picks Personal `team-a` in the Save panel
+- **THEN** `updateSkill` is called for `docs-helper`, then the skill is moved to `team-a/docs-helper`
 
 ---
 

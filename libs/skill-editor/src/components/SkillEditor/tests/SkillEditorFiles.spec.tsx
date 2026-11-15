@@ -216,6 +216,39 @@ vi.mock('@epam/ai-dial-ui-kit', async () => ({
       {details}
     </span>
   ),
+  Breadcrumbs: ({
+    items,
+    ariaLabel,
+    overflowAriaLabel,
+  }: {
+    items: { label: string; onClick?: () => void }[];
+    ariaLabel?: string;
+    overflowAriaLabel?: string;
+  }) => (
+    <nav aria-label={ariaLabel} data-overflow-label={overflowAriaLabel}>
+      {items.map((item) =>
+        item.onClick ? (
+          <button key={item.label} type="button" onClick={item.onClick}>
+            {item.label}
+          </button>
+        ) : (
+          <span key={item.label}>{item.label}</span>
+        ),
+      )}
+    </nav>
+  ),
+  NoDataContent: ({
+    title,
+    description,
+  }: {
+    title: ReactNode;
+    description?: ReactNode;
+  }) => (
+    <div>
+      <span>{title}</span>
+      <span>{description}</span>
+    </div>
+  ),
   RadioGroup: ({
     items,
     value,
@@ -894,6 +927,128 @@ describe('SkillEditor — files pane', () => {
     expect(screen.getAllByRole('button', { name: 'agents' })[0]).toBeTruthy();
     await user.click(screen.getAllByRole('button', { name: 'agents' })[0]);
     expect(screen.queryByText('Preview goes here')).toBeNull();
+  });
+
+  describe('folder preview', () => {
+    const nestedFiles = [
+      {
+        path: 'agents/reviewers/lint.md',
+        name: 'lint.md',
+        kind: SkillFileNodeKind.File,
+      },
+      {
+        path: 'agents/planner.md',
+        name: 'planner.md',
+        kind: SkillFileNodeKind.File,
+      },
+    ];
+
+    it('lists the direct children of the selected folder under a breadcrumb trail', () => {
+      renderEditor({ files: nestedFiles, selectedPath: 'agents' });
+
+      const trail = screen.getByRole('navigation', { name: 'Folder path' });
+      expect(within(trail).getByRole('button', { name: 'Skill' })).toBeTruthy();
+      const list = screen.getByRole('list', { name: 'Folder content' });
+      expect(within(list).getAllByRole('listitem')).toHaveLength(2);
+      expect(within(list).getByText('1 item')).toBeTruthy();
+    });
+
+    it('shows the empty state for a folder without children', () => {
+      renderEditor({
+        files: [{ path: 'docs', name: 'docs', kind: SkillFileNodeKind.Folder }],
+        selectedPath: 'docs',
+      });
+
+      expect(screen.getByText('This folder is empty')).toBeTruthy();
+      expect(screen.queryByRole('list', { name: 'Folder content' })).toBeNull();
+    });
+
+    it('selects a nested folder and expands the path to it when its row is activated', async () => {
+      const user = userEvent.setup({ delay: null });
+      const onSelectedPathChange = vi.fn();
+      const onExpandedPathsChange = vi.fn();
+      renderEditor({
+        files: nestedFiles,
+        selectedPath: 'agents',
+        expandedPaths: [],
+        onSelectedPathChange,
+        onExpandedPathsChange,
+      });
+
+      const list = screen.getByRole('list', { name: 'Folder content' });
+      await user.click(within(list).getByRole('button', { name: /reviewers/ }));
+
+      expect(onSelectedPathChange).toHaveBeenCalledWith('agents/reviewers');
+      expect(onExpandedPathsChange).toHaveBeenCalledWith(
+        expect.arrayContaining(['agents', 'agents/reviewers']),
+      );
+    });
+
+    it('passes the overflow label to the breadcrumb trail', () => {
+      const view = renderEditor({
+        files: nestedFiles,
+        selectedPath: 'agents',
+      });
+      expect(
+        screen
+          .getByRole('navigation', { name: 'Folder path' })
+          .getAttribute('data-overflow-label'),
+      ).toBe('Show hidden path segments');
+      view.unmount();
+
+      renderEditor({
+        files: nestedFiles,
+        selectedPath: 'agents',
+        labels: { folderPreviewOverflowAriaLabel: 'Pfadteile anzeigen' },
+      });
+      expect(
+        screen
+          .getByRole('navigation', { name: 'Folder path' })
+          .getAttribute('data-overflow-label'),
+      ).toBe('Pfadteile anzeigen');
+    });
+
+    it('renders no folder preview for a path whose folder no longer exists', () => {
+      renderEditor({ files: nestedFiles, selectedPath: 'removed/x.md' });
+
+      expect(screen.queryByText('This folder is empty')).toBeNull();
+      expect(screen.queryByRole('list', { name: 'Folder content' })).toBeNull();
+    });
+
+    it('falls back to SKILL.md when an ancestor of the selection is deleted', async () => {
+      const user = userEvent.setup({ delay: null });
+      const onSelectedPathChange = vi.fn();
+      renderEditor(
+        {
+          files: [docsFolder, docsFile],
+          selectedPath: docsFile.path,
+          onSelectedPathChange,
+        },
+        fullFileActions(),
+      );
+
+      await user.click(screen.getAllByRole('menuitem', { name: 'Delete' })[0]);
+
+      expect(onSelectedPathChange).toHaveBeenCalledWith('SKILL.md');
+    });
+
+    it('returns to SKILL.md from the root crumb', async () => {
+      const user = userEvent.setup({ delay: null });
+      const onSelectedPathChange = vi.fn();
+      renderEditor({
+        files: nestedFiles,
+        selectedPath: 'agents',
+        onSelectedPathChange,
+      });
+
+      await user.click(
+        within(
+          screen.getByRole('navigation', { name: 'Folder path' }),
+        ).getByRole('button', { name: 'Skill' }),
+      );
+
+      expect(onSelectedPathChange).toHaveBeenCalledWith('SKILL.md');
+    });
   });
 });
 

@@ -134,6 +134,7 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
             searchAriaLabel: t(DeploymentSelectorI18nKeys.AriaLabel),
             emptyLabel: t(DeploymentSelectorI18nKeys.EmptyHint),
             errorLabel: t(DeploymentSelectorI18nKeys.Error),
+            panelAriaLabel: t(DeploymentSelectorI18nKeys.AriaLabel),
           }}
           onSelect={onSelect}
           isLoading={isLoading}
@@ -141,7 +142,7 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
           isDisabled={isDisabled}
           isInvalid={isInvalid}
           labelledById={labelledById}
-          ariaHasPopup={isPhone ? 'dialog' : 'listbox'}
+          ariaHasPopup="dialog"
           className={className}
           panelClassName={panelClassName}
           iconAfter={

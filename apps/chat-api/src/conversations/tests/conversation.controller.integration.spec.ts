@@ -24,15 +24,16 @@ import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationReadStateService } from '../../scheduled-task-unread/conversation-read-state.service';
 import { ScheduledTaskUnreadService } from '../../scheduled-task-unread/scheduled-task-unread.service';
 import { UserConfigService } from '../../user-config/user-config.service';
-import {
-  ConversationGenerationService,
-  GenerationStatus,
-} from '../conversation-generation.service';
-import { ConversationNamingService } from '../conversation-naming.service';
+import { ConversationGenerationController } from '../conversation-generation.controller';
+import { ConversationTitlesController } from '../conversation-titles.controller';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 import { BackgroundGenerationService } from '../generation/background-generation.service';
 import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
+import {
+  ConversationGenerationService,
+  GenerationStatus,
+} from '../generation/conversation-generation.service';
 import { CoreResponsesClient } from '../generation/core-responses.client';
 import { GenerationApiSelector } from '../generation/generation-api-selector.service';
 import { ResponsesAdapter } from '../generation/responses.adapter';
@@ -41,11 +42,13 @@ import { ConversationListingService } from '../listing/conversation-listing.serv
 import { ConversationTitleCacheService } from '../listing/conversation-title-cache.service';
 import { ConversationTitleStreamService } from '../listing/conversation-title-stream.service';
 import { ConversationTitlesService } from '../listing/conversation-titles.service';
+import { ConversationNamingService } from '../naming/conversation-naming.service';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
 import { ProjectConversationStore } from '../persistence/project-conversation.store';
 import { PublishedFolderAttachmentsService } from '../published-folder-attachments.service';
 import { ConversationCompletionsResponder } from '../streaming/conversation-completions.responder';
 import { ConversationStreamingService } from '../streaming/conversation-streaming.service';
+import type { StreamCompletionRequest } from '../streaming/stream-completion-request';
 
 const TEST_USER = {
   sid: 'test-sid',
@@ -70,6 +73,7 @@ describe('ConversationController (integration)', () => {
     markConversationViewed: ReturnType<typeof vi.fn>;
     resolveBackgroundAttach: ReturnType<typeof vi.fn>;
     stopBackgroundGeneration: ReturnType<typeof vi.fn>;
+    stopForegroundGeneration: ReturnType<typeof vi.fn>;
     saveClientConversation: ReturnType<typeof vi.fn>;
     getConversation: ReturnType<typeof vi.fn>;
   };
@@ -78,6 +82,7 @@ describe('ConversationController (integration)', () => {
     service = {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
       createConversation: vi.fn(),
       listConversations: vi.fn(),
       getConversationTitles: vi.fn(),
@@ -101,7 +106,11 @@ describe('ConversationController (integration)', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [ConversationController],
+      controllers: [
+        ConversationController,
+        ConversationGenerationController,
+        ConversationTitlesController,
+      ],
       providers: [
         ConversationCompletionsResponder,
         { provide: ConversationService, useValue: service },
@@ -176,7 +185,7 @@ describe('ConversationController (integration)', () => {
     it('accepts encoded deployment slashes and literal percent escapes', async () => {
       const ids = [
         'conversations/public/applications/public/Team%2FApp__0.0.1__hello',
-        'conversations/other-bucket/applications/public/pg-agent%255F%255F1.0.0__New%20chat',
+        'conversations/other-bucket/applications/public/sample-agent%255F%255F1.0.0__New%20chat',
       ];
       service.getConversationTitles.mockResolvedValue({ items: [] });
       await request(app.getHttpServer())
@@ -341,7 +350,11 @@ describe('ConversationController (integration)', () => {
       };
 
       const realModule: TestingModule = await Test.createTestingModule({
-        controllers: [ConversationController],
+        controllers: [
+          ConversationController,
+          ConversationGenerationController,
+          ConversationTitlesController,
+        ],
         providers: [
           ConversationCompletionsResponder,
           { provide: ConfigService, useValue: configService },
@@ -1082,7 +1095,7 @@ describe('ConversationController (integration)', () => {
        */
       const metadata = Reflect.getMetadata(
         FEATURE_KEY_METADATA,
-        ConversationController.prototype.streamCompletion,
+        ConversationGenerationController.prototype.streamCompletion,
       );
       expect(metadata).toBeUndefined();
     });
@@ -1096,9 +1109,12 @@ describe('ConversationController (integration)', () => {
      */
     it('returns 409 for a same-principal, same-path submit arriving while the prior generation is finalizing, before an SSE 200 opens', async () => {
       const path = 'test-bucket/gpt-4o__Hello__uuid';
-      const realGenerationService = new ConversationGenerationService({
-        get: () => undefined,
-      } as unknown as ConfigService<EnvironmentVariables>);
+      const realGenerationService = new ConversationGenerationService(
+        {
+          get: () => undefined,
+        } as unknown as ConfigService<EnvironmentVariables>,
+        0,
+      );
       const existingLease = realGenerationService.register(
         `c:${TEST_USER.sid}`,
         path,
@@ -1109,12 +1125,11 @@ describe('ConversationController (integration)', () => {
       const streamingStub = {
         resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
         stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
-        streamCompletion: vi.fn().mockImplementation(async function* (
-          streamPath: string,
-          _at: string,
-          _bucket: string,
-          generationId: string,
-        ) {
+        stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
+        streamCompletion: vi.fn().mockImplementation(async function* ({
+          conversationPath: streamPath,
+          generationId,
+        }: StreamCompletionRequest) {
           /* Mirrors ConversationStreamingService.streamCompletion's first call. */
           realGenerationService.register(
             `c:${TEST_USER.sid}`,
@@ -1126,7 +1141,11 @@ describe('ConversationController (integration)', () => {
       };
 
       const module: TestingModule = await Test.createTestingModule({
-        controllers: [ConversationController],
+        controllers: [
+          ConversationController,
+          ConversationGenerationController,
+          ConversationTitlesController,
+        ],
         providers: [
           ConversationCompletionsResponder,
           { provide: ConversationService, useValue: streamingStub },

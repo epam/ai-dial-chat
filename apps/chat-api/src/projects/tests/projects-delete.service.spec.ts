@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import type { DialClientService } from '../../dial/dial-client.service';
 import type { UserConfigService } from '../../user-config/user-config.service';
+import { ProjectAccessService } from '../access/project-access.service';
 import { PROJECT_WRITE_ATTEMPTS } from '../constants/project-context.constants';
 import { ProjectsCreateService } from '../create/projects-create.service';
 import { ProjectsService } from '../projects.service';
@@ -37,16 +38,28 @@ const makeService = (
   snapshot: ProjectSnapshot = snapshotOf(),
 ) => {
   const deleteProjectFolder = vi.fn(async (..._args: unknown[]) => result);
+  const getSharedResources = vi.fn();
   const read = vi.fn(async (..._args: unknown[]) => snapshot);
   const readState = { removeProject: vi.fn(async () => undefined) };
+  const dialClient = {
+    client: { deleteProjectFolder, getSharedResources },
+  } as unknown as DialClientService;
   const service = new ProjectsService(
-    { client: { deleteProjectFolder } } as unknown as DialClientService,
+    dialClient,
     new ProjectsCreateService(config),
     { read } as unknown as ProjectsSnapshotService,
     { removeProjectPin } as unknown as UserConfigService,
     readState as never,
+    new ProjectAccessService(dialClient),
   );
-  return { service, deleteProjectFolder, removeProjectPin, read, readState };
+  return {
+    service,
+    deleteProjectFolder,
+    getSharedResources,
+    removeProjectPin,
+    read,
+    readState,
+  };
 };
 
 const deleted = { error: undefined, response: { status: 200 } };
@@ -120,7 +133,8 @@ describe('ProjectsService.deleteProject', () => {
   );
 
   it('refuses a project outside the caller bucket before calling Core', async () => {
-    const { service, deleteProjectFolder } = makeService(deleted);
+    const { service, deleteProjectFolder, getSharedResources, read } =
+      makeService(deleted);
 
     await expect(
       service.deleteProject(
@@ -130,6 +144,9 @@ describe('ProjectsService.deleteProject', () => {
         'token',
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
+    /* Owner-only even for a recipient with `WRITE`, so no permission lookup either. */
+    expect(getSharedResources).not.toHaveBeenCalled();
+    expect(read).not.toHaveBeenCalled();
     expect(deleteProjectFolder).not.toHaveBeenCalled();
   });
 

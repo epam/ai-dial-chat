@@ -85,7 +85,9 @@ Only the parts the doc calls shared move.
 - Fix every `openspec/specs/**` and `docs/**` reference to the old path or name.
 - Run `npm run validate:docs`, `npm run validate:specs`,
   `npm run validate:lib-duplicates`, then `nx run-many -t lint typecheck`
-  for the lib and the app.
+  for the lib and the app. In a git worktree, follow "Verifying in a git
+  worktree" in the `lean-verification` skill first — otherwise Nx checks the
+  main checkout instead of the change.
 
 ## 7. Traps
 
@@ -110,6 +112,16 @@ Each of these broke or nearly broke a move:
   README peer list.
 - **App tests of moved code.** Move or delete the app spec for the function, or
   `nx typecheck` fails on an import the app module no longer exports.
+- **Router internals are routing.** A helper with no router import can still
+  depend on the router: reading react-router's `history.state.usr` is router
+  knowledge and stays in the app, while a pure query-string rewrite of
+  `window.location` can move. Split such a file instead of moving it whole
+  (`getCurrentRouterState` stayed, `getCleanedLocationTarget` moved).
+- **A label the kit ignores.** A kit `Button` (and `GhostButton`,
+  `PrimaryButton`, …) with a string `label` names itself from that label and
+  drops `aria-label`. Do not carry an app's `aria-label` for such a button into
+  a lib `*Labels` field: nothing would read it. Check the rendered accessible
+  name, not the prop list.
 - **Docs that say "keep in the app".** A guide that keeps a callback in the host
   may still allow the callback to call a lib helper; update the guide to name
   it rather than moving the callback.

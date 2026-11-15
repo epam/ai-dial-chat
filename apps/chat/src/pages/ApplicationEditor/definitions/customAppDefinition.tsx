@@ -21,11 +21,16 @@ import {
 } from '../../../constants/custom-apps';
 import { ToolsetEditorQuery } from '../../../constants/toolsets';
 import {
+  ButtonsI18nKeys,
+  CatalogI18nKeys,
   CustomAppI18nKeys,
   EditorI18nKeys,
-  ButtonsI18nKeys,
 } from '../../../constants/translation-keys';
-import type { ApplicationSetupErrors } from '../../../models/application-editor';
+import type {
+  ApplicationCreateOptions,
+  ApplicationEditorContext,
+  ApplicationSetupErrors,
+} from '../../../models/application-editor';
 import type { CustomAppFormData } from '../../../models/custom-apps';
 import {
   createApplication,
@@ -37,9 +42,13 @@ import {
   ApplicationEditorKind,
 } from '../../../types/application-editor';
 import { NotifiableEntity } from '../../../types/entity-notification';
-import { defineApplicationEditor } from '../../../utils/application-editor';
+import {
+  defineApplicationEditor,
+  toFolderPathField,
+} from '../../../utils/application-editor';
 import { PRIMARY_LOCALE } from '../../../utils/locale';
 import CustomAppSetup from '../setup/CustomAppSetup';
+import { getVersionLockedInEditMode } from './schemaDefinitionHelpers';
 
 const getMetadataLabelOverrides = (t: TFunction) => ({
   name: {
@@ -99,6 +108,8 @@ const toLocaleFields = (metadata: DeploymentCreationFormValues) => {
 const create = async (
   metadata: DeploymentCreationFormValues,
   setup: CustomAppFormData,
+  _ctx: ApplicationEditorContext,
+  options?: ApplicationCreateOptions,
 ) => {
   const appProperties: Record<string, unknown> = {
     endpoint: setup.completionUrl,
@@ -121,6 +132,7 @@ const create = async (
     topics: metadata.topics,
     applicationProperties: appProperties,
     ...toLocaleFields(metadata),
+    ...toFolderPathField(options),
   };
   return createApplication(body);
 };
@@ -180,4 +192,6 @@ export const customAppDefinition = defineApplicationEditor<CustomAppFormData>({
   Setup: CustomAppSetup,
   create,
   update,
+  savePanel: { getTypeLabel: (ctx) => ctx.t(CatalogI18nKeys.CreateCustomApp) },
+  getMetadataFieldState: getVersionLockedInEditMode,
 });

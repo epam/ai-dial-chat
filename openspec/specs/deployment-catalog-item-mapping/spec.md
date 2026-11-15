@@ -12,8 +12,8 @@ The app wrapper `mapDeploymentToCatalogItem` (`apps/chat/src/utils/map-deploymen
 
 `resolveDeploymentFolder` SHALL apply these rules in order:
 
-- Return `[folderLabels.personal]` when `deployment.isMy` is true.
 - Strip the `applications/` prefix from `deployment.applicationFolder` and percent-decode each path segment before use.
+- Return `[folderLabels.personal, ...segments.slice(1)]` when `deployment.isMy` is true, so the owner bucket is dropped and the user's own Personal folders stay visible.
 - Return `[folderLabels.shared, ...segments.slice(1)]` when `deployment.sharedWithMe` is true, dropping the owner bucket while preserving nested folders. With no folder metadata, return `[folderLabels.shared]`.
 - Return `[folderLabels.public]` when the deployment type is `application` and the parsed folder path is empty. This covers configured applications whose plain IDs produce no `applicationFolder`.
 - Replace the first remaining segment with `folderLabels.public` when it case-insensitively equals `"public"`, dropping that segment from the returned path.
@@ -65,7 +65,7 @@ Every call site of `mapDeploymentToCatalogItem` SHALL supply `t` obtained from `
 
 `mapToolsetToCatalogItem` in `libs/chat-hooks/src/catalog/map-deployment-to-catalog-item.ts` SHALL resolve toolset folders from the effective identifier `toolset.toolset || toolset.id`. The app wrapper (`apps/chat/src/utils/map-deployment-to-catalog-item.ts`) accepts an optional `t` and SHALL supply translated `folderLabels` (via `buildDeploymentFolderLabels(t)`) only when `t` is provided.
 
-When labels are supplied, owned toolsets SHALL use `[folderLabels.personal]`. For non-owned shared toolsets, `resolveToolsetFolder` SHALL return `[folderLabels.shared, ...segments.slice(1)]` for a `toolsets/{bucket}/{path}` identifier, where `segments` excludes the final toolset name. For identifiers without the `toolsets/` prefix it SHALL return `[folderLabels.shared]`. Shared toolsets SHALL therefore retain their label even when no nested path is available.
+When labels are supplied, owned toolsets SHALL use `[folderLabels.personal, ...segments.slice(1)]` for a `toolsets/{bucket}/{path}` identifier (and `[folderLabels.personal]` otherwise), so their own Personal folders stay visible. For non-owned shared toolsets, `resolveToolsetFolder` SHALL return `[folderLabels.shared, ...segments.slice(1)]` for a `toolsets/{bucket}/{path}` identifier, where `segments` excludes the final toolset name. For identifiers without the `toolsets/` prefix it SHALL return `[folderLabels.shared]`. Shared toolsets SHALL therefore retain their label even when no nested path is available.
 
 #### Scenario: Shared toolset with no nested folder shows the translated Shared label
 

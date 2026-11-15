@@ -8,6 +8,7 @@ import {
 import {
   CatalogCreationType,
   type CatalogCreationPermissionsDto,
+  CelebrationDeliveryMode,
 } from '@epam/ai-dial-chat-api-client';
 import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
@@ -736,6 +737,7 @@ describe('CatalogView', () => {
         appVersion: '0.0.1',
         asrModelId: null,
         transcribeSizeLimitBytes: 5 * 1024 * 1024,
+        additionalContentLocales: [],
         defaultDeploymentId: null,
         dialCoreExternalUrl: 'https://dial.example.com',
         mcpAppSandboxUrl: null,
@@ -759,6 +761,12 @@ describe('CatalogView', () => {
         maxAttachmentFileSizeBytes: 536_870_912,
         usageLimitsWarningThresholdPercent: 75,
         celebrationsEnabledByDefault: true,
+        celebrationDelivery: {
+          mode: CelebrationDeliveryMode.Bundled,
+          revision: '0',
+          externalScenes: [],
+          externalEvents: [],
+        },
         projectContextFileMaxBytes: 1_048_576,
         projectContextTotalMaxBytes: 10_485_760,
         projectContextAllowedExtensions: ['csv', 'pdf', 'xlsx'],

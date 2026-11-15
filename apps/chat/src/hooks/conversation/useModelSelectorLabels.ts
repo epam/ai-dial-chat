@@ -11,7 +11,7 @@ interface Params {
   itemCount: number;
 }
 
-interface Result {
+export interface ModelSelectorLabels {
   ariaLabel: string;
   loading: string | undefined;
   error: string | undefined;
@@ -25,7 +25,7 @@ export const useModelSelectorLabels = ({
   isLoading,
   error,
   itemCount,
-}: Params): Result => {
+}: Params): ModelSelectorLabels => {
   const { t } = useTranslation();
 
   return useMemo(

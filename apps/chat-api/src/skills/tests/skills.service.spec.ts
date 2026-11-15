@@ -38,6 +38,7 @@ describe('SkillsService', () => {
       deleteSkillGroupingFolder: vi
         .fn()
         .mockResolvedValue('deleteSkillGroupingFolder-result'),
+      moveSkill: vi.fn().mockResolvedValue('moveSkill-result'),
     } as unknown as SkillsMutationService;
     const importService = {
       importSkillArchive: vi
@@ -292,6 +293,18 @@ describe('SkillsService', () => {
       '"etag"',
     );
     expect(result).toBe('deleteSkillGroupingFolder-result');
+  });
+
+  it('delegates moveSkill to SkillsMutationService', async () => {
+    const { service, mutationService } = makeService();
+    const result = await service.moveSkill('bucket', 'path', 'folder', 'token');
+    expect(mutationService.moveSkill).toHaveBeenCalledWith(
+      'bucket',
+      'path',
+      'folder',
+      'token',
+    );
+    expect(result).toBe('moveSkill-result');
   });
 
   it('does not expose resolveSkillItem on the facade', () => {

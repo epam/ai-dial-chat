@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ConversationPersistencePort } from '../conversation-persistence.port';
+import {
+  ConditionalUpdateStatus,
+  type ConversationPersistencePort,
+} from '../conversation-persistence.port';
 import {
   BackgroundGenerationDto,
   BackgroundGenerationStatus,
@@ -12,9 +15,12 @@ import { runConditionalUpdate } from '../persistence/conversation-persistence.se
 import {
   BackgroundWriteResult,
   findPendingBackgroundMessage,
+  mergeClientMessages,
   neutralizeForeignPendingMessages,
+  updateConversationUnlessPending,
   updatePendingBackgroundMessage,
   withServerOwnedFields,
+  type StoredMessage,
 } from './background-message';
 
 const GEN = 'gen-1';
@@ -277,5 +283,115 @@ describe('neutralizeForeignPendingMessages', () => {
       user,
       finished,
     ]);
+  });
+});
+
+describe('client saves against a foreground generation', () => {
+  const FG = '4b2c8f1e-7d3a-4c5b-9e2f-0a1b2c3d4e5f';
+  const OTHER_FG = '9d1e2f3a-4b5c-4d6e-8f70-81a2b3c4d5e6';
+  const question = (content: string): StoredMessage => ({
+    role: ConversationMessageRole.User,
+    content,
+    timestamp: 'tq',
+  });
+  const answer = (
+    content: string,
+    extra: Partial<StoredMessage> = {},
+  ): StoredMessage => ({
+    role: ConversationMessageRole.Assistant,
+    content,
+    timestamp: 'ta',
+    ...extra,
+  });
+  const LIVE_UNTIL = Date.now() + 3_600_000;
+  const marker = (generationId: string, expiresAt = LIVE_UNTIL) => ({
+    foregroundGeneration: { generationId, startedAt: 1, expiresAt },
+  });
+
+  it('keeps a running exchange a stale tab has never seen', () => {
+    const stored = [
+      question('q1'),
+      answer('a1'),
+      question('q2'),
+      answer('', marker(FG)),
+    ];
+    const body = [question('q1'), answer('a1', { rating: true } as never)];
+
+    const merged = mergeClientMessages(body, stored);
+
+    expect(merged).toEqual([
+      question('q1'),
+      answer('a1', { rating: true } as never),
+      question('q2'),
+      answer('', marker(FG)),
+    ]);
+  });
+
+  it("keeps the stored marker on the generating tab's own unmarked placeholder", () => {
+    const stored = [question('q1'), answer('', marker(FG))];
+    const body = [question('q1'), answer('Hel', { rating: false } as never)];
+
+    const [, saved] = mergeClientMessages(body, stored);
+
+    expect(saved).toEqual(
+      answer('', { ...marker(FG), rating: false } as never),
+    );
+  });
+
+  it('removes a marker a client body carries that storage does not hold as live', () => {
+    const stored = [question('q1'), answer('a1')];
+    const body = [
+      question('q1'),
+      answer('a1'),
+      question('q2'),
+      answer('', marker(OTHER_FG)),
+    ];
+
+    const merged = mergeClientMessages(body, stored);
+
+    expect(merged.at(-1)).toEqual(answer('', { streamErrorMessage: '' }));
+  });
+
+  it('gives a stale copy of a finished foreground answer the stored answer', () => {
+    const stored = [question('q1'), answer('final answer')];
+    const body = [question('q1'), answer('', marker(OTHER_FG))];
+
+    const [, saved] = mergeClientMessages(body, stored);
+
+    expect(saved).toEqual(answer('final answer'));
+  });
+
+  it('treats an expired stored marker as absent', () => {
+    const stored = [question('q1'), answer('', marker(FG, Date.now() - 1))];
+    const body = [question('q1')];
+
+    expect(mergeClientMessages(body, stored)).toEqual([question('q1')]);
+  });
+
+  it('stays a conflict when persistent conflicts meet a live foreground marker', async () => {
+    const conversation = {
+      id: 'c',
+      messages: [question('q1'), answer('', marker(FG))],
+    };
+    const persistence = {
+      updateConversation: vi.fn().mockResolvedValue({
+        status: ConditionalUpdateStatus.Conflict,
+      }),
+      readConversationWithEtag: vi
+        .fn()
+        .mockResolvedValue({ conversation, etag: '"v9"' }),
+      saveConversation: vi.fn(),
+    };
+
+    const result = await updateConversationUnlessPending(
+      persistence as never,
+      'c',
+      't',
+      'b',
+      (stored) => stored?.conversation ?? null,
+    );
+
+    expect(result.status).toBe(ConditionalUpdateStatus.Conflict);
+    expect(persistence.saveConversation).not.toHaveBeenCalled();
   });
 });

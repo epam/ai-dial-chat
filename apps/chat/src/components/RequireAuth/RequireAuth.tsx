@@ -1,5 +1,7 @@
 import { Spinner } from '@epam/ai-dial-ui-kit';
 import { memo, type FC, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import { AuthI18nKeys } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
@@ -11,6 +13,7 @@ interface Props {
 }
 
 const RequireAuth: FC<Props> = ({ children }) => {
+  const { t } = useTranslation();
   const { status } = useUser();
   /*
    * Presence (not a boolean field) is the overlay-mode signal: OverlayProvider
@@ -30,7 +33,7 @@ const RequireAuth: FC<Props> = ({ children }) => {
     }
     return (
       <div className="flex size-full items-center justify-center">
-        <Spinner />
+        <Spinner ariaLabel={t(AuthI18nKeys.Loading)} />
       </div>
     );
   }

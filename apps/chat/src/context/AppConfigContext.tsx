@@ -1,5 +1,12 @@
-import type { CatalogCreationPermissionsDto } from '@epam/ai-dial-chat-api-client';
-import type { AnnouncementListItem } from '@epam/ai-dial-chat-hooks';
+import {
+  CelebrationDeliveryMode,
+  type CatalogCreationPermissionsDto,
+  type CelebrationDeliveryDto,
+} from '@epam/ai-dial-chat-api-client';
+import {
+  type AnnouncementListItem,
+  mapAnnouncementSeverity,
+} from '@epam/ai-dial-chat-hooks';
 import {
   DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
   DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
@@ -36,6 +43,13 @@ const DEFAULT_FILE_MANAGER_TABS = ['all', 'my_files', 'shared', 'organization'];
 const DEFAULT_PUBLICATION_FILTER_SOURCES = ['title', 'role', 'dial_roles'];
 const DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES = 536_870_912;
 const DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT = 75;
+/* Used until the config arrives or when it omits the policy: every scene stays bundled. */
+const DEFAULT_CELEBRATION_DELIVERY: CelebrationDeliveryDto = {
+  mode: CelebrationDeliveryMode.Bundled,
+  revision: '0',
+  externalScenes: [],
+  externalEvents: [],
+};
 
 export interface AppConfigState {
   status: UserConfigStatus;
@@ -66,11 +80,15 @@ export interface AppConfigState {
     customVisualizers: CustomVisualizer[];
     applicationVisualizers: ApplicationVisualizerRegistry;
     publicationFilterSources: string[];
+    /** Additional content locales (BCP-47) the editors offer for Name/Description translations; may include the primary locale. */
+    additionalContentLocales: string[];
     maxAttachmentFileSizeBytes: number;
     /** Percentage of a capped usage limit at which the composer banner appears. */
     usageLimitsWarningThresholdPercent: number;
     /** Operator default for the celebrations switch, used while the user has saved no choice. */
     celebrationsEnabledByDefault: boolean;
+    /** Where celebration scenes come from: the compiled modules or allowlisted packs. */
+    celebrationDelivery: CelebrationDeliveryDto;
     /** Maximum size in bytes of one project context file. */
     projectContextFileMaxBytes: number;
     /** Maximum combined size in bytes of a project's context files (its capacity). */
@@ -130,10 +148,12 @@ const INITIAL_STATE: ProviderState = {
     customVisualizers: [],
     applicationVisualizers: {},
     publicationFilterSources: DEFAULT_PUBLICATION_FILTER_SOURCES,
+    additionalContentLocales: [],
     maxAttachmentFileSizeBytes: DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES,
     usageLimitsWarningThresholdPercent:
       DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
     celebrationsEnabledByDefault: true,
+    celebrationDelivery: DEFAULT_CELEBRATION_DELIVERY,
     projectContextFileMaxBytes: DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
     projectContextTotalMaxBytes: DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
     projectContextAllowedExtensions: DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
@@ -197,7 +217,10 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             announcementDescription:
               response.config?.announcementDescription ?? null,
             announcements: Array.isArray(response.config?.announcements)
-              ? response.config.announcements
+              ? response.config.announcements.map((item) => ({
+                  ...item,
+                  severity: mapAnnouncementSeverity(item.severity),
+                }))
               : [],
             welcomeScreenDescription:
               response.config?.welcomeScreenDescription ?? null,
@@ -208,6 +231,8 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             publicationFilterSources:
               response.config?.publicationFilterSources ??
               DEFAULT_PUBLICATION_FILTER_SOURCES,
+            additionalContentLocales:
+              response.config?.additionalContentLocales ?? [],
             maxAttachmentFileSizeBytes:
               response.config?.maxAttachmentFileSizeBytes ??
               DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES,
@@ -216,6 +241,9 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
               DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
             celebrationsEnabledByDefault:
               response.config?.celebrationsEnabledByDefault ?? true,
+            celebrationDelivery:
+              response.config?.celebrationDelivery ??
+              DEFAULT_CELEBRATION_DELIVERY,
             projectContextFileMaxBytes: resolveByteLimit(
               response.config?.projectContextFileMaxBytes,
               DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,

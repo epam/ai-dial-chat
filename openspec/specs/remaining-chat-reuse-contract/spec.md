@@ -99,7 +99,7 @@ The public external-service login hook SHALL compose typed service get/sign-in/s
 
 Stale logout SHALL be best-effort. An ambiguous popup cancellation SHALL be rechecked against authoritative service status. DIAL-native login SHALL check app consent before and after offline login. API keys SHALL be trimmed. Outcomes SHALL preserve success/failure/cancelled/popup-blocked/admin-consent-required/offline-unavailable behavior; timeout SHALL NOT become success absent successful authoritative verification. Failed preconditions and exceptions SHALL close the owned popup.
 
-Code exchange SHALL remain in `apps/chat/src/pages/ToolsetAuthCallback/ToolsetAuthCallback.tsx` and dispatch by resource kind. The parent adapter SHALL continue to call the external-service exchange for ExternalService rather than the toolset exchange.
+Code exchange SHALL dispatch by resource kind through `createOAuthCallbackExchange` in `libs/chat-hooks/src/oauth/callback-exchange.ts`, which takes the host's already-configured toolset, external-service and offline-credentials sign-in operations; `apps/chat/src/pages/ToolsetAuthCallback/ToolsetAuthCallback.tsx` SHALL supply its server-api adapters as those operations. The dispatch SHALL continue to call the external-service exchange for ExternalService rather than the toolset exchange.
 
 #### Scenario: Reserved popup and stale credentials
 

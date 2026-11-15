@@ -1,4 +1,5 @@
 export * from '../oauth/authorize-url';
+export * from '../oauth/callback-exchange';
 export * from '../oauth/handshake';
 export * from '../oauth/models';
 export * from '../oauth/popup';

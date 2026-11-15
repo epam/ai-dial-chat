@@ -299,9 +299,10 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
           : {
               subMenuOpen: openMenuOverlayKey === overlay.key,
               onSubMenuOpenChange: (open: boolean) => {
-                setOpenMenuOverlayKey((current) =>
-                  open ? overlay.key : current === overlay.key ? null : current,
-                );
+                setOpenMenuOverlayKey((current) => {
+                  if (open) return overlay.key;
+                  return current === overlay.key ? null : current;
+                });
                 if (open) setIsToolsSheetOpen(false);
               },
               renderSubMenu: () =>

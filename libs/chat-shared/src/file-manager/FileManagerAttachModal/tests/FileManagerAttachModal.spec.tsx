@@ -19,6 +19,7 @@ import { FileManagerAttachModal } from '../FileManagerAttachModal';
 const shellEmitted = vi.hoisted(() => ({
   lastSet: null as Set<string> | null,
   lastOversizedUploadMessage: undefined as string | undefined,
+  lastTreeContainerClassName: undefined as string | undefined,
 }));
 
 vi.mock('../../DialFileManagerShell/DialFileManagerShell', async () => {
@@ -30,13 +31,16 @@ vi.mock('../../DialFileManagerShell/DialFileManagerShell', async () => {
       onTabChange,
       selectedPaths,
       oversizedUploadMessage,
+      treeContainerClassName,
     }: {
       onSelectedPathsChange: (paths: Set<string>) => void;
       onTabChange: (tab: DialFileManagerTabs) => void;
       selectedPaths: Set<string>;
       oversizedUploadMessage?: string;
+      treeContainerClassName?: string;
     }) => {
       shellEmitted.lastOversizedUploadMessage = oversizedUploadMessage;
+      shellEmitted.lastTreeContainerClassName = treeContainerClassName;
       return (
         <div>
           <button
@@ -182,6 +186,10 @@ interface RenderOptions {
   maximumAttachmentsAmount?: number;
   existingAttachmentsAmount?: number;
   oversizedUploadMessage?: string;
+  dialogClassName?: string;
+  treeContainerClassName?: string;
+  showHeaderDivider?: boolean;
+  showFooterDivider?: boolean;
 }
 
 const renderModal = ({
@@ -227,6 +235,20 @@ describe('FileManagerAttachModal', () => {
     }).parentElement?.parentElement?.classList;
     expect(classList?.contains('px-5')).toBe(false);
     expect(classList?.contains('py-4')).toBe(false);
+  });
+
+  it('merges dialogClassName onto the dialog so it overrides the size defaults', () => {
+    renderModal({ dialogClassName: 'max-w-[1330px]!' });
+
+    const classList = screen.getByRole('dialog').classList;
+    expect(classList.contains('max-w-[1330px]!')).toBe(true);
+    expect(classList.contains('max-w-[1600px]!')).toBe(false);
+  });
+
+  it('forwards treeContainerClassName to the shell', () => {
+    renderModal({ treeContainerClassName: 'shrink-0 w-[250px]' });
+
+    expect(shellEmitted.lastTreeContainerClassName).toBe('shrink-0 w-[250px]');
   });
 
   describe('Attach button disabled state', () => {

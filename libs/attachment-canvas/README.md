@@ -80,6 +80,15 @@ on `CodeContent` itself, to customize those strings. Opening a non-PDF
 attachment never triggers the PDF import, and a plaintext code attachment
 never triggers the syntax-highlighter import.
 
+`AttachmentCanvasBody` loads its MCP App renderer the same way: the
+`McpAppCanvasRenderer` module, and with it `@mcp-ui/client`, the MCP SDK and
+their `zod` schemas, is imported the first time the canvas shows
+`AttachmentContentType.McpApp`. The pending, failure and retry states reuse
+`loadingLabel`, `loadErrorLabel` and `loadErrorRetryLabel`. A host that builds
+from source and does not import `McpAppCanvasRenderer` itself keeps that chain
+out of its initial bundle; the published `dist/index.js` still carries it,
+because `McpAppCanvasRenderer` is also a public export.
+
 The library never configures `pdfjs-dist`'s worker itself —
 `GlobalWorkerOptions.workerSrc` is a global shared by every `pdfjs-dist`
 consumer in the host app, so deciding it is the host's responsibility, not
@@ -145,7 +154,7 @@ import {
 
 ### AttachmentCanvasBody
 
-Content-only renderer shared by `AttachmentCanvas` — the same Markdown/JSON/code/HTML/PDF/OOXML/image/audio/visualizer/unsupported/error rendering, with no sidebar chrome (no panel, header, close/download/copy actions). Use it when a host wants to mount an attachment preview inline in its own layout instead of the resizable side panel `AttachmentCanvas`/`AttachmentCanvasContainer` render. For content type `MarkdownTable`, pass the table copy/download labels in `labels` (and optionally `tableDownloadFilename`) to show the table's own inline copy/download header, same as `AttachmentCanvas`. The code-block, table and formula labels (`codeBlockCopyLabel`, `codeBlockCopiedLabel`, `codeBlockDownloadLabel`, `tableScrollRegionAriaLabel`, `mathScrollRegionAriaLabel`) are part of `AttachmentCanvasBodyLabels` too. For content type `McpApp`, pass `onAppInfo` to be notified once the mounted app completes its `ui/initialize` handshake, with its declared name/version.
+Content-only renderer shared by `AttachmentCanvas` — the same Markdown/JSON/code/HTML/PDF/OOXML/image/audio/visualizer/unsupported/error rendering, with no sidebar chrome (no panel, header, close/download/copy actions). Use it when a host wants to mount an attachment preview inline in its own layout instead of the resizable side panel `AttachmentCanvas`/`AttachmentCanvasContainer` render. For content type `MarkdownTable`, pass the table copy/download labels in `labels` (and optionally `tableDownloadFilename`) to show the table's own inline copy/download header, same as `AttachmentCanvas`. The code-block, table and formula labels (`codeBlockCopyLabel`, `codeBlockCopiedLabel`, `codeBlockDownloadLabel`, `tableScrollRegionAriaLabel`, `mathScrollRegionAriaLabel`) are part of `AttachmentCanvasBodyLabels` too. `loadingLabel` (default `'Loading…'`) is the accessible name of every loading spinner the body renders — the whole-body spinner while `isLoading`, the HTML source fetch and iframe load, the OOXML/CSV viewer and the MCP App handshake; `AttachmentCanvas` and `AttachmentCanvasContainer` forward it from `AttachmentCanvasLabels`. For content type `McpApp`, pass `onAppInfo` to be notified once the mounted app completes its `ui/initialize` handshake, with its declared name/version.
 
 ```tsx
 import { AttachmentCanvasBody } from '@epam/ai-dial-attachment-canvas';
@@ -210,9 +219,11 @@ import {
 
 ### McpAppCanvasRenderer
 
-Mounts an MCP tool's `ui://` resource via `@mcp-ui/client`'s `AppFrame` and a host-owned `AppBridge`, inside the isolated-origin sandbox proxy named by `content.sandboxUrl`, seeded with the original invocation's `content.toolInput`/`content.toolResult`. Handles its own loading/error overlay while the app initializes. Exported so a host can also mount a compact preview outside the full canvas — e.g. inline under a chat message — using the same `McpAppCanvasContent` payload it builds for `AttachmentCanvas`.
+Mounts an MCP tool's `ui://` resource via `@mcp-ui/client`'s `AppFrame` and a host-owned `AppBridge`, inside the isolated-origin sandbox proxy named by `content.sandboxUrl`, seeded with the original invocation's `content.toolInput`/`content.toolResult`. Handles its own loading/error overlay while the app initializes. `loadingLabel` (default `'Loading…'`) names the overlay's spinner for assistive tech. Exported so a host can also mount a compact preview outside the full canvas — e.g. inline under a chat message — using the same `McpAppCanvasContent` payload it builds for `AttachmentCanvas`.
 
 Watches its own container with a `ResizeObserver` and reports the live pixel size to the mounted app via `hostContext.containerDimensions`, so a resize (the host dragging a resizable panel, a window resize) reaches a well-behaved app after mount, not just once. When `content.hostContext.displayMode` is `'fullscreen'` (the value `AttachmentCanvas`'s own usage sets), the mounted iframe is also forced to fill 100% of that container — overriding the mounted app's own reported content size, which is otherwise what drives the iframe's dimensions and is a better default for a compact inline preview.
+
+`content.hostContext` is only a snapshot taken when the canvas opens. To keep a mounted app in step with the host's theme and locale, pass the live value as `mcpAppHostContext` to `AttachmentCanvasContainer` (also accepted by `AttachmentCanvas` and `AttachmentCanvasBody`); `McpAppCanvasRenderer` takes it as `hostContext`. When set it replaces `content.hostContext`, and each new value is pushed to the app through `setHostContext` as `ui/notifications/host-context-changed` — the bridge and the iframe are not recreated. The bridge is also seeded from it, and a change that lands before the app finishes its `ui/initialize` handshake is replayed right after. Keep its identity stable between renders, since every new object is compared with the previous one.
 
 The bridge serves the app's `ui/open-link` and `ui/request-display-mode` requests. `content.onOpenLink` decides whether a requested URL is opened — when omitted, the renderer itself opens `http`/`https` URLs in a new browser tab (`noopener`/`noreferrer`) and rejects every other scheme. `content.onRequestDisplayMode` answers a mode request with the mode actually applied; when omitted (or when it returns `undefined`), the app is answered with the current mode from `content.hostContext.displayMode`.
 
@@ -243,6 +254,7 @@ const content: McpAppCanvasContent = {
 <McpAppCanvasRenderer
   content={content}
   errorLabel="Failed to load app"
+  loadingLabel="Loading…"
   onAppInfo={(appInfo) => console.log(appInfo.name, appInfo.version)}
 />;
 ```

@@ -17,8 +17,8 @@ export {
   insertAnchor,
   reconcileAnchors,
 } from './utils/skill-mention-tracking';
+export { ChatSkillDetailsTrigger } from './types/chat-skill-details-trigger';
 export type {
-  ChatSkillDetailsTrigger,
   ChatSkillColors,
   ChatSkillLabels,
   ChatSkillProps,

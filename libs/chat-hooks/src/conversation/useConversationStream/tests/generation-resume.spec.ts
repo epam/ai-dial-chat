@@ -5,10 +5,12 @@ import {
   StageStatus,
 } from '@epam/ai-dial-chat-shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_GENERATION_INTERRUPTED_ERROR_MESSAGE } from '../../create-chat-stream-api';
 import type { BufferedGeneration } from '../buffered-generation';
 import {
   createResumeIfAwaitingGeneration,
   fetchConversationForRecovery,
+  findLiveForegroundMessageIndex,
   findPendingBackgroundMessageIndex,
   isAwaitingGenerationResume,
 } from '../generation-resume';
@@ -808,6 +810,303 @@ describe('createResumeIfAwaitingGeneration — watch fallback', () => {
   });
 });
 
+describe('createResumeIfAwaitingGeneration — orphaned placeholder', () => {
+  const CONVERSATION_ID = 'bucket/gpt-4o__Hello';
+  const PATH = 'gpt-4o__Hello';
+  const INTERRUPTED = 'Interrupted';
+  const encoder = new TextEncoder();
+
+  const makeAnswer = () =>
+    makeConversation({
+      messages: [
+        {
+          role: MessageRole.User,
+          content: 'Hello',
+          timestamp: new Date().toISOString(),
+        },
+        {
+          role: MessageRole.Assistant,
+          content: 'Final answer',
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    });
+
+  const makeSseStream = () => {
+    let controller!: ReadableStreamDefaultController<Uint8Array>;
+    const stream = new ReadableStream<Uint8Array>({
+      start(streamController) {
+        controller = streamController;
+      },
+    });
+    return {
+      stream,
+      emit: (event: unknown) =>
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify(event)}\n\n`),
+        ),
+      end: () => controller.close(),
+    };
+  };
+
+  const makeHarness = ({
+    getConversation = vi.fn().mockResolvedValue(makeConversation()),
+    attachToGeneration = vi.fn().mockRejectedValue(new Error('no attach')),
+    watchRejects = false,
+    deps = {},
+  }: {
+    getConversation?: ConversationStreamTransport['getConversation'];
+    attachToGeneration?: ConversationStreamTransport['attachToGeneration'];
+    watchRejects?: boolean;
+    deps?: Partial<Parameters<typeof createResumeIfAwaitingGeneration>[0]>;
+  } = {}) => {
+    const watch = makeSseStream();
+    const transport: ConversationStreamTransport = {
+      streamCompletion: vi.fn(),
+      stopCompletion: vi.fn(),
+      saveConversation: vi.fn(),
+      attachToGeneration,
+      watchConversation: watchRejects
+        ? vi.fn().mockRejectedValue(new Error('no watch'))
+        : vi.fn().mockResolvedValue(watch.stream),
+      getConversation,
+    };
+    let displayed: Conversation | null = makeConversation();
+    const setConversation = vi.fn(
+      (
+        update:
+          | Conversation
+          | null
+          | ((prev: Conversation | null) => Conversation | null),
+      ) => {
+        displayed = typeof update === 'function' ? update(displayed) : update;
+      },
+    );
+    const removeStreamingPath = vi.fn();
+    const bufferedGenerationsRef = {
+      current: new Map<string, BufferedGeneration>(),
+    };
+    const resumingPathsRef = { current: new Set<string>() };
+    const resume = createResumeIfAwaitingGeneration({
+      transport,
+      setConversation,
+      conversationRef: { current: null },
+      resumingPathsRef,
+      bufferedGenerationsRef,
+      addStreamingPath: vi.fn(),
+      removeStreamingPath,
+      isPathDisplayed: () => true,
+      generationInterruptedMessage: INTERRUPTED,
+      ...deps,
+    });
+    return {
+      transport,
+      resume,
+      watch,
+      setConversation,
+      removeStreamingPath,
+      bufferedGenerationsRef,
+      resumingPathsRef,
+      getDisplayed: () => displayed,
+    };
+  };
+
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 20));
+
+  it('releases the path and shows the interrupted text when attach is unavailable and the placeholder is still unresolved', async () => {
+    const { resume, transport, removeStreamingPath, getDisplayed } =
+      makeHarness();
+
+    resume(CONVERSATION_ID, makeConversation(), {
+      shouldMarkOrphanedAsInterrupted: true,
+    });
+
+    await vi.waitFor(() =>
+      expect(removeStreamingPath).toHaveBeenCalledWith(PATH),
+    );
+    expect(getDisplayed()?.messages[1].streamErrorMessage).toBe(INTERRUPTED);
+    expect(transport.saveConversation).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the English default text when the host passes none', async () => {
+    const { resume, removeStreamingPath, getDisplayed } = makeHarness({
+      deps: { generationInterruptedMessage: undefined },
+    });
+
+    resume(CONVERSATION_ID, makeConversation(), {
+      shouldMarkOrphanedAsInterrupted: true,
+    });
+
+    await vi.waitFor(() => expect(removeStreamingPath).toHaveBeenCalled());
+    expect(getDisplayed()?.messages[1].streamErrorMessage).toBe(
+      DEFAULT_GENERATION_INTERRUPTED_ERROR_MESSAGE,
+    );
+  });
+
+  it('replaces the interrupted text with the saved answer when it arrives while the watch runs', async () => {
+    const getConversation = vi
+      .fn()
+      .mockResolvedValueOnce(makeConversation())
+      .mockResolvedValue(makeAnswer());
+    const { resume, watch, removeStreamingPath, getDisplayed } = makeHarness({
+      getConversation,
+    });
+
+    resume(CONVERSATION_ID, makeConversation(), {
+      shouldMarkOrphanedAsInterrupted: true,
+    });
+    await vi.waitFor(() => expect(removeStreamingPath).toHaveBeenCalled());
+
+    watch.emit({ action: 'UPDATE' });
+
+    await vi.waitFor(() =>
+      expect(getDisplayed()?.messages[1].content).toBe('Final answer'),
+    );
+    expect(getDisplayed()?.messages[1].streamErrorMessage).toBeUndefined();
+  });
+
+  it('leaves the displayed state alone once another generation owns the path', async () => {
+    const getConversation = vi
+      .fn()
+      .mockResolvedValueOnce(makeConversation())
+      .mockResolvedValue(makeAnswer());
+    const {
+      resume,
+      watch,
+      removeStreamingPath,
+      bufferedGenerationsRef,
+      setConversation,
+    } = makeHarness({ getConversation });
+
+    resume(CONVERSATION_ID, makeConversation(), {
+      shouldMarkOrphanedAsInterrupted: true,
+    });
+    await vi.waitFor(() => expect(removeStreamingPath).toHaveBeenCalled());
+    bufferedGenerationsRef.current.set(PATH, {
+      generationId: 'new-generation',
+      messageIndex: 1,
+      message: makeConversation().messages[1],
+    });
+    setConversation.mockClear();
+
+    watch.emit({ action: 'UPDATE' });
+    await flush();
+
+    expect(setConversation).not.toHaveBeenCalled();
+  });
+
+  it('keeps the interrupted text when the watch ends and the final reload still returns the placeholder', async () => {
+    const { resume, watch, removeStreamingPath, getDisplayed } = makeHarness();
+
+    resume(CONVERSATION_ID, makeConversation(), {
+      shouldMarkOrphanedAsInterrupted: true,
+    });
+    await vi.waitFor(() => expect(removeStreamingPath).toHaveBeenCalled());
+
+    watch.end();
+
+    await vi.waitFor(() =>
+      expect(removeStreamingPath.mock.calls.length).toBeGreaterThan(1),
+    );
+    expect(getDisplayed()?.messages[1].streamErrorMessage).toBe(INTERRUPTED);
+  });
+
+  it('shows the interrupted text when the watch cannot open and the final reload returns the placeholder', async () => {
+    const { resume, removeStreamingPath, getDisplayed } = makeHarness({
+      watchRejects: true,
+    });
+
+    resume(CONVERSATION_ID, makeConversation(), {
+      shouldMarkOrphanedAsInterrupted: true,
+    });
+
+    await vi.waitFor(() =>
+      expect(removeStreamingPath).toHaveBeenCalledWith(PATH),
+    );
+    expect(getDisplayed()?.messages[1].streamErrorMessage).toBe(INTERRUPTED);
+  });
+
+  it('does not mark a resume that did not opt in', async () => {
+    const { resume, removeStreamingPath, getDisplayed, watch } = makeHarness();
+
+    resume(CONVERSATION_ID, makeConversation());
+    await flush();
+
+    expect(removeStreamingPath).not.toHaveBeenCalled();
+    expect(getDisplayed()?.messages[1].streamErrorMessage).toBeUndefined();
+    watch.end();
+  });
+
+  it('does not mark a placeholder while attach serves a live generation', async () => {
+    const attach = makeSseStream();
+    const { resume, removeStreamingPath, getDisplayed } = makeHarness({
+      attachToGeneration: vi.fn().mockResolvedValue(attach.stream),
+    });
+
+    resume(CONVERSATION_ID, makeConversation(), {
+      shouldMarkOrphanedAsInterrupted: true,
+    });
+    attach.emit({
+      type: 'snapshot',
+      message: { ...makeConversation().messages[1], content: 'Partial' },
+    });
+    await flush();
+
+    expect(removeStreamingPath).not.toHaveBeenCalled();
+    expect(getDisplayed()?.messages[1].streamErrorMessage).toBeUndefined();
+    attach.end();
+  });
+
+  it('does not mark a pending background message', async () => {
+    const pending = makeConversation({
+      messages: [
+        {
+          role: MessageRole.User,
+          content: 'Hello',
+          timestamp: new Date().toISOString(),
+        },
+        {
+          role: MessageRole.Assistant,
+          content: '',
+          timestamp: new Date().toISOString(),
+          backgroundGeneration: {
+            generationId: 'g1',
+            startedAt: 1,
+            status: BackgroundGenerationStatus.Pending,
+          },
+        },
+      ],
+    });
+    const { resume, removeStreamingPath, getDisplayed, watch } = makeHarness({
+      getConversation: vi.fn().mockResolvedValue(pending),
+    });
+
+    resume(CONVERSATION_ID, pending, { shouldMarkOrphanedAsInterrupted: true });
+    await flush();
+
+    expect(removeStreamingPath).not.toHaveBeenCalled();
+    expect(getDisplayed()?.messages[1].streamErrorMessage).toBeUndefined();
+    watch.end();
+  });
+
+  it('keeps the chat blocked when the page holds a partial answer to preserve', async () => {
+    const { resume, removeStreamingPath, watch } = makeHarness();
+
+    resume(CONVERSATION_ID, makeConversation(), {
+      shouldMarkOrphanedAsInterrupted: true,
+      seedMessage: {
+        role: MessageRole.Assistant,
+        content: 'Partial answer so far',
+        timestamp: new Date().toISOString(),
+      },
+    });
+    await flush();
+
+    expect(removeStreamingPath).not.toHaveBeenCalled();
+    watch.end();
+  });
+});
+
 describe('fetchConversationForRecovery — pending results', () => {
   afterEach(() => {
     vi.useRealTimers();
@@ -1138,5 +1437,164 @@ describe('attach-supplied generation id', () => {
         false,
       ),
     );
+  });
+});
+
+describe('live foreground marker', () => {
+  const CONVERSATION_ID = 'bucket/gpt-4o__Hello';
+  const PATH = 'gpt-4o__Hello';
+  const MARKER_ID = '9d1e2f3a-4b5c-4d6e-8f70-81a2b3c4d5e6';
+  const INTERRUPTED = 'Interrupted';
+  const user = {
+    role: MessageRole.User,
+    content: 'Hello',
+    timestamp: new Date().toISOString(),
+  };
+  const marked = (expiresAt: number) => ({
+    role: MessageRole.Assistant,
+    content: '',
+    timestamp: new Date().toISOString(),
+    foregroundGeneration: { generationId: MARKER_ID, startedAt: 1, expiresAt },
+  });
+  const status = {
+    role: MessageRole.Status,
+    content: '',
+    timestamp: new Date().toISOString(),
+  };
+  const live = () =>
+    makeConversation({ messages: [user, marked(Date.now() + 60_000)] });
+  const answered = () =>
+    makeConversation({
+      messages: [
+        user,
+        {
+          role: MessageRole.Assistant,
+          content: 'Final answer',
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    });
+
+  describe('detection', () => {
+    it('finds the live marker at any position', () => {
+      const conversation = makeConversation({
+        messages: [user, marked(Date.now() + 60_000), status],
+      } as never);
+
+      expect(findLiveForegroundMessageIndex(conversation)).toBe(1);
+      expect(isAwaitingGenerationResume(conversation)).toBe(true);
+    });
+
+    it('ignores an expired marker, leaving the placeholder rule to decide', () => {
+      const conversation = makeConversation({
+        messages: [user, marked(Date.now() - 1), status],
+      } as never);
+
+      expect(findLiveForegroundMessageIndex(conversation)).toBe(-1);
+      expect(isAwaitingGenerationResume(conversation)).toBe(false);
+    });
+  });
+
+  const makeHarness = (
+    getConversation: ConversationStreamTransport['getConversation'],
+  ) => {
+    let displayed: Conversation | null = live();
+    const setConversation = vi.fn((update: unknown) => {
+      displayed =
+        typeof update === 'function'
+          ? (update as (prev: Conversation | null) => Conversation | null)(
+              displayed,
+            )
+          : (update as Conversation);
+    });
+    const removeStreamingPath = vi.fn();
+    const rememberResumedGenerationId = vi.fn();
+    const forgetResumedGenerationId = vi.fn();
+    const transport: ConversationStreamTransport = {
+      streamCompletion: vi.fn(),
+      stopCompletion: vi.fn(),
+      attachToGeneration: vi.fn().mockRejectedValue(new Error('404')),
+      watchConversation: vi.fn().mockRejectedValue(new Error('no watch')),
+      getConversation,
+    };
+    const resume = createResumeIfAwaitingGeneration({
+      transport,
+      setConversation: setConversation as never,
+      conversationRef: { current: null },
+      resumingPathsRef: { current: new Set<string>() },
+      bufferedGenerationsRef: {
+        current: new Map<string, BufferedGeneration>(),
+      },
+      addStreamingPath: vi.fn(),
+      removeStreamingPath,
+      isPathDisplayed: () => true,
+      generationInterruptedMessage: INTERRUPTED,
+      rememberResumedGenerationId,
+      forgetResumedGenerationId,
+      stoppedGenerationIdsRef: { current: new Set<string>() },
+    });
+    return {
+      resume,
+      removeStreamingPath,
+      rememberResumedGenerationId,
+      forgetResumedGenerationId,
+      getDisplayed: () => displayed,
+    };
+  };
+
+  it('never shows another participant’s running answer as interrupted', async () => {
+    const harness = makeHarness(vi.fn().mockResolvedValue(live()));
+
+    harness.resume(CONVERSATION_ID, live(), {
+      shouldMarkOrphanedAsInterrupted: true,
+      trackAttachGenerationId: true,
+    });
+
+    await vi.waitFor(() =>
+      expect(harness.removeStreamingPath).toHaveBeenCalledWith(PATH),
+    );
+    expect(
+      harness.getDisplayed()?.messages[1].streamErrorMessage,
+    ).toBeUndefined();
+  });
+
+  it('shows the saved answer once the marker is gone', async () => {
+    const harness = makeHarness(vi.fn().mockResolvedValue(answered()));
+
+    harness.resume(CONVERSATION_ID, live(), {
+      shouldMarkOrphanedAsInterrupted: true,
+    });
+
+    await vi.waitFor(() =>
+      expect(harness.getDisplayed()?.messages[1].content).toBe('Final answer'),
+    );
+    expect(
+      harness.getDisplayed()?.messages[1].streamErrorMessage,
+    ).toBeUndefined();
+  });
+
+  it('offers Stop with the marker’s id and drops it once the resume settles', async () => {
+    const harness = makeHarness(vi.fn().mockResolvedValue(answered()));
+
+    harness.resume(CONVERSATION_ID, live(), { trackAttachGenerationId: true });
+
+    expect(harness.rememberResumedGenerationId).toHaveBeenCalledWith(
+      PATH,
+      MARKER_ID,
+    );
+    await vi.waitFor(() =>
+      expect(harness.forgetResumedGenerationId).toHaveBeenCalledWith(
+        PATH,
+        MARKER_ID,
+      ),
+    );
+  });
+
+  it('keeps Stop hidden during a conflict handover, which does not track ids', () => {
+    const harness = makeHarness(vi.fn().mockResolvedValue(live()));
+
+    harness.resume(CONVERSATION_ID, live());
+
+    expect(harness.rememberResumedGenerationId).not.toHaveBeenCalled();
   });
 });

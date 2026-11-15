@@ -34,6 +34,7 @@ function makeService(configOverrides: Record<string, unknown> = {}) {
     baseUrl: 'http://dial-core',
     dialApiVersion: '2024-10-21',
     fetchCore,
+    uploadCore: fetchCore,
   } as unknown as DialClientService;
 
   const filesUploadService = new FilesUploadService(dialClient, configService);

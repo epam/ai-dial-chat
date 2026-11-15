@@ -2,6 +2,7 @@ import type {
   ApplicationsResponseDto,
   CreateApplicationBodyDto,
   CreatedApplicationDto,
+  ResourceFoldersResponseDto,
   UpdateApplicationBodyDto,
   UpdatedApplicationDto,
 } from '@epam/ai-dial-chat-api-client';
@@ -35,3 +36,9 @@ export const updateApplication = (
 
 export const deleteApplication = (applicationName: string): Promise<void> =>
   applicationsApi.deleteApplication({ applicationName });
+
+/** Lists one level of the caller's application folders; an empty `path` is the root. */
+export const listApplicationFolders = (
+  path: string,
+): Promise<ResourceFoldersResponseDto> =>
+  applicationsApi.listApplicationFolders({ path });
