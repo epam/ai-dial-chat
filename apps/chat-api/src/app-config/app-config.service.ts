@@ -116,6 +116,12 @@ export class AppConfigService {
       context.roles,
     );
 
+    const themesBaseUrl =
+      this.configService
+        .get('THEMES_CONFIG_URL', { infer: true })
+        ?.trim()
+        .replace(/\/+$/, '') || undefined;
+
     const response: ClientConfigResponseDto = {
       appId: context.appId,
       features,
@@ -128,6 +134,7 @@ export class AppConfigService {
         catalogCreationPermissions,
         modelCatalogAvailable:
           resolveModelCatalogApiKey(this.configService) != null,
+        ...(themesBaseUrl != null ? { themesBaseUrl } : {}),
       },
       metadata: {
         resolvedAt: new Date().toISOString(),

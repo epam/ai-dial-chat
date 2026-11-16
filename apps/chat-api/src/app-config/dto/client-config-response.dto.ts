@@ -332,6 +332,14 @@ export class ClientConfigDto {
     example: false,
   })
   modelCatalogAvailable?: boolean;
+
+  @ApiPropertyOptional({
+    type: String,
+    description:
+      'Base URL of the themes service (THEMES_CONFIG_URL without a trailing slash). Clients recognise absolute deployment icon URLs under it and load them through GET /api/themes/icon instead, so one icon is requested under one URL. Missing when THEMES_CONFIG_URL is not configured.',
+    example: 'https://themes.example.com',
+  })
+  themesBaseUrl?: string;
 }
 
 export class ClientConfigMetadataDto {
