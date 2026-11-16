@@ -74,8 +74,8 @@
   {
     "target": "conversation-input",
     "page": "New chat, conversation and project view",
-    "element": "The message composer's text field",
-    "lookup": "The first on-screen `textarea` inside `#main-content`"
+    "element": "The message composer as a whole: the text field with its +, model and Send controls",
+    "lookup": "The smallest element holding both the first on-screen `textarea` inside `#main-content` and the button named \"Send message\"; the `textarea` alone when there is no such button"
   },
   {
     "target": "add-attachment",

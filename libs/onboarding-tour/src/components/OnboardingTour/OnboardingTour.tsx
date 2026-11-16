@@ -6,7 +6,9 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-ui-kit';
 import {
+  arrow,
   autoUpdate,
+  FloatingArrow,
   FloatingFocusManager,
   FloatingPortal,
   useDismiss,
@@ -18,22 +20,34 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type FC,
 } from 'react';
+import {
+  ARROW_HEIGHT,
+  ARROW_WIDTH,
+  SPOTLIGHT_PADDING,
+} from '../../constants/layout';
 import { ONBOARDING_TOUR_CLASS } from '../../constants/public-class-names';
 import { useResolvedTarget } from '../../hooks/useResolvedTarget/useResolvedTarget';
 import type { OnboardingTourProps } from '../../models/onboarding-tour';
 import { cardColorVars } from '../../utils/card-colors';
-import { hintCardMiddleware } from '../../utils/floating';
+import type { TargetRect } from '../../models/target-rect';
+import {
+  hintCardMiddleware,
+  TARGET_RECT_MIDDLEWARE,
+  targetRect,
+} from '../../utils/floating';
+import { spotlightRadius } from '../../utils/spotlight';
 import { HintCard } from '../HintCard/HintCard';
 import styles from './OnboardingTour.module.scss';
 
 const defaultStepCounter = (current: number, total: number) =>
   `Step ${current} of ${total}`;
 
-/** Dims the page and walks through the steps one hint card at a time, each card next to its step's element; the page stays usable while a card is open. */
+/** Dims the page around each step's element and walks through the steps one hint card at a time, the card pointing at the element; the page stays usable while a card is open. */
 export const OnboardingTour: FC<OnboardingTourProps> = ({
   steps,
   onFinish,
@@ -60,6 +74,12 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
   const step = steps[index] ?? null;
   const isOpen = step != null;
   const target = useResolvedTarget(step?.getTarget);
+  const arrowRef = useRef<SVGSVGElement>(null);
+  /* The cut-out follows the target's own corners: round for a round button, square for a panel. */
+  const borderRadius = useMemo(
+    () => (target ? spotlightRadius(target, SPOTLIGHT_PADDING) : undefined),
+    [target],
+  );
 
   /* Remember where focus was before the tour took it, to give it back. */
   useLayoutEffect(() => {
@@ -72,19 +92,25 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
     onFinish(steps.map(({ id }) => id));
   }, [onFinish, steps]);
 
-  const { refs, floatingStyles, context, isPositioned } = useFloating({
-    open: isOpen,
-    onOpenChange: (open) => {
-      if (!open) {
-        finish();
-      }
-    },
-    elements: { reference: target },
-    strategy: 'fixed',
-    placement: 'bottom-start',
-    middleware: hintCardMiddleware(),
-    whileElementsMounted: autoUpdate,
-  });
+  const { refs, floatingStyles, context, middlewareData, isPositioned } =
+    useFloating({
+      open: isOpen,
+      onOpenChange: (open) => {
+        if (!open) {
+          finish();
+        }
+      },
+      elements: { reference: target },
+      strategy: 'fixed',
+      placement: 'bottom-start',
+      middleware: [
+        ...hintCardMiddleware(ARROW_HEIGHT),
+        /* Kept clear of the card's rounded corners. */
+        arrow({ element: arrowRef, padding: 12 }),
+        targetRect(),
+      ],
+      whileElementsMounted: autoUpdate,
+    });
   /* Escape ends the tour; a click elsewhere on the page leaves the card
    * open, so a stray tap cannot dismiss a hint the user has not read. */
   const dismiss = useDismiss(context, { outsidePress: false });
@@ -128,6 +154,9 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
   /* Without a target to sit next to (on mobile, or while a target is briefly
    * gone) the card is a bottom sheet. */
   const isSheet = isMobile || !target;
+  const rect = target
+    ? (middlewareData[TARGET_RECT_MIDDLEWARE] as TargetRect | undefined)
+    : undefined;
 
   const cssVars = buildCssVars({
     ...cardColorVars(colors),
@@ -147,11 +176,27 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
           className,
         )}
       >
-        {/* Visual only: like the layer, it lets clicks through to the page. */}
-        <div
-          aria-hidden
-          className={mergeClasses(styles.backdrop, 'absolute inset-0')}
-        />
+        {/* Visual only: like the layer, it lets clicks through to the page.
+         * With a target, the dimming is a huge shadow around a cut-out over
+         * the element, so the element stays lit. */}
+        {rect ? (
+          <div
+            aria-hidden
+            className={mergeClasses(styles.cutout, 'absolute')}
+            style={{
+              top: rect.top - SPOTLIGHT_PADDING,
+              left: rect.left - SPOTLIGHT_PADDING,
+              width: rect.width + SPOTLIGHT_PADDING * 2,
+              height: rect.height + SPOTLIGHT_PADDING * 2,
+              borderRadius,
+            }}
+          />
+        ) : (
+          <div
+            aria-hidden
+            className={mergeClasses(styles.backdrop, 'absolute inset-0')}
+          />
+        )}
         <FloatingFocusManager
           context={context}
           modal={false}
@@ -178,6 +223,17 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
               !isSheet && !isPositioned && 'invisible',
             )}
             style={isSheet ? undefined : floatingStyles}
+            arrow={
+              isSheet ? undefined : (
+                <FloatingArrow
+                  ref={arrowRef}
+                  context={context}
+                  width={ARROW_WIDTH}
+                  height={ARROW_HEIGHT}
+                  className={styles.arrow}
+                />
+              )
+            }
             footer={
               <div className="flex items-center justify-between gap-2">
                 {isLast ? (

@@ -167,6 +167,13 @@ describe('resolveOnboardingTarget', () => {
     ).toBe(screen.getByRole('navigation', { name: 'Main navigation' }));
   });
 
+  it('finds the whole composer around the text field and Send button', () => {
+    render(<AppPage />);
+    expect(
+      resolveOnboardingTarget(OnboardingHintTarget.ConversationInput, labels),
+    ).toBe(screen.getByRole('region', { name: 'Message input' }));
+  });
+
   it('finds the composer and its + button', () => {
     render(<Page />);
     expect(

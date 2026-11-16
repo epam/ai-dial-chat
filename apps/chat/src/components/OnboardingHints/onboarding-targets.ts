@@ -210,6 +210,22 @@ const composerScopes = (): Element[] => {
 const conversationLogs = (labels: OnboardingTargetLabels): Element[] =>
   named(mainContent(), '[role="log"]', labels.conversationMessages);
 
+/* The whole composer: the smallest element holding both the text field and
+ * the Send button, so a hint card sits outside the composer rather than over
+ * its toolbar. Falls back to the text field when no Send button is found. */
+const findComposer = (labels: OnboardingTargetLabels): HTMLElement | null => {
+  const field = firstOnScreen(queryAll(mainContent(), 'textarea'));
+  const send = field ? findControl(composerScopes(), labels.sendMessage) : null;
+  if (!field || !send) {
+    return field;
+  }
+  let element: HTMLElement | null = field;
+  while (element && !element.contains(send)) {
+    element = element.parentElement;
+  }
+  return element ?? field;
+};
+
 const chatsSections = (labels: OnboardingTargetLabels): Element[] =>
   named(navigations(labels), 'section', labels.chats);
 
@@ -233,8 +249,7 @@ const ANCHOR_RESOLVERS: Record<OnboardingHintTarget, AnchorResolver> = {
     findControl(navigations(labels), labels.catalog),
   [OnboardingHintTarget.FileManager]: (labels) =>
     findControl(navigations(labels), labels.fileManager),
-  [OnboardingHintTarget.ConversationInput]: () =>
-    firstOnScreen(queryAll(mainContent(), 'textarea')),
+  [OnboardingHintTarget.ConversationInput]: (labels) => findComposer(labels),
   [OnboardingHintTarget.AddAttachment]: (labels) =>
     findControl(composerScopes(), labels.addAttachment),
   [OnboardingHintTarget.SendMessage]: (labels) =>

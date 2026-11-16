@@ -25,6 +25,8 @@ interface HintCardProps extends HTMLAttributes<HTMLDivElement> {
   onClose?: () => void;
   /** Buttons at the bottom of the card. */
   footer: ReactNode;
+  /** Optional arrow pointing from the card at its target. */
+  arrow?: ReactNode;
   /** Typography class of the counter. */
   counterClassName?: string;
   /** Typography class of the heading. */
@@ -42,6 +44,7 @@ export const HintCard: FC<HintCardProps> = ({
   closeLabel,
   onClose,
   footer,
+  arrow,
   counterClassName,
   titleClassName,
   descriptionClassName,
@@ -66,6 +69,7 @@ export const HintCard: FC<HintCardProps> = ({
         className,
       )}
     >
+      {arrow}
       <div className="flex items-start gap-2">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {counter && (
