@@ -593,7 +593,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Streams one file directly under the project `artifacts/` folder as an attachment with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.
+   * Streams one file under the project `artifacts/` folder, a direct child or a nested path, as an attachment named after its last path segment, with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.
    * Download one output of a project
    */
   async downloadProjectArtifactRaw(
@@ -651,7 +651,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Streams one file directly under the project `artifacts/` folder as an attachment with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.
+   * Streams one file under the project `artifacts/` folder, a direct child or a nested path, as an attachment named after its last path segment, with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.
    * Download one output of a project
    */
   async downloadProjectArtifact(

@@ -15,7 +15,7 @@ import {
   ButtonsI18nKeys,
 } from '../../constants/translation-keys';
 import { attachmentDisplayResolvers } from '../../utils/attachment-display-resolvers';
-import { resolveDialFileDownloadUrl } from '../../utils/dial-file';
+import { resolveAttachmentDownloadUrl } from '../../utils/dial-file';
 
 type UseMessageAttachmentsParams = Pick<
   ConversationMessageItemProps,
@@ -38,7 +38,7 @@ export const useMessageAttachments = ({
   const { t } = useTranslation();
 
   const { handleAttachmentClick: handleDownload } = useAttachmentAction({
-    resolveDownloadUrl: resolveDialFileDownloadUrl,
+    resolveDownloadUrl: resolveAttachmentDownloadUrl,
   });
   const handleIndexedAttachmentClick = useCallback(
     (attachment: DisplayAttachment) =>

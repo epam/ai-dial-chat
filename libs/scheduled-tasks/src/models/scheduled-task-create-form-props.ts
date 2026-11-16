@@ -2,6 +2,12 @@ import type { TextRefinementLabels } from '@epam/ai-dial-chat-shared';
 import type { EditorThemes } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import type { ScheduledTaskRepeat } from '../types/scheduled-task-schedule';
+import type {
+  ScheduledTaskTimezoneClassNames,
+  ScheduledTaskTimezoneColors,
+  ScheduledTaskTimezoneLabels,
+  ScheduledTaskTimezoneOption,
+} from './scheduled-task-timezone-props';
 
 /** A single option rendered in the Repeat dropdown. */
 export interface ScheduledTaskRepeatOption {
@@ -27,6 +33,8 @@ export interface ScheduledTaskCreateFormValues {
   displayName: string;
   /** How often the task repeats. */
   repeat: ScheduledTaskRepeat;
+  /** IANA time zone the schedule is evaluated in, such as `Europe/Berlin`; `time`, `runAt` and the activity-window dates are wall time in it. */
+  timezone: string;
   /** Local datetime-local input value used when `repeat` is `'oneTime'`. */
   runAt?: string;
   /** `HH:mm` time-of-day used when `repeat` is `'daily'`, `'weekly'`, `'monthly'`, or `'custom'`. */
@@ -57,6 +65,8 @@ export interface ScheduledTaskCreateFormValues {
 export interface ScheduledTaskCreateFormErrors {
   /** Error shown under the display name field. */
   displayName?: string;
+  /** Error shown under the time zone field. */
+  timezone?: string;
   /** Error shown under the run-at field. */
   runAt?: string;
   /** Error shown under the time field. */
@@ -206,6 +216,20 @@ export interface ScheduledTaskCreateFormStyles {
   layout?: { detailsWidth?: string; columnGap?: string };
 }
 
+/** What the host supplies so the form can offer a time zone picker. */
+export interface ScheduledTaskCreateFormTimezone {
+  /** Selectable zones, already sorted. */
+  options: ScheduledTaskTimezoneOption[];
+  /** The viewer's own zone, listed first. */
+  browserTimezoneId?: string;
+  /** Localized picker and hint strings. */
+  labels?: ScheduledTaskTimezoneLabels;
+  /** Picker color overrides. */
+  colors?: ScheduledTaskTimezoneColors;
+  /** Picker typography overrides. */
+  classNames?: ScheduledTaskTimezoneClassNames;
+}
+
 /** Props for the {@link ScheduledTaskCreateForm} component. */
 export interface ScheduledTaskCreateFormProps {
   /** Optional Description rewrite callback; omission hides its action. */
@@ -217,6 +241,8 @@ export interface ScheduledTaskCreateFormProps {
   ) => Promise<string>;
   /** Localized labels. */
   labels: ScheduledTaskCreateFormLabels;
+  /** Time zone picker data; omit it to hide the picker and leave the zone to the host. */
+  timezone?: ScheduledTaskCreateFormTimezone;
   /** Current field values. */
   values: ScheduledTaskCreateFormValues;
   /**

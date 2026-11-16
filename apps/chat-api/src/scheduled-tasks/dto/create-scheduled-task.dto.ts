@@ -20,6 +20,11 @@ import { IsValidFilePath } from '../../files/dto/file-path.validator';
 import { ScheduleTriggerDto } from './schedule-trigger.dto';
 import { ScheduledTaskDto } from './scheduled-task.dto';
 import { IsValidSkillPathLength } from './skill-path-length.validator';
+import {
+  IsIanaTimezone,
+  TIMEZONE_ID_MAX_LENGTH,
+  TIMEZONE_ID_PATTERN,
+} from './timezone.validator';
 
 export class CreateScheduledTaskBodyDto {
   @ApiProperty({ example: 'Daily summary', maxLength: ENTITY_NAME_MAX_LENGTH })
@@ -37,6 +42,22 @@ export class CreateScheduledTaskBodyDto {
   @ValidateNested()
   @Type(() => ScheduleTriggerDto)
   trigger!: ScheduleTriggerDto;
+
+  @ApiPropertyOptional({
+    example: 'Europe/Berlin',
+    default: 'UTC',
+    maxLength: TIMEZONE_ID_MAX_LENGTH,
+    description:
+      'IANA time zone the trigger is evaluated in. Cron fields and offset-less datetimes are local wall time in this zone. Omission means UTC; an update that omits it resets the zone to UTC.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(TIMEZONE_ID_MAX_LENGTH)
+  @Matches(TIMEZONE_ID_PATTERN, {
+    message: 'timezone must contain only IANA identifier characters',
+  })
+  @IsIanaTimezone()
+  timezone?: string;
 
   @ApiProperty({ example: 'gpt-4.1-mini-2025-04-14' })
   @IsString()

@@ -364,15 +364,15 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it('declares exactly the 49 known keys: 7 managed, 27 local-only and 15 eligible', () => {
-    expect(CONFIG_DEFINITIONS).toHaveLength(49);
+  it('declares exactly the 50 known keys: 7 managed, 27 local-only and 16 eligible', () => {
+    expect(CONFIG_DEFINITIONS).toHaveLength(50);
     expect(managed).toHaveLength(7);
     expect(
       CONFIG_DEFINITIONS.filter((d) => localOnlyReasonOf(d) !== undefined),
     ).toHaveLength(27);
     expect(
       CONFIG_DEFINITIONS.filter((d) => d.management === undefined),
-    ).toHaveLength(15);
+    ).toHaveLength(16);
   });
 
   it('manages a config key as config and a feature as feature', () => {

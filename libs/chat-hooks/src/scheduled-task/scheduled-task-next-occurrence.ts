@@ -1,14 +1,17 @@
 import type { ScheduleCronDto } from '@epam/ai-dial-chat-api-client';
+import { getZonedNow } from '@epam/ai-dial-scheduled-tasks';
+import { padTwoDigits } from '../shared/formatting';
 
-/** APScheduler `day` expression for the last day of the month. */
+/** APScheduler `day` expression for the last day of the month, written by older clients. */
 const CRON_LAST_DAY_OF_MONTH = 'last';
 /* A day-of-month constraint (e.g. the 31st) always matches within a year. */
 const MAX_DAYS_TO_NEXT_OCCURRENCE = 366;
 const PLAIN_NUMBER = /^\d+$/;
+const MS_PER_DAY = 86_400_000;
 
-/** Whether a UTC date satisfies the cron's `day_of_week` / `day` constraint. */
+/** Whether a calendar day (held as UTC midnight) satisfies the cron's `day_of_week` / `day` constraint. */
 const matchesCronDay = (
-  date: Date,
+  day: Date,
   dayOfWeek: string | null | undefined,
   dayOfMonth: string | null | undefined,
 ): boolean => {
@@ -16,27 +19,28 @@ const matchesCronDay = (
     /* APScheduler weekdays run Monday=0..Sunday=6; JS `getUTCDay` Sunday=0. */
     return dayOfWeek
       .split(',')
-      .some((day) => (Number(day) + 1) % 7 === date.getUTCDay());
+      .some((entry) => (Number(entry) + 1) % 7 === day.getUTCDay());
   }
   if (dayOfMonth === CRON_LAST_DAY_OF_MONTH) {
-    const nextDay = new Date(date);
-    nextDay.setUTCDate(date.getUTCDate() + 1);
-    return nextDay.getUTCDate() === 1;
+    return new Date(day.getTime() + MS_PER_DAY).getUTCDate() === 1;
   }
-  if (dayOfMonth != null) return Number(dayOfMonth) === date.getUTCDate();
+  if (dayOfMonth != null) return Number(dayOfMonth) === day.getUTCDate();
   return true;
 };
 
 /**
- * Returns the next UTC time at which a cron trigger with a fixed
- * `hour`/`minute` fires, honouring its `day_of_week` (a weekday or a comma
- * list of weekdays) or `day` (Monthly) constraint. Returns `undefined` when
- * the fields are not plain values this helper can evaluate.
+ * Returns the next local `YYYY-MM-DDTHH:mm` at which a cron trigger with a
+ * fixed `hour`/`minute` fires in `timezone`, honouring its `day_of_week` (a
+ * weekday or a comma list of weekdays) or `day` (Monthly) constraint. Cron
+ * fields are wall time in the task's zone, so the answer is wall time too.
+ * Returns `undefined` when the fields are not plain values this helper can
+ * evaluate or the zone is unknown.
  */
 export const getNextCronOccurrence = (
   cron: ScheduleCronDto,
+  timezone: string,
   from: Date = new Date(),
-): Date | undefined => {
+): string | undefined => {
   const {
     hour,
     minute,
@@ -55,13 +59,20 @@ export const getNextCronOccurrence = (
   ) {
     return undefined;
   }
-  const candidate = new Date(from);
-  candidate.setUTCHours(Number(hour), Number(minute), 0, 0);
+  let now: string;
+  try {
+    now = getZonedNow(from, timezone).dateTime;
+  } catch {
+    return undefined;
+  }
+  const time = `${padTwoDigits(Number(hour))}:${padTwoDigits(Number(minute))}`;
+  const today = Date.parse(`${now.slice(0, 10)}T00:00:00Z`);
   for (let i = 0; i <= MAX_DAYS_TO_NEXT_OCCURRENCE; i++) {
-    if (candidate > from && matchesCronDay(candidate, dayOfWeek, dayOfMonth)) {
+    const day = new Date(today + i * MS_PER_DAY);
+    const candidate = `${day.toISOString().slice(0, 10)}T${time}`;
+    if (candidate > now && matchesCronDay(day, dayOfWeek, dayOfMonth)) {
       return candidate;
     }
-    candidate.setUTCDate(candidate.getUTCDate() + 1);
   }
   return undefined;
 };

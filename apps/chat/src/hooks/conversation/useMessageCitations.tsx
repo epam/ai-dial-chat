@@ -1,7 +1,7 @@
 import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import {
   annotationToDisplayAttachment,
-  isDialFileId,
+  isDialStoredFileId,
   isExternalSourcePreviewable,
   mapStages,
   openAnnotationAttachment,
@@ -32,7 +32,7 @@ import {
   CitationsI18nKeys,
 } from '../../constants/translation-keys';
 import { attachmentCanvasUrlResolvers } from '../../utils/attachment-display-resolvers';
-import { resolveDialFileDownloadUrl } from '../../utils/dial-file';
+import { resolveAttachmentDownloadUrl } from '../../utils/dial-file';
 import type { useMessageAttachments } from './useMessageAttachments';
 
 const MESSAGE_TEXT_STYLES = {
@@ -49,7 +49,7 @@ const isCitationPreviewable = (annotation: Annotation): boolean => {
   const attachment = annotation.body?.source?.attachment;
   return (
     attachment != null &&
-    (isDialFileId(attachment.url) ||
+    (isDialStoredFileId(attachment.url) ||
       isExternalSourcePreviewable(attachment.type, attachment.url))
   );
 };
@@ -157,7 +157,7 @@ export const useMessageCitations = ({
   const handleCitationOpenInBrowser = useCallback((annotation: Annotation) => {
     const attachment = annotation.body?.source?.attachment;
     if (attachment)
-      openAnnotationAttachment(attachment, resolveDialFileDownloadUrl);
+      openAnnotationAttachment(attachment, resolveAttachmentDownloadUrl);
   }, []);
   const buildCitationLabels = useCallback(
     (group: AnnotationGroup) => {

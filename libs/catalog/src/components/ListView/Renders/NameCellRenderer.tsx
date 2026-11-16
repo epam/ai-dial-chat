@@ -1,10 +1,5 @@
 import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
-  EllipsisTooltip,
-} from '@epam/ai-dial-ui-kit';
-import { IconCheck } from '@tabler/icons-react';
+import { EllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import type { ICellRendererParams } from 'ag-grid-community';
 import { FC } from 'react';
 import type { CatalogItem } from '../../../models/catalog-item';
@@ -13,7 +8,7 @@ import { ClampedName } from '../../ClampedName/ClampedName';
 import { CredentialsBadge } from '../../CredentialsBadge/CredentialsBadge';
 import styles from '../ListView.module.scss';
 
-/** ag-grid cell renderer for the name/identity column: icon, name, version, credentials badge, and selection checkmark. */
+/** ag-grid cell renderer for the name/identity column: icon, name, version and credentials badge. The selected row is marked by the row frame (`ListView.module.scss`), not by a cell icon. */
 export const NameCellRenderer: FC<
   ICellRendererParams<CatalogItem, unknown, GridContext>
 > = ({ data, context }) => {
@@ -21,7 +16,6 @@ export const NameCellRenderer: FC<
   const typography = context?.typography;
   const nameClassName = typography?.nameClassName ?? 'dial-small-semi-text';
   const versionClassName = typography?.versionClassName ?? 'dial-tiny-text';
-  const isSelected = data != null && data.id === context?.selectedItemId;
 
   if (!data) return null;
   return (
@@ -60,14 +54,6 @@ export const NameCellRenderer: FC<
               versionClassName,
               styles.version,
             )}
-          />
-        )}
-        {isSelected && (
-          <IconCheck
-            size={DIAL_ICON_SIZE.SM}
-            className={mergeClasses('ms-auto shrink-0', styles.selectedCheck)}
-            aria-hidden
-            stroke={DIAL_KIT_ICON_STROKE}
           />
         )}
       </div>

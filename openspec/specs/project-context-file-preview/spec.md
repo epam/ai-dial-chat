@@ -58,7 +58,9 @@ A context file that is not stored in the project yet SHALL open from the `File` 
 
 ### Requirement: Saved files are fetched by the shared canvas resolvers through the project file endpoint
 
-A context file stored in the project (the view page's files, and the edit page's files with `isStored`) SHALL be opened as an attachment whose `url` is its locator, `{projectId}/files/context/{fileName}` (`toProjectContextFileUrl` in `apps/chat/src/utils/dial-file.ts`). The app's `resolveDialUrl` (the same function that resolves a `files/` id for the conversation canvas) maps that locator to the BFF endpoint, so the shared content resolvers in `libs/chat-hooks/src/files/attachment-canvas.ts` fetch it, with no project-specific fetch.
+A context file stored in the project (the view page's files, and the edit page's files with `isStored`) SHALL be opened as an attachment whose `url` is its locator, `{projectId}/files/context/{fileName}` with every segment percent-encoded (`toProjectContextFileUrl` in `apps/chat/src/utils/dial-file.ts`). The locator has the shape of the id DIAL Core gives the same file, so a `#` in a name is `%23` and is never read as a fragment. The app's `resolveDialUrl` (the same function that resolves a `files/` id for the conversation canvas) maps that locator to the BFF endpoint through `resolveProjectFileDownloadUrl`, so the shared content resolvers in `libs/chat-hooks/src/files/attachment-canvas.ts` fetch it, with no project-specific fetch.
+
+`resolveProjectFileDownloadUrl` SHALL decode every segment of the locator before encoding it for the route, and SHALL take the project id from before the first `/files/` segment (see the `project-view-ui` capability). That covers a DIAL Core percent-encoded context file id in a message attachment as well as the app's own locator. A context file is always one segment directly under `context/`. A locator with a deeper path under `context/` resolves to nothing.
 
 **Endpoint (existing, reused unchanged).** `GET /api/v1/projects/{id}/files/{fileName}` (`downloadProjectFile` in `apps/chat-api/src/projects/projects.controller.ts`), authenticated with the session cookie. `id` is the URL-encoded project id and `fileName` a name directly under the project's `context/` folder.
 
@@ -112,6 +114,16 @@ Errors: `400` invalid id or file name, `401` not authenticated, `403` the `proje
 
 - **WHEN** the locator `projects/bucket-1/support/files/context/Q4 tickets.csv` is resolved
 - **THEN** it maps to `/api/v1/projects/projects%2Fbucket-1%2Fsupport/files/Q4%20tickets.csv`, and a locator with no file name, a name containing `/`, or no `projects/` prefix resolves to nothing
+
+#### Scenario: A name with `#` keeps its `#`
+
+- **WHEN** the user opens the stored context file `Plan #2.md` of `projects/bucket-1/support`
+- **THEN** its locator is `projects/bucket-1/support/files/context/Plan%20%232.md`, and the canvas requests `/api/v1/projects/projects%2Fbucket-1%2Fsupport/files/Plan%20%232.md`
+
+#### Scenario: A Core-encoded context file id
+
+- **WHEN** the id `projects/bucket-1/Q4%20launch/files/context/Q4%20tickets.csv` is resolved
+- **THEN** it maps to `/api/v1/projects/projects%2Fbucket-1%2FQ4%20launch/files/Q4%20tickets.csv`
 
 ### Requirement: Preview keys are project-scoped and a preview never dirties the form
 

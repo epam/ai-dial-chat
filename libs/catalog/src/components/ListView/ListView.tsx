@@ -29,6 +29,7 @@ import { ListViewProps } from '../../models/list-props';
 import { CatalogSelectionMode } from '../../types/selection-mode';
 import { mergeGridSelection } from '../../utils/list-selection';
 import { CATALOG_COLUMNS } from './columns';
+import styles from './ListView.module.scss';
 
 /** Height of every row, in pixels. */
 const ROW_HEIGHT = 60;
@@ -99,7 +100,6 @@ export const ListView: FC<ListViewProps> = ({
   const cssVars = {
     '--cat-card-star-filled': colors?.starFilled,
     '--cat-list-folder-icon': colors?.folderIcon,
-    '--cat-list-selected-check': colors?.selectedRowCheckIcon,
     '--cat-list-name-text': colors?.nameText,
     '--cat-list-version-text': colors?.versionText,
   } as CSSProperties;
@@ -237,7 +237,11 @@ export const ListView: FC<ListViewProps> = ({
   return (
     <div
       style={cssVars}
-      className={mergeClasses('size-full', CATALOG_CLASS.listView)}
+      className={mergeClasses(
+        'size-full',
+        !isMultiSelect && styles.singleSelect,
+        CATALOG_CLASS.listView,
+      )}
     >
       {/* The kit's "Chat table": borderless 12px card with the MD shadow, inset row dividers. */}
       <Grid<CatalogItem>

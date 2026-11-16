@@ -5,6 +5,9 @@ import {
   getFileSelectionKind,
   isDialFileId,
   isDialFolderId,
+  isDialProjectFileId,
+  isDialStoredFileId,
+  parseDialProjectFileId,
   resolveDialFileBucketAndPath,
   resolveDialFolderPath,
   resolveRelativeDialFilePath,
@@ -30,6 +33,73 @@ describe('isDialFolderId', () => {
     expect(isDialFolderId('files/bucket/report.pdf')).toBe(false);
     expect(isDialFolderId('https://external.com/docs/')).toBe(false);
   });
+});
+
+describe('isDialProjectFileId', () => {
+  it.each([
+    'projects/b/p/files/artifacts/a.csv',
+    'projects/b/p/files/context/a.csv#page=2',
+    'projects/b/Q4%20launch/files/artifacts/run-1/data.csv',
+  ])('accepts the project file id %s', (url) => {
+    expect(isDialProjectFileId(url)).toBe(true);
+  });
+
+  it.each([
+    'projects/b/p/files/artifacts/',
+    'projects/b/p',
+    'projects/b/files/artifacts/a.csv',
+    'projects//files/artifacts/a.csv',
+    'files/b/a.csv',
+    'conversations/b/x',
+    'projects/b/p/files/artifacts/run-1//a.csv',
+    'projects/b/p/files/artifacts/%E0%A4%A.csv',
+  ])('rejects %s', (url) => {
+    expect(isDialProjectFileId(url)).toBe(false);
+  });
+});
+
+describe('parseDialProjectFileId', () => {
+  it('decodes the project id and every file path segment', () => {
+    expect(
+      parseDialProjectFileId(
+        'projects/b/Q4%20launch/files/artifacts/run-1/report%20%231.md#page=2',
+      ),
+    ).toEqual({
+      projectId: 'projects/b/Q4 launch',
+      filePath: ['artifacts', 'run-1', 'report #1.md'],
+    });
+  });
+
+  it('ends the project id at the first files segment', () => {
+    expect(
+      parseDialProjectFileId('projects/b/p/files/artifacts/files/x.csv'),
+    ).toEqual({
+      projectId: 'projects/b/p',
+      filePath: ['artifacts', 'files', 'x.csv'],
+    });
+  });
+
+  it('returns undefined for a folder', () => {
+    expect(
+      parseDialProjectFileId('projects/b/p/files/artifacts/'),
+    ).toBeUndefined();
+  });
+});
+
+describe('isDialStoredFileId', () => {
+  it.each(['files/b/a.csv', 'projects/b/p/files/artifacts/a.csv'])(
+    'accepts %s',
+    (url) => {
+      expect(isDialStoredFileId(url)).toBe(true);
+    },
+  );
+
+  it.each(['https://example.com/a.csv', 'projects/b/p'])(
+    'rejects %s',
+    (url) => {
+      expect(isDialStoredFileId(url)).toBe(false);
+    },
+  );
 });
 
 describe('resolveDialFileBucketAndPath', () => {

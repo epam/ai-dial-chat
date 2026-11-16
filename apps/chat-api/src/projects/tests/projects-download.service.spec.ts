@@ -126,6 +126,45 @@ describe('ProjectsDownloadService', () => {
     });
   });
 
+  it('streams a nested artifact named after its last path segment', async () => {
+    const { service, client } = makeService(okResponse());
+
+    const download = await service.downloadArtifact(
+      project,
+      'run-1/data.csv',
+      'token',
+      USER_BUCKET,
+    );
+
+    expect(client.downloadProjectFile).toHaveBeenCalledWith(
+      USER_BUCKET,
+      'marketing/Q4%20launch',
+      'artifacts/run-1/data.csv',
+      expect.objectContaining({ parseAs: 'stream' }),
+    );
+    expect(download.headers['content-disposition']).toBe(
+      'attachment; filename="data.csv"; filename*=UTF-8\'\'data.csv',
+    );
+  });
+
+  it('encodes each segment of an artifact name an agent wrote with a colon', async () => {
+    const { service, client } = makeService(okResponse());
+
+    await service.downloadArtifact(
+      project,
+      'run-1/summary: final.md',
+      'token',
+      USER_BUCKET,
+    );
+
+    expect(client.downloadProjectFile).toHaveBeenCalledWith(
+      USER_BUCKET,
+      'marketing/Q4%20launch',
+      'artifacts/run-1/summary%3A%20final.md',
+      expect.objectContaining({ parseAs: 'stream' }),
+    );
+  });
+
   it('reports a missing artifact as not found', async () => {
     const { service } = makeService({
       error: { message: 'missing' },

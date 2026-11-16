@@ -636,6 +636,9 @@ export const Catalog: FC<CatalogProps> = ({
       noFolderLabel: titles?.noFolderLabel,
       credentialsBadgeLoggedOutLabel:
         detailsTexts?.credentialsBadgeLoggedOutLabel,
+      /* The card stars read the same labels as the details panel's star. */
+      addToFavoritesAriaLabel: detailsTexts?.addToFavoritesAriaLabel,
+      removeFromFavoritesAriaLabel: detailsTexts?.removeFromFavoritesAriaLabel,
     }),
     [
       emptyTitle,
@@ -643,6 +646,8 @@ export const Catalog: FC<CatalogProps> = ({
       featuredLabel,
       titles?.noFolderLabel,
       detailsTexts?.credentialsBadgeLoggedOutLabel,
+      detailsTexts?.addToFavoritesAriaLabel,
+      detailsTexts?.removeFromFavoritesAriaLabel,
     ],
   );
 
@@ -784,6 +789,10 @@ export const Catalog: FC<CatalogProps> = ({
               selectedItemId={selectedItemId}
               credentialsBadgeLoggedOutLabel={
                 detailsTexts?.credentialsBadgeLoggedOutLabel
+              }
+              addToFavoritesAriaLabel={detailsTexts?.addToFavoritesAriaLabel}
+              removeFromFavoritesAriaLabel={
+                detailsTexts?.removeFromFavoritesAriaLabel
               }
               isPaginationHidden={isFavoritesPaginationHidden}
             />

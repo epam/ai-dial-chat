@@ -2116,7 +2116,7 @@ const ChatPage = ({
 
 `ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path, content? })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`. A sixth, optional `saveConversation(path, conversation)` saves a conversation at the bucket-stripped `path` and resolves with the saved copy; the hook uses it only for the recovery save described below.
 
-**Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event. Once that watch is open, the hook re-reads the conversation once, so a generation that finished just before the subscription settles without waiting for the watch timeout.
+**Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event. Once that watch is open, the hook re-reads the conversation once, so a generation that finished just before the subscription settles without waiting for the watch timeout. While the conversation holds a live `foregroundGeneration` marker, the hook also re-reads it when the marker expires (a Stop shortens that expiry), instead of waiting for the watch timeout.
 
 `startStream(conversationId, userContent, messageIndex, model, customContent?, generationId?, mode?, options?)` takes an optional `StartStreamOptions` as its last argument. With `{ resumeOnConflict: true }`, a `GenerationConflictError` means "this turn is already being generated": typically the page was reloaded after a new conversation's first message, before the backend saved that generation's start state. The hook then joins the running generation instead of showing `generationConflictMessage`:
 
@@ -2572,11 +2572,11 @@ const AttachmentTile = ({ attachment }: { attachment: DisplayAttachment }) => {
 
 #### API
 
-**Parameters** (`UseAttachmentActionParams`): `{ resolveDownloadUrl: (fileId: string) => string | undefined }` — resolves a DIAL Core file id (`files/{bucket}/{path}`) to a downloadable URL; this is host-owned since it encodes the app's own file-download endpoint.
+**Parameters** (`UseAttachmentActionParams`): `{ resolveDownloadUrl: (fileId: string) => string | undefined }` — resolves a DIAL Core file id (`files/{bucket}/{path}`) or project file id (`projects/{bucket}/{path}/files/{filePath}`) to a downloadable URL; this is host-owned since it encodes the app's own file-download endpoints. Returning `undefined` means no download is offered for that id.
 
 **Returns** (`UseAttachmentActionResult`): `{ handleAttachmentClick: (attachment: DisplayAttachment) => void }`.
 
-Also exports `isDialFileId`, `isDownloadableAttachment`, and `downloadAttachment` (the standalone functions the hook is built on) for callers that need the download decision outside the click handler. A DIAL folder attachment (`url` ending with `/`) is not downloadable: `isDownloadableAttachment` returns `false` and `downloadAttachment` does nothing for it.
+Also exports `isDialFileId`, `isDownloadableAttachment`, and `downloadAttachment` (the standalone functions the hook is built on) for callers that need the download decision outside the click handler. A DIAL folder attachment (`url` ending with `/`) is not downloadable: `isDownloadableAttachment` returns `false` and `downloadAttachment` does nothing for it. A project file attachment (`isDialProjectFileId`) is downloadable: `downloadAttachment` passes its id to `resolveDownloadUrl` and returns `false` when the host resolves it to `undefined`.
 
 ### usePromptsState
 
@@ -3722,6 +3722,21 @@ Resolves the browser's current IANA timezone (`Intl.DateTimeFormat().resolvedOpt
 import { getBrowserTimezone } from '@epam/ai-dial-chat-hooks';
 
 getBrowserTimezone(); // e.g. 'Europe/Warsaw'
+```
+
+### getTimezoneOptions / findTimezoneOption
+
+`getTimezoneOptions({ now?, locale? })` returns every selectable IANA zone as a `ScheduledTaskTimezoneOption` (from `@epam/ai-dial-scheduled-tasks`), sorted by UTC offset and then by identifier. The list is `Intl.supportedValuesOf('timeZone')` plus `UTC` (engines may omit it), with legacy names such as `Asia/Calcutta` shown under their current name (`Asia/Kolkata`). Offsets and the current abbreviation are read at `now`; the abbreviation is the first letters-only short name `Intl` gives for `locale`, then English (`en-GB`, `en-US`) — so Berlin reads `CET` even in an `en-US` browser, whose own short name is `GMT+1` — and is absent when no locale has one. `searchTerms` also hold the January and July abbreviations and the long names (`Central European Time`, `Central European Summer Time`), so `CET`, `CEST` or `central europe` finds the zone in any month. `findTimezoneOption(options, id)` returns the row for an id, including a legacy or aliased one, or `undefined`. Available from the root and `./scheduled-tasks`.
+
+```ts
+import { getBrowserTimezone } from '@epam/ai-dial-chat-hooks/utils';
+import {
+  findTimezoneOption,
+  getTimezoneOptions,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+const options = getTimezoneOptions({ locale: 'en-GB' }); // [{ id: 'Pacific/Pago_Pago', offsetLabel: 'GMT-11:00', ... }, ...]
+const browserZone = findTimezoneOption(options, getBrowserTimezone())?.id;
 ```
 
 ### applyThemeColors / getOsPreferredTheme / ColorScheme
@@ -4967,20 +4982,21 @@ const historyRuns = mergeScheduledTaskRuns(acceptedRuns, runs);
 
 Turn scheduler DTOs into the props `@epam/ai-dial-scheduled-tasks` renders.
 The lib decides everything the response determines — the trigger kind and the
-timezone it is shown in, the duration units, whether a run started today, the
+zone its wall times are read in (the task's own `timezone`, never converted to the viewer's), the duration units, whether a run started today, the
 run status, and which delete or mutation error applies — and the host supplies
 every word through formatter objects. Available from the root and
 `./scheduled-tasks`.
 
-| Export                                                              | Returns                                                                                                                                                                                           |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output; `options.timeZone` defaults to the browser's, `options.locale` formats dates and weekdays (several weekdays are joined with `Intl.ListFormat`) |
-| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                                                                             |
-| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                                                                          |
-| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                                                                       |
-| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                                                                                  |
-| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                                                                      |
-| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                                                                       |
+| Export                                                              | Returns                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output, showing the task's stored wall time in its own zone; `labels.withTimezone` appends the zone when it differs from `options.browserTimezone` (default: the browser's), `options.locale` formats dates and weekdays (several weekdays are joined with `Intl.ListFormat`) |
+| `formatScheduledTaskTriggerTime(value, timezone, locale?)`          | A stored trigger datetime — zone-local, or an instant from an older client — as the wall time it shows in `timezone`                                                                                                                                                                                                     |
+| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                                                                                                                                                                                                    |
+| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                                                                                                                                                                                                 |
+| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                                                                                                                                                                                              |
+| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                                                                                                                                                                                                         |
+| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                                                                                                                                                                                             |
+| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                                                                                                                                                                                              |
 
 ```ts
 import {
@@ -5000,6 +5016,7 @@ const scheduleLabels: ScheduledTaskScheduleLabels = {
   monthlyAt: (day, time) => `Monthly on day ${day} at ${time}`,
   invalid: 'Invalid schedule',
   recurringFallback: 'Recurring',
+  withTimezone: (label, timezone) => `${label} (${timezone})`,
 };
 const durationLabels: ScheduledTaskRunDurationLabels = {
   hours: (count) => `${count}h`,
@@ -5030,7 +5047,7 @@ building the formatters from `t()`.
 
 ### mapFormValuesToCreateBody / mapFormValuesToUpdateBody / mapScheduledTaskDtoToFormValues
 
-Maps validated scheduled-task create/edit form values to their request bodies (converting local wall-clock time to the UTC cron fields DIAL Scheduler expects), and inverts that mapping back to editable form values — failing closed with an `UnsupportedTriggerReason` when a task's trigger cannot be represented losslessly by the editor.
+Maps validated scheduled-task create/edit form values to their request bodies, and inverts that mapping back to editable form values — failing closed with an `UnsupportedTriggerReason` when a task's trigger cannot be represented losslessly by the editor. The body carries the wall time the user entered (cron `hour`/`minute`/`day_of_week`/`day`, an offset-less one-time `date`, and `T00:00:00.000`/`T23:59:59.999` window boundaries) next to a top-level `timezone`; DIAL Scheduler evaluates all of it in that zone, so a daily 09:00 task keeps running at 09:00 local time across daylight-saving changes and the browser's own offset is never involved. The reverse mapping reads the stored fields as they are and takes `values.timezone` from the DTO (`UTC` when absent); a one-time `date` or window boundary written by an older client as an instant (`Z` or an offset) is shown in the task's zone. A zone `Intl` does not know fails closed.
 
 ```ts
 import {
@@ -5047,15 +5064,16 @@ if (result.ok) {
 
 ### getNextCronOccurrence
 
-Returns the next UTC time a cron trigger with a fixed `hour`/`minute` fires after `from` (default: now), honouring its `day_of_week` (APScheduler Monday=0, one weekday or a comma list such as `'0,2,4'`) or `day` (a number or `'last'`) constraint. Returns `undefined` when the fields are not plain values it can evaluate (`*`, ranges, steps). Available from the root and `./scheduled-tasks`.
+Returns the next local `YYYY-MM-DDTHH:mm` at which a cron trigger with a fixed `hour`/`minute` fires in `timezone` after `from` (default: now) — cron fields are wall time in the task's zone, so the answer is wall time too — honouring its `day_of_week` (APScheduler Monday=0, one weekday or a comma list such as `'0,2,4'`) or `day` (a number or `'last'`) constraint. Returns `undefined` when the fields are not plain values it can evaluate (`*`, ranges, steps) or the zone is unknown. Available from the root and `./scheduled-tasks`.
 
 ```ts
 import { getNextCronOccurrence } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 
 getNextCronOccurrence(
   { fields: { hour: '9', minute: '0', day_of_week: '0' } },
+  'Europe/Berlin',
   new Date('2026-10-07T08:00:00.000Z'),
-); // 2026-10-12T09:00:00.000Z — the next Monday
+); // '2026-10-12T09:00' — the next Monday
 ```
 
 ## Catalog Hooks
@@ -6055,19 +6073,32 @@ import { sanitizeFileName } from '@epam/ai-dial-chat-hooks';
 sanitizeFileName('report:final?.pdf'); // 'report_final_.pdf'
 ```
 
-### isDialFileId / isDialFolderId / resolveRelativeDialFilePath / resolveDialFileBucketAndPath
+### isDialFileId / isDialFolderId / isDialProjectFileId / parseDialProjectFileId / isDialStoredFileId / resolveRelativeDialFilePath / resolveDialFileBucketAndPath
 
 Recognizes a DIAL Core file id (`files/{bucket}/{path}`) or folder id (a file id ending with `/`) and resolves it to a bucket-relative path or its `{ bucket, path }` parts.
+
+`parseDialProjectFileId` splits a file inside a project, `projects/{bucket}/{path}/files/{filePath}` (as an agent in a project conversation returns it), into a `DialProjectFileIdParts` value: the decoded `projectId` and the decoded `filePath` segments. The id is percent-encoded per segment, as DIAL Core writes it, so a `#` in a name is `%23` and a raw `#...` is a fragment it ignores. It returns `undefined` for a folder, an empty segment or a malformed escape; `isDialProjectFileId` is the same test as a boolean. The host maps the parts to its own route.
+
+`isDialStoredFileId` is true for either kind of id — the ids a host resolves to its own download routes. The citation, reference and canvas resolvers use it to decide between the host resolver and opening the URL as-is.
 
 ```ts
 import {
   isDialFolderId,
+  isDialProjectFileId,
+  isDialStoredFileId,
+  parseDialProjectFileId,
   resolveDialFileBucketAndPath,
 } from '@epam/ai-dial-chat-hooks';
 
 resolveDialFileBucketAndPath('files/my-bucket/reports/q1.pdf');
 // { bucket: 'my-bucket', path: 'reports/q1.pdf' }
 isDialFolderId('files/my-bucket/reports/'); // true
+isDialProjectFileId('projects/my-bucket/q4/files/artifacts/report.pdf'); // true
+parseDialProjectFileId(
+  'projects/my-bucket/Q4%20launch/files/artifacts/run-1/a.csv',
+);
+// { projectId: 'projects/my-bucket/Q4 launch', filePath: ['artifacts', 'run-1', 'a.csv'] }
+isDialStoredFileId('files/my-bucket/reports/q1.pdf'); // true
 ```
 
 ### FileSelectionKind / getFileSelectionKind / resolveDialFolderPath
@@ -6087,7 +6118,7 @@ const folderPath = resolveDialFolderPath(folder, bucket);
 
 ### openAnnotationAttachment
 
-Default click behavior for a cited/referenced attachment: triggers a browser download for DIAL-hosted files via the injected `resolveDownloadUrl`, otherwise opens the URL in a new tab.
+Default click behavior for a cited/referenced attachment: triggers a browser download for DIAL-hosted files (`isDialStoredFileId`: a `files/` id or a project file id) via the injected `resolveDownloadUrl`, otherwise opens the URL in a new tab. `useAttachmentAction` uses the same function for a reference-only attachment.
 
 ```ts
 import { openAnnotationAttachment } from '@epam/ai-dial-chat-hooks';
@@ -6101,7 +6132,7 @@ openAnnotationAttachment(attachmentResource, (fileId) =>
 
 Reachable from the root entry and from `@epam/ai-dial-chat-hooks/file-manager-canvas` — the subpath that owns them, so `./file-manager` stays free of the `@epam/ai-dial-attachment-canvas`/`@epam/ai-dial-quotations` peers.
 
-A family of resolvers that turn a `DisplayAttachment` into the content payload `@epam/ai-dial-attachment-canvas` renders (image, plain text, markdown, code, HTML, PDF, OOXML/CSV, JSON, or a custom visualizer), plus the annotation-specific PDF resolvers and the shared LRU fetch cache they use. Every resolver takes the same host-injected `AttachmentCanvasUrlResolvers` — DIAL-file URL resolution is host-owned, since it encodes the app's own file-download endpoint. Before serving a cached blob/text body, the cache revalidates the resource's current ETag through `resolveDialFileMetadataUrl` and only reuses the cached body on an exact match, so a resource overwritten since it was cached is refetched instead of replayed.
+A family of resolvers that turn a `DisplayAttachment` into the content payload `@epam/ai-dial-attachment-canvas` renders (image, plain text, markdown, code, HTML, PDF, OOXML/CSV, JSON, or a custom visualizer), plus the annotation-specific PDF resolvers and the shared LRU fetch cache they use. Every resolver takes the same host-injected `AttachmentCanvasUrlResolvers` — DIAL-file URL resolution is host-owned, since it encodes the app's own file-download endpoint. The citation and reference PDF/OOXML resolvers pass a source that is a `files/` id or a project file id (`isDialStoredFileId`) to `resolveDialFileDownloadUrl`, so a host that serves project files resolves both kinds there. Before serving a cached blob/text body, the cache revalidates the resource's current ETag through `resolveDialFileMetadataUrl` and only reuses the cached body on an exact match, so a resource overwritten since it was cached is refetched instead of replayed.
 
 ```ts
 import {

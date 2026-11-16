@@ -64,6 +64,10 @@ export class ClientUiEnv {
 
   @IsOptional()
   @IsString()
+  ONBOARDING_HINTS?: string;
+
+  @IsOptional()
+  @IsString()
   FOOTER_HTML_MESSAGE?: string;
 
   @IsOptional()

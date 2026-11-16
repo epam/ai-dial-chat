@@ -33,8 +33,8 @@ import {
 } from '../../server-api/publish.api';
 import { EntityOperation } from '../../types/entity-notification';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
-import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { getPublishFolderLabel } from '../../utils/publish';
+import { useResolveCatalogIconUrl } from '../catalog/useResolveCatalogIconUrl';
 import type { useOperationNotification } from '../useOperationNotification';
 
 /* Built from the named wrappers, not `publishApiClient`, so tests that mock those wrappers keep covering this path. */
@@ -192,6 +192,7 @@ export const useCatalogPublishing = ({
    * the publish API does not know has nothing to resolve. A public copy is
    * never published again, so it has no dependencies to list either.
    */
+  const resolveCatalogIconUrl = useResolveCatalogIconUrl();
   const resolveDependencyIcon = useMemo(
     () =>
       createPublishDependencyIconResolver({
@@ -199,7 +200,7 @@ export const useCatalogPublishing = ({
         toolsets,
         resolveIconUrl: resolveCatalogIconUrl,
       }),
-    [deployments, toolsets],
+    [deployments, toolsets, resolveCatalogIconUrl],
   );
   const getPublishDependencies = useCallback(
     async (item: CatalogItem): Promise<PublishDependency[]> => {

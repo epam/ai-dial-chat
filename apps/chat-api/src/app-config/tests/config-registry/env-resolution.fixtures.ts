@@ -261,6 +261,11 @@ export const ENV_KEY_CASES: readonly EnvKeyCase[] = [
       '[{"title":"A","link":{"label":"Read","href":"https://a.example.com"}}]',
   },
   {
+    key: 'onboarding.hints',
+    variable: 'ONBOARDING_HINTS',
+    nonDefault: '[{"id":"new-chat","target":"new-chat","title":"Start here"}]',
+  },
+  {
     key: 'welcomeScreen.description',
     variable: 'WELCOME_SCREEN_DESCRIPTION',
     nonDefault: 'Welcome',

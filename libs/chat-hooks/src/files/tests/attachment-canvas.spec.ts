@@ -635,6 +635,25 @@ describe('referenceAttachmentToPdfCanvasContent', () => {
     ).toBeNull();
   });
 
+  it('resolves a project file reference through the host resolver', () => {
+    const resolveProjectFile = vi.fn(
+      (_fileId: string) => '/api/v1/projects/p/files/handbook.pdf',
+    );
+
+    const result = referenceAttachmentToPdfCanvasContent(
+      {
+        type: 'application/pdf',
+        url: 'projects/b/q4/files/context/handbook.pdf#page=2',
+      },
+      { ...resolvers, resolveDialFileDownloadUrl: resolveProjectFile },
+    );
+
+    expect(resolveProjectFile).toHaveBeenCalledWith(
+      'projects/b/q4/files/context/handbook.pdf',
+    );
+    expect(result?.url).toBe('/api/v1/projects/p/files/handbook.pdf');
+  });
+
   it('builds a PDF canvas payload with a page-scoped invisible highlight', () => {
     const result = referenceAttachmentToPdfCanvasContent(
       {

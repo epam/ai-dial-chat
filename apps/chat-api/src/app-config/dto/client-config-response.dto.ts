@@ -10,6 +10,7 @@ import { ApplicationVisualizerDto } from './application-visualizer.dto';
 import { CatalogCreationPermissionsDto } from './catalog-creation-permissions.dto';
 import { CelebrationDeliveryDto } from './celebration-delivery.dto';
 import { CustomVisualizerDto } from './custom-visualizer.dto';
+import { OnboardingHintDto } from './onboarding-hint.dto';
 
 /* ApplicationVisualizerDto is reachable only through an additionalProperties
  * $ref, which Swagger does not follow when collecting schemas, so the model
@@ -207,6 +208,13 @@ export class ClientConfigDto {
   })
   announcements!: AnnouncementItemDto[];
 
+  @ApiProperty({
+    description:
+      'Onboarding hints the client shows once, step by step, to a user who has not seen them, in configured order. Empty when ONBOARDING_HINTS is unset or contained no valid entries.',
+    type: [OnboardingHintDto],
+  })
+  onboardingHints!: OnboardingHintDto[];
+
   @ApiPropertyOptional({
     description:
       'Plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Null when WELCOME_SCREEN_DESCRIPTION is not configured or is blank.',
@@ -332,6 +340,14 @@ export class ClientConfigDto {
     example: false,
   })
   modelCatalogAvailable?: boolean;
+
+  @ApiPropertyOptional({
+    type: String,
+    description:
+      'Public base URL of the themes host (THEMES_PUBLIC_URL without a trailing slash). Clients recognise absolute deployment icon URLs under it and load them through GET /api/themes/icon instead, so one icon is requested under one URL. Missing when THEMES_PUBLIC_URL is not configured; the in-cluster THEMES_CONFIG_URL is never exposed.',
+    example: 'https://themes.example.com',
+  })
+  themesBaseUrl?: string;
 }
 
 export class ClientConfigMetadataDto {

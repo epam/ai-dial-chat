@@ -10,6 +10,7 @@ import {
   FILE_MANAGER_ALLOWED_TABS,
   admitFileManagerTabs,
 } from '../../env-admission/file-manager-tabs.admission';
+import { admitOnboardingHints } from '../../env-admission/onboarding-hints.admission';
 import { admitPublicationFilterSources } from '../../env-admission/publication-filter-sources.admission';
 import {
   admitApplicationVisualizers,
@@ -54,6 +55,17 @@ describe('admitAnnouncements', () => {
     const { log, messages } = recordingLog();
     expect(admitAnnouncements(raw, log)).toBeUndefined();
     expect(messages).toEqual([message]);
+  });
+});
+
+describe('admitOnboardingHints', () => {
+  it('shares the JSON-array admission and names its own variable', () => {
+    const { log, messages } = recordingLog();
+    expect(admitOnboardingHints('[{"id":"a"}]', log)).toEqual([{ id: 'a' }]);
+    expect(admitOnboardingHints('{}', log)).toBeUndefined();
+    expect(messages).toEqual([
+      'error: ONBOARDING_HINTS must be a JSON array; resolving to an empty list',
+    ]);
   });
 });
 

@@ -193,6 +193,7 @@ const CatalogView: FC<Props> = ({
   const isAdmin = user?.isAdmin ?? false;
   const { config } = useAppConfig();
   const dialCoreExternalUrl = config.dialCoreExternalUrl;
+  const themesBaseUrl = config.themesBaseUrl;
   const {
     items: deployments,
     selectedItemId,
@@ -312,6 +313,7 @@ const CatalogView: FC<Props> = ({
     toolsets,
     isAdmin,
     dialCoreExternalUrl,
+    themesBaseUrl,
     isToolsetsEnabled,
     isCustomAppsEnabled,
     isPromptsEnabled,
@@ -792,6 +794,7 @@ const CatalogView: FC<Props> = ({
           gridViewLabel: t(CatalogI18nKeys.GridViewLabel),
           listViewLabel: t(CatalogI18nKeys.ListViewLabel),
           viewToggleLabel: t(CatalogI18nKeys.ViewToggleLabel),
+          filterFromLabel: t(CatalogI18nKeys.BrowseSettingsFrom),
           filterMyAppsLabel: t(CatalogI18nKeys.BrowseSettingsMy),
           filterTopicsLabel: t(CatalogI18nKeys.BrowseSettingsTopics),
           browseSettings: {
@@ -837,6 +840,15 @@ const CatalogView: FC<Props> = ({
           )
         }
         detailsTexts={{
+          ariaLabel: t(CatalogI18nKeys.DetailsAriaLabel),
+          closeAriaLabel: t(ButtonsI18nKeys.Close),
+          shareLabel: t(ButtonsI18nKeys.Share),
+          publishLabel: t(ButtonsI18nKeys.Publish),
+          publishTitle: t(ButtonsI18nKeys.Publish),
+          addToFavoritesAriaLabel: t(FavoritesI18nKeys.AddToFavorites),
+          removeFromFavoritesAriaLabel: t(
+            FavoritesI18nKeys.RemoveFromFavorites,
+          ),
           tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
           tabContentLabel: t(CatalogI18nKeys.DetailsTabContent),
           tabLimitsLabel: t(CatalogI18nKeys.DetailsTabLimits),

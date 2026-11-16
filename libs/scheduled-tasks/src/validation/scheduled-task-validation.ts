@@ -9,6 +9,7 @@ import { DESCRIPTION_MAX_LENGTH } from '../constants/scheduled-task-create-form'
 import type { ScheduledTaskCreateFormValues } from '../models/scheduled-task-create-form-props';
 import { ScheduledTaskRepeat } from '../types/scheduled-task-schedule';
 import { TIME_OF_DAY_PATTERN } from '../utils/calendar-value';
+import { getZonedNow } from '../utils/zoned-wall-clock';
 
 /** Stable error codes that a host translates at its application boundary. */
 export enum ScheduledTaskValidationErrorCode {
@@ -26,6 +27,8 @@ export enum ScheduledTaskValidationErrorCode {
   /** A selected skill requires explicit capability support. */
   SkillUnsupported = 'skillUnsupported',
   DescriptionTooLong = 'descriptionTooLong',
+  /** The time zone is empty or not an identifier `Intl` knows. */
+  TimezoneInvalid = 'timezoneInvalid',
   RunAtInvalid = 'runAtInvalid',
   TimeInvalid = 'timeInvalid',
   MinuteInvalid = 'minuteInvalid',
@@ -120,16 +123,25 @@ const isValidDateOnly = (value: string): boolean => {
   );
 };
 
-const isValidLocalDateTime = (value: string): boolean => {
-  const timestamp = new Date(value).getTime();
-  return Number.isFinite(timestamp);
+const LOCAL_DATE_TIME_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/;
+
+const isValidLocalDateTime = (value: string): boolean =>
+  LOCAL_DATE_TIME_PATTERN.test(value) &&
+  Number.isFinite(Date.parse(`${value}Z`));
+
+/* An IANA id starts with a letter; engines also accept offset zones (`+02:00`), which DIAL Scheduler rejects. */
+const TIMEZONE_ID_PATTERN = /^[A-Za-z][A-Za-z0-9_+\-/]*$/;
+
+/** True when the identifier looks like an IANA id and `Intl` can format in it; an empty string, an unknown name or an offset such as `+02:00` is not a zone. */
+const isValidTimezone = (timezone: string | undefined): timezone is string => {
+  if (!timezone || !TIMEZONE_ID_PATTERN.test(timezone)) return false;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: timezone });
+    return true;
+  } catch {
+    return false;
+  }
 };
-
-const padDatePart = (value: number): string => String(value).padStart(2, '0');
-
-/** Formats a `Date` as its local `YYYY-MM-DD` date-only string, matching the form's `startDate`/`endDate` shape. */
-const toLocalDateOnly = (date: Date): string =>
-  `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
 
 /** A date-only boundary is past when its day is earlier than today; any time on today's day is allowed. */
 const isWindowBoundaryInPast = (value: string, today: string): boolean =>
@@ -182,13 +194,26 @@ export const validateScheduledTaskFormValues = (
   }
   setTextFieldError(ScheduledTaskTextField.Description, values.description);
 
+  /*
+   * Every wall-clock value below is read in the task's zone, so "now" and
+   * "today" are the zone's, not the browser's. An invalid zone is reported on
+   * its own field and the clock falls back to UTC so the other checks still run.
+   */
+  const isTimezoneValid = isValidTimezone(values.timezone);
+  if (!isTimezoneValid) {
+    errors.timezone = ScheduledTaskValidationErrorCode.TimezoneInvalid;
+  }
+  const clockZone = isTimezoneValid ? values.timezone : 'UTC';
+
   if (values.repeat === ScheduledTaskRepeat.OneTime) {
-    const runAtTime = values.runAt ? new Date(values.runAt).getTime() : NaN;
+    const earliestRunAt = getZonedNow(
+      new Date(now.getTime() + minimumLeadMs),
+      clockZone,
+    ).dateTimeWithSeconds;
+    const runAt = values.runAt ?? '';
     if (
-      !values.runAt ||
-      !isValidLocalDateTime(values.runAt) ||
-      !Number.isFinite(runAtTime) ||
-      runAtTime < now.getTime() + minimumLeadMs
+      !isValidLocalDateTime(runAt) ||
+      `${runAt.slice(0, 16)}:${runAt.slice(17, 19) || '00'}` < earliestRunAt
     ) {
       errors.runAt = ScheduledTaskValidationErrorCode.RunAtInvalid;
     }
@@ -249,7 +274,7 @@ export const validateScheduledTaskFormValues = (
    * user choice, so it is exempt — only a boundary changed into the past is
    * rejected.
    */
-  const today = toLocalDateOnly(now);
+  const today = getZonedNow(now, clockZone).date;
   if (
     values.startDate &&
     values.startDate !== originalStartDate &&

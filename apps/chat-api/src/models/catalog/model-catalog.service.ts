@@ -13,6 +13,10 @@ import {
 import { getApiKeyAuthHeaders } from '../../common/utils/auth-header';
 import { EnvironmentVariables } from '../../config/environment.config';
 import { mapCatalogProperties } from '../../deployments/utils/deployment-mapper.util';
+import {
+  hasHiddenEntityTag,
+  readHiddenEntityTags,
+} from '../../deployments/utils/hidden-entity-tags.util';
 import { DialClientService } from '../../dial/dial-client.service';
 import {
   MODEL_CATALOG_ENTRY_FIELDS,
@@ -56,7 +60,8 @@ const toCatalogEntry = (
 
 /**
  * Lists the DIAL Core models visible to the server-side
- * `MODEL_CATALOG_API_KEY`, for display to any signed-in user. The service owns
+ * `MODEL_CATALOG_API_KEY`, for display to any signed-in user. Models tagged
+ * with `HIDDEN_ENTITY_TAGS` are left out, as in the Chat Catalog. The service owns
  * its one cache entry instead of using the shared `CACHE_MANAGER`, whose
  * 100-entry LRU would let per-user entries evict it before the TTL. Concurrent
  * cache misses share one Core request.
@@ -66,11 +71,14 @@ export class ModelCatalogService {
   private readonly logger = new Logger(ModelCatalogService.name);
   private cached: CatalogCacheEntry | null = null;
   private inFlight: Promise<ModelCatalogListResponseDto> | null = null;
+  private readonly hiddenTags: ReadonlySet<string>;
 
   constructor(
     private readonly dialClient: DialClientService,
     private readonly configService: ConfigService<EnvironmentVariables>,
-  ) {}
+  ) {
+    this.hiddenTags = readHiddenEntityTags(configService);
+  }
 
   async listCatalog(): Promise<ModelCatalogListResponseDto> {
     const apiKey = resolveModelCatalogApiKey(this.configService);
@@ -167,6 +175,16 @@ export class ModelCatalogService {
         `Dropped ${models.length - entries.length} model catalog entries without a string id`,
       );
     }
-    return { data: entries.map(toCatalogEntry) };
+    /* Hidden models are dropped on the raw Core record, before projection and
+     * caching, so the shared entry and the detail route never hold them and
+     * the rule does not depend on which fields the projection keeps. */
+    return {
+      data: entries
+        .filter(
+          (model) =>
+            !hasHiddenEntityTag(model.description_keywords, this.hiddenTags),
+        )
+        .map(toCatalogEntry),
+    };
   }
 }

@@ -15,7 +15,15 @@ import {
   EditorThemes,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import { memo, useCallback, useEffect, useId, useState, type FC } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import DeploymentSelectorFieldTrigger from '../../components/DeploymentSelector/DeploymentSelectorFieldTrigger';
@@ -31,6 +39,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useScheduledTaskFormLabels } from '../../hooks/scheduled-tasks/useScheduledTaskFormLabels';
 import { useScheduledTaskSkillSupport } from '../../hooks/scheduled-tasks/useScheduledTaskSkillSupport';
 import { useScheduledTaskSubmit } from '../../hooks/scheduled-tasks/useScheduledTaskSubmit';
+import { useScheduledTaskTimezone } from '../../hooks/scheduled-tasks/useScheduledTaskTimezone';
 import { useBuilderLeaveGuard } from '../../hooks/unsaved-changes/useBuilderLeaveGuard';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { createScheduledTask } from '../../server-api/scheduled-tasks.api';
@@ -63,9 +72,17 @@ const ScheduledTaskCreatePage: FC = () => {
   const markdownEditorTheme: EditorThemes =
     currentTheme === ThemeId.Dark ? EditorThemes.dark : EditorThemes.light;
 
-  const [values, setValues] = useState<ScheduledTaskCreateFormValues>(
-    SCHEDULED_TASK_CREATE_DEFAULT_VALUES,
+  const { browserTimezone, timezone } = useScheduledTaskTimezone();
+  /* A new task starts in the viewer's own zone; the guard below compares against the same start. */
+  const startValues = useMemo<ScheduledTaskCreateFormValues>(
+    () => ({
+      ...SCHEDULED_TASK_CREATE_DEFAULT_VALUES,
+      timezone: browserTimezone,
+    }),
+    [browserTimezone],
   );
+  const [values, setValues] =
+    useState<ScheduledTaskCreateFormValues>(startValues);
   const [errors, setErrors] = useState<ScheduledTaskCreateFormErrors>({});
   const isSkillsSupported = useScheduledTaskSkillSupport(values?.modelId);
   /* A capability change invalidates a prior server rejection. Local validation
@@ -89,10 +106,7 @@ const ScheduledTaskCreatePage: FC = () => {
   /* The page owns the unsaved-changes guard, so the form gets no
    * `initialValues` and shows no dialog of its own. */
   const { allowNextNavigation } = useBuilderLeaveGuard({
-    isDirty: hasScheduledTaskFormChanges(
-      values,
-      SCHEDULED_TASK_CREATE_DEFAULT_VALUES,
-    ),
+    isDirty: hasScheduledTaskFormChanges(values, startValues),
   });
 
   const labels = useScheduledTaskFormLabels('create');
@@ -195,6 +209,7 @@ const ScheduledTaskCreatePage: FC = () => {
       onRefineDescription={onRefineDescription}
       onRefineInstructions={onRefineInstructions}
       labels={labels}
+      timezone={timezone}
       values={values}
       errors={effectiveErrors}
       skillSelector={

@@ -296,6 +296,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     }),
   },
   {
+    key: 'onboarding.hints',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: [],
+    critical: false,
+    description:
+      'Onboarding hints shown once, step by step, to a user who has not seen them. JSON array of { id, target, title, description? }; target is one of the anchors listed in docs/onboarding-anchors.md. Entries with an invalid or duplicate id, an unknown target or a blank title are dropped with a warning. Empty (no tour) when ONBOARDING_HINTS is unset or malformed; boot never fails on bad config.',
+    owner: 'chat-team',
+    envVar: 'ONBOARDING_HINTS',
+  },
+  {
     key: 'welcomeScreen.description',
     type: 'config',
     valueType: 'string',

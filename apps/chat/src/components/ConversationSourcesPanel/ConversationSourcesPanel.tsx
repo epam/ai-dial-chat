@@ -9,7 +9,7 @@ import {
 } from '@epam/ai-dial-chat-hooks/attachments';
 import { useConversationSources } from '@epam/ai-dial-chat-hooks/conversation-sources';
 import {
-  isDialFileId,
+  isDialStoredFileId,
   isExternalSourcePreviewable,
   resolveExternalSourceContentType,
 } from '@epam/ai-dial-chat-hooks/file-manager';
@@ -55,7 +55,10 @@ import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachme
 import { useCloseSourcesSidebarOnSubjectChange } from '../../hooks/sources-sidebar/useCloseSourcesSidebarOnSubjectChange';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { StorageKey } from '../../types/storage-key';
-import { resolveDialFileDownloadUrl } from '../../utils/dial-file';
+import {
+  isAttachmentDownloadable,
+  resolveAttachmentDownloadUrl,
+} from '../../utils/dial-file';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import TaskDetailsSection from './TaskDetailsSection/TaskDetailsSection';
 import TaskHistorySection from './TaskHistorySection/TaskHistorySection';
@@ -71,7 +74,7 @@ const DOWNLOAD_ALL_STAGGER_MS = 150;
 /* Stable references so useConversationSources'/useAttachmentAction's memoization isn't defeated by a new object/function each render. */
 const attachmentDisplayResolvers: AttachmentDisplayResolvers = {
   resolvePreviewUrl: (dto) => resolveCatalogIconUrl(dto.url),
-  resolvePlayUrl: (dto) => dto.url && resolveDialFileDownloadUrl(dto.url),
+  resolvePlayUrl: (dto) => dto.url && resolveAttachmentDownloadUrl(dto.url),
 };
 
 /*
@@ -104,7 +107,7 @@ const ConversationSourcesPanelContainer: FC = () => {
     attachmentDisplayResolvers,
   );
   const { handleAttachmentClick: downloadAttachment } = useAttachmentAction({
-    resolveDownloadUrl: resolveDialFileDownloadUrl,
+    resolveDownloadUrl: resolveAttachmentDownloadUrl,
   });
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
@@ -166,7 +169,7 @@ const ConversationSourcesPanelContainer: FC = () => {
     async (source: QuotationSource) => {
       const { url, title, contentType } = source;
       if (
-        !isDialFileId(url) &&
+        !isDialStoredFileId(url) &&
         !isExternalSourcePreviewable(contentType, url)
       ) {
         window.open(url, '_blank', 'noopener,noreferrer');
@@ -193,7 +196,7 @@ const ConversationSourcesPanelContainer: FC = () => {
           return;
         }
         if (!shouldCommit()) return;
-        if (isDialFileId(pageReference.baseUrl)) {
+        if (isDialStoredFileId(pageReference.baseUrl)) {
           downloadAttachment({
             ...pageAttachment,
             referenceUrl: undefined,
@@ -228,7 +231,7 @@ const ConversationSourcesPanelContainer: FC = () => {
         return;
       }
       if (!shouldCommit()) return;
-      if (!isDialFileId(url)) {
+      if (!isDialStoredFileId(url)) {
         window.open(url, '_blank', 'noopener,noreferrer');
       } else {
         downloadAttachment(attachment);
@@ -238,14 +241,20 @@ const ConversationSourcesPanelContainer: FC = () => {
   );
 
   const downloadableAttachments = useMemo(
-    () => [...uploaded, ...generated].filter(isDownloadableAttachment),
+    () =>
+      [...uploaded, ...generated].filter(
+        (attachment) =>
+          isDownloadableAttachment(attachment) &&
+          isAttachmentDownloadable(attachment),
+      ),
     [uploaded, generated],
   );
 
   const handleDownloadAll = useCallback(() => {
     downloadableAttachments.forEach((attachment, index) => {
       setTimeout(
-        () => triggerAttachmentDownload(attachment, resolveDialFileDownloadUrl),
+        () =>
+          triggerAttachmentDownload(attachment, resolveAttachmentDownloadUrl),
         index * DOWNLOAD_ALL_STAGGER_MS,
       );
     });

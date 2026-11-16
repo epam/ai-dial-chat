@@ -2,6 +2,7 @@ import {
   CelebrationDeliveryMode,
   type CatalogCreationPermissionsDto,
   type CelebrationDeliveryDto,
+  type OnboardingHintDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
   type AnnouncementListItem,
@@ -66,6 +67,8 @@ export interface AppConfigState {
     mcpAppTheme: 'light' | 'dark' | null;
     mcpAppUserAgent: string | null;
     mcpAppHostName: string | null;
+    /** Base URL of the themes service; absolute icon URLs under it load through the icon proxy. */
+    themesBaseUrl: string | null;
     fileManagerTabs: string[];
     overlayEnabled: boolean;
     overlayAllowedOrigins: string[];
@@ -75,6 +78,8 @@ export interface AppConfigState {
     announcementTitle: string | null;
     announcementDescription: string | null;
     announcements: AnnouncementListItem[];
+    /** Operator-authored first-visit hints, in configured order. */
+    onboardingHints: OnboardingHintDto[];
     welcomeScreenDescription: string | null;
     footerHtmlMessage: string;
     customVisualizers: CustomVisualizer[];
@@ -134,6 +139,7 @@ const INITIAL_STATE: ProviderState = {
     mcpAppTheme: null,
     mcpAppUserAgent: null,
     mcpAppHostName: null,
+    themesBaseUrl: null,
     fileManagerTabs: DEFAULT_FILE_MANAGER_TABS,
     overlayEnabled: false,
     overlayAllowedOrigins: [],
@@ -143,6 +149,7 @@ const INITIAL_STATE: ProviderState = {
     announcementTitle: null,
     announcementDescription: null,
     announcements: [],
+    onboardingHints: [],
     welcomeScreenDescription: null,
     footerHtmlMessage: '',
     customVisualizers: [],
@@ -206,6 +213,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             mcpAppTheme: response.config?.mcpAppTheme ?? null,
             mcpAppUserAgent: response.config?.mcpAppUserAgent ?? null,
             mcpAppHostName: response.config?.mcpAppHostName ?? null,
+            themesBaseUrl: response.config?.themesBaseUrl ?? null,
             fileManagerTabs:
               response.config?.fileManagerTabs ?? DEFAULT_FILE_MANAGER_TABS,
             overlayEnabled: response.config?.overlayEnabled ?? false,
@@ -221,6 +229,9 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
                   ...item,
                   severity: mapAnnouncementSeverity(item.severity),
                 }))
+              : [],
+            onboardingHints: Array.isArray(response.config?.onboardingHints)
+              ? response.config.onboardingHints
               : [],
             welcomeScreenDescription:
               response.config?.welcomeScreenDescription ?? null,

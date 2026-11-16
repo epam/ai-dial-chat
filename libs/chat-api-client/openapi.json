@@ -1830,7 +1830,7 @@
     },
     "/api/v1/models": {
       "get": {
-        "description": "Returns the list of DIAL Core deployments visible to the authenticated session user. Proxies GET /openai/models using the caller's session access token. Results are cached server-side for 30 seconds per user.",
+        "description": "Returns the list of DIAL Core deployments visible to the authenticated session user. Proxies GET /openai/models using the caller's session access token. Models whose description_keywords contain a HIDDEN_ENTITY_TAGS tag are omitted, as in the Chat Catalog. Hiding is not access control. Results are cached server-side for 30 seconds per user.",
         "operationId": "listModels",
         "parameters": [],
         "responses": {
@@ -1884,7 +1884,7 @@
     },
     "/api/v1/models/{modelName}": {
       "get": {
-        "description": "Returns a single DIAL Core deployment by name for the authenticated session user. Proxies GET /openai/models/{model_name} using the caller's session access token. Results are cached server-side for 60 seconds per user per model.",
+        "description": "Returns a single DIAL Core deployment by name for the authenticated session user. Proxies GET /openai/models/{model_name} using the caller's session access token. A model whose description_keywords contain a HIDDEN_ENTITY_TAGS tag answers 404, as if it did not exist. Results are cached server-side for 60 seconds per user per model.",
         "operationId": "getModel",
         "parameters": [
           {
@@ -1919,7 +1919,7 @@
             "description": "Caller lacks permission to access this model"
           },
           "404": {
-            "description": "Model not found"
+            "description": "Model not found, or hidden through HIDDEN_ENTITY_TAGS"
           },
           "409": {
             "description": "DIAL Core reported a conflict with the current resource state"
@@ -1949,7 +1949,7 @@
     },
     "/api/v1/model-catalog": {
       "get": {
-        "description": "Returns the DIAL Core models visible to the server-side MODEL_CATALOG_API_KEY, including models the caller's own roles cannot access. Display data only: GET /api/v1/models still decides what the user can use, and Core invocation settings (defaults, responses_defaults, max_retry_attempts, tokenizer_model) are omitted. One server-side cache entry, shared by all users, is kept for 5 minutes.",
+        "description": "Returns the DIAL Core models visible to the server-side MODEL_CATALOG_API_KEY, including models the caller's own roles cannot access. Display data only: GET /api/v1/models still decides what the user can use, and Core invocation settings (defaults, responses_defaults, max_retry_attempts, tokenizer_model) are omitted. Models whose description_keywords contain a HIDDEN_ENTITY_TAGS tag are omitted, as in the Chat Catalog. One server-side cache entry, shared by all users, is kept for 5 minutes.",
         "operationId": "listModelCatalog",
         "parameters": [],
         "responses": {
@@ -1997,7 +1997,7 @@
     },
     "/api/v1/model-catalog/{modelName}": {
       "get": {
-        "description": "Returns one model from the cached model catalog, without a separate DIAL Core call. A model hidden from the catalog key answers 404, never 403, so its existence is not revealed.",
+        "description": "Returns one model from the cached model catalog, without a separate DIAL Core call. A model hidden from the catalog key answers 404, never 403, so its existence is not revealed. A model omitted through HIDDEN_ENTITY_TAGS also answers 404.",
         "operationId": "getModelCatalogEntry",
         "parameters": [
           {
@@ -2029,7 +2029,7 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "404": {
-            "description": "The model catalog is not configured, or the model is not in the catalog"
+            "description": "The model catalog is not configured, or the model is not in the catalog or is hidden through HIDDEN_ENTITY_TAGS"
           },
           "409": {
             "description": "DIAL Core reported a conflict with the current resource state"
@@ -11315,7 +11315,7 @@
     },
     "/api/v1/projects/{id}/artifacts/{fileName}": {
       "get": {
-        "description": "Streams one file directly under the project `artifacts/` folder as an attachment with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.",
+        "description": "Streams one file under the project `artifacts/` folder, a direct child or a nested path, as an attachment named after its last path segment, with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.",
         "operationId": "downloadProjectArtifact",
         "parameters": [
           {
@@ -11332,9 +11332,9 @@
             "name": "fileName",
             "required": true,
             "in": "path",
-            "description": "Name of a file directly under the project `artifacts/` folder.",
+            "description": "Path relative to the project `artifacts/` folder, URL-encoded into one path segment.",
             "schema": {
-              "example": "report.pdf",
+              "example": "run-1%2Fdata.csv",
               "type": "string"
             }
           }
@@ -12921,6 +12921,115 @@
         },
         "required": ["title", "description", "link", "severity"]
       },
+      "OnboardingHintTarget": {
+        "type": "string",
+        "enum": [
+          "new-chat",
+          "navigation",
+          "projects",
+          "scheduled-tasks",
+          "catalog",
+          "file-manager",
+          "conversation-input",
+          "add-attachment",
+          "send-message",
+          "model-selector",
+          "voice-input",
+          "conversation-starters",
+          "conversation-messages",
+          "sources-panel-toggle",
+          "sidebar-toggle",
+          "chats",
+          "chats-search",
+          "chats-filter",
+          "user-menu",
+          "usage",
+          "projects-create",
+          "projects-search",
+          "project-chats",
+          "project-details",
+          "scheduled-tasks-create",
+          "scheduled-tasks-search",
+          "settings-sections",
+          "catalog-create",
+          "catalog-search",
+          "catalog-tabs",
+          "catalog-view-mode",
+          "catalog-filter",
+          "catalog-sort",
+          "catalog-card",
+          "catalog-favorite",
+          "message-actions",
+          "catalog-details",
+          "catalog-details-use-in-chat",
+          "catalog-details-manage",
+          "catalog-details-credentials",
+          "catalog-details-share",
+          "catalog-details-publish",
+          "catalog-details-tabs",
+          "project-form-submit",
+          "project-form-context",
+          "project-view-edit",
+          "project-view-more-actions",
+          "project-view-pin",
+          "project-view-publish",
+          "project-context-search",
+          "projects-sort",
+          "scheduled-task-form-submit",
+          "scheduled-task-configuration",
+          "scheduled-task-repeat",
+          "scheduled-task-model",
+          "scheduled-task-start-now",
+          "scheduled-task-edit",
+          "scheduled-task-history",
+          "scheduled-task-active",
+          "scheduled-tasks-sort",
+          "settings-extensions",
+          "settings-extensions-log-in",
+          "settings-theme",
+          "settings-language",
+          "duplicate-shared-chat",
+          "sources-panel",
+          "sources-download-all",
+          "project-chat-back",
+          "tools-selector",
+          "editor-setup",
+          "active-chat",
+          "active-chat-actions"
+        ],
+        "description": "The UI element the hint points at. A closed list; the client resolves it and skips the hint when that element is not on screen."
+      },
+      "OnboardingHintDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable identifier of the hint. The client remembers which ids a user has seen, so changing an id shows that hint again. Letters, digits, \".\", \"_\" and \"-\", at most 64 characters; duplicates after the first are dropped server-side.",
+            "example": "new-chat"
+          },
+          "target": {
+            "description": "The UI element the hint points at. A closed list; the client resolves it and skips the hint when that element is not on screen.",
+            "example": "new-chat",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingHintTarget"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "Hint heading. Plain text; never interpreted as markup. Entries without one are dropped server-side.",
+            "example": "Start a new conversation"
+          },
+          "description": {
+            "type": "string",
+            "description": "Supporting copy under the heading. Plain text; never interpreted as markup. Null when unset or blank.",
+            "example": "Each chat keeps its own history and model.",
+            "nullable": true
+          }
+        },
+        "required": ["id", "target", "title", "description"]
+      },
       "CustomVisualizerDto": {
         "type": "object",
         "properties": {
@@ -13198,6 +13307,13 @@
               "$ref": "#/components/schemas/AnnouncementItemDto"
             }
           },
+          "onboardingHints": {
+            "description": "Onboarding hints the client shows once, step by step, to a user who has not seen them, in configured order. Empty when ONBOARDING_HINTS is unset or contained no valid entries.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnboardingHintDto"
+            }
+          },
           "welcomeScreenDescription": {
             "type": "string",
             "description": "Plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Null when WELCOME_SCREEN_DESCRIPTION is not configured or is blank.",
@@ -13298,6 +13414,11 @@
             "type": "boolean",
             "description": "Whether GET /api/v1/model-catalog is configured (MODEL_CATALOG_API_KEY is set). Missing means unavailable. Never carries the key.",
             "example": false
+          },
+          "themesBaseUrl": {
+            "type": "string",
+            "description": "Public base URL of the themes host (THEMES_PUBLIC_URL without a trailing slash). Clients recognise absolute deployment icon URLs under it and load them through GET /api/themes/icon instead, so one icon is requested under one URL. Missing when THEMES_PUBLIC_URL is not configured; the in-cluster THEMES_CONFIG_URL is never exposed.",
+            "example": "https://themes.example.com"
           }
         },
         "required": [
@@ -13310,6 +13431,7 @@
           "overlayAllowedOrigins",
           "enabledUiFeatures",
           "announcements",
+          "onboardingHints",
           "footerHtmlMessage",
           "customVisualizers",
           "applicationVisualizers",
@@ -20252,6 +20374,11 @@
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
           },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Berlin",
+            "description": "IANA time zone the trigger is evaluated in. Always present on responses (UTC for tasks saved without one); declared optional so existing clients and fixtures stay valid."
+          },
           "nextRunTime": {
             "type": "string",
             "example": "2026-07-28T12:00:00.000Z"
@@ -20419,6 +20546,13 @@
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
           },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Berlin",
+            "default": "UTC",
+            "maxLength": 64,
+            "description": "IANA time zone the trigger is evaluated in. Cron fields and offset-less datetimes are local wall time in this zone. Omission means UTC; an update that omits it resets the zone to UTC."
+          },
           "model": {
             "type": "string",
             "example": "gpt-4.1-mini-2025-04-14"
@@ -20457,6 +20591,11 @@
           },
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Berlin",
+            "description": "IANA time zone the trigger is evaluated in. Always present on responses (UTC for tasks saved without one); declared optional so existing clients and fixtures stay valid."
           },
           "nextRunTime": {
             "type": "string",
@@ -20610,6 +20749,13 @@
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
           },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Berlin",
+            "default": "UTC",
+            "maxLength": 64,
+            "description": "IANA time zone the trigger is evaluated in. Cron fields and offset-less datetimes are local wall time in this zone. Omission means UTC; an update that omits it resets the zone to UTC."
+          },
           "model": {
             "type": "string",
             "example": "gpt-4.1-mini-2025-04-14"
@@ -20648,6 +20794,11 @@
           },
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Berlin",
+            "description": "IANA time zone the trigger is evaluated in. Always present on responses (UTC for tasks saved without one); declared optional so existing clients and fixtures stay valid."
           },
           "nextRunTime": {
             "type": "string",
