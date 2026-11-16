@@ -145,11 +145,13 @@
       "filtering": "Filtering",
       "cards": "Cards",
       "list": "List",
+      "from": "From",
       "my": "My",
       "topics": "Topics",
       "filterCount": "{{selected}} of {{total}}"
     },
     "details": {
+      "ariaLabel": "Item details",
       "tabTools": "Tools",
       "tabContent": "Details",
       "promptLoadError": "Couldn't load this prompt. Please try again.",
@@ -1440,6 +1442,18 @@
     "pillLabel_other": "+{{count}} announcements",
     "listAriaLabel": "Announcements",
     "opensInNewTab": "(opens in a new tab)"
+  },
+  "onboardingTour": {
+    "stepCounter": "Step {{current}} of {{total}}",
+    "next": "Next",
+    "back": "Back",
+    "done": "Done",
+    "skip": "Skip tour",
+    "close": "Close tour",
+    "anchorsSummary": "{{found}} of {{total}} anchors on this page",
+    "anchorsMissing": "Not on this page",
+    "anchorsNoneMissing": "Every anchor is on this page",
+    "anchorsClose": "Close anchor view"
   },
   "notification": {
     "requestId": {

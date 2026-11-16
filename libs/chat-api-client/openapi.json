@@ -12831,6 +12831,115 @@
         },
         "required": ["title", "description", "link", "severity"]
       },
+      "OnboardingHintTarget": {
+        "type": "string",
+        "enum": [
+          "new-chat",
+          "navigation",
+          "projects",
+          "scheduled-tasks",
+          "catalog",
+          "file-manager",
+          "conversation-input",
+          "add-attachment",
+          "send-message",
+          "model-selector",
+          "voice-input",
+          "conversation-starters",
+          "conversation-messages",
+          "sources-panel-toggle",
+          "sidebar-toggle",
+          "chats",
+          "chats-search",
+          "chats-filter",
+          "user-menu",
+          "usage",
+          "projects-create",
+          "projects-search",
+          "project-chats",
+          "project-details",
+          "scheduled-tasks-create",
+          "scheduled-tasks-search",
+          "settings-sections",
+          "catalog-create",
+          "catalog-search",
+          "catalog-tabs",
+          "catalog-view-mode",
+          "catalog-filter",
+          "catalog-sort",
+          "catalog-card",
+          "catalog-favorite",
+          "message-actions",
+          "catalog-details",
+          "catalog-details-use-in-chat",
+          "catalog-details-manage",
+          "catalog-details-credentials",
+          "catalog-details-share",
+          "catalog-details-publish",
+          "catalog-details-tabs",
+          "project-form-submit",
+          "project-form-context",
+          "project-view-edit",
+          "project-view-more-actions",
+          "project-view-pin",
+          "project-view-publish",
+          "project-context-search",
+          "projects-sort",
+          "scheduled-task-form-submit",
+          "scheduled-task-configuration",
+          "scheduled-task-repeat",
+          "scheduled-task-model",
+          "scheduled-task-start-now",
+          "scheduled-task-edit",
+          "scheduled-task-history",
+          "scheduled-task-active",
+          "scheduled-tasks-sort",
+          "settings-extensions",
+          "settings-extensions-log-in",
+          "settings-theme",
+          "settings-language",
+          "duplicate-shared-chat",
+          "sources-panel",
+          "sources-download-all",
+          "project-chat-back",
+          "tools-selector",
+          "editor-setup",
+          "active-chat",
+          "active-chat-actions"
+        ],
+        "description": "The UI element the hint points at. A closed list; the client resolves it and skips the hint when that element is not on screen."
+      },
+      "OnboardingHintDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable identifier of the hint. The client remembers which ids a user has seen, so changing an id shows that hint again. Letters, digits, \".\", \"_\" and \"-\", at most 64 characters; duplicates after the first are dropped server-side.",
+            "example": "new-chat"
+          },
+          "target": {
+            "description": "The UI element the hint points at. A closed list; the client resolves it and skips the hint when that element is not on screen.",
+            "example": "new-chat",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingHintTarget"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "Hint heading. Plain text; never interpreted as markup. Entries without one are dropped server-side.",
+            "example": "Start a new conversation"
+          },
+          "description": {
+            "type": "string",
+            "description": "Supporting copy under the heading. Plain text; never interpreted as markup. Null when unset or blank.",
+            "example": "Each chat keeps its own history and model.",
+            "nullable": true
+          }
+        },
+        "required": ["id", "target", "title", "description"]
+      },
       "CustomVisualizerDto": {
         "type": "object",
         "properties": {
@@ -13108,6 +13217,13 @@
               "$ref": "#/components/schemas/AnnouncementItemDto"
             }
           },
+          "onboardingHints": {
+            "description": "Onboarding hints the client shows once, step by step, to a user who has not seen them, in configured order. Empty when ONBOARDING_HINTS is unset or contained no valid entries.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnboardingHintDto"
+            }
+          },
           "welcomeScreenDescription": {
             "type": "string",
             "description": "Plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Null when WELCOME_SCREEN_DESCRIPTION is not configured or is blank.",
@@ -13225,6 +13341,7 @@
           "overlayAllowedOrigins",
           "enabledUiFeatures",
           "announcements",
+          "onboardingHints",
           "footerHtmlMessage",
           "customVisualizers",
           "applicationVisualizers",

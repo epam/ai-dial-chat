@@ -150,6 +150,21 @@ const KEY_EXPECTATIONS: Readonly<
     },
     [EnvCaseName.Empty]: { provider: undefined, effective: [] },
   },
+  'onboarding.hints': {
+    [EnvCaseName.Absent]: { provider: undefined, effective: [] },
+    [EnvCaseName.NonDefault]: {
+      provider: [{ id: 'new-chat', target: 'new-chat', title: 'Start here' }],
+      effective: [
+        {
+          id: 'new-chat',
+          target: 'new-chat',
+          title: 'Start here',
+          description: null,
+        },
+      ],
+    },
+    [EnvCaseName.Empty]: { provider: undefined, effective: [] },
+  },
   'welcomeScreen.description': {
     [EnvCaseName.Absent]: { provider: undefined, effective: null },
     [EnvCaseName.NonDefault]: { provider: 'Welcome', effective: 'Welcome' },

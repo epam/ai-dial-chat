@@ -11,6 +11,7 @@ import {
 } from '../env-admission/content-locales.admission';
 import { admitCustomVariables } from '../env-admission/custom-variables.admission';
 import { admitFileManagerTabs } from '../env-admission/file-manager-tabs.admission';
+import { admitOnboardingHints } from '../env-admission/onboarding-hints.admission';
 import { admitPublicationFilterSources } from '../env-admission/publication-filter-sources.admission';
 import {
   admitApplicationVisualizers,
@@ -126,6 +127,15 @@ export class EnvConfigProvider implements ConfigProvider, OnModuleInit {
     if (key === 'announcement.items') {
       return admitAnnouncements(
         this.configService.get('ANNOUNCEMENTS', { infer: true }),
+        this.admissionLog,
+      );
+    }
+
+    /* Same JSON-array contract as ANNOUNCEMENTS; entry validation lives in
+     * normalizeOnboardingHints. */
+    if (key === 'onboarding.hints') {
+      return admitOnboardingHints(
+        this.configService.get('ONBOARDING_HINTS', { infer: true }),
         this.admissionLog,
       );
     }

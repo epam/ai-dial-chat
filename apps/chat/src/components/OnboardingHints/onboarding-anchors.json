@@ -1,0 +1,434 @@
+[
+  {
+    "target": "navigation",
+    "page": "Any page with the sidebar open",
+    "element": "The navigation sidebar as a whole",
+    "lookup": "The on-screen `nav` landmark named like the navigation"
+  },
+  {
+    "target": "new-chat",
+    "page": "Any page",
+    "element": "The New chat control: a sidebar link on desktop, a header button on mobile",
+    "lookup": "The first on-screen button or link named \"New chat\" anywhere on the page"
+  },
+  {
+    "target": "sidebar-toggle",
+    "page": "Any page",
+    "element": "The sidebar collapse button on desktop, the navigation menu button in the mobile header",
+    "lookup": "A button named \"Sidebar\" inside the navigation landmark, else a button named \"Navigation menu\" inside `#main-content`"
+  },
+  {
+    "target": "projects",
+    "page": "Any page with the sidebar open",
+    "element": "The Projects link in the sidebar",
+    "lookup": "A button or link named \"Projects\" inside the navigation landmark"
+  },
+  {
+    "target": "scheduled-tasks",
+    "page": "Any page with the sidebar open",
+    "element": "The Scheduled tasks link in the sidebar",
+    "lookup": "A button or link named \"Scheduled tasks\" inside the navigation landmark"
+  },
+  {
+    "target": "catalog",
+    "page": "Any page with the sidebar open",
+    "element": "The Catalog link in the sidebar",
+    "lookup": "A button or link named \"Catalog\" inside the navigation landmark"
+  },
+  {
+    "target": "file-manager",
+    "page": "Any page with the sidebar open",
+    "element": "The File manager link in the sidebar",
+    "lookup": "A button or link named \"File manager\" inside the navigation landmark"
+  },
+  {
+    "target": "chats",
+    "page": "Any page with the sidebar expanded",
+    "element": "The sidebar's chats section with the conversation list",
+    "lookup": "The `section` named \"Chats and tasks\" inside the navigation landmark"
+  },
+  {
+    "target": "chats-search",
+    "page": "Any page with the sidebar expanded",
+    "element": "The chats section's search: its button, or the field once search is open",
+    "lookup": "A button named \"Search chats\" inside the chats section, else the `search` element there"
+  },
+  {
+    "target": "chats-filter",
+    "page": "Any page with the sidebar expanded",
+    "element": "The chats section's filter button",
+    "lookup": "A button named \"Filter chats\" inside the chats section"
+  },
+  {
+    "target": "user-menu",
+    "page": "Any page with the sidebar open",
+    "element": "The user menu at the bottom of the sidebar",
+    "lookup": "A button inside the navigation landmark whose name contains \"Signed in as\""
+  },
+  {
+    "target": "usage",
+    "page": "Any page with the sidebar open",
+    "element": "The Usage link at the bottom of the sidebar",
+    "lookup": "A link named \"Usage\" inside the navigation landmark"
+  },
+  {
+    "target": "conversation-input",
+    "page": "New chat, conversation and project view",
+    "element": "The message composer as a whole: the text field with its +, model and Send controls",
+    "lookup": "The smallest element holding both the first on-screen `textarea` inside `#main-content` and the button named \"Send message\"; the `textarea` alone when there is no such button"
+  },
+  {
+    "target": "add-attachment",
+    "page": "New chat, conversation and project view",
+    "element": "The composer's + button that adds attachments",
+    "lookup": "A button named \"Add\" in the region, section or form around the on-screen composer field; nothing on a page without a composer"
+  },
+  {
+    "target": "send-message",
+    "page": "New chat, conversation and project view",
+    "element": "The composer's send button",
+    "lookup": "A button named \"Send message\" around the on-screen composer field; replaced by Stop while a reply streams"
+  },
+  {
+    "target": "model-selector",
+    "page": "New chat, conversation and project view",
+    "element": "The composer's model selector",
+    "lookup": "A button inside `#main-content` named \"Select model\", or \"Select model: \" followed by the chosen model"
+  },
+  {
+    "target": "voice-input",
+    "page": "New chat, conversation and project view",
+    "element": "The composer's dictation button, when voice input is available",
+    "lookup": "A button named \"Dictate\" around the on-screen composer field"
+  },
+  {
+    "target": "conversation-starters",
+    "page": "New chat",
+    "element": "The starter prompts, when the selected model has any",
+    "lookup": "The `role=\"list\"` named \"Conversation starters\" inside `#main-content`"
+  },
+  {
+    "target": "conversation-messages",
+    "page": "Conversation",
+    "element": "The conversation's message log",
+    "lookup": "The `role=\"log\"` named \"Conversation messages\" inside `#main-content`"
+  },
+  {
+    "target": "sources-panel-toggle",
+    "page": "Conversation",
+    "element": "The button that opens the sources panel",
+    "lookup": "A button named \"Open panel\" inside `#main-content`; absent while the panel is open"
+  },
+  {
+    "target": "projects-create",
+    "page": "Projects",
+    "element": "The New project button",
+    "lookup": "The first on-screen button named \"New project\" inside `#main-content`"
+  },
+  {
+    "target": "projects-search",
+    "page": "Projects",
+    "element": "The projects search field",
+    "lookup": "The `search` element around the input named \"Search projects\" inside `#main-content`"
+  },
+  {
+    "target": "project-chats",
+    "page": "Project view",
+    "element": "The project's chats section, with its composer",
+    "lookup": "The `section` named \"Project chats\" inside `#main-content`, once the project has loaded"
+  },
+  {
+    "target": "project-details",
+    "page": "Project view",
+    "element": "The project's details panel",
+    "lookup": "The `aside` labelled \"Details\" inside `#main-content`, once the project has loaded"
+  },
+  {
+    "target": "scheduled-tasks-create",
+    "page": "Scheduled tasks",
+    "element": "The New task button",
+    "lookup": "A button named \"New task\" inside `#main-content`"
+  },
+  {
+    "target": "scheduled-tasks-search",
+    "page": "Scheduled tasks",
+    "element": "The scheduled tasks search field",
+    "lookup": "The `search` element around the input named \"Search scheduled tasks by name\" inside `#main-content`"
+  },
+  {
+    "target": "catalog-create",
+    "page": "Catalog",
+    "element": "The catalog's Create button",
+    "lookup": "A button named \"Create\" inside the catalog `section`"
+  },
+  {
+    "target": "catalog-search",
+    "page": "Catalog",
+    "element": "The catalog's search field",
+    "lookup": "The first `search` element or `role=\"search\"` inside the catalog `section`"
+  },
+  {
+    "target": "catalog-tabs",
+    "page": "Catalog",
+    "element": "The catalog's entity tabs",
+    "lookup": "The first `role=\"tablist\"` inside the catalog `section`"
+  },
+  {
+    "target": "catalog-view-mode",
+    "page": "Catalog",
+    "element": "The catalog's grid/list switch",
+    "lookup": "The `role=\"radiogroup\"` named like the view switch inside the catalog `section`"
+  },
+  {
+    "target": "settings-sections",
+    "page": "Settings",
+    "element": "The settings page's section tabs",
+    "lookup": "The `role=\"tablist\"` labelled \"Settings\" inside `#main-content`"
+  },
+  {
+    "target": "message-actions",
+    "page": "Conversation",
+    "element": "The action bar (Copy, Regenerate…) under the newest message, normally the latest answer; it appears once the answer has finished",
+    "lookup": "The last on-screen `role=\"toolbar\"` named \"Message actions\" inside the `role=\"log\"` named \"Conversation messages\""
+  },
+  {
+    "target": "catalog-filter",
+    "page": "Catalog (desktop)",
+    "element": "The catalog's source filter button (\"From\", or \"My\" while only your own items are shown)",
+    "lookup": "A button inside the catalog `section` named \"From\", \"From: …\", \"My\" or \"My · …\""
+  },
+  {
+    "target": "catalog-sort",
+    "page": "Catalog",
+    "element": "The sort menu on desktop; the browse-settings button that holds sorting on a phone",
+    "lookup": "A button inside the catalog `section` named after one of the sort orders (\"Recently Updated\", \"Newest\", \"Name A-Z\"), else a button named \"Browse settings\""
+  },
+  {
+    "target": "catalog-card",
+    "page": "Catalog",
+    "element": "The first catalog card on screen — a favorite's card when the favorites row is shown; open it to see the item's details",
+    "lookup": "The first on-screen `article` with an accessible name inside the catalog `section`"
+  },
+  {
+    "target": "catalog-favorite",
+    "page": "Catalog",
+    "element": "The favorite star of the first card on screen",
+    "lookup": "The first on-screen button inside the catalog `section` named \"Add to favorites\" or \"Remove from favorites\""
+  },
+  {
+    "target": "catalog-details",
+    "page": "Catalog, item details open",
+    "element": "The item details drawer as a whole",
+    "lookup": "The on-screen the `role=\"dialog\"` named \"Item details\""
+  },
+  {
+    "target": "catalog-details-use-in-chat",
+    "page": "Catalog, item details open",
+    "element": "The drawer's \"Use in chat\" button",
+    "lookup": "A button named \"Use in chat\" inside the `role=\"dialog\"` named \"Item details\""
+  },
+  {
+    "target": "catalog-details-manage",
+    "page": "Catalog, item details open",
+    "element": "The drawer's \"Manage\" menu button (only for items you can manage)",
+    "lookup": "A button named \"Manage\" inside the `role=\"dialog\"` named \"Item details\""
+  },
+  {
+    "target": "catalog-details-credentials",
+    "page": "Catalog, toolset details open",
+    "element": "The toolset's sign-in or credentials button",
+    "lookup": "A button named \"Log in\", \"Log out\" or \"Manage credentials\" inside the `role=\"dialog\"` named \"Item details\""
+  },
+  {
+    "target": "catalog-details-share",
+    "page": "Catalog, item details open",
+    "element": "The drawer's \"Share\" button",
+    "lookup": "A button named \"Share\" inside the `role=\"dialog\"` named \"Item details\""
+  },
+  {
+    "target": "catalog-details-publish",
+    "page": "Catalog, item details open",
+    "element": "The drawer's \"Publish\" (or \"Unpublish\") button",
+    "lookup": "A button named \"Publish\" or \"Unpublish\" inside the `role=\"dialog\"` named \"Item details\""
+  },
+  {
+    "target": "catalog-details-tabs",
+    "page": "Catalog, item details open",
+    "element": "The drawer's tabs (Details, Tools, Limits…)",
+    "lookup": "The first `role=\"tablist\"` inside the `role=\"dialog\"` named \"Item details\""
+  },
+  {
+    "target": "project-form-submit",
+    "page": "New project, project edit",
+    "element": "The form's \"Create\" (new) or \"Save\" (edit) button",
+    "lookup": "The nearest button named \"Create\" or \"Save\" around the `section` named \"Context\" inside `#main-content`"
+  },
+  {
+    "target": "project-form-context",
+    "page": "New project, project edit",
+    "element": "The form's \"Context\" section for knowledge files",
+    "lookup": "The `section` named \"Context\" inside `#main-content`"
+  },
+  {
+    "target": "project-view-edit",
+    "page": "Project view (desktop)",
+    "element": "The project's \"Edit\" button",
+    "lookup": "The nearest button named \"Edit\" around the `aside` named \"Details\" inside `#main-content`"
+  },
+  {
+    "target": "project-view-more-actions",
+    "page": "Project view",
+    "element": "The project's \"More actions\" menu button",
+    "lookup": "The nearest button named \"More actions\" around the `aside` named \"Details\" inside `#main-content`"
+  },
+  {
+    "target": "project-view-pin",
+    "page": "Project view (desktop)",
+    "element": "The project's \"Pin\" (or \"Unpin\") button",
+    "lookup": "The nearest button named \"Pin\" or \"Unpin\" around the `aside` named \"Details\" inside `#main-content`"
+  },
+  {
+    "target": "project-view-publish",
+    "page": "Project view (desktop)",
+    "element": "The project's \"Publish\" (or \"Unpublish\") button",
+    "lookup": "The nearest button named \"Publish\" or \"Unpublish\" around the `aside` named \"Details\" inside `#main-content`"
+  },
+  {
+    "target": "project-context-search",
+    "page": "Project view, with context files",
+    "element": "The search over the project's context files",
+    "lookup": "The search field named \"Search context files\" inside the `aside` named \"Details\""
+  },
+  {
+    "target": "projects-sort",
+    "page": "Projects",
+    "element": "The Projects page's sort control",
+    "lookup": "The `role=\"group\"` named \"Sort\" inside `#main-content`"
+  },
+  {
+    "target": "scheduled-task-form-submit",
+    "page": "New scheduled task, task edit",
+    "element": "The form's \"Create\" (new) or \"Save\" (edit) button",
+    "lookup": "The nearest button named \"Create\" or \"Save\" around the `role=\"group\"` named \"Configuration\" inside `#main-content`"
+  },
+  {
+    "target": "scheduled-task-configuration",
+    "page": "New scheduled task, task edit",
+    "element": "The form's \"Configuration\" section: the task's instructions",
+    "lookup": "The `role=\"group\"` named \"Configuration\" inside `#main-content`"
+  },
+  {
+    "target": "scheduled-task-repeat",
+    "page": "New scheduled task, task edit",
+    "element": "The \"Repeat\" schedule picker",
+    "lookup": "The `role=\"combobox\"` named \"Repeat\" inside `#main-content`"
+  },
+  {
+    "target": "scheduled-task-model",
+    "page": "New scheduled task, task edit",
+    "element": "The model or agent picker",
+    "lookup": "A button or `role=\"combobox\"` inside `#main-content` whose name starts with \"Model or Agent\""
+  },
+  {
+    "target": "scheduled-task-start-now",
+    "page": "Scheduled task",
+    "element": "The task's \"Start now\" button",
+    "lookup": "A button named \"Start now\" or \"Starting…\" inside `#main-content`"
+  },
+  {
+    "target": "scheduled-task-edit",
+    "page": "Scheduled task",
+    "element": "The task's \"Edit\" button",
+    "lookup": "The nearest button named \"Edit\" around the list named \"History\" inside `#main-content`"
+  },
+  {
+    "target": "scheduled-task-history",
+    "page": "Scheduled task",
+    "element": "The task's run history",
+    "lookup": "The list named \"History\" inside `#main-content`"
+  },
+  {
+    "target": "scheduled-task-active",
+    "page": "Scheduled task",
+    "element": "The task's \"Active\" switch, which pauses and resumes it",
+    "lookup": "The `role=\"switch\"` named \"Active\" inside `#main-content`"
+  },
+  {
+    "target": "scheduled-tasks-sort",
+    "page": "Scheduled tasks",
+    "element": "The sort menu",
+    "lookup": "The nearest button named after a sort order (\"First to run\", \"Last to run\", \"Newest\", \"Name A-Z\") around the search field named like the page's search"
+  },
+  {
+    "target": "settings-extensions",
+    "page": "Settings, Extensions tab",
+    "element": "The extensions table",
+    "lookup": "The `role=\"table\"` named \"Extensions\" inside `#main-content`"
+  },
+  {
+    "target": "settings-extensions-log-in",
+    "page": "Settings, Extensions tab",
+    "element": "The extension's \"Log in\" button",
+    "lookup": "A button named \"Log in\" or its logging-in state inside the table named \"Extensions\""
+  },
+  {
+    "target": "settings-theme",
+    "page": "Settings, Preferences tab",
+    "element": "The theme picker",
+    "lookup": "The `role=\"combobox\"` named \"Theme\" inside `#main-content`"
+  },
+  {
+    "target": "settings-language",
+    "page": "Settings, Preferences tab",
+    "element": "The language picker",
+    "lookup": "The `role=\"combobox\"` named \"Language\" inside `#main-content`"
+  },
+  {
+    "target": "duplicate-shared-chat",
+    "page": "A read-only (shared) conversation",
+    "element": "The button that duplicates the chat so it can be edited, in place of the composer",
+    "lookup": "A button named \"Duplicate the conversation to be able to edit it\" inside `#main-content`"
+  },
+  {
+    "target": "sources-panel",
+    "page": "Conversation, sources panel open",
+    "element": "The conversation's files and sources panel",
+    "lookup": "The on-screen `aside` named \"Conversation sources\""
+  },
+  {
+    "target": "sources-download-all",
+    "page": "Conversation, sources panel open",
+    "element": "The panel's \"Download all\" button",
+    "lookup": "A button named \"Download all\" inside the `aside` named \"Conversation sources\""
+  },
+  {
+    "target": "project-chat-back",
+    "page": "Project chat",
+    "element": "The \"Back to <project>\" button",
+    "lookup": "A button inside `#main-content` whose name starts with \"Back to\""
+  },
+  {
+    "target": "tools-selector",
+    "page": "Composer, model with tools",
+    "element": "The composer's tools chip (\"Tools: 2 of 5 on\")",
+    "lookup": "A button in the composer whose name starts with \"Tools:\""
+  },
+  {
+    "target": "editor-setup",
+    "page": "App, toolset and custom-app editors",
+    "element": "The editor's \"Setup\" section",
+    "lookup": "The `section` named \"Setup\" inside `#main-content`"
+  },
+  {
+    "target": "active-chat",
+    "page": "Any page with the sidebar open and a conversation open",
+    "element": "The open conversation's row in the chat list",
+    "lookup": "The on-screen element with `aria-current=\"page\"` inside the chats `section` of the navigation landmark"
+  },
+  {
+    "target": "active-chat-actions",
+    "page": "Any page with the sidebar open and a conversation open",
+    "element": "The open conversation's \"More actions\" menu (pin, duplicate, export, share…); its button shows on hover",
+    "lookup": "The button named \"More actions\" in the same list item as the open conversation's row"
+  }
+]

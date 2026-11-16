@@ -216,10 +216,12 @@ export enum CatalogI18nKeys {
   BrowseSettingsFiltering = 'catalog.browseSettings.filtering',
   BrowseSettingsCards = 'catalog.browseSettings.cards',
   BrowseSettingsList = 'catalog.browseSettings.list',
+  BrowseSettingsFrom = 'catalog.browseSettings.from',
   BrowseSettingsMy = 'catalog.browseSettings.my',
   BrowseSettingsTopics = 'catalog.browseSettings.topics',
   BrowseSettingsFilterCount = 'catalog.browseSettings.filterCount',
   // Details panel
+  DetailsAriaLabel = 'catalog.details.ariaLabel',
   DetailsTabTools = 'catalog.details.tabTools',
   DetailsTabContent = 'catalog.details.tabContent',
   DetailsPromptLoadError = 'catalog.details.promptLoadError',
@@ -1269,6 +1271,19 @@ export enum AnnouncementsPopoverI18nKeys {
   PillLabel = 'announcementsPopover.pillLabel',
   ListAriaLabel = 'announcementsPopover.listAriaLabel',
   OpensInNewTab = 'announcementsPopover.opensInNewTab',
+}
+
+export enum OnboardingTourI18nKeys {
+  StepCounter = 'onboardingTour.stepCounter',
+  Next = 'onboardingTour.next',
+  Back = 'onboardingTour.back',
+  Done = 'onboardingTour.done',
+  Skip = 'onboardingTour.skip',
+  Close = 'onboardingTour.close',
+  AnchorsSummary = 'onboardingTour.anchorsSummary',
+  AnchorsMissing = 'onboardingTour.anchorsMissing',
+  AnchorsNoneMissing = 'onboardingTour.anchorsNoneMissing',
+  AnchorsClose = 'onboardingTour.anchorsClose',
 }
 
 export enum FooterMessageI18nKeys {

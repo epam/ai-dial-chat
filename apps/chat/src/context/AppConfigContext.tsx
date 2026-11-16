@@ -3,6 +3,7 @@ import {
   type CatalogCreationPermissionsDto,
   type CelebrationDeliveryDto,
   type ClientConfigResponseDto,
+  type OnboardingHintDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
   type AnnouncementListItem,
@@ -84,6 +85,8 @@ export interface AppConfigState {
     announcementTitle: string | null;
     announcementDescription: string | null;
     announcements: AnnouncementListItem[];
+    /** Operator-authored first-visit hints, in configured order. */
+    onboardingHints: OnboardingHintDto[];
     welcomeScreenDescription: string | null;
     footerHtmlMessage: string;
     customVisualizers: CustomVisualizer[];
@@ -165,6 +168,7 @@ const INITIAL_STATE: ProviderState = {
     announcementTitle: null,
     announcementDescription: null,
     announcements: [],
+    onboardingHints: [],
     welcomeScreenDescription: null,
     footerHtmlMessage: '',
     customVisualizers: [],
@@ -230,6 +234,9 @@ const toProviderState = (
             ...item,
             severity: mapAnnouncementSeverity(item.severity),
           }))
+        : [],
+      onboardingHints: Array.isArray(response.config?.onboardingHints)
+        ? response.config.onboardingHints
         : [],
       welcomeScreenDescription:
         response.config?.welcomeScreenDescription ?? null,

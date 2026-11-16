@@ -1880,6 +1880,12 @@ export interface ClientConfigDto {
    */
   announcements: Array<AnnouncementItemDto>;
   /**
+   * Onboarding hints the client shows once, step by step, to a user who has not seen them, in configured order. Empty when ONBOARDING_HINTS is unset or contained no valid entries.
+   * @type {Array<OnboardingHintDto>}
+   * @memberof ClientConfigDto
+   */
+  onboardingHints: Array<OnboardingHintDto>;
+  /**
    * Plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Null when WELCOME_SCREEN_DESCRIPTION is not configured or is blank.
    * @type {string}
    * @memberof ClientConfigDto
@@ -7230,6 +7236,119 @@ export interface OfflineCredentialsSigninBodyDto {
    */
   redirectUri: string;
 }
+/**
+ *
+ * @export
+ * @interface OnboardingHintDto
+ */
+export interface OnboardingHintDto {
+  /**
+   * Stable identifier of the hint. The client remembers which ids a user has seen, so changing an id shows that hint again. Letters, digits, ".", "_" and "-", at most 64 characters; duplicates after the first are dropped server-side.
+   * @type {string}
+   * @memberof OnboardingHintDto
+   */
+  id: string;
+  /**
+   * The UI element the hint points at. A closed list; the client resolves it and skips the hint when that element is not on screen.
+   * @type {OnboardingHintTarget}
+   * @memberof OnboardingHintDto
+   */
+  target: OnboardingHintTarget;
+  /**
+   * Hint heading. Plain text; never interpreted as markup. Entries without one are dropped server-side.
+   * @type {string}
+   * @memberof OnboardingHintDto
+   */
+  title: string;
+  /**
+   * Supporting copy under the heading. Plain text; never interpreted as markup. Null when unset or blank.
+   * @type {string}
+   * @memberof OnboardingHintDto
+   */
+  description: string | null;
+}
+
+/**
+ * The UI element the hint points at. A closed list; the client resolves it and skips the hint when that element is not on screen.
+ * @export
+ */
+export const OnboardingHintTarget = {
+  NewChat: 'new-chat',
+  Navigation: 'navigation',
+  Projects: 'projects',
+  ScheduledTasks: 'scheduled-tasks',
+  Catalog: 'catalog',
+  FileManager: 'file-manager',
+  ConversationInput: 'conversation-input',
+  AddAttachment: 'add-attachment',
+  SendMessage: 'send-message',
+  ModelSelector: 'model-selector',
+  VoiceInput: 'voice-input',
+  ConversationStarters: 'conversation-starters',
+  ConversationMessages: 'conversation-messages',
+  SourcesPanelToggle: 'sources-panel-toggle',
+  SidebarToggle: 'sidebar-toggle',
+  Chats: 'chats',
+  ChatsSearch: 'chats-search',
+  ChatsFilter: 'chats-filter',
+  UserMenu: 'user-menu',
+  Usage: 'usage',
+  ProjectsCreate: 'projects-create',
+  ProjectsSearch: 'projects-search',
+  ProjectChats: 'project-chats',
+  ProjectDetails: 'project-details',
+  ScheduledTasksCreate: 'scheduled-tasks-create',
+  ScheduledTasksSearch: 'scheduled-tasks-search',
+  SettingsSections: 'settings-sections',
+  CatalogCreate: 'catalog-create',
+  CatalogSearch: 'catalog-search',
+  CatalogTabs: 'catalog-tabs',
+  CatalogViewMode: 'catalog-view-mode',
+  CatalogFilter: 'catalog-filter',
+  CatalogSort: 'catalog-sort',
+  CatalogCard: 'catalog-card',
+  CatalogFavorite: 'catalog-favorite',
+  MessageActions: 'message-actions',
+  CatalogDetails: 'catalog-details',
+  CatalogDetailsUseInChat: 'catalog-details-use-in-chat',
+  CatalogDetailsManage: 'catalog-details-manage',
+  CatalogDetailsCredentials: 'catalog-details-credentials',
+  CatalogDetailsShare: 'catalog-details-share',
+  CatalogDetailsPublish: 'catalog-details-publish',
+  CatalogDetailsTabs: 'catalog-details-tabs',
+  ProjectFormSubmit: 'project-form-submit',
+  ProjectFormContext: 'project-form-context',
+  ProjectViewEdit: 'project-view-edit',
+  ProjectViewMoreActions: 'project-view-more-actions',
+  ProjectViewPin: 'project-view-pin',
+  ProjectViewPublish: 'project-view-publish',
+  ProjectContextSearch: 'project-context-search',
+  ProjectsSort: 'projects-sort',
+  ScheduledTaskFormSubmit: 'scheduled-task-form-submit',
+  ScheduledTaskConfiguration: 'scheduled-task-configuration',
+  ScheduledTaskRepeat: 'scheduled-task-repeat',
+  ScheduledTaskModel: 'scheduled-task-model',
+  ScheduledTaskStartNow: 'scheduled-task-start-now',
+  ScheduledTaskEdit: 'scheduled-task-edit',
+  ScheduledTaskHistory: 'scheduled-task-history',
+  ScheduledTaskActive: 'scheduled-task-active',
+  ScheduledTasksSort: 'scheduled-tasks-sort',
+  SettingsExtensions: 'settings-extensions',
+  SettingsExtensionsLogIn: 'settings-extensions-log-in',
+  SettingsTheme: 'settings-theme',
+  SettingsLanguage: 'settings-language',
+  DuplicateSharedChat: 'duplicate-shared-chat',
+  SourcesPanel: 'sources-panel',
+  SourcesDownloadAll: 'sources-download-all',
+  ProjectChatBack: 'project-chat-back',
+  ToolsSelector: 'tools-selector',
+  EditorSetup: 'editor-setup',
+  ActiveChat: 'active-chat',
+  ActiveChatActions: 'active-chat-actions',
+} as const;
+export type OnboardingHintTarget =
+  (typeof OnboardingHintTarget)[keyof typeof OnboardingHintTarget];
+
 /**
  *
  * @export
