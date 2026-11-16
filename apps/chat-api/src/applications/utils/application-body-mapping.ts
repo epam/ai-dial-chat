@@ -44,10 +44,16 @@ export const hoistApplicationFields = (
 };
 
 /**
- * Every camelCase field of the SDK `Application` write schema. DIAL Core
- * accepts both spellings of these fields but answers a stored application in
- * snake_case (`display_version`, `icon_url`, `description_keywords`, …),
- * so each one may arrive under its snake alias.
+ * The camelCase fields of the SDK `Application` write schema that DIAL Core
+ * accepts under both spellings (a `@JsonAlias` on the field) but answers a
+ * stored application in snake_case (`display_version`, `icon_url`,
+ * `description_keywords`, …), so each one may arrive under its snake alias.
+ *
+ * Only list a field here once Core aliases its camelCase name. `responsesDefaults`
+ * and `responsesEndpoint` are deliberately absent: Core declares them without
+ * an alias, so it rejects the camelCase spelling with a 400 ("Unrecognized
+ * field") and they must stay under their snake keys (`responses_defaults`,
+ * `responses_endpoint`).
  */
 const CAMEL_CASE_APPLICATION_FIELDS = [
   'baseUrl',
@@ -64,8 +70,6 @@ const CAMEL_CASE_APPLICATION_FIELDS = [
   'maxInputAttachments',
   'maxRetryAttempts',
   'overrideName',
-  'responsesDefaults',
-  'responsesEndpoint',
   'updatedAt',
   'userRoles',
 ] as const satisfies readonly (keyof DialApplication)[];
