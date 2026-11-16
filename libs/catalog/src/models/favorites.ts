@@ -14,11 +14,13 @@ export interface FavoritesColors {
   titleText?: string;
   /** Total-count and page-counter text color. Fallback: `--text-secondary`. */
   countText?: string;
-  /** Color of the checkmark icon on the selected favorite card. Fallback: `--text-accent`. */
+  /**
+   * @deprecated No effect: the selected favorite card is marked by its border only and no longer renders a checkmark.
+   */
   selectedCheckIcon?: string;
   /** Border color of the selected favorite card. Fallback: `--stroke-accent`. */
   selectedCardBorder?: string;
-  /** Background color (tint) of the selected favorite card. Fallback: `--bg-control-accent-alpha-active`. */
+  /** Background color of the selected favorite card. Fallback: `--bg-layer-raised` (the card's regular background). */
   selectedCardBackground?: string;
   /** Icon color of the pagination arrows. Fallback: `--text-accent`. */
   navButton?: string;

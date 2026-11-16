@@ -1,11 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  CardShell,
-  DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
-  ElementSize,
-} from '@epam/ai-dial-ui-kit';
-import { IconCheck } from '@tabler/icons-react';
+import { CardShell, ElementSize } from '@epam/ai-dial-ui-kit';
 import { FC, MouseEvent, useState } from 'react';
 import { CATALOG_CLASS } from '../../constants/public-class-names';
 import { AppIdentityColors } from '../../models/app-identity-styles';
@@ -117,18 +111,6 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
         >
           {item.name}
         </button>
-      )}
-
-      {isSelected && (
-        <IconCheck
-          size={DIAL_ICON_SIZE.SM}
-          className={mergeClasses(
-            'absolute inset-e-3 top-3 shrink-0',
-            styles.selectedCheck,
-          )}
-          aria-hidden
-          stroke={DIAL_KIT_ICON_STROKE}
-        />
       )}
 
       {/* The star sits on AppIdentity's meta row rather than in a column of
