@@ -20,7 +20,7 @@ import {
 import {
   CAPABILITY_FEATURE_KEYS,
   deriveCapabilityFeature,
-  type CapabilityInputs,
+  readCapabilityInputs,
 } from '../feature-capabilities';
 import { isManagedKey } from '../managed-config/key-management';
 import { CONFIG_DEFINITIONS } from './config-registry.constants';
@@ -73,7 +73,10 @@ export class EnvConfigProvider implements ConfigProvider, OnModuleInit {
      * own. Role gating is not applied here: AppConfigService applies it after
      * selection, for every source. */
     if (CAPABILITY_FEATURE_KEYS.some((featureKey) => featureKey === key)) {
-      return deriveCapabilityFeature(key, this.readCapabilityInputs());
+      return deriveCapabilityFeature(
+        key,
+        readCapabilityInputs(this.configService),
+      );
     }
 
     // fileManager.availableTabs is validated against a fixed allow-list, dropping unknown ids
@@ -177,21 +180,6 @@ export class EnvConfigProvider implements ConfigProvider, OnModuleInit {
     }
 
     return rawValue;
-  }
-
-  private readCapabilityInputs(): CapabilityInputs {
-    return {
-      asrModel: this.configService.get('ASR_MODEL', { infer: true }),
-      utilityModel: this.configService.get('UTILITY_MODEL', { infer: true }),
-      dialApiKey: this.configService.get('DIAL_API_KEY', { infer: true }),
-      llmConversationNamingEnabled: this.configService.get(
-        'LLM_CONVERSATION_NAMING_ENABLED',
-        { infer: true },
-      ),
-      footerHtmlMessage: this.configService.get('FOOTER_HTML_MESSAGE', {
-        infer: true,
-      }),
-    };
   }
 
   private isValidType(key: string, value: unknown, valueType: string): boolean {

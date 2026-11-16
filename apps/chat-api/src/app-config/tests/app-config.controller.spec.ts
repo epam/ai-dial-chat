@@ -19,10 +19,25 @@ import {
   CatalogCreationType,
   type CatalogCreationRolesConfig,
 } from '../../config/catalog-creation.types';
+import type { EnvironmentVariables } from '../../config/environment.config';
 import { ExplicitEnvironment } from '../../config/explicit-environment';
+import { validate } from '../../config/validation';
 import { AppConfigController } from '../app-config.controller';
 import { AppConfigService } from '../app-config.service';
 import { CompositeConfigProvider } from '../config-registry/composite-config.provider';
+import { EnvConfigProvider } from '../config-registry/env-config.provider';
+import { StaticDefaultsProvider } from '../config-registry/static-defaults.provider';
+import { ManagedConfigProvider } from '../managed-runtime/managed-config.provider';
+import { ManagedRuntimeService } from '../managed-runtime/managed-runtime.service';
+import { RuntimeReadKind } from '../managed-runtime/snapshot-reader';
+import {
+  candidate,
+  createFakeClock,
+  createFakeReader,
+  createInertManagedRuntime,
+  type FakeReader,
+  snapshotBody,
+} from './managed-runtime/managed-runtime.fixtures';
 
 const ASR_RESPONSE = {
   appId: 'chat-ui',
@@ -392,6 +407,7 @@ describe('AppConfigController catalogCreationPermissions (integration)', () => {
         useValue: new ConfigService({ CATALOG_CREATION_ROLES: policy }),
       },
       { provide: ExplicitEnvironment, useValue: ExplicitEnvironment.of([]) },
+      { provide: ManagedRuntimeService, useValue: createInertManagedRuntime() },
     ]);
     return app;
   };
@@ -577,6 +593,7 @@ describe('AppConfigController served application identifiers (integration)', () 
         useValue: new ConfigService({ CLIENT_CONFIG_APP_IDS: servedAppIds }),
       },
       { provide: ExplicitEnvironment, useValue: ExplicitEnvironment.of([]) },
+      { provide: ManagedRuntimeService, useValue: createInertManagedRuntime() },
     ]);
     return app;
   };
@@ -658,5 +675,303 @@ describe('AppConfigController served application identifiers (integration)', () 
     const result = await getConfig(server, 'launchpad').expect(200);
 
     expect(result.headers['cache-control']).toBe('private, no-store');
+  });
+});
+
+/*
+ * The real resolution stack — environment, managed and default providers —
+ * behind the real controller, over a fake Core reader and a fake clock.
+ */
+describe('AppConfigController managed configuration (integration)', () => {
+  const REQUIRED = {
+    DIAL_CORE_URL: 'https://dial-core.example.com',
+    AUTH_SESSION_SECRET: 'a'.repeat(64),
+    AUTH_CALLBACK_BASE_URL: 'http://localhost:5000',
+  };
+  const MANAGED = {
+    MANAGED_CONFIG_INSTANCES: 'chat-ui=chat-dev,launchpad=launchpad-dev',
+    CLIENT_CONFIG_APP_IDS: 'chat-ui,launchpad',
+    MANAGED_CONFIG_API_KEY: 'reader-key',
+    MANAGED_CONFIG_MAX_STALENESS_SECONDS: '900',
+  };
+  const CHAT_PAYLOAD = {
+    config: { 'welcomeScreen.description': 'Hello from Studio' },
+    features: {},
+  };
+  const LAUNCHPAD_BODY = snapshotBody({
+    instanceId: 'launchpad-dev',
+    appId: 'launchpad',
+    schemaVersion: '2.0.0',
+    schemaSha256: 'b'.repeat(64),
+    revisionId: '20261120T090000000Z-fedcba9876543210',
+    payload: { blocks: [{ id: 'news' }] },
+  });
+
+  let app: INestApplication | undefined;
+  let runtime: ManagedRuntimeService | undefined;
+  let cacheSets: { key: string; ttl: number }[];
+
+  beforeEach(() => {
+    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+  });
+
+  afterEach(async () => {
+    runtime?.onModuleDestroy();
+    await app?.close();
+    app = undefined;
+    runtime = undefined;
+    vi.restoreAllMocks();
+  });
+
+  const buildManagedApp = async (
+    raw: Record<string, unknown>,
+    respond: (fake: FakeReader) => void = () => undefined,
+  ) => {
+    const configService = new ConfigService<EnvironmentVariables>(
+      validate({ ...REQUIRED, ...raw }),
+    );
+    const clock = createFakeClock();
+    const fake = createFakeReader();
+    respond(fake);
+    runtime = new ManagedRuntimeService(configService, fake.reader, clock);
+    await runtime.onApplicationBootstrap();
+    const cacheStore = new Map<string, unknown>();
+    cacheSets = [];
+    app = await buildApp([
+      AppConfigService,
+      CompositeConfigProvider,
+      EnvConfigProvider,
+      StaticDefaultsProvider,
+      ManagedConfigProvider,
+      { provide: ManagedRuntimeService, useValue: runtime },
+      { provide: ConfigService, useValue: configService },
+      {
+        provide: ExplicitEnvironment,
+        useValue: ExplicitEnvironment.fromConfigService(configService),
+      },
+      {
+        provide: CACHE_MANAGER,
+        useValue: {
+          get: async (key: string) => cacheStore.get(key),
+          set: async (key: string, value: unknown, ttl: number) => {
+            cacheSets.push({ key, ttl });
+            cacheStore.set(key, value);
+          },
+        },
+      },
+    ]);
+    return { clock, fake, server: app.getHttpServer() };
+  };
+
+  const respondChat = (fake: FakeReader) => {
+    fake.respondAlways('chat-dev', candidate({ payload: CHAT_PAYLOAD }));
+    fake.respondAlways('launchpad-dev', {
+      kind: RuntimeReadKind.Candidate,
+      body: LAUNCHPAD_BODY,
+    });
+  };
+
+  const withoutTime = (body: Record<string, unknown>) => ({
+    ...body,
+    metadata: { ...(body['metadata'] as object), resolvedAt: undefined },
+  });
+
+  it('answers shadow mode exactly like off mode', async () => {
+    const off = await buildManagedApp({});
+    const offResponse = await request(off.server)
+      .get('/v1/client-config?appId=chat-ui')
+      .expect(200);
+    const offCache = cacheSets;
+    runtime?.onModuleDestroy();
+    await app?.close();
+
+    const shadow = await buildManagedApp(
+      { ...MANAGED, MANAGED_CONFIG_MODE: 'shadow' },
+      respondChat,
+    );
+    const shadowResponse = await request(shadow.server)
+      .get('/v1/client-config?appId=chat-ui')
+      .expect(200);
+
+    expect(runtime?.captureView('chat-ui').state).toBe('fresh');
+    expect(withoutTime(shadowResponse.body)).toEqual(
+      withoutTime(offResponse.body),
+    );
+    expect(shadowResponse.body.config.welcomeScreenDescription).toBeNull();
+    expect(shadowResponse.body).not.toHaveProperty('appConfig');
+    expect(shadowResponse.body.metadata).not.toHaveProperty('managed');
+    expect(shadowResponse.body.metadata).not.toHaveProperty('nextRefreshAt');
+    expect(cacheSets).toEqual(offCache);
+  });
+
+  it('applies an active key and reports the managed state', async () => {
+    const { server } = await buildManagedApp(
+      {
+        ...MANAGED,
+        MANAGED_CONFIG_MODE: 'active',
+        MANAGED_CONFIG_ACTIVE_KEYS: 'welcomeScreen.description',
+      },
+      respondChat,
+    );
+
+    const response = await request(server)
+      .get('/v1/client-config?appId=chat-ui')
+      .expect(200);
+
+    expect(response.headers['cache-control']).toBe('private, no-store');
+    expect(response.body.config.welcomeScreenDescription).toBe(
+      'Hello from Studio',
+    );
+    expect(response.body).not.toHaveProperty('appConfig');
+    expect(response.body.metadata).toEqual({
+      resolvedAt: '2026-11-20T10:00:00.000Z',
+      cacheTtlSeconds: 60,
+      nextRefreshAt: '2026-11-20T10:02:00.000Z',
+      managed: {
+        instanceId: 'chat-dev',
+        state: 'fresh',
+        revisionId: '20261120T095500000Z-0123456789abcdef',
+        schemaVersion: '1.0.0',
+        publishedAt: '2026-11-20T09:55:00.000Z',
+      },
+    });
+    expect(cacheSets).toEqual([
+      {
+        key: 'app-config:client:chat-ui:user:anonymous:roles:none:managed:chat-dev:20261120T095500000Z-0123456789abcdef:fresh',
+        ttl: 60_000,
+      },
+    ]);
+  });
+
+  it('keeps an explicit environment value over the managed one', async () => {
+    const { server } = await buildManagedApp(
+      {
+        ...MANAGED,
+        MANAGED_CONFIG_MODE: 'active',
+        MANAGED_CONFIG_ACTIVE_KEYS: 'welcomeScreen.description',
+        WELCOME_SCREEN_DESCRIPTION: 'Local',
+      },
+      respondChat,
+    );
+    const response = await request(server)
+      .get('/v1/client-config?appId=chat-ui')
+      .expect(200);
+    expect(response.body.config.welcomeScreenDescription).toBe('Local');
+  });
+
+  it('delivers a foreign payload unchanged, only to its own identifier', async () => {
+    const { server } = await buildManagedApp(
+      { ...MANAGED, MANAGED_CONFIG_MODE: 'active' },
+      respondChat,
+    );
+
+    const launchpad = await request(server)
+      .get('/v1/client-config?appId=launchpad')
+      .expect(200);
+    const chat = await request(server)
+      .get('/v1/client-config?appId=chat-ui')
+      .expect(200);
+
+    expect(launchpad.body.appConfig).toEqual({
+      schemaVersion: '2.0.0',
+      schemaSha256: 'b'.repeat(64),
+      revisionId: '20261120T090000000Z-fedcba9876543210',
+      publishedAt: '2026-11-20T09:55:00.000Z',
+      payload: { blocks: [{ id: 'news' }] },
+    });
+    expect(launchpad.body.metadata.managed.instanceId).toBe('launchpad-dev');
+    expect(launchpad.body.features).toEqual(chat.body.features);
+    expect(chat.body).not.toHaveProperty('appConfig');
+    expect(chat.body.metadata.managed.instanceId).toBe('chat-dev');
+  });
+
+  it('never reads a foreign payload into the typed fields', async () => {
+    const { server } = await buildManagedApp(
+      {
+        ...MANAGED,
+        MANAGED_CONFIG_MODE: 'active',
+        MANAGED_CONFIG_ACTIVE_KEYS:
+          'welcomeScreen.description,features.usageLimitsControl',
+      },
+      (fake) => {
+        fake.respondAlways(
+          'chat-dev',
+          candidate({
+            payload: {
+              config: { 'welcomeScreen.description': 'Chat value' },
+              features: { 'features.usageLimitsControl': { enabled: true } },
+            },
+          }),
+        );
+        fake.respondAlways('launchpad-dev', {
+          kind: RuntimeReadKind.Candidate,
+          body: {
+            ...LAUNCHPAD_BODY,
+            payload: {
+              config: { 'welcomeScreen.description': 'Launchpad value' },
+              features: {},
+            },
+          },
+        });
+      },
+    );
+
+    const launchpad = await request(server)
+      .get('/v1/client-config?appId=launchpad')
+      .expect(200);
+    const chat = await request(server)
+      .get('/v1/client-config?appId=chat-ui')
+      .expect(200);
+
+    expect(chat.body.config.welcomeScreenDescription).toBe('Chat value');
+    expect(chat.body.features.usageLimitsControl).toBe(true);
+    expect(launchpad.body.config.welcomeScreenDescription).toBeNull();
+    expect(launchpad.body.features.usageLimitsControl).toBe(false);
+    expect(launchpad.body.appConfig.payload.config).toEqual({
+      'welcomeScreen.description': 'Launchpad value',
+    });
+  });
+
+  it('withholds a foreign payload that is not usable', async () => {
+    const { server } = await buildManagedApp(
+      { ...MANAGED, MANAGED_CONFIG_MODE: 'active' },
+      (fake) => {
+        fake.respondAlways('chat-dev', candidate());
+        fake.respondAlways('launchpad-dev', {
+          kind: RuntimeReadKind.NotPublished,
+        });
+      },
+    );
+    const response = await request(server)
+      .get('/v1/client-config?appId=launchpad')
+      .expect(200);
+    expect(response.body).not.toHaveProperty('appConfig');
+    expect(response.body.metadata.managed).toEqual({
+      instanceId: 'launchpad-dev',
+      state: 'not_published',
+    });
+  });
+
+  it('rejects a browser attempt to name an instance', async () => {
+    const { fake, server } = await buildManagedApp(
+      { ...MANAGED, MANAGED_CONFIG_MODE: 'active' },
+      respondChat,
+    );
+    await request(server)
+      .get('/v1/client-config?appId=chat-ui&instance=chat-prod')
+      .expect(400);
+    expect(fake.calls).not.toContain('chat-prod');
+  });
+
+  it('makes no Core request per browser request', async () => {
+    const { fake, server } = await buildManagedApp(
+      { ...MANAGED, MANAGED_CONFIG_MODE: 'active' },
+      respondChat,
+    );
+    const before = fake.calls.length;
+    for (let index = 0; index < 5; index += 1) {
+      await request(server).get('/v1/client-config?appId=chat-ui').expect(200);
+    }
+    expect(fake.calls.length).toBe(before);
   });
 });

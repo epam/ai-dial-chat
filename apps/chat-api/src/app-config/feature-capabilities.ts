@@ -1,3 +1,5 @@
+import type { ConfigService } from '@nestjs/config';
+import type { EnvironmentVariables } from '../config/environment.config';
 import { FeatureKey } from './feature-flags/feature-key.enum';
 
 /**
@@ -66,3 +68,22 @@ export const deriveCapabilityFeature = (
   }
   return true;
 };
+
+/**
+ * Reads the capability inputs from the validated environment. Only local
+ * configuration supplies them; a managed snapshot never does.
+ */
+export const readCapabilityInputs = (
+  configService: ConfigService<EnvironmentVariables>,
+): CapabilityInputs => ({
+  asrModel: configService.get('ASR_MODEL', { infer: true }),
+  utilityModel: configService.get('UTILITY_MODEL', { infer: true }),
+  dialApiKey: configService.get('DIAL_API_KEY', { infer: true }),
+  llmConversationNamingEnabled: configService.get(
+    'LLM_CONVERSATION_NAMING_ENABLED',
+    { infer: true },
+  ),
+  footerHtmlMessage: configService.get('FOOTER_HTML_MESSAGE', {
+    infer: true,
+  }),
+});

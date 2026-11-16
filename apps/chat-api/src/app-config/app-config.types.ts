@@ -1,5 +1,6 @@
 import type { EnvironmentVariables } from '../config/environment.config';
 import type { KeyManagement } from './managed-config/managed-config.types';
+import type { ManagedResolutionView } from './managed-runtime/managed-runtime.types';
 
 /** The environment variables whose validated value is a list of strings. */
 export type StringListEnvironmentVariable = {
@@ -37,6 +38,11 @@ export interface AppConfigEvalContext {
   appId: string;
   userId?: string;
   roles?: string[];
+  /**
+   * Set only by `AppConfigService`: the managed snapshot captured once for
+   * this evaluation. A value a caller supplies is replaced.
+   */
+  managed?: ManagedResolutionView;
 }
 
 export interface ConfigProvider {

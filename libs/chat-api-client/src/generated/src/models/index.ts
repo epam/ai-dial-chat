@@ -1719,6 +1719,43 @@ export interface Check200Response {
 /**
  *
  * @export
+ * @interface ClientAppConfigDto
+ */
+export interface ClientAppConfigDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ClientAppConfigDto
+   */
+  schemaVersion: string;
+  /**
+   * Canonical SHA-256 of the schema the payload was published against.
+   * @type {string}
+   * @memberof ClientAppConfigDto
+   */
+  schemaSha256: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ClientAppConfigDto
+   */
+  revisionId: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ClientAppConfigDto
+   */
+  publishedAt: string;
+  /**
+   * The application's published payload. Chat does not validate it against the application's schema; the application does.
+   * @type {{ [key: string]: unknown }}
+   * @memberof ClientAppConfigDto
+   */
+  payload: { [key: string]: unknown };
+}
+/**
+ *
+ * @export
  * @interface ClientConfigDto
  */
 export interface ClientConfigDto {
@@ -1965,6 +2002,44 @@ export type ClientConfigDtoMcpAppThemeEnum =
 /**
  *
  * @export
+ * @interface ClientConfigManagedMetadataDto
+ */
+export interface ClientConfigManagedMetadataDto {
+  /**
+   * The Config Studio instance this deployment maps the application identifier to.
+   * @type {string}
+   * @memberof ClientConfigManagedMetadataDto
+   */
+  instanceId: string;
+  /**
+   * The managed state at resolution: `fresh` and `degraded` are usable; `stale`, `unavailable` and `not_published` mean no managed value or policy applied.
+   * @type {ManagedConfigState}
+   * @memberof ClientConfigManagedMetadataDto
+   */
+  state: ManagedConfigState;
+  /**
+   * The applied revision; present only in a usable state.
+   * @type {string}
+   * @memberof ClientConfigManagedMetadataDto
+   */
+  revisionId?: string;
+  /**
+   * The schema version of the applied revision; present only in a usable state.
+   * @type {string}
+   * @memberof ClientConfigManagedMetadataDto
+   */
+  schemaVersion?: string;
+  /**
+   * When the applied revision was published; present only in a usable state.
+   * @type {string}
+   * @memberof ClientConfigManagedMetadataDto
+   */
+  publishedAt?: string;
+}
+
+/**
+ *
+ * @export
  * @interface ClientConfigMetadataDto
  */
 export interface ClientConfigMetadataDto {
@@ -1980,6 +2055,18 @@ export interface ClientConfigMetadataDto {
    * @memberof ClientConfigMetadataDto
    */
   cacheTtlSeconds: number;
+  /**
+   * When the browser should refresh this response while its tab is visible. Present only when the deployment applies managed configuration; without it, the browser does not refresh on a timer.
+   * @type {string}
+   * @memberof ClientConfigMetadataDto
+   */
+  nextRefreshAt?: string;
+  /**
+   * The managed snapshot state behind this response, when the deployment applies managed configuration for this application identifier.
+   * @type {ClientConfigManagedMetadataDto}
+   * @memberof ClientConfigMetadataDto
+   */
+  managed?: ClientConfigManagedMetadataDto;
 }
 /**
  *
@@ -2011,6 +2098,12 @@ export interface ClientConfigResponseDto {
    * @memberof ClientConfigResponseDto
    */
   metadata?: ClientConfigMetadataDto;
+  /**
+   * The published Config Studio payload of an application other than chat-ui, unchanged. Present only when the deployment applies managed configuration and the snapshot is usable.
+   * @type {ClientAppConfigDto}
+   * @memberof ClientConfigResponseDto
+   */
+  appConfig?: ClientAppConfigDto;
 }
 /**
  *
@@ -6328,6 +6421,21 @@ export interface LocaleTextEntryDto {
    */
   description?: string;
 }
+
+/**
+ * The managed state at resolution: `fresh` and `degraded` are usable; `stale`, `unavailable` and `not_published` mean no managed value or policy applied.
+ * @export
+ */
+export const ManagedConfigState = {
+  Fresh: 'fresh',
+  Degraded: 'degraded',
+  Stale: 'stale',
+  Unavailable: 'unavailable',
+  NotPublished: 'not_published',
+} as const;
+export type ManagedConfigState =
+  (typeof ManagedConfigState)[keyof typeof ManagedConfigState];
+
 /**
  *
  * @export
