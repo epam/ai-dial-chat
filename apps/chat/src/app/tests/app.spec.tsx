@@ -128,6 +128,9 @@ vi.mock(
 vi.mock('../../components/AnnouncementBanner/AnnouncementBanner', () => ({
   default: () => null,
 }));
+vi.mock('../../components/OnboardingHints/OnboardingHints', () => ({
+  default: () => null,
+}));
 vi.mock('../../components/ChatLayout/ChatLayout', () => ({
   default: () => null,
 }));

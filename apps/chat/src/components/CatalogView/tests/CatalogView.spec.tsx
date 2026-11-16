@@ -754,6 +754,7 @@ describe('CatalogView', () => {
         announcementTitle: null,
         announcementDescription: null,
         announcements: [],
+        onboardingHints: [],
         welcomeScreenDescription: null,
         footerHtmlMessage: '',
         customVisualizers: [],

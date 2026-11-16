@@ -1,0 +1,284 @@
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type {
+  OnboardingTourProps,
+  OnboardingTourStep,
+} from '../../../models/onboarding-tour';
+import { OnboardingTourEndReason } from '../../../types/onboarding-tour-end-reason';
+import { OnboardingTour } from '../OnboardingTour';
+
+const byLabel = (label: string) => () => screen.queryByLabelText(label);
+
+const stepsFixture = (): OnboardingTourStep[] => [
+  {
+    id: 'new-chat',
+    title: 'Start a chat',
+    description: 'Start a chat body',
+    getTarget: byLabel('New chat'),
+  },
+  { id: 'composer', title: 'Ask here', getTarget: byLabel('Message') },
+];
+
+/* A host that clears the steps once the tour reports them finished. */
+const Host = ({
+  initialSteps,
+  onFinish,
+  ...tourProps
+}: Partial<OnboardingTourProps> & {
+  initialSteps: OnboardingTourStep[];
+  onFinish: (ids: string[], reason: OnboardingTourEndReason) => void;
+}) => {
+  const [steps, setSteps] = useState(initialSteps);
+  return (
+    <>
+      <button type="button" aria-label="New chat">
+        +
+      </button>
+      <textarea aria-label="Message" />
+      <OnboardingTour
+        {...tourProps}
+        steps={steps}
+        onFinish={(ids, reason) => {
+          onFinish(ids, reason);
+          setSteps([]);
+        }}
+      />
+    </>
+  );
+};
+
+describe('OnboardingTour', () => {
+  beforeEach(() => {
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+      top: 10,
+      left: 10,
+      width: 40,
+      height: 20,
+    } as DOMRect);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('docks the mobile sheet away from a target low on the screen', async () => {
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+      top: window.innerHeight - 40,
+      left: 10,
+      width: 40,
+      height: 20,
+    } as DOMRect);
+    render(<Host initialSteps={stepsFixture()} onFinish={vi.fn()} isMobile />);
+    await waitFor(() =>
+      expect(screen.getByRole('dialog').className).toContain('top-4'),
+    );
+    expect(screen.getByRole('dialog').className).not.toContain('bottom-4');
+  });
+
+  it('docks the mobile sheet at the bottom for a target high on the screen', () => {
+    render(<Host initialSteps={stepsFixture()} onFinish={vi.fn()} isMobile />);
+    expect(screen.getByRole('dialog').className).toContain('bottom-4');
+  });
+
+  it('renders nothing without steps', () => {
+    render(<OnboardingTour steps={[]} onFinish={vi.fn()} />);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('walks through the steps and reports them once done', async () => {
+    const user = userEvent.setup();
+    const onFinish = vi.fn();
+    render(<Host initialSteps={stepsFixture()} onFinish={onFinish} />);
+
+    const dialog = screen.getByRole('dialog', { name: 'Start a chat' });
+    expect(dialog.textContent).toContain('Step 1 of 2');
+    expect(dialog.getAttribute('aria-describedby')).toBeTruthy();
+    // eslint-disable-next-line testing-library/no-node-access -- focus placement has no query; the focused element is the assertion
+    await waitFor(() => expect(document.activeElement).toBe(dialog));
+
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('dialog', { name: 'Ask here' })).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+    expect(screen.getByRole('dialog', { name: 'Start a chat' })).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(onFinish).toHaveBeenCalledWith(
+      ['new-chat', 'composer'],
+      OnboardingTourEndReason.Done,
+    );
+  });
+
+  it('keeps the page usable while a card is open', async () => {
+    const user = userEvent.setup();
+    const onPageClick = vi.fn();
+    render(
+      <>
+        <button type="button" onClick={onPageClick}>
+          Page action
+        </button>
+        <Host initialSteps={stepsFixture()} onFinish={vi.fn()} />
+      </>,
+    );
+
+    const dialog = screen.getByRole('dialog', { name: 'Start a chat' });
+    expect(dialog.getAttribute('aria-modal')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Page action' }));
+    expect(onPageClick).toHaveBeenCalledOnce();
+    expect(screen.getByRole('dialog', { name: 'Start a chat' })).toBeTruthy();
+  });
+
+  it('reports only the steps shown when dismissed with Escape', async () => {
+    const user = userEvent.setup();
+    const onFinish = vi.fn();
+    render(<Host initialSteps={stepsFixture()} onFinish={onFinish} />);
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(onFinish).toHaveBeenCalledWith(
+      ['new-chat'],
+      OnboardingTourEndReason.Dismissed,
+    );
+  });
+
+  it('reports Skip tour as dismissed', async () => {
+    const user = userEvent.setup();
+    const onFinish = vi.fn();
+    render(<Host initialSteps={stepsFixture()} onFinish={onFinish} />);
+
+    await user.click(screen.getByRole('button', { name: 'Skip tour' }));
+    expect(onFinish).toHaveBeenCalledWith(
+      ['new-chat'],
+      OnboardingTourEndReason.Dismissed,
+    );
+  });
+
+  it('does not report a step skipped because its target was gone', async () => {
+    const user = userEvent.setup();
+    const onFinish = vi.fn();
+    const [newChat, composer] = stepsFixture();
+    render(
+      <Host
+        initialSteps={[
+          newChat,
+          { id: 'missing', title: 'Gone', getTarget: () => null },
+          composer,
+        ]}
+        onFinish={onFinish}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('dialog', { name: 'Ask here' })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    expect(onFinish).toHaveBeenCalledWith(
+      ['new-chat', 'composer'],
+      OnboardingTourEndReason.Done,
+    );
+  });
+
+  it('returns focus to the element focused before each tour', async () => {
+    const user = userEvent.setup();
+    const Tours = () => {
+      const [steps, setSteps] = useState<OnboardingTourStep[]>([]);
+      return (
+        <>
+          <button type="button" onClick={() => setSteps(stepsFixture())}>
+            First
+          </button>
+          <button type="button" onClick={() => setSteps(stepsFixture())}>
+            Second
+          </button>
+          <button type="button" aria-label="New chat" />
+          <textarea aria-label="Message" />
+          <OnboardingTour steps={steps} onFinish={() => setSteps([])} />
+        </>
+      );
+    };
+    render(<Tours />);
+
+    await user.click(screen.getByRole('button', { name: 'First' }));
+    await user.keyboard('{Escape}');
+
+    await waitFor(() =>
+      expect(
+        // eslint-disable-next-line testing-library/no-node-access -- focus placement has no query; the focused element is the assertion
+        document.activeElement,
+      ).toBe(screen.getByRole('button', { name: 'First' })),
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Second' }));
+    await user.keyboard('{Escape}');
+
+    await waitFor(() =>
+      expect(
+        // eslint-disable-next-line testing-library/no-node-access -- focus placement has no query; the focused element is the assertion
+        document.activeElement,
+      ).toBe(screen.getByRole('button', { name: 'Second' })),
+    );
+  });
+
+  it('skips a step whose target is gone', () => {
+    const [, composer] = stepsFixture();
+    render(
+      <Host
+        initialSteps={[
+          { id: 'missing', title: 'Gone', getTarget: () => null },
+          composer,
+        ]}
+        onFinish={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole('dialog', { name: 'Ask here' })).toBeTruthy();
+  });
+
+  it('finishes when no step has a target', () => {
+    const onFinish = vi.fn();
+    render(
+      <Host
+        initialSteps={[{ id: 'missing', title: 'Gone', getTarget: () => null }]}
+        onFinish={onFinish}
+      />,
+    );
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(onFinish).toHaveBeenCalledWith([], OnboardingTourEndReason.Done);
+  });
+
+  it('renders host labels', async () => {
+    const user = userEvent.setup();
+    render(
+      <Host
+        initialSteps={stepsFixture()}
+        onFinish={vi.fn()}
+        labels={{
+          stepCounter: (current, total) => `${current}/${total}`,
+          next: 'Weiter',
+          skip: 'Überspringen',
+          close: 'Schließen',
+        }}
+      />,
+    );
+    expect(screen.getByRole('dialog').textContent).toContain('1/2');
+    expect(screen.getByRole('button', { name: 'Überspringen' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Schließen' })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Weiter' }));
+    expect(screen.getByRole('dialog').textContent).toContain('2/2');
+  });
+
+  it('applies color overrides as custom properties', () => {
+    render(
+      <Host
+        initialSteps={stepsFixture()}
+        onFinish={vi.fn()}
+        colors={{ cardBackground: 'red' }}
+      />,
+    );
+    // eslint-disable-next-line testing-library/no-node-access -- the overlay root has no role; the custom property on it is the assertion
+    const root = screen.getByRole('dialog').parentElement;
+    expect(root?.style.getPropertyValue('--ot-card-bg')).toBe('red');
+  });
+});
