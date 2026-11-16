@@ -10,6 +10,12 @@ import { createDeploymentsContextValue } from '../../../context/tests/deployment
 import * as conversationsApi from '../../../server-api/conversations.api';
 import ConversationRoute from '../ConversationRoute';
 
+/* Components here render without AppConfigProvider; resolve icons without a themes base URL. */
+vi.mock('../../../hooks/catalog/useResolveCatalogIconUrl', async () => {
+  const { resolveCatalogIconUrl } = await import('../../../utils/icon-path');
+  return { useResolveCatalogIconUrl: () => resolveCatalogIconUrl };
+});
+
 const routerMocks = vi.hoisted(() => ({ navigate: vi.fn(), key: 'nav-1' }));
 
 vi.mock('react-router', () => ({

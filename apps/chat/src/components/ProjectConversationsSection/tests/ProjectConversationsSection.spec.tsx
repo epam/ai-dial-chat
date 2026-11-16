@@ -25,6 +25,12 @@ import {
 } from '../../../server-api/project-conversations.api';
 import ProjectConversationsSection from '../ProjectConversationsSection';
 
+/* Components here render without AppConfigProvider; resolve icons without a themes base URL. */
+vi.mock('../../../hooks/catalog/useResolveCatalogIconUrl', async () => {
+  const { resolveCatalogIconUrl } = await import('../../../utils/icon-path');
+  return { useResolveCatalogIconUrl: () => resolveCatalogIconUrl };
+});
+
 const { composerMenus } = vi.hoisted(() => ({
   composerMenus: {
     composerProps: {},

@@ -71,6 +71,8 @@ export interface MapDeploymentToCatalogItemOptions {
   isCustomAppsEditable?: boolean;
   activeLocale?: string;
   isToolsetTabEnabled?: boolean;
+  /** Base URL of the themes service, from the client config. */
+  themesBaseUrl?: string | null;
 }
 
 export const mapDeploymentToCatalogItem = (
@@ -83,6 +85,7 @@ export const mapDeploymentToCatalogItem = (
     isCustomAppsEditable,
     activeLocale = PRIMARY_LOCALE,
     isToolsetTabEnabled,
+    themesBaseUrl,
   }: MapDeploymentToCatalogItemOptions,
 ): CatalogItem => {
   const options: MapDeploymentToCatalogItemOptionsLib = {
@@ -92,7 +95,7 @@ export const mapDeploymentToCatalogItem = (
     isCustomAppsEditable,
     activeLocale,
     primaryLocale: PRIMARY_LOCALE,
-    resolveIconUrl: resolveCatalogIconUrl,
+    resolveIconUrl: (iconUrl) => resolveCatalogIconUrl(iconUrl, themesBaseUrl),
     folderLabels: buildDeploymentFolderLabels(t),
     entityDetailsLabels: buildEntityDetailsLabels(t),
     isToolsetTabEnabled,
@@ -105,6 +108,8 @@ export interface MapToolsetToCatalogItemOptions {
   isAdmin?: boolean;
   t?: TFunction;
   activeLocale?: string;
+  /** Base URL of the themes service, from the client config. */
+  themesBaseUrl?: string | null;
 }
 
 export const mapToolsetToCatalogItem = (
@@ -114,6 +119,7 @@ export const mapToolsetToCatalogItem = (
     isAdmin,
     t,
     activeLocale = PRIMARY_LOCALE,
+    themesBaseUrl,
   }: MapToolsetToCatalogItemOptions = {},
 ): CatalogItem => {
   const options: MapToolsetToCatalogItemOptionsLib = {
@@ -121,7 +127,7 @@ export const mapToolsetToCatalogItem = (
     isAdmin,
     activeLocale,
     primaryLocale: PRIMARY_LOCALE,
-    resolveIconUrl: resolveCatalogIconUrl,
+    resolveIconUrl: (iconUrl) => resolveCatalogIconUrl(iconUrl, themesBaseUrl),
     folderLabels: t != null ? buildDeploymentFolderLabels(t) : undefined,
   };
   return mapToolsetToCatalogItemLib(toolset, options);

@@ -42,6 +42,12 @@ import { toPanelConversationId } from '../../../utils/conversation-id-match';
 import { preloadPublishConversationPanel } from '../../PublishConversationPanelContainer/load-publish-conversation-panel';
 import ConversationPanelView from '../ConversationPanelView';
 
+/* Components here render without AppConfigProvider; resolve icons without a themes base URL. */
+vi.mock('../../../hooks/catalog/useResolveCatalogIconUrl', async () => {
+  const { resolveCatalogIconUrl } = await import('../../../utils/icon-path');
+  return { useResolveCatalogIconUrl: () => resolveCatalogIconUrl };
+});
+
 /* Counts renders of the mocked lib panel, which stays `memo`-wrapped like the real one. */
 const panelRenderCount = vi.hoisted(() => ({ current: 0 }));
 /* Props of every render of the mocked lib panel, to compare identities across renders. */

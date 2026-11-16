@@ -184,6 +184,7 @@ const CatalogView: FC<Props> = ({
   const isAdmin = user?.isAdmin ?? false;
   const { config } = useAppConfig();
   const dialCoreExternalUrl = config.dialCoreExternalUrl;
+  const themesBaseUrl = config.themesBaseUrl;
   const {
     items: deployments,
     selectedItemId,
@@ -303,6 +304,7 @@ const CatalogView: FC<Props> = ({
     toolsets,
     isAdmin,
     dialCoreExternalUrl,
+    themesBaseUrl,
     isToolsetsEnabled,
     isCustomAppsEnabled,
     isPromptsEnabled,
