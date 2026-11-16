@@ -14,10 +14,12 @@ import { CONFIG_DEFINITIONS } from '../config-registry/config-registry.constants
 import { AnnouncementSeverity } from '../dto/announcement-severity.enum';
 import { FeatureKey } from '../feature-flags/feature-key.enum';
 import { isManagedKey } from '../managed-config/key-management';
+import { ManagedConfigState } from '../managed-runtime/managed-runtime.types';
 import {
   buildResolutionStack,
   type RawEnvironment,
 } from './config-registry/env-resolution.fixtures';
+import { createInertManagedRuntime } from './managed-runtime/managed-runtime.fixtures';
 
 const ctx: AppConfigEvalContext = { appId: 'chat-ui' };
 
@@ -56,6 +58,7 @@ function makeService(
         CLIENT_CONFIG_APP_IDS: servedAppIds,
         MODEL_CATALOG_API_KEY: modelCatalogApiKey,
       }),
+      createInertManagedRuntime(),
     ),
     cacheManager,
     compositeProvider,
@@ -1671,8 +1674,12 @@ describe('AppConfigService', () => {
           (def) => def.visibility === 'client' && def.key !== 'app.version',
         ).map((def) => def.key),
       ]);
+      /* One context, captured once with its managed view, serves every key. */
+      const [, firstContext] = calls[0];
+      expect(firstContext).toEqual(expect.objectContaining(fullCtx));
+      expect(firstContext.managed).toBeDefined();
       for (const [, callContext] of calls) {
-        expect(callContext).toBe(fullCtx);
+        expect(callContext).toBe(firstContext);
       }
       const resolvedKeys = calls.map(([key]) => key);
       expect(resolvedKeys).not.toContain('utility.modelId');
@@ -2012,6 +2019,7 @@ describe('AppConfigService', () => {
           set: vi.fn(),
         } as never,
         new ConfigService(),
+        createInertManagedRuntime(),
       );
 
       const result = await service.resolveValue('asr.modelId', ctx);
@@ -2019,7 +2027,7 @@ describe('AppConfigService', () => {
       expect(result).toBe('test-value');
       expect(compositeProvider.resolve).toHaveBeenCalledWith(
         'asr.modelId',
-        ctx,
+        expect.objectContaining(ctx),
       );
     });
   });
@@ -2041,6 +2049,7 @@ describe('AppConfigService', () => {
           }),
         } as never,
         new ConfigService(held),
+        createInertManagedRuntime(),
       );
     };
     const restricted = { SCHEDULED_TASKS_ENABLED_ROLES: ['beta'] };
@@ -2185,5 +2194,52 @@ describe('AppConfigService', () => {
         expect(stripped).toEqual(withMetadata);
       },
     );
+  });
+});
+
+describe('AppConfigService managed view capture', () => {
+  it('captures the managed view once per client-config response', async () => {
+    const runtime = createInertManagedRuntime();
+    const capture = vi.spyOn(runtime, 'captureView');
+    const service = new AppConfigService(
+      { resolve: vi.fn(async () => undefined) } as never,
+      { get: vi.fn(), set: vi.fn() } as never,
+      new ConfigService(),
+      runtime,
+    );
+
+    await service.getClientConfig(ctx);
+
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(capture).toHaveBeenCalledWith('chat-ui');
+  });
+
+  it('replaces a managed view supplied by the caller', async () => {
+    const resolve = vi.fn(async () => true);
+    const service = new AppConfigService(
+      { resolve } as never,
+      { get: vi.fn(), set: vi.fn() } as never,
+      new ConfigService(),
+      createInertManagedRuntime(),
+    );
+    const forged = {
+      ...ctx,
+      managed: {
+        appId: 'chat-ui',
+        instanceId: 'chat-prod',
+        state: ManagedConfigState.Fresh,
+        now: 0,
+      },
+    };
+
+    await service.isEnabled(FeatureKey.UsageLimitsControl, forged);
+
+    const [, context] = resolve.mock.calls[0] as unknown as [
+      string,
+      AppConfigEvalContext,
+    ];
+    expect(context.managed).not.toBe(forged.managed);
+    expect(context.managed?.instanceId).toBeUndefined();
+    expect(context.managed?.state).toBe(ManagedConfigState.Unavailable);
   });
 });

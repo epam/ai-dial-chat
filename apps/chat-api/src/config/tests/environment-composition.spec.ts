@@ -8,6 +8,7 @@ import { FeatureFlagsEnv } from '../env/feature-flags.env';
 import { FilesEnv } from '../env/files.env';
 import { GenerationEnv } from '../env/generation.env';
 import { IntegrationsEnv } from '../env/integrations.env';
+import { ManagedConfigEnv } from '../env/managed-config.env';
 import { ServerEnv } from '../env/server.env';
 import { EnvironmentVariables } from '../environment.config';
 import { validate } from '../validation';
@@ -151,6 +152,14 @@ const ENV_VAR_NAMES = [
   'LIVE_CHAT_INTERACTION_ENABLED_ROLES',
   'LLM_CONVERSATION_NAMING_ENABLED',
   'LOG_LEVEL',
+  'MANAGED_CONFIG_ACTIVE_KEYS',
+  'MANAGED_CONFIG_API_KEY',
+  'MANAGED_CONFIG_CLIENT_REFRESH_SECONDS',
+  'MANAGED_CONFIG_ENVIRONMENT',
+  'MANAGED_CONFIG_INSTANCES',
+  'MANAGED_CONFIG_MAX_STALENESS_SECONDS',
+  'MANAGED_CONFIG_MODE',
+  'MANAGED_CONFIG_REFRESH_INTERVAL_SECONDS',
   'MAX_GENERATION_DURATION_MS',
   'MCP_APP_HOST_NAME',
   'MCP_APP_SANDBOX_URL',
@@ -229,6 +238,7 @@ const DOMAIN_CLASSES = [
   ClientUiEnv,
   FeatureFlagsEnv,
   IntegrationsEnv,
+  ManagedConfigEnv,
 ];
 
 const validBaseConfig = {

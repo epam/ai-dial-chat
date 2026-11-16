@@ -13,6 +13,12 @@ import { CONFIG_DEFINITIONS } from '../../config-registry/config-registry.consta
 import { EnvConfigProvider } from '../../config-registry/env-config.provider';
 import { StaticDefaultsProvider } from '../../config-registry/static-defaults.provider';
 import type { FeatureKey } from '../../feature-flags/feature-key.enum';
+import { ManagedRuntimeService } from '../../managed-runtime/managed-runtime.service';
+import {
+  createFakeClock,
+  createFakeReader,
+  createManagedProvider,
+} from '../managed-runtime/managed-runtime.fixtures';
 
 /** The variables `validate()` requires; none of them is a registry variable. */
 export const REQUIRED_ENV: Readonly<Record<string, string>> = {
@@ -59,14 +65,21 @@ export const buildResolutionStack = (raw: RawEnvironment): ResolutionStack => {
   const provider = new EnvConfigProvider(configService, explicitEnvironment);
   /* Nest calls this at boot; it logs the AVAILABLE_LOCALES deprecation. */
   provider.onModuleInit();
+  const managedRuntime = new ManagedRuntimeService(
+    configService,
+    createFakeReader().reader,
+    createFakeClock(),
+  );
   const composite = new CompositeConfigProvider(
     provider,
     new StaticDefaultsProvider(),
+    createManagedProvider(managedRuntime),
   );
   const service = new AppConfigService(
     composite,
     createMemoryCache() as never,
     configService,
+    managedRuntime,
   );
   return { provider, service };
 };

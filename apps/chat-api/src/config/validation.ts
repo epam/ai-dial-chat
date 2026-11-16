@@ -1,5 +1,6 @@
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
+import { validateManagedRuntimeEnvironment } from '../app-config/managed-runtime/managed-runtime.settings';
 import {
   PROJECT_ARCHIVE_READ_MAX_BYTES,
   PROJECT_MANIFEST_MAX_BYTES,
@@ -76,6 +77,13 @@ export const validate = (rawConfig: Record<string, unknown>) => {
   ) {
     throw new Error(
       `Environment validation failed:\nPROJECT_CONTEXT_TOTAL_MAX_BYTES must be at most ${PROJECT_CONTEXT_TOTAL_UPPER_BOUND} (the ${PROJECT_ARCHIVE_READ_MAX_BYTES}-byte project read limit minus the ${PROJECT_MANIFEST_MAX_BYTES}-byte PROJECT.md limit)`,
+    );
+  }
+
+  const managedErrors = validateManagedRuntimeEnvironment(validatedConfig);
+  if (managedErrors.length > 0) {
+    throw new Error(
+      `Environment validation failed:\n${managedErrors.join('\n')}`,
     );
   }
 

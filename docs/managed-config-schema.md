@@ -13,15 +13,16 @@ and no running Chat deployment.
 ## Export is not activation
 
 A managed `management` entry puts a key into the exported contract and nothing
-else. Chat has no managed-config reader today. No effective value,
-client-config field, feature-flag result or cache entry depends on it, and a
-test strips `management` from every registry entry and compares the results.
+else. No effective value, client-config field, feature-flag result or cache
+entry depends on it, and a test strips `management` from every registry entry
+and compares the results. Reading published snapshots is a separate deployment
+control, described in
+[Runtime reading and activation](#runtime-reading-and-activation).
 The one provider-level difference is that a blank managed text from ENV
 resolves to `undefined` instead of `""` (see
 [Related environment resolution](#related-environment-resolution)); the
-client-config field is `null` either way. Activation (shadow reads, then
-per-key opt-in) will be its own deployment control. That change must not treat
-a managed classification as permission to read.
+client-config field is `null` either way. A managed classification only makes
+a key eligible for `MANAGED_CONFIG_ACTIVE_KEYS`; it is never permission to read.
 
 The schema's root description tells operators that a deployment applies the
 values only once its managed reading is enabled.
@@ -236,16 +237,117 @@ map to its own Config Studio instance.
 - Only `chat-ui` has Chat-owned typed fields, and this repository publishes
   only the `chat-ui` schema. Launchpad, Models Garden and Config Studio own
   their contracts and schemas in their own repositories.
-- Today every served identifier receives the same ENV-driven `features` and
-  `config`, with its own echoed `appId` and its own cache entry.
+- Every served identifier receives the same `chat-ui` `features` and `config`,
+  with its own echoed `appId` and its own cache entry.
 - Server-side feature gates (`FeatureGuard`, text refinement) always evaluate
   as `chat-ui`, because they protect Chat BFF endpoints.
 
-The runtime reader does not exist yet. When it is added, `chat-ui` values will
-feed the existing typed fields under this schema, and a payload published for
-another served identifier will be returned unchanged in a new optional
-`appConfig` field. The BFF will check that payload's identity, revision and
-size but not its schema. The application validates it against its own contract.
+With managed reading `active`, `chat-ui` values feed the existing typed fields
+under this schema, and a payload published for another mapped identifier is
+returned unchanged in the optional `appConfig` field. The BFF checks that
+payload's identity, revision and size but not its schema. The application
+validates it against its own contract.
+
+## Runtime reading and activation
+
+The BFF reads the published snapshot of each served identifier that
+`MANAGED_CONFIG_INSTANCES` maps to a Config Studio instance, through DIAL Core
+only: `GET {DIAL_CORE_URL}/v1/deployments/<instance>/route/v1/published` with
+`MANAGED_CONFIG_API_KEY` and nothing from any user session. The key's Core role
+must be in the instance's `userRoles` and `readerRoles`. Variables are listed in
+[`apps/chat-api/README.md`](../apps/chat-api/README.md#environment-variables).
+
+### Modes
+
+| `MANAGED_CONFIG_MODE` | Effect                                                                                                                                                                |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `off` (default)       | No request is sent. Responses, cache keys, guards and browsers behave exactly as without managed configuration.                                                       |
+| `shadow`              | Snapshots are read, verified and compared with the effective values (`dial_chat_managed_config_shadow_comparison_total`, one log per revision). Nothing else changes. |
+| `active`              | The keys in `MANAGED_CONFIG_ACTIVE_KEYS` take managed values and policies; responses carry `metadata.managed`, `metadata.nextRefreshAt` and `appConfig`.              |
+
+A failure never changes the mode. Setting `off`, or removing a key, is the
+explicit rollback; it applies to the next request. Rolling back a configuration
+is done in Studio, as a new revision.
+
+### Reading and accepting a snapshot
+
+Each instance is read once at startup (bounded by the 5-second read deadline;
+a failure never blocks startup), then every
+`MANAGED_CONFIG_REFRESH_INTERVAL_SECONDS` plus up to 10 % jitter. Failures back
+off by doubling, up to five intervals. One request per instance is in flight;
+browser requests never reach Core. A response over 131,072 bytes is rejected.
+
+A candidate is accepted only when its `instanceId` and `appId` match the
+mapping (and `environment` matches `MANAGED_CONFIG_ENVIRONMENT` when set), its
+payload is at most 57,344 canonical bytes, and a revision seen before has
+unchanged hashes. A `chat-ui` snapshot must also name a supported
+`schemaVersion` with exactly its pinned `schemaSha256`, validate against the
+bundled artifact, and pass `calendar_date` and `window_order`. A foreign
+payload is not schema-validated. Any failure rejects the whole candidate and
+keeps the previous snapshot.
+
+### States
+
+Freshness is the time since the last successful verification, not since
+publication. The state is computed whenever a request reads it.
+
+| State           | Meaning                                                                | Active values           | Active features |
+| --------------- | ---------------------------------------------------------------------- | ----------------------- | --------------- |
+| `fresh`         | Verified by the last read, within the maximum staleness                | ENV → managed → default | gated           |
+| `degraded`      | Last read failed, was denied or rejected; still within staleness       | ENV → managed → default | gated           |
+| `stale`         | Older than `MANAGED_CONFIG_MAX_STALENESS_SECONDS`                      | ENV → default           | `false`         |
+| `unavailable`   | Nothing accepted yet (cold start, or every candidate rejected)         | ENV → default           | `false`         |
+| `not_published` | Studio has nothing published for the instance; the snapshot is dropped | ENV → default           | `false`         |
+
+A denied key behaves like an outage, is logged as an error, and keeps being
+retried with backoff. Persisted last-known-good is not kept: a pod that starts
+while Core or Studio is down serves defaults and closed features until its
+first successful read.
+
+### Values and feature gates
+
+An active config value resolves as explicit ENV → managed → registry default,
+through the same client-config normalization as an ENV value. An explicit ENV
+variable always wins, so remove it before activating its key (shadow mode
+reports such keys as `env_shadowed`).
+
+An active managed feature is `true` only when all of these hold: the
+configured bit (explicit ENV → managed `enabled` → default) is `true`; the
+snapshot is usable and has a policy for the key; the local capability exists;
+the availability window is active (`startsAt` inclusive, `endsAt` exclusive,
+evaluated on every request); targeting matches a verified session role
+(anonymous callers never match a role list); and the deployment role gate
+allows the caller. ENV `true` cannot bypass any gate; ENV `false` turns the
+feature off. `FeatureGuard` applies the same gates.
+
+### Caching and browser refresh
+
+In `active` mode the per-user response cache key also carries the instance,
+revision and state, and its TTL never passes the next availability boundary or
+the snapshot's staleness expiry. A visible tab refreshes at
+`metadata.nextRefreshAt` (`MANAGED_CONFIG_CLIENT_REFRESH_SECONDS`, 120 by
+default), and immediately on focus, return to the tab, back-forward-cache
+restore and reconnect. With the defaults, a visible tab shows a new publication
+within about four minutes, and about 70 seconds after it regains focus. Pods
+read independently, so for one interval they may serve different revisions.
+
+### Migration runbook
+
+1. Deploy with the mode `off`.
+2. Create the Studio instance with a reader role for the BFF's key; set
+   `MANAGED_CONFIG_INSTANCES`, `MANAGED_CONFIG_API_KEY` and
+   `MANAGED_CONFIG_MAX_STALENESS_SECONDS`.
+3. Switch to `shadow`; watch `dial_chat_managed_config_state` and the shadow
+   comparisons. Remove ENV variables reported as `env_shadowed` for keys about
+   to be activated.
+4. Switch to `active` with the first keys: `welcomeScreen.description`,
+   `usageLimits.warningThresholdPercent`, `fileManager.availableTabs`,
+   `announcement.title`, `announcement.description`.
+5. Add `announcement.items` only after a schema with announcement `severity`
+   is exported and supported. Add `features.usageLimitsControl` only after
+   Config Studio enforces `calendar_date` and `window_order`; until then a
+   publication with an invalid window is rejected here as a whole and the
+   instance goes `degraded`, then `stale`.
 
 ## Not authorized by this contract
 

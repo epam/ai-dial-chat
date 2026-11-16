@@ -3,6 +3,7 @@ import type { AppConfigEvalContext } from '../../app-config.types';
 import { CompositeConfigProvider } from '../../config-registry/composite-config.provider';
 import { EnvConfigProvider } from '../../config-registry/env-config.provider';
 import { StaticDefaultsProvider } from '../../config-registry/static-defaults.provider';
+import { createManagedProvider } from '../managed-runtime/managed-runtime.fixtures';
 
 const ctx: AppConfigEvalContext = { appId: 'chat-ui' };
 
@@ -17,7 +18,11 @@ function makeComposite(
     resolve: vi.fn(staticResolve),
   } as unknown as StaticDefaultsProvider;
   return {
-    composite: new CompositeConfigProvider(envProvider, staticProvider),
+    composite: new CompositeConfigProvider(
+      envProvider,
+      staticProvider,
+      createManagedProvider(),
+    ),
     envProvider,
     staticProvider,
   };
@@ -75,7 +80,11 @@ describe('CompositeConfigProvider', () => {
     const staticProvider = {
       resolve: vi.fn(async () => false),
     } as unknown as StaticDefaultsProvider;
-    const composite = new CompositeConfigProvider(envProvider, staticProvider);
+    const composite = new CompositeConfigProvider(
+      envProvider,
+      staticProvider,
+      createManagedProvider(),
+    );
 
     const loggerErrorSpy = vi.spyOn(composite['logger'], 'error');
     const loggerWarnSpy = vi.spyOn(composite['logger'], 'warn');
@@ -95,5 +104,41 @@ describe('CompositeConfigProvider', () => {
     const result = await composite.resolve('asr.modelId', ctx);
 
     expect(result).toBeUndefined();
+  });
+});
+
+describe('CompositeConfigProvider order', () => {
+  it('reads explicit environment, then managed configuration, then the registry default', () => {
+    const envProvider = {} as EnvConfigProvider;
+    const staticProvider = new StaticDefaultsProvider();
+    const managedProvider = createManagedProvider();
+    const composite = new CompositeConfigProvider(
+      envProvider,
+      staticProvider,
+      managedProvider,
+    );
+
+    expect(composite.providers).toEqual([
+      envProvider,
+      managedProvider,
+      staticProvider,
+    ]);
+  });
+
+  it('falls through an inert managed provider to the registry default', async () => {
+    const envProvider = {
+      resolve: vi.fn(async () => undefined),
+    } as unknown as EnvConfigProvider;
+    const composite = new CompositeConfigProvider(
+      envProvider,
+      new StaticDefaultsProvider(),
+      createManagedProvider(),
+    );
+
+    await expect(
+      composite.resolve('usageLimits.warningThresholdPercent', {
+        appId: 'chat-ui',
+      }),
+    ).resolves.toBe(75);
   });
 });

@@ -18,6 +18,7 @@ import { FeatureFlagsEnv } from './env/feature-flags.env';
 import { FilesEnv } from './env/files.env';
 import { GenerationEnv } from './env/generation.env';
 import { IntegrationsEnv } from './env/integrations.env';
+import { ManagedConfigEnv } from './env/managed-config.env';
 import { ServerEnv } from './env/server.env';
 
 export { IFRAME_ORIGIN_PATTERN } from './env/env-patterns';
@@ -65,6 +66,7 @@ export class EnvironmentVariables extends IntersectionType(
   ClientUiEnv,
   FeatureFlagsEnv,
   IntegrationsEnv,
+  ManagedConfigEnv,
 ) {
   @IsOptional()
   @IsString()
