@@ -1077,6 +1077,33 @@ describe('ApplicationsService', () => {
         expect(saveCustomApplicationSpy).toHaveBeenCalledOnce();
       });
 
+      it('reads the snake_case name and version DIAL Core answers with and writes only the camelCase keys', async () => {
+        const { service, deploymentsService } = makeService();
+        const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+          service,
+          okResponse({
+            display_name: 'My App',
+            display_version: '0.0.1',
+            description: 'Old description',
+          }),
+        );
+
+        await service.updateApplication('user1', 'token', id, {
+          name: 'My App',
+          version: '0.0.1',
+          description: 'New description',
+        });
+
+        expect(deploymentsService.listDeployments).not.toHaveBeenCalled();
+        const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+        expect(sentBody).toMatchObject({
+          displayName: 'My App',
+          displayVersion: '0.0.1',
+        });
+        expect(sentBody).not.toHaveProperty('display_name');
+        expect(sentBody).not.toHaveProperty('display_version');
+      });
+
       it('rejects a rename into the identity of another own agent and writes nothing', async () => {
         const { service, deploymentsService } = makeService();
         const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(service);
@@ -1304,6 +1331,40 @@ describe('ApplicationsService', () => {
         displayName: updateBody.name,
         application_properties: existingApp.application_properties,
       });
+    });
+
+    it('removes the stored icon when DIAL Core answers it as icon_url and iconUrl is an empty string', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+        service,
+        okResponse({ ...existingApp, icon_url: 'files/test-bucket/icon.png' }),
+      );
+
+      await service.updateApplication('user1', 'token', id, {
+        ...updateBody,
+        iconUrl: '',
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).not.toHaveProperty('iconUrl');
+      expect(sentBody).not.toHaveProperty('icon_url');
+    });
+
+    it('replaces stored description_keywords with the camelCase topics only', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+        service,
+        okResponse({ ...existingApp, description_keywords: ['old'] }),
+      );
+
+      await service.updateApplication('user1', 'token', id, {
+        ...updateBody,
+        topics: ['new'],
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({ descriptionKeywords: ['new'] });
+      expect(sentBody).not.toHaveProperty('description_keywords');
     });
 
     it('keeps the stored icon when iconUrl is omitted', async () => {
@@ -2095,7 +2156,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
         response: { status: 200 },
       } as never);
       client(service).getCustomApplication.mockResolvedValue(
-        appResponse({ displayVersion: '1.0.0', description: 'pre' }, 'e1'),
+        appResponse({ display_version: '1.0.0', description: 'pre' }, 'e1'),
       );
       client(service).saveCustomApplication.mockResolvedValue(okResponse({}));
 
@@ -2185,7 +2246,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
         response: { status: 200 },
       } as never);
       client(service).getCustomApplication.mockResolvedValue(
-        appResponse({ displayVersion: '1.0.0' }, 'e1'),
+        appResponse({ display_version: '1.0.0' }, 'e1'),
       );
       client(service).saveCustomApplication.mockResolvedValue(okResponse({}));
 
@@ -2206,7 +2267,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
         response: { status: 200 },
       } as never);
       client(service).getCustomApplication.mockResolvedValue(
-        appResponse({ displayVersion: '1.0.0' }, 'e1'),
+        appResponse({ display_version: '1.0.0' }, 'e1'),
       );
       client(service).saveCustomApplication.mockResolvedValue(errResponse(500));
       client(service).deleteCustomApplication.mockResolvedValue(
@@ -2278,11 +2339,11 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
         Promise.resolve(
           path === 'agent__1.0.0'
             ? appResponse(
-                { displayVersion: '1.0.0', description: 'edited' },
+                { display_version: '1.0.0', description: 'edited' },
                 'src',
               )
             : appResponse(
-                { displayVersion: '1.1.0', description: 'pre' },
+                { display_version: '1.1.0', description: 'pre' },
                 'snap',
               ),
         )) as never);
@@ -2326,11 +2387,11 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
         Promise.resolve(
           path === 'agent__1.0.0'
             ? appResponse(
-                { displayVersion: '1.0.0', description: 'edited' },
+                { display_version: '1.0.0', description: 'edited' },
                 'src',
               )
             : appResponse(
-                { displayVersion: '1.1.0', description: 'pre' },
+                { display_version: '1.1.0', description: 'pre' },
                 'snap',
               ),
         )) as never);
@@ -2366,7 +2427,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
       const { service } = makeService();
       withBucket(service);
       client(service).getCustomApplication.mockResolvedValue(
-        appResponse({ displayVersion: '1.0.0' }, 'e'),
+        appResponse({ display_version: '1.0.0' }, 'e'),
       );
       client(service).saveCustomApplication.mockResolvedValue(errResponse(500));
 
@@ -2390,7 +2451,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
       const { service } = makeService();
       withBucket(service);
       client(service).getCustomApplication.mockResolvedValue(
-        appResponse({ displayVersion: '1.0.0' }, 'e'),
+        appResponse({ display_version: '1.0.0' }, 'e'),
       );
       client(service).saveCustomApplication.mockResolvedValue(errResponse(412));
 
