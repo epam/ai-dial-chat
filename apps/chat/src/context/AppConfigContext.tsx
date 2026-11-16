@@ -66,6 +66,8 @@ export interface AppConfigState {
     mcpAppTheme: 'light' | 'dark' | null;
     mcpAppUserAgent: string | null;
     mcpAppHostName: string | null;
+    /** Base URL of the themes service; absolute icon URLs under it load through the icon proxy. */
+    themesBaseUrl: string | null;
     fileManagerTabs: string[];
     overlayEnabled: boolean;
     overlayAllowedOrigins: string[];
@@ -134,6 +136,7 @@ const INITIAL_STATE: ProviderState = {
     mcpAppTheme: null,
     mcpAppUserAgent: null,
     mcpAppHostName: null,
+    themesBaseUrl: null,
     fileManagerTabs: DEFAULT_FILE_MANAGER_TABS,
     overlayEnabled: false,
     overlayAllowedOrigins: [],
@@ -206,6 +209,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             mcpAppTheme: response.config?.mcpAppTheme ?? null,
             mcpAppUserAgent: response.config?.mcpAppUserAgent ?? null,
             mcpAppHostName: response.config?.mcpAppHostName ?? null,
+            themesBaseUrl: response.config?.themesBaseUrl ?? null,
             fileManagerTabs:
               response.config?.fileManagerTabs ?? DEFAULT_FILE_MANAGER_TABS,
             overlayEnabled: response.config?.overlayEnabled ?? false,

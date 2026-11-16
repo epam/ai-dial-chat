@@ -37,19 +37,44 @@ const isAbsoluteUrl = (url: string): boolean => {
   );
 };
 
+/* The icon names `GET /api/themes/icon` accepts. */
+const THEME_ICON_NAME_PATTERN = /^[a-zA-Z0-9_.-]+$/;
+
+/*
+ * Returns the theme icon name when `iconUrl` points straight at a file under
+ * the themes service, so it can load through the same proxy URL as the
+ * theme-relative form of that icon.
+ */
+const getThemesHostIconName = (
+  iconUrl: string,
+  themesBaseUrl: string | null | undefined,
+): string | undefined => {
+  if (!themesBaseUrl) return undefined;
+  const prefix = `${themesBaseUrl}/`;
+  if (!iconUrl.startsWith(prefix)) return undefined;
+  const iconName = iconUrl.slice(prefix.length);
+  return THEME_ICON_NAME_PATTERN.test(iconName) ? iconName : undefined;
+};
+
 /**
  * Resolves a raw DIAL `icon_url` value to a URL usable in an <img> src.
  *
  * DIAL returns three formats:
- *  - Absolute URLs → returned as-is
+ *  - Absolute URLs → returned as-is, except a file directly under
+ *    `themesBaseUrl`, which maps to the same proxy URL as its theme-relative
+ *    name so the browser fetches that icon once
  *  - DIAL file IDs (`files/{bucket}/{path}`) → proxied via BFF download endpoint
  *  - Theme-relative names → mapped to /api/themes/icon?iconName={encoded}
  */
 export const resolveCatalogIconUrl = (
   iconUrl: string | undefined,
+  themesBaseUrl?: string | null,
 ): string | undefined => {
   if (!iconUrl) return undefined;
-  if (isAbsoluteUrl(iconUrl)) return iconUrl;
+  if (isAbsoluteUrl(iconUrl)) {
+    const themesIconName = getThemesHostIconName(iconUrl, themesBaseUrl);
+    return themesIconName != null ? getIconPath(themesIconName) : iconUrl;
+  }
   if (isDialFileId(iconUrl)) return resolveDialFileDownloadUrl(iconUrl);
   return getIconPath(iconUrl);
 };

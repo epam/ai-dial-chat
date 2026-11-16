@@ -14,6 +14,12 @@ import { createNotificationContextValue } from '../../../context/tests/notificat
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import ConversationPanelView from '../ConversationPanelView';
 
+/* Components here render without AppConfigProvider; resolve icons without a themes base URL. */
+vi.mock('../../../hooks/catalog/useResolveCatalogIconUrl', async () => {
+  const { resolveCatalogIconUrl } = await import('../../../utils/icon-path');
+  return { useResolveCatalogIconUrl: () => resolveCatalogIconUrl };
+});
+
 /* The lib list and its header are replaced by stubs that expose the props the
    view hands them, so the tests assert the wiring, not the lib's own rendering. */
 const sectionProps = vi.hoisted(

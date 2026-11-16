@@ -887,6 +887,34 @@ GET /api/v1/client-config?appId=chat-ui
 - **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called
 - **THEN** `response.config.modelCatalogAvailable` is `false`
 
+### Requirement: client-config exposes the themes base URL
+
+`GET /api/v1/client-config` SHALL include `config.themesBaseUrl: string` when `THEMES_CONFIG_URL` is configured: the value trimmed, without trailing slashes. It SHALL be omitted when the variable is unset or blank. DIAL can list one theme icon in two forms — a theme-relative name (`gpt4.svg`) and an absolute URL on the themes host — and a browser fetches each URL separately, so the frontend uses this value to load both forms through one `GET /api/themes/icon` URL.
+
+- `AppConfigService.getClientConfig` (`apps/chat-api/src/app-config/app-config.service.ts`) SHALL assemble the field itself from `ConfigService`, as it does `modelCatalogAvailable`. `MappedClientConfig` SHALL omit it, and the mapper spec's list of service-assembled fields SHALL include it. It is appended last, so every existing field keeps its position, and a response without it keeps the previous key list.
+- `ClientConfigDto` SHALL declare it with `@ApiPropertyOptional({ type: String })`. The generated `ClientConfigDto` in `@epam/ai-dial-chat-api-client` gains `themesBaseUrl?: string`.
+- The value SHALL NOT vary by user, role or `appId`. It is cached as part of the existing client-config entry (60-second TTL, unchanged key).
+- In `apps/chat`, `resolveCatalogIconUrl` (`apps/chat/src/utils/icon-path.ts`) SHALL map an absolute icon URL of the form `<themesBaseUrl>/<name>`, where `<name>` matches the icon proxy's `^[a-zA-Z0-9_.-]+$`, to `/api/themes/icon?iconName=<name>`. Every other absolute URL, and every URL while the base URL is unknown, is returned unchanged. Deployment, toolset, conversation and usage icons resolve through `useResolveCatalogIconUrl` (`apps/chat/src/hooks/catalog/useResolveCatalogIconUrl.ts`) or the catalog mapper's `themesBaseUrl` option. Only the displayed URL changes; the stored `icon_url` and the value an editor saves are untouched.
+- No i18n string, UI, RTL impact or feature gate is introduced.
+
+#### Scenario: Themes URL configured
+
+- **GIVEN** `THEMES_CONFIG_URL=https://themes.example.com/`
+- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called
+- **THEN** `response.config.themesBaseUrl` is `https://themes.example.com`
+
+#### Scenario: Themes URL unset or blank
+
+- **GIVEN** `THEMES_CONFIG_URL` is unset, or is `"  "`
+- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called
+- **THEN** `response.config` has no `themesBaseUrl` key
+
+#### Scenario: Both forms of one icon load from one URL
+
+- **GIVEN** `themesBaseUrl` is `https://themes.example.com`, one model lists `icon_url: gpt4.svg` and another `icon_url: https://themes.example.com/gpt4.svg`
+- **WHEN** the catalog renders both
+- **THEN** both icons use `/api/themes/icon?iconName=gpt4.svg`
+
 ### Requirement: The deployment declares the application identifiers it serves
 
 The backend SHALL read `CLIENT_CONFIG_APP_IDS`, a comma-separated list of application identifiers declared on `ClientUiEnv` in `apps/chat-api/src/config/env/client-ui.env.ts`. Entries SHALL be trimmed, de-duplicated preserving order, and each SHALL match `^[a-z0-9][a-z0-9-]{0,62}$`. A non-matching entry SHALL fail startup with an `Environment validation failed:` message naming the variable. An absent, empty or blank value SHALL mean `["chat-ui"]`. The list SHALL be at most 16 entries. Only `GET /api/v1/client-config` uses the list. Server-side feature evaluation (`FeatureGuard`, text refinement) SHALL keep evaluating with `appId` `chat-ui`, because those gates protect Chat BFF endpoints whichever frontend a deployment serves.

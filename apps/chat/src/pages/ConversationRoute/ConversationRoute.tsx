@@ -53,6 +53,7 @@ import {
 } from '../../context/IsolatedModelViewContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
+import { useResolveCatalogIconUrl } from '../../hooks/catalog/useResolveCatalogIconUrl';
 import { useComposerMenus } from '../../hooks/conversation/useComposerMenus';
 import { useCustomViewer } from '../../hooks/custom-viewer/useCustomViewer';
 import { useLanguage } from '../../hooks/language/useLanguage';
@@ -63,7 +64,6 @@ import {
   saveConversation,
 } from '../../server-api/conversations.api';
 import { ROUTES } from '../../types/routes';
-import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
 
 /*
@@ -322,6 +322,7 @@ const ConversationRoute: FC = () => {
     },
   );
 
+  const resolveCatalogIconUrl = useResolveCatalogIconUrl();
   const deploymentItems: DeploymentItem[] = useMemo(
     () =>
       items.map(
@@ -341,7 +342,7 @@ const ConversationRoute: FC = () => {
           inputAttachmentTypes,
         }),
       ),
-    [items, language],
+    [items, language, resolveCatalogIconUrl],
   );
 
   const {

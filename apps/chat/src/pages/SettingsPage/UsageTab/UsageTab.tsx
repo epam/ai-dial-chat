@@ -22,9 +22,9 @@ import { useTranslation } from 'react-i18next';
 import { UsageI18nKeys } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
+import { useResolveCatalogIconUrl } from '../../../hooks/catalog/useResolveCatalogIconUrl';
 import { useLanguage } from '../../../hooks/language/useLanguage';
 import { getUserUsage } from '../../../server-api/user-limits';
-import { resolveCatalogIconUrl } from '../../../utils/icon-path';
 import { resolveLocalizedText } from '../../../utils/locale';
 
 /*
@@ -210,6 +210,7 @@ const UsageTab: FC = () => {
     [t],
   );
 
+  const resolveCatalogIconUrl = useResolveCatalogIconUrl();
   const modelLimitRows = useMemo(
     () =>
       mapUserUsageToModelLimits(
@@ -220,7 +221,7 @@ const UsageTab: FC = () => {
         resolveCatalogIconUrl,
         resolveLocalizedText,
       ),
-    [usage, deploymentItems, activeLocale, t],
+    [usage, deploymentItems, activeLocale, t, resolveCatalogIconUrl],
   );
   const modelLimitPeriodStatuses = useMemo(
     () =>
