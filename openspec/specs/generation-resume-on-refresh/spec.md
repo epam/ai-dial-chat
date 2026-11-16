@@ -104,7 +104,7 @@ The fallback watch path SHALL be bounded by a module-private timeout constant (`
 
 ### Requirement: Resume watch re-reads when a live foreground marker expires
 
-Expiry of a `foregroundGeneration` marker writes nothing, so the watch receives no update for it; a Stop only shortens the expiry (`foreground-generation-lock` "A Stop from any writer is stored on the marker"). While the fallback watch is open and the last read of the conversation holds a live marker, the hook SHALL re-read the conversation once when that marker expires (its `expiresAt` plus a one-second grace, never sooner than one second from the read), and SHALL schedule the same re-read for the newest `expiresAt` every later read reports. When a re-read no longer awaits resume, the hook SHALL abort the watch and settle as for any qualifying update. When the marker is still live, the chat SHALL stay blocked exactly as before.
+Expiry of a `foregroundGeneration` marker writes nothing, so the watch receives no update for it; a Stop only shortens the expiry (`foreground-generation-lock` "A Stop from any writer is stored on the marker"). While the fallback watch is open and the last read of the conversation holds a live marker, the hook SHALL re-read the conversation once when that marker expires (its `expiresAt` plus a one-second grace, never sooner than one second from the read), and SHALL schedule the same re-read for the newest `expiresAt` every later read reports. When a re-read no longer awaits resume, the hook SHALL abort the watch and settle as for any qualifying update. When the marker is still live, the chat SHALL stay blocked exactly as before. When the marker has expired and only an empty assistant placeholder is left, the hook SHALL release the chat and label the placeholder as interrupted, as at the start of the watch, while the watch stays open for a late answer.
 
 The re-read SHALL NOT start for a conversation without a live marker, SHALL NOT release the chat while the marker is live, and SHALL do nothing once another generation owns the path or the resume has settled.
 
@@ -122,6 +122,11 @@ The re-read SHALL NOT start for a conversation without a live marker, SHALL NOT 
 
 - **WHEN** the re-read still returns a live marker
 - **THEN** the path stays in `streamingPaths` and no interrupted text is shown
+
+#### Scenario: The marker expired and only an empty placeholder is left
+
+- **WHEN** the re-read finds no live marker and the last message is an empty assistant placeholder
+- **THEN** the hook labels it as interrupted and removes the path from `streamingPaths`, and keeps watching for a late answer
 
 #### Scenario: No marker, no re-read
 

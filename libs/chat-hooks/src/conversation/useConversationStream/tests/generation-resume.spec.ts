@@ -950,6 +950,104 @@ describe('createResumeIfAwaitingGeneration — live marker expiry', () => {
     expect(removeStreamingPath).not.toHaveBeenCalled();
   });
 
+  it('releases the chat as interrupted when the marker expired and only an empty placeholder is left', async () => {
+    vi.useFakeTimers({ now: NOW });
+    const getConversation = vi
+      .fn()
+      .mockResolvedValueOnce(withMarker(NOW + 60_000))
+      .mockResolvedValue(makeConversation());
+    const { resume, setConversation, removeStreamingPath } =
+      makeHarness(getConversation);
+
+    resume(CONVERSATION_ID, withMarker(NOW + 60_000), {
+      shouldMarkOrphanedAsInterrupted: true,
+    });
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(removeStreamingPath).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(31_500);
+
+    expect(removeStreamingPath).toHaveBeenCalledOnce();
+    const update = setConversation.mock.calls.at(-1)?.[0] as (
+      prev: Conversation,
+    ) => Conversation;
+    expect(
+      update(makeConversation()).messages[1].streamErrorMessage,
+    ).toBeTruthy();
+  });
+
+  it('keeps the chat blocked after the marker expired when orphans are not marked as interrupted', async () => {
+    vi.useFakeTimers({ now: NOW });
+    const getConversation = vi
+      .fn()
+      .mockResolvedValueOnce(withMarker(NOW + 60_000))
+      .mockResolvedValue(makeConversation());
+    const { resume, removeStreamingPath } = makeHarness(getConversation);
+
+    resume(CONVERSATION_ID, withMarker(NOW + 60_000));
+    await vi.advanceTimersByTimeAsync(62_000);
+
+    expect(removeStreamingPath).not.toHaveBeenCalled();
+  });
+
+  it('follows the marker the caller saw when the first re-read of the watch fails', async () => {
+    vi.useFakeTimers({ now: NOW });
+    const settled = settledConversation();
+    const getConversation = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValue(settled);
+    const { resume, setConversation, removeStreamingPath } =
+      makeHarness(getConversation);
+
+    resume(CONVERSATION_ID, withMarker(NOW + 60_000));
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(removeStreamingPath).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(31_500);
+
+    expect(getConversation).toHaveBeenCalledTimes(2);
+    expect(setConversation).toHaveBeenCalledWith(settled);
+    expect(removeStreamingPath).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the timer a watch update scheduled while an expiry re-read is in flight', async () => {
+    vi.useFakeTimers({ now: NOW });
+    const settled = settledConversation();
+    let resolveInFlight!: (conversation: Conversation) => void;
+    const getConversation = vi
+      .fn()
+      .mockResolvedValueOnce(withMarker(NOW + 60_000))
+      .mockImplementationOnce(
+        () =>
+          new Promise<Conversation>((resolve) => {
+            resolveInFlight = resolve;
+          }),
+      )
+      .mockResolvedValueOnce(withMarker(NOW + 120_000))
+      .mockResolvedValue(settled);
+    const { resume, setConversation, removeStreamingPath, emitUpdate } =
+      makeHarness(getConversation);
+
+    resume(CONVERSATION_ID, withMarker(NOW + 60_000));
+    await vi.advanceTimersByTimeAsync(61_500);
+    expect(getConversation).toHaveBeenCalledTimes(2);
+
+    emitUpdate();
+    await vi.advanceTimersByTimeAsync(10);
+    expect(getConversation).toHaveBeenCalledTimes(3);
+
+    resolveInFlight(withMarker(NOW + 60_000));
+    await vi.advanceTimersByTimeAsync(10);
+    expect(removeStreamingPath).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(61_000);
+
+    expect(getConversation).toHaveBeenCalledTimes(4);
+    expect(setConversation).toHaveBeenCalledWith(settled);
+    expect(removeStreamingPath).toHaveBeenCalledOnce();
+  });
+
   it('does not re-read on a timer when the placeholder carries no live marker', async () => {
     vi.useFakeTimers({ now: NOW });
     const getConversation = vi.fn().mockResolvedValue(makeConversation());

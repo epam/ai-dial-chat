@@ -564,7 +564,11 @@ export const createResumeIfAwaitingGeneration = ({
         reloaded: Conversation,
         isFromExpiryRecheck = false,
       ) => {
-        window.clearTimeout(expiryTimerId);
+        /*
+         * A re-read's own timer has already fired, and a newer timer may belong
+         * to a watch update that arrived while that read was in flight.
+         */
+        if (!isFromExpiryRecheck) window.clearTimeout(expiryTimerId);
         const markerIndex = findLiveForegroundMessageIndex(reloaded);
         if (markerIndex === -1) return;
         const expiresAt =
@@ -573,6 +577,7 @@ export const createResumeIfAwaitingGeneration = ({
         /* A re-read that finds the same expiry still live is left to the watch, so it cannot loop. */
         if (isFromExpiryRecheck && expiresAt <= scheduledExpiresAt) return;
         scheduledExpiresAt = expiresAt;
+        window.clearTimeout(expiryTimerId);
         const delay = Math.max(
           expiresAt - Date.now() + FOREGROUND_EXPIRY_RECHECK_GRACE_MS,
           FOREGROUND_EXPIRY_RECHECK_GRACE_MS,
@@ -591,13 +596,17 @@ export const createResumeIfAwaitingGeneration = ({
               finish(result);
               return;
             }
+            /* The marker is gone but no answer was stored: release the chat as at the start of the watch. */
+            if (isOrphanedPlaceholder(result)) showInterrupted();
             scheduleExpiryRecheck(result, true);
           } catch {
             // Keep watching: a later update or the watch timeout resolves it.
           }
         }, delay);
       };
+      /* Without the first re-read, the marker the caller saw still gives an expiry to follow. */
       if (initialCheck) scheduleExpiryRecheck(initialCheck);
+      else if (liveForegroundIndex !== -1) scheduleExpiryRecheck(conversation);
 
       try {
         await readSseEvents<{ action?: string }>(stream, async (event) => {
@@ -620,7 +629,7 @@ export const createResumeIfAwaitingGeneration = ({
           return false;
         });
       } finally {
-        clearTimeout(timeoutId);
+        window.clearTimeout(timeoutId);
         window.clearTimeout(expiryTimerId);
       }
 
