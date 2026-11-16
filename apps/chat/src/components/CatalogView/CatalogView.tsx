@@ -14,12 +14,12 @@ import {
   findSchemaDisplayName,
   getOrgUnitNamespace,
   resolveFavoriteEntityType,
+  toPublishDisabledReason,
   toPublishEntityType,
   type ToolsetCredentialsLabels,
   useCatalogEditNavigation,
   useCatalogToolsetCredentials,
 } from '@epam/ai-dial-chat-hooks';
-import { toPublishDisabledReason } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { SkillContentFileTree } from '@epam/ai-dial-skills';

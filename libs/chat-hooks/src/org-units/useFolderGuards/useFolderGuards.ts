@@ -33,7 +33,7 @@ export interface UseFolderGuardsParams {
   orgUnits: FolderGuardsOrgUnits;
   /** Re-read already loaded rights each time the panel opens, so a right that changed since is honoured. Defaults to `false`. */
   shouldRefreshOnOpen?: boolean;
-  /** The host's translated reason shown for a disabled folder; without it `getDisabledReason` is `undefined`. */
+  /** The host's translated reason shown for a disabled folder; without it `getDisabledReason` is `undefined`. Keep its identity stable (memoise it): a new function each render rebuilds the guards and so re-renders the folder tree. */
   getReason?: (folderPath: string[]) => string;
 }
 
@@ -67,14 +67,14 @@ export const useFolderGuards = ({
   }, [status, refreshUnits]);
 
   useEffect(() => {
-    if (isActive) ensureUnits();
-  }, [isActive, ensureUnits]);
+    if (isActive && isEnabled) ensureUnits();
+  }, [isActive, isEnabled, ensureUnits]);
 
   useEffect(() => {
-    if (!isActive || !shouldRefreshOnOpen) return;
+    if (!isActive || !isEnabled || !shouldRefreshOnOpen) return;
     const { status: current, refreshUnits: refresh } = latestRef.current;
     if (current === OrgUnitsStatus.Ready) refresh();
-  }, [isActive, shouldRefreshOnOpen]);
+  }, [isActive, isEnabled, shouldRefreshOnOpen]);
 
   return useMemo(
     () =>

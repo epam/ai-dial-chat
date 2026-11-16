@@ -199,7 +199,7 @@ describe('useResourceSaveNotification', () => {
       );
     });
 
-    it('says the folder already has an item with this name when the direct write conflicts', async () => {
+    it('says the name is already taken in the folder when the direct write conflicts', async () => {
       vi.mocked(getApiErrorDetails).mockResolvedValue({
         message: 'Target resource already exists',
         status: 409,

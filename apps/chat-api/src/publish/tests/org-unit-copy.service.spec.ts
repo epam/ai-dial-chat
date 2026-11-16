@@ -74,6 +74,34 @@ describe('OrgUnitCopyService', () => {
     vi.clearAllMocks();
   });
 
+  it('copies an own application into the public org-unit folder and clears its caches', async () => {
+    const { service, copyResource, applicationsService } = makeService();
+
+    const result = await copy(service, { folderPath: 'Acme/US Risk' });
+
+    expect(result).toEqual({
+      id: 'applications/public/Acme/US%20Risk/agent__1.0.0',
+    });
+    expect(copyResource).toHaveBeenCalledWith({
+      headers: { Authorization: 'Bearer token' },
+      body: {
+        sourceUrl: ENTITY_ID,
+        destinationUrl: 'applications/public/Acme/US%20Risk/agent__1.0.0',
+        overwrite: false,
+      },
+    });
+    expect(applicationsService.resolveOwnApplication).toHaveBeenCalledWith(
+      { Authorization: 'Bearer token' },
+      ENTITY_ID,
+      'b1',
+    );
+    expect(applicationsService.invalidateAfterWrite).toHaveBeenCalledWith(
+      'user1',
+      [ENTITY_ID, 'applications/public/Acme/US%20Risk/agent__1.0.0'],
+      expect.any(String),
+    );
+  });
+
   it('rejects an entity outside the caller bucket and never calls Core', async () => {
     const { service, copyResource, applicationsService } = makeService();
     applicationsService.resolveOwnApplication.mockRejectedValue(
@@ -93,6 +121,14 @@ describe('OrgUnitCopyService', () => {
     copyResource.mockResolvedValue(err(status));
 
     await expect(copy(service)).rejects.toBeInstanceOf(type);
+    expect(applicationsService.invalidateAfterWrite).not.toHaveBeenCalled();
+  });
+
+  it("maps Core's own 409 to a conflict", async () => {
+    const { service, copyResource, applicationsService } = makeService();
+    copyResource.mockResolvedValue(err(409));
+
+    await expect(copy(service)).rejects.toBeInstanceOf(ConflictException);
     expect(applicationsService.invalidateAfterWrite).not.toHaveBeenCalled();
   });
 
@@ -154,7 +190,7 @@ describe('OrgUnitCopyService', () => {
       expect(copyResource).not.toHaveBeenCalled();
     });
 
-    it('reports a repeated same-name copy as 409 ', async () => {
+    it('reports a repeated same-name copy as 409', async () => {
       const { service, copyResource, getToolSetMetadata } = makeService();
       copyResource.mockResolvedValue(err(400));
       getToolSetMetadata.mockResolvedValue({ response: { status: 200 } });
@@ -238,7 +274,7 @@ describe('OrgUnitCopyService', () => {
       expect(copyResource).not.toHaveBeenCalled();
     });
 
-    it('reports a repeated same-name copy as 409 ', async () => {
+    it('reports a repeated same-name copy as 409', async () => {
       const { service, copyResource, getPromptMetadata } = makeService();
       copyResource.mockResolvedValue(err(400));
       getPromptMetadata.mockResolvedValue({ response: { status: 200 } });
@@ -311,7 +347,7 @@ describe('OrgUnitCopyService', () => {
       expect(listSkillMetadata).not.toHaveBeenCalled();
     });
 
-    it('reports a repeated same-name copy as 409 ', async () => {
+    it('reports a repeated same-name copy as 409', async () => {
       const { service, copyResource, listSkillMetadata } = makeService();
       copyResource.mockResolvedValue(err(400));
       listSkillMetadata.mockResolvedValue({ response: { status: 200 } });

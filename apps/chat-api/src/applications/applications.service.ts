@@ -626,12 +626,17 @@ export class ApplicationsService {
    * Resolves `applicationName` to a resource in the caller's own bucket.
    * Moving or versioning someone else's application is never a personal
    * folder operation, even where a share grants write access.
+   * @param authHeaders - bearer headers for DIAL Core
+   * @param applicationName - bare name or full application id
+   * @param userBucket - the caller's own bucket when already known (the session's); without it DIAL Core is asked
    */
   async resolveOwnApplication(
     authHeaders: ReturnType<typeof getBearerAuthHeaders>,
     applicationName: string,
+    userBucket?: string,
   ): Promise<DialApplicationResource> {
-    const bucket = await this.getUserBucket(authHeaders, 'get user bucket');
+    const bucket =
+      userBucket ?? (await this.getUserBucket(authHeaders, 'get user bucket'));
     const resource = parseDialApplicationResource(applicationName) ?? {
       bucket,
       path: encodeDialResourcePath(applicationName),

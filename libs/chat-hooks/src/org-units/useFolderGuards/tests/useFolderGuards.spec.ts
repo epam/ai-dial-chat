@@ -60,6 +60,13 @@ describe('useFolderGuards', () => {
     expect(ensureUnits).toHaveBeenCalled();
   });
 
+  it('starts no read and no refresh while the flag is off, even for a raw useOrgUnits result', () => {
+    getGuards({ isEnabled: false, shouldRefreshOnOpen: true });
+
+    expect(ensureUnits).not.toHaveBeenCalled();
+    expect(refreshUnits).not.toHaveBeenCalled();
+  });
+
   it('uses canSaveAt for Save and canPublishAt for Publish', () => {
     const save = getGuards({ purpose: OrgUnitFolderGuardPurpose.Save });
     const publish = getGuards({

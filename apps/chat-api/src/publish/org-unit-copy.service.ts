@@ -97,8 +97,12 @@ export class OrgUnitCopyService {
     this.copyTypes = {
       [CatalogEntityType.Application]: {
         resourceType: DialResourceType.Applications,
-        resolveOwn: (authHeaders, entityId) =>
-          this.applicationsService.resolveOwnApplication(authHeaders, entityId),
+        resolveOwn: (authHeaders, entityId, userBucket) =>
+          this.applicationsService.resolveOwnApplication(
+            authHeaders,
+            entityId,
+            userBucket,
+          ),
         invalidate: (userSub, entityId, copyId, context) =>
           this.applicationsService.invalidateAfterWrite(
             userSub,
