@@ -33,8 +33,8 @@ import {
 import { ONBOARDING_TOUR_CLASS } from '../../constants/public-class-names';
 import { useResolvedTarget } from '../../hooks/useResolvedTarget/useResolvedTarget';
 import type { OnboardingTourProps } from '../../models/onboarding-tour';
-import { cardColorVars } from '../../utils/card-colors';
 import type { TargetRect } from '../../models/target-rect';
+import { cardColorVars } from '../../utils/card-colors';
 import {
   hintCardMiddleware,
   TARGET_RECT_MIDDLEWARE,

@@ -24,14 +24,14 @@ One anchor is four things, and all four change together:
 | Part                                        | File                                                               |
 | ------------------------------------------- | ------------------------------------------------------------------ |
 | The accepted value (closed list)            | `apps/chat-api/src/app-config/types/onboarding-hint-target.ts`     |
-| The resolver that finds the element         | `apps/chat/src/components/OnboardingHints/onboarding-targets.ts`   |
+| The resolver that finds the element         | `libs/chat-hooks/src/onboarding/onboarding-targets.ts`             |
 | The catalog row (page, element, lookup)     | `apps/chat/src/components/OnboardingHints/onboarding-anchors.json` |
 | The operator-facing page, generated from it | `docs/onboarding-anchors.md`                                       |
 
 What catches a missing part:
 
-- a target in the enum with no resolver — the build, because `ANCHOR_RESOLVERS`
-  is a `Record<OnboardingHintTarget, …>`;
+- a target in the enum with no resolver — the build, because `buildResolvers`
+  returns a `Record<OnboardingHintTarget, …>`;
 - a target with no catalog row, or a row with no target —
   `apps/chat/src/components/OnboardingHints/tests/onboarding-anchors.spec.ts`;
 - a stale operator page — `npm run validate:docs`.
@@ -40,15 +40,19 @@ What catches a missing part:
 
 1. Add the member to `OnboardingHintTarget` in chat-api with a JSDoc that names
    the element, then `npm run openapi` and `npm run openapi:check`.
-2. Add its resolver to `ANCHOR_RESOLVERS`. Find the element the way assistive
+2. Add its resolver to `buildResolvers` in `libs/chat-hooks`. Find the element the way assistive
    technology sees it — a role or landmark plus its accessible name — inside the
    narrowest scope that makes it unique: the navigation landmark,
-   `#main-content`, a named `section`. Take the accessible name from the same
-   translation key the control renders with, through `OnboardingTargetLabels`,
-   so the lookup works in every language.
+   the host's main landmark (`mainContent()`, the id the host passes), a named
+   `section`. Take the accessible name from the same
+   translation key the control renders with, through `OnboardingTargetLabels`
+   (filled with `t()` in `apps/chat/src/components/OnboardingHints/OnboardingHints.tsx`),
+   so the lookup works in every language and in every host — pg-ai-chat uses the
+   same resolvers.
 3. Add its row to `onboarding-anchors.json` and run
    `npm run docs:onboarding-anchors`.
-4. Cover the resolver in `onboarding-targets.spec.tsx`: it finds the element,
+4. Cover the resolver in
+   `libs/chat-hooks/src/onboarding/tests/onboarding-targets.spec.tsx`: it finds the element,
    and it returns `null` when the element is hidden or in an `inert` subtree.
 5. Check it on the real page with `?onboarding-anchors` in the URL.
 

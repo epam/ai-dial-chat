@@ -1,3 +1,10 @@
+import type { OnboardingHintTarget } from '@epam/ai-dial-chat-api-client';
+import {
+  getOnboardingAnchorTargets,
+  resolveOnboardingTarget,
+  useOnboardingHints,
+  type OnboardingTargetLabels,
+} from '@epam/ai-dial-chat-hooks/onboarding';
 import { useIsMobile } from '@epam/ai-dial-chat-shared';
 import {
   OnboardingAnchorMap,
@@ -5,16 +12,8 @@ import {
   type OnboardingAnchor,
   type OnboardingAnchorMapLabels,
   type OnboardingTourLabels,
-  type OnboardingTourStep,
 } from '@epam/ai-dial-onboarding-tour';
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type FC,
-} from 'react';
+import { memo, useCallback, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useSearchParams } from 'react-router';
 import {
@@ -37,19 +36,9 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { StorageKey } from '../../types/storage-key';
 import { UserConfigStatus } from '../../types/user-config-status';
-import {
-  ONBOARDING_ANCHOR_TARGETS,
-  resolveOnboardingTarget,
-  type OnboardingTargetLabels,
-} from './onboarding-targets';
 
-/* Lets a route render before targets are looked up. */
-export const ONBOARDING_START_DELAY_MS = 800;
-/* Then keeps looking for about ten seconds while the page loads its data. */
-export const ONBOARDING_RETRY_INTERVAL_MS = 500;
-const ONBOARDING_RETRY_ATTEMPTS = 20;
-
-const NO_STEPS: OnboardingTourStep[] = [];
+/* The app shell's main landmark, which most anchors are looked up inside. */
+const MAIN_CONTENT_ID = 'main-content';
 
 /* `?onboarding-anchors` in the URL outlines every anchor on the page instead
  * of showing hints, so an operator can see what a hint's target points at. */
@@ -73,7 +62,6 @@ const OnboardingHints: FC = () => {
     StorageKey.SeenOnboardingHints,
     [],
   );
-  const [steps, setSteps] = useState<OnboardingTourStep[]>(NO_STEPS);
 
   /* Keyed on the strings, not on `t`, so the effect below reruns only when
    * the language actually changes. */
@@ -148,73 +136,29 @@ const OnboardingHints: FC = () => {
     }),
     [t],
   );
-  const anchors = useMemo<OnboardingAnchor[]>(
-    () =>
-      ONBOARDING_ANCHOR_TARGETS.map((target) => ({
-        id: target,
-        getTarget: () => resolveOnboardingTarget(target, targetLabels),
-      })),
+  const resolveTarget = useCallback(
+    (target: OnboardingHintTarget) =>
+      resolveOnboardingTarget(target, targetLabels, MAIN_CONTENT_ID),
     [targetLabels],
   );
-
-  const pendingHints = useMemo(
-    () => config.onboardingHints.filter((hint) => !seenIds.includes(hint.id)),
-    [config.onboardingHints, seenIds],
-  );
-  /* One step object per hint, so its getTarget stays stable while it is shown. */
-  const pendingSteps = useMemo<OnboardingTourStep[]>(
+  const anchors = useMemo<OnboardingAnchor[]>(
     () =>
-      pendingHints.map((hint) => ({
-        id: hint.id,
-        title: hint.title,
-        description: hint.description ?? undefined,
-        getTarget: () => resolveOnboardingTarget(hint.target, targetLabels),
+      getOnboardingAnchorTargets().map((target) => ({
+        id: target,
+        getTarget: () => resolveTarget(target),
       })),
-    [pendingHints, targetLabels],
+    [resolveTarget],
   );
 
-  /* Look for unseen hints on every route, after the route had a moment to
-   * paint, and keep looking for a while: a page such as the catalog renders
-   * its controls only once its data arrives. The tour shows the hints that
-   * are on screen; the rest stay unseen until a page renders them, so a
-   * catalog hint waits for the first visit to the catalog. */
-  const isRunning = steps.length > 0;
-  useEffect(() => {
-    if (
-      isAnchorView ||
-      isRunning ||
-      status !== UserConfigStatus.Ready ||
-      pendingSteps.length === 0
-    ) {
-      return;
-    }
-    let attempts = 0;
-    let timer = 0;
-    const tryStart = () => {
-      const visible = pendingSteps.filter((step) => step.getTarget() != null);
-      if (visible.length > 0) {
-        setSteps(visible);
-        return;
-      }
-      attempts += 1;
-      if (attempts < ONBOARDING_RETRY_ATTEMPTS) {
-        timer = window.setTimeout(tryStart, ONBOARDING_RETRY_INTERVAL_MS);
-      }
-    };
-    timer = window.setTimeout(tryStart, ONBOARDING_START_DELAY_MS);
-    return () => window.clearTimeout(timer);
-  }, [isAnchorView, isRunning, status, pendingSteps, pathname]);
-
-  const handleFinish = useCallback(
-    (shownIds: string[]) => {
-      setSeenIds([
-        ...seenIds.filter((id) => !shownIds.includes(id)),
-        ...shownIds,
-      ]);
-      setSteps(NO_STEPS);
-    },
-    [seenIds, setSeenIds],
-  );
+  /* Hints wait on every route, so the pathname restarts the lookup. */
+  const { steps, onFinish } = useOnboardingHints({
+    hints: config.onboardingHints,
+    seenIds,
+    onSeenIdsChange: setSeenIds,
+    resolveTarget,
+    isEnabled: !isAnchorView && status === UserConfigStatus.Ready,
+    pageKey: pathname,
+  });
 
   const handleCloseAnchorView = useCallback(
     () =>
@@ -243,7 +187,7 @@ const OnboardingHints: FC = () => {
   return (
     <OnboardingTour
       steps={steps}
-      onFinish={handleFinish}
+      onFinish={onFinish}
       isMobile={isMobile}
       dir={i18n.dir()}
       labels={labels}

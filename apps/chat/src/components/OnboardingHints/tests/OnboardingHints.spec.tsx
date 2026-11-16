@@ -1,4 +1,9 @@
 import type { OnboardingHintDto } from '@epam/ai-dial-chat-api-client';
+import {
+  getOnboardingAnchorTargets,
+  ONBOARDING_RETRY_INTERVAL_MS,
+  ONBOARDING_START_DELAY_MS,
+} from '@epam/ai-dial-chat-hooks/onboarding';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect, useState } from 'react';
@@ -7,11 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
 import { StorageKey } from '../../../types/storage-key';
 import { UserConfigStatus } from '../../../types/user-config-status';
-import { ONBOARDING_ANCHOR_TARGETS } from '../onboarding-targets';
-import OnboardingHints, {
-  ONBOARDING_RETRY_INTERVAL_MS,
-  ONBOARDING_START_DELAY_MS,
-} from '../OnboardingHints';
+import OnboardingHints from '../OnboardingHints';
 
 const { state } = vi.hoisted(() => ({
   state: {
@@ -248,7 +249,7 @@ describe('OnboardingHints', () => {
       expect(screen.getByText('new-chat')).toBeTruthy();
       expect(
         screen.getByRole('region', {
-          name: `onboardingTour.anchorsSummary:2/${ONBOARDING_ANCHOR_TARGETS.length}`,
+          name: `onboardingTour.anchorsSummary:2/${getOnboardingAnchorTargets().length}`,
         }),
       ).toBeTruthy();
     });

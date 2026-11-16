@@ -153,6 +153,12 @@
       "types": "./dist/external-services.d.ts",
       "import": "./dist/external-services.js",
       "default": "./dist/external-services.js"
+    },
+    "./onboarding": {
+      "@epam/source": "./src/entry-points/onboarding.ts",
+      "types": "./dist/onboarding.d.ts",
+      "import": "./dist/onboarding.js",
+      "default": "./dist/onboarding.js"
     }
   },
   "dependencies": {

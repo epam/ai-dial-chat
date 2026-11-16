@@ -45,6 +45,10 @@ const labels: OnboardingTargetLabels = {
   settings: 'Settings',
 };
 
+/* The pages below render the app shell's main landmark with this id. */
+const resolve = (target: OnboardingHintTarget) =>
+  resolveOnboardingTarget(target, labels, 'main-content');
+
 const Page = ({ inertNav = false }: { inertNav?: boolean }) => (
   <>
     <nav aria-label="Main navigation" inert={inertNav}>
@@ -155,50 +159,48 @@ describe('resolveOnboardingTarget', () => {
     [OnboardingHintTarget.NewChat, 'New chat'],
   ])('finds the %s link in the navigation', (target, name) => {
     render(<Page />);
-    expect(resolveOnboardingTarget(target, labels)).toBe(
-      screen.getByRole('link', { name }),
-    );
+    expect(resolve(target)).toBe(screen.getByRole('link', { name }));
   });
 
   it('finds the navigation landmark', () => {
     render(<Page />);
-    expect(
-      resolveOnboardingTarget(OnboardingHintTarget.Navigation, labels),
-    ).toBe(screen.getByRole('navigation', { name: 'Main navigation' }));
+    expect(resolve(OnboardingHintTarget.Navigation)).toBe(
+      screen.getByRole('navigation', { name: 'Main navigation' }),
+    );
   });
 
   it('finds the whole composer around the text field and Send button', () => {
     render(<AppPage />);
-    expect(
-      resolveOnboardingTarget(OnboardingHintTarget.ConversationInput, labels),
-    ).toBe(screen.getByRole('region', { name: 'Message input' }));
+    expect(resolve(OnboardingHintTarget.ConversationInput)).toBe(
+      screen.getByRole('region', { name: 'Message input' }),
+    );
   });
 
   it('finds the composer and its + button', () => {
     render(<Page />);
-    expect(
-      resolveOnboardingTarget(OnboardingHintTarget.ConversationInput, labels),
-    ).toBe(screen.getByRole('textbox', { name: 'Message' }));
-    expect(
-      resolveOnboardingTarget(OnboardingHintTarget.AddAttachment, labels),
-    ).toBe(screen.getByRole('button', { name: 'Add' }));
+    expect(resolve(OnboardingHintTarget.ConversationInput)).toBe(
+      screen.getByRole('textbox', { name: 'Message' }),
+    );
+    expect(resolve(OnboardingHintTarget.AddAttachment)).toBe(
+      screen.getByRole('button', { name: 'Add' }),
+    );
   });
 
   it('finds the catalog controls inside the catalog region', () => {
     render(<Page />);
     const catalog = screen.getByRole('region', { name: 'Catalog' });
-    expect(
-      resolveOnboardingTarget(OnboardingHintTarget.CatalogCreate, labels),
-    ).toBe(within(catalog).getByRole('button', { name: 'Create' }));
-    expect(
-      resolveOnboardingTarget(OnboardingHintTarget.CatalogSearch, labels),
-    ).toBe(within(catalog).getByRole('search'));
-    expect(
-      resolveOnboardingTarget(OnboardingHintTarget.CatalogTabs, labels),
-    ).toBe(within(catalog).getByRole('tablist'));
-    expect(
-      resolveOnboardingTarget(OnboardingHintTarget.CatalogViewMode, labels),
-    ).toBe(within(catalog).getByRole('radiogroup', { name: 'View mode' }));
+    expect(resolve(OnboardingHintTarget.CatalogCreate)).toBe(
+      within(catalog).getByRole('button', { name: 'Create' }),
+    );
+    expect(resolve(OnboardingHintTarget.CatalogSearch)).toBe(
+      within(catalog).getByRole('search'),
+    );
+    expect(resolve(OnboardingHintTarget.CatalogTabs)).toBe(
+      within(catalog).getByRole('tablist'),
+    );
+    expect(resolve(OnboardingHintTarget.CatalogViewMode)).toBe(
+      within(catalog).getByRole('radiogroup', { name: 'View mode' }),
+    );
   });
 
   describe('catalog browsing', () => {
@@ -225,18 +227,16 @@ describe('resolveOnboardingTarget', () => {
     it('finds the filter, the sort menu, the first card and its star', () => {
       render(<CatalogPage />);
       const catalog = screen.getByRole('region', { name: 'Catalog' });
-      expect(
-        resolveOnboardingTarget(OnboardingHintTarget.CatalogFilter, labels),
-      ).toBe(within(catalog).getByRole('button', { name: 'From' }));
-      expect(
-        resolveOnboardingTarget(OnboardingHintTarget.CatalogSort, labels),
-      ).toBe(within(catalog).getByRole('button', { name: 'Recently Updated' }));
-      expect(
-        resolveOnboardingTarget(OnboardingHintTarget.CatalogCard, labels),
-      ).toBe(within(catalog).getByRole('article', { name: 'GPT-4o' }));
-      expect(
-        resolveOnboardingTarget(OnboardingHintTarget.CatalogFavorite, labels),
-      ).toBe(
+      expect(resolve(OnboardingHintTarget.CatalogFilter)).toBe(
+        within(catalog).getByRole('button', { name: 'From' }),
+      );
+      expect(resolve(OnboardingHintTarget.CatalogSort)).toBe(
+        within(catalog).getByRole('button', { name: 'Recently Updated' }),
+      );
+      expect(resolve(OnboardingHintTarget.CatalogCard)).toBe(
+        within(catalog).getByRole('article', { name: 'GPT-4o' }),
+      );
+      expect(resolve(OnboardingHintTarget.CatalogFavorite)).toBe(
         within(catalog).getByRole('button', { name: 'Remove from favorites' }),
       );
     });
@@ -245,9 +245,9 @@ describe('resolveOnboardingTarget', () => {
       'finds the filter while it reads %s',
       (filter) => {
         render(<CatalogPage filter={filter} />);
-        expect(
-          resolveOnboardingTarget(OnboardingHintTarget.CatalogFilter, labels),
-        ).toBe(screen.getByRole('button', { name: filter }));
+        expect(resolve(OnboardingHintTarget.CatalogFilter)).toBe(
+          screen.getByRole('button', { name: filter }),
+        );
       },
     );
 
@@ -259,9 +259,9 @@ describe('resolveOnboardingTarget', () => {
           </section>
         </main>,
       );
-      expect(
-        resolveOnboardingTarget(OnboardingHintTarget.CatalogSort, labels),
-      ).toBe(screen.getByRole('button', { name: 'Browse settings' }));
+      expect(resolve(OnboardingHintTarget.CatalogSort)).toBe(
+        screen.getByRole('button', { name: 'Browse settings' }),
+      );
     });
   });
 
@@ -282,9 +282,7 @@ describe('resolveOnboardingTarget', () => {
       const [, newest] = screen.getAllByRole('toolbar', {
         name: 'Message actions',
       });
-      expect(
-        resolveOnboardingTarget(OnboardingHintTarget.MessageActions, labels),
-      ).toBe(newest);
+      expect(resolve(OnboardingHintTarget.MessageActions)).toBe(newest);
     });
 
     it('skips an action bar hidden until hover', () => {
@@ -300,9 +298,9 @@ describe('resolveOnboardingTarget', () => {
           </div>
         </main>,
       );
-      expect(
-        resolveOnboardingTarget(OnboardingHintTarget.MessageActions, labels),
-      ).toBe(screen.getAllByRole('toolbar', { name: 'Message actions' })[0]);
+      expect(resolve(OnboardingHintTarget.MessageActions)).toBe(
+        screen.getAllByRole('toolbar', { name: 'Message actions' })[0],
+      );
     });
   });
 
@@ -318,15 +316,13 @@ describe('resolveOnboardingTarget', () => {
       OnboardingHintTarget.CatalogCard,
       OnboardingHintTarget.CatalogFavorite,
     ]) {
-      expect(resolveOnboardingTarget(target, labels)).toBeNull();
+      expect(resolve(target)).toBeNull();
     }
   });
 
   it('skips links inside an inert navigation, such as a closed drawer', () => {
     render(<Page inertNav />);
-    expect(
-      resolveOnboardingTarget(OnboardingHintTarget.Catalog, labels),
-    ).toBeNull();
+    expect(resolve(OnboardingHintTarget.Catalog)).toBeNull();
   });
 
   it('returns null for an element with no box', () => {
@@ -334,9 +330,7 @@ describe('resolveOnboardingTarget', () => {
       [] as unknown as DOMRectList,
     );
     render(<Page />);
-    expect(
-      resolveOnboardingTarget(OnboardingHintTarget.Projects, labels),
-    ).toBeNull();
+    expect(resolve(OnboardingHintTarget.Projects)).toBeNull();
   });
 
   describe('across the app', () => {
@@ -368,9 +362,7 @@ describe('resolveOnboardingTarget', () => {
       [OnboardingHintTarget.SettingsSections, 'tablist', 'Settings'],
     ] as const)('finds %s', (target, role, name) => {
       render(<AppPage />);
-      expect(resolveOnboardingTarget(target, labels)).toBe(
-        screen.getByRole(role, { name }),
-      );
+      expect(resolve(target)).toBe(screen.getByRole(role, { name }));
     });
 
     it.each([
@@ -384,32 +376,28 @@ describe('resolveOnboardingTarget', () => {
       const search = screen
         .getAllByRole('search')
         .find((element) => within(element).queryByRole('textbox', { name }));
-      expect(resolveOnboardingTarget(target, labels)).toBe(search);
+      expect(resolve(target)).toBe(search);
     });
 
     it('finds the composer controls only around the composer', () => {
       render(<AppPage />);
       const composer = screen.getByRole('region', { name: 'Message input' });
-      expect(
-        resolveOnboardingTarget(OnboardingHintTarget.AddAttachment, labels),
-      ).toBe(within(composer).getByRole('button', { name: 'Add' }));
+      expect(resolve(OnboardingHintTarget.AddAttachment)).toBe(
+        within(composer).getByRole('button', { name: 'Add' }),
+      );
     });
 
     it('finds no composer control on a page without a composer', () => {
       render(<FileManagerPage />);
-      expect(
-        resolveOnboardingTarget(OnboardingHintTarget.AddAttachment, labels),
-      ).toBeNull();
-      expect(
-        resolveOnboardingTarget(OnboardingHintTarget.SendMessage, labels),
-      ).toBeNull();
+      expect(resolve(OnboardingHintTarget.AddAttachment)).toBeNull();
+      expect(resolve(OnboardingHintTarget.SendMessage)).toBeNull();
     });
 
     it('falls back to the mobile menu button for the sidebar toggle', () => {
       render(<FileManagerPage />);
-      expect(
-        resolveOnboardingTarget(OnboardingHintTarget.SidebarToggle, labels),
-      ).toBe(screen.getByRole('button', { name: 'Navigation menu' }));
+      expect(resolve(OnboardingHintTarget.SidebarToggle)).toBe(
+        screen.getByRole('button', { name: 'Navigation menu' }),
+      );
     });
 
     it('matches the model selector before a model is chosen', () => {
@@ -418,18 +406,22 @@ describe('resolveOnboardingTarget', () => {
           <button type="button" aria-label="Select model" />
         </main>,
       );
-      expect(
-        resolveOnboardingTarget(OnboardingHintTarget.ModelSelector, labels),
-      ).toBe(screen.getByRole('button', { name: 'Select model' }));
+      expect(resolve(OnboardingHintTarget.ModelSelector)).toBe(
+        screen.getByRole('button', { name: 'Select model' }),
+      );
     });
 
     it('finds no user menu without the fixed part of its name', () => {
       render(<AppPage />);
       expect(
-        resolveOnboardingTarget(OnboardingHintTarget.UserMenu, {
-          ...labels,
-          signedInAs: '',
-        }),
+        resolveOnboardingTarget(
+          OnboardingHintTarget.UserMenu,
+          {
+            ...labels,
+            signedInAs: '',
+          },
+          'main-content',
+        ),
       ).toBeNull();
     });
 
@@ -441,12 +433,8 @@ describe('resolveOnboardingTarget', () => {
           </section>
         </nav>,
       );
-      expect(
-        resolveOnboardingTarget(OnboardingHintTarget.Chats, labels),
-      ).toBeNull();
-      expect(
-        resolveOnboardingTarget(OnboardingHintTarget.ChatsSearch, labels),
-      ).toBeNull();
+      expect(resolve(OnboardingHintTarget.Chats)).toBeNull();
+      expect(resolve(OnboardingHintTarget.ChatsSearch)).toBeNull();
     });
   });
 });

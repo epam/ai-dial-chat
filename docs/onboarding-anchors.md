@@ -65,5 +65,5 @@ change. Close the panel to drop the parameter.
 | `catalog-favorite`       | Catalog                                 | The favorite star of the first card on screen                                                                                    | The first on-screen button inside the catalog `section` named "Add to favorites" or "Remove from favorites"                                                                    |
 
 A renamed control or a changed role silently stops its anchor from
-resolving. `apps/chat/src/components/OnboardingHints/tests/onboarding-targets.spec.tsx`
+resolving. `libs/chat-hooks/src/onboarding/tests/onboarding-targets.spec.tsx`
 covers every resolver against fixture markup.

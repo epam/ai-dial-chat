@@ -61,7 +61,7 @@ const render = () => {
     ...rows,
     '',
     'A renamed control or a changed role silently stops its anchor from',
-    'resolving. `apps/chat/src/components/OnboardingHints/tests/onboarding-targets.spec.tsx`',
+    'resolving. `libs/chat-hooks/src/onboarding/tests/onboarding-targets.spec.tsx`',
     'covers every resolver against fixture markup.',
     '',
   ].join('\n');
