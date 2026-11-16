@@ -6,7 +6,9 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
+import type { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { EnvironmentVariables } from '../../config/environment.config';
 import type { DialClientService } from '../../dial/dial-client.service';
 import type {
   DialModelDto,
@@ -42,6 +44,13 @@ const emptyBodyErrResponse = (status: number) =>
     response: { ok: false, status } as Response,
   }) as never;
 
+const makeConfig = (hiddenTags: string[] = []) =>
+  ({
+    get: vi.fn((key: string) =>
+      key === 'HIDDEN_ENTITY_TAGS' ? hiddenTags : undefined,
+    ),
+  }) as unknown as ConfigService<EnvironmentVariables>;
+
 function makeDeps() {
   const dialClient = {
     client: { getModels: vi.fn(), getModel: vi.fn() },
@@ -57,11 +66,37 @@ function makeDeps() {
   return { dialClient, cacheManager };
 }
 
-function makeService() {
+function makeService(hiddenTags: string[] = []) {
   const { dialClient, cacheManager } = makeDeps();
-  const service = new ModelsService(dialClient, cacheManager as never);
+  const service = new ModelsService(
+    dialClient,
+    makeConfig(hiddenTags),
+    cacheManager as never,
+  );
   return { service, cacheManager };
 }
+
+/* A cache that really stores, so a test can prove the second call is a hit. */
+const makeMemoryCache = () => {
+  const store = new Map<string, unknown>();
+  return {
+    get: vi.fn(async (key: string) => store.get(key)),
+    set: vi.fn(async (key: string, value: unknown) => {
+      store.set(key, value);
+    }),
+  };
+};
+
+const hiddenModel: DialModelDto = {
+  id: 'gpt-4o',
+  object: 'model',
+  description_keywords: ['HIDDEN', 'Text'],
+};
+const visibleModel: DialModelDto = {
+  id: 'claude-opus',
+  object: 'model',
+  description_keywords: ['Text'],
+};
 
 describe('ModelsService', () => {
   beforeEach(() => {
@@ -86,7 +121,11 @@ describe('ModelsService', () => {
         get: vi.fn().mockResolvedValue(mockList),
         set: vi.fn(),
       };
-      const service = new ModelsService(dialClient, cacheManager as never);
+      const service = new ModelsService(
+        dialClient,
+        makeConfig(),
+        cacheManager as never,
+      );
       const spy = vi
         .spyOn(service['dialClient'].client, 'getModels')
         .mockResolvedValue(okResponse(mockList));
@@ -106,7 +145,11 @@ describe('ModelsService', () => {
           return Promise.resolve();
         }),
       };
-      const service = new ModelsService(dialClient, cacheManager as never);
+      const service = new ModelsService(
+        dialClient,
+        makeConfig(),
+        cacheManager as never,
+      );
       vi.spyOn(service['dialClient'].client, 'getModels').mockResolvedValue(
         okResponse(mockList),
       );
@@ -210,7 +253,11 @@ describe('ModelsService', () => {
         get: vi.fn().mockResolvedValue(mockModel),
         set: vi.fn(),
       };
-      const service = new ModelsService(dialClient, cacheManager as never);
+      const service = new ModelsService(
+        dialClient,
+        makeConfig(),
+        cacheManager as never,
+      );
       const spy = vi
         .spyOn(service['dialClient'].client, 'getModel')
         .mockResolvedValue(okResponse(mockModel));
@@ -307,6 +354,119 @@ describe('ModelsService', () => {
       await expect(service.getModel('u', 't', 'gpt-4o')).rejects.toThrow(
         ServiceUnavailableException,
       );
+    });
+  });
+
+  describe('HIDDEN_ENTITY_TAGS', () => {
+    it('omits hidden models from the list', async () => {
+      const { service } = makeService(['HIDDEN']);
+      vi.spyOn(service['dialClient'].client, 'getModels').mockResolvedValue(
+        okResponse({ data: [hiddenModel, visibleModel] }),
+      );
+
+      const result = await service.listModels('user1', 'token');
+
+      expect(result).toEqual({ data: [visibleModel] });
+    });
+
+    it('caches the filtered list so a repeated call skips upstream', async () => {
+      const { dialClient } = makeDeps();
+      const cacheManager = makeMemoryCache();
+      const service = new ModelsService(
+        dialClient,
+        makeConfig(['HIDDEN']),
+        cacheManager as never,
+      );
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'getModels')
+        .mockResolvedValue(okResponse({ data: [hiddenModel, visibleModel] }));
+
+      const first = await service.listModels('user1', 'token');
+      const second = await service.listModels('user1', 'token');
+
+      expect(spy).toHaveBeenCalledOnce();
+      expect(cacheManager.set).toHaveBeenCalledWith(
+        'models:list:user1',
+        { data: [visibleModel] },
+        30_000,
+      );
+      expect(first).toEqual({ data: [visibleModel] });
+      expect(second).toEqual({ data: [visibleModel] });
+    });
+
+    it('returns every model when no tag is configured', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getModels').mockResolvedValue(
+        okResponse({ data: [hiddenModel, visibleModel] }),
+      );
+
+      const result = await service.listModels('user1', 'token');
+
+      expect(result).toEqual({ data: [hiddenModel, visibleModel] });
+    });
+
+    it('answers NotFoundException for a hidden model lookup', async () => {
+      const { service } = makeService(['HIDDEN']);
+      vi.spyOn(service['dialClient'].client, 'getModel').mockResolvedValue(
+        okResponse(hiddenModel),
+      );
+
+      await expect(
+        service.getModel('user1', 'token', 'gpt-4o'),
+      ).rejects.toThrow(new NotFoundException('Resource not found'));
+    });
+
+    it('serves a repeated hidden lookup from the cache', async () => {
+      const { dialClient } = makeDeps();
+      const service = new ModelsService(
+        dialClient,
+        makeConfig(['HIDDEN']),
+        makeMemoryCache() as never,
+      );
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'getModel')
+        .mockResolvedValue(okResponse(hiddenModel));
+
+      await expect(
+        service.getModel('user1', 'token', 'gpt-4o'),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        service.getModel('user1', 'token', 'gpt-4o'),
+      ).rejects.toThrow(NotFoundException);
+      expect(spy).toHaveBeenCalledOnce();
+    });
+
+    it('returns a model without a hidden tag', async () => {
+      const { service } = makeService(['HIDDEN']);
+      vi.spyOn(service['dialClient'].client, 'getModel').mockResolvedValue(
+        okResponse(visibleModel),
+      );
+
+      const result = await service.getModel('user1', 'token', 'claude-opus');
+
+      expect(result).toEqual(visibleModel);
+    });
+
+    it('returns a tagged model when no tag is configured', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getModel').mockResolvedValue(
+        okResponse(hiddenModel),
+      );
+
+      const result = await service.getModel('user1', 'token', 'gpt-4o');
+
+      expect(result).toEqual(hiddenModel);
+    });
+
+    it('keeps mapping an upstream 403 to ForbiddenException', async () => {
+      const { service } = makeService(['HIDDEN']);
+      vi.spyOn(service['dialClient'].client, 'getModel').mockResolvedValue(
+        errResponse(403),
+      );
+
+      await expect(
+        service.getModel('user1', 'token', 'gpt-4o'),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 });

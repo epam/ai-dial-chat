@@ -1830,7 +1830,7 @@
     },
     "/api/v1/models": {
       "get": {
-        "description": "Returns the list of DIAL Core deployments visible to the authenticated session user. Proxies GET /openai/models using the caller's session access token. Results are cached server-side for 30 seconds per user.",
+        "description": "Returns the list of DIAL Core deployments visible to the authenticated session user. Proxies GET /openai/models using the caller's session access token. Models whose description_keywords contain a HIDDEN_ENTITY_TAGS tag are omitted, as in the Chat Catalog. Hiding is not access control. Results are cached server-side for 30 seconds per user.",
         "operationId": "listModels",
         "parameters": [],
         "responses": {
@@ -1884,7 +1884,7 @@
     },
     "/api/v1/models/{modelName}": {
       "get": {
-        "description": "Returns a single DIAL Core deployment by name for the authenticated session user. Proxies GET /openai/models/{model_name} using the caller's session access token. Results are cached server-side for 60 seconds per user per model.",
+        "description": "Returns a single DIAL Core deployment by name for the authenticated session user. Proxies GET /openai/models/{model_name} using the caller's session access token. A model whose description_keywords contain a HIDDEN_ENTITY_TAGS tag answers 404, as if it did not exist. Results are cached server-side for 60 seconds per user per model.",
         "operationId": "getModel",
         "parameters": [
           {
@@ -1919,7 +1919,7 @@
             "description": "Caller lacks permission to access this model"
           },
           "404": {
-            "description": "Model not found"
+            "description": "Model not found, or hidden through HIDDEN_ENTITY_TAGS"
           },
           "409": {
             "description": "DIAL Core reported a conflict with the current resource state"
@@ -1949,7 +1949,7 @@
     },
     "/api/v1/model-catalog": {
       "get": {
-        "description": "Returns the DIAL Core models visible to the server-side MODEL_CATALOG_API_KEY, including models the caller's own roles cannot access. Display data only: GET /api/v1/models still decides what the user can use, and Core invocation settings (defaults, responses_defaults, max_retry_attempts, tokenizer_model) are omitted. One server-side cache entry, shared by all users, is kept for 5 minutes.",
+        "description": "Returns the DIAL Core models visible to the server-side MODEL_CATALOG_API_KEY, including models the caller's own roles cannot access. Display data only: GET /api/v1/models still decides what the user can use, and Core invocation settings (defaults, responses_defaults, max_retry_attempts, tokenizer_model) are omitted. Models whose description_keywords contain a HIDDEN_ENTITY_TAGS tag are omitted, as in the Chat Catalog. One server-side cache entry, shared by all users, is kept for 5 minutes.",
         "operationId": "listModelCatalog",
         "parameters": [],
         "responses": {
@@ -1997,7 +1997,7 @@
     },
     "/api/v1/model-catalog/{modelName}": {
       "get": {
-        "description": "Returns one model from the cached model catalog, without a separate DIAL Core call. A model hidden from the catalog key answers 404, never 403, so its existence is not revealed.",
+        "description": "Returns one model from the cached model catalog, without a separate DIAL Core call. A model hidden from the catalog key answers 404, never 403, so its existence is not revealed. A model omitted through HIDDEN_ENTITY_TAGS also answers 404.",
         "operationId": "getModelCatalogEntry",
         "parameters": [
           {
@@ -2029,7 +2029,7 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "404": {
-            "description": "The model catalog is not configured, or the model is not in the catalog"
+            "description": "The model catalog is not configured, or the model is not in the catalog or is hidden through HIDDEN_ENTITY_TAGS"
           },
           "409": {
             "description": "DIAL Core reported a conflict with the current resource state"
