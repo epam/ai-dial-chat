@@ -40,7 +40,7 @@ export interface GetTimezoneOptionsParams {
 
 const readZoneName = (
   timezone: string,
-  timeZoneName: 'longOffset' | 'short',
+  timeZoneName: 'longOffset' | 'short' | 'long' | 'longGeneric',
   at: Date,
   locale: string | undefined,
 ): string | undefined => {
