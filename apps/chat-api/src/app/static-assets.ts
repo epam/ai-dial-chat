@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto';
 import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
-import { join, posix } from 'path';
+import { join, posix, relative, sep } from 'path';
 import { Logger } from '@nestjs/common';
 import express, { type RequestHandler, Router } from 'express';
 import helmet from 'helmet';
@@ -16,6 +16,11 @@ const SPA_RENDER_PATH = '/{*frontendRoute}';
 /* Vite emits this same-origin PDF worker as an asset. The policy on the
  * worker script controls its execution; the policy on a PDF download does not. */
 const PDF_WORKER_PATH = /^\/assets\/pdf\.worker\.min-[\w-]+\.mjs$/;
+
+/* Vite names every file under `assets/` after a hash of its content, so a
+ * changed file always gets a new URL and an existing one never changes. A warm
+ * reload can then reuse them without revalidating each one. */
+export const HASHED_ASSET_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
 type PathExists = (path: string) => boolean;
 
@@ -181,7 +186,16 @@ export const createFrontendMiddleware = async ({
         next();
       }
     });
-    staticRouter.use(express.static(rootPath, { index: false }));
+    staticRouter.use(
+      express.static(rootPath, {
+        index: false,
+        setHeaders: (res, filePath) => {
+          if (relative(rootPath, filePath).startsWith(`assets${sep}`)) {
+            res.setHeader('Cache-Control', HASHED_ASSET_CACHE_CONTROL);
+          }
+        },
+      }),
+    );
     staticRouter.get(SPA_RENDER_PATH, (req, res, next) => {
       if (isWithinPath(req.path, '/assets')) {
         next();

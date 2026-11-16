@@ -11,6 +11,16 @@
       content="AI DIAL Chat: talk to AI models, applications and agents in one workspace."
     />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <!-- Latin Inter subset: every page draws basic Latin text, and the
+         browser otherwise finds this font only after the stylesheet loads.
+         Vite rewrites the path to the same hashed asset the CSS references. -->
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      crossorigin
+      href="../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2"
+    />
   </head>
   <body>
     <div id="root"></div>

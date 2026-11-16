@@ -40,6 +40,10 @@ import {
   conversationIdsMatch,
   toPanelConversationId,
 } from '../utils/conversation-id-match';
+import {
+  isConversationInBucket,
+  toOwnConversationListItem,
+} from '../utils/conversation-list';
 import { useUser } from './auth/UserContext';
 import { useOptionalOverlay } from './overlay/OverlayContext';
 import { useUserConfig } from './UserConfigContext';
@@ -179,6 +183,7 @@ export const ConversationsProvider = ({
   const { user } = useUser();
   const draftStore = useConversationDraftStore();
   const userSub = user?.sub;
+  const userBucket = user?.bucket;
   const [conversations, setConversations] = useState<ConversationListItemDto[]>(
     [],
   );
@@ -332,6 +337,24 @@ export const ConversationsProvider = ({
     });
   }, []);
 
+  /*
+   * Inserts a row the list does not have yet, or replaces the matching one, and
+   * keeps the listing endpoint's `updatedAt`-descending order (Array#sort is
+   * stable, so the rest of the list stays as it is).
+   */
+  const addConversationToList = useCallback(
+    (item: ConversationListItemDto) => {
+      rememberTitle(item.id, item.title);
+      setConversations((prev) =>
+        [
+          item,
+          ...prev.filter((c) => !conversationIdsMatch(c.id, item.id)),
+        ].sort((a, b) => b.updatedAt - a.updatedAt),
+      );
+    },
+    [rememberTitle],
+  );
+
   const watchForDisplayNameUpdate = useCallback(
     (
       conversationId: string,
@@ -410,9 +433,34 @@ export const ConversationsProvider = ({
                   (nextName && nextName !== previousName.trim())
                 ) {
                   if (nextName) {
-                    updateConversationTitle(conversationId, nextName);
+                    /*
+                     * Re-reading the whole list here cost every new chat a
+                     * full history listing (all personal and public pages)
+                     * just to show one row. A listed chat only needs its
+                     * title; a chat the user just created in their own
+                     * bucket is added from the conversation already loaded.
+                     * Only a chat from another bucket that the list lacks
+                     * still needs the server's row.
+                     */
+                    const isListed = conversationsRef.current.some((c) =>
+                      conversationIdsMatch(c.id, conversationId),
+                    );
+                    if (isListed) {
+                      updateConversationTitle(conversationId, nextName);
+                    } else if (
+                      isConversationInBucket(fullConversationId, userBucket)
+                    ) {
+                      addConversationToList(
+                        toOwnConversationListItem(
+                          fullConversationId,
+                          conversation,
+                          nextName,
+                        ),
+                      );
+                    } else {
+                      void silentRefreshConversations();
+                    }
                     onUpdated(nextName);
-                    void silentRefreshConversations();
                   }
                   /* Closes the SSE connection; releasing the reader alone
                    * would leave the request open until the timeout. */
@@ -438,7 +486,12 @@ export const ConversationsProvider = ({
         controller.abort();
       };
     },
-    [silentRefreshConversations, updateConversationTitle],
+    [
+      addConversationToList,
+      silentRefreshConversations,
+      updateConversationTitle,
+      userBucket,
+    ],
   );
 
   /*
