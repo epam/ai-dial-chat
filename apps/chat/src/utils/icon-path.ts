@@ -1,6 +1,9 @@
-import { isDialFileId } from '@epam/ai-dial-chat-hooks';
+import { isDialFileId, isDialProjectFileId } from '@epam/ai-dial-chat-hooks';
 import { ApiEndpoints } from '../server-api/base';
-import { resolveDialFileDownloadUrl } from './dial-file';
+import {
+  resolveDialFileDownloadUrl,
+  resolveProjectFileDownloadUrl,
+} from './dial-file';
 
 export const getIconPath = (iconName?: string): string => {
   return `${ApiEndpoints.THEME_ICON}?iconName=${encodeURIComponent(iconName || '')}`;
@@ -64,6 +67,9 @@ const getThemesHostIconName = (
  *    `themesBaseUrl`, which maps to the same proxy URL as its theme-relative
  *    name so the browser fetches that icon once
  *  - DIAL file IDs (`files/{bucket}/{path}`) → proxied via BFF download endpoint
+ *  - DIAL project file IDs (`projects/{bucket}/{path}/files/{filePath}`, e.g.
+ *    an image an agent generated in a project chat) → the project file
+ *    endpoint, or `undefined` when no route serves the folder
  *  - Theme-relative names → mapped to /api/themes/icon?iconName={encoded}
  */
 export const resolveCatalogIconUrl = (
@@ -76,5 +82,8 @@ export const resolveCatalogIconUrl = (
     return themesIconName != null ? getIconPath(themesIconName) : iconUrl;
   }
   if (isDialFileId(iconUrl)) return resolveDialFileDownloadUrl(iconUrl);
+  if (isDialProjectFileId(iconUrl)) {
+    return resolveProjectFileDownloadUrl(iconUrl);
+  }
   return getIconPath(iconUrl);
 };

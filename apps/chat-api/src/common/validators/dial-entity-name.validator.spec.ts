@@ -4,12 +4,19 @@ import { describe, expect, it } from 'vitest';
 import {
   DIAL_ENTITY_NAME_FORBIDDEN_CHARS_RE,
   IsDialEntityName,
+  isSafeDialRelativePath,
+  IsSafeDialRelativePath,
   isValidDialEntityName,
 } from './dial-entity-name.validator';
 
 class NameHolder {
   @IsDialEntityName()
   name!: string;
+}
+
+class PathHolder {
+  @IsSafeDialRelativePath()
+  path!: string;
 }
 
 describe('isValidDialEntityName', () => {
@@ -62,6 +69,50 @@ describe('isValidDialEntityName', () => {
     expect(isValidDialEntityName('a/b')).toBe(false);
     expect('a:b/c'.replace(DIAL_ENTITY_NAME_FORBIDDEN_CHARS_RE, ' ')).toBe(
       'a b c',
+    );
+  });
+});
+
+describe('isSafeDialRelativePath', () => {
+  it.each(['report.pdf', 'run-1/data.csv', 'run-1/summary: final.md'])(
+    'accepts %s',
+    (value) => {
+      expect(isSafeDialRelativePath(value)).toBe(true);
+    },
+  );
+
+  it.each([
+    ['empty', ''],
+    ['a leading slash', '/a'],
+    ['a trailing slash', 'a/'],
+    ['an empty segment', 'a//b'],
+    ['a leading traversal', '../x'],
+    ['an inner traversal', 'a/../b'],
+    ['a backslash', 'a\\b'],
+    ['a percent escape', 'a%20b'],
+    ['a reserved segment', 'files/x'],
+    ['4,097 bytes', `${'a'.repeat(1000)}/`.repeat(4) + 'a'.repeat(93)],
+  ])('rejects %s', (_label, value) => {
+    expect(isSafeDialRelativePath(value)).toBe(false);
+  });
+
+  it('rejects non-string values', () => {
+    expect(isSafeDialRelativePath(undefined)).toBe(false);
+  });
+});
+
+describe('IsSafeDialRelativePath', () => {
+  it('passes a nested path', () => {
+    const holder = plainToInstance(PathHolder, { path: 'run-1/data.csv' });
+    expect(validateSync(holder)).toHaveLength(0);
+  });
+
+  it('reports a traversal with a descriptive message', () => {
+    const holder = plainToInstance(PathHolder, { path: 'run-1/../x' });
+    const [error] = validateSync(holder);
+    expect(error.property).toBe('path');
+    expect(Object.values(error.constraints ?? {})[0]).toContain(
+      'is not a reserved name',
     );
   });
 });

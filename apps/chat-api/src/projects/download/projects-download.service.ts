@@ -103,22 +103,25 @@ export class ProjectsDownloadService {
     );
   }
 
+  /**
+   * @param relativePath - the output's path under `artifacts/`, e.g. `report.pdf` or `run-1/data.csv`; the download is named after its last segment
+   */
   downloadArtifact(
     project: ParsedProjectId,
-    fileName: string,
+    relativePath: string,
     accessToken: string,
     callerBucket: string,
   ): Promise<ProjectDownload> {
     return this.download(
       'projects.downloadProjectArtifact',
-      fileName,
+      relativePath.slice(relativePath.lastIndexOf('/') + 1),
       project.bucket,
       callerBucket,
       (signal) =>
         this.dialClient.client.downloadProjectFile(
           project.bucket,
           encodeDialResourcePath(project.path),
-          encodeDialResourcePath(`${PROJECT_ARTIFACTS_FOLDER}/${fileName}`),
+          encodeDialResourcePath(`${PROJECT_ARTIFACTS_FOLDER}/${relativePath}`),
           {
             headers: getBearerAuthHeaders(accessToken),
             parseAs: 'stream',

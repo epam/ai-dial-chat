@@ -64,13 +64,33 @@ describe('ProjectArtifactParamDto', () => {
     );
   });
 
-  it.each(['..', 'context/tickets.csv', 'a\\b', '../x'])(
-    'rejects the file name %j',
+  it.each(['report.pdf', 'run-1/data.csv', 'run-1/summary: final.md'])(
+    'accepts the artifact path %j',
     (fileName) => {
-      const errors = validateArtifact('projects/a1b2c3/q4', fileName);
-      expect(errors.map((error) => error.property)).toEqual(['fileName']);
+      expect(validateArtifact('projects/a1b2c3/q4', fileName)).toHaveLength(0);
     },
   );
+
+  it('accepts a path that names a context-like folder inside artifacts', () => {
+    expect(
+      validateArtifact('projects/a1b2c3/q4', 'context/tickets.csv'),
+    ).toHaveLength(0);
+  });
+
+  it.each([
+    '..',
+    'a\\b',
+    '../x',
+    '../context/tickets.csv',
+    'run-1/../x',
+    '/report.pdf',
+    'run-1/',
+    'run-1//data.csv',
+    'report%20v2.md',
+  ])('rejects the artifact path %j', (fileName) => {
+    const errors = validateArtifact('projects/a1b2c3/q4', fileName);
+    expect(errors.map((error) => error.property)).toEqual(['fileName']);
+  });
 });
 
 describe('parseProjectId', () => {
