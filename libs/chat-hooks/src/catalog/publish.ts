@@ -35,6 +35,12 @@ export const toPublishEntityType = (
   type: CatalogEntityType,
 ): CatalogPublishEntityType | undefined => PUBLISHABLE_ENTITY_TYPES[type];
 
+/** Whether a catalog entity type has saved versions, and so a Versions history section. */
+export const isVersionedCatalogEntityType = (
+  type: CatalogEntityType,
+): boolean =>
+  type === CatalogEntityType.Agent || type === CatalogEntityType.Toolset;
+
 /**
  * Whether a catalog entity id addresses the shared `public` bucket
  * (`{resourceType}/public/{folder…}/{name}`), i.e. the id names a published

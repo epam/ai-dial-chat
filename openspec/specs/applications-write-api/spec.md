@@ -527,6 +527,8 @@ The system SHALL expose two endpoints.
 
 Response `200`: `ResourceIdResponseDto { id: snapshotId }`. It returns `409` when either ETag changed between the read and the write.
 
+DIAL Core answers a stored application in snake_case (`display_version`, `icon_url`, `description_keywords`, …), although the SDK `Application` schema types those fields in camelCase. The service SHALL normalize every stored application body once at read (`normalizeStoredApplication` in `apps/chat-api/src/applications/utils/application-body-mapping.ts`): each snake alias of a camelCase SDK field is renamed to that field and dropped, the camelCase value winning when both are present, and snake-only schema fields such as `application_properties` are kept. Fork, commit and update therefore write camelCase keys only, so a stale snake key carried over from a stored body never overrides a value the write sets or clears.
+
 Both endpoints:
 
 - invalidate `applications:list:{userSub}` on success;

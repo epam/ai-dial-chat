@@ -8,6 +8,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { usePublishDependencyIconResolver } from '../usePublishDependencyIconResolver';
 
+/* Components here render without AppConfigProvider; resolve icons without a themes base URL. */
+vi.mock('../../../hooks/catalog/useResolveCatalogIconUrl', async () => {
+  const { resolveCatalogIconUrl } = await import('../../../utils/icon-path');
+  return { useResolveCatalogIconUrl: () => resolveCatalogIconUrl };
+});
+
 vi.mock('../../../context/DeploymentsContext');
 vi.mock('../../../utils/icon-path', () => ({
   resolveCatalogIconUrl: (iconUrl?: string) =>

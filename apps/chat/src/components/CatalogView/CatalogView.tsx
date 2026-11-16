@@ -52,6 +52,7 @@ import { useCatalogCreationPermissions } from '../../hooks/catalog/useCatalogCre
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
+import { useResourceVersionHistory } from '../../hooks/publish/useResourceVersionHistory';
 import { useSkillArchiveImport } from '../../hooks/skills/useSkillArchiveImport';
 import { useCatalogActiveTabPreference } from '../../hooks/useCatalogActiveTabPreference/useCatalogActiveTabPreference';
 import { useCatalogItemActions } from '../../hooks/useCatalogItemActions/useCatalogItemActions';
@@ -151,6 +152,7 @@ const CatalogView: FC<Props> = ({
   const [searchParams, setSearchParams] = useSearchParams();
   const itemIdParam = searchParams.get(CatalogQuery.ItemId) ?? undefined;
   const [initialDetailsItemId, setInitialDetailsItemId] = useState(itemIdParam);
+  const [publishOpenItem, setPublishOpenItem] = useState<CatalogItem>();
 
   /*
    * `itemId` is a one-shot signal — from a shared-invitation redirect (see
@@ -184,6 +186,7 @@ const CatalogView: FC<Props> = ({
   const isAdmin = user?.isAdmin ?? false;
   const { config } = useAppConfig();
   const dialCoreExternalUrl = config.dialCoreExternalUrl;
+  const themesBaseUrl = config.themesBaseUrl;
   const {
     items: deployments,
     selectedItemId,
@@ -303,6 +306,7 @@ const CatalogView: FC<Props> = ({
     toolsets,
     isAdmin,
     dialCoreExternalUrl,
+    themesBaseUrl,
     isToolsetsEnabled,
     isCustomAppsEnabled,
     isPromptsEnabled,
@@ -457,6 +461,17 @@ const CatalogView: FC<Props> = ({
     showPublishError,
     isAdmin,
   });
+
+  const handlePublishOpenChange = useCallback(
+    (isOpen: boolean, item: CatalogItem) =>
+      setPublishOpenItem(isOpen ? item : undefined),
+    [],
+  );
+  const versionHistory = useResourceVersionHistory(
+    publishOpenItem?.id ?? '',
+    publishOpenItem?.type ?? CatalogEntityType.Agent,
+    publishOpenItem != null,
+  );
 
   const {
     isShareVisible,
@@ -662,6 +677,8 @@ const CatalogView: FC<Props> = ({
         isPublishVisible={isPublishVisible}
         getPublishHistory={getPublishHistory}
         getPublishDependencies={getPublishDependencies}
+        publishVersionHistory={versionHistory}
+        onPublishOpenChange={handlePublishOpenChange}
         resolvePublishDependenciesLabels={(item) =>
           getPublishDependenciesLabels(
             t,

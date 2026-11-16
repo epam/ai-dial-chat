@@ -47,6 +47,7 @@ export type MappedClientConfig = Required<
     | 'appVersion'
     | 'catalogCreationPermissions'
     | 'modelCatalogAvailable'
+    | 'themesBaseUrl'
   >
 >;
 

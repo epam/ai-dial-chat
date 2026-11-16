@@ -20,6 +20,12 @@ import {
 } from '../../../types/entity-notification';
 import { useCatalogPublishing } from '../useCatalogPublishing';
 
+/* Components here render without AppConfigProvider; resolve icons without a themes base URL. */
+vi.mock('../../../hooks/catalog/useResolveCatalogIconUrl', async () => {
+  const { resolveCatalogIconUrl } = await import('../../../utils/icon-path');
+  return { useResolveCatalogIconUrl: () => resolveCatalogIconUrl };
+});
+
 vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   publishCatalogEntity: vi.fn(),

@@ -749,6 +749,9 @@ const ConversationView: FC<Props> = ({
                     fallbackCitationGroups={fallbackCitationGroups}
                     editingMessageIndexes={editingMessageIndexes}
                     onSelectStarter={onSelectStarter}
+                    /* A read-only conversation is not the viewer's to continue,
+                       so its form buttons stay visible but inert (#6878). */
+                    isStarterSelectionDisabled={isReadOnly}
                     onVisualizerSendMessage={onVisualizerSendMessage}
                     onStartEdit={isReadOnly ? undefined : handleStartEdit}
                     onDeleteMessage={isReadOnly ? undefined : onDeleteMessage}

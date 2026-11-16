@@ -22,13 +22,18 @@ import { PublishResultDto } from './dto/publish-result.dto';
 import { UnpublishAccessDto } from './dto/unpublish-access.dto';
 import { UnpublishCatalogEntityDto } from './dto/unpublish-catalog-entity.dto';
 import { UnpublishResultDto } from './dto/unpublish-result.dto';
+import { VersionStatusEntryDto } from './dto/version-status-entry.dto';
 import { PublishService } from './publish.service';
+import { VersionStatusesService } from './version-statuses.service';
 
 /** Controller for publishing catalog entities to an Organization folder and reading their publish history, both proxied through DIAL Core's Publication API. */
 @ApiTags('publish')
 @Controller({ path: 'catalog', version: '1' })
 export class PublishController {
-  constructor(private readonly publishService: PublishService) {}
+  constructor(
+    private readonly publishService: PublishService,
+    private readonly versionStatusesService: VersionStatusesService,
+  ) {}
 
   @Post(':entityType/:entityId/publish')
   @HttpCode(201)
@@ -250,6 +255,59 @@ export class PublishController {
   ): Promise<PublishHistoryEntryDto[]> {
     const { at, bucket } = req.user as SessionUser;
     return this.publishService.getPublishHistory(
+      at,
+      bucket,
+      entityType,
+      entityId,
+    );
+  }
+
+  @Get(':entityType/:entityId/version-statuses')
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'getCatalogVersionStatuses',
+    summary: 'Get the publication status of every version of an entity',
+    description:
+      'Returns one entry per saved version of the application or toolset (same owner, folder and base name) ' +
+      'with its publication status: `not-published`, `in-review`, `published` (with its folders and publisher) ' +
+      'or `unknown` for a resource owned by another user. Derived from the caller’s own publications in DIAL ' +
+      'Core, read once per request, and never from chat-api-side storage. Only applications and toolsets have versions.',
+  })
+  @ApiDialCoreErrors()
+  @ApiResponse({
+    status: 200,
+    description: 'Status of every version in the entity’s version group',
+    type: VersionStatusEntryDto,
+    isArray: true,
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Validation error — invalid entityType or entityId, or an entity type without versions',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'No version of the entity exists in the caller’s listing',
+  })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  getCatalogVersionStatuses(
+    @Req() req: Request,
+    @Param() { entityType, entityId }: CatalogEntityParamsDto,
+  ): Promise<VersionStatusEntryDto[]> {
+    const { sub, at, bucket } = req.user as SessionUser;
+    return this.versionStatusesService.getVersionStatuses(
+      sub,
       at,
       bucket,
       entityType,

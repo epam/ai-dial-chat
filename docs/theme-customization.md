@@ -157,6 +157,15 @@ Values are file names relative to the themes host; they are fetched through the
 `/api/themes/icon` proxy, so only characters allowed by its validation
 (alphanumerics, dash, underscore, dot) are usable.
 
+A deployment's `icon_url` in the DIAL config may name a theme icon either way:
+relative (`gpt4.svg`) or as an absolute URL on the themes host
+(`https://themes.example.com/gpt4.svg`). The chat loads both through
+`/api/themes/icon?iconName=gpt4.svg`, using `config.themesBaseUrl` from
+`GET /api/v1/client-config` (`THEMES_CONFIG_URL`), so a mixed config still
+fetches each icon once. Only a file directly under the themes base URL whose
+name passes the proxy's validation is rewritten; every other absolute URL loads
+as listed.
+
 ### Setting the theme from an embedding host
 
 An embedded overlay selects the theme by id, both at construction and at

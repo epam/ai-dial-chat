@@ -224,7 +224,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-projects` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.4.1
+- `@epam/ai-dial-react-file-manager` ^0.4.2
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
@@ -1116,6 +1116,29 @@ setRefreshToken((token) => token + 1);
 | `usage`      | `UserLimitStatsResponseDto \| undefined` | The fetched stats, or `undefined` until the first response resolves. Retained across a `refreshToken`-triggered re-fetch. |
 | `isLoading`  | `boolean`                                | `true` while a fetch is in flight, including a refresh.                                                                   |
 | `usageError` | `Error \| undefined`                     | Set when the `getUserUsage` call rejects.                                                                                 |
+
+### useOrgUnits
+
+Loads the current user's DIAL Core org units once, on demand, and answers
+which public-bucket folders are units. The host supplies `listOrgUnits`
+(resolving `{ enabled, units }`), so the hook never builds a client. Nothing
+is read until `ensureUnits()` is called. Later calls do nothing, except after a
+failed read, when the next call reads again. Status
+is the `OrgUnitsStatus` enum: `Idle`, `Loading`, `Ready`, `Disabled` (Core
+has org units off) or `Error` (the read failed; nothing is reported). Until
+the status is `Ready`, `isOrgUnitFolder` returns `false`. Available from the
+root and `./utils`.
+
+```tsx
+import { OrgUnitsStatus, useOrgUnits } from '@epam/ai-dial-chat-hooks';
+
+const { status, ensureUnits, isOrgUnitFolder } = useOrgUnits({
+  listOrgUnits, // host-configured fetch
+});
+
+useEffect(() => ensureUnits(), [ensureUnits]);
+const isUnit = status === OrgUnitsStatus.Ready && isOrgUnitFolder('Acme');
+```
 
 ### useUsageLimitBanner
 
@@ -2743,6 +2766,51 @@ const SkillCatalog = ({
 | `error`            | `unknown`                              | Rejection reason of the most recent failed listing, or `null`.             |
 | `refetch`          | `() => Promise<void>`                  | Re-reads all namespaces and replaces the current state.                    |
 | `mergeSharedSkill` | `(item: SkillMetadataItemDto) => void` | Upserts a skill into `sharedWithMe` by `url`, appending it if not present. |
+
+### useVersionHistory
+
+Builds the Versions history rows of the Save and Publish panels. It selects the caller's own items of an already-loaded deployments or toolsets listing that share the edited resource's `versionGroupId`, leaves the edited version itself out, sorts the others by `updatedAt` (newest first), formats the folder (`rootLabel` plus the folder segments of the id), date and author line through the host `formatters`, and loads the publication statuses in the background through the supplied `client.getCatalogVersionStatuses` while `isEnabled` is `true`. The rows render at once; a failed request keeps them and sets `hasError`, and `onRetry` reloads. A resource that is not the user's own (no row with `isMy === true`), an id missing from the listing, a listing still loading, or a resource with no other saved version returns no rows, `hasVersions: false`, and requests nothing: the host should then render no section. Closing the panel (`isEnabled: false`) clears the loaded statuses and any error, so reopening shows the loading state again. The hook builds no client and no path: the host passes `publishApiClient` from its `createPublishApiClient` and the translated `formatters`.
+
+```tsx
+import { useVersionHistory } from '@epam/ai-dial-chat-hooks';
+
+const { rows, isLoading, hasError, onRetry } = useVersionHistory({
+  items: toolsets,
+  resourceId: toolset.id,
+  entityType: 'toolset',
+  isEnabled: isPanelOpen,
+  client: publishApiClient,
+  formatters,
+});
+
+<PublishPanel
+  {...props}
+  versionHistory={{ rows, isLoading, hasError, onRetry }}
+/>;
+```
+
+`formatters` is `{ rootLabel, formatDate, formatPublishedBy, formatOwner }` (`VersionHistoryFormatters`) and should be referentially stable. The pure `selectOtherVersions` and `buildVersionHistoryRows` it uses are exported too.
+
+### useVersionHistorySection / isVersionedCatalogEntityType
+
+`useVersionHistorySection` wraps `useVersionHistory` for a host that holds both listings. It takes `resourceId`, `resourceType` (a `CatalogEntityType`), `isEnabled`, the `applications` and `toolsets` listing items, the `client`, the translated `labels` and the `formatters`, picks the listing by type, and returns ready `VersionHistorySectionProps` (`rows`, `isLoading`, `hasError`, `onRetry`, `labels`), or `undefined` for an unversioned type, an empty `resourceId`, and while the listing holds no other version the user owns. `isVersionedCatalogEntityType(type)` is `true` for applications (`CatalogEntityType.Agent`) and toolsets.
+
+```tsx
+import { useVersionHistorySection } from '@epam/ai-dial-chat-hooks';
+
+const versionHistory = useVersionHistorySection({
+  resourceId: item.id,
+  resourceType: item.type,
+  isEnabled: isPublishOpen,
+  applications: deployments,
+  toolsets,
+  client: publishApiClient,
+  labels,
+  formatters,
+});
+
+<PublishPanel {...props} versionHistory={versionHistory} />;
+```
 
 ## Usage Utilities
 

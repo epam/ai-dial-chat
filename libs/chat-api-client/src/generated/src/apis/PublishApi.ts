@@ -22,6 +22,7 @@ import type {
   UnpublishAccessDto,
   UnpublishCatalogEntityDto,
   UnpublishResultDto,
+  VersionStatusEntryDto,
 } from '../models/index';
 
 export interface GetCatalogPublishDependenciesRequest {
@@ -36,6 +37,11 @@ export interface GetCatalogPublishHistoryRequest {
 
 export interface GetCatalogUnpublishAccessRequest {
   entityType: GetCatalogUnpublishAccessEntityTypeEnum;
+  entityId: string;
+}
+
+export interface GetCatalogVersionStatusesRequest {
+  entityType: GetCatalogVersionStatusesEntityTypeEnum;
   entityId: string;
 }
 
@@ -272,6 +278,79 @@ export class PublishApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<UnpublishAccessDto> {
     const response = await this.getCatalogUnpublishAccessRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns one entry per saved version of the application or toolset (same owner, folder and base name) with its publication status: `not-published`, `in-review`, `published` (with its folders and publisher) or `unknown` for a resource owned by another user. Derived from the caller’s own publications in DIAL Core, read once per request, and never from chat-api-side storage. Only applications and toolsets have versions.
+   * Get the publication status of every version of an entity
+   */
+  async getCatalogVersionStatusesRaw(
+    requestParameters: GetCatalogVersionStatusesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Array<VersionStatusEntryDto>>> {
+    if (requestParameters['entityType'] == null) {
+      throw new runtime.RequiredError(
+        'entityType',
+        'Required parameter "entityType" was null or undefined when calling getCatalogVersionStatuses().',
+      );
+    }
+
+    if (requestParameters['entityId'] == null) {
+      throw new runtime.RequiredError(
+        'entityId',
+        'Required parameter "entityId" was null or undefined when calling getCatalogVersionStatuses().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/catalog/{entityType}/{entityId}/version-statuses`;
+    urlPath = urlPath.replace(
+      `{${'entityType'}}`,
+      encodeURIComponent(String(requestParameters['entityType'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'entityId'}}`,
+      encodeURIComponent(String(requestParameters['entityId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<Array<VersionStatusEntryDto>>(response);
+  }
+
+  /**
+   * Returns one entry per saved version of the application or toolset (same owner, folder and base name) with its publication status: `not-published`, `in-review`, `published` (with its folders and publisher) or `unknown` for a resource owned by another user. Derived from the caller’s own publications in DIAL Core, read once per request, and never from chat-api-side storage. Only applications and toolsets have versions.
+   * Get the publication status of every version of an entity
+   */
+  async getCatalogVersionStatuses(
+    requestParameters: GetCatalogVersionStatusesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Array<VersionStatusEntryDto>> {
+    const response = await this.getCatalogVersionStatusesRaw(
       requestParameters,
       initOverrides,
     );
@@ -546,6 +625,19 @@ export const GetCatalogUnpublishAccessEntityTypeEnum = {
 } as const;
 export type GetCatalogUnpublishAccessEntityTypeEnum =
   (typeof GetCatalogUnpublishAccessEntityTypeEnum)[keyof typeof GetCatalogUnpublishAccessEntityTypeEnum];
+/**
+ * @export
+ */
+export const GetCatalogVersionStatusesEntityTypeEnum = {
+  Model: 'model',
+  Toolset: 'toolset',
+  Application: 'application',
+  Prompt: 'prompt',
+  Skill: 'skill',
+  Project: 'project',
+} as const;
+export type GetCatalogVersionStatusesEntityTypeEnum =
+  (typeof GetCatalogVersionStatusesEntityTypeEnum)[keyof typeof GetCatalogVersionStatusesEntityTypeEnum];
 /**
  * @export
  */

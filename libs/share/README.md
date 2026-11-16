@@ -88,6 +88,11 @@ standalone component renders the code only — the Copy and Download actions
 belong to `SharePopover`. Pass the optional `svgRef` to receive the rendered
 `<svg>` element.
 
+The QR renderer (`react-qr-code`) loads through a dynamic import when
+`QrCode` first mounts, so it stays out of a host's initial bundle. The labelled
+frame renders immediately at its final size; `svgRef.current` stays `null` until
+the code has rendered, and the frame stays empty if the import fails.
+
 ```tsx
 import { QrCode } from '@epam/ai-dial-share';
 import { useRef } from 'react';

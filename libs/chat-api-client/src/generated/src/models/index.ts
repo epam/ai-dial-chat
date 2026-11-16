@@ -1,5 +1,5 @@
 /* tslint:disable */
-/* eslint-disable */
+
 /**
  *
  * @export
@@ -954,6 +954,49 @@ export type BackgroundGenerationStatus =
 /**
  *
  * @export
+ * @interface BudgetStatsDto
+ */
+export interface BudgetStatsDto {
+  /**
+   * The cost object the budget applies in. A cost object can hold several budgets, so more than one entry may carry the same value.
+   * @type {string}
+   * @memberof BudgetStatsDto
+   */
+  costObject: string;
+  /**
+   * The path of the budget's policy.
+   * @type {string}
+   * @memberof BudgetStatsDto
+   */
+  policy: string;
+  /**
+   * The priority of the budget's policy, lower first; absent when the policy sets none.
+   * @type {number}
+   * @memberof BudgetStatsDto
+   */
+  priority?: number;
+  /**
+   * The human-readable name of the budget's policy; absent when the policy sets none. Use `policy` as the identifier — the display name need not be unique.
+   * @type {string}
+   * @memberof BudgetStatsDto
+   */
+  displayName?: string;
+  /**
+   * The budget's limit and the caller's spend against it for the current UTC day. A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.
+   * @type {LimitStatsDto}
+   * @memberof BudgetStatsDto
+   */
+  day: LimitStatsDto;
+  /**
+   * The budget's limit and the caller's spend against it for the current UTC month. A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.
+   * @type {LimitStatsDto}
+   * @memberof BudgetStatsDto
+   */
+  month: LimitStatsDto;
+}
+/**
+ *
+ * @export
  * @interface CatalogCreationPermissionsDto
  */
 export interface CatalogCreationPermissionsDto {
@@ -1895,6 +1938,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   modelCatalogAvailable?: boolean;
+  /**
+   * Base URL of the themes service (THEMES_CONFIG_URL without a trailing slash). Clients recognise absolute deployment icon URLs under it and load them through GET /api/themes/icon instead, so one icon is requested under one URL. Missing when THEMES_CONFIG_URL is not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  themesBaseUrl?: string;
 }
 
 /**
@@ -4189,6 +4238,12 @@ export interface DeploymentItemDto {
    */
   displayVersion?: string;
   /**
+   * Identifies the versions of one application saved by one owner in one folder: the owner bucket, the folder and the base name without the `__<version>` suffix of the stored id. Absent for models and for ids without a version suffix.
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  versionGroupId?: string;
+  /**
    * Whether this deployment is featured (configured via env)
    * @type {boolean}
    * @memberof DeploymentItemDto
@@ -4596,6 +4651,24 @@ export interface DialModelDto {
    */
   lifecycleStatus?: string;
   /**
+   * Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  provider?: string;
+  /**
+   * Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  deprecationDate?: string;
+  /**
+   * Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  endOfService?: string;
+  /**
    *
    * @type {DialModelCapabilitiesDto}
    * @memberof DialModelDto
@@ -4999,6 +5072,12 @@ export interface DialToolsetDto {
    * @memberof DialToolsetDto
    */
   displayVersion?: string;
+  /**
+   * Identifies the versions of one toolset saved by one owner in one folder: the owner bucket, the folder and the base name without the `__<version>` suffix of the stored id. Absent for an id without a version suffix.
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  versionGroupId?: string;
   /**
    *
    * @type {DialToolsetDtoDescription}
@@ -6554,6 +6633,24 @@ export interface ModelCatalogEntryDto {
    */
   lifecycleStatus?: string;
   /**
+   * Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  provider?: string;
+  /**
+   * Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  deprecationDate?: string;
+  /**
+   * Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  endOfService?: string;
+  /**
    *
    * @type {DialModelCapabilitiesDto}
    * @memberof ModelCatalogEntryDto
@@ -6604,12 +6701,6 @@ export interface ModelCatalogListResponseDto {
  */
 export interface ModelCatalogPropertiesDto {
   /**
-   * Model provider for catalog display
-   * @type {string}
-   * @memberof ModelCatalogPropertiesDto
-   */
-  provider?: string;
-  /**
    * Model vendor for catalog display
    * @type {string}
    * @memberof ModelCatalogPropertiesDto
@@ -6652,6 +6743,24 @@ export interface ModelDetailsDto {
    * @memberof ModelDetailsDto
    */
   lifecycleStatus?: string;
+  /**
+   * Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated
+   * @type {string}
+   * @memberof ModelDetailsDto
+   */
+  provider?: string;
+  /**
+   * Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof ModelDetailsDto
+   */
+  deprecationDate?: string;
+  /**
+   * Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof ModelDetailsDto
+   */
+  endOfService?: string;
   /**
    * Name of the model whose tokenization algorithm this model uses
    * @type {string}
@@ -7012,6 +7121,62 @@ export interface OfflineCredentialsSigninBodyDto {
    * @memberof OfflineCredentialsSigninBodyDto
    */
   redirectUri: string;
+}
+/**
+ *
+ * @export
+ * @interface OrgUnitDto
+ */
+export interface OrgUnitDto {
+  /**
+   * Core unit id
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  id: string;
+  /**
+   * Unit name; also the last segment of its folder
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  name: string;
+  /**
+   * Display name; falls back to `name` when Core has none
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  displayName: string;
+  /**
+   * Decoded unit address without a trailing slash
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  path: string;
+  /**
+   * Unit folder exactly as DIAL Core returns it: url-encoded, with a trailing slash
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  folder: string;
+}
+/**
+ *
+ * @export
+ * @interface OrgUnitsResponseDto
+ */
+export interface OrgUnitsResponseDto {
+  /**
+   * `false` when DIAL Core has org units turned off
+   * @type {boolean}
+   * @memberof OrgUnitsResponseDto
+   */
+  enabled: boolean;
+  /**
+   *
+   * @type {Array<OrgUnitDto>}
+   * @memberof OrgUnitsResponseDto
+   */
+  units: Array<OrgUnitDto>;
 }
 /**
  *
@@ -10645,6 +10810,12 @@ export interface UserLimitStatsResponseDto {
    * @memberof UserLimitStatsResponseDto
    */
   monthCostStats?: LimitStatsDto;
+  /**
+   * The caller's spend against each spending budget that applies to them, in DIAL Core's order. A cost object can hold several budgets, so entries may share a `costObject`. The budgets are reported separately from, and are not merged into, the top-level `minuteCostStats`/`dayCostStats`/`weekCostStats`/`monthCostStats`. An empty array means DIAL Core reported no applicable budget (spending limits are off, no budget matches the caller, or the caller is an API key); an absent field means DIAL Core does not report budgets at all (an older DIAL Core). A window `total` at or above 9007199254740992 (2^53) represents the upstream "unlimited" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio. The BFF forwards the array verbatim.
+   * @type {Array<BudgetStatsDto>}
+   * @memberof UserLimitStatsResponseDto
+   */
+  budgets?: Array<BudgetStatsDto>;
 }
 /**
  *
@@ -10689,6 +10860,58 @@ export interface UserProfileDto {
    */
   pictureUrl?: string;
 }
+
+/**
+ *
+ * @export
+ */
+export const VersionPublicationStatus = {
+  NotPublished: 'not-published',
+  InReview: 'in-review',
+  Published: 'published',
+  Unknown: 'unknown',
+} as const;
+export type VersionPublicationStatus =
+  (typeof VersionPublicationStatus)[keyof typeof VersionPublicationStatus];
+
+/**
+ *
+ * @export
+ * @interface VersionStatusEntryDto
+ */
+export interface VersionStatusEntryDto {
+  /**
+   * DIAL Core resource id of the version, as the listings return it.
+   * @type {string}
+   * @memberof VersionStatusEntryDto
+   */
+  id: string;
+  /**
+   * Display version of the version; empty when the resource has none.
+   * @type {string}
+   * @memberof VersionStatusEntryDto
+   */
+  version: string;
+  /**
+   *
+   * @type {VersionPublicationStatus}
+   * @memberof VersionStatusEntryDto
+   */
+  status: VersionPublicationStatus;
+  /**
+   * Folders a published version is published to, without the `public/` prefix; empty otherwise.
+   * @type {Array<string>}
+   * @memberof VersionStatusEntryDto
+   */
+  publishedFolders: Array<string>;
+  /**
+   * Display name of the publisher of a published version.
+   * @type {string}
+   * @memberof VersionStatusEntryDto
+   */
+  publishedBy?: string;
+}
+
 /**
  *
  * @export

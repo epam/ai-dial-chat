@@ -56,6 +56,8 @@ interface UseCatalogItemsParams {
   toolsets: DialToolsetDto[];
   isAdmin: boolean;
   dialCoreExternalUrl: string | null;
+  /** Base URL of the themes service, from the client config. */
+  themesBaseUrl?: string | null;
   isToolsetsEnabled: boolean;
   isCustomAppsEnabled: boolean;
   isPromptsEnabled: boolean;
@@ -104,6 +106,7 @@ export const useCatalogItems = ({
   toolsets,
   isAdmin,
   dialCoreExternalUrl,
+  themesBaseUrl,
   isToolsetsEnabled,
   isCustomAppsEnabled,
   isPromptsEnabled,
@@ -225,6 +228,7 @@ export const useCatalogItems = ({
           isCustomAppsEditable: isCustomAppsEnabled,
           activeLocale: language,
           isToolsetTabEnabled: isToolsetsEnabled,
+          themesBaseUrl,
         }),
       ),
       ...(isToolsetsEnabled
@@ -234,6 +238,7 @@ export const useCatalogItems = ({
               isAdmin,
               t,
               activeLocale: language,
+              themesBaseUrl,
             }),
           )
         : []),
@@ -297,6 +302,7 @@ export const useCatalogItems = ({
     t,
     language,
     toolsets,
+    themesBaseUrl,
     runnerSchemaIds,
     isAdmin,
     isToolsetsEnabled,
