@@ -1,5 +1,8 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import type { PublishHistoryEntry } from '@epam/ai-dial-publish-panel';
+import type {
+  PublishDependency,
+  PublishHistoryEntry,
+} from '@epam/ai-dial-publish-panel';
 import {
   derivePublishState,
   PublishPanelView,
@@ -12,6 +15,7 @@ import type { PublishedFolder } from '../../../models/details-panel';
 import type { DetailsPanelProps } from '../../../models/item-details-props';
 import {
   CATALOG_PUBLISH_ALLOWS_REPLACE,
+  EMPTY_PUBLISH_DEPENDENCIES,
   EMPTY_PUBLISH_FOLDERS,
   NO_OP_PUBLISH,
 } from '../../../utils/details-panel';
@@ -23,6 +27,7 @@ export type UseDetailsPublishParams = Pick<
   | 'item'
   | 'isReadonly'
   | 'getPublishHistory'
+  | 'getPublishDependencies'
   | 'publishFolderItems'
   | 'hasPublishWriteAccess'
   | 'publishDefaultAuthor'
@@ -41,6 +46,7 @@ export const useDetailsPublish = ({
   item,
   isReadonly = false,
   getPublishHistory,
+  getPublishDependencies,
   publishFolderItems = EMPTY_PUBLISH_FOLDERS,
   hasPublishWriteAccess,
   publishDefaultAuthor,
@@ -106,6 +112,56 @@ export const useDetailsPublish = ({
   useEffect(() => {
     if (isPublishOpen) requestPublishHistory();
   }, [isPublishOpen, requestPublishHistory]);
+
+  /*
+   * Private dependencies are read each time the publish sub-view opens, for the
+   * open item only: the list names what is still private right now, so a
+   * dependency published since the last open must drop off. A failed read
+   * leaves the list empty (it only informs), and a response that lands after
+   * the panel closed or the item changed is dropped. The host's callback and
+   * the item are read through refs so only an open or an item change reads.
+   */
+  const [loadedDependencies, setLoadedDependencies] = useState<
+    { itemId: string; dependencies: PublishDependency[] } | undefined
+  >();
+  const getPublishDependenciesRef = useRef(getPublishDependencies);
+  const itemRef = useRef(item);
+  useEffect(() => {
+    getPublishDependenciesRef.current = getPublishDependencies;
+    itemRef.current = item;
+  }, [getPublishDependencies, item]);
+  const hasPublishDependencies = getPublishDependencies != null;
+  const itemId = item.id;
+
+  useEffect(() => {
+    if (!isPublishOpen || !hasPublishDependencies) return;
+    let isCancelled = false;
+    const load = async () => {
+      let dependencies = EMPTY_PUBLISH_DEPENDENCIES;
+      try {
+        dependencies =
+          (await getPublishDependenciesRef.current?.(itemRef.current)) ??
+          EMPTY_PUBLISH_DEPENDENCIES;
+      } catch {
+        /* Left empty: the list only informs, publishing does not depend on it. */
+      }
+      if (!isCancelled) setLoadedDependencies({ itemId, dependencies });
+    };
+    void load();
+    return () => {
+      isCancelled = true;
+      setLoadedDependencies(undefined);
+    };
+  }, [isPublishOpen, hasPublishDependencies, itemId]);
+
+  /* `undefined` when the host supplies no lookup, so the panel renders as it always did. */
+  let publishDependencies: PublishDependency[] | undefined;
+  if (hasPublishDependencies) {
+    publishDependencies =
+      loadedDependencies?.itemId === itemId
+        ? loadedDependencies.dependencies
+        : EMPTY_PUBLISH_DEPENDENCIES;
+  }
 
   /*
    * A successful publish adds a folder to this item's history, so the
@@ -245,6 +301,7 @@ export const useDetailsPublish = ({
     isPublishHistoryResolved,
     requestPublishHistory,
     publishFlow,
+    publishDependencies,
     isPublishCredentialsEligible,
     publishDerived,
     publishedFolders,

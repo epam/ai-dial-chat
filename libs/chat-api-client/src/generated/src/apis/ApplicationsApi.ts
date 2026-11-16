@@ -14,6 +14,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApplicationErrorDto,
   ApplicationSchemasResponseDto,
   ApplicationsResponseDto,
   CommitApplicationVersionDto,

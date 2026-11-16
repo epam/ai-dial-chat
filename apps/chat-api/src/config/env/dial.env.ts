@@ -46,6 +46,15 @@ export class DialEnv {
   @IsString()
   DIAL_API_KEY?: string;
 
+  /**
+   * Server-only `Api-Key` for `GET /api/v1/model-catalog`. Separate from
+   * `DIAL_API_KEY`: its Core role must see every catalog model. Unset or blank
+   * disables the catalog routes.
+   */
+  @IsOptional()
+  @IsString()
+  MODEL_CATALOG_API_KEY?: string;
+
   @IsOptional()
   @IsUrl({ require_tld: false })
   THEMES_CONFIG_URL?: string;

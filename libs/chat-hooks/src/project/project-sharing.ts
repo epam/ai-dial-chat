@@ -21,18 +21,26 @@ export enum PinnedProjectMenuAction {
   Publish = 'publish',
   /** Opens the share popover. */
   Share = 'share',
+  /** Opens the owner's revoke-access confirmation. */
+  RevokeAccess = 'revokeAccess',
   /** Opens the delete confirmation. */
   Delete = 'delete',
   /** Opens the confirmation that drops a shared project from the caller's list. */
   RemoveFromMyList = 'removeFromMyList',
 }
 
-/** Returns the actions a pinned project's menu offers the caller, in display order; the host maps each to its label, icon and handler. */
+/**
+ * Returns the actions a pinned project's menu offers the caller, in display order.
+ * The host maps each to its label, icon and handler.
+ * @param project - The loaded project, or nullish while loading.
+ * @param canRevokeAccess - Whether recipients are confirmed; defaults to false. Ownership is still required.
+ */
 export const getPinnedProjectMenuActions = (
   project:
     | Pick<ProjectDetailsDto, 'source' | 'canEdit' | 'canManage'>
     | null
     | undefined,
+  canRevokeAccess = false,
 ): PinnedProjectMenuAction[] => {
   /* A project that is not loaded yet only offers Unpin. */
   if (project == null) return [PinnedProjectMenuAction.Unpin];
@@ -55,6 +63,7 @@ export const getPinnedProjectMenuActions = (
     PinnedProjectMenuAction.Edit,
     PinnedProjectMenuAction.Publish,
     PinnedProjectMenuAction.Share,
+    ...(canRevokeAccess ? [PinnedProjectMenuAction.RevokeAccess] : []),
     PinnedProjectMenuAction.Delete,
   ];
 };

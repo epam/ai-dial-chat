@@ -7,8 +7,9 @@ import type { DeploymentCreationFormValues } from '../models/deployment-creation
 import { DeploymentCreationFieldErrorCode } from '../models/validation';
 import {
   DEFAULT_DEPLOYMENT_VERSION,
-  SEMVER_VERSION_PATTERN,
+  STORED_VERSION_PATTERN,
   validateDeploymentCreationFields,
+  withStoredVersionRule,
 } from './validate-deployment-creation-fields';
 
 const baseValues: DeploymentCreationFormValues = {
@@ -19,6 +20,8 @@ const baseValues: DeploymentCreationFormValues = {
   topics: [],
   otherLocales: [],
 };
+
+const NUMERIC_VERSION_PATTERN = /^\d+(\.\d+)*$/;
 
 describe('validateDeploymentCreationFields', () => {
   it('returns no errors for valid values', () => {
@@ -91,6 +94,30 @@ describe('validateDeploymentCreationFields', () => {
     expect(errors.version).toBe(DeploymentCreationFieldErrorCode.InvalidFormat);
   });
 
+  it.each(['1.0.', '..', 'a'.repeat(65), '1/0'])(
+    'rejects version "%s" under the default pattern',
+    (version) => {
+      const errors = validateDeploymentCreationFields(
+        { ...baseValues, version },
+        { validateVersionPattern: true },
+      );
+      expect(errors.version).toBe(
+        DeploymentCreationFieldErrorCode.InvalidFormat,
+      );
+    },
+  );
+
+  it.each(['beta-2', '1.0+build5', '.hidden', 'a'.repeat(64)])(
+    'accepts version "%s" under the default pattern',
+    (version) => {
+      const errors = validateDeploymentCreationFields(
+        { ...baseValues, version },
+        { validateVersionPattern: true },
+      );
+      expect(errors.version).toBeUndefined();
+    },
+  );
+
   it('accepts a letters-only version when the default pattern check is enabled', () => {
     const errors = validateDeploymentCreationFields(
       { ...baseValues, version: 'abc' },
@@ -102,7 +129,7 @@ describe('validateDeploymentCreationFields', () => {
   it('returns an invalid-format error for a non-numeric version when a stricter pattern is passed', () => {
     const errors = validateDeploymentCreationFields(
       { ...baseValues, version: 'abc' },
-      { validateVersionPattern: SEMVER_VERSION_PATTERN },
+      { validateVersionPattern: NUMERIC_VERSION_PATTERN },
     );
     expect(errors.version).toBe(DeploymentCreationFieldErrorCode.InvalidFormat);
   });
@@ -110,10 +137,28 @@ describe('validateDeploymentCreationFields', () => {
   it('accepts a dot-separated numeric version when a stricter pattern is passed', () => {
     const errors = validateDeploymentCreationFields(
       { ...baseValues, version: '0.0.1' },
-      { validateVersionPattern: SEMVER_VERSION_PATTERN },
+      { validateVersionPattern: NUMERIC_VERSION_PATTERN },
     );
     expect(errors.version).toBeUndefined();
   });
+
+  it.each(['_beta', '1.0.', '1__2'])(
+    'accepts the stored version "%s" with STORED_VERSION_PATTERN but not with the default rule',
+    (version) => {
+      expect(
+        validateDeploymentCreationFields(
+          { ...baseValues, version },
+          { validateVersionPattern: STORED_VERSION_PATTERN },
+        ).version,
+      ).toBeUndefined();
+      expect(
+        validateDeploymentCreationFields(
+          { ...baseValues, version },
+          { validateVersionPattern: true },
+        ).version,
+      ).toBe(DeploymentCreationFieldErrorCode.InvalidFormat);
+    },
+  );
 
   it('does not flag an empty version even when the pattern check is enabled', () => {
     const errors = validateDeploymentCreationFields(
@@ -137,11 +182,34 @@ describe('DEFAULT_DEPLOYMENT_VERSION', () => {
     expect(DEFAULT_DEPLOYMENT_VERSION).toBe('1.0.0');
   });
 
-  it('passes the SemVer version check', () => {
+  it('passes the numeric version check', () => {
     const errors = validateDeploymentCreationFields(
       { ...baseValues, version: DEFAULT_DEPLOYMENT_VERSION },
-      { validateVersionPattern: SEMVER_VERSION_PATTERN },
+      { validateVersionPattern: NUMERIC_VERSION_PATTERN },
     );
     expect(errors.version).toBeUndefined();
+  });
+});
+
+describe('withStoredVersionRule', () => {
+  it('switches the default version check to the stored rule in edit mode', () => {
+    expect(
+      withStoredVersionRule({ validateVersionPattern: true }, true),
+    ).toEqual({ validateVersionPattern: STORED_VERSION_PATTERN });
+  });
+
+  it('keeps the options of a create form', () => {
+    const options = { validateVersionPattern: true };
+
+    expect(withStoredVersionRule(options, false)).toBe(options);
+  });
+
+  it('keeps a host regular expression and the other options in edit mode', () => {
+    const options = {
+      validateNamePattern: true,
+      validateVersionPattern: NUMERIC_VERSION_PATTERN,
+    };
+
+    expect(withStoredVersionRule(options, true)).toBe(options);
   });
 });

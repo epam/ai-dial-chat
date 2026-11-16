@@ -22,7 +22,9 @@ export * from './catalog/map-prompt-to-catalog-item';
 export * from './catalog/map-skill-to-catalog-item';
 export * from './catalog/mcp-endpoint-url';
 export * from './catalog/publish';
+export * from './catalog/publish-dependency-icons';
 export * from './catalog/use-publish-history';
+export * from './catalog/use-publish-dependencies';
 export * from './catalog/unpublishable-folders';
 export * from './catalog/useUnpublishableFolders/useUnpublishableFolders';
 export * from './catalog/useUnpublishConfirmation/useUnpublishConfirmation';
@@ -49,6 +51,9 @@ export * from './catalog/resource-name-conflict';
 export * from './catalog/resource-save';
 export * from './catalog/resource-save-adapters';
 export * from './catalog/useResourceSavePanel/useResourceSavePanel';
+export * from './catalog/useVersionHistory/useVersionHistory';
+export * from './catalog/useVersionHistory/useVersionHistorySection';
+export * from './catalog/version-history';
 export * from './conversation/announcement-message';
 export * from './conversation/conversation-draft/conversation-draft';
 export * from './conversation/conversation-draft/conversation-draft-store';
@@ -183,6 +188,7 @@ export * from './files/dial-file-manager-copy-move.util';
 export * from './files/dial-file-manager-mapping.util';
 export * from './files/dial-file-manager-path.util';
 export * from './files/attachment-types';
+export * from './files/attachment-type-labels';
 export * from './files/create-files-api';
 export * from './files/create-upload-file-with-progress';
 export * from './files/annotation';
@@ -303,3 +309,13 @@ export * from './signin-interrupt/useSigninInterrupt/useSigninInterrupt';
 
 export * from './conversation/useDeploymentChangeTracking';
 export * from './conversation/conversation-data-source';
+
+export {
+  notifyProjectAccessRevoked,
+  type ProjectSharingClient,
+} from './project/project-sharing-client';
+export * from './project/use-project-share-recipients';
+export * from './project/use-project-revoke-access';
+export * from './org-units/types';
+export * from './org-units/models';
+export * from './org-units/useOrgUnits/useOrgUnits';

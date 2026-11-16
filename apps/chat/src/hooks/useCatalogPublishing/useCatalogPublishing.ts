@@ -2,11 +2,14 @@ import type { CatalogItem } from '@epam/ai-dial-catalog';
 import type {
   ApplicationSchemaSummaryDto,
   DeploymentItemDto,
+  DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
+  createPublishDependencyIconResolver,
   findDeploymentByIdOrReference,
   isPublicCatalogEntityId,
   mapPublishHistoryEntryDto,
+  mapResourceDependencyDto,
   resolveUnpublishableFolders,
   toPublishEntityType,
   toPublishRuleDto,
@@ -15,12 +18,14 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import type {
   PublicationRule,
+  PublishDependency,
   PublishHistoryEntry,
 } from '@epam/ai-dial-publish-panel';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getPublishRules } from '../../server-api/publish-rules.api';
 import {
+  getCatalogPublishDependencies,
   getCatalogPublishHistory,
   getCatalogUnpublishAccess,
   publishCatalogEntity,
@@ -29,6 +34,7 @@ import {
 import { EntityOperation } from '../../types/entity-notification';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import { getPublishFolderLabel } from '../../utils/publish';
+import { useResolveCatalogIconUrl } from '../catalog/useResolveCatalogIconUrl';
 import type { useOperationNotification } from '../useOperationNotification';
 
 /* Built from the named wrappers, not `publishApiClient`, so tests that mock those wrappers keep covering this path. */
@@ -37,8 +43,12 @@ const unpublishableFoldersClient: UnpublishableFoldersClient = {
   getCatalogUnpublishAccess,
 };
 
+const NO_TOOLSETS: DialToolsetDto[] = [];
+
 interface UseCatalogPublishingParams {
   deployments: DeploymentItemDto[];
+  /** Toolsets the catalog has loaded; their icons are shown beside the private dependencies of a publication. */
+  toolsets?: DialToolsetDto[];
   /** Application schemas, used to name a schema app by its schema in notifications. */
   schemas: ApplicationSchemaSummaryDto[];
   rememberPublishFolder: (folderPath: string[]) => void;
@@ -52,6 +62,7 @@ interface UseCatalogPublishingParams {
 
 interface UseCatalogPublishingResult {
   getPublishHistory: (item: CatalogItem) => Promise<PublishHistoryEntry[]>;
+  getPublishDependencies: (item: CatalogItem) => Promise<PublishDependency[]>;
   handlePublish: (
     item: CatalogItem,
     folderPath: string[],
@@ -80,6 +91,7 @@ interface UseCatalogPublishingResult {
  */
 export const useCatalogPublishing = ({
   deployments,
+  toolsets = NO_TOOLSETS,
   schemas,
   rememberPublishFolder,
   notifyOperationSuccess,
@@ -173,6 +185,36 @@ export const useCatalogPublishing = ({
       return entries.map(mapPublishHistoryEntryDto);
     },
     [isAdmin],
+  );
+
+  /*
+   * The catalog item's own id is the entity id the publish routes take. A kind
+   * the publish API does not know has nothing to resolve. A public copy is
+   * never published again, so it has no dependencies to list either.
+   */
+  const resolveCatalogIconUrl = useResolveCatalogIconUrl();
+  const resolveDependencyIcon = useMemo(
+    () =>
+      createPublishDependencyIconResolver({
+        deployments,
+        toolsets,
+        resolveIconUrl: resolveCatalogIconUrl,
+      }),
+    [deployments, toolsets, resolveCatalogIconUrl],
+  );
+  const getPublishDependencies = useCallback(
+    async (item: CatalogItem): Promise<PublishDependency[]> => {
+      const entityType = toPublishEntityType(item.type);
+      if (!entityType || isPublicCatalogEntityId(item.id)) return [];
+      const { dependencies } = await getCatalogPublishDependencies(
+        entityType,
+        item.id,
+      );
+      return dependencies.map((dependency) =>
+        mapResourceDependencyDto(dependency, resolveDependencyIcon),
+      );
+    },
+    [resolveDependencyIcon],
   );
 
   const handlePublish = useCallback(
@@ -275,6 +317,7 @@ export const useCatalogPublishing = ({
 
   return {
     getPublishHistory,
+    getPublishDependencies,
     handlePublish,
     handleUnpublish,
     handlePublishSuccess,

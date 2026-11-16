@@ -1,5 +1,10 @@
 import { encodePlainDialResourcePath } from '../common/utils/encode-dial-path';
+import { RESOURCE_VERSION_SEPARATOR } from '../common/utils/next-free-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
+import {
+  MAX_TARGET_VERSION_LENGTH,
+  STORED_RESOURCE_VERSION_PATTERN,
+} from '../common/validators/resource-version.pattern';
 
 /*
  * Confirmed against DIAL Core's own OpenAPI spec (`/v1/ops/publication/create`
@@ -214,9 +219,6 @@ export const getPublishedAttachmentTargetUrl = (
  * it because the earlier version's copy already exists there (#9428).
  */
 const VERSIONED_RESOURCE_PREFIXES = new Set(['applications', 'toolsets']);
-const RESOURCE_VERSION_SEPARATOR = '__';
-// The charset the application and toolset DTOs accept, never only dots.
-const TARGET_VERSION_PATTERN = /^(?!\.+$)[\w.+-]{1,64}$/;
 
 /**
  * The published copy's resource name for `version`: `resourceName`'s own
@@ -235,7 +237,8 @@ export const getVersionedTargetResourceName = (
     !VERSIONED_RESOURCE_PREFIXES.has(resourceTypePrefix) ||
     separatorIndex === -1 ||
     !version ||
-    !TARGET_VERSION_PATTERN.test(version)
+    version.length > MAX_TARGET_VERSION_LENGTH ||
+    !STORED_RESOURCE_VERSION_PATTERN.test(version)
   ) {
     return resourceName;
   }

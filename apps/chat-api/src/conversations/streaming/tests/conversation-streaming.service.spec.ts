@@ -210,7 +210,7 @@ describe('ConversationStreamingService', () => {
     lang?: string,
     jobTitle?: string,
   ) => {
-    const stream = service.streamCompletion(
+    const stream = service.streamCompletion({
       conversationPath,
       token,
       bucket,
@@ -219,20 +219,20 @@ describe('ConversationStreamingService', () => {
       message,
       messageIndex,
       model,
-      customContent as never,
-      sessionId,
-      () => {
+      customContent: customContent as never,
+      ownerKey: sessionId,
+      onReadyToStream: () => {
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
         res.flushHeaders();
       },
-      'user1',
+      sub: 'user1',
       clientChannelId,
       timezone,
       lang,
       jobTitle,
-    );
+    });
     for await (const chunk of stream) {
       res.write(chunk);
     }
@@ -2364,20 +2364,18 @@ describe('ConversationStreamingService', () => {
         response: new Response(neverEndingStream, { status: 200 }),
       } as never);
 
-      const stream = service.streamCompletion(
-        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
-        'test-token',
-        'test-bucket',
-        'test-gen-id',
-        CompletionMode.Append,
-        'Hello',
-        undefined,
-        'gpt-4o',
-        undefined,
-        'test-session-id',
-        () => undefined,
-        'user1',
-      );
+      const stream = service.streamCompletion({
+        conversationPath: 'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        token: 'test-token',
+        bucket: 'test-bucket',
+        generationId: 'test-gen-id',
+        mode: CompletionMode.Append,
+        message: 'Hello',
+        model: 'gpt-4o',
+        ownerKey: 'test-session-id',
+        onReadyToStream: () => undefined,
+        sub: 'user1',
+      });
 
       /*
        * `ConversationGenerationController.streamCompletion` no longer abandons its
@@ -2616,20 +2614,18 @@ describe('ConversationStreamingService', () => {
         response: new Response(neverEndingStream, { status: 200 }),
       } as never);
 
-      const stream = service.streamCompletion(
-        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
-        'test-token',
-        'test-bucket',
-        'test-gen-id',
-        CompletionMode.Append,
-        'Hello',
-        undefined,
-        'gpt-4o',
-        undefined,
-        'test-session-id',
-        () => undefined,
-        'user1',
-      );
+      const stream = service.streamCompletion({
+        conversationPath: 'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        token: 'test-token',
+        bucket: 'test-bucket',
+        generationId: 'test-gen-id',
+        mode: CompletionMode.Append,
+        message: 'Hello',
+        model: 'gpt-4o',
+        ownerKey: 'test-session-id',
+        onReadyToStream: () => undefined,
+        sub: 'user1',
+      });
 
       for await (const _chunk of stream) {
         /*
@@ -4483,6 +4479,72 @@ describe('ConversationStreamingService', () => {
         } as never);
 
         expect(await stop()).toBe(ForegroundStopResult.Failed);
+      });
+    });
+
+    describe('stopForegroundGeneration logging', () => {
+      const stop = () =>
+        service.stopForegroundGeneration(
+          PATH,
+          'test-token',
+          'test-bucket',
+          OTHER_GEN,
+        );
+
+      it('logs the status and error name when the Stop write throws, never the token or a message', async () => {
+        installCoreStorage({
+          ...TEST_CONVERSATION,
+          messages: [question, markedAnswer(OTHER_GEN, Date.now() + 60_000)],
+        });
+        vi.mocked(mockDialClient.client.saveConversation).mockResolvedValue({
+          error: { message: 'secret upstream text' },
+          response: new Response(null, { status: 500 }),
+        } as never);
+        const warnSpy = vi.spyOn(Logger.prototype, 'warn').mockClear();
+
+        expect(await stop()).toBe(ForegroundStopResult.Failed);
+
+        const lines = warnSpy.mock.calls.map(([message]) => String(message));
+        const line = lines.find((message) =>
+          message.startsWith('Foreground Stop not stored'),
+        );
+        expect(line).toContain(`generationId: ${OTHER_GEN}`);
+        expect(line).toContain('result: failed');
+        expect(line).toMatch(/status: \d+|status: none/);
+        expect(line).not.toContain('test-token');
+        expect(line).not.toContain('secret upstream text');
+      });
+
+      it('stays silent for a plain not_found, the normal answer for a local generation', async () => {
+        installCoreStorage({
+          ...TEST_CONVERSATION,
+          messages: [question, markedAnswer(OTHER_GEN, NOW - 1)],
+        });
+        const warnSpy = vi.spyOn(Logger.prototype, 'warn').mockClear();
+
+        expect(await stop()).toBe(ForegroundStopResult.NotFound);
+
+        expect(
+          warnSpy.mock.calls.some(([message]) =>
+            String(message).startsWith('Foreground Stop not stored'),
+          ),
+        ).toBe(false);
+      });
+
+      it('stays silent when the Stop is stored', async () => {
+        installCoreStorage({
+          ...TEST_CONVERSATION,
+          messages: [question, markedAnswer(OTHER_GEN, Date.now() + 60_000)],
+        });
+        const warnSpy = vi.spyOn(Logger.prototype, 'warn').mockClear();
+
+        expect(await stop()).toBe(ForegroundStopResult.Stored);
+
+        expect(
+          warnSpy.mock.calls.some(([message]) =>
+            String(message).startsWith('Foreground Stop not stored'),
+          ),
+        ).toBe(false);
       });
     });
 

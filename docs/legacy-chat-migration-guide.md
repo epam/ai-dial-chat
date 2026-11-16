@@ -298,6 +298,12 @@ Translate each rule by what it restricted, for example:
   restricted as well.
 - Restrict individual runners under `schemas`, keyed by their **exact** schema
   id; a display name does not match.
+- `toolsets` → `types.toolset`, when only those roles should create toolsets.
+  The meaning changes: legacy hid toolsets from users without a listed role,
+  while 1.0 shows every user the toolsets available to them and lets them
+  sign in to one. Only creation stays with the listed roles. To hide toolsets
+  from everyone, leave `toolsets` out of `ENABLED_UI_FEATURES`; it cannot be
+  hidden per role.
 - Legacy flags for other UI surfaces (sharing, publishing, settings, …) have no
   mapping in this policy. They stay global through `ENABLED_UI_FEATURES` or an
   overlay host's `enabledFeatures`.

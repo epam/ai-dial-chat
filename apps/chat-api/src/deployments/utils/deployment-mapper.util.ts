@@ -1,4 +1,5 @@
 import { getResourceDisplayNameFallback } from '../../common/utils/resource-name';
+import { getVersionGroupId } from '../../common/utils/version-group';
 import type {
   DeploymentFeaturesDetailsDto,
   ModelCatalogPropertiesDto,
@@ -161,7 +162,7 @@ export const redactApplicationFunctionEnv = (raw: unknown): unknown => {
  */
 /**
  * Allow-lists `catalog_properties` (schema-driven, identical shape across
- * model/application/toolset DIAL Core responses) to the five recognized
+ * model/application/toolset DIAL Core responses) to the four recognized
  * string fields shown in the catalog Overview panel. Unknown keys and
  * non-string values are dropped; the result is omitted entirely rather than
  * returned as an empty object when nothing recognized remains.
@@ -172,7 +173,6 @@ export const mapCatalogProperties = (
   if (!isRecord(raw)) return undefined;
 
   const properties = {
-    provider: getString(raw, 'provider'),
     vendor: getString(raw, 'vendor'),
     license: getString(raw, 'license'),
     knowledgeCutoffDate: getString(raw, 'knowledgeCutoffDate'),
@@ -284,6 +284,10 @@ export const mapToDeploymentItem = (
     iconUrl: raw.icon_url,
     description: raw.description,
     displayVersion: raw.display_version,
+    versionGroupId:
+      type === DeploymentItemType.Application
+        ? getVersionGroupId(raw.id)
+        : undefined,
     reference: raw.reference,
     isFeatured:
       featuredIds.has(raw.id) ||

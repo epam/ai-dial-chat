@@ -11,4 +11,10 @@
 export const PUBLISH_PANEL_CLASS = {
   /** The panel body, which carries the themed CSS variables. */
   panel: 'dial-publish-panel-panel',
+  /** The private-dependencies section. */
+  dependencies: 'dial-publish-panel-dependencies',
+  /** The list inside the private-dependencies section. */
+  dependenciesList: 'dial-publish-panel-dependencies-list',
+  /** One row of the private-dependencies list. */
+  dependenciesItem: 'dial-publish-panel-dependencies-item',
 } as const;

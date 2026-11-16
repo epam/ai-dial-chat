@@ -116,7 +116,10 @@ export const ToolsChips: FC<ToolsChipsProps> = ({
   );
 
   const renderLabel = (item: ToolMenuItem) => (
-    <span className="flex min-w-0 items-center">
+    /* Baseline, not center: the label (14/24) and the state (12/16) have
+       different line boxes, so centering them leaves the caps-only state
+       sitting above the label's baseline. */
+    <span className="flex min-w-0 items-baseline">
       <span
         className={mergeClasses(
           styles.chipText,

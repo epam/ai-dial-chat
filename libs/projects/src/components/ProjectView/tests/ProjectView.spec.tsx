@@ -450,6 +450,24 @@ describe('ProjectView', () => {
     expect(onDownload).toHaveBeenCalledOnce();
   });
 
+  it('offers revoke access in both menus only when supplied by the host', async () => {
+    const onRevokeAccess = vi.fn();
+    const onActionMenuOpenChange = vi.fn();
+    renderView({ onRevokeAccess, onActionMenuOpenChange });
+    for (const trigger of screen.getAllByRole('button', {
+      name: 'More actions',
+    })) {
+      await userEvent.click(trigger);
+      await userEvent.click(
+        within(await screen.findByRole('menu')).getByRole('menuitem', {
+          name: 'Revoke access',
+        }),
+      );
+    }
+    expect(onRevokeAccess).toHaveBeenCalledTimes(2);
+    expect(onActionMenuOpenChange).toHaveBeenCalledWith(true);
+  });
+
   it('offers Remove from My List in place of Delete when the host supplies it', async () => {
     const onRemoveFromMyList = vi.fn();
     renderView({ onDelete: undefined, onRemoveFromMyList });

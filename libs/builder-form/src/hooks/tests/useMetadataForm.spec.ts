@@ -4,7 +4,6 @@ import type { DeploymentCreationFormValues } from '../../models/deployment-creat
 import { MetadataField } from '../../models/metadata-field';
 import type { UseMetadataFormOptions } from '../../models/use-metadata-form';
 import { DeploymentCreationFieldErrorCode } from '../../models/validation';
-import { SEMVER_VERSION_PATTERN } from '../../utils/validate-deployment-creation-fields';
 import { useMetadataForm } from '../useMetadataForm';
 
 const emptyValues: DeploymentCreationFormValues = {
@@ -40,7 +39,7 @@ describe('useMetadataForm', () => {
   it('shows every error after a failed submit attempt', () => {
     const { result } = renderMetadataForm({
       initialValues: { ...emptyValues, version: 'beta' },
-      validationOptions: { validateVersionPattern: SEMVER_VERSION_PATTERN },
+      validationOptions: { validateVersionPattern: /^\d+(\.\d+)*$/ },
     });
 
     let isValid = true;
@@ -104,7 +103,7 @@ describe('useMetadataForm', () => {
     });
     const { result: strictResult } = renderMetadataForm({
       initialValues: { ...emptyValues, name: 'App', version: '1.0-beta' },
-      validationOptions: { validateVersionPattern: SEMVER_VERSION_PATTERN },
+      validationOptions: { validateVersionPattern: /^\d+(\.\d+)*$/ },
     });
 
     expect(looseResult.current.errorCodes.version).toBeUndefined();

@@ -40,6 +40,10 @@ declared on the DTO).
 - **WHEN** DIAL Core returns an error status during create
 - **THEN** the endpoint maps it to the corresponding typed HTTP error (e.g. 502/503)
 
+#### Scenario: Create refused because a dependency is missing
+- **WHEN** DIAL Core refuses the save with `403` and a plain-text body starting with `Failed to access application resource`
+- **THEN** the endpoint responds `403 Forbidden` with `code` `applicationDependentResourceMissing` and a fixed message, without the resource path, and any other `403` body keeps the generic `Forbidden`
+
 ### Requirement: Additional-locale translations on create and update
 The create and update request bodies SHALL accept an optional `locales` array of
 `{language, name, description}` entries and an optional `primaryLocale` string. When `locales`
@@ -374,6 +378,10 @@ supplied and this default is not applied, so a flag the caller leaves unset stay
 - **WHEN** DIAL Core returns an error status while fetching or saving the application
 - **THEN** the endpoint maps it to the corresponding typed HTTP error (e.g. `502`/`503`)
 
+#### Scenario: Update refused because a dependency is missing
+- **WHEN** DIAL Core refuses the save with `403` and a plain-text body starting with `Failed to access application resource` (a resource the application depends on, such as a context file, was moved, deleted or unpublished)
+- **THEN** the endpoint responds `403 Forbidden` with `code` `applicationDependentResourceMissing` (`ApplicationErrorCode`) and a fixed message, and never forwards the Core text or the resource path; a `403` with any other body keeps the generic `Forbidden`. DIAL Core gives the case no machine-readable field, so it is detected by prefix match, the same way `isAcceptedUsersLimitError` detects the share-invitation limit
+
 #### Scenario: OpenAPI contract regenerated
 - **WHEN** `UpdateApplicationBodyDto` gains `applicationProperties`
 - **THEN** `npm run openapi` regenerates the spec, `npm run openapi:check` passes, and the
@@ -518,6 +526,8 @@ The system SHALL expose two endpoints.
 2. writes the source's previous body to the snapshot path with the snapshot's `displayVersion`, using `If-Match`.
 
 Response `200`: `ResourceIdResponseDto { id: snapshotId }`. It returns `409` when either ETag changed between the read and the write.
+
+DIAL Core answers a stored application in snake_case (`display_version`, `icon_url`, `description_keywords`, …), although the SDK `Application` schema types those fields in camelCase. The service SHALL normalize every stored application body once at read (`normalizeStoredApplication` in `apps/chat-api/src/applications/utils/application-body-mapping.ts`): each snake alias of a camelCase SDK field is renamed to that field and dropped, the camelCase value winning when both are present, and snake-only schema fields such as `application_properties` are kept. Fork, commit and update therefore write camelCase keys only, so a stale snake key carried over from a stored body never overrides a value the write sets or clears.
 
 Both endpoints:
 

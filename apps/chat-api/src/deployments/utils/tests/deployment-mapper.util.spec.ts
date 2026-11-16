@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RawDeploymentDto } from '../../dto/raw-deployment.dto';
 import {
+  mapCatalogProperties,
   mapToDeploymentItem,
   mapToolsetAuthSettings,
   redactApplicationFunctionEnv,
@@ -8,6 +9,37 @@ import {
 
 const raw = (overrides: Partial<RawDeploymentDto>): RawDeploymentDto =>
   ({ id: 'gpt-4o', ...overrides }) as RawDeploymentDto;
+
+describe('mapCatalogProperties', () => {
+  it('keeps the four recognized properties and drops provider', () => {
+    const result = mapCatalogProperties({
+      provider: 'Provider',
+      vendor: 'Vendor',
+      license: 'License',
+      knowledgeCutoffDate: '2026-08-17',
+      parameters: '100B',
+    });
+
+    expect(result).toStrictEqual({
+      vendor: 'Vendor',
+      license: 'License',
+      knowledgeCutoffDate: '2026-08-17',
+      parameters: '100B',
+    });
+  });
+
+  it('returns undefined when provider is the only recognized-looking property', () => {
+    expect(
+      mapCatalogProperties({ provider: 'Provider', extra: 'x' }),
+    ).toBeUndefined();
+  });
+
+  it('returns undefined for missing or non-object catalog properties', () => {
+    expect(mapCatalogProperties(undefined)).toBeUndefined();
+    expect(mapCatalogProperties('Provider')).toBeUndefined();
+    expect(mapCatalogProperties(['Provider'])).toBeUndefined();
+  });
+});
 
 describe('mapToDeploymentItem isFeatured', () => {
   it('marks a deployment featured by its id', () => {

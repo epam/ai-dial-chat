@@ -68,7 +68,11 @@ import type {
   UpdateApplicationBodyDto,
   UpdatedApplicationDto,
 } from './dto/update-application.dto';
-import { hoistApplicationFields } from './utils/application-body-mapping';
+import {
+  hoistApplicationFields,
+  normalizeStoredApplication,
+} from './utils/application-body-mapping';
+import { throwApplicationSaveError } from './utils/application-save-error';
 
 type DialApplication = components['schemas']['Application'];
 
@@ -342,8 +346,9 @@ export class ApplicationsService {
           if (attempt < maxAttempts) continue;
           throw new ConflictException('Application name already taken');
         }
-        return mapDialHttpStatus(
+        return throwApplicationSaveError(
           response.response.status,
+          response.error,
           'create application',
           this.logger,
         );
@@ -406,7 +411,7 @@ export class ApplicationsService {
         );
       }
 
-      const stored = existingResponse.data as DialApplication;
+      const stored = normalizeStoredApplication(existingResponse.data);
       /*
        * A stored display name is a string or a locale map; the SDK types it
        * narrower than DIAL Core writes it, so it is widened here.
@@ -445,7 +450,7 @@ export class ApplicationsService {
         body.primaryLocale,
       );
       const mergedBody: DialApplication = {
-        ...(existingResponse.data as DialApplication),
+        ...stored,
         /*
          * This is a full replacement, not a per-locale merge with whatever
          * the existing resource had — consistent with every other
@@ -516,8 +521,9 @@ export class ApplicationsService {
       );
 
       if (saveResponse.error) {
-        return mapDialHttpStatus(
+        return throwApplicationSaveError(
           saveResponse.response.status,
+          saveResponse.error,
           `update application "${applicationName}"`,
           this.logger,
         );
@@ -682,7 +688,7 @@ export class ApplicationsService {
       return mapDialHttpStatus(response.response.status, context, this.logger);
     }
     return {
-      body: response.data as DialApplication,
+      body: normalizeStoredApplication(response.data),
       etag: response.response.headers?.get('etag') ?? undefined,
     };
   }

@@ -36,7 +36,10 @@ export class AppConfigController {
     summary: 'Get client-safe application configuration and feature flags',
   })
   @ApiResponse({ status: 200, type: ClientConfigResponseDtoClass })
-  @ApiResponse({ status: 400, description: 'Missing or invalid appId' })
+  @ApiResponse({
+    status: 400,
+    description: 'Missing, malformed or unserved appId',
+  })
   async getClientConfig(
     @Query() query: GetClientConfigDto,
     @Req() req: Request,

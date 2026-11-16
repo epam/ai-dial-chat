@@ -3,6 +3,10 @@
   "description": "Presentational settings surfaces: a vertical settings navigation panel and the Extensions services table",
   "version": "0.0.1",
   "license": "Apache-2.0",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss"
+  ],
   "private": true,
   "type": "module",
   "main": "./dist/index.js",

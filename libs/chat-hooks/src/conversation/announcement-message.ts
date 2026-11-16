@@ -1,3 +1,4 @@
+import { AnnouncementSeverity as AnnouncementSeverityDto } from '@epam/ai-dial-chat-api-client';
 import DOMPurify, { type Config } from 'dompurify';
 
 /*
@@ -37,6 +38,14 @@ export interface AnnouncementListItemLink {
   href: string;
 }
 
+/** How urgent an announcements-popover entry is. */
+export enum AnnouncementSeverity {
+  /** An ordinary news item. */
+  Info = 'info',
+  /** A maintenance or outage notice a host may mark, for example with an icon. */
+  Warning = 'warning',
+}
+
 /** One entry of the announcements popover behind the banner's `+N` pill. */
 export interface AnnouncementListItem {
   /** Plain-text heading of the entry. */
@@ -45,7 +54,27 @@ export interface AnnouncementListItem {
   description?: string | null;
   /** Optional call to action shown at the end of the entry. */
   link?: AnnouncementListItemLink | null;
+  /** How urgent the entry is. Absent means `AnnouncementSeverity.Info`. */
+  severity?: AnnouncementSeverity;
 }
+
+/* Exhaustive on purpose: a level the backend adds becomes a compile error
+ * here until this enum gains it. */
+const ANNOUNCEMENT_SEVERITIES: Record<
+  AnnouncementSeverityDto,
+  AnnouncementSeverity
+> = {
+  [AnnouncementSeverityDto.Info]: AnnouncementSeverity.Info,
+  [AnnouncementSeverityDto.Warning]: AnnouncementSeverity.Warning,
+};
+
+/** Returns the `AnnouncementSeverity` for a generated-client severity, or `Info` when it is missing or unknown. */
+export const mapAnnouncementSeverity = (
+  severity: AnnouncementSeverityDto | null | undefined,
+): AnnouncementSeverity =>
+  // Missing when the backend predates the field; unknown when it is newer.
+  (severity != null && ANNOUNCEMENT_SEVERITIES[severity]) ||
+  AnnouncementSeverity.Info;
 
 /** Structured announcement banner content. */
 export interface AnnouncementContent {
@@ -107,6 +136,10 @@ interface AnnouncementSignaturePayload {
  * entries arrive from a JSON-parsed environment variable, so their key order
  * follows however the operator typed them and would otherwise churn the
  * signature on a purely cosmetic edit.
+ *
+ * `severity` is left out on purpose. The Chat surfaces do not render it, and
+ * signing it would change the stored signature of every deployment that
+ * configures the popover, re-showing banners users already dismissed.
  */
 const buildItemsSignature = (
   items: readonly AnnouncementListItem[],

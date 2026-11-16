@@ -1,9 +1,14 @@
 import {
+  CelebrationDeliveryMode,
   OnboardingHintsMode,
   type CatalogCreationPermissionsDto,
+  type CelebrationDeliveryDto,
   type OnboardingHintDto,
 } from '@epam/ai-dial-chat-api-client';
-import type { AnnouncementListItem } from '@epam/ai-dial-chat-hooks';
+import {
+  type AnnouncementListItem,
+  mapAnnouncementSeverity,
+} from '@epam/ai-dial-chat-hooks';
 import {
   DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
   DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
@@ -40,6 +45,13 @@ const DEFAULT_FILE_MANAGER_TABS = ['all', 'my_files', 'shared', 'organization'];
 const DEFAULT_PUBLICATION_FILTER_SOURCES = ['title', 'role', 'dial_roles'];
 const DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES = 536_870_912;
 const DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT = 75;
+/* Used until the config arrives or when it omits the policy: every scene stays bundled. */
+const DEFAULT_CELEBRATION_DELIVERY: CelebrationDeliveryDto = {
+  mode: CelebrationDeliveryMode.Bundled,
+  revision: '0',
+  externalScenes: [],
+  externalEvents: [],
+};
 
 export interface AppConfigState {
   status: UserConfigStatus;
@@ -56,6 +68,8 @@ export interface AppConfigState {
     mcpAppTheme: 'light' | 'dark' | null;
     mcpAppUserAgent: string | null;
     mcpAppHostName: string | null;
+    /** Base URL of the themes service; absolute icon URLs under it load through the icon proxy. */
+    themesBaseUrl: string | null;
     fileManagerTabs: string[];
     overlayEnabled: boolean;
     overlayAllowedOrigins: string[];
@@ -81,6 +95,8 @@ export interface AppConfigState {
     usageLimitsWarningThresholdPercent: number;
     /** Operator default for the celebrations switch, used while the user has saved no choice. */
     celebrationsEnabledByDefault: boolean;
+    /** Where celebration scenes come from: the compiled modules or allowlisted packs. */
+    celebrationDelivery: CelebrationDeliveryDto;
     /** Maximum size in bytes of one project context file. */
     projectContextFileMaxBytes: number;
     /** Maximum combined size in bytes of a project's context files (its capacity). */
@@ -126,6 +142,7 @@ const INITIAL_STATE: ProviderState = {
     mcpAppTheme: null,
     mcpAppUserAgent: null,
     mcpAppHostName: null,
+    themesBaseUrl: null,
     fileManagerTabs: DEFAULT_FILE_MANAGER_TABS,
     overlayEnabled: false,
     overlayAllowedOrigins: [],
@@ -147,6 +164,7 @@ const INITIAL_STATE: ProviderState = {
     usageLimitsWarningThresholdPercent:
       DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
     celebrationsEnabledByDefault: true,
+    celebrationDelivery: DEFAULT_CELEBRATION_DELIVERY,
     projectContextFileMaxBytes: DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
     projectContextTotalMaxBytes: DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
     projectContextAllowedExtensions: DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
@@ -199,6 +217,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             mcpAppTheme: response.config?.mcpAppTheme ?? null,
             mcpAppUserAgent: response.config?.mcpAppUserAgent ?? null,
             mcpAppHostName: response.config?.mcpAppHostName ?? null,
+            themesBaseUrl: response.config?.themesBaseUrl ?? null,
             fileManagerTabs:
               response.config?.fileManagerTabs ?? DEFAULT_FILE_MANAGER_TABS,
             overlayEnabled: response.config?.overlayEnabled ?? false,
@@ -210,7 +229,10 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             announcementDescription:
               response.config?.announcementDescription ?? null,
             announcements: Array.isArray(response.config?.announcements)
-              ? response.config.announcements
+              ? response.config.announcements.map((item) => ({
+                  ...item,
+                  severity: mapAnnouncementSeverity(item.severity),
+                }))
               : [],
             onboardingHints: Array.isArray(response.config?.onboardingHints)
               ? response.config.onboardingHints
@@ -239,6 +261,9 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
               DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
             celebrationsEnabledByDefault:
               response.config?.celebrationsEnabledByDefault ?? true,
+            celebrationDelivery:
+              response.config?.celebrationDelivery ??
+              DEFAULT_CELEBRATION_DELIVERY,
             projectContextFileMaxBytes: resolveByteLimit(
               response.config?.projectContextFileMaxBytes,
               DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,

@@ -91,6 +91,14 @@ arrives through `usePublishFlow`'s `defaultAuthor`.
 Override its copy through `labels.authorLabel`, `labels.authorPlaceholder`, and
 `labels.authorHint`.
 
+When a folder is selected, the user can publish to it and the version is not
+already there, the panel shows an info callout under the destination row saying
+the publication needs an administrator's approval. Its copy is
+`labels.adminApprovalTitle` (default `'Admin approval required'`) and
+`labels.adminApprovalMessage`; the default message says "it will appear in the
+folder", so a host replaces it to name the entity being published. The replace,
+no-access and submit-error callouts take its place when they apply.
+
 Typography comes from four class props: `summaryTitleClassName` and
 `headingClassName` (both `'dial-body-semi-text'`), `destinationClassName`
 (`'dial-small-semi-text'`) for the destination path, and
@@ -329,6 +337,85 @@ displays or accepts a credential value.
 />
 ```
 
+### PublishDependenciesList
+
+Read-only list of the resources the item being published refers to that are not in the public bucket, so the publisher can publish those too. `PublishPanel` and `StandalonePublishPanel` render it as the last section of the main view when you pass `dependencies`; it renders nothing visible while the list is empty, and the hidden live region it keeps mounted announces the count when the list appears later.
+
+```tsx
+import {
+  PublishDependencyType,
+  StandalonePublishPanel,
+  type PublishDependency,
+} from '@epam/ai-dial-publish-panel';
+
+const dependencies: PublishDependency[] = [
+  {
+    id: 'prompts/my-bucket/Support/Greeting',
+    name: 'Greeting',
+    type: PublishDependencyType.Prompt,
+    location: 'Support',
+  },
+  {
+    id: 'toolsets/my-bucket/Search__1.0.0',
+    name: 'Search',
+    version: '1.0.0',
+    type: PublishDependencyType.Toolset,
+    location: '',
+  },
+];
+
+<StandalonePublishPanel
+  {...publishPanelProps}
+  dependencies={dependencies}
+  labels={{ dependenciesLabels: { title: 'Private dependencies' } }}
+/>;
+```
+
+The list is informational: rows are not interactive, and it never changes what the submit button does. The library receives the list as data and knows nothing of how it was found. A `PublishDependency` is `{ id, name, version?, type, location, iconUrl?, isFolder? }`, with `type` a `PublishDependencyType` (`Application`, `Toolset`, `Prompt`, `Skill`, `File`), shown as text next to the folder. `iconUrl` is the already-resolved icon of the entity: an application, toolset, prompt or skill shows it in `DeploymentIcon`, or the initials of its name when there is none, and a `File` shows the UI kit's `FileIcon`, whose glyph is picked from the extension in `name` (the folder glyph when `isFolder` is `true`). `location` is the folder path inside the owner's bucket, empty at the bucket root.
+
+Copy comes from `PublishPanelLabels.dependenciesLabels` (`PublishDependenciesLabels`): `title` (default `'Private dependencies'`), `description` (the host names the published entity in it, such as application or conversation; the default says "this item"), `typeLabels` (default `'Application'`, `'Toolset'`, `'Prompt'`, `'Skill'`, `'File'`) and `getAnnouncement(count)`, the screen-reader text for the count, so a host can pluralise it in its own language. Colors come from `PublishPanelStyles.dependencies.colors` (`PublishDependenciesColors`: `headingText`, `nameText`, `metaText`, falling back to `--text-primary` and `--text-secondary`). `PublishDependenciesList` can also be used on its own; it then takes `labels`, `styles`, and the typography classes `headingClassName` (default `'dial-body-semi-text'`), `nameClassName` (default `'dial-small-semi-text'`) and `metaClassName` (default `'dial-small-text'`).
+
+### VersionHistorySection
+
+Read-only list of the other saved versions of an application or toolset (the version being edited or published is not listed), shown as the last section of `SaveToFolderPanel` and `PublishPanel` (and so of `StandaloneSaveToFolderPanel` and `StandalonePublishPanel`) when the host passes the `versionHistory` prop. Without it neither panel renders the section. Rows carry no action and the section adds no version input: publishing still uses the saved version.
+
+```tsx
+import {
+  VersionHistoryStatus,
+  type VersionHistorySectionProps,
+} from '@epam/ai-dial-publish-panel';
+
+const versionHistory: VersionHistorySectionProps = {
+  rows: [
+    {
+      id: 'applications/b1/Design/Review__beta-2',
+      version: 'beta-2',
+      status: VersionHistoryStatus.NotPublished,
+      folder: 'Personal / Design',
+      modifiedAt: '20 Jul 2026',
+      author: 'by Ivan Petrov',
+    },
+    {
+      id: 'applications/b1/Design/Review__1.0.0',
+      version: '1.0.0',
+      status: VersionHistoryStatus.Published,
+      folder: 'Personal / Design',
+      modifiedAt: '12 Jul 2026',
+      author: 'Published by Jane Doe',
+    },
+  ],
+  isLoading: false,
+  hasError: false,
+  onRetry: reloadStatuses,
+};
+
+<PublishPanel {...publishProps} versionHistory={versionHistory} />;
+```
+
+The library renders the rows it is given, in the given order; the host sorts them (the hook `useVersionHistory` from `@epam/ai-dial-chat-hooks` sorts by last modified time, newest first) and formats the folder, date and author text. Each row has the version and, for a published or in-review version, the status badge on the first line (a not published version has no badge, and the line keeps the badge height so rows do not change height when statuses load) with the date at the far end; the folder (with the kit folder icon) and the author on the second line. A row's `status` is left out while it loads; `VersionHistoryStatus.Unknown` (a version the user does not own) reads as "Status unavailable", never as Not published. `isLoading` draws a placeholder in the status slot of every row whose status has not loaded, so the layout does not shift when the badge arrives, and announces `loadingLabel` to screen readers without showing it; `hasError` shows the error message while the rows stay visible; `onRetry` backs the Retry link. The loading and error messages sit in live regions that are always mounted, so a change after the first render is announced (the error, and the loading message when `isLoading` turns on later); a section that mounts with `isLoading` already `true` announces the loading text one commit after it mounts, so the region exists before its text. With no rows the section shows its own empty message; a host that has nothing to show yet should leave `versionHistory` out instead.
+
+Copy comes from `labels` (`VersionHistoryLabels`): `heading` (default `'Versions history'`), `inReviewLabel` (`'In review'`), `publishedLabel` (`'Published'`, the badge), `unknownLabel` (`'Status unavailable'`), `loadingLabel`, `emptyLabel` (`'No saved versions yet.'`), `errorLabel` and `retryLabel` (`'Retry'`). Colors come from `styles.colors` (`VersionHistoryColors`: `headingText`, `versionText` and `dateText` falling back to `--text-primary`; `metaText` falling back to `--text-secondary`; `skeleton` falling back to `--bg-control-disable-primary`; `rowBorder` falling back to `--stroke-tertiary`). Typography comes from `headingClassName` (default `'dial-body-semi-text'`, or the panel's own heading class), `versionClassName` (default `'dial-small-semi-text'`), `dateClassName` (default `'dial-small-text'`) and `metaClassName` (default `'dial-tiny-text'`). `VersionHistorySection` can also be used on its own.
+
 ### UnpublishConfirmationDialog
 
 Confirms an unpublish request. One published folder is confirmed directly. When there are several folders, the user must pick one in a radio group before Unpublish is enabled. While `isLoading`, both buttons stay rendered and disabled, and the footer announces `loadingStatusLabel`.
@@ -429,6 +516,10 @@ const {
 
 ## Enums
 
+### PublishDependencyType
+
+`Application`, `Toolset`, `Prompt`, `Skill` and `File`: the kind of a `PublishDependency`, which picks its default type label.
+
 ### PublishPanelView
 
 `Main` (summary, destination row, author, credentials and rules) and `ChangeFolder` (folder search and tree).
@@ -488,14 +579,18 @@ they are hashed at build time — nor through DOM order or ARIA attributes, whic
 are structure and accessibility contracts rather than styling ones. Selected
 elements therefore carry a stable public class.
 
-| Key     | Class                      | Element                                                |
-| ------- | -------------------------- | ------------------------------------------------------ |
-| `panel` | `dial-publish-panel-panel` | The panel body, which carries the themed CSS variables |
+| Key                | Class                                  | Element                                                |
+| ------------------ | -------------------------------------- | ------------------------------------------------------ |
+| `panel`            | `dial-publish-panel-panel`             | The panel body, which carries the themed CSS variables |
+| `dependencies`     | `dial-publish-panel-dependencies`      | The private-dependencies section                       |
+| `dependenciesList` | `dial-publish-panel-dependencies-list` | The list inside the private-dependencies section       |
+| `dependenciesItem` | `dial-publish-panel-dependencies-item` | One row of the private-dependencies list               |
 
 ```tsx
 import { PUBLISH_PANEL_CLASS } from '@epam/ai-dial-publish-panel';
 
 PUBLISH_PANEL_CLASS.panel; // 'dial-publish-panel-panel'
+PUBLISH_PANEL_CLASS.dependencies; // 'dial-publish-panel-dependencies'
 ```
 
 The classes carry no declarations of their own: nothing in `styles.css`

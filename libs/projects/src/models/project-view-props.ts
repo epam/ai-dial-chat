@@ -40,6 +40,8 @@ export interface ProjectViewLabels {
   closeLabel?: string;
   /** Share action label. */
   shareLabel: string;
+  /** Revoke access action label. Defaults to 'Revoke access'. */
+  revokeAccessLabel?: string;
   /** Download action label. */
   downloadLabel: string;
   /** Delete action label. */
@@ -153,6 +155,10 @@ export interface ProjectViewProps {
   onEdit?: () => void;
   /** Called from the Share action; the action is hidden when omitted. */
   onShare?: () => void;
+  /** Opens the owner's revoke confirmation; hidden when omitted. */
+  onRevokeAccess?: () => void;
+  /** Notifies the host when either actions menu opens or closes, for fresh action eligibility. */
+  onActionMenuOpenChange?: (isOpen: boolean) => void;
   /** Called from the Delete action; the action is hidden when omitted. */
   onDelete?: () => void;
   /** Called from the Remove from My List action, offered to a recipient in place of Delete; the action is hidden when omitted. */

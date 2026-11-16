@@ -224,7 +224,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-projects` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.4.1
+- `@epam/ai-dial-react-file-manager` ^0.4.2
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
@@ -232,7 +232,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-ui-kit` ^0.16.0
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.2
-- `@epam/pdf-highlighter-kit` ^0.0.21
+- `@epam/pdf-highlighter-kit` ^0.0.22
 
 `@epam/ai-dial-chat-api-client` is **not** a peer. Every entry that calls DIAL Core
 imports a runtime enum from it (`SendCompletionDtoModeEnum`,
@@ -744,6 +744,35 @@ ignores a read that finishes after the panel closed or `entityId` changed. The
 request and its mapping to `PublishHistoryEntry` (for the catalog endpoint,
 `mapPublishHistoryEntryDto`) stay with the host.
 
+`usePublishDependencies({ isOpen, entityId, loadDependencies })` (root and `./catalog`)
+returns the `PublishDependency[]` a publish panel lists as resources the item refers to
+that are not in the public bucket. It follows `usePublishHistory`: it reads through your
+`loadDependencies(entityId)` each time `isOpen` turns true, leaves the list empty when a
+read fails (the list only informs, publishing does not depend on it), ignores a read that
+finishes after the panel closed or `entityId` changed, and never returns another entity's
+list. For a catalog entity the request is `createPublishApiClient(publishApi)
+.getCatalogPublishDependencies(entityType, entityId)`; both it and the conversation
+request map each entry with `mapResourceDependencyDto`, and stay with the host. Pass `createPublishDependencyIconResolver({ deployments, toolsets, resolveIconUrl })` as its second argument to give an application or toolset the icon of the entity the host has already loaded, with no extra request; an entry the lists do not hold has none.
+
+```ts
+import {
+  createPublishApiClient,
+  mapResourceDependencyDto,
+  usePublishDependencies,
+} from '@epam/ai-dial-chat-hooks';
+
+const publishClient = createPublishApiClient(publishApi);
+
+const dependencies = usePublishDependencies({
+  isOpen,
+  entityId: 'applications/my-bucket/Support agent__1.0.0',
+  loadDependencies: async (entityId) =>
+    (
+      await publishClient.getCatalogPublishDependencies('application', entityId)
+    ).dependencies.map(mapResourceDependencyDto),
+});
+```
+
 `useUnpublishableFolders(client, target, isAdmin)` (root and `./catalog`) reports
 the folders the caller may request removal of one published entity from, as
 `{ isResolved, folders, refresh }`, through `resolveUnpublishableFolders`: an owner
@@ -845,7 +874,7 @@ const ProjectPage = () => {
 };
 ```
 
-`usePinnedProjectChats(client, projectIds, { enabled, onProjectDeleted })`
+`usePinnedProjectChats(client, projectIds, { enabled, onProjectDeleted, activeConversationId? })`
 loads the trees a sidebar shows for pinned projects. For each id it reads the
 details (`getProject`) and the listing (`listProjectConversations`) in
 parallel, keeps the first `PINNED_PROJECT_CHATS_LIMIT` (10) chats newest first
@@ -855,6 +884,11 @@ pending titles in one `getProjectConversationTitles` call. It returns
 `PinnedProjectChats[]` (`project`, `chats` of `PinnedProjectChat` — `id`,
 `title`, `isUnread?` — and `hasMore`) in `projectIds` order, without the ids
 whose load failed.
+
+When `activeConversationId` names a chat that is not among a project's newest
+chats, it replaces the last of the kept ones and comes last, so the list stays
+at `PINNED_PROJECT_CHATS_LIMIT` and the open chat is listed whenever it is in
+the project's listing.
 
 - A `404` from `getProject` drops the project and calls `onProjectDeleted(id)`
   once. Any other details failure on the first load keeps it out and retries
@@ -1082,6 +1116,29 @@ setRefreshToken((token) => token + 1);
 | `usage`      | `UserLimitStatsResponseDto \| undefined` | The fetched stats, or `undefined` until the first response resolves. Retained across a `refreshToken`-triggered re-fetch. |
 | `isLoading`  | `boolean`                                | `true` while a fetch is in flight, including a refresh.                                                                   |
 | `usageError` | `Error \| undefined`                     | Set when the `getUserUsage` call rejects.                                                                                 |
+
+### useOrgUnits
+
+Loads the current user's DIAL Core org units once, on demand, and answers
+which public-bucket folders are units. The host supplies `listOrgUnits`
+(resolving `{ enabled, units }`), so the hook never builds a client. Nothing
+is read until `ensureUnits()` is called. Later calls do nothing, except after a
+failed read, when the next call reads again. Status
+is the `OrgUnitsStatus` enum: `Idle`, `Loading`, `Ready`, `Disabled` (Core
+has org units off) or `Error` (the read failed; nothing is reported). Until
+the status is `Ready`, `isOrgUnitFolder` returns `false`. Available from the
+root and `./utils`.
+
+```tsx
+import { OrgUnitsStatus, useOrgUnits } from '@epam/ai-dial-chat-hooks';
+
+const { status, ensureUnits, isOrgUnitFolder } = useOrgUnits({
+  listOrgUnits, // host-configured fetch
+});
+
+useEffect(() => ensureUnits(), [ensureUnits]);
+const isUnit = status === OrgUnitsStatus.Ready && isOrgUnitFolder('Acme');
+```
 
 ### useUsageLimitBanner
 
@@ -2016,7 +2073,7 @@ const ChatPage = ({
 
 `ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path, content? })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`. A sixth, optional `saveConversation(path, conversation)` saves a conversation at the bucket-stripped `path` and resolves with the saved copy; the hook uses it only for the recovery save described below.
 
-**Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event. Once that watch is open, the hook re-reads the conversation once, so a generation that finished just before the subscription settles without waiting for the watch timeout.
+**Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event. Once that watch is open, the hook re-reads the conversation once, so a generation that finished just before the subscription settles without waiting for the watch timeout. While the conversation holds a live `foregroundGeneration` marker, the hook also re-reads it when the marker expires (a Stop shortens that expiry), instead of waiting for the watch timeout.
 
 `startStream(conversationId, userContent, messageIndex, model, customContent?, generationId?, mode?, options?)` takes an optional `StartStreamOptions` as its last argument. With `{ resumeOnConflict: true }`, a `GenerationConflictError` means "this turn is already being generated": typically the page was reloaded after a new conversation's first message, before the backend saved that generation's start state. The hook then joins the running generation instead of showing `generationConflictMessage`:
 
@@ -2709,6 +2766,51 @@ const SkillCatalog = ({
 | `error`            | `unknown`                              | Rejection reason of the most recent failed listing, or `null`.             |
 | `refetch`          | `() => Promise<void>`                  | Re-reads all namespaces and replaces the current state.                    |
 | `mergeSharedSkill` | `(item: SkillMetadataItemDto) => void` | Upserts a skill into `sharedWithMe` by `url`, appending it if not present. |
+
+### useVersionHistory
+
+Builds the Versions history rows of the Save and Publish panels. It selects the caller's own items of an already-loaded deployments or toolsets listing that share the edited resource's `versionGroupId`, leaves the edited version itself out, sorts the others by `updatedAt` (newest first), formats the folder (`rootLabel` plus the folder segments of the id), date and author line through the host `formatters`, and loads the publication statuses in the background through the supplied `client.getCatalogVersionStatuses` while `isEnabled` is `true`. The rows render at once; a failed request keeps them and sets `hasError`, and `onRetry` reloads. A resource that is not the user's own (no row with `isMy === true`), an id missing from the listing, a listing still loading, or a resource with no other saved version returns no rows, `hasVersions: false`, and requests nothing: the host should then render no section. Closing the panel (`isEnabled: false`) clears the loaded statuses and any error, so reopening shows the loading state again. The hook builds no client and no path: the host passes `publishApiClient` from its `createPublishApiClient` and the translated `formatters`.
+
+```tsx
+import { useVersionHistory } from '@epam/ai-dial-chat-hooks';
+
+const { rows, isLoading, hasError, onRetry } = useVersionHistory({
+  items: toolsets,
+  resourceId: toolset.id,
+  entityType: 'toolset',
+  isEnabled: isPanelOpen,
+  client: publishApiClient,
+  formatters,
+});
+
+<PublishPanel
+  {...props}
+  versionHistory={{ rows, isLoading, hasError, onRetry }}
+/>;
+```
+
+`formatters` is `{ rootLabel, formatDate, formatPublishedBy, formatOwner }` (`VersionHistoryFormatters`) and should be referentially stable. The pure `selectOtherVersions` and `buildVersionHistoryRows` it uses are exported too.
+
+### useVersionHistorySection / isVersionedCatalogEntityType
+
+`useVersionHistorySection` wraps `useVersionHistory` for a host that holds both listings. It takes `resourceId`, `resourceType` (a `CatalogEntityType`), `isEnabled`, the `applications` and `toolsets` listing items, the `client`, the translated `labels` and the `formatters`, picks the listing by type, and returns ready `VersionHistorySectionProps` (`rows`, `isLoading`, `hasError`, `onRetry`, `labels`), or `undefined` for an unversioned type, an empty `resourceId`, and while the listing holds no other version the user owns. `isVersionedCatalogEntityType(type)` is `true` for applications (`CatalogEntityType.Agent`) and toolsets.
+
+```tsx
+import { useVersionHistorySection } from '@epam/ai-dial-chat-hooks';
+
+const versionHistory = useVersionHistorySection({
+  resourceId: item.id,
+  resourceType: item.type,
+  isEnabled: isPublishOpen,
+  applications: deployments,
+  toolsets,
+  client: publishApiClient,
+  labels,
+  formatters,
+});
+
+<PublishPanel {...props} versionHistory={versionHistory} />;
+```
 
 ## Usage Utilities
 
@@ -4261,7 +4363,7 @@ const { starters, propertyKey, description } = getStartersFromSchema(
 
 Announcement-banner helpers: sanitize operator-supplied HTML, check whether structured (`title`/`description`) or any content is present, and build the content-keyed signature used to track dismissal.
 
-`buildAnnouncementSignature` covers every part of the banner surface: the title, the description, and the `items` entries behind the `+N` pill, whose popover is hidden along with the banner. Editing any of them produces a new signature, so a host that persists it re-shows a banner the user had dismissed. A legacy-only announcement (`html` with no title or description) signs as the raw HTML string, and `items` is left out of the payload when the list is empty — both so signatures stored by earlier builds keep matching.
+`buildAnnouncementSignature` covers every part of the banner surface: the title, the description, and the `items` entries behind the `+N` pill, whose popover is hidden along with the banner. Editing any of them produces a new signature, so a host that persists it re-shows a banner the user had dismissed. An entry's `severity` is not signed: the Chat surfaces do not render it, so changing only the severity leaves a dismissed banner hidden. A legacy-only announcement (`html` with no title or description) signs as the raw HTML string, and `items` is left out of the payload when the list is empty — both so signatures stored by earlier builds keep matching.
 
 The two sanitizers differ in the tags they keep, because the two banner layouts differ. `sanitizeAnnouncementHtml` is for the structured `description`, which renders as one truncating line, so it keeps inline markup only — `a`, `b`, `strong`, `em`, `br`, `span`. `sanitizeAnnouncementMessageHtml` is for the legacy `html` message, a free-standing block, so it additionally keeps `u` and `p`. Both keep `href`, `target` and `rel` on links, drop everything else including `style`, and force `rel="noopener noreferrer"` on any link that already carries `target="_blank"`.
 
@@ -4293,6 +4395,32 @@ buildAnnouncementSignature(content);
 
 sanitizeAnnouncementMessageHtml('<p>Upgraded to <strong>1.47</strong></p>');
 // '<p>Upgraded to <strong>1.47</strong></p>'
+```
+
+### AnnouncementSeverity / mapAnnouncementSeverity
+
+`AnnouncementSeverity` says how urgent an `AnnouncementListItem` is, so a host can mark a maintenance or outage notice — for example with a warning icon before the title. Members: `Info` (`'info'`, an ordinary news item) and `Warning` (`'warning'`). `AnnouncementListItem.severity` is optional; absent means `Info`.
+
+`mapAnnouncementSeverity` converts the generated client's `AnnouncementSeverity` (from an `AnnouncementItemDto`) into the lib enum. It returns `Info` when the value is `null`, `undefined` — as from a backend that predates the field — or a level this build does not know, so a host can switch on the result exhaustively.
+
+```ts
+import type { AnnouncementItemDto } from '@epam/ai-dial-chat-api-client';
+import {
+  type AnnouncementListItem,
+  AnnouncementSeverity,
+  mapAnnouncementSeverity,
+} from '@epam/ai-dial-chat-hooks';
+
+const toListItems = (
+  dtos: readonly AnnouncementItemDto[],
+): AnnouncementListItem[] =>
+  dtos.map((dto) => ({
+    ...dto,
+    severity: mapAnnouncementSeverity(dto.severity),
+  }));
+
+const isWarning = (item: AnnouncementListItem): boolean =>
+  item.severity === AnnouncementSeverity.Warning;
 ```
 
 ### sanitizeFooterHtml / formatAppVersion
@@ -4602,9 +4730,9 @@ const overview = buildSkillOverview(
 );
 ```
 
-### toPublishEntityType / mapPublishHistoryEntryDto / mapPublishConversationResultDto
+### toPublishEntityType / mapPublishHistoryEntryDto / mapPublishConversationResultDto / mapResourceDependencyDto
 
-Maps a catalog entity type to the publish API's entity-type path param (`CatalogPublishEntityType`), and maps publish-history API responses into the publish panel's `PublishHistoryEntry` model.
+Maps a catalog entity type to the publish API's entity-type path param (`CatalogPublishEntityType`), maps publish-history API responses into the publish panel's `PublishHistoryEntry` model, and maps a publish-dependencies API entry (`ResourceDependencyDto`) into the panel's `PublishDependency` model.
 
 ```ts
 import { toPublishEntityType } from '@epam/ai-dial-chat-hooks';
@@ -6843,3 +6971,28 @@ UsageResetOffsetPolicy.CurrentOffset retains the viewer's formatting-time offset
 UsageResetOffsetPolicy.ResetInstant uses the offset at the reset boundary. Both preserve
 isoValue and resetsAtMs. The shortened formatter and parent defaults are unchanged.
 Downstream can select the explicit policies instead of copying these algorithms.
+
+The project entry point's `getPinnedProjectMenuActions` includes
+`PinnedProjectMenuAction.RevokeAccess` after Share for owners only when its
+second argument, `canRevokeAccess`, is true. It defaults to false; pass
+`canRevokeAccess(project.id)` from `useProjectShareRecipients` after a confirmed
+positive count. Other actions keep their existing ownership rules. Hosts map this
+action to their confirmation and revoke request; recipients retain the
+existing Remove from My List flow.
+
+### Project access revocation
+
+The project entry point exports `useProjectShareRecipients(client)` and
+`useProjectRevokeAccess(client, project, handlers)`. Supply the same stable,
+already-configured `ProjectSharingClient` (the `ShareApi` recipient-count and revoke
+operations) to both. No authentication or transport configuration occurs here.
+
+Recipient state returns `requestRecipients(projectId)` for menu-open refreshes
+and `canRevokeAccess(projectId)`, false until a positive count is confirmed.
+Revoke state returns `isRevoking` and `confirmRevoke()`, guards ownership and
+duplicate requests, and updates all menus on the same client after success.
+`ProjectRevokeAccessHandlers.onRevoked(project)` and
+`onError(project, requestId)` carry notifications and dialog lifecycle.
+`notifyProjectAccessRevoked(client, projectId)` supports revokes performed
+outside the hook. Client instances have isolated subscriptions; unmounting
+unsubscribes and discards pending responses. No persistent cache is created.

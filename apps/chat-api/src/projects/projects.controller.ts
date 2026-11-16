@@ -1,5 +1,3 @@
-import { Readable } from 'node:stream';
-import { pipeline } from 'node:stream/promises';
 import {
   Body,
   Controller,
@@ -41,6 +39,7 @@ import {
   waitForDrain,
   writeSseChunk,
 } from '../common/utils/sse';
+import { pipeWebBody } from '../common/utils/stream';
 import { SSE_KEEPALIVE_INTERVAL_MS } from '../conversations/streaming/conversation-completions.responder';
 import {
   SseSubscriptionKind,
@@ -668,11 +667,7 @@ export class ProjectsController {
       if (!res.writableEnded) abortOnDisconnect();
     });
 
-    await pipeline(Readable.fromWeb(stream as ReadableStream), res).catch(
-      () => {
-        res.destroy();
-      },
-    );
+    await pipeWebBody(stream, res);
   }
 
   @Post()

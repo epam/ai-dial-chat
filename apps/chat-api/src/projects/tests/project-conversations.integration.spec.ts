@@ -19,6 +19,7 @@ import {
 } from '../../conversations/generation/conversation-generation.service';
 import { ProjectConversationStore } from '../../conversations/persistence/project-conversation.store';
 import { ConversationCompletionsResponder } from '../../conversations/streaming/conversation-completions.responder';
+import type { StreamCompletionRequest } from '../../conversations/streaming/stream-completion-request';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationReadStateService } from '../../scheduled-task-unread/conversation-read-state.service';
 import { ProjectAccessService } from '../access/project-access.service';
@@ -232,7 +233,8 @@ describe('ProjectConversationsController (integration)', () => {
     app = built.app;
     built.conversationService.streamCompletion.mockImplementation(
       async function* (..._args: unknown[]) {
-        const onReady = _args[10] as () => void;
+        const { onReadyToStream: onReady } =
+          _args[0] as StreamCompletionRequest;
         onReady();
         yield 'data: {}\n\n';
       },
@@ -249,9 +251,9 @@ describe('ProjectConversationsController (integration)', () => {
       })
       .expect(200);
 
-    const [locator, token] = built.conversationService.streamCompletion.mock
-      .calls[0] as unknown as [string, string];
-    expect(locator).toBe('projects/z9y8x7/research/conversations/x');
+    const { conversationPath, token } = built.conversationService
+      .streamCompletion.mock.calls[0][0] as StreamCompletionRequest;
+    expect(conversationPath).toBe('projects/z9y8x7/research/conversations/x');
     expect(token).toBe(USER.at);
   });
 
@@ -443,7 +445,8 @@ describe('ProjectConversationsController (integration)', () => {
     app = built.app;
     built.conversationService.streamCompletion.mockImplementation(
       async function* (..._args: unknown[]) {
-        const onReady = _args[10] as () => void;
+        const { onReadyToStream: onReady } =
+          _args[0] as StreamCompletionRequest;
         onReady();
         yield 'data: {}\n\n';
       },
@@ -460,23 +463,23 @@ describe('ProjectConversationsController (integration)', () => {
       })
       .expect(200);
 
-    expect(built.conversationService.streamCompletion).toHaveBeenCalledWith(
-      'projects/a1b2c3/q4/conversations/x',
-      USER.at,
-      USER.bucket,
-      GENERATION_ID,
-      'append',
-      'Hi',
-      undefined,
-      'gpt-4o',
-      undefined,
-      OWNER_KEY,
-      expect.any(Function),
-      USER.sub,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-    );
+    expect(built.conversationService.streamCompletion).toHaveBeenCalledWith({
+      conversationPath: 'projects/a1b2c3/q4/conversations/x',
+      token: USER.at,
+      bucket: USER.bucket,
+      generationId: GENERATION_ID,
+      mode: 'append',
+      message: 'Hi',
+      messageIndex: undefined,
+      model: 'gpt-4o',
+      customContent: undefined,
+      ownerKey: OWNER_KEY,
+      onReadyToStream: expect.any(Function),
+      sub: USER.sub,
+      clientChannelId: undefined,
+      timezone: undefined,
+      lang: undefined,
+      jobTitle: undefined,
+    });
   });
 });

@@ -404,6 +404,16 @@ describe('NavigationSidebar', () => {
       expect(drawer.className).toContain('fixed');
     });
 
+    /* A `visibility` transition would keep an opening drawer hidden for the
+       frame in which it takes focus, and the browser drops that `focus()`. */
+    it('turns visible at once when it opens, so it can take focus', () => {
+      renderDrawer();
+
+      const drawer = screen.getByRole('navigation');
+      expect(drawer.className).toContain('transition-transform');
+      expect(drawer.className).not.toContain('visibility');
+    });
+
     it('slides out, hides and goes inert while closed', () => {
       renderDrawer({ isOpen: false });
 
@@ -412,6 +422,7 @@ describe('NavigationSidebar', () => {
       expect(drawer.className).toContain('invisible');
       expect(drawer.className).toContain('ltr:-translate-x-full');
       expect(drawer.className).toContain('rtl:translate-x-full');
+      expect(drawer.className).toContain('transition-[transform,visibility]');
     });
 
     it('takes the id the host gives it', () => {
@@ -556,6 +567,40 @@ describe('NavigationSidebar', () => {
       expect(document.activeElement).toBe(screen.getByRole('navigation'));
 
       rerender(renderWithOpener(false));
+      expect(document.activeElement).toBe(opener);
+      /* eslint-enable testing-library/no-node-access */
+    });
+
+    it('returns focus to the aria-controls opener when the page around it went inert', () => {
+      const renderWithInertPage = (isOpen: boolean) => (
+        <>
+          <main inert={isOpen}>
+            <button aria-controls="other-panel drawer-under-test">
+              opener
+            </button>
+          </main>
+          <NavigationSidebar
+            id="drawer-under-test"
+            items={ITEMS}
+            labels={LABELS}
+            variant={NavigationSidebarVariant.Drawer}
+            isOpen={isOpen}
+          />
+        </>
+      );
+      const { rerender } = render(renderWithInertPage(false));
+      const opener = screen.getByRole('button', { name: 'opener' });
+      opener.focus();
+      /* The browser moves focus to the body as the opener's page turns inert. */
+      opener.blur();
+
+      rerender(renderWithInertPage(true));
+      /* eslint-disable testing-library/no-node-access -- focus is a property of the document, not of a queryable node */
+      expect(document.activeElement).toBe(
+        screen.getByRole('navigation', { hidden: true }),
+      );
+
+      rerender(renderWithInertPage(false));
       expect(document.activeElement).toBe(opener);
       /* eslint-enable testing-library/no-node-access */
     });

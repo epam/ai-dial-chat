@@ -116,6 +116,8 @@ interface Props {
     propertyKey?: string,
     description?: string,
   ) => void;
+  /** Renders the message's form buttons disabled, e.g. in a read-only (shared or published) conversation. */
+  isStarterSelectionDisabled?: boolean;
   /** Sends a visualizer `SEND_MESSAGE` text; `undefined` while visualizer messages are disabled. */
   onVisualizerSendMessage?: (content: string) => void;
   onStartEdit?: (messageIndex: number) => void;
@@ -289,6 +291,7 @@ const ConversationMessageItem: FC<Props> = ({
   hasTimestamp = false,
   editingMessageIndexes,
   onSelectStarter,
+  isStarterSelectionDisabled = false,
   onVisualizerSendMessage,
   onStartEdit,
   onDeleteMessage,
@@ -724,6 +727,7 @@ const ConversationMessageItem: FC<Props> = ({
         }
         starters={activeStarters}
         onSelectStarter={handleSelectStarter}
+        isStarterSelectionDisabled={isStarterSelectionDisabled}
         labels={{
           showMoreLabel,
           showLessLabel,

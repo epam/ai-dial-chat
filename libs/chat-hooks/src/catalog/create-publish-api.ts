@@ -4,9 +4,11 @@ import type {
   PublishHistoryEntryDto,
   PublishResultDto,
   PublishRuleDto,
+  ResourceDependenciesResultDto,
   UnpublishAccessDto,
   UnpublishCatalogEntityDto,
   UnpublishResultDto,
+  VersionStatusEntryDto,
 } from '@epam/ai-dial-chat-api-client';
 import type {
   PublicationRule,
@@ -48,11 +50,25 @@ export interface PublishApiClient {
     entityType: CatalogPublishEntityType,
     entityId: string,
   ) => Promise<PublishHistoryEntryDto[]>;
+  /**
+   * Reads the direct dependencies of one catalog entity that are not in the
+   * public bucket. Advisory: the backend answers an empty list when it cannot
+   * resolve them.
+   */
+  getCatalogPublishDependencies: (
+    entityType: CatalogPublishEntityType,
+    entityId: string,
+  ) => Promise<ResourceDependenciesResultDto>;
   /** Reads whether the caller may request removal of one catalog entity. */
   getCatalogUnpublishAccess: (
     entityType: CatalogPublishEntityType,
     entityId: string,
   ) => Promise<UnpublishAccessDto>;
+  /** Reads the publication status of every saved version of one application or toolset. */
+  getCatalogVersionStatuses: (
+    entityType: CatalogPublishEntityType,
+    entityId: string,
+  ) => Promise<VersionStatusEntryDto[]>;
   /** Reads a destination folder's already-configured access rules. */
   getPublishRules: (folderPath: string) => Promise<PublicationRule[]>;
 }
@@ -80,8 +96,12 @@ export const createPublishApiClient = (
     }),
   getCatalogPublishHistory: (entityType, entityId) =>
     publishApi.getCatalogPublishHistory({ entityType, entityId }),
+  getCatalogPublishDependencies: (entityType, entityId) =>
+    publishApi.getCatalogPublishDependencies({ entityType, entityId }),
   getCatalogUnpublishAccess: (entityType, entityId) =>
     publishApi.getCatalogUnpublishAccess({ entityType, entityId }),
+  getCatalogVersionStatuses: (entityType, entityId) =>
+    publishApi.getCatalogVersionStatuses({ entityType, entityId }),
   getPublishRules: async (folderPath) => {
     const response = await publishApi.getPublishRules({ folderPath });
     return response.rules.map(({ function: ruleFunction, ...rule }) => ({

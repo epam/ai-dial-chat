@@ -1,0 +1,21 @@
+import { renderHook } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { useVersionHistoryText } from '../useVersionHistoryText';
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, params?: Record<string, unknown>) =>
+      params?.name != null ? `${key}|${params.name}` : key,
+    i18n: { language: 'en', resolvedLanguage: 'en' },
+  }),
+}));
+
+describe('useVersionHistoryText', () => {
+  it('formats a date as day, short month and year', () => {
+    const { result } = renderHook(() => useVersionHistoryText());
+
+    expect(
+      result.current.formatters.formatDate(Date.UTC(2026, 6, 12, 12)),
+    ).toBe('12 Jul 2026');
+  });
+});

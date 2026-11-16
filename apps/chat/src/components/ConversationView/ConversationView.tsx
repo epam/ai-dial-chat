@@ -74,6 +74,7 @@ import {
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useAnchoredMessageActions } from '../../hooks/conversation/useAnchoredMessageActions';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
@@ -405,6 +406,7 @@ const ConversationView: FC<Props> = ({
     config: { maxAttachmentFileSizeBytes },
   } = useAppConfig();
   const isUsageLimitsControlEnabled = useFeatureFlag('usageLimitsControl');
+  const overlay = useOptionalOverlay();
   const isDisallowChangeAgentEnabled = useUiFeature(
     OverlayFeature.DisallowChangeAgent,
   );
@@ -747,6 +749,9 @@ const ConversationView: FC<Props> = ({
                     fallbackCitationGroups={fallbackCitationGroups}
                     editingMessageIndexes={editingMessageIndexes}
                     onSelectStarter={onSelectStarter}
+                    /* A read-only conversation is not the viewer's to continue,
+                       so its form buttons stay visible but inert (#6878). */
+                    isStarterSelectionDisabled={isReadOnly}
                     onVisualizerSendMessage={onVisualizerSendMessage}
                     onStartEdit={isReadOnly ? undefined : handleStartEdit}
                     onDeleteMessage={isReadOnly ? undefined : onDeleteMessage}
@@ -976,6 +981,7 @@ const ConversationView: FC<Props> = ({
                 canRemoveTools={isRemovableToolsEnabled}
                 toolsMenuTitle={toolsMenuTitle}
                 toolsChipLabels={toolsChipLabels}
+                isToolChipRowAllowedOnPhone={overlay != null}
                 pendingDropFiles={
                   !isEditActive ? reply.pendingFiles : undefined
                 }

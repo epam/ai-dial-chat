@@ -147,12 +147,13 @@ export class OfflineCredentialsController {
     description:
       "Revokes the session user's stored offline-credentials grant by " +
       'proxying DIAL Core (POST /v1/user/offline-credentials/signout). A ' +
-      'Core 404 is treated as idempotent success — there was no grant left ' +
-      'to revoke. The authorization token is never logged.',
+      'Core 200 false or 404 is treated as idempotent success — there was ' +
+      'no grant left to revoke. The authorization token is never logged.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Signed out successfully (including idempotent Core 404)',
+    description:
+      'Signed out successfully (including idempotent Core 200 false or 404)',
     type: OfflineCredentialsAuthResultDto,
   })
   @ApiResponse({
@@ -166,7 +167,7 @@ export class OfflineCredentialsController {
   })
   @ApiResponse({
     status: 502,
-    description: 'DIAL Core returned an error response or reported failure',
+    description: 'DIAL Core returned an error response',
   })
   @ApiResponse({ status: 503, description: 'DIAL Core is unreachable' })
   async signOut(@Req() req: Request): Promise<OfflineCredentialsAuthResultDto> {

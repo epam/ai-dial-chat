@@ -13,9 +13,18 @@
  */
 
 import * as runtime from '../runtime';
-import type { DialModelDto, DialModelListResponseDto } from '../models/index';
+import type {
+  DialModelDto,
+  DialModelListResponseDto,
+  ModelCatalogEntryDto,
+  ModelCatalogListResponseDto,
+} from '../models/index';
 
 export interface GetModelRequest {
+  modelName: string;
+}
+
+export interface GetModelCatalogEntryRequest {
   modelName: string;
 }
 
@@ -79,6 +88,114 @@ export class ModelsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<DialModelDto> {
     const response = await this.getModelRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Returns one model from the cached model catalog, without a separate DIAL Core call. A model hidden from the catalog key answers 404, never 403, so its existence is not revealed.
+   * Get a model from the catalog
+   */
+  async getModelCatalogEntryRaw(
+    requestParameters: GetModelCatalogEntryRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ModelCatalogEntryDto>> {
+    if (requestParameters['modelName'] == null) {
+      throw new runtime.RequiredError(
+        'modelName',
+        'Required parameter "modelName" was null or undefined when calling getModelCatalogEntry().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/model-catalog/{modelName}`;
+    urlPath = urlPath.replace(
+      `{${'modelName'}}`,
+      encodeURIComponent(String(requestParameters['modelName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ModelCatalogEntryDto>(response);
+  }
+
+  /**
+   * Returns one model from the cached model catalog, without a separate DIAL Core call. A model hidden from the catalog key answers 404, never 403, so its existence is not revealed.
+   * Get a model from the catalog
+   */
+  async getModelCatalogEntry(
+    requestParameters: GetModelCatalogEntryRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ModelCatalogEntryDto> {
+    const response = await this.getModelCatalogEntryRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns the DIAL Core models visible to the server-side MODEL_CATALOG_API_KEY, including models the caller\'s own roles cannot access. Display data only: GET /api/v1/models still decides what the user can use, and Core invocation settings (defaults, responses_defaults, max_retry_attempts, tokenizer_model) are omitted. One server-side cache entry, shared by all users, is kept for 5 minutes.
+   * List the model catalog
+   */
+  async listModelCatalogRaw(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ModelCatalogListResponseDto>> {
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/model-catalog`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ModelCatalogListResponseDto>(response);
+  }
+
+  /**
+   * Returns the DIAL Core models visible to the server-side MODEL_CATALOG_API_KEY, including models the caller\'s own roles cannot access. Display data only: GET /api/v1/models still decides what the user can use, and Core invocation settings (defaults, responses_defaults, max_retry_attempts, tokenizer_model) are omitted. One server-side cache entry, shared by all users, is kept for 5 minutes.
+   * List the model catalog
+   */
+  async listModelCatalog(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ModelCatalogListResponseDto> {
+    const response = await this.listModelCatalogRaw(initOverrides);
     return await response.value();
   }
 

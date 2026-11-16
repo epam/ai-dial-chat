@@ -45,7 +45,7 @@ Peers:
 - `react` ^19.2.8
 - `react-dom` ^19.2.8 (`NotificationStack` portals into `document.body`)
 - `@epam/ai-dial-ui-kit` ^0.16.0
-- `@epam/ai-dial-react-file-manager` ^0.4.1
+- `@epam/ai-dial-react-file-manager` ^0.4.2
 
 Installed for you as dependencies: `ag-grid-community`, `@tabler/icons-react`, `react-markdown`,
 `react-syntax-highlighter`, `remark-breaks`, `remark-gfm`, `remark-math`, `rehype-katex`,
@@ -701,6 +701,30 @@ import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
 />;
 ```
 
+### Org-unit folders
+
+`OrgUnit` (`id`, `name`, `displayName`, `path`, `folder`) is a DIAL Core org
+unit. Pure helpers match a unit against a public-bucket path. A unit's Core
+`folder` is url-encoded and rooted at `public/`; `normalizeOrgUnitFolder`
+decodes it and drops that root. The path passed to `isOrgUnitFolder` is the
+decoded, public-relative path the file manager and the publish tree show, so it
+is not decoded again and a top-level folder named `public` stays a folder. Core's
+`public/Acme/US%20Risk/` therefore matches the tree path `Acme/US Risk`. A folder
+_inside_ a unit is not a unit, and `Risk/` never matches `Risk2/`.
+
+```ts
+import {
+  isOrgUnitFolder,
+  normalizeOrgUnitFolder,
+  toOrgUnitFolderSet,
+  type OrgUnit,
+} from '@epam/ai-dial-chat-shared';
+
+const folders = toOrgUnitFolderSet(units as OrgUnit[]);
+isOrgUnitFolder(folders, 'Acme/US Risk'); // true
+normalizeOrgUnitFolder('public/Acme/US%20Risk/'); // 'Acme/US Risk/'
+```
+
 ### NewVersionAlert
 
 Kit `StateScreen` preset shown instead of the app once a newer build has been
@@ -1342,6 +1366,8 @@ import {
   ENTITY_NAME_MAX_LENGTH,
   ENTITY_DESCRIPTION_MAX_LENGTH,
   ENTITY_INSTRUCTIONS_MAX_LENGTH,
+  RESOURCE_VERSION_PATTERN,
+  STORED_RESOURCE_VERSION_PATTERN,
   exceedsMaxLength,
   hasControlCharacters,
   sanitizeConversationName,
@@ -1356,6 +1382,12 @@ import {
 // applications, scheduled tasks): name 256, description 2000, instructions 50000.
 const isNameTooLong = exceedsMaxLength(name.trim(), ENTITY_NAME_MAX_LENGTH);
 const isNameMultiline = hasControlCharacters(name); // line breaks, tabs, NUL, …
+
+// Version rule shared with the chat API: 1-64 of letters, digits, `_`, `.`, `+`, `-`; no trailing dot, no `__`, no leading `_` (`__` separates the name from the version in the stored path).
+const isVersionValid = RESOURCE_VERSION_PATTERN.test(version);
+
+// Rule for a version that already exists or does not create a path (an update, a publish): the same characters with no length limit and without the three exclusions, so a version stored under the earlier rules still saves.
+const isStoredVersionValid = STORED_RESOURCE_VERSION_PATTERN.test(version);
 
 // Merge conditional class names — the only supported way to compose classes.
 // Conflicting utilities collapse to the last one, including the workspace

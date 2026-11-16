@@ -91,9 +91,6 @@ export type ModelPricingRecord = Record<
 >;
 
 export class ModelCatalogPropertiesDto {
-  @ApiPropertyOptional({ description: 'Model provider for catalog display' })
-  provider?: string;
-
   @ApiPropertyOptional({ description: 'Model vendor for catalog display' })
   vendor?: string;
 
@@ -221,6 +218,27 @@ export class ModelDetailsDto {
 
   @ApiPropertyOptional({ description: 'Lifecycle status of the model' })
   lifecycleStatus?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated',
+    example: 'Azure',
+  })
+  provider?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated',
+    example: '2026-12-31',
+  })
+  deprecationDate?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated',
+    example: '2027-03-31',
+  })
+  endOfService?: string;
 
   @ApiPropertyOptional({
     description:

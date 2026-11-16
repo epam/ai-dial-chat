@@ -28,6 +28,7 @@ import {
 import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useResolveCatalogIconUrl } from '../../hooks/catalog/useResolveCatalogIconUrl';
 import { useConversationEditDialogs } from '../../hooks/conversation-panel/useConversationEditDialogs';
 import { useConversationRowActions } from '../../hooks/conversation-panel/useConversationRowActions';
 import { useConversationSharingDialogs } from '../../hooks/conversation-panel/useConversationSharingDialogs';
@@ -41,7 +42,6 @@ import {
   conversationIdsMatch,
   toPanelConversationId,
 } from '../../utils/conversation-id-match';
-import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
 import ConversationPanelMenu from './ConversationPanelMenu';
 import ConversationPanelOverlays from './ConversationPanelOverlays';
@@ -184,12 +184,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     ConversationPanelI18nKeys.UnreadIndicatorLabel,
   );
 
+  const resolveCatalogIconUrl = useResolveCatalogIconUrl();
   const resolveIconUrl = useCallback(
     (deployment: DeploymentItemDto | undefined) =>
       deployment?.iconUrl
         ? resolveCatalogIconUrl(deployment.iconUrl)
         : undefined,
-    [],
+    [resolveCatalogIconUrl],
   );
 
   const resolveIconTooltip = useCallback(

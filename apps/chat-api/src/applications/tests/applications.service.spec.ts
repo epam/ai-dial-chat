@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   HttpException,
@@ -15,6 +16,7 @@ import { ApplicationsService } from '../applications.service';
 import type { ApplicationsResponseDto } from '../dto/application.dto';
 import type { CreateApplicationBodyDto } from '../dto/create-application.dto';
 import type { UpdateApplicationBodyDto } from '../dto/update-application.dto';
+import { ApplicationErrorCode } from '../types/application-error-code.enum';
 
 const mockApp = { id: 'my-app', object: 'application', display_name: 'My App' };
 const mockList: ApplicationsResponseDto = { data: [mockApp] };
@@ -22,8 +24,10 @@ const mockList: ApplicationsResponseDto = { data: [mockApp] };
 const okResponse = (data: unknown) =>
   ({ data, response: {} as Response }) as never;
 
-const errResponse = (status: number) =>
-  ({ error: {}, response: { status } as Response }) as never;
+const errResponse = (status: number, error: unknown = {}) =>
+  ({ error, response: { status } as Response }) as never;
+
+const DEPENDENT_RESOURCE_BODY = 'Failed to access application resource';
 
 function makeDeps() {
   const dialClient = {
@@ -555,6 +559,22 @@ describe('ApplicationsService', () => {
       });
     });
 
+    it('clears the list caches after a create-only save so the new version shows in the next listing', async () => {
+      const { service, cacheManager, deploymentsService } = makeService();
+      mockCreateApplicationSdk(service);
+
+      await service.createApplication('user1', 'token', {
+        ...body,
+        createOnly: true,
+        version: '2.0.0',
+      });
+
+      expect(cacheManager.del).toHaveBeenCalledWith('applications:list:user1');
+      expect(deploymentsService.invalidateListCache).toHaveBeenCalledWith(
+        'user1',
+      );
+    });
+
     it('creates at the bucket root when folderPath is empty', async () => {
       const { service } = makeService();
       const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
@@ -647,6 +667,39 @@ describe('ApplicationsService', () => {
           body: expect.objectContaining({ displayVersion: '2.0' }),
         }),
       );
+    });
+
+    it('encodes a plus sign of the version in the stored path', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+
+      const result = await service.createApplication('user1', 't', {
+        ...body,
+        version: '1.0+build5',
+      });
+
+      expect(result.id).toBe('applications/test-bucket/My%20App__1.0%2Bbuild5');
+      expect(saveCustomApplicationSpy).toHaveBeenCalledWith(
+        expect.anything(),
+        'My%20App__1.0%2Bbuild5',
+        expect.objectContaining({
+          body: expect.objectContaining({ displayVersion: '1.0+build5' }),
+        }),
+      );
+    });
+
+    it('surfaces the Core 400 for a name and 64-character version that exceed the segment limit', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+      saveCustomApplicationSpy.mockResolvedValue(errResponse(400));
+
+      await expect(
+        service.createApplication('user1', 't', {
+          ...body,
+          name: 'n'.repeat(250),
+          version: 'v'.repeat(64),
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('defaults version to 1.0.0 when not provided', async () => {
@@ -791,6 +844,46 @@ describe('ApplicationsService', () => {
       await expect(service.createApplication('u', 't', body)).rejects.toThrow(
         ForbiddenException,
       );
+    });
+
+    it('returns the coded 403 for a create-only save without retrying', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(
+        service,
+        undefined,
+        errResponse(403, `${DEPENDENT_RESOURCE_BODY} files/b/doc.pdf`),
+      );
+
+      const error = await service
+        .createApplication('u', 't', { ...body, createOnly: true })
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      expect(
+        ((error as ForbiddenException).getResponse() as { code: string }).code,
+      ).toBe(ApplicationErrorCode.DependentResourceMissing);
+      expect(saveCustomApplicationSpy).toHaveBeenCalledOnce();
+    });
+
+    it('throws a coded ForbiddenException without the resource path when Core reports a missing dependency', async () => {
+      const { service } = makeService();
+      mockCreateApplicationSdk(
+        service,
+        undefined,
+        errResponse(403, `${DEPENDENT_RESOURCE_BODY} files/b/folder/doc.pdf`),
+      );
+
+      const error = await service
+        .createApplication('u', 't', body)
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      const response = (error as ForbiddenException).getResponse() as {
+        code: string;
+        message: string;
+      };
+      expect(response.code).toBe(ApplicationErrorCode.DependentResourceMissing);
+      expect(response.message).not.toContain('doc.pdf');
     });
 
     it('throws HttpException(429) when PUT returns 429', async () => {
@@ -984,6 +1077,33 @@ describe('ApplicationsService', () => {
         expect(saveCustomApplicationSpy).toHaveBeenCalledOnce();
       });
 
+      it('reads the snake_case name and version DIAL Core answers with and writes only the camelCase keys', async () => {
+        const { service, deploymentsService } = makeService();
+        const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+          service,
+          okResponse({
+            display_name: 'My App',
+            display_version: '0.0.1',
+            description: 'Old description',
+          }),
+        );
+
+        await service.updateApplication('user1', 'token', id, {
+          name: 'My App',
+          version: '0.0.1',
+          description: 'New description',
+        });
+
+        expect(deploymentsService.listDeployments).not.toHaveBeenCalled();
+        const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+        expect(sentBody).toMatchObject({
+          displayName: 'My App',
+          displayVersion: '0.0.1',
+        });
+        expect(sentBody).not.toHaveProperty('display_name');
+        expect(sentBody).not.toHaveProperty('display_version');
+      });
+
       it('rejects a rename into the identity of another own agent and writes nothing', async () => {
         const { service, deploymentsService } = makeService();
         const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(service);
@@ -1175,6 +1295,24 @@ describe('ApplicationsService', () => {
       });
     });
 
+    it('keeps a stored version longer than 64 characters when the update omits version', async () => {
+      const { service, deploymentsService } = makeService();
+      const longVersion = 'v'.repeat(70);
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+        service,
+        okResponse({ ...existingApp, displayVersion: longVersion }),
+      );
+
+      await service.updateApplication('user1', 'token', id, {
+        name: 'My App',
+        description: 'New description',
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({ displayVersion: longVersion });
+      expect(deploymentsService.listDeployments).not.toHaveBeenCalled();
+    });
+
     it('removes the stored icon when iconUrl is an empty string', async () => {
       const { service } = makeService();
       const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
@@ -1193,6 +1331,40 @@ describe('ApplicationsService', () => {
         displayName: updateBody.name,
         application_properties: existingApp.application_properties,
       });
+    });
+
+    it('removes the stored icon when DIAL Core answers it as icon_url and iconUrl is an empty string', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+        service,
+        okResponse({ ...existingApp, icon_url: 'files/test-bucket/icon.png' }),
+      );
+
+      await service.updateApplication('user1', 'token', id, {
+        ...updateBody,
+        iconUrl: '',
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).not.toHaveProperty('iconUrl');
+      expect(sentBody).not.toHaveProperty('icon_url');
+    });
+
+    it('replaces stored description_keywords with the camelCase topics only', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(
+        service,
+        okResponse({ ...existingApp, description_keywords: ['old'] }),
+      );
+
+      await service.updateApplication('user1', 'token', id, {
+        ...updateBody,
+        topics: ['new'],
+      });
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({ descriptionKeywords: ['new'] });
+      expect(sentBody).not.toHaveProperty('description_keywords');
     });
 
     it('keeps the stored icon when iconUrl is omitted', async () => {
@@ -1370,6 +1542,45 @@ describe('ApplicationsService', () => {
       await expect(
         service.updateApplication('u', 't', id, updateBody),
       ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws a coded ForbiddenException without the resource path when Core reports a missing dependency', async () => {
+      const { service } = makeService();
+      mockUpdateApplicationSdk(
+        service,
+        undefined,
+        errResponse(403, `${DEPENDENT_RESOURCE_BODY} files/b/folder/doc.pdf`),
+      );
+
+      const error = await service
+        .updateApplication('u', 't', id, updateBody)
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      const response = (error as ForbiddenException).getResponse() as {
+        code: string;
+        message: string;
+      };
+      expect(response.code).toBe(ApplicationErrorCode.DependentResourceMissing);
+      expect(response.message).not.toContain('doc.pdf');
+    });
+
+    it('keeps the generic 403 when the Core body is another text', async () => {
+      const { service } = makeService();
+      mockUpdateApplicationSdk(
+        service,
+        undefined,
+        errResponse(403, "You don't have an access to: files/b/x.pdf"),
+      );
+
+      const error = await service
+        .updateApplication('u', 't', id, updateBody)
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      expect(
+        (error as ForbiddenException).getResponse() as { code?: string },
+      ).not.toHaveProperty('code');
     });
 
     it('throws BadGatewayException when DIAL Core returns a 5xx while saving', async () => {
@@ -1945,7 +2156,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
         response: { status: 200 },
       } as never);
       client(service).getCustomApplication.mockResolvedValue(
-        appResponse({ displayVersion: '1.0.0', description: 'pre' }, 'e1'),
+        appResponse({ display_version: '1.0.0', description: 'pre' }, 'e1'),
       );
       client(service).saveCustomApplication.mockResolvedValue(okResponse({}));
 
@@ -1976,7 +2187,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
       );
     });
 
-    it('keeps a separator inside the name when forking', async () => {
+    it('encodes a plus sign of the version in the forked path', async () => {
       const { service } = makeService();
       withBucket(service);
       client(service).copyResource.mockResolvedValue({
@@ -1984,6 +2195,58 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
       } as never);
       client(service).getCustomApplication.mockResolvedValue(
         appResponse({ displayVersion: '1.0.0' }, 'e1'),
+      );
+      client(service).saveCustomApplication.mockResolvedValue(okResponse({}));
+
+      const result = await service.forkApplicationVersion(
+        'user1',
+        'token',
+        'applications/b1/agent__1.0.0',
+        { version: '1.0+build5', folderPath: '' },
+      );
+
+      expect(result).toEqual({ id: 'applications/b1/agent__1.0%2Bbuild5' });
+      expect(client(service).saveCustomApplication).toHaveBeenCalledWith(
+        'b1',
+        'agent__1.0%2Bbuild5',
+        expect.objectContaining({
+          body: { displayVersion: '1.0+build5' },
+        }),
+      );
+    });
+
+    it('clears the list caches after a fork so the new version shows in the next listing', async () => {
+      const { service, cacheManager, deploymentsService } = makeService();
+      withBucket(service);
+      client(service).copyResource.mockResolvedValue({
+        response: { status: 200 },
+      } as never);
+      client(service).getCustomApplication.mockResolvedValue(
+        appResponse({ displayVersion: '1.0.0' }, 'e1'),
+      );
+      client(service).saveCustomApplication.mockResolvedValue(okResponse({}));
+
+      await service.forkApplicationVersion(
+        'user1',
+        'token',
+        'applications/b1/agent__1.0.0',
+        { version: '1.1.0', folderPath: '' },
+      );
+
+      expect(cacheManager.del).toHaveBeenCalledWith('applications:list:user1');
+      expect(deploymentsService.invalidateListCache).toHaveBeenCalledWith(
+        'user1',
+      );
+    });
+
+    it('keeps a separator inside the name when forking', async () => {
+      const { service } = makeService();
+      withBucket(service);
+      client(service).copyResource.mockResolvedValue({
+        response: { status: 200 },
+      } as never);
+      client(service).getCustomApplication.mockResolvedValue(
+        appResponse({ display_version: '1.0.0' }, 'e1'),
       );
       client(service).saveCustomApplication.mockResolvedValue(okResponse({}));
 
@@ -2004,7 +2267,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
         response: { status: 200 },
       } as never);
       client(service).getCustomApplication.mockResolvedValue(
-        appResponse({ displayVersion: '1.0.0' }, 'e1'),
+        appResponse({ display_version: '1.0.0' }, 'e1'),
       );
       client(service).saveCustomApplication.mockResolvedValue(errResponse(500));
       client(service).deleteCustomApplication.mockResolvedValue(
@@ -2045,6 +2308,27 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
       ).rejects.toBeInstanceOf(ConflictException);
     });
 
+    it('clears the list caches after a commit so the new version shows in the next listing', async () => {
+      const { service, cacheManager, deploymentsService } = makeService();
+      withBucket(service);
+      client(service).getCustomApplication.mockResolvedValue(
+        appResponse({ displayVersion: '1.0.0' }, 'e1'),
+      );
+      client(service).saveCustomApplication.mockResolvedValue(okResponse({}));
+
+      await service.commitApplicationVersion(
+        'user1',
+        'token',
+        'applications/b1/agent__1.0.0',
+        { snapshotId: 'applications/b1/agent__1.1.0' },
+      );
+
+      expect(cacheManager.del).toHaveBeenCalledWith('applications:list:user1');
+      expect(deploymentsService.invalidateListCache).toHaveBeenCalledWith(
+        'user1',
+      );
+    });
+
     it('commits by moving the edits to the snapshot first and then restoring the source', async () => {
       const { service } = makeService();
       withBucket(service);
@@ -2055,11 +2339,11 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
         Promise.resolve(
           path === 'agent__1.0.0'
             ? appResponse(
-                { displayVersion: '1.0.0', description: 'edited' },
+                { display_version: '1.0.0', description: 'edited' },
                 'src',
               )
             : appResponse(
-                { displayVersion: '1.1.0', description: 'pre' },
+                { display_version: '1.1.0', description: 'pre' },
                 'snap',
               ),
         )) as never);
@@ -2103,11 +2387,11 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
         Promise.resolve(
           path === 'agent__1.0.0'
             ? appResponse(
-                { displayVersion: '1.0.0', description: 'edited' },
+                { display_version: '1.0.0', description: 'edited' },
                 'src',
               )
             : appResponse(
-                { displayVersion: '1.1.0', description: 'pre' },
+                { display_version: '1.1.0', description: 'pre' },
                 'snap',
               ),
         )) as never);
@@ -2143,7 +2427,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
       const { service } = makeService();
       withBucket(service);
       client(service).getCustomApplication.mockResolvedValue(
-        appResponse({ displayVersion: '1.0.0' }, 'e'),
+        appResponse({ display_version: '1.0.0' }, 'e'),
       );
       client(service).saveCustomApplication.mockResolvedValue(errResponse(500));
 
@@ -2167,7 +2451,7 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
       const { service } = makeService();
       withBucket(service);
       client(service).getCustomApplication.mockResolvedValue(
-        appResponse({ displayVersion: '1.0.0' }, 'e'),
+        appResponse({ display_version: '1.0.0' }, 'e'),
       );
       client(service).saveCustomApplication.mockResolvedValue(errResponse(412));
 

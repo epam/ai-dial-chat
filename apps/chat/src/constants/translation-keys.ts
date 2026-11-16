@@ -293,6 +293,8 @@ export enum CatalogI18nKeys {
   EntityDetailsParameters = 'catalog.entityDetails.parameters',
   EntityDetailsHostedBy = 'catalog.entityDetails.hostedBy',
   EntityDetailsReleaseDate = 'catalog.entityDetails.releaseDate',
+  EntityDetailsDeprecationDate = 'catalog.entityDetails.deprecationDate',
+  EntityDetailsEndOfService = 'catalog.entityDetails.endOfService',
   EntityDetailsContextWindow = 'catalog.entityDetails.contextWindow',
   EntityDetailsMaxOutputTokens = 'catalog.entityDetails.maxOutputTokens',
   EntityDetailsInputModalities = 'catalog.entityDetails.inputModalities',
@@ -1026,6 +1028,8 @@ export enum PublishI18nKeys {
   UnpublishFailedMessage = 'publish.unpublishFailedMessage',
   UnpublishNetworkErrorMessage = 'publish.unpublishNetworkErrorMessage',
   SubmitErrorCallout = 'publish.submitErrorCallout',
+  AdminApprovalTitle = 'publish.adminApprovalTitle',
+  AdminApprovalMessage = 'publish.adminApprovalMessage',
   AuthorLabel = 'publish.authorLabel',
   AuthorPlaceholder = 'publish.authorPlaceholder',
   AuthorHint = 'publish.authorHint',
@@ -1037,6 +1041,21 @@ export enum PublishI18nKeys {
   AddChildFolder = 'publish.addChildFolder',
   UpdateVersion = 'publish.updateVersion',
   PublishingInProgress = 'publish.publishingInProgress',
+  DependenciesTitle = 'publish.dependenciesTitle',
+  DependenciesDescription = 'publish.dependenciesDescription',
+  DependenciesAnnouncement = 'publish.dependenciesAnnouncement',
+  DependenciesEntityApplication = 'publish.dependenciesEntityApplication',
+  DependenciesEntityConversation = 'publish.dependenciesEntityConversation',
+  DependenciesEntityProject = 'publish.dependenciesEntityProject',
+  DependenciesEntityToolset = 'publish.dependenciesEntityToolset',
+  DependenciesEntityPrompt = 'publish.dependenciesEntityPrompt',
+  DependenciesEntitySkill = 'publish.dependenciesEntitySkill',
+  DependenciesEntityItem = 'publish.dependenciesEntityItem',
+  DependenciesTypeApplication = 'publish.dependenciesTypeApplication',
+  DependenciesTypeToolset = 'publish.dependenciesTypeToolset',
+  DependenciesTypePrompt = 'publish.dependenciesTypePrompt',
+  DependenciesTypeSkill = 'publish.dependenciesTypeSkill',
+  DependenciesTypeFile = 'publish.dependenciesTypeFile',
 }
 
 export enum PublishAccessRulesI18nKeys {
@@ -1914,4 +1933,16 @@ export enum ResourceSavePanelI18nKeys {
   SavedButPublishFailed = 'resourceSavePanel.savedButPublishFailed',
   SavedButPublishFailedReason = 'resourceSavePanel.savedButPublishFailedReason',
   SavedButAlreadyPublished = 'resourceSavePanel.savedButAlreadyPublished',
+}
+
+export enum VersionHistoryI18nKeys {
+  Heading = 'versionHistory.heading',
+  InReview = 'versionHistory.inReview',
+  Published = 'versionHistory.published',
+  StatusUnavailable = 'versionHistory.statusUnavailable',
+  Loading = 'versionHistory.loading',
+  Empty = 'versionHistory.empty',
+  LoadFailed = 'versionHistory.loadFailed',
+  PublishedBy = 'versionHistory.publishedBy',
+  Owner = 'versionHistory.owner',
 }

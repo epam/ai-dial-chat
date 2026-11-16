@@ -126,7 +126,16 @@ The exported `QrCode` component SHALL accept an optional `svgRef` prop that rece
 #### Scenario: Ref receives the SVG
 
 - **WHEN** `QrCode` is rendered with `svgRef`
-- **THEN** the ref's `current` is the rendered `SVGSVGElement`
+- **THEN** the ref's `current` is the rendered `SVGSVGElement` once the QR renderer has loaded, and `null` before that
+
+### Requirement: QrCode loads its renderer on demand
+
+`QrCode` SHALL import `react-qr-code` dynamically when it first mounts, so the QR engine stays out of a host's initial bundle. The labelled `role="img"` frame SHALL render immediately at its final size; a failed import SHALL leave the frame empty rather than throw, and a later mount SHALL attempt the import again.
+
+#### Scenario: Frame renders before the code
+
+- **WHEN** `QrCode` mounts and the QR renderer has not loaded yet
+- **THEN** the labelled frame is present and `svgRef.current` is `null`
 
 #### Scenario: Standalone QrCode unchanged
 

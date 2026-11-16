@@ -1,5 +1,8 @@
 import { buildCssVars } from '@epam/ai-dial-chat-shared';
-import type { PublishFolderNode } from '@epam/ai-dial-publish-panel';
+import type {
+  PublishDependency,
+  PublishFolderNode,
+} from '@epam/ai-dial-publish-panel';
 import type { CSSProperties } from 'react';
 import type { PublishedFolder } from '../models/details-panel';
 import type { ItemDetailsColors } from '../models/item-details-props';
@@ -33,6 +36,9 @@ export const CATALOG_PUBLISH_ALLOWS_REPLACE = false;
 export const NO_OP_PUBLISH = async () => undefined;
 /** Stable empty folder list for the `publishFolderItems` default. */
 export const EMPTY_PUBLISH_FOLDERS: PublishFolderNode[] = [];
+
+/** Shared empty list so an unresolved dependencies lookup keeps one identity between renders. */
+export const EMPTY_PUBLISH_DEPENDENCIES: PublishDependency[] = [];
 /** Stable empty list for the `ruleSourceOptions` default. */
 export const EMPTY_RULE_SOURCE_OPTIONS: string[] = [];
 
