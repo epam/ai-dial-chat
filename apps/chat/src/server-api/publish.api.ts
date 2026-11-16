@@ -14,6 +14,8 @@ export const CatalogPublishEntityType = PublishCatalogEntityEntityTypeEnum;
 export const publishApiClient = createPublishApiClient(publishApi);
 
 export const publishCatalogEntity = publishApiClient.publishCatalogEntity;
+export const copyCatalogEntityToOrgUnit =
+  publishApiClient.copyCatalogEntityToOrgUnit;
 export const unpublishCatalogEntity = publishApiClient.unpublishCatalogEntity;
 export const getCatalogPublishHistory =
   publishApiClient.getCatalogPublishHistory;

@@ -51,4 +51,25 @@ describe('createPublishApiClient', () => {
       entityId: 'applications/b/App__1.0.0',
     });
   });
+
+  it('copies a catalog entity into an org-unit folder through the generated operation', async () => {
+    const result = { id: 'applications/public/Acme/App__1.0.0' };
+    const copyCatalogEntityToOrgUnit = vi.fn().mockResolvedValue(result);
+    const client = createPublishApiClient({
+      copyCatalogEntityToOrgUnit,
+    } as unknown as PublishApi);
+
+    const response = await client.copyCatalogEntityToOrgUnit(
+      'application',
+      'applications/b/App__1.0.0',
+      { folderPath: 'Acme' },
+    );
+
+    expect(response).toBe(result);
+    expect(copyCatalogEntityToOrgUnit).toHaveBeenCalledWith({
+      entityType: 'application',
+      entityId: 'applications/b/App__1.0.0',
+      copyCatalogEntityToOrgUnitDto: { folderPath: 'Acme' },
+    });
+  });
 });

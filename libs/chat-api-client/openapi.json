@@ -385,12 +385,12 @@
     },
     "/api/v1/org-units": {
       "get": {
-        "description": "Returns the DIAL Core org units the authenticated user may see, flat and parents first. `enabled` is false when DIAL Core has org units turned off. Answers 403 while the `features.orgUnitsEnabled` flag is off. Results are cached server-side for 60 seconds per user.",
+        "description": "Returns the DIAL Core org units the authenticated user may see, flat in Core order, each with the caller's `permissions` (namespace to actions). `hasAdminAccess` is true when Core reports full admin access. `enabled` is false (and `hasAdminAccess` false, `units` empty) when DIAL Core has org units turned off. Answers 403 while the `features.orgUnitsEnabled` flag is off. Results are cached server-side for 60 seconds per user.",
         "operationId": "listOrgUnits",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Successfully retrieved the org units",
+            "description": "Successfully retrieved the org units with their permissions and the admin flag",
             "content": {
               "application/json": {
                 "schema": {
@@ -8887,6 +8887,99 @@
         "tags": ["publish"]
       }
     },
+    "/api/v1/catalog/{entityType}/{entityId}/copy-to-org-unit": {
+      "post": {
+        "description": "Copies a catalog entity of the caller's own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core's resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Only applications are supported so far; other types answer 501. Answers 403 while the `features.orgUnitsEnabled` flag is off.",
+        "operationId": "copyCatalogEntityToOrgUnit",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": true,
+            "in": "path",
+            "description": "Catalog entity kind.",
+            "schema": {
+              "example": "toolset",
+              "type": "string",
+              "enum": [
+                "model",
+                "toolset",
+                "application",
+                "prompt",
+                "skill",
+                "project"
+              ]
+            }
+          },
+          {
+            "name": "entityId",
+            "required": true,
+            "in": "path",
+            "description": "The entity's DIAL Core resource path, used directly as the Publication API `sourceUrl`.",
+            "schema": {
+              "example": "tool-abc123",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyCatalogEntityToOrgUnitDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Entity copied; the response carries the id of the copy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceIdResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid entityType, entityId or folderPath"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "The `features.orgUnitsEnabled` flag is off, the entity is not in the caller's own bucket, or DIAL Core refused the write (no `write` in the unit, or a Core per-type rule)"
+          },
+          "404": {
+            "description": "Entity not found"
+          },
+          "409": {
+            "description": "The folder already holds an entity with this name and `overwrite` is not set, or DIAL Core refused the copy as a conflict"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "501": {
+            "description": "Copying this entity type into an org unit is not supported yet"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Copy an own catalog entity into an org-unit folder",
+        "tags": ["publish"]
+      }
+    },
     "/api/v1/catalog/{entityType}/{entityId}/unpublish": {
       "post": {
         "description": "Submits a removal request for one already-published folder of a catalog entity (Toolset, Application, Prompt, or Skill) by proxying DIAL Core's Publication API (`createPublication`) with a single `DELETE`-action resource. **The removal takes effect only after an administrator approves the request.** Until then the published copy stays visible to everyone who could already see it, and the folder continues to appear in the entity’s publish history. This endpoint keeps no records of its own — DIAL Core is the sole source of truth.",
@@ -13352,9 +13445,30 @@
             "type": "string",
             "description": "Unit folder exactly as DIAL Core returns it: url-encoded, with a trailing slash",
             "example": "public/Acme/US%20Risk/"
+          },
+          "permissions": {
+            "type": "object",
+            "description": "Core's namespace-to-actions map for the caller in this unit; `{}` when the caller only reaches the unit through its parent",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "example": {
+              "applications": ["read", "write"],
+              "prompts": ["read"]
+            }
           }
         },
-        "required": ["id", "name", "displayName", "path", "folder"]
+        "required": [
+          "id",
+          "name",
+          "displayName",
+          "path",
+          "folder",
+          "permissions"
+        ]
       },
       "OrgUnitsResponseDto": {
         "type": "object",
@@ -13364,6 +13478,11 @@
             "description": "`false` when DIAL Core has org units turned off",
             "example": true
           },
+          "hasAdminAccess": {
+            "type": "boolean",
+            "description": "`true` when Core reports full admin access for the caller; `false` otherwise",
+            "example": false
+          },
           "units": {
             "type": "array",
             "items": {
@@ -13371,7 +13490,7 @@
             }
           }
         },
-        "required": ["enabled", "units"]
+        "required": ["enabled", "hasAdminAccess", "units"]
       },
       "ApplicationDto": {
         "type": "object",
@@ -19893,6 +20012,22 @@
           "publishedAt",
           "publishedBy"
         ]
+      },
+      "CopyCatalogEntityToOrgUnitDto": {
+        "type": "object",
+        "properties": {
+          "folderPath": {
+            "type": "string",
+            "example": "Acme/US Risk/Teams",
+            "description": "Plain-text destination folder relative to the public bucket, never empty: the public root is not an org unit. DIAL Core decides whether the caller may write there."
+          },
+          "overwrite": {
+            "type": "boolean",
+            "default": false,
+            "description": "Replace the entity already stored under the same name in the folder. Without it an existing target answers 409."
+          }
+        },
+        "required": ["folderPath"]
       },
       "UnpublishCatalogEntityDto": {
         "type": "object",

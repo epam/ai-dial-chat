@@ -8,9 +8,10 @@ describe('org-units server-api', () => {
   });
 
   describe('listOrgUnits', () => {
-    it('delegates to the generated listOrgUnits method', async () => {
+    it('delegates to the generated listOrgUnits method and returns hasAdminAccess and permissions', async () => {
       const mockResponse = {
         enabled: true,
+        hasAdminAccess: false,
         units: [
           {
             id: 'u-acme',
@@ -18,6 +19,7 @@ describe('org-units server-api', () => {
             displayName: 'Acme Corp',
             path: 'public/Acme',
             folder: 'public/Acme/',
+            permissions: { applications: ['read', 'write'] },
           },
         ],
       };
@@ -28,7 +30,11 @@ describe('org-units server-api', () => {
       const result = await listOrgUnits();
 
       expect(spy).toHaveBeenCalledOnce();
-      expect(result).toEqual(mockResponse);
+      expect(result).toBe(mockResponse);
+      expect(result.hasAdminAccess).toBe(false);
+      expect(result.units[0].permissions).toEqual({
+        applications: ['read', 'write'],
+      });
     });
   });
 });

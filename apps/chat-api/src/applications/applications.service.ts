@@ -627,7 +627,7 @@ export class ApplicationsService {
    * Moving or versioning someone else's application is never a personal
    * folder operation, even where a share grants write access.
    */
-  private async resolveOwnApplication(
+  async resolveOwnApplication(
     authHeaders: ReturnType<typeof getBearerAuthHeaders>,
     applicationName: string,
   ): Promise<DialApplicationResource> {
@@ -646,7 +646,7 @@ export class ApplicationsService {
    * cache is keyed by application id, so every id the write touched is
    * cleared to keep a re-opened editor from loading stale configuration.
    */
-  private async invalidateAfterWrite(
+  async invalidateAfterWrite(
     userSub: string,
     applicationIds: string[],
     context: string,

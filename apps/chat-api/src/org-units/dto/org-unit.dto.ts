@@ -29,6 +29,15 @@ export class OrgUnitDto {
     example: 'public/Acme/US%20Risk/',
   })
   folder!: string;
+
+  @ApiProperty({
+    description:
+      "Core's namespace-to-actions map for the caller in this unit; `{}` when the caller only reaches the unit through its parent",
+    type: 'object',
+    additionalProperties: { type: 'array', items: { type: 'string' } },
+    example: { applications: ['read', 'write'], prompts: ['read'] },
+  })
+  permissions!: Record<string, string[]>;
 }
 
 /** The org units visible to the caller, flat, parents before children. */
@@ -38,6 +47,13 @@ export class OrgUnitsResponseDto {
     example: true,
   })
   enabled!: boolean;
+
+  @ApiProperty({
+    description:
+      '`true` when Core reports full admin access for the caller; `false` otherwise',
+    example: false,
+  })
+  hasAdminAccess!: boolean;
 
   @ApiProperty({ type: () => [OrgUnitDto] })
   units!: OrgUnitDto[];

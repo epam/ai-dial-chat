@@ -2,6 +2,7 @@ import {
   mapResourceDependencyDto,
   usePublishDependencies,
 } from '@epam/ai-dial-chat-hooks';
+import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import {
   PublishHistoryEntry,
   PublishResourceSummary,
@@ -21,6 +22,7 @@ import {
 import { useAppConfig } from '../../context/AppConfigContext';
 import { usePublishDependencyIconResolver } from '../../hooks/publish/usePublishDependencyIconResolver';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
+import { usePublishFolderGuards } from '../../hooks/publish/usePublishFolderGuards';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
@@ -33,6 +35,7 @@ import {
   EntityOperation,
   NotifiableEntity,
 } from '../../types/entity-notification';
+import { toPublishDisabledReason } from '../../utils/org-unit-access';
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
@@ -91,6 +94,11 @@ const PublishConversationPanelContainer: FC<Props> = ({
   /* The publish panel pre-fills its author field with this; the lib cannot read the session itself. */
   const { displayName } = useUserProfile();
 
+  const { canPublishTo, getDisabledReason } = usePublishFolderGuards(
+    OrgUnitNamespace.Conversations,
+    isOpen,
+  );
+
   const {
     folderItems,
     expandedPaths,
@@ -99,7 +107,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
     onCreatePublishFolder,
     rememberPublishFolder,
     hasPublishWriteAccess,
-  } = usePublishFolders();
+  } = usePublishFolders({ canPublishTo });
 
   const resource: PublishResourceSummary = { title: conversationTitle };
 
@@ -172,6 +180,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
       selectedFolderPath={publishFlow.selectedFolderPath}
       onSelectedFolderPathChange={publishFlow.setSelectedFolderPath}
       onCreateFolder={publishFlow.handleCreateFolder}
+      getDisabledReason={toPublishDisabledReason(getDisabledReason)}
       expandedPaths={expandedPaths}
       onExpandedPathsChange={onExpandedPathsChange}
       loadingPaths={loadingPaths}

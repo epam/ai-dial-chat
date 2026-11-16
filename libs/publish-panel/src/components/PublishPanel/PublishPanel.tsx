@@ -27,6 +27,7 @@ import {
   useState,
 } from 'react';
 import { PUBLISH_PANEL_CLASS } from '../../constants/public-class-names';
+import type { FolderDestination } from '../../models/folder-destination';
 import {
   PublicationRule,
   PublishCalloutKind,
@@ -151,6 +152,8 @@ export interface PublishPanelProps {
   onPendingFolderPathChange: (path: string[] | undefined) => void;
   /** Called when the user confirms a new folder name. */
   onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
+  /** Reason a folder is unavailable as a destination, or `undefined` when it is usable; forwarded to the folder view's tree (`rootKey` is `''`), see `PublishFoldersTreeProps.getDisabledReason`. */
+  getDisabledReason?: (destination: FolderDestination) => string | undefined;
   /**
    * Externally-controlled set of expanded folder path keys. Pass this
    * together with `onExpandedPathsChange` when the host lazily fetches a
@@ -236,6 +239,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   pendingFolderPath,
   onPendingFolderPathChange,
   onCreateFolder,
+  getDisabledReason,
   expandedPaths,
   onExpandedPathsChange,
   loadingPaths,
@@ -406,6 +410,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           selectedPath={pendingFolderPath}
           onSelectedPathChange={onPendingFolderPathChange}
           onCreateFolder={onCreateFolder}
+          getDisabledReason={getDisabledReason}
           expandedPaths={expandedPaths}
           onExpandedPathsChange={onExpandedPathsChange}
           loadingPaths={loadingPaths}

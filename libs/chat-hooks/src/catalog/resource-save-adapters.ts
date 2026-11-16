@@ -8,12 +8,21 @@ import type {
   ToolsetsApi,
   UpdatePromptDto,
 } from '@epam/ai-dial-chat-api-client';
+import type { PublishApiClient } from './create-publish-api';
+import type { CatalogPublishEntityType } from './publish';
 import {
   ResourceSaveError,
   type ResourceCreateSaveAdapter,
   type ResourceEditSaveAdapter,
+  type ResourceOrgUnitWriter,
   type SavedResource,
 } from './resource-save';
+
+/** The org-unit copy operation the adapters' direct write calls. */
+export type ResourceSavePublishClient = Pick<
+  PublishApiClient,
+  'copyCatalogEntityToOrgUnit'
+>;
 
 /** The application operations the application save adapters call. */
 export type ResourceSaveApplicationsApi = Pick<
@@ -46,6 +55,8 @@ export interface EmbeddedApplicationSaveAdapterParams {
   runEmbeddedSave: () => Promise<void>;
   /** Translated message for a fork whose commit failed, naming the new version. */
   getCommitFailedMessage: (version: string) => string;
+  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls. */
+  publishClient: ResourceSavePublishClient;
 }
 
 /** Parameters for {@link createHostApplicationSaveAdapter}. */
@@ -61,6 +72,8 @@ export interface HostApplicationSaveAdapterParams {
     version: string,
     folderPath: string[],
   ) => Promise<{ id?: string } | void>;
+  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls. */
+  publishClient: ResourceSavePublishClient;
 }
 
 /** Parameters for {@link createToolsetSaveAdapter}. */
@@ -71,6 +84,8 @@ export interface ToolsetSaveAdapterParams {
   toolsetId: string;
   /** The edited values, already mapped to the write body. */
   body: ToolsetBodyDto;
+  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls. */
+  publishClient: ResourceSavePublishClient;
 }
 
 /** Parameters for {@link createPromptSaveAdapter}. */
@@ -81,7 +96,26 @@ export interface PromptSaveAdapterParams {
   promptId: string;
   /** The edited values. */
   body: UpdatePromptDto;
+  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls. */
+  publishClient: ResourceSavePublishClient;
 }
+
+/**
+ * The direct write of a saved resource into an org-unit folder, for every
+ * adapter of the resource type `entityType`. It never overwrites: a
+ * same-named resource already in the folder answers 409.
+ * @param publishClient - client with the generic org-unit copy
+ * @param entityType - publish API entity type of the resource
+ */
+export const createOrgUnitWriter = (
+  publishClient: ResourceSavePublishClient,
+  entityType: CatalogPublishEntityType,
+): Required<ResourceOrgUnitWriter> => ({
+  saveIntoOrgUnit: (id, folderPath) =>
+    publishClient.copyCatalogEntityToOrgUnit(entityType, id, {
+      folderPath: folderPath.join('/'),
+    }),
+});
 
 const moveApplicationToFolder =
   (applicationsApi: Pick<ResourceSaveApplicationsApi, 'moveApplication'>) =>
@@ -103,6 +137,7 @@ export const createEmbeddedApplicationSaveAdapter = ({
   applicationId,
   runEmbeddedSave,
   getCommitFailedMessage,
+  publishClient,
 }: EmbeddedApplicationSaveAdapterParams): ResourceEditSaveAdapter => ({
   publishEntityType: 'application',
   isVersioned: true,
@@ -134,6 +169,7 @@ export const createEmbeddedApplicationSaveAdapter = ({
     }
   },
   move: moveApplicationToFolder(applicationsApi),
+  ...createOrgUnitWriter(publishClient, 'application'),
 });
 
 /**
@@ -146,6 +182,7 @@ export const createHostApplicationSaveAdapter = ({
   applicationId,
   update,
   createVersion,
+  publishClient,
 }: HostApplicationSaveAdapterParams): ResourceEditSaveAdapter => ({
   publishEntityType: 'application',
   isVersioned: true,
@@ -159,6 +196,7 @@ export const createHostApplicationSaveAdapter = ({
     return { id: created.id };
   },
   move: moveApplicationToFolder(applicationsApi),
+  ...createOrgUnitWriter(publishClient, 'application'),
 });
 
 /** Save operations for a toolset; a new version is a create-only write into the chosen folder. */
@@ -166,6 +204,7 @@ export const createToolsetSaveAdapter = ({
   toolsetsApi,
   toolsetId,
   body,
+  publishClient,
 }: ToolsetSaveAdapterParams): ResourceEditSaveAdapter => ({
   publishEntityType: 'toolset',
   isVersioned: true,
@@ -185,6 +224,7 @@ export const createToolsetSaveAdapter = ({
       toolsetName: id,
       moveResourceDto: { folderPath: folderPath.join('/') },
     }),
+  ...createOrgUnitWriter(publishClient, 'toolset'),
 });
 
 /** Save operations for a prompt: unversioned, so it is updated in place and then moved when its folder changes. */
@@ -192,6 +232,7 @@ export const createPromptSaveAdapter = ({
   promptsApi,
   promptId,
   body,
+  publishClient,
 }: PromptSaveAdapterParams): ResourceEditSaveAdapter => ({
   publishEntityType: 'prompt',
   isVersioned: false,
@@ -203,6 +244,7 @@ export const createPromptSaveAdapter = ({
       id,
       movePromptDto: { targetFolderId: folderPath.join('/') },
     }),
+  ...createOrgUnitWriter(publishClient, 'prompt'),
 });
 
 /** Parameters for {@link createToolsetCreateAdapter}. */
@@ -211,6 +253,8 @@ export interface ToolsetCreateAdapterParams {
   toolsetsApi: Pick<ResourceSaveToolsetsApi, 'createToolset'>;
   /** The new toolset's values, already mapped to the write body. */
   body: ToolsetBodyDto;
+  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls. */
+  publishClient: ResourceSavePublishClient;
 }
 
 /** Parameters for {@link createPromptCreateAdapter}. */
@@ -219,12 +263,15 @@ export interface PromptCreateAdapterParams {
   promptsApi: Pick<ResourceSavePromptsApi, 'createPrompt'>;
   /** The new prompt's values; its folder comes from the panel. */
   body: Omit<CreatePromptDto, 'folderId'>;
+  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls. */
+  publishClient: ResourceSavePublishClient;
 }
 
 /** Creates a new toolset in the chosen Personal folder, never overwriting an existing one. */
 export const createToolsetCreateAdapter = ({
   toolsetsApi,
   body,
+  publishClient,
 }: ToolsetCreateAdapterParams): ResourceCreateSaveAdapter => ({
   publishEntityType: 'toolset',
   isVersioned: false,
@@ -236,12 +283,14 @@ export const createToolsetCreateAdapter = ({
         ...(folderPath.length > 0 ? { folderPath: folderPath.join('/') } : {}),
       },
     }),
+  ...createOrgUnitWriter(publishClient, 'toolset'),
 });
 
 /** Creates a new prompt in the chosen Personal folder. */
 export const createPromptCreateAdapter = ({
   promptsApi,
   body,
+  publishClient,
 }: PromptCreateAdapterParams): ResourceCreateSaveAdapter => ({
   publishEntityType: 'prompt',
   isVersioned: false,
@@ -252,6 +301,7 @@ export const createPromptCreateAdapter = ({
         ...(folderPath.length > 0 ? { folderId: folderPath.join('/') } : {}),
       },
     }),
+  ...createOrgUnitWriter(publishClient, 'prompt'),
 });
 
 /** Returns a lister of the caller's prompt folders directly under `path` (plain text, `''` for the root). */

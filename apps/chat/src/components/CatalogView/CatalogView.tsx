@@ -12,7 +12,9 @@ import {
   canEditShareAccess,
   findDeploymentByIdOrReference,
   findSchemaDisplayName,
+  getOrgUnitNamespace,
   resolveFavoriteEntityType,
+  toPublishEntityType,
   type ToolsetCredentialsLabels,
   useCatalogEditNavigation,
   useCatalogToolsetCredentials,
@@ -51,6 +53,7 @@ import { useSkills } from '../../context/SkillsContext';
 import { useCatalogCreationPermissions } from '../../hooks/catalog/useCatalogCreationPermissions';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
+import { usePublishFolderGuards } from '../../hooks/publish/usePublishFolderGuards';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import { useResourceVersionHistory } from '../../hooks/publish/useResourceVersionHistory';
 import { useSkillArchiveImport } from '../../hooks/skills/useSkillArchiveImport';
@@ -75,7 +78,10 @@ import {
 import { AppsEditorQuery } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
 import { EditorQuery } from '../../types/editor-query';
-import { EntityOperation } from '../../types/entity-notification';
+import {
+  NotifiableEntity,
+  EntityOperation,
+} from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import {
   getCatalogEmptyDescription,
@@ -85,6 +91,7 @@ import {
   getCatalogSearchPlaceholder,
 } from '../../utils/catalog';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
+import { toPublishDisabledReason } from '../../utils/org-unit-access';
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
@@ -347,6 +354,20 @@ const CatalogView: FC<Props> = ({
     [availableTabIds, t],
   );
 
+  const publishEntityType =
+    publishOpenItem && toPublishEntityType(publishOpenItem.type);
+  const { canPublishTo, getDisabledReason: getPublishFolderReason } =
+    usePublishFolderGuards(
+      publishEntityType ? getOrgUnitNamespace(publishEntityType) : undefined,
+      !isSelectorMode && publishOpenItem != null,
+      publishOpenItem != null &&
+        resolveCatalogItemEntity(
+          publishOpenItem.type,
+          findDeploymentByIdOrReference(deployments, publishOpenItem.id),
+          schemas,
+        ) === NotifiableEntity.QuickApp,
+    );
+
   const {
     folderItems: publishFolderItems,
     expandedPaths: publishExpandedPaths,
@@ -355,7 +376,7 @@ const CatalogView: FC<Props> = ({
     onCreatePublishFolder,
     rememberPublishFolder,
     hasPublishWriteAccess,
-  } = usePublishFolders();
+  } = usePublishFolders({ canPublishTo });
 
   const showPublishError = usePublishErrorNotification();
 
@@ -693,6 +714,9 @@ const CatalogView: FC<Props> = ({
         publishExpandedPaths={publishExpandedPaths}
         onPublishExpandedPathsChange={onPublishExpandedPathsChange}
         publishLoadingPaths={publishLoadingPaths}
+        getPublishDisabledReason={toPublishDisabledReason(
+          getPublishFolderReason,
+        )}
         onCreatePublishFolder={onCreatePublishFolder}
         hasPublishWriteAccess={hasPublishWriteAccess}
         publishDefaultAuthor={displayName}

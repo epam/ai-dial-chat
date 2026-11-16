@@ -76,6 +76,7 @@ vi.mock(
             isCreated: false,
             isNewVersion: false,
             isPublished: false,
+            isWrittenToOrgUnit: false,
           });
           return;
         }
@@ -87,6 +88,7 @@ vi.mock(
             isCreated: true,
             isNewVersion: false,
             isPublished: false,
+            isWrittenToOrgUnit: false,
           });
         } catch {
           setCreateError('Create failed');

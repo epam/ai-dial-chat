@@ -412,6 +412,56 @@ describe('useSkillEditorSubmit with the Save panel', () => {
     expect(params.onNotify).not.toHaveBeenCalled();
   });
 
+  it('offers a direct write into an org unit on both adapters when a publish client is given', async () => {
+    const publishClient = {
+      copyCatalogEntityToOrgUnit: vi
+        .fn()
+        .mockResolvedValue({ id: 'skills/public/Acme/new-skill' }),
+    };
+    const create = makeHarness(false);
+    create.params.publishClient = publishClient;
+    create.params.onSaveRequest = vi.fn();
+    const { result } = renderHook(() => useSkillEditorSubmit(create.params));
+    await act(async () => {
+      await result.current.handleSubmit(makeValues({ name: 'New skill' }));
+    });
+    const adapter = vi.mocked(create.params.onSaveRequest!).mock.lastCall?.[0];
+
+    await adapter?.saveIntoOrgUnit?.('skills/bucket-1/new-skill', ['Acme']);
+
+    expect(publishClient.copyCatalogEntityToOrgUnit).toHaveBeenCalledWith(
+      'skill',
+      'skills/bucket-1/new-skill',
+      { folderPath: 'Acme' },
+    );
+
+    const edit = makeHarness(true);
+    edit.params.publishClient = publishClient;
+    edit.params.onSaveRequest = vi.fn();
+    const { result: editResult } = renderHook(() =>
+      useSkillEditorSubmit(edit.params),
+    );
+    await act(async () => {
+      await editResult.current.handleSubmit(makeValues());
+    });
+    expect(
+      vi.mocked(edit.params.onSaveRequest!).mock.lastCall?.[0].saveIntoOrgUnit,
+    ).toBeTypeOf('function');
+  });
+
+  it('offers no direct write without a publish client', async () => {
+    const { params } = makeHarness(false);
+    params.onSaveRequest = vi.fn();
+    const { result } = renderHook(() => useSkillEditorSubmit(params));
+    await act(async () => {
+      await result.current.handleSubmit(makeValues());
+    });
+
+    expect(
+      vi.mocked(params.onSaveRequest!).mock.lastCall?.[0].saveIntoOrgUnit,
+    ).toBeUndefined();
+  });
+
   it('turns a 409 on create into the name-conflict message', async () => {
     const { client, params } = makeHarness(false);
     vi.mocked(client.createSkill).mockRejectedValue(statusError(409));

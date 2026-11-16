@@ -65,6 +65,13 @@ export interface UseResourceSavePanelParams {
     PublishApiClient,
     'publishCatalogEntity' | 'getPublishRules'
   >;
+  /** Whether an Organization destination takes a direct write into an org unit (the user may write there); omit while the org-unit rule does not apply, which keeps every Organization destination on the publish path. */
+  canSaveDirectlyTo?: (folderPath: string[]) => boolean;
+  /** Reason a folder is unavailable as a destination in the given root, or `undefined` when usable; omit while the org-unit rule does not apply. A committed destination with a reason shows it and disables Save. */
+  getDisabledReason?: (
+    folderPath: string[],
+    root: SaveDestinationRoot,
+  ) => string | undefined;
   /** Options offered in the access-rules editor's source picker. */
   ruleSourceOptions: string[];
   /** Translated copy. */
@@ -84,6 +91,7 @@ export type ResourceSavePanelStateProps = Pick<
   | 'destination'
   | 'onDestinationChange'
   | 'onCreateFolder'
+  | 'getDisabledReason'
   | 'version'
   | 'accessRules'
   | 'onPendingDestinationChange'
@@ -115,6 +123,8 @@ export const useResourceSavePanel = ({
   listPersonalFolders,
   organizationFolders,
   publishClient,
+  canSaveDirectlyTo,
+  getDisabledReason: getFolderDisabledReason,
   ruleSourceOptions,
   labels,
   onSaved,
@@ -146,10 +156,21 @@ export const useResourceSavePanel = ({
   /* Folder the current rules belong to, so returning to it keeps the user's edits; also guards stale fetches. */
   const rulesFolderKeyRef = useRef<string | undefined>(undefined);
 
+  /* Only an Organization folder can be a unit; a Personal folder named like one never matches. */
+  const isDirectDestination = useCallback(
+    (candidate: FolderDestination): boolean =>
+      candidate.rootKey === SaveDestinationRoot.Organization &&
+      adapter.saveIntoOrgUnit != null &&
+      canSaveDirectlyTo?.(candidate.path) === true,
+    [adapter.saveIntoOrgUnit, canSaveDirectlyTo],
+  );
+
   const setPendingDestination = useCallback(
     (pending: FolderDestination | undefined) => {
       /* Rules apply only to Organization folders; browsing Personal keeps the last ones untouched. */
       if (pending?.rootKey !== SaveDestinationRoot.Organization) return;
+      /* A direct write stores no rules, so none are fetched for it. */
+      if (isDirectDestination(pending)) return;
       const folderKey = toFolderPathKey(pending.path);
       if (folderKey === rulesFolderKeyRef.current) return;
       rulesFolderKeyRef.current = folderKey;
@@ -172,7 +193,7 @@ export const useResourceSavePanel = ({
       };
       void loadRules();
     },
-    [getPublishRules],
+    [getPublishRules, isDirectDestination],
   );
 
   useEffect(() => {
@@ -216,8 +237,21 @@ export const useResourceSavePanel = ({
   ]);
 
   /* Publishing before the folder's rules arrive would send `rules: []` and overwrite the folder's existing rules. */
+  const getDestinationDisabledReason = useMemo(
+    () =>
+      getFolderDisabledReason &&
+      ((candidate: FolderDestination) =>
+        getFolderDisabledReason(
+          candidate.path,
+          candidate.rootKey as SaveDestinationRoot,
+        )),
+    [getFolderDisabledReason],
+  );
+  const committedDisabledReason = getDestinationDisabledReason?.(destination);
+  const isDirectWrite = isDirectDestination(destination);
   const isRulesPending =
     destination.rootKey === SaveDestinationRoot.Organization &&
+    !isDirectWrite &&
     (isRulesLoading || hasRulesLoadError);
 
   const setNewVersion = useCallback((version: string) => {
@@ -233,7 +267,7 @@ export const useResourceSavePanel = ({
   const { saveError } = labels;
   const submit = useCallback(async () => {
     setIsNewVersionTouched(true);
-    if (versionError || isRulesPending) return;
+    if (versionError || isRulesPending || committedDisabledReason) return;
     setIsSubmitting(true);
     setSubmitError(undefined);
     const choice: ResourceSaveChoice = {
@@ -244,6 +278,7 @@ export const useResourceSavePanel = ({
       versionMode,
       newVersion: trimmedNewVersion,
       rules,
+      isDirectWrite,
     };
     try {
       const result = await runResourceSave(adapter, choice, publish);
@@ -269,7 +304,9 @@ export const useResourceSavePanel = ({
     currentVersion,
     destination,
     isNewVersion,
+    isDirectWrite,
     isRulesPending,
+    committedDisabledReason,
     onSaved,
     publish,
     rememberPublishFolder,
@@ -368,10 +405,12 @@ export const useResourceSavePanel = ({
       isLoading: isRulesLoading,
       hasLoadError: hasRulesLoadError,
       labels: accessRulesLabels,
+      isHiddenFor: isDirectDestination,
     }),
     [
       accessRulesLabels,
       hasRulesLoadError,
+      isDirectDestination,
       isRulesLoading,
       ruleSourceOptions,
       rules,
@@ -382,13 +421,16 @@ export const useResourceSavePanel = ({
     panelProps: {
       onSubmit: handleSubmit,
       isSubmitDisabled:
-        (isNewVersion && Boolean(versionError)) || isRulesPending,
+        (isNewVersion && Boolean(versionError)) ||
+        isRulesPending ||
+        committedDisabledReason != null,
       isSubmitting,
       submitError,
       roots,
       destination,
       onDestinationChange: setDestination,
       onCreateFolder: handleCreateFolder,
+      getDisabledReason: getDestinationDisabledReason,
       version,
       accessRules,
       onPendingDestinationChange: setPendingDestination,

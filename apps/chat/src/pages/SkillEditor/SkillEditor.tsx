@@ -77,6 +77,7 @@ import { useBuilderLeaveGuard } from '../../hooks/unsaved-changes/useBuilderLeav
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
 import { skillsApi } from '../../server-api/api-client';
+import { publishApiClient } from '../../server-api/publish.api';
 import {
   createSkill,
   downloadSkill,
@@ -400,6 +401,7 @@ const SkillEditorPage: FC = () => {
     getCreateReturnUrl,
     refetchSkills,
     client: skillEditorSubmitClient,
+    publishClient: publishApiClient,
     messages: submitMessages,
     onNavigate: handleSubmitNavigate,
     onNotify: handleSubmitNotification,

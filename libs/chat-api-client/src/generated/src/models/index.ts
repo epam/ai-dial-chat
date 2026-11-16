@@ -1,5 +1,5 @@
 /* tslint:disable */
-
+/* eslint-disable */
 /**
  *
  * @export
@@ -2958,6 +2958,25 @@ export interface ConversationsConfigDto {
    * @memberof ConversationsConfigDto
    */
   pinnedIds: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface CopyCatalogEntityToOrgUnitDto
+ */
+export interface CopyCatalogEntityToOrgUnitDto {
+  /**
+   * Plain-text destination folder relative to the public bucket, never empty: the public root is not an org unit. DIAL Core decides whether the caller may write there.
+   * @type {string}
+   * @memberof CopyCatalogEntityToOrgUnitDto
+   */
+  folderPath: string;
+  /**
+   * Replace the entity already stored under the same name in the folder. Without it an existing target answers 409.
+   * @type {boolean}
+   * @memberof CopyCatalogEntityToOrgUnitDto
+   */
+  overwrite?: boolean;
 }
 /**
  *
@@ -7140,6 +7159,12 @@ export interface OrgUnitDto {
    * @memberof OrgUnitDto
    */
   folder: string;
+  /**
+   * Core's namespace-to-actions map for the caller in this unit; `{}` when the caller only reaches the unit through its parent
+   * @type {{ [key: string]: Array<string>; }}
+   * @memberof OrgUnitDto
+   */
+  permissions: { [key: string]: Array<string> };
 }
 /**
  *
@@ -7153,6 +7178,12 @@ export interface OrgUnitsResponseDto {
    * @memberof OrgUnitsResponseDto
    */
   enabled: boolean;
+  /**
+   * `true` when Core reports full admin access for the caller; `false` otherwise
+   * @type {boolean}
+   * @memberof OrgUnitsResponseDto
+   */
+  hasAdminAccess: boolean;
   /**
    *
    * @type {Array<OrgUnitDto>}

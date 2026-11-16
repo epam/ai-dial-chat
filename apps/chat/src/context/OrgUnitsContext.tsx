@@ -28,7 +28,12 @@ export const OrgUnitsProvider: FC<Props> = ({ children }) => {
   const {
     status,
     ensureUnits: ensureLoaded,
-    isOrgUnitFolder,
+    refreshUnits: refreshLoaded,
+    canWriteAt,
+    canSaveAt,
+    canSaveDirectlyAt,
+    canReadAt,
+    canPublishAt,
   } = useOrgUnits({ listOrgUnits });
 
   /* A new identity once the flag resolves re-runs the consumers' effects, so a
@@ -37,9 +42,31 @@ export const OrgUnitsProvider: FC<Props> = ({ children }) => {
     if (isEnabled) ensureLoaded();
   }, [isEnabled, ensureLoaded]);
 
+  const refreshUnits = useCallback(() => {
+    if (isEnabled) refreshLoaded();
+  }, [isEnabled, refreshLoaded]);
+
   const value = useMemo(
-    (): UseOrgUnitsResult => ({ status, ensureUnits, isOrgUnitFolder }),
-    [status, ensureUnits, isOrgUnitFolder],
+    (): UseOrgUnitsResult => ({
+      status,
+      ensureUnits,
+      refreshUnits,
+      canWriteAt,
+      canSaveAt,
+      canSaveDirectlyAt,
+      canReadAt,
+      canPublishAt,
+    }),
+    [
+      status,
+      ensureUnits,
+      refreshUnits,
+      canWriteAt,
+      canSaveAt,
+      canSaveDirectlyAt,
+      canReadAt,
+      canPublishAt,
+    ],
   );
 
   return (

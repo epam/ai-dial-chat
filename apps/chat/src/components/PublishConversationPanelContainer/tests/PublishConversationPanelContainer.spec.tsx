@@ -1,3 +1,4 @@
+import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { PublicationRuleFunction } from '@epam/ai-dial-publish-panel';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -7,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNotification } from '../../../context/NotificationContext';
 import { useAppConfig as useAppConfigMock } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { usePublishFolderGuards } from '../../../hooks/publish/usePublishFolderGuards';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import {
   getConversationPublishDependencies,
@@ -21,12 +23,15 @@ const mockRule: PublicationRule = {
   targets: ['engineering'],
 };
 
+const reasonProp = vi.fn();
+
 vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-publish-panel')>();
   return {
     ...actual,
     StandalonePublishPanel: ({
+      getDisabledReason,
       resource,
       selectedFolderPath,
       onSelectedFolderPathChange,
@@ -47,6 +52,9 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       dependencies,
     }: {
       dependencies?: { name: string }[];
+      getDisabledReason?: (destination: {
+        path: string[];
+      }) => string | undefined;
       resource?: { title: string };
       selectedFolderPath?: string[];
       onSelectedFolderPathChange: (path: string[] | undefined) => void;
@@ -67,6 +75,7 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
     }) => (
       <div role="dialog" aria-label="publish conversation">
         <span>{resource?.title}</span>
+        {reasonProp(getDisabledReason)}
         <span>
           dependencies:
           {dependencies?.map((dependency) => dependency.name).join(',')}
@@ -102,6 +111,9 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
   };
 });
 
+vi.mock('../../../hooks/publish/usePublishFolderGuards', () => ({
+  usePublishFolderGuards: vi.fn(),
+}));
 vi.mock('../../../hooks/publish/usePublishFolders');
 vi.mock('../../../hooks/publish/usePublishDependencyIconResolver', () => ({
   usePublishDependencyIconResolver: () => () => undefined,
@@ -159,6 +171,11 @@ describe('PublishConversationPanelContainer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(usePublishFolders).mockReturnValue(baseFoldersResult);
+    vi.mocked(usePublishFolderGuards).mockReturnValue({
+      canPublishTo: undefined,
+      getDisabledReason: undefined,
+      canSaveDirectlyTo: undefined,
+    });
     vi.mocked(useNotification).mockReturnValue(
       createNotificationContextValue(mockShowNotification),
     );
@@ -171,6 +188,61 @@ describe('PublishConversationPanelContainer', () => {
   it('renders the conversation title as the resource summary', async () => {
     await renderContainer();
     expect(screen.getByText('Q3 planning notes')).toBeTruthy();
+  });
+
+  it('builds the folder guards for the conversations namespace and gives canPublishTo to the folder tree', async () => {
+    const canPublishTo = vi.fn().mockReturnValue(true);
+    vi.mocked(usePublishFolderGuards).mockReturnValue({
+      canPublishTo,
+      getDisabledReason: undefined,
+      canSaveDirectlyTo: undefined,
+    });
+
+    await renderContainer();
+
+    expect(usePublishFolderGuards).toHaveBeenCalledWith(
+      OrgUnitNamespace.Conversations,
+      true,
+    );
+    expect(usePublishFolders).toHaveBeenCalledWith({ canPublishTo });
+  });
+
+  it('does not activate the org-unit read while the panel is closed', async () => {
+    await renderContainer({ isOpen: false });
+
+    expect(usePublishFolderGuards).toHaveBeenCalledWith(
+      OrgUnitNamespace.Conversations,
+      false,
+    );
+  });
+
+  it('gives the folder tree a reason callback that judges the destination path', async () => {
+    const getDisabledReason = vi.fn().mockReturnValue('No access');
+    vi.mocked(usePublishFolderGuards).mockReturnValue({
+      canPublishTo: vi.fn(),
+      getDisabledReason,
+      canSaveDirectlyTo: undefined,
+    });
+
+    await renderContainer();
+
+    const reason = reasonProp.mock.lastCall?.[0];
+    expect(reason({ rootKey: '', path: ['Acme', 'Secret'] })).toBe('No access');
+    expect(getDisabledReason).toHaveBeenCalledWith(['Acme', 'Secret']);
+  });
+
+  it('gives the folder tree no reason callback when no guard applies', async () => {
+    await renderContainer();
+
+    expect(reasonProp.mock.lastCall?.[0]).toBeUndefined();
+  });
+
+  it('keeps the Production fallback when no guard applies', async () => {
+    await renderContainer();
+
+    expect(usePublishFolders).toHaveBeenCalledWith({
+      canPublishTo: undefined,
+    });
   });
 
   it('selecting a folder updates selectedFolderPath', async () => {

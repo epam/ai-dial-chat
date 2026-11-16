@@ -15,6 +15,8 @@ import { encodePlainDialResourcePath } from './encode-dial-path';
 export enum DialResourceType {
   Applications = 'applications',
   Toolsets = 'toolsets',
+  Prompts = 'prompts',
+  Skills = 'skills',
 }
 
 /** A resource inside one bucket; `path` is percent-encoded per segment. */
@@ -45,10 +47,31 @@ const getMetadata = (
   token?: string,
 ): Promise<MetadataListPage> => {
   const init = { headers, params: { query: { token } } };
-  return (
-    type === DialResourceType.Applications
-      ? client.getApplicationMetadata(bucket, path, init)
-      : client.getToolSetMetadata(bucket, path, init)
+  if (type === DialResourceType.Applications) {
+    return client.getApplicationMetadata(
+      bucket,
+      path,
+      init,
+    ) as Promise<MetadataListPage>;
+  }
+  if (type === DialResourceType.Skills) {
+    return client.listSkillMetadata(
+      bucket,
+      path,
+      init,
+    ) as Promise<MetadataListPage>;
+  }
+  if (type === DialResourceType.Prompts) {
+    return client.getPromptMetadata(
+      bucket,
+      path,
+      init,
+    ) as Promise<MetadataListPage>;
+  }
+  return client.getToolSetMetadata(
+    bucket,
+    path,
+    init,
   ) as Promise<MetadataListPage>;
 };
 
@@ -184,10 +207,12 @@ export interface TransferDialResourceParams {
   destination: DialResourceLocation;
   context: string;
   logger: Logger;
+  /** Replace an existing destination; defaults to `false`, which reports an existing target as 409. */
+  overwrite?: boolean;
 }
 
 /**
- * Moves or copies one resource without ever overwriting the destination.
+ * Moves or copies one resource, by default without overwriting the destination.
  * DIAL Core answers a non-overwriting transfer onto an existing target with
  * 400, so a 400 whose destination now exists is reported as 409.
  */
@@ -200,18 +225,20 @@ export const transferDialResource = async ({
   destination,
   context,
   logger,
+  overwrite = false,
 }: TransferDialResourceParams): Promise<void> => {
   const { error, response } = await client[operation]({
     headers,
     body: {
       sourceUrl: toDialResourceUrl(type, source),
       destinationUrl: toDialResourceUrl(type, destination),
-      overwrite: false,
+      overwrite,
     },
   });
   if (error == null && response.status < 400) return;
 
   if (
+    !overwrite &&
     response.status === 400 &&
     (await existsQuietly(client, type, destination, headers))
   ) {

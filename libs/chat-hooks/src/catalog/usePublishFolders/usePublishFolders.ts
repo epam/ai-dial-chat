@@ -87,6 +87,12 @@ export interface UsePublishFoldersParams {
    * Omit it for a host that does not persist destinations.
    */
   onRememberedFolderKeysChange?: (folderKeys: string[]) => void;
+  /**
+   * Host rule for whether a destination accepts a publish, replacing the
+   * `Production` placeholder when given. Omit it while the rule is unknown
+   * (feature off, rights not loaded) so the placeholder stays the fallback.
+   */
+  canPublishTo?: (folderPath: string[]) => boolean;
 }
 
 /** Result returned by {@link usePublishFolders}. */
@@ -119,7 +125,7 @@ export interface UsePublishFoldersResult {
    * later publishes. Call it after a successful publish.
    */
   rememberPublishFolder: (folderPath: string[]) => void;
-  /** Heuristic write-access check for a folder path (see the TODO above). */
+  /** Write-access check for a folder path: the host's `canPublishTo` when given, otherwise the `Production` heuristic (see the TODO above). */
   hasPublishWriteAccess: (folderPath: string[]) => boolean;
 }
 
@@ -144,6 +150,7 @@ export const usePublishFolders = ({
   listPublicFiles,
   rememberedFolderKeys,
   onRememberedFolderKeysChange,
+  canPublishTo,
 }: UsePublishFoldersParams): UsePublishFoldersResult => {
   const [cache, setCache] = useState<Map<string, ListFilesItemDto[]>>(
     () => new Map(),
@@ -233,7 +240,7 @@ export const usePublishFolders = ({
     [rememberedFolderKeys, onRememberedFolderKeysChange],
   );
 
-  const hasPublishWriteAccess = hasPublishFolderWriteAccess;
+  const hasPublishWriteAccess = canPublishTo ?? hasPublishFolderWriteAccess;
 
   const folderItems = useMemo(() => {
     const storedKeys = Array.isArray(rememberedFolderKeys)

@@ -9,10 +9,14 @@ import useLocalStorage from '../useLocalStorage';
 /**
  * App-edge wrapper around the lib's `usePublishFolders`: supplies the public
  * files listing and persists the destinations the user has published to.
- * The hook itself never touches browser storage (library isolation), so the
+ * `canPublishTo` is forwarded when the org-unit rule applies. The hook itself never touches browser storage (library isolation), so the
  * remembered list is read from and written back to `localStorage` here.
  */
-export const usePublishFolders = (): UsePublishFoldersResult => {
+export const usePublishFolders = ({
+  canPublishTo,
+}: {
+  canPublishTo?: (folderPath: string[]) => boolean;
+} = {}): UsePublishFoldersResult => {
   const [rememberedFolderKeys, setRememberedFolderKeys] = useLocalStorage<
     string[]
   >(StorageKey.PublishDestinationFolders, []);
@@ -21,5 +25,6 @@ export const usePublishFolders = (): UsePublishFoldersResult => {
     listPublicFiles,
     rememberedFolderKeys,
     onRememberedFolderKeysChange: setRememberedFolderKeys,
+    canPublishTo,
   });
 };

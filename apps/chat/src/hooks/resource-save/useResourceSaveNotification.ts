@@ -72,6 +72,27 @@ export const useResourceSaveNotification = ({
     [resourceName, showErrorNotification, t],
   );
 
+  /* A direct write is refused by DIAL Core's own rules, so its reason is shown when it has one. */
+  const notifyOrgUnitWriteFailed = useCallback(
+    async (error: unknown, folderPath: string[]) => {
+      const { message, traceId } = await getApiErrorDetails(error);
+      const params = {
+        name: resourceName,
+        folder: getPublishFolderLabel(folderPath, t),
+      };
+      showErrorNotification({
+        message: message
+          ? t(ResourceSavePanelI18nKeys.SavedButOrgUnitWriteFailedReason, {
+              ...params,
+              reason: message,
+            })
+          : t(ResourceSavePanelI18nKeys.SavedButOrgUnitWriteFailed, params),
+        requestId: traceId,
+      });
+    },
+    [resourceName, showErrorNotification, t],
+  );
+
   return useCallback(
     (result: ResourceSaveResult, choice: ResourceSaveChoice) => {
       const folderPath = choice.destination.path;
@@ -92,6 +113,19 @@ export const useResourceSaveNotification = ({
       }
       if (result.outcome === ResourceSaveOutcome.SavedButPublishFailed) {
         void notifyPublishFailed(result.error, folderPath);
+        return;
+      }
+      if (result.outcome === ResourceSaveOutcome.SavedButOrgUnitWriteFailed) {
+        void notifyOrgUnitWriteFailed(result.error, folderPath);
+        return;
+      }
+      if (result.isWrittenToOrgUnit) {
+        showSuccessNotification({
+          message: t(ResourceSavePanelI18nKeys.SavedToFolder, {
+            name: resourceName,
+            folder: getPublishFolderLabel(folderPath, t),
+          }),
+        });
         return;
       }
       if (result.isPublished) {
@@ -122,6 +156,7 @@ export const useResourceSaveNotification = ({
       notifiableEntity,
       notificationType,
       notifyOperationSuccess,
+      notifyOrgUnitWriteFailed,
       notifyPublishFailed,
       resourceName,
       showErrorNotification,

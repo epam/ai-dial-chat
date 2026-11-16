@@ -99,6 +99,7 @@ vi.mock(
             isCreated: true,
             isNewVersion: false,
             isPublished: false,
+            isWrittenToOrgUnit: false,
           });
         } catch {
           setCreateError('Create failed');

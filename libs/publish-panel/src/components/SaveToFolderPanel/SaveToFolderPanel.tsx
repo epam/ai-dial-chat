@@ -33,6 +33,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
   roots,
   destination,
   onCreateFolder,
+  getDisabledReason,
   onChangeFolderClick,
   changeFolderButtonRef,
   pendingDestination,
@@ -87,6 +88,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
 
   const [searchQuery, setSearchQuery] = useState('');
   const newVersionInputId = useId();
+  const destinationReasonId = useId();
 
   const destinationSegments = useMemo(() => {
     const root = roots.find(
@@ -104,6 +106,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
     : undefined;
 
   const headingClass = mergeClasses(headingClassName, styles.heading);
+  const destinationDisabledReason = getDisabledReason?.(destination);
 
   if (view === SaveToFolderView.ChangeFolder) {
     return (
@@ -132,6 +135,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
           destination={pendingDestination}
           onDestinationChange={onPendingDestinationChange}
           onCreateDestinationFolder={onCreateFolder}
+          getDisabledReason={getDisabledReason}
           searchQuery={searchQuery}
           disabled={isSubmitting}
           noResultsLabel={folderEmptyStateLabel}
@@ -146,21 +150,25 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
           styles={folderTreeStyles}
         />
         {/* Rules are scoped to the folder picked above, so they sit with the tree, as in the Publish panel. */}
-        {accessRules && pendingRoot?.hasAccessRules && (
-          <div className="mt-1">
-            <PublishAccessRules
-              rules={accessRules.rules}
-              onRulesChange={accessRules.onRulesChange}
-              sourceOptions={accessRules.sourceOptions}
-              folderName={pendingFolderName}
-              disabled={isSubmitting}
-              isLoading={accessRules.isLoading}
-              hasLoadError={accessRules.hasLoadError}
-              labels={accessRules.labels}
-              styles={accessRules.styles}
-            />
-          </div>
-        )}
+        {accessRules &&
+          pendingRoot?.hasAccessRules &&
+          !(
+            pendingDestination && accessRules.isHiddenFor?.(pendingDestination)
+          ) && (
+            <div className="mt-1">
+              <PublishAccessRules
+                rules={accessRules.rules}
+                onRulesChange={accessRules.onRulesChange}
+                sourceOptions={accessRules.sourceOptions}
+                folderName={pendingFolderName}
+                disabled={isSubmitting}
+                isLoading={accessRules.isLoading}
+                hasLoadError={accessRules.hasLoadError}
+                labels={accessRules.labels}
+                styles={accessRules.styles}
+              />
+            </div>
+          )}
       </div>
     );
   }
@@ -219,6 +227,9 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
           <div
             role="group"
             aria-label={destinationAriaLabel}
+            aria-describedby={
+              destinationDisabledReason ? destinationReasonId : undefined
+            }
             className="min-w-0 flex-1"
           >
             <FolderName
@@ -262,6 +273,12 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
       )}
 
       <LiveRegion politeness={LiveRegionPoliteness.Assertive}>
+        {destinationDisabledReason && (
+          <ErrorText
+            id={destinationReasonId}
+            text={destinationDisabledReason}
+          />
+        )}
         {submitError && <ErrorText text={submitError} />}
       </LiveRegion>
 
