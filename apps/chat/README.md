@@ -165,7 +165,10 @@ Three things keep them off the first paint:
   their own chunk groups (`build.rolldownOptions.output.codeSplitting`), so
   small shared modules are never co-located with them.
 - Inter is self-hosted through `@fontsource-variable/inter`, imported in
-  `main.tsx`; the page loads no third-party stylesheet.
+  `main.tsx`; the page loads no third-party stylesheet. `index.html` preloads
+  the Latin subset, which every page draws, so the font request starts with the
+  document instead of after the stylesheet; Vite rewrites the link to the same
+  hashed file the stylesheet references.
 
 ## Celebration events
 
