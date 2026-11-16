@@ -34,12 +34,34 @@ export const normalizeOrgUnitFolder = (folder: string): string => {
   return joinFolder(segments.map(safeDecode));
 };
 
+interface UnitFolder {
+  unit: OrgUnit;
+  folder: string;
+}
+
+/* Normalising a folder decodes every segment, and a tree asks about each visible row on each render, so it is done once per units array. */
+const UNIT_FOLDERS = new WeakMap<readonly OrgUnit[], UnitFolder[]>();
+
+const getUnitFolders = (units: readonly OrgUnit[]): UnitFolder[] => {
+  let prepared = UNIT_FOLDERS.get(units);
+  if (!prepared) {
+    prepared = units.map((unit) => ({
+      unit,
+      folder: normalizeOrgUnitFolder(unit.folder),
+    }));
+    UNIT_FOLDERS.set(units, prepared);
+  }
+  return prepared;
+};
+
 /**
  * The unit that owns `publicPath`: the one whose normalised folder is the
  * longest prefix of the path at a segment boundary. A unit's own folder belongs
  * to it; the public root, a path under no listed unit and a sibling sharing
  * leading characters (`Risk2/` vs `Risk/`) have no owner. `publicPath` is the
- * decoded, public-relative path a tree shows and is not decoded again.
+ * decoded, public-relative path a tree shows and is not decoded again. The
+ * units' folders are normalised once per `units` array (keep the array
+ * identity stable between calls).
  * @param units - units as returned by DIAL Core
  * @param publicPath - decoded path relative to the public bucket, e.g. `Acme/US Risk/Reports`
  */
@@ -51,11 +73,10 @@ export const findOwningOrgUnit = (
   if (pathFolder === '') return undefined;
   let owner: OrgUnit | undefined;
   let ownerLength = 0;
-  for (const unit of units) {
-    const unitFolder = normalizeOrgUnitFolder(unit.folder);
-    if (unitFolder.length > ownerLength && pathFolder.startsWith(unitFolder)) {
+  for (const { unit, folder } of getUnitFolders(units)) {
+    if (folder.length > ownerLength && pathFolder.startsWith(folder)) {
       owner = unit;
-      ownerLength = unitFolder.length;
+      ownerLength = folder.length;
     }
   }
   return owner;

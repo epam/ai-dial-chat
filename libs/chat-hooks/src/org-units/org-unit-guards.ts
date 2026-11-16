@@ -62,8 +62,9 @@ export interface FolderGuards {
   getDisabledReason:
     | ((folderPath: string[], root?: SaveDestinationRoot) => string | undefined)
     | undefined;
-  /** Whether a save may write straight into the destination (inside an org unit that grants `write`); `undefined` while the rule does not apply or no check was given. */
-  canSaveDirectlyTo: ((folderPath: string[]) => boolean) | undefined;
+  /** Whether a save may write straight into the destination (inside an org unit that grants `write`); like `canPublishTo`, only the Organization root (or an omitted root) can be a unit, so a Personal folder never direct-writes. `undefined` while the rule does not apply or no check was given. */
+  canSaveDirectlyTo:
+    ((folderPath: string[], root?: SaveDestinationRoot) => boolean) | undefined;
 }
 
 /**
@@ -102,7 +103,8 @@ export const buildFolderGuards = ({
     canPublishTo,
     canSaveDirectlyTo:
       canSaveDirectlyAt &&
-      ((folderPath: string[]) =>
+      ((folderPath: string[], root = SaveDestinationRoot.Organization) =>
+        root === SaveDestinationRoot.Organization &&
         canSaveDirectlyAt(folderPath.join('/'), namespace)),
     getDisabledReason:
       getReason &&
@@ -110,3 +112,14 @@ export const buildFolderGuards = ({
         canPublishTo(folderPath, root) ? undefined : getReason(folderPath)),
   };
 };
+
+/**
+ * Adapts a guard's `getDisabledReason(folderPath)` to the publish panels'
+ * `getDisabledReason(destination)`: a publish tree has one root, so only the
+ * path is judged.
+ * @param getDisabledReason - the guard's callback, or `undefined` while the rule does not apply
+ */
+export const toPublishDisabledReason = (
+  getDisabledReason: ((folderPath: string[]) => string | undefined) | undefined,
+): ((destination: { path: string[] }) => string | undefined) | undefined =>
+  getDisabledReason && ((destination) => getDisabledReason(destination.path));

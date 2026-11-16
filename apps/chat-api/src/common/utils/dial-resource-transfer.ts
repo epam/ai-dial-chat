@@ -207,12 +207,10 @@ export interface TransferDialResourceParams {
   destination: DialResourceLocation;
   context: string;
   logger: Logger;
-  /** Replace an existing destination; defaults to `false`, which reports an existing target as 409. */
-  overwrite?: boolean;
 }
 
 /**
- * Moves or copies one resource, by default without overwriting the destination.
+ * Moves or copies one resource without ever overwriting the destination.
  * DIAL Core answers a non-overwriting transfer onto an existing target with
  * 400, so a 400 whose destination now exists is reported as 409.
  */
@@ -225,20 +223,18 @@ export const transferDialResource = async ({
   destination,
   context,
   logger,
-  overwrite = false,
 }: TransferDialResourceParams): Promise<void> => {
   const { error, response } = await client[operation]({
     headers,
     body: {
       sourceUrl: toDialResourceUrl(type, source),
       destinationUrl: toDialResourceUrl(type, destination),
-      overwrite,
+      overwrite: false,
     },
   });
   if (error == null && response.status < 400) return;
 
   if (
-    !overwrite &&
     response.status === 400 &&
     (await existsQuietly(client, type, destination, headers))
   ) {

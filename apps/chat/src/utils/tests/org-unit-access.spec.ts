@@ -1,12 +1,9 @@
 import { OrgUnitFolderGuardPurpose } from '@epam/ai-dial-chat-hooks';
 import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { OrgUnitAccessI18nKeys } from '../../constants/translation-keys';
 import en from '../../i18n/locales/en.json';
-import {
-  getOrgUnitAccessReasonKey,
-  toPublishDisabledReason,
-} from '../org-unit-access';
+import { getOrgUnitAccessReasonKey } from '../org-unit-access';
 
 const RESOURCE_NAMESPACES = [
   OrgUnitNamespace.Applications,
@@ -77,20 +74,5 @@ describe('getOrgUnitAccessReasonKey', () => {
         /^You have no access to (save|publish) your .+ to this folder\.$/,
       );
     }
-  });
-});
-
-describe('toPublishDisabledReason', () => {
-  it('judges only the destination path', () => {
-    const getDisabledReason = vi.fn().mockReturnValue('No access');
-
-    const adapted = toPublishDisabledReason(getDisabledReason);
-
-    expect(adapted?.({ path: ['Acme', 'Secret'] })).toBe('No access');
-    expect(getDisabledReason).toHaveBeenCalledWith(['Acme', 'Secret']);
-  });
-
-  it('stays undefined while the guard has no reason callback', () => {
-    expect(toPublishDisabledReason(undefined)).toBeUndefined();
   });
 });

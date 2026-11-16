@@ -198,29 +198,6 @@ describe('transferDialResource', () => {
     });
   });
 
-  it('sends overwrite: true when asked to replace the destination', async () => {
-    const copyResource = vi
-      .fn()
-      .mockResolvedValue({ error: undefined, response: { status: 200 } });
-
-    await transferDialResource({
-      client: makeClient({ copyResource }),
-      operation: 'copyResource',
-      type: DialResourceType.Applications,
-      headers: {},
-      source,
-      destination,
-      context: 'copy application',
-      logger,
-      overwrite: true,
-    });
-
-    expect(copyResource).toHaveBeenCalledWith({
-      headers: {},
-      body: expect.objectContaining({ overwrite: true }),
-    });
-  });
-
   it('reports an existing destination as a conflict', async () => {
     const copyResource = vi
       .fn()

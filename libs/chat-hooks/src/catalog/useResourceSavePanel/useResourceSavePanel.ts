@@ -19,6 +19,7 @@ import {
   ResourceSaveVersionError,
   runResourceSave,
   SaveDestinationRoot,
+  toSaveDestinationRoot,
   type ResourceSaveAdapter,
   type ResourceSaveChoice,
   type ResourceSaveResult,
@@ -66,7 +67,10 @@ export interface UseResourceSavePanelParams {
     'publishCatalogEntity' | 'getPublishRules'
   >;
   /** Whether an Organization destination takes a direct write into an org unit (the user may write there); omit while the org-unit rule does not apply, which keeps every Organization destination on the publish path. */
-  canSaveDirectlyTo?: (folderPath: string[]) => boolean;
+  canSaveDirectlyTo?: (
+    folderPath: string[],
+    root: SaveDestinationRoot,
+  ) => boolean;
   /** Reason a folder is unavailable as a destination in the given root, or `undefined` when usable; omit while the org-unit rule does not apply. A committed destination with a reason shows it and disables Save. */
   getDisabledReason?: (
     folderPath: string[],
@@ -161,7 +165,8 @@ export const useResourceSavePanel = ({
     (candidate: FolderDestination): boolean =>
       candidate.rootKey === SaveDestinationRoot.Organization &&
       adapter.saveIntoOrgUnit != null &&
-      canSaveDirectlyTo?.(candidate.path) === true,
+      canSaveDirectlyTo?.(candidate.path, SaveDestinationRoot.Organization) ===
+        true,
     [adapter.saveIntoOrgUnit, canSaveDirectlyTo],
   );
 
@@ -236,19 +241,18 @@ export const useResourceSavePanel = ({
     conflictedVersion,
   ]);
 
-  /* Publishing before the folder's rules arrive would send `rules: []` and overwrite the folder's existing rules. */
   const getDestinationDisabledReason = useMemo(
     () =>
       getFolderDisabledReason &&
-      ((candidate: FolderDestination) =>
-        getFolderDisabledReason(
-          candidate.path,
-          candidate.rootKey as SaveDestinationRoot,
-        )),
+      ((candidate: FolderDestination) => {
+        const root = toSaveDestinationRoot(candidate.rootKey);
+        return root ? getFolderDisabledReason(candidate.path, root) : undefined;
+      }),
     [getFolderDisabledReason],
   );
   const committedDisabledReason = getDestinationDisabledReason?.(destination);
   const isDirectWrite = isDirectDestination(destination);
+  /* Publishing before the folder's rules arrive would send `rules: []` and overwrite the folder's existing rules. */
   const isRulesPending =
     destination.rootKey === SaveDestinationRoot.Organization &&
     !isDirectWrite &&

@@ -4,7 +4,6 @@ import {
   ConflictException,
   ForbiddenException,
   NotFoundException,
-  NotImplementedException,
 } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ApplicationsService } from '../../applications/applications.service';
@@ -44,7 +43,6 @@ const makeService = () => {
     resolveToolsetResource: vi
       .fn()
       .mockResolvedValue({ bucket: 'b1', path: 'tools__1.0.0' }),
-    getUserBucket: vi.fn().mockResolvedValue('b1'),
     invalidateCaches: vi.fn().mockResolvedValue(undefined),
   };
   const service = new OrgUnitCopyService(
@@ -66,48 +64,14 @@ const makeService = () => {
 
 const copy = (
   service: OrgUnitCopyService,
-  body: { folderPath: string; overwrite?: boolean } = { folderPath: 'Acme' },
+  body: { folderPath: string } = { folderPath: 'Acme' },
   entityType = CatalogEntityType.Application,
-) => service.copyIntoOrgUnit('user1', 'token', entityType, ENTITY_ID, body);
+) =>
+  service.copyIntoOrgUnit('user1', 'b1', 'token', entityType, ENTITY_ID, body);
 
 describe('OrgUnitCopyService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it('copies an own application into the public org-unit folder and clears its caches', async () => {
-    const { service, copyResource, applicationsService } = makeService();
-
-    const result = await copy(service, { folderPath: 'Acme/US Risk' });
-
-    expect(result).toEqual({
-      id: 'applications/public/Acme/US%20Risk/agent__1.0.0',
-    });
-    expect(copyResource).toHaveBeenCalledWith({
-      headers: { Authorization: 'Bearer token' },
-      body: {
-        sourceUrl: ENTITY_ID,
-        destinationUrl: 'applications/public/Acme/US%20Risk/agent__1.0.0',
-        overwrite: false,
-      },
-    });
-    expect(applicationsService.invalidateAfterWrite).toHaveBeenCalledWith(
-      'user1',
-      [ENTITY_ID, 'applications/public/Acme/US%20Risk/agent__1.0.0'],
-      expect.any(String),
-    );
-  });
-
-  it('passes overwrite through to the copy', async () => {
-    const { service, copyResource } = makeService();
-
-    await copy(service, { folderPath: 'Acme', overwrite: true });
-
-    expect(copyResource).toHaveBeenCalledWith(
-      expect.objectContaining({
-        body: expect.objectContaining({ overwrite: true }),
-      }),
-    );
   });
 
   it('rejects an entity outside the caller bucket and never calls Core', async () => {
@@ -132,7 +96,7 @@ describe('OrgUnitCopyService', () => {
     expect(applicationsService.invalidateAfterWrite).not.toHaveBeenCalled();
   });
 
-  it('reports an existing target as 409 when overwrite is not set', async () => {
+  it('reports an existing target as 409', async () => {
     const { service, copyResource, getApplicationMetadata } = makeService();
     copyResource.mockResolvedValue(err(400));
     getApplicationMetadata.mockResolvedValue({ response: { status: 200 } });
@@ -140,33 +104,17 @@ describe('OrgUnitCopyService', () => {
     await expect(copy(service)).rejects.toBeInstanceOf(ConflictException);
   });
 
-  it("maps Core's own 409 to a conflict", async () => {
-    const { service, copyResource } = makeService();
-    copyResource.mockResolvedValue(err(409));
-
-    await expect(copy(service)).rejects.toBeInstanceOf(ConflictException);
-  });
-
-  it('does not probe the destination for a conflict when overwrite is set', async () => {
-    const { service, copyResource, getApplicationMetadata } = makeService();
-    copyResource.mockResolvedValue(err(400));
-
-    await expect(
-      copy(service, { folderPath: 'Acme', overwrite: true }),
-    ).rejects.toBeInstanceOf(BadRequestException);
-    expect(getApplicationMetadata).not.toHaveBeenCalled();
-  });
-
   describe('toolsets', () => {
     const TOOLSET_ID = 'toolsets/b1/tools__1.0.0';
     const copyToolset = (
       service: OrgUnitCopyService,
-      body: { folderPath: string; overwrite?: boolean } = {
+      body: { folderPath: string } = {
         folderPath: 'Acme',
       },
     ) =>
       service.copyIntoOrgUnit(
         'user1',
+        'b1',
         'token',
         CatalogEntityType.Toolset,
         TOOLSET_ID,
@@ -206,7 +154,7 @@ describe('OrgUnitCopyService', () => {
       expect(copyResource).not.toHaveBeenCalled();
     });
 
-    it('reports a repeated same-name copy as 409 when overwrite is not set', async () => {
+    it('reports a repeated same-name copy as 409 ', async () => {
       const { service, copyResource, getToolSetMetadata } = makeService();
       copyResource.mockResolvedValue(err(400));
       getToolSetMetadata.mockResolvedValue({ response: { status: 200 } });
@@ -243,12 +191,13 @@ describe('OrgUnitCopyService', () => {
     const copyPrompt = (
       service: OrgUnitCopyService,
       entityId = PROMPT_ID,
-      body: { folderPath: string; overwrite?: boolean } = {
+      body: { folderPath: string } = {
         folderPath: 'Acme',
       },
     ) =>
       service.copyIntoOrgUnit(
         'user1',
+        'b1',
         'token',
         CatalogEntityType.Prompt,
         entityId,
@@ -289,7 +238,7 @@ describe('OrgUnitCopyService', () => {
       expect(copyResource).not.toHaveBeenCalled();
     });
 
-    it('reports a repeated same-name copy as 409 when overwrite is not set', async () => {
+    it('reports a repeated same-name copy as 409 ', async () => {
       const { service, copyResource, getPromptMetadata } = makeService();
       copyResource.mockResolvedValue(err(400));
       getPromptMetadata.mockResolvedValue({ response: { status: 200 } });
@@ -305,12 +254,13 @@ describe('OrgUnitCopyService', () => {
     const copySkill = (
       service: OrgUnitCopyService,
       entityId = SKILL_ID,
-      body: { folderPath: string; overwrite?: boolean } = {
+      body: { folderPath: string } = {
         folderPath: 'Acme',
       },
     ) =>
       service.copyIntoOrgUnit(
         'user1',
+        'b1',
         'token',
         CatalogEntityType.Skill,
         entityId,
@@ -361,7 +311,7 @@ describe('OrgUnitCopyService', () => {
       expect(listSkillMetadata).not.toHaveBeenCalled();
     });
 
-    it('reports a repeated same-name copy as 409 when overwrite is not set', async () => {
+    it('reports a repeated same-name copy as 409 ', async () => {
       const { service, copyResource, listSkillMetadata } = makeService();
       copyResource.mockResolvedValue(err(400));
       listSkillMetadata.mockResolvedValue({ response: { status: 200 } });
@@ -373,12 +323,12 @@ describe('OrgUnitCopyService', () => {
   });
 
   it.each([CatalogEntityType.Project, CatalogEntityType.Model])(
-    'answers 501 for the %s type until it is added',
+    'answers 400 for the %s type, which has no org-unit copy',
     async (entityType) => {
       const { service, copyResource } = makeService();
 
       await expect(copy(service, undefined, entityType)).rejects.toBeInstanceOf(
-        NotImplementedException,
+        BadRequestException,
       );
       expect(copyResource).not.toHaveBeenCalled();
     },

@@ -1,11 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsBoolean,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Matches,
-} from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, Matches } from 'class-validator';
 import {
   RESOURCE_FOLDER_PATH_PATTERN,
   RESOURCE_FOLDER_PATH_VALIDATION_MESSAGE,
@@ -26,13 +20,4 @@ export class CopyCatalogEntityToOrgUnitDto {
     message: RESOURCE_FOLDER_PATH_VALIDATION_MESSAGE,
   })
   folderPath!: string;
-
-  @ApiPropertyOptional({
-    default: false,
-    description:
-      'Replace the entity already stored under the same name in the folder. Without it an existing target answers 409.',
-  })
-  @IsOptional()
-  @IsBoolean()
-  overwrite?: boolean;
 }

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   OrgUnitNamespace,
   type OrgUnit,
@@ -294,5 +294,34 @@ describe('canWriteIntoOrgUnitAt', () => {
         OrgUnitNamespace.Applications,
       ),
     ).toBe(true);
+  });
+});
+
+describe('findOwningOrgUnit caching', () => {
+  it('decodes the unit folders once per units array, not once per call', () => {
+    const units = [
+      unit('public/Acme/US%20Risk/'),
+      unit('public/Delivery/Teams/'),
+    ];
+    const decode = vi.spyOn(globalThis, 'decodeURIComponent');
+
+    for (let call = 0; call < 50; call++) {
+      findOwningOrgUnit(units, 'Acme/US Risk/Reports');
+    }
+    const decodedAfterMany = decode.mock.calls.length;
+    findOwningOrgUnit(units, 'Delivery/Teams/Q1');
+
+    expect(decodedAfterMany).toBe(4);
+    expect(decode.mock.calls.length).toBe(decodedAfterMany);
+    decode.mockRestore();
+  });
+
+  it('answers the same after the units array is replaced', () => {
+    const first = [unit('public/Acme/')];
+    const second = [unit('public/Beta/')];
+
+    expect(findOwningOrgUnit(first, 'Acme/x')).toBeDefined();
+    expect(findOwningOrgUnit(second, 'Acme/x')).toBeUndefined();
+    expect(findOwningOrgUnit(second, 'Beta/x')).toBeDefined();
   });
 });

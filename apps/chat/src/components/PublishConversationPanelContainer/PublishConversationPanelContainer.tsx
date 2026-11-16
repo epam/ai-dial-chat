@@ -1,6 +1,7 @@
 import {
   mapResourceDependencyDto,
   usePublishDependencies,
+  toPublishDisabledReason,
 } from '@epam/ai-dial-chat-hooks';
 import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import {
@@ -35,7 +36,6 @@ import {
   EntityOperation,
   NotifiableEntity,
 } from '../../types/entity-notification';
-import { toPublishDisabledReason } from '../../utils/org-unit-access';
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,

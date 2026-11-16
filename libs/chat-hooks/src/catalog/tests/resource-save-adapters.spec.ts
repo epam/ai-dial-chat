@@ -438,4 +438,65 @@ describe('resource save adapters', () => {
       expect(skillsApi.listSkills).toHaveBeenCalledTimes(2);
     });
   });
+
+  describe('without a publish client', () => {
+    it.each([
+      [
+        'embedded application',
+        () =>
+          createEmbeddedApplicationSaveAdapter({
+            applicationsApi,
+            applicationId: APP_ID,
+            runEmbeddedSave: vi.fn(),
+            getCommitFailedMessage: () => 'failed',
+          }),
+      ],
+      [
+        'host application',
+        () =>
+          createHostApplicationSaveAdapter({
+            applicationsApi,
+            applicationId: APP_ID,
+            update: vi.fn(),
+            createVersion: vi.fn(),
+          }),
+      ],
+      [
+        'toolset',
+        () =>
+          createToolsetSaveAdapter({
+            toolsetsApi,
+            toolsetId: 'toolsets/b1/search__1.0.0',
+            body: { name: 'search', version: '1.0.0' } as ToolsetBodyDto,
+          }),
+      ],
+      [
+        'prompt',
+        () =>
+          createPromptSaveAdapter({
+            promptsApi,
+            promptId: 'prompts/b1/Summarize',
+            body: { name: 'Summarize', description: '', content: 'x' },
+          }),
+      ],
+      [
+        'toolset create',
+        () =>
+          createToolsetCreateAdapter({
+            toolsetsApi,
+            body: { name: 'search', version: '1.0.0' } as ToolsetBodyDto,
+          }),
+      ],
+      [
+        'prompt create',
+        () =>
+          createPromptCreateAdapter({
+            promptsApi,
+            body: { name: 'Summarize', content: 'x' },
+          }),
+      ],
+    ])('offers no direct write for the %s adapter', (_label, build) => {
+      expect(build().saveIntoOrgUnit).toBeUndefined();
+    });
+  });
 });

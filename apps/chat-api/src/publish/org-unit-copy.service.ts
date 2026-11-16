@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  NotImplementedException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ApplicationsService } from '../applications/applications.service';
 import { handleDialFetchError } from '../common/dial/dial-error.mapper';
 import type { ResourceIdResponseDto } from '../common/dto/resource-folder.dto';
@@ -38,6 +33,7 @@ interface OrgUnitCopyType {
   resolveOwn: (
     authHeaders: ReturnType<typeof getBearerAuthHeaders>,
     entityId: string,
+    userBucket: string,
   ) => Promise<DialResourceLocation>;
   /** Clears the caches the write made stale. */
   invalidate: (
@@ -48,78 +44,58 @@ interface OrgUnitCopyType {
   ) => Promise<void>;
 }
 
+/** Prompts and skills keep no cache in chat-api, so a copy leaves nothing stale. */
+const NOTHING_TO_INVALIDATE: OrgUnitCopyType['invalidate'] = () =>
+  Promise.resolve();
+
+/**
+ * Resolver for a type whose `entityId` is always a full `{type}/{bucket}/{path}`
+ * id: parses it, answers 400 for anything else, and checks it is the caller's.
+ * @param parse - splits the full id into bucket and plain path, or `undefined` when it is not one
+ * @param label - the type's name for the 400 message
+ */
+const resolveOwnFullId =
+  (
+    parse: (id: string) => { bucket: string; path: string } | null,
+    label: string,
+  ): OrgUnitCopyType['resolveOwn'] =>
+  (_authHeaders, entityId, userBucket) => {
+    const parsed = parse(entityId);
+    if (parsed == null) {
+      throw new BadRequestException(
+        `entityId must be a full ${label} resource path`,
+      );
+    }
+    const resource: DialResourceLocation = {
+      bucket: parsed.bucket,
+      path: encodeDialResourcePath(parsed.path),
+    };
+    assertOwnBucket(resource, userBucket);
+    return Promise.resolve(resource);
+  };
+
 /**
  * Copies a catalog entity of the caller's own bucket into a folder of the
  * public bucket (an org-unit folder), without a publication request. Every
  * right and per-type rule is DIAL Core's: its 403 and 409 reach the caller as
- * they are. The per-type differences live in {@link OrgUnitCopyService.getType}
- * only; types without an entry answer 501 until they are added there.
+ * they are. The per-type differences live in {@link OrgUnitCopyService.copyTypes}
+ * only; a type without an entry answers 400.
  */
 @Injectable()
 export class OrgUnitCopyService {
   private readonly logger = new Logger(OrgUnitCopyService.name);
 
+  private readonly copyTypes: Partial<
+    Record<CatalogEntityType, OrgUnitCopyType>
+  >;
+
   constructor(
     private readonly dialClient: DialClientService,
     private readonly applicationsService: ApplicationsService,
     private readonly toolsetsListingService: ToolsetsListingService,
-  ) {}
-
-  /**
-   * @param userSub - session user whose caches are cleared
-   * @param accessToken - bearer token for DIAL Core
-   * @param entityType - catalog entity kind of `entityId`
-   * @param entityId - own resource: a bare name or full id for applications and toolsets, the full `{type}/{bucket}/{path}` id for prompts and skills (a bare name answers 400)
-   * @param body - destination folder and whether to replace an existing target
-   * @returns the full id of the copy in the public bucket
-   * @throws {NotImplementedException} When the entity type has no org-unit copy yet
-   * @throws {ForbiddenException} When the entity is not in the caller's own bucket or Core refuses the write
-   * @throws {ConflictException} When the target exists and `overwrite` is not set, or Core refuses the copy as a conflict
-   */
-  async copyIntoOrgUnit(
-    userSub: string,
-    accessToken: string,
-    entityType: CatalogEntityType,
-    entityId: string,
-    body: CopyCatalogEntityToOrgUnitDto,
-  ): Promise<ResourceIdResponseDto> {
-    const copyType = this.getType(entityType);
-    const authHeaders = getBearerAuthHeaders(accessToken);
-    const context = `copy ${entityType} "${entityId}" into an org unit`;
-    let id: string;
-    try {
-      const source = await copyType.resolveOwn(authHeaders, entityId);
-      const destination: DialResourceLocation = {
-        bucket: PUBLIC_BUCKET,
-        path: buildFolderResourcePath(
-          body.folderPath,
-          getResourceLeaf(source.path),
-        ),
-      };
-      await transferDialResource({
-        client: this.dialClient.client,
-        operation: 'copyResource',
-        type: copyType.resourceType,
-        headers: authHeaders,
-        source,
-        destination,
-        context,
-        logger: this.logger,
-        overwrite: body.overwrite ?? false,
-      });
-      id = `${copyType.resourceType}/${destination.bucket}/${destination.path}`;
-    } catch (err) {
-      return handleDialFetchError(err, context, this.logger, 0);
-    }
-
-    await copyType.invalidate(userSub, entityId, id, context);
-    return { id };
-  }
-
-  /** The one place per-type differences are declared. */
-  private getType(entityType: CatalogEntityType): OrgUnitCopyType {
-    if (entityType === CatalogEntityType.Application) {
-      return {
+  ) {
+    this.copyTypes = {
+      [CatalogEntityType.Application]: {
         resourceType: DialResourceType.Applications,
         resolveOwn: (authHeaders, entityId) =>
           this.applicationsService.resolveOwnApplication(authHeaders, entityId),
@@ -129,24 +105,16 @@ export class OrgUnitCopyService {
             [entityId, copyId],
             context,
           ),
-      };
-    }
-    if (entityType === CatalogEntityType.Toolset) {
-      return {
+      },
+      [CatalogEntityType.Toolset]: {
         resourceType: DialResourceType.Toolsets,
-        resolveOwn: async (authHeaders, entityId) => {
+        resolveOwn: async (authHeaders, entityId, userBucket) => {
           const resource =
             await this.toolsetsListingService.resolveToolsetResource(
               authHeaders,
               entityId,
             );
-          assertOwnBucket(
-            resource,
-            await this.toolsetsListingService.getUserBucket(
-              authHeaders,
-              'get user bucket',
-            ),
-          );
+          assertOwnBucket(resource, userBucket);
           return resource;
         },
         invalidate: async (userSub, entityId, _copyId, context) => {
@@ -165,64 +133,78 @@ export class OrgUnitCopyService {
             );
           }
         },
-      };
-    }
-    if (entityType === CatalogEntityType.Prompt) {
-      return {
+      },
+      [CatalogEntityType.Prompt]: {
         resourceType: DialResourceType.Prompts,
-        resolveOwn: async (authHeaders, entityId) => {
-          const parsed = parsePromptId(entityId);
-          if (parsed == null) {
-            throw new BadRequestException(
-              'entityId must be a full prompt resource path',
-            );
-          }
-          const resource: DialResourceLocation = {
-            bucket: parsed.bucket,
-            path: encodeDialResourcePath(parsed.path),
-          };
-          assertOwnBucket(
-            resource,
-            await this.toolsetsListingService.getUserBucket(
-              authHeaders,
-              'get user bucket',
-            ),
-          );
-          return resource;
-        },
-        /* Prompts are not cached by chat-api, so a copy leaves nothing stale. */
-        invalidate: () => Promise.resolve(),
-      };
-    }
-    if (entityType === CatalogEntityType.Skill) {
-      return {
+        resolveOwn: resolveOwnFullId(parsePromptId, 'prompt'),
+        invalidate: NOTHING_TO_INVALIDATE,
+      },
+      [CatalogEntityType.Skill]: {
         resourceType: DialResourceType.Skills,
-        resolveOwn: async (authHeaders, entityId) => {
-          const parsed = parseSkillResourceUrl(entityId);
-          if (parsed == null) {
-            throw new BadRequestException(
-              'entityId must be a full skill resource path',
-            );
-          }
-          const resource: DialResourceLocation = {
-            bucket: parsed.bucket,
-            path: encodeDialResourcePath(parsed.path),
-          };
-          assertOwnBucket(
-            resource,
-            await this.toolsetsListingService.getUserBucket(
-              authHeaders,
-              'get user bucket',
-            ),
-          );
-          return resource;
-        },
-        /* Skills are not cached by chat-api; the listing is refetched by the host. */
-        invalidate: () => Promise.resolve(),
-      };
+        resolveOwn: resolveOwnFullId(parseSkillResourceUrl, 'skill'),
+        invalidate: NOTHING_TO_INVALIDATE,
+      },
+    };
+  }
+
+  /**
+   * @param userSub - session user whose caches are cleared
+   * @param userBucket - the session user's own bucket, which a source must lie in
+   * @param accessToken - bearer token for DIAL Core
+   * @param entityType - catalog entity kind of `entityId`
+   * @param entityId - own resource: a bare name or full id for applications and toolsets, the full `{type}/{bucket}/{path}` id for prompts and skills (a bare name answers 400)
+   * @param body - destination folder
+   * @returns the full id of the copy in the public bucket
+   * @throws {BadRequestException} When the entity type has no org-unit copy, or `entityId` is not a full id where one is required
+   * @throws {ForbiddenException} When the entity is not in the caller's own bucket or Core refuses the write
+   * @throws {ConflictException} When the target already exists, or Core refuses the copy as a conflict
+   */
+  async copyIntoOrgUnit(
+    userSub: string,
+    userBucket: string,
+    accessToken: string,
+    entityType: CatalogEntityType,
+    entityId: string,
+    body: CopyCatalogEntityToOrgUnitDto,
+  ): Promise<ResourceIdResponseDto> {
+    const copyType = this.copyTypes[entityType];
+    if (copyType == null) {
+      throw new BadRequestException(
+        `Copying a ${entityType} into an org unit is not supported`,
+      );
     }
-    throw new NotImplementedException(
-      `Copying a ${entityType} into an org unit is not supported yet`,
-    );
+    const authHeaders = getBearerAuthHeaders(accessToken);
+    const context = `copy ${entityType} "${entityId}" into an org unit`;
+    let id: string;
+    try {
+      const source = await copyType.resolveOwn(
+        authHeaders,
+        entityId,
+        userBucket,
+      );
+      const destination: DialResourceLocation = {
+        bucket: PUBLIC_BUCKET,
+        path: buildFolderResourcePath(
+          body.folderPath,
+          getResourceLeaf(source.path),
+        ),
+      };
+      await transferDialResource({
+        client: this.dialClient.client,
+        operation: 'copyResource',
+        type: copyType.resourceType,
+        headers: authHeaders,
+        source,
+        destination,
+        context,
+        logger: this.logger,
+      });
+      id = `${copyType.resourceType}/${destination.bucket}/${destination.path}`;
+    } catch (err) {
+      return handleDialFetchError(err, context, this.logger, 0);
+    }
+
+    await copyType.invalidate(userSub, entityId, id, context);
+    return { id };
   }
 }

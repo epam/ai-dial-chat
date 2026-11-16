@@ -55,8 +55,8 @@ export interface EmbeddedApplicationSaveAdapterParams {
   runEmbeddedSave: () => Promise<void>;
   /** Translated message for a fork whose commit failed, naming the new version. */
   getCommitFailedMessage: (version: string) => string;
-  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls. */
-  publishClient: ResourceSavePublishClient;
+  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls; without it the adapter offers no direct write. */
+  publishClient?: ResourceSavePublishClient;
 }
 
 /** Parameters for {@link createHostApplicationSaveAdapter}. */
@@ -72,8 +72,8 @@ export interface HostApplicationSaveAdapterParams {
     version: string,
     folderPath: string[],
   ) => Promise<{ id?: string } | void>;
-  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls. */
-  publishClient: ResourceSavePublishClient;
+  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls; without it the adapter offers no direct write. */
+  publishClient?: ResourceSavePublishClient;
 }
 
 /** Parameters for {@link createToolsetSaveAdapter}. */
@@ -84,8 +84,8 @@ export interface ToolsetSaveAdapterParams {
   toolsetId: string;
   /** The edited values, already mapped to the write body. */
   body: ToolsetBodyDto;
-  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls. */
-  publishClient: ResourceSavePublishClient;
+  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls; without it the adapter offers no direct write. */
+  publishClient?: ResourceSavePublishClient;
 }
 
 /** Parameters for {@link createPromptSaveAdapter}. */
@@ -96,26 +96,30 @@ export interface PromptSaveAdapterParams {
   promptId: string;
   /** The edited values. */
   body: UpdatePromptDto;
-  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls. */
-  publishClient: ResourceSavePublishClient;
+  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls; without it the adapter offers no direct write. */
+  publishClient?: ResourceSavePublishClient;
 }
 
 /**
  * The direct write of a saved resource into an org-unit folder, for every
  * adapter of the resource type `entityType`. It never overwrites: a
- * same-named resource already in the folder answers 409.
- * @param publishClient - client with the generic org-unit copy
+ * same-named resource already in the folder answers 409. Without a client it
+ * is empty, so the adapter keeps offering only the publish path.
+ * @param publishClient - client with the generic org-unit copy, or `undefined` for none
  * @param entityType - publish API entity type of the resource
  */
 export const createOrgUnitWriter = (
-  publishClient: ResourceSavePublishClient,
+  publishClient: ResourceSavePublishClient | undefined,
   entityType: CatalogPublishEntityType,
-): Required<ResourceOrgUnitWriter> => ({
-  saveIntoOrgUnit: (id, folderPath) =>
-    publishClient.copyCatalogEntityToOrgUnit(entityType, id, {
-      folderPath: folderPath.join('/'),
-    }),
-});
+): ResourceOrgUnitWriter =>
+  publishClient
+    ? {
+        saveIntoOrgUnit: (id, folderPath) =>
+          publishClient.copyCatalogEntityToOrgUnit(entityType, id, {
+            folderPath: folderPath.join('/'),
+          }),
+      }
+    : {};
 
 const moveApplicationToFolder =
   (applicationsApi: Pick<ResourceSaveApplicationsApi, 'moveApplication'>) =>
@@ -253,8 +257,8 @@ export interface ToolsetCreateAdapterParams {
   toolsetsApi: Pick<ResourceSaveToolsetsApi, 'createToolset'>;
   /** The new toolset's values, already mapped to the write body. */
   body: ToolsetBodyDto;
-  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls. */
-  publishClient: ResourceSavePublishClient;
+  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls; without it the adapter offers no direct write. */
+  publishClient?: ResourceSavePublishClient;
 }
 
 /** Parameters for {@link createPromptCreateAdapter}. */
@@ -263,8 +267,8 @@ export interface PromptCreateAdapterParams {
   promptsApi: Pick<ResourceSavePromptsApi, 'createPrompt'>;
   /** The new prompt's values; its folder comes from the panel. */
   body: Omit<CreatePromptDto, 'folderId'>;
-  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls. */
-  publishClient: ResourceSavePublishClient;
+  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls; without it the adapter offers no direct write. */
+  publishClient?: ResourceSavePublishClient;
 }
 
 /** Creates a new toolset in the chosen Personal folder, never overwriting an existing one. */

@@ -6,6 +6,7 @@ import {
   buildFolderGuards,
   getOrgUnitNamespace,
   OrgUnitFolderGuardPurpose,
+  toPublishDisabledReason,
   type BuildFolderGuardsParams,
 } from '../org-unit-guards';
 import { OrgUnitsStatus } from '../types';
@@ -102,6 +103,24 @@ describe('buildFolderGuards', () => {
     ).toBe('No access');
   });
 
+  it('never direct-writes into a Personal folder, even one named like a writable unit', () => {
+    const { guards, canSaveDirectlyAt } = buildGuards();
+
+    expect(
+      guards.canSaveDirectlyTo?.(
+        ['Acme', 'Teams'],
+        SaveDestinationRoot.Personal,
+      ),
+    ).toBe(false);
+    expect(canSaveDirectlyAt).not.toHaveBeenCalled();
+    expect(
+      guards.canSaveDirectlyTo?.(
+        ['Acme', 'Teams'],
+        SaveDestinationRoot.Organization,
+      ),
+    ).toBe(true);
+  });
+
   it('answers direct save from the strict check with the joined path and namespace', () => {
     const { guards, canSaveDirectlyAt } = buildGuards();
 
@@ -149,5 +168,20 @@ describe('buildFolderGuards', () => {
     expect(guards.canPublishTo).toBeUndefined();
     expect(guards.getDisabledReason).toBeUndefined();
     expect(guards.canSaveDirectlyTo).toBeUndefined();
+  });
+});
+
+describe('toPublishDisabledReason', () => {
+  it('judges only the destination path', () => {
+    const getDisabledReason = vi.fn().mockReturnValue('No access');
+
+    const adapted = toPublishDisabledReason(getDisabledReason);
+
+    expect(adapted?.({ path: ['Acme', 'Secret'] })).toBe('No access');
+    expect(getDisabledReason).toHaveBeenCalledWith(['Acme', 'Secret']);
+  });
+
+  it('stays undefined while the guard has no reason callback', () => {
+    expect(toPublishDisabledReason(undefined)).toBeUndefined();
   });
 });

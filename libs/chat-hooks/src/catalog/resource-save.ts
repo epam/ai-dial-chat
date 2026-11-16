@@ -21,6 +21,16 @@ export enum SaveDestinationRoot {
   Organization = 'organization',
 }
 
+/**
+ * Returns the Save panel root a destination's `rootKey` names, or `undefined`
+ * for a key that is not one of its roots.
+ * @param rootKey - the `rootKey` of a `FolderDestination`
+ */
+export const toSaveDestinationRoot = (
+  rootKey: string,
+): SaveDestinationRoot | undefined =>
+  Object.values(SaveDestinationRoot).find((root) => root === rootKey);
+
 /** How a save that reached at least its first step ended. */
 export enum ResourceSaveOutcome {
   /** Every step succeeded. */
@@ -84,8 +94,8 @@ export interface ResourceSaveResult {
   isNewVersion: boolean;
   /** Whether a publish request was sent successfully. */
   isPublished: boolean;
-  /** Whether the resource was written directly into an org-unit folder. */
-  isWrittenToOrgUnit: boolean;
+  /** Whether the resource was written directly into an org-unit folder; `false` or absent when it was not. */
+  isWrittenToOrgUnit?: boolean;
   /** The error of the step that failed after the save, if any. */
   error?: unknown;
 }

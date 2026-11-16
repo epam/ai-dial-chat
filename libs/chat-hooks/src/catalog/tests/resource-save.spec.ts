@@ -4,6 +4,7 @@ import {
   ResourceSaveOutcome,
   runResourceSave,
   SaveDestinationRoot,
+  toSaveDestinationRoot,
   type ResourceCreateSaveAdapter,
   type ResourceEditSaveAdapter,
   type ResourceSaveChoice,
@@ -406,5 +407,18 @@ describe('runResourceSave', () => {
         [],
       );
     });
+  });
+});
+
+describe('toSaveDestinationRoot', () => {
+  it.each([SaveDestinationRoot.Personal, SaveDestinationRoot.Organization])(
+    'returns the root named %s',
+    (root) => {
+      expect(toSaveDestinationRoot(root)).toBe(root);
+    },
+  );
+
+  it('returns undefined for a key that is not a root', () => {
+    expect(toSaveDestinationRoot('shared')).toBeUndefined();
   });
 });

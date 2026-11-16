@@ -72,14 +72,24 @@ export const useResourceSaveNotification = ({
     [resourceName, showErrorNotification, t],
   );
 
-  /* A direct write is refused by DIAL Core's own rules, so its reason is shown when it has one. */
+  /* A direct write is refused by DIAL Core's own rules, so its reason is shown when it has one; a 409 means the folder already has an item with this name, as it does for a publish. */
   const notifyOrgUnitWriteFailed = useCallback(
     async (error: unknown, folderPath: string[]) => {
-      const { message, traceId } = await getApiErrorDetails(error);
+      const { message, status, traceId } = await getApiErrorDetails(error);
       const params = {
         name: resourceName,
         folder: getPublishFolderLabel(folderPath, t),
       };
+      if (status === 409) {
+        showErrorNotification({
+          message: t(
+            ResourceSavePanelI18nKeys.SavedButAlreadyInOrgUnit,
+            params,
+          ),
+          requestId: traceId,
+        });
+        return;
+      }
       showErrorNotification({
         message: message
           ? t(ResourceSavePanelI18nKeys.SavedButOrgUnitWriteFailedReason, {

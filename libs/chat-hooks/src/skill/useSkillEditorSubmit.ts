@@ -473,8 +473,7 @@ export const useSkillEditorSubmit = ({
   );
 
   const orgUnitWriter = useMemo(
-    () =>
-      publishClient ? createOrgUnitWriter(publishClient, 'skill') : undefined,
+    () => createOrgUnitWriter(publishClient, 'skill'),
     [publishClient],
   );
 

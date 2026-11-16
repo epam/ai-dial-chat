@@ -583,6 +583,17 @@ describe('useResourceSavePanel', () => {
       expect(params.onSaved).not.toHaveBeenCalled();
     });
 
+    it('offers no reason for a destination whose root is not one of the panel roots', () => {
+      const { result } = renderPanel({ getDisabledReason });
+
+      expect(
+        result.current.panelProps.getDisabledReason?.({
+          rootKey: 'shared',
+          path: ['Acme', 'Locked'],
+        }),
+      ).toBeUndefined();
+    });
+
     it('keeps Save enabled for a destination without a reason', () => {
       const { result } = renderPanel({ getDisabledReason });
       act(() =>

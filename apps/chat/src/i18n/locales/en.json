@@ -2128,6 +2128,7 @@
     "savedButPublishFailed": "“{{name}}” was saved, but the publish request failed.",
     "savedButPublishFailedReason": "“{{name}}” was saved, but the publish request failed: {{reason}}",
     "savedButAlreadyPublished": "“{{name}}” was saved, but this version is already published in {{folder}}. Choose another folder or save as a new version.",
+    "savedButAlreadyInOrgUnit": "“{{name}}” was saved, but {{folder}} already has an item with this name. Choose another folder or save as a new version.",
     "savedToFolder": "“{{name}}” was saved to {{folder}}.",
     "savedButOrgUnitWriteFailed": "“{{name}}” was saved, but it could not be written to {{folder}}.",
     "savedButOrgUnitWriteFailedReason": "“{{name}}” was saved, but it could not be written to {{folder}}: {{reason}}"

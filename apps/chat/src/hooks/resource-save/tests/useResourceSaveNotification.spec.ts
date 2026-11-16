@@ -167,6 +167,70 @@ describe('useResourceSaveNotification', () => {
       );
     });
 
+    it('shows the generic refusal text when Core refuses the direct write with 403', async () => {
+      vi.mocked(getApiErrorDetails).mockResolvedValue({
+        message: 'Forbidden',
+        status: 403,
+        traceId: 'trace-1',
+      });
+      renderNotify()(
+        makeResult({
+          outcome: ResourceSaveOutcome.SavedButOrgUnitWriteFailed,
+        }),
+        unitChoice,
+      );
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: NotificationVariant.Error,
+            message: expect.stringContaining(
+              ResourceSavePanelI18nKeys.SavedButOrgUnitWriteFailedReason,
+            ),
+          }),
+        ),
+      );
+      expect(showNotification).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining(
+            ResourceSavePanelI18nKeys.SavedButAlreadyInOrgUnit,
+          ),
+        }),
+      );
+    });
+
+    it('says the folder already has an item with this name when the direct write conflicts', async () => {
+      vi.mocked(getApiErrorDetails).mockResolvedValue({
+        message: 'Target resource already exists',
+        status: 409,
+        traceId: 'trace-1',
+      });
+      renderNotify()(
+        makeResult({
+          outcome: ResourceSaveOutcome.SavedButOrgUnitWriteFailed,
+        }),
+        unitChoice,
+      );
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: NotificationVariant.Error,
+            message: expect.stringContaining(
+              ResourceSavePanelI18nKeys.SavedButAlreadyInOrgUnit,
+            ),
+          }),
+        ),
+      );
+      expect(showNotification).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining(
+            ResourceSavePanelI18nKeys.SavedButOrgUnitWriteFailedReason,
+          ),
+        }),
+      );
+    });
+
     it("includes Core's reason when the failed direct write has one", async () => {
       vi.mocked(getApiErrorDetails).mockResolvedValue({
         message: 'Conflict',

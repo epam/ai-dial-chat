@@ -1919,6 +1919,7 @@ export enum ResourceSavePanelI18nKeys {
   SavedButPublishFailedReason = 'resourceSavePanel.savedButPublishFailedReason',
   SavedButAlreadyPublished = 'resourceSavePanel.savedButAlreadyPublished',
   SavedToFolder = 'resourceSavePanel.savedToFolder',
+  SavedButAlreadyInOrgUnit = 'resourceSavePanel.savedButAlreadyInOrgUnit',
   SavedButOrgUnitWriteFailed = 'resourceSavePanel.savedButOrgUnitWriteFailed',
   SavedButOrgUnitWriteFailedReason = 'resourceSavePanel.savedButOrgUnitWriteFailedReason',
 }

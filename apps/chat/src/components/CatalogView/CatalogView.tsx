@@ -19,6 +19,7 @@ import {
   useCatalogEditNavigation,
   useCatalogToolsetCredentials,
 } from '@epam/ai-dial-chat-hooks';
+import { toPublishDisabledReason } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { SkillContentFileTree } from '@epam/ai-dial-skills';
@@ -91,7 +92,6 @@ import {
   getCatalogSearchPlaceholder,
 } from '../../utils/catalog';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
-import { toPublishDisabledReason } from '../../utils/org-unit-access';
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,

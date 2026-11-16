@@ -1,8 +1,8 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   INestApplication,
-  NotImplementedException,
   ServiceUnavailableException,
   ValidationPipe,
   VersioningType,
@@ -93,25 +93,11 @@ describe('POST /api/v1/catalog/:entityType/:entityId/copy-to-org-unit', () => {
     expect(res.body).toEqual({ id: 'applications/public/Acme/agent__1.0.0' });
     expect(service.copyIntoOrgUnit).toHaveBeenCalledWith(
       TEST_USER.sub,
+      TEST_USER.bucket,
       TEST_USER.at,
       'application',
       'applications/b1/agent__1.0.0',
       { folderPath: 'Acme' },
-    );
-  });
-
-  it('forwards overwrite', async () => {
-    await request(app.getHttpServer())
-      .post(URL)
-      .send({ folderPath: 'Acme', overwrite: true })
-      .expect(200);
-
-    expect(service.copyIntoOrgUnit).toHaveBeenCalledWith(
-      TEST_USER.sub,
-      TEST_USER.at,
-      'application',
-      'applications/b1/agent__1.0.0',
-      { folderPath: 'Acme', overwrite: true },
     );
   });
 
@@ -154,12 +140,12 @@ describe('POST /api/v1/catalog/:entityType/:entityId/copy-to-org-unit', () => {
       .expect(409);
   });
 
-  it('returns 501 for a type without an org-unit copy yet', async () => {
-    service.copyIntoOrgUnit.mockRejectedValue(new NotImplementedException());
+  it('returns 400 for a type without an org-unit copy', async () => {
+    service.copyIntoOrgUnit.mockRejectedValue(new BadRequestException());
     await request(app.getHttpServer())
       .post('/api/v1/catalog/prompt/prompts%2Fb1%2Fp/copy-to-org-unit')
       .send({ folderPath: 'Acme' })
-      .expect(501);
+      .expect(400);
   });
 
   it('returns 503 when Core is unavailable', async () => {

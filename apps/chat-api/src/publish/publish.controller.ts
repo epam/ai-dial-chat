@@ -124,7 +124,7 @@ export class PublishController {
     description:
       "Copies a catalog entity of the caller's own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core's resource copy. " +
       'No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. ' +
-      'Applications, toolsets, prompts and skills are supported so far; other types answer 501. ' +
+      'Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. ' +
       'Answers 403 while the `features.orgUnitsEnabled` flag is off.',
   })
   @ApiBody({ type: CopyCatalogEntityToOrgUnitDto })
@@ -137,7 +137,7 @@ export class PublishController {
   @ApiResponse({
     status: 400,
     description:
-      'Validation error — invalid entityType, entityId or folderPath',
+      'Validation error — invalid entityType, entityId or folderPath, or an entity type that cannot be copied into an org unit',
   })
   @ApiResponse({
     status: 401,
@@ -152,12 +152,7 @@ export class PublishController {
   @ApiResponse({
     status: 409,
     description:
-      'The folder already holds an entity with this name and `overwrite` is not set, or DIAL Core refused the copy as a conflict',
-  })
-  @ApiResponse({
-    status: 501,
-    description:
-      'Copying this entity type into an org unit is not supported yet',
+      'The folder already holds an entity with this name, or DIAL Core refused the copy as a conflict',
   })
   @ApiResponse({
     status: 502,
@@ -172,9 +167,10 @@ export class PublishController {
     @Param() { entityType, entityId }: CatalogEntityParamsDto,
     @Body() body: CopyCatalogEntityToOrgUnitDto,
   ): Promise<ResourceIdResponseDto> {
-    const { sub, at } = req.user as SessionUser;
+    const { sub, bucket, at } = req.user as SessionUser;
     return this.orgUnitCopyService.copyIntoOrgUnit(
       sub,
+      bucket,
       at,
       entityType,
       entityId,

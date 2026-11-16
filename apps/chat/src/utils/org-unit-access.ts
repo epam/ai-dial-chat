@@ -62,14 +62,3 @@ export const getOrgUnitAccessReasonKey = (
   }
   return REASON_KEYS[purpose]?.[namespace];
 };
-
-/**
- * Adapts a guard's `getDisabledReason(folderPath)` to the publish panels'
- * `getDisabledReason(destination)`: a publish tree has one root, so only the
- * path is judged.
- * @param getDisabledReason - the guard's callback, or `undefined` while the rule does not apply
- */
-export const toPublishDisabledReason = (
-  getDisabledReason: ((folderPath: string[]) => string | undefined) | undefined,
-): ((destination: { path: string[] }) => string | undefined) | undefined =>
-  getDisabledReason && ((destination) => getDisabledReason(destination.path));

@@ -2971,12 +2971,6 @@ export interface CopyCatalogEntityToOrgUnitDto {
    * @memberof CopyCatalogEntityToOrgUnitDto
    */
   folderPath: string;
-  /**
-   * Replace the entity already stored under the same name in the folder. Without it an existing target answers 409.
-   * @type {boolean}
-   * @memberof CopyCatalogEntityToOrgUnitDto
-   */
-  overwrite?: boolean;
 }
 /**
  *

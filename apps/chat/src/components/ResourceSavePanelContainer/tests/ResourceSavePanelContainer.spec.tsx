@@ -190,9 +190,12 @@ describe('ResourceSavePanelContainer', () => {
 
       renderContainer();
 
-      expect(lastFlowParams().canSaveDirectlyTo?.(['Acme', 'Teams'])).toBe(
-        true,
-      );
+      expect(
+        lastFlowParams().canSaveDirectlyTo?.(
+          ['Acme', 'Teams'],
+          SaveDestinationRoot.Organization,
+        ),
+      ).toBe(true);
       expect(canSaveDirectlyAt).toHaveBeenCalledWith(
         'Acme/Teams',
         OrgUnitNamespace.Applications,

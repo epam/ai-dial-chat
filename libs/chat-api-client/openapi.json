@@ -8889,7 +8889,7 @@
     },
     "/api/v1/catalog/{entityType}/{entityId}/copy-to-org-unit": {
       "post": {
-        "description": "Copies a catalog entity of the caller's own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core's resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Only applications are supported so far; other types answer 501. Answers 403 while the `features.orgUnitsEnabled` flag is off.",
+        "description": "Copies a catalog entity of the caller's own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core's resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. Answers 403 while the `features.orgUnitsEnabled` flag is off.",
         "operationId": "copyCatalogEntityToOrgUnit",
         "parameters": [
           {
@@ -8943,7 +8943,7 @@
             }
           },
           "400": {
-            "description": "Validation error — invalid entityType, entityId or folderPath"
+            "description": "Validation error — invalid entityType, entityId or folderPath, or an entity type that cannot be copied into an org unit"
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
@@ -8955,7 +8955,7 @@
             "description": "Entity not found"
           },
           "409": {
-            "description": "The folder already holds an entity with this name and `overwrite` is not set, or DIAL Core refused the copy as a conflict"
+            "description": "The folder already holds an entity with this name, or DIAL Core refused the copy as a conflict"
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -8965,9 +8965,6 @@
           },
           "429": {
             "description": "DIAL Core rate-limited the request"
-          },
-          "501": {
-            "description": "Copying this entity type into an org unit is not supported yet"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -20020,11 +20017,6 @@
             "type": "string",
             "example": "Acme/US Risk/Teams",
             "description": "Plain-text destination folder relative to the public bucket, never empty: the public root is not an org unit. DIAL Core decides whether the caller may write there."
-          },
-          "overwrite": {
-            "type": "boolean",
-            "default": false,
-            "description": "Replace the entity already stored under the same name in the folder. Without it an existing target answers 409."
           }
         },
         "required": ["folderPath"]

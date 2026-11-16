@@ -1163,7 +1163,7 @@ and `getDisabledReason`, plus `canSaveDirectlyTo` when the host passes the stric
 translated sentence) only for a disabled folder; without it `getDisabledReason`
 is `undefined`. Both `canPublishTo` and `getDisabledReason` take an optional `SaveDestinationRoot` as a second argument: only `SaveDestinationRoot.Organization` (also the meaning of an omitted root, since the publish panels have one tree) is matched against units, and a Personal folder is always usable even when it is named like a unit. With the flag off, a status
 other than `Ready`, or no namespace, both guards are `undefined`, so the panel
-keeps its default behaviour. Both are available from the root and `./utils`.
+keeps its default behaviour. `canSaveDirectlyTo` takes the same optional root and is `false` for any root but Organization, so a Personal folder named like a unit never direct-writes. `useFolderGuards({ purpose, namespace, isActive, isEnabled, orgUnits, shouldRefreshOnOpen?, getReason? })` wraps it for a panel: it calls `orgUnits.ensureUnits()` while `isActive`, re-reads loaded rights on open when `shouldRefreshOnOpen`, and returns the guards; `orgUnits` is the `useOrgUnits` result (or one shared through a host context) and `isEnabled` the host's flag. `toPublishDisabledReason(getDisabledReason)` adapts a guard's `getDisabledReason(folderPath)` to a publish panel's `getDisabledReason(destination)`. `toSaveDestinationRoot(rootKey)` turns a destination's `rootKey` into a `SaveDestinationRoot`, or `undefined`. All are available from the root and `./utils`.
 
 ```tsx
 import {
@@ -5520,7 +5520,7 @@ const { panelProps } = useResourceSavePanel({
 These functions build the `ResourceSaveAdapter` for each resource type.
 Each one takes a configured generated client and never creates one:
 
-- **`createEmbeddedApplicationSaveAdapter({ applicationsApi, applicationId, runEmbeddedSave, getCommitFailedMessage, publishClient })`**
+- **`createEmbeddedApplicationSaveAdapter({ applicationsApi, applicationId, runEmbeddedSave, getCommitFailedMessage, publishClient? })`**
   is for Quick Apps, whose embedded editor is the only writer. A new version
   runs in three steps:
   1. fork the stored application;
@@ -5535,18 +5535,18 @@ Each one takes a configured generated client and never creates one:
   `publishClient.copyCatalogEntityToOrgUnit('application', id, { folderPath })`
   and never overwrites. `publishClient` is a `ResourceSavePublishClient`, the
   `PublishApiClient` from `createPublishApiClient`; `createOrgUnitWriter(publishClient, entityType)`
-  builds the same `saveIntoOrgUnit` for any other adapter.
+  builds the same `saveIntoOrgUnit` for any other adapter. `publishClient` is optional on every adapter factory (as in `useSkillEditorSubmit`): without it the adapter has no `saveIntoOrgUnit` and keeps only the publish path, and `isWrittenToOrgUnit` on a result is optional, so a host built before org units needs no change. A host that wants the direct write passes the client and a BFF that serves `copy-to-org-unit`.
 
-- **`createHostApplicationSaveAdapter({ applicationsApi, applicationId, update, createVersion, publishClient })`**
+- **`createHostApplicationSaveAdapter({ applicationsApi, applicationId, update, createVersion, publishClient? })`**
   is for applications the host writes itself.
-- **`createToolsetSaveAdapter({ toolsetsApi, toolsetId, body })`** writes a new
+- **`createToolsetSaveAdapter({ toolsetsApi, toolsetId, body, publishClient? })`** writes a new
   version with `createOnly: true` into the chosen folder.
-- **`createPromptSaveAdapter({ promptsApi, promptId, body })`** is unversioned:
+- **`createPromptSaveAdapter({ promptsApi, promptId, body, publishClient? })`** is unversioned:
   it updates the prompt and then moves it.
 - **`createPromptFolderLister(promptsApi)`** returns the `listPersonalFolders`
   for prompts, one folder level built from the prompt listing.
-- **`createToolsetCreateAdapter({ toolsetsApi, body })`** and
-  **`createPromptCreateAdapter({ promptsApi, body })`** create a new toolset
+- **`createToolsetCreateAdapter({ toolsetsApi, body, publishClient? })`** and
+  **`createPromptCreateAdapter({ promptsApi, body, publishClient? })`** create a new toolset
   (create-only) or prompt in the chosen folder.
 - **`createSkillFolderLister(skillsApi, bucket)`** returns the
   `listPersonalFolders` for skills: the grouping folders of one level, across

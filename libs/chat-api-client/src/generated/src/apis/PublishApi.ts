@@ -74,7 +74,7 @@ export interface UnpublishCatalogEntityRequest {
  */
 export class PublishApi extends runtime.BaseAPI {
   /**
-   * Copies a catalog entity of the caller\'s own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core\'s resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Only applications are supported so far; other types answer 501. Answers 403 while the `features.orgUnitsEnabled` flag is off.
+   * Copies a catalog entity of the caller\'s own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core\'s resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. Answers 403 while the `features.orgUnitsEnabled` flag is off.
    * Copy an own catalog entity into an org-unit folder
    */
   async copyCatalogEntityToOrgUnitRaw(
@@ -142,7 +142,7 @@ export class PublishApi extends runtime.BaseAPI {
   }
 
   /**
-   * Copies a catalog entity of the caller\'s own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core\'s resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Only applications are supported so far; other types answer 501. Answers 403 while the `features.orgUnitsEnabled` flag is off.
+   * Copies a catalog entity of the caller\'s own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core\'s resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. Answers 403 while the `features.orgUnitsEnabled` flag is off.
    * Copy an own catalog entity into an org-unit folder
    */
   async copyCatalogEntityToOrgUnit(
