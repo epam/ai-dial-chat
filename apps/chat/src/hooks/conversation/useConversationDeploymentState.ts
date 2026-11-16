@@ -6,8 +6,8 @@ import { useMemo } from 'react';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
+import { useResolveCatalogIconUrl } from '../catalog/useResolveCatalogIconUrl';
 
 interface UseConversationDeploymentStateParams {
   /* Pinned by the app editor's preview pane; otherwise the selected deployment applies. */
@@ -59,6 +59,7 @@ export const useConversationDeploymentState = ({
   const usageDeploymentId =
     selectedDeployment?.id ?? activeDeploymentId ?? undefined;
 
+  const resolveCatalogIconUrl = useResolveCatalogIconUrl();
   const deploymentItems = useMemo(
     () =>
       items.map(
@@ -80,7 +81,7 @@ export const useConversationDeploymentState = ({
           features,
         }),
       ),
-    [items, language],
+    [items, language, resolveCatalogIconUrl],
   );
 
   const fixedDeploymentItems = useMemo(

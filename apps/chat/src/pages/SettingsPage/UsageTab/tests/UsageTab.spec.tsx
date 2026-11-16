@@ -17,6 +17,12 @@ import { createDeploymentsContextValue } from '../../../../context/tests/deploym
 import { createNotificationContextValue } from '../../../../context/tests/notification-context-mock';
 import UsageTab from '../UsageTab';
 
+/* Components here render without AppConfigProvider; resolve icons without a themes base URL. */
+vi.mock('../../../../hooks/catalog/useResolveCatalogIconUrl', async () => {
+  const { resolveCatalogIconUrl } = await import('../../../../utils/icon-path');
+  return { useResolveCatalogIconUrl: () => resolveCatalogIconUrl };
+});
+
 const { modelLimitsSectionSpy, cardGroupSpy } = vi.hoisted(() => ({
   modelLimitsSectionSpy: vi.fn(),
   cardGroupSpy: vi.fn(),
