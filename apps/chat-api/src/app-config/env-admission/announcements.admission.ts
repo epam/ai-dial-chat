@@ -1,4 +1,5 @@
 import type { AdmissionLog } from './admission-log';
+import { admitJsonArray } from './json-array.admission';
 
 /**
  * Admits `ANNOUNCEMENTS` fail-open: an unset or empty value, invalid JSON or a
@@ -9,23 +10,4 @@ import type { AdmissionLog } from './admission-log';
 export const admitAnnouncements = (
   raw: string | undefined,
   log: AdmissionLog,
-): unknown[] | undefined => {
-  if (!raw) {
-    return undefined;
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    log.error('ANNOUNCEMENTS is not valid JSON; resolving to an empty list');
-    return undefined;
-  }
-
-  if (!Array.isArray(parsed)) {
-    log.error('ANNOUNCEMENTS must be a JSON array; resolving to an empty list');
-    return undefined;
-  }
-
-  return parsed;
-};
+): unknown[] | undefined => admitJsonArray(raw, 'ANNOUNCEMENTS', log);

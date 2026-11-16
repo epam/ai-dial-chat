@@ -34,6 +34,7 @@
       "@epam/ai-dial-conversation-panel/*": ["./libs/conversation-panel/*"],
       "@epam/ai-dial-celebrations/*": ["./libs/celebrations/*"],
       "@epam/ai-dial-starter-buttons/*": ["./libs/starter-buttons/*"],
+      "@epam/ai-dial-onboarding-tour/*": ["./libs/onboarding-tour/*"],
       "@epam/ai-dial-catalog/*": ["./libs/catalog/*"],
       "@epam/ai-dial-prompt-editor/*": ["./libs/prompt-editor/*"],
       "@epam/ai-dial-prompts/*": ["./libs/prompts/*"],

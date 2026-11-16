@@ -1,0 +1,19 @@
+.card {
+  background: var(--ot-card-bg, var(--bg-layer-raised, #fcfcfc));
+  /* With no border, the shadow alone separates the card from the page. */
+  box-shadow:
+    0 2px 6px 0 var(--ot-card-shadow, var(--shadow-lg, #161b2d1f)),
+    0 12px 32px 0 var(--ot-card-shadow, var(--shadow-lg, #161b2d1f));
+}
+
+.counter {
+  color: var(--ot-counter-text, var(--text-tertiary, #848e9c));
+}
+
+.title {
+  color: var(--ot-title-text, var(--text-primary, #161b2d));
+}
+
+.description {
+  color: var(--ot-description-text, var(--text-secondary, #57647a));
+}

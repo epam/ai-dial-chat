@@ -176,12 +176,12 @@ import { EditorSection } from '@epam/ai-dial-builder-form';
 
 **Props**
 
-| Prop        | Type                  | Required | Default | Description                                       |
-| ----------- | --------------------- | -------- | ------- | ------------------------------------------------- |
-| `title`     | `string`              |          | —       | Optional heading rendered above the section body. |
-| `children`  | `ReactNode`           |          | —       | Section body content.                             |
-| `styles`    | `EditorSectionStyles` |          | —       | CSS custom property overrides.                    |
-| `className` | `string`              |          | —       | Additional CSS class applied to the root element. |
+| Prop        | Type                  | Required | Default | Description                                                                                          |
+| ----------- | --------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------- |
+| `title`     | `string`              |          | —       | Optional heading rendered above the section body; it also names the `<section>` (`aria-labelledby`). |
+| `children`  | `ReactNode`           |          | —       | Section body content.                                                                                |
+| `styles`    | `EditorSectionStyles` |          | —       | CSS custom property overrides.                                                                       |
+| `className` | `string`              |          | —       | Additional CSS class applied to the root element.                                                    |
 
 ### AddAvatar
 

@@ -463,6 +463,7 @@ published to npm today. Each library has its own README with its public API.
 | `@epam/ai-dial-attachment-canvas`     | [`libs/attachment-canvas`](libs/attachment-canvas)         | Viewer for attachment content — images, PDFs, JSON, markdown, code, text                                      |
 | `@epam/ai-dial-attachment-input`      | [`libs/attachment-input`](libs/attachment-input)           | File input with upload validation, drag-and-drop, progress                                                    |
 | `@epam/ai-dial-mcp-apps`              | [`libs/mcp-apps`](libs/mcp-apps)                           | Host-agnostic MCP Apps message-matching/caching logic and inline preview                                      |
+| `@epam/ai-dial-onboarding-tour`       | [`libs/onboarding-tour`](libs/onboarding-tour)             | Onboarding hints as cards shown one after another                                                             |
 | `@epam/ai-dial-starter-buttons`       | [`libs/starter-buttons`](libs/starter-buttons)             | Starter prompts that overflow into a dropdown when space runs out                                             |
 | `@epam/ai-dial-share`                 | [`libs/share`](libs/share)                                 | Share popover UI and share-link types                                                                         |
 | `@epam/ai-dial-publish-panel`         | [`libs/publish-panel`](libs/publish-panel)                 | Publish-to-folder UI and state flow                                                                           |
@@ -501,6 +502,7 @@ the backend's OpenAPI document, and apps consume it through
 - [Theme Customization](docs/theme-customization.md) - Configuring a theme and porting one from the legacy chat
 - [Responses API Integration](docs/responses-api-integration.md) - How the app consumes the DIAL Responses API
 - [Host Install Matrix](docs/host-install-matrix.md) - What an embedding host installs per set of libs
+- [Onboarding Anchors](docs/onboarding-anchors.md) - The elements an `ONBOARDING_HINTS` entry can point at
 - [Reusable Chat Workflows](docs/reusable-chat-workflows.md) - Skill import, file attachment and prompt selection as public package APIs, and the client application adoption map
 - [Authentication (BFF, encrypted cookie)](docs/auth/auth-bff-encrypted-cookie.md) - OIDC login/logout, session cookies, transparent token refresh
 - [Auth Diagrams](docs/auth/auth-diagrams/README.md) - Rendered Mermaid diagrams for every auth flow
