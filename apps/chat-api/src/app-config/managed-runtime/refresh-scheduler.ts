@@ -49,24 +49,36 @@ export const nextRefreshDelay = (
   return base * (1 + REFRESH_JITTER * random);
 };
 
+/** A read result that reached the scheduler: every kind but `aborted`. */
+export type AppliedReadResult = Exclude<
+  RuntimeReadResult,
+  { readonly kind: RuntimeReadKind.Aborted }
+>;
+
 /** What one instance's scheduler does on each attempt. */
 export interface RefreshHooks {
   /** Reads the snapshot; must honor `signal`. */
   fetch(signal: AbortSignal): Promise<RuntimeReadResult>;
-  /** Applies the result of the current generation; returns whether it succeeded. */
-  apply(result: RuntimeReadResult, durationMs: number): boolean;
-  /** A response arrived for a generation that is no longer current. */
+  /**
+   * Applies the result of the attempt that is still current; returns whether
+   * it succeeded. A throw counts as a failed attempt.
+   */
+  apply(result: AppliedReadResult, durationMs: number): boolean;
+  /** A response arrived after its attempt had already ended. */
   onLateDiscarded(): void;
+  /** `apply` threw; the scheduler treated it as a failure and keeps polling. */
+  onApplyError(error: unknown): void;
 }
 
 /**
  * Runs one instance's refreshes: at most one request in flight, a deadline
- * per attempt, jittered intervals and capped backoff. Every attempt has a
- * generation; a response that arrives after its attempt timed out, was
- * superseded or the scheduler stopped is discarded.
+ * per attempt, jittered intervals and capped backoff. Attempts never overlap:
+ * the next one is scheduled only after the previous one ended, so a response
+ * that arrives after its attempt timed out or the scheduler stopped is the
+ * only stale result possible, and it is discarded. Nothing an attempt does
+ * can stop the polling or escape as an unhandled rejection.
  */
 export class InstanceRefreshScheduler {
-  private generation = 0;
   private consecutiveFailures = 0;
   private timer: unknown;
   private controller: AbortController | undefined;
@@ -79,7 +91,7 @@ export class InstanceRefreshScheduler {
     private readonly hooks: RefreshHooks,
   ) {}
 
-  /** Runs the first attempt; resolves once it is applied or timed out. */
+  /** Runs the first attempt; resolves once it is applied, timed out or stopped. */
   start(): Promise<void> {
     return this.attempt();
   }
@@ -94,7 +106,6 @@ export class InstanceRefreshScheduler {
   private async attempt(): Promise<void> {
     if (this.stopped) return;
     this.timer = undefined;
-    const generation = ++this.generation;
     const controller = new AbortController();
     this.controller = controller;
     const startedAt = this.clock.now();
@@ -106,22 +117,35 @@ export class InstanceRefreshScheduler {
       }, this.timeoutMs);
       const settle = (late: RuntimeReadResult) => {
         this.clock.clearTimer(deadline);
-        if (controller.signal.aborted) {
-          /* The attempt already ended; only a real response counts as late. */
-          if (!this.stopped && late.kind !== RuntimeReadKind.Aborted) {
-            this.hooks.onLateDiscarded();
-          }
-          return;
+        /* After the deadline this resolve is a no-op; after stop() it ends
+         * the attempt, so a pending start() always settles. */
+        if (
+          controller.signal.aborted &&
+          !this.stopped &&
+          late.kind !== RuntimeReadKind.Aborted
+        ) {
+          this.hooks.onLateDiscarded();
         }
         resolve(late);
       };
-      this.hooks
-        .fetch(controller.signal)
-        .then(settle, () => settle({ kind: RuntimeReadKind.Unavailable }));
+      let fetching: Promise<RuntimeReadResult>;
+      try {
+        fetching = this.hooks.fetch(controller.signal);
+      } catch {
+        fetching = Promise.resolve({ kind: RuntimeReadKind.Unavailable });
+      }
+      fetching.then(settle, () =>
+        settle({ kind: RuntimeReadKind.Unavailable }),
+      );
     });
 
-    if (this.stopped || generation !== this.generation) return;
-    const succeeded = this.hooks.apply(result, this.clock.now() - startedAt);
+    if (this.stopped || result.kind === RuntimeReadKind.Aborted) return;
+    let succeeded = false;
+    try {
+      succeeded = this.hooks.apply(result, this.clock.now() - startedAt);
+    } catch (error) {
+      this.hooks.onApplyError(error);
+    }
     this.consecutiveFailures = succeeded ? 0 : this.consecutiveFailures + 1;
     this.timer = this.clock.setTimer(
       () => void this.attempt(),

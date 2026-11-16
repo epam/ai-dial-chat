@@ -52,11 +52,8 @@ export const validateManagedRuntimeEnvironment = (
   const activeKeys = config.MANAGED_CONFIG_ACTIVE_KEYS ?? [];
   const errors: string[] = [];
 
-  if (mode !== ManagedConfigMode.Active && activeKeys.length > 0) {
-    errors.push(
-      'MANAGED_CONFIG_ACTIVE_KEYS may only be set when MANAGED_CONFIG_MODE is active',
-    );
-  }
+  /* Outside `active` the key list is ignored (ManagedRuntimeService warns),
+   * so turning the mode back is a one-variable rollback. */
   if (mode === ManagedConfigMode.Off) {
     return errors;
   }
@@ -106,7 +103,7 @@ export const validateManagedRuntimeEnvironment = (
     );
   }
 
-  for (const key of activeKeys) {
+  for (const key of mode === ManagedConfigMode.Active ? activeKeys : []) {
     const definition = CONFIG_DEFINITIONS.find((entry) => entry.key === key);
     if (!definition || !isManagedKey(definition)) {
       errors.push(
@@ -116,6 +113,12 @@ export const validateManagedRuntimeEnvironment = (
   }
   return errors;
 };
+
+/** The keys listed in `MANAGED_CONFIG_ACTIVE_KEYS`, whatever the mode. */
+export const readConfiguredActiveKeys = (
+  configService: ConfigService<EnvironmentVariables>,
+): readonly string[] =>
+  configService.get('MANAGED_CONFIG_ACTIVE_KEYS', { infer: true }) ?? [];
 
 /** Reads the settings `validateManagedRuntimeEnvironment` already accepted. */
 export const readManagedRuntimeSettings = (

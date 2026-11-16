@@ -127,4 +127,20 @@ describe('ManagedSnapshotReader', () => {
     controller.abort();
     await expect(pending).resolves.toEqual({ kind: RuntimeReadKind.Aborted });
   });
+
+  it('reports an abort while reading an error body as aborted', async () => {
+    const controller = new AbortController();
+    const body = new ReadableStream<Uint8Array>({
+      pull: () => {
+        controller.abort();
+        throw new DOMException('aborted', 'AbortError');
+      },
+    });
+    const { reader } = makeReader(
+      async () => new Response(body, { status: 404 }),
+    );
+    await expect(read(reader, controller.signal)).resolves.toEqual({
+      kind: RuntimeReadKind.Aborted,
+    });
+  });
 });

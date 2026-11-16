@@ -337,6 +337,23 @@ describe('managed configuration activation', () => {
       expect(after.features['usageLimitsControl']).toBe(true);
     });
 
+    it('never caches longer than the browser refresh interval', async () => {
+      const { service, cacheTtls } = await buildStack(
+        {
+          ...activeKeys('welcomeScreen.description'),
+          MANAGED_CONFIG_CLIENT_REFRESH_SECONDS: '30',
+        },
+        (fake) =>
+          fake.respondAlways(
+            'chat-dev',
+            published('r1', { config: {}, features: {} }),
+          ),
+      );
+      const response = await service.getClientConfig(anonymous);
+      expect(cacheTtls.at(-1)).toBe(30_000);
+      expect(response.metadata?.cacheTtlSeconds).toBe(30);
+    });
+
     it('never caches past staleness expiry', async () => {
       const { service, clock, cacheTtls } = await buildStack(
         activeKeys('welcomeScreen.description'),
@@ -563,6 +580,27 @@ describe('managed configuration activation', () => {
       await expect(
         flags.isEnabled(FeatureKey.UsageLimitsControl, anonymous),
       ).resolves.toBe(false);
+    });
+
+    it('keeps environment behavior while chat-ui has no mapped instance', async () => {
+      const { service } = await buildStack(
+        {
+          ...activeKeys(FEATURE),
+          CLIENT_CONFIG_APP_IDS: 'chat-ui,launchpad',
+          MANAGED_CONFIG_INSTANCES: 'launchpad=launchpad-dev',
+          USAGE_LIMITS_CONTROL_ENABLED: 'true',
+        },
+        (fake) =>
+          fake.respondAlways('launchpad-dev', {
+            kind: RuntimeReadKind.NotPublished,
+          }),
+      );
+      await expect(
+        service.isEnabled(FeatureKey.UsageLimitsControl, anonymous),
+      ).resolves.toBe(true);
+      const response = await service.getClientConfig(anonymous);
+      expect(response.features['usageLimitsControl']).toBe(true);
+      expect(response.metadata?.managed).toBeUndefined();
     });
 
     it('keeps the legacy path for a feature that is not active', async () => {

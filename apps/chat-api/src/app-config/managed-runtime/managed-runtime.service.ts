@@ -8,6 +8,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import {
+  readConfiguredActiveKeys,
   readManagedRuntimeSettings,
   type ManagedRuntimeSettings,
 } from './managed-runtime.settings';
@@ -26,6 +27,7 @@ import {
 import {
   InstanceRefreshScheduler,
   MANAGED_RUNTIME_CLOCK,
+  type AppliedReadResult,
   type ManagedRuntimeClock,
 } from './refresh-scheduler';
 import {
@@ -37,7 +39,6 @@ import {
   ManagedSnapshotReader,
   RUNTIME_READ_TIMEOUT_MS,
   RuntimeReadKind,
-  type RuntimeReadResult,
 } from './snapshot-reader';
 import { ManagedSnapshotStore } from './snapshot-store';
 
@@ -78,6 +79,15 @@ export class ManagedRuntimeService
     @Inject(MANAGED_RUNTIME_CLOCK) private readonly clock: ManagedRuntimeClock,
   ) {
     this.settings = readManagedRuntimeSettings(configService);
+    const ignoredKeys = readConfiguredActiveKeys(configService);
+    if (
+      this.settings.mode !== ManagedConfigMode.Active &&
+      ignoredKeys.length > 0
+    ) {
+      this.logger.warn(
+        `MANAGED_CONFIG_ACTIVE_KEYS is ignored while MANAGED_CONFIG_MODE is ${this.settings.mode}: ${ignoredKeys.join(', ')} keep their environment behavior`,
+      );
+    }
     /* A bundled artifact that does not match its pin fails startup. */
     this.validators =
       this.settings.mode === ManagedConfigMode.Off
@@ -168,6 +178,11 @@ export class ManagedRuntimeService
                 store.instanceId,
                 ManagedRefreshOutcome.LateDiscarded,
               ),
+            onApplyError: (error) =>
+              this.logger.error(
+                `Applying the managed configuration of instance ${store.instanceId} failed; polling continues`,
+                error instanceof Error ? error.stack : undefined,
+              ),
           },
         ),
       );
@@ -182,10 +197,22 @@ export class ManagedRuntimeService
 
   private apply(
     store: ManagedSnapshotStore,
-    result: RuntimeReadResult,
+    result: AppliedReadResult,
     durationMs: number,
   ): boolean {
-    const applied = this.applyToStore(store, result);
+    let applied: AppliedResult;
+    try {
+      applied = this.applyToStore(store, result);
+    } catch (error) {
+      /* A candidate that breaks acceptance itself is rejected like any other
+       * malformed body; the previous snapshot stays. */
+      store.recordFailure();
+      applied = this.rejected(ManagedRejectionReason.Malformed);
+      this.logger.error(
+        `Accepting a snapshot of instance ${store.instanceId} threw`,
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
     this.telemetry?.recordRefresh(
       store.instanceId,
       applied.outcome,
@@ -197,7 +224,7 @@ export class ManagedRuntimeService
 
   private applyToStore(
     store: ManagedSnapshotStore,
-    result: RuntimeReadResult,
+    result: AppliedReadResult,
   ): AppliedResult {
     switch (result.kind) {
       case RuntimeReadKind.Candidate: {
@@ -236,7 +263,6 @@ export class ManagedRuntimeService
         store.recordFailure();
         return this.rejected(ManagedRejectionReason.Malformed);
       case RuntimeReadKind.Unavailable:
-      case RuntimeReadKind.Aborted:
         store.recordFailure();
         return {
           succeeded: false,

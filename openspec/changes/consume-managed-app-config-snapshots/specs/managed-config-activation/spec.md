@@ -33,12 +33,22 @@ A change of mode SHALL be a deployment configuration change. The backend SHALL N
 
 ### Requirement: Per-key activation
 
-`MANAGED_CONFIG_ACTIVE_KEYS` SHALL list full registry keys, comma-separated. It SHALL be empty by default and SHALL be accepted only when the mode is `active`. Each listed key SHALL be a managed key of the current schema version (a `management` of kind `managed-config` or `managed-feature` in `apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`). Any other key SHALL fail startup with a message naming the variable and the key. Keys that are not listed SHALL keep their environment behavior.
+`MANAGED_CONFIG_ACTIVE_KEYS` SHALL list full registry keys, comma-separated. It SHALL be empty by default. Outside `active` mode it SHALL be ignored, with one startup warning naming the ignored keys, so that changing only the mode is a complete rollback. In `active` mode each listed key SHALL be a managed key of the current schema version (a `management` of kind `managed-config` or `managed-feature` in `apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`). Any other key SHALL fail startup with a message naming the variable and the key. Keys that are not listed SHALL keep their environment behavior.
 
 #### Scenario: Local-only key is refused
 
-- **WHEN** `MANAGED_CONFIG_ACTIVE_KEYS=footer.html`
+- **WHEN** the mode is `active` and `MANAGED_CONFIG_ACTIVE_KEYS=footer.html`
 - **THEN** environment validation fails and names `MANAGED_CONFIG_ACTIVE_KEYS` and `footer.html`
+
+#### Scenario: Changing only the mode rolls back
+
+- **WHEN** a deployment running `active` with `MANAGED_CONFIG_ACTIVE_KEYS=welcomeScreen.description` restarts with `MANAGED_CONFIG_MODE=off` and the key list unchanged
+- **THEN** startup succeeds, a warning names the ignored key, and `welcomeScreen.description` has its environment behavior
+
+#### Scenario: Unmapped chat-ui keeps environment behavior
+
+- **WHEN** the mode is `active`, `features.usageLimitsControl` is listed, `USAGE_LIMITS_CONTROL_ENABLED=true`, and only `launchpad` is mapped
+- **THEN** `chat-ui` gets `features.usageLimitsControl=true` with no `metadata.managed`, and `FeatureGuard` allows it
 
 #### Scenario: Unlisted managed key keeps its environment value
 
@@ -71,7 +81,7 @@ For an active configuration key, the selected value SHALL be the explicit enviro
 
 ### Requirement: Managed feature gates
 
-For an active managed feature, the effective value SHALL be `true` only when every condition holds:
+For an active managed feature of a mapped `chat-ui`, the effective value SHALL be `true` only when every condition holds:
 
 1. The configured enabled bit, taken from the explicit environment value, otherwise the managed `enabled`, otherwise the registry default, is `true`.
 2. The captured state is usable.

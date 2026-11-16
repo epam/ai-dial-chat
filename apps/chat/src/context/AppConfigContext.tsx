@@ -31,7 +31,11 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useClientConfigRefresh } from '../hooks/useClientConfigRefresh/useClientConfigRefresh';
+import {
+  scheduleFromResponse,
+  useClientConfigRefresh,
+  type ClientConfigRefreshSchedule,
+} from '../hooks/useClientConfigRefresh/useClientConfigRefresh';
 import { getClientConfig } from '../server-api/app-config.api';
 import { AuthStatus } from '../types/auth-status';
 import { UserConfigStatus } from '../types/user-config-status';
@@ -121,11 +125,12 @@ interface ProviderState extends AppConfigState {
   /* The identity whose response produced the accepted permissions. */
   catalogCreationOwner: string | null;
   /*
-   * When to refresh in the background: the server's `nextRefreshAt`, or a
-   * retry time after a failed background refresh. `null` keeps today's
-   * behavior: loads happen only when the identity changes.
+   * When to refresh in the background: the server's hint, or a retry after a
+   * failed background refresh; a new object per load re-arms the timer.
+   * `null` keeps today's behavior: loads happen only when the identity
+   * changes.
    */
-  refreshAt: string | null;
+  refreshSchedule: ClientConfigRefreshSchedule | null;
 }
 
 /* How long a failed background refresh waits before it is retried. */
@@ -136,7 +141,7 @@ const INITIAL_STATE: ProviderState = {
   catalogCreationStatus: UserConfigStatus.Loading,
   catalogCreationPermissions: null,
   catalogCreationOwner: null,
-  refreshAt: null,
+  refreshSchedule: null,
   features: {},
   config: {
     activeEventId: null,
@@ -259,7 +264,7 @@ const toProviderState = (
       ),
     },
     metadata: response.metadata,
-    refreshAt: response.metadata?.nextRefreshAt ?? null,
+    refreshSchedule: scheduleFromResponse(response.metadata),
   };
 };
 
@@ -307,6 +312,8 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
   const loadSequenceRef = useRef(0);
   const loadControllerRef = useRef<AbortController | null>(null);
   const lastLoadStartedAtRef = useRef(0);
+  /* Whether an identity (foreground) load is in flight; background refreshes wait for it. */
+  const foregroundPendingRef = useRef(false);
   const identityRef = useRef(identity);
   const authStatusRef = useRef(authStatus);
   /* Declared before the load effect, so a load always sees the current identity. */
@@ -324,6 +331,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
       loadSequenceRef.current += 1;
       const sequence = loadSequenceRef.current;
       lastLoadStartedAtRef.current = Date.now();
+      if (!isBackground) foregroundPendingRef.current = true;
       const isCurrent = () =>
         !controller.signal.aborted &&
         sequence === loadSequenceRef.current &&
@@ -340,9 +348,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
           /* Keep every value and the ready state; try again later. */
           setState((previous) => ({
             ...previous,
-            refreshAt: new Date(
-              Date.now() + BACKGROUND_REFRESH_RETRY_MS,
-            ).toISOString(),
+            refreshSchedule: { delayMs: BACKGROUND_REFRESH_RETRY_MS },
           }));
           return;
         }
@@ -352,8 +358,12 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
           catalogCreationStatus: UserConfigStatus.Error,
           catalogCreationPermissions: null,
           catalogCreationOwner: requestIdentity,
-          refreshAt: null,
+          refreshSchedule: null,
         }));
+      } finally {
+        if (sequence === loadSequenceRef.current && !isBackground) {
+          foregroundPendingRef.current = false;
+        }
       }
     },
     [],
@@ -375,9 +385,18 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
     };
   }, [loadConfig, authStatus, identity]);
 
-  /* A background refresh keeps the ready state and the current identity. */
+  /*
+   * A background refresh keeps the ready state and the current identity. It
+   * never supersedes an identity load: that load's own success or failure
+   * must decide what the new identity sees.
+   */
   const refresh = useCallback(() => {
-    if (authStatusRef.current === AuthStatus.Loading) return;
+    if (
+      authStatusRef.current === AuthStatus.Loading ||
+      foregroundPendingRef.current
+    ) {
+      return;
+    }
     void loadConfig(identityRef.current, true);
   }, [loadConfig]);
   const getLastLoadStartedAt = useCallback(
@@ -385,8 +404,8 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
     [],
   );
   useClientConfigRefresh({
-    nextRefreshAt:
-      state.status === UserConfigStatus.Ready ? state.refreshAt : null,
+    schedule:
+      state.status === UserConfigStatus.Ready ? state.refreshSchedule : null,
     refresh,
     getLastLoadStartedAt,
   });
@@ -395,7 +414,11 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
    * switched user never sees them — not even before the reload effect runs —
    * and withholds them while authentication itself is being resolved. */
   const value = useMemo<AppConfigState>(() => {
-    const { catalogCreationOwner, refreshAt: _refreshAt, ...appConfig } = state;
+    const {
+      catalogCreationOwner,
+      refreshSchedule: _refreshSchedule,
+      ...appConfig
+    } = state;
     if (
       catalogCreationOwner === identity &&
       authStatus !== AuthStatus.Loading

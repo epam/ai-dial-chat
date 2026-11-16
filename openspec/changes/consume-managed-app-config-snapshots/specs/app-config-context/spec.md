@@ -14,9 +14,9 @@ When a successful response carries `metadata.nextRefreshAt`, the provider SHALL 
 - when the window gains focus;
 - on `pageshow` with `persisted` (resume from the back-forward cache);
 - on `online`;
-- at `nextRefreshAt` while the document is visible, with the delay clamped to between 15 seconds and 15 minutes.
+- while the document is visible, after the response's `nextRefreshAt` minus its `resolvedAt` (both server time, so a wrong browser clock does not matter), measured from the moment the response was accepted, with the delay clamped to between 15 seconds and 15 minutes. Every accepted response SHALL re-arm this timer, even when it repeats the previous hint.
 
-Triggers less than 15 seconds after the last started load SHALL be coalesced. A hidden document SHALL schedule no timed refresh. When the last accepted response has no `nextRefreshAt` (managed mode `off`, or an older backend), the only re-fetch trigger SHALL remain a change in authentication status. The refresh triggers SHALL live in an app-level hook in `apps/chat/src/hooks/`, not in a library.
+Triggers less than 15 seconds after the last started load SHALL be coalesced. While an identity load is in flight, no background refresh SHALL start, so that load alone decides what the new identity sees. A hidden document SHALL schedule no timed refresh. When the last accepted response has no `nextRefreshAt` (managed mode `off`, or an older backend), the only re-fetch trigger SHALL remain a change in authentication status. The refresh triggers SHALL live in an app-level hook in `apps/chat/src/hooks/`, not in a library.
 
 **RTL impact:** None. **i18n impact:** None.
 
@@ -77,7 +77,7 @@ Triggers less than 15 seconds after the last started load SHALL be coalesced. A 
 
 A refresh started while `status` is `Ready` SHALL keep `status` `Ready` while it runs. It SHALL NOT reset `catalogCreationStatus` or `catalogCreationPermissions` unless the identity changed. A failed refresh SHALL keep the last accepted values and `status` `Ready`. A successful refresh SHALL replace the values atomically in one state update.
 
-The context value SHALL stay memoized (`useMemo`). Unchanged array fields SHALL keep their references when a refresh returns equal content, so consumers do not re-render for an unchanged response.
+The context value SHALL stay memoized (`useMemo`). Fields a refresh returns unchanged SHALL keep their previous references, so consumers that compare a field by reference (memoized values, effect dependencies) see no change. Consumers of the whole context still re-render after every accepted refresh.
 
 **Accessibility:** No new UI. Refreshed values reach existing components without focus changes. **RTL impact:** None. **i18n impact:** None. **Feature flag:** Not gated.
 
@@ -95,6 +95,11 @@ The context value SHALL stay memoized (`useMemo`). Unchanged array fields SHALL 
 
 - **WHEN** `features.usageLimitsControl` is `true` in the accepted response and the next refresh fails with a network error
 - **THEN** `status` stays `Ready` and `useFeatureFlag('usageLimitsControl')` stays `true`
+
+#### Scenario: Identity reload is not superseded
+
+- **WHEN** the identity changes, its load is still in flight after 15 seconds, and the window gains focus
+- **THEN** no background refresh starts, and only the identity load's result is applied
 
 #### Scenario: Refresh does not flicker
 

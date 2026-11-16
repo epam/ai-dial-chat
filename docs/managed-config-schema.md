@@ -266,7 +266,8 @@ must be in the instance's `userRoles` and `readerRoles`. Variables are listed in
 | `active`              | The keys in `MANAGED_CONFIG_ACTIVE_KEYS` take managed values and policies; responses carry `metadata.managed`, `metadata.nextRefreshAt` and `appConfig`.              |
 
 A failure never changes the mode. Setting `off`, or removing a key, is the
-explicit rollback; it applies to the next request. Rolling back a configuration
+explicit rollback; it applies to the next request. The key list may stay in
+place: outside `active` it is ignored, with a startup warning. Rolling back a configuration
 is done in Studio, as a new revision.
 
 ### Reading and accepting a snapshot
@@ -274,12 +275,15 @@ is done in Studio, as a new revision.
 Each instance is read once at startup (bounded by the 5-second read deadline;
 a failure never blocks startup), then every
 `MANAGED_CONFIG_REFRESH_INTERVAL_SECONDS` plus up to 10 % jitter. Failures back
-off by doubling, up to five intervals. One request per instance is in flight;
+off by doubling, up to five intervals. Anything a read or a snapshot throws
+counts as a failed attempt; polling and the process continue. One request per
+instance is in flight;
 browser requests never reach Core. A response over 131,072 bytes is rejected.
 
 A candidate is accepted only when its `instanceId` and `appId` match the
 mapping (and `environment` matches `MANAGED_CONFIG_ENVIRONMENT` when set), its
-payload is at most 57,344 canonical bytes, and a revision seen before has
+payload nests at most 32 levels and is at most 57,344 canonical bytes, and a
+revision seen before has
 unchanged hashes. A `chat-ui` snapshot must also name a supported
 `schemaVersion` with exactly its pinned `schemaSha256`, validate against the
 bundled artifact, and pass `calendar_date` and `window_order`. A foreign
@@ -324,9 +328,10 @@ feature off. `FeatureGuard` applies the same gates.
 
 In `active` mode the per-user response cache key also carries the instance,
 revision and state, and its TTL never passes the next availability boundary or
-the snapshot's staleness expiry. A visible tab refreshes at
-`metadata.nextRefreshAt` (`MANAGED_CONFIG_CLIENT_REFRESH_SECONDS`, 120 by
-default), and immediately on focus, return to the tab, back-forward-cache
+the snapshot's staleness expiry, nor the browser refresh interval. A visible
+tab refreshes after `metadata.nextRefreshAt` − `resolvedAt`
+(`MANAGED_CONFIG_CLIENT_REFRESH_SECONDS`, 120 by default, measured in server
+time), and immediately on focus, return to the tab, back-forward-cache
 restore and reconnect. With the defaults, a visible tab shows a new publication
 within about four minutes, and about 70 seconds after it regains focus. Pods
 read independently, so for one interval they may serve different revisions.

@@ -1362,6 +1362,30 @@ describe('AppConfigContext background refresh', () => {
     expect(result.current.config.config.welcomeScreenDescription).toBe('For B');
   });
 
+  it('does not let a background refresh supersede a slow identity reload', async () => {
+    mockGetClientConfig.mockResolvedValueOnce(managedResponse('For A'));
+    const { result, rerender } = await renderReady();
+    const forB = deferred();
+    mockGetClientConfig.mockReturnValueOnce(forB.promise);
+    mockSession.current = {
+      user: { sub: 'user-b', providerId: 'keycloak', claims: {} },
+      status: AuthStatus.Authenticated,
+    };
+    rerender();
+    await waitFor(() => expect(mockGetClientConfig).toHaveBeenCalledTimes(2));
+    const signalB = mockGetClientConfig.mock.calls[1][0];
+
+    focusLater();
+    focusLater();
+
+    expect(mockGetClientConfig).toHaveBeenCalledTimes(2);
+    expect(signalB?.aborted).toBe(false);
+    await act(async () => {
+      forB.resolve(managedResponse('For B'));
+    });
+    expect(result.current.config.config.welcomeScreenDescription).toBe('For B');
+  });
+
   it('keeps references of values a refresh returned unchanged', async () => {
     mockGetClientConfig.mockResolvedValueOnce(managedResponse('Same'));
     const { result } = await renderReady();

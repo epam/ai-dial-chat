@@ -135,11 +135,17 @@ describe('managed configuration environment', () => {
     );
   });
 
-  it('rejects active keys outside active mode', () => {
-    expectFailure(
-      { ...MANAGED, MANAGED_CONFIG_ACTIVE_KEYS: 'welcomeScreen.description' },
-      'MANAGED_CONFIG_ACTIVE_KEYS may only be set when MANAGED_CONFIG_MODE is active',
-    );
+  it('accepts and ignores active keys outside active mode, so the mode alone rolls back', () => {
+    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    for (const mode of ['off', 'shadow']) {
+      expect(() =>
+        validate({
+          ...MANAGED,
+          MANAGED_CONFIG_MODE: mode,
+          MANAGED_CONFIG_ACTIVE_KEYS: 'footer.html',
+        }),
+      ).not.toThrow();
+    }
   });
 
   it('rejects a local-only key in the active list', () => {

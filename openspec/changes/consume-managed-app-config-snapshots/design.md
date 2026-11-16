@@ -94,7 +94,7 @@ The services are registered in `AppConfigModule`.
 | `MANAGED_CONFIG_MAX_STALENESS_SECONDS`    | **no default**                                                       | Required unless `off`. An integer from `3 × MANAGED_CONFIG_REFRESH_INTERVAL_SECONDS` to 86,400                                                                |
 | `MANAGED_CONFIG_REFRESH_INTERVAL_SECONDS` | 60                                                                   | Integer 15–3,600                                                                                                                                             |
 | `MANAGED_CONFIG_CLIENT_REFRESH_SECONDS`   | 120                                                                  | Integer 30–900. The browser's visible interval, sent as `nextRefreshAt`                                                                                      |
-| `MANAGED_CONFIG_ACTIVE_KEYS`              | comma-separated registry keys, empty by default                      | Allowed only in `active` mode. Each key must be managed (`managedKeyOf`) in the current schema version. Any other key fails startup                           |
+| `MANAGED_CONFIG_ACTIVE_KEYS`              | comma-separated registry keys, empty by default                      | Ignored, with a startup warning, outside `active` mode, so changing the mode alone rolls back. In `active` mode each key must be managed (`managedKeyOf`) in the current schema version; any other key fails startup |
 | `MANAGED_CONFIG_ENVIRONMENT`              | optional label                                                       | When set, a snapshot's `environment` must equal it                                                                                                            |
 
 There is deliberately no default staleness, because the production value is an operator decision (D14). An instance-ID pattern is used instead of a Core lookup, because Core is the authority and answers 404 for unknown IDs. Fixed limits are constants, not variables:
@@ -122,7 +122,7 @@ No credential other than `MANAGED_CONFIG_API_KEY` is ever tried, and no session 
 
 1. **Identity.** `instanceId` equals the mapped instance, `appId` equals the mapped `appId`, and `environment` equals `MANAGED_CONFIG_ENVIRONMENT` when it is set.
 2. **Envelope types.** `schemaVersion` is `MAJOR.MINOR.PATCH`; `schemaSha256` and `sha256` are 64 lowercase hex characters; `revisionId` is a string of at most 128 characters; `publishedAt` is an ISO instant; `payload` is an object.
-3. **Size.** The canonical bytes of `payload` (`canonical-json.ts`) are at most 57,344.
+3. **Depth and size.** `payload` nests at most 32 levels (checked iteratively, before anything recurses over it), and its canonical bytes (`canonical-json.ts`) are at most 57,344. Without the depth bound, a 12 KB foreign payload nested ~2,000 levels overflowed the stack in the canonical serializer.
 4. **Immutability.** If `revisionId` is in the instance's bounded map of accepted revisions (the last 32: `revisionId → sha256`, plus the canonical payload hash), both hashes must match. A mismatch is `rejected: revision_changed`.
 5. **`chat-ui` only:**
    - `schemaVersion` is in `SUPPORTED_MANAGED_CONFIG_SCHEMA_VERSIONS`, and `schemaSha256 === PINNED_MANAGED_CONFIG_SCHEMA_SHA256[schemaVersion]`; otherwise the result is `rejected: unsupported_schema`;
@@ -140,7 +140,7 @@ Rejection never alters the active snapshot. Rejected candidates are not remember
 
 ### D5. Per-instance state and freshness
 
-The store holds `{ active?: ParsedSnapshot, lastVerifiedAt?, lastOutcome, consecutiveFailures, generation }`. `ParsedSnapshot` is deeply frozen. Freshness is the time since the last successful verification of `active`. Verification means a 200 that names the same revision with unchanged hashes, or the acceptance of a new revision. It is never measured from `publishedAt`.
+The store holds `{ active?: ParsedSnapshot, lastVerifiedAt?, lastAttemptSucceeded, notPublished, accepted revisions }`. `ParsedSnapshot` is deeply frozen. Freshness is the time since the last successful verification of `active`. Verification means a 200 that names the same revision with unchanged hashes, or the acceptance of a new revision. It is never measured from `publishedAt`.
 
 | State           | Definition                                                                     | Usable | Values for active keys                    | Active managed features |
 | --------------- | ------------------------------------------------------------------------------ | ------ | ----------------------------------------- | ----------------------- |
@@ -163,13 +163,14 @@ State is computed when the snapshot is captured, from the injected clock. A snap
 | Recovery with the same revision                                   | A later 200 for the same revision verifies it (`fresh`, new `lastVerifiedAt`, no swap). A previously rejected revision that now passes is accepted and swapped |
 | A new revision is accepted                                        | Atomic swap of `active`; state `fresh`                                                                                  |
 
-### D6. Scheduler and generations
+### D6. Scheduler and attempt isolation
 
 - **Single in-flight.** There is one timer per instance and at most one request in flight per instance.
 - **Next delay.**
   - After a success: `R × (1 + u)` with `u ∈ [0, 0.1)`, where R is the refresh interval.
   - After the n-th consecutive failure: `min(R × 2ⁿ, 5R) × (1 + u)`.
-- **Generations.** Each attempt takes `generation = ++counter` and an `AbortController` with the 5 s deadline. The result applies only if its generation is still the latest and it was not aborted. A late response after a timeout, an abort at shutdown (`onModuleDestroy`), or a superseded attempt is discarded and counted as `late_discarded`.
+- **No overlap.** The next attempt is scheduled only after the previous one ended, so attempts never overlap and no generation counter is needed. Each attempt has an `AbortController` and the 5 s deadline. A response that arrives after its attempt timed out is discarded and counted as `late_discarded`; `stop()` (`onModuleDestroy`) aborts the read and settles a pending first attempt.
+- **Failure isolation.** A throw while reading or applying counts as a failed attempt and is logged; polling continues with backoff. The service also catches a throw from acceptance and records it as `rejected_malformed`. Nothing reaches the process as an unhandled rejection, and bootstrap never fails because of a snapshot.
 - **No load in `off`.** Mode `off` creates no timers and issues no requests.
 - **Injected dependencies.** The clock and the timer are injected (`ManagedRuntimeClock`) for fake-clock tests.
 
@@ -240,20 +241,20 @@ For a served `appId` other than `chat-ui` that has a mapping, in mode `active`, 
 
 ### D12. Response cache and refresh hint
 
-- **Cache key.** It becomes `app-config:client:<appId>:user:<userId|anonymous>:roles:<roles|none>:managed:<instanceId>:<revisionId|none>:<state>` when the `appId` is mapped and the mode is not `off`. Otherwise it is unchanged. Activation (a new revision) and every usability transition change the key, which invalidates by construction. Old entries expire through their own TTL.
-- **TTL.** `min(60 s, ms until the next startsAt/endsAt boundary of any active feature in the snapshot, ms until staleness expiry)`, with a floor of 1 s.
+- **Cache key.** It becomes `app-config:client:<appId>:user:<userId|anonymous>:roles:<roles|none>:managed:<instanceId>:<revisionId|none>:<state>` when the mode is `active` and the `appId` is mapped. Otherwise it is unchanged. Activation (a new revision) and every usability transition change the key, which invalidates by construction. Old entries expire through their own TTL.
+- **TTL.** `min(60 s, MANAGED_CONFIG_CLIENT_REFRESH_SECONDS, ms until the next startsAt/endsAt boundary of any active feature in the snapshot, ms until staleness expiry)`, with a floor of 1 s.
 - **Shadow.** Shadow mode uses the unchanged key and TTL, because responses do not change.
 - **Refresh hint.** `metadata.nextRefreshAt` is sent in `active` mode only. Its value is `min(resolvedAt + MANAGED_CONFIG_CLIENT_REFRESH_SECONDS, next boundary, staleness expiry)`, and it is cached together with the response.
 - **Managed metadata.** `metadata.managed = { instanceId, state, revisionId?, schemaVersion?, publishedAt? }`, sent in `active` mode for a mapped `appId`. The revision fields are present only when usable. No operator identity, hash, reason, or payload policy is added.
 
 ### D13. Browser refresh
 
-- **Hook.** `apps/chat/src/hooks/useClientConfigRefresh/useClientConfigRefresh.ts` is app-level because it serves `AppConfigProvider`, so no lib change is needed. It follows the `useAppVersionCheck` event pattern. While `nextRefreshAt` is present, it triggers a refresh on:
+- **Hook.** `apps/chat/src/hooks/useClientConfigRefresh/useClientConfigRefresh.ts` is app-level because it serves `AppConfigProvider`, so no lib change is needed. It follows the `useAppVersionCheck` event pattern. It takes a schedule, `{ delayMs }`, that the provider derives from each accepted response as `nextRefreshAt − resolvedAt` (both server time, so browser clock skew does not matter). A new schedule object per accepted response re-arms the timer even when a cached response repeats the hint. While a schedule exists, it triggers a refresh on:
   - `visibilitychange` to visible;
   - window `focus`;
   - `pageshow` with `persisted` (resume);
   - `online`;
-  - a timer at `nextRefreshAt`, clamped to [15 s, 15 min], that runs only while visible.
+  - a timer after `delayMs` from acceptance, clamped to [15 s, 15 min], that runs only while visible.
 
   Triggers within 15 s of the last started load are coalesced. A hidden tab schedules nothing.
 - **Provider.**
@@ -261,7 +262,8 @@ For a served `appId` other than `chat-ui` that has a mapping, in mode `active`, 
   - A newer trigger or an identity change aborts the in-flight load.
   - A result applies only if its sequence is the latest and the identity is unchanged.
   - A background refresh never sets `status` to `Loading`, and does not reset catalog-creation readiness when the identity is unchanged.
-  - A failed background refresh keeps the last values and `Ready`. The server, not the browser, enforces staleness, and server guards are independent.
+  - A failed background refresh keeps the last values and `Ready`, and retries after 60 s. The server, not the browser, enforces staleness, and server guards are independent.
+  - No background refresh starts while an identity load is in flight, so that load alone decides what the new identity sees.
   - Without `nextRefreshAt` (mode `off` or an older backend), behavior is exactly today's.
 
 ### D14. Maximum staleness, interval, and propagation target
@@ -339,7 +341,7 @@ Pods poll independently, with no coordination. After a publication, different po
 4. `active` with the Active 1 set (D15). Verify `metadata.managed.state` and the propagation target.
 5. Later sets after their preconditions.
 
-**Rollback.** Remove keys, or set `MANAGED_CONFIG_MODE=off`. This is a deliberate deployment change, effective on the next request, because the cache keys change with the mode. A configuration rollback is done in Studio as a new revision.
+**Rollback.** Remove keys, or set `MANAGED_CONFIG_MODE=off` (the key list may stay; it is ignored outside `active`). This is a deliberate deployment change, effective on the next request, because the cache keys change with the mode. A configuration rollback is done in Studio as a new revision.
 
 ## Open Questions
 

@@ -28,10 +28,14 @@ export enum RuntimeReadKind {
 export type RuntimeReadResult =
   | { readonly kind: RuntimeReadKind.Candidate; readonly body: unknown }
   | {
-      readonly kind: Exclude<RuntimeReadKind, RuntimeReadKind.Candidate>;
+      readonly kind: Exclude<
+        RuntimeReadKind,
+        RuntimeReadKind.Candidate | RuntimeReadKind.Aborted
+      >;
       /** The upstream status, when one was received. */
       readonly status?: number;
-    };
+    }
+  | { readonly kind: RuntimeReadKind.Aborted };
 
 /* Error bodies are small; reading more than this is never needed. */
 const MAX_ERROR_BODY_BYTES = 4_096;
@@ -101,7 +105,7 @@ export class ManagedSnapshotReader {
           ...getApiKeyAuthHeaders(apiKey),
         },
       });
-      return await this.classify(response);
+      return await this.classify(response, signal);
     } catch (error) {
       if (signal.aborted) return { kind: RuntimeReadKind.Aborted };
       if (error instanceof BodyTooLargeError) {
@@ -113,6 +117,7 @@ export class ManagedSnapshotReader {
 
   private async classify(
     response: globalThis.Response,
+    signal: AbortSignal,
   ): Promise<RuntimeReadResult> {
     const { status } = response;
     if (status === 200) {
@@ -127,6 +132,8 @@ export class ManagedSnapshotReader {
       const body = parseJson(
         await readLimited(response, MAX_ERROR_BODY_BYTES).catch(() => ''),
       );
+      /* An abort while reading the error body ends the read, not a denial. */
+      if (signal.aborted) return { kind: RuntimeReadKind.Aborted };
       if (status === 404) {
         return hasCode(body, 'not_published')
           ? { kind: RuntimeReadKind.NotPublished, status }

@@ -163,10 +163,9 @@ export const snapshotBody = (
     schemaVersion: '1.0.0',
     schemaSha256: CHAT_UI_SCHEMA_SHA256,
     revisionId: '20261120T095500000Z-0123456789abcdef',
-    sha256: canonicalSha256({
-      revision: overrides['revisionId'] ?? 'r1',
-      payload,
-    }),
+    sha256:
+      (overrides['sha256'] as string | undefined) ??
+      canonicalSha256({ revision: overrides['revisionId'] ?? 'r1', payload }),
     publishedAt: '2026-11-20T09:55:00.000Z',
     payload,
     ...overrides,

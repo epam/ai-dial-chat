@@ -111,7 +111,7 @@ A candidate SHALL be accepted only if every check below passes, in this order.
 
 1. **Identity.** `instanceId` equals the mapped instance and `appId` equals the mapped application identifier. When `MANAGED_CONFIG_ENVIRONMENT` is set, `environment` equals it.
 2. **Envelope.** `schemaVersion` is `MAJOR.MINOR.PATCH`. `schemaSha256` and `sha256` are 64 lowercase hexadecimal characters. `revisionId` is a non-empty string of at most 128 characters. `publishedAt` is an ISO-8601 instant. `payload` is a JSON object.
-3. **Size.** The canonical serialization of `payload` is at most 57,344 bytes (`MAX_MANAGED_PAYLOAD_BYTES` in `apps/chat-api/src/app-config/managed-config/managed-config.constants.ts`).
+3. **Depth and size.** `payload` nests objects and arrays at most 32 levels deep (the payload itself being level 1), checked without recursion before any other walk of it. Its canonical serialization is at most 57,344 bytes (`MAX_MANAGED_PAYLOAD_BYTES` in `apps/chat-api/src/app-config/managed-config/managed-config.constants.ts`).
 4. **Immutability.** For a `revisionId` already accepted on this instance, `sha256` and the canonical payload are unchanged.
 5. **For `chat-ui` only:**
    - `schemaVersion` is listed in `SUPPORTED_MANAGED_CONFIG_SCHEMA_VERSIONS`;
@@ -253,16 +253,21 @@ A rejected revision SHALL be re-evaluated on every refresh, so the same revision
 - **WHEN** an outage ends and the read returns the still-active revision `R1` with unchanged hashes
 - **THEN** the state returns to `fresh`, no swap occurs, and freshness restarts
 
-### Requirement: Refresh cadence, backoff, and generations
+### Requirement: Refresh cadence, backoff, and attempt isolation
 
 After a successful attempt, the next attempt for an instance SHALL start after the refresh interval R multiplied by `1 + u`, with u uniformly in [0, 0.1). After n consecutive failed or rejected attempts, the delay SHALL be `min(R × 2ⁿ, 5 × R) × (1 + u)`.
 
-Each attempt SHALL carry a generation number. A response SHALL apply only if its generation is the instance's latest and the attempt was not aborted. A late response after a timeout or shutdown SHALL be discarded and counted. Timers and in-flight requests SHALL stop on module shutdown. The clock and timers SHALL be injectable, so that tests run without real time.
+Attempts of one instance SHALL never overlap: the next one SHALL be scheduled only after the previous one ended. A response SHALL apply only while its attempt is current, that is, neither timed out nor stopped. A late response after a timeout SHALL be discarded and counted. Anything an attempt throws, while reading or while applying a result, SHALL count as a failed attempt: polling SHALL continue with backoff, startup SHALL NOT fail, and nothing SHALL escape as an unhandled rejection. Timers and in-flight requests SHALL stop on module shutdown, and a pending first attempt SHALL then settle. The clock and timers SHALL be injectable, so that tests run without real time.
 
 #### Scenario: Backoff is capped
 
 - **WHEN** R is 60 s and four consecutive attempts fail
 - **THEN** the following delays fall within [120 s, 132 s), [240 s, 264 s), [300 s, 330 s), and [300 s, 330 s)
+
+#### Scenario: Deeply nested payload
+
+- **WHEN** a mapped foreign instance returns a payload nested 5,000 levels deep
+- **THEN** it is rejected as malformed, startup completes, and the next refresh is scheduled
 
 #### Scenario: Late response is discarded
 

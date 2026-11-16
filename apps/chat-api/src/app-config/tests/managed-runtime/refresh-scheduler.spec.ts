@@ -45,6 +45,7 @@ describe('InstanceRefreshScheduler', () => {
       fetch: vi.fn(fetch),
       apply: vi.fn(apply),
       onLateDiscarded: vi.fn(),
+      onApplyError: vi.fn(),
     };
     const scheduler = new InstanceRefreshScheduler(
       clock,
@@ -136,5 +137,52 @@ describe('InstanceRefreshScheduler', () => {
     await clock.advance(600_000);
     expect(hooks.fetch).toHaveBeenCalledTimes(1);
     expect(hooks.apply).not.toHaveBeenCalled();
+  });
+
+  it('keeps polling when applying a result throws', async () => {
+    const { clock, hooks, scheduler } = makeScheduler(
+      async () => ({ kind: RuntimeReadKind.Candidate, body: {} }),
+      () => {
+        throw new RangeError('Maximum call stack size exceeded');
+      },
+    );
+
+    await expect(scheduler.start()).resolves.toBeUndefined();
+    expect(hooks.onApplyError).toHaveBeenCalledWith(expect.any(RangeError));
+    expect(clock.pendingDelays()).toEqual([120_000]);
+
+    await clock.advance(120_000);
+    expect(hooks.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps polling when the read itself throws synchronously', async () => {
+    const { clock, hooks, scheduler } = makeScheduler(
+      () => {
+        throw new TypeError('boom');
+      },
+      (result) => result.kind !== RuntimeReadKind.Unavailable,
+    );
+    await scheduler.start();
+    expect(hooks.apply).toHaveBeenCalledWith(
+      { kind: RuntimeReadKind.Unavailable },
+      0,
+    );
+    expect(clock.pendingDelays()).toEqual([120_000]);
+  });
+
+  it('settles a pending start when stopped during the read', async () => {
+    const { hooks, scheduler } = makeScheduler(
+      (signal) =>
+        new Promise<RuntimeReadResult>((resolve) => {
+          signal.addEventListener('abort', () =>
+            resolve({ kind: RuntimeReadKind.Aborted }),
+          );
+        }),
+    );
+    const started = scheduler.start();
+    scheduler.stop();
+    await expect(started).resolves.toBeUndefined();
+    expect(hooks.apply).not.toHaveBeenCalled();
+    expect(hooks.onLateDiscarded).not.toHaveBeenCalled();
   });
 });

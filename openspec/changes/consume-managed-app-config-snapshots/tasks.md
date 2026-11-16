@@ -66,3 +66,12 @@ Paths under `managed-runtime/` and `useClientConfigRefresh` are proposed. Backen
   **Verification:** `npm run validate:docs`.
 - [x] 6.3 Run `npm run validate:specs` and `npm run spec:impact`, and `openspec validate consume-managed-app-config-snapshots --type change --strict --no-interactive`, all green.
 - [x] 6.4 Final gate: run `npm run verify:full` once.
+
+## 7. Review fixes
+
+- [x] 7.1 Isolate attempt failures: `apps/chat-api/src/app-config/managed-runtime/refresh-scheduler.ts` treats a throw while reading or applying as a failed attempt and always reschedules; `ManagedRuntimeService` records a throwing acceptance as `rejected_malformed`; `snapshot-acceptance.ts` rejects payloads nested deeper than 32 levels (checked iteratively) before any recursive walk. The redundant generation counter and the unreachable `aborted` apply branch are removed, and `stop()` settles a pending first attempt. **Verification:** `refresh-scheduler.spec.ts` (apply throws, read throws, stop during the read) and `managed-runtime.service.spec.ts` (5,000-level payload: startup completes, polling continues).
+- [x] 7.2 `snapshot-reader.ts` reports an abort during an error-body read as `aborted`, not a denial. **Verification:** `snapshot-reader.spec.ts`.
+- [x] 7.3 An unmapped `chat-ui` keeps environment behavior for active feature keys (`AppConfigService.applyManagedPolicy`), and the managed response TTL is capped at `MANAGED_CONFIG_CLIENT_REFRESH_SECONDS`. **Verification:** `managed-activation.spec.ts`.
+- [x] 7.4 `MANAGED_CONFIG_ACTIVE_KEYS` is ignored with a warning outside `active` mode, so the mode alone rolls back. **Verification:** `managed-config-environment.spec.ts`, `managed-runtime.service.spec.ts`.
+- [x] 7.5 Browser: `useClientConfigRefresh` takes a per-response schedule (`nextRefreshAt − resolvedAt`, server time) that re-arms on every accepted response; `AppConfigProvider` starts no background refresh while an identity load is in flight. **Verification:** `useClientConfigRefresh.spec.ts`, `AppConfigContext.spec.tsx`.
+- [x] 7.6 Specs, design, proposal and docs updated to match (attempt isolation, depth bound, rollback, TTL cap, schedule, narrowed re-render promise, D12 `active`-only cache key). **Verification:** strict OpenSpec validation, `npm run validate:docs`, `npm run verify:full`.

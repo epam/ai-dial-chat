@@ -93,6 +93,14 @@ export type AcceptanceResult =
   | { readonly accepted: false; readonly reason: ManagedRejectionReason };
 
 const SHA256_HEX = /^[0-9a-f]{64}$/;
+
+/**
+ * The deepest object/array nesting a payload may have, the payload itself
+ * being level 1. The `chat-ui` schema needs 5; the bound exists because a
+ * foreign payload is not schema-checked, and the canonical serialization,
+ * `structuredClone` and freezing all recurse.
+ */
+export const MAX_MANAGED_PAYLOAD_DEPTH = 32;
 /* ISO-8601 instant with an explicit `Z` or offset, as Studio writes it. */
 const ISO_INSTANT =
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/;
@@ -103,6 +111,20 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.length > 0;
+
+/* Iterative, so an arbitrarily deep value cannot overflow the stack here. */
+const exceedsDepth = (value: unknown, maxDepth: number): boolean => {
+  const pending: [unknown, number][] = [[value, 1]];
+  for (let next = pending.pop(); next; next = pending.pop()) {
+    const [node, depth] = next;
+    if (node === null || typeof node !== 'object') continue;
+    if (depth > maxDepth) return true;
+    for (const member of Object.values(node)) {
+      pending.push([member, depth + 1]);
+    }
+  }
+  return false;
+};
 
 const reject = (reason: ManagedRejectionReason): AcceptanceResult => ({
   accepted: false,
@@ -118,7 +140,7 @@ const deepFreeze = <T>(value: T): T => {
 };
 
 /**
- * Checks one runtime-read body, in order: identity, envelope, payload size,
+ * Checks one runtime-read body, in order: identity, envelope, payload depth and size,
  * revision immutability, and for `chat-ui` the supported version, its pinned
  * hash, schema validation and the semantic constraints. A foreign
  * application's payload is never validated against a schema: the
@@ -167,6 +189,9 @@ export const acceptSnapshot = (
     return reject(ManagedRejectionReason.Malformed);
   }
 
+  if (exceedsDepth(payload, MAX_MANAGED_PAYLOAD_DEPTH)) {
+    return reject(ManagedRejectionReason.Malformed);
+  }
   if (canonicalByteLength(payload) > MAX_MANAGED_PAYLOAD_BYTES) {
     return reject(ManagedRejectionReason.PayloadTooLarge);
   }

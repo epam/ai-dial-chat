@@ -1,6 +1,10 @@
 import { renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useClientConfigRefresh } from '../useClientConfigRefresh';
+import {
+  scheduleFromResponse,
+  useClientConfigRefresh,
+  type ClientConfigRefreshSchedule,
+} from '../useClientConfigRefresh';
 
 const NOW = Date.UTC(2026, 10, 20, 10);
 
@@ -11,8 +15,9 @@ const setVisibility = (next: DocumentVisibilityState) => {
   document.dispatchEvent(new Event('visibilitychange'));
 };
 
-const inSeconds = (seconds: number) =>
-  new Date(Date.now() + seconds * 1000).toISOString();
+const inSeconds = (seconds: number): ClientConfigRefreshSchedule => ({
+  delayMs: seconds * 1000,
+});
 
 describe('useClientConfigRefresh', () => {
   let lastLoadStartedAt: number;
@@ -20,15 +25,15 @@ describe('useClientConfigRefresh', () => {
     lastLoadStartedAt = Date.now();
   });
 
-  const render = (nextRefreshAt: string | null) =>
+  const render = (schedule: ClientConfigRefreshSchedule | null) =>
     renderHook(
-      ({ hint }: { hint: string | null }) =>
+      ({ hint }: { hint: ClientConfigRefreshSchedule | null }) =>
         useClientConfigRefresh({
-          nextRefreshAt: hint,
+          schedule: hint,
           refresh,
           getLastLoadStartedAt: () => lastLoadStartedAt,
         }),
-      { initialProps: { hint: nextRefreshAt } },
+      { initialProps: { hint: schedule } },
     );
 
   beforeEach(() => {
@@ -146,5 +151,44 @@ describe('useClientConfigRefresh', () => {
     vi.advanceTimersByTime(600_000);
     window.dispatchEvent(new Event('focus'));
     expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it('re-arms for every accepted response, even with the same hint', () => {
+    const { rerender } = render(inSeconds(30));
+    vi.advanceTimersByTime(30_000);
+    expect(refresh).toHaveBeenCalledTimes(1);
+
+    /* A cached response repeats the hint; its new schedule object re-arms. */
+    rerender({ hint: inSeconds(30) });
+    vi.advanceTimersByTime(30_000);
+    expect(refresh).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('scheduleFromResponse', () => {
+  it('measures the delay in server time, whatever the browser clock says', () => {
+    vi.setSystemTime(Date.UTC(2030, 0, 1));
+    expect(
+      scheduleFromResponse({
+        resolvedAt: '2026-11-20T10:00:00.000Z',
+        nextRefreshAt: '2026-11-20T10:02:00.000Z',
+      }),
+    ).toEqual({ delayMs: 120_000 });
+  });
+
+  it('has no schedule without a hint', () => {
+    expect(scheduleFromResponse(undefined)).toBeNull();
+    expect(
+      scheduleFromResponse({ resolvedAt: '2026-11-20T10:00:00.000Z' }),
+    ).toBeNull();
+  });
+
+  it('never schedules a negative delay', () => {
+    expect(
+      scheduleFromResponse({
+        resolvedAt: '2026-11-20T10:02:00.000Z',
+        nextRefreshAt: '2026-11-20T10:00:00.000Z',
+      }),
+    ).toEqual({ delayMs: 0 });
   });
 });

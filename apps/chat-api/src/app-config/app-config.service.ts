@@ -284,8 +284,8 @@ export class AppConfigService {
 
   /**
    * The gates of an active managed feature (see `isManagedFeatureEnabled`).
-   * Every other key, every key outside `active` mode, and every key of a
-   * foreign application's response (its typed fields keep the `chat-ui`
+   * Every other key, every key outside `active` mode, every key while
+   * `chat-ui` has no mapped instance, and every key of a foreign application's response (its typed fields keep the `chat-ui`
    * environment values) keeps its selected value.
    */
   private applyManagedPolicy(
@@ -295,6 +295,8 @@ export class AppConfigService {
   ): unknown {
     if (
       context.managed?.appId !== MANAGED_CONFIG_APP_ID ||
+      /* An unmapped identifier keeps pure environment behavior. */
+      context.managed.instanceId == null ||
       !this.managedRuntime.isActiveKey(key)
     ) {
       return selected;
@@ -325,11 +327,13 @@ export class AppConfigService {
   }
 
   /*
-   * At most 60 s, and never past the next window boundary or the moment the
+   * At most 60 s and at most the browser refresh interval (so the request a
+   * tab sends at `nextRefreshAt` is resolved again, not served the cached
+   * hint), and never past the next window boundary or the moment the
    * snapshot becomes stale, so a cached response cannot outlive either.
    */
   private managedCacheTtlMs(view: ManagedResolutionView): number {
-    const limits = [CACHE_TTL_MS];
+    const limits = [CACHE_TTL_MS, this.managedRuntime.settings.clientRefreshMs];
     const boundary = this.nextBoundary(view);
     if (boundary != null) limits.push(boundary - view.now);
     if (view.snapshot && view.staleAt != null) {

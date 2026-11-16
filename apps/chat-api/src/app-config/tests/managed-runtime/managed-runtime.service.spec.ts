@@ -238,6 +238,44 @@ describe('ManagedRuntimeService', () => {
     runtime.onModuleDestroy();
   });
 
+  it('rejects a deeply nested payload without stopping startup or polling', async () => {
+    const { clock, fake, runtime } = setup({
+      ...SHADOW,
+      CLIENT_CONFIG_APP_IDS: ['chat-ui', 'launchpad'],
+      MANAGED_CONFIG_INSTANCES: ['launchpad=launchpad-dev'],
+    });
+    const deep = JSON.parse(`${'{"a":'.repeat(5_000)}1${'}'.repeat(5_000)}`);
+    fake.respondAlways('launchpad-dev', {
+      kind: RuntimeReadKind.Candidate,
+      body: snapshotBody({
+        instanceId: 'launchpad-dev',
+        appId: 'launchpad',
+        sha256: 'd'.repeat(64),
+        payload: deep,
+      }),
+    });
+
+    await expect(runtime.onApplicationBootstrap()).resolves.toBeUndefined();
+    expect(runtime.captureView('launchpad').state).toBe(
+      ManagedConfigState.Unavailable,
+    );
+    await clock.advance(2 * INTERVAL);
+    expect(fake.calls).toEqual(['launchpad-dev', 'launchpad-dev']);
+    runtime.onModuleDestroy();
+  });
+
+  it('warns that active keys are ignored outside active mode', () => {
+    const warn = vi.spyOn(Logger.prototype, 'warn');
+    const runtime = createManagedRuntime({
+      ...SHADOW,
+      MANAGED_CONFIG_ACTIVE_KEYS: ['welcomeScreen.description'],
+    });
+    expect(runtime.isActiveKey('welcomeScreen.description')).toBe(false);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('MANAGED_CONFIG_ACTIVE_KEYS is ignored'),
+    );
+  });
+
   it('keeps two instances isolated', async () => {
     const { fake, runtime } = setup({
       ...SHADOW,

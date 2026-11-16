@@ -5,7 +5,7 @@ Chat exports its managed contract (`chat-ui-1.0.0.json`, #9787), and Config Stud
 ## What Changes
 
 - **Reader.** A server-side reader that polls the runtime read of each served application identifier mapped to a Config Studio instance in trusted deployment configuration. It uses Chat's own reader key and goes through Core only. Polling is bounded: jitter, backoff, a timeout, and a response byte limit, with one request in flight per instance.
-- **Acceptance and swap.** Identity, schema version and pinned hash, size, and revision immutability are checked. `chat-ui` payloads also pass schema and semantic validation. An accepted snapshot becomes one immutable parsed snapshot, swapped atomically. A late response from an obsolete refresh generation is discarded.
+- **Acceptance and swap.** Identity, schema version and pinned hash, size, and revision immutability are checked. `chat-ui` payloads also pass schema and semantic validation. An accepted snapshot becomes one immutable parsed snapshot, swapped atomically. A late response after its attempt timed out is discarded, and nothing a snapshot contains can stop polling or the process.
 - **Freshness.** Freshness counts from the last successful verification. Last-known-good is kept only in memory and is usable up to an explicit maximum staleness. The design defines a state for each case: cold start, warm outage, stale, denied key, `not_published`, `integrity_mismatch`, incompatible revision, and recovery with the same revision.
 - **Staged activation** through `MANAGED_CONFIG_MODE`:
   - `off` (default) is exactly today's behavior;
@@ -27,7 +27,7 @@ No breaking change. In mode `off`, requests, responses, and browser behavior are
 
 ### New Capabilities
 
-- `managed-config-runtime-reader`: trusted instance mapping and reader credential; polling, limits, and generations; snapshot acceptance; immutable swap; freshness and maximum staleness; failure states and recovery; observability.
+- `managed-config-runtime-reader`: trusted instance mapping and reader credential; polling, limits, and attempt isolation; snapshot acceptance; immutable swap; freshness and maximum staleness; failure states and recovery; observability.
 - `managed-config-activation`: modes `off`/`shadow`/`active`; per-key activation; value resolution order; feature gate composition; time-window and role-targeting evaluation; server-guard enforcement; delivery of foreign payloads.
 
 ### Modified Capabilities
@@ -59,7 +59,7 @@ No breaking change. In mode `off`, requests, responses, and browser behavior are
   - an oversized payload;
   - a schema or semantic failure;
   - changed content for a known `revisionId`;
-  - a late response from an older generation.
+  - a late response after its attempt timed out.
 - `not_published` drops managed state at once. A denied key and Core or Studio 5xx keep last-known-good within staleness and fail closed beyond it. After a rejection, the same revision is accepted once it validates.
 - Two instances, `chat-ui` → A and `launchpad` → B, never share snapshots, caches, or responses. Two service instances (separate pods) over one fake Core converge independently.
 - ENV `false` disables an active managed feature, and ENV `true` cannot enable one whose policy is unusable, outside its window, or untargeted. `FeatureGuard` agrees with `client-config`.
