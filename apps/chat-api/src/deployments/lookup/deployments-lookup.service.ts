@@ -16,12 +16,13 @@ import { DeploymentItemType } from '../dto/deployment-item.dto';
 import type { DeploymentItemDto } from '../dto/deployment-item.dto';
 import { RawDeploymentDto } from '../dto/raw-deployment.dto';
 import { mapToDeploymentItem } from '../utils/deployment-mapper.util';
+import { readHiddenEntityTags } from '../utils/hidden-entity-tags.util';
 
 @Injectable()
 export class DeploymentsLookupService {
   private readonly logger = new Logger(DeploymentsLookupService.name);
   private readonly featuredIds: Set<string>;
-  private readonly hiddenTags: Set<string>;
+  private readonly hiddenTags: ReadonlySet<string>;
 
   constructor(
     private readonly dialClient: DialClientService,
@@ -31,9 +32,7 @@ export class DeploymentsLookupService {
       configService.get<string[]>('FEATURED_MODEL_IDS') ?? [],
     );
 
-    this.hiddenTags = new Set(
-      configService.get<string[]>('HIDDEN_ENTITY_TAGS') ?? [],
-    );
+    this.hiddenTags = readHiddenEntityTags(configService);
   }
 
   private async tryGetRawModel(

@@ -33,7 +33,7 @@ export interface GetModelCatalogEntryRequest {
  */
 export class ModelsApi extends runtime.BaseAPI {
   /**
-   * Returns a single DIAL Core deployment by name for the authenticated session user. Proxies GET /openai/models/{model_name} using the caller\'s session access token. Results are cached server-side for 60 seconds per user per model.
+   * Returns a single DIAL Core deployment by name for the authenticated session user. Proxies GET /openai/models/{model_name} using the caller\'s session access token. A model whose description_keywords contain a HIDDEN_ENTITY_TAGS tag answers 404, as if it did not exist. Results are cached server-side for 60 seconds per user per model.
    * Get model by name
    */
   async getModelRaw(
@@ -80,7 +80,7 @@ export class ModelsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns a single DIAL Core deployment by name for the authenticated session user. Proxies GET /openai/models/{model_name} using the caller\'s session access token. Results are cached server-side for 60 seconds per user per model.
+   * Returns a single DIAL Core deployment by name for the authenticated session user. Proxies GET /openai/models/{model_name} using the caller\'s session access token. A model whose description_keywords contain a HIDDEN_ENTITY_TAGS tag answers 404, as if it did not exist. Results are cached server-side for 60 seconds per user per model.
    * Get model by name
    */
   async getModel(
@@ -92,7 +92,7 @@ export class ModelsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns one model from the cached model catalog, without a separate DIAL Core call. A model hidden from the catalog key answers 404, never 403, so its existence is not revealed.
+   * Returns one model from the cached model catalog, without a separate DIAL Core call. A model hidden from the catalog key answers 404, never 403, so its existence is not revealed. A model omitted through HIDDEN_ENTITY_TAGS also answers 404.
    * Get a model from the catalog
    */
   async getModelCatalogEntryRaw(
@@ -139,7 +139,7 @@ export class ModelsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns one model from the cached model catalog, without a separate DIAL Core call. A model hidden from the catalog key answers 404, never 403, so its existence is not revealed.
+   * Returns one model from the cached model catalog, without a separate DIAL Core call. A model hidden from the catalog key answers 404, never 403, so its existence is not revealed. A model omitted through HIDDEN_ENTITY_TAGS also answers 404.
    * Get a model from the catalog
    */
   async getModelCatalogEntry(
@@ -154,7 +154,7 @@ export class ModelsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns the DIAL Core models visible to the server-side MODEL_CATALOG_API_KEY, including models the caller\'s own roles cannot access. Display data only: GET /api/v1/models still decides what the user can use, and Core invocation settings (defaults, responses_defaults, max_retry_attempts, tokenizer_model) are omitted. One server-side cache entry, shared by all users, is kept for 5 minutes.
+   * Returns the DIAL Core models visible to the server-side MODEL_CATALOG_API_KEY, including models the caller\'s own roles cannot access. Display data only: GET /api/v1/models still decides what the user can use, and Core invocation settings (defaults, responses_defaults, max_retry_attempts, tokenizer_model) are omitted. Models whose description_keywords contain a HIDDEN_ENTITY_TAGS tag are omitted, as in the Chat Catalog. One server-side cache entry, shared by all users, is kept for 5 minutes.
    * List the model catalog
    */
   async listModelCatalogRaw(
@@ -189,7 +189,7 @@ export class ModelsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns the DIAL Core models visible to the server-side MODEL_CATALOG_API_KEY, including models the caller\'s own roles cannot access. Display data only: GET /api/v1/models still decides what the user can use, and Core invocation settings (defaults, responses_defaults, max_retry_attempts, tokenizer_model) are omitted. One server-side cache entry, shared by all users, is kept for 5 minutes.
+   * Returns the DIAL Core models visible to the server-side MODEL_CATALOG_API_KEY, including models the caller\'s own roles cannot access. Display data only: GET /api/v1/models still decides what the user can use, and Core invocation settings (defaults, responses_defaults, max_retry_attempts, tokenizer_model) are omitted. Models whose description_keywords contain a HIDDEN_ENTITY_TAGS tag are omitted, as in the Chat Catalog. One server-side cache entry, shared by all users, is kept for 5 minutes.
    * List the model catalog
    */
   async listModelCatalog(
@@ -200,7 +200,7 @@ export class ModelsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns the list of DIAL Core deployments visible to the authenticated session user. Proxies GET /openai/models using the caller\'s session access token. Results are cached server-side for 30 seconds per user.
+   * Returns the list of DIAL Core deployments visible to the authenticated session user. Proxies GET /openai/models using the caller\'s session access token. Models whose description_keywords contain a HIDDEN_ENTITY_TAGS tag are omitted, as in the Chat Catalog. Hiding is not access control. Results are cached server-side for 30 seconds per user.
    * List available models
    */
   async listModelsRaw(
@@ -235,7 +235,7 @@ export class ModelsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns the list of DIAL Core deployments visible to the authenticated session user. Proxies GET /openai/models using the caller\'s session access token. Results are cached server-side for 30 seconds per user.
+   * Returns the list of DIAL Core deployments visible to the authenticated session user. Proxies GET /openai/models using the caller\'s session access token. Models whose description_keywords contain a HIDDEN_ENTITY_TAGS tag are omitted, as in the Chat Catalog. Hiding is not access control. Results are cached server-side for 30 seconds per user.
    * List available models
    */
   async listModels(
