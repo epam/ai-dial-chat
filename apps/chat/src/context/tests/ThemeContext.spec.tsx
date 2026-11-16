@@ -4,7 +4,9 @@ import { act, render, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as useFaviconModule from '../../hooks/favicon/useFavicon';
 import * as serverApi from '../../server-api/base';
+import { StorageKey } from '../../types/storage-key';
 import * as localStorage from '../../utils/local-storage';
+import { THEME_PRELOAD_ATTRIBUTE } from '../../utils/theme-preload';
 import { ThemeProvider, useTheme } from '../ThemeContext';
 
 // Mock modules
@@ -226,7 +228,9 @@ describe('ThemeContext', () => {
         wrapper: ThemeProvider,
       });
 
+      // The stored id is reported before the configuration loads; wait for it.
       await waitFor(() => {
+        expect(result.current.themes).toEqual(mockThemeConfig.themes);
         expect(result.current.selectedTheme).toBe('dark');
         expect(result.current.currentTheme).toBe('dark');
       });
@@ -246,6 +250,7 @@ describe('ThemeContext', () => {
       });
 
       await waitFor(() => {
+        expect(result.current.themes).toEqual(customThemeConfig.themes);
         expect(result.current.selectedTheme).toBe('contoso-night');
         expect(result.current.currentTheme).toBe('contoso-night');
       });
@@ -294,7 +299,10 @@ describe('ThemeContext', () => {
       });
 
       expect(result.current.currentTheme).toBe('light');
-      expect(mockSetToLocalStorage).not.toHaveBeenCalled();
+      expect(mockSetToLocalStorage).not.toHaveBeenCalledWith(
+        StorageKey.Theme,
+        expect.anything(),
+      );
     });
 
     it('restores system and resolves it against the OS preference', async () => {
@@ -321,7 +329,13 @@ describe('ThemeContext', () => {
         wrapper: ThemeProvider,
       });
 
+      /*
+       * The provider reports the stored theme before the configuration
+       * loads, so wait for the configuration too — the OS subscription the
+       * stub serves only starts after it.
+       */
       await waitFor(() => {
+        expect(result.current.themes).toEqual(mockThemeConfig.themes);
         expect(result.current.selectedTheme).toBe('system');
         expect(result.current.currentTheme).toBe('dark');
       });
@@ -385,6 +399,56 @@ describe('ThemeContext', () => {
         undefined,
       );
       expect(result.current.currentTheme).toBe('light');
+    });
+  });
+
+  /*
+   * `public/theme-init.js` paints the stored theme from this cache before the
+   * bundle loads, so a reload does not flash the default palette (#5166).
+   */
+  describe('early paint on the next load', () => {
+    it('caches every configured theme colours by id once the configuration loads', async () => {
+      const { result } = renderHook(() => useTheme(), {
+        wrapper: ThemeProvider,
+      });
+
+      await waitFor(() => {
+        expect(result.current.themes).toEqual(mockThemeConfig.themes);
+      });
+
+      expect(localStorage.setToLocalStorage).toHaveBeenCalledWith(
+        StorageKey.ThemeColors,
+        JSON.stringify({
+          dark: mockThemeConfig.themes[0].colors,
+          light: mockThemeConfig.themes[1].colors,
+        }),
+      );
+    });
+
+    it('reports the stored theme before the configuration loads', () => {
+      mockGet.mockReturnValue(new Promise<ThemeConfiguration>(() => undefined));
+      mockGetFromLocalStorage.mockReturnValue('dark');
+
+      const { result } = renderHook(() => useTheme(), {
+        wrapper: ThemeProvider,
+      });
+
+      expect(result.current.currentTheme).toBe('dark');
+    });
+
+    it('removes the properties the preload script wrote before applying the fetched theme', async () => {
+      const root = document.documentElement;
+      root.style.setProperty('--stale-color', '#123456');
+      root.setAttribute(THEME_PRELOAD_ATTRIBUTE, '--stale-color');
+
+      renderHook(() => useTheme(), { wrapper: ThemeProvider });
+
+      await waitFor(() => {
+        expect(mockApplyThemeColors).toHaveBeenCalled();
+      });
+
+      expect(root.style.getPropertyValue('--stale-color')).toBe('');
+      expect(root.hasAttribute(THEME_PRELOAD_ATTRIBUTE)).toBe(false);
     });
   });
 

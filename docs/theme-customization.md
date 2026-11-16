@@ -130,6 +130,26 @@ regardless of which theme the file lists first. A deployment that configures no
 `light` theme therefore renders in the built-in Tailwind light palette until the
 user picks something.
 
+### First paint on reload
+
+The configuration arrives only after the bundle has loaded and `/api/themes`
+has answered, so painting from it alone flashed the built-in light palette on
+every reload for a user on a dark theme. To avoid that, the app keeps the
+colours of every configured theme in local storage (`themeColors`, written each
+time the configuration loads), and `apps/chat/public/theme-init.js` — a
+synchronous classic script in the `index.html` head, served from `'self'`
+because the app-shell CSP allows no inline scripts — writes the stored theme's
+colours onto `<html>` before the bundle runs, resolving `system` against
+`prefers-color-scheme` itself. It lists the properties it wrote in
+`data-theme-preload`; `ThemeContext` removes them before applying the fetched
+configuration, so a key the cached theme had and the current one lacks does not
+linger.
+
+The cache is per device. On the very first visit, or after the storage is
+cleared, there is nothing to paint and the page starts in the built-in palette
+as before. A theme whose colours changed on the themes host shows its previous
+colours until `/api/themes` answers.
+
 ### Logos and icons
 
 The application reads exactly three image fields:
