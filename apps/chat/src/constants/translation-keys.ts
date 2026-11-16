@@ -216,6 +216,7 @@ export enum CatalogI18nKeys {
   BrowseSettingsFiltering = 'catalog.browseSettings.filtering',
   BrowseSettingsCards = 'catalog.browseSettings.cards',
   BrowseSettingsList = 'catalog.browseSettings.list',
+  BrowseSettingsFrom = 'catalog.browseSettings.from',
   BrowseSettingsMy = 'catalog.browseSettings.my',
   BrowseSettingsTopics = 'catalog.browseSettings.topics',
   BrowseSettingsFilterCount = 'catalog.browseSettings.filterCount',

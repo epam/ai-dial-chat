@@ -184,5 +184,35 @@
     "page": "Settings",
     "element": "The settings page's section tabs",
     "lookup": "The `role=\"tablist\"` labelled \"Settings\" inside `#main-content`"
+  },
+  {
+    "target": "message-actions",
+    "page": "Conversation",
+    "element": "The action bar (Copy, Regenerate…) under the newest message, normally the latest answer; it appears once the answer has finished",
+    "lookup": "The last on-screen `role=\"toolbar\"` named \"Message actions\" inside the `role=\"log\"` named \"Conversation messages\""
+  },
+  {
+    "target": "catalog-filter",
+    "page": "Catalog (desktop)",
+    "element": "The catalog's source filter button (\"From\", or \"My\" while only your own items are shown)",
+    "lookup": "A button inside the catalog `section` named \"From\", \"From: …\", \"My\" or \"My · …\""
+  },
+  {
+    "target": "catalog-sort",
+    "page": "Catalog",
+    "element": "The sort menu on desktop; the browse-settings button that holds sorting on a phone",
+    "lookup": "A button inside the catalog `section` named after one of the sort orders (\"Recently Updated\", \"Newest\", \"Name A-Z\"), else a button named \"Browse settings\""
+  },
+  {
+    "target": "catalog-card",
+    "page": "Catalog",
+    "element": "The first catalog card on screen — a favorite's card when the favorites row is shown; open it to see the item's details",
+    "lookup": "The first on-screen `article` with an accessible name inside the catalog `section`"
+  },
+  {
+    "target": "catalog-favorite",
+    "page": "Catalog",
+    "element": "The favorite star of the first card on screen",
+    "lookup": "The first on-screen button inside the catalog `section` named \"Add to favorites\" or \"Remove from favorites\""
   }
 ]

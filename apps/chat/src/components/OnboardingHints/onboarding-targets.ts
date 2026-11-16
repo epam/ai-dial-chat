@@ -20,6 +20,20 @@ export interface OnboardingTargetLabels {
   catalogCreate: string;
   /** The catalog's grid/list view switch. */
   catalogViewMode: string;
+  /** The catalog filter's label while nothing is filtered ("From"). */
+  catalogFilterFrom: string;
+  /** The catalog filter's label while only the user's own items are shown ("My"). */
+  catalogFilterMy: string;
+  /** The catalog's sort options; the sort trigger is named after the applied one. */
+  catalogSortOptions: string[];
+  /** The phone-only button that opens the catalog's view, sort and filter sheet. */
+  catalogBrowseSettings: string;
+  /** A catalog card's star while the item is not a favorite. */
+  addToFavorites: string;
+  /** A catalog card's star while the item is a favorite. */
+  removeFromFavorites: string;
+  /** The action bar under a message. */
+  messageActions: string;
   /** The composer's send button. */
   sendMessage: string;
   /** The model selector; its name is this label, or this label followed by ": " and the model. */
@@ -78,6 +92,9 @@ const firstOnScreen = (elements: Iterable<Element>): HTMLElement | null => {
   }
   return null;
 };
+
+const lastOnScreen = (elements: Element[]): HTMLElement | null =>
+  firstOnScreen([...elements].reverse());
 
 /* The name assistive technology reads: aria-labelledby, then aria-label, then
  * the visible text. */
@@ -190,6 +207,9 @@ const composerScopes = (): Element[] => {
   return [field.closest('[role="region"], section, form') ?? mainContent()[0]];
 };
 
+const conversationLogs = (labels: OnboardingTargetLabels): Element[] =>
+  named(mainContent(), '[role="log"]', labels.conversationMessages);
+
 const chatsSections = (labels: OnboardingTargetLabels): Element[] =>
   named(navigations(labels), 'section', labels.chats);
 
@@ -232,7 +252,17 @@ const ANCHOR_RESOLVERS: Record<OnboardingHintTarget, AnchorResolver> = {
   [OnboardingHintTarget.ConversationStarters]: (labels) =>
     firstNamed(mainContent(), '[role="list"]', labels.conversationStarters),
   [OnboardingHintTarget.ConversationMessages]: (labels) =>
-    firstNamed(mainContent(), '[role="log"]', labels.conversationMessages),
+    firstOnScreen(conversationLogs(labels)),
+  /* Every finished message has an action bar; the last one belongs to the
+   * newest message, normally the latest answer. */
+  [OnboardingHintTarget.MessageActions]: (labels) =>
+    lastOnScreen(
+      named(
+        conversationLogs(labels),
+        '[role="toolbar"]',
+        labels.messageActions,
+      ),
+    ),
   [OnboardingHintTarget.SourcesPanelToggle]: (labels) =>
     findControl(mainContent(), labels.sourcesPanelToggle),
   /* The desktop collapse button in the sidebar, or the mobile header button
@@ -284,6 +314,33 @@ const ANCHOR_RESOLVERS: Record<OnboardingHintTarget, AnchorResolver> = {
       '[role="radiogroup"]',
       (element) =>
         element.getAttribute('aria-label') === labels.catalogViewMode,
+    ),
+  /* The trigger is named after the applied filter: "From", "From: 2 of 5",
+   * "My" or "My · 2". */
+  [OnboardingHintTarget.CatalogFilter]: (labels) =>
+    findControlBy(
+      catalogRegions(labels),
+      (name) =>
+        name === labels.catalogFilterFrom ||
+        name.startsWith(`${labels.catalogFilterFrom}: `) ||
+        name === labels.catalogFilterMy ||
+        name.startsWith(`${labels.catalogFilterMy} · `),
+    ),
+  /* The trigger is named after the applied order; on a phone, sorting lives
+   * in the browse-settings sheet. */
+  [OnboardingHintTarget.CatalogSort]: (labels) =>
+    findControlBy(catalogRegions(labels), (name) =>
+      labels.catalogSortOptions.includes(name),
+    ) ?? findControl(catalogRegions(labels), labels.catalogBrowseSettings),
+  /* Each card is an `article` named after its item, the favorites strip's
+   * first. */
+  [OnboardingHintTarget.CatalogCard]: (labels) =>
+    firstInCatalog(labels, 'article[aria-label]'),
+  [OnboardingHintTarget.CatalogFavorite]: (labels) =>
+    findControlBy(
+      catalogRegions(labels),
+      (name) =>
+        name === labels.addToFavorites || name === labels.removeFromFavorites,
     ),
 };
 

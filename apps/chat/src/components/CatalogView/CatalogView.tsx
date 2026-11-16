@@ -770,6 +770,7 @@ const CatalogView: FC<Props> = ({
           gridViewLabel: t(CatalogI18nKeys.GridViewLabel),
           listViewLabel: t(CatalogI18nKeys.ListViewLabel),
           viewToggleLabel: t(CatalogI18nKeys.ViewToggleLabel),
+          filterFromLabel: t(CatalogI18nKeys.BrowseSettingsFrom),
           filterMyAppsLabel: t(CatalogI18nKeys.BrowseSettingsMy),
           filterTopicsLabel: t(CatalogI18nKeys.BrowseSettingsTopics),
           browseSettings: {
@@ -815,6 +816,10 @@ const CatalogView: FC<Props> = ({
           )
         }
         detailsTexts={{
+          addToFavoritesAriaLabel: t(FavoritesI18nKeys.AddToFavorites),
+          removeFromFavoritesAriaLabel: t(
+            FavoritesI18nKeys.RemoveFromFavorites,
+          ),
           tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
           tabContentLabel: t(CatalogI18nKeys.DetailsTabContent),
           tabLimitsLabel: t(CatalogI18nKeys.DetailsTabLimits),

@@ -7184,6 +7184,11 @@ export const OnboardingHintTarget = {
   CatalogSearch: 'catalog-search',
   CatalogTabs: 'catalog-tabs',
   CatalogViewMode: 'catalog-view-mode',
+  CatalogFilter: 'catalog-filter',
+  CatalogSort: 'catalog-sort',
+  CatalogCard: 'catalog-card',
+  CatalogFavorite: 'catalog-favorite',
+  MessageActions: 'message-actions',
 } as const;
 export type OnboardingHintTarget =
   (typeof OnboardingHintTarget)[keyof typeof OnboardingHintTarget];

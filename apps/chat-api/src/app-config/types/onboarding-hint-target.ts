@@ -68,4 +68,14 @@ export enum OnboardingHintTarget {
   CatalogTabs = 'catalog-tabs',
   /** The catalog's grid/list view switch. */
   CatalogViewMode = 'catalog-view-mode',
+  /** The catalog's source filter ("From" / "My"). */
+  CatalogFilter = 'catalog-filter',
+  /** The catalog's sort menu, or the browse-settings button on a phone. */
+  CatalogSort = 'catalog-sort',
+  /** The first catalog card on screen. */
+  CatalogCard = 'catalog-card',
+  /** The favorite star of the first catalog card on screen. */
+  CatalogFavorite = 'catalog-favorite',
+  /** The action bar (Copy, Regenerate…) of the last message in the open conversation. */
+  MessageActions = 'message-actions',
 }

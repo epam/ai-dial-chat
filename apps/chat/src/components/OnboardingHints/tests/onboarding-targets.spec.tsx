@@ -16,6 +16,13 @@ const labels: OnboardingTargetLabels = {
   addAttachment: 'Add',
   catalogCreate: 'Create',
   catalogViewMode: 'View mode',
+  catalogFilterFrom: 'From',
+  catalogFilterMy: 'My',
+  catalogSortOptions: ['Recently Updated', 'Newest', 'Name A-Z'],
+  catalogBrowseSettings: 'Browse settings',
+  addToFavorites: 'Add to favorites',
+  removeFromFavorites: 'Remove from favorites',
+  messageActions: 'Message actions',
   sendMessage: 'Send message',
   modelSelector: 'Select model',
   voiceInput: 'Dictate',
@@ -187,6 +194,111 @@ describe('resolveOnboardingTarget', () => {
     ).toBe(within(catalog).getByRole('radiogroup', { name: 'View mode' }));
   });
 
+  describe('catalog browsing', () => {
+    const CatalogPage = ({ filter = 'From' }: { filter?: string }) => (
+      <main id="main-content">
+        <button type="button">Newest</button>
+        <section aria-label="Catalog">
+          <button type="button" aria-expanded="false">
+            {filter}
+          </button>
+          <button type="button" aria-haspopup="menu">
+            Recently Updated
+          </button>
+          <article aria-label="GPT-4o">
+            <button type="button" aria-label="Remove from favorites" />
+          </article>
+          <article aria-label="Planner">
+            <button type="button" aria-label="Add to favorites" />
+          </article>
+        </section>
+      </main>
+    );
+
+    it('finds the filter, the sort menu, the first card and its star', () => {
+      render(<CatalogPage />);
+      const catalog = screen.getByRole('region', { name: 'Catalog' });
+      expect(
+        resolveOnboardingTarget(OnboardingHintTarget.CatalogFilter, labels),
+      ).toBe(within(catalog).getByRole('button', { name: 'From' }));
+      expect(
+        resolveOnboardingTarget(OnboardingHintTarget.CatalogSort, labels),
+      ).toBe(within(catalog).getByRole('button', { name: 'Recently Updated' }));
+      expect(
+        resolveOnboardingTarget(OnboardingHintTarget.CatalogCard, labels),
+      ).toBe(within(catalog).getByRole('article', { name: 'GPT-4o' }));
+      expect(
+        resolveOnboardingTarget(OnboardingHintTarget.CatalogFavorite, labels),
+      ).toBe(
+        within(catalog).getByRole('button', { name: 'Remove from favorites' }),
+      );
+    });
+
+    it.each(['From: 2 of 5', 'My', 'My · 2'])(
+      'finds the filter while it reads %s',
+      (filter) => {
+        render(<CatalogPage filter={filter} />);
+        expect(
+          resolveOnboardingTarget(OnboardingHintTarget.CatalogFilter, labels),
+        ).toBe(screen.getByRole('button', { name: filter }));
+      },
+    );
+
+    it('falls back to the browse-settings button for sorting on a phone', () => {
+      render(
+        <main id="main-content">
+          <section aria-label="Catalog">
+            <button type="button" aria-label="Browse settings" />
+          </section>
+        </main>,
+      );
+      expect(
+        resolveOnboardingTarget(OnboardingHintTarget.CatalogSort, labels),
+      ).toBe(screen.getByRole('button', { name: 'Browse settings' }));
+    });
+  });
+
+  describe('message actions', () => {
+    it('finds the action bar of the newest message', () => {
+      render(
+        <main id="main-content">
+          <div role="log" aria-label="Conversation messages">
+            <div role="toolbar" aria-label="Message actions">
+              <button type="button">Copy</button>
+            </div>
+            <div role="toolbar" aria-label="Message actions">
+              <button type="button">Regenerate</button>
+            </div>
+          </div>
+        </main>,
+      );
+      const [, newest] = screen.getAllByRole('toolbar', {
+        name: 'Message actions',
+      });
+      expect(
+        resolveOnboardingTarget(OnboardingHintTarget.MessageActions, labels),
+      ).toBe(newest);
+    });
+
+    it('skips an action bar hidden until hover', () => {
+      render(
+        <main id="main-content">
+          <div role="log" aria-label="Conversation messages">
+            <div role="toolbar" aria-label="Message actions" />
+            <div
+              role="toolbar"
+              aria-label="Message actions"
+              style={{ visibility: 'hidden' }}
+            />
+          </div>
+        </main>,
+      );
+      expect(
+        resolveOnboardingTarget(OnboardingHintTarget.MessageActions, labels),
+      ).toBe(screen.getAllByRole('toolbar', { name: 'Message actions' })[0]);
+    });
+  });
+
   it('finds no catalog control outside the catalog page', () => {
     render(<RootPage />);
     for (const target of [
@@ -194,6 +306,10 @@ describe('resolveOnboardingTarget', () => {
       OnboardingHintTarget.CatalogSearch,
       OnboardingHintTarget.CatalogTabs,
       OnboardingHintTarget.CatalogViewMode,
+      OnboardingHintTarget.CatalogFilter,
+      OnboardingHintTarget.CatalogSort,
+      OnboardingHintTarget.CatalogCard,
+      OnboardingHintTarget.CatalogFavorite,
     ]) {
       expect(resolveOnboardingTarget(target, labels)).toBeNull();
     }
