@@ -10,16 +10,11 @@ import {
   isResourceCreateAdapter,
   type ResourceSaveAdapter,
 } from './resource-save-adapter';
+import { SaveDestinationRoot } from './save-destination-root';
 
 export * from './resource-save-adapter';
 
-/** The roots of the Save panel's destination tree. */
-export enum SaveDestinationRoot {
-  /** The user's own folders for the resource type. */
-  Personal = 'personal',
-  /** The Organization/public bucket; saving here also sends a publish request. */
-  Organization = 'organization',
-}
+export { SaveDestinationRoot };
 
 /**
  * Returns the Save panel root a destination's `rootKey` names, or `undefined`

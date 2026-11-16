@@ -1,6 +1,6 @@
 import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import type { CatalogPublishEntityType } from '../catalog/publish';
-import { SaveDestinationRoot } from '../catalog/resource-save';
+import { SaveDestinationRoot } from '../catalog/save-destination-root';
 import { OrgUnitsStatus } from './types';
 import type { OrgUnitRightCheck } from './useOrgUnits/useOrgUnits';
 
