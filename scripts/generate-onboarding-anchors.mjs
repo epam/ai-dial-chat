@@ -4,7 +4,7 @@
 // ONBOARDING_HINTS entry can point at through its `target`.
 //
 // The catalog data lives in
-// apps/chat/src/components/OnboardingHints/onboarding-anchors.json, next to the
+// libs/chat-hooks/src/onboarding/onboarding-anchors.json, next to the
 // resolvers that find each element. A unit test keeps that file in step with
 // the OnboardingHintTarget enum chat-api accepts; `--check` keeps this document
 // in step with the file.
@@ -16,8 +16,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import prettier from 'prettier';
 
-const SOURCE =
-  'apps/chat/src/components/OnboardingHints/onboarding-anchors.json';
+const SOURCE = 'libs/chat-hooks/src/onboarding/onboarding-anchors.json';
 const OUTPUT = 'docs/onboarding-anchors.md';
 
 const escapeCell = (value) => value.replaceAll('|', '\\|');

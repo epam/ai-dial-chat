@@ -1,7 +1,7 @@
 import { OnboardingHintTarget } from '@epam/ai-dial-chat-api-client';
-import { getOnboardingAnchorTargets } from '@epam/ai-dial-chat-hooks/onboarding';
 import { describe, expect, it } from 'vitest';
 import anchors from '../onboarding-anchors.json';
+import { getOnboardingAnchorTargets } from '../onboarding-targets';
 
 describe('onboarding anchor catalog', () => {
   it('describes every target chat-api accepts, once each', () => {

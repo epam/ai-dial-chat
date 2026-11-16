@@ -15,7 +15,8 @@
     ],
     "forceConsistentCasingInFileNames": true,
     "ignoreDeprecations": "6.0",
-    "rootDir": "."
+    "rootDir": ".",
+    "resolveJsonModule": true
   },
   "include": [
     "src/test-setup.ts",

@@ -21,19 +21,19 @@ change that adds it.
 
 One anchor is four things, and all four change together:
 
-| Part                                        | File                                                               |
-| ------------------------------------------- | ------------------------------------------------------------------ |
-| The accepted value (closed list)            | `apps/chat-api/src/app-config/types/onboarding-hint-target.ts`     |
-| The resolver that finds the element         | `libs/chat-hooks/src/onboarding/onboarding-targets.ts`             |
-| The catalog row (page, element, lookup)     | `apps/chat/src/components/OnboardingHints/onboarding-anchors.json` |
-| The operator-facing page, generated from it | `docs/onboarding-anchors.md`                                       |
+| Part                                        | File                                                           |
+| ------------------------------------------- | -------------------------------------------------------------- |
+| The accepted value (closed list)            | `apps/chat-api/src/app-config/types/onboarding-hint-target.ts` |
+| The resolver that finds the element         | `libs/chat-hooks/src/onboarding/onboarding-targets.ts`         |
+| The catalog row (page, element, lookup)     | `libs/chat-hooks/src/onboarding/onboarding-anchors.json`       |
+| The operator-facing page, generated from it | `docs/onboarding-anchors.md`                                   |
 
 What catches a missing part:
 
 - a target in the enum with no resolver — the build, because `buildResolvers`
   returns a `Record<OnboardingHintTarget, …>`;
 - a target with no catalog row, or a row with no target —
-  `apps/chat/src/components/OnboardingHints/tests/onboarding-anchors.spec.ts`;
+  `libs/chat-hooks/src/onboarding/tests/onboarding-anchors.spec.ts`;
 - a stale operator page — `npm run validate:docs`.
 
 ## Adding an anchor
