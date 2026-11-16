@@ -119,6 +119,11 @@ it holding `Spanish`, so confirming without typing submits the default; a bare
 `{{tone}}` opens empty, as before. Every field stays required, so a parameter
 without a default still has to be filled before Submit enables.
 
+On desktop the popup shows Parameters and Details side by side under their
+headings. On mobile (`useIsMobile`) it is `100dvh - 4rem` tall and splits the two
+into tabs labelled with `labels.parametersLabel` and `labels.detailsLabel`;
+Parameters is the tab selected on open. Entered values survive tab switches.
+
 ## Hooks
 
 ### `usePromptSelectorOverlay`

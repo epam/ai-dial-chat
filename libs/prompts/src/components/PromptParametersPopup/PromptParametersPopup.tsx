@@ -4,6 +4,7 @@ import {
   buildCssVars,
   buildPromptParamDefaults,
   mergeClasses,
+  useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import {
   ButtonVariant,
@@ -11,11 +12,13 @@ import {
   GhostIconButton,
   Popup,
   PopupSize,
+  Tabs,
   Textarea,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft } from '@tabler/icons-react';
 import { useId, useState, type FC } from 'react';
 import type { PromptParametersPopupProps } from '../../models/prompt-parameters-popup-props';
+import { PromptParametersPopupTab } from '../../types/prompt-parameters-popup';
 import styles from './PromptParametersPopup.module.scss';
 
 /**
@@ -58,6 +61,9 @@ export const PromptParametersPopup: FC<PromptParametersPopupProps> = ({
     buildPromptParamDefaults(parameters),
   );
   const [seededKey, setSeededKey] = useState(parametersKey);
+  const [activeTab, setActiveTab] = useState<PromptParametersPopupTab>(
+    PromptParametersPopupTab.Parameters,
+  );
 
   /*
    * Re-seed during render (React's "adjust state when a prop changes") when the
@@ -67,9 +73,15 @@ export const PromptParametersPopup: FC<PromptParametersPopupProps> = ({
   if (seededKey !== parametersKey) {
     setSeededKey(parametersKey);
     setValues(buildPromptParamDefaults(parameters));
+    setActiveTab(PromptParametersPopupTab.Parameters);
   }
 
   const fieldIdPrefix = useId();
+  const isMobile = useIsMobile();
+  const isParametersVisible =
+    !isMobile || activeTab === PromptParametersPopupTab.Parameters;
+  const isDetailsVisible =
+    !isMobile || activeTab === PromptParametersPopupTab.Details;
 
   const cssVars = buildCssVars({
     '--pp-card-bg': colors?.cardBackground,
@@ -77,6 +89,13 @@ export const PromptParametersPopup: FC<PromptParametersPopupProps> = ({
   });
 
   const isSubmitDisabled = parameters.some(({ name }) => !values[name]?.trim());
+
+  const handleTabChange = (tabId: string) => {
+    const tab = Object.values(PromptParametersPopupTab).find(
+      (value) => value === tabId,
+    );
+    if (tab != null) setActiveTab(tab);
+  };
 
   const handleSubmit = () => {
     if (isSubmitDisabled) return;
@@ -108,6 +127,9 @@ export const PromptParametersPopup: FC<PromptParametersPopupProps> = ({
       header={header}
       ariaLabel={title}
       size={PopupSize.Lg}
+      className={
+        isMobile ? 'h-[calc(100dvh-4rem)] max-h-[calc(100dvh-4rem)]' : undefined
+      }
       closeAriaLabel={closeLabel}
       onClose={onClose}
       mainButtons={[
@@ -120,10 +142,10 @@ export const PromptParametersPopup: FC<PromptParametersPopupProps> = ({
         },
       ]}
     >
-      <div className="flex flex-col gap-4 px-6 pt-2 pb-4">
+      <div className="flex flex-col gap-4 pt-2 pb-4">
         <div
           className={mergeClasses(
-            'flex h-[72px] w-full items-center rounded-lg border px-3',
+            'mx-6 flex h-[72px] items-center rounded-lg border px-3',
             styles.card,
           )}
           style={cssVars}
@@ -136,35 +158,76 @@ export const PromptParametersPopup: FC<PromptParametersPopupProps> = ({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-3">
-            <h2 className={mergeClasses(parametersLabelClassName, 'm-0')}>
-              {parametersLabel}
-            </h2>
-            {parameters.map(({ name }) => {
-              const fieldId = `${fieldIdPrefix}-${name}`;
-              return (
-                <Textarea
-                  key={name}
-                  id={fieldId}
-                  aria-label={name}
-                  value={values[name] ?? ''}
-                  labelProps={{ htmlFor: fieldId, label: name, required: true }}
-                  placeholder={enterValuePlaceholder}
-                  onChange={(value) =>
-                    setValues((prev) => ({ ...prev, [name]: value }))
-                  }
-                />
-              );
-            })}
-          </div>
+        {isMobile && (
+          <Tabs
+            ariaLabel={promptName}
+            className="px-6"
+            tabs={[
+              {
+                id: PromptParametersPopupTab.Parameters,
+                label: parametersLabel,
+              },
+              { id: PromptParametersPopupTab.Details, label: detailsLabel },
+            ]}
+            activeTabId={activeTab}
+            onTabChange={handleTabChange}
+          />
+        )}
 
-          <div className="flex min-h-0 flex-col gap-3">
-            <h2 className={mergeClasses(detailsLabelClassName, 'm-0')}>
-              {detailsLabel}
-            </h2>
-            <ContentTab content={content} description={description} />
-          </div>
+        <div
+          className={mergeClasses(
+            'gap-4 px-6',
+            isMobile ? 'flex flex-col' : 'grid grid-cols-2',
+          )}
+        >
+          {isParametersVisible && (
+            <div
+              role={isMobile ? 'tabpanel' : undefined}
+              aria-label={isMobile ? parametersLabel : undefined}
+              className="flex flex-col gap-3"
+            >
+              {!isMobile && (
+                <h2 className={mergeClasses(parametersLabelClassName, 'm-0')}>
+                  {parametersLabel}
+                </h2>
+              )}
+              {parameters.map(({ name }) => {
+                const fieldId = `${fieldIdPrefix}-${name}`;
+                return (
+                  <Textarea
+                    key={name}
+                    id={fieldId}
+                    aria-label={name}
+                    value={values[name] ?? ''}
+                    labelProps={{
+                      htmlFor: fieldId,
+                      label: name,
+                      required: true,
+                    }}
+                    placeholder={enterValuePlaceholder}
+                    onChange={(value) =>
+                      setValues((prev) => ({ ...prev, [name]: value }))
+                    }
+                  />
+                );
+              })}
+            </div>
+          )}
+
+          {isDetailsVisible && (
+            <div
+              role={isMobile ? 'tabpanel' : undefined}
+              aria-label={isMobile ? detailsLabel : undefined}
+              className="flex min-h-0 flex-col gap-3"
+            >
+              {!isMobile && (
+                <h2 className={mergeClasses(detailsLabelClassName, 'm-0')}>
+                  {detailsLabel}
+                </h2>
+              )}
+              <ContentTab content={content} description={description} />
+            </div>
+          )}
         </div>
       </div>
     </Popup>

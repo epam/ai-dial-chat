@@ -8,9 +8,9 @@ export interface PromptParametersPopupLabels {
   closeLabel?: string;
   /** Accessible label for the back chevron, shown only when `onBack` is provided. Defaults to `'Back'`. */
   backLabel?: string;
-  /** Heading for the parameters column. Defaults to `'Parameters'`. */
+  /** Heading for the parameters column (tab label on mobile). Defaults to `'Parameters'`. */
   parametersLabel?: string;
-  /** Heading for the details column. Defaults to `'Details'`. */
+  /** Heading for the details column (tab label on mobile). Defaults to `'Details'`. */
   detailsLabel?: string;
   /** Placeholder shown in each empty parameter field. Defaults to `'Enter value'`. */
   enterValuePlaceholder?: string;
