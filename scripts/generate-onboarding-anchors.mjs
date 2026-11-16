@@ -27,6 +27,14 @@ const render = () => {
     ({ target, page, element, lookup }) =>
       `| \`${target}\` | ${escapeCell(page)} | ${escapeCell(element)} | ${escapeCell(lookup)} |`,
   );
+  /* One hint per anchor, so an operator can paste the whole catalog into
+   * .env and walk every anchor; titles reuse the catalog's element column. */
+  const hints = anchors.map(({ target, page, element }) => ({
+    id: target,
+    target,
+    title: element,
+    description: page,
+  }));
   return [
     '# Onboarding anchors',
     '',
@@ -51,7 +59,19 @@ const render = () => {
     'every anchor on screen with its `target` name and lists, in a panel at the',
     'bottom corner, the anchors that page does not render. The page stays',
     'usable, so you can open the sidebar or switch tabs and watch the list',
-    'change. Close the panel to drop the parameter.',
+    'change. The view stays on while you follow links in that tab; close the',
+    'panel to turn it off.',
+    '',
+    '## Example with every anchor',
+    '',
+    'One hint per anchor, titled after the element it points at, on one line as',
+    '`.env` needs it. Set it in `apps/chat-api/.env.local`, restart chat-api,',
+    'and clear the seen ids (`seenOnboardingHints` in local storage) to walk',
+    'every anchor again.',
+    '',
+    '```sh',
+    `ONBOARDING_HINTS=${JSON.stringify(hints)}`,
+    '```',
     '',
     '## Anchors',
     '',

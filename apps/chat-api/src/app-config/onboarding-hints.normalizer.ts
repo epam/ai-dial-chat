@@ -2,8 +2,6 @@ import type { OnboardingHintDto } from './dto/onboarding-hint.dto';
 import { toNullableText } from './text.util';
 import { OnboardingHintTarget } from './types/onboarding-hint-target';
 
-const MAX_ONBOARDING_HINTS = 20;
-
 /* The id ends up as a localStorage value and in log lines, so it is held to a
  * short allowlist rather than accepted as free text. */
 const HINT_ID_PATTERN = /^[A-Za-z0-9._-]{1,64}$/;
@@ -73,13 +71,6 @@ export const normalizeOnboardingHints = (
       title: parsedTitle,
       description: toNullableText(description),
     });
-  }
-
-  if (hints.length > MAX_ONBOARDING_HINTS) {
-    warn(
-      `ONBOARDING_HINTS carried ${hints.length} entries; keeping the first ${MAX_ONBOARDING_HINTS} and dropping the rest`,
-    );
-    return hints.slice(0, MAX_ONBOARDING_HINTS);
   }
 
   return hints;

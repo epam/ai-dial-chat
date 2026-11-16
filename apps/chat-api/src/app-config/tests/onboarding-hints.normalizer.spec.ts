@@ -81,14 +81,14 @@ describe('normalizeOnboardingHints', () => {
     );
   });
 
-  it('keeps the first twenty entries', () => {
+  it('keeps every valid entry, however many there are', () => {
     const warn = vi.fn();
-    const entries = Array.from({ length: 22 }, (_, index) => ({
+    const entries = Array.from({ length: 70 }, (_, index) => ({
       id: `hint-${index}`,
       target: 'navigation',
       title: `Hint ${index}`,
     }));
-    expect(normalizeOnboardingHints(entries, warn)).toHaveLength(20);
-    expect(warn).toHaveBeenCalledOnce();
+    expect(normalizeOnboardingHints(entries, warn)).toHaveLength(70);
+    expect(warn).not.toHaveBeenCalled();
   });
 });
