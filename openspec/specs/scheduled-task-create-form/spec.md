@@ -234,79 +234,6 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 - **WHEN** the viewport matches the `mobile` breakpoint
 - **THEN** Details renders full-width above Configuration, both stacked in that order
 
-### Requirement: Page maps form values to BFF trigger shape
-
-`ScheduledTaskCreatePage` SHALL use `@epam/ai-dial-chat-hooks/scheduled-tasks` checked preparation to convert form `values` to the BFF `trigger` field before calling `createScheduledTask`, branching on `values.repeat`:
-
-- `repeat === 'oneTime'`: `trigger = { date: <ISO-8601 datetime> }` built from `runAt`
-- `repeat === 'hourly'`: `trigger = { cron: { fields: { hour: '*', minute } } }`, where `minute` is the UTC-equivalent minute-of-hour of the user-entered local `values.minute`, computed via `buildCronFields` using a reference `Date` set to local hour `0`/local `minute` and reading back `getUTCMinutes()`. `hour` itself is always the literal `'*'` and is never converted — only whole-hour-offset timezones make the hour boundary itself timezone-invariant; the sub-hour offset (relevant for timezones like UTC+5:30/UTC+5:45) is carried entirely in the `minute` conversion
-- `repeat === 'daily'`: `trigger = { cron: { fields: { hour, minute } } }`, where `hour`/`minute` are the UTC equivalent of the local `time` the user entered, computed via `buildCronFields` in `libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts` from a reference `Date` set with the local `setHours(hour, minute)` and read back through `getUTCHours()`/`getUTCMinutes()` (the browser's own timezone and DST rules apply; no explicit IANA zone is read)
-- `repeat === 'weekly'`: include `day_of_week` as the UTC-equivalent weekday (shifted ±1, mod 7, relative to the locally-selected `dayOfWeek`, whenever the local→UTC hour conversion crosses a calendar-day boundary), alongside the UTC `hour`/`minute`
-- `repeat === 'monthly'`: include `day` as the local `dayOfMonth` shifted by the UTC calendar-day shift (−1, 0, or +1) of the same conversion, alongside the UTC `hour`/`minute`. The shift is applied to the number, never by rolling a `Date` to that day, so a day the current month lacks (e.g. the 31st in November) is not carried into the next month. A local 1st shifted back emits the APScheduler expression `day: 'last'`, because the UTC predecessor of the 1st is the previous month's last day, whose number varies; a local 31st shifted forward emits `day: '1'`
-- `repeat === 'custom'`: `trigger = { cron: { fields: { day_of_week, hour, minute }, startDate?, endDate? } }`, where `hour`/`minute` are the UTC equivalents of `values.time` and `day_of_week` is the comma-separated, ascending list of the UTC weekdays of `values.daysOfWeek`. The conversion uses **one** reference `Date` (constructed from the local `hour`/`minute` and rolled to the first selected weekday) and applies its UTC calendar-day shift (−1, 0 or +1) to every selected day, mod 7, so all days share one UTC `hour`/`minute` and one cron entry is always enough. No `week` field is emitted: the former `week: '*/<everyWeeks>'` encoding is no longer produced. The optional `startDate`/`endDate` are converted exactly as for the other day-based repeats (see "Create-task page validates and converts the activity window to UTC boundaries")
-
-This mapping, including the local→UTC conversion for the `'hourly'`/`'daily'`/`'weekly'`/`'monthly'`/`'custom'` fields, MUST remain in `libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts`, reused by app adapters under the existing configured-client/type exception, not duplicated in app pages or presentation libraries. `buildCronFields` MUST use a single reference `Date` and read back UTC getters from it rather than computing the UTC offset by hand: for `'daily'`/`'weekly'`/`'monthly'`/`'custom'`, the reference is constructed from the local `hour`/`minute` (rolled to the matching local weekday for weekly, and to the first selected weekday for custom) and `getUTCHours()`/`getUTCMinutes()`/`getUTCDay()` are read back, with the monthly `day` derived from the reference's UTC calendar-day shift as described above; for `'hourly'`, the reference is constructed from local hour `0`/local `minute` and only `getUTCMinutes()` is read back, with `hour` always emitted as the literal `'*'`.
-
-#### Scenario: One-time repeat sends trigger.date
-
-- **WHEN** the user selects Repeat = One-time with run at `2026-07-24T09:00` (local) and submits
-- **THEN** the POST body includes `trigger.date` as an ISO-8601 string and no `trigger.cron`
-
-#### Scenario: Hourly repeat sends the user-selected minute with hour always wildcarded
-
-- **WHEN** the user selects Repeat = Hourly, enters `minute = '15'`, and submits, with the browser at a whole-hour-offset timezone (e.g. UTC+2)
-- **THEN** the POST body includes `trigger.cron.fields` equal to exactly `{ hour: '*', minute: '15' }`, with no `day` or `day_of_week` key
-
-#### Scenario: Hourly minute is converted for a sub-hour-offset timezone
-
-- **WHEN** the user selects Repeat = Hourly, enters `minute = '15'`, and submits, with the browser at UTC+5:30 (e.g. `Asia/Kolkata`)
-- **THEN** the POST body includes `trigger.cron.fields.minute = '45'` (15 local minutes past the hour, shifted back by the 30-minute sub-hour offset) and `trigger.cron.fields.hour = '*'`
-
-#### Scenario: Daily repeat sends UTC-converted trigger.cron.fields
-
-- **WHEN** the user selects Repeat = Daily with local time `09:00` in a timezone at UTC+2 and submits
-- **THEN** the POST body includes `trigger.cron.fields.hour = '7'` and `trigger.cron.fields.minute = '0'` (the UTC equivalent), not the raw local `hour`/`minute`
-
-#### Scenario: Weekly repeat shifts day_of_week when the UTC conversion crosses midnight
-
-- **WHEN** the user selects Repeat = Weekly with local time `23:30` on Monday in a timezone at UTC+2, so the UTC equivalent falls on Tuesday `21:30`
-- **THEN** the POST body's `trigger.cron.fields.day_of_week` reflects Tuesday (the UTC calendar day), not Monday (the locally-selected day)
-
-#### Scenario: Monthly repeat on the 1st maps to the last UTC day of the month
-
-- **WHEN** the user selects Repeat = Monthly with local time `00:30` on day `1` in a timezone at UTC+3, so the UTC equivalent falls on the previous calendar day at `21:30`
-- **THEN** the POST body's `trigger.cron.fields` is `{ hour: '21', minute: '30', day: 'last' }`, not the number of whichever month preceded the submission
-
-#### Scenario: Monthly day survives a submission during a shorter month
-
-- **WHEN** the user selects Repeat = Monthly with day `31` and local time `09:00` while the current month has 30 days
-- **THEN** the POST body's `trigger.cron.fields.day` is the UTC-equivalent of the 31st, not `'1'` of the following month
-
-#### Scenario: Daily repeat at a timezone-neutral moment is a no-op conversion
-
-- **WHEN** the user's browser timezone is UTC and they select Repeat = Daily with local time `09:00`
-- **THEN** the POST body includes `trigger.cron.fields.hour = '9'` and `trigger.cron.fields.minute = '0'`, unchanged from the entered local value
-
-#### Scenario: Custom repeat sends the week step with UTC-converted day and time
-
-- **WHEN** the user selects Repeat = Custom, Monday, Wednesday and Friday, local time `09:00` in a timezone at UTC+2, and submits
-- **THEN** the POST body's `trigger.cron.fields` is `{ day_of_week: '0,2,4', hour: '7', minute: '0' }` with no `week` or `day` key (the scenario name is historical: the former `week` step is no longer sent)
-
-#### Scenario: Custom repeat shifts day_of_week when the UTC conversion crosses midnight
-
-- **WHEN** the user selects Repeat = Custom with Monday and Wednesday at local time `00:30` in a timezone at UTC+2, so the UTC equivalents fall on Sunday and Tuesday `22:30`
-- **THEN** the POST body's `trigger.cron.fields` is `{ day_of_week: '1,6', hour: '22', minute: '30' }` — every selected day shifts by the same UTC day offset
-
-#### Scenario: Custom every-1-week still emits the week field
-
-- **WHEN** the user selects Repeat = Custom with any set of days and submits
-- **THEN** the POST body's `trigger.cron.fields` carries no `week` key (the scenario name is historical: the former `'*/1'` marker is no longer emitted; a weekday list is what distinguishes Custom from Weekly on the reverse mapping)
-
-#### Scenario: Custom submit never carries stale boundary values
-
-- **WHEN** the user sets a Start date while `values.repeat === 'weekly'`, switches `repeat` to `'custom'`, and submits
-- **THEN** the Start date stays visible in the Custom pickers and is sent as `trigger.cron.startDate`; after switching to `'oneTime'` instead, no boundary is sent
-
 ### Requirement: Create-task strings flow through react-i18next
 
 Every user-visible string on the create-task page (page title, repeat-field labels, model/instructions/description labels, validation messages, success/error notifications) MUST be resolved via `useTranslation().t()` in the app and passed into the lib as plain strings. The form's field labels and Repeat options are built by the shared `useScheduledTaskFormLabels(mode)` hook (`apps/chat/src/hooks/scheduled-tasks/useScheduledTaskFormLabels.ts`), which both the create (`'create'`) and edit (`'edit'`) pages call. Feature-specific keys live under `scheduledTasks.create.*` in `apps/chat/src/i18n/locales/en.json`, referenced through `ScheduledTasksI18nKeys`. The display name label/required message MUST reuse `EditorI18nKeys.NameLabel` and `EditorI18nKeys.NameRequired`. Length and control-character errors on the display name, description and instructions MUST reuse `EditorI18nKeys.FieldTooLong` (interpolating the exceeded limit as `count`) and `EditorI18nKeys.NameControlCharacters`; there is no scheduled-task-specific length key. Cancel MUST reuse `ButtonsI18nKeys.Cancel`; the submit action MUST reuse `ButtonsI18nKeys.Create` (labeled "Create" — the create page creates a task; the edit page keeps `ButtonsI18nKeys.Save`).
@@ -460,90 +387,9 @@ The lib remains presentational: it performs no timezone conversion, no i18n, and
 - **WHEN** `libs/scheduled-tasks` source (including `ScheduledTaskBoundaryField`) is statically analyzed
 - **THEN** it contains no new imports of `apps/chat/*`, `@epam/chat-api-client`, `server-api`, routing, feature-flag, notification, deployments, auth, env, or analytics modules
 
-### Requirement: Create-task page validates and converts the activity window to UTC boundaries
-
-`ScheduledTaskCreatePage`'s `DEFAULT_VALUES` SHALL include `startDate: undefined` and `endDate: undefined`. Before calling `createScheduledTask`, when both `values.startDate` and `values.endDate` are set and `endDate` is earlier than `startDate`, the page SHALL set `errors.endDate` to a validation message and block submit; `endDate` equal to `startDate` is a valid single-day window for day-based repeats (the start boundary resolves to that day's `00:00:00.000` local and the end boundary to its `23:59:59.999`), so it MUST NOT be rejected. When either or both fields are empty, this check is skipped (both empty is valid — an unbounded recurring schedule). This check applies whenever `values.repeat !== 'oneTime'`, including `'hourly'`.
-
-The shared `validateScheduledTaskFormValues` (`libs/scheduled-tasks/src/validation`) SHALL additionally reject a recurring activity-window boundary earlier than the validating clock's local today, returning the `StartDateInPast`/`EndDateInPast` error codes — a boundary that is both past and mis-ordered reports the past-date code, which runs after the ordering check so the more actionable message wins. A boundary equal to the option's `originalStartDate`/`originalEndDate` SHALL be exempt: `ScheduledTaskEditPage` passes the hydrated boundaries in those options, so an older task's prefilled past window does not block saving unrelated edits, while a boundary changed into the past is still rejected. The create page passes no originals, so the rule applies to every boundary there. The past-date comparison is by calendar day: a `YYYY-MM-DD` boundary is past when its day is earlier than the clock's local today, so today itself is allowed. Validation SHALL reject a boundary that is not a valid date-only `YYYY-MM-DD` value (`StartDateInvalid`/`EndDateInvalid`), including one carrying a time part, for every cadence.
-
-`mapFormValuesToCreateBody` (`libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts`, using its `buildCronWindowBoundary` helper) SHALL build the `trigger.cron` object for any non-`'oneTime'` `repeat` value as `{ fields, ...(startDate ? { startDate: <iso> } : {}), ...(endDate ? { endDate: <iso> } : {}) }`, and MUST NOT include `startDate`/`endDate` when `repeat === 'oneTime'` (the one-time branch is unaffected by this change). `buildCronWindowBoundary` takes only the date-only value and the edge, for every cadence including `'hourly'`: `startDate` converts to that local calendar day's `00:00:00.000` local time, then to its UTC ISO equivalent; `endDate` converts to that local calendar day's `23:59:59.999` local time, then to its UTC ISO equivalent, so the last local day the user selected is not cut off by the UTC conversion. It uses the reference-`Date`-plus-getters technique `buildCronFields` already uses, so the browser's own timezone/DST handling does the conversion.
-
-The reverse mapping `mapScheduledTaskDtoToFormValues` SHALL hydrate every cadence's boundaries as local `YYYY-MM-DD` values (via `isoToLocalDateOnly`), including an hourly task's — an older hourly task saved with an exact time-of-day boundary opens with just its calendar day.
-
-Feature-specific i18n keys `scheduledTasks.create.startDateLabel`, `scheduledTasks.create.endDateLabel`, `scheduledTasks.create.startDatePlaceholder`, `scheduledTasks.create.endDatePlaceholder`, `scheduledTasks.create.endDateBeforeStartError`, `scheduledTasks.create.startDateInPast`, and `scheduledTasks.create.endDateInPast` SHALL exist in `apps/chat/src/i18n/locales/en.json` with matching `ScheduledTasksI18nKeys` enum entries, resolved via `useTranslation().t()` in `useScheduledTaskFormLabels` and passed into the lib as plain strings, per the existing i18n requirement for this page.
-
-#### Scenario: No dates set is a valid submit
-
-- **WHEN** `values.repeat !== 'oneTime'` and both `startDate` and `endDate` are empty
-- **THEN** submit proceeds and the POST body's `trigger.cron` has no `startDate`/`endDate` keys
-
-#### Scenario: Both dates set sends a UTC-converted window
-
-- **WHEN** `values.repeat` is a day-based cadence, `startDate = '2026-08-01'`, `endDate = '2026-08-31'`, and the browser's local timezone is UTC+2
-- **THEN** the POST body's `trigger.cron.startDate` is `'2026-07-31T22:00:00.000Z'` (local midnight Aug 1 in UTC+2) and `trigger.cron.endDate` is `'2026-08-31T21:59:59.999Z'` (local 23:59:59.999 Aug 31 in UTC+2)
-
-#### Scenario: Hourly boundary values convert to the start and end of the local day
-
-- **WHEN** `values.repeat === 'hourly'`, `startDate = '2026-08-01'`, `endDate = '2026-08-31'`, and the browser's local timezone is UTC+2
-- **THEN** the POST body's `trigger.cron.startDate` is `'2026-07-31T22:00:00.000Z'` and `trigger.cron.endDate` is `'2026-08-31T21:59:59.999Z'` — the same conversion as the day-based repeats
-
-#### Scenario: An hourly task's boundaries hydrate as date-only values
-
-- **WHEN** an hourly task with `trigger.cron.startDate = '2026-07-31T22:00:00.000Z'` and `endDate = '2026-08-31T21:59:59.999Z'` is loaded on the edit page in a UTC+2 browser
-- **THEN** `values.startDate` hydrates as `'2026-08-01'` and `values.endDate` as `'2026-08-31'` (via `isoToLocalDateOnly`)
-
-#### Scenario: endDate earlier than startDate blocks submit with an inline error
-
-- **WHEN** the user sets `endDate` earlier than `startDate` and activates Create
-- **THEN** `errors.endDate` is set to the `endDateBeforeStartError` message, no `createScheduledTask` call is made, and the form remains open
-
-#### Scenario: endDate equal to startDate is a valid single-day window
-
-- **WHEN** the user sets `startDate` and `endDate` to the same calendar day (not earlier than the validating clock's local today) on a day-based repeat and activates Create/Save
-- **THEN** no ordering error is set and submit proceeds — the window covers that full local day, from `00:00:00.000` to `23:59:59.999`
-
-#### Scenario: A past startDate blocks submit with an inline error
-
-- **WHEN** the user sets `startDate` earlier than the validating clock's local today and activates Create/Save
-- **THEN** `errors.startDate` is set to the `startDateInPast` message, no `createScheduledTask`/`updateScheduledTask` call is made, and the form remains open
-
-#### Scenario: A past endDate blocks submit with an inline error
-
-- **WHEN** the user sets `endDate` earlier than the validating clock's local today (with `startDate` unset or valid) and activates Create/Save
-- **THEN** `errors.endDate` is set to the `endDateInPast` message, no `createScheduledTask`/`updateScheduledTask` call is made, and the form remains open
-
-#### Scenario: An unchanged prefilled past boundary still saves on the edit page
-
-- **WHEN** an older task's past `startDate` (or ended `endDate`) is prefilled on the edit form, the user leaves the boundary unchanged, and activates Save
-- **THEN** no past-date error is set and the `updateScheduledTask` call proceeds with the boundary preserved in `trigger.cron`
-
-#### Scenario: A boundary changed to a different past date blocks save on the edit page
-
-- **WHEN** an older task's past `startDate` is prefilled on the edit form and the user changes it to another date earlier than the validating clock's local today
-- **THEN** `errors.startDate` is set to the `startDateInPast` message and no `updateScheduledTask` call is made
-
-#### Scenario: A window starting on today is accepted
-
-- **WHEN** `startDate` equals the validating clock's local today and `endDate` is a later day
-- **THEN** no past-date error is set and submit proceeds — today is not a past date
-
-#### Scenario: Switching back to One-time never sends the window
-
-- **WHEN** the user set `startDate`/`endDate` while `values.repeat` was a recurring value, then switches `repeat` to `'oneTime'` and submits
-- **THEN** the POST body's `trigger` is `{ date: <ISO> }` only — no `cron`, `startDate`, or `endDate` field is present
-
-#### Scenario: Boundary conversion is correct across a DST transition
-
-- **WHEN** date-only `startDate`/`endDate` span a date range that crosses a daylight-saving-time transition in the browser's local timezone
-- **THEN** both converted UTC instants still represent local `00:00:00.000` and local `23:59:59.999` respectively on their calendar days, using the timezone offset in effect on each specific day, not a single offset applied to both
-
-#### Scenario: Activity window applies unchanged to Hourly
-
-- **WHEN** `values.repeat === 'hourly'`, `startDate = '2026-08-01'`, and `endDate = '2026-08-31'`
-- **THEN** the POST body's `trigger.cron` includes `fields: { hour: '*', minute: '0' }` alongside the local-day-start/day-end UTC-converted `startDate`/`endDate` boundaries
 ### Requirement: Edit route loads the task and reuses ScheduledTaskCreateForm
 
-The application SHALL expose a lazy-loaded `ScheduledTaskEditPage` at `ROUTES.ScheduledTaskEdit` (`/scheduled-tasks/:scheduleId/edit`), registered in `apps/chat/src/app/app.tsx` using the same `RouteErrorBoundary` + `Suspense` + `RouteFallback` pattern as `ROUTES.ScheduledTaskCreate`/`ROUTES.ScheduledTaskDetail`, gated behind `useFeatureFlag('scheduledTasksEnabled')` inside the page component (not at route registration), matching the existing create/detail pages' gating pattern. On mount, `ScheduledTaskEditPage` SHALL call `getScheduledTask(scheduleId)` and, on success, prefill `ScheduledTaskCreateForm`'s `values` via the reverse mapping described in the "Reverse trigger mapping is fail-closed" requirement below. `ScheduledTaskEditPage` SHALL render `ScheduledTaskCreateForm` with the same component contract used by the create page (`labels`, `values`, `errors`, `modelSelector`, `modelLabelId`, `onFieldChange`, `onBack`, `onCancel`, `onSubmit`, `isSubmitting?`) — no `mode` prop is added to the lib; edit-flavored copy (page title "Edit scheduled task", Save button text) is supplied entirely by the page's `labels` object. `ScheduledTaskEditPage` SHALL build its `modelSelector` element from the loaded task's `values.modelId` (from the reverse mapping) as the trigger's `selectedId`, so the task's current deployment is preselected even when it is not present in the favorites or initially-loaded deployment subset.
+The application SHALL expose a lazy-loaded `ScheduledTaskEditPage` at `ROUTES.ScheduledTaskEdit` (`/scheduled-tasks/:scheduleId/edit`), registered in `apps/chat/src/app/app.tsx` using the same `RouteErrorBoundary` + `Suspense` + `RouteFallback` pattern as `ROUTES.ScheduledTaskCreate`/`ROUTES.ScheduledTaskDetail`, gated behind `useFeatureFlag('scheduledTasksEnabled')` inside the page component (not at route registration), matching the existing create/detail pages' gating pattern. On mount, `ScheduledTaskEditPage` SHALL call `getScheduledTask(scheduleId)` and, on success, prefill `ScheduledTaskCreateForm`'s `values` via the reverse mapping described in the "Reverse mapping reads zone-local fields as stored" and "Reverse mapping is fail-closed for unsupported or incomplete tasks" requirements below. `ScheduledTaskEditPage` SHALL render `ScheduledTaskCreateForm` with the same component contract used by the create page (`labels`, `values`, `errors`, `modelSelector`, `modelLabelId`, `onFieldChange`, `onBack`, `onCancel`, `onSubmit`, `isSubmitting?`) — no `mode` prop is added to the lib; edit-flavored copy (page title "Edit scheduled task", Save button text) is supplied entirely by the page's `labels` object. `ScheduledTaskEditPage` SHALL build its `modelSelector` element from the loaded task's `values.modelId` (from the reverse mapping) as the trigger's `selectedId`, so the task's current deployment is preselected even when it is not present in the favorites or initially-loaded deployment subset.
 
 #### Scenario: Flag enabled renders the edit page
 
@@ -582,7 +428,7 @@ The application SHALL expose a lazy-loaded `ScheduledTaskEditPage` at `ROUTES.Sc
 
 ### Requirement: Scheduled Task forms compose the shared deployment selector for the Model or Agent field
 
-`ScheduledTaskCreatePage` and `ScheduledTaskEditPage` SHALL each render an `apps/chat/src/components/DeploymentSelector/DeploymentSelectorFieldTrigger` element bound to `values.modelId`/`onFieldChange('modelId', ...)` and pass it as `ScheduledTaskCreateForm`'s `modelSelector` prop, replacing the previous `modelOptions: {id, label}[]` mapping built directly from `useDeployments().items`. The field label SHALL remain "Model or Agent" (required) and the trigger's placeholder SHALL read "Select Model or Agent" when no deployment is selected. Selecting a deployment SHALL call `onFieldChange('modelId', <id>)` and close the dropdown; the `model` field sent in `CreateScheduledTaskBodyDto`/`UpdateScheduledTaskBodyDto` SHALL continue to be `values.modelId` unchanged from the existing "Page maps form values to BFF trigger shape"/"Edit page submits via PUT" requirements — no request-body field renames.
+`ScheduledTaskCreatePage` and `ScheduledTaskEditPage` SHALL each render an `apps/chat/src/components/DeploymentSelector/DeploymentSelectorFieldTrigger` element bound to `values.modelId`/`onFieldChange('modelId', ...)` and pass it as `ScheduledTaskCreateForm`'s `modelSelector` prop, replacing the previous `modelOptions: {id, label}[]` mapping built directly from `useDeployments().items`. The field label SHALL remain "Model or Agent" (required) and the trigger's placeholder SHALL read "Select Model or Agent" when no deployment is selected. Selecting a deployment SHALL call `onFieldChange('modelId', <id>)` and close the dropdown; the `model` field sent in `CreateScheduledTaskBodyDto`/`UpdateScheduledTaskBodyDto` SHALL continue to be `values.modelId` unchanged from the existing "Page sends zone-local cron fields and datetimes with the task time zone"/"Edit page submits via PUT" requirements — no request-body field renames.
 
 Any new i18n keys this wiring requires (e.g. the placeholder, if not already covered by an existing key) SHALL be added under `scheduledTasks.create.*`/`scheduledTasks.edit.*` per the existing i18n requirements for these pages, reusing existing keys where the exact string already exists.
 
@@ -610,103 +456,6 @@ Any new i18n keys this wiring requires (e.g. the placeholder, if not already cov
 
 - **WHEN** `values.modelId` is empty and the user activates Create or Save
 - **THEN** the action is blocked by the existing `values.modelId`-empty guard, and `errors.modelId` (from `validateScheduledTaskForm`) is surfaced the same way it was before this change
-
-### Requirement: Reverse trigger mapping is fail-closed for unsupported or incomplete tasks
-
-Custom editability requires that every non-null cron field belongs to the supported `day_of_week`/`hour`/`minute` shape. Additional non-null fields, including `week`, `month`, `year`, `second` and `day`, SHALL fail closed rather than being discarded on save. Null-valued extra fields remain absent for this check.
-
-`libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts` SHALL export a reverse mapping function that converts a `ScheduledTaskDto` into `ScheduledTaskCreateFormValues`, inverting `buildCronFields`/`buildCronWindowBoundary`'s UTC→local conversion using the same reference-`Date`-plus-getters technique (browser timezone/DST handling, not manual offset arithmetic). The function SHALL return a discriminated result — success with mapped `values`, or failure with a reason — rather than a value that may itself be invalid. `trigger.cron.fields` MUST be evaluated by presence of a non-`null` value per key, not by key presence alone — DIAL Scheduler always returns every cron field key, using `null` for ones that are not set.
-
-Before applying the existing numeric-hour parsing, the mapper SHALL check for the Hourly shape: when `fields.hour === '*'`, `fields.minute` is present with a purely-numeric value, and neither `day` nor `day_of_week` is present, the mapper SHALL succeed with `values.repeat = 'hourly'` and `values.minute` set to the local minute-of-hour equivalent of the stored UTC minute (via a reference `Date` set with `setUTCHours(0, utcMinute)`, reading back `getMinutes()` — the inverse of the forward `setHours(0, minute)` → `getUTCMinutes()` conversion), with no `time`/`dayOfWeek`/`dayOfMonth` field set. Any other non-numeric `hour` value (cron range/list/step expressions, or `*` combined with a `day`/`day_of_week`) continues to fail closed, same as today.
-
-The mapper SHALL also check for the Custom shape before the extra-key rejection: when `fields.day_of_week` is a comma-separated list of two or more distinct plain numeric weekdays (`0`–`6`), `fields.hour`/`fields.minute` are plain numeric values, and no `day` or `week` is set, the mapper SHALL succeed with `values.repeat = 'custom'`, `values.daysOfWeek` set to the local weekdays (the UTC list shifted back by the reference `Date`'s calendar-day shift, mod 7, sorted Monday first) and `values.time` set to the local time, plus `values.startDate`/`values.endDate` hydrated exactly as for the other day-based repeats. A single plain numeric weekday without `week` continues to map to Weekly. Any non-null `week` value — including the `*/N` step written by the former every-N-weeks Custom option, which was never released — fails closed as an unsupported cron shape; no compatibility path is kept.
-
-For the remaining (non-Hourly, non-Custom) shapes, mapping SHALL fail when: the task's `trigger` shape (cron fields with a set, non-`null` value outside `hour`/`minute`/`day`/`day_of_week`/`week`-as-Custom, or both `day` and `day_of_week` set) falls outside what `ScheduledTaskCreateFormValues`'s `repeat`-driven fields can express; `triggerType` does not correspond to a `repeat` value the form supports; or `model` is missing/empty, `prompt` is not a string, or both trimmed `prompt` and `skillUrls` are empty on the DTO. On mapping failure, `ScheduledTaskEditPage` SHALL render a localized, non-destructive error message and SHALL NOT mount `ScheduledTaskCreateForm` in an editable/submittable state — the original task's trigger is never read, coerced, and re-submitted.
-
-#### Scenario: Once-schedule task round-trips through reverse mapping
-
-- **WHEN** a task's `trigger` is `{ date: '2026-07-24T07:00:00.000Z' }` (UTC) and the viewer's browser timezone is UTC+2
-- **THEN** the reverse mapper succeeds with `values.repeat = 'oneTime'` and `values.runAt` equal to the local `2026-07-24T09:00` equivalent
-
-#### Scenario: Hourly task round-trips through reverse mapping at a whole-hour offset
-
-- **WHEN** a task's `trigger.cron.fields` is `{ hour: '*', minute: '15' }` and the viewer's browser timezone is UTC+2
-- **THEN** the reverse mapper succeeds with `values.repeat = 'hourly'`, `values.minute = '15'` (unchanged — a whole-hour offset does not shift the minute), and no `time`, `dayOfWeek`, or `dayOfMonth` value is set
-
-#### Scenario: Hourly task round-trips through reverse mapping at a sub-hour offset
-
-- **WHEN** a task's `trigger.cron.fields` is `{ hour: '*', minute: '45' }` and the viewer's browser timezone is UTC+5:30 (e.g. `Asia/Kolkata`)
-- **THEN** the reverse mapper succeeds with `values.repeat = 'hourly'` and `values.minute = '15'` (45 UTC minutes past the hour, shifted forward by the 30-minute sub-hour offset)
-
-#### Scenario: Daily recurring task round-trips through reverse mapping
-
-- **WHEN** a task's `trigger.cron.fields` is `{ hour: '7', minute: '0' }` (UTC) and the viewer's browser timezone is UTC+2
-- **THEN** the reverse mapper succeeds with `values.repeat = 'daily'` and `values.time = '09:00'` (local)
-
-#### Scenario: Weekly recurring task with day_of_week round-trips, including a UTC day-boundary shift
-
-- **WHEN** a task's `trigger.cron.fields` is `{ hour: '21', minute: '30', day_of_week: '1' }` (UTC Tuesday) and the local UTC+2 equivalent falls back onto Monday `23:30`
-- **THEN** the reverse mapper succeeds with `values.repeat = 'weekly'`, `values.dayOfWeek` corresponding to Monday, and `values.time = '23:30'`
-
-#### Scenario: Custom task round-trips through reverse mapping
-
-- **WHEN** a task's `trigger.cron.fields` is `{ day_of_week: '1,6', hour: '22', minute: '30' }` (UTC Tuesday and Sunday) and the local UTC+2 equivalents fall on Wednesday and Monday `00:30`
-- **THEN** the reverse mapper succeeds with `values.repeat = 'custom'`, `values.daysOfWeek = ['0', '2']` (Monday, Wednesday) and `values.time = '00:30'`, and mapping those values forward reproduces the same fields
-
-#### Scenario: A weekly task without a week value still hydrates as Weekly
-
-- **WHEN** a task's `trigger.cron.fields` is `{ hour: '7', minute: '0', day_of_week: '0' }` with `week` present but `null`
-- **THEN** the reverse mapper succeeds with `values.repeat = 'weekly'` (not `'custom'`) — Custom requires a present, non-`null` `week` value
-
-#### Scenario: An unsupported week expression fails closed
-
-- **WHEN** a task's `trigger.cron.fields` includes `week: '*/1'` or `week: '*/2'` (written by the former, never released every-N-weeks Custom option), `week: '2-40'`, `week: '1,3'`, or `week: '*/12'`
-- **THEN** the reverse mapper returns a failure result with the unsupported-cron-shape reason, no `ScheduledTaskCreateFormValues` are produced, and the edit page shows the non-destructive "can't be edited here" message with Save unavailable, while the task stays listed, pausable and deletable
-
-#### Scenario: A custom schedule with an activity window fails closed
-
-- **WHEN** a task's `trigger.cron` carries the Custom field shape (a weekday list) and also a `startDate` and `endDate`
-- **THEN** the reverse mapper succeeds and hydrates both boundaries into the Custom pickers (the scenario name is historical: Custom previously had no activity window, so a window failed closed)
-
-#### Scenario: A custom schedule with extra cron constraints fails closed
-
-- **WHEN** a task has `{ day_of_week: '0,2', hour: '9', minute: '0' }` plus a non-null `month`, `year`, `second` or `day` field
-- **THEN** the reverse mapper returns the unsupported-cron-shape failure, so editing an unrelated field cannot remove the extra constraint
-
-#### Scenario: Null-valued extra fields do not prevent Custom editing
-
-- **WHEN** the Custom field shape is accompanied only by null-valued `month`, `year`, `day`, `week`, and `second` fields
-- **THEN** the reverse mapper succeeds with `values.repeat = 'custom'` and preserves the local weekdays and local time
-
-#### Scenario: Activity-window boundaries round-trip to local date-only values
-
-- **WHEN** a task's `trigger.cron` includes `startDate`/`endDate` as UTC ISO instants at local-midnight and local-`23:59:59.999` respectively
-- **THEN** the reverse mapper succeeds with `values.startDate`/`values.endDate` as the corresponding local `YYYY-MM-DD` strings, whether the trigger's `fields.hour` is `'*'` (Hourly) or a fixed numeric hour
-
-#### Scenario: DST-crossing date maps without a one-hour drift
-
-- **WHEN** a recurring task's stored UTC `hour`/`minute` corresponds to a local wall-clock time on a date where the viewer's timezone observes a DST transition relative to the current reference date
-- **THEN** the reverse mapper produces a local `time` consistent with the DST offset in effect for the mapped date, not the offset in effect "now"
-
-#### Scenario: Unsupported cron shape fails closed
-
-- **WHEN** a task's `trigger.cron.fields` encodes a shape the create form's `repeat` control cannot represent (e.g. a `day_of_week` range or step such as `'0-4'` or `'*/2'`, a field the form has no control for, or `hour: '*'` combined with a set `day`/`day_of_week`)
-- **THEN** the reverse mapper returns a failure result, no `ScheduledTaskCreateFormValues` are produced, and the edit page shows a non-destructive "can't be edited here" message with Save unavailable
-
-#### Scenario: Null-valued cron fields are treated as absent, not as unsupported
-
-- **WHEN** a task's `trigger.cron.fields` is the full DIAL Scheduler shape with every field key present but unset ones set to `null` (e.g. `{ hour: '9', minute: '0', day: null, week: null, year: null, month: null, second: null, day_of_week: null }`)
-- **THEN** the reverse mapper succeeds as a plain daily schedule (`values.repeat = 'daily'`) — the presence of a field key alone (with a `null` value) MUST NOT be treated as an unsupported extra field or as a set `day`/`day_of_week`
-
-#### Scenario: Missing required fields fails closed
-
-- **WHEN** a task's `model` is missing/empty, `prompt` is not a string, or both trimmed `prompt` and `skillUrls` are empty
-- **THEN** the reverse mapper returns a failure result, and the edit page shows the same non-destructive error with Save unavailable, without submitting a partial update
-
-#### Scenario: Skill-only task hydrates without catalog metadata
-
-- **WHEN** an otherwise supported task has `prompt: ""` and a saved `skillUrls`
-- **THEN** mapping succeeds with the same reference and empty prompt, independently of skill metadata resolution
 
 ### Requirement: Edit page submits via PUT and preserves input on failure
 
@@ -1083,3 +832,250 @@ When `values.repeat === 'custom'`, `validateScheduledTaskFormValues` SHALL requi
 
 - **WHEN** `values.repeat === 'weekly'`
 - **THEN** only `values.dayOfWeek` is checked and `values.daysOfWeek` is ignored
+### Requirement: Page sends zone-local cron fields and datetimes with the task time zone
+
+`ScheduledTaskCreatePage` SHALL convert form values with `@epam/ai-dial-chat-hooks/scheduled-tasks` into the BFF `trigger` and a top-level `timezone` equal to `values.timezone`. Cron fields and datetimes SHALL be the wall time the user entered, unshifted. The mapping MUST stay in `libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts` and MUST NOT use the browser's offset or `Date` UTC getters.
+
+#### Scenario: One-time repeat sends a zone-local date
+
+- **WHEN** the user selects One-time with run at `2026-07-24T09:00`, zone `Europe/Berlin`, and submits
+- **THEN** the POST body has `trigger.date = '2026-07-24T09:00:00'`, `timezone = 'Europe/Berlin'` and no `trigger.cron`
+
+#### Scenario: Hourly repeat sends the entered minute
+
+- **WHEN** the user selects Hourly, enters `minute = '15'`, zone `Asia/Kolkata`, and submits
+- **THEN** `trigger.cron.fields` equals exactly `{ hour: '*', minute: '15' }` and `timezone = 'Asia/Kolkata'`
+
+#### Scenario: Daily repeat is not converted to UTC
+
+- **WHEN** the user selects Daily with time `09:00`, zone `Europe/Berlin`, in a browser whose zone is `America/New_York`
+- **THEN** `trigger.cron.fields` is `{ hour: '9', minute: '0' }` and `timezone = 'Europe/Berlin'`
+
+#### Scenario: Weekly keeps the selected weekday
+
+- **WHEN** the user selects Weekly, Monday, time `23:30`, zone `Asia/Tokyo`
+- **THEN** `trigger.cron.fields` is `{ hour: '23', minute: '30', day_of_week: '0' }` with no weekday shift
+
+#### Scenario: Monthly keeps the selected day
+
+- **WHEN** the user selects Monthly, day `31`, time `00:30`
+- **THEN** `trigger.cron.fields.day` is `'31'`, never `'last'` or `'1'`
+
+#### Scenario: Custom sends the weekday list unshifted
+
+- **WHEN** the user selects Custom, Monday, Wednesday and Friday, time `09:00`, zone `Europe/Berlin`
+- **THEN** `trigger.cron.fields` is `{ day_of_week: '0,2,4', hour: '9', minute: '0' }` with no `week` or `day` key
+
+#### Scenario: Result does not depend on the browser zone
+
+- **WHEN** the same form values are mapped with the process zone set to `UTC` and to `Pacific/Auckland`
+- **THEN** both bodies are identical
+
+### Requirement: Activity window is sent as zone-local boundaries
+
+For any non-`'oneTime'` repeat, including `'hourly'`, `trigger.cron` SHALL be `{ fields, startDate?, endDate? }`. `startDate` SHALL be `<YYYY-MM-DD>T00:00:00.000` and `endDate` `<YYYY-MM-DD>T23:59:59.999`, both offset-less and so local to `values.timezone`. `startDate`/`endDate` MUST NOT be sent for `'oneTime'`.
+
+#### Scenario: No dates set is a valid submit
+
+- **WHEN** `values.repeat !== 'oneTime'` and both `startDate` and `endDate` are empty
+- **THEN** submit proceeds and the POST body's `trigger.cron` has no `startDate`/`endDate` keys
+
+#### Scenario: Both dates set sends zone-local boundaries
+
+- **WHEN** `values.repeat` is a day-based cadence, `startDate = '2026-08-01'`, `endDate = '2026-08-31'`, zone `Europe/Berlin`, in a browser at any zone
+- **THEN** `trigger.cron.startDate` is `'2026-08-01T00:00:00.000'` and `trigger.cron.endDate` is `'2026-08-31T23:59:59.999'`, with `timezone = 'Europe/Berlin'`
+
+#### Scenario: Hourly uses the same boundaries
+
+- **WHEN** `values.repeat === 'hourly'`, `startDate = '2026-08-01'`, `endDate = '2026-08-31'`
+- **THEN** `trigger.cron` carries `fields: { hour: '*', minute: '0' }` and the same local boundaries as the day-based repeats
+
+#### Scenario: Custom submit never carries stale boundary values
+
+- **WHEN** the user sets a Start date while `values.repeat === 'weekly'`, switches to `'custom'`, and submits
+- **THEN** the Start date stays visible and is sent as `trigger.cron.startDate`; after switching to `'oneTime'` instead, no boundary is sent
+
+#### Scenario: Switching back to One-time never sends the window
+
+- **WHEN** the user set `startDate`/`endDate` on a recurring repeat, then switches to `'oneTime'` and submits
+- **THEN** the POST body's `trigger` is `{ date }` only — no `cron`, `startDate`, or `endDate`
+
+### Requirement: Activity window is validated against today in the task zone
+
+Create and edit SHALL block submit with `errors.endDate` when `endDate` is earlier than `startDate`; equal dates form a valid single-day window and an empty field skips the check. `validateScheduledTaskFormValues` SHALL reject a boundary earlier than today in `values.timezone` (`StartDateInPast`/`EndDateInPast`, after the ordering check), exempt a boundary equal to `originalStartDate`/`originalEndDate`, and reject non-`YYYY-MM-DD` boundaries (`StartDateInvalid`/`EndDateInvalid`).
+
+#### Scenario: endDate earlier than startDate blocks submit with an inline error
+
+- **WHEN** the user sets `endDate` earlier than `startDate` and activates Create
+- **THEN** `errors.endDate` is set to the `endDateBeforeStartError` message, no `createScheduledTask` call is made, and the form remains open
+
+#### Scenario: endDate equal to startDate is a valid single-day window
+
+- **WHEN** `startDate` and `endDate` are the same day, not earlier than today in the selected zone
+- **THEN** no ordering error is set and the window covers that day from `00:00:00.000` to `23:59:59.999` local
+
+#### Scenario: A past startDate blocks submit with an inline error
+
+- **WHEN** `startDate` is earlier than today in the selected zone and the user activates Create/Save
+- **THEN** `errors.startDate` is `startDateInPast` and no create/update call is made
+
+#### Scenario: A past endDate blocks submit with an inline error
+
+- **WHEN** `endDate` is earlier than today in the selected zone (with `startDate` unset or valid)
+- **THEN** `errors.endDate` is `endDateInPast` and no create/update call is made
+
+#### Scenario: An unchanged prefilled past boundary still saves on the edit page
+
+- **WHEN** an older task's past boundary is prefilled, left unchanged, and the user activates Save
+- **THEN** no past-date error is set and `updateScheduledTask` proceeds with the boundary preserved
+
+#### Scenario: A boundary changed to a different past date blocks save on the edit page
+
+- **WHEN** an older task's past `startDate` is changed to another earlier-than-today date
+- **THEN** `errors.startDate` is `startDateInPast` and no update call is made
+
+#### Scenario: A window starting on today is accepted
+
+- **WHEN** `startDate` equals today in the selected zone and `endDate` is a later day
+- **THEN** no past-date error is set
+
+#### Scenario: Today depends on the selected zone
+
+- **WHEN** it is `2026-03-10` in the browser zone and already `2026-03-11` in the selected `Asia/Tokyo`, and `startDate = '2026-03-10'`
+- **THEN** `errors.startDate` is `startDateInPast`
+
+### Requirement: Activity-window strings flow through react-i18next
+
+The i18n keys `scheduledTasks.create.startDateLabel`, `scheduledTasks.create.endDateLabel`, `scheduledTasks.create.startDatePlaceholder`, `scheduledTasks.create.endDatePlaceholder`, `scheduledTasks.create.endDateBeforeStartError`, `scheduledTasks.create.startDateInPast` and `scheduledTasks.create.endDateInPast` SHALL stay in `apps/chat/src/i18n/locales/en.json` with matching `ScheduledTasksI18nKeys` entries, resolved in `useScheduledTaskFormLabels` and passed to the lib as plain strings.
+
+#### Scenario: Labels are resolved by the app
+
+- **WHEN** the create page renders
+- **THEN** the lib receives the translated window labels and errors as strings and imports no i18n
+
+### Requirement: Reverse mapping reads zone-local fields as stored
+
+`libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts` SHALL map a `ScheduledTaskDto` to form values by reading `hour`, `minute`, `day_of_week` and `day` exactly as stored, with no offset shift, and setting `values.timezone` from the DTO (`'UTC'` when absent). A one-time `date` with an offset or `Z` SHALL be converted into the task's zone to produce `values.runAt`; an offset-less one is used as stored. Boundaries hydrate as `YYYY-MM-DD` the same way.
+
+#### Scenario: One-time instant is shown in the task zone
+
+- **WHEN** a task's `trigger.date` is `'2026-07-24T07:00:00.000Z'` with zone `Europe/Berlin`
+- **THEN** `values.runAt = '2026-07-24T09:00'` and `values.timezone = 'Europe/Berlin'`
+
+#### Scenario: Offset-less one-time date is used as stored
+
+- **WHEN** a task's `trigger.date` is `'2026-07-24T09:00:00'` with zone `Asia/Tokyo`
+- **THEN** `values.runAt = '2026-07-24T09:00'` in any browser zone
+
+#### Scenario: Hourly task round-trips
+
+- **WHEN** a task's `trigger.cron.fields` is `{ hour: '*', minute: '15' }`
+- **THEN** `values.repeat = 'hourly'`, `values.minute = '15'` in any browser zone, and no `time`, `dayOfWeek` or `dayOfMonth`
+
+#### Scenario: Daily task is read without an offset shift
+
+- **WHEN** a task's `trigger.cron.fields` is `{ hour: '7', minute: '0' }` with zone `UTC`, viewed in a `Europe/Berlin` browser
+- **THEN** `values.repeat = 'daily'`, `values.time = '07:00'` and `values.timezone = 'UTC'`
+
+#### Scenario: Weekly task keeps its weekday
+
+- **WHEN** a task's `trigger.cron.fields` is `{ hour: '23', minute: '30', day_of_week: '0' }` with zone `Asia/Tokyo`
+- **THEN** `values.repeat = 'weekly'`, `values.dayOfWeek` is Monday and `values.time = '23:30'`
+
+#### Scenario: Monthly task keeps its day
+
+- **WHEN** a task's `trigger.cron.fields` is `{ hour: '9', minute: '0', day: '31' }`
+- **THEN** `values.repeat = 'monthly'` and `values.dayOfMonth = '31'`
+
+#### Scenario: Custom task round-trips
+
+- **WHEN** a task's `trigger.cron.fields` is `{ day_of_week: '0,2,4', hour: '9', minute: '0' }`
+- **THEN** `values.repeat = 'custom'`, `values.daysOfWeek = ['0', '2', '4']`, `values.time = '09:00'`, and mapping forward reproduces the same fields
+
+#### Scenario: Older UTC-instant boundaries hydrate in the task zone
+
+- **WHEN** a task with zone `Europe/Berlin` has `startDate = '2026-07-31T22:00:00.000Z'` and `endDate = '2026-08-31T21:59:59.999Z'`
+- **THEN** `values.startDate = '2026-08-01'` and `values.endDate = '2026-08-31'`
+
+#### Scenario: Hourly task with a time-of-day boundary opens with its date
+
+- **WHEN** an hourly task was saved with a time-carrying boundary
+- **THEN** the form shows just the boundary's calendar day in the task zone
+
+#### Scenario: Task without a stored zone opens as UTC
+
+- **WHEN** the DTO has no `timezone`
+- **THEN** `values.timezone = 'UTC'` and the stored fields are shown unchanged
+
+#### Scenario: DST-day task keeps its wall time
+
+- **WHEN** a `Europe/Berlin` task `{ hour: '9', minute: '0' }` is opened in July and in January
+- **THEN** `values.time = '09:00'` both times
+
+### Requirement: Reverse mapping is fail-closed for unsupported or incomplete tasks
+
+The mapper SHALL return a discriminated result (values, or a failure reason), reading cron fields by non-`null` value because DIAL Scheduler returns every key with `null` for unset ones. A set field outside `hour`/`minute`/`day`/`day_of_week`, a non-null `week`, an unsupported `triggerType`, or a missing model or prompt/skill SHALL fail, and the edit page SHALL then show a non-destructive error without an editable form.
+
+#### Scenario: A weekly task without a week value still hydrates as Weekly
+
+- **WHEN** a task's fields are `{ hour: '7', minute: '0', day_of_week: '0' }` with `week` present but `null`
+- **THEN** `values.repeat = 'weekly'`, not `'custom'`
+
+#### Scenario: An unsupported week expression fails closed
+
+- **WHEN** a task's `trigger.cron.fields` includes `week: '*/1'`, `'*/2'`, `'2-40'`, `'1,3'` or `'*/12'`
+- **THEN** the mapper returns the unsupported-cron-shape failure and the edit page shows the "can't be edited here" message with Save unavailable, while the task stays listed, pausable and deletable
+
+#### Scenario: A custom schedule with an activity window hydrates its boundaries
+
+- **WHEN** a task's `trigger.cron` carries the Custom shape and also a `startDate` and `endDate`
+- **THEN** the mapper succeeds and hydrates both boundaries
+
+#### Scenario: A custom schedule with extra cron constraints fails closed
+
+- **WHEN** a task has `{ day_of_week: '0,2', hour: '9', minute: '0' }` plus a non-null `month`, `year`, `second` or `day`
+- **THEN** the mapper returns the unsupported-cron-shape failure
+
+#### Scenario: Null-valued extra fields do not prevent Custom editing
+
+- **WHEN** the Custom shape is accompanied only by null-valued `month`, `year`, `day`, `week` and `second`
+- **THEN** the mapper succeeds with `values.repeat = 'custom'`
+
+#### Scenario: Unsupported cron shape fails closed
+
+- **WHEN** a task's fields encode a shape the form cannot represent (a `day_of_week` range or step such as `'0-4'` or `'*/2'`, an unsupported field, or `hour: '*'` with a set `day`/`day_of_week`)
+- **THEN** the mapper returns a failure result and the edit page shows the non-destructive message with Save unavailable
+
+#### Scenario: Null-valued cron fields are treated as absent
+
+- **WHEN** a task's fields are `{ hour: '9', minute: '0', day: null, week: null, year: null, month: null, second: null, day_of_week: null }`
+- **THEN** the mapper succeeds as a plain daily schedule
+
+#### Scenario: Missing required fields fails closed
+
+- **WHEN** a task's `model` is missing/empty, `prompt` is not a string, or both trimmed `prompt` and `skillUrls` are empty
+- **THEN** the mapper returns a failure result and the edit page shows the same error without submitting a partial update
+
+#### Scenario: Skill-only task hydrates without catalog metadata
+
+- **WHEN** an otherwise supported task has `prompt: ""` and a saved `skillUrls`
+- **THEN** mapping succeeds with the same reference and an empty prompt
+
+### Requirement: Create form exposes the time zone field
+
+`ScheduledTaskCreateFormValues` SHALL include a required `timezone` (IANA id). `ScheduledTaskCreateForm` SHALL render the picker from the `scheduled-task-timezone` capability, fed by host-supplied options and labels, and report changes through `onFieldChange('timezone', id)`. The lib SHALL receive these only through props. Validation SHALL reject an empty or `Intl`-rejected `timezone` with `TimezoneInvalid`.
+
+#### Scenario: Picker is shown for time-based repeats
+
+- **WHEN** `values.repeat` is daily, weekly, monthly, custom or one-time
+- **THEN** the "Change timezone" link is rendered under the matching Time or Run-at field
+
+#### Scenario: Hourly shows the link under the Minute field
+
+- **WHEN** `values.repeat` is hourly
+- **THEN** the "Change timezone" link is rendered under the Minute field, and the selected zone is sent with the task
+
+#### Scenario: Unknown zone fails validation
+
+- **WHEN** `values.timezone` is empty or an identifier `Intl` rejects (for example `Mars/Olympus`)
+- **THEN** the shared validation returns `TimezoneInvalid` and submit is blocked

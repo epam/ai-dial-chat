@@ -54,7 +54,7 @@ Slicing strategy: **contract-first, then vertical**. Group 1 fixes the wire cont
 ## 8. Final integration
 
 - [x] 8.1 Run `npm run verify:full` once, plus `npm run build:quiet` because the shared libs and generated client changed. Verification: both exit 0
-- [ ] 8.2 End-to-end check with the real scheduler (sibling `dial-scheduler`): create a daily `09:00` `Europe/Berlin` task, a one-time task at `2027-03-28T02:30` Berlin, and open a pre-existing task. Verification: the scheduler's `next_run_time` is `08:00Z`/`07:00Z` by season, the gap task fires at `01:30Z`, and the legacy task shows its UTC time with zone `UTC`
+- [x] 8.2 End-to-end check with the real scheduler (sibling `dial-scheduler`): create a daily `09:00` `Europe/Berlin` task, a one-time task at `2027-03-28T02:30` Berlin, and open a pre-existing task. Verification: the scheduler's `next_run_time` is `08:00Z`/`07:00Z` by season, the gap task fires at `01:30Z`, and the legacy task shows its UTC time with zone `UTC`
 
 ## Workflow follow-up
 
