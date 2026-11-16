@@ -286,7 +286,6 @@ export * from './files/useDialFilePreview/useDialFilePreview';
 export * from './conversation/useEntityPreselection/useEntityPreselection';
 export * from './viewport-layout/canvas-width';
 export * from './onboarding/onboarding-targets';
-export * from './onboarding/useOnboardingHints';
 export * from './shared/usePersistedState/usePersistedState';
 export * from './shared/useAppVersionCheck/useAppVersionCheck';
 export * from './shared/url-cleanup';

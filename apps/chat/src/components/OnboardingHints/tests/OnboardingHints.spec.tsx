@@ -1,9 +1,9 @@
 import type { OnboardingHintDto } from '@epam/ai-dial-chat-api-client';
+import { getOnboardingAnchorTargets } from '@epam/ai-dial-chat-hooks/onboarding';
 import {
-  getOnboardingAnchorTargets,
   ONBOARDING_RETRY_INTERVAL_MS,
   ONBOARDING_START_DELAY_MS,
-} from '@epam/ai-dial-chat-hooks/onboarding';
+} from '@epam/ai-dial-onboarding-tour';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect, useState } from 'react';
@@ -112,6 +112,7 @@ describe('OnboardingHints', () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     localStorage.clear();
+    sessionStorage.clear();
     state.status = UserConfigStatus.Ready;
     state.isMobile = false;
     state.hints = [
@@ -254,12 +255,25 @@ describe('OnboardingHints', () => {
       ).toBeTruthy();
     });
 
+    it('stays on after following a link that drops the URL parameter', async () => {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      await startTour('/?onboarding-anchors');
+      await user.click(screen.getByRole('link', { name: 'Go to catalog' }));
+      expect(
+        screen.getByRole('region', {
+          name: /^onboardingTour.anchorsSummary:/,
+        }),
+      ).toBeTruthy();
+    });
+
     it('closes and drops the URL parameter', async () => {
       const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
       await startTour('/?onboarding-anchors');
       await user.click(
         screen.getByRole('button', { name: 'onboardingTour.anchorsClose' }),
       );
+      expect(screen.queryByRole('region')).toBeNull();
+      await user.click(screen.getByRole('link', { name: 'Go to catalog' }));
       expect(screen.queryByRole('region')).toBeNull();
     });
   });

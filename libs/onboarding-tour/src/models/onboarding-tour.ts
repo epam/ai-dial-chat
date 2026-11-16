@@ -131,3 +131,63 @@ export interface OnboardingAnchorMapProps {
   /** Extra class name(s) merged onto the map root. */
   className?: string;
 }
+
+/** One operator-configured hint: its copy and the target name the host resolves. */
+export interface OnboardingHint {
+  /** Stable id of the hint; seen ids are tracked by it. */
+  id: string;
+  /** Name of the element the hint points at, resolved by the host's `resolveTarget`. */
+  target: string;
+  /** Card heading. */
+  title: string;
+  /** Optional body text; `null` and `undefined` both mean none. */
+  description?: string | null;
+}
+
+/** Options of `useOnboardingHints`. */
+export interface UseOnboardingHintsOptions {
+  /** Hints to show, in order. */
+  hints: OnboardingHint[];
+  /** Ids of the hints this user has already seen. */
+  seenIds: string[];
+  /** Called with the new list of seen ids once a tour ends; the host persists it. */
+  onSeenIdsChange: (seenIds: string[]) => void;
+  /** Returns the on-screen element of a target, or `null` when the page does not render it. */
+  resolveTarget: (target: string) => HTMLElement | null;
+  /** `false` while the hints are loading or the host shows something else instead. */
+  isEnabled: boolean;
+  /** A value that changes on navigation, such as the pathname; each change looks for hints again. */
+  pageKey?: unknown;
+}
+
+/** Return value of `useOnboardingHints`. */
+export interface UseOnboardingHintsResult {
+  /** Steps to pass to `OnboardingTour`; empty while no tour runs. */
+  steps: OnboardingTourStep[];
+  /** Pass to `OnboardingTour` as `onFinish`: marks the shown ids seen and ends the tour. */
+  onFinish: (shownIds: string[]) => void;
+}
+
+/** User-visible strings of the `OnboardingHints` component. */
+export interface OnboardingHintsLabels {
+  /** Strings of the tour; each missing field falls back to its English default. */
+  tour?: OnboardingTourLabels;
+  /** Strings of the anchor map; each missing field falls back to its English default. */
+  anchorMap?: OnboardingAnchorMapLabels;
+}
+
+/** Props for the `OnboardingHints` component. */
+export interface OnboardingHintsProps extends UseOnboardingHintsOptions {
+  /** Every target name the host can resolve, outlined while `isAnchorView` is set. */
+  anchorTargets: string[];
+  /** When `true`, outlines every anchor on the page instead of showing hints. Defaults to `false`. */
+  isAnchorView?: boolean;
+  /** Called when the anchor map's close button is pressed; without it the button does nothing. */
+  onCloseAnchorView?: () => void;
+  /** When `true`, the hint card is a bottom sheet. Defaults to `false`. */
+  isMobile?: boolean;
+  /** Text direction of the tour and the anchor map. Defaults to the direction inherited from the document. */
+  dir?: 'ltr' | 'rtl';
+  /** User-visible strings of the tour and the anchor map. */
+  labels?: OnboardingHintsLabels;
+}

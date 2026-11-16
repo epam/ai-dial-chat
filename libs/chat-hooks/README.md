@@ -1597,18 +1597,9 @@ const ResizableSidePanel = () => {
 | --------------------- | -------- | ----------------------------------------------------------------------------- |
 | `minContentAreaWidth` | `number` | Minimum pixel width the main content area must retain when the panel is open. |
 
-### useOnboardingHints / resolveOnboardingTarget
+### resolveOnboardingTarget / getOnboardingAnchorTargets
 
 Available from the root and from `./onboarding` (no peer beyond `react`).
-
-`useOnboardingHints` decides which operator-configured `onboardingHints` a
-tour shows: the ones the user has not seen whose element is on the current
-page. It waits `ONBOARDING_START_DELAY_MS` after each `pageKey` change, then
-looks again every `ONBOARDING_RETRY_INTERVAL_MS` up to
-`ONBOARDING_RETRY_ATTEMPTS` times while the page loads its data. It returns the
-`steps` and `onFinish` to pass to `OnboardingTour` from
-`@epam/ai-dial-onboarding-tour`; `onFinish` reports the merged seen ids through
-`onSeenIdsChange`, and the host persists them wherever it likes.
 
 `resolveOnboardingTarget(target, labels, mainContentId)` finds the element an
 `OnboardingHintTarget` names by ARIA role and translated accessible name,
@@ -1619,57 +1610,35 @@ every `OnboardingTargetLabels` field with the same translated string the control
 renders. The anchors and how each is found are listed in
 [`docs/onboarding-anchors.md`](../../docs/onboarding-anchors.md).
 
+Pass both to `OnboardingHints` from `@epam/ai-dial-onboarding-tour`, which
+decides which hints to show and renders them:
+
 ```tsx
-import type {
-  OnboardingHintDto,
-  OnboardingHintTarget,
-} from '@epam/ai-dial-chat-api-client';
+import type { OnboardingHintTarget } from '@epam/ai-dial-chat-api-client';
 import {
+  getOnboardingAnchorTargets,
   resolveOnboardingTarget,
-  useOnboardingHints,
   type OnboardingTargetLabels,
 } from '@epam/ai-dial-chat-hooks/onboarding';
-import { OnboardingTour } from '@epam/ai-dial-onboarding-tour';
-import { useCallback } from 'react';
+import { OnboardingHints } from '@epam/ai-dial-onboarding-tour';
 
-const Onboarding = ({
-  hints,
-  labels,
-  seenIds,
-  saveSeenIds,
-  pathname,
-}: {
-  hints: OnboardingHintDto[];
-  labels: OnboardingTargetLabels;
-  seenIds: string[];
-  saveSeenIds: (ids: string[]) => void;
-  pathname: string;
-}) => {
-  const resolveTarget = useCallback(
-    (target: OnboardingHintTarget) =>
-      resolveOnboardingTarget(target, labels, 'main-content'),
-    [labels],
+const resolveTarget = (labels: OnboardingTargetLabels) => (target: string) =>
+  resolveOnboardingTarget(
+    target as OnboardingHintTarget,
+    labels,
+    'main-content',
   );
-  const { steps, onFinish } = useOnboardingHints({
-    hints,
-    seenIds,
-    onSeenIdsChange: saveSeenIds,
-    resolveTarget,
-    isEnabled: true,
-    pageKey: pathname,
-  });
-  return <OnboardingTour steps={steps} onFinish={onFinish} />;
-};
-```
 
-| Option            | Type                                           | Description                                                      |
-| ----------------- | ---------------------------------------------- | ---------------------------------------------------------------- |
-| `hints`           | `OnboardingHintDto[]`                          | Operator-configured hints, in order.                             |
-| `seenIds`         | `string[]`                                     | Ids the user has already seen.                                   |
-| `onSeenIdsChange` | `(seenIds: string[]) => void`                  | Receives the merged seen ids when a tour ends.                   |
-| `resolveTarget`   | `(target: OnboardingHintTarget) => HTMLElement | null`                                                            | Finds a target's element; usually `resolveOnboardingTarget`. |
-| `isEnabled`       | `boolean`                                      | `false` while the config loads or the host shows something else. |
-| `pageKey`         | `unknown`                                      | Changes on navigation (the pathname); each change looks again.   |
+<OnboardingHints
+  hints={config.onboardingHints}
+  resolveTarget={resolveTarget(labels)}
+  anchorTargets={getOnboardingAnchorTargets()}
+  seenIds={seenIds}
+  onSeenIdsChange={saveSeenIds}
+  isEnabled={isConfigReady}
+  pageKey={pathname}
+/>;
+```
 
 ### useAppVersionCheck
 

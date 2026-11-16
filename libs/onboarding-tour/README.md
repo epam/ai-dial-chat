@@ -36,6 +36,61 @@ import '@epam/ai-dial-onboarding-tour/styles.css';
 
 ## Components
 
+### OnboardingHints
+
+The whole first-visit flow over `OnboardingTour` and `OnboardingAnchorMap`:
+it picks the hints the user has not seen whose element is on the page, waits
+`ONBOARDING_START_DELAY_MS` after each `pageKey` change and keeps looking every
+`ONBOARDING_RETRY_INTERVAL_MS` (up to `ONBOARDING_RETRY_ATTEMPTS` times) while
+the page loads its data, runs the tour, and reports the merged seen ids through
+`onSeenIdsChange`. With `isAnchorView` it outlines every anchor instead.
+
+The host decides what a `target` means: `resolveTarget` turns it into the
+element, and `anchorTargets` lists every target it knows.
+`resolveOnboardingTarget` and `getOnboardingAnchorTargets` from
+`@epam/ai-dial-chat-hooks/onboarding` are those for a DIAL Chat app shell.
+
+```tsx
+import { OnboardingHints } from '@epam/ai-dial-onboarding-tour';
+
+<OnboardingHints
+  hints={[
+    {
+      id: 'new-chat',
+      target: 'new-chat',
+      title: 'Start a chat',
+      description: 'Open a fresh conversation at any time.',
+    },
+  ]}
+  resolveTarget={(target) =>
+    target === 'new-chat' ? document.querySelector('#new-chat') : null
+  }
+  anchorTargets={['new-chat']}
+  seenIds={seenIds}
+  onSeenIdsChange={saveSeenIds}
+  isEnabled={isConfigReady}
+  pageKey={pathname}
+  isAnchorView={isAnchorView}
+  onCloseAnchorView={closeAnchorView}
+  labels={{ tour: { next: 'Next' }, anchorMap: { close: 'Close anchor view' } }}
+/>;
+```
+
+| Prop                | Type                                      | Default   | Description                                                                    |
+| ------------------- | ----------------------------------------- | --------- | ------------------------------------------------------------------------------ |
+| `hints`             | `OnboardingHint[]`                        | —         | `{ id, target, title, description? }` per hint, in order.                      |
+| `resolveTarget`     | `(target: string) => HTMLElement \| null` | —         | Finds a target's element; `null` when the page does not render it.             |
+| `anchorTargets`     | `string[]`                                | —         | Every target name, outlined in the anchor view.                                |
+| `seenIds`           | `string[]`                                | —         | Ids the user has already seen.                                                 |
+| `onSeenIdsChange`   | `(seenIds: string[]) => void`             | —         | Receives the merged seen ids when a tour ends; the host persists them.         |
+| `isEnabled`         | `boolean`                                 | —         | `false` while the hints load; no tour starts.                                  |
+| `pageKey`           | `unknown`                                 | —         | Changes on navigation (the pathname); each change looks for hints again.       |
+| `isAnchorView`      | `boolean`                                 | `false`   | Outlines every anchor instead of showing hints.                                |
+| `onCloseAnchorView` | `() => void`                              | —         | Called by the anchor map's close button.                                       |
+| `isMobile`          | `boolean`                                 | `false`   | Shows the hint card as a bottom sheet.                                         |
+| `dir`               | `'ltr' \| 'rtl'`                          | inherited | Direction of the tour and the anchor map.                                      |
+| `labels`            | `OnboardingHintsLabels`                   | English   | `tour` (`OnboardingTourLabels`) and `anchorMap` (`OnboardingAnchorMapLabels`). |
+
 ### OnboardingTour
 
 ```tsx
@@ -129,9 +184,39 @@ import { OnboardingAnchorMap } from '@epam/ai-dial-onboarding-tour';
 
 `colors` fields and their defaults: `outline` (`--stroke-accent`), `tagBackground` (`--bg-layer-raised`), `tagText` (`--text-accent`), `panelBackground` (`--bg-layer-raised`), `panelBorder` (`--stroke-tertiary`), `panelShadow` (`--shadow-lg`), `panelText` (`--text-primary`), `panelMutedText` (`--text-secondary`).
 
+## Hooks
+
+### useOnboardingHints
+
+The hint logic of `OnboardingHints` without its rendering, for a host that
+renders `OnboardingTour` itself. It takes the same `hints`, `seenIds`,
+`onSeenIdsChange`, `resolveTarget`, `isEnabled` and `pageKey`, and returns the
+`steps` and `onFinish` to pass to `OnboardingTour`.
+
+```tsx
+import {
+  OnboardingTour,
+  useOnboardingHints,
+} from '@epam/ai-dial-onboarding-tour';
+
+const { steps, onFinish } = useOnboardingHints({
+  hints,
+  seenIds,
+  onSeenIdsChange: saveSeenIds,
+  resolveTarget,
+  isEnabled: true,
+  pageKey: pathname,
+});
+
+<OnboardingTour steps={steps} onFinish={onFinish} />;
+```
+
+`ONBOARDING_START_DELAY_MS`, `ONBOARDING_RETRY_INTERVAL_MS` and
+`ONBOARDING_RETRY_ATTEMPTS` are exported for tests that advance fake timers.
+
 ## Types
 
-`OnboardingTourStep`, `OnboardingTourProps`, `OnboardingTourLabels`, `OnboardingTourColors`, `OnboardingCardColors` — the hint card colors `OnboardingTourColors` extends — and `OnboardingAnchor`, `OnboardingAnchorMapProps`, `OnboardingAnchorMapLabels`, `OnboardingAnchorMapColors`.
+`OnboardingHint`, `OnboardingHintsProps`, `OnboardingHintsLabels`, `UseOnboardingHintsOptions`, `UseOnboardingHintsResult`, `OnboardingTourStep`, `OnboardingTourProps`, `OnboardingTourLabels`, `OnboardingTourColors`, `OnboardingCardColors` — the hint card colors `OnboardingTourColors` extends — and `OnboardingAnchor`, `OnboardingAnchorMapProps`, `OnboardingAnchorMapLabels`, `OnboardingAnchorMapColors`.
 
 ## Public class names
 

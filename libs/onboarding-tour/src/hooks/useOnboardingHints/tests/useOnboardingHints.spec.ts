@@ -1,30 +1,30 @@
-import {
-  OnboardingHintTarget,
-  type OnboardingHintDto,
-} from '@epam/ai-dial-chat-api-client';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ONBOARDING_RETRY_INTERVAL_MS,
   ONBOARDING_START_DELAY_MS,
-  useOnboardingHints,
-  type UseOnboardingHintsOptions,
-} from '../useOnboardingHints';
+} from '../../../constants/timing';
+import type {
+  OnboardingHint,
+  UseOnboardingHintsOptions,
+} from '../../../models/onboarding-tour';
+import { useOnboardingHints } from '../useOnboardingHints';
 
-const hint = (
-  id: string,
-  target: OnboardingHintTarget,
-  title: string,
-): OnboardingHintDto => ({ id, target, title, description: null });
+const hint = (id: string, target: string, title: string): OnboardingHint => ({
+  id,
+  target,
+  title,
+  description: null,
+});
 
 const HINTS = [
-  hint('new-chat', OnboardingHintTarget.NewChat, 'Start a chat'),
-  hint('catalog', OnboardingHintTarget.CatalogCreate, 'Create an agent'),
+  hint('new-chat', 'new-chat', 'Start a chat'),
+  hint('catalog', 'catalog-create', 'Create an agent'),
 ];
 
 describe('useOnboardingHints', () => {
   const element = document.createElement('button');
-  let onScreen: Set<OnboardingHintTarget>;
+  let onScreen: Set<string>;
 
   const renderHints = (options: Partial<UseOnboardingHintsOptions> = {}) =>
     renderHook(
@@ -43,7 +43,7 @@ describe('useOnboardingHints', () => {
 
   beforeEach(() => {
     vi.useFakeTimers();
-    onScreen = new Set([OnboardingHintTarget.NewChat]);
+    onScreen = new Set(['new-chat']);
   });
 
   afterEach(() => {
@@ -64,7 +64,7 @@ describe('useOnboardingHints', () => {
     act(() => vi.advanceTimersByTime(ONBOARDING_START_DELAY_MS));
     expect(result.current.steps).toEqual([]);
 
-    onScreen.add(OnboardingHintTarget.CatalogCreate);
+    onScreen.add('catalog-create');
     act(() => vi.advanceTimersByTime(ONBOARDING_RETRY_INTERVAL_MS));
     expect(result.current.steps.map((step) => step.id)).toEqual(['catalog']);
   });

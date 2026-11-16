@@ -2,18 +2,21 @@ import type { OnboardingHintTarget } from '@epam/ai-dial-chat-api-client';
 import {
   getOnboardingAnchorTargets,
   resolveOnboardingTarget,
-  useOnboardingHints,
   type OnboardingTargetLabels,
 } from '@epam/ai-dial-chat-hooks/onboarding';
 import { useIsMobile } from '@epam/ai-dial-chat-shared';
 import {
-  OnboardingAnchorMap,
-  OnboardingTour,
-  type OnboardingAnchor,
-  type OnboardingAnchorMapLabels,
-  type OnboardingTourLabels,
+  OnboardingHints as OnboardingHintsView,
+  type OnboardingHintsLabels,
 } from '@epam/ai-dial-onboarding-tour';
-import { memo, useCallback, useMemo, type FC } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useSearchParams } from 'react-router';
 import {
@@ -39,12 +42,19 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { StorageKey } from '../../types/storage-key';
 import { UserConfigStatus } from '../../types/user-config-status';
+import {
+  getFromSessionStorage,
+  removeFromSessionStorage,
+  setToSessionStorage,
+} from '../../utils/session-storage';
 
 /* The app shell's main landmark, which most anchors are looked up inside. */
 const MAIN_CONTENT_ID = 'main-content';
 
 /* `?onboarding-anchors` in the URL outlines every anchor on the page instead
- * of showing hints, so an operator can see what a hint's target points at. */
+ * of showing hints, so an operator can see what a hint's target points at.
+ * The view then stays on for the tab's session, so following links keeps it,
+ * until its panel is closed. */
 export const ONBOARDING_ANCHORS_PARAM = 'onboarding-anchors';
 
 /**
@@ -60,7 +70,17 @@ const OnboardingHints: FC = () => {
   const isMobile = useIsMobile();
   const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const isAnchorView = searchParams.has(ONBOARDING_ANCHORS_PARAM);
+  const hasAnchorsParam = searchParams.has(ONBOARDING_ANCHORS_PARAM);
+  const [isStoredAnchorView, setIsStoredAnchorView] = useState(
+    () => getFromSessionStorage(StorageKey.OnboardingAnchorView) === 'true',
+  );
+  useEffect(() => {
+    if (hasAnchorsParam) {
+      setToSessionStorage(StorageKey.OnboardingAnchorView, 'true');
+      setIsStoredAnchorView(true);
+    }
+  }, [hasAnchorsParam]);
+  const isAnchorView = hasAnchorsParam || isStoredAnchorView;
   const [seenIds, setSeenIds] = useLocalStorage<string[]>(
     StorageKey.SeenOnboardingHints,
     [],
@@ -170,81 +190,66 @@ const OnboardingHints: FC = () => {
     [targetLabelsKey],
   );
 
-  const labels = useMemo<OnboardingTourLabels>(
+  const labels = useMemo<OnboardingHintsLabels>(
     () => ({
-      stepCounter: (current, total) =>
-        t(OnboardingTourI18nKeys.StepCounter, { current, total }),
-      next: t(OnboardingTourI18nKeys.Next),
-      back: t(OnboardingTourI18nKeys.Back),
-      done: t(OnboardingTourI18nKeys.Done),
-      skip: t(OnboardingTourI18nKeys.Skip),
-      close: t(OnboardingTourI18nKeys.Close),
+      tour: {
+        stepCounter: (current, total) =>
+          t(OnboardingTourI18nKeys.StepCounter, { current, total }),
+        next: t(OnboardingTourI18nKeys.Next),
+        back: t(OnboardingTourI18nKeys.Back),
+        done: t(OnboardingTourI18nKeys.Done),
+        skip: t(OnboardingTourI18nKeys.Skip),
+        close: t(OnboardingTourI18nKeys.Close),
+      },
+      anchorMap: {
+        summary: (found, total) =>
+          t(OnboardingTourI18nKeys.AnchorsSummary, { found, total }),
+        missingHeading: t(OnboardingTourI18nKeys.AnchorsMissing),
+        noneMissing: t(OnboardingTourI18nKeys.AnchorsNoneMissing),
+        close: t(OnboardingTourI18nKeys.AnchorsClose),
+      },
     }),
     [t],
   );
 
-  const anchorMapLabels = useMemo<OnboardingAnchorMapLabels>(
-    () => ({
-      summary: (found, total) =>
-        t(OnboardingTourI18nKeys.AnchorsSummary, { found, total }),
-      missingHeading: t(OnboardingTourI18nKeys.AnchorsMissing),
-      noneMissing: t(OnboardingTourI18nKeys.AnchorsNoneMissing),
-      close: t(OnboardingTourI18nKeys.AnchorsClose),
-    }),
-    [t],
-  );
+  /* Hint targets come from chat-api's closed list, so the cast only narrows
+   * the lib's plain string back to the enum the resolvers are keyed by. */
   const resolveTarget = useCallback(
-    (target: OnboardingHintTarget) =>
-      resolveOnboardingTarget(target, targetLabels, MAIN_CONTENT_ID),
+    (target: string) =>
+      resolveOnboardingTarget(
+        target as OnboardingHintTarget,
+        targetLabels,
+        MAIN_CONTENT_ID,
+      ),
     [targetLabels],
   );
-  const anchors = useMemo<OnboardingAnchor[]>(
-    () =>
-      getOnboardingAnchorTargets().map((target) => ({
-        id: target,
-        getTarget: () => resolveTarget(target),
-      })),
-    [resolveTarget],
-  );
+  const anchorTargets = useMemo(() => getOnboardingAnchorTargets(), []);
+
+  const handleCloseAnchorView = useCallback(() => {
+    removeFromSessionStorage(StorageKey.OnboardingAnchorView);
+    setIsStoredAnchorView(false);
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete(ONBOARDING_ANCHORS_PARAM);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [setSearchParams]);
 
   /* Hints wait on every route, so the pathname restarts the lookup. */
-  const { steps, onFinish } = useOnboardingHints({
-    hints: config.onboardingHints,
-    seenIds,
-    onSeenIdsChange: setSeenIds,
-    resolveTarget,
-    isEnabled: !isAnchorView && status === UserConfigStatus.Ready,
-    pageKey: pathname,
-  });
-
-  const handleCloseAnchorView = useCallback(
-    () =>
-      setSearchParams(
-        (current) => {
-          const next = new URLSearchParams(current);
-          next.delete(ONBOARDING_ANCHORS_PARAM);
-          return next;
-        },
-        { replace: true },
-      ),
-    [setSearchParams],
-  );
-
-  if (isAnchorView) {
-    return (
-      <OnboardingAnchorMap
-        anchors={anchors}
-        onClose={handleCloseAnchorView}
-        dir={i18n.dir()}
-        labels={anchorMapLabels}
-      />
-    );
-  }
-
   return (
-    <OnboardingTour
-      steps={steps}
-      onFinish={onFinish}
+    <OnboardingHintsView
+      hints={config.onboardingHints}
+      resolveTarget={resolveTarget}
+      anchorTargets={anchorTargets}
+      seenIds={seenIds}
+      onSeenIdsChange={setSeenIds}
+      isEnabled={status === UserConfigStatus.Ready}
+      pageKey={pathname}
+      isAnchorView={isAnchorView}
+      onCloseAnchorView={handleCloseAnchorView}
       isMobile={isMobile}
       dir={i18n.dir()}
       labels={labels}

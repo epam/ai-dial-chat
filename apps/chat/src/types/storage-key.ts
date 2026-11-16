@@ -11,6 +11,8 @@ export enum StorageKey {
   CatalogActiveTab = 'catalogActiveTab',
   TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
   SeenOnboardingHints = 'seenOnboardingHints',
+  /** Session flag: the onboarding anchor view stays on across navigation until closed. */
+  OnboardingAnchorView = 'onboardingAnchorView',
   PublishDestinationFolders = 'publishDestinationFolders',
   ConversationDrafts = 'conversationDrafts',
   NavigationSidebarExpanded = 'navigationSidebarExpanded',
