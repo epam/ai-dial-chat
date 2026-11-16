@@ -69,6 +69,40 @@ describe('mapToDeploymentItem isFeatured', () => {
   });
 });
 
+describe('mapToDeploymentItem isHidden', () => {
+  const hiddenTags = new Set(['HIDDEN']);
+
+  it('marks a deployment hidden when a description keyword is a hidden tag', () => {
+    const item = mapToDeploymentItem(
+      raw({ description_keywords: ['Text', 'HIDDEN'] }),
+      new Set(),
+      hiddenTags,
+    );
+
+    expect(item?.isHidden).toBe(true);
+  });
+
+  it('does not mark a deployment without a hidden tag', () => {
+    const item = mapToDeploymentItem(
+      raw({ description_keywords: ['Text'] }),
+      new Set(),
+      hiddenTags,
+    );
+
+    expect(item?.isHidden).toBe(false);
+  });
+
+  it('does not mark a deployment whose keywords are not an array', () => {
+    const item = mapToDeploymentItem(
+      raw({ description_keywords: 'HIDDEN' as unknown as string[] }),
+      new Set(),
+      hiddenTags,
+    );
+
+    expect(item?.isHidden).toBe(false);
+  });
+});
+
 describe('mapToDeploymentItem viewerUrl', () => {
   const map = (overrides: Partial<RawDeploymentDto>) =>
     mapToDeploymentItem(raw(overrides), new Set(), new Set());

@@ -22,6 +22,8 @@ export class ModelsController {
     description:
       'Returns the list of DIAL Core deployments visible to the authenticated session user. ' +
       "Proxies GET /openai/models using the caller's session access token. " +
+      'Models whose description_keywords contain a HIDDEN_ENTITY_TAGS tag are omitted, ' +
+      'as in the Chat Catalog. Hiding is not access control. ' +
       'Results are cached server-side for 30 seconds per user.',
   })
   @ApiDialCoreErrors()
@@ -59,6 +61,8 @@ export class ModelsController {
     description:
       'Returns a single DIAL Core deployment by name for the authenticated session user. ' +
       "Proxies GET /openai/models/{model_name} using the caller's session access token. " +
+      'A model whose description_keywords contain a HIDDEN_ENTITY_TAGS tag answers 404, ' +
+      'as if it did not exist. ' +
       'Results are cached server-side for 60 seconds per user per model.',
   })
   @ApiDialCoreErrors()
@@ -79,7 +83,10 @@ export class ModelsController {
     status: 403,
     description: 'Caller lacks permission to access this model',
   })
-  @ApiResponse({ status: 404, description: 'Model not found' })
+  @ApiResponse({
+    status: 404,
+    description: 'Model not found, or hidden through HIDDEN_ENTITY_TAGS',
+  })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   @ApiResponse({
     status: 502,

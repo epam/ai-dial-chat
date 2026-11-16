@@ -31,6 +31,7 @@ const errResponse = (status: number) =>
 
 const makeService = (
   { apiKey }: { apiKey: string | undefined } = { apiKey: CATALOG_KEY },
+  hiddenTags: string[] = [],
 ) => {
   const getModels = vi.fn();
   const getModel = vi.fn();
@@ -38,9 +39,11 @@ const makeService = (
     client: { getModels, getModel },
   } as unknown as DialClientService;
   const configService = {
-    get: vi.fn((key: string) =>
-      key === 'MODEL_CATALOG_API_KEY' ? apiKey : undefined,
-    ),
+    get: vi.fn((key: string) => {
+      if (key === 'MODEL_CATALOG_API_KEY') return apiKey;
+      if (key === 'HIDDEN_ENTITY_TAGS') return hiddenTags;
+      return undefined;
+    }),
   } as unknown as ConfigService<EnvironmentVariables>;
   const service = new ModelCatalogService(dialClient, configService);
   return { service, getModels, getModel };
@@ -501,6 +504,89 @@ describe('ModelCatalogService', () => {
       await expect(service.getCatalogEntry('gpt-4o')).rejects.toThrow(
         ServiceUnavailableException,
       );
+    });
+  });
+
+  describe('HIDDEN_ENTITY_TAGS', () => {
+    const hiddenGpt: DialModelDto = {
+      ...gpt,
+      description_keywords: ['Text', 'HIDDEN'],
+    };
+    const visibleClaude: DialModelDto = {
+      ...claude,
+      description_keywords: ['Text'],
+    };
+    const makeHidingService = () =>
+      makeService({ apiKey: CATALOG_KEY }, ['HIDDEN']);
+
+    it('omits hidden models from the catalog list', async () => {
+      const { service, getModels } = makeHidingService();
+      getModels.mockResolvedValue(
+        okResponse({ data: [hiddenGpt, visibleClaude] }),
+      );
+
+      await expect(service.listCatalog()).resolves.toEqual({
+        data: [visibleClaude],
+      });
+    });
+
+    it('shares one DIAL Core call and the filtered list across callers', async () => {
+      const { service, getModels } = makeHidingService();
+      getModels.mockResolvedValue(
+        okResponse({ data: [hiddenGpt, visibleClaude] }),
+      );
+
+      const first = await service.listCatalog();
+      const second = await service.listCatalog();
+
+      expect(getModels).toHaveBeenCalledOnce();
+      expect(first).toEqual({ data: [visibleClaude] });
+      expect(second).toBe(first);
+    });
+
+    it('returns 404 for a hidden model without a per-model DIAL Core call', async () => {
+      const { service, getModels, getModel } = makeHidingService();
+      getModels.mockResolvedValue(
+        okResponse({ data: [hiddenGpt, visibleClaude] }),
+      );
+
+      await expect(service.getCatalogEntry('gpt-4o')).rejects.toThrow(
+        new NotFoundException('Model not found'),
+      );
+      expect(getModel).not.toHaveBeenCalled();
+    });
+
+    it('returns a model without a hidden tag', async () => {
+      const { service, getModels } = makeHidingService();
+      getModels.mockResolvedValue(
+        okResponse({ data: [hiddenGpt, visibleClaude] }),
+      );
+
+      await expect(service.getCatalogEntry('claude-opus')).resolves.toEqual(
+        visibleClaude,
+      );
+    });
+
+    it('does not count hidden models as malformed entries', async () => {
+      const { service, getModels } = makeHidingService();
+      getModels.mockResolvedValue(
+        okResponse({ data: [hiddenGpt, visibleClaude] }),
+      );
+
+      await service.listCatalog();
+
+      expect(Logger.prototype.warn).not.toHaveBeenCalled();
+    });
+
+    it('returns every entry when no tag is configured', async () => {
+      const { service, getModels } = makeService();
+      getModels.mockResolvedValue(
+        okResponse({ data: [hiddenGpt, visibleClaude] }),
+      );
+
+      await expect(service.listCatalog()).resolves.toEqual({
+        data: [hiddenGpt, visibleClaude],
+      });
     });
   });
 });

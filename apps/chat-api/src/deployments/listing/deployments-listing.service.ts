@@ -26,6 +26,7 @@ import type {
 import { DeploymentInterfaceType } from '../dto/deployments-query.dto';
 import { RawDeploymentDto } from '../dto/raw-deployment.dto';
 import { mapToDeploymentItem } from '../utils/deployment-mapper.util';
+import { readHiddenEntityTags } from '../utils/hidden-entity-tags.util';
 
 type DialDeploymentInterfaceType = NonNullable<
   NonNullable<
@@ -37,7 +38,7 @@ type DialDeploymentInterfaceType = NonNullable<
 export class DeploymentsListingService {
   private readonly logger = new Logger(DeploymentsListingService.name);
   private readonly featuredIds: Set<string>;
-  private readonly hiddenTags: Set<string>;
+  private readonly hiddenTags: ReadonlySet<string>;
 
   constructor(
     private readonly dialClient: DialClientService,
@@ -49,9 +50,7 @@ export class DeploymentsListingService {
       configService.get<string[]>('FEATURED_MODEL_IDS') ?? [],
     );
 
-    this.hiddenTags = new Set(
-      configService.get<string[]>('HIDDEN_ENTITY_TAGS') ?? [],
-    );
+    this.hiddenTags = readHiddenEntityTags(configService);
   }
 
   /**

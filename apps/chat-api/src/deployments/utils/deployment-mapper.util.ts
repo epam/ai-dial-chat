@@ -10,6 +10,7 @@ import type {
   DeploymentItemDto,
 } from '../dto/deployment-item.dto';
 import { RawDeploymentDto } from '../dto/raw-deployment.dto';
+import { hasHiddenEntityTag } from './hidden-entity-tags.util';
 
 export const isRecord = (val: unknown): val is Record<string, unknown> =>
   val != null && typeof val === 'object' && !Array.isArray(val);
@@ -232,7 +233,7 @@ export const mapDeploymentFeatures = (
 export const mapToDeploymentItem = (
   raw: RawDeploymentDto,
   featuredIds: Set<string>,
-  hiddenTags: Set<string>,
+  hiddenTags: ReadonlySet<string>,
 ): DeploymentItemDto | null => {
   if (!raw.id) return null;
 
@@ -287,7 +288,7 @@ export const mapToDeploymentItem = (
     isFeatured:
       featuredIds.has(raw.id) ||
       (raw.reference != null && featuredIds.has(raw.reference)),
-    isHidden: topics.some((tag) => hiddenTags.has(tag)),
+    isHidden: hasHiddenEntityTag(raw.description_keywords, hiddenTags),
     updatedAt: raw.updated_at,
     createdAt: raw.created_at,
     interfaces,
