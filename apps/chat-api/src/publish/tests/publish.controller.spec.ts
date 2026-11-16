@@ -2,6 +2,7 @@ import {
   BadGatewayException,
   ForbiddenException,
   INestApplication,
+  NotFoundException,
   ValidationPipe,
   VersioningType,
 } from '@nestjs/common';
@@ -12,6 +13,7 @@ import { CatalogEntityType } from '../dto/catalog-entity-params.dto';
 import { PublishResultDto } from '../dto/publish-result.dto';
 import { PublishController } from '../publish.controller';
 import { PublishService } from '../publish.service';
+import { VersionStatusesService } from '../version-statuses.service';
 
 const TEST_USER = {
   sub: 'user-123',
@@ -29,10 +31,16 @@ const publishResult: PublishResultDto = {
   publishedBy: 'user@example.com',
 };
 
-async function buildApp(service: unknown): Promise<INestApplication> {
+async function buildApp(
+  service: unknown,
+  versionStatusesService: unknown = {},
+): Promise<INestApplication> {
   const module: TestingModule = await Test.createTestingModule({
     controllers: [PublishController],
-    providers: [{ provide: PublishService, useValue: service }],
+    providers: [
+      { provide: PublishService, useValue: service },
+      { provide: VersionStatusesService, useValue: versionStatusesService },
+    ],
   }).compile();
 
   const app = module.createNestApplication();
@@ -354,6 +362,94 @@ describe('PublishController (integration)', () => {
       service.getPublishHistory.mockRejectedValue(new BadGatewayException());
       await request(app.getHttpServer())
         .get('/api/v1/catalog/toolset/tool-abc123/publish-history')
+        .expect(502);
+    });
+  });
+
+  describe('GET /api/v1/catalog/:entityType/:entityId/version-statuses', () => {
+    const entries = [
+      {
+        id: 'applications/bucket-123/Design/Review__1.0.0',
+        version: '1.0.0',
+        status: 'published',
+        publishedFolders: ['Organization/Design'],
+        publishedBy: 'Jane Doe',
+      },
+      {
+        id: 'applications/bucket-123/Design/Review__1.1.0',
+        version: '1.1.0',
+        status: 'not-published',
+        publishedFolders: [],
+      },
+    ];
+    let statusesApp: INestApplication;
+    let versionStatuses: { getVersionStatuses: ReturnType<typeof vi.fn> };
+
+    beforeEach(async () => {
+      versionStatuses = {
+        getVersionStatuses: vi.fn().mockResolvedValue(entries),
+      };
+      statusesApp = await buildApp(service, versionStatuses);
+    });
+
+    afterEach(async () => {
+      await statusesApp.close();
+    });
+
+    it('delegates to the service with the session and returns 200 with the entries', async () => {
+      const res = await request(statusesApp.getHttpServer())
+        .get(
+          '/api/v1/catalog/application/applications%2Fbucket-123%2FDesign%2FReview__1.0.0/version-statuses',
+        )
+        .expect(200);
+
+      expect(res.body).toEqual(entries);
+      expect(versionStatuses.getVersionStatuses).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        TEST_USER.bucket,
+        'application',
+        'applications/bucket-123/Design/Review__1.0.0',
+      );
+    });
+
+    it('returns 400 for an unknown entityType', async () => {
+      await request(statusesApp.getHttpServer())
+        .get('/api/v1/catalog/unknown-type/tool-abc123/version-statuses')
+        .expect(400);
+
+      expect(versionStatuses.getVersionStatuses).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 for a path traversal entityId', async () => {
+      await request(statusesApp.getHttpServer())
+        .get(
+          '/api/v1/catalog/application/..%2F..%2Fetc%2Fpasswd/version-statuses',
+        )
+        .expect(400);
+
+      expect(versionStatuses.getVersionStatuses).not.toHaveBeenCalled();
+    });
+
+    it('returns 404 when the service finds no version', async () => {
+      versionStatuses.getVersionStatuses.mockRejectedValue(
+        new NotFoundException(),
+      );
+
+      await request(statusesApp.getHttpServer())
+        .get(
+          '/api/v1/catalog/application/applications%2Fb%2FX__1.0.0/version-statuses',
+        )
+        .expect(404);
+    });
+
+    it('returns 502 when the service throws BadGatewayException', async () => {
+      versionStatuses.getVersionStatuses.mockRejectedValue(
+        new BadGatewayException(),
+      );
+
+      await request(statusesApp.getHttpServer())
+        .get('/api/v1/catalog/toolset/toolsets%2Fb%2FX__1.0.0/version-statuses')
         .expect(502);
     });
   });

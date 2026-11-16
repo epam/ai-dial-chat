@@ -194,6 +194,9 @@ describe('PublishService.unpublish', () => {
     expect(cacheManager.del).toHaveBeenCalledWith(
       `publish-history:toolset:${TOOLSET_ID}`,
     );
+    expect(cacheManager.del).toHaveBeenCalledWith(
+      `publish:bucket-publications:${TEST_BUCKET}`,
+    );
   });
 
   it('falls back to the caller-supplied author and the current time when Core returns no parseable publication body', async () => {

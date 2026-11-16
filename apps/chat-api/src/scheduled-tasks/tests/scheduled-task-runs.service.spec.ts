@@ -1,4 +1,4 @@
-import { ServiceUnavailableException } from '@nestjs/common';
+import { NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ScheduledTaskRunStatus } from '../dto/scheduled-task-run.dto';
 import { ScheduledTaskRateLimitException } from '../scheduled-task-rate-limit.exception';
@@ -526,6 +526,29 @@ describe('ScheduledTasksService', () => {
         ).rejects.toMatchObject({ status });
       },
     );
+
+    it('maps a Scheduler 422 for a non-UUID run id to 404', async () => {
+      fetchMock.mockResolvedValue({
+        ok: false,
+        status: 422,
+        json: () => Promise.resolve({ detail: 'invalid run id' }),
+      });
+      const service = createScheduledTasksService(
+        makeDialClient(fetchMock),
+        makeConfigService('scheduler-app') as never,
+        makeCacheManager() as never,
+        { resolveDeploymentItem: vi.fn() } as never,
+        makeSchedulerConsent() as never,
+      );
+
+      await expect(
+        service.getScheduledTaskRun(
+          'token',
+          'sched_123',
+          'run_doesnotexist0000',
+        ),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
 
     it('maps an unreachable Scheduler to 503', async () => {
       fetchMock.mockRejectedValue(

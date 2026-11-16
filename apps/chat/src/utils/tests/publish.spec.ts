@@ -7,12 +7,32 @@ import {
   PublishI18nKeys,
 } from '../../constants/translation-keys';
 import {
+  getPublishApprovalLabels,
   getPublishDependenciesEntityKey,
   getPublishDependenciesLabels,
   getPublishFolderLabel,
 } from '../publish';
 
 const t = ((key: string) => key) as unknown as TFunction;
+
+describe('getPublishApprovalLabels', () => {
+  it('translates the title and splices the entity noun into the message', () => {
+    const tWithOptions = ((key: string, options?: { entity?: string }) =>
+      options?.entity
+        ? `${key}:${options.entity}`
+        : key) as unknown as TFunction;
+
+    expect(
+      getPublishApprovalLabels(
+        tWithOptions,
+        PublishI18nKeys.DependenciesEntityApplication,
+      ),
+    ).toEqual({
+      adminApprovalTitle: PublishI18nKeys.AdminApprovalTitle,
+      adminApprovalMessage: `${PublishI18nKeys.AdminApprovalMessage}:${PublishI18nKeys.DependenciesEntityApplication}`,
+    });
+  });
+});
 
 describe('getPublishFolderLabel', () => {
   it('names the leaf segment of a nested folder path', () => {

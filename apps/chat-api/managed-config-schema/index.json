@@ -1,0 +1,14 @@
+{
+  "format": "dial-managed-config-schema-index@1",
+  "appId": "chat-ui",
+  "current": "1.0.0",
+  "supported": ["1.0.0"],
+  "versions": [
+    {
+      "schemaVersion": "1.0.0",
+      "file": "chat-ui-1.0.0.json",
+      "schemaSha256": "9e2155b7857adf6cc51e8966ad02ebf79953c5a87875eaea929e384c02b55dd6",
+      "canonicalBytes": 5161
+    }
+  ]
+}

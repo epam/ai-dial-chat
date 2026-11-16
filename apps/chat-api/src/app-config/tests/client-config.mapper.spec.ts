@@ -17,6 +17,7 @@ const SERVICE_ASSEMBLED_FIELDS = [
   'aiTextRefinementAvailable',
   'appVersion',
   'catalogCreationPermissions',
+  'modelCatalogAvailable',
 ];
 
 /* The DTO's Swagger-declared fields, stored by @ApiProperty as `:<name>`. */

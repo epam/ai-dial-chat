@@ -8,13 +8,14 @@ import {
 import {
   CatalogCreationType,
   type CatalogCreationPermissionsDto,
+  CelebrationDeliveryMode,
 } from '@epam/ai-dial-chat-api-client';
 import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -56,6 +57,8 @@ const capturedPublishProps: {
     isPublishVisible?: (item: CatalogItem) => boolean;
     onUnpublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
     isUnpublishVisible?: (item: CatalogItem) => boolean;
+    publishVersionHistory?: unknown;
+    onPublishOpenChange?: (isOpen: boolean, item: CatalogItem) => void;
     publishExpandedPaths?: Set<string>;
     onPublishExpandedPathsChange?: (paths: Set<string>) => void;
     publishLoadingPaths?: Set<string>;
@@ -138,6 +141,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     isPublishVisible,
     onUnpublish,
     isUnpublishVisible,
+    publishVersionHistory,
+    onPublishOpenChange,
     publishLabels,
     detailsTexts,
     detailsLimitsFooterNote,
@@ -199,6 +204,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     isPublishVisible?: (item: CatalogItem) => boolean;
     onUnpublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
     isUnpublishVisible?: (item: CatalogItem) => boolean;
+    publishVersionHistory?: unknown;
+    onPublishOpenChange?: (isOpen: boolean, item: CatalogItem) => void;
     detailsTexts?: { apiKeyHeaderHint?: (header: string) => string };
     detailsLimitsFooterNote?: ReactNode;
     publishLabels?: {
@@ -226,6 +233,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       isPublishVisible,
       onUnpublish,
       isUnpublishVisible,
+      publishVersionHistory,
+      onPublishOpenChange,
       publishExpandedPaths,
       onPublishExpandedPathsChange,
       publishLoadingPaths,
@@ -618,6 +627,12 @@ vi.mock(
   }),
 );
 
+/* The real hook returns nothing for the empty id the catalog passes while no publish panel is open. */
+vi.mock('../../../hooks/publish/useResourceVersionHistory', () => ({
+  useResourceVersionHistory: vi.fn((resourceId: string) =>
+    resourceId === '' ? undefined : { rows: [], resourceId },
+  ),
+}));
 vi.mock('../../../hooks/publish/usePublishFolders', () => ({
   usePublishFolders: vi.fn(),
 }));
@@ -760,6 +775,12 @@ describe('CatalogView', () => {
         maxAttachmentFileSizeBytes: 536_870_912,
         usageLimitsWarningThresholdPercent: 75,
         celebrationsEnabledByDefault: true,
+        celebrationDelivery: {
+          mode: CelebrationDeliveryMode.Bundled,
+          revision: '0',
+          externalScenes: [],
+          externalEvents: [],
+        },
         projectContextFileMaxBytes: 1_048_576,
         projectContextTotalMaxBytes: 10_485_760,
         projectContextAllowedExtensions: ['csv', 'pdf', 'xlsx'],
@@ -935,6 +956,49 @@ describe('CatalogView', () => {
       expect(
         screen.getByLabelText('Publish credentials hint').textContent,
       ).toBe(CatalogI18nKeys.PublishCredentialsHint);
+    });
+  });
+
+  describe('versions history wiring', () => {
+    const openItem = {
+      id: 'applications/b1/Design/Review__1.0.0',
+      type: CatalogEntityType.Agent,
+    } as CatalogItem;
+
+    it('hands the catalog no history while no publish panel is open', () => {
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.publishVersionHistory,
+      ).toBeUndefined();
+    });
+
+    it('builds the history for the item whose publish panel opened', () => {
+      render(<CatalogView />);
+
+      act(() =>
+        capturedPublishProps.current?.onPublishOpenChange?.(true, openItem),
+      );
+
+      expect(capturedPublishProps.current?.publishVersionHistory).toEqual({
+        rows: [],
+        resourceId: openItem.id,
+      });
+    });
+
+    it('drops the history when the publish panel closes', () => {
+      render(<CatalogView />);
+      act(() =>
+        capturedPublishProps.current?.onPublishOpenChange?.(true, openItem),
+      );
+
+      act(() =>
+        capturedPublishProps.current?.onPublishOpenChange?.(false, openItem),
+      );
+
+      expect(
+        capturedPublishProps.current?.publishVersionHistory,
+      ).toBeUndefined();
     });
   });
 

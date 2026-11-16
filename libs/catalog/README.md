@@ -1311,7 +1311,10 @@ before. Its text arrives through the existing `publishLabels` (as
 `dependenciesLabels`). The optional `resolvePublishDependenciesLabels(item)`
 (on `DetailsPanel` and `Catalog`) returns dependency labels for the item being
 published, merged over `publishLabels.dependenciesLabels`, so a host can name
-the item's kind in the warning; omitting it uses `publishLabels` as is. The request, its endpoint
+the item's kind in the warning; omitting it uses `publishLabels` as is.
+Likewise `resolvePublishApprovalLabels(item)` returns the `adminApprovalTitle` and
+`adminApprovalMessage` of the publish panel's admin-approval banner for the item,
+merged over `publishLabels`. The request, its endpoint
 and its mapping to `PublishDependency` stay with the host (see
 `usePublishDependencies` and `mapResourceDependencyDto` in
 `@epam/ai-dial-chat-hooks`).
@@ -1327,6 +1330,30 @@ and its mapping to `PublishDependency` stay with the host (see
   publishLabels={{
     dependenciesLabels: { title: t('catalog.publish.dependencies.title') },
   }}
+/>
+```
+
+### Versions history in the publish panel
+
+`publishVersionHistory` (on `DetailsPanel`) is the `VersionHistorySectionProps`
+object of `@epam/ai-dial-publish-panel` for the open item: rows, loading and error
+state, retry, labels and styles, already resolved by the host. The details panel
+forwards it to the publish panel unchanged, so the Versions history section is the
+last section of the panel; omitting it renders the panel as before. The panel adds no
+version input. `onPublishOpenChange(isOpen, item)` is called with `true` and the open item when
+the publish sub-view opens and with `false` when it closes or the panel unmounts, so
+the host can build the history for that item and load its statuses only while the
+sub-view is open. `Catalog` takes and forwards both props. The library builds no rows and
+calls no API; `useVersionHistory` in `@epam/ai-dial-chat-hooks` does both on the
+host side.
+
+```tsx
+<DetailsPanel
+  item={item}
+  isOpen
+  onClose={handleClose}
+  publishVersionHistory={history}
+  onPublishOpenChange={(isOpen) => setIsPublishOpen(isOpen)}
 />
 ```
 

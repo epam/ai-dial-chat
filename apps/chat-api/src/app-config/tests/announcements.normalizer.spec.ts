@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { normalizeAnnouncements } from '../announcements.normalizer';
+import { AnnouncementSeverity } from '../dto/announcement-severity.enum';
 
 describe('normalizeAnnouncements', () => {
   it('returns an empty list with no warning when the value is absent', () => {
@@ -37,6 +38,7 @@ describe('normalizeAnnouncements', () => {
         title: 'We have upgraded to DIAL 1.43',
         description: "Check what's new:",
         link: { label: 'Changelog', href: 'https://dialx.ai' },
+        severity: AnnouncementSeverity.Info,
       },
     ]);
     expect(warn).not.toHaveBeenCalled();
@@ -48,7 +50,12 @@ describe('normalizeAnnouncements', () => {
       vi.fn(),
     );
     expect(result).toEqual([
-      { title: 'Maintenance window on Friday', description: null, link: null },
+      {
+        title: 'Maintenance window on Friday',
+        description: null,
+        link: null,
+        severity: AnnouncementSeverity.Info,
+      },
     ]);
   });
 
@@ -231,6 +238,138 @@ describe('normalizeAnnouncements', () => {
       const description = result[0].description ?? '';
       expect(description).not.toContain('target="_blank"');
       expect(description).toContain('href="#section"');
+    });
+  });
+
+  describe('severity', () => {
+    it('returns an entry without severity as info and logs nothing', () => {
+      const warn = vi.fn();
+      const result = normalizeAnnouncements([{ title: 'News' }], warn);
+      expect(result[0].severity).toBe(AnnouncementSeverity.Info);
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('treats a null severity as absent', () => {
+      const warn = vi.fn();
+      const result = normalizeAnnouncements(
+        [{ title: 'News', severity: null }],
+        warn,
+      );
+      expect(result[0].severity).toBe(AnnouncementSeverity.Info);
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it.each([['info'], ['warning']])(
+      'returns the configured %s severity',
+      (severity) => {
+        const warn = vi.fn();
+        const result = normalizeAnnouncements(
+          [{ title: 'Maintenance', severity }],
+          warn,
+        );
+        expect(result[0].severity).toBe(severity);
+        expect(warn).not.toHaveBeenCalled();
+      },
+    );
+
+    it('matches severity regardless of case and surrounding whitespace', () => {
+      const warn = vi.fn();
+      const result = normalizeAnnouncements(
+        [{ title: 'Maintenance', severity: ' Warning ' }],
+        warn,
+      );
+      expect(result[0].severity).toBe(AnnouncementSeverity.Warning);
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('keeps an entry with an unknown severity as info and warns once', () => {
+      const warn = vi.fn();
+      const result = normalizeAnnouncements(
+        [{ title: 'Maintenance', severity: 'critical' }],
+        warn,
+      );
+      expect(result).toEqual([
+        {
+          title: 'Maintenance',
+          description: null,
+          link: null,
+          severity: AnnouncementSeverity.Info,
+        },
+      ]);
+      expect(warn).toHaveBeenCalledOnce();
+      expect(warn).toHaveBeenCalledWith(
+        'Announcement "Maintenance": unknown severity "critical"; using "info"',
+      );
+    });
+
+    it.each([[''], [2], [true], [['warning']], [{ level: 'warning' }]])(
+      'falls back to info and warns once for the non-matching value %j',
+      (severity) => {
+        const warn = vi.fn();
+        const result = normalizeAnnouncements(
+          [{ title: 'Maintenance', severity }],
+          warn,
+        );
+        expect(result[0].severity).toBe(AnnouncementSeverity.Info);
+        expect(warn).toHaveBeenCalledOnce();
+        expect(warn).toHaveBeenCalledWith(
+          expect.stringContaining(
+            'Announcement "Maintenance": unknown severity',
+          ),
+        );
+      },
+    );
+
+    it('warns once per entry carrying an unknown severity', () => {
+      const warn = vi.fn();
+      const result = normalizeAnnouncements(
+        [
+          { title: 'First', severity: 'critical' },
+          { title: 'Second', severity: 'warning' },
+          { title: 'Third', severity: 'urgent' },
+        ],
+        warn,
+      );
+      expect(result.map((item) => item.severity)).toEqual([
+        AnnouncementSeverity.Info,
+        AnnouncementSeverity.Warning,
+        AnnouncementSeverity.Info,
+      ]);
+      expect(warn).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not evaluate the severity of an entry dropped for another reason', () => {
+      const warn = vi.fn();
+      const result = normalizeAnnouncements(
+        [
+          { title: '   ', severity: 'critical' },
+          {
+            title: 'Bad link',
+            link: { label: 'Go', href: 'javascript:x' },
+            severity: 'critical',
+          },
+        ],
+        warn,
+      );
+      expect(result).toEqual([]);
+      expect(warn).toHaveBeenCalledTimes(2);
+      expect(warn).not.toHaveBeenCalledWith(
+        expect.stringContaining('unknown severity'),
+      );
+    });
+
+    it('keeps duplicates that differ only in severity', () => {
+      const result = normalizeAnnouncements(
+        [
+          { title: 'Same', severity: 'info' },
+          { title: 'Same', severity: 'warning' },
+        ],
+        vi.fn(),
+      );
+      expect(result.map((item) => item.severity)).toEqual([
+        AnnouncementSeverity.Info,
+        AnnouncementSeverity.Warning,
+      ]);
     });
   });
 

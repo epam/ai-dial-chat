@@ -152,6 +152,16 @@ export class FeatureFlagsEnv {
   @IsBoolean()
   USAGE_LIMITS_CONTROL_ENABLED?: boolean = false;
 
+  @IsOptional()
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  ORG_UNITS_ENABLED?: boolean = false;
+
   /*
    * Percentage of a capped day/week/month usage limit at which the composer's
    * usage banner appears. Banner only — the usage dial keeps its fixed 75%.

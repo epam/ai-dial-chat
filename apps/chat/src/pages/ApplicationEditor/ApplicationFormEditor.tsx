@@ -4,6 +4,7 @@ import {
   MetadataField,
   MetadataForm,
   useMetadataForm,
+  withStoredVersionRule,
 } from '@epam/ai-dial-builder-form';
 import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import {
@@ -149,9 +150,13 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
         : definition.defaultMetadata,
     [deployment, definition.defaultMetadata],
   );
+  const metadataValidationOptions = useMemo(
+    () => withStoredVersionRule(definition.metadataValidation, isEditMode),
+    [definition.metadataValidation, isEditMode],
+  );
   const metadata = useMetadataForm({
     initialValues: metadataInitialValues,
-    validationOptions: definition.metadataValidation,
+    validationOptions: metadataValidationOptions,
     reseedKey: wasCreatedThisSession ? undefined : deployment?.id,
   });
 

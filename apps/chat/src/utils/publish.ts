@@ -148,6 +148,21 @@ export const getPublishDependenciesEntityKey = (
 };
 
 /**
+ * Builds the translated admin-approval callout labels, naming what is being published.
+ * @param t - translation function
+ * @param entityKey - key of the lowercase noun naming what is being published, spliced into the message
+ */
+export const getPublishApprovalLabels = (
+  t: TFunction,
+  entityKey: PublishDependenciesEntityKey,
+): Pick<PublishPanelLabels, 'adminApprovalTitle' | 'adminApprovalMessage'> => ({
+  adminApprovalTitle: t(PublishI18nKeys.AdminApprovalTitle),
+  adminApprovalMessage: t(PublishI18nKeys.AdminApprovalMessage, {
+    entity: t(entityKey),
+  }),
+});
+
+/**
  * Builds the translated labels of the private-dependencies section, shared by every publish panel host.
  * @param t - translation function
  * @param entityKey - key of the lowercase noun naming what is being published, spliced into the warning

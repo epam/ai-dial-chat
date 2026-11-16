@@ -3,6 +3,7 @@ import type {
   PublicationRule,
   PublishDependenciesLabels,
   PublishDependency,
+  VersionHistorySectionProps,
   PublishFolderNode,
   PublishFooterLabels,
   PublishHistoryEntry,
@@ -586,12 +587,26 @@ export interface DetailsPanelProps {
    */
   getPublishDependencies?: (item: CatalogItem) => Promise<PublishDependency[]>;
   /**
+   * Versions history shown as the last section of the publish panel of the open item, already resolved by the host
+   * (rows, loading and error state, retry, labels and styles). Omit it to leave the section out; publishing never offers a version input.
+   */
+  publishVersionHistory?: VersionHistorySectionProps;
+  /** Called with `true` and the open item when the publish sub-view opens, and with `false` when it closes or the panel unmounts, so the host can load the history's statuses only while it is open. */
+  onPublishOpenChange?: (isOpen: boolean, item: CatalogItem) => void;
+  /**
    * Resolves the private-dependencies labels for the item being published, merged over
    * `publishLabels.dependenciesLabels`, so the warning can name what the item is. Omit it to use `publishLabels` as is.
    */
   resolvePublishDependenciesLabels?: (
     item: CatalogItem,
   ) => PublishDependenciesLabels;
+  /**
+   * Resolves the admin-approval callout text for the item being published, merged over `publishLabels`,
+   * so the message can name what the item is. Omit it to use `publishLabels` as is.
+   */
+  resolvePublishApprovalLabels?: (
+    item: CatalogItem,
+  ) => Pick<PublishPanelLabels, 'adminApprovalTitle' | 'adminApprovalMessage'>;
   /** Root-level destination folder nodes offered by the publish flow. */
   publishFolderItems?: PublishFolderNode[];
   /**

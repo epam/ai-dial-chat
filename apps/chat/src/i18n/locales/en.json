@@ -339,6 +339,8 @@
       "parameters": "Parameters",
       "hostedBy": "Hosted by",
       "releaseDate": "Release date",
+      "deprecationDate": "Deprecation date",
+      "endOfService": "End of service",
       "contextWindow": "Context window",
       "maxOutputTokens": "Max output tokens",
       "inputModalities": "Input modalities",
@@ -603,6 +605,8 @@
     "unpublishFailedMessage": "The unpublish request was not submitted. Please try again.",
     "unpublishNetworkErrorMessage": "The unpublish request was not submitted because your internet connection was lost. Please check your connection and try again.",
     "submitErrorCallout": "Publishing failed. Please try again.",
+    "adminApprovalTitle": "Admin approval required",
+    "adminApprovalMessage": "We’ll send a request to your organization’s admin. If approved, your {{entity}} will appear in the folder.",
     "authorLabel": "Author",
     "authorPlaceholder": "Author name",
     "authorHint": "Shown as the publication's author. Defaults to you — replace it to credit a team instead.",
@@ -1553,7 +1557,7 @@
     "general": {
       "namePlaceholder": "Enter name",
       "descriptionPlaceholder": "Describe what this toolset does",
-      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
+      "versionInvalid": "Version may only contain letters, digits, dots, underscores, plus signs and hyphens, up to 64 characters; it cannot end with a dot, contain two underscores in a row, or start with an underscore"
     },
     "settings": {
       "endpointCaption": "The HTTPS address where the server accepts MCP requests. Choose the transport under Protocol below.",
@@ -2111,8 +2115,8 @@
     "saveAsNewVersion": "Save as new version",
     "newVersionLabel": "New version",
     "newVersionPlaceholder": "Enter new version",
-    "versionInvalid": "Use a version like 1.0.0.",
-    "versionUnchanged": "Enter a version other than {{version}}.",
+    "versionInvalid": "Version may only contain letters, digits, dots, underscores, plus signs and hyphens, up to 64 characters; it cannot end with a dot, contain two underscores in a row, or start with an underscore",
+    "versionUnchanged": "Enter a version other than {{version}}",
     "versionExists": "Version {{version}} already exists. Enter another version.",
     "versionReadOnlyTooltip": "To change the version, choose “Save as new version” when you save.",
     "foldersLoadFailed": "Folders could not be loaded.",
@@ -2124,5 +2128,16 @@
     "savedButPublishFailed": "“{{name}}” was saved, but the publish request failed.",
     "savedButPublishFailedReason": "“{{name}}” was saved, but the publish request failed: {{reason}}",
     "savedButAlreadyPublished": "“{{name}}” was saved, but this version is already published in {{folder}}. Choose another folder or save as a new version."
+  },
+  "versionHistory": {
+    "heading": "Versions history",
+    "inReview": "In review",
+    "published": "Published",
+    "statusUnavailable": "Status unavailable",
+    "loading": "Loading publication statuses…",
+    "empty": "No saved versions yet.",
+    "loadFailed": "Could not load publication statuses.",
+    "publishedBy": "Published by {{name}}",
+    "owner": "by {{name}}"
   }
 }

@@ -36,6 +36,7 @@ import {
 import type { PublishDependenciesLabels } from '../../models/publish-dependencies-list';
 import type { PublishDependency } from '../../models/publish-dependency';
 import type { PublishPanelStyles } from '../../models/publish-panel-styles';
+import type { VersionHistorySectionProps } from '../../models/version-history';
 import { PublishPanelView } from '../../types/publish-panel';
 import { derivePublishState } from '../../utils/publish-state';
 import {
@@ -44,6 +45,7 @@ import {
 } from '../PublishAccessRules/PublishAccessRules';
 import { PublishDependenciesList } from '../PublishDependenciesList/PublishDependenciesList';
 import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
+import { VersionHistorySection } from '../VersionHistorySection/VersionHistorySection';
 import styles from './PublishPanel.module.scss';
 
 /** Matches the publish endpoints' own `author` limit, so the field cannot compose a request the backend rejects. */
@@ -81,6 +83,10 @@ export interface PublishPanelLabels {
   noAccessError?: string;
   /** Error callout body shown when the most recent submit attempt failed. */
   submitError?: string;
+  /** Heading of the informational callout stating the publication needs an administrator's approval. Default: `'Admin approval required'`. */
+  adminApprovalTitle?: string;
+  /** Body of the informational callout under `adminApprovalTitle`. Default: `'We’ll send a request to your organization’s admin. If approved, it will appear in the folder.'`; a host replaces it to name the entity being published. */
+  adminApprovalMessage?: string;
   /** Message shown when a folder search query matches no folders; `{query}` is replaced. */
   folderEmptyStateLabel?: string;
   /** Label for the per-row context menu action that creates a folder alongside the clicked folder. */
@@ -125,6 +131,8 @@ export interface PublishPanelProps {
    * Omit it to leave the section out; pass an empty array to keep it mounted for a later list, which is announced when it appears.
    */
   dependencies?: PublishDependency[];
+  /** Versions history shown as the last section of the main view. Omit it to leave the section out. */
+  versionHistory?: VersionHistorySectionProps;
   /** Which view to show: the main form or the destination folder tree. Default: `PublishPanelView.Main`. */
   view?: PublishPanelView;
   /** Called when the user asks to open the folder view from the destination row. */
@@ -222,6 +230,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   resource,
   renderSummary,
   dependencies,
+  versionHistory,
   folderItems,
   selectedFolderPath,
   pendingFolderPath,
@@ -282,6 +291,8 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     replaceWarning = 'Version {version} is already published in {folder}. Publishing will replace it.',
     noAccessError = "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
     submitError = 'Publishing failed. Please try again.',
+    adminApprovalTitle = 'Admin approval required',
+    adminApprovalMessage = 'We’ll send a request to your organization’s admin. If approved, it will appear in the folder.',
     folderEmptyStateLabel,
     addSiblingFolderLabel,
     addChildFolderLabel,
@@ -487,6 +498,16 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             onClick={onChangeFolderClick}
           />
         </div>
+        {derived.calloutKind === PublishCalloutKind.Info && (
+          <div className="my-4">
+            <Notification
+              type={NotificationType.SectionMessage}
+              variant={NotificationVariant.Info}
+              title={adminApprovalTitle}
+              message={adminApprovalMessage}
+            />
+          </div>
+        )}
         {derived.calloutKind !== PublishCalloutKind.None &&
           derived.calloutKind !== PublishCalloutKind.Info && (
             <div className="mt-3">
@@ -561,6 +582,13 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           labels={dependenciesLabels}
           headingClassName={headingClassName}
           styles={dependenciesStyles}
+        />
+      )}
+
+      {versionHistory != null && (
+        <VersionHistorySection
+          headingClassName={headingClassName}
+          {...versionHistory}
         />
       )}
     </div>

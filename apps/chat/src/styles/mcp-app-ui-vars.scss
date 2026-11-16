@@ -46,7 +46,7 @@
   --color-ring-warning: var(--stroke-warning, #eec840);
 
   /* Fonts — `--theme-font` is set in `styles.scss`; no mono token exists in this app */
-  --font-sans: var(--theme-font, 'Inter', sans-serif);
+  --font-sans: var(--theme-font, 'Inter Variable', 'Inter', sans-serif);
   --font-mono: ui-monospace, 'SFMono-Regular', 'Fira Code', monospace;
 
   /* Font weights — no app-level weight tokens; standard CSS scale */

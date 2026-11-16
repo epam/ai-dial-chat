@@ -33,16 +33,20 @@ const DEFAULT_PUBLICATION_FILTER_SOURCES: readonly string[] = [
 /**
  * The `config` fields of the client-config response that are derived from a
  * single registry key. `appVersion` (resolved ahead of the loop),
- * `aiTextRefinementAvailable` (read from `ConfigService`) and
- * `catalogCreationPermissions` (evaluated from the server-only
- * `CATALOG_CREATION_ROLES`, which is not a registry key) are assembled by
- * `AppConfigService` itself. `Required` keeps `allowedConnectOrigins`, which is
- * optional in the DTO, always present, as the response has always emitted it.
+ * `aiTextRefinementAvailable` and `modelCatalogAvailable` (read from
+ * `ConfigService`) and `catalogCreationPermissions` (evaluated from the
+ * server-only `CATALOG_CREATION_ROLES`, which is not a registry key) are
+ * assembled by `AppConfigService` itself. `Required` keeps
+ * `allowedConnectOrigins`, which is optional in the DTO, always present, as the
+ * response has always emitted it.
  */
 export type MappedClientConfig = Required<
   Omit<
     ClientConfigDto,
-    'aiTextRefinementAvailable' | 'appVersion' | 'catalogCreationPermissions'
+    | 'aiTextRefinementAvailable'
+    | 'appVersion'
+    | 'catalogCreationPermissions'
+    | 'modelCatalogAvailable'
   >
 >;
 

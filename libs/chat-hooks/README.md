@@ -1117,6 +1117,29 @@ setRefreshToken((token) => token + 1);
 | `isLoading`  | `boolean`                                | `true` while a fetch is in flight, including a refresh.                                                                   |
 | `usageError` | `Error \| undefined`                     | Set when the `getUserUsage` call rejects.                                                                                 |
 
+### useOrgUnits
+
+Loads the current user's DIAL Core org units once, on demand, and answers
+which public-bucket folders are units. The host supplies `listOrgUnits`
+(resolving `{ enabled, units }`), so the hook never builds a client. Nothing
+is read until `ensureUnits()` is called. Later calls do nothing, except after a
+failed read, when the next call reads again. Status
+is the `OrgUnitsStatus` enum: `Idle`, `Loading`, `Ready`, `Disabled` (Core
+has org units off) or `Error` (the read failed; nothing is reported). Until
+the status is `Ready`, `isOrgUnitFolder` returns `false`. Available from the
+root and `./utils`.
+
+```tsx
+import { OrgUnitsStatus, useOrgUnits } from '@epam/ai-dial-chat-hooks';
+
+const { status, ensureUnits, isOrgUnitFolder } = useOrgUnits({
+  listOrgUnits, // host-configured fetch
+});
+
+useEffect(() => ensureUnits(), [ensureUnits]);
+const isUnit = status === OrgUnitsStatus.Ready && isOrgUnitFolder('Acme');
+```
+
 ### useUsageLimitBanner
 
 Everything the composer usage-limit banner needs except its rendering: fetches the selected deployment's own usage and the caller's account usage, refreshes both once after each generation ends, picks the day/week/month token limit (from the deployment) or cost budget (from the account) closest to its cap, translates the limit and reset sentences, and tracks tab-lifetime dismissal. Spread the returned `banner` onto `UsageLimitBannerView` from `@epam/ai-dial-conversation-input`. Available from the root and from `@epam/ai-dial-chat-hooks/usage-limits`; needs the optional `@epam/ai-dial-conversation-input` peer (it supplies the `UsageLimitBannerSeverity` enum at runtime).
@@ -2744,6 +2767,51 @@ const SkillCatalog = ({
 | `refetch`          | `() => Promise<void>`                  | Re-reads all namespaces and replaces the current state.                    |
 | `mergeSharedSkill` | `(item: SkillMetadataItemDto) => void` | Upserts a skill into `sharedWithMe` by `url`, appending it if not present. |
 
+### useVersionHistory
+
+Builds the Versions history rows of the Save and Publish panels. It selects the caller's own items of an already-loaded deployments or toolsets listing that share the edited resource's `versionGroupId`, leaves the edited version itself out, sorts the others by `updatedAt` (newest first), formats the folder (`rootLabel` plus the folder segments of the id), date and author line through the host `formatters`, and loads the publication statuses in the background through the supplied `client.getCatalogVersionStatuses` while `isEnabled` is `true`. The rows render at once; a failed request keeps them and sets `hasError`, and `onRetry` reloads. A resource that is not the user's own (no row with `isMy === true`), an id missing from the listing, a listing still loading, or a resource with no other saved version returns no rows, `hasVersions: false`, and requests nothing: the host should then render no section. Closing the panel (`isEnabled: false`) clears the loaded statuses and any error, so reopening shows the loading state again. The hook builds no client and no path: the host passes `publishApiClient` from its `createPublishApiClient` and the translated `formatters`.
+
+```tsx
+import { useVersionHistory } from '@epam/ai-dial-chat-hooks';
+
+const { rows, isLoading, hasError, onRetry } = useVersionHistory({
+  items: toolsets,
+  resourceId: toolset.id,
+  entityType: 'toolset',
+  isEnabled: isPanelOpen,
+  client: publishApiClient,
+  formatters,
+});
+
+<PublishPanel
+  {...props}
+  versionHistory={{ rows, isLoading, hasError, onRetry }}
+/>;
+```
+
+`formatters` is `{ rootLabel, formatDate, formatPublishedBy, formatOwner }` (`VersionHistoryFormatters`) and should be referentially stable. The pure `selectOtherVersions` and `buildVersionHistoryRows` it uses are exported too.
+
+### useVersionHistorySection / isVersionedCatalogEntityType
+
+`useVersionHistorySection` wraps `useVersionHistory` for a host that holds both listings. It takes `resourceId`, `resourceType` (a `CatalogEntityType`), `isEnabled`, the `applications` and `toolsets` listing items, the `client`, the translated `labels` and the `formatters`, picks the listing by type, and returns ready `VersionHistorySectionProps` (`rows`, `isLoading`, `hasError`, `onRetry`, `labels`), or `undefined` for an unversioned type, an empty `resourceId`, and while the listing holds no other version the user owns. `isVersionedCatalogEntityType(type)` is `true` for applications (`CatalogEntityType.Agent`) and toolsets.
+
+```tsx
+import { useVersionHistorySection } from '@epam/ai-dial-chat-hooks';
+
+const versionHistory = useVersionHistorySection({
+  resourceId: item.id,
+  resourceType: item.type,
+  isEnabled: isPublishOpen,
+  applications: deployments,
+  toolsets,
+  client: publishApiClient,
+  labels,
+  formatters,
+});
+
+<PublishPanel {...props} versionHistory={versionHistory} />;
+```
+
 ## Usage Utilities
 
 Available from both `@epam/ai-dial-chat-hooks` and `@epam/ai-dial-chat-hooks/usage`.
@@ -4295,7 +4363,7 @@ const { starters, propertyKey, description } = getStartersFromSchema(
 
 Announcement-banner helpers: sanitize operator-supplied HTML, check whether structured (`title`/`description`) or any content is present, and build the content-keyed signature used to track dismissal.
 
-`buildAnnouncementSignature` covers every part of the banner surface: the title, the description, and the `items` entries behind the `+N` pill, whose popover is hidden along with the banner. Editing any of them produces a new signature, so a host that persists it re-shows a banner the user had dismissed. A legacy-only announcement (`html` with no title or description) signs as the raw HTML string, and `items` is left out of the payload when the list is empty — both so signatures stored by earlier builds keep matching.
+`buildAnnouncementSignature` covers every part of the banner surface: the title, the description, and the `items` entries behind the `+N` pill, whose popover is hidden along with the banner. Editing any of them produces a new signature, so a host that persists it re-shows a banner the user had dismissed. An entry's `severity` is not signed: the Chat surfaces do not render it, so changing only the severity leaves a dismissed banner hidden. A legacy-only announcement (`html` with no title or description) signs as the raw HTML string, and `items` is left out of the payload when the list is empty — both so signatures stored by earlier builds keep matching.
 
 The two sanitizers differ in the tags they keep, because the two banner layouts differ. `sanitizeAnnouncementHtml` is for the structured `description`, which renders as one truncating line, so it keeps inline markup only — `a`, `b`, `strong`, `em`, `br`, `span`. `sanitizeAnnouncementMessageHtml` is for the legacy `html` message, a free-standing block, so it additionally keeps `u` and `p`. Both keep `href`, `target` and `rel` on links, drop everything else including `style`, and force `rel="noopener noreferrer"` on any link that already carries `target="_blank"`.
 
@@ -4327,6 +4395,32 @@ buildAnnouncementSignature(content);
 
 sanitizeAnnouncementMessageHtml('<p>Upgraded to <strong>1.47</strong></p>');
 // '<p>Upgraded to <strong>1.47</strong></p>'
+```
+
+### AnnouncementSeverity / mapAnnouncementSeverity
+
+`AnnouncementSeverity` says how urgent an `AnnouncementListItem` is, so a host can mark a maintenance or outage notice — for example with a warning icon before the title. Members: `Info` (`'info'`, an ordinary news item) and `Warning` (`'warning'`). `AnnouncementListItem.severity` is optional; absent means `Info`.
+
+`mapAnnouncementSeverity` converts the generated client's `AnnouncementSeverity` (from an `AnnouncementItemDto`) into the lib enum. It returns `Info` when the value is `null`, `undefined` — as from a backend that predates the field — or a level this build does not know, so a host can switch on the result exhaustively.
+
+```ts
+import type { AnnouncementItemDto } from '@epam/ai-dial-chat-api-client';
+import {
+  type AnnouncementListItem,
+  AnnouncementSeverity,
+  mapAnnouncementSeverity,
+} from '@epam/ai-dial-chat-hooks';
+
+const toListItems = (
+  dtos: readonly AnnouncementItemDto[],
+): AnnouncementListItem[] =>
+  dtos.map((dto) => ({
+    ...dto,
+    severity: mapAnnouncementSeverity(dto.severity),
+  }));
+
+const isWarning = (item: AnnouncementListItem): boolean =>
+  item.severity === AnnouncementSeverity.Warning;
 ```
 
 ### sanitizeFooterHtml / formatAppVersion

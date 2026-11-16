@@ -405,6 +405,48 @@ describe('PublishPanel', () => {
     ).toBeTruthy();
   });
 
+  it('shows the admin-approval banner for a fresh folder the user can publish to', () => {
+    renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
+    expect(screen.getByText('Admin approval required')).toBeTruthy();
+    expect(screen.getByText(/We’ll send a request/)).toBeTruthy();
+  });
+
+  it('takes the admin-approval banner text from labels', () => {
+    renderPanel({
+      selectedFolderPath: ['Shared', 'Data Science'],
+      labels: {
+        adminApprovalTitle: 'Custom title',
+        adminApprovalMessage: 'Your application will appear in the folder.',
+      },
+    });
+    expect(screen.getByText('Custom title')).toBeTruthy();
+    expect(
+      screen.getByText('Your application will appear in the folder.'),
+    ).toBeTruthy();
+  });
+
+  it.each([
+    ['no folder is selected', {}],
+    [
+      'the version already exists',
+      {
+        selectedFolderPath: ['Shared'],
+        hasExistingPublicationInFolder: true,
+      },
+    ],
+    [
+      'the user lacks write access',
+      { selectedFolderPath: ['Shared'], hasWriteAccess: false },
+    ],
+    [
+      'the last submit failed',
+      { selectedFolderPath: ['Shared'], hasSubmitError: true },
+    ],
+  ])('hides the admin-approval banner when %s', (_, props) => {
+    renderPanel(props);
+    expect(screen.queryByText('Admin approval required')).toBeNull();
+  });
+
   it('hides the callout while submitting', () => {
     renderPanel({
       selectedFolderPath: ['Shared', 'Data Science'],
@@ -591,6 +633,51 @@ describe('PublishPanel — private dependencies', () => {
 
     expect(
       screen.queryByRole('region', { name: 'Private dependencies' }),
+    ).toBeNull();
+  });
+});
+
+describe('PublishPanel — versions history', () => {
+  const versionHistory = {
+    rows: [
+      { id: 'a', version: '1.0.0' },
+      { id: 'b', version: 'beta-2' },
+    ],
+  };
+
+  it('renders the section as the last section of the panel', () => {
+    renderPanel({ versionHistory });
+
+    const region = screen.getByRole('region', { name: 'Versions history' });
+    const folderHeading = screen.getByRole('heading', {
+      name: 'Publish to folder',
+    });
+    expect(
+      folderHeading.compareDocumentPosition(region) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+  });
+
+  it('renders no section when the host supplies no history', () => {
+    renderPanel();
+
+    expect(
+      screen.queryByRole('region', { name: 'Versions history' }),
+    ).toBeNull();
+  });
+
+  it('offers no version input, so publishing uses the saved version', () => {
+    renderPanel({ versionHistory });
+
+    expect(screen.queryByRole('textbox', { name: /version/i })).toBeNull();
+  });
+
+  it('does not render the section in the folder view', () => {
+    renderPanel({ versionHistory, view: PublishPanelView.ChangeFolder });
+
+    expect(
+      screen.queryByRole('region', { name: 'Versions history' }),
     ).toBeNull();
   });
 });

@@ -45,6 +45,7 @@ import {
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
+  getPublishApprovalLabels,
   getPublishDependenciesLabels,
   getPublishFooterProgressLabels,
   getPublishPanelCommonLabels,
@@ -259,6 +260,10 @@ const PublishProjectPanelContainer: FC<Props> = ({
         rootFolderLabel: t(BasicI18nKeys.Organization),
         accessRulesLabels: getAccessRulesLabels(t),
         dependenciesLabels: getPublishDependenciesLabels(
+          t,
+          PublishI18nKeys.DependenciesEntityProject,
+        ),
+        ...getPublishApprovalLabels(
           t,
           PublishI18nKeys.DependenciesEntityProject,
         ),
