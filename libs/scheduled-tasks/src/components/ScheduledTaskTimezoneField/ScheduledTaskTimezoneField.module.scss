@@ -1,0 +1,105 @@
+/* Colors come from the `--stz-*` vars `ScheduledTaskTimezoneField` sets from its `colors` prop, on the link and on the panel root (the panel is portalled, so the link's vars never reach it). */
+/*
+ * Spacing follows the design, measured against a 46px field: the link's text
+ * centre sits about 18px under the input (the parent's 4px gap + 2px here +
+ * half of its 24px box) and the next field starts about 20px below the link
+ * (8px here + the form's 12px gap). The kit's link button is a 40px box, which
+ * put the text 10px too low and the popup's gap to it at 18px instead of 8px.
+ */
+.field {
+  margin-block: 2px 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 12px;
+}
+
+.summary {
+  color: var(--stz-name, var(--text-primary, #161b2d));
+}
+
+.link.link {
+  block-size: 24px;
+  color: var(--stz-link, var(--text-accent, #1d4ed8));
+}
+
+.chevron {
+  transition: transform 150ms ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.popover {
+  min-inline-size: 360px;
+  /* The var comes from `listStyle`, because the popover is portalled away from the field. */
+  box-shadow:
+    0 12px 32px 0 var(--stz-shadow, var(--shadow-lg, #2764d914)),
+    0 2px 8px 0 var(--stz-shadow, var(--shadow-lg, #2764d914));
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  inline-size: 100%;
+  box-sizing: border-box;
+}
+
+.results {
+  /* A fixed height, so the popup keeps its size while a search narrows the list or empties it. */
+  display: flex;
+  flex-direction: column;
+  block-size: 320px;
+  overflow-y: auto;
+}
+
+.heading {
+  padding-block: 8px 4px;
+  padding-inline: 12px;
+  color: var(--stz-heading, var(--text-secondary, #57647a));
+}
+
+.row {
+  inline-size: 100%;
+}
+
+.rowContent {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  min-inline-size: 0;
+  white-space: nowrap;
+  text-align: start;
+}
+
+.offset {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-inline-size: 5.5rem;
+  color: var(--stz-offset, var(--text-secondary, #57647a));
+  font-variant-numeric: tabular-nums;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  min-inline-size: 0;
+  color: var(--stz-name, var(--text-primary, #161b2d));
+}
+
+.abbreviation {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  color: var(--stz-abbreviation, var(--text-secondary, #57647a));
+}
+
+.hint {
+  color: var(--stz-hint, var(--text-secondary, #57647a));
+}

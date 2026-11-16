@@ -3372,6 +3372,12 @@ export interface CreateScheduledTaskBodyDto {
    */
   trigger: ScheduleTriggerDto;
   /**
+   * IANA time zone the trigger is evaluated in. Cron fields and offset-less datetimes are local wall time in this zone. Omission means UTC; an update that omits it resets the zone to UTC.
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  timezone?: string;
+  /**
    *
    * @type {string}
    * @memberof CreateScheduledTaskBodyDto
@@ -3584,6 +3590,12 @@ export interface CreatedScheduledTaskDto {
    * @memberof CreatedScheduledTaskDto
    */
   trigger: ScheduleTriggerDto;
+  /**
+   * IANA time zone the trigger is evaluated in. Always present on responses (UTC for tasks saved without one); declared optional so existing clients and fixtures stay valid.
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  timezone?: string;
   /**
    *
    * @type {string}
@@ -8637,6 +8649,12 @@ export interface ScheduledTaskDto {
    */
   trigger: ScheduleTriggerDto;
   /**
+   * IANA time zone the trigger is evaluated in. Always present on responses (UTC for tasks saved without one); declared optional so existing clients and fixtures stay valid.
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  timezone?: string;
+  /**
    *
    * @type {string}
    * @memberof ScheduledTaskDto
@@ -10481,6 +10499,12 @@ export interface UpdateScheduledTaskBodyDto {
    */
   trigger: ScheduleTriggerDto;
   /**
+   * IANA time zone the trigger is evaluated in. Cron fields and offset-less datetimes are local wall time in this zone. Omission means UTC; an update that omits it resets the zone to UTC.
+   * @type {string}
+   * @memberof UpdateScheduledTaskBodyDto
+   */
+  timezone?: string;
+  /**
    *
    * @type {string}
    * @memberof UpdateScheduledTaskBodyDto
@@ -10567,6 +10591,12 @@ export interface UpdatedScheduledTaskDto {
    * @memberof UpdatedScheduledTaskDto
    */
   trigger: ScheduleTriggerDto;
+  /**
+   * IANA time zone the trigger is evaluated in. Always present on responses (UTC for tasks saved without one); declared optional so existing clients and fixtures stay valid.
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  timezone?: string;
   /**
    *
    * @type {string}

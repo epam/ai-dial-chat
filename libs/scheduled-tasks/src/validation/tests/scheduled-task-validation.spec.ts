@@ -17,6 +17,7 @@ const values: ScheduledTaskCreateFormValues = {
   prompt: 'Review the day',
   repeat: ScheduledTaskRepeat.Daily,
   time: '09:00',
+  timezone: 'UTC',
 };
 
 describe('validateScheduledTaskFormValues', () => {
@@ -317,5 +318,105 @@ describe('validateScheduledTaskFormValues', () => {
         { now: localNow },
       ),
     ).toEqual({ endDate: ScheduledTaskValidationErrorCode.EndDateInvalid });
+  });
+});
+
+describe('validateScheduledTaskFormValues — time zone', () => {
+  /* 2026-03-10T16:00Z is 17:00 in Europe/Berlin and 2026-03-11 01:00 in Asia/Tokyo. */
+  const clock = new Date('2026-03-10T16:00:00.000Z');
+  const oneTime = (
+    timezone: string,
+    runAt: string,
+  ): ScheduledTaskCreateFormValues => ({
+    ...values,
+    repeat: ScheduledTaskRepeat.OneTime,
+    timezone,
+    runAt,
+  });
+
+  it('rejects a run-at that is past in the selected zone though it is future in another', () => {
+    expect(
+      validateScheduledTaskFormValues(
+        oneTime('Asia/Tokyo', '2026-03-11T00:30'),
+        {
+          now: clock,
+        },
+      ).runAt,
+    ).toBe(ScheduledTaskValidationErrorCode.RunAtInvalid);
+    expect(
+      validateScheduledTaskFormValues(
+        oneTime('Europe/Berlin', '2026-03-11T00:30'),
+        { now: clock },
+      ).runAt,
+    ).toBeUndefined();
+  });
+
+  it('applies the minimum lead in the selected zone', () => {
+    const base = oneTime('Europe/Berlin', '2026-03-10T17:00');
+
+    expect(validateScheduledTaskFormValues(base, { now: clock }).runAt).toBe(
+      ScheduledTaskValidationErrorCode.RunAtInvalid,
+    );
+    expect(
+      validateScheduledTaskFormValues(
+        { ...base, runAt: '2026-03-10T17:01' },
+        { now: clock },
+      ).runAt,
+    ).toBeUndefined();
+  });
+
+  it('rejects a run-at that is not a local date and time', () => {
+    for (const runAt of ['', 'tomorrow', '2026-03-11', '2026-03-11T10:00Z']) {
+      expect(
+        validateScheduledTaskFormValues(oneTime('UTC', runAt), { now: clock })
+          .runAt,
+      ).toBe(ScheduledTaskValidationErrorCode.RunAtInvalid);
+    }
+  });
+
+  it('uses today in the selected zone for the window start', () => {
+    const recurring = (timezone: string): ScheduledTaskCreateFormValues => ({
+      ...values,
+      timezone,
+      startDate: '2026-03-10',
+    });
+
+    expect(
+      validateScheduledTaskFormValues(recurring('Asia/Tokyo'), { now: clock })
+        .startDate,
+    ).toBe(ScheduledTaskValidationErrorCode.StartDateInPast);
+    expect(
+      validateScheduledTaskFormValues(recurring('Europe/Berlin'), {
+        now: clock,
+      }).startDate,
+    ).toBeUndefined();
+  });
+
+  it('exempts an unchanged original boundary in the selected zone', () => {
+    expect(
+      validateScheduledTaskFormValues(
+        { ...values, timezone: 'Asia/Tokyo', startDate: '2026-03-10' },
+        { now: clock, originalStartDate: '2026-03-10' },
+      ).startDate,
+    ).toBeUndefined();
+  });
+
+  it.each(['', 'Mars/Olympus', '+02:00'])(
+    'reports an invalid zone %j on the zone field',
+    (timezone) => {
+      expect(
+        validateScheduledTaskFormValues({ ...values, timezone }, { now: clock })
+          .timezone,
+      ).toBe(ScheduledTaskValidationErrorCode.TimezoneInvalid);
+    },
+  );
+
+  it('accepts a valid zone', () => {
+    expect(
+      validateScheduledTaskFormValues(
+        { ...values, timezone: 'America/St_Johns' },
+        { now: clock },
+      ).timezone,
+    ).toBeUndefined();
   });
 });

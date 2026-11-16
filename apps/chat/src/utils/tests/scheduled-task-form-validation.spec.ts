@@ -23,8 +23,10 @@ const localDateOnly = (offsetDays: number): string => {
 const baseValues: ScheduledTaskCreateFormValues = {
   displayName: 'Daily summary',
   repeat: ScheduledTaskRepeat.OneTime,
-  runAt: new Date(Date.now() + 3_600_000).toISOString(),
+  /* The form's run-at is zone-local wall time; in UTC that is the ISO instant without its suffix. */
+  runAt: new Date(Date.now() + 3_600_000).toISOString().slice(0, 16),
   time: '09:00',
+  timezone: 'UTC',
   modelId: 'gpt-4o',
   prompt: 'Summarize my inbox',
 };

@@ -27,6 +27,13 @@ export class ScheduledTaskDto {
   @Type(() => ScheduleTriggerDto)
   trigger!: ScheduleTriggerDto;
 
+  @ApiPropertyOptional({
+    example: 'Europe/Berlin',
+    description:
+      'IANA time zone the trigger is evaluated in. Always present on responses (UTC for tasks saved without one); declared optional so existing clients and fixtures stay valid.',
+  })
+  timezone?: string;
+
   @ApiPropertyOptional({ example: '2026-07-28T12:00:00.000Z' })
   @IsOptional()
   @IsISO8601()

@@ -3681,6 +3681,21 @@ import { getBrowserTimezone } from '@epam/ai-dial-chat-hooks';
 getBrowserTimezone(); // e.g. 'Europe/Warsaw'
 ```
 
+### getTimezoneOptions / findTimezoneOption
+
+`getTimezoneOptions({ now?, locale? })` returns every selectable IANA zone as a `ScheduledTaskTimezoneOption` (from `@epam/ai-dial-scheduled-tasks`), sorted by UTC offset and then by identifier. The list is `Intl.supportedValuesOf('timeZone')` plus `UTC` (engines may omit it), with legacy names such as `Asia/Calcutta` shown under their current name (`Asia/Kolkata`). Offsets and the current abbreviation are read at `now`; the abbreviation is the first letters-only short name `Intl` gives for `locale`, then English (`en-GB`, `en-US`) — so Berlin reads `CET` even in an `en-US` browser, whose own short name is `GMT+1` — and is absent when no locale has one. `searchTerms` also hold the January and July abbreviations and the long names (`Central European Time`, `Central European Summer Time`), so `CET`, `CEST` or `central europe` finds the zone in any month. `findTimezoneOption(options, id)` returns the row for an id, including a legacy or aliased one, or `undefined`. Available from the root and `./scheduled-tasks`.
+
+```ts
+import { getBrowserTimezone } from '@epam/ai-dial-chat-hooks/utils';
+import {
+  findTimezoneOption,
+  getTimezoneOptions,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+const options = getTimezoneOptions({ locale: 'en-GB' }); // [{ id: 'Pacific/Pago_Pago', offsetLabel: 'GMT-11:00', ... }, ...]
+const browserZone = findTimezoneOption(options, getBrowserTimezone())?.id;
+```
+
 ### applyThemeColors / getOsPreferredTheme / ColorScheme
 
 `applyThemeColors(element, colors?)` writes each entry of `colors` to `element` as a `--<key>` custom property, first removing the properties its previous call wrote to that same element — so switching to a theme that declares fewer keys does not keep the old theme's values. Called without `colors`, it only removes them. Properties it never wrote are left alone. `getOsPreferredTheme()` returns `ColorScheme.Dark` or `ColorScheme.Light` from the `prefers-color-scheme` media query. Available from the root and `./utils`.
@@ -4924,20 +4939,21 @@ const historyRuns = mergeScheduledTaskRuns(acceptedRuns, runs);
 
 Turn scheduler DTOs into the props `@epam/ai-dial-scheduled-tasks` renders.
 The lib decides everything the response determines — the trigger kind and the
-timezone it is shown in, the duration units, whether a run started today, the
+zone its wall times are read in (the task's own `timezone`, never converted to the viewer's), the duration units, whether a run started today, the
 run status, and which delete or mutation error applies — and the host supplies
 every word through formatter objects. Available from the root and
 `./scheduled-tasks`.
 
-| Export                                                              | Returns                                                                                                                                                                                           |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output; `options.timeZone` defaults to the browser's, `options.locale` formats dates and weekdays (several weekdays are joined with `Intl.ListFormat`) |
-| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                                                                             |
-| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                                                                          |
-| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                                                                       |
-| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                                                                                  |
-| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                                                                      |
-| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                                                                       |
+| Export                                                              | Returns                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output, showing the task's stored wall time in its own zone; `labels.withTimezone` appends the zone when it differs from `options.browserTimezone` (default: the browser's), `options.locale` formats dates and weekdays (several weekdays are joined with `Intl.ListFormat`) |
+| `formatScheduledTaskTriggerTime(value, timezone, locale?)`          | A stored trigger datetime — zone-local, or an instant from an older client — as the wall time it shows in `timezone`                                                                                                                                                                                                     |
+| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                                                                                                                                                                                                    |
+| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                                                                                                                                                                                                 |
+| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                                                                                                                                                                                              |
+| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                                                                                                                                                                                                         |
+| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                                                                                                                                                                                             |
+| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                                                                                                                                                                                              |
 
 ```ts
 import {
@@ -4957,6 +4973,7 @@ const scheduleLabels: ScheduledTaskScheduleLabels = {
   monthlyAt: (day, time) => `Monthly on day ${day} at ${time}`,
   invalid: 'Invalid schedule',
   recurringFallback: 'Recurring',
+  withTimezone: (label, timezone) => `${label} (${timezone})`,
 };
 const durationLabels: ScheduledTaskRunDurationLabels = {
   hours: (count) => `${count}h`,
@@ -4987,7 +5004,7 @@ building the formatters from `t()`.
 
 ### mapFormValuesToCreateBody / mapFormValuesToUpdateBody / mapScheduledTaskDtoToFormValues
 
-Maps validated scheduled-task create/edit form values to their request bodies (converting local wall-clock time to the UTC cron fields DIAL Scheduler expects), and inverts that mapping back to editable form values — failing closed with an `UnsupportedTriggerReason` when a task's trigger cannot be represented losslessly by the editor.
+Maps validated scheduled-task create/edit form values to their request bodies, and inverts that mapping back to editable form values — failing closed with an `UnsupportedTriggerReason` when a task's trigger cannot be represented losslessly by the editor. The body carries the wall time the user entered (cron `hour`/`minute`/`day_of_week`/`day`, an offset-less one-time `date`, and `T00:00:00.000`/`T23:59:59.999` window boundaries) next to a top-level `timezone`; DIAL Scheduler evaluates all of it in that zone, so a daily 09:00 task keeps running at 09:00 local time across daylight-saving changes and the browser's own offset is never involved. The reverse mapping reads the stored fields as they are and takes `values.timezone` from the DTO (`UTC` when absent); a one-time `date` or window boundary written by an older client as an instant (`Z` or an offset) is shown in the task's zone. A zone `Intl` does not know fails closed.
 
 ```ts
 import {
@@ -5004,15 +5021,16 @@ if (result.ok) {
 
 ### getNextCronOccurrence
 
-Returns the next UTC time a cron trigger with a fixed `hour`/`minute` fires after `from` (default: now), honouring its `day_of_week` (APScheduler Monday=0, one weekday or a comma list such as `'0,2,4'`) or `day` (a number or `'last'`) constraint. Returns `undefined` when the fields are not plain values it can evaluate (`*`, ranges, steps). Available from the root and `./scheduled-tasks`.
+Returns the next local `YYYY-MM-DDTHH:mm` at which a cron trigger with a fixed `hour`/`minute` fires in `timezone` after `from` (default: now) — cron fields are wall time in the task's zone, so the answer is wall time too — honouring its `day_of_week` (APScheduler Monday=0, one weekday or a comma list such as `'0,2,4'`) or `day` (a number or `'last'`) constraint. Returns `undefined` when the fields are not plain values it can evaluate (`*`, ranges, steps) or the zone is unknown. Available from the root and `./scheduled-tasks`.
 
 ```ts
 import { getNextCronOccurrence } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 
 getNextCronOccurrence(
   { fields: { hour: '9', minute: '0', day_of_week: '0' } },
+  'Europe/Berlin',
   new Date('2026-10-07T08:00:00.000Z'),
-); // 2026-10-12T09:00:00.000Z — the next Monday
+); // '2026-10-12T09:00' — the next Monday
 ```
 
 ## Catalog Hooks

@@ -20130,6 +20130,11 @@
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
           },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Berlin",
+            "description": "IANA time zone the trigger is evaluated in. Always present on responses (UTC for tasks saved without one); declared optional so existing clients and fixtures stay valid."
+          },
           "nextRunTime": {
             "type": "string",
             "example": "2026-07-28T12:00:00.000Z"
@@ -20297,6 +20302,13 @@
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
           },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Berlin",
+            "default": "UTC",
+            "maxLength": 64,
+            "description": "IANA time zone the trigger is evaluated in. Cron fields and offset-less datetimes are local wall time in this zone. Omission means UTC; an update that omits it resets the zone to UTC."
+          },
           "model": {
             "type": "string",
             "example": "gpt-4.1-mini-2025-04-14"
@@ -20335,6 +20347,11 @@
           },
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Berlin",
+            "description": "IANA time zone the trigger is evaluated in. Always present on responses (UTC for tasks saved without one); declared optional so existing clients and fixtures stay valid."
           },
           "nextRunTime": {
             "type": "string",
@@ -20488,6 +20505,13 @@
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
           },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Berlin",
+            "default": "UTC",
+            "maxLength": 64,
+            "description": "IANA time zone the trigger is evaluated in. Cron fields and offset-less datetimes are local wall time in this zone. Omission means UTC; an update that omits it resets the zone to UTC."
+          },
           "model": {
             "type": "string",
             "example": "gpt-4.1-mini-2025-04-14"
@@ -20526,6 +20550,11 @@
           },
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Berlin",
+            "description": "IANA time zone the trigger is evaluated in. Always present on responses (UTC for tasks saved without one); declared optional so existing clients and fixtures stay valid."
           },
           "nextRunTime": {
             "type": "string",

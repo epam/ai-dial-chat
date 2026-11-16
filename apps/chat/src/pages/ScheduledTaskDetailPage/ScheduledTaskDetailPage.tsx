@@ -5,6 +5,7 @@ import {
 import {
   getApiErrorDetails,
   getApiErrorStatus,
+  formatScheduledTaskTriggerTime,
   getNextCronOccurrence,
   getScheduledTasksLoginRetryState,
   mergeScheduledTaskRuns,
@@ -409,20 +410,20 @@ const ScheduledTaskDetailPage: FC = () => {
      * occurrence: the server's `nextRunTime`, or one computed from the cron
      * fields when the server has none (e.g. an inactive task).
      */
+    const taskTimezone = task?.timezone ?? 'UTC';
     const effectiveStartDate =
       cronWindow.startDate ??
       taskNextRunTime ??
-      getNextCronOccurrence(cronWindow)?.toISOString();
+      getNextCronOccurrence(cronWindow, taskTimezone);
     if (!effectiveStartDate) return undefined;
-    const dateFormatter = new Intl.DateTimeFormat(undefined, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
     return t(ScheduledTasksI18nKeys.DetailActiveWindowValue, {
-      startDate: dateFormatter.format(new Date(effectiveStartDate)),
-      endDate: dateFormatter.format(new Date(cronWindow.endDate)),
+      startDate: formatScheduledTaskTriggerTime(
+        effectiveStartDate,
+        taskTimezone,
+      ),
+      endDate: formatScheduledTaskTriggerTime(cronWindow.endDate, taskTimezone),
     });
-  }, [cronWindow, taskNextRunTime, t]);
+  }, [cronWindow, task?.timezone, taskNextRunTime, t]);
 
   const nextRunLabel = useMemo(() => {
     if (!taskNextRunTime) return undefined;

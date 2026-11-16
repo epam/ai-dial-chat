@@ -10,11 +10,15 @@ import {
   ErrorText,
   LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
-import { useId, useRef, type FC } from 'react';
+import { useId, useMemo, useRef, type FC } from 'react';
 import {
   calendarValueToRunAt,
   runAtToCalendarValue,
 } from '../../utils/calendar-value';
+import {
+  getZonedNow,
+  wallClockToLocalDate,
+} from '../../utils/zoned-wall-clock';
 import { ScheduledTaskRunAtTimeField } from '../ScheduledTaskRunAtTimeField/ScheduledTaskRunAtTimeField';
 import styles from './ScheduledTaskRunAtField.module.scss';
 
@@ -33,6 +37,8 @@ export interface ScheduledTaskRunAtFieldProps {
   error?: string;
   /** CSS class applied to the error text. Defaults to `'dial-tiny-text'`. */
   errorClassName?: string;
+  /** IANA zone the picked value is wall time in; the earliest selectable day is then today in that zone. Omit it to use the browser's clock. */
+  timezone?: string;
 }
 
 /** Footer time control of the date-time popover. */
@@ -49,11 +55,20 @@ export const ScheduledTaskRunAtField: FC<ScheduledTaskRunAtFieldProps> = ({
   disabled,
   error,
   errorClassName = 'dial-tiny-text',
+  timezone,
 }) => {
   /* Pinned at mount through a ref — `useMemo` is only a performance hint
    * React may discard, and the earliest selectable moment must stay fixed for
    * the component's lifetime. */
-  const minDate = useRef(new Date()).current;
+  const mountedAt = useRef(new Date()).current;
+  const minDate = useMemo(() => {
+    if (!timezone) return mountedAt;
+    try {
+      return wallClockToLocalDate(getZonedNow(mountedAt, timezone).dateTime);
+    } catch {
+      return mountedAt;
+    }
+  }, [mountedAt, timezone]);
 
   const handleCalendarChange = (next: CalendarValue) =>
     onChange(calendarValueToRunAt(next));
