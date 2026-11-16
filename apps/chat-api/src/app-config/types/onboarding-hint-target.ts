@@ -78,4 +78,72 @@ export enum OnboardingHintTarget {
   CatalogFavorite = 'catalog-favorite',
   /** The action bar (Copy, Regenerate…) of the last message in the open conversation. */
   MessageActions = 'message-actions',
+  /** The catalog item details drawer as a whole. */
+  CatalogDetails = 'catalog-details',
+  /** The details drawer's "Use in chat" button. */
+  CatalogDetailsUseInChat = 'catalog-details-use-in-chat',
+  /** The details drawer's "Manage" menu button. */
+  CatalogDetailsManage = 'catalog-details-manage',
+  /** The details drawer's toolset sign-in / credentials button. */
+  CatalogDetailsCredentials = 'catalog-details-credentials',
+  /** The details drawer's "Share" button. */
+  CatalogDetailsShare = 'catalog-details-share',
+  /** The details drawer's "Publish" / "Unpublish" button. */
+  CatalogDetailsPublish = 'catalog-details-publish',
+  /** The details drawer's tabs. */
+  CatalogDetailsTabs = 'catalog-details-tabs',
+  /** The project create/edit form's "Create" / "Save" button. */
+  ProjectFormSubmit = 'project-form-submit',
+  /** The project create/edit form's "Context" section. */
+  ProjectFormContext = 'project-form-context',
+  /** The project view's "Edit" button. */
+  ProjectViewEdit = 'project-view-edit',
+  /** The project view's "More actions" menu button. */
+  ProjectViewMoreActions = 'project-view-more-actions',
+  /** The project view's "Pin" / "Unpin" button. */
+  ProjectViewPin = 'project-view-pin',
+  /** The project view's "Publish" / "Unpublish" button. */
+  ProjectViewPublish = 'project-view-publish',
+  /** The project details panel's context-file search. */
+  ProjectContextSearch = 'project-context-search',
+  /** The Projects page's sort control. */
+  ProjectsSort = 'projects-sort',
+  /** The scheduled task form's "Create" / "Save" button. */
+  ScheduledTaskFormSubmit = 'scheduled-task-form-submit',
+  /** The scheduled task form's "Configuration" section. */
+  ScheduledTaskConfiguration = 'scheduled-task-configuration',
+  /** The scheduled task form's "Repeat" picker. */
+  ScheduledTaskRepeat = 'scheduled-task-repeat',
+  /** The scheduled task form's model or agent picker. */
+  ScheduledTaskModel = 'scheduled-task-model',
+  /** A scheduled task's "Start now" button. */
+  ScheduledTaskStartNow = 'scheduled-task-start-now',
+  /** A scheduled task's "Edit" button. */
+  ScheduledTaskEdit = 'scheduled-task-edit',
+  /** A scheduled task's run history. */
+  ScheduledTaskHistory = 'scheduled-task-history',
+  /** A scheduled task's "Active" switch. */
+  ScheduledTaskActive = 'scheduled-task-active',
+  /** The Scheduled tasks page's sort menu. */
+  ScheduledTasksSort = 'scheduled-tasks-sort',
+  /** The settings page's extensions table. */
+  SettingsExtensions = 'settings-extensions',
+  /** The extensions table's "Log in" button. */
+  SettingsExtensionsLogIn = 'settings-extensions-log-in',
+  /** The settings page's theme picker. */
+  SettingsTheme = 'settings-theme',
+  /** The settings page's language picker. */
+  SettingsLanguage = 'settings-language',
+  /** The "Duplicate the conversation to be able to edit it" button of a read-only chat. */
+  DuplicateSharedChat = 'duplicate-shared-chat',
+  /** The conversation sources panel. */
+  SourcesPanel = 'sources-panel',
+  /** The sources panel's "Download all" button. */
+  SourcesDownloadAll = 'sources-download-all',
+  /** A project chat's "Back to <project>" button. */
+  ProjectChatBack = 'project-chat-back',
+  /** The composer's tools chip. */
+  ToolsSelector = 'tools-selector',
+  /** An app, toolset or custom-app editor's "Setup" section. */
+  EditorSetup = 'editor-setup',
 }

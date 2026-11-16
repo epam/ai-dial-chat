@@ -816,6 +816,11 @@ const CatalogView: FC<Props> = ({
           )
         }
         detailsTexts={{
+          ariaLabel: t(CatalogI18nKeys.DetailsAriaLabel),
+          closeAriaLabel: t(ButtonsI18nKeys.Close),
+          shareLabel: t(ButtonsI18nKeys.Share),
+          publishLabel: t(ButtonsI18nKeys.Publish),
+          publishTitle: t(ButtonsI18nKeys.Publish),
           addToFavoritesAriaLabel: t(FavoritesI18nKeys.AddToFavorites),
           removeFromFavoritesAriaLabel: t(
             FavoritesI18nKeys.RemoveFromFavorites,

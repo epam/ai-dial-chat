@@ -35,11 +35,17 @@ export const accessibleName = (element: Element): string => {
       .join(' ')
       .trim();
   }
-  return (
-    element.getAttribute('aria-label') ??
-    element.textContent ??
-    ''
-  ).trim();
+  const ariaLabel = element.getAttribute('aria-label');
+  if (ariaLabel != null) {
+    return ariaLabel.trim();
+  }
+  /* A form control is named by its `<label for>` before its own text. */
+  const label = element.id
+    ? Array.from(document.getElementsByTagName('label')).find(
+        (candidate) => candidate.htmlFor === element.id,
+      )
+    : undefined;
+  return (label?.textContent ?? element.textContent ?? '').trim();
 };
 
 /** Returns every element matching `selector` inside each of `scopes`, in order. */
@@ -76,6 +82,22 @@ export const findControl = (
   name: string,
 ): HTMLElement | null =>
   findControlBy(scopes, (candidate) => candidate === name);
+
+/** Returns the first on-screen button or link that passes `matches` in the smallest ancestor of `start` holding one, or `null`. */
+export const findControlNear = (
+  start: Element | null,
+  matches: (name: string) => boolean,
+): HTMLElement | null => {
+  let scope = start?.parentElement ?? null;
+  while (scope) {
+    const control = findControlBy([scope], matches);
+    if (control) {
+      return control;
+    }
+    scope = scope.parentElement;
+  }
+  return null;
+};
 
 /** Returns the elements matching `selector` inside `scopes` whose accessible name is `name`. */
 export const named = (

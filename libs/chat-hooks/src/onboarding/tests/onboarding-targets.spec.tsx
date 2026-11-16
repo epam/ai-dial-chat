@@ -23,6 +23,47 @@ const labels: OnboardingTargetLabels = {
   addToFavorites: 'Add to favorites',
   removeFromFavorites: 'Remove from favorites',
   messageActions: 'Message actions',
+  catalogDetails: 'Item details',
+  useInChat: 'Use in chat',
+  manage: 'Manage',
+  logIn: 'Log in',
+  logOut: 'Log out',
+  loggingIn: 'Logging in',
+  manageCredentials: 'Manage credentials',
+  share: 'Share',
+  publish: 'Publish',
+  unpublish: 'Unpublish',
+  create: 'Create',
+  save: 'Save',
+  edit: 'Edit',
+  moreActions: 'More actions',
+  pin: 'Pin',
+  unpin: 'Unpin',
+  sort: 'Sort',
+  projectContext: 'Context',
+  projectContextSearch: 'Search context files',
+  projectChatBack: 'Back to',
+  scheduledTaskConfiguration: 'Configuration',
+  scheduledTaskRepeat: 'Repeat',
+  scheduledTaskModel: 'Model or Agent',
+  scheduledTaskStartNow: 'Start now',
+  scheduledTaskStarting: 'Starting…',
+  scheduledTaskHistory: 'History',
+  scheduledTaskActive: 'Active',
+  scheduledTasksSortOptions: [
+    'First to run',
+    'Last to run',
+    'Newest',
+    'Name A-Z',
+  ],
+  extensions: 'Extensions',
+  theme: 'Theme',
+  language: 'Language',
+  duplicateReadOnly: 'Duplicate the conversation to be able to edit it',
+  sourcesPanel: 'Conversation sources',
+  downloadAll: 'Download all',
+  toolsSummary: 'Tools: ',
+  editorSetup: 'Setup',
   sendMessage: 'Send message',
   modelSelector: 'Select model',
   voiceInput: 'Dictate',
@@ -436,5 +477,273 @@ describe('resolveOnboardingTarget', () => {
       expect(resolve(OnboardingHintTarget.Chats)).toBeNull();
       expect(resolve(OnboardingHintTarget.ChatsSearch)).toBeNull();
     });
+  });
+  describe('catalog item details', () => {
+    it('finds the drawer and its controls by the drawer name', () => {
+      render(
+        <>
+          <button type="button">Use in chat</button>
+          <div role="dialog" aria-label="Item details">
+            <button type="button">Use in chat</button>
+            <button type="button" aria-label="Manage" />
+            <button type="button">Log in</button>
+            <button type="button">Share</button>
+            <button type="button">Unpublish</button>
+            <div role="tablist" aria-label="Tabs" />
+          </div>
+        </>,
+      );
+      const dialog = screen.getByRole('dialog', { name: 'Item details' });
+      expect(resolve(OnboardingHintTarget.CatalogDetails)).toBe(dialog);
+      expect(resolve(OnboardingHintTarget.CatalogDetailsUseInChat)).toBe(
+        within(dialog).getByRole('button', { name: 'Use in chat' }),
+      );
+      expect(resolve(OnboardingHintTarget.CatalogDetailsManage)).toBe(
+        within(dialog).getByRole('button', { name: 'Manage' }),
+      );
+      expect(resolve(OnboardingHintTarget.CatalogDetailsCredentials)).toBe(
+        within(dialog).getByRole('button', { name: 'Log in' }),
+      );
+      expect(resolve(OnboardingHintTarget.CatalogDetailsShare)).toBe(
+        within(dialog).getByRole('button', { name: 'Share' }),
+      );
+      expect(resolve(OnboardingHintTarget.CatalogDetailsPublish)).toBe(
+        within(dialog).getByRole('button', { name: 'Unpublish' }),
+      );
+      expect(resolve(OnboardingHintTarget.CatalogDetailsTabs)).toBe(
+        within(dialog).getByRole('tablist'),
+      );
+    });
+  });
+
+  describe('forms', () => {
+    it('finds the project form and its submit button next to its Context section', () => {
+      render(
+        <main id="main-content">
+          <header>
+            <button type="button">Create</button>
+          </header>
+          <div>
+            <section aria-labelledby="context-heading">
+              <h2 id="context-heading">Context</h2>
+            </section>
+          </div>
+        </main>,
+      );
+      expect(resolve(OnboardingHintTarget.ProjectFormContext)).toBe(
+        screen.getByRole('region', { name: 'Context' }),
+      );
+      expect(resolve(OnboardingHintTarget.ProjectFormSubmit)).toBe(
+        screen.getByRole('button', { name: 'Create' }),
+      );
+    });
+
+    it('finds the scheduled task form, its pickers and its submit button', () => {
+      render(
+        <main id="main-content">
+          <button type="button">Save</button>
+          <div role="group" aria-label="Configuration" />
+          <label htmlFor="repeat">Repeat</label>
+          <button type="button" role="combobox" id="repeat" />
+          <span id="model-label">Model or Agent*(required)</span>
+          <button type="button" aria-labelledby="model-label" />
+        </main>,
+      );
+      expect(resolve(OnboardingHintTarget.ScheduledTaskConfiguration)).toBe(
+        screen.getByRole('group', { name: 'Configuration' }),
+      );
+      expect(resolve(OnboardingHintTarget.ScheduledTaskFormSubmit)).toBe(
+        screen.getByRole('button', { name: 'Save' }),
+      );
+      expect(resolve(OnboardingHintTarget.ScheduledTaskRepeat)).toBe(
+        screen.getByRole('combobox', { name: 'Repeat' }),
+      );
+      expect(resolve(OnboardingHintTarget.ScheduledTaskModel)).toBe(
+        screen.getByRole('button', { name: 'Model or Agent*(required)' }),
+      );
+    });
+
+    it('finds no form submit button on a page without its form', () => {
+      render(
+        <main id="main-content">
+          <button type="button">Create</button>
+        </main>,
+      );
+      expect(resolve(OnboardingHintTarget.ProjectFormSubmit)).toBeNull();
+      expect(resolve(OnboardingHintTarget.ScheduledTaskFormSubmit)).toBeNull();
+    });
+  });
+
+  describe('project view', () => {
+    it('finds the header actions next to the details panel', () => {
+      render(
+        <main id="main-content">
+          <header>
+            <button type="button">Unpin</button>
+            <button type="button">Publish</button>
+            <button type="button">Edit</button>
+            <button type="button" aria-label="More actions" />
+          </header>
+          <aside aria-label="Details">
+            <div role="search">
+              <input aria-label="Search context files" />
+            </div>
+          </aside>
+          <div role="group" aria-label="Sort" />
+        </main>,
+      );
+      expect(resolve(OnboardingHintTarget.ProjectViewPin)).toBe(
+        screen.getByRole('button', { name: 'Unpin' }),
+      );
+      expect(resolve(OnboardingHintTarget.ProjectViewPublish)).toBe(
+        screen.getByRole('button', { name: 'Publish' }),
+      );
+      expect(resolve(OnboardingHintTarget.ProjectViewEdit)).toBe(
+        screen.getByRole('button', { name: 'Edit' }),
+      );
+      expect(resolve(OnboardingHintTarget.ProjectViewMoreActions)).toBe(
+        screen.getByRole('button', { name: 'More actions' }),
+      );
+      expect(resolve(OnboardingHintTarget.ProjectContextSearch)).toBe(
+        screen.getByRole('search'),
+      );
+      expect(resolve(OnboardingHintTarget.ProjectsSort)).toBe(
+        screen.getByRole('group', { name: 'Sort' }),
+      );
+    });
+  });
+
+  describe('scheduled task view', () => {
+    it('finds the task controls, its history and its switch', () => {
+      render(
+        <main id="main-content">
+          <div>
+            <button type="button">Edit</button>
+            <button type="button">Start now</button>
+            <label htmlFor="active">Active</label>
+            <input id="active" type="checkbox" role="switch" />
+          </div>
+          <ul aria-label="History" />
+        </main>,
+      );
+      expect(resolve(OnboardingHintTarget.ScheduledTaskStartNow)).toBe(
+        screen.getByRole('button', { name: 'Start now' }),
+      );
+      expect(resolve(OnboardingHintTarget.ScheduledTaskEdit)).toBe(
+        screen.getByRole('button', { name: 'Edit' }),
+      );
+      expect(resolve(OnboardingHintTarget.ScheduledTaskHistory)).toBe(
+        screen.getByRole('list', { name: 'History' }),
+      );
+      expect(resolve(OnboardingHintTarget.ScheduledTaskActive)).toBe(
+        screen.getByRole('switch', { name: 'Active' }),
+      );
+    });
+
+    it('finds the list sort next to the page search, not the catalog one', () => {
+      render(
+        <main id="main-content">
+          <section aria-label="Catalog">
+            <button type="button">Newest</button>
+          </section>
+          <div>
+            <div role="search">
+              <input aria-label="Search scheduled tasks by name" />
+            </div>
+            <button type="button">First to run</button>
+          </div>
+        </main>,
+      );
+      expect(resolve(OnboardingHintTarget.ScheduledTasksSort)).toBe(
+        screen.getByRole('button', { name: 'First to run' }),
+      );
+    });
+  });
+
+  describe('settings', () => {
+    it('finds the extensions table, its log-in button and the pickers', () => {
+      render(
+        <main id="main-content">
+          <div role="table" aria-label="Extensions">
+            <button type="button">Log in</button>
+          </div>
+          <label htmlFor="theme">Theme</label>
+          <button type="button" role="combobox" id="theme" />
+          <label htmlFor="language">Language</label>
+          <button type="button" role="combobox" id="language" />
+        </main>,
+      );
+      expect(resolve(OnboardingHintTarget.SettingsExtensions)).toBe(
+        screen.getByRole('table', { name: 'Extensions' }),
+      );
+      expect(resolve(OnboardingHintTarget.SettingsExtensionsLogIn)).toBe(
+        screen.getByRole('button', { name: 'Log in' }),
+      );
+      expect(resolve(OnboardingHintTarget.SettingsTheme)).toBe(
+        screen.getByRole('combobox', { name: 'Theme' }),
+      );
+      expect(resolve(OnboardingHintTarget.SettingsLanguage)).toBe(
+        screen.getByRole('combobox', { name: 'Language' }),
+      );
+    });
+  });
+
+  describe('conversation', () => {
+    it('finds the read-only duplicate button, the sources panel and the chat back button', () => {
+      render(
+        <>
+          <main id="main-content">
+            <button type="button">Back to Research</button>
+            <button type="button">
+              Duplicate the conversation to be able to edit it
+            </button>
+          </main>
+          <aside aria-label="Conversation sources">
+            <button type="button" aria-label="Download all" />
+          </aside>
+        </>,
+      );
+      expect(resolve(OnboardingHintTarget.DuplicateSharedChat)).toBe(
+        screen.getByRole('button', {
+          name: 'Duplicate the conversation to be able to edit it',
+        }),
+      );
+      expect(resolve(OnboardingHintTarget.SourcesPanel)).toBe(
+        screen.getByRole('complementary', { name: 'Conversation sources' }),
+      );
+      expect(resolve(OnboardingHintTarget.SourcesDownloadAll)).toBe(
+        screen.getByRole('button', { name: 'Download all' }),
+      );
+      expect(resolve(OnboardingHintTarget.ProjectChatBack)).toBe(
+        screen.getByRole('button', { name: 'Back to Research' }),
+      );
+    });
+
+    it('finds the tools chip in the composer', () => {
+      render(
+        <main id="main-content">
+          <div role="region" aria-label="Message input">
+            <textarea aria-label="Message" />
+            <button type="button" aria-label="Tools: 2 of 5 on" />
+          </div>
+        </main>,
+      );
+      expect(resolve(OnboardingHintTarget.ToolsSelector)).toBe(
+        screen.getByRole('button', { name: 'Tools: 2 of 5 on' }),
+      );
+    });
+  });
+
+  it("finds an editor's Setup section", () => {
+    render(
+      <main id="main-content">
+        <section aria-labelledby="setup-heading">
+          <h2 id="setup-heading">Setup</h2>
+        </section>
+      </main>,
+    );
+    expect(resolve(OnboardingHintTarget.EditorSetup)).toBe(
+      screen.getByRole('region', { name: 'Setup' }),
+    );
   });
 });

@@ -221,6 +221,7 @@ export enum CatalogI18nKeys {
   BrowseSettingsTopics = 'catalog.browseSettings.topics',
   BrowseSettingsFilterCount = 'catalog.browseSettings.filterCount',
   // Details panel
+  DetailsAriaLabel = 'catalog.details.ariaLabel',
   DetailsTabTools = 'catalog.details.tabTools',
   DetailsTabContent = 'catalog.details.tabContent',
   DetailsPromptLoadError = 'catalog.details.promptLoadError',

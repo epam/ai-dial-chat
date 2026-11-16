@@ -1,9 +1,11 @@
 import { OnboardingHintTarget } from '@epam/ai-dial-chat-api-client';
 import {
+  accessibleName,
   findControl,
   findControlBy,
   findSearch,
   firstNamed,
+  findControlNear,
   firstOnScreen,
   lastOnScreen,
   named,
@@ -44,6 +46,78 @@ export interface OnboardingTargetLabels {
   removeFromFavorites: string;
   /** The action bar under a message. */
   messageActions: string;
+  /** The catalog item details drawer. */
+  catalogDetails: string;
+  /** The details drawer's "Use in chat" button. */
+  useInChat: string;
+  /** The "Manage" menu button. */
+  manage: string;
+  /** A "Log in" button. */
+  logIn: string;
+  /** A "Log out" button. */
+  logOut: string;
+  /** The "Logging in…" state of a "Log in" button. */
+  loggingIn: string;
+  /** The toolset "Manage credentials" button. */
+  manageCredentials: string;
+  /** A "Share" button. */
+  share: string;
+  /** A "Publish" button. */
+  publish: string;
+  /** An "Unpublish" button. */
+  unpublish: string;
+  /** A form's "Create" button. */
+  create: string;
+  /** A form's "Save" button. */
+  save: string;
+  /** An "Edit" button. */
+  edit: string;
+  /** A "More actions" menu button. */
+  moreActions: string;
+  /** A "Pin" button. */
+  pin: string;
+  /** An "Unpin" button. */
+  unpin: string;
+  /** A "Sort" group. */
+  sort: string;
+  /** The project form's "Context" section. */
+  projectContext: string;
+  /** The project details panel's context-file search field. */
+  projectContextSearch: string;
+  /** The fixed start of a project chat's "Back to <project>" button. */
+  projectChatBack: string;
+  /** The scheduled task form's "Configuration" section. */
+  scheduledTaskConfiguration: string;
+  /** The scheduled task form's "Repeat" picker. */
+  scheduledTaskRepeat: string;
+  /** The fixed start of the scheduled task form's model or agent picker name. */
+  scheduledTaskModel: string;
+  /** A scheduled task's "Start now" button. */
+  scheduledTaskStartNow: string;
+  /** The "Starting…" state of that button. */
+  scheduledTaskStarting: string;
+  /** A scheduled task's run history list. */
+  scheduledTaskHistory: string;
+  /** A scheduled task's "Active" switch. */
+  scheduledTaskActive: string;
+  /** The Scheduled tasks page's sort options; its sort trigger is named after the applied one. */
+  scheduledTasksSortOptions: string[];
+  /** The settings page's extensions table. */
+  extensions: string;
+  /** The settings page's theme picker. */
+  theme: string;
+  /** The settings page's language picker. */
+  language: string;
+  /** A read-only chat's duplicate button. */
+  duplicateReadOnly: string;
+  /** The conversation sources panel. */
+  sourcesPanel: string;
+  /** The sources panel's "Download all" button. */
+  downloadAll: string;
+  /** The fixed start of the composer's tools chip name. */
+  toolsSummary: string;
+  /** An editor's "Setup" section. */
+  editorSetup: string;
   /** The composer's send button. */
   sendMessage: string;
   /** The model selector; its name is this label, or this label followed by ": " and the model. */
@@ -85,6 +159,17 @@ export interface OnboardingTargetLabels {
   /** The settings page's section tabs. */
   settings: string;
 }
+
+const isOneOf =
+  (...names: string[]) =>
+  (name: string): boolean =>
+    names.includes(name);
+
+/* An empty prefix (a template that starts with its value) must match nothing. */
+const startsWithNonEmpty =
+  (prefix: string) =>
+  (name: string): boolean =>
+    prefix !== '' && name.startsWith(prefix);
 
 type AnchorResolver = (labels: OnboardingTargetLabels) => HTMLElement | null;
 
@@ -151,6 +236,29 @@ const buildResolvers = (
     }
     return element ?? field;
   };
+
+  const catalogDetailsDialogs = (labels: OnboardingTargetLabels): Element[] =>
+    named([document], '[role="dialog"]', labels.catalogDetails);
+
+  const projectDetailsPanel = (
+    labels: OnboardingTargetLabels,
+  ): HTMLElement | null =>
+    firstNamed(mainContent(), 'aside', labels.projectDetails);
+
+  const scheduledTaskHistoryList = (
+    labels: OnboardingTargetLabels,
+  ): HTMLElement | null =>
+    firstNamed(
+      mainContent(),
+      'ul[aria-label], [role="list"]',
+      labels.scheduledTaskHistory,
+    );
+
+  const extensionsTables = (labels: OnboardingTargetLabels): Element[] =>
+    named(mainContent(), 'table, [role="table"]', labels.extensions);
+
+  const sourcesPanels = (labels: OnboardingTargetLabels): Element[] =>
+    named([document], 'aside', labels.sourcesPanel);
 
   const chatsSections = (labels: OnboardingTargetLabels): Element[] =>
     named(navigations(labels), 'section', labels.chats);
@@ -271,6 +379,137 @@ const buildResolvers = (
      * first. */
     [OnboardingHintTarget.CatalogCard]: (labels) =>
       firstInCatalog(labels, 'article[aria-label]'),
+    [OnboardingHintTarget.CatalogDetails]: (labels) =>
+      firstOnScreen(catalogDetailsDialogs(labels)),
+    [OnboardingHintTarget.CatalogDetailsUseInChat]: (labels) =>
+      findControl(catalogDetailsDialogs(labels), labels.useInChat),
+    [OnboardingHintTarget.CatalogDetailsManage]: (labels) =>
+      findControl(catalogDetailsDialogs(labels), labels.manage),
+    /* Named after the sign-in state. */
+    [OnboardingHintTarget.CatalogDetailsCredentials]: (labels) =>
+      findControlBy(
+        catalogDetailsDialogs(labels),
+        isOneOf(labels.logIn, labels.logOut, labels.manageCredentials),
+      ),
+    [OnboardingHintTarget.CatalogDetailsShare]: (labels) =>
+      findControl(catalogDetailsDialogs(labels), labels.share),
+    [OnboardingHintTarget.CatalogDetailsPublish]: (labels) =>
+      findControlBy(
+        catalogDetailsDialogs(labels),
+        isOneOf(labels.publish, labels.unpublish),
+      ),
+    [OnboardingHintTarget.CatalogDetailsTabs]: (labels) =>
+      firstOnScreen(
+        queryAll(catalogDetailsDialogs(labels), '[role="tablist"]'),
+      ),
+    /* "Create" and "Save" are common names, so the button is looked for next
+     * to the form's own "Context" section. Desktop and phone each render one
+     * copy; the on-screen one wins. */
+    [OnboardingHintTarget.ProjectFormSubmit]: (labels) =>
+      findControlNear(
+        firstNamed(mainContent(), 'section', labels.projectContext),
+        isOneOf(labels.create, labels.save),
+      ),
+    [OnboardingHintTarget.ProjectFormContext]: (labels) =>
+      firstNamed(mainContent(), 'section', labels.projectContext),
+    /* The project view's header actions sit next to its details panel. */
+    [OnboardingHintTarget.ProjectViewEdit]: (labels) =>
+      findControlNear(projectDetailsPanel(labels), isOneOf(labels.edit)),
+    [OnboardingHintTarget.ProjectViewMoreActions]: (labels) =>
+      findControlNear(projectDetailsPanel(labels), isOneOf(labels.moreActions)),
+    [OnboardingHintTarget.ProjectViewPin]: (labels) =>
+      findControlNear(
+        projectDetailsPanel(labels),
+        isOneOf(labels.pin, labels.unpin),
+      ),
+    [OnboardingHintTarget.ProjectViewPublish]: (labels) =>
+      findControlNear(
+        projectDetailsPanel(labels),
+        isOneOf(labels.publish, labels.unpublish),
+      ),
+    [OnboardingHintTarget.ProjectContextSearch]: (labels) => {
+      const panel = projectDetailsPanel(labels);
+      return panel ? findSearch([panel], labels.projectContextSearch) : null;
+    },
+    [OnboardingHintTarget.ProjectsSort]: (labels) =>
+      firstNamed(mainContent(), '[role="group"]', labels.sort),
+    [OnboardingHintTarget.ScheduledTaskFormSubmit]: (labels) =>
+      findControlNear(
+        firstNamed(
+          mainContent(),
+          '[role="group"]',
+          labels.scheduledTaskConfiguration,
+        ),
+        isOneOf(labels.create, labels.save),
+      ),
+    [OnboardingHintTarget.ScheduledTaskConfiguration]: (labels) =>
+      firstNamed(
+        mainContent(),
+        '[role="group"]',
+        labels.scheduledTaskConfiguration,
+      ),
+    [OnboardingHintTarget.ScheduledTaskRepeat]: (labels) =>
+      firstNamed(
+        mainContent(),
+        '[role="combobox"]',
+        labels.scheduledTaskRepeat,
+      ),
+    /* The label also carries the "required" marker, so it is matched on its start. */
+    [OnboardingHintTarget.ScheduledTaskModel]: (labels) =>
+      firstOnScreen(
+        queryAll(
+          mainContent(),
+          'button, [role="button"], [role="combobox"]',
+        ).filter((element) =>
+          startsWithNonEmpty(labels.scheduledTaskModel)(
+            accessibleName(element),
+          ),
+        ),
+      ),
+    [OnboardingHintTarget.ScheduledTaskStartNow]: (labels) =>
+      findControlBy(
+        mainContent(),
+        isOneOf(labels.scheduledTaskStartNow, labels.scheduledTaskStarting),
+      ),
+    /* "Edit" is a common name, so the button is looked for next to the run history. */
+    [OnboardingHintTarget.ScheduledTaskEdit]: (labels) =>
+      findControlNear(scheduledTaskHistoryList(labels), isOneOf(labels.edit)),
+    [OnboardingHintTarget.ScheduledTaskHistory]: (labels) =>
+      scheduledTaskHistoryList(labels),
+    [OnboardingHintTarget.ScheduledTaskActive]: (labels) =>
+      firstNamed(mainContent(), '[role="switch"]', labels.scheduledTaskActive),
+    /* Named after the applied order, like the catalog's; looked for next to the
+     * page's own search so the catalog's sort never passes for it. */
+    [OnboardingHintTarget.ScheduledTasksSort]: (labels) =>
+      findControlNear(
+        findSearch(mainContent(), labels.scheduledTasksSearch),
+        (name) => labels.scheduledTasksSortOptions.includes(name),
+      ),
+    [OnboardingHintTarget.SettingsExtensions]: (labels) =>
+      firstOnScreen(extensionsTables(labels)),
+    [OnboardingHintTarget.SettingsExtensionsLogIn]: (labels) =>
+      findControlBy(
+        extensionsTables(labels),
+        isOneOf(labels.logIn, labels.loggingIn),
+      ),
+    [OnboardingHintTarget.SettingsTheme]: (labels) =>
+      firstNamed(mainContent(), '[role="combobox"]', labels.theme),
+    [OnboardingHintTarget.SettingsLanguage]: (labels) =>
+      firstNamed(mainContent(), '[role="combobox"]', labels.language),
+    [OnboardingHintTarget.DuplicateSharedChat]: (labels) =>
+      findControl(mainContent(), labels.duplicateReadOnly),
+    [OnboardingHintTarget.SourcesPanel]: (labels) =>
+      firstOnScreen(sourcesPanels(labels)),
+    [OnboardingHintTarget.SourcesDownloadAll]: (labels) =>
+      findControl(sourcesPanels(labels), labels.downloadAll),
+    /* The name carries the project's name, so it is matched on its start. */
+    [OnboardingHintTarget.ProjectChatBack]: (labels) =>
+      findControlBy(mainContent(), startsWithNonEmpty(labels.projectChatBack)),
+    /* The name carries the selected count, so it is matched on its start. */
+    [OnboardingHintTarget.ToolsSelector]: (labels) =>
+      findControlBy(composerScopes(), startsWithNonEmpty(labels.toolsSummary)),
+    [OnboardingHintTarget.EditorSetup]: (labels) =>
+      firstNamed(mainContent(), 'section', labels.editorSetup),
     [OnboardingHintTarget.CatalogFavorite]: (labels) =>
       findControlBy(
         catalogRegions(labels),

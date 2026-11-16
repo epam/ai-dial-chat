@@ -151,6 +151,7 @@
       "filterCount": "{{selected}} of {{total}}"
     },
     "details": {
+      "ariaLabel": "Item details",
       "tabTools": "Tools",
       "tabContent": "Details",
       "promptLoadError": "Couldn't load this prompt. Please try again.",
