@@ -43,6 +43,15 @@ describe('normalizeStoredApplication', () => {
     expect(normalizeStoredApplication(body)).toEqual(body);
   });
 
+  it('keeps the fields DIAL Core does not alias under their snake keys', () => {
+    const body = {
+      responses_defaults: { store: false },
+      responses_endpoint: 'https://app/responses',
+    };
+
+    expect(normalizeStoredApplication(body)).toEqual(body);
+  });
+
   it('does not mutate the stored body', () => {
     const raw = { display_version: '1.0.0' };
 
