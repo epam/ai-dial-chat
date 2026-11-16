@@ -115,23 +115,21 @@ const assertExactlyOneTriggerVariant = (trigger: ScheduleTriggerDto): void => {
   }
 };
 
-const assertValidCronWindow = (
-  cron: ScheduleCronDto | undefined,
-  timezone: string,
-): void => {
+const assertValidCronWindow = (cron: ScheduleCronDto | undefined): void => {
   if (cron?.startDate == null || cron?.endDate == null) {
     return;
   }
   /*
-   * Offset-less boundaries are wall time in the task's zone. Two of them are
-   * ordered by their wall clocks; a mix with an absolute instant is resolved
-   * through the zone, so the server's own zone never decides the outcome.
+   * Offset-less boundaries are wall time in the task's zone, absolute ones are
+   * instants; the two cannot be ordered without a zone-aware conversion, so a
+   * window must use one kind for both.
    */
-  const isMixed = !areBoundariesComparable(cron.startDate, cron.endDate);
-  if (
-    toWindowOrderMs(cron.endDate, timezone, isMixed) <=
-    toWindowOrderMs(cron.startDate, timezone, isMixed)
-  ) {
+  if (!areBoundariesComparable(cron.startDate, cron.endDate)) {
+    throw new BadRequestException(
+      'trigger.cron.startDate and trigger.cron.endDate must both include a UTC offset or both omit it',
+    );
+  }
+  if (toWindowOrderMs(cron.endDate) <= toWindowOrderMs(cron.startDate)) {
     throw new BadRequestException(
       'trigger.cron.endDate must be strictly after trigger.cron.startDate',
     );
@@ -140,13 +138,12 @@ const assertValidCronWindow = (
 
 const toUpstreamTrigger = (
   trigger: ScheduleTriggerDto,
-  timezone: string,
 ): UpstreamScheduleTrigger => {
   assertExactlyOneTriggerVariant(trigger);
   if (trigger.date != null) {
     return { date: trigger.date };
   }
-  assertValidCronWindow(trigger.cron, timezone);
+  assertValidCronWindow(trigger.cron);
   return {
     cron: {
       fields: trigger.cron?.fields ?? {},
@@ -174,10 +171,7 @@ export const toUpstreamSchedulePayload = (
 ): UpstreamSchedulePayload => ({
   display_name: body.displayName,
   service_id: serviceId,
-  trigger: toUpstreamTrigger(
-    body.trigger,
-    body.timezone ?? DEFAULT_SCHEDULE_TIMEZONE,
-  ),
+  trigger: toUpstreamTrigger(body.trigger),
   timezone: body.timezone ?? DEFAULT_SCHEDULE_TIMEZONE,
   ...(body.description ? { description: body.description } : {}),
   properties: {

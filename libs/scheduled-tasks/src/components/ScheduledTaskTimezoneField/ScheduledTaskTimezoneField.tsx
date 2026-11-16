@@ -80,6 +80,7 @@ export const ScheduledTaskTimezoneField: FC<
   browserTimezoneId,
   disabled,
   isSummaryShown = true,
+  ariaDescribedBy,
   labels,
   colors,
   classNames,
@@ -123,6 +124,7 @@ export const ScheduledTaskTimezoneField: FC<
       textClassName={resolvedClassNames.linkClassName}
       className={styles.link}
       disabled={disabled}
+      aria-describedby={ariaDescribedBy}
       iconAfter={
         <IconChevronDown
           size={16}

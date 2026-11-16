@@ -29,7 +29,7 @@ See `proposal.md` for motivation. Current state that shapes the approach:
 
 ### 1. Send local wall time + `timezone`; do not convert in the browser
 
-The mapping stops using `Date` UTC getters. `buildCronFields` returns `{ hour, minute, day_of_week?, day? }` exactly as entered; `values.timezone` becomes the top-level body field. `getUtcDayShift`, `toUtcCronDayOfMonth`, `toLocalDayOfMonth` and the weekday shifting are deleted along with their tests. `monthly` day `31` is sent as `'31'` (the scheduler handles short months), so the `'last'` rewrite also goes.
+The mapping stops using `Date` UTC getters. `buildCronFields` returns `{ hour, minute, day_of_week?, day? }` exactly as entered; `values.timezone` becomes the top-level body field. `getUtcDayShift`, `toUtcCronDayOfMonth`, `toLocalDayOfMonth` and the weekday shifting are deleted along with their tests. `monthly` day `31` is sent as `'31'` (the scheduler handles short months), so the `'last'` rewrite also goes. Existing tasks the old editor stored with `day: 'last'` (an east-of-UTC user picking the 1st at an early hour) are no longer read back as the 1st: the card shows them as a custom expression and the edit form fails closed, on purpose, because the intended day cannot be recovered.
 
 *Alternatives*: Temporal / `@date-fns/tz` plus UTC on the wire (rejected: duplicates scheduler logic, and a disagreement on a gap or repeat would be a silent bug); keep UTC conversion and store the zone only for display (rejected: does not fix drift).
 

@@ -413,6 +413,41 @@ describe('formatScheduledTaskScheduleLabel — task zone', () => {
       ),
     ).toBe('onceAt:Jul 24, 2026, 9:00 AM');
   });
+
+  it('adds no zone suffix when the browser reports the legacy name of the task zone', () => {
+    const label = (browserTimezone?: string) =>
+      formatScheduledTaskScheduleLabel(
+        buildDto({
+          timezone: 'Europe/Kyiv',
+          trigger: { cron: { fields: { hour: '9', minute: '0' } } },
+        }),
+        scheduleLabels,
+        { locale: 'en', browserTimezone },
+      );
+
+    expect(label('Europe/Kiev')).toBe(label('Europe/Kyiv'));
+    expect(label('Europe/Kiev')).not.toContain('Europe/Kyiv');
+  });
+
+  it('compares against the platform zone, legacy name included, by default', () => {
+    const spy = vi
+      .spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions')
+      .mockReturnValue({
+        timeZone: 'Europe/Kiev',
+      } as Intl.ResolvedDateTimeFormatOptions);
+
+    const label = formatScheduledTaskScheduleLabel(
+      buildDto({
+        timezone: 'Europe/Kyiv',
+        trigger: { cron: { fields: { hour: '9', minute: '0' } } },
+      }),
+      scheduleLabels,
+      { locale: 'en' },
+    );
+    spy.mockRestore();
+
+    expect(label).not.toContain('Europe/Kyiv');
+  });
 });
 
 describe('toScheduledTaskItems', () => {

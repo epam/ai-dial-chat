@@ -919,8 +919,7 @@ describe('scheduled-task time zone', () => {
     );
   });
 
-  it('orders a mixed window through the task zone', () => {
-    /* 2026-08-01 00:00 Berlin (UTC+2) is 2026-07-31T22:00Z. */
+  it('rejects a window that mixes an offset-less and an absolute boundary', () => {
     const mixed = (endDate: string) =>
       buildBody({
         timezone: 'Europe/Berlin',
@@ -933,10 +932,9 @@ describe('scheduled-task time zone', () => {
         },
       });
 
-    expect(() => toPayload(mixed('2026-07-31T21:59:59.000Z'))).toThrow(
+    expect(() => toPayload(mixed('2026-12-31T21:59:59.000Z'))).toThrow(
       BadRequestException,
     );
-    expect(() => toPayload(mixed('2026-07-31T22:00:01.000Z'))).not.toThrow();
   });
 
   it('keeps ordering independent of the process time zone', () => {

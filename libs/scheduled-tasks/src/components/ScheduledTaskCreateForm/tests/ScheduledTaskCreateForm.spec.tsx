@@ -1530,6 +1530,15 @@ describe('ScheduledTaskCreateForm — time zone', () => {
     ).toHaveLength(1);
   });
 
+  it('shows the time zone error under the picker', async () => {
+    await renderForm({
+      timezone,
+      errors: { timezone: 'Select a valid time zone' },
+    });
+
+    expect(screen.getByText('Select a valid time zone')).toBeTruthy();
+  });
+
   it('writes the selected zone inside the time field and keeps the link below it', async () => {
     await renderForm({
       timezone: {

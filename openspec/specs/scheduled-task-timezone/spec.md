@@ -37,6 +37,11 @@ A task that has no stored zone or reads back as `UTC` SHALL open in the edit for
 - **WHEN** a task with `date: 2026-07-24T07:00:00.000Z` and zone `UTC` is opened
 - **THEN** the run-at field shows `2026-07-24T07:00`
 
+#### Scenario: Legacy last-day monthly task is not editable
+
+- **WHEN** a task stored by the earlier UTC-shifting editor carries cron `day: "last"` (written for an east-of-UTC user who picked the 1st at an early hour)
+- **THEN** the card shows its schedule as a custom expression and the edit form fails closed instead of reading it back as the 1st, because the editor no longer writes `last` and cannot tell which day the user meant
+
 ### Requirement: Time zone picker opens from the Time field
 
 Under the Time field (daily, weekly, monthly, custom), the Run-at field (one-time) and the Minute field (hourly), the form SHALL show a "Change timezone" link with a chevron that flips while the picker is open. The picker SHALL open as a popover (a bottom sheet on phones) containing a search field, a "Your time zone" group with the browser zone, and an "All time zones" group.

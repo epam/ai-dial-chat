@@ -1324,6 +1324,11 @@ The BFF SHALL validate `timezone` as a string of 1 to 64 characters matching an 
 - **WHEN** a task is created with `timezone: "Europe/Berlin"` and `trigger.date: "2027-01-01T09:00:00"`
 - **THEN** the upstream request carries both values unchanged
 
+#### Scenario: Mixed window boundaries are rejected
+
+- **WHEN** a client sends a `startDate` without an offset and an `endDate` with one (or the reverse)
+- **THEN** the BFF answers `400` and nothing is forwarded
+
 #### Scenario: Instant values still work
 
 - **WHEN** a client sends `startDate: "2026-07-31T22:00:00.000Z"`

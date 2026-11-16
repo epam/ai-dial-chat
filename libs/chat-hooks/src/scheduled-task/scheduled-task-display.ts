@@ -13,6 +13,7 @@ import {
   type ScheduledTaskRunItem,
 } from '@epam/ai-dial-scheduled-tasks';
 import type { ApiErrorDetails } from '../api-error/api-error';
+import { isSameTimezone } from '../shared/timezones';
 import {
   describeScheduledTaskTrigger,
   ScheduledTaskTriggerDescriptionKind as Kind,
@@ -179,7 +180,7 @@ export const formatScheduledTaskScheduleLabel = (
   const description = describeScheduledTaskTrigger(task.trigger, { timezone });
   const time = description.time ?? '';
   const withZone = (label: string): string =>
-    labels.withTimezone && timezone !== browserTimezone
+    labels.withTimezone && !isSameTimezone(timezone, browserTimezone)
       ? labels.withTimezone(label, timezone)
       : label;
   switch (description.kind) {

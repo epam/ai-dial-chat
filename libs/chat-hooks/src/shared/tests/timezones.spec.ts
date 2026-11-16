@@ -3,6 +3,7 @@ import {
   findTimezoneOption,
   getTimezoneOptions,
   isKnownTimezone,
+  isSameTimezone,
   UTC_TIMEZONE_ID,
 } from '../timezones';
 
@@ -237,5 +238,16 @@ describe('findTimezoneOption', () => {
   it('returns undefined for an empty or unknown value', () => {
     expect(findTimezoneOption(options, undefined)).toBeUndefined();
     expect(findTimezoneOption(options, 'Mars/Olympus')).toBeUndefined();
+  });
+});
+
+describe('isSameTimezone', () => {
+  it('treats a legacy name and its current name as one zone', () => {
+    expect(isSameTimezone('Europe/Kyiv', 'Europe/Kiev')).toBe(true);
+    expect(isSameTimezone('Asia/Kolkata', 'Asia/Calcutta')).toBe(true);
+  });
+
+  it('keeps different zones apart', () => {
+    expect(isSameTimezone('Europe/Berlin', 'Europe/Kyiv')).toBe(false);
   });
 });

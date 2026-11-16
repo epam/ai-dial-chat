@@ -125,6 +125,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   const daysOfWeekLabelId = useId();
   const modelErrorId = useId();
   const dayOfWeekErrorId = useId();
+  const timezoneErrorId = useId();
   const daysOfWeekErrorId = useId();
   const timeErrorId = useId();
   const promptErrorId = useId();
@@ -233,18 +234,31 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   /* One picker per schedule shape, under the field whose wall time it explains. */
   const renderTimezoneField = (id: string, isSummaryShown = true) =>
     timezoneProps && (
-      <ScheduledTaskTimezoneField
-        id={id}
-        options={timezoneProps.options}
-        value={values.timezone}
-        browserTimezoneId={timezoneProps.browserTimezoneId}
-        onChange={(timezoneId) => onFieldChange('timezone', timezoneId)}
-        disabled={isSubmitting}
-        isSummaryShown={isSummaryShown}
-        labels={timezoneProps.labels}
-        colors={timezoneProps.colors}
-        classNames={timezoneProps.classNames}
-      />
+      <>
+        <ScheduledTaskTimezoneField
+          id={id}
+          options={timezoneProps.options}
+          value={values.timezone}
+          browserTimezoneId={timezoneProps.browserTimezoneId}
+          onChange={(timezoneId) => onFieldChange('timezone', timezoneId)}
+          disabled={isSubmitting}
+          isSummaryShown={isSummaryShown}
+          ariaDescribedBy={errors.timezone ? timezoneErrorId : undefined}
+          labels={timezoneProps.labels}
+          colors={timezoneProps.colors}
+          classNames={timezoneProps.classNames}
+        />
+        {errors.timezone && (
+          <ErrorText
+            id={timezoneErrorId}
+            className={mergeClasses(
+              instructionsErrorClassName,
+              styles.instructionsError,
+            )}
+            text={errors.timezone}
+          />
+        )}
+      </>
     );
 
   const refinementStyles = {

@@ -117,6 +117,10 @@ const canonicalOf = (timezone: string): string => {
   }
 };
 
+/** True when both identifiers name the same zone once legacy names are resolved (`Europe/Kiev` and `Europe/Kyiv`). */
+export const isSameTimezone = (a: string, b: string): boolean =>
+  a === b || applyRename(a) === applyRename(b);
+
 /** Maps every listed id to its current name and drops the duplicates that creates (`Etc/UTC` beside `UTC`). */
 const collapseAliases = (ids: string[]): string[] => [
   ...new Set(ids.map(canonicalOf)),
@@ -217,7 +221,8 @@ const buildSearchTerms = (
  * then by identifier. Offsets and the abbreviation are read at `now`; the
  * abbreviation falls back to English (`CET`) where the locale gives none. Search
  * terms also carry the January and July abbreviations and the long names
- * (`Central European Time`), so `CEST` or a region name is found in any month.
+ * (`Central European Time`), so `CEST` or a region name is found in any month;
+ * they are computed when a row's `searchTerms` is first read.
  */
 export const getTimezoneOptions = ({
   now = new Date(),
@@ -235,16 +240,26 @@ export const getTimezoneOptions = ({
       const current = toAbbreviation(id, now, locale);
       const abbreviation =
         current?.toUpperCase() === id.toUpperCase() ? undefined : current;
-      return {
+      const option: ScheduledTaskTimezoneOption = {
         id,
         offsetLabel: formatOffsetLabel(offsetMinutes),
         offsetMinutes,
         ...(abbreviation ? { abbreviation } : {}),
-        searchTerms: buildSearchTerms(id, offsetMinutes, [
-          ...collectAbbreviations(id, [now, january, july], locale),
-          ...collectLongNames(id, [january, july], locale),
-        ]),
+        searchTerms: [],
       };
+      /* The terms need about twenty `Intl` lookups per zone and only search reads them, so they are built on first access. */
+      let terms: string[] | undefined;
+      Object.defineProperty(option, 'searchTerms', {
+        enumerable: true,
+        get: () => {
+          terms ??= buildSearchTerms(id, offsetMinutes, [
+            ...collectAbbreviations(id, [now, january, july], locale),
+            ...collectLongNames(id, [january, july], locale),
+          ]);
+          return terms;
+        },
+      });
+      return option;
     })
     .sort((a, b) => {
       if (a.offsetMinutes !== b.offsetMinutes) {

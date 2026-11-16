@@ -86,6 +86,8 @@ export interface ScheduledTaskTimezoneFieldProps {
   disabled?: boolean;
   /** Whether the selected zone, such as `(GMT+01:00) Europe/Berlin`, is written beside the link. Defaults to `true`; turn it off when the host shows the zone elsewhere, for example inside the time input. */
   isSummaryShown?: boolean;
+  /** Id of the element describing the field, such as its error message; set as `aria-describedby` on the link. */
+  ariaDescribedBy?: string;
   /** Localized strings, each with an English default. */
   labels?: ScheduledTaskTimezoneLabels;
   /** Color overrides. */
