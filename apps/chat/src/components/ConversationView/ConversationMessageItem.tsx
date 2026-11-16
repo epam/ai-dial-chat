@@ -77,7 +77,7 @@ import { ThemeId } from '../../types/theme-id';
 import { attachmentDisplayResolvers } from '../../utils/attachment-display-resolvers';
 import {
   isAttachmentDownloadable,
-  resolveDialFileDownloadUrl,
+  resolveAttachmentDownloadUrl,
   resolveMarkdownUrl,
 } from '../../utils/dial-file';
 import MessageEditMode from './message/MessageEditMode';
@@ -485,7 +485,7 @@ const ConversationMessageItem: FC<Props> = ({
   const handleOpenReferenceInBrowser = useCallback((annotation: Annotation) => {
     const attachment = annotation.body?.source?.attachment;
     if (attachment)
-      openAnnotationAttachment(attachment, resolveDialFileDownloadUrl);
+      openAnnotationAttachment(attachment, resolveAttachmentDownloadUrl);
   }, []);
 
   const mcpAppMatch = findMcpAppForMessage(msg, mcpAppTools);

@@ -4,6 +4,72 @@ import { safeDecodeURI } from '../shared/string-utils';
 /** True when `url` looks like a DIAL Core file id (`files/{bucket}/{path}`). */
 export const isDialFileId = (url: string): boolean => url.startsWith('files/');
 
+const PROJECT_ID_PREFIX = 'projects/';
+const PROJECT_FILES_SEGMENT = '/files/';
+
+/** The decoded parts of a DIAL Core project file id, `projects/{bucket}/{path}/files/{filePath}`. */
+export interface DialProjectFileIdParts {
+  /** The project id, `projects/{bucket}/{path}`, with every segment decoded. */
+  projectId: string;
+  /** The decoded segments of the file path inside the project, e.g. `['artifacts', 'run-1', 'data.csv']`. */
+  filePath: string[];
+}
+
+/* Decodes each `/`-separated segment; `undefined` on a malformed escape or an empty segment. */
+const decodePathSegments = (path: string): string[] | undefined => {
+  const segments: string[] = [];
+  for (const segment of path.split('/')) {
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(segment);
+    } catch {
+      return undefined;
+    }
+    if (decoded === '') return undefined;
+    segments.push(decoded);
+  }
+  return segments;
+};
+
+/**
+ * Returns the decoded parts of a DIAL Core project file id, ignoring any
+ * `#...` fragment, or `undefined` when `url` is not one: no `projects/`
+ * prefix, no project path, a folder (trailing `/`), an empty segment or a
+ * malformed escape.
+ */
+export const parseDialProjectFileId = (
+  url: string,
+): DialProjectFileIdParts | undefined => {
+  const id = url.split('#')[0];
+  if (!id.startsWith(PROJECT_ID_PREFIX)) return undefined;
+  const bucketEnd = id.indexOf('/', PROJECT_ID_PREFIX.length);
+  if (bucketEnd <= PROJECT_ID_PREFIX.length) return undefined;
+  /* `files` is a name DIAL Core reserves, so no project path holds a `files`
+   * segment and the first one always ends the project id. */
+  const filesIndex = id.indexOf(PROJECT_FILES_SEGMENT, bucketEnd);
+  if (filesIndex <= bucketEnd) return undefined;
+
+  const projectSegments = decodePathSegments(
+    id.slice(PROJECT_ID_PREFIX.length, filesIndex),
+  );
+  const filePath = decodePathSegments(
+    id.slice(filesIndex + PROJECT_FILES_SEGMENT.length),
+  );
+  if (projectSegments == null || filePath == null) return undefined;
+  return {
+    projectId: `${PROJECT_ID_PREFIX}${projectSegments.join('/')}`,
+    filePath,
+  };
+};
+
+/** True when `url` is a DIAL Core id of a file inside a project, `projects/{bucket}/{path}/files/{filePath}`; see {@link parseDialProjectFileId}. */
+export const isDialProjectFileId = (url: string): boolean =>
+  parseDialProjectFileId(url) != null;
+
+/** True when `url` is a DIAL Core file id (`files/…`) or a project file id (`projects/…/files/…`): an id the host resolves to one of its own download routes. */
+export const isDialStoredFileId = (url: string): boolean =>
+  isDialFileId(url) || isDialProjectFileId(url);
+
 /** True when `url` is a DIAL Core folder id: a file id ending with `/`, ignoring any `#...` fragment. */
 export const isDialFolderId = (url: string): boolean =>
   isDialFileId(url) && url.split('#')[0].endsWith('/');

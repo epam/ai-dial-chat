@@ -124,6 +124,42 @@ export const IsSafeDialPathSegment = (
   };
 };
 
+/** Upper bound of a stored relative path (segments joined by `/`), in UTF-8 bytes. */
+export const DIAL_RELATIVE_PATH_MAX_BYTES = 4096;
+
+/**
+ * Returns `true` when `value` is a relative DIAL resource path of at most
+ * `DIAL_RELATIVE_PATH_MAX_BYTES` UTF-8 bytes whose every `/`-separated
+ * segment passes {@link isSafeDialPathSegment}.
+ */
+export const isSafeDialRelativePath = (value: unknown): value is string => {
+  if (typeof value !== 'string' || value.length === 0) return false;
+  if (Buffer.byteLength(value, 'utf8') > DIAL_RELATIVE_PATH_MAX_BYTES) {
+    return false;
+  }
+  return value.split('/').every(isSafeDialPathSegment);
+};
+
+/** class-validator decorator for {@link isSafeDialRelativePath}. */
+export const IsSafeDialRelativePath = (
+  validationOptions?: ValidationOptions,
+) => {
+  return (object: object, propertyName: string) => {
+    registerDecorator({
+      name: 'isSafeDialRelativePath',
+      target: object.constructor,
+      propertyName,
+      options: validationOptions,
+      validator: {
+        validate: isSafeDialRelativePath,
+        defaultMessage(args?: ValidationArguments) {
+          return `${args?.property ?? propertyName} must be a relative path of at most ${DIAL_RELATIVE_PATH_MAX_BYTES} UTF-8 bytes whose every segment is 1-${DIAL_PATH_SEGMENT_MAX_BYTES} UTF-8 bytes with no surrounding whitespace, backslash, %, control character, and is not a reserved name`;
+        },
+      },
+    });
+  };
+};
+
 export const DIAL_ENTITY_NAME_VALIDATION_MESSAGE =
   `must be 1-${DIAL_ENTITY_NAME_MAX_BYTES} UTF-8 bytes with no surrounding ` +
   'whitespace, control characters, or any of : ; , = / \\ { } % & ", ' +

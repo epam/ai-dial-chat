@@ -2073,7 +2073,7 @@ const ChatPage = ({
 
 `ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path, content? })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`. A sixth, optional `saveConversation(path, conversation)` saves a conversation at the bucket-stripped `path` and resolves with the saved copy; the hook uses it only for the recovery save described below.
 
-**Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event. Once that watch is open, the hook re-reads the conversation once, so a generation that finished just before the subscription settles without waiting for the watch timeout.
+**Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event. Once that watch is open, the hook re-reads the conversation once, so a generation that finished just before the subscription settles without waiting for the watch timeout. While the conversation holds a live `foregroundGeneration` marker, the hook also re-reads it when the marker expires (a Stop shortens that expiry), instead of waiting for the watch timeout.
 
 `startStream(conversationId, userContent, messageIndex, model, customContent?, generationId?, mode?, options?)` takes an optional `StartStreamOptions` as its last argument. With `{ resumeOnConflict: true }`, a `GenerationConflictError` means "this turn is already being generated": typically the page was reloaded after a new conversation's first message, before the backend saved that generation's start state. The hook then joins the running generation instead of showing `generationConflictMessage`:
 
@@ -2529,11 +2529,11 @@ const AttachmentTile = ({ attachment }: { attachment: DisplayAttachment }) => {
 
 #### API
 
-**Parameters** (`UseAttachmentActionParams`): `{ resolveDownloadUrl: (fileId: string) => string | undefined }` — resolves a DIAL Core file id (`files/{bucket}/{path}`) to a downloadable URL; this is host-owned since it encodes the app's own file-download endpoint.
+**Parameters** (`UseAttachmentActionParams`): `{ resolveDownloadUrl: (fileId: string) => string | undefined }` — resolves a DIAL Core file id (`files/{bucket}/{path}`) or project file id (`projects/{bucket}/{path}/files/{filePath}`) to a downloadable URL; this is host-owned since it encodes the app's own file-download endpoints. Returning `undefined` means no download is offered for that id.
 
 **Returns** (`UseAttachmentActionResult`): `{ handleAttachmentClick: (attachment: DisplayAttachment) => void }`.
 
-Also exports `isDialFileId`, `isDownloadableAttachment`, and `downloadAttachment` (the standalone functions the hook is built on) for callers that need the download decision outside the click handler. A DIAL folder attachment (`url` ending with `/`) is not downloadable: `isDownloadableAttachment` returns `false` and `downloadAttachment` does nothing for it.
+Also exports `isDialFileId`, `isDownloadableAttachment`, and `downloadAttachment` (the standalone functions the hook is built on) for callers that need the download decision outside the click handler. A DIAL folder attachment (`url` ending with `/`) is not downloadable: `isDownloadableAttachment` returns `false` and `downloadAttachment` does nothing for it. A project file attachment (`isDialProjectFileId`) is downloadable: `downloadAttachment` passes its id to `resolveDownloadUrl` and returns `false` when the host resolves it to `undefined`.
 
 ### usePromptsState
 
@@ -6003,19 +6003,32 @@ import { sanitizeFileName } from '@epam/ai-dial-chat-hooks';
 sanitizeFileName('report:final?.pdf'); // 'report_final_.pdf'
 ```
 
-### isDialFileId / isDialFolderId / resolveRelativeDialFilePath / resolveDialFileBucketAndPath
+### isDialFileId / isDialFolderId / isDialProjectFileId / parseDialProjectFileId / isDialStoredFileId / resolveRelativeDialFilePath / resolveDialFileBucketAndPath
 
 Recognizes a DIAL Core file id (`files/{bucket}/{path}`) or folder id (a file id ending with `/`) and resolves it to a bucket-relative path or its `{ bucket, path }` parts.
+
+`parseDialProjectFileId` splits a file inside a project, `projects/{bucket}/{path}/files/{filePath}` (as an agent in a project conversation returns it), into a `DialProjectFileIdParts` value: the decoded `projectId` and the decoded `filePath` segments. The id is percent-encoded per segment, as DIAL Core writes it, so a `#` in a name is `%23` and a raw `#...` is a fragment it ignores. It returns `undefined` for a folder, an empty segment or a malformed escape; `isDialProjectFileId` is the same test as a boolean. The host maps the parts to its own route.
+
+`isDialStoredFileId` is true for either kind of id — the ids a host resolves to its own download routes. The citation, reference and canvas resolvers use it to decide between the host resolver and opening the URL as-is.
 
 ```ts
 import {
   isDialFolderId,
+  isDialProjectFileId,
+  isDialStoredFileId,
+  parseDialProjectFileId,
   resolveDialFileBucketAndPath,
 } from '@epam/ai-dial-chat-hooks';
 
 resolveDialFileBucketAndPath('files/my-bucket/reports/q1.pdf');
 // { bucket: 'my-bucket', path: 'reports/q1.pdf' }
 isDialFolderId('files/my-bucket/reports/'); // true
+isDialProjectFileId('projects/my-bucket/q4/files/artifacts/report.pdf'); // true
+parseDialProjectFileId(
+  'projects/my-bucket/Q4%20launch/files/artifacts/run-1/a.csv',
+);
+// { projectId: 'projects/my-bucket/Q4 launch', filePath: ['artifacts', 'run-1', 'a.csv'] }
+isDialStoredFileId('files/my-bucket/reports/q1.pdf'); // true
 ```
 
 ### FileSelectionKind / getFileSelectionKind / resolveDialFolderPath
@@ -6035,7 +6048,7 @@ const folderPath = resolveDialFolderPath(folder, bucket);
 
 ### openAnnotationAttachment
 
-Default click behavior for a cited/referenced attachment: triggers a browser download for DIAL-hosted files via the injected `resolveDownloadUrl`, otherwise opens the URL in a new tab.
+Default click behavior for a cited/referenced attachment: triggers a browser download for DIAL-hosted files (`isDialStoredFileId`: a `files/` id or a project file id) via the injected `resolveDownloadUrl`, otherwise opens the URL in a new tab. `useAttachmentAction` uses the same function for a reference-only attachment.
 
 ```ts
 import { openAnnotationAttachment } from '@epam/ai-dial-chat-hooks';
@@ -6049,7 +6062,7 @@ openAnnotationAttachment(attachmentResource, (fileId) =>
 
 Reachable from the root entry and from `@epam/ai-dial-chat-hooks/file-manager-canvas` — the subpath that owns them, so `./file-manager` stays free of the `@epam/ai-dial-attachment-canvas`/`@epam/ai-dial-quotations` peers.
 
-A family of resolvers that turn a `DisplayAttachment` into the content payload `@epam/ai-dial-attachment-canvas` renders (image, plain text, markdown, code, HTML, PDF, OOXML/CSV, JSON, or a custom visualizer), plus the annotation-specific PDF resolvers and the shared LRU fetch cache they use. Every resolver takes the same host-injected `AttachmentCanvasUrlResolvers` — DIAL-file URL resolution is host-owned, since it encodes the app's own file-download endpoint. Before serving a cached blob/text body, the cache revalidates the resource's current ETag through `resolveDialFileMetadataUrl` and only reuses the cached body on an exact match, so a resource overwritten since it was cached is refetched instead of replayed.
+A family of resolvers that turn a `DisplayAttachment` into the content payload `@epam/ai-dial-attachment-canvas` renders (image, plain text, markdown, code, HTML, PDF, OOXML/CSV, JSON, or a custom visualizer), plus the annotation-specific PDF resolvers and the shared LRU fetch cache they use. Every resolver takes the same host-injected `AttachmentCanvasUrlResolvers` — DIAL-file URL resolution is host-owned, since it encodes the app's own file-download endpoint. The citation and reference PDF/OOXML resolvers pass a source that is a `files/` id or a project file id (`isDialStoredFileId`) to `resolveDialFileDownloadUrl`, so a host that serves project files resolves both kinds there. Before serving a cached blob/text body, the cache revalidates the resource's current ETag through `resolveDialFileMetadataUrl` and only reuses the cached body on an exact match, so a resource overwritten since it was cached is refetched instead of replayed.
 
 ```ts
 import {

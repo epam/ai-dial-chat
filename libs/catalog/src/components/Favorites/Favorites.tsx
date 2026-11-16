@@ -90,7 +90,6 @@ export const Favorites: FC<FavoritesProps> = ({
   const cssVars = buildCssVars({
     '--cat-fav-title-text': favoritesStyles?.colors?.titleText,
     '--cat-fav-count-text': favoritesStyles?.colors?.countText,
-    '--cat-fav-selected-check': favoritesStyles?.colors?.selectedCheckIcon,
     '--cat-fav-selected-border': favoritesStyles?.colors?.selectedCardBorder,
     '--cat-fav-selected-bg': favoritesStyles?.colors?.selectedCardBackground,
     '--cat-fav-nav-btn': favoritesStyles?.colors?.navButton,

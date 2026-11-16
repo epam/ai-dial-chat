@@ -528,7 +528,11 @@ Configured at startup:
 - Swagger at `/api/docs` (non-production)
 - Static assets from `apps/chat/dist` and nonce-bearing React SPA HTML for
   non-`/api/*` routes (`app/static-assets.ts`). HTML templates are cached in memory;
-  HTML responses use `no-store` with a fresh nonce, while asset caching is unchanged.
+  HTML responses use `no-store` with a fresh nonce. Files under `assets/`, which
+  Vite names after a hash of their content, are served
+  `public, max-age=31536000, immutable`, so a warm reload reuses them without a
+  revalidation request each; other static files keep Express's default
+  revalidation.
 - Global prefix: `api`
 - Global in-memory cache: an explicit Keyv memory adapter with a 100-entry LRU limit and periodic expiration cleanup; see [backend caching behavior](../apps/chat-api/README.md#performance).
 - OpenTelemetry SDK bootstrap (`telemetry/otel-sdk.ts`, imported first, before `reflect-metadata`)

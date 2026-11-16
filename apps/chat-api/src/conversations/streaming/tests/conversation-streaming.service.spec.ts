@@ -4482,6 +4482,72 @@ describe('ConversationStreamingService', () => {
       });
     });
 
+    describe('stopForegroundGeneration logging', () => {
+      const stop = () =>
+        service.stopForegroundGeneration(
+          PATH,
+          'test-token',
+          'test-bucket',
+          OTHER_GEN,
+        );
+
+      it('logs the status and error name when the Stop write throws, never the token or a message', async () => {
+        installCoreStorage({
+          ...TEST_CONVERSATION,
+          messages: [question, markedAnswer(OTHER_GEN, Date.now() + 60_000)],
+        });
+        vi.mocked(mockDialClient.client.saveConversation).mockResolvedValue({
+          error: { message: 'secret upstream text' },
+          response: new Response(null, { status: 500 }),
+        } as never);
+        const warnSpy = vi.spyOn(Logger.prototype, 'warn').mockClear();
+
+        expect(await stop()).toBe(ForegroundStopResult.Failed);
+
+        const lines = warnSpy.mock.calls.map(([message]) => String(message));
+        const line = lines.find((message) =>
+          message.startsWith('Foreground Stop not stored'),
+        );
+        expect(line).toContain(`generationId: ${OTHER_GEN}`);
+        expect(line).toContain('result: failed');
+        expect(line).toMatch(/status: \d+|status: none/);
+        expect(line).not.toContain('test-token');
+        expect(line).not.toContain('secret upstream text');
+      });
+
+      it('stays silent for a plain not_found, the normal answer for a local generation', async () => {
+        installCoreStorage({
+          ...TEST_CONVERSATION,
+          messages: [question, markedAnswer(OTHER_GEN, NOW - 1)],
+        });
+        const warnSpy = vi.spyOn(Logger.prototype, 'warn').mockClear();
+
+        expect(await stop()).toBe(ForegroundStopResult.NotFound);
+
+        expect(
+          warnSpy.mock.calls.some(([message]) =>
+            String(message).startsWith('Foreground Stop not stored'),
+          ),
+        ).toBe(false);
+      });
+
+      it('stays silent when the Stop is stored', async () => {
+        installCoreStorage({
+          ...TEST_CONVERSATION,
+          messages: [question, markedAnswer(OTHER_GEN, Date.now() + 60_000)],
+        });
+        const warnSpy = vi.spyOn(Logger.prototype, 'warn').mockClear();
+
+        expect(await stop()).toBe(ForegroundStopResult.Stored);
+
+        expect(
+          warnSpy.mock.calls.some(([message]) =>
+            String(message).startsWith('Foreground Stop not stored'),
+          ),
+        ).toBe(false);
+      });
+    });
+
     it('makes no release write when a refused start stored nothing', async () => {
       installCoreStorage({
         ...TEST_CONVERSATION,

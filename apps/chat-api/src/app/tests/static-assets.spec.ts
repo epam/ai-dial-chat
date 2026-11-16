@@ -19,6 +19,7 @@ import {
 } from '../../config/csp';
 import {
   createFrontendMiddleware,
+  HASHED_ASSET_CACHE_CONTROL,
   OVERLAY_SANDBOX_ROUTE,
   resolveFrontendRootPath,
   resolveOverlaySandboxRootPath,
@@ -266,6 +267,36 @@ describe('static assets serving', () => {
 
     expect(response.text).toBe('console.log("app");');
     expect(response.headers['content-type']).toContain('javascript');
+  });
+
+  it('caches content-hashed assets as immutable', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/assets/app.js')
+      .expect(200);
+
+    expect(response.headers['cache-control']).toBe(HASHED_ASSET_CACHE_CONTROL);
+  });
+
+  it('caches overlay sandbox assets as immutable', async () => {
+    await app.close();
+    app = await createStaticTestApp(staticRoot, overlaySandboxRoot, true);
+    const response = await request(app.getHttpServer())
+      .get(`${OVERLAY_SANDBOX_ROUTE}/assets/sandbox.js`)
+      .expect(200);
+
+    expect(response.headers['cache-control']).toBe(HASHED_ASSET_CACHE_CONTROL);
+  });
+
+  it('keeps files outside assets/ revalidated', async () => {
+    await writeFile(join(staticRoot, 'favicon.ico'), 'icon');
+    const response = await request(app.getHttpServer())
+      .get('/favicon.ico')
+      .expect(200);
+
+    expect(response.headers['cache-control']).not.toBe(
+      HASHED_ASSET_CACHE_CONTROL,
+    );
+    expect(response.headers['cache-control']).not.toContain('immutable');
   });
 
   it('returns 404 instead of index.html for a missing asset', async () => {

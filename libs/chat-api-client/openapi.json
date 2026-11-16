@@ -11225,7 +11225,7 @@
     },
     "/api/v1/projects/{id}/artifacts/{fileName}": {
       "get": {
-        "description": "Streams one file directly under the project `artifacts/` folder as an attachment with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.",
+        "description": "Streams one file under the project `artifacts/` folder, a direct child or a nested path, as an attachment named after its last path segment, with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.",
         "operationId": "downloadProjectArtifact",
         "parameters": [
           {
@@ -11242,9 +11242,9 @@
             "name": "fileName",
             "required": true,
             "in": "path",
-            "description": "Name of a file directly under the project `artifacts/` folder.",
+            "description": "Path relative to the project `artifacts/` folder, URL-encoded into one path segment.",
             "schema": {
-              "example": "report.pdf",
+              "example": "run-1%2Fdata.csv",
               "type": "string"
             }
           }
@@ -13211,7 +13211,7 @@
           },
           "themesBaseUrl": {
             "type": "string",
-            "description": "Base URL of the themes service (THEMES_CONFIG_URL without a trailing slash). Clients recognise absolute deployment icon URLs under it and load them through GET /api/themes/icon instead, so one icon is requested under one URL. Missing when THEMES_CONFIG_URL is not configured.",
+            "description": "Public base URL of the themes host (THEMES_PUBLIC_URL without a trailing slash). Clients recognise absolute deployment icon URLs under it and load them through GET /api/themes/icon instead, so one icon is requested under one URL. Missing when THEMES_PUBLIC_URL is not configured; the in-cluster THEMES_CONFIG_URL is never exposed.",
             "example": "https://themes.example.com"
           }
         },

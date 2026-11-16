@@ -4,7 +4,10 @@ import {
   registerDecorator,
   type ValidationOptions,
 } from 'class-validator';
-import { IsDialEntityName } from '../../common/validators/dial-entity-name.validator';
+import {
+  IsDialEntityName,
+  IsSafeDialRelativePath,
+} from '../../common/validators/dial-entity-name.validator';
 import { parseProjectId } from '../utils/project-id.util';
 
 const PROJECT_ID_EXAMPLE = 'projects/a1b2c3/marketing/q4-launch';
@@ -61,10 +64,10 @@ export class ProjectFileParamDto extends ProjectIdParamDto {
 export class ProjectArtifactParamDto extends ProjectIdParamDto {
   @ApiProperty({
     description:
-      'Name of a file directly under the project `artifacts/` folder.',
-    example: 'report.pdf',
+      'Path relative to the project `artifacts/` folder, URL-encoded into one path segment.',
+    example: 'run-1%2Fdata.csv',
   })
   @IsString()
-  @IsDialEntityName()
+  @IsSafeDialRelativePath()
   fileName!: string;
 }

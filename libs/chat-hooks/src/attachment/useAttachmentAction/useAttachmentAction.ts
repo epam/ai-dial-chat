@@ -14,9 +14,15 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { parsePdfPageReference } from '@epam/ai-dial-quotations';
 import { useCallback } from 'react';
-import { isDialFileId, isDialFolderId } from '../../files/dial-file';
+import { openAnnotationAttachment } from '../../files/annotation';
+import {
+  isDialFileId,
+  isDialFolderId,
+  isDialProjectFileId,
+  isDialStoredFileId,
+} from '../../files/dial-file';
 
-/** Resolves a DIAL Core file id to a downloadable URL. Host-owned — encodes the app's own file-download endpoint. */
+/** Resolves a DIAL Core file id or project file id to a downloadable URL, or `undefined` when the host serves none. Host-owned — encodes the app's own file-download endpoints. */
 export type ResolveDownloadUrl = (fileId: string) => string | undefined;
 
 /** Parameters for {@link useAttachmentAction}. */
@@ -31,9 +37,12 @@ export interface UseAttachmentActionResult {
   handleAttachmentClick: (attachment: DisplayAttachment) => void;
 }
 
-/* DIAL Core serves no download for a folder id (`files/{bucket}/{path}/`). */
+/* DIAL Core serves no download for a folder id (`files/{bucket}/{path}/`).
+ * A project file id (`projects/…/files/…`) is downloadable too; the host's
+ * `resolveDownloadUrl` decides whether it has a route for it. */
 const isDownloadableDialFileId = (url: string | undefined): url is string =>
-  url != null && isDialFileId(url) && !isDialFolderId(url);
+  url != null &&
+  ((isDialFileId(url) && !isDialFolderId(url)) || isDialProjectFileId(url));
 
 /** Returns true when `downloadAttachment` can trigger a download for `attachment`; a DIAL folder attachment is not downloadable. */
 export const isDownloadableAttachment = (
@@ -79,27 +88,6 @@ export const downloadAttachment = (
   return false;
 };
 
-const openAnnotationAttachment = (
-  attachment: AttachmentResource,
-  resolveDownloadUrl: ResolveDownloadUrl,
-): void => {
-  const { url } = attachment;
-  if (url == null) return;
-
-  const fileId = url.split('#')[0];
-  if (isDialFileId(fileId)) {
-    const downloadUrl = resolveDownloadUrl(fileId);
-    if (downloadUrl == null) return;
-    const displayName = attachment.title ?? fileId.split('/').pop() ?? '';
-    triggerAnchorDownload(
-      downloadUrl,
-      ensureDownloadFilename(displayName, fileId, attachment.type),
-    );
-  } else {
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
-};
-
 const referenceAttachmentToPdfCanvasContent = (
   attachment: AttachmentResource,
   resolveDownloadUrl: ResolveDownloadUrl,
@@ -107,7 +95,7 @@ const referenceAttachmentToPdfCanvasContent = (
   const parsed = parsePdfPageReference(attachment.url);
   if (parsed == null) return null;
 
-  const url = isDialFileId(parsed.baseUrl)
+  const url = isDialStoredFileId(parsed.baseUrl)
     ? resolveDownloadUrl(parsed.baseUrl)
     : parsed.baseUrl;
   if (url == null) return null;

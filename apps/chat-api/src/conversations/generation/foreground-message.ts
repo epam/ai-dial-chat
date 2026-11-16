@@ -125,6 +125,14 @@ export enum ForegroundStopResult {
   Failed = 'failed',
 }
 
+/** Why storing a Stop threw: the HTTP status when there is one, never a message or a body. */
+export interface ForegroundStopErrorDetails {
+  status?: number;
+  errorName: string;
+  /** True once the conversation was read, so the failure came from the conditional write. */
+  isRead: boolean;
+}
+
 /* A refused read or write discloses nothing: the caller cannot see this conversation. */
 const isAccessRefusal = (error: unknown): boolean =>
   error instanceof HttpException && [403, 404].includes(error.getStatus());
@@ -139,6 +147,7 @@ const isAccessRefusal = (error: unknown): boolean =>
  * @param params.bucket - stopping caller's session bucket
  * @param params.generationId - generation to stop
  * @param params.stopReleaseMs - how long after the Stop the marker may still hold the conversation
+ * @param params.onError - called when the read or write threw, so the caller can log why the Stop was not stored
  */
 export const storeForegroundStop = async (params: {
   persistence: Pick<ConversationPersistencePort, 'updateConversation'>;
@@ -147,6 +156,7 @@ export const storeForegroundStop = async (params: {
   bucket: string;
   generationId: string;
   stopReleaseMs: number;
+  onError?: (details: ForegroundStopErrorDetails) => void;
 }): Promise<ForegroundStopResult> => {
   let isRead = false;
   let skipped = ForegroundStopResult.NotFound;
@@ -195,6 +205,14 @@ export const storeForegroundStop = async (params: {
       ? skipped
       : ForegroundStopResult.Failed;
   } catch (error) {
+    /* A refusal is the normal answer for a generation this caller does not own, so it is not reported. */
+    if (!isAccessRefusal(error)) {
+      params.onError?.({
+        status: error instanceof HttpException ? error.getStatus() : undefined,
+        errorName: error instanceof Error ? error.name : 'unknown',
+        isRead,
+      });
+    }
     if (!isRead || isAccessRefusal(error)) return ForegroundStopResult.NotFound;
     return ForegroundStopResult.Failed;
   }
