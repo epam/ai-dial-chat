@@ -1,7 +1,9 @@
 import {
   isDialFileId,
   isDialFolderId,
+  parseDialProjectFileId,
   resolveDialFileBucketAndPath,
+  type DialProjectFileIdParts,
 } from '@epam/ai-dial-chat-hooks';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { ApiEndpoints } from '../server-api/base';
@@ -46,80 +48,99 @@ const stripFragment = (fileId: string): string => fileId.split('#')[0];
 
 /**
  * Rewrites a markdown `href`/`src` when it is a DIAL file id
- * (`files/{bucket}/{path}`); otherwise returns the URL unchanged. A trailing
+ * (`files/{bucket}/{path}`) or a project file id; otherwise returns the URL
+ * unchanged. A trailing
  * `#page=N`-style anchor is stripped before resolving, the same as
  * {@link resolveDialUrl} does, so it is not percent-encoded into the `path`
  * query parameter (which would 404 the download).
  */
 export const resolveMarkdownUrl = (url: string): string =>
-  resolveDialFileDownloadUrl(stripFragment(url)) ?? url;
+  resolveAttachmentDownloadUrl(url) ?? url;
 
 /* A folder id ends with `/`; DIAL Core has no download for a folder. */
 const isDownloadableDialFileId = (url: string | undefined): url is string =>
   url != null && isDialFileId(url) && !isDialFolderId(url);
 
 /**
- * Whether an attachment tile may offer a download. Only a DIAL folder
- * attachment is ruled out; reference-only and inline attachments keep the
- * download action their click handler already supports.
+ * Whether an attachment tile may offer a download. A DIAL folder attachment,
+ * and a project file id no BFF route serves, are ruled out; reference-only
+ * and inline attachments keep the download action their click handler
+ * already supports.
  */
 export const isAttachmentDownloadable = (
   attachment: DisplayAttachment,
-): boolean => attachment.url == null || !isDialFolderId(attachment.url);
+): boolean => {
+  const { url } = attachment;
+  if (url == null) return true;
+  const projectFile = parseDialProjectFileId(url);
+  if (projectFile != null) return toProjectFileRoute(projectFile) != null;
+  return !isDialFolderId(url);
+};
 
-const PROJECT_ID_PREFIX = 'projects/';
-const PROJECT_CONTEXT_FILE_SEGMENT = '/files/context/';
-const PROJECT_ARTIFACT_SEGMENT = '/files/artifacts/';
+const PROJECT_CONTEXT_FOLDER = 'context';
+const PROJECT_ARTIFACTS_FOLDER = 'artifacts';
 
-/* Each project file locator segment and the BFF route segment that serves it. */
-const PROJECT_FILE_ROUTES = [
-  { segment: PROJECT_CONTEXT_FILE_SEGMENT, route: 'files' },
-  { segment: PROJECT_ARTIFACT_SEGMENT, route: 'artifacts' },
-];
+/* Percent-encodes every `/`-separated segment, the way DIAL Core writes a resource id. */
+const encodePathSegments = (path: string): string =>
+  path.split('/').map(encodeURIComponent).join('/');
+
+/* The BFF route segment and the file path under it, or `undefined` for a folder no route serves. */
+const toProjectFileRoute = ({
+  filePath,
+}: DialProjectFileIdParts): { route: string; filePath: string } | undefined => {
+  const [folder, ...rest] = filePath;
+  if (folder === PROJECT_CONTEXT_FOLDER && rest.length === 1) {
+    return { route: 'files', filePath: rest[0] };
+  }
+  if (folder === PROJECT_ARTIFACTS_FOLDER && rest.length > 0) {
+    return { route: 'artifacts', filePath: rest.join('/') };
+  }
+  return undefined;
+};
 
 /**
- * Locator of a project's context file, `{projectId}/files/context/{fileName}`:
- * the `url` a project page gives the attachment it opens in the canvas, so the
- * canvas content resolvers fetch it like any other DIAL file.
+ * Locator of a project's context file, `{projectId}/files/context/{fileName}`
+ * with every segment percent-encoded: the `url` a project page gives the
+ * attachment it opens in the canvas, so the canvas content resolvers fetch it
+ * like any other DIAL file. It has the shape of the id DIAL Core gives the
+ * same file, so a `#` in a name cannot be read as a fragment.
  */
 export const toProjectContextFileUrl = (
   projectId: string,
   fileName: string,
-): string => `${projectId}${PROJECT_CONTEXT_FILE_SEGMENT}${fileName}`;
+): string =>
+  `${encodePathSegments(projectId)}/files/${PROJECT_CONTEXT_FOLDER}/${encodeURIComponent(fileName)}`;
 
 /**
- * Locator of a project's output, `{projectId}/files/artifacts/{fileName}`: a
- * file an agent saved under the project's `artifacts/` folder, opened in the
- * canvas like a context file.
+ * Locator of a project's output, `{projectId}/files/artifacts/{fileName}`
+ * with every segment percent-encoded: a file an agent saved under the
+ * project's `artifacts/` folder, opened in the canvas like a context file.
+ * DIAL Core gives a generated attachment the same shape, possibly nested
+ * (`artifacts/run-1/data.csv`).
  */
 export const toProjectArtifactUrl = (
   projectId: string,
   fileName: string,
-): string => `${projectId}${PROJECT_ARTIFACT_SEGMENT}${fileName}`;
+): string =>
+  `${encodePathSegments(projectId)}/files/${PROJECT_ARTIFACTS_FOLDER}/${encodePathSegments(fileName)}`;
 
 /**
- * Converts a project file locator to the BFF endpoint that streams it:
- * `GET /api/v1/projects/:id/files/:fileName` for a context file and
- * `GET /api/v1/projects/:id/artifacts/:fileName` for an output. Returns
- * `undefined` when the input is not such a locator: no `projects/` prefix, no
- * project before the folder segment, or no single-segment file name after it.
+ * Converts a project file id (`projects/{bucket}/{path}/files/{filePath}`,
+ * percent-encoded as DIAL Core and {@link toProjectContextFileUrl} write it)
+ * to the BFF endpoint that streams it: `GET /api/v1/projects/:id/files/:fileName`
+ * for a context file and `GET /api/v1/projects/:id/artifacts/:fileName` for an
+ * output, direct or nested. A `#...` fragment is ignored. Returns `undefined`
+ * for anything else: not a project file id, a nested context file, or a
+ * folder other than `context/` and `artifacts/`.
  */
 export const resolveProjectFileDownloadUrl = (
   url: string,
 ): string | undefined => {
-  if (!url.startsWith(PROJECT_ID_PREFIX)) return undefined;
-  /* The file name is one segment, so the last folder segment in the URL is the real one. */
-  const match = PROJECT_FILE_ROUTES.map((entry) => ({
-    ...entry,
-    index: url.lastIndexOf(entry.segment),
-  })).reduce((best, entry) => (entry.index > best.index ? entry : best));
-  if (match.index <= PROJECT_ID_PREFIX.length) return undefined;
-  const projectId = url.slice(0, match.index);
-  const fileName = url.slice(match.index + match.segment.length);
-  if (projectId.endsWith('/') || fileName === '' || fileName.includes('/')) {
-    return undefined;
-  }
-  return `${ApiEndpoints.PROJECTS}/${encodeURIComponent(projectId)}/${match.route}/${encodeURIComponent(fileName)}`;
+  const projectFile = parseDialProjectFileId(url);
+  if (projectFile == null) return undefined;
+  const target = toProjectFileRoute(projectFile);
+  if (target == null) return undefined;
+  return `${ApiEndpoints.PROJECTS}/${encodeURIComponent(projectFile.projectId)}/${target.route}/${encodeURIComponent(target.filePath)}`;
 };
 
 /**
@@ -140,6 +161,21 @@ export const resolveDialUrl = (
   return attachment.url == null
     ? undefined
     : resolveProjectFileDownloadUrl(attachment.url);
+};
+
+/**
+ * Resolves the id an attachment tile, the sources panel or audio playback
+ * downloads: a DIAL file id (`files/{bucket}/{path}`) to the files download
+ * route, and a project file id (`projects/{bucket}/{path}/files/{filePath}`)
+ * to the project file route. A `#...` fragment is ignored. Returns
+ * `undefined` for anything else.
+ */
+export const resolveAttachmentDownloadUrl = (
+  fileId: string,
+): string | undefined => {
+  const id = stripFragment(fileId);
+  if (isDialFileId(id)) return resolveDialFileDownloadUrl(id);
+  return resolveProjectFileDownloadUrl(id);
 };
 
 /**

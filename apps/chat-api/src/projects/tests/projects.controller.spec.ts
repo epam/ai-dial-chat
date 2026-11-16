@@ -665,13 +665,40 @@ describe('ProjectsController (integration)', () => {
       );
     });
 
+    it.each([
+      ['a nested output', 'run-1/data.csv'],
+      ['a context-like folder inside artifacts', 'context/tickets.csv'],
+    ])('passes %s through as a path under artifacts', async (_, path) => {
+      downloadService.downloadArtifact.mockResolvedValue({
+        stream: new ReadableStream({
+          start: (controller) => controller.close(),
+        }),
+        headers: { 'content-type': 'text/csv' },
+        abortOnDisconnect: vi.fn(),
+      });
+      app = await buildApp(service);
+
+      await request(app.getHttpServer())
+        .get(`${artifactsUrl(PROJECT_ID)}/${encodeURIComponent(path)}`)
+        .expect(200);
+
+      expect(downloadService.downloadArtifact).toHaveBeenCalledWith(
+        expect.objectContaining({ id: PROJECT_ID }),
+        path,
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
     /* A bare `..` never reaches the route: WHATWG URL parsing resolves it,
      * `%2E%2E` included, to the parent path. `ProjectArtifactParamDto`'s unit
      * test covers it. */
     it.each([
       encodeURIComponent('../context/tickets.csv'),
-      encodeURIComponent('context/tickets.csv'),
-    ])('rejects the encoded output name %s with 400', async (encodedName) => {
+      encodeURIComponent('run-1/../x'),
+      encodeURIComponent('run-1//data.csv'),
+      encodeURIComponent('report%20v2.md'),
+    ])('rejects the encoded output path %s with 400', async (encodedName) => {
       app = await buildApp(service);
 
       await request(app.getHttpServer())

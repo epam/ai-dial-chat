@@ -137,6 +137,12 @@ describe('resolveMarkdownUrl', () => {
     );
   });
 
+  it('rewrites a project file id to the BFF project artifact URL', () => {
+    expect(
+      resolveMarkdownUrl('projects/b/Q4%20launch/files/artifacts/chart.png'),
+    ).toBe('/api/v1/projects/projects%2Fb%2FQ4%20launch/artifacts/chart.png');
+  });
+
   it('leaves an incomplete files/ id unchanged', () => {
     expect(resolveMarkdownUrl('files/only-bucket')).toBe('files/only-bucket');
   });
@@ -186,6 +192,18 @@ describe('resolveCatalogIconUrl', () => {
     expect(resolveCatalogIconUrl('files/bucket/icon.png', THEMES)).toBe(
       '/api/v1/files/download?bucket=bucket&path=icon.png',
     );
+  });
+
+  it('resolves a generated project image through the project artifact endpoint', () => {
+    expect(
+      resolveCatalogIconUrl('projects/a1b2c3/q4/files/artifacts/chart.png'),
+    ).toBe('/api/v1/projects/projects%2Fa1b2c3%2Fq4/artifacts/chart.png');
+  });
+
+  it('does not treat a project file outside context and artifacts as a theme icon', () => {
+    expect(
+      resolveCatalogIconUrl('projects/a1b2c3/q4/files/tmp/chart.png'),
+    ).toBeUndefined();
   });
 
   it('returns undefined for a missing icon', () => {

@@ -35,6 +35,31 @@ describe('openAnnotationAttachment', () => {
     expect(window.open).not.toHaveBeenCalled();
   });
 
+  it('downloads a project file reference via the injected resolver', () => {
+    vi.spyOn(window, 'open').mockImplementation(() => null);
+    const anchor = document.createElement('a');
+    const anchorClick = vi.fn();
+    anchor.click = anchorClick;
+    vi.spyOn(document, 'createElement').mockReturnValue(anchor);
+
+    const resolveDownloadUrl = vi.fn(
+      () => '/api/v1/projects/projects%2Fb%2Fq4/files/handbook.pdf',
+    );
+    openAnnotationAttachment(
+      {
+        type: 'application/pdf',
+        url: 'projects/b/q4/files/context/handbook.pdf#page=3',
+      },
+      resolveDownloadUrl,
+    );
+
+    expect(resolveDownloadUrl).toHaveBeenCalledWith(
+      'projects/b/q4/files/context/handbook.pdf',
+    );
+    expect(anchorClick).toHaveBeenCalled();
+    expect(window.open).not.toHaveBeenCalled();
+  });
+
   it('opens a non-DIAL URL in a new tab without calling the resolver', () => {
     vi.spyOn(window, 'open').mockImplementation(() => null);
     const resolveDownloadUrl = vi.fn();
