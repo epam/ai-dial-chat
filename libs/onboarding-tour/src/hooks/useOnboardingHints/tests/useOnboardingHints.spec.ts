@@ -8,6 +8,7 @@ import type {
   OnboardingHint,
   UseOnboardingHintsOptions,
 } from '../../../models/onboarding-tour';
+import { OnboardingTourEndReason } from '../../../types/onboarding-tour-end-reason';
 import { useOnboardingHints } from '../useOnboardingHints';
 
 const hint = (id: string, target: string, title: string): OnboardingHint => ({
@@ -81,13 +82,76 @@ describe('useOnboardingHints', () => {
     expect(result.current.steps).toEqual([]);
   });
 
-  it('adds the shown ids to the seen ones and ends the tour', () => {
+  it('adds the shown ids to the seen ones when the tour is done', () => {
     const onSeenIdsChange = vi.fn();
     const { result } = renderHints({ seenIds: ['old'], onSeenIdsChange });
     act(() => vi.advanceTimersByTime(ONBOARDING_START_DELAY_MS));
 
-    act(() => result.current.onFinish(['new-chat']));
+    act(() =>
+      result.current.onFinish(['new-chat'], OnboardingTourEndReason.Done),
+    );
     expect(onSeenIdsChange).toHaveBeenCalledWith(['old', 'new-chat']);
     expect(result.current.steps).toEqual([]);
+  });
+
+  it('marks every configured hint seen when the tour is dismissed', () => {
+    const onSeenIdsChange = vi.fn();
+    const { result } = renderHints({ onSeenIdsChange });
+    act(() => vi.advanceTimersByTime(ONBOARDING_START_DELAY_MS));
+
+    act(() =>
+      result.current.onFinish(['new-chat'], OnboardingTourEndReason.Dismissed),
+    );
+    expect(onSeenIdsChange).toHaveBeenCalledWith(['new-chat', 'catalog']);
+  });
+
+  it('ends a running tour without marking anything when the page changes', () => {
+    const onSeenIdsChange = vi.fn();
+    const { result, rerender } = renderHook(
+      (props: UseOnboardingHintsOptions) => useOnboardingHints(props),
+      {
+        initialProps: {
+          hints: HINTS,
+          seenIds: [],
+          onSeenIdsChange,
+          resolveTarget: (target: string) =>
+            onScreen.has(target) ? element : null,
+          isEnabled: true,
+          pageKey: '/',
+        },
+      },
+    );
+    act(() => vi.advanceTimersByTime(ONBOARDING_START_DELAY_MS));
+    expect(result.current.steps).toHaveLength(1);
+
+    onScreen = new Set();
+    rerender({
+      hints: HINTS,
+      seenIds: [],
+      onSeenIdsChange,
+      resolveTarget: (target: string) =>
+        onScreen.has(target) ? element : null,
+      isEnabled: true,
+      pageKey: '/catalog',
+    });
+    expect(result.current.steps).toEqual([]);
+    expect(onSeenIdsChange).not.toHaveBeenCalled();
+  });
+
+  it('waits while the user is typing and keeps their focus', () => {
+    const field = document.createElement('input');
+    document.body.append(field);
+    field.focus();
+    const { result } = renderHints();
+
+    act(() => vi.advanceTimersByTime(ONBOARDING_START_DELAY_MS * 20));
+    expect(result.current.steps).toEqual([]);
+    // eslint-disable-next-line testing-library/no-node-access -- focus placement has no query; the focused element is the assertion
+    expect(document.activeElement).toBe(field);
+
+    field.blur();
+    act(() => vi.advanceTimersByTime(ONBOARDING_RETRY_INTERVAL_MS));
+    expect(result.current.steps.map((step) => step.id)).toEqual(['new-chat']);
+    field.remove();
   });
 });

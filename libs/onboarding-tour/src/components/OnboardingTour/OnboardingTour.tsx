@@ -34,6 +34,7 @@ import { ONBOARDING_TOUR_CLASS } from '../../constants/public-class-names';
 import { useResolvedTarget } from '../../hooks/useResolvedTarget/useResolvedTarget';
 import type { OnboardingTourProps } from '../../models/onboarding-tour';
 import type { TargetRect } from '../../models/target-rect';
+import { OnboardingTourEndReason } from '../../types/onboarding-tour-end-reason';
 import { cardColorVars } from '../../utils/card-colors';
 import {
   hintCardMiddleware,
@@ -81,23 +82,50 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
     [target],
   );
 
-  /* Remember where focus was before the tour took it, to give it back. */
+  /* Remember where focus was each time a tour opens, to give it back when
+   * that tour ends; a later tour must not return to an element saved before
+   * an earlier one, which is usually gone with its page. */
   useLayoutEffect(() => {
-    if (isOpen && returnFocusRef.current == null) {
+    if (isOpen) {
       returnFocusRef.current = document.activeElement as HTMLElement | null;
     }
   }, [isOpen]);
 
-  const finish = useCallback(() => {
-    onFinish(steps.map(({ id }) => id));
-  }, [onFinish, steps]);
+  /* Only steps that were on screen count as shown; a step skipped because its
+   * element was gone stays unseen for a page that renders it. */
+  const shownIdsRef = useRef<Set<string>>(new Set());
+  useLayoutEffect(() => {
+    shownIdsRef.current = new Set();
+  }, [steps]);
+  useLayoutEffect(() => {
+    /* The step's own lookup: `target` still holds the previous step's
+     * element for the render in which the step changes. */
+    if (step && target && step.getTarget()) {
+      shownIdsRef.current.add(step.id);
+    }
+  }, [step, target]);
+
+  const finishWith = useCallback(
+    (reason: OnboardingTourEndReason) => {
+      onFinish([...shownIdsRef.current], reason);
+    },
+    [onFinish],
+  );
+  const finish = useCallback(
+    () => finishWith(OnboardingTourEndReason.Done),
+    [finishWith],
+  );
+  const dismiss = useCallback(
+    () => finishWith(OnboardingTourEndReason.Dismissed),
+    [finishWith],
+  );
 
   const { refs, floatingStyles, context, middlewareData, isPositioned } =
     useFloating({
       open: isOpen,
       onOpenChange: (open) => {
         if (!open) {
-          finish();
+          dismiss();
         }
       },
       elements: { reference: target },
@@ -113,8 +141,8 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
     });
   /* Escape ends the tour; a click elsewhere on the page leaves the card
    * open, so a stray tap cannot dismiss a hint the user has not read. */
-  const dismiss = useDismiss(context, { outsidePress: false });
-  const { getFloatingProps } = useInteractions([dismiss]);
+  const dismissInteraction = useDismiss(context, { outsidePress: false });
+  const { getFloatingProps } = useInteractions([dismissInteraction]);
   const cardRefs = useMergeRefs([refs.setFloating, cardRef]);
 
   /* A step whose target is not on screen when it opens is skipped. */
@@ -152,11 +180,15 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
   const stepCounter = labels?.stepCounter ?? defaultStepCounter;
 
   /* Without a target to sit next to (on mobile, or while a target is briefly
-   * gone) the card is a bottom sheet. */
+   * gone) the card is a sheet. */
   const isSheet = isMobile || !target;
   const rect = target
     ? (middlewareData[TARGET_RECT_MIDDLEWARE] as TargetRect | undefined)
     : undefined;
+  /* A sheet docks at the edge away from its target, so it never covers the
+   * element it explains (the composer sits at the bottom on a phone). */
+  const isTargetLow =
+    rect != null && rect.top + rect.height / 2 > window.innerHeight / 2;
 
   const cssVars = buildCssVars({
     ...cardColorVars(colors),
@@ -211,15 +243,15 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
             description={step.description}
             counter={stepCounter(index + 1, total)}
             closeLabel={labels?.close ?? 'Close tour'}
-            onClose={finish}
+            onClose={dismiss}
             counterClassName={counterClassName}
             titleClassName={titleClassName}
             descriptionClassName={descriptionClassName}
             className={mergeClasses(
               'pointer-events-auto',
-              isSheet
-                ? 'fixed inset-x-4 bottom-4'
-                : 'w-90 max-w-[calc(100vw-32px)]',
+              isSheet && isTargetLow && 'fixed inset-x-4 top-4',
+              isSheet && !isTargetLow && 'fixed inset-x-4 bottom-4',
+              !isSheet && 'w-90 max-w-[calc(100vw-32px)]',
               !isSheet && !isPositioned && 'invisible',
             )}
             style={isSheet ? undefined : floatingStyles}
@@ -241,7 +273,7 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
                 ) : (
                   <GhostButton
                     label={labels?.skip ?? 'Skip tour'}
-                    onClick={finish}
+                    onClick={dismiss}
                   />
                 )}
                 <div className="flex items-center gap-2">

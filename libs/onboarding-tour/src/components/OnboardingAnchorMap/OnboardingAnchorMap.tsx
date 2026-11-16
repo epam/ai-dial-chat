@@ -1,6 +1,14 @@
 import { buildCssVars } from '@epam/ai-dial-chat-shared';
-import { CloseButton, ElementSize, mergeClasses } from '@epam/ai-dial-ui-kit';
+import {
+  CloseButton,
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  ElementSize,
+  GhostButton,
+  mergeClasses,
+} from '@epam/ai-dial-ui-kit';
 import { FloatingPortal } from '@floating-ui/react';
+import { IconChevronDown } from '@tabler/icons-react';
 import { useCallback, useId, useState, type FC } from 'react';
 import { ONBOARDING_ANCHOR_MAP_CLASS } from '../../constants/public-class-names';
 import type { OnboardingAnchorMapProps } from '../../models/onboarding-tour';
@@ -26,6 +34,13 @@ export const OnboardingAnchorMap: FC<OnboardingAnchorMapProps> = ({
     () => new Set(),
   );
   const headingId = useId();
+  const missingListId = useId();
+  /* Collapsed by default so the panel covers as little of the page as possible. */
+  const [isMissingExpanded, setIsMissingExpanded] = useState(false);
+  const handleToggleMissing = useCallback(
+    () => setIsMissingExpanded((value) => !value),
+    [],
+  );
 
   const handleAvailabilityChange = useCallback(
     (id: string, isOnScreen: boolean) =>
@@ -102,10 +117,36 @@ export const OnboardingAnchorMap: FC<OnboardingAnchorMapProps> = ({
           </div>
           {missing.length > 0 ? (
             <>
-              <h3 className={mergeClasses(styles.item, itemClassName)}>
-                {labels?.missingHeading ?? 'Not on this page'}
+              <h3>
+                <GhostButton
+                  label={`${labels?.missingHeading ?? 'Not on this page'} (${missing.length})`}
+                  aria-expanded={isMissingExpanded}
+                  aria-controls={missingListId}
+                  onClick={handleToggleMissing}
+                  iconAfter={
+                    <IconChevronDown
+                      size={DIAL_ICON_SIZE.SM}
+                      stroke={DIAL_KIT_ICON_STROKE}
+                      className={mergeClasses(
+                        'transition-transform',
+                        isMissingExpanded && 'rotate-180',
+                      )}
+                      aria-hidden
+                    />
+                  }
+                  textClassName={mergeClasses(styles.item, itemClassName)}
+                />
               </h3>
-              <ul className="flex flex-col gap-1">
+              <ul
+                id={missingListId}
+                /* `hidden` keeps it out of the accessibility tree; the class
+                 * wins over `flex` for the eye. */
+                hidden={!isMissingExpanded}
+                className={mergeClasses(
+                  isMissingExpanded ? 'flex' : 'hidden',
+                  'flex-col gap-1',
+                )}
+              >
                 {missing.map(({ id }) => (
                   <li
                     key={id}

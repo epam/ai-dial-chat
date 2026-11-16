@@ -45,10 +45,16 @@ it picks the hints the user has not seen whose element is on the page, waits
 the page loads its data, runs the tour, and reports the merged seen ids through
 `onSeenIdsChange`. With `isAnchorView` it outlines every anchor instead.
 
+A tour never starts while an input, textarea, select or editable region has
+focus, so it never takes the user's keystrokes; it waits until they leave the
+field. Done marks the hints that were on screen as seen; Skip, Close and Escape
+dismiss onboarding and mark every configured hint seen, so no later page opens
+another tour. A `pageKey` change ends a running tour without marking anything,
+so its remaining hints wait for a page that renders them.
+
 The host decides what a `target` means: `resolveTarget` turns it into the
-element, and `anchorTargets` lists every target it knows.
-`resolveOnboardingTarget` and `getOnboardingAnchorTargets` from
-`@epam/ai-dial-chat-hooks/onboarding` are those for a DIAL Chat app shell.
+element, and `anchorTargets` lists every target it knows. The lib never looks
+at the page's markup itself.
 
 ```tsx
 import { OnboardingHints } from '@epam/ai-dial-onboarding-tour';
@@ -131,24 +137,24 @@ const Tour = () => {
 };
 ```
 
-| Prop                   | Type                               | Default                       | Description                                                                                                                   |
-| ---------------------- | ---------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `steps`                | `OnboardingTourStep[]`             | —                             | Steps in order. An empty list renders nothing; a new list restarts from its first step.                                       |
-| `onFinish`             | `(shownStepIds: string[]) => void` | —                             | Called with every step id on Done, Skip, Close, Escape, or when no remaining step has a target. The host clears `steps` here. |
-| `isMobile`             | `boolean`                          | `false`                       | Shows the card as a bottom sheet instead of next to the target.                                                               |
-| `dir`                  | `'ltr' \| 'rtl'`                   | inherited                     | Direction of the card; it is start-aligned with its target.                                                                   |
-| `labels`               | `OnboardingTourLabels`             | English                       | `stepCounter`, `next`, `back`, `done`, `skip`, `close`.                                                                       |
-| `colors`               | `OnboardingTourColors`             | theme tokens                  | See below.                                                                                                                    |
-| `counterClassName`     | `string`                           | `'dial-tiny-text'`            | Typography of the step counter.                                                                                               |
-| `titleClassName`       | `string`                           | `'dial-body-semi-text'`       | Typography of the card title.                                                                                                 |
-| `descriptionClassName` | `string`                           | `'dial-small-paragraph-text'` | Typography of the card description.                                                                                           |
-| `className`            | `string`                           | —                             | Extra class name(s) on the tour root.                                                                                         |
+| Prop                   | Type                                                                | Default                       | Description                                                                                                                                                                    |
+| ---------------------- | ------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `steps`                | `OnboardingTourStep[]`                                              | —                             | Steps in order. An empty list renders nothing; a new list restarts from its first step.                                                                                        |
+| `onFinish`             | `(shownStepIds: string[], reason: OnboardingTourEndReason) => void` | —                             | Called with the ids of the steps that were on screen, and `Done` (Done, or no remaining step has a target) or `Dismissed` (Skip, Close, Escape). The host clears `steps` here. |
+| `isMobile`             | `boolean`                                                           | `false`                       | Shows the card as a sheet instead of next to the target, docked at the bottom, or at the top when the target is in the lower half of the screen.                               |
+| `dir`                  | `'ltr' \| 'rtl'`                                                    | inherited                     | Direction of the card; it is start-aligned with its target.                                                                                                                    |
+| `labels`               | `OnboardingTourLabels`                                              | English                       | `stepCounter`, `next`, `back`, `done`, `skip`, `close`.                                                                                                                        |
+| `colors`               | `OnboardingTourColors`                                              | theme tokens                  | See below.                                                                                                                                                                     |
+| `counterClassName`     | `string`                                                            | `'dial-tiny-text'`            | Typography of the step counter.                                                                                                                                                |
+| `titleClassName`       | `string`                                                            | `'dial-body-semi-text'`       | Typography of the card title.                                                                                                                                                  |
+| `descriptionClassName` | `string`                                                            | `'dial-small-paragraph-text'` | Typography of the card description.                                                                                                                                            |
+| `className`            | `string`                                                            | —                             | Extra class name(s) on the tour root.                                                                                                                                          |
 
 `colors` fields and their defaults: `backdrop` (`--bg-backdrop`, the dimming around the cut-out), `counterText` (`--text-tertiary`), and the card fields `cardBackground` (`--bg-layer-raised`), `cardShadow` (`--shadow-lg`), `titleText` (`--text-primary`), `descriptionText` (`--text-secondary`).
 
 ### OnboardingAnchorMap
 
-An authoring aid rather than an onboarding surface: it draws a dashed outline with the anchor's name over every anchor on screen and lists, in a panel at the bottom end corner, the anchors the page does not render. Clicks pass through the outlines, so the page stays usable while the map is shown; only the panel takes pointer input.
+An authoring aid rather than an onboarding surface: it draws a dashed outline with the anchor's name over every anchor on screen and lists, in a panel at the bottom end corner, the anchors the page does not render, behind a toggle that starts collapsed. An anchor covered by a drawer or dialog, or clipped by a scroll container, gets no outline. Clicks pass through the outlines, so the page stays usable while the map is shown; only the panel takes pointer input.
 
 ```tsx
 import { OnboardingAnchorMap } from '@epam/ai-dial-onboarding-tour';
@@ -213,6 +219,10 @@ const { steps, onFinish } = useOnboardingHints({
 
 `ONBOARDING_START_DELAY_MS`, `ONBOARDING_RETRY_INTERVAL_MS` and
 `ONBOARDING_RETRY_ATTEMPTS` are exported for tests that advance fake timers.
+
+## Enums
+
+`OnboardingTourEndReason` — `Done` or `Dismissed`, the second argument of `OnboardingTourProps.onFinish`.
 
 ## Types
 

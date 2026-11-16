@@ -5,7 +5,12 @@ import { ONBOARDING_ANCHOR_MAP_CLASS } from '../../constants/public-class-names'
 import { useResolvedTarget } from '../../hooks/useResolvedTarget/useResolvedTarget';
 import type { OnboardingAnchor } from '../../models/onboarding-tour';
 import type { TargetRect } from '../../models/target-rect';
-import { TARGET_RECT_MIDDLEWARE, targetRect } from '../../utils/floating';
+import {
+  OCCLUSION_MIDDLEWARE,
+  occlusion,
+  TARGET_RECT_MIDDLEWARE,
+  targetRect,
+} from '../../utils/floating';
 import { spotlightRadius } from '../../utils/spotlight';
 import styles from './AnchorOutline.module.scss';
 
@@ -37,8 +42,10 @@ export const AnchorOutline: FC<AnchorOutlineProps> = ({
     elements: { reference: target },
     strategy: 'fixed',
     placement: 'top-start',
-    middleware: [targetRect(), hide()],
-    whileElementsMounted: autoUpdate,
+    middleware: [targetRect(), hide(), occlusion()],
+    /* Every frame: a drawer opening over an anchor covers it without moving it. */
+    whileElementsMounted: (reference, floating, update) =>
+      autoUpdate(reference, floating, update, { animationFrame: true }),
   });
   const borderRadius = useMemo(
     () => (target ? spotlightRadius(target, 0) : undefined),
@@ -50,7 +57,13 @@ export const AnchorOutline: FC<AnchorOutlineProps> = ({
   }
 
   const rect = middlewareData[TARGET_RECT_MIDDLEWARE] as TargetRect | undefined;
-  const isHidden = !isPositioned || middlewareData.hide?.referenceHidden;
+  /* An anchor clipped by a scroll container or covered by a drawer or dialog
+   * gets no outline, so outlines never spill over the layer in front. */
+  const isHidden =
+    !isPositioned ||
+    middlewareData.hide?.referenceHidden ||
+    (middlewareData[OCCLUSION_MIDDLEWARE] as { isCovered: boolean } | undefined)
+      ?.isCovered;
 
   return (
     <>

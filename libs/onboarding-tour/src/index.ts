@@ -2,6 +2,7 @@ export { OnboardingTour } from './components/OnboardingTour/OnboardingTour';
 export { OnboardingAnchorMap } from './components/OnboardingAnchorMap/OnboardingAnchorMap';
 export { OnboardingHints } from './components/OnboardingHints/OnboardingHints';
 export { useOnboardingHints } from './hooks/useOnboardingHints/useOnboardingHints';
+export { OnboardingTourEndReason } from './types/onboarding-tour-end-reason';
 export {
   ONBOARDING_RETRY_ATTEMPTS,
   ONBOARDING_RETRY_INTERVAL_MS,

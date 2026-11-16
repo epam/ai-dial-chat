@@ -1,6 +1,8 @@
+import type { OnboardingTourEndReason } from '../types/onboarding-tour-end-reason';
+
 /** One hint: the copy shown in its card and the element it points at. */
 export interface OnboardingTourStep {
-  /** Stable id of the hint, reported back through `onFinish` / `onDismiss`. */
+  /** Stable id of the hint, reported back through `onFinish`. */
   id: string;
   /** Card heading; also the card's accessible name. */
   title: string;
@@ -50,8 +52,8 @@ export interface OnboardingTourColors extends OnboardingCardColors {
 export interface OnboardingTourProps {
   /** Hints to walk through, in order; the tour renders nothing while the list is empty and restarts from the first hint when the list changes. */
   steps: OnboardingTourStep[];
-  /** Called with every step id when the user finishes, skips, closes or presses Escape, or when no remaining step has a target; the host clears `steps` in response. */
-  onFinish: (shownStepIds: string[]) => void;
+  /** Called with the ids of the steps that were on screen when the tour ends, and why it ended; the host clears `steps` in response. */
+  onFinish: (shownStepIds: string[], reason: OnboardingTourEndReason) => void;
   /** When `true`, the card is a bottom sheet instead of a popover next to the target. Defaults to `false`. */
   isMobile?: boolean;
   /** Text direction of the overlay, used to align the card with its target. Defaults to the direction inherited from the document. */
@@ -164,8 +166,8 @@ export interface UseOnboardingHintsOptions {
 export interface UseOnboardingHintsResult {
   /** Steps to pass to `OnboardingTour`; empty while no tour runs. */
   steps: OnboardingTourStep[];
-  /** Pass to `OnboardingTour` as `onFinish`: marks the shown ids seen and ends the tour. */
-  onFinish: (shownIds: string[]) => void;
+  /** Pass to `OnboardingTour` as `onFinish`: marks the shown ids seen (every hint's id when dismissed) and ends the tour. */
+  onFinish: (shownIds: string[], reason: OnboardingTourEndReason) => void;
 }
 
 /** User-visible strings of the `OnboardingHints` component. */

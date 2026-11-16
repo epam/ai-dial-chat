@@ -48,15 +48,26 @@ describe('OnboardingAnchorMap', () => {
     expect(await screen.findByText('new-chat')).toBeTruthy();
   });
 
-  it('counts the anchors on screen and lists the missing ones', async () => {
+  it('counts the anchors on screen and lists the missing ones once expanded', async () => {
+    const user = userEvent.setup();
     renderMap();
     const panel = await screen.findByRole('region', {
       name: '1 of 2 anchors on this page',
     });
-    expect(within(panel).getByText('Not on this page')).toBeTruthy();
+    const toggle = within(panel).getByRole('button', {
+      name: 'Not on this page (1)',
+    });
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(within(panel).queryByRole('listitem')).toBeNull();
+
+    await user.click(toggle);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
     expect(within(panel).getByRole('listitem').textContent).toBe(
       'catalog-create',
     );
+
+    await user.click(toggle);
+    expect(within(panel).queryByRole('listitem')).toBeNull();
   });
 
   it('says so when every anchor is on screen', async () => {
@@ -85,6 +96,6 @@ describe('OnboardingAnchorMap', () => {
       },
     });
     expect(await screen.findByRole('region', { name: '1/2' })).toBeTruthy();
-    expect(screen.getByText('Fehlt')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Fehlt (1)' })).toBeTruthy();
   });
 });

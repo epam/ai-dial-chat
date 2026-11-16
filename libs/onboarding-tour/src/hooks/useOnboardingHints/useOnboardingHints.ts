@@ -9,6 +9,8 @@ import type {
   UseOnboardingHintsOptions,
   UseOnboardingHintsResult,
 } from '../../models/onboarding-tour';
+import { OnboardingTourEndReason } from '../../types/onboarding-tour-end-reason';
+import { isEditableElement } from '../../utils/focus';
 
 const NO_STEPS: OnboardingTourStep[] = [];
 
@@ -37,10 +39,17 @@ export const useOnboardingHints = ({
     [hints, seenIds, resolveTarget],
   );
 
+  /* Leaving the page ends a running tour without marking anything seen: its
+   * remaining steps point at elements the next page does not render. */
+  useEffect(() => {
+    setSteps(NO_STEPS);
+  }, [pageKey]);
+
   /* Look for unseen hints on every page, after it had a moment to paint, and
    * keep looking for a while: a page such as the catalog renders its controls
    * only once its data arrives. The tour shows the hints that are on screen;
-   * the rest stay unseen until a page renders them. */
+   * the rest stay unseen until a page renders them. A tour never opens while
+   * the user is typing: it would take their focus and keystrokes. */
   const isRunning = steps.length > 0;
   useEffect(() => {
     if (!isEnabled || isRunning || pendingSteps.length === 0) {
@@ -49,6 +58,10 @@ export const useOnboardingHints = ({
     let attempts = 0;
     let timer = 0;
     const tryStart = () => {
+      if (isEditableElement(document.activeElement)) {
+        timer = window.setTimeout(tryStart, ONBOARDING_RETRY_INTERVAL_MS);
+        return;
+      }
       const visible = pendingSteps.filter((step) => step.getTarget() != null);
       if (visible.length > 0) {
         setSteps(visible);
@@ -63,15 +76,22 @@ export const useOnboardingHints = ({
     return () => window.clearTimeout(timer);
   }, [isEnabled, isRunning, pendingSteps, pageKey]);
 
+  /* Done marks the hints that were shown; dismissing the tour (Skip, close,
+   * Escape) opts out of every configured hint, so no later page starts a new
+   * tour. */
   const onFinish = useCallback(
-    (shownIds: string[]) => {
+    (shownIds: string[], reason: OnboardingTourEndReason) => {
+      const newlySeen =
+        reason === OnboardingTourEndReason.Dismissed
+          ? [...new Set([...shownIds, ...hints.map(({ id }) => id)])]
+          : shownIds;
       onSeenIdsChange([
-        ...seenIds.filter((id) => !shownIds.includes(id)),
-        ...shownIds,
+        ...seenIds.filter((id) => !newlySeen.includes(id)),
+        ...newlySeen,
       ]);
       setSteps(NO_STEPS);
     },
-    [seenIds, onSeenIdsChange],
+    [hints, seenIds, onSeenIdsChange],
   );
 
   return { steps, onFinish };
