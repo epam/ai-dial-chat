@@ -161,10 +161,13 @@ A deployment's `icon_url` in the DIAL config may name a theme icon either way:
 relative (`gpt4.svg`) or as an absolute URL on the themes host
 (`https://themes.example.com/gpt4.svg`). The chat loads both through
 `/api/themes/icon?iconName=gpt4.svg`, using `config.themesBaseUrl` from
-`GET /api/v1/client-config` (`THEMES_CONFIG_URL`), so a mixed config still
-fetches each icon once. Only a file directly under the themes base URL whose
-name passes the proxy's validation is rewritten; every other absolute URL loads
-as listed.
+`GET /api/v1/client-config`, so a mixed config still fetches each icon once.
+That value comes from `THEMES_PUBLIC_URL`, the themes host's public address as
+the DIAL config spells it, not from `THEMES_CONFIG_URL`, which is often an
+in-cluster address the browser never sees. Leave `THEMES_PUBLIC_URL` unset and
+absolute icon URLs load as listed. Only a file directly under the public base
+URL whose name passes the proxy's validation is rewritten; every other absolute
+URL loads as listed.
 
 ### Setting the theme from an embedding host
 
