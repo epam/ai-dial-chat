@@ -2,6 +2,8 @@ export enum StorageKey {
   ConversationPanelWidth = 'conversationPanelWidth',
   ConversationSourcesWidth = 'conversationSourcesWidth',
   Theme = 'theme',
+  /** Every configured theme's colours by id, read by `public/theme-init.js`. */
+  ThemeColors = 'themeColors',
   KeyboardShortcut = 'keyboardShortcut',
   CelebrationsEnabled = 'celebrationsEnabled',
   DefaultAgent = 'defaultAgent',

@@ -17,6 +17,11 @@ import { ApiEndpoints, get } from '../server-api/base';
 import { StorageKey } from '../types/storage-key';
 import { ThemeId } from '../types/theme-id';
 import { getFromLocalStorage, setToLocalStorage } from '../utils/local-storage';
+import {
+  cacheThemeColors,
+  clearPreloadedThemeColors,
+  resolveInitialThemeId,
+} from '../utils/theme-preload';
 
 interface ThemeContextType {
   currentTheme: string;
@@ -32,7 +37,17 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [config, setConfig] = useState<ThemeConfiguration | null>(null);
-  const [currentThemeId, setCurrentThemeId] = useState<string>(ThemeId.Light);
+  /*
+   * Starts from the stored preference, which `public/theme-init.js` has
+   * already painted, so consumers keyed on the theme (celebrations, logo
+   * choice) do not render one light frame before the configuration loads.
+   */
+  const [currentThemeId, setCurrentThemeId] = useState<string>(() =>
+    resolveInitialThemeId(
+      getFromLocalStorage(StorageKey.Theme),
+      getOsPreferredTheme,
+    ),
+  );
   const [selectedThemeId, setSelectedThemeId] = useState<string>(
     () => getFromLocalStorage(StorageKey.Theme) ?? ThemeId.Light,
   );
@@ -43,6 +58,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     (resolvedId: string) => {
       const theme = config?.themes.find((t) => t.id === resolvedId);
       const root = document.documentElement;
+      clearPreloadedThemeColors(root);
       applyThemeColors(root, theme?.colors);
       setCurrentThemeId(resolvedId);
       const updatedLogo =
@@ -76,6 +92,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
           const data = await get<ThemeConfiguration>(ApiEndpoints.THEMES);
           if (cancelled) return;
           setConfig(data);
+          cacheThemeColors(data.themes);
         } catch (err) {
           console.error('Failed to fetch theme configuration:', err);
         } finally {
