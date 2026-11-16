@@ -418,5 +418,17 @@
     "page": "App, toolset and custom-app editors",
     "element": "The editor's \"Setup\" section",
     "lookup": "The `section` named \"Setup\" inside `#main-content`"
+  },
+  {
+    "target": "active-chat",
+    "page": "Any page with the sidebar open and a conversation open",
+    "element": "The open conversation's row in the chat list",
+    "lookup": "The on-screen element with `aria-current=\"page\"` inside the chats `section` of the navigation landmark"
+  },
+  {
+    "target": "active-chat-actions",
+    "page": "Any page with the sidebar open and a conversation open",
+    "element": "The open conversation's \"More actions\" menu (pin, duplicate, export, share…); its button shows on hover",
+    "lookup": "The button named \"More actions\" in the same list item as the open conversation's row"
   }
 ]

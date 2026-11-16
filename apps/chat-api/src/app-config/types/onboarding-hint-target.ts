@@ -146,4 +146,8 @@ export enum OnboardingHintTarget {
   ToolsSelector = 'tools-selector',
   /** An app, toolset or custom-app editor's "Setup" section. */
   EditorSetup = 'editor-setup',
+  /** The open conversation's row in the sidebar's chat list. */
+  ActiveChat = 'active-chat',
+  /** The "More actions" menu button of the open conversation's row (pin, duplicate, export, share…). */
+  ActiveChatActions = 'active-chat-actions',
 }

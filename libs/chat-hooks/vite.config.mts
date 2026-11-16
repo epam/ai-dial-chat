@@ -84,7 +84,6 @@ export default defineConfig(({ command }) => ({
         usage: 'src/entry-points/usage.ts',
         'usage-limits': 'src/entry-points/usage-limits.ts',
         'mcp-apps': 'src/entry-points/mcp-apps.ts',
-        onboarding: 'src/entry-points/onboarding.ts',
       },
       name: '@epam/ai-dial-chat-hooks',
       formats: ['es' as const],

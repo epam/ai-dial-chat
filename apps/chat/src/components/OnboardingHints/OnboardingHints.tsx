@@ -1,9 +1,4 @@
 import type { OnboardingHintTarget } from '@epam/ai-dial-chat-api-client';
-import {
-  getOnboardingAnchorTargets,
-  resolveOnboardingTarget,
-  type OnboardingTargetLabels,
-} from '@epam/ai-dial-chat-hooks/onboarding';
 import { useIsMobile } from '@epam/ai-dial-chat-shared';
 import {
   OnboardingHints as OnboardingHintsView,
@@ -47,6 +42,11 @@ import {
   removeFromSessionStorage,
   setToSessionStorage,
 } from '../../utils/session-storage';
+import {
+  getOnboardingAnchorTargets,
+  resolveOnboardingTarget,
+  type OnboardingTargetLabels,
+} from './onboarding-targets';
 
 /* The app shell's main landmark, which most anchors are looked up inside. */
 const MAIN_CONTENT_ID = 'main-content';

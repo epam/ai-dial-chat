@@ -305,7 +305,6 @@ whether you need to `npm install` it.
 | `./usage`                 | `@epam/ai-dial-usage-dashboard`, `@epam/ai-dial-chat-shared`                                                                                        | —                                                               |
 | `./usage-limits`          | `@epam/ai-dial-conversation-input`, `@epam/ai-dial-chat-shared`                                                                                     | —                                                               |
 | `./mcp-apps`              | `@epam/ai-dial-mcp-apps`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`, `@modelcontextprotocol/sdk`                               | —                                                               |
-| `./onboarding`            | —                                                                                                                                                   | —                                                               |
 
 Five of the peers above (`@epam/ai-dial-catalog`,
 `@epam/ai-dial-chat-overlay`, `@epam/ai-dial-publish-panel`,
@@ -1596,49 +1595,6 @@ const ResizableSidePanel = () => {
 | Name                  | Type     | Description                                                                   |
 | --------------------- | -------- | ----------------------------------------------------------------------------- |
 | `minContentAreaWidth` | `number` | Minimum pixel width the main content area must retain when the panel is open. |
-
-### resolveOnboardingTarget / getOnboardingAnchorTargets
-
-Available from the root and from `./onboarding` (no peer beyond `react`).
-
-`resolveOnboardingTarget(target, labels, mainContentId)` finds the element an
-`OnboardingHintTarget` names by ARIA role and translated accessible name,
-inside the host's navigation landmark and the main landmark with id
-`mainContentId`; it returns `null` when the page does not render it.
-`getOnboardingAnchorTargets()` lists every target it resolves. The host fills
-every `OnboardingTargetLabels` field with the same translated string the control
-renders. The anchors and how each is found are listed in
-[`docs/onboarding-anchors.md`](../../docs/onboarding-anchors.md).
-
-Pass both to `OnboardingHints` from `@epam/ai-dial-onboarding-tour`, which
-decides which hints to show and renders them:
-
-```tsx
-import type { OnboardingHintTarget } from '@epam/ai-dial-chat-api-client';
-import {
-  getOnboardingAnchorTargets,
-  resolveOnboardingTarget,
-  type OnboardingTargetLabels,
-} from '@epam/ai-dial-chat-hooks/onboarding';
-import { OnboardingHints } from '@epam/ai-dial-onboarding-tour';
-
-const resolveTarget = (labels: OnboardingTargetLabels) => (target: string) =>
-  resolveOnboardingTarget(
-    target as OnboardingHintTarget,
-    labels,
-    'main-content',
-  );
-
-<OnboardingHints
-  hints={config.onboardingHints}
-  resolveTarget={resolveTarget(labels)}
-  anchorTargets={getOnboardingAnchorTargets()}
-  seenIds={seenIds}
-  onSeenIdsChange={saveSeenIds}
-  isEnabled={isConfigReady}
-  pageKey={pathname}
-/>;
-```
 
 ### useAppVersionCheck
 

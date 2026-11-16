@@ -15,8 +15,7 @@
     ],
     "forceConsistentCasingInFileNames": true,
     "ignoreDeprecations": "6.0",
-    "rootDir": ".",
-    "resolveJsonModule": true
+    "rootDir": "."
   },
   "include": [
     "src/test-setup.ts",
@@ -33,8 +32,7 @@
     "src/**/*.test.jsx",
     "src/**/*.spec.jsx",
     "src/**/*.d.ts",
-    "src/**/tests/**/*.ts",
-    "src/**/*.json"
+    "src/**/tests/**/*.ts"
   ],
   "references": [
     {

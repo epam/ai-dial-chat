@@ -7223,6 +7223,8 @@ export const OnboardingHintTarget = {
   ProjectChatBack: 'project-chat-back',
   ToolsSelector: 'tools-selector',
   EditorSetup: 'editor-setup',
+  ActiveChat: 'active-chat',
+  ActiveChatActions: 'active-chat-actions',
 } as const;
 export type OnboardingHintTarget =
   (typeof OnboardingHintTarget)[keyof typeof OnboardingHintTarget];

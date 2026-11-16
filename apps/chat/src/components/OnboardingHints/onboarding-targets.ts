@@ -508,6 +508,18 @@ const buildResolvers = (
     /* The name carries the selected count, so it is matched on its start. */
     [OnboardingHintTarget.ToolsSelector]: (labels) =>
       findControlBy(composerScopes(), startsWithNonEmpty(labels.toolsSummary)),
+    /* The row the open conversation is marked current on; only one is. */
+    [OnboardingHintTarget.ActiveChat]: (labels) =>
+      firstOnScreen(queryAll(chatsSections(labels), '[aria-current="page"]')),
+    /* Its menu button sits in the same list item; it is transparent until the
+     * row is hovered or focused, but keeps its box. */
+    [OnboardingHintTarget.ActiveChatActions]: (labels) => {
+      const row = firstOnScreen(
+        queryAll(chatsSections(labels), '[aria-current="page"]'),
+      );
+      const item = row?.closest('li');
+      return item ? findControl([item], labels.moreActions) : null;
+    },
     [OnboardingHintTarget.EditorSetup]: (labels) =>
       firstNamed(mainContent(), 'section', labels.editorSetup),
     [OnboardingHintTarget.CatalogFavorite]: (labels) =>

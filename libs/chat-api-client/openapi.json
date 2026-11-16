@@ -12903,7 +12903,9 @@
           "sources-download-all",
           "project-chat-back",
           "tools-selector",
-          "editor-setup"
+          "editor-setup",
+          "active-chat",
+          "active-chat-actions"
         ],
         "description": "The UI element the hint points at. A closed list; the client resolves it and skips the hint when that element is not on screen."
       },

@@ -734,6 +734,33 @@ describe('resolveOnboardingTarget', () => {
     });
   });
 
+  it('finds the open conversation and its menu button', () => {
+    render(
+      <nav aria-label="Main navigation">
+        <section aria-label="Chats and tasks">
+          <ul>
+            <li>
+              <button type="button">Other chat</button>
+              <button type="button" aria-label="More actions" />
+            </li>
+            <li>
+              <button type="button" aria-current="page">
+                Open chat
+              </button>
+              <button type="button" aria-label="More actions" />
+            </li>
+          </ul>
+        </section>
+      </nav>,
+    );
+    expect(resolve(OnboardingHintTarget.ActiveChat)).toBe(
+      screen.getByRole('button', { name: 'Open chat' }),
+    );
+    expect(resolve(OnboardingHintTarget.ActiveChatActions)).toBe(
+      screen.getAllByRole('button', { name: 'More actions' })[1],
+    );
+  });
+
   it("finds an editor's Setup section", () => {
     render(
       <main id="main-content">

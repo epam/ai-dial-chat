@@ -4,7 +4,7 @@
 // ONBOARDING_HINTS entry can point at through its `target`.
 //
 // The catalog data lives in
-// libs/chat-hooks/src/onboarding/onboarding-anchors.json, next to the
+// apps/chat/src/components/OnboardingHints/onboarding-anchors.json, next to the
 // resolvers that find each element. A unit test keeps that file in step with
 // the OnboardingHintTarget enum chat-api accepts; `--check` keeps this document
 // in step with the file.
@@ -16,7 +16,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import prettier from 'prettier';
 
-const SOURCE = 'libs/chat-hooks/src/onboarding/onboarding-anchors.json';
+const SOURCE = 'apps/chat/src/components/OnboardingHints/onboarding-anchors.json';
 const OUTPUT = 'docs/onboarding-anchors.md';
 
 const escapeCell = (value) => value.replaceAll('|', '\\|');
@@ -80,7 +80,7 @@ const render = () => {
     ...rows,
     '',
     'A renamed control or a changed role silently stops its anchor from',
-    'resolving. `libs/chat-hooks/src/onboarding/tests/onboarding-targets.spec.tsx`',
+    'resolving. `apps/chat/src/components/OnboardingHints/tests/onboarding-targets.spec.tsx`',
     'covers every resolver against fixture markup.',
     '',
   ].join('\n');

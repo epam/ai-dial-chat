@@ -1,5 +1,4 @@
 import type { OnboardingHintDto } from '@epam/ai-dial-chat-api-client';
-import { getOnboardingAnchorTargets } from '@epam/ai-dial-chat-hooks/onboarding';
 import {
   ONBOARDING_RETRY_INTERVAL_MS,
   ONBOARDING_START_DELAY_MS,
@@ -12,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppConfig as mockUseAppConfig } from '../../../context/tests/app-config-context-mock';
 import { StorageKey } from '../../../types/storage-key';
 import { UserConfigStatus } from '../../../types/user-config-status';
+import { getOnboardingAnchorTargets } from '../onboarding-targets';
 import OnboardingHints from '../OnboardingHints';
 
 const { state } = vi.hoisted(() => ({
