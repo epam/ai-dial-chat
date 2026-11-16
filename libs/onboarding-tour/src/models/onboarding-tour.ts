@@ -10,7 +10,7 @@ export interface OnboardingTourStep {
   getTarget: () => HTMLElement | null;
 }
 
-/** Colors shared by the hint card of `OnboardingTour` and `OnboardingBeacons`. */
+/** Colors of the hint card of `OnboardingTour`. */
 export interface OnboardingCardColors {
   /** Hint card background. Defaults to `--bg-layer-raised`. */
   cardBackground?: string;
@@ -42,10 +42,6 @@ export interface OnboardingTourLabels {
 
 /** Color overrides of the `OnboardingTour` component. */
 export interface OnboardingTourColors extends OnboardingCardColors {
-  /** Dimming layer over the page outside the spotlight. Defaults to `--bg-backdrop`. */
-  backdrop?: string;
-  /** Border around the spotlighted element. Defaults to `--stroke-accent`. */
-  spotlightBorder?: string;
   /** Step counter text. Defaults to `--text-tertiary`. */
   counterText?: string;
 }
@@ -71,44 +67,6 @@ export interface OnboardingTourProps {
   /** Typography class of the card description. Defaults to `'dial-small-paragraph-text'`. */
   descriptionClassName?: string;
   /** Extra class name(s) merged onto the overlay root. */
-  className?: string;
-}
-
-/** User-visible strings of the `OnboardingBeacons` component. */
-export interface OnboardingBeaconsLabels {
-  /** Accessible label of a beacon, given the hint title. Defaults to `` (title) => `Show hint: ${title}` ``. */
-  beacon?: (title: string) => string;
-  /** Label of the card button that dismisses the hint for good. Defaults to `'Got it'`. */
-  gotIt?: string;
-}
-
-/** Color overrides of the `OnboardingBeacons` component. */
-export interface OnboardingBeaconsColors extends OnboardingCardColors {
-  /** Fill of the beacon dot. Defaults to `--bg-accent-primary`. */
-  beacon?: string;
-  /** Ring around the beacon dot that separates it from the page. Defaults to `--bg-layer-0`. */
-  beaconRing?: string;
-  /** Focus outline of a keyboard-focused beacon. Defaults to `--stroke-focus`. */
-  beaconFocusOutline?: string;
-}
-
-/** Props for the `OnboardingBeacons` component. */
-export interface OnboardingBeaconsProps {
-  /** Hints to mark with a beacon; a hint whose target is not on screen shows no beacon until its target appears. */
-  hints: OnboardingTourStep[];
-  /** Called with a hint's id when the user dismisses it with the card's Got it button; the host removes it from `hints`. */
-  onDismiss: (id: string) => void;
-  /** Text direction of the beacons and cards. Defaults to the direction inherited from the document. */
-  dir?: 'ltr' | 'rtl';
-  /** User-visible strings; each missing field falls back to its English default. */
-  labels?: OnboardingBeaconsLabels;
-  /** Color overrides, applied as CSS custom properties on every beacon and card. */
-  colors?: OnboardingBeaconsColors;
-  /** Typography class of the card title. Defaults to `'dial-body-semi-text'`. */
-  titleClassName?: string;
-  /** Typography class of the card description. Defaults to `'dial-small-paragraph-text'`. */
-  descriptionClassName?: string;
-  /** Extra class name(s) merged onto the beacons root. */
   className?: string;
 }
 

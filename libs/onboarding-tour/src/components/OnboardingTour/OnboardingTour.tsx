@@ -18,30 +18,21 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
   type FC,
 } from 'react';
-import { SPOTLIGHT_PADDING } from '../../constants/layout';
 import { ONBOARDING_TOUR_CLASS } from '../../constants/public-class-names';
 import { useResolvedTarget } from '../../hooks/useResolvedTarget/useResolvedTarget';
 import type { OnboardingTourProps } from '../../models/onboarding-tour';
-import type { TargetRect } from '../../models/target-rect';
 import { cardColorVars } from '../../utils/card-colors';
-import {
-  hintCardMiddleware,
-  TARGET_RECT_MIDDLEWARE,
-  targetRect,
-} from '../../utils/floating';
-import { spotlightRadius } from '../../utils/spotlight';
+import { hintCardMiddleware } from '../../utils/floating';
 import { HintCard } from '../HintCard/HintCard';
-import styles from './OnboardingTour.module.scss';
 
 const defaultStepCounter = (current: number, total: number) =>
   `Step ${current} of ${total}`;
 
-/** Dims the page, spotlights each step's element and walks through the steps in a hint card. */
+/** Walks through the steps one hint card at a time, each card next to its step's element; the page stays usable while a card is open. */
 export const OnboardingTour: FC<OnboardingTourProps> = ({
   steps,
   onFinish,
@@ -68,11 +59,6 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
   const step = steps[index] ?? null;
   const isOpen = step != null;
   const target = useResolvedTarget(step?.getTarget);
-  /* The outline follows the target's own corners: round for a round button, square for a square panel. */
-  const borderRadius = useMemo(
-    () => (target ? spotlightRadius(target, SPOTLIGHT_PADDING) : undefined),
-    [target],
-  );
 
   /* Remember where focus was before the tour took it, to give it back. */
   useLayoutEffect(() => {
@@ -85,22 +71,21 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
     onFinish(steps.map(({ id }) => id));
   }, [onFinish, steps]);
 
-  const { refs, floatingStyles, context, middlewareData, isPositioned } =
-    useFloating({
-      open: isOpen,
-      onOpenChange: (open) => {
-        if (!open) {
-          finish();
-        }
-      },
-      elements: { reference: target },
-      strategy: 'fixed',
-      placement: 'bottom-start',
-      middleware: [...hintCardMiddleware(), targetRect()],
-      whileElementsMounted: autoUpdate,
-    });
-  /* Escape ends the tour; a click on the dimmed page does nothing, so a
-   * stray tap cannot dismiss a hint the user has not read. */
+  const { refs, floatingStyles, context, isPositioned } = useFloating({
+    open: isOpen,
+    onOpenChange: (open) => {
+      if (!open) {
+        finish();
+      }
+    },
+    elements: { reference: target },
+    strategy: 'fixed',
+    placement: 'bottom-start',
+    middleware: hintCardMiddleware(),
+    whileElementsMounted: autoUpdate,
+  });
+  /* Escape ends the tour; a click elsewhere on the page leaves the card
+   * open, so a stray tap cannot dismiss a hint the user has not read. */
   const dismiss = useDismiss(context, { outsidePress: false });
   const { getFloatingProps } = useInteractions([dismiss]);
   const cardRefs = useMergeRefs([refs.setFloating, cardRef]);
@@ -138,9 +123,6 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
   const total = steps.length;
   const isLast = index === total - 1;
   const stepCounter = labels?.stepCounter ?? defaultStepCounter;
-  const rect = target
-    ? (middlewareData[TARGET_RECT_MIDDLEWARE] as TargetRect | undefined)
-    : undefined;
 
   /* Without a target to sit next to (on mobile, or while a target is briefly
    * gone) the card is a bottom sheet. */
@@ -148,8 +130,6 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
 
   const cssVars = buildCssVars({
     ...cardColorVars(colors),
-    '--ot-backdrop': colors?.backdrop,
-    '--ot-spotlight-border': colors?.spotlightBorder,
     '--ot-counter-text': colors?.counterText,
   });
 
@@ -160,44 +140,21 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
         style={cssVars}
         className={mergeClasses(
           ONBOARDING_TOUR_CLASS.root,
-          'fixed inset-0 z-60',
+          /* The layer passes clicks through; only the card takes them. */
+          'pointer-events-none fixed inset-0 z-60',
           className,
         )}
       >
-        {/* Blocks the page behind the tour. */}
-        <div className="absolute inset-0" aria-hidden />
-        {rect ? (
-          <div
-            aria-hidden
-            className={mergeClasses(
-              ONBOARDING_TOUR_CLASS.spotlight,
-              styles.spotlight,
-              'pointer-events-none absolute border-2',
-            )}
-            style={{
-              top: rect.top - SPOTLIGHT_PADDING,
-              left: rect.left - SPOTLIGHT_PADDING,
-              width: rect.width + SPOTLIGHT_PADDING * 2,
-              height: rect.height + SPOTLIGHT_PADDING * 2,
-              borderRadius,
-            }}
-          />
-        ) : (
-          <div
-            aria-hidden
-            className={mergeClasses(styles.backdrop, 'absolute inset-0')}
-          />
-        )}
         <FloatingFocusManager
           context={context}
-          modal
+          modal={false}
+          closeOnFocusOut={false}
           initialFocus={cardRef}
           returnFocus={returnFocusRef}
         >
           <HintCard
             {...getFloatingProps()}
             ref={cardRefs}
-            aria-modal="true"
             heading={step.title}
             description={step.description}
             counter={stepCounter(index + 1, total)}
@@ -207,6 +164,7 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
             titleClassName={titleClassName}
             descriptionClassName={descriptionClassName}
             className={mergeClasses(
+              'pointer-events-auto',
               isSheet
                 ? 'fixed inset-x-4 bottom-4'
                 : 'w-90 max-w-[calc(100vw-32px)]',

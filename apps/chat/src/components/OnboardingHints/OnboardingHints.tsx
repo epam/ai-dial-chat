@@ -1,12 +1,9 @@
-import { OnboardingHintsMode } from '@epam/ai-dial-chat-api-client';
 import { useIsMobile } from '@epam/ai-dial-chat-shared';
 import {
   OnboardingAnchorMap,
-  OnboardingBeacons,
   OnboardingTour,
   type OnboardingAnchor,
   type OnboardingAnchorMapLabels,
-  type OnboardingBeaconsLabels,
   type OnboardingTourLabels,
   type OnboardingTourStep,
 } from '@epam/ai-dial-onboarding-tour';
@@ -59,8 +56,7 @@ export const ONBOARDING_ANCHORS_PARAM = 'onboarding-anchors';
 
 /**
  * First-visit onboarding: feeds the operator-configured `onboardingHints`
- * whose element is on screen to the `OnboardingTour` lib, or, in
- * `beacons` mode, every unseen hint to `OnboardingBeacons`. Finishing or
+ * whose element is on screen to the `OnboardingTour` lib. Finishing or
  * skipping the tour stores the shown ids in `localStorage`, so a hint is seen
  * once per browser and a new id is shown on the next visit. Hints whose
  * element is not on screen wait for a page that renders it.
@@ -129,13 +125,6 @@ const OnboardingHints: FC = () => {
     }),
     [t],
   );
-  const beaconLabels = useMemo<OnboardingBeaconsLabels>(
-    () => ({
-      beacon: (title) => t(OnboardingTourI18nKeys.Beacon, { title }),
-      gotIt: t(OnboardingTourI18nKeys.GotIt),
-    }),
-    [t],
-  );
 
   const anchorMapLabels = useMemo<OnboardingAnchorMapLabels>(
     () => ({
@@ -156,7 +145,6 @@ const OnboardingHints: FC = () => {
     [targetLabels],
   );
 
-  const isBeacons = config.onboardingHintsMode === OnboardingHintsMode.Beacons;
   const pendingHints = useMemo(
     () => config.onboardingHints.filter((hint) => !seenIds.includes(hint.id)),
     [config.onboardingHints, seenIds],
@@ -182,7 +170,6 @@ const OnboardingHints: FC = () => {
   useEffect(() => {
     if (
       isAnchorView ||
-      isBeacons ||
       isRunning ||
       status !== UserConfigStatus.Ready ||
       pendingSteps.length === 0
@@ -204,7 +191,7 @@ const OnboardingHints: FC = () => {
     };
     timer = window.setTimeout(tryStart, ONBOARDING_START_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [isAnchorView, isBeacons, isRunning, status, pendingSteps, pathname]);
+  }, [isAnchorView, isRunning, status, pendingSteps, pathname]);
 
   const handleFinish = useCallback(
     (shownIds: string[]) => {
@@ -214,11 +201,6 @@ const OnboardingHints: FC = () => {
       ]);
       setSteps(NO_STEPS);
     },
-    [seenIds, setSeenIds],
-  );
-
-  const handleDismiss = useCallback(
-    (id: string) => setSeenIds([...seenIds.filter((seen) => seen !== id), id]),
     [seenIds, setSeenIds],
   );
 
@@ -242,19 +224,6 @@ const OnboardingHints: FC = () => {
         onClose={handleCloseAnchorView}
         dir={i18n.dir()}
         labels={anchorMapLabels}
-      />
-    );
-  }
-
-  if (isBeacons) {
-    /* Beacons need no start delay: the lib looks each target up again as
-     * the page changes, so a catalog hint gets its beacon on the catalog. */
-    return (
-      <OnboardingBeacons
-        hints={status === UserConfigStatus.Ready ? pendingSteps : NO_STEPS}
-        onDismiss={handleDismiss}
-        dir={i18n.dir()}
-        labels={beaconLabels}
       />
     );
   }

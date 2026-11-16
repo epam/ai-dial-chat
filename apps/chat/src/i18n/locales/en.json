@@ -1434,8 +1434,6 @@
     "done": "Done",
     "skip": "Skip tour",
     "close": "Close tour",
-    "beacon": "Show hint: {{title}}",
-    "gotIt": "Got it",
     "anchorsSummary": "{{found}} of {{total}} anchors on this page",
     "anchorsMissing": "Not on this page",
     "anchorsNoneMissing": "Every anchor is on this page",

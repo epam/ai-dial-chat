@@ -1,7 +1,4 @@
-import type {
-  OnboardingHintDto,
-  OnboardingHintsMode,
-} from '@epam/ai-dial-chat-api-client';
+import type { OnboardingHintDto } from '@epam/ai-dial-chat-api-client';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect, useState } from 'react';
@@ -20,7 +17,6 @@ const { state } = vi.hoisted(() => ({
   state: {
     status: 'ready' as UserConfigStatus,
     hints: [] as OnboardingHintDto[],
-    mode: 'tour' as OnboardingHintsMode,
     isMobile: false,
   },
 }));
@@ -31,7 +27,7 @@ vi.mock(
 );
 mockUseAppConfig.mockImplementation(() => ({
   status: state.status,
-  config: { onboardingHints: state.hints, onboardingHintsMode: state.mode },
+  config: { onboardingHints: state.hints },
 }));
 
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
@@ -42,9 +38,6 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options?: Record<string, unknown>) => {
-      if (options?.title != null) {
-        return `${key}:${options.title}`;
-      }
       if (options?.found != null) {
         return `${key}:${options.found}/${options.total}`;
       }
@@ -120,7 +113,6 @@ describe('OnboardingHints', () => {
     localStorage.clear();
     state.status = UserConfigStatus.Ready;
     state.isMobile = false;
-    state.mode = 'tour';
     state.hints = [
       hint('new-chat', 'new-chat', 'Start a chat'),
       hint('composer', 'conversation-input', 'Ask here'),
@@ -247,56 +239,6 @@ describe('OnboardingHints', () => {
     state.status = UserConfigStatus.Loading;
     await startTour();
     expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  describe('beacons mode', () => {
-    beforeEach(() => {
-      state.mode = 'beacons';
-    });
-
-    it('marks each unseen hint with a beacon instead of starting a tour', async () => {
-      await startTour();
-      expect(screen.queryByRole('dialog')).toBeNull();
-      expect(
-        screen.getByRole('button', {
-          name: 'onboardingTour.beacon:Start a chat',
-        }),
-      ).toBeTruthy();
-      expect(
-        screen.getByRole('button', { name: 'onboardingTour.beacon:Ask here' }),
-      ).toBeTruthy();
-    });
-
-    it('remembers a hint dismissed with Got it', async () => {
-      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-      await startTour();
-
-      await user.click(
-        screen.getByRole('button', { name: 'onboardingTour.beacon:Ask here' }),
-      );
-      await user.click(
-        screen.getByRole('button', { name: 'onboardingTour.gotIt' }),
-      );
-      expect(readSeen()).toEqual(['composer']);
-      expect(
-        screen.queryByRole('button', {
-          name: 'onboardingTour.beacon:Ask here',
-        }),
-      ).toBeNull();
-    });
-
-    it('shows no beacon for a hint the user has already seen', async () => {
-      localStorage.setItem(
-        StorageKey.SeenOnboardingHints,
-        JSON.stringify(['new-chat']),
-      );
-      await startTour();
-      expect(
-        screen.queryByRole('button', {
-          name: 'onboardingTour.beacon:Start a chat',
-        }),
-      ).toBeNull();
-    });
   });
 
   describe('anchor view', () => {

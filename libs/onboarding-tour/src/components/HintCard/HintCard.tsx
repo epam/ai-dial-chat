@@ -33,7 +33,7 @@ interface HintCardProps extends HTMLAttributes<HTMLDivElement> {
   descriptionClassName: string;
 }
 
-/** The hint card shared by the tour and the beacons: heading, description and footer buttons in a `role="dialog"`. */
+/** The hint card of the tour: heading, description and footer buttons in a `role="dialog"`. */
 export const HintCard: FC<HintCardProps> = ({
   ref,
   heading,

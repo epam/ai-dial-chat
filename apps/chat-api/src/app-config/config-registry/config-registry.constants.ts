@@ -16,7 +16,6 @@ import {
   type ManagedValueSchema,
 } from '../managed-config/managed-config.types';
 import { CelebrationDeliveryMode } from '../types/celebration-delivery';
-import { OnboardingHintsMode } from '../types/onboarding-hints-mode';
 
 /* Non-blank: at least one non-whitespace character. */
 const NON_BLANK_PATTERN = '\\S';
@@ -307,18 +306,6 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Onboarding hints shown once, step by step, to a user who has not seen them. JSON array of { id, target, title, description? }; target is one of the anchors listed in docs/onboarding-anchors.md. Entries with an invalid or duplicate id, an unknown target or a blank title are dropped with a warning. Empty (no tour) when ONBOARDING_HINTS is unset or malformed; boot never fails on bad config.',
     owner: 'chat-team',
     envVar: 'ONBOARDING_HINTS',
-  },
-  {
-    key: 'onboarding.mode',
-    type: 'config',
-    valueType: 'string',
-    visibility: 'client',
-    defaultValue: OnboardingHintsMode.Tour,
-    critical: false,
-    description:
-      'How the onboarding hints are presented: tour (a one-time step-by-step tour that dims the page) or beacons (a beacon on each element that opens its hint on demand). Sourced from ONBOARDING_HINTS_MODE; tour by default.',
-    owner: 'chat-team',
-    envVar: 'ONBOARDING_HINTS_MODE',
   },
   {
     key: 'welcomeScreen.description',

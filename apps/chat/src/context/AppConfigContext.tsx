@@ -1,6 +1,5 @@
 import {
   CelebrationDeliveryMode,
-  OnboardingHintsMode,
   type CatalogCreationPermissionsDto,
   type CelebrationDeliveryDto,
   type OnboardingHintDto,
@@ -81,8 +80,6 @@ export interface AppConfigState {
     announcements: AnnouncementListItem[];
     /** Operator-authored first-visit hints, in configured order. */
     onboardingHints: OnboardingHintDto[];
-    /** How the onboarding hints are presented: a one-time tour or on-demand beacons. */
-    onboardingHintsMode: OnboardingHintsMode;
     welcomeScreenDescription: string | null;
     footerHtmlMessage: string;
     customVisualizers: CustomVisualizer[];
@@ -153,7 +150,6 @@ const INITIAL_STATE: ProviderState = {
     announcementDescription: null,
     announcements: [],
     onboardingHints: [],
-    onboardingHintsMode: OnboardingHintsMode.Tour,
     welcomeScreenDescription: null,
     footerHtmlMessage: '',
     customVisualizers: [],
@@ -237,11 +233,6 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             onboardingHints: Array.isArray(response.config?.onboardingHints)
               ? response.config.onboardingHints
               : [],
-            onboardingHintsMode:
-              response.config?.onboardingHintsMode ===
-              OnboardingHintsMode.Beacons
-                ? OnboardingHintsMode.Beacons
-                : OnboardingHintsMode.Tour,
             welcomeScreenDescription:
               response.config?.welcomeScreenDescription ?? null,
             footerHtmlMessage: response.config?.footerHtmlMessage ?? '',

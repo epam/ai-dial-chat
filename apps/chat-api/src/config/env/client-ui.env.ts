@@ -3,14 +3,12 @@ import {
   ArrayMaxSize,
   IsArray,
   IsBoolean,
-  IsEnum,
   IsOptional,
   IsString,
   IsUrl,
   Matches,
   MaxLength,
 } from 'class-validator';
-import { OnboardingHintsMode } from '../../app-config/types/onboarding-hints-mode';
 import {
   CONTENT_LOCALE_MAX_LENGTH,
   CONTENT_LOCALE_PATTERN,
@@ -67,15 +65,6 @@ export class ClientUiEnv {
   @IsOptional()
   @IsString()
   ONBOARDING_HINTS?: string;
-
-  @IsOptional()
-  @Transform(({ value }) =>
-    value == null || value === '' ? undefined : String(value).trim(),
-  )
-  @IsEnum(OnboardingHintsMode, {
-    message: 'ONBOARDING_HINTS_MODE must be tour or beacons',
-  })
-  ONBOARDING_HINTS_MODE?: OnboardingHintsMode = OnboardingHintsMode.Tour;
 
   @IsOptional()
   @IsString()

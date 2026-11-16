@@ -28,7 +28,6 @@ describe('app-config API', () => {
         asrModelId: null,
         announcements: [],
         onboardingHints: [],
-        onboardingHintsMode: 'tour',
         transcribeSizeLimitBytes: 5 * 1024 * 1024,
         additionalContentLocales: [],
         fileManagerTabs: ['my_files', 'shared', 'organization'],

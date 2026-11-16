@@ -1849,12 +1849,6 @@ export interface ClientConfigDto {
    */
   onboardingHints: Array<OnboardingHintDto>;
   /**
-   * How the client presents onboardingHints: a one-time step-by-step tour, or a beacon on each element that opens its hint on demand. Sourced from ONBOARDING_HINTS_MODE; tour by default.
-   * @type {OnboardingHintsMode}
-   * @memberof ClientConfigDto
-   */
-  onboardingHintsMode: OnboardingHintsMode;
-  /**
    * Plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Null when WELCOME_SCREEN_DESCRIPTION is not configured or is blank.
    * @type {string}
    * @memberof ClientConfigDto
@@ -7193,17 +7187,6 @@ export const OnboardingHintTarget = {
 } as const;
 export type OnboardingHintTarget =
   (typeof OnboardingHintTarget)[keyof typeof OnboardingHintTarget];
-
-/**
- * How the client presents onboardingHints: a one-time step-by-step tour, or a beacon on each element that opens its hint on demand. Sourced from ONBOARDING_HINTS_MODE; tour by default.
- * @export
- */
-export const OnboardingHintsMode = {
-  Tour: 'tour',
-  Beacons: 'beacons',
-} as const;
-export type OnboardingHintsMode =
-  (typeof OnboardingHintsMode)[keyof typeof OnboardingHintsMode];
 
 /**
  *

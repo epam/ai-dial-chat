@@ -769,7 +769,6 @@ describe('CatalogView', () => {
         announcementDescription: null,
         announcements: [],
         onboardingHints: [],
-        onboardingHintsMode: 'tour',
         welcomeScreenDescription: null,
         footerHtmlMessage: '',
         customVisualizers: [],

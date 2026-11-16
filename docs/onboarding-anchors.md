@@ -11,12 +11,8 @@ of these as its `target`; chat-api drops an entry with any other value.
 The chat finds each element the way assistive technology sees it — by role
 and accessible name, translated into the current language — and only when
 it is on screen: it has a box, sits outside an `inert` subtree and is not
-`visibility: hidden`. A hint whose element is not on screen waits:
-
-- **Tour** (`ONBOARDING_HINTS_MODE=tour`) — the tour shows the hints whose
-  elements are on screen and keeps the rest for a page that renders them.
-- **Beacons** (`ONBOARDING_HINTS_MODE=beacons`) — a beacon appears as soon
-  as its element is rendered.
+`visibility: hidden`. The tour shows the hints whose elements are on
+screen and keeps the rest for a page that renders them.
 
 ## Seeing the anchors on a page
 

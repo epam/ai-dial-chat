@@ -43,7 +43,6 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       announcementDescription: null,
       announcements: [],
       onboardingHints: [],
-      onboardingHintsMode: 'tour',
       enabledUiFeatures,
       welcomeScreenDescription: null,
       footerHtmlMessage: '',

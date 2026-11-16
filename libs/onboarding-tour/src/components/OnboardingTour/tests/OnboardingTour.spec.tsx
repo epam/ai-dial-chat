@@ -90,6 +90,26 @@ describe('OnboardingTour', () => {
     expect(onFinish).toHaveBeenCalledWith(['new-chat', 'composer']);
   });
 
+  it('keeps the page usable while a card is open', async () => {
+    const user = userEvent.setup();
+    const onPageClick = vi.fn();
+    render(
+      <>
+        <button type="button" onClick={onPageClick}>
+          Page action
+        </button>
+        <Host initialSteps={stepsFixture()} onFinish={vi.fn()} />
+      </>,
+    );
+
+    const dialog = screen.getByRole('dialog', { name: 'Start a chat' });
+    expect(dialog.getAttribute('aria-modal')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Page action' }));
+    expect(onPageClick).toHaveBeenCalledOnce();
+    expect(screen.getByRole('dialog', { name: 'Start a chat' })).toBeTruthy();
+  });
+
   it('reports every step when skipped with Escape', async () => {
     const user = userEvent.setup();
     const onFinish = vi.fn();
