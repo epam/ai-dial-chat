@@ -1,5 +1,11 @@
 import type { ScheduleTriggerDto } from '@epam/ai-dial-chat-api-client';
-import { CRON_LAST_DAY_OF_MONTH } from '../shared/cron-day-of-month';
+import {
+  instantToZonedDateTime,
+  isAbsoluteInstant,
+} from '@epam/ai-dial-scheduled-tasks';
+import { padTwoDigits } from '../shared/formatting';
+
+const DATE_TIME_TO_MINUTE_LENGTH = 16;
 
 /** Display categories are independent of task editability. */
 export enum ScheduledTaskTriggerDescriptionKind {
@@ -13,56 +19,61 @@ export enum ScheduledTaskTriggerDescriptionKind {
   Invalid = 'invalid',
 }
 
+/** What a trigger does, in the wall time of the task's own zone. */
 export interface ScheduledTaskTriggerDescription {
+  /** Which schedule shape the trigger is. */
   kind: ScheduledTaskTriggerDescriptionKind;
+  /** `HH:mm` of a daily, weekly or monthly run, or the two-digit minute of an hourly one. */
   time?: string;
+  /** First weekday of a `Weekly` description, `0` (Monday) to `6` (Sunday). */
   dayOfWeek?: string;
-  /** Every display-timezone weekday of a `Weekly` description, Monday first; `dayOfWeek` is its first entry. */
+  /** Every weekday of a `Weekly` description, Monday first; `dayOfWeek` is its first entry. */
   daysOfWeek?: string[];
+  /** Day of the month of a `Monthly` description. */
   dayOfMonth?: string;
+  /** Minutes between runs of an `EveryNMinutes` description. */
   intervalMinutes?: number;
-  date?: Date;
+  /** Local `YYYY-MM-DDTHH:mm` of a `OneTime` description, in the task's zone. */
+  dateTime?: string;
+  /** Raw cron fields of a `Custom` description. */
   expression?: string;
-  sourceTimezone: 'utc';
+  /** IANA zone the times above are wall time in. */
+  timezone: string;
 }
 
+/** Options of {@link describeScheduledTaskTrigger}. */
 export interface ScheduledTaskTriggerDescriptionOptions {
-  /** Display timezone; defaults to UTC for backwards compatibility. */
-  timeZone?: string;
-  /** Date whose timezone offset is used. Defaults to now (the existing UTC-storage policy). */
-  referenceDate?: Date;
+  /** IANA zone the trigger is evaluated in. Defaults to UTC, which is what a task saved without a zone runs in. */
+  timezone?: string;
 }
 
 /**
  * Describes the complete trigger without requiring unrelated task metadata.
- * Unsupported constraints remain Custom, with the full source expression.
- * Calendar-month shifts crossing month boundaries or days 29–31 remain
- * Custom because a shifted monthly day is not equivalent around short months.
- * The one exception is `day: 'last'` one day behind local time, which is
- * exactly the local 1st.
+ * Times are the stored wall time in the task's zone; nothing is converted to
+ * the viewer's zone. Unsupported constraints remain Custom, with the full
+ * source expression.
  */
 export const describeScheduledTaskTrigger = (
   trigger: ScheduleTriggerDto,
-  {
-    timeZone = 'UTC',
-    referenceDate = new Date(),
-  }: ScheduledTaskTriggerDescriptionOptions = {},
+  { timezone = 'UTC' }: ScheduledTaskTriggerDescriptionOptions = {},
 ): ScheduledTaskTriggerDescription => {
   const result = (
     kind: ScheduledTaskTriggerDescriptionKind,
     extra: Partial<ScheduledTaskTriggerDescription> = {},
   ): ScheduledTaskTriggerDescription => ({
     kind,
-    sourceTimezone: 'utc',
+    timezone,
     ...extra,
   });
   if (trigger.date && trigger.cron)
     return result(ScheduledTaskTriggerDescriptionKind.Invalid);
   if (trigger.date) {
-    const date = new Date(trigger.date);
-    return Number.isNaN(date.getTime())
-      ? result(ScheduledTaskTriggerDescriptionKind.Invalid)
-      : result(ScheduledTaskTriggerDescriptionKind.OneTime, { date });
+    const dateTime = isAbsoluteInstant(trigger.date)
+      ? instantToZonedDateTime(trigger.date, timezone)
+      : trigger.date.slice(0, DATE_TIME_TO_MINUTE_LENGTH);
+    return dateTime && !Number.isNaN(Date.parse(`${dateTime}Z`))
+      ? result(ScheduledTaskTriggerDescriptionKind.OneTime, { dateTime })
+      : result(ScheduledTaskTriggerDescriptionKind.Invalid);
   }
   const fields = trigger.cron?.fields as
     Record<string, string | null | undefined> | undefined;
@@ -103,7 +114,6 @@ export const describeScheduledTaskTrigger = (
   const hour = fields.hour;
   const minute = fields.minute;
   const day = fields.day === '*' ? undefined : fields.day;
-  const isLastDayOfMonth = day === CRON_LAST_DAY_OF_MONTH;
   const rawWeekday =
     fields.day_of_week === '*' ? undefined : fields.day_of_week;
   const weekdayNames = [
@@ -128,7 +138,7 @@ export const describeScheduledTaskTrigger = (
   const weekday = weekdays[0];
   if (
     (day && weekday) ||
-    (day && !isLastDayOfMonth && !/^\d+$/.test(day)) ||
+    (day && !/^\d+$/.test(day)) ||
     weekdays.some((entry) => !/^[0-6]$/.test(entry)) ||
     new Set(weekdays).size !== weekdays.length
   )
@@ -147,71 +157,23 @@ export const describeScheduledTaskTrigger = (
     return custom();
   if (everyHour && (day || weekday)) return custom();
 
-  const reference = new Date(referenceDate);
-  if (Number.isNaN(reference.getTime()))
-    return result(ScheduledTaskTriggerDescriptionKind.Invalid);
-  reference.setUTCHours(everyHour ? 0 : Number(hour), Number(minute), 0, 0);
-  if (weekday) {
-    const targetDay = (Number(weekday) + 1) % 7;
-    reference.setUTCDate(
-      reference.getUTCDate() + ((targetDay - reference.getUTCDay() + 7) % 7),
-    );
-  }
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone,
-    hourCycle: 'h23',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).formatToParts(reference);
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((entry) => entry.type === type)?.value ?? '';
-  const localDate = new Date(
-    Date.UTC(
-      Number(part('year')),
-      Number(part('month')) - 1,
-      Number(part('day')),
-    ),
-  );
-  const utcDay = Date.UTC(
-    reference.getUTCFullYear(),
-    reference.getUTCMonth(),
-    reference.getUTCDate(),
-  );
-  const dayShift = Math.round((localDate.getTime() - utcDay) / 86400000);
-  const time = part('hour') + ':' + part('minute');
   if (everyHour)
     return result(ScheduledTaskTriggerDescriptionKind.Hourly, {
-      time: part('minute'),
+      time: padTwoDigits(Number(minute)),
     });
+  const time = `${padTwoDigits(Number(hour))}:${padTwoDigits(Number(minute))}`;
   if (weekday) {
-    const daysOfWeek = weekdays
-      .map((entry) => String((Number(entry) + dayShift + 7) % 7))
-      .sort((a, b) => Number(a) - Number(b));
+    const daysOfWeek = [...weekdays].sort((a, b) => Number(a) - Number(b));
     return result(ScheduledTaskTriggerDescriptionKind.Weekly, {
       time,
       dayOfWeek: daysOfWeek[0],
       daysOfWeek,
     });
   }
-  if (isLastDayOfMonth)
-    return dayShift === 1
-      ? result(ScheduledTaskTriggerDescriptionKind.Monthly, {
-          time,
-          dayOfMonth: '1',
-        })
-      : custom();
   if (day)
-    return dayShift === 0 ||
-      (Number(day) <= 28 &&
-        Number(day) + dayShift >= 1 &&
-        Number(day) + dayShift <= 28)
-      ? result(ScheduledTaskTriggerDescriptionKind.Monthly, {
-          time,
-          dayOfMonth: String(Number(day) + dayShift),
-        })
-      : custom();
+    return result(ScheduledTaskTriggerDescriptionKind.Monthly, {
+      time,
+      dayOfMonth: String(Number(day)),
+    });
   return result(ScheduledTaskTriggerDescriptionKind.Daily, { time });
 };

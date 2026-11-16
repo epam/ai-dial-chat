@@ -184,6 +184,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     placeholder,
     disabled,
     showTimezone,
+    showTimePicker,
     minDate,
     mode,
     invalid,
@@ -199,6 +200,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     placeholder?: string;
     disabled?: boolean;
     showTimezone?: boolean;
+    showTimePicker?: boolean;
     minDate?: Date;
     mode?: string;
   }) => (
@@ -224,6 +226,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       </label>
       {mode === 'datetime' && <span>isDateTimeMode</span>}
       {showTimezone && <span>(GMT+00:00) (UTC) UTC</span>}
+      {mode === 'time' && showTimePicker !== false && (
+        <button type="button">Choose time</button>
+      )}
       {minDate && <span>hasMinDate</span>}
     </>
   ),
@@ -323,6 +328,36 @@ vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
     }),
 }));
 
+/* The real picker is covered by its own spec; here it only proves the form places and feeds it. */
+vi.mock(
+  '../../ScheduledTaskTimezoneField/ScheduledTaskTimezoneField',
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import('../../ScheduledTaskTimezoneField/ScheduledTaskTimezoneField')
+    >()),
+    ScheduledTaskTimezoneField: ({
+      id,
+      value,
+      onChange,
+      disabled,
+    }: {
+      id: string;
+      value: string;
+      onChange: (timezoneId: string) => void;
+      disabled?: boolean;
+    }) => (
+      <button
+        type="button"
+        id={id}
+        disabled={disabled}
+        onClick={() => onChange('Asia/Tokyo')}
+      >
+        {`Change timezone (${value})`}
+      </button>
+    ),
+  }),
+);
+
 vi.mock('@tabler/icons-react', () => ({
   IconArrowNarrowLeft: () => <svg />,
 }));
@@ -331,6 +366,7 @@ const baseValues: ScheduledTaskCreateFormValues = {
   displayName: '',
   repeat: ScheduledTaskRepeat.Daily,
   time: '09:00',
+  timezone: 'UTC',
   modelId: '',
   prompt: '',
 };
@@ -484,11 +520,11 @@ describe('ScheduledTaskCreateForm', () => {
     ).toBeTruthy();
   });
 
-  it('renders the lib-owned time field with the required label and timezone hint', async () => {
+  it('renders the lib-owned time field with the required label and no viewer-zone hint', async () => {
     await renderForm();
 
     expect(screen.getByLabelText('Time *')).toBeTruthy();
-    expect(screen.getByText('(GMT+00:00) (UTC) UTC')).toBeTruthy();
+    expect(screen.queryByText('(GMT+00:00) (UTC) UTC')).toBeNull();
   });
 
   it('reports a complete time through onFieldChange', async () => {
@@ -1460,5 +1496,173 @@ describe('ScheduledTaskCreateForm', () => {
 
     expect(screen.getByText('Invalid start date')).toBeTruthy();
     expect(screen.getByText('End before start')).toBeTruthy();
+  });
+});
+
+describe('ScheduledTaskCreateForm — time zone', () => {
+  const timezone = {
+    options: [
+      {
+        id: 'UTC',
+        offsetLabel: 'GMT+00:00',
+        offsetMinutes: 0,
+        searchTerms: ['utc'],
+      },
+    ],
+    browserTimezoneId: 'UTC',
+  };
+
+  it.each([
+    ScheduledTaskRepeat.Daily,
+    ScheduledTaskRepeat.Weekly,
+    ScheduledTaskRepeat.Monthly,
+    ScheduledTaskRepeat.Custom,
+    ScheduledTaskRepeat.Hourly,
+    ScheduledTaskRepeat.OneTime,
+  ])('shows one change-timezone link for %s', async (repeat) => {
+    await renderForm({
+      timezone,
+      values: { ...baseValues, repeat, runAt: '2099-01-01T09:00' },
+    });
+
+    expect(
+      screen.getAllByRole('button', { name: /Change timezone/ }),
+    ).toHaveLength(1);
+  });
+
+  it('writes the selected zone inside the time field and keeps the link below it', async () => {
+    await renderForm({
+      timezone: {
+        ...timezone,
+        options: [
+          {
+            id: 'Europe/Berlin',
+            offsetLabel: 'GMT+01:00',
+            offsetMinutes: 60,
+            searchTerms: ['europe/berlin'],
+          },
+        ],
+      },
+      values: { ...baseValues, timezone: 'Europe/Berlin' },
+    });
+
+    const zone = screen.getByText('(GMT+01:00) Europe/Berlin');
+    expect(zone.getAttribute('title')).toBe('(GMT+01:00) Europe/Berlin');
+    expect(zone.textContent).toBe('(GMT+01:00) Europe/Berlin');
+    expect(
+      screen.getByRole('button', { name: /Change timezone/ }),
+    ).toBeTruthy();
+  });
+
+  it('names a zone missing from the list by its id', async () => {
+    await renderForm({
+      timezone,
+      values: { ...baseValues, timezone: 'Asia/Calcutta' },
+    });
+
+    expect(screen.getByText('Asia/Calcutta')).toBeTruthy();
+  });
+
+  it('keeps the clock button in the time field when the zone is shown', async () => {
+    await renderForm({ timezone });
+
+    expect(screen.getByRole('button', { name: 'Choose time' })).toBeTruthy();
+  });
+
+  it('hides the picker when the host supplies no zone data', async () => {
+    await renderForm();
+
+    expect(
+      screen.queryByRole('button', { name: /Change timezone/ }),
+    ).toBeNull();
+  });
+
+  it('shows the current zone and reports a new one through onFieldChange', async () => {
+    const onFieldChange = vi.fn();
+    await renderForm({
+      timezone,
+      onFieldChange,
+      values: { ...baseValues, timezone: 'Europe/Berlin' },
+    });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Change timezone (Europe/Berlin)' }),
+    );
+
+    expect(onFieldChange).toHaveBeenCalledWith('timezone', 'Asia/Tokyo');
+  });
+
+  it('disables the picker while submitting', async () => {
+    await renderForm({ timezone, isSubmitting: true });
+
+    expect(
+      (
+        screen.getByRole('button', {
+          name: /Change timezone/,
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+  });
+
+  describe('DST gap hint', () => {
+    const oneTime = (runAt: string): Partial<ScheduledTaskCreateFormProps> => ({
+      timezone,
+      values: {
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.OneTime,
+        timezone: 'Europe/Berlin',
+        runAt,
+      },
+    });
+
+    it('names the shifted time for a time that does not exist', async () => {
+      await renderForm(oneTime('2027-03-28T02:30'));
+
+      expect(
+        screen.getByText(
+          'This time does not exist on that day, so the task will run at 03:30.',
+        ),
+      ).toBeTruthy();
+    });
+
+    it('uses host wording for the hint', async () => {
+      await renderForm({
+        ...oneTime('2027-03-28T02:30'),
+        timezone: {
+          ...timezone,
+          labels: { gapHintLabel: (time) => `Runs at ${time}` },
+        },
+      });
+
+      expect(screen.getByText('Runs at 03:30')).toBeTruthy();
+    });
+
+    it('shows no hint for a repeated hour or an ordinary time', async () => {
+      const view = await renderForm(oneTime('2027-10-31T02:30'));
+      expect(screen.queryByText(/does not exist/)).toBeNull();
+      view.unmount();
+
+      await renderForm(oneTime('2027-06-01T09:00'));
+      expect(screen.queryByText(/does not exist/)).toBeNull();
+    });
+
+    it('keeps the hint region mounted before it has text', async () => {
+      const view = await renderForm(oneTime('2027-06-01T09:00'));
+      const findHintRegion = () =>
+        screen
+          .getAllByRole('status')
+          .find((region) => /hint/.test(region.className));
+      const region = findHintRegion();
+      expect(region?.textContent).toBe('');
+
+      view.rerender(
+        <ScheduledTaskCreateForm
+          {...buildFormProps(oneTime('2027-03-28T02:30'))}
+        />,
+      );
+
+      expect(findHintRegion()).toBe(region);
+      expect(region?.textContent).toMatch(/does not exist on that day/);
+    });
   });
 });

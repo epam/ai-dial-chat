@@ -7,11 +7,17 @@ import type {
   ScheduleTriggerDto,
 } from './dto/schedule-trigger.dto';
 import {
+  areBoundariesComparable,
+  toWindowOrderMs,
+} from './dto/schedule-window';
+import {
   type ScheduledTaskRunDto,
   ScheduledTaskRunStatus,
 } from './dto/scheduled-task-run.dto';
 import type { ScheduledTaskDto } from './dto/scheduled-task.dto';
 import { ScheduleTriggerType } from './dto/scheduled-task.dto';
+
+export const DEFAULT_SCHEDULE_TIMEZONE = 'UTC';
 
 interface UpstreamScheduleTrigger {
   date?: string;
@@ -26,6 +32,7 @@ interface UpstreamSchedulePayload {
   display_name: string;
   service_id: string;
   trigger: UpstreamScheduleTrigger;
+  timezone: string;
   /*
    * Not confirmed against a live DIAL Scheduler response or its
    * openapi.json — assumed to mirror display_name/service_id as a
@@ -57,6 +64,7 @@ export interface UpstreamScheduleResponse {
   id: string;
   display_name: string;
   trigger: UpstreamScheduleTrigger;
+  timezone?: string;
   next_run_time?: string;
   created_at?: string;
   updated_at?: string;
@@ -107,11 +115,23 @@ const assertExactlyOneTriggerVariant = (trigger: ScheduleTriggerDto): void => {
   }
 };
 
-const assertValidCronWindow = (cron: ScheduleCronDto | undefined): void => {
+const assertValidCronWindow = (
+  cron: ScheduleCronDto | undefined,
+  timezone: string,
+): void => {
   if (cron?.startDate == null || cron?.endDate == null) {
     return;
   }
-  if (new Date(cron.endDate).getTime() <= new Date(cron.startDate).getTime()) {
+  /*
+   * Offset-less boundaries are wall time in the task's zone. Two of them are
+   * ordered by their wall clocks; a mix with an absolute instant is resolved
+   * through the zone, so the server's own zone never decides the outcome.
+   */
+  const isMixed = !areBoundariesComparable(cron.startDate, cron.endDate);
+  if (
+    toWindowOrderMs(cron.endDate, timezone, isMixed) <=
+    toWindowOrderMs(cron.startDate, timezone, isMixed)
+  ) {
     throw new BadRequestException(
       'trigger.cron.endDate must be strictly after trigger.cron.startDate',
     );
@@ -120,12 +140,13 @@ const assertValidCronWindow = (cron: ScheduleCronDto | undefined): void => {
 
 const toUpstreamTrigger = (
   trigger: ScheduleTriggerDto,
+  timezone: string,
 ): UpstreamScheduleTrigger => {
   assertExactlyOneTriggerVariant(trigger);
   if (trigger.date != null) {
     return { date: trigger.date };
   }
-  assertValidCronWindow(trigger.cron);
+  assertValidCronWindow(trigger.cron, timezone);
   return {
     cron: {
       fields: trigger.cron?.fields ?? {},
@@ -153,7 +174,11 @@ export const toUpstreamSchedulePayload = (
 ): UpstreamSchedulePayload => ({
   display_name: body.displayName,
   service_id: serviceId,
-  trigger: toUpstreamTrigger(body.trigger),
+  trigger: toUpstreamTrigger(
+    body.trigger,
+    body.timezone ?? DEFAULT_SCHEDULE_TIMEZONE,
+  ),
+  timezone: body.timezone ?? DEFAULT_SCHEDULE_TIMEZONE,
   ...(body.description ? { description: body.description } : {}),
   properties: {
     target_type: 'chat_completion',
@@ -237,6 +262,7 @@ export const fromUpstreamSchedule = (
         }
       : undefined,
   },
+  timezone: upstream.timezone ?? DEFAULT_SCHEDULE_TIMEZONE,
   nextRunTime: upstream.next_run_time,
   createdAt: upstream.created_at,
   updatedAt: upstream.updated_at,

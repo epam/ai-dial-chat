@@ -47,6 +47,7 @@ import {
   Suspense,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type FC,
@@ -63,8 +64,22 @@ import {
   TIME_OF_DAY_PATTERN,
 } from '../../utils/calendar-value';
 import { hasScheduledTaskFormChanges } from '../../utils/scheduled-task-form-values';
+import {
+  getZonedNow,
+  isNonexistentLocalTime,
+  shiftForwardOverGap,
+  wallClockToLocalDate,
+} from '../../utils/zoned-wall-clock';
 import { ScheduledTaskBoundaryField } from '../ScheduledTaskBoundaryField/ScheduledTaskBoundaryField';
 import { ScheduledTaskRunAtField } from '../ScheduledTaskRunAtField/ScheduledTaskRunAtField';
+import {
+  buildTimezoneCssVars,
+  getTimezoneSummary,
+  resolveTimezoneClassNames,
+  resolveTimezoneLabels,
+  ScheduledTaskTimezoneField,
+} from '../ScheduledTaskTimezoneField/ScheduledTaskTimezoneField';
+import { ScheduledTaskTimezoneGapHint } from '../ScheduledTaskTimezoneField/ScheduledTaskTimezoneGapHint';
 import styles from './ScheduledTaskCreateForm.module.scss';
 
 const MarkdownEditor = lazy(async () => {
@@ -85,6 +100,7 @@ const MarkdownEditor = lazy(async () => {
  */
 export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   labels,
+  timezone: timezoneProps,
   values,
   initialValues,
   errors,
@@ -170,7 +186,17 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
    * React may discard, and the earliest selectable day must stay fixed for
    * the component's lifetime — the same pin `ScheduledTaskRunAtField`
    * applies to the one-shot run-at picker. */
-  const minDate = useRef(new Date()).current;
+  const mountedAt = useRef(new Date()).current;
+  /* The earliest selectable day is today in the task's zone, not the browser's. */
+  const minDate = useMemo(() => {
+    try {
+      return wallClockToLocalDate(
+        getZonedNow(mountedAt, values.timezone).dateTime,
+      );
+    } catch {
+      return mountedAt;
+    }
+  }, [mountedAt, values.timezone]);
   const { colors, typography, layout } = formStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const sectionTitleClassName =
@@ -188,6 +214,38 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     '--stcf-refine-action-text': colors?.refineActionText,
     '--stcf-refine-error-text': colors?.refineErrorText,
   });
+
+  const timezoneGapHint = useMemo(() => {
+    if (
+      !timezoneProps ||
+      values.repeat !== ScheduledTaskRepeat.OneTime ||
+      !values.runAt ||
+      !isNonexistentLocalTime(values.runAt, values.timezone)
+    ) {
+      return undefined;
+    }
+    const shifted = shiftForwardOverGap(values.runAt, values.timezone);
+    return resolveTimezoneLabels(timezoneProps.labels).gapHintLabel(
+      shifted.slice(11, 16),
+    );
+  }, [timezoneProps, values.repeat, values.runAt, values.timezone]);
+
+  /* One picker per schedule shape, under the field whose wall time it explains. */
+  const renderTimezoneField = (id: string, isSummaryShown = true) =>
+    timezoneProps && (
+      <ScheduledTaskTimezoneField
+        id={id}
+        options={timezoneProps.options}
+        value={values.timezone}
+        browserTimezoneId={timezoneProps.browserTimezoneId}
+        onChange={(timezoneId) => onFieldChange('timezone', timezoneId)}
+        disabled={isSubmitting}
+        isSummaryShown={isSummaryShown}
+        labels={timezoneProps.labels}
+        colors={timezoneProps.colors}
+        classNames={timezoneProps.classNames}
+      />
+    );
 
   const refinementStyles = {
     feedbackClassName: mergeClasses(
@@ -453,7 +511,20 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                   error={errors.runAt}
                   errorClassName={instructionsErrorClassName}
                   disabled={isSubmitting}
+                  timezone={timezoneProps ? values.timezone : undefined}
                 />
+              )}
+              {values.repeat === ScheduledTaskRepeat.OneTime && (
+                <>
+                  {renderTimezoneField('scheduled-task-timezone')}
+                  {timezoneProps && (
+                    <ScheduledTaskTimezoneGapHint
+                      text={timezoneGapHint}
+                      colors={timezoneProps.colors}
+                      classNames={timezoneProps.classNames}
+                    />
+                  )}
+                </>
               )}
 
               {values.repeat !== ScheduledTaskRepeat.OneTime && (
@@ -494,18 +565,43 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
 
                   {isTimeFieldShown && (
                     <div className="flex flex-col gap-1">
-                      <Calendar
-                        id="scheduled-task-time"
-                        mode={CalendarMode.Time}
-                        value={values.time}
-                        onChange={handleTimeChange}
-                        onBlur={handleTimeBlur}
-                        labelProps={{ label: labels.timeLabel, required: true }}
-                        invalid={Boolean(timeError)}
-                        ariaDescribedBy={timeError ? timeErrorId : undefined}
-                        disabled={isSubmitting}
-                        showTimezone
-                      />
+                      {/* The kit's own trailing hint always names the viewer's zone, so the selected zone is drawn inside the field instead, just before the clock button. */}
+                      <div className="relative">
+                        <Calendar
+                          id="scheduled-task-time"
+                          mode={CalendarMode.Time}
+                          value={values.time}
+                          onChange={handleTimeChange}
+                          onBlur={handleTimeBlur}
+                          labelProps={{
+                            label: labels.timeLabel,
+                            required: true,
+                          }}
+                          invalid={Boolean(timeError)}
+                          ariaDescribedBy={timeError ? timeErrorId : undefined}
+                          disabled={isSubmitting}
+                        />
+                        {timezoneProps && (
+                          <span
+                            className={mergeClasses(
+                              styles.timeFieldZone,
+                              resolveTimezoneClassNames(
+                                timezoneProps.classNames,
+                              ).rowClassName,
+                            )}
+                            style={buildTimezoneCssVars(timezoneProps.colors)}
+                            title={getTimezoneSummary(
+                              timezoneProps.options,
+                              values.timezone,
+                            )}
+                          >
+                            {getTimezoneSummary(
+                              timezoneProps.options,
+                              values.timezone,
+                            )}
+                          </span>
+                        )}
+                      </div>
                       {timeError && (
                         <ErrorText
                           id={timeErrorId}
@@ -516,6 +612,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           text={timeError}
                         />
                       )}
+                      {renderTimezoneField('scheduled-task-timezone', false)}
                     </div>
                   )}
 
@@ -626,6 +723,8 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                       error={errors.minute}
                     />
                   )}
+                  {values.repeat === ScheduledTaskRepeat.Hourly &&
+                    renderTimezoneField('scheduled-task-timezone')}
                   {/* The two boundary fields share one row. */}
                   <div className="flex flex-row gap-3">
                     <ScheduledTaskBoundaryField

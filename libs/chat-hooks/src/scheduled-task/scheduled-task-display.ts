@@ -6,6 +6,8 @@ import {
   type ScheduledTaskRunDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
+  instantToZonedDateTime,
+  isAbsoluteInstant,
   ScheduledTaskRunStatus,
   type ScheduledTaskItem,
   type ScheduledTaskRunItem,
@@ -34,6 +36,8 @@ export interface ScheduledTaskScheduleLabels {
   invalid: string;
   /** Label for a recurring trigger no other shape describes. */
   recurringFallback: string;
+  /** Appends the task's zone to a schedule label, e.g. "Daily at 09:00 (Asia/Tokyo)". Omit to never show the zone. */
+  withTimezone?: (label: string, timezone: string) => string;
 }
 
 /** Host-translated duration units for a run. */
@@ -56,12 +60,12 @@ export interface ScheduledTaskRunTimestampLabels {
   dateAt: (date: string, time: string) => string;
 }
 
-/** Locale and timezone used to format a schedule label. */
+/** Locale and viewer zone used to format a schedule label. */
 export interface ScheduledTaskScheduleLabelOptions {
   /** BCP 47 locale for dates and weekday names. Defaults to the runtime default. */
   locale?: string;
-  /** IANA timezone the schedule is shown in. Defaults to the browser's resolved timezone. */
-  timeZone?: string;
+  /** The viewer's IANA zone; a task in a different zone gets its zone appended to the label. Defaults to the browser's resolved zone. */
+  browserTimezone?: string;
 }
 
 /** Inputs for formatting a run's start time. */
@@ -108,6 +112,8 @@ export enum ScheduledTaskDeleteErrorKind {
   Generic = 'generic',
 }
 
+/** A zone-local `YYYY-MM-DDTHH:mm`, the shape the formatter can show. */
+const WALL_TIME_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 const SECONDS_PER_MINUTE = 60;
 const SECONDS_PER_HOUR = 3600;
 
@@ -128,41 +134,77 @@ const isSameDay = (a: Date, b: Date): boolean =>
   a.getMonth() === b.getMonth() &&
   a.getDate() === b.getDate();
 
-/** Returns the schedule label for a task's trigger, shown in `timeZone`. */
+/** Formats a zone-local `YYYY-MM-DDTHH:mm` as a medium date and short time without converting it to another zone. */
+export const formatZonedDateTime = (
+  dateTime: string,
+  locale?: string,
+): string =>
+  new Intl.DateTimeFormat(locale, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone: 'UTC',
+  }).format(new Date(`${dateTime}:00Z`));
+
+/**
+ * Formats a stored trigger datetime — a zone-local wall time, or an absolute
+ * instant written by an older client — as the wall time it shows in the
+ * task's own zone. Returns the raw value when it is not a date.
+ */
+export const formatScheduledTaskTriggerTime = (
+  value: string,
+  timezone: string,
+  locale?: string,
+): string => {
+  const wallTime = isAbsoluteInstant(value)
+    ? instantToZonedDateTime(value, timezone)
+    : value.slice(0, 16);
+  if (!wallTime || !WALL_TIME_PATTERN.test(wallTime)) return value;
+  return formatZonedDateTime(wallTime, locale);
+};
+
+/**
+ * Returns the schedule label for a task's trigger in the task's own zone: the
+ * stored wall time is shown as is, and the zone is appended when it differs
+ * from the viewer's.
+ */
 export const formatScheduledTaskScheduleLabel = (
   task: ScheduledTaskDto,
   labels: ScheduledTaskScheduleLabels,
   {
     locale,
-    timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone,
+    browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone,
   }: ScheduledTaskScheduleLabelOptions = {},
 ): string => {
-  const description = describeScheduledTaskTrigger(task.trigger, { timeZone });
+  const timezone = task.timezone || 'UTC';
+  const description = describeScheduledTaskTrigger(task.trigger, { timezone });
   const time = description.time ?? '';
+  const withZone = (label: string): string =>
+    labels.withTimezone && timezone !== browserTimezone
+      ? labels.withTimezone(label, timezone)
+      : label;
   switch (description.kind) {
     case Kind.OneTime:
-      return labels.onceAt(
-        new Intl.DateTimeFormat(locale, {
-          dateStyle: 'medium',
-          timeStyle: 'short',
-        }).format(description.date),
+      return withZone(
+        labels.onceAt(formatZonedDateTime(description.dateTime ?? '', locale)),
       );
     case Kind.EveryNMinutes:
       return labels.everyNMinutes(description.intervalMinutes ?? 0);
     case Kind.Hourly:
-      return labels.hourlyAt(time);
+      return withZone(labels.hourlyAt(time));
     case Kind.Daily:
-      return labels.dailyAt(time);
+      return withZone(labels.dailyAt(time));
     case Kind.Weekly:
-      return labels.weeklyAt(
-        formatWeekdays(
-          description.daysOfWeek ?? [description.dayOfWeek ?? ''],
-          locale,
+      return withZone(
+        labels.weeklyAt(
+          formatWeekdays(
+            description.daysOfWeek ?? [description.dayOfWeek ?? ''],
+            locale,
+          ),
+          time,
         ),
-        time,
       );
     case Kind.Monthly:
-      return labels.monthlyAt(description.dayOfMonth ?? '', time);
+      return withZone(labels.monthlyAt(description.dayOfMonth ?? '', time));
     case Kind.Invalid:
       return labels.invalid;
     default:

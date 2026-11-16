@@ -173,7 +173,16 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
   };
 });
 
-vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
+vi.mock('@epam/ai-dial-scheduled-tasks', async (importOriginal) => ({
+  getZonedNow: (
+    await importOriginal<typeof import('@epam/ai-dial-scheduled-tasks')>()
+  ).getZonedNow,
+  instantToZonedDateTime: (
+    await importOriginal<typeof import('@epam/ai-dial-scheduled-tasks')>()
+  ).instantToZonedDateTime,
+  isAbsoluteInstant: (
+    await importOriginal<typeof import('@epam/ai-dial-scheduled-tasks')>()
+  ).isAbsoluteInstant,
   ScheduledTaskRunStatus: {
     Success: 'success',
     Error: 'error',
@@ -1348,6 +1357,8 @@ describe('ScheduledTaskDetailPage', () => {
     getScheduledTaskMock.mockResolvedValue({
       id: 'sched_123',
       displayName: 'Mon, Wed, Fri report',
+      /* A task in the browser's own zone gets no zone suffix on its label. */
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       trigger: {
         cron: {
           fields: { hour: '9', minute: '0', day_of_week: '0,2,4' },

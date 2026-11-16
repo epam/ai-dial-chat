@@ -35,6 +35,53 @@ const cron = (fields: Record<string, string>): Partial<ScheduledTaskDto> => ({
   trigger: { cron: { fields } },
 });
 
+describe('buildScheduleLabel — zone suffix', () => {
+  beforeEach(() => {
+    const options = new Intl.DateTimeFormat().resolvedOptions();
+    vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({
+      ...options,
+      timeZone: 'Europe/Berlin',
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('appends the task zone through the translated suffix when it differs from the browser zone', () => {
+    expect(
+      buildScheduleLabel(
+        buildDto({
+          timezone: 'Asia/Tokyo',
+          ...cron({ hour: '9', minute: '0' }),
+        }),
+        fakeT,
+        'en',
+      ),
+    ).toBe(
+      `${ScheduledTasksI18nKeys.CardScheduleZoneSuffix}:${JSON.stringify({
+        label: `${ScheduledTasksI18nKeys.CardScheduleDailyAt}:${JSON.stringify({ time: '09:00' })}`,
+        timezone: 'Asia/Tokyo',
+      })}`,
+    );
+  });
+
+  it('leaves the label alone when the task is in the browser zone', () => {
+    expect(
+      buildScheduleLabel(
+        buildDto({
+          timezone: 'Europe/Berlin',
+          ...cron({ hour: '9', minute: '0' }),
+        }),
+        fakeT,
+        'en',
+      ),
+    ).toBe(
+      `${ScheduledTasksI18nKeys.CardScheduleDailyAt}:${JSON.stringify({ time: '09:00' })}`,
+    );
+  });
+});
+
 describe('buildScheduleLabel', () => {
   beforeEach(() => {
     const options = new Intl.DateTimeFormat().resolvedOptions();
@@ -54,6 +101,7 @@ describe('buildScheduleLabel', () => {
         date: new Intl.DateTimeFormat('fr', {
           dateStyle: 'medium',
           timeStyle: 'short',
+          timeZone: 'UTC',
         }).format(new Date('2026-07-24T09:00:00.000Z')),
       })}`,
     );
@@ -113,6 +161,18 @@ describe('buildScheduleLabel', () => {
 });
 
 describe('mapScheduledTaskDtoToItem', () => {
+  beforeEach(() => {
+    const options = new Intl.DateTimeFormat().resolvedOptions();
+    vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({
+      ...options,
+      timeZone: 'UTC',
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('builds the item with the translated schedule label', () => {
     const result = mapScheduledTaskDtoToItem(
       buildDto({ description: 'Summary', isActive: true }),

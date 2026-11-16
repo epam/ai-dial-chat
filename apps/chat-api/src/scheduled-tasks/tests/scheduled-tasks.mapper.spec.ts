@@ -136,6 +136,7 @@ describe('toUpstreamSchedulePayload', () => {
       display_name: 'Daily summary',
       service_id: SCHEDULER_SERVICE_ID,
       trigger: { date: '2026-07-24T09:00:00.000Z' },
+      timezone: 'UTC',
       properties: {
         target_type: 'chat_completion',
         url: 'http://dial-core/openai',
@@ -399,6 +400,7 @@ describe('fromUpstreamSchedule', () => {
       id: 'sched_123',
       displayName: 'Daily summary',
       trigger: { date: '2026-07-24T09:00:00.000Z', cron: undefined },
+      timezone: 'UTC',
       triggerType: 'date',
       serviceId: 'dial-oauth',
       isActive: false,
@@ -558,6 +560,7 @@ describe('fromUpstreamSchedule', () => {
       id: 'sched_456',
       displayName: 'Hourly check',
       trigger: { date: undefined, cron: { fields: { minute: '0' } } },
+      timezone: 'UTC',
       triggerType: 'cron',
       isActive: false,
       isDeleted: false,
@@ -820,4 +823,145 @@ describe('fromUpstreamRun', () => {
       ).not.toHaveProperty('resultStage');
     },
   );
+});
+
+describe('scheduled-task time zone', () => {
+  const buildBody = (
+    overrides: Partial<CreateScheduledTaskBodyDto>,
+  ): CreateScheduledTaskBodyDto => ({
+    displayName: 'Morning briefing',
+    trigger: { cron: { fields: { hour: '9', minute: '0' } } },
+    model: 'gpt-4.1-mini-2025-04-14',
+    prompt: 'Summarize my calendar',
+    ...overrides,
+  });
+
+  const toPayload = (body: CreateScheduledTaskBodyDto) =>
+    toUpstreamSchedulePayload(
+      body,
+      DIAL_CORE_URL,
+      DIAL_API_VERSION,
+      SCHEDULER_SERVICE_ID,
+    );
+
+  it('forwards the requested zone and leaves cron fields unshifted', () => {
+    const upstream = toPayload(buildBody({ timezone: 'Europe/Berlin' }));
+
+    expect(upstream.timezone).toBe('Europe/Berlin');
+    expect(upstream.trigger.cron?.fields).toEqual({ hour: '9', minute: '0' });
+  });
+
+  it('forwards UTC when the zone is omitted', () => {
+    expect(toPayload(buildBody({})).timezone).toBe('UTC');
+  });
+
+  it('forwards an offset-less one-time date unchanged', () => {
+    const upstream = toPayload(
+      buildBody({
+        timezone: 'Europe/Berlin',
+        trigger: { date: '2027-01-01T09:00:00' },
+      }),
+    );
+
+    expect(upstream.trigger).toEqual({ date: '2027-01-01T09:00:00' });
+  });
+
+  it('reads the zone back from an upstream response', () => {
+    const dto = fromUpstreamSchedule({
+      id: 'sched_1',
+      display_name: 'Morning briefing',
+      trigger: { cron: { fields: { hour: '9', minute: '0' } } },
+      timezone: 'Asia/Calcutta',
+    });
+
+    expect(dto.timezone).toBe('Asia/Calcutta');
+  });
+
+  it('reports UTC when the upstream response has no zone', () => {
+    const dto = fromUpstreamSchedule({
+      id: 'sched_1',
+      display_name: 'Morning briefing',
+      trigger: { cron: { fields: { hour: '9', minute: '0' } } },
+    });
+
+    expect(dto.timezone).toBe('UTC');
+  });
+
+  it('rejects an offset-less window whose end is before its start', () => {
+    const body = buildBody({
+      timezone: 'Europe/Berlin',
+      trigger: {
+        cron: {
+          fields: { hour: '9', minute: '0' },
+          startDate: '2026-08-01T00:00:00.000',
+          endDate: '2026-07-31T23:59:59.999',
+        },
+      },
+    });
+
+    expect(() => toPayload(body)).toThrow(BadRequestException);
+  });
+
+  it('accepts a one-day offset-less window', () => {
+    const body = buildBody({
+      timezone: 'Europe/Berlin',
+      trigger: {
+        cron: {
+          fields: { hour: '9', minute: '0' },
+          startDate: '2026-08-01T00:00:00.000',
+          endDate: '2026-08-01T23:59:59.999',
+        },
+      },
+    });
+
+    expect(toPayload(body).trigger.cron?.start_date).toBe(
+      '2026-08-01T00:00:00.000',
+    );
+  });
+
+  it('orders a mixed window through the task zone', () => {
+    /* 2026-08-01 00:00 Berlin (UTC+2) is 2026-07-31T22:00Z. */
+    const mixed = (endDate: string) =>
+      buildBody({
+        timezone: 'Europe/Berlin',
+        trigger: {
+          cron: {
+            fields: { hour: '9', minute: '0' },
+            startDate: '2026-08-01T00:00:00.000',
+            endDate,
+          },
+        },
+      });
+
+    expect(() => toPayload(mixed('2026-07-31T21:59:59.000Z'))).toThrow(
+      BadRequestException,
+    );
+    expect(() => toPayload(mixed('2026-07-31T22:00:01.000Z'))).not.toThrow();
+  });
+
+  it('keeps ordering independent of the process time zone', () => {
+    const original = process.env.TZ;
+    const body = buildBody({
+      timezone: 'Europe/Berlin',
+      trigger: {
+        cron: {
+          fields: { hour: '9', minute: '0' },
+          startDate: '2026-10-25T00:00:00.000',
+          endDate: '2026-10-25T23:59:59.999',
+        },
+      },
+    });
+    try {
+      process.env.TZ = 'America/Sao_Paulo';
+      expect(() => toPayload(body)).not.toThrow();
+      process.env.TZ = 'UTC';
+      expect(() => toPayload(body)).not.toThrow();
+    } finally {
+      if (original === undefined) {
+        delete process.env.TZ;
+      } else {
+        process.env.TZ = original;
+      }
+    }
+  });
 });

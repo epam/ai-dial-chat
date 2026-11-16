@@ -11,6 +11,7 @@ import {
   formatScheduledTaskRunDuration,
   formatScheduledTaskRunTimestamp,
   formatScheduledTaskScheduleLabel,
+  formatScheduledTaskTriggerTime,
   ScheduledTaskDeleteErrorKind,
   selectScheduledTaskErrorMessage,
   toScheduledTaskItem,
@@ -33,6 +34,7 @@ const scheduleLabels: ScheduledTaskScheduleLabels = {
   monthlyAt: (day, time) => `monthlyAt:${day}|${time}`,
   invalid: 'invalid',
   recurringFallback: 'recurringFallback',
+  withTimezone: (label, timezone) => `${label}@${timezone}`,
 };
 
 const durationLabels: ScheduledTaskRunDurationLabels = {
@@ -55,6 +57,7 @@ const conversationIdsMatch = (left: string, right: string): boolean =>
 const buildDto = (overrides?: Partial<ScheduledTaskDto>): ScheduledTaskDto => ({
   id: 'sched_1',
   displayName: 'Daily summary',
+  timezone: 'UTC',
   trigger: { date: '2026-07-24T09:00:00.000Z' },
   ...overrides,
 });
@@ -130,6 +133,7 @@ describe('toScheduledTaskItem', () => {
       `onceAt:${new Intl.DateTimeFormat('fr', {
         dateStyle: 'medium',
         timeStyle: 'short',
+        timeZone: 'UTC',
       }).format(new Date('2026-07-24T09:00:00.000Z'))}`,
     );
     expect(items[1].scheduleLabel).toBe('weeklyAt:lundi|09:00');
@@ -157,7 +161,7 @@ describe('toScheduledTaskItem', () => {
         },
       }),
       scheduleLabels,
-      { locale: 'en', timeZone: 'UTC' },
+      { locale: 'en', browserTimezone: 'UTC' },
     );
 
     expect(result.scheduleLabel).toBe(
@@ -295,86 +299,119 @@ describe('toScheduledTaskItem', () => {
   });
 });
 
-describe('formatScheduledTaskScheduleLabel — timezone conversion', () => {
+describe('formatScheduledTaskScheduleLabel — task zone', () => {
+  const daily = (timezone: string) =>
+    buildDto({
+      timezone,
+      trigger: { cron: { fields: { hour: '9', minute: '0' } } },
+    });
+
   beforeEach(() => {
     mockBrowserTimeZone('Europe/Warsaw');
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-08-05T12:00:00.000Z'));
   });
 
   afterEach(() => {
-    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
-  it.each([
-    ['2026-08-05T12:00:00.000Z', '09:00'],
-    ['2026-01-05T12:00:00.000Z', '08:00'],
-  ])(
-    'shows the local equivalent of a stored UTC daily time on %s',
-    (referenceDate, time) => {
+  it.each(['2026-08-05T12:00:00.000Z', '2026-01-05T12:00:00.000Z'])(
+    'shows the stored wall time on %s without converting it',
+    (referenceDate) => {
+      vi.useFakeTimers();
       vi.setSystemTime(new Date(referenceDate));
 
-      expect(
-        formatScheduledTaskScheduleLabel(
-          buildDto({
-            trigger: { cron: { fields: { hour: '7', minute: '0' } } },
-          }),
-          scheduleLabels,
-        ),
-      ).toBe(`dailyAt:${time}`);
+      try {
+        expect(
+          formatScheduledTaskScheduleLabel(
+            daily('Europe/Warsaw'),
+            scheduleLabels,
+          ),
+        ).toBe('dailyAt:09:00');
+      } finally {
+        vi.useRealTimers();
+      }
     },
   );
 
-  it('uses an explicit timeZone instead of the browser timezone', () => {
-    vi.setSystemTime(new Date('2026-08-05T12:00:00.000Z'));
-
+  it('appends the zone when it differs from the browser zone', () => {
     expect(
-      formatScheduledTaskScheduleLabel(
-        buildDto({ trigger: { cron: { fields: { hour: '7', minute: '0' } } } }),
-        scheduleLabels,
-        { timeZone: 'UTC' },
-      ),
-    ).toBe('dailyAt:07:00');
+      formatScheduledTaskScheduleLabel(daily('Asia/Tokyo'), scheduleLabels),
+    ).toBe('dailyAt:09:00@Asia/Tokyo');
   });
 
-  it('shows the local weekday when the stored UTC day rolls forward a day', () => {
+  it('does not append the zone when it equals the browser zone', () => {
+    expect(
+      formatScheduledTaskScheduleLabel(daily('Europe/Warsaw'), scheduleLabels),
+    ).toBe('dailyAt:09:00');
+  });
+
+  it('compares against an explicit browser zone', () => {
+    expect(
+      formatScheduledTaskScheduleLabel(daily('Asia/Tokyo'), scheduleLabels, {
+        browserTimezone: 'Asia/Tokyo',
+      }),
+    ).toBe('dailyAt:09:00');
+  });
+
+  it('never appends a zone when the host supplies no wording for it', () => {
+    const { withTimezone: _unused, ...labels } = scheduleLabels;
+
+    expect(formatScheduledTaskScheduleLabel(daily('Asia/Tokyo'), labels)).toBe(
+      'dailyAt:09:00',
+    );
+  });
+
+  it('keeps the stored weekday near midnight', () => {
     expect(
       formatScheduledTaskScheduleLabel(
         buildDto({
+          timezone: 'Asia/Tokyo',
           trigger: {
-            cron: { fields: { hour: '23', minute: '0', day_of_week: '6' } }, // UTC Sunday
+            cron: { fields: { hour: '23', minute: '0', day_of_week: '6' } },
           },
         }),
         scheduleLabels,
         { locale: 'en' },
       ),
-    ).toBe('weeklyAt:Monday|01:00'); // local Monday 01:00
+    ).toBe('weeklyAt:Sunday|23:00@Asia/Tokyo');
   });
 
-  it('formats a named weekday with its local time', () => {
+  it('keeps the stored day of month', () => {
     expect(
       formatScheduledTaskScheduleLabel(
         buildDto({
-          trigger: {
-            cron: { fields: { hour: '9', minute: '0', day_of_week: 'Monday' } },
-          },
+          trigger: { cron: { fields: { hour: '23', minute: '0', day: '31' } } },
         }),
         scheduleLabels,
-        { locale: 'en' },
+        { browserTimezone: 'UTC' },
       ),
-    ).toBe('weeklyAt:Monday|11:00');
+    ).toBe('monthlyAt:31|23:00');
   });
 
-  it('shows the local day-of-month when the stored UTC day rolls forward a day', () => {
+  it('formats a one-time instant in the task zone', () => {
     expect(
       formatScheduledTaskScheduleLabel(
         buildDto({
-          trigger: { cron: { fields: { hour: '23', minute: '0', day: '14' } } }, // UTC day 14
+          timezone: 'Europe/Berlin',
+          trigger: { date: '2026-07-24T07:00:00.000Z' },
         }),
         scheduleLabels,
+        { locale: 'en', browserTimezone: 'Europe/Berlin' },
       ),
-    ).toBe('monthlyAt:15|01:00'); // local day 15
+    ).toBe('onceAt:Jul 24, 2026, 9:00 AM');
+  });
+
+  it('formats an offset-less one-time date as stored', () => {
+    expect(
+      formatScheduledTaskScheduleLabel(
+        buildDto({
+          timezone: 'Asia/Tokyo',
+          trigger: { date: '2026-07-24T09:00:00' },
+        }),
+        scheduleLabels,
+        { locale: 'en', browserTimezone: 'Asia/Tokyo' },
+      ),
+    ).toBe('onceAt:Jul 24, 2026, 9:00 AM');
   });
 });
 
@@ -710,4 +747,30 @@ describe('selectScheduledTaskErrorMessage', () => {
       ).toBe('fallback');
     },
   );
+});
+
+describe('formatScheduledTaskTriggerTime', () => {
+  it('shows a zone-local value as stored', () => {
+    expect(
+      formatScheduledTaskTriggerTime(
+        '2026-08-01T00:00:00.000',
+        'Asia/Tokyo',
+        'en',
+      ),
+    ).toBe('Aug 1, 2026, 12:00 AM');
+  });
+
+  it('shows an absolute instant in the task zone', () => {
+    expect(
+      formatScheduledTaskTriggerTime(
+        '2026-07-31T22:00:00.000Z',
+        'Europe/Berlin',
+        'en',
+      ),
+    ).toBe('Aug 1, 2026, 12:00 AM');
+  });
+
+  it('returns a value that is not a date unchanged', () => {
+    expect(formatScheduledTaskTriggerTime('soon', 'UTC', 'en')).toBe('soon');
+  });
 });

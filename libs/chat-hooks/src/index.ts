@@ -214,6 +214,7 @@ export * from './files/useDialFileUploadBatch/useDialFileUploadBatch';
 export * from './files/useFileAttachmentPicker/useFileAttachmentPicker';
 export * from './shared/application-schema';
 export * from './shared/browser-timezone';
+export * from './shared/timezones';
 export * from './shared/cron-weekday';
 export * from './shared/custom-apps';
 export * from './shared/external-services';
