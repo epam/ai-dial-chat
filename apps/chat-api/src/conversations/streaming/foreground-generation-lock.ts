@@ -32,6 +32,7 @@ import {
 import {
   ForegroundStopResult,
   releasedForegroundFields,
+  type ForegroundStopErrorDetails,
   storeForegroundStop,
   updateForegroundMessage,
 } from '../generation/foreground-message';
@@ -205,13 +206,26 @@ export class ForegroundGenerationLock {
   async storeStop(
     params: ForegroundMarkerLocation,
   ): Promise<ForegroundStopResult> {
+    const errors: ForegroundStopErrorDetails[] = [];
     const result = await storeForegroundStop({
       persistence: this.persistenceService,
       ...params,
       stopReleaseMs: buildForegroundStopReleaseMs(
         this.bounds.finalizeTimeoutMs,
       ),
+      onError: (details) => errors.push(details),
     });
+    /*
+     * A plain `not_found` is the normal answer for a generation this instance runs
+     * itself, so only a thrown read or write, or a refused write, is worth a line
+     * ([#9370](https://github.com/epam/ai-dial-chat/issues/9370)).
+     */
+    if (errors.length > 0 || result === ForegroundStopResult.Failed) {
+      const errorDetails = errors.at(-1);
+      this.logger.warn(
+        `Foreground Stop not stored — generationId: ${params.generationId}, result: ${result}, ${errorDetails ? `${errorDetails.isRead ? 'write' : 'read'} error: ${errorDetails.errorName}` : 'error: none'}, status: ${errorDetails?.status ?? 'none'}`,
+      );
+    }
     if (result === ForegroundStopResult.Stored) {
       foregroundGenerationOutcomesTotal.add(1, {
         outcome: ForegroundGenerationOutcome.StopStored,

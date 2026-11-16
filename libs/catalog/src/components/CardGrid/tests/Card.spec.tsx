@@ -31,14 +31,14 @@ describe('Card — selected state', () => {
     expect(card.className).not.toContain('selectedCard');
   });
 
-  it('shows the selected border, tint, and checkmark when isSelected is true', () => {
+  it('marks a selected card with the selected border only, without a checkmark', () => {
     render(<Card item={makeItem()} isSelected />);
 
     const card = screen.getByRole('article', { hidden: true });
     expect(card.className).toContain('selectedCard');
-    // Checkmark icon is aria-hidden with no accessible role, so no semantic query can find it.
+    /* The checkmark was aria-hidden with no accessible role, so no semantic query can find it. */
     // eslint-disable-next-line testing-library/no-node-access
-    expect(card.querySelector('svg')).toBeTruthy();
+    expect(card.querySelector(':scope > svg')).toBeNull();
   });
 });
 

@@ -31,7 +31,6 @@ import {
 import { CodeContent } from '../CodeContent/CodeContent';
 import { HtmlContent } from '../HtmlContent/HtmlContent';
 import { LazyContentBoundary } from '../LazyContentBoundary/LazyContentBoundary';
-import { McpAppCanvasRenderer } from '../McpAppCanvasRenderer/McpAppCanvasRenderer';
 import { OoxmlContent } from '../OoxmlContent/OoxmlContent';
 import { VisualizerCanvasRenderer } from '../VisualizerCanvasRenderer/VisualizerCanvasRenderer';
 import styles from './AttachmentCanvasBody.module.scss';
@@ -50,6 +49,18 @@ const createPdfContent = () =>
   lazy(async () => {
     const module = await import('../PdfContent/PdfContent');
     return { default: module.PdfContent };
+  });
+
+/*
+ * `McpAppCanvasRenderer` pulls in `@mcp-ui/client`, the MCP SDK and its
+ * `zod` schemas — the bulk of the canvas's eager JavaScript — although only
+ * an MCP App tool result ever renders it. Lazy for the same reason, and with
+ * the same retry factory shape, as `createPdfContent`.
+ */
+const createMcpAppCanvasRenderer = () =>
+  lazy(async () => {
+    const module = await import('../McpAppCanvasRenderer/McpAppCanvasRenderer');
+    return { default: module.McpAppCanvasRenderer };
   });
 
 interface ImageContentProps {
@@ -159,6 +170,14 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
   const PdfContent = useMemo(createPdfContent, [pdfRetryKey]);
   const handleRetryPdf = useCallback(() => {
     setPdfRetryKey((key) => key + 1);
+  }, []);
+
+  const [mcpAppRetryKey, setMcpAppRetryKey] = useState(0);
+  const McpAppCanvasRenderer = useMemo(createMcpAppCanvasRenderer, [
+    mcpAppRetryKey,
+  ]);
+  const handleRetryMcpApp = useCallback(() => {
+    setMcpAppRetryKey((key) => key + 1);
   }, []);
 
   /*
@@ -472,12 +491,23 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         );
       case AttachmentContentType.McpApp:
         return (
-          <McpAppCanvasRenderer
-            content={content}
-            loadingLabel={loadingLabel}
-            onAppInfo={onAppInfo}
-            hostContext={activeMcpAppHostContext}
-          />
+          <LazyContentBoundary
+            retryKey={mcpAppRetryKey}
+            onRetry={handleRetryMcpApp}
+            errorLabelClassName={typography?.errorMessageClassName}
+            labels={{
+              loadingLabel,
+              errorLabel: loadErrorLabel,
+              retryLabel: loadErrorRetryLabel,
+            }}
+          >
+            <McpAppCanvasRenderer
+              content={content}
+              loadingLabel={loadingLabel}
+              onAppInfo={onAppInfo}
+              hostContext={activeMcpAppHostContext}
+            />
+          </LazyContentBoundary>
         );
       case AttachmentContentType.Unsupported:
         return (
@@ -552,6 +582,9 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     codeContentErrorLabel,
     codeContentRetryLabel,
     PdfContent,
+    McpAppCanvasRenderer,
+    mcpAppRetryKey,
+    handleRetryMcpApp,
     pdfRetryKey,
     handleRetryPdf,
     pdfReloadKey,

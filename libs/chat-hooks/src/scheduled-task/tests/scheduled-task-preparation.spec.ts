@@ -10,6 +10,7 @@ import {
 } from '../scheduled-task-preparation';
 
 const values: ScheduledTaskCreateFormValues = {
+  timezone: 'UTC',
   displayName: 'Monthly review',
   modelId: 'model-1',
   prompt: 'Review',

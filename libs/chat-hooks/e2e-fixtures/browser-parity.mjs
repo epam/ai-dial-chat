@@ -235,9 +235,17 @@ export const checkMarkdownReloadAndAssets = async (fixture) => {
         cssResponses.push(response);
     });
     let abortedOnce = false;
+    /*
+     * Fail every markdown chunk request until the route is removed after the
+     * first attempt, not only the first one: when the chunk's preload list
+     * carries a stylesheet, Vite's `modulepreload` link fetches the chunk
+     * first, its failure is not surfaced, and `import()` fetches the chunk
+     * again — aborting only the first request would then let the "failed"
+     * attempt succeed.
+     */
     await page.route('**/*.js', (route) => {
       const isLikelyMarkdownChunk = /markdown/i.test(route.request().url());
-      if (isLikelyMarkdownChunk && !abortedOnce) {
+      if (isLikelyMarkdownChunk) {
         abortedOnce = true;
         return route.abort('failed');
       }

@@ -27,31 +27,28 @@ describe('describeScheduledTaskTrigger', () => {
     });
   });
 
-  it('describes a weekday list as one weekly schedule, Monday first', () => {
+  it('describes a weekday list as one weekly schedule, Monday first, at the stored time', () => {
     expect(
       describeScheduledTaskTrigger(
         { cron: { fields: { hour: '7', minute: '0', day_of_week: '4,0,2' } } },
-        { timeZone: 'Europe/Warsaw', referenceDate: new Date('2026-07-15') },
+        { timezone: 'Europe/Warsaw' },
       ),
     ).toMatchObject({
       kind: ScheduledTaskTriggerDescriptionKind.Weekly,
       dayOfWeek: '0',
       daysOfWeek: ['0', '2', '4'],
-      time: '09:00',
+      time: '07:00',
+      timezone: 'Europe/Warsaw',
     });
   });
 
-  it('shifts every listed weekday with the time across midnight', () => {
+  it('does not shift weekdays or time, whatever the zone', () => {
     expect(
       describeScheduledTaskTrigger(
-        { cron: { fields: { hour: '22', minute: '30', day_of_week: '1,6' } } },
-        { timeZone: 'Europe/Warsaw', referenceDate: new Date('2026-07-15') },
+        { cron: { fields: { hour: '23', minute: '30', day_of_week: '0' } } },
+        { timezone: 'Asia/Kathmandu' },
       ),
-    ).toMatchObject({
-      kind: ScheduledTaskTriggerDescriptionKind.Weekly,
-      daysOfWeek: ['0', '2'],
-      time: '00:30',
-    });
+    ).toMatchObject({ time: '23:30', dayOfWeek: '0' });
   });
 
   it.each(['0-4', '*/2', '0,0'])(
@@ -104,50 +101,66 @@ describe('describeScheduledTaskTrigger', () => {
     },
   );
 
-  it('converts fractional timezone offsets and weekday rollover deterministically', () => {
-    const options = {
-      timeZone: 'Asia/Kathmandu',
-      referenceDate: new Date('2026-09-21T12:00:00Z'),
-    };
+  it('describes an hourly schedule by its two-digit minute', () => {
     expect(
       describeScheduledTaskTrigger(
-        { cron: { fields: { hour: '23', minute: '30', day_of_week: '0' } } },
-        options,
-      ),
-    ).toMatchObject({ time: '05:15', dayOfWeek: '1' });
-    expect(
-      describeScheduledTaskTrigger(
-        { cron: { fields: { hour: '*', minute: '0' } } },
-        options,
-      ),
-    ).toMatchObject({ time: '45' });
-    expect(
-      describeScheduledTaskTrigger(
-        { cron: { fields: { hour: '23', minute: '30', day: '31' } } },
-        options,
-      ).kind,
-    ).toBe(ScheduledTaskTriggerDescriptionKind.Custom);
-  });
-
-  it('describes the last day of the month one day behind local time as the 1st', () => {
-    const fields = { hour: '21', minute: '30', day: 'last' };
-    expect(
-      describeScheduledTaskTrigger(
-        { cron: { fields } },
-        {
-          timeZone: 'Europe/Kyiv',
-          referenceDate: new Date('2026-07-15T12:00:00Z'),
-        },
+        { cron: { fields: { hour: '*', minute: '5' } } },
+        { timezone: 'Asia/Kathmandu' },
       ),
     ).toMatchObject({
-      kind: ScheduledTaskTriggerDescriptionKind.Monthly,
-      time: '00:30',
-      dayOfMonth: '1',
+      kind: ScheduledTaskTriggerDescriptionKind.Hourly,
+      time: '05',
     });
+  });
+
+  it('describes the 31st as a monthly schedule', () => {
+    expect(
+      describeScheduledTaskTrigger({
+        cron: { fields: { hour: '23', minute: '30', day: '31' } },
+      }),
+    ).toMatchObject({
+      kind: ScheduledTaskTriggerDescriptionKind.Monthly,
+      dayOfMonth: '31',
+      time: '23:30',
+    });
+  });
+
+  it('keeps the last-day-of-month expression as a custom expression', () => {
+    const fields = { hour: '21', minute: '30', day: 'last' };
+
     expect(describeScheduledTaskTrigger({ cron: { fields } })).toMatchObject({
       kind: ScheduledTaskTriggerDescriptionKind.Custom,
       expression: JSON.stringify(fields),
     });
+  });
+
+  it('reads an offset-less one-time date as zone-local wall time', () => {
+    expect(
+      describeScheduledTaskTrigger(
+        { date: '2026-07-24T09:00:00' },
+        { timezone: 'Asia/Tokyo' },
+      ),
+    ).toMatchObject({
+      kind: ScheduledTaskTriggerDescriptionKind.OneTime,
+      dateTime: '2026-07-24T09:00',
+    });
+  });
+
+  it('shows an absolute one-time instant in the task zone', () => {
+    expect(
+      describeScheduledTaskTrigger(
+        { date: '2026-07-24T07:00:00.000Z' },
+        { timezone: 'Europe/Berlin' },
+      ),
+    ).toMatchObject({ dateTime: '2026-07-24T09:00' });
+  });
+
+  it('defaults to UTC for a task without a zone', () => {
+    expect(
+      describeScheduledTaskTrigger({
+        cron: { fields: { hour: '9', minute: '0' } },
+      }).timezone,
+    ).toBe('UTC');
   });
 
   it('rejects numeric values outside valid ranges', () => {

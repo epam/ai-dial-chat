@@ -17,6 +17,7 @@ const initialValues: ScheduledTaskCreateFormValues = {
   displayName: 'Report',
   repeat: ScheduledTaskRepeat.Daily,
   time: '09:00',
+  timezone: 'UTC',
   modelId: 'gpt',
   prompt: 'Do it',
 };

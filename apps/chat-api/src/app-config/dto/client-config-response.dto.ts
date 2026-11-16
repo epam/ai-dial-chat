@@ -332,6 +332,14 @@ export class ClientConfigDto {
     example: false,
   })
   modelCatalogAvailable?: boolean;
+
+  @ApiPropertyOptional({
+    type: String,
+    description:
+      'Public base URL of the themes host (THEMES_PUBLIC_URL without a trailing slash). Clients recognise absolute deployment icon URLs under it and load them through GET /api/themes/icon instead, so one icon is requested under one URL. Missing when THEMES_PUBLIC_URL is not configured; the in-cluster THEMES_CONFIG_URL is never exposed.',
+    example: 'https://themes.example.com',
+  })
+  themesBaseUrl?: string;
 }
 
 export class ClientConfigMetadataDto {

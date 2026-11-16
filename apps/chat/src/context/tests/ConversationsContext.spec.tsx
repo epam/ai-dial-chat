@@ -26,6 +26,7 @@ import { useAppConfig as mockUseAppConfig } from './app-config-context-mock';
 
 const contextMocks = vi.hoisted(() => ({
   userSub: 'user-1' as string | undefined,
+  userBucket: undefined as string | undefined,
   setPinnedConversation: vi.fn(),
 }));
 
@@ -44,7 +45,9 @@ vi.mock('../AppConfigContext', async () => import('./app-config-context-mock'));
 vi.mock('../auth/UserContext', () => ({
   useUser: () => ({
     status: AuthStatus.Authenticated,
-    user: contextMocks.userSub ? { sub: contextMocks.userSub } : null,
+    user: contextMocks.userSub
+      ? { sub: contextMocks.userSub, bucket: contextMocks.userBucket }
+      : null,
   }),
 }));
 vi.mock('../ThemeContext', () => ({
@@ -133,6 +136,7 @@ describe('ConversationsContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     contextMocks.userSub = 'user-1';
+    contextMocks.userBucket = undefined;
     contextMocks.setPinnedConversation.mockResolvedValue(undefined);
     mockUseAppConfig.mockReturnValue({
       config: { overlayAllowedOrigins: ['https://partner.example.com'] },
@@ -1661,6 +1665,72 @@ describe('ConversationsContext', () => {
         'applications/bucket/My App__0.0.1__title__uuid',
         expect.anything(),
       );
+    });
+
+    describe('updates the list without re-reading it when the chat is known', () => {
+      const renderAndWatch = async (conversationId: string) => {
+        vi.mocked(conversationsApi.watchConversation).mockResolvedValueOnce(
+          buildUpdateEventStream(),
+        );
+        vi.mocked(conversationsApi.getConversation).mockResolvedValueOnce({
+          name: 'New Name',
+          updatedAt: 5,
+        } as never);
+        const { result } = renderHook(() => useConversations(), {
+          wrapper: ConversationsProvider,
+        });
+        await waitFor(() =>
+          expect(result.current.conversations).toHaveLength(3),
+        );
+        const onUpdated = vi.fn();
+        act(() => {
+          result.current.watchForDisplayNameUpdate(
+            conversationId,
+            'Old Name',
+            onUpdated,
+          );
+        });
+        await waitFor(() => expect(onUpdated).toHaveBeenCalledWith('New Name'));
+        /* Let any background refresh the update could start settle. */
+        await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+        return result;
+      };
+
+      it('renames a listed chat in place', async () => {
+        const view = await renderAndWatch('conv2');
+
+        expect(mockListConversations).toHaveBeenCalledOnce();
+        expect(
+          view.current.conversations.find((c) => c.id === 'conv2')?.title,
+        ).toBe('New Name');
+      });
+
+      it('adds a new chat from the user’s own bucket as the newest row', async () => {
+        contextMocks.userBucket = 'bucket-1';
+
+        const view = await renderAndWatch('bucket-1/model__New chat__uuid');
+
+        expect(mockListConversations).toHaveBeenCalledOnce();
+        expect(view.current.conversations).toHaveLength(4);
+        expect(view.current.conversations[0]).toMatchObject({
+          id: 'conversations/bucket-1/model__New%20chat__uuid',
+          title: 'New Name',
+          updatedAt: 5,
+          isReadonly: false,
+          sharedWithMe: false,
+        });
+      });
+
+      it('re-reads the list for an unlisted chat from another bucket', async () => {
+        contextMocks.userBucket = 'bucket-1';
+
+        const view = await renderAndWatch('owner-bucket/model__Shared__uuid');
+
+        await waitFor(() =>
+          expect(mockListConversations).toHaveBeenCalledTimes(2),
+        );
+        expect(view.current.conversations).toHaveLength(3);
+      });
     });
   });
 

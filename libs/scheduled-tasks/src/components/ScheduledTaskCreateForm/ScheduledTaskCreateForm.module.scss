@@ -27,3 +27,19 @@
 .refineError {
   color: var(--stcf-refine-error-text, var(--text-error, #ae2f2f));
 }
+
+/* The selected zone drawn inside the end of the time input, left of the clock button (48px matches the kit's own hint offset). The input is the last row of its wrapper and 46px tall (12px padding, a 20px line and 1px borders), so a box of that height pinned to the bottom centers the text on it; the kit's own hint could only name the viewer's zone. */
+.timeFieldZone {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-end: 48px;
+  display: flex;
+  align-items: center;
+  block-size: 46px;
+  max-inline-size: 60%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  color: var(--stz-offset, var(--text-secondary, #57647a));
+}

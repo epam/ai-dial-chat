@@ -10,8 +10,8 @@ import {
 } from '../../constants/translation-keys';
 import type { useDeployments } from '../../context/DeploymentsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
+import { useResolveCatalogIconUrl } from '../catalog/useResolveCatalogIconUrl';
 
 interface UseMessageListLabelsParams {
   items: ReturnType<typeof useDeployments>['items'];
@@ -26,6 +26,7 @@ interface UseMessageListLabelsParams {
 export const useMessageListLabels = ({ items }: UseMessageListLabelsParams) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const resolveCatalogIconUrl = useResolveCatalogIconUrl();
 
   const deploymentLookup = useMemo<
     Record<string, { displayName: string; iconUrl: string | undefined }>
@@ -40,7 +41,7 @@ export const useMessageListLabels = ({ items }: UseMessageListLabelsParams) => {
           },
         ]),
       ),
-    [items, language],
+    [items, language, resolveCatalogIconUrl],
   );
 
   const tooltips = useMemo<MessageActionTooltips>(

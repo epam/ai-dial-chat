@@ -13,6 +13,7 @@ import { CatalogEntityType } from '../dto/catalog-entity-params.dto';
 import { UnpublishResultDto } from '../dto/unpublish-result.dto';
 import { PublishController } from '../publish.controller';
 import { PublishService } from '../publish.service';
+import { VersionStatusesService } from '../version-statuses.service';
 
 const TEST_USER = {
   sub: 'user-123',
@@ -33,7 +34,10 @@ const unpublishResult: UnpublishResultDto = {
 const buildApp = async (service: unknown): Promise<INestApplication> => {
   const module: TestingModule = await Test.createTestingModule({
     controllers: [PublishController],
-    providers: [{ provide: PublishService, useValue: service }],
+    providers: [
+      { provide: PublishService, useValue: service },
+      { provide: VersionStatusesService, useValue: {} },
+    ],
   }).compile();
 
   const app = module.createNestApplication();

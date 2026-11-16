@@ -46,7 +46,7 @@ import {
   parsePdfPageReference,
 } from '@epam/ai-dial-quotations';
 import { LRUCache } from 'lru-cache';
-import { isDialFileId } from './dial-file';
+import { isDialFileId, isDialStoredFileId } from './dial-file';
 
 /**
  * DIAL-file URL resolution injected by the host into every attachment-canvas
@@ -54,7 +54,7 @@ import { isDialFileId } from './dial-file';
  * file-download endpoint.
  */
 export interface AttachmentCanvasUrlResolvers {
-  /** Resolves a DIAL Core file id to a downloadable URL. */
+  /** Resolves a DIAL Core file id or project file id (a citation or reference source) to a downloadable URL. */
   resolveDialFileDownloadUrl: (fileId: string) => string | undefined;
   /** Resolves the best downloadable DIAL-file URL from an attachment's `url` or `referenceUrl`. */
   resolveDialUrl: (attachment: DisplayAttachment) => string | undefined;
@@ -543,7 +543,7 @@ export const annotationToPdfCanvasContent = (
   const source = annotation.body?.source?.attachment;
   if (source?.type !== MIMEType.PDF) return null;
 
-  const url = isDialFileId(source.url)
+  const url = isDialStoredFileId(source.url)
     ? resolvers.resolveDialFileDownloadUrl(source.url)
     : source.url;
   if (url == null) return null;
@@ -660,7 +660,7 @@ export const annotationToOoxmlCanvasContent = (
     return null;
   }
 
-  const url = isDialFileId(source.url)
+  const url = isDialStoredFileId(source.url)
     ? resolvers.resolveDialFileDownloadUrl(source.url)
     : source.url;
   if (url == null) return null;
@@ -734,7 +734,7 @@ export const referenceAttachmentToPdfCanvasContent = (
   const parsed = parsePdfPageReference(attachment.url);
   if (parsed == null) return null;
 
-  const url = isDialFileId(parsed.baseUrl)
+  const url = isDialStoredFileId(parsed.baseUrl)
     ? resolvers.resolveDialFileDownloadUrl(parsed.baseUrl)
     : parsed.baseUrl;
   if (url == null) return null;

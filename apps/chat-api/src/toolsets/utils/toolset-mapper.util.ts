@@ -9,6 +9,7 @@ import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { DEFAULT_RESOURCE_VERSION } from '../../common/utils/resource-identity';
 import { getResourceDisplayNameFallback } from '../../common/utils/resource-name';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
+import { getVersionGroupId } from '../../common/utils/version-group';
 import { HIDDEN_FILE } from '../../constants/dial.constants';
 import type {
   DialToolsetAuthSettingsDto,
@@ -443,6 +444,7 @@ export const mapDialToolsetToDto = (raw: RawDialToolset): DialToolsetDto => ({
     raw.display_name ??
     getResourceDisplayNameFallback(raw.id),
   displayVersion: raw.displayVersion ?? raw.display_version,
+  versionGroupId: getVersionGroupId(raw.id),
   description: raw.description,
   iconUrl: raw.iconUrl ?? raw.icon_url,
   owner: raw.owner,

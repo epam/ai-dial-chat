@@ -43,6 +43,8 @@ const VALIDATION_ERROR_KEYS: Record<
     SkillSelectorI18nKeys.UnsupportedTooltipLabel,
   [ScheduledTaskValidationErrorCode.DescriptionTooLong]:
     EditorI18nKeys.FieldTooLong,
+  [ScheduledTaskValidationErrorCode.TimezoneInvalid]:
+    ScheduledTasksI18nKeys.CreateTimezoneInvalid,
   [ScheduledTaskValidationErrorCode.RunAtInvalid]:
     ScheduledTasksI18nKeys.CreateRunAtRequired,
   [ScheduledTaskValidationErrorCode.TimeInvalid]:

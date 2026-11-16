@@ -1,7 +1,7 @@
 import { createPublishDependencyIconResolver } from '@epam/ai-dial-chat-hooks';
 import { useMemo } from 'react';
 import { useDeployments } from '../../context/DeploymentsContext';
-import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import { useResolveCatalogIconUrl } from '../catalog/useResolveCatalogIconUrl';
 
 /**
  * Returns the lookup that gives a publish dependency the icon of the
@@ -11,6 +11,7 @@ import { resolveCatalogIconUrl } from '../../utils/icon-path';
  */
 export const usePublishDependencyIconResolver = () => {
   const { items: deployments, toolsets } = useDeployments();
+  const resolveCatalogIconUrl = useResolveCatalogIconUrl();
 
   return useMemo(
     () =>
@@ -19,6 +20,6 @@ export const usePublishDependencyIconResolver = () => {
         toolsets,
         resolveIconUrl: resolveCatalogIconUrl,
       }),
-    [deployments, toolsets],
+    [deployments, toolsets, resolveCatalogIconUrl],
   );
 };

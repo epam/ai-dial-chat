@@ -161,6 +161,51 @@ describe('useAttachmentAction', () => {
     expect(anchorClickSpy).toHaveBeenCalledOnce();
   });
 
+  /* Regression: a project file reference went to `window.open` as a relative
+   * URL, and a PDF one reached the canvas unresolved. */
+  it('downloads a project file referenceUrl through the host resolver', () => {
+    const resolveProjectUrl = vi.fn(
+      (_fileId: string) => '/api/v1/projects/p/files/notes.md',
+    );
+    const { result } = renderHook(() =>
+      useAttachmentAction({ resolveDownloadUrl: resolveProjectUrl }),
+    );
+
+    result.current.handleAttachmentClick(
+      makeAttachment({
+        url: undefined,
+        referenceUrl: 'projects/my-bucket/q4/files/context/notes.md',
+      }),
+    );
+
+    expect(resolveProjectUrl).toHaveBeenCalledWith(
+      'projects/my-bucket/q4/files/context/notes.md',
+    );
+    expect(anchorClickSpy).toHaveBeenCalledOnce();
+    expect(windowOpenSpy).not.toHaveBeenCalled();
+  });
+
+  it('opens a project PDF referenceUrl in the canvas at the resolved URL', () => {
+    const { result } = renderHook(() =>
+      useAttachmentAction({
+        resolveDownloadUrl: () => '/api/v1/projects/p/files/handbook.pdf',
+      }),
+    );
+
+    result.current.handleAttachmentClick(
+      makeAttachment({
+        url: undefined,
+        referenceUrl: 'projects/my-bucket/q4/files/context/handbook.pdf#page=3',
+      }),
+    );
+
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      expect.objectContaining({ url: '/api/v1/projects/p/files/handbook.pdf' }),
+      expect.any(String),
+    );
+    expect(windowOpenSpy).not.toHaveBeenCalled();
+  });
+
   it('opens an external referenceUrl in a new tab', () => {
     const { result } = renderHook(() =>
       useAttachmentAction({ resolveDownloadUrl }),
@@ -241,6 +286,37 @@ describe('useAttachmentAction', () => {
       expect(anchorClickSpy).not.toHaveBeenCalled();
     });
 
+    it('passes a project file id to the host resolver and downloads its URL', () => {
+      const resolveProjectUrl = vi.fn(
+        (_fileId: string) => '/api/v1/projects/p/artifacts/report.pdf',
+      );
+      const attachment = makeAttachment({
+        name: 'report.pdf',
+        url: 'projects/my-bucket/q4/files/artifacts/report.pdf',
+      });
+
+      const result = downloadAttachment(attachment, resolveProjectUrl);
+
+      expect(result).toBe(true);
+      expect(resolveProjectUrl).toHaveBeenCalledWith(
+        'projects/my-bucket/q4/files/artifacts/report.pdf',
+      );
+      expect(getDownloadAnchor()?.href).toContain(
+        '/api/v1/projects/p/artifacts/report.pdf',
+      );
+    });
+
+    it('returns false for a project file id the host cannot resolve', () => {
+      const attachment = makeAttachment({
+        url: 'projects/my-bucket/q4/files/tmp/x.csv',
+      });
+
+      const result = downloadAttachment(attachment, () => undefined);
+
+      expect(result).toBe(false);
+      expect(anchorClickSpy).not.toHaveBeenCalled();
+    });
+
     it('returns false and does not download for an attachment with no URL', () => {
       const attachment = makeAttachment({ url: undefined });
 
@@ -261,6 +337,16 @@ describe('useAttachmentAction', () => {
       expect(
         isDownloadableAttachment(
           makeAttachment({ url: undefined, data: btoa('# Report') }),
+        ),
+      ).toBe(true);
+    });
+
+    it('accepts a project file attachment', () => {
+      expect(
+        isDownloadableAttachment(
+          makeAttachment({
+            url: 'projects/my-bucket/q4/files/artifacts/run-1/data.csv',
+          }),
         ),
       ).toBe(true);
     });

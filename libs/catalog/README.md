@@ -563,10 +563,13 @@ the height of its parent and scrolls its rows inside that box, with the column
 header staying in view. Give the parent a definite height (a flex child with
 `min-h-0` works). Rows are a fixed 60 px.
 
-The table frame, header, row dividers and selected-row tint come from the
-`Grid` theme: the list renders the kit's `GridAppearance.Chat`, a borderless
-12px card with the MD shadow and inset row dividers. `styles.colors` (`ListViewColors`) covers cell content only:
-`starFilled`, `folderIcon`, `selectedRowCheckIcon`, `nameText` and `versionText`. With no items, the grid
+The table frame, header and row dividers come from the `Grid` theme: the list
+renders the kit's `GridAppearance.Chat`, a borderless 12px card with the MD
+shadow and inset row dividers. Outside multi-select, the selected row keeps its
+regular background and is framed with a 1.5px `--stroke-accent` border, the same
+outline-only look as a selected card. `styles.colors` (`ListViewColors`) covers cell content only:
+`starFilled`, `folderIcon`, `nameText` and `versionText` (`selectedRowCheckIcon`
+is deprecated and has no effect). With no items, the grid
 shows its own empty state from `emptyStateTitle` (default `'No results'`) and
 `emptyStateDescription`. The message is announced only with `isEmptyStateLive`
 (default `false`); `Catalog` sets it when a search or topic filter left the tab
@@ -1330,6 +1333,30 @@ and its mapping to `PublishDependency` stay with the host (see
   publishLabels={{
     dependenciesLabels: { title: t('catalog.publish.dependencies.title') },
   }}
+/>
+```
+
+### Versions history in the publish panel
+
+`publishVersionHistory` (on `DetailsPanel`) is the `VersionHistorySectionProps`
+object of `@epam/ai-dial-publish-panel` for the open item: rows, loading and error
+state, retry, labels and styles, already resolved by the host. The details panel
+forwards it to the publish panel unchanged, so the Versions history section is the
+last section of the panel; omitting it renders the panel as before. The panel adds no
+version input. `onPublishOpenChange(isOpen, item)` is called with `true` and the open item when
+the publish sub-view opens and with `false` when it closes or the panel unmounts, so
+the host can build the history for that item and load its statuses only while the
+sub-view is open. `Catalog` takes and forwards both props. The library builds no rows and
+calls no API; `useVersionHistory` in `@epam/ai-dial-chat-hooks` does both on the
+host side.
+
+```tsx
+<DetailsPanel
+  item={item}
+  isOpen
+  onClose={handleClose}
+  publishVersionHistory={history}
+  onPublishOpenChange={(isOpen) => setIsPublishOpen(isOpen)}
 />
 ```
 

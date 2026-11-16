@@ -107,6 +107,7 @@ const Harness = ({
     prompt: 'Original instructions',
     repeat: ScheduledTaskRepeat.Daily,
     time: '09:00',
+    timezone: 'UTC',
     modelId: 'model',
   });
   return (

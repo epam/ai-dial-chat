@@ -7,12 +7,9 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   CardShell,
-  DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
   ElementSize,
   FolderPath,
 } from '@epam/ai-dial-ui-kit';
-import { IconCheck } from '@tabler/icons-react';
 import {
   FC,
   KeyboardEvent,
@@ -94,7 +91,6 @@ export const Card: FC<CardProps> = ({
     '--cg-description-text': cardStyles?.colors?.textSecondary,
     '--cg-selected-border': cardStyles?.colors?.selectedBorder,
     '--cg-selected-bg': cardStyles?.colors?.selectedBackground,
-    '--cg-check-icon': cardStyles?.colors?.checkIcon,
     '--cg-footer-border': cardStyles?.colors?.footerBorder,
     '--cg-focus-outline': cardStyles?.colors?.focusOutline,
   });
@@ -158,18 +154,6 @@ export const Card: FC<CardProps> = ({
             style={cardStyles?.colors?.featuredChipStyle}
           />
         </div>
-      )}
-
-      {isSelected && (
-        <IconCheck
-          size={DIAL_ICON_SIZE.SM}
-          className={mergeClasses(
-            'absolute inset-e-3 top-3 shrink-0',
-            styles.checkIcon,
-          )}
-          aria-hidden
-          stroke={DIAL_KIT_ICON_STROKE}
-        />
       )}
 
       <AppIdentity

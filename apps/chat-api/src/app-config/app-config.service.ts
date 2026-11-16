@@ -116,6 +116,14 @@ export class AppConfigService {
       context.roles,
     );
 
+    /* THEMES_CONFIG_URL is often an in-cluster address, so only the
+     * explicitly public URL reaches the client. */
+    const themesBaseUrl =
+      this.configService
+        .get('THEMES_PUBLIC_URL', { infer: true })
+        ?.trim()
+        .replace(/\/+$/, '') || undefined;
+
     const response: ClientConfigResponseDto = {
       appId: context.appId,
       features,
@@ -128,6 +136,7 @@ export class AppConfigService {
         catalogCreationPermissions,
         modelCatalogAvailable:
           resolveModelCatalogApiKey(this.configService) != null,
+        ...(themesBaseUrl != null ? { themesBaseUrl } : {}),
       },
       metadata: {
         resolvedAt: new Date().toISOString(),

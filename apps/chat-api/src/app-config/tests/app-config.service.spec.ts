@@ -116,6 +116,48 @@ describe('AppConfigService', () => {
       );
     });
 
+    describe('themesBaseUrl', () => {
+      /* ConfigService resolves process.env first, so stub the keys to each
+       * case's value to keep the test hermetic. */
+      afterEach(() => {
+        vi.unstubAllEnvs();
+      });
+
+      it.each([
+        ['https://themes.example.com', 'https://themes.example.com'],
+        ['https://themes.example.com/', 'https://themes.example.com'],
+        [
+          ' https://themes.example.com/dial// ',
+          'https://themes.example.com/dial',
+        ],
+      ])('exposes THEMES_PUBLIC_URL %j as %j', async (configured, expected) => {
+        vi.stubEnv('THEMES_CONFIG_URL', 'http://dial-themes');
+        vi.stubEnv('THEMES_PUBLIC_URL', configured);
+        const { service } = makeService(async () => undefined);
+        const result = await service.getClientConfig(ctx);
+        expect(result.config.themesBaseUrl).toBe(expected);
+      });
+
+      it.each(['', '   '])(
+        'omits the field when THEMES_PUBLIC_URL is %j',
+        async (configured) => {
+          vi.stubEnv('THEMES_PUBLIC_URL', configured);
+          const { service } = makeService(async () => undefined);
+          const result = await service.getClientConfig(ctx);
+          expect(result.config).not.toHaveProperty('themesBaseUrl');
+        },
+      );
+
+      it('never exposes THEMES_CONFIG_URL, which is often an in-cluster address', async () => {
+        vi.stubEnv('THEMES_CONFIG_URL', 'http://dial-themes');
+        vi.stubEnv('THEMES_PUBLIC_URL', '');
+        const { service } = makeService(async () => undefined);
+        const result = await service.getClientConfig(ctx);
+        expect(result.config).not.toHaveProperty('themesBaseUrl');
+        expect(JSON.stringify(result)).not.toContain('dial-themes');
+      });
+    });
+
     describe('modelCatalogAvailable', () => {
       /* ConfigService resolves process.env first, so stub the key to each
        * case's value to keep the test hermetic. */
@@ -1696,6 +1738,7 @@ describe('AppConfigService', () => {
         'defaultDeploymentPinned',
         'visualizerSendMessages',
         'usageLimitsControl',
+        'orgUnitsEnabled',
       ]);
     });
 
