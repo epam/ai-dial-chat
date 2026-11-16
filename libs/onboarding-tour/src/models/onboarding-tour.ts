@@ -14,8 +14,6 @@ export interface OnboardingTourStep {
 export interface OnboardingCardColors {
   /** Hint card background. Defaults to `--bg-layer-raised`. */
   cardBackground?: string;
-  /** Hint card border. Defaults to `--stroke-tertiary`. */
-  cardBorder?: string;
   /** Hint card drop shadow color. Defaults to `--shadow-lg`. */
   cardShadow?: string;
   /** Card title text. Defaults to `--text-primary`. */
@@ -42,6 +40,8 @@ export interface OnboardingTourLabels {
 
 /** Color overrides of the `OnboardingTour` component. */
 export interface OnboardingTourColors extends OnboardingCardColors {
+  /** Dimming layer over the page behind the card. Defaults to `--bg-backdrop`. */
+  backdrop?: string;
   /** Step counter text. Defaults to `--text-tertiary`. */
   counterText?: string;
 }

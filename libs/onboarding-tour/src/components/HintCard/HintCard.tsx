@@ -62,7 +62,7 @@ export const HintCard: FC<HintCardProps> = ({
       className={mergeClasses(
         ONBOARDING_TOUR_CLASS.card,
         styles.card,
-        'flex flex-col gap-3 rounded-lg border p-4 outline-none',
+        'flex flex-col gap-3 rounded-lg p-4 outline-none',
         className,
       )}
     >
@@ -83,7 +83,7 @@ export const HintCard: FC<HintCardProps> = ({
         {onClose && closeLabel && (
           <CloseButton
             ariaLabel={closeLabel}
-            size={ElementSize.Standard}
+            size={ElementSize.Small}
             onClose={onClose}
           />
         )}

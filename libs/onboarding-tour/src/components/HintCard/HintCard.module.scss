@@ -1,8 +1,9 @@
 .card {
   background: var(--ot-card-bg, var(--bg-layer-raised, #fcfcfc));
-  border-color: var(--ot-card-border, var(--stroke-tertiary, #e0e6f0));
-  box-shadow: 1px 10px 25px 12px
-    var(--ot-card-shadow, var(--shadow-lg, #2764d914));
+  /* With no border, the shadow alone separates the card from the page. */
+  box-shadow:
+    0 2px 6px 0 var(--ot-card-shadow, var(--shadow-lg, #161b2d1f)),
+    0 12px 32px 0 var(--ot-card-shadow, var(--shadow-lg, #161b2d1f));
 }
 
 .counter {

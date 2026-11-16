@@ -28,11 +28,12 @@ import type { OnboardingTourProps } from '../../models/onboarding-tour';
 import { cardColorVars } from '../../utils/card-colors';
 import { hintCardMiddleware } from '../../utils/floating';
 import { HintCard } from '../HintCard/HintCard';
+import styles from './OnboardingTour.module.scss';
 
 const defaultStepCounter = (current: number, total: number) =>
   `Step ${current} of ${total}`;
 
-/** Walks through the steps one hint card at a time, each card next to its step's element; the page stays usable while a card is open. */
+/** Dims the page and walks through the steps one hint card at a time, each card next to its step's element; the page stays usable while a card is open. */
 export const OnboardingTour: FC<OnboardingTourProps> = ({
   steps,
   onFinish,
@@ -130,6 +131,7 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
 
   const cssVars = buildCssVars({
     ...cardColorVars(colors),
+    '--ot-backdrop': colors?.backdrop,
     '--ot-counter-text': colors?.counterText,
   });
 
@@ -145,6 +147,11 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
           className,
         )}
       >
+        {/* Visual only: like the layer, it lets clicks through to the page. */}
+        <div
+          aria-hidden
+          className={mergeClasses(styles.backdrop, 'absolute inset-0')}
+        />
         <FloatingFocusManager
           context={context}
           modal={false}
