@@ -116,9 +116,11 @@ export class AppConfigService {
       context.roles,
     );
 
+    /* THEMES_CONFIG_URL is often an in-cluster address, so only the
+     * explicitly public URL reaches the client. */
     const themesBaseUrl =
       this.configService
-        .get('THEMES_CONFIG_URL', { infer: true })
+        .get('THEMES_PUBLIC_URL', { infer: true })
         ?.trim()
         .replace(/\/+$/, '') || undefined;
 

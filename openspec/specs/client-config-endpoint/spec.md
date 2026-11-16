@@ -889,7 +889,7 @@ GET /api/v1/client-config?appId=chat-ui
 
 ### Requirement: client-config exposes the themes base URL
 
-`GET /api/v1/client-config` SHALL include `config.themesBaseUrl: string` when `THEMES_CONFIG_URL` is configured: the value trimmed, without trailing slashes. It SHALL be omitted when the variable is unset or blank. DIAL can list one theme icon in two forms — a theme-relative name (`gpt4.svg`) and an absolute URL on the themes host — and a browser fetches each URL separately, so the frontend uses this value to load both forms through one `GET /api/themes/icon` URL.
+`GET /api/v1/client-config` SHALL include `config.themesBaseUrl: string` when `THEMES_PUBLIC_URL` is configured: the value trimmed, without trailing slashes. It SHALL be omitted when the variable is unset or blank. `THEMES_CONFIG_URL` SHALL never be exposed: it is the address `chat-api` fetches themes from and is often in-cluster (for example `http://dial-themes`), so it does not match the public host that absolute `icon_url` values name. DIAL can list one theme icon in two forms — a theme-relative name (`gpt4.svg`) and an absolute URL on the themes host — and a browser fetches each URL separately, so the frontend uses this value to load both forms through one `GET /api/themes/icon` URL.
 
 - `AppConfigService.getClientConfig` (`apps/chat-api/src/app-config/app-config.service.ts`) SHALL assemble the field itself from `ConfigService`, as it does `modelCatalogAvailable`. `MappedClientConfig` SHALL omit it, and the mapper spec's list of service-assembled fields SHALL include it. It is appended last, so every existing field keeps its position, and a response without it keeps the previous key list.
 - `ClientConfigDto` SHALL declare it with `@ApiPropertyOptional({ type: String })`. The generated `ClientConfigDto` in `@epam/ai-dial-chat-api-client` gains `themesBaseUrl?: string`.
@@ -899,13 +899,13 @@ GET /api/v1/client-config?appId=chat-ui
 
 #### Scenario: Themes URL configured
 
-- **GIVEN** `THEMES_CONFIG_URL=https://themes.example.com/`
+- **GIVEN** `THEMES_CONFIG_URL=http://dial-themes` and `THEMES_PUBLIC_URL=https://themes.example.com/`
 - **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called
-- **THEN** `response.config.themesBaseUrl` is `https://themes.example.com`
+- **THEN** `response.config.themesBaseUrl` is `https://themes.example.com` and no field of the response contains `dial-themes`
 
 #### Scenario: Themes URL unset or blank
 
-- **GIVEN** `THEMES_CONFIG_URL` is unset, or is `"  "`
+- **GIVEN** `THEMES_PUBLIC_URL` is unset, or is `"  "`, whatever `THEMES_CONFIG_URL` is
 - **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called
 - **THEN** `response.config` has no `themesBaseUrl` key
 

@@ -1939,7 +1939,7 @@ export interface ClientConfigDto {
    */
   modelCatalogAvailable?: boolean;
   /**
-   * Base URL of the themes service (THEMES_CONFIG_URL without a trailing slash). Clients recognise absolute deployment icon URLs under it and load them through GET /api/themes/icon instead, so one icon is requested under one URL. Missing when THEMES_CONFIG_URL is not configured.
+   * Public base URL of the themes host (THEMES_PUBLIC_URL without a trailing slash). Clients recognise absolute deployment icon URLs under it and load them through GET /api/themes/icon instead, so one icon is requested under one URL. Missing when THEMES_PUBLIC_URL is not configured; the in-cluster THEMES_CONFIG_URL is never exposed.
    * @type {string}
    * @memberof ClientConfigDto
    */
