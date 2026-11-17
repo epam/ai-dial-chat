@@ -191,12 +191,25 @@ describe('managed configuration environment', () => {
     const config = validate({
       ...MANAGED,
       MANAGED_CONFIG_MODE: 'active',
-      MANAGED_CONFIG_ACTIVE_KEYS:
-        'welcomeScreen.description, features.usageLimitsControl',
+      MANAGED_CONFIG_ACTIVE_KEYS: ' onboarding.hints ',
     });
-    expect(config.MANAGED_CONFIG_ACTIVE_KEYS).toEqual([
-      'welcomeScreen.description',
-      'features.usageLimitsControl',
-    ]);
+    expect(config.MANAGED_CONFIG_ACTIVE_KEYS).toEqual(['onboarding.hints']);
+  });
+
+  /* Schema 1.0.0 manages only the onboarding tour; these keys were managed
+   * before it and return in schema 1.1.0. */
+  it.each([
+    'welcomeScreen.description',
+    'usageLimits.spendingLimitsMode',
+    'features.usageLimitsControl',
+  ])('rejects the eligible but unmanaged key %s in the active list', (key) => {
+    expectFailure(
+      {
+        ...MANAGED,
+        MANAGED_CONFIG_MODE: 'active',
+        MANAGED_CONFIG_ACTIVE_KEYS: `onboarding.hints,${key}`,
+      },
+      `MANAGED_CONFIG_ACTIVE_KEYS lists "${key}", which is not a managed key`,
+    );
   });
 });

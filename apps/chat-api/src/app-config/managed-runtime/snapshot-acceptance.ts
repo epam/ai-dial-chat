@@ -1,6 +1,5 @@
 import Ajv2020, { type ValidateFunction } from 'ajv/dist/2020';
 import chatSchemaArtifact100 from '../../../managed-config-schema/ai-dial-chat-1.0.0.json';
-import chatSchemaArtifact110 from '../../../managed-config-schema/ai-dial-chat-1.1.0.json';
 import {
   canonicalByteLength,
   canonicalSha256,
@@ -32,7 +31,6 @@ interface SchemaArtifact {
  */
 const BUNDLED_ARTIFACTS: readonly SchemaArtifact[] = [
   chatSchemaArtifact100 as SchemaArtifact,
-  chatSchemaArtifact110 as SchemaArtifact,
 ];
 
 /** Validates a `ai-dial-chat` payload against one exact supported schema version. */

@@ -710,8 +710,41 @@ describe('AppConfigController managed configuration (integration)', () => {
     MANAGED_CONFIG_API_KEY: 'reader-key',
     MANAGED_CONFIG_MAX_STALENESS_SECONDS: '900',
   };
+  /* Published order is the tour order: it is neither sorted nor grouped by
+   * target. The repeated id is valid under the schema; Chat keeps the first. */
+  const TOUR = [
+    {
+      id: 'tour.composer',
+      target: 'conversation-input',
+      title: '  Ask anything  ',
+      description: 'Type a question or attach files.',
+    },
+    { id: 'tour.new-chat', target: 'new-chat', title: 'Start a new chat' },
+    { id: 'tour.composer', target: 'catalog', title: 'Repeated id' },
+    { id: 'tour.catalog', target: 'catalog', title: 'Browse the catalog' },
+  ];
+  const NORMALIZED_TOUR = [
+    {
+      id: 'tour.composer',
+      target: 'conversation-input',
+      title: 'Ask anything',
+      description: 'Type a question or attach files.',
+    },
+    {
+      id: 'tour.new-chat',
+      target: 'new-chat',
+      title: 'Start a new chat',
+      description: null,
+    },
+    {
+      id: 'tour.catalog',
+      target: 'catalog',
+      title: 'Browse the catalog',
+      description: null,
+    },
+  ];
   const CHAT_PAYLOAD = {
-    config: { 'welcomeScreen.description': 'Hello from Studio' },
+    config: { 'onboarding.hints': TOUR },
     features: {},
   };
   const LAUNCHPAD_BODY = snapshotBody({
@@ -813,7 +846,7 @@ describe('AppConfigController managed configuration (integration)', () => {
     expect(withoutTime(shadowResponse.body)).toEqual(
       withoutTime(offResponse.body),
     );
-    expect(shadowResponse.body.config.welcomeScreenDescription).toBeNull();
+    expect(shadowResponse.body.config.onboardingHints).toEqual([]);
     expect(shadowResponse.body).not.toHaveProperty('appConfig');
     expect(shadowResponse.body.metadata).not.toHaveProperty('managed');
     expect(shadowResponse.body.metadata).not.toHaveProperty('nextRefreshAt');
@@ -825,7 +858,7 @@ describe('AppConfigController managed configuration (integration)', () => {
       {
         ...MANAGED,
         MANAGED_CONFIG_MODE: 'active',
-        MANAGED_CONFIG_ACTIVE_KEYS: 'welcomeScreen.description',
+        MANAGED_CONFIG_ACTIVE_KEYS: 'onboarding.hints',
       },
       respondChat,
     );
@@ -835,9 +868,7 @@ describe('AppConfigController managed configuration (integration)', () => {
       .expect(200);
 
     expect(response.headers['cache-control']).toBe('private, no-store');
-    expect(response.body.config.welcomeScreenDescription).toBe(
-      'Hello from Studio',
-    );
+    expect(response.body.config.onboardingHints).toEqual(NORMALIZED_TOUR);
     expect(response.body).not.toHaveProperty('appConfig');
     expect(response.body.metadata).toEqual({
       resolvedAt: '2026-11-20T10:00:00.000Z',
@@ -859,20 +890,53 @@ describe('AppConfigController managed configuration (integration)', () => {
     ]);
   });
 
+  it('delivers the published tour in order, normalized like the environment value', async () => {
+    const fromEnvironment = await buildManagedApp({
+      ONBOARDING_HINTS: JSON.stringify(TOUR),
+    });
+    const environmentResponse = await request(fromEnvironment.server)
+      .get('/v1/client-config?appId=ai-dial-chat')
+      .expect(200);
+    runtime?.onModuleDestroy();
+    await app?.close();
+
+    const managed = await buildManagedApp(
+      {
+        ...MANAGED,
+        MANAGED_CONFIG_MODE: 'active',
+        MANAGED_CONFIG_ACTIVE_KEYS: 'onboarding.hints',
+      },
+      respondChat,
+    );
+    const managedResponse = await request(managed.server)
+      .get('/v1/client-config?appId=ai-dial-chat')
+      .expect(200);
+
+    expect(environmentResponse.body.config.onboardingHints).toEqual(
+      NORMALIZED_TOUR,
+    );
+    expect(managedResponse.body.config.onboardingHints).toEqual(
+      environmentResponse.body.config.onboardingHints,
+    );
+  });
+
   it('keeps an explicit environment value over the managed one', async () => {
+    const local = [{ id: 'local', target: 'navigation', title: 'Local' }];
     const { server } = await buildManagedApp(
       {
         ...MANAGED,
         MANAGED_CONFIG_MODE: 'active',
-        MANAGED_CONFIG_ACTIVE_KEYS: 'welcomeScreen.description',
-        WELCOME_SCREEN_DESCRIPTION: 'Local',
+        MANAGED_CONFIG_ACTIVE_KEYS: 'onboarding.hints',
+        ONBOARDING_HINTS: JSON.stringify(local),
       },
       respondChat,
     );
     const response = await request(server)
       .get('/v1/client-config?appId=ai-dial-chat')
       .expect(200);
-    expect(response.body.config.welcomeScreenDescription).toBe('Local');
+    expect(response.body.config.onboardingHints).toEqual([
+      { ...local[0], description: null },
+    ]);
   });
 
   it('delivers a foreign payload unchanged, only to its own identifier', async () => {
@@ -906,25 +970,20 @@ describe('AppConfigController managed configuration (integration)', () => {
       {
         ...MANAGED,
         MANAGED_CONFIG_MODE: 'active',
-        MANAGED_CONFIG_ACTIVE_KEYS:
-          'welcomeScreen.description,features.usageLimitsControl',
+        MANAGED_CONFIG_ACTIVE_KEYS: 'onboarding.hints',
       },
       (fake) => {
-        fake.respondAlways(
-          'chat-dev',
-          candidate({
-            payload: {
-              config: { 'welcomeScreen.description': 'Chat value' },
-              features: { 'features.usageLimitsControl': { enabled: true } },
-            },
-          }),
-        );
+        fake.respondAlways('chat-dev', candidate({ payload: CHAT_PAYLOAD }));
         fake.respondAlways('launchpad-dev', {
           kind: RuntimeReadKind.Candidate,
           body: {
             ...LAUNCHPAD_BODY,
             payload: {
-              config: { 'welcomeScreen.description': 'Launchpad value' },
+              config: {
+                'onboarding.hints': [
+                  { id: 'lp', target: 'navigation', title: 'Launchpad value' },
+                ],
+              },
               features: {},
             },
           },
@@ -939,12 +998,12 @@ describe('AppConfigController managed configuration (integration)', () => {
       .get('/v1/client-config?appId=ai-dial-chat')
       .expect(200);
 
-    expect(chat.body.config.welcomeScreenDescription).toBe('Chat value');
-    expect(chat.body.features.usageLimitsControl).toBe(true);
-    expect(launchpad.body.config.welcomeScreenDescription).toBeNull();
-    expect(launchpad.body.features.usageLimitsControl).toBe(false);
+    expect(chat.body.config.onboardingHints).toEqual(NORMALIZED_TOUR);
+    expect(launchpad.body.config.onboardingHints).toEqual([]);
     expect(launchpad.body.appConfig.payload.config).toEqual({
-      'welcomeScreen.description': 'Launchpad value',
+      'onboarding.hints': [
+        { id: 'lp', target: 'navigation', title: 'Launchpad value' },
+      ],
     });
   });
 

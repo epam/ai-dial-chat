@@ -15,133 +15,133 @@
         "additionalProperties": false,
         "title": "Configuration",
         "properties": {
-          "announcement.title": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200,
-            "pattern": "\\S",
-            "title": "Announcement title",
-            "description": "Plain-text heading at the start of the announcement banner. Never rendered as markup.",
-            "dial:meta": {
-              "dial:propertyOrder": 10
-            }
-          },
-          "announcement.description": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 2000,
-            "pattern": "\\S",
-            "title": "Announcement description",
-            "description": "Supporting banner copy. Sanitized to a safe HTML subset before it reaches browsers.",
-            "dial:meta": {
-              "dial:propertyOrder": 11
-            }
-          },
-          "announcement.items": {
+          "onboarding.hints": {
             "type": "array",
-            "maxItems": 10,
+            "maxItems": 50,
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["title"],
+              "required": ["id", "target", "title"],
               "properties": {
-                "title": {
+                "id": {
                   "type": "string",
                   "minLength": 1,
-                  "maxLength": 200,
-                  "pattern": "\\S",
-                  "title": "Title",
+                  "maxLength": 64,
+                  "pattern": "^[A-Za-z0-9._-]{1,64}$",
+                  "title": "ID",
+                  "description": "Letters, digits, dot, underscore or hyphen, at most 64. Each browser remembers the ids it has shown, so a new id shows the hint again to everyone; editing the text or the order does not. When two hints share an id, only the first is shown.",
                   "dial:meta": {
                     "dial:propertyOrder": 1
                   }
                 },
-                "description": {
+                "target": {
                   "type": "string",
-                  "minLength": 1,
-                  "maxLength": 2000,
-                  "pattern": "\\S",
-                  "title": "Description",
-                  "description": "Sanitized to a safe HTML subset.",
+                  "enum": [
+                    "new-chat",
+                    "navigation",
+                    "projects",
+                    "scheduled-tasks",
+                    "catalog",
+                    "file-manager",
+                    "conversation-input",
+                    "add-attachment",
+                    "send-message",
+                    "model-selector",
+                    "voice-input",
+                    "conversation-starters",
+                    "conversation-messages",
+                    "sources-panel-toggle",
+                    "sidebar-toggle",
+                    "chats",
+                    "chats-search",
+                    "chats-filter",
+                    "user-menu",
+                    "usage",
+                    "projects-create",
+                    "projects-search",
+                    "project-chats",
+                    "project-details",
+                    "scheduled-tasks-create",
+                    "scheduled-tasks-search",
+                    "settings-sections",
+                    "catalog-create",
+                    "catalog-search",
+                    "catalog-tabs",
+                    "catalog-view-mode",
+                    "catalog-filter",
+                    "catalog-sort",
+                    "catalog-card",
+                    "catalog-favorite",
+                    "message-actions",
+                    "catalog-details",
+                    "catalog-details-use-in-chat",
+                    "catalog-details-manage",
+                    "catalog-details-credentials",
+                    "catalog-details-share",
+                    "catalog-details-publish",
+                    "catalog-details-tabs",
+                    "project-form-submit",
+                    "project-form-context",
+                    "project-view-edit",
+                    "project-view-more-actions",
+                    "project-view-pin",
+                    "project-view-publish",
+                    "project-context-search",
+                    "projects-sort",
+                    "scheduled-task-form-submit",
+                    "scheduled-task-configuration",
+                    "scheduled-task-repeat",
+                    "scheduled-task-model",
+                    "scheduled-task-start-now",
+                    "scheduled-task-edit",
+                    "scheduled-task-history",
+                    "scheduled-task-active",
+                    "scheduled-tasks-sort",
+                    "settings-extensions",
+                    "settings-extensions-log-in",
+                    "settings-theme",
+                    "settings-language",
+                    "duplicate-shared-chat",
+                    "sources-panel",
+                    "sources-download-all",
+                    "project-chat-back",
+                    "tools-selector",
+                    "editor-setup",
+                    "active-chat",
+                    "active-chat-actions"
+                  ],
+                  "title": "Target",
+                  "description": "The on-screen element the hint points at. The tour skips a hint whose element is not on the current page and shows it on a page that renders it.",
                   "dial:meta": {
                     "dial:propertyOrder": 2
                   }
                 },
-                "link": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": ["label", "href"],
-                  "title": "Link",
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100,
+                  "pattern": "\\S",
+                  "title": "Title",
                   "dial:meta": {
                     "dial:propertyOrder": 3
-                  },
-                  "properties": {
-                    "label": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 100,
-                      "pattern": "\\S",
-                      "title": "Label",
-                      "dial:meta": {
-                        "dial:propertyOrder": 1
-                      }
-                    },
-                    "href": {
-                      "type": "string",
-                      "maxLength": 2048,
-                      "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://[^\\s]+$",
-                      "title": "URL",
-                      "description": "Absolute http or https URL.",
-                      "dial:meta": {
-                        "dial:propertyOrder": 2
-                      }
-                    }
+                  }
+                },
+                "description": {
+                  "type": "string",
+                  "maxLength": 500,
+                  "title": "Description",
+                  "description": "Optional plain text below the title.",
+                  "dial:meta": {
+                    "dial:propertyOrder": 4
                   }
                 }
               }
             },
             "default": [],
-            "title": "Announcements",
-            "description": "Entries behind the banner's \"+N announcements\" pill, at most 10.",
+            "title": "Onboarding tour",
+            "description": "Hints shown one at a time, in this order, to users who have not seen them. Each points at an on-screen element; at most 50. A hint whose id repeats an earlier one is dropped.",
             "dial:meta": {
-              "dial:propertyOrder": 12
-            }
-          },
-          "welcomeScreen.description": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 1000,
-            "pattern": "\\S",
-            "title": "Welcome text",
-            "description": "Plain-text copy below the greeting on the new-chat screen. Never rendered as markup.",
-            "dial:meta": {
-              "dial:propertyOrder": 20
-            }
-          },
-          "fileManager.availableTabs": {
-            "type": "array",
-            "minItems": 1,
-            "maxItems": 4,
-            "uniqueItems": true,
-            "items": {
-              "type": "string",
-              "enum": ["all", "my_files", "shared", "organization"]
-            },
-            "default": ["all", "my_files", "shared", "organization"],
-            "title": "File Manager tabs",
-            "description": "File Manager tabs shown to users, in order.",
-            "dial:meta": {
-              "dial:propertyOrder": 30
-            }
-          },
-          "usageLimits.warningThresholdPercent": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 99,
-            "default": 75,
-            "title": "Usage warning threshold (%)",
-            "description": "Percentage of a capped token or cost limit at which the composer shows its usage banner.",
-            "dial:meta": {
-              "dial:propertyOrder": 40
+              "dial:propertyOrder": 15
             }
           }
         },
@@ -153,16 +153,7 @@
         "type": "object",
         "additionalProperties": false,
         "title": "Features",
-        "properties": {
-          "features.usageLimitsControl": {
-            "$ref": "#/$defs/featureState",
-            "title": "Usage-limits control",
-            "description": "Shows the token and cost usage-limits control next to the model selector.",
-            "dial:meta": {
-              "dial:propertyOrder": 1
-            }
-          }
-        },
+        "properties": {},
         "dial:meta": {
           "dial:propertyOrder": 2
         }

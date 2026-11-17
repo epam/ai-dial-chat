@@ -21,7 +21,8 @@ control, described in
 The one provider-level difference is that a blank managed text from ENV
 resolves to `undefined` instead of `""` (see
 [Related environment resolution](#related-environment-resolution)); the
-client-config field is `null` either way. A managed classification only makes
+client-config field is `null` either way. Schema 1.0.0 manages no text key,
+so this difference applies to no key today. A managed classification only makes
 a key eligible for `MANAGED_CONFIG_ACTIVE_KEYS`; it is never permission to read.
 
 The schema's root description tells operators that a deployment applies the
@@ -56,26 +57,29 @@ or enforces, even when the deployment already degrades safely without it:
 | `derived`                | Computed from another local value                        | `features.footer`                                                                                                                               |
 | `opaque`                 | Client-owned JSON with no declared schema                | `customVariables`                                                                                                                               |
 
-Schema version 1.0.0 manages seven keys: `announcement.title`,
-`announcement.description`, `announcement.items`, `welcomeScreen.description`,
-`fileManager.availableTabs`, `usageLimits.warningThresholdPercent` and the
-feature `features.usageLimitsControl`. Schema version 1.1.0 adds
-`usageLimits.spendingLimitsMode` (`off`, `shadow` or `enforce`), so it manages
-eight keys. Thirty-one keys are local-only, and the other 12 are eligible but
-unmanaged.
+Schema version 1.0.0 manages one key, the onboarding tour `onboarding.hints`
+(see [The onboarding tour](#the-onboarding-tour)), and no feature. Thirty-one
+keys are local-only, and the other 19 are eligible but unmanaged.
 
 ### Rollout
 
-Each wave is a separate change with its own schema version.
+Each step is a separate change with its own schema version. The first
+schema an `ai-dial-chat` instance receives manages only the onboarding tour;
+the keys managed before it come back in the next version.
 
-| Wave | Keys                                                                                                                     | Needs first                                                                                                                                             |
-| ---- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0    | `severity` on `announcement.items` entries                                                                               | Nothing; it unblocks activating `announcement.items`                                                                                                    |
-| 1    | `ui.celebrationsEnabledByDefault`, `ui.activeEventId`, `mcpApps.theme`, `onboarding.hints`                               | Nothing                                                                                                                                                 |
-| 2    | `features.projectsEnabled`                                                                                               | `features.usageLimitsControl` active on a deployment, proving the managed feature path                                                                  |
-| 3    | `footer.html`; `uiFeatures.enabledUiFeatures`; `deployments.defaultDeploymentId` with `features.defaultDeploymentPinned` | Footer: `features.footer` derived from the effective `footer.html`, decided together with `announcement.html`. The deployment pair moves in one version |
+| Schema | Keys                                                                                                                                                                                                                                                                                   | Needs first                                                                                                                                             |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0.0  | `onboarding.hints`                                                                                                                                                                                                                                                                     | Nothing                                                                                                                                                 |
+| 1.1.0  | `announcement.title`, `announcement.description`, `announcement.items` with `severity` on its entries, `welcomeScreen.description`, `fileManager.availableTabs`, `usageLimits.warningThresholdPercent`, `usageLimits.spendingLimitsMode` and the feature `features.usageLimitsControl` | Nothing. Activating `features.usageLimitsControl` needs Config Studio to enforce `calendar_date` and `window_order`                                     |
+| Next   | `ui.celebrationsEnabledByDefault`, `ui.activeEventId`, `mcpApps.theme`                                                                                                                                                                                                                 | Nothing                                                                                                                                                 |
+| Next   | `features.projectsEnabled`                                                                                                                                                                                                                                                             | `features.usageLimitsControl` active on a deployment, proving the managed feature path                                                                  |
+| Next   | `footer.html`; `uiFeatures.enabledUiFeatures`; `deployments.defaultDeploymentId` with `features.defaultDeploymentPinned`                                                                                                                                                               | Footer: `features.footer` derived from the effective `footer.html`, decided together with `announcement.html`. The deployment pair moves in one version |
 
-The two wave 3 rules for the footer and the deployment pair are contract
+The keys of 1.1.0 were managed by a 1.0.0 and a 1.1.0 that no Chat release or
+Config Studio instance ever carried; both were replaced before the first
+upload.
+
+The two rules for the footer and the deployment pair are contract
 requirements, and registry tests fail when a version breaks them. The other
 "needs first" entries are delivery order, not code conditions.
 
@@ -109,8 +113,38 @@ still does not activate it (see
    `apps/chat-api/src/app-config/tests/managed-config/fixtures/`.
 
 The managed bounds apply only to managed admission. Environment variables keep
-their existing fail-open parsing: a 300-character `ANNOUNCEMENT_TITLE` still
-works. Moving a key from ENV to managed values means fitting its bounds.
+their existing fail-open parsing: `ONBOARDING_HINTS` with 60 hints or a
+300-character title still works. Moving a key from ENV to managed values means
+fitting its bounds.
+
+### The onboarding tour
+
+`onboarding.hints` is the first-visit onboarding tour that `ONBOARDING_HINTS`
+configures (see the variable in
+[`apps/chat-api/README.md`](../apps/chat-api/README.md#environment-variables)).
+Its managed value mirrors `normalizeOnboardingHints`
+(`apps/chat-api/src/app-config/onboarding-hints.normalizer.ts`):
+
+| Member        | Rule                                                                                        |
+| ------------- | ------------------------------------------------------------------------------------------- |
+| the array     | At most 50 hints. The order is the tour order.                                              |
+| a hint        | `{ id, target, title, description? }`; any other member is rejected                         |
+| `id`          | Required; `^[A-Za-z0-9._-]{1,64}$`                                                          |
+| `target`      | Required; one of the anchors in [onboarding anchors](onboarding-anchors.md), a plain `enum` |
+| `title`       | Required; 1–100 characters, not only whitespace                                             |
+| `description` | Optional; at most 500 characters                                                            |
+
+- **Repeated ids.** JSON Schema cannot require distinct ids across the hints,
+  so the schema accepts a repeated id. Chat keeps the first hint with an id
+  and drops later ones with a warning, exactly as for `ONBOARDING_HINTS`.
+- **Seen hints are remembered per browser.** The browser stores the ids it
+  has shown in `localStorage`. A new or changed id shows that hint again to
+  every user; editing a title or description, or reordering hints, does not.
+- **A new anchor needs a new schema version.** The `target` enum is generated
+  from `OnboardingHintTarget`. Adding an anchor changes the generated schema,
+  so the artifact test fails until `MANAGED_CONFIG_SCHEMA_VERSION` gets a
+  MINOR bump, and Config Studio editors can use the anchor only once that
+  version is uploaded. Until then only `ONBOARDING_HINTS` can point at it.
 
 ## Payload contract
 
@@ -120,20 +154,30 @@ undeclared is rejected.
 
 ```json
 {
-  "config": { "usageLimits.warningThresholdPercent": 80 },
-  "features": {
-    "features.usageLimitsControl": {
-      "enabled": true,
-      "availability": { "startsAt": "2026-11-01T08:00:00Z" },
-      "targeting": { "roles": ["beta-tester"] }
-    }
-  }
+  "config": {
+    "onboarding.hints": [
+      {
+        "id": "tour.composer",
+        "target": "conversation-input",
+        "title": "Ask anything",
+        "description": "Type a question or attach files."
+      },
+      {
+        "id": "tour.new-chat",
+        "target": "new-chat",
+        "title": "Start a new chat"
+      }
+    ]
+  },
+  "features": {}
 }
 ```
 
 - A config value is a plain JSON value, never `null`. To fall back to the
   registry default, omit the key.
-- A feature state is `{ enabled, availability?, targeting? }`.
+- A feature state is `{ enabled, availability?, targeting? }`. Schema 1.0.0
+  exports no feature, but it exports this state as `$defs/featureState`, and
+  every feature of a later version references it.
   - `availability` has at least one of `startsAt` (inclusive) and `endsAt`
     (exclusive). Each is `YYYY-MM-DDTHH:MM:SS[.fff]Z`, in UTC only.
   - `targeting.roles` holds 1–50 distinct roles, each 1–128 characters with no
@@ -156,20 +200,14 @@ without the client-supplied `operationId`. `index.json` sits next to it:
 {
   "format": "dial-managed-config-schema-index@1",
   "appId": "ai-dial-chat",
-  "current": "1.1.0",
-  "supported": ["1.0.0", "1.1.0"],
+  "current": "1.0.0",
+  "supported": ["1.0.0"],
   "versions": [
     {
       "schemaVersion": "1.0.0",
       "file": "ai-dial-chat-1.0.0.json",
-      "schemaSha256": "9e2155b7857adf6cc51e8966ad02ebf79953c5a87875eaea929e384c02b55dd6",
-      "canonicalBytes": 5161
-    },
-    {
-      "schemaVersion": "1.1.0",
-      "file": "ai-dial-chat-1.1.0.json",
-      "schemaSha256": "bfbad5396a9ef14fdcb39df44f9dd876b7ad3a2f7abf33bbf40bd694284711d8",
-      "canonicalBytes": 5427
+      "schemaSha256": "edbe9267f6663eb7768ae7e2033e20b0b3c842994224a774968d348e3b9be71f",
+      "canonicalBytes": 5259
     }
   ]
 }
@@ -384,14 +422,14 @@ read independently, so for one interval they may serve different revisions.
 3. Switch to `shadow`; watch `dial_chat_managed_config_state` and the shadow
    comparisons. Remove ENV variables reported as `env_shadowed` for keys about
    to be activated.
-4. Switch to `active` with the first keys: `welcomeScreen.description`,
-   `usageLimits.warningThresholdPercent`, `fileManager.availableTabs`,
-   `announcement.title`, `announcement.description`.
-5. Add `announcement.items` only after a schema with announcement `severity`
-   is exported and supported. Add `features.usageLimitsControl` only after
-   Config Studio enforces `calendar_date` and `window_order`; until then a
-   publication with an invalid window is rejected here as a whole and the
-   instance goes `degraded`, then `stale`.
+4. Switch to `active` with `MANAGED_CONFIG_ACTIVE_KEYS=onboarding.hints`,
+   after removing `ONBOARDING_HINTS`. Publish the current tour first, so
+   shadow comparison reports `equal` before the switch.
+5. With schema 1.1.0, add its texts and lists, then
+   `features.usageLimitsControl` only after Config Studio enforces
+   `calendar_date` and `window_order`; until then a publication with an
+   invalid window is rejected here as a whole and the instance goes
+   `degraded`, then `stale`.
 
 ## Not authorized by this contract
 

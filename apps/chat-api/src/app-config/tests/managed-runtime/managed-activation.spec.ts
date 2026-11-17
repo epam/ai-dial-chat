@@ -15,7 +15,6 @@ import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { FeatureKey } from '../../feature-flags/feature-key.enum';
 import { FeatureGuard } from '../../feature-flags/feature.guard';
 import { canonicalSha256 } from '../../managed-config/canonical-json';
-import { PINNED_MANAGED_CONFIG_SCHEMA_SHA256 } from '../../managed-config/managed-config.constants';
 import { ManagedConfigProvider } from '../../managed-runtime/managed-config.provider';
 import { ManagedRuntimeService } from '../../managed-runtime/managed-runtime.service';
 import {
@@ -29,6 +28,26 @@ import {
   type FakeClock,
   type FakeReader,
 } from './managed-runtime.fixtures';
+
+/* Schema 1.0.0 manages only onboarding.hints. These tests exercise managed
+ * features and several managed config keys, so they run on the test-only
+ * contract (see test-managed-contract.fixtures.ts). */
+vi.mock(
+  '../../config-registry/config-registry.constants',
+  async (importOriginal) =>
+    (
+      await import('../managed-config/test-managed-contract.fixtures')
+    ).withTestManagedRegistry(await importOriginal()),
+);
+vi.mock('../../managed-runtime/snapshot-acceptance', async (importOriginal) =>
+  (
+    await import('../managed-config/test-managed-contract.fixtures')
+  ).withTestManagedValidators(
+    await importOriginal(),
+    (await import('../../config-registry/config-registry.constants'))
+      .CONFIG_DEFINITIONS,
+  ),
+);
 
 const REQUIRED = {
   DIAL_CORE_URL: 'https://dial-core.example.com',
@@ -245,48 +264,18 @@ describe('managed configuration activation', () => {
       );
     });
 
-    describe('spending limits mode (schema 1.1.0)', () => {
-      const payload = {
-        config: { 'usageLimits.spendingLimitsMode': 'enforce' },
-        features: {},
-      };
-      const modeStack = (raw: Record<string, unknown> = {}) =>
-        buildStack(
-          { ...activeKeys('usageLimits.spendingLimitsMode'), ...raw },
-          (fake) =>
-            fake.respondAlways(
-              'chat-dev',
-              candidate({
-                revisionId: 'r1',
-                schemaVersion: '1.1.0',
-                schemaSha256: PINNED_MANAGED_CONFIG_SCHEMA_SHA256['1.1.0'],
-                sha256: canonicalSha256({ revisionId: 'r1', payload }),
-                payload,
-              }),
-            ),
-        );
-
-      it('applies the managed mode when the environment is silent', async () => {
-        const { service } = await modeStack();
-        const response = await service.getClientConfig(anonymous);
-        expect(response.config.spendingLimitsMode).toBe('enforce');
-      });
-
-      it('keeps an explicit environment mode', async () => {
-        const { service } = await modeStack({ SPENDING_LIMITS_MODE: 'shadow' });
-        const response = await service.getClientConfig(anonymous);
-        expect(response.config.spendingLimitsMode).toBe('shadow');
-      });
-    });
-
     it('falls back to the default and reports a stale snapshot', async () => {
       const { service, clock } = await buildStack(
-        activeKeys('usageLimits.warningThresholdPercent'),
+        activeKeys('onboarding.hints'),
         (fake) => {
           fake.respond(
             'chat-dev',
             published('r1', {
-              config: { 'usageLimits.warningThresholdPercent': 80 },
+              config: {
+                'onboarding.hints': [
+                  { id: 'tour.start', target: 'new-chat', title: 'Start' },
+                ],
+              },
               features: {},
             }),
           );
@@ -294,13 +283,19 @@ describe('managed configuration activation', () => {
         },
       );
       expect(
-        (await service.getClientConfig(anonymous)).config
-          .usageLimitsWarningThresholdPercent,
-      ).toBe(80);
+        (await service.getClientConfig(anonymous)).config.onboardingHints,
+      ).toEqual([
+        {
+          id: 'tour.start',
+          target: 'new-chat',
+          title: 'Start',
+          description: null,
+        },
+      ]);
 
       await clock.advance(900_001);
       const response = await service.getClientConfig(anonymous);
-      expect(response.config.usageLimitsWarningThresholdPercent).toBe(75);
+      expect(response.config.onboardingHints).toEqual([]);
       expect(response.metadata?.managed).toEqual({
         instanceId: 'chat-dev',
         state: 'stale',
@@ -635,6 +630,27 @@ describe('managed configuration activation', () => {
       ).resolves.toBe(true);
       const response = await service.getClientConfig(anonymous);
       expect(response.features['usageLimitsControl']).toBe(true);
+      expect(response.metadata?.managed).toBeUndefined();
+    });
+
+    it('keeps the environment tour while ai-dial-chat has no mapped instance', async () => {
+      const tour = [{ id: 'local', target: 'navigation', title: 'Local' }];
+      const { service } = await buildStack(
+        {
+          ...activeKeys('onboarding.hints'),
+          CLIENT_CONFIG_APP_IDS: 'ai-dial-chat,launchpad',
+          MANAGED_CONFIG_INSTANCES: 'launchpad=launchpad-dev',
+          ONBOARDING_HINTS: JSON.stringify(tour),
+        },
+        (fake) =>
+          fake.respondAlways('launchpad-dev', {
+            kind: RuntimeReadKind.NotPublished,
+          }),
+      );
+      const response = await service.getClientConfig(anonymous);
+      expect(response.config.onboardingHints).toEqual([
+        { ...tour[0], description: null },
+      ]);
       expect(response.metadata?.managed).toBeUndefined();
     });
 

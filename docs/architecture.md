@@ -320,7 +320,7 @@ displayed boundary and re-fetches when it elapses, so post-reset figures always 
 DIAL Core response — nothing is ever zeroed locally.
 DIAL Core spending budgets reach the tab as `budgets[]` and `costObject` on the same response.
 DIAL Core does not report its `spendingLimits.mode`, so the operator declares it with
-`SPENDING_LIMITS_MODE` (client config `spendingLimitsMode`, also a managed key); the client treats
+`SPENDING_LIMITS_MODE` (client config `spendingLimitsMode`); the client treats
 it as `off` while the response carries no `costObject`. In `off` the tab is unchanged. In `shadow`
 the charged budgets (those in `costObject`) are added below the cards as not yet enforced. In
 `enforce` only the budgets are shown: the role cost cards are hidden, and the

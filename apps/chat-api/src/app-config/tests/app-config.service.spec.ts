@@ -2170,6 +2170,8 @@ describe('AppConfigService', () => {
       [
         'managed keys set through ENV',
         {
+          ONBOARDING_HINTS:
+            '[{"id":"a","target":"new-chat","title":"Start"},{"id":"a","target":"catalog","title":"Again"}]',
           ANNOUNCEMENT_TITLE: 'Maintenance',
           ANNOUNCEMENT_DESCRIPTION: 'Tonight',
           ANNOUNCEMENTS: '[{"title":"A"}]',
@@ -2192,7 +2194,7 @@ describe('AppConfigService', () => {
         },
       ],
       [
-        'blank managed text set through ENV',
+        'blank texts set through ENV',
         {
           ANNOUNCEMENT_TITLE: '',
           ANNOUNCEMENT_DESCRIPTION: '   ',
@@ -2208,10 +2210,27 @@ describe('AppConfigService', () => {
           snapshotResolution(env),
         );
 
-        expect(CONFIG_DEFINITIONS.filter(isManagedKey)).toHaveLength(8);
+        expect(CONFIG_DEFINITIONS.filter(isManagedKey)).toHaveLength(1);
         expect(stripped).toEqual(withMetadata);
       },
     );
+
+    /* The managed bounds (50 hints, title 100, description 500) apply only to
+     * published values; environment admission keeps its own rules. */
+    it('does not bound environment onboarding hints by the managed contract', async () => {
+      vi.spyOn(console, 'info').mockImplementation(() => undefined);
+      const hints = Array.from({ length: 60 }, (_, index) => ({
+        id: `hint-${index}`,
+        target: 'new-chat',
+        title: 't'.repeat(300),
+        description: 'd'.repeat(800),
+      }));
+      const { service } = buildResolutionStack({
+        ONBOARDING_HINTS: JSON.stringify(hints),
+      });
+      const { config } = await service.getClientConfig(ctx);
+      expect(config.onboardingHints).toEqual(hints);
+    });
   });
 });
 

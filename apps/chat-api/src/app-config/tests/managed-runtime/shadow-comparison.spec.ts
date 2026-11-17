@@ -29,6 +29,8 @@ const REQUIRED = {
   AUTH_CALLBACK_BASE_URL: 'http://localhost:5000',
 };
 
+const HINT = { id: 'tour.start', target: 'new-chat', title: 'Start here' };
+
 const acceptedSnapshot = (payload: Record<string, unknown>) => {
   const result = acceptSnapshot(snapshotBody({ payload }), {
     appId: 'ai-dial-chat',
@@ -85,15 +87,8 @@ describe('ManagedShadowComparator', () => {
     const comparisons = await comparator.compare(
       acceptedSnapshot({ config: {}, features: {} }),
     );
-    expect(comparisons.map((comparison) => comparison.key).sort()).toEqual([
-      'announcement.description',
-      'announcement.items',
-      'announcement.title',
-      'features.usageLimitsControl',
-      'fileManager.availableTabs',
-      'usageLimits.spendingLimitsMode',
-      'usageLimits.warningThresholdPercent',
-      'welcomeScreen.description',
+    expect(comparisons.map((comparison) => comparison.key)).toEqual([
+      'onboarding.hints',
     ]);
     expect(
       comparisons.every(
@@ -107,8 +102,8 @@ describe('ManagedShadowComparator', () => {
     await expect(
       resultOf(
         comparator,
-        { config: { 'welcomeScreen.description': 'Hello' }, features: {} },
-        'welcomeScreen.description',
+        { config: { 'onboarding.hints': [HINT] }, features: {} },
+        'onboarding.hints',
       ),
     ).resolves.toBe(ShadowComparisonResult.Differs);
   });
@@ -118,40 +113,23 @@ describe('ManagedShadowComparator', () => {
     await expect(
       resultOf(
         comparator,
-        { config: { 'usageLimits.warningThresholdPercent': 75 }, features: {} },
-        'usageLimits.warningThresholdPercent',
+        { config: { 'onboarding.hints': [] }, features: {} },
+        'onboarding.hints',
       ),
     ).resolves.toBe(ShadowComparisonResult.Equal);
   });
 
   it('reports an explicit environment value that would shadow the managed one', async () => {
-    const { comparator } = makeComparator({ ANNOUNCEMENT_TITLE: 'Local' });
+    const { comparator } = makeComparator({
+      ONBOARDING_HINTS: JSON.stringify([{ ...HINT, title: 'Local' }]),
+    });
     await expect(
       resultOf(
         comparator,
-        { config: { 'announcement.title': 'Managed' }, features: {} },
-        'announcement.title',
+        { config: { 'onboarding.hints': [HINT] }, features: {} },
+        'onboarding.hints',
       ),
     ).resolves.toBe(ShadowComparisonResult.EnvShadowed);
-  });
-
-  it('compares a managed feature through its gates for an anonymous caller', async () => {
-    const { comparator } = makeComparator();
-    const feature = (state: Record<string, unknown>) =>
-      resultOf(
-        comparator,
-        { config: {}, features: { 'features.usageLimitsControl': state } },
-        'features.usageLimitsControl',
-      );
-    await expect(feature({ enabled: false })).resolves.toBe(
-      ShadowComparisonResult.Equal,
-    );
-    await expect(feature({ enabled: true })).resolves.toBe(
-      ShadowComparisonResult.Differs,
-    );
-    await expect(
-      feature({ enabled: true, targeting: { roles: ['beta'] } }),
-    ).resolves.toBe(ShadowComparisonResult.Equal);
   });
 
   it('subscribes in shadow mode and logs one summary per revision without values', async () => {
@@ -159,7 +137,9 @@ describe('ManagedShadowComparator', () => {
     const fake = createFakeReader();
     const body = snapshotBody({
       payload: {
-        config: { 'welcomeScreen.description': 'Secret welcome' },
+        config: {
+          'onboarding.hints': [{ ...HINT, title: 'Secret welcome' }],
+        },
         features: {},
       },
     });
@@ -193,15 +173,16 @@ describe('ManagedShadowComparator', () => {
 
     expect(record).toHaveBeenCalledWith(
       'chat-dev',
-      'welcomeScreen.description',
+      'onboarding.hints',
       ShadowComparisonResult.Differs,
     );
-    expect(record).toHaveBeenCalledTimes(16);
+    /* One managed key, compared at startup and after one interval. */
+    expect(record).toHaveBeenCalledTimes(2);
     const summaries = log.mock.calls
       .map(([message]) => String(message))
       .filter((message) => message.startsWith('Shadow comparison'));
     expect(summaries).toHaveLength(1);
-    expect(summaries[0]).toContain('differs=[welcomeScreen.description]');
+    expect(summaries[0]).toContain('differs=[onboarding.hints]');
     expect(summaries[0]).not.toContain('Secret welcome');
     comparator.onModuleDestroy();
     runtime.onModuleDestroy();

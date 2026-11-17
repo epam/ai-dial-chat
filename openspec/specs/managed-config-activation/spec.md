@@ -24,8 +24,8 @@ A change of mode SHALL be a deployment configuration change. The backend SHALL N
 
 #### Scenario: Shadow does not change responses
 
-- **WHEN** the mode is `shadow` and a fresh snapshot sets `welcomeScreen.description` to `Hello`, while `WELCOME_SCREEN_DESCRIPTION` is unset
-- **THEN** `config.welcomeScreenDescription` stays `null`, and the response has no `metadata.managed`, `metadata.nextRefreshAt`, or `appConfig`
+- **WHEN** the mode is `shadow` and a fresh snapshot sets `onboarding.hints` to a tour, while `ONBOARDING_HINTS` is unset
+- **THEN** `config.onboardingHints` stays `[]`, and the response has no `metadata.managed`, `metadata.nextRefreshAt`, or `appConfig`
 
 #### Scenario: Failure never switches the mode
 
@@ -43,18 +43,23 @@ A change of mode SHALL be a deployment configuration change. The backend SHALL N
 
 #### Scenario: Changing only the mode rolls back
 
-- **WHEN** a deployment running `active` with `MANAGED_CONFIG_ACTIVE_KEYS=welcomeScreen.description` restarts with `MANAGED_CONFIG_MODE=off` and the key list unchanged
-- **THEN** startup succeeds, a warning names the ignored key, and `welcomeScreen.description` has its environment behavior
+- **WHEN** a deployment running `active` with `MANAGED_CONFIG_ACTIVE_KEYS=onboarding.hints` restarts with `MANAGED_CONFIG_MODE=off` and the key list unchanged
+- **THEN** startup succeeds, a warning names the ignored key, and `onboarding.hints` has its environment behavior
 
 #### Scenario: Unmapped chat-ui keeps environment behavior
 
-- **WHEN** the mode is `active`, `features.usageLimitsControl` is listed, `USAGE_LIMITS_CONTROL_ENABLED=true`, and only `launchpad` is mapped
-- **THEN** `ai-dial-chat` gets `features.usageLimitsControl=true` with no `metadata.managed`, and `FeatureGuard` allows it
+- **WHEN** the mode is `active`, `onboarding.hints` is listed, `ONBOARDING_HINTS` holds a tour, and only `launchpad` is mapped
+- **THEN** `ai-dial-chat` gets that tour in `config.onboardingHints` with no `metadata.managed`
 
 #### Scenario: Unlisted managed key keeps its environment value
 
-- **WHEN** the mode is `active`, only `welcomeScreen.description` is listed, and a fresh snapshot also sets `usageLimits.warningThresholdPercent` to `80`
-- **THEN** `config.usageLimitsWarningThresholdPercent` keeps its environment or default value
+- **WHEN** the mode is `active`, `MANAGED_CONFIG_ACTIVE_KEYS` is empty, and a fresh snapshot sets `onboarding.hints`
+- **THEN** `config.onboardingHints` keeps its environment or default value
+
+#### Scenario: Key the current schema does not manage is refused
+
+- **WHEN** the mode is `active` and `MANAGED_CONFIG_ACTIVE_KEYS=onboarding.hints,welcomeScreen.description` while the current schema is 1.0.0
+- **THEN** environment validation fails and names `MANAGED_CONFIG_ACTIVE_KEYS` and `welcomeScreen.description`
 
 ### Requirement: Managed value resolution
 
@@ -62,23 +67,23 @@ For an active configuration key, the selected value SHALL be the explicit enviro
 
 #### Scenario: Managed value applies
 
-- **WHEN** `welcomeScreen.description` is active, `WELCOME_SCREEN_DESCRIPTION` is not explicitly set, and the fresh snapshot sets it to `Welcome`
-- **THEN** `config.welcomeScreenDescription` is `Welcome`
+- **WHEN** `onboarding.hints` is active, `ONBOARDING_HINTS` is not explicitly set, and the fresh snapshot sets hints with targets `conversation-input`, `new-chat` and `catalog` in that order
+- **THEN** `config.onboardingHints` holds those hints in the published order
 
 #### Scenario: Explicit environment value wins
 
-- **WHEN** the same key is active, `WELCOME_SCREEN_DESCRIPTION=Local` is set, and the snapshot sets `Welcome`
-- **THEN** `config.welcomeScreenDescription` is `Local`
+- **WHEN** the same key is active, `ONBOARDING_HINTS` holds a local tour, and the snapshot sets another
+- **THEN** `config.onboardingHints` is the local tour
 
 #### Scenario: Shared normalization
 
-- **WHEN** `announcement.description` is active and the managed value contains `<script>alert(1)</script><b>x</b>`
-- **THEN** `config.announcementDescription` is the same sanitized markup an environment value would produce
+- **WHEN** `onboarding.hints` is active and the managed tour has a title with surrounding spaces, a hint without a description and a repeated id
+- **THEN** `config.onboardingHints` equals what the same tour in `ONBOARDING_HINTS` produces: trimmed titles, `description: null`, and only the first hint with the repeated id
 
 #### Scenario: Stale snapshot falls back to the declared default and reports it
 
-- **WHEN** `usageLimits.warningThresholdPercent` is active, its variable is unset, and the state is `stale`
-- **THEN** `config.usageLimitsWarningThresholdPercent` is `75` and `metadata.managed.state` is `stale`
+- **WHEN** `onboarding.hints` is active, its variable is unset, and the state is `stale`
+- **THEN** `config.onboardingHints` is `[]` and `metadata.managed.state` is `stale`
 
 ### Requirement: Managed feature gates
 
@@ -92,21 +97,21 @@ For an active managed feature of a mapped `ai-dial-chat`, the effective value SH
 6. Role targeting matches.
 7. The deployment role gate of the feature, when it declares one, allows the caller.
 
-An explicit environment `true` SHALL NOT satisfy any condition other than the first. An explicit environment `false` SHALL make the feature `false`. A feature that is not active SHALL keep its environment behavior.
+These gates SHALL apply to every schema version that exports a managed feature; schema 1.0.0 exports none, so in 1.0.0 no feature can be listed in `MANAGED_CONFIG_ACTIVE_KEYS`. An explicit environment `true` SHALL NOT satisfy any condition other than the first. An explicit environment `false` SHALL make the feature `false`. A feature that is not active SHALL keep its environment behavior.
 
 #### Scenario: Environment false is a kill switch
 
-- **WHEN** `features.usageLimitsControl` is active, `USAGE_LIMITS_CONTROL_ENABLED=false`, and a fresh snapshot sets `enabled: true` with no window or targeting
-- **THEN** `features.usageLimitsControl` is `false`
+- **WHEN** a managed feature is active, its environment variable is explicitly `false`, and a fresh snapshot sets `enabled: true` with no window or targeting
+- **THEN** the feature is `false`
 
 #### Scenario: Environment true cannot bypass unusable policy
 
-- **WHEN** the feature is active, `USAGE_LIMITS_CONTROL_ENABLED=true`, and the state is `unavailable`
+- **WHEN** the feature is active, its environment variable is explicitly `true`, and the state is `unavailable`
 - **THEN** the feature is `false`
 
 #### Scenario: Environment true cannot bypass a window
 
-- **WHEN** the feature is active, `USAGE_LIMITS_CONTROL_ENABLED=true`, and the fresh snapshot sets `enabled: false` with `availability.endsAt` in the past
+- **WHEN** the feature is active, its environment variable is explicitly `true`, and the fresh snapshot sets `enabled: false` with `availability.endsAt` in the past
 - **THEN** the feature is `false`
 
 #### Scenario: Feature absent from a usable snapshot
@@ -192,8 +197,13 @@ Each comparison SHALL produce `equal`, `differs`, `env_shadowed` (an explicit en
 
 #### Scenario: Environment value would shadow a managed value
 
-- **WHEN** the mode is `shadow`, `ANNOUNCEMENT_TITLE=Local` is set, and the snapshot sets `announcement.title`
-- **THEN** the comparison for `announcement.title` is `env_shadowed`
+- **WHEN** the mode is `shadow`, `ONBOARDING_HINTS` holds a local tour, and the snapshot sets `onboarding.hints`
+- **THEN** the comparison for `onboarding.hints` is `env_shadowed`
+
+#### Scenario: Shadow mode compares only the managed tour
+
+- **WHEN** the mode is `shadow` and a fresh 1.0.0 snapshot is accepted
+- **THEN** exactly one comparison is produced, for `onboarding.hints`
 
 ### Requirement: Foreign application payload delivery
 

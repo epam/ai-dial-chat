@@ -13,6 +13,11 @@ import { createStudioAjv } from './studio-contract.fixtures';
  * Validates the 1.0.0 contract fixtures against the committed 1.0.0 schema
  * with Config Studio's Ajv options. The fixtures are versioned with the
  * schema: a MINOR successor must still accept every valid one.
+ *
+ * Schema 1.0.0 manages no feature, so no 1.0.0 payload can carry a feature
+ * state. The `featureStates` fixtures validate bare states against the
+ * exported `$defs/featureState`, which every managed feature of a later
+ * version references.
  */
 interface ExpectedError {
   readonly keyword: string;
@@ -27,6 +32,14 @@ interface ContractFixtures {
     payload: unknown;
     errors: readonly ExpectedError[];
   }[];
+  readonly featureStates: {
+    readonly valid: readonly { name: string; state: unknown }[];
+    readonly invalid: readonly {
+      name: string;
+      state: unknown;
+      errors: readonly ExpectedError[];
+    }[];
+  };
 }
 
 const fixtures = JSON.parse(
@@ -46,14 +59,24 @@ const artifact = JSON.parse(
 ) as ManagedConfigArtifact;
 
 const validate = createStudioAjv().compile(artifact.schema);
-
-const errorsOf = (payload: unknown): ExpectedError[] => {
-  validate(payload);
-  return (validate.errors ?? []).map((error: ErrorObject) => ({
-    keyword: error.keyword,
-    instancePath: error.instancePath,
-  }));
+const featureStateSchema: typeof artifact.schema = {
+  $schema: artifact.schema['$schema'],
+  $defs: artifact.schema['$defs'],
+  $ref: '#/$defs/featureState',
 };
+const validateFeatureState = createStudioAjv().compile(featureStateSchema);
+
+const errorsWith =
+  (validator: typeof validate) =>
+  (instance: unknown): ExpectedError[] => {
+    validator(instance);
+    return (validator.errors ?? []).map((error: ErrorObject) => ({
+      keyword: error.keyword,
+      instancePath: error.instancePath,
+    }));
+  };
+const errorsOf = errorsWith(validate);
+const featureStateErrorsOf = errorsWith(validateFeatureState);
 
 describe('managed-config 1.0.0 contract', () => {
   it('validates fixtures of its own version', () => {
@@ -71,6 +94,24 @@ describe('managed-config 1.0.0 contract', () => {
       expect(actual).toContainEqual(expected);
     }
   });
+
+  it.each(fixtures.featureStates.valid)(
+    'accepts the feature state $name',
+    ({ state }) => {
+      expect(featureStateErrorsOf(state)).toEqual([]);
+    },
+  );
+
+  it.each(fixtures.featureStates.invalid)(
+    'rejects the feature state $name',
+    ({ state, errors }) => {
+      const actual = featureStateErrorsOf(state);
+      expect(actual.length).toBeGreaterThan(0);
+      for (const expected of errors) {
+        expect(actual).toContainEqual(expected);
+      }
+    },
+  );
 
   it('fits the largest valid payload within the Studio payload limit', () => {
     const largest = fixtures.valid.find(

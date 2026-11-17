@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { CONFIG_DEFINITIONS } from '../../config-registry/config-registry.constants';
 import { canonicalSha256 } from '../../managed-config/canonical-json';
 import { ManagedRejectionReason } from '../../managed-runtime/managed-runtime.types';
 import {
@@ -8,6 +9,10 @@ import {
   compileManagedPayloadValidators,
   type AcceptanceContext,
 } from '../../managed-runtime/snapshot-acceptance';
+import {
+  compileTestManagedPayloadValidators,
+  withTestManagedKeys,
+} from '../managed-config/test-managed-contract.fixtures';
 import { snapshotBody } from './managed-runtime.fixtures';
 
 const validators = compileManagedPayloadValidators();
@@ -32,19 +37,31 @@ const chatContext = (
   ...overrides,
 });
 
+const HINT = { id: 'tour.start', target: 'new-chat', title: 'Start here' };
+
 const VALID_PAYLOAD = {
   config: {
-    'usageLimits.warningThresholdPercent': 80,
-    'welcomeScreen.description': 'Welcome',
+    'onboarding.hints': [
+      { ...HINT, description: 'Each chat keeps its own history.' },
+      { id: 'tour.composer', target: 'conversation-input', title: 'Ask' },
+    ],
   },
-  features: {
-    'features.usageLimitsControl': {
-      enabled: true,
-      availability: { startsAt: '2026-11-01T08:00:00Z' },
-      targeting: { roles: ['beta'] },
-    },
-  },
+  features: {},
 };
+
+/* Schema 1.0.0 manages no feature. Feature-policy admission is checked
+ * against the test-only contract, which adds a managed feature. */
+const featureContext = () =>
+  chatContext({
+    validators: compileTestManagedPayloadValidators(
+      withTestManagedKeys(CONFIG_DEFINITIONS),
+    ),
+  });
+
+const tour = (...hints: unknown[]) => ({
+  config: { 'onboarding.hints': hints },
+  features: {},
+});
 
 const rejectionOf = (body: unknown, context = chatContext()) => {
   const result = acceptSnapshot(body, context);
@@ -66,8 +83,8 @@ describe('acceptSnapshot', () => {
     expect(Object.isFrozen(result.snapshot.payload['config'])).toBe(true);
     expect(() => {
       (result.snapshot.payload['config'] as Record<string, unknown>)[
-        'welcomeScreen.description'
-      ] = 'changed';
+        'onboarding.hints'
+      ] = [];
     }).toThrow(TypeError);
   });
 
@@ -172,14 +189,72 @@ describe('acceptSnapshot', () => {
         'features.usageLimitsControl': { enabled: true, percentage: 5 },
       },
     };
-    expect(rejectionOf(snapshotBody({ payload }))).toBe(
+    expect(rejectionOf(snapshotBody({ payload }), featureContext())).toBe(
       ManagedRejectionReason.InvalidPayload,
     );
   });
 
   it.each([
     ['a local-only key', { config: { 'footer.html': 'x' }, features: {} }],
-    ['a null value', { config: { 'announcement.title': null }, features: {} }],
+    ['a null value', { config: { 'onboarding.hints': null }, features: {} }],
+    [
+      'a key 1.0.0 does not manage',
+      { config: { 'welcomeScreen.description': 'Welcome' }, features: {} },
+    ],
+    [
+      'a feature 1.0.0 does not manage',
+      {
+        config: {},
+        features: { 'features.usageLimitsControl': { enabled: true } },
+      },
+    ],
+  ])('rejects %s as an invalid payload', (_label, payload) => {
+    expect(rejectionOf(snapshotBody({ payload }))).toBe(
+      ManagedRejectionReason.InvalidPayload,
+    );
+  });
+
+  it.each([
+    ['an unknown target', tour({ ...HINT, target: 'settings-gear' })],
+    ['a missing target', tour({ id: HINT.id, title: HINT.title })],
+    ['an extra property', tour({ ...HINT, selector: '#new-chat' })],
+    ['an id outside the allowlist', tour({ ...HINT, id: 'tour start' })],
+    ['an id over 64 characters', tour({ ...HINT, id: 'i'.repeat(65) })],
+    ['a blank title', tour({ ...HINT, title: '   ' })],
+    ['a title over 100 characters', tour({ ...HINT, title: 't'.repeat(101) })],
+    [
+      'a description over 500 characters',
+      tour({ ...HINT, description: 'd'.repeat(501) }),
+    ],
+    [
+      'more than 50 hints',
+      tour(...Array.from({ length: 51 }, (_, i) => ({ ...HINT, id: `h${i}` }))),
+    ],
+  ])('rejects an onboarding hint with %s at admission', (_label, payload) => {
+    expect(rejectionOf(snapshotBody({ payload }))).toBe(
+      ManagedRejectionReason.InvalidPayload,
+    );
+  });
+
+  it('accepts a tour at every bound and leaves repeated ids to the client mapping', () => {
+    const payload = tour(
+      ...Array.from({ length: 50 }, (_, i) => ({
+        id: `${i}`.padStart(64, 'i'),
+        target: 'navigation',
+        title: 't'.repeat(100),
+        description: 'd'.repeat(500),
+      })),
+    );
+    expect(
+      acceptSnapshot(snapshotBody({ payload }), chatContext()).accepted,
+    ).toBe(true);
+    expect(
+      acceptSnapshot(snapshotBody({ payload: tour(HINT, HINT) }), chatContext())
+        .accepted,
+    ).toBe(true);
+  });
+
+  it.each([
     [
       'an offset timestamp',
       {
@@ -204,11 +279,14 @@ describe('acceptSnapshot', () => {
         },
       },
     ],
-  ])('rejects %s as an invalid payload', (_label, payload) => {
-    expect(rejectionOf(snapshotBody({ payload }))).toBe(
-      ManagedRejectionReason.InvalidPayload,
-    );
-  });
+  ])(
+    'rejects a feature policy with %s as an invalid payload',
+    (_label, payload) => {
+      expect(rejectionOf(snapshotBody({ payload }), featureContext())).toBe(
+        ManagedRejectionReason.InvalidPayload,
+      );
+    },
+  );
 
   it.each([
     ['an impossible date', { startsAt: '2027-02-30T00:00:00Z' }],
@@ -226,7 +304,7 @@ describe('acceptSnapshot', () => {
         'features.usageLimitsControl': { enabled: true, availability },
       },
     };
-    expect(rejectionOf(snapshotBody({ payload }))).toBe(
+    expect(rejectionOf(snapshotBody({ payload }), featureContext())).toBe(
       ManagedRejectionReason.SemanticViolation,
     );
   });
@@ -249,7 +327,7 @@ describe('acceptSnapshot', () => {
 
 describe('compileManagedPayloadValidators', () => {
   it('compiles every supported version from the bundled artifacts', () => {
-    expect([...validators.keys()]).toEqual(['1.0.0', '1.1.0']);
+    expect([...validators.keys()]).toEqual(['1.0.0']);
   });
 
   it('refuses an artifact whose hash differs from its pin', () => {

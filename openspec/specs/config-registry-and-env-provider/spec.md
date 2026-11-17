@@ -166,7 +166,7 @@ All providers MUST implement this interface. Providers MUST return `undefined` w
 
 `EnvConfigProvider` SHALL read values from `ConfigService<EnvironmentVariables>` (never from `process.env` directly) using the `envVar` field from the matching `ConfigDefinition`.
 
-`EnvConfigProvider` SHALL return a value from a key's `envVar` only when that variable is explicitly present in the deployment environment. A value that exists only because the environment class declares a typed default (for example `SCHEDULED_TASKS_ENABLED = false`, `USAGE_LIMITS_WARNING_THRESHOLD_PERCENT = 75`, `UI_EVENT_ENABLED_BY_DEFAULT = true`) SHALL NOT be treated as explicit; the provider SHALL return `undefined` so that the next provider applies. Explicit presence SHALL be determined from the raw environment input (process variables and loaded `.env` files) before class defaults are applied; a variable set to the empty string is present. For a managed key, an explicit string value that is empty or whitespace-only SHALL resolve to `undefined`: the client mapping hides blank and null alike, so the effective value is unchanged, and a blank variable cannot shadow a lower-priority source. Derived feature keys (`features.asrEnabled`, `features.llmConversationNaming`, `features.footer`) keep their documented derivations.
+`EnvConfigProvider` SHALL return a value from a key's `envVar` only when that variable is explicitly present in the deployment environment. A value that exists only because the environment class declares a typed default (for example `SCHEDULED_TASKS_ENABLED = false`, `USAGE_LIMITS_WARNING_THRESHOLD_PERCENT = 75`, `UI_EVENT_ENABLED_BY_DEFAULT = true`) SHALL NOT be treated as explicit; the provider SHALL return `undefined` so that the next provider applies. Explicit presence SHALL be determined from the raw environment input (process variables and loaded `.env` files) before class defaults are applied; a variable set to the empty string is present. For a managed key, an explicit string value that is empty or whitespace-only SHALL resolve to `undefined`: the client mapping hides blank and null alike, so the effective value is unchanged, and a blank variable cannot shadow a lower-priority source. Schema 1.0.0 manages no string key, so this rule applies to no key of 1.0.0; a blank text of an unmanaged key resolves to `''`, and its client-config field is `null` either way. Derived feature keys (`features.asrEnabled`, `features.llmConversationNaming`, `features.footer`) keep their documented derivations.
 
 For `type='feature'` keys derived from a config key (e.g. `features.asrEnabled` derived from `asr.modelId`), the provider SHALL apply the derivation logic declared in the registry.
 
@@ -210,8 +210,8 @@ Type coercion MUST NOT be performed — `ConfigService` already returns typed va
 
 #### Scenario: A blank managed text is not an operator value
 
-- **WHEN** `ANNOUNCEMENT_TITLE` is set to the empty string
-- **THEN** `EnvConfigProvider.resolve('announcement.title', ctx)` returns `undefined`, and the client-config `announcementTitle` is `null` as before
+- **WHEN** the variable of a managed string key is set to the empty string or to spaces
+- **THEN** `EnvConfigProvider.resolve` returns `undefined` for that key, while a blank `ANNOUNCEMENT_TITLE`, unmanaged in 1.0.0, resolves to `''` and the client-config `announcementTitle` is `null` as before
 
 #### Scenario: Effective values are unchanged for unset variables
 
@@ -1042,8 +1042,8 @@ Resolving a key SHALL proceed through distinct stages: source admission (parsing
 
 #### Scenario: Environment values are not bounded by managed constraints
 
-- **WHEN** `ANNOUNCEMENT_TITLE` holds a 300-character title
-- **THEN** the client-config `announcementTitle` is that title, as before this change
+- **WHEN** `ONBOARDING_HINTS` holds 60 hints with 300-character titles and 800-character descriptions
+- **THEN** the client-config `onboardingHints` holds all 60 hints unchanged, although a published tour is limited to 50 hints, 100-character titles and 500-character descriptions
 
 #### Scenario: Capability checks are unchanged
 
@@ -1065,8 +1065,8 @@ The value it returns SHALL be the member's value for a configuration key, or the
 
 #### Scenario: Managed value is selected when the environment is silent
 
-- **WHEN** `usageLimits.warningThresholdPercent` is active, its variable is not explicit, and the captured fresh payload sets `80`
-- **THEN** `CompositeConfigProvider.resolve` returns `80`
+- **WHEN** `onboarding.hints` is active, `ONBOARDING_HINTS` is not set, and the captured fresh payload sets a tour
+- **THEN** `CompositeConfigProvider.resolve` returns that tour
 
 #### Scenario: Typed default does not shadow the managed value
 
