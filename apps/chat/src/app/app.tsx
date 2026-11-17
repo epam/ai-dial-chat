@@ -154,6 +154,13 @@ const NotFoundPage = lazy(() => import('../pages/NotFound/NotFound'));
 
 // Start loading the module immediately so the Suspense fallback is skipped on first navigation.
 const conversationPageModule = import('../pages/Conversation/Conversation');
+/*
+ * The composer is lazy, so it stays out of the entry chunk, but the home page
+ * renders it straight away and suspends the route until it arrives. Fetching
+ * it here, alongside the page module, keeps it from waiting on the page chunk
+ * first. `import()` caches the module, so the composer's own `lazy` reuses it.
+ */
+void import('../utils/lazy-conversation-input');
 
 const ConversationPage = lazy(async () => {
   const module = await conversationPageModule;
