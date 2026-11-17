@@ -332,16 +332,18 @@ describe('Card — description rendering', () => {
     // eslint-disable-next-line testing-library/no-node-access
     screen.getByText('desc').closest('[class*="line-clamp"]')?.className;
 
-  it('clamps the description to 3 lines when the item has topic tags', () => {
-    render(<Card item={makeItem({ topics: ['Reasoning'] })} />);
+  it('clamps the description to 3 lines with or without topic tags', () => {
+    const { rerender } = render(
+      <Card item={makeItem({ topics: ['Reasoning'] })} />,
+    );
 
     expect(getClampClassName()).toContain('line-clamp-3');
-  });
+    expect(getClampClassName()).toContain('min-h-[3lh]');
 
-  it('clamps the description to 3 lines when the item has no topic tags', () => {
-    render(<Card item={makeItem({ topics: [] })} />);
+    rerender(<Card item={makeItem({ topics: [] })} />);
 
     expect(getClampClassName()).toContain('line-clamp-3');
+    expect(getClampClassName()).toContain('min-h-[3lh]');
   });
 
   it('renders a plain-text description unchanged', () => {
@@ -386,24 +388,6 @@ describe('Card — description rendering', () => {
     await userEvent.click(link);
 
     expect(onCardClick).not.toHaveBeenCalled();
-  });
-
-  it('keeps the description wrapper with line-clamp-3 and min-h-[3lh] classes for truncation', () => {
-    const longDescription =
-      'Line 1\nLine 2\nLine 3\nLine 4 which should be hidden due to clamping';
-    render(
-      <Card
-        item={makeItem({ description: longDescription, topics: ['Reasoning'] })}
-      />,
-    );
-
-    const card = screen.getByRole('article', { hidden: true });
-    // eslint-disable-next-line testing-library/no-node-access
-    const descriptionDiv = Array.from(card.querySelectorAll('div')).find((el) =>
-      el.className.includes('line-clamp-3'),
-    );
-    expect(descriptionDiv?.className).toContain('line-clamp-3');
-    expect(descriptionDiv?.className).toContain('min-h-[3lh]');
   });
 });
 
