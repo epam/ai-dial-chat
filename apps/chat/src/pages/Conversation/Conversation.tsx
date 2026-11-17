@@ -131,8 +131,11 @@ export const ConversationPage: FC<Props> = ({
     setCreatedHereId(prefetchedConversation ? (conversationId ?? null) : null);
     setDuplicateError(null);
   }
+  // Read by async handlers to tell whether the user has moved on.
   const currentConversationIdRef = useRef(conversationId);
-  currentConversationIdRef.current = conversationId;
+  useEffect(() => {
+    currentConversationIdRef.current = conversationId;
+  }, [conversationId]);
   const conversationRef = useRef<Conversation | null>(null);
   const displayNameWatchCleanupRef = useRef<(() => void) | null>(null);
   const displayNameWatchKeyRef = useRef<string | null>(null);
