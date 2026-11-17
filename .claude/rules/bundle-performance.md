@@ -25,6 +25,13 @@ import puts it, and everything it renders, in the entry chunk. The
 `ConversationSourcesPanel` import alone pulled react-markdown and parse5
 (~400 KB) into every page.
 
+A lazy component that **is** on screen at first paint on some route — the
+composer on the home page — must start loading before the route renders, or
+the route suspends on a second round trip after its own chunk. Start the
+`import()` at module scope next to the page preload in `app.tsx`
+(`conversationPageModule`, `lazy-conversation-input`); `import()` caches the
+module, so the component's own `lazy` reuses it.
+
 ## Never `import()` a lib barrel that the entry imports statically
 
 `lazy(() => import('@epam/ai-dial-conversation-input'))` split nothing off:
