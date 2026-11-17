@@ -5,11 +5,7 @@ import {
   MarkdownRendererClassNames,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import {
-  CardShell,
-  ElementSize,
-  FolderPath,
-} from '@epam/ai-dial-ui-kit';
+import { CardShell, ElementSize, FolderPath } from '@epam/ai-dial-ui-kit';
 import {
   FC,
   KeyboardEvent,
