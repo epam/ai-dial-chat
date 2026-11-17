@@ -431,6 +431,31 @@ describe('validate', () => {
     },
   );
 
+  it('defaults SPENDING_LIMITS_MODE to off when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.SPENDING_LIMITS_MODE).toBe('off');
+  });
+
+  it.each(['off', 'shadow', 'enforce'])(
+    'accepts SPENDING_LIMITS_MODE=%s',
+    (rawValue) => {
+      const config = validate({
+        ...baseConfig,
+        SPENDING_LIMITS_MODE: rawValue,
+      });
+      expect(config.SPENDING_LIMITS_MODE).toBe(rawValue);
+    },
+  );
+
+  it.each(['ENFORCE ', 'on', 'true'])(
+    'rejects SPENDING_LIMITS_MODE=%s at startup',
+    (rawValue) => {
+      expect(() =>
+        validate({ ...baseConfig, SPENDING_LIMITS_MODE: rawValue }),
+      ).toThrow(/SPENDING_LIMITS_MODE/);
+    },
+  );
+
   it('defaults ALLOW_VISUALIZER_SEND_MESSAGES to false when unset', () => {
     const config = validate({ ...baseConfig });
     expect(config.ALLOW_VISUALIZER_SEND_MESSAGES).toBe(false);

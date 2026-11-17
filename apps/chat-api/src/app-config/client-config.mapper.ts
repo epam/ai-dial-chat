@@ -15,6 +15,7 @@ import { sanitizeAnnouncementHtml, sanitizeFooterHtml } from './html-sanitizer';
 import { normalizeOnboardingHints } from './onboarding-hints.normalizer';
 import { toNullableText } from './text.util';
 import { CelebrationDeliveryMode } from './types/celebration-delivery';
+import { SpendingLimitsMode } from './types/spending-limits-mode';
 
 const DEFAULT_TRANSCRIBE_SIZE_LIMIT_BYTES = 5 * 1024 * 1024;
 const DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES = 536_870_912;
@@ -30,6 +31,13 @@ const DEFAULT_PUBLICATION_FILTER_SOURCES: readonly string[] = [
   'role',
   'dial_roles',
 ];
+
+const SPENDING_LIMITS_MODES: ReadonlySet<unknown> = new Set(
+  Object.values(SpendingLimitsMode),
+);
+
+const isSpendingLimitsMode = (value: unknown): value is SpendingLimitsMode =>
+  SPENDING_LIMITS_MODES.has(value);
 
 /**
  * The `config` fields of the client-config response that are derived from a
@@ -176,6 +184,7 @@ export const createDefaultClientConfig = (): MappedClientConfig => ({
   maxAttachmentFileSizeBytes: DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES,
   usageLimitsWarningThresholdPercent:
     DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
+  spendingLimitsMode: SpendingLimitsMode.Off,
   celebrationsEnabledByDefault: true,
   celebrationDelivery: createDefaultCelebrationDelivery(),
   projectContextFileMaxBytes: DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
@@ -371,6 +380,20 @@ export const CLIENT_CONFIG_MAPPINGS: ReadonlyMap<string, ClientConfigMapping> =
           ? resolved
           : DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
       ),
+    ],
+    [
+      'usageLimits.spendingLimitsMode',
+      defineMapping('spendingLimitsMode', ({ resolved, warn }) => {
+        if (isSpendingLimitsMode(resolved)) {
+          return resolved;
+        }
+        if (resolved != null) {
+          warn(
+            'usageLimits.spendingLimitsMode is not off, shadow or enforce; using off',
+          );
+        }
+        return SpendingLimitsMode.Off;
+      }),
     ],
     [
       'ui.celebrationsEnabledByDefault',

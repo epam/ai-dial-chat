@@ -6,6 +6,7 @@ import {
 } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { ManagedConfigState } from '../managed-runtime/managed-runtime.types';
+import { SpendingLimitsMode } from '../types/spending-limits-mode';
 import { AnnouncementItemDto } from './announcement-item.dto';
 import { ApplicationVisualizerDto } from './application-visualizer.dto';
 import { CatalogCreationPermissionsDto } from './catalog-creation-permissions.dto';
@@ -289,6 +290,15 @@ export class ClientConfigDto {
     example: 75,
   })
   usageLimitsWarningThresholdPercent!: number;
+
+  @ApiProperty({
+    enum: SpendingLimitsMode,
+    enumName: 'SpendingLimitsMode',
+    description:
+      "DIAL Core's spendingLimits.mode as the operator declares it (DIAL Core does not report it). Sourced from SPENDING_LIMITS_MODE or managed config; off by default. off: Settings → Usage shows no budgets and presents the role cost limit as today. shadow: budgets are shown as not yet enforced, and the role cost limit still decides. enforce: Settings → Usage shows only the budgets, and the role cost limit is withheld from the usage banner and dial. The client falls back to off when the usage response carries no costObject.",
+    example: SpendingLimitsMode.Off,
+  })
+  spendingLimitsMode!: SpendingLimitsMode;
 
   @ApiProperty({
     type: Boolean,

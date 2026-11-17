@@ -16,6 +16,7 @@ import {
   type ManagedValueSchema,
 } from '../managed-config/managed-config.types';
 import { CelebrationDeliveryMode } from '../types/celebration-delivery';
+import { SpendingLimitsMode } from '../types/spending-limits-mode';
 
 /* Non-blank: at least one non-whitespace character. */
 const NON_BLANK_PATTERN = '\\S';
@@ -96,6 +97,11 @@ const USAGE_WARNING_THRESHOLD_SCHEMA: ManagedValueSchema = {
   type: ManagedSchemaType.Integer,
   minimum: 1,
   maximum: 99,
+};
+
+const SPENDING_LIMITS_MODE_SCHEMA: ManagedValueSchema = {
+  type: ManagedSchemaType.String,
+  enum: Object.values(SpendingLimitsMode),
 };
 
 export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
@@ -788,6 +794,25 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
         'Percentage of a capped token or cost limit at which the composer shows its usage banner.',
       order: 40,
       value: USAGE_WARNING_THRESHOLD_SCHEMA,
+    }),
+  },
+  {
+    key: 'usageLimits.spendingLimitsMode',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: SpendingLimitsMode.Off,
+    critical: false,
+    description:
+      "DIAL Core's spendingLimits.mode (off, shadow or enforce), which DIAL Core does not report to the caller. Decides whether Settings → Usage shows the caller's budgets, and whether the Usage page, the usage banner and the usage dial present the role cost limit (off, shadow) or only the budgets (enforce). Must equal DIAL Core's value; off by default.",
+    owner: 'chat-team',
+    envVar: 'SPENDING_LIMITS_MODE',
+    management: managedConfigKey({
+      title: 'Spending limits mode',
+      description:
+        "DIAL Core's spending limits mode: off, shadow or enforce. Must match DIAL Core.",
+      order: 41,
+      value: SPENDING_LIMITS_MODE_SCHEMA,
     }),
   },
 ];

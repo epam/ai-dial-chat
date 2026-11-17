@@ -15,6 +15,7 @@ import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { FeatureKey } from '../../feature-flags/feature-key.enum';
 import { FeatureGuard } from '../../feature-flags/feature.guard';
 import { canonicalSha256 } from '../../managed-config/canonical-json';
+import { PINNED_MANAGED_CONFIG_SCHEMA_SHA256 } from '../../managed-config/managed-config.constants';
 import { ManagedConfigProvider } from '../../managed-runtime/managed-config.provider';
 import { ManagedRuntimeService } from '../../managed-runtime/managed-runtime.service';
 import {
@@ -242,6 +243,40 @@ describe('managed configuration activation', () => {
       expect(managedResponse.config.announcementDescription).not.toContain(
         'script',
       );
+    });
+
+    describe('spending limits mode (schema 1.1.0)', () => {
+      const payload = {
+        config: { 'usageLimits.spendingLimitsMode': 'enforce' },
+        features: {},
+      };
+      const modeStack = (raw: Record<string, unknown> = {}) =>
+        buildStack(
+          { ...activeKeys('usageLimits.spendingLimitsMode'), ...raw },
+          (fake) =>
+            fake.respondAlways(
+              'chat-dev',
+              candidate({
+                revisionId: 'r1',
+                schemaVersion: '1.1.0',
+                schemaSha256: PINNED_MANAGED_CONFIG_SCHEMA_SHA256['1.1.0'],
+                sha256: canonicalSha256({ revisionId: 'r1', payload }),
+                payload,
+              }),
+            ),
+        );
+
+      it('applies the managed mode when the environment is silent', async () => {
+        const { service } = await modeStack();
+        const response = await service.getClientConfig(anonymous);
+        expect(response.config.spendingLimitsMode).toBe('enforce');
+      });
+
+      it('keeps an explicit environment mode', async () => {
+        const { service } = await modeStack({ SPENDING_LIMITS_MODE: 'shadow' });
+        const response = await service.getClientConfig(anonymous);
+        expect(response.config.spendingLimitsMode).toBe('shadow');
+      });
     });
 
     it('falls back to the default and reports a stale snapshot', async () => {

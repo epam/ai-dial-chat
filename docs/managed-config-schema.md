@@ -59,8 +59,10 @@ or enforces, even when the deployment already degrades safely without it:
 Schema version 1.0.0 manages seven keys: `announcement.title`,
 `announcement.description`, `announcement.items`, `welcomeScreen.description`,
 `fileManager.availableTabs`, `usageLimits.warningThresholdPercent` and the
-feature `features.usageLimitsControl`. Thirty-one keys are local-only, and the
-other 12 are eligible but unmanaged.
+feature `features.usageLimitsControl`. Schema version 1.1.0 adds
+`usageLimits.spendingLimitsMode` (`off`, `shadow` or `enforce`), so it manages
+eight keys. Thirty-one keys are local-only, and the other 12 are eligible but
+unmanaged.
 
 ### Rollout
 
@@ -154,14 +156,20 @@ without the client-supplied `operationId`. `index.json` sits next to it:
 {
   "format": "dial-managed-config-schema-index@1",
   "appId": "chat-ui",
-  "current": "1.0.0",
-  "supported": ["1.0.0"],
+  "current": "1.1.0",
+  "supported": ["1.0.0", "1.1.0"],
   "versions": [
     {
       "schemaVersion": "1.0.0",
       "file": "chat-ui-1.0.0.json",
       "schemaSha256": "9e2155b7857adf6cc51e8966ad02ebf79953c5a87875eaea929e384c02b55dd6",
       "canonicalBytes": 5161
+    },
+    {
+      "schemaVersion": "1.1.0",
+      "file": "chat-ui-1.1.0.json",
+      "schemaSha256": "bfbad5396a9ef14fdcb39df44f9dd876b7ad3a2f7abf33bbf40bd694284711d8",
+      "canonicalBytes": 5427
     }
   ]
 }

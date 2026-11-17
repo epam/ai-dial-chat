@@ -27,4 +27,13 @@ export type {
   ModelLimitsStyles,
   ModelLimitsTypography,
 } from './models/model-limits-props';
+export { SpendingBudgetsSection } from './components/SpendingBudgetsSection/SpendingBudgetsSection';
+export type {
+  SpendingBudgetData,
+  SpendingBudgetsSectionColors,
+  SpendingBudgetsSectionLabels,
+  SpendingBudgetsSectionProps,
+  SpendingBudgetsSectionStyles,
+  SpendingBudgetsSectionTypography,
+} from './models/spending-budgets-props';
 export { USAGE_DASHBOARD_CLASS } from './constants/public-class-names';

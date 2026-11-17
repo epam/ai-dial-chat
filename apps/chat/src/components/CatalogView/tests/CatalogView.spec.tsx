@@ -13,6 +13,7 @@ import {
 import {
   FavoriteEntityType,
   OrgUnitFolderGuardPurpose,
+  SpendingLimitsMode,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
@@ -799,6 +800,7 @@ describe('CatalogView', () => {
         publicationFilterSources: ['title', 'role', 'dial_roles'],
         maxAttachmentFileSizeBytes: 536_870_912,
         usageLimitsWarningThresholdPercent: 75,
+        spendingLimitsMode: SpendingLimitsMode.Off,
         celebrationsEnabledByDefault: true,
         celebrationDelivery: {
           mode: CelebrationDeliveryMode.Bundled,

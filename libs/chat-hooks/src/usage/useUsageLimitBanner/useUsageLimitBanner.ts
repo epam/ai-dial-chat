@@ -3,6 +3,10 @@ import {
   type UsageLimitBannerViewProps,
 } from '@epam/ai-dial-conversation-input';
 import { useCallback, useMemo } from 'react';
+import {
+  SpendingLimitsMode,
+  withholdAccountCostInEnforce,
+} from '../spending-limits-mode';
 import { selectUsageBannerSource } from '../usage-banner-source';
 import { UsagePeriod } from '../usage-period';
 import { type TranslateFn, formatUsageResetShort } from '../usage-reset-time';
@@ -68,6 +72,8 @@ export interface UseUsageLimitBannerOptions {
   activeLocale: string;
   /** Translate function compatible with i18next's `TFunction`. */
   t: TranslateFn;
+  /** The host's configured spending limits mode; in an effective `Enforce`, the account cost is not reported. Defaults to `SpendingLimitsMode.Off`. */
+  spendingLimitsMode?: SpendingLimitsMode;
 }
 
 /** The part of `UsageLimitBannerViewProps` the hook decides. */
@@ -97,6 +103,7 @@ export const useUsageLimitBanner = ({
   warningThresholdPercent,
   activeLocale,
   t,
+  spendingLimitsMode = SpendingLimitsMode.Off,
 }: UseUsageLimitBannerOptions): UseUsageLimitBannerResult => {
   const api = useMemo(
     () => ({ getDeploymentUsage, getAccountUsage }),
@@ -114,9 +121,24 @@ export const useUsageLimitBanner = ({
     refresh,
   });
 
+  /*
+   * Applied here rather than to the fetched value, so a mode change takes
+   * effect without a re-fetch: in enforce, DIAL Core no longer gates model
+   * calls on the role cost limit.
+   */
   const source = useMemo(
-    () => selectUsageBannerSource(sources, warningThresholdPercent),
-    [sources, warningThresholdPercent],
+    () =>
+      selectUsageBannerSource(
+        {
+          ...sources,
+          account: withholdAccountCostInEnforce(
+            sources.account,
+            spendingLimitsMode,
+          ),
+        },
+        warningThresholdPercent,
+      ),
+    [sources, warningThresholdPercent, spendingLimitsMode],
   );
 
   const display = useMemo(() => {

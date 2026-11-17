@@ -238,7 +238,7 @@ describe('acceptSnapshot', () => {
 
 describe('compileManagedPayloadValidators', () => {
   it('compiles every supported version from the bundled artifacts', () => {
-    expect([...validators.keys()]).toEqual(['1.0.0']);
+    expect([...validators.keys()]).toEqual(['1.0.0', '1.1.0']);
   });
 
   it('refuses an artifact whose hash differs from its pin', () => {

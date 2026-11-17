@@ -13,6 +13,9 @@ preformatted amounts, status enums, and localized labels via props — they neve
 data, format currency, detect the unlimited sentinel, or compute percentages themselves.
 `UsageLimitCardGroup` renders each card as its own independent, equally-sized box: stacked on mobile,
 side by side on desktop. `UsageLimitCard` is also exported standalone for a single-card use case.
+`SpendingBudgetsSection` lists a caller's spending budgets under one heading, each with its title,
+an optional model-coverage line and its own period cards; which budgets to list, and every string
+including the optional notice and empty state, comes from the host.
 
 ### BREAKING — period properties renamed to calendar names
 
@@ -211,6 +214,75 @@ import {
 />;
 ```
 
+### SpendingBudgetsSection
+
+Renders a `section` named by its `h2` heading, an optional description and informational notice,
+and one `role="group"` per budget (named by its `h3` title) with its cards laid out like
+`UsageLimitCardGroup`. With an empty `budgets` list it renders the heading and
+`labels.emptyStateLabel`, or nothing when that label is not set. The notice is a kit
+`Notification` with `role="note"`: static page content, not a live region. The component knows
+nothing about DIAL Core spending-limit modes or cost objects; the host decides whether to render it.
+
+```tsx
+import {
+  SpendingBudgetsSection,
+  UsageLimitStatus,
+} from '@epam/ai-dial-usage-dashboard';
+
+<SpendingBudgetsSection
+  budgets={[
+    {
+      id: 'org-wide',
+      title: 'Organization-wide',
+      coverageLabel: 'All models',
+      cards: [
+        {
+          title: 'Today',
+          periodDescription: 'Today',
+          used: 1.2,
+          total: 10,
+          usedLabel: '$1.20',
+          totalLabel: '$10',
+          remainingLabel: '$8.80',
+          usedPercent: 12,
+          status: UsageLimitStatus.Default,
+          progressAriaLabel: '$1.20 of $10, 12% used',
+        },
+      ],
+    },
+  ]}
+  labels={{
+    headingLabel: 'Budgets',
+    descriptionLabel:
+      'Model requests are charged to the first budget that covers the model.',
+    noticeLabel: 'These budgets are not enforced yet.',
+    emptyStateLabel: 'No budget is assigned to you.',
+  }}
+  cardLabels={{
+    defaultBadgeLabel: 'Within limits',
+    runningLowBadgeLabel: 'Running low',
+    limitReachedBadgeLabel: 'Limit reached',
+    usedOfTotalLabel: ({ total }) => `used of ${total}`,
+    remainingCaptionLabel: ({ remaining }) => `${remaining} left`,
+    usedPercentLabel: ({ percent }) => `${percent}%`,
+  }}
+/>;
+```
+
+`styles.colors` (`SpendingBudgetsSectionColors`), each falling back to a theme token:
+
+| Field              | Fallback           |
+| ------------------ | ------------------ |
+| `headingColor`     | `--text-primary`   |
+| `descriptionColor` | `--text-secondary` |
+| `titleColor`       | `--text-primary`   |
+| `coverageColor`    | `--text-secondary` |
+
+`styles.typography` (`SpendingBudgetsSectionTypography`): `headingClassName` (default
+`'dial-h3-text'`), `descriptionClassName` (`'dial-small-text'`), `titleClassName`
+(`'dial-body-semi-text'`), `coverageClassName` (`'dial-small-text'`). `styles.cards` is a
+`UsageLimitCardGroupStyles` forwarded to every card.
+
 ### ModelLimitsSection
 
 Renders a "Model tokens limits" heading with the rendered row count and one fixed comparison table per
@@ -360,6 +432,12 @@ with `labels.emptyStateLabel`.
 - `UsageLimitCardGroupStyles` — `{ colors?, typography? }`
 - `UsageLimitCardGroupColors` — CSS-custom-property color overrides
 - `UsageLimitCardGroupTypography` — typography class overrides
+- `SpendingBudgetData` — `{ id, title, coverageLabel?, cards }`
+- `SpendingBudgetsSectionLabels` — `{ headingLabel, descriptionLabel?, noticeLabel?, emptyStateLabel? }`
+- `SpendingBudgetsSectionProps` — `{ budgets, labels, cardLabels, styles? }`
+- `SpendingBudgetsSectionStyles` — `{ colors?, typography?, cards? }`
+- `SpendingBudgetsSectionColors` — CSS-custom-property color overrides for the heading, description, budget titles and coverage lines
+- `SpendingBudgetsSectionTypography` — typography class overrides
 - `ModelLimitStatus` — `WithinLimits | RunningLow | LimitReached | NoLimit | Unavailable`
 - `ModelLimitMetricKind` — `Finite | Unlimited | Unavailable`
 - `ModelLimitMetricCell` — `{ kind, usedLabel?, totalLabel?, usedPercent?, status?, supportingLabel?, ariaLabel }`
@@ -380,10 +458,12 @@ they are hashed at build time — nor through DOM order or ARIA attributes, whic
 are structure and accessibility contracts rather than styling ones. Selected
 elements therefore carry a stable public class.
 
-| Key         | Class                             | Element                                                           |
-| ----------- | --------------------------------- | ----------------------------------------------------------------- |
-| `card`      | `dial-usage-dashboard-card`       | One usage-limit card, which carries the themed CSS variables      |
-| `cardGroup` | `dial-usage-dashboard-card-group` | The responsive grid a `UsageLimitCardGroup` lays its cards out in |
+| Key         | Class                             | Element                                                                 |
+| ----------- | --------------------------------- | ----------------------------------------------------------------------- |
+| `card`      | `dial-usage-dashboard-card`       | One usage-limit card, which carries the themed CSS variables            |
+| `cardGroup` | `dial-usage-dashboard-card-group` | The responsive grid a `UsageLimitCardGroup` lays its cards out in       |
+| `budgets`   | `dial-usage-dashboard-budgets`    | A `SpendingBudgetsSection` root, which carries its themed CSS variables |
+| `budget`    | `dial-usage-dashboard-budget`     | One budget group: title, coverage line and cards                        |
 
 ```tsx
 import { USAGE_DASHBOARD_CLASS } from '@epam/ai-dial-usage-dashboard';

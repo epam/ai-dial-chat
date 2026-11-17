@@ -91,6 +91,7 @@ describe('ManagedShadowComparator', () => {
       'announcement.title',
       'features.usageLimitsControl',
       'fileManager.availableTabs',
+      'usageLimits.spendingLimitsMode',
       'usageLimits.warningThresholdPercent',
       'welcomeScreen.description',
     ]);
@@ -195,7 +196,7 @@ describe('ManagedShadowComparator', () => {
       'welcomeScreen.description',
       ShadowComparisonResult.Differs,
     );
-    expect(record).toHaveBeenCalledTimes(14);
+    expect(record).toHaveBeenCalledTimes(16);
     const summaries = log.mock.calls
       .map(([message]) => String(message))
       .filter((message) => message.startsWith('Shadow comparison'));

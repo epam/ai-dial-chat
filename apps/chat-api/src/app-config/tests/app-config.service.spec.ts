@@ -1729,6 +1729,7 @@ describe('AppConfigService', () => {
         'additionalContentLocales',
         'maxAttachmentFileSizeBytes',
         'usageLimitsWarningThresholdPercent',
+        'spendingLimitsMode',
         'celebrationsEnabledByDefault',
         'celebrationDelivery',
         'projectContextFileMaxBytes',
@@ -2201,7 +2202,7 @@ describe('AppConfigService', () => {
           snapshotResolution(env),
         );
 
-        expect(CONFIG_DEFINITIONS.filter(isManagedKey)).toHaveLength(7);
+        expect(CONFIG_DEFINITIONS.filter(isManagedKey)).toHaveLength(8);
         expect(stripped).toEqual(withMetadata);
       },
     );

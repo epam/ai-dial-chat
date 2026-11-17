@@ -2061,7 +2061,15 @@
     "includesCalledModelsLabel": "Includes cost of models it called",
     "noLimitLabel": "No limit",
     "unavailableLabel": "Not available",
-    "unavailableBadgeLabel": "Unavailable"
+    "unavailableBadgeLabel": "Unavailable",
+    "budgets": {
+      "heading": "Budgets",
+      "description": "Each request to a model is charged to the first budget in this list that covers the model and has not run out.",
+      "shadowNotice": "These budgets are being tested and don't limit your requests yet. The limits above still apply.",
+      "enforceEmpty": "No budget is assigned to you, so requests to models are rejected. Contact your administrator to get a budget.",
+      "allModels": "All models",
+      "coveredModels": "Models: {{models}}"
+    }
   },
   "halloween": {
     "toastTitle": "🎃 Happy Halloween!",

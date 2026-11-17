@@ -8,6 +8,8 @@ import {
 import {
   type AnnouncementListItem,
   mapAnnouncementSeverity,
+  parseSpendingLimitsMode,
+  SpendingLimitsMode,
 } from '@epam/ai-dial-chat-hooks';
 import {
   DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
@@ -97,6 +99,8 @@ export interface AppConfigState {
     maxAttachmentFileSizeBytes: number;
     /** Percentage of a capped usage limit at which the composer banner appears. */
     usageLimitsWarningThresholdPercent: number;
+    /** DIAL Core's spending limits mode as the operator declares it; `Off` before the config loads. */
+    spendingLimitsMode: SpendingLimitsMode;
     /** Operator default for the celebrations switch, used while the user has saved no choice. */
     celebrationsEnabledByDefault: boolean;
     /** Where celebration scenes come from: the compiled modules or allowlisted packs. */
@@ -178,6 +182,7 @@ const INITIAL_STATE: ProviderState = {
     maxAttachmentFileSizeBytes: DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES,
     usageLimitsWarningThresholdPercent:
       DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
+    spendingLimitsMode: SpendingLimitsMode.Off,
     celebrationsEnabledByDefault: true,
     celebrationDelivery: DEFAULT_CELEBRATION_DELIVERY,
     projectContextFileMaxBytes: DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
@@ -253,6 +258,9 @@ const toProviderState = (
       usageLimitsWarningThresholdPercent:
         response.config?.usageLimitsWarningThresholdPercent ??
         DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
+      spendingLimitsMode: parseSpendingLimitsMode(
+        response.config?.spendingLimitsMode,
+      ),
       celebrationsEnabledByDefault:
         response.config?.celebrationsEnabledByDefault ?? true,
       celebrationDelivery:

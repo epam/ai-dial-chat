@@ -63,7 +63,7 @@ describe('buildManagedConfigSchema', () => {
     expect(schema['$schema']).toBe(
       'https://json-schema.org/draft/2020-12/schema',
     );
-    expect(schema['$id']).toBe('urn:dial:chat-ui:managed-config:1.0.0');
+    expect(schema['$id']).toBe('urn:dial:chat-ui:managed-config:1.1.0');
     expect(managedConfigSchemaId('2.3.4')).toBe(
       'urn:dial:chat-ui:managed-config:2.3.4',
     );
@@ -83,7 +83,7 @@ describe('buildManagedConfigSchema', () => {
     }
   });
 
-  it('exports exactly the 1.0.0 managed keys', () => {
+  it('exports exactly the 1.1.0 managed keys', () => {
     const schema = generate();
     expect(Object.keys(propertiesOf(schema, 'config'))).toEqual([
       'announcement.title',
@@ -92,6 +92,7 @@ describe('buildManagedConfigSchema', () => {
       'welcomeScreen.description',
       'fileManager.availableTabs',
       'usageLimits.warningThresholdPercent',
+      'usageLimits.spendingLimitsMode',
     ]);
     expect(Object.keys(propertiesOf(schema, 'features'))).toEqual([
       'features.usageLimitsControl',
@@ -229,13 +230,13 @@ describe('buildManagedConfigSchema', () => {
     expect(index).toMatchObject({
       format: 'dial-managed-config-schema-index@1',
       appId: 'chat-ui',
-      current: '1.0.0',
+      current: '1.1.0',
       supported: SUPPORTED_MANAGED_CONFIG_SCHEMA_VERSIONS,
     });
     expect(index.versions).toEqual([
       {
-        schemaVersion: '1.0.0',
-        file: 'chat-ui-1.0.0.json',
+        schemaVersion: '1.1.0',
+        file: 'chat-ui-1.1.0.json',
         schemaSha256: expect.stringMatching(/^[0-9a-f]{64}$/),
         canonicalBytes: canonicalByteLength(artifact.schema),
       },

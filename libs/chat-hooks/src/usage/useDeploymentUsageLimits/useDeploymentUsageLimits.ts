@@ -4,10 +4,14 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-/** The caller's account-wide cost budget and spend: the top level of a user-usage response. */
+/**
+ * The caller's account-wide cost budget and spend, plus the spending-limit
+ * evidence (`costObject`, `budgets`) that decides the effective spending
+ * limits mode: the top level of a user-usage response.
+ */
 export type AccountUsage = Pick<
   UserLimitStatsResponseDto,
-  'dayCostStats' | 'weekCostStats' | 'monthCostStats'
+  'dayCostStats' | 'weekCostStats' | 'monthCostStats' | 'costObject' | 'budgets'
 >;
 
 /**
