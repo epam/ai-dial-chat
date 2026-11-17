@@ -294,4 +294,15 @@ describe('usePublishFolders', () => {
       result.current.hasPublishWriteAccess(['Organization', 'Marketing']),
     ).toBe(true);
   });
+
+  it('forwards canPublishTo, which replaces the Production placeholder', async () => {
+    const canPublishTo = vi.fn().mockReturnValue(true);
+    const { result } = renderHook(() => usePublishFolders({ canPublishTo }));
+    await waitFor(() => expect(listPublicFiles).toHaveBeenCalled());
+
+    expect(
+      result.current.hasPublishWriteAccess(['Organization', 'Production']),
+    ).toBe(true);
+    expect(canPublishTo).toHaveBeenCalledWith(['Organization', 'Production']);
+  });
 });

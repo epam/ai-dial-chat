@@ -254,4 +254,61 @@ describe('SaveToFolderPanel — versions history', () => {
       screen.queryByRole('region', { name: 'Versions history' }),
     ).toBeNull();
   });
+
+  it('forwards getDisabledReason to the folder tree', () => {
+    const getDisabledReason = vi.fn();
+    renderPanel({ view: SaveToFolderView.ChangeFolder, getDisabledReason });
+
+    expect(treeProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({ getDisabledReason }),
+    );
+  });
+
+  it('shows the reason when the committed destination is disabled', () => {
+    renderPanel({
+      getDisabledReason: ({ path }) =>
+        path[0] === 'Design' ? 'You have no access to save here.' : undefined,
+    });
+
+    expect(screen.getByText('You have no access to save here.')).toBeTruthy();
+  });
+
+  it('describes the destination by the reason so the state is not visual only', () => {
+    renderPanel({
+      getDisabledReason: () => 'You have no access to save here.',
+    });
+
+    const group = screen.getByRole('group', { name: 'Destination folder' });
+    const reason = screen.getByText('You have no access to save here.');
+    expect(group.getAttribute('aria-describedby')).toBe(reason.id);
+  });
+
+  it('keeps the reason inside the live region that is mounted with the view', () => {
+    const { rerender } = renderPanel({ getDisabledReason: () => undefined });
+    const region = screen.getByRole('alert');
+    expect(region.textContent).toBe('');
+
+    rerender(
+      <SaveToFolderPanel
+        view={SaveToFolderView.Main}
+        resource={{ title: 'Design Review Agent', version: '1.0.0' }}
+        roots={roots}
+        destination={{ rootKey: 'personal', path: ['Design', 'Audit'] }}
+        onDestinationChange={vi.fn()}
+        onCreateFolder={vi.fn()}
+        onChangeFolderClick={vi.fn()}
+        onPendingDestinationChange={vi.fn()}
+        getDisabledReason={() => 'You have no access to save here.'}
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toBe(region);
+    expect(region.textContent).toBe('You have no access to save here.');
+  });
+
+  it('shows no reason for a usable committed destination', () => {
+    renderPanel({ getDisabledReason: () => undefined });
+
+    expect(screen.queryByText('You have no access to save here.')).toBeNull();
+  });
 });

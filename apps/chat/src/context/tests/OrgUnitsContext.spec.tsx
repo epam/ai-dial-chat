@@ -1,5 +1,12 @@
 import { OrgUnitsStatus } from '@epam/ai-dial-chat-hooks';
-import { render, renderHook, screen } from '@testing-library/react';
+import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
+import {
+  act,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { useEffect, type FC } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { listOrgUnits } from '../../server-api/org-units.api';
@@ -23,7 +30,11 @@ const Consumer: FC<{ name: string }> = ({ name }) => {
 describe('OrgUnitsContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(listOrgUnits).mockResolvedValue({ enabled: true, units: [] });
+    vi.mocked(listOrgUnits).mockResolvedValue({
+      enabled: true,
+      hasAdminAccess: false,
+      units: [],
+    });
     vi.mocked(useFeatureFlag).mockImplementation(
       (key) => key === 'orgUnitsEnabled',
     );
@@ -69,6 +80,99 @@ describe('OrgUnitsContext', () => {
     expect(
       screen.getByText(`file manager: ${OrgUnitsStatus.Idle}`),
     ).toBeTruthy();
+  });
+
+  it('answers every right check true while the flag is off and refreshUnits reads nothing', () => {
+    vi.mocked(useFeatureFlag).mockReturnValue(false);
+    const { result } = renderHook(() => useOrgUnitsContext(), {
+      wrapper: OrgUnitsProvider,
+    });
+
+    act(() => result.current.refreshUnits());
+
+    expect(
+      result.current.canSaveAt('Acme', OrgUnitNamespace.Applications),
+    ).toBe(true);
+    expect(
+      result.current.canPublishAt('Acme', OrgUnitNamespace.Applications),
+    ).toBe(true);
+    expect(listOrgUnits).not.toHaveBeenCalled();
+  });
+
+  it('exposes the hook result once the units are Ready, so a read-only unit is not writable', async () => {
+    vi.mocked(listOrgUnits).mockResolvedValue({
+      enabled: true,
+      hasAdminAccess: false,
+      units: [
+        {
+          id: 'u',
+          name: 'Reports',
+          displayName: 'Reports',
+          path: 'public/Reports',
+          folder: 'public/Reports/',
+          permissions: { applications: ['read'] },
+        },
+      ],
+    });
+    const { result } = renderHook(() => useOrgUnitsContext(), {
+      wrapper: OrgUnitsProvider,
+    });
+
+    act(() => result.current.ensureUnits());
+    await waitFor(() =>
+      expect(result.current.status).toBe(OrgUnitsStatus.Ready),
+    );
+
+    expect(
+      result.current.canSaveAt('Reports/Q1', OrgUnitNamespace.Applications),
+    ).toBe(false);
+    expect(
+      result.current.canPublishAt('Reports/Q1', OrgUnitNamespace.Applications),
+    ).toBe(true);
+  });
+
+  it('answers canSaveDirectlyAt false until Ready, and only inside a unit that grants write', async () => {
+    vi.mocked(listOrgUnits).mockResolvedValue({
+      enabled: true,
+      hasAdminAccess: true,
+      units: [
+        {
+          id: 'u',
+          name: 'Acme',
+          displayName: 'Acme',
+          path: 'public/Acme',
+          folder: 'public/Acme/',
+          permissions: { applications: ['read', 'write'] },
+        },
+      ],
+    });
+    const { result } = renderHook(() => useOrgUnitsContext(), {
+      wrapper: OrgUnitsProvider,
+    });
+    expect(
+      result.current.canSaveDirectlyAt(
+        'Acme/Teams',
+        OrgUnitNamespace.Applications,
+      ),
+    ).toBe(false);
+
+    act(() => result.current.ensureUnits());
+    await waitFor(() =>
+      expect(result.current.status).toBe(OrgUnitsStatus.Ready),
+    );
+
+    expect(
+      result.current.canSaveDirectlyAt(
+        'Acme/Teams',
+        OrgUnitNamespace.Applications,
+      ),
+    ).toBe(true);
+    expect(
+      result.current.canSaveDirectlyAt(
+        'Plain/Folder',
+        OrgUnitNamespace.Applications,
+      ),
+    ).toBe(false);
   });
 
   it('starts the read for an already mounted consumer once the flag turns on', async () => {

@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
+import { AppConfigModule } from '../app-config/app-config.module';
 import { ApplicationSchemasModule } from '../application-schemas/application-schemas.module';
+import { ApplicationsModule } from '../applications/applications.module';
 import { AuthModule } from '../auth/auth.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
 import { ToolsetsListingModule } from '../toolsets/listing/toolsets-listing.module';
 import { ApplicationDependencyResolver } from './dependencies/application-dependency.resolver';
 import { PublishDependenciesService } from './dependencies/publish-dependencies.service';
+import { OrgUnitCopyService } from './org-unit-copy.service';
 import { PublishDependenciesController } from './publish-dependencies.controller';
 import { PublishRulesController } from './publish-rules.controller';
 import { PublishRulesService } from './publish-rules.service';
@@ -14,6 +17,8 @@ import { VersionStatusesService } from './version-statuses.service';
 
 @Module({
   imports: [
+    AppConfigModule,
+    ApplicationsModule,
     AuthModule,
     ApplicationSchemasModule,
     DeploymentsModule,
@@ -26,6 +31,7 @@ import { VersionStatusesService } from './version-statuses.service';
   ],
   providers: [
     PublishService,
+    OrgUnitCopyService,
     VersionStatusesService,
     PublishRulesService,
     PublishDependenciesService,

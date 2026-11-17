@@ -25,11 +25,8 @@ interface Props {
  */
 export const OrgUnitsProvider: FC<Props> = ({ children }) => {
   const isEnabled = useFeatureFlag('orgUnitsEnabled');
-  const {
-    status,
-    ensureUnits: ensureLoaded,
-    isOrgUnitFolder,
-  } = useOrgUnits({ listOrgUnits });
+  const orgUnits = useOrgUnits({ listOrgUnits });
+  const { ensureUnits: ensureLoaded, refreshUnits: refreshLoaded } = orgUnits;
 
   /* A new identity once the flag resolves re-runs the consumers' effects, so a
      surface mounted before the client config loaded still starts the read. */
@@ -37,9 +34,13 @@ export const OrgUnitsProvider: FC<Props> = ({ children }) => {
     if (isEnabled) ensureLoaded();
   }, [isEnabled, ensureLoaded]);
 
+  const refreshUnits = useCallback(() => {
+    if (isEnabled) refreshLoaded();
+  }, [isEnabled, refreshLoaded]);
+
   const value = useMemo(
-    (): UseOrgUnitsResult => ({ status, ensureUnits, isOrgUnitFolder }),
-    [status, ensureUnits, isOrgUnitFolder],
+    (): UseOrgUnitsResult => ({ ...orgUnits, ensureUnits, refreshUnits }),
+    [orgUnits, ensureUnits, refreshUnits],
   );
 
   return (

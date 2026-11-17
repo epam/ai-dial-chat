@@ -94,6 +94,7 @@ export const Catalog: FC<CatalogProps> = ({
   publishExpandedPaths,
   onPublishExpandedPathsChange,
   publishLoadingPaths,
+  getPublishDisabledReason,
   hasPublishWriteAccess,
   publishDefaultAuthor,
   onPublish,
@@ -982,6 +983,7 @@ export const Catalog: FC<CatalogProps> = ({
           publishExpandedPaths={publishExpandedPaths}
           onPublishExpandedPathsChange={onPublishExpandedPathsChange}
           publishLoadingPaths={publishLoadingPaths}
+          getPublishDisabledReason={getPublishDisabledReason}
           hasPublishWriteAccess={hasPublishWriteAccess}
           publishDefaultAuthor={publishDefaultAuthor}
           onPublish={onPublish}

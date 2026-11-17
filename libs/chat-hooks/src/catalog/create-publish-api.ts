@@ -1,9 +1,11 @@
 import type {
+  CopyCatalogEntityToOrgUnitDto,
   PublishApi,
   PublishCatalogEntityDto,
   PublishHistoryEntryDto,
   PublishResultDto,
   PublishRuleDto,
+  ResourceIdResponseDto,
   ResourceDependenciesResultDto,
   UnpublishAccessDto,
   UnpublishCatalogEntityDto,
@@ -35,6 +37,16 @@ export interface PublishApiClient {
     entityId: string,
     body: PublishCatalogEntityDto,
   ) => Promise<PublishResultDto>;
+  /**
+   * Copies one own catalog entity into an org-unit folder of the public bucket
+   * without a publication request; DIAL Core decides the right and its 403 and
+   * 409 reject the promise. Resolves to the id of the copy.
+   */
+  copyCatalogEntityToOrgUnit: (
+    entityType: CatalogPublishEntityType,
+    entityId: string,
+    body: CopyCatalogEntityToOrgUnitDto,
+  ) => Promise<ResourceIdResponseDto>;
   /**
    * Submits a removal request for one already-published folder of a catalog
    * entity. The removal takes effect only after an administrator approves it,
@@ -87,6 +99,12 @@ export const createPublishApiClient = (
       entityType,
       entityId,
       publishCatalogEntityDto: body,
+    }),
+  copyCatalogEntityToOrgUnit: (entityType, entityId, body) =>
+    publishApi.copyCatalogEntityToOrgUnit({
+      entityType,
+      entityId,
+      copyCatalogEntityToOrgUnitDto: body,
     }),
   unpublishCatalogEntity: (entityType, entityId, body) =>
     publishApi.unpublishCatalogEntity({

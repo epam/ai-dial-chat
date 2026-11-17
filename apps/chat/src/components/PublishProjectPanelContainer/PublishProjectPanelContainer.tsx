@@ -4,7 +4,10 @@ import {
   toPublishRuleDto,
   usePublishDependencies,
   usePublishHistory,
+  OrgUnitFolderGuardPurpose,
+  toPublishDisabledReason,
 } from '@epam/ai-dial-chat-hooks';
+import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import {
   PublishResourceSummary,
   StandalonePublishPanel,
@@ -26,6 +29,7 @@ import {
   ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
+import { useOrgUnitFolderGuards } from '../../hooks/publish/useOrgUnitFolderGuards';
 import { usePublishDependencyIconResolver } from '../../hooks/publish/usePublishDependencyIconResolver';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
@@ -95,6 +99,12 @@ const PublishProjectPanelContainer: FC<Props> = ({
   /* The publish panel pre-fills its author field with this; the lib cannot read the session itself. */
   const { displayName } = useUserProfile();
 
+  const { isDestinationUsable, getDisabledReason } = useOrgUnitFolderGuards({
+    purpose: OrgUnitFolderGuardPurpose.Publish,
+    namespace: OrgUnitNamespace.Projects,
+    isActive: isOpen,
+  });
+
   const {
     folderItems,
     expandedPaths,
@@ -103,7 +113,7 @@ const PublishProjectPanelContainer: FC<Props> = ({
     onCreatePublishFolder,
     rememberPublishFolder,
     hasPublishWriteAccess,
-  } = usePublishFolders();
+  } = usePublishFolders({ canPublishTo: isDestinationUsable });
 
   const resource = useMemo<PublishResourceSummary>(
     () => ({ title: projectName }),
@@ -216,6 +226,7 @@ const PublishProjectPanelContainer: FC<Props> = ({
       selectedFolderPath={publishFlow.selectedFolderPath}
       onSelectedFolderPathChange={publishFlow.setSelectedFolderPath}
       onCreateFolder={publishFlow.handleCreateFolder}
+      getDisabledReason={toPublishDisabledReason(getDisabledReason)}
       expandedPaths={expandedPaths}
       onExpandedPathsChange={onExpandedPathsChange}
       loadingPaths={loadingPaths}

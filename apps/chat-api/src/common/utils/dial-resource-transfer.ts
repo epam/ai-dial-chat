@@ -15,6 +15,8 @@ import { encodePlainDialResourcePath } from './encode-dial-path';
 export enum DialResourceType {
   Applications = 'applications',
   Toolsets = 'toolsets',
+  Prompts = 'prompts',
+  Skills = 'skills',
 }
 
 /** A resource inside one bucket; `path` is percent-encoded per segment. */
@@ -45,10 +47,31 @@ const getMetadata = (
   token?: string,
 ): Promise<MetadataListPage> => {
   const init = { headers, params: { query: { token } } };
-  return (
-    type === DialResourceType.Applications
-      ? client.getApplicationMetadata(bucket, path, init)
-      : client.getToolSetMetadata(bucket, path, init)
+  if (type === DialResourceType.Applications) {
+    return client.getApplicationMetadata(
+      bucket,
+      path,
+      init,
+    ) as Promise<MetadataListPage>;
+  }
+  if (type === DialResourceType.Skills) {
+    return client.listSkillMetadata(
+      bucket,
+      path,
+      init,
+    ) as Promise<MetadataListPage>;
+  }
+  if (type === DialResourceType.Prompts) {
+    return client.getPromptMetadata(
+      bucket,
+      path,
+      init,
+    ) as Promise<MetadataListPage>;
+  }
+  return client.getToolSetMetadata(
+    bucket,
+    path,
+    init,
   ) as Promise<MetadataListPage>;
 };
 

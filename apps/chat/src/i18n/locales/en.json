@@ -2155,7 +2155,27 @@
     "savedButMoveFailed": "“{{name}}” was saved, but it could not be moved to {{folder}}.",
     "savedButPublishFailed": "“{{name}}” was saved, but the publish request failed.",
     "savedButPublishFailedReason": "“{{name}}” was saved, but the publish request failed: {{reason}}",
-    "savedButAlreadyPublished": "“{{name}}” was saved, but this version is already published in {{folder}}. Choose another folder or save as a new version."
+    "savedButAlreadyPublished": "“{{name}}” was saved, but this version is already published in {{folder}}. Choose another folder or save as a new version.",
+    "savedButAlreadyInOrgUnit": "“{{name}}” was saved, but it could not be written to {{folder}} because the name is already taken there. Choose another folder or save as a new version.",
+    "savedToFolder": "“{{name}}” was saved to {{folder}}.",
+    "savedButOrgUnitWriteFailed": "“{{name}}” was saved, but it could not be written to {{folder}}.",
+    "savedButOrgUnitWriteFailedReason": "“{{name}}” was saved, but it could not be written to {{folder}}: {{reason}}"
+  },
+  "orgUnitAccess": {
+    "noSaveAccessQuickApp": "You have no access to save your QuickApp to this folder.",
+    "noSaveAccessApplication": "You have no access to save your application to this folder.",
+    "noSaveAccessToolset": "You have no access to save your toolset to this folder.",
+    "noSaveAccessPrompt": "You have no access to save your prompt to this folder.",
+    "noSaveAccessSkill": "You have no access to save your skill to this folder.",
+    "noSaveAccessConversation": "You have no access to save your conversation to this folder.",
+    "noSaveAccessProject": "You have no access to save your project to this folder.",
+    "noPublishAccessQuickApp": "You have no access to publish your QuickApp to this folder.",
+    "noPublishAccessApplication": "You have no access to publish your application to this folder.",
+    "noPublishAccessToolset": "You have no access to publish your toolset to this folder.",
+    "noPublishAccessPrompt": "You have no access to publish your prompt to this folder.",
+    "noPublishAccessSkill": "You have no access to publish your skill to this folder.",
+    "noPublishAccessConversation": "You have no access to publish your conversation to this folder.",
+    "noPublishAccessProject": "You have no access to publish your project to this folder."
   },
   "versionHistory": {
     "heading": "Versions history",

@@ -1,7 +1,10 @@
 import {
   mapResourceDependencyDto,
   usePublishDependencies,
+  OrgUnitFolderGuardPurpose,
+  toPublishDisabledReason,
 } from '@epam/ai-dial-chat-hooks';
+import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import {
   PublishHistoryEntry,
   PublishResourceSummary,
@@ -19,6 +22,7 @@ import {
   ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
+import { useOrgUnitFolderGuards } from '../../hooks/publish/useOrgUnitFolderGuards';
 import { usePublishDependencyIconResolver } from '../../hooks/publish/usePublishDependencyIconResolver';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
@@ -91,6 +95,12 @@ const PublishConversationPanelContainer: FC<Props> = ({
   /* The publish panel pre-fills its author field with this; the lib cannot read the session itself. */
   const { displayName } = useUserProfile();
 
+  const { isDestinationUsable, getDisabledReason } = useOrgUnitFolderGuards({
+    purpose: OrgUnitFolderGuardPurpose.Publish,
+    namespace: OrgUnitNamespace.Conversations,
+    isActive: isOpen,
+  });
+
   const {
     folderItems,
     expandedPaths,
@@ -99,7 +109,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
     onCreatePublishFolder,
     rememberPublishFolder,
     hasPublishWriteAccess,
-  } = usePublishFolders();
+  } = usePublishFolders({ canPublishTo: isDestinationUsable });
 
   const resource: PublishResourceSummary = { title: conversationTitle };
 
@@ -172,6 +182,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
       selectedFolderPath={publishFlow.selectedFolderPath}
       onSelectedFolderPathChange={publishFlow.setSelectedFolderPath}
       onCreateFolder={publishFlow.handleCreateFolder}
+      getDisabledReason={toPublishDisabledReason(getDisabledReason)}
       expandedPaths={expandedPaths}
       onExpandedPathsChange={onExpandedPathsChange}
       loadingPaths={loadingPaths}

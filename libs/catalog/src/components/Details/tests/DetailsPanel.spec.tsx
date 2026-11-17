@@ -329,7 +329,12 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       allowReplace,
       dependencies,
       versionHistory,
+      getDisabledReason,
     }: {
+      getDisabledReason?: (destination: {
+        rootKey: string;
+        path: string[];
+      }) => string | undefined;
       allowReplace?: boolean;
       dependencies?: PublishDependency[];
       versionHistory?: { rows: { id: string; version: string }[] };
@@ -348,6 +353,11 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
     }) => (
       <div>
         <span>Publish panel</span>
+        <span>
+          disabledReason:
+          {getDisabledReason?.({ rootKey: '', path: ['Acme', 'Secret'] }) ??
+            'none'}
+        </span>
         <span>panelAllowReplace:{String(allowReplace)}</span>
         <span>
           dependencies:
@@ -1632,6 +1642,25 @@ describe('DetailsPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.getByRole('tablist')).toBeTruthy();
+  });
+
+  it('forwards getPublishDisabledReason to the publish panel', async () => {
+    renderPanel({
+      getPublishDisabledReason: ({ path }) =>
+        path[1] === 'Secret' ? 'No access' : undefined,
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    expect(screen.getByText('disabledReason:No access')).toBeTruthy();
+  });
+
+  it('disables no publish folder without getPublishDisabledReason', async () => {
+    renderPanel();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    expect(screen.getByText('disabledReason:none')).toBeTruthy();
   });
 
   it('creates publish folders through the shared publish flow', async () => {

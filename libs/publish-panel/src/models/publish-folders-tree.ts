@@ -45,6 +45,8 @@ export interface PublishFoldersTreeProps {
   ) => Promise<void>;
   /** Host-owned search query used to filter the tree. */
   searchQuery: string;
+  /** Reason a folder is unavailable as a destination; a non-empty string disables that row (`aria-disabled`, tooltip, accessible description, no selection) while it stays focusable and expandable, and no folder is created under it. `rootKey` is `''` in single-root mode. The whole-tree `disabled` wins. Without it, or while it returns `undefined`, nothing changes. */
+  getDisabledReason?: (destination: FolderDestination) => string | undefined;
   /** Disables every control. Defaults to `false`. */
   disabled?: boolean;
   /** Label for the folder-creation trigger. Defaults to `'Create new folder'`. */

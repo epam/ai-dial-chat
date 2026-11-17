@@ -1,5 +1,6 @@
 import { ResourceNameConflictCode } from '@epam/ai-dial-chat-api-client';
 import {
+  OrgUnitsStatus,
   ResourceSaveError,
   ResourceSaveOutcome,
   ResourceSaveVersionError,
@@ -9,7 +10,7 @@ import {
   type ResourceSaveChoice,
   type UseResourceSavePanelParams,
 } from '@epam/ai-dial-chat-hooks';
-import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import { CatalogEntityType, OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import { SaveVersionMode } from '@epam/ai-dial-publish-panel';
 import { render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -18,6 +19,8 @@ import {
   CatalogI18nKeys,
   ResourceSavePanelI18nKeys,
 } from '../../../constants/translation-keys';
+import { useFeatureFlag } from '../../../context/AppConfigContext';
+import { useOrgUnitsContext } from '../../../context/OrgUnitsContext';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { useResourceVersionHistory } from '../../../hooks/publish/useResourceVersionHistory';
 import { NotifiableEntity } from '../../../types/entity-notification';
@@ -41,6 +44,10 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => ({
 
 vi.mock('../../../context/AppConfigContext', () => ({
   useAppConfig: () => ({ config: { publicationFilterSources: ['roles'] } }),
+  useFeatureFlag: vi.fn(),
+}));
+vi.mock('../../../context/OrgUnitsContext', () => ({
+  useOrgUnitsContext: vi.fn(),
 }));
 vi.mock('../../../server-api/publish-rules.api', () => ({
   getPublishRules: vi.fn(),
@@ -119,9 +126,24 @@ const lastPanelProps = () =>
     labels: { title: string };
   };
 
+const ensureUnits = vi.fn();
+const canSaveDirectlyAt = vi.fn();
+
+const mockOrgUnits = (status: OrgUnitsStatus) =>
+  vi.mocked(useOrgUnitsContext).mockReturnValue({
+    status,
+    ensureUnits,
+    refreshUnits: vi.fn(),
+    canSaveAt: vi.fn(),
+    canSaveDirectlyAt,
+    canPublishAt: vi.fn(),
+  });
+
 describe('ResourceSavePanelContainer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useFeatureFlag).mockReturnValue(false);
+    mockOrgUnits(OrgUnitsStatus.Idle);
     vi.mocked(usePublishFolders).mockReturnValue(organizationFolders);
     vi.mocked(useResourceVersionHistory).mockReturnValue(undefined);
     vi.mocked(useResourceSavePanel).mockReturnValue({
@@ -139,6 +161,54 @@ describe('ResourceSavePanelContainer', () => {
     expect(params.labels.foldersLoadError).toBe(
       ResourceSavePanelI18nKeys.FoldersLoadFailed,
     );
+  });
+
+  describe('org-unit direct save', () => {
+    it('gives the flow no direct-save guard while the flag is off', () => {
+      mockOrgUnits(OrgUnitsStatus.Ready);
+
+      renderContainer();
+
+      expect(lastFlowParams().canSaveDirectlyTo).toBeUndefined();
+    });
+
+    it('gives the flow no direct-save guard until the rights are Ready', () => {
+      vi.mocked(useFeatureFlag).mockReturnValue(true);
+      mockOrgUnits(OrgUnitsStatus.Loading);
+
+      renderContainer();
+
+      expect(lastFlowParams().canSaveDirectlyTo).toBeUndefined();
+    });
+
+    it('builds the guard from the strict check and the application namespace once Ready', () => {
+      vi.mocked(useFeatureFlag).mockReturnValue(true);
+      mockOrgUnits(OrgUnitsStatus.Ready);
+      canSaveDirectlyAt.mockReturnValue(true);
+
+      renderContainer();
+
+      expect(
+        lastFlowParams().canSaveDirectlyTo?.(
+          ['Acme', 'Teams'],
+          SaveDestinationRoot.Organization,
+        ),
+      ).toBe(true);
+      expect(canSaveDirectlyAt).toHaveBeenCalledWith(
+        'Acme/Teams',
+        OrgUnitNamespace.Applications,
+      );
+    });
+
+    it('asks the org units to load while the panel is open, and not while it is closed', () => {
+      vi.mocked(useFeatureFlag).mockReturnValue(true);
+      renderContainer({ isOpen: false });
+      expect(ensureUnits).not.toHaveBeenCalled();
+
+      renderContainer({ isOpen: true });
+
+      expect(ensureUnits).toHaveBeenCalled();
+    });
   });
 
   it('leaves out the Organization folders when the user cannot publish', () => {
@@ -171,6 +241,7 @@ describe('ResourceSavePanelContainer', () => {
       isCreated: false,
       isNewVersion: false,
       isPublished: false,
+      isWrittenToOrgUnit: false,
     };
     const choice: ResourceSaveChoice = {
       resourceId: 'id',

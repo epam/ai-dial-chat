@@ -21,15 +21,17 @@ export class OrgUnitsController {
     operationId: 'listOrgUnits',
     summary: 'List the org units visible to the caller',
     description:
-      'Returns the DIAL Core org units the authenticated user may see, flat and parents first. ' +
-      '`enabled` is false when DIAL Core has org units turned off. ' +
+      "Returns the DIAL Core org units the authenticated user may see, flat in Core order, each with the caller's `permissions` (namespace to actions). " +
+      '`hasAdminAccess` is true when Core reports full admin access. ' +
+      '`enabled` is false (and `hasAdminAccess` false, `units` empty) when DIAL Core has org units turned off. ' +
       'Answers 403 while the `features.orgUnitsEnabled` flag is off. ' +
       'Results are cached server-side for 60 seconds per user.',
   })
   @ApiDialCoreErrors()
   @ApiResponse({
     status: 200,
-    description: 'Successfully retrieved the org units',
+    description:
+      'Successfully retrieved the org units with their permissions and the admin flag',
     type: OrgUnitsResponseDto,
   })
   @ApiResponse({

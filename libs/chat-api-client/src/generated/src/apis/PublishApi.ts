@@ -14,16 +14,24 @@
 
 import * as runtime from '../runtime';
 import type {
+  CopyCatalogEntityToOrgUnitDto,
   PublishCatalogEntityDto,
   PublishHistoryEntryDto,
   PublishResultDto,
   PublishRulesResultDto,
   ResourceDependenciesResultDto,
+  ResourceIdResponseDto,
   UnpublishAccessDto,
   UnpublishCatalogEntityDto,
   UnpublishResultDto,
   VersionStatusEntryDto,
 } from '../models/index';
+
+export interface CopyCatalogEntityToOrgUnitRequest {
+  entityType: CopyCatalogEntityToOrgUnitEntityTypeEnum;
+  entityId: string;
+  copyCatalogEntityToOrgUnitDto: CopyCatalogEntityToOrgUnitDto;
+}
 
 export interface GetCatalogPublishDependenciesRequest {
   entityType: GetCatalogPublishDependenciesEntityTypeEnum;
@@ -65,6 +73,89 @@ export interface UnpublishCatalogEntityRequest {
  *
  */
 export class PublishApi extends runtime.BaseAPI {
+  /**
+   * Copies a catalog entity of the caller\'s own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core\'s resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. Answers 403 while the `features.orgUnitsEnabled` flag is off.
+   * Copy an own catalog entity into an org-unit folder
+   */
+  async copyCatalogEntityToOrgUnitRaw(
+    requestParameters: CopyCatalogEntityToOrgUnitRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ResourceIdResponseDto>> {
+    if (requestParameters['entityType'] == null) {
+      throw new runtime.RequiredError(
+        'entityType',
+        'Required parameter "entityType" was null or undefined when calling copyCatalogEntityToOrgUnit().',
+      );
+    }
+
+    if (requestParameters['entityId'] == null) {
+      throw new runtime.RequiredError(
+        'entityId',
+        'Required parameter "entityId" was null or undefined when calling copyCatalogEntityToOrgUnit().',
+      );
+    }
+
+    if (requestParameters['copyCatalogEntityToOrgUnitDto'] == null) {
+      throw new runtime.RequiredError(
+        'copyCatalogEntityToOrgUnitDto',
+        'Required parameter "copyCatalogEntityToOrgUnitDto" was null or undefined when calling copyCatalogEntityToOrgUnit().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/catalog/{entityType}/{entityId}/copy-to-org-unit`;
+    urlPath = urlPath.replace(
+      `{${'entityType'}}`,
+      encodeURIComponent(String(requestParameters['entityType'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'entityId'}}`,
+      encodeURIComponent(String(requestParameters['entityId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['copyCatalogEntityToOrgUnitDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ResourceIdResponseDto>(response);
+  }
+
+  /**
+   * Copies a catalog entity of the caller\'s own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core\'s resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. Answers 403 while the `features.orgUnitsEnabled` flag is off.
+   * Copy an own catalog entity into an org-unit folder
+   */
+  async copyCatalogEntityToOrgUnit(
+    requestParameters: CopyCatalogEntityToOrgUnitRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ResourceIdResponseDto> {
+    const response = await this.copyCatalogEntityToOrgUnitRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
   /**
    * Returns the direct references of a catalog entity (Toolset, Application, Prompt, Skill or Project) that are not in the public bucket, so the publisher can publish them too before the published copy reaches its audience. Resources that publishing already carries along (the application icon and its declared files) are not listed, and a dependency’s own dependencies are not followed. The list is advisory: when it cannot be resolved the response is an empty list rather than an error. Kinds that reference no other resource always return an empty list.
    * List the private dependencies of a catalog entity
@@ -586,6 +677,19 @@ export class PublishApi extends runtime.BaseAPI {
   }
 }
 
+/**
+ * @export
+ */
+export const CopyCatalogEntityToOrgUnitEntityTypeEnum = {
+  Model: 'model',
+  Toolset: 'toolset',
+  Application: 'application',
+  Prompt: 'prompt',
+  Skill: 'skill',
+  Project: 'project',
+} as const;
+export type CopyCatalogEntityToOrgUnitEntityTypeEnum =
+  (typeof CopyCatalogEntityToOrgUnitEntityTypeEnum)[keyof typeof CopyCatalogEntityToOrgUnitEntityTypeEnum];
 /**
  * @export
  */

@@ -8,15 +8,17 @@ import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import type { OrgUnitDto, OrgUnitsResponseDto } from './dto/org-unit.dto';
 
-/** The shared space every org unit lives under. */
-const ORG_UNITS_ROOT = 'public';
 const CACHE_TTL_MS = 60 * 1000;
 const NOT_FOUND = 404;
 const CONTEXT = 'list org units';
 
-const DISABLED: OrgUnitsResponseDto = { enabled: false, units: [] };
+const DISABLED: OrgUnitsResponseDto = {
+  enabled: false,
+  hasAdminAccess: false,
+  units: [],
+};
 
-type CoreOrgUnitItem = components['schemas']['OrgUnitDataSummary'];
+type CoreOrgUnitItem = components['schemas']['UserOrgUnitsUnit'];
 
 @Injectable()
 export class OrgUnitsService {
@@ -28,9 +30,10 @@ export class OrgUnitsService {
   ) {}
 
   /**
-   * The org units DIAL Core shows the caller (all of them for a DIAL admin),
-   * flattened parents-first. Core answers 404 while org units are off; that is
-   * a deployment state, not a failure, so it becomes `enabled: false`.
+   * The org units DIAL Core shows the caller (all of them for a DIAL admin)
+   * with the caller's permissions in each, flat in Core's order. Core answers
+   * 404 while org units are off; that is a deployment state, not a failure,
+   * so it becomes `enabled: false`.
    */
   async listOrgUnits(
     userSub: string,
@@ -43,8 +46,7 @@ export class OrgUnitsService {
       context: CONTEXT,
       logger: this.logger,
       fetch: async () => {
-        const result = await this.dialClient.client.getOrgUnit(ORG_UNITS_ROOT, {
-          params: { query: { recursive: true } },
+        const result = await this.dialClient.client.getUserRoleAssignments({
           headers: getBearerAuthHeaders(accessToken),
         });
         if (result.error) {
@@ -60,6 +62,7 @@ export class OrgUnitsService {
         const items = Array.isArray(rawItems) ? rawItems : [];
         return {
           enabled: true,
+          hasAdminAccess: result.data?.adminAccess === 'FULL',
           units: items.flatMap((item) => this.toDto(item)),
         };
       },
@@ -67,13 +70,22 @@ export class OrgUnitsService {
   }
 
   private toDto(item: CoreOrgUnitItem): OrgUnitDto[] {
-    const { id, name, displayName, path, folder } = item;
+    const { id, name, displayName, path, folder, permissions } = item;
     if (!id || !name || !path || !folder) {
       this.logger.warn(
         `Dropping a DIAL Core org unit without id, name, path or folder (id: ${id ?? 'none'})`,
       );
       return [];
     }
-    return [{ id, name, displayName: displayName || name, path, folder }];
+    return [
+      {
+        id,
+        name,
+        displayName: displayName || name,
+        path,
+        folder,
+        permissions: permissions ?? {},
+      },
+    ];
   }
 }

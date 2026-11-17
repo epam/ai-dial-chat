@@ -5,7 +5,20 @@ import type { OrgUnitsService } from '../org-units.service';
 
 describe('OrgUnitsController', () => {
   it("lists the org units with the session user's id and token", async () => {
-    const body = { enabled: true, units: [] };
+    const body = {
+      enabled: true,
+      hasAdminAccess: false,
+      units: [
+        {
+          id: 'u-acme',
+          name: 'Acme',
+          displayName: 'Acme',
+          path: 'public/Acme',
+          folder: 'public/Acme/',
+          permissions: { applications: ['read', 'write'] },
+        },
+      ],
+    };
     const service = {
       listOrgUnits: vi.fn().mockResolvedValue(body),
     } as unknown as OrgUnitsService;

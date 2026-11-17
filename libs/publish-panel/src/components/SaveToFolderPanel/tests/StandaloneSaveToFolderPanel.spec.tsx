@@ -5,20 +5,28 @@ import type { FolderDestinationRoot } from '../../../models/folder-destination';
 import type { StandaloneSaveToFolderPanelProps } from '../../../models/save-to-folder-panel';
 import { StandaloneSaveToFolderPanel } from '../StandaloneSaveToFolderPanel';
 
+const treeProps = vi.fn();
+
 vi.mock('../../PublishFoldersTree/PublishFoldersTree', () => ({
   PublishFoldersTree: (props: {
     onDestinationChange: (destination: unknown) => void;
-  }) => (
-    <div role="tree" aria-label="Folders">
-      <button
-        onClick={() =>
-          props.onDestinationChange({ rootKey: 'organization', path: ['EPAM'] })
-        }
-      >
-        EPAM
-      </button>
-    </div>
-  ),
+  }) => {
+    treeProps(props);
+    return (
+      <div role="tree" aria-label="Folders">
+        <button
+          onClick={() =>
+            props.onDestinationChange({
+              rootKey: 'organization',
+              path: ['EPAM'],
+            })
+          }
+        >
+          EPAM
+        </button>
+      </div>
+    );
+  },
 }));
 
 vi.mock('../../PublishAccessRules/PublishAccessRules', () => ({
@@ -106,6 +114,16 @@ describe('StandaloneSaveToFolderPanel', () => {
     expect(screen.getByRole('button', { name: 'Select' })).toBeTruthy();
   });
 
+  it('forwards getDisabledReason to the folder tree in the folder view', async () => {
+    const getDisabledReason = vi.fn();
+    renderPanel({ getDisabledReason });
+    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+
+    expect(treeProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({ getDisabledReason }),
+    );
+  });
+
   it('commits the pending destination only on Select', async () => {
     const onDestinationChange = vi.fn();
     renderPanel({ onDestinationChange });
@@ -151,6 +169,22 @@ describe('StandaloneSaveToFolderPanel', () => {
     expect(
       screen.getByRole('region', { name: 'Access rules' }).textContent,
     ).toBe('EPAM');
+  });
+
+  it('hides the access rules for a destination the host marks as taking none', async () => {
+    const isHiddenFor = vi.fn(
+      (destination: { path: string[] }) => destination.path[0] === 'EPAM',
+    );
+    renderPanel({ accessRules: { ...accessRules, isHiddenFor } });
+    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+
+    await userEvent.click(screen.getByRole('button', { name: 'EPAM' }));
+
+    expect(screen.queryByRole('region', { name: 'Access rules' })).toBeNull();
+    expect(isHiddenFor).toHaveBeenCalledWith({
+      rootKey: 'organization',
+      path: ['EPAM'],
+    });
   });
 
   it('reports the pending destination and resets it to the committed one on Back', async () => {

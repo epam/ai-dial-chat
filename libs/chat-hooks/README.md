@@ -224,7 +224,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-projects` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.4.2
+- `@epam/ai-dial-react-file-manager` ^0.4.3
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
@@ -1120,24 +1120,67 @@ setRefreshToken((token) => token + 1);
 ### useOrgUnits
 
 Loads the current user's DIAL Core org units once, on demand, and answers
-which public-bucket folders are units. The host supplies `listOrgUnits`
-(resolving `{ enabled, units }`), so the hook never builds a client. Nothing
-is read until `ensureUnits()` is called. Later calls do nothing, except after a
-failed read, when the next call reads again. Status
-is the `OrgUnitsStatus` enum: `Idle`, `Loading`, `Ready`, `Disabled` (Core
-has org units off) or `Error` (the read failed; nothing is reported). Until
-the status is `Ready`, `isOrgUnitFolder` returns `false`. Available from the
-root and `./utils`.
+write, save, read and publication-request rights per public-bucket path. The host
+supplies `listOrgUnits` (resolving `{ enabled, hasAdminAccess, units }`, each
+unit with its `permissions`), so the hook never builds a client. Nothing is read
+until `ensureUnits()` is called. Later calls do nothing, except after a failed
+read, when the next call reads again. `refreshUnits()` reads again while the
+previous answer stays in use (a failed refresh keeps it) and does nothing once
+Core reported org units off. Status is the `OrgUnitsStatus` enum: `Idle`,
+`Loading`, `Ready`, `Disabled` (Core has org units off) or `Error` (the read
+failed; nothing is reported). Until the status is `Ready`, and in `Disabled` and
+`Error`, `canSaveAt` and `canPublishAt` return `true`
+for every path, so missing data never disables a folder. `canSaveDirectlyAt` is the
+exception: it is `false` until `Ready`, so a direct write always needs a proven
+right. Each takes a decoded public-relative path and an `OrgUnitNamespace` from
+`@epam/ai-dial-chat-shared`. Available from the root and `./utils`.
 
 ```tsx
 import { OrgUnitsStatus, useOrgUnits } from '@epam/ai-dial-chat-hooks';
+import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 
-const { status, ensureUnits, isOrgUnitFolder } = useOrgUnits({
+const { status, ensureUnits, canSaveAt } = useOrgUnits({
   listOrgUnits, // host-configured fetch
 });
 
 useEffect(() => ensureUnits(), [ensureUnits]);
-const isUnit = status === OrgUnitsStatus.Ready && isOrgUnitFolder('Acme');
+const isUsableDestination =
+  status !== OrgUnitsStatus.Ready ||
+  canSaveAt('Acme/Reports', OrgUnitNamespace.Applications);
+```
+
+`getOrgUnitNamespace(entityType)` maps a `CatalogPublishEntityType`
+(`application`, `toolset`, `prompt`, `skill`, `project`) to the
+`OrgUnitNamespace` a unit grants rights on (`undefined` for `model`; a
+conversation has no catalog entity type, so its containers pass
+`OrgUnitNamespace.Conversations`). `buildFolderGuards` turns the hook's answers
+into the two props a folder panel needs: `isDestinationUsable` (a host passes it to `usePublishFolders` as `canPublishTo`)
+and `getDisabledReason`, plus `canSaveDirectlyTo` when the host passes the strict
+`canSaveDirectlyAt` of `useOrgUnits` (a folder inside an org unit that grants
+`write`; `false` until `Ready` and outside every unit, even for a DIAL admin). It checks `canSaveAt` (a folder outside every unit stays usable) for
+`OrgUnitFolderGuardPurpose.Save` and `canPublishAt` for
+`OrgUnitFolderGuardPurpose.Publish`, and calls the host's optional `getReason` (a
+translated sentence) only for a disabled folder; without it `getDisabledReason`
+is `undefined`. Both `isDestinationUsable` and `getDisabledReason` take an optional `SaveDestinationRoot` as a second argument: only `SaveDestinationRoot.Organization` (also the meaning of an omitted root, since the publish panels have one tree) is matched against units, and a Personal folder is always usable even when it is named like a unit. With the flag off, a status
+other than `Ready`, or no namespace, both guards are `undefined`, so the panel
+keeps its default behaviour. `canSaveDirectlyTo` takes the same optional root and is `false` for any root but Organization, so a Personal folder named like a unit never direct-writes. `useFolderGuards({ purpose, namespace, isActive, isEnabled, orgUnits, shouldRefreshOnOpen?, getReason? })` wraps it for a panel: it calls `orgUnits.ensureUnits()` while `isActive`, re-reads loaded rights on open when `shouldRefreshOnOpen`, and returns the guards; `orgUnits` is the `useOrgUnits` result (or one shared through a host context) and `isEnabled` the host's flag. `toPublishDisabledReason(getDisabledReason)` adapts a guard's `getDisabledReason(folderPath)` to a publish panel's `getDisabledReason(destination)`. `toSaveDestinationRoot(rootKey)` turns a destination's `rootKey` into a `SaveDestinationRoot`, or `undefined`. All are available from the root and `./utils`.
+
+```tsx
+import {
+  buildFolderGuards,
+  getOrgUnitNamespace,
+  OrgUnitFolderGuardPurpose,
+} from '@epam/ai-dial-chat-hooks';
+
+const { isDestinationUsable, getDisabledReason } = buildFolderGuards({
+  purpose: OrgUnitFolderGuardPurpose.Publish,
+  isEnabled, // host feature flag
+  status,
+  namespace: getOrgUnitNamespace('application'),
+  canSaveAt,
+  canPublishAt,
+  getReason: () => 'You cannot publish to this folder',
+});
 ```
 
 ### useUsageLimitBanner
@@ -5363,7 +5406,10 @@ returns the remembered destination keys with `folderKey` moved to the front and
 the list capped at 50, or `undefined` when nothing changes (an empty key, or one
 already first); a stored value that is not an array of strings is ignored.
 `hasPublishFolderWriteAccess(folderPath)` is `false` for a folder under a
-`Production` segment. Available from the root and `./catalog`.
+`Production` segment; it is the fallback `usePublishFolders` returns as
+`hasPublishWriteAccess` until the host passes `canPublishTo` (for example from
+`buildFolderGuards`), which then replaces it. Available from the root and
+`./catalog`.
 
 ```ts
 import {
@@ -5433,7 +5479,24 @@ Organization folder. With a create adapter (`ResourceCreateSaveAdapter`, told
 apart by `isResourceCreateAdapter`) it calls `createIn` with the chosen
 Personal folder, or with the root before publishing; the result's `isCreated`
 is then `true`, and the panel offers no version choice. A failure after the save resolves with the
-`ResourceSaveOutcome` `SavedButMoveFailed` or `SavedButPublishFailed`.
+`ResourceSaveOutcome` `SavedButMoveFailed`, `SavedButPublishFailed` or
+`SavedButOrgUnitWriteFailed`.
+
+An Organization destination takes a direct write instead of a publish request
+when `choice.isDirectWrite` is `true` and the adapter has `saveIntoOrgUnit`
+(`ResourceOrgUnitWriter`): the steps before it are the Organization rows, then
+`saveIntoOrgUnit(savedId, folderPath)` replaces `publish`, and the result's
+`isWrittenToOrgUnit` is `true`. `useResourceSavePanel` sets `isDirectWrite`
+from its optional `canSaveDirectlyTo(folderPath)` parameter (for example from
+`buildFolderGuards`), only for the Organization root, and for such a
+destination it fetches no rules, does not wait for them and hides the rules
+editor through `accessRules.isHiddenFor`. Without the parameter every
+Organization destination keeps the publish rows. The optional
+`getDisabledReason(folderPath, root)` parameter (for example the guards'
+`getDisabledReason`) is returned to the panel as
+`panelProps.getDisabledReason(destination)`; a committed destination for which
+it returns a reason disables Save (`isSubmitDisabled`) and makes `submit` do
+nothing, and the main view shows the reason.
 
 The module also exports:
 
@@ -5475,7 +5538,7 @@ const { panelProps } = useResourceSavePanel({
 These functions build the `ResourceSaveAdapter` for each resource type.
 Each one takes a configured generated client and never creates one:
 
-- **`createEmbeddedApplicationSaveAdapter({ applicationsApi, applicationId, runEmbeddedSave, getCommitFailedMessage })`**
+- **`createEmbeddedApplicationSaveAdapter({ applicationsApi, applicationId, runEmbeddedSave, getCommitFailedMessage, publishClient? })`**
   is for Quick Apps, whose embedded editor is the only writer. A new version
   runs in three steps:
   1. fork the stored application;
@@ -5485,16 +5548,23 @@ Each one takes a configured generated client and never creates one:
   If the save fails, the fork is deleted. If the commit fails, it throws a
   `ResourceSaveError` with `getCommitFailedMessage(version)`.
 
-- **`createHostApplicationSaveAdapter({ applicationsApi, applicationId, update, createVersion })`**
+  It also gives the adapter `saveIntoOrgUnit(id, folderPath)`, which copies the
+  saved application into an org-unit folder of the public bucket through
+  `publishClient.copyCatalogEntityToOrgUnit('application', id, { folderPath })`
+  and never overwrites. `publishClient` is a `ResourceSavePublishClient`, the
+  `PublishApiClient` from `createPublishApiClient`; `createOrgUnitWriter(publishClient, entityType)`
+  builds the same `saveIntoOrgUnit` for any other adapter. `publishClient` is optional on every adapter factory (as in `useSkillEditorSubmit`): without it the adapter has no `saveIntoOrgUnit` and keeps only the publish path, and `isWrittenToOrgUnit` on a result is optional, so a host built before org units needs no change. A host that wants the direct write passes the client and a BFF that serves `copy-to-org-unit`.
+
+- **`createHostApplicationSaveAdapter({ applicationsApi, applicationId, update, createVersion, publishClient? })`**
   is for applications the host writes itself.
-- **`createToolsetSaveAdapter({ toolsetsApi, toolsetId, body })`** writes a new
+- **`createToolsetSaveAdapter({ toolsetsApi, toolsetId, body, publishClient? })`** writes a new
   version with `createOnly: true` into the chosen folder.
-- **`createPromptSaveAdapter({ promptsApi, promptId, body })`** is unversioned:
+- **`createPromptSaveAdapter({ promptsApi, promptId, body, publishClient? })`** is unversioned:
   it updates the prompt and then moves it.
 - **`createPromptFolderLister(promptsApi)`** returns the `listPersonalFolders`
   for prompts, one folder level built from the prompt listing.
-- **`createToolsetCreateAdapter({ toolsetsApi, body })`** and
-  **`createPromptCreateAdapter({ promptsApi, body })`** create a new toolset
+- **`createToolsetCreateAdapter({ toolsetsApi, body, publishClient? })`** and
+  **`createPromptCreateAdapter({ promptsApi, body, publishClient? })`** create a new toolset
   (create-only) or prompt in the chosen folder.
 - **`createSkillFolderLister(skillsApi, bucket)`** returns the
   `listPersonalFolders` for skills: the grouping folders of one level, across
@@ -5734,7 +5804,7 @@ if (loadState === SkillEditorLoadState.Loading) {
 
 ### useSkillEditorSubmit
 
-Owns a Skill Editor's create/edit submission flow: field validation, building and (in edit mode) merging the `SKILL.md` manifest, calling `client.createSkill`/`client.updateSkill`, and mapping the resulting success/error/conflict outcomes to presentable state. Accepts an already-configured `client`, a `messages` object, and `onNavigate`/`onNotify` callbacks rather than importing routing, notification, or i18n modules itself. Pass `getCreateReturnUrl` when the host needs to select the created skill; it receives the normalized skill path and keeps host routing out of the hook.
+Owns a Skill Editor's create/edit submission flow: field validation, building and (in edit mode) merging the `SKILL.md` manifest, calling `client.createSkill`/`client.updateSkill`, and mapping the resulting success/error/conflict outcomes to presentable state. Accepts an already-configured `client`, a `messages` object, and `onNavigate`/`onNotify` callbacks rather than importing routing, notification, or i18n modules itself. Pass `getCreateReturnUrl` when the host needs to select the created skill; it receives the normalized skill path and keeps host routing out of the hook. Pass `publishClient` (an object with `copyCatalogEntityToOrgUnit`) to give the Save-panel adapters a direct write into an org-unit folder; without it they offer none.
 
 `isSubmitErrorRetryable` is `true` only when `submitError` came from something a plain re-send can clear, such as an unavailable service; `retrySubmit` then re-sends the failed attempt's values, reusing the manifest and file blobs it already built. Pair the two to offer the action only where it can help — `onRetrySubmit={isSubmitErrorRetryable ? retrySubmit : undefined}` on `SkillEditor`.
 

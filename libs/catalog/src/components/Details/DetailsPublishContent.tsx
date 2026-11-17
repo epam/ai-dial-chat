@@ -16,6 +16,7 @@ export interface DetailsPublishContentProps extends Pick<
   | 'publishExpandedPaths'
   | 'onPublishExpandedPathsChange'
   | 'publishLoadingPaths'
+  | 'getPublishDisabledReason'
   | 'publishLabels'
   | 'resolvePublishDependenciesLabels'
   | 'resolvePublishApprovalLabels'
@@ -43,6 +44,7 @@ export const DetailsPublishContent: FC<DetailsPublishContentProps> = ({
   publishExpandedPaths,
   onPublishExpandedPathsChange,
   publishLoadingPaths,
+  getPublishDisabledReason,
   ruleSourceOptions,
   publishLabels,
   resolvePublishDependenciesLabels,
@@ -67,6 +69,7 @@ export const DetailsPublishContent: FC<DetailsPublishContentProps> = ({
       expandedPaths={publishExpandedPaths}
       onExpandedPathsChange={onPublishExpandedPathsChange}
       loadingPaths={publishLoadingPaths}
+      getDisabledReason={getPublishDisabledReason}
       hasExistingPublicationInFolder={
         publishFlow.hasExistingPublicationInFolder
       }

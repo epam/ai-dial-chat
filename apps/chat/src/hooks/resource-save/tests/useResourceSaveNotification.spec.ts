@@ -41,6 +41,7 @@ const makeResult = (
   isCreated: false,
   isNewVersion: false,
   isPublished: false,
+  isWrittenToOrgUnit: false,
   ...overrides,
 });
 
@@ -115,6 +116,142 @@ describe('useResourceSaveNotification', () => {
         message: `${ResourceSavePanelI18nKeys.SavedButMoveFailed}|${JSON.stringify({ name: 'Agent', folder: 'Drafts' })}`,
       }),
     );
+  });
+
+  describe('direct write into an org unit', () => {
+    const unitChoice: ResourceSaveChoice = {
+      ...choice,
+      destination: {
+        rootKey: SaveDestinationRoot.Organization,
+        path: ['Acme', 'Teams'],
+      },
+      isDirectWrite: true,
+    };
+
+    it('says the resource was saved to the folder, with no publish-requested text', () => {
+      renderNotify()(makeResult({ isWrittenToOrgUnit: true }), unitChoice);
+
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: NotificationVariant.Success,
+          message: expect.stringContaining(
+            ResourceSavePanelI18nKeys.SavedToFolder,
+          ),
+        }),
+      );
+      expect(showNotification).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining('publish'),
+        }),
+      );
+    });
+
+    it('reports a failed direct write as an error naming the folder', async () => {
+      vi.mocked(getApiErrorDetails).mockResolvedValue({ message: null });
+      renderNotify()(
+        makeResult({
+          outcome: ResourceSaveOutcome.SavedButOrgUnitWriteFailed,
+        }),
+        unitChoice,
+      );
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: NotificationVariant.Error,
+            message: expect.stringContaining(
+              ResourceSavePanelI18nKeys.SavedButOrgUnitWriteFailed,
+            ),
+          }),
+        ),
+      );
+    });
+
+    it('shows the generic refusal text when Core refuses the direct write with 403', async () => {
+      vi.mocked(getApiErrorDetails).mockResolvedValue({
+        message: 'Forbidden',
+        status: 403,
+        traceId: 'trace-1',
+      });
+      renderNotify()(
+        makeResult({
+          outcome: ResourceSaveOutcome.SavedButOrgUnitWriteFailed,
+        }),
+        unitChoice,
+      );
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: NotificationVariant.Error,
+            message: expect.stringContaining(
+              ResourceSavePanelI18nKeys.SavedButOrgUnitWriteFailedReason,
+            ),
+          }),
+        ),
+      );
+      expect(showNotification).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining(
+            ResourceSavePanelI18nKeys.SavedButAlreadyInOrgUnit,
+          ),
+        }),
+      );
+    });
+
+    it('says the name is already taken in the folder when the direct write conflicts', async () => {
+      vi.mocked(getApiErrorDetails).mockResolvedValue({
+        message: 'Target resource already exists',
+        status: 409,
+        traceId: 'trace-1',
+      });
+      renderNotify()(
+        makeResult({
+          outcome: ResourceSaveOutcome.SavedButOrgUnitWriteFailed,
+        }),
+        unitChoice,
+      );
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: NotificationVariant.Error,
+            message: expect.stringContaining(
+              ResourceSavePanelI18nKeys.SavedButAlreadyInOrgUnit,
+            ),
+          }),
+        ),
+      );
+      expect(showNotification).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining(
+            ResourceSavePanelI18nKeys.SavedButOrgUnitWriteFailedReason,
+          ),
+        }),
+      );
+    });
+
+    it("includes Core's reason when the failed direct write has one", async () => {
+      vi.mocked(getApiErrorDetails).mockResolvedValue({
+        message: 'Conflict',
+      });
+      renderNotify()(
+        makeResult({
+          outcome: ResourceSaveOutcome.SavedButOrgUnitWriteFailed,
+        }),
+        unitChoice,
+      );
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: expect.stringContaining(
+              ResourceSavePanelI18nKeys.SavedButOrgUnitWriteFailedReason,
+            ),
+          }),
+        ),
+      );
+    });
   });
 
   it('reports a failed publish after a successful save as an error', async () => {

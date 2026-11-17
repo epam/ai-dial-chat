@@ -10,16 +10,21 @@ import {
   isResourceCreateAdapter,
   type ResourceSaveAdapter,
 } from './resource-save-adapter';
+import { SaveDestinationRoot } from './save-destination-root';
 
 export * from './resource-save-adapter';
 
-/** The roots of the Save panel's destination tree. */
-export enum SaveDestinationRoot {
-  /** The user's own folders for the resource type. */
-  Personal = 'personal',
-  /** The Organization/public bucket; saving here also sends a publish request. */
-  Organization = 'organization',
-}
+export { SaveDestinationRoot };
+
+/**
+ * Returns the Save panel root a destination's `rootKey` names, or `undefined`
+ * for a key that is not one of its roots.
+ * @param rootKey - the `rootKey` of a `FolderDestination`
+ */
+export const toSaveDestinationRoot = (
+  rootKey: string,
+): SaveDestinationRoot | undefined =>
+  Object.values(SaveDestinationRoot).find((root) => root === rootKey);
 
 /** How a save that reached at least its first step ended. */
 export enum ResourceSaveOutcome {
@@ -29,6 +34,8 @@ export enum ResourceSaveOutcome {
   SavedButMoveFailed = 'savedButMoveFailed',
   /** The save succeeded but the publish request failed. */
   SavedButPublishFailed = 'savedButPublishFailed',
+  /** The save succeeded but the direct write into the org-unit folder failed. */
+  SavedButOrgUnitWriteFailed = 'savedButOrgUnitWriteFailed',
 }
 
 /** Why the new version typed in the Save panel cannot be used. */
@@ -57,6 +64,8 @@ export interface ResourceSaveChoice {
   newVersion: string;
   /** Access rules sent with the publish request for an Organization destination. */
   rules?: PublicationRule[];
+  /** Whether the Organization destination takes a direct write (an org unit the user may write to) instead of a publish request. Defaults to `false`. */
+  isDirectWrite?: boolean;
 }
 
 /** Sends the publish request for a saved resource. */
@@ -80,6 +89,8 @@ export interface ResourceSaveResult {
   isNewVersion: boolean;
   /** Whether a publish request was sent successfully. */
   isPublished: boolean;
+  /** Whether the resource was written directly into an org-unit folder; `false` or absent when it was not. */
+  isWrittenToOrgUnit?: boolean;
   /** The error of the step that failed after the save, if any. */
   error?: unknown;
 }
@@ -104,7 +115,8 @@ export const createPublishSavedResource =
  * Runs the Save panel's choice through `adapter`: create the resource in the
  * chosen Personal folder, or save it in place or as a new version and then
  * move it into a different Personal folder; for an Organization folder, save
- * where it lives and publish. Rejects only when the first step fails; a failure
+ * where it lives and publish, or write it into the org-unit folder directly
+ * when the choice says so and the adapter can. Rejects only when the first step fails; a failure
  * after the save resolves with the matching partial outcome, because the
  * save itself already happened.
  */
@@ -117,6 +129,11 @@ export const runResourceSave = async (
     adapter.isVersioned && choice.versionMode === SaveVersionMode.New;
   const isOrganization =
     choice.destination.rootKey === SaveDestinationRoot.Organization;
+  /* A direct write needs the adapter's own operation; without it the destination keeps the publish rows. */
+  const isDirectWrite =
+    isOrganization &&
+    choice.isDirectWrite === true &&
+    adapter.saveIntoOrgUnit != null;
   /* Publishing keeps the resource where it lives; only a Personal destination relocates it. */
   const personalFolder = isOrganization
     ? choice.currentFolderPath
@@ -147,6 +164,7 @@ export const runResourceSave = async (
     isCreated: isResourceCreateAdapter(adapter),
     isNewVersion,
     isPublished: false,
+    isWrittenToOrgUnit: false,
   };
 
   if (shouldMove && !isResourceCreateAdapter(adapter)) {
@@ -161,7 +179,18 @@ export const runResourceSave = async (
     }
   }
 
-  if (isOrganization) {
+  if (isOrganization && isDirectWrite) {
+    try {
+      await adapter.saveIntoOrgUnit?.(result.savedId, choice.destination.path);
+      result.isWrittenToOrgUnit = true;
+    } catch (error) {
+      return {
+        ...result,
+        outcome: ResourceSaveOutcome.SavedButOrgUnitWriteFailed,
+        error,
+      };
+    }
+  } else if (isOrganization) {
     try {
       await publish(
         adapter.publishEntityType,

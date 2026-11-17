@@ -298,4 +298,15 @@ describe('StandalonePublishPanel', () => {
     );
     expect(onSubmit).toHaveBeenCalledOnce();
   });
+
+  it('forwards getDisabledReason to the publish panel body', () => {
+    const getDisabledReason = vi.fn();
+    publishPanelProps.mockClear();
+
+    renderPanel({ getDisabledReason });
+
+    expect(publishPanelProps).toHaveBeenCalledWith(
+      expect.objectContaining({ getDisabledReason }),
+    );
+  });
 });
