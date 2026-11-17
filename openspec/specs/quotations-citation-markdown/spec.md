@@ -286,5 +286,5 @@ The chat app's Copy actions SHALL pass a `formatLabel` that returns the same tex
 
 #### Scenario: Copying a message keeps the page
 
-- **WHEN** the user copies an assistant message whose `<cit>` resolves to `clm.pdf` with selector page `1`
-- **THEN** the clipboard text contains `"clm.pdf, p. 1"`
+- **WHEN** the user copies an assistant message whose `<cit>` resolves to `clm.pdf` with selector page `2`
+- **THEN** the clipboard text contains `"clm.pdf, p. 2"`

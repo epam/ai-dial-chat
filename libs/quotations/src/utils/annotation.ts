@@ -339,6 +339,8 @@ export const getAnnotationPdfPage = (
   return undefined;
 };
 
+const FIRST_PAGE = 1;
+
 /*
  * A page token (`page`, `pages`, `pg`, `pp`, `p`) as a whole word followed by
  * digits that do not run into a word, or a `#page=` fragment. Bare digits in a
@@ -347,17 +349,23 @@ export const getAnnotationPdfPage = (
 const PAGE_MENTION_RE =
   /(?:^|[^\p{L}\p{N}])(?:pages?|pg|pp|p)\s*[.:]?\s*\d+(?![\p{L}\p{N}])|#page=\d/iu;
 
-/** Returns the 1-based PDF page a citation group's marker refers to, or `undefined` when none is known or `sourceName` already mentions a page. */
+/**
+ * Returns the 1-based PDF page a citation group's marker refers to, or
+ * `undefined` when none is known, when it is page 1, or when `sourceName`
+ * already mentions a page.
+ */
 export const getCitationGroupPage = (
   group: AnnotationGroup,
 ): number | undefined => {
   // Some sources write the page into the title the pill already displays.
   if (PAGE_MENTION_RE.test(group.sourceName)) return undefined;
-  return (
+  const page =
     getAnnotationPdfPage(group.primaryAnnotation) ??
-    parsePdfPageReference(group.sourceUrl)?.page ??
-    undefined
-  );
+    parsePdfPageReference(group.sourceUrl)?.page;
+  /* Page 1 is where a link to a whole document lands (Issue #9845), so naming
+   it adds noise; the marker still opens page 1 because opening does not read
+   this value. */
+  return page != null && page > FIRST_PAGE ? page : undefined;
 };
 
 /**
