@@ -33,6 +33,7 @@ export type {
   UsePublishFlowOptions,
   UsePublishFlowResult,
 } from './utils/use-publish-flow';
+/* Folder helpers and types live in `@epam/ai-dial-react-file-manager`; they are re-exported so existing imports keep resolving. */
 export {
   collectFolderKeys,
   filterFolderTree,
@@ -44,8 +45,8 @@ export {
   toDialFileTree,
   toFolderPathKey,
   validateFolderName,
-} from './utils/publish-folder-tree';
-export type { FolderNameValidationMessages } from './utils/publish-folder-tree';
+} from '@epam/ai-dial-react-file-manager';
+export type { FolderNameValidationMessages } from '@epam/ai-dial-react-file-manager';
 
 // Components
 export { PublishAccessRuleEditor } from './components/PublishAccessRuleEditor/PublishAccessRuleEditor';
@@ -84,13 +85,6 @@ export type {
   PublishHistoryListProps,
 } from './components/PublishHistoryList/PublishHistoryList';
 
-export { PublishFoldersTree } from './components/PublishFoldersTree/PublishFoldersTree';
-export type {
-  PublishFoldersTreeColors,
-  PublishFoldersTreeProps,
-  PublishFoldersTreeStyles,
-} from './models/publish-folders-tree';
-
 export { PublishPanel } from './components/PublishPanel/PublishPanel';
 export type {
   PublishPanelProps,
@@ -116,10 +110,8 @@ export type {
 } from './components/PublishPanel/StandalonePublishPanel';
 export { PUBLISH_PANEL_CLASS } from './constants/public-class-names';
 
-export type {
-  FolderDestination,
-  FolderDestinationRoot,
-} from './models/folder-destination';
+export type { FolderDestination } from '@epam/ai-dial-react-file-manager';
+export type { FolderDestinationRoot } from './models/folder-destination';
 
 export { UnpublishConfirmationDialog } from './components/UnpublishConfirmationDialog/UnpublishConfirmationDialog';
 export type {

@@ -127,7 +127,7 @@ Copy/move, upload and download keep their own treatments, so none of them adds t
 
 ### Requirement: Standalone page and destination popup require no new gating
 
-`DialFileManagerPage` (standalone) SHALL require no code change to inherit the consolidated overlay's coverage of `isUnsharing`/`isRemovingAccess` — it already renders through the shared `DialFileManagerShell`. The destination-folder popup's confirm-gating (`folderPopupLoadingPaths`, per `file-manager-folder-picker`) and `useDialFileManager`'s existing re-entrant-call guards on `onCopyFiles`/`onMoveToFiles` (which already early-return while `isCopying`/`isMoving` is `true`) SHALL remain unchanged — this capability introduces no new popup-specific requirement.
+`DialFileManagerPage` (standalone) SHALL require no code change to inherit the consolidated overlay's coverage of `isUnsharing`/`isRemovingAccess` — it already renders through the shared `DialFileManagerShell`. The destination side panel's confirm-gating (`folderPopupLoadingPaths`, per `file-manager-folder-picker`) and `useDialFileManager`'s existing re-entrant-call guards on `onCopyFiles`/`onMoveToFiles` (which already early-return while `isCopying`/`isMoving` is `true`) SHALL remain unchanged — this capability introduces no new destination-panel requirement.
 
 #### Scenario: Standalone page shows the consolidated overlay without host-level changes
 
@@ -136,7 +136,7 @@ Copy/move, upload and download keep their own treatments, so none of them adds t
 
 #### Scenario: Destination popup preload-loading gating is unaffected
 
-- **WHEN** the destination-folder popup is open and browsing an uncached folder
+- **WHEN** the destination side panel is open and browsing an uncached folder
 - **THEN** `folderPopupLoadingPaths`-driven confirm-disabling behaves exactly as specified in `file-manager-folder-picker`, unaffected by the new `isAnyOperationInProgress` flag
 
 ### Requirement: i18n keys for the new overlay labels

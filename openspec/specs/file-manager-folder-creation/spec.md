@@ -185,7 +185,7 @@ mergeCreatedFolder(
 bumpRetry();
 ```
 
-`mergeCreatedFolder` (`libs/chat-hooks/src/files/useDialFileListing/useDialFileListing.ts`) runs `setCache((prev) => mergeCreatedFolderIntoCache(prev, parentApiPath, created, inheritedPermissions))`. `mergeCreatedFolderIntoCache` (`libs/chat-hooks/src/files/dial-file-manager-mapping.util.ts`) returns a new `Map` whose `parentApiPath` entry has a synthesized folder `ListFilesItemDto` appended — unless a case-insensitive same-name item is already there — so the folder shows immediately, including when it was created from a destination-folder popup browsing a different parent. `bumpRetry` increments `retryCounter`, which refetches the currently browsed `folderPath`.
+`mergeCreatedFolder` (`libs/chat-hooks/src/files/useDialFileListing/useDialFileListing.ts`) runs `setCache((prev) => mergeCreatedFolderIntoCache(prev, parentApiPath, created, inheritedPermissions))`. `mergeCreatedFolderIntoCache` (`libs/chat-hooks/src/files/dial-file-manager-mapping.util.ts`) returns a new `Map` whose `parentApiPath` entry has a synthesized folder `ListFilesItemDto` appended — unless a case-insensitive same-name item is already there — so the folder shows immediately, including when it was created from a destination side panel browsing a different parent. `bumpRetry` increments `retryCounter`, which refetches the currently browsed `folderPath`.
 
 This optimistic entry is **not** preserved across a refetch. Every listing fetch in `useDialFileListing` (the `retryCounter`-driven current-folder effect, tree expansion, and destination-popup loads) writes its result with `next.set(apiPath, flat)` / `new Map(prev).set(apiPath, flat)`, replacing the folder's cache entry outright; there is no merge of cached and incoming items (no `mergeListingItems` helper exists). After the next refetch of the parent, the folder is shown only if DIAL Core's listing returns it. DIAL Core has no empty-folder concept — a folder exists only while some object is stored under its prefix — so a created folder that the listing does not return disappears from the grid at that refetch and reappears once an object exists under it (for example after a file is uploaded into it). This is expected behaviour: the hooks keep no client-side record of created folders beyond that cache entry. A tab or session change (`setCache(new Map())`) also discards it.
 
@@ -382,7 +382,7 @@ No new metrics or analytics events beyond `MetricsInterceptor` (request duration
 
 #### Scenario: Parent folder resolution when creating outside the currently browsed folder
 
-- **WHEN** a folder is created from a destination-folder popup browsing a different folder than the outer grid, so no cached sibling list is available for the new folder's actual parent
+- **WHEN** a folder is created from a destination side panel browsing a different folder than the outer grid, so no cached sibling list is available for the new folder's actual parent
 - **THEN** `onCreateFolder` still runs the empty-name, forbidden-symbol, reserved-name, and length checks against the resolved name
 - **AND** the client-side sibling-duplicate check is best-effort only for this case; a genuine conflict is still caught by the BFF's `409` response, exactly as already specified for the existing conflict-check scenario
 ---
@@ -397,9 +397,9 @@ The notification SHALL NOT be raised when validation rejects the name locally or
 - **WHEN** a user confirms a valid new folder name and the create request succeeds
 - **THEN** a success notification titled `"Folder created successfully"` is shown, naming the folder
 
-#### Scenario: Folder created from a destination-folder popup confirms
+#### Scenario: Folder created from a destination side panel confirms
 
-- **WHEN** a folder is created from a destination-folder popup browsing a different folder than the outer grid, and the create request succeeds
+- **WHEN** a folder is created from a destination side panel browsing a different folder than the outer grid, and the create request succeeds
 - **THEN** the same success notification is shown, even though the new folder is not visible in the outer grid
 
 #### Scenario: Rejected name raises no success notification

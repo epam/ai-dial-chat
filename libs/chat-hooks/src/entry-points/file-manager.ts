@@ -4,6 +4,7 @@ export * from '../files/dial-file-manager.model';
 export * from '../files/dial-file-manager-copy-move.util';
 export * from '../files/dial-file-manager-mapping.util';
 export * from '../files/dial-file-manager-path.util';
+export * from '../files/dial-file-manager-destination.util';
 export * from '../files/attachment-types';
 export * from '../files/attachment-type-labels';
 export * from '../files/create-files-api';
@@ -38,3 +39,4 @@ export type {
 } from '@epam/ai-dial-chat-shared';
 export { useGridEditingScroll } from '@epam/ai-dial-chat-shared';
 export * from '../files/useFileAttachmentModalState/useFileAttachmentModalState';
+export * from '../files/useFileManagerDestination/useFileManagerDestination';

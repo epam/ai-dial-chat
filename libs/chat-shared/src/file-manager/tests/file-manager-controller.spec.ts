@@ -25,7 +25,6 @@ describe('FileManagerController', () => {
       expandedPaths: true,
       loadedPaths: true,
       onExpandedPathsChange: true,
-      onFolderPopupPathChange: true,
       folderPopupLoadingPaths: true,
       onUploadFiles: true,
       onUploadArchive: true,
@@ -71,7 +70,7 @@ describe('FileManagerController', () => {
       sectionTab: true,
     } satisfies Record<ControllerKeys, true>;
 
-    expect(Object.keys(controllerKeys)).toHaveLength(57);
+    expect(Object.keys(controllerKeys)).toHaveLength(56);
   });
 });
 

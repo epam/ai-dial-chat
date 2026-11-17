@@ -4,6 +4,10 @@ import {
   ResourceSummary,
 } from '@epam/ai-dial-chat-shared';
 import {
+  FolderDestinationTree,
+  type FolderDestination,
+} from '@epam/ai-dial-react-file-manager';
+import {
   Checkbox,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
@@ -27,7 +31,6 @@ import {
   useState,
 } from 'react';
 import { PUBLISH_PANEL_CLASS } from '../../constants/public-class-names';
-import type { FolderDestination } from '../../models/folder-destination';
 import {
   PublicationRule,
   PublishCalloutKind,
@@ -45,7 +48,6 @@ import {
   PublishAccessRulesLabels,
 } from '../PublishAccessRules/PublishAccessRules';
 import { PublishDependenciesList } from '../PublishDependenciesList/PublishDependenciesList';
-import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
 import { VersionHistorySection } from '../VersionHistorySection/VersionHistorySection';
 import styles from './PublishPanel.module.scss';
 
@@ -152,7 +154,7 @@ export interface PublishPanelProps {
   onPendingFolderPathChange: (path: string[] | undefined) => void;
   /** Called when the user confirms a new folder name. */
   onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
-  /** Reason a folder is unavailable as a destination, or `undefined` when it is usable; forwarded to the folder view's tree (`rootKey` is `''`), see `PublishFoldersTreeProps.getDisabledReason`. */
+  /** Reason a folder is unavailable as a destination, or `undefined` when it is usable; forwarded to the folder view's tree (`rootKey` is `''`), see `FolderDestinationTreeProps.getDisabledReason`. */
   getDisabledReason?: (destination: FolderDestination) => string | undefined;
   /**
    * Externally-controlled set of expanded folder path keys. Pass this
@@ -405,7 +407,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             aria-label={searchPlaceholder}
           />
         </div>
-        <PublishFoldersTree
+        <FolderDestinationTree
           items={folderItems}
           selectedPath={pendingFolderPath}
           onSelectedPathChange={onPendingFolderPathChange}

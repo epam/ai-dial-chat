@@ -1,33 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import type { FolderDestinationRoot } from '@epam/ai-dial-react-file-manager';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import type { FolderDestinationRoot } from '../../../models/folder-destination';
 import type { StandaloneSaveToFolderPanelProps } from '../../../models/save-to-folder-panel';
 import { StandaloneSaveToFolderPanel } from '../StandaloneSaveToFolderPanel';
-
-const treeProps = vi.fn();
-
-vi.mock('../../PublishFoldersTree/PublishFoldersTree', () => ({
-  PublishFoldersTree: (props: {
-    onDestinationChange: (destination: unknown) => void;
-  }) => {
-    treeProps(props);
-    return (
-      <div role="tree" aria-label="Folders">
-        <button
-          onClick={() =>
-            props.onDestinationChange({
-              rootKey: 'organization',
-              path: ['EPAM'],
-            })
-          }
-        >
-          EPAM
-        </button>
-      </div>
-    );
-  },
-}));
 
 vi.mock('../../PublishAccessRules/PublishAccessRules', () => ({
   PublishAccessRules: (props: { folderName?: string }) => (
@@ -46,7 +22,7 @@ const roots: FolderDestinationRoot[] = [
   {
     key: 'organization',
     label: 'Organization',
-    items: [],
+    items: [{ path: ['EPAM'], name: 'EPAM' }],
     hasAccessRules: true,
   },
 ];
@@ -114,21 +90,26 @@ describe('StandaloneSaveToFolderPanel', () => {
     expect(screen.getByRole('button', { name: 'Select' })).toBeTruthy();
   });
 
-  it('forwards getDisabledReason to the folder tree in the folder view', async () => {
-    const getDisabledReason = vi.fn();
-    renderPanel({ getDisabledReason });
+  it('disables the folder rows the host gives a reason for in the folder view', async () => {
+    renderPanel({
+      getDisabledReason: ({ rootKey, path }) =>
+        rootKey === 'organization' && path[0] === 'EPAM'
+          ? 'No access'
+          : undefined,
+    });
     await userEvent.click(screen.getByRole('button', { name: 'Change' }));
 
-    expect(treeProps).toHaveBeenLastCalledWith(
-      expect.objectContaining({ getDisabledReason }),
-    );
+    const row = screen.getByRole('treeitem', { name: /EPAM/ });
+    expect(row.getAttribute('aria-disabled')).toBe('true');
   });
 
   it('commits the pending destination only on Select', async () => {
     const onDestinationChange = vi.fn();
     renderPanel({ onDestinationChange });
     await userEvent.click(screen.getByRole('button', { name: 'Change' }));
-    await userEvent.click(screen.getByRole('button', { name: 'EPAM' }));
+    await userEvent.click(
+      within(screen.getByRole('treeitem', { name: 'EPAM' })).getByText('EPAM'),
+    );
     expect(onDestinationChange).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole('button', { name: 'Select' }));
     expect(onDestinationChange).toHaveBeenCalledWith({
@@ -146,12 +127,16 @@ describe('StandaloneSaveToFolderPanel', () => {
     renderPanel({ onDestinationChange, onClose });
 
     await userEvent.click(screen.getByRole('button', { name: 'Change' }));
-    await userEvent.click(screen.getByRole('button', { name: 'EPAM' }));
+    await userEvent.click(
+      within(screen.getByRole('treeitem', { name: 'EPAM' })).getByText('EPAM'),
+    );
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
 
     await userEvent.click(screen.getByRole('button', { name: 'Change' }));
-    await userEvent.click(screen.getByRole('button', { name: 'EPAM' }));
+    await userEvent.click(
+      within(screen.getByRole('treeitem', { name: 'EPAM' })).getByText('EPAM'),
+    );
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
     expect(onDestinationChange).not.toHaveBeenCalled();
@@ -164,7 +149,9 @@ describe('StandaloneSaveToFolderPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Change' }));
     expect(screen.queryByRole('region', { name: 'Access rules' })).toBeNull();
 
-    await userEvent.click(screen.getByRole('button', { name: 'EPAM' }));
+    await userEvent.click(
+      within(screen.getByRole('treeitem', { name: 'EPAM' })).getByText('EPAM'),
+    );
 
     expect(
       screen.getByRole('region', { name: 'Access rules' }).textContent,
@@ -194,7 +181,9 @@ describe('StandaloneSaveToFolderPanel', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Change' }));
     expect(onPendingDestinationChange).toHaveBeenLastCalledWith(committed);
-    await userEvent.click(screen.getByRole('button', { name: 'EPAM' }));
+    await userEvent.click(
+      within(screen.getByRole('treeitem', { name: 'EPAM' })).getByText('EPAM'),
+    );
     expect(onPendingDestinationChange).toHaveBeenLastCalledWith({
       rootKey: 'organization',
       path: ['EPAM'],

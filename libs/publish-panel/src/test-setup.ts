@@ -15,3 +15,8 @@ vi.stubGlobal(
     }
   },
 );
+
+// The file manager's folder tree hit-tests rows with `elementFromPoint`, which jsdom lacks.
+if (!document.elementFromPoint) {
+  document.elementFromPoint = vi.fn(() => document.createElement('div'));
+}

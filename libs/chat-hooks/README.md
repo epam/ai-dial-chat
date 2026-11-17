@@ -117,6 +117,8 @@ form's "File manager" source uses it with `T = File`. A host that imports it fro
 
 ### Pending attachment results
 
+`useFileManagerDestination` (root and `./file-manager`) drives a folder destination panel for a file-manager Copy or Move: it turns the file manager's `items` into destination roots, opens the hierarchy along the source folder's path, preloads a folder when it is picked (`onDestinationChange`) or expanded, reports whether the destination is loading or restricted (`DestinationRestriction`: the source folder, or a moved folder's own subtree), and creates folders under the chosen parent. Pass the `DialDestinationRequest` the file manager raised plus the controller's `items`, `folderPopupLoadingPaths`, `onFolderPopupPathChange` and `onCreateFolder`; the host renders `FolderDestinationPanel` from `@epam/ai-dial-react-file-manager` (Inline layout) and calls `request.confirm` / `request.cancel`. `DialDestinationRequest` and the panel come from the `@epam/ai-dial-react-file-manager` release that follows `0.4.1`.
+
 `useFileAttachmentModalState` (root and `./file-manager`) accepts `bucket` and
 optional `resolvePreviewUrl`. It exposes modal open/close actions,
 `pendingAttachments`, `handleAttach` and `clearPendingAttachments`. Attach maps

@@ -1,16 +1,16 @@
+import type {
+  FolderDestination,
+  FolderDestinationTreeStyles,
+} from '@epam/ai-dial-react-file-manager';
 import type { CSSProperties, Ref, RefObject } from 'react';
 import type { PublishAccessRulesLabels } from '../components/PublishAccessRules/PublishAccessRules';
 import type {
   SaveToFolderView,
   SaveVersionMode,
 } from '../types/save-to-folder';
-import type {
-  FolderDestination,
-  FolderDestinationRoot,
-} from './folder-destination';
+import type { FolderDestinationRoot } from './folder-destination';
 import type { PublicationRule, PublishResourceSummary } from './publish';
 import type { PublishAccessRulesStyles } from './publish-access-rules-styles';
-import type { PublishFoldersTreeStyles } from './publish-folders-tree';
 import type { VersionHistorySectionProps } from './version-history';
 
 /** Text overrides for the body of the save-to-folder panel. */
@@ -74,7 +74,7 @@ export interface SaveToFolderPanelStyles {
   /** Color overrides. */
   colors?: SaveToFolderPanelColors;
   /** Style overrides forwarded to the folder tree. */
-  folderTree?: PublishFoldersTreeStyles;
+  folderTree?: FolderDestinationTreeStyles;
   /** Additional CSS custom properties applied to the body root. */
   cssVars?: CSSProperties;
 }
@@ -127,7 +127,7 @@ export interface SaveToFolderPanelBaseProps {
   destination: FolderDestination;
   /** Called with the destination the user selected and confirmed in the folder tree. */
   onDestinationChange: (destination: FolderDestination) => void;
-  /** Reason a folder is unavailable as a destination, or `undefined` when it is usable; forwarded to the folder tree, see `PublishFoldersTreeProps.getDisabledReason`. */
+  /** Reason a folder is unavailable as a destination, or `undefined` when it is usable; forwarded to the folder tree, see `FolderDestinationTreeProps.getDisabledReason`. */
   getDisabledReason?: (destination: FolderDestination) => string | undefined;
   /** Called when a new folder name is confirmed under `rootKey` at `parentPath`. */
   onCreateFolder: (

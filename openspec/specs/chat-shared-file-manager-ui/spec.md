@@ -20,7 +20,7 @@ The controller's required keys SHALL be exactly the current shell destructure:
 `items`, `isLoading`, `error`, `path`, `onPathChange`, `retry`,
 `onSearchFiles`, `isSearching`, `searchResults`, `clearSearchResults`,
 `expandedPaths`, `loadedPaths`, `onExpandedPathsChange`,
-`onFolderPopupPathChange`, `folderPopupLoadingPaths`, `onUploadFiles`,
+`folderPopupLoadingPaths`, `onUploadFiles`,
 `onUploadArchive`, `onValidateUpload`, `uploadBatchState`, `cancelUpload`, `cancelUploadFile`,
 `clearUploadBatch`, `onCreateFolder`, `onCreateFolderValidate`,
 `onDownloadFiles`, `isDownloading`, `onDeleteFiles`, `isDeleting`,

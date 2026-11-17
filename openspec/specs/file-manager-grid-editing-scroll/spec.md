@@ -21,17 +21,12 @@
 
 ### Requirement: Grid API captured via onGridApiChange on the main grid
 
-`DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileManagerShell`) SHALL pass `handleGridApiChange` (from `useGridEditingScroll`) as the `onGridApiChange` prop on the main `<DialFileManager>` element it renders, and only there; the destination-folder popup options it builds carry no `onGridApiChange`.
+`DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileManagerShell`) SHALL pass `handleGridApiChange` (from `useGridEditingScroll`) as the `onGridApiChange` prop on the main `<DialFileManager>` element it renders, and only there; the destination side panel is owned by the host and has no grid.
 
 #### Scenario: Shell wires the hook to the main grid
 
 - **WHEN** `DialFileManagerShell` renders its main `<DialFileManager>`
 - **THEN** the element's `onGridApiChange` prop is `useGridEditingScroll`'s `handleGridApiChange`
-
-#### Scenario: Destination-folder popup grid is not subscribed
-
-- **WHEN** the destination-folder popup opens with its own inner grid
-- **THEN** `useGridEditingScroll`'s `handleGridApiChange` is not invoked for the popup's inner grid
 
 ---
 

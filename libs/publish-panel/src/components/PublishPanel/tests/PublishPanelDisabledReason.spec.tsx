@@ -1,30 +1,21 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { PublishPanelView } from '../../../types/publish-panel';
 import { PublishPanel } from '../PublishPanel';
 
-const treeProps = vi.fn();
-
-vi.mock('../../PublishFoldersTree/PublishFoldersTree', () => ({
-  PublishFoldersTree: (props: unknown) => {
-    treeProps(props);
-    return <div role="tree" aria-label="Folders" />;
-  },
-}));
-
 describe('PublishPanel getDisabledReason', () => {
-  it('forwards getDisabledReason to the folder view tree', () => {
-    const getDisabledReason = vi.fn();
-
+  it('disables the folder view rows the host gives a reason for', () => {
     render(
       <PublishPanel
         view={PublishPanelView.ChangeFolder}
         resource={{ title: 'Agent', version: '1.0.0' }}
-        folderItems={[]}
+        folderItems={[{ path: ['Shared'], name: 'Shared' }]}
         onChangeFolderClick={vi.fn()}
         onPendingFolderPathChange={vi.fn()}
         onCreateFolder={vi.fn()}
-        getDisabledReason={getDisabledReason}
+        getDisabledReason={({ path }) =>
+          path[0] === 'Shared' ? 'No access' : undefined
+        }
         hasExistingPublicationInFolder={false}
         hasWriteAccess
         isSubmitting={false}
@@ -36,8 +27,10 @@ describe('PublishPanel getDisabledReason', () => {
       />,
     );
 
-    expect(treeProps).toHaveBeenLastCalledWith(
-      expect.objectContaining({ getDisabledReason }),
-    );
+    expect(
+      screen
+        .getByRole('treeitem', { name: /Shared/ })
+        .getAttribute('aria-disabled'),
+    ).toBe('true');
   });
 });

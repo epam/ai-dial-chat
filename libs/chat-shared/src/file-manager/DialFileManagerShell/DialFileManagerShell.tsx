@@ -3,6 +3,7 @@ import {
   DialFileManagerActions,
   DialFileManagerTabs,
   GridSelectionMode,
+  type DialDestinationRequest,
   type DialFileAcceptType,
   type FileManagerGridRow,
   type FileTreeOptions,
@@ -19,14 +20,7 @@ import {
   LiveRegion,
   LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type FC,
-} from 'react';
+import { memo, useCallback, useEffect, useMemo, type FC } from 'react';
 import type { FileManagerSelectableNode } from '../../types/file-manager-node';
 import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
@@ -35,13 +29,8 @@ import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
 } from '../file-manager-variant';
-import type {
-  DialFileManagerDestinationFolderPopupOptions,
-  DialFileManagerShellLabels,
-  EmptyStateCopy,
-} from '../labels';
+import type { DialFileManagerShellLabels, EmptyStateCopy } from '../labels';
 import { OperationLoaderModal } from '../OperationLoaderModal/OperationLoaderModal';
-import { getParentFolderPath } from '../path';
 import type { DialFileManagerShellStyles } from '../shell-styles';
 import {
   buildTransferQueueLabels,
@@ -51,14 +40,6 @@ import {
 } from '../upload-queue';
 import { useGridEditingScroll } from '../useGridEditingScroll/useGridEditingScroll';
 import styles from './DialFileManagerShell.module.scss';
-
-type DestinationFolderPopupOptions =
-  DialFileManagerDestinationFolderPopupOptions & {
-    sourceFolder?: string;
-    destinationFolderPath?: string;
-    setDestinationFolderPath?: (path?: string) => void;
-    filesLoading?: boolean;
-  };
 
 interface OverlayFlags {
   isDeleting: boolean;
@@ -138,6 +119,8 @@ export interface DialFileManagerShellProps {
   onTableFileClick?: (row: FileManagerGridRow) => void;
   /** Dotted extensions (e.g. `.md`) the Preview row action is offered for. The file manager matches them exactly as written, so list every spelling that should qualify. */
   previewExtensions?: string[];
+  /** Called when the user starts Copy or Move; the host shows its own destination UI and calls `request.confirm` or `request.cancel`. Without it Copy and Move are not offered. */
+  onDestinationRequest?: (request: DialDestinationRequest) => void;
   /** Color overrides, e.g. a different surface background. */
   styles?: DialFileManagerShellStyles;
 }
@@ -168,6 +151,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   onPreview,
   onTableFileClick,
   previewExtensions,
+  onDestinationRequest,
   styles: shellStyles,
 }) => {
   const {
@@ -184,7 +168,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     expandedPaths,
     loadedPaths,
     onExpandedPathsChange,
-    onFolderPopupPathChange,
     folderPopupLoadingPaths,
     onUploadFiles,
     onUploadArchive,
@@ -232,10 +215,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   /* Per-tab rules follow the browsed folder's source tab; the strip keeps `activeTab`. */
   const gateTab = sectionTab ?? activeTab;
 
-  const [destinationFolderPath, setDestinationFolderPath] = useState<
-    string | undefined
-  >(undefined);
-
   const { handleGridApiChange, reset: resetGridEditingScroll } =
     useGridEditingScroll();
 
@@ -254,10 +233,17 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     if (DialFileManagerActions.Rename in tabActionLabels) {
       result[DialFileManagerActions.Rename] = labels.renameLabel;
     }
-    if (DialFileManagerActions.Copy in tabActionLabels) {
+    /* Copy and Move need the host's destination UI, so they are offered only when it is wired. */
+    if (
+      onDestinationRequest != null &&
+      DialFileManagerActions.Copy in tabActionLabels
+    ) {
       result[DialFileManagerActions.Copy] = labels.copyLabel;
     }
-    if (DialFileManagerActions.Move in tabActionLabels) {
+    if (
+      onDestinationRequest != null &&
+      DialFileManagerActions.Move in tabActionLabels
+    ) {
       result[DialFileManagerActions.Move] = labels.moveLabel;
     }
     if (DialFileManagerActions.Duplicate in tabActionLabels) {
@@ -278,6 +264,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     labels.copyLabel,
     labels.moveLabel,
     labels.duplicateLabel,
+    onDestinationRequest,
     labels.unshareLabel,
     labels.removeAccessLabel,
   ]);
@@ -455,64 +442,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       labels.deleteCloseLabel,
       labels.deleteConfirmTitle,
       labels.deleteConfirmBody,
-    ],
-  );
-
-  const commonSelectedParentFolder = useMemo(() => {
-    let commonParent: string | undefined;
-    for (const selectedPath of selectedPaths) {
-      const parent = getParentFolderPath(selectedPath);
-      if (commonParent === undefined) {
-        commonParent = parent;
-      } else if (commonParent !== parent) {
-        return undefined;
-      }
-    }
-    return commonParent;
-  }, [selectedPaths]);
-
-  const isDestinationFolderLoading =
-    destinationFolderPath != null &&
-    folderPopupLoadingPaths.has(destinationFolderPath);
-
-  const disabledDestinationPath = isDestinationFolderLoading
-    ? destinationFolderPath
-    : commonSelectedParentFolder;
-
-  const destinationFolderPopupOptions = useMemo(
-    (): DestinationFolderPopupOptions => ({
-      copyLabel: labels.copyLabel,
-      moveLabel: labels.moveLabel,
-      addFolderLabel: labels.addFolderLabel,
-      hiddenFilesSwitcherLabel: labels.hiddenFilesSwitcherLabel,
-      getCopyHeader: labels.getCopyHeader,
-      getMoveHeader: labels.getMoveHeader,
-      disabledPathTooltip: isDestinationFolderLoading
-        ? labels.folderPickerLoadingTooltip
-        : labels.moveSourceDisabledTooltip,
-      movedIntoItselfTooltip: labels.movedIntoItselfTooltip,
-      emptyStateTitle: labels.folderPickerEmptyStateTitle,
-      emptyStateDescription: labels.folderPickerEmptyStateDescription,
-      sourceFolder: disabledDestinationPath,
-      destinationFolderPath,
-      setDestinationFolderPath,
-      filesLoading: isDestinationFolderLoading,
-    }),
-    [
-      labels.copyLabel,
-      labels.moveLabel,
-      labels.addFolderLabel,
-      labels.hiddenFilesSwitcherLabel,
-      labels.getCopyHeader,
-      labels.getMoveHeader,
-      labels.folderPickerLoadingTooltip,
-      labels.moveSourceDisabledTooltip,
-      labels.movedIntoItselfTooltip,
-      labels.folderPickerEmptyStateTitle,
-      labels.folderPickerEmptyStateDescription,
-      isDestinationFolderLoading,
-      disabledDestinationPath,
-      destinationFolderPath,
     ],
   );
 
@@ -695,7 +624,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             clearSearchResults={clearSearchResults}
             gridOptions={gridOptions}
             treeOptions={treeOptions}
-            onFolderPopupPathChange={onFolderPopupPathChange}
             toolbarOptions={toolbarOptions}
             bulkActionsToolbarOptions={bulkActionsToolbarOptions}
             autoSelectUploadedItems={autoSelectUploadedItems}
@@ -728,7 +656,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             conflictResolutionPopupOptions={
               labels.conflictResolutionPopupOptions
             }
-            destinationFolderPopupOptions={destinationFolderPopupOptions}
+            onDestinationRequest={onDestinationRequest}
             forbiddenSymbolsRegExp={NOT_ALLOWED_SYMBOLS_REGEXP}
             forbiddenSymbolsTooltip={labels.forbiddenSymbolsTooltip}
             getDisabledTooltip={getDisabledTooltip}

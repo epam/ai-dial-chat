@@ -1,7 +1,7 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { SideDrawer } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, RefObject, useEffect, useMemo, useState } from 'react';
-import type { FolderDestination } from '../../models/folder-destination';
+import type { FolderDestination } from '@epam/ai-dial-react-file-manager';
 import {
   PublicationRule,
   PublishFolderNode,
