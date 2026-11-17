@@ -63,7 +63,7 @@ New feature keys MUST be added to this enum before being used in any service, gu
 async isEnabled(key: FeatureKey, context: AppConfigEvalContext): Promise<boolean>
 ```
 
-It SHALL first look the key up in `CONFIG_DEFINITIONS` and MUST reject calls for keys that are missing or not `type='feature'` by throwing `BadRequestException` (`Key "<key>" is not a valid feature flag key`). It SHALL then delegate to `AppConfigService.isEnabled(key, context)`, which resolves the value through `CompositeConfigProvider.resolve` and returns `value === true` (no cast).
+It SHALL first look the key up in `CONFIG_DEFINITIONS` and MUST reject calls for keys that are missing or not `type='feature'` by throwing `BadRequestException` (`Key "<key>" is not a valid feature flag key`). It SHALL then delegate to `AppConfigService.isEnabled(key, context)`. That method captures the managed view once, resolves the enabled bit through `CompositeConfigProvider.resolve`, and applies the deployment role gate. For a feature listed in `MANAGED_CONFIG_ACTIVE_KEYS`, it also applies the managed gates of `managed-config-activation`: usable state, policy present, capability, availability window, and role targeting. It returns `true` only when the result is `value === true` (no cast).
 
 **Failure behavior:**
 - If the resolved value is `undefined` or any non-`true` value (including non-boolean values), return `false` (fail closed) without logging; there is no `critical`-based branching at this layer.
@@ -99,6 +99,16 @@ It SHALL first look the key up in `CONFIG_DEFINITIONS` and MUST reject calls for
 - **THEN** it throws `BadRequestException`
 
 ---
+
+#### Scenario: Unusable managed state fails closed
+
+- **WHEN** an active managed feature's instance is `stale` and its environment variable is `true`
+- **THEN** `featureFlagsService.isEnabled` returns `false`
+
+#### Scenario: Window evaluated at call time
+
+- **WHEN** an active managed feature has `endsAt` at `T`, and `isEnabled` is called at `T - 1 ms` and at `T`
+- **THEN** the results are `true` and `false`
 
 ### Requirement: FeatureGuard protects routes behind a feature flag
 
