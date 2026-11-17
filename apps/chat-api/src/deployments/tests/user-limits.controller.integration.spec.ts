@@ -398,6 +398,41 @@ describe('UserLimitsController (integration)', () => {
       expect(res.body).toHaveProperty('budgets', []);
     });
 
+    it('forwards the charged cost object and budget coverage verbatim', async () => {
+      const body = {
+        ...USAGE_WITH_BUDGETS,
+        costObject: 'projA',
+        budgets: [
+          { ...USAGE_WITH_BUDGETS.budgets[0], object: '*' },
+          {
+            ...USAGE_WITH_BUDGETS.budgets[1],
+            object: ['gpt-4o', 'claude-sonnet'],
+          },
+          USAGE_WITH_BUDGETS.budgets[2],
+        ],
+      };
+      service[method].mockResolvedValue(body);
+
+      const res = await request(app.getHttpServer()).get(path).expect(200);
+
+      expect(res.body).toEqual(body);
+      expect(res.body.costObject).toBe('projA');
+      expect(res.body.budgets[0].object).toBe('*');
+      expect(res.body.budgets[1].object).toEqual(['gpt-4o', 'claude-sonnet']);
+      expect(res.body.budgets[2]).not.toHaveProperty('object');
+    });
+
+    it('returns no costObject key when DIAL Core omits it', async () => {
+      service[method].mockResolvedValue({
+        ...USAGE_WITH_RESETS_AT,
+        budgets: [],
+      });
+
+      const res = await request(app.getHttpServer()).get(path).expect(200);
+
+      expect(res.body).not.toHaveProperty('costObject');
+    });
+
     it('returns no budgets key for an older DIAL Core response without it', async () => {
       service[method].mockResolvedValue(USAGE_WITH_RESETS_AT);
 

@@ -13001,6 +13001,11 @@
         },
         "required": ["title", "contentType", "url"]
       },
+      "SpendingLimitsMode": {
+        "type": "string",
+        "enum": ["off", "shadow", "enforce"],
+        "description": "DIAL Core's spendingLimits.mode as the operator declares it (DIAL Core does not report it). Sourced from SPENDING_LIMITS_MODE or managed config; off by default. off: Settings → Usage shows no budgets and presents the role cost limit as today. shadow: budgets are shown as not yet enforced, and the role cost limit still decides. enforce: Settings → Usage shows only the budgets, and the role cost limit is withheld from the usage banner and dial. The client falls back to off when the usage response carries no costObject."
+      },
       "CelebrationDeliveryMode": {
         "type": "string",
         "enum": ["bundled", "prefer-external"],
@@ -13281,6 +13286,15 @@
             "description": "Percentage (1–99) of a capped day/week/month usage limit at which the composer shows its usage banner. Sourced from USAGE_LIMITS_WARNING_THRESHOLD_PERCENT; governs the banner only, not the usage dial.",
             "example": 75
           },
+          "spendingLimitsMode": {
+            "description": "DIAL Core's spendingLimits.mode as the operator declares it (DIAL Core does not report it). Sourced from SPENDING_LIMITS_MODE or managed config; off by default. off: Settings → Usage shows no budgets and presents the role cost limit as today. shadow: budgets are shown as not yet enforced, and the role cost limit still decides. enforce: Settings → Usage shows only the budgets, and the role cost limit is withheld from the usage banner and dial. The client falls back to off when the usage response carries no costObject.",
+            "example": "off",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SpendingLimitsMode"
+              }
+            ]
+          },
           "celebrationsEnabledByDefault": {
             "type": "boolean",
             "description": "Operator default for the seasonal-celebrations switch, applied to users who have not saved a choice of their own; a saved choice overrides it. Sourced from UI_EVENT_ENABLED_BY_DEFAULT; true unless it is false, 0 or no. Has no visible effect while activeEventId is null.",
@@ -13350,6 +13364,7 @@
           "additionalContentLocales",
           "maxAttachmentFileSizeBytes",
           "usageLimitsWarningThresholdPercent",
+          "spendingLimitsMode",
           "celebrationsEnabledByDefault",
           "celebrationDelivery",
           "projectContextFileMaxBytes",
@@ -14869,10 +14884,26 @@
           "displayName": {
             "type": "string",
             "example": "Example policy",
-            "description": "The human-readable name of the budget's policy; absent when the policy sets none. Use `policy` as the identifier — the display name need not be unique."
+            "description": "The human-readable name of the budget's policy. DIAL Core falls back to the policy path when the policy sets none (epam/ai-dial-core#2283); an older DIAL Core omits the field. Use `policy` as the identifier — the display name need not be unique."
+          },
+          "object": {
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": ["*"]
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "example": ["gpt-4o", "claude-sonnet"],
+            "description": "The models the budget's policy covers: `\"*\"` for every deployment, or the sorted deployment names. The list is not filtered by what the caller can access. Absent from a DIAL Core older than epam/ai-dial-core#2284."
           },
           "day": {
-            "description": "The budget's limit and the caller's spend against it for the current UTC day. A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.",
+            "description": "The budget's limit and the caller's spend against it for the current day of DIAL Core's rate-limit schedule time zone (not necessarily UTC). A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/LimitStatsDto"
@@ -14880,7 +14911,7 @@
             ]
           },
           "month": {
-            "description": "The budget's limit and the caller's spend against it for the current UTC month. A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.",
+            "description": "The budget's limit and the caller's spend against it for the current month of DIAL Core's rate-limit schedule time zone (not necessarily UTC). A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/LimitStatsDto"
@@ -14933,11 +14964,16 @@
             ]
           },
           "budgets": {
-            "description": "The caller's spend against each spending budget that applies to them, in DIAL Core's order. A cost object can hold several budgets, so entries may share a `costObject`. The budgets are reported separately from, and are not merged into, the top-level `minuteCostStats`/`dayCostStats`/`weekCostStats`/`monthCostStats`. An empty array means DIAL Core reported no applicable budget (spending limits are off, no budget matches the caller, or the caller is an API key); an absent field means DIAL Core does not report budgets at all (an older DIAL Core). A window `total` at or above 9007199254740992 (2^53) represents the upstream \"unlimited\" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio. The BFF forwards the array verbatim.",
+            "description": "The caller's spend against each spending budget that applies to them, in DIAL Core's order. A cost object can hold several budgets, so entries may share a `costObject`. Only the entries whose `costObject` equals the top-level `costObject` are charged for the caller's model calls. The budgets are reported separately from, and are not merged into, the top-level `minuteCostStats`/`dayCostStats`/`weekCostStats`/`monthCostStats`. An empty array means DIAL Core reported no applicable budget (spending limits are off, no budget matches the caller, or the caller is an API key); an absent field means DIAL Core does not report budgets at all (an older DIAL Core). A window `total` at or above 9007199254740992 (2^53) represents the upstream \"unlimited\" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio. The BFF forwards the array verbatim.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/BudgetStatsDto"
             }
+          },
+          "costObject": {
+            "type": "string",
+            "example": "example-project",
+            "description": "The cost object whose budgets the caller's model calls are charged to: only the `budgets` entries with this `costObject` can be charged (epam/ai-dial-core#2284). Absent when DIAL Core has spending limits off, the caller is an API key, or DIAL Core is older. The BFF forwards it verbatim."
           }
         }
       },

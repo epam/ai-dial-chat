@@ -1,5 +1,13 @@
-import { formatUsageResetTime, useUsageData } from '@epam/ai-dial-chat-hooks';
 import {
+  formatUsageResetTime,
+  normalizeDeploymentId,
+  resolveSpendingLimitsMode,
+  SpendingLimitsMode,
+  omitAccountCostStats,
+  useUsageData,
+} from '@epam/ai-dial-chat-hooks';
+import {
+  mapBudgetsToDashboard,
   mapOverallCostLimitsToPeriodStatuses,
   mapUsageDataToDashboard,
   mapUserUsageToModelLimits,
@@ -7,6 +15,7 @@ import {
 import { Spinner, LiveRegion, LiveRegionElement } from '@epam/ai-dial-ui-kit';
 import {
   ModelLimitsSection,
+  SpendingBudgetsSection,
   UsageLimitCardGroup,
 } from '@epam/ai-dial-usage-dashboard';
 import {
@@ -17,9 +26,11 @@ import {
   useRef,
   useState,
   type FC,
+  type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UsageI18nKeys } from '../../../constants/translation-keys';
+import { useAppConfig } from '../../../context/AppConfigContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { useResolveCatalogIconUrl } from '../../../hooks/catalog/useResolveCatalogIconUrl';
@@ -41,7 +52,7 @@ const RESET_SETTLE_MS = 5_000;
  */
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 
-/** The Usage page: period cost-limit cards and the model limits table. */
+/** The Usage page: period cost-limit cards, the caller's spending budgets and the model limits table. */
 const UsageTab: FC = () => {
   const { t } = useTranslation() as {
     t: (s: string, params?: Record<string, unknown>) => string;
@@ -56,6 +67,26 @@ const UsageTab: FC = () => {
   } = useUsageData(getUserUsage, true, refreshToken);
   const { items: deploymentItems, isLoading: isDeploymentsLoading } =
     useDeployments();
+  const {
+    config: { spendingLimitsMode },
+  } = useAppConfig();
+
+  /*
+   * DIAL Core does not report its spending limits mode; the operator declares
+   * it, and it falls back to off while the response shows no budgets.
+   */
+  const effectiveMode = useMemo(
+    () => resolveSpendingLimitsMode(spendingLimitsMode, usage),
+    [spendingLimitsMode, usage],
+  );
+  /* In enforce, model calls skip the role cost limit, so nothing derived from it reaches the model table. */
+  const modelTableUsage = useMemo(
+    () =>
+      effectiveMode === SpendingLimitsMode.Enforce && usage != null
+        ? omitAccountCostStats(usage)
+        : usage,
+    [effectiveMode, usage],
+  );
   /*
    * Keyed on the initial load only: a boundary-triggered refresh must not
    * replace the whole tab with a spinner, which would flash the figures away.
@@ -102,6 +133,25 @@ const UsageTab: FC = () => {
     [usage, t, formatResetTime],
   );
 
+  const resolveModelName = useMemo(() => {
+    const names = new Map(
+      deploymentItems.map((item) => [
+        normalizeDeploymentId(item.id),
+        resolveLocalizedText(item.displayName, activeLocale) || item.id,
+      ]),
+    );
+    return (deploymentId: string) =>
+      names.get(normalizeDeploymentId(deploymentId));
+  }, [deploymentItems, activeLocale]);
+
+  const budgets = useMemo(
+    () =>
+      effectiveMode === SpendingLimitsMode.Off
+        ? []
+        : mapBudgetsToDashboard(usage, t, formatResetTime, resolveModelName),
+    [effectiveMode, usage, t, formatResetTime, resolveModelName],
+  );
+
   /*
    * Every parsed reset boundary among the displayed cards, ascending, read
    * from each card's `resetIsoValue`. `UsageLimitCardData` carries only the
@@ -113,13 +163,17 @@ const UsageTab: FC = () => {
    */
   const resetBoundariesMs = useMemo(
     () =>
-      cards
+      /* Enforce hides the role cost cards, so their resets must not trigger a refresh. */
+      [
+        ...(effectiveMode === SpendingLimitsMode.Enforce ? [] : cards),
+        ...budgets.flatMap((budget) => budget.cards),
+      ]
         .map((card) =>
           card.resetIsoValue != null ? Date.parse(card.resetIsoValue) : NaN,
         )
         .filter((ms) => !Number.isNaN(ms))
         .sort((first, second) => first - second),
-    [cards],
+    [cards, budgets, effectiveMode],
   );
 
   /*
@@ -214,25 +268,69 @@ const UsageTab: FC = () => {
   const modelLimitRows = useMemo(
     () =>
       mapUserUsageToModelLimits(
-        usage,
+        modelTableUsage,
         deploymentItems,
         activeLocale,
         t,
         resolveCatalogIconUrl,
         resolveLocalizedText,
       ),
-    [usage, deploymentItems, activeLocale, t, resolveCatalogIconUrl],
+    [modelTableUsage, deploymentItems, activeLocale, t, resolveCatalogIconUrl],
   );
   const modelLimitPeriodStatuses = useMemo(
     () =>
       mapOverallCostLimitsToPeriodStatuses(
-        usage,
+        modelTableUsage,
         activeLocale,
         t,
         formatResetTime,
       ),
-    [usage, activeLocale, t, formatResetTime],
+    [modelTableUsage, activeLocale, t, formatResetTime],
   );
+
+  const budgetsLabels = useMemo(
+    () => ({
+      headingLabel: t(UsageI18nKeys.BudgetsHeading),
+      descriptionLabel: t(UsageI18nKeys.BudgetsDescription),
+      ...(effectiveMode === SpendingLimitsMode.Shadow
+        ? { noticeLabel: t(UsageI18nKeys.BudgetsShadowNotice) }
+        : {}),
+      ...(effectiveMode === SpendingLimitsMode.Enforce
+        ? { emptyStateLabel: t(UsageI18nKeys.BudgetsEnforceEmpty) }
+        : {}),
+    }),
+    [effectiveMode, t],
+  );
+
+  /*
+   * Off renders today's page, and shadow adds the budgets below the role cost
+   * cards, which still decide. Enforce shows the budgets only: model calls are
+   * limited by them, not by the role cost limit.
+   */
+  const renderCostSections = (): ReactNode => {
+    if (effectiveMode === SpendingLimitsMode.Off) {
+      return <UsageLimitCardGroup cards={cards} labels={labels} />;
+    }
+
+    const budgetsSection = (
+      <SpendingBudgetsSection
+        budgets={budgets}
+        labels={budgetsLabels}
+        cardLabels={labels}
+      />
+    );
+
+    if (effectiveMode === SpendingLimitsMode.Enforce) {
+      return budgetsSection;
+    }
+
+    return (
+      <>
+        <UsageLimitCardGroup cards={cards} labels={labels} />
+        {budgetsSection}
+      </>
+    );
+  };
 
   /*
    * The one live region for this tab. It stays mounted so every change is
@@ -271,7 +369,7 @@ const UsageTab: FC = () => {
           </div>
         ) : (
           <>
-            <UsageLimitCardGroup cards={cards} labels={labels} />
+            {renderCostSections()}
             <ModelLimitsSection
               rows={modelLimitRows}
               labels={modelLimitsLabels}

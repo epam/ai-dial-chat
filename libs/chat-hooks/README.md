@@ -1170,15 +1170,16 @@ const UsageBanner = ({ deploymentId, isGenerating }) => {
 
 **Options** (`UseUsageLimitBannerOptions`):
 
-| Name                      | Type                                                             | Description                                                                                                            |
-| ------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `deploymentId`            | `string \| undefined`                                            | Selected deployment. Nothing is fetched while it is `undefined`.                                                       |
-| `isGenerationInProgress`  | `boolean` (default `false`)                                      | A `true` → `false` edge triggers one refresh of both sources.                                                          |
-| `getDeploymentUsage`      | `(deploymentId: string) => Promise<DeploymentLimitsResponseDto>` | Host-configured fetch of the deployment's own usage (token stats are read). The hook never constructs a client.        |
-| `getAccountUsage`         | `() => Promise<AccountUsage>`                                    | Host-configured fetch of the caller's account usage (top-level cost stats are read). A user-usage response fits as-is. |
-| `warningThresholdPercent` | `number`                                                         | Used percentage at or above which a not-yet-exhausted limit raises a warning.                                          |
-| `activeLocale`            | `string`                                                         | Locale for the reset time.                                                                                             |
-| `t`                       | `(key: string, options?: Record<string, unknown>) => string`     | i18next-compatible translate function.                                                                                 |
+| Name                      | Type                                                             | Description                                                                                                                                     |
+| ------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `deploymentId`            | `string \| undefined`                                            | Selected deployment. Nothing is fetched while it is `undefined`.                                                                                |
+| `isGenerationInProgress`  | `boolean` (default `false`)                                      | A `true` → `false` edge triggers one refresh of both sources.                                                                                   |
+| `getDeploymentUsage`      | `(deploymentId: string) => Promise<DeploymentLimitsResponseDto>` | Host-configured fetch of the deployment's own usage (token stats are read). The hook never constructs a client.                                 |
+| `getAccountUsage`         | `() => Promise<AccountUsage>`                                    | Host-configured fetch of the caller's account usage (top-level cost stats are read). A user-usage response fits as-is.                          |
+| `warningThresholdPercent` | `number`                                                         | Used percentage at or above which a not-yet-exhausted limit raises a warning.                                                                   |
+| `activeLocale`            | `string`                                                         | Locale for the reset time.                                                                                                                      |
+| `t`                       | `(key: string, options?: Record<string, unknown>) => string`     | i18next-compatible translate function.                                                                                                          |
+| `spendingLimitsMode`      | `SpendingLimitsMode` (default `Off`)                             | The host's declared DIAL Core spending limits mode. In an effective `Enforce`, the account cost stats are not reported; token limits still are. |
 
 **Returns** (`UseUsageLimitBannerResult`): `banner` — `severity`, `limitText`, `reset`, `onClose`, `closeAriaLabel`, or `undefined` when nothing should render (no deployment, below the threshold, or dismissed).
 
@@ -1191,7 +1192,7 @@ The pieces are exported separately for hosts that render their own banner or a u
 Fetches the two usage sources the banner and the usage dial are mapped from, each with a single scope, and returns them as a `UsageLimitsSources` pair:
 
 - `deployment`: the selected deployment's own usage (`GET /deployments/{id}/usage`). Only its token stats are read.
-- `account`: the caller's account budget and spend, an `AccountUsage` (the top level of `GET /user/usage`). Only its day/week/month cost stats are read.
+- `account`: the caller's account budget and spend, an `AccountUsage` (the top level of `GET /user/usage`): its day/week/month cost stats, plus the `costObject` and `budgets` that `resolveSpendingLimitsMode` reads.
 
 A deployment-limits response (`GET /deployments/{id}/limits`) is deliberately not a source: for an application, its cost `used` adds the application's aggregated callee cost to the account spend that already contains it, so an agent's spend would be counted twice.
 
@@ -2820,7 +2821,7 @@ It is an optional peer in the package manifest, but must be installed when loadi
 either entry point; optional means hosts using other feature subpaths can omit it.
 The root retains its broader feature-peer requirements listed above.
 
-Three pure functions turning `useUsageData`'s already-fetched `UserLimitStatsResponseDto` into the normalized display models `@epam/ai-dial-usage-dashboard`'s `UsageLimitCardGroup` and `ModelLimitsSection` render. This is the narrow, explicitly justified DIAL-Core-response-adapter exception recorded in AGENTS.md §Library isolation: the adaptation is driven entirely by the generated response's own shape (the unlimited sentinel, status thresholds, field names), fully characterized by an existing test suite, and consumed identically by every DIAL-Core-backed chat application this library serves. Every user-visible string is produced by a caller-supplied `t` function matching i18next's `TFunction` signature, and every host-specific concern (icon-URL construction, locale resolution, date/time formatting) arrives as a caller-supplied callback — none of the three functions imports `react-i18next`, an app context, or `Intl`.
+Four pure functions turning `useUsageData`'s already-fetched `UserLimitStatsResponseDto` into the normalized display models `@epam/ai-dial-usage-dashboard`'s `UsageLimitCardGroup`, `SpendingBudgetsSection` and `ModelLimitsSection` render. This is the narrow, explicitly justified DIAL-Core-response-adapter exception recorded in AGENTS.md §Library isolation: the adaptation is driven entirely by the generated response's own shape (the unlimited sentinel, status thresholds, field names), fully characterized by an existing test suite, and consumed identically by every DIAL-Core-backed chat application this library serves. Every user-visible string is produced by a caller-supplied `t` function matching i18next's `TFunction` signature, and every host-specific concern (icon-URL construction, locale resolution, date/time formatting) arrives as a caller-supplied callback — none of the four functions imports `react-i18next`, an app context, or `Intl`.
 
 ### mapUsageDataToDashboard
 
@@ -2938,6 +2939,56 @@ const periodStatuses = mapOverallCostLimitsToPeriodStatuses(
 | `formatResetTime` | `FormatResetTime` (optional)             | Same callback as `mapUsageDataToDashboard`'s. Omit to produce statuses with no reset fields. |
 
 **Returns**: `ModelLimitPeriodStatuses` — see `@epam/ai-dial-usage-dashboard`'s README for the shape.
+
+### mapBudgetsToDashboard
+
+Maps the budgets charged for the caller's model calls — the `usage.budgets` entries whose `costObject` equals `usage.costObject` — into the `budgets` prop of `SpendingBudgetsSection`, in DIAL Core's order (the priority order in which a model call picks its payer). Each entry carries a Today card (`day`) and a This month card (`month`), built with exactly the same sentinel, status and reset rules as `mapUsageDataToDashboard`'s cards; DIAL Core budgets have no week window. Returns `[]` when the response carries no `costObject` or no `budgets`.
+
+- `title` is a non-blank `displayName`, otherwise `policy`.
+- `coverageLabel` is `t(BUDGET_DATA_I18N_KEYS.allModels)` for `object: "*"`, `t(BUDGET_DATA_I18N_KEYS.coveredModels, { models })` for a list (each id through the host's `resolveModelName`, an unknown id kept as is), and absent when the budget reports no `object`.
+- `id` is stable and unique even when a cost object lists the same policy twice.
+
+```tsx
+import {
+  mapBudgetsToDashboard,
+  BUDGET_DATA_I18N_KEYS,
+} from '@epam/ai-dial-chat-hooks/usage';
+import { SpendingBudgetsSection } from '@epam/ai-dial-usage-dashboard';
+
+const budgets = mapBudgetsToDashboard(usage, t, formatResetTime, (id) =>
+  modelNames.get(id),
+);
+// <SpendingBudgetsSection budgets={budgets} labels={labels} cardLabels={cardLabels} />
+```
+
+**Parameters**: `usage` (`Pick<UserLimitStatsResponseDto, 'budgets' | 'costObject'> | undefined`), `t`, `formatResetTime` (as for `mapUsageDataToDashboard`) and `resolveModelName` (`ResolveModelName`: `(deploymentId: string) => string | undefined`).
+
+**Returns**: `SpendingBudgetData[]` — see `@epam/ai-dial-usage-dashboard`'s README for the shape.
+
+### Spending limits mode
+
+DIAL Core does not report its `spendingLimits.mode` to the caller, so the host declares it (`SpendingLimitsMode`: `Off`, `Shadow`, `Enforce`) and these helpers decide what that means for one response. Available from the root and `./usage-limits` (they need only the generated client's types).
+
+- `parseSpendingLimitsMode(value)` returns the matching `SpendingLimitsMode`, or `Off` for anything else.
+- `resolveSpendingLimitsMode(configured, usage)` returns the effective mode: `configured` when `usage` carries a `budgets` array and a non-empty `costObject`, otherwise `Off` (DIAL Core with spending limits off, or older than epam/ai-dial-core#2284, still enforces the role cost limit).
+- `omitAccountCostStats(usage)` returns a copy without the four top-level `*CostStats`, keeping every other field.
+- `withholdAccountCostInEnforce(usage, configured)` applies `omitAccountCostStats` only in an effective `Enforce`, and returns `usage` itself otherwise. In `Enforce`, DIAL Core limits model calls by budgets instead of the role cost limit, so pass its result to `mapOverallCostLimitsToPeriodStatuses` and `mapDeploymentLimitsToInput`; `useUsageLimitBanner` applies it through its `spendingLimitsMode` option.
+
+```ts
+import {
+  SpendingLimitsMode,
+  resolveSpendingLimitsMode,
+  withholdAccountCostInEnforce,
+} from '@epam/ai-dial-chat-hooks/usage-limits';
+
+const mode = resolveSpendingLimitsMode(SpendingLimitsMode.Enforce, usage);
+const periodStatuses = mapOverallCostLimitsToPeriodStatuses(
+  withholdAccountCostInEnforce(usage, SpendingLimitsMode.Enforce),
+  activeLocale,
+  t,
+  formatResetTime,
+);
+```
 
 ### Supporting types
 

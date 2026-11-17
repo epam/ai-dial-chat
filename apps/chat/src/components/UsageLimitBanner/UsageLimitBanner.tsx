@@ -26,7 +26,7 @@ const UsageLimitBanner: FC<Props> = ({
   };
   const { language: activeLocale } = useLanguage();
   const {
-    config: { usageLimitsWarningThresholdPercent },
+    config: { usageLimitsWarningThresholdPercent, spendingLimitsMode },
   } = useAppConfig();
 
   const { banner } = useUsageLimitBanner({
@@ -37,6 +37,7 @@ const UsageLimitBanner: FC<Props> = ({
     warningThresholdPercent: usageLimitsWarningThresholdPercent,
     activeLocale,
     t,
+    spendingLimitsMode,
   });
 
   /* Always mounted, so a banner that appears after streaming is announced; empty, it takes no space. */

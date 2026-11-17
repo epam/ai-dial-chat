@@ -583,15 +583,30 @@ export class BudgetStatsDto {
   @ApiPropertyOptional({
     example: 'Example policy',
     description:
-      "The human-readable name of the budget's policy; absent when the policy sets none. " +
+      "The human-readable name of the budget's policy. DIAL Core falls back to the policy path " +
+      'when the policy sets none (epam/ai-dial-core#2283); an older DIAL Core omits the field. ' +
       'Use `policy` as the identifier — the display name need not be unique.',
   })
   displayName?: string;
 
+  @ApiPropertyOptional({
+    oneOf: [
+      { type: 'string', enum: ['*'] },
+      { type: 'array', items: { type: 'string' } },
+    ],
+    example: ['gpt-4o', 'claude-sonnet'],
+    description:
+      'The models the budget\'s policy covers: `"*"` for every deployment, or the sorted ' +
+      'deployment names. The list is not filtered by what the caller can access. Absent from a ' +
+      'DIAL Core older than epam/ai-dial-core#2284.',
+  })
+  object?: '*' | string[];
+
   @ApiProperty({
     type: () => LimitStatsDto,
     description:
-      "The budget's limit and the caller's spend against it for the current UTC day. A `total` " +
+      "The budget's limit and the caller's spend against it for the current day of DIAL Core's " +
+      'rate-limit schedule time zone (not necessarily UTC). A `total` ' +
       'at or above 9007199254740992 (2^53) is the unlimited sentinel — see ' +
       'UserLimitStatsResponseDto.minuteCostStats.',
   })
@@ -600,7 +615,8 @@ export class BudgetStatsDto {
   @ApiProperty({
     type: () => LimitStatsDto,
     description:
-      "The budget's limit and the caller's spend against it for the current UTC month. A " +
+      "The budget's limit and the caller's spend against it for the current month of DIAL " +
+      "Core's rate-limit schedule time zone (not necessarily UTC). A " +
       '`total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see ' +
       'UserLimitStatsResponseDto.minuteCostStats.',
   })
@@ -697,7 +713,9 @@ export class UserLimitStatsResponseDto {
     type: () => [BudgetStatsDto],
     description:
       "The caller's spend against each spending budget that applies to them, in DIAL Core's " +
-      'order. A cost object can hold several budgets, so entries may share a `costObject`. The ' +
+      'order. A cost object can hold several budgets, so entries may share a `costObject`. Only ' +
+      'the entries whose `costObject` equals the top-level `costObject` are charged for the ' +
+      "caller's model calls. The " +
       'budgets are reported separately from, and are not merged into, the top-level ' +
       '`minuteCostStats`/`dayCostStats`/`weekCostStats`/`monthCostStats`. An empty array means ' +
       'DIAL Core reported no applicable budget (spending limits are off, no budget matches the ' +
@@ -708,6 +726,16 @@ export class UserLimitStatsResponseDto {
       'used/total ratio. The BFF forwards the array verbatim.',
   })
   budgets?: BudgetStatsDto[];
+
+  @ApiPropertyOptional({
+    example: 'example-project',
+    description:
+      "The cost object whose budgets the caller's model calls are charged to: only the `budgets` " +
+      'entries with this `costObject` can be charged (epam/ai-dial-core#2284). Absent when DIAL ' +
+      'Core has spending limits off, the caller is an API key, or DIAL Core is older. The BFF ' +
+      'forwards it verbatim.',
+  })
+  costObject?: string;
 }
 
 export class ThemeDto {

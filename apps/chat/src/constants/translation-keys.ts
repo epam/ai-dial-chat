@@ -1854,6 +1854,12 @@ export enum UsageI18nKeys {
   NoLimitLabel = 'usage.noLimitLabel',
   UnavailableLabel = 'usage.unavailableLabel',
   UnavailableBadgeLabel = 'usage.unavailableBadgeLabel',
+  BudgetsHeading = 'usage.budgets.heading',
+  BudgetsDescription = 'usage.budgets.description',
+  BudgetsShadowNotice = 'usage.budgets.shadowNotice',
+  BudgetsEnforceEmpty = 'usage.budgets.enforceEmpty',
+  BudgetsAllModels = 'usage.budgets.allModels',
+  BudgetsCoveredModels = 'usage.budgets.coveredModels',
 }
 
 export enum HalloweenI18nKeys {

@@ -667,6 +667,32 @@ describe('DeploymentsDetailsService', () => {
         expect(result).toHaveProperty('budgets', []);
       });
 
+      it('forwards the charged cost object and each budget coverage verbatim', async () => {
+        const payload = {
+          ...legacyStats,
+          costObject: 'projA',
+          budgets: [
+            { ...budgets[0], object: '*' },
+            { ...budgets[1], object: ['gpt-4o', 'claude-sonnet'] },
+            budgets[2],
+          ],
+        };
+
+        const result = await fetchStats(payload);
+
+        expect(result).toEqual(payload);
+        expect(result.costObject).toBe('projA');
+        expect(result.budgets?.[0].object).toBe('*');
+        expect(result.budgets?.[1].object).toEqual(['gpt-4o', 'claude-sonnet']);
+        expect(result.budgets?.[2]).not.toHaveProperty('object');
+      });
+
+      it('leaves costObject absent when DIAL Core reports no applicable budget', async () => {
+        const result = await fetchStats({ ...legacyStats, budgets: [] });
+
+        expect(result).not.toHaveProperty('costObject');
+      });
+
       it('leaves budgets absent when DIAL Core does not report it', async () => {
         const result = await fetchStats(legacyStats);
 

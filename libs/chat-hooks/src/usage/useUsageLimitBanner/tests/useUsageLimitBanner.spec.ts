@@ -1,6 +1,7 @@
 import { UsageLimitBannerSeverity } from '@epam/ai-dial-conversation-input';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { SpendingLimitsMode } from '../../spending-limits-mode';
 import { resetUsageLimitBannerDismissals } from '../../useUsageLimitBannerDismissal/useUsageLimitBannerDismissal';
 import { useUsageLimitBanner } from '../useUsageLimitBanner';
 
@@ -135,5 +136,80 @@ describe('useUsageLimitBanner', () => {
 
     await waitFor(() => expect(getDeploymentUsage).toHaveBeenCalledTimes(2));
     expect(getAccountUsage).toHaveBeenCalledTimes(2);
+  });
+
+  describe('spending limits mode', () => {
+    const comfortableDeployment = {
+      monthTokenStats: { used: 10, total: 100 },
+    };
+    const budgetAccount = {
+      monthCostStats: { used: 95, total: 100 },
+      costObject: 'ORG',
+      budgets: [],
+    };
+
+    it('reports no account cost in an effective enforce mode', async () => {
+      const getAccountUsage = vi.fn().mockResolvedValue(budgetAccount);
+      const { result } = setup({
+        getDeploymentUsage: vi.fn().mockResolvedValue(comfortableDeployment),
+        getAccountUsage,
+        spendingLimitsMode: SpendingLimitsMode.Enforce,
+      });
+
+      await waitFor(() => expect(getAccountUsage).toHaveBeenCalled());
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(result.current.banner).toBeUndefined();
+    });
+
+    it('keeps a reached token limit in an effective enforce mode', async () => {
+      const { result } = setup({
+        getDeploymentUsage: vi
+          .fn()
+          .mockResolvedValue({ monthTokenStats: { used: 100, total: 100 } }),
+        getAccountUsage: vi.fn().mockResolvedValue(budgetAccount),
+        spendingLimitsMode: SpendingLimitsMode.Enforce,
+      });
+
+      await waitFor(() => expect(result.current.banner).toBeDefined());
+
+      expect(result.current.banner).toMatchObject({
+        severity: UsageLimitBannerSeverity.Reached,
+        limitText: 'conversationInput.usageBanner.reachedMonth:{"percent":100}',
+      });
+    });
+
+    it.each([SpendingLimitsMode.Shadow, undefined])(
+      'keeps the account cost warning in %s',
+      async (spendingLimitsMode) => {
+        const { result } = setup({
+          getDeploymentUsage: vi.fn().mockResolvedValue(comfortableDeployment),
+          getAccountUsage: vi.fn().mockResolvedValue(budgetAccount),
+          spendingLimitsMode,
+        });
+
+        await waitFor(() => expect(result.current.banner).toBeDefined());
+
+        expect(result.current.banner).toMatchObject({
+          severity: UsageLimitBannerSeverity.Warning,
+          limitText:
+            'conversationInput.usageBanner.warningMonth:{"percent":95}',
+        });
+      },
+    );
+
+    it('keeps the account cost warning when enforce is configured but Core has spending limits off', async () => {
+      const { result } = setup({
+        getDeploymentUsage: vi.fn().mockResolvedValue(comfortableDeployment),
+        getAccountUsage: vi
+          .fn()
+          .mockResolvedValue({ monthCostStats: { used: 95, total: 100 } }),
+        spendingLimitsMode: SpendingLimitsMode.Enforce,
+      });
+
+      await waitFor(() => expect(result.current.banner).toBeDefined());
+    });
   });
 });

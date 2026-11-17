@@ -14,4 +14,8 @@ export const USAGE_DASHBOARD_CLASS = {
   card: 'dial-usage-dashboard-card',
   /** The responsive grid a `UsageLimitCardGroup` lays its cards out in. */
   cardGroup: 'dial-usage-dashboard-card-group',
+  /** A `SpendingBudgetsSection` root, which carries its themed CSS variables. */
+  budgets: 'dial-usage-dashboard-budgets',
+  /** One budget group inside a `SpendingBudgetsSection`: title, coverage line and cards. */
+  budget: 'dial-usage-dashboard-budget',
 } as const;

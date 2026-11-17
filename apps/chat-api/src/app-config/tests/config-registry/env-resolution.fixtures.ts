@@ -460,6 +460,12 @@ export const ENV_KEY_CASES: readonly EnvKeyCase[] = [
     typedDefault: '75',
     nonDefault: '80',
   },
+  {
+    key: 'usageLimits.spendingLimitsMode',
+    variable: 'SPENDING_LIMITS_MODE',
+    typedDefault: 'off',
+    nonDefault: 'enforce',
+  },
 ];
 
 /** A named scenario: one raw environment, one key, one caller. */

@@ -3,7 +3,10 @@ import {
   CatalogCreationType,
   type ClientConfigResponseDto,
 } from '@epam/ai-dial-chat-api-client';
-import { AnnouncementSeverity } from '@epam/ai-dial-chat-hooks';
+import {
+  AnnouncementSeverity,
+  SpendingLimitsMode,
+} from '@epam/ai-dial-chat-hooks';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createElement, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -883,6 +886,48 @@ describe('AppConfigContext', () => {
       );
       expect(result.current.config.usageLimitsWarningThresholdPercent).toBe(75);
     });
+  });
+
+  describe('spendingLimitsMode', () => {
+    const loadConfigWithMode = async (spendingLimitsMode: unknown) => {
+      mockGetClientConfig.mockResolvedValue({
+        ...READY_RESPONSE,
+        config: {
+          ...(READY_RESPONSE as unknown as { config: object }).config,
+          spendingLimitsMode,
+        },
+      } as unknown as ClientConfigResponseDto);
+      const view = renderHook(() => useAppConfig(), { wrapper });
+      await waitFor(() =>
+        expect(view.result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      return view.result;
+    };
+
+    it('defaults to off before the config loads', () => {
+      mockGetClientConfig.mockReturnValue(new Promise(() => undefined));
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      expect(result.current.config.spendingLimitsMode).toBe(
+        SpendingLimitsMode.Off,
+      );
+    });
+
+    it('surfaces an operator-configured mode', async () => {
+      const configResult = await loadConfigWithMode('enforce');
+      expect(configResult.current.config.spendingLimitsMode).toBe(
+        SpendingLimitsMode.Enforce,
+      );
+    });
+
+    it.each([undefined, 'ENFORCE', 'unknown'])(
+      'falls back to off for %j',
+      async (value) => {
+        const configResult = await loadConfigWithMode(value);
+        expect(configResult.current.config.spendingLimitsMode).toBe(
+          SpendingLimitsMode.Off,
+        );
+      },
+    );
   });
 
   describe('catalog creation permissions', () => {

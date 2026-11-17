@@ -443,6 +443,12 @@ const KEY_EXPECTATIONS: Readonly<
         'Environment validation failed:\nUSAGE_LIMITS_WARNING_THRESHOLD_PERCENT must not be less than 1',
     },
   },
+  'usageLimits.spendingLimitsMode': {
+    [EnvCaseName.Absent]: { provider: undefined, effective: 'off' },
+    [EnvCaseName.TypedDefault]: { provider: 'off', effective: 'off' },
+    [EnvCaseName.NonDefault]: { provider: 'enforce', effective: 'enforce' },
+    [EnvCaseName.Empty]: { provider: undefined, effective: 'off' },
+  },
 };
 
 const ROLE_GATE_EXPECTATIONS: Readonly<Record<string, Outcome>> = {
