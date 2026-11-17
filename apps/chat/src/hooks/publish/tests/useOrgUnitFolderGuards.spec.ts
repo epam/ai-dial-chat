@@ -11,9 +11,10 @@ import { useFeatureFlag } from '../../../context/AppConfigContext';
 import { useOrgUnitsContext } from '../../../context/OrgUnitsContext';
 import { useOrgUnitFolderGuards } from '../useOrgUnitFolderGuards';
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+vi.mock('react-i18next', () => {
+  const t = (key: string) => key;
+  return { useTranslation: () => ({ t }) };
+});
 vi.mock('../../../context/AppConfigContext', () => ({
   useFeatureFlag: vi.fn(),
 }));
@@ -35,10 +36,8 @@ describe('useOrgUnitFolderGuards', () => {
       status: OrgUnitsStatus.Ready,
       ensureUnits,
       refreshUnits,
-      canWriteAt: vi.fn(),
       canSaveAt,
       canSaveDirectlyAt,
-      canReadAt: vi.fn(),
       canPublishAt,
     });
   });
@@ -49,7 +48,12 @@ describe('useOrgUnitFolderGuards', () => {
     isQuickApp = false,
   ) =>
     renderHook(() =>
-      useOrgUnitFolderGuards(purpose, namespace, true, isQuickApp),
+      useOrgUnitFolderGuards({
+        purpose,
+        namespace,
+        isActive: true,
+        isQuickApp,
+      }),
     ).result.current;
 
   it('uses canSaveAt for Save and gives the typed save reason', () => {
@@ -120,7 +124,7 @@ describe('useOrgUnitFolderGuards', () => {
       OrgUnitAccessI18nKeys.NoPublishAccessConversation,
     );
     expect(guards.getDisabledReason?.(['Plain'])).toBeUndefined();
-    expect(guards.canPublishTo?.(['Acme', 'Secret'])).toBe(false);
+    expect(guards.isDestinationUsable?.(['Acme', 'Secret'])).toBe(false);
   });
 
   it('disables nothing while the flag is off, so the Production placeholder still applies', () => {
@@ -131,7 +135,7 @@ describe('useOrgUnitFolderGuards', () => {
       OrgUnitNamespace.Projects,
     );
 
-    expect(guards.canPublishTo).toBeUndefined();
+    expect(guards.isDestinationUsable).toBeUndefined();
     expect(guards.getDisabledReason).toBeUndefined();
   });
 
@@ -147,19 +151,18 @@ describe('useOrgUnitFolderGuards', () => {
     );
 
     expect(guards.getDisabledReason).toBeUndefined();
-    expect(guards.canPublishTo).toBeUndefined();
+    expect(guards.isDestinationUsable).toBeUndefined();
   });
 
   describe('re-reading the rights on open', () => {
     const open = (isActive: boolean, shouldRefreshOnOpen: boolean) =>
       renderHook(() =>
-        useOrgUnitFolderGuards(
-          OrgUnitFolderGuardPurpose.Save,
-          OrgUnitNamespace.Toolsets,
+        useOrgUnitFolderGuards({
+          purpose: OrgUnitFolderGuardPurpose.Save,
+          namespace: OrgUnitNamespace.Toolsets,
           isActive,
-          false,
           shouldRefreshOnOpen,
-        ),
+        }),
       );
 
     it('refreshes already loaded rights when the panel opens and asks to refresh', () => {
@@ -191,6 +194,62 @@ describe('useOrgUnitFolderGuards', () => {
 
       expect(ensureUnits).toHaveBeenCalled();
       expect(refreshUnits).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('loading the rights', () => {
+    const usePublish = (isActive?: boolean) =>
+      useOrgUnitFolderGuards({
+        purpose: OrgUnitFolderGuardPurpose.Publish,
+        namespace: OrgUnitNamespace.Applications,
+        isActive,
+      });
+
+    it('asks the org units to load once the panel is active', () => {
+      renderHook(() => usePublish(true));
+
+      expect(ensureUnits).toHaveBeenCalledOnce();
+    });
+
+    it('does not ask for the org units while no panel is active', () => {
+      renderHook(() => usePublish());
+
+      expect(ensureUnits).not.toHaveBeenCalled();
+    });
+
+    it('asks for the org units when the panel opens', () => {
+      const { rerender } = renderHook(({ isActive }) => usePublish(isActive), {
+        initialProps: { isActive: false },
+      });
+      expect(ensureUnits).not.toHaveBeenCalled();
+
+      rerender({ isActive: true });
+
+      expect(ensureUnits).toHaveBeenCalledOnce();
+    });
+
+    it.each([
+      OrgUnitsStatus.Idle,
+      OrgUnitsStatus.Loading,
+      OrgUnitsStatus.Error,
+    ])('gives no publish guard while the status is %s', (status) => {
+      vi.mocked(useOrgUnitsContext).mockReturnValue({
+        ...vi.mocked(useOrgUnitsContext)(),
+        status,
+      });
+
+      const { result } = renderHook(() => usePublish());
+
+      expect(result.current.isDestinationUsable).toBeUndefined();
+    });
+
+    it('keeps the same guard object while nothing it depends on changes', () => {
+      const { result, rerender } = renderHook(() => usePublish());
+      const first = result.current;
+
+      rerender();
+
+      expect(result.current).toBe(first);
     });
   });
 });

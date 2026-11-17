@@ -10,23 +10,32 @@ import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useOrgUnitsContext } from '../../context/OrgUnitsContext';
 import { getOrgUnitAccessReasonKey } from '../../utils/org-unit-access';
 
+interface Options {
+  /** Save uses `canSaveAt`, Publish uses `canPublishAt` */
+  purpose: OrgUnitFolderGuardPurpose;
+  /** Core namespace of the resource */
+  namespace: OrgUnitNamespace | undefined;
+  /** Whether the panel is open; no read starts while it is false. Defaults to `false`. */
+  isActive?: boolean;
+  /** For applications, whether the resource is a Quick App (changes the type word in the reason). Defaults to `false`. */
+  isQuickApp?: boolean;
+  /** Re-reads already loaded rights each time the panel opens. Defaults to `false`. */
+  shouldRefreshOnOpen?: boolean;
+}
+
 /**
  * The org-unit folder guards of a Save or Publish panel for one resource type,
  * with the typed, translated reason for a disabled folder; the rule itself is
  * `useFolderGuards` in `@epam/ai-dial-chat-hooks`.
- * @param purpose - Save uses `canSaveAt`, Publish uses `canPublishAt`
- * @param namespace - Core namespace of the resource
- * @param isActive - whether the panel is open; no read starts while it is false
- * @param isQuickApp - for applications, whether the resource is a Quick App (changes the type word in the reason)
- * @param shouldRefreshOnOpen - re-read already loaded rights each time the panel opens
+ * @param options - purpose, namespace and panel state of the guards
  */
-export const useOrgUnitFolderGuards = (
-  purpose: OrgUnitFolderGuardPurpose,
-  namespace: OrgUnitNamespace | undefined,
+export const useOrgUnitFolderGuards = ({
+  purpose,
+  namespace,
   isActive = false,
   isQuickApp = false,
   shouldRefreshOnOpen = false,
-): FolderGuards => {
+}: Options): FolderGuards => {
   const { t } = useTranslation();
   const isEnabled = useFeatureFlag('orgUnitsEnabled');
   const orgUnits = useOrgUnitsContext();

@@ -134,10 +134,8 @@ const mockOrgUnits = (status: OrgUnitsStatus) =>
     status,
     ensureUnits,
     refreshUnits: vi.fn(),
-    canWriteAt: vi.fn(),
     canSaveAt: vi.fn(),
     canSaveDirectlyAt,
-    canReadAt: vi.fn(),
     canPublishAt: vi.fn(),
   });
 

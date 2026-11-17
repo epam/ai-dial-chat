@@ -55,14 +55,14 @@ export interface BuildFolderGuardsParams {
 
 /** Guards a panel passes to its folder tree; both are `undefined` while the rule does not apply. */
 export interface FolderGuards {
-  /** Whether a destination accepts the action; replaces the `Production` placeholder in `usePublishFolders`. Only the Organization root is matched against units: any other `root` is always usable, and an omitted `root` means Organization (the publish panels' only tree). */
-  canPublishTo:
+  /** Whether a destination is usable for the panel's purpose (Save: `canSaveAt`, Publish: `canPublishAt`); a host passes it to `usePublishFolders` as `canPublishTo`, where it replaces the `Production` placeholder. Only the Organization root is matched against units: any other `root` is always usable, and an omitted `root` means Organization (the publish panels' only tree). */
+  isDestinationUsable:
     ((folderPath: string[], root?: SaveDestinationRoot) => boolean) | undefined;
-  /** The reason a destination is disabled, or `undefined` when it is usable; `root` follows the same rule as in `canPublishTo`. */
+  /** The reason a destination is disabled, or `undefined` when it is usable; `root` follows the same rule as in `isDestinationUsable`. */
   getDisabledReason:
     | ((folderPath: string[], root?: SaveDestinationRoot) => string | undefined)
     | undefined;
-  /** Whether a save may write straight into the destination (inside an org unit that grants `write`); like `canPublishTo`, only the Organization root (or an omitted root) can be a unit, so a Personal folder never direct-writes. `undefined` while the rule does not apply or no check was given. */
+  /** Whether a save may write straight into the destination (inside an org unit that grants `write`); like `isDestinationUsable`, only the Organization root (or an omitted root) can be a unit, so a Personal folder never direct-writes. `undefined` while the rule does not apply or no check was given. */
   canSaveDirectlyTo:
     ((folderPath: string[], root?: SaveDestinationRoot) => boolean) | undefined;
 }
@@ -86,21 +86,21 @@ export const buildFolderGuards = ({
 }: BuildFolderGuardsParams): FolderGuards => {
   if (!isEnabled || status !== OrgUnitsStatus.Ready || namespace == null) {
     return {
-      canPublishTo: undefined,
+      isDestinationUsable: undefined,
       getDisabledReason: undefined,
       canSaveDirectlyTo: undefined,
     };
   }
   const check =
     purpose === OrgUnitFolderGuardPurpose.Save ? canSaveAt : canPublishAt;
-  const canPublishTo = (
+  const isDestinationUsable = (
     folderPath: string[],
     root: SaveDestinationRoot = SaveDestinationRoot.Organization,
   ): boolean =>
     root !== SaveDestinationRoot.Organization ||
     check(folderPath.join('/'), namespace);
   return {
-    canPublishTo,
+    isDestinationUsable,
     canSaveDirectlyTo:
       canSaveDirectlyAt &&
       ((folderPath: string[], root = SaveDestinationRoot.Organization) =>
@@ -109,7 +109,9 @@ export const buildFolderGuards = ({
     getDisabledReason:
       getReason &&
       ((folderPath, root) =>
-        canPublishTo(folderPath, root) ? undefined : getReason(folderPath)),
+        isDestinationUsable(folderPath, root)
+          ? undefined
+          : getReason(folderPath)),
   };
 };
 

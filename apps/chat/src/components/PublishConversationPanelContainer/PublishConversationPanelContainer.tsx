@@ -1,6 +1,7 @@
 import {
   mapResourceDependencyDto,
   usePublishDependencies,
+  OrgUnitFolderGuardPurpose,
   toPublishDisabledReason,
 } from '@epam/ai-dial-chat-hooks';
 import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
@@ -21,9 +22,9 @@ import {
   ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
+import { useOrgUnitFolderGuards } from '../../hooks/publish/useOrgUnitFolderGuards';
 import { usePublishDependencyIconResolver } from '../../hooks/publish/usePublishDependencyIconResolver';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
-import { usePublishFolderGuards } from '../../hooks/publish/usePublishFolderGuards';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
@@ -94,10 +95,11 @@ const PublishConversationPanelContainer: FC<Props> = ({
   /* The publish panel pre-fills its author field with this; the lib cannot read the session itself. */
   const { displayName } = useUserProfile();
 
-  const { canPublishTo, getDisabledReason } = usePublishFolderGuards(
-    OrgUnitNamespace.Conversations,
-    isOpen,
-  );
+  const { isDestinationUsable, getDisabledReason } = useOrgUnitFolderGuards({
+    purpose: OrgUnitFolderGuardPurpose.Publish,
+    namespace: OrgUnitNamespace.Conversations,
+    isActive: isOpen,
+  });
 
   const {
     folderItems,
@@ -107,7 +109,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
     onCreatePublishFolder,
     rememberPublishFolder,
     hasPublishWriteAccess,
-  } = usePublishFolders({ canPublishTo });
+  } = usePublishFolders({ canPublishTo: isDestinationUsable });
 
   const resource: PublishResourceSummary = { title: conversationTitle };
 

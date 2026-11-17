@@ -47,8 +47,8 @@ describe('buildFolderGuards', () => {
   it('uses canSaveAt for a save panel and passes the joined path and namespace', () => {
     const { guards, canSaveAt, canPublishAt } = buildGuards();
 
-    expect(guards.canPublishTo?.(['Acme', 'Reports'])).toBe(false);
-    expect(guards.canPublishTo?.(['Acme', 'Secret'])).toBe(true);
+    expect(guards.isDestinationUsable?.(['Acme', 'Reports'])).toBe(false);
+    expect(guards.isDestinationUsable?.(['Acme', 'Secret'])).toBe(true);
     expect(canSaveAt).toHaveBeenCalledWith(
       'Acme/Reports',
       OrgUnitNamespace.Applications,
@@ -59,7 +59,7 @@ describe('buildFolderGuards', () => {
   it('has no reason callback when the host gives no getReason', () => {
     const { guards } = buildGuards({ getReason: undefined });
 
-    expect(guards.canPublishTo).toBeDefined();
+    expect(guards.isDestinationUsable).toBeDefined();
     expect(guards.getDisabledReason).toBeUndefined();
   });
 
@@ -73,7 +73,10 @@ describe('buildFolderGuards', () => {
     const { guards, canSaveAt, getReason } = buildGuards();
 
     expect(
-      guards.canPublishTo?.(['Acme', 'Reports'], SaveDestinationRoot.Personal),
+      guards.isDestinationUsable?.(
+        ['Acme', 'Reports'],
+        SaveDestinationRoot.Personal,
+      ),
     ).toBe(true);
     expect(
       guards.getDisabledReason?.(
@@ -89,12 +92,12 @@ describe('buildFolderGuards', () => {
     const { guards } = buildGuards();
 
     expect(
-      guards.canPublishTo?.(
+      guards.isDestinationUsable?.(
         ['Acme', 'Reports'],
         SaveDestinationRoot.Organization,
       ),
     ).toBe(false);
-    expect(guards.canPublishTo?.(['Acme', 'Reports'])).toBe(false);
+    expect(guards.isDestinationUsable?.(['Acme', 'Reports'])).toBe(false);
     expect(
       guards.getDisabledReason?.(
         ['Acme', 'Reports'],
@@ -143,8 +146,8 @@ describe('buildFolderGuards', () => {
       purpose: OrgUnitFolderGuardPurpose.Publish,
     });
 
-    expect(guards.canPublishTo?.(['Acme', 'Secret'])).toBe(false);
-    expect(guards.canPublishTo?.(['Acme', 'Reports'])).toBe(true);
+    expect(guards.isDestinationUsable?.(['Acme', 'Secret'])).toBe(false);
+    expect(guards.isDestinationUsable?.(['Acme', 'Reports'])).toBe(true);
   });
 
   it('returns the injected reason only for a disabled folder', () => {
@@ -165,7 +168,7 @@ describe('buildFolderGuards', () => {
   ])('returns no guards when %s', (_label, overrides) => {
     const { guards } = buildGuards(overrides);
 
-    expect(guards.canPublishTo).toBeUndefined();
+    expect(guards.isDestinationUsable).toBeUndefined();
     expect(guards.getDisabledReason).toBeUndefined();
     expect(guards.canSaveDirectlyTo).toBeUndefined();
   });

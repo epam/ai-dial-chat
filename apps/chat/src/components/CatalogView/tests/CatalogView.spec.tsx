@@ -10,7 +10,10 @@ import {
   type CatalogCreationPermissionsDto,
   CelebrationDeliveryMode,
 } from '@epam/ai-dial-chat-api-client';
-import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
+import {
+  FavoriteEntityType,
+  OrgUnitFolderGuardPurpose,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
@@ -29,7 +32,7 @@ import { useNotification } from '../../../context/NotificationContext';
 import { usePrompts } from '../../../context/PromptsContext';
 import { useSkills } from '../../../context/SkillsContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
-import { usePublishFolderGuards } from '../../../hooks/publish/usePublishFolderGuards';
+import { useOrgUnitFolderGuards } from '../../../hooks/publish/useOrgUnitFolderGuards';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { useCatalogActiveTabPreference } from '../../../hooks/useCatalogActiveTabPreference/useCatalogActiveTabPreference';
 import { useCatalogSortFilterPreference } from '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
@@ -644,8 +647,8 @@ vi.mock('../../../hooks/publish/useResourceVersionHistory', () => ({
     resourceId === '' ? undefined : { rows: [], resourceId },
   ),
 }));
-vi.mock('../../../hooks/publish/usePublishFolderGuards', () => ({
-  usePublishFolderGuards: vi.fn(),
+vi.mock('../../../hooks/publish/useOrgUnitFolderGuards', () => ({
+  useOrgUnitFolderGuards: vi.fn(),
 }));
 
 vi.mock('../../../hooks/publish/usePublishFolders', () => ({
@@ -731,8 +734,8 @@ describe('CatalogView', () => {
       refetchSkills: vi.fn().mockResolvedValue(undefined),
       mergeSharedSkill: vi.fn(),
     });
-    vi.mocked(usePublishFolderGuards).mockReturnValue({
-      canPublishTo: undefined,
+    vi.mocked(useOrgUnitFolderGuards).mockReturnValue({
+      isDestinationUsable: undefined,
       getDisabledReason: undefined,
       canSaveDirectlyTo: undefined,
     });
@@ -811,27 +814,30 @@ describe('CatalogView', () => {
   });
 
   it('gives the org-unit publish guard to usePublishFolders and keeps the Production fallback while no guard applies', () => {
-    const canPublishTo = vi.fn().mockReturnValue(true);
-    vi.mocked(usePublishFolderGuards).mockReturnValue({
-      canPublishTo,
+    const isDestinationUsable = vi.fn().mockReturnValue(true);
+    vi.mocked(useOrgUnitFolderGuards).mockReturnValue({
+      isDestinationUsable,
       getDisabledReason: undefined,
       canSaveDirectlyTo: undefined,
     });
 
     render(<CatalogView />);
 
-    expect(usePublishFolders).toHaveBeenCalledWith({ canPublishTo });
-    expect(usePublishFolderGuards).toHaveBeenCalledWith(
-      undefined,
-      false,
-      false,
-    );
+    expect(usePublishFolders).toHaveBeenCalledWith({
+      canPublishTo: isDestinationUsable,
+    });
+    expect(useOrgUnitFolderGuards).toHaveBeenCalledWith({
+      purpose: OrgUnitFolderGuardPurpose.Publish,
+      namespace: undefined,
+      isActive: false,
+      isQuickApp: false,
+    });
   });
 
   it('gives Catalog a destination-path reason callback while the guard has one', () => {
     const getDisabledReason = vi.fn().mockReturnValue('No access');
-    vi.mocked(usePublishFolderGuards).mockReturnValue({
-      canPublishTo: vi.fn(),
+    vi.mocked(useOrgUnitFolderGuards).mockReturnValue({
+      isDestinationUsable: vi.fn(),
       getDisabledReason,
       canSaveDirectlyTo: undefined,
     });
@@ -856,14 +862,14 @@ describe('CatalogView', () => {
   it('never activates the org-unit read in selector mode', () => {
     render(<CatalogView isSelectorMode />);
 
-    expect(usePublishFolderGuards).toHaveBeenCalledWith(
-      undefined,
-      false,
-      false,
-    );
-    expect(usePublishFolderGuards).not.toHaveBeenCalledWith(
-      expect.anything(),
-      true,
+    expect(useOrgUnitFolderGuards).toHaveBeenCalledWith({
+      purpose: OrgUnitFolderGuardPurpose.Publish,
+      namespace: undefined,
+      isActive: false,
+      isQuickApp: false,
+    });
+    expect(useOrgUnitFolderGuards).not.toHaveBeenCalledWith(
+      expect.objectContaining({ isActive: true }),
     );
   });
 

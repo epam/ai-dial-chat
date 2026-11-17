@@ -91,13 +91,7 @@ describe('OrgUnitsContext', () => {
     act(() => result.current.refreshUnits());
 
     expect(
-      result.current.canWriteAt('Acme', OrgUnitNamespace.Applications),
-    ).toBe(true);
-    expect(
       result.current.canSaveAt('Acme', OrgUnitNamespace.Applications),
-    ).toBe(true);
-    expect(
-      result.current.canReadAt('Acme', OrgUnitNamespace.Applications),
     ).toBe(true);
     expect(
       result.current.canPublishAt('Acme', OrgUnitNamespace.Applications),

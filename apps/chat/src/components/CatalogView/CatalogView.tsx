@@ -13,6 +13,7 @@ import {
   findDeploymentByIdOrReference,
   findSchemaDisplayName,
   getOrgUnitNamespace,
+  OrgUnitFolderGuardPurpose,
   resolveFavoriteEntityType,
   toPublishDisabledReason,
   toPublishEntityType,
@@ -53,8 +54,8 @@ import { usePrompts } from '../../context/PromptsContext';
 import { useSkills } from '../../context/SkillsContext';
 import { useCatalogCreationPermissions } from '../../hooks/catalog/useCatalogCreationPermissions';
 import { useLanguage } from '../../hooks/language/useLanguage';
+import { useOrgUnitFolderGuards } from '../../hooks/publish/useOrgUnitFolderGuards';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
-import { usePublishFolderGuards } from '../../hooks/publish/usePublishFolderGuards';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import { useResourceVersionHistory } from '../../hooks/publish/useResourceVersionHistory';
 import { useSkillArchiveImport } from '../../hooks/skills/useSkillArchiveImport';
@@ -358,17 +359,21 @@ const CatalogView: FC<Props> = ({
 
   const publishEntityType =
     publishOpenItem && toPublishEntityType(publishOpenItem.type);
-  const { canPublishTo, getDisabledReason: getPublishFolderReason } =
-    usePublishFolderGuards(
-      publishEntityType ? getOrgUnitNamespace(publishEntityType) : undefined,
-      !isSelectorMode && publishOpenItem != null,
-      publishOpenItem != null &&
+  const { isDestinationUsable, getDisabledReason: getPublishFolderReason } =
+    useOrgUnitFolderGuards({
+      purpose: OrgUnitFolderGuardPurpose.Publish,
+      namespace: publishEntityType
+        ? getOrgUnitNamespace(publishEntityType)
+        : undefined,
+      isActive: !isSelectorMode && publishOpenItem != null,
+      isQuickApp:
+        publishOpenItem != null &&
         resolveCatalogItemEntity(
           publishOpenItem.type,
           findDeploymentByIdOrReference(deployments, publishOpenItem.id),
           schemas,
         ) === NotifiableEntity.QuickApp,
-    );
+    });
 
   const {
     folderItems: publishFolderItems,
@@ -378,7 +383,7 @@ const CatalogView: FC<Props> = ({
     onCreatePublishFolder,
     rememberPublishFolder,
     hasPublishWriteAccess,
-  } = usePublishFolders({ canPublishTo });
+  } = usePublishFolders({ canPublishTo: isDestinationUsable });
 
   const showPublishError = usePublishErrorNotification();
 

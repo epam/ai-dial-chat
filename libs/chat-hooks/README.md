@@ -1129,7 +1129,7 @@ previous answer stays in use (a failed refresh keeps it) and does nothing once
 Core reported org units off. Status is the `OrgUnitsStatus` enum: `Idle`,
 `Loading`, `Ready`, `Disabled` (Core has org units off) or `Error` (the read
 failed; nothing is reported). Until the status is `Ready`, and in `Disabled` and
-`Error`, `canWriteAt`, `canSaveAt`, `canReadAt` and `canPublishAt` return `true`
+`Error`, `canSaveAt` and `canPublishAt` return `true`
 for every path, so missing data never disables a folder. `canSaveDirectlyAt` is the
 exception: it is `false` until `Ready`, so a direct write always needs a proven
 right. Each takes a decoded public-relative path and an `OrgUnitNamespace` from
@@ -1139,14 +1139,14 @@ right. Each takes a decoded public-relative path and an `OrgUnitNamespace` from
 import { OrgUnitsStatus, useOrgUnits } from '@epam/ai-dial-chat-hooks';
 import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 
-const { status, ensureUnits, canWriteAt } = useOrgUnits({
+const { status, ensureUnits, canSaveAt } = useOrgUnits({
   listOrgUnits, // host-configured fetch
 });
 
 useEffect(() => ensureUnits(), [ensureUnits]);
-const isWritable =
+const isUsableDestination =
   status !== OrgUnitsStatus.Ready ||
-  canWriteAt('Acme/Reports', OrgUnitNamespace.Applications);
+  canSaveAt('Acme/Reports', OrgUnitNamespace.Applications);
 ```
 
 `getOrgUnitNamespace(entityType)` maps a `CatalogPublishEntityType`
@@ -1154,14 +1154,14 @@ const isWritable =
 `OrgUnitNamespace` a unit grants rights on (`undefined` for `model`; a
 conversation has no catalog entity type, so its containers pass
 `OrgUnitNamespace.Conversations`). `buildFolderGuards` turns the hook's answers
-into the two props a folder panel needs: `canPublishTo` (for `usePublishFolders`)
+into the two props a folder panel needs: `isDestinationUsable` (a host passes it to `usePublishFolders` as `canPublishTo`)
 and `getDisabledReason`, plus `canSaveDirectlyTo` when the host passes the strict
 `canSaveDirectlyAt` of `useOrgUnits` (a folder inside an org unit that grants
 `write`; `false` until `Ready` and outside every unit, even for a DIAL admin). It checks `canSaveAt` (a folder outside every unit stays usable) for
 `OrgUnitFolderGuardPurpose.Save` and `canPublishAt` for
 `OrgUnitFolderGuardPurpose.Publish`, and calls the host's optional `getReason` (a
 translated sentence) only for a disabled folder; without it `getDisabledReason`
-is `undefined`. Both `canPublishTo` and `getDisabledReason` take an optional `SaveDestinationRoot` as a second argument: only `SaveDestinationRoot.Organization` (also the meaning of an omitted root, since the publish panels have one tree) is matched against units, and a Personal folder is always usable even when it is named like a unit. With the flag off, a status
+is `undefined`. Both `isDestinationUsable` and `getDisabledReason` take an optional `SaveDestinationRoot` as a second argument: only `SaveDestinationRoot.Organization` (also the meaning of an omitted root, since the publish panels have one tree) is matched against units, and a Personal folder is always usable even when it is named like a unit. With the flag off, a status
 other than `Ready`, or no namespace, both guards are `undefined`, so the panel
 keeps its default behaviour. `canSaveDirectlyTo` takes the same optional root and is `false` for any root but Organization, so a Personal folder named like a unit never direct-writes. `useFolderGuards({ purpose, namespace, isActive, isEnabled, orgUnits, shouldRefreshOnOpen?, getReason? })` wraps it for a panel: it calls `orgUnits.ensureUnits()` while `isActive`, re-reads loaded rights on open when `shouldRefreshOnOpen`, and returns the guards; `orgUnits` is the `useOrgUnits` result (or one shared through a host context) and `isEnabled` the host's flag. `toPublishDisabledReason(getDisabledReason)` adapts a guard's `getDisabledReason(folderPath)` to a publish panel's `getDisabledReason(destination)`. `toSaveDestinationRoot(rootKey)` turns a destination's `rootKey` into a `SaveDestinationRoot`, or `undefined`. All are available from the root and `./utils`.
 
@@ -1172,7 +1172,7 @@ import {
   OrgUnitFolderGuardPurpose,
 } from '@epam/ai-dial-chat-hooks';
 
-const { canPublishTo, getDisabledReason } = buildFolderGuards({
+const { isDestinationUsable, getDisabledReason } = buildFolderGuards({
   purpose: OrgUnitFolderGuardPurpose.Publish,
   isEnabled, // host feature flag
   status,

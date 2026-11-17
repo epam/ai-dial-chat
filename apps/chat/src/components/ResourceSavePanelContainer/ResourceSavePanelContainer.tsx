@@ -117,13 +117,13 @@ const ResourceSavePanelContainer: FC<Props> = ({
     config: { publicationFilterSources },
   } = useAppConfig();
   const organization = usePublishFolders();
-  const { canSaveDirectlyTo, getDisabledReason } = useOrgUnitFolderGuards(
-    OrgUnitFolderGuardPurpose.Save,
-    getOrgUnitNamespace(editorAdapter.publishEntityType),
-    isOpen,
-    notifiableEntity === NotifiableEntity.QuickApp,
-    true,
-  );
+  const { canSaveDirectlyTo, getDisabledReason } = useOrgUnitFolderGuards({
+    purpose: OrgUnitFolderGuardPurpose.Save,
+    namespace: getOrgUnitNamespace(editorAdapter.publishEntityType),
+    isActive: isOpen,
+    isQuickApp: notifiableEntity === NotifiableEntity.QuickApp,
+    shouldRefreshOnOpen: true,
+  });
   const notifySaved = useResourceSaveNotification({
     resourceName,
     notifiableEntity,

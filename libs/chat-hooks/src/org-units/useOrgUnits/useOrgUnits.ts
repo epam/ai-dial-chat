@@ -1,9 +1,7 @@
 import {
-  canReadAt as canReadAtAccess,
   canSaveToFolderAt,
   canWriteIntoOrgUnitAt,
   canRequestPublicationAt,
-  canWriteAt as canWriteAtAccess,
   type OrgUnitAccess,
   type OrgUnitNamespace,
 } from '@epam/ai-dial-chat-shared';
@@ -31,14 +29,10 @@ export interface UseOrgUnitsResult {
   ensureUnits: () => void;
   /** Reads the units again while the previous answer stays in use; does nothing once Core reported org units off. */
   refreshUnits: () => void;
-  /** Whether the user may write at the path; `true` until the status is `Ready`. */
-  canWriteAt: OrgUnitRightCheck;
   /** Whether the path is a usable save destination: `true` outside every unit, otherwise needs `write`; `true` until the status is `Ready`. */
   canSaveAt: OrgUnitRightCheck;
   /** Whether the user may write straight into the path: it lies inside an org unit that grants `write`. `false` until the status is `Ready` and outside every unit, even for a DIAL admin. */
   canSaveDirectlyAt: OrgUnitRightCheck;
-  /** Whether the user may read at the path; `true` until the status is `Ready`. */
-  canReadAt: OrgUnitRightCheck;
   /** Whether a publication request into the path can be sent; `true` until the status is `Ready`. */
   canPublishAt: OrgUnitRightCheck;
 }
@@ -46,9 +40,10 @@ export interface UseOrgUnitsResult {
 const NO_UNITS: OrgUnitAccess = { hasAdminAccess: false, units: [] };
 
 /**
- * Loads the current user's org units once, on demand, and answers write, read and
- * save and publication-request rights per path. Until the status is `Ready` (and in
- * `Disabled` and `Error`) every answer is `true`, so missing data never disables a folder.
+ * Loads the current user's org units once, on demand, and answers save, direct-save
+ * and publication-request rights per path. Until the status is `Ready` (and in
+ * `Disabled` and `Error`) every answer is `true` except `canSaveDirectlyAt`, so missing
+ * data never disables a folder.
  * @param options - the host-supplied `listOrgUnits` read
  */
 export const useOrgUnits = ({
@@ -114,12 +109,6 @@ export const useOrgUnits = ({
 
   const isReady = status === OrgUnitsStatus.Ready;
 
-  const canWriteAt = useCallback<OrgUnitRightCheck>(
-    (publicPath, namespace) =>
-      !isReady || canWriteAtAccess(access, publicPath, namespace),
-    [isReady, access],
-  );
-
   const canSaveAt = useCallback<OrgUnitRightCheck>(
     (publicPath, namespace) =>
       !isReady || canSaveToFolderAt(access, publicPath, namespace),
@@ -129,12 +118,6 @@ export const useOrgUnits = ({
   const canSaveDirectlyAt = useCallback<OrgUnitRightCheck>(
     (publicPath, namespace) =>
       isReady && canWriteIntoOrgUnitAt(access, publicPath, namespace),
-    [isReady, access],
-  );
-
-  const canReadAt = useCallback<OrgUnitRightCheck>(
-    (publicPath, namespace) =>
-      !isReady || canReadAtAccess(access, publicPath, namespace),
     [isReady, access],
   );
 
@@ -149,20 +132,16 @@ export const useOrgUnits = ({
       status,
       ensureUnits,
       refreshUnits,
-      canWriteAt,
       canSaveAt,
       canSaveDirectlyAt,
-      canReadAt,
       canPublishAt,
     }),
     [
       status,
       ensureUnits,
       refreshUnits,
-      canWriteAt,
       canSaveAt,
       canSaveDirectlyAt,
-      canReadAt,
       canPublishAt,
     ],
   );

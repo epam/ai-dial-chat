@@ -50,7 +50,7 @@ describe('useOrgUnits', () => {
       expect(result.current.status).toBe(OrgUnitsStatus.Ready),
     );
     expect(listOrgUnits).toHaveBeenCalledOnce();
-    expect(result.current.canWriteAt('Acme/Plans', APPS)).toBe(true);
+    expect(result.current.canSaveAt('Acme/Plans', APPS)).toBe(true);
   });
 
   it('answers three calls from one load and disables a read-only unit once Ready', async () => {
@@ -69,10 +69,8 @@ describe('useOrgUnits', () => {
     );
 
     expect(listOrgUnits).toHaveBeenCalledOnce();
-    expect(result.current.canWriteAt('Reports/Q1', APPS)).toBe(false);
-    expect(result.current.canReadAt('Reports/Q1', APPS)).toBe(true);
     expect(result.current.canPublishAt('Reports/Q1', APPS)).toBe(true);
-    expect(result.current.canWriteAt('Plain/Folder', APPS)).toBe(false);
+    expect(result.current.canSaveDirectlyAt('Plain/Folder', APPS)).toBe(false);
     expect(result.current.canSaveAt('Plain/Folder', APPS)).toBe(true);
     expect(result.current.canSaveAt('Reports/Q1', APPS)).toBe(false);
     expect(result.current.canSaveAt('Acme/Plans', APPS)).toBe(true);
@@ -98,7 +96,7 @@ describe('useOrgUnits', () => {
       expect(result.current.status).toBe(OrgUnitsStatus.Ready),
     );
 
-    expect(result.current.canWriteAt('Plain/Folder', APPS)).toBe(true);
+    expect(result.current.canSaveAt('Plain/Folder', APPS)).toBe(true);
   });
 
   it('keeps the previous answer while refreshUnits reads again', async () => {
@@ -121,10 +119,10 @@ describe('useOrgUnits', () => {
     act(() => result.current.refreshUnits());
 
     expect(result.current.status).toBe(OrgUnitsStatus.Ready);
-    expect(result.current.canWriteAt('Reports/Q1', APPS)).toBe(false);
+    expect(result.current.canSaveAt('Reports/Q1', APPS)).toBe(false);
     await act(async () => resolveRefresh(listResult([ACME, READ_ONLY])));
     expect(listOrgUnits).toHaveBeenCalledTimes(2);
-    expect(result.current.canWriteAt('Acme/Plans', APPS)).toBe(true);
+    expect(result.current.canSaveAt('Acme/Plans', APPS)).toBe(true);
   });
 
   it('does not read again on refreshUnits once org units are off', async () => {
@@ -153,7 +151,7 @@ describe('useOrgUnits', () => {
     await waitFor(() =>
       expect(result.current.status).toBe(OrgUnitsStatus.Disabled),
     );
-    expect(result.current.canWriteAt('Acme', APPS)).toBe(true);
+    expect(result.current.canSaveAt('Acme', APPS)).toBe(true);
   });
 
   it('reports Error without throwing when the read fails', async () => {
@@ -165,7 +163,7 @@ describe('useOrgUnits', () => {
     await waitFor(() =>
       expect(result.current.status).toBe(OrgUnitsStatus.Error),
     );
-    expect(result.current.canWriteAt('Acme', APPS)).toBe(true);
+    expect(result.current.canSaveAt('Acme', APPS)).toBe(true);
   });
 
   it('reads again on the next ensureUnits after a failed read', async () => {
@@ -185,7 +183,7 @@ describe('useOrgUnits', () => {
       expect(result.current.status).toBe(OrgUnitsStatus.Ready),
     );
     expect(listOrgUnits).toHaveBeenCalledTimes(2);
-    expect(result.current.canWriteAt('Acme/Plans', APPS)).toBe(true);
+    expect(result.current.canSaveAt('Acme/Plans', APPS)).toBe(true);
   });
 
   it('does not read again after org units turn out to be off', async () => {
@@ -209,7 +207,7 @@ describe('useOrgUnits', () => {
 
     act(() => result.current.ensureUnits());
 
-    expect(result.current.canWriteAt('Acme', APPS)).toBe(true);
+    expect(result.current.canSaveAt('Acme', APPS)).toBe(true);
   });
 
   it('does not update state after the owner unmounts', async () => {

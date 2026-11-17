@@ -120,7 +120,7 @@ describe('useFolderGuards', () => {
   ])('returns no guards when %s', (_label, options) => {
     const guards = getGuards(options);
 
-    expect(guards.canPublishTo).toBeUndefined();
+    expect(guards.isDestinationUsable).toBeUndefined();
     expect(guards.getDisabledReason).toBeUndefined();
     expect(guards.canSaveDirectlyTo).toBeUndefined();
   });
