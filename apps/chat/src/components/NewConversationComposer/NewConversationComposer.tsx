@@ -74,7 +74,7 @@ import UsageLimitBanner from '../UsageLimitBanner/UsageLimitBanner';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 
 const ConversationInput = lazy(async () => {
-  const module = await import('@epam/ai-dial-conversation-input');
+  const module = await import('../../utils/lazy-conversation-input');
   return { default: module.ConversationInput };
 });
 

@@ -91,7 +91,8 @@ import {
   getStatusMessageProps,
 } from './utils/message-display';
 
-const preloadEditInput = () => void import('@epam/ai-dial-conversation-input');
+const preloadEditInput = () =>
+  void import('../../utils/lazy-conversation-input');
 
 /* Fallback inline-frame height when the registry entry declares neither
    `height` nor `mobileHeight`. */

@@ -100,7 +100,7 @@ import { ConversationReloadNotification } from './ConversationReloadNotification
 import { getInputMessageHistory } from './utils/message-display';
 
 const ConversationInput = lazy(async () => {
-  const module = await import('@epam/ai-dial-conversation-input');
+  const module = await import('../../utils/lazy-conversation-input');
   return { default: module.ConversationInput };
 });
 

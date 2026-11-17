@@ -35,7 +35,6 @@ import {
 import AnnouncementBanner from '../components/AnnouncementBanner/AnnouncementBanner';
 import ChatLayout from '../components/ChatLayout/ChatLayout';
 import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView';
-import ConversationSourcesPanel from '../components/ConversationSourcesPanel/ConversationSourcesPanel';
 import { RouteErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
 import Header from '../components/Header/Header';
 import SourcesSidebarToggle from '../components/Header/SourcesSidebarToggle';
@@ -80,6 +79,15 @@ import { configurePdfWorker } from '../utils/pdf';
 import { renderSettingsRoutes, renderUsageRoute } from './settings-routes';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
+/*
+ * Lazy so the sources panel's scheduled-task section, and the markdown stack
+ * it renders (`MDMessageViewer` → rehype-raw → parse5), stay out of the entry
+ * chunk every page waits on. The panel is closed until the user opens it.
+ */
+const ConversationSourcesPanel = lazy(
+  () =>
+    import('../components/ConversationSourcesPanel/ConversationSourcesPanel'),
+);
 const DialFileManagerPage = lazy(
   () => import('../pages/DialFileManagerPage/DialFileManagerPage'),
 );
@@ -606,7 +614,11 @@ const App: FC = () => {
               />
             </Routes>
           </main>
-          {isConversationRoute && <ConversationSourcesPanel />}
+          {isConversationRoute && (
+            <Suspense fallback={null}>
+              <ConversationSourcesPanel />
+            </Suspense>
+          )}
         </ActiveScheduledTaskProvider>
         {(isFileManagerRoute ||
           isProjectPageRoute ||

@@ -11,7 +11,7 @@ import { isAttachmentDownloadable } from '../../../utils/dial-file';
 import type { ConversationMessageItemProps } from '../ConversationMessageItem';
 
 const EditMessageInput = lazy(async () => {
-  const module = await import('@epam/ai-dial-conversation-input');
+  const module = await import('../../../utils/lazy-conversation-input');
   return { default: module.EditMessageInput };
 });
 
