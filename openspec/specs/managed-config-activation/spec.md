@@ -46,7 +46,7 @@ A change of mode SHALL be a deployment configuration change. The backend SHALL N
 - **WHEN** a deployment running `active` with `MANAGED_CONFIG_ACTIVE_KEYS=onboarding.hints` restarts with `MANAGED_CONFIG_MODE=off` and the key list unchanged
 - **THEN** startup succeeds, a warning names the ignored key, and `onboarding.hints` has its environment behavior
 
-#### Scenario: Unmapped chat-ui keeps environment behavior
+#### Scenario: Unmapped ai-dial-chat keeps environment behavior
 
 - **WHEN** the mode is `active`, `onboarding.hints` is listed, `ONBOARDING_HINTS` holds a tour, and only `launchpad` is mapped
 - **THEN** `ai-dial-chat` gets that tour in `config.onboardingHints` with no `metadata.managed`

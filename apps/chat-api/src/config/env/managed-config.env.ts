@@ -32,7 +32,6 @@ const parseCommaList = (value: unknown): string[] =>
     .map((entry) => entry.trim())
     .filter((entry) => entry.length > 0);
 
-/* Splits a comma-separated pair list, trimming around `=` as well. */
 /* Trims each side of every pair and replaces the legacy application
  * identifier, so the cross-variable checks see only canonical identifiers. */
 const parsePairList = (value: unknown): string[] =>
