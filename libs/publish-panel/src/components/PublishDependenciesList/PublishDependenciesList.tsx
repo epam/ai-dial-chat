@@ -156,7 +156,9 @@ export const PublishDependenciesList: FC<PublishDependenciesListProps> = ({
               </span>
             )}
           </span>
-          <span className={mergeClasses('truncate', metaClassName, styles.meta)}>
+          <span
+            className={mergeClasses('truncate', metaClassName, styles.meta)}
+          >
             {dependency.location
               ? `${typeLabel} · ${dependency.location}`
               : typeLabel}
@@ -180,7 +182,9 @@ export const PublishDependenciesList: FC<PublishDependenciesListProps> = ({
       >
         {renderDependencyIcon(dependency, true)}
         <div className="flex min-w-0 flex-col">
-          <span className={mergeClasses('truncate', typeClassName, styles.type)}>
+          <span
+            className={mergeClasses('truncate', typeClassName, styles.type)}
+          >
             {typeLabel}
             {dependency.location && (
               <span
