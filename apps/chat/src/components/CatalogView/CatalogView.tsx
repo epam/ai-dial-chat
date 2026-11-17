@@ -12,7 +12,11 @@ import {
   canEditShareAccess,
   findDeploymentByIdOrReference,
   findSchemaDisplayName,
+  getOrgUnitNamespace,
+  OrgUnitFolderGuardPurpose,
   resolveFavoriteEntityType,
+  toPublishDisabledReason,
+  toPublishEntityType,
   type ToolsetCredentialsLabels,
   useCatalogEditNavigation,
   useCatalogToolsetCredentials,
@@ -50,8 +54,10 @@ import { usePrompts } from '../../context/PromptsContext';
 import { useSkills } from '../../context/SkillsContext';
 import { useCatalogCreationPermissions } from '../../hooks/catalog/useCatalogCreationPermissions';
 import { useLanguage } from '../../hooks/language/useLanguage';
+import { useOrgUnitFolderGuards } from '../../hooks/publish/useOrgUnitFolderGuards';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
+import { useResourceVersionHistory } from '../../hooks/publish/useResourceVersionHistory';
 import { useSkillArchiveImport } from '../../hooks/skills/useSkillArchiveImport';
 import { useCatalogActiveTabPreference } from '../../hooks/useCatalogActiveTabPreference/useCatalogActiveTabPreference';
 import { useCatalogItemActions } from '../../hooks/useCatalogItemActions/useCatalogItemActions';
@@ -74,7 +80,10 @@ import {
 import { AppsEditorQuery } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
 import { EditorQuery } from '../../types/editor-query';
-import { EntityOperation } from '../../types/entity-notification';
+import {
+  NotifiableEntity,
+  EntityOperation,
+} from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import {
   getCatalogEmptyDescription,
@@ -87,6 +96,9 @@ import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
+  getPublishApprovalLabels,
+  getPublishDependenciesEntityKey,
+  getPublishDependenciesLabels,
   getPublishPanelCommonLabels,
 } from '../../utils/publish';
 import { ApplicationCredentials } from '../ApplicationCredentials/ApplicationCredentials';
@@ -148,6 +160,7 @@ const CatalogView: FC<Props> = ({
   const [searchParams, setSearchParams] = useSearchParams();
   const itemIdParam = searchParams.get(CatalogQuery.ItemId) ?? undefined;
   const [initialDetailsItemId, setInitialDetailsItemId] = useState(itemIdParam);
+  const [publishOpenItem, setPublishOpenItem] = useState<CatalogItem>();
 
   /*
    * `itemId` is a one-shot signal — from a shared-invitation redirect (see
@@ -181,6 +194,7 @@ const CatalogView: FC<Props> = ({
   const isAdmin = user?.isAdmin ?? false;
   const { config } = useAppConfig();
   const dialCoreExternalUrl = config.dialCoreExternalUrl;
+  const themesBaseUrl = config.themesBaseUrl;
   const {
     items: deployments,
     selectedItemId,
@@ -300,6 +314,7 @@ const CatalogView: FC<Props> = ({
     toolsets,
     isAdmin,
     dialCoreExternalUrl,
+    themesBaseUrl,
     isToolsetsEnabled,
     isCustomAppsEnabled,
     isPromptsEnabled,
@@ -342,6 +357,24 @@ const CatalogView: FC<Props> = ({
     [availableTabIds, t],
   );
 
+  const publishEntityType =
+    publishOpenItem && toPublishEntityType(publishOpenItem.type);
+  const { isDestinationUsable, getDisabledReason: getPublishFolderReason } =
+    useOrgUnitFolderGuards({
+      purpose: OrgUnitFolderGuardPurpose.Publish,
+      namespace: publishEntityType
+        ? getOrgUnitNamespace(publishEntityType)
+        : undefined,
+      isActive: !isSelectorMode && publishOpenItem != null,
+      isQuickApp:
+        publishOpenItem != null &&
+        resolveCatalogItemEntity(
+          publishOpenItem.type,
+          findDeploymentByIdOrReference(deployments, publishOpenItem.id),
+          schemas,
+        ) === NotifiableEntity.QuickApp,
+    });
+
   const {
     folderItems: publishFolderItems,
     expandedPaths: publishExpandedPaths,
@@ -350,7 +383,7 @@ const CatalogView: FC<Props> = ({
     onCreatePublishFolder,
     rememberPublishFolder,
     hasPublishWriteAccess,
-  } = usePublishFolders();
+  } = usePublishFolders({ canPublishTo: isDestinationUsable });
 
   const showPublishError = usePublishErrorNotification();
 
@@ -437,6 +470,7 @@ const CatalogView: FC<Props> = ({
 
   const {
     getPublishHistory,
+    getPublishDependencies,
     handlePublish,
     handleUnpublish,
     handlePublishSuccess,
@@ -446,12 +480,24 @@ const CatalogView: FC<Props> = ({
     isUnpublishVisible,
   } = useCatalogPublishing({
     deployments,
+    toolsets,
     schemas,
     rememberPublishFolder,
     notifyOperationSuccess,
     showPublishError,
     isAdmin,
   });
+
+  const handlePublishOpenChange = useCallback(
+    (isOpen: boolean, item: CatalogItem) =>
+      setPublishOpenItem(isOpen ? item : undefined),
+    [],
+  );
+  const versionHistory = useResourceVersionHistory(
+    publishOpenItem?.id ?? '',
+    publishOpenItem?.type ?? CatalogEntityType.Agent,
+    publishOpenItem != null,
+  );
 
   const {
     isShareVisible,
@@ -656,10 +702,28 @@ const CatalogView: FC<Props> = ({
         isPrimaryActionVisible={isPrimaryActionVisible}
         isPublishVisible={isPublishVisible}
         getPublishHistory={getPublishHistory}
+        getPublishDependencies={getPublishDependencies}
+        publishVersionHistory={versionHistory}
+        onPublishOpenChange={handlePublishOpenChange}
+        resolvePublishDependenciesLabels={(item) =>
+          getPublishDependenciesLabels(
+            t,
+            getPublishDependenciesEntityKey(item.type),
+          )
+        }
+        resolvePublishApprovalLabels={(item) =>
+          getPublishApprovalLabels(
+            t,
+            getPublishDependenciesEntityKey(item.type),
+          )
+        }
         publishFolderItems={publishFolderItems}
         publishExpandedPaths={publishExpandedPaths}
         onPublishExpandedPathsChange={onPublishExpandedPathsChange}
         publishLoadingPaths={publishLoadingPaths}
+        getPublishDisabledReason={toPublishDisabledReason(
+          getPublishFolderReason,
+        )}
         onCreatePublishFolder={onCreatePublishFolder}
         hasPublishWriteAccess={hasPublishWriteAccess}
         publishDefaultAuthor={displayName}
@@ -685,6 +749,14 @@ const CatalogView: FC<Props> = ({
           rootFolderLabel: t(BasicI18nKeys.Organization),
           selectFolderLabel: t(ButtonsI18nKeys.Select),
           accessRulesLabels: getAccessRulesLabels(t),
+          dependenciesLabels: getPublishDependenciesLabels(
+            t,
+            PublishI18nKeys.DependenciesEntityItem,
+          ),
+          ...getPublishApprovalLabels(
+            t,
+            PublishI18nKeys.DependenciesEntityItem,
+          ),
           ...getPublishAuthorLabels(t),
           ...getPublishPanelCommonLabels(t),
         }}
@@ -727,6 +799,7 @@ const CatalogView: FC<Props> = ({
           gridViewLabel: t(CatalogI18nKeys.GridViewLabel),
           listViewLabel: t(CatalogI18nKeys.ListViewLabel),
           viewToggleLabel: t(CatalogI18nKeys.ViewToggleLabel),
+          filterFromLabel: t(CatalogI18nKeys.BrowseSettingsFrom),
           filterMyAppsLabel: t(CatalogI18nKeys.BrowseSettingsMy),
           filterTopicsLabel: t(CatalogI18nKeys.BrowseSettingsTopics),
           browseSettings: {
@@ -772,6 +845,15 @@ const CatalogView: FC<Props> = ({
           )
         }
         detailsTexts={{
+          ariaLabel: t(CatalogI18nKeys.DetailsAriaLabel),
+          closeAriaLabel: t(ButtonsI18nKeys.Close),
+          shareLabel: t(ButtonsI18nKeys.Share),
+          publishLabel: t(ButtonsI18nKeys.Publish),
+          publishTitle: t(ButtonsI18nKeys.Publish),
+          addToFavoritesAriaLabel: t(FavoritesI18nKeys.AddToFavorites),
+          removeFromFavoritesAriaLabel: t(
+            FavoritesI18nKeys.RemoveFromFavorites,
+          ),
           tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
           tabContentLabel: t(CatalogI18nKeys.DetailsTabContent),
           tabLimitsLabel: t(CatalogI18nKeys.DetailsTabLimits),

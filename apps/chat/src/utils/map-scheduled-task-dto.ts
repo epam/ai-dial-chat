@@ -24,6 +24,8 @@ const buildScheduleLabels = (t: TFunction): ScheduledTaskScheduleLabels => ({
   monthlyAt: (day, time) => t(Keys.CardScheduleMonthlyAt, { day, time }),
   invalid: t(Keys.EditInvalidScheduleLabel),
   recurringFallback: t(Keys.CardScheduleRecurringFallback),
+  withTimezone: (label, timezone) =>
+    t(Keys.CardScheduleZoneSuffix, { label, timezone }),
 });
 
 /** Localizes the shared trigger descriptor in the browser's display timezone. */

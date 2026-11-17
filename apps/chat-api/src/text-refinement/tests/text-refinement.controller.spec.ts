@@ -15,6 +15,7 @@ import { FeatureKey } from '../../app-config/feature-flags/feature-key.enum';
 import { AuthSource } from '../../auth/auth-source.enum';
 import { CsrfGuard } from '../../auth/csrf/csrf.guard';
 import { SessionGuard } from '../../auth/session/session.guard';
+import { UserRolesService } from '../../auth/user-roles.service';
 import { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
 import { TextRefinementPurpose } from '../dto/refine-text.dto';
@@ -40,12 +41,14 @@ describe('Text refinement HTTP contract', () => {
   let config: ConfigService<EnvironmentVariables, true>;
   const send = vi.fn();
   const enabled = vi.fn();
+  const getRoles = vi.fn();
   beforeEach(async () => {
     config = new ConfigService<EnvironmentVariables, true>({
       UTILITY_MODEL: 'refiner',
       CORS_ORIGIN: 'http://localhost:4207',
     });
     enabled.mockReset().mockResolvedValue(true);
+    getRoles.mockReset().mockReturnValue(['skill-author']);
     send.mockReset().mockResolvedValue({
       response: new Response(),
       data: {
@@ -65,6 +68,7 @@ describe('Text refinement HTTP contract', () => {
           },
         },
         { provide: FeatureFlagsService, useValue: { isEnabled: enabled } },
+        { provide: UserRolesService, useValue: { getRoles } },
       ],
     }).compile();
     service = module.get(TextRefinementService);

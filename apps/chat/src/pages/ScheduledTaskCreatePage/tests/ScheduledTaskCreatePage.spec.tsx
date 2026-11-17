@@ -183,6 +183,15 @@ interface FormProps {
 }
 
 vi.mock('@epam/ai-dial-scheduled-tasks', async (importOriginal) => ({
+  getZonedNow: (
+    await importOriginal<typeof import('@epam/ai-dial-scheduled-tasks')>()
+  ).getZonedNow,
+  instantToZonedDateTime: (
+    await importOriginal<typeof import('@epam/ai-dial-scheduled-tasks')>()
+  ).instantToZonedDateTime,
+  isAbsoluteInstant: (
+    await importOriginal<typeof import('@epam/ai-dial-scheduled-tasks')>()
+  ).isAbsoluteInstant,
   hasScheduledTaskFormChanges: (
     await importOriginal<typeof import('@epam/ai-dial-scheduled-tasks')>()
   ).hasScheduledTaskFormChanges,
@@ -621,18 +630,8 @@ describe('ScheduledTaskCreatePage', () => {
     expect(triggerLabelledById).toBe(modelLabelId);
   });
 
-  it('sends the entered time in the create body as UTC cron fields', async () => {
-    /*
-     * Both the mapper's local→UTC conversion and the expectation below read
-     * the wall clock; pin one instant so a minute or DST boundary between
-     * them cannot flip the assertion. `shouldAdvanceTime` keeps timers
-     * firing so userEvent and async queries still work under the fake clock.
-     */
-    vi.useFakeTimers({
-      now: new Date('2025-06-15T00:00:00Z'),
-      shouldAdvanceTime: true,
-    });
-
+  it('sends the entered time unshifted, in the browser zone by default', async () => {
+    vi.stubEnv('TZ', 'Europe/Warsaw');
     createScheduledTaskMock.mockResolvedValue({ id: 'sched_1' });
     renderAtRoute('/scheduled-tasks/new');
 
@@ -645,14 +644,10 @@ describe('ScheduledTaskCreatePage', () => {
     );
 
     expect(createScheduledTaskMock).toHaveBeenCalledOnce();
-    const fields = createScheduledTaskMock.mock.calls[0][0].trigger.cron.fields;
-    /* The mapper converts the local 08:45 to UTC with a reference Date —
-       compute the expectation the same way so the test holds in any
-       runner timezone. */
-    const reference = new Date();
-    reference.setHours(8, 45, 0, 0);
-    expect(fields.hour).toBe(String(reference.getUTCHours()));
-    expect(fields.minute).toBe(String(reference.getUTCMinutes()));
+    const body = createScheduledTaskMock.mock.calls[0][0];
+    expect(body.trigger.cron.fields).toEqual({ hour: '8', minute: '45' });
+    expect(body.timezone).toBe('Europe/Warsaw');
+    vi.unstubAllEnvs();
   });
 
   it('navigates to the list route on Cancel', async () => {

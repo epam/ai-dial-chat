@@ -1,6 +1,10 @@
 import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type {
+  FolderDestination,
   PublicationRule,
+  PublishDependenciesLabels,
+  PublishDependency,
+  VersionHistorySectionProps,
   PublishFolderNode,
   PublishFooterLabels,
   PublishHistoryEntry,
@@ -578,6 +582,32 @@ export interface DetailsPanelProps {
   isPublishPrimary?: (item: CatalogItem) => boolean;
   /** Resolves previously published versions for an item, most recent first. */
   getPublishHistory?: (item: CatalogItem) => Promise<PublishHistoryEntry[]>;
+  /**
+   * Resolves the resources an item refers to that are not in the public bucket, listed read-only in the
+   * publish panel. Called each time the publish sub-view opens; a rejection shows nothing. Omit it to leave the section out.
+   */
+  getPublishDependencies?: (item: CatalogItem) => Promise<PublishDependency[]>;
+  /**
+   * Versions history shown as the last section of the publish panel of the open item, already resolved by the host
+   * (rows, loading and error state, retry, labels and styles). Omit it to leave the section out; publishing never offers a version input.
+   */
+  publishVersionHistory?: VersionHistorySectionProps;
+  /** Called with `true` and the open item when the publish sub-view opens, and with `false` when it closes or the panel unmounts, so the host can load the history's statuses only while it is open. */
+  onPublishOpenChange?: (isOpen: boolean, item: CatalogItem) => void;
+  /**
+   * Resolves the private-dependencies labels for the item being published, merged over
+   * `publishLabels.dependenciesLabels`, so the warning can name what the item is. Omit it to use `publishLabels` as is.
+   */
+  resolvePublishDependenciesLabels?: (
+    item: CatalogItem,
+  ) => PublishDependenciesLabels;
+  /**
+   * Resolves the admin-approval callout text for the item being published, merged over `publishLabels`,
+   * so the message can name what the item is. Omit it to use `publishLabels` as is.
+   */
+  resolvePublishApprovalLabels?: (
+    item: CatalogItem,
+  ) => Pick<PublishPanelLabels, 'adminApprovalTitle' | 'adminApprovalMessage'>;
   /** Root-level destination folder nodes offered by the publish flow. */
   publishFolderItems?: PublishFolderNode[];
   /**
@@ -590,6 +620,10 @@ export interface DetailsPanelProps {
   onPublishExpandedPathsChange?: (paths: Set<string>) => void;
   /** Publish-folder path keys currently being fetched by the host. */
   publishLoadingPaths?: Set<string>;
+  /** Reason a folder is unavailable as a publish destination, or `undefined` when it is usable (`rootKey` is `''`); the panel's tree shows it on the disabled row. Without it no folder is disabled. */
+  getPublishDisabledReason?: (
+    destination: FolderDestination,
+  ) => string | undefined;
   /** Resolves whether the current user can publish to a given folder path. */
   hasPublishWriteAccess?: (folderPath: string[]) => boolean;
   /**

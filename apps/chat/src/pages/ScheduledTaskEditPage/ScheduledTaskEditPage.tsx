@@ -58,6 +58,7 @@ import { useScheduledTaskFormLabels } from '../../hooks/scheduled-tasks/useSched
 import { useScheduledTaskModelPreview } from '../../hooks/scheduled-tasks/useScheduledTaskModelPreview';
 import { useScheduledTaskSkillSupport } from '../../hooks/scheduled-tasks/useScheduledTaskSkillSupport';
 import { useScheduledTaskSubmit } from '../../hooks/scheduled-tasks/useScheduledTaskSubmit';
+import { useScheduledTaskTimezone } from '../../hooks/scheduled-tasks/useScheduledTaskTimezone';
 import { useScheduledTaskSkillDetails } from '../../hooks/scheduled-tasks/useUnavailableScheduledTaskSkills';
 import { useBuilderLeaveGuard } from '../../hooks/unsaved-changes/useBuilderLeaveGuard';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
@@ -219,6 +220,7 @@ const ScheduledTaskEditPage: FC = () => {
     };
   }, [isEnabled, scheduleId, taskFetchToken]);
 
+  const { timezone } = useScheduledTaskTimezone();
   const labels = useScheduledTaskFormLabels('edit');
 
   /* The page owns the unsaved-changes guard, so the form gets no
@@ -426,6 +428,7 @@ const ScheduledTaskEditPage: FC = () => {
       onRefineDescription={onRefineDescription}
       onRefineInstructions={onRefineInstructions}
       labels={labels}
+      timezone={timezone}
       values={values}
       errors={effectiveErrors}
       skillSelector={

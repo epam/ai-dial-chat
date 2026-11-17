@@ -1,6 +1,7 @@
 import type { FolderDestinationTreeStyles } from '@epam/ai-dial-react-file-manager';
 import type { CSSProperties } from 'react';
 import type { PublishAccessRulesStyles } from './publish-access-rules-styles';
+import type { PublishDependenciesStyles } from './publish-dependencies-list';
 
 /** Color overrides for the publish panel body. */
 export interface PublishPanelColors {
@@ -24,6 +25,8 @@ export interface PublishPanelStyles {
   folderTree?: FolderDestinationTreeStyles;
   /** Style overrides forwarded to the access-rules section. */
   accessRules?: PublishAccessRulesStyles;
+  /** Style overrides forwarded to the private-dependencies section. */
+  dependencies?: PublishDependenciesStyles;
   /** Additional CSS custom properties applied to the panel body root. */
   cssVars?: CSSProperties;
 }

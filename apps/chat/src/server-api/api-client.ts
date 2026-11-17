@@ -2,6 +2,7 @@ import {
   AppConfigApi,
   ApplicationsApi,
   AuthApi,
+  CelebrationsApi,
   ClientChannelApi,
   Configuration,
   ConversationsApi,
@@ -11,6 +12,7 @@ import {
   FilesApi,
   HealthApi,
   OfflineCredentialsApi,
+  OrgUnitsApi,
   ProjectsApi,
   PromptsApi,
   PublishApi,
@@ -106,7 +108,9 @@ export const projectsApi = new ProjectsApi(config);
 export const clientChannelApi = new ClientChannelApi(config);
 export const scheduledTasksApi = new ScheduledTasksApi(config);
 export const offlineCredentialsApi = new OfflineCredentialsApi(config);
+export const orgUnitsApi = new OrgUnitsApi(config);
 export const externalServicesApi = new ExternalServicesApi(config);
 export const healthApi = new HealthApi(config);
 export const transcriptionApi = new TranscriptionApi(config);
 export const customApiApi = new CustomApiApi(config);
+export const celebrationsApi = new CelebrationsApi(config);

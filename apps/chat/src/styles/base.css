@@ -7,6 +7,6 @@ html,
 body,
 #root {
   @apply size-full overflow-hidden bg-layer-base text-primary;
-  font-family: 'Inter', sans-serif;
-  --theme-font: 'Inter', sans-serif;
+  font-family: 'Inter Variable', 'Inter', sans-serif;
+  --theme-font: 'Inter Variable', 'Inter', sans-serif;
 }

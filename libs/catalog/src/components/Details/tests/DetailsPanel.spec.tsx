@@ -2,6 +2,8 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   PublicationRule,
   PublicationRuleFunction,
+  PublishDependency,
+  PublishDependencyType,
   PublishFolderNode,
   PublishHistoryEntry,
 } from '@epam/ai-dial-publish-panel';
@@ -325,8 +327,17 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       publishCredentials,
       onPublishCredentialsChange,
       allowReplace,
+      dependencies,
+      versionHistory,
+      getDisabledReason,
     }: {
+      getDisabledReason?: (destination: {
+        rootKey: string;
+        path: string[];
+      }) => string | undefined;
       allowReplace?: boolean;
+      dependencies?: PublishDependency[];
+      versionHistory?: { rows: { id: string; version: string }[] };
       onChangeFolderClick: () => void;
       onPendingFolderPathChange: (path: string[]) => void;
       onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
@@ -342,7 +353,24 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
     }) => (
       <div>
         <span>Publish panel</span>
+        <span>
+          disabledReason:
+          {getDisabledReason?.({ rootKey: '', path: ['Acme', 'Secret'] }) ??
+            'none'}
+        </span>
         <span>panelAllowReplace:{String(allowReplace)}</span>
+        <span>
+          dependencies:
+          {dependencies == null
+            ? 'none'
+            : dependencies.map((dependency) => dependency.name).join(',')}
+        </span>
+        <span>
+          versionHistory:
+          {versionHistory == null
+            ? 'none'
+            : versionHistory.rows.map((row) => row.version).join(',')}
+        </span>
         <span>author:{author}</span>
         <button onClick={() => onAuthorChange('DIAL Team')}>Set author</button>
         <span>ruleSourceOptions:{ruleSourceOptions.join(',')}</span>
@@ -466,6 +494,88 @@ describe('DetailsPanel — republishing an existing version', () => {
 
     expect(screen.getByText('panelAllowReplace:false')).toBeTruthy();
     expect(screen.getByText('footerAllowReplace:false')).toBeTruthy();
+  });
+});
+
+describe('DetailsPanel — private dependencies', () => {
+  const dependency = (name: string): PublishDependency => ({
+    id: `prompts/b/${name}`,
+    name,
+    type: PublishDependencyType.Prompt,
+    location: '',
+  });
+
+  it('passes the resolved dependencies to the publish panel when Publish opens', async () => {
+    const getPublishDependencies = vi
+      .fn()
+      .mockResolvedValue([dependency('Greeting')]);
+    renderPanel({ getPublishDependencies });
+
+    await openPublish();
+
+    expect(await screen.findByText('dependencies:Greeting')).toBeTruthy();
+    expect(getPublishDependencies).toHaveBeenCalledWith(item);
+  });
+
+  it('does not look dependencies up before Publish opens', () => {
+    const getPublishDependencies = vi.fn().mockResolvedValue([]);
+    renderPanel({ getPublishDependencies });
+
+    expect(getPublishDependencies).not.toHaveBeenCalled();
+  });
+
+  it('shows an empty list and no error when the lookup rejects', async () => {
+    const getPublishDependencies = vi
+      .fn()
+      .mockRejectedValue(new Error('offline'));
+    renderPanel({ getPublishDependencies });
+
+    await openPublish();
+
+    await waitFor(() => expect(getPublishDependencies).toHaveBeenCalledOnce());
+    expect(screen.getByText('dependencies:')).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('hands the panel no list when the host supplies no lookup', async () => {
+    renderPanel();
+
+    await openPublish();
+
+    expect(screen.getByText('dependencies:none')).toBeTruthy();
+  });
+
+  it("never shows one item's list for another item", async () => {
+    let resolveFirst: (list: PublishDependency[]) => void = () => {
+      /* replaced synchronously by the promise executor below */
+    };
+    const getPublishDependencies = vi.fn(
+      (requested: CatalogItem): Promise<PublishDependency[]> =>
+        requested.id === item.id
+          ? new Promise<PublishDependency[]>((resolve) => {
+              resolveFirst = resolve;
+            })
+          : Promise.resolve([dependency('Other')]),
+    );
+    const { rerender } = renderPanel({ getPublishDependencies });
+    await openPublish();
+
+    rerender(
+      <DetailsPanel
+        item={makeItem({ id: '2', name: 'Second' })}
+        isOpen
+        onClose={vi.fn()}
+        publishFolderItems={folderItems}
+        onPublish={vi.fn().mockResolvedValue(undefined)}
+        getPublishDependencies={getPublishDependencies}
+      />,
+    );
+    await openPublish();
+    expect(await screen.findByText('dependencies:Other')).toBeTruthy();
+    await act(async () => resolveFirst([dependency('Stale')]));
+
+    expect(screen.getByText('dependencies:Other')).toBeTruthy();
+    expect(screen.queryByText('dependencies:Stale')).toBeNull();
   });
 });
 
@@ -1532,6 +1642,25 @@ describe('DetailsPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.getByRole('tablist')).toBeTruthy();
+  });
+
+  it('forwards getPublishDisabledReason to the publish panel', async () => {
+    renderPanel({
+      getPublishDisabledReason: ({ path }) =>
+        path[1] === 'Secret' ? 'No access' : undefined,
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    expect(screen.getByText('disabledReason:No access')).toBeTruthy();
+  });
+
+  it('disables no publish folder without getPublishDisabledReason', async () => {
+    renderPanel();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    expect(screen.getByText('disabledReason:none')).toBeTruthy();
   });
 
   it('creates publish folders through the shared publish flow', async () => {
@@ -2907,5 +3036,51 @@ describe('DetailsPanel — empty tabs', () => {
     // AboutTab is mocked in this file as 'about content'.
     expect(screen.getByText('about content')).toBeTruthy();
     expect(screen.queryByText('No data')).toBeNull();
+  });
+});
+
+describe('DetailsPanel — versions history', () => {
+  const versionHistory = {
+    rows: [
+      { id: 'a', version: '1.0.0' },
+      { id: 'b', version: 'beta-2' },
+    ],
+  };
+
+  it('passes the host-resolved history to the publish panel unchanged', async () => {
+    renderPanel({ publishVersionHistory: versionHistory });
+
+    await openPublish();
+
+    expect(screen.getByText('versionHistory:1.0.0,beta-2')).toBeTruthy();
+  });
+
+  it('hands the publish panel no history when the host supplies none', async () => {
+    renderPanel();
+
+    await openPublish();
+
+    expect(screen.getByText('versionHistory:none')).toBeTruthy();
+  });
+
+  it('tells the host when the publish sub-view opens and closes', async () => {
+    const onPublishOpenChange = vi.fn();
+    renderPanel({ onPublishOpenChange });
+
+    expect(onPublishOpenChange).toHaveBeenLastCalledWith(false, item);
+
+    await openPublish();
+
+    expect(onPublishOpenChange).toHaveBeenLastCalledWith(true, item);
+  });
+
+  it('reports the sub-view closed when the panel unmounts', async () => {
+    const onPublishOpenChange = vi.fn();
+    const { unmount } = renderPanel({ onPublishOpenChange });
+    await openPublish();
+
+    unmount();
+
+    expect(onPublishOpenChange).toHaveBeenLastCalledWith(false, item);
   });
 });

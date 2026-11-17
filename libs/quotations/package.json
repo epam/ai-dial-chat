@@ -3,6 +3,10 @@
   "description": "Citation and annotation components, hooks, and utilities for AI DIAL conversations",
   "version": "0.0.1",
   "license": "Apache-2.0",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss"
+  ],
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -21,7 +25,7 @@
   "dependencies": {
     "@tabler/icons-react": "^3.50.0",
     "react-markdown": "^10.1.0",
-    "@epam/pdf-highlighter-kit": "^0.0.21"
+    "@epam/pdf-highlighter-kit": "^0.0.22"
   },
   "peerDependencies": {
     "react": "^19.2.8",

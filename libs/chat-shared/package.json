@@ -38,7 +38,7 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "@epam/ai-dial-ui-kit": "^0.16.0",
-    "@epam/ai-dial-react-file-manager": "^0.4.1"
+    "@epam/ai-dial-react-file-manager": "^0.4.3"
   },
   "dependencies": {
     "ag-grid-community": "^35.3.0",
@@ -68,6 +68,14 @@
     "targets": {
       "publish": {
         "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
+      },
+      "test": {
+        "inputs": [
+          "...",
+          {
+            "fileset": "{workspaceRoot}/apps/chat-api/src/common/validators/resource-version.*"
+          }
+        ]
       }
     }
   }

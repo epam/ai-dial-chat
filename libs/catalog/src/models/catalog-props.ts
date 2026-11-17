@@ -1,10 +1,14 @@
 import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type {
+  FolderDestination,
   PublicationRule,
+  PublishDependenciesLabels,
+  PublishDependency,
   PublishFolderNode,
   PublishFooterLabels,
   PublishHistoryEntry,
   PublishPanelLabels,
+  VersionHistorySectionProps,
 } from '@epam/ai-dial-publish-panel';
 import { DropdownItem, TabModel } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
@@ -216,6 +220,32 @@ export interface CatalogProps {
   isPublishPrimary?: (item: CatalogItem) => boolean;
   /** Resolves previously published versions for an item, most recent first. */
   getPublishHistory?: (item: CatalogItem) => Promise<PublishHistoryEntry[]>;
+  /**
+   * Resolves the resources an item refers to that are not in the public bucket, listed read-only in the
+   * publish panel. Called each time the publish sub-view opens; a rejection shows nothing. Omit it to leave the section out.
+   */
+  getPublishDependencies?: (item: CatalogItem) => Promise<PublishDependency[]>;
+  /**
+   * Resolves the private-dependencies labels for the item being published, merged over
+   * `publishLabels.dependenciesLabels`, so the warning can name what the item is. Omit it to use `publishLabels` as is.
+   */
+  resolvePublishDependenciesLabels?: (
+    item: CatalogItem,
+  ) => PublishDependenciesLabels;
+  /**
+   * Resolves the admin-approval callout text for the item being published, merged over `publishLabels`,
+   * so the message can name what the item is. Omit it to use `publishLabels` as is.
+   */
+  resolvePublishApprovalLabels?: (
+    item: CatalogItem,
+  ) => Pick<PublishPanelLabels, 'adminApprovalTitle' | 'adminApprovalMessage'>;
+  /**
+   * Versions history shown as the last section of the publish panel of the open item, already resolved by the host; see `DetailsPanel`'s `publishVersionHistory`.
+   * The host builds it for the item reported by `onPublishOpenChange`.
+   */
+  publishVersionHistory?: VersionHistorySectionProps;
+  /** Called with `true` and the open item when its publish sub-view opens, and with `false` when it closes; see `DetailsPanel`'s `onPublishOpenChange`. */
+  onPublishOpenChange?: (isOpen: boolean, item: CatalogItem) => void;
   /** Root-level destination folder nodes offered by the publish flow. */
   publishFolderItems?: PublishFolderNode[];
   /**
@@ -228,6 +258,10 @@ export interface CatalogProps {
   onPublishExpandedPathsChange?: (paths: Set<string>) => void;
   /** Publish-folder path keys currently being fetched by the host. */
   publishLoadingPaths?: Set<string>;
+  /** Reason a folder is unavailable as a publish destination, or `undefined` when it is usable (`rootKey` is `''`); the panel's tree shows it on the disabled row. Without it no folder is disabled. */
+  getPublishDisabledReason?: (
+    destination: FolderDestination,
+  ) => string | undefined;
   /** Resolves whether the current user can publish to a given folder path. */
   hasPublishWriteAccess?: (folderPath: string[]) => boolean;
   /**

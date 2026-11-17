@@ -33,13 +33,13 @@ import {
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useResolveCatalogIconUrl } from '../../hooks/catalog/useResolveCatalogIconUrl';
 import { useComposerMenus } from '../../hooks/conversation/useComposerMenus';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { projectsClient } from '../../hooks/projects/projects-client';
 import { useProjectConversationsPanelLabels } from '../../hooks/projects/useProjectConversationsPanelLabels';
 import type { ProjectChatProjectSummary } from '../../models/project-chat';
 import { ComposerLayout } from '../../types/conversation-composer';
-import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
 import NewConversationComposer, {
@@ -146,6 +146,7 @@ const ProjectConversationsSection: FC<Props> = ({
   } = useComposerMenus({
     isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
   });
+  const resolveCatalogIconUrl = useResolveCatalogIconUrl();
   const deploymentItems: DeploymentItem[] = useMemo(
     () =>
       deployments.map(
@@ -165,7 +166,7 @@ const ProjectConversationsSection: FC<Props> = ({
           inputAttachmentTypes,
         }),
       ),
-    [deployments, language],
+    [deployments, language, resolveCatalogIconUrl],
   );
 
   /* The chat page renders from this instead of waiting for the project details, which read the whole project. */

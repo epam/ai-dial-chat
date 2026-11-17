@@ -106,6 +106,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
       hideActionBar = false,
       actionRowLayout = ActionRowLayout.Stacked,
       isInlineActionRowAllowedBelowDesktop = false,
+      isToolChipRowAllowedOnPhone = false,
       renderFooterActions,
       isInputDisabled = false,
       isModelSelectorDisabled = false,
@@ -149,6 +150,8 @@ export const Input = forwardRef<InputHandle, InputProps>(
   ) => {
     const isMobile = useIsMobile();
     const isPhone = useIsPhone();
+    /* A phone shows one tools summary chip, and tools are switched only from `+` → Tools, unless the host keeps the chip row. */
+    const hasPhoneToolsSummary = isPhone && !isToolChipRowAllowedOnPhone;
     const [isPickerOpen, setIsPickerOpen] = useState(false);
     const handlePickerOpenChange = (open: boolean) => {
       setIsPickerOpen(open);
@@ -471,7 +474,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
         isVoiceRecordingSupported={isVoiceRecordingSupported}
         isVoiceActive={isVoiceActive}
         startRecording={startRecording}
-        isPhone={isPhone}
+        isPhone={hasPhoneToolsSummary}
         canRemoveTools={canRemoveTools}
         toolsMenuItems={toolsMenuItems}
         onToolToggle={onToolToggle}
@@ -565,7 +568,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
         </div>
       );
 
-    const chipsNode = isPhone ? phoneChipsNode : desktopChipsNode;
+    const chipsNode = hasPhoneToolsSummary ? phoneChipsNode : desktopChipsNode;
 
     return (
       <div

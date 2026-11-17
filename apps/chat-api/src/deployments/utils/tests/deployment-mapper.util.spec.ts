@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RawDeploymentDto } from '../../dto/raw-deployment.dto';
 import {
+  mapCatalogProperties,
   mapToDeploymentItem,
   mapToolsetAuthSettings,
   redactApplicationFunctionEnv,
@@ -8,6 +9,37 @@ import {
 
 const raw = (overrides: Partial<RawDeploymentDto>): RawDeploymentDto =>
   ({ id: 'gpt-4o', ...overrides }) as RawDeploymentDto;
+
+describe('mapCatalogProperties', () => {
+  it('keeps the four recognized properties and drops provider', () => {
+    const result = mapCatalogProperties({
+      provider: 'Provider',
+      vendor: 'Vendor',
+      license: 'License',
+      knowledgeCutoffDate: '2026-08-17',
+      parameters: '100B',
+    });
+
+    expect(result).toStrictEqual({
+      vendor: 'Vendor',
+      license: 'License',
+      knowledgeCutoffDate: '2026-08-17',
+      parameters: '100B',
+    });
+  });
+
+  it('returns undefined when provider is the only recognized-looking property', () => {
+    expect(
+      mapCatalogProperties({ provider: 'Provider', extra: 'x' }),
+    ).toBeUndefined();
+  });
+
+  it('returns undefined for missing or non-object catalog properties', () => {
+    expect(mapCatalogProperties(undefined)).toBeUndefined();
+    expect(mapCatalogProperties('Provider')).toBeUndefined();
+    expect(mapCatalogProperties(['Provider'])).toBeUndefined();
+  });
+});
 
 describe('mapToDeploymentItem isFeatured', () => {
   it('marks a deployment featured by its id', () => {
@@ -34,6 +66,40 @@ describe('mapToDeploymentItem isFeatured', () => {
     );
 
     expect(item?.isFeatured).toBe(false);
+  });
+});
+
+describe('mapToDeploymentItem isHidden', () => {
+  const hiddenTags = new Set(['HIDDEN']);
+
+  it('marks a deployment hidden when a description keyword is a hidden tag', () => {
+    const item = mapToDeploymentItem(
+      raw({ description_keywords: ['Text', 'HIDDEN'] }),
+      new Set(),
+      hiddenTags,
+    );
+
+    expect(item?.isHidden).toBe(true);
+  });
+
+  it('does not mark a deployment without a hidden tag', () => {
+    const item = mapToDeploymentItem(
+      raw({ description_keywords: ['Text'] }),
+      new Set(),
+      hiddenTags,
+    );
+
+    expect(item?.isHidden).toBe(false);
+  });
+
+  it('does not mark a deployment whose keywords are not an array', () => {
+    const item = mapToDeploymentItem(
+      raw({ description_keywords: 'HIDDEN' as unknown as string[] }),
+      new Set(),
+      hiddenTags,
+    );
+
+    expect(item?.isHidden).toBe(false);
   });
 });
 

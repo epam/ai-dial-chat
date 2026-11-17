@@ -1,12 +1,15 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { SideDrawer } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, RefObject, useEffect, useMemo, useState } from 'react';
+import type { FolderDestination } from '@epam/ai-dial-react-file-manager';
 import {
   PublicationRule,
   PublishFolderNode,
   PublishResourceSummary,
 } from '../../models/publish';
+import type { PublishDependency } from '../../models/publish-dependency';
 import type { PublishPanelStyles } from '../../models/publish-panel-styles';
+import type { VersionHistorySectionProps } from '../../models/version-history';
 import { PublishPanelView } from '../../types/publish-panel';
 import { derivePublishState } from '../../utils/publish-state';
 import { usePublishFolderView } from '../../utils/use-publish-folder-view';
@@ -43,6 +46,10 @@ export interface StandalonePublishPanelProps {
    * See `PublishPanel`'s `renderSummary` prop.
    */
   renderSummary?: () => ReactNode;
+  /** Resources the item refers to that are not in the public bucket; see `PublishPanel`'s `dependencies` prop. Text and colours ride `labels` and `styles`. */
+  dependencies?: PublishDependency[];
+  /** Versions history shown as the last section of the panel; see `PublishPanel`'s `versionHistory` prop. */
+  versionHistory?: VersionHistorySectionProps;
   /** Destination folders available for selection. */
   folderItems: PublishFolderNode[];
   /** Currently selected destination folder path. `undefined` means nothing selected; `[]` means the bucket root. */
@@ -51,6 +58,8 @@ export interface StandalonePublishPanelProps {
   onSelectedFolderPathChange: (path: string[] | undefined) => void;
   /** Called when the user confirms a new folder name. */
   onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
+  /** Reason a folder is unavailable as a destination, or `undefined` when usable; see `PublishPanel`'s `getDisabledReason`. */
+  getDisabledReason?: (destination: FolderDestination) => string | undefined;
   /** Externally-controlled set of expanded folder path keys. */
   expandedPaths?: Set<string>;
   /** Called when the set of expanded folders changes. */
@@ -135,10 +144,13 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   isOpen,
   resource,
   renderSummary,
+  dependencies,
+  versionHistory,
   folderItems,
   selectedFolderPath,
   onSelectedFolderPathChange,
   onCreateFolder,
+  getDisabledReason,
   expandedPaths,
   onExpandedPathsChange,
   loadingPaths,
@@ -309,6 +321,8 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
           <PublishPanel
             resource={resource}
             renderSummary={renderSummary}
+            dependencies={dependencies}
+            versionHistory={versionHistory}
             view={folderView.view}
             onChangeFolderClick={folderView.openFolderView}
             folderItems={folderItems}
@@ -316,6 +330,7 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
             pendingFolderPath={folderView.pendingFolderPath}
             onPendingFolderPathChange={folderView.setPendingFolderPath}
             onCreateFolder={onCreateFolder}
+            getDisabledReason={getDisabledReason}
             expandedPaths={expandedPaths}
             onExpandedPathsChange={onExpandedPathsChange}
             loadingPaths={loadingPaths}

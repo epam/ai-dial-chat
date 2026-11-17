@@ -12,6 +12,7 @@ import {
 } from '../../test-utils/pack-fixtures';
 import { CelebrationColorScheme } from '../../types/celebration-pack';
 import {
+  addCelebrationScenes,
   createCelebrationEventFromDescriptor,
   createCelebrationSceneFromDescriptor,
   replaceCelebrationScenes,
@@ -142,5 +143,75 @@ describe('createCelebrationEventFromDescriptor', () => {
         message: 'Thanks for being with us',
       }),
     );
+  });
+});
+
+describe('addCelebrationScenes', () => {
+  const couriers = createCelebrationSceneFromDescriptor(
+    packSceneFixture({ id: 'bullfinch-couriers', labelId: 'couriersToast' }),
+    loaders,
+    CONTEXT,
+  );
+  const snowman = createCelebrationSceneFromDescriptor(
+    packSceneFixture(),
+    loaders,
+    CONTEXT,
+  );
+
+  it('appends a new scene to the scenes and the click pool only', () => {
+    const added = addCelebrationScenes(newYearEvent, [couriers], {
+      couriersToast: 'Delivered by bullfinches',
+    });
+    expect(added.scenes.map(({ id }) => id)).toEqual([
+      ...newYearEvent.scenes.map(({ id }) => id),
+      'bullfinch-couriers',
+    ]);
+    expect(added.clickSceneIds).toEqual([
+      ...newYearEvent.clickSceneIds,
+      'bullfinch-couriers',
+    ]);
+    expect(added.secretTrigger).toBe(newYearEvent.secretTrigger);
+    expect(added.decorBehaviors).toBe(newYearEvent.decorBehaviors);
+    expect(added.titleLabelId).toBe(newYearEvent.titleLabelId);
+    expect(added.labels.couriersToast).toBe('Delivered by bullfinches');
+  });
+
+  it('never overrides a bundled label', () => {
+    const added = addCelebrationScenes(newYearEvent, [couriers], {
+      toastTitle: 'Pack title',
+    });
+    expect(added.labels.toastTitle).toBe(newYearEvent.labels.toastTitle);
+  });
+
+  it('returns the same event when every scene already exists', () => {
+    expect(addCelebrationScenes(newYearEvent, [snowman])).toBe(newYearEvent);
+  });
+
+  it('plays an added scene from a gift click', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    const onNotify = vi.fn();
+    const event = addCelebrationScenes(newYearEvent, [couriers], {
+      couriersToast: 'Delivered by bullfinches',
+    });
+    render(
+      <CelebrationProvider
+        events={{ 'new-year': async () => event }}
+        activeEventId="new-year"
+        onNotify={onNotify}
+      >
+        <CelebrationDecor />
+      </CelebrationProvider>,
+    );
+    await userEvent.click(
+      await screen.findByRole('button', {
+        name: newYearEvent.labels.giftLabel,
+      }),
+    );
+    await waitFor(() =>
+      expect(onNotify).toHaveBeenLastCalledWith(
+        expect.objectContaining({ message: 'Delivered by bullfinches' }),
+      ),
+    );
+    vi.restoreAllMocks();
   });
 });

@@ -1,5 +1,7 @@
 # Backend observability
 
+The standalone MCP Apps sandbox proxy has its own, smaller opt-in setup (HTTP server metrics only); see the [sandbox README](../apps/mcp-app-sandbox/README.md#observability).
+
 The backend exports OpenTelemetry metrics, traces, and logs. For environment variables and
 defaults, see the [backend README](../apps/chat-api/README.md#observability).
 
@@ -352,6 +354,28 @@ pod and read the conversation back from storage after completion, cancellation, 
 For details, see the [registry contract](../openspec/specs/generation-registry/spec.md),
 [persistence contract](../openspec/specs/backend-owned-generation-persistence/spec.md), and
 [runtime instruments](../apps/chat-api/src/telemetry/runtime-metrics.ts).
+
+### Managed configuration
+
+Emitted only when `MANAGED_CONFIG_MODE` is `shadow` or `active`
+([managed configuration](./managed-config-schema.md#runtime-reading-and-activation)).
+`instance` comes only from `MANAGED_CONFIG_INSTANCES` (at most 16); every other label is a fixed
+value or a registry key. No payload, value, role, credential or revision ID is a label.
+
+| Prometheus family                                              | Measurement                                         | Application labels                                                                                                              |
+| -------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `dial_chat_managed_config_refresh_total`                       | Runtime reads of one instance                       | `instance`, `outcome` = `accepted`, `verified`, `not_published`, `denied`, `unavailable`, `rejected_<reason>`, `late_discarded` |
+| `dial_chat_managed_config_refresh_duration_{bucket,sum,count}` | Duration of one runtime read, seconds               | `instance`, `outcome`                                                                                                           |
+| `dial_chat_managed_config_snapshot_age`                        | Seconds since the active snapshot was last verified | `instance`; absent until a snapshot is accepted                                                                                 |
+| `dial_chat_managed_config_state`                               | 1 for the current state, 0 for the others           | `instance`, `state` = `fresh`, `degraded`, `stale`, `unavailable`, `not_published`                                              |
+| `dial_chat_managed_config_shadow_comparison_total`             | Shadow-mode comparisons of one managed key          | `instance`, `key`, `result` = `equal`, `differs`, `env_shadowed`, `absent`                                                      |
+
+Rejection reasons are `identity_mismatch`, `malformed`, `payload_too_large`, `revision_changed`,
+`unsupported_schema`, `invalid_payload`, `semantic_violation` and `integrity_mismatch`. Alert on
+`state="degraded"` (the last read failed but the snapshot is still usable) before it becomes
+`stale`, and on any `denied`, which means the reader key lost its Core role. Each state change is
+also logged once with the instance, revision and reason. `/api/health` does not depend on managed
+state, so a Config Studio outage never fails liveness or readiness.
 
 ### Completion-response termination
 

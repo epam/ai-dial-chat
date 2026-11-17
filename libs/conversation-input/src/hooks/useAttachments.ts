@@ -13,6 +13,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { runAtRate } from '../utils/concurrency';
+import { withResolvedFileType } from '../utils/file-type';
 
 /** Parameters for the {@link useAttachments} hook. */
 interface UseAttachmentsParams {
@@ -113,7 +114,8 @@ export const useAttachments = ({
   }, []);
 
   const buildAttachments = useCallback((files: File[]): Attachment[] => {
-    return files.map((file) => {
+    return files.map((pickedFile) => {
+      const file = withResolvedFileType(pickedFile);
       const isImage = file.type.startsWith('image/');
       const isAudio = file.type.startsWith('audio/');
       const previewUrl = isImage ? URL.createObjectURL(file) : undefined;

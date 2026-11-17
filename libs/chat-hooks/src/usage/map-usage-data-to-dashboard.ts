@@ -1,9 +1,13 @@
 import type {
+  BudgetStatsDto,
   LimitStatsDto,
   UserLimitStatsResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 import { formatCost } from '@epam/ai-dial-chat-shared';
-import type { UsageLimitCardData } from '@epam/ai-dial-usage-dashboard';
+import type {
+  SpendingBudgetData,
+  UsageLimitCardData,
+} from '@epam/ai-dial-usage-dashboard';
 import { UsageLimitStatus } from '@epam/ai-dial-usage-dashboard';
 import type { ResetTimeDisplay } from './usage-reset-time';
 
@@ -177,4 +181,105 @@ export const mapUsageDataToDashboard = (
         ]
       : [],
   );
+};
+
+/**
+ * i18n key strings that the consuming app's translation bundle must define for
+ * `mapBudgetsToDashboard`, beyond the Today and This month keys of
+ * `USAGE_DATA_I18N_KEYS`. The values are the default key paths used by AI DIAL Chat.
+ */
+export const BUDGET_DATA_I18N_KEYS = {
+  /** Coverage line of a budget that covers every model (e.g. `'All models'`). */
+  allModels: 'usage.budgets.allModels',
+  /** Coverage line of a budget that lists its models. Receives `{ models: string }`. */
+  coveredModels: 'usage.budgets.coveredModels',
+} as const;
+
+/** Resolves a deployment id to its display name, or `undefined` when the host does not know it. */
+export type ResolveModelName = (deploymentId: string) => string | undefined;
+
+/* DIAL Core's `object` value for a budget that covers every deployment. */
+const ALL_MODELS_OBJECT = '*';
+
+const getBudgetTitle = (budget: BudgetStatsDto): string =>
+  budget.displayName?.trim() ? budget.displayName : budget.policy;
+
+const getBudgetCoverage = (
+  object: BudgetStatsDto['object'],
+  t: Translate,
+  resolveModelName: ResolveModelName,
+): string | undefined => {
+  if (object === ALL_MODELS_OBJECT) {
+    return t(BUDGET_DATA_I18N_KEYS.allModels);
+  }
+  if (!Array.isArray(object) || object.length === 0) {
+    return undefined;
+  }
+  const models = object.map((id) => resolveModelName(id) ?? id).join(', ');
+  return t(BUDGET_DATA_I18N_KEYS.coveredModels, { models });
+};
+
+/**
+ * Maps the budgets charged for the caller's model calls — the `budgets`
+ * entries whose `costObject` equals the response's `costObject` — into
+ * `SpendingBudgetsSection`'s `budgets` prop, in response order, each with a
+ * Today card and a This month card. Returns `[]` when the response carries no
+ * `costObject` or no `budgets`.
+ */
+export const mapBudgetsToDashboard = (
+  usage: Pick<UserLimitStatsResponseDto, 'budgets' | 'costObject'> | undefined,
+  t: Translate,
+  formatResetTime: FormatResetTime,
+  resolveModelName: ResolveModelName,
+): SpendingBudgetData[] => {
+  const costObject = usage?.costObject;
+  if (!costObject || !Array.isArray(usage?.budgets)) {
+    return [];
+  }
+
+  /* A cost object can list the same policy twice; the occurrence keeps each key unique and stable. */
+  const occurrences = new Map<string, number>();
+
+  return usage.budgets
+    .filter((budget) => budget.costObject === costObject)
+    .map((budget) => {
+      const occurrence = occurrences.get(budget.policy) ?? 0;
+      occurrences.set(budget.policy, occurrence + 1);
+      const coverageLabel = getBudgetCoverage(
+        budget.object,
+        t,
+        resolveModelName,
+      );
+      const periods = [
+        {
+          stats: budget.day,
+          titleKey: USAGE_DATA_I18N_KEYS.todayTitle,
+          periodDescriptionKey: USAGE_DATA_I18N_KEYS.todayPeriodDescription,
+        },
+        {
+          stats: budget.month,
+          titleKey: USAGE_DATA_I18N_KEYS.thisMonthTitle,
+          periodDescriptionKey: USAGE_DATA_I18N_KEYS.thisMonthPeriodDescription,
+        },
+      ];
+
+      return {
+        id: `${costObject}\u0000${budget.policy}\u0000${occurrence}`,
+        title: getBudgetTitle(budget),
+        ...(coverageLabel == null ? {} : { coverageLabel }),
+        cards: periods.flatMap(({ stats, titleKey, periodDescriptionKey }) =>
+          isUsableStats(stats)
+            ? [
+                mapStatsToCardData(
+                  stats,
+                  t(titleKey),
+                  t(periodDescriptionKey),
+                  t,
+                  formatResetTime(stats.resetsAt),
+                ),
+              ]
+            : [],
+        ),
+      };
+    });
 };

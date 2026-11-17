@@ -1,0 +1,15 @@
+.heading {
+  color: var(--uld-budgets-heading, var(--text-primary, #161b2d));
+}
+
+.description {
+  color: var(--uld-budgets-description, var(--text-secondary, #57647a));
+}
+
+.title {
+  color: var(--uld-budgets-title, var(--text-primary, #161b2d));
+}
+
+.coverage {
+  color: var(--uld-budgets-coverage, var(--text-secondary, #57647a));
+}

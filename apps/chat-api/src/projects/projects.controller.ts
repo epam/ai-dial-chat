@@ -1,5 +1,3 @@
-import { Readable } from 'node:stream';
-import { pipeline } from 'node:stream/promises';
 import {
   Body,
   Controller,
@@ -41,6 +39,7 @@ import {
   waitForDrain,
   writeSseChunk,
 } from '../common/utils/sse';
+import { pipeWebBody } from '../common/utils/stream';
 import { SSE_KEEPALIVE_INTERVAL_MS } from '../conversations/streaming/conversation-completions.responder';
 import {
   SseSubscriptionKind,
@@ -588,14 +587,14 @@ export class ProjectsController {
     operationId: 'downloadProjectArtifact',
     summary: 'Download one output of a project',
     description:
-      'Streams one file directly under the project `artifacts/` folder as an attachment with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.',
+      'Streams one file under the project `artifacts/` folder, a direct child or a nested path, as an attachment named after its last path segment, with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.',
   })
   @ApiParam(PROJECT_ID_PARAM)
   @ApiParam({
     name: 'fileName',
     description:
-      'Name of a file directly under the project `artifacts/` folder.',
-    example: 'report.pdf',
+      'Path relative to the project `artifacts/` folder, URL-encoded into one path segment.',
+    example: 'run-1%2Fdata.csv',
   })
   @ApiDialCoreErrors()
   @ApiResponse({
@@ -668,11 +667,7 @@ export class ProjectsController {
       if (!res.writableEnded) abortOnDisconnect();
     });
 
-    await pipeline(Readable.fromWeb(stream as ReadableStream), res).catch(
-      () => {
-        res.destroy();
-      },
-    );
+    await pipeWebBody(stream, res);
   }
 
   @Post()

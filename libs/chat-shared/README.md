@@ -45,7 +45,7 @@ Peers:
 - `react` ^19.2.8
 - `react-dom` ^19.2.8 (`NotificationStack` portals into `document.body`)
 - `@epam/ai-dial-ui-kit` ^0.16.0
-- `@epam/ai-dial-react-file-manager` ^0.4.1
+- `@epam/ai-dial-react-file-manager` ^0.4.3
 
 Installed for you as dependencies: `ag-grid-community`, `@tabler/icons-react`, `react-markdown`,
 `react-syntax-highlighter`, `remark-breaks`, `remark-gfm`, `remark-math`, `rehype-katex`,
@@ -701,6 +701,43 @@ import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
 />;
 ```
 
+### Org-unit rights
+
+`OrgUnit` (`id`, `name`, `displayName`, `path`, `folder`, `permissions`) is a
+DIAL Core org unit; `permissions` maps a Core namespace to the caller's actions
+in that unit (`{ applications: ['read', 'write'] }`, `{}` when the unit is
+reached only through its parent). `OrgUnitNamespace` and `OrgUnitAction` are the
+string enums for Core's namespaces and for `read` / `write`; `OrgUnitAccess`
+(`hasAdminAccess`, `units`) is the resolved data every check takes. The helpers
+are pure and know no endpoint, flag or context.
+
+A unit's Core `folder` is url-encoded and rooted at `public/`;
+`normalizeOrgUnitFolder` decodes it and drops that root. The path passed to the
+other helpers is the decoded, public-relative path the file manager and the
+publish tree show (`Acme/US Risk`), so it is not decoded again. `findOwningOrgUnit`
+returns the unit whose folder is the longest prefix of the path at a segment
+boundary (a unit owns its own folder; `Risk/` never owns `Risk2/`; the public root
+and a path under no listed unit have no owner). `canWriteAt`, `canReadAt` and
+`canAccessAt` are `true` for a DIAL admin; otherwise only the owner's
+`permissions[namespace]` decides, so a path under no unit is `false`, role names
+are never consulted and `write` does not imply `read`. `canSaveToFolderAt` is the Save panel's rule: `true` for an admin and outside every unit (plain public folders keep today's flow), otherwise `canWriteAt` on the owner; use the strict `canWriteAt` where an owner must be proven. `canWriteIntoOrgUnitAt` is the strict direct-write rule: the path must lie inside a listed unit and that unit (or admin access) must grant `write`, so a DIAL admin outside every unit is not a direct write. `canRequestPublicationAt`
+is `true` for an admin and outside units (Core's folder rules decide there) and
+needs `read` on the owner inside a unit. A unit listed without its parents still
+owns its own folders; missing parents are not guessed.
+
+```ts
+import {
+  canWriteAt,
+  findOwningOrgUnit,
+  OrgUnitNamespace,
+  type OrgUnitAccess,
+} from '@epam/ai-dial-chat-shared';
+
+const access: OrgUnitAccess = { hasAdminAccess: false, units };
+findOwningOrgUnit(access.units, 'Acme/US Risk/Reports'); // the `Acme/US Risk/` unit
+canWriteAt(access, 'Acme/US Risk/Reports', OrgUnitNamespace.Applications);
+```
+
 ### NewVersionAlert
 
 Kit `StateScreen` preset shown instead of the app once a newer build has been
@@ -1342,6 +1379,8 @@ import {
   ENTITY_NAME_MAX_LENGTH,
   ENTITY_DESCRIPTION_MAX_LENGTH,
   ENTITY_INSTRUCTIONS_MAX_LENGTH,
+  RESOURCE_VERSION_PATTERN,
+  STORED_RESOURCE_VERSION_PATTERN,
   exceedsMaxLength,
   hasControlCharacters,
   sanitizeConversationName,
@@ -1356,6 +1395,12 @@ import {
 // applications, scheduled tasks): name 256, description 2000, instructions 50000.
 const isNameTooLong = exceedsMaxLength(name.trim(), ENTITY_NAME_MAX_LENGTH);
 const isNameMultiline = hasControlCharacters(name); // line breaks, tabs, NUL, …
+
+// Version rule shared with the chat API: 1-64 of letters, digits, `_`, `.`, `+`, `-`; no trailing dot, no `__`, no leading `_` (`__` separates the name from the version in the stored path).
+const isVersionValid = RESOURCE_VERSION_PATTERN.test(version);
+
+// Rule for a version that already exists or does not create a path (an update, a publish): the same characters with no length limit and without the three exclusions, so a version stored under the earlier rules still saves.
+const isStoredVersionValid = STORED_RESOURCE_VERSION_PATTERN.test(version);
 
 // Merge conditional class names — the only supported way to compose classes.
 // Conflicting utilities collapse to the last one, including the workspace

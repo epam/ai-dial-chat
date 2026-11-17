@@ -1,7 +1,12 @@
 import {
+  AnnouncementSeverity as AnnouncementSeverityDto,
   CatalogCreationType,
   type ClientConfigResponseDto,
 } from '@epam/ai-dial-chat-api-client';
+import {
+  AnnouncementSeverity,
+  SpendingLimitsMode,
+} from '@epam/ai-dial-chat-hooks';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createElement, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -338,6 +343,59 @@ describe('AppConfigContext', () => {
     expect(result.current.config.announcements).toHaveLength(1);
     expect(result.current.config.announcements[0].title).toBe(
       'Upgraded to DIAL 1.43',
+    );
+  });
+
+  it('maps each announcement severity onto the lib enum and keeps the other fields', async () => {
+    const link = { label: 'Details', href: 'https://dialx.ai' };
+    mockGetClientConfig.mockResolvedValue({
+      appId: 'chat-ui',
+      features: {},
+      config: {
+        announcements: [
+          {
+            title: 'Upcoming maintenance',
+            description: 'Saturday 10:00 UTC',
+            link,
+            severity: AnnouncementSeverityDto.Warning,
+          },
+        ],
+      },
+      metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
+    } as unknown as ClientConfigResponseDto);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+
+    expect(result.current.config.announcements).toEqual([
+      {
+        title: 'Upcoming maintenance',
+        description: 'Saturday 10:00 UTC',
+        link,
+        severity: AnnouncementSeverity.Warning,
+      },
+    ]);
+  });
+
+  it('reports info for an announcement the backend sends without a severity', async () => {
+    mockGetClientConfig.mockResolvedValue({
+      appId: 'chat-ui',
+      features: {},
+      config: {
+        announcements: [{ title: 'News', description: null, link: null }],
+      },
+      metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
+    } as unknown as ClientConfigResponseDto);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+
+    expect(result.current.config.announcements[0].severity).toBe(
+      AnnouncementSeverity.Info,
     );
   });
 
@@ -830,6 +888,48 @@ describe('AppConfigContext', () => {
     });
   });
 
+  describe('spendingLimitsMode', () => {
+    const loadConfigWithMode = async (spendingLimitsMode: unknown) => {
+      mockGetClientConfig.mockResolvedValue({
+        ...READY_RESPONSE,
+        config: {
+          ...(READY_RESPONSE as unknown as { config: object }).config,
+          spendingLimitsMode,
+        },
+      } as unknown as ClientConfigResponseDto);
+      const view = renderHook(() => useAppConfig(), { wrapper });
+      await waitFor(() =>
+        expect(view.result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      return view.result;
+    };
+
+    it('defaults to off before the config loads', () => {
+      mockGetClientConfig.mockReturnValue(new Promise(() => undefined));
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      expect(result.current.config.spendingLimitsMode).toBe(
+        SpendingLimitsMode.Off,
+      );
+    });
+
+    it('surfaces an operator-configured mode', async () => {
+      const configResult = await loadConfigWithMode('enforce');
+      expect(configResult.current.config.spendingLimitsMode).toBe(
+        SpendingLimitsMode.Enforce,
+      );
+    });
+
+    it.each([undefined, 'ENFORCE', 'unknown'])(
+      'falls back to off for %j',
+      async (value) => {
+        const configResult = await loadConfigWithMode(value);
+        expect(configResult.current.config.spendingLimitsMode).toBe(
+          SpendingLimitsMode.Off,
+        );
+      },
+    );
+  });
+
   describe('catalog creation permissions', () => {
     const ALL_TYPES = [
       CatalogCreationType.CustomApp,
@@ -1133,5 +1233,219 @@ describe('AppConfigContext', () => {
         UserConfigStatus.Loading,
       );
     });
+  });
+});
+
+describe('AppConfigContext background refresh', () => {
+  const START = Date.UTC(2026, 10, 20, 10);
+  let now = START;
+
+  const PERMISSIONS = {
+    allowedTypes: [CatalogCreationType.Prompt],
+    restrictedSchemaIds: [],
+  };
+
+  /* A managed deployment's response: it carries a refresh hint. */
+  const managedResponse = (
+    welcome: string,
+    features: Record<string, boolean> = { usageLimitsControl: true },
+  ) =>
+    ({
+      appId: 'chat-ui',
+      features,
+      config: {
+        welcomeScreenDescription: welcome,
+        fileManagerTabs: ['my_files', 'shared'],
+        catalogCreationPermissions: PERMISSIONS,
+      },
+      metadata: {
+        resolvedAt: new Date(now).toISOString(),
+        cacheTtlSeconds: 60,
+        nextRefreshAt: new Date(now + 120_000).toISOString(),
+      },
+    }) as unknown as ClientConfigResponseDto;
+
+  const deferred = () => {
+    let resolve!: (value: ClientConfigResponseDto) => void;
+    const promise = new Promise<ClientConfigResponseDto>((settle) => {
+      resolve = settle;
+    });
+    return { promise, resolve };
+  };
+
+  /* Moves the clock past the 15-second coalescing gap and focuses the tab. */
+  const focusLater = () => {
+    now += 20_000;
+    act(() => {
+      window.dispatchEvent(new Event('focus'));
+    });
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    now = START;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+    mockSession.current = {
+      user: { sub: 'user-a', providerId: 'keycloak', claims: {} },
+      status: AuthStatus.Authenticated,
+    };
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const renderReady = async () => {
+    const statuses: UserConfigStatus[] = [];
+    const catalogStatuses: UserConfigStatus[] = [];
+    const view = renderHook(
+      () => {
+        const config = useAppConfig();
+        statuses.push(config.status);
+        catalogStatuses.push(config.catalogCreationStatus);
+        return { config, usageLimits: useFeatureFlag('usageLimitsControl') };
+      },
+      { wrapper },
+    );
+    await waitFor(() =>
+      expect(view.result.current.config.status).toBe(UserConfigStatus.Ready),
+    );
+    statuses.length = 0;
+    catalogStatuses.length = 0;
+    return { ...view, statuses, catalogStatuses };
+  };
+
+  it('does not refresh on focus when the response has no hint', async () => {
+    mockGetClientConfig.mockResolvedValue(READY_RESPONSE);
+    await renderReady();
+    focusLater();
+    expect(mockGetClientConfig).toHaveBeenCalledTimes(1);
+  });
+
+  it('refreshes in the background without leaving the ready state', async () => {
+    mockGetClientConfig.mockResolvedValueOnce(managedResponse('First'));
+    const { result, statuses, catalogStatuses } = await renderReady();
+    mockGetClientConfig.mockResolvedValueOnce(managedResponse('Second'));
+
+    focusLater();
+
+    await waitFor(() =>
+      expect(result.current.config.config.welcomeScreenDescription).toBe(
+        'Second',
+      ),
+    );
+    expect(mockGetClientConfig).toHaveBeenCalledTimes(2);
+    expect(statuses).not.toContain(UserConfigStatus.Loading);
+    expect(catalogStatuses).not.toContain(UserConfigStatus.Loading);
+    expect(result.current.config.catalogCreationStatus).toBe(
+      UserConfigStatus.Ready,
+    );
+  });
+
+  it('keeps the last values and features after a failed refresh', async () => {
+    mockGetClientConfig.mockResolvedValueOnce(managedResponse('First'));
+    const { result } = await renderReady();
+    mockGetClientConfig.mockRejectedValueOnce(new Error('network error'));
+
+    focusLater();
+
+    await waitFor(() => expect(mockGetClientConfig).toHaveBeenCalledTimes(2));
+    await act(async () => undefined);
+    expect(result.current.config.status).toBe(UserConfigStatus.Ready);
+    expect(result.current.usageLimits).toBe(true);
+    expect(result.current.config.config.welcomeScreenDescription).toBe('First');
+  });
+
+  it('keeps only the latest of out-of-order results', async () => {
+    mockGetClientConfig.mockResolvedValueOnce(managedResponse('Initial'));
+    const { result } = await renderReady();
+    const first = deferred();
+    const second = deferred();
+    mockGetClientConfig.mockReturnValueOnce(first.promise);
+    mockGetClientConfig.mockReturnValueOnce(second.promise);
+
+    focusLater();
+    focusLater();
+    await act(async () => {
+      second.resolve(managedResponse('Second'));
+    });
+    await act(async () => {
+      first.resolve(managedResponse('First'));
+    });
+
+    expect(result.current.config.config.welcomeScreenDescription).toBe(
+      'Second',
+    );
+    const firstSignal = mockGetClientConfig.mock.calls[1][0];
+    expect(firstSignal?.aborted).toBe(true);
+  });
+
+  it('discards a refresh started for the previous identity', async () => {
+    mockGetClientConfig.mockResolvedValueOnce(managedResponse('For A'));
+    const { result, rerender } = await renderReady();
+    const forA = deferred();
+    mockGetClientConfig.mockReturnValueOnce(forA.promise);
+    focusLater();
+    const signalA = mockGetClientConfig.mock.calls[1][0];
+
+    mockGetClientConfig.mockResolvedValueOnce(managedResponse('For B'));
+    mockSession.current = {
+      user: { sub: 'user-b', providerId: 'keycloak', claims: {} },
+      status: AuthStatus.Authenticated,
+    };
+    rerender();
+    await waitFor(() =>
+      expect(result.current.config.config.welcomeScreenDescription).toBe(
+        'For B',
+      ),
+    );
+    expect(signalA?.aborted).toBe(true);
+
+    await act(async () => {
+      forA.resolve(managedResponse('Late for A'));
+    });
+    expect(result.current.config.config.welcomeScreenDescription).toBe('For B');
+  });
+
+  it('does not let a background refresh supersede a slow identity reload', async () => {
+    mockGetClientConfig.mockResolvedValueOnce(managedResponse('For A'));
+    const { result, rerender } = await renderReady();
+    const forB = deferred();
+    mockGetClientConfig.mockReturnValueOnce(forB.promise);
+    mockSession.current = {
+      user: { sub: 'user-b', providerId: 'keycloak', claims: {} },
+      status: AuthStatus.Authenticated,
+    };
+    rerender();
+    await waitFor(() => expect(mockGetClientConfig).toHaveBeenCalledTimes(2));
+    const signalB = mockGetClientConfig.mock.calls[1][0];
+
+    focusLater();
+    focusLater();
+
+    expect(mockGetClientConfig).toHaveBeenCalledTimes(2);
+    expect(signalB?.aborted).toBe(false);
+    await act(async () => {
+      forB.resolve(managedResponse('For B'));
+    });
+    expect(result.current.config.config.welcomeScreenDescription).toBe('For B');
+  });
+
+  it('keeps references of values a refresh returned unchanged', async () => {
+    mockGetClientConfig.mockResolvedValueOnce(managedResponse('Same'));
+    const { result } = await renderReady();
+    const tabs = result.current.config.config.fileManagerTabs;
+    const features = result.current.config.features;
+    mockGetClientConfig.mockResolvedValueOnce(managedResponse('Changed'));
+
+    focusLater();
+
+    await waitFor(() =>
+      expect(result.current.config.config.welcomeScreenDescription).toBe(
+        'Changed',
+      ),
+    );
+    expect(result.current.config.config.fileManagerTabs).toBe(tabs);
+    expect(result.current.config.features).toBe(features);
   });
 });

@@ -1,6 +1,7 @@
-import { SEMVER_VERSION_PATTERN } from '@epam/ai-dial-builder-form';
 import type { ResourceFoldersResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
+  getOrgUnitNamespace,
+  OrgUnitFolderGuardPurpose,
   ResourceNameConflictKind,
   ResourceSaveVersionError,
   useResourceSavePanel,
@@ -10,7 +11,10 @@ import {
   type ResourceSaveResult,
   type UseResourceSavePanelLabels,
 } from '@epam/ai-dial-chat-hooks';
-import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import {
+  type CatalogEntityType,
+  RESOURCE_VERSION_PATTERN,
+} from '@epam/ai-dial-chat-shared';
 import { StandaloneSaveToFolderPanel } from '@epam/ai-dial-publish-panel';
 import type { FC, RefObject } from 'react';
 import { memo, useCallback, useMemo } from 'react';
@@ -24,13 +28,16 @@ import {
   ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
+import { useOrgUnitFolderGuards } from '../../hooks/publish/useOrgUnitFolderGuards';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
+import { useResourceVersionHistory } from '../../hooks/publish/useResourceVersionHistory';
 import {
   type SaveNotifiableEntity,
   useResourceSaveNotification,
 } from '../../hooks/resource-save/useResourceSaveNotification';
 import { getPublishRules } from '../../server-api/publish-rules.api';
 import { publishCatalogEntity } from '../../server-api/publish.api';
+import { NotifiableEntity } from '../../types/entity-notification';
 import {
   getAccessRulesLabels,
   getPublishPanelCommonLabels,
@@ -110,6 +117,13 @@ const ResourceSavePanelContainer: FC<Props> = ({
     config: { publicationFilterSources },
   } = useAppConfig();
   const organization = usePublishFolders();
+  const { canSaveDirectlyTo, getDisabledReason } = useOrgUnitFolderGuards({
+    purpose: OrgUnitFolderGuardPurpose.Save,
+    namespace: getOrgUnitNamespace(editorAdapter.publishEntityType),
+    isActive: isOpen,
+    isQuickApp: notifiableEntity === NotifiableEntity.QuickApp,
+    shouldRefreshOnOpen: true,
+  });
   const notifySaved = useResourceSaveNotification({
     resourceName,
     notifiableEntity,
@@ -151,10 +165,12 @@ const ResourceSavePanelContainer: FC<Props> = ({
     resourceId,
     currentFolderPath,
     currentVersion,
-    versionPattern: SEMVER_VERSION_PATTERN,
+    versionPattern: RESOURCE_VERSION_PATTERN,
     listPersonalFolders,
     organizationFolders: canPublish ? organization : undefined,
     publishClient,
+    canSaveDirectlyTo,
+    getDisabledReason,
     ruleSourceOptions: publicationFilterSources,
     labels: flowLabels,
     onSaved: handleSaved,
@@ -225,9 +241,16 @@ const ResourceSavePanelContainer: FC<Props> = ({
     [t, typeLabel],
   );
 
+  const versionHistory = useResourceVersionHistory(
+    resourceId,
+    resourceType,
+    isOpen && currentVersion != null,
+  );
+
   return (
     <StandaloneSaveToFolderPanel
       {...panelProps}
+      versionHistory={versionHistory}
       isOpen={isOpen}
       onClose={onClose}
       returnFocusRef={returnFocusRef}

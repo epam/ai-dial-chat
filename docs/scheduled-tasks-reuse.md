@@ -18,6 +18,7 @@ base/theme styles once at the host root.
 | F11 deep CSS imports                                 | `@epam/ai-dial-scheduled-tasks/styles.css`                                                                                                                                                                                                                               |
 | F12 detail model label shows the raw deployment id   | `ScheduledTaskDetailView.modelLabel` — a display name the host resolves from its deployment records, falling back to the raw stored id                                                                                                                                   |
 | F13 Custom every-N-weeks interval (`everyWeeks`)     | Custom now picks several weekdays: `ScheduledTaskCreateFormValues.daysOfWeek` and `ScheduledTaskCreateFormLabels.daysOfWeekLabel`; `everyWeeks`, `everyLabel`, `everyWeekOptions`, `ScheduledTaskEveryWeekOption` and the hooks' `everyNWeeks`/`EveryNWeeks` are removed |
+| F14 browser-offset UTC conversion of schedules       | `ScheduledTaskCreateFormValues.timezone` plus the `timezone` prop of `ScheduledTaskCreateForm`; the mapping in `@epam/ai-dial-chat-hooks/scheduled-tasks` sends wall time and the zone, and `getTimezoneOptions` builds the picker list                                  |
 
 The fixture at `tools/scheduled-tasks-consumer-fixture` proves this boundary
 against packed artifacts, rather than workspace aliases. It imports scheduler
@@ -29,7 +30,33 @@ UI Kit base and
 theme styles remain singleton host imports, while the scheduler stylesheet
 includes its builder-form structural dependency.
 
-The public APIs are additive, except for the Custom every-N-weeks removal (F13), which only shipped in `1.3.0-dev.*` prereleases. Omitted icons retain defaults; `null` suppresses
+## Time zones
+
+Every schedule carries an IANA `timezone`, and all its wall-clock values — cron
+`hour`/`minute`/`day_of_week`/`day`, a one-time `date`, and the activity-window
+`startDate`/`endDate` — are read in it by DIAL Scheduler, so a task keeps its
+local time across daylight-saving changes. A host therefore:
+
+- sends `values.timezone` on every create **and** update (the scheduler resets
+  an omitted zone to `UTC`), through `mapFormValuesToCreateBody` /
+  `mapFormValuesToUpdateBody`, which no longer shift anything by the browser's
+  offset;
+- passes `timezone={{ options, browserTimezoneId, labels }}` to
+  `ScheduledTaskCreateForm` to show the picker, with `options` from
+  `getTimezoneOptions` (`@epam/ai-dial-chat-hooks/scheduled-tasks`) and every
+  string translated at its own edge;
+- starts new tasks in the viewer's zone (`getBrowserTimezone`, resolved to a
+  listed row with `findTimezoneOption`);
+- opens tasks saved before schedules had a zone as `UTC`, showing their stored
+  fields unchanged — it must not reinterpret them in the browser's zone;
+- passes `labels.withTimezone` to `toScheduledTaskItems` / `buildScheduleLabel`
+  so a task in another zone shows it next to its schedule.
+
+The kit `Calendar`'s `showTimezone` hint always shows the viewer's zone, so the
+form does not use it; the selected zone is shown beside the "Change timezone"
+link instead.
+
+The public APIs are additive, except for the Custom every-N-weeks removal (F13), which only shipped in `1.3.0-dev.*` prereleases. The form value `timezone` is required, and the schedule mapping and `getNextCronOccurrence(cron, timezone, from?)` now read stored fields as wall time in the task's zone (F14). Omitted icons retain defaults; `null` suppresses
 only the decorative node. Per-instance `styles` and layout values override
 their component CSS variables and theme-token fallbacks without leaking to a
 second instance. Hooks expose no feature-key strings: the host keeps feature

@@ -36,6 +36,7 @@ const values = {
   prompt: '',
   repeat: ScheduledTaskRepeat.Daily,
   time: '09:00',
+  timezone: 'UTC',
 };
 const descriptor = describeScheduledTaskTrigger({
   cron: { fields: { hour: '9', minute: '0' } },
@@ -205,6 +206,7 @@ const Fixture = () => {
             skillUrls,
             repeat: ScheduledTaskRepeat.Daily,
             time: '09:00',
+            timezone: 'UTC',
           }}
           styles={{ layout: { detailsWidth: '280px', columnGap: '24px' } }}
           errors={

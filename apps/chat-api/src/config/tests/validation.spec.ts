@@ -374,6 +374,22 @@ describe('validate', () => {
     expect(config.DEFAULT_DEPLOYMENT_PINNED).toBe(expected);
   });
 
+  it('defaults ORG_UNITS_ENABLED to false when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.ORG_UNITS_ENABLED).toBe(false);
+  });
+
+  it.each([
+    ['true', true],
+    ['false', false],
+  ])('parses ORG_UNITS_ENABLED=%s as %s', (rawValue, expected) => {
+    const config = validate({
+      ...baseConfig,
+      ORG_UNITS_ENABLED: rawValue,
+    });
+    expect(config.ORG_UNITS_ENABLED).toBe(expected);
+  });
+
   it('defaults USAGE_LIMITS_CONTROL_ENABLED to false when unset', () => {
     const config = validate({ ...baseConfig });
     expect(config.USAGE_LIMITS_CONTROL_ENABLED).toBe(false);
@@ -415,6 +431,31 @@ describe('validate', () => {
     },
   );
 
+  it('defaults SPENDING_LIMITS_MODE to off when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.SPENDING_LIMITS_MODE).toBe('off');
+  });
+
+  it.each(['off', 'shadow', 'enforce'])(
+    'accepts SPENDING_LIMITS_MODE=%s',
+    (rawValue) => {
+      const config = validate({
+        ...baseConfig,
+        SPENDING_LIMITS_MODE: rawValue,
+      });
+      expect(config.SPENDING_LIMITS_MODE).toBe(rawValue);
+    },
+  );
+
+  it.each(['ENFORCE ', 'on', 'true'])(
+    'rejects SPENDING_LIMITS_MODE=%s at startup',
+    (rawValue) => {
+      expect(() =>
+        validate({ ...baseConfig, SPENDING_LIMITS_MODE: rawValue }),
+      ).toThrow(/SPENDING_LIMITS_MODE/);
+    },
+  );
+
   it('defaults ALLOW_VISUALIZER_SEND_MESSAGES to false when unset', () => {
     const config = validate({ ...baseConfig });
     expect(config.ALLOW_VISUALIZER_SEND_MESSAGES).toBe(false);
@@ -439,6 +480,32 @@ describe('validate', () => {
       ALLOW_VISUALIZER_SEND_MESSAGES: rawValue,
     });
     expect(config.ALLOW_VISUALIZER_SEND_MESSAGES).toBe(expected);
+  });
+
+  it('defaults CSP_ALLOW_STYLE_ATTRIBUTES to false when unset', () => {
+    expect(validate({ ...baseConfig }).CSP_ALLOW_STYLE_ATTRIBUTES).toBe(false);
+  });
+
+  it.each([
+    ['true', true],
+    ['TRUE', true],
+    ['1', true],
+    ['yes', true],
+    [' true ', true],
+    ['false', false],
+    ['false ', false],
+    ['false\r', false],
+    ['0', false],
+    ['no', false],
+    ['off', false],
+    ['disabled', false],
+    ['', false],
+  ])('parses CSP_ALLOW_STYLE_ATTRIBUTES=%j as %s', (rawValue, expected) => {
+    const config = validate({
+      ...baseConfig,
+      CSP_ALLOW_STYLE_ATTRIBUTES: rawValue,
+    });
+    expect(config.CSP_ALLOW_STYLE_ATTRIBUTES).toBe(expected);
   });
 
   it('defaults OVERLAY_SANDBOX_ENABLED to false when unset', () => {

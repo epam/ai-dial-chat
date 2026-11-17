@@ -1,5 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import type { FC } from 'react';
+import { useId, type FC } from 'react';
 import { BUILDER_FORM_CLASS } from '../../constants/public-class-names';
 import type { EditorSectionProps } from '../../models/editor-section-props';
 import styles from './EditorSection.module.scss';
@@ -11,6 +11,8 @@ export const EditorSection: FC<EditorSectionProps> = ({
   styles: stylesProp,
   className,
 }) => {
+  /* The heading names the section, so it reads as a named region. */
+  const titleId = useId();
   const cssVars = buildCssVars({
     '--es-border-color': stylesProp?.colors?.borderColor,
     '--es-title-color': stylesProp?.colors?.titleColor,
@@ -18,6 +20,7 @@ export const EditorSection: FC<EditorSectionProps> = ({
 
   return (
     <section
+      aria-labelledby={title != null ? titleId : undefined}
       className={mergeClasses(
         'flex h-full flex-col gap-4 rounded border',
         styles.section,
@@ -28,6 +31,7 @@ export const EditorSection: FC<EditorSectionProps> = ({
     >
       {title != null && (
         <h2
+          id={titleId}
           className={mergeClasses(
             stylesProp?.typography?.titleClassName ?? 'dial-h3-text',
             styles.title,

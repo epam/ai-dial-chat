@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
@@ -68,6 +69,7 @@ export function useDeploymentSelectorFieldOverlay(
 
   const { t } = useTranslation();
   const { items, isLoading, error } = useDeployments();
+  const { themesBaseUrl } = useAppConfig().config;
   const { favoriteIds, toggleFavorite } = useFavoriteApplications();
   const { language } = useLanguage();
   const isToolsetsEnabled = useUiFeature(OverlayFeature.Toolsets);
@@ -82,9 +84,10 @@ export function useDeploymentSelectorFieldOverlay(
             t,
             activeLocale: language,
             isToolsetTabEnabled: isToolsetsEnabled,
+            themesBaseUrl,
           }),
         ),
-    [items, favoriteIds, t, language, isToolsetsEnabled],
+    [items, favoriteIds, t, language, isToolsetsEnabled, themesBaseUrl],
   );
 
   const selectedDeployment = useMemo(
@@ -100,9 +103,17 @@ export function useDeploymentSelectorFieldOverlay(
             t,
             activeLocale: language,
             isToolsetTabEnabled: isToolsetsEnabled,
+            themesBaseUrl,
           })
         : undefined,
-    [selectedDeployment, favoriteIds, t, language, isToolsetsEnabled],
+    [
+      selectedDeployment,
+      favoriteIds,
+      t,
+      language,
+      isToolsetsEnabled,
+      themesBaseUrl,
+    ],
   );
 
   const resolvedLabel = useMemo(() => {

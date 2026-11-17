@@ -5,12 +5,14 @@ import type {
   SkillFileTreeNode,
 } from '@epam/ai-dial-skill-editor';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { getApiErrorDetails, getApiErrorStatus } from '../api-error/api-error';
 import {
   ResourceSaveError,
   type ResourceSaveAdapter,
 } from '../catalog/resource-save-adapter';
+import { createOrgUnitWriter } from '../catalog/resource-save-adapters';
+import type { ResourceSavePublishClient } from '../catalog/resource-save-adapters';
 import {
   buildSkillFilesPayload,
   buildSkillManifestForSubmit,
@@ -158,6 +160,8 @@ export interface UseSkillEditorSubmitParams {
   refetchSkills: () => Promise<void>;
   /** Already-configured create/update operations. */
   client: SkillEditorSubmitClient;
+  /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls; without it the Save panel offers no direct write for skills. */
+  publishClient?: ResourceSavePublishClient;
   /** Localized messages, resolved by the host. */
   messages: SkillEditorSubmitMessages;
   /** Called with `returnUrl` after a successful save. */
@@ -221,6 +225,7 @@ export const useSkillEditorSubmit = ({
   getCreateReturnUrl,
   refetchSkills,
   client,
+  publishClient,
   messages,
   onNavigate,
   onNotify,
@@ -467,6 +472,11 @@ export const useSkillEditorSubmit = ({
     [messages],
   );
 
+  const orgUnitWriter = useMemo(
+    () => createOrgUnitWriter(publishClient, 'skill'),
+    [publishClient],
+  );
+
   const buildPanelAdapter = useCallback(
     (values: SkillEditorValues): ResourceSaveAdapter | undefined => {
       const skillBucket = bucket as string;
@@ -505,6 +515,7 @@ export const useSkillEditorSubmit = ({
             await refetchSkills().catch(() => undefined);
             return { id: `skills/${skillBucket}/${path}` };
           },
+          ...orgUnitWriter,
         };
       }
 
@@ -550,11 +561,13 @@ export const useSkillEditorSubmit = ({
             throw await toSaveError(err, false);
           }
         },
+        ...orgUnitWriter,
       };
     },
     [
       bucket,
       client,
+      orgUnitWriter,
       etagRef,
       files,
       filesContentRef,

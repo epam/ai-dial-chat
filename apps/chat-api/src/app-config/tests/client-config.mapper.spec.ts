@@ -17,6 +17,8 @@ const SERVICE_ASSEMBLED_FIELDS = [
   'aiTextRefinementAvailable',
   'appVersion',
   'catalogCreationPermissions',
+  'modelCatalogAvailable',
+  'themesBaseUrl',
 ];
 
 /* The DTO's Swagger-declared fields, stored by @ApiProperty as `:<name>`. */
@@ -270,6 +272,46 @@ describe('CLIENT_CONFIG_MAPPINGS', () => {
         expect(config.usageLimitsWarningThresholdPercent).toBe(75);
       },
     );
+
+    it('defaults spendingLimitsMode to off', () => {
+      expect(createDefaultClientConfig().spendingLimitsMode).toBe('off');
+    });
+
+    it.each(['off', 'shadow', 'enforce'])(
+      'maps a resolved spending limits mode %s verbatim',
+      (resolved) => {
+        const config = createDefaultClientConfig();
+        const input = makeInput({ resolved });
+
+        applyClientConfigValue(config, 'usageLimits.spendingLimitsMode', input);
+
+        expect(config.spendingLimitsMode).toBe(resolved);
+        expect(input.warn).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each(['ENFORCE', 'on', 1])(
+      'falls back to off with a warning for a resolved spending limits mode %j',
+      (resolved) => {
+        const config = createDefaultClientConfig();
+        const input = makeInput({ resolved });
+
+        applyClientConfigValue(config, 'usageLimits.spendingLimitsMode', input);
+
+        expect(config.spendingLimitsMode).toBe('off');
+        expect(input.warn).toHaveBeenCalledOnce();
+      },
+    );
+
+    it('falls back to off without a warning when no spending limits mode resolved', () => {
+      const config = createDefaultClientConfig();
+      const input = makeInput({ resolved: undefined });
+
+      applyClientConfigValue(config, 'usageLimits.spendingLimitsMode', input);
+
+      expect(config.spendingLimitsMode).toBe('off');
+      expect(input.warn).not.toHaveBeenCalled();
+    });
 
     it('defaults celebrationsEnabledByDefault to true', () => {
       expect(createDefaultClientConfig().celebrationsEnabledByDefault).toBe(

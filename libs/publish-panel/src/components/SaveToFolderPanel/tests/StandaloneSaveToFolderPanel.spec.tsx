@@ -90,6 +90,19 @@ describe('StandaloneSaveToFolderPanel', () => {
     expect(screen.getByRole('button', { name: 'Select' })).toBeTruthy();
   });
 
+  it('disables the folder rows the host gives a reason for in the folder view', async () => {
+    renderPanel({
+      getDisabledReason: ({ rootKey, path }) =>
+        rootKey === 'organization' && path[0] === 'EPAM'
+          ? 'No access'
+          : undefined,
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+
+    const row = screen.getByRole('treeitem', { name: /EPAM/ });
+    expect(row.getAttribute('aria-disabled')).toBe('true');
+  });
+
   it('commits the pending destination only on Select', async () => {
     const onDestinationChange = vi.fn();
     renderPanel({ onDestinationChange });
@@ -143,6 +156,22 @@ describe('StandaloneSaveToFolderPanel', () => {
     expect(
       screen.getByRole('region', { name: 'Access rules' }).textContent,
     ).toBe('EPAM');
+  });
+
+  it('hides the access rules for a destination the host marks as taking none', async () => {
+    const isHiddenFor = vi.fn(
+      (destination: { path: string[] }) => destination.path[0] === 'EPAM',
+    );
+    renderPanel({ accessRules: { ...accessRules, isHiddenFor } });
+    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+
+    await userEvent.click(screen.getByRole('button', { name: 'EPAM' }));
+
+    expect(screen.queryByRole('region', { name: 'Access rules' })).toBeNull();
+    expect(isHiddenFor).toHaveBeenCalledWith({
+      rootKey: 'organization',
+      path: ['EPAM'],
+    });
   });
 
   it('reports the pending destination and resets it to the committed one on Back', async () => {

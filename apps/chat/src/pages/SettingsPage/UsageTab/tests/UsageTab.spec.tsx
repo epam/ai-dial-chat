@@ -1,21 +1,30 @@
 import { DeploymentItemDtoTypeEnum } from '@epam/ai-dial-chat-api-client';
-import { useUsageData } from '@epam/ai-dial-chat-hooks';
+import { useUsageData, SpendingLimitsMode } from '@epam/ai-dial-chat-hooks';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type {
   ModelLimitPeriodStatuses,
   ModelLimitRow,
   ModelLimitsLabels,
 } from '@epam/ai-dial-usage-dashboard';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsageI18nKeys } from '../../../../constants/translation-keys';
-import { useFeatureFlag } from '../../../../context/AppConfigContext';
+import {
+  useAppConfig,
+  useFeatureFlag,
+} from '../../../../context/AppConfigContext';
 import { useDeployments } from '../../../../context/DeploymentsContext';
 import { useNotification } from '../../../../context/NotificationContext';
 import { createDeploymentsContextValue } from '../../../../context/tests/deployments-context-mock';
 import { createNotificationContextValue } from '../../../../context/tests/notification-context-mock';
 import UsageTab from '../UsageTab';
+
+/* Components here render without AppConfigProvider; resolve icons without a themes base URL. */
+vi.mock('../../../../hooks/catalog/useResolveCatalogIconUrl', async () => {
+  const { resolveCatalogIconUrl } = await import('../../../../utils/icon-path');
+  return { useResolveCatalogIconUrl: () => resolveCatalogIconUrl };
+});
 
 const { modelLimitsSectionSpy, cardGroupSpy } = vi.hoisted(() => ({
   modelLimitsSectionSpy: vi.fn(),
@@ -29,8 +38,11 @@ const { modelLimitsSectionSpy, cardGroupSpy } = vi.hoisted(() => ({
  */
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, params?: Record<string, unknown>) =>
-      params?.dateTime != null ? `${key}|${params.dateTime}` : key,
+    t: (key: string, params?: Record<string, unknown>) => {
+      if (params?.dateTime != null) return `${key}|${params.dateTime}`;
+      if (params?.models != null) return `${key}|${params.models}`;
+      return key;
+    },
     i18n: { language: 'en', changeLanguage: vi.fn() },
   }),
 }));
@@ -103,6 +115,7 @@ vi.mock('@epam/ai-dial-usage-dashboard', async (importOriginal) => {
 });
 
 const mockUseFeatureFlag = vi.mocked(useFeatureFlag);
+const mockUseAppConfig = vi.mocked(useAppConfig);
 const mockUseDeployments = vi.mocked(useDeployments);
 const mockUseNotification = vi.mocked(useNotification);
 const mockUseUsageData = vi.mocked(useUsageData);
@@ -114,6 +127,9 @@ describe('UsageTab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseFeatureFlag.mockReturnValue(true);
+    mockUseAppConfig.mockReturnValue({
+      config: { spendingLimitsMode: SpendingLimitsMode.Off },
+    } as unknown as ReturnType<typeof useAppConfig>);
     mockUseDeployments.mockReturnValue(createDeploymentsContextValue());
     mockUseNotification.mockReturnValue(
       createNotificationContextValue(showNotification),
@@ -752,6 +768,352 @@ describe('UsageTab', () => {
       expect(tokyoLabel).toContain('9:00');
       expect(tokyoLabel).toContain('GMT+9');
       expect(warsawLabel).not.toBe(tokyoLabel);
+    });
+  });
+
+  describe('spending budgets', () => {
+    const UNLIMITED = 2 ** 63;
+    const charged = {
+      costObject: 'ORG',
+      policy: 'org-wide',
+      displayName: 'Organization-wide',
+      object: '*',
+      day: { used: 1, total: 10 },
+      month: { used: 20, total: 200 },
+    };
+    const otherProject = {
+      ...charged,
+      costObject: 'project-a',
+      displayName: 'Project A',
+    };
+
+    const configureMode = (spendingLimitsMode: SpendingLimitsMode) => {
+      mockUseAppConfig.mockReturnValue({
+        config: { spendingLimitsMode },
+      } as unknown as ReturnType<typeof useAppConfig>);
+    };
+
+    const withUsage = (usage: Record<string, unknown>) => {
+      mockUseUsageData.mockReturnValue({
+        usage,
+        isLoading: false,
+        usageError: undefined,
+      });
+    };
+
+    const budgetsRegion = () =>
+      screen.queryByRole('region', { name: UsageI18nKeys.BudgetsHeading });
+    const lastPeriodStatuses = () =>
+      (
+        modelLimitsSectionSpy.mock.lastCall?.[0] as {
+          periodStatuses: ModelLimitPeriodStatuses;
+        }
+      ).periodStatuses;
+    const isBefore = (first: Element, second: Element) =>
+      Boolean(
+        first.compareDocumentPosition(second) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+
+    const legacyStats = {
+      dayCostStats: { used: 9, total: 10 },
+      weekCostStats: { used: 1, total: UNLIMITED },
+      monthCostStats: { used: 95, total: 100 },
+    };
+
+    it('renders no budget in off mode, even when Core reports budgets', () => {
+      configureMode(SpendingLimitsMode.Off);
+      withUsage({
+        deployments: {},
+        ...legacyStats,
+        costObject: 'ORG',
+        budgets: [charged],
+      });
+
+      render(<UsageTab />);
+
+      expect(budgetsRegion()).toBeNull();
+      expect(cardGroupSpy).toHaveBeenCalled();
+      expect(lastPeriodStatuses().month.status).toBe('running-low');
+    });
+
+    it('adds the charged budgets with the not-enforced notice in shadow mode', () => {
+      configureMode(SpendingLimitsMode.Shadow);
+      withUsage({
+        deployments: {},
+        ...legacyStats,
+        costObject: 'ORG',
+        budgets: [charged, otherProject],
+      });
+
+      render(<UsageTab />);
+
+      const region = budgetsRegion();
+      expect(region).toBeTruthy();
+      expect(
+        within(region as HTMLElement).getByRole('group', {
+          name: 'Organization-wide',
+        }),
+      ).toBeTruthy();
+      expect(
+        within(region as HTMLElement).queryByRole('group', {
+          name: 'Project A',
+        }),
+      ).toBeNull();
+      expect(
+        within(region as HTMLElement).getByText(
+          UsageI18nKeys.BudgetsShadowNotice,
+        ),
+      ).toBeTruthy();
+      expect(
+        within(region as HTMLElement).getByText(UsageI18nKeys.BudgetsAllModels),
+      ).toBeTruthy();
+      const legacyCard = screen.getAllByText(UsageI18nKeys.TodayTitle)[0];
+      expect(isBefore(legacyCard, region as HTMLElement)).toBe(true);
+      expect(lastPeriodStatuses().month.status).toBe('running-low');
+    });
+
+    it('renders no budgets section in shadow mode without a charged budget', () => {
+      configureMode(SpendingLimitsMode.Shadow);
+      withUsage({
+        deployments: {},
+        ...legacyStats,
+        costObject: 'ORG',
+        budgets: [otherProject],
+      });
+
+      render(<UsageTab />);
+
+      expect(budgetsRegion()).toBeNull();
+    });
+
+    it('shows only the budgets, with no role cost card, in enforce mode', () => {
+      configureMode(SpendingLimitsMode.Enforce);
+      withUsage({
+        deployments: {},
+        ...legacyStats,
+        costObject: 'ORG',
+        budgets: [charged],
+      });
+
+      render(<UsageTab />);
+
+      const budgets = budgetsRegion() as HTMLElement;
+      expect(budgets).toBeTruthy();
+      expect(
+        within(budgets).getByRole('group', { name: 'Organization-wide' }),
+      ).toBeTruthy();
+      expect(
+        within(budgets).queryByText(UsageI18nKeys.BudgetsShadowNotice),
+      ).toBeNull();
+      expect(cardGroupSpy).not.toHaveBeenCalled();
+      expect(screen.queryByText(UsageI18nKeys.ThisWeekTitle)).toBeNull();
+    });
+
+    it('renders no header indicator in enforce mode with an unlimited role cost', () => {
+      configureMode(SpendingLimitsMode.Enforce);
+      withUsage({
+        deployments: {},
+        dayCostStats: { used: 9, total: UNLIMITED },
+        weekCostStats: { used: 9, total: UNLIMITED },
+        monthCostStats: { used: 9, total: UNLIMITED },
+        costObject: 'ORG',
+        budgets: [charged],
+      });
+
+      render(<UsageTab />);
+
+      expect(cardGroupSpy).not.toHaveBeenCalled();
+      const statuses = lastPeriodStatuses();
+      expect([statuses.day, statuses.week, statuses.month]).toEqual([
+        { status: 'unavailable', tooltipLabel: undefined },
+        { status: 'unavailable', tooltipLabel: undefined },
+        { status: 'unavailable', tooltipLabel: undefined },
+      ]);
+    });
+
+    it('withholds the role cost from the header indicators in enforce mode', () => {
+      configureMode(SpendingLimitsMode.Enforce);
+      withUsage({
+        deployments: {},
+        ...legacyStats,
+        costObject: 'ORG',
+        budgets: [charged],
+      });
+
+      render(<UsageTab />);
+
+      expect(lastPeriodStatuses().month.status).toBe('unavailable');
+      expect(lastPeriodStatuses().day.status).toBe('unavailable');
+    });
+
+    it('keeps a model row within limits in enforce mode when only the role cost is reached', () => {
+      configureMode(SpendingLimitsMode.Enforce);
+      mockUseDeployments.mockReturnValue(
+        createDeploymentsContextValue({
+          items: [
+            {
+              id: 'gpt-4o',
+              displayName: 'GPT-4o',
+              type: DeploymentItemDtoTypeEnum.Model,
+            },
+          ],
+        }),
+      );
+      withUsage({
+        deployments: { 'gpt-4o': { monthTokenStats: { used: 1, total: 10 } } },
+        monthCostStats: { used: 100, total: 100 },
+        costObject: 'ORG',
+        budgets: [charged],
+      });
+
+      render(<UsageTab />);
+
+      const { rows } = modelLimitsSectionSpy.mock.lastCall?.[0] as {
+        rows: ModelLimitRow[];
+      };
+      expect(rows[0].status).toBe('within-limits');
+    });
+
+    it('renders the no-budget state in enforce mode without a charged budget', () => {
+      configureMode(SpendingLimitsMode.Enforce);
+      withUsage({
+        deployments: {},
+        ...legacyStats,
+        costObject: 'ORG',
+        budgets: [otherProject],
+      });
+
+      render(<UsageTab />);
+
+      const region = budgetsRegion() as HTMLElement;
+      expect(region).toBeTruthy();
+      expect(
+        within(region).getByText(UsageI18nKeys.BudgetsEnforceEmpty),
+      ).toBeTruthy();
+      expect(within(region).queryByRole('group')).toBeNull();
+    });
+
+    it('falls back to off when Core reports no cost object', () => {
+      configureMode(SpendingLimitsMode.Enforce);
+      withUsage({ deployments: {}, ...legacyStats, budgets: [] });
+
+      render(<UsageTab />);
+
+      expect(budgetsRegion()).toBeNull();
+      expect(cardGroupSpy).toHaveBeenCalled();
+      expect(lastPeriodStatuses().month.status).toBe('running-low');
+    });
+
+    it('resolves listed models to their display names', () => {
+      configureMode(SpendingLimitsMode.Shadow);
+      mockUseDeployments.mockReturnValue(
+        createDeploymentsContextValue({
+          items: [
+            {
+              id: 'gpt-4o',
+              displayName: 'GPT-4o',
+              type: DeploymentItemDtoTypeEnum.Model,
+            },
+          ],
+        }),
+      );
+      withUsage({
+        deployments: {},
+        costObject: 'ORG',
+        budgets: [{ ...charged, object: ['gpt-4o', 'unknown-model'] }],
+      });
+
+      render(<UsageTab />);
+
+      expect(
+        screen.getByText(
+          `${UsageI18nKeys.BudgetsCoveredModels}|GPT-4o, unknown-model`,
+        ),
+      ).toBeTruthy();
+    });
+
+    describe('reset boundary', () => {
+      const NOW = Date.parse('2026-09-15T21:00:00Z');
+
+      beforeEach(() => {
+        vi.useFakeTimers({ shouldAdvanceTime: false });
+        vi.setSystemTime(NOW);
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it('re-fetches once at a budget reset that comes before every card reset', () => {
+        configureMode(SpendingLimitsMode.Shadow);
+        const budgetReset = '2026-09-15T22:00:00Z';
+        withUsage({
+          deployments: {},
+          dayCostStats: {
+            used: 1,
+            total: 10,
+            resetsAt: '2026-09-16T00:00:00Z',
+          },
+          costObject: 'ORG',
+          budgets: [
+            {
+              ...charged,
+              day: { used: 1, total: 10, resetsAt: budgetReset },
+              month: { used: 1, total: 10, resetsAt: '2026-10-01T00:00:00Z' },
+            },
+          ],
+        });
+
+        render(<UsageTab />);
+        const tokens = () => [
+          ...new Set(mockUseUsageData.mock.calls.map((call) => call[2])),
+        ];
+        expect(tokens()).toEqual([0]);
+
+        act(() => {
+          vi.advanceTimersByTime(Date.parse(budgetReset) - NOW + 10_000);
+        });
+
+        expect(tokens()).toEqual([0, 1]);
+      });
+
+      it('does not re-fetch at a hidden role cost reset in enforce mode', () => {
+        configureMode(SpendingLimitsMode.Enforce);
+        const roleCostReset = '2026-09-15T22:00:00Z';
+        const budgetReset = '2026-09-16T00:00:00Z';
+        withUsage({
+          deployments: {},
+          dayCostStats: { used: 1, total: 10, resetsAt: roleCostReset },
+          costObject: 'ORG',
+          budgets: [
+            {
+              ...charged,
+              day: { used: 1, total: 10, resetsAt: budgetReset },
+              month: { used: 1, total: 10, resetsAt: '2026-10-01T00:00:00Z' },
+            },
+          ],
+        });
+
+        render(<UsageTab />);
+        const tokens = () => [
+          ...new Set(mockUseUsageData.mock.calls.map((call) => call[2])),
+        ];
+
+        act(() => {
+          vi.advanceTimersByTime(Date.parse(roleCostReset) - NOW + 10_000);
+        });
+
+        expect(tokens()).toEqual([0]);
+
+        act(() => {
+          vi.advanceTimersByTime(
+            Date.parse(budgetReset) - Date.parse(roleCostReset),
+          );
+        });
+
+        expect(tokens()).toEqual([0, 1]);
+      });
     });
   });
 });

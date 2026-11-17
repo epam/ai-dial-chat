@@ -218,6 +218,35 @@ describe('useResourceSavePanel', () => {
     expect(result.current.panelProps.isSubmitting).toBe(false);
   });
 
+  it('shows the Core 400 message for an over-long path as a submit error, not as an existing version', async () => {
+    const tooLong = Object.assign(new Error('bad request'), {
+      response: new Response(
+        JSON.stringify({ statusCode: 400, message: 'Path is too long' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } },
+      ),
+    });
+    const adapter = makeAdapter({
+      saveAsNewVersion: vi.fn().mockRejectedValue(tooLong),
+    });
+    const { result, params } = renderPanel({ adapter });
+    act(() =>
+      result.current.panelProps.version?.onVersionModeChange(
+        SaveVersionMode.New,
+      ),
+    );
+    act(() =>
+      result.current.panelProps.version?.onNewVersionChange('1'.repeat(64)),
+    );
+
+    await act(() => result.current.submit());
+
+    await waitFor(() =>
+      expect(result.current.panelProps.submitError).toBe('Path is too long'),
+    );
+    expect(result.current.panelProps.version?.newVersionError).toBeUndefined();
+    expect(params.onSaved).not.toHaveBeenCalled();
+  });
+
   it('shows a submit error for a failed first step and does not report a save', async () => {
     const adapter = makeAdapter({
       saveInPlace: vi.fn().mockRejectedValue(new Error('boom')),
@@ -345,6 +374,141 @@ describe('useResourceSavePanel', () => {
     expect(result.current.panelProps.isSubmitDisabled).toBe(false);
   });
 
+  describe('direct write into an org unit', () => {
+    const UNIT = {
+      rootKey: SaveDestinationRoot.Organization,
+      path: ['Acme', 'Teams'],
+    };
+    const makeDirectAdapter = () =>
+      makeAdapter({
+        saveIntoOrgUnit: vi
+          .fn()
+          .mockResolvedValue({ id: 'applications/public/Acme/Teams/agent' }),
+      });
+
+    it('writes into the unit folder with no publish request and no rules fetch', async () => {
+      const adapter = makeDirectAdapter();
+      const getPublishRules = vi.fn().mockResolvedValue([]);
+      const { result, params } = renderPanel({
+        adapter,
+        canSaveDirectlyTo: (path) => path[0] === 'Acme',
+        publishClient: {
+          publishCatalogEntity: vi.fn().mockResolvedValue({}),
+          getPublishRules,
+        },
+      });
+      act(() => result.current.panelProps.onPendingDestinationChange?.(UNIT));
+      act(() => result.current.panelProps.onDestinationChange(UNIT));
+
+      await act(() => result.current.submit());
+
+      expect(getPublishRules).not.toHaveBeenCalled();
+      expect(adapter.saveIntoOrgUnit).toHaveBeenCalledWith(ID, [
+        'Acme',
+        'Teams',
+      ]);
+      expect(params.publishClient.publishCatalogEntity).not.toHaveBeenCalled();
+      expect(params.onSaved).toHaveBeenCalledWith(
+        expect.objectContaining({ isWrittenToOrgUnit: true }),
+        expect.objectContaining({ isDirectWrite: true }),
+      );
+    });
+
+    it('hides the access rules for a direct destination only', () => {
+      const { result } = renderPanel({
+        adapter: makeDirectAdapter(),
+        canSaveDirectlyTo: (path) => path[0] === 'Acme',
+      });
+      const isHiddenFor = result.current.panelProps.accessRules?.isHiddenFor;
+
+      expect(isHiddenFor?.(UNIT)).toBe(true);
+      expect(isHiddenFor?.(EPAM)).toBe(false);
+    });
+
+    it('does not block Save while rules would be loading for a direct destination', () => {
+      const { result } = renderPanel({
+        adapter: makeDirectAdapter(),
+        canSaveDirectlyTo: () => true,
+      });
+      act(() => result.current.panelProps.onDestinationChange(UNIT));
+
+      expect(result.current.panelProps.isSubmitDisabled).toBe(false);
+    });
+
+    it('keeps a Personal folder named like a unit on the normal path', async () => {
+      const adapter = makeDirectAdapter();
+      const { result, params } = renderPanel({
+        adapter,
+        canSaveDirectlyTo: () => true,
+      });
+      act(() =>
+        result.current.panelProps.onDestinationChange({
+          rootKey: SaveDestinationRoot.Personal,
+          path: ['Acme', 'Teams'],
+        }),
+      );
+
+      await act(() => result.current.submit());
+
+      expect(adapter.saveIntoOrgUnit).not.toHaveBeenCalled();
+      expect(params.onSaved).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ isDirectWrite: false }),
+      );
+    });
+
+    it.each([
+      [
+        'no direct-save guard (flag off, rights not loaded or Core off)',
+        undefined,
+      ],
+      [
+        'a guard that refuses the folder (outside units, a reader, or a DIAL admin outside units)',
+        () => false,
+      ],
+    ])('takes the publish path with %s', async (_label, canSaveDirectlyTo) => {
+      const adapter = makeDirectAdapter();
+      const { result, params } = renderPanel({ adapter, canSaveDirectlyTo });
+      act(() => result.current.panelProps.onDestinationChange(UNIT));
+
+      await act(() => result.current.submit());
+
+      expect(adapter.saveIntoOrgUnit).not.toHaveBeenCalled();
+      expect(params.publishClient.publishCatalogEntity).toHaveBeenCalledOnce();
+    });
+
+    it('takes the publish path when the adapter has no direct write', async () => {
+      const { result, params } = renderPanel({
+        canSaveDirectlyTo: () => true,
+      });
+      act(() => result.current.panelProps.onDestinationChange(UNIT));
+
+      await act(() => result.current.submit());
+
+      expect(params.publishClient.publishCatalogEntity).toHaveBeenCalledOnce();
+    });
+
+    it('reports a failed direct write as a partial outcome', async () => {
+      const adapter = makeAdapter({
+        saveIntoOrgUnit: vi.fn().mockRejectedValue(new Error('denied')),
+      });
+      const { result, params } = renderPanel({
+        adapter,
+        canSaveDirectlyTo: () => true,
+      });
+      act(() => result.current.panelProps.onDestinationChange(UNIT));
+
+      await act(() => result.current.submit());
+
+      expect(params.onSaved).toHaveBeenCalledWith(
+        expect.objectContaining({
+          outcome: ResourceSaveOutcome.SavedButOrgUnitWriteFailed,
+        }),
+        expect.anything(),
+      );
+    });
+  });
+
   it('reports a failed publish after a successful save as a partial outcome', async () => {
     const { result, params } = renderPanel({
       publishClient: {
@@ -372,5 +536,74 @@ describe('useResourceSavePanel', () => {
     const { result } = renderPanel();
     expect(result.current.panelProps.foldersError).toBe('Folders failed');
     personalFolders.hasError = false;
+  });
+
+  describe('disabled destinations', () => {
+    const LOCKED = {
+      rootKey: SaveDestinationRoot.Organization,
+      path: ['Acme', 'Locked'],
+    };
+    const getDisabledReason = (
+      folderPath: string[],
+      root: SaveDestinationRoot,
+    ) =>
+      root === SaveDestinationRoot.Organization && folderPath[1] === 'Locked'
+        ? 'No access'
+        : undefined;
+
+    it('offers no reason callback while the host passes none', () => {
+      const { result } = renderPanel();
+
+      expect(result.current.panelProps.getDisabledReason).toBeUndefined();
+    });
+
+    it('maps a destination to the host callback with its root', () => {
+      const { result } = renderPanel({ getDisabledReason });
+
+      expect(result.current.panelProps.getDisabledReason?.(LOCKED)).toBe(
+        'No access',
+      );
+      expect(
+        result.current.panelProps.getDisabledReason?.({
+          rootKey: SaveDestinationRoot.Personal,
+          path: ['Acme', 'Locked'],
+        }),
+      ).toBeUndefined();
+    });
+
+    it('disables Save and does nothing on submit for a committed destination with a reason', async () => {
+      const adapter = makeAdapter();
+      const { result, params } = renderPanel({ adapter, getDisabledReason });
+      act(() => result.current.panelProps.onDestinationChange(LOCKED));
+
+      expect(result.current.panelProps.isSubmitDisabled).toBe(true);
+      await act(() => result.current.submit());
+
+      expect(adapter.saveInPlace).not.toHaveBeenCalled();
+      expect(params.onSaved).not.toHaveBeenCalled();
+    });
+
+    it('offers no reason for a destination whose root is not one of the panel roots', () => {
+      const { result } = renderPanel({ getDisabledReason });
+
+      expect(
+        result.current.panelProps.getDisabledReason?.({
+          rootKey: 'shared',
+          path: ['Acme', 'Locked'],
+        }),
+      ).toBeUndefined();
+    });
+
+    it('keeps Save enabled for a destination without a reason', () => {
+      const { result } = renderPanel({ getDisabledReason });
+      act(() =>
+        result.current.panelProps.onDestinationChange({
+          rootKey: SaveDestinationRoot.Organization,
+          path: ['Acme', 'Open'],
+        }),
+      );
+
+      expect(result.current.panelProps.isSubmitDisabled).toBe(false);
+    });
   });
 });

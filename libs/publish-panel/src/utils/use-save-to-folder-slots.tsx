@@ -1,10 +1,11 @@
 import type {
   FolderDestination,
-  FolderDestinationPanelBodyLabels,
+  FolderDestinationPanelContentLabels,
 } from '@epam/ai-dial-react-file-manager';
 import { ReactNode, useCallback } from 'react';
 import { PublishAccessRules } from '../components/PublishAccessRules/PublishAccessRules';
 import { SaveToFolderVersionSection } from '../components/SaveToFolderPanel/SaveToFolderVersionSection';
+import { VersionHistorySection } from '../components/VersionHistorySection/VersionHistorySection';
 import type { SaveToFolderPanelBaseProps } from '../models/save-to-folder-panel';
 
 /** The Save-specific content a folder destination panel renders around its folder picker. */
@@ -16,7 +17,7 @@ interface SaveToFolderSlots {
     pendingDestination: FolderDestination | undefined,
   ) => ReactNode;
   /** The body labels the generic panel understands, with the Save heading mapped onto its destination heading. */
-  panelLabels: FolderDestinationPanelBodyLabels;
+  panelLabels: FolderDestinationPanelContentLabels;
 }
 
 /** Builds the version section, access rules and generic body labels from the save-to-folder props. */
@@ -24,6 +25,7 @@ export const useSaveToFolderSlots = ({
   roots,
   version,
   accessRules,
+  versionHistory,
   isSubmitting = false,
   panelLabels = {},
   panelStyles = {},
@@ -33,6 +35,7 @@ export const useSaveToFolderSlots = ({
   | 'roots'
   | 'version'
   | 'accessRules'
+  | 'versionHistory'
   | 'isSubmitting'
   | 'panelLabels'
   | 'panelStyles'
@@ -55,6 +58,10 @@ export const useSaveToFolderSlots = ({
         (candidate) => candidate.key === pendingDestination?.rootKey,
       );
       if (!pendingRoot?.hasAccessRules) return null;
+      /* A destination that takes no rules shows no rules section. */
+      if (pendingDestination && accessRules.isHiddenFor?.(pendingDestination)) {
+        return null;
+      }
       const pendingFolderName = pendingDestination
         ? (pendingDestination.path[pendingDestination.path.length - 1] ??
           pendingRoot.label)
@@ -79,7 +86,7 @@ export const useSaveToFolderSlots = ({
     [accessRules, isSubmitting, roots],
   );
 
-  const mainSections = version ? (
+  const versionSection = version ? (
     <SaveToFolderVersionSection
       version={version}
       heading={versionHeading}
@@ -92,6 +99,20 @@ export const useSaveToFolderSlots = ({
       colors={panelStyles.colors}
     />
   ) : undefined;
+
+  /* Versions history is the last section of the main view. */
+  const mainSections =
+    versionSection || versionHistory ? (
+      <>
+        {versionSection}
+        {versionHistory && (
+          <VersionHistorySection
+            headingClassName={headingClassName}
+            {...versionHistory}
+          />
+        )}
+      </>
+    ) : undefined;
 
   return {
     mainSections,

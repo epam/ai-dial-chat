@@ -1,4 +1,8 @@
-import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
+import {
+  CatalogCreationType,
+  CelebrationDeliveryMode,
+} from '@epam/ai-dial-chat-api-client';
+import { SpendingLimitsMode } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
@@ -30,6 +34,7 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       mcpAppTheme: null,
       mcpAppUserAgent: null,
       mcpAppHostName: null,
+      themesBaseUrl: null,
       fileManagerTabs: [],
       overlayEnabled: false,
       overlayAllowedOrigins: [],
@@ -38,6 +43,7 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       announcementTitle: null,
       announcementDescription: null,
       announcements: [],
+      onboardingHints: [],
       enabledUiFeatures,
       welcomeScreenDescription: null,
       footerHtmlMessage: '',
@@ -46,7 +52,14 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       publicationFilterSources: ['title', 'role', 'dial_roles'],
       maxAttachmentFileSizeBytes: 536_870_912,
       usageLimitsWarningThresholdPercent: 75,
+      spendingLimitsMode: SpendingLimitsMode.Off,
       celebrationsEnabledByDefault: true,
+      celebrationDelivery: {
+        mode: CelebrationDeliveryMode.Bundled,
+        revision: '0',
+        externalScenes: [],
+        externalEvents: [],
+      },
       projectContextFileMaxBytes: 1_048_576,
       projectContextTotalMaxBytes: 10_485_760,
       projectContextAllowedExtensions: ['csv', 'pdf', 'xlsx'],

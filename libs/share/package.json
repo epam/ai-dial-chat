@@ -3,6 +3,10 @@
   "description": "Share popover UI component and share-link types for AI DIAL catalog deployments",
   "version": "0.0.1",
   "license": "Apache-2.0",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss"
+  ],
   "private": true,
   "type": "module",
   "main": "./dist/index.js",

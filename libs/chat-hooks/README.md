@@ -226,7 +226,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-projects` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.4.1
+- `@epam/ai-dial-react-file-manager` ^0.4.3
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
@@ -234,7 +234,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-ui-kit` ^0.16.0
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.2
-- `@epam/pdf-highlighter-kit` ^0.0.21
+- `@epam/pdf-highlighter-kit` ^0.0.22
 
 `@epam/ai-dial-chat-api-client` is **not** a peer. Every entry that calls DIAL Core
 imports a runtime enum from it (`SendCompletionDtoModeEnum`,
@@ -746,6 +746,35 @@ ignores a read that finishes after the panel closed or `entityId` changed. The
 request and its mapping to `PublishHistoryEntry` (for the catalog endpoint,
 `mapPublishHistoryEntryDto`) stay with the host.
 
+`usePublishDependencies({ isOpen, entityId, loadDependencies })` (root and `./catalog`)
+returns the `PublishDependency[]` a publish panel lists as resources the item refers to
+that are not in the public bucket. It follows `usePublishHistory`: it reads through your
+`loadDependencies(entityId)` each time `isOpen` turns true, leaves the list empty when a
+read fails (the list only informs, publishing does not depend on it), ignores a read that
+finishes after the panel closed or `entityId` changed, and never returns another entity's
+list. For a catalog entity the request is `createPublishApiClient(publishApi)
+.getCatalogPublishDependencies(entityType, entityId)`; both it and the conversation
+request map each entry with `mapResourceDependencyDto`, and stay with the host. Pass `createPublishDependencyIconResolver({ deployments, toolsets, resolveIconUrl })` as its second argument to give an application or toolset the icon of the entity the host has already loaded, with no extra request; an entry the lists do not hold has none.
+
+```ts
+import {
+  createPublishApiClient,
+  mapResourceDependencyDto,
+  usePublishDependencies,
+} from '@epam/ai-dial-chat-hooks';
+
+const publishClient = createPublishApiClient(publishApi);
+
+const dependencies = usePublishDependencies({
+  isOpen,
+  entityId: 'applications/my-bucket/Support agent__1.0.0',
+  loadDependencies: async (entityId) =>
+    (
+      await publishClient.getCatalogPublishDependencies('application', entityId)
+    ).dependencies.map(mapResourceDependencyDto),
+});
+```
+
 `useUnpublishableFolders(client, target, isAdmin)` (root and `./catalog`) reports
 the folders the caller may request removal of one published entity from, as
 `{ isResolved, folders, refresh }`, through `resolveUnpublishableFolders`: an owner
@@ -847,7 +876,7 @@ const ProjectPage = () => {
 };
 ```
 
-`usePinnedProjectChats(client, projectIds, { enabled, onProjectDeleted })`
+`usePinnedProjectChats(client, projectIds, { enabled, onProjectDeleted, activeConversationId? })`
 loads the trees a sidebar shows for pinned projects. For each id it reads the
 details (`getProject`) and the listing (`listProjectConversations`) in
 parallel, keeps the first `PINNED_PROJECT_CHATS_LIMIT` (10) chats newest first
@@ -857,6 +886,11 @@ pending titles in one `getProjectConversationTitles` call. It returns
 `PinnedProjectChats[]` (`project`, `chats` of `PinnedProjectChat` — `id`,
 `title`, `isUnread?` — and `hasMore`) in `projectIds` order, without the ids
 whose load failed.
+
+When `activeConversationId` names a chat that is not among a project's newest
+chats, it replaces the last of the kept ones and comes last, so the list stays
+at `PINNED_PROJECT_CHATS_LIMIT` and the open chat is listed whenever it is in
+the project's listing.
 
 - A `404` from `getProject` drops the project and calls `onProjectDeleted(id)`
   once. Any other details failure on the first load keeps it out and retries
@@ -1085,6 +1119,72 @@ setRefreshToken((token) => token + 1);
 | `isLoading`  | `boolean`                                | `true` while a fetch is in flight, including a refresh.                                                                   |
 | `usageError` | `Error \| undefined`                     | Set when the `getUserUsage` call rejects.                                                                                 |
 
+### useOrgUnits
+
+Loads the current user's DIAL Core org units once, on demand, and answers
+write, save, read and publication-request rights per public-bucket path. The host
+supplies `listOrgUnits` (resolving `{ enabled, hasAdminAccess, units }`, each
+unit with its `permissions`), so the hook never builds a client. Nothing is read
+until `ensureUnits()` is called. Later calls do nothing, except after a failed
+read, when the next call reads again. `refreshUnits()` reads again while the
+previous answer stays in use (a failed refresh keeps it) and does nothing once
+Core reported org units off. Status is the `OrgUnitsStatus` enum: `Idle`,
+`Loading`, `Ready`, `Disabled` (Core has org units off) or `Error` (the read
+failed; nothing is reported). Until the status is `Ready`, and in `Disabled` and
+`Error`, `canSaveAt` and `canPublishAt` return `true`
+for every path, so missing data never disables a folder. `canSaveDirectlyAt` is the
+exception: it is `false` until `Ready`, so a direct write always needs a proven
+right. Each takes a decoded public-relative path and an `OrgUnitNamespace` from
+`@epam/ai-dial-chat-shared`. Available from the root and `./utils`.
+
+```tsx
+import { OrgUnitsStatus, useOrgUnits } from '@epam/ai-dial-chat-hooks';
+import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
+
+const { status, ensureUnits, canSaveAt } = useOrgUnits({
+  listOrgUnits, // host-configured fetch
+});
+
+useEffect(() => ensureUnits(), [ensureUnits]);
+const isUsableDestination =
+  status !== OrgUnitsStatus.Ready ||
+  canSaveAt('Acme/Reports', OrgUnitNamespace.Applications);
+```
+
+`getOrgUnitNamespace(entityType)` maps a `CatalogPublishEntityType`
+(`application`, `toolset`, `prompt`, `skill`, `project`) to the
+`OrgUnitNamespace` a unit grants rights on (`undefined` for `model`; a
+conversation has no catalog entity type, so its containers pass
+`OrgUnitNamespace.Conversations`). `buildFolderGuards` turns the hook's answers
+into the two props a folder panel needs: `isDestinationUsable` (a host passes it to `usePublishFolders` as `canPublishTo`)
+and `getDisabledReason`, plus `canSaveDirectlyTo` when the host passes the strict
+`canSaveDirectlyAt` of `useOrgUnits` (a folder inside an org unit that grants
+`write`; `false` until `Ready` and outside every unit, even for a DIAL admin). It checks `canSaveAt` (a folder outside every unit stays usable) for
+`OrgUnitFolderGuardPurpose.Save` and `canPublishAt` for
+`OrgUnitFolderGuardPurpose.Publish`, and calls the host's optional `getReason` (a
+translated sentence) only for a disabled folder; without it `getDisabledReason`
+is `undefined`. Both `isDestinationUsable` and `getDisabledReason` take an optional `SaveDestinationRoot` as a second argument: only `SaveDestinationRoot.Organization` (also the meaning of an omitted root, since the publish panels have one tree) is matched against units, and a Personal folder is always usable even when it is named like a unit. With the flag off, a status
+other than `Ready`, or no namespace, both guards are `undefined`, so the panel
+keeps its default behaviour. `canSaveDirectlyTo` takes the same optional root and is `false` for any root but Organization, so a Personal folder named like a unit never direct-writes. `useFolderGuards({ purpose, namespace, isActive, isEnabled, orgUnits, shouldRefreshOnOpen?, getReason? })` wraps it for a panel: it calls `orgUnits.ensureUnits()` while `isActive`, re-reads loaded rights on open when `shouldRefreshOnOpen`, and returns the guards; `orgUnits` is the `useOrgUnits` result (or one shared through a host context) and `isEnabled` the host's flag. `toPublishDisabledReason(getDisabledReason)` adapts a guard's `getDisabledReason(folderPath)` to a publish panel's `getDisabledReason(destination)`. `toSaveDestinationRoot(rootKey)` turns a destination's `rootKey` into a `SaveDestinationRoot`, or `undefined`. All are available from the root and `./utils`.
+
+```tsx
+import {
+  buildFolderGuards,
+  getOrgUnitNamespace,
+  OrgUnitFolderGuardPurpose,
+} from '@epam/ai-dial-chat-hooks';
+
+const { isDestinationUsable, getDisabledReason } = buildFolderGuards({
+  purpose: OrgUnitFolderGuardPurpose.Publish,
+  isEnabled, // host feature flag
+  status,
+  namespace: getOrgUnitNamespace('application'),
+  canSaveAt,
+  canPublishAt,
+  getReason: () => 'You cannot publish to this folder',
+});
+```
+
 ### useUsageLimitBanner
 
 Everything the composer usage-limit banner needs except its rendering: fetches the selected deployment's own usage and the caller's account usage, refreshes both once after each generation ends, picks the day/week/month token limit (from the deployment) or cost budget (from the account) closest to its cap, translates the limit and reset sentences, and tracks tab-lifetime dismissal. Spread the returned `banner` onto `UsageLimitBannerView` from `@epam/ai-dial-conversation-input`. Available from the root and from `@epam/ai-dial-chat-hooks/usage-limits`; needs the optional `@epam/ai-dial-conversation-input` peer (it supplies the `UsageLimitBannerSeverity` enum at runtime).
@@ -1115,15 +1215,16 @@ const UsageBanner = ({ deploymentId, isGenerating }) => {
 
 **Options** (`UseUsageLimitBannerOptions`):
 
-| Name                      | Type                                                             | Description                                                                                                            |
-| ------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `deploymentId`            | `string \| undefined`                                            | Selected deployment. Nothing is fetched while it is `undefined`.                                                       |
-| `isGenerationInProgress`  | `boolean` (default `false`)                                      | A `true` → `false` edge triggers one refresh of both sources.                                                          |
-| `getDeploymentUsage`      | `(deploymentId: string) => Promise<DeploymentLimitsResponseDto>` | Host-configured fetch of the deployment's own usage (token stats are read). The hook never constructs a client.        |
-| `getAccountUsage`         | `() => Promise<AccountUsage>`                                    | Host-configured fetch of the caller's account usage (top-level cost stats are read). A user-usage response fits as-is. |
-| `warningThresholdPercent` | `number`                                                         | Used percentage at or above which a not-yet-exhausted limit raises a warning.                                          |
-| `activeLocale`            | `string`                                                         | Locale for the reset time.                                                                                             |
-| `t`                       | `(key: string, options?: Record<string, unknown>) => string`     | i18next-compatible translate function.                                                                                 |
+| Name                      | Type                                                             | Description                                                                                                                                     |
+| ------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `deploymentId`            | `string \| undefined`                                            | Selected deployment. Nothing is fetched while it is `undefined`.                                                                                |
+| `isGenerationInProgress`  | `boolean` (default `false`)                                      | A `true` → `false` edge triggers one refresh of both sources.                                                                                   |
+| `getDeploymentUsage`      | `(deploymentId: string) => Promise<DeploymentLimitsResponseDto>` | Host-configured fetch of the deployment's own usage (token stats are read). The hook never constructs a client.                                 |
+| `getAccountUsage`         | `() => Promise<AccountUsage>`                                    | Host-configured fetch of the caller's account usage (top-level cost stats are read). A user-usage response fits as-is.                          |
+| `warningThresholdPercent` | `number`                                                         | Used percentage at or above which a not-yet-exhausted limit raises a warning.                                                                   |
+| `activeLocale`            | `string`                                                         | Locale for the reset time.                                                                                                                      |
+| `t`                       | `(key: string, options?: Record<string, unknown>) => string`     | i18next-compatible translate function.                                                                                                          |
+| `spendingLimitsMode`      | `SpendingLimitsMode` (default `Off`)                             | The host's declared DIAL Core spending limits mode. In an effective `Enforce`, the account cost stats are not reported; token limits still are. |
 
 **Returns** (`UseUsageLimitBannerResult`): `banner` — `severity`, `limitText`, `reset`, `onClose`, `closeAriaLabel`, or `undefined` when nothing should render (no deployment, below the threshold, or dismissed).
 
@@ -1136,7 +1237,7 @@ The pieces are exported separately for hosts that render their own banner or a u
 Fetches the two usage sources the banner and the usage dial are mapped from, each with a single scope, and returns them as a `UsageLimitsSources` pair:
 
 - `deployment`: the selected deployment's own usage (`GET /deployments/{id}/usage`). Only its token stats are read.
-- `account`: the caller's account budget and spend, an `AccountUsage` (the top level of `GET /user/usage`). Only its day/week/month cost stats are read.
+- `account`: the caller's account budget and spend, an `AccountUsage` (the top level of `GET /user/usage`): its day/week/month cost stats, plus the `costObject` and `budgets` that `resolveSpendingLimitsMode` reads.
 
 A deployment-limits response (`GET /deployments/{id}/limits`) is deliberately not a source: for an application, its cost `used` adds the application's aggregated callee cost to the account spend that already contains it, so an agent's spend would be counted twice.
 
@@ -2018,7 +2119,7 @@ const ChatPage = ({
 
 `ConversationStreamTransport` has five methods the host implements: `streamCompletion(path, message, model, options, customContent?, generationId?, mode?, messageIndex?, clientChannelId?)`, `stopCompletion({ generationId, path, content? })`, `watchConversation(path, signal)`, `attachToGeneration(path, signal)`, and `getConversation(conversationId, signal?)`. A sixth, optional `saveConversation(path, conversation)` saves a conversation at the bucket-stripped `path` and resolves with the saved copy; the hook uses it only for the recovery save described below.
 
-**Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event. Once that watch is open, the hook re-reads the conversation once, so a generation that finished just before the subscription settles without waiting for the watch timeout.
+**Returns** (`UseConversationStreamResult`): `{ startStream, handleStop, resumeIfAwaitingGeneration, restoreBufferedGeneration, isStreaming, canStopStreaming }`. `restoreBufferedGeneration(conversationId, conversation)` reapplies the full in-memory assistant message accumulated by an active stream when the host reloads that conversation during navigation; this includes text and merged `custom_content.stages` received before and while the conversation was hidden. `resumeIfAwaitingGeneration(conversationId, conversation)` detects a hard-refresh-mid-generation conversation and first attaches to the backend's live replay of it via `transport.attachToGeneration` — showing the assistant message populate progressively — falling back to watching for its terminal resolution via `transport.watchConversation` when attach is unavailable or ends without a terminal event. Once that watch is open, the hook re-reads the conversation once, so a generation that finished just before the subscription settles without waiting for the watch timeout. While the conversation holds a live `foregroundGeneration` marker, the hook also re-reads it when the marker expires (a Stop shortens that expiry), instead of waiting for the watch timeout.
 
 `startStream(conversationId, userContent, messageIndex, model, customContent?, generationId?, mode?, options?)` takes an optional `StartStreamOptions` as its last argument. With `{ resumeOnConflict: true }`, a `GenerationConflictError` means "this turn is already being generated": typically the page was reloaded after a new conversation's first message, before the backend saved that generation's start state. The hook then joins the running generation instead of showing `generationConflictMessage`:
 
@@ -2474,11 +2575,11 @@ const AttachmentTile = ({ attachment }: { attachment: DisplayAttachment }) => {
 
 #### API
 
-**Parameters** (`UseAttachmentActionParams`): `{ resolveDownloadUrl: (fileId: string) => string | undefined }` — resolves a DIAL Core file id (`files/{bucket}/{path}`) to a downloadable URL; this is host-owned since it encodes the app's own file-download endpoint.
+**Parameters** (`UseAttachmentActionParams`): `{ resolveDownloadUrl: (fileId: string) => string | undefined }` — resolves a DIAL Core file id (`files/{bucket}/{path}`) or project file id (`projects/{bucket}/{path}/files/{filePath}`) to a downloadable URL; this is host-owned since it encodes the app's own file-download endpoints. Returning `undefined` means no download is offered for that id.
 
 **Returns** (`UseAttachmentActionResult`): `{ handleAttachmentClick: (attachment: DisplayAttachment) => void }`.
 
-Also exports `isDialFileId`, `isDownloadableAttachment`, and `downloadAttachment` (the standalone functions the hook is built on) for callers that need the download decision outside the click handler. A DIAL folder attachment (`url` ending with `/`) is not downloadable: `isDownloadableAttachment` returns `false` and `downloadAttachment` does nothing for it.
+Also exports `isDialFileId`, `isDownloadableAttachment`, and `downloadAttachment` (the standalone functions the hook is built on) for callers that need the download decision outside the click handler. A DIAL folder attachment (`url` ending with `/`) is not downloadable: `isDownloadableAttachment` returns `false` and `downloadAttachment` does nothing for it. A project file attachment (`isDialProjectFileId`) is downloadable: `downloadAttachment` passes its id to `resolveDownloadUrl` and returns `false` when the host resolves it to `undefined`.
 
 ### usePromptsState
 
@@ -2712,6 +2813,51 @@ const SkillCatalog = ({
 | `refetch`          | `() => Promise<void>`                  | Re-reads all namespaces and replaces the current state.                    |
 | `mergeSharedSkill` | `(item: SkillMetadataItemDto) => void` | Upserts a skill into `sharedWithMe` by `url`, appending it if not present. |
 
+### useVersionHistory
+
+Builds the Versions history rows of the Save and Publish panels. It selects the caller's own items of an already-loaded deployments or toolsets listing that share the edited resource's `versionGroupId`, leaves the edited version itself out, sorts the others by `updatedAt` (newest first), formats the folder (`rootLabel` plus the folder segments of the id), date and author line through the host `formatters`, and loads the publication statuses in the background through the supplied `client.getCatalogVersionStatuses` while `isEnabled` is `true`. The rows render at once; a failed request keeps them and sets `hasError`, and `onRetry` reloads. A resource that is not the user's own (no row with `isMy === true`), an id missing from the listing, a listing still loading, or a resource with no other saved version returns no rows, `hasVersions: false`, and requests nothing: the host should then render no section. Closing the panel (`isEnabled: false`) clears the loaded statuses and any error, so reopening shows the loading state again. The hook builds no client and no path: the host passes `publishApiClient` from its `createPublishApiClient` and the translated `formatters`.
+
+```tsx
+import { useVersionHistory } from '@epam/ai-dial-chat-hooks';
+
+const { rows, isLoading, hasError, onRetry } = useVersionHistory({
+  items: toolsets,
+  resourceId: toolset.id,
+  entityType: 'toolset',
+  isEnabled: isPanelOpen,
+  client: publishApiClient,
+  formatters,
+});
+
+<PublishPanel
+  {...props}
+  versionHistory={{ rows, isLoading, hasError, onRetry }}
+/>;
+```
+
+`formatters` is `{ rootLabel, formatDate, formatPublishedBy, formatOwner }` (`VersionHistoryFormatters`) and should be referentially stable. The pure `selectOtherVersions` and `buildVersionHistoryRows` it uses are exported too.
+
+### useVersionHistorySection / isVersionedCatalogEntityType
+
+`useVersionHistorySection` wraps `useVersionHistory` for a host that holds both listings. It takes `resourceId`, `resourceType` (a `CatalogEntityType`), `isEnabled`, the `applications` and `toolsets` listing items, the `client`, the translated `labels` and the `formatters`, picks the listing by type, and returns ready `VersionHistorySectionProps` (`rows`, `isLoading`, `hasError`, `onRetry`, `labels`), or `undefined` for an unversioned type, an empty `resourceId`, and while the listing holds no other version the user owns. `isVersionedCatalogEntityType(type)` is `true` for applications (`CatalogEntityType.Agent`) and toolsets.
+
+```tsx
+import { useVersionHistorySection } from '@epam/ai-dial-chat-hooks';
+
+const versionHistory = useVersionHistorySection({
+  resourceId: item.id,
+  resourceType: item.type,
+  isEnabled: isPublishOpen,
+  applications: deployments,
+  toolsets,
+  client: publishApiClient,
+  labels,
+  formatters,
+});
+
+<PublishPanel {...props} versionHistory={versionHistory} />;
+```
+
 ## Usage Utilities
 
 Available from both `@epam/ai-dial-chat-hooks` and `@epam/ai-dial-chat-hooks/usage`.
@@ -2720,7 +2866,7 @@ It is an optional peer in the package manifest, but must be installed when loadi
 either entry point; optional means hosts using other feature subpaths can omit it.
 The root retains its broader feature-peer requirements listed above.
 
-Three pure functions turning `useUsageData`'s already-fetched `UserLimitStatsResponseDto` into the normalized display models `@epam/ai-dial-usage-dashboard`'s `UsageLimitCardGroup` and `ModelLimitsSection` render. This is the narrow, explicitly justified DIAL-Core-response-adapter exception recorded in AGENTS.md §Library isolation: the adaptation is driven entirely by the generated response's own shape (the unlimited sentinel, status thresholds, field names), fully characterized by an existing test suite, and consumed identically by every DIAL-Core-backed chat application this library serves. Every user-visible string is produced by a caller-supplied `t` function matching i18next's `TFunction` signature, and every host-specific concern (icon-URL construction, locale resolution, date/time formatting) arrives as a caller-supplied callback — none of the three functions imports `react-i18next`, an app context, or `Intl`.
+Four pure functions turning `useUsageData`'s already-fetched `UserLimitStatsResponseDto` into the normalized display models `@epam/ai-dial-usage-dashboard`'s `UsageLimitCardGroup`, `SpendingBudgetsSection` and `ModelLimitsSection` render. This is the narrow, explicitly justified DIAL-Core-response-adapter exception recorded in AGENTS.md §Library isolation: the adaptation is driven entirely by the generated response's own shape (the unlimited sentinel, status thresholds, field names), fully characterized by an existing test suite, and consumed identically by every DIAL-Core-backed chat application this library serves. Every user-visible string is produced by a caller-supplied `t` function matching i18next's `TFunction` signature, and every host-specific concern (icon-URL construction, locale resolution, date/time formatting) arrives as a caller-supplied callback — none of the four functions imports `react-i18next`, an app context, or `Intl`.
 
 ### mapUsageDataToDashboard
 
@@ -2838,6 +2984,56 @@ const periodStatuses = mapOverallCostLimitsToPeriodStatuses(
 | `formatResetTime` | `FormatResetTime` (optional)             | Same callback as `mapUsageDataToDashboard`'s. Omit to produce statuses with no reset fields. |
 
 **Returns**: `ModelLimitPeriodStatuses` — see `@epam/ai-dial-usage-dashboard`'s README for the shape.
+
+### mapBudgetsToDashboard
+
+Maps the budgets charged for the caller's model calls — the `usage.budgets` entries whose `costObject` equals `usage.costObject` — into the `budgets` prop of `SpendingBudgetsSection`, in DIAL Core's order (the priority order in which a model call picks its payer). Each entry carries a Today card (`day`) and a This month card (`month`), built with exactly the same sentinel, status and reset rules as `mapUsageDataToDashboard`'s cards; DIAL Core budgets have no week window. Returns `[]` when the response carries no `costObject` or no `budgets`.
+
+- `title` is a non-blank `displayName`, otherwise `policy`.
+- `coverageLabel` is `t(BUDGET_DATA_I18N_KEYS.allModels)` for `object: "*"`, `t(BUDGET_DATA_I18N_KEYS.coveredModels, { models })` for a list (each id through the host's `resolveModelName`, an unknown id kept as is), and absent when the budget reports no `object`.
+- `id` is stable and unique even when a cost object lists the same policy twice.
+
+```tsx
+import {
+  mapBudgetsToDashboard,
+  BUDGET_DATA_I18N_KEYS,
+} from '@epam/ai-dial-chat-hooks/usage';
+import { SpendingBudgetsSection } from '@epam/ai-dial-usage-dashboard';
+
+const budgets = mapBudgetsToDashboard(usage, t, formatResetTime, (id) =>
+  modelNames.get(id),
+);
+// <SpendingBudgetsSection budgets={budgets} labels={labels} cardLabels={cardLabels} />
+```
+
+**Parameters**: `usage` (`Pick<UserLimitStatsResponseDto, 'budgets' | 'costObject'> | undefined`), `t`, `formatResetTime` (as for `mapUsageDataToDashboard`) and `resolveModelName` (`ResolveModelName`: `(deploymentId: string) => string | undefined`).
+
+**Returns**: `SpendingBudgetData[]` — see `@epam/ai-dial-usage-dashboard`'s README for the shape.
+
+### Spending limits mode
+
+DIAL Core does not report its `spendingLimits.mode` to the caller, so the host declares it (`SpendingLimitsMode`: `Off`, `Shadow`, `Enforce`) and these helpers decide what that means for one response. Available from the root and `./usage-limits` (they need only the generated client's types).
+
+- `parseSpendingLimitsMode(value)` returns the matching `SpendingLimitsMode`, or `Off` for anything else.
+- `resolveSpendingLimitsMode(configured, usage)` returns the effective mode: `configured` when `usage` carries a `budgets` array and a non-empty `costObject`, otherwise `Off` (DIAL Core with spending limits off, or older than epam/ai-dial-core#2284, still enforces the role cost limit).
+- `omitAccountCostStats(usage)` returns a copy without the four top-level `*CostStats`, keeping every other field.
+- `withholdAccountCostInEnforce(usage, configured)` applies `omitAccountCostStats` only in an effective `Enforce`, and returns `usage` itself otherwise. In `Enforce`, DIAL Core limits model calls by budgets instead of the role cost limit, so pass its result to `mapOverallCostLimitsToPeriodStatuses` and `mapDeploymentLimitsToInput`; `useUsageLimitBanner` applies it through its `spendingLimitsMode` option.
+
+```ts
+import {
+  SpendingLimitsMode,
+  resolveSpendingLimitsMode,
+  withholdAccountCostInEnforce,
+} from '@epam/ai-dial-chat-hooks/usage-limits';
+
+const mode = resolveSpendingLimitsMode(SpendingLimitsMode.Enforce, usage);
+const periodStatuses = mapOverallCostLimitsToPeriodStatuses(
+  withholdAccountCostInEnforce(usage, SpendingLimitsMode.Enforce),
+  activeLocale,
+  t,
+  formatResetTime,
+);
+```
 
 ### Supporting types
 
@@ -3581,6 +3777,21 @@ import { getBrowserTimezone } from '@epam/ai-dial-chat-hooks';
 getBrowserTimezone(); // e.g. 'Europe/Warsaw'
 ```
 
+### getTimezoneOptions / findTimezoneOption
+
+`getTimezoneOptions({ now?, locale? })` returns every selectable IANA zone as a `ScheduledTaskTimezoneOption` (from `@epam/ai-dial-scheduled-tasks`), sorted by UTC offset and then by identifier. The list is `Intl.supportedValuesOf('timeZone')` plus `UTC` (engines may omit it), with legacy names such as `Asia/Calcutta` shown under their current name (`Asia/Kolkata`). Offsets and the current abbreviation are read at `now`; the abbreviation is the first letters-only short name `Intl` gives for `locale`, then English (`en-GB`, `en-US`) — so Berlin reads `CET` even in an `en-US` browser, whose own short name is `GMT+1` — and is absent when no locale has one. `searchTerms` also hold the January and July abbreviations and the long names (`Central European Time`, `Central European Summer Time`), so `CET`, `CEST` or `central europe` finds the zone in any month. `findTimezoneOption(options, id)` returns the row for an id, including a legacy or aliased one, or `undefined`. Available from the root and `./scheduled-tasks`.
+
+```ts
+import { getBrowserTimezone } from '@epam/ai-dial-chat-hooks/utils';
+import {
+  findTimezoneOption,
+  getTimezoneOptions,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+const options = getTimezoneOptions({ locale: 'en-GB' }); // [{ id: 'Pacific/Pago_Pago', offsetLabel: 'GMT-11:00', ... }, ...]
+const browserZone = findTimezoneOption(options, getBrowserTimezone())?.id;
+```
+
 ### applyThemeColors / getOsPreferredTheme / ColorScheme
 
 `applyThemeColors(element, colors?)` writes each entry of `colors` to `element` as a `--<key>` custom property, first removing the properties its previous call wrote to that same element — so switching to a theme that declares fewer keys does not keep the old theme's values. Called without `colors`, it only removes them. Properties it never wrote are left alone. `getOsPreferredTheme()` returns `ColorScheme.Dark` or `ColorScheme.Light` from the `prefers-color-scheme` media query. Available from the root and `./utils`.
@@ -4263,7 +4474,7 @@ const { starters, propertyKey, description } = getStartersFromSchema(
 
 Announcement-banner helpers: sanitize operator-supplied HTML, check whether structured (`title`/`description`) or any content is present, and build the content-keyed signature used to track dismissal.
 
-`buildAnnouncementSignature` covers every part of the banner surface: the title, the description, and the `items` entries behind the `+N` pill, whose popover is hidden along with the banner. Editing any of them produces a new signature, so a host that persists it re-shows a banner the user had dismissed. A legacy-only announcement (`html` with no title or description) signs as the raw HTML string, and `items` is left out of the payload when the list is empty — both so signatures stored by earlier builds keep matching.
+`buildAnnouncementSignature` covers every part of the banner surface: the title, the description, and the `items` entries behind the `+N` pill, whose popover is hidden along with the banner. Editing any of them produces a new signature, so a host that persists it re-shows a banner the user had dismissed. An entry's `severity` is not signed: the Chat surfaces do not render it, so changing only the severity leaves a dismissed banner hidden. A legacy-only announcement (`html` with no title or description) signs as the raw HTML string, and `items` is left out of the payload when the list is empty — both so signatures stored by earlier builds keep matching.
 
 The two sanitizers differ in the tags they keep, because the two banner layouts differ. `sanitizeAnnouncementHtml` is for the structured `description`, which renders as one truncating line, so it keeps inline markup only — `a`, `b`, `strong`, `em`, `br`, `span`. `sanitizeAnnouncementMessageHtml` is for the legacy `html` message, a free-standing block, so it additionally keeps `u` and `p`. Both keep `href`, `target` and `rel` on links, drop everything else including `style`, and force `rel="noopener noreferrer"` on any link that already carries `target="_blank"`.
 
@@ -4295,6 +4506,32 @@ buildAnnouncementSignature(content);
 
 sanitizeAnnouncementMessageHtml('<p>Upgraded to <strong>1.47</strong></p>');
 // '<p>Upgraded to <strong>1.47</strong></p>'
+```
+
+### AnnouncementSeverity / mapAnnouncementSeverity
+
+`AnnouncementSeverity` says how urgent an `AnnouncementListItem` is, so a host can mark a maintenance or outage notice — for example with a warning icon before the title. Members: `Info` (`'info'`, an ordinary news item) and `Warning` (`'warning'`). `AnnouncementListItem.severity` is optional; absent means `Info`.
+
+`mapAnnouncementSeverity` converts the generated client's `AnnouncementSeverity` (from an `AnnouncementItemDto`) into the lib enum. It returns `Info` when the value is `null`, `undefined` — as from a backend that predates the field — or a level this build does not know, so a host can switch on the result exhaustively.
+
+```ts
+import type { AnnouncementItemDto } from '@epam/ai-dial-chat-api-client';
+import {
+  type AnnouncementListItem,
+  AnnouncementSeverity,
+  mapAnnouncementSeverity,
+} from '@epam/ai-dial-chat-hooks';
+
+const toListItems = (
+  dtos: readonly AnnouncementItemDto[],
+): AnnouncementListItem[] =>
+  dtos.map((dto) => ({
+    ...dto,
+    severity: mapAnnouncementSeverity(dto.severity),
+  }));
+
+const isWarning = (item: AnnouncementListItem): boolean =>
+  item.severity === AnnouncementSeverity.Warning;
 ```
 
 ### sanitizeFooterHtml / formatAppVersion
@@ -4604,9 +4841,9 @@ const overview = buildSkillOverview(
 );
 ```
 
-### toPublishEntityType / mapPublishHistoryEntryDto / mapPublishConversationResultDto
+### toPublishEntityType / mapPublishHistoryEntryDto / mapPublishConversationResultDto / mapResourceDependencyDto
 
-Maps a catalog entity type to the publish API's entity-type path param (`CatalogPublishEntityType`), and maps publish-history API responses into the publish panel's `PublishHistoryEntry` model.
+Maps a catalog entity type to the publish API's entity-type path param (`CatalogPublishEntityType`), maps publish-history API responses into the publish panel's `PublishHistoryEntry` model, and maps a publish-dependencies API entry (`ResourceDependencyDto`) into the panel's `PublishDependency` model.
 
 ```ts
 import { toPublishEntityType } from '@epam/ai-dial-chat-hooks';
@@ -4798,20 +5035,21 @@ const historyRuns = mergeScheduledTaskRuns(acceptedRuns, runs);
 
 Turn scheduler DTOs into the props `@epam/ai-dial-scheduled-tasks` renders.
 The lib decides everything the response determines — the trigger kind and the
-timezone it is shown in, the duration units, whether a run started today, the
+zone its wall times are read in (the task's own `timezone`, never converted to the viewer's), the duration units, whether a run started today, the
 run status, and which delete or mutation error applies — and the host supplies
 every word through formatter objects. Available from the root and
 `./scheduled-tasks`.
 
-| Export                                                              | Returns                                                                                                                                                                                           |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output; `options.timeZone` defaults to the browser's, `options.locale` formats dates and weekdays (several weekdays are joined with `Intl.ListFormat`) |
-| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                                                                             |
-| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                                                                          |
-| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                                                                       |
-| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                                                                                  |
-| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                                                                      |
-| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                                                                       |
+| Export                                                              | Returns                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output, showing the task's stored wall time in its own zone; `labels.withTimezone` appends the zone when it differs from `options.browserTimezone` (default: the browser's), `options.locale` formats dates and weekdays (several weekdays are joined with `Intl.ListFormat`) |
+| `formatScheduledTaskTriggerTime(value, timezone, locale?)`          | A stored trigger datetime — zone-local, or an instant from an older client — as the wall time it shows in `timezone`                                                                                                                                                                                                     |
+| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                                                                                                                                                                                                    |
+| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                                                                                                                                                                                                 |
+| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                                                                                                                                                                                              |
+| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                                                                                                                                                                                                         |
+| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                                                                                                                                                                                             |
+| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                                                                                                                                                                                              |
 
 ```ts
 import {
@@ -4831,6 +5069,7 @@ const scheduleLabels: ScheduledTaskScheduleLabels = {
   monthlyAt: (day, time) => `Monthly on day ${day} at ${time}`,
   invalid: 'Invalid schedule',
   recurringFallback: 'Recurring',
+  withTimezone: (label, timezone) => `${label} (${timezone})`,
 };
 const durationLabels: ScheduledTaskRunDurationLabels = {
   hours: (count) => `${count}h`,
@@ -4861,7 +5100,7 @@ building the formatters from `t()`.
 
 ### mapFormValuesToCreateBody / mapFormValuesToUpdateBody / mapScheduledTaskDtoToFormValues
 
-Maps validated scheduled-task create/edit form values to their request bodies (converting local wall-clock time to the UTC cron fields DIAL Scheduler expects), and inverts that mapping back to editable form values — failing closed with an `UnsupportedTriggerReason` when a task's trigger cannot be represented losslessly by the editor.
+Maps validated scheduled-task create/edit form values to their request bodies, and inverts that mapping back to editable form values — failing closed with an `UnsupportedTriggerReason` when a task's trigger cannot be represented losslessly by the editor. The body carries the wall time the user entered (cron `hour`/`minute`/`day_of_week`/`day`, an offset-less one-time `date`, and `T00:00:00.000`/`T23:59:59.999` window boundaries) next to a top-level `timezone`; DIAL Scheduler evaluates all of it in that zone, so a daily 09:00 task keeps running at 09:00 local time across daylight-saving changes and the browser's own offset is never involved. The reverse mapping reads the stored fields as they are and takes `values.timezone` from the DTO (`UTC` when absent); a one-time `date` or window boundary written by an older client as an instant (`Z` or an offset) is shown in the task's zone. A zone `Intl` does not know fails closed.
 
 ```ts
 import {
@@ -4878,15 +5117,16 @@ if (result.ok) {
 
 ### getNextCronOccurrence
 
-Returns the next UTC time a cron trigger with a fixed `hour`/`minute` fires after `from` (default: now), honouring its `day_of_week` (APScheduler Monday=0, one weekday or a comma list such as `'0,2,4'`) or `day` (a number or `'last'`) constraint. Returns `undefined` when the fields are not plain values it can evaluate (`*`, ranges, steps). Available from the root and `./scheduled-tasks`.
+Returns the next local `YYYY-MM-DDTHH:mm` at which a cron trigger with a fixed `hour`/`minute` fires in `timezone` after `from` (default: now) — cron fields are wall time in the task's zone, so the answer is wall time too — honouring its `day_of_week` (APScheduler Monday=0, one weekday or a comma list such as `'0,2,4'`) or `day` (a number or `'last'`) constraint. Returns `undefined` when the fields are not plain values it can evaluate (`*`, ranges, steps) or the zone is unknown. Available from the root and `./scheduled-tasks`.
 
 ```ts
 import { getNextCronOccurrence } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 
 getNextCronOccurrence(
   { fields: { hour: '9', minute: '0', day_of_week: '0' } },
+  'Europe/Berlin',
   new Date('2026-10-07T08:00:00.000Z'),
-); // 2026-10-12T09:00:00.000Z — the next Monday
+); // '2026-10-12T09:00' — the next Monday
 ```
 
 ## Catalog Hooks
@@ -5219,7 +5459,10 @@ returns the remembered destination keys with `folderKey` moved to the front and
 the list capped at 50, or `undefined` when nothing changes (an empty key, or one
 already first); a stored value that is not an array of strings is ignored.
 `hasPublishFolderWriteAccess(folderPath)` is `false` for a folder under a
-`Production` segment. Available from the root and `./catalog`.
+`Production` segment; it is the fallback `usePublishFolders` returns as
+`hasPublishWriteAccess` until the host passes `canPublishTo` (for example from
+`buildFolderGuards`), which then replaces it. Available from the root and
+`./catalog`.
 
 ```ts
 import {
@@ -5289,7 +5532,24 @@ Organization folder. With a create adapter (`ResourceCreateSaveAdapter`, told
 apart by `isResourceCreateAdapter`) it calls `createIn` with the chosen
 Personal folder, or with the root before publishing; the result's `isCreated`
 is then `true`, and the panel offers no version choice. A failure after the save resolves with the
-`ResourceSaveOutcome` `SavedButMoveFailed` or `SavedButPublishFailed`.
+`ResourceSaveOutcome` `SavedButMoveFailed`, `SavedButPublishFailed` or
+`SavedButOrgUnitWriteFailed`.
+
+An Organization destination takes a direct write instead of a publish request
+when `choice.isDirectWrite` is `true` and the adapter has `saveIntoOrgUnit`
+(`ResourceOrgUnitWriter`): the steps before it are the Organization rows, then
+`saveIntoOrgUnit(savedId, folderPath)` replaces `publish`, and the result's
+`isWrittenToOrgUnit` is `true`. `useResourceSavePanel` sets `isDirectWrite`
+from its optional `canSaveDirectlyTo(folderPath)` parameter (for example from
+`buildFolderGuards`), only for the Organization root, and for such a
+destination it fetches no rules, does not wait for them and hides the rules
+editor through `accessRules.isHiddenFor`. Without the parameter every
+Organization destination keeps the publish rows. The optional
+`getDisabledReason(folderPath, root)` parameter (for example the guards'
+`getDisabledReason`) is returned to the panel as
+`panelProps.getDisabledReason(destination)`; a committed destination for which
+it returns a reason disables Save (`isSubmitDisabled`) and makes `submit` do
+nothing, and the main view shows the reason.
 
 The module also exports:
 
@@ -5331,7 +5591,7 @@ const { panelProps } = useResourceSavePanel({
 These functions build the `ResourceSaveAdapter` for each resource type.
 Each one takes a configured generated client and never creates one:
 
-- **`createEmbeddedApplicationSaveAdapter({ applicationsApi, applicationId, runEmbeddedSave, getCommitFailedMessage })`**
+- **`createEmbeddedApplicationSaveAdapter({ applicationsApi, applicationId, runEmbeddedSave, getCommitFailedMessage, publishClient? })`**
   is for Quick Apps, whose embedded editor is the only writer. A new version
   runs in three steps:
   1. fork the stored application;
@@ -5341,16 +5601,23 @@ Each one takes a configured generated client and never creates one:
   If the save fails, the fork is deleted. If the commit fails, it throws a
   `ResourceSaveError` with `getCommitFailedMessage(version)`.
 
-- **`createHostApplicationSaveAdapter({ applicationsApi, applicationId, update, createVersion })`**
+  It also gives the adapter `saveIntoOrgUnit(id, folderPath)`, which copies the
+  saved application into an org-unit folder of the public bucket through
+  `publishClient.copyCatalogEntityToOrgUnit('application', id, { folderPath })`
+  and never overwrites. `publishClient` is a `ResourceSavePublishClient`, the
+  `PublishApiClient` from `createPublishApiClient`; `createOrgUnitWriter(publishClient, entityType)`
+  builds the same `saveIntoOrgUnit` for any other adapter. `publishClient` is optional on every adapter factory (as in `useSkillEditorSubmit`): without it the adapter has no `saveIntoOrgUnit` and keeps only the publish path, and `isWrittenToOrgUnit` on a result is optional, so a host built before org units needs no change. A host that wants the direct write passes the client and a BFF that serves `copy-to-org-unit`.
+
+- **`createHostApplicationSaveAdapter({ applicationsApi, applicationId, update, createVersion, publishClient? })`**
   is for applications the host writes itself.
-- **`createToolsetSaveAdapter({ toolsetsApi, toolsetId, body })`** writes a new
+- **`createToolsetSaveAdapter({ toolsetsApi, toolsetId, body, publishClient? })`** writes a new
   version with `createOnly: true` into the chosen folder.
-- **`createPromptSaveAdapter({ promptsApi, promptId, body })`** is unversioned:
+- **`createPromptSaveAdapter({ promptsApi, promptId, body, publishClient? })`** is unversioned:
   it updates the prompt and then moves it.
 - **`createPromptFolderLister(promptsApi)`** returns the `listPersonalFolders`
   for prompts, one folder level built from the prompt listing.
-- **`createToolsetCreateAdapter({ toolsetsApi, body })`** and
-  **`createPromptCreateAdapter({ promptsApi, body })`** create a new toolset
+- **`createToolsetCreateAdapter({ toolsetsApi, body, publishClient? })`** and
+  **`createPromptCreateAdapter({ promptsApi, body, publishClient? })`** create a new toolset
   (create-only) or prompt in the chosen folder.
 - **`createSkillFolderLister(skillsApi, bucket)`** returns the
   `listPersonalFolders` for skills: the grouping folders of one level, across
@@ -5590,7 +5857,7 @@ if (loadState === SkillEditorLoadState.Loading) {
 
 ### useSkillEditorSubmit
 
-Owns a Skill Editor's create/edit submission flow: field validation, building and (in edit mode) merging the `SKILL.md` manifest, calling `client.createSkill`/`client.updateSkill`, and mapping the resulting success/error/conflict outcomes to presentable state. Accepts an already-configured `client`, a `messages` object, and `onNavigate`/`onNotify` callbacks rather than importing routing, notification, or i18n modules itself. Pass `getCreateReturnUrl` when the host needs to select the created skill; it receives the normalized skill path and keeps host routing out of the hook.
+Owns a Skill Editor's create/edit submission flow: field validation, building and (in edit mode) merging the `SKILL.md` manifest, calling `client.createSkill`/`client.updateSkill`, and mapping the resulting success/error/conflict outcomes to presentable state. Accepts an already-configured `client`, a `messages` object, and `onNavigate`/`onNotify` callbacks rather than importing routing, notification, or i18n modules itself. Pass `getCreateReturnUrl` when the host needs to select the created skill; it receives the normalized skill path and keeps host routing out of the hook. Pass `publishClient` (an object with `copyCatalogEntityToOrgUnit`) to give the Save-panel adapters a direct write into an org-unit folder; without it they offer none.
 
 `isSubmitErrorRetryable` is `true` only when `submitError` came from something a plain re-send can clear, such as an unavailable service; `retrySubmit` then re-sends the failed attempt's values, reusing the manifest and file blobs it already built. Pair the two to offer the action only where it can help — `onRetrySubmit={isSubmitErrorRetryable ? retrySubmit : undefined}` on `SkillEditor`.
 
@@ -5859,19 +6126,32 @@ import { sanitizeFileName } from '@epam/ai-dial-chat-hooks';
 sanitizeFileName('report:final?.pdf'); // 'report_final_.pdf'
 ```
 
-### isDialFileId / isDialFolderId / resolveRelativeDialFilePath / resolveDialFileBucketAndPath
+### isDialFileId / isDialFolderId / isDialProjectFileId / parseDialProjectFileId / isDialStoredFileId / resolveRelativeDialFilePath / resolveDialFileBucketAndPath
 
 Recognizes a DIAL Core file id (`files/{bucket}/{path}`) or folder id (a file id ending with `/`) and resolves it to a bucket-relative path or its `{ bucket, path }` parts.
+
+`parseDialProjectFileId` splits a file inside a project, `projects/{bucket}/{path}/files/{filePath}` (as an agent in a project conversation returns it), into a `DialProjectFileIdParts` value: the decoded `projectId` and the decoded `filePath` segments. The id is percent-encoded per segment, as DIAL Core writes it, so a `#` in a name is `%23` and a raw `#...` is a fragment it ignores. It returns `undefined` for a folder, an empty segment or a malformed escape; `isDialProjectFileId` is the same test as a boolean. The host maps the parts to its own route.
+
+`isDialStoredFileId` is true for either kind of id — the ids a host resolves to its own download routes. The citation, reference and canvas resolvers use it to decide between the host resolver and opening the URL as-is.
 
 ```ts
 import {
   isDialFolderId,
+  isDialProjectFileId,
+  isDialStoredFileId,
+  parseDialProjectFileId,
   resolveDialFileBucketAndPath,
 } from '@epam/ai-dial-chat-hooks';
 
 resolveDialFileBucketAndPath('files/my-bucket/reports/q1.pdf');
 // { bucket: 'my-bucket', path: 'reports/q1.pdf' }
 isDialFolderId('files/my-bucket/reports/'); // true
+isDialProjectFileId('projects/my-bucket/q4/files/artifacts/report.pdf'); // true
+parseDialProjectFileId(
+  'projects/my-bucket/Q4%20launch/files/artifacts/run-1/a.csv',
+);
+// { projectId: 'projects/my-bucket/Q4 launch', filePath: ['artifacts', 'run-1', 'a.csv'] }
+isDialStoredFileId('files/my-bucket/reports/q1.pdf'); // true
 ```
 
 ### FileSelectionKind / getFileSelectionKind / resolveDialFolderPath
@@ -5891,7 +6171,7 @@ const folderPath = resolveDialFolderPath(folder, bucket);
 
 ### openAnnotationAttachment
 
-Default click behavior for a cited/referenced attachment: triggers a browser download for DIAL-hosted files via the injected `resolveDownloadUrl`, otherwise opens the URL in a new tab.
+Default click behavior for a cited/referenced attachment: triggers a browser download for DIAL-hosted files (`isDialStoredFileId`: a `files/` id or a project file id) via the injected `resolveDownloadUrl`, otherwise opens the URL in a new tab. `useAttachmentAction` uses the same function for a reference-only attachment.
 
 ```ts
 import { openAnnotationAttachment } from '@epam/ai-dial-chat-hooks';
@@ -5905,7 +6185,7 @@ openAnnotationAttachment(attachmentResource, (fileId) =>
 
 Reachable from the root entry and from `@epam/ai-dial-chat-hooks/file-manager-canvas` — the subpath that owns them, so `./file-manager` stays free of the `@epam/ai-dial-attachment-canvas`/`@epam/ai-dial-quotations` peers.
 
-A family of resolvers that turn a `DisplayAttachment` into the content payload `@epam/ai-dial-attachment-canvas` renders (image, plain text, markdown, code, HTML, PDF, OOXML/CSV, JSON, or a custom visualizer), plus the annotation-specific PDF resolvers and the shared LRU fetch cache they use. Every resolver takes the same host-injected `AttachmentCanvasUrlResolvers` — DIAL-file URL resolution is host-owned, since it encodes the app's own file-download endpoint. Before serving a cached blob/text body, the cache revalidates the resource's current ETag through `resolveDialFileMetadataUrl` and only reuses the cached body on an exact match, so a resource overwritten since it was cached is refetched instead of replayed.
+A family of resolvers that turn a `DisplayAttachment` into the content payload `@epam/ai-dial-attachment-canvas` renders (image, plain text, markdown, code, HTML, PDF, OOXML/CSV, JSON, or a custom visualizer), plus the annotation-specific PDF resolvers and the shared LRU fetch cache they use. Every resolver takes the same host-injected `AttachmentCanvasUrlResolvers` — DIAL-file URL resolution is host-owned, since it encodes the app's own file-download endpoint. The citation and reference PDF/OOXML resolvers pass a source that is a `files/` id or a project file id (`isDialStoredFileId`) to `resolveDialFileDownloadUrl`, so a host that serves project files resolves both kinds there. Before serving a cached blob/text body, the cache revalidates the resource's current ETag through `resolveDialFileMetadataUrl` and only reuses the cached body on an exact match, so a resource overwritten since it was cached is refetched instead of replayed.
 
 ```ts
 import {
@@ -6845,3 +7125,28 @@ UsageResetOffsetPolicy.CurrentOffset retains the viewer's formatting-time offset
 UsageResetOffsetPolicy.ResetInstant uses the offset at the reset boundary. Both preserve
 isoValue and resetsAtMs. The shortened formatter and parent defaults are unchanged.
 Downstream can select the explicit policies instead of copying these algorithms.
+
+The project entry point's `getPinnedProjectMenuActions` includes
+`PinnedProjectMenuAction.RevokeAccess` after Share for owners only when its
+second argument, `canRevokeAccess`, is true. It defaults to false; pass
+`canRevokeAccess(project.id)` from `useProjectShareRecipients` after a confirmed
+positive count. Other actions keep their existing ownership rules. Hosts map this
+action to their confirmation and revoke request; recipients retain the
+existing Remove from My List flow.
+
+### Project access revocation
+
+The project entry point exports `useProjectShareRecipients(client)` and
+`useProjectRevokeAccess(client, project, handlers)`. Supply the same stable,
+already-configured `ProjectSharingClient` (the `ShareApi` recipient-count and revoke
+operations) to both. No authentication or transport configuration occurs here.
+
+Recipient state returns `requestRecipients(projectId)` for menu-open refreshes
+and `canRevokeAccess(projectId)`, false until a positive count is confirmed.
+Revoke state returns `isRevoking` and `confirmRevoke()`, guards ownership and
+duplicate requests, and updates all menus on the same client after success.
+`ProjectRevokeAccessHandlers.onRevoked(project)` and
+`onError(project, requestId)` carry notifications and dialog lifecycle.
+`notifyProjectAccessRevoked(client, projectId)` supports revokes performed
+outside the hook. Client instances have isolated subscriptions; unmounting
+unsubscribes and discards pending responses. No persistent cache is created.

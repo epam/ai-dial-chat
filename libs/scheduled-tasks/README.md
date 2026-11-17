@@ -119,7 +119,7 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
 
 ### ScheduledTaskCreateForm
 
-Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control is a fully-composed `modelSelector` element the host renders — the lib wraps it with the field's required label and error message. Other fields, including the masked time-of-day picker (shown when `repeat` is "daily", "weekly", "monthly", or "custom"), is lib-owned: the picker shows the viewer's timezone hint and validates its visible draft on blur, since the ui kit's masked time input only reports complete `HH:mm` values through `onChange` — while that blur error is set, Save stays disabled so a half-typed draft cannot be saved as the stale last-complete value. Every blur reports the visible draft through `onFieldChange('time', …)` — complete or not — so a host that clears a field's error on change also clears its own `errors.time` without the value having to change; the blur pass validates the draft separately and keeps showing its own message for incomplete ones. The one-shot run-at picker is the internal `ScheduledTaskRunAtField` component: it cannot select a moment earlier than the field's mount time — the earliest selectable moment is pinned when the field mounts, so past days render unselectable while the mount date and future days stay selectable. Its popover footer's time control opens an hour/minute list from a clock button, besides accepting typed `HH:mm`. The Start date / End date pair is bounded the same way: both pickers pin the earliest selectable day at the form's mount date, so days before it render unselectable. Every recurring cadence, `custom` included, renders the same date-only pair, so a repeat switch between them keeps both boundaries. The form's only internal state is the time field's blur error, which resets when a repeat switch hides the field.
+Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control is a fully-composed `modelSelector` element the host renders — the lib wraps it with the field's required label and error message. Other fields, including the masked time-of-day picker (shown when `repeat` is "daily", "weekly", "monthly", or "custom"), is lib-owned: the picker validates its visible draft on blur, since the ui kit's masked time input only reports complete `HH:mm` values through `onChange` — while that blur error is set, Save stays disabled so a half-typed draft cannot be saved as the stale last-complete value. Every blur reports the visible draft through `onFieldChange('time', …)` — complete or not — so a host that clears a field's error on change also clears its own `errors.time` without the value having to change; the blur pass validates the draft separately and keeps showing its own message for incomplete ones. The one-shot run-at picker is the internal `ScheduledTaskRunAtField` component: it cannot select a moment earlier than the field's mount time — the earliest selectable moment is pinned when the field mounts (and read in `values.timezone` when the host supplies a `timezone` prop), so past days render unselectable while the mount date and future days stay selectable. Its popover footer's time control opens an hour/minute list from a clock button, besides accepting typed `HH:mm`. The Start date / End date pair is bounded the same way: both pickers pin the earliest selectable day at the form's mount date in `values.timezone`, so days before it render unselectable. Every recurring cadence, `custom` included, renders the same date-only pair, so a repeat switch between them keeps both boundaries. The form's only internal state is the time field's blur error, which resets when a repeat switch hides the field.
 
 When `repeat` is `ScheduledTaskRepeat.Custom`, the schedule section renders the time-of-day picker, below it a multi-select day-of-week button row under a visible required "Days" label (`labels.daysOfWeekLabel`, also the row's accessible name via `aria-labelledby`), and the Start date / End date pair. The row is circular 40×40px kit `Button`s at a 2px gap — Primary Solid selected, Neutral Solid unselected — built from `labels.customDayOptions`, each button carrying its full day name as the accessible name and an `aria-pressed` selection state. Activating a day toggles it in `values.daysOfWeek` (APScheduler `'0'`=Monday–`'6'`=Sunday, kept sorted Monday first), except that the only selected day stays selected; `errors.daysOfWeek` renders under the row. One time applies to every selected day, and Custom blocks Save until a day is selected.
 
@@ -166,6 +166,53 @@ import {
   onSubmit={() => {}}
   isSubmitting={false}
   markdownEditorTheme="light"
+/>;
+```
+
+#### Time zone
+
+`ScheduledTaskCreateFormValues.timezone` is the IANA zone the schedule is evaluated in. Every wall-clock value in the form — `time`, `runAt`, `minute`, the day pickers and the activity-window dates — is read in it, so a daily 09:00 task keeps running at 09:00 local time across daylight-saving changes. Pass the optional `timezone` prop (`ScheduledTaskCreateFormTimezone`: `options`, `browserTimezoneId`, `labels`, `colors`, `classNames`) to show the picker; without it the picker is hidden and the host owns the zone. The picker sits under the Time field (daily, weekly, monthly, custom), the Run-at field (one-time) or the Minute field (hourly). In the time-of-day field the selected zone is written inside the input at its trailing edge, as `(GMT+01:00) Europe/Berlin`, just before the clock button, with the link below it; the kit `Calendar`'s own `showTimezone` hint is not used, because it always names the viewer's zone. The one-time and hourly fields show the zone beside the link instead. `validateScheduledTaskFormValues` reads "now" and "today" in `values.timezone` and reports `ScheduledTaskValidationErrorCode.TimezoneInvalid` for an empty or unknown zone; the form shows that error under the picker and links it to the link through `aria-describedby`.
+
+When a one-time run time does not exist in the zone (it falls in a spring-forward gap), a non-blocking `ScheduledTaskTimezoneGapHint` names the time the task will run at; saving stays allowed.
+
+```tsx
+import {
+  ScheduledTaskCreateForm,
+  type ScheduledTaskTimezoneOption,
+} from '@epam/ai-dial-scheduled-tasks';
+
+const options: ScheduledTaskTimezoneOption[] = [
+  {
+    id: 'Europe/Berlin',
+    offsetLabel: 'GMT+01:00',
+    offsetMinutes: 60,
+    abbreviation: 'CET',
+    searchTerms: ['gmt+01:00', 'europe/berlin', 'europe berlin', 'cet', 'cest'],
+  },
+];
+
+<ScheduledTaskCreateForm
+  {...formProps}
+  values={{ ...values, timezone: 'Europe/Berlin' }}
+  timezone={{ options, browserTimezoneId: 'Europe/Berlin' }}
+/>;
+```
+
+### ScheduledTaskTimezoneField
+
+A "Change timezone" link (with the selected zone written beside it unless `isSummaryShown` is `false`) that opens a searchable, grouped list of zones: a popover on desktop, a bottom sheet under `useIsPhone`. The host passes already-sorted `options` (the list is rendered in the order given, with `browserTimezoneId` repeated first under "Your time zone"), the selected `value`, and `onChange(timezoneId)`. Typing filters by substring against each option's `searchTerms` and highlights the match in the offset, identifier and abbreviation; with a query the two group headings give way to one flat list, the result count is announced through a live region, and an empty result shows an announced empty state. Arrow keys move between rows, Enter selects, and Escape closes and returns focus to the link. A row reads `GMT+01:00  Europe/Berlin • CET`; the bullet and abbreviation are omitted when `abbreviation` is not set. The lib builds no zone list itself — `getTimezoneOptions` in `@epam/ai-dial-chat-hooks` does.
+
+Every string comes from `labels` (`ScheduledTaskTimezoneLabels`, each with an English default), colors from `colors` (`linkColor`, `headingColor`, `offsetColor`, `nameColor`, `abbreviationColor`, `hintColor`, `shadowColor`) and typography from `classNames` (`linkClassName` `'dial-small-semi-text'`, `headingClassName` `'dial-tiny-lead-semi-text'`, `rowClassName` `'dial-small-text'`, `hintClassName` `'dial-tiny-text'`).
+
+```tsx
+import { ScheduledTaskTimezoneField } from '@epam/ai-dial-scheduled-tasks';
+
+<ScheduledTaskTimezoneField
+  id="task-timezone"
+  options={options}
+  value={timezone}
+  browserTimezoneId="Europe/Berlin"
+  onChange={setTimezone}
 />;
 ```
 
@@ -671,6 +718,24 @@ import {
 />;
 ```
 
+### getTimezoneSummary
+
+`getTimezoneSummary(options, timezoneId)` returns the selected zone as `(GMT+01:00) Europe/Berlin`, or the bare id when the zone is not among `options`. The create form uses it for the text inside the time input.
+
+### getZonedNow / instantToZonedDateTime / isNonexistentLocalTime / shiftForwardOverGap / wallClockToLocalDate / isAbsoluteInstant
+
+Wall-clock helpers for a task's IANA zone, built on `Intl` alone. Values are zone-local `YYYY-MM-DDTHH:mm` strings, so the same input gives the same answer wherever the page runs. `getZonedNow(now, timezone)` returns `{ date, dateTime, dateTimeWithSeconds }` for the zone (it throws a `RangeError` for an unknown zone). `instantToZonedDateTime(iso, timezone)` shows an absolute instant in the zone, or returns `undefined` for a non-date. `isNonexistentLocalTime(dateTime, timezone)` is `true` only inside a spring-forward gap (a repeated autumn time exists), and `shiftForwardOverGap` returns the time the task then runs at (`02:30` becomes `03:30` in `Europe/Berlin`). `wallClockToLocalDate(dateTime)` builds a `Date` in the process's zone with the same fields, for a kit picker's `minDate`. `isAbsoluteInstant(value)` tells an ISO value with `Z` or an offset from zone-local wall time.
+
+```ts
+import {
+  getZonedNow,
+  shiftForwardOverGap,
+} from '@epam/ai-dial-scheduled-tasks';
+
+getZonedNow(new Date(), 'Asia/Tokyo').date; // today's date in Tokyo
+shiftForwardOverGap('2027-03-28T02:30', 'Europe/Berlin'); // '2027-03-28T03:30'
+```
+
 ## Constants
 
 ### TIME_OF_DAY_PATTERN
@@ -687,8 +752,8 @@ TIME_OF_DAY_PATTERN.test('9:5'); // false
 ### SCHEDULED_TASK_CREATE_DEFAULT_VALUES
 
 The `ScheduledTaskCreateFormValues` a new task starts with: a daily run at
-`09:00` (`minute: '0'`), with name, model and prompt empty and
-no activity window.
+`09:00` (`minute: '0'`) in `UTC` — a host replaces `timezone` with the
+viewer's own zone — with name, model and prompt empty and no activity window.
 
 ```ts
 import { SCHEDULED_TASK_CREATE_DEFAULT_VALUES } from '@epam/ai-dial-scheduled-tasks';

@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { ApiEndpoints } from '../../server-api/base';
 import { resolveDialFileDownloadUrl, resolveMarkdownUrl } from '../dial-file';
-import { getIconMimeType, getIconPath } from '../icon-path';
+import {
+  getIconMimeType,
+  getIconPath,
+  resolveCatalogIconUrl,
+} from '../icon-path';
 
 describe('getIconMimeType', () => {
   it('returns image/svg+xml for an SVG icon regardless of extension case', () => {
@@ -133,6 +137,12 @@ describe('resolveMarkdownUrl', () => {
     );
   });
 
+  it('rewrites a project file id to the BFF project artifact URL', () => {
+    expect(
+      resolveMarkdownUrl('projects/b/Q4%20launch/files/artifacts/chart.png'),
+    ).toBe('/api/v1/projects/projects%2Fb%2FQ4%20launch/artifacts/chart.png');
+  });
+
   it('leaves an incomplete files/ id unchanged', () => {
     expect(resolveMarkdownUrl('files/only-bucket')).toBe('files/only-bucket');
   });
@@ -141,5 +151,63 @@ describe('resolveMarkdownUrl', () => {
     expect(resolveMarkdownUrl('files/bucket/report.pdf#page=3')).toBe(
       '/api/v1/files/download?bucket=bucket&path=report.pdf',
     );
+  });
+});
+
+describe('resolveCatalogIconUrl', () => {
+  const THEMES = 'https://themes.example.com';
+
+  it('maps a theme-relative name to the icon proxy', () => {
+    expect(resolveCatalogIconUrl('gpt4.svg')).toBe(
+      '/api/themes/icon?iconName=gpt4.svg',
+    );
+  });
+
+  it('maps an absolute URL of a file under the themes host to the same proxy URL as its relative name', () => {
+    expect(resolveCatalogIconUrl(`${THEMES}/gpt4.svg`, THEMES)).toBe(
+      resolveCatalogIconUrl('gpt4.svg', THEMES),
+    );
+  });
+
+  it('keeps an absolute themes-host URL as is when no themes base URL is known', () => {
+    expect(resolveCatalogIconUrl(`${THEMES}/gpt4.svg`)).toBe(
+      `${THEMES}/gpt4.svg`,
+    );
+    expect(resolveCatalogIconUrl(`${THEMES}/gpt4.svg`, null)).toBe(
+      `${THEMES}/gpt4.svg`,
+    );
+  });
+
+  it.each([
+    'https://cdn.example.com/gpt4.svg',
+    'https://themes.example.com.evil.test/gpt4.svg',
+    `${THEMES}/nested/gpt4.svg`,
+    `${THEMES}/gpt4.svg?v=2`,
+    `${THEMES}/`,
+  ])('keeps %s as is because the proxy cannot serve it', (url) => {
+    expect(resolveCatalogIconUrl(url, THEMES)).toBe(url);
+  });
+
+  it('proxies a DIAL file ID through the download endpoint', () => {
+    expect(resolveCatalogIconUrl('files/bucket/icon.png', THEMES)).toBe(
+      '/api/v1/files/download?bucket=bucket&path=icon.png',
+    );
+  });
+
+  it('resolves a generated project image through the project artifact endpoint', () => {
+    expect(
+      resolveCatalogIconUrl('projects/a1b2c3/q4/files/artifacts/chart.png'),
+    ).toBe('/api/v1/projects/projects%2Fa1b2c3%2Fq4/artifacts/chart.png');
+  });
+
+  it('does not treat a project file outside context and artifacts as a theme icon', () => {
+    expect(
+      resolveCatalogIconUrl('projects/a1b2c3/q4/files/tmp/chart.png'),
+    ).toBeUndefined();
+  });
+
+  it('returns undefined for a missing icon', () => {
+    expect(resolveCatalogIconUrl(undefined, THEMES)).toBeUndefined();
+    expect(resolveCatalogIconUrl('', THEMES)).toBeUndefined();
   });
 });

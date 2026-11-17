@@ -1,10 +1,15 @@
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
+import { validateManagedRuntimeEnvironment } from '../app-config/managed-runtime/managed-runtime.settings';
 import {
   PROJECT_ARCHIVE_READ_MAX_BYTES,
   PROJECT_MANIFEST_MAX_BYTES,
 } from '../projects/constants/project-context.constants';
 import { EnvironmentVariables } from './environment.config';
+import {
+  attachExplicitEnvironment,
+  collectExplicitEnvironment,
+} from './explicit-environment';
 
 /*
  * The largest PROJECT_CONTEXT_TOTAL_MAX_BYTES a project can be edited at:
@@ -75,10 +80,22 @@ export const validate = (rawConfig: Record<string, unknown>) => {
     );
   }
 
+  const managedErrors = validateManagedRuntimeEnvironment(validatedConfig);
+  if (managedErrors.length > 0) {
+    throw new Error(
+      `Environment validation failed:\n${managedErrors.join('\n')}`,
+    );
+  }
+
   console.info(
     '[Config] Environment validated. DIAL_CORE_URL=%s',
     validatedConfig.DIAL_CORE_URL,
   );
 
-  return validatedConfig;
+  /* Presence comes from the raw input, before class initializers and the
+   * callback-URL fallbacks above, so a typed default is never explicit. */
+  return attachExplicitEnvironment(
+    validatedConfig,
+    collectExplicitEnvironment(rawConfig),
+  );
 };

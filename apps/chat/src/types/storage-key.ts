@@ -2,6 +2,8 @@ export enum StorageKey {
   ConversationPanelWidth = 'conversationPanelWidth',
   ConversationSourcesWidth = 'conversationSourcesWidth',
   Theme = 'theme',
+  /** Every configured theme's colours by id, read by `public/theme-init.js`. */
+  ThemeColors = 'themeColors',
   KeyboardShortcut = 'keyboardShortcut',
   CelebrationsEnabled = 'celebrationsEnabled',
   DefaultAgent = 'defaultAgent',
@@ -10,6 +12,9 @@ export enum StorageKey {
   CatalogIsMyAppsActive = 'catalogIsMyAppsActive',
   CatalogActiveTab = 'catalogActiveTab',
   TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
+  SeenOnboardingHints = 'seenOnboardingHints',
+  /** Session flag: the onboarding anchor view stays on across navigation until closed. */
+  OnboardingAnchorView = 'onboardingAnchorView',
   PublishDestinationFolders = 'publishDestinationFolders',
   ConversationDrafts = 'conversationDrafts',
   NavigationSidebarExpanded = 'navigationSidebarExpanded',

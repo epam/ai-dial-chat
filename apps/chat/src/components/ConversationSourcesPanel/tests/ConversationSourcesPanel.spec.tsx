@@ -270,8 +270,9 @@ vi.mock('../../../hooks/useLocalStorage', () => ({
   default: () => [360, vi.fn()],
 }));
 
-vi.mock('../../../utils/dial-file', () => ({
-  resolveDialFileDownloadUrl: (fileId: string) =>
+vi.mock('../../../utils/dial-file', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../utils/dial-file')>()),
+  resolveAttachmentDownloadUrl: (fileId: string) =>
     `/api/v1/files/download?path=${fileId}`,
 }));
 
@@ -360,6 +361,34 @@ describe('ConversationSourcesPanelContainer — download all', () => {
     });
 
     expect(screen.queryByRole('button', { name: 'Download all' })).toBeNull();
+  });
+
+  /* Regression: the lib predicate accepts any project file id, so a file no
+   * BFF route serves showed a button whose click downloaded nothing. */
+  it('hides the download-all button when the only project file has no download route', () => {
+    mockUploaded = [
+      makeAttachment('notes.pdf', {
+        url: 'projects/bucket/q4/files/conversations/notes.pdf',
+      }),
+    ];
+    render(<ConversationSourcesPanelContainer />, {
+      wrapper: CanvasTestWrapper,
+    });
+
+    expect(screen.queryByRole('button', { name: 'Download all' })).toBeNull();
+  });
+
+  it('renders the download-all button for a project output', () => {
+    mockUploaded = [
+      makeAttachment('report.pdf', {
+        url: 'projects/bucket/q4/files/artifacts/report.pdf',
+      }),
+    ];
+    render(<ConversationSourcesPanelContainer />, {
+      wrapper: CanvasTestWrapper,
+    });
+
+    expect(screen.getByRole('button', { name: 'Download all' })).toBeTruthy();
   });
 
   it('renders the download-all button enabled when a downloadable attachment is present', () => {

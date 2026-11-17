@@ -14,6 +14,7 @@ import {
   ConversationGenerationService,
   GenerationStatus,
 } from '../generation/conversation-generation.service';
+import type { StreamCompletionRequest } from '../streaming/stream-completion-request';
 import { createConversationGenerationController } from './conversation-controller.fixture';
 
 /*
@@ -57,8 +58,6 @@ const VALID_COMPLETION_BODY = {
 const CHUNK_SIZE = 64 * 1024;
 /** 20 * 64 KiB = 1.25 MiB, past `SSE_COMPLETION_MAX_BUFFERED_BYTES`. */
 const CHUNKS_PAST_LIMIT = 20;
-/** The `onReadyToStream` callback's position in `streamCompletion`'s argument list. */
-const ON_READY_TO_STREAM_ARG = 10;
 
 const makeGenerationService = () => ({
   register: vi.fn().mockReturnValue(new AbortController()),
@@ -87,7 +86,7 @@ const makeStreamingService = (
   streamCompletion: vi.fn().mockImplementation(async function* (
     ...args: unknown[]
   ) {
-    (args[ON_READY_TO_STREAM_ARG] as () => void)();
+    (args[0] as StreamCompletionRequest).onReadyToStream();
     for (let index = 0; index < chunkCount; index += 1) {
       yield Buffer.alloc(CHUNK_SIZE, 'x');
       if (index === 0) onFirstChunk?.();
@@ -383,9 +382,9 @@ describe('completion-response-lifecycle', () => {
         streamCompletion: vi.fn().mockImplementation(async function* (
           ...args: unknown[]
         ) {
-          (args[ON_READY_TO_STREAM_ARG] as () => void)();
+          (args[0] as StreamCompletionRequest).onReadyToStream();
           throw new Error('upstream failed before the first chunk');
-          // eslint-disable-next-line no-unreachable
+
           yield Buffer.alloc(1);
         }),
       };
@@ -440,7 +439,7 @@ describe('completion-response-lifecycle', () => {
         streamCompletion: vi.fn().mockImplementation(async function* (
           ...args: unknown[]
         ) {
-          (args[ON_READY_TO_STREAM_ARG] as () => void)();
+          (args[0] as StreamCompletionRequest).onReadyToStream();
           for (const chunk of chunks) {
             await new Promise<void>((resolve) => releases.push(resolve));
             yield Buffer.from(chunk);

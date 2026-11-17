@@ -241,8 +241,9 @@
             "name": "appId",
             "required": true,
             "in": "query",
-            "description": "Application identifier. Must be a known app ID.",
+            "description": "Application identifier served by this deployment. An identifier the deployment does not serve is rejected with 400.",
             "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
               "example": "chat-ui",
               "type": "string"
             }
@@ -260,7 +261,7 @@
             }
           },
           "400": {
-            "description": "Missing or invalid appId"
+            "description": "Missing, malformed or unserved appId"
           }
         },
         "summary": "Get client-safe application configuration and feature flags",
@@ -382,6 +383,57 @@
         "tags": ["applications"]
       }
     },
+    "/api/v1/org-units": {
+      "get": {
+        "description": "Returns the DIAL Core org units the authenticated user may see, flat in Core order, each with the caller's `permissions` (namespace to actions). `hasAdminAccess` is true when Core reports full admin access. `enabled` is false (and `hasAdminAccess` false, `units` empty) when DIAL Core has org units turned off. Answers 403 while the `features.orgUnitsEnabled` flag is off. Results are cached server-side for 60 seconds per user.",
+        "operationId": "listOrgUnits",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the org units with their permissions and the admin flag",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgUnitsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DIAL Core rejected the request as invalid"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "The `features.orgUnitsEnabled` flag is off, or DIAL Core refused the org-units read"
+          },
+          "404": {
+            "description": "DIAL Core resource not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "List the org units visible to the caller",
+        "tags": ["org-units"]
+      }
+    },
     "/api/v1/applications": {
       "get": {
         "description": "Returns the list of DIAL Core applications visible to the authenticated session user. Proxies GET /openai/applications using the caller's session access token. Results are cached server-side for 30 seconds per user.",
@@ -464,7 +516,14 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission to create applications in their bucket"
+            "description": "Caller lacks permission to create applications in their bucket, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "DIAL Core resource not found"
@@ -572,7 +631,7 @@
             "in": "path",
             "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "my-app__1.0",
               "type": "string"
             }
@@ -652,7 +711,7 @@
             "in": "path",
             "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "my-app__1.0",
               "type": "string"
             }
@@ -732,7 +791,7 @@
             "in": "path",
             "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "my-app__1.0",
               "type": "string"
             }
@@ -805,7 +864,7 @@
             "in": "path",
             "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "my-app__1.0",
               "type": "string"
             }
@@ -839,7 +898,14 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission"
+            "description": "Caller lacks permission, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationErrorDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Application not found"
@@ -883,7 +949,7 @@
             "in": "path",
             "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F). Empty, dot, and dot-dot path segments are rejected, including when encoded.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "my-app__1.0",
               "type": "string"
             }
@@ -1764,7 +1830,7 @@
     },
     "/api/v1/models": {
       "get": {
-        "description": "Returns the list of DIAL Core deployments visible to the authenticated session user. Proxies GET /openai/models using the caller's session access token. Results are cached server-side for 30 seconds per user.",
+        "description": "Returns the list of DIAL Core deployments visible to the authenticated session user. Proxies GET /openai/models using the caller's session access token. Models whose description_keywords contain a HIDDEN_ENTITY_TAGS tag are omitted, as in the Chat Catalog. Hiding is not access control. Results are cached server-side for 30 seconds per user.",
         "operationId": "listModels",
         "parameters": [],
         "responses": {
@@ -1818,7 +1884,7 @@
     },
     "/api/v1/models/{modelName}": {
       "get": {
-        "description": "Returns a single DIAL Core deployment by name for the authenticated session user. Proxies GET /openai/models/{model_name} using the caller's session access token. Results are cached server-side for 60 seconds per user per model.",
+        "description": "Returns a single DIAL Core deployment by name for the authenticated session user. Proxies GET /openai/models/{model_name} using the caller's session access token. A model whose description_keywords contain a HIDDEN_ENTITY_TAGS tag answers 404, as if it did not exist. Results are cached server-side for 60 seconds per user per model.",
         "operationId": "getModel",
         "parameters": [
           {
@@ -1853,7 +1919,7 @@
             "description": "Caller lacks permission to access this model"
           },
           "404": {
-            "description": "Model not found"
+            "description": "Model not found, or hidden through HIDDEN_ENTITY_TAGS"
           },
           "409": {
             "description": "DIAL Core reported a conflict with the current resource state"
@@ -1878,6 +1944,113 @@
           }
         },
         "summary": "Get model by name",
+        "tags": ["models"]
+      }
+    },
+    "/api/v1/model-catalog": {
+      "get": {
+        "description": "Returns the DIAL Core models visible to the server-side MODEL_CATALOG_API_KEY, including models the caller's own roles cannot access. Display data only: GET /api/v1/models still decides what the user can use, and Core invocation settings (defaults, responses_defaults, max_retry_attempts, tokenizer_model) are omitted. Models whose description_keywords contain a HIDDEN_ENTITY_TAGS tag are omitted, as in the Chat Catalog. One server-side cache entry, shared by all users, is kept for 5 minutes.",
+        "operationId": "listModelCatalog",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the model catalog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelCatalogListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DIAL Core rejected the request as invalid"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "404": {
+            "description": "The model catalog is not configured on this deployment"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core rejected the catalog key, or is unreachable or timed out"
+          }
+        },
+        "summary": "List the model catalog",
+        "tags": ["models"]
+      }
+    },
+    "/api/v1/model-catalog/{modelName}": {
+      "get": {
+        "description": "Returns one model from the cached model catalog, without a separate DIAL Core call. A model hidden from the catalog key answers 404, never 403, so its existence is not revealed. A model omitted through HIDDEN_ENTITY_TAGS also answers 404.",
+        "operationId": "getModelCatalogEntry",
+        "parameters": [
+          {
+            "name": "modelName",
+            "required": true,
+            "in": "path",
+            "description": "Model name (alphanumeric, dash, underscore, dot, colon, and at-sign only)",
+            "schema": {
+              "example": "gpt-4o",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the catalog model",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelCatalogEntryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid model name — disallowed characters"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "404": {
+            "description": "The model catalog is not configured, or the model is not in the catalog or is hidden through HIDDEN_ENTITY_TAGS"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core rejected the catalog key, or is unreachable or timed out"
+          }
+        },
+        "summary": "Get a model from the catalog",
         "tags": ["models"]
       }
     },
@@ -3038,7 +3211,7 @@
             "in": "path",
             "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
               "type": "string"
             }
@@ -3104,7 +3277,7 @@
             "in": "path",
             "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
               "type": "string"
             }
@@ -3115,7 +3288,7 @@
             "in": "path",
             "description": "The external service id defined in the application's `external_services` config.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "finhub-api2",
               "type": "string"
             }
@@ -3176,7 +3349,7 @@
             "in": "path",
             "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
               "type": "string"
             }
@@ -3258,7 +3431,7 @@
             "in": "path",
             "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
               "type": "string"
             }
@@ -3325,7 +3498,7 @@
             "in": "path",
             "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
               "type": "string"
             }
@@ -3336,7 +3509,7 @@
             "in": "path",
             "description": "The external service id defined in the application's `external_services` config.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "finhub-api2",
               "type": "string"
             }
@@ -3409,7 +3582,7 @@
             "in": "path",
             "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
               "type": "string"
             }
@@ -3420,7 +3593,7 @@
             "in": "path",
             "description": "The external service id defined in the application's `external_services` config.",
             "schema": {
-              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$",
               "example": "finhub-api2",
               "type": "string"
             }
@@ -4737,6 +4910,44 @@
           }
         },
         "summary": "Get publish history for a conversation",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/publish-dependencies": {
+      "get": {
+        "description": "Returns the direct references of an owned conversation that are not in the public bucket: its model or add-ons when they are applications or toolsets, the skills its messages use, and attachment files that belong to another user. Files in the author’s own bucket are not listed, because they are published with the conversation. The list is advisory: when it cannot be resolved the response is an empty list rather than an error.",
+        "operationId": "getConversationPublishDependencies",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "gpt-4o__My Conversation__UUID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The conversation’s private dependencies, possibly empty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceDependenciesResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid path"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          }
+        },
+        "summary": "List the private dependencies of a conversation",
         "tags": ["conversations"]
       }
     },
@@ -8676,6 +8887,96 @@
         "tags": ["publish"]
       }
     },
+    "/api/v1/catalog/{entityType}/{entityId}/copy-to-org-unit": {
+      "post": {
+        "description": "Copies a catalog entity of the caller's own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core's resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. Answers 403 while the `features.orgUnitsEnabled` flag is off.",
+        "operationId": "copyCatalogEntityToOrgUnit",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": true,
+            "in": "path",
+            "description": "Catalog entity kind.",
+            "schema": {
+              "example": "toolset",
+              "type": "string",
+              "enum": [
+                "model",
+                "toolset",
+                "application",
+                "prompt",
+                "skill",
+                "project"
+              ]
+            }
+          },
+          {
+            "name": "entityId",
+            "required": true,
+            "in": "path",
+            "description": "The entity's DIAL Core resource path, used directly as the Publication API `sourceUrl`.",
+            "schema": {
+              "example": "tool-abc123",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyCatalogEntityToOrgUnitDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Entity copied; the response carries the id of the copy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceIdResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid entityType, entityId or folderPath, or an entity type that cannot be copied into an org unit"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "The `features.orgUnitsEnabled` flag is off, the entity is not in the caller's own bucket, or DIAL Core refused the write (no `write` in the unit, or a Core per-type rule)"
+          },
+          "404": {
+            "description": "Entity not found"
+          },
+          "409": {
+            "description": "The folder already holds an entity with this name, or DIAL Core refused the copy as a conflict"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Copy an own catalog entity into an org-unit folder",
+        "tags": ["publish"]
+      }
+    },
     "/api/v1/catalog/{entityType}/{entityId}/unpublish": {
       "post": {
         "description": "Submits a removal request for one already-published folder of a catalog entity (Toolset, Application, Prompt, or Skill) by proxying DIAL Core's Publication API (`createPublication`) with a single `DELETE`-action resource. **The removal takes effect only after an administrator approves the request.** Until then the published copy stays visible to everyone who could already see it, and the folder continues to appear in the entity’s publish history. This endpoint keeps no records of its own — DIAL Core is the sole source of truth.",
@@ -8926,6 +9227,145 @@
           }
         },
         "summary": "Get publish history for a catalog entity",
+        "tags": ["publish"]
+      }
+    },
+    "/api/v1/catalog/{entityType}/{entityId}/version-statuses": {
+      "get": {
+        "description": "Returns one entry per saved version of the application or toolset (same owner, folder and base name) with its publication status: `not-published`, `in-review`, `published` (with its folders and publisher) or `unknown` for a resource owned by another user. Derived from the caller’s own publications in DIAL Core, read once per request, and never from chat-api-side storage. Only applications and toolsets have versions.",
+        "operationId": "getCatalogVersionStatuses",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": true,
+            "in": "path",
+            "description": "Catalog entity kind.",
+            "schema": {
+              "example": "toolset",
+              "type": "string",
+              "enum": [
+                "model",
+                "toolset",
+                "application",
+                "prompt",
+                "skill",
+                "project"
+              ]
+            }
+          },
+          {
+            "name": "entityId",
+            "required": true,
+            "in": "path",
+            "description": "The entity's DIAL Core resource path, used directly as the Publication API `sourceUrl`.",
+            "schema": {
+              "example": "tool-abc123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status of every version in the entity’s version group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VersionStatusEntryDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid entityType or entityId, or an entity type without versions"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "DIAL Core denied access to the resource"
+          },
+          "404": {
+            "description": "No version of the entity exists in the caller’s listing"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get the publication status of every version of an entity",
+        "tags": ["publish"]
+      }
+    },
+    "/api/v1/catalog/{entityType}/{entityId}/publish-dependencies": {
+      "get": {
+        "description": "Returns the direct references of a catalog entity (Toolset, Application, Prompt, Skill or Project) that are not in the public bucket, so the publisher can publish them too before the published copy reaches its audience. Resources that publishing already carries along (the application icon and its declared files) are not listed, and a dependency’s own dependencies are not followed. The list is advisory: when it cannot be resolved the response is an empty list rather than an error. Kinds that reference no other resource always return an empty list.",
+        "operationId": "getCatalogPublishDependencies",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": true,
+            "in": "path",
+            "description": "Catalog entity kind.",
+            "schema": {
+              "example": "toolset",
+              "type": "string",
+              "enum": [
+                "model",
+                "toolset",
+                "application",
+                "prompt",
+                "skill",
+                "project"
+              ]
+            }
+          },
+          {
+            "name": "entityId",
+            "required": true,
+            "in": "path",
+            "description": "The entity's DIAL Core resource path, used directly as the Publication API `sourceUrl`.",
+            "schema": {
+              "example": "tool-abc123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The entity’s private dependencies, possibly empty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceDependenciesResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid entityType or entityId"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          }
+        },
+        "summary": "List the private dependencies of a catalog entity",
         "tags": ["publish"]
       }
     },
@@ -10875,7 +11315,7 @@
     },
     "/api/v1/projects/{id}/artifacts/{fileName}": {
       "get": {
-        "description": "Streams one file directly under the project `artifacts/` folder as an attachment with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.",
+        "description": "Streams one file under the project `artifacts/` folder, a direct child or a nested path, as an attachment named after its last path segment, with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.",
         "operationId": "downloadProjectArtifact",
         "parameters": [
           {
@@ -10892,9 +11332,9 @@
             "name": "fileName",
             "required": true,
             "in": "path",
-            "description": "Name of a file directly under the project `artifacts/` folder.",
+            "description": "Path relative to the project `artifacts/` folder, URL-encoded into one path segment.",
             "schema": {
-              "example": "report.pdf",
+              "example": "run-1%2Fdata.csv",
               "type": "string"
             }
           }
@@ -10948,7 +11388,7 @@
     },
     "/api/v1/projects/{id}/conversations": {
       "get": {
-        "description": "Lists every conversation stored in the project's `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.",
+        "description": "Lists every conversation stored in the project's `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves. A published project is the exception: its files all carry the time of the copy, so every body is read, no item is pending, and the conversations are ordered by their last message.",
         "operationId": "listProjectConversations",
         "parameters": [
           {
@@ -11883,12 +12323,12 @@
     },
     "/api/v1/offline-credentials/signout": {
       "post": {
-        "description": "Revokes the session user's stored offline-credentials grant by proxying DIAL Core (POST /v1/user/offline-credentials/signout). A Core 404 is treated as idempotent success — there was no grant left to revoke. The authorization token is never logged.",
+        "description": "Revokes the session user's stored offline-credentials grant by proxying DIAL Core (POST /v1/user/offline-credentials/signout). A Core 200 false or 404 is treated as idempotent success — there was no grant left to revoke. The authorization token is never logged.",
         "operationId": "signOutOfflineCredentials",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Signed out successfully (including idempotent Core 404)",
+            "description": "Signed out successfully (including idempotent Core 200 false or 404)",
             "content": {
               "application/json": {
                 "schema": {
@@ -11904,7 +12344,7 @@
             "description": "Caller lacks permission, or neither scheduledTasksEnabled nor liveChatInteraction is enabled"
           },
           "502": {
-            "description": "DIAL Core returned an error response or reported failure"
+            "description": "DIAL Core returned an error response"
           },
           "503": {
             "description": "DIAL Core is unreachable"
@@ -12440,6 +12880,11 @@
         },
         "required": ["label", "href"]
       },
+      "AnnouncementSeverity": {
+        "type": "string",
+        "enum": ["info", "warning"],
+        "description": "How urgent the announcement is, for clients that mark maintenance or outage notices. Always present: an entry configured without one, or with an unrecognized value, is returned as `info`. Clients should treat a value they do not recognize as `info`, since more levels may be added."
+      },
       "AnnouncementItemDto": {
         "type": "object",
         "properties": {
@@ -12463,9 +12908,127 @@
                 "$ref": "#/components/schemas/AnnouncementLinkDto"
               }
             ]
+          },
+          "severity": {
+            "description": "How urgent the announcement is, for clients that mark maintenance or outage notices. Always present: an entry configured without one, or with an unrecognized value, is returned as `info`. Clients should treat a value they do not recognize as `info`, since more levels may be added.",
+            "example": "warning",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnouncementSeverity"
+              }
+            ]
           }
         },
-        "required": ["title", "description", "link"]
+        "required": ["title", "description", "link", "severity"]
+      },
+      "OnboardingHintTarget": {
+        "type": "string",
+        "enum": [
+          "new-chat",
+          "navigation",
+          "projects",
+          "scheduled-tasks",
+          "catalog",
+          "file-manager",
+          "conversation-input",
+          "add-attachment",
+          "send-message",
+          "model-selector",
+          "voice-input",
+          "conversation-starters",
+          "conversation-messages",
+          "sources-panel-toggle",
+          "sidebar-toggle",
+          "chats",
+          "chats-search",
+          "chats-filter",
+          "user-menu",
+          "usage",
+          "projects-create",
+          "projects-search",
+          "project-chats",
+          "project-details",
+          "scheduled-tasks-create",
+          "scheduled-tasks-search",
+          "settings-sections",
+          "catalog-create",
+          "catalog-search",
+          "catalog-tabs",
+          "catalog-view-mode",
+          "catalog-filter",
+          "catalog-sort",
+          "catalog-card",
+          "catalog-favorite",
+          "message-actions",
+          "catalog-details",
+          "catalog-details-use-in-chat",
+          "catalog-details-manage",
+          "catalog-details-credentials",
+          "catalog-details-share",
+          "catalog-details-publish",
+          "catalog-details-tabs",
+          "project-form-submit",
+          "project-form-context",
+          "project-view-edit",
+          "project-view-more-actions",
+          "project-view-pin",
+          "project-view-publish",
+          "project-context-search",
+          "projects-sort",
+          "scheduled-task-form-submit",
+          "scheduled-task-configuration",
+          "scheduled-task-repeat",
+          "scheduled-task-model",
+          "scheduled-task-start-now",
+          "scheduled-task-edit",
+          "scheduled-task-history",
+          "scheduled-task-active",
+          "scheduled-tasks-sort",
+          "settings-extensions",
+          "settings-extensions-log-in",
+          "settings-theme",
+          "settings-language",
+          "duplicate-shared-chat",
+          "sources-panel",
+          "sources-download-all",
+          "project-chat-back",
+          "tools-selector",
+          "editor-setup",
+          "active-chat",
+          "active-chat-actions"
+        ],
+        "description": "The UI element the hint points at. A closed list; the client resolves it and skips the hint when that element is not on screen."
+      },
+      "OnboardingHintDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable identifier of the hint. The client remembers which ids a user has seen, so changing an id shows that hint again. Letters, digits, \".\", \"_\" and \"-\", at most 64 characters; duplicates after the first are dropped server-side.",
+            "example": "new-chat"
+          },
+          "target": {
+            "description": "The UI element the hint points at. A closed list; the client resolves it and skips the hint when that element is not on screen.",
+            "example": "new-chat",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OnboardingHintTarget"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "Hint heading. Plain text; never interpreted as markup. Entries without one are dropped server-side.",
+            "example": "Start a new conversation"
+          },
+          "description": {
+            "type": "string",
+            "description": "Supporting copy under the heading. Plain text; never interpreted as markup. Null when unset or blank.",
+            "example": "Each chat keeps its own history and model.",
+            "nullable": true
+          }
+        },
+        "required": ["id", "target", "title", "description"]
       },
       "CustomVisualizerDto": {
         "type": "object",
@@ -12527,6 +13090,11 @@
           }
         },
         "required": ["title", "contentType", "url"]
+      },
+      "SpendingLimitsMode": {
+        "type": "string",
+        "enum": ["off", "shadow", "enforce"],
+        "description": "DIAL Core's spendingLimits.mode as the operator declares it (DIAL Core does not report it). Sourced from SPENDING_LIMITS_MODE or managed config; off by default. off: Settings → Usage shows no budgets and presents the role cost limit as today. shadow: budgets are shown as not yet enforced, and the role cost limit still decides. enforce: Settings → Usage shows only the budgets, and the role cost limit is withheld from the usage banner and dial. The client falls back to off when the usage response carries no costObject."
       },
       "CelebrationDeliveryMode": {
         "type": "string",
@@ -12744,6 +13312,13 @@
               "$ref": "#/components/schemas/AnnouncementItemDto"
             }
           },
+          "onboardingHints": {
+            "description": "Onboarding hints the client shows once, step by step, to a user who has not seen them, in configured order. Empty when ONBOARDING_HINTS is unset or contained no valid entries.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnboardingHintDto"
+            }
+          },
           "welcomeScreenDescription": {
             "type": "string",
             "description": "Plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Null when WELCOME_SCREEN_DESCRIPTION is not configured or is blank.",
@@ -12801,6 +13376,15 @@
             "description": "Percentage (1–99) of a capped day/week/month usage limit at which the composer shows its usage banner. Sourced from USAGE_LIMITS_WARNING_THRESHOLD_PERCENT; governs the banner only, not the usage dial.",
             "example": 75
           },
+          "spendingLimitsMode": {
+            "description": "DIAL Core's spendingLimits.mode as the operator declares it (DIAL Core does not report it). Sourced from SPENDING_LIMITS_MODE or managed config; off by default. off: Settings → Usage shows no budgets and presents the role cost limit as today. shadow: budgets are shown as not yet enforced, and the role cost limit still decides. enforce: Settings → Usage shows only the budgets, and the role cost limit is withheld from the usage banner and dial. The client falls back to off when the usage response carries no costObject.",
+            "example": "off",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SpendingLimitsMode"
+              }
+            ]
+          },
           "celebrationsEnabledByDefault": {
             "type": "boolean",
             "description": "Operator default for the seasonal-celebrations switch, applied to users who have not saved a choice of their own; a saved choice overrides it. Sourced from UI_EVENT_ENABLED_BY_DEFAULT; true unless it is false, 0 or no. Has no visible effect while activeEventId is null.",
@@ -12839,6 +13423,16 @@
                 "$ref": "#/components/schemas/CatalogCreationPermissionsDto"
               }
             ]
+          },
+          "modelCatalogAvailable": {
+            "type": "boolean",
+            "description": "Whether GET /api/v1/model-catalog is configured (MODEL_CATALOG_API_KEY is set). Missing means unavailable. Never carries the key.",
+            "example": false
+          },
+          "themesBaseUrl": {
+            "type": "string",
+            "description": "Public base URL of the themes host (THEMES_PUBLIC_URL without a trailing slash). Clients recognise absolute deployment icon URLs under it and load them through GET /api/themes/icon instead, so one icon is requested under one URL. Missing when THEMES_PUBLIC_URL is not configured; the in-cluster THEMES_CONFIG_URL is never exposed.",
+            "example": "https://themes.example.com"
           }
         },
         "required": [
@@ -12851,6 +13445,7 @@
           "overlayAllowedOrigins",
           "enabledUiFeatures",
           "announcements",
+          "onboardingHints",
           "footerHtmlMessage",
           "customVisualizers",
           "applicationVisualizers",
@@ -12859,6 +13454,7 @@
           "additionalContentLocales",
           "maxAttachmentFileSizeBytes",
           "usageLimitsWarningThresholdPercent",
+          "spendingLimitsMode",
           "celebrationsEnabledByDefault",
           "celebrationDelivery",
           "projectContextFileMaxBytes",
@@ -12866,6 +13462,45 @@
           "projectContextAllowedExtensions",
           "catalogCreationPermissions"
         ]
+      },
+      "ManagedConfigState": {
+        "type": "string",
+        "enum": ["fresh", "degraded", "stale", "unavailable", "not_published"],
+        "description": "The managed state at resolution: `fresh` and `degraded` are usable; `stale`, `unavailable` and `not_published` mean no managed value or policy applied."
+      },
+      "ClientConfigManagedMetadataDto": {
+        "type": "object",
+        "properties": {
+          "instanceId": {
+            "type": "string",
+            "description": "The Config Studio instance this deployment maps the application identifier to.",
+            "example": "chat-dev"
+          },
+          "state": {
+            "description": "The managed state at resolution: `fresh` and `degraded` are usable; `stale`, `unavailable` and `not_published` mean no managed value or policy applied.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagedConfigState"
+              }
+            ]
+          },
+          "revisionId": {
+            "type": "string",
+            "description": "The applied revision; present only in a usable state.",
+            "example": "20261120T095500000Z-0123456789abcdef"
+          },
+          "schemaVersion": {
+            "type": "string",
+            "description": "The schema version of the applied revision; present only in a usable state.",
+            "example": "1.0.0"
+          },
+          "publishedAt": {
+            "type": "string",
+            "description": "When the applied revision was published; present only in a usable state.",
+            "example": "2026-11-20T09:55:00.000Z"
+          }
+        },
+        "required": ["instanceId", "state"]
       },
       "ClientConfigMetadataDto": {
         "type": "object",
@@ -12877,9 +13512,55 @@
           "cacheTtlSeconds": {
             "type": "number",
             "description": "Cache TTL in seconds applied to this response."
+          },
+          "nextRefreshAt": {
+            "type": "string",
+            "description": "When the browser should refresh this response while its tab is visible. Present only when the deployment applies managed configuration; without it, the browser does not refresh on a timer.",
+            "example": "2026-11-20T10:02:00.000Z"
+          },
+          "managed": {
+            "description": "The managed snapshot state behind this response, when the deployment applies managed configuration for this application identifier.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClientConfigManagedMetadataDto"
+              }
+            ]
           }
         },
         "required": ["resolvedAt", "cacheTtlSeconds"]
+      },
+      "ClientAppConfigDto": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "example": "2.0.0"
+          },
+          "schemaSha256": {
+            "type": "string",
+            "description": "Canonical SHA-256 of the schema the payload was published against."
+          },
+          "revisionId": {
+            "type": "string",
+            "example": "20261120T090000000Z-fedcba9876543210"
+          },
+          "publishedAt": {
+            "type": "string",
+            "example": "2026-11-20T09:00:00.000Z"
+          },
+          "payload": {
+            "type": "object",
+            "description": "The application's published payload. Chat does not validate it against the application's schema; the application does.",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "schemaSha256",
+          "revisionId",
+          "publishedAt",
+          "payload"
+        ]
       },
       "ClientConfigResponseDto": {
         "type": "object",
@@ -12909,6 +13590,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/ClientConfigMetadataDto"
+              }
+            ]
+          },
+          "appConfig": {
+            "description": "The published Config Studio payload of an application other than chat-ui, unchanged. Present only when the deployment applies managed configuration and the snapshot is usable.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClientAppConfigDto"
               }
             ]
           }
@@ -12955,6 +13644,80 @@
           }
         },
         "required": ["schemas"]
+      },
+      "OrgUnitDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Core unit id",
+            "example": "u-risk"
+          },
+          "name": {
+            "type": "string",
+            "description": "Unit name; also the last segment of its folder",
+            "example": "US Risk"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Display name; falls back to `name` when Core has none",
+            "example": "US Risk"
+          },
+          "path": {
+            "type": "string",
+            "description": "Decoded unit address without a trailing slash",
+            "example": "public/Acme/US Risk"
+          },
+          "folder": {
+            "type": "string",
+            "description": "Unit folder exactly as DIAL Core returns it: url-encoded, with a trailing slash",
+            "example": "public/Acme/US%20Risk/"
+          },
+          "permissions": {
+            "type": "object",
+            "description": "Core's namespace-to-actions map for the caller in this unit; `{}` when the caller only reaches the unit through its parent",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "example": {
+              "applications": ["read", "write"],
+              "prompts": ["read"]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "displayName",
+          "path",
+          "folder",
+          "permissions"
+        ]
+      },
+      "OrgUnitsResponseDto": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "`false` when DIAL Core has org units turned off",
+            "example": true
+          },
+          "hasAdminAccess": {
+            "type": "boolean",
+            "description": "`true` when Core reports full admin access for the caller; `false` otherwise",
+            "example": false
+          },
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrgUnitDto"
+            }
+          }
+        },
+        "required": ["enabled", "hasAdminAccess", "units"]
       },
       "ApplicationDto": {
         "type": "object",
@@ -13257,6 +14020,38 @@
         },
         "required": ["id"]
       },
+      "ApplicationErrorCode": {
+        "type": "string",
+        "enum": ["applicationDependentResourceMissing"],
+        "description": "Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available."
+      },
+      "ApplicationErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 403
+          },
+          "error": {
+            "type": "string",
+            "example": "Forbidden",
+            "description": "HTTP status text. Absent from a plain `403 Forbidden`."
+          },
+          "message": {
+            "type": "string",
+            "example": "This application refers to a resource that is no longer available. Remove or replace it to continue."
+          },
+          "code": {
+            "description": "Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApplicationErrorCode"
+              }
+            ]
+          }
+        },
+        "required": ["statusCode", "message"]
+      },
       "UpdateApplicationBodyDto": {
         "type": "object",
         "properties": {
@@ -13490,6 +14285,11 @@
           "displayVersion": {
             "type": "string",
             "description": "Display version from DIAL Core"
+          },
+          "versionGroupId": {
+            "type": "string",
+            "description": "Identifies the versions of one application saved by one owner in one folder: the owner bucket, the folder and the base name without the `__<version>` suffix of the stored id. Absent for models and for ids without a version suffix.",
+            "example": "abc/Design/Review"
           },
           "isFeatured": {
             "type": "boolean",
@@ -13869,10 +14669,6 @@
       "ModelCatalogPropertiesDto": {
         "type": "object",
         "properties": {
-          "provider": {
-            "type": "string",
-            "description": "Model provider for catalog display"
-          },
           "vendor": {
             "type": "string",
             "description": "Model vendor for catalog display"
@@ -13902,6 +14698,21 @@
           "lifecycleStatus": {
             "type": "string",
             "description": "Lifecycle status of the model"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated",
+            "example": "Azure"
+          },
+          "deprecationDate": {
+            "type": "string",
+            "description": "Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated",
+            "example": "2026-12-31"
+          },
+          "endOfService": {
+            "type": "string",
+            "description": "Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated",
+            "example": "2027-03-31"
           },
           "tokenizerModel": {
             "type": "string",
@@ -14168,6 +14979,64 @@
         },
         "required": ["id", "type"]
       },
+      "BudgetStatsDto": {
+        "type": "object",
+        "properties": {
+          "costObject": {
+            "type": "string",
+            "example": "example-project",
+            "description": "The cost object the budget applies in. A cost object can hold several budgets, so more than one entry may carry the same value."
+          },
+          "policy": {
+            "type": "string",
+            "example": "example-policy",
+            "description": "The path of the budget's policy."
+          },
+          "priority": {
+            "type": "integer",
+            "example": 10,
+            "description": "The priority of the budget's policy, lower first; absent when the policy sets none."
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Example policy",
+            "description": "The human-readable name of the budget's policy. DIAL Core falls back to the policy path when the policy sets none (epam/ai-dial-core#2283); an older DIAL Core omits the field. Use `policy` as the identifier — the display name need not be unique."
+          },
+          "object": {
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": ["*"]
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "example": ["gpt-4o", "claude-sonnet"],
+            "description": "The models the budget's policy covers: `\"*\"` for every deployment, or the sorted deployment names. The list is not filtered by what the caller can access. Absent from a DIAL Core older than epam/ai-dial-core#2284."
+          },
+          "day": {
+            "description": "The budget's limit and the caller's spend against it for the current day of DIAL Core's rate-limit schedule time zone (not necessarily UTC). A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LimitStatsDto"
+              }
+            ]
+          },
+          "month": {
+            "description": "The budget's limit and the caller's spend against it for the current month of DIAL Core's rate-limit schedule time zone (not necessarily UTC). A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LimitStatsDto"
+              }
+            ]
+          }
+        },
+        "required": ["costObject", "policy", "day", "month"]
+      },
       "UserLimitStatsResponseDto": {
         "type": "object",
         "properties": {
@@ -14209,6 +15078,18 @@
                 "$ref": "#/components/schemas/LimitStatsDto"
               }
             ]
+          },
+          "budgets": {
+            "description": "The caller's spend against each spending budget that applies to them, in DIAL Core's order. A cost object can hold several budgets, so entries may share a `costObject`. Only the entries whose `costObject` equals the top-level `costObject` are charged for the caller's model calls. The budgets are reported separately from, and are not merged into, the top-level `minuteCostStats`/`dayCostStats`/`weekCostStats`/`monthCostStats`. An empty array means DIAL Core reported no applicable budget (spending limits are off, no budget matches the caller, or the caller is an API key); an absent field means DIAL Core does not report budgets at all (an older DIAL Core). A window `total` at or above 9007199254740992 (2^53) represents the upstream \"unlimited\" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio. The BFF forwards the array verbatim.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BudgetStatsDto"
+            }
+          },
+          "costObject": {
+            "type": "string",
+            "example": "example-project",
+            "description": "The cost object whose budgets the caller's model calls are charged to: only the `budgets` entries with this `costObject` can be charged (epam/ai-dial-core#2284). Absent when DIAL Core has spending limits off, the caller is an API key, or DIAL Core is older. The BFF forwards it verbatim."
           }
         }
       },
@@ -14672,6 +15553,11 @@
             "type": "object",
             "additionalProperties": true
           },
+          "catalog_properties": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Curated catalog display metadata from DIAL Core, forwarded as sent"
+          },
           "description_keywords": {
             "example": ["Text Generation", "Image Recognition"],
             "type": "array",
@@ -14686,6 +15572,21 @@
           "lifecycle_status": {
             "type": "string",
             "example": "generally-available"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated",
+            "example": "Azure"
+          },
+          "deprecation_date": {
+            "type": "string",
+            "description": "Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated",
+            "example": "2026-12-31"
+          },
+          "end_of_service": {
+            "type": "string",
+            "description": "Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated",
+            "example": "2027-03-31"
           },
           "capabilities": {
             "$ref": "#/components/schemas/DialModelCapabilitiesDto"
@@ -14717,6 +15618,156 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/DialModelDto"
+            }
+          }
+        },
+        "required": ["data"]
+      },
+      "ModelCatalogEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "dial.gemini-3-flash-preview"
+          },
+          "object": {
+            "type": "string",
+            "example": "model"
+          },
+          "model": {
+            "type": "string",
+            "example": "dial.gemini-3-flash-preview"
+          },
+          "display_name": {
+            "example": "Gemini 3 Flash",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "display_version": {
+            "type": "string",
+            "example": "test"
+          },
+          "icon_url": {
+            "type": "string",
+            "example": "Gemini.svg"
+          },
+          "description": {
+            "example": "A multimodal model combining reasoning and efficiency.",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "reference": {
+            "type": "string",
+            "example": "dial.gemini-3-flash-preview"
+          },
+          "owner": {
+            "type": "string",
+            "example": "organization-owner"
+          },
+          "status": {
+            "type": "string",
+            "example": "succeeded"
+          },
+          "created_at": {
+            "type": "number",
+            "example": 1779372048383
+          },
+          "updated_at": {
+            "type": "number",
+            "example": 1779372138434
+          },
+          "features": {
+            "$ref": "#/components/schemas/DialModelFeaturesDto"
+          },
+          "input_attachment_types": {
+            "example": ["image/png", "application/pdf"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "max_input_attachments": {
+            "type": "number",
+            "example": 5
+          },
+          "description_keywords": {
+            "example": ["Text Generation", "Image Recognition"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lifecycle_status": {
+            "type": "string",
+            "example": "generally-available"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated",
+            "example": "Azure"
+          },
+          "deprecation_date": {
+            "type": "string",
+            "description": "Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated",
+            "example": "2026-12-31"
+          },
+          "end_of_service": {
+            "type": "string",
+            "description": "Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated",
+            "example": "2027-03-31"
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/DialModelCapabilitiesDto"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/DialModelLimitsDto"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/DialModelPricingDto"
+          },
+          "interfaces": {
+            "example": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "catalog_properties": {
+            "description": "Known model catalog properties allow-listed from DIAL Core catalog_properties",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ModelCatalogPropertiesDto"
+              }
+            ]
+          }
+        },
+        "required": ["id", "object"]
+      },
+      "ModelCatalogListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelCatalogEntryDto"
             }
           }
         },
@@ -14926,6 +15977,11 @@
           "displayVersion": {
             "type": "string",
             "example": "0.0.1"
+          },
+          "versionGroupId": {
+            "type": "string",
+            "description": "Identifies the versions of one toolset saved by one owner in one folder: the owner bucket, the folder and the base name without the `__<version>` suffix of the stored id. Absent for an id without a version suffix.",
+            "example": "abc/Search/Web search"
           },
           "description": {
             "example": "My toolset description",
@@ -16108,7 +17164,7 @@
             "example": "applications/catalog/Untitled%20app%201__0.0.1",
             "minLength": 1,
             "maxLength": 256,
-            "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$"
+            "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$"
           },
           "custom_content": {
             "description": "Extra DIAL payload attached to the first user message",
@@ -17170,6 +18226,49 @@
         },
         "required": ["path", "folderPath", "requestedAt", "requestedBy"]
       },
+      "ResourceDependencyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The dependency's DIAL Core resource url, as stored in the reference.",
+            "example": "prompts/bucket-123/Support/Greeting"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name, percent-decoded, without a trailing `__version`.",
+            "example": "Greeting"
+          },
+          "version": {
+            "type": "string",
+            "description": "Present only for a versioned dependency.",
+            "example": "1.0.0"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["application", "toolset", "prompt", "skill", "file"],
+            "example": "prompt"
+          },
+          "location": {
+            "type": "string",
+            "description": "Percent-decoded folder path of the dependency inside its owner's bucket; empty at the bucket root.",
+            "example": "Support"
+          }
+        },
+        "required": ["id", "name", "type", "location"]
+      },
+      "ResourceDependenciesResultDto": {
+        "type": "object",
+        "properties": {
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceDependencyDto"
+            }
+          }
+        },
+        "required": ["dependencies"]
+      },
       "PromptResponseDto": {
         "type": "object",
         "properties": {
@@ -18087,7 +19186,7 @@
             "description": "Model deployment ID that produced the response",
             "example": "anthropic.claude-v3-sonnet",
             "maxLength": 256,
-            "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$"
+            "pattern": "^(?:[\\w.\\-:@/()+]|%[\\dA-Fa-f]{2})+$"
           },
           "rate": {
             "type": "number",
@@ -19162,6 +20261,17 @@
           "publishedBy"
         ]
       },
+      "CopyCatalogEntityToOrgUnitDto": {
+        "type": "object",
+        "properties": {
+          "folderPath": {
+            "type": "string",
+            "example": "Acme/US Risk/Teams",
+            "description": "Plain-text destination folder relative to the public bucket, never empty: the public root is not an org unit. DIAL Core decides whether the caller may write there."
+          }
+        },
+        "required": ["folderPath"]
+      },
       "UnpublishCatalogEntityDto": {
         "type": "object",
         "properties": {
@@ -19286,6 +20396,47 @@
           "publishCredentials"
         ]
       },
+      "VersionPublicationStatus": {
+        "type": "string",
+        "enum": ["not-published", "in-review", "published", "unknown"]
+      },
+      "VersionStatusEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "DIAL Core resource id of the version, as the listings return it.",
+            "example": "applications/abc/Design/Review__1.0.0"
+          },
+          "version": {
+            "type": "string",
+            "description": "Display version of the version; empty when the resource has none.",
+            "example": "1.0.0"
+          },
+          "status": {
+            "example": "published",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VersionPublicationStatus"
+              }
+            ]
+          },
+          "publishedFolders": {
+            "description": "Folders a published version is published to, without the `public/` prefix; empty otherwise.",
+            "example": ["Organization/Design"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "publishedBy": {
+            "type": "string",
+            "description": "Display name of the publisher of a published version.",
+            "example": "Jane Doe"
+          }
+        },
+        "required": ["id", "version", "status", "publishedFolders"]
+      },
       "PublishRulesResultDto": {
         "type": "object",
         "properties": {
@@ -19351,6 +20502,11 @@
           },
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Berlin",
+            "description": "IANA time zone the trigger is evaluated in. Always present on responses (UTC for tasks saved without one); declared optional so existing clients and fixtures stay valid."
           },
           "nextRunTime": {
             "type": "string",
@@ -19519,6 +20675,13 @@
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
           },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Berlin",
+            "default": "UTC",
+            "maxLength": 64,
+            "description": "IANA time zone the trigger is evaluated in. Cron fields and offset-less datetimes are local wall time in this zone. Omission means UTC; an update that omits it resets the zone to UTC."
+          },
           "model": {
             "type": "string",
             "example": "gpt-4.1-mini-2025-04-14"
@@ -19557,6 +20720,11 @@
           },
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Berlin",
+            "description": "IANA time zone the trigger is evaluated in. Always present on responses (UTC for tasks saved without one); declared optional so existing clients and fixtures stay valid."
           },
           "nextRunTime": {
             "type": "string",
@@ -19710,6 +20878,13 @@
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
           },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Berlin",
+            "default": "UTC",
+            "maxLength": 64,
+            "description": "IANA time zone the trigger is evaluated in. Cron fields and offset-less datetimes are local wall time in this zone. Omission means UTC; an update that omits it resets the zone to UTC."
+          },
           "model": {
             "type": "string",
             "example": "gpt-4.1-mini-2025-04-14"
@@ -19748,6 +20923,11 @@
           },
           "trigger": {
             "$ref": "#/components/schemas/ScheduleTriggerDto"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Berlin",
+            "description": "IANA time zone the trigger is evaluated in. Always present on responses (UTC for tasks saved without one); declared optional so existing clients and fixtures stay valid."
           },
           "nextRunTime": {
             "type": "string",

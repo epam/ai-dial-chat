@@ -190,7 +190,11 @@ describe('ProjectConversationsPanel', () => {
     renderPanel({ onRename });
 
     await userEvent.type(await openRenameDialog(), ' 2');
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    const save = screen.getByRole('button', { name: 'Save' });
+    await waitFor(() =>
+      expect((save as HTMLButtonElement).disabled).toBe(false),
+    );
+    await userEvent.click(save);
 
     await waitFor(() => expect(onRename).toHaveBeenCalled());
     expect(screen.getByRole('dialog', { name: 'Rename chat' })).toBeTruthy();

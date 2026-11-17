@@ -73,6 +73,7 @@ import { useTextRefinementCallback } from '../../../hooks/useTextRefinementCallb
 import { useTextRefinementLabels } from '../../../hooks/useTextRefinementLabels';
 import { toolsetsApi } from '../../../server-api/api-client';
 import { mcpAppsApiClient } from '../../../server-api/mcp-apps';
+import { publishApiClient } from '../../../server-api/publish.api';
 import {
   getToolset,
   listToolsetFolders,
@@ -224,8 +225,17 @@ const ToolsetApplicationEditor: FC = () => {
           pendingPersistRef.current = resolve;
           setSaveRequest({
             adapter: isCreate
-              ? createToolsetCreateAdapter({ toolsetsApi, body })
-              : createToolsetSaveAdapter({ toolsetsApi, toolsetId, body }),
+              ? createToolsetCreateAdapter({
+                  toolsetsApi,
+                  body,
+                  publishClient: publishApiClient,
+                })
+              : createToolsetSaveAdapter({
+                  toolsetsApi,
+                  toolsetId,
+                  body,
+                  publishClient: publishApiClient,
+                }),
             name: form.name.trim(),
             version: form.version.trim(),
             iconUrl: avatarPicker.resolveIconUrl?.(form.iconUrl),
@@ -272,8 +282,9 @@ const ToolsetApplicationEditor: FC = () => {
         setIsOwnToolset(true);
       }
       settlePendingPersist(result.savedId);
+      void refetchToolsets().catch(() => undefined);
     },
-    [settlePendingPersist],
+    [refetchToolsets, settlePendingPersist],
   );
   // A persist still waiting on the panel must not hang the editor after unmount.
   useEffect(() => () => settlePendingPersist(null), [settlePendingPersist]);

@@ -6,10 +6,23 @@
     <base href="/" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="AI DIAL Chat: talk to AI models, applications and agents in one workspace."
+    />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+    <!-- Latin Inter subset: every page draws basic Latin text, and the
+         browser otherwise finds this font only after the stylesheet loads.
+         Vite rewrites the path to the same hashed asset the CSS references. -->
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      crossorigin
+      href="../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2"
+    />
+    <!-- Synchronous on purpose: paints the stored theme before first render. -->
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>

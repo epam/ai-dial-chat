@@ -303,7 +303,14 @@ export interface AnnouncementItemDto {
    * @memberof AnnouncementItemDto
    */
   link: AnnouncementLinkDto | null;
+  /**
+   * How urgent the announcement is, for clients that mark maintenance or outage notices. Always present: an entry configured without one, or with an unrecognized value, is returned as `info`. Clients should treat a value they do not recognize as `info`, since more levels may be added.
+   * @type {AnnouncementSeverity}
+   * @memberof AnnouncementItemDto
+   */
+  severity: AnnouncementSeverity;
 }
+
 /**
  *
  * @export
@@ -323,6 +330,18 @@ export interface AnnouncementLinkDto {
    */
   href: string;
 }
+
+/**
+ * How urgent the announcement is, for clients that mark maintenance or outage notices. Always present: an entry configured without one, or with an unrecognized value, is returned as `info`. Clients should treat a value they do not recognize as `info`, since more levels may be added.
+ * @export
+ */
+export const AnnouncementSeverity = {
+  Info: 'info',
+  Warning: 'warning',
+} as const;
+export type AnnouncementSeverity =
+  (typeof AnnouncementSeverity)[keyof typeof AnnouncementSeverity];
+
 /**
  *
  * @export
@@ -469,6 +488,49 @@ export interface ApplicationDto {
    */
   maxInputAttachments?: number;
 }
+
+/**
+ * Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available.
+ * @export
+ */
+export const ApplicationErrorCode = {
+  ApplicationDependentResourceMissing: 'applicationDependentResourceMissing',
+} as const;
+export type ApplicationErrorCode =
+  (typeof ApplicationErrorCode)[keyof typeof ApplicationErrorCode];
+
+/**
+ *
+ * @export
+ * @interface ApplicationErrorDto
+ */
+export interface ApplicationErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ApplicationErrorDto
+   */
+  statusCode: number;
+  /**
+   * HTTP status text. Absent from a plain `403 Forbidden`.
+   * @type {string}
+   * @memberof ApplicationErrorDto
+   */
+  error?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationErrorDto
+   */
+  message: string;
+  /**
+   * Why DIAL Core refused the save. `applicationDependentResourceMissing`: a resource the application depends on is no longer available.
+   * @type {ApplicationErrorCode}
+   * @memberof ApplicationErrorDto
+   */
+  code?: ApplicationErrorCode;
+}
+
 /**
  *
  * @export
@@ -889,6 +951,61 @@ export const BackgroundGenerationStatus = {
 export type BackgroundGenerationStatus =
   (typeof BackgroundGenerationStatus)[keyof typeof BackgroundGenerationStatus];
 
+/**
+ *
+ * @export
+ * @interface BudgetStatsDto
+ */
+export interface BudgetStatsDto {
+  /**
+   * The cost object the budget applies in. A cost object can hold several budgets, so more than one entry may carry the same value.
+   * @type {string}
+   * @memberof BudgetStatsDto
+   */
+  costObject: string;
+  /**
+   * The path of the budget's policy.
+   * @type {string}
+   * @memberof BudgetStatsDto
+   */
+  policy: string;
+  /**
+   * The priority of the budget's policy, lower first; absent when the policy sets none.
+   * @type {number}
+   * @memberof BudgetStatsDto
+   */
+  priority?: number;
+  /**
+   * The human-readable name of the budget's policy. DIAL Core falls back to the policy path when the policy sets none (epam/ai-dial-core#2283); an older DIAL Core omits the field. Use `policy` as the identifier — the display name need not be unique.
+   * @type {string}
+   * @memberof BudgetStatsDto
+   */
+  displayName?: string;
+  /**
+   *
+   * @type {BudgetStatsDtoObject}
+   * @memberof BudgetStatsDto
+   */
+  object?: BudgetStatsDtoObject;
+  /**
+   * The budget's limit and the caller's spend against it for the current day of DIAL Core's rate-limit schedule time zone (not necessarily UTC). A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.
+   * @type {LimitStatsDto}
+   * @memberof BudgetStatsDto
+   */
+  day: LimitStatsDto;
+  /**
+   * The budget's limit and the caller's spend against it for the current month of DIAL Core's rate-limit schedule time zone (not necessarily UTC). A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.
+   * @type {LimitStatsDto}
+   * @memberof BudgetStatsDto
+   */
+  month: LimitStatsDto;
+}
+/**
+ * @type BudgetStatsDtoObject
+ * The models the budget's policy covers: `"*"` for every deployment, or the sorted deployment names. The list is not filtered by what the caller can access. Absent from a DIAL Core older than epam/ai-dial-core#2284.
+ * @export
+ */
+export type BudgetStatsDtoObject = Array<string> | string;
 /**
  *
  * @export
@@ -1614,6 +1731,43 @@ export interface Check200Response {
 /**
  *
  * @export
+ * @interface ClientAppConfigDto
+ */
+export interface ClientAppConfigDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ClientAppConfigDto
+   */
+  schemaVersion: string;
+  /**
+   * Canonical SHA-256 of the schema the payload was published against.
+   * @type {string}
+   * @memberof ClientAppConfigDto
+   */
+  schemaSha256: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ClientAppConfigDto
+   */
+  revisionId: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ClientAppConfigDto
+   */
+  publishedAt: string;
+  /**
+   * The application's published payload. Chat does not validate it against the application's schema; the application does.
+   * @type {{ [key: string]: unknown }}
+   * @memberof ClientAppConfigDto
+   */
+  payload: { [key: string]: unknown };
+}
+/**
+ *
+ * @export
  * @interface ClientConfigDto
  */
 export interface ClientConfigDto {
@@ -1738,6 +1892,12 @@ export interface ClientConfigDto {
    */
   announcements: Array<AnnouncementItemDto>;
   /**
+   * Onboarding hints the client shows once, step by step, to a user who has not seen them, in configured order. Empty when ONBOARDING_HINTS is unset or contained no valid entries.
+   * @type {Array<OnboardingHintDto>}
+   * @memberof ClientConfigDto
+   */
+  onboardingHints: Array<OnboardingHintDto>;
+  /**
    * Plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Null when WELCOME_SCREEN_DESCRIPTION is not configured or is blank.
    * @type {string}
    * @memberof ClientConfigDto
@@ -1792,6 +1952,12 @@ export interface ClientConfigDto {
    */
   usageLimitsWarningThresholdPercent: number;
   /**
+   * DIAL Core's spendingLimits.mode as the operator declares it (DIAL Core does not report it). Sourced from SPENDING_LIMITS_MODE or managed config; off by default. off: Settings → Usage shows no budgets and presents the role cost limit as today. shadow: budgets are shown as not yet enforced, and the role cost limit still decides. enforce: Settings → Usage shows only the budgets, and the role cost limit is withheld from the usage banner and dial. The client falls back to off when the usage response carries no costObject.
+   * @type {SpendingLimitsMode}
+   * @memberof ClientConfigDto
+   */
+  spendingLimitsMode: SpendingLimitsMode;
+  /**
    * Operator default for the seasonal-celebrations switch, applied to users who have not saved a choice of their own; a saved choice overrides it. Sourced from UI_EVENT_ENABLED_BY_DEFAULT; true unless it is false, 0 or no. Has no visible effect while activeEventId is null.
    * @type {boolean}
    * @memberof ClientConfigDto
@@ -1827,6 +1993,18 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   catalogCreationPermissions: CatalogCreationPermissionsDto;
+  /**
+   * Whether GET /api/v1/model-catalog is configured (MODEL_CATALOG_API_KEY is set). Missing means unavailable. Never carries the key.
+   * @type {boolean}
+   * @memberof ClientConfigDto
+   */
+  modelCatalogAvailable?: boolean;
+  /**
+   * Public base URL of the themes host (THEMES_PUBLIC_URL without a trailing slash). Clients recognise absolute deployment icon URLs under it and load them through GET /api/themes/icon instead, so one icon is requested under one URL. Missing when THEMES_PUBLIC_URL is not configured; the in-cluster THEMES_CONFIG_URL is never exposed.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  themesBaseUrl?: string;
 }
 
 /**
@@ -1838,6 +2016,44 @@ export const ClientConfigDtoMcpAppThemeEnum = {
 } as const;
 export type ClientConfigDtoMcpAppThemeEnum =
   (typeof ClientConfigDtoMcpAppThemeEnum)[keyof typeof ClientConfigDtoMcpAppThemeEnum];
+
+/**
+ *
+ * @export
+ * @interface ClientConfigManagedMetadataDto
+ */
+export interface ClientConfigManagedMetadataDto {
+  /**
+   * The Config Studio instance this deployment maps the application identifier to.
+   * @type {string}
+   * @memberof ClientConfigManagedMetadataDto
+   */
+  instanceId: string;
+  /**
+   * The managed state at resolution: `fresh` and `degraded` are usable; `stale`, `unavailable` and `not_published` mean no managed value or policy applied.
+   * @type {ManagedConfigState}
+   * @memberof ClientConfigManagedMetadataDto
+   */
+  state: ManagedConfigState;
+  /**
+   * The applied revision; present only in a usable state.
+   * @type {string}
+   * @memberof ClientConfigManagedMetadataDto
+   */
+  revisionId?: string;
+  /**
+   * The schema version of the applied revision; present only in a usable state.
+   * @type {string}
+   * @memberof ClientConfigManagedMetadataDto
+   */
+  schemaVersion?: string;
+  /**
+   * When the applied revision was published; present only in a usable state.
+   * @type {string}
+   * @memberof ClientConfigManagedMetadataDto
+   */
+  publishedAt?: string;
+}
 
 /**
  *
@@ -1857,6 +2073,18 @@ export interface ClientConfigMetadataDto {
    * @memberof ClientConfigMetadataDto
    */
   cacheTtlSeconds: number;
+  /**
+   * When the browser should refresh this response while its tab is visible. Present only when the deployment applies managed configuration; without it, the browser does not refresh on a timer.
+   * @type {string}
+   * @memberof ClientConfigMetadataDto
+   */
+  nextRefreshAt?: string;
+  /**
+   * The managed snapshot state behind this response, when the deployment applies managed configuration for this application identifier.
+   * @type {ClientConfigManagedMetadataDto}
+   * @memberof ClientConfigMetadataDto
+   */
+  managed?: ClientConfigManagedMetadataDto;
 }
 /**
  *
@@ -1888,6 +2116,12 @@ export interface ClientConfigResponseDto {
    * @memberof ClientConfigResponseDto
    */
   metadata?: ClientConfigMetadataDto;
+  /**
+   * The published Config Studio payload of an application other than chat-ui, unchanged. Present only when the deployment applies managed configuration and the snapshot is usable.
+   * @type {ClientAppConfigDto}
+   * @memberof ClientConfigResponseDto
+   */
+  appConfig?: ClientAppConfigDto;
 }
 /**
  *
@@ -2851,6 +3085,19 @@ export interface ConversationsConfigDto {
 /**
  *
  * @export
+ * @interface CopyCatalogEntityToOrgUnitDto
+ */
+export interface CopyCatalogEntityToOrgUnitDto {
+  /**
+   * Plain-text destination folder relative to the public bucket, never empty: the public root is not an org unit. DIAL Core decides whether the caller may write there.
+   * @type {string}
+   * @memberof CopyCatalogEntityToOrgUnitDto
+   */
+  folderPath: string;
+}
+/**
+ *
+ * @export
  * @interface CopyFilesDto
  */
 export interface CopyFilesDto {
@@ -3255,6 +3502,12 @@ export interface CreateScheduledTaskBodyDto {
    */
   trigger: ScheduleTriggerDto;
   /**
+   * IANA time zone the trigger is evaluated in. Cron fields and offset-less datetimes are local wall time in this zone. Omission means UTC; an update that omits it resets the zone to UTC.
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  timezone?: string;
+  /**
    *
    * @type {string}
    * @memberof CreateScheduledTaskBodyDto
@@ -3467,6 +3720,12 @@ export interface CreatedScheduledTaskDto {
    * @memberof CreatedScheduledTaskDto
    */
   trigger: ScheduleTriggerDto;
+  /**
+   * IANA time zone the trigger is evaluated in. Always present on responses (UTC for tasks saved without one); declared optional so existing clients and fixtures stay valid.
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  timezone?: string;
   /**
    *
    * @type {string}
@@ -4109,6 +4368,12 @@ export interface DeploymentItemDto {
    */
   displayVersion?: string;
   /**
+   * Identifies the versions of one application saved by one owner in one folder: the owner bucket, the folder and the base name without the `__<version>` suffix of the stored id. Absent for models and for ids without a version suffix.
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  versionGroupId?: string;
+  /**
    * Whether this deployment is featured (configured via env)
    * @type {boolean}
    * @memberof DeploymentItemDto
@@ -4492,6 +4757,12 @@ export interface DialModelDto {
    */
   responsesDefaults?: { [key: string]: unknown };
   /**
+   * Curated catalog display metadata from DIAL Core, forwarded as sent
+   * @type {{ [key: string]: unknown }}
+   * @memberof DialModelDto
+   */
+  catalogProperties?: { [key: string]: unknown };
+  /**
    *
    * @type {Array<string>}
    * @memberof DialModelDto
@@ -4509,6 +4780,24 @@ export interface DialModelDto {
    * @memberof DialModelDto
    */
   lifecycleStatus?: string;
+  /**
+   * Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  provider?: string;
+  /**
+   * Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  deprecationDate?: string;
+  /**
+   * Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  endOfService?: string;
   /**
    *
    * @type {DialModelCapabilitiesDto}
@@ -4913,6 +5202,12 @@ export interface DialToolsetDto {
    * @memberof DialToolsetDto
    */
   displayVersion?: string;
+  /**
+   * Identifies the versions of one toolset saved by one owner in one folder: the owner bucket, the folder and the base name without the `__<version>` suffix of the stored id. Absent for an id without a version suffix.
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  versionGroupId?: string;
   /**
    *
    * @type {DialToolsetDtoDescription}
@@ -6144,6 +6439,21 @@ export interface LocaleTextEntryDto {
    */
   description?: string;
 }
+
+/**
+ * The managed state at resolution: `fresh` and `degraded` are usable; `stale`, `unavailable` and `not_published` mean no managed value or policy applied.
+ * @export
+ */
+export const ManagedConfigState = {
+  Fresh: 'fresh',
+  Degraded: 'degraded',
+  Stale: 'stale',
+  Unavailable: 'unavailable',
+  NotPublished: 'not_published',
+} as const;
+export type ManagedConfigState =
+  (typeof ManagedConfigState)[keyof typeof ManagedConfigState];
+
 /**
  *
  * @export
@@ -6362,15 +6672,179 @@ export interface ModelCapabilitiesDto {
 /**
  *
  * @export
+ * @interface ModelCatalogEntryDto
+ */
+export interface ModelCatalogEntryDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  object: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  model?: string;
+  /**
+   *
+   * @type {DialModelDtoDisplayName}
+   * @memberof ModelCatalogEntryDto
+   */
+  displayName?: DialModelDtoDisplayName;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  displayVersion?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {DialModelDtoDescription}
+   * @memberof ModelCatalogEntryDto
+   */
+  description?: DialModelDtoDescription;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  reference?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  owner?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  status?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof ModelCatalogEntryDto
+   */
+  createdAt?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof ModelCatalogEntryDto
+   */
+  updatedAt?: number;
+  /**
+   *
+   * @type {DialModelFeaturesDto}
+   * @memberof ModelCatalogEntryDto
+   */
+  features?: DialModelFeaturesDto;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ModelCatalogEntryDto
+   */
+  inputAttachmentTypes?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof ModelCatalogEntryDto
+   */
+  maxInputAttachments?: number;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ModelCatalogEntryDto
+   */
+  descriptionKeywords?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  lifecycleStatus?: string;
+  /**
+   * Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  provider?: string;
+  /**
+   * Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  deprecationDate?: string;
+  /**
+   * Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof ModelCatalogEntryDto
+   */
+  endOfService?: string;
+  /**
+   *
+   * @type {DialModelCapabilitiesDto}
+   * @memberof ModelCatalogEntryDto
+   */
+  capabilities?: DialModelCapabilitiesDto;
+  /**
+   *
+   * @type {DialModelLimitsDto}
+   * @memberof ModelCatalogEntryDto
+   */
+  limits?: DialModelLimitsDto;
+  /**
+   *
+   * @type {DialModelPricingDto}
+   * @memberof ModelCatalogEntryDto
+   */
+  pricing?: DialModelPricingDto;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ModelCatalogEntryDto
+   */
+  interfaces?: Array<string>;
+  /**
+   * Known model catalog properties allow-listed from DIAL Core catalog_properties
+   * @type {ModelCatalogPropertiesDto}
+   * @memberof ModelCatalogEntryDto
+   */
+  catalogProperties?: ModelCatalogPropertiesDto;
+}
+/**
+ *
+ * @export
+ * @interface ModelCatalogListResponseDto
+ */
+export interface ModelCatalogListResponseDto {
+  /**
+   *
+   * @type {Array<ModelCatalogEntryDto>}
+   * @memberof ModelCatalogListResponseDto
+   */
+  data: Array<ModelCatalogEntryDto>;
+}
+/**
+ *
+ * @export
  * @interface ModelCatalogPropertiesDto
  */
 export interface ModelCatalogPropertiesDto {
-  /**
-   * Model provider for catalog display
-   * @type {string}
-   * @memberof ModelCatalogPropertiesDto
-   */
-  provider?: string;
   /**
    * Model vendor for catalog display
    * @type {string}
@@ -6414,6 +6888,24 @@ export interface ModelDetailsDto {
    * @memberof ModelDetailsDto
    */
   lifecycleStatus?: string;
+  /**
+   * Provider that hosts the model, free-form text forwarded from DIAL Core unvalidated
+   * @type {string}
+   * @memberof ModelDetailsDto
+   */
+  provider?: string;
+  /**
+   * Date the model is deprecated but still served, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof ModelDetailsDto
+   */
+  deprecationDate?: string;
+  /**
+   * Date the provider stops serving the model, documented by DIAL Core as YYYY-MM-DD and forwarded unvalidated
+   * @type {string}
+   * @memberof ModelDetailsDto
+   */
+  endOfService?: string;
   /**
    * Name of the model whose tokenization algorithm this model uses
    * @type {string}
@@ -6774,6 +7266,187 @@ export interface OfflineCredentialsSigninBodyDto {
    * @memberof OfflineCredentialsSigninBodyDto
    */
   redirectUri: string;
+}
+/**
+ *
+ * @export
+ * @interface OnboardingHintDto
+ */
+export interface OnboardingHintDto {
+  /**
+   * Stable identifier of the hint. The client remembers which ids a user has seen, so changing an id shows that hint again. Letters, digits, ".", "_" and "-", at most 64 characters; duplicates after the first are dropped server-side.
+   * @type {string}
+   * @memberof OnboardingHintDto
+   */
+  id: string;
+  /**
+   * The UI element the hint points at. A closed list; the client resolves it and skips the hint when that element is not on screen.
+   * @type {OnboardingHintTarget}
+   * @memberof OnboardingHintDto
+   */
+  target: OnboardingHintTarget;
+  /**
+   * Hint heading. Plain text; never interpreted as markup. Entries without one are dropped server-side.
+   * @type {string}
+   * @memberof OnboardingHintDto
+   */
+  title: string;
+  /**
+   * Supporting copy under the heading. Plain text; never interpreted as markup. Null when unset or blank.
+   * @type {string}
+   * @memberof OnboardingHintDto
+   */
+  description: string | null;
+}
+
+/**
+ * The UI element the hint points at. A closed list; the client resolves it and skips the hint when that element is not on screen.
+ * @export
+ */
+export const OnboardingHintTarget = {
+  NewChat: 'new-chat',
+  Navigation: 'navigation',
+  Projects: 'projects',
+  ScheduledTasks: 'scheduled-tasks',
+  Catalog: 'catalog',
+  FileManager: 'file-manager',
+  ConversationInput: 'conversation-input',
+  AddAttachment: 'add-attachment',
+  SendMessage: 'send-message',
+  ModelSelector: 'model-selector',
+  VoiceInput: 'voice-input',
+  ConversationStarters: 'conversation-starters',
+  ConversationMessages: 'conversation-messages',
+  SourcesPanelToggle: 'sources-panel-toggle',
+  SidebarToggle: 'sidebar-toggle',
+  Chats: 'chats',
+  ChatsSearch: 'chats-search',
+  ChatsFilter: 'chats-filter',
+  UserMenu: 'user-menu',
+  Usage: 'usage',
+  ProjectsCreate: 'projects-create',
+  ProjectsSearch: 'projects-search',
+  ProjectChats: 'project-chats',
+  ProjectDetails: 'project-details',
+  ScheduledTasksCreate: 'scheduled-tasks-create',
+  ScheduledTasksSearch: 'scheduled-tasks-search',
+  SettingsSections: 'settings-sections',
+  CatalogCreate: 'catalog-create',
+  CatalogSearch: 'catalog-search',
+  CatalogTabs: 'catalog-tabs',
+  CatalogViewMode: 'catalog-view-mode',
+  CatalogFilter: 'catalog-filter',
+  CatalogSort: 'catalog-sort',
+  CatalogCard: 'catalog-card',
+  CatalogFavorite: 'catalog-favorite',
+  MessageActions: 'message-actions',
+  CatalogDetails: 'catalog-details',
+  CatalogDetailsUseInChat: 'catalog-details-use-in-chat',
+  CatalogDetailsManage: 'catalog-details-manage',
+  CatalogDetailsCredentials: 'catalog-details-credentials',
+  CatalogDetailsShare: 'catalog-details-share',
+  CatalogDetailsPublish: 'catalog-details-publish',
+  CatalogDetailsTabs: 'catalog-details-tabs',
+  ProjectFormSubmit: 'project-form-submit',
+  ProjectFormContext: 'project-form-context',
+  ProjectViewEdit: 'project-view-edit',
+  ProjectViewMoreActions: 'project-view-more-actions',
+  ProjectViewPin: 'project-view-pin',
+  ProjectViewPublish: 'project-view-publish',
+  ProjectContextSearch: 'project-context-search',
+  ProjectsSort: 'projects-sort',
+  ScheduledTaskFormSubmit: 'scheduled-task-form-submit',
+  ScheduledTaskConfiguration: 'scheduled-task-configuration',
+  ScheduledTaskRepeat: 'scheduled-task-repeat',
+  ScheduledTaskModel: 'scheduled-task-model',
+  ScheduledTaskStartNow: 'scheduled-task-start-now',
+  ScheduledTaskEdit: 'scheduled-task-edit',
+  ScheduledTaskHistory: 'scheduled-task-history',
+  ScheduledTaskActive: 'scheduled-task-active',
+  ScheduledTasksSort: 'scheduled-tasks-sort',
+  SettingsExtensions: 'settings-extensions',
+  SettingsExtensionsLogIn: 'settings-extensions-log-in',
+  SettingsTheme: 'settings-theme',
+  SettingsLanguage: 'settings-language',
+  DuplicateSharedChat: 'duplicate-shared-chat',
+  SourcesPanel: 'sources-panel',
+  SourcesDownloadAll: 'sources-download-all',
+  ProjectChatBack: 'project-chat-back',
+  ToolsSelector: 'tools-selector',
+  EditorSetup: 'editor-setup',
+  ActiveChat: 'active-chat',
+  ActiveChatActions: 'active-chat-actions',
+} as const;
+export type OnboardingHintTarget =
+  (typeof OnboardingHintTarget)[keyof typeof OnboardingHintTarget];
+
+/**
+ *
+ * @export
+ * @interface OrgUnitDto
+ */
+export interface OrgUnitDto {
+  /**
+   * Core unit id
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  id: string;
+  /**
+   * Unit name; also the last segment of its folder
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  name: string;
+  /**
+   * Display name; falls back to `name` when Core has none
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  displayName: string;
+  /**
+   * Decoded unit address without a trailing slash
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  path: string;
+  /**
+   * Unit folder exactly as DIAL Core returns it: url-encoded, with a trailing slash
+   * @type {string}
+   * @memberof OrgUnitDto
+   */
+  folder: string;
+  /**
+   * Core's namespace-to-actions map for the caller in this unit; `{}` when the caller only reaches the unit through its parent
+   * @type {{ [key: string]: Array<string>; }}
+   * @memberof OrgUnitDto
+   */
+  permissions: { [key: string]: Array<string> };
+}
+/**
+ *
+ * @export
+ * @interface OrgUnitsResponseDto
+ */
+export interface OrgUnitsResponseDto {
+  /**
+   * `false` when DIAL Core has org units turned off
+   * @type {boolean}
+   * @memberof OrgUnitsResponseDto
+   */
+  enabled: boolean;
+  /**
+   * `true` when Core reports full admin access for the caller; `false` otherwise
+   * @type {boolean}
+   * @memberof OrgUnitsResponseDto
+   */
+  hasAdminAccess: boolean;
+  /**
+   *
+   * @type {Array<OrgUnitDto>}
+   * @memberof OrgUnitsResponseDto
+   */
+  units: Array<OrgUnitDto>;
 }
 /**
  *
@@ -7943,6 +8616,70 @@ export interface RequestSkillDto {
 /**
  *
  * @export
+ * @interface ResourceDependenciesResultDto
+ */
+export interface ResourceDependenciesResultDto {
+  /**
+   *
+   * @type {Array<ResourceDependencyDto>}
+   * @memberof ResourceDependenciesResultDto
+   */
+  dependencies: Array<ResourceDependencyDto>;
+}
+/**
+ *
+ * @export
+ * @interface ResourceDependencyDto
+ */
+export interface ResourceDependencyDto {
+  /**
+   * The dependency's DIAL Core resource url, as stored in the reference.
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  id: string;
+  /**
+   * Display name, percent-decoded, without a trailing `__version`.
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  name: string;
+  /**
+   * Present only for a versioned dependency.
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  version?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  type: ResourceDependencyDtoTypeEnum;
+  /**
+   * Percent-decoded folder path of the dependency inside its owner's bucket; empty at the bucket root.
+   * @type {string}
+   * @memberof ResourceDependencyDto
+   */
+  location: string;
+}
+
+/**
+ * @export
+ */
+export const ResourceDependencyDtoTypeEnum = {
+  Application: 'application',
+  Toolset: 'toolset',
+  Prompt: 'prompt',
+  Skill: 'skill',
+  File: 'file',
+} as const;
+export type ResourceDependencyDtoTypeEnum =
+  (typeof ResourceDependencyDtoTypeEnum)[keyof typeof ResourceDependencyDtoTypeEnum];
+
+/**
+ *
+ * @export
  * @interface ResourceFolderDto
  */
 export interface ResourceFolderDto {
@@ -8181,6 +8918,12 @@ export interface ScheduledTaskDto {
    * @memberof ScheduledTaskDto
    */
   trigger: ScheduleTriggerDto;
+  /**
+   * IANA time zone the trigger is evaluated in. Always present on responses (UTC for tasks saved without one); declared optional so existing clients and fixtures stay valid.
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  timezone?: string;
   /**
    *
    * @type {string}
@@ -8867,6 +9610,19 @@ export interface SkillsConfigDto {
    */
   installed: Array<string>;
 }
+
+/**
+ * DIAL Core's spendingLimits.mode as the operator declares it (DIAL Core does not report it). Sourced from SPENDING_LIMITS_MODE or managed config; off by default. off: Settings → Usage shows no budgets and presents the role cost limit as today. shadow: budgets are shown as not yet enforced, and the role cost limit still decides. enforce: Settings → Usage shows only the budgets, and the role cost limit is withheld from the usage banner and dial. The client falls back to off when the usage response carries no costObject.
+ * @export
+ */
+export const SpendingLimitsMode = {
+  Off: 'off',
+  Shadow: 'shadow',
+  Enforce: 'enforce',
+} as const;
+export type SpendingLimitsMode =
+  (typeof SpendingLimitsMode)[keyof typeof SpendingLimitsMode];
+
 /**
  *
  * @export
@@ -10026,6 +10782,12 @@ export interface UpdateScheduledTaskBodyDto {
    */
   trigger: ScheduleTriggerDto;
   /**
+   * IANA time zone the trigger is evaluated in. Cron fields and offset-less datetimes are local wall time in this zone. Omission means UTC; an update that omits it resets the zone to UTC.
+   * @type {string}
+   * @memberof UpdateScheduledTaskBodyDto
+   */
+  timezone?: string;
+  /**
    *
    * @type {string}
    * @memberof UpdateScheduledTaskBodyDto
@@ -10112,6 +10874,12 @@ export interface UpdatedScheduledTaskDto {
    * @memberof UpdatedScheduledTaskDto
    */
   trigger: ScheduleTriggerDto;
+  /**
+   * IANA time zone the trigger is evaluated in. Always present on responses (UTC for tasks saved without one); declared optional so existing clients and fixtures stay valid.
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  timezone?: string;
   /**
    *
    * @type {string}
@@ -10325,6 +11093,18 @@ export interface UserLimitStatsResponseDto {
    * @memberof UserLimitStatsResponseDto
    */
   monthCostStats?: LimitStatsDto;
+  /**
+   * The caller's spend against each spending budget that applies to them, in DIAL Core's order. A cost object can hold several budgets, so entries may share a `costObject`. Only the entries whose `costObject` equals the top-level `costObject` are charged for the caller's model calls. The budgets are reported separately from, and are not merged into, the top-level `minuteCostStats`/`dayCostStats`/`weekCostStats`/`monthCostStats`. An empty array means DIAL Core reported no applicable budget (spending limits are off, no budget matches the caller, or the caller is an API key); an absent field means DIAL Core does not report budgets at all (an older DIAL Core). A window `total` at or above 9007199254740992 (2^53) represents the upstream "unlimited" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio. The BFF forwards the array verbatim.
+   * @type {Array<BudgetStatsDto>}
+   * @memberof UserLimitStatsResponseDto
+   */
+  budgets?: Array<BudgetStatsDto>;
+  /**
+   * The cost object whose budgets the caller's model calls are charged to: only the `budgets` entries with this `costObject` can be charged (epam/ai-dial-core#2284). Absent when DIAL Core has spending limits off, the caller is an API key, or DIAL Core is older. The BFF forwards it verbatim.
+   * @type {string}
+   * @memberof UserLimitStatsResponseDto
+   */
+  costObject?: string;
 }
 /**
  *
@@ -10369,6 +11149,58 @@ export interface UserProfileDto {
    */
   pictureUrl?: string;
 }
+
+/**
+ *
+ * @export
+ */
+export const VersionPublicationStatus = {
+  NotPublished: 'not-published',
+  InReview: 'in-review',
+  Published: 'published',
+  Unknown: 'unknown',
+} as const;
+export type VersionPublicationStatus =
+  (typeof VersionPublicationStatus)[keyof typeof VersionPublicationStatus];
+
+/**
+ *
+ * @export
+ * @interface VersionStatusEntryDto
+ */
+export interface VersionStatusEntryDto {
+  /**
+   * DIAL Core resource id of the version, as the listings return it.
+   * @type {string}
+   * @memberof VersionStatusEntryDto
+   */
+  id: string;
+  /**
+   * Display version of the version; empty when the resource has none.
+   * @type {string}
+   * @memberof VersionStatusEntryDto
+   */
+  version: string;
+  /**
+   *
+   * @type {VersionPublicationStatus}
+   * @memberof VersionStatusEntryDto
+   */
+  status: VersionPublicationStatus;
+  /**
+   * Folders a published version is published to, without the `public/` prefix; empty otherwise.
+   * @type {Array<string>}
+   * @memberof VersionStatusEntryDto
+   */
+  publishedFolders: Array<string>;
+  /**
+   * Display name of the publisher of a published version.
+   * @type {string}
+   * @memberof VersionStatusEntryDto
+   */
+  publishedBy?: string;
+}
+
 /**
  *
  * @export

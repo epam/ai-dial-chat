@@ -593,7 +593,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Streams one file directly under the project `artifacts/` folder as an attachment with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.
+   * Streams one file under the project `artifacts/` folder, a direct child or a nested path, as an attachment named after its last path segment, with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.
    * Download one output of a project
    */
   async downloadProjectArtifactRaw(
@@ -651,7 +651,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Streams one file directly under the project `artifacts/` folder as an attachment with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.
+   * Streams one file under the project `artifacts/` folder, a direct child or a nested path, as an attachment named after its last path segment, with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.
    * Download one output of a project
    */
   async downloadProjectArtifact(
@@ -1080,7 +1080,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Lists every conversation stored in the project\'s `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.
+   * Lists every conversation stored in the project\'s `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves. A published project is the exception: its files all carry the time of the copy, so every body is read, no item is pending, and the conversations are ordered by their last message.
    * List a project\'s conversations
    */
   async listProjectConversationsRaw(
@@ -1129,7 +1129,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Lists every conversation stored in the project\'s `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.
+   * Lists every conversation stored in the project\'s `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves. A published project is the exception: its files all carry the time of the copy, so every body is read, no item is pending, and the conversations are ordered by their last message.
    * List a project\'s conversations
    */
   async listProjectConversations(

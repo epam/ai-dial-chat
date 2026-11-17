@@ -5,11 +5,14 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
+import { ManagedConfigState } from '../managed-runtime/managed-runtime.types';
+import { SpendingLimitsMode } from '../types/spending-limits-mode';
 import { AnnouncementItemDto } from './announcement-item.dto';
 import { ApplicationVisualizerDto } from './application-visualizer.dto';
 import { CatalogCreationPermissionsDto } from './catalog-creation-permissions.dto';
 import { CelebrationDeliveryDto } from './celebration-delivery.dto';
 import { CustomVisualizerDto } from './custom-visualizer.dto';
+import { OnboardingHintDto } from './onboarding-hint.dto';
 
 /* ApplicationVisualizerDto is reachable only through an additionalProperties
  * $ref, which Swagger does not follow when collecting schemas, so the model
@@ -207,6 +210,13 @@ export class ClientConfigDto {
   })
   announcements!: AnnouncementItemDto[];
 
+  @ApiProperty({
+    description:
+      'Onboarding hints the client shows once, step by step, to a user who has not seen them, in configured order. Empty when ONBOARDING_HINTS is unset or contained no valid entries.',
+    type: [OnboardingHintDto],
+  })
+  onboardingHints!: OnboardingHintDto[];
+
   @ApiPropertyOptional({
     description:
       'Plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Null when WELCOME_SCREEN_DESCRIPTION is not configured or is blank.',
@@ -282,6 +292,15 @@ export class ClientConfigDto {
   usageLimitsWarningThresholdPercent!: number;
 
   @ApiProperty({
+    enum: SpendingLimitsMode,
+    enumName: 'SpendingLimitsMode',
+    description:
+      "DIAL Core's spendingLimits.mode as the operator declares it (DIAL Core does not report it). Sourced from SPENDING_LIMITS_MODE or managed config; off by default. off: Settings → Usage shows no budgets and presents the role cost limit as today. shadow: budgets are shown as not yet enforced, and the role cost limit still decides. enforce: Settings → Usage shows only the budgets, and the role cost limit is withheld from the usage banner and dial. The client falls back to off when the usage response carries no costObject.",
+    example: SpendingLimitsMode.Off,
+  })
+  spendingLimitsMode!: SpendingLimitsMode;
+
+  @ApiProperty({
     type: Boolean,
     description:
       'Operator default for the seasonal-celebrations switch, applied to users who have not saved a choice of their own; a saved choice overrides it. Sourced from UI_EVENT_ENABLED_BY_DEFAULT; true unless it is false, 0 or no. Has no visible effect while activeEventId is null.',
@@ -324,6 +343,86 @@ export class ClientConfigDto {
     type: CatalogCreationPermissionsDto,
   })
   catalogCreationPermissions!: CatalogCreationPermissionsDto;
+
+  @ApiPropertyOptional({
+    type: Boolean,
+    description:
+      'Whether GET /api/v1/model-catalog is configured (MODEL_CATALOG_API_KEY is set). Missing means unavailable. Never carries the key.',
+    example: false,
+  })
+  modelCatalogAvailable?: boolean;
+
+  @ApiPropertyOptional({
+    type: String,
+    description:
+      'Public base URL of the themes host (THEMES_PUBLIC_URL without a trailing slash). Clients recognise absolute deployment icon URLs under it and load them through GET /api/themes/icon instead, so one icon is requested under one URL. Missing when THEMES_PUBLIC_URL is not configured; the in-cluster THEMES_CONFIG_URL is never exposed.',
+    example: 'https://themes.example.com',
+  })
+  themesBaseUrl?: string;
+}
+
+/** Which published Config Studio snapshot a response was resolved from. */
+export class ClientConfigManagedMetadataDto {
+  @ApiProperty({
+    description:
+      'The Config Studio instance this deployment maps the application identifier to.',
+    example: 'chat-dev',
+  })
+  instanceId!: string;
+
+  @ApiProperty({
+    description:
+      'The managed state at resolution: `fresh` and `degraded` are usable; `stale`, `unavailable` and `not_published` mean no managed value or policy applied.',
+    enum: ManagedConfigState,
+    enumName: 'ManagedConfigState',
+  })
+  state!: ManagedConfigState;
+
+  @ApiPropertyOptional({
+    description: 'The applied revision; present only in a usable state.',
+    example: '20261120T095500000Z-0123456789abcdef',
+  })
+  revisionId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'The schema version of the applied revision; present only in a usable state.',
+    example: '1.0.0',
+  })
+  schemaVersion?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'When the applied revision was published; present only in a usable state.',
+    example: '2026-11-20T09:55:00.000Z',
+  })
+  publishedAt?: string;
+}
+
+/** A foreign application's published payload, delivered unchanged. */
+export class ClientAppConfigDto {
+  @ApiProperty({ example: '2.0.0' })
+  schemaVersion!: string;
+
+  @ApiProperty({
+    description:
+      'Canonical SHA-256 of the schema the payload was published against.',
+  })
+  schemaSha256!: string;
+
+  @ApiProperty({ example: '20261120T090000000Z-fedcba9876543210' })
+  revisionId!: string;
+
+  @ApiProperty({ example: '2026-11-20T09:00:00.000Z' })
+  publishedAt!: string;
+
+  @ApiProperty({
+    description:
+      "The application's published payload. Chat does not validate it against the application's schema; the application does.",
+    type: 'object',
+    additionalProperties: true,
+  })
+  payload!: Record<string, unknown>;
 }
 
 export class ClientConfigMetadataDto {
@@ -334,6 +433,20 @@ export class ClientConfigMetadataDto {
     description: 'Cache TTL in seconds applied to this response.',
   })
   cacheTtlSeconds!: number;
+
+  @ApiPropertyOptional({
+    description:
+      'When the browser should refresh this response while its tab is visible. Present only when the deployment applies managed configuration; without it, the browser does not refresh on a timer.',
+    example: '2026-11-20T10:02:00.000Z',
+  })
+  nextRefreshAt?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'The managed snapshot state behind this response, when the deployment applies managed configuration for this application identifier.',
+    type: ClientConfigManagedMetadataDto,
+  })
+  managed?: ClientConfigManagedMetadataDto;
 }
 
 export class ClientConfigResponseDto {
@@ -357,4 +470,11 @@ export class ClientConfigResponseDto {
     type: ClientConfigMetadataDto,
   })
   metadata?: ClientConfigMetadataDto;
+
+  @ApiPropertyOptional({
+    description:
+      'The published Config Studio payload of an application other than chat-ui, unchanged. Present only when the deployment applies managed configuration and the snapshot is usable.',
+    type: ClientAppConfigDto,
+  })
+  appConfig?: ClientAppConfigDto;
 }

@@ -14,6 +14,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
   resource,
   version,
   accessRules,
+  versionHistory,
   panelLabels,
   ...bodyProps
 }) => {
@@ -21,6 +22,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
     ...bodyProps,
     version,
     accessRules,
+    versionHistory,
     panelLabels,
   });
 

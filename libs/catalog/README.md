@@ -532,7 +532,7 @@ import { Card } from '@epam/ai-dial-catalog';
 />;
 ```
 
-The card's `description` is rendered as sanitized Markdown using the same rendering pipeline as the About tab's details view (sanitization via `rehypeSanitize`). Markdown syntax (e.g. `**bold**`, lists, links), HTML-like snippets, and plain text all render correctly. Inline images are suppressed to keep the description within the card's line clamp — 2 lines, or 3 when the item has no `topics` and the tag row is empty; they appear normally in the About tab. Links render as real `<a>` elements and activate independently without triggering the card's own `onClick` handler; clicks on other description content still open the card details. When the clamp actually hides text, hovering the description opens an interactive panel (the kit `InteractiveTooltip`) with the full Markdown; it stays open while the pointer moves into it, its links are clickable, and clicks inside it never open the card. The panel is capped at the viewport height and scrolls, so a description longer than the screen stays readable to the end ([#9363](https://github.com/epam/ai-dial-chat/issues/9363)); a description that fits gets no panel. An item with no folder path shows `noFolderLabel` (default `'No folder'`) in the footer instead of an empty row; a read-only card drops that footer instead.
+The card's `description` is rendered as sanitized Markdown using the same rendering pipeline as the About tab's details view (sanitization via `rehypeSanitize`). Markdown syntax (e.g. `**bold**`, lists, links), HTML-like snippets, and plain text all render correctly. Inline images are suppressed to keep the description within the card's 3-line description clamp; they appear normally in the About tab. Links render as real `<a>` elements and activate independently without triggering the card's own `onClick` handler; clicks on other description content still open the card details. An item with no folder path shows `noFolderLabel` (default `'No folder'`) in the footer instead of an empty row; a read-only card drops that footer instead.
 
 The "Featured" chip's colors follow the item's entity type by default. Override
 it for every entity type with `styles.colors.featuredChipStyle` (merged over
@@ -563,10 +563,13 @@ the height of its parent and scrolls its rows inside that box, with the column
 header staying in view. Give the parent a definite height (a flex child with
 `min-h-0` works). Rows are a fixed 60 px.
 
-The table frame, header, row dividers and selected-row tint come from the
-`Grid` theme: the list renders the kit's `GridAppearance.Chat`, a borderless
-12px card with the MD shadow and inset row dividers. `styles.colors` (`ListViewColors`) covers cell content only:
-`starFilled`, `folderIcon`, `selectedRowCheckIcon`, `nameText` and `versionText`. With no items, the grid
+The table frame, header and row dividers come from the `Grid` theme: the list
+renders the kit's `GridAppearance.Chat`, a borderless 12px card with the MD
+shadow and inset row dividers. Outside multi-select, the selected row keeps its
+regular background and is framed with a 1.5px `--stroke-accent` border, the same
+outline-only look as a selected card. `styles.colors` (`ListViewColors`) covers cell content only:
+`starFilled`, `folderIcon`, `nameText` and `versionText` (`selectedRowCheckIcon`
+is deprecated and has no effect). With no items, the grid
 shows its own empty state from `emptyStateTitle` (default `'No results'`) and
 `emptyStateDescription`. The message is announced only with `isEmptyStateLive`
 (default `false`); `Catalog` sets it when a search or topic filter left the tab
@@ -1296,6 +1299,64 @@ Through `Catalog`, the same two callbacks are `onUnpublish` and
   onUnpublish={handleUnpublish}
   isUnpublishVisible={(candidate) => candidate.isMyApp === true}
   detailsTexts={{ unpublishLabel: t('buttons.unpublish') }}
+/>
+```
+
+### Private dependencies in the publish panel
+
+`getPublishDependencies(item)` (on `DetailsPanel` and `Catalog`) resolves the
+resources the item refers to that are not in the public bucket, as the publish
+panel's `PublishDependency[]`. The details panel calls it each time its publish
+sub-view opens and lists the result read-only under the summary row; a rejected
+lookup shows an empty list and no error, a response that arrives after the panel
+closed or the item changed is ignored, and omitting the prop renders the panel as
+before. Its text arrives through the existing `publishLabels` (as
+`dependenciesLabels`). The optional `resolvePublishDependenciesLabels(item)`
+(on `DetailsPanel` and `Catalog`) returns dependency labels for the item being
+published, merged over `publishLabels.dependenciesLabels`, so a host can name
+the item's kind in the warning; omitting it uses `publishLabels` as is.
+Likewise `resolvePublishApprovalLabels(item)` returns the `adminApprovalTitle` and
+`adminApprovalMessage` of the publish panel's admin-approval banner for the item,
+merged over `publishLabels`. The request, its endpoint
+and its mapping to `PublishDependency` stay with the host (see
+`usePublishDependencies` and `mapResourceDependencyDto` in
+`@epam/ai-dial-chat-hooks`).
+
+```tsx
+<DetailsPanel
+  item={item}
+  isOpen
+  onClose={handleClose}
+  getPublishDependencies={async (candidate) =>
+    (await fetchPublishDependencies(candidate.id)).map(mapResourceDependencyDto)
+  }
+  publishLabels={{
+    dependenciesLabels: { title: t('catalog.publish.dependencies.title') },
+  }}
+/>
+```
+
+### Versions history in the publish panel
+
+`publishVersionHistory` (on `DetailsPanel`) is the `VersionHistorySectionProps`
+object of `@epam/ai-dial-publish-panel` for the open item: rows, loading and error
+state, retry, labels and styles, already resolved by the host. The details panel
+forwards it to the publish panel unchanged, so the Versions history section is the
+last section of the panel; omitting it renders the panel as before. The panel adds no
+version input. `onPublishOpenChange(isOpen, item)` is called with `true` and the open item when
+the publish sub-view opens and with `false` when it closes or the panel unmounts, so
+the host can build the history for that item and load its statuses only while the
+sub-view is open. `Catalog` takes and forwards both props. The library builds no rows and
+calls no API; `useVersionHistory` in `@epam/ai-dial-chat-hooks` does both on the
+host side.
+
+```tsx
+<DetailsPanel
+  item={item}
+  isOpen
+  onClose={handleClose}
+  publishVersionHistory={history}
+  onPublishOpenChange={(isOpen) => setIsPublishOpen(isOpen)}
 />
 ```
 

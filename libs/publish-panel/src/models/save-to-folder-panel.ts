@@ -1,6 +1,5 @@
 import type {
   FolderDestination,
-  FolderDestinationRoot,
   FolderDestinationTreeStyles,
 } from '@epam/ai-dial-react-file-manager';
 import type { CSSProperties, Ref, RefObject } from 'react';
@@ -9,8 +8,10 @@ import type {
   SaveToFolderView,
   SaveVersionMode,
 } from '../types/save-to-folder';
+import type { FolderDestinationRoot } from './folder-destination';
 import type { PublicationRule, PublishResourceSummary } from './publish';
 import type { PublishAccessRulesStyles } from './publish-access-rules-styles';
+import type { VersionHistorySectionProps } from './version-history';
 
 /** Text overrides for the body of the save-to-folder panel. */
 export interface SaveToFolderPanelLabels {
@@ -112,6 +113,8 @@ export interface SaveToFolderAccessRulesProps {
   labels?: PublishAccessRulesLabels;
   /** Style overrides for the rules section. */
   styles?: PublishAccessRulesStyles;
+  /** Returns `true` for a destination that takes no rules, which hides the section while it is selected. Omit to show the section for every folder of a root with `hasAccessRules`. */
+  isHiddenFor?: (destination: FolderDestination) => boolean;
 }
 
 /** Props shared by the body and the standalone shell of the save-to-folder panel. */
@@ -124,6 +127,8 @@ export interface SaveToFolderPanelBaseProps {
   destination: FolderDestination;
   /** Called with the destination the user selected and confirmed in the folder tree. */
   onDestinationChange: (destination: FolderDestination) => void;
+  /** Reason a folder is unavailable as a destination, or `undefined` when it is usable; forwarded to the folder tree, see `FolderDestinationTreeProps.getDisabledReason`. */
+  getDisabledReason?: (destination: FolderDestination) => string | undefined;
   /** Called when a new folder name is confirmed under `rootKey` at `parentPath`. */
   onCreateFolder: (
     rootKey: string,
@@ -134,6 +139,8 @@ export interface SaveToFolderPanelBaseProps {
   version?: SaveToFolderVersionProps;
   /** Access rules for a destination under a root with `hasAccessRules`; omit to hide the section. */
   accessRules?: SaveToFolderAccessRulesProps;
+  /** Versions history shown as the last section of the main view; omit to hide the section. */
+  versionHistory?: VersionHistorySectionProps;
   /** Whether a save is in flight; every control is disabled meanwhile. Defaults to `false`. */
   isSubmitting?: boolean;
   /** Error from the last save attempt, already translated; announced assertively. */

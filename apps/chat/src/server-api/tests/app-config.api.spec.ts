@@ -1,6 +1,7 @@
 import {
   CatalogCreationType,
   CelebrationDeliveryMode,
+  SpendingLimitsMode,
 } from '@epam/ai-dial-chat-api-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { appConfigApi } from '../api-client';
@@ -27,6 +28,7 @@ describe('app-config API', () => {
         appVersion: '0.0.1',
         asrModelId: null,
         announcements: [],
+        onboardingHints: [],
         transcribeSizeLimitBytes: 5 * 1024 * 1024,
         additionalContentLocales: [],
         fileManagerTabs: ['my_files', 'shared', 'organization'],
@@ -40,6 +42,7 @@ describe('app-config API', () => {
         publicationFilterSources: ['title', 'role', 'dial_roles'],
         maxAttachmentFileSizeBytes: 536_870_912,
         usageLimitsWarningThresholdPercent: 75,
+        spendingLimitsMode: SpendingLimitsMode.Off,
         celebrationsEnabledByDefault: true,
         celebrationDelivery: {
           mode: CelebrationDeliveryMode.Bundled,

@@ -201,6 +201,15 @@ interface FormProps {
 }
 
 vi.mock('@epam/ai-dial-scheduled-tasks', async (importOriginal) => ({
+  getZonedNow: (
+    await importOriginal<typeof import('@epam/ai-dial-scheduled-tasks')>()
+  ).getZonedNow,
+  instantToZonedDateTime: (
+    await importOriginal<typeof import('@epam/ai-dial-scheduled-tasks')>()
+  ).instantToZonedDateTime,
+  isAbsoluteInstant: (
+    await importOriginal<typeof import('@epam/ai-dial-scheduled-tasks')>()
+  ).isAbsoluteInstant,
   hasScheduledTaskFormChanges: (
     await importOriginal<typeof import('@epam/ai-dial-scheduled-tasks')>()
   ).hasScheduledTaskFormChanges,
@@ -750,19 +759,11 @@ describe('ScheduledTaskEditPage', () => {
     expect(updateScheduledTaskMock).not.toHaveBeenCalled();
   });
 
-  it('sends the edited time in the update body as UTC cron fields', async () => {
-    /*
-     * Both the mapper's local→UTC conversion and the expectation below read
-     * the wall clock; pin one instant so a minute or DST boundary between
-     * them cannot flip the assertion. `shouldAdvanceTime` keeps timers
-     * firing so userEvent and async queries still work under the fake clock.
-     */
-    vi.useFakeTimers({
-      now: new Date('2025-06-15T00:00:00Z'),
-      shouldAdvanceTime: true,
+  it('sends the edited time unshifted, with the task zone', async () => {
+    getScheduledTaskMock.mockResolvedValue({
+      ...baseTask,
+      timezone: 'Europe/Berlin',
     });
-
-    getScheduledTaskMock.mockResolvedValue(baseTask);
     updateScheduledTaskMock.mockResolvedValue({ id: 'sched_123' });
     renderEditPage();
 
@@ -773,24 +774,32 @@ describe('ScheduledTaskEditPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     expect(updateScheduledTaskMock).toHaveBeenCalledOnce();
-    const fields = updateScheduledTaskMock.mock.calls[0][1].trigger.cron.fields;
-    /* The mapper converts the local 08:45 to UTC with a reference Date —
-       compute the expectation the same way so the test holds in any
-       runner timezone. */
-    const reference = new Date();
-    reference.setHours(8, 45, 0, 0);
-    expect(fields.hour).toBe(String(reference.getUTCHours()));
-    expect(fields.minute).toBe(String(reference.getUTCMinutes()));
+    const body = updateScheduledTaskMock.mock.calls[0][1];
+    expect(body.trigger.cron.fields).toEqual({ hour: '8', minute: '45' });
+    expect(body.timezone).toBe('Europe/Berlin');
+  });
+
+  it('opens a task saved without a zone as UTC and resends UTC on save', async () => {
+    getScheduledTaskMock.mockResolvedValue(baseTask);
+    updateScheduledTaskMock.mockResolvedValue({ id: 'sched_123' });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    const body = updateScheduledTaskMock.mock.calls[0][1];
+    expect(body.timezone).toBe('UTC');
+    expect(body.trigger.cron.fields).toEqual({ hour: '9', minute: '0' });
   });
 
   it('saves an older task whose activity window already started, preserving the boundary', async () => {
-    const loadedStart = new Date('2020-01-01T00:00:00.000Z');
     getScheduledTaskMock.mockResolvedValue({
       ...baseTask,
+      timezone: 'Europe/Berlin',
       trigger: {
         cron: {
           fields: { hour: '9', minute: '0' },
-          startDate: loadedStart.toISOString(),
+          startDate: '2019-12-31T23:00:00.000Z',
           endDate: '2099-12-31T23:59:59.999Z',
         },
       },
@@ -802,16 +811,11 @@ describe('ScheduledTaskEditPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     expect(updateScheduledTaskMock).toHaveBeenCalledOnce();
-    /* The body rebuilds the boundary from the loaded local calendar day via a
-       reference Date; compute the expectation the same way so the test holds
-       in any runner timezone. */
-    const expected = new Date(
-      loadedStart.getFullYear(),
-      loadedStart.getMonth(),
-      loadedStart.getDate(),
-    ).toISOString();
+    /* The older UTC instant is Berlin's 2020-01-01 midnight; it is resent as that local day. */
     expect(updateScheduledTaskMock.mock.calls[0][1].trigger.cron).toMatchObject(
-      { startDate: expected },
+      {
+        startDate: '2020-01-01T00:00:00.000',
+      },
     );
   });
 

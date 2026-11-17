@@ -25,6 +25,12 @@ import {
 } from '../../../server-api/project-conversations.api';
 import ProjectConversationsSection from '../ProjectConversationsSection';
 
+/* Components here render without AppConfigProvider; resolve icons without a themes base URL. */
+vi.mock('../../../hooks/catalog/useResolveCatalogIconUrl', async () => {
+  const { resolveCatalogIconUrl } = await import('../../../utils/icon-path');
+  return { useResolveCatalogIconUrl: () => resolveCatalogIconUrl };
+});
+
 const { composerMenus } = vi.hoisted(() => ({
   composerMenus: {
     composerProps: {},
@@ -365,9 +371,15 @@ describe('ProjectConversationsSection', () => {
       ProjectsI18nKeys.ChatsRenameInputLabel,
     );
     await userEvent.clear(input);
-    await userEvent.click(
-      screen.getByRole('button', { name: ButtonsI18nKeys.Save }),
-    );
+    /* Save stays disabled for an empty name, so Enter is what surfaces the error. */
+    expect(
+      (
+        screen.getByRole('button', {
+          name: ButtonsI18nKeys.Save,
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+    await userEvent.type(input, '{Enter}');
     expect(
       await screen.findByText(ProjectsI18nKeys.ChatsRenameEmpty),
     ).toBeTruthy();

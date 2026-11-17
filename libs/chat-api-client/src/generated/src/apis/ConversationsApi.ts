@@ -33,6 +33,7 @@ import type {
   PublishConversationResultDto,
   RenameConversationBodyDto,
   RenameConversationResponseDto,
+  ResourceDependenciesResultDto,
   SaveConversationBodyDto,
   SendCompletionDto,
   StopCompletionDto,
@@ -77,6 +78,10 @@ export interface GetConversationRequest {
 export interface GetConversationMetadataRequest {
   path: string;
   permissions?: boolean;
+}
+
+export interface GetConversationPublishDependenciesRequest {
+  path: string;
 }
 
 export interface GetConversationPublishHistoryRequest {
@@ -676,6 +681,68 @@ export class ConversationsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ConversationMetadataDto> {
     const response = await this.getConversationMetadataRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns the direct references of an owned conversation that are not in the public bucket: its model or add-ons when they are applications or toolsets, the skills its messages use, and attachment files that belong to another user. Files in the author’s own bucket are not listed, because they are published with the conversation. The list is advisory: when it cannot be resolved the response is an empty list rather than an error.
+   * List the private dependencies of a conversation
+   */
+  async getConversationPublishDependenciesRaw(
+    requestParameters: GetConversationPublishDependenciesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ResourceDependenciesResultDto>> {
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling getConversationPublishDependencies().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/conversations/publish-dependencies`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ResourceDependenciesResultDto>(response);
+  }
+
+  /**
+   * Returns the direct references of an owned conversation that are not in the public bucket: its model or add-ons when they are applications or toolsets, the skills its messages use, and attachment files that belong to another user. Files in the author’s own bucket are not listed, because they are published with the conversation. The list is advisory: when it cannot be resolved the response is an empty list rather than an error.
+   * List the private dependencies of a conversation
+   */
+  async getConversationPublishDependencies(
+    requestParameters: GetConversationPublishDependenciesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ResourceDependenciesResultDto> {
+    const response = await this.getConversationPublishDependenciesRaw(
       requestParameters,
       initOverrides,
     );

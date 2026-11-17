@@ -79,6 +79,30 @@ describe('ScheduledTasksService — upstream error reason and code', () => {
     });
   });
 
+  it('surfaces the Scheduler reason when it rejects a wrongly cased time zone', async () => {
+    upstream(422, {
+      error: {
+        message:
+          "unknown timezone 'europe/berlin'; expected an IANA identifier such as 'Europe/Berlin'",
+        code: 'validation_error',
+      },
+    });
+
+    const error = await failure(
+      makeService().createScheduledTask('user', 'token', {
+        ...body,
+        timezone: 'europe/berlin',
+      }),
+    );
+
+    expect(error).toBeInstanceOf(HttpException);
+    expect(error.getStatus()).toBeLessThan(500);
+    expect(error.getResponse()).toMatchObject({
+      upstreamMessage: expect.stringContaining('europe/berlin'),
+      upstreamCode: 'validation_error',
+    });
+  });
+
   it('turns a bare-string 409 body on delete into upstreamMessage only', async () => {
     upstream(409, 'Schedule is already deleted');
 

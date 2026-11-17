@@ -6,9 +6,21 @@ import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
 import { CatalogI18nKeys } from '../../constants/translation-keys';
 import {
+  buildEntityDetailsLabels,
   mapDeploymentToCatalogItem,
   mapToolsetToCatalogItem,
 } from '../map-deployment-to-catalog-item';
+
+describe('buildEntityDetailsLabels', () => {
+  it('translates the deprecation date and end of service labels via t()', () => {
+    const t = ((key: string) => key) as TFunction;
+
+    expect(buildEntityDetailsLabels(t)).toMatchObject({
+      deprecationDate: CatalogI18nKeys.EntityDetailsDeprecationDate,
+      endOfService: CatalogI18nKeys.EntityDetailsEndOfService,
+    });
+  });
+});
 
 /*
  * The mapping algorithm itself is covered by

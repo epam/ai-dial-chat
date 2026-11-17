@@ -9,6 +9,15 @@ export type {
   PublishResourceSummary,
 } from './models/publish';
 
+export { PublishDependencyType } from './models/publish-dependency';
+export type { PublishDependency } from './models/publish-dependency';
+export type {
+  PublishDependenciesColors,
+  PublishDependenciesLabels,
+  PublishDependenciesListProps,
+  PublishDependenciesStyles,
+} from './models/publish-dependencies-list';
+
 // Utils
 export { derivePublishState } from './utils/publish-state';
 export { formatPublishedDate } from './utils/format-published-date';
@@ -58,6 +67,18 @@ export type {
   PublishAccessRulesStyles,
 } from './models/publish-access-rules-styles';
 
+export { VersionHistorySection } from './components/VersionHistorySection/VersionHistorySection';
+export { VersionHistoryStatus } from './models/version-history';
+export type {
+  VersionHistoryColors,
+  VersionHistoryLabels,
+  VersionHistoryRow,
+  VersionHistorySectionProps,
+  VersionHistoryStyles,
+} from './models/version-history';
+
+export { PublishDependenciesList } from './components/PublishDependenciesList/PublishDependenciesList';
+
 export { PublishHistoryList } from './components/PublishHistoryList/PublishHistoryList';
 export type {
   PublishHistoryListColors,
@@ -89,10 +110,8 @@ export type {
 } from './components/PublishPanel/StandalonePublishPanel';
 export { PUBLISH_PANEL_CLASS } from './constants/public-class-names';
 
-export type {
-  FolderDestination,
-  FolderDestinationRoot,
-} from '@epam/ai-dial-react-file-manager';
+export type { FolderDestination } from '@epam/ai-dial-react-file-manager';
+export type { FolderDestinationRoot } from './models/folder-destination';
 
 export { UnpublishConfirmationDialog } from './components/UnpublishConfirmationDialog/UnpublishConfirmationDialog';
 export type {

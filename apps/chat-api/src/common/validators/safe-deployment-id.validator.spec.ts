@@ -7,6 +7,8 @@ describe('isSafeDeploymentId', () => {
     'applications/bucket/My App',
     'toolsets/public/folder/my-toolset',
     'applications/bucket/name?#*',
+    'applications/bucket/my-app__1.0+build5',
+    'applications/bucket/my-app__1.0%2Bbuild5',
   ])('accepts the valid deployment identifier %s', (value) => {
     expect(isSafeDeploymentId(value)).toBe(true);
   });

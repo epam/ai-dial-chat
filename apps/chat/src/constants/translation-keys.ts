@@ -216,10 +216,12 @@ export enum CatalogI18nKeys {
   BrowseSettingsFiltering = 'catalog.browseSettings.filtering',
   BrowseSettingsCards = 'catalog.browseSettings.cards',
   BrowseSettingsList = 'catalog.browseSettings.list',
+  BrowseSettingsFrom = 'catalog.browseSettings.from',
   BrowseSettingsMy = 'catalog.browseSettings.my',
   BrowseSettingsTopics = 'catalog.browseSettings.topics',
   BrowseSettingsFilterCount = 'catalog.browseSettings.filterCount',
   // Details panel
+  DetailsAriaLabel = 'catalog.details.ariaLabel',
   DetailsTabTools = 'catalog.details.tabTools',
   DetailsTabContent = 'catalog.details.tabContent',
   DetailsPromptLoadError = 'catalog.details.promptLoadError',
@@ -293,6 +295,8 @@ export enum CatalogI18nKeys {
   EntityDetailsParameters = 'catalog.entityDetails.parameters',
   EntityDetailsHostedBy = 'catalog.entityDetails.hostedBy',
   EntityDetailsReleaseDate = 'catalog.entityDetails.releaseDate',
+  EntityDetailsDeprecationDate = 'catalog.entityDetails.deprecationDate',
+  EntityDetailsEndOfService = 'catalog.entityDetails.endOfService',
   EntityDetailsContextWindow = 'catalog.entityDetails.contextWindow',
   EntityDetailsMaxOutputTokens = 'catalog.entityDetails.maxOutputTokens',
   EntityDetailsInputModalities = 'catalog.entityDetails.inputModalities',
@@ -408,6 +412,7 @@ export enum PromptSelectorI18nKeys {
   ParametersTitle = 'promptSelector.parametersTitle',
   ParametersLabel = 'promptSelector.parametersLabel',
   DetailsLabel = 'promptSelector.detailsLabel',
+  TabsAriaLabel = 'promptSelector.tabsAriaLabel',
   EnterValuePlaceholder = 'promptSelector.enterValuePlaceholder',
 }
 
@@ -584,6 +589,7 @@ export enum ScheduledTasksI18nKeys {
   CardScheduleEveryNMinutes = 'scheduledTasks.card.scheduleEveryNMinutes',
   CardScheduleOnceAt = 'scheduledTasks.card.scheduleOnceAt',
   CardScheduleRecurringFallback = 'scheduledTasks.card.scheduleRecurringFallback',
+  CardScheduleZoneSuffix = 'scheduledTasks.card.scheduleZoneSuffix',
   CreatePageTitle = 'scheduledTasks.create.pageTitle',
   CreateDetailsSectionTitle = 'scheduledTasks.create.detailsSectionTitle',
   CreateDetailsSectionSubtitle = 'scheduledTasks.create.detailsSectionSubtitle',
@@ -600,6 +606,18 @@ export enum ScheduledTasksI18nKeys {
   CreateRepeatCustom = 'scheduledTasks.create.repeatCustom',
   CreateTimeLabel = 'scheduledTasks.create.timeLabel',
   CreateTimeInvalid = 'scheduledTasks.create.timeInvalid',
+  CreateTimezoneChangeLabel = 'scheduledTasks.create.timezoneChangeLabel',
+  CreateTimezoneDialogAriaLabel = 'scheduledTasks.create.timezoneDialogAriaLabel',
+  CreateTimezoneSearchPlaceholder = 'scheduledTasks.create.timezoneSearchPlaceholder',
+  CreateTimezoneSearchAriaLabel = 'scheduledTasks.create.timezoneSearchAriaLabel',
+  CreateTimezoneYourZone = 'scheduledTasks.create.timezoneYourZone',
+  CreateTimezoneAllZones = 'scheduledTasks.create.timezoneAllZones',
+  CreateTimezoneListAriaLabel = 'scheduledTasks.create.timezoneListAriaLabel',
+  CreateTimezoneNoResults = 'scheduledTasks.create.timezoneNoResults',
+  CreateTimezoneNoResultsDescription = 'scheduledTasks.create.timezoneNoResultsDescription',
+  CreateTimezoneResultsCount = 'scheduledTasks.create.timezoneResultsCount',
+  CreateTimezoneGapHint = 'scheduledTasks.create.timezoneGapHint',
+  CreateTimezoneInvalid = 'scheduledTasks.create.timezoneInvalid',
   CreateDayOfWeekLabel = 'scheduledTasks.create.dayOfWeekLabel',
   CreateDayOfWeekRequired = 'scheduledTasks.create.dayOfWeekRequired',
   CreateDaysOfWeekLabel = 'scheduledTasks.create.daysOfWeekLabel',
@@ -1034,6 +1052,8 @@ export enum PublishI18nKeys {
   UnpublishFailedMessage = 'publish.unpublishFailedMessage',
   UnpublishNetworkErrorMessage = 'publish.unpublishNetworkErrorMessage',
   SubmitErrorCallout = 'publish.submitErrorCallout',
+  AdminApprovalTitle = 'publish.adminApprovalTitle',
+  AdminApprovalMessage = 'publish.adminApprovalMessage',
   AuthorLabel = 'publish.authorLabel',
   AuthorPlaceholder = 'publish.authorPlaceholder',
   AuthorHint = 'publish.authorHint',
@@ -1045,6 +1065,21 @@ export enum PublishI18nKeys {
   AddChildFolder = 'publish.addChildFolder',
   UpdateVersion = 'publish.updateVersion',
   PublishingInProgress = 'publish.publishingInProgress',
+  DependenciesTitle = 'publish.dependenciesTitle',
+  DependenciesDescription = 'publish.dependenciesDescription',
+  DependenciesAnnouncement = 'publish.dependenciesAnnouncement',
+  DependenciesEntityApplication = 'publish.dependenciesEntityApplication',
+  DependenciesEntityConversation = 'publish.dependenciesEntityConversation',
+  DependenciesEntityProject = 'publish.dependenciesEntityProject',
+  DependenciesEntityToolset = 'publish.dependenciesEntityToolset',
+  DependenciesEntityPrompt = 'publish.dependenciesEntityPrompt',
+  DependenciesEntitySkill = 'publish.dependenciesEntitySkill',
+  DependenciesEntityItem = 'publish.dependenciesEntityItem',
+  DependenciesTypeApplication = 'publish.dependenciesTypeApplication',
+  DependenciesTypeToolset = 'publish.dependenciesTypeToolset',
+  DependenciesTypePrompt = 'publish.dependenciesTypePrompt',
+  DependenciesTypeSkill = 'publish.dependenciesTypeSkill',
+  DependenciesTypeFile = 'publish.dependenciesTypeFile',
 }
 
 export enum PublishAccessRulesI18nKeys {
@@ -1245,6 +1280,19 @@ export enum AnnouncementsPopoverI18nKeys {
   PillLabel = 'announcementsPopover.pillLabel',
   ListAriaLabel = 'announcementsPopover.listAriaLabel',
   OpensInNewTab = 'announcementsPopover.opensInNewTab',
+}
+
+export enum OnboardingTourI18nKeys {
+  StepCounter = 'onboardingTour.stepCounter',
+  Next = 'onboardingTour.next',
+  Back = 'onboardingTour.back',
+  Done = 'onboardingTour.done',
+  Skip = 'onboardingTour.skip',
+  Close = 'onboardingTour.close',
+  AnchorsSummary = 'onboardingTour.anchorsSummary',
+  AnchorsMissing = 'onboardingTour.anchorsMissing',
+  AnchorsNoneMissing = 'onboardingTour.anchorsNoneMissing',
+  AnchorsClose = 'onboardingTour.anchorsClose',
 }
 
 export enum FooterMessageI18nKeys {
@@ -1815,6 +1863,12 @@ export enum UsageI18nKeys {
   NoLimitLabel = 'usage.noLimitLabel',
   UnavailableLabel = 'usage.unavailableLabel',
   UnavailableBadgeLabel = 'usage.unavailableBadgeLabel',
+  BudgetsHeading = 'usage.budgets.heading',
+  BudgetsDescription = 'usage.budgets.description',
+  BudgetsShadowNotice = 'usage.budgets.shadowNotice',
+  BudgetsEnforceEmpty = 'usage.budgets.enforceEmpty',
+  BudgetsAllModels = 'usage.budgets.allModels',
+  BudgetsCoveredModels = 'usage.budgets.coveredModels',
 }
 
 export enum HalloweenI18nKeys {
@@ -1907,4 +1961,38 @@ export enum ResourceSavePanelI18nKeys {
   SavedButPublishFailed = 'resourceSavePanel.savedButPublishFailed',
   SavedButPublishFailedReason = 'resourceSavePanel.savedButPublishFailedReason',
   SavedButAlreadyPublished = 'resourceSavePanel.savedButAlreadyPublished',
+  SavedToFolder = 'resourceSavePanel.savedToFolder',
+  SavedButAlreadyInOrgUnit = 'resourceSavePanel.savedButAlreadyInOrgUnit',
+  SavedButOrgUnitWriteFailed = 'resourceSavePanel.savedButOrgUnitWriteFailed',
+  SavedButOrgUnitWriteFailedReason = 'resourceSavePanel.savedButOrgUnitWriteFailedReason',
+}
+
+/** Why a folder is disabled: the user lacks the org-unit right the action needs, one reason per resource type. */
+export enum OrgUnitAccessI18nKeys {
+  NoSaveAccessQuickApp = 'orgUnitAccess.noSaveAccessQuickApp',
+  NoSaveAccessApplication = 'orgUnitAccess.noSaveAccessApplication',
+  NoSaveAccessToolset = 'orgUnitAccess.noSaveAccessToolset',
+  NoSaveAccessPrompt = 'orgUnitAccess.noSaveAccessPrompt',
+  NoSaveAccessSkill = 'orgUnitAccess.noSaveAccessSkill',
+  NoSaveAccessConversation = 'orgUnitAccess.noSaveAccessConversation',
+  NoSaveAccessProject = 'orgUnitAccess.noSaveAccessProject',
+  NoPublishAccessQuickApp = 'orgUnitAccess.noPublishAccessQuickApp',
+  NoPublishAccessApplication = 'orgUnitAccess.noPublishAccessApplication',
+  NoPublishAccessToolset = 'orgUnitAccess.noPublishAccessToolset',
+  NoPublishAccessPrompt = 'orgUnitAccess.noPublishAccessPrompt',
+  NoPublishAccessSkill = 'orgUnitAccess.noPublishAccessSkill',
+  NoPublishAccessConversation = 'orgUnitAccess.noPublishAccessConversation',
+  NoPublishAccessProject = 'orgUnitAccess.noPublishAccessProject',
+}
+
+export enum VersionHistoryI18nKeys {
+  Heading = 'versionHistory.heading',
+  InReview = 'versionHistory.inReview',
+  Published = 'versionHistory.published',
+  StatusUnavailable = 'versionHistory.statusUnavailable',
+  Loading = 'versionHistory.loading',
+  Empty = 'versionHistory.empty',
+  LoadFailed = 'versionHistory.loadFailed',
+  PublishedBy = 'versionHistory.publishedBy',
+  Owner = 'versionHistory.owner',
 }

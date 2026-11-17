@@ -130,6 +130,26 @@ regardless of which theme the file lists first. A deployment that configures no
 `light` theme therefore renders in the built-in Tailwind light palette until the
 user picks something.
 
+### First paint on reload
+
+The configuration arrives only after the bundle has loaded and `/api/themes`
+has answered, so painting from it alone flashed the built-in light palette on
+every reload for a user on a dark theme. To avoid that, the app keeps the
+colours of every configured theme in local storage (`themeColors`, written each
+time the configuration loads), and `apps/chat/public/theme-init.js` — a
+synchronous classic script in the `index.html` head, served from `'self'`
+because the app-shell CSP allows no inline scripts — writes the stored theme's
+colours onto `<html>` before the bundle runs, resolving `system` against
+`prefers-color-scheme` itself. It lists the properties it wrote in
+`data-theme-preload`; `ThemeContext` removes them before applying the fetched
+configuration, so a key the cached theme had and the current one lacks does not
+linger.
+
+The cache is per device. On the very first visit, or after the storage is
+cleared, there is nothing to paint and the page starts in the built-in palette
+as before. A theme whose colours changed on the themes host shows its previous
+colours until `/api/themes` answers.
+
 ### Logos and icons
 
 The application reads exactly three image fields:
@@ -156,6 +176,18 @@ same themes host; do not expect them to change anything here.
 Values are file names relative to the themes host; they are fetched through the
 `/api/themes/icon` proxy, so only characters allowed by its validation
 (alphanumerics, dash, underscore, dot) are usable.
+
+A deployment's `icon_url` in the DIAL config may name a theme icon either way:
+relative (`gpt4.svg`) or as an absolute URL on the themes host
+(`https://themes.example.com/gpt4.svg`). The chat loads both through
+`/api/themes/icon?iconName=gpt4.svg`, using `config.themesBaseUrl` from
+`GET /api/v1/client-config`, so a mixed config still fetches each icon once.
+That value comes from `THEMES_PUBLIC_URL`, the themes host's public address as
+the DIAL config spells it, not from `THEMES_CONFIG_URL`, which is often an
+in-cluster address the browser never sees. Leave `THEMES_PUBLIC_URL` unset and
+absolute icon URLs load as listed. Only a file directly under the public base
+URL whose name passes the proxy's validation is rewritten; every other absolute
+URL loads as listed.
 
 ### Setting the theme from an embedding host
 

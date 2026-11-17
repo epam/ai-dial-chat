@@ -46,9 +46,28 @@ export class DialEnv {
   @IsString()
   DIAL_API_KEY?: string;
 
+  /**
+   * Server-only `Api-Key` for `GET /api/v1/model-catalog`. Separate from
+   * `DIAL_API_KEY`: its Core role must see every catalog model. Unset or blank
+   * disables the catalog routes.
+   */
+  @IsOptional()
+  @IsString()
+  MODEL_CATALOG_API_KEY?: string;
+
   @IsOptional()
   @IsUrl({ require_tld: false })
   THEMES_CONFIG_URL?: string;
+
+  /**
+   * Public base URL of the themes host, as absolute deployment `icon_url`
+   * values name it. Exposed to the client as `config.themesBaseUrl`; unset
+   * keeps the field out of the response. `THEMES_CONFIG_URL` is often an
+   * in-cluster address and is never exposed.
+   */
+  @IsOptional()
+  @IsUrl({ require_tld: false, protocols: ['http', 'https'] })
+  THEMES_PUBLIC_URL?: string;
 
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))

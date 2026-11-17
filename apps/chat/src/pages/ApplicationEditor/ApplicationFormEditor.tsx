@@ -4,11 +4,13 @@ import {
   MetadataField,
   MetadataForm,
   useMetadataForm,
+  withStoredVersionRule,
 } from '@epam/ai-dial-builder-form';
 import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import {
   createEmbeddedApplicationSaveAdapter,
   createHostApplicationSaveAdapter,
+  createOrgUnitWriter,
   getApiErrorDetails,
   parseResourceFolderPath,
   type ResourceSaveAdapter,
@@ -72,6 +74,7 @@ import type {
 import type { CatalogCreationCheck } from '../../models/catalog-creation';
 import { applicationsApi } from '../../server-api/api-client';
 import { listApplicationFolders } from '../../server-api/applications';
+import { publishApiClient } from '../../server-api/publish.api';
 import { ApplicationCreateStrategy } from '../../types/application-editor';
 import { CatalogCreationDecision } from '../../types/catalog-creation';
 import { EntityOperation } from '../../types/entity-notification';
@@ -149,9 +152,13 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
         : definition.defaultMetadata,
     [deployment, definition.defaultMetadata],
   );
+  const metadataValidationOptions = useMemo(
+    () => withStoredVersionRule(definition.metadataValidation, isEditMode),
+    [definition.metadataValidation, isEditMode],
+  );
   const metadata = useMetadataForm({
     initialValues: metadataInitialValues,
-    validationOptions: definition.metadataValidation,
+    validationOptions: metadataValidationOptions,
     reseedKey: wasCreatedThisSession ? undefined : deployment?.id,
   });
 
@@ -527,6 +534,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
           if (!created?.id) throw new Error('Created application has no id');
           return { id: created.id };
         },
+        ...createOrgUnitWriter(publishApiClient, 'application'),
       });
       setIsSavePanelOpen(true);
       return;
@@ -536,6 +544,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
         ? createHostApplicationSaveAdapter({
             applicationsApi,
             applicationId: appId,
+            publishClient: publishApiClient,
             update: () => update(appId, values, setup),
             createVersion: (version, folderPath) =>
               definition.create({ ...values, version }, setup, context, {
@@ -545,6 +554,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
         : createEmbeddedApplicationSaveAdapter({
             applicationsApi,
             applicationId: appId,
+            publishClient: publishApiClient,
             // The embedded editor is the single writer; it shows its own save error inline.
             runEmbeddedSave: async () => {
               await setupRef.current?.save(values);

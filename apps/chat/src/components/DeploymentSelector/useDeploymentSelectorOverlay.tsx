@@ -44,6 +44,7 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
   const { t } = useTranslation();
   const { items, selectedItemId, setSelectedItemId } = useDeployments();
   const { config: appConfig } = useAppConfig();
+  const { themesBaseUrl } = appConfig;
   const isDefaultDeploymentPinned = useFeatureFlag('defaultDeploymentPinned');
   const { favoriteIds, toggleFavorite } = useFavoriteApplications();
   const { language } = useLanguage();
@@ -59,9 +60,10 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
             t,
             activeLocale: language,
             isToolsetTabEnabled: isToolsetsEnabled,
+            themesBaseUrl,
           }),
         ),
-    [items, favoriteIds, t, language, isToolsetsEnabled],
+    [items, favoriteIds, t, language, isToolsetsEnabled, themesBaseUrl],
   );
 
   const selectedDeployment = useMemo(
@@ -77,9 +79,17 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
             t,
             activeLocale: language,
             isToolsetTabEnabled: isToolsetsEnabled,
+            themesBaseUrl,
           })
         : undefined,
-    [selectedDeployment, favoriteIds, t, language, isToolsetsEnabled],
+    [
+      selectedDeployment,
+      favoriteIds,
+      t,
+      language,
+      isToolsetsEnabled,
+      themesBaseUrl,
+    ],
   );
 
   const pinnedCatalogItem = useMemo(() => {
@@ -94,6 +104,7 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
           t,
           activeLocale: language,
           isToolsetTabEnabled: isToolsetsEnabled,
+          themesBaseUrl,
         })
       : undefined;
   }, [
@@ -104,6 +115,7 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
     t,
     language,
     isToolsetsEnabled,
+    themesBaseUrl,
   ]);
 
   const renderOverlay = useCallback(

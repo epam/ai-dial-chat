@@ -1,0 +1,13 @@
+.backdrop {
+  background: var(--ot-backdrop, var(--bg-backdrop, #161b2d4d));
+}
+
+/* A huge spread shadow dims everything around the cut-out. */
+.cutout {
+  box-shadow: 0 0 0 9999px var(--ot-backdrop, var(--bg-backdrop, #161b2d4d));
+}
+
+/* Same fill as the card, so the arrow reads as part of it. */
+.arrow {
+  fill: var(--ot-card-bg, var(--bg-layer-raised, #fcfcfc));
+}

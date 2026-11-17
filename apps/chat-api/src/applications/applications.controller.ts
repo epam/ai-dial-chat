@@ -23,6 +23,7 @@ import {
 } from '../common/dto/resource-folder.dto';
 import { ResourceNameConflictDto } from '../common/dto/resource-name-conflict.dto';
 import { ApplicationsService } from './applications.service';
+import { ApplicationErrorDto } from './dto/application-error.dto';
 import {
   CommitApplicationVersionDto,
   ForkApplicationVersionDto,
@@ -317,7 +318,8 @@ export class ApplicationsController {
   @ApiResponse({
     status: 403,
     description:
-      'Caller lacks permission to create applications in their bucket',
+      'Caller lacks permission to create applications in their bucket, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available',
+    type: ApplicationErrorDto,
   })
   @ApiResponse({
     status: 409,
@@ -368,7 +370,12 @@ export class ApplicationsController {
     status: 401,
     description: 'Not authenticated — valid session cookie required',
   })
-  @ApiResponse({ status: 403, description: 'Caller lacks permission' })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Caller lacks permission, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available',
+    type: ApplicationErrorDto,
+  })
   @ApiResponse({ status: 404, description: 'Application not found' })
   @ApiResponse({
     status: 409,

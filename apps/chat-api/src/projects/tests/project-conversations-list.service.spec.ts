@@ -314,6 +314,183 @@ describe('ProjectConversationsListService', () => {
   });
 });
 
+describe('ProjectConversationsListService — published project', () => {
+  const PUBLISHED = parseProjectId('projects/public/handbook')!;
+  const iso = (time: number) => new Date(time).toISOString();
+
+  beforeEach(() => {
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const bodiesByTitle = (
+    store: ReturnType<typeof makeService>['store'],
+    times: Record<string, number[] | undefined>,
+  ) => {
+    store.readConversationWithEtag.mockImplementation((async (
+      locator: string,
+    ) => {
+      const title = locator.split('__')[1];
+      return {
+        conversation: {
+          name: title,
+          messages: (times[title] ?? []).map((time) => ({
+            timestamp: iso(time),
+          })),
+        },
+        etag: '"sha256:x"',
+      };
+    }) as never);
+  };
+
+  it('orders the chats by their last message, not by the copy time of the files', async () => {
+    const { service, store } = makeService([
+      listing([
+        file('gpt-4o__Old__1', 1000),
+        file('gpt-4o__Newest__2', 1000),
+        file('gpt-4o__Middle__3', 999),
+      ]),
+    ]);
+    bodiesByTitle(store, {
+      Old: [100, 200],
+      Newest: [100, 900],
+      Middle: [100, 500],
+    });
+
+    const { items } = await service.listProjectConversations(
+      PUBLISHED,
+      'token',
+      'u-bucket',
+    );
+
+    expect(items.map((item) => item.title)).toEqual([
+      'Newest',
+      'Middle',
+      'Old',
+    ]);
+  });
+
+  it('reads every body past the first 20 and leaves no title pending', async () => {
+    const names = Array.from({ length: 22 }, (_, i) => `gpt-4o__T${i}__${i}`);
+    const { service, store } = makeService([
+      listing(names.map((name) => file(name, 1000))),
+    ]);
+    bodiesByTitle(
+      store,
+      Object.fromEntries(names.map((_, i) => [`T${i}`, [i + 1]])),
+    );
+
+    const { items } = await service.listProjectConversations(
+      PUBLISHED,
+      'token',
+      'u-bucket',
+    );
+
+    expect(store.readConversationWithEtag).toHaveBeenCalledTimes(22);
+    expect(items[0].title).toBe('T21');
+    expect(items[21].title).toBe('T0');
+    expect(items.some((item) => item.isTitlePending)).toBe(false);
+  });
+
+  it('puts a chat without a dated message last, in name order', async () => {
+    const { service, store } = makeService([
+      listing([
+        file('gpt-4o__B empty__1', 1000),
+        file('gpt-4o__A empty__2', 1000),
+        file('gpt-4o__Dated__3', 1000),
+      ]),
+    ]);
+    bodiesByTitle(store, { Dated: [50] });
+
+    const { items } = await service.listProjectConversations(
+      PUBLISHED,
+      'token',
+      'u-bucket',
+    );
+
+    expect(items.map((item) => item.title)).toEqual([
+      'Dated',
+      'A empty',
+      'B empty',
+    ]);
+  });
+
+  it('reuses the cached last message while the file is unchanged', async () => {
+    const { service, store } = makeService([
+      listing([file('gpt-4o__Chat__1', 1000)]),
+      listing([file('gpt-4o__Chat__1', 1000)]),
+    ]);
+    bodiesByTitle(store, { Chat: [10] });
+
+    await service.listProjectConversations(PUBLISHED, 'token', 'u-bucket');
+    await service.listProjectConversations(PUBLISHED, 'token', 'u-bucket');
+
+    expect(store.readConversationWithEtag).toHaveBeenCalledOnce();
+  });
+
+  it('re-reads a body cached without its last message once', async () => {
+    const { service, store, cache } = makeService([
+      listing([file('gpt-4o__Chat__1', 1000)]),
+    ]);
+    bodiesByTitle(store, { Chat: [10] });
+    await cache.set(
+      'projects:conversation-title:projects/public/handbook/conversations/gpt-4o__Chat__1',
+      { updatedAt: 1000, title: 'Chat', version: '"sha256:x"' },
+    );
+
+    await service.listProjectConversations(PUBLISHED, 'token', 'u-bucket');
+
+    expect(store.readConversationWithEtag).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the file order for a personal project', async () => {
+    const { service, store } = makeService([
+      listing([
+        file('gpt-4o__FileNewest__1', 900),
+        file('gpt-4o__FileOldest__2', 100),
+      ]),
+    ]);
+    bodiesByTitle(store, { FileNewest: [1], FileOldest: [999] });
+
+    const { items } = await service.listProjectConversations(
+      PROJECT,
+      'token',
+      'a1b2c3',
+    );
+
+    expect(items.map((item) => item.title)).toEqual([
+      'FileNewest',
+      'FileOldest',
+    ]);
+  });
+
+  it('keeps the file order for a project shared by another user', async () => {
+    const shared = parseProjectId('projects/other1/handbook')!;
+    const { service, store } = makeService([
+      listing([
+        file('gpt-4o__FileNewest__1', 900),
+        file('gpt-4o__FileOldest__2', 100),
+      ]),
+    ]);
+    bodiesByTitle(store, { FileNewest: [1], FileOldest: [999] });
+
+    const { items } = await service.listProjectConversations(
+      shared,
+      'token',
+      'a1b2c3',
+    );
+
+    expect(items.map((item) => item.title)).toEqual([
+      'FileNewest',
+      'FileOldest',
+    ]);
+  });
+});
+
 describe('ProjectConversationsListService — unread', () => {
   const LOCATOR = `projects/a1b2c3/support-quality/conversations/${NEWER}`;
 

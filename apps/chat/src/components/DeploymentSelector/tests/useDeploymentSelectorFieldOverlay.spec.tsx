@@ -5,6 +5,10 @@ import { useDeployments } from '../../../context/DeploymentsContext';
 import { useFavoriteApplications } from '../../../context/FavoriteApplicationsContext';
 import { useDeploymentSelectorFieldOverlay } from '../useDeploymentSelectorFieldOverlay';
 
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({ config: { themesBaseUrl: null } }),
+}));
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));

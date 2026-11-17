@@ -1,8 +1,12 @@
 {
   "name": "@epam/ai-dial-usage-dashboard",
-  "description": "Presentational aggregate cost-limit cards for the Usage settings dashboard",
+  "description": "Presentational aggregate cost-limit cards, spending budgets and model limits for the Usage settings dashboard",
   "version": "0.0.1",
   "license": "Apache-2.0",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss"
+  ],
   "private": true,
   "type": "module",
   "main": "./dist/index.js",

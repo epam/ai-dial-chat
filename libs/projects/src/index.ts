@@ -82,3 +82,9 @@ export {
   PROJECT_NAME_MAX_BYTES,
   validateProjectName,
 } from './utils/project-name';
+
+export { ProjectRevokeAccessConfirmation } from './components/ProjectRevokeAccessConfirmation/ProjectRevokeAccessConfirmation';
+export type {
+  ProjectRevokeAccessConfirmationProps,
+  ProjectRevokeAccessConfirmationLabels,
+} from './models/project-revoke-access-confirmation-props';

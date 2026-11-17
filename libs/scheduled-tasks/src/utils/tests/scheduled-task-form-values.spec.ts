@@ -7,6 +7,7 @@ const baseValues: ScheduledTaskCreateFormValues = {
   displayName: '',
   repeat: ScheduledTaskRepeat.Daily,
   time: '09:00',
+  timezone: 'UTC',
   modelId: '',
   prompt: '',
 };

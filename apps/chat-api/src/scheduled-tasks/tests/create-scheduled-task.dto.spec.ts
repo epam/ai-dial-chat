@@ -66,3 +66,35 @@ describe('scheduled-task skill arrays', () => {
     ]);
   });
 });
+
+describe('scheduled-task timezone', () => {
+  it.each([undefined, 'UTC', 'Europe/Berlin', 'Asia/Calcutta'])(
+    'accepts omitted or valid zone %j',
+    async (timezone) => {
+      expect(await invalidProperties({ ...BASE_BODY, timezone })).toEqual([]);
+    },
+  );
+
+  it.each([
+    'Mars/Olympus',
+    '+02:00',
+    '',
+    '../../etc/passwd',
+    'A'.repeat(65),
+    42,
+  ])('rejects zone %j', async (timezone) => {
+    expect(await invalidProperties({ ...BASE_BODY, timezone })).toEqual([
+      'timezone',
+    ]);
+  });
+
+  it('accepts an offset-less one-time date', async () => {
+    expect(
+      await invalidProperties({
+        ...BASE_BODY,
+        timezone: 'Europe/Berlin',
+        trigger: { date: '2027-01-01T09:00:00' },
+      }),
+    ).toEqual([]);
+  });
+});

@@ -540,6 +540,168 @@ describe('DeploymentsDetailsService', () => {
     });
   });
 
+  /*
+   * DIAL Core's `budgets[]` (epam/ai-dial-core#2188) must reach the caller
+   * untouched: same entries, same order, `priority` and `displayName` absent
+   * where Core omits them, and an absent `budgets` kept distinct from `[]`. Drives the real SDK
+   * client so its JSON parsing is part of what is asserted.
+   */
+  describe.each(['getUserLimits', 'getUserUsage'] as const)(
+    '%s budgets pass-through',
+    (method) => {
+      // `Long.MAX_VALUE` as JavaScript parses it.
+      const UNLIMITED_SENTINEL = 9223372036854776000;
+      const legacyStats = {
+        deployments: {
+          'gpt-4o': {
+            dayTokenStats: {
+              total: 10000,
+              used: 4000,
+              resetsAt: '2026-11-14T00:00:00Z',
+            },
+          },
+        },
+        dayCostStats: {
+          total: 100,
+          used: 14.2,
+          resetsAt: '2026-11-14T00:00:00Z',
+        },
+        monthCostStats: {
+          total: 2000,
+          used: 171.4,
+          resetsAt: '2026-12-01T00:00:00Z',
+        },
+      };
+      const budgets = [
+        {
+          costObject: 'projA',
+          policy: 'org-wide',
+          priority: 1,
+          displayName: 'Organization-wide',
+          day: {
+            total: 50,
+            used: 14.2,
+            resetsAt: '2026-11-14T00:00:00Z',
+          },
+          month: {
+            total: 2000,
+            used: 171.4,
+            resetsAt: '2026-12-01T00:00:00Z',
+          },
+        },
+        {
+          costObject: 'projA',
+          policy: 'team',
+          priority: 2,
+          displayName: 'Team',
+          day: {
+            total: UNLIMITED_SENTINEL,
+            used: 14.2,
+            resetsAt: '2026-11-14T00:00:00Z',
+          },
+          month: {
+            total: 200,
+            used: 171.4,
+            resetsAt: '2026-12-01T00:00:00Z',
+          },
+        },
+        {
+          costObject: 'projB',
+          policy: 'project',
+          day: {
+            total: 10,
+            used: 0.0048335,
+            resetsAt: '2026-11-14T00:00:00Z',
+          },
+          month: {
+            total: 100,
+            used: 0.0178885,
+            resetsAt: '2026-12-01T00:00:00Z',
+          },
+        },
+      ];
+
+      const fetchStats = async (payload: unknown) => {
+        const fetchStub = vi.fn(
+          async () =>
+            new Response(JSON.stringify(payload), {
+              status: 200,
+              headers: { 'content-type': 'application/json' },
+            }),
+        );
+        const dialClient = {
+          client: createSDK({ baseUrl: 'http://dial-core', fetch: fetchStub }),
+        } as unknown as DialClientService;
+        const service = new DeploymentsDetailsService(
+          dialClient,
+          {} as never,
+          configWith([DeploymentType.Model, DeploymentType.Application]),
+        );
+        return service[method]('token');
+      };
+
+      it('returns every budget in DIAL Core order alongside the unchanged legacy stats', async () => {
+        const payload = { ...legacyStats, budgets };
+
+        const result = await fetchStats(payload);
+
+        expect(result).toEqual(payload);
+        expect(result.budgets?.map((b) => [b.costObject, b.policy])).toEqual([
+          ['projA', 'org-wide'],
+          ['projA', 'team'],
+          ['projB', 'project'],
+        ]);
+        expect(result.budgets?.[2]).not.toHaveProperty('priority');
+        expect(result.budgets?.map((b) => b.displayName)).toEqual([
+          'Organization-wide',
+          'Team',
+          undefined,
+        ]);
+        expect(result.budgets?.[2]).not.toHaveProperty('displayName');
+        expect(result.budgets?.[1].day.total).toBe(UNLIMITED_SENTINEL);
+      });
+
+      it('keeps an empty budgets array empty', async () => {
+        const result = await fetchStats({ ...legacyStats, budgets: [] });
+
+        expect(result).toHaveProperty('budgets', []);
+      });
+
+      it('forwards the charged cost object and each budget coverage verbatim', async () => {
+        const payload = {
+          ...legacyStats,
+          costObject: 'projA',
+          budgets: [
+            { ...budgets[0], object: '*' },
+            { ...budgets[1], object: ['gpt-4o', 'claude-sonnet'] },
+            budgets[2],
+          ],
+        };
+
+        const result = await fetchStats(payload);
+
+        expect(result).toEqual(payload);
+        expect(result.costObject).toBe('projA');
+        expect(result.budgets?.[0].object).toBe('*');
+        expect(result.budgets?.[1].object).toEqual(['gpt-4o', 'claude-sonnet']);
+        expect(result.budgets?.[2]).not.toHaveProperty('object');
+      });
+
+      it('leaves costObject absent when DIAL Core reports no applicable budget', async () => {
+        const result = await fetchStats({ ...legacyStats, budgets: [] });
+
+        expect(result).not.toHaveProperty('costObject');
+      });
+
+      it('leaves budgets absent when DIAL Core does not report it', async () => {
+        const result = await fetchStats(legacyStats);
+
+        expect(result).toEqual(legacyStats);
+        expect(result).not.toHaveProperty('budgets');
+      });
+    },
+  );
+
   describe('getDeploymentDetails', () => {
     it('encodes each deployment path segment before calling DIAL Core', async () => {
       const { service, sdkClient } = makeService();
@@ -617,7 +779,6 @@ describe('DeploymentsDetailsService', () => {
             cache_read: { rate: '0.001' },
           },
           catalogProperties: {
-            provider: 'Provider',
             vendor: 'Vendor',
             license: 'License',
             knowledgeCutoffDate: '2026-08-17',
@@ -625,8 +786,78 @@ describe('DeploymentsDetailsService', () => {
           },
         },
       });
+      expect(result.modelDetails?.catalogProperties).not.toHaveProperty(
+        'provider',
+      );
       expect(sdkClient.getApplication).not.toHaveBeenCalled();
       expect(sdkClient.getToolset).not.toHaveBeenCalled();
+    });
+
+    it('forwards the model provider, deprecation date and end of service from DIAL Core', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(
+        okResponse({
+          id: 'gpt-4o',
+          provider: 'Azure',
+          deprecation_date: '2026-12-31',
+          end_of_service: '2027-03-31',
+          catalog_properties: { provider: 'Legacy', vendor: 'OpenAI' },
+        }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'gpt-4o',
+        'token',
+      );
+
+      expect(result.modelDetails).toMatchObject({
+        provider: 'Azure',
+        deprecationDate: '2026-12-31',
+        endOfService: '2027-03-31',
+      });
+      expect(result.modelDetails?.catalogProperties).toEqual({
+        vendor: 'OpenAI',
+      });
+      expect(result.modelDetails?.catalogProperties).not.toHaveProperty(
+        'provider',
+      );
+    });
+
+    it('omits the model provider and lifecycle dates when DIAL Core does not send them', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(okResponse({ id: 'gpt-4o' }));
+
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'gpt-4o',
+        'token',
+      );
+      const body = JSON.parse(JSON.stringify(result)) as typeof result;
+
+      expect(body.modelDetails).not.toHaveProperty('provider');
+      expect(body.modelDetails).not.toHaveProperty('deprecationDate');
+      expect(body.modelDetails).not.toHaveProperty('endOfService');
+    });
+
+    it('omits a model catalogProperties whose only key is provider', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(
+        okResponse({
+          id: 'gpt-4o',
+          catalog_properties: { provider: 'Legacy' },
+        }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'gpt-4o',
+        'token',
+      );
+      const body = JSON.parse(JSON.stringify(result)) as typeof result;
+
+      expect(body.modelDetails).not.toHaveProperty('catalogProperties');
+      expect(body.modelDetails).not.toHaveProperty('provider');
     });
 
     it('dispatches to getApplication, maps owner/features/inputAttachmentTypes, and excludes function.env/source_folder/target_folder', async () => {
@@ -915,12 +1146,14 @@ describe('DeploymentsDetailsService', () => {
       );
 
       expect(result.applicationDetails?.catalogProperties).toEqual({
-        provider: 'Provider',
         vendor: 'Vendor',
         license: 'License',
         knowledgeCutoffDate: '2026-08-17',
         parameters: '100B',
       });
+      expect(result.applicationDetails?.catalogProperties).not.toHaveProperty(
+        'provider',
+      );
     });
 
     it('omits catalogProperties for an application when no recognized string value is present', async () => {
@@ -1091,12 +1324,14 @@ describe('DeploymentsDetailsService', () => {
       );
 
       expect(result.toolsetDetails?.catalogProperties).toEqual({
-        provider: 'Provider',
         vendor: 'Vendor',
         license: 'License',
         knowledgeCutoffDate: '2026-08-17',
         parameters: '100B',
       });
+      expect(result.toolsetDetails?.catalogProperties).not.toHaveProperty(
+        'provider',
+      );
     });
 
     it('omits catalogProperties for a toolset when no recognized string value is present', async () => {

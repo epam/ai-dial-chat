@@ -85,10 +85,16 @@ export const Catalog: FC<CatalogProps> = ({
   isPublishVisible,
   isPublishPrimary,
   getPublishHistory,
+  getPublishDependencies,
+  resolvePublishDependenciesLabels,
+  resolvePublishApprovalLabels,
+  publishVersionHistory,
+  onPublishOpenChange,
   publishFolderItems,
   publishExpandedPaths,
   onPublishExpandedPathsChange,
   publishLoadingPaths,
+  getPublishDisabledReason,
   hasPublishWriteAccess,
   publishDefaultAuthor,
   onPublish,
@@ -630,6 +636,9 @@ export const Catalog: FC<CatalogProps> = ({
       noFolderLabel: titles?.noFolderLabel,
       credentialsBadgeLoggedOutLabel:
         detailsTexts?.credentialsBadgeLoggedOutLabel,
+      /* The card stars read the same labels as the details panel's star. */
+      addToFavoritesAriaLabel: detailsTexts?.addToFavoritesAriaLabel,
+      removeFromFavoritesAriaLabel: detailsTexts?.removeFromFavoritesAriaLabel,
     }),
     [
       emptyTitle,
@@ -637,6 +646,8 @@ export const Catalog: FC<CatalogProps> = ({
       featuredLabel,
       titles?.noFolderLabel,
       detailsTexts?.credentialsBadgeLoggedOutLabel,
+      detailsTexts?.addToFavoritesAriaLabel,
+      detailsTexts?.removeFromFavoritesAriaLabel,
     ],
   );
 
@@ -760,7 +771,7 @@ export const Catalog: FC<CatalogProps> = ({
       <div
         ref={setScrollBody}
         className={mergeClasses(
-          'flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto',
+          'relative flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto',
           isFloatingCreateVisible && 'pb-16',
         )}
       >
@@ -778,6 +789,10 @@ export const Catalog: FC<CatalogProps> = ({
               selectedItemId={selectedItemId}
               credentialsBadgeLoggedOutLabel={
                 detailsTexts?.credentialsBadgeLoggedOutLabel
+              }
+              addToFavoritesAriaLabel={detailsTexts?.addToFavoritesAriaLabel}
+              removeFromFavoritesAriaLabel={
+                detailsTexts?.removeFromFavoritesAriaLabel
               }
               isPaginationHidden={isFavoritesPaginationHidden}
             />
@@ -959,10 +974,16 @@ export const Catalog: FC<CatalogProps> = ({
           isPublishVisible={isPublishVisible}
           isPublishPrimary={isPublishPrimary}
           getPublishHistory={getPublishHistory}
+          getPublishDependencies={getPublishDependencies}
+          resolvePublishDependenciesLabels={resolvePublishDependenciesLabels}
+          resolvePublishApprovalLabels={resolvePublishApprovalLabels}
+          publishVersionHistory={publishVersionHistory}
+          onPublishOpenChange={onPublishOpenChange}
           publishFolderItems={publishFolderItems}
           publishExpandedPaths={publishExpandedPaths}
           onPublishExpandedPathsChange={onPublishExpandedPathsChange}
           publishLoadingPaths={publishLoadingPaths}
+          getPublishDisabledReason={getPublishDisabledReason}
           hasPublishWriteAccess={hasPublishWriteAccess}
           publishDefaultAuthor={publishDefaultAuthor}
           onPublish={onPublish}

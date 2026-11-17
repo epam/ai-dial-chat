@@ -7,11 +7,17 @@ import type {
   ScheduleTriggerDto,
 } from './dto/schedule-trigger.dto';
 import {
+  areBoundariesComparable,
+  toWindowOrderMs,
+} from './dto/schedule-window';
+import {
   type ScheduledTaskRunDto,
   ScheduledTaskRunStatus,
 } from './dto/scheduled-task-run.dto';
 import type { ScheduledTaskDto } from './dto/scheduled-task.dto';
 import { ScheduleTriggerType } from './dto/scheduled-task.dto';
+
+export const DEFAULT_SCHEDULE_TIMEZONE = 'UTC';
 
 interface UpstreamScheduleTrigger {
   date?: string;
@@ -26,6 +32,7 @@ interface UpstreamSchedulePayload {
   display_name: string;
   service_id: string;
   trigger: UpstreamScheduleTrigger;
+  timezone: string;
   /*
    * Not confirmed against a live DIAL Scheduler response or its
    * openapi.json — assumed to mirror display_name/service_id as a
@@ -57,6 +64,7 @@ export interface UpstreamScheduleResponse {
   id: string;
   display_name: string;
   trigger: UpstreamScheduleTrigger;
+  timezone?: string;
   next_run_time?: string;
   created_at?: string;
   updated_at?: string;
@@ -111,7 +119,17 @@ const assertValidCronWindow = (cron: ScheduleCronDto | undefined): void => {
   if (cron?.startDate == null || cron?.endDate == null) {
     return;
   }
-  if (new Date(cron.endDate).getTime() <= new Date(cron.startDate).getTime()) {
+  /*
+   * Offset-less boundaries are wall time in the task's zone, absolute ones are
+   * instants; the two cannot be ordered without a zone-aware conversion, so a
+   * window must use one kind for both.
+   */
+  if (!areBoundariesComparable(cron.startDate, cron.endDate)) {
+    throw new BadRequestException(
+      'trigger.cron.startDate and trigger.cron.endDate must both include a UTC offset or both omit it',
+    );
+  }
+  if (toWindowOrderMs(cron.endDate) <= toWindowOrderMs(cron.startDate)) {
     throw new BadRequestException(
       'trigger.cron.endDate must be strictly after trigger.cron.startDate',
     );
@@ -154,6 +172,7 @@ export const toUpstreamSchedulePayload = (
   display_name: body.displayName,
   service_id: serviceId,
   trigger: toUpstreamTrigger(body.trigger),
+  timezone: body.timezone ?? DEFAULT_SCHEDULE_TIMEZONE,
   ...(body.description ? { description: body.description } : {}),
   properties: {
     target_type: 'chat_completion',
@@ -237,6 +256,7 @@ export const fromUpstreamSchedule = (
         }
       : undefined,
   },
+  timezone: upstream.timezone ?? DEFAULT_SCHEDULE_TIMEZONE,
   nextRunTime: upstream.next_run_time,
   createdAt: upstream.created_at,
   updatedAt: upstream.updated_at,

@@ -1,4 +1,3 @@
-import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import {
   BadRequestException,
@@ -26,6 +25,7 @@ import {
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
+import { pipeWebBody } from '../common/utils/stream';
 import { createHtmlPreviewCspHeader } from '../config/csp';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { ArchiveUploadInterceptor } from './archive-upload.interceptor';
@@ -754,10 +754,6 @@ export class FilesController {
       }
     }
 
-    await pipeline(Readable.fromWeb(stream as ReadableStream), res).catch(
-      () => {
-        res.destroy();
-      },
-    );
+    await pipeWebBody(stream, res);
   }
 }

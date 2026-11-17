@@ -14,14 +14,29 @@
 
 import * as runtime from '../runtime';
 import type {
+  CopyCatalogEntityToOrgUnitDto,
   PublishCatalogEntityDto,
   PublishHistoryEntryDto,
   PublishResultDto,
   PublishRulesResultDto,
+  ResourceDependenciesResultDto,
+  ResourceIdResponseDto,
   UnpublishAccessDto,
   UnpublishCatalogEntityDto,
   UnpublishResultDto,
+  VersionStatusEntryDto,
 } from '../models/index';
+
+export interface CopyCatalogEntityToOrgUnitRequest {
+  entityType: CopyCatalogEntityToOrgUnitEntityTypeEnum;
+  entityId: string;
+  copyCatalogEntityToOrgUnitDto: CopyCatalogEntityToOrgUnitDto;
+}
+
+export interface GetCatalogPublishDependenciesRequest {
+  entityType: GetCatalogPublishDependenciesEntityTypeEnum;
+  entityId: string;
+}
 
 export interface GetCatalogPublishHistoryRequest {
   entityType: GetCatalogPublishHistoryEntityTypeEnum;
@@ -30,6 +45,11 @@ export interface GetCatalogPublishHistoryRequest {
 
 export interface GetCatalogUnpublishAccessRequest {
   entityType: GetCatalogUnpublishAccessEntityTypeEnum;
+  entityId: string;
+}
+
+export interface GetCatalogVersionStatusesRequest {
+  entityType: GetCatalogVersionStatusesEntityTypeEnum;
   entityId: string;
 }
 
@@ -53,6 +73,162 @@ export interface UnpublishCatalogEntityRequest {
  *
  */
 export class PublishApi extends runtime.BaseAPI {
+  /**
+   * Copies a catalog entity of the caller\'s own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core\'s resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. Answers 403 while the `features.orgUnitsEnabled` flag is off.
+   * Copy an own catalog entity into an org-unit folder
+   */
+  async copyCatalogEntityToOrgUnitRaw(
+    requestParameters: CopyCatalogEntityToOrgUnitRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ResourceIdResponseDto>> {
+    if (requestParameters['entityType'] == null) {
+      throw new runtime.RequiredError(
+        'entityType',
+        'Required parameter "entityType" was null or undefined when calling copyCatalogEntityToOrgUnit().',
+      );
+    }
+
+    if (requestParameters['entityId'] == null) {
+      throw new runtime.RequiredError(
+        'entityId',
+        'Required parameter "entityId" was null or undefined when calling copyCatalogEntityToOrgUnit().',
+      );
+    }
+
+    if (requestParameters['copyCatalogEntityToOrgUnitDto'] == null) {
+      throw new runtime.RequiredError(
+        'copyCatalogEntityToOrgUnitDto',
+        'Required parameter "copyCatalogEntityToOrgUnitDto" was null or undefined when calling copyCatalogEntityToOrgUnit().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/catalog/{entityType}/{entityId}/copy-to-org-unit`;
+    urlPath = urlPath.replace(
+      `{${'entityType'}}`,
+      encodeURIComponent(String(requestParameters['entityType'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'entityId'}}`,
+      encodeURIComponent(String(requestParameters['entityId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['copyCatalogEntityToOrgUnitDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ResourceIdResponseDto>(response);
+  }
+
+  /**
+   * Copies a catalog entity of the caller\'s own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core\'s resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. Answers 403 while the `features.orgUnitsEnabled` flag is off.
+   * Copy an own catalog entity into an org-unit folder
+   */
+  async copyCatalogEntityToOrgUnit(
+    requestParameters: CopyCatalogEntityToOrgUnitRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ResourceIdResponseDto> {
+    const response = await this.copyCatalogEntityToOrgUnitRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns the direct references of a catalog entity (Toolset, Application, Prompt, Skill or Project) that are not in the public bucket, so the publisher can publish them too before the published copy reaches its audience. Resources that publishing already carries along (the application icon and its declared files) are not listed, and a dependency’s own dependencies are not followed. The list is advisory: when it cannot be resolved the response is an empty list rather than an error. Kinds that reference no other resource always return an empty list.
+   * List the private dependencies of a catalog entity
+   */
+  async getCatalogPublishDependenciesRaw(
+    requestParameters: GetCatalogPublishDependenciesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ResourceDependenciesResultDto>> {
+    if (requestParameters['entityType'] == null) {
+      throw new runtime.RequiredError(
+        'entityType',
+        'Required parameter "entityType" was null or undefined when calling getCatalogPublishDependencies().',
+      );
+    }
+
+    if (requestParameters['entityId'] == null) {
+      throw new runtime.RequiredError(
+        'entityId',
+        'Required parameter "entityId" was null or undefined when calling getCatalogPublishDependencies().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/catalog/{entityType}/{entityId}/publish-dependencies`;
+    urlPath = urlPath.replace(
+      `{${'entityType'}}`,
+      encodeURIComponent(String(requestParameters['entityType'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'entityId'}}`,
+      encodeURIComponent(String(requestParameters['entityId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ResourceDependenciesResultDto>(response);
+  }
+
+  /**
+   * Returns the direct references of a catalog entity (Toolset, Application, Prompt, Skill or Project) that are not in the public bucket, so the publisher can publish them too before the published copy reaches its audience. Resources that publishing already carries along (the application icon and its declared files) are not listed, and a dependency’s own dependencies are not followed. The list is advisory: when it cannot be resolved the response is an empty list rather than an error. Kinds that reference no other resource always return an empty list.
+   * List the private dependencies of a catalog entity
+   */
+  async getCatalogPublishDependencies(
+    requestParameters: GetCatalogPublishDependenciesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ResourceDependenciesResultDto> {
+    const response = await this.getCatalogPublishDependenciesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
   /**
    * Returns every folder this catalog entity has been published to, most recent first, derived from DIAL Core\'s Publication API (`getPublications`) — never from chat-api-side storage.
    * Get publish history for a catalog entity
@@ -193,6 +369,79 @@ export class PublishApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<UnpublishAccessDto> {
     const response = await this.getCatalogUnpublishAccessRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns one entry per saved version of the application or toolset (same owner, folder and base name) with its publication status: `not-published`, `in-review`, `published` (with its folders and publisher) or `unknown` for a resource owned by another user. Derived from the caller’s own publications in DIAL Core, read once per request, and never from chat-api-side storage. Only applications and toolsets have versions.
+   * Get the publication status of every version of an entity
+   */
+  async getCatalogVersionStatusesRaw(
+    requestParameters: GetCatalogVersionStatusesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Array<VersionStatusEntryDto>>> {
+    if (requestParameters['entityType'] == null) {
+      throw new runtime.RequiredError(
+        'entityType',
+        'Required parameter "entityType" was null or undefined when calling getCatalogVersionStatuses().',
+      );
+    }
+
+    if (requestParameters['entityId'] == null) {
+      throw new runtime.RequiredError(
+        'entityId',
+        'Required parameter "entityId" was null or undefined when calling getCatalogVersionStatuses().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/catalog/{entityType}/{entityId}/version-statuses`;
+    urlPath = urlPath.replace(
+      `{${'entityType'}}`,
+      encodeURIComponent(String(requestParameters['entityType'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'entityId'}}`,
+      encodeURIComponent(String(requestParameters['entityId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<Array<VersionStatusEntryDto>>(response);
+  }
+
+  /**
+   * Returns one entry per saved version of the application or toolset (same owner, folder and base name) with its publication status: `not-published`, `in-review`, `published` (with its folders and publisher) or `unknown` for a resource owned by another user. Derived from the caller’s own publications in DIAL Core, read once per request, and never from chat-api-side storage. Only applications and toolsets have versions.
+   * Get the publication status of every version of an entity
+   */
+  async getCatalogVersionStatuses(
+    requestParameters: GetCatalogVersionStatusesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Array<VersionStatusEntryDto>> {
+    const response = await this.getCatalogVersionStatusesRaw(
       requestParameters,
       initOverrides,
     );
@@ -431,6 +680,32 @@ export class PublishApi extends runtime.BaseAPI {
 /**
  * @export
  */
+export const CopyCatalogEntityToOrgUnitEntityTypeEnum = {
+  Model: 'model',
+  Toolset: 'toolset',
+  Application: 'application',
+  Prompt: 'prompt',
+  Skill: 'skill',
+  Project: 'project',
+} as const;
+export type CopyCatalogEntityToOrgUnitEntityTypeEnum =
+  (typeof CopyCatalogEntityToOrgUnitEntityTypeEnum)[keyof typeof CopyCatalogEntityToOrgUnitEntityTypeEnum];
+/**
+ * @export
+ */
+export const GetCatalogPublishDependenciesEntityTypeEnum = {
+  Model: 'model',
+  Toolset: 'toolset',
+  Application: 'application',
+  Prompt: 'prompt',
+  Skill: 'skill',
+  Project: 'project',
+} as const;
+export type GetCatalogPublishDependenciesEntityTypeEnum =
+  (typeof GetCatalogPublishDependenciesEntityTypeEnum)[keyof typeof GetCatalogPublishDependenciesEntityTypeEnum];
+/**
+ * @export
+ */
 export const GetCatalogPublishHistoryEntityTypeEnum = {
   Model: 'model',
   Toolset: 'toolset',
@@ -454,6 +729,19 @@ export const GetCatalogUnpublishAccessEntityTypeEnum = {
 } as const;
 export type GetCatalogUnpublishAccessEntityTypeEnum =
   (typeof GetCatalogUnpublishAccessEntityTypeEnum)[keyof typeof GetCatalogUnpublishAccessEntityTypeEnum];
+/**
+ * @export
+ */
+export const GetCatalogVersionStatusesEntityTypeEnum = {
+  Model: 'model',
+  Toolset: 'toolset',
+  Application: 'application',
+  Prompt: 'prompt',
+  Skill: 'skill',
+  Project: 'project',
+} as const;
+export type GetCatalogVersionStatusesEntityTypeEnum =
+  (typeof GetCatalogVersionStatusesEntityTypeEnum)[keyof typeof GetCatalogVersionStatusesEntityTypeEnum];
 /**
  * @export
  */

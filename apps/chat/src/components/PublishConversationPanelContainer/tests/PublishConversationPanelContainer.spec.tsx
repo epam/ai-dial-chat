@@ -1,3 +1,5 @@
+import { OrgUnitFolderGuardPurpose } from '@epam/ai-dial-chat-hooks';
+import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { PublicationRuleFunction } from '@epam/ai-dial-publish-panel';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -7,8 +9,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNotification } from '../../../context/NotificationContext';
 import { useAppConfig as useAppConfigMock } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { useOrgUnitFolderGuards } from '../../../hooks/publish/useOrgUnitFolderGuards';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
-import { publishConversation } from '../../../server-api/conversation-publish.api';
+import {
+  getConversationPublishDependencies,
+  publishConversation,
+} from '../../../server-api/conversation-publish.api';
 import { getPublishRules } from '../../../server-api/publish-rules.api';
 import PublishConversationPanelContainer from '../PublishConversationPanelContainer';
 
@@ -18,12 +24,15 @@ const mockRule: PublicationRule = {
   targets: ['engineering'],
 };
 
+const reasonProp = vi.fn();
+
 vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-publish-panel')>();
   return {
     ...actual,
     StandalonePublishPanel: ({
+      getDisabledReason,
       resource,
       selectedFolderPath,
       onSelectedFolderPathChange,
@@ -41,7 +50,12 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       hasRulesLoadError,
       onClose,
       onSubmit,
+      dependencies,
     }: {
+      dependencies?: { name: string }[];
+      getDisabledReason?: (destination: {
+        path: string[];
+      }) => string | undefined;
       resource?: { title: string };
       selectedFolderPath?: string[];
       onSelectedFolderPathChange: (path: string[] | undefined) => void;
@@ -62,6 +76,11 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
     }) => (
       <div role="dialog" aria-label="publish conversation">
         <span>{resource?.title}</span>
+        {reasonProp(getDisabledReason)}
+        <span>
+          dependencies:
+          {dependencies?.map((dependency) => dependency.name).join(',')}
+        </span>
         <span>selected:{selectedFolderPath?.join('/') ?? 'none'}</span>
         <span>existing:{String(hasExistingPublicationInFolder)}</span>
         <span>writeAccess:{String(hasWriteAccess)}</span>
@@ -93,7 +112,13 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
   };
 });
 
+vi.mock('../../../hooks/publish/useOrgUnitFolderGuards', () => ({
+  useOrgUnitFolderGuards: vi.fn(),
+}));
 vi.mock('../../../hooks/publish/usePublishFolders');
+vi.mock('../../../hooks/publish/usePublishDependencyIconResolver', () => ({
+  usePublishDependencyIconResolver: () => () => undefined,
+}));
 vi.mock('../../../hooks/user-profile/useUserProfile', () => ({
   useUserProfile: () => ({ displayName: 'Daniil Pavlov' }),
 }));
@@ -147,6 +172,11 @@ describe('PublishConversationPanelContainer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(usePublishFolders).mockReturnValue(baseFoldersResult);
+    vi.mocked(useOrgUnitFolderGuards).mockReturnValue({
+      isDestinationUsable: undefined,
+      getDisabledReason: undefined,
+      canSaveDirectlyTo: undefined,
+    });
     vi.mocked(useNotification).mockReturnValue(
       createNotificationContextValue(mockShowNotification),
     );
@@ -159,6 +189,65 @@ describe('PublishConversationPanelContainer', () => {
   it('renders the conversation title as the resource summary', async () => {
     await renderContainer();
     expect(screen.getByText('Q3 planning notes')).toBeTruthy();
+  });
+
+  it('builds the folder guards for the conversations namespace and gives the destination guard to the folder tree as canPublishTo', async () => {
+    const isDestinationUsable = vi.fn().mockReturnValue(true);
+    vi.mocked(useOrgUnitFolderGuards).mockReturnValue({
+      isDestinationUsable,
+      getDisabledReason: undefined,
+      canSaveDirectlyTo: undefined,
+    });
+
+    await renderContainer();
+
+    expect(useOrgUnitFolderGuards).toHaveBeenCalledWith({
+      purpose: OrgUnitFolderGuardPurpose.Publish,
+      namespace: OrgUnitNamespace.Conversations,
+      isActive: true,
+    });
+    expect(usePublishFolders).toHaveBeenCalledWith({
+      canPublishTo: isDestinationUsable,
+    });
+  });
+
+  it('does not activate the org-unit read while the panel is closed', async () => {
+    await renderContainer({ isOpen: false });
+
+    expect(useOrgUnitFolderGuards).toHaveBeenCalledWith({
+      purpose: OrgUnitFolderGuardPurpose.Publish,
+      namespace: OrgUnitNamespace.Conversations,
+      isActive: false,
+    });
+  });
+
+  it('gives the folder tree a reason callback that judges the destination path', async () => {
+    const getDisabledReason = vi.fn().mockReturnValue('No access');
+    vi.mocked(useOrgUnitFolderGuards).mockReturnValue({
+      isDestinationUsable: vi.fn(),
+      getDisabledReason,
+      canSaveDirectlyTo: undefined,
+    });
+
+    await renderContainer();
+
+    const reason = reasonProp.mock.lastCall?.[0];
+    expect(reason({ rootKey: '', path: ['Acme', 'Secret'] })).toBe('No access');
+    expect(getDisabledReason).toHaveBeenCalledWith(['Acme', 'Secret']);
+  });
+
+  it('gives the folder tree no reason callback when no guard applies', async () => {
+    await renderContainer();
+
+    expect(reasonProp.mock.lastCall?.[0]).toBeUndefined();
+  });
+
+  it('keeps the Production fallback when no guard applies', async () => {
+    await renderContainer();
+
+    expect(usePublishFolders).toHaveBeenCalledWith({
+      canPublishTo: undefined,
+    });
   });
 
   it('selecting a folder updates selectedFolderPath', async () => {
@@ -481,5 +570,47 @@ describe('PublishConversationPanelContainer', () => {
     );
 
     expect(screen.getByText('rules:')).toBeTruthy();
+  });
+
+  describe('private dependencies', () => {
+    it("passes the conversation's dependencies to the panel", async () => {
+      vi.mocked(getConversationPublishDependencies).mockResolvedValue({
+        dependencies: [
+          { id: 'skills/b/Docs', name: 'Docs', type: 'skill', location: '' },
+        ],
+      } as never);
+
+      renderContainer();
+
+      expect(await screen.findByText('dependencies:Docs')).toBeTruthy();
+      expect(getConversationPublishDependencies).toHaveBeenCalledWith(
+        'my-conversation-abc',
+      );
+    });
+
+    it('shows an empty list and still publishes when the lookup fails', async () => {
+      vi.mocked(getConversationPublishDependencies).mockRejectedValue(
+        new Error('offline'),
+      );
+      vi.mocked(publishConversation).mockResolvedValue({} as never);
+      renderContainer();
+
+      await waitFor(() =>
+        expect(getConversationPublishDependencies).toHaveBeenCalledOnce(),
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Select Shared' }),
+      );
+      await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+      expect(screen.getByText('dependencies:')).toBeTruthy();
+      await waitFor(() => expect(publishConversation).toHaveBeenCalledOnce());
+    });
+
+    it('does not look dependencies up while the panel is closed', () => {
+      renderContainer({ isOpen: false });
+
+      expect(getConversationPublishDependencies).not.toHaveBeenCalled();
+    });
   });
 });

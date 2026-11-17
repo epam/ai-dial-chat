@@ -176,6 +176,7 @@ vi.mock(
             isCreated,
             isNewVersion: false,
             isPublished: false,
+            isWrittenToOrgUnit: false,
           });
         } catch (err) {
           setSaveError(err instanceof Error ? err.message : String(err));

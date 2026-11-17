@@ -31,6 +31,10 @@ import {
   RESOURCE_FOLDER_PATH_VALIDATION_MESSAGE,
 } from '../../common/validators/resource-folder-path.pattern';
 import { IsValidResourceReference } from '../../common/validators/resource-reference.validator';
+import {
+  RESOURCE_VERSION_PATTERN,
+  RESOURCE_VERSION_VALIDATION_MESSAGE,
+} from '../../common/validators/resource-version.pattern';
 import { IsValidFilePath } from '../../files/dto/file-path.validator';
 
 export class CreateApplicationBodyDto {
@@ -76,9 +80,8 @@ export class CreateApplicationBodyDto {
   @ApiPropertyOptional({ example: '1.0' })
   @IsString()
   @IsOptional()
-  @Matches(/^[a-zA-Z0-9._-]+$/, {
-    message:
-      'version must contain only letters, digits, dots, underscores, and dashes',
+  @Matches(RESOURCE_VERSION_PATTERN, {
+    message: RESOURCE_VERSION_VALIDATION_MESSAGE,
   })
   version?: string;
 

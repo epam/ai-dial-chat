@@ -1,5 +1,3 @@
-import { Readable } from 'node:stream';
-import { pipeline } from 'node:stream/promises';
 import {
   BadRequestException,
   Body,
@@ -31,6 +29,7 @@ import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import { ResourceIdResponseDto } from '../common/dto/resource-folder.dto';
+import { pipeWebBody } from '../common/utils/stream';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { ApiIfMatchHeader, IF_MATCH_HEADER } from './dto/skill-file-path.dto';
 import {
@@ -282,11 +281,7 @@ export class SkillsController {
       }
     });
 
-    await pipeline(Readable.fromWeb(stream as ReadableStream), res).catch(
-      () => {
-        res.destroy();
-      },
-    );
+    await pipeWebBody(stream, res);
   }
 
   @Get('files/download')
@@ -357,11 +352,7 @@ export class SkillsController {
       }
     });
 
-    await pipeline(Readable.fromWeb(stream as ReadableStream), res).catch(
-      () => {
-        res.destroy();
-      },
-    );
+    await pipeWebBody(stream, res);
   }
 
   @Post()

@@ -11,6 +11,8 @@ describe('isSafeResourceId', () => {
     'applications/bucket/folder/my-app__1.0.0',
     'toolsets/bucket/My%20Tool',
     'applications%2Fbucket%2Fmy-app',
+    'applications/bucket/my-app__1.0%2Bbuild5',
+    'applications/bucket/my-app__1.0+build5',
   ])('accepts the safe resource id %s', (value) => {
     expect(isSafeResourceId(value)).toBe(true);
   });

@@ -1,12 +1,16 @@
 import type {
+  CopyCatalogEntityToOrgUnitDto,
   PublishApi,
   PublishCatalogEntityDto,
   PublishHistoryEntryDto,
   PublishResultDto,
   PublishRuleDto,
+  ResourceIdResponseDto,
+  ResourceDependenciesResultDto,
   UnpublishAccessDto,
   UnpublishCatalogEntityDto,
   UnpublishResultDto,
+  VersionStatusEntryDto,
 } from '@epam/ai-dial-chat-api-client';
 import type {
   PublicationRule,
@@ -34,6 +38,16 @@ export interface PublishApiClient {
     body: PublishCatalogEntityDto,
   ) => Promise<PublishResultDto>;
   /**
+   * Copies one own catalog entity into an org-unit folder of the public bucket
+   * without a publication request; DIAL Core decides the right and its 403 and
+   * 409 reject the promise. Resolves to the id of the copy.
+   */
+  copyCatalogEntityToOrgUnit: (
+    entityType: CatalogPublishEntityType,
+    entityId: string,
+    body: CopyCatalogEntityToOrgUnitDto,
+  ) => Promise<ResourceIdResponseDto>;
+  /**
    * Submits a removal request for one already-published folder of a catalog
    * entity. The removal takes effect only after an administrator approves it,
    * so callers must report a pending request rather than a completed removal.
@@ -48,11 +62,25 @@ export interface PublishApiClient {
     entityType: CatalogPublishEntityType,
     entityId: string,
   ) => Promise<PublishHistoryEntryDto[]>;
+  /**
+   * Reads the direct dependencies of one catalog entity that are not in the
+   * public bucket. Advisory: the backend answers an empty list when it cannot
+   * resolve them.
+   */
+  getCatalogPublishDependencies: (
+    entityType: CatalogPublishEntityType,
+    entityId: string,
+  ) => Promise<ResourceDependenciesResultDto>;
   /** Reads whether the caller may request removal of one catalog entity. */
   getCatalogUnpublishAccess: (
     entityType: CatalogPublishEntityType,
     entityId: string,
   ) => Promise<UnpublishAccessDto>;
+  /** Reads the publication status of every saved version of one application or toolset. */
+  getCatalogVersionStatuses: (
+    entityType: CatalogPublishEntityType,
+    entityId: string,
+  ) => Promise<VersionStatusEntryDto[]>;
   /** Reads a destination folder's already-configured access rules. */
   getPublishRules: (folderPath: string) => Promise<PublicationRule[]>;
 }
@@ -72,6 +100,12 @@ export const createPublishApiClient = (
       entityId,
       publishCatalogEntityDto: body,
     }),
+  copyCatalogEntityToOrgUnit: (entityType, entityId, body) =>
+    publishApi.copyCatalogEntityToOrgUnit({
+      entityType,
+      entityId,
+      copyCatalogEntityToOrgUnitDto: body,
+    }),
   unpublishCatalogEntity: (entityType, entityId, body) =>
     publishApi.unpublishCatalogEntity({
       entityType,
@@ -80,8 +114,12 @@ export const createPublishApiClient = (
     }),
   getCatalogPublishHistory: (entityType, entityId) =>
     publishApi.getCatalogPublishHistory({ entityType, entityId }),
+  getCatalogPublishDependencies: (entityType, entityId) =>
+    publishApi.getCatalogPublishDependencies({ entityType, entityId }),
   getCatalogUnpublishAccess: (entityType, entityId) =>
     publishApi.getCatalogUnpublishAccess({ entityType, entityId }),
+  getCatalogVersionStatuses: (entityType, entityId) =>
+    publishApi.getCatalogVersionStatuses({ entityType, entityId }),
   getPublishRules: async (folderPath) => {
     const response = await publishApi.getPublishRules({ folderPath });
     return response.rules.map(({ function: ruleFunction, ...rule }) => ({

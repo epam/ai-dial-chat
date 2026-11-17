@@ -11,6 +11,7 @@ export const StandaloneSaveToFolderPanel: FC<
   resource,
   version,
   accessRules,
+  versionHistory,
   panelLabels,
   onSubmit,
   isSubmitDisabled = false,
@@ -26,6 +27,7 @@ export const StandaloneSaveToFolderPanel: FC<
     ...panelProps,
     version,
     accessRules,
+    versionHistory,
     panelLabels,
   });
 

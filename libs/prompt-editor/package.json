@@ -3,6 +3,10 @@
   "description": "Host-agnostic form for authoring a reusable prompt, with an inline folder picker",
   "version": "0.0.1",
   "license": "Apache-2.0",
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss"
+  ],
   "private": true,
   "type": "module",
   "main": "./dist/index.js",

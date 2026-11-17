@@ -48,6 +48,7 @@ import { ProjectConversationStore } from '../persistence/project-conversation.st
 import { PublishedFolderAttachmentsService } from '../published-folder-attachments.service';
 import { ConversationCompletionsResponder } from '../streaming/conversation-completions.responder';
 import { ConversationStreamingService } from '../streaming/conversation-streaming.service';
+import type { StreamCompletionRequest } from '../streaming/stream-completion-request';
 
 const TEST_USER = {
   sid: 'test-sid',
@@ -1125,12 +1126,10 @@ describe('ConversationController (integration)', () => {
         resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
         stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
         stopForegroundGeneration: vi.fn().mockResolvedValue('not_found'),
-        streamCompletion: vi.fn().mockImplementation(async function* (
-          streamPath: string,
-          _at: string,
-          _bucket: string,
-          generationId: string,
-        ) {
+        streamCompletion: vi.fn().mockImplementation(async function* ({
+          conversationPath: streamPath,
+          generationId,
+        }: StreamCompletionRequest) {
           /* Mirrors ConversationStreamingService.streamCompletion's first call. */
           realGenerationService.register(
             `c:${TEST_USER.sid}`,

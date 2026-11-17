@@ -64,6 +64,11 @@ The handler SHALL forward an explicit allowlist of safe response headers from th
 - **WHEN** the fetch to DIAL Core exceeds `FILE_TRANSFER_TIMEOUT_MS`
 - **THEN** the system aborts the connection and returns `503 Service Unavailable`
 
+#### Scenario: Browser disconnects before the body is streamed
+- **WHEN** the browser closes the connection before the DIAL Core body is piped (for example, an HTML preview iframe reloads)
+- **THEN** the system destroys the response and cancels the DIAL Core body at once, releasing the upstream connection instead of holding it until `FILE_TRANSFER_TIMEOUT_MS`: `pipeWebBody` (`apps/chat-api/src/common/utils/stream.ts`) destroys both ends when the pipe fails
+- **AND** a late error on that body never becomes an uncaught `'error'` event, so the BFF process keeps running
+
 #### Scenario: DIAL Core returns unexpected 5xx
 - **WHEN** DIAL Core returns a 5xx response
 - **THEN** the system logs the error and returns `502 Bad Gateway`

@@ -67,9 +67,18 @@ vi.mock('@epam/ai-dial-scheduled-tasks', async (importOriginal) => ({
   ...(await importOriginal<
     typeof import('@epam/ai-dial-scheduled-tasks')
   >().then(
-    ({ ScheduledTasksLimitedAccessBanner, ScheduledTasksLoginBanner }) => ({
+    ({
       ScheduledTasksLimitedAccessBanner,
       ScheduledTasksLoginBanner,
+      getZonedNow,
+      instantToZonedDateTime,
+      isAbsoluteInstant,
+    }) => ({
+      ScheduledTasksLimitedAccessBanner,
+      ScheduledTasksLoginBanner,
+      getZonedNow,
+      instantToZonedDateTime,
+      isAbsoluteInstant,
     }),
   )),
   ScheduledTasksSortKey: {

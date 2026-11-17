@@ -8,6 +8,7 @@ import { Injectable, Logger, PayloadTooLargeException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import archiver from 'archiver';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
+import { readableFromWeb } from '../../common/utils/stream';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
 import { encodeDialFilePath, toRelativePath } from '../dial-resource-path.util';
@@ -442,7 +443,7 @@ export class FilesArchiveDownloadService {
         return null;
       }
 
-      return Readable.fromWeb(webStream);
+      return readableFromWeb(webStream);
     } catch (error) {
       this.logger.warn(
         `Archive file download failed: bucket=${file.bucket}, path=${file.path}, archivePath=${file.archivePath}, error=${error instanceof Error ? error.message : 'unknown'}`,

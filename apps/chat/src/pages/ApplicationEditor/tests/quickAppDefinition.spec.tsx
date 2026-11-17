@@ -108,6 +108,7 @@ vi.mock(
             isCreated: true,
             isNewVersion: false,
             isPublished: false,
+            isWrittenToOrgUnit: false,
           });
         } catch {
           setCreateError('Create failed');
@@ -257,14 +258,14 @@ describe('ApplicationEditorPage — quick app', () => {
       expect(createApplication).not.toHaveBeenCalled();
     });
 
-    it('blocks the request for a name with forbidden characters and a non-semver version', async () => {
+    it('blocks the request for a name with forbidden characters and an invalid version', async () => {
       renderPage(createSearch);
 
       await user.type(getNameInput(), 'Bad/name');
       await user.clear(screen.getByLabelText(EditorI18nKeys.VersionLabel));
       await user.type(
         screen.getByLabelText(EditorI18nKeys.VersionLabel),
-        'v1-beta',
+        '1.0.',
       );
       await user.click(getAction(ButtonsI18nKeys.Create));
 

@@ -51,6 +51,9 @@ vi.mock('../context/IsolatedModelViewContext', () => ({
 vi.mock('../context/NotificationContext', () => ({
   NotificationProvider: passThrough,
 }));
+vi.mock('../context/OrgUnitsContext', () => ({
+  OrgUnitsProvider: passThrough,
+}));
 vi.mock('../context/overlay/OverlayContext', () => ({
   OverlayModeGate: passThrough,
 }));
