@@ -538,6 +538,48 @@ describe('ConversationRoute', () => {
     expect(overlayMocks.notifyConversationLoaded).toHaveBeenCalledOnce();
   });
 
+  it('notifies overlay only once deployments have loaded, so createConversation has a default deployment', () => {
+    const loadedDeployments = mockUseDeployments();
+    mockUseDeployments.mockReturnValue({
+      ...loadedDeployments,
+      selectedItemId: null,
+      isLoading: true,
+    });
+    const renderWithOverlay = () => (
+      <MemoryRouter>
+        <OverlayTestCtx.Provider
+          value={{
+            notifyConversationLoaded: overlayMocks.notifyConversationLoaded,
+          }}
+        >
+          <ConversationRoute />
+        </OverlayTestCtx.Provider>
+      </MemoryRouter>
+    );
+
+    const { rerender } = render(renderWithOverlay(), {
+      wrapper: AttachmentCanvasProvider,
+    });
+
+    expect(overlayMocks.notifyConversationLoaded).not.toHaveBeenCalled();
+
+    mockUseDeployments.mockReturnValue(loadedDeployments);
+    rerender(renderWithOverlay());
+
+    expect(overlayMocks.notifyConversationLoaded).toHaveBeenCalledOnce();
+
+    // A later reload of the catalog must not announce readiness a second time.
+    mockUseDeployments.mockReturnValue({
+      ...loadedDeployments,
+      isLoading: true,
+    });
+    rerender(renderWithOverlay());
+    mockUseDeployments.mockReturnValue(loadedDeployments);
+    rerender(renderWithOverlay());
+
+    expect(overlayMocks.notifyConversationLoaded).toHaveBeenCalledOnce();
+  });
+
   it('calls apiCreateConversation with selectedItemId when send fires', async () => {
     renderRoute();
     const sendButton = await screen.findByRole('button', { name: 'Send' });
