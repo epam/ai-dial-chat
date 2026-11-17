@@ -100,6 +100,12 @@ const SIGNALS = [
     hint: 'raw control — Button/IconButton/LinkButton, Select, Textarea, Checkbox, Radio, Slider, Highlight',
   },
   {
+    id: 'hand-rolled-table',
+    scope: SOURCE,
+    re: /<table\b|aria-sort=|role=["'](grid|table|columnheader)["']/,
+    hint: 'native or ARIA table — Grid (sorting, empty state, GridAppearance.Chat); a static read-only table may stay native',
+  },
+  {
     id: 'loading-placeholder',
     scope: SOURCE,
     re: /\banimate-(spin|pulse)\b/,

@@ -96,7 +96,7 @@ The optimistic lifecycle is:
 - **THEN** the placeholder is removed from the list and the error is re-thrown so callers can handle it
 
 ### Requirement: Backend refuses to duplicate a conversation whose current model is hidden
-After reading the source conversation, `ConversationLifecycleService.duplicateConversation` SHALL resolve the model the conversation uses now — `assistantModelId || model.id` from the stored body, not the deployment id in the resource path — through `DeploymentsService.resolveDeploymentItem`. When that deployment has `isHidden: true` (`HIDDEN_ENTITY_TAGS`, Issue #9183) the endpoint SHALL throw `ForbiddenException` with `code: conversationDuplicateModelHidden` and SHALL NOT save a copy. A model that no longer resolves to a deployment does not block the copy.
+After reading the source conversation, `ConversationLifecycleService.duplicateConversation` SHALL resolve the model the conversation uses now — `assistantModelId || model.id` from the stored body, not the deployment id in the resource path — through `DeploymentsService.resolveDeploymentItem`. When that deployment has `isHidden: true` (`HIDDEN_ENTITY_TAGS`, Issue #9183) the endpoint SHALL throw `ForbiddenException` with `code: conversationDuplicateModelHidden` and SHALL NOT save a copy. A model that no longer resolves to a deployment does not block the copy. Neither does a model the caller cannot access: when the lookup fails with `ForbiddenException` (DIAL Core answers 403 for a deployment the caller has no access to, e.g. a conversation shared by or published from a user with access the caller lacks), the model is not treated as hidden and the copy is saved (Issues #9895, #9893). Any other lookup failure still fails the request.
 
 The path keeps the model a conversation was created with, so a chat later switched to a hidden model is only caught here; the row dropdown below cannot see the switch.
 
@@ -108,6 +108,11 @@ The path keeps the model a conversation was created with, so a chat later switch
 #### Scenario: Visible current model is duplicated
 - **WHEN** the conversation's current model resolves to a deployment without `isHidden`
 - **THEN** the copy is saved as usual
+
+#### Scenario: Model the caller cannot access is duplicated
+- **GIVEN** a shared or published conversation whose current model the caller has no access to
+- **WHEN** the caller calls the duplicate endpoint
+- **THEN** the model lookup's 403 does not block it and the copy is saved
 
 ### Requirement: Duplicate action in conversation row dropdown
 The conversation row three-dot dropdown in `ConversationPanelView` SHALL include a Duplicate item (`key: 'duplicate'`, `IconCopy` icon, label `t(ButtonsI18nKeys.Duplicate)` → `buttons.duplicate`) for all conversations regardless of source — both the read-only action list and the owned-conversation action list include it — except a conversation whose model is operator-hidden. For the open conversation (the row matching the panel's active conversation) that deployment is the one selected in the model picker now (`useDeployments().selectedItemId`), so a chat switched onto or off a hidden model is judged by its current model. Every other row resolves it from its resource path via `findDeploymentForConversationId` (which tries every suffix of the path-derived id, so a conversation stored inside a folder is matched too). Either way the matching deployment in `useDeployments().items` has `isHidden: true` (`HIDDEN_ENTITY_TAGS`, Issue #9183). Such a row omits Duplicate from both lists, so the hidden model cannot spread to new conversations. On success it shows the `EntityOperation.Duplicated` conversation success notification; on failure it shows an error notification with the response trace ID and `ConversationPanelI18nKeys.DuplicateUnavailableModel` when the response `code` is `conversationDuplicateModelHidden`, otherwise `ConversationPanelI18nKeys.DuplicateError`. A row that is not open resolves the model from the path, so one whose chat was switched to a hidden model still offers Duplicate; the server refuses that copy.
