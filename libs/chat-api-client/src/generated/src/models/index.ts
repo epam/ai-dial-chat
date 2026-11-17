@@ -976,24 +976,36 @@ export interface BudgetStatsDto {
    */
   priority?: number;
   /**
-   * The human-readable name of the budget's policy; absent when the policy sets none. Use `policy` as the identifier — the display name need not be unique.
+   * The human-readable name of the budget's policy. DIAL Core falls back to the policy path when the policy sets none (epam/ai-dial-core#2283); an older DIAL Core omits the field. Use `policy` as the identifier — the display name need not be unique.
    * @type {string}
    * @memberof BudgetStatsDto
    */
   displayName?: string;
   /**
-   * The budget's limit and the caller's spend against it for the current UTC day. A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.
+   *
+   * @type {BudgetStatsDtoObject}
+   * @memberof BudgetStatsDto
+   */
+  object?: BudgetStatsDtoObject;
+  /**
+   * The budget's limit and the caller's spend against it for the current day of DIAL Core's rate-limit schedule time zone (not necessarily UTC). A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.
    * @type {LimitStatsDto}
    * @memberof BudgetStatsDto
    */
   day: LimitStatsDto;
   /**
-   * The budget's limit and the caller's spend against it for the current UTC month. A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.
+   * The budget's limit and the caller's spend against it for the current month of DIAL Core's rate-limit schedule time zone (not necessarily UTC). A `total` at or above 9007199254740992 (2^53) is the unlimited sentinel — see UserLimitStatsResponseDto.minuteCostStats.
    * @type {LimitStatsDto}
    * @memberof BudgetStatsDto
    */
   month: LimitStatsDto;
 }
+/**
+ * @type BudgetStatsDtoObject
+ * The models the budget's policy covers: `"*"` for every deployment, or the sorted deployment names. The list is not filtered by what the caller can access. Absent from a DIAL Core older than epam/ai-dial-core#2284.
+ * @export
+ */
+export type BudgetStatsDtoObject = Array<string> | string;
 /**
  *
  * @export
@@ -1902,6 +1914,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   usageLimitsWarningThresholdPercent: number;
+  /**
+   * DIAL Core's spendingLimits.mode as the operator declares it (DIAL Core does not report it). Sourced from SPENDING_LIMITS_MODE or managed config; off by default. off: Settings → Usage shows no budgets and presents the role cost limit as today. shadow: budgets are shown as not yet enforced, and the role cost limit still decides. enforce: Settings → Usage shows only the budgets, and the role cost limit is withheld from the usage banner and dial. The client falls back to off when the usage response carries no costObject.
+   * @type {SpendingLimitsMode}
+   * @memberof ClientConfigDto
+   */
+  spendingLimitsMode: SpendingLimitsMode;
   /**
    * Operator default for the seasonal-celebrations switch, applied to users who have not saved a choice of their own; a saved choice overrides it. Sourced from UI_EVENT_ENABLED_BY_DEFAULT; true unless it is false, 0 or no. Has no visible effect while activeEventId is null.
    * @type {boolean}
@@ -9429,6 +9447,19 @@ export interface SkillsConfigDto {
    */
   installed: Array<string>;
 }
+
+/**
+ * DIAL Core's spendingLimits.mode as the operator declares it (DIAL Core does not report it). Sourced from SPENDING_LIMITS_MODE or managed config; off by default. off: Settings → Usage shows no budgets and presents the role cost limit as today. shadow: budgets are shown as not yet enforced, and the role cost limit still decides. enforce: Settings → Usage shows only the budgets, and the role cost limit is withheld from the usage banner and dial. The client falls back to off when the usage response carries no costObject.
+ * @export
+ */
+export const SpendingLimitsMode = {
+  Off: 'off',
+  Shadow: 'shadow',
+  Enforce: 'enforce',
+} as const;
+export type SpendingLimitsMode =
+  (typeof SpendingLimitsMode)[keyof typeof SpendingLimitsMode];
+
 /**
  *
  * @export
@@ -10888,11 +10919,17 @@ export interface UserLimitStatsResponseDto {
    */
   monthCostStats?: LimitStatsDto;
   /**
-   * The caller's spend against each spending budget that applies to them, in DIAL Core's order. A cost object can hold several budgets, so entries may share a `costObject`. The budgets are reported separately from, and are not merged into, the top-level `minuteCostStats`/`dayCostStats`/`weekCostStats`/`monthCostStats`. An empty array means DIAL Core reported no applicable budget (spending limits are off, no budget matches the caller, or the caller is an API key); an absent field means DIAL Core does not report budgets at all (an older DIAL Core). A window `total` at or above 9007199254740992 (2^53) represents the upstream "unlimited" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio. The BFF forwards the array verbatim.
+   * The caller's spend against each spending budget that applies to them, in DIAL Core's order. A cost object can hold several budgets, so entries may share a `costObject`. Only the entries whose `costObject` equals the top-level `costObject` are charged for the caller's model calls. The budgets are reported separately from, and are not merged into, the top-level `minuteCostStats`/`dayCostStats`/`weekCostStats`/`monthCostStats`. An empty array means DIAL Core reported no applicable budget (spending limits are off, no budget matches the caller, or the caller is an API key); an absent field means DIAL Core does not report budgets at all (an older DIAL Core). A window `total` at or above 9007199254740992 (2^53) represents the upstream "unlimited" sentinel (`Long.MAX_VALUE`, which exceeds `Number.MAX_SAFE_INTEGER`) and must be treated as unlimited rather than rendered as a used/total ratio. The BFF forwards the array verbatim.
    * @type {Array<BudgetStatsDto>}
    * @memberof UserLimitStatsResponseDto
    */
   budgets?: Array<BudgetStatsDto>;
+  /**
+   * The cost object whose budgets the caller's model calls are charged to: only the `budgets` entries with this `costObject` can be charged (epam/ai-dial-core#2284). Absent when DIAL Core has spending limits off, the caller is an API key, or DIAL Core is older. The BFF forwards it verbatim.
+   * @type {string}
+   * @memberof UserLimitStatsResponseDto
+   */
+  costObject?: string;
 }
 /**
  *

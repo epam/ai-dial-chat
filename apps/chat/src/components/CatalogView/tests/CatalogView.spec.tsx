@@ -10,7 +10,10 @@ import {
   type CatalogCreationPermissionsDto,
   CelebrationDeliveryMode,
 } from '@epam/ai-dial-chat-api-client';
-import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
+import {
+  FavoriteEntityType,
+  SpendingLimitsMode,
+} from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
@@ -762,6 +765,7 @@ describe('CatalogView', () => {
         publicationFilterSources: ['title', 'role', 'dial_roles'],
         maxAttachmentFileSizeBytes: 536_870_912,
         usageLimitsWarningThresholdPercent: 75,
+        spendingLimitsMode: SpendingLimitsMode.Off,
         celebrationsEnabledByDefault: true,
         celebrationDelivery: {
           mode: CelebrationDeliveryMode.Bundled,

@@ -4,12 +4,14 @@ import {
   type UseDeploymentUsageLimitsResult,
   useDeploymentUsageLimits,
 } from '@epam/ai-dial-chat-hooks';
+import { SpendingLimitsMode } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useAppConfig } from '../../../context/AppConfigContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import {
@@ -64,6 +66,11 @@ vi.mock('../../../server-api/user-limits', () => ({
   getUserUsage: vi.fn(),
 }));
 
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
+
 vi.mock('../../../hooks/useUiFeature', () => ({
   useUiFeature: vi.fn(() => false),
 }));
@@ -74,6 +81,13 @@ const mockGetDeploymentLimits = vi.mocked(getDeploymentLimits);
 const mockGetDeploymentUsage = vi.mocked(getDeploymentUsage);
 const mockGetUserUsage = vi.mocked(getUserUsage);
 const mockUseUiFeature = vi.mocked(useUiFeature);
+const mockUseAppConfig = vi.mocked(useAppConfig);
+
+const setMode = (spendingLimitsMode: SpendingLimitsMode): void => {
+  mockUseAppConfig.mockReturnValue({
+    config: { spendingLimitsMode },
+  } as unknown as ReturnType<typeof useAppConfig>);
+};
 
 const DEPLOYMENT_NAME = 'GPT-4o mini';
 
@@ -150,6 +164,7 @@ describe('UsageLimitsControl', () => {
       items: [{ id: 'gpt-4o', displayName: DEPLOYMENT_NAME }],
     } as unknown as ReturnType<typeof useDeployments>);
     mockUseUiFeature.mockReturnValue(false);
+    setMode(SpendingLimitsMode.Off);
   });
 
   afterEach(() => {
@@ -193,6 +208,52 @@ describe('UsageLimitsControl', () => {
        is asserted in the mapper's own spec instead. */
     expect(screen.getAllByRole('progressbar')).toHaveLength(3);
     expect(screen.getAllByText(DAY_LABEL)).toHaveLength(2);
+  });
+
+  describe('spending limits mode', () => {
+    const withBudgetAccount = () =>
+      mockUseDeploymentUsageLimits.mockReturnValue({
+        ...defaultHookResult,
+        sources: {
+          deployment: { dayTokenStats: { used: 45000, total: 50000 } },
+          account: {
+            dayCostStats: { used: 90, total: 100 },
+            costObject: 'ORG',
+            budgets: [],
+          },
+        },
+      });
+
+    it('lists no account cost group in enforce mode', async () => {
+      setMode(SpendingLimitsMode.Enforce);
+      withBudgetAccount();
+      const user = userEvent.setup();
+      renderControl();
+
+      await openPopover(user);
+
+      expect(
+        screen.getByText('conversationInput.usageLimits.tokenGroup'),
+      ).toBeTruthy();
+      expect(
+        screen.queryByText('conversationInput.usageLimits.costGroup'),
+      ).toBeNull();
+      expect(screen.getAllByRole('progressbar')).toHaveLength(1);
+    });
+
+    it('keeps the account cost group in shadow mode', async () => {
+      setMode(SpendingLimitsMode.Shadow);
+      withBudgetAccount();
+      const user = userEvent.setup();
+      renderControl();
+
+      await openPopover(user);
+
+      expect(
+        screen.getByText('conversationInput.usageLimits.costGroup'),
+      ).toBeTruthy();
+      expect(screen.getAllByRole('progressbar')).toHaveLength(2);
+    });
   });
 
   it('shows no spend caption on a token row, the cost counter spanning every agent', async () => {

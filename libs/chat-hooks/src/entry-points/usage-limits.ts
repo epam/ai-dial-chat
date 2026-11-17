@@ -6,3 +6,4 @@ export * from '../usage/useDeploymentUsageLimits/useDeploymentUsageLimits';
 export * from '../usage/useRefreshUsageAfterGeneration/useRefreshUsageAfterGeneration';
 export * from '../usage/useUsageLimitBanner/useUsageLimitBanner';
 export * from '../usage/useUsageLimitBannerDismissal/useUsageLimitBannerDismissal';
+export * from '../usage/spending-limits-mode';

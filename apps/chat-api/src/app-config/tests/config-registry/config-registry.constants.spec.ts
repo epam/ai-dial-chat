@@ -285,6 +285,27 @@ describe('CONFIG_DEFINITIONS', () => {
     });
   });
 
+  it('contains the client-visible usageLimits.spendingLimitsMode entry, off by default', () => {
+    const entry = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === 'usageLimits.spendingLimitsMode',
+    );
+
+    expect(entry).toMatchObject({
+      key: 'usageLimits.spendingLimitsMode',
+      type: 'config',
+      valueType: 'string',
+      visibility: 'client',
+      defaultValue: 'off',
+      critical: false,
+      owner: 'chat-team',
+      envVar: 'SPENDING_LIMITS_MODE',
+    });
+    expect(
+      entry?.management?.kind === KeyManagementKind.ManagedConfig &&
+        entry.management.contract.value,
+    ).toEqual({ type: 'string', enum: ['off', 'shadow', 'enforce'] });
+  });
+
   it('contains an open-ended client-visible event selection without a feature flag', () => {
     const entry = CONFIG_DEFINITIONS.find(
       (definition) => definition.key === 'ui.activeEventId',
@@ -317,12 +338,13 @@ const ENVIRONMENT_VARIABLE_NAMES: readonly string[] = [
   ),
 ];
 
-const MANAGED_1_0_0_KEYS = [
+const MANAGED_1_1_0_KEYS = [
   'announcement.description',
   'announcement.items',
   'announcement.title',
   'features.usageLimitsControl',
   'fileManager.availableTabs',
+  'usageLimits.spendingLimitsMode',
   'usageLimits.warningThresholdPercent',
   'welcomeScreen.description',
 ];
@@ -364,9 +386,9 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it('declares exactly the 50 known keys: 7 managed, 27 local-only and 16 eligible', () => {
-    expect(CONFIG_DEFINITIONS).toHaveLength(50);
-    expect(managed).toHaveLength(7);
+  it('declares exactly the 51 known keys: 8 managed, 27 local-only and 16 eligible', () => {
+    expect(CONFIG_DEFINITIONS).toHaveLength(51);
+    expect(managed).toHaveLength(8);
     expect(
       CONFIG_DEFINITIONS.filter((d) => localOnlyReasonOf(d) !== undefined),
     ).toHaveLength(27);
@@ -414,8 +436,8 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     }
   });
 
-  it('manages exactly the seven 1.0.0 keys', () => {
-    expect(managed.map((d) => d.key).sort()).toEqual(MANAGED_1_0_0_KEYS);
+  it('manages exactly the eight 1.1.0 keys', () => {
+    expect(managed.map((d) => d.key).sort()).toEqual(MANAGED_1_1_0_KEYS);
   });
 
   it('gives every managed key in a section a distinct display order', () => {

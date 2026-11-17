@@ -75,6 +75,27 @@ describe('UserLimitStatsResponseDto OpenAPI schema', () => {
     expect(response.required ?? []).not.toContain('budgets');
   });
 
+  it('exposes the charged cost object as an optional string', () => {
+    const response = schema('UserLimitStatsResponseDto');
+
+    expect(response.properties?.['costObject']).toMatchObject({
+      type: 'string',
+    });
+    expect(response.required ?? []).not.toContain('costObject');
+  });
+
+  it('describes budget coverage as an optional "*" or list of deployment names', () => {
+    const budget = schema('BudgetStatsDto');
+
+    expect(budget.properties?.['object']).toMatchObject({
+      oneOf: [
+        { type: 'string', enum: ['*'] },
+        { type: 'array', items: { type: 'string' } },
+      ],
+    });
+    expect(budget.required).not.toContain('object');
+  });
+
   it.each(['/api/v1/user/limits', '/api/v1/user/usage'])(
     'returns UserLimitStatsResponseDto from GET %s',
     (path) => {

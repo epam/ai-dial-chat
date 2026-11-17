@@ -1,12 +1,14 @@
 import { Transform } from 'class-transformer';
 import {
   IsBoolean,
+  IsEnum,
   IsInt,
   IsOptional,
   IsString,
   Max,
   Min,
 } from 'class-validator';
+import { SpendingLimitsMode } from '../../app-config/types/spending-limits-mode';
 import {
   IsCatalogCreationRoles,
   parseCatalogCreationRoles,
@@ -173,4 +175,16 @@ export class FeatureFlagsEnv {
   @Min(1)
   @Max(99)
   USAGE_LIMITS_WARNING_THRESHOLD_PERCENT?: number = 75;
+
+  /*
+   * DIAL Core's `spendingLimits.mode`, which the response does not report: it
+   * decides whether Settings → Usage, the usage banner and the usage dial show
+   * budgets and how they present the role cost limit. `off` keeps today's UI.
+   */
+  @IsOptional()
+  @Transform(({ value }) => (value == null || value === '' ? undefined : value))
+  @IsEnum(SpendingLimitsMode, {
+    message: 'SPENDING_LIMITS_MODE must be off, shadow or enforce',
+  })
+  SPENDING_LIMITS_MODE?: SpendingLimitsMode = SpendingLimitsMode.Off;
 }

@@ -3,6 +3,7 @@ import {
   type AccountUsage,
   resetUsageLimitBannerDismissals,
 } from '@epam/ai-dial-chat-hooks';
+import { SpendingLimitsMode } from '@epam/ai-dial-chat-hooks';
 import {
   UsageLimitBannerSeverity,
   UsageLimitBannerView,
@@ -242,6 +243,38 @@ describe('UsageLimitBanner', () => {
     expect(mockGetUserUsage).toHaveBeenCalledOnce();
     expect(mockGetDeploymentLimits).not.toHaveBeenCalled();
     expect(screen.getByRole('status').textContent).toBe('');
+  });
+
+  describe('spending limits mode', () => {
+    const setMode = (spendingLimitsMode: SpendingLimitsMode): void => {
+      mockUseAppConfig.mockReturnValue({
+        config: { usageLimitsWarningThresholdPercent: 75, spendingLimitsMode },
+      } as ReturnType<typeof useAppConfig>);
+    };
+    const budgetAccount = {
+      monthCostStats: { used: 95, total: 100, resetsAt: MONTH_RESET },
+      costObject: 'ORG',
+      budgets: [],
+    };
+
+    it('renders nothing for a high role cost in enforce mode', async () => {
+      setMode(SpendingLimitsMode.Enforce);
+      mockGetDeploymentUsage.mockResolvedValue(dayAt(10));
+      mockGetUserUsage.mockResolvedValue(budgetAccount);
+      await renderBanner(DEPLOYMENT_ID);
+
+      expect(mockGetUserUsage).toHaveBeenCalledOnce();
+      expect(screen.getByRole('status').textContent).toBe('');
+    });
+
+    it('keeps warning about the role cost in shadow mode', async () => {
+      setMode(SpendingLimitsMode.Shadow);
+      mockGetDeploymentUsage.mockResolvedValue(dayAt(10));
+      mockGetUserUsage.mockResolvedValue(budgetAccount);
+      await renderBanner(DEPLOYMENT_ID);
+
+      expect(screen.getByRole('status').textContent).not.toBe('');
+    });
   });
 
   it('follows a custom threshold', async () => {

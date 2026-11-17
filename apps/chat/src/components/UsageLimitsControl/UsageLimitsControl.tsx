@@ -11,6 +11,7 @@ import {
   type UsageLimitsApi,
   useDeploymentUsageLimits,
   useRefreshUsageAfterGeneration,
+  withholdAccountCostInEnforce,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
@@ -38,6 +39,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { ConversationInputI18nKeys } from '../../constants/translation-keys';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUiFeature } from '../../hooks/useUiFeature';
@@ -73,6 +75,9 @@ const UsageLimitsControl: FC<Props> = ({
   const { language: activeLocale } = useLanguage();
   const { items: deployments } = useDeployments();
   const isUsagePageHidden = useUiFeature(OverlayFeature.HideUsagePage);
+  const {
+    config: { spendingLimitsMode },
+  } = useAppConfig();
   const { sources, isLoading, hasError, refresh } = useDeploymentUsageLimits(
     deploymentId,
     USAGE_LIMITS_API,
@@ -109,9 +114,21 @@ const UsageLimitsControl: FC<Props> = ({
     [activeLocale, t],
   );
 
+  /* In enforce, model calls skip the role cost limit, so the dial lists no account cost group. */
   const limits = useMemo(
-    () => mapDeploymentLimitsToInput(sources, labels, formatResetTime),
-    [sources, labels, formatResetTime],
+    () =>
+      mapDeploymentLimitsToInput(
+        {
+          ...sources,
+          account: withholdAccountCostInEnforce(
+            sources.account,
+            spendingLimitsMode,
+          ),
+        },
+        labels,
+        formatResetTime,
+      ),
+    [sources, spendingLimitsMode, labels, formatResetTime],
   );
 
   const worstRow = useMemo(() => findWorstCappedRow(limits), [limits]);
