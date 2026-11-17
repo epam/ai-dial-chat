@@ -55,6 +55,14 @@ alive. Either:
 Never call into a heavy package at module scope (`strToU8('')` at the top of
 `zip-export.ts`); that runs on import and pins the package.
 
+## One module per translation-key namespace
+
+The bundler drops unused modules, not unused members of a kept module. All 66
+key enums in one `translation-keys.ts` put every page's keys (~154 KB) in the
+entry chunk; one module per namespace under `apps/chat/src/constants/i18n-keys/`
+cut that to the 44 the entry uses. Add a namespace as a new module there and
+re-export it from the barrel — never append a second enum to an existing one.
+
 ## Memoize object and array props passed to a memoized component
 
 An object literal in JSX is a new value on every render, so the child's `memo`

@@ -1,0 +1,17 @@
+export enum ConversationI18nKeys {
+  ModelUnavailableNotice = 'conversation.modelUnavailableNotice',
+  StatusModelChangedTitle = 'conversation.statusMessage.modelChangedTitle',
+  StatusModelChangedBody = 'conversation.statusMessage.modelChangedBody',
+  StagesExecuted = 'conversation.stages.executed',
+  StagesStep = 'conversation.stages.step',
+  StagesRunning = 'conversation.stages.running',
+  StagesFailed = 'conversation.stages.failed',
+  StagesFailedCount = 'conversation.stages.failedCount',
+  StagesAttempt = 'conversation.stages.attempt',
+  StagesCopyContent = 'conversation.stages.copyContent',
+  StagesPreviewAttachment = 'conversation.stages.previewAttachment',
+  AttachMenuDialFileSystem = 'conversation.attachMenuDialFileSystem',
+  MessageTooLong = 'conversation.messageTooLong',
+  StartedToday = 'conversation.startedToday',
+  StartedYesterday = 'conversation.startedYesterday',
+}
