@@ -10,6 +10,11 @@ import type {
 } from './folder-destination';
 import type { PublicationRule, PublishResourceSummary } from './publish';
 import type { PublishAccessRulesStyles } from './publish-access-rules-styles';
+import type {
+  PublishDependenciesLabels,
+  PublishDependenciesStyles,
+} from './publish-dependencies-list';
+import type { PublishDependency } from './publish-dependency';
 import type { PublishFoldersTreeStyles } from './publish-folders-tree';
 import type { VersionHistorySectionProps } from './version-history';
 
@@ -139,6 +144,12 @@ export interface SaveToFolderPanelBaseProps {
   version?: SaveToFolderVersionProps;
   /** Access rules for a destination under a root with `hasAccessRules`; omit to hide the section. */
   accessRules?: SaveToFolderAccessRulesProps;
+  /** Resources the item refers to that are not in the public bucket, listed in the main view as in `PublishPanel`; informational only, it never blocks Save. The host passes them only when they apply (for example, an Organization destination); the section is hidden while this is empty or omitted. */
+  dependencies?: PublishDependency[];
+  /** Text overrides for the private-dependencies section. */
+  dependenciesLabels?: PublishDependenciesLabels;
+  /** Style overrides for the private-dependencies section. */
+  dependenciesStyles?: PublishDependenciesStyles;
   /** Versions history shown as the last section of the main view; omit to hide the section. */
   versionHistory?: VersionHistorySectionProps;
   /** Whether a save is in flight; every control is disabled meanwhile. Defaults to `false`. */

@@ -31,9 +31,10 @@ export class ApplicationDependencyResolver implements DependencyResolver {
    * @throws {Error} When the application cannot be read or its schema cannot be fetched
    */
   async resolve(
-    { accessToken, userSub }: DependencyResolverContext,
+    context: DependencyResolverContext,
     entityId: string,
   ): Promise<ResourceDependencyDto[]> {
+    const { accessToken } = context;
     const resource = parseDialApplicationResource(
       encodeDialResourcePath(entityId),
     );
@@ -56,6 +57,23 @@ export class ApplicationDependencyResolver implements DependencyResolver {
     } = result.data;
     if (!schemaId || properties == null) return [];
 
+    return this.resolveFromValues(context, schemaId, properties);
+  }
+
+  /**
+   * Resolves the references in property values that are not saved yet, so a
+   * form can show them before the first save. Reads only the schema, never the
+   * application.
+   * @param context - the caller's credentials
+   * @param schemaId - the application type schema the values belong to
+   * @param properties - the application property values
+   * @throws {Error} When the schema cannot be fetched
+   */
+  async resolveFromValues(
+    { accessToken, userSub }: DependencyResolverContext,
+    schemaId: string,
+    properties: Record<string, unknown>,
+  ): Promise<ResourceDependencyDto[]> {
     const schema = await this.applicationSchemasService.getApplicationSchema(
       userSub,
       accessToken,

@@ -22,6 +22,7 @@ import { FC, useId, useMemo, useState } from 'react';
 import type { SaveToFolderPanelProps } from '../../models/save-to-folder-panel';
 import { SaveToFolderView, SaveVersionMode } from '../../types/save-to-folder';
 import { PublishAccessRules } from '../PublishAccessRules/PublishAccessRules';
+import { PublishDependenciesList } from '../PublishDependenciesList/PublishDependenciesList';
 import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
 import { VersionHistorySection } from '../VersionHistorySection/VersionHistorySection';
 import styles from './SaveToFolderPanel.module.scss';
@@ -40,6 +41,9 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
   onPendingDestinationChange,
   version,
   accessRules,
+  dependencies,
+  dependenciesLabels,
+  dependenciesStyles,
   versionHistory,
   isSubmitting = false,
   submitError,
@@ -281,6 +285,15 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
         )}
         {submitError && <ErrorText text={submitError} />}
       </LiveRegion>
+
+      {dependencies != null && (
+        <PublishDependenciesList
+          dependencies={dependencies}
+          labels={dependenciesLabels}
+          headingClassName={headingClassName}
+          styles={dependenciesStyles}
+        />
+      )}
 
       {versionHistory != null && (
         <VersionHistorySection

@@ -337,8 +337,24 @@ The main view shows the committed destination as the kit `FolderName` (the path 
 - **THEN** `onDestinationChange` is not called until Select is pressed, and is never called when Back or Cancel is pressed
 
 #### Scenario: No history or dependencies
-- **WHEN** `SaveToFolderPanel` renders
+- **WHEN** `SaveToFolderPanel` renders without `versionHistory` and `dependencies`
 - **THEN** it renders no publish history and no dependencies list
+
+### Requirement: SaveToFolderPanel lists private dependencies in the main view
+
+`SaveToFolderPanelBaseProps` (`libs/publish-panel/src/models/save-to-folder-panel.ts`) SHALL accept optional `dependencies?: PublishDependency[]`, `dependenciesLabels?: PublishDependenciesLabels` and `dependenciesStyles?: PublishDependenciesStyles`, and `SaveToFolderPanel` and `StandaloneSaveToFolderPanel` SHALL render `PublishDependenciesList` with them in the main view only, above the versions history. The section SHALL be informational: it SHALL NOT change `isSubmitDisabled` or any submit behavior, and SHALL render nothing while `dependencies` is omitted or empty. The panel SHALL NOT decide when the section applies; the host passes the list only for the destinations that need it.
+
+#### Scenario: Dependencies are listed in the main view
+- **WHEN** `SaveToFolderPanel` renders the main view with `dependencies` holding one prompt
+- **THEN** the dependencies heading and the prompt's name are present
+
+#### Scenario: Empty or omitted list renders nothing
+- **WHEN** `dependencies` is `[]` or omitted
+- **THEN** no dependencies section is rendered
+
+#### Scenario: Folder view shows no section
+- **WHEN** the panel renders the folder view with `dependencies` non-empty
+- **THEN** no dependencies section is rendered
 
 ### Requirement: PublishFoldersTree supports multiple roots
 `PublishFoldersTree` SHALL accept optional `roots?: FolderDestinationRoot[]`, `destination?: FolderDestination` and `onDestinationChange?: (destination: FolderDestination | undefined) => void`. When `roots` is given:

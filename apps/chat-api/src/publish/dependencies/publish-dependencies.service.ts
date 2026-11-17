@@ -22,7 +22,9 @@ export class PublishDependenciesService {
     Record<CatalogEntityType, DependencyResolver>
   >;
 
-  constructor(applicationResolver: ApplicationDependencyResolver) {
+  constructor(
+    private readonly applicationResolver: ApplicationDependencyResolver,
+  ) {
     this.resolvers = {
       [CatalogEntityType.Application]: applicationResolver,
     };
@@ -49,6 +51,37 @@ export class PublishDependenciesService {
     } catch (err) {
       this.logger.warn(
         `Could not resolve the publish dependencies of ${entityType} "${entityId}": ${
+          err instanceof Error ? err.message : 'unknown error'
+        }`,
+      );
+    }
+    return { dependencies };
+  }
+
+  /**
+   * Lists the private dependencies of an application that is not saved yet,
+   * from the values of its form. Best-effort like {@link getDependencies}.
+   * @param accessToken - caller's bearer token
+   * @param userSub - caller's session subject, used to scope cached schemas
+   * @param schemaId - the application type schema the values belong to
+   * @param properties - the application property values
+   */
+  async getApplicationValueDependencies(
+    accessToken: string,
+    userSub: string,
+    schemaId: string,
+    properties: Record<string, unknown>,
+  ): Promise<ResourceDependenciesResultDto> {
+    let dependencies: ResourceDependencyDto[] = [];
+    try {
+      dependencies = await this.applicationResolver.resolveFromValues(
+        { accessToken, userSub },
+        schemaId,
+        properties,
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Could not resolve the publish dependencies of application values for schema "${schemaId}": ${
           err instanceof Error ? err.message : 'unknown error'
         }`,
       );

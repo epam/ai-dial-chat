@@ -1,4 +1,5 @@
 import type {
+  ApplicationValuesDependenciesRequestDto,
   CopyCatalogEntityToOrgUnitDto,
   PublishApi,
   PublishCatalogEntityDto,
@@ -72,6 +73,14 @@ export interface PublishApiClient {
     entityType: CatalogPublishEntityType,
     entityId: string,
   ) => Promise<ResourceDependenciesResultDto>;
+  /**
+   * Reads the private dependencies of application property values that are not
+   * saved yet, from the values alone; the backend reads no application. Advisory
+   * like {@link PublishApiClient.getCatalogPublishDependencies}.
+   */
+  getApplicationValuesPublishDependencies: (
+    body: ApplicationValuesDependenciesRequestDto,
+  ) => Promise<ResourceDependenciesResultDto>;
   /** Reads whether the caller may request removal of one catalog entity. */
   getCatalogUnpublishAccess: (
     entityType: CatalogPublishEntityType,
@@ -129,6 +138,10 @@ export const createPublishApiClient = (
     publishApi.getCatalogPublishHistory({ entityType, entityId }),
   getCatalogPublishDependencies: (entityType, entityId) =>
     publishApi.getCatalogPublishDependencies({ entityType, entityId }),
+  getApplicationValuesPublishDependencies: (body) =>
+    publishApi.getApplicationValuesPublishDependencies({
+      applicationValuesDependenciesRequestDto: body,
+    }),
   getCatalogUnpublishAccess: (entityType, entityId) =>
     publishApi.getCatalogUnpublishAccess({ entityType, entityId }),
   getCatalogVersionStatuses: (entityType, entityId) =>

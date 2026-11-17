@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { FolderDestinationRoot } from '../../../models/folder-destination';
+import { PublishDependencyType } from '../../../models/publish-dependency';
 import type { SaveToFolderPanelProps } from '../../../models/save-to-folder-panel';
 import {
   SaveToFolderView,
@@ -310,5 +311,38 @@ describe('SaveToFolderPanel — versions history', () => {
     renderPanel({ getDisabledReason: () => undefined });
 
     expect(screen.queryByText('You have no access to save here.')).toBeNull();
+  });
+});
+
+describe('SaveToFolderPanel — private dependencies', () => {
+  const dependencies = [
+    {
+      id: 'prompts/b/Hi',
+      name: 'Greeting prompt',
+      type: PublishDependencyType.Prompt,
+      location: 'Support',
+    },
+  ];
+
+  it('lists the dependencies in the main view with the host labels', () => {
+    renderPanel({
+      dependencies,
+      dependenciesLabels: { title: 'Private dependencies' },
+    });
+    expect(screen.getByText('Private dependencies')).toBeTruthy();
+    expect(screen.getByText('Greeting prompt')).toBeTruthy();
+  });
+
+  it('renders no section when the list is empty or omitted', () => {
+    const { unmount } = renderPanel({ dependencies: [] });
+    expect(screen.queryByText('Private dependencies')).toBeNull();
+    unmount();
+    renderPanel();
+    expect(screen.queryByText('Private dependencies')).toBeNull();
+  });
+
+  it('does not render the section in the folder view', () => {
+    renderPanel({ view: SaveToFolderView.ChangeFolder, dependencies });
+    expect(screen.queryByText('Greeting prompt')).toBeNull();
   });
 });

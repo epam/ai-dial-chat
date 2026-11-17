@@ -5,6 +5,7 @@ import {
   type FolderDestination,
   type FolderDestinationRoot,
   type PublicationRule,
+  type PublishDependency,
   type PublishAccessRulesLabels,
   type SaveToFolderAccessRulesProps,
   type SaveToFolderVersionProps,
@@ -26,6 +27,8 @@ import {
 } from '../resource-save';
 import type { UsePublishFoldersResult } from '../usePublishFolders/usePublishFolders';
 import { useResourceFolders } from '../useResourceFolders/useResourceFolders';
+
+const EMPTY_DEPENDENCIES: PublishDependency[] = [];
 
 /** Translated copy the Save flow puts into the panel's state; the panel's own labels stay with the host. */
 export interface UseResourceSavePanelLabels {
@@ -76,6 +79,10 @@ export interface UseResourceSavePanelParams {
     folderPath: string[],
     root: SaveDestinationRoot,
   ) => string | undefined;
+  /**
+   * Reads the private dependencies of what is being saved, already mapped to the panel's model; omit for a resource that has none to list. Called when the panel is open and the destination is under the Organization root, whichever way the save then goes (a publication request or a direct write); the list is advisory, so a failed read leaves it empty. The host reads the values it saves when called, so it should return the form's state at that moment.
+   */
+  loadDependencies?: () => Promise<PublishDependency[]>;
   /** Options offered in the access-rules editor's source picker. */
   ruleSourceOptions: string[];
   /** Translated copy. */
@@ -101,6 +108,7 @@ export type ResourceSavePanelStateProps = Pick<
   | 'onPendingDestinationChange'
   | 'foldersError'
   | 'onRetryFolders'
+  | 'dependencies'
 >;
 
 /** Result of {@link useResourceSavePanel}. */
@@ -115,7 +123,9 @@ export interface UseResourceSavePanelResult {
  * Owns the Save panel's flow for one resource — the Personal and
  * Organization destination tree, the version choice, the Organization
  * folder's access rules — and runs the choice through the resource's
- * adapter. Notifications stay with the host through `onSaved`.
+ * adapter. Notifications stay with the host through `onSaved`. For a resource
+ * with private dependencies it also reads them while an Organization
+ * destination is chosen and returns them as `panelProps.dependencies`.
  */
 export const useResourceSavePanel = ({
   isOpen,
@@ -129,6 +139,7 @@ export const useResourceSavePanel = ({
   publishClient,
   canSaveDirectlyTo,
   getDisabledReason: getFolderDisabledReason,
+  loadDependencies,
   ruleSourceOptions,
   labels,
   onSaved,
@@ -216,6 +227,35 @@ export const useResourceSavePanel = ({
     // Reset only when the panel opens, never while the user is choosing.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  const [dependencies, setDependencies] =
+    useState<PublishDependency[]>(EMPTY_DEPENDENCIES);
+  /* The host may pass a new function each render; only an open or a move into the Organization root reads. */
+  const loadDependenciesRef = useRef(loadDependencies);
+  useEffect(() => {
+    loadDependenciesRef.current = loadDependencies;
+  }, [loadDependencies]);
+  const shouldListDependencies =
+    isOpen &&
+    loadDependencies != null &&
+    destination.rootKey === SaveDestinationRoot.Organization;
+  useEffect(() => {
+    setDependencies(EMPTY_DEPENDENCIES);
+    if (!shouldListDependencies) return;
+    let isCancelled = false;
+    const load = async () => {
+      try {
+        const loaded = await loadDependenciesRef.current?.();
+        if (!isCancelled && loaded) setDependencies(loaded);
+      } catch {
+        /* Left empty: the list only informs, saving does not depend on it. */
+      }
+    };
+    void load();
+    return () => {
+      isCancelled = true;
+    };
+  }, [shouldListDependencies]);
 
   const isNewVersion =
     adapter.isVersioned && versionMode === SaveVersionMode.New;
@@ -440,6 +480,7 @@ export const useResourceSavePanel = ({
       onPendingDestinationChange: setPendingDestination,
       foldersError: personal.hasError ? labels.foldersLoadError : undefined,
       onRetryFolders: personal.retry,
+      dependencies,
     },
     submit,
   };

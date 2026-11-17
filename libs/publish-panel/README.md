@@ -299,6 +299,8 @@ The "save to a folder, optionally as a new version" flow. `StandaloneSaveToFolde
 
 The version section renders only when `version` (`SaveToFolderVersionProps`) is passed: a `RadioGroup` of "Keep version {version}" and "Save as new version", the latter revealing a required version input whose error the host supplies as `newVersionError`. Pass no `version` for an unversioned resource. `submitError` is announced through an assertive `LiveRegion`; `foldersError` shows above the tree with a Retry action when `onRetryFolders` is given. Every control is disabled while `isSubmitting`.
 
+`SaveToFolderPanel` and `StandaloneSaveToFolderPanel` also render `PublishDependenciesList` as the last section but one of the main view (above the versions history) when the host passes `dependencies` (`PublishDependency[]`); they take its copy and colors as `dependenciesLabels` (`PublishDependenciesLabels`) and `dependenciesStyles` (`PublishDependenciesStyles`). The list is informational: it never changes what Save does, it renders nothing while empty or omitted, and the panel does not decide when it applies, so the host passes it only for the destinations that need it.
+
 The drawer is named by `labels.title` in both views; switching views moves focus to the new view's heading, and leaving the folder view returns it to Change. `SaveToFolderPanel` is the controlled body (`view`, `pendingDestination`, `onPendingDestinationChange`, `onChangeFolderClick`) for a host that renders its own shell. The panel never decides what a destination means — saving, moving and publishing are the host's.
 
 ```tsx

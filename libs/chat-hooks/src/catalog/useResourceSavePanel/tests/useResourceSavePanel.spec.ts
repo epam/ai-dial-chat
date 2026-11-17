@@ -1,5 +1,6 @@
 import {
   PublicationRuleFunction,
+  PublishDependencyType,
   SaveVersionMode,
   type PublicationRule,
 } from '@epam/ai-dial-publish-panel';
@@ -90,6 +91,126 @@ const renderPanel = (overrides: Partial<UseResourceSavePanelParams> = {}) => {
   };
   return { params, ...renderHook(() => useResourceSavePanel(params)) };
 };
+
+const DEPENDENCY = {
+  id: 'prompts/b1/Hi',
+  name: 'Hi',
+  type: PublishDependencyType.Prompt,
+  location: '',
+};
+const PERSONAL = { rootKey: SaveDestinationRoot.Personal, path: [] };
+
+describe('useResourceSavePanel — private dependencies', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('lists nothing for a Personal destination and never reads', () => {
+    const loadDependencies = vi.fn().mockResolvedValue([DEPENDENCY]);
+    const { result } = renderPanel({ loadDependencies });
+    expect(result.current.panelProps.dependencies).toEqual([]);
+    expect(loadDependencies).not.toHaveBeenCalled();
+  });
+
+  it('lists them for an Organization destination that goes through a publication request', async () => {
+    const loadDependencies = vi.fn().mockResolvedValue([DEPENDENCY]);
+    const { result } = renderPanel({ loadDependencies });
+
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+
+    await waitFor(() =>
+      expect(result.current.panelProps.dependencies).toEqual([DEPENDENCY]),
+    );
+    expect(loadDependencies).toHaveBeenCalledOnce();
+  });
+
+  it('lists them for a direct write into an org unit too', async () => {
+    const UNIT = {
+      rootKey: SaveDestinationRoot.Organization,
+      path: ['Acme', 'Teams'],
+    };
+    const loadDependencies = vi.fn().mockResolvedValue([DEPENDENCY]);
+    const { result } = renderPanel({
+      loadDependencies,
+      adapter: makeAdapter({
+        saveIntoOrgUnit: vi.fn().mockResolvedValue({ id: ID }),
+      }),
+      canSaveDirectlyTo: (path) => path[0] === 'Acme',
+    });
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+
+    await waitFor(() =>
+      expect(result.current.panelProps.dependencies).toEqual([DEPENDENCY]),
+    );
+    expect(result.current.panelProps.accessRules?.isHiddenFor?.(UNIT)).toBe(
+      true,
+    );
+  });
+
+  it('clears the list when the destination goes back to Personal', async () => {
+    const loadDependencies = vi.fn().mockResolvedValue([DEPENDENCY]);
+    const { result } = renderPanel({ loadDependencies });
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+    await waitFor(() =>
+      expect(result.current.panelProps.dependencies).toHaveLength(1),
+    );
+
+    act(() => result.current.panelProps.onDestinationChange(PERSONAL));
+
+    expect(result.current.panelProps.dependencies).toEqual([]);
+  });
+
+  it('leaves the list empty and Save enabled when the read fails', async () => {
+    const loadDependencies = vi.fn().mockRejectedValue(new Error('boom'));
+    const { result } = renderPanel({ loadDependencies });
+
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+    await waitFor(() => expect(loadDependencies).toHaveBeenCalledOnce());
+
+    expect(result.current.panelProps.dependencies).toEqual([]);
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
+  });
+
+  it('ignores a read that finishes after the destination left Organization', async () => {
+    let resolve!: (value: (typeof DEPENDENCY)[]) => void;
+    const loadDependencies = vi.fn(
+      () => new Promise<(typeof DEPENDENCY)[]>((r) => (resolve = r)),
+    );
+    const { result } = renderPanel({ loadDependencies });
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+    act(() => result.current.panelProps.onDestinationChange(PERSONAL));
+
+    await act(async () => resolve([DEPENDENCY]));
+
+    expect(result.current.panelProps.dependencies).toEqual([]);
+  });
+
+  it('reads again each time the panel opens', async () => {
+    const loadDependencies = vi.fn().mockResolvedValue([DEPENDENCY]);
+    const { result, rerender, params } = renderPanel({ loadDependencies });
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+    await waitFor(() => expect(loadDependencies).toHaveBeenCalledOnce());
+
+    params.isOpen = false;
+    rerender();
+    expect(result.current.panelProps.dependencies).toEqual([]);
+    params.isOpen = true;
+    rerender();
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+
+    await waitFor(() =>
+      expect(result.current.panelProps.dependencies).toEqual([DEPENDENCY]),
+    );
+    expect(loadDependencies.mock.calls.length).toBeGreaterThan(1);
+  });
+
+  it('shows nothing without a provider', () => {
+    const { result } = renderPanel();
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+    expect(result.current.panelProps.dependencies).toEqual([]);
+  });
+});
 
 describe('useResourceSavePanel', () => {
   beforeEach(() => {

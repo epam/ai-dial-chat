@@ -7,6 +7,7 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PublishDependenciesService } from '../dependencies/publish-dependencies.service';
+import { MAX_APPLICATION_VALUES_LENGTH } from '../dto/application-values-dependencies.dto';
 import { ResourceDependencyType } from '../dto/resource-dependency.dto';
 import { PublishDependenciesController } from '../publish-dependencies.controller';
 
@@ -25,10 +26,16 @@ const RESULT = {
 
 describe('PublishDependenciesController (integration)', () => {
   let app: INestApplication;
-  let service: { getDependencies: ReturnType<typeof vi.fn> };
+  let service: {
+    getDependencies: ReturnType<typeof vi.fn>;
+    getApplicationValueDependencies: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
-    service = { getDependencies: vi.fn().mockResolvedValue(RESULT) };
+    service = {
+      getDependencies: vi.fn().mockResolvedValue(RESULT),
+      getApplicationValueDependencies: vi.fn().mockResolvedValue(RESULT),
+    };
     const module = await Test.createTestingModule({
       controllers: [PublishDependenciesController],
       providers: [{ provide: PublishDependenciesService, useValue: service }],
@@ -102,5 +109,51 @@ describe('PublishDependenciesController (integration)', () => {
     await request(app.getHttpServer())
       .get('/api/v1/catalog/conversation/x/publish-dependencies')
       .expect(400);
+  });
+
+  describe('POST application-values/publish-dependencies', () => {
+    const URL = '/api/v1/catalog/application-values/publish-dependencies';
+    const BODY = {
+      schemaId: 'https://schema/form',
+      properties: { skills: [{ url: 'prompts/b-1/Hi' }] },
+    };
+
+    it('returns 200 with the dependencies and passes the caller and values to the service', async () => {
+      const res = await request(app.getHttpServer())
+        .post(URL)
+        .send(BODY)
+        .expect(200);
+
+      expect(res.body).toEqual(RESULT);
+      expect(service.getApplicationValueDependencies).toHaveBeenCalledWith(
+        TEST_USER.at,
+        TEST_USER.sub,
+        BODY.schemaId,
+        BODY.properties,
+      );
+      expect(service.getDependencies).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['a missing schemaId', { properties: { a: 1 } }],
+      ['missing properties', { schemaId: 'https://schema/form' }],
+      ['empty properties', { schemaId: 'https://schema/form', properties: {} }],
+      [
+        'array properties',
+        { schemaId: 'https://schema/form', properties: [1] },
+      ],
+      [
+        'oversized properties',
+        {
+          schemaId: 'https://schema/form',
+          properties: { blob: 'x'.repeat(MAX_APPLICATION_VALUES_LENGTH) },
+        },
+      ],
+      ['an unknown field', { ...BODY, extra: true }],
+    ])('rejects %s with 400', async (_name, body) => {
+      await request(app.getHttpServer()).post(URL).send(body).expect(400);
+
+      expect(service.getApplicationValueDependencies).not.toHaveBeenCalled();
+    });
   });
 });

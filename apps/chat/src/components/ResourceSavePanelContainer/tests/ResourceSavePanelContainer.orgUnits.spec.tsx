@@ -66,6 +66,9 @@ vi.mock('../../../server-api/publish.api', () => ({
 }));
 vi.mock('../../../hooks/publish/usePublishFolders');
 vi.mock('../../../hooks/publish/useResourceVersionHistory');
+vi.mock('../../../hooks/publish/usePublishDependencyIconResolver', () => ({
+  usePublishDependencyIconResolver: () => undefined,
+}));
 vi.mock('../../../hooks/resource-save/useResourceSaveNotification', () => ({
   useResourceSaveNotification: () => notifySaved,
 }));

@@ -13,12 +13,17 @@ const DEPENDENCY = {
 
 describe('PublishDependenciesService', () => {
   let resolve: ReturnType<typeof vi.fn>;
+  let resolveFromValues: ReturnType<typeof vi.fn>;
   let service: PublishDependenciesService;
   let warn: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     resolve = vi.fn().mockResolvedValue([DEPENDENCY]);
-    service = new PublishDependenciesService({ resolve } as never);
+    resolveFromValues = vi.fn().mockResolvedValue([DEPENDENCY]);
+    service = new PublishDependenciesService({
+      resolve,
+      resolveFromValues,
+    } as never);
     warn = vi.spyOn(Logger.prototype, 'warn').mockReturnValue(undefined);
   });
 
@@ -88,5 +93,39 @@ describe('PublishDependenciesService', () => {
 
     expect(result).toEqual({ dependencies: [] });
     expect(warn).toHaveBeenCalledOnce();
+  });
+
+  describe('getApplicationValueDependencies', () => {
+    it('returns the resolver result for the given values', async () => {
+      const result = await service.getApplicationValueDependencies(
+        'secret-token',
+        'user-1',
+        'https://schema/form',
+        { a: 1 },
+      );
+
+      expect(result).toEqual({ dependencies: [DEPENDENCY] });
+      expect(resolveFromValues).toHaveBeenCalledWith(
+        { accessToken: 'secret-token', userSub: 'user-1' },
+        'https://schema/form',
+        { a: 1 },
+      );
+      expect(resolve).not.toHaveBeenCalled();
+    });
+
+    it('returns an empty list and logs without the token when the resolver fails', async () => {
+      resolveFromValues.mockRejectedValue(new Error('boom'));
+
+      const result = await service.getApplicationValueDependencies(
+        'secret-token',
+        'user-1',
+        'https://schema/form',
+        { a: 1 },
+      );
+
+      expect(result).toEqual({ dependencies: [] });
+      expect(warn).toHaveBeenCalledOnce();
+      expect(String(warn.mock.calls[0][0])).not.toContain('secret-token');
+    });
   });
 });

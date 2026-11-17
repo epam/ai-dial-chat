@@ -499,6 +499,34 @@ i18n keys: `publish.dependenciesTitle`, `publish.dependenciesDescription`, `publ
 - **WHEN** the user opens Publish for a toolset
 - **THEN** no dependencies section is rendered
 
+### Requirement: The Save panel shows the private dependencies of an unsaved schema app
+
+`POST /api/v1/catalog/application-values/publish-dependencies` (`PublishDependenciesController`) SHALL accept `{ schemaId, properties }` (`ApplicationValuesDependenciesRequestDto`, `properties` a non-empty object of at most 64 KiB serialized) and return a `ResourceDependenciesResultDto` built by `ApplicationDependencyResolver.resolveFromValues` from the application type schema and the given values, without reading any application from DIAL Core. Like the entity route it SHALL answer an empty list when the schema cannot be read.
+
+`useResourceSavePanel` (`libs/chat-hooks/src/catalog/useResourceSavePanel/useResourceSavePanel.ts`) SHALL accept an optional `loadDependencies` and return `panelProps.dependencies`: the loaded list while the committed destination is under the Organization root, otherwise an empty list. The list SHALL be empty while loading and after a failed read, SHALL ignore a read that finishes after the destination left the Organization root or the panel closed, and SHALL never disable Save. It SHALL apply to a public-folder save that sends a publication request and to a direct write into an org unit alike.
+
+`apps/chat` SHALL pass `dependencyValues` to `ResourceSavePanelContainer` only for a schema-form app, from `ApplicationSavePanelConfig.getDependencyValues` of `schemaAppDefinition` (the schema id and `setup.properties`); the Quick App, DIAL Loop and custom app definitions SHALL provide none. The container SHALL fill the section's copy with `getPublishDependenciesLabels` and the existing `publish.dependencies*` keys.
+
+#### Scenario: Schema app saved to an Organization folder through a publication request
+- **WHEN** the committed destination is a public folder outside every org unit and the app has form values
+- **THEN** the panel lists the private dependencies of those values
+
+#### Scenario: Schema app saved by a direct write into an org unit
+- **WHEN** the committed destination is a unit folder the user may write to, and the app has form values
+- **THEN** the panel lists the private dependencies of those values and the rules editor stays hidden
+
+#### Scenario: Personal destination
+- **WHEN** the committed destination is under the Personal root
+- **THEN** no dependencies are listed and no request is made
+
+#### Scenario: Kind without a form
+- **WHEN** the Save panel opens for a Quick App, DIAL Loop or custom app
+- **THEN** no dependencies are listed under any root
+
+#### Scenario: Failed read
+- **WHEN** the dependencies request rejects
+- **THEN** the list is empty and Save stays enabled
+
 #### Scenario: Project publish panel
 - **WHEN** the user opens Publish for a project
 - **THEN** the project container loads the list with `usePublishDependencies` and renders no section while the list is empty

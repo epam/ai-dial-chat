@@ -9513,6 +9513,43 @@
         "tags": ["publish"]
       }
     },
+    "/api/v1/catalog/application-values/publish-dependencies": {
+      "post": {
+        "description": "Returns the references in the given application property values that are not in the public bucket. Unlike the entity route it reads no application from DIAL Core, only the application type schema, so it works before the first save. The list is advisory: when it cannot be resolved the response is an empty list rather than an error.",
+        "operationId": "getApplicationValuesPublishDependencies",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationValuesDependenciesRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The values’ private dependencies, possibly empty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceDependenciesResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — missing schemaId, or properties empty or too large"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          }
+        },
+        "summary": "List the private dependencies of unsaved application values",
+        "tags": ["publish"]
+      }
+    },
     "/api/v1/publish/rules": {
       "get": {
         "description": "Returns the exact requested folder's own access-restriction rules by proxying DIAL Core's `getPublicationRules` — ancestor-folder rules in the underlying response are discarded, never returned.",
@@ -20933,6 +20970,31 @@
           }
         },
         "required": ["id", "version", "status", "publishedFolders"]
+      },
+      "ApplicationValuesDependenciesRequestDto": {
+        "type": "object",
+        "properties": {
+          "schemaId": {
+            "type": "string",
+            "description": "The application type schema the values belong to.",
+            "example": "https://example.com/schemas/my-app.json",
+            "maxLength": 2048
+          },
+          "properties": {
+            "type": "object",
+            "description": "The application property values as the form holds them, keyed by schema property.",
+            "additionalProperties": true,
+            "example": {
+              "skills": [
+                {
+                  "type": "dial-prompt",
+                  "url": "prompts/bucket/Hi"
+                }
+              ]
+            }
+          }
+        },
+        "required": ["schemaId", "properties"]
       },
       "PublishRulesResultDto": {
         "type": "object",

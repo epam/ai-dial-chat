@@ -5561,7 +5561,16 @@ returns `panelProps` to spread on `StandaloneSaveToFolderPanel` from
   `ResourceSaveVersionError` (`Invalid`, `Unchanged`, `Exists`) that
   `labels.getVersionError` turns into text;
 - the access rules of the pending Organization folder, fetched with
-  `publishClient.getPublishRules`, and kept while the same folder stays chosen.
+  `publishClient.getPublishRules`, and kept while the same folder stays chosen;
+- the private dependencies of what is being saved: pass `loadDependencies`
+  (`() => Promise<PublishDependency[]>`, already mapped with
+  `mapResourceDependencyDto`) and `panelProps.dependencies` holds its result while
+  the committed destination is under the Organization root, whether the save then
+  sends a publication request or writes directly into an org unit. It is empty for
+  the Personal root, while the read is in flight, after a failed read and after a
+  read that finished once the destination moved away; it never blocks Save. For
+  application values that are not saved yet, build the read with
+  `PublishApiClient.getApplicationValuesPublishDependencies({ schemaId, properties })`.
 
 The host owns everything else: the resource summary, the panel's own labels,
 `onClose`, and the notification it shows from `onSaved(result, choice)`. The

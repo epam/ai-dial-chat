@@ -513,6 +513,10 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
   /* A metadata-first create only starts the application; it is set up, and can be published, once it exists. */
   const canPublishFromPanel = isEditMode || !isMetadataFirst;
   const [isSavePanelOpen, setIsSavePanelOpen] = useState(false);
+  const savePanelDependencyValues = useMemo(
+    () => definition.savePanel?.getDependencyValues?.(setup, context),
+    [context, definition.savePanel, setup],
+  );
   const savedVersion = metadata.values.version;
   /*
    * Built when the panel opens, never during render: its save reads the Setup
@@ -853,6 +857,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
             notifiableEntity={notifiableEntity}
             notificationType={notificationType}
             canPublish={canPublishFromPanel}
+            dependencyValues={savePanelDependencyValues}
             onSaved={handleSavePanelSaved}
           />
         </Suspense>
