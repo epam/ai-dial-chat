@@ -4,21 +4,14 @@ import {
   MarkdownRenderer,
   MarkdownRendererClassNames,
   mergeClasses,
-  useIsVerticallyClamped,
 } from '@epam/ai-dial-chat-shared';
-import {
-  CardShell,
-  ElementSize,
-  FolderPath,
-  InteractiveTooltip,
-} from '@epam/ai-dial-ui-kit';
+import { CardShell, ElementSize, FolderPath } from '@epam/ai-dial-ui-kit';
 import {
   FC,
   KeyboardEvent,
   MouseEvent,
   useCallback,
   useEffect,
-  useMemo,
   useState,
 } from 'react';
 import { CATALOG_CLASS } from '../../constants/public-class-names';
@@ -40,7 +33,7 @@ const isLinkEvent = (
 
 /*
  * React bubbles events from a portal through its React ancestors, so a click
- * or key press inside the description panel (portaled out of the card) would
+ * or key press inside anything the card portals out of its own DOM would
  * otherwise reach the card's own handlers and open the details.
  */
 const isOutsideCardEvent = (
@@ -81,9 +74,6 @@ export const Card: FC<CardProps> = ({
     setIsStarred(initialIsStarred);
   }, [item.id, initialIsStarred]);
 
-  const { ref: descriptionRef, isClamped: isDescriptionClamped } =
-    useIsVerticallyClamped<HTMLDivElement>(item.description);
-
   const descriptionClassName =
     cardStyles?.typography?.descriptionClassName ?? 'dial-small-paragraph-text';
 
@@ -92,26 +82,6 @@ export const Card: FC<CardProps> = ({
     cardStyles?.typography?.folderLabelClassName ?? 'dial-tiny-text';
   const folderLeafClassName =
     cardStyles?.typography?.folderLeafClassName ?? 'dial-tiny-semi-text';
-  const tooltipTextClassName =
-    cardStyles?.typography?.descriptionTooltipClassName ?? 'dial-small-text';
-  const tooltipStrongClassName =
-    cardStyles?.typography?.descriptionTooltipStrongClassName ??
-    'dial-small-semi-text';
-  const tooltipMarkdownClassNames = useMemo(
-    (): MarkdownRendererClassNames => ({
-      p: tooltipTextClassName,
-      ul: tooltipTextClassName,
-      ol: tooltipTextClassName,
-      h1: tooltipTextClassName,
-      h2: tooltipTextClassName,
-      h3: tooltipTextClassName,
-      h4: tooltipTextClassName,
-      h5: tooltipTextClassName,
-      h6: tooltipTextClassName,
-      strong: tooltipStrongClassName,
-    }),
-    [tooltipTextClassName, tooltipStrongClassName],
-  );
 
   const cssVars = buildCssVars({
     '--cg-description-text': cardStyles?.colors?.textSecondary,
@@ -198,66 +168,40 @@ export const Card: FC<CardProps> = ({
         }
       />
 
-      {/* Only while the clamp actually hides text — a description that fits
-       * gets no panel repeating what is already on screen (#9334).
-       * An interactive panel rather than a plain tooltip: it stays open while
-       * the pointer moves into it, so a description taller than the viewport
-       * can be scrolled — the panel is capped at the viewport height, and the
-       * kit's flip/shift keep a side-placed panel inside it (#9363). */}
-      <InteractiveTooltip
-        asChild
-        hideTooltip={!isDescriptionClamped}
-        contentClassName="max-h-[calc(100dvh-16px)] overflow-y-auto"
-        content={
-          item.description && (
-            <MarkdownRenderer
-              content={item.description}
-              classNames={tooltipMarkdownClassNames}
-              components={DESCRIPTION_MARKDOWN_COMPONENTS}
-              {...markdownLabels}
-            />
-          )
-        }
+      <div
+        className={mergeClasses(
+          /*
+           * `min-h` is three line-heights, not a fixed px value: `line-clamp-3`
+           * limits the text to 3 lines but `overflow: hidden` clips at the box
+           * height, so any box taller than 3 lines paints the clamped-away
+           * lines. `3lh` tracks whichever typography class is applied.
+           */
+          'line-clamp-3 min-h-[3lh]',
+          'wrap-break-word',
+          styles.description,
+        )}
       >
-        <div
-          ref={descriptionRef}
-          className={mergeClasses(
-            /*
-             * `min-h` is two line-heights, not a fixed px value: `line-clamp-2`
-             * limits the text to 2 lines but `overflow: hidden` clips at the box
-             * height, so any box taller than 2 lines paints the clamped-away
-             * lines. `2lh` tracks whichever typography class is applied.
-             * Without topic tags their row is free, so the text takes a 3rd line.
-             */
-            item.topics.length > 0
-              ? 'line-clamp-2 min-h-[2lh]'
-              : 'line-clamp-3 min-h-[3lh]',
-            'wrap-break-word',
-            styles.description,
-          )}
-        >
-          {item.description && (
-            <MarkdownRenderer
-              content={item.description}
-              classNames={
-                {
-                  p: descriptionClassName,
-                  ul: descriptionClassName,
-                  ol: descriptionClassName,
-                  h1: descriptionClassName,
-                  h2: descriptionClassName,
-                  h3: descriptionClassName,
-                  h4: descriptionClassName,
-                  h5: descriptionClassName,
-                  h6: descriptionClassName,
-                } satisfies MarkdownRendererClassNames
-              }
-              components={DESCRIPTION_MARKDOWN_COMPONENTS}
-              {...markdownLabels}
-            />
-          )}
-        </div>
-      </InteractiveTooltip>
+        {item.description && (
+          <MarkdownRenderer
+            content={item.description}
+            classNames={
+              {
+                p: descriptionClassName,
+                ul: descriptionClassName,
+                ol: descriptionClassName,
+                h1: descriptionClassName,
+                h2: descriptionClassName,
+                h3: descriptionClassName,
+                h4: descriptionClassName,
+                h5: descriptionClassName,
+                h6: descriptionClassName,
+              } satisfies MarkdownRendererClassNames
+            }
+            components={DESCRIPTION_MARKDOWN_COMPONENTS}
+            {...markdownLabels}
+          />
+        )}
+      </div>
 
       {/* `mt-auto` pins the topics row and footer to the card bottom — the job
        * `flex-1` on the description used to do before it broke the clamp. */}
