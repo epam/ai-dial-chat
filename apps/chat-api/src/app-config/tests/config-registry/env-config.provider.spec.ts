@@ -7,7 +7,7 @@ import type { AppConfigEvalContext } from '../../app-config.types';
 import { EnvConfigProvider } from '../../config-registry/env-config.provider';
 import { CelebrationDeliveryMode } from '../../types/celebration-delivery';
 
-const ctx: AppConfigEvalContext = { appId: 'chat-ui' };
+const ctx: AppConfigEvalContext = { appId: 'ai-dial-chat' };
 
 /**
  * `envOverrides` are the values ConfigService holds. By default each defined

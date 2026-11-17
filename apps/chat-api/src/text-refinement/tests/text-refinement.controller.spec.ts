@@ -187,7 +187,7 @@ describe('Text refinement HTTP contract', () => {
         .send({ ...body, purpose })
         .expect(403);
       expect(enabled).toHaveBeenCalledWith(feature, {
-        appId: 'chat-ui',
+        appId: 'ai-dial-chat',
         userId: user.sub,
         roles: ['skill-author'],
       });

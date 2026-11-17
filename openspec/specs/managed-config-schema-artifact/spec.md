@@ -5,11 +5,12 @@
 The deterministic generation of Chat's managed-configuration JSON Schema from the registry, the committed per-version artifact files and `index.json` with Studio's canonical SHA-256, the drift and frozen-version checks, the semantic-version bump rules, and what distribution the artifact does and does not authorize.
 
 ## Requirements
+
 ### Requirement: Deterministic schema generation from the registry
 
 Chat SHALL generate the managed-configuration schema only from the registry's managed entries and contract constants. It SHALL read no environment variable, `.env` file or `ConfigService` value, and SHALL start no application module. Generating twice from the same registry SHALL produce deep-equal output. The schema SHALL be a JSON Schema 2020-12 document that meets all of the following:
 
-- it declares `"$schema": "https://json-schema.org/draft/2020-12/schema"` and a root `$id` of `urn:dial:chat-ui:managed-config:<schemaVersion>`;
+- it declares `"$schema": "https://json-schema.org/draft/2020-12/schema"` and a root `$id` of `urn:dial:ai-dial-chat:managed-config:<schemaVersion>`;
 - its root `type` is `object`;
 - every `$ref` points inside the document (`#/...`) and no nested `$id` exists;
 - it uses `dial:meta` with a nested `dial:propertyOrder`, `title`, `description` and, for hidden keys only, `isHidden: true` as editor annotations;
@@ -42,18 +43,18 @@ The schema SHALL compile under Ajv 2020 with `strict: false`, `allErrors: true` 
 
 ### Requirement: Artifact files and index
 
-Each schema version SHALL be committed in `apps/chat-api/managed-config-schema/` as `chat-ui-<schemaVersion>.json`. The file SHALL contain exactly the members `appId` (`chat-ui`), `schemaVersion` and `schema`, the same members as Config Studio's schema upload body except its client-supplied `operationId`. The same directory SHALL contain `index.json`:
+Each schema version SHALL be committed in `apps/chat-api/managed-config-schema/` as `ai-dial-chat-<schemaVersion>.json`. The file SHALL contain exactly the members `appId` (`ai-dial-chat`), `schemaVersion` and `schema`, the same members as Config Studio's schema upload body except its client-supplied `operationId`. The same directory SHALL contain `index.json`:
 
 ```json
 {
   "format": "dial-managed-config-schema-index@1",
-  "appId": "chat-ui",
+  "appId": "ai-dial-chat",
   "current": "1.0.0",
   "supported": ["1.0.0"],
   "versions": [
     {
       "schemaVersion": "1.0.0",
-      "file": "chat-ui-1.0.0.json",
+      "file": "ai-dial-chat-1.0.0.json",
       "schemaSha256": "<lowercase hex SHA-256 of the canonical schema>",
       "canonicalBytes": 5161
     }
@@ -67,7 +68,7 @@ Each schema version SHALL be committed in `apps/chat-api/managed-config-schema/`
 
 #### Scenario: Uploadable without editing
 
-- **WHEN** a schema manager posts the contents of `chat-ui-1.0.0.json` plus a new `operationId` to a `chat-ui` instance's `POST /v1/schema-validations`
+- **WHEN** a schema manager posts the contents of `ai-dial-chat-1.0.0.json` plus a new `operationId` to a `ai-dial-chat` instance's `POST /v1/schema-validations`
 - **THEN** the result is `{ "valid": true, "errors": [] }`
 
 #### Scenario: Checksum matches Studio
@@ -107,7 +108,7 @@ A pinned version SHALL never be modified; any correction, an annotation change i
 
 #### Scenario: Released file edited alone
 
-- **WHEN** `chat-ui-1.0.0.json` is edited without changing its index entry
+- **WHEN** `ai-dial-chat-1.0.0.json` is edited without changing its index entry
 - **THEN** the artifact test fails
 
 ### Requirement: Schema versioning and compatibility
@@ -151,6 +152,5 @@ The trusted source of a schema version SHALL be its file and `index.json` entry 
 
 #### Scenario: Operator verifies an upload
 
-- **WHEN** an operator uploads `chat-ui-1.0.0.json` from a Chat release tag into an instance
+- **WHEN** an operator uploads `ai-dial-chat-1.0.0.json` from a Chat release tag into an instance
 - **THEN** the `sha256` Studio returns equals that tag's `index.json` `schemaSha256`, and any difference means the uploaded schema is not the released artifact
-

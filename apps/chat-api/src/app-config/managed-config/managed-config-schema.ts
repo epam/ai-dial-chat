@@ -32,7 +32,7 @@ const JSON_SCHEMA_DIALECT = 'https://json-schema.org/draft/2020-12/schema';
 
 const ROOT_TITLE = 'DIAL Chat managed configuration';
 const ROOT_DESCRIPTION =
-  'Values published through Config Studio for one chat-ui instance. A Chat deployment applies them only when its managed reading is enabled; an explicit deployment environment override still wins, and omitted keys use the application default.';
+  'Values published through Config Studio for one ai-dial-chat instance. A Chat deployment applies them only when its managed reading is enabled; an explicit deployment environment override still wins, and omitted keys use the application default.';
 
 /*
  * `YYYY-MM-DDTHH:MM:SS[.fff]Z`: UTC only, because Studio does not enforce

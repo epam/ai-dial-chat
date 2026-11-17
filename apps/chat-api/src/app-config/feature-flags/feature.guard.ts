@@ -8,6 +8,7 @@ import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import type { SessionUser } from '../../auth/session/session.types';
 import { UserRolesService } from '../../auth/user-roles.service';
+import { CHAT_APP_ID } from '../../config/env/app-ids';
 import type { AppConfigEvalContext } from '../app-config.types';
 import { FeatureFlagsService } from './feature-flags.service';
 import { FeatureKey } from './feature-key.enum';
@@ -37,7 +38,7 @@ export class FeatureGuard implements CanActivate {
     const request = executionContext.switchToHttp().getRequest<Request>();
     const sessionUser = request.user as SessionUser | undefined;
     const context: AppConfigEvalContext = {
-      appId: 'chat-ui',
+      appId: CHAT_APP_ID,
       userId: sessionUser?.sub,
       roles: sessionUser ? this.userRoles.getRoles(sessionUser) : undefined,
     };

@@ -12,7 +12,7 @@ export class GetClientConfigDto {
       'appId must be a lowercase application identifier of 1-63 characters (a-z, 0-9 and hyphens, not starting with a hyphen)',
   })
   @ApiProperty({
-    example: 'chat-ui',
+    example: 'ai-dial-chat',
     pattern: APP_ID_PATTERN.source,
     description:
       'Application identifier served by this deployment. An identifier the deployment does not serve is rejected with 400.',

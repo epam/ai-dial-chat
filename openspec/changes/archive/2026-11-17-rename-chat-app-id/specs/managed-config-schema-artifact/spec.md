@@ -1,0 +1,117 @@
+## MODIFIED Requirements
+
+### Requirement: Deterministic schema generation from the registry
+
+Chat SHALL generate the managed-configuration schema only from the registry's managed entries and contract constants. It SHALL read no environment variable, `.env` file or `ConfigService` value, and SHALL start no application module. Generating twice from the same registry SHALL produce deep-equal output. The schema SHALL be a JSON Schema 2020-12 document that meets all of the following:
+
+- it declares `"$schema": "https://json-schema.org/draft/2020-12/schema"` and a root `$id` of `urn:dial:ai-dial-chat:managed-config:<schemaVersion>`;
+- its root `type` is `object`;
+- every `$ref` points inside the document (`#/...`) and no nested `$id` exists;
+- it uses `dial:meta` with a nested `dial:propertyOrder`, `title`, `description` and, for hidden keys only, `isHidden: true` as editor annotations;
+- each `default` comes from the registry and validates against its own schema;
+- its canonical serialization is at most 57,344 bytes.
+
+The schema SHALL compile under Ajv 2020 with `strict: false`, `allErrors: true` and `validateFormats: false`.
+
+**RTL impact:** None. **i18n impact:** None.
+
+#### Scenario: Repeated generation
+
+- **WHEN** the generator runs twice without registry changes
+- **THEN** both outputs are deep-equal
+
+#### Scenario: Environment cannot leak
+
+- **WHEN** the generator runs with `ANNOUNCEMENT_TITLE`, `USAGE_LIMITS_WARNING_THRESHOLD_PERCENT=90` and `DIAL_API_KEY` set in the process environment
+- **THEN** the output is deep-equal to a run without them, and no environment value or secret appears in it
+
+#### Scenario: Structural acceptance
+
+- **WHEN** the generated schema is checked with Studio's rules
+- **THEN** it has an object root, only internal references and no nested `$id`, compiles, and measures at most 57,344 canonical bytes
+
+#### Scenario: Size budget is measured
+
+- **WHEN** the artifact test runs
+- **THEN** it records the canonical byte size in `index.json` and fails if the size exceeds 57,344 bytes
+
+### Requirement: Artifact files and index
+
+Each schema version SHALL be committed in `apps/chat-api/managed-config-schema/` as `ai-dial-chat-<schemaVersion>.json`. The file SHALL contain exactly the members `appId` (`ai-dial-chat`), `schemaVersion` and `schema`, the same members as Config Studio's schema upload body except its client-supplied `operationId`. The same directory SHALL contain `index.json`:
+
+```json
+{
+  "format": "dial-managed-config-schema-index@1",
+  "appId": "ai-dial-chat",
+  "current": "1.0.0",
+  "supported": ["1.0.0"],
+  "versions": [
+    {
+      "schemaVersion": "1.0.0",
+      "file": "ai-dial-chat-1.0.0.json",
+      "schemaSha256": "<lowercase hex SHA-256 of the canonical schema>",
+      "canonicalBytes": 5161
+    }
+  ]
+}
+```
+
+`schemaSha256` SHALL be the SHA-256 of the canonical JSON of `schema`: object keys sorted at every level in ascending UTF-16 code-unit order, primitives serialized as by `JSON.stringify`, and no whitespace. This is the same value Config Studio returns after an upload and records with every publication. A test SHALL keep this algorithm aligned with the fixed vector `{"b":1,"a":[{"d":"x","c":null}],"é":"ü"}` → `b69925e54531b6b61268fda5dca74b8d1eb6d566616ec5932258abac6c9edde0`.
+
+**RTL impact:** None. **i18n impact:** None.
+
+#### Scenario: Uploadable without editing
+
+- **WHEN** a schema manager posts the contents of `ai-dial-chat-1.0.0.json` plus a new `operationId` to a `ai-dial-chat` instance's `POST /v1/schema-validations`
+- **THEN** the result is `{ "valid": true, "errors": [] }`
+
+#### Scenario: Checksum matches Studio
+
+- **WHEN** the same body is uploaded with `POST /v1/schemas`
+- **THEN** the returned `sha256` equals the version's `schemaSha256` in `index.json`
+
+#### Scenario: Canonical vector
+
+- **WHEN** Chat's canonicalizer hashes the fixed vector
+- **THEN** the digest is `b69925e54531b6b61268fda5dca74b8d1eb6d566616ec5932258abac6c9edde0`
+
+### Requirement: Committed artifacts stay tied to the registry and pinned versions stay frozen
+
+A test in the default test run SHALL fail in any of these cases:
+
+- the current version's committed file differs from the generator output;
+- any committed version file does not hash to its `index.json` entry;
+- the index does not list exactly the committed files;
+- `current` is not the highest listed version;
+- `supported` differs from the build's supported-version list;
+- the committed versions and their `schemaSha256` differ from `PINNED_MANAGED_CONFIG_SCHEMA_SHA256`, a hand-edited constant the generator never writes.
+
+A pinned version SHALL never be modified; any correction, an annotation change included, SHALL be a new version with its own pin. The generator SHALL refuse to write a pinned version whose generated hash differs from its pin.
+
+**RTL impact:** None. **i18n impact:** None.
+
+#### Scenario: Registry changed without regeneration
+
+- **WHEN** a managed key's bound is changed in the registry and the artifact is not regenerated
+- **THEN** the artifact test fails
+
+#### Scenario: Pinned version regenerated in place
+
+- **WHEN** a managed key's operator description changes in the registry without a version bump and `npm run managed-config-schema` runs
+- **THEN** the generator fails, naming the pinned and the generated hash, and writes nothing
+
+#### Scenario: Released file edited alone
+
+- **WHEN** `ai-dial-chat-1.0.0.json` is edited without changing its index entry
+- **THEN** the artifact test fails
+
+### Requirement: Distribution and provenance
+
+The trusted source of a schema version SHALL be its file and `index.json` entry at an `epam/ai-dial-chat` release tag, reached through the normal reviewed pull-request process. Config Studio SHALL NOT need Chat source, a Chat build, or a running Chat deployment to obtain or use the artifact. Integrity SHALL be verifiable by comparing Studio's upload `sha256` with `schemaSha256`. Creating and committing artifact files SHALL be part of implementation. Attaching them to a release, signing them, publishing them to a package registry, or uploading them into any Config Studio instance SHALL each require separate authorization.
+
+**RTL impact:** None. **i18n impact:** None.
+
+#### Scenario: Operator verifies an upload
+
+- **WHEN** an operator uploads `ai-dial-chat-1.0.0.json` from a Chat release tag into an instance
+- **THEN** the `sha256` Studio returns equals that tag's `index.json` `schemaSha256`, and any difference means the uploaded schema is not the released artifact

@@ -5,7 +5,7 @@ import { EnvConfigProvider } from '../../config-registry/env-config.provider';
 import { StaticDefaultsProvider } from '../../config-registry/static-defaults.provider';
 import { createManagedProvider } from '../managed-runtime/managed-runtime.fixtures';
 
-const ctx: AppConfigEvalContext = { appId: 'chat-ui' };
+const ctx: AppConfigEvalContext = { appId: 'ai-dial-chat' };
 
 function makeComposite(
   envResolve: (key: string) => Promise<unknown | undefined>,
@@ -137,7 +137,7 @@ describe('CompositeConfigProvider order', () => {
 
     await expect(
       composite.resolve('usageLimits.warningThresholdPercent', {
-        appId: 'chat-ui',
+        appId: 'ai-dial-chat',
       }),
     ).resolves.toBe(75);
   });

@@ -11,6 +11,7 @@ import {
   Min,
 } from 'class-validator';
 import { ManagedConfigMode } from '../../app-config/managed-runtime/managed-runtime.types';
+import { canonicalAppId } from './app-ids';
 import {
   APP_ID_PATTERN,
   MANAGED_CONFIG_INSTANCE_ID_PATTERN,
@@ -31,14 +32,13 @@ const parseCommaList = (value: unknown): string[] =>
     .map((entry) => entry.trim())
     .filter((entry) => entry.length > 0);
 
-/* Splits a comma-separated pair list, trimming around `=` as well. */
+/* Trims each side of every pair and replaces the legacy application
+ * identifier, so the cross-variable checks see only canonical identifiers. */
 const parsePairList = (value: unknown): string[] =>
-  parseCommaList(value).map((pair) =>
-    pair
-      .split('=')
-      .map((part) => part.trim())
-      .join('='),
-  );
+  parseCommaList(value).map((pair) => {
+    const [appId = '', ...rest] = pair.split('=').map((part) => part.trim());
+    return [canonicalAppId(appId), ...rest].join('=');
+  });
 
 /*
  * Reading published Config Studio snapshots through DIAL Core. Every value

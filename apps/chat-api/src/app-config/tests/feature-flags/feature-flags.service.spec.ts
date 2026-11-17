@@ -5,7 +5,7 @@ import type { AppConfigEvalContext } from '../../app-config.types';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { FeatureKey } from '../../feature-flags/feature-key.enum';
 
-const ctx: AppConfigEvalContext = { appId: 'chat-ui' };
+const ctx: AppConfigEvalContext = { appId: 'ai-dial-chat' };
 
 function makeService(isEnabledImpl: (key: FeatureKey) => Promise<boolean>) {
   const appConfigService = {

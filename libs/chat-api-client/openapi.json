@@ -244,7 +244,7 @@
             "description": "Application identifier served by this deployment. An identifier the deployment does not serve is rejected with 400.",
             "schema": {
               "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
-              "example": "chat-ui",
+              "example": "ai-dial-chat",
               "type": "string"
             }
           }
@@ -13568,7 +13568,7 @@
           "appId": {
             "type": "string",
             "description": "Application identifier.",
-            "example": "chat-ui"
+            "example": "ai-dial-chat"
           },
           "features": {
             "type": "object",
@@ -13594,7 +13594,7 @@
             ]
           },
           "appConfig": {
-            "description": "The published Config Studio payload of an application other than chat-ui, unchanged. Present only when the deployment applies managed configuration and the snapshot is usable.",
+            "description": "The published Config Studio payload of an application other than ai-dial-chat, unchanged. Present only when the deployment applies managed configuration and the snapshot is usable.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ClientAppConfigDto"

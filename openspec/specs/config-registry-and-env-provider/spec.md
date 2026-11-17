@@ -3,7 +3,9 @@
 ## Purpose
 
 The backend configuration registry and the provider chain — env, static defaults, composite — that resolves every declared key.
+
 ## Requirements
+
 ### Requirement: ConfigDefinition registry declares all known keys
 
 The system SHALL maintain a `CONFIG_DEFINITIONS` registry in `apps/chat-api/src/app-config/config-registry/config-registry.constants.ts` that is the single authoritative list of all known configuration keys. Each entry SHALL conform to the `ConfigDefinition` interface:
@@ -105,17 +107,19 @@ interface AppConfigEvalContext {
   appId: string;
   userId?: string;
   roles?: string[];
+  /** Set only by AppConfigService: the managed snapshot captured for this evaluation. */
+  managed?: ManagedResolutionView;
 }
 ```
 
-`AppConfigController` (`apps/chat-api/src/app-config/app-config.controller.ts`) builds the context from the validated `appId` query parameter and the optional session (`OptionalSessionGuard`). `userId` is the session user's `sub`. `roles` is `UserRolesService.getRoles(sessionUser)` (see "Session roles are read through the provider's rolesClaim"), which honors the provider's `rolesClaim`. It is not taken from a hardcoded `claims['roles']`. With no session, `userId` and `roles` are left unset. The context carries no environment field: no provider reads one, and the controller does not read `process.env`. Context fields MUST NOT be serialized into the client response. Providers receive the full context and MAY ignore user-specific fields. `AppConfigService` reads `roles` for the deployment role gate of definitions that declare `allowedRolesEnvVar` (see "Deployment role gates apply after value selection"), and to compute `catalogCreationPermissions` (see `catalog-creation-role-restrictions`).
+`AppConfigController` (`apps/chat-api/src/app-config/app-config.controller.ts`) builds the context from the validated `appId` query parameter and the optional session (`OptionalSessionGuard`). `userId` is the session user's `sub`. `roles` is `UserRolesService.getRoles(sessionUser)` (see "Session roles are read through the provider's rolesClaim"), which honors the provider's `rolesClaim`. It is not taken from a hardcoded `claims['roles']`. With no session, `userId` and `roles` are left unset. The context carries no environment field: no provider reads one, and the controller does not read `process.env`. Context fields MUST NOT be serialized into the client response. `managed` SHALL be set only by `AppConfigService`, once per evaluation, and any value supplied by a caller SHALL be replaced. It holds the mapped instance, the captured state, the captured snapshot when it is usable, and the evaluation instant. Providers receive the full context and MAY ignore user-specific fields. `AppConfigService` reads `roles` for the deployment role gate of definitions that declare `allowedRolesEnvVar` (see "Deployment role gates apply after value selection"), and to compute `catalogCreationPermissions` (see `catalog-creation-role-restrictions`).
 
 **RTL impact:** None. **i18n impact:** None.
 
 #### Scenario: Context is built from appId
 
-- **WHEN** the controller receives `?appId=chat-ui`
-- **THEN** an `AppConfigEvalContext` with `appId='chat-ui'` is constructed and passed to `AppConfigService`. When a session is present, the context also carries the session user's `userId` and the roles returned by `UserRolesService.getRoles`
+- **WHEN** the controller receives `?appId=ai-dial-chat`
+- **THEN** an `AppConfigEvalContext` with `appId='ai-dial-chat'` is constructed and passed to `AppConfigService`. When a session is present, the context also carries the session user's `userId` and the roles returned by `UserRolesService.getRoles`
 
 #### Scenario: Roles follow the provider's rolesClaim
 
@@ -126,6 +130,11 @@ interface AppConfigEvalContext {
 
 - **WHEN** the client-config response is serialized
 - **THEN** it MUST NOT contain `userId` or `roles` fields
+
+#### Scenario: Caller cannot inject a managed view
+
+- **WHEN** a caller passes a context with its own `managed` member to `AppConfigService.isEnabled`
+- **THEN** the service replaces it with its own capture before resolution
 
 ### Requirement: ConfigProvider interface is implemented by all providers
 
@@ -157,7 +166,7 @@ All providers MUST implement this interface. Providers MUST return `undefined` w
 
 `EnvConfigProvider` SHALL read values from `ConfigService<EnvironmentVariables>` (never from `process.env` directly) using the `envVar` field from the matching `ConfigDefinition`.
 
-`EnvConfigProvider` SHALL return a value from a key's `envVar` only when that variable is explicitly present in the deployment environment. A value that exists only because the environment class declares a typed default (for example `SCHEDULED_TASKS_ENABLED = false`, `USAGE_LIMITS_WARNING_THRESHOLD_PERCENT = 75`, `UI_EVENT_ENABLED_BY_DEFAULT = true`) SHALL NOT be treated as explicit; the provider SHALL return `undefined` so that the next provider applies. Explicit presence SHALL be determined from the raw environment input (process variables and loaded `.env` files) before class defaults are applied; a variable set to the empty string is present. For a managed key, an explicit string value that is empty or whitespace-only SHALL resolve to `undefined`: the client mapping hides blank and null alike, so the effective value is unchanged, and a blank variable cannot shadow a lower-priority source. Derived feature keys (`features.asrEnabled`, `features.llmConversationNaming`, `features.footer`) keep their documented derivations.
+`EnvConfigProvider` SHALL return a value from a key's `envVar` only when that variable is explicitly present in the deployment environment. A value that exists only because the environment class declares a typed default (for example `SCHEDULED_TASKS_ENABLED = false`, `USAGE_LIMITS_WARNING_THRESHOLD_PERCENT = 75`, `UI_EVENT_ENABLED_BY_DEFAULT = true`) SHALL NOT be treated as explicit; the provider SHALL return `undefined` so that the next provider applies. Explicit presence SHALL be determined from the raw environment input (process variables and loaded `.env` files) before class defaults are applied; a variable set to the empty string is present. For a managed key, an explicit string value that is empty or whitespace-only SHALL resolve to `undefined`: the client mapping hides blank and null alike, so the effective value is unchanged, and a blank variable cannot shadow a lower-priority source. Schema 1.0.0 manages no string key, so this rule applies to no key of 1.0.0; a blank text of an unmanaged key resolves to `''`, and its client-config field is `null` either way. Derived feature keys (`features.asrEnabled`, `features.llmConversationNaming`, `features.footer`) keep their documented derivations.
 
 For `type='feature'` keys derived from a config key (e.g. `features.asrEnabled` derived from `asr.modelId`), the provider SHALL apply the derivation logic declared in the registry.
 
@@ -201,8 +210,8 @@ Type coercion MUST NOT be performed — `ConfigService` already returns typed va
 
 #### Scenario: A blank managed text is not an operator value
 
-- **WHEN** `ANNOUNCEMENT_TITLE` is set to the empty string
-- **THEN** `EnvConfigProvider.resolve('announcement.title', ctx)` returns `undefined`, and the client-config `announcementTitle` is `null` as before
+- **WHEN** the variable of a managed string key is set to the empty string or to spaces
+- **THEN** `EnvConfigProvider.resolve` returns `undefined` for that key, while a blank `ANNOUNCEMENT_TITLE`, unmanaged in 1.0.0, resolves to `''` and the client-config `announcementTitle` is `null` as before
 
 #### Scenario: Effective values are unchanged for unset variables
 
@@ -991,9 +1000,9 @@ A failing entry SHALL fail environment validation at startup, and the error SHAL
 
 ### Requirement: Deployment role gates apply after value selection
 
-The allowed-roles restriction of a feature (`allowedRolesEnvVar`) SHALL be applied once, after a value has been selected from the provider chain, for every resolution path of `AppConfigService` (`getClientConfig`, `isEnabled`, `resolveValue`). When the allowed-roles variable is non-empty and the caller has none of the listed roles, the effective value SHALL be `false`. When it is empty, including its typed default `[]` when the variable is absent, the selected value SHALL be returned unchanged. The gate SHALL be conjunctive: no provider can bypass it by returning `true`. For every combination of environment and roles supported today, effective feature values SHALL equal the values produced when the gate lived inside `EnvConfigProvider`.
+The allowed-roles restriction of a feature (`allowedRolesEnvVar`) SHALL be applied once, after a value has been selected from the provider chain, for every resolution path of `AppConfigService` (`getClientConfig`, `isEnabled`, `resolveValue`). When the allowed-roles variable is non-empty and the caller has none of the listed roles, the effective value SHALL be `false`. When it is empty, including its typed default `[]` when the variable is absent, the selected value SHALL be returned unchanged. The gate SHALL be conjunctive: no provider can bypass it by returning `true`. For a feature listed in `MANAGED_CONFIG_ACTIVE_KEYS`, the deployment role gate SHALL be one of the conjunctive gates defined by `managed-config-activation` and SHALL still apply. For every combination of environment and roles supported today, effective feature values SHALL equal the values produced when the gate lived inside `EnvConfigProvider`.
 
-**Feature flag:** Applies to `features.asrEnabled` (`ASR_ENABLED_ROLES`), `features.liveChatInteraction` (`LIVE_CHAT_INTERACTION_ENABLED_ROLES`), `features.scheduledTasksEnabled` (`SCHEDULED_TASKS_ENABLED_ROLES`) and `features.projectsEnabled` (`PROJECTS_ENABLED_ROLES`). **RTL impact:** None. **i18n impact:** None. **Cache:** Unchanged — `app-config:client:<appId>:user:<userId>:roles:<roles>`, 60 s TTL.
+**Feature flag:** Applies to `features.asrEnabled` (`ASR_ENABLED_ROLES`), `features.liveChatInteraction` (`LIVE_CHAT_INTERACTION_ENABLED_ROLES`), `features.scheduledTasksEnabled` (`SCHEDULED_TASKS_ENABLED_ROLES`) and `features.projectsEnabled` (`PROJECTS_ENABLED_ROLES`). **RTL impact:** None. **i18n impact:** None. **Cache:** As defined by `client-config-endpoint` ("GET /api/v1/client-config returns client-safe configuration").
 
 #### Scenario: Restricted user is gated off
 
@@ -1015,6 +1024,11 @@ The allowed-roles restriction of a feature (`allowedRolesEnvVar`) SHALL be appli
 - **WHEN** `SCHEDULED_TASKS_ENABLED_ROLES` is absent
 - **THEN** the selected value is returned for every caller
 
+#### Scenario: Managed policy cannot bypass the deployment role gate
+
+- **WHEN** `SCHEDULED_TASKS_ENABLED_ROLES=beta` and a managed policy would enable the feature for a caller with roles `['staff']`
+- **THEN** the effective value is `false`
+
 ### Requirement: Environment admission, capability and policy are separate from shared normalization
 
 Resolving a key SHALL proceed through distinct stages: source admission (parsing and admitting a raw environment value with the key's existing fail-open rules), selection by the provider chain, shared normalization (the client-config mapping stage: sanitizers, trimming, caps and allow-lists that run on the selected value whatever its source), capability checks, and policy (deployment role gates). The environment-specific parsing currently inside `EnvConfigProvider` (announcements, custom client variables, custom and application visualizers, file-manager tabs, publication filter sources, content locales) SHALL be pure functions independent of `ConfigService`, so that another source can reuse normalization without environment parsing. Capability rules (`ASR_MODEL` for ASR; `UTILITY_MODEL`, `DIAL_API_KEY` and `LLM_CONVERSATION_NAMING_ENABLED` for conversation naming; `FOOTER_HTML_MESSAGE` for the footer) SHALL be expressed as pure checks that return the same results as today. Environment admission SHALL keep today's behavior, including dropping malformed entries with a warning, and SHALL NOT apply managed-contract bounds.
@@ -1028,11 +1042,38 @@ Resolving a key SHALL proceed through distinct stages: source admission (parsing
 
 #### Scenario: Environment values are not bounded by managed constraints
 
-- **WHEN** `ANNOUNCEMENT_TITLE` holds a 300-character title
-- **THEN** the client-config `announcementTitle` is that title, as before this change
+- **WHEN** `ONBOARDING_HINTS` holds 60 hints with 300-character titles and 800-character descriptions
+- **THEN** the client-config `onboardingHints` holds all 60 hints unchanged, although a published tour is limited to 50 hints, 100-character titles and 500-character descriptions
 
 #### Scenario: Capability checks are unchanged
 
 - **WHEN** `ASR_MODEL` is absent
 - **THEN** `features.asrEnabled` is `false` for every caller, and when `ASR_MODEL` is set and no role restriction applies it is `true`
 
+### Requirement: Managed source sits between explicit environment and the registry default
+
+`CompositeConfigProvider` SHALL resolve in this order: `EnvConfigProvider`, a managed provider, then `StaticDefaultsProvider`. The managed provider SHALL return a value only when all of the following hold:
+
+- `MANAGED_CONFIG_MODE` is `active`;
+- the key is listed in `MANAGED_CONFIG_ACTIVE_KEYS`;
+- the context's captured `managed` view is usable;
+- the captured payload has a member for the key.
+
+The value it returns SHALL be the member's value for a configuration key, or the member's `enabled` for a feature. Otherwise it SHALL return `undefined`. It SHALL NOT read the environment, call Core, or use any snapshot other than the captured one. Because `EnvConfigProvider` returns a value only for an explicitly present variable, the selected value is explicit environment → managed → registry default. The existing per-provider error handling SHALL apply: a managed provider error falls through to the registry default and is logged without values. Feature policy beyond the enabled bit is applied after selection (`managed-config-activation`).
+
+**RTL impact:** None. **i18n impact:** None.
+
+#### Scenario: Managed value is selected when the environment is silent
+
+- **WHEN** `onboarding.hints` is active, `ONBOARDING_HINTS` is not set, and the captured fresh payload sets a tour
+- **THEN** `CompositeConfigProvider.resolve` returns that tour
+
+#### Scenario: Typed default does not shadow the managed value
+
+- **WHEN** a feature variable holds only its typed class default and the captured payload sets `enabled: true`
+- **THEN** the selected enabled bit is `true`
+
+#### Scenario: Managed provider is silent outside active mode
+
+- **WHEN** the mode is `shadow`
+- **THEN** the managed provider returns `undefined` for every key

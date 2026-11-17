@@ -21,7 +21,7 @@ describe('app-config API', () => {
   it('uses the shared generated client and forwards the abort signal', async () => {
     const controller = new AbortController();
     vi.mocked(appConfigApi.getClientConfig).mockResolvedValue({
-      appId: 'chat-ui',
+      appId: 'ai-dial-chat',
       features: {},
       config: {
         activeEventId: null,
@@ -69,7 +69,7 @@ describe('app-config API', () => {
     await getClientConfig(controller.signal);
 
     expect(appConfigApi.getClientConfig).toHaveBeenCalledWith(
-      { appId: 'chat-ui' },
+      { appId: 'ai-dial-chat' },
       { signal: controller.signal },
     );
   });

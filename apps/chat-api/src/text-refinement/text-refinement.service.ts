@@ -16,6 +16,7 @@ import type { SessionUser } from '../auth/session/session.types';
 import { UserRolesService } from '../auth/user-roles.service';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { resolvePrompt } from '../common/utils/resolve-prompt';
+import { CHAT_APP_ID } from '../config/env/app-ids';
 import { EnvironmentVariables } from '../config/environment.config';
 import { DialClientService } from '../dial/dial-client.service';
 import {
@@ -97,7 +98,7 @@ export class TextRefinementService {
     if (gate) {
       if (
         !(await this.features.isEnabled(gate.feature, {
-          appId: 'chat-ui',
+          appId: CHAT_APP_ID,
           userId: user.sub,
           roles: this.userRoles.getRoles(user),
         }))
