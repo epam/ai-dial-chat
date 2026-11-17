@@ -207,6 +207,12 @@ export const Card: FC<CardProps> = ({
             content={item.description}
             classNames={descriptionClassNames}
             components={DESCRIPTION_MARKDOWN_COMPONENTS}
+            /*
+             * Raw HTML can only come from a `<` in the source, and without one
+             * rehype-raw finds nothing to parse yet still re-runs the whole tree
+             * through parse5 — about a third of the card's markdown cost.
+             */
+            isRawHtmlEnabled={item.description.includes('<')}
             {...markdownLabels}
           />
         )}
