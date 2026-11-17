@@ -908,6 +908,37 @@ describe('Input — attachment status transitions', () => {
     });
   });
 
+  /*
+   * Firefox on Windows reports `.md` files with an empty `File.type`; the
+   * type inferred from the extension must reach validation and the upload.
+   */
+  it('infers the markdown content type when the browser reports no type for an .md file', async () => {
+    const handleValidateAttachment = vi.fn(() => undefined);
+    const handleUploadAttachment = vi.fn(() => new Promise<never>(vi.fn()));
+
+    render(
+      <Input
+        validateAttachment={handleValidateAttachment}
+        onUploadAttachment={handleUploadAttachment}
+      />,
+    );
+    fireEvent.change(getFileInput(), {
+      target: { files: [new File(['# Notes'], 'notes.md', { type: '' })] },
+    });
+
+    await waitFor(() => {
+      expect(handleUploadAttachment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          contentType: 'text/markdown',
+          file: expect.objectContaining({ type: 'text/markdown' }),
+        }),
+      );
+    });
+    expect(handleValidateAttachment).toHaveBeenCalledWith(
+      expect.objectContaining({ contentType: 'text/markdown' }),
+    );
+  });
+
   it('restores message text and attachment tray when onSend rejects', async () => {
     const handleSend = vi.fn().mockRejectedValue(new Error('upload failed'));
 
