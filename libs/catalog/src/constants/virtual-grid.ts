@@ -1,5 +1,5 @@
 /**
- * Card height: 44padding + 44identity(sm) + 14gap + 44desc(2ln@22px,min44) + 14gap + 28tags(min28) + auto-space + 29strip(1border+12pt+16content) = ~217 + auto.
+ * Card height: 28padding+border + 44identity(sm) + 12gap + 66desc(3ln@22px) + 12gap + 28tags(min28) + 12gap + 29strip(1border+12pt+16content) = ~231 + auto (under the fixed 248).
  * Strip is pinned to card bottom via mt-auto; auto-space absorbs remaining flex free space.
  */
 export const CARD_HEIGHT = 248;

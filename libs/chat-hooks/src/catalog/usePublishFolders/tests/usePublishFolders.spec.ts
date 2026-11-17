@@ -255,6 +255,27 @@ describe('usePublishFolders', () => {
     );
   });
 
+  it('uses the host canPublishTo instead of the Production placeholder when given', async () => {
+    const canPublishTo = vi.fn((path: string[]) => path[0] !== 'Reports');
+    const { result } = render({ canPublishTo });
+    await waitFor(() => expect(result.current.folderItems).toHaveLength(1));
+
+    expect(result.current.hasPublishWriteAccess(['Org', 'Production'])).toBe(
+      true,
+    );
+    expect(result.current.hasPublishWriteAccess(['Reports', 'Q1'])).toBe(false);
+    expect(canPublishTo).toHaveBeenCalledWith(['Reports', 'Q1']);
+  });
+
+  it('keeps the Production placeholder when canPublishTo is undefined', async () => {
+    const { result } = render({ canPublishTo: undefined });
+    await waitFor(() => expect(result.current.folderItems).toHaveLength(1));
+
+    expect(result.current.hasPublishWriteAccess(['Org', 'Production'])).toBe(
+      false,
+    );
+  });
+
   it('tolerates a malformed stored value instead of throwing', async () => {
     const { result } = render({
       rememberedFolderKeys: [42, 'Org/Archive'] as unknown as string[],

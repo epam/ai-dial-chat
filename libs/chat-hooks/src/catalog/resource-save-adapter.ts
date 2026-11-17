@@ -6,8 +6,17 @@ export interface SavedResource {
   id: string;
 }
 
+/** The optional direct write of a saved resource into an org-unit folder, shared by both adapter kinds. */
+export interface ResourceOrgUnitWriter {
+  /** Writes the saved resource `id` into `folderPath` of the public bucket without a publication request; omit it while the resource type has no direct write. */
+  saveIntoOrgUnit?: (
+    id: string,
+    folderPath: string[],
+  ) => Promise<SavedResource>;
+}
+
 /** The operations the Save panel runs for a resource that already exists, supplied by each editor. */
-export interface ResourceEditSaveAdapter {
+export interface ResourceEditSaveAdapter extends ResourceOrgUnitWriter {
   /** The publish API entity type of the resource. */
   publishEntityType: CatalogPublishEntityType;
   /** Whether the resource has versions; an unversioned one never forks. */
@@ -24,7 +33,7 @@ export interface ResourceEditSaveAdapter {
 }
 
 /** The operation the Save panel runs for a resource being created, supplied by each editor. */
-export interface ResourceCreateSaveAdapter {
+export interface ResourceCreateSaveAdapter extends ResourceOrgUnitWriter {
   /** The publish API entity type of the resource. */
   publishEntityType: CatalogPublishEntityType;
   /** Always `false`: a new resource takes its version from the form, so the panel offers no version choice. */

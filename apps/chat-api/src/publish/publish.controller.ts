@@ -6,16 +6,22 @@ import {
   Param,
   Post,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
+import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
+import { FeatureGuard } from '../app-config/feature-flags/feature.guard';
+import { RequireFeature } from '../app-config/feature-flags/require-feature.decorator';
 import type { SessionUser } from '../auth/session/session.types';
 import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
+import { ResourceIdResponseDto } from '../common/dto/resource-folder.dto';
 import {
   getUserDisplayName,
   resolveDisplayAuthor,
 } from '../common/utils/user-display-name';
 import { CatalogEntityParamsDto } from './dto/catalog-entity-params.dto';
+import { CopyCatalogEntityToOrgUnitDto } from './dto/copy-catalog-entity-to-org-unit.dto';
 import { PublishCatalogEntityDto } from './dto/publish-catalog-entity.dto';
 import { PublishHistoryEntryDto } from './dto/publish-history-entry.dto';
 import { PublishResultDto } from './dto/publish-result.dto';
@@ -23,6 +29,7 @@ import { UnpublishAccessDto } from './dto/unpublish-access.dto';
 import { UnpublishCatalogEntityDto } from './dto/unpublish-catalog-entity.dto';
 import { UnpublishResultDto } from './dto/unpublish-result.dto';
 import { VersionStatusEntryDto } from './dto/version-status-entry.dto';
+import { OrgUnitCopyService } from './org-unit-copy.service';
 import { PublishService } from './publish.service';
 import { VersionStatusesService } from './version-statuses.service';
 
@@ -32,6 +39,7 @@ import { VersionStatusesService } from './version-statuses.service';
 export class PublishController {
   constructor(
     private readonly publishService: PublishService,
+    private readonly orgUnitCopyService: OrgUnitCopyService,
     private readonly versionStatusesService: VersionStatusesService,
   ) {}
 
@@ -103,6 +111,70 @@ export class PublishController {
       resolveDisplayAuthor(author, claims),
       rules,
       publishCredentials,
+    );
+  }
+
+  @Post(':entityType/:entityId/copy-to-org-unit')
+  @HttpCode(200)
+  @UseGuards(FeatureGuard)
+  @RequireFeature(FeatureKey.OrgUnitsEnabled)
+  @ApiOperation({
+    operationId: 'copyCatalogEntityToOrgUnit',
+    summary: 'Copy an own catalog entity into an org-unit folder',
+    description:
+      "Copies a catalog entity of the caller's own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core's resource copy. " +
+      'No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. ' +
+      'Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. ' +
+      'Answers 403 while the `features.orgUnitsEnabled` flag is off.',
+  })
+  @ApiBody({ type: CopyCatalogEntityToOrgUnitDto })
+  @ApiDialCoreErrors()
+  @ApiResponse({
+    status: 200,
+    description: 'Entity copied; the response carries the id of the copy',
+    type: ResourceIdResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Validation error — invalid entityType, entityId or folderPath, or an entity type that cannot be copied into an org unit',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({
+    status: 403,
+    description:
+      "The `features.orgUnitsEnabled` flag is off, the entity is not in the caller's own bucket, or DIAL Core refused the write (no `write` in the unit, or a Core per-type rule)",
+  })
+  @ApiResponse({ status: 404, description: 'Entity not found' })
+  @ApiResponse({
+    status: 409,
+    description:
+      'The folder already holds an entity with this name, or DIAL Core refused the copy as a conflict',
+  })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  copyToOrgUnit(
+    @Req() req: Request,
+    @Param() { entityType, entityId }: CatalogEntityParamsDto,
+    @Body() body: CopyCatalogEntityToOrgUnitDto,
+  ): Promise<ResourceIdResponseDto> {
+    const { sub, bucket, at } = req.user as SessionUser;
+    return this.orgUnitCopyService.copyIntoOrgUnit(
+      sub,
+      bucket,
+      at,
+      entityType,
+      entityId,
+      body,
     );
   }
 

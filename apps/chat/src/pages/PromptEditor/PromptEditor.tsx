@@ -56,6 +56,7 @@ import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { promptsApi } from '../../server-api/api-client';
 import { getPrompt, updatePrompt } from '../../server-api/prompts.api';
+import { publishApiClient } from '../../server-api/publish.api';
 import { CatalogCreationDecision } from '../../types/catalog-creation';
 import { EditorQuery } from '../../types/editor-query';
 import {
@@ -266,6 +267,7 @@ const PromptEditorPage: FC = () => {
         setSaveRequest({
           adapter: createPromptCreateAdapter({
             promptsApi,
+            publishClient: publishApiClient,
             body: {
               name: trimmedName,
               description: description || undefined,
@@ -281,6 +283,7 @@ const PromptEditorPage: FC = () => {
         setSaveRequest({
           adapter: createPromptSaveAdapter({
             promptsApi,
+            publishClient: publishApiClient,
             promptId,
             body: { name: trimmedName, description, content },
           }),

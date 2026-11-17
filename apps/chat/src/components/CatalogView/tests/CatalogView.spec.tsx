@@ -12,6 +12,7 @@ import {
 } from '@epam/ai-dial-chat-api-client';
 import {
   FavoriteEntityType,
+  OrgUnitFolderGuardPurpose,
   SpendingLimitsMode,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
@@ -32,6 +33,7 @@ import { useNotification } from '../../../context/NotificationContext';
 import { usePrompts } from '../../../context/PromptsContext';
 import { useSkills } from '../../../context/SkillsContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { useOrgUnitFolderGuards } from '../../../hooks/publish/useOrgUnitFolderGuards';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { useCatalogActiveTabPreference } from '../../../hooks/useCatalogActiveTabPreference/useCatalogActiveTabPreference';
 import { useCatalogSortFilterPreference } from '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
@@ -65,6 +67,10 @@ const capturedPublishProps: {
     publishExpandedPaths?: Set<string>;
     onPublishExpandedPathsChange?: (paths: Set<string>) => void;
     publishLoadingPaths?: Set<string>;
+    getPublishDisabledReason?: (destination: {
+      rootKey: string;
+      path: string[];
+    }) => string | undefined;
     ruleSourceOptions?: string[];
     onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
     isShareVisible?: (item: CatalogItem) => boolean;
@@ -137,6 +143,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     publishExpandedPaths,
     onPublishExpandedPathsChange,
     publishLoadingPaths,
+    getPublishDisabledReason,
     onCreatePublishFolder,
     onPublish,
     onPublishSuccess,
@@ -196,6 +203,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     publishExpandedPaths?: Set<string>;
     onPublishExpandedPathsChange?: (paths: Set<string>) => void;
     publishLoadingPaths?: Set<string>;
+    getPublishDisabledReason?: (destination: {
+      rootKey: string;
+      path: string[];
+    }) => string | undefined;
     onCreatePublishFolder?: (parentPath: string[], name: string) => void;
     onPublish?: (
       item: CatalogItem,
@@ -241,6 +252,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       publishExpandedPaths,
       onPublishExpandedPathsChange,
       publishLoadingPaths,
+      getPublishDisabledReason,
       ruleSourceOptions,
       onFetchExistingRules,
       isShareVisible,
@@ -636,6 +648,10 @@ vi.mock('../../../hooks/publish/useResourceVersionHistory', () => ({
     resourceId === '' ? undefined : { rows: [], resourceId },
   ),
 }));
+vi.mock('../../../hooks/publish/useOrgUnitFolderGuards', () => ({
+  useOrgUnitFolderGuards: vi.fn(),
+}));
+
 vi.mock('../../../hooks/publish/usePublishFolders', () => ({
   usePublishFolders: vi.fn(),
 }));
@@ -719,6 +735,11 @@ describe('CatalogView', () => {
       refetchSkills: vi.fn().mockResolvedValue(undefined),
       mergeSharedSkill: vi.fn(),
     });
+    vi.mocked(useOrgUnitFolderGuards).mockReturnValue({
+      isDestinationUsable: undefined,
+      getDisabledReason: undefined,
+      canSaveDirectlyTo: undefined,
+    });
     vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
       expandedPaths: new Set(),
@@ -792,6 +813,66 @@ describe('CatalogView', () => {
         projectContextAllowedExtensions: ['csv', 'pdf', 'xlsx'],
       },
     });
+  });
+
+  it('gives the org-unit publish guard to usePublishFolders and keeps the Production fallback while no guard applies', () => {
+    const isDestinationUsable = vi.fn().mockReturnValue(true);
+    vi.mocked(useOrgUnitFolderGuards).mockReturnValue({
+      isDestinationUsable,
+      getDisabledReason: undefined,
+      canSaveDirectlyTo: undefined,
+    });
+
+    render(<CatalogView />);
+
+    expect(usePublishFolders).toHaveBeenCalledWith({
+      canPublishTo: isDestinationUsable,
+    });
+    expect(useOrgUnitFolderGuards).toHaveBeenCalledWith({
+      purpose: OrgUnitFolderGuardPurpose.Publish,
+      namespace: undefined,
+      isActive: false,
+      isQuickApp: false,
+    });
+  });
+
+  it('gives Catalog a destination-path reason callback while the guard has one', () => {
+    const getDisabledReason = vi.fn().mockReturnValue('No access');
+    vi.mocked(useOrgUnitFolderGuards).mockReturnValue({
+      isDestinationUsable: vi.fn(),
+      getDisabledReason,
+      canSaveDirectlyTo: undefined,
+    });
+
+    render(<CatalogView />);
+
+    const reason = capturedPublishProps.current?.getPublishDisabledReason;
+    expect(reason?.({ rootKey: '', path: ['Acme', 'Secret'] })).toBe(
+      'No access',
+    );
+    expect(getDisabledReason).toHaveBeenCalledWith(['Acme', 'Secret']);
+  });
+
+  it('gives Catalog no reason callback while no guard applies, so nothing is disabled', () => {
+    render(<CatalogView />);
+
+    expect(
+      capturedPublishProps.current?.getPublishDisabledReason,
+    ).toBeUndefined();
+  });
+
+  it('never activates the org-unit read in selector mode', () => {
+    render(<CatalogView isSelectorMode />);
+
+    expect(useOrgUnitFolderGuards).toHaveBeenCalledWith({
+      purpose: OrgUnitFolderGuardPurpose.Publish,
+      namespace: undefined,
+      isActive: false,
+      isQuickApp: false,
+    });
+    expect(useOrgUnitFolderGuards).not.toHaveBeenCalledWith(
+      expect.objectContaining({ isActive: true }),
+    );
   });
 
   it('passes publish folder items from usePublishFolders through to Catalog', () => {

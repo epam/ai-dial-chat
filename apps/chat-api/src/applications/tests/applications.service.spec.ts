@@ -2480,4 +2480,46 @@ describe('updateApplication + GET .../details cache interaction (regression)', (
       expect(client(service).saveCustomApplication).not.toHaveBeenCalled();
     });
   });
+
+  describe('resolveOwnApplication', () => {
+    const headers = { Authorization: 'Bearer token' };
+
+    it('asks DIAL Core for the bucket when none is given', async () => {
+      const { service } = makeService();
+      const getUserBucket = (service['dialClient'] as DialClientService).client
+        .getUserBucket;
+
+      const resource = await service.resolveOwnApplication(headers, 'agent');
+
+      expect(getUserBucket).toHaveBeenCalledOnce();
+      expect(resource.bucket).toBe('test-bucket');
+    });
+
+    it('uses the given bucket and does not ask DIAL Core', async () => {
+      const { service } = makeService();
+      const getUserBucket = (service['dialClient'] as DialClientService).client
+        .getUserBucket;
+
+      const resource = await service.resolveOwnApplication(
+        headers,
+        'agent',
+        'session-bucket',
+      );
+
+      expect(getUserBucket).not.toHaveBeenCalled();
+      expect(resource.bucket).toBe('session-bucket');
+    });
+
+    it('rejects an application of another bucket against the given bucket', async () => {
+      const { service } = makeService();
+
+      await expect(
+        service.resolveOwnApplication(
+          headers,
+          'applications/other/agent__1.0.0',
+          'session-bucket',
+        ),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+  });
 });

@@ -1,6 +1,7 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { SideDrawer } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, RefObject, useEffect, useMemo, useState } from 'react';
+import type { FolderDestination } from '../../models/folder-destination';
 import {
   PublicationRule,
   PublishFolderNode,
@@ -57,6 +58,8 @@ export interface StandalonePublishPanelProps {
   onSelectedFolderPathChange: (path: string[] | undefined) => void;
   /** Called when the user confirms a new folder name. */
   onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
+  /** Reason a folder is unavailable as a destination, or `undefined` when usable; see `PublishPanel`'s `getDisabledReason`. */
+  getDisabledReason?: (destination: FolderDestination) => string | undefined;
   /** Externally-controlled set of expanded folder path keys. */
   expandedPaths?: Set<string>;
   /** Called when the set of expanded folders changes. */
@@ -147,6 +150,7 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   selectedFolderPath,
   onSelectedFolderPathChange,
   onCreateFolder,
+  getDisabledReason,
   expandedPaths,
   onExpandedPathsChange,
   loadingPaths,
@@ -326,6 +330,7 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
             pendingFolderPath={folderView.pendingFolderPath}
             onPendingFolderPathChange={folderView.setPendingFolderPath}
             onCreateFolder={onCreateFolder}
+            getDisabledReason={getDisabledReason}
             expandedPaths={expandedPaths}
             onExpandedPathsChange={onExpandedPathsChange}
             loadingPaths={loadingPaths}

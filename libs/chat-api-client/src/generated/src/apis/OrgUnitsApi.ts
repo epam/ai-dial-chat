@@ -20,7 +20,7 @@ import type { OrgUnitsResponseDto } from '../models/index';
  */
 export class OrgUnitsApi extends runtime.BaseAPI {
   /**
-   * Returns the DIAL Core org units the authenticated user may see, flat and parents first. `enabled` is false when DIAL Core has org units turned off. Answers 403 while the `features.orgUnitsEnabled` flag is off. Results are cached server-side for 60 seconds per user.
+   * Returns the DIAL Core org units the authenticated user may see, flat in Core order, each with the caller\'s `permissions` (namespace to actions). `hasAdminAccess` is true when Core reports full admin access. `enabled` is false (and `hasAdminAccess` false, `units` empty) when DIAL Core has org units turned off. Answers 403 while the `features.orgUnitsEnabled` flag is off. Results are cached server-side for 60 seconds per user.
    * List the org units visible to the caller
    */
   async listOrgUnitsRaw(
@@ -55,7 +55,7 @@ export class OrgUnitsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns the DIAL Core org units the authenticated user may see, flat and parents first. `enabled` is false when DIAL Core has org units turned off. Answers 403 while the `features.orgUnitsEnabled` flag is off. Results are cached server-side for 60 seconds per user.
+   * Returns the DIAL Core org units the authenticated user may see, flat in Core order, each with the caller\'s `permissions` (namespace to actions). `hasAdminAccess` is true when Core reports full admin access. `enabled` is false (and `hasAdminAccess` false, `units` empty) when DIAL Core has org units turned off. Answers 403 while the `features.orgUnitsEnabled` flag is off. Results are cached server-side for 60 seconds per user.
    * List the org units visible to the caller
    */
   async listOrgUnits(

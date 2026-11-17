@@ -43,25 +43,48 @@ helpers live in `managed-config/key-management.ts`.
 
 A registry test fails when a managed kind does not match the entry's `type`.
 
-A key is local-only when a remote value would bypass a local dependency:
+A key is local-only when it depends on something only the deployment provides
+or enforces, even when the deployment already degrades safely without it:
 
-| `LocalOnlyReason`        | Meaning                                                  | Examples                                                               |
-| ------------------------ | -------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `capability`             | Needs a local model, credential, service or Core feature | `asr.modelId`, `features.asrEnabled`, `features.llmConversationNaming` |
-| `deployment-topology`    | A URL of this deployment                                 | `dialCore.externalUrl`, `mcpApps.sandboxUrl`                           |
-| `security-policy`        | CSP, iframe, embedding, HTML or external content         | `overlay.allowedOrigins`, `customVisualizers`, `announcement.html`     |
-| `backend-enforced-limit` | Must equal a limit the BFF enforces                      | `attachments.maxFileSizeBytes`, `projects.contextFileMaxBytes`         |
-| `build-metadata`         | Stamped by the release pipeline                          | `app.version`                                                          |
-| `derived`                | Computed from another local value                        | `features.footer`                                                      |
-| `opaque`                 | Client-owned JSON with no declared schema                | `customVariables`                                                      |
+| `LocalOnlyReason`        | Meaning                                                  | Examples                                                                                                                                        |
+| ------------------------ | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `capability`             | Needs a local model, credential, service or Core feature | `asr.modelId`, `features.llmConversationNaming`, `features.scheduledTasksEnabled` (DIAL Scheduler), `features.orgUnitsEnabled` (Core org units) |
+| `deployment-topology`    | A URL of this deployment                                 | `dialCore.externalUrl`, `mcpApps.sandboxUrl`                                                                                                    |
+| `security-policy`        | CSP, iframe, embedding, HTML or external content         | `overlay.allowedOrigins`, `customVisualizers`, `announcement.html`                                                                              |
+| `backend-enforced-limit` | Must equal a limit the BFF enforces                      | `attachments.maxFileSizeBytes`, `projects.contextFileMaxBytes`                                                                                  |
+| `build-metadata`         | Stamped by the release pipeline                          | `app.version`                                                                                                                                   |
+| `derived`                | Computed from another local value                        | `features.footer`                                                                                                                               |
+| `opaque`                 | Client-owned JSON with no declared schema                | `customVariables`                                                                                                                               |
 
 Schema version 1.0.0 manages seven keys: `announcement.title`,
 `announcement.description`, `announcement.items`, `welcomeScreen.description`,
 `fileManager.availableTabs`, `usageLimits.warningThresholdPercent` and the
-feature `features.usageLimitsControl`. The other 14 keys are eligible but
-unmanaged. `features.scheduledTasksEnabled`, `features.projectsEnabled`,
-`footer.html` and `uiFeatures.enabledUiFeatures` are the next candidates, and
-each needs its own schema version.
+feature `features.usageLimitsControl`. Schema version 1.1.0 adds
+`usageLimits.spendingLimitsMode` (`off`, `shadow` or `enforce`), so it manages
+eight keys. Thirty-one keys are local-only, and the other 12 are eligible but
+unmanaged.
+
+### Rollout
+
+Each wave is a separate change with its own schema version.
+
+| Wave | Keys                                                                                                                     | Needs first                                                                                                                                             |
+| ---- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | `severity` on `announcement.items` entries                                                                               | Nothing; it unblocks activating `announcement.items`                                                                                                    |
+| 1    | `ui.celebrationsEnabledByDefault`, `ui.activeEventId`, `mcpApps.theme`, `onboarding.hints`                               | Nothing                                                                                                                                                 |
+| 2    | `features.projectsEnabled`                                                                                               | `features.usageLimitsControl` active on a deployment, proving the managed feature path                                                                  |
+| 3    | `footer.html`; `uiFeatures.enabledUiFeatures`; `deployments.defaultDeploymentId` with `features.defaultDeploymentPinned` | Footer: `features.footer` derived from the effective `footer.html`, decided together with `announcement.html`. The deployment pair moves in one version |
+
+The two wave 3 rules for the footer and the deployment pair are contract
+requirements, and registry tests fail when a version breaks them. The other
+"needs first" entries are delivery order, not code conditions.
+
+`features.scheduledTasksEnabled` is local-only because it needs the DIAL
+Scheduler. Making it manageable means changing the `capability` rule above, not
+only adding a capability check. `mcpApps.hostName`, `mcpApps.userAgent` and
+`content.additionalLocales` are eligible but not planned. Making a key managed
+still does not activate it (see
+[Runtime reading and activation](#runtime-reading-and-activation)).
 
 ### Opting a key in
 
@@ -133,14 +156,20 @@ without the client-supplied `operationId`. `index.json` sits next to it:
 {
   "format": "dial-managed-config-schema-index@1",
   "appId": "chat-ui",
-  "current": "1.0.0",
-  "supported": ["1.0.0"],
+  "current": "1.1.0",
+  "supported": ["1.0.0", "1.1.0"],
   "versions": [
     {
       "schemaVersion": "1.0.0",
       "file": "chat-ui-1.0.0.json",
       "schemaSha256": "9e2155b7857adf6cc51e8966ad02ebf79953c5a87875eaea929e384c02b55dd6",
       "canonicalBytes": 5161
+    },
+    {
+      "schemaVersion": "1.1.0",
+      "file": "chat-ui-1.1.0.json",
+      "schemaSha256": "bfbad5396a9ef14fdcb39df44f9dd876b7ad3a2f7abf33bbf40bd694284711d8",
+      "canonicalBytes": 5427
     }
   ]
 }

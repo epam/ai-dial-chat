@@ -12,6 +12,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconFolderPlus, IconPlus } from '@tabler/icons-react';
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
+import type { FolderDestination } from '../../models/folder-destination';
 import type { PublishFolderNode } from '../../models/publish';
 import type { PublishFoldersTreeProps } from '../../models/publish-folders-tree';
 import {
@@ -53,6 +54,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   onDestinationChange,
   onCreateDestinationFolder,
   searchQuery,
+  getDisabledReason,
   disabled = false,
   createFolderLabel = 'Create new folder',
   cancelCreatingFolderLabel = 'Cancel',
@@ -283,7 +285,27 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
       ? undefined
       : parentPath.at(-1);
 
+  /* The destination a tree node stands for: a root token node maps to the root itself. */
+  const toDestination = (nodePath: string[]): FolderDestination | undefined => {
+    if (!roots) return { rootKey: SINGLE_ROOT_KEY, path: nodePath };
+    return fromRootedPath(nodePath);
+  };
+
+  const getRowDisabledReason = (file: DialFile): string | undefined => {
+    if (!getDisabledReason) return undefined;
+    const destination = toDestination(fromFolderPathKey(file.path));
+    return destination
+      ? getDisabledReason(destination) || undefined
+      : undefined;
+  };
+
+  const isPathDisabled = (path: string[]): boolean => {
+    const destination = toDestination(path);
+    return destination != null && !!getDisabledReason?.(destination);
+  };
+
   const canCreateUnder = (parentPath: string[]): boolean => {
+    if (isPathDisabled(parentPath)) return false;
     if (!roots) return true;
     const target = fromRootedPath(parentPath);
     const root = roots.find((candidate) => candidate.key === target?.rootKey);
@@ -292,7 +314,10 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
 
   /* The parent the trailing "Create new folder" button creates under, or `undefined` when none accepts new folders. */
   const resolveTrailingCreateParent = (): string[] | undefined => {
-    if (!roots) return selectedPath ?? [];
+    if (!roots) {
+      const parent = selectedPath ?? [];
+      return canCreateUnder(parent) ? parent : undefined;
+    }
     if (selectedPath && canCreateUnder(selectedPath)) return selectedPath;
     const firstCreatable = roots.find(
       (root) => root.canCreateFolders !== false,
@@ -440,6 +465,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   const handleCancelCreatingFolder = () => setCreatingParentPath(null);
 
   const handleItemClick = (file: DialFile) => {
+    if (disabled || getRowDisabledReason(file)) return;
     const isSelected =
       selectedPath != null && toFolderPathKey(selectedPath) === file.path;
     selectPath(isSelected ? undefined : fromFolderPathKey(file.path));
@@ -464,6 +490,9 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
           onExpandedPathsChange={handleExpandedPathsChange}
           loadingPaths={loadingPaths}
           onItemClick={handleItemClick}
+          getDisabledTooltip={
+            getDisabledReason ? getRowDisabledReason : undefined
+          }
           getContextMenuItems={getFolderContextMenuItems}
           createdFolderPath={createdFolderPath}
           newFolderDefaultName={creatingFolderName}

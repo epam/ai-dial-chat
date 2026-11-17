@@ -21,6 +21,7 @@ const applicationsApi = {
   commitApplicationVersion: vi.fn(),
   deleteApplication: vi.fn(),
 };
+const publishClient = { copyCatalogEntityToOrgUnit: vi.fn() };
 const toolsetsApi = {
   updateToolset: vi.fn(),
   createToolset: vi.fn(),
@@ -46,6 +47,7 @@ describe('resource save adapters', () => {
       applicationId: APP_ID,
       runEmbeddedSave,
       getCommitFailedMessage: (version) => `commit failed ${version}`,
+      publishClient,
     });
 
     beforeEach(() => {
@@ -57,6 +59,21 @@ describe('resource save adapters', () => {
         id: SNAPSHOT,
       });
       applicationsApi.deleteApplication.mockResolvedValue(undefined);
+    });
+
+    it('writes a saved application into an org-unit folder through the generic copy, never overwriting', async () => {
+      publishClient.copyCatalogEntityToOrgUnit.mockResolvedValue({
+        id: 'applications/public/Acme/Teams/agent__1.0.0',
+      });
+
+      await expect(
+        adapter.saveIntoOrgUnit?.(APP_ID, ['Acme', 'Teams']),
+      ).resolves.toEqual({ id: 'applications/public/Acme/Teams/agent__1.0.0' });
+      expect(publishClient.copyCatalogEntityToOrgUnit).toHaveBeenCalledWith(
+        'application',
+        APP_ID,
+        { folderPath: 'Acme/Teams' },
+      );
     });
 
     it('saves in place through the embedded editor', async () => {
@@ -135,6 +152,21 @@ describe('resource save adapters', () => {
       applicationId: APP_ID,
       update,
       createVersion,
+      publishClient,
+    });
+
+    it('writes a saved application into an org-unit folder through the generic copy', async () => {
+      publishClient.copyCatalogEntityToOrgUnit.mockResolvedValue({
+        id: 'applications/public/Acme/agent__1.0.0',
+      });
+
+      await adapter.saveIntoOrgUnit?.(APP_ID, ['Acme']);
+
+      expect(publishClient.copyCatalogEntityToOrgUnit).toHaveBeenCalledWith(
+        'application',
+        APP_ID,
+        { folderPath: 'Acme' },
+      );
     });
 
     beforeEach(() => {
@@ -170,6 +202,7 @@ describe('resource save adapters', () => {
       toolsetsApi,
       toolsetId: TOOLSET_ID,
       body,
+      publishClient,
     });
 
     it('updates the toolset in place', async () => {
@@ -201,6 +234,20 @@ describe('resource save adapters', () => {
       expect(
         toolsetsApi.createToolset.mock.lastCall?.[0].createToolsetBodyDto,
       ).not.toHaveProperty('folderPath');
+    });
+
+    it('writes a saved toolset into an org-unit folder through the generic copy', async () => {
+      publishClient.copyCatalogEntityToOrgUnit.mockResolvedValue({
+        id: 'toolsets/public/Acme/search__1.0.0',
+      });
+
+      await adapter.saveIntoOrgUnit?.(TOOLSET_ID, ['Acme', 'Teams']);
+
+      expect(publishClient.copyCatalogEntityToOrgUnit).toHaveBeenCalledWith(
+        'toolset',
+        TOOLSET_ID,
+        { folderPath: 'Acme/Teams' },
+      );
     });
 
     it('moves into a Personal folder', async () => {
@@ -250,6 +297,21 @@ describe('resource save adapters', () => {
       promptsApi,
       promptId: PROMPT_ID,
       body,
+      publishClient,
+    });
+
+    it('writes a saved prompt into an org-unit folder through the generic copy', async () => {
+      publishClient.copyCatalogEntityToOrgUnit.mockResolvedValue({
+        id: 'prompts/public/Acme/Summarize',
+      });
+
+      await adapter.saveIntoOrgUnit?.(PROMPT_ID, ['Acme']);
+
+      expect(publishClient.copyCatalogEntityToOrgUnit).toHaveBeenCalledWith(
+        'prompt',
+        PROMPT_ID,
+        { folderPath: 'Acme' },
+      );
     });
 
     it('is unversioned and offers no new-version write', () => {
@@ -284,7 +346,11 @@ describe('resource save adapters', () => {
 
   describe('createToolsetCreateAdapter', () => {
     const body = { name: 'search', version: '1.0.0' } as ToolsetBodyDto;
-    const adapter = createToolsetCreateAdapter({ toolsetsApi, body });
+    const adapter = createToolsetCreateAdapter({
+      toolsetsApi,
+      body,
+      publishClient,
+    });
 
     it('creates the toolset create-only in the chosen folder', async () => {
       toolsetsApi.createToolset.mockResolvedValue({ id: 'toolsets/b1/A/x' });
@@ -307,7 +373,11 @@ describe('resource save adapters', () => {
 
   describe('createPromptCreateAdapter', () => {
     const body = { name: 'Summarize', content: 'x' };
-    const adapter = createPromptCreateAdapter({ promptsApi, body });
+    const adapter = createPromptCreateAdapter({
+      promptsApi,
+      body,
+      publishClient,
+    });
 
     it('creates the prompt in the chosen folder as its folder id', async () => {
       promptsApi.createPrompt.mockResolvedValue({ id: 'prompts/b1/Work/S' });
@@ -366,6 +436,67 @@ describe('resource save adapters', () => {
       skillsApi.listSkills.mockResolvedValue({ items: [], nextToken: 'same' });
       await expect(listFolders('team-a')).resolves.toEqual({ folders: [] });
       expect(skillsApi.listSkills).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('without a publish client', () => {
+    it.each([
+      [
+        'embedded application',
+        () =>
+          createEmbeddedApplicationSaveAdapter({
+            applicationsApi,
+            applicationId: APP_ID,
+            runEmbeddedSave: vi.fn(),
+            getCommitFailedMessage: () => 'failed',
+          }),
+      ],
+      [
+        'host application',
+        () =>
+          createHostApplicationSaveAdapter({
+            applicationsApi,
+            applicationId: APP_ID,
+            update: vi.fn(),
+            createVersion: vi.fn(),
+          }),
+      ],
+      [
+        'toolset',
+        () =>
+          createToolsetSaveAdapter({
+            toolsetsApi,
+            toolsetId: 'toolsets/b1/search__1.0.0',
+            body: { name: 'search', version: '1.0.0' } as ToolsetBodyDto,
+          }),
+      ],
+      [
+        'prompt',
+        () =>
+          createPromptSaveAdapter({
+            promptsApi,
+            promptId: 'prompts/b1/Summarize',
+            body: { name: 'Summarize', description: '', content: 'x' },
+          }),
+      ],
+      [
+        'toolset create',
+        () =>
+          createToolsetCreateAdapter({
+            toolsetsApi,
+            body: { name: 'search', version: '1.0.0' } as ToolsetBodyDto,
+          }),
+      ],
+      [
+        'prompt create',
+        () =>
+          createPromptCreateAdapter({
+            promptsApi,
+            body: { name: 'Summarize', content: 'x' },
+          }),
+      ],
+    ])('offers no direct write for the %s adapter', (_label, build) => {
+      expect(build().saveIntoOrgUnit).toBeUndefined();
     });
   });
 });

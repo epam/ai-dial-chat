@@ -907,4 +907,153 @@ describe('PublishFoldersTree', () => {
       );
     });
   });
+
+  describe('per-row disabled state', () => {
+    const sharedFile = (): DialFile => ({
+      path: 'Shared',
+      name: 'Shared',
+      folderId: 'Shared',
+      nodeType: DialFileNodeType.FOLDER,
+    });
+    const reasonFor = (file: DialFile | undefined) =>
+      file ? capturedProps.current?.getDisabledTooltip?.(file) : undefined;
+
+    it('passes no tooltip callback to the tree without getDisabledReason', () => {
+      renderTree();
+
+      expect(capturedProps.current?.getDisabledTooltip).toBeUndefined();
+    });
+
+    it('asks the host about a single-root folder with an empty root key', () => {
+      const getDisabledReason = vi.fn(() => 'No access');
+      renderTree({ getDisabledReason });
+
+      expect(reasonFor(sharedFile())).toBe('No access');
+      expect(getDisabledReason).toHaveBeenCalledWith({
+        rootKey: '',
+        path: ['Shared'],
+      });
+    });
+
+    it('asks about the single-root root itself with an empty path', () => {
+      const getDisabledReason = vi.fn(() => undefined);
+      renderTree({ getDisabledReason });
+
+      reasonFor(capturedProps.current?.items[0]);
+
+      expect(getDisabledReason).toHaveBeenCalledWith({
+        rootKey: '',
+        path: [],
+      });
+    });
+
+    it('treats an empty reason as enabled', () => {
+      renderTree({ getDisabledReason: () => '' });
+
+      expect(reasonFor(sharedFile())).toBeUndefined();
+    });
+
+    it('does not select a disabled folder', () => {
+      const onSelectedPathChange = vi.fn();
+      renderTree({
+        onSelectedPathChange,
+        getDisabledReason: ({ path }) =>
+          path[0] === 'Shared' ? 'No access' : undefined,
+      });
+
+      act(() => capturedProps.current?.onItemClick?.(sharedFile()));
+
+      expect(onSelectedPathChange).not.toHaveBeenCalled();
+    });
+
+    it('keeps a child of a disabled folder selectable', () => {
+      const onSelectedPathChange = vi.fn();
+      renderTree({
+        onSelectedPathChange,
+        getDisabledReason: ({ path }) =>
+          path.length === 1 && path[0] === 'Shared' ? 'No access' : undefined,
+      });
+
+      act(() =>
+        capturedProps.current?.onItemClick?.({
+          path: 'Shared/Data Science',
+          name: 'Data Science',
+          folderId: 'Shared/Data Science',
+          nodeType: DialFileNodeType.FOLDER,
+        }),
+      );
+
+      expect(onSelectedPathChange).toHaveBeenCalledWith([
+        'Shared',
+        'Data Science',
+      ]);
+    });
+
+    it('lets the whole-tree disabled win over a row the host leaves enabled', () => {
+      const onSelectedPathChange = vi.fn();
+      renderTree({
+        onSelectedPathChange,
+        disabled: true,
+        getDisabledReason: () => undefined,
+      });
+
+      act(() => capturedProps.current?.onItemClick?.(sharedFile()));
+
+      expect(onSelectedPathChange).not.toHaveBeenCalled();
+    });
+
+    it('offers no folder creation under a disabled folder', () => {
+      renderTree({
+        getDisabledReason: ({ path }) =>
+          path[0] === 'Shared' ? 'No access' : undefined,
+      });
+
+      expect(
+        capturedProps.current?.getContextMenuItems?.(sharedFile()),
+      ).toEqual([]);
+    });
+
+    it('disables the create button when the selected folder is disabled', () => {
+      renderTree({
+        selectedPath: ['Shared'],
+        getDisabledReason: ({ path }) =>
+          path[0] === 'Shared' ? 'No access' : undefined,
+      });
+
+      expect(
+        screen
+          .getByRole('button', { name: 'Create new folder' })
+          .hasAttribute('disabled'),
+      ).toBe(true);
+    });
+
+    it('maps a multi-root folder to its root key and path', () => {
+      const getDisabledReason = vi.fn(() => 'No access');
+      render(
+        <PublishFoldersTree
+          roots={[
+            {
+              key: 'organization',
+              label: 'Organization',
+              items: [{ path: ['EPAM'], name: 'EPAM' }],
+            },
+          ]}
+          searchQuery=""
+          getDisabledReason={getDisabledReason}
+        />,
+      );
+
+      reasonFor({
+        path: ':organization/EPAM',
+        name: 'EPAM',
+        folderId: ':organization/EPAM',
+        nodeType: DialFileNodeType.FOLDER,
+      });
+
+      expect(getDisabledReason).toHaveBeenCalledWith({
+        rootKey: 'organization',
+        path: ['EPAM'],
+      });
+    });
+  });
 });

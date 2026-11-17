@@ -1,3 +1,5 @@
+import { OrgUnitFolderGuardPurpose } from '@epam/ai-dial-chat-hooks';
+import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { PublicationRuleFunction } from '@epam/ai-dial-publish-panel';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -8,6 +10,7 @@ import { ProjectsI18nKeys } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
 import { useAppConfig as useAppConfigMock } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { useOrgUnitFolderGuards } from '../../../hooks/publish/useOrgUnitFolderGuards';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { getPublishRules } from '../../../server-api/publish-rules.api';
 import {
@@ -23,12 +26,15 @@ const mockRule: PublicationRule = {
   targets: ['engineering'],
 };
 
+const reasonProp = vi.fn();
+
 vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-publish-panel')>();
   return {
     ...actual,
     StandalonePublishPanel: ({
+      getDisabledReason,
       resource,
       allowReplace,
       hasExistingPublicationInFolder,
@@ -42,6 +48,9 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       dependencies,
     }: {
       dependencies?: { name: string }[];
+      getDisabledReason?: (destination: {
+        path: string[];
+      }) => string | undefined;
       resource?: { title: string };
       renderSummary?: () => ReactNode;
       allowReplace: boolean;
@@ -55,6 +64,7 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
     }) => (
       <div role="dialog" aria-label={labels.ariaLabel}>
         {renderSummary ? renderSummary() : <span>{resource?.title}</span>}
+        {reasonProp(getDisabledReason)}
         <span>allowReplace:{String(allowReplace)}</span>
         <span>
           dependencies:
@@ -74,6 +84,9 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
   };
 });
 
+vi.mock('../../../hooks/publish/useOrgUnitFolderGuards', () => ({
+  useOrgUnitFolderGuards: vi.fn(),
+}));
 vi.mock('../../../hooks/publish/usePublishFolders');
 vi.mock('../../../hooks/publish/usePublishDependencyIconResolver', () => ({
   usePublishDependencyIconResolver: () => () => undefined,
@@ -138,6 +151,11 @@ describe('PublishProjectPanelContainer', () => {
       rememberPublishFolder: mockRememberPublishFolder,
       hasPublishWriteAccess: () => true,
     });
+    vi.mocked(useOrgUnitFolderGuards).mockReturnValue({
+      isDestinationUsable: undefined,
+      getDisabledReason: undefined,
+      canSaveDirectlyTo: undefined,
+    });
     vi.mocked(useNotification).mockReturnValue(
       createNotificationContextValue(mockShowNotification),
     );
@@ -146,6 +164,73 @@ describe('PublishProjectPanelContainer', () => {
     });
     vi.mocked(getPublishRules).mockResolvedValue([]);
     vi.mocked(getCatalogPublishHistory).mockResolvedValue([]);
+  });
+
+  it('builds the folder guards for the projects namespace and gives the destination guard to the folder tree as canPublishTo', () => {
+    const isDestinationUsable = vi.fn().mockReturnValue(true);
+    vi.mocked(useOrgUnitFolderGuards).mockReturnValue({
+      isDestinationUsable,
+      getDisabledReason: undefined,
+      canSaveDirectlyTo: undefined,
+    });
+
+    renderContainer();
+
+    expect(useOrgUnitFolderGuards).toHaveBeenCalledWith({
+      purpose: OrgUnitFolderGuardPurpose.Publish,
+      namespace: OrgUnitNamespace.Projects,
+      isActive: true,
+    });
+    expect(usePublishFolders).toHaveBeenCalledWith({
+      canPublishTo: isDestinationUsable,
+    });
+  });
+
+  it('does not activate the org-unit read while the panel is closed', () => {
+    render(
+      <PublishProjectPanelContainer
+        isOpen={false}
+        projectId="projects/a1b2c3/q4-launch"
+        projectName="q4-launch"
+        onClose={vi.fn()}
+        onPublished={vi.fn()}
+      />,
+    );
+
+    expect(useOrgUnitFolderGuards).toHaveBeenCalledWith({
+      purpose: OrgUnitFolderGuardPurpose.Publish,
+      namespace: OrgUnitNamespace.Projects,
+      isActive: false,
+    });
+  });
+
+  it('gives the folder tree a reason callback that judges the destination path', () => {
+    const getDisabledReason = vi.fn().mockReturnValue('No access');
+    vi.mocked(useOrgUnitFolderGuards).mockReturnValue({
+      isDestinationUsable: vi.fn(),
+      getDisabledReason,
+      canSaveDirectlyTo: undefined,
+    });
+
+    renderContainer();
+
+    const reason = reasonProp.mock.lastCall?.[0];
+    expect(reason({ rootKey: '', path: ['Acme', 'Secret'] })).toBe('No access');
+    expect(getDisabledReason).toHaveBeenCalledWith(['Acme', 'Secret']);
+  });
+
+  it('gives the folder tree no reason callback when no guard applies', () => {
+    renderContainer();
+
+    expect(reasonProp.mock.lastCall?.[0]).toBeUndefined();
+  });
+
+  it('keeps the Production fallback when no guard applies', () => {
+    renderContainer();
+
+    expect(usePublishFolders).toHaveBeenCalledWith({
+      canPublishTo: undefined,
+    });
   });
 
   it('names the project and never offers to replace a publication', () => {

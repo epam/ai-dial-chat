@@ -567,6 +567,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
     envVar: 'LIVE_CHAT_INTERACTION_ENABLED',
     allowedRolesEnvVar: 'LIVE_CHAT_INTERACTION_ENABLED_ROLES',
+    management: localOnlyKey(LocalOnlyReason.Capability),
   },
   {
     key: 'features.scheduledTasksEnabled',
@@ -582,6 +583,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
     envVar: 'SCHEDULED_TASKS_ENABLED',
     allowedRolesEnvVar: 'SCHEDULED_TASKS_ENABLED_ROLES',
+    management: localOnlyKey(LocalOnlyReason.Capability),
   },
   {
     key: 'features.projectsEnabled',
@@ -658,6 +660,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'folders are units. Off by default.',
     owner: 'chat-team',
     envVar: 'ORG_UNITS_ENABLED',
+    management: localOnlyKey(LocalOnlyReason.Capability),
   },
   {
     key: 'uiFeatures.enabledUiFeatures',
@@ -708,6 +711,7 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       "Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES (comma-separated); falls back to the legacy default when unset or empty.",
     owner: 'chat-team',
     envVar: 'PUBLICATION_FILTER_SOURCES',
+    management: localOnlyKey(LocalOnlyReason.Capability),
   },
   {
     key: 'content.additionalLocales',

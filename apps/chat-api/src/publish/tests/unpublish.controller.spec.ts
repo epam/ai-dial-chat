@@ -9,8 +9,10 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { FeatureGuard } from '../../app-config/feature-flags/feature.guard';
 import { CatalogEntityType } from '../dto/catalog-entity-params.dto';
 import { UnpublishResultDto } from '../dto/unpublish-result.dto';
+import { OrgUnitCopyService } from '../org-unit-copy.service';
 import { PublishController } from '../publish.controller';
 import { PublishService } from '../publish.service';
 import { VersionStatusesService } from '../version-statuses.service';
@@ -35,10 +37,14 @@ const buildApp = async (service: unknown): Promise<INestApplication> => {
   const module: TestingModule = await Test.createTestingModule({
     controllers: [PublishController],
     providers: [
+      { provide: OrgUnitCopyService, useValue: {} },
       { provide: PublishService, useValue: service },
       { provide: VersionStatusesService, useValue: {} },
     ],
-  }).compile();
+  })
+    .overrideGuard(FeatureGuard)
+    .useValue({ canActivate: () => true })
+    .compile();
 
   const app = module.createNestApplication();
   app.use(

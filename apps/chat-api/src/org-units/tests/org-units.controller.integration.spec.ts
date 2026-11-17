@@ -20,6 +20,7 @@ const TEST_USER = { sub: 'user-123', at: 'test-access-token' };
 
 const UNITS_BODY = {
   enabled: true,
+  hasAdminAccess: false,
   units: [
     {
       id: 'u-acme',
@@ -27,6 +28,7 @@ const UNITS_BODY = {
       displayName: 'Acme Corp',
       path: 'public/Acme',
       folder: 'public/Acme/',
+      permissions: { applications: ['read', 'write'], prompts: ['read'] },
     },
   ],
 };
@@ -107,6 +109,10 @@ describe('OrgUnitsController (integration)', () => {
         .expect(200);
 
       expect(res.body).toEqual(UNITS_BODY);
+      expect(res.body.units[0].permissions).toEqual({
+        applications: ['read', 'write'],
+        prompts: ['read'],
+      });
       expect(service.listOrgUnits).toHaveBeenCalledWith(
         'user-123',
         'test-access-token',
@@ -114,14 +120,36 @@ describe('OrgUnitsController (integration)', () => {
     });
 
     it('returns 200 with enabled: false when org units are off in Core', async () => {
-      service.listOrgUnits.mockResolvedValue({ enabled: false, units: [] });
+      service.listOrgUnits.mockResolvedValue({
+        enabled: false,
+        hasAdminAccess: false,
+        units: [],
+      });
       app = await buildApp(service);
 
       const res = await request(app.getHttpServer())
         .get('/api/v1/org-units')
         .expect(200);
 
-      expect(res.body).toEqual({ enabled: false, units: [] });
+      expect(res.body).toEqual({
+        enabled: false,
+        hasAdminAccess: false,
+        units: [],
+      });
+    });
+
+    it('returns hasAdminAccess for a DIAL admin', async () => {
+      service.listOrgUnits.mockResolvedValue({
+        ...UNITS_BODY,
+        hasAdminAccess: true,
+      });
+      app = await buildApp(service);
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/org-units')
+        .expect(200);
+
+      expect(res.body.hasAdminAccess).toBe(true);
     });
 
     it('returns 401 without a session and never reads the units', async () => {

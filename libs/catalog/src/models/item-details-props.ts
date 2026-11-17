@@ -1,5 +1,6 @@
 import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type {
+  FolderDestination,
   PublicationRule,
   PublishDependenciesLabels,
   PublishDependency,
@@ -619,6 +620,10 @@ export interface DetailsPanelProps {
   onPublishExpandedPathsChange?: (paths: Set<string>) => void;
   /** Publish-folder path keys currently being fetched by the host. */
   publishLoadingPaths?: Set<string>;
+  /** Reason a folder is unavailable as a publish destination, or `undefined` when it is usable (`rootKey` is `''`); the panel's tree shows it on the disabled row. Without it no folder is disabled. */
+  getPublishDisabledReason?: (
+    destination: FolderDestination,
+  ) => string | undefined;
   /** Resolves whether the current user can publish to a given folder path. */
   hasPublishWriteAccess?: (folderPath: string[]) => boolean;
   /**
