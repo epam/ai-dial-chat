@@ -224,7 +224,11 @@ describe('PromptParametersPopup on mobile', () => {
   it('shows only the Parameters tab content first', async () => {
     await renderPopup();
 
-    expect(screen.getByRole('tab', { name: 'Parameters' })).toBeTruthy();
+    expect(
+      screen
+        .getByRole('tab', { name: 'Parameters' })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
     expect(screen.getByRole('textbox', { name: 'text' })).toBeTruthy();
     expect(screen.queryByRole('tabpanel', { name: 'Details' })).toBeNull();
   });
@@ -242,5 +246,44 @@ describe('PromptParametersPopup on mobile', () => {
     await user.click(screen.getByRole('tab', { name: /Parameters/ }));
 
     expect(fieldValue('text')).toBe('hello');
+  });
+
+  it('makes the Details panel keyboard focusable', async () => {
+    const user = userEvent.setup();
+    await renderPopup();
+
+    await user.click(screen.getByRole('tab', { name: /Details/ }));
+
+    expect(
+      screen
+        .getByRole('tabpanel', { name: 'Details' })
+        .getAttribute('tabindex'),
+    ).toBe('0');
+  });
+
+  it('names the tab list with the tabs label', async () => {
+    await renderPopup({ labels: { tabsAriaLabel: 'Sections' } });
+
+    expect(screen.getByRole('tablist', { name: 'Sections' })).toBeTruthy();
+  });
+
+  it('returns to the Parameters tab when the parameters change', async () => {
+    const user = userEvent.setup();
+    const { rerender } = await renderPopup();
+
+    await user.click(screen.getByRole('tab', { name: /Details/ }));
+    expect(
+      screen
+        .getByRole('tab', { name: /Details/ })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
+
+    rerender(popupFor('Translate {{language}}.'));
+
+    expect(
+      screen
+        .getByRole('tab', { name: /Parameters/ })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
   });
 });

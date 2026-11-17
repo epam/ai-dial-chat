@@ -83,6 +83,7 @@ export const usePromptSelectorOverlay = ({
         backLabel: t(ButtonsI18nKeys.Back),
         parametersLabel: t(PromptSelectorI18nKeys.ParametersLabel),
         detailsLabel: t(PromptSelectorI18nKeys.DetailsLabel),
+        tabsAriaLabel: t(PromptSelectorI18nKeys.TabsAriaLabel),
         enterValuePlaceholder: t(PromptSelectorI18nKeys.EnterValuePlaceholder),
         cancelLabel: t(ButtonsI18nKeys.Cancel),
         submitLabel: t(ButtonsI18nKeys.Confirm),

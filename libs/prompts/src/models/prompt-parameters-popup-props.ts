@@ -12,6 +12,8 @@ export interface PromptParametersPopupLabels {
   parametersLabel?: string;
   /** Heading for the details column (tab label on mobile). Defaults to `'Details'`. */
   detailsLabel?: string;
+  /** Accessible name of the Parameters/Details tab list shown on mobile. Defaults to `'Prompt parameters sections'`. */
+  tabsAriaLabel?: string;
   /** Placeholder shown in each empty parameter field. Defaults to `'Enter value'`. */
   enterValuePlaceholder?: string;
   /** Label for the footer Cancel button. Defaults to `'Cancel'`. */

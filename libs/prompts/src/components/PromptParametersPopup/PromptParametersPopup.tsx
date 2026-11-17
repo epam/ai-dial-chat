@@ -18,7 +18,10 @@ import {
 import { IconChevronLeft } from '@tabler/icons-react';
 import { useId, useState, type FC } from 'react';
 import type { PromptParametersPopupProps } from '../../models/prompt-parameters-popup-props';
-import { PromptParametersPopupTab } from '../../types/prompt-parameters-popup';
+import {
+  PromptParametersPopupTab,
+  isPromptParametersPopupTab,
+} from '../../types/prompt-parameters-popup';
 import styles from './PromptParametersPopup.module.scss';
 
 /**
@@ -48,6 +51,7 @@ export const PromptParametersPopup: FC<PromptParametersPopupProps> = ({
     backLabel = 'Back',
     parametersLabel = 'Parameters',
     detailsLabel = 'Details',
+    tabsAriaLabel = 'Prompt parameters sections',
     enterValuePlaceholder = 'Enter value',
     cancelLabel = 'Cancel',
     submitLabel = 'Confirm',
@@ -91,10 +95,7 @@ export const PromptParametersPopup: FC<PromptParametersPopupProps> = ({
   const isSubmitDisabled = parameters.some(({ name }) => !values[name]?.trim());
 
   const handleTabChange = (tabId: string) => {
-    const tab = Object.values(PromptParametersPopupTab).find(
-      (value) => value === tabId,
-    );
-    if (tab != null) setActiveTab(tab);
+    if (isPromptParametersPopupTab(tabId)) setActiveTab(tabId);
   };
 
   const handleSubmit = () => {
@@ -128,7 +129,9 @@ export const PromptParametersPopup: FC<PromptParametersPopupProps> = ({
       ariaLabel={title}
       size={PopupSize.Lg}
       className={
-        isMobile ? 'h-[calc(100dvh-4rem)] max-h-[calc(100dvh-4rem)]' : undefined
+        isMobile
+          ? 'h-[calc(100dvh-4rem)]! max-h-[calc(100dvh-4rem)]!'
+          : undefined
       }
       closeAriaLabel={closeLabel}
       onClose={onClose}
@@ -160,7 +163,7 @@ export const PromptParametersPopup: FC<PromptParametersPopupProps> = ({
 
         {isMobile && (
           <Tabs
-            ariaLabel={promptName}
+            ariaLabel={tabsAriaLabel}
             className="px-6"
             tabs={[
               {
@@ -218,6 +221,7 @@ export const PromptParametersPopup: FC<PromptParametersPopupProps> = ({
             <div
               role={isMobile ? 'tabpanel' : undefined}
               aria-label={isMobile ? detailsLabel : undefined}
+              tabIndex={isMobile ? 0 : undefined}
               className="flex min-h-0 flex-col gap-3"
             >
               {!isMobile && (
