@@ -73,6 +73,7 @@ import {
   getNavigationSidebarWidth,
   resolveCanvasWidth,
 } from '../utils/canvas-width';
+import { loadConversationInput } from '../utils/conversation-input-loader';
 import { configurePdfWorker } from '../utils/pdf';
 import { renderSettingsRoutes, renderUsageRoute } from './settings-routes';
 
@@ -160,7 +161,7 @@ const conversationPageModule = import('../pages/Conversation/Conversation');
  * it here, alongside the page module, keeps it from waiting on the page chunk
  * first. `import()` caches the module, so the composer's own `lazy` reuses it.
  */
-void import('../utils/lazy-conversation-input');
+void loadConversationInput();
 
 const ConversationPage = lazy(async () => {
   const module = await conversationPageModule;

@@ -29,8 +29,15 @@ A lazy component that **is** on screen at first paint on some route — the
 composer on the home page — must start loading before the route renders, or
 the route suspends on a second round trip after its own chunk. Start the
 `import()` at module scope next to the page preload in `app.tsx`
-(`conversationPageModule`, `lazy-conversation-input`); `import()` caches the
-module, so the component's own `lazy` reuses it.
+(`conversationPageModule`, `loadConversationInput`).
+
+Preloading is not enough on its own: `React.lazy` still suspends on its first
+render, and a Suspense boundary that showed its fallback reveals the content
+only after React's ~300 ms fallback throttle. The composer's boundary held the
+home greeting — the LCP element — for that long. Render the loaded component
+directly when its module is already in memory, and keep `lazy` only as the
+fallback path (`ConversationInputLoader`, `conversation-input-loader.ts`);
+pick the path once per instance so the component never remounts.
 
 ## Never `import()` a lib barrel that the entry imports statically
 

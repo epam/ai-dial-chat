@@ -68,15 +68,11 @@ import { ComposerLayout } from '../../types/conversation-composer';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { buildAttachmentValidationNotification } from '../../utils/attachment-validation-notification';
 import { resolveLocalizedText } from '../../utils/locale';
+import ConversationInput from '../ConversationInputLoader/ConversationInputLoader';
 import FileDeleteConfirmContent from '../FileDeleteConfirmContent/FileDeleteConfirmContent';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import UsageLimitBanner from '../UsageLimitBanner/UsageLimitBanner';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
-
-const ConversationInput = lazy(async () => {
-  const module = await import('../../utils/lazy-conversation-input');
-  return { default: module.ConversationInput };
-});
 
 const DialFileManagerModal = lazy(async () => {
   const module = await import('../DialFileManagerModal/DialFileManagerModal');
