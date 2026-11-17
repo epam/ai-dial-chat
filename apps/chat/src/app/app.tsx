@@ -40,7 +40,6 @@ import Header from '../components/Header/Header';
 import SourcesSidebarToggle from '../components/Header/SourcesSidebarToggle';
 import SidebarNavigation from '../components/Navigation/SidebarNavigation';
 import NewVersionFallback from '../components/NewVersionFallback/NewVersionFallback';
-import OnboardingHints from '../components/OnboardingHints/OnboardingHints';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
 import { MIN_CONTENT_AREA_WIDTH } from '../constants/layout';
 import {
@@ -95,6 +94,10 @@ const ConversationSourcesPanel = lazy(
  */
 const McpAppCanvasContainer = lazy(
   () => import('../components/McpAppCanvasContainer/McpAppCanvasContainer'),
+);
+// Lazy: the tour shows its first hint only after a start delay, never at first paint.
+const OnboardingHints = lazy(
+  () => import('../components/OnboardingHints/OnboardingHints'),
 );
 const DialFileManagerPage = lazy(
   () => import('../pages/DialFileManagerPage/DialFileManagerPage'),
@@ -344,7 +347,9 @@ const App: FC = () => {
   return (
     <div className="flex size-full flex-col">
       <AnnouncementBanner />
-      <OnboardingHints />
+      <Suspense fallback={null}>
+        <OnboardingHints />
+      </Suspense>
       <div className="relative flex min-h-0 flex-1 flex-row tablet:overflow-hidden">
         <Suspense fallback={null}>
           <SigninInterruptDialog />
