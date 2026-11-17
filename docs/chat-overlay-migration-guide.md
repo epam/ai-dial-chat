@@ -345,7 +345,10 @@ iframe -> host: READY_TO_INTERACT
 ```
 
 `overlay.ready()` resolves only after `READY_TO_INTERACT`, when the first active
-conversation has been selected or the composer is ready. In legacy
+conversation has been selected or the composer is ready. On the composer,
+"ready" includes the deployment list having loaded, so
+`createConversation({ firstMessage })` without a `deploymentId` can resolve the
+default deployment straight after `ready()`. In legacy
 integrations, readiness could be reached as early as `READY`.
 
 Practical implications:
