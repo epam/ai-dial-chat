@@ -377,6 +377,7 @@
     "parametersTitle": "Prompt parameters",
     "parametersLabel": "Parameters",
     "detailsLabel": "Details",
+    "tabsAriaLabel": "Prompt parameters sections",
     "enterValuePlaceholder": "Enter value"
   },
   "skillSelector": {

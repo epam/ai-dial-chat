@@ -2,7 +2,7 @@ import { extractPromptParams } from '@epam/ai-dial-chat-shared';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PromptParametersPopup } from '../PromptParametersPopup';
 
 const popup = (
@@ -201,5 +201,89 @@ describe('PromptParametersPopup', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
     expect(onCancel).toHaveBeenCalledOnce();
+  });
+});
+
+describe('PromptParametersPopup on mobile', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation((query: string) => ({
+        matches: true,
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('shows only the Parameters tab content first', async () => {
+    await renderPopup();
+
+    expect(
+      screen
+        .getByRole('tab', { name: 'Parameters' })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
+    expect(screen.getByRole('textbox', { name: 'text' })).toBeTruthy();
+    expect(screen.queryByRole('tabpanel', { name: 'Details' })).toBeNull();
+  });
+
+  it('switches to Details and keeps the entered values', async () => {
+    const user = userEvent.setup();
+    await renderPopup();
+
+    await user.type(screen.getByRole('textbox', { name: 'text' }), 'hello');
+    await user.click(screen.getByRole('tab', { name: /Details/ }));
+
+    expect(screen.queryByRole('textbox', { name: 'text' })).toBeNull();
+    expect(screen.getByRole('tabpanel', { name: 'Details' })).toBeTruthy();
+
+    await user.click(screen.getByRole('tab', { name: /Parameters/ }));
+
+    expect(fieldValue('text')).toBe('hello');
+  });
+
+  it('makes the Details panel keyboard focusable', async () => {
+    const user = userEvent.setup();
+    await renderPopup();
+
+    await user.click(screen.getByRole('tab', { name: /Details/ }));
+
+    expect(
+      screen
+        .getByRole('tabpanel', { name: 'Details' })
+        .getAttribute('tabindex'),
+    ).toBe('0');
+  });
+
+  it('names the tab list with the tabs label', async () => {
+    await renderPopup({ labels: { tabsAriaLabel: 'Sections' } });
+
+    expect(screen.getByRole('tablist', { name: 'Sections' })).toBeTruthy();
+  });
+
+  it('returns to the Parameters tab when the parameters change', async () => {
+    const user = userEvent.setup();
+    const { rerender } = await renderPopup();
+
+    await user.click(screen.getByRole('tab', { name: /Details/ }));
+    expect(
+      screen
+        .getByRole('tab', { name: /Details/ })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
+
+    rerender(popupFor('Translate {{language}}.'));
+
+    expect(
+      screen
+        .getByRole('tab', { name: /Parameters/ })
+        .getAttribute('aria-selected'),
+    ).toBe('true');
   });
 });

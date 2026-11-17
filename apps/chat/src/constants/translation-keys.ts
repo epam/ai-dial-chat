@@ -412,6 +412,7 @@ export enum PromptSelectorI18nKeys {
   ParametersTitle = 'promptSelector.parametersTitle',
   ParametersLabel = 'promptSelector.parametersLabel',
   DetailsLabel = 'promptSelector.detailsLabel',
+  TabsAriaLabel = 'promptSelector.tabsAriaLabel',
   EnterValuePlaceholder = 'promptSelector.enterValuePlaceholder',
 }
 
