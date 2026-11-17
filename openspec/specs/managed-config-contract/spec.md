@@ -5,6 +5,7 @@
 Which configuration registry keys Chat exports to DIAL Config Studio as managed values, which keys stay local-only and why, and the `{ config, features }` payload shape and its value constraints. Export is not activation: no runtime value depends on the managed classification.
 
 ## Requirements
+
 ### Requirement: Managed opt-in is explicit and separate from activation
 
 A registry key SHALL be part of the managed contract only when its definition's `management` is a managed config key (`managedConfigKey`) or a managed feature (`managedFeatureKey`). The default SHALL be unmanaged (`management` absent). `management` SHALL be one discriminated value, so a key cannot be both managed and local-only. A managed key's contract SHALL carry an operator-facing English `title` and `description`, a numeric display `order` and an optional `isHidden` flag; a managed config key's contract SHALL also carry a value schema, and a managed feature's contract SHALL NOT, because a feature's value is always a feature state. A managed config key SHALL belong to a `type: 'config'` entry and a managed feature to a `type: 'feature'` entry. Marking a key managed SHALL NOT change any effective resolved value, client-config field, feature-flag result or cache entry; the runtime reads no managed source until a later change adds activation. Operator-facing descriptions SHALL NOT contain environment-variable names, environment values, secrets, or deployment URLs.
@@ -33,7 +34,7 @@ A registry key SHALL be part of the managed contract only when its definition's 
 
 ### Requirement: Local-only keys are classified with a reason and never exported
 
-A key that depends on a local capability, credential, deployment topology, security policy, backend-enforced limit, build metadata, a derivation from another local value, or opaque client-owned JSON SHALL be classified with `localOnlyKey` and one of the reasons `capability`, `deployment-topology`, `security-policy`, `backend-enforced-limit`, `build-metadata`, `derived` or `opaque`. Local-only keys SHALL never appear in the exported schema, so a payload that contains one is rejected as an unknown key. Every current registry key SHALL be classified, and at least the following SHALL be local-only: `asr.modelId`, `features.asrEnabled`, `utility.modelId` and `features.llmConversationNaming` as `capability`; `dialCore.externalUrl` and `mcpApps.sandboxUrl` as `deployment-topology`; `overlay.allowedOrigins`, `documents.allowedConnectOrigins`, `customVisualizers`, `applicationVisualizers` and `announcement.html` as `security-policy`; `attachments.maxFileSizeBytes` and the project context limits as `backend-enforced-limit`; `app.version` as `build-metadata`; `features.footer` as `derived`; and `customVariables` as `opaque`.
+A key that depends on a local capability, credential, deployment topology, security policy, backend-enforced limit, build metadata, a derivation from another local value, or opaque client-owned JSON SHALL be classified with `localOnlyKey` and one of the reasons `capability`, `deployment-topology`, `security-policy`, `backend-enforced-limit`, `build-metadata`, `derived` or `opaque`. Local-only keys SHALL never appear in the exported schema, so a payload that contains one is rejected as an unknown key. Every current registry key SHALL be classified, and at least the following SHALL be local-only: `asr.modelId`, `features.asrEnabled`, `utility.modelId`, `features.llmConversationNaming`, `features.orgUnitsEnabled` (DIAL Core org units), `features.liveChatInteraction` (the DIAL Core client channel), `features.scheduledTasksEnabled` (the DIAL Scheduler) and `publish.publicationFilterSources` (claim and category sources the Core and identity-provider deployment defines) as `capability`; `dialCore.externalUrl` and `mcpApps.sandboxUrl` as `deployment-topology`; `overlay.allowedOrigins`, `documents.allowedConnectOrigins`, `customVisualizers`, `applicationVisualizers` and `announcement.html` as `security-policy`; `attachments.maxFileSizeBytes` and the project context limits as `backend-enforced-limit`; `app.version` as `build-metadata`; `features.footer` as `derived`; and `customVariables` as `opaque`. A key that needs a local service or Core feature SHALL be local-only even when the deployment degrades safely without it; a capability check alone does not make such a key manageable. Reclassifying an eligible key as local-only SHALL NOT change its environment resolution or its client-config field.
 
 **RTL impact:** None. **i18n impact:** None.
 
@@ -46,6 +47,21 @@ A key that depends on a local capability, credential, deployment topology, secur
 
 - **WHEN** the exported schema is inspected
 - **THEN** it contains no property for `dialCore.externalUrl`, `mcpApps.sandboxUrl` or any key whose definition references `DIAL_CORE_URL`
+
+#### Scenario: Keys that depend on Core or identity-provider features are local-only
+
+- **WHEN** the registry is inspected
+- **THEN** `features.orgUnitsEnabled`, `features.liveChatInteraction`, `features.scheduledTasksEnabled` and `publish.publicationFilterSources` are local-only with reason `capability`
+
+#### Scenario: Reclassification keeps the environment value
+
+- **WHEN** `ORG_UNITS_ENABLED=true`, `LIVE_CHAT_INTERACTION_ENABLED=true` and `SCHEDULED_TASKS_ENABLED=true` are set and `PUBLICATION_FILTER_SOURCES` is `title,role`
+- **THEN** `GET /api/v1/client-config` returns the same `features` and `config` values as before the reclassification
+
+#### Scenario: Reclassification leaves the 1.0.0 artifact unchanged
+
+- **WHEN** the schema generator runs after the reclassification
+- **THEN** `apps/chat-api/managed-config-schema/chat-ui-1.0.0.json` and `index.json` are unchanged and the pinned 1.0.0 hash still matches
 
 ### Requirement: Managed payload shape
 
@@ -142,7 +158,23 @@ Schema version 1.0.0 SHALL contain exactly these managed keys: `announcement.tit
 - **WHEN** the 1.0.0 schema is generated
 - **THEN** `properties.config.properties` has exactly the six config keys above and `properties.features.properties` has exactly `features.usageLimitsControl`
 
-#### Scenario: Excluded candidates stay unmanaged
+### Requirement: Managed opt-in prerequisites
 
-- **WHEN** the registry is inspected
-- **THEN** `features.scheduledTasksEnabled`, `features.projectsEnabled`, `footer.html` and `uiFeatures.enabledUiFeatures` are eligible but unmanaged
+An eligible key SHALL become managed only in a schema version that also meets its prerequisite below. Each prerequisite SHALL be checked by a registry test, so a version that breaks it fails the build.
+
+| Key | Prerequisite |
+| --- | --- |
+| `footer.html` | `features.footer` is no longer derived only from the local footer value, and the classification of `footer.html` and `announcement.html` is decided together |
+| `deployments.defaultDeploymentId`, `features.defaultDeploymentPinned` | both are managed in the same schema version |
+
+**Feature flag:** Not gated. **RTL impact:** None. **i18n impact:** None.
+
+#### Scenario: Footer copy managed while its visibility is still local
+
+- **WHEN** `footer.html` is managed while `features.footer` is still local-only with reason `derived`
+- **THEN** the registry test fails
+
+#### Scenario: Default deployment keys move together
+
+- **WHEN** exactly one of `deployments.defaultDeploymentId` and `features.defaultDeploymentPinned` is managed
+- **THEN** the registry test fails

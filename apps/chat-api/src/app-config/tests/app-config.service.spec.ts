@@ -2175,6 +2175,16 @@ describe('AppConfigService', () => {
         },
       ],
       [
+        'capability keys set through ENV',
+        {
+          ORG_UNITS_ENABLED: 'true',
+          LIVE_CHAT_INTERACTION_ENABLED: 'true',
+          LIVE_CHAT_INTERACTION_ENABLED_ROLES: 'beta',
+          PUBLICATION_FILTER_SOURCES: 'title,role',
+          SCHEDULED_TASKS_ENABLED: 'true',
+        },
+      ],
+      [
         'blank managed text set through ENV',
         {
           ANNOUNCEMENT_TITLE: '',
