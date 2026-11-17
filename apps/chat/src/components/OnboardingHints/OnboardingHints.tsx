@@ -59,10 +59,11 @@ export const ONBOARDING_ANCHORS_PARAM = 'onboarding-anchors';
 
 /**
  * First-visit onboarding: feeds the operator-configured `onboardingHints`
- * whose element is on screen to the `OnboardingTour` lib. Finishing or
- * skipping the tour stores the shown ids in `localStorage`, so a hint is seen
- * once per browser and a new id is shown on the next visit. Hints whose
- * element is not on screen wait for a page that renders it.
+ * whose element is on screen to the `OnboardingTour` lib. Each hint passed
+ * with Next, and finishing or skipping the tour, stores the seen ids in
+ * `localStorage`, so a hint is seen once per browser and a new id is shown
+ * on the next visit. Hints whose element is not on screen wait for a page
+ * that renders it.
  */
 const OnboardingHints: FC = () => {
   const { t, i18n } = useTranslation();

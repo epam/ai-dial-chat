@@ -105,6 +105,30 @@ describe('useOnboardingHints', () => {
     expect(onSeenIdsChange).toHaveBeenCalledWith(['new-chat', 'catalog']);
   });
 
+  it('marks each step seen as soon as the user moves past it', () => {
+    const onSeenIdsChange = vi.fn();
+    const { result } = renderHints({ seenIds: ['old'], onSeenIdsChange });
+    act(() => vi.advanceTimersByTime(ONBOARDING_START_DELAY_MS));
+
+    act(() => result.current.onStepComplete('new-chat'));
+    expect(onSeenIdsChange).toHaveBeenLastCalledWith(['old', 'new-chat']);
+    expect(result.current.steps.map((step) => step.id)).toEqual(['new-chat']);
+
+    act(() => result.current.onStepComplete('new-chat'));
+    expect(onSeenIdsChange).toHaveBeenCalledOnce();
+  });
+
+  it('keeps every passed step when the host has not re-rendered in between', () => {
+    const onSeenIdsChange = vi.fn();
+    const { result } = renderHints({ onSeenIdsChange });
+
+    act(() => {
+      result.current.onStepComplete('new-chat');
+      result.current.onStepComplete('catalog');
+    });
+    expect(onSeenIdsChange).toHaveBeenLastCalledWith(['new-chat', 'catalog']);
+  });
+
   it('ends a running tour without marking anything when the page changes', () => {
     const onSeenIdsChange = vi.fn();
     const { result, rerender } = renderHook(
