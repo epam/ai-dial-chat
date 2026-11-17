@@ -1,0 +1,5 @@
+{
+  "$comment": "Core's answer to POST /v1/ops/resource/copy with overwrite=false onto an existing destination: ResourceOperationService throws IllegalArgumentException, ResourceOperationController.handleServiceError answers 400 with the message as the body.",
+  "status": 400,
+  "body": "Can't move resource applications/bucket-123/Helper__1.0.0 to applications/bucket-123/.publish-staging/Helper__1.0.0, because destination resource already exists"
+}

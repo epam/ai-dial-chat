@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   getPublicationSourceAction,
   getPublicationSourceCredentials,
+  getPublicationSourceTargetUrl,
   isStatusDetailCandidate,
   narrowPublicationsForSource,
   PublicationResourceAction,
@@ -1131,5 +1132,85 @@ describe('resolvePublicationsForSource, split into detail resolution and narrowi
       'p/1',
       'p/3',
     ]);
+  });
+});
+
+describe("a publication of an application's temporary publication copy", () => {
+  const ORIGINAL = 'applications/bucket-123/Design/Helper__1.0.0';
+  const STAGING =
+    'applications/bucket-123/Design/.publish-staging/Helper__1.0.0';
+  const TARGET = 'applications/public/Org/Helper__1.0.0';
+
+  const make = (sourceUrl: string, targetUrl = TARGET) => ({
+    status: PublicationStatus.Pending,
+    targetFolder: 'public/Org/',
+    resources: [
+      {
+        action: PublicationResourceAction.Add,
+        publishCredentials: true,
+        sourceUrl,
+        targetUrl,
+      },
+    ],
+  });
+
+  it("answers every source lookup as the original's own publication does", () => {
+    const viaStaging = make(STAGING);
+    const direct = make(ORIGINAL);
+
+    expect(publishesSource(viaStaging, ORIGINAL)).toBe(
+      publishesSource(direct, ORIGINAL),
+    );
+    expect(publishesSource(viaStaging, ORIGINAL)).toBe(true);
+    expect(getPublicationSourceAction(viaStaging, ORIGINAL)).toBe(
+      getPublicationSourceAction(direct, ORIGINAL),
+    );
+    expect(getPublicationSourceCredentials(viaStaging, ORIGINAL)).toBe(
+      getPublicationSourceCredentials(direct, ORIGINAL),
+    );
+    expect(getPublicationSourceTargetUrl(viaStaging, ORIGINAL)).toBe(TARGET);
+  });
+
+  it('matches a percent-encoded staging path', () => {
+    expect(
+      publishesSource(
+        make('applications/bucket-123/Design/.publish-staging/Helper__1.0.0'),
+        'applications/bucket-123/Design/Helper__1.0.0',
+      ),
+    ).toBe(true);
+    expect(
+      publishesSource(
+        make('applications/bucket-123/My%20Design/.publish-staging/A%20b__1'),
+        'applications/bucket-123/My Design/A b__1',
+      ),
+    ).toBe(true);
+  });
+
+  it('does not normalize an unrelated path containing the word', () => {
+    expect(
+      publishesSource(
+        make('applications/bucket-123/Design/publish-staging/Helper__1.0.0'),
+        ORIGINAL,
+      ),
+    ).toBe(false);
+    expect(
+      publishesSource(
+        make('applications/bucket-123/Design/.publish-staging-x/Helper__1.0.0'),
+        ORIGINAL,
+      ),
+    ).toBe(false);
+  });
+
+  it('compares a target path with the staging folder name as it is', () => {
+    const copyUrl = 'applications/public/Org/Helper__1.0.0';
+    const stagingNamedTarget =
+      'applications/public/Org/.publish-staging/Helper__1.0.0';
+    const pub = {
+      ...make(ORIGINAL, stagingNamedTarget),
+      status: PublicationStatus.Approved,
+    };
+
+    expect(publishesCopy([pub], stagingNamedTarget)).toBe(true);
+    expect(publishesCopy([pub], copyUrl)).toBe(false);
   });
 });

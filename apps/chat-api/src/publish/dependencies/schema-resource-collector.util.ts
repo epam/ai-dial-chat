@@ -1,3 +1,6 @@
+import { safeDecodeURIComponent } from '../../common/utils/uri';
+import { normalizeResourceUrl } from './publish-dependency.util';
+
 type JsonObject = Record<string, unknown>;
 
 /** JSON Schema keyword DIAL Core reads to mark a property whose value is a DIAL resource reference. */
@@ -40,25 +43,38 @@ const branchAccepts = (branch: JsonObject, value: JsonObject): boolean => {
   return typeSchema.const === value.type;
 };
 
+/** Called with each string held by a `dial:resource` property; returns what to keep in its place. */
+type ResourceVisitor = (resource: string) => string;
+
+/**
+ * Walks the schema alongside the value and returns the value with each string
+ * on a `dial:resource` property passed through `visit`. Objects and arrays are
+ * rebuilt only where something changed, and the input is never mutated, so the
+ * values read by {@link collectSchemaResources} and the values written by
+ * {@link replaceSchemaResources} come from one walk and cannot drift apart.
+ */
 const walk = (
   root: JsonObject,
   schemaNode: unknown,
-  value: unknown,
-  found: string[],
+  input: unknown,
+  visit: ResourceVisitor,
   depth: number,
-): void => {
-  if (!isRecord(schemaNode) || value == null || depth > MAX_WALK_DEPTH) return;
+): unknown => {
+  if (!isRecord(schemaNode) || input == null || depth > MAX_WALK_DEPTH) {
+    return input;
+  }
   const node = resolveRef(root, schemaNode);
 
   if (
     (schemaNode[DIAL_RESOURCE_KEYWORD] === true ||
       node[DIAL_RESOURCE_KEYWORD] === true) &&
-    typeof value === 'string' &&
-    value !== ''
+    typeof input === 'string' &&
+    input !== ''
   ) {
-    found.push(value);
-    return;
+    return visit(input);
   }
+
+  let value: unknown = input;
 
   /*
    * Composition applies to every kind of value: an optional list or string
@@ -78,29 +94,41 @@ const walk = (
       ) {
         continue;
       }
-      walk(root, resolved, value, found, depth + 1);
+      value = walk(root, resolved, value, visit, depth + 1);
     }
   }
 
   if (Array.isArray(value)) {
-    for (const item of value) walk(root, node.items, item, found, depth + 1);
-    return;
+    let changed = false;
+    const items = value.map((item) => {
+      const next = walk(root, node.items, item, visit, depth + 1);
+      if (next !== item) changed = true;
+      return next;
+    });
+    return changed ? items : value;
   }
-  if (!isRecord(value)) return;
+  if (!isRecord(value)) return value;
 
   const properties = isRecord(node.properties) ? node.properties : {};
+  let result = value;
+  const set = (key: string, next: unknown) => {
+    if (next === result[key]) return;
+    if (result === value) result = { ...value };
+    result[key] = next;
+  };
   for (const [key, propertySchema] of Object.entries(properties)) {
     if (key in value) {
-      walk(root, propertySchema, value[key], found, depth + 1);
+      set(key, walk(root, propertySchema, value[key], visit, depth + 1));
     }
   }
   if (isRecord(node.additionalProperties)) {
     for (const [key, item] of Object.entries(value)) {
       if (!(key in properties)) {
-        walk(root, node.additionalProperties, item, found, depth + 1);
+        set(key, walk(root, node.additionalProperties, item, visit, depth + 1));
       }
     }
   }
+  return result;
 };
 
 /**
@@ -118,6 +146,51 @@ export const collectSchemaResources = (
   value: unknown,
 ): string[] => {
   const found: string[] = [];
-  walk(schema, schema, value, found, 0);
+  walk(
+    schema,
+    schema,
+    value,
+    (resource) => {
+      found.push(resource);
+      return resource;
+    },
+    0,
+  );
   return found;
+};
+
+/**
+ * Returns `value` with every string on a `dial:resource` property that names a
+ * key of `replacements` swapped for that key's replacement, using the same
+ * walk as {@link collectSchemaResources}. A stored reference may carry a
+ * `?query`, a `#fragment` or the legacy `metadata/` prefix, which the resolver
+ * strips from the dependency id; matching strips them the same way and
+ * compares the percent-decoded forms. Replacements are written exactly as
+ * given, so they must already be in the percent-encoded form Core receives:
+ * Core parses references leniently and silently drops one it cannot parse.
+ * `value` is never mutated.
+ * @param schema - the application type's JSON schema
+ * @param value - the application's `application_properties`
+ * @param replacements - dependency id (as listed by the resolver) to the url that replaces it
+ */
+export const replaceSchemaResources = (
+  schema: JsonObject,
+  value: unknown,
+  replacements: ReadonlyMap<string, string>,
+): unknown => {
+  const byDecodedId = new Map(
+    [...replacements].map(([id, replacement]) => [
+      safeDecodeURIComponent(id),
+      replacement,
+    ]),
+  );
+  return walk(
+    schema,
+    schema,
+    value,
+    (resource) =>
+      byDecodedId.get(safeDecodeURIComponent(normalizeResourceUrl(resource))) ??
+      resource,
+    0,
+  );
 };

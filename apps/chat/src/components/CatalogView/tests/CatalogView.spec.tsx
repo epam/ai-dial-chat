@@ -60,6 +60,10 @@ const capturedPublishProps: {
     onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
+    resolvePublishDependenciesLabels?: (item: CatalogItem) => {
+      title?: string;
+      appearance?: string;
+    };
     onUnpublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
     isUnpublishVisible?: (item: CatalogItem) => boolean;
     publishVersionHistory?: unknown;
@@ -149,6 +153,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onPublishSuccess,
     getPublishHistory,
     isPublishVisible,
+    resolvePublishDependenciesLabels,
     onUnpublish,
     isUnpublishVisible,
     publishVersionHistory,
@@ -216,6 +221,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
+    resolvePublishDependenciesLabels?: (item: CatalogItem) => {
+      title?: string;
+      appearance?: string;
+    };
     onUnpublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
     isUnpublishVisible?: (item: CatalogItem) => boolean;
     publishVersionHistory?: unknown;
@@ -245,6 +254,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       onPublishSuccess,
       getPublishHistory,
       isPublishVisible,
+      resolvePublishDependenciesLabels,
       onUnpublish,
       isUnpublishVisible,
       publishVersionHistory,
@@ -851,6 +861,20 @@ describe('CatalogView', () => {
       'No access',
     );
     expect(getDisabledReason).toHaveBeenCalledWith(['Acme', 'Secret']);
+  });
+
+  it('gives an application the informational dependencies section and other kinds the warning', () => {
+    render(<CatalogView />);
+
+    const resolve =
+      capturedPublishProps.current?.resolvePublishDependenciesLabels;
+    const application = resolve?.({ type: CatalogEntityType.Agent } as never);
+    const prompt = resolve?.({ type: CatalogEntityType.Prompt } as never);
+
+    expect(application?.title).toBe('publish.dependenciesPublishedTitle');
+    expect(application?.appearance).toBe('published');
+    expect(prompt?.title).toBe('publish.dependenciesTitle');
+    expect(prompt?.appearance).toBeUndefined();
   });
 
   it('gives Catalog no reason callback while no guard applies, so nothing is disabled', () => {

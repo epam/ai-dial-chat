@@ -1,0 +1,23 @@
+{
+  "name": "Helper 1.0.0",
+  "targetFolder": "public/Organization/Agents/",
+  "resources": [
+    {
+      "action": "ADD",
+      "sourceUrl": "applications/bucket-123/.publish-staging/Helper__1.0.0",
+      "targetUrl": "applications/public/Organization/Agents/Helper__1.0.0"
+    },
+    {
+      "action": "ADD",
+      "sourceUrl": "skills/bucket-123/Docs%20helper",
+      "targetUrl": "skills/public/Organization/Agents/.Helper__1.0.0.deps/bucket-123/Docs%20helper"
+    },
+    {
+      "action": "ADD",
+      "sourceUrl": "applications/bucket-123/Calculator__1.0.0",
+      "targetUrl": "applications/public/Organization/Agents/.Helper__1.0.0.deps/bucket-123/Calculator__1.0.0"
+    }
+  ],
+  "displayAuthor": "Test User",
+  "rules": []
+}

@@ -9,3 +9,16 @@
 .meta {
   color: var(--pp-dependencies-meta-text, var(--text-secondary, #57647a));
 }
+
+.caption {
+  color: var(--pp-dependencies-caption-text, var(--text-secondary, #57647a));
+}
+
+.type {
+  color: var(--pp-dependencies-type-text, var(--text-accent-tertiary, #7e39ec));
+}
+
+.row:not(:last-child) {
+  border-block-end: 1px solid
+    var(--pp-dependencies-divider, var(--stroke-tertiary, #e0e6f0));
+}

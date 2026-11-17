@@ -13,6 +13,7 @@ import {
   buildFolderResourcePath,
   getResourceLeaf,
   listDialResourceFolders,
+  resourceExists,
   toDialResourceUrl,
   transferDialResource,
 } from '../dial-resource-transfer';
@@ -165,6 +166,47 @@ describe('listDialResourceFolders', () => {
         logger,
       ),
     ).rejects.toBeInstanceOf(BadGatewayException);
+  });
+});
+
+describe('resourceExists', () => {
+  const location = { bucket: 'public', path: 'Org/Greeting' };
+  const exists = (status: number | undefined) =>
+    resourceExists(
+      makeClient({
+        getPromptMetadata: vi.fn().mockResolvedValue({ response: { status } }),
+      }),
+      DialResourceType.Prompts,
+      location,
+      {},
+    );
+
+  it('is true when the resource is found', async () => {
+    await expect(exists(200)).resolves.toBe(true);
+  });
+
+  it('is false only when Core says it is not found', async () => {
+    await expect(exists(404)).resolves.toBe(false);
+  });
+
+  it.each([401, 403, 500, 503])(
+    'throws for status %s instead of reading it as absent',
+    async (status) => {
+      await expect(exists(status)).rejects.toThrow(/status/);
+    },
+  );
+
+  it('throws when the request itself fails', async () => {
+    await expect(
+      resourceExists(
+        makeClient({
+          getPromptMetadata: vi.fn().mockRejectedValue(new Error('network')),
+        }),
+        DialResourceType.Prompts,
+        location,
+        {},
+      ),
+    ).rejects.toThrow('network');
   });
 });
 

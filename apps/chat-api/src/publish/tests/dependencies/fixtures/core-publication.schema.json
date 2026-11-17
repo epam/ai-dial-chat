@@ -1,0 +1,40 @@
+{
+  "$comment": "Hand-copied from DIAL Core docs/open_api_core.yaml components.schemas (Publication, PublicationResource, PublicationResourceAction, PublicationStatus). Not generated; refresh by hand when Core changes them.",
+  "$defs": {
+    "PublicationResourceAction": {
+      "type": "string",
+      "enum": ["ADD", "DELETE", "ADD_IF_ABSENT"]
+    },
+    "PublicationStatus": {
+      "type": "string",
+      "enum": ["PENDING", "APPROVED", "REJECTED"]
+    },
+    "PublicationResource": {
+      "type": "object",
+      "properties": {
+        "action": { "$ref": "#/$defs/PublicationResourceAction" },
+        "publishCredentials": { "type": "boolean" },
+        "reviewUrl": { "type": "string" },
+        "sourceUrl": { "type": "string" },
+        "targetUrl": { "type": "string" }
+      }
+    }
+  },
+  "type": "object",
+  "properties": {
+    "author": { "type": "string" },
+    "createdAt": { "type": "integer" },
+    "displayAuthor": { "type": "string" },
+    "etag": { "type": "string" },
+    "name": { "type": "string" },
+    "resourceTypes": { "type": "array", "items": { "type": "string" } },
+    "resources": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/PublicationResource" }
+    },
+    "rules": { "type": "array", "items": { "type": "object" } },
+    "status": { "$ref": "#/$defs/PublicationStatus" },
+    "targetFolder": { "type": "string" },
+    "url": { "type": "string" }
+  }
+}

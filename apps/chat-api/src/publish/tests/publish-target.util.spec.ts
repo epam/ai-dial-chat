@@ -3,6 +3,7 @@ import {
   getPublicTargetFolder,
   getPublishedAttachmentsFolderUrl,
   getPublishedAttachmentTargetUrl,
+  getPublishedDependencyTargetUrl,
   getPublishableIconUrl,
   getPublishedIconTargetUrl,
   getPublishedTargetUrl,
@@ -230,5 +231,111 @@ describe('published attachment paths', () => {
         'docs/a.pdf',
       ),
     ).toBe(`${folder}b/docs/a.pdf`);
+  });
+});
+
+describe('getPublishedDependencyTargetUrl', () => {
+  const FOLDER = 'Organization/Agents';
+  const APP = 'Helper__1.0.0';
+
+  it("keeps a prompt's folder structure under the application's namespace", () => {
+    expect(
+      getPublishedDependencyTargetUrl(
+        FOLDER,
+        APP,
+        'prompts/bucket-123/Support/Greeting',
+      ),
+    ).toBe(
+      'prompts/public/Organization/Agents/.Helper__1.0.0.deps/bucket-123/Support/Greeting',
+    );
+  });
+
+  it('places a dependency application beside the application, not under it', () => {
+    const target = getPublishedDependencyTargetUrl(
+      FOLDER,
+      APP,
+      'applications/bucket-123/Calculator__1.0.0',
+    );
+    const own = getPublishedTargetUrl('applications', FOLDER, APP);
+
+    expect(target).toBe(
+      'applications/public/Organization/Agents/.Helper__1.0.0.deps/bucket-123/Calculator__1.0.0',
+    );
+    expect(target.startsWith(`${own}/`)).toBe(false);
+  });
+
+  it('keeps the version suffix of a versioned toolset', () => {
+    expect(
+      getPublishedDependencyTargetUrl(
+        FOLDER,
+        APP,
+        'toolsets/bucket-123/Search__1.0.0',
+      )
+        .split('/')
+        .pop(),
+    ).toBe('Search__1.0.0');
+  });
+
+  it("separates two authors' same-named dependencies by source bucket", () => {
+    const first = getPublishedDependencyTargetUrl(
+      FOLDER,
+      'A__1',
+      'skills/b1/Docs helper',
+    );
+    const second = getPublishedDependencyTargetUrl(
+      FOLDER,
+      'B__1',
+      'skills/b2/Docs helper',
+    );
+    const sameApp = getPublishedDependencyTargetUrl(
+      FOLDER,
+      'A__1',
+      'skills/b2/Docs helper',
+    );
+
+    expect(first).not.toBe(second);
+    expect(first).not.toBe(sameApp);
+  });
+
+  it('encodes a plain path and leaves an encoded one as it is', () => {
+    const expected =
+      'skills/public/Organization/Agents/.Helper__1.0.0.deps/bucket-123/Docs%20helper';
+
+    expect(
+      getPublishedDependencyTargetUrl(
+        FOLDER,
+        APP,
+        'skills/bucket-123/Docs helper',
+      ),
+    ).toBe(expected);
+    expect(
+      getPublishedDependencyTargetUrl(
+        FOLDER,
+        APP,
+        'skills/bucket-123/Docs%20helper',
+      ),
+    ).toBe(expected);
+  });
+
+  it("encodes the publish folder like the application's own target", () => {
+    expect(
+      getPublishedDependencyTargetUrl('My Org/Agents', APP, 'skills/b/S'),
+    ).toBe('skills/public/My%20Org/Agents/.Helper__1.0.0.deps/b/S');
+  });
+
+  it("puts every target below the application's publication folder so folder rules are inherited", () => {
+    for (const id of [
+      'prompts/b/Support/Greeting',
+      'skills/b/S',
+      'applications/b/Calc__1.0.0',
+      'toolsets/b/T__2.0.0',
+    ]) {
+      const target = getPublishedDependencyTargetUrl(FOLDER, APP, id);
+      const type = id.split('/')[0];
+
+      expect(
+        target.startsWith(`${type}/${getPublicTargetFolder(FOLDER)}`),
+      ).toBe(true);
+    }
   });
 });

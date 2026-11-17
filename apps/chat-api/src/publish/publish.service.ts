@@ -22,6 +22,12 @@ import { safeDecodeURIComponent } from '../common/utils/uri';
 import { readPublicationDisplayAuthor } from '../common/utils/user-display-name';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
+import { ApplicationBeingPublishedException } from './application-publish-copy.service';
+import {
+  CATALOG_TYPE_BY_DEPENDENCY,
+  ApplicationPublishPreparationService,
+  type PreparedApplicationPublication,
+} from './application-publish-preparation.service';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
 import { PublishHistoryEntryDto } from './dto/publish-history-entry.dto';
 import { PublishResultDto } from './dto/publish-result.dto';
@@ -132,6 +138,7 @@ export class PublishService {
     private readonly dialClient: DialClientService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly adminRoleService: AdminRoleService,
+    private readonly applicationPublishPreparation: ApplicationPublishPreparationService,
   ) {}
 
   /**
@@ -140,8 +147,16 @@ export class PublishService {
    * organization use it without authorising individually. Carries the
    * publisher's intent only — it changes no authorization here or in Core.
    *
+   * @param userSub Caller's session subject; scopes cached schemas and lists when an application is published with its dependencies. Defaults to the bucket.
+   *
+   * An application with private dependencies is published together with them in
+   * the one request, through a temporary rewritten copy (see
+   * `ApplicationPublishCopyService`); any other entity, and an application
+   * without such dependencies, sends the request it always did.
+   *
    * @throws {NotFoundException} When Core reports the entity or folder as unknown
    * @throws {ForbiddenException} When the caller lacks write access to `folderPath`
+   * @throws {ApplicationBeingPublishedException} When the same application is already being published
    * @throws {BadGatewayException} When Core returns an unexpected error, a 5xx, or is unreachable
    */
   async publish(
@@ -154,6 +169,7 @@ export class PublishService {
     author: string,
     rules?: PublishRuleDto[],
     publishCredentials?: boolean,
+    userSub: string = bucket,
   ): Promise<PublishResultDto> {
     /*
      * `entityId` arrives as plain, unencoded text (e.g. a prompt path can
@@ -180,51 +196,73 @@ export class PublishService {
     const { name: entityName, version: resourceVersion } =
       splitEntityNameAndVersion(sourceUrl);
     const publicationVersion = version || resourceVersion;
-    const requestBody = {
-      /* A prompt carries no version, so the title must not gain a trailing space. */
-      name: `${entityName} ${publicationVersion}`.trim(),
-      targetFolder: publicTargetFolder,
-      /*
-       * `publishCredentials` is omitted entirely when false rather than sent as
-       * `false`, so the Core request stays byte-identical to the pre-change
-       * request for every caller that does not set it.
-       */
-      resources: [
-        {
-          action: 'ADD' as const,
-          sourceUrl,
-          targetUrl,
-          ...(publishCredentials ? { publishCredentials: true } : {}),
-        },
-        ...(iconUrl != null
-          ? [
-              {
-                action: 'ADD' as const,
-                sourceUrl: iconUrl,
-                targetUrl: getPublishedIconTargetUrl(
-                  folderPath,
-                  targetResourceName,
-                  iconUrl,
-                ),
-              },
-            ]
-          : []),
-      ],
-      displayAuthor: author,
-      rules: rules ?? [],
-    };
+    const prepared = await this.prepareApplicationPublication(
+      entityType,
+      userSub,
+      accessToken,
+      bucket,
+      entityId,
+      folderPath,
+      targetResourceName,
+    );
     let result;
     try {
-      result = await this.dialClient.client.createPublication({
-        headers: getBearerAuthHeaders(accessToken),
-        body: requestBody,
-      });
-    } catch (err) {
-      this.logger.error(
-        `Unexpected error publishing ${entityType} "${entityId}"`,
-        err instanceof Error ? err.stack : undefined,
-      );
-      throw new BadGatewayException('Failed to publish to DIAL Core');
+      const requestBody = {
+        /* A prompt carries no version, so the title must not gain a trailing space. */
+        name: `${entityName} ${publicationVersion}`.trim(),
+        targetFolder: publicTargetFolder,
+        /*
+         * `publishCredentials` is omitted entirely when false rather than sent as
+         * `false`, so the Core request stays byte-identical to the pre-change
+         * request for every caller that does not set it.
+         */
+        resources: [
+          {
+            action: 'ADD' as const,
+            /* The icon, names and version above come from the original; only this source is the rewritten copy. */
+            sourceUrl: prepared ? prepared.copy.id : sourceUrl,
+            targetUrl,
+            ...(publishCredentials ? { publishCredentials: true } : {}),
+          },
+          ...(iconUrl != null
+            ? [
+                {
+                  action: 'ADD' as const,
+                  sourceUrl: iconUrl,
+                  targetUrl: getPublishedIconTargetUrl(
+                    folderPath,
+                    targetResourceName,
+                    iconUrl,
+                  ),
+                },
+              ]
+            : []),
+          /* No `publishCredentials`: the flag is a per-resource choice made for the application only (design D9). */
+          ...(prepared?.dependencyResources ?? []),
+        ],
+        displayAuthor: author,
+        rules: rules ?? [],
+      };
+      try {
+        result = await this.dialClient.client.createPublication({
+          headers: getBearerAuthHeaders(accessToken),
+          body: requestBody,
+        });
+      } catch (err) {
+        this.logger.error(
+          `Unexpected error publishing ${entityType} "${entityId}"`,
+          err instanceof Error ? err.stack : undefined,
+        );
+        throw new BadGatewayException('Failed to publish to DIAL Core');
+      }
+    } finally {
+      if (prepared) {
+        await this.applicationPublishPreparation.cleanup(
+          userSub,
+          accessToken,
+          prepared,
+        );
+      }
     }
 
     /*
@@ -245,6 +283,13 @@ export class PublishService {
     }
 
     await this.cacheManager.del(historyCacheKey(entityType, entityId));
+    for (const dependency of prepared?.publishedDependencies ?? []) {
+      const dependencyType = CATALOG_TYPE_BY_DEPENDENCY[dependency.type];
+      if (dependencyType == null) continue;
+      await this.cacheManager.del(
+        historyCacheKey(dependencyType, safeDecodeURIComponent(dependency.id)),
+      );
+    }
     await this.cacheManager.del(bucketPublicationsCacheKey(bucket));
 
     /*
@@ -258,6 +303,11 @@ export class PublishService {
     this.logger.debug(
       `Published ${entityType} "${entityId}" to "${folderPath}"`,
     );
+    if (prepared) {
+      this.logger.debug(
+        `Published ${prepared.publishedDependencies.length} dependencies with ${entityType} "${entityId}", reused ${prepared.reusedCount}`,
+      );
+    }
 
     return {
       entityId,
@@ -269,6 +319,50 @@ export class PublishService {
         : new Date().toISOString(),
       publishedBy: readPublicationDisplayAuthor(publication, author),
     };
+  }
+
+  /**
+   * Prepares an application's publication together with its dependencies. Any
+   * failure but "already being published" is logged and answered with
+   * `undefined`, so the application is published the way it was before
+   * dependencies were published with it.
+   * @param entityType - catalog entity kind being published
+   * @param userSub - caller's session subject
+   * @param accessToken - caller's bearer token
+   * @param bucket - caller's own bucket
+   * @param entityId - the entity's resource path
+   * @param folderPath - plain publish target folder
+   * @param targetResourceName - last segment of the entity's published `targetUrl`
+   * @throws {ApplicationBeingPublishedException} When the same application is already being published
+   */
+  private async prepareApplicationPublication(
+    entityType: CatalogEntityType,
+    userSub: string,
+    accessToken: string,
+    bucket: string,
+    entityId: string,
+    folderPath: string,
+    targetResourceName: string,
+  ): Promise<PreparedApplicationPublication | undefined> {
+    if (entityType !== CatalogEntityType.Application) return undefined;
+    try {
+      return await this.applicationPublishPreparation.prepare(
+        userSub,
+        accessToken,
+        bucket,
+        entityId,
+        folderPath,
+        targetResourceName,
+      );
+    } catch (err) {
+      if (err instanceof ApplicationBeingPublishedException) throw err;
+      this.logger.warn(
+        `Publishing ${entityType} "${entityId}" without its dependencies: ${
+          err instanceof Error ? err.message : 'unknown error'
+        }`,
+      );
+      return undefined;
+    }
   }
 
   /*

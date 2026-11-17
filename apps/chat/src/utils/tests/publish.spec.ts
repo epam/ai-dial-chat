@@ -1,5 +1,8 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { PublishDependencyType } from '@epam/ai-dial-publish-panel';
+import {
+  PublishDependenciesAppearance,
+  PublishDependencyType,
+} from '@epam/ai-dial-publish-panel';
 import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
 import {
@@ -7,6 +10,7 @@ import {
   PublishI18nKeys,
 } from '../../constants/translation-keys';
 import {
+  getApplicationPublishDependenciesLabels,
   getPublishApprovalLabels,
   getPublishDependenciesEntityKey,
   getPublishDependenciesLabels,
@@ -117,6 +121,53 @@ describe('getPublishDependenciesLabels', () => {
     expect(getAnnouncement?.(3)).toBe(
       `${PublishI18nKeys.DependenciesAnnouncement}:3`,
     );
+  });
+});
+
+describe('getApplicationPublishDependenciesLabels', () => {
+  const echoT = ((
+    key: string,
+    options?: { count?: number; entity?: string },
+  ): string => {
+    if (options?.entity != null) return `${key}:${options.entity}`;
+    if (options?.count != null) return `${key}:${options.count}`;
+    return key;
+  }) as unknown as TFunction;
+
+  it('uses the application keys and an informational notice', () => {
+    const labels = getApplicationPublishDependenciesLabels(echoT);
+
+    expect(labels.title).toBe(PublishI18nKeys.DependenciesPublishedTitle);
+    expect(labels.description).toBe(
+      `${PublishI18nKeys.DependenciesPublishedDescription}:${PublishI18nKeys.DependenciesEntityApplication}`,
+    );
+    expect(labels.appearance).toBe(PublishDependenciesAppearance.Published);
+    expect(labels.getAnnouncement?.(2)).toBe(
+      `${PublishI18nKeys.DependenciesPublishedAnnouncement}:2`,
+    );
+  });
+
+  it('keeps the type labels of the shared section', () => {
+    const { typeLabels } = getApplicationPublishDependenciesLabels(echoT);
+
+    expect(typeLabels?.[PublishDependencyType.Skill]).toBe(
+      PublishI18nKeys.DependenciesTypeSkill,
+    );
+  });
+
+  it('leaves the conversation and project labels a warning with their own keys', () => {
+    for (const entity of [
+      PublishI18nKeys.DependenciesEntityConversation,
+      PublishI18nKeys.DependenciesEntityProject,
+    ] as const) {
+      const labels = getPublishDependenciesLabels(echoT, entity);
+
+      expect(labels.title).toBe(PublishI18nKeys.DependenciesTitle);
+      expect(labels.appearance).toBeUndefined();
+      expect(labels.getAnnouncement?.(1)).toBe(
+        `${PublishI18nKeys.DependenciesAnnouncement}:1`,
+      );
+    }
   });
 });
 

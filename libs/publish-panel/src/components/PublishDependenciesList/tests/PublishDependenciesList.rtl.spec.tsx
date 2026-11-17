@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { PublishDependenciesAppearance } from '../../../models/publish-dependencies-list';
 import type { PublishDependency } from '../../../models/publish-dependency';
 import { PublishDependencyType } from '../../../models/publish-dependency';
 import { PublishDependenciesList } from '../PublishDependenciesList';
@@ -25,6 +26,30 @@ describe('PublishDependenciesList — RTL', () => {
 
     expect(screen.getByRole('list')).toBeTruthy();
     expect(screen.getByText('Docs')).toBeTruthy();
+  });
+
+  it('renders the Published appearance under a right-to-left ancestor with no physical-direction class', () => {
+    render(
+      <div dir="rtl">
+        <PublishDependenciesList
+          dependencies={[dependency]}
+          labels={{
+            title: 'Dependencies',
+            appearance: PublishDependenciesAppearance.Published,
+          }}
+        />
+      </div>,
+    );
+
+    const offenders = [
+      screen.getByRole('region'),
+      screen.getByRole('list'),
+      screen.getByRole('listitem'),
+    ].filter((element) =>
+      PHYSICAL_DIRECTION_CLASS.test(element.getAttribute('class') ?? ''),
+    );
+    expect(screen.getByRole('heading', { name: 'Dependencies' })).toBeTruthy();
+    expect(offenders).toEqual([]);
   });
 
   it('uses no physical-direction class on the section, heading, list or rows', () => {

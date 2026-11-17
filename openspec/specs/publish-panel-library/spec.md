@@ -378,10 +378,13 @@ Accessibility: the folder view root SHALL be a named `group` that receives focus
 When `dependencies` is absent or empty the section SHALL NOT render and SHALL leave no gap, so a host that supplies nothing renders exactly today's panel. When it is non-empty, the section SHALL render in the Main view as its last section, below the destination folder, author and access-rules block, as:
 
 - a heading from `dependenciesLabels.title`;
-- a warning `Notification` (ui-kit 2.0 `NotificationType.SectionMessage`, `NotificationVariant.Warning`) whose message is `dependenciesLabels.description`;
-- a list with one row per dependency starting with an icon, then the name with `version` appended when present, and a second line with the type label and the location, which is omitted together with its separator when `location` is empty.
+- the description `dependenciesLabels.description`, presented according to `dependenciesLabels.appearance`, a member of the exported string enum `PublishDependenciesAppearance` (`Warning`, `Published`). When the host passes nothing the appearance SHALL be `Warning` and the title, description and announcement defaults SHALL be today's, so a host that supplies nothing renders exactly today's section;
+- in the `Warning` appearance the description is a warning `Notification` (ui-kit 2.0 `NotificationType.SectionMessage`) and each row is an icon, then the name with `version` appended when present, and a second line with the type label and the location, which is omitted together with its separator when `location` is empty;
+- in the `Published` appearance the description is a plain muted caption directly under the heading, with no notification and no warning, and each row is a 40px icon with 12px rounded corners, 12px before the text, the type label above the name (the type label upper-cased and in the accent color), the `version` appended to the name when present, the `location` after the type label when not empty, and a thin divider between rows.
 
 The section is informational: rows SHALL NOT be interactive, selectable or removable, and the section SHALL NOT change the submit button's enabled state or the callout derivation.
+
+The library SHALL NOT know why a host picks an appearance. A host that publishes the listed dependencies together with the item passes `Published` with text saying so; a host that only warns passes nothing. Every color of the `Published` appearance (`captionText`, `typeText`, `divider`) SHALL come from `PublishDependenciesColors` as a `--pp-dependencies-*` CSS variable with a token fallback, and its typography from `captionClassName` and `typeClassName` props defaulted to kit classes.
 
 Accessibility: the section SHALL be a landmark-free `section` named by its heading (`aria-labelledby`), the rows SHALL be `<li>` items of a `<ul>`, and when the section first appears or its count changes the panel SHALL announce `dependenciesLabels.getAnnouncement(count)` through the ui-kit `LiveRegion`, mounted before the text it announces.
 
@@ -389,9 +392,19 @@ RTL: all spacing and alignment SHALL use logical Tailwind classes (`ms-*`, `me-*
 
 Memoisation: none required; the host keeps the `dependencies` array identity stable between renders (the `usePublishDependencies` hook returns a module-level empty array).
 
+The app host's strings for the **application** panel SHALL be new i18n keys (`publish.dependenciesPublishedTitle` whose English text is `Dependencies`, `publish.dependenciesPublishedDescription` with the `{{entity}}` placeholder, `publish.dependenciesPublishedAnnouncement_one` and `publish.dependenciesPublishedAnnouncement_other`) added to `apps/chat/src/i18n/locales/en.json`; the existing `publish.dependenciesTitle`, `publish.dependenciesDescription` and announcement keys SHALL stay unchanged and keep serving the conversation and project panels.
+
 #### Scenario: Private dependencies are shown
-- **WHEN** `PublishPanel` renders with `dependencies` holding one prompt and one toolset
-- **THEN** the panel shows the title, the warning, and two rows, each with its type label, name and location
+- **WHEN** `PublishPanel` renders with `dependencies` holding one prompt and one toolset and no `dependenciesLabels`
+- **THEN** the panel shows today's title, a warning, and two rows, each with its type label, name and location
+
+#### Scenario: Host publishes the dependencies with the item
+- **WHEN** a host passes `dependenciesLabels` with `title: 'Dependencies'`, text saying the artifacts are published with the item and `appearance: PublishDependenciesAppearance.Published`
+- **THEN** the section shows that title and text as a plain caption, with no notification and no warning, and each row shows the type label above the name
+
+#### Scenario: Default appearance is a warning
+- **WHEN** `dependenciesLabels.appearance` is omitted
+- **THEN** the description is a warning notification and the rows keep their compact layout
 
 #### Scenario: No dependencies renders today's panel
 - **WHEN** `PublishPanel` renders with `dependencies` omitted or `[]`
@@ -412,6 +425,10 @@ Memoisation: none required; the host keeps the `dependencies` array identity sta
 #### Scenario: Appearance is announced
 - **WHEN** dependencies arrive after the panel has opened
 - **THEN** the live region announces the count
+
+#### Scenario: Conversation and project panels are unchanged
+- **WHEN** the conversation or project publish panel renders with dependencies
+- **THEN** it shows the same title, warning and announcement as before this change
 
 ### Requirement: The dependencies section is themeable and carries only host-supplied text and data
 

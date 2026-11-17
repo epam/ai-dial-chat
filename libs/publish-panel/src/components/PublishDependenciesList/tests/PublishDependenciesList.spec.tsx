@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { PUBLISH_PANEL_CLASS } from '../../../constants/public-class-names';
+import { PublishDependenciesAppearance } from '../../../models/publish-dependencies-list';
 import type { PublishDependency } from '../../../models/publish-dependency';
 import { PublishDependencyType } from '../../../models/publish-dependency';
 import { PublishDependenciesList } from '../PublishDependenciesList';
@@ -8,6 +9,12 @@ import { PublishDependenciesList } from '../PublishDependenciesList';
 /* The real icons draw images and glyphs a test cannot read by role; these state which icon a row asked for. */
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
+  /* States which variant the section asked for, which the real notification only shows as styling. */
+  Notification: (props: { variant: unknown; message: string }) => (
+    <p data-variant={String(props.variant)} role="note">
+      {props.message}
+    </p>
+  ),
   FileIcon: ({ type, name }: { type: string; name: string }) => (
     <span>
       file-icon:{type}:{name}
@@ -179,6 +186,77 @@ describe('PublishDependenciesList', () => {
       );
 
       expect(screen.getByText('file-icon:folder:docs')).toBeTruthy();
+    });
+  });
+
+  describe('appearance', () => {
+    it('is a warning with the default texts when the host passes nothing', () => {
+      render(<PublishDependenciesList dependencies={[prompt]} />);
+
+      expect(screen.getByRole('note').dataset.variant).toBe('warning');
+      expect(
+        screen.getByRole('heading', { name: 'Private dependencies' }),
+      ).toBeTruthy();
+    });
+
+    it('shows a plain caption and no notification for Published', () => {
+      render(
+        <PublishDependenciesList
+          dependencies={[prompt]}
+          labels={{
+            title: 'Dependencies',
+            description: 'Published with the application.',
+            appearance: PublishDependenciesAppearance.Published,
+          }}
+        />,
+      );
+
+      expect(screen.queryByRole('note')).toBeNull();
+      expect(screen.getByText('Published with the application.')).toBeTruthy();
+      expect(
+        screen.getByRole('heading', { name: 'Dependencies' }),
+      ).toBeTruthy();
+    });
+
+    it('puts the type label above the name for Published', () => {
+      render(
+        <PublishDependenciesList
+          dependencies={[prompt]}
+          labels={{ appearance: PublishDependenciesAppearance.Published }}
+        />,
+      );
+
+      const row = within(screen.getByRole('list')).getByRole('listitem');
+      const label = within(row).getByText('Prompt');
+      const names = within(row).getAllByText(prompt.name);
+      const name = names[names.length - 1];
+      expect(
+        label.compareDocumentPosition(name) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('keeps the location beside the type label for Published', () => {
+      render(
+        <PublishDependenciesList
+          dependencies={[prompt]}
+          labels={{ appearance: PublishDependenciesAppearance.Published }}
+        />,
+      );
+
+      expect(screen.getByText('· Support')).toBeTruthy();
+    });
+
+    it('lists every dependency for Published', () => {
+      render(
+        <PublishDependenciesList
+          dependencies={[prompt, toolset]}
+          labels={{ appearance: PublishDependenciesAppearance.Published }}
+        />,
+      );
+
+      expect(
+        within(screen.getByRole('list')).getAllByRole('listitem'),
+      ).toHaveLength(2);
     });
   });
 });

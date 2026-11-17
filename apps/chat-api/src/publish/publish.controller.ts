@@ -57,7 +57,11 @@ export class PublishController {
       "Core to copy the publisher's own credential for the entity onto the published copy, so members of the " +
       'organization use it without authorising individually; it is forwarded unchanged and changes no ' +
       'authorization — Core still derives the actor from the bearer token, enforces target-folder write access, ' +
-      'and holds the publication PENDING until an administrator approves it.',
+      'and holds the publication PENDING until an administrator approves it. Publishing an application also ' +
+      'publishes its first-level private dependencies (skills, prompts, toolsets, applications) in the same ' +
+      'DIAL Core request, so the published application works for other users; a temporary copy of the ' +
+      "application, with its references rewritten, is the request's source and is deleted when the call returns. " +
+      "The author's own application is never modified.",
   })
   @ApiBody({ type: PublishCatalogEntityDto })
   @ApiDialCoreErrors()
@@ -80,6 +84,11 @@ export class PublishController {
     description: 'Caller lacks write access to the target folder',
   })
   @ApiResponse({
+    status: 409,
+    description:
+      'The same application is already being published, or DIAL Core reported a conflict',
+  })
+  @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
   })
@@ -100,7 +109,7 @@ export class PublishController {
       publishCredentials,
     }: PublishCatalogEntityDto,
   ): Promise<PublishResultDto> {
-    const { at, bucket, claims } = req.user as SessionUser;
+    const { at, bucket, claims, sub } = req.user as SessionUser;
     return this.publishService.publish(
       at,
       bucket,
@@ -111,6 +120,7 @@ export class PublishController {
       resolveDisplayAuthor(author, claims),
       rules,
       publishCredentials,
+      sub,
     );
   }
 
