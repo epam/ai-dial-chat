@@ -16,7 +16,7 @@ import {
 import { CHAT_SHARED_CLASS } from '../../../constants/public-class-names';
 import { useHorizontalOverflow } from '../../../hooks/useHorizontalOverflow';
 import { buildCssVars } from '../../../utils/build-css-vars';
-import { copyMarkdownAsRichText } from '../../../utils/copy-to-clipboard';
+import { copyMarkdownAsRichText } from '../../../utils/markdown-rich-text';
 import { downloadTextFile } from '../../../utils/file-download';
 import { mergeClasses } from '../../../utils/merge-class';
 import styles from './MarkdownTable.module.scss';

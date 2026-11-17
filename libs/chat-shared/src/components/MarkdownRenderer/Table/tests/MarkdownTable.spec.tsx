@@ -2,12 +2,12 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CHAT_SHARED_CLASS } from '../../../../constants/public-class-names';
-import { copyMarkdownAsRichText } from '../../../../utils/copy-to-clipboard';
+import { copyMarkdownAsRichText } from '../../../../utils/markdown-rich-text';
 import { downloadTextFile } from '../../../../utils/file-download';
 import { MarkdownTable } from '../MarkdownTable';
 import styles from '../MarkdownTable.module.scss';
 
-vi.mock('../../../../utils/copy-to-clipboard', () => ({
+vi.mock('../../../../utils/markdown-rich-text', () => ({
   copyMarkdownAsRichText: vi.fn(),
 }));
 

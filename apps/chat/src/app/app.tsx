@@ -38,7 +38,6 @@ import ConversationPanelView from '../components/ConversationPanel/ConversationP
 import { RouteErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
 import Header from '../components/Header/Header';
 import SourcesSidebarToggle from '../components/Header/SourcesSidebarToggle';
-import McpAppCanvasContainer from '../components/McpAppCanvasContainer/McpAppCanvasContainer';
 import SidebarNavigation from '../components/Navigation/SidebarNavigation';
 import NewVersionFallback from '../components/NewVersionFallback/NewVersionFallback';
 import OnboardingHints from '../components/OnboardingHints/OnboardingHints';
@@ -87,6 +86,15 @@ const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 const ConversationSourcesPanel = lazy(
   () =>
     import('../components/ConversationSourcesPanel/ConversationSourcesPanel'),
+);
+/*
+ * Lazy for the same reason: the canvas body renders markdown, code and
+ * visualizer content, and it is closed until an attachment is opened. The
+ * chunk starts loading as soon as a canvas route mounts, so it is in place by
+ * the first click.
+ */
+const McpAppCanvasContainer = lazy(
+  () => import('../components/McpAppCanvasContainer/McpAppCanvasContainer'),
 );
 const DialFileManagerPage = lazy(
   () => import('../pages/DialFileManagerPage/DialFileManagerPage'),
@@ -623,95 +631,97 @@ const App: FC = () => {
         {(isFileManagerRoute ||
           isProjectPageRoute ||
           (isConversationRoute && isAttachmentsManagerEnabled)) && (
-          <McpAppCanvasContainer
-            loadPdf={loadPdf}
-            onVisualizerSendMessage={handleCanvasVisualizerSendMessage}
-            labels={{
-              ariaLabel: t(AttachmentCanvasI18nKeys.AriaLabel),
-              closeLabel: t(AttachmentCanvasI18nKeys.CloseLabel),
-              resizeLabel: t(SidebarI18nKeys.ResizePanel),
-              visualizerErrorLabel: t(
-                AttachmentCanvasI18nKeys.VisualizerLoadErrorLabel,
-              ),
-              downloadLabel: t(AttachmentCanvasI18nKeys.DownloadLabel),
-              unsupportedLabel: t(AttachmentCanvasI18nKeys.UnsupportedLabel),
-              loadErrorLabel: t(AttachmentCanvasI18nKeys.LoadErrorLabel),
-              loadErrorRetryLabel: t(ButtonsI18nKeys.Retry),
-              forbiddenErrorLabel: t(
-                AttachmentCanvasI18nKeys.ForbiddenErrorLabel,
-              ),
-              copyTextLabel: t(ButtonsI18nKeys.CopyText),
-              copiedTextLabel: t(ButtonsI18nKeys.Copied),
-              copyMarkdownLabel: t(ButtonsI18nKeys.CopyAsMarkdown),
-              copiedMarkdownLabel: t(ButtonsI18nKeys.Copied),
-              copyJsonLabel: t(ButtonsI18nKeys.CopyAsJson),
-              copiedJsonLabel: t(ButtonsI18nKeys.Copied),
-              htmlFrameBlockedLabel: t(
-                AttachmentCanvasI18nKeys.HtmlFrameBlocked,
-              ),
-              htmlOpenInNewTabLabel: t(AttachmentsI18nKeys.OpenInNewTab),
-              htmlViewSourceLabel: t(AttachmentCanvasI18nKeys.HtmlViewSource),
-              htmlViewRenderedLabel: t(
-                AttachmentCanvasI18nKeys.HtmlViewRendered,
-              ),
-              pdfThumbnailsLabel: t(
-                AttachmentCanvasI18nKeys.PdfThumbnailsLabel,
-              ),
-              pdfShowThumbnailsLabel: t(
-                AttachmentCanvasI18nKeys.PdfShowThumbnailsLabel,
-              ),
-              pdfHideThumbnailsLabel: t(
-                AttachmentCanvasI18nKeys.PdfHideThumbnailsLabel,
-              ),
-              pdfPageNumberLabel: t(
-                AttachmentCanvasI18nKeys.PdfPageNumberLabel,
-              ),
-              mcpAppReloadLabel: t(ButtonsI18nKeys.Reload),
-              pdfContentLoadingLabel: t(
-                AttachmentCanvasI18nKeys.PdfContentLoadingLabel,
-              ),
-              pdfContentErrorLabel: t(
-                AttachmentCanvasI18nKeys.PdfContentErrorLabel,
-              ),
-              pdfContentRetryLabel: t(ButtonsI18nKeys.Retry),
-              xlsxFormulaLabel: t(AttachmentCanvasI18nKeys.XlsxFormulaLabel),
-              codeContentLoadingLabel: t(
-                AttachmentCanvasI18nKeys.CodeContentLoadingLabel,
-              ),
-              codeContentErrorLabel: t(
-                AttachmentCanvasI18nKeys.CodeContentErrorLabel,
-              ),
-              codeContentRetryLabel: t(ButtonsI18nKeys.Retry),
-              tableCopyLabel: t(ButtonsI18nKeys.Copy),
-              tableCopiedLabel: t(ButtonsI18nKeys.Copied),
-              tableDownloadCsvLabel: t(ButtonsI18nKeys.DownloadAsCsv),
-              codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
-              codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
-              codeBlockDownloadLabel: t(ButtonsI18nKeys.Download),
-              tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
-              mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
-              ooxmlHighlightsLabel: t(
-                AttachmentCanvasI18nKeys.OoxmlHighlightsLabel,
-              ),
-              ooxmlHighlightNavigatedLabel: t(
-                AttachmentCanvasI18nKeys.OoxmlHighlightNavigatedLabel,
-              ),
-              loadingLabel: t(BasicI18nKeys.Loading),
-            }}
-            /* The project pages have no sources panel for the toggle to drive. */
-            leftActions={
-              isMobile && !isProjectPageRoute ? (
-                <SourcesSidebarToggle />
-              ) : undefined
-            }
-            isMobile={isMobile}
-            isBoundedOverlay={isTablet}
-            defaultWidth={canvasDefaultWidth}
-            minWidth={canvasMinWidth}
-            maxWidth={canvasMaxWidth}
-            codeBlockTheme={codeBlockTheme}
-            configurePdfWorker={configurePdfWorker}
-          />
+          <Suspense fallback={null}>
+            <McpAppCanvasContainer
+              loadPdf={loadPdf}
+              onVisualizerSendMessage={handleCanvasVisualizerSendMessage}
+              labels={{
+                ariaLabel: t(AttachmentCanvasI18nKeys.AriaLabel),
+                closeLabel: t(AttachmentCanvasI18nKeys.CloseLabel),
+                resizeLabel: t(SidebarI18nKeys.ResizePanel),
+                visualizerErrorLabel: t(
+                  AttachmentCanvasI18nKeys.VisualizerLoadErrorLabel,
+                ),
+                downloadLabel: t(AttachmentCanvasI18nKeys.DownloadLabel),
+                unsupportedLabel: t(AttachmentCanvasI18nKeys.UnsupportedLabel),
+                loadErrorLabel: t(AttachmentCanvasI18nKeys.LoadErrorLabel),
+                loadErrorRetryLabel: t(ButtonsI18nKeys.Retry),
+                forbiddenErrorLabel: t(
+                  AttachmentCanvasI18nKeys.ForbiddenErrorLabel,
+                ),
+                copyTextLabel: t(ButtonsI18nKeys.CopyText),
+                copiedTextLabel: t(ButtonsI18nKeys.Copied),
+                copyMarkdownLabel: t(ButtonsI18nKeys.CopyAsMarkdown),
+                copiedMarkdownLabel: t(ButtonsI18nKeys.Copied),
+                copyJsonLabel: t(ButtonsI18nKeys.CopyAsJson),
+                copiedJsonLabel: t(ButtonsI18nKeys.Copied),
+                htmlFrameBlockedLabel: t(
+                  AttachmentCanvasI18nKeys.HtmlFrameBlocked,
+                ),
+                htmlOpenInNewTabLabel: t(AttachmentsI18nKeys.OpenInNewTab),
+                htmlViewSourceLabel: t(AttachmentCanvasI18nKeys.HtmlViewSource),
+                htmlViewRenderedLabel: t(
+                  AttachmentCanvasI18nKeys.HtmlViewRendered,
+                ),
+                pdfThumbnailsLabel: t(
+                  AttachmentCanvasI18nKeys.PdfThumbnailsLabel,
+                ),
+                pdfShowThumbnailsLabel: t(
+                  AttachmentCanvasI18nKeys.PdfShowThumbnailsLabel,
+                ),
+                pdfHideThumbnailsLabel: t(
+                  AttachmentCanvasI18nKeys.PdfHideThumbnailsLabel,
+                ),
+                pdfPageNumberLabel: t(
+                  AttachmentCanvasI18nKeys.PdfPageNumberLabel,
+                ),
+                mcpAppReloadLabel: t(ButtonsI18nKeys.Reload),
+                pdfContentLoadingLabel: t(
+                  AttachmentCanvasI18nKeys.PdfContentLoadingLabel,
+                ),
+                pdfContentErrorLabel: t(
+                  AttachmentCanvasI18nKeys.PdfContentErrorLabel,
+                ),
+                pdfContentRetryLabel: t(ButtonsI18nKeys.Retry),
+                xlsxFormulaLabel: t(AttachmentCanvasI18nKeys.XlsxFormulaLabel),
+                codeContentLoadingLabel: t(
+                  AttachmentCanvasI18nKeys.CodeContentLoadingLabel,
+                ),
+                codeContentErrorLabel: t(
+                  AttachmentCanvasI18nKeys.CodeContentErrorLabel,
+                ),
+                codeContentRetryLabel: t(ButtonsI18nKeys.Retry),
+                tableCopyLabel: t(ButtonsI18nKeys.Copy),
+                tableCopiedLabel: t(ButtonsI18nKeys.Copied),
+                tableDownloadCsvLabel: t(ButtonsI18nKeys.DownloadAsCsv),
+                codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
+                codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
+                codeBlockDownloadLabel: t(ButtonsI18nKeys.Download),
+                tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
+                mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
+                ooxmlHighlightsLabel: t(
+                  AttachmentCanvasI18nKeys.OoxmlHighlightsLabel,
+                ),
+                ooxmlHighlightNavigatedLabel: t(
+                  AttachmentCanvasI18nKeys.OoxmlHighlightNavigatedLabel,
+                ),
+                loadingLabel: t(BasicI18nKeys.Loading),
+              }}
+              /* The project pages have no sources panel for the toggle to drive. */
+              leftActions={
+                isMobile && !isProjectPageRoute ? (
+                  <SourcesSidebarToggle />
+                ) : undefined
+              }
+              isMobile={isMobile}
+              isBoundedOverlay={isTablet}
+              defaultWidth={canvasDefaultWidth}
+              minWidth={canvasMinWidth}
+              maxWidth={canvasMaxWidth}
+              codeBlockTheme={codeBlockTheme}
+              configurePdfWorker={configurePdfWorker}
+            />
+          </Suspense>
         )}
       </div>
     </div>
