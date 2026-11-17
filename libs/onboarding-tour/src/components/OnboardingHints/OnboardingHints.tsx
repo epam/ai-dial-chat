@@ -19,7 +19,7 @@ export const OnboardingHints: FC<OnboardingHintsProps> = ({
   ...hintOptions
 }) => {
   const { resolveTarget } = hintOptions;
-  const { steps, onFinish } = useOnboardingHints({
+  const { steps, onFinish, onStepComplete } = useOnboardingHints({
     ...hintOptions,
     isEnabled: isEnabled && !isAnchorView,
   });
@@ -48,6 +48,7 @@ export const OnboardingHints: FC<OnboardingHintsProps> = ({
     <OnboardingTour
       steps={steps}
       onFinish={onFinish}
+      onStepComplete={onStepComplete}
       isMobile={isMobile}
       dir={dir}
       labels={labels?.tour}

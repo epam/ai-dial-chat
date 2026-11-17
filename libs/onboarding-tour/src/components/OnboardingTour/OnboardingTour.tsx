@@ -52,6 +52,7 @@ const defaultStepCounter = (current: number, total: number) =>
 export const OnboardingTour: FC<OnboardingTourProps> = ({
   steps,
   onFinish,
+  onStepComplete,
   isMobile = false,
   dir,
   labels,
@@ -169,7 +170,12 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
   }, [step]);
 
   const handleBack = useCallback(() => setIndex((value) => value - 1), []);
-  const handleNext = useCallback(() => setIndex((value) => value + 1), []);
+  const handleNext = useCallback(() => {
+    if (step) {
+      onStepComplete?.(step.id);
+    }
+    setIndex((value) => value + 1);
+  }, [step, onStepComplete]);
 
   if (!step) {
     return null;
