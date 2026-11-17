@@ -364,15 +364,15 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it('declares exactly the 50 known keys: 7 managed, 27 local-only and 16 eligible', () => {
+  it('declares exactly the 50 known keys: 7 managed, 31 local-only and 12 eligible', () => {
     expect(CONFIG_DEFINITIONS).toHaveLength(50);
     expect(managed).toHaveLength(7);
     expect(
       CONFIG_DEFINITIONS.filter((d) => localOnlyReasonOf(d) !== undefined),
-    ).toHaveLength(27);
+    ).toHaveLength(31);
     expect(
       CONFIG_DEFINITIONS.filter((d) => d.management === undefined),
-    ).toHaveLength(16);
+    ).toHaveLength(12);
   });
 
   it('manages a config key as config and a feature as feature', () => {
@@ -434,6 +434,10 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     ['features.llmConversationNaming', LocalOnlyReason.Capability],
     ['features.responsesApiEnabled', LocalOnlyReason.Capability],
     ['features.responsesBackgroundEnabled', LocalOnlyReason.Capability],
+    ['features.orgUnitsEnabled', LocalOnlyReason.Capability],
+    ['features.liveChatInteraction', LocalOnlyReason.Capability],
+    ['publish.publicationFilterSources', LocalOnlyReason.Capability],
+    ['features.scheduledTasksEnabled', LocalOnlyReason.Capability],
     ['dialCore.externalUrl', LocalOnlyReason.DeploymentTopology],
     ['mcpApps.sandboxUrl', LocalOnlyReason.DeploymentTopology],
     ['overlay.enabled', LocalOnlyReason.SecurityPolicy],
@@ -460,15 +464,26 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     expect(definition && localOnlyReasonOf(definition)).toBe(reason);
   });
 
-  it.each([
-    'features.scheduledTasksEnabled',
-    'features.projectsEnabled',
-    'footer.html',
-    'uiFeatures.enabledUiFeatures',
-  ])('keeps the excluded candidate %s eligible but unmanaged', (key) => {
-    const definition = CONFIG_DEFINITIONS.find((entry) => entry.key === key);
-    expect(definition).toBeDefined();
-    expect(definition?.management).toBeUndefined();
+  describe('opt-in prerequisites', () => {
+    const definitionOf = (key: string) => {
+      const definition = CONFIG_DEFINITIONS.find((entry) => entry.key === key);
+      if (!definition) throw new Error(`Registry key ${key} is missing`);
+      return definition;
+    };
+
+    it('manages footer.html only once features.footer no longer derives from the local footer', () => {
+      if (isManagedKey(definitionOf('footer.html'))) {
+        expect(localOnlyReasonOf(definitionOf('features.footer'))).not.toBe(
+          LocalOnlyReason.Derived,
+        );
+      }
+    });
+
+    it('manages the default deployment and its pinning together', () => {
+      expect(
+        isManagedKey(definitionOf('features.defaultDeploymentPinned')),
+      ).toBe(isManagedKey(definitionOf('deployments.defaultDeploymentId')));
+    });
   });
 
   it('never manages a key that reads DIAL_CORE_URL', () => {
