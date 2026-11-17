@@ -37,21 +37,21 @@ const REQUIRED = {
 };
 const ACTIVE = {
   MANAGED_CONFIG_MODE: 'active',
-  MANAGED_CONFIG_INSTANCES: 'chat-ui=chat-dev',
+  MANAGED_CONFIG_INSTANCES: 'ai-dial-chat=chat-dev',
   MANAGED_CONFIG_API_KEY: 'reader-key',
   MANAGED_CONFIG_MAX_STALENESS_SECONDS: '900',
 };
 const FEATURE = 'features.usageLimitsControl';
 const INTERVAL = 60_000;
 
-const anonymous: AppConfigEvalContext = { appId: 'chat-ui' };
+const anonymous: AppConfigEvalContext = { appId: 'ai-dial-chat' };
 const beta: AppConfigEvalContext = {
-  appId: 'chat-ui',
+  appId: 'ai-dial-chat',
   userId: 'u-beta',
   roles: ['beta', 'staff'],
 };
 const staff: AppConfigEvalContext = {
-  appId: 'chat-ui',
+  appId: 'ai-dial-chat',
   userId: 'u-staff',
   roles: ['staff'],
 };
@@ -549,7 +549,7 @@ describe('managed configuration activation', () => {
         },
       );
       await clock.advance(endsAt - clock.now() - 1);
-      expect(runtime.captureView('chat-ui').state).toBe('degraded');
+      expect(runtime.captureView('ai-dial-chat').state).toBe('degraded');
       await expect(
         flags.isEnabled(FeatureKey.UsageLimitsControl, anonymous),
       ).resolves.toBe(true);
@@ -617,11 +617,11 @@ describe('managed configuration activation', () => {
       ).resolves.toBe(false);
     });
 
-    it('keeps environment behavior while chat-ui has no mapped instance', async () => {
+    it('keeps environment behavior while ai-dial-chat has no mapped instance', async () => {
       const { service } = await buildStack(
         {
           ...activeKeys(FEATURE),
-          CLIENT_CONFIG_APP_IDS: 'chat-ui,launchpad',
+          CLIENT_CONFIG_APP_IDS: 'ai-dial-chat,launchpad',
           MANAGED_CONFIG_INSTANCES: 'launchpad=launchpad-dev',
           USAGE_LIMITS_CONTROL_ENABLED: 'true',
         },

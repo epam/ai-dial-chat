@@ -14,7 +14,10 @@ const validators = compileManagedPayloadValidators();
 
 const chatUiSchemaArtifact100 = JSON.parse(
   readFileSync(
-    join(__dirname, '../../../../managed-config-schema/chat-ui-1.0.0.json'),
+    join(
+      __dirname,
+      '../../../../managed-config-schema/ai-dial-chat-1.0.0.json',
+    ),
     'utf8',
   ),
 ) as { appId: string; schemaVersion: string; schema: Record<string, unknown> };
@@ -22,7 +25,7 @@ const chatUiSchemaArtifact100 = JSON.parse(
 const chatContext = (
   overrides: Partial<AcceptanceContext> = {},
 ): AcceptanceContext => ({
-  appId: 'chat-ui',
+  appId: 'ai-dial-chat',
   instanceId: 'chat-dev',
   knownRevision: () => undefined,
   validators,
@@ -49,7 +52,7 @@ const rejectionOf = (body: unknown, context = chatContext()) => {
 };
 
 describe('acceptSnapshot', () => {
-  it('accepts a valid chat-ui snapshot as a frozen copy', () => {
+  it('accepts a valid ai-dial-chat snapshot as a frozen copy', () => {
     const body = snapshotBody({ payload: VALID_PAYLOAD });
     const result = acceptSnapshot(body, chatContext());
 
@@ -76,6 +79,14 @@ describe('acceptSnapshot', () => {
 
   it('rejects a snapshot of another application', () => {
     expect(rejectionOf(snapshotBody({ appId: 'launchpad' }))).toBe(
+      ManagedRejectionReason.IdentityMismatch,
+    );
+  });
+
+  /* The legacy identifier is an alias for requests and the environment only:
+   * an instance created with appId chat-ui publishes another contract line. */
+  it('rejects a snapshot published under the legacy chat-ui identifier', () => {
+    expect(rejectionOf(snapshotBody({ appId: 'chat-ui' }))).toBe(
       ManagedRejectionReason.IdentityMismatch,
     );
   });

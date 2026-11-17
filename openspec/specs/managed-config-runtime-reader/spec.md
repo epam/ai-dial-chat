@@ -45,17 +45,17 @@ The instance SHALL be selected only by this mapping. No request parameter, heade
 
 #### Scenario: Mapping for an unserved identifier fails startup
 
-- **WHEN** `CLIENT_CONFIG_APP_IDS=chat-ui` and `MANAGED_CONFIG_INSTANCES=chat-ui=chat-dev,launchpad=launchpad-dev`
+- **WHEN** `CLIENT_CONFIG_APP_IDS=ai-dial-chat` and `MANAGED_CONFIG_INSTANCES=ai-dial-chat=chat-dev,launchpad=launchpad-dev`
 - **THEN** environment validation fails and names `MANAGED_CONFIG_INSTANCES`
 
 #### Scenario: Browser cannot select an instance
 
-- **WHEN** a browser calls `GET /api/v1/client-config?appId=chat-ui&instance=chat-prod`
+- **WHEN** a browser calls `GET /api/v1/client-config?appId=ai-dial-chat&instance=chat-prod`
 - **THEN** the response is `400 Bad Request` (`forbidNonWhitelisted`), and `chat-prod` is never read
 
 #### Scenario: Unmapped served identifier
 
-- **WHEN** `CLIENT_CONFIG_APP_IDS=chat-ui,models-garden` and only `chat-ui` is mapped
+- **WHEN** `CLIENT_CONFIG_APP_IDS=ai-dial-chat,models-garden` and only `ai-dial-chat` is mapped
 - **THEN** `appId=models-garden` receives the environment-only response without managed metadata
 
 ### Requirement: Runtime read request
@@ -114,10 +114,10 @@ A candidate SHALL be accepted only if every check below passes, in this order.
 2. **Envelope.** `schemaVersion` is `MAJOR.MINOR.PATCH`. `schemaSha256` and `sha256` are 64 lowercase hexadecimal characters. `revisionId` is a non-empty string of at most 128 characters. `publishedAt` is an ISO-8601 instant. `payload` is a JSON object.
 3. **Depth and size.** `payload` nests objects and arrays at most 32 levels deep (the payload itself being level 1), checked without recursion before any other walk of it. Its canonical serialization is at most 57,344 bytes (`MAX_MANAGED_PAYLOAD_BYTES` in `apps/chat-api/src/app-config/managed-config/managed-config.constants.ts`).
 4. **Immutability.** For a `revisionId` already accepted on this instance, `sha256` and the canonical payload are unchanged.
-5. **For `chat-ui` only:**
+5. **For `ai-dial-chat` only:**
    - `schemaVersion` is listed in `SUPPORTED_MANAGED_CONFIG_SCHEMA_VERSIONS`;
    - `schemaSha256` equals its entry in `PINNED_MANAGED_CONFIG_SCHEMA_SHA256`;
-   - `payload` validates against that version's committed artifact (`apps/chat-api/managed-config-schema/chat-ui-<version>.json`) under JSON Schema 2020-12, with formats not enforced;
+   - `payload` validates against that version's committed artifact (`apps/chat-api/managed-config-schema/ai-dial-chat-<version>.json`) under JSON Schema 2020-12, with formats not enforced;
    - `payload` passes the `calendar_date` and `window_order` checks of `apps/chat-api/src/app-config/managed-config/managed-semantics.ts`.
 
 A failed check SHALL reject the whole candidate with a reason: `identity_mismatch`, `malformed`, `payload_too_large`, `revision_changed`, `unsupported_schema`, `invalid_payload`, or `semantic_violation`. A rejection SHALL leave the active snapshot unchanged. A foreign application identifier SHALL skip check 5. Its payload SHALL NOT be validated against any schema by Chat.
@@ -131,22 +131,22 @@ At startup, when the mode is not `off`, the backend SHALL verify that each suppo
 
 #### Scenario: Schema edited under the same version
 
-- **WHEN** a `chat-ui` snapshot carries `schemaVersion` `1.0.0` with a `schemaSha256` that differs from the pin
+- **WHEN** a `ai-dial-chat` snapshot carries `schemaVersion` `1.0.0` with a `schemaSha256` that differs from the pin
 - **THEN** it is rejected with `unsupported_schema`
 
 #### Scenario: Unsupported version
 
-- **WHEN** a `chat-ui` snapshot carries `schemaVersion` `1.1.0` and this build supports only `1.0.0`
+- **WHEN** a `ai-dial-chat` snapshot carries `schemaVersion` `1.1.0` and this build supports only `1.0.0`
 - **THEN** it is rejected with `unsupported_schema`
 
 #### Scenario: Unknown policy member
 
-- **WHEN** a feature state in a `chat-ui` payload contains `"percentage": 5`
+- **WHEN** a feature state in a `ai-dial-chat` payload contains `"percentage": 5`
 - **THEN** the snapshot is rejected with `invalid_payload`, and the member is never silently ignored
 
 #### Scenario: Impossible date
 
-- **WHEN** a `chat-ui` payload sets `startsAt` to `2027-02-30T00:00:00Z`
+- **WHEN** a `ai-dial-chat` payload sets `startsAt` to `2027-02-30T00:00:00Z`
 - **THEN** the snapshot is rejected with `semantic_violation`
 
 #### Scenario: Changed content for a known revision
@@ -281,8 +281,8 @@ Snapshots, states, accepted-revision memory, caches, and metrics SHALL be kept p
 
 #### Scenario: Two instances
 
-- **WHEN** `chat-ui=chat-dev` and `launchpad=launchpad-dev` are mapped, and `launchpad-dev` returns `not_published` while `chat-dev` is `fresh`
-- **THEN** `appId=chat-ui` uses `chat-dev`'s snapshot, `appId=launchpad` has none, and neither response or cache entry contains the other's data
+- **WHEN** `ai-dial-chat=chat-dev` and `launchpad=launchpad-dev` are mapped, and `launchpad-dev` returns `not_published` while `chat-dev` is `fresh`
+- **THEN** `appId=ai-dial-chat` uses `chat-dev`'s snapshot, `appId=launchpad` has none, and neither response or cache entry contains the other's data
 
 #### Scenario: Separate pods converge
 

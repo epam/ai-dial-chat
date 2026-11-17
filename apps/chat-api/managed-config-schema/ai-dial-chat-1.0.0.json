@@ -1,11 +1,11 @@
 {
-  "appId": "chat-ui",
-  "schemaVersion": "1.1.0",
+  "appId": "ai-dial-chat",
+  "schemaVersion": "1.0.0",
   "schema": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "urn:dial:chat-ui:managed-config:1.1.0",
+    "$id": "urn:dial:ai-dial-chat:managed-config:1.0.0",
     "title": "DIAL Chat managed configuration",
-    "description": "Values published through Config Studio for one chat-ui instance. A Chat deployment applies them only when its managed reading is enabled; an explicit deployment environment override still wins, and omitted keys use the application default.",
+    "description": "Values published through Config Studio for one ai-dial-chat instance. A Chat deployment applies them only when its managed reading is enabled; an explicit deployment environment override still wins, and omitted keys use the application default.",
     "type": "object",
     "additionalProperties": false,
     "required": ["config", "features"],
@@ -142,16 +142,6 @@
             "description": "Percentage of a capped token or cost limit at which the composer shows its usage banner.",
             "dial:meta": {
               "dial:propertyOrder": 40
-            }
-          },
-          "usageLimits.spendingLimitsMode": {
-            "type": "string",
-            "enum": ["off", "shadow", "enforce"],
-            "default": "off",
-            "title": "Spending limits mode",
-            "description": "DIAL Core's spending limits mode: off, shadow or enforce. Must match DIAL Core.",
-            "dial:meta": {
-              "dial:propertyOrder": 41
             }
           }
         },

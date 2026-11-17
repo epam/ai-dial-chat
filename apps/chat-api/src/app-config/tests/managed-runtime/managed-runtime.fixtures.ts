@@ -74,13 +74,13 @@ export const createFakeClock = (
 /** The environment a managed deployment needs, before per-test overrides. */
 export const MANAGED_ENVIRONMENT: Partial<EnvironmentVariables> = {
   MANAGED_CONFIG_MODE: undefined,
-  MANAGED_CONFIG_INSTANCES: ['chat-ui=chat-dev'],
+  MANAGED_CONFIG_INSTANCES: ['ai-dial-chat=chat-dev'],
   MANAGED_CONFIG_API_KEY: 'reader-key',
   MANAGED_CONFIG_MAX_STALENESS_SECONDS: 900,
   MANAGED_CONFIG_REFRESH_INTERVAL_SECONDS: 60,
   MANAGED_CONFIG_CLIENT_REFRESH_SECONDS: 120,
   MANAGED_CONFIG_ACTIVE_KEYS: [],
-  CLIENT_CONFIG_APP_IDS: ['chat-ui'],
+  CLIENT_CONFIG_APP_IDS: ['ai-dial-chat'],
 };
 
 /** A reader whose results the test queues per instance. */
@@ -148,7 +148,7 @@ export const createManagedProvider = (
 
 const CHAT_UI_SCHEMA_SHA256 = PINNED_MANAGED_CONFIG_SCHEMA_SHA256['1.0.0'];
 
-/** A runtime-read 200 body for `chat-ui` → `chat-dev`, with overrides. */
+/** A runtime-read 200 body for `ai-dial-chat` → `chat-dev`, with overrides. */
 export const snapshotBody = (
   overrides: Record<string, unknown> = {},
 ): Record<string, unknown> => {
@@ -158,7 +158,7 @@ export const snapshotBody = (
   };
   return {
     instanceId: 'chat-dev',
-    appId: 'chat-ui',
+    appId: 'ai-dial-chat',
     environment: 'dev',
     schemaVersion: '1.0.0',
     schemaSha256: CHAT_UI_SCHEMA_SHA256,

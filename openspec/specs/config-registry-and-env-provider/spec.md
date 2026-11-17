@@ -118,8 +118,8 @@ interface AppConfigEvalContext {
 
 #### Scenario: Context is built from appId
 
-- **WHEN** the controller receives `?appId=chat-ui`
-- **THEN** an `AppConfigEvalContext` with `appId='chat-ui'` is constructed and passed to `AppConfigService`. When a session is present, the context also carries the session user's `userId` and the roles returned by `UserRolesService.getRoles`
+- **WHEN** the controller receives `?appId=ai-dial-chat`
+- **THEN** an `AppConfigEvalContext` with `appId='ai-dial-chat'` is constructed and passed to `AppConfigService`. When a session is present, the context also carries the session user's `userId` and the roles returned by `UserRolesService.getRoles`
 
 #### Scenario: Roles follow the provider's rolesClaim
 

@@ -8,7 +8,7 @@
 
 ### Requirement: GET /api/v1/client-config returns client-safe configuration
 
-The system SHALL expose `GET /api/v1/client-config` as a versioned business endpoint (version `'1'`). It SHALL accept a required `appId` query parameter that matches `^[a-z0-9][a-z0-9-]{0,62}$` and is one of the application identifiers the deployment serves (`CLIENT_CONFIG_APP_IDS`, default `chat-ui`), and return all `visibility='client'` configuration values, including the new `dialCore.externalUrl` key added by the `config-registry-and-env-provider` capability.
+The system SHALL expose `GET /api/v1/client-config` as a versioned business endpoint (version `'1'`). It SHALL accept a required `appId` query parameter that matches `^[a-z0-9][a-z0-9-]{0,62}$` and is one of the application identifiers the deployment serves (`CLIENT_CONFIG_APP_IDS`, default `ai-dial-chat`), and return all `visibility='client'` configuration values, including the new `dialCore.externalUrl` key added by the `config-registry-and-env-provider` capability.
 
 **Authorization:** None required. The endpoint is public and MUST work before authentication.
 
@@ -26,11 +26,11 @@ The system SHALL expose `GET /api/v1/client-config` as a versioned business endp
 
 #### Scenario: Happy path — ASR configured
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `ASR_MODEL=whisper-1`, `TRANSCRIBE_SIZE_LIMIT_BYTES=10485760` are set
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called and `ASR_MODEL=whisper-1`, `TRANSCRIBE_SIZE_LIMIT_BYTES=10485760` are set
 - **THEN** the response is `200 OK` with body:
   ```json
   {
-    "appId": "chat-ui",
+    "appId": "ai-dial-chat",
     "features": { "asrEnabled": true },
     "config": {
       "asrModelId": "whisper-1",
@@ -46,22 +46,22 @@ The system SHALL expose `GET /api/v1/client-config` as a versioned business endp
 
 #### Scenario: Happy path — ASR not configured
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `ASR_MODEL` is not set
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called and `ASR_MODEL` is not set
 - **THEN** the response is `200 OK` with `features.asrEnabled=false`, `config.asrModelId=null`, `config.transcribeSizeLimitBytes=5242880`
 
 #### Scenario: Happy path — DIAL Core external URL configured
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `DIAL_CORE_EXTERNAL_URL=https://dial.example.com` is set
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called and `DIAL_CORE_EXTERNAL_URL=https://dial.example.com` is set
 - **THEN** the response is `200 OK` with `config.dialCoreExternalUrl="https://dial.example.com"`
 
 #### Scenario: Happy path — DIAL Core external URL not configured
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `DIAL_CORE_EXTERNAL_URL` is not set
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called and `DIAL_CORE_EXTERNAL_URL` is not set
 - **THEN** the response is `200 OK` with `config.dialCoreExternalUrl=null`
 
 #### Scenario: External connection origins
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called with
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called with
   `ALLOWED_CONNECT_ORIGINS` configured
 - **THEN** the `200 OK` JSON response includes `config.allowedConnectOrigins`
   as a string array preserving the configured exact origins and wildcard patterns
@@ -92,12 +92,12 @@ The system SHALL expose `GET /api/v1/client-config` as a versioned business endp
 
 #### Scenario: Another served application
 
-- **WHEN** `CLIENT_CONFIG_APP_IDS=launchpad,chat-ui` and `GET /api/v1/client-config?appId=launchpad` is called
-- **THEN** the response is `200 OK` with `appId` `launchpad`, and its `features` and `config` equal those returned for `appId=chat-ui` under the same environment, session and roles
+- **WHEN** `CLIENT_CONFIG_APP_IDS=launchpad,ai-dial-chat` and `GET /api/v1/client-config?appId=launchpad` is called
+- **THEN** the response is `200 OK` with `appId` `launchpad`, and its `features` and `config` equal those returned for `appId=ai-dial-chat` under the same environment, session and roles
 
 #### Scenario: Responses are cached per application
 
-- **WHEN** the same user requests `appId=launchpad` and then `appId=chat-ui`
+- **WHEN** the same user requests `appId=launchpad` and then `appId=ai-dial-chat`
 - **THEN** the two responses use different cache entries, each echoing its own `appId`
 
 #### Scenario: Response does not contain server-only values
@@ -117,7 +117,7 @@ The system SHALL expose `GET /api/v1/client-config` as a versioned business endp
 
 #### Scenario: A new managed revision uses a new cache entry
 
-- **WHEN** the mode is `active`, `chat-ui` is mapped to `chat-dev`, a user's response for revision `R1` is cached, and revision `R2` is accepted 10 s later
+- **WHEN** the mode is `active`, `ai-dial-chat` is mapped to `chat-dev`, a user's response for revision `R1` is cached, and revision `R2` is accepted 10 s later
 - **THEN** that user's next request misses the cache and reflects `R2`
 
 #### Scenario: Cache entry never outlives a window boundary
@@ -141,7 +141,7 @@ The system SHALL expose `GET /api/v1/client-config` as a versioned business endp
 
 **Generated client impact:**
 - `operationId`: `getClientConfig`
-- SDK method: `AppConfigApi.getClientConfig({ appId: 'chat-ui' })`
+- SDK method: `AppConfigApi.getClientConfig({ appId: 'ai-dial-chat' })`
 - Request DTO: `GetClientConfigDto` with `appId: string`
 - Response DTO: `ClientConfigResponseDto` with `appId`, `features`, `config` (now including `dialCoreExternalUrl: string | null`), `metadata`
 - Frontend callers use the normal (non-`Raw`) generated method.
@@ -191,7 +191,7 @@ The old `GET /api/v1/config` endpoint SHALL be removed in the same PR that intro
 
 #### Scenario: Overlay disabled by default
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `OVERLAY_ENABLED` is unset
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called and `OVERLAY_ENABLED` is unset
 - **THEN** the response includes `config.overlayEnabled: false` and `config.overlayAllowedOrigins: []`
 
 #### Scenario: Overlay enabled with configured origins
@@ -221,7 +221,7 @@ The old `GET /api/v1/config` endpoint SHALL be removed in the same PR that intro
 
 #### Scenario: No baseline configured — null returned
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `ENABLED_UI_FEATURES` is unset
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called and `ENABLED_UI_FEATURES` is unset
 - **THEN** the response includes `config.enabledUiFeatures: null`
 
 #### Scenario: Baseline configured — array returned
@@ -257,12 +257,12 @@ The old `GET /api/v1/config` endpoint SHALL be removed in the same PR that intro
 
 #### Scenario: Announcement message configured
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `ANNOUNCEMENT_HTML_MESSAGE` is set to `Welcome to DIAL!`
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called and `ANNOUNCEMENT_HTML_MESSAGE` is set to `Welcome to DIAL!`
 - **THEN** the response is `200 OK` with `config.announcementHtml="Welcome to DIAL!"`
 
 #### Scenario: Announcement message not configured
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `ANNOUNCEMENT_HTML_MESSAGE` is not set
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called and `ANNOUNCEMENT_HTML_MESSAGE` is not set
 - **THEN** the response is `200 OK` with `config.announcementHtml=null`
 
 ---
@@ -279,7 +279,7 @@ The old `GET /api/v1/config` endpoint SHALL be removed in the same PR that intro
 
 #### Scenario: Default sources returned when unconfigured
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `PUBLICATION_FILTER_SOURCES` is unset
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called and `PUBLICATION_FILTER_SOURCES` is unset
 - **THEN** the response includes `config.publicationFilterSources: ["title", "role", "dial_roles"]`
 
 #### Scenario: Operator-configured sources are returned
@@ -320,12 +320,12 @@ The `ClientConfigDto` response DTO SHALL declare both fields with Swagger metada
 
 #### Scenario: Title and description configured
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called with `ANNOUNCEMENT_TITLE="🎉 Welcome to DIAL! 🎉"` and `ANNOUNCEMENT_DESCRIPTION="Explore our AI offerings with your data."`
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called with `ANNOUNCEMENT_TITLE="🎉 Welcome to DIAL! 🎉"` and `ANNOUNCEMENT_DESCRIPTION="Explore our AI offerings with your data."`
 - **THEN** the response is `200 OK` with both fields populated with those values
 
 #### Scenario: Title and description not configured
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and neither variable is set
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called and neither variable is set
 - **THEN** the response is `200 OK` with `config.announcementTitle=null` and `config.announcementDescription=null`
 
 #### Scenario: Blank values resolve to null
@@ -588,12 +588,12 @@ The `ClientConfigResponseDto` response DTO SHALL declare this field with Swagger
 
 #### Scenario: Description configured
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `WELCOME_SCREEN_DESCRIPTION` is set to `Your secure, all-in-one AI assistant.`
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called and `WELCOME_SCREEN_DESCRIPTION` is set to `Your secure, all-in-one AI assistant.`
 - **THEN** the response is `200 OK` with `config.welcomeScreenDescription="Your secure, all-in-one AI assistant."`
 
 #### Scenario: Description not configured
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `WELCOME_SCREEN_DESCRIPTION` is not set
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called and `WELCOME_SCREEN_DESCRIPTION` is not set
 - **THEN** the response is `200 OK` with `config.welcomeScreenDescription=null`
 
 #### Scenario: Blank value resolves to null
@@ -618,7 +618,7 @@ The `ClientConfigResponseDto` response DTO SHALL declare this field with Swagger
 
 #### Scenario: Default limit returned when unconfigured
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `FILE_UPLOAD_MAX_BYTES` is unset
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called and `FILE_UPLOAD_MAX_BYTES` is unset
 - **THEN** the response includes `config.maxAttachmentFileSizeBytes: 536870912`
 
 #### Scenario: Operator-configured limit is returned
@@ -737,7 +737,7 @@ metrics, or exceptions.
 
 #### Scenario: Response field set and order are unchanged
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called with all providers returning `undefined`
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called with all providers returning `undefined`
 - **THEN** `Object.keys(response.config)` lists the same fields in the same order as before the refactor, starting with `aiTextRefinementAvailable`, `appVersion`, `activeEventId` and ending with `publicationFilterSources`, `maxAttachmentFileSizeBytes`
 
 #### Scenario: app.version is resolved once, first
@@ -777,19 +777,19 @@ metrics, or exceptions.
 
 ### Requirement: client-config exposes resolved catalog creation permissions
 
-`GET /api/v1/client-config?appId=chat-ui` SHALL include required `config.catalogCreationPermissions` with required `allowedTypes` (an array of the five creation-type enum values) and `restrictedSchemaIds` (a string array). Evaluation follows `catalog-creation-role-restrictions`. Both arrays SHALL always be present, including when empty. The role maps and user roles SHALL never be serialized.
+`GET /api/v1/client-config?appId=ai-dial-chat` SHALL include required `config.catalogCreationPermissions` with required `allowedTypes` (an array of the five creation-type enum values) and `restrictedSchemaIds` (a string array). Evaluation follows `catalog-creation-role-restrictions`. Both arrays SHALL always be present, including when empty. The role maps and user roles SHALL never be serialized.
 
-Request: existing required `GetClientConfigDto.appId`, allowlisted to `chat-ui`, no body or new headers. Authorization SHALL stay `@Public()` plus `OptionalSessionGuard`; no role is required to read config, and anonymous callers receive evaluation with no roles. Response SHALL remain 200 for a valid request, 400 for missing/invalid appId. This change adds no auth, schema-lookup, upstream dependency, or new 401/403/404/502/503 outcome; existing unexpected failures retain the sanitized framework 500 response. A policy is validated at boot, not silently discarded during a request.
+Request: existing required `GetClientConfigDto.appId`, allowlisted to `ai-dial-chat`, no body or new headers. Authorization SHALL stay `@Public()` plus `OptionalSessionGuard`; no role is required to read config, and anonymous callers receive evaluation with no roles. Response SHALL remain 200 for a valid request, 400 for missing/invalid appId. This change adds no auth, schema-lookup, upstream dependency, or new 401/403/404/502/503 outcome; existing unexpected failures retain the sanitized framework 500 response. A policy is validated at boot, not silently discarded during a request.
 
 Example policy: `{"types":{"custom-app":["developers"]},"schemas":{"schema-A":["team-A"]}}`. Response to a user holding neither role (unrelated fields abbreviated):
 
 ```http
-GET /api/v1/client-config?appId=chat-ui
+GET /api/v1/client-config?appId=ai-dial-chat
 ```
 
 ```json
 {
-  "appId": "chat-ui",
+  "appId": "ai-dial-chat",
   "features": { "asrEnabled": false },
   "config": {
     "enabledUiFeatures": null,
@@ -845,7 +845,7 @@ GET /api/v1/client-config?appId=chat-ui
 Example response (abridged):
 
 ```json
-GET /api/v1/client-config?appId=chat-ui
+GET /api/v1/client-config?appId=ai-dial-chat
 200 OK
 {
   "config": {
@@ -857,7 +857,7 @@ GET /api/v1/client-config?appId=chat-ui
 
 #### Scenario: Empty list returned when unconfigured
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and neither `ADDITIONAL_CONTENT_LOCALES` nor `AVAILABLE_LOCALES` is set
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called and neither `ADDITIONAL_CONTENT_LOCALES` nor `AVAILABLE_LOCALES` is set
 - **THEN** the response includes `config.additionalContentLocales: []`
 
 #### Scenario: Operator-configured locales are returned canonicalised
@@ -889,24 +889,24 @@ GET /api/v1/client-config?appId=chat-ui
 #### Scenario: Key configured
 
 - **GIVEN** `MODEL_CATALOG_API_KEY=catalog-key`
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called
 - **THEN** `response.config.modelCatalogAvailable` is `true` and no field of the response contains `catalog-key`
 
 #### Scenario: Key unset or blank
 
 - **GIVEN** `MODEL_CATALOG_API_KEY` is unset, or is `"  "`
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called
 - **THEN** `response.config.modelCatalogAvailable` is `false`
 
 #### Scenario: Field order keeps existing positions
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called with all providers returning `undefined`
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called with all providers returning `undefined`
 - **THEN** `Object.keys(response.config)` equals the previous list with `modelCatalogAvailable` appended after `catalogCreationPermissions`
 
 #### Scenario: DIAL_API_KEY does not affect the flag
 
 - **GIVEN** `DIAL_API_KEY` is set and `MODEL_CATALOG_API_KEY` is unset
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called
 - **THEN** `response.config.modelCatalogAvailable` is `false`
 
 ### Requirement: client-config exposes the themes base URL
@@ -922,13 +922,13 @@ GET /api/v1/client-config?appId=chat-ui
 #### Scenario: Themes URL configured
 
 - **GIVEN** `THEMES_CONFIG_URL=http://dial-themes` and `THEMES_PUBLIC_URL=https://themes.example.com/`
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called
 - **THEN** `response.config.themesBaseUrl` is `https://themes.example.com` and no field of the response contains `dial-themes`
 
 #### Scenario: Themes URL unset or blank
 
 - **GIVEN** `THEMES_PUBLIC_URL` is unset, or is `"  "`, whatever `THEMES_CONFIG_URL` is
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` is called
 - **THEN** `response.config` has no `themesBaseUrl` key
 
 #### Scenario: Both forms of one icon load from one URL
@@ -939,29 +939,29 @@ GET /api/v1/client-config?appId=chat-ui
 
 ### Requirement: The deployment declares the application identifiers it serves
 
-The backend SHALL read `CLIENT_CONFIG_APP_IDS`, a comma-separated list of application identifiers declared on `ClientUiEnv` in `apps/chat-api/src/config/env/client-ui.env.ts`. Entries SHALL be trimmed, de-duplicated preserving order, and each SHALL match `^[a-z0-9][a-z0-9-]{0,62}$`. A non-matching entry SHALL fail startup with an `Environment validation failed:` message naming the variable. An absent, empty or blank value SHALL mean `["chat-ui"]`. The list SHALL be at most 16 entries. Only `GET /api/v1/client-config` uses the list. Server-side feature evaluation (`FeatureGuard`, text refinement) SHALL keep evaluating with `appId` `chat-ui`, because those gates protect Chat BFF endpoints whichever frontend a deployment serves.
+The backend SHALL read `CLIENT_CONFIG_APP_IDS`, a comma-separated list of application identifiers declared on `ClientUiEnv` in `apps/chat-api/src/config/env/client-ui.env.ts`. Entries SHALL be trimmed, de-duplicated preserving order, and each SHALL match `^[a-z0-9][a-z0-9-]{0,62}$`. A non-matching entry SHALL fail startup with an `Environment validation failed:` message naming the variable. An absent, empty or blank value SHALL mean `["ai-dial-chat"]`. The list SHALL be at most 16 entries. Only `GET /api/v1/client-config` uses the list. Server-side feature evaluation (`FeatureGuard`, text refinement) SHALL keep evaluating with `appId` `ai-dial-chat`, because those gates protect Chat BFF endpoints whichever frontend a deployment serves.
 
 **Feature flag:** Not gated. **RTL impact:** None. **i18n impact:** None. **Cache:** Defined by "GET /api/v1/client-config returns client-safe configuration"; `appId` is always a segment, and a mapped `appId` in managed `active` mode also adds its instance, revision and state. A served identifier MAY additionally be mapped to a Config Studio instance (`MANAGED_CONFIG_INSTANCES`, see `managed-config-runtime-reader`); a mapping for an identifier this list does not serve SHALL fail startup.
 
 #### Scenario: Default serves only Chat
 
 - **WHEN** `CLIENT_CONFIG_APP_IDS` is unset
-- **THEN** `appId=chat-ui` is accepted and `appId=launchpad` is `400 Bad Request`
+- **THEN** `appId=ai-dial-chat` is accepted and `appId=launchpad` is `400 Bad Request`
 
 #### Scenario: Invalid entry fails startup
 
-- **WHEN** `CLIENT_CONFIG_APP_IDS=chat-ui,Bad_Id`
+- **WHEN** `CLIENT_CONFIG_APP_IDS=ai-dial-chat,Bad_Id`
 - **THEN** environment validation fails and names `CLIENT_CONFIG_APP_IDS` without printing other environment values
 
 #### Scenario: Transitional list
 
-- **WHEN** a Launchpad deployment sets `CLIENT_CONFIG_APP_IDS=launchpad,chat-ui` while older Launchpad builds still send `chat-ui`
+- **WHEN** a Launchpad deployment sets `CLIENT_CONFIG_APP_IDS=launchpad,ai-dial-chat` while older Launchpad builds still send the legacy `chat-ui`
 - **THEN** both the old and the new builds receive `200 OK`
 
 #### Scenario: Server-side gates keep the Chat contract
 
 - **WHEN** a deployment sets `CLIENT_CONFIG_APP_IDS=launchpad` and a request reaches an endpoint protected by `FeatureGuard`
-- **THEN** the feature is evaluated with `appId` `chat-ui`, exactly as before this change
+- **THEN** the feature is evaluated with `appId` `ai-dial-chat`, Chat's own identifier
 
 ### Requirement: client-config carries optional managed fields
 
@@ -972,19 +972,19 @@ In `MANAGED_CONFIG_MODE=active`, the response of `GET /api/v1/client-config` for
   - `state`, one of `fresh`, `degraded`, `stale`, `unavailable`, `not_published`;
   - when the state is `fresh` or `degraded`, also `revisionId`, `schemaVersion`, and `publishedAt`.
 - `metadata.nextRefreshAt`: an ISO instant. It SHALL be the earliest of the resolution time plus `MANAGED_CONFIG_CLIENT_REFRESH_SECONDS`, the next window boundary of an active managed feature, and the snapshot's staleness expiry.
-- `appConfig`, only for an `appId` other than `chat-ui` with a usable snapshot (see `managed-config-activation`). It is `{ schemaVersion, schemaSha256, revisionId, publishedAt, payload }`, where `payload` is an arbitrary JSON object.
+- `appConfig`, only for an `appId` other than `ai-dial-chat` with a usable snapshot (see `managed-config-activation`). It is `{ schemaVersion, schemaSha256, revisionId, publishedAt, payload }`, where `payload` is an arbitrary JSON object.
 
 In modes `off` and `shadow`, and for an unmapped `appId`, none of these fields SHALL be present. The fields SHALL NOT carry operator identities, publication reasons, revision hashes other than `schemaSha256` in `appConfig`, roles, policy definitions of features, or credentials.
 
-Example request and response (`active`, `chat-ui` → `chat-dev`, `welcomeScreen.description` active):
+Example request and response (`active`, `ai-dial-chat` → `chat-dev`, `welcomeScreen.description` active):
 
 ```http
-GET /api/v1/client-config?appId=chat-ui
+GET /api/v1/client-config?appId=ai-dial-chat
 200 OK
 Cache-Control: private, no-store
 
 {
-  "appId": "chat-ui",
+  "appId": "ai-dial-chat",
   "features": { "usageLimitsControl": false },
   "config": { "welcomeScreenDescription": "Welcome", "...": "unchanged fields" },
   "metadata": {
@@ -1007,8 +1007,8 @@ Foreign application (`launchpad` → `launchpad-dev`):
 ```json
 {
   "appId": "launchpad",
-  "features": { "...": "chat-ui environment values" },
-  "config": { "...": "chat-ui environment values" },
+  "features": { "...": "ai-dial-chat environment values" },
+  "config": { "...": "ai-dial-chat environment values" },
   "appConfig": {
     "schemaVersion": "2.0.0",
     "schemaSha256": "4f1c…",
@@ -1041,7 +1041,7 @@ Errors are unchanged: `400` for a missing, malformed, repeated, or unserved `app
 
 #### Scenario: Chat never receives appConfig
 
-- **WHEN** `appId=chat-ui` is served from a fresh snapshot
+- **WHEN** `appId=ai-dial-chat` is served from a fresh snapshot
 - **THEN** the response has no `appConfig`
 
 #### Scenario: Refresh hint follows the next boundary
@@ -1053,3 +1053,45 @@ Errors are unchanged: `400` for a missing, malformed, repeated, or unserved `app
 
 - **WHEN** `npm run openapi` runs
 - **THEN** the generated `ClientConfigResponseDto` has optional `appConfig`, and `ClientConfigMetadataDto` has optional `nextRefreshAt` and `managed`
+
+### Requirement: The legacy chat-ui identifier is an alias of ai-dial-chat
+
+`ai-dial-chat` SHALL be Chat's application identifier, defined once as `CHAT_APP_ID` in `apps/chat-api/src/config/env/app-ids.ts`. The former identifier `chat-ui` (`LEGACY_CHAT_APP_ID`) SHALL be a deprecated alias. Wherever an application identifier is read, `chat-ui` SHALL be replaced with `ai-dial-chat` before any other check:
+
+- the `appId` query parameter of `GET /api/v1/client-config`, before the served-identifier check, the cache key, and the managed view;
+- each entry of `CLIENT_CONFIG_APP_IDS`, before de-duplication;
+- the application side of each `MANAGED_CONFIG_INSTANCES` pair, before the cross-variable checks.
+
+A response to either identifier SHALL be identical and SHALL carry `"appId": "ai-dial-chat"`. Listing both identifiers in `CLIENT_CONFIG_APP_IDS` SHALL serve one identifier. Mapping both in `MANAGED_CONFIG_INSTANCES` SHALL fail startup with the existing duplicate-mapping message. The alias SHALL NOT apply to a Config Studio snapshot: a snapshot whose `appId` is `chat-ui`, read for `ai-dial-chat`, SHALL be rejected with `identity_mismatch`. No other identifier has an alias.
+
+**Feature flag:** Not gated. **RTL impact:** None. **i18n impact:** None. **Generated client:** unchanged operations and types (`getClientConfig`); only the OpenAPI examples change.
+
+#### Scenario: Legacy request
+
+- **WHEN** a caller requests `GET /api/v1/client-config?appId=chat-ui` with default settings
+- **THEN** the response is `200 OK` with `"appId": "ai-dial-chat"` and the same body as `appId=ai-dial-chat` for the same identity and roles
+
+#### Scenario: Legacy list entry
+
+- **WHEN** `CLIENT_CONFIG_APP_IDS=launchpad,chat-ui`
+- **THEN** the deployment serves `launchpad` and `ai-dial-chat`, and `appId=chat-ui` is accepted
+
+#### Scenario: Both spellings listed
+
+- **WHEN** `CLIENT_CONFIG_APP_IDS=chat-ui,ai-dial-chat`
+- **THEN** the deployment serves exactly one identifier, `ai-dial-chat`
+
+#### Scenario: Both spellings mapped
+
+- **WHEN** `MANAGED_CONFIG_MODE=shadow` and `MANAGED_CONFIG_INSTANCES=chat-ui=chat-dev,ai-dial-chat=chat-prod`
+- **THEN** startup fails with "MANAGED_CONFIG_INSTANCES maps an application identifier twice"
+
+#### Scenario: Legacy mapping
+
+- **WHEN** `MANAGED_CONFIG_INSTANCES=chat-ui=ai-dial-chat` in mode `shadow`
+- **THEN** the instance `ai-dial-chat` is read for the identifier `ai-dial-chat`
+
+#### Scenario: Snapshot with the legacy identifier
+
+- **WHEN** the mapped instance returns a snapshot whose `appId` is `chat-ui`
+- **THEN** the snapshot is rejected with `identity_mismatch` and the previous snapshot, if any, is kept

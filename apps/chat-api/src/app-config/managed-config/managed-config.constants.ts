@@ -1,5 +1,7 @@
+import { CHAT_APP_ID } from '../../config/env/app-ids';
+
 /** The Config Studio application id of every Chat runner instance. */
-export const MANAGED_CONFIG_APP_ID = 'chat-ui';
+export const MANAGED_CONFIG_APP_ID = CHAT_APP_ID;
 
 /**
  * The version of the managed contract this build generates. It is the
@@ -26,8 +28,8 @@ export const SUPPORTED_MANAGED_CONFIG_SCHEMA_VERSIONS: readonly string[] = [
 export const PINNED_MANAGED_CONFIG_SCHEMA_SHA256: Readonly<
   Record<string, string>
 > = {
-  '1.0.0': '9e2155b7857adf6cc51e8966ad02ebf79953c5a87875eaea929e384c02b55dd6',
-  '1.1.0': 'bfbad5396a9ef14fdcb39df44f9dd876b7ad3a2f7abf33bbf40bd694284711d8',
+  '1.0.0': 'c1e565ff7edc923cd2eb03afc70cbbb4872d9d270d3440485ed5ef42fe78fb1a',
+  '1.1.0': 'caa5bc8e5216d5189894f50bc037808a2f2ec4474d0f87219f724197a5e371af',
 };
 
 /** Config Studio's limit on the canonical bytes of an uploaded schema (56 KiB). */

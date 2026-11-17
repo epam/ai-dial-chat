@@ -153,23 +153,39 @@ describe('validate - explicit environment presence', () => {
 });
 
 describe('validate - CLIENT_CONFIG_APP_IDS', () => {
-  it.each([undefined, '', ' , '])('defaults %j to chat-ui', (value) => {
+  it.each([undefined, '', ' , '])('defaults %j to ai-dial-chat', (value) => {
     const config = validate({
       ...validBaseConfig,
       ...(value === undefined ? {} : { CLIENT_CONFIG_APP_IDS: value }),
     });
 
-    expect(config.CLIENT_CONFIG_APP_IDS).toEqual(['chat-ui']);
+    expect(config.CLIENT_CONFIG_APP_IDS).toEqual(['ai-dial-chat']);
   });
 
   it('trims entries and drops repeats, keeping the first position', () => {
     const config = validate({
       ...validBaseConfig,
-      CLIENT_CONFIG_APP_IDS: ' launchpad , chat-ui,launchpad ,,',
+      CLIENT_CONFIG_APP_IDS: ' launchpad , ai-dial-chat,launchpad ,,',
     });
 
-    expect(config.CLIENT_CONFIG_APP_IDS).toEqual(['launchpad', 'chat-ui']);
+    expect(config.CLIENT_CONFIG_APP_IDS).toEqual(['launchpad', 'ai-dial-chat']);
   });
+
+  it.each([
+    ['launchpad,chat-ui', ['launchpad', 'ai-dial-chat']],
+    ['chat-ui,ai-dial-chat', ['ai-dial-chat']],
+    ['ai-dial-chat,launchpad,chat-ui', ['ai-dial-chat', 'launchpad']],
+  ])(
+    'replaces the legacy chat-ui in %j before dropping repeats',
+    (value, expected) => {
+      const config = validate({
+        ...validBaseConfig,
+        CLIENT_CONFIG_APP_IDS: value,
+      });
+
+      expect(config.CLIENT_CONFIG_APP_IDS).toEqual(expected);
+    },
+  );
 
   it('accepts a 63-character identifier', () => {
     const id = `a${'b'.repeat(62)}`;
@@ -178,7 +194,7 @@ describe('validate - CLIENT_CONFIG_APP_IDS', () => {
     expect(config.CLIENT_CONFIG_APP_IDS).toEqual([id]);
   });
 
-  it.each(['chat-ui,Bad_Id', '-x', `a${'b'.repeat(63)}`, 'chat ui'])(
+  it.each(['ai-dial-chat,Bad_Id', '-x', `a${'b'.repeat(63)}`, 'chat ui'])(
     'fails startup for %j, naming only the variable',
     (value) => {
       const secret = 'a'.repeat(64);

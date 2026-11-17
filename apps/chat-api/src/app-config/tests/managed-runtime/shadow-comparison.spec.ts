@@ -31,7 +31,7 @@ const REQUIRED = {
 
 const acceptedSnapshot = (payload: Record<string, unknown>) => {
   const result = acceptSnapshot(snapshotBody({ payload }), {
-    appId: 'chat-ui',
+    appId: 'ai-dial-chat',
     instanceId: 'chat-dev',
     knownRevision: () => undefined,
     validators: compileManagedPayloadValidators(),

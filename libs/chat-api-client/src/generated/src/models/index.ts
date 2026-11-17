@@ -2117,7 +2117,7 @@ export interface ClientConfigResponseDto {
    */
   metadata?: ClientConfigMetadataDto;
   /**
-   * The published Config Studio payload of an application other than chat-ui, unchanged. Present only when the deployment applies managed configuration and the snapshot is usable.
+   * The published Config Studio payload of an application other than ai-dial-chat, unchanged. Present only when the deployment applies managed configuration and the snapshot is usable.
    * @type {ClientAppConfigDto}
    * @memberof ClientConfigResponseDto
    */

@@ -3,7 +3,9 @@
 ## Purpose
 
 The operator-configurable file-manager tab list, from the config registry through to active-tab correction in the UI.
+
 ## Requirements
+
 ### Requirement: fileManager.availableTabs config-registry key
 
 `apps/chat-api/src/app-config/config-registry/config-registry.constants.ts` SHALL declare a `fileManager.availableTabs` entry in `CONFIG_DEFINITIONS`: `type: 'config'`, `valueType: 'json'`, `visibility: 'client'`, `defaultValue: ['all', 'my_files', 'shared', 'organization']`, `critical: false`, `envVar: 'FILE_MANAGER_AVAILABLE_TABS'`.
@@ -14,7 +16,7 @@ The operator-configurable file-manager tab list, from the config registry throug
 
 #### Scenario: Config definition is registered as client-visible
 
-- **WHEN** `GET /api/v1/client-config?appId=chat-ui` resolves the client config
+- **WHEN** `GET /api/v1/client-config?appId=ai-dial-chat` resolves the client config
 - **THEN** the `fileManager.availableTabs` definition is included among the resolved `client`-visibility definitions
 
 #### Scenario: Default value lists all first
@@ -86,11 +88,11 @@ The operator-configurable file-manager tab list, from the config registry throug
 - **Response DTO**: `ClientConfigDto.fileManagerTabs: string[]`.
 - **Frontend caller**: `apps/chat/src/server-api/app-config.api.ts`'s existing `getClientConfig` is unchanged (normal, non-`Raw` method).
 
-**Example response** (`GET /api/v1/client-config?appId=chat-ui`):
+**Example response** (`GET /api/v1/client-config?appId=ai-dial-chat`):
 
 ```json
 {
-  "appId": "chat-ui",
+  "appId": "ai-dial-chat",
   "features": { "asrEnabled": false },
   "config": {
     "asrModelId": null,
@@ -106,7 +108,7 @@ Error codes are unchanged from the existing endpoint.
 
 #### Scenario: Default deployment returns the four-tab default
 
-- **WHEN** `FILE_MANAGER_AVAILABLE_TABS` is unset and `GET /api/v1/client-config?appId=chat-ui` is called
+- **WHEN** `FILE_MANAGER_AVAILABLE_TABS` is unset and `GET /api/v1/client-config?appId=ai-dial-chat` is called
 - **THEN** the response's `config.fileManagerTabs` is `["all", "my_files", "shared", "organization"]`
 
 ---
@@ -190,7 +192,7 @@ Error codes are unchanged from the existing endpoint.
 
 #### Scenario: Tab configuration applies uniformly regardless of caller roles
 
-- **WHEN** two users with different roles both call `GET /api/v1/client-config?appId=chat-ui` against the same deployment
+- **WHEN** two users with different roles both call `GET /api/v1/client-config?appId=ai-dial-chat` against the same deployment
 - **THEN** both receive the identical `config.fileManagerTabs` value
 
 ---
@@ -203,4 +205,3 @@ This capability SHALL NOT implement client-side or BFF-side filtering of individ
 
 - **WHEN** the file listing endpoints (`/list`, `/shared`, `/shared-by-me`, organization listing) are inspected
 - **THEN** none of their response DTOs carry a `sharedWithMe` or `publishedWithMe` field on individual file items
-

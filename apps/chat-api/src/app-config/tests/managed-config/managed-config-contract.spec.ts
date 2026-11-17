@@ -30,11 +30,17 @@ interface ContractFixtures {
 }
 
 const fixtures = JSON.parse(
-  readFileSync(join(__dirname, 'fixtures/chat-ui-1.0.0.fixtures.json'), 'utf8'),
+  readFileSync(
+    join(__dirname, 'fixtures/ai-dial-chat-1.0.0.fixtures.json'),
+    'utf8',
+  ),
 ) as ContractFixtures;
 const artifact = JSON.parse(
   readFileSync(
-    join(__dirname, '../../../../managed-config-schema/chat-ui-1.0.0.json'),
+    join(
+      __dirname,
+      '../../../../managed-config-schema/ai-dial-chat-1.0.0.json',
+    ),
     'utf8',
   ),
 ) as ManagedConfigArtifact;

@@ -70,7 +70,7 @@ describe('FeatureGuard', () => {
     expect(featureFlagsService.isEnabled).toHaveBeenCalledWith(
       FeatureKey.AsrEnabled,
       {
-        appId: 'chat-ui',
+        appId: 'ai-dial-chat',
         userId: 'user-1',
         roles: ['admin', '42'],
       },
@@ -158,7 +158,7 @@ describe('FeatureGuard', () => {
     ).toBe(true);
     expect(featureFlagsService.isEnabled).toHaveBeenLastCalledWith(
       FeatureKey.LiveChatInteraction,
-      { appId: 'chat-ui', userId: 'user-1', roles: ['user'] },
+      { appId: 'ai-dial-chat', userId: 'user-1', roles: ['user'] },
     );
   });
 
@@ -225,7 +225,7 @@ describe('FeatureGuard', () => {
 
     expect(featureFlagsService.isEnabled).toHaveBeenCalledWith(
       FeatureKey.AsrEnabled,
-      { appId: 'chat-ui', userId: undefined, roles: undefined },
+      { appId: 'ai-dial-chat', userId: undefined, roles: undefined },
     );
   });
 

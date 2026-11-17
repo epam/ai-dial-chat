@@ -27,7 +27,7 @@ export const REQUIRED_ENV: Readonly<Record<string, string>> = {
   AUTH_CALLBACK_BASE_URL: 'http://localhost:5000',
 };
 
-export const ANONYMOUS: AppConfigEvalContext = { appId: 'chat-ui' };
+export const ANONYMOUS: AppConfigEvalContext = { appId: 'ai-dial-chat' };
 
 /** A raw environment as Nest's ConfigModule hands it to `validate()`. */
 export type RawEnvironment = Readonly<Record<string, string>>;
@@ -477,12 +477,12 @@ export interface ScenarioCase {
 }
 
 export const ALLOWED_CALLER: AppConfigEvalContext = {
-  appId: 'chat-ui',
+  appId: 'ai-dial-chat',
   userId: 'allowed',
   roles: ['beta'],
 };
 export const RESTRICTED_CALLER: AppConfigEvalContext = {
-  appId: 'chat-ui',
+  appId: 'ai-dial-chat',
   userId: 'restricted',
   roles: ['staff'],
 };

@@ -61,7 +61,7 @@ A key that depends on a local capability, credential, deployment topology, secur
 #### Scenario: Reclassification leaves the 1.0.0 artifact unchanged
 
 - **WHEN** the schema generator runs after the reclassification
-- **THEN** `apps/chat-api/managed-config-schema/chat-ui-1.0.0.json` and `index.json` are unchanged and the pinned 1.0.0 hash still matches
+- **THEN** `apps/chat-api/managed-config-schema/ai-dial-chat-1.0.0.json` and `index.json` are unchanged and the pinned 1.0.0 hash still matches
 
 ### Requirement: Managed payload shape
 

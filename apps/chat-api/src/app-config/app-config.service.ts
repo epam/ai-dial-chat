@@ -285,7 +285,7 @@ export class AppConfigService {
   /**
    * The gates of an active managed feature (see `isManagedFeatureEnabled`).
    * Every other key, every key outside `active` mode, every key while
-   * `chat-ui` has no mapped instance, and every key of a foreign application's response (its typed fields keep the `chat-ui`
+   * `ai-dial-chat` has no mapped instance, and every key of a foreign application's response (its typed fields keep the `ai-dial-chat`
    * environment values) keeps its selected value.
    */
   private applyManagedPolicy(
@@ -368,7 +368,7 @@ export class AppConfigService {
     };
   }
 
-  /* A foreign application's payload, unchanged; never for `chat-ui`. */
+  /* A foreign application's payload, unchanged; never for `ai-dial-chat`. */
   private foreignAppConfig(
     view: ManagedResolutionView,
   ): ClientAppConfigDto | undefined {

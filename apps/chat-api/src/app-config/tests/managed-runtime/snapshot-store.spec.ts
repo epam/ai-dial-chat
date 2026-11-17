@@ -18,7 +18,7 @@ const snapshot = (
 ): ManagedSnapshot =>
   Object.freeze({
     instanceId: 'chat-dev',
-    appId: 'chat-ui',
+    appId: 'ai-dial-chat',
     environment: 'dev',
     schemaVersion: '1.0.0',
     schemaSha256: 'a'.repeat(64),
@@ -30,7 +30,7 @@ const snapshot = (
   });
 
 const newStore = () =>
-  new ManagedSnapshotStore('chat-ui', 'chat-dev', MAX_STALENESS_MS);
+  new ManagedSnapshotStore('ai-dial-chat', 'chat-dev', MAX_STALENESS_MS);
 
 describe('ManagedSnapshotStore', () => {
   it('is unavailable before any snapshot is accepted', () => {

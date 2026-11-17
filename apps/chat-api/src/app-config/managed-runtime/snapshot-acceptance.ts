@@ -1,6 +1,6 @@
 import Ajv2020, { type ValidateFunction } from 'ajv/dist/2020';
-import chatUiSchemaArtifact100 from '../../../managed-config-schema/chat-ui-1.0.0.json';
-import chatUiSchemaArtifact110 from '../../../managed-config-schema/chat-ui-1.1.0.json';
+import chatSchemaArtifact100 from '../../../managed-config-schema/ai-dial-chat-1.0.0.json';
+import chatSchemaArtifact110 from '../../../managed-config-schema/ai-dial-chat-1.1.0.json';
 import {
   canonicalByteLength,
   canonicalSha256,
@@ -18,7 +18,7 @@ import {
   type ManagedSnapshot,
 } from './managed-runtime.types';
 
-/** A committed schema artifact, as `managed-config-schema/chat-ui-<version>.json` holds it. */
+/** A committed schema artifact, as `managed-config-schema/ai-dial-chat-<version>.json` holds it. */
 interface SchemaArtifact {
   readonly appId: string;
   readonly schemaVersion: string;
@@ -31,11 +31,11 @@ interface SchemaArtifact {
  * entry in SUPPORTED_MANAGED_CONFIG_SCHEMA_VERSIONS and its pin.
  */
 const BUNDLED_ARTIFACTS: readonly SchemaArtifact[] = [
-  chatUiSchemaArtifact100 as SchemaArtifact,
-  chatUiSchemaArtifact110 as SchemaArtifact,
+  chatSchemaArtifact100 as SchemaArtifact,
+  chatSchemaArtifact110 as SchemaArtifact,
 ];
 
-/** Validates a `chat-ui` payload against one exact supported schema version. */
+/** Validates a `ai-dial-chat` payload against one exact supported schema version. */
 export type ManagedPayloadValidators = ReadonlyMap<string, ValidateFunction>;
 
 /**
@@ -98,7 +98,7 @@ const SHA256_HEX = /^[0-9a-f]{64}$/;
 
 /**
  * The deepest object/array nesting a payload may have, the payload itself
- * being level 1. The `chat-ui` schema needs 5; the bound exists because a
+ * being level 1. The `ai-dial-chat` schema needs 5; the bound exists because a
  * foreign payload is not schema-checked, and the canonical serialization,
  * `structuredClone` and freezing all recurse.
  */
@@ -143,7 +143,7 @@ const deepFreeze = <T>(value: T): T => {
 
 /**
  * Checks one runtime-read body, in order: identity, envelope, payload depth and size,
- * revision immutability, and for `chat-ui` the supported version, its pinned
+ * revision immutability, and for `ai-dial-chat` the supported version, its pinned
  * hash, schema validation and the semantic constraints. A foreign
  * application's payload is never validated against a schema: the
  * application owns its contract. An accepted snapshot is a deep-frozen copy.

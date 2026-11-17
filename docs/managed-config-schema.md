@@ -2,7 +2,7 @@
 
 DIAL Config Studio keeps one immutable JSON Schema per version in every runner
 instance and validates each publication against that exact version. For
-`chat-ui` instances, the schema is generated from Chat's configuration
+`ai-dial-chat` instances, the schema is generated from Chat's configuration
 registry, `CONFIG_DEFINITIONS` in
 [`config-registry.constants.ts`](../apps/chat-api/src/app-config/config-registry/config-registry.constants.ts),
 and committed in
@@ -148,26 +148,26 @@ undeclared is rejected.
 
 ## Artifact and index
 
-Each version is committed as `chat-ui-<schemaVersion>.json`. It holds exactly
+Each version is committed as `ai-dial-chat-<schemaVersion>.json`. It holds exactly
 `{ appId, schemaVersion, schema }`, which is Studio's schema upload body
 without the client-supplied `operationId`. `index.json` sits next to it:
 
 ```json
 {
   "format": "dial-managed-config-schema-index@1",
-  "appId": "chat-ui",
+  "appId": "ai-dial-chat",
   "current": "1.1.0",
   "supported": ["1.0.0", "1.1.0"],
   "versions": [
     {
       "schemaVersion": "1.0.0",
-      "file": "chat-ui-1.0.0.json",
+      "file": "ai-dial-chat-1.0.0.json",
       "schemaSha256": "9e2155b7857adf6cc51e8966ad02ebf79953c5a87875eaea929e384c02b55dd6",
       "canonicalBytes": 5161
     },
     {
       "schemaVersion": "1.1.0",
-      "file": "chat-ui-1.1.0.json",
+      "file": "ai-dial-chat-1.1.0.json",
       "schemaSha256": "bfbad5396a9ef14fdcb39df44f9dd876b7ad3a2f7abf33bbf40bd694284711d8",
       "canonicalBytes": 5427
     }
@@ -245,9 +245,9 @@ been part of a Chat release tag.
 ## Verifying an upload
 
 The trusted source of a version is its file and `index.json` entry at an
-`epam/ai-dial-chat` release tag. To install it in a `chat-ui` instance:
+`epam/ai-dial-chat` release tag. To install it in a `ai-dial-chat` instance:
 
-1. Post the contents of `chat-ui-<version>.json`, plus a new `operationId`, to
+1. Post the contents of `ai-dial-chat-<version>.json`, plus a new `operationId`, to
    `POST /v1/schema-validations`. The expected result is
    `{ "valid": true, "errors": [] }`.
 2. Post the same body to `POST /v1/schemas`.
@@ -258,20 +258,30 @@ The trusted source of a version is its file and `index.json` entry at an
 ## Application identifiers
 
 A BFF deployment serves the identifiers listed in `CLIENT_CONFIG_APP_IDS`
-(default `chat-ui`), and `GET /api/v1/client-config` accepts only those as
+(default `ai-dial-chat`), and `GET /api/v1/client-config` accepts only those as
 `appId`. Each identifier uses the pattern Config Studio enforces for an
 instance's `appId`, `^[a-z0-9][a-z0-9-]{0,62}$`, so each served identifier can
 map to its own Config Studio instance.
 
-- Only `chat-ui` has Chat-owned typed fields, and this repository publishes
-  only the `chat-ui` schema. Launchpad, Models Garden and Config Studio own
+- Only `ai-dial-chat` has Chat-owned typed fields, and this repository publishes
+  only the `ai-dial-chat` schema. Launchpad, Models Garden and Config Studio own
   their contracts and schemas in their own repositories.
-- Every served identifier receives the same `chat-ui` `features` and `config`,
+- Every served identifier receives the same `ai-dial-chat` `features` and `config`,
   with its own echoed `appId` and its own cache entry.
 - Server-side feature gates (`FeatureGuard`, text refinement) always evaluate
-  as `chat-ui`, because they protect Chat BFF endpoints.
+  as `ai-dial-chat`, because they protect Chat BFF endpoints.
+- `chat-ui`, Chat's former identifier, is a deprecated alias. It is replaced
+  with `ai-dial-chat` in the `appId` query parameter, in
+  `CLIENT_CONFIG_APP_IDS` and on the application side of
+  `MANAGED_CONFIG_INSTANCES`, so existing callers (Launchpad's fallback read,
+  Models Garden, Config Studio, cached Chat frontends) and existing Helm values
+  keep working. A response always carries `"appId": "ai-dial-chat"`. The alias
+  does not apply to Config Studio: an instance created with `appId` `chat-ui`
+  is rejected with `identity_mismatch`. Recreate it with `appId`
+  `ai-dial-chat` and upload `ai-dial-chat-<version>.json`. No Chat release
+  shipped the former `chat-ui-<version>.json` artifacts.
 
-With managed reading `active`, `chat-ui` values feed the existing typed fields
+With managed reading `active`, `ai-dial-chat` values feed the existing typed fields
 under this schema, and a payload published for another mapped identifier is
 returned unchanged in the optional `appConfig` field. The BFF checks that
 payload's identity, revision and size but not its schema. The application
@@ -313,7 +323,7 @@ A candidate is accepted only when its `instanceId` and `appId` match the
 mapping (and `environment` matches `MANAGED_CONFIG_ENVIRONMENT` when set), its
 payload nests at most 32 levels and is at most 57,344 canonical bytes, and a
 revision seen before has
-unchanged hashes. A `chat-ui` snapshot must also name a supported
+unchanged hashes. A `ai-dial-chat` snapshot must also name a supported
 `schemaVersion` with exactly its pinned `schemaSha256`, validate against the
 bundled artifact, and pass `calendar_date` and `window_order`. A foreign
 payload is not schema-validated. Any failure rejects the whole candidate and

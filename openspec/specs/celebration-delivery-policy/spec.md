@@ -49,7 +49,7 @@ The generated client SHALL be regenerated, and `apps/chat` SHALL read the field 
 
 #### Scenario: Allowlisted scene reaches the client
 - **WHEN** `UI_EVENT_DELIVERY_MODE=prefer-external` and `UI_EVENT_EXTERNAL_SCENES=new-year/snowman-delivery`
-- **THEN** `GET /api/v1/client-config?appId=chat-ui` includes `celebrationDelivery.externalScenes` with that pair
+- **THEN** `GET /api/v1/client-config?appId=ai-dial-chat` includes `celebrationDelivery.externalScenes` with that pair
 
 ### Requirement: Documented variables
 

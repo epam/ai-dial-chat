@@ -63,9 +63,9 @@ describe('buildManagedConfigSchema', () => {
     expect(schema['$schema']).toBe(
       'https://json-schema.org/draft/2020-12/schema',
     );
-    expect(schema['$id']).toBe('urn:dial:chat-ui:managed-config:1.1.0');
+    expect(schema['$id']).toBe('urn:dial:ai-dial-chat:managed-config:1.1.0');
     expect(managedConfigSchemaId('2.3.4')).toBe(
-      'urn:dial:chat-ui:managed-config:2.3.4',
+      'urn:dial:ai-dial-chat:managed-config:2.3.4',
     );
   });
 
@@ -225,18 +225,18 @@ describe('buildManagedConfigSchema', () => {
       MANAGED_CONFIG_SCHEMA_VERSION,
     );
     expect(Object.keys(artifact)).toEqual(['appId', 'schemaVersion', 'schema']);
-    expect(artifact.appId).toBe('chat-ui');
+    expect(artifact.appId).toBe('ai-dial-chat');
     const index = buildManagedConfigIndex([artifact]);
     expect(index).toMatchObject({
       format: 'dial-managed-config-schema-index@1',
-      appId: 'chat-ui',
+      appId: 'ai-dial-chat',
       current: '1.1.0',
       supported: SUPPORTED_MANAGED_CONFIG_SCHEMA_VERSIONS,
     });
     expect(index.versions).toEqual([
       {
         schemaVersion: '1.1.0',
-        file: 'chat-ui-1.1.0.json',
+        file: 'ai-dial-chat-1.1.0.json',
         schemaSha256: expect.stringMatching(/^[0-9a-f]{64}$/),
         canonicalBytes: canonicalByteLength(artifact.schema),
       },
@@ -245,7 +245,7 @@ describe('buildManagedConfigSchema', () => {
 
   it('orders index versions semantically', () => {
     const at = (version: string) => ({
-      appId: 'chat-ui',
+      appId: 'ai-dial-chat',
       schemaVersion: version,
       schema: { type: 'object' },
     });

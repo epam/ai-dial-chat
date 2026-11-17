@@ -1302,7 +1302,7 @@ describe('ENV resolution characterization', () => {
          * initializer as unset so the registry default applies. */
         const { provider } = buildResolutionStack({});
         expect(
-          await provider.resolve(definition.key, { appId: 'chat-ui' }),
+          await provider.resolve(definition.key, { appId: 'ai-dial-chat' }),
           reason,
         ).toBeUndefined();
       },

@@ -49,7 +49,7 @@ A change of mode SHALL be a deployment configuration change. The backend SHALL N
 #### Scenario: Unmapped chat-ui keeps environment behavior
 
 - **WHEN** the mode is `active`, `features.usageLimitsControl` is listed, `USAGE_LIMITS_CONTROL_ENABLED=true`, and only `launchpad` is mapped
-- **THEN** `chat-ui` gets `features.usageLimitsControl=true` with no `metadata.managed`, and `FeatureGuard` allows it
+- **THEN** `ai-dial-chat` gets `features.usageLimitsControl=true` with no `metadata.managed`, and `FeatureGuard` allows it
 
 #### Scenario: Unlisted managed key keeps its environment value
 
@@ -82,7 +82,7 @@ For an active configuration key, the selected value SHALL be the explicit enviro
 
 ### Requirement: Managed feature gates
 
-For an active managed feature of a mapped `chat-ui`, the effective value SHALL be `true` only when every condition holds:
+For an active managed feature of a mapped `ai-dial-chat`, the effective value SHALL be `true` only when every condition holds:
 
 1. The configured enabled bit, taken from the explicit environment value, otherwise the managed `enabled`, otherwise the registry default, is `true`.
 2. The captured state is usable.
@@ -169,7 +169,7 @@ A feature state without `targeting` SHALL have no role restriction. With `target
 
 ### Requirement: Server guards enforce managed policy
 
-`FeatureGuard` and every `FeatureFlagsService.isEnabled` caller SHALL evaluate active managed features with the same gates and captured-snapshot rules as `GET /api/v1/client-config`, for `appId` `chat-ui`, independently of any browser flag or cached response.
+`FeatureGuard` and every `FeatureFlagsService.isEnabled` caller SHALL evaluate active managed features with the same gates and captured-snapshot rules as `GET /api/v1/client-config`, for `appId` `ai-dial-chat`, independently of any browser flag or cached response.
 
 #### Scenario: Guard and client config agree
 
@@ -183,7 +183,7 @@ A feature state without `targeting` SHALL have no role restriction. With `target
 
 ### Requirement: Shadow comparison
 
-In `shadow` mode, each accepted or re-verified `chat-ui` snapshot SHALL be compared with the effective values computed without it:
+In `shadow` mode, each accepted or re-verified `ai-dial-chat` snapshot SHALL be compared with the effective values computed without it:
 
 - every managed configuration key's normalized managed value;
 - every managed feature's gate result for an anonymous context.
@@ -197,7 +197,7 @@ Each comparison SHALL produce `equal`, `differs`, `env_shadowed` (an explicit en
 
 ### Requirement: Foreign application payload delivery
 
-In `active` mode, for a served application identifier other than `chat-ui` that has a mapping and a usable captured snapshot, `GET /api/v1/client-config` SHALL include `appConfig` with `schemaVersion`, `schemaSha256`, `revisionId`, `publishedAt`, and the accepted `payload` unchanged. When the snapshot is not usable, `appConfig` SHALL be omitted. The typed `features` and `config` of that response SHALL keep the `chat-ui` environment-driven values. `chat-ui` responses SHALL never contain `appConfig`.
+In `active` mode, for a served application identifier other than `ai-dial-chat` that has a mapping and a usable captured snapshot, `GET /api/v1/client-config` SHALL include `appConfig` with `schemaVersion`, `schemaSha256`, `revisionId`, `publishedAt`, and the accepted `payload` unchanged. When the snapshot is not usable, `appConfig` SHALL be omitted. The typed `features` and `config` of that response SHALL keep the `ai-dial-chat` environment-driven values. `ai-dial-chat` responses SHALL never contain `appConfig`.
 
 #### Scenario: Launchpad receives its payload
 

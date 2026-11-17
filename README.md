@@ -363,7 +363,7 @@ contract — run these after any change to a `chat-api` controller or DTO.
 
 ### Managed configuration schema
 
-Config Studio validates `chat-ui` publications against a schema generated from
+Config Studio validates `ai-dial-chat` publications against a schema generated from
 the `chat-api` configuration registry and committed in
 `apps/chat-api/managed-config-schema/`. Regenerate it after changing a managed
 registry entry; a test fails when the committed files drift. See

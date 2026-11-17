@@ -82,7 +82,7 @@ Pattern MUST follow `ThemeContext.tsx`: `createContext<AppConfigState | undefine
 
 The provider SHALL fetch config using `async`/`await` with an `AbortController` inside `useEffect`. A `cancelled` flag SHALL prevent `setState` after unmount. The pattern MUST follow `useFavicon.ts`.
 
-The provider SHALL call the `getClientConfig(signal?)` wrapper from `apps/chat/src/server-api/app-config.api.ts`, which passes `{ appId: 'chat-ui' }` to the generated `@epam/ai-dial-chat-api-client` `AppConfigApi`. The provider MUST NOT call `fetch` directly or use `config.api.ts`.
+The provider SHALL call the `getClientConfig(signal?)` wrapper from `apps/chat/src/server-api/app-config.api.ts`, which passes `{ appId: 'ai-dial-chat' }` to the generated `@epam/ai-dial-chat-api-client` `AppConfigApi`. The provider MUST NOT call `fetch` directly or use `config.api.ts`.
 
 The load SHALL be gated on authentication status: while `useUser().status` is `AuthStatus.Loading` the provider SHALL not issue a request, and it SHALL re-run the load whenever that status settles or changes, so the config reflects the signed-in user rather than a pre-auth response. `AppConfigProvider` therefore SHALL be mounted inside `UserProvider`.
 

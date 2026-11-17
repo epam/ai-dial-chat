@@ -4,6 +4,7 @@
 Surface the deployed chat version to users and support staff. The version is sourced from the `CHAT_VERSION` environment variable, flows through the app-config client response and context, and renders as a label in the footer strip.
 
 ## Requirements
+
 ### Requirement: Chat version is sourced from the CHAT_VERSION environment variable
 
 The NestJS `app-config` module SHALL accept an optional `CHAT_VERSION` environment variable,
@@ -100,7 +101,7 @@ Example response fragment for `GET /api/v1/app-config`:
 
 ```json
 {
-  "appId": "chat-ui",
+  "appId": "ai-dial-chat",
   "features": { "footer": true },
   "config": {
     "appVersion": "0.45.0",

@@ -11,7 +11,7 @@ const BASE = {
 const MANAGED = {
   ...BASE,
   MANAGED_CONFIG_MODE: 'shadow',
-  MANAGED_CONFIG_INSTANCES: 'chat-ui=chat-dev',
+  MANAGED_CONFIG_INSTANCES: 'ai-dial-chat=chat-dev',
   MANAGED_CONFIG_API_KEY: 'super-secret-reader-key',
   MANAGED_CONFIG_MAX_STALENESS_SECONDS: '900',
 };
@@ -47,11 +47,12 @@ describe('managed configuration environment', () => {
     vi.spyOn(console, 'info').mockImplementation(() => undefined);
     const config = validate({
       ...MANAGED,
-      CLIENT_CONFIG_APP_IDS: 'chat-ui,launchpad',
-      MANAGED_CONFIG_INSTANCES: ' chat-ui = chat-dev , launchpad=launchpad-dev',
+      CLIENT_CONFIG_APP_IDS: 'ai-dial-chat,launchpad',
+      MANAGED_CONFIG_INSTANCES:
+        ' ai-dial-chat = chat-dev , launchpad=launchpad-dev',
     });
     expect(config.MANAGED_CONFIG_INSTANCES).toEqual([
-      'chat-ui=chat-dev',
+      'ai-dial-chat=chat-dev',
       'launchpad=launchpad-dev',
     ]);
   });
@@ -99,8 +100,9 @@ describe('managed configuration environment', () => {
     expectFailure(
       {
         ...MANAGED,
-        CLIENT_CONFIG_APP_IDS: 'chat-ui',
-        MANAGED_CONFIG_INSTANCES: 'chat-ui=chat-dev,launchpad=launchpad-dev',
+        CLIENT_CONFIG_APP_IDS: 'ai-dial-chat',
+        MANAGED_CONFIG_INSTANCES:
+          'ai-dial-chat=chat-dev,launchpad=launchpad-dev',
       },
       'MANAGED_CONFIG_INSTANCES may only map application identifiers listed in CLIENT_CONFIG_APP_IDS',
     );
@@ -109,22 +111,47 @@ describe('managed configuration environment', () => {
   it.each([
     [
       'an identifier twice',
-      'chat-ui=chat-dev,chat-ui=chat-prod',
+      'ai-dial-chat=chat-dev,ai-dial-chat=chat-prod',
       'maps an application identifier twice',
     ],
     [
       'an instance twice',
-      'chat-ui=chat-dev,launchpad=chat-dev',
+      'ai-dial-chat=chat-dev,launchpad=chat-dev',
       'maps an instance twice',
     ],
   ])('rejects a mapping with %s', (_label, instances, message) => {
     expectFailure(
       {
         ...MANAGED,
-        CLIENT_CONFIG_APP_IDS: 'chat-ui,launchpad',
+        CLIENT_CONFIG_APP_IDS: 'ai-dial-chat,launchpad',
         MANAGED_CONFIG_INSTANCES: instances,
       },
       message,
+    );
+  });
+
+  it('maps the legacy chat-ui identifier to ai-dial-chat', () => {
+    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    const config = validate({
+      ...MANAGED,
+      CLIENT_CONFIG_APP_IDS: 'chat-ui,launchpad',
+      MANAGED_CONFIG_INSTANCES:
+        'chat-ui = ai-dial-chat,launchpad=launchpad-dev',
+    });
+    expect(config.CLIENT_CONFIG_APP_IDS).toEqual(['ai-dial-chat', 'launchpad']);
+    expect(config.MANAGED_CONFIG_INSTANCES).toEqual([
+      'ai-dial-chat=ai-dial-chat',
+      'launchpad=launchpad-dev',
+    ]);
+  });
+
+  it('rejects mapping both the legacy and the current identifier', () => {
+    expectFailure(
+      {
+        ...MANAGED,
+        MANAGED_CONFIG_INSTANCES: 'chat-ui=chat-dev,ai-dial-chat=chat-prod',
+      },
+      'maps an application identifier twice',
     );
   });
 
