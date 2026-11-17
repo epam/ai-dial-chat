@@ -407,10 +407,12 @@ export const useConversationExport = ({
         }
 
         const envelope = buildExportEnvelope([conversation], []);
-        const { blob, skippedPaths } = buildDialArchive(
+        const { blob, skippedPaths } = await buildDialArchive(
           envelope,
           zipAttachments,
         );
+        // Building awaits the on-demand ZIP engine, so a cancel can land in between.
+        if (signal.aborted) return;
         const hasSkippedAttachments = anySkipped || skippedPaths.length > 0;
         if (hasSkippedAttachments) {
           onWarning?.({

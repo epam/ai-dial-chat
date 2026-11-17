@@ -1,5 +1,4 @@
 import type { ExportFormat } from '@epam/ai-dial-chat-shared';
-import { strFromU8, unzipSync } from 'fflate';
 import {
   parseImportEnvelope,
   UnsupportedImportFormatError,
@@ -51,6 +50,8 @@ export const parseDialArchive = async (
   file: File,
 ): Promise<ParsedDialArchive> => {
   const buffer = await readFileAsBytes(file);
+  // On demand: the ZIP engine is needed only once a user imports.
+  const { strFromU8, unzipSync } = await import('fflate');
 
   let entries: Record<string, Uint8Array>;
   try {

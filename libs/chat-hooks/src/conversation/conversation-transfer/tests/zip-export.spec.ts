@@ -60,8 +60,8 @@ describe('buildDialArchive', () => {
     folders: [],
   };
 
-  it('reports no skipped paths when all attachments are valid', () => {
-    const result = buildDialArchive(envelope, [
+  it('reports no skipped paths when all attachments are valid', async () => {
+    const result = await buildDialArchive(envelope, [
       { path: 'reports/q1.pdf', data: encode('pdf-bytes') },
       { path: 'images/photo.png', data: encode('png-bytes') },
     ]);
@@ -71,7 +71,7 @@ describe('buildDialArchive', () => {
   });
 
   it('produces a zip readable back with fflate', async () => {
-    const result = buildDialArchive(envelope, [
+    const result = await buildDialArchive(envelope, [
       { path: 'reports/q1.pdf', data: encode('pdf-bytes') },
     ]);
 
@@ -89,7 +89,7 @@ describe('buildDialArchive', () => {
   });
 
   it('skips attachments with an invalid path and does not write them', async () => {
-    const result = buildDialArchive(envelope, [
+    const result = await buildDialArchive(envelope, [
       { path: '../../etc/passwd', data: encode('malicious') },
       { path: 'safe/file.txt', data: encode('safe-bytes') },
     ]);
@@ -105,7 +105,7 @@ describe('buildDialArchive', () => {
   });
 
   it('returns a zip Blob even when there are no attachments', async () => {
-    const result = buildDialArchive(envelope, []);
+    const result = await buildDialArchive(envelope, []);
     const buffer = await readBlobAsBytes(result.blob);
     const entries = unzipSync(buffer);
     expect(Object.keys(entries)).toEqual(['conversation.json']);
