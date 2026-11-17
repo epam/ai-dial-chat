@@ -118,12 +118,21 @@ export const ConversationPage: FC<Props> = ({
   const [createdHereId, setCreatedHereId] = useState<string | null>(
     prefetchedConversation ? (conversationId ?? null) : null,
   );
+  /*
+   * A failed duplicate belongs to the conversation it was attempted on. The page
+   * instance is reused across conversations, so the error is cleared when the
+   * route moves on ([#9893](https://github.com/epam/ai-dial-chat/issues/9893)).
+   */
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const [trackedConversationId, setTrackedConversationId] =
     useState(conversationId);
   if (trackedConversationId !== conversationId) {
     setTrackedConversationId(conversationId);
     setCreatedHereId(prefetchedConversation ? (conversationId ?? null) : null);
+    setDuplicateError(null);
   }
+  const currentConversationIdRef = useRef(conversationId);
+  currentConversationIdRef.current = conversationId;
   const conversationRef = useRef<Conversation | null>(null);
   const displayNameWatchCleanupRef = useRef<(() => void) | null>(null);
   const displayNameWatchKeyRef = useRef<string | null>(null);
@@ -208,7 +217,6 @@ export const ConversationPage: FC<Props> = ({
     remove: removeConversationFromList,
     refresh: refreshConversations,
   } = listSync;
-  const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const overlay = useOptionalOverlay();
   /*
    * One-shot text hand-off into the composer's textarea. The two writers differ
@@ -295,6 +303,8 @@ export const ConversationPage: FC<Props> = ({
       navigate(getConversationRoute(newPath));
     } catch (error) {
       const { code } = await getApiErrorDetails(error);
+      // The user opened another conversation while the request was in flight.
+      if (currentConversationIdRef.current !== conversationId) return;
       setDuplicateError(
         t(
           code === ConversationErrorCode.ConversationDuplicateModelHidden

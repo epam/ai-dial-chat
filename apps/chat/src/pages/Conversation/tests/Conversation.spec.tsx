@@ -78,11 +78,15 @@ const MockConversationView = ({
   onToolToggle,
   inputContentRevision,
   topContent,
+  duplicateError,
+  onDuplicateConversation,
 }: {
   toolsMenuItems?: ToolMenuItem[];
   onToolToggle?: (id: string) => void;
   inputContentRevision?: number;
   topContent?: ReactNode;
+  duplicateError?: string;
+  onDuplicateConversation?: () => void;
 }) => {
   useState(() =>
     overlayContentMocks.mountedRevisions.push(inputContentRevision ?? 0),
@@ -91,6 +95,12 @@ const MockConversationView = ({
     <div>
       conversation-view
       {topContent}
+      {onDuplicateConversation && (
+        <button type="button" onClick={onDuplicateConversation}>
+          duplicate
+        </button>
+      )}
+      {duplicateError && <p role="alert">{duplicateError}</p>}
       {toolsMenuItems.map((item) => (
         <button
           key={item.id}
@@ -572,6 +582,76 @@ describe('Conversation', () => {
       openConversation(rerender, CONVERSATION_ID);
 
       await waitFor(() => expect(getStartLabels()).toHaveLength(1));
+    });
+  });
+
+  describe('ConversationPage — duplicate error', () => {
+    const OTHER_ID = 'conversations/bucket/claude__Small';
+
+    const withDuplicate = (duplicateConversation: () => Promise<string>) =>
+      mockUseConversations.mockReturnValue({
+        ...mockUseConversations(),
+        duplicateConversation,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+
+    const openConversation = (
+      rerender: (ui: ReactElement) => void,
+      id: string,
+    ) => {
+      routerMocks.conversationId = id;
+      rerender(<ConversationPage />);
+    };
+
+    beforeEach(() => {
+      mockGetConversation.mockImplementation(
+        async (path: string) =>
+          ({
+            ...makeConversation(),
+            id: path.includes('claude') ? OTHER_ID : CONVERSATION_ID,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          }) as any,
+      );
+    });
+
+    it('clears a failed duplicate error when another conversation is opened', async () => {
+      withDuplicate(vi.fn().mockRejectedValue(new Error('boom')));
+      const { rerender } = render(<ConversationPage />, {
+        wrapper: ConversationDataSourceProvider,
+      });
+
+      await userEvent.click(
+        await screen.findByRole('button', { name: 'duplicate' }),
+      );
+      expect(await screen.findByRole('alert')).toBeTruthy();
+
+      openConversation(rerender, OTHER_ID);
+
+      await screen.findByRole('button', { name: 'duplicate' });
+      expect(screen.queryByRole('alert')).toBeNull();
+    });
+
+    it('drops the failure of a duplicate that settles after the user moved on', async () => {
+      let failDuplicate!: (reason: unknown) => void;
+      withDuplicate(
+        vi.fn(
+          () =>
+            new Promise<string>((_, reject) => {
+              failDuplicate = reject;
+            }),
+        ),
+      );
+      const { rerender } = render(<ConversationPage />, {
+        wrapper: ConversationDataSourceProvider,
+      });
+
+      await userEvent.click(
+        await screen.findByRole('button', { name: 'duplicate' }),
+      );
+      openConversation(rerender, OTHER_ID);
+      await act(async () => failDuplicate(new Error('boom')));
+
+      expect(screen.queryByRole('alert')).toBeNull();
     });
   });
 
