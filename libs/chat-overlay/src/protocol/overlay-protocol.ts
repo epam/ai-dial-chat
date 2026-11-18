@@ -248,6 +248,12 @@ export enum OverlayFeature {
    * conversation-starter pill, leaving a label-only button.
    */
   HideStarterIcon = 'hide-starter-icon',
+  /**
+   * Shows the theme's full `logo` in the mobile header instead of its
+   * `favicon`. Without a `logo` in the theme the header keeps the `favicon`.
+   * The desktop top bar and the navigation sidebar are unaffected.
+   */
+  ShowMobileHeaderFullLogo = 'show-mobile-header-full-logo',
 }
 
 /**
