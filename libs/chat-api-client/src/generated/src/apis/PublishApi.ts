@@ -16,9 +16,11 @@ import * as runtime from '../runtime';
 import type {
   CopyCatalogEntityToOrgUnitDto,
   PublishCatalogEntityDto,
+  PublishConflictDto,
   PublishHistoryEntryDto,
   PublishResultDto,
   PublishRulesResultDto,
+  PublishTargetCheckDto,
   ResourceDependenciesResultDto,
   ResourceIdResponseDto,
   UnpublishAccessDto,
@@ -41,6 +43,13 @@ export interface GetCatalogPublishDependenciesRequest {
 export interface GetCatalogPublishHistoryRequest {
   entityType: GetCatalogPublishHistoryEntityTypeEnum;
   entityId: string;
+}
+
+export interface GetCatalogPublishTargetRequest {
+  entityType: GetCatalogPublishTargetEntityTypeEnum;
+  entityId: string;
+  folderPath: string;
+  version?: string;
 }
 
 export interface GetCatalogUnpublishAccessRequest {
@@ -296,6 +305,94 @@ export class PublishApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<Array<PublishHistoryEntryDto>> {
     const response = await this.getCatalogPublishHistoryRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Derives the path a publish of this entity into `folderPath` (and `version`) would create, exactly as the publish endpoint does, and reads that path\'s metadata with the caller\'s own token. Creates nothing. `exists: false` means no resource was found, not that none exists: a copy hidden from the caller by access rules, or one still pending approval, is not detected, and another publication can land before the caller submits. The publish endpoint answers `409` `target-exists` for those cases.
+   * Check whether the published copy of an entity would land on a taken path
+   */
+  async getCatalogPublishTargetRaw(
+    requestParameters: GetCatalogPublishTargetRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<PublishTargetCheckDto>> {
+    if (requestParameters['entityType'] == null) {
+      throw new runtime.RequiredError(
+        'entityType',
+        'Required parameter "entityType" was null or undefined when calling getCatalogPublishTarget().',
+      );
+    }
+
+    if (requestParameters['entityId'] == null) {
+      throw new runtime.RequiredError(
+        'entityId',
+        'Required parameter "entityId" was null or undefined when calling getCatalogPublishTarget().',
+      );
+    }
+
+    if (requestParameters['folderPath'] == null) {
+      throw new runtime.RequiredError(
+        'folderPath',
+        'Required parameter "folderPath" was null or undefined when calling getCatalogPublishTarget().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['folderPath'] != null) {
+      queryParameters['folderPath'] = requestParameters['folderPath'];
+    }
+
+    if (requestParameters['version'] != null) {
+      queryParameters['version'] = requestParameters['version'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/catalog/{entityType}/{entityId}/publish-target`;
+    urlPath = urlPath.replace(
+      `{${'entityType'}}`,
+      encodeURIComponent(String(requestParameters['entityType'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'entityId'}}`,
+      encodeURIComponent(String(requestParameters['entityId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<PublishTargetCheckDto>(response);
+  }
+
+  /**
+   * Derives the path a publish of this entity into `folderPath` (and `version`) would create, exactly as the publish endpoint does, and reads that path\'s metadata with the caller\'s own token. Creates nothing. `exists: false` means no resource was found, not that none exists: a copy hidden from the caller by access rules, or one still pending approval, is not detected, and another publication can land before the caller submits. The publish endpoint answers `409` `target-exists` for those cases.
+   * Check whether the published copy of an entity would land on a taken path
+   */
+  async getCatalogPublishTarget(
+    requestParameters: GetCatalogPublishTargetRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<PublishTargetCheckDto> {
+    const response = await this.getCatalogPublishTargetRaw(
       requestParameters,
       initOverrides,
     );
@@ -716,6 +813,19 @@ export const GetCatalogPublishHistoryEntityTypeEnum = {
 } as const;
 export type GetCatalogPublishHistoryEntityTypeEnum =
   (typeof GetCatalogPublishHistoryEntityTypeEnum)[keyof typeof GetCatalogPublishHistoryEntityTypeEnum];
+/**
+ * @export
+ */
+export const GetCatalogPublishTargetEntityTypeEnum = {
+  Model: 'model',
+  Toolset: 'toolset',
+  Application: 'application',
+  Prompt: 'prompt',
+  Skill: 'skill',
+  Project: 'project',
+} as const;
+export type GetCatalogPublishTargetEntityTypeEnum =
+  (typeof GetCatalogPublishTargetEntityTypeEnum)[keyof typeof GetCatalogPublishTargetEntityTypeEnum];
 /**
  * @export
  */

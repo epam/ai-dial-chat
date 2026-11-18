@@ -30,27 +30,27 @@ The `409` applies to every entity type the endpoint accepts (`toolset`, `applica
 
 ### Requirement: A target-check endpoint reports whether a publish target is taken
 
-The backend SHALL expose authenticated `GET /api/v1/catalog/{entityType}/{entityId}/publish-target` with the query parameters `folderPath` (required, validated like the publish `folderPath`) and `version` (optional, validated like the publish `version`). It SHALL answer `200` with `{ exists: boolean }`: `true` when the caller's own read of the target's metadata finds a resource, `false` when Core reports it absent.
+The backend SHALL expose authenticated `GET /api/v1/catalog/{entityType}/{entityId}/publish-target` with the query parameters `folderPath` (required, validated like the publish `folderPath`) and `version` (optional, validated like the publish `version`). It SHALL answer `200` with `{ taken: boolean }`: `true` when the caller's own read of the target's metadata finds a resource, `false` when Core reports it absent.
 
 The target SHALL be derived by the same function the publish endpoint uses, from the same `entityType`, `entityId`, `folderPath` and `version`, so a check and a publish for the same inputs address the same path. The endpoint SHALL create nothing and SHALL call Core with the caller's own bearer token.
 
-`exists: false` means the caller could not find a resource, not that none exists: a copy hidden from the caller by access rules, or a publication still pending approval, is not detected. The publish endpoint's `409` remains the safety net for those cases, and for a publication that lands between a check and a submit.
+`taken: false` means the caller could not find a resource, not that none exists: a copy hidden from the caller by access rules, or a publication still pending approval, is not detected. The publish endpoint's `409` remains the safety net for those cases, and for a publication that lands between a check and a submit.
 
 The endpoint SHALL answer the same validation, authentication and Core-failure statuses as the publish endpoint (400, 401, 403, 404 where Core reports the entity unknown, 502, 503). It SHALL be declared in the OpenAPI document with its own response DTO, and `libs/chat-api-client` SHALL be regenerated.
 
 #### Scenario: Target is taken
 - **GIVEN** a published copy exists at the target derived from the request
 - **WHEN** the caller requests the check for that entity and folder
-- **THEN** the answer is `200 { "exists": true }`
+- **THEN** the answer is `200 { "taken": true }`
 
 #### Scenario: Target is free
 - **WHEN** the caller requests the check for a folder that holds no such copy
-- **THEN** the answer is `200 { "exists": false }` and nothing is created
+- **THEN** the answer is `200 { "taken": false }` and nothing is created
 
 #### Scenario: Version changes the target of an application
 - **GIVEN** an application published as `{name}__1.0.0` in a folder
 - **WHEN** the caller checks the same application and folder with `version=2.0.0`
-- **THEN** the answer is `200 { "exists": false }`, because the target is `{name}__2.0.0`
+- **THEN** the answer is `200 { "taken": false }`, because the target is `{name}__2.0.0`
 
 #### Scenario: Check and publish agree
 - **WHEN** the check and the publish are given the same `entityType`, `entityId`, `folderPath` and `version`

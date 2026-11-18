@@ -303,6 +303,22 @@ export interface CatalogProps {
    * the rules editor's contents. Omit to skip pre-filling entirely.
    */
   onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
+  /**
+   * Resolves whether another resource already holds the published path of
+   * `item` in a destination folder, called when the selected folder changes
+   * and when the item's version changes. A taken target shows a warning and
+   * keeps Publish disabled; a rejection does not block. Omit to skip the check.
+   */
+  onCheckTargetExists?: (
+    item: CatalogItem,
+    folderPath: string[],
+  ) => Promise<boolean>;
+  /**
+   * Tells whether the rejection of `onPublish` means the published path is
+   * taken, so the panel shows the same warning instead of the generic submit
+   * error. Must be synchronous.
+   */
+  isTargetTakenError?: (error: unknown) => boolean;
   /** Called when the "Edit" button is clicked in the details panel. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
   /**

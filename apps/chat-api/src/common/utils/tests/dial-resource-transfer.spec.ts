@@ -11,6 +11,8 @@ import {
   DialResourceType,
   assertOwnBucket,
   buildFolderResourcePath,
+  dialResourceExists,
+  existsQuietly,
   getResourceLeaf,
   listDialResourceFolders,
   toDialResourceUrl,
@@ -237,5 +239,65 @@ describe('transferDialResource', () => {
         logger,
       }),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+});
+
+describe('dialResourceExists', () => {
+  const location = { bucket: 'public', path: 'Org/agent__1.0.0' };
+  const reader: Record<DialResourceType, string> = {
+    [DialResourceType.Applications]: 'getApplicationMetadata',
+    [DialResourceType.Toolsets]: 'getToolSetMetadata',
+    [DialResourceType.Prompts]: 'getPromptMetadata',
+    [DialResourceType.Skills]: 'listSkillMetadata',
+    [DialResourceType.Projects]: 'listProjectMetadata',
+  };
+
+  it.each(Object.values(DialResourceType))(
+    'reads %s metadata: 200 is present, 404 is absent',
+    async (type) => {
+      const read = vi
+        .fn()
+        .mockResolvedValueOnce({ data: {}, response: { status: 200 } })
+        .mockResolvedValueOnce({ error: {}, response: { status: 404 } });
+      const client = makeClient({ [reader[type]]: read });
+
+      await expect(
+        dialResourceExists(client, type, location, {}, 'check', logger),
+      ).resolves.toBe(true);
+      await expect(
+        dialResourceExists(client, type, location, {}, 'check', logger),
+      ).resolves.toBe(false);
+      expect(read.mock.calls[0].slice(0, 2)).toEqual([
+        'public',
+        'Org/agent__1.0.0',
+      ]);
+    },
+  );
+
+  it.each(Object.values(DialResourceType))(
+    'maps another %s status to a typed HTTP error',
+    async (type) => {
+      const client = makeClient({
+        [reader[type]]: vi
+          .fn()
+          .mockResolvedValue({ error: {}, response: { status: 403 } }),
+      });
+
+      await expect(
+        dialResourceExists(client, type, location, {}, 'check', logger),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    },
+  );
+
+  it('existsQuietly counts a failed read as not found', async () => {
+    const client = makeClient({
+      getApplicationMetadata: vi
+        .fn()
+        .mockResolvedValue({ error: {}, response: { status: 500 } }),
+    });
+
+    await expect(
+      existsQuietly(client, DialResourceType.Applications, location, {}),
+    ).resolves.toBe(false);
   });
 });

@@ -79,12 +79,14 @@ describe('PublishController (integration)', () => {
   let service: {
     publish: ReturnType<typeof vi.fn>;
     getPublishHistory: ReturnType<typeof vi.fn>;
+    checkPublishTarget: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
     service = {
       publish: vi.fn().mockResolvedValue(publishResult),
       getPublishHistory: vi.fn().mockResolvedValue([publishResult]),
+      checkPublishTarget: vi.fn().mockResolvedValue({ taken: true }),
     };
     app = await buildApp(service);
   });
@@ -92,6 +94,69 @@ describe('PublishController (integration)', () => {
   afterEach(async () => {
     vi.clearAllMocks();
     await app.close();
+  });
+
+  describe('GET /api/v1/catalog/:entityType/:entityId/publish-target', () => {
+    it('delegates to the service with the caller token and returns the answer', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/catalog/application/app__1.0.0/publish-target')
+        .query({ folderPath: 'Organization/Data Science', version: '2.0.0' })
+        .expect(200);
+
+      expect(res.body).toEqual({ taken: true });
+      expect(service.checkPublishTarget).toHaveBeenCalledWith(
+        TEST_USER.at,
+        'application',
+        'app__1.0.0',
+        'Organization/Data Science',
+        '2.0.0',
+      );
+    });
+
+    it('accepts a request without a version', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/catalog/prompt/greet/publish-target')
+        .query({ folderPath: 'Org' })
+        .expect(200);
+
+      expect(service.checkPublishTarget).toHaveBeenCalledWith(
+        TEST_USER.at,
+        'prompt',
+        'greet',
+        'Org',
+        undefined,
+      );
+    });
+
+    it.each([
+      ['a missing folderPath', {}],
+      ['a path traversal in folderPath', { folderPath: '../secret' }],
+      ['a version outside the charset', { folderPath: 'Org', version: 'a b' }],
+      ['an unknown query parameter', { folderPath: 'Org', extra: '1' }],
+    ])('rejects %s before the service', async (_label, query) => {
+      await request(app.getHttpServer())
+        .get('/api/v1/catalog/application/app__1.0.0/publish-target')
+        .query(query)
+        .expect(400);
+
+      expect(service.checkPublishTarget).not.toHaveBeenCalled();
+    });
+
+    it('rejects an unknown entity type', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/catalog/widget/x/publish-target')
+        .query({ folderPath: 'Org' })
+        .expect(400);
+    });
+
+    it('passes a Core failure through as its mapped status', async () => {
+      service.checkPublishTarget.mockRejectedValue(new ForbiddenException());
+
+      await request(app.getHttpServer())
+        .get('/api/v1/catalog/application/app__1.0.0/publish-target')
+        .query({ folderPath: 'Org' })
+        .expect(403);
+    });
   });
 
   describe('POST /api/v1/catalog/:entityType/:entityId/publish', () => {

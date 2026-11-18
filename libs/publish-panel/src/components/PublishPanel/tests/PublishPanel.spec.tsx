@@ -379,6 +379,70 @@ describe('PublishPanel', () => {
     expect(boldFolderNames).toHaveLength(1);
   });
 
+  it('shows the versioned target-taken callout with the folder name bold and the version filled in', () => {
+    renderPanel({
+      selectedFolderPath: ['Shared', 'Data Science'],
+      isTargetTaken: true,
+    });
+
+    expect(
+      screen.getByText('of a resource with this name already exists in', {
+        exact: false,
+      }),
+    ).toBeTruthy();
+    expect(
+      screen
+        .getAllByText('Data Science')
+        .filter((el) => el.tagName === 'STRONG'),
+    ).toHaveLength(1);
+  });
+
+  it('shows the plain target-taken callout when the resource has no version', () => {
+    renderPanel({
+      resource: { title: 'My prompt' },
+      selectedFolderPath: ['Shared', 'Data Science'],
+      isTargetTaken: true,
+    });
+
+    expect(
+      screen.getByText('with this name already exists in', { exact: false }),
+    ).toBeTruthy();
+    expect(screen.queryByText(/change its version/)).toBeNull();
+  });
+
+  it('treats an empty version as no version', () => {
+    renderPanel({
+      resource: { title: 'My prompt', version: '' },
+      selectedFolderPath: ['Shared', 'Data Science'],
+      isTargetTaken: true,
+    });
+
+    expect(screen.queryByText(/change its version/)).toBeNull();
+    expect(
+      screen.getByText('with this name already exists in', { exact: false }),
+    ).toBeTruthy();
+  });
+
+  it('uses the host-supplied target-taken labels', () => {
+    renderPanel({
+      selectedFolderPath: ['Shared'],
+      isTargetTaken: true,
+      labels: { targetTakenVersionedLabel: 'Taken: {version} in {folder}' },
+    });
+
+    expect(screen.getByText('Taken: 4.0.1 in', { exact: false })).toBeTruthy();
+  });
+
+  it('shows no target-taken callout while the check runs', () => {
+    renderPanel({
+      selectedFolderPath: ['Shared'],
+      isTargetTaken: true,
+      isTargetChecking: true,
+    });
+
+    expect(screen.queryByText(/already exists in/)).toBeNull();
+  });
+
   it('shows the no-access callout when the user lacks write access, with the folder name bold', () => {
     renderPanel({
       selectedFolderPath: ['Shared', 'Data Science'],

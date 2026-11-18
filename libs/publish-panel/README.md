@@ -97,13 +97,27 @@ the publication needs an administrator's approval. Its copy is
 `labels.adminApprovalTitle` (default `'Admin approval required'`) and
 `labels.adminApprovalMessage`; the default message says "it will appear in the
 folder", so a host replaces it to name the entity being published. The replace,
-no-access and submit-error callouts take its place when they apply.
+no-access, submit-error and target-taken callouts take its place when they apply.
+
+`isTargetTaken` and `isTargetChecking` (both default `false`) let the host say
+that another resource already holds the published path in the selected folder.
+While `isTargetChecking` is `true` the panel disables Publish and shows no
+callout. When `isTargetTaken` is `true` it shows a warning callout under the
+destination row, with the folder name in bold, and keeps Publish disabled, whatever
+`allowReplace` says. The text is `labels.targetTakenVersionedLabel` when
+`resource.version` is a non-empty string (`{version}` and `{folder}` are replaced; default
+`'Version {version} of a resource with this name already exists in {folder}. Rename it, change its version or choose another folder.'`)
+and `labels.targetTakenLabel` otherwise (`{folder}` is replaced; default
+`'A resource with this name already exists in {folder}. Rename it or choose another folder.'`).
+Precedence among the callouts: no access, then the check in flight, then submit error,
+then the item's own publication in the folder, then a taken target, then the info callout.
+Pass `usePublishFlow`'s `isTargetTaken` and `isTargetChecking` straight through.
 
 Typography comes from four class props: `summaryTitleClassName` and
 `headingClassName` (both `'dial-body-semi-text'`), `destinationClassName`
 (`'dial-small-semi-text'`) for the destination path, and
 `calloutFolderNameClassName` (`'dial-small-paragraph-semi-text'`) for the folder
-name emphasised in the replace-warning and no-access callouts.
+name emphasised in the replace-warning, target-taken and no-access callouts.
 `StandalonePublishPanel` forwards them as `panelSummaryTitleClassName`,
 `panelHeadingClassName` and `panelCalloutFolderNameClassName`.
 
@@ -497,6 +511,38 @@ carried shared credentials still opens with the option cleared. The argument
 is additive, so a host callback declaring only the first four parameters stays
 assignable and keeps behaving as it did.
 
+`onCheckTargetExists(item, folderPath)` is an optional callback resolving to
+`true` when another resource already holds the published path of `item` in
+`folderPath`. The hook calls it when the selected folder changes to a defined
+folder and when `item.version` changes while one is selected, and exposes the
+answer as `isTargetTaken` and the request's state as `isTargetChecking`. It does
+not call it for a folder created in this session (or one beneath it), nor for a
+folder whose publish history already holds the item, and it discards an answer
+that arrives after the folder or version changed again. A rejected callback
+leaves `isTargetTaken` and `isTargetChecking` `false` and sets no submit error:
+the host's backend refusing on submit is the safety net. The hook knows nothing of
+how the path is derived or checked; that stays with the host.
+
+`isTargetTakenError(error)` is an optional synchronous predicate over the
+rejection of `onPublish`. When it returns `true` the hook marks the selected
+folder's target as taken (`isTargetTaken`) instead of setting `hasSubmitError`,
+so the panel shows the target-taken callout; `onPublishError` is still called.
+`reset()` clears both.
+
+```tsx
+const publishFlow = usePublishFlow({
+  /* ... */
+  onCheckTargetExists: (item, folderPath) => checkTarget(item, folderPath),
+  isTargetTakenError: (error) => error instanceof TargetTakenError,
+});
+
+<StandalonePublishPanel
+  /* ... */
+  isTargetTaken={publishFlow.isTargetTaken}
+  isTargetChecking={publishFlow.isTargetChecking}
+/>;
+```
+
 ### usePublishFolderView
 
 Holds the publish panel's main/folder view switch and the folder picked in the folder view before Select commits it. Every opening (`isOpen` turning `true`) starts on the main view, and `backToMain` discards the pending folder.
@@ -523,6 +569,10 @@ const {
 ### PublishDependencyType
 
 `Application`, `Toolset`, `Prompt`, `Skill` and `File`: the kind of a `PublishDependency`, which picks its default type label.
+
+### PublishCalloutKind
+
+`None`, `Info`, `ReplaceWarning`, `TargetTaken`, `NoAccess` and `SubmitError`: the callout `derivePublishState` picks for the panel. `TargetTaken` means another resource already holds the published path in the selected folder.
 
 ### PublishPanelView
 

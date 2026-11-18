@@ -43,9 +43,9 @@ When `onPublish` rejects and the host reports the rejection as a taken target, t
 
 ### Requirement: derivePublishState and PublishPanel show a target-taken callout and disable Publish
 
-`derivePublishState` SHALL accept `isTargetTaken` and `isTargetChecking` and return a new callout kind for a taken target. The order of the outcomes SHALL be: submitting; no folder selected; no write access; the item's own publication already in the folder (`ReplaceWarning`); target taken (the new kind); submit error; then the informational callout. While `isTargetChecking` is `true` the submit button SHALL be disabled with no callout. A taken target SHALL disable submit regardless of `allowReplace`.
+`derivePublishState` SHALL accept `isTargetTaken` and `isTargetChecking` and return a new callout kind for a taken target. The order of the outcomes SHALL be: submitting; no folder selected; no write access; target check in flight (submit disabled, no callout); the last submit failed (`SubmitError`); the item's own publication already in the folder (`ReplaceWarning`); target taken (the new kind); then the informational callout. A taken target SHALL disable submit regardless of `allowReplace`.
 
-`PublishPanel` SHALL render the new kind in the same slot and warning style as `ReplaceWarning`, with the folder name emphasised the same way, using host-supplied labels `targetTakenLabel` and `targetTakenVersionedLabel`, each with an English default and a `{folder}` placeholder (the versioned one also `{version}`). The panel SHALL use the versioned label when the resource has a version and the plain one otherwise, so a host does not choose between them. The callout text SHALL reach assistive technology through the existing live-region mechanism of the panel's callouts. The label, like every other text of the library, SHALL come from the host. `README.md` SHALL list the new option, result fields and label.
+`PublishPanel` SHALL render the new kind in the same slot and warning style as `ReplaceWarning`, with the folder name emphasised the same way, using host-supplied labels `targetTakenLabel` and `targetTakenVersionedLabel`, each with an English default and a `{folder}` placeholder (the versioned one also `{version}`). The panel SHALL use the versioned label when the resource has a version and the plain one otherwise, so a host does not choose between them. The callout SHALL be the same kit notification the panel's other callouts use. The label, like every other text of the library, SHALL come from the host. `README.md` SHALL list the new option, result fields and label.
 
 #### Scenario: Taken target disables Publish
 - **GIVEN** a folder is selected, the user has write access, and `isTargetTaken` is `true`
@@ -57,7 +57,7 @@ When `onPublish` rejects and the host reports the rejection as a taken target, t
 - **THEN** it uses `targetTakenVersionedLabel`; for a resource without a version it uses `targetTakenLabel`
 
 #### Scenario: Own publication wins
-- **GIVEN** `hasExistingPublicationInFolder` and `isTargetTaken` are both `true`
+- **GIVEN** `hasExistingPublicationInFolder` and `isTargetTaken` are both `true` (no failed submit)
 - **WHEN** the panel renders
 - **THEN** only the `ReplaceWarning` callout is shown
 

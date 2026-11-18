@@ -1,4 +1,11 @@
-import { encodePlainDialResourcePath } from '../common/utils/encode-dial-path';
+import {
+  DialResourceType,
+  type DialResourceLocation,
+} from '../common/utils/dial-resource-transfer';
+import {
+  encodeDialResourcePath,
+  encodePlainDialResourcePath,
+} from '../common/utils/encode-dial-path';
 import { RESOURCE_VERSION_SEPARATOR } from '../common/utils/next-free-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import {
@@ -243,4 +250,76 @@ export const getVersionedTargetResourceName = (
     return resourceName;
   }
   return `${resourceName.slice(0, separatorIndex)}${RESOURCE_VERSION_SEPARATOR}${encodeURIComponent(version)}`;
+};
+
+/** The published copy's address, as derived from a publish request. */
+export interface PublishTarget {
+  /** The entity's own resource url, percent-encoded per segment. */
+  sourceUrl: string;
+  /** `entityId`'s first path segment, e.g. `applications`. */
+  resourceTypePrefix: string;
+  /** The published copy's resource name, with a versioned suffix where the type has one. */
+  targetResourceName: string;
+  /** The published copy's full resource path under `public/`. */
+  targetUrl: string;
+}
+
+/**
+ * Derives where a publish request lands. The publish and the target check both
+ * call this, so a check and a publish for the same inputs always address the
+ * same path.
+ * @param entityId - the entity's plain, unencoded resource path
+ * @param folderPath - plain destination folder
+ * @param version - optional display version, which names the copy of an application or toolset
+ */
+export const resolvePublishTarget = (
+  entityId: string,
+  folderPath: string,
+  version: string | undefined,
+): PublishTarget => {
+  const sourceUrl = encodeDialResourcePath(entityId);
+  const resourceTypePrefix = getResourceTypePrefix(sourceUrl);
+  const targetResourceName = getVersionedTargetResourceName(
+    resourceTypePrefix,
+    getResourceName(sourceUrl),
+    version,
+  );
+  return {
+    sourceUrl,
+    resourceTypePrefix,
+    targetResourceName,
+    targetUrl: getPublishedTargetUrl(
+      resourceTypePrefix,
+      folderPath,
+      targetResourceName,
+    ),
+  };
+};
+
+/** Where a published copy's metadata is read: its resource type and its place in the public bucket. */
+export interface PublishTargetLocation {
+  type: DialResourceType;
+  location: DialResourceLocation;
+}
+
+/**
+ * The type and public-bucket location behind a derived `targetUrl`, or
+ * `undefined` when the url is not a published copy of a resource type whose
+ * metadata can be read (a built-in model, for one).
+ * @param targetUrl - the `targetUrl` returned by {@link resolvePublishTarget}
+ */
+export const getPublishTargetLocation = (
+  targetUrl: string,
+): PublishTargetLocation | undefined => {
+  const type = Object.values(DialResourceType).find((candidate) =>
+    targetUrl.startsWith(`${candidate}/${PUBLIC_URL_PREFIX}/`),
+  );
+  if (type == null) return undefined;
+  return {
+    type,
+    location: {
+      bucket: PUBLIC_URL_PREFIX,
+      path: targetUrl.slice(`${type}/${PUBLIC_URL_PREFIX}/`.length),
+    },
+  };
 };

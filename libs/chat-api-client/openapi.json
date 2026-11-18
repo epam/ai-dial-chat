@@ -8865,7 +8865,14 @@
             "description": "DIAL Core resource not found"
           },
           "409": {
-            "description": "DIAL Core reported a conflict with the current resource state"
+            "description": "The published copy would land on a path that is already taken (`code` `target-exists`): another author's resource, or an earlier publication, holds the same name (and version) in this folder",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishConflictDto"
+                }
+              }
+            }
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -8884,6 +8891,106 @@
           }
         },
         "summary": "Publish a catalog entity to an Organization folder",
+        "tags": ["publish"]
+      }
+    },
+    "/api/v1/catalog/{entityType}/{entityId}/publish-target": {
+      "get": {
+        "description": "Derives the path a publish of this entity into `folderPath` (and `version`) would create, exactly as the publish endpoint does, and reads that path's metadata with the caller's own token. Creates nothing. `exists: false` means no resource was found, not that none exists: a copy hidden from the caller by access rules, or one still pending approval, is not detected, and another publication can land before the caller submits. The publish endpoint answers `409` `target-exists` for those cases.",
+        "operationId": "getCatalogPublishTarget",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": true,
+            "in": "path",
+            "description": "Catalog entity kind.",
+            "schema": {
+              "example": "toolset",
+              "type": "string",
+              "enum": [
+                "model",
+                "toolset",
+                "application",
+                "prompt",
+                "skill",
+                "project"
+              ]
+            }
+          },
+          {
+            "name": "entityId",
+            "required": true,
+            "in": "path",
+            "description": "The entity's DIAL Core resource path, used directly as the Publication API `sourceUrl`.",
+            "schema": {
+              "example": "tool-abc123",
+              "type": "string"
+            }
+          },
+          {
+            "name": "folderPath",
+            "required": true,
+            "in": "query",
+            "description": "Destination folder under the Organization/public bucket, as the publish request sends it.",
+            "schema": {
+              "example": "Organization/Data Science",
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "required": false,
+            "in": "query",
+            "description": "Optional version label, as the publish request sends it; it names the published copy of an application or toolset.",
+            "schema": {
+              "example": "1.2.0",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Whether a resource was found at the target",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishTargetCheckDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid entityType, entityId, folderPath or version, or an entity type with no published copy to check"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "DIAL Core refused the caller the read"
+          },
+          "404": {
+            "description": "DIAL Core resource not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "The session user bucket could not be resolved because DIAL Core is unavailable (raised by session authentication; an unreachable DIAL Core during the call itself is reported as 502)"
+          }
+        },
+        "summary": "Check whether the published copy of an entity would land on a taken path",
         "tags": ["publish"]
       }
     },
@@ -20260,6 +20367,48 @@
           "publishedAt",
           "publishedBy"
         ]
+      },
+      "PublishConflictCode": {
+        "type": "string",
+        "enum": ["target-exists"],
+        "description": "Always `target-exists`: the published copy of this resource would land on a path that is already taken."
+      },
+      "PublishConflictDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 409
+          },
+          "message": {
+            "type": "string",
+            "example": "A resource with this name already exists in the target folder. Rename it, change its version or choose another folder"
+          },
+          "error": {
+            "type": "string",
+            "example": "Conflict"
+          },
+          "code": {
+            "description": "Always `target-exists`: the published copy of this resource would land on a path that is already taken.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PublishConflictCode"
+              }
+            ]
+          }
+        },
+        "required": ["statusCode", "message", "error", "code"]
+      },
+      "PublishTargetCheckDto": {
+        "type": "object",
+        "properties": {
+          "taken": {
+            "type": "boolean",
+            "description": "True when the caller can read a resource at the target. False means none was found, not that none is there: a copy hidden from the caller by access rules, or one still pending approval, is not detected. The publish endpoint answers `409` for those.",
+            "example": false
+          }
+        },
+        "required": ["taken"]
       },
       "CopyCatalogEntityToOrgUnitDto": {
         "type": "object",

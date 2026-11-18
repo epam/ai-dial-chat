@@ -3,6 +3,7 @@ import {
   mapResourceDependencyDto,
   toPublishRuleDto,
   usePublishDependencies,
+  usePublishTargetGuard,
   usePublishHistory,
   OrgUnitFolderGuardPurpose,
   toPublishDisabledReason,
@@ -40,6 +41,7 @@ import {
   CatalogPublishEntityType,
   getCatalogPublishDependencies,
   getCatalogPublishHistory,
+  publishApiClient,
   publishCatalogEntity,
 } from '../../server-api/publish.api';
 import {
@@ -173,6 +175,18 @@ const PublishProjectPanelContainer: FC<Props> = ({
     loadDependencies,
   });
 
+  const getPublishTargetEntity = useCallback(
+    () => ({
+      entityType: CatalogPublishEntityType.Project,
+      entityId: projectId,
+    }),
+    [projectId],
+  );
+  const targetGuard = usePublishTargetGuard<PublishResourceSummary>({
+    client: publishApiClient,
+    getEntity: getPublishTargetEntity,
+  });
+
   const publishFlow = usePublishFlow<PublishResourceSummary>({
     item: resource,
     history,
@@ -180,14 +194,20 @@ const PublishProjectPanelContainer: FC<Props> = ({
     hasWriteAccess: hasPublishWriteAccess,
     onCreateFolder: onCreatePublishFolder,
     defaultAuthor: displayName,
-    onPublish: async (_item, folderPath, rules, author) => {
-      const trimmedAuthor = author?.trim();
-      await publishCatalogEntity(CatalogPublishEntityType.Project, projectId, {
-        folderPath: folderPath.join('/'),
-        ...(trimmedAuthor ? { author: trimmedAuthor } : {}),
-        rules: rules.map(toPublishRuleDto),
-      });
-    },
+    onPublish: targetGuard.wrapPublish(
+      async (_item, folderPath, rules, author) => {
+        const trimmedAuthor = author?.trim();
+        await publishCatalogEntity(
+          CatalogPublishEntityType.Project,
+          projectId,
+          {
+            folderPath: folderPath.join('/'),
+            ...(trimmedAuthor ? { author: trimmedAuthor } : {}),
+            rules: rules.map(toPublishRuleDto),
+          },
+        );
+      },
+    ),
     onPublishSuccess: (_item, folderPath) => {
       rememberPublishFolder(folderPath);
       notifyOperationSuccess(
@@ -197,8 +217,11 @@ const PublishProjectPanelContainer: FC<Props> = ({
       );
       onPublished?.();
     },
-    onPublishError: (_item, _folderPath, error) => showPublishError(error),
+    onPublishError: (_item, _folderPath, error) =>
+      showPublishError(error, undefined, { isVersioned: false }),
     onFetchExistingRules: (folderPath) => getPublishRules(folderPath.join('/')),
+    onCheckTargetExists: targetGuard.onCheckTargetExists,
+    isTargetTakenError: targetGuard.isTargetTakenError,
   });
 
   useEffect(() => {
@@ -236,6 +259,8 @@ const PublishProjectPanelContainer: FC<Props> = ({
       hasWriteAccess={publishFlow.hasWriteAccess}
       isSubmitting={publishFlow.isSubmitting}
       hasSubmitError={publishFlow.hasSubmitError}
+      isTargetTaken={publishFlow.isTargetTaken}
+      isTargetChecking={publishFlow.isTargetChecking}
       allowReplace={false}
       author={publishFlow.author}
       onAuthorChange={publishFlow.setAuthor}

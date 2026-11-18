@@ -36,6 +36,8 @@ export type UseDetailsPublishParams = Pick<
   | 'onPublishError'
   | 'onCreatePublishFolder'
   | 'onFetchExistingRules'
+  | 'onCheckTargetExists'
+  | 'isTargetTakenError'
   | 'onUnpublish'
   | 'isUnpublishVisible'
   | 'publishLabels'
@@ -55,6 +57,8 @@ export const useDetailsPublish = ({
   onPublishError,
   onCreatePublishFolder,
   onFetchExistingRules,
+  onCheckTargetExists,
+  isTargetTakenError,
   onUnpublish,
   isUnpublishVisible,
   publishLabels,
@@ -190,6 +194,8 @@ export const useDetailsPublish = ({
     onPublishSuccess: handlePublishSuccess,
     onPublishError,
     onFetchExistingRules,
+    onCheckTargetExists,
+    isTargetTakenError,
   });
 
   /*
@@ -210,6 +216,8 @@ export const useDetailsPublish = ({
         hasWriteAccess: publishFlow.hasWriteAccess,
         isSubmitting: publishFlow.isSubmitting,
         hasSubmitError: publishFlow.hasSubmitError,
+        isTargetTaken: publishFlow.isTargetTaken,
+        isTargetChecking: publishFlow.isTargetChecking,
         allowReplace: CATALOG_PUBLISH_ALLOWS_REPLACE,
       }),
     [
@@ -218,6 +226,8 @@ export const useDetailsPublish = ({
       publishFlow.hasWriteAccess,
       publishFlow.isSubmitting,
       publishFlow.hasSubmitError,
+      publishFlow.isTargetTaken,
+      publishFlow.isTargetChecking,
     ],
   );
 

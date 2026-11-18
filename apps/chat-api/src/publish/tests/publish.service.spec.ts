@@ -1,4 +1,9 @@
-import { BadGatewayException, ForbiddenException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AdminRoleService } from '../../auth/admin-role.service';
 import type { DialClientService } from '../../dial/dial-client.service';
@@ -36,6 +41,11 @@ const makeService = () => {
       getCustomApplication: vi.fn().mockResolvedValue(okResponse({})),
       getPublication: vi.fn(),
       getPublications: vi.fn(),
+      getApplicationMetadata: vi.fn(),
+      getToolSetMetadata: vi.fn(),
+      getPromptMetadata: vi.fn(),
+      listSkillMetadata: vi.fn(),
+      listProjectMetadata: vi.fn(),
     },
   } as unknown as DialClientService;
   const cacheManager = makeCacheManager();
@@ -846,6 +856,303 @@ describe('PublishService', () => {
         ),
       ).rejects.toBeInstanceOf(BadGatewayException);
       expect(cacheManager.del).not.toHaveBeenCalled();
+    });
+
+    describe('when Core rejects because the target exists', () => {
+      const publishToolset = (service: PublishService) =>
+        service.publish(
+          'token-abc',
+          TEST_BUCKET,
+          CatalogEntityType.Toolset,
+          'toolsets/bucket-123/tool-abc123__1.2.0',
+          'Organization/Data Science',
+          '1.2.0',
+          'Test User',
+        );
+      const rejection = (status: number, message?: string) =>
+        ({
+          error: message == null ? {} : { error: { message } },
+          response: { ok: false, status } as Response,
+        }) as never;
+
+      it('answers 409 target-exists when a 400 is confirmed by reading the target', async () => {
+        const { service, dialClient, cacheManager } = makeService();
+        vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+          rejection(400),
+        );
+        vi.spyOn(dialClient.client, 'getToolSetMetadata').mockResolvedValue({
+          data: {},
+          response: { status: 200 },
+        } as never);
+
+        const error = await publishToolset(service).catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(ConflictException);
+        expect((error as ConflictException).getResponse()).toMatchObject({
+          statusCode: 409,
+          error: 'Conflict',
+          code: 'target-exists',
+        });
+        expect(dialClient.client.getToolSetMetadata).toHaveBeenCalledWith(
+          'public',
+          'Organization/Data%20Science/tool-abc123__1.2.0',
+          expect.objectContaining({
+            headers: { Authorization: 'Bearer token-abc' },
+          }),
+        );
+        expect(cacheManager.del).not.toHaveBeenCalled();
+      });
+
+      it("answers 409 target-exists from Core's message when the caller cannot read the copy", async () => {
+        const { service, dialClient } = makeService();
+        vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+          rejection(
+            400,
+            'Target resource already exists: toolsets/public/Organization/Data%20Science/tool-abc123__1.2.0',
+          ),
+        );
+        vi.spyOn(dialClient.client, 'getToolSetMetadata').mockResolvedValue({
+          error: {},
+          response: { status: 404 },
+        } as never);
+
+        await expect(publishToolset(service)).rejects.toMatchObject({
+          response: { code: 'target-exists' },
+        });
+      });
+
+      it('answers 409 target-exists for a 409 from Core', async () => {
+        const { service, dialClient } = makeService();
+        vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+          rejection(409, 'Target resource already exists: x'),
+        );
+
+        await expect(publishToolset(service)).rejects.toBeInstanceOf(
+          ConflictException,
+        );
+      });
+
+      it.each([
+        ['prompt', 'prompts/bucket-123/Folder/greet', 'getPromptMetadata'],
+        ['skill', 'skills/bucket-123/Folder/review', 'listSkillMetadata'],
+        ['project', 'projects/bucket-123/q4-launch', 'listProjectMetadata'],
+        [
+          'application',
+          'applications/bucket-123/app__1.0.0',
+          'getApplicationMetadata',
+        ],
+      ] as const)(
+        'confirms a %s target by reading its own metadata',
+        async (type, entityId, reader) => {
+          const { service, dialClient } = makeService();
+          vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+            rejection(400),
+          );
+          vi.spyOn(dialClient.client, reader).mockResolvedValue({
+            data: {},
+            response: { status: 200 },
+          } as never);
+
+          await expect(
+            service.publish(
+              'token-abc',
+              TEST_BUCKET,
+              type as CatalogEntityType,
+              entityId,
+              'Organization',
+              undefined,
+              'Test User',
+            ),
+          ).rejects.toMatchObject({ response: { code: 'target-exists' } });
+        },
+      );
+
+      it('keeps a 400 that is not about an existing target', async () => {
+        const { service, dialClient } = makeService();
+        vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+          rejection(400, 'Bad resource url: public/x y/'),
+        );
+        vi.spyOn(dialClient.client, 'getToolSetMetadata').mockResolvedValue({
+          error: {},
+          response: { status: 404 },
+        } as never);
+
+        const error = await publishToolset(service).catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(BadRequestException);
+        expect((error as BadRequestException).message).toBe(
+          'Bad resource url: public/x y/',
+        );
+      });
+
+      it('keeps a 502 for a failure that is not a 400 or 409, without reading the target', async () => {
+        const { service, dialClient } = makeService();
+        vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+          rejection(500, 'Target resource already exists'),
+        );
+
+        await expect(publishToolset(service)).rejects.toBeInstanceOf(
+          BadGatewayException,
+        );
+        expect(dialClient.client.getToolSetMetadata).not.toHaveBeenCalled();
+      });
+
+      it('keeps the 400 when reading the target fails', async () => {
+        const { service, dialClient } = makeService();
+        vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+          rejection(400),
+        );
+        vi.spyOn(dialClient.client, 'getToolSetMetadata').mockResolvedValue({
+          error: {},
+          response: { status: 500 },
+        } as never);
+
+        await expect(publishToolset(service)).rejects.toBeInstanceOf(
+          BadRequestException,
+        );
+      });
+    });
+  });
+
+  describe('checkPublishTarget', () => {
+    it('reports a taken target by reading the derived path with the caller token', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getApplicationMetadata').mockResolvedValue({
+        data: {},
+        response: { status: 200 },
+      } as never);
+
+      await expect(
+        service.checkPublishTarget(
+          'token-abc',
+          CatalogEntityType.Application,
+          'applications/bucket-123/app__1.0.0',
+          'Org',
+          undefined,
+        ),
+      ).resolves.toEqual({ taken: true });
+      expect(dialClient.client.getApplicationMetadata).toHaveBeenCalledWith(
+        'public',
+        'Org/app__1.0.0',
+        expect.objectContaining({
+          headers: { Authorization: 'Bearer token-abc' },
+        }),
+      );
+    });
+
+    it('reports a free target and creates nothing', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getApplicationMetadata').mockResolvedValue({
+        error: {},
+        response: { status: 404 },
+      } as never);
+
+      await expect(
+        service.checkPublishTarget(
+          'token-abc',
+          CatalogEntityType.Application,
+          'applications/bucket-123/app__1.0.0',
+          'Org',
+          undefined,
+        ),
+      ).resolves.toEqual({ taken: false });
+      expect(dialClient.client.createPublication).not.toHaveBeenCalled();
+    });
+
+    it('derives a different target for a different version of an application', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getApplicationMetadata').mockResolvedValue({
+        error: {},
+        response: { status: 404 },
+      } as never);
+
+      await service.checkPublishTarget(
+        'token-abc',
+        CatalogEntityType.Application,
+        'applications/bucket-123/app__1.0.0',
+        'Org',
+        '2.0.0',
+      );
+
+      expect(dialClient.client.getApplicationMetadata).toHaveBeenCalledWith(
+        'public',
+        'Org/app__2.0.0',
+        expect.anything(),
+      );
+    });
+
+    it('reads the same path the publish would create', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({}),
+      );
+      vi.spyOn(dialClient.client, 'getToolSetMetadata').mockResolvedValue({
+        error: {},
+        response: { status: 404 },
+      } as never);
+      const args = [
+        'toolsets/bucket-123/tool-abc123__1.2.0',
+        'Organization/Data Science',
+        '1.2.0',
+      ] as const;
+
+      await service.publish(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        args[0],
+        args[1],
+        args[2],
+        'Test User',
+      );
+      await service.checkPublishTarget(
+        'token-abc',
+        CatalogEntityType.Toolset,
+        args[0],
+        args[1],
+        args[2],
+      );
+
+      const publishedTarget = (
+        dialClient.client.createPublication as ReturnType<typeof vi.fn>
+      ).mock.calls[0][0].body.resources[0].targetUrl as string;
+      const [bucket, path] = (
+        dialClient.client.getToolSetMetadata as ReturnType<typeof vi.fn>
+      ).mock.calls[0] as [string, string];
+      expect(publishedTarget).toBe(`toolsets/${bucket}/${path}`);
+    });
+
+    it('rejects an entity type with no published copy to read', async () => {
+      const { service, dialClient } = makeService();
+
+      await expect(
+        service.checkPublishTarget(
+          'token-abc',
+          CatalogEntityType.Model,
+          'gpt-4',
+          'Org',
+          undefined,
+        ),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(dialClient.client.getToolSetMetadata).not.toHaveBeenCalled();
+    });
+
+    it('maps a refusal from Core to ForbiddenException', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getToolSetMetadata').mockResolvedValue({
+        error: {},
+        response: { status: 403 },
+      } as never);
+
+      await expect(
+        service.checkPublishTarget(
+          'token-abc',
+          CatalogEntityType.Toolset,
+          'toolsets/bucket-123/t__1',
+          'Org',
+          undefined,
+        ),
+      ).rejects.toBeInstanceOf(ForbiddenException);
     });
   });
 

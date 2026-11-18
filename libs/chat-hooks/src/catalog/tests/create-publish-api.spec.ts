@@ -72,4 +72,27 @@ describe('createPublishApiClient', () => {
       copyCatalogEntityToOrgUnitDto: { folderPath: 'Acme' },
     });
   });
+
+  it('checks a publish target through the generated operation', async () => {
+    const result = { taken: true };
+    const getCatalogPublishTarget = vi.fn().mockResolvedValue(result);
+    const client = createPublishApiClient({
+      getCatalogPublishTarget,
+    } as unknown as PublishApi);
+
+    const response = await client.checkPublishTarget(
+      'application',
+      'applications/b/App__1.0.0',
+      'Acme/Team',
+      '2.0.0',
+    );
+
+    expect(response).toBe(result);
+    expect(getCatalogPublishTarget).toHaveBeenCalledWith({
+      entityType: 'application',
+      entityId: 'applications/b/App__1.0.0',
+      folderPath: 'Acme/Team',
+      version: '2.0.0',
+    });
+  });
 });

@@ -1,6 +1,8 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadGatewayException,
+  BadRequestException,
+  ConflictException,
   ForbiddenException,
   HttpException,
   Inject,
@@ -16,6 +18,10 @@ import {
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { parseDialApplicationResource } from '../common/utils/dial-application-resource';
+import {
+  dialResourceExists,
+  existsQuietly,
+} from '../common/utils/dial-resource-transfer';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { RESOURCE_VERSION_SEPARATOR } from '../common/utils/next-free-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
@@ -23,9 +29,11 @@ import { readPublicationDisplayAuthor } from '../common/utils/user-display-name'
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
+import { PublishConflictCode } from './dto/publish-conflict.dto';
 import { PublishHistoryEntryDto } from './dto/publish-history-entry.dto';
 import { PublishResultDto } from './dto/publish-result.dto';
 import type { PublishRuleDto } from './dto/publish-rule.dto';
+import { PublishTargetCheckDto } from './dto/publish-target-check.dto';
 import type { UnpublishAccessDto } from './dto/unpublish-access.dto';
 import { UnpublishResultDto } from './dto/unpublish-result.dto';
 import {
@@ -45,8 +53,10 @@ import {
   getPublishedTargetUrl,
   getResourceBucket,
   getResourceName,
+  getPublishTargetLocation,
   getResourceTypePrefix,
   getVersionedTargetResourceName,
+  resolvePublishTarget,
   stripPublicTargetFolder,
 } from './publish-target.util';
 import type { StatusPublication } from './version-status.util';
@@ -64,6 +74,12 @@ const bucketPublicationsCacheKey = (bucket: string) =>
   `publish:bucket-publications:${bucket}`;
 
 const BUCKET_PUBLICATIONS_TTL_MS = 60 * 1000;
+
+/* Core's rejection of a publication whose target exists reads "Target resource already exists: {targetUrl}". */
+const TARGET_EXISTS_PATTERN = /already exists/i;
+
+const TARGET_EXISTS_MESSAGE =
+  'A resource with this name already exists in the target folder. Rename it, change its version or choose another folder';
 
 /* Keyed by the caller's bucket, so one caller's answer is never served to another. */
 const unpublishAccessCacheKey = (
@@ -163,18 +179,11 @@ export class PublishService {
      * Core, exactly as `conversation-publish.service.ts` already does for
      * conversations.
      */
-    const sourceUrl = encodeDialResourcePath(entityId);
     const publicTargetFolder = getPublicTargetFolder(folderPath);
-    const resourceTypePrefix = getResourceTypePrefix(sourceUrl);
-    const targetResourceName = getVersionedTargetResourceName(
-      resourceTypePrefix,
-      getResourceName(sourceUrl),
-      version,
-    );
-    const targetUrl = getPublishedTargetUrl(
-      resourceTypePrefix,
+    const { sourceUrl, targetResourceName, targetUrl } = resolvePublishTarget(
+      entityId,
       folderPath,
-      targetResourceName,
+      version,
     );
     const iconUrl = await this.getApplicationIconUrl(accessToken, sourceUrl);
     const { name: entityName, version: resourceVersion } =
@@ -235,12 +244,31 @@ export class PublishService {
      * `models.service.ts` and `files-listing.service.ts`).
      */
     if (!result.response.ok || result.error != null) {
+      const upstreamMessage = extractDialErrorMessage(result.error);
+      if (
+        await this.isTargetTakenRejection(
+          accessToken,
+          result.response.status,
+          targetUrl,
+          upstreamMessage,
+        )
+      ) {
+        this.logger.warn(
+          `Publish of ${entityType} "${entityId}" rejected: target already exists`,
+        );
+        throw new ConflictException({
+          statusCode: 409,
+          message: TARGET_EXISTS_MESSAGE,
+          error: 'Conflict',
+          code: PublishConflictCode.TargetExists,
+        });
+      }
       return mapDialHttpStatus(
         result.response.status,
         `publish ${entityType} "${entityId}"`,
         this.logger,
         result.error,
-        extractDialErrorMessage(result.error),
+        upstreamMessage,
       );
     }
 
@@ -269,6 +297,75 @@ export class PublishService {
         : new Date().toISOString(),
       publishedBy: readPublicationDisplayAuthor(publication, author),
     };
+  }
+
+  /**
+   * Reports whether the published copy of an entity would land on a path that
+   * is already taken, reading the target's metadata with the caller's own
+   * token. A copy the caller cannot read, or one still pending approval, is not
+   * found; the publish itself answers `409` for those.
+   * @param accessToken - bearer token for DIAL Core
+   * @param entityType - catalog entity kind
+   * @param entityId - plain resource path of the entity
+   * @param folderPath - plain destination folder
+   * @param version - optional display version, which names the copy of an application or toolset
+   * @throws {BadRequestException} When the entity type has no readable published copy
+   * @throws {ForbiddenException} When Core refuses the caller the read
+   * @throws {BadGatewayException} When Core returns an unexpected error or is unreachable
+   */
+  async checkPublishTarget(
+    accessToken: string,
+    entityType: CatalogEntityType,
+    entityId: string,
+    folderPath: string,
+    version: string | undefined,
+  ): Promise<PublishTargetCheckDto> {
+    const { targetUrl } = resolvePublishTarget(entityId, folderPath, version);
+    const target = getPublishTargetLocation(targetUrl);
+    if (target == null) {
+      throw new BadRequestException(
+        `A published ${entityType} has no target to check`,
+      );
+    }
+    const taken = await dialResourceExists(
+      this.dialClient.client,
+      target.type,
+      target.location,
+      getBearerAuthHeaders(accessToken),
+      `check publish target of ${entityType} "${entityId}"`,
+      this.logger,
+    );
+    return { taken };
+  }
+
+  /**
+   * Whether a failed `createPublication` was Core refusing a target that
+   * already exists. Core answers 400 (sometimes 409) for it, so the status
+   * alone is not enough: the target is confirmed by reading its metadata with
+   * the caller's token, or by Core's own message, which also covers a copy the
+   * caller cannot read.
+   */
+  private async isTargetTakenRejection(
+    accessToken: string,
+    status: number,
+    targetUrl: string,
+    upstreamMessage: string | undefined,
+  ): Promise<boolean> {
+    if (status !== 400 && status !== 409) return false;
+    if (
+      upstreamMessage != null &&
+      TARGET_EXISTS_PATTERN.test(upstreamMessage)
+    ) {
+      return true;
+    }
+    const target = getPublishTargetLocation(targetUrl);
+    if (target == null) return false;
+    return existsQuietly(
+      this.dialClient.client,
+      target.type,
+      target.location,
+      getBearerAuthHeaders(accessToken),
+    );
   }
 
   /*

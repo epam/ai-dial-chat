@@ -101,6 +101,8 @@ export const getPublishPanelCommonLabels = (
   | 'chooseFolderLabel'
   | 'clearSearchAriaLabel'
   | 'noAccessError'
+  | 'targetTakenLabel'
+  | 'targetTakenVersionedLabel'
   | 'addSiblingFolderLabel'
   | 'addChildFolderLabel'
 > => ({
@@ -111,6 +113,8 @@ export const getPublishPanelCommonLabels = (
   chooseFolderLabel: t(PublishI18nKeys.ChooseFolder),
   clearSearchAriaLabel: t(BasicI18nKeys.ClearSearch),
   noAccessError: t(PublishI18nKeys.NoAccessError),
+  targetTakenLabel: t(PublishI18nKeys.TargetTakenLabel),
+  targetTakenVersionedLabel: t(PublishI18nKeys.TargetTakenVersionedLabel),
   addSiblingFolderLabel: t(PublishI18nKeys.AddSiblingFolder),
   addChildFolderLabel: t(PublishI18nKeys.AddChildFolder),
 });

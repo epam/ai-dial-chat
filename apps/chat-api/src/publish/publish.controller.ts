@@ -5,6 +5,7 @@ import {
   HttpCode,
   Param,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -23,8 +24,13 @@ import {
 import { CatalogEntityParamsDto } from './dto/catalog-entity-params.dto';
 import { CopyCatalogEntityToOrgUnitDto } from './dto/copy-catalog-entity-to-org-unit.dto';
 import { PublishCatalogEntityDto } from './dto/publish-catalog-entity.dto';
+import { PublishConflictDto } from './dto/publish-conflict.dto';
 import { PublishHistoryEntryDto } from './dto/publish-history-entry.dto';
 import { PublishResultDto } from './dto/publish-result.dto';
+import {
+  PublishTargetCheckDto,
+  PublishTargetCheckQueryDto,
+} from './dto/publish-target-check.dto';
 import { UnpublishAccessDto } from './dto/unpublish-access.dto';
 import { UnpublishCatalogEntityDto } from './dto/unpublish-catalog-entity.dto';
 import { UnpublishResultDto } from './dto/unpublish-result.dto';
@@ -80,6 +86,12 @@ export class PublishController {
     description: 'Caller lacks write access to the target folder',
   })
   @ApiResponse({
+    status: 409,
+    description:
+      "The published copy would land on a path that is already taken (`code` `target-exists`): another author's resource, or an earlier publication, holds the same name (and version) in this folder",
+    type: PublishConflictDto,
+  })
+  @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',
   })
@@ -111,6 +123,58 @@ export class PublishController {
       resolveDisplayAuthor(author, claims),
       rules,
       publishCredentials,
+    );
+  }
+
+  @Get(':entityType/:entityId/publish-target')
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'getCatalogPublishTarget',
+    summary:
+      'Check whether the published copy of an entity would land on a taken path',
+    description:
+      "Derives the path a publish of this entity into `folderPath` (and `version`) would create, exactly as the publish endpoint does, and reads that path's metadata with the caller's own token. Creates nothing. `exists: false` means no resource was found, not that none exists: a copy hidden from the caller by access rules, or one still pending approval, is not detected, and another publication can land before the caller submits. The publish endpoint answers `409` `target-exists` for those cases.",
+  })
+  @ApiDialCoreErrors()
+  @ApiResponse({
+    status: 200,
+    description: 'Whether a resource was found at the target',
+    type: PublishTargetCheckDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Validation error — invalid entityType, entityId, folderPath or version, or an entity type with no published copy to check',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'DIAL Core refused the caller the read',
+  })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description:
+      'The session user bucket could not be resolved because DIAL Core is unavailable (raised by session authentication; an unreachable DIAL Core during the call itself is reported as 502)',
+  })
+  getPublishTarget(
+    @Req() req: Request,
+    @Param() { entityType, entityId }: CatalogEntityParamsDto,
+    @Query() { folderPath, version }: PublishTargetCheckQueryDto,
+  ): Promise<PublishTargetCheckDto> {
+    const { at } = req.user as SessionUser;
+    return this.publishService.checkPublishTarget(
+      at,
+      entityType,
+      entityId,
+      folderPath,
+      version,
     );
   }
 

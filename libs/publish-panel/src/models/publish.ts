@@ -82,6 +82,8 @@ export enum PublishCalloutKind {
   Info = 'info',
   /** Warning callout — publishing will replace an existing version in this folder. */
   ReplaceWarning = 'replaceWarning',
+  /** Warning callout — another resource already holds the published path in this folder, so publishing would be rejected. */
+  TargetTaken = 'targetTaken',
   /** Error callout — the user lacks write access to the selected folder. */
   NoAccess = 'noAccess',
   /** Error callout — the most recent submit attempt failed. */
@@ -104,6 +106,10 @@ export interface PublishDerivationInput {
   isSubmitting: boolean;
   /** Whether the most recent submit attempt failed. */
   hasSubmitError: boolean;
+  /** Whether the host found another resource at the published path in the selected folder. Default `false`. */
+  isTargetTaken?: boolean;
+  /** Whether the host's check of the published path is still running. Default `false`. */
+  isTargetChecking?: boolean;
   /**
    * Whether resubmitting when `hasExistingPublicationInFolder` is true is
    * allowed (the host's backend overwrites the existing publication) or
