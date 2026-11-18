@@ -1,0 +1,16 @@
+export enum AttachmentsI18nKeys {
+  Download = 'attachments.downloadFile',
+  OpenInNewTab = 'attachments.openInNewTab',
+  RemoveLabel = 'attachments.removeLabel',
+  RetryLabel = 'attachments.retryLabel',
+  UploadingLabel = 'attachments.uploadingLabel',
+  ExpandPastedText = 'attachments.expandPastedText',
+  UnsupportedTypeTitle = 'attachments.unsupportedType.title',
+  UnsupportedTypeMessage = 'attachments.unsupportedType.message',
+  NoAttachmentsAllowedTitle = 'attachments.noAttachmentsAllowed.title',
+  NoAttachmentsAllowedMessage = 'attachments.noAttachmentsAllowed.message',
+  NetworkErrorTitle = 'attachments.networkError.title',
+  NetworkErrorMessage = 'attachments.networkError.message',
+  FileTooLargeTitle = 'attachments.fileTooLarge.title',
+  FileTooLargeMessage = 'attachments.fileTooLarge.message',
+}

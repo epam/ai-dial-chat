@@ -75,6 +75,7 @@ import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ThemeId } from '../../types/theme-id';
 import { attachmentDisplayResolvers } from '../../utils/attachment-display-resolvers';
+import { loadConversationInput } from '../../utils/conversation-input-loader';
 import {
   isAttachmentDownloadable,
   resolveDialFileDownloadUrl,
@@ -91,7 +92,7 @@ import {
   getStatusMessageProps,
 } from './utils/message-display';
 
-const preloadEditInput = () => void import('@epam/ai-dial-conversation-input');
+const preloadEditInput = () => void loadConversationInput();
 
 /* Fallback inline-frame height when the registry entry declares neither
    `height` nor `mobileHeight`. */

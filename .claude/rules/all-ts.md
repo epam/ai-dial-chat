@@ -105,9 +105,13 @@ open, loading, error as boolean, send, redirect
 
 In app TypeScript code, never pass a raw string literal translation key to
 `t()`. Every translation key must be declared in the appropriate string enum
-in `apps/chat/src/constants/translation-keys.ts` and referenced through that
-enum (for example, `t(DialFileManagerI18nKeys.ConflictReplace)`). When adding a
-key to a locale JSON file, add the matching enum member in the same change.
+and referenced through that enum (for example,
+`t(DialFileManagerI18nKeys.ConflictReplace)`). Each enum lives in its own
+module under `apps/chat/src/constants/i18n-keys/` and is imported through the
+`apps/chat/src/constants/translation-keys.ts` barrel; a new namespace gets a
+new module there plus a re-export line in the barrel, so a chunk only carries
+the namespaces it uses. When adding a key to a locale JSON file, add the
+matching enum member in the same change.
 
 ### Avoid duplicate translation values
 

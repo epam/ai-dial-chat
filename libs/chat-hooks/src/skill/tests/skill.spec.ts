@@ -153,14 +153,16 @@ describe('buildSkillManifestFromFrontmatter', () => {
 });
 
 describe('unpackSkillArchive', () => {
-  it('separates the manifest from every other entry', () => {
+  it('separates the manifest from every other entry', async () => {
     const manifest = '---\nname: x\ndescription: y\n---\n\nbody';
     const zipped = zipSync({
       'SKILL.md': strToU8(manifest),
       'agents/analyzer.md': strToU8('analyzer'),
     });
 
-    const { manifestText, files } = unpackSkillArchive(new Uint8Array(zipped));
+    const { manifestText, files } = await unpackSkillArchive(
+      new Uint8Array(zipped),
+    );
 
     expect(manifestText).toBe(manifest);
     expect(files.size).toBe(1);
@@ -169,7 +171,7 @@ describe('unpackSkillArchive', () => {
     );
   });
 
-  it('ignores directory-only entries', () => {
+  it('ignores directory-only entries', async () => {
     const manifest = '---\nname: x\ndescription: y\n---\n\nbody';
     const zipped = zipSync({
       'SKILL.md': strToU8(manifest),
@@ -177,12 +179,12 @@ describe('unpackSkillArchive', () => {
       'agents/analyzer.md': strToU8('analyzer'),
     });
 
-    const { files } = unpackSkillArchive(new Uint8Array(zipped));
+    const { files } = await unpackSkillArchive(new Uint8Array(zipped));
 
     expect([...files.keys()]).toEqual(['agents/analyzer.md']);
   });
 
-  it('returns nested empty-folder markers as folders and drops a root marker', () => {
+  it('returns nested empty-folder markers as folders and drops a root marker', async () => {
     const zipped = zipSync({
       'SKILL.md': strToU8('---\nname: x\ndescription: y\n---\n'),
       'docs/.dial_folder': new Uint8Array(0),
@@ -191,19 +193,19 @@ describe('unpackSkillArchive', () => {
       'notes.md': strToU8('notes'),
     });
 
-    const { files, folders } = unpackSkillArchive(new Uint8Array(zipped));
+    const { files, folders } = await unpackSkillArchive(new Uint8Array(zipped));
 
     expect([...files.keys()]).toEqual(['notes.md']);
     expect(folders).toEqual(['docs', 'a/b']);
   });
 
-  it('throws when there is no root SKILL.md entry', () => {
+  it('rejects when there is no root SKILL.md entry', async () => {
     const zipped = zipSync({ 'notes.md': strToU8('notes') });
 
-    expect(() => unpackSkillArchive(new Uint8Array(zipped))).toThrow();
+    await expect(unpackSkillArchive(new Uint8Array(zipped))).rejects.toThrow();
   });
 
-  it('round-trips a create-mode-built manifest', () => {
+  it('round-trips a create-mode-built manifest', async () => {
     const manifest = buildSkillManifest({
       name: 'x',
       description: 'y',
@@ -211,7 +213,7 @@ describe('unpackSkillArchive', () => {
     });
     const zipped = zipSync({ 'SKILL.md': strToU8(manifest) });
 
-    const { manifestText } = unpackSkillArchive(new Uint8Array(zipped));
+    const { manifestText } = await unpackSkillArchive(new Uint8Array(zipped));
 
     expect(manifestText).toBe(manifest);
   });

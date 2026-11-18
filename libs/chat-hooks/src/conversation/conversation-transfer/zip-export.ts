@@ -1,14 +1,20 @@
 import type { ExportFormat } from '@epam/ai-dial-chat-shared';
-import { strToU8, zipSync } from 'fflate';
+
+/*
+ * fflate is imported on demand, not at module scope: this module sits in the
+ * `@epam/ai-dial-chat-hooks` barrel every page loads, and the ZIP engine is
+ * needed only once a user exports.
+ */
 
 /*
  * fflate identifies file entries with instanceof against its own Uint8Array
  * constructor, so normalize bytes from other realms before calling zipSync.
  */
-const FflateUint8Array = strToU8('', true).constructor as Uint8ArrayConstructor;
-
-const toZipUint8Array = (data: Uint8Array): Uint8Array =>
-  data instanceof FflateUint8Array ? data : new FflateUint8Array(data);
+const toZipUint8Array = (
+  data: Uint8Array,
+  fflateUint8Array: Uint8ArrayConstructor,
+): Uint8Array =>
+  data instanceof fflateUint8Array ? data : new fflateUint8Array(data);
 
 /**
  * Validates an attachment path before it is written into (or read from) a
@@ -45,14 +51,18 @@ export interface BuildDialArchiveResult {
  * plus every valid attachment, laid out under `res/<path>`. Attachments
  * failing the path allowlist are skipped and reported in `skippedPaths`.
  */
-export const buildDialArchive = (
+export const buildDialArchive = async (
   envelope: ExportFormat,
   attachments: ZipAttachmentEntry[],
-): BuildDialArchiveResult => {
+): Promise<BuildDialArchiveResult> => {
+  const { strToU8, zipSync } = await import('fflate');
+  const fflateUint8Array = strToU8('', true)
+    .constructor as Uint8ArrayConstructor;
   const skippedPaths: string[] = [];
   const files: Record<string, Uint8Array> = {
     'conversation.json': toZipUint8Array(
       strToU8(JSON.stringify(envelope, null, 2)),
+      fflateUint8Array,
     ),
   };
 
@@ -61,7 +71,10 @@ export const buildDialArchive = (
       skippedPaths.push(attachment.path);
       continue;
     }
-    files[`res/${attachment.path}`] = toZipUint8Array(attachment.data);
+    files[`res/${attachment.path}`] = toZipUint8Array(
+      attachment.data,
+      fflateUint8Array,
+    );
   }
 
   const zipped = zipSync(files);

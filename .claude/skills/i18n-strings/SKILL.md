@@ -41,7 +41,8 @@ them through `t()`.
 **In `apps/chat`:**
 
 - Every string is `t(SomeI18nKeys.Member)`: the key is declared in a string
-  enum in `apps/chat/src/constants/translation-keys.ts` and in
+  enum (one module per namespace under `apps/chat/src/constants/i18n-keys/`,
+  imported through the `translation-keys.ts` barrel) and in
   `apps/chat/src/i18n/locales/en.json` in the same change — never a raw
   `t('a.b')` key and never a literal (`.claude/rules/all-ts.md`).
 - Every `*Labels` field of a lib component the app renders is passed, built
@@ -117,8 +118,10 @@ The scanner skips tests, stories and `chat-api-client`.
 
    In `apps/chat`:
    1. Add an enum member to the right enum in
-      `apps/chat/src/constants/translation-keys.ts` (reuse a `ButtonsI18nKeys`
-      member when the English string already exists — grep `en.json` first).
+      `apps/chat/src/constants/i18n-keys/<namespace>.ts` (reuse a
+      `ButtonsI18nKeys` member when the English string already exists — grep
+      `en.json` first). A new enum also gets a re-export line in
+      `apps/chat/src/constants/translation-keys.ts`.
    2. Add the key to `apps/chat/src/i18n/locales/en.json` with the English
       text, matching the lib default.
    3. Pass it where the app renders the lib component, through the existing

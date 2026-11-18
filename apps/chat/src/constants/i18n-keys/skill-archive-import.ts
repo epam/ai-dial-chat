@@ -1,0 +1,16 @@
+export enum SkillArchiveImportI18nKeys {
+  FileInputAriaLabel = 'skillArchiveImport.fileInputAriaLabel',
+  DialogTitle = 'skillArchiveImport.dialog.title',
+  DialogDropZoneLabel = 'skillArchiveImport.dialog.dropZoneLabel',
+  DialogDropZoneMobileLabel = 'skillArchiveImport.dialog.dropZoneMobileLabel',
+  DialogFormats = 'skillArchiveImport.dialog.formats',
+  StatusUploading = 'skillArchiveImport.status.uploading',
+  StatusSuccess = 'skillArchiveImport.status.success',
+  ErrorTitle = 'skillArchiveImport.error.title',
+  ErrorValidation = 'skillArchiveImport.error.validation',
+  ErrorUnsupportedFilename = 'skillArchiveImport.error.unsupportedFilename',
+  ErrorCollision = 'skillArchiveImport.error.collision',
+  ErrorRateLimited = 'skillArchiveImport.error.rateLimited',
+  ErrorServiceUnavailable = 'skillArchiveImport.error.serviceUnavailable',
+  ErrorGeneric = 'skillArchiveImport.error.generic',
+}
