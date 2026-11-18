@@ -15,10 +15,11 @@ import {
   IsBcp47LocaleList,
   parseContentLocaleList,
 } from '../content-locales';
+import { CHAT_APP_ID, canonicalAppId } from './app-ids';
 import { APP_ID_PATTERN, IFRAME_ORIGIN_PATTERN } from './env-patterns';
 
 /** The identifiers a deployment serves when `CLIENT_CONFIG_APP_IDS` is absent or blank. */
-export const DEFAULT_CLIENT_CONFIG_APP_IDS: readonly string[] = ['chat-ui'];
+export const DEFAULT_CLIENT_CONFIG_APP_IDS: readonly string[] = [CHAT_APP_ID];
 
 /** The most identifiers one deployment may serve. */
 export const MAX_CLIENT_CONFIG_APP_IDS = 16;
@@ -111,7 +112,9 @@ export class ClientUiEnv {
   @IsOptional()
   @Transform(({ value }) => {
     if (value == null) return [...DEFAULT_CLIENT_CONFIG_APP_IDS];
-    const ids = parseUniqueCommaList(value);
+    /* The legacy identifier is replaced before de-duplication, so listing
+     * both spellings serves one identifier. */
+    const ids = [...new Set(parseUniqueCommaList(value).map(canonicalAppId))];
     return ids.length > 0 ? ids : [...DEFAULT_CLIENT_CONFIG_APP_IDS];
   })
   @IsArray()

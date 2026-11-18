@@ -1,15 +1,16 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  GhostButton,
+  DIAL_KIT_ICON_STROKE,
+  ElementSize,
+  GhostIconButton,
   Input,
-  LinkButton,
   LiveRegion,
   LiveRegionPoliteness,
   PrimaryButton,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import { IconAlertCircleFilled } from '@tabler/icons-react';
+import { IconAlertCircleFilled, IconX } from '@tabler/icons-react';
 import type { FC } from 'react';
 import type {
   SigninInterruptDialogLabels,
@@ -41,11 +42,11 @@ interface SigninInterruptRowProps extends Pick<
   nameClassName: string;
   /** Typography class of the row error. */
   errorClassName: string;
-  /** Typography class of the hint and the no-credentials label. */
+  /** Typography class of the version, the hint and the no-credentials label. */
   hintClassName: string;
 }
 
-/** One pending sign-in request: name, optional API key field, error with Retry, and Decline / Log in actions. */
+/** One pending sign-in request: a single line with name, decline and login actions, plus an optional API key field, error and hint below it. */
 export const SigninInterruptRow: FC<SigninInterruptRowProps> = ({
   row,
   labels,
@@ -57,6 +58,7 @@ export const SigninInterruptRow: FC<SigninInterruptRowProps> = ({
   onDecline,
 }) => {
   const { id, isProcessing } = row;
+  const loginLabel = row.errorMessage ? labels.retry : labels.logIn;
 
   return (
     <div
@@ -64,21 +66,60 @@ export const SigninInterruptRow: FC<SigninInterruptRowProps> = ({
       aria-label={row.displayName}
       aria-busy={isProcessing}
       className={mergeClasses(
-        'flex flex-col gap-2 border-b py-3 last:border-b-0',
+        'flex flex-col gap-2 rounded-lg px-3 py-2',
         styles.row,
       )}
     >
-      <div className="flex min-w-0 items-center justify-between gap-2">
-        <span
-          className={mergeClasses(
-            'min-w-0 flex-1 truncate',
-            nameClassName,
-            styles.name,
+      <div className="flex min-h-8 min-w-0 items-center gap-2">
+        <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
+          <span
+            className={mergeClasses('truncate', nameClassName, styles.name)}
+          >
+            {row.displayName}
+          </span>
+          {row.displayVersion && (
+            <span
+              className={mergeClasses('shrink-0', hintClassName, styles.hint)}
+            >
+              {row.displayVersion}
+            </span>
           )}
-        >
-          {row.displayName}
-          {row.displayVersion ? ` (${row.displayVersion})` : ''}
         </span>
+        {row.requiresNoCredentials ? (
+          <span
+            className={mergeClasses('shrink-0', hintClassName, styles.hint)}
+          >
+            {labels.noCredentialsRequired}
+          </span>
+        ) : (
+          <>
+            <GhostIconButton
+              size={ElementSize.Small}
+              icon={
+                <IconX
+                  aria-hidden
+                  size={DIAL_ICON_SIZE.SM}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
+              aria-label={labels.decline}
+              disabled={isProcessing}
+              onClick={() => onDecline(id)}
+            />
+            <PrimaryButton
+              size={ElementSize.Small}
+              label={isProcessing ? undefined : loginLabel}
+              aria-label={isProcessing ? loginLabel : undefined}
+              iconBefore={
+                isProcessing ? (
+                  <Spinner size={16} ariaLabel={loginLabel} />
+                ) : undefined
+              }
+              disabled={isProcessing || !row.canSubmitLogin}
+              onClick={() => onLogin(id)}
+            />
+          </>
+        )}
       </div>
 
       {row.requiresApiKey && (
@@ -93,23 +134,23 @@ export const SigninInterruptRow: FC<SigninInterruptRowProps> = ({
         />
       )}
 
+      {/* Always mounted so an error that appears later is announced. */}
       <LiveRegion
         politeness={LiveRegionPoliteness.Assertive}
         className={mergeClasses(
-          'flex flex-wrap items-center gap-2 wrap-break-word',
+          'flex items-start gap-1.5 wrap-break-word empty:hidden',
           errorClassName,
           styles.error,
         )}
       >
         {row.errorMessage && (
           <>
-            <IconAlertCircleFilled size={DIAL_ICON_SIZE.SM} aria-hidden />
-            <span>{row.errorMessage}</span>
-            <LinkButton
-              className="h-auto"
-              label={labels.retry}
-              onClick={() => onLogin(id)}
+            <IconAlertCircleFilled
+              className="mt-0.5 shrink-0"
+              size={DIAL_ICON_SIZE.SM}
+              aria-hidden
             />
+            <span>{row.errorMessage}</span>
           </>
         )}
       </LiveRegion>
@@ -124,35 +165,6 @@ export const SigninInterruptRow: FC<SigninInterruptRowProps> = ({
         >
           {labels.dialNativeHint}
         </p>
-      )}
-
-      {row.requiresNoCredentials ? (
-        <div className="flex justify-end">
-          <span className={mergeClasses(hintClassName, styles.hint)}>
-            {labels.noCredentialsRequired}
-          </span>
-        </div>
-      ) : (
-        <div className="flex justify-end gap-2">
-          <GhostButton
-            label={labels.decline}
-            className="mobile:flex-1"
-            disabled={isProcessing}
-            onClick={() => onDecline(id)}
-          />
-          <PrimaryButton
-            label={isProcessing ? undefined : labels.logIn}
-            aria-label={isProcessing ? labels.logIn : undefined}
-            iconBefore={
-              isProcessing ? (
-                <Spinner size={16} ariaLabel={labels.logIn} />
-              ) : undefined
-            }
-            className="mobile:flex-1"
-            disabled={isProcessing || !row.canSubmitLogin}
-            onClick={() => onLogin(id)}
-          />
-        </div>
       )}
     </div>
   );

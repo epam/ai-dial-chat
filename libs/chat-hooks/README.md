@@ -232,7 +232,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-ui-kit` ^0.16.0
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.2
-- `@epam/pdf-highlighter-kit` ^0.0.22
+- `@epam/pdf-highlighter-kit` ^0.0.23
 
 `@epam/ai-dial-chat-api-client` is **not** a peer. Every entry that calls DIAL Core
 imports a runtime enum from it (`SendCompletionDtoModeEnum`,
@@ -5714,7 +5714,7 @@ const { handleLogin, handleLogout } = useCatalogToolsetCredentials({
 
 ### isValidSkillRelativePath / normalizeSkillName / buildSkillManifest / buildSkillManifestFromFrontmatter / parseSkillManifest / unpackSkillArchive
 
-Client-side skill-authoring helpers: validates a relative file path against the backend's naming rules (inline feedback only — the server stays authoritative), normalizes a skill name to the DIAL naming convention, builds/parses a `SKILL.md`'s YAML frontmatter plus instructions body, and unpacks a whole-skill ZIP archive into its manifest text, its `files` map, and the `folders` its empty-folder markers stand for.
+Client-side skill-authoring helpers: validates a relative file path against the backend's naming rules (inline feedback only — the server stays authoritative), normalizes a skill name to the DIAL naming convention, builds/parses a `SKILL.md`'s YAML frontmatter plus instructions body, and unpacks a whole-skill ZIP archive into its manifest text, its `files` map, and the `folders` its empty-folder markers stand for. `unpackSkillArchive` is async: it loads the ZIP engine (`fflate`) on first use, so the engine stays out of a host's entry chunk.
 
 ```ts
 import {

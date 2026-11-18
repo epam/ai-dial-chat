@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   ConflictException,
   ForbiddenException,
   NotFoundException,
@@ -905,6 +906,41 @@ describe('ConversationLifecycleService', () => {
         );
 
         expect(saveSpy).toHaveBeenCalledOnce();
+      });
+
+      it('duplicates when the caller has no access to the model (Issue #9895)', async () => {
+        mockGetConversation();
+        mockDeploymentsService.resolveDeploymentItem.mockRejectedValue(
+          new ForbiddenException(),
+        );
+        const saveSpy = vi
+          .spyOn(mockDialClient.client, 'saveConversation')
+          .mockResolvedValue({ data: {} } as never);
+
+        await service.duplicateConversation(
+          'shared-bucket/gpt-4o__New%20chat',
+          'test-token',
+          'test-bucket',
+        );
+
+        expect(saveSpy).toHaveBeenCalledOnce();
+      });
+
+      it('still fails when the model lookup fails upstream', async () => {
+        mockGetConversation();
+        mockDeploymentsService.resolveDeploymentItem.mockRejectedValue(
+          new BadGatewayException(),
+        );
+        const saveSpy = vi.spyOn(mockDialClient.client, 'saveConversation');
+
+        await expect(
+          service.duplicateConversation(
+            'shared-bucket/gpt-4o__New%20chat',
+            'test-token',
+            'test-bucket',
+          ),
+        ).rejects.toBeInstanceOf(BadGatewayException);
+        expect(saveSpy).not.toHaveBeenCalled();
       });
 
       it('duplicates when the model no longer resolves to a deployment', async () => {

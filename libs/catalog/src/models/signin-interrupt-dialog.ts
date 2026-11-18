@@ -4,11 +4,11 @@ export interface SigninInterruptDialogRow {
   id: string;
   /** Resource display name. */
   displayName: string;
-  /** Resource version rendered in parentheses after the name, when present. */
+  /** Resource version rendered in secondary text after the name, when present. */
   displayVersion?: string;
   /** Current value of the row's API key field. */
   apiKey: string;
-  /** Whether a login or decline is in flight; disables the row's controls and shows a spinner on `Log in`. */
+  /** Whether a login or decline is in flight; disables the row's controls and shows a spinner on its login action. */
   isProcessing: boolean;
   /** Whether `Log in` is enabled while the row is idle. */
   canSubmitLogin: boolean;
@@ -18,7 +18,7 @@ export interface SigninInterruptDialogRow {
   requiresNoCredentials: boolean;
   /** Whether to render the DIAL-native offline-access hint. */
   showDialNativeHint: boolean;
-  /** Translated recoverable error, rendered with a Retry action; omitted when the row has none. */
+  /** Translated recoverable error, rendered under the name while the row's login action reads Retry; omitted when the row has none. */
   errorMessage?: string;
 }
 
@@ -30,11 +30,13 @@ export interface SigninInterruptDialogLabels {
   description?: string;
   /** Footer action declining every row. Defaults to `'Decline all'`. */
   declineAll?: string;
-  /** Per-row decline action. Defaults to `'Decline'`. */
+  /** Footer action logging in to the next actionable row, given its name. Defaults to `` (name) => `Log in to ${name}` ``. */
+  logInTo?: (name: string) => string;
+  /** Accessible name of the per-row icon-only decline action. Defaults to `'Decline'`. */
   decline?: string;
   /** Per-row login action and its spinner's accessible name. Defaults to `'Log in'`. */
   logIn?: string;
-  /** Retry action next to a row error. Defaults to `'Retry'`. */
+  /** Per-row login action while the row shows an error. Defaults to `'Retry'`. */
   retry?: string;
   /** API key field label. Defaults to `'API key'`. */
   apiKeyLabel?: string;
@@ -52,13 +54,13 @@ export interface SigninInterruptDialogLabels {
 
 /** Color overrides of `SigninInterruptDialog`, applied as `--cat-signin-*` custom properties. */
 export interface SigninInterruptDialogColors {
-  /** Divider between rows. Defaults to `--stroke-primary`. */
-  rowBorder?: string;
+  /** Row background on hover and while a row control has focus. Defaults to `--bg-control-neutral-hover-muted`. */
+  rowHoverBackground?: string;
   /** Row name text. Defaults to `--text-primary`. */
   nameText?: string;
   /** Row error text and icon. Defaults to `--text-error`. */
   errorText?: string;
-  /** DIAL-native hint and no-credentials label. Defaults to `--text-secondary`. */
+  /** Row version, DIAL-native hint and no-credentials label. Defaults to `--text-secondary`. */
   hintText?: string;
   /** Text under the heading. Defaults to `--text-secondary`. */
   descriptionText?: string;
@@ -78,11 +80,11 @@ export interface SigninInterruptDialogProps {
   onOfflineUsageConsentChange: (value: boolean) => void;
   /** Called with a row id and its new API key. */
   onApiKeyChange: (rowId: string, value: string) => void;
-  /** Called with a row id on `Log in` or Retry; must open any OAuth popup synchronously. */
+  /** Called with a row id on its `Log in` / Retry action, or with the first idle, submittable row needing credentials on the footer's `Log in to …`; must open any OAuth popup synchronously. */
   onLogin: (rowId: string) => void;
   /** Called with a row id on `Decline`. */
   onDecline: (rowId: string) => void;
-  /** Called on `Decline all`, which renders only while more than one row is listed. */
+  /** Called on `Decline all`; the footer with `Decline all` and `Log in to …` renders only while more than one row is listed. */
   onDeclineAll: () => void;
   /** Copy overrides. */
   labels?: SigninInterruptDialogLabels;
@@ -94,6 +96,6 @@ export interface SigninInterruptDialogProps {
   nameClassName?: string;
   /** Typography class of each row error. Defaults to `'dial-small-text'`. */
   errorClassName?: string;
-  /** Typography class of the DIAL-native hint and the no-credentials label. Defaults to `'dial-small-text'`. */
+  /** Typography class of the row version, the DIAL-native hint and the no-credentials label. Defaults to `'dial-small-text'`. */
   hintClassName?: string;
 }

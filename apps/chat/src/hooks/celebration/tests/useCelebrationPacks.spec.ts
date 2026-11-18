@@ -21,10 +21,12 @@ import {
   BUNDLED_DELIVERY,
   CATALOG,
   COURIERS_DELIVERY,
+  GIFT_WRAPPING_DELIVERY,
   PILOT_DELIVERY,
   SNOWMAN_DESKTOP_ID,
   SNOWMAN_POSTER_ID,
   anniversaryPack,
+  giftWrappingScene,
   newYearPack,
 } from './celebration-pack-fixtures';
 
@@ -179,8 +181,7 @@ describe('useCelebrationPacks', () => {
         ...pack,
         scenes: pack.scenes.map((scene) => ({
           ...scene,
-          requiredCapabilities: ['composer-anchor-v1'],
-          placement: { template: 'composer-anchor-v1' },
+          requiredCapabilities: ['interaction-cat-borrow-v1'],
         })),
       });
       const { result } = renderPacks();
@@ -244,6 +245,66 @@ describe('useCelebrationPacks', () => {
       toastTitle: 'Happy New Year',
       bullfinchCouriersToastMessage: 'Two couriers, one gingerbread star.',
     });
+  });
+
+  it('replaces the allowlisted gift-wrapping and keeps its secret pool and bundled label', async () => {
+    vi.mocked(getCelebrationPack).mockResolvedValue(
+      newYearPack({ scenes: [...newYearPack().scenes, giftWrappingScene()] }),
+    );
+    const { result } = renderPacks({ delivery: GIFT_WRAPPING_DELIVERY });
+    await waitFor(() =>
+      expect(result.current.packKey).toBe(
+        'new-year-default@1.0.0:gift-wrapping',
+      ),
+    );
+
+    const event = await loadActive(result.current.events, 'new-year');
+    expect(event.scenes.map(({ id }) => id)).toEqual([
+      'penguin-star',
+      'gift-wrapping',
+      'snowman-delivery',
+    ]);
+    expect(event.scenes[1]).toMatchObject({
+      labelId: 'giftWrappingToastMessage',
+      durationMs: 18500,
+    });
+    expect(event.scenes[1].Component).not.toBe(BundledScene);
+    expect(event.scenes[2]).toBe(NEW_YEAR.scenes[2]);
+    expect(event.clickSceneIds).toEqual(NEW_YEAR.clickSceneIds);
+    expect(event.secretTrigger).toEqual(NEW_YEAR.secretTrigger);
+    expect(createCelebrationSceneFromDescriptor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'gift-wrapping',
+        placement: expect.objectContaining({
+          template: 'composer-anchor-v1',
+          anchorRect: { x: 340, y: 164, width: 520, height: 56 },
+          scale: { min: 0.6, max: 1 },
+        }),
+      }),
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
+  it('keeps the bundled gift-wrapping when its anchored placement is incomplete', async () => {
+    vi.mocked(getCelebrationPack).mockResolvedValue(
+      newYearPack({
+        scenes: [
+          giftWrappingScene({
+            placement: {
+              ...giftWrappingScene().placement,
+              anchorRect: undefined,
+            },
+          }),
+        ],
+      }),
+    );
+    const { result } = renderPacks({ delivery: GIFT_WRAPPING_DELIVERY });
+    await waitFor(() => expect(getCelebrationPack).toHaveBeenCalled());
+    await settle();
+
+    expect(result.current.events).toBe(COMPILED);
+    expect(result.current.packKey).toBe(BUNDLED_PACK_KEY);
   });
 
   it('keeps the bundled snowman when only the couriers are allowlisted', async () => {

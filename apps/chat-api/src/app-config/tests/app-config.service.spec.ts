@@ -21,7 +21,7 @@ import {
 } from './config-registry/env-resolution.fixtures';
 import { createInertManagedRuntime } from './managed-runtime/managed-runtime.fixtures';
 
-const ctx: AppConfigEvalContext = { appId: 'chat-ui' };
+const ctx: AppConfigEvalContext = { appId: 'ai-dial-chat' };
 
 // getClientConfig resolves exactly one definition per client-visible config key.
 const CLIENT_DEFINITIONS_COUNT = CONFIG_DEFINITIONS.filter(
@@ -241,7 +241,7 @@ describe('AppConfigService', () => {
       expect(result).not.toHaveProperty('userId');
       expect(result).not.toHaveProperty('roles');
       expect(result).not.toHaveProperty('environment');
-      expect(result.appId).toBe('chat-ui');
+      expect(result.appId).toBe('ai-dial-chat');
       expect(typeof result.features).toBe('object');
       expect(typeof result.config).toBe('object');
     });
@@ -1303,11 +1303,11 @@ describe('AppConfigService', () => {
       );
 
       const roleless = await service.getClientConfig({
-        appId: 'chat-ui',
+        appId: 'ai-dial-chat',
         userId: 'user-1',
       });
       const admin = await service.getClientConfig({
-        appId: 'chat-ui',
+        appId: 'ai-dial-chat',
         userId: 'user-2',
         roles: ['admin'],
       });
@@ -1341,14 +1341,14 @@ describe('AppConfigService', () => {
         makeService(async () => undefined, undefined, undefined, servedAppIds);
 
       it.each([undefined, []])(
-        'serves only chat-ui when the list is %j',
+        'serves only ai-dial-chat when the list is %j',
         async (servedAppIds) => {
           const { service, cacheManager, compositeProvider } =
             makeServing(servedAppIds);
 
           await expect(
-            service.getClientConfig({ appId: 'chat-ui' }),
-          ).resolves.toMatchObject({ appId: 'chat-ui' });
+            service.getClientConfig({ appId: 'ai-dial-chat' }),
+          ).resolves.toMatchObject({ appId: 'ai-dial-chat' });
           cacheManager.get.mockClear();
           vi.mocked(compositeProvider.resolve).mockClear();
 
@@ -1361,7 +1361,10 @@ describe('AppConfigService', () => {
       );
 
       it('rejects an unlisted identifier before the cache lookup', async () => {
-        const { service, cacheManager } = makeServing(['launchpad', 'chat-ui']);
+        const { service, cacheManager } = makeServing([
+          'launchpad',
+          'ai-dial-chat',
+        ]);
 
         await expect(
           service.getClientConfig({ appId: 'models-garden' }),
@@ -1371,7 +1374,10 @@ describe('AppConfigService', () => {
       });
 
       it('returns the same values to every served identifier, each echoing its own appId', async () => {
-        const { service, cacheManager } = makeServing(['launchpad', 'chat-ui']);
+        const { service, cacheManager } = makeServing([
+          'launchpad',
+          'ai-dial-chat',
+        ]);
         const context = { userId: 'user-1', roles: ['viewer'] };
 
         const launchpad = await service.getClientConfig({
@@ -1380,16 +1386,16 @@ describe('AppConfigService', () => {
         });
         const chat = await service.getClientConfig({
           ...context,
-          appId: 'chat-ui',
+          appId: 'ai-dial-chat',
         });
 
         expect(launchpad.appId).toBe('launchpad');
-        expect(chat.appId).toBe('chat-ui');
+        expect(chat.appId).toBe('ai-dial-chat');
         expect(launchpad.features).toEqual(chat.features);
         expect(launchpad.config).toEqual(chat.config);
         expect(cacheManager.set.mock.calls.map(([key]) => key)).toEqual([
           'app-config:client:launchpad:user:user-1:roles:viewer',
-          'app-config:client:chat-ui:user:user-1:roles:viewer',
+          'app-config:client:ai-dial-chat:user:user-1:roles:viewer',
         ]);
       });
     });
@@ -1400,19 +1406,19 @@ describe('AppConfigService', () => {
       );
 
       const first = await service.getClientConfig({
-        appId: 'chat-ui',
+        appId: 'ai-dial-chat',
         userId: 'user-1',
         roles: ['viewer', 'admin'],
       });
       const second = await service.getClientConfig({
-        appId: 'chat-ui',
+        appId: 'ai-dial-chat',
         userId: 'user-1',
         roles: ['admin', 'viewer'],
       });
 
       expect(second).toEqual(first);
       expect(cacheManager.set).toHaveBeenCalledWith(
-        'app-config:client:chat-ui:user:user-1:roles:admin,viewer',
+        'app-config:client:ai-dial-chat:user:user-1:roles:admin,viewer',
         first,
         60_000,
       );
@@ -1425,12 +1431,12 @@ describe('AppConfigService', () => {
       const { service, compositeProvider } = makeService(async () => undefined);
 
       await service.getClientConfig({
-        appId: 'chat-ui',
+        appId: 'ai-dial-chat',
         userId: 'user-1',
         roles: ['admin'],
       });
       await service.getClientConfig({
-        appId: 'chat-ui',
+        appId: 'ai-dial-chat',
         userId: 'user-1',
         roles: ['viewer'],
       });
@@ -1655,7 +1661,7 @@ describe('AppConfigService', () => {
 
     it('resolves app.version first, then every other client key once in registry order with the full context', async () => {
       const fullCtx: AppConfigEvalContext = {
-        appId: 'chat-ui',
+        appId: 'ai-dial-chat',
         userId: 'user-1',
         roles: ['viewer'],
       };
@@ -1764,8 +1770,8 @@ describe('AppConfigService', () => {
       });
 
       const [admin, viewer] = await Promise.all([
-        service.getClientConfig({ appId: 'chat-ui', roles: ['admin'] }),
-        service.getClientConfig({ appId: 'chat-ui', roles: ['viewer'] }),
+        service.getClientConfig({ appId: 'ai-dial-chat', roles: ['admin'] }),
+        service.getClientConfig({ appId: 'ai-dial-chat', roles: ['viewer'] }),
       ]);
 
       expect(admin.config.fileManagerTabs).toEqual(['my_files']);
@@ -1810,7 +1816,7 @@ describe('AppConfigService', () => {
         );
 
         const result = await service.getClientConfig({
-          appId: 'chat-ui',
+          appId: 'ai-dial-chat',
           userId: 'user-1',
           roles: ['trainers'],
         });
@@ -1852,8 +1858,8 @@ describe('AppConfigService', () => {
           expect.stringContaining('CATALOG_CREATION_ROLES'),
         );
 
-        await service.getClientConfig({ appId: 'chat-ui', userId: 'a' });
-        await service.getClientConfig({ appId: 'chat-ui', userId: 'b' });
+        await service.getClientConfig({ appId: 'ai-dial-chat', userId: 'a' });
+        await service.getClientConfig({ appId: 'ai-dial-chat', userId: 'b' });
 
         expect(
           warnSpy.mock.calls.filter(([message]) =>
@@ -1871,17 +1877,17 @@ describe('AppConfigService', () => {
         );
 
         const developer = await service.getClientConfig({
-          appId: 'chat-ui',
+          appId: 'ai-dial-chat',
           userId: 'user-1',
           roles: ['developers', 'team-A'],
         });
         const sameUserOtherRoles = await service.getClientConfig({
-          appId: 'chat-ui',
+          appId: 'ai-dial-chat',
           userId: 'user-1',
           roles: ['team-B'],
         });
         const otherUser = await service.getClientConfig({
-          appId: 'chat-ui',
+          appId: 'ai-dial-chat',
           userId: 'user-2',
           roles: ['developers', 'team-A'],
         });
@@ -1922,12 +1928,12 @@ describe('AppConfigService', () => {
 
           const [allowed, denied] = await Promise.all([
             service.getClientConfig({
-              appId: 'chat-ui',
+              appId: 'ai-dial-chat',
               userId: 'user-1',
               roles: ['developers'],
             }),
             service.getClientConfig({
-              appId: 'chat-ui',
+              appId: 'ai-dial-chat',
               userId: 'user-2',
               roles: [],
             }),
@@ -1950,7 +1956,7 @@ describe('AppConfigService', () => {
 
         const serialized = JSON.stringify(
           await service.getClientConfig({
-            appId: 'chat-ui',
+            appId: 'ai-dial-chat',
             userId: 'user-1',
             roles: ['trainers'],
           }),
@@ -2164,6 +2170,8 @@ describe('AppConfigService', () => {
       [
         'managed keys set through ENV',
         {
+          ONBOARDING_HINTS:
+            '[{"id":"a","target":"new-chat","title":"Start"},{"id":"a","target":"catalog","title":"Again"}]',
           ANNOUNCEMENT_TITLE: 'Maintenance',
           ANNOUNCEMENT_DESCRIPTION: 'Tonight',
           ANNOUNCEMENTS: '[{"title":"A"}]',
@@ -2186,7 +2194,7 @@ describe('AppConfigService', () => {
         },
       ],
       [
-        'blank managed text set through ENV',
+        'blank texts set through ENV',
         {
           ANNOUNCEMENT_TITLE: '',
           ANNOUNCEMENT_DESCRIPTION: '   ',
@@ -2202,10 +2210,27 @@ describe('AppConfigService', () => {
           snapshotResolution(env),
         );
 
-        expect(CONFIG_DEFINITIONS.filter(isManagedKey)).toHaveLength(8);
+        expect(CONFIG_DEFINITIONS.filter(isManagedKey)).toHaveLength(1);
         expect(stripped).toEqual(withMetadata);
       },
     );
+
+    /* The managed bounds (50 hints, title 100, description 500) apply only to
+     * published values; environment admission keeps its own rules. */
+    it('does not bound environment onboarding hints by the managed contract', async () => {
+      vi.spyOn(console, 'info').mockImplementation(() => undefined);
+      const hints = Array.from({ length: 60 }, (_, index) => ({
+        id: `hint-${index}`,
+        target: 'new-chat',
+        title: 't'.repeat(300),
+        description: 'd'.repeat(800),
+      }));
+      const { service } = buildResolutionStack({
+        ONBOARDING_HINTS: JSON.stringify(hints),
+      });
+      const { config } = await service.getClientConfig(ctx);
+      expect(config.onboardingHints).toEqual(hints);
+    });
   });
 });
 
@@ -2223,7 +2248,7 @@ describe('AppConfigService managed view capture', () => {
     await service.getClientConfig(ctx);
 
     expect(capture).toHaveBeenCalledTimes(1);
-    expect(capture).toHaveBeenCalledWith('chat-ui');
+    expect(capture).toHaveBeenCalledWith('ai-dial-chat');
   });
 
   it('replaces a managed view supplied by the caller', async () => {
@@ -2237,7 +2262,7 @@ describe('AppConfigService managed view capture', () => {
     const forged = {
       ...ctx,
       managed: {
-        appId: 'chat-ui',
+        appId: 'ai-dial-chat',
         instanceId: 'chat-prod',
         state: ManagedConfigState.Fresh,
         now: 0,

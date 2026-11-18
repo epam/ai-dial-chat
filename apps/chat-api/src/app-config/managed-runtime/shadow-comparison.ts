@@ -71,7 +71,7 @@ const MANAGED_DEFINITIONS: readonly ConfigDefinition[] =
   CONFIG_DEFINITIONS.filter(isManagedKey);
 
 /**
- * In `shadow` mode, compares every `chat-ui` managed key of each accepted
+ * In `shadow` mode, compares every `ai-dial-chat` managed key of each accepted
  * or re-verified snapshot with what callers see today, without changing any
  * response: config keys through the shared client-config normalization,
  * features through their gates for an anonymous caller. Results are counted

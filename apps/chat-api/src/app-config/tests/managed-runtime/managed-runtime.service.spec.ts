@@ -57,8 +57,8 @@ describe('ManagedRuntimeService', () => {
     await runtime.onApplicationBootstrap();
     await clock.advance(3_600_000);
     expect(fake.calls).toEqual([]);
-    expect(runtime.captureView('chat-ui')).toEqual({
-      appId: 'chat-ui',
+    expect(runtime.captureView('ai-dial-chat')).toEqual({
+      appId: 'ai-dial-chat',
       state: ManagedConfigState.Unavailable,
       now: clock.now(),
     });
@@ -70,7 +70,7 @@ describe('ManagedRuntimeService', () => {
     await runtime.onApplicationBootstrap();
 
     expect(fake.calls).toEqual(['chat-dev']);
-    expect(runtime.captureView('chat-ui')).toMatchObject({
+    expect(runtime.captureView('ai-dial-chat')).toMatchObject({
       instanceId: 'chat-dev',
       state: ManagedConfigState.Fresh,
       snapshot: expect.objectContaining({ revisionId: 'r1' }),
@@ -85,7 +85,7 @@ describe('ManagedRuntimeService', () => {
     await clock.advance(5_000);
     await bootstrap;
 
-    expect(runtime.captureView('chat-ui').state).toBe(
+    expect(runtime.captureView('ai-dial-chat').state).toBe(
       ManagedConfigState.Unavailable,
     );
     expect(clock.pendingDelays()).toEqual([2 * INTERVAL]);
@@ -102,17 +102,17 @@ describe('ManagedRuntimeService', () => {
     await runtime.onApplicationBootstrap();
 
     await clock.advance(5 * INTERVAL);
-    expect(runtime.captureView('chat-ui')).toMatchObject({
+    expect(runtime.captureView('ai-dial-chat')).toMatchObject({
       state: ManagedConfigState.Degraded,
       snapshot: expect.objectContaining({ revisionId: 'r1' }),
     });
 
     await clock.advance(STALENESS - 5 * INTERVAL);
-    expect(runtime.captureView('chat-ui').state).toBe(
+    expect(runtime.captureView('ai-dial-chat').state).toBe(
       ManagedConfigState.Degraded,
     );
     await clock.advance(1);
-    const view = runtime.captureView('chat-ui');
+    const view = runtime.captureView('ai-dial-chat');
     expect(view.state).toBe(ManagedConfigState.Stale);
     expect(view.snapshot).toBeUndefined();
     runtime.onModuleDestroy();
@@ -129,14 +129,16 @@ describe('ManagedRuntimeService', () => {
     await runtime.onApplicationBootstrap();
 
     await clock.advance(INTERVAL);
-    expect(runtime.captureView('chat-ui').state).toBe(
+    expect(runtime.captureView('ai-dial-chat').state).toBe(
       ManagedConfigState.Degraded,
     );
     expect(error).toHaveBeenCalledWith(
       expect.stringContaining('Core refused the reader key'),
     );
     await clock.advance(STALENESS);
-    expect(runtime.captureView('chat-ui').state).toBe(ManagedConfigState.Stale);
+    expect(runtime.captureView('ai-dial-chat').state).toBe(
+      ManagedConfigState.Stale,
+    );
     runtime.onModuleDestroy();
   });
 
@@ -150,7 +152,7 @@ describe('ManagedRuntimeService', () => {
     await runtime.onApplicationBootstrap();
     await clock.advance(INTERVAL);
 
-    const view = runtime.captureView('chat-ui');
+    const view = runtime.captureView('ai-dial-chat');
     expect(view.state).toBe(ManagedConfigState.NotPublished);
     expect(view.snapshot).toBeUndefined();
     runtime.onModuleDestroy();
@@ -167,9 +169,9 @@ describe('ManagedRuntimeService', () => {
     await runtime.onApplicationBootstrap();
 
     await clock.advance(INTERVAL);
-    expect(runtime.captureView('chat-ui').snapshot?.revisionId).toBe('r1');
+    expect(runtime.captureView('ai-dial-chat').snapshot?.revisionId).toBe('r1');
     await clock.advance(2 * INTERVAL);
-    expect(runtime.captureView('chat-ui')).toMatchObject({
+    expect(runtime.captureView('ai-dial-chat')).toMatchObject({
       state: ManagedConfigState.Degraded,
       snapshot: expect.objectContaining({ revisionId: 'r1' }),
     });
@@ -181,12 +183,12 @@ describe('ManagedRuntimeService', () => {
     fake.respond('chat-dev', revision('r2', { instanceId: 'chat-prod' }));
     fake.respond('chat-dev', revision('r2'));
     await runtime.onApplicationBootstrap();
-    expect(runtime.captureView('chat-ui').state).toBe(
+    expect(runtime.captureView('ai-dial-chat').state).toBe(
       ManagedConfigState.Unavailable,
     );
 
     await clock.advance(2 * INTERVAL);
-    expect(runtime.captureView('chat-ui')).toMatchObject({
+    expect(runtime.captureView('ai-dial-chat')).toMatchObject({
       state: ManagedConfigState.Fresh,
       snapshot: expect.objectContaining({ revisionId: 'r2' }),
     });
@@ -200,14 +202,14 @@ describe('ManagedRuntimeService', () => {
     fake.respond('chat-dev', unavailable);
     fake.respond('chat-dev', r1);
     await runtime.onApplicationBootstrap();
-    const first = runtime.captureView('chat-ui').snapshot;
+    const first = runtime.captureView('ai-dial-chat').snapshot;
 
     await clock.advance(INTERVAL);
-    expect(runtime.captureView('chat-ui').state).toBe(
+    expect(runtime.captureView('ai-dial-chat').state).toBe(
       ManagedConfigState.Degraded,
     );
     await clock.advance(2 * INTERVAL);
-    const view = runtime.captureView('chat-ui');
+    const view = runtime.captureView('ai-dial-chat');
     expect(view.state).toBe(ManagedConfigState.Fresh);
     expect(view.snapshot).toBe(first);
     expect(view.staleAt).toBe(clock.now() + STALENESS);
@@ -232,7 +234,7 @@ describe('ManagedRuntimeService', () => {
     await runtime.onApplicationBootstrap();
     await clock.advance(INTERVAL);
 
-    const view = runtime.captureView('chat-ui');
+    const view = runtime.captureView('ai-dial-chat');
     expect(view.state).toBe(ManagedConfigState.Degraded);
     expect(view.snapshot?.payload).toEqual({ config: {}, features: {} });
     runtime.onModuleDestroy();
@@ -241,7 +243,7 @@ describe('ManagedRuntimeService', () => {
   it('rejects a deeply nested payload without stopping startup or polling', async () => {
     const { clock, fake, runtime } = setup({
       ...SHADOW,
-      CLIENT_CONFIG_APP_IDS: ['chat-ui', 'launchpad'],
+      CLIENT_CONFIG_APP_IDS: ['ai-dial-chat', 'launchpad'],
       MANAGED_CONFIG_INSTANCES: ['launchpad=launchpad-dev'],
     });
     const deep = JSON.parse(`${'{"a":'.repeat(5_000)}1${'}'.repeat(5_000)}`);
@@ -279,15 +281,18 @@ describe('ManagedRuntimeService', () => {
   it('keeps two instances isolated', async () => {
     const { fake, runtime } = setup({
       ...SHADOW,
-      CLIENT_CONFIG_APP_IDS: ['chat-ui', 'launchpad'],
-      MANAGED_CONFIG_INSTANCES: ['chat-ui=chat-dev', 'launchpad=launchpad-dev'],
+      CLIENT_CONFIG_APP_IDS: ['ai-dial-chat', 'launchpad'],
+      MANAGED_CONFIG_INSTANCES: [
+        'ai-dial-chat=chat-dev',
+        'launchpad=launchpad-dev',
+      ],
     });
     fake.respond('chat-dev', revision('r1'));
     fake.respond('launchpad-dev', { kind: RuntimeReadKind.NotPublished });
     await runtime.onApplicationBootstrap();
 
     expect(fake.calls.sort()).toEqual(['chat-dev', 'launchpad-dev']);
-    expect(runtime.captureView('chat-ui')).toMatchObject({
+    expect(runtime.captureView('ai-dial-chat')).toMatchObject({
       instanceId: 'chat-dev',
       state: ManagedConfigState.Fresh,
     });
@@ -303,8 +308,11 @@ describe('ManagedRuntimeService', () => {
   it('rejects a snapshot of the other instance', async () => {
     const { fake, runtime } = setup({
       ...SHADOW,
-      CLIENT_CONFIG_APP_IDS: ['chat-ui', 'launchpad'],
-      MANAGED_CONFIG_INSTANCES: ['chat-ui=chat-dev', 'launchpad=launchpad-dev'],
+      CLIENT_CONFIG_APP_IDS: ['ai-dial-chat', 'launchpad'],
+      MANAGED_CONFIG_INSTANCES: [
+        'ai-dial-chat=chat-dev',
+        'launchpad=launchpad-dev',
+      ],
     });
     fake.respond('chat-dev', revision('r1'));
     fake.respond('launchpad-dev', revision('r1'));
@@ -335,8 +343,8 @@ describe('ManagedRuntimeService', () => {
     await clockA.advance(INTERVAL * 1.1);
     await clockB.advance(INTERVAL * 1.1);
 
-    expect(podA.captureView('chat-ui').snapshot?.revisionId).toBe('r2');
-    expect(podB.captureView('chat-ui').snapshot?.revisionId).toBe('r2');
+    expect(podA.captureView('ai-dial-chat').snapshot?.revisionId).toBe('r2');
+    expect(podB.captureView('ai-dial-chat').snapshot?.revisionId).toBe('r2');
     podA.onModuleDestroy();
     podB.onModuleDestroy();
   });

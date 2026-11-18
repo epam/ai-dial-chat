@@ -54,6 +54,8 @@ export interface OnboardingTourProps {
   steps: OnboardingTourStep[];
   /** Called with the ids of the steps that were on screen when the tour ends, and why it ended; the host clears `steps` in response. */
   onFinish: (shownStepIds: string[], reason: OnboardingTourEndReason) => void;
+  /** Called with a step's id when the user moves past it with Next, so the host can keep the progress of a tour that is left unfinished. */
+  onStepComplete?: (stepId: string) => void;
   /** When `true`, the card is a bottom sheet instead of a popover next to the target. Defaults to `false`. */
   isMobile?: boolean;
   /** Text direction of the overlay, used to align the card with its target. Defaults to the direction inherited from the document. */
@@ -152,7 +154,7 @@ export interface UseOnboardingHintsOptions {
   hints: OnboardingHint[];
   /** Ids of the hints this user has already seen. */
   seenIds: string[];
-  /** Called with the new list of seen ids once a tour ends; the host persists it. */
+  /** Called with the new list of seen ids each time the user moves past a hint with Next and once a tour ends; the host persists it. */
   onSeenIdsChange: (seenIds: string[]) => void;
   /** Returns the on-screen element of a target, or `null` when the page does not render it. */
   resolveTarget: (target: string) => HTMLElement | null;
@@ -168,6 +170,8 @@ export interface UseOnboardingHintsResult {
   steps: OnboardingTourStep[];
   /** Pass to `OnboardingTour` as `onFinish`: marks the shown ids seen (every hint's id when dismissed) and ends the tour. */
   onFinish: (shownIds: string[], reason: OnboardingTourEndReason) => void;
+  /** Pass to `OnboardingTour` as `onStepComplete`: marks a hint seen as soon as the user moves past it. */
+  onStepComplete: (stepId: string) => void;
 }
 
 /** User-visible strings of the `OnboardingHints` component. */

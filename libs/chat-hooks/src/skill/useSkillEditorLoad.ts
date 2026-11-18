@@ -112,7 +112,7 @@ const loadSkillArchive = async (
 
   try {
     const buffer = await response.arrayBuffer();
-    const { manifestText, files, folders } = unpackSkillArchive(
+    const { manifestText, files, folders } = await unpackSkillArchive(
       new Uint8Array(buffer),
     );
     return { etag, manifestText, files, folders };

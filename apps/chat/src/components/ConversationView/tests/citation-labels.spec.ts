@@ -52,11 +52,21 @@ describe('buildCitationMarkerLabels', () => {
 
   it('names the cited page in the label and the accessible name', () => {
     expect(
+      buildCitationMarkerLabels(t, makeGroup('clm.pdf', pageSelector(5))),
+    ).toEqual({
+      ariaLabel: 'Citation from clm.pdf, page 5',
+      label: 'clm.pdf, p. 5',
+      labelWithOverflow: 'clm.pdf, p. 5 +0',
+    });
+  });
+
+  it('leaves page 1 out of the label, as a link to the whole document', () => {
+    expect(
       buildCitationMarkerLabels(t, makeGroup('clm.pdf', pageSelector(1))),
     ).toEqual({
-      ariaLabel: 'Citation from clm.pdf, page 1',
-      label: 'clm.pdf, p. 1',
-      labelWithOverflow: 'clm.pdf, p. 1 +0',
+      ariaLabel: 'Citation from clm.pdf',
+      label: 'clm.pdf',
+      labelWithOverflow: 'clm.pdf +0',
     });
   });
 
@@ -71,12 +81,12 @@ describe('buildCitationMarkerLabels', () => {
     expect(
       buildCitationMarkerLabels(
         t,
-        makeGroup('clm.pdf, page 1', pageSelector(1)),
+        makeGroup('clm.pdf, page 3', pageSelector(3)),
       ),
     ).toEqual({
-      ariaLabel: 'Citation from clm.pdf, page 1',
-      label: 'clm.pdf, page 1',
-      labelWithOverflow: 'clm.pdf, page 1 +0',
+      ariaLabel: 'Citation from clm.pdf, page 3',
+      label: 'clm.pdf, page 3',
+      labelWithOverflow: 'clm.pdf, page 3 +0',
     });
   });
 

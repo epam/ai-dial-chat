@@ -1,9 +1,10 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  Badge,
+  ButtonVariant,
   Checkbox,
   LiveRegion,
   LiveRegionElement,
-  NeutralButton,
   Popup,
   PopupSize,
 } from '@epam/ai-dial-ui-kit';
@@ -12,7 +13,7 @@ import type { SigninInterruptDialogProps } from '../../models/signin-interrupt-d
 import styles from './SigninInterruptDialog.module.scss';
 import { SigninInterruptRow } from './SigninInterruptRow/SigninInterruptRow';
 
-/** Non-dismissible dialog listing pending sign-in requests with per-row Log in / Decline actions. */
+/** Non-dismissible dialog listing pending sign-in requests as compact rows with per-row Log in / Decline actions. */
 export const SigninInterruptDialog: FC<SigninInterruptDialogProps> = ({
   rows,
   statusMessage = '',
@@ -32,6 +33,9 @@ export const SigninInterruptDialog: FC<SigninInterruptDialogProps> = ({
 }) => {
   if (rows.length === 0) return null;
 
+  const title = labels?.title ?? 'Sign-in required';
+  const logInTo =
+    labels?.logInTo ?? ((name: string): string => `Log in to ${name}`);
   const rowLabels = {
     decline: labels?.decline ?? 'Decline',
     logIn: labels?.logIn ?? 'Log in',
@@ -45,16 +49,14 @@ export const SigninInterruptDialog: FC<SigninInterruptDialogProps> = ({
       labels?.noCredentialsRequired ?? 'No credentials required',
   };
 
-  /* With a single row, its own Decline button already covers it — showing "Decline all" too is a redundant duplicate action. */
-  const footer =
-    rows.length > 1 ? (
-      <div className="flex items-center justify-end gap-2 px-6 py-4">
-        <NeutralButton
-          label={labels?.declineAll ?? 'Decline all'}
-          onClick={onDeclineAll}
-        />
-      </div>
-    ) : undefined;
+  /* With a single row, its own actions already cover it — a footer would only repeat them. */
+  const hasFooter = rows.length > 1;
+  const nextRow = hasFooter
+    ? rows.find(
+        (row) =>
+          !row.requiresNoCredentials && !row.isProcessing && row.canSubmitLogin,
+      )
+    : undefined;
 
   return (
     <Popup
@@ -62,15 +64,42 @@ export const SigninInterruptDialog: FC<SigninInterruptDialogProps> = ({
       hideClose
       closeOnOutsideClick={false}
       size={PopupSize.Md}
-      header={labels?.title ?? 'Sign-in required'}
-      footer={footer}
+      ariaLabel={title}
+      header={
+        <span className="flex items-center gap-2">
+          {title}
+          {hasFooter && <Badge label={String(rows.length)} />}
+        </span>
+      }
+      additionalButtonsOnLeft
+      additionalButtons={
+        hasFooter
+          ? [
+              {
+                label: labels?.declineAll ?? 'Decline all',
+                onClick: onDeclineAll,
+              },
+            ]
+          : undefined
+      }
+      mainButtons={
+        nextRow
+          ? [
+              {
+                label: logInTo(nextRow.displayName),
+                variant: ButtonVariant.Primary,
+                onClick: () => onLogin(nextRow.id),
+              },
+            ]
+          : undefined
+      }
     >
       {/* The popup is portalled, so the color vars are set inside it. */}
       <div
-        className="flex flex-col gap-2 px-6 py-4"
+        className="flex flex-col gap-3 px-6 py-4"
         style={buildCssVars({
           '--cat-signin-description-text': colors?.descriptionText,
-          '--cat-signin-row-border': colors?.rowBorder,
+          '--cat-signin-row-hover-background': colors?.rowHoverBackground,
           '--cat-signin-name-text': colors?.nameText,
           '--cat-signin-error-text': colors?.errorText,
           '--cat-signin-hint-text': colors?.hintText,
@@ -83,7 +112,8 @@ export const SigninInterruptDialog: FC<SigninInterruptDialogProps> = ({
         <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
           {statusMessage}
         </LiveRegion>
-        <div className="flex flex-col">
+        {/* Negative margin lines row text up with the description while the hover tint keeps its own padding. */}
+        <div className="-mx-3 flex flex-col gap-0.5">
           {rows.map((row) => (
             <SigninInterruptRow
               key={row.id}
@@ -100,7 +130,6 @@ export const SigninInterruptDialog: FC<SigninInterruptDialogProps> = ({
         </div>
         {isOfflineUsageConsentShown && (
           <Checkbox
-            className="mt-2"
             isSelected={offlineUsageConsent}
             onChange={onOfflineUsageConsentChange}
             labelProps={{

@@ -25,6 +25,12 @@ import {
   CELEBRATION_MIN_POSTER_DURATION_MS,
   CELEBRATION_SCHEMA_VERSION,
   CELEBRATION_SHA256_PATTERN,
+  CELEBRATION_ANCHOR_MAX_SCALE,
+  CELEBRATION_ANCHOR_MIN_HEIGHT,
+  CELEBRATION_ANCHOR_MIN_SCALE,
+  CELEBRATION_ANCHOR_MIN_WIDTH,
+  CELEBRATION_STAGE_MAX_SIZE,
+  COMPOSER_ANCHOR_TEMPLATE,
   STATIC_TRIGGER_TEMPLATE,
   VIEWPORT_STAGE_TEMPLATE,
 } from './constants/celebrations.constants';
@@ -39,6 +45,9 @@ import type {
   CelebrationVariantDto,
 } from './dto/celebration-pack.dto';
 import {
+  CelebrationAnchor,
+  CelebrationAnchorEdge,
+  CelebrationAnchorFallback,
   CelebrationMediaType,
   CelebrationSceneDirection,
   CelebrationStageAlign,
@@ -178,14 +187,73 @@ const readLabels = (raw: unknown): Labels => {
   return labels;
 };
 
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const readComposerAnchor = (
+  raw: Record<string, unknown>,
+  path: string,
+): CelebrationPlacementDto => {
+  const { anchor, anchorRect, edge, scale, fallback } = raw;
+  requireThat(
+    isEnumValue(CelebrationAnchor, anchor),
+    `${path}.anchor is invalid`,
+  );
+  requireThat(isRecord(anchorRect), `${path}.anchorRect is not an object`);
+  const { x, y, width, height } = anchorRect as Record<string, unknown>;
+  requireThat(
+    [x, y, width, height].every(isFiniteNumber) &&
+      (width as number) >= CELEBRATION_ANCHOR_MIN_WIDTH &&
+      (height as number) >= CELEBRATION_ANCHOR_MIN_HEIGHT &&
+      (x as number) >= 0 &&
+      (y as number) >= 0 &&
+      (x as number) + (width as number) <= CELEBRATION_STAGE_MAX_SIZE &&
+      (y as number) + (height as number) <= CELEBRATION_STAGE_MAX_SIZE,
+    `${path}.anchorRect is out of bounds`,
+  );
+  requireThat(
+    isEnumValue(CelebrationAnchorEdge, edge),
+    `${path}.edge is invalid`,
+  );
+  requireThat(isRecord(scale), `${path}.scale is not an object`);
+  const { min, max } = scale as Record<string, unknown>;
+  requireThat(
+    isFiniteNumber(min) &&
+      isFiniteNumber(max) &&
+      min >= CELEBRATION_ANCHOR_MIN_SCALE &&
+      min <= max &&
+      max <= CELEBRATION_ANCHOR_MAX_SCALE,
+    `${path}.scale is out of bounds`,
+  );
+  requireThat(
+    isEnumValue(CelebrationAnchorFallback, fallback),
+    `${path}.fallback is invalid`,
+  );
+  return {
+    template: COMPOSER_ANCHOR_TEMPLATE,
+    anchor: anchor as CelebrationAnchor,
+    anchorRect: {
+      x: x as number,
+      y: y as number,
+      width: width as number,
+      height: height as number,
+    },
+    edge: edge as CelebrationAnchorEdge,
+    scale: { min: min as number, max: max as number },
+    fallback: fallback as CelebrationAnchorFallback,
+  };
+};
+
 const readPlacement = (raw: unknown, path: string): CelebrationPlacementDto => {
   requireThat(
     isRecord(raw) && isCelebrationId((raw as Record<string, unknown>).template),
     `${path}.template is invalid`,
   );
   const { template, fit, align } = raw as Record<string, unknown>;
-  /* Other templates (composer-anchor-v1 from S3) are passed as the ID alone;
-   * the scene requires their capability, so a client without it skips it. */
+  if (template === COMPOSER_ANCHOR_TEMPLATE)
+    return readComposerAnchor(raw as Record<string, unknown>, path);
+  /* Other templates are passed as the ID alone; the scene requires their
+   * capability, so a client without it skips it. */
   if (template !== VIEWPORT_STAGE_TEMPLATE)
     return { template: template as string };
   requireThat(isEnumValue(CelebrationStageFit, fit), `${path}.fit is invalid`);
@@ -293,20 +361,37 @@ const readScene = (
       scene.variants.length <= CELEBRATION_MAX_VARIANTS,
     `${path} needs 1–${CELEBRATION_MAX_VARIANTS} variants`,
   );
+  const placement = readPlacement(scene.placement, `${path}.placement`);
   const variants = (scene.variants as unknown[]).map(
     (variant, variantIndex): CelebrationVariantDto => {
       const variantPath = `${path}.variants[${variantIndex}]`;
       requireThat(isRecord(variant), `${variantPath} is not an object`);
-      const { when, animationAssetId } = variant as Record<string, unknown>;
+      const {
+        when,
+        animationAssetId,
+        placement: variantPlacement,
+      } = variant as Record<string, unknown>;
       requireThat(
         files.get(animationAssetId as string)?.mediaType ===
           CelebrationMediaType.Json,
         `${variantPath}.animationAssetId is not a declared JSON asset`,
       );
-      return {
+      const result: CelebrationVariantDto = {
         when: readConditions(when ?? {}, variantPath),
         animationAssetId: animationAssetId as string,
       };
+      if (variantPlacement === undefined) return result;
+      /* A variant may change the frame it is authored in, never the template,
+       * so the scene's required capabilities keep describing every variant. */
+      const override = readPlacement(
+        variantPlacement,
+        `${variantPath}.placement`,
+      );
+      requireThat(
+        override.template === placement.template,
+        `${variantPath}.placement.template differs from the scene's`,
+      );
+      return { ...result, placement: override };
     },
   );
   return {
@@ -317,7 +402,7 @@ const readScene = (
       scene.requiredCapabilities,
       `${path}.requiredCapabilities`,
     ),
-    placement: readPlacement(scene.placement, `${path}.placement`),
+    placement,
     direction: scene.direction as CelebrationSceneDirection,
     timing,
     posterAssetId: scene.posterAssetId as string,

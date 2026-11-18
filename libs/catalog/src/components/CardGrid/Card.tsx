@@ -12,6 +12,7 @@ import {
   MouseEvent,
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 import { CATALOG_CLASS } from '../../constants/public-class-names';
@@ -76,6 +77,26 @@ export const Card: FC<CardProps> = ({
 
   const descriptionClassName =
     cardStyles?.typography?.descriptionClassName ?? 'dial-small-paragraph-text';
+
+  /*
+   * Memoized so `MarkdownRenderer`'s `memo` holds: a fresh object on every
+   * render re-ran the whole markdown pipeline for every visible card each
+   * time the grid re-rendered (a favorite toggled, the selection changed).
+   */
+  const descriptionClassNames = useMemo(
+    (): MarkdownRendererClassNames => ({
+      p: descriptionClassName,
+      ul: descriptionClassName,
+      ol: descriptionClassName,
+      h1: descriptionClassName,
+      h2: descriptionClassName,
+      h3: descriptionClassName,
+      h4: descriptionClassName,
+      h5: descriptionClassName,
+      h6: descriptionClassName,
+    }),
+    [descriptionClassName],
+  );
 
   const featuredChipClassName = cardStyles?.typography?.featuredChipClassName;
   const folderLabelClassName =
@@ -184,20 +205,14 @@ export const Card: FC<CardProps> = ({
         {item.description && (
           <MarkdownRenderer
             content={item.description}
-            classNames={
-              {
-                p: descriptionClassName,
-                ul: descriptionClassName,
-                ol: descriptionClassName,
-                h1: descriptionClassName,
-                h2: descriptionClassName,
-                h3: descriptionClassName,
-                h4: descriptionClassName,
-                h5: descriptionClassName,
-                h6: descriptionClassName,
-              } satisfies MarkdownRendererClassNames
-            }
+            classNames={descriptionClassNames}
             components={DESCRIPTION_MARKDOWN_COMPONENTS}
+            /*
+             * Raw HTML can only come from a `<` in the source, and without one
+             * rehype-raw finds nothing to parse yet still re-runs the whole tree
+             * through parse5 — about a third of the card's markdown cost.
+             */
+            isRawHtmlEnabled={item.description.includes('<')}
             {...markdownLabels}
           />
         )}

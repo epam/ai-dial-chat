@@ -112,6 +112,15 @@ ONBOARDING_HINTS=[{"id":"navigation","target":"navigation","title":"The navigati
 | `active-chat`                  | Any page with the sidebar open and a conversation open | The open conversation's row in the chat list                                                                                     | The on-screen element with `aria-current="page"` inside the chats `section` of the navigation landmark                                                                         |
 | `active-chat-actions`          | Any page with the sidebar open and a conversation open | The open conversation's "More actions" menu (pin, duplicate, export, share…); its button shows on hover                          | The button named "More actions" in the same list item as the open conversation's row                                                                                           |
 
+## Adding an anchor
+
+Config Studio manages the same tour as `onboarding.hints`, whose schema
+lists exactly these targets. A new anchor changes that list, so Config
+Studio editors can use it only after a new minor version of the managed
+configuration schema is exported and uploaded (see
+[Managed configuration schema](managed-config-schema.md#versioning)).
+Until then, only `ONBOARDING_HINTS` can point at it.
+
 A renamed control or a changed role silently stops its anchor from
 resolving. `apps/chat/src/components/OnboardingHints/tests/onboarding-targets.spec.tsx`
 covers every resolver against fixture markup.

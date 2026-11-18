@@ -228,26 +228,35 @@ describe('app', () => {
 
     const queryCanvas = () => screen.queryByLabelText('attachment canvas');
 
+    // The canvas container is lazy, so a route that shows it mounts it a tick after `main`.
+    const renderWithCanvas = async (
+      path: string,
+      features: OverlayFeature[] = [],
+    ): Promise<void> => {
+      await renderAt(path, features);
+      await screen.findByLabelText('attachment canvas');
+    };
+
     it('renders the canvas on the file manager page with AttachmentsManager disabled', async () => {
-      await renderAt('/files', [OverlayFeature.FileManager]);
+      await renderWithCanvas('/files', [OverlayFeature.FileManager]);
 
       expect(queryCanvas()).toBeTruthy();
     });
 
     it('gives the file manager page a 400 px minimum width', async () => {
-      await renderAt('/files', [OverlayFeature.FileManager]);
+      await renderWithCanvas('/files', [OverlayFeature.FileManager]);
 
       expect(mocks.canvasProps?.minWidth).toBe(400);
     });
 
     it('renders the canvas on a conversation route when AttachmentsManager is enabled', async () => {
-      await renderAt('/', [OverlayFeature.AttachmentsManager]);
+      await renderWithCanvas('/', [OverlayFeature.AttachmentsManager]);
 
       expect(queryCanvas()).toBeTruthy();
     });
 
     it('keeps the canvas default minimum on a conversation route', async () => {
-      await renderAt('/', [OverlayFeature.AttachmentsManager]);
+      await renderWithCanvas('/', [OverlayFeature.AttachmentsManager]);
 
       expect(mocks.canvasProps?.minWidth).toBeUndefined();
     });
@@ -271,7 +280,7 @@ describe('app', () => {
     ])(
       'renders the canvas on the %s page without the AttachmentsManager feature',
       async (_, path) => {
-        await renderAt(path);
+        await renderWithCanvas(path);
 
         expect(queryCanvas()).toBeTruthy();
       },
@@ -284,7 +293,7 @@ describe('app', () => {
     });
 
     it('keeps the conversation default width on a project page', async () => {
-      await renderAt('/projects/new');
+      await renderWithCanvas('/projects/new');
 
       expect(mocks.canvasProps?.minWidth).toBeUndefined();
     });
@@ -292,7 +301,7 @@ describe('app', () => {
     it('opts project previews into a bounded overlay without changing the mobile layout signal', async () => {
       mocks.isMobile = true;
       mocks.isTablet = true;
-      await renderAt('/projects/new');
+      await renderWithCanvas('/projects/new');
       expect(mocks.canvasProps?.isBoundedOverlay).toBe(true);
       expect(mocks.canvasProps?.isMobile).toBe(true);
       expect(mocks.closePanel).not.toHaveBeenCalled();
@@ -300,7 +309,7 @@ describe('app', () => {
 
     it('renders the canvas in its mobile full-screen mode on a mobile project page', async () => {
       mocks.isMobile = true;
-      await renderAt('/projects/new');
+      await renderWithCanvas('/projects/new');
 
       expect(queryCanvas()).toBeTruthy();
       expect(mocks.canvasProps?.isMobile).toBe(true);
@@ -308,14 +317,14 @@ describe('app', () => {
 
     it('offers no sources toggle in the canvas header on a mobile project page', async () => {
       mocks.isMobile = true;
-      await renderAt('/projects/view/bucket-1/projects/support');
+      await renderWithCanvas('/projects/view/bucket-1/projects/support');
 
       expect(mocks.canvasProps?.leftActions).toBeUndefined();
     });
 
     it('keeps the sources toggle in the canvas header on a mobile conversation route', async () => {
       mocks.isMobile = true;
-      await renderAt('/', [OverlayFeature.AttachmentsManager]);
+      await renderWithCanvas('/', [OverlayFeature.AttachmentsManager]);
 
       expect(mocks.canvasProps?.leftActions).toBeTruthy();
     });

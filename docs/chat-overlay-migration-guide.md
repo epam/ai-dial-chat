@@ -345,7 +345,10 @@ iframe -> host: READY_TO_INTERACT
 ```
 
 `overlay.ready()` resolves only after `READY_TO_INTERACT`, when the first active
-conversation has been selected or the composer is ready. In legacy
+conversation has been selected or the composer is ready. On the composer,
+"ready" includes the deployment list having loaded, so
+`createConversation({ firstMessage })` without a `deploymentId` can resolve the
+default deployment straight after `ready()`. In legacy
 integrations, readiness could be reached as early as `READY`.
 
 Practical implications:
@@ -805,6 +808,7 @@ hide-settings-page
 hide-usage-page
 show-header-logo
 hide-starter-icon
+show-mobile-header-full-logo
 ```
 
 #### Navigation sidebar
@@ -956,6 +960,10 @@ shows it whenever `header` is on; with `header` off, `show-header-logo` still
 renders that header row, carrying only the logo and none of its buttons. The
 mobile header shows the theme's `favicon`, or a smaller full `logo` when the
 theme defines no `favicon`.
+
+`show-mobile-header-full-logo` shows the theme's full `logo` in the mobile
+header instead of its `favicon`. A theme that defines no `logo` keeps the
+`favicon`. The desktop top bar and the navigation sidebar are unaffected.
 
 `hide-starter-icon` removes the sparkles icon the UI kit renders by default on
 every conversation-starter pill, leaving a label-only button. It does not

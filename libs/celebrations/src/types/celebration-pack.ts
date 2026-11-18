@@ -4,8 +4,10 @@ export enum CelebrationCapability {
   LottieLightSvgV1 = 'lottie-light-svg-v1',
   /** Places a fixed-aspect stage in the viewport scene layer. */
   ViewportStageV1 = 'viewport-stage-v1',
-  /** Anchors the stage to the composer; not implemented in this release. */
+  /** Anchors the stage to the measured composer by a bounded uniform scale. */
   ComposerAnchorV1 = 'composer-anchor-v1',
+  /** Fits the `composer-outline` and `composer-parcel` layers to the measured composer. */
+  InteractionComposerOutlineV1 = 'interaction-composer-outline-v1',
   /** Shows a static poster image instead of motion. */
   StaticPosterV1 = 'static-poster-v1',
   /** Renders a static image button as an external event's decoration. */
@@ -42,7 +44,7 @@ export enum CelebrationColorScheme {
 export enum CelebrationPlacementTemplate {
   /** A fixed-aspect stage fitted into the viewport scene layer. */
   ViewportStageV1 = 'viewport-stage-v1',
-  /** A stage anchored to the composer; not implemented in this release. */
+  /** A stage anchored to the measured composer. */
   ComposerAnchorV1 = 'composer-anchor-v1',
 }
 
@@ -86,4 +88,26 @@ export enum CelebrationStageEdge {
   Center = 'center',
   /** The axis end: bottom, or the inline end. */
   End = 'end',
+}
+
+/** Host element a `composer-anchor-v1` stage attaches to. */
+export enum CelebrationAnchor {
+  /** The host composer, supplied as `anchors.composer`. */
+  Composer = 'composer',
+}
+
+/** Edge of the anchor that the stage's anchor rectangle aligns with. */
+export enum CelebrationAnchorEdge {
+  /** The top edge. */
+  Top = 'top',
+  /** The bottom edge. */
+  Bottom = 'bottom',
+}
+
+/** What a `composer-anchor-v1` scene does when no composer is eligible. */
+export enum CelebrationAnchorFallback {
+  /** Plays around a synthetic anchor in the lower half of the viewport. */
+  StageAnchor = 'stage-anchor',
+  /** Shows the scene poster. */
+  Poster = 'poster',
 }

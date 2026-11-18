@@ -63,7 +63,7 @@ New feature keys MUST be added to this enum before being used in any service, gu
 async isEnabled(key: FeatureKey, context: AppConfigEvalContext): Promise<boolean>
 ```
 
-It SHALL first look the key up in `CONFIG_DEFINITIONS` and MUST reject calls for keys that are missing or not `type='feature'` by throwing `BadRequestException` (`Key "<key>" is not a valid feature flag key`). It SHALL then delegate to `AppConfigService.isEnabled(key, context)`, which resolves the value through `CompositeConfigProvider.resolve` and returns `value === true` (no cast).
+It SHALL first look the key up in `CONFIG_DEFINITIONS` and MUST reject calls for keys that are missing or not `type='feature'` by throwing `BadRequestException` (`Key "<key>" is not a valid feature flag key`). It SHALL then delegate to `AppConfigService.isEnabled(key, context)`. That method captures the managed view once, resolves the enabled bit through `CompositeConfigProvider.resolve`, and applies the deployment role gate. For a feature listed in `MANAGED_CONFIG_ACTIVE_KEYS`, it also applies the managed gates of `managed-config-activation`: usable state, policy present, capability, availability window, and role targeting. It returns `true` only when the result is `value === true` (no cast).
 
 **Failure behavior:**
 - If the resolved value is `undefined` or any non-`true` value (including non-boolean values), return `false` (fail closed) without logging; there is no `critical`-based branching at this layer.
@@ -100,11 +100,21 @@ It SHALL first look the key up in `CONFIG_DEFINITIONS` and MUST reject calls for
 
 ---
 
+#### Scenario: Unusable managed state fails closed
+
+- **WHEN** an active managed feature's instance is `stale` and its environment variable is `true`
+- **THEN** `featureFlagsService.isEnabled` returns `false`
+
+#### Scenario: Window evaluated at call time
+
+- **WHEN** an active managed feature has `endsAt` at `T`, and `isEnabled` is called at `T - 1 ms` and at `T`
+- **THEN** the results are `true` and `false`
+
 ### Requirement: FeatureGuard protects routes behind a feature flag
 
 The system SHALL provide `FeatureGuard` in `apps/chat-api/src/app-config/feature-flags/feature.guard.ts` implementing `CanActivate`. When `featureFlagsService.isEnabled(key, context)` returns `false`, the guard MUST throw `ForbiddenException`. When `true`, the guard passes. For an array of feature keys, the guard SHALL preserve its existing OR behavior: allow when any requested key is enabled, otherwise throw `ForbiddenException`.
 
-The guard SHALL build its `AppConfigEvalContext` with `appId: 'chat-ui'`, `userId` set to the request user's `sub`, and `roles` set to `UserRolesService.getRoles(request.user)` (see `config-registry-and-env-provider`). The roles therefore follow the session provider's `rolesClaim`, exactly as client-config does. The guard SHALL NOT keep its own claim-reading helper. Nest instantiates a `@UseGuards(FeatureGuard)` guard in each consumer module's injector, so `AppConfigModule` SHALL re-export `AuthModule` (which exports `UserRolesService`) alongside `FeatureGuard`; every module importing `AppConfigModule` can then resolve the guard's dependencies.
+The guard SHALL build its `AppConfigEvalContext` with `appId: 'ai-dial-chat'`, `userId` set to the request user's `sub`, and `roles` set to `UserRolesService.getRoles(request.user)` (see `config-registry-and-env-provider`). The roles therefore follow the session provider's `rolesClaim`, exactly as client-config does. The guard SHALL NOT keep its own claim-reading helper. Nest instantiates a `@UseGuards(FeatureGuard)` guard in each consumer module's injector, so `AppConfigModule` SHALL re-export `AuthModule` (which exports `UserRolesService`) alongside `FeatureGuard`; every module importing `AppConfigModule` can then resolve the guard's dependencies.
 
 `@RequireFeature(key: FeatureKey | FeatureKey[])` decorator SHALL set metadata consumed by `FeatureGuard` via `Reflector.getAllAndOverride(FEATURE_KEY_METADATA, [handler, class])`, so the decorator works on a handler or on the controller class, and a handler-level `@RequireFeature` overrides the class-level one. `ScheduledTasksController` relies on the class-level form for `FeatureKey.ScheduledTasksEnabled`.
 

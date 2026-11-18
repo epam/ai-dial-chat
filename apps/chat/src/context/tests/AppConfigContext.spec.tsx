@@ -42,7 +42,7 @@ vi.mock('../auth/UserContext', async (importOriginal) => {
 const mockGetClientConfig = vi.mocked(appConfigApi.getClientConfig);
 
 const READY_RESPONSE = {
-  appId: 'chat-ui',
+  appId: 'ai-dial-chat',
   features: { asrEnabled: true },
   config: {
     asrModelId: 'whisper-1',
@@ -148,7 +148,7 @@ describe('AppConfigContext', () => {
 
   it('populates overlayEnabled/overlayAllowedOrigins from a successful API call', async () => {
     mockGetClientConfig.mockResolvedValue({
-      appId: 'chat-ui',
+      appId: 'ai-dial-chat',
       features: { asrEnabled: false },
       config: {
         asrModelId: null,
@@ -177,7 +177,7 @@ describe('AppConfigContext', () => {
 
   it('reflects a narrowed fileManagerTabs value once the config resolves', async () => {
     mockGetClientConfig.mockResolvedValue({
-      appId: 'chat-ui',
+      appId: 'ai-dial-chat',
       features: { asrEnabled: false },
       config: {
         asrModelId: null,
@@ -219,7 +219,7 @@ describe('AppConfigContext', () => {
 
   it('populates announcementHtml from a successful API call', async () => {
     mockGetClientConfig.mockResolvedValue({
-      appId: 'chat-ui',
+      appId: 'ai-dial-chat',
       features: { asrEnabled: false },
       config: {
         asrModelId: null,
@@ -261,7 +261,7 @@ describe('AppConfigContext', () => {
 
   it('populates the announcement title and description from a successful API call', async () => {
     mockGetClientConfig.mockResolvedValue({
-      appId: 'chat-ui',
+      appId: 'ai-dial-chat',
       features: {},
       config: {
         announcementTitle: '🎉 Welcome to DIAL! 🎉',
@@ -297,7 +297,7 @@ describe('AppConfigContext', () => {
 
   it('keeps the announcement description null when the backend sends only a title', async () => {
     mockGetClientConfig.mockResolvedValue({
-      appId: 'chat-ui',
+      appId: 'ai-dial-chat',
       features: {},
       config: { announcementTitle: 'Title only' },
       metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
@@ -321,7 +321,7 @@ describe('AppConfigContext', () => {
 
   it('populates announcements from a successful API call', async () => {
     mockGetClientConfig.mockResolvedValue({
-      appId: 'chat-ui',
+      appId: 'ai-dial-chat',
       features: {},
       config: {
         announcements: [
@@ -349,7 +349,7 @@ describe('AppConfigContext', () => {
   it('maps each announcement severity onto the lib enum and keeps the other fields', async () => {
     const link = { label: 'Details', href: 'https://dialx.ai' };
     mockGetClientConfig.mockResolvedValue({
-      appId: 'chat-ui',
+      appId: 'ai-dial-chat',
       features: {},
       config: {
         announcements: [
@@ -381,7 +381,7 @@ describe('AppConfigContext', () => {
 
   it('reports info for an announcement the backend sends without a severity', async () => {
     mockGetClientConfig.mockResolvedValue({
-      appId: 'chat-ui',
+      appId: 'ai-dial-chat',
       features: {},
       config: {
         announcements: [{ title: 'News', description: null, link: null }],
@@ -401,7 +401,7 @@ describe('AppConfigContext', () => {
 
   it('normalizes a non-array announcements value to an empty array', async () => {
     mockGetClientConfig.mockResolvedValue({
-      appId: 'chat-ui',
+      appId: 'ai-dial-chat',
       features: {},
       config: { announcements: null },
       metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
@@ -428,7 +428,7 @@ describe('AppConfigContext', () => {
 
   it('keeps the announcements array reference stable across renders', async () => {
     mockGetClientConfig.mockResolvedValue({
-      appId: 'chat-ui',
+      appId: 'ai-dial-chat',
       features: {},
       config: {
         announcements: [{ title: 'One', description: null, link: null }],
@@ -448,7 +448,7 @@ describe('AppConfigContext', () => {
 
   it('keeps dialCoreExternalUrl null when the backend omits it', async () => {
     mockGetClientConfig.mockResolvedValue({
-      appId: 'chat-ui',
+      appId: 'ai-dial-chat',
       features: { asrEnabled: false },
       config: {
         asrModelId: null,
@@ -474,7 +474,7 @@ describe('AppConfigContext', () => {
 
   it('populates enabledUiFeatures from a successful API call', async () => {
     mockGetClientConfig.mockResolvedValue({
-      appId: 'chat-ui',
+      appId: 'ai-dial-chat',
       features: { asrEnabled: false },
       config: {
         asrModelId: null,
@@ -1251,7 +1251,7 @@ describe('AppConfigContext background refresh', () => {
     features: Record<string, boolean> = { usageLimitsControl: true },
   ) =>
     ({
-      appId: 'chat-ui',
+      appId: 'ai-dial-chat',
       features,
       config: {
         welcomeScreenDescription: welcome,

@@ -5,6 +5,7 @@ import { OptionalSessionGuard } from '../auth/session/optional-session.guard';
 import type { SessionUser } from '../auth/session/session.types';
 import { UserRolesService } from '../auth/user-roles.service';
 import { Public } from '../common/decorators/public.decorator';
+import { canonicalAppId } from '../config/env/app-ids';
 import { AppConfigService } from './app-config.service';
 import type { AppConfigEvalContext } from './app-config.types';
 import type { ClientConfigResponseDto } from './dto/client-config-response.dto';
@@ -46,7 +47,8 @@ export class AppConfigController {
   ): Promise<ClientConfigResponseDto> {
     const sessionUser = req.user as SessionUser | undefined;
     const context: AppConfigEvalContext = {
-      appId: query.appId,
+      /* The legacy `chat-ui` becomes `ai-dial-chat` before every check. */
+      appId: canonicalAppId(query.appId),
       userId: sessionUser?.sub,
       roles: sessionUser ? this.userRoles.getRoles(sessionUser) : undefined,
     };

@@ -8,7 +8,7 @@ Onboarding hints over any page: hint cards shown one after another, each next to
 
 Cards are positioned with [Floating UI](https://floating-ui.com) (`@floating-ui/react`): a card goes below its target, otherwise above or beside it, start-aligned and kept inside the viewport; on mobile it is a bottom sheet. Each step moves focus to its card so the new title is announced. Focus is not trapped, and when the tour ends it goes back to where it was when the tour started. A step whose target is not on screen is skipped.
 
-The lib owns presentation only. Which hints exist, how their elements are found, when the tour starts and which hints the user has already seen are host decisions: the host builds the steps, receives the shown ids through `onFinish`, persists them however it likes and drops them from the list.
+The lib owns presentation only. Which hints exist, how their elements are found, when the tour starts and which hints the user has already seen are host decisions: the host builds the steps, receives each passed step through `onStepComplete` and the shown ids through `onFinish`, persists them however it likes and drops them from the list.
 
 ## Installation
 
@@ -47,10 +47,12 @@ the page loads its data, runs the tour, and reports the merged seen ids through
 
 A tour never starts while an input, textarea, select or editable region has
 focus, so it never takes the user's keystrokes; it waits until they leave the
-field. Done marks the hints that were on screen as seen; Skip, Close and Escape
-dismiss onboarding and mark every configured hint seen, so no later page opens
-another tour. A `pageKey` change ends a running tour without marking anything,
-so its remaining hints wait for a page that renders them.
+field. Next marks the hint just passed as seen at once, so a tour left halfway
+— another page, a reload, a closed tab — later resumes from the first hint the
+user has not passed. Done marks the hints that were on screen as seen; Skip,
+Close and Escape dismiss onboarding and mark every configured hint seen, so no
+later page opens another tour. A `pageKey` change ends a running tour; the
+hints not passed yet wait for a page that renders them.
 
 The host decides what a `target` means: `resolveTarget` turns it into the
 element, and `anchorTargets` lists every target it knows. The lib never looks
@@ -82,20 +84,20 @@ import { OnboardingHints } from '@epam/ai-dial-onboarding-tour';
 />;
 ```
 
-| Prop                | Type                                      | Default   | Description                                                                    |
-| ------------------- | ----------------------------------------- | --------- | ------------------------------------------------------------------------------ |
-| `hints`             | `OnboardingHint[]`                        | —         | `{ id, target, title, description? }` per hint, in order.                      |
-| `resolveTarget`     | `(target: string) => HTMLElement \| null` | —         | Finds a target's element; `null` when the page does not render it.             |
-| `anchorTargets`     | `string[]`                                | —         | Every target name, outlined in the anchor view.                                |
-| `seenIds`           | `string[]`                                | —         | Ids the user has already seen.                                                 |
-| `onSeenIdsChange`   | `(seenIds: string[]) => void`             | —         | Receives the merged seen ids when a tour ends; the host persists them.         |
-| `isEnabled`         | `boolean`                                 | —         | `false` while the hints load; no tour starts.                                  |
-| `pageKey`           | `unknown`                                 | —         | Changes on navigation (the pathname); each change looks for hints again.       |
-| `isAnchorView`      | `boolean`                                 | `false`   | Outlines every anchor instead of showing hints.                                |
-| `onCloseAnchorView` | `() => void`                              | —         | Called by the anchor map's close button.                                       |
-| `isMobile`          | `boolean`                                 | `false`   | Shows the hint card as a bottom sheet.                                         |
-| `dir`               | `'ltr' \| 'rtl'`                          | inherited | Direction of the tour and the anchor map.                                      |
-| `labels`            | `OnboardingHintsLabels`                   | English   | `tour` (`OnboardingTourLabels`) and `anchorMap` (`OnboardingAnchorMapLabels`). |
+| Prop                | Type                                      | Default   | Description                                                                                |
+| ------------------- | ----------------------------------------- | --------- | ------------------------------------------------------------------------------------------ |
+| `hints`             | `OnboardingHint[]`                        | —         | `{ id, target, title, description? }` per hint, in order.                                  |
+| `resolveTarget`     | `(target: string) => HTMLElement \| null` | —         | Finds a target's element; `null` when the page does not render it.                         |
+| `anchorTargets`     | `string[]`                                | —         | Every target name, outlined in the anchor view.                                            |
+| `seenIds`           | `string[]`                                | —         | Ids the user has already seen.                                                             |
+| `onSeenIdsChange`   | `(seenIds: string[]) => void`             | —         | Receives the merged seen ids after each Next and when a tour ends; the host persists them. |
+| `isEnabled`         | `boolean`                                 | —         | `false` while the hints load; no tour starts.                                              |
+| `pageKey`           | `unknown`                                 | —         | Changes on navigation (the pathname); each change looks for hints again.                   |
+| `isAnchorView`      | `boolean`                                 | `false`   | Outlines every anchor instead of showing hints.                                            |
+| `onCloseAnchorView` | `() => void`                              | —         | Called by the anchor map's close button.                                                   |
+| `isMobile`          | `boolean`                                 | `false`   | Shows the hint card as a bottom sheet.                                                     |
+| `dir`               | `'ltr' \| 'rtl'`                          | inherited | Direction of the tour and the anchor map.                                                  |
+| `labels`            | `OnboardingHintsLabels`                   | English   | `tour` (`OnboardingTourLabels`) and `anchorMap` (`OnboardingAnchorMapLabels`).             |
 
 ### OnboardingTour
 
@@ -141,6 +143,7 @@ const Tour = () => {
 | ---------------------- | ------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `steps`                | `OnboardingTourStep[]`                                              | —                             | Steps in order. An empty list renders nothing; a new list restarts from its first step.                                                                                        |
 | `onFinish`             | `(shownStepIds: string[], reason: OnboardingTourEndReason) => void` | —                             | Called with the ids of the steps that were on screen, and `Done` (Done, or no remaining step has a target) or `Dismissed` (Skip, Close, Escape). The host clears `steps` here. |
+| `onStepComplete`       | `(stepId: string) => void`                                          | —                             | Optional. Called with a step's id when the user moves past it with Next, so the host can keep the progress of a tour left unfinished.                                          |
 | `isMobile`             | `boolean`                                                           | `false`                       | Shows the card as a sheet instead of next to the target, docked at the bottom, or at the top when the target is in the lower half of the screen.                               |
 | `dir`                  | `'ltr' \| 'rtl'`                                                    | inherited                     | Direction of the card; it is start-aligned with its target.                                                                                                                    |
 | `labels`               | `OnboardingTourLabels`                                              | English                       | `stepCounter`, `next`, `back`, `done`, `skip`, `close`.                                                                                                                        |
@@ -197,7 +200,7 @@ import { OnboardingAnchorMap } from '@epam/ai-dial-onboarding-tour';
 The hint logic of `OnboardingHints` without its rendering, for a host that
 renders `OnboardingTour` itself. It takes the same `hints`, `seenIds`,
 `onSeenIdsChange`, `resolveTarget`, `isEnabled` and `pageKey`, and returns the
-`steps` and `onFinish` to pass to `OnboardingTour`.
+`steps`, `onFinish` and `onStepComplete` to pass to `OnboardingTour`.
 
 ```tsx
 import {
@@ -205,7 +208,7 @@ import {
   useOnboardingHints,
 } from '@epam/ai-dial-onboarding-tour';
 
-const { steps, onFinish } = useOnboardingHints({
+const { steps, onFinish, onStepComplete } = useOnboardingHints({
   hints,
   seenIds,
   onSeenIdsChange: saveSeenIds,
@@ -214,7 +217,11 @@ const { steps, onFinish } = useOnboardingHints({
   pageKey: pathname,
 });
 
-<OnboardingTour steps={steps} onFinish={onFinish} />;
+<OnboardingTour
+  steps={steps}
+  onFinish={onFinish}
+  onStepComplete={onStepComplete}
+/>;
 ```
 
 `ONBOARDING_START_DELAY_MS`, `ONBOARDING_RETRY_INTERVAL_MS` and

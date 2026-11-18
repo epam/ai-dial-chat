@@ -143,7 +143,9 @@ colours onto `<html>` before the bundle runs, resolving `system` against
 `prefers-color-scheme` itself. It lists the properties it wrote in
 `data-theme-preload`; `ThemeContext` removes them before applying the fetched
 configuration, so a key the cached theme had and the current one lacks does not
-linger.
+linger. A production build loads it from a content-hashed copy under
+`assets/` (`tools/vite/hashed-public-script.mjs`), which chat-api caches as
+`immutable`, so a warm load runs it from cache instead of revalidating it.
 
 The cache is per device. On the very first visit, or after the storage is
 cleared, there is nothing to paint and the page starts in the built-in palette

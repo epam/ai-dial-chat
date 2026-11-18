@@ -1,7 +1,9 @@
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatI18nKeys } from '../../../constants/translation-keys';
 import * as ThemeContext from '../../../context/ThemeContext';
+import { useUiFeature } from '../../../hooks/useUiFeature';
 import * as iconPathUtils from '../../../utils/icon-path';
 import Logo from '../Logo';
 
@@ -13,6 +15,7 @@ vi.mock('@epam/ai-dial-celebrations', () => ({
 }));
 
 vi.mock('../../../context/ThemeContext');
+vi.mock('../../../hooks/useUiFeature');
 vi.mock('../../../utils/icon-path');
 
 describe('Logo', () => {
@@ -22,6 +25,7 @@ describe('Logo', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     celebration.event = null;
+    vi.mocked(useUiFeature).mockReturnValue(false);
   });
 
   it('should render logo with correct theme', () => {
@@ -110,6 +114,51 @@ describe('Logo', () => {
     const logoImage = container.querySelector('span.desktop\\:block');
     expect(logoImage?.classList.contains('hidden')).toBe(false);
     expect(logoImage?.classList.contains('block')).toBe(true);
+  });
+
+  describe('with show-mobile-header-full-logo', () => {
+    const enableFlag = () =>
+      vi
+        .mocked(useUiFeature)
+        .mockImplementation(
+          (feature) => feature === OverlayFeature.ShowMobileHeaderFullLogo,
+        );
+
+    it('shows the full logo below desktop and drops the favicon when the theme has both', () => {
+      enableFlag();
+      mockUseTheme.mockReturnValue({
+        currentTheme: 'dark',
+        selectedTheme: 'dark',
+        currentThemeLogo: 'logo.svg',
+        currentThemeFavicon: 'favicon.svg',
+        themes: [],
+        setTheme: vi.fn(),
+        isLoading: false,
+      });
+      const { container } = render(<Logo />);
+      /* Breakpoint visibility is CSS-level behavior with no semantic query. */
+      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+      const logoImage = container.querySelector('span.desktop\\:block');
+      expect(logoImage?.classList.contains('hidden')).toBe(false);
+      expect(logoImage?.classList.contains('block')).toBe(true);
+      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+      expect(container.querySelector('span.desktop\\:hidden')).toBeNull();
+    });
+
+    it('keeps the favicon below desktop when the theme defines no logo', () => {
+      enableFlag();
+      mockUseTheme.mockReturnValue({
+        currentTheme: 'dark',
+        selectedTheme: 'dark',
+        currentThemeFavicon: 'favicon.svg',
+        themes: [],
+        setTheme: vi.fn(),
+        isLoading: false,
+      });
+      const { container } = render(<Logo />);
+      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+      expect(container.querySelector('span.desktop\\:hidden')).toBeTruthy();
+    });
   });
 
   it('should return null when logo is not available', () => {

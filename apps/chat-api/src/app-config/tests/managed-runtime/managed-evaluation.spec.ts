@@ -19,7 +19,7 @@ const FEATURE = 'features.usageLimitsControl';
 
 const snapshotWith = (features: Record<string, unknown>): ManagedSnapshot => ({
   instanceId: 'chat-dev',
-  appId: 'chat-ui',
+  appId: 'ai-dial-chat',
   environment: 'dev',
   schemaVersion: '1.0.0',
   schemaSha256: 'a'.repeat(64),
@@ -34,7 +34,7 @@ const viewOf = (
   snapshot: ManagedSnapshot | undefined,
   now: number,
 ): ManagedResolutionView => ({
-  appId: 'chat-ui',
+  appId: 'ai-dial-chat',
   instanceId: 'chat-dev',
   state: snapshot ? ManagedConfigState.Fresh : ManagedConfigState.Unavailable,
   snapshot,

@@ -39,6 +39,7 @@ Core principle: the chat application is assembled from a set of **independently 
 | **Tailwind CSS 4** | Utility CSS; one CSS-first theme in `tools/tailwind/theme.css` (see Styling)                          |
 | **ESLint 9**       | Flat config (`eslint.config.mjs`) + Prettier 3                                                        |
 | **Storybook 10**   | Lib-local component catalogue (`libs/celebrations/.storybook`, React/Vite); built in CI, not deployed |
+| **Knip 6**         | Advisory dead-code analysis (`knip.ts`, `npm run knip`); not run in CI                                |
 
 ```
 root/
@@ -320,7 +321,7 @@ displayed boundary and re-fetches when it elapses, so post-reset figures always 
 DIAL Core response — nothing is ever zeroed locally.
 DIAL Core spending budgets reach the tab as `budgets[]` and `costObject` on the same response.
 DIAL Core does not report its `spendingLimits.mode`, so the operator declares it with
-`SPENDING_LIMITS_MODE` (client config `spendingLimitsMode`, also a managed key); the client treats
+`SPENDING_LIMITS_MODE` (client config `spendingLimitsMode`); the client treats
 it as `off` while the response carries no `costObject`. In `off` the tab is unchanged. In `shadow`
 the charged budgets (those in `costObject`) are added below the cards as not yet enforced. In
 `enforce` only the budgets are shown: the role cost cards are hidden, and the
@@ -505,7 +506,7 @@ Every `chat-api` SSE response (`conversations/completions`, `conversations/watch
 
 ### Internationalisation
 
-`react-i18next` + `i18next-browser-languagedetector`. All user-visible strings go through `useTranslation()`, and every key is declared in `apps/chat/src/constants/translation-keys.ts` rather than passed as a string literal. Locale files live in `apps/chat/src/i18n/locales/`. The i18n config also drives `document.documentElement.dir`, so RTL locales flip the layout — libs rely on CSS logical properties and never read the language themselves.
+`react-i18next` + `i18next-browser-languagedetector`. All user-visible strings go through `useTranslation()`, and every key is declared in a string enum rather than passed as a string literal: one module per namespace under `apps/chat/src/constants/i18n-keys/`, imported through the `apps/chat/src/constants/translation-keys.ts` barrel so each chunk carries only the namespaces it uses. Locale files live in `apps/chat/src/i18n/locales/`. The i18n config also drives `document.documentElement.dir`, so RTL locales flip the layout — libs rely on CSS logical properties and never read the language themselves.
 
 ---
 
@@ -1078,6 +1079,8 @@ External celebration packs live next to the themes on the same host, under `cele
 Whether the client uses a pack is app configuration, not theme data: `UI_EVENT_DELIVERY_MODE`, `UI_EVENT_DELIVERY_REVISION`, `UI_EVENT_EXTERNAL_SCENES` and `UI_EVENT_EXTERNAL_EVENTS` reach the client as `config.celebrationDelivery`. The default is `bundled` with empty lists, which makes no celebration request.
 
 Pack resolution is app-owned. `useCelebrationPacks` (`apps/chat/src/hooks/celebration/`), called only by `CelebrationHost`, requests anything only for an eligible event the policy admits: a compiled event under `prefer-external` with an allowlisted `eventId/sceneId`, or an uncompiled event listed in `externalEvents`. It then reads `defaults[eventId]` from the catalog and fetches that pack version through `server-api/celebrations.api.ts`. It keeps only supported scenes, maps the DTOs to the library's pack descriptors, and composes the event through the fixed `@epam/ai-dial-celebrations/packs` import: `replaceCelebrationScenes` over the compiled event followed by `addCelebrationScenes` for an allowlisted scene ID the event lacks (an operator-owned addition to its click pool, never to the secret pool), or `createCelebrationEventFromDescriptor` for an external-only one. No import path is derived from an ID. Manifests and parsed clips are kept for the page lifetime. Any failure before activation leaves the compiled event in place, and an external-only event stays hidden. `CelebrationHost` passes a composite `resetKey` built from the route key, the event, the policy mode and revision, the catalog revision, the resolved pack (or `bundled`), the theme ID and its color scheme, `i18n.dir()`, the layout and the selection revision. A change to any of them cancels a playing scene; a language change alone only re-translates labels. Host translations take precedence over pack labels.
+
+A pack scene is placed either on a `viewport-stage-v1` stage fitted into the scene layer, or on a `composer-anchor-v1` stage attached to the host composer. For the second, `LottieScene` measures the element named by `anchors.composer` once after loading (the eligibility rules are in `libs/celebrations/src/utils/composer-target.ts`, shared with the compiled GiftWrapping). It then copies the clip, sizes the copy's root to the viewport and hangs its layers from one null layer that carries the bounded uniform scale, the edge alignment and, for `mirror` in RTL, the flip. Input, scrolling, viewport changes or a moved composer cancel the scene instead of re-mapping it. The first released adapter, `interaction-composer-outline-v1`, then fits the clip's `composer-outline` path to the measured composer and keeps the `composer-parcel` rectangle only for the synthetic anchor used when no composer qualifies. Everything else in the clip is authored motion. The New Year `gift-wrapping` scene uses both. It is replaced by stable ID only when `new-year/gift-wrapping` is allowlisted, so it stays in the `happy new year` secret pool and keeps its bundled label, and the compiled scene stays the default and the fallback.
 
 The configuration format, the full list of tokens the application reads, logo and favicon fields, the light/dark/system picker, and the legacy → new token mapping are documented in [Theme Customization](theme-customization.md). Note that the token set differs from the legacy chat's, so a legacy `config.json` applies almost nothing.
 

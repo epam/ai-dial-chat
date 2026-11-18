@@ -28,10 +28,12 @@ import {
  * - since role gating moved after selection into AppConfigService, the
  *   provider returns the ungated value for a restricted or anonymous caller
  *   (role-gate rows with `roles beta`), and the gate turns it off later;
- * - a blank managed text (`empty` rows of `announcement.title`,
- *   `announcement.description` and `welcomeScreen.description`) resolves to
- *   `undefined` at the provider instead of `''`, so it cannot shadow a
- *   lower-priority source; the client mapping hides blank and null alike.
+ * - a blank managed text resolves to `undefined` at the provider instead of
+ *   `''`, so it cannot shadow a lower-priority source; the client mapping
+ *   hides blank and null alike. Schema 1.0.0 manages no text key, so the
+ *   `empty` rows of `announcement.title`, `announcement.description` and
+ *   `welcomeScreen.description` record `''` again; they return to
+ *   `undefined` when schema 1.1.0 manages those keys.
  * The effective value of every row is the one recorded before both changes.
  */
 
@@ -123,7 +125,7 @@ const KEY_EXPECTATIONS: Readonly<
       provider: ' Maintenance ',
       effective: 'Maintenance',
     },
-    [EnvCaseName.Empty]: { provider: undefined, effective: null },
+    [EnvCaseName.Empty]: { provider: '', effective: null },
   },
   'announcement.description': {
     [EnvCaseName.Absent]: { provider: undefined, effective: null },
@@ -131,7 +133,7 @@ const KEY_EXPECTATIONS: Readonly<
       provider: 'Tonight <script>x</script><b>only</b>',
       effective: 'Tonight <b>only</b>',
     },
-    [EnvCaseName.Empty]: { provider: undefined, effective: null },
+    [EnvCaseName.Empty]: { provider: '', effective: null },
   },
   'announcement.items': {
     [EnvCaseName.Absent]: { provider: undefined, effective: [] },
@@ -168,7 +170,7 @@ const KEY_EXPECTATIONS: Readonly<
   'welcomeScreen.description': {
     [EnvCaseName.Absent]: { provider: undefined, effective: null },
     [EnvCaseName.NonDefault]: { provider: 'Welcome', effective: 'Welcome' },
-    [EnvCaseName.Empty]: { provider: undefined, effective: null },
+    [EnvCaseName.Empty]: { provider: '', effective: null },
   },
   'footer.html': {
     [EnvCaseName.Absent]: { provider: undefined, effective: '' },
@@ -1302,7 +1304,7 @@ describe('ENV resolution characterization', () => {
          * initializer as unset so the registry default applies. */
         const { provider } = buildResolutionStack({});
         expect(
-          await provider.resolve(definition.key, { appId: 'chat-ui' }),
+          await provider.resolve(definition.key, { appId: 'ai-dial-chat' }),
           reason,
         ).toBeUndefined();
       },

@@ -7,6 +7,7 @@ import { packSceneFixture } from '../test-utils/pack-fixtures';
 import {
   CelebrationColorScheme,
   CelebrationDirectionMode,
+  CelebrationPlacementTemplate,
   CelebrationStageAlign,
   CelebrationStageFit,
 } from '../types/celebration-pack';
@@ -45,7 +46,11 @@ const LottieScenePlayer: FC<LottieScenePlayerProps> = ({
   const scene = useMemo(
     () =>
       packSceneFixture({
-        placement: { ...packSceneFixture().placement, align, fit },
+        placement: {
+          template: CelebrationPlacementTemplate.ViewportStageV1,
+          align,
+          fit,
+        },
         direction,
         timing: {
           playbackDurationMs: 3000,

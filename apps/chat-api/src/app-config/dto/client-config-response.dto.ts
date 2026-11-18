@@ -450,7 +450,10 @@ export class ClientConfigMetadataDto {
 }
 
 export class ClientConfigResponseDto {
-  @ApiProperty({ description: 'Application identifier.', example: 'chat-ui' })
+  @ApiProperty({
+    description: 'Application identifier.',
+    example: 'ai-dial-chat',
+  })
   appId!: string;
 
   @ApiProperty({
@@ -473,7 +476,7 @@ export class ClientConfigResponseDto {
 
   @ApiPropertyOptional({
     description:
-      'The published Config Studio payload of an application other than chat-ui, unchanged. Present only when the deployment applies managed configuration and the snapshot is usable.',
+      'The published Config Studio payload of an application other than ai-dial-chat, unchanged. Present only when the deployment applies managed configuration and the snapshot is usable.',
     type: ClientAppConfigDto,
   })
   appConfig?: ClientAppConfigDto;

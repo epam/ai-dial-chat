@@ -49,8 +49,8 @@ export const GiftElf: FC<GiftElfProps> = ({
   return (
     <g
       data-elf-art
-      stroke="#3f3348"
-      strokeWidth="1.8"
+      stroke="#4f3d45"
+      strokeWidth="1.4"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
@@ -110,8 +110,8 @@ export const GiftElf: FC<GiftElfProps> = ({
       <path
         d={
           helper
-            ? 'M10-54Q17-37 8-23L21-26Q20-43 10-54Z'
-            : 'M15-54Q23-31 5-23L24-26Q27-43 15-54Z'
+            ? 'M9-54C19-44 21-33 21-26C16-23 7-22 0-24C12-29 14-42 9-54Z'
+            : 'M11-55C25-44 26-31 24-26C17-22 6-20-4-22C13-28 17-41 11-55Z'
         }
         fill={shade}
         stroke="none"
@@ -219,6 +219,15 @@ export const GiftElf: FC<GiftElfProps> = ({
               : 'M-21-93Q-3-103 20-94L23-80Q25-58 2-57Q-22-57-24-78Z'
           }
           fill="#ffd4ad"
+        />
+        <path
+          d={
+            helper
+              ? 'M-20-78C-15-64-4-61 7-64C16-67 20-77 19-86C24-66 15-58 1-58C-12-58-20-64-20-78Z'
+              : 'M-23-79C-20-64-8-60 6-62C17-64 21-74 21-84C27-64 17-57 2-57C-15-57-24-65-23-79Z'
+          }
+          fill="#f0b18e"
+          stroke="none"
         />
         <g data-elf-expression opacity={expressionOpacity}>
           <path

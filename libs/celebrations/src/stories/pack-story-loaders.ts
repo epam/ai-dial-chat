@@ -1,4 +1,5 @@
 import type { CelebrationAssetLoaders } from '../models/celebration-pack';
+import anchoredAnimation from './fixtures/anchored-scene.lottie.json';
 import posterUrl from './fixtures/pack-poster.svg';
 import animation from './fixtures/pack-scene.lottie.json';
 import triggerUrl from './fixtures/pack-trigger.svg';
@@ -20,6 +21,11 @@ const DELAY_MS: Record<PackStoryLoader, number> = {
   [PackStoryLoader.Slow]: 4000,
   [PackStoryLoader.Broken]: 0,
   [PackStoryLoader.IgnoresAbort]: 1000,
+};
+
+const ANIMATIONS: Readonly<Record<string, unknown>> = {
+  fixture: animation,
+  'anchored-fixture': anchoredAnimation,
 };
 
 const IMAGES: Readonly<Record<string, string>> = {
@@ -44,7 +50,7 @@ export const createStoryPackLoaders = (
         }
         /* The delay stands in for the network round trip. */
         const timer = setTimeout(() => {
-          const data = structuredClone(animation);
+          const data = structuredClone(ANIMATIONS[assetId] ?? animation);
           cache.set(assetId, data);
           resolve(data);
         }, DELAY_MS[mode]);

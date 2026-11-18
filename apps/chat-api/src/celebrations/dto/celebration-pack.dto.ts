@@ -1,5 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  CelebrationAnchor,
+  CelebrationAnchorEdge,
+  CelebrationAnchorFallback,
   CelebrationMediaType,
   CelebrationSceneDirection,
   CelebrationStageAlign,
@@ -38,11 +41,38 @@ export class CelebrationAssetDto {
   sha256!: string;
 }
 
-/** Where a scene is placed. Only `viewport-stage-v1` carries further fields. */
+/** The reference composer of a `composer-anchor-v1` stage, in stage coordinates. */
+export class CelebrationAnchorRectDto {
+  @ApiProperty({ description: 'Left edge.', example: 340 })
+  x!: number;
+
+  @ApiProperty({ description: 'Top edge.', example: 164 })
+  y!: number;
+
+  @ApiProperty({ description: 'Width, at least 120.', example: 520 })
+  width!: number;
+
+  @ApiProperty({ description: 'Height, at least 24.', example: 56 })
+  height!: number;
+}
+
+/** Bounds of a `composer-anchor-v1` stage's uniform scale, within 0.25–4. */
+export class CelebrationAnchorScaleDto {
+  @ApiProperty({
+    description: 'Smallest scale; also the scale of the synthetic anchor.',
+    example: 0.6,
+  })
+  min!: number;
+
+  @ApiProperty({ description: 'Largest scale.', example: 1 })
+  max!: number;
+}
+
+/** Where a scene is placed: `viewport-stage-v1` or `composer-anchor-v1` fields. */
 export class CelebrationPlacementDto {
   @ApiProperty({
     description:
-      'Placement template ID. Templates other than viewport-stage-v1 are passed as the ID alone, and clients without the matching capability skip the scene.',
+      'Placement template ID. Templates other than viewport-stage-v1 and composer-anchor-v1 are passed as the ID alone, and clients without the matching capability skip the scene.',
     example: 'viewport-stage-v1',
   })
   template!: string;
@@ -61,6 +91,43 @@ export class CelebrationPlacementDto {
     enumName: 'CelebrationStageAlign',
   })
   align?: CelebrationStageAlign;
+
+  @ApiPropertyOptional({
+    description: 'Host element the stage attaches to (composer-anchor-v1).',
+    enum: CelebrationAnchor,
+    enumName: 'CelebrationAnchor',
+  })
+  anchor?: CelebrationAnchor;
+
+  @ApiPropertyOptional({
+    description:
+      'The reference composer the motion is authored around, in stage coordinates (composer-anchor-v1).',
+    type: () => CelebrationAnchorRectDto,
+  })
+  anchorRect?: CelebrationAnchorRectDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Edge of anchorRect aligned with the same edge of the composer (composer-anchor-v1).',
+    enum: CelebrationAnchorEdge,
+    enumName: 'CelebrationAnchorEdge',
+  })
+  edge?: CelebrationAnchorEdge;
+
+  @ApiPropertyOptional({
+    description:
+      'Bounds of composerWidth / anchorRect.width (composer-anchor-v1).',
+    type: () => CelebrationAnchorScaleDto,
+  })
+  scale?: CelebrationAnchorScaleDto;
+
+  @ApiPropertyOptional({
+    description:
+      'What happens when no composer is eligible (composer-anchor-v1).',
+    enum: CelebrationAnchorFallback,
+    enumName: 'CelebrationAnchorFallback',
+  })
+  fallback?: CelebrationAnchorFallback;
 }
 
 /** Scene timing in milliseconds. */
@@ -126,6 +193,13 @@ export class CelebrationVariantDto {
     example: 'new-year-default-snowman-delivery-desktop-5b0c7e19a2d4f836',
   })
   animationAssetId!: string;
+
+  @ApiPropertyOptional({
+    description:
+      "Placement for this variant instead of the scene's, with the same template; lets a mobile variant use its own reference composer.",
+    type: () => CelebrationPlacementDto,
+  })
+  placement?: CelebrationPlacementDto;
 }
 
 /** One scene of a pack. */
