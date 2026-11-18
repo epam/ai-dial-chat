@@ -5,9 +5,11 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import {
   getConversationPath,
+  isConversationInBucket,
   isConversationNotFoundError,
   isTotalDeletionFailure,
   safeDecodeURIComponent,
+  toOwnConversationListItem,
 } from '@epam/ai-dial-chat-hooks';
 import { generateUUID } from '@epam/ai-dial-chat-shared';
 import {
@@ -40,10 +42,6 @@ import {
   conversationIdsMatch,
   toPanelConversationId,
 } from '../utils/conversation-id-match';
-import {
-  isConversationInBucket,
-  toOwnConversationListItem,
-} from '../utils/conversation-list';
 import { useUser } from './auth/UserContext';
 import { useOptionalOverlay } from './overlay/OverlayContext';
 import { useUserConfig } from './UserConfigContext';

@@ -1,8 +1,21 @@
+import { toConversationListId } from '@epam/ai-dial-chat-hooks';
 import { describe, expect, it } from 'vitest';
 import {
   conversationIdsMatch,
   toPanelConversationId,
 } from '../conversation-id-match';
+
+describe('conversationIdsMatch with toConversationListId', () => {
+  it('matches the list id of a conversation with its route form', () => {
+    const conversationId = 'bucket-1/gpt-4__My chat';
+    expect(
+      conversationIdsMatch(
+        toConversationListId(conversationId),
+        conversationId,
+      ),
+    ).toBe(true);
+  });
+});
 
 describe('conversationIdsMatch', () => {
   it('matches list ids with route ids regardless of conversations/ prefix', () => {
