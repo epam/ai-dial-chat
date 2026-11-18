@@ -62,6 +62,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onPublishError,
   onCreatePublishFolder,
   publishLabels,
+  hidePublishAuthor = false,
+  hidePublishAccessRules = false,
   ruleSourceOptions = EMPTY_RULE_SOURCE_OPTIONS,
   onFetchExistingRules,
   shareOverlay,
@@ -411,6 +413,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             onPublishExpandedPathsChange={onPublishExpandedPathsChange}
             publishLoadingPaths={publishLoadingPaths}
             getPublishDisabledReason={getPublishDisabledReason}
+            hidePublishAuthor={hidePublishAuthor}
+            hidePublishAccessRules={hidePublishAccessRules}
             ruleSourceOptions={ruleSourceOptions}
             publishLabels={publishLabels}
             resolvePublishDependenciesLabels={resolvePublishDependenciesLabels}

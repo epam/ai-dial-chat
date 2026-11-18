@@ -52,6 +52,10 @@ import styles from './PublishPanel.module.scss';
 /** Matches the publish endpoints' own `author` limit, so the field cannot compose a request the backend rejects. */
 const MAX_AUTHOR_LENGTH = 200;
 
+/** Stable defaults, so an omitted prop does not hand the rules section a new array every render. */
+const EMPTY_RULES: PublicationRule[] = [];
+const EMPTY_RULE_SOURCE_OPTIONS: string[] = [];
+
 /** Text overrides for all user-visible strings in {@link PublishPanel}. */
 export interface PublishPanelLabels {
   /** Heading above the destination row, and the accessible name of the folder view. Default: `'Publish to folder'`. */
@@ -185,10 +189,15 @@ export interface PublishPanelProps {
   /**
    * Display author recorded on the publication. An empty value is valid and
    * never blocks submission — the host decides what an unset author means.
+   * Only rendered when `onAuthorChange` is supplied.
    */
-  author: string;
-  /** Called with the next author value on every edit. */
-  onAuthorChange: (author: string) => void;
+  author?: string;
+  /**
+   * Called with the next author value on every edit. Supplying it is what
+   * renders the author field at all — a host that collects the author
+   * elsewhere omits it and gets a panel without the field.
+   */
+  onAuthorChange?: (author: string) => void;
   /**
    * Whether the publication should carry the publisher's own credentials.
    * Only rendered when `onPublishCredentialsChange` is supplied. Default:
@@ -202,12 +211,16 @@ export interface PublishPanelProps {
    * own for the value.
    */
   onPublishCredentialsChange?: (value: boolean) => void;
-  /** Current access rules, combined with AND. */
-  rules: PublicationRule[];
-  /** Called with the full next rules array on add, remove, or clear. */
-  onRulesChange: (rules: PublicationRule[]) => void;
-  /** Options offered in the access-rules editor's source picker. */
-  ruleSourceOptions: string[];
+  /** Current access rules, combined with AND. Default: `[]`. */
+  rules?: PublicationRule[];
+  /**
+   * Called with the full next rules array on add, remove, or clear. Supplying
+   * it is what renders the access-rules section at all — a host that does not
+   * manage rules here omits it and gets a panel without the section.
+   */
+  onRulesChange?: (rules: PublicationRule[]) => void;
+  /** Options offered in the access-rules editor's source picker. Default: `[]`. */
+  ruleSourceOptions?: string[];
   /** Whether existing rules are currently being fetched for the selected folder. Default: `false`. */
   isRulesLoading?: boolean;
   /** Whether the most recent existing-rules fetch failed. Default: `false`. */
@@ -248,13 +261,13 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   isSubmitting,
   hasSubmitError = false,
   allowReplace = true,
-  author,
+  author = '',
   onAuthorChange,
   publishCredentials = false,
   onPublishCredentialsChange,
-  rules,
+  rules = EMPTY_RULES,
   onRulesChange,
-  ruleSourceOptions,
+  ruleSourceOptions = EMPTY_RULE_SOURCE_OPTIONS,
   isRulesLoading = false,
   hasRulesLoadError = false,
   labels = {},
@@ -535,18 +548,20 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             folder and the author together say what this publication is, and
             the rules below say who may see it. An empty author is a valid
             state, so nothing here can block submit. */}
-        <div className="mt-4">
-          <Input
-            id={authorFieldId}
-            labelProps={{ label: authorLabel }}
-            placeholder={authorPlaceholder}
-            caption={authorHint}
-            value={author}
-            onChange={(value) => onAuthorChange(value ?? '')}
-            maxLength={MAX_AUTHOR_LENGTH}
-            disabled={isSubmitting}
-          />
-        </div>
+        {onAuthorChange != null && (
+          <div className="mt-4">
+            <Input
+              id={authorFieldId}
+              labelProps={{ label: authorLabel }}
+              placeholder={authorPlaceholder}
+              caption={authorHint}
+              value={author}
+              onChange={(value) => onAuthorChange(value ?? '')}
+              maxLength={MAX_AUTHOR_LENGTH}
+              disabled={isSubmitting}
+            />
+          </div>
+        )}
 
         {/* The consequence of ticking this lives in the caption, not the
             label alone: the kit wires the caption as the control's accessible
@@ -566,19 +581,21 @@ export const PublishPanel: FC<PublishPanelProps> = ({
         {/* Nested inside the destination-folder block, and tighter than the
             inter-section gap, so the rules read as scoped to the selection
             above rather than as an independent control. */}
-        <div className="mt-4">
-          <PublishAccessRules
-            rules={rules}
-            onRulesChange={onRulesChange}
-            sourceOptions={ruleSourceOptions}
-            folderName={isFolderSelected ? folderName : undefined}
-            disabled={isSubmitting}
-            isLoading={isRulesLoading}
-            hasLoadError={hasRulesLoadError}
-            labels={accessRulesLabels}
-            styles={accessRulesStyles}
-          />
-        </div>
+        {onRulesChange != null && (
+          <div className="mt-4">
+            <PublishAccessRules
+              rules={rules}
+              onRulesChange={onRulesChange}
+              sourceOptions={ruleSourceOptions}
+              folderName={isFolderSelected ? folderName : undefined}
+              disabled={isSubmitting}
+              isLoading={isRulesLoading}
+              hasLoadError={hasRulesLoadError}
+              labels={accessRulesLabels}
+              styles={accessRulesStyles}
+            />
+          </div>
+        )}
       </section>
 
       {dependencies != null && (

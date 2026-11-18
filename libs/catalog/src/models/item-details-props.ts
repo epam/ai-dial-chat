@@ -657,6 +657,18 @@ export interface DetailsPanelProps {
   onCreatePublishFolder?: (parentPath: string[], name: string) => void;
   /** Text overrides forwarded to the publish flow. */
   publishLabels?: PublishPanelLabels & PublishFooterLabels;
+  /**
+   * Hides the display-author field in the publish panel. Set it when the host
+   * collects the author elsewhere; the publish callback then receives
+   * `publishDefaultAuthor` (or an empty string). Default: `false`.
+   */
+  hidePublishAuthor?: boolean;
+  /**
+   * Hides the access-rules section in the publish panel. Set it when access
+   * is managed elsewhere; the publish callback then receives the rules
+   * resolved by `onFetchExistingRules`, or an empty list. Default: `false`.
+   */
+  hidePublishAccessRules?: boolean;
   /** Options offered in the access-rules editor's source picker. Defaults to `[]` when absent. */
   ruleSourceOptions?: string[];
   /**
