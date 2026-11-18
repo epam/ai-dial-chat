@@ -294,6 +294,17 @@ export const ENV_KEY_CASES: readonly EnvKeyCase[] = [
     nonDefault: 'gpt-4o-mini',
   },
   {
+    key: 'analytics.url',
+    variable: 'ANALYTICS_URL',
+    nonDefault: 'http://analytics.example:8080',
+  },
+  {
+    key: 'analytics.timeoutMs',
+    variable: 'ANALYTICS_TIMEOUT_MS',
+    typedDefault: '10000',
+    nonDefault: '5000',
+  },
+  {
     key: 'features.responsesApiEnabled',
     variable: 'RESPONSES_API_ENABLED',
     typedDefault: 'false',

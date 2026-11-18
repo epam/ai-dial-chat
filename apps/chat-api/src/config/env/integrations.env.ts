@@ -4,6 +4,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsUrl,
   Matches,
   Min,
 } from 'class-validator';
@@ -15,7 +16,7 @@ import {
   PROJECT_CONTEXT_EXTENSION_PATTERN,
 } from '../../projects/constants/project-context.constants';
 
-/** DIAL Scheduler, custom Core API and project-context limits. */
+/** DIAL Scheduler, DIAL Analytics, custom Core API and project-context limits. */
 export class IntegrationsEnv {
   /*
    * Server-only allowlist of exact GET Core paths exposed through
@@ -80,4 +81,22 @@ export class IntegrationsEnv {
   @IsInt()
   @Min(1000)
   SCHEDULER_SERVICE_TIMEOUT_MS?: number = 10_000;
+
+  /*
+   * Base URL of DIAL Analytics (ADAS), read by GET /api/v1/user/usage/history
+   * (see openspec/changes/add-user-usage-history-api/design.md). Unset turns
+   * the route off: it answers `not_configured` and makes no outbound call.
+   * Server-only: never exposed through client-config, CUSTOM_CLIENT_VARIABLES
+   * or browser build variables.
+   */
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  ANALYTICS_URL?: string;
+
+  /* Timeout of each ADAS call made for one usage-history request. Server-only. */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  ANALYTICS_TIMEOUT_MS?: number = 10_000;
 }
