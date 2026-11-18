@@ -405,20 +405,22 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
         <button onClick={() => void onCreateFolder(['Shared'], 'New')}>
           Create folder
         </button>
-        <button
-          onClick={() =>
-            onRulesChange([
-              ...rules,
-              {
-                source: 'role',
-                function: PublicationRuleFunction.Contain,
-                targets: ['engineering'],
-              },
-            ])
-          }
-        >
-          Add mock rule
-        </button>
+        {onRulesChange != null && (
+          <button
+            onClick={() =>
+              onRulesChange([
+                ...(rules ?? []),
+                {
+                  source: 'role',
+                  function: PublicationRuleFunction.Contain,
+                  targets: ['engineering'],
+                },
+              ])
+            }
+          >
+            Add mock rule
+          </button>
+        )}
       </div>
     ),
     PublishFooter: ({
