@@ -39,6 +39,7 @@ Core principle: the chat application is assembled from a set of **independently 
 | **Tailwind CSS 4** | Utility CSS; one CSS-first theme in `tools/tailwind/theme.css` (see Styling)                          |
 | **ESLint 9**       | Flat config (`eslint.config.mjs`) + Prettier 3                                                        |
 | **Storybook 10**   | Lib-local component catalogue (`libs/celebrations/.storybook`, React/Vite); built in CI, not deployed |
+| **Knip 6**         | Advisory dead-code analysis (`knip.ts`, `npm run knip`); not run in CI                                |
 
 ```
 root/
