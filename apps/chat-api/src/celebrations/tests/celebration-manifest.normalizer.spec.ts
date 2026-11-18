@@ -95,16 +95,109 @@ describe('normalizeCelebrationManifest', () => {
     expect(JSON.stringify(result)).not.toMatch(/css|script|routes/);
   });
 
-  it('passes a non-viewport placement template as its ID alone', () => {
+  const composerAnchor = (override: Record<string, unknown> = {}) => ({
+    template: 'composer-anchor-v1',
+    anchor: 'composer',
+    anchorRect: { x: 340, y: 164, width: 520, height: 56 },
+    edge: 'top',
+    scale: { min: 0.6, max: 1 },
+    fallback: 'stage-anchor',
+    ...override,
+  });
+
+  it('forwards a valid composer-anchor placement and nothing else', () => {
     const result = normalizeCelebrationManifest(
       withScene(newYear(), {
-        placement: { template: 'composer-anchor-v1', anchor: 'composer' },
+        placement: { ...composerAnchor(), fit: 'contain', selector: '.x' },
+      }),
+      newYearRef(),
+    );
+    if ('error' in result) throw new Error(result.error);
+    expect(result.value.pack.scenes[0].placement).toEqual(composerAnchor());
+  });
+
+  it.each<[string, Record<string, unknown>]>([
+    ['an unknown anchor', { anchor: 'sidebar' }],
+    ['edge: left', { edge: 'left' }],
+    [
+      'a non-finite anchorRect value',
+      { anchorRect: { x: 0, y: 0, width: Number.NaN, height: 56 } },
+    ],
+    ['a missing anchorRect', { anchorRect: undefined }],
+    [
+      'an anchorRect narrower than 120',
+      { anchorRect: { x: 0, y: 0, width: 100, height: 56 } },
+    ],
+    [
+      'an anchorRect shorter than 24',
+      { anchorRect: { x: 0, y: 0, width: 520, height: 20 } },
+    ],
+    ['scale.min above scale.max', { scale: { min: 1.2, max: 1 } }],
+    ['scale.min below 0.25', { scale: { min: 0.1, max: 1 } }],
+    ['scale.max above 4', { scale: { min: 1, max: 5 } }],
+    ['the S0 viewport-stage-v1 fallback', { fallback: 'viewport-stage-v1' }],
+  ])('rejects a composer-anchor placement with %s', (_name, override) => {
+    const result = normalizeCelebrationManifest(
+      withScene(newYear(), { placement: composerAnchor(override) }),
+      newYearRef(),
+    );
+    expect(result).toHaveProperty('error');
+  });
+
+  it('forwards a variant placement that keeps the scene template', () => {
+    const scene = newYear().scenes[0] as {
+      variants: Record<string, unknown>[];
+    };
+    const mobile = composerAnchor({
+      anchorRect: { x: 210, y: 132, width: 300, height: 56 },
+      scale: { min: 0.77, max: 1 },
+    });
+    const result = normalizeCelebrationManifest(
+      withScene(newYear(), {
+        placement: composerAnchor(),
+        variants: [
+          scene.variants[0],
+          { ...scene.variants[1], placement: mobile },
+        ],
+      }),
+      newYearRef(),
+    );
+    if ('error' in result) throw new Error(result.error);
+    const [desktop, phone] = result.value.pack.scenes[0].variants;
+    expect(desktop).not.toHaveProperty('placement');
+    expect(phone.placement).toEqual(mobile);
+  });
+
+  it.each<[string, Record<string, unknown>]>([
+    [
+      'a different template',
+      { template: 'viewport-stage-v1', fit: 'contain', align: 'bottom' },
+    ],
+    ['an invalid anchor field', composerAnchor({ edge: 'left' })],
+  ])('rejects a variant placement with %s', (_name, placement) => {
+    const scene = newYear().scenes[0] as {
+      variants: Record<string, unknown>[];
+    };
+    const result = normalizeCelebrationManifest(
+      withScene(newYear(), {
+        placement: composerAnchor(),
+        variants: [{ ...scene.variants[0], placement }],
+      }),
+      newYearRef(),
+    );
+    expect(result).toHaveProperty('error');
+  });
+
+  it('passes an unknown placement template as its ID alone', () => {
+    const result = normalizeCelebrationManifest(
+      withScene(newYear(), {
+        placement: { template: 'shelf-anchor-v2', shelf: 'left' },
       }),
       newYearRef(),
     );
     if ('error' in result) throw new Error(result.error);
     expect(result.value.pack.scenes[0].placement).toEqual({
-      template: 'composer-anchor-v1',
+      template: 'shelf-anchor-v2',
     });
   });
 

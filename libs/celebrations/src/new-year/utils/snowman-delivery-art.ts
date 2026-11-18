@@ -125,21 +125,35 @@ const path = (points: Point[], closed = true, smooth = 0): SnowmanShape => {
 const { snow, shadow, ink } = SNOWMAN_PALETTE;
 const P = SNOWMAN_PALETTE;
 
+/* A broad lower-right crescent follows the snow ball instead of reading as
+   a separate coloured disc. The same light direction carries across the rig. */
+const snowShade = ([x, y]: Point, radius: number): SnowmanShape =>
+  path(
+    [
+      [0.92, -0.32],
+      [0.92, 0.38],
+      [0.4, 0.89],
+      [-0.36, 0.92],
+      [-0.91, 0.36],
+      [-0.22, 0.62],
+      [0.57, 0.18],
+      [0.75, -0.29],
+    ].map(([dx, dy]): Point => [x + dx * radius, y + dy * radius]),
+    true,
+    0.12,
+  );
+
 /** Two snow balls with buttons; drawn in the rig frame, pivoting at the ground point. */
 export const bodyArt = (): SnowmanShape[] => {
   const { bottomBall, middleBall } = SNOWMAN_RIG;
   const ball = (name: string, [x, y]: Point, r: number) =>
     group(name, [
-      group(
-        `${name}-shade`,
-        [ellipse([x - r * 0.18, y + r * 0.2], [r * 1.5, r * 1.4])],
-        {
-          fill: shadow,
-        },
-      ),
+      group(`${name}-shade`, [snowShade([x, y], r)], {
+        fill: shadow,
+      }),
       group(
         `${name}-snow`,
-        [ellipse([x + r * 0.12, y - r * 0.1], [r * 1.6, r * 1.55])],
+        [ellipse([x - r * 0.08, y - r * 0.08], [r * 1.8, r * 1.8])],
         {
           fill: snow,
         },
@@ -298,7 +312,7 @@ export const headArt = (): SnowmanShape[] => {
             false,
           ),
         ]
-      : [ellipse([4, -4], [3.2, 3.6]), ellipse([10, -4], [3.2, 3.6])];
+      : [ellipse([3.5, -4], [3.8, 4.2]), ellipse([10.5, -4], [3.8, 4.2])];
   const face = (name: SnowmanFace): SnowmanShape =>
     group(`face-${name}`, [
       group(
@@ -345,10 +359,10 @@ export const headArt = (): SnowmanShape[] => {
       { stroke: '#a24d0e', fill: P.carrot, width: 1 },
     ),
     ...Object.values(SnowmanFace).map(face),
-    group('head-shade', [ellipse([-3, 3], [r * 1.5, r * 1.4])], {
+    group('head-shade', [snowShade([0, 0], r)], {
       fill: shadow,
     }),
-    group('head-snow', [ellipse([1, -1], [r * 1.6, r * 1.55])], { fill: snow }),
+    group('head-snow', [ellipse([-1, -1], [r * 1.8, r * 1.8])], { fill: snow }),
     group('head-outline', [ellipse([0, 0], [r * 2, r * 2])], {
       stroke: ink,
       fill: '#eef3fb',
@@ -465,15 +479,20 @@ export const treeArt = (): SnowmanShape[] => [
       [
         path(
           [
-            [0, top],
-            [half, top + height],
-            [-half, top + height],
+            [2, top],
+            [half * 0.42, top + height * 0.5],
+            [half, top + height * 0.9],
+            [half * 0.64, top + height],
+            [half * 0.14, top + height * 0.94],
+            [-half * 0.42, top + height * 1.02],
+            [-half, top + height * 0.88],
+            [-half * 0.46, top + height * 0.48],
           ],
           true,
-          0.03,
+          0.1,
         ),
       ],
-      { stroke: P.firDark, fill: P.fir, width: 1.2 },
+      { stroke: P.firDark, fill: P.fir, width: 1 },
     ),
   ),
   group('trunk', [rect([0, -8], [9, 16], 1)], {
@@ -493,11 +512,13 @@ export const branchArt = (): SnowmanShape[] => [
     [
       path(
         [
-          [-6, -63],
-          [-36, -66],
-          [-40, -59],
-          [-30, -55],
           [-6, -57],
+          [-18, -54],
+          [-29, -54],
+          [-41, -49],
+          [-32, -45],
+          [-17, -46],
+          [-6, -51],
         ],
         true,
         0.12,
@@ -511,17 +532,19 @@ export const branchArt = (): SnowmanShape[] => [
 export const BRANCH_PIVOT: Point = [-6, -60];
 export const BRANCH_SOCKET: Point = [-26, -62];
 
-/** Needles drawn over the lodged head so it reads as inside the bough. */
+/** The bough's front lip covers the lodged head's lower edge, keeping its face visible. */
 export const needlesArt = (): SnowmanShape[] => [
   group(
     'needles',
     [
       path(
         [
-          [-38, -60],
-          [-28, -66],
-          [-17, -60],
-          [-27, -56],
+          [-39, -50],
+          [-30, -53],
+          [-25, -50],
+          [-18, -53],
+          [-14, -49],
+          [-26, -46],
         ],
         true,
         0.1,
@@ -559,18 +582,30 @@ export const groundArt = (
 ): SnowmanShape[] => [
   group(
     'ground-shade',
-    [rect([0, thickness * 0.7], [length, thickness * 0.6], 3)],
+    [ellipse([0, thickness * 0.7], [length, thickness * 0.6])],
     {
       fill: shadow,
     },
   ),
   group(
     'ground',
-    [rect([0, thickness / 2], [length, thickness], thickness / 2)],
+    [
+      path(
+        [
+          [-length / 2, 0],
+          [-length * 0.3, -thickness * 0.08],
+          [length * 0.18, 0],
+          [length / 2, 0],
+          [length * 0.46, thickness * 0.6],
+          [0, thickness * 0.85],
+          [-length * 0.46, thickness * 0.6],
+        ],
+        true,
+        0.05,
+      ),
+    ],
     {
-      stroke: ink,
       fill: '#f4f7fc',
-      width: 1,
     },
   ),
 ];

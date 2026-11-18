@@ -11,6 +11,7 @@ import { SNOWMAN_DELIVERY_TIMINGS } from '../snowman-delivery-animation';
 import {
   armArt,
   bodyArt,
+  BRANCH_SOCKET,
   branchArt,
   footArt,
   headArt,
@@ -374,6 +375,26 @@ describe('snowman-delivery', () => {
   });
 
   describe('snowman delivery budgets', () => {
+    it('keeps foreground needles below the lodged face', () => {
+      const outline = needlesArt()
+        .flatMap((shape) => shape.it ?? [])
+        .find((shape) => shape.ty === 'sh')?.ks as {
+        k: { v: Point[]; i: Point[]; o: Point[] };
+      };
+      /* Cubic control points bound the entire curve, including the intervals
+         between vertices where foliage used to cover the eyes. */
+      const upperEdge = Math.min(
+        ...outline.k.v.flatMap(([, y], index) => [
+          y,
+          y + outline.k.i[index][1],
+          y + outline.k.o[index][1],
+        ]),
+      );
+      expect(upperEdge).toBeGreaterThan(
+        BRANCH_SOCKET[1] + SNOWMAN_RIG.headRadius * 0.3,
+      );
+    });
+
     it('keeps the static vector artwork small', () => {
       const art = [
         ...bodyArt(),

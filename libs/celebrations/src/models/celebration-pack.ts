@@ -1,4 +1,7 @@
 import type {
+  CelebrationAnchor,
+  CelebrationAnchorEdge,
+  CelebrationAnchorFallback,
   CelebrationColorScheme,
   CelebrationDecorationTemplate,
   CelebrationDirectionMode,
@@ -30,8 +33,45 @@ export interface CelebrationViewportStagePlacement {
   align: CelebrationStageAlign;
 }
 
-/** Placement of a scene; this release defines only `viewport-stage-v1`. */
-export type CelebrationPlacementDescriptor = CelebrationViewportStagePlacement;
+/** A rectangle in stage coordinates. */
+export interface CelebrationStageRect {
+  /** Left edge. */
+  x: number;
+  /** Top edge. */
+  y: number;
+  /** Width. */
+  width: number;
+  /** Height. */
+  height: number;
+}
+
+/** Bounds of the uniform stage scale. */
+export interface CelebrationAnchorScale {
+  /** Smallest scale; also the scale of the synthetic anchor. */
+  min: number;
+  /** Largest scale. */
+  max: number;
+}
+
+/** `composer-anchor-v1` placement of a scene. */
+export interface CelebrationComposerAnchorPlacement {
+  /** Placement template. */
+  template: CelebrationPlacementTemplate.ComposerAnchorV1;
+  /** Host element the stage attaches to. */
+  anchor: CelebrationAnchor;
+  /** The reference composer the motion is authored around, in stage coordinates. */
+  anchorRect: CelebrationStageRect;
+  /** Edge of `anchorRect` aligned with the same edge of the composer. */
+  edge: CelebrationAnchorEdge;
+  /** Bounds of `composerWidth / anchorRect.width`. */
+  scale: CelebrationAnchorScale;
+  /** What happens when no composer is eligible. */
+  fallback: CelebrationAnchorFallback;
+}
+
+/** Placement of a scene, discriminated by `template`. */
+export type CelebrationPlacementDescriptor =
+  CelebrationViewportStagePlacement | CelebrationComposerAnchorPlacement;
 
 /** The four deadlines of a pack scene, in milliseconds. */
 export interface CelebrationSceneTiming {
@@ -61,6 +101,8 @@ export interface CelebrationSceneVariantDescriptor {
   when: CelebrationVariantConditions;
   /** Asset id of the variant's Lottie JSON. */
   animationAssetId: string;
+  /** Placement of this variant instead of the scene's; its template must match the scene's. */
+  placement?: CelebrationPlacementDescriptor;
 }
 
 /** A pack scene, transport-independent and already validated by the host. */

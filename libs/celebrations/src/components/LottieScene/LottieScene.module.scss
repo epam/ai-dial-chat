@@ -59,3 +59,13 @@
 .mirrored {
   transform: scaleX(-1);
 }
+
+/* An anchored stage is re-based onto the viewport in its data, so its host is
+   the whole scene layer and anything outside the viewport is clipped. */
+.anchoredStage {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  pointer-events: none;
+  user-select: none;
+}
