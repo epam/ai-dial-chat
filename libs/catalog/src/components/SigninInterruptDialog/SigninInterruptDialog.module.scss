@@ -5,8 +5,13 @@
   color: var(--cat-signin-description-text, var(--text-secondary, #57647a));
 }
 
-.row {
-  border-color: var(--cat-signin-row-border, var(--stroke-primary, #57647a));
+/* Rows are separated by spacing, not rules; a tint marks the row under the pointer or keyboard focus. */
+.row:hover,
+.row:focus-within {
+  background: var(
+    --cat-signin-row-hover-background,
+    var(--bg-control-neutral-hover-muted, #e0e6f0)
+  );
 }
 
 .name {
