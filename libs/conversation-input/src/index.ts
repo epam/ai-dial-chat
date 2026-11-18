@@ -1,5 +1,7 @@
 export { CONVERSATION_INPUT_CLASS } from './constants/public-class-names';
 export { BottomSheetShell } from './components/BottomSheetShell/BottomSheetShell';
+export { ModelSelectorPanelSkeleton } from './components/ModelSelectorSkeleton/ModelSelectorSkeleton';
+export type { ModelSelectorPanelSkeletonProps } from './components/ModelSelectorSkeleton/ModelSelectorSkeleton';
 export type { BottomSheetShellProps } from './components/BottomSheetShell/BottomSheetShell';
 export { ConversationInput } from './components/ConversationInput/ConversationInput';
 export { EditMessageInput } from './components/EditMessageInput/EditMessageInput';

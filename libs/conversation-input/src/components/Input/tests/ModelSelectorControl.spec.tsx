@@ -172,3 +172,42 @@ describe('ModelSelectorControl — streaming', () => {
     expect(screen.queryByRole('dialog', { name: 'Select model' })).toBeNull();
   });
 });
+
+describe('ModelSelectorControl — desktop picker overlay while loading', () => {
+  const setupDesktopControl = (isLoadingModels: boolean) => {
+    const modelPickerOverlay = vi.fn(() => <span>overlay content</span>);
+    render(
+      <ModelSelectorControl
+        deployments={[]}
+        selectedDeploymentId={null}
+        modelSelectorLabels={{
+          ariaLabel: 'Select model',
+          loading: isLoadingModels ? 'Loading models…' : undefined,
+        }}
+        isStreaming={false}
+        isMobile={false}
+        style={{}}
+        modelPickerOverlay={modelPickerOverlay}
+      />,
+    );
+    return modelPickerOverlay;
+  };
+
+  it('shows the skeleton instead of the host picker while models load', async () => {
+    const modelPickerOverlay = setupDesktopControl(true);
+
+    await userEvent.click(screen.getByLabelText(/Select model/));
+
+    expect(await screen.findByText('Loading models…')).toBeTruthy();
+    expect(screen.queryByText('overlay content')).toBeNull();
+    expect(modelPickerOverlay).not.toHaveBeenCalled();
+  });
+
+  it('shows the host picker once models have loaded', async () => {
+    setupDesktopControl(false);
+
+    await userEvent.click(screen.getByLabelText(/Select model/));
+
+    expect(await screen.findByText('overlay content')).toBeTruthy();
+  });
+});

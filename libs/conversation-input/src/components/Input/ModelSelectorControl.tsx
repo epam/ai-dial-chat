@@ -19,6 +19,7 @@ import { useModelSelector } from '../../hooks/useModelSelector';
 import type { ModelMenuStyles, ModelSelectorLabels } from '../../models/Input';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
 import { ModelSelectorBottomSheet } from '../ModelSelectorBottomSheet/ModelSelectorBottomSheet';
+import { ModelSelectorPanelSkeleton } from '../ModelSelectorSkeleton/ModelSelectorSkeleton';
 import styles from './Input.module.scss';
 
 interface Props {
@@ -97,6 +98,9 @@ export const ModelSelectorControl: FC<Props> = ({
   if (!deployments) {
     return null;
   }
+
+  /* Same signal `useModelSelector` uses for its skeleton icon and rows. */
+  const isLoading = modelSelectorLabels?.loading !== undefined;
 
   /* Streaming blocks the selector exactly like `isDisabled`, in every
    * presentation: the class only stops pointer input, so each path also
@@ -214,7 +218,14 @@ export const ModelSelectorControl: FC<Props> = ({
         overlayRole={DropdownOverlayRole.Dialog}
         overlayAriaLabel={modelSelectorLabels?.ariaLabel ?? 'Select model'}
         renderOverlay={() =>
-          modelPickerOverlay(() => setIsModelSheetOpen(false))
+          isLoading ? (
+            <ModelSelectorPanelSkeleton
+              loadingLabel={modelSelectorLabels?.loading}
+              skeletonColor={menuStyles?.colors?.skeletonColor}
+            />
+          ) : (
+            modelPickerOverlay(() => setIsModelSheetOpen(false))
+          )
         }
         listClassName={mergeClasses(
           'w-[368px]!',

@@ -116,6 +116,8 @@ export interface ModelMenuColors {
   checkIcon?: string;
   /** Background of the desktop dropdown panel when `modelPickerOverlay` supplies the content. Defaults to `--bg-layer-raised`. */
   overlayBackground?: string;
+  /** Shimmer color of the loading skeleton shown in the desktop panel. Defaults to `--bg-control-disable-primary`. */
+  skeletonColor?: string;
 }
 
 /**
