@@ -1,5 +1,5 @@
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
-import { FC, lazy, Suspense } from 'react';
+import { FC, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AttachmentsI18nKeys,
@@ -8,12 +8,8 @@ import {
 import type { useMessageAttachments } from '../../../hooks/conversation/useMessageAttachments';
 import type { useMessageCitations } from '../../../hooks/conversation/useMessageCitations';
 import { isAttachmentDownloadable } from '../../../utils/dial-file';
+import EditMessageInput from '../../EditMessageInputLoader/EditMessageInputLoader';
 import type { ConversationMessageItemProps } from '../ConversationMessageItem';
-
-const EditMessageInput = lazy(async () => {
-  const module = await import('@epam/ai-dial-conversation-input');
-  return { default: module.EditMessageInput };
-});
 
 interface MessageEditModeProps extends Pick<
   ConversationMessageItemProps,

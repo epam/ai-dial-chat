@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   copyMarkdownAsRichText,
   markdownToRichTextHtml,
-} from '../copy-to-clipboard';
+} from '../markdown-rich-text';
 
 const TABLE_MARKDOWN = [
   '| Year | Song |',

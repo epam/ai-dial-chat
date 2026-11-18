@@ -1,0 +1,16 @@
+export enum ChatSettingsI18nKeys {
+  ResponseFormatLabel = 'chatSettings.responseFormatLabel',
+  ResponseFormatHint = 'chatSettings.responseFormatHint',
+  ResponseFormatMarkdown = 'chatSettings.responseFormatMarkdown',
+  ResponseFormatPlainText = 'chatSettings.responseFormatPlainText',
+  SystemPromptLabel = 'chatSettings.systemPromptLabel',
+  TemperatureLabel = 'chatSettings.temperatureLabel',
+  TemperaturePrecise = 'chatSettings.temperaturePrecise',
+  TemperatureNeutral = 'chatSettings.temperatureNeutral',
+  TemperatureCreative = 'chatSettings.temperatureCreative',
+  SaveLabel = 'chatSettings.saveLabel',
+  SaveDisabledTooltip = 'chatSettings.saveDisabledTooltip',
+  TemperatureHint = 'chatSettings.temperatureHint',
+  SystemPromptTooltip = 'chatSettings.systemPromptTooltip',
+  SavedNotification = 'chatSettings.savedNotification',
+}
