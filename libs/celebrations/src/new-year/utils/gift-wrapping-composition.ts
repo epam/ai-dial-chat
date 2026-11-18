@@ -212,8 +212,9 @@ export const buildGiftWrappingComposition = (
     center + x * direction,
     floor + y,
   ];
-  const masterX = -Math.min(box.width * 0.27, 130);
-  const helperX = Math.min(box.width * 0.34, 175);
+  /* Leave the centre open for the host greeting and the hanging ribbon. */
+  const masterX = -Math.min(box.width * 0.38, 185);
+  const helperX = Math.min(box.width * 0.36, 185);
   const departure = -box.width / 2 - 140;
   const masterPos: Sample[] = [
     [0, [masterX - 100, 0]],
@@ -755,8 +756,10 @@ export const buildGiftWrappingComposition = (
     const origin = [attachment[0] * handoff, 5 + (attachment[1] - 5) * handoff];
     const path = contour([origin, grip, reel]);
     const span = grip[0] - origin[0];
-    path.o[0] = [span * 0.42, time < 5.8 ? 24 : 4];
-    path.i[1] = [-span * 0.28, time < 5.8 ? 12 : 2];
+    /* The free span hangs toward the rim; its ends still follow the real grips. */
+    const sag = ease(Math.max(0, Math.min(1, (time - 5.8) / 0.4)));
+    path.o[0] = [span * (0.42 - 0.24 * sag), 24 + 51 * sag];
+    path.i[1] = [-span * (0.28 - 0.1 * sag), 12 + 28 * sag];
     path.o[1] = [15, -8];
     path.i[2] = [-12, -12];
     looseFrames.push({

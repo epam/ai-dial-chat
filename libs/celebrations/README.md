@@ -416,7 +416,9 @@ greeting or prompts block the stage, the cast stands on a decorative snow
 ledge below the composer; an eligible prompt or selector can still be borrowed.
 The penguin follows a supplied image reference: front-facing
 black-and-white body, large pale belly, opaque sunglasses, tapered flippers,
-small pale feet and a restrained red Santa hat. The same full story runs on
+small pale feet and a restrained red Santa hat. A pale cheek and clear beak separate
+the face from the glasses; the head compresses for the effort and lifts into
+the throw beside a fir with rounded branch masses. The same full story runs on
 mobile and in RTL. Reduced motion, unsupported browser APIs and player failures
 show static art. The borrowed control is never clicked, cloned or reparented;
 its reversible visual transform is cancelled when playback stops.
@@ -441,8 +443,10 @@ presents his work while the frustrated master hops away with a chest bow and a
 ribbon around his
 ankles; the helper follows with the reel. Both elves and the full story remain
 on mobile and in RTL layouts.
-The original character contours remain intact: cap movement and recoil are
-restrained, while each frustrated hop slows on ascent and accelerates into
+Broad cheek and coat shadows soften the characters, with finer warm outlines
+in both animated and static artwork. The elves work nearer the composer corners,
+and the loose ribbon hangs toward its rim to leave more space around the greeting.
+Cap movement and recoil remain restrained, while each frustrated hop slows on ascent and accelerates into
 landing without stopping horizontally at its apex.
 
 The scene plays one sixteen-second Lottie vector composition and unmounts by
@@ -476,7 +480,9 @@ Steps follow distance traveled, with planted soles and bending joints. The
 bodies compress before pulling and takeoff; the calf turns before walking
 back. Forelegs and hind legs bend differently with staggered contacts. The
 adult has a fuller chest and longer antlers; the calf has a rounder face and
-compact proportions. Neck, gaze and ear gestures distinguish the adult's
+compact proportions. Broad fur shading and an open shoulder contour join the
+neck to the torso; the calf has a clearer eye and muzzle. Neck, gaze and ear
+gestures distinguish the adult's
 effort from the calf's curiosity. The nose and caught loop share the articulated
 neck/head geometry. During takeoff the legs extend, fold and settle into a
 relaxed glide instead of continuing to walk in the air. A continuous flight
@@ -533,6 +539,11 @@ spreads its mittens; the head sneezes, the bough flexes and drops it into the
 waiting mittens — backwards. He pauses, turns it the right way round,
 straightens the present, carries the card back, jumps it back into its exact
 slot and leaves holding his head with both mittens.
+
+Broad crescent shadows give the snowballs volume. The fir has rounded, uneven
+boughs, with a low foreground branch lip that leaves the lodged face visible;
+the supporting snow ledge has a soft outline. The static resolution uses the
+same drawing treatment.
 
 Staging follows the measured page: with starters below the composer (the
 chat's default) he works on a drawn snow ledge under the starter row, low
