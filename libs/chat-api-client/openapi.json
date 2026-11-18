@@ -19471,12 +19471,69 @@
         ],
         "description": "Where the stage sits in the viewport, in logical terms (viewport-stage-v1)."
       },
+      "CelebrationAnchor": {
+        "type": "string",
+        "enum": ["composer"],
+        "description": "Host element the stage attaches to (composer-anchor-v1)."
+      },
+      "CelebrationAnchorRectDto": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number",
+            "description": "Left edge.",
+            "example": 340
+          },
+          "y": {
+            "type": "number",
+            "description": "Top edge.",
+            "example": 164
+          },
+          "width": {
+            "type": "number",
+            "description": "Width, at least 120.",
+            "example": 520
+          },
+          "height": {
+            "type": "number",
+            "description": "Height, at least 24.",
+            "example": 56
+          }
+        },
+        "required": ["x", "y", "width", "height"]
+      },
+      "CelebrationAnchorEdge": {
+        "type": "string",
+        "enum": ["top", "bottom"],
+        "description": "Edge of anchorRect aligned with the same edge of the composer (composer-anchor-v1)."
+      },
+      "CelebrationAnchorScaleDto": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "number",
+            "description": "Smallest scale; also the scale of the synthetic anchor.",
+            "example": 0.6
+          },
+          "max": {
+            "type": "number",
+            "description": "Largest scale.",
+            "example": 1
+          }
+        },
+        "required": ["min", "max"]
+      },
+      "CelebrationAnchorFallback": {
+        "type": "string",
+        "enum": ["stage-anchor", "poster"],
+        "description": "What happens when no composer is eligible (composer-anchor-v1)."
+      },
       "CelebrationPlacementDto": {
         "type": "object",
         "properties": {
           "template": {
             "type": "string",
-            "description": "Placement template ID. Templates other than viewport-stage-v1 are passed as the ID alone, and clients without the matching capability skip the scene.",
+            "description": "Placement template ID. Templates other than viewport-stage-v1 and composer-anchor-v1 are passed as the ID alone, and clients without the matching capability skip the scene.",
             "example": "viewport-stage-v1"
           },
           "fit": {
@@ -19492,6 +19549,46 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/CelebrationStageAlign"
+              }
+            ]
+          },
+          "anchor": {
+            "description": "Host element the stage attaches to (composer-anchor-v1).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationAnchor"
+              }
+            ]
+          },
+          "anchorRect": {
+            "description": "The reference composer the motion is authored around, in stage coordinates (composer-anchor-v1).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationAnchorRectDto"
+              }
+            ]
+          },
+          "edge": {
+            "description": "Edge of anchorRect aligned with the same edge of the composer (composer-anchor-v1).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationAnchorEdge"
+              }
+            ]
+          },
+          "scale": {
+            "description": "Bounds of composerWidth / anchorRect.width (composer-anchor-v1).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationAnchorScaleDto"
+              }
+            ]
+          },
+          "fallback": {
+            "description": "What happens when no composer is eligible (composer-anchor-v1).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationAnchorFallback"
               }
             ]
           }
@@ -19593,6 +19690,14 @@
             "type": "string",
             "description": "Asset ID of the Lottie JSON.",
             "example": "new-year-default-snowman-delivery-desktop-5b0c7e19a2d4f836"
+          },
+          "placement": {
+            "description": "Placement for this variant instead of the scene's, with the same template; lets a mobile variant use its own reference composer.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationPlacementDto"
+              }
+            ]
           }
         },
         "required": ["when", "animationAssetId"]

@@ -8,6 +8,7 @@ import {
   type FC,
 } from 'react';
 import { useCelebrationEnvironment } from '../../context/CelebrationEnvironmentContext';
+import { useComposerInterrupts } from '../../hooks/useComposerInterrupts';
 import { useLottieSceneSession } from '../../hooks/useLottieSceneSession';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import type {
@@ -19,6 +20,8 @@ import type { LottieScenePlayback } from '../../models/lottie-scene';
 import {
   CelebrationDirectionMode,
   CelebrationLayout,
+  CelebrationPlacementTemplate,
+  CelebrationStageAlign,
   CelebrationStageEdge,
   CelebrationStageFit,
 } from '../../types/celebration-pack';
@@ -29,7 +32,10 @@ import {
 import {
   isCelebrationSceneSupported,
   isPackRendererWithinBudget,
+  prepareAnchoredSceneData,
   preparePackSceneData,
+  requiresComposerOutline,
+  resolveVariantPlacement,
   resolvePosterObjectPosition,
   type PackScenePreparation,
 } from '../../utils/celebration-pack-scene';
@@ -37,6 +43,7 @@ import {
   resolveStageAlignment,
   selectCelebrationVariant,
 } from '../../utils/celebration-variant';
+import { watchComposer } from '../../utils/composer-watch';
 import styles from './LottieScene.module.scss';
 
 /** Props of `LottieScene`. */
@@ -67,25 +74,45 @@ export const LottieScene: FC<LottieSceneProps> = ({
   loaders,
   context,
 }) => {
-  const { isMobile } = useCelebrationEnvironment();
+  const { anchors, isMobile } = useCelebrationEnvironment();
   const isReducedMotion = useReducedMotion();
-  /* Layout and motion preference are fixed at activation; a change ends the scene. */
-  const [initial] = useState(() => ({ isMobile, isReducedMotion }));
+  const isAnchored =
+    scene.placement.template === CelebrationPlacementTemplate.ComposerAnchorV1;
+  /* Layout, anchors and motion preference are fixed at activation; a change ends the scene. */
+  const [initial] = useState(() => ({ anchors, isMobile, isReducedMotion }));
   const isChanged =
     initial.isMobile !== isMobile ||
-    initial.isReducedMotion !== isReducedMotion;
-  const [variant] = useState(() =>
-    isCelebrationSceneSupported(scene)
-      ? selectCelebrationVariant(scene.variants, {
-          ...context,
-          layout: initial.isMobile
-            ? CelebrationLayout.Mobile
-            : CelebrationLayout.Desktop,
-        })
-      : undefined,
+    initial.isReducedMotion !== isReducedMotion ||
+    (isAnchored && initial.anchors.composer !== anchors.composer);
+  /* Anchored scenes watch the composer, so they need both observers. */
+  const [hasObservers] = useState(
+    () =>
+      typeof ResizeObserver === 'function' &&
+      typeof MutationObserver === 'function',
   );
+  /* The variant and its placement are chosen together; a variant that changes
+     the template makes the scene unsupported. */
+  const [selected] = useState(() => {
+    if (!isCelebrationSceneSupported(scene) || (isAnchored && !hasObservers))
+      return undefined;
+    const match = selectCelebrationVariant(scene.variants, {
+      ...context,
+      layout: initial.isMobile
+        ? CelebrationLayout.Mobile
+        : CelebrationLayout.Desktop,
+    });
+    const matchPlacement = match && resolveVariantPlacement(scene, match);
+    return match && matchPlacement
+      ? { variant: match, placement: matchPlacement }
+      : undefined;
+  });
+  const variant = selected?.variant;
+  const placement = selected?.placement ?? scene.placement;
   const [hasPlaybackStarted, setHasPlaybackStarted] = useState(false);
   const [isPosterExpired, setIsPosterExpired] = useState(false);
+  const isMirrored =
+    scene.direction === CelebrationDirectionMode.Mirror &&
+    context.direction === 'rtl';
 
   const playback = useMemo<LottieScenePlayback<PackScenePreparation>>(
     () => ({
@@ -94,12 +121,24 @@ export const LottieScene: FC<LottieSceneProps> = ({
         readyTimeoutMs: scene.timing.readyTimeoutMs,
         playbackMs: scene.timing.playbackDurationMs,
       },
-      ownership: LottieDataOwnership.Shared,
+      /* An anchored preparation is a private copy built for one session. */
+      ownership: isAnchored
+        ? LottieDataOwnership.Transferred
+        : LottieDataOwnership.Shared,
       getAnimationData: ({ data }) => data,
       isRendererAccepted: isPackRendererWithinBudget,
+      onAnimationCreated: isAnchored
+        ? ({ preparation, host, addDisposer, cancel }) =>
+            watchComposer({
+              source: preparation.anchor?.source ?? null,
+              host,
+              addDisposer,
+              cancel,
+            })
+        : undefined,
       onPlaybackStarted: () => setHasPlaybackStarted(true),
     }),
-    [scene.timing],
+    [scene.timing, isAnchored],
   );
   const animationAssetId = variant?.animationAssetId;
   const loadData = useCallback(
@@ -109,12 +148,30 @@ export const LottieScene: FC<LottieSceneProps> = ({
         : Promise.reject(new Error('No variant')),
     [animationAssetId, loaders],
   );
-  const { phase, preparation, hostRef } = useLottieSceneSession({
+  const { phase, preparation, hostRef, cancel } = useLottieSceneSession({
     enabled: !initial.isReducedMotion && variant !== undefined && !isChanged,
     playback,
-    prepare: (_player, data) => preparePackSceneData(data),
+    /* Runs after the player and data load, so the composer is measured as it is then. */
+    prepare: (_player, data) =>
+      placement.template === CelebrationPlacementTemplate.ComposerAnchorV1
+        ? prepareAnchoredSceneData(
+            data,
+            placement,
+            initial.anchors.composer,
+            isMirrored,
+            requiresComposerOutline(scene),
+          )
+        : preparePackSceneData(data),
     loadData,
   });
+
+  useComposerInterrupts(
+    isAnchored &&
+      !isChanged &&
+      (phase === LottieScenePhase.Loading ||
+        phase === LottieScenePhase.Prepared),
+    cancel,
+  );
 
   const isPoster =
     !isChanged &&
@@ -135,11 +192,15 @@ export const LottieScene: FC<LottieSceneProps> = ({
     return () => window.clearTimeout(timer);
   }, [isPosterVisible, scene.posterDurationMs]);
 
-  const alignment = resolveStageAlignment(scene.placement.align);
-  const isMirrored =
-    scene.direction === CelebrationDirectionMode.Mirror &&
-    context.direction === 'rtl';
-  const isCover = scene.placement.fit === CelebrationStageFit.Cover;
+  /* An anchored scene's poster sits at the bottom center, like its composer. */
+  const alignment = resolveStageAlignment(
+    placement.template === CelebrationPlacementTemplate.ViewportStageV1
+      ? placement.align
+      : CelebrationStageAlign.Bottom,
+  );
+  const isCover =
+    placement.template === CelebrationPlacementTemplate.ViewportStageV1 &&
+    placement.fit === CelebrationStageFit.Cover;
   const sceneClassName = mergeClasses(
     styles.scene,
     BLOCK_CLASS[alignment.block],
@@ -171,6 +232,18 @@ export const LottieScene: FC<LottieSceneProps> = ({
     );
   }
   if (!preparation || phase !== LottieScenePhase.Prepared) return null;
+  if (preparation.anchor)
+    return (
+      <div
+        ref={hostRef}
+        className={styles.anchoredStage}
+        dir={context.direction}
+        inert
+        data-celebration-anchor={
+          preparation.anchor.source ? 'composer' : 'stage-anchor'
+        }
+      />
+    );
   return (
     <div className={sceneClassName} dir={context.direction} inert>
       <div

@@ -1041,6 +1041,88 @@ export type CatalogCreationType =
   (typeof CatalogCreationType)[keyof typeof CatalogCreationType];
 
 /**
+ * Host element the stage attaches to (composer-anchor-v1).
+ * @export
+ */
+export const CelebrationAnchor = {
+  Composer: 'composer',
+} as const;
+export type CelebrationAnchor =
+  (typeof CelebrationAnchor)[keyof typeof CelebrationAnchor];
+
+/**
+ * Edge of anchorRect aligned with the same edge of the composer (composer-anchor-v1).
+ * @export
+ */
+export const CelebrationAnchorEdge = {
+  Top: 'top',
+  Bottom: 'bottom',
+} as const;
+export type CelebrationAnchorEdge =
+  (typeof CelebrationAnchorEdge)[keyof typeof CelebrationAnchorEdge];
+
+/**
+ * What happens when no composer is eligible (composer-anchor-v1).
+ * @export
+ */
+export const CelebrationAnchorFallback = {
+  StageAnchor: 'stage-anchor',
+  Poster: 'poster',
+} as const;
+export type CelebrationAnchorFallback =
+  (typeof CelebrationAnchorFallback)[keyof typeof CelebrationAnchorFallback];
+
+/**
+ *
+ * @export
+ * @interface CelebrationAnchorRectDto
+ */
+export interface CelebrationAnchorRectDto {
+  /**
+   * Left edge.
+   * @type {number}
+   * @memberof CelebrationAnchorRectDto
+   */
+  x: number;
+  /**
+   * Top edge.
+   * @type {number}
+   * @memberof CelebrationAnchorRectDto
+   */
+  y: number;
+  /**
+   * Width, at least 120.
+   * @type {number}
+   * @memberof CelebrationAnchorRectDto
+   */
+  width: number;
+  /**
+   * Height, at least 24.
+   * @type {number}
+   * @memberof CelebrationAnchorRectDto
+   */
+  height: number;
+}
+/**
+ *
+ * @export
+ * @interface CelebrationAnchorScaleDto
+ */
+export interface CelebrationAnchorScaleDto {
+  /**
+   * Smallest scale; also the scale of the synthetic anchor.
+   * @type {number}
+   * @memberof CelebrationAnchorScaleDto
+   */
+  min: number;
+  /**
+   * Largest scale.
+   * @type {number}
+   * @memberof CelebrationAnchorScaleDto
+   */
+  max: number;
+}
+/**
  *
  * @export
  * @interface CelebrationAssetDto
@@ -1347,7 +1429,7 @@ export interface CelebrationPackRefDto {
  */
 export interface CelebrationPlacementDto {
   /**
-   * Placement template ID. Templates other than viewport-stage-v1 are passed as the ID alone, and clients without the matching capability skip the scene.
+   * Placement template ID. Templates other than viewport-stage-v1 and composer-anchor-v1 are passed as the ID alone, and clients without the matching capability skip the scene.
    * @type {string}
    * @memberof CelebrationPlacementDto
    */
@@ -1364,6 +1446,36 @@ export interface CelebrationPlacementDto {
    * @memberof CelebrationPlacementDto
    */
   align?: CelebrationStageAlign;
+  /**
+   * Host element the stage attaches to (composer-anchor-v1).
+   * @type {CelebrationAnchor}
+   * @memberof CelebrationPlacementDto
+   */
+  anchor?: CelebrationAnchor;
+  /**
+   * The reference composer the motion is authored around, in stage coordinates (composer-anchor-v1).
+   * @type {CelebrationAnchorRectDto}
+   * @memberof CelebrationPlacementDto
+   */
+  anchorRect?: CelebrationAnchorRectDto;
+  /**
+   * Edge of anchorRect aligned with the same edge of the composer (composer-anchor-v1).
+   * @type {CelebrationAnchorEdge}
+   * @memberof CelebrationPlacementDto
+   */
+  edge?: CelebrationAnchorEdge;
+  /**
+   * Bounds of composerWidth / anchorRect.width (composer-anchor-v1).
+   * @type {CelebrationAnchorScaleDto}
+   * @memberof CelebrationPlacementDto
+   */
+  scale?: CelebrationAnchorScaleDto;
+  /**
+   * What happens when no composer is eligible (composer-anchor-v1).
+   * @type {CelebrationAnchorFallback}
+   * @memberof CelebrationPlacementDto
+   */
+  fallback?: CelebrationAnchorFallback;
 }
 
 /**
@@ -1571,6 +1683,12 @@ export interface CelebrationVariantDto {
    * @memberof CelebrationVariantDto
    */
   animationAssetId: string;
+  /**
+   * Placement for this variant instead of the scene's, with the same template; lets a mobile variant use its own reference composer.
+   * @type {CelebrationPlacementDto}
+   * @memberof CelebrationVariantDto
+   */
+  placement?: CelebrationPlacementDto;
 }
 
 /**

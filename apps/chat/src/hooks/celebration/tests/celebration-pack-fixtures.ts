@@ -66,6 +66,36 @@ const scene = (
   ...overrides,
 });
 
+/** The pack's `gift-wrapping` scene, anchored to the composer with the outline adapter. */
+export const giftWrappingScene = (
+  overrides: Partial<CelebrationSceneDto> = {},
+): CelebrationSceneDto =>
+  scene({
+    id: 'gift-wrapping',
+    labelId: 'giftWrappingToastMessage',
+    requiredCapabilities: [
+      'lottie-light-svg-v1',
+      'composer-anchor-v1',
+      'interaction-composer-outline-v1',
+      'static-poster-v1',
+    ],
+    placement: {
+      template: 'composer-anchor-v1',
+      anchor: 'composer',
+      anchorRect: { x: 340, y: 164, width: 520, height: 56 },
+      edge: 'top',
+      scale: { min: 0.6, max: 1 },
+      fallback: 'stage-anchor',
+    },
+    timing: {
+      playbackDurationMs: 16000,
+      loadTimeoutMs: 2000,
+      readyTimeoutMs: 250,
+      maxLifetimeMs: 18500,
+    },
+    ...overrides,
+  });
+
 /** The New Year pack: a `snowman-delivery` replacement, a `sleigh` nobody allowlists and an added `bullfinch-couriers`. */
 export const newYearPack = (
   overrides: Partial<CelebrationPackDto> = {},
@@ -185,4 +215,10 @@ export const PILOT_DELIVERY: CelebrationDeliveryDto = {
 export const COURIERS_DELIVERY: CelebrationDeliveryDto = {
   ...PILOT_DELIVERY,
   externalScenes: [{ eventId: 'new-year', sceneId: 'bullfinch-couriers' }],
+};
+
+/** A policy that replaces only the bundled gift-wrapping. */
+export const GIFT_WRAPPING_DELIVERY: CelebrationDeliveryDto = {
+  ...PILOT_DELIVERY,
+  externalScenes: [{ eventId: 'new-year', sceneId: 'gift-wrapping' }],
 };

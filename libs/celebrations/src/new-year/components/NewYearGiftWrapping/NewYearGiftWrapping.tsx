@@ -1,5 +1,6 @@
-import { useEffect, useState, type FC } from 'react';
+import { useState, type FC } from 'react';
 import { useCelebrationEnvironment } from '../../../context/CelebrationEnvironmentContext';
+import { useComposerInterrupts } from '../../../hooks/useComposerInterrupts';
 import { useLottieSceneSession } from '../../../hooks/useLottieSceneSession';
 import { useReducedMotion } from '../../../hooks/useReducedMotion';
 import { LottieScenePhase } from '../../../types/lottie-scene';
@@ -35,38 +36,7 @@ const NewYearGiftWrapping: FC = () => {
   const stationary = reduced || !supported || phase === LottieScenePhase.Failed;
   const ended = phase === LottieScenePhase.Ended;
 
-  useEffect(() => {
-    if (changed || ended) return;
-    const handleInterrupt = (event?: Event) => {
-      if (event?.type === 'visibilitychange' && !document.hidden) return;
-      cancel();
-    };
-    const events = [
-      'pointerdown',
-      'click',
-      'keydown',
-      'focusin',
-      'focusout',
-      'beforeinput',
-      'input',
-      'compositionstart',
-      'scroll',
-      'resize',
-      'visibilitychange',
-    ];
-    events.forEach((name) =>
-      window.addEventListener(name, handleInterrupt, true),
-    );
-    window.visualViewport?.addEventListener('resize', handleInterrupt);
-    window.visualViewport?.addEventListener('scroll', handleInterrupt);
-    return () => {
-      events.forEach((name) =>
-        window.removeEventListener(name, handleInterrupt, true),
-      );
-      window.visualViewport?.removeEventListener('resize', handleInterrupt);
-      window.visualViewport?.removeEventListener('scroll', handleInterrupt);
-    };
-  }, [cancel, changed, ended]);
+  useComposerInterrupts(!changed && !ended, cancel);
 
   if (ended || changed) return null;
   if (stationary)
