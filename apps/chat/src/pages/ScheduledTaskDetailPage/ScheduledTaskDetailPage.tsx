@@ -5,8 +5,10 @@ import {
 import {
   getApiErrorDetails,
   getApiErrorStatus,
+  formatScheduledTaskInstant,
   formatScheduledTaskTriggerTime,
   getNextCronOccurrence,
+  hasScheduledTaskWindowEnded,
   getScheduledTasksLoginRetryState,
   mergeScheduledTaskRuns,
   OfflineCredentialsGateStatus,
@@ -397,7 +399,8 @@ const ScheduledTaskDetailPage: FC = () => {
     useScheduledTaskModelPreview(task?.model);
 
   const repeatsLabel = useMemo(
-    () => (task ? buildScheduleLabel(task, t, displayLanguage) : undefined),
+    () =>
+      task ? buildScheduleLabel(task, t, displayLanguage, true) : undefined,
     [task, t, displayLanguage],
   );
 
@@ -420,24 +423,24 @@ const ScheduledTaskDetailPage: FC = () => {
       startDate: formatScheduledTaskTriggerTime(
         effectiveStartDate,
         taskTimezone,
+        displayLanguage,
       ),
-      endDate: formatScheduledTaskTriggerTime(cronWindow.endDate, taskTimezone),
+      endDate: formatScheduledTaskTriggerTime(
+        cronWindow.endDate,
+        taskTimezone,
+        displayLanguage,
+      ),
     });
-  }, [cronWindow, task?.timezone, taskNextRunTime, t]);
+  }, [cronWindow, task?.timezone, taskNextRunTime, t, displayLanguage]);
 
   const nextRunLabel = useMemo(() => {
     if (!taskNextRunTime) return undefined;
-    let formatted = taskNextRunTime;
-    try {
-      formatted = new Intl.DateTimeFormat(undefined, {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      }).format(new Date(taskNextRunTime));
-    } catch {
-      // Keep the raw ISO string if the date can't be formatted.
-    }
+    const formatted = formatScheduledTaskInstant(
+      taskNextRunTime,
+      displayLanguage,
+    );
     return t(ScheduledTasksI18nKeys.DetailNextRunLabel, { value: formatted });
-  }, [taskNextRunTime, t]);
+  }, [taskNextRunTime, t, displayLanguage]);
 
   const labels = useMemo(
     () => ({
@@ -529,7 +532,7 @@ const ScheduledTaskDetailPage: FC = () => {
     (task?.triggerType === 'date' && task?.nextRunTime == null) ||
     (task?.triggerType === 'cron' &&
       cronWindowEndDate != null &&
-      new Date(cronWindowEndDate).getTime() <= Date.now()) ||
+      hasScheduledTaskWindowEnded(cronWindowEndDate)) ||
     /* Turning the task on runs the consent-checked resume; while the consent
      * is missing the switch renders disabled with no reason label — just the
      * disabled control (product decision). Pausing still works, so an active
@@ -551,7 +554,7 @@ const ScheduledTaskDetailPage: FC = () => {
     if (
       task?.triggerType === 'cron' &&
       cronWindowEndDate != null &&
-      new Date(cronWindowEndDate).getTime() <= Date.now()
+      hasScheduledTaskWindowEnded(cronWindowEndDate)
     )
       return t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonExpired);
     return undefined;

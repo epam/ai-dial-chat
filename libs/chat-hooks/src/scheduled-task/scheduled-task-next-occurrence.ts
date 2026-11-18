@@ -76,3 +76,9 @@ export const getNextCronOccurrence = (
   }
   return undefined;
 };
+
+/** Returns whether a cron activity window's `endDate` is at or before `now` (epoch ms, default: the current time). */
+export const hasScheduledTaskWindowEnded = (
+  endDate: string,
+  now: number = Date.now(),
+): boolean => new Date(endDate).getTime() <= now;

@@ -18,6 +18,14 @@ import {
   describeScheduledTaskTrigger,
   ScheduledTaskTriggerDescriptionKind as Kind,
 } from './scheduled-task-description';
+import {
+  formatScheduledTaskClockTime,
+  formatScheduledTaskRunDate,
+  formatScheduledTaskRunTime,
+  formatScheduledTaskWeekdays,
+  formatZonedDateTime,
+  SCHEDULED_TASK_WALL_DATE_TIME_PATTERN,
+} from './scheduled-task-time-format';
 
 /** Host-translated wording for each schedule shape; every argument is already locale-formatted. */
 export interface ScheduledTaskScheduleLabels {
@@ -27,7 +35,7 @@ export interface ScheduledTaskScheduleLabels {
   everyNMinutes: (count: number) => string;
   /** An hourly run at `minute` past the hour. */
   hourlyAt: (minute: string) => string;
-  /** A daily run at `time` (`HH:mm`). */
+  /** A daily run at `time`, a locale-formatted clock time such as `9:00 AM` or `09:00`. */
   dailyAt: (time: string) => string;
   /** A weekly run on `day` — one weekday name, or several joined as a locale list — at `time`. */
   weeklyAt: (day: string, time: string) => string;
@@ -67,6 +75,8 @@ export interface ScheduledTaskScheduleLabelOptions {
   locale?: string;
   /** The viewer's IANA zone; a task in a different zone gets its zone appended to the label. Defaults to the browser's resolved zone. */
   browserTimezone?: string;
+  /** Appends the task's zone even when it equals the viewer's zone. Needs `labels.withTimezone`. Defaults to `false`. */
+  alwaysShowTimezone?: boolean;
 }
 
 /** Inputs for formatting a run's start time. */
@@ -113,38 +123,13 @@ export enum ScheduledTaskDeleteErrorKind {
   Generic = 'generic',
 }
 
-/** A zone-local `YYYY-MM-DDTHH:mm`, the shape the formatter can show. */
-const WALL_TIME_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 const SECONDS_PER_MINUTE = 60;
 const SECONDS_PER_HOUR = 3600;
-
-/* APScheduler numbers weekdays from Monday = 0, and 2023-01-02 was a Monday. */
-const formatWeekday = (dayOfWeek: string | undefined, locale?: string) =>
-  new Intl.DateTimeFormat(locale, { weekday: 'long', timeZone: 'UTC' }).format(
-    new Date(Date.UTC(2023, 0, 2 + Number(dayOfWeek))),
-  );
-
-/* Several weekdays read as one locale list, e.g. "Monday, Wednesday and Friday". */
-const formatWeekdays = (daysOfWeek: string[], locale?: string) =>
-  new Intl.ListFormat(locale, { type: 'conjunction' }).format(
-    daysOfWeek.map((dayOfWeek) => formatWeekday(dayOfWeek, locale)),
-  );
 
 const isSameDay = (a: Date, b: Date): boolean =>
   a.getFullYear() === b.getFullYear() &&
   a.getMonth() === b.getMonth() &&
   a.getDate() === b.getDate();
-
-/** Formats a zone-local `YYYY-MM-DDTHH:mm` as a medium date and short time without converting it to another zone. */
-export const formatZonedDateTime = (
-  dateTime: string,
-  locale?: string,
-): string =>
-  new Intl.DateTimeFormat(locale, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'UTC',
-  }).format(new Date(`${dateTime}:00Z`));
 
 /**
  * Formats a stored trigger datetime — a zone-local wall time, or an absolute
@@ -159,7 +144,8 @@ export const formatScheduledTaskTriggerTime = (
   const wallTime = isAbsoluteInstant(value)
     ? instantToZonedDateTime(value, timezone)
     : value.slice(0, 16);
-  if (!wallTime || !WALL_TIME_PATTERN.test(wallTime)) return value;
+  if (!wallTime || !SCHEDULED_TASK_WALL_DATE_TIME_PATTERN.test(wallTime))
+    return value;
   return formatZonedDateTime(wallTime, locale);
 };
 
@@ -174,13 +160,16 @@ export const formatScheduledTaskScheduleLabel = (
   {
     locale,
     browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone,
+    alwaysShowTimezone = false,
   }: ScheduledTaskScheduleLabelOptions = {},
 ): string => {
   const timezone = task.timezone || 'UTC';
   const description = describeScheduledTaskTrigger(task.trigger, { timezone });
   const time = description.time ?? '';
+  const clockTime = formatScheduledTaskClockTime(time, locale);
   const withZone = (label: string): string =>
-    labels.withTimezone && !isSameTimezone(timezone, browserTimezone)
+    labels.withTimezone &&
+    (alwaysShowTimezone || !isSameTimezone(timezone, browserTimezone))
       ? labels.withTimezone(label, timezone)
       : label;
   switch (description.kind) {
@@ -193,19 +182,21 @@ export const formatScheduledTaskScheduleLabel = (
     case Kind.Hourly:
       return withZone(labels.hourlyAt(time));
     case Kind.Daily:
-      return withZone(labels.dailyAt(time));
+      return withZone(labels.dailyAt(clockTime));
     case Kind.Weekly:
       return withZone(
         labels.weeklyAt(
-          formatWeekdays(
+          formatScheduledTaskWeekdays(
             description.daysOfWeek ?? [description.dayOfWeek ?? ''],
             locale,
           ),
-          time,
+          clockTime,
         ),
       );
     case Kind.Monthly:
-      return withZone(labels.monthlyAt(description.dayOfMonth ?? '', time));
+      return withZone(
+        labels.monthlyAt(description.dayOfMonth ?? '', clockTime),
+      );
     case Kind.Invalid:
       return labels.invalid;
     default:
@@ -269,18 +260,10 @@ export const formatScheduledTaskRunTimestamp = (
   }: ScheduledTaskRunTimestampOptions = {},
 ): string => {
   const start = new Date(startTime);
-  const time = new Intl.DateTimeFormat(locale, { timeStyle: 'short' }).format(
-    start,
-  );
+  const time = formatScheduledTaskRunTime(start, locale);
   const dateLabel = isSameDay(start, now)
     ? labels.todayAt(time)
-    : labels.dateAt(
-        new Intl.DateTimeFormat(locale, {
-          month: 'short',
-          day: 'numeric',
-        }).format(start),
-        time,
-      );
+    : labels.dateAt(formatScheduledTaskRunDate(start, locale), time);
 
   const durationLabel = durationLabels
     ? formatScheduledTaskRunDuration(durationSeconds, durationLabels)
