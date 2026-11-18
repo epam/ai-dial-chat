@@ -30,15 +30,19 @@ export interface PublicationRule {
 
 ### Requirement: Rules section renders in the Publish sidebar for all three publishable types
 
-`PublishPanel` (`libs/publish-panel/src/components/PublishPanel/PublishPanel.tsx`) SHALL render the access-rules section inside the destination-folder block, after the callout, the author field and the credentials checkbox, as the last element of the same scrollable body — never inside the pinned `PublishFooter`. This section SHALL render identically regardless of which host supplies it — `PublishConversationPanelContainer` (through the `StandalonePublishPanel` wrapper, which forwards the same rule props) or `DetailsPanel` (rendering `PublishPanel` directly) — since both wire the same controlled props.
+`PublishPanel` (`libs/publish-panel/src/components/PublishPanel/PublishPanel.tsx`) SHALL, when `onRulesChange` is supplied, render the access-rules section inside the destination-folder block, after the callout, the author field and the credentials checkbox, as the last element of the same scrollable body — never inside the pinned `PublishFooter`. This section SHALL render identically regardless of which host supplies it — `PublishConversationPanelContainer` (through the `StandalonePublishPanel` wrapper, which forwards the same rule props) or `DetailsPanel` (rendering `PublishPanel` directly) — since both wire the same controlled props.
 
-`PublishPanelProps` (declared in `PublishPanel.tsx`) SHALL carry three required props:
+`PublishPanelProps` (declared in `PublishPanel.tsx`) SHALL carry three optional props:
 ```ts
-rules: PublicationRule[];
-onRulesChange: (rules: PublicationRule[]) => void;
-ruleSourceOptions: string[];
+rules?: PublicationRule[];            // default []
+onRulesChange?: (rules: PublicationRule[]) => void;
+ruleSourceOptions?: string[];         // default []
 ```
-plus optional `isRulesLoading?: boolean` and `hasRulesLoadError?: boolean` (both default `false`), and an optional `PublishPanelLabels.accessRulesLabels?: PublishAccessRulesLabels` carrying the section heading, folder-scope hints, chip separator/remove/clear labels, function labels, live-region announcements, and a nested `editorLabels?: PublishAccessRuleEditorLabels` for the rule editor's field labels, placeholders, and validation error strings.
+Supplying `onRulesChange` is what renders the section: a host that does not manage rules in the panel omits it and gets a panel without the section or its "Add rule" control. The `StandalonePublishPanel` wrapper forwards the same optional props. In addition the panel takes optional `isRulesLoading?: boolean` and `hasRulesLoadError?: boolean` (both default `false`), and an optional `PublishPanelLabels.accessRulesLabels?: PublishAccessRulesLabels` carrying the section heading, folder-scope hints, chip separator/remove/clear labels, function labels, live-region announcements, and a nested `editorLabels?: PublishAccessRuleEditorLabels` for the rule editor's field labels, placeholders, and validation error strings.
+
+#### Scenario: Section is omitted without onRulesChange
+- **WHEN** `PublishPanel` renders on its main view without `onRulesChange`
+- **THEN** no "Allow access if all match" heading, "Add rule" control, or rule editor is rendered, and the rest of the panel is unaffected
 
 #### Scenario: Section appears identically for a conversation, an application, and a toolset
 - **WHEN** the Publish sidebar opens for a conversation, an application, or a toolset
