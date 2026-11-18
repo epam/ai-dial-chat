@@ -1,7 +1,7 @@
 import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ModelSelectorControl } from '../ModelSelectorControl';
 
 const makeDeployments = (): DeploymentItem[] => [
@@ -170,5 +170,74 @@ describe('ModelSelectorControl — streaming', () => {
     await user.keyboard('{Enter}');
 
     expect(screen.queryByRole('dialog', { name: 'Select model' })).toBeNull();
+  });
+});
+
+describe('ModelSelectorControl — unavailable deployment', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const renderUnavailable = (
+    props: Partial<Parameters<typeof ModelSelectorControl>[0]> = {},
+  ) =>
+    render(
+      <ModelSelectorControl
+        deployments={makeDeployments()}
+        selectedDeploymentId="removed-model"
+        onDeploymentChange={vi.fn()}
+        modelSelectorLabels={{
+          ariaLabel: 'Select model',
+          unavailableTooltip: 'Deployment is gone',
+        }}
+        isStreaming={false}
+        isMobile={false}
+        style={{}}
+        {...props}
+      />,
+    );
+
+  it.each([
+    { presentation: 'desktop menu', props: {} },
+    {
+      presentation: 'desktop host overlay',
+      props: { modelPickerOverlay: () => <div>overlay content</div> },
+    },
+    { presentation: 'mobile sheet', props: { isMobile: true } },
+  ])(
+    'shows the unavailable tooltip when the $presentation trigger is hovered',
+    async ({ props }) => {
+      const user = userEvent.setup({ delay: null });
+      renderUnavailable(props);
+
+      await user.hover(screen.getByRole('button', { name: /Select model/ }));
+
+      expect(await screen.findByText('Deployment is gone')).toBeTruthy();
+    },
+  );
+
+  it('falls back to the English unavailable tooltip without a label', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderUnavailable({ modelSelectorLabels: { ariaLabel: 'Select model' } });
+
+    await user.hover(screen.getByRole('button', { name: /Select model/ }));
+
+    expect(
+      await screen.findByText('This deployment is no longer available'),
+    ).toBeTruthy();
+  });
+
+  it('shows the deployment name, not the unavailable tooltip, for an available deployment', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderUnavailable({ selectedDeploymentId: 'gpt-4o' });
+
+    await user.hover(screen.getByRole('button', { name: /Select model/ }));
+
+    expect(await screen.findByRole('tooltip')).toBeTruthy();
+    expect(screen.queryByText('Deployment is gone')).toBeNull();
   });
 });
