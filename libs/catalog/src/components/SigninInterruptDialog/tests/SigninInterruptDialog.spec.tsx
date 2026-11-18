@@ -54,14 +54,36 @@ describe('SigninInterruptDialog', () => {
   it('renders the heading, description and the row name with its version', () => {
     renderDialog({ rows: [makeRow({ displayVersion: '1.0' })] });
 
-    expect(screen.getByText('Sign-in required')).toBeTruthy();
+    expect(
+      screen.getByRole('dialog', { name: 'Sign-in required' }),
+    ).toBeTruthy();
     expect(
       screen.getByText(
         'One or more tools or services need you to sign in before the conversation can continue.',
       ),
     ).toBeTruthy();
-    expect(screen.getByText('My Toolset (1.0)')).toBeTruthy();
+    expect(screen.getByText('My Toolset')).toBeTruthy();
+    expect(screen.getByText('1.0')).toBeTruthy();
     expect(screen.getByRole('group', { name: 'My Toolset' })).toBeTruthy();
+  });
+
+  it('shows the pending count next to the heading only while more than one row is listed', () => {
+    const { rerender } = renderDialog();
+    expect(screen.queryByText('1')).toBeNull();
+
+    rerender(
+      <SigninInterruptDialog
+        rows={[makeRow(), makeRow({ id: 'evt-2' }), makeRow({ id: 'evt-3' })]}
+        offlineUsageConsent
+        onOfflineUsageConsentChange={onOfflineUsageConsentChange}
+        onApiKeyChange={onApiKeyChange}
+        onLogin={onLogin}
+        onDecline={onDecline}
+        onDeclineAll={onDeclineAll}
+      />,
+    );
+
+    expect(screen.getByText('3')).toBeTruthy();
   });
 
   it('reports API key changes and disables Log in until the host allows submitting', async () => {
@@ -129,6 +151,7 @@ describe('SigninInterruptDialog', () => {
 
     expect(screen.getByRole('alert')).toBe(alert);
     expect(alert.textContent).toContain('Failed to log in.');
+    expect(screen.queryByRole('button', { name: 'Log in' })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onLogin).toHaveBeenCalledWith('evt-1');
   });
@@ -150,10 +173,13 @@ describe('SigninInterruptDialog', () => {
     expect(screen.getAllByRole('button', { name: 'Decline' })).toHaveLength(1);
   });
 
-  it('renders Decline all only while more than one row is listed', async () => {
+  it('renders the footer actions only while more than one row is listed', async () => {
     const user = userEvent.setup();
     const { rerender } = renderDialog();
     expect(screen.queryByRole('button', { name: 'Decline all' })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Log in to My Toolset' }),
+    ).toBeNull();
 
     rerender(
       <SigninInterruptDialog
@@ -169,6 +195,39 @@ describe('SigninInterruptDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Decline all' }));
 
     expect(onDeclineAll).toHaveBeenCalledOnce();
+  });
+
+  it('logs in to the first idle, submittable row needing credentials from the footer', async () => {
+    const user = userEvent.setup();
+    renderDialog({
+      rows: [
+        makeRow({ id: 'evt-1', displayName: 'Busy', isProcessing: true }),
+        makeRow({
+          id: 'evt-2',
+          displayName: 'Free',
+          requiresNoCredentials: true,
+        }),
+        makeRow({ id: 'evt-3', displayName: 'Keyless', canSubmitLogin: false }),
+        makeRow({ id: 'evt-4', displayName: 'Jira' }),
+      ],
+      labels: { logInTo: (name) => `Sign in: ${name}` },
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Sign in: Jira' }));
+
+    expect(onLogin).toHaveBeenCalledWith('evt-4');
+  });
+
+  it('omits the footer login when no row can be submitted', () => {
+    renderDialog({
+      rows: [
+        makeRow({ canSubmitLogin: false }),
+        makeRow({ id: 'evt-2', isProcessing: true }),
+      ],
+    });
+
+    expect(screen.getByRole('button', { name: 'Decline all' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Log in to/ })).toBeNull();
   });
 
   it('renders the offline-use consent only when asked and reports changes', async () => {
@@ -207,10 +266,10 @@ describe('SigninInterruptDialog', () => {
     renderDialog({
       labels: { title: 'Anmelden', logIn: 'Einloggen' },
       nameClassName: 'dial-h3-text',
-      colors: { nameText: 'red' },
+      colors: { nameText: 'red', rowHoverBackground: 'blue' },
     });
 
-    expect(screen.getByText('Anmelden')).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: 'Anmelden' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Einloggen' })).toBeTruthy();
     const name = screen.getByText('My Toolset');
     expect(name.className).toContain('dial-h3-text');
@@ -219,5 +278,11 @@ describe('SigninInterruptDialog', () => {
     // eslint-disable-next-line testing-library/no-node-access
     const vars = name.closest<HTMLElement>('[style]');
     expect(vars?.style.getPropertyValue('--cat-signin-name-text')).toBe('red');
+    expect(
+      vars?.style.getPropertyValue('--cat-signin-row-hover-background'),
+    ).toBe('blue');
+    expect(screen.getByRole('group', { name: 'My Toolset' }).className).toMatch(
+      /row/,
+    );
   });
 });

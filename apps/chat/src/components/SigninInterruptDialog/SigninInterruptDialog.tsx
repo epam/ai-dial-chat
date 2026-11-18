@@ -97,6 +97,7 @@ const SigninInterruptDialog: FC = () => {
       title: t(ToolsetSigninI18nKeys.DialogTitle),
       description: t(ToolsetSigninI18nKeys.DialogDescription),
       declineAll: t(ToolsetSigninI18nKeys.DeclineAll),
+      logInTo: (name: string) => t(ToolsetSigninI18nKeys.LogInTo, { name }),
       decline: t(ToolsetSigninI18nKeys.RowDecline),
       logIn: t(ButtonsI18nKeys.LogIn),
       retry: t(ButtonsI18nKeys.Retry),
