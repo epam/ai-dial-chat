@@ -378,12 +378,12 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it('declares exactly the 51 known keys: 1 managed, 31 local-only and 19 eligible', () => {
-    expect(CONFIG_DEFINITIONS).toHaveLength(51);
+  it('declares exactly the 53 known keys: 1 managed, 33 local-only and 19 eligible', () => {
+    expect(CONFIG_DEFINITIONS).toHaveLength(53);
     expect(managed).toHaveLength(1);
     expect(
       CONFIG_DEFINITIONS.filter((d) => localOnlyReasonOf(d) !== undefined),
-    ).toHaveLength(31);
+    ).toHaveLength(33);
     expect(
       CONFIG_DEFINITIONS.filter((d) => d.management === undefined),
     ).toHaveLength(19);
@@ -445,6 +445,8 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     ['asr.modelId', LocalOnlyReason.Capability],
     ['features.asrEnabled', LocalOnlyReason.Capability],
     ['utility.modelId', LocalOnlyReason.Capability],
+    ['analytics.url', LocalOnlyReason.DeploymentTopology],
+    ['analytics.timeoutMs', LocalOnlyReason.Capability],
     ['features.llmConversationNaming', LocalOnlyReason.Capability],
     ['features.responsesApiEnabled', LocalOnlyReason.Capability],
     ['features.responsesBackgroundEnabled', LocalOnlyReason.Capability],

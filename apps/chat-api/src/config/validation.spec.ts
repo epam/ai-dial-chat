@@ -225,3 +225,38 @@ describe('validate - CLIENT_CONFIG_APP_IDS', () => {
     ).toThrow(/CLIENT_CONFIG_APP_IDS must list at most 16/);
   });
 });
+
+describe('validate - DIAL Analytics', () => {
+  it('leaves ANALYTICS_URL unset and defaults ANALYTICS_TIMEOUT_MS to 10000', () => {
+    const config = validate(validBaseConfig);
+
+    expect(config.ANALYTICS_URL).toBeUndefined();
+    expect(config.ANALYTICS_TIMEOUT_MS).toBe(10_000);
+  });
+
+  it('accepts an in-cluster analytics URL and a numeric timeout', () => {
+    const config = validate({
+      ...validBaseConfig,
+      ANALYTICS_URL: 'http://ai-dial-analytics:8080',
+      ANALYTICS_TIMEOUT_MS: '5000',
+    });
+
+    expect(config.ANALYTICS_URL).toBe('http://ai-dial-analytics:8080');
+    expect(config.ANALYTICS_TIMEOUT_MS).toBe(5000);
+  });
+
+  it.each(['abc', '500'])(
+    'fails startup for ANALYTICS_TIMEOUT_MS=%s',
+    (value) => {
+      expect(() =>
+        validate({ ...validBaseConfig, ANALYTICS_TIMEOUT_MS: value }),
+      ).toThrow(/ANALYTICS_TIMEOUT_MS/);
+    },
+  );
+
+  it('fails startup for an ANALYTICS_URL that is not a URL', () => {
+    expect(() =>
+      validate({ ...validBaseConfig, ANALYTICS_URL: 'not a url' }),
+    ).toThrow(/ANALYTICS_URL/);
+  });
+});

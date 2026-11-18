@@ -346,6 +346,32 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     management: localOnlyKey(LocalOnlyReason.Capability),
   },
   {
+    key: 'analytics.url',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'server',
+    defaultValue: null,
+    critical: false,
+    description:
+      "Base URL of DIAL Analytics (ADAS), read by GET /api/v1/user/usage/history with the caller's own token. Null when ANALYTICS_URL is not configured, which turns the route off (it answers not_configured). Never exposed to the frontend client-config endpoint (visibility: server).",
+    owner: 'chat-team',
+    envVar: 'ANALYTICS_URL',
+    management: localOnlyKey(LocalOnlyReason.DeploymentTopology),
+  },
+  {
+    key: 'analytics.timeoutMs',
+    type: 'config',
+    valueType: 'number',
+    visibility: 'server',
+    defaultValue: 10_000,
+    critical: false,
+    description:
+      'Timeout in milliseconds of each DIAL Analytics call made for one usage-history request. No retries. Never exposed to the frontend client-config endpoint (visibility: server).',
+    owner: 'chat-team',
+    envVar: 'ANALYTICS_TIMEOUT_MS',
+    management: localOnlyKey(LocalOnlyReason.Capability),
+  },
+  {
     key: 'features.llmConversationNaming',
     type: 'feature',
     valueType: 'boolean',

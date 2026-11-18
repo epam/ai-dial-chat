@@ -11129,6 +11129,158 @@ export interface UploadArchiveResponseDto {
 /**
  *
  * @export
+ * @interface UsageHistoryClientEntryDto
+ */
+export interface UsageHistoryClientEntryDto {
+  /**
+   * Client type from DIAL Analytics' `usage_client_identity` enrichment (for example `chat`, `claudecode`, `claudedesktop`, `codex`, `opencode`, `dialcli`, `other`), or `unknown` when the enrichment has no value for the request.
+   * @type {string}
+   * @memberof UsageHistoryClientEntryDto
+   */
+  client: string;
+  /**
+   * Spend in USD, rounded to 6 decimal places (half away from zero), summed from the root span's chain-inclusive price: a call to an application includes the models it called.
+   * @type {number}
+   * @memberof UsageHistoryClientEntryDto
+   */
+  spend: number;
+  /**
+   * User requests from this client.
+   * @type {number}
+   * @memberof UsageHistoryClientEntryDto
+   */
+  requests: number;
+}
+/**
+ *
+ * @export
+ * @interface UsageHistoryDailyEntryDto
+ */
+export interface UsageHistoryDailyEntryDto {
+  /**
+   * UTC calendar date, `YYYY-MM-DD`.
+   * @type {string}
+   * @memberof UsageHistoryDailyEntryDto
+   */
+  date: string;
+  /**
+   * Spend in USD, rounded to 6 decimal places (half away from zero), summed from the root span's chain-inclusive price: a call to an application includes the models it called.
+   * @type {number}
+   * @memberof UsageHistoryDailyEntryDto
+   */
+  spend: number;
+  /**
+   * User requests on that date.
+   * @type {number}
+   * @memberof UsageHistoryDailyEntryDto
+   */
+  requests: number;
+  /**
+   * That date's spend per deployment, keyed by the deployment names of the top-level `byModel` (including `other`). Keys with no spend and no requests on that date are omitted, so a date without usage has an empty object.
+   * @type {{ [key: string]: number; }}
+   * @memberof UsageHistoryDailyEntryDto
+   */
+  byModel: { [key: string]: number };
+}
+/**
+ *
+ * @export
+ * @interface UsageHistoryModelEntryDto
+ */
+export interface UsageHistoryModelEntryDto {
+  /**
+   * Root deployment the user called, or `other` for the remainder beyond the top 10 by spend.
+   * @type {string}
+   * @memberof UsageHistoryModelEntryDto
+   */
+  deployment: string;
+  /**
+   * Spend in USD, rounded to 6 decimal places (half away from zero), summed from the root span's chain-inclusive price: a call to an application includes the models it called.
+   * @type {number}
+   * @memberof UsageHistoryModelEntryDto
+   */
+  spend: number;
+  /**
+   * User requests to this deployment.
+   * @type {number}
+   * @memberof UsageHistoryModelEntryDto
+   */
+  requests: number;
+}
+
+/**
+ *
+ * @export
+ */
+export const UsageHistoryPeriod = {
+  Today: 'today',
+  Week: 'week',
+  Month: 'month',
+} as const;
+export type UsageHistoryPeriod =
+  (typeof UsageHistoryPeriod)[keyof typeof UsageHistoryPeriod];
+
+/**
+ *
+ * @export
+ * @interface UsageHistoryTotalsDto
+ */
+export interface UsageHistoryTotalsDto {
+  /**
+   * Spend in USD, rounded to 6 decimal places (half away from zero), summed from the root span's chain-inclusive price: a call to an application includes the models it called.
+   * @type {number}
+   * @memberof UsageHistoryTotalsDto
+   */
+  spend: number;
+  /**
+   * Number of user requests (root spans) in the window.
+   * @type {number}
+   * @memberof UsageHistoryTotalsDto
+   */
+  requests: number;
+}
+
+/**
+ * Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. `forbidden`: DIAL Analytics refused the caller's token, or the caller's view of the usage log is not restricted to their own rows. `unavailable`: timeout, network error or server error.
+ * @export
+ */
+export const UsageHistoryUnavailableReason = {
+  NotConfigured: 'not_configured',
+  Unavailable: 'unavailable',
+  Forbidden: 'forbidden',
+} as const;
+export type UsageHistoryUnavailableReason =
+  (typeof UsageHistoryUnavailableReason)[keyof typeof UsageHistoryUnavailableReason];
+
+/**
+ *
+ * @export
+ * @interface UsageHistoryWindowDto
+ */
+export interface UsageHistoryWindowDto {
+  /**
+   * The requested period.
+   * @type {UsageHistoryPeriod}
+   * @memberof UsageHistoryWindowDto
+   */
+  name: UsageHistoryPeriod;
+  /**
+   * Inclusive window start: 00:00:00.000Z of the current UTC day, ISO week Monday, or month 1st.
+   * @type {string}
+   * @memberof UsageHistoryWindowDto
+   */
+  from: string;
+  /**
+   * Exclusive window end: the request time.
+   * @type {string}
+   * @memberof UsageHistoryWindowDto
+   */
+  to: string;
+}
+
+/**
+ *
+ * @export
  * @interface UserConfigDto
  */
 export interface UserConfigDto {
@@ -11266,6 +11418,61 @@ export interface UserProfileDto {
    * @memberof UserProfileDto
    */
   pictureUrl?: string;
+}
+/**
+ *
+ * @export
+ * @interface UserUsageHistoryResponseDto
+ */
+export interface UserUsageHistoryResponseDto {
+  /**
+   * Whether DIAL Analytics answered. `true`: `period`, `currency`, `totals`, `daily` and `byModel` are present (and `byClient` when the client-identity enrichment is available). `false`: only `reason` is present.
+   * @type {boolean}
+   * @memberof UserUsageHistoryResponseDto
+   */
+  available: boolean;
+  /**
+   * Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. `forbidden`: DIAL Analytics refused the caller's token, or the caller's view of the usage log is not restricted to their own rows. `unavailable`: timeout, network error or server error.
+   * @type {UsageHistoryUnavailableReason}
+   * @memberof UserUsageHistoryResponseDto
+   */
+  reason?: UsageHistoryUnavailableReason;
+  /**
+   * Present only when `available` is `true`. The half-open window `[from, to)`.
+   * @type {UsageHistoryWindowDto}
+   * @memberof UserUsageHistoryResponseDto
+   */
+  period?: UsageHistoryWindowDto;
+  /**
+   * Present only when `available` is `true`. Always `USD`: DIAL Analytics prices carry no currency.
+   * @type {string}
+   * @memberof UserUsageHistoryResponseDto
+   */
+  currency?: string;
+  /**
+   * Present only when `available` is `true`. Spend and requests of the whole window.
+   * @type {UsageHistoryTotalsDto}
+   * @memberof UserUsageHistoryResponseDto
+   */
+  totals?: UsageHistoryTotalsDto;
+  /**
+   * Present only when `available` is `true`. One entry per UTC date of the window, ascending, zero-filled.
+   * @type {Array<UsageHistoryDailyEntryDto>}
+   * @memberof UserUsageHistoryResponseDto
+   */
+  daily?: Array<UsageHistoryDailyEntryDto>;
+  /**
+   * Present only when `available` is `true`. Root deployments by spend descending, at most 10, followed by one `other` entry with the remainder when more than 10 have usage.
+   * @type {Array<UsageHistoryModelEntryDto>}
+   * @memberof UserUsageHistoryResponseDto
+   */
+  byModel?: Array<UsageHistoryModelEntryDto>;
+  /**
+   * Present only when `available` is `true` and DIAL Analytics exposes the client-identity enrichment to the caller; absent (not empty) otherwise. Sorted by spend descending.
+   * @type {Array<UsageHistoryClientEntryDto>}
+   * @memberof UserUsageHistoryResponseDto
+   */
+  byClient?: Array<UsageHistoryClientEntryDto>;
 }
 
 /**

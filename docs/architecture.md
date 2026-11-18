@@ -594,6 +594,7 @@ apps/chat-api/src/
 ├── external-services/      # Application external-service metadata + signin/signout proxy
 ├── offline-credentials/    # Long-lived credentials for background runs
 ├── deployments/  models/   # Deployment and model listings
+├── usage-history/          # Caller's own usage history from DIAL Analytics (ADAS), optional (ANALYTICS_URL)
 ├── text-refinement/        # Bounded draft rewriting with caller credentials
 ├── transcription/          # Speech-to-text proxy for voice input
 ├── rate/                   # Message like/dislike
@@ -798,6 +799,7 @@ The worker enters `finalizing` immediately before its single terminal-save attem
 | `GET`  | `/api/v1/deployments/{deployment}/usage`   | One deployment's own usage: token/request stats as on `/limits`, cost stats are its direct + aggregated spend (no account budget)                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `GET`  | `/api/v1/user/limits`                      | Rate-limit and calendar-period usage stats for every visible deployment of the kinds in the optional `deploymentTypes` (models and/or applications; default from `USER_USAGE_DEPLOYMENT_TYPES`), plus global cost-budget figures, the optional `budgets[]` (each applicable spending budget's day/month limit and spend, its `displayName` and covered models `object`, in DIAL Core order, separate from the global figures) and the optional `costObject` (the cost object whose budgets the caller's model calls are charged to) |
 | `GET`  | `/api/v1/user/usage`                       | Same shape as `/api/v1/user/limits`, restricted to deployments used in the current UTC day/week/month; takes the same `deploymentTypes` and carries the same `budgets[]`                                                                                                                                                                                                                                                                                                                                                            |
+| `GET`  | `/api/v1/user/usage/history`               | The caller's own spend and requests for the current UTC day/week/month from DIAL Analytics (ADAS): zero-filled daily series, top-10 root deployments plus `other`, optional client split. Forwards the session token; ADAS row policy confines rows; a non-row-restricted ADAS view answers `forbidden`. Always `200` with `available`/`reason`; off unless `ANALYTICS_URL` is set (`apps/chat-api/README.md` "Usage history (DIAL Analytics)")                                                                                     |
 
 #### Client Channel (`/api/v1/client-channel`)
 

@@ -34,6 +34,7 @@ import { TextRefinementModule } from '../text-refinement/text-refinement.module'
 import { ThemesModule } from '../themes/themes.module';
 import { ToolsetsModule } from '../toolsets/toolsets.module';
 import { TranscriptionModule } from '../transcription/transcription.module';
+import { UsageHistoryModule } from '../usage-history/usage-history.module';
 import { UserConfigModule } from '../user-config/user-config.module';
 import { AppController } from './app.controller';
 import { createAppCacheOptions } from './cache.config';
@@ -56,6 +57,7 @@ import { createAppCacheOptions } from './cache.config';
     OrgUnitsModule,
     ApplicationsModule,
     DeploymentsModule,
+    UsageHistoryModule,
     ModelsModule,
     ToolsetsModule,
     ChatModule,
