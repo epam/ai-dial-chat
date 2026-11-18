@@ -967,6 +967,21 @@ describe('PublishService', () => {
         },
       );
 
+      it('does not treat another "already exists" message as a taken target', async () => {
+        const { service, dialClient } = makeService();
+        vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+          rejection(400, 'Publication rule already exists'),
+        );
+        vi.spyOn(dialClient.client, 'getToolSetMetadata').mockResolvedValue({
+          error: {},
+          response: { status: 404 },
+        } as never);
+
+        await expect(publishToolset(service)).rejects.toBeInstanceOf(
+          BadRequestException,
+        );
+      });
+
       it('keeps a 400 that is not about an existing target', async () => {
         const { service, dialClient } = makeService();
         vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(

@@ -76,7 +76,7 @@ const bucketPublicationsCacheKey = (bucket: string) =>
 const BUCKET_PUBLICATIONS_TTL_MS = 60 * 1000;
 
 /* Core's rejection of a publication whose target exists reads "Target resource already exists: {targetUrl}". */
-const TARGET_EXISTS_PATTERN = /already exists/i;
+const TARGET_EXISTS_PATTERN = /target resource already exists/i;
 
 const TARGET_EXISTS_MESSAGE =
   'A resource with this name already exists in the target folder. Rename it, change its version or choose another folder';

@@ -312,7 +312,7 @@ export class PublishApi extends runtime.BaseAPI {
   }
 
   /**
-   * Derives the path a publish of this entity into `folderPath` (and `version`) would create, exactly as the publish endpoint does, and reads that path\'s metadata with the caller\'s own token. Creates nothing. `exists: false` means no resource was found, not that none exists: a copy hidden from the caller by access rules, or one still pending approval, is not detected, and another publication can land before the caller submits. The publish endpoint answers `409` `target-exists` for those cases.
+   * Derives the path a publish of this entity into `folderPath` (and `version`) would create, exactly as the publish endpoint does, and reads that path\'s metadata with the caller\'s own token. Creates nothing. `taken: false` means no resource was found, not that none is there: a copy hidden from the caller by access rules, or one still pending approval, is not detected, and another publication can land before the caller submits. The publish endpoint answers `409` `target-exists` for those cases.
    * Check whether the published copy of an entity would land on a taken path
    */
   async getCatalogPublishTargetRaw(
@@ -385,7 +385,7 @@ export class PublishApi extends runtime.BaseAPI {
   }
 
   /**
-   * Derives the path a publish of this entity into `folderPath` (and `version`) would create, exactly as the publish endpoint does, and reads that path\'s metadata with the caller\'s own token. Creates nothing. `exists: false` means no resource was found, not that none exists: a copy hidden from the caller by access rules, or one still pending approval, is not detected, and another publication can land before the caller submits. The publish endpoint answers `409` `target-exists` for those cases.
+   * Derives the path a publish of this entity into `folderPath` (and `version`) would create, exactly as the publish endpoint does, and reads that path\'s metadata with the caller\'s own token. Creates nothing. `taken: false` means no resource was found, not that none is there: a copy hidden from the caller by access rules, or one still pending approval, is not detected, and another publication can land before the caller submits. The publish endpoint answers `409` `target-exists` for those cases.
    * Check whether the published copy of an entity would land on a taken path
    */
   async getCatalogPublishTarget(

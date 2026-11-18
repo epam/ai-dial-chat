@@ -78,7 +78,12 @@ export const usePublishErrorNotification = (): ((
 
       if (error instanceof PublishTargetTakenError) {
         const notifyTargetTaken = async () => {
-          const { traceId } = await getApiErrorDetails(error.cause);
+          let traceId: string | undefined;
+          try {
+            ({ traceId } = await getApiErrorDetails(error.cause));
+          } catch {
+            /* The text is shown without a request ID when the cause cannot be read. */
+          }
           showErrorNotification({
             title: t(copy.titleKey),
             message: t(

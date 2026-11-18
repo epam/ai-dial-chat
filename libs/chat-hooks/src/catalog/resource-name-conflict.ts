@@ -1,5 +1,6 @@
 import { ResourceNameConflictCode } from '@epam/ai-dial-chat-api-client';
 import { getApiErrorDetails } from '../api-error/api-error';
+import { withApiErrorMapping } from '../api-error/map-api-error';
 import {
   isResourceCreateAdapter,
   ResourceSaveError,
@@ -55,19 +56,13 @@ export const withResourceNameConflictMessages = (
    * already exists" text. Moving a saved resource is left unwrapped: its
    * failure already has its own "saved, but not moved" outcome.
    */
-  const guard =
-    <Args extends unknown[], Result>(
-      operation: (...args: Args) => Promise<Result>,
-    ) =>
-    async (...args: Args): Promise<Result> => {
-      try {
-        return await operation(...args);
-      } catch (error) {
-        const kind = await getResourceNameConflictKind(error);
-        if (kind != null) throw new ResourceSaveError(messages[kind]);
-        throw error;
-      }
-    };
+  const guard = <Args extends unknown[], Result>(
+    operation: (...args: Args) => Promise<Result>,
+  ) =>
+    withApiErrorMapping(operation, async (error) => {
+      const kind = await getResourceNameConflictKind(error);
+      return kind == null ? undefined : new ResourceSaveError(messages[kind]);
+    });
 
   if (isResourceCreateAdapter(adapter)) {
     return { ...adapter, createIn: guard(adapter.createIn) };

@@ -9,6 +9,8 @@ import {
 export interface PublishFlowItem {
   /** Version, when the item is versioned. `undefined` for unversioned resources. */
   version?: string;
+  /** Identity of the item, when the host can show several items through one flow; a taken-target answer is never carried from one id to another. */
+  id?: string;
 }
 
 const insertFolder = (
@@ -328,13 +330,17 @@ export const usePublishFlow = <
    * anything beneath it, so it cannot collide and is not checked.
    */
   const createdFolderKeys = useRef(new Set<string>());
-  const [takenKey, setTakenKey] = useState<string>();
+  /* Kept apart: a refusal on submit also covers a copy the check cannot see, so a later free answer must not clear it. */
+  const [checkedTakenKey, setCheckedTakenKey] = useState<string>();
+  const [submitTakenKey, setSubmitTakenKey] = useState<string>();
   const [isTargetChecking, setIsTargetChecking] = useState(false);
   const targetKey =
     selectedFolderPath == null
       ? undefined
-      : `${selectedFolderPath.join('/')}\u0000${item.version ?? ''}`;
-  const isTargetTaken = targetKey != null && takenKey === targetKey;
+      : `${item.id ?? ''}\u0000${selectedFolderPath.join('/')}\u0000${item.version ?? ''}`;
+  const isTargetTaken =
+    targetKey != null &&
+    (checkedTakenKey === targetKey || submitTakenKey === targetKey);
 
   useEffect(() => {
     if (
@@ -360,7 +366,7 @@ export const usePublishFlow = <
     onCheckTargetExists(item, selectedFolderPath)
       .then((isTaken) => {
         if (isCancelled) return;
-        setTakenKey((previous) => {
+        setCheckedTakenKey((previous) => {
           if (isTaken) return targetKey;
           return previous === targetKey ? undefined : previous;
         });
@@ -373,6 +379,7 @@ export const usePublishFlow = <
     return () => {
       isCancelled = true;
     };
+    /* `item` and the callback are read when the key changes; `targetKey` already carries the folder and version, and a new callback identity must not re-ask. */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetKey, hasExistingPublicationInFolder, onCheckTargetExists == null]);
 
@@ -410,7 +417,7 @@ export const usePublishFlow = <
       return true;
     } catch (error) {
       if (isTargetTakenError?.(error) && targetKey != null) {
-        setTakenKey(targetKey);
+        setSubmitTakenKey(targetKey);
       } else {
         setHasSubmitError(true);
       }
@@ -442,7 +449,8 @@ export const usePublishFlow = <
     setIsAuthorEdited(false);
     setPublishCredentials(false);
     createdFolderKeys.current.clear();
-    setTakenKey(undefined);
+    setCheckedTakenKey(undefined);
+    setSubmitTakenKey(undefined);
     setIsTargetChecking(false);
   }, [defaultAuthor, initialFolderItems]);
 

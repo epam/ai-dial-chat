@@ -133,7 +133,7 @@ export class PublishController {
     summary:
       'Check whether the published copy of an entity would land on a taken path',
     description:
-      "Derives the path a publish of this entity into `folderPath` (and `version`) would create, exactly as the publish endpoint does, and reads that path's metadata with the caller's own token. Creates nothing. `exists: false` means no resource was found, not that none exists: a copy hidden from the caller by access rules, or one still pending approval, is not detected, and another publication can land before the caller submits. The publish endpoint answers `409` `target-exists` for those cases.",
+      "Derives the path a publish of this entity into `folderPath` (and `version`) would create, exactly as the publish endpoint does, and reads that path's metadata with the caller's own token. Creates nothing. `taken: false` means no resource was found, not that none is there: a copy hidden from the caller by access rules, or one still pending approval, is not detected, and another publication can land before the caller submits. The publish endpoint answers `409` `target-exists` for those cases.",
   })
   @ApiDialCoreErrors()
   @ApiResponse({
@@ -161,7 +161,7 @@ export class PublishController {
   @ApiResponse({
     status: 503,
     description:
-      'The session user bucket could not be resolved because DIAL Core is unavailable (raised by session authentication; an unreachable DIAL Core during the call itself is reported as 502)',
+      'DIAL Core is unavailable or timed out, or the session user bucket could not be resolved because DIAL Core is unavailable',
   })
   getPublishTarget(
     @Req() req: Request,

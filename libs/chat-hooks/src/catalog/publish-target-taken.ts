@@ -1,5 +1,6 @@
 import { PublishConflictCode } from '@epam/ai-dial-chat-api-client';
 import { getApiErrorDetails } from '../api-error/api-error';
+import { withApiErrorMapping } from '../api-error/map-api-error';
 
 /**
  * A publish rejected because the published path already holds another resource
@@ -33,17 +34,11 @@ export const isPublishTargetTakenResponse = async (
  * conversion happens here, before `usePublishFlow`'s synchronous predicate sees it.
  * @param publish - the host's publish request
  */
-export const wrapPublishTargetTaken =
-  <Args extends unknown[], Result>(
-    publish: (...args: Args) => Promise<Result>,
-  ) =>
-  async (...args: Args): Promise<Result> => {
-    try {
-      return await publish(...args);
-    } catch (error) {
-      if (await isPublishTargetTakenResponse(error)) {
-        throw new PublishTargetTakenError(error);
-      }
-      throw error;
-    }
-  };
+export const wrapPublishTargetTaken = <Args extends unknown[], Result>(
+  publish: (...args: Args) => Promise<Result>,
+) =>
+  withApiErrorMapping(publish, async (error) =>
+    (await isPublishTargetTakenResponse(error))
+      ? new PublishTargetTakenError(error)
+      : undefined,
+  );
