@@ -103,6 +103,7 @@ export class ManagedRuntimeService
         ),
       );
     }
+    this.logger.log(describeManagedSettings(this.settings));
   }
 
   get mode(): ManagedConfigMode {
@@ -218,6 +219,9 @@ export class ManagedRuntimeService
       applied.outcome,
       durationMs,
     );
+    this.logger.debug(
+      `Managed read of instance ${store.instanceId}: ${result.kind}, outcome ${applied.outcome}, revision ${store.activeRevisionId ?? 'none'}, ${Math.round(durationMs)} ms`,
+    );
     this.reportTransition(store, applied);
     return applied.succeeded;
   }
@@ -325,3 +329,21 @@ export class ManagedRuntimeService
     }
   }
 }
+
+/**
+ * The startup line that states how this deployment reads Config Studio:
+ * mode, mapping, active keys, cadence, and whether a reader key is set,
+ * never the key itself.
+ */
+export const describeManagedSettings = (
+  settings: ManagedRuntimeSettings,
+): string => {
+  if (settings.mode === ManagedConfigMode.Off) {
+    return 'Managed configuration: mode off; no Config Studio snapshot is read';
+  }
+  const instances = [...settings.instances]
+    .map(([appId, instanceId]) => `${appId}=${instanceId}`)
+    .join(', ');
+  const activeKeys = [...settings.activeKeys].join(', ') || 'none';
+  return `Managed configuration: mode ${settings.mode}, instances ${instances}, active keys ${activeKeys}, refresh ${settings.refreshIntervalMs / 1000}s, max staleness ${settings.maxStalenessMs / 1000}s, reader key ${settings.apiKey ? 'set' : 'missing'}`;
+};

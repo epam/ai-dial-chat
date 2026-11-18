@@ -298,7 +298,7 @@ The backend SHALL emit, per instance:
 - the observable gauge `dial.chat.managed_config.snapshot.age` in seconds;
 - the observable gauge `dial.chat.managed_config.state` by `state`.
 
-Labels SHALL be limited to the configured instance identifiers and these fixed values. A state transition SHALL be logged once, with the instance, the revision identifier, and the reason. Logs and metrics SHALL NOT contain payloads, configuration values, roles, credentials, or response bodies. Liveness and readiness SHALL NOT depend on managed state.
+Labels SHALL be limited to the configured instance identifiers and these fixed values. A state transition SHALL be logged once, with the instance, the revision identifier, and the reason. Every pod SHALL log one line at startup, in every mode, naming the mode, the instance mapping, the active keys, the refresh interval, the maximum staleness, and whether a reader key is set. Each read SHALL be logged at debug level with the instance, the read result, the refresh outcome, the active revision, and the duration. Logs and metrics SHALL NOT contain payloads, configuration values, roles, credentials, or response bodies. Liveness and readiness SHALL NOT depend on managed state.
 
 #### Scenario: Rejection is observable without contents
 
@@ -309,3 +309,8 @@ Labels SHALL be limited to the configured instance identifiers and these fixed v
 
 - **WHEN** the state of every instance is `stale`
 - **THEN** `GET /api/health` still reports healthy
+
+#### Scenario: Startup line names the settings without the key
+
+- **WHEN** a pod starts in `active` mode with `MANAGED_CONFIG_INSTANCES=ai-dial-chat=ai-dial-chat`, `MANAGED_CONFIG_ACTIVE_KEYS=onboarding.hints`, and a reader key
+- **THEN** one log line names the mode, the mapping, `onboarding.hints`, the cadence, and "reader key set", and does not contain the key
