@@ -227,6 +227,43 @@ const { steps, onFinish, onStepComplete } = useOnboardingHints({
 `ONBOARDING_START_DELAY_MS`, `ONBOARDING_RETRY_INTERVAL_MS` and
 `ONBOARDING_RETRY_ATTEMPTS` are exported for tests that advance fake timers.
 
+## Utilities
+
+### ARIA target lookup
+
+DOM helpers for a host's `resolveTarget`: they find the element a hint points
+at by role and accessible name, so the explained markup needs no test id or
+extra class. Every helper that returns an element skips one that is off
+screen — no box, inside an `inert` subtree, or `visibility: hidden` — so a
+closed mobile drawer or a hidden desktop control is never chosen.
+
+| Helper                               | Returns                                                                                   |
+| ------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `isOnScreen(element)`                | Whether `element` is an on-screen `HTMLElement`                                           |
+| `firstOnScreen(elements)`            | The first on-screen element, or `null`                                                    |
+| `lastOnScreen(elements)`             | The last on-screen element, or `null`                                                     |
+| `accessibleName(element)`            | `aria-labelledby` text, else `aria-label`, else its `<label for>` text, else its own text |
+| `queryAll(scopes, selector)`         | Every match of `selector` inside each scope, in order                                     |
+| `findControlBy(scopes, matches)`     | The first on-screen button or link whose accessible name passes `matches`, or `null`      |
+| `findControl(scopes, name)`          | The first on-screen button or link named exactly `name`, or `null`                        |
+| `findControlNear(start, matches)`    | The matching control in the smallest ancestor of `start` that holds one, or `null`        |
+| `named(scopes, selector, name)`      | The matches of `selector` whose accessible name is `name` (on screen or not)              |
+| `firstNamed(scopes, selector, name)` | The first on-screen element of `named(...)`, or `null`                                    |
+| `findSearch(scopes, name)`           | The input named `name` — its `search`/`role="search"` wrapper when it has one — or `null` |
+
+Names are compared as strings, never built into a selector, so a translated
+label needs no CSS escaping. Pass the label the page renders, for example the
+host's translated string.
+
+```tsx
+import { findControl, findSearch } from '@epam/ai-dial-onboarding-tour';
+
+const resolveTarget = (target: string): HTMLElement | null =>
+  target === 'search'
+    ? findSearch([document], 'Search')
+    : findControl([document], 'New conversation');
+```
+
 ## Enums
 
 `OnboardingTourEndReason` — `Done` or `Dismissed`, the second argument of `OnboardingTourProps.onFinish`.

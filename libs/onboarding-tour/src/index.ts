@@ -2,6 +2,19 @@ export { OnboardingTour } from './components/OnboardingTour/OnboardingTour';
 export { OnboardingAnchorMap } from './components/OnboardingAnchorMap/OnboardingAnchorMap';
 export { OnboardingHints } from './components/OnboardingHints/OnboardingHints';
 export { useOnboardingHints } from './hooks/useOnboardingHints/useOnboardingHints';
+export {
+  accessibleName,
+  findControl,
+  findControlBy,
+  findControlNear,
+  findSearch,
+  firstNamed,
+  firstOnScreen,
+  isOnScreen,
+  lastOnScreen,
+  named,
+  queryAll,
+} from './utils/aria-lookup';
 export { OnboardingTourEndReason } from './types/onboarding-tour-end-reason';
 export {
   ONBOARDING_RETRY_ATTEMPTS,

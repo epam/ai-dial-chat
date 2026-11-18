@@ -6486,6 +6486,22 @@ const pinned = resolveConversationPinChange(targetGroupKey, item.isPinned);
 if (pinned != null) void pinConversation(id, pinned);
 ```
 
+### toConversationListId / isConversationInBucket / toOwnConversationListItem
+
+Conversation-list rows built without re-reading the list. `toConversationListId(conversationId)` turns a decoded `<bucket>/<path>` conversation id into the list endpoint's id, `conversations/<bucket>/<encoded path>`, percent-encoding each segment. `isConversationInBucket(conversationId, bucket)` is `true` when the id lives in `bucket` (a bucket-name prefix does not count; a missing bucket is `false`). `toOwnConversationListItem(conversationId, conversation, title)` returns a `ConversationListItemDto` for a conversation in the user's own bucket — not shared, published, pinned, read-only or scheduled — stamped with the conversation's `updatedAt`, or the current time when it has none. Available from the root and `./conversation`.
+
+```ts
+import {
+  isConversationInBucket,
+  toOwnConversationListItem,
+} from '@epam/ai-dial-chat-hooks/conversation';
+
+if (isConversationInBucket(conversationId, user.bucket)) {
+  const row = toOwnConversationListItem(conversationId, conversation, title);
+  setConversations((rows) => [row, ...rows]);
+}
+```
+
 ### useAsyncConfirmDialog
 
 Generic single-slot pending/loading/error state machine for confirmation dialogs. The `confirm` method calls `run(pending)`, closes the dialog on success, or sets an error message and keeps the dialog open on throw.
