@@ -1,6 +1,5 @@
 import { inferMimeTypeFromPath } from '@epam/ai-dial-chat-shared';
 import type { SkillFileSourceEntry } from '@epam/ai-dial-skill-editor';
-import { unzipSync } from 'fflate';
 import { nameFromPath, SKILL_FOLDER_MARKER } from './skill';
 
 /** Archive metadata written by macOS Finder, never part of a skill. */
@@ -33,7 +32,10 @@ const readFileAsBytes = (file: File): Promise<Uint8Array> =>
 export const extractSkillArchive = async (
   archive: File,
 ): Promise<SkillFileSourceEntry[]> => {
-  const entries = unzipSync(await readFileAsBytes(archive));
+  const bytes = await readFileAsBytes(archive);
+  // On demand: the ZIP engine is needed only once a user drops an archive.
+  const { unzipSync } = await import('fflate');
+  const entries = unzipSync(bytes);
   /*
    * Path safety, size and count are deliberately not checked here: every
    * entry is staged and goes through the same batch validation as a device

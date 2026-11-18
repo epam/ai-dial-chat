@@ -39,6 +39,7 @@ Core principle: the chat application is assembled from a set of **independently 
 | **Tailwind CSS 4** | Utility CSS; one CSS-first theme in `tools/tailwind/theme.css` (see Styling)                          |
 | **ESLint 9**       | Flat config (`eslint.config.mjs`) + Prettier 3                                                        |
 | **Storybook 10**   | Lib-local component catalogue (`libs/celebrations/.storybook`, React/Vite); built in CI, not deployed |
+| **Knip 6**         | Advisory dead-code analysis (`knip.ts`, `npm run knip`); not run in CI                                |
 
 ```
 root/
@@ -505,7 +506,7 @@ Every `chat-api` SSE response (`conversations/completions`, `conversations/watch
 
 ### Internationalisation
 
-`react-i18next` + `i18next-browser-languagedetector`. All user-visible strings go through `useTranslation()`, and every key is declared in `apps/chat/src/constants/translation-keys.ts` rather than passed as a string literal. Locale files live in `apps/chat/src/i18n/locales/`. The i18n config also drives `document.documentElement.dir`, so RTL locales flip the layout — libs rely on CSS logical properties and never read the language themselves.
+`react-i18next` + `i18next-browser-languagedetector`. All user-visible strings go through `useTranslation()`, and every key is declared in a string enum rather than passed as a string literal: one module per namespace under `apps/chat/src/constants/i18n-keys/`, imported through the `apps/chat/src/constants/translation-keys.ts` barrel so each chunk carries only the namespaces it uses. Locale files live in `apps/chat/src/i18n/locales/`. The i18n config also drives `document.documentElement.dir`, so RTL locales flip the layout — libs rely on CSS logical properties and never read the language themselves.
 
 ---
 

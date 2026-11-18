@@ -297,6 +297,7 @@ ai-dial-chat/
 - Prettier 3.9
 - Vitest 4.1
 - Storybook 10.6 (`@epam/ai-dial-celebrations` only)
+- Knip 6.44 (dead-code analysis, not run in CI)
 
 ### Nx Commands
 
@@ -346,6 +347,7 @@ nx graph
 | `npm run format`        | Format code with Prettier                           |
 | `npm run format:check`  | Check code formatting                               |
 | `npm run graph`         | Visualize project dependencies                      |
+| `npm run knip`          | Report unused files, exports and dependencies       |
 
 ### OpenAPI & Postman
 
@@ -547,6 +549,23 @@ npm run format
 # Check formatting
 npm run format:check
 ```
+
+### Dead-code analysis
+
+[Knip](https://knip.dev) reports unused files, exports, types, enum members
+and dependencies. It is advisory: nothing in CI runs it, and its findings are
+candidates to check, not a deletion list — an export no app imports may still
+be public API of a published lib. Configuration lives in `knip.ts`.
+
+```bash
+# Production code plus tests and tooling
+npm run knip
+
+# Production code only: code that only tests keep alive shows up as unused
+npm run knip:production
+```
+
+Never run `knip --fix`.
 
 ### Testing
 

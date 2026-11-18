@@ -9,7 +9,6 @@ import {
   SkillFileNodeKind,
   type SkillFileTreeNode,
 } from '@epam/ai-dial-skill-editor';
-import { unzipSync } from 'fflate';
 import { parse, stringify } from 'yaml';
 import type { SkillFileContent } from './skill-file-preview';
 
@@ -278,10 +277,17 @@ export interface UnpackedSkillArchive {
  * Unpacks a whole-skill ZIP (as downloaded from `GET /api/v1/skills/download`
  * — DIAL Core's whole-resource `GET` is the one place this contract still
  * uses a ZIP, per `openspec/changes/archive/2026-10-05-persist-skill-empty-folders/design.md`) into its manifest text, every other entry's
- * bytes, and the folders its empty-folder markers stand for. Throws if the
+ * bytes, and the folders its empty-folder markers stand for. Rejects if the
  * archive has no root `SKILL.md` entry.
  */
-export const unpackSkillArchive = (bytes: Uint8Array): UnpackedSkillArchive => {
+export const unpackSkillArchive = async (
+  bytes: Uint8Array,
+): Promise<UnpackedSkillArchive> => {
+  /*
+   * On demand: this module sits in the `@epam/ai-dial-chat-hooks` barrel
+   * every page loads, and the ZIP engine is needed only to open a skill.
+   */
+  const { unzipSync } = await import('fflate');
   const entries = unzipSync(bytes);
   const manifestBytes = entries[SKILL_MANIFEST_FILE];
   if (manifestBytes == null) {
