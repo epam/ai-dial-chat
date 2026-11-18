@@ -1,4 +1,5 @@
 import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
+import type { FavoritesPayload } from '@epam/ai-dial-chat-hooks/catalog';
 import { Spinner } from '@epam/ai-dial-ui-kit';
 import {
   createContext,
@@ -32,6 +33,12 @@ interface UserConfigContextType {
   installedToolsetIds: string[];
   installedDeploymentIds: string[];
   selectedDeploymentId: string | null;
+  /**
+   * Every installed id exactly as the last load returned it, so
+   * `FavoriteApplicationsProvider` seeds its state without fetching the
+   * config a second time. Favorite toggles do not update it.
+   */
+  loadedFavorites: FavoritesPayload;
   status: UserConfigStatus;
   setPinnedConversation: (id: string, isPinned: boolean) => Promise<void>;
   setPinnedProject: (id: string, isPinned: boolean) => Promise<void>;
@@ -41,6 +48,13 @@ interface UserConfigContextType {
   setInstalledDeployment: (id: string, isInstalled: boolean) => Promise<void>;
   setSelectedDeployment: (id: string | null) => Promise<void>;
 }
+
+const EMPTY_FAVORITES: FavoritesPayload = {
+  deployments: [],
+  toolsets: [],
+  prompts: [],
+  skills: [],
+};
 
 const UserConfigContext = createContext<UserConfigContextType | undefined>(
   undefined,
@@ -66,6 +80,8 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
   const [selectedDeploymentId, setSelectedDeploymentId] = useState<
     string | null
   >(null);
+  const [loadedFavorites, setLoadedFavorites] =
+    useState<FavoritesPayload>(EMPTY_FAVORITES);
 
   /*
    * userSub is included so that if the authenticated identity changes while
@@ -84,6 +100,7 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
       setInstalledToolsetIds([]);
       setInstalledDeploymentIds([]);
       setSelectedDeploymentId(null);
+      setLoadedFavorites(EMPTY_FAVORITES);
       try {
         const config = await getUserConfig();
         if (guard.isCancelled) return;
@@ -92,6 +109,12 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
         setInstalledToolsetIds(config.toolsets?.installed ?? []);
         setInstalledDeploymentIds(config.deployments?.installed ?? []);
         setSelectedDeploymentId(config.deployments?.selectedId ?? null);
+        setLoadedFavorites({
+          deployments: config.deployments?.installed ?? [],
+          toolsets: config.toolsets?.installed ?? [],
+          prompts: config.prompts?.installed ?? [],
+          skills: config.skills?.installed ?? [],
+        });
         setStatus(UserConfigStatus.Ready);
       } catch (err) {
         if (guard.isCancelled) return;
@@ -211,6 +234,7 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
       installedToolsetIds,
       installedDeploymentIds,
       selectedDeploymentId,
+      loadedFavorites,
       status,
       setPinnedConversation,
       setPinnedProject,
@@ -225,6 +249,7 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
       installedToolsetIds,
       installedDeploymentIds,
       selectedDeploymentId,
+      loadedFavorites,
       status,
       setPinnedConversation,
       setPinnedProject,

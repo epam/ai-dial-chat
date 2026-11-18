@@ -81,6 +81,7 @@ export const ModelSelectorControl: FC<Props> = ({
     onSearchQueryChange,
     selectorIcon,
     selectorAriaLabel,
+    unavailableTooltip,
     selectedLabel,
     selectedVersion,
     menuItems,
@@ -142,7 +143,7 @@ export const ModelSelectorControl: FC<Props> = ({
     return (
       <>
         <GhostIconButton
-          tooltipProps={{ tooltip: selectedLabel }}
+          tooltipProps={{ tooltip: unavailableTooltip ?? selectedLabel }}
           icon={
             <div className="flex items-center gap-1">
               {iconNode}
@@ -244,7 +245,7 @@ export const ModelSelectorControl: FC<Props> = ({
         <Button
           aria-label={selectorAriaLabel}
           aria-disabled={isBlocked || undefined}
-          tooltipProps={{ tooltip: chipTooltip }}
+          tooltipProps={{ tooltip: unavailableTooltip ?? chipTooltip }}
           className={mergeClasses(
             'h-auto min-w-0 gap-1.5 rounded-full! border-0! px-0 py-1.5 ps-1.5 pe-2',
             styles.modelSelectorButton,
@@ -318,7 +319,7 @@ export const ModelSelectorControl: FC<Props> = ({
         <Button
           aria-label={selectorAriaLabel}
           aria-disabled={isBlocked || undefined}
-          tooltipProps={{ tooltip: selectedLabel }}
+          tooltipProps={{ tooltip: unavailableTooltip ?? selectedLabel }}
           iconBefore={iconNode}
           iconAfter={caretIcon}
           className={mergeClasses(

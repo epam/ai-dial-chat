@@ -10,7 +10,7 @@ import {
   lastOnScreen,
   named,
   queryAll,
-} from './aria-lookup';
+} from '@epam/ai-dial-onboarding-tour';
 
 /** Accessible names the resolvers match against; the caller passes them translated. */
 export interface OnboardingTargetLabels {

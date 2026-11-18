@@ -63,14 +63,16 @@ When `tooltip` is absent, both paths SHALL render without any tooltip wrapper.
 
 ### Requirement: Model selector trigger shows a tooltip when the selected deployment is unavailable
 
-`useModelSelector` (in `libs/conversation-input/src/hooks/useModelSelector.tsx`) SHALL detect when `selectedDeploymentId` does not resolve to an entry in `deployments` (and the selector is not in its loading state, i.e. `modelSelectorLabels.loading` is undefined), and in that case SHALL pass `modelSelectorLabels?.unavailableTooltip ?? 'This deployment is no longer available'` as the `tooltip` argument (fifth parameter) to `buildDeploymentIcon` for the trigger icon. `ModelSelectorLabels` SHALL expose an optional `unavailableTooltip?: string` field for this purpose. When the selected deployment resolves normally, or while `deployments` is loading, no such tooltip SHALL be applied.
+`useModelSelector` (in `libs/conversation-input/src/hooks/useModelSelector.tsx`) SHALL detect when `selectedDeploymentId` does not resolve to an entry in `deployments` (and the selector is not in its loading state, i.e. `modelSelectorLabels.loading` is undefined), and in that case SHALL return `unavailableTooltip` set to `modelSelectorLabels?.unavailableTooltip ?? 'This deployment is no longer available'`; otherwise `unavailableTooltip` SHALL be `undefined`. `ModelSelectorLabels` SHALL expose an optional `unavailableTooltip?: string` field for this purpose.
+
+`ModelSelectorControl` (in `libs/conversation-input/src/components/Input/ModelSelectorControl.tsx`) SHALL put that text on the trigger button's own tooltip (`tooltipProps.tooltip`) in every presentation — the built-in desktop menu, the desktop host overlay and the mobile sheet — in place of the deployment name. The trigger icon itself SHALL NOT carry a tooltip: it sits inside the button, whose tooltip owns hover and focus, so an icon tooltip there never opens. When the selected deployment resolves normally, or while `deployments` is loading, the trigger tooltip SHALL stay the deployment name (with its version in the host-overlay presentation).
 
 #### Scenario: Tooltip shown for an unavailable selected deployment
 
 - **WHEN** `selectedDeploymentId` is set to an id that is not present in `deployments`, and loading has finished
-- **THEN** hovering or focusing the trigger's initials fallback icon shows a tooltip reading `modelSelectorLabels.unavailableTooltip`, defaulting to "This deployment is no longer available" when the label is not supplied
+- **THEN** hovering or focusing the model-selector trigger shows a tooltip reading `modelSelectorLabels.unavailableTooltip`, defaulting to "This deployment is no longer available" when the label is not supplied
 
 #### Scenario: No unavailable tooltip while loading or when resolved
 
 - **WHEN** the selector is loading, or `selectedDeploymentId` resolves to an item in `deployments`
-- **THEN** no "unavailable" tooltip is applied to the trigger icon
+- **THEN** no "unavailable" tooltip is applied to the trigger

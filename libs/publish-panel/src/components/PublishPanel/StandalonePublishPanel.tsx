@@ -84,15 +84,15 @@ export interface StandalonePublishPanelProps {
    * Display author recorded on the publication. Forwarded to
    * {@link PublishPanel} unmodified; an empty value never blocks submission.
    */
-  author: string;
-  /** Called with the next author value on every edit. */
-  onAuthorChange: (author: string) => void;
+  author?: string;
+  /** Called with the next author value on every edit. Omit to hide the author field. */
+  onAuthorChange?: (author: string) => void;
   /** Current access rules, combined with AND. */
-  rules: PublicationRule[];
-  /** Called with the full next rules array on add, remove, or clear. */
-  onRulesChange: (rules: PublicationRule[]) => void;
+  rules?: PublicationRule[];
+  /** Called with the full next rules array on add, remove, or clear. Omit to hide the access-rules section. */
+  onRulesChange?: (rules: PublicationRule[]) => void;
   /** Options offered in the access-rules editor's source picker. */
-  ruleSourceOptions: string[];
+  ruleSourceOptions?: string[];
   /** Whether existing rules are currently being fetched for the selected folder. Default: `false`. */
   isRulesLoading?: boolean;
   /** Whether the most recent existing-rules fetch failed. Default: `false`. */

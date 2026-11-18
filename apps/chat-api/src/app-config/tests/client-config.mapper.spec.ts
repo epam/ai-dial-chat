@@ -75,6 +75,9 @@ describe('CLIENT_CONFIG_MAPPINGS', () => {
       ).map((def) => def.key);
 
       expect(excluded).toContain('utility.modelId');
+      expect(excluded).toEqual(
+        expect.arrayContaining(['analytics.url', 'analytics.timeoutMs']),
+      );
       for (const key of excluded) {
         expect(CLIENT_CONFIG_MAPPINGS.has(key), key).toBe(false);
       }

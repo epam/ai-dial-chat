@@ -3,6 +3,7 @@ export enum ToolsetSigninI18nKeys {
   DialogDescription = 'toolsetSignin.dialogDescription',
   RowDecline = 'toolsetSignin.rowDecline',
   DeclineAll = 'toolsetSignin.declineAll',
+  LogInTo = 'toolsetSignin.logInTo',
   ApiKeyLabel = 'toolsetSignin.apiKeyLabel',
   ApiKeyPlaceholder = 'toolsetSignin.apiKeyPlaceholder',
   ErrorLoginFailed = 'toolsetSignin.errorLoginFailed',

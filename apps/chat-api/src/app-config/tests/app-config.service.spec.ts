@@ -2231,6 +2231,18 @@ describe('AppConfigService', () => {
       const { config } = await service.getClientConfig(ctx);
       expect(config.onboardingHints).toEqual(hints);
     });
+
+    it('never exposes the DIAL Analytics URL or timeout', async () => {
+      const analyticsUrl = 'http://analytics-internal.example:8080';
+      const { service } = buildResolutionStack({
+        ANALYTICS_URL: analyticsUrl,
+        ANALYTICS_TIMEOUT_MS: '4321',
+      });
+      const serialized = JSON.stringify(await service.getClientConfig(ctx));
+      expect(serialized).not.toContain('analytics-internal.example');
+      expect(serialized).not.toContain('4321');
+      expect(serialized.toLowerCase()).not.toContain('analytics');
+    });
   });
 });
 

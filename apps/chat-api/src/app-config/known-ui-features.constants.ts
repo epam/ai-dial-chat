@@ -65,6 +65,7 @@ export const KNOWN_UI_FEATURES: ReadonlySet<string> = new Set([
   'show-header-logo',
   'conversation-drafts',
   'hide-starter-icon',
+  'show-mobile-header-full-logo',
 ]);
 
 /**

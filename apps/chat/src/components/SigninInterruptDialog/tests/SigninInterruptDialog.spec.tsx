@@ -154,7 +154,8 @@ describe('SigninInterruptDialog', () => {
 
     render(<SigninInterruptDialog />);
 
-    expect(screen.getByText('My Toolset (1.0)')).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'My Toolset' })).toBeTruthy();
+    expect(screen.getByText('1.0')).toBeTruthy();
   });
 
   it('disables the login button until an API key is entered, then logs in and reports success', async () => {

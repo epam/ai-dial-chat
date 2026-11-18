@@ -188,6 +188,26 @@ const KEY_EXPECTATIONS: Readonly<
     },
     [EnvCaseName.Empty]: { provider: '', effective: '' },
   },
+  'analytics.url': {
+    [EnvCaseName.Absent]: { provider: undefined, effective: null },
+    [EnvCaseName.NonDefault]: {
+      provider: 'http://analytics.example:8080',
+      effective: 'http://analytics.example:8080',
+    },
+    [EnvCaseName.Empty]: {
+      bootError:
+        'Environment validation failed:\nANALYTICS_URL must be a URL address',
+    },
+  },
+  'analytics.timeoutMs': {
+    [EnvCaseName.Absent]: { provider: undefined, effective: 10000 },
+    [EnvCaseName.TypedDefault]: { provider: 10000, effective: 10000 },
+    [EnvCaseName.NonDefault]: { provider: 5000, effective: 5000 },
+    [EnvCaseName.Empty]: {
+      bootError:
+        'Environment validation failed:\nANALYTICS_TIMEOUT_MS must not be less than 1000',
+    },
+  },
   'features.responsesApiEnabled': {
     [EnvCaseName.Absent]: { provider: undefined, effective: false },
     [EnvCaseName.TypedDefault]: { provider: false, effective: false },

@@ -50,6 +50,8 @@ export interface UseModelSelectorResult {
   selectorIcon: ReactNode;
   /** Accessible label for the trigger button. */
   selectorAriaLabel: string;
+  /** Trigger tooltip shown when the selected deployment is no longer available, or `undefined` otherwise. Defaults to `'This deployment is no longer available'` when `modelSelectorLabels.unavailableTooltip` is unset. */
+  unavailableTooltip: string | undefined;
   /** Display name of the currently selected deployment, or `undefined` when none is selected or loading. */
   selectedLabel: string | undefined;
   /** Display version of the currently selected deployment, or `undefined` when none is selected, loading, or the deployment has no version. */
@@ -83,6 +85,9 @@ export const useModelSelector = ({
   const isSelectedDeploymentUnavailable =
     !isLoading && !selectedItem && !!selectedDeploymentId;
 
+  /* The icon sits inside the trigger button, whose own tooltip owns hover and
+   * focus, so a tooltip on the icon would never open. The unavailable notice
+   * travels to the button instead (`unavailableTooltip`). */
   const selectorIcon: ReactNode = useMemo(
     () =>
       isLoading ? (
@@ -93,22 +98,17 @@ export const useModelSelector = ({
           selectedItem?.type,
           selectedItem?.displayName ?? selectedItem?.id ?? '',
           DIAL_ICON_SIZE.LG,
-          isSelectedDeploymentUnavailable
-            ? (modelSelectorLabels?.unavailableTooltip ??
-                'This deployment is no longer available')
-            : undefined,
         )
       ),
-    [
-      isLoading,
-      selectedItem,
-      isSelectedDeploymentUnavailable,
-      modelSelectorLabels?.unavailableTooltip,
-    ],
+    [isLoading, selectedItem],
   );
 
   const selectedLabel = selectedItem?.displayName ?? selectedItem?.id;
   const selectedVersion = selectedItem?.displayVersion;
+  const unavailableTooltip = isSelectedDeploymentUnavailable
+    ? (modelSelectorLabels?.unavailableTooltip ??
+      'This deployment is no longer available')
+    : undefined;
   const selectorAriaLabel = selectedLabel
     ? `${modelSelectorLabels?.ariaLabel ?? 'Select model'}: ${selectedLabel}`
     : (modelSelectorLabels?.ariaLabel ?? 'Select model');
@@ -247,6 +247,7 @@ export const useModelSelector = ({
     onSearchQueryChange: setSearchQuery,
     selectorIcon,
     selectorAriaLabel,
+    unavailableTooltip,
     selectedLabel,
     selectedVersion,
     menuItems,
