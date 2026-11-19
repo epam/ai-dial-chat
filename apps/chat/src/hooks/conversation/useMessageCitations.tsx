@@ -62,6 +62,8 @@ interface UseMessageCitationsParams extends Pick<
     ConversationMessageItemProps['fallbackCitationGroups']
   >;
   isStreaming: boolean;
+  /** Whether a marker click always opens the citation card (`always-show-citation-card`). */
+  isCitationCardAlwaysShown?: boolean;
   stages: NonNullable<ReturnType<typeof mapStages>>;
   handleAttachmentClick: ReturnType<
     typeof useMessageAttachments
@@ -95,6 +97,7 @@ export interface UseMessageCitationsResult {
 export const useMessageCitations = ({
   msg,
   isStreaming,
+  isCitationCardAlwaysShown = false,
   stages,
   fallbackCitationGroups,
   isCompactTypography,
@@ -190,12 +193,14 @@ export const useMessageCitations = ({
       onOpenInBrowser: handleCitationOpenInBrowser,
       isPreviewOpen: isCanvasOpen,
       previewFilesOnMarkerClick: true,
+      alwaysShowCard: isCitationCardAlwaysShown,
       buildLabels: buildCitationLabels,
     }),
     [
       handleCitationPreview,
       handleCitationOpenInBrowser,
       isCanvasOpen,
+      isCitationCardAlwaysShown,
       buildCitationLabels,
     ],
   );

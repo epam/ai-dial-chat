@@ -23,6 +23,7 @@ export const createCitationGroupRenderer = ({
   isDownloadEnabled = true,
   isPreviewOpen = false,
   previewFilesOnMarkerClick = false,
+  alwaysShowCard = false,
   buildLabels,
 }: UseCitationMarkdownComponentsCallbacks) => {
   const renderGroup = (group: AnnotationGroup) => {
@@ -38,6 +39,7 @@ export const createCitationGroupRenderer = ({
         isDownloadEnabled={isDownloadEnabled}
         isPreviewOpen={isPreviewOpen}
         previewFilesOnMarkerClick={previewFilesOnMarkerClick}
+        alwaysShowCard={alwaysShowCard}
         cardLabels={cardLabels}
         markerLabels={markerLabels}
       />
