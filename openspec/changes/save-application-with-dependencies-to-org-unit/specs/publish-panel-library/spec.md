@@ -25,3 +25,23 @@
 #### Scenario: Folder view shows no section
 - **WHEN** the panel renders the folder view with `dependencies` non-empty
 - **THEN** no dependencies section is rendered
+
+## ADDED Requirements
+
+### Requirement: SaveToFolderPanel can show a notice under the destination
+
+`SaveToFolderPanelBaseProps` SHALL accept an optional `destinationNote?: string`, and `SaveToFolderPanel` and `StandaloneSaveToFolderPanel` SHALL render it in the main view as a plain paragraph under the destination path, in the same section. The panel SHALL render it as given, SHALL NOT decide when it applies, SHALL NOT change `isSubmitDisabled` or any submit behavior because of it, and SHALL NOT put it in a live region. It SHALL render nothing while `destinationNote` is omitted or empty, and nothing in the folder view.
+
+Both notes (`dependenciesNote` and `destinationNote`) SHALL take their typography from the optional `noteClassName` prop, whose default is `'dial-small-text'`, and their text color from `SaveToFolderPanelColors.noteText`, set as the CSS custom property `--stf-note-text` and falling back to `--text-secondary`. The notes SHALL use no physical left/right classes.
+
+#### Scenario: Destination note is shown
+- **WHEN** `SaveToFolderPanel` renders the main view with `destinationNote` "The icon will not be copied."
+- **THEN** that text is present under the destination and is not inside an element with role `alert` or `status`
+
+#### Scenario: No note
+- **WHEN** `destinationNote` is omitted
+- **THEN** no paragraph is rendered under the destination
+
+#### Scenario: Notes in a right-to-left page
+- **WHEN** both notes are rendered under `dir="rtl"`
+- **THEN** both are plain text in reading order and carry no physical direction classes

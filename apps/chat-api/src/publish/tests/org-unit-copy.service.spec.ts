@@ -27,7 +27,9 @@ const makeService = () => {
   const copyResource = vi.fn().mockResolvedValue({
     response: { status: 200 },
   });
-  const getApplicationMetadata = vi.fn();
+  const getApplicationMetadata = vi
+    .fn()
+    .mockResolvedValue({ response: { status: 404 } });
   const getCustomApplication = vi
     .fn()
     .mockResolvedValue({ data: {}, response: { status: 200 } });
@@ -596,18 +598,66 @@ describe('OrgUnitCopyService', () => {
       ]);
     });
 
-    it('answers 409 for an application target that exists and deletes the staging copy', async () => {
+    it('answers 409 before any copy when the application target already exists', async () => {
       const made = makeService();
       made.preparation.plan.mockResolvedValue(planOf(SKILL));
-      made.copyResource
-        .mockResolvedValueOnce({ response: { status: 200 } })
-        .mockResolvedValueOnce(err(400));
+      made.getCustomApplication.mockResolvedValue({
+        data: { iconUrl: ICON },
+        response: { status: 200 },
+      });
       made.getApplicationMetadata.mockResolvedValue({
         response: { status: 200 },
       });
 
       await expect(run(made.service)).rejects.toBeInstanceOf(ConflictException);
-      expect(made.preparation.deleteCopy).toHaveBeenCalledTimes(1);
+
+      expect(made.getApplicationMetadata).toHaveBeenCalledWith(
+        'public',
+        'Acme/Teams/agent__1.0.0',
+        expect.anything(),
+      );
+      expect(made.copyResource).not.toHaveBeenCalled();
+      expect(made.preparation.stage).not.toHaveBeenCalled();
+      expect(
+        made.orgUnitsService.findMissingWriteNamespaces,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('answers 409 and deletes the staging copy when the target appears after the check', async () => {
+      const made = makeService();
+      made.preparation.plan.mockResolvedValue(planOf(SKILL));
+      made.getApplicationMetadata
+        .mockResolvedValueOnce({ response: { status: 404 } })
+        .mockResolvedValue({ response: { status: 200 } });
+      made.copyResource
+        .mockResolvedValueOnce({ response: { status: 200 } })
+        .mockResolvedValueOnce(err(400));
+
+      await expect(run(made.service)).rejects.toBeInstanceOf(ConflictException);
+      expect(made.preparation.deleteCopy).toHaveBeenCalledOnce();
+    });
+
+    it('resolves the full application id from a bare name before planning and staging', async () => {
+      const made = makeService();
+      made.preparation.plan.mockResolvedValue(planOf(SKILL));
+
+      await made.service.copyIntoOrgUnit(
+        'user1',
+        'b1',
+        'token',
+        CatalogEntityType.Application,
+        'agent__1.0.0',
+        { folderPath: 'Acme/Teams' },
+      );
+
+      expect(made.preparation.plan.mock.calls[0][3]).toBe(ENTITY_ID);
+      expect(made.preparation.stage.mock.calls[0][3]).toBe(ENTITY_ID);
+      expect(made.getCustomApplication).toHaveBeenCalledWith(
+        'b1',
+        'agent__1.0.0',
+        expect.anything(),
+      );
+      expect(copied(made)).toEqual([SKILL.targetUrl, APP_TARGET]);
     });
 
     it('deletes the staging copy when the check or the staging itself fails', async () => {

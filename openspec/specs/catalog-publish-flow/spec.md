@@ -505,7 +505,7 @@ i18n keys: `publish.dependenciesTitle`, `publish.dependenciesDescription`, `publ
 
 `useResourceSavePanel` (`libs/chat-hooks/src/catalog/useResourceSavePanel/useResourceSavePanel.ts`) SHALL accept an optional `loadDependencies` and return `panelProps.dependencies`: the loaded list while the committed destination is under the Organization root, otherwise an empty list. The list SHALL be empty while loading and after a failed read, SHALL ignore a read that finishes after the destination left the Organization root or the panel closed, and SHALL never disable Save. It SHALL apply to a public-folder save that sends a publication request and to a direct write into an org unit alike.
 
-`apps/chat` SHALL pass `dependencyValues` to `ResourceSavePanelContainer` only for a schema-form app, from `ApplicationSavePanelConfig.getDependencyValues` of `schemaAppDefinition` (the schema id and `setup.properties`); the Quick App, DIAL Loop and custom app definitions SHALL provide none. The container SHALL fill the section's copy with `getPublishDependenciesLabels` and the existing `publish.dependencies*` keys.
+`apps/chat` SHALL pass `dependencyValues` to `ResourceSavePanelContainer` only for a schema-form app, from `ApplicationSavePanelConfig.getDependencyValues` of `schemaAppDefinition` (the schema id and `setup.properties`); the Quick App and custom app definitions SHALL provide none. The container SHALL fill the section's copy with `getPublishDependenciesLabels` and the existing `publish.dependencies*` keys.
 
 #### Scenario: Schema app saved to an Organization folder through a publication request
 - **WHEN** the committed destination is a public folder outside every org unit and the app has form values
@@ -520,7 +520,7 @@ i18n keys: `publish.dependenciesTitle`, `publish.dependenciesDescription`, `publ
 - **THEN** no dependencies are listed and no request is made
 
 #### Scenario: Kind without a form
-- **WHEN** the Save panel opens for a Quick App, DIAL Loop or custom app
+- **WHEN** the Save panel opens for a Quick App or custom app
 - **THEN** no dependencies are listed under any root
 
 #### Scenario: Failed read

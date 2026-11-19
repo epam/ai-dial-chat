@@ -6207,11 +6207,13 @@ import { sanitizeFileName } from '@epam/ai-dial-chat-hooks';
 sanitizeFileName('report:final?.pdf'); // 'report_final_.pdf'
 ```
 
-### isDialFileId / isDialFolderId / isDialProjectFileId / parseDialProjectFileId / isDialStoredFileId / resolveRelativeDialFilePath / resolveDialFileBucketAndPath
+### isDialFileId / isOwnDialFileId / isDialFolderId / isDialProjectFileId / parseDialProjectFileId / isDialStoredFileId / resolveRelativeDialFilePath / resolveDialFileBucketAndPath
 
 Recognizes a DIAL Core file id (`files/{bucket}/{path}`) or folder id (a file id ending with `/`) and resolves it to a bucket-relative path or its `{ bucket, path }` parts.
 
 `parseDialProjectFileId` splits a file inside a project, `projects/{bucket}/{path}/files/{filePath}` (as an agent in a project conversation returns it), into a `DialProjectFileIdParts` value: the decoded `projectId` and the decoded `filePath` segments. The id is percent-encoded per segment, as DIAL Core writes it, so a `#` in a name is `%23` and a raw `#...` is a fragment it ignores. It returns `undefined` for a folder, an empty segment or a malformed escape; `isDialProjectFileId` is the same test as a boolean. The host maps the parts to its own route.
+
+`isOwnDialFileId(url, bucket)` is true for a file id in `bucket` that has no `..` segment (decoded), ignoring a query string or fragment; a theme icon name, an absolute URL and a file in another bucket are `false`. A host uses it to tell an application's uploaded icon of the user's own from any other `iconUrl`.
 
 `isDialStoredFileId` is true for either kind of id — the ids a host resolves to its own download routes. The citation, reference and canvas resolvers use it to decide between the host resolver and opening the URL as-is.
 
@@ -6219,6 +6221,7 @@ Recognizes a DIAL Core file id (`files/{bucket}/{path}`) or folder id (a file id
 import {
   isDialFolderId,
   isDialProjectFileId,
+  isOwnDialFileId,
   isDialStoredFileId,
   parseDialProjectFileId,
   resolveDialFileBucketAndPath,
@@ -6233,6 +6236,8 @@ parseDialProjectFileId(
 );
 // { projectId: 'projects/my-bucket/Q4 launch', filePath: ['artifacts', 'run-1', 'a.csv'] }
 isDialStoredFileId('files/my-bucket/reports/q1.pdf'); // true
+isOwnDialFileId('files/my-bucket/icons/logo.png?v=2', 'my-bucket'); // true
+isOwnDialFileId('files/public/logo.png', 'my-bucket'); // false
 ```
 
 ### FileSelectionKind / getFileSelectionKind / resolveDialFolderPath

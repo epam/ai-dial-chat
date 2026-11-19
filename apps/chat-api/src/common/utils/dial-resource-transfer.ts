@@ -100,6 +100,21 @@ export const toDialResourceUrl = (
   location: DialResourceLocation,
 ): string => `${type}/${location.bucket}/${location.path}`;
 
+/** The parts of a `{type}/{bucket}/{path}` resource url; `path` stays encoded. */
+export interface DialResourceUrlParts extends DialResourceLocation {
+  /** First segment, e.g. `applications`. */
+  type: string;
+}
+
+/**
+ * Splits a `{type}/{bucket}/{path}` resource url, the inverse of {@link toDialResourceUrl}.
+ * @param url - a resource url with its path still encoded
+ */
+export const parseDialResourceUrl = (url: string): DialResourceUrlParts => {
+  const [type, bucket, ...path] = url.split('/');
+  return { type, bucket, path: path.join('/') };
+};
+
 /** The last, still-encoded segment of a resource path: the item's own name. */
 export const getResourceLeaf = (encodedPath: string): string =>
   encodedPath.split('/').pop() ?? encodedPath;

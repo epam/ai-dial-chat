@@ -61,6 +61,9 @@ describe('Org-unit copy contract fixtures', () => {
       {
         client: {
           copyResource,
+          getApplicationMetadata: vi
+            .fn()
+            .mockResolvedValue({ response: { status: 404 } }),
           getCustomApplication: vi.fn().mockResolvedValue({
             data: { iconUrl: `files/${BUCKET}/icons/logo.png` },
             response: { status: 200 },

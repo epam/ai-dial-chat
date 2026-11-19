@@ -14,6 +14,8 @@ import {
   assertOwnBucket,
   buildFolderResourcePath,
   getResourceLeaf,
+  parseDialResourceUrl,
+  resourceExists,
   toDialResourceUrl,
   transferDialResource,
   type DialResourceLocation,
@@ -103,7 +105,6 @@ interface CopyApplicationParams {
   userSub: string;
   userBucket: string;
   accessToken: string;
-  entityId: string;
   folderPath: string;
   source: DialResourceLocation;
   destination: DialResourceLocation;
@@ -113,18 +114,16 @@ interface CopyApplicationParams {
 /**
  * The org-unit namespace of a dependency kind, which is its resource type's group.
  * @param type - the dependency kind
+ * @throws {Error} When the kind has no resource type to copy, which a planned dependency never has
  */
 const getNamespace = (
   type: ApplicationDependencyPlan['dependencies'][number]['type'],
-): DialResourceType => DIAL_TYPE_BY_DEPENDENCY[type] as DialResourceType;
-
-/**
- * Splits a `{type}/{bucket}/{path}` url into the bucket and the still-encoded path.
- * @param url - a resource url as the plan and the icon reader produce them
- */
-const parseResourceUrl = (url: string): DialResourceLocation => {
-  const [, bucket, ...path] = url.split('/');
-  return { bucket, path: path.join('/') };
+): DialResourceType => {
+  const resourceType = DIAL_TYPE_BY_DEPENDENCY[type];
+  if (resourceType == null) {
+    throw new Error(`A ${type} dependency has no resource type to copy`);
+  }
+  return resourceType;
 };
 
 /**
@@ -254,7 +253,6 @@ export class OrgUnitCopyService {
           userSub,
           userBucket,
           accessToken,
-          entityId,
           folderPath: body.folderPath,
           source,
           destination,
@@ -295,8 +293,10 @@ export class OrgUnitCopyService {
   private async copyApplication(
     params: CopyApplicationParams,
   ): Promise<CopiedDependency[]> {
-    const { userSub, userBucket, accessToken, entityId, folderPath } = params;
+    const { userSub, userBucket, accessToken, folderPath } = params;
     const { source, destination, context } = params;
+    /* The caller may name the application by its bare name; the dependency resolver needs the full id. */
+    const entityId = toDialResourceUrl(DialResourceType.Applications, source);
     const headers = getBearerAuthHeaders(accessToken);
     const leaf = getResourceLeaf(source.path);
     const plan = (await this.preparation.plan(
@@ -311,7 +311,7 @@ export class OrgUnitCopyService {
     const iconUrl = await readPublishableApplicationIconUrl(
       this.dialClient.client,
       accessToken,
-      toDialResourceUrl(DialResourceType.Applications, source),
+      entityId,
       this.logger,
       'copying',
     );
@@ -334,6 +334,17 @@ export class OrgUnitCopyService {
     if (plan.dependencies.length === 0 && iconUrl == null) {
       await transfer(DialResourceType.Applications, source, destination);
       return [];
+    }
+
+    if (
+      await resourceExists(
+        this.dialClient.client,
+        DialResourceType.Applications,
+        destination,
+        headers,
+      )
+    ) {
+      throw new ConflictException('Target resource already exists');
     }
 
     const missing = await this.orgUnitsService.findMissingWriteNamespaces(
@@ -382,8 +393,8 @@ export class OrgUnitCopyService {
         try {
           await transfer(
             type,
-            parseResourceUrl(planned.sourceUrl),
-            parseResourceUrl(planned.targetUrl),
+            parseDialResourceUrl(planned.sourceUrl),
+            parseDialResourceUrl(planned.targetUrl),
           );
           copied.push({
             dependency: planned.dependency,
@@ -431,8 +442,8 @@ export class OrgUnitCopyService {
     try {
       await transfer(
         DialResourceType.Files,
-        parseResourceUrl(iconUrl),
-        parseResourceUrl(targetUrl),
+        parseDialResourceUrl(iconUrl),
+        parseDialResourceUrl(targetUrl),
       );
     } catch (err) {
       /* An icon already copied by an earlier attempt is reused. */

@@ -13,11 +13,11 @@ import {
 export const MAX_APPLICATION_VALUES_LENGTH = 64 * 1024;
 
 /** Longest accepted application type schema id. */
-export const MAX_SCHEMA_ID_LENGTH = 2048;
+const MAX_SCHEMA_ID_LENGTH = 2048;
 
 /** Rejects a value whose JSON form is larger than {@link MAX_APPLICATION_VALUES_LENGTH}. */
 @ValidatorConstraint({ name: 'maxSerializedLength', async: false })
-export class MaxSerializedLengthConstraint implements ValidatorConstraintInterface {
+class MaxSerializedLengthConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
     return (
       (JSON.stringify(value) ?? '').length <= MAX_APPLICATION_VALUES_LENGTH

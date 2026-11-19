@@ -9,7 +9,7 @@ Saving an application into an org-unit folder the user may write to is a direct 
 - Core's plain `copyResource` of an application into `public/` relinks and copies the files a schema marks (`ApplicationService.copyApplication`), but copies references to prompts, skills, toolsets and applications verbatim, and does not touch `iconUrl`: icons are rewritten only inside Core's publication machinery (`PublicationService`), through a hook the copy endpoint does not use.
 - A non-administrator's copy also drops the admin consent of declared `resource_dependencies` (`ApprovalPolicy.DROP`). This stays as the known risk already recorded in `org-units-folder-permissions`.
 - Rights in an org unit are per namespace: writing a dependency into the unit needs `write` on that dependency's namespace (`applications`, `toolsets`, `prompts`, `skills`), and writing the icon file needs `write` on `files` (`OrgUnitGrants.granted` takes the namespace from the resource type). The Save panel checks only the application's own namespace today.
-- The Save panel opens before the save. For a schema-form application the form values are in the host and can be inspected; for an application with an embedded editor (Quick App, DIAL Loop) the current values exist only inside the iframe, so the panel cannot know what it will reference until the save has run.
+- The Save panel opens before the save. For a schema-form application the form values are in the host and can be inspected; for an application with an embedded editor (for example a Quick App) the current values exist only inside the iframe, so the panel cannot know what it will reference until the save has run.
 
 ## Solution
 

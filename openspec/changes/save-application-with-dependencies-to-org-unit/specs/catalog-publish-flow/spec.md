@@ -8,7 +8,7 @@
 
 `useResourceSavePanel` (`libs/chat-hooks/src/catalog/useResourceSavePanel/useResourceSavePanel.ts`) SHALL accept an optional `loadDependencies` and return `panelProps.dependencies`: the loaded list while the committed destination is under the Organization root, otherwise an empty list. The list SHALL be empty while loading and after a failed read, SHALL ignore a read that finishes after the destination left the Organization root or the panel closed, and SHALL never disable Save. It SHALL apply to a public-folder save that sends a publication request and to a direct write into an org unit alike.
 
-`apps/chat` SHALL pass `dependencyValues` to `ResourceSavePanelContainer` only for a schema-form app, from `ApplicationSavePanelConfig.getDependencyValues` of `schemaAppDefinition` (the schema id and `setup.properties`); the Quick App, DIAL Loop and custom app definitions SHALL provide none. For a Quick App and a DIAL Loop app the container SHALL instead pass the neutral dependencies sentence of `resource-save-panel`, because their form state is inside an embedded editor; a custom app has no schema and so nothing to list or say. The container SHALL fill the section's copy with the `Published` variant of `getPublishDependenciesLabels` and the `publish.dependenciesPublished*` keys, since the dependencies of an application are published or copied together with it on both Save paths (a publication request and a direct write into an org unit).
+`apps/chat` SHALL pass `dependencyValues` to `ResourceSavePanelContainer` only for a schema-form app, from `ApplicationSavePanelConfig.getDependencyValues` of `schemaAppDefinition` (the schema id and `setup.properties`); the Quick App and custom app definitions SHALL provide none. For an application with an embedded editor (the Quick App definition sets `ApplicationSavePanelConfig.isFormStateEmbedded`) the container SHALL instead pass the neutral dependencies sentence of `resource-save-panel`, because its form state is inside the embedded editor; a custom app has no schema and so nothing to list or say. The container SHALL fill the section's copy with the `Published` variant of `getPublishDependenciesLabels` and the `publish.dependenciesPublished*` keys, since the dependencies of an application are published or copied together with it on both Save paths (a publication request and a direct write into an org unit).
 
 #### Scenario: Schema app saved to an Organization folder through a publication request
 - **WHEN** the committed destination is a public folder outside every org unit and the app has form values
@@ -23,8 +23,8 @@
 - **THEN** no dependencies are listed and no request is made
 
 #### Scenario: Kind without a form
-- **WHEN** the Save panel opens for a Quick App, DIAL Loop or custom app
-- **THEN** no dependencies are requested or listed under any root, a Quick App and a DIAL Loop app show the neutral sentence for an Organization destination, and a custom app shows nothing
+- **WHEN** the Save panel opens for an application with an embedded editor (a Quick App) or a custom app
+- **THEN** no dependencies are requested or listed under any root, an application with an embedded editor shows the neutral sentence for an Organization destination, and a custom app shows nothing
 
 #### Scenario: Failed read
 - **WHEN** the dependencies request rejects

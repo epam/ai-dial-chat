@@ -15,6 +15,7 @@ import {
   existsQuietly,
   getResourceLeaf,
   listDialResourceFolders,
+  parseDialResourceUrl,
   resourceExists,
   toDialResourceUrl,
   transferDialResource,
@@ -64,6 +65,16 @@ describe('path helpers', () => {
         path: 'Search/search__1.0.0',
       }),
     ).toBe('toolsets/b1/Search/search__1.0.0');
+  });
+
+  it('splits a resource url into type, bucket and encoded path, the inverse of toDialResourceUrl', () => {
+    const location = { bucket: 'b1', path: 'My%20Folder/agent__1.0.0' };
+    const url = toDialResourceUrl(DialResourceType.Applications, location);
+
+    expect(parseDialResourceUrl(url)).toEqual({
+      type: 'applications',
+      ...location,
+    });
   });
 
   it('rejects a resource outside the session bucket', () => {

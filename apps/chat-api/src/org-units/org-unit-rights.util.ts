@@ -1,3 +1,4 @@
+import { safeDecodeURIComponent } from '../common/utils/uri';
 import type { OrgUnitDto } from './dto/org-unit.dto';
 
 /**
@@ -12,18 +13,10 @@ const PUBLIC_ROOT = 'public';
 const WRITE_ACTION = 'write';
 
 /** The org-unit data a right is decided from. */
-export interface OrgUnitRightsData {
+interface OrgUnitRightsData {
   hasAdminAccess: boolean;
   units: readonly OrgUnitDto[];
 }
-
-const safeDecode = (segment: string): string => {
-  try {
-    return decodeURIComponent(segment);
-  } catch {
-    return segment;
-  }
-};
 
 const toSegments = (path: string): string[] =>
   path.split('/').filter((segment) => segment !== '');
@@ -40,7 +33,7 @@ const joinFolder = (segments: readonly string[]): string =>
 export const normalizeOrgUnitFolder = (folder: string): string => {
   const [root, ...segments] = toSegments(folder);
   if (root !== PUBLIC_ROOT) return '';
-  return joinFolder(segments.map(safeDecode));
+  return joinFolder(segments.map(safeDecodeURIComponent));
 };
 
 /**

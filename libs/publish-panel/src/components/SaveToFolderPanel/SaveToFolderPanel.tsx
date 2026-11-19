@@ -19,6 +19,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconFolder } from '@tabler/icons-react';
 import { FC, useId, useMemo, useState } from 'react';
+import { DEFAULT_DEPENDENCIES_TITLE } from '../../constants/publish-dependencies';
 import type { SaveToFolderPanelProps } from '../../models/save-to-folder-panel';
 import { SaveToFolderView, SaveVersionMode } from '../../types/save-to-folder';
 import { PublishAccessRules } from '../PublishAccessRules/PublishAccessRules';
@@ -304,7 +305,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
           aria-labelledby={dependenciesHeadingId}
         >
           <h2 id={dependenciesHeadingId} className={headingClass}>
-            {dependenciesLabels?.title ?? 'Private dependencies'}
+            {dependenciesLabels?.title ?? DEFAULT_DEPENDENCIES_TITLE}
           </h2>
           <p className={mergeClasses(noteClassName, styles.note)}>
             {dependenciesNote}

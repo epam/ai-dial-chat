@@ -8,6 +8,7 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { parseDialApplicationResource } from '../common/utils/dial-application-resource';
 import {
   DialResourceType,
+  parseDialResourceUrl,
   resourceExists,
 } from '../common/utils/dial-resource-transfer';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
@@ -45,7 +46,7 @@ export interface PreparedApplicationPublication {
 }
 
 /** One dependency that still has to be copied, with where it comes from and where it goes. */
-export interface PlannedDependency {
+interface PlannedDependency {
   dependency: ResourceDependencyDto;
   /** Percent-encoded `{type}/{bucket}/{path}` of the dependency. */
   sourceUrl: string;
@@ -117,7 +118,7 @@ export const selectPublishableDependencies = (
   dependencies.filter(
     (dependency) =>
       dependency.type !== ResourceDependencyType.File &&
-      dependency.id.split('/')[1] === ownBucket,
+      parseDialResourceUrl(dependency.id).bucket === ownBucket,
   );
 
 /**
@@ -355,11 +356,10 @@ export class ApplicationPublishPreparationService {
   ): Promise<boolean> {
     const type = DIAL_TYPE_BY_DEPENDENCY[dependency.type];
     if (type == null) return false;
-    const [, , ...path] = targetUrl.split('/');
     const exists = await resourceExists(
       this.dialClient.client,
       type,
-      { bucket: PUBLIC_BUCKET, path: path.join('/') },
+      { bucket: PUBLIC_BUCKET, path: parseDialResourceUrl(targetUrl).path },
       headers,
     );
     if (exists) {

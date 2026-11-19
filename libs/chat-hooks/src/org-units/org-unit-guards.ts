@@ -156,7 +156,7 @@ export const getDependencyOrgUnitNamespaces = (
 };
 
 /** Inputs of {@link getMissingDirectWriteNamespaces}. */
-export interface MissingDirectWriteNamespacesParams {
+interface MissingDirectWriteNamespacesParams {
   /** Whether the `orgUnitsEnabled` feature flag is on. */
   isEnabled: boolean;
   /** Load status from `useOrgUnits`. */

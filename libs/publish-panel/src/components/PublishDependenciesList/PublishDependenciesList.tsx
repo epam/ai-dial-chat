@@ -14,6 +14,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { FC, useId } from 'react';
 import { PUBLISH_PANEL_CLASS } from '../../constants/public-class-names';
+import { DEFAULT_DEPENDENCIES_TITLE } from '../../constants/publish-dependencies';
 import {
   PublishDependenciesAppearance,
   type PublishDependenciesLabels,
@@ -78,7 +79,6 @@ const renderDependencyIcon = (
   );
 };
 
-const DEFAULT_TITLE = 'Private dependencies';
 const DEFAULT_DESCRIPTION =
   'This item depends on personal private resources (listed below). After publishing, other users may not be able to use it fully, or may run into problems.';
 
@@ -103,7 +103,7 @@ export const PublishDependenciesList: FC<PublishDependenciesListProps> = ({
 }) => {
   const headingId = useId();
   const {
-    title = DEFAULT_TITLE,
+    title = DEFAULT_DEPENDENCIES_TITLE,
     description = DEFAULT_DESCRIPTION,
     appearance = PublishDependenciesAppearance.Warning,
     typeLabels = {},
