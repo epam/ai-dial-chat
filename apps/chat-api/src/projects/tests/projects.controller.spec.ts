@@ -634,6 +634,7 @@ describe('ProjectsController (integration)', () => {
 
       expect(res.headers['content-type']).toBe('application/pdf');
       expect(res.headers['content-disposition']).toMatch(/^attachment;/);
+      expect(res.headers['content-security-policy']).toBeUndefined();
       expect(res.headers['x-content-type-options']).toBe('nosniff');
       expect(downloadService.downloadArtifact).toHaveBeenCalledWith(
         expect.objectContaining({ id: PROJECT_ID }),
@@ -641,6 +642,37 @@ describe('ProjectsController (integration)', () => {
         TEST_USER.at,
         TEST_USER.bucket,
       );
+    });
+
+    it('serves an HTML output inline under the sandboxed preview CSP', async () => {
+      downloadService.downloadArtifact.mockResolvedValue({
+        stream: new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode('<p>hi</p>'));
+            controller.close();
+          },
+        }),
+        headers: {
+          'content-type': 'text/html; charset=utf-8',
+          'content-disposition':
+            'attachment; filename="report.html"; filename*=UTF-8\'\'report.html',
+          'x-content-type-options': 'nosniff',
+        },
+        abortOnDisconnect: vi.fn(),
+      });
+      app = await buildApp(service);
+
+      const res = await request(app.getHttpServer())
+        .get(`${artifactsUrl(PROJECT_ID)}/report.html`)
+        .expect(200);
+
+      expect(res.headers['content-disposition']).toBe(
+        'inline; filename="report.html"; filename*=UTF-8\'\'report.html',
+      );
+      expect(res.headers['content-security-policy']).toContain(
+        'sandbox allow-scripts',
+      );
+      expect(res.headers['x-content-type-options']).toBe('nosniff');
     });
 
     it("lets a reader download an output of another user's project", async () => {

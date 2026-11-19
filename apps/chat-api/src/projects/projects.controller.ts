@@ -15,6 +15,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   ApiBody,
   ApiConsumes,
@@ -33,6 +34,10 @@ import { RequireFeature } from '../app-config/feature-flags/require-feature.deco
 import type { SessionUser } from '../auth/session/session.types';
 import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
 import {
+  applyHtmlPreviewHeaders,
+  isHtmlContentType,
+} from '../common/utils/html-preview-headers';
+import {
   SSE_DRAIN_TIMEOUT_MS,
   SSE_KEEPALIVE_PAYLOAD,
   startSseResponse,
@@ -40,6 +45,7 @@ import {
   writeSseChunk,
 } from '../common/utils/sse';
 import { pipeWebBody } from '../common/utils/stream';
+import type { EnvironmentVariables } from '../config/environment.config';
 import { SSE_KEEPALIVE_INTERVAL_MS } from '../conversations/streaming/conversation-completions.responder';
 import {
   SseSubscriptionKind,
@@ -117,6 +123,7 @@ export class ProjectsController {
     private readonly updateService: ProjectsUpdateService,
     private readonly watchService: ProjectsWatchService,
     private readonly artifactsListService: ProjectArtifactsListService,
+    private readonly configService: ConfigService<EnvironmentVariables, true>,
   ) {}
 
   @Get()
@@ -486,7 +493,7 @@ export class ProjectsController {
     operationId: 'downloadProjectFile',
     summary: 'Download one context file of a project',
     description:
-      'Streams one file directly under the project `context/` folder as an attachment with `X-Content-Type-Options: nosniff`.',
+      'Streams one file directly under the project `context/` folder as an attachment with `X-Content-Type-Options: nosniff`. A `text/html` file is served `inline` with the sandboxed HTML-preview `Content-Security-Policy` instead, so the attachment preview can render it at an opaque origin.',
   })
   @ApiParam(PROJECT_ID_PARAM)
   @ApiParam({
@@ -587,7 +594,7 @@ export class ProjectsController {
     operationId: 'downloadProjectArtifact',
     summary: 'Download one output of a project',
     description:
-      'Streams one file under the project `artifacts/` folder, a direct child or a nested path, as an attachment named after its last path segment, with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.',
+      'Streams one file under the project `artifacts/` folder, a direct child or a nested path, as an attachment named after its last path segment, with `X-Content-Type-Options: nosniff`. A `text/html` output is served `inline` with the sandboxed HTML-preview `Content-Security-Policy` instead, so the attachment preview can render it at an opaque origin. Any reader of the project may call it.',
   })
   @ApiParam(PROJECT_ID_PARAM)
   @ApiParam({
@@ -662,6 +669,14 @@ export class ProjectsController {
 
     for (const [key, value] of Object.entries(headers)) {
       res.setHeader(key, value);
+    }
+    /* An HTML context file or output renders in the attachment-preview
+     * iframe, sandboxed by its own CSP, rather than downloading. */
+    if (isHtmlContentType(headers['content-type'])) {
+      applyHtmlPreviewHeaders(
+        res,
+        this.configService.get('ALLOWED_IFRAME_ORIGINS', { infer: true }) ?? [],
+      );
     }
     res.on('close', () => {
       if (!res.writableEnded) abortOnDisconnect();

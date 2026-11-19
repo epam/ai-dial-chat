@@ -45,8 +45,10 @@ export const buildAttachmentDisposition = (fileName: string): string =>
 
 /**
  * Streams a whole project (Core's ZIP), one context file or one artifact to
- * the client. Responses are always attachments with `nosniff`, so a project
- * file never renders on the chat origin. A `403` in the caller's own bucket is Core
+ * the client. Responses are attachments with `nosniff`, so a project file
+ * never renders on the chat origin; `ProjectsController` serves an HTML file
+ * `inline` under the sandboxed preview CSP, which renders it at an opaque
+ * origin. A `403` in the caller's own bucket is Core
  * masking a missing resource and becomes a `404`.
  */
 @Injectable()

@@ -11324,7 +11324,7 @@
     },
     "/api/v1/projects/{id}/files/{fileName}": {
       "get": {
-        "description": "Streams one file directly under the project `context/` folder as an attachment with `X-Content-Type-Options: nosniff`.",
+        "description": "Streams one file directly under the project `context/` folder as an attachment with `X-Content-Type-Options: nosniff`. A `text/html` file is served `inline` with the sandboxed HTML-preview `Content-Security-Policy` instead, so the attachment preview can render it at an opaque origin.",
         "operationId": "downloadProjectFile",
         "parameters": [
           {
@@ -11459,7 +11459,7 @@
     },
     "/api/v1/projects/{id}/artifacts/{fileName}": {
       "get": {
-        "description": "Streams one file under the project `artifacts/` folder, a direct child or a nested path, as an attachment named after its last path segment, with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.",
+        "description": "Streams one file under the project `artifacts/` folder, a direct child or a nested path, as an attachment named after its last path segment, with `X-Content-Type-Options: nosniff`. A `text/html` output is served `inline` with the sandboxed HTML-preview `Content-Security-Policy` instead, so the attachment preview can render it at an opaque origin. Any reader of the project may call it.",
         "operationId": "downloadProjectArtifact",
         "parameters": [
           {

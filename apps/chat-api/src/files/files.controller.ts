@@ -25,6 +25,10 @@ import {
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
+import {
+  applyHtmlPreviewHeaders,
+  isHtmlContentType,
+} from '../common/utils/html-preview-headers';
 import { pipeWebBody } from '../common/utils/stream';
 import { createHtmlPreviewCspHeader } from '../config/csp';
 import type { EnvironmentVariables } from '../config/environment.config';
@@ -723,35 +727,13 @@ export class FilesController {
      * it's loaded (the preview iframe's own `sandbox` attribute is
      * additional defense-in-depth, not the primary control).
      */
-    if (headers['content-type']?.toLowerCase().startsWith('text/html')) {
-      const allowedIframeOrigins =
-        this.configService.get('ALLOWED_IFRAME_ORIGINS', { infer: true }) ?? [];
-      res.setHeader(
-        'Content-Security-Policy',
-        createHtmlPreviewCspHeader(allowedIframeOrigins),
+    /* DIAL Core forwards `Content-Disposition: attachment` verbatim even for
+     * HTML files; `applyHtmlPreviewHeaders` rewrites it to `inline`. */
+    if (isHtmlContentType(headers['content-type'])) {
+      applyHtmlPreviewHeaders(
+        res,
+        this.configService.get('ALLOWED_IFRAME_ORIGINS', { infer: true }) ?? [],
       );
-      /*
-       * `SAFE_DOWNLOAD_HEADERS` never forwards this today, but strip it
-       * defensively so a future widening of that allowlist can't leave a
-       * stale report-only policy sitting alongside the enforced one above.
-       */
-      res.removeHeader('Content-Security-Policy-Report-Only');
-
-      /*
-       * DIAL Core forwards `Content-Disposition: attachment` verbatim even
-       * for HTML files, which makes the browser download the file instead
-       * of rendering it in the `src=` iframe. Rewrite it to `inline` for the
-       * preview response; an explicit "download to disk" action elsewhere
-       * uses a same-origin `<a download>` element, which browsers honor
-       * regardless of this header.
-       */
-      const disposition = headers['content-disposition'];
-      if (disposition != null) {
-        res.setHeader(
-          'Content-Disposition',
-          disposition.replace(/^attachment/i, 'inline'),
-        );
-      }
     }
 
     await pipeWebBody(stream, res);

@@ -593,7 +593,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Streams one file under the project `artifacts/` folder, a direct child or a nested path, as an attachment named after its last path segment, with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.
+   * Streams one file under the project `artifacts/` folder, a direct child or a nested path, as an attachment named after its last path segment, with `X-Content-Type-Options: nosniff`. A `text/html` output is served `inline` with the sandboxed HTML-preview `Content-Security-Policy` instead, so the attachment preview can render it at an opaque origin. Any reader of the project may call it.
    * Download one output of a project
    */
   async downloadProjectArtifactRaw(
@@ -651,7 +651,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Streams one file under the project `artifacts/` folder, a direct child or a nested path, as an attachment named after its last path segment, with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.
+   * Streams one file under the project `artifacts/` folder, a direct child or a nested path, as an attachment named after its last path segment, with `X-Content-Type-Options: nosniff`. A `text/html` output is served `inline` with the sandboxed HTML-preview `Content-Security-Policy` instead, so the attachment preview can render it at an opaque origin. Any reader of the project may call it.
    * Download one output of a project
    */
   async downloadProjectArtifact(
@@ -666,7 +666,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Streams one file directly under the project `context/` folder as an attachment with `X-Content-Type-Options: nosniff`.
+   * Streams one file directly under the project `context/` folder as an attachment with `X-Content-Type-Options: nosniff`. A `text/html` file is served `inline` with the sandboxed HTML-preview `Content-Security-Policy` instead, so the attachment preview can render it at an opaque origin.
    * Download one context file of a project
    */
   async downloadProjectFileRaw(
@@ -724,7 +724,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Streams one file directly under the project `context/` folder as an attachment with `X-Content-Type-Options: nosniff`.
+   * Streams one file directly under the project `context/` folder as an attachment with `X-Content-Type-Options: nosniff`. A `text/html` file is served `inline` with the sandboxed HTML-preview `Content-Security-Policy` instead, so the attachment preview can render it at an opaque origin.
    * Download one context file of a project
    */
   async downloadProjectFile(
