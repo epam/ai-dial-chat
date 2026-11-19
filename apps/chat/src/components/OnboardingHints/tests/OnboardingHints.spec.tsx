@@ -76,7 +76,7 @@ const CatalogPage = () => {
  * route and a catalog route. There is no navigation landmark, so a
  * `navigation` hint has nothing to point at. */
 const startTour = async (initialPath = '/') => {
-  render(
+  const view = render(
     <MemoryRouter initialEntries={[initialPath]}>
       <button aria-label="buttons.newChat">+</button>
       <Link to="/catalog">Go to catalog</Link>
@@ -92,6 +92,7 @@ const startTour = async (initialPath = '/') => {
   await act(async () => {
     vi.advanceTimersByTime(ONBOARDING_START_DELAY_MS);
   });
+  return view;
 };
 
 /* Two steps, because React commits the catalog's loaded state only when an
@@ -112,7 +113,6 @@ describe('OnboardingHints', () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     localStorage.clear();
-    sessionStorage.clear();
     state.status = UserConfigStatus.Ready;
     state.isMobile = false;
     state.hints = [
@@ -275,6 +275,15 @@ describe('OnboardingHints', () => {
           name: /^onboardingTour.anchorsSummary:/,
         }),
       ).toBeTruthy();
+    });
+
+    it('is left by a reload without the URL parameter', async () => {
+      const { unmount } = await startTour('/?onboarding-anchors');
+      expect(screen.getByRole('region')).toBeTruthy();
+      unmount();
+
+      await startTour('/');
+      expect(screen.queryByRole('region')).toBeNull();
     });
 
     it('closes and drops the URL parameter', async () => {

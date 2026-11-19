@@ -38,11 +38,6 @@ import useLocalStorage from '../../hooks/useLocalStorage';
 import { StorageKey } from '../../types/storage-key';
 import { UserConfigStatus } from '../../types/user-config-status';
 import {
-  getFromSessionStorage,
-  removeFromSessionStorage,
-  setToSessionStorage,
-} from '../../utils/session-storage';
-import {
   getOnboardingAnchorTargets,
   resolveOnboardingTarget,
   type OnboardingTargetLabels,
@@ -53,8 +48,9 @@ const MAIN_CONTENT_ID = 'main-content';
 
 /* `?onboarding-anchors` in the URL outlines every anchor on the page instead
  * of showing hints, so an operator can see what a hint's target points at.
- * The view then stays on for the tab's session, so following links keeps it,
- * until its panel is closed. */
+ * The view then stays on while the app is open, so following links that drop
+ * the parameter keeps it, until its panel is closed; a reload without the
+ * parameter leaves it. */
 export const ONBOARDING_ANCHORS_PARAM = 'onboarding-anchors';
 
 /**
@@ -72,16 +68,13 @@ const OnboardingHints: FC = () => {
   const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const hasAnchorsParam = searchParams.has(ONBOARDING_ANCHORS_PARAM);
-  const [isStoredAnchorView, setIsStoredAnchorView] = useState(
-    () => getFromSessionStorage(StorageKey.OnboardingAnchorView) === 'true',
-  );
+  const [isKeptAnchorView, setIsKeptAnchorView] = useState(hasAnchorsParam);
   useEffect(() => {
     if (hasAnchorsParam) {
-      setToSessionStorage(StorageKey.OnboardingAnchorView, 'true');
-      setIsStoredAnchorView(true);
+      setIsKeptAnchorView(true);
     }
   }, [hasAnchorsParam]);
-  const isAnchorView = hasAnchorsParam || isStoredAnchorView;
+  const isAnchorView = hasAnchorsParam || isKeptAnchorView;
   const [seenIds, setSeenIds] = useLocalStorage<string[]>(
     StorageKey.SeenOnboardingHints,
     [],
@@ -227,8 +220,7 @@ const OnboardingHints: FC = () => {
   const anchorTargets = useMemo(() => getOnboardingAnchorTargets(), []);
 
   const handleCloseAnchorView = useCallback(() => {
-    removeFromSessionStorage(StorageKey.OnboardingAnchorView);
-    setIsStoredAnchorView(false);
+    setIsKeptAnchorView(false);
     setSearchParams(
       (current) => {
         const next = new URLSearchParams(current);

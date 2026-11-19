@@ -159,7 +159,7 @@ const Tour = () => {
 
 ### OnboardingAnchorMap
 
-An authoring aid rather than an onboarding surface: it draws a dashed outline with the anchor's name over every anchor on screen and lists, in a panel at the bottom end corner, the anchors the page does not render, behind a toggle that starts collapsed. An anchor covered by a drawer or dialog, or clipped by a scroll container, gets no outline. Clicks pass through the outlines, so the page stays usable while the map is shown; only the panel takes pointer input.
+An authoring aid rather than an onboarding surface: it draws a dashed outline with the anchor's name over every anchor on screen and lists, in a panel at the bottom end corner, the anchors the page does not render, behind a toggle that starts collapsed. A labelled button at the bottom of the panel closes the view. An anchor covered by a drawer or dialog, or clipped by a scroll container, gets no outline. Clicks pass through the outlines, so the page stays usable while the map is shown; only the panel takes pointer input.
 
 ```tsx
 import { OnboardingAnchorMap } from '@epam/ai-dial-onboarding-tour';

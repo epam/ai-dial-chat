@@ -88,7 +88,7 @@ export interface OnboardingAnchorMapLabels {
   missingHeading?: string;
   /** Text shown when every anchor is on screen. Defaults to `'Every anchor is on this page'`. */
   noneMissing?: string;
-  /** Accessible label of the panel's close button. Defaults to `'Close anchor view'`. */
+  /** Visible label of the panel's button that closes the anchor view. Defaults to `'Close anchor view'`. */
   close?: string;
 }
 
