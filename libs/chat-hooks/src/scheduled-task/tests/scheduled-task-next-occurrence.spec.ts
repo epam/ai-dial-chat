@@ -1,6 +1,9 @@
 import type { ScheduleCronDto } from '@epam/ai-dial-chat-api-client';
 import { describe, expect, it } from 'vitest';
-import { getNextCronOccurrence } from '../scheduled-task-next-occurrence';
+import {
+  getNextCronOccurrence,
+  hasScheduledTaskWindowEnded,
+} from '../scheduled-task-next-occurrence';
 
 describe('getNextCronOccurrence', () => {
   /* 7 Oct 2026, 08:00 UTC, which is 10:00 in Europe/Berlin and 17:00 in Asia/Tokyo. */
@@ -155,5 +158,17 @@ describe('getNextCronOccurrence', () => {
         from,
       ),
     ).toBeUndefined();
+  });
+});
+
+describe('hasScheduledTaskWindowEnded', () => {
+  const now = Date.parse('2026-10-07T08:00:00.000Z');
+
+  it.each([
+    ['2026-10-07T07:59:59.000Z', true],
+    ['2026-10-07T08:00:00.000Z', true],
+    ['2026-10-07T08:00:01.000Z', false],
+  ])('compares %s with now', (endDate, expected) => {
+    expect(hasScheduledTaskWindowEnded(endDate, now)).toBe(expected);
   });
 });

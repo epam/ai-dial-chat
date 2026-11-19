@@ -150,7 +150,7 @@ describe('toScheduledTaskItem', () => {
       { locale: 'en' },
     );
 
-    expect(result.scheduleLabel).toBe('weeklyAt:Monday|09:00');
+    expect(result.scheduleLabel).toBe('weeklyAt:Monday|9:00 AM');
   });
 
   it('formats a weekday list through weeklyAt as one locale list', () => {
@@ -165,7 +165,7 @@ describe('toScheduledTaskItem', () => {
     );
 
     expect(result.scheduleLabel).toBe(
-      'weeklyAt:Monday, Wednesday, and Friday|09:00',
+      'weeklyAt:Monday, Wednesday, and Friday|9:00 AM',
     );
   });
 
@@ -219,7 +219,7 @@ describe('toScheduledTaskItem', () => {
       scheduleLabels,
     );
 
-    expect(result.scheduleLabel).toBe('monthlyAt:15|09:00');
+    expect(result.scheduleLabel).toBe('monthlyAt:15|9:00 AM');
   });
 
   it('formats a plain daily cron trigger through dailyAt', () => {
@@ -228,7 +228,7 @@ describe('toScheduledTaskItem', () => {
       scheduleLabels,
     );
 
-    expect(result.scheduleLabel).toBe('dailyAt:09:00');
+    expect(result.scheduleLabel).toBe('dailyAt:9:00 AM');
   });
 
   it('shows the invalid label when cron fields are empty', () => {
@@ -326,7 +326,7 @@ describe('formatScheduledTaskScheduleLabel — task zone', () => {
             daily('Europe/Warsaw'),
             scheduleLabels,
           ),
-        ).toBe('dailyAt:09:00');
+        ).toBe('dailyAt:9:00 AM');
       } finally {
         vi.useRealTimers();
       }
@@ -336,13 +336,13 @@ describe('formatScheduledTaskScheduleLabel — task zone', () => {
   it('appends the zone when it differs from the browser zone', () => {
     expect(
       formatScheduledTaskScheduleLabel(daily('Asia/Tokyo'), scheduleLabels),
-    ).toBe('dailyAt:09:00@Asia/Tokyo');
+    ).toBe('dailyAt:9:00 AM@Asia/Tokyo');
   });
 
   it('does not append the zone when it equals the browser zone', () => {
     expect(
       formatScheduledTaskScheduleLabel(daily('Europe/Warsaw'), scheduleLabels),
-    ).toBe('dailyAt:09:00');
+    ).toBe('dailyAt:9:00 AM');
   });
 
   it('compares against an explicit browser zone', () => {
@@ -350,14 +350,35 @@ describe('formatScheduledTaskScheduleLabel — task zone', () => {
       formatScheduledTaskScheduleLabel(daily('Asia/Tokyo'), scheduleLabels, {
         browserTimezone: 'Asia/Tokyo',
       }),
-    ).toBe('dailyAt:09:00');
+    ).toBe('dailyAt:9:00 AM');
+  });
+
+  it('appends the zone when it equals the browser zone and alwaysShowTimezone is set', () => {
+    expect(
+      formatScheduledTaskScheduleLabel(daily('Europe/Warsaw'), scheduleLabels, {
+        alwaysShowTimezone: true,
+      }),
+    ).toBe('dailyAt:9:00 AM@Europe/Warsaw');
+  });
+
+  it('formats the clock time in the locale without shifting it to another zone', () => {
+    const label = (locale: string) =>
+      formatScheduledTaskScheduleLabel(
+        daily('Asia/Tokyo'),
+        { ...scheduleLabels, withTimezone: undefined },
+        { locale },
+      );
+
+    expect(label('en')).toBe('dailyAt:9:00 AM');
+    expect(label('en-GB')).toBe('dailyAt:09:00');
+    expect(label('de')).toBe('dailyAt:09:00');
   });
 
   it('never appends a zone when the host supplies no wording for it', () => {
     const { withTimezone: _unused, ...labels } = scheduleLabels;
 
     expect(formatScheduledTaskScheduleLabel(daily('Asia/Tokyo'), labels)).toBe(
-      'dailyAt:09:00',
+      'dailyAt:9:00 AM',
     );
   });
 
@@ -373,7 +394,7 @@ describe('formatScheduledTaskScheduleLabel — task zone', () => {
         scheduleLabels,
         { locale: 'en' },
       ),
-    ).toBe('weeklyAt:Sunday|23:00@Asia/Tokyo');
+    ).toBe('weeklyAt:Sunday|11:00 PM@Asia/Tokyo');
   });
 
   it('keeps the stored day of month', () => {
@@ -385,7 +406,7 @@ describe('formatScheduledTaskScheduleLabel — task zone', () => {
         scheduleLabels,
         { browserTimezone: 'UTC' },
       ),
-    ).toBe('monthlyAt:31|23:00');
+    ).toBe('monthlyAt:31|11:00 PM');
   });
 
   it('formats a one-time instant in the task zone', () => {

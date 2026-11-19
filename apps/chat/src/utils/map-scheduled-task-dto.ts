@@ -28,13 +28,20 @@ const buildScheduleLabels = (t: TFunction): ScheduledTaskScheduleLabels => ({
     t(Keys.CardScheduleZoneSuffix, { label, timezone }),
 });
 
-/** Localizes the shared trigger descriptor in the browser's display timezone. */
+/**
+ * Localizes the shared trigger descriptor. The task's zone is appended only when it
+ * differs from the browser's, unless `alwaysShowTimezone` is set.
+ */
 export const buildScheduleLabel = (
   task: ScheduledTaskDto,
   t: TFunction,
   locale?: string,
+  alwaysShowTimezone = false,
 ): string =>
-  formatScheduledTaskScheduleLabel(task, buildScheduleLabels(t), { locale });
+  formatScheduledTaskScheduleLabel(task, buildScheduleLabels(t), {
+    locale,
+    alwaysShowTimezone,
+  });
 
 /** Maps a `GET /api/v1/scheduled-tasks` DTO to the lib-facing `ScheduledTaskItem`. */
 export const mapScheduledTaskDtoToItem = (

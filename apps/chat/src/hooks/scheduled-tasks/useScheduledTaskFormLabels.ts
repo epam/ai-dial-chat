@@ -1,3 +1,7 @@
+import {
+  formatScheduledTaskWeekday,
+  ScheduledTaskWeekdayStyle,
+} from '@epam/ai-dial-chat-hooks';
 import { ScheduledTaskRepeat } from '@epam/ai-dial-scheduled-tasks';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -70,24 +74,15 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
         ),
       })),
       daysOfWeekLabel: t(ScheduledTasksI18nKeys.CreateDaysOfWeekLabel),
-      /* 2023-01-02 is a Monday; the APScheduler day value counts Monday-first,
-       * so the reference lands on each segment's own day. Both formatters run
-       * in UTC so the localized weekday is the segment's day, not the local
-       * calendar's. */
-      customDayOptions: CUSTOM_DAY_VALUES.map((value) => {
-        const dayDate = new Date(Date.UTC(2023, 0, 2 + Number(value)));
-        return {
+      customDayOptions: CUSTOM_DAY_VALUES.map((value) => ({
+        value,
+        shortLabel: formatScheduledTaskWeekday(
           value,
-          shortLabel: new Intl.DateTimeFormat(displayLanguage, {
-            weekday: 'narrow',
-            timeZone: 'UTC',
-          }).format(dayDate),
-          fullName: new Intl.DateTimeFormat(displayLanguage, {
-            weekday: 'long',
-            timeZone: 'UTC',
-          }).format(dayDate),
-        };
-      }),
+          displayLanguage,
+          ScheduledTaskWeekdayStyle.Narrow,
+        ),
+        fullName: formatScheduledTaskWeekday(value, displayLanguage),
+      })),
       dayOfWeekLabel: t(ScheduledTasksI18nKeys.CreateDayOfWeekLabel),
       dayOfMonthLabel: t(ScheduledTasksI18nKeys.CreateDayOfMonthLabel),
       minuteLabel: t(ScheduledTasksI18nKeys.CreateMinuteLabel),

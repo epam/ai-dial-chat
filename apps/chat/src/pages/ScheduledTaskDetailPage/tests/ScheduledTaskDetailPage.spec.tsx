@@ -1357,7 +1357,7 @@ describe('ScheduledTaskDetailPage', () => {
     getScheduledTaskMock.mockResolvedValue({
       id: 'sched_123',
       displayName: 'Mon, Wed, Fri report',
-      /* A task in the browser's own zone gets no zone suffix on its label. */
+      /* The Details panel always appends the task's zone, even the browser's own. */
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       trigger: {
         cron: {
@@ -1369,7 +1369,7 @@ describe('ScheduledTaskDetailPage', () => {
 
     expect(
       await screen.findByText(
-        'repeatsLabel:scheduledTasks.card.scheduleWeeklyAt',
+        'repeatsLabel:scheduledTasks.card.scheduleZoneSuffix',
       ),
     ).toBeTruthy();
   });

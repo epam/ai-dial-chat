@@ -60,8 +60,27 @@ describe('buildScheduleLabel — zone suffix', () => {
       ),
     ).toBe(
       `${ScheduledTasksI18nKeys.CardScheduleZoneSuffix}:${JSON.stringify({
-        label: `${ScheduledTasksI18nKeys.CardScheduleDailyAt}:${JSON.stringify({ time: '09:00' })}`,
+        label: `${ScheduledTasksI18nKeys.CardScheduleDailyAt}:${JSON.stringify({ time: '9:00 AM' })}`,
         timezone: 'Asia/Tokyo',
+      })}`,
+    );
+  });
+
+  it('appends the task zone even when it equals the browser zone if alwaysShowTimezone is set', () => {
+    expect(
+      buildScheduleLabel(
+        buildDto({
+          timezone: 'Europe/Berlin',
+          ...cron({ hour: '9', minute: '0' }),
+        }),
+        fakeT,
+        'en',
+        true,
+      ),
+    ).toBe(
+      `${ScheduledTasksI18nKeys.CardScheduleZoneSuffix}:${JSON.stringify({
+        label: `${ScheduledTasksI18nKeys.CardScheduleDailyAt}:${JSON.stringify({ time: '9:00 AM' })}`,
+        timezone: 'Europe/Berlin',
       })}`,
     );
   });
@@ -77,7 +96,7 @@ describe('buildScheduleLabel — zone suffix', () => {
         'en',
       ),
     ).toBe(
-      `${ScheduledTasksI18nKeys.CardScheduleDailyAt}:${JSON.stringify({ time: '09:00' })}`,
+      `${ScheduledTasksI18nKeys.CardScheduleDailyAt}:${JSON.stringify({ time: '9:00 AM' })}`,
     );
   });
 });
@@ -121,22 +140,22 @@ describe('buildScheduleLabel', () => {
     [
       cron({ hour: '9', minute: '0' }),
       ScheduledTasksI18nKeys.CardScheduleDailyAt,
-      { time: '09:00' },
+      { time: '9:00 AM' },
     ],
     [
       cron({ hour: '9', minute: '0', day_of_week: 'Monday' }),
       ScheduledTasksI18nKeys.CardScheduleWeeklyAt,
-      { day: 'Monday', time: '09:00' },
+      { day: 'Monday', time: '9:00 AM' },
     ],
     [
       cron({ hour: '9', minute: '0', day_of_week: '0,2,4' }),
       ScheduledTasksI18nKeys.CardScheduleWeeklyAt,
-      { day: 'Monday, Wednesday, and Friday', time: '09:00' },
+      { day: 'Monday, Wednesday, and Friday', time: '9:00 AM' },
     ],
     [
       cron({ hour: '9', minute: '0', day: '15' }),
       ScheduledTasksI18nKeys.CardScheduleMonthlyAt,
-      { day: '15', time: '09:00' },
+      { day: '15', time: '9:00 AM' },
     ],
   ])(
     'renders a recurring trigger through %#: its key and options',
