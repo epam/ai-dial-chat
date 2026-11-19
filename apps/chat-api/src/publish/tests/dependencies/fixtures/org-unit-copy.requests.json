@@ -1,0 +1,21 @@
+{
+  "$comment": "The copy requests chat-api sends, in order, when application applications/bucket-123/Helper__1.0.0 with an uploaded icon and the private skill skills/bucket-123/Plan is saved into the org-unit folder Delivery/Teams: icon, dependency, then the staged application to its own target.",
+  "folderPath": "Delivery/Teams",
+  "requests": [
+    {
+      "sourceUrl": "files/bucket-123/icons/logo.png",
+      "destinationUrl": "files/public/Delivery/Teams/Helper__1.0.0/logo.png",
+      "overwrite": false
+    },
+    {
+      "sourceUrl": "skills/bucket-123/Plan",
+      "destinationUrl": "skills/public/Delivery/Teams/.Helper__1.0.0.deps/bucket-123/Plan",
+      "overwrite": false
+    },
+    {
+      "sourceUrl": "applications/bucket-123/.publish-staging/Helper__1.0.0",
+      "destinationUrl": "applications/public/Delivery/Teams/Helper__1.0.0",
+      "overwrite": false
+    }
+  ]
+}

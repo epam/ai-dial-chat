@@ -1,3 +1,6 @@
+import type { Logger } from '@nestjs/common';
+import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import { parseDialApplicationResource } from '../common/utils/dial-application-resource';
 import {
   DialResourceType,
   type DialResourceLocation,
@@ -12,6 +15,7 @@ import {
   MAX_TARGET_VERSION_LENGTH,
   STORED_RESOURCE_VERSION_PATTERN,
 } from '../common/validators/resource-version.pattern';
+import type { DialClientService } from '../dial/dial-client.service';
 
 /*
  * Confirmed against DIAL Core's own OpenAPI spec (`/v1/ops/publication/create`
@@ -151,6 +155,49 @@ export const getPublishableIconUrl = (
     return undefined;
 
   return resourceUrl;
+};
+
+/**
+ * Reads an application of the caller and returns its uploaded icon file (see
+ * {@link getPublishableIconUrl}). Best-effort: a failed read is logged and
+ * answered with `undefined`, so the caller goes on without an icon.
+ * @param client - DIAL Core SDK client
+ * @param accessToken - caller's bearer token
+ * @param sourceUrl - the application's percent-encoded resource path
+ * @param logger - logger of the caller
+ * @param purpose - what the read is for, as a gerund for the log line (`publishing`, `copying`)
+ * @returns the icon's file resource url, or `undefined` for anything else or when the read failed
+ */
+export const readPublishableApplicationIconUrl = async (
+  client: DialClientService['client'],
+  accessToken: string,
+  sourceUrl: string,
+  logger: Logger,
+  purpose: string,
+): Promise<string | undefined> => {
+  const resource = parseDialApplicationResource(sourceUrl);
+  if (resource == null) return undefined;
+
+  try {
+    const result = await client.getCustomApplication(
+      resource.bucket,
+      resource.path,
+      { headers: getBearerAuthHeaders(accessToken) },
+    );
+    if (result.error != null || result.data == null) {
+      logger.warn(
+        `Could not read application "${sourceUrl}" before ${purpose} (status ${result.response?.status}); ${purpose} without its icon`,
+      );
+      return undefined;
+    }
+    return getPublishableIconUrl(result.data, resource.bucket);
+  } catch (err) {
+    logger.warn(
+      `Failed to read application "${sourceUrl}" before ${purpose}; ${purpose} without its icon`,
+      err instanceof Error ? err.stack : undefined,
+    );
+    return undefined;
+  }
 };
 
 /**

@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  Logger,
   ForbiddenException,
   ServiceUnavailableException,
   UnauthorizedException,
@@ -199,5 +200,81 @@ describe('OrgUnitsService', () => {
       'org-units:list:user-1',
       'org-units:list:user-2',
     ]);
+  });
+});
+
+describe('OrgUnitsService.findMissingWriteNamespaces', () => {
+  const WRITER = {
+    ...ACME,
+    permissions: { applications: ['read', 'write'], skills: ['read'] },
+  };
+  const rights = (data: unknown) => {
+    const made = makeService();
+    made.getUserRoleAssignments.mockResolvedValue(ok(data));
+    return made;
+  };
+  const check = (service: OrgUnitsService, namespaces: string[]) =>
+    service.findMissingWriteNamespaces(
+      'user-1',
+      'token-1',
+      'Acme/Teams',
+      namespaces,
+    );
+
+  it('returns nothing missing for a writer on every namespace asked', async () => {
+    const { service } = rights({ adminAccess: 'NONE', items: [WRITER] });
+
+    await expect(check(service, ['applications'])).resolves.toEqual([]);
+  });
+
+  it('names the namespaces the writer lacks, without duplicates', async () => {
+    const { service } = rights({ adminAccess: 'NONE', items: [WRITER] });
+
+    await expect(
+      check(service, ['applications', 'skills', 'files', 'skills']),
+    ).resolves.toEqual(['skills', 'files']);
+  });
+
+  it('names every namespace for a reader', async () => {
+    const reader = { ...ACME, permissions: { applications: ['read'] } };
+    const { service } = rights({ adminAccess: 'NONE', items: [reader] });
+
+    await expect(check(service, ['applications', 'prompts'])).resolves.toEqual([
+      'applications',
+      'prompts',
+    ]);
+  });
+
+  it('lets an admin write everywhere inside a unit', async () => {
+    const { service } = rights({ adminAccess: 'FULL', items: [WRITER] });
+
+    await expect(check(service, ['applications', 'files'])).resolves.toEqual(
+      [],
+    );
+  });
+
+  it('is unknown while org units are off', async () => {
+    const { service, getUserRoleAssignments } = makeService();
+    getUserRoleAssignments.mockResolvedValue(err(404));
+
+    await expect(check(service, ['applications'])).resolves.toBeUndefined();
+  });
+
+  it('is unknown when the rights cannot be read', async () => {
+    const { service, getUserRoleAssignments } = makeService();
+    getUserRoleAssignments.mockResolvedValue(err(500));
+    vi.spyOn(Logger.prototype, 'warn').mockReturnValue(undefined);
+
+    await expect(check(service, ['applications'])).resolves.toBeUndefined();
+  });
+
+  it('is unknown for a folder no unit owns', async () => {
+    const { service } = rights({ adminAccess: 'NONE', items: [WRITER] });
+
+    await expect(
+      service.findMissingWriteNamespaces('user-1', 'token-1', 'Plain/Folder', [
+        'applications',
+      ]),
+    ).resolves.toBeUndefined();
   });
 });

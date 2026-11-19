@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ApplicationSchemasService } from '../application-schemas/application-schemas.service';
-import { ApplicationsService } from '../applications/applications.service';
+import {
+  ApplicationsService,
+  type DialApplication,
+} from '../applications/applications.service';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { parseDialApplicationResource } from '../common/utils/dial-application-resource';
 import {
@@ -41,7 +44,44 @@ export interface PreparedApplicationPublication {
   reusedCount: number;
 }
 
-const DIAL_TYPE_BY_DEPENDENCY: Partial<
+/** One dependency that still has to be copied, with where it comes from and where it goes. */
+export interface PlannedDependency {
+  dependency: ResourceDependencyDto;
+  /** Percent-encoded `{type}/{bucket}/{path}` of the dependency. */
+  sourceUrl: string;
+  /** Percent-encoded `{type}/public/...` target in the per-application namespace. */
+  targetUrl: string;
+}
+
+/** The first-level private dependencies of an application and where each one goes. */
+export interface ApplicationDependencyPlan {
+  /** Every dependency the application refers to that is copied or reused. */
+  dependencies: ResourceDependencyDto[];
+  /** The dependencies whose target does not exist yet. */
+  toCopy: PlannedDependency[];
+  /** Dependency id to target url, for every dependency in `dependencies`. */
+  targets: Map<string, string>;
+}
+
+/**
+ * Returns the body with its icon set, or removed when `iconUrl` is `null`.
+ * @param body - the application body
+ * @param iconUrl - the icon url to set, or `null` to remove the icon
+ */
+const withIcon = (
+  body: DialApplication,
+  iconUrl: string | null,
+): DialApplication => {
+  const {
+    iconUrl: _current,
+    icon_url: _legacy,
+    ...rest
+  } = body as DialApplication & Record<string, unknown>;
+  return (iconUrl == null ? rest : { ...rest, iconUrl }) as DialApplication;
+};
+
+/** The DIAL Core resource type of each dependency kind that is copied; a `file` has none. */
+export const DIAL_TYPE_BY_DEPENDENCY: Partial<
   Record<ResourceDependencyType, DialResourceType>
 > = {
   [ResourceDependencyType.Application]: DialResourceType.Applications,
@@ -119,20 +159,73 @@ export class ApplicationPublishPreparationService {
     folderPath: string,
     targetResourceName: string,
   ): Promise<PreparedApplicationPublication | undefined> {
+    const plan = await this.plan(
+      userSub,
+      accessToken,
+      bucket,
+      entityId,
+      folderPath,
+      targetResourceName,
+    );
+    if (plan == null || plan.dependencies.length === 0) return undefined;
+
+    const copy = await this.stage(userSub, accessToken, bucket, entityId, plan);
+    return {
+      copy,
+      dependencyResources: plan.toCopy.map(({ sourceUrl, targetUrl }) => ({
+        action: 'ADD',
+        sourceUrl,
+        targetUrl,
+      })),
+      publishedDependencies: plan.toCopy.map(({ dependency }) => dependency),
+      reusedCount: plan.dependencies.length - plan.toCopy.length,
+    };
+  }
+
+  /**
+   * Resolves the application's first-level private dependencies, computes where
+   * each one goes and which of those targets already exist. Writes nothing.
+   * @param userSub - caller's session subject
+   * @param accessToken - caller's bearer token
+   * @param bucket - caller's own bucket
+   * @param entityId - the application's resource path
+   * @param folderPath - plain target folder
+   * @param targetResourceName - last segment of the application's own target
+   * @param isStrict - when `true` a failure to read the dependencies is thrown instead of read as "none", for a caller that must not go on without them
+   * @returns the plan, or `undefined` when the application is not the caller's own
+   * @throws {Error} When a target's existence cannot be told, or, with `isStrict`, when the dependencies cannot be read
+   */
+  async plan(
+    userSub: string,
+    accessToken: string,
+    bucket: string,
+    entityId: string,
+    folderPath: string,
+    targetResourceName: string,
+    isStrict = false,
+  ): Promise<ApplicationDependencyPlan | undefined> {
     const resource = parseDialApplicationResource(
       encodeDialResourcePath(entityId),
     );
     if (resource != null && resource.bucket !== bucket) return undefined;
 
-    const { dependencies: found } =
-      await this.dependenciesService.getDependencies(
-        accessToken,
-        userSub,
-        CatalogEntityType.Application,
-        entityId,
-      );
+    const { dependencies: found } = await (isStrict
+      ? this.dependenciesService.getDependenciesStrict(
+          accessToken,
+          userSub,
+          CatalogEntityType.Application,
+          entityId,
+        )
+      : this.dependenciesService.getDependencies(
+          accessToken,
+          userSub,
+          CatalogEntityType.Application,
+          entityId,
+        ));
     const dependencies = selectPublishableDependencies(found, bucket);
-    if (dependencies.length === 0) return undefined;
+    if (dependencies.length === 0) {
+      return { dependencies, toCopy: [], targets: new Map() };
+    }
 
     const headers = getBearerAuthHeaders(accessToken);
     const targets = new Map<string, string>();
@@ -150,51 +243,88 @@ export class ApplicationPublishPreparationService {
         this.targetExists(headers, dependency, targetUrl),
       ),
     );
-    const dependencyResources: DependencyPublicationResource[] = [];
-    const publishedDependencies: ResourceDependencyDto[] = [];
+    const toCopy: PlannedDependency[] = [];
     planned.forEach(({ dependency, targetUrl }, index) => {
       if (existing[index]) return;
-      publishedDependencies.push(dependency);
-      dependencyResources.push({
-        action: 'ADD',
+      toCopy.push({
+        dependency,
         sourceUrl: encodeDialResourcePath(dependency.id),
         targetUrl,
       });
     });
+    return { dependencies, toCopy, targets };
+  }
 
+  /**
+   * Makes the temporary copy of the application with its references pointed at
+   * the plan's targets and, optionally, its icon rewritten or removed. The
+   * author's own application is never written.
+   * @param userSub - caller's session subject
+   * @param accessToken - caller's bearer token
+   * @param bucket - caller's own bucket
+   * @param entityId - the application's resource path
+   * @param plan - what {@link plan} returned
+   * @param iconUrl - the icon the copy carries: a url sets it, `null` removes it, `undefined` leaves it as it is
+   * @throws {ApplicationBeingPublishedException} When another call holds the temporary copy
+   * @throws Core's mapped error (an `HttpException`) when it refuses the copy or the write
+   */
+  async stage(
+    userSub: string,
+    accessToken: string,
+    bucket: string,
+    entityId: string,
+    plan: ApplicationDependencyPlan,
+    iconUrl?: string | null,
+  ): Promise<ApplicationPublishCopy> {
+    const headers = getBearerAuthHeaders(accessToken);
     const original = await this.applicationsService.resolveOwnApplication(
       headers,
       entityId,
       bucket,
     );
-    const copy = await this.copyService.create(
+    return this.copyService.create(
       userSub,
       accessToken,
       original,
       async (body) => {
+        let rewritten = body;
         const schemaId = body.application_type_schema_id;
-        if (!schemaId || body.application_properties == null) return body;
-        const schema = await this.schemasService.getApplicationSchema(
-          userSub,
-          accessToken,
-          schemaId,
-        );
-        return {
-          ...body,
-          application_properties: replaceSchemaResources(
-            schema,
-            body.application_properties,
-            targets,
-          ) as typeof body.application_properties,
-        };
+        if (
+          plan.targets.size > 0 &&
+          schemaId &&
+          body.application_properties != null
+        ) {
+          const schema = await this.schemasService.getApplicationSchema(
+            userSub,
+            accessToken,
+            schemaId,
+          );
+          rewritten = {
+            ...body,
+            application_properties: replaceSchemaResources(
+              schema,
+              body.application_properties,
+              plan.targets,
+            ) as typeof body.application_properties,
+          };
+        }
+        return iconUrl === undefined ? rewritten : withIcon(rewritten, iconUrl);
       },
     );
-    return {
-      copy,
-      dependencyResources,
-      publishedDependencies,
-      reusedCount: dependencies.length - publishedDependencies.length,
-    };
+  }
+
+  /**
+   * Deletes a temporary copy.
+   * @param userSub - caller's session subject
+   * @param accessToken - caller's bearer token
+   * @param copy - what {@link stage} returned
+   */
+  deleteCopy(
+    userSub: string,
+    accessToken: string,
+    copy: ApplicationPublishCopy,
+  ): Promise<void> {
+    return this.copyService.delete(userSub, accessToken, copy);
   }
 
   /**
@@ -208,7 +338,7 @@ export class ApplicationPublishPreparationService {
     accessToken: string,
     prepared: PreparedApplicationPublication,
   ): Promise<void> {
-    return this.copyService.delete(userSub, accessToken, prepared.copy);
+    return this.deleteCopy(userSub, accessToken, prepared.copy);
   }
 
   /**

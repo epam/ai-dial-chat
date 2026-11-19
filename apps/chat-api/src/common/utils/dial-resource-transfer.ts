@@ -15,6 +15,7 @@ import { encodePlainDialResourcePath } from './encode-dial-path';
  * DIAL Core resource types whose personal items can be listed by folder and
  * moved or copied. `Projects` is only read: its metadata answers
  * {@link dialResourceExists}; no project is moved or copied through here.
+ * `Files` can be copied and checked for existence, not listed here.
  */
 export enum DialResourceType {
   Applications = 'applications',
@@ -22,6 +23,7 @@ export enum DialResourceType {
   Prompts = 'prompts',
   Skills = 'skills',
   Projects = 'projects',
+  Files = 'files',
 }
 
 /** A resource inside one bucket; `path` is percent-encoded per segment. */
@@ -58,6 +60,11 @@ const getMetadata = (
       path,
       init,
     ) as Promise<MetadataListPage>;
+  }
+  if (type === DialResourceType.Files) {
+    return client.getFileMetadata(bucket, path, {
+      headers,
+    }) as Promise<MetadataListPage>;
   }
   if (type === DialResourceType.Skills) {
     return client.listSkillMetadata(

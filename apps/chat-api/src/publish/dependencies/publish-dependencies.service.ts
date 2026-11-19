@@ -42,19 +42,45 @@ export class PublishDependenciesService {
     entityType: CatalogEntityType,
     entityId: string,
   ): Promise<ResourceDependenciesResultDto> {
-    const resolver = this.resolvers[entityType];
-    if (resolver == null) return { dependencies: [] };
-
-    let dependencies: ResourceDependencyDto[] = [];
     try {
-      dependencies = await resolver.resolve({ accessToken, userSub }, entityId);
+      return await this.getDependenciesStrict(
+        accessToken,
+        userSub,
+        entityType,
+        entityId,
+      );
     } catch (err) {
       this.logger.warn(
         `Could not resolve the publish dependencies of ${entityType} "${entityId}": ${
           err instanceof Error ? err.message : 'unknown error'
         }`,
       );
+      return { dependencies: [] };
     }
+  }
+
+  /**
+   * Like {@link getDependencies}, but a resolver failure reaches the caller
+   * instead of becoming an empty list. For a caller that must not go on with a
+   * list it could not read, such as a direct write into an org unit.
+   * @param accessToken - caller's bearer token
+   * @param userSub - caller's session subject, used to scope cached schemas
+   * @param entityType - catalog entity kind
+   * @param entityId - the entity's DIAL Core resource path
+   * @throws {Error} Whatever the resolver throws when the dependencies cannot be read
+   */
+  async getDependenciesStrict(
+    accessToken: string,
+    userSub: string,
+    entityType: CatalogEntityType,
+    entityId: string,
+  ): Promise<ResourceDependenciesResultDto> {
+    const resolver = this.resolvers[entityType];
+    if (resolver == null) return { dependencies: [] };
+    const dependencies = await resolver.resolve(
+      { accessToken, userSub },
+      entityId,
+    );
     return { dependencies };
   }
 

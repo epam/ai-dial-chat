@@ -62,6 +62,28 @@ describe('PublishDependenciesService', () => {
     },
   );
 
+  it('getDependenciesStrict returns the resolver result and lets a resolver failure through', async () => {
+    await expect(
+      service.getDependenciesStrict(
+        't',
+        'u',
+        CatalogEntityType.Application,
+        'applications/b/App__1.0.0',
+      ),
+    ).resolves.toEqual({ dependencies: [DEPENDENCY] });
+
+    resolve.mockRejectedValue(new Error('application read failed'));
+    await expect(
+      service.getDependenciesStrict(
+        't',
+        'u',
+        CatalogEntityType.Application,
+        'applications/b/App__1.0.0',
+      ),
+    ).rejects.toThrow('application read failed');
+    expect(warn).not.toHaveBeenCalled();
+  });
+
   it('returns an empty list and logs a warning without the token when the resolver fails', async () => {
     resolve.mockRejectedValue(
       new Error('application read failed with status 500'),

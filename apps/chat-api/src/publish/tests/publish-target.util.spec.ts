@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { Logger } from '@nestjs/common';
+import { describe, expect, it, vi } from 'vitest';
 import { DialResourceType } from '../../common/utils/dial-resource-transfer';
+import type { DialClientService } from '../../dial/dial-client.service';
 import {
   getPublicTargetFolder,
   getPublishedAttachmentsFolderUrl,
@@ -9,6 +11,7 @@ import {
   getPublishTargetLocation,
   getPublishedIconTargetUrl,
   getPublishedTargetUrl,
+  readPublishableApplicationIconUrl,
   getResourceName,
   getResourceTypePrefix,
   getVersionedTargetResourceName,
@@ -389,5 +392,62 @@ describe('getPublishTargetLocation', () => {
   it('has no location for a url that is not a published copy', () => {
     expect(getPublishTargetLocation('models/public/x')).toBeUndefined();
     expect(getPublishTargetLocation('applications/b1/x')).toBeUndefined();
+  });
+});
+
+describe('readPublishableApplicationIconUrl', () => {
+  const logger = new Logger('test');
+  const sourceUrl = 'applications/bucket-123/Design/Helper__1.0.0';
+  const read = (getCustomApplication: unknown) =>
+    readPublishableApplicationIconUrl(
+      { getCustomApplication } as unknown as DialClientService['client'],
+      'token',
+      sourceUrl,
+      logger,
+      'copying',
+    );
+
+  it('returns the own uploaded icon of the application', async () => {
+    const getCustomApplication = vi.fn().mockResolvedValue({
+      data: { iconUrl: 'files/bucket-123/icons/logo.png' },
+      response: { status: 200 },
+    });
+
+    await expect(read(getCustomApplication)).resolves.toBe(
+      'files/bucket-123/icons/logo.png',
+    );
+    expect(getCustomApplication).toHaveBeenCalledWith(
+      'bucket-123',
+      'Design/Helper__1.0.0',
+      { headers: { Authorization: 'Bearer token' } },
+    );
+  });
+
+  it('answers undefined and warns when the read fails or throws', async () => {
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+
+    await expect(
+      read(vi.fn().mockResolvedValue({ error: {}, response: { status: 500 } })),
+    ).resolves.toBeUndefined();
+    await expect(
+      read(vi.fn().mockRejectedValue(new Error('network'))),
+    ).resolves.toBeUndefined();
+    expect(warn).toHaveBeenCalledTimes(2);
+    expect(warn.mock.calls[0][0]).toContain('copying without its icon');
+  });
+
+  it('answers undefined for a path that is not an application', async () => {
+    const getCustomApplication = vi.fn();
+
+    await expect(
+      readPublishableApplicationIconUrl(
+        { getCustomApplication } as unknown as DialClientService['client'],
+        'token',
+        'prompts/bucket-123/x',
+        logger,
+        'copying',
+      ),
+    ).resolves.toBeUndefined();
+    expect(getCustomApplication).not.toHaveBeenCalled();
   });
 });
