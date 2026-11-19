@@ -1,4 +1,7 @@
-import type { OnboardingHintDto } from '@epam/ai-dial-chat-api-client';
+import {
+  OnboardingHintPage,
+  type OnboardingHintDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   ONBOARDING_RETRY_INTERVAL_MS,
   ONBOARDING_START_DELAY_MS,
@@ -52,7 +55,14 @@ const hint = (
   id: string,
   target: OnboardingHintDto['target'],
   title: string,
-): OnboardingHintDto => ({ id, target, title, description: `${title} body` });
+  pages: OnboardingHintDto['pages'] = [],
+): OnboardingHintDto => ({
+  id,
+  target,
+  title,
+  description: `${title} body`,
+  pages,
+});
 
 /* A catalog that, like the real one, renders its controls only once its
  * data has loaded. */
@@ -76,10 +86,11 @@ const CatalogPage = () => {
  * route and a catalog route. There is no navigation landmark, so a
  * `navigation` hint has nothing to point at. */
 const startTour = async (initialPath = '/') => {
-  render(
+  const view = render(
     <MemoryRouter initialEntries={[initialPath]}>
       <button aria-label="buttons.newChat">+</button>
       <Link to="/catalog">Go to catalog</Link>
+      <Link to="/">Go home</Link>
       <main id="main-content">
         <Routes>
           <Route path="/" element={<textarea aria-label="Message" />} />
@@ -92,6 +103,7 @@ const startTour = async (initialPath = '/') => {
   await act(async () => {
     vi.advanceTimersByTime(ONBOARDING_START_DELAY_MS);
   });
+  return view;
 };
 
 /* Two steps, because React commits the catalog's loaded state only when an
@@ -112,7 +124,6 @@ describe('OnboardingHints', () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     localStorage.clear();
-    sessionStorage.clear();
     state.status = UserConfigStatus.Ready;
     state.isMobile = false;
     state.hints = [
@@ -164,11 +175,22 @@ describe('OnboardingHints', () => {
     expect(screen.getByRole('dialog', { name: 'Start a chat' })).toBeTruthy();
   });
 
-  it('marks the shown hints seen when skipped with Escape', async () => {
+  it('marks only the shown hint seen when closed with Escape', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     await startTour();
 
     await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(readSeen()).toEqual(['new-chat']);
+  });
+
+  it('marks every hint seen when the tour is skipped', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    await startTour();
+
+    await user.click(
+      screen.getByRole('button', { name: 'onboardingTour.skip' }),
+    );
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(readSeen()).toEqual(['new-chat', 'composer']);
   });
@@ -203,7 +225,11 @@ describe('OnboardingHints', () => {
   });
 
   it('keeps looking while a page loads its controls', async () => {
-    state.hints = [hint('create', 'catalog-create', 'Create an agent')];
+    state.hints = [
+      hint('create', 'catalog-create', 'Create an agent', [
+        OnboardingHintPage.Catalog,
+      ]),
+    ];
     await startTour('/catalog');
     expect(screen.queryByRole('dialog')).toBeNull();
 
@@ -217,7 +243,9 @@ describe('OnboardingHints', () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     state.hints = [
       hint('new-chat', 'new-chat', 'Start a chat'),
-      hint('create', 'catalog-create', 'Create an agent'),
+      hint('create', 'catalog-create', 'Create an agent', [
+        OnboardingHintPage.Catalog,
+      ]),
     ];
     await startTour();
 
@@ -235,6 +263,32 @@ describe('OnboardingHints', () => {
     expect(
       screen.getByRole('dialog', { name: 'Create an agent' }),
     ).toBeTruthy();
+  });
+
+  it('shows a hint without pages on the home page only', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    state.hints = [hint('new-chat', 'new-chat', 'Start a chat')];
+    await startTour('/catalog');
+    await waitForCatalogThenRetry();
+    /* The New chat control is on the catalog page too, but the hint is not. */
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    await user.click(screen.getByRole('link', { name: 'Go home' }));
+    await act(async () => {
+      vi.advanceTimersByTime(ONBOARDING_START_DELAY_MS);
+    });
+    expect(screen.getByRole('dialog', { name: 'Start a chat' })).toBeTruthy();
+  });
+
+  it('keeps the step number of a tour reloaded halfway', async () => {
+    localStorage.setItem(
+      StorageKey.SeenOnboardingHints,
+      JSON.stringify(['new-chat']),
+    );
+    await startTour();
+    expect(
+      screen.getByRole('dialog', { name: 'Ask here' }).textContent,
+    ).toContain('onboardingTour.stepCounter:2/2');
   });
 
   it('waits for the config to be ready', async () => {
@@ -264,6 +318,15 @@ describe('OnboardingHints', () => {
           name: /^onboardingTour.anchorsSummary:/,
         }),
       ).toBeTruthy();
+    });
+
+    it('is left by a reload without the URL parameter', async () => {
+      const { unmount } = await startTour('/?onboarding-anchors');
+      expect(screen.getByRole('region')).toBeTruthy();
+      unmount();
+
+      await startTour('/');
+      expect(screen.queryByRole('region')).toBeNull();
     });
 
     it('closes and drops the URL parameter', async () => {

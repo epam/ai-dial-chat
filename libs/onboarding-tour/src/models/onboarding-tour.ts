@@ -42,8 +42,6 @@ export interface OnboardingTourLabels {
 
 /** Color overrides of the `OnboardingTour` component. */
 export interface OnboardingTourColors extends OnboardingCardColors {
-  /** Dimming layer over the page behind the card. Defaults to `--bg-backdrop`. */
-  backdrop?: string;
   /** Step counter text. Defaults to `--text-tertiary`. */
   counterText?: string;
 }
@@ -56,6 +54,8 @@ export interface OnboardingTourProps {
   onFinish: (shownStepIds: string[], reason: OnboardingTourEndReason) => void;
   /** Called with a step's id when the user moves past it with Next, so the host can keep the progress of a tour that is left unfinished. */
   onStepComplete?: (stepId: string) => void;
+  /** Steps of this tour the user already passed in an earlier visit; the step counter starts after them and counts them in its total. Defaults to `0`. */
+  completedStepCount?: number;
   /** When `true`, the card is a bottom sheet instead of a popover next to the target. Defaults to `false`. */
   isMobile?: boolean;
   /** Text direction of the overlay, used to align the card with its target. Defaults to the direction inherited from the document. */
@@ -90,7 +90,7 @@ export interface OnboardingAnchorMapLabels {
   missingHeading?: string;
   /** Text shown when every anchor is on screen. Defaults to `'Every anchor is on this page'`. */
   noneMissing?: string;
-  /** Accessible label of the panel's close button. Defaults to `'Close anchor view'`. */
+  /** Visible label of the panel's button that closes the anchor view. Defaults to `'Close anchor view'`. */
   close?: string;
 }
 
@@ -162,16 +162,20 @@ export interface UseOnboardingHintsOptions {
   isEnabled: boolean;
   /** A value that changes on navigation, such as the pathname; each change looks for hints again. */
   pageKey?: unknown;
+  /** Whether a hint belongs to the current page; a hint that does not is neither shown nor counted there. Defaults to every hint belonging to every page. */
+  isHintOnPage?: (hint: OnboardingHint) => boolean;
 }
 
 /** Return value of `useOnboardingHints`. */
 export interface UseOnboardingHintsResult {
   /** Steps to pass to `OnboardingTour`; empty while no tour runs. */
   steps: OnboardingTourStep[];
-  /** Pass to `OnboardingTour` as `onFinish`: marks the shown ids seen (every hint's id when dismissed) and ends the tour. */
+  /** Pass to `OnboardingTour` as `onFinish`: marks the shown ids seen (every hint's id when skipped) and ends the tour; after a close no tour opens again until the hook remounts. */
   onFinish: (shownIds: string[], reason: OnboardingTourEndReason) => void;
   /** Pass to `OnboardingTour` as `onStepComplete`: marks a hint seen as soon as the user moves past it. */
   onStepComplete: (stepId: string) => void;
+  /** Pass to `OnboardingTour` as `completedStepCount`: how many hints of the current page were already seen when the tour started. */
+  completedStepCount: number;
 }
 
 /** User-visible strings of the `OnboardingHints` component. */

@@ -2,6 +2,7 @@ import type { OnboardingHintTarget } from '@epam/ai-dial-chat-api-client';
 import { useIsMobile } from '@epam/ai-dial-chat-shared';
 import {
   OnboardingHints as OnboardingHintsView,
+  type OnboardingHint,
   type OnboardingHintsLabels,
 } from '@epam/ai-dial-onboarding-tour';
 import {
@@ -37,11 +38,7 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { StorageKey } from '../../types/storage-key';
 import { UserConfigStatus } from '../../types/user-config-status';
-import {
-  getFromSessionStorage,
-  removeFromSessionStorage,
-  setToSessionStorage,
-} from '../../utils/session-storage';
+import { getOnboardingPage, isHintOnOnboardingPage } from './onboarding-page';
 import {
   getOnboardingAnchorTargets,
   resolveOnboardingTarget,
@@ -53,13 +50,15 @@ const MAIN_CONTENT_ID = 'main-content';
 
 /* `?onboarding-anchors` in the URL outlines every anchor on the page instead
  * of showing hints, so an operator can see what a hint's target points at.
- * The view then stays on for the tab's session, so following links keeps it,
- * until its panel is closed. */
+ * The view then stays on while the app is open, so following links that drop
+ * the parameter keeps it, until its panel is closed; a reload without the
+ * parameter leaves it. */
 export const ONBOARDING_ANCHORS_PARAM = 'onboarding-anchors';
 
 /**
  * First-visit onboarding: feeds the operator-configured `onboardingHints`
- * whose element is on screen to the `OnboardingTour` lib. Each hint passed
+ * of the current page (`onboarding-page.ts`) whose element is on screen to
+ * the `OnboardingTour` lib. Each hint passed
  * with Next, and finishing or skipping the tour, stores the seen ids in
  * `localStorage`, so a hint is seen once per browser and a new id is shown
  * on the next visit. Hints whose element is not on screen wait for a page
@@ -72,16 +71,13 @@ const OnboardingHints: FC = () => {
   const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const hasAnchorsParam = searchParams.has(ONBOARDING_ANCHORS_PARAM);
-  const [isStoredAnchorView, setIsStoredAnchorView] = useState(
-    () => getFromSessionStorage(StorageKey.OnboardingAnchorView) === 'true',
-  );
+  const [isKeptAnchorView, setIsKeptAnchorView] = useState(hasAnchorsParam);
   useEffect(() => {
     if (hasAnchorsParam) {
-      setToSessionStorage(StorageKey.OnboardingAnchorView, 'true');
-      setIsStoredAnchorView(true);
+      setIsKeptAnchorView(true);
     }
   }, [hasAnchorsParam]);
-  const isAnchorView = hasAnchorsParam || isStoredAnchorView;
+  const isAnchorView = hasAnchorsParam || isKeptAnchorView;
   const [seenIds, setSeenIds] = useLocalStorage<string[]>(
     StorageKey.SeenOnboardingHints,
     [],
@@ -226,9 +222,22 @@ const OnboardingHints: FC = () => {
   );
   const anchorTargets = useMemo(() => getOnboardingAnchorTargets(), []);
 
+  /* A hint belongs to the pages it names, or to the home page when it names
+   * none; a client-config from an older chat-api has no `pages` at all. */
+  const page = getOnboardingPage(pathname);
+  const pagesById = useMemo(
+    () =>
+      new Map(config.onboardingHints.map(({ id, pages }) => [id, pages ?? []])),
+    [config.onboardingHints],
+  );
+  const isHintOnPage = useCallback(
+    (hint: OnboardingHint) =>
+      isHintOnOnboardingPage(pagesById.get(hint.id) ?? [], page),
+    [pagesById, page],
+  );
+
   const handleCloseAnchorView = useCallback(() => {
-    removeFromSessionStorage(StorageKey.OnboardingAnchorView);
-    setIsStoredAnchorView(false);
+    setIsKeptAnchorView(false);
     setSearchParams(
       (current) => {
         const next = new URLSearchParams(current);
@@ -249,6 +258,7 @@ const OnboardingHints: FC = () => {
       onSeenIdsChange={setSeenIds}
       isEnabled={status === UserConfigStatus.Ready}
       pageKey={pathname}
+      isHintOnPage={isHintOnPage}
       isAnchorView={isAnchorView}
       onCloseAnchorView={handleCloseAnchorView}
       isMobile={isMobile}

@@ -19,10 +19,11 @@ export const OnboardingHints: FC<OnboardingHintsProps> = ({
   ...hintOptions
 }) => {
   const { resolveTarget } = hintOptions;
-  const { steps, onFinish, onStepComplete } = useOnboardingHints({
-    ...hintOptions,
-    isEnabled: isEnabled && !isAnchorView,
-  });
+  const { steps, onFinish, onStepComplete, completedStepCount } =
+    useOnboardingHints({
+      ...hintOptions,
+      isEnabled: isEnabled && !isAnchorView,
+    });
 
   const anchors = useMemo<OnboardingAnchor[]>(
     () =>
@@ -49,6 +50,7 @@ export const OnboardingHints: FC<OnboardingHintsProps> = ({
       steps={steps}
       onFinish={onFinish}
       onStepComplete={onStepComplete}
+      completedStepCount={completedStepCount}
       isMobile={isMobile}
       dir={dir}
       labels={labels?.tour}

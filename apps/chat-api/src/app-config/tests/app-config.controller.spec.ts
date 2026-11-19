@@ -729,18 +729,21 @@ describe('AppConfigController managed configuration (integration)', () => {
       target: 'conversation-input',
       title: 'Ask anything',
       description: 'Type a question or attach files.',
+      pages: [],
     },
     {
       id: 'tour.new-chat',
       target: 'new-chat',
       title: 'Start a new chat',
       description: null,
+      pages: [],
     },
     {
       id: 'tour.catalog',
       target: 'catalog',
       title: 'Browse the catalog',
       description: null,
+      pages: [],
     },
   ];
   const CHAT_PAYLOAD = {
@@ -935,7 +938,7 @@ describe('AppConfigController managed configuration (integration)', () => {
       .get('/v1/client-config?appId=ai-dial-chat')
       .expect(200);
     expect(response.body.config.onboardingHints).toEqual([
-      { ...local[0], description: null },
+      { ...local[0], description: null, pages: [] },
     ]);
   });
 

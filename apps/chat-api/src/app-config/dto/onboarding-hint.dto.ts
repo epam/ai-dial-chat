@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { OnboardingHintPage } from '../types/onboarding-hint-page';
 import { OnboardingHintTarget } from '../types/onboarding-hint-target';
 
 export class OnboardingHintDto {
@@ -33,4 +34,14 @@ export class OnboardingHintDto {
     type: String,
   })
   description!: string | null;
+
+  @ApiProperty({
+    description:
+      'Pages the hint is shown on. Empty when unset: the hint is then shown on the home page (new chat and conversations) only. Unknown names are dropped server-side.',
+    enum: OnboardingHintPage,
+    enumName: 'OnboardingHintPage',
+    isArray: true,
+    example: [OnboardingHintPage.Catalog],
+  })
+  pages!: OnboardingHintPage[];
 }

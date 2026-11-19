@@ -113,6 +113,24 @@ describe('OnboardingTour', () => {
     );
   });
 
+  it('counts the steps passed in an earlier visit', async () => {
+    const user = userEvent.setup();
+    render(
+      <Host
+        initialSteps={stepsFixture()}
+        onFinish={vi.fn()}
+        completedStepCount={2}
+      />,
+    );
+    expect(
+      screen.getByRole('dialog', { name: 'Start a chat' }).textContent,
+    ).toContain('Step 3 of 4');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    const last = screen.getByRole('dialog', { name: 'Ask here' });
+    expect(last.textContent).toContain('Step 4 of 4');
+    expect(screen.getByRole('button', { name: 'Done' })).toBeTruthy();
+  });
+
   it('reports each step the user moves past with Next', async () => {
     const user = userEvent.setup();
     const onStepComplete = vi.fn();
@@ -151,7 +169,7 @@ describe('OnboardingTour', () => {
     expect(screen.getByRole('dialog', { name: 'Start a chat' })).toBeTruthy();
   });
 
-  it('reports only the steps shown when dismissed with Escape', async () => {
+  it('reports only the steps shown when closed with Escape', async () => {
     const user = userEvent.setup();
     const onFinish = vi.fn();
     render(<Host initialSteps={stepsFixture()} onFinish={onFinish} />);
@@ -160,11 +178,37 @@ describe('OnboardingTour', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(onFinish).toHaveBeenCalledWith(
       ['new-chat'],
-      OnboardingTourEndReason.Dismissed,
+      OnboardingTourEndReason.Closed,
     );
   });
 
-  it('reports Skip tour as dismissed', async () => {
+  it('reports the close button as closed, not skipped', async () => {
+    const user = userEvent.setup();
+    const onFinish = vi.fn();
+    render(<Host initialSteps={stepsFixture()} onFinish={onFinish} />);
+
+    await user.click(screen.getByRole('button', { name: 'Close tour' }));
+    expect(onFinish).toHaveBeenCalledWith(
+      ['new-chat'],
+      OnboardingTourEndReason.Closed,
+    );
+  });
+
+  it('offers Skip tour on the last step too', async () => {
+    const user = userEvent.setup();
+    const onFinish = vi.fn();
+    render(<Host initialSteps={stepsFixture()} onFinish={onFinish} />);
+
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('button', { name: 'Done' })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Skip tour' }));
+    expect(onFinish).toHaveBeenCalledWith(
+      ['new-chat', 'composer'],
+      OnboardingTourEndReason.Skipped,
+    );
+  });
+
+  it('reports Skip tour as skipped', async () => {
     const user = userEvent.setup();
     const onFinish = vi.fn();
     render(<Host initialSteps={stepsFixture()} onFinish={onFinish} />);
@@ -172,7 +216,7 @@ describe('OnboardingTour', () => {
     await user.click(screen.getByRole('button', { name: 'Skip tour' }));
     expect(onFinish).toHaveBeenCalledWith(
       ['new-chat'],
-      OnboardingTourEndReason.Dismissed,
+      OnboardingTourEndReason.Skipped,
     );
   });
 

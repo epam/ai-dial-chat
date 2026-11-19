@@ -145,6 +145,11 @@ Its managed value mirrors `normalizeOnboardingHints`
   so the artifact test fails until `MANAGED_CONFIG_SCHEMA_VERSION` gets a
   MINOR bump, and Config Studio editors can use the anchor only once that
   version is uploaded. Until then only `ONBOARDING_HINTS` can point at it.
+- **`pages` is environment-only for now.** `ONBOARDING_HINTS` entries can
+  carry `pages` (an `OnboardingHintPage` list) to limit a hint to those
+  pages. Schema 1.0.0 predates the member and rejects it, so a published
+  hint has no `pages` and shows on the home page only. Adding it to the
+  managed schema needs a MINOR bump like a new anchor.
 
 ## Payload contract
 

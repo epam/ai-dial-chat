@@ -20,16 +20,11 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
   type FC,
 } from 'react';
-import {
-  ARROW_HEIGHT,
-  ARROW_WIDTH,
-  SPOTLIGHT_PADDING,
-} from '../../constants/layout';
+import { ARROW_HEIGHT, ARROW_WIDTH } from '../../constants/layout';
 import { ONBOARDING_TOUR_CLASS } from '../../constants/public-class-names';
 import { useResolvedTarget } from '../../hooks/useResolvedTarget/useResolvedTarget';
 import type { OnboardingTourProps } from '../../models/onboarding-tour';
@@ -41,18 +36,18 @@ import {
   TARGET_RECT_MIDDLEWARE,
   targetRect,
 } from '../../utils/floating';
-import { spotlightRadius } from '../../utils/spotlight';
 import { HintCard } from '../HintCard/HintCard';
 import styles from './OnboardingTour.module.scss';
 
 const defaultStepCounter = (current: number, total: number) =>
   `Step ${current} of ${total}`;
 
-/** Dims the page around each step's element and walks through the steps one hint card at a time, the card pointing at the element; the page stays usable while a card is open. */
+/** Walks through the steps one hint card at a time, the card pointing at each step's element; the page is not dimmed and stays usable while a card is open. */
 export const OnboardingTour: FC<OnboardingTourProps> = ({
   steps,
   onFinish,
   onStepComplete,
+  completedStepCount = 0,
   isMobile = false,
   dir,
   labels,
@@ -77,11 +72,6 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
   const isOpen = step != null;
   const target = useResolvedTarget(step?.getTarget);
   const arrowRef = useRef<SVGSVGElement>(null);
-  /* The cut-out follows the target's own corners: round for a round button, square for a panel. */
-  const borderRadius = useMemo(
-    () => (target ? spotlightRadius(target, SPOTLIGHT_PADDING) : undefined),
-    [target],
-  );
 
   /* Remember where focus was each time a tour opens, to give it back when
    * that tour ends; a later tour must not return to an element saved before
@@ -116,8 +106,12 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
     () => finishWith(OnboardingTourEndReason.Done),
     [finishWith],
   );
-  const dismiss = useCallback(
-    () => finishWith(OnboardingTourEndReason.Dismissed),
+  const close = useCallback(
+    () => finishWith(OnboardingTourEndReason.Closed),
+    [finishWith],
+  );
+  const skip = useCallback(
+    () => finishWith(OnboardingTourEndReason.Skipped),
     [finishWith],
   );
 
@@ -126,7 +120,7 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
       open: isOpen,
       onOpenChange: (open) => {
         if (!open) {
-          dismiss();
+          close();
         }
       },
       elements: { reference: target },
@@ -181,8 +175,8 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
     return null;
   }
 
-  const total = steps.length;
-  const isLast = index === total - 1;
+  const total = completedStepCount + steps.length;
+  const isLast = index === steps.length - 1;
   const stepCounter = labels?.stepCounter ?? defaultStepCounter;
 
   /* Without a target to sit next to (on mobile, or while a target is briefly
@@ -198,7 +192,6 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
 
   const cssVars = buildCssVars({
     ...cardColorVars(colors),
-    '--ot-backdrop': colors?.backdrop,
     '--ot-counter-text': colors?.counterText,
   });
 
@@ -214,27 +207,6 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
           className,
         )}
       >
-        {/* Visual only: like the layer, it lets clicks through to the page.
-         * With a target, the dimming is a huge shadow around a cut-out over
-         * the element, so the element stays lit. */}
-        {rect ? (
-          <div
-            aria-hidden
-            className={mergeClasses(styles.cutout, 'absolute')}
-            style={{
-              top: rect.top - SPOTLIGHT_PADDING,
-              left: rect.left - SPOTLIGHT_PADDING,
-              width: rect.width + SPOTLIGHT_PADDING * 2,
-              height: rect.height + SPOTLIGHT_PADDING * 2,
-              borderRadius,
-            }}
-          />
-        ) : (
-          <div
-            aria-hidden
-            className={mergeClasses(styles.backdrop, 'absolute inset-0')}
-          />
-        )}
         <FloatingFocusManager
           context={context}
           modal={false}
@@ -247,9 +219,9 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
             ref={cardRefs}
             heading={step.title}
             description={step.description}
-            counter={stepCounter(index + 1, total)}
+            counter={stepCounter(completedStepCount + index + 1, total)}
             closeLabel={labels?.close ?? 'Close tour'}
-            onClose={dismiss}
+            onClose={close}
             counterClassName={counterClassName}
             titleClassName={titleClassName}
             descriptionClassName={descriptionClassName}
@@ -274,14 +246,12 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
             }
             footer={
               <div className="flex items-center justify-between gap-2">
-                {isLast ? (
-                  <span />
-                ) : (
-                  <GhostButton
-                    label={labels?.skip ?? 'Skip tour'}
-                    onClick={dismiss}
-                  />
-                )}
+                {/* On every step, the last one too: Done marks the shown
+                 * hints seen, Skip opts out of the ones still to come. */}
+                <GhostButton
+                  label={labels?.skip ?? 'Skip tour'}
+                  onClick={skip}
+                />
                 <div className="flex items-center gap-2">
                   {index > 0 && (
                     <NeutralButton

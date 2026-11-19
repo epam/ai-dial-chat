@@ -55,7 +55,18 @@ What catches a missing part:
    `apps/chat/src/components/OnboardingHints/tests/onboarding-targets.spec.tsx`: it finds the element,
    and it returns `null` when the element is hidden or in an `inert` subtree.
 5. Check it on the real page with `?onboarding-anchors` in the URL. The view
-   stays on while you follow links in that tab, until its panel is closed.
+   stays on while you follow links in the app, until its panel is closed or the
+   page reloads without the parameter.
+
+## Adding a page
+
+A hint shows only on the pages its `pages` member names, or on `home` when it
+names none. A new top-level route belongs to an `OnboardingHintPage`
+(`apps/chat-api/src/app-config/types/onboarding-hint-page.ts`) through
+`PAGE_ROUTES` in `apps/chat/src/components/OnboardingHints/onboarding-page.ts`;
+a route missing there shows no hint at all. Add a new `OnboardingHintPage`
+member only for a surface operators would want to aim hints at on their own,
+then `npm run openapi` and `npm run openapi:check`.
 
 The tour itself — which hints to show, the start delay, seen ids, the anchor
 map — is `OnboardingHints` from `@epam/ai-dial-onboarding-tour`; a host

@@ -1,11 +1,10 @@
 import { buildCssVars } from '@epam/ai-dial-chat-shared';
 import {
-  CloseButton,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  ElementSize,
   GhostButton,
   mergeClasses,
+  NeutralButton,
 } from '@epam/ai-dial-ui-kit';
 import { FloatingPortal } from '@floating-ui/react';
 import { IconChevronDown } from '@tabler/icons-react';
@@ -102,19 +101,12 @@ export const OnboardingAnchorMap: FC<OnboardingAnchorMapProps> = ({
             'pointer-events-auto fixed inset-e-4 bottom-4 flex max-h-[50vh] w-72 max-w-[calc(100vw-32px)] flex-col gap-2 overflow-auto rounded-lg border p-3',
           )}
         >
-          <div className="flex items-start justify-between gap-2">
-            <h2
-              id={headingId}
-              className={mergeClasses(styles.summary, summaryClassName)}
-            >
-              {summary}
-            </h2>
-            <CloseButton
-              ariaLabel={labels?.close ?? 'Close anchor view'}
-              size={ElementSize.Standard}
-              onClose={onClose}
-            />
-          </div>
+          <h2
+            id={headingId}
+            className={mergeClasses(styles.summary, summaryClassName)}
+          >
+            {summary}
+          </h2>
           {missing.length > 0 ? (
             <>
               <h3>
@@ -162,6 +154,13 @@ export const OnboardingAnchorMap: FC<OnboardingAnchorMapProps> = ({
               {labels?.noneMissing ?? 'Every anchor is on this page'}
             </p>
           )}
+          {/* A labelled button rather than an icon: it is the only way out of
+           * the view, so it must be easy to find. */}
+          <NeutralButton
+            label={labels?.close ?? 'Close anchor view'}
+            onClick={onClose}
+            className="self-stretch"
+          />
         </section>
       </div>
     </FloatingPortal>
