@@ -1,5 +1,5 @@
 import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
-import { PublishDependencyType } from '@epam/ai-dial-publish-panel';
+import type { PublishDependencyType } from '@epam/ai-dial-publish-panel';
 import type { CatalogPublishEntityType } from '../catalog/publish';
 import { SaveDestinationRoot } from '../catalog/save-destination-root';
 import { OrgUnitsStatus } from './types';
@@ -127,15 +127,16 @@ export const toPublishDisabledReason = (
 ): ((destination: { path: string[] }) => string | undefined) | undefined =>
   getDisabledReason && ((destination) => getDisabledReason(destination.path));
 
+/* Keyed by the enum's values, which are the publish-dependencies API's `type` values: the enum is only a type here so this module, which the lean `./utils` entry carries, takes no runtime dependency on the optional `@epam/ai-dial-publish-panel` peer. */
 const NAMESPACE_BY_DEPENDENCY_TYPE: Record<
-  PublishDependencyType,
+  `${PublishDependencyType}`,
   OrgUnitNamespace | undefined
 > = {
-  [PublishDependencyType.Application]: OrgUnitNamespace.Applications,
-  [PublishDependencyType.Toolset]: OrgUnitNamespace.Toolsets,
-  [PublishDependencyType.Prompt]: OrgUnitNamespace.Prompts,
-  [PublishDependencyType.Skill]: OrgUnitNamespace.Skills,
-  [PublishDependencyType.File]: undefined,
+  application: OrgUnitNamespace.Applications,
+  toolset: OrgUnitNamespace.Toolsets,
+  prompt: OrgUnitNamespace.Prompts,
+  skill: OrgUnitNamespace.Skills,
+  file: undefined,
 };
 
 /**
@@ -145,9 +146,9 @@ const NAMESPACE_BY_DEPENDENCY_TYPE: Record<
 export const getDependencyTypeOfNamespace = (
   namespace: OrgUnitNamespace,
 ): PublishDependencyType | undefined =>
-  Object.values(PublishDependencyType).find(
-    (type) => NAMESPACE_BY_DEPENDENCY_TYPE[type] === namespace,
-  );
+  Object.entries(NAMESPACE_BY_DEPENDENCY_TYPE).find(
+    ([, candidate]) => candidate === namespace,
+  )?.[0] as unknown as PublishDependencyType | undefined;
 
 /**
  * The org-unit namespaces a direct write must hold `write` on to copy the given
