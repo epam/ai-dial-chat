@@ -13,7 +13,9 @@ import {
   buildDailyTopModelsQuery,
   buildDailyTotalsQuery,
   buildModelRankingQuery,
+  BUDGET_FIELDS,
   CLIENT_TYPE_FIELD,
+  type UsageBudget,
 } from './queries/usage-history.queries';
 import type { UsageHistoryPeriod } from './types/usage-history-period';
 import { UsageHistoryUnavailableReason } from './types/usage-history-unavailable-reason';
@@ -40,9 +42,13 @@ const describeError = (error: unknown): string => {
   return error instanceof Error ? error.name : 'unknown error';
 };
 
-/* Outcome of client-identity discovery; `error` is set when the schema read failed. */
-interface ClientTypeDiscovery {
+/*
+ * Outcome of schema discovery: whether the client-identity field and the
+ * budget columns are visible; `error` is set when the schema read failed.
+ */
+interface SchemaDiscovery {
   exposed: boolean;
+  budgetColumns: boolean;
   error?: unknown;
 }
 
@@ -62,21 +68,30 @@ const isRowRestricted = (table: unknown): boolean => {
   return permissions?.read === true && permissions.rows_restricted === true;
 };
 
-/* Whether the caller's schema of the usage log lists the client-identity field. */
-const exposesClientType = (schema: unknown): boolean => {
+/* The field names the caller's schema of the usage log lists. */
+const schemaFieldNames = (schema: unknown): Set<string> => {
   const fields =
     schema != null && typeof schema === 'object'
       ? (schema as { fields?: unknown }).fields
       : undefined;
-  return (
-    Array.isArray(fields) &&
-    fields.some(
-      (entry) =>
-        entry != null &&
-        typeof entry === 'object' &&
-        (entry as { name?: unknown }).name === CLIENT_TYPE_FIELD,
-    )
-  );
+  const names = new Set<string>();
+  if (!Array.isArray(fields)) return names;
+  for (const entry of fields) {
+    const name =
+      entry != null && typeof entry === 'object'
+        ? (entry as { name?: unknown }).name
+        : undefined;
+    if (typeof name === 'string') names.add(name);
+  }
+  return names;
+};
+
+const discover = (schema: unknown): SchemaDiscovery => {
+  const names = schemaFieldNames(schema);
+  return {
+    exposed: names.has(CLIENT_TYPE_FIELD),
+    budgetColumns: BUDGET_FIELDS.every((name) => names.has(name)),
+  };
 };
 
 /**
@@ -91,9 +106,14 @@ export class UsageHistoryService {
 
   constructor(private readonly analytics: AnalyticsClient) {}
 
+  /**
+   * @param budget narrows every figure to the model calls this budget paid
+   * for; without it the history covers all of the caller's root requests.
+   */
   async getUsageHistory(
     accessToken: string,
     period: UsageHistoryPeriod,
+    budget?: UsageBudget,
   ): Promise<UserUsageHistoryResponseDto> {
     if (!this.analytics.isConfigured) {
       this.logger.debug(
@@ -109,10 +129,13 @@ export class UsageHistoryService {
      * guard has passed; its rejection is captured here so it is never
      * unhandled when the guard refuses.
      */
-    const discovery = this.analytics.getUsageLogSchema(accessToken).then(
-      (schema): ClientTypeDiscovery => ({ exposed: exposesClientType(schema) }),
-      (error: unknown): ClientTypeDiscovery => ({ exposed: false, error }),
-    );
+    const discovery = this.analytics
+      .getUsageLogSchema(accessToken)
+      .then(discover, (error: unknown): SchemaDiscovery => ({
+        exposed: false,
+        budgetColumns: false,
+        error,
+      }));
     try {
       const table = await this.analytics.getUsageLogTable(accessToken);
       if (!isRowRestricted(table)) {
@@ -130,6 +153,26 @@ export class UsageHistoryService {
     }
 
     /*
+     * Step 1b, budget scope only: the budget columns must be visible, or the
+     * queries would fail on an unknown field instead of saying the narrowing
+     * is unsupported.
+     */
+    if (budget) {
+      const { budgetColumns, error } = await discovery;
+      if (error !== undefined) {
+        if (isRefusal(error)) return this.forbidden(period, error);
+        return this.unavailableAfter(period, error);
+      }
+      if (!budgetColumns) {
+        this.logger.warn(
+          `Usage history (${period}) for a budget unsupported: the caller's DIAL Analytics ` +
+            'schema of dial_usage_log has no budget columns (ai-dial-analytics V18, ai-dial-core#2308)',
+        );
+        return unavailable(UsageHistoryUnavailableReason.BudgetUnsupported);
+      }
+    }
+
+    /*
      * Step 2: daily totals and the model ranking start at once; the optional
      * client split follows discovery on its own, so a slow schema endpoint
      * never delays the required queries.
@@ -139,13 +182,17 @@ export class UsageHistoryService {
       period,
       window,
       discovery,
+      budget,
     );
     try {
       const [dailyTotals, ranking] = await Promise.all([
-        this.analytics.executeQuery(accessToken, buildDailyTotalsQuery(window)),
         this.analytics.executeQuery(
           accessToken,
-          buildModelRankingQuery(window),
+          buildDailyTotalsQuery(window, budget),
+        ),
+        this.analytics.executeQuery(
+          accessToken,
+          buildModelRankingQuery(window, budget),
         ),
       ]);
       const ranked = rankDeployments(ranking);
@@ -158,13 +205,14 @@ export class UsageHistoryService {
         topNames.length > 0
           ? await this.analytics.executeQuery(
               accessToken,
-              buildDailyTopModelsQuery(window, topNames),
+              buildDailyTopModelsQuery(window, topNames, budget),
             )
           : undefined;
 
       return buildAvailableHistory({
         period,
         window,
+        budget,
         dailyTotals,
         ranked,
         dailyTopModels,
@@ -186,7 +234,8 @@ export class UsageHistoryService {
     accessToken: string,
     period: UsageHistoryPeriod,
     window: UsageWindow,
-    discovery: Promise<ClientTypeDiscovery>,
+    discovery: Promise<SchemaDiscovery>,
+    budget: UsageBudget | undefined,
   ): Promise<unknown> {
     const { exposed, error } = await discovery;
     if (error !== undefined) {
@@ -199,7 +248,7 @@ export class UsageHistoryService {
     try {
       return await this.analytics.executeQuery(
         accessToken,
-        buildClientSplitQuery(window),
+        buildClientSplitQuery(window, budget),
       );
     } catch (queryError) {
       this.logger.warn(

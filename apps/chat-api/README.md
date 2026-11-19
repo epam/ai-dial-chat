@@ -1310,18 +1310,30 @@ its chain-inclusive `total_price`. `daily` is zero-filled. `byModel` lists the t
 Money is in USD, rounded to 6 decimals. The response is `Cache-Control: private, no-store` and is never cached by the
 BFF.
 
-The route answers `200` whenever the request is valid (`400` for a missing or unknown `period`, `401` without a
-session). When ADAS cannot answer, the body is `{ "available": false, "reason": "<reason>" }`:
+**Per budget (package).** With `costObject` and `policy` (both, taken from a `budgets` entry of
+`GET /api/v1/user/limits`), every figure is narrowed to the model calls that budget paid for, and the response echoes
+`budget: { costObject, policy }`. DIAL Core writes the charged budget on model rows only (ai-dial-core#2308, ADAS
+columns `budget_cost_object`, `budget_policy`, `budget_outcome` from ai-dial-analytics V18), so this mode filters
+`budget_outcome = 'paid'` rows of that budget instead of root spans and sums their own `deployment_price`, which is
+what Core charged the budget. `requests` then counts those model calls, and `byModel` lists the models. Rows written
+before Core logged the budget carry none and are not counted. In `shadow` mode the paid budget is the one Core would
+have charged.
 
-| `reason`         | When                                                                                                                                                                                      |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `not_configured` | `ANALYTICS_URL` is unset. No outbound call is made.                                                                                                                                       |
-| `forbidden`      | ADAS answered `401`/`403` (or `404` on the table read), or the caller's view of `dial_usage_log` is not row-restricted (an ADAS administrator, or ADAS in `none` mode). Logged at `warn`. |
-| `unavailable`    | Timeout, network error, ADAS `5xx`, or any other unexpected ADAS response. Logged at `error`.                                                                                             |
+The route answers `200` whenever the request is valid (`400` for a missing or unknown `period`, only one of
+`costObject` and `policy`, an empty or over-long one, or a repeated parameter; `401` without a session). When ADAS
+cannot answer, the body is `{ "available": false, "reason": "<reason>" }`:
+
+| `reason`             | When                                                                                                                                                                                      |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `not_configured`     | `ANALYTICS_URL` is unset. No outbound call is made.                                                                                                                                       |
+| `forbidden`          | ADAS answered `401`/`403` (or `404` on the table read), or the caller's view of `dial_usage_log` is not row-restricted (an ADAS administrator, or ADAS in `none` mode). Logged at `warn`. |
+| `unavailable`        | Timeout, network error, ADAS `5xx`, or any other unexpected ADAS response. Logged at `error`.                                                                                             |
+| `budget_unsupported` | A budget was requested, but the caller's ADAS schema of `dial_usage_log` has no budget columns. No usage query is run. Logged at `warn`.                                                  |
 
 **Security model.** The BFF forwards the caller's own session access token as `Authorization: Bearer` and holds no
 ADAS credential, service account or hashing salt. It adds no user filter: the ADAS row policy confines the rows. The
-browser's only input is `period`; every ADAS query is a fixed structured query (`POST /v1/queries/execute`). A
+browser's only inputs are `period` and the optional budget, which is validated and sent only as string literals of
+a fixed structured query (`POST /v1/queries/execute`), never as SQL or a query document. A
 caller whose ADAS view is not row-restricted gets `forbidden`, because ADAS policies narrow access and never widen
 it, so such a caller would otherwise see every user's spend as their own.
 

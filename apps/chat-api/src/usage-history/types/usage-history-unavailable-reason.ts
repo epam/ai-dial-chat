@@ -6,4 +6,6 @@ export enum UsageHistoryUnavailableReason {
   Unavailable = 'unavailable',
   /** ADAS refused the token (401/403), or the caller's view is not row-restricted. */
   Forbidden = 'forbidden',
+  /** A budget was requested, but the caller's ADAS schema has no budget columns. */
+  BudgetUnsupported = 'budget_unsupported',
 }
