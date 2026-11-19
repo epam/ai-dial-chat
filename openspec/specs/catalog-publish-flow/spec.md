@@ -3,7 +3,9 @@
 ## Purpose
 
 Publishing a catalog entity: folder-tree destination picking, inline folder creation, access rules, and submission against real backend data.
+
 ## Requirements
+
 ### Requirement: Folder selection uses the file-manager folder tree
 The catalog publish panel SHALL present the destination-folder picker using the `DialFoldersTree` component from `@epam/ai-dial-react-file-manager` (a peer dependency of `libs/publish-panel`) (`showFiles={false}`, with the per-row "Add child"/"Add sibling" context menu described below) rendered inside the shared `PublishFoldersTree` wrapper (exported from `@epam/ai-dial-publish-panel`), instead of the bespoke `PublishFolderPicker` tree. Selection SHALL remain single-folder: selecting a new folder replaces the prior selection.
 
@@ -505,7 +507,7 @@ i18n keys: `publish.dependenciesTitle`, `publish.dependenciesDescription`, `publ
 
 `useResourceSavePanel` (`libs/chat-hooks/src/catalog/useResourceSavePanel/useResourceSavePanel.ts`) SHALL accept an optional `loadDependencies` and return `panelProps.dependencies`: the loaded list while the committed destination is under the Organization root, otherwise an empty list. The list SHALL be empty while loading and after a failed read, SHALL ignore a read that finishes after the destination left the Organization root or the panel closed, and SHALL never disable Save. It SHALL apply to a public-folder save that sends a publication request and to a direct write into an org unit alike.
 
-`apps/chat` SHALL pass `dependencyValues` to `ResourceSavePanelContainer` only for a schema-form app, from `ApplicationSavePanelConfig.getDependencyValues` of `schemaAppDefinition` (the schema id and `setup.properties`); the Quick App and custom app definitions SHALL provide none. The container SHALL fill the section's copy with `getPublishDependenciesLabels` and the existing `publish.dependencies*` keys.
+`apps/chat` SHALL pass `dependencyValues` to `ResourceSavePanelContainer` only for a schema-form app, from `ApplicationSavePanelConfig.getDependencyValues` of `schemaAppDefinition` (the schema id and `setup.properties`); the Quick App and custom app definitions SHALL provide none. For an application with an embedded editor (the Quick App definition sets `ApplicationSavePanelConfig.isFormStateEmbedded`) the container SHALL instead pass the neutral dependencies sentence of `resource-save-panel`, because its form state is inside the embedded editor; a custom app has no schema and so nothing to list or say. The container SHALL fill the section's copy with the `Published` variant of `getPublishDependenciesLabels` and the `publish.dependenciesPublished*` keys, since the dependencies of an application are published or copied together with it on both Save paths (a publication request and a direct write into an org unit).
 
 #### Scenario: Schema app saved to an Organization folder through a publication request
 - **WHEN** the committed destination is a public folder outside every org unit and the app has form values
@@ -520,8 +522,8 @@ i18n keys: `publish.dependenciesTitle`, `publish.dependenciesDescription`, `publ
 - **THEN** no dependencies are listed and no request is made
 
 #### Scenario: Kind without a form
-- **WHEN** the Save panel opens for a Quick App or custom app
-- **THEN** no dependencies are listed under any root
+- **WHEN** the Save panel opens for an application with an embedded editor (a Quick App) or a custom app
+- **THEN** no dependencies are requested or listed under any root, an application with an embedded editor shows the neutral sentence for an Organization destination, and a custom app shows nothing
 
 #### Scenario: Failed read
 - **WHEN** the dependencies request rejects

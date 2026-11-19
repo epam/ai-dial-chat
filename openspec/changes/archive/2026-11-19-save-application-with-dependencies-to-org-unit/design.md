@@ -99,6 +99,8 @@ Unchanged: any authenticated session, gated by `features.orgUnitsEnabled`; Core'
 - **Embedded editor** → the panel's hint is blind to new dependencies; D3 catches them after the save, and the user's edits are saved in their own bucket either way.
 - **Splitting `prepare`** → touches the code the open publish change owns; the split keeps the publish path byte-for-byte, and any change to `prepare` from that review is merged into this branch.
 - **Interceptors, functions, bucket copy** → same recorded limitations as publishing; here the failure is shown instead of silently falling back.
+- **Dependencies in another user's bucket.** The panel's list (and so its rights hint) holds every private reference the form makes, while the server copies only those in the caller's own bucket, as in publishing. For an application that uses another user's private resource the panel can disable a folder for a namespace whose resource the server would not copy, and lists that resource as saved. Accepted: the same list is shown by the Publish panel, and filtering needs the caller's bucket in the panel's host.
+- **The icon is read best-effort.** When the application's own read for the icon fails, the write takes the plain path and the copy keeps its `iconUrl`, which may point at the author's private file; the dependencies' read is strict, the icon's is not, as in publishing (a warning is logged).
 - **Dot folders under a unit folder** show in listings that include them, as in publishing.
 
 ## Migration Plan
@@ -110,6 +112,18 @@ No data migration. Deploy backend and frontend together or backend first (the pa
 The icon notice of D6 needs to know whether the application has an uploaded icon in the user's own bucket. `ApplicationFormEditor` already holds the raw DIAL value in `metadata.values.iconUrl` (filled from the deployment and updated when the user changes the icon, and the source of the `iconUrl` the container already receives for the summary). The host decides with `isDialFileId` from `@epam/ai-dial-chat-hooks` and a comparison of the file's bucket with the user's own bucket (`user.bucket`, as `ConversationsContext` does), and passes one boolean to `ResourceSavePanelContainer`. This reflects what will actually be saved, works for every kind (the icon belongs to the shared metadata form, not to an embedded editor), and matches the server's own rule in `getPublishableIconUrl`; the server stays the authority.
 
 Alternatives: reading the loaded deployment's `iconUrl` (rejected: stale when the icon was changed before saving); no notice (rejected: the user would not learn that the icon was dropped); a flag in the endpoint's response (rejected: changes the contract and reports after the fact).
+
+### D11. The Save panel asks the existing target check for a direct-write folder
+
+Today a name already taken in the unit folder shows only after the save: the resource is saved in the user's own bucket, the copy answers `409`, and the panel has already closed ("saved, but could not be written to {folder}"). The Publish panels avoid this with `onCheckTargetExists` of `usePublishFlow` (`libs/publish-panel/src/utils/use-publish-flow.ts`), wired by `usePublishTargetGuard` and `PublishApiClient.checkPublishTarget` (`libs/chat-hooks/src/catalog/`): the backend reads the target's metadata with the caller's token (`dialResourceExists`) and answers `{ taken }`. The Save panel reuses it.
+
+- **Where.** `useResourceSavePanel` gets the same effect as `usePublishFlow`: it runs when the committed destination is a direct-write folder, and again when a valid new version changes; an answer that arrives after the folder or version changed is discarded; a rejected check leaves the target untaken and never blocks Save. `publishClient` (already passed to the hook) gains `checkPublishTarget`. No new endpoint, DTO or generated-client change.
+- **Which name is asked.** The direct write keeps the stored leaf, so "keep version" asks without a version (the backend then uses the stored name, as the copy does); "save as new version" asks with the typed version, which names `{name}__{version}` exactly as the fork does. The typed version is checked only when it matches the version pattern and differs from the current one, after 400 ms without typing.
+- **Which destinations.** Only a direct-write unit folder, for every resource type that has a direct write. Not Personal, not a folder created in this session, and not a destination that sends a publication request (that path keeps its own refusal).
+- **Result.** Save is disabled with the reason `resourceSavePanel.targetTaken`, through the same disabled-destination channel as the rights reasons (`aria-describedby` and the folder-view reason already exist). The refusal after the save (`SavedButAlreadyInOrgUnit`) stays for the race and for a copy the caller cannot read, which the check reports as free.
+- **Cost.** One metadata read per change of destination to a direct-write folder, and one per settled valid version edit; none when the panel opens, none for Personal.
+
+Alternatives: checking every folder of the tree when it is listed (rejected: many reads for a choice the user makes once); leaving the refusal after the save (rejected: the user ends up with a saved resource and no write, and learns it only after the panel closed).
 
 ## Open Questions
 

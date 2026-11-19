@@ -20,6 +20,7 @@ When an application is saved into an org-unit folder by a direct write, chat-api
 3. **Icon rule.** The icon is copied when the user may write `files` in the folder; otherwise the application is still written and the staging copy carries no icon reference, so the shared copy shows the default icon instead of a broken image. The panel shows a non-blocking notice when it already knows this.
 4. **Rights are checked before anything is written.** After the save has run and the real dependencies are known, chat-api checks the user's `write` on the namespace of every dependency it is about to copy and answers 403 naming the missing types before the first copy. In the panel the same check runs on the dependencies it knows (stale for an embedded editor), as a hint that disables the folder with a typed reason, as it does today for the application's own namespace.
 5. **Save panel section.** For a schema-form application the panel lists the dependencies of the current form values (the list and its endpoint are already in this branch from issue 9790), worded as dependencies saved or published together with the application. For an application with an embedded editor the panel shows one neutral sentence and no list. The section follows the Organization destination, as the list already does.
+6. **A taken name is found before Save.** When the committed destination is a unit folder that takes a direct write, the panel asks the backend, through the target check the Publish panels already use (`checkPublishTarget`), whether the name this save would write is already taken there, and says so before the user presses Save: it disables Save with a reason. The check asks once per change of destination and, for a new version, once the typed version is valid; the refusal after the save stays as the safety net.
 
 ## What Changes
 
@@ -28,6 +29,7 @@ When an application is saved into an org-unit folder by a direct write, chat-api
 - chat-api: files become a resource type the transfer helper can copy (`apps/chat-api/src/common/utils/dial-resource-transfer.ts`).
 - apps/chat, libs/chat-hooks: the Save panel's rights guard also considers the namespaces of the dependencies and of `files` for the icon; new typed reasons; the schema-form dependency list uses the "published together" wording; the embedded-editor sentence and the icon notice.
 - libs/publish-panel: the Save panel gets one optional note for the dependencies section; defaults unchanged.
+- libs/chat-hooks, apps/chat: for a direct-write destination the Save panel asks the existing publish target check and shows a taken-name reason before Save (new string `resourceSavePanel.targetTaken`).
 - Specs: new capability for the direct write with dependencies; deltas for the copy endpoint, the unit rights, the Save panel and the publish panel library.
 
 ## Non-goals
@@ -50,23 +52,25 @@ When an application is saved into an org-unit folder by a direct write, chat-api
 
 ## Alternatives considered
 
-| Option | Verdict |
-|---|---|
-| Copy only the application, as today | Rejected. The shared copy is broken for everyone but its author. |
-| Block the folder, or fall back to a publication request, when the application has dependencies | Rejected. The unit writer expects a save, and a publication request is not a save. |
-| Copy dependencies with a new mechanism of their own | Rejected. Publishing already defines the namespace, the reuse rule and the rewrite; a second pattern would drift. |
-| **Reuse the publish preparation, execute it with `copyResource`** | **Chosen.** One plan, two executors; if Core later offers its own dependency-aware copy, only the preparation changes. |
-| Strict icon rule: block the folder without `write` on `files` | Rejected. A missing icon is cosmetic; a missing dependency breaks the application. |
-| Show the list from Core for an embedded editor with a "last saved" label | Rejected. It shows data that may be wrong and needs an explanation the user does not care about. |
-| **Neutral sentence for an embedded editor, real list for a schema-form** | **Chosen.** No wrong data; the list appears for other kinds as soon as their form state can be read. |
-| Check rights only in the panel | Rejected. For an embedded editor the panel's list is stale; the check must also run after the save and before the first write. |
+| Option                                                                                         | Verdict                                                                                                                        |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Copy only the application, as today                                                            | Rejected. The shared copy is broken for everyone but its author.                                                               |
+| Block the folder, or fall back to a publication request, when the application has dependencies | Rejected. The unit writer expects a save, and a publication request is not a save.                                             |
+| Copy dependencies with a new mechanism of their own                                            | Rejected. Publishing already defines the namespace, the reuse rule and the rewrite; a second pattern would drift.              |
+| **Reuse the publish preparation, execute it with `copyResource`**                              | **Chosen.** One plan, two executors; if Core later offers its own dependency-aware copy, only the preparation changes.         |
+| Strict icon rule: block the folder without `write` on `files`                                  | Rejected. A missing icon is cosmetic; a missing dependency breaks the application.                                             |
+| Show the list from Core for an embedded editor with a "last saved" label                       | Rejected. It shows data that may be wrong and needs an explanation the user does not care about.                               |
+| **Neutral sentence for an embedded editor, real list for a schema-form**                       | **Chosen.** No wrong data; the list appears for other kinds as soon as their form state can be read.                           |
+| Check rights only in the panel                                                                 | Rejected. For an embedded editor the panel's list is stale; the check must also run after the save and before the first write. |
 
 ## Capabilities
 
 ### New Capabilities
+
 - `org-unit-application-dependencies`: saving an application into an org-unit folder together with its first-level private dependencies and its icon, including ordering, reuse of existing targets, failure and partial-failure behaviour, and the rights check before the first write.
 
 ### Modified Capabilities
+
 - `org-units-api`: the copy-to-org-unit endpoint's behaviour for applications.
 - `org-units-folder-permissions`: the direct-save rule also requires `write` on the namespaces of the dependencies the write will copy, and the known-risk text.
 - `resource-save-panel`: the dependencies section, the embedded-editor sentence and the icon notice; the "no Dependencies section" requirement is replaced.
@@ -90,6 +94,7 @@ When an application is saved into an org-unit folder by a direct write, chat-api
 - Without `write` on `files`, the application is written without a broken icon and the panel shows the notice when it can.
 - A failure in the middle reports the error; saving again completes the copy and reuses what already exists.
 - An application with an embedded editor shows the neutral sentence and no list; a schema-form application shows the list for its current form values.
+- Choosing a unit folder that already holds the name this save would write (the kept version, or a typed new version) disables Save with a taken-name reason before submit; a free folder stays enabled; a failed check never blocks Save.
 - Toolsets, prompts, skills and applications without dependencies or icon behave exactly as before.
 
 ## Rollback and compatibility
