@@ -290,6 +290,7 @@ describe('managed configuration activation', () => {
           target: 'new-chat',
           title: 'Start',
           description: null,
+          pages: [],
         },
       ]);
 
@@ -649,7 +650,7 @@ describe('managed configuration activation', () => {
       );
       const response = await service.getClientConfig(anonymous);
       expect(response.config.onboardingHints).toEqual([
-        { ...tour[0], description: null },
+        { ...tour[0], description: null, pages: [] },
       ]);
       expect(response.metadata?.managed).toBeUndefined();
     });

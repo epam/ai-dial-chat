@@ -7415,7 +7415,30 @@ export interface OnboardingHintDto {
    * @memberof OnboardingHintDto
    */
   description: string | null;
+  /**
+   * Pages the hint is shown on. Empty when unset: the hint is then shown on the home page (new chat and conversations) only. Unknown names are dropped server-side.
+   * @type {Array<OnboardingHintPage>}
+   * @memberof OnboardingHintDto
+   */
+  pages: Array<OnboardingHintPage>;
 }
+
+/**
+ * Pages the hint is shown on. Empty when unset: the hint is then shown on the home page (new chat and conversations) only. Unknown names are dropped server-side.
+ * @export
+ */
+export const OnboardingHintPage = {
+  Home: 'home',
+  Projects: 'projects',
+  ScheduledTasks: 'scheduled-tasks',
+  Catalog: 'catalog',
+  FileManager: 'file-manager',
+  Settings: 'settings',
+  Usage: 'usage',
+  Editors: 'editors',
+} as const;
+export type OnboardingHintPage =
+  (typeof OnboardingHintPage)[keyof typeof OnboardingHintPage];
 
 /**
  * The UI element the hint points at. A closed list; the client resolves it and skips the hint when that element is not on screen.

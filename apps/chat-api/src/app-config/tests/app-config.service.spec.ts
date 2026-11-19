@@ -2229,7 +2229,9 @@ describe('AppConfigService', () => {
         ONBOARDING_HINTS: JSON.stringify(hints),
       });
       const { config } = await service.getClientConfig(ctx);
-      expect(config.onboardingHints).toEqual(hints);
+      expect(config.onboardingHints).toEqual(
+        hints.map((hint) => ({ ...hint, pages: [] })),
+      );
     });
 
     it('never exposes the DIAL Analytics URL or timeout', async () => {

@@ -162,6 +162,7 @@ const KEY_EXPECTATIONS: Readonly<
           target: 'new-chat',
           title: 'Start here',
           description: null,
+          pages: [],
         },
       ],
     },

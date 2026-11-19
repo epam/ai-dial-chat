@@ -13143,6 +13143,20 @@
         ],
         "description": "The UI element the hint points at. A closed list; the client resolves it and skips the hint when that element is not on screen."
       },
+      "OnboardingHintPage": {
+        "type": "string",
+        "enum": [
+          "home",
+          "projects",
+          "scheduled-tasks",
+          "catalog",
+          "file-manager",
+          "settings",
+          "usage",
+          "editors"
+        ],
+        "description": "Pages the hint is shown on. Empty when unset: the hint is then shown on the home page (new chat and conversations) only. Unknown names are dropped server-side."
+      },
       "OnboardingHintDto": {
         "type": "object",
         "properties": {
@@ -13170,9 +13184,17 @@
             "description": "Supporting copy under the heading. Plain text; never interpreted as markup. Null when unset or blank.",
             "example": "Each chat keeps its own history and model.",
             "nullable": true
+          },
+          "pages": {
+            "type": "array",
+            "description": "Pages the hint is shown on. Empty when unset: the hint is then shown on the home page (new chat and conversations) only. Unknown names are dropped server-side.",
+            "example": ["catalog"],
+            "items": {
+              "$ref": "#/components/schemas/OnboardingHintPage"
+            }
           }
         },
-        "required": ["id", "target", "title", "description"]
+        "required": ["id", "target", "title", "description", "pages"]
       },
       "CustomVisualizerDto": {
         "type": "object",
