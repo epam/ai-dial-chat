@@ -40,6 +40,7 @@ const LIST_MAX_HEIGHT_PX = 288;
 /** Second-level "My Collection" panel: the user's favorite skills, or an empty-state hint, plus a "Browse" action. */
 export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
   favorites,
+  otherSkills = [],
   onSelect,
   onToggleFavorite,
   onBrowse,
@@ -102,13 +103,17 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
 
   const isSearchMode = searchQuery != null;
   const normalizedQuery = searchQuery?.toLowerCase() ?? '';
+  const matchesQuery = (item: FavoriteSkillItem) =>
+    item.name.toLowerCase().includes(normalizedQuery);
   const visibleFavorites = isSearchMode
-    ? favorites.filter((item) =>
-        item.name.toLowerCase().includes(normalizedQuery),
-      )
+    ? favorites.filter(matchesQuery)
     : favorites;
+  /* Catalog skills follow the favorites in search mode, an empty query included. */
+  const visibleOthers = isSearchMode ? otherSkills.filter(matchesQuery) : [];
+  const visibleItems = [...visibleFavorites, ...visibleOthers];
+  const favoriteIds = new Set(favorites.map((item) => item.id));
   const hasNoMatches =
-    visibleFavorites.length === 0 && isSearchMode && normalizedQuery !== '';
+    visibleItems.length === 0 && isSearchMode && normalizedQuery !== '';
 
   /*
    * Animates the scrollable list's own height as rows leave instead of
@@ -123,7 +128,7 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
         Math.min(listContentRef.current.scrollHeight, LIST_MAX_HEIGHT_PX),
       );
     }
-  }, [favorites, searchQuery]);
+  }, [favorites, otherSkills, searchQuery]);
 
   const handleKeyDown = (
     e: KeyboardEvent<HTMLDivElement>,
@@ -202,7 +207,7 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
             {item.name}
           </span>
         )}
-        {onToggleFavorite && (
+        {onToggleFavorite && favoriteIds.has(item.id) && (
           <ToggleIconButton
             icon={
               <IconStarFilled
@@ -268,7 +273,7 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
    * query still shows every row, so it never reaches the no-matching branch.
    */
   const renderListBody = () => {
-    if (visibleFavorites.length > 0) {
+    if (visibleItems.length > 0) {
       return (
         <ul
           id={listboxId}
@@ -276,7 +281,7 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
           aria-labelledby={isListbox ? headerId : undefined}
           className="flex flex-col gap-1 px-1 pb-1"
         >
-          {visibleFavorites.map(renderRow)}
+          {visibleItems.map(renderRow)}
         </ul>
       );
     }
@@ -303,6 +308,13 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
     <div
       className={mergeClasses(
         'flex w-full flex-col desktop:w-[280px]',
+        /*
+         * Inside a floating host (the slash menu's Dropdown) the panel may not
+         * outgrow the room the host left it, or the host clips the footer's
+         * bottom padding: the list wrapper (`min-h-0 flex-1`) shrinks instead.
+         * Without that host the variable is unset and the cap is `none`.
+         */
+        'max-h-(--fui-available-height,none)',
         className,
         SKILLS_CLASS.favoritesPanel,
       )}
