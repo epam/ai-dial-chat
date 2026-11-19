@@ -3,6 +3,7 @@ import type {
   ResourceFoldersResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
+  getDependencyTypeOfNamespace,
   getMissingDirectWriteNamespaces,
   getOrgUnitNamespace,
   mapResourceDependencyDto,
@@ -50,9 +51,9 @@ import {
   publishCatalogEntity,
 } from '../../server-api/publish.api';
 import { NotifiableEntity } from '../../types/entity-notification';
-import { getDependencyTypeKey } from '../../utils/org-unit-access';
 import {
   getAccessRulesLabels,
+  getPublishFolderLabel,
   getApplicationPublishDependenciesLabels,
   getPublishPanelCommonLabels,
 } from '../../utils/publish';
@@ -99,7 +100,13 @@ interface Props {
   returnFocusRef?: RefObject<HTMLElement | null>;
 }
 
-const publishClient = { publishCatalogEntity, getPublishRules };
+const publishClient = {
+  publishCatalogEntity,
+  getPublishRules,
+  checkPublishTarget: (
+    ...args: Parameters<typeof publishApiClient.checkPublishTarget>
+  ) => publishApiClient.checkPublishTarget(...args),
+};
 
 /** App adapter for the Save panel: translated copy, notifications and the app's API clients around `useResourceSavePanel`. */
 const ResourceSavePanelContainer: FC<Props> = ({
@@ -212,15 +219,37 @@ const ResourceSavePanelContainer: FC<Props> = ({
       ),
     [canSaveDirectlyAt, isOrgUnitsEnabled, orgUnitsStatus],
   );
+  const dependenciesLabels = useMemo(
+    () => getApplicationPublishDependenciesLabels(t),
+    [t],
+  );
+
   const getMissingNamespacesReason = useCallback(
     (missing: OrgUnitNamespace[]) =>
       t(OrgUnitAccessI18nKeys.NoWriteAccessDependencies, {
         types: missing
-          .flatMap((namespace) => getDependencyTypeKey(namespace) ?? [])
-          .map((key) => t(key))
+          .flatMap((namespace) => {
+            const type = getDependencyTypeOfNamespace(namespace);
+            return (type && dependenciesLabels.typeLabels?.[type]) || [];
+          })
           .join(', '),
       }),
-    [t],
+    [dependenciesLabels, t],
+  );
+
+  const getTargetTakenReason = useCallback(
+    (folderPath: string[], version?: string) =>
+      t(
+        version == null
+          ? ResourceSavePanelI18nKeys.TargetTaken
+          : ResourceSavePanelI18nKeys.TargetTakenVersion,
+        {
+          name: resourceName,
+          version,
+          folder: getPublishFolderLabel(folderPath, t),
+        },
+      ),
+    [resourceName, t],
   );
 
   const { panelProps } = useResourceSavePanel({
@@ -238,6 +267,7 @@ const ResourceSavePanelContainer: FC<Props> = ({
     loadDependencies,
     getMissingNamespaces,
     getMissingNamespacesReason,
+    getTargetTakenReason,
     dependenciesNote: isFormStateEmbedded
       ? t(ResourceSavePanelI18nKeys.DependenciesEmbeddedNote)
       : undefined,
@@ -312,11 +342,6 @@ const ResourceSavePanelContainer: FC<Props> = ({
       selectLabel: t(ButtonsI18nKeys.Select),
     }),
     [t, typeLabel],
-  );
-
-  const dependenciesLabels = useMemo(
-    () => getApplicationPublishDependenciesLabels(t),
-    [t],
   );
 
   const versionHistory = useResourceVersionHistory(

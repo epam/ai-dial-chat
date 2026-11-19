@@ -139,6 +139,17 @@ const NAMESPACE_BY_DEPENDENCY_TYPE: Record<
 };
 
 /**
+ * The kind of dependency whose resources live in `namespace`, or `undefined` for a namespace no dependency has.
+ * @param namespace - org-unit namespace
+ */
+export const getDependencyTypeOfNamespace = (
+  namespace: OrgUnitNamespace,
+): PublishDependencyType | undefined =>
+  Object.values(PublishDependencyType).find(
+    (type) => NAMESPACE_BY_DEPENDENCY_TYPE[type] === namespace,
+  );
+
+/**
  * The org-unit namespaces a direct write must hold `write` on to copy the given
  * dependencies, each once. A `file` has none: the files a schema marks travel
  * with the application.

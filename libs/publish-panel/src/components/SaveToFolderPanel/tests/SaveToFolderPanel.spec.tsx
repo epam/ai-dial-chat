@@ -279,32 +279,30 @@ describe('SaveToFolderPanel — versions history', () => {
       getDisabledReason: () => 'You have no access to save here.',
     });
 
-    const group = screen.getByRole('group', { name: 'Destination folder' });
-    const reason = screen.getByText('You have no access to save here.');
-    expect(group.getAttribute('aria-describedby')).toBe(reason.id);
+    expect(
+      screen.getByRole('group', {
+        name: 'Destination folder',
+        description: 'You have no access to save here.',
+      }),
+    ).toBeTruthy();
   });
 
-  it('keeps the reason inside the live region that is mounted with the view', () => {
-    const { rerender } = renderPanel({ getDisabledReason: () => undefined });
-    const region = screen.getByRole('alert');
-    expect(region.textContent).toBe('');
+  it('shows the reason right under the destination, before the version choice', () => {
+    renderPanel({
+      version: versionProps(),
+      getDisabledReason: () => 'You have no access to save here.',
+    });
 
-    rerender(
-      <SaveToFolderPanel
-        view={SaveToFolderView.Main}
-        resource={{ title: 'Design Review Agent', version: '1.0.0' }}
-        roots={roots}
-        destination={{ rootKey: 'personal', path: ['Design', 'Audit'] }}
-        onDestinationChange={vi.fn()}
-        onCreateFolder={vi.fn()}
-        onChangeFolderClick={vi.fn()}
-        onPendingDestinationChange={vi.fn()}
-        getDisabledReason={() => 'You have no access to save here.'}
-      />,
-    );
-
-    expect(screen.getByRole('alert')).toBe(region);
-    expect(region.textContent).toBe('You have no access to save here.');
+    const group = screen.getByRole('group', { name: 'Destination folder' });
+    const reason = screen.getByText('You have no access to save here.');
+    const versionHeading = screen.getByRole('heading', { name: 'Version' });
+    expect(
+      group.compareDocumentPosition(reason) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      reason.compareDocumentPosition(versionHeading) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it('shows no reason for a usable committed destination', () => {

@@ -8,7 +8,10 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { render, waitFor } from '@testing-library/react';
 import { act, useEffect } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { OrgUnitAccessI18nKeys } from '../../../constants/translation-keys';
+import {
+  OrgUnitAccessI18nKeys,
+  ResourceSavePanelI18nKeys,
+} from '../../../constants/translation-keys';
 import { useFeatureFlag } from '../../../context/AppConfigContext';
 import {
   OrgUnitsProvider,
@@ -18,7 +21,10 @@ import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { useResourceVersionHistory } from '../../../hooks/publish/useResourceVersionHistory';
 import { listOrgUnits } from '../../../server-api/org-units.api';
 import { getPublishRules } from '../../../server-api/publish-rules.api';
-import { publishCatalogEntity } from '../../../server-api/publish.api';
+import {
+  publishApiClient,
+  publishCatalogEntity,
+} from '../../../server-api/publish.api';
 import { NotifiableEntity } from '../../../types/entity-notification';
 import ResourceSavePanelContainer from '../ResourceSavePanelContainer';
 
@@ -63,6 +69,7 @@ vi.mock('../../../server-api/publish-rules.api', () => ({
 }));
 vi.mock('../../../server-api/publish.api', () => ({
   publishCatalogEntity: vi.fn(),
+  publishApiClient: { checkPublishTarget: vi.fn() },
 }));
 vi.mock('../../../hooks/publish/usePublishFolders');
 vi.mock('../../../hooks/publish/useResourceVersionHistory');
@@ -73,7 +80,10 @@ vi.mock('../../../hooks/resource-save/useResourceSaveNotification', () => ({
   useResourceSaveNotification: () => notifySaved,
 }));
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({
+    t: (key: string, options?: { name?: string; folder?: string }) =>
+      options?.name == null ? key : `${key}:${options.name}:${options.folder}`,
+  }),
 }));
 
 const APP_ID = 'applications/b1/agent__1.0.0';
@@ -447,5 +457,60 @@ describe('ResourceSavePanelContainer with org units', () => {
       expect(publishClient.copyCatalogEntityToOrgUnit).not.toHaveBeenCalled();
       expect(publishCatalogEntity).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('ResourceSavePanelContainer taken name in a unit folder', () => {
+  const UNIT_FOLDER = organization('Delivery', 'Teams');
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(usePublishFolders).mockReturnValue(organizationFolders);
+    vi.mocked(useResourceVersionHistory).mockReturnValue(undefined);
+    vi.mocked(getPublishRules).mockResolvedValue([]);
+    vi.mocked(publishApiClient.checkPublishTarget).mockResolvedValue({
+      taken: false,
+    });
+  });
+
+  it('shows the reason naming the resource and the folder, and disables Save, for a taken name', async () => {
+    vi.mocked(publishApiClient.checkPublishTarget).mockResolvedValue({
+      taken: true,
+    });
+    await renderEditorSave();
+
+    act(() => lastPanel().onDestinationChange(UNIT_FOLDER));
+    await waitFor(() => expect(lastPanel().isSubmitDisabled).toBe(true));
+
+    expect(publishApiClient.checkPublishTarget).toHaveBeenCalledWith(
+      'application',
+      APP_ID,
+      'Delivery/Teams',
+      undefined,
+    );
+    expect(lastPanel().getDisabledReason?.(UNIT_FOLDER)).toBe(
+      `${ResourceSavePanelI18nKeys.TargetTaken}:Agent:Teams`,
+    );
+  });
+
+  it('keeps Save enabled for a free name', async () => {
+    await renderEditorSave();
+
+    act(() => lastPanel().onDestinationChange(UNIT_FOLDER));
+    await waitFor(() =>
+      expect(publishApiClient.checkPublishTarget).toHaveBeenCalledOnce(),
+    );
+
+    expect(lastPanel().isSubmitDisabled).toBe(false);
+    expect(lastPanel().getDisabledReason?.(UNIT_FOLDER)).toBeUndefined();
+  });
+
+  it('asks nothing for a folder outside every unit, which sends a publication request', async () => {
+    await renderEditorSave();
+
+    act(() => lastPanel().onDestinationChange(organization('EPAM')));
+    await act(async () => undefined);
+
+    expect(publishApiClient.checkPublishTarget).not.toHaveBeenCalled();
   });
 });

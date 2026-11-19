@@ -5585,6 +5585,21 @@ namespaces)` (the namespaces, among those asked, where the user may not write
   with that reason through `panelProps.getDisabledReason`, like the application's
   own namespace. Without the dependencies known (an application with an embedded
   editor) nothing is disabled and the server's check after the save decides.
+- a taken name found before Save: when `publishClient` has `checkPublishTarget`
+  (the `PublishApiClient` from `createPublishApiClient` does) and the host gives
+  `getTargetTakenReason(folderPath, version)` (`version` is the typed one for
+  "Save as new version", `undefined` for "Keep version") and `getDisabledReason`
+  (the reason is returned through it), the committed destination of a direct write into a unit
+  folder is checked through `checkPublishTarget` (entity type, resource id, folder,
+  version): without a version for "Keep version", and with
+  the typed version for "Save as new version", only once it matches
+  `versionPattern`, differs from `currentVersion` and 400 ms have passed without
+  typing. A taken name disables Save with the reason; an answer that arrives
+  after the folder or version changed is discarded, a failed check leaves Save
+  enabled, and nothing is asked for a Personal folder, a folder created in this
+  session, a destination that sends a publication request or a resource that is
+  not saved yet (a create adapter). The refusal after the save stays as the
+  safety net.
 - two host-supplied sentences: `dependenciesNote` is passed through as
   `panelProps.dependenciesNote` only for a committed Organization destination,
   and `iconNote` becomes `panelProps.destinationNote` only on a direct write into

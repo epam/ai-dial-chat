@@ -14,6 +14,9 @@ import {
   LinkButton,
   LiveRegion,
   LiveRegionPoliteness,
+  Notification,
+  NotificationType,
+  NotificationVariant,
   RadioGroup,
   Search,
 } from '@epam/ai-dial-ui-kit';
@@ -267,6 +270,15 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
             onClick={onChangeFolderClick}
           />
         </div>
+        {destinationDisabledReason && (
+          <div id={destinationReasonId}>
+            <Notification
+              type={NotificationType.SectionMessage}
+              variant={NotificationVariant.Error}
+              message={destinationDisabledReason}
+            />
+          </div>
+        )}
         {destinationNote && (
           <p className={mergeClasses(noteClassName, styles.note)}>
             {destinationNote}
@@ -290,12 +302,6 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
       )}
 
       <LiveRegion politeness={LiveRegionPoliteness.Assertive}>
-        {destinationDisabledReason && (
-          <ErrorText
-            id={destinationReasonId}
-            text={destinationDisabledReason}
-          />
-        )}
         {submitError && <ErrorText text={submitError} />}
       </LiveRegion>
 

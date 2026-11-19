@@ -2180,7 +2180,9 @@
     "savedButOrgUnitWriteFailed": "“{{name}}” was saved, but it could not be written to {{folder}}.",
     "savedButOrgUnitWriteFailedReason": "“{{name}}” was saved, but it could not be written to {{folder}}: {{reason}}",
     "dependenciesEmbeddedNote": "The prompts, skills, toolsets and applications this application uses will be saved to the folder together with it.",
-    "iconNotCopiedNotice": "The application's icon will not be copied to this folder: you have no write access to files in it."
+    "iconNotCopiedNotice": "The application's icon will not be copied to this folder: you have no write access to files in it.",
+    "targetTaken": "“{{name}}” already exists in {{folder}}. Choose another folder or save as a new version.",
+    "targetTakenVersion": "Version {{version}} of “{{name}}” already exists in {{folder}}. Choose another folder or version."
   },
   "orgUnitAccess": {
     "noSaveAccessQuickApp": "You have no access to save your QuickApp to this folder.",

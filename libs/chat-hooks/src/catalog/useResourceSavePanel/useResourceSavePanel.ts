@@ -18,6 +18,7 @@ import { getDependencyOrgUnitNamespaces } from '../../org-units/org-unit-guards'
 import type { PublishApiClient } from '../create-publish-api';
 import {
   createPublishSavedResource,
+  isResourceCreateAdapter,
   ResourceSaveError,
   ResourceSaveVersionError,
   runResourceSave,
@@ -31,6 +32,9 @@ import type { UsePublishFoldersResult } from '../usePublishFolders/usePublishFol
 import { useResourceFolders } from '../useResourceFolders/useResourceFolders';
 
 const EMPTY_DEPENDENCIES: PublishDependency[] = [];
+
+/** Quiet time after the last keystroke before a typed version is asked about, in ms. */
+const TARGET_CHECK_DEBOUNCE_MS = 400;
 
 /** Translated copy the Save flow puts into the panel's state; the panel's own labels stay with the host. */
 export interface UseResourceSavePanelLabels {
@@ -70,7 +74,8 @@ export interface UseResourceSavePanelParams {
   publishClient: Pick<
     PublishApiClient,
     'publishCatalogEntity' | 'getPublishRules'
-  >;
+  > &
+    Partial<Pick<PublishApiClient, 'checkPublishTarget'>>;
   /** Whether an Organization destination takes a direct write into an org unit (the user may write there); omit while the org-unit rule does not apply, which keeps every Organization destination on the publish path. */
   canSaveDirectlyTo?: (
     folderPath: string[],
@@ -96,6 +101,8 @@ export interface UseResourceSavePanelParams {
   dependenciesNote?: string;
   /** Notice about the application's uploaded icon, shown under the committed destination when it is a unit folder where the user may not write `files`; pass it only when the saved resource has an uploaded icon. */
   iconNote?: string;
+  /** Reason shown, and Save disabled, while the committed direct-write folder already holds the name this save would write; receives that folder and, for "Save as new version", the typed version. It is returned through `getDisabledReason`, so it needs that parameter too; without it, or without `publishClient.checkPublishTarget`, no target check is made. */
+  getTargetTakenReason?: (folderPath: string[], version?: string) => string;
   /** Options offered in the access-rules editor's source picker. */
   ruleSourceOptions: string[];
   /** Translated copy. */
@@ -159,6 +166,7 @@ export const useResourceSavePanel = ({
   getMissingNamespacesReason,
   dependenciesNote,
   iconNote,
+  getTargetTakenReason,
   ruleSourceOptions,
   labels,
   onSaved,
@@ -167,7 +175,7 @@ export const useResourceSavePanel = ({
     listFolders: listPersonalFolders,
     isEnabled: isOpen,
   });
-  const { getPublishRules } = publishClient;
+  const { getPublishRules, checkPublishTarget } = publishClient;
   const publish = useMemo(
     () => createPublishSavedResource(publishClient),
     [publishClient],
@@ -185,6 +193,9 @@ export const useResourceSavePanel = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
   const [isPendingOrganization, setIsPendingOrganization] = useState(false);
+  const [takenTargetKey, setTakenTargetKey] = useState<string>();
+  /* Organization folders created in this session; nothing can be in them yet, so they are never asked about. */
+  const createdFolderKeysRef = useRef(new Set<string>());
   const [rules, setRules] = useState<PublicationRule[]>([]);
   const [isRulesLoading, setIsRulesLoading] = useState(false);
   const [hasRulesLoadError, setHasRulesLoadError] = useState(false);
@@ -242,6 +253,8 @@ export const useResourceSavePanel = ({
     setIsRulesLoading(false);
     setHasRulesLoadError(false);
     setIsPendingOrganization(false);
+    setTakenTargetKey(undefined);
+    createdFolderKeysRef.current.clear();
     setDestination(initialDestination);
     setVersionMode(SaveVersionMode.Keep);
     setNewVersionValue('');
@@ -307,6 +320,66 @@ export const useResourceSavePanel = ({
     conflictedVersion,
   ]);
 
+  /*
+   * The name this save would write in a direct-write folder: the stored one for
+   * "keep version", the typed one once it is valid and differs from the
+   * current. No key means nothing is asked.
+   */
+  const isCreateAdapter = isResourceCreateAdapter(adapter);
+  const targetFolderKey = destination.path.join('/');
+  const isInCreatedFolder = [...createdFolderKeysRef.current].some(
+    (created) =>
+      targetFolderKey === created || targetFolderKey.startsWith(`${created}/`),
+  );
+  const isNewVersionAskable =
+    versionPattern.test(trimmedNewVersion) &&
+    trimmedNewVersion !== currentVersion;
+  const targetVersion = isNewVersion ? trimmedNewVersion : undefined;
+  const canCheckTarget =
+    getTargetTakenReason != null &&
+    getFolderDisabledReason != null &&
+    checkPublishTarget != null &&
+    !isCreateAdapter &&
+    isDirectDestination(destination) &&
+    !isInCreatedFolder &&
+    (!isNewVersion || isNewVersionAskable);
+  const targetKey = canCheckTarget
+    ? `${targetFolderKey}\u0000${targetVersion ?? ''}`
+    : undefined;
+  const publishEntityType = adapter.publishEntityType;
+  useEffect(() => {
+    if (targetKey == null || checkPublishTarget == null) return;
+    let isCancelled = false;
+    const run = async () => {
+      try {
+        const { taken } = await checkPublishTarget(
+          publishEntityType,
+          resourceId,
+          targetFolderKey,
+          targetVersion,
+        );
+        if (isCancelled) return;
+        setTakenTargetKey((previous) => {
+          if (taken) return targetKey;
+          return previous === targetKey ? undefined : previous;
+        });
+      } catch {
+        /* A failed check leaves the target untaken: the refusal after the save is the safety net. */
+      }
+    };
+    const timer = setTimeout(
+      () => void run(),
+      targetVersion == null ? 0 : TARGET_CHECK_DEBOUNCE_MS,
+    );
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+    };
+    /* The key already carries the folder and the version; a new callback identity must not ask again. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetKey]);
+  const isTargetTaken = targetKey != null && takenTargetKey === targetKey;
+
   const dependencyNamespaces = useMemo(
     () => getDependencyOrgUnitNamespaces(dependencies),
     [dependencies],
@@ -318,6 +391,12 @@ export const useResourceSavePanel = ({
       if (!root) return undefined;
       const ownReason = getFolderDisabledReason(candidate.path, root);
       if (ownReason != null) return ownReason;
+      const isCommitted =
+        candidate.rootKey === destination.rootKey &&
+        candidate.path.join('/') === targetFolderKey;
+      if (isTargetTaken && isCommitted && getTargetTakenReason) {
+        return getTargetTakenReason(candidate.path, targetVersion);
+      }
       if (
         !getMissingNamespaces ||
         !getMissingNamespacesReason ||
@@ -336,10 +415,15 @@ export const useResourceSavePanel = ({
     };
   }, [
     dependencyNamespaces,
+    destination.rootKey,
     getFolderDisabledReason,
     getMissingNamespaces,
     getMissingNamespacesReason,
+    getTargetTakenReason,
     isDirectDestination,
+    isTargetTaken,
+    targetFolderKey,
+    targetVersion,
   ]);
   const committedDisabledReason = getDestinationDisabledReason?.(destination);
   const isDirectWrite = isDirectDestination(destination);
@@ -460,6 +544,7 @@ export const useResourceSavePanel = ({
   const handleCreateFolder = useCallback(
     async (rootKey: string, parentPath: string[], name: string) => {
       if (rootKey === SaveDestinationRoot.Organization) {
+        createdFolderKeysRef.current.add([...parentPath, name].join('/'));
         await onCreatePublishFolder?.(parentPath, name);
         return;
       }

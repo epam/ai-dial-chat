@@ -6,7 +6,7 @@ import {
   type PublicationRule,
 } from '@epam/ai-dial-publish-panel';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ResourceSaveOutcome,
   ResourceSaveVersionError,
@@ -925,5 +925,283 @@ describe('useResourceSavePanel — dependency namespaces and notes', () => {
     act(() => result.current.panelProps.onDestinationChange(UNIT));
 
     expect(result.current.panelProps.destinationNote).toBeUndefined();
+  });
+});
+
+describe('useResourceSavePanel — taken name in a direct-write folder', () => {
+  const UNIT = {
+    rootKey: SaveDestinationRoot.Organization,
+    path: ['Acme', 'Teams'],
+  };
+  const TAKEN_REASON = 'Already exists in Acme / Teams';
+  const checkPublishTarget = vi.fn();
+  const renderDirect = (overrides: Partial<UseResourceSavePanelParams> = {}) =>
+    renderPanel({
+      adapter: makeAdapter({
+        saveIntoOrgUnit: vi.fn().mockResolvedValue({ id: ID }),
+      }),
+      canSaveDirectlyTo: (path) => path[0] === 'Acme',
+      publishClient: {
+        publishCatalogEntity: vi.fn().mockResolvedValue({}),
+        getPublishRules: vi.fn().mockResolvedValue([]),
+        checkPublishTarget,
+      },
+      getDisabledReason: () => undefined,
+      getTargetTakenReason: () => TAKEN_REASON,
+      ...overrides,
+    });
+  const settle = () => act(async () => vi.advanceTimersByTimeAsync(450));
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    checkPublishTarget.mockResolvedValue({ taken: false });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('asks without a version for "keep version" and disables Save with the reason when the name is taken', async () => {
+    checkPublishTarget.mockResolvedValue({ taken: true });
+    const { result } = renderDirect();
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+
+    expect(checkPublishTarget).toHaveBeenCalledOnce();
+    expect(checkPublishTarget).toHaveBeenCalledWith(
+      'application',
+      ID,
+      'Acme/Teams',
+      undefined,
+    );
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBe(
+      TAKEN_REASON,
+    );
+    expect(result.current.panelProps.isSubmitDisabled).toBe(true);
+  });
+
+  it('keeps Save enabled when the name is free', async () => {
+    const { result } = renderDirect();
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+
+    expect(checkPublishTarget).toHaveBeenCalledOnce();
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBeUndefined();
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
+  });
+
+  it('gives the typed version to the reason when the new version is the taken one', async () => {
+    checkPublishTarget.mockResolvedValue({ taken: true });
+    const getTargetTakenReason = vi.fn().mockReturnValue(TAKEN_REASON);
+    const { result } = renderDirect({ getTargetTakenReason });
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBe(
+      TAKEN_REASON,
+    );
+    expect(getTargetTakenReason).toHaveBeenLastCalledWith(
+      ['Acme', 'Teams'],
+      undefined,
+    );
+
+    act(() =>
+      result.current.panelProps.version?.onVersionModeChange(
+        SaveVersionMode.New,
+      ),
+    );
+    act(() => result.current.panelProps.version?.onNewVersionChange('2.0.0'));
+    await settle();
+
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBe(
+      TAKEN_REASON,
+    );
+    expect(getTargetTakenReason).toHaveBeenLastCalledWith(
+      ['Acme', 'Teams'],
+      '2.0.0',
+    );
+  });
+
+  it('asks with the typed version once it is valid and settled, and re-enables Save when the next version is free', async () => {
+    checkPublishTarget.mockImplementation(
+      async (_type, _id, _folder, version) => ({ taken: version === '2.0.0' }),
+    );
+    const { result } = renderDirect();
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+    checkPublishTarget.mockClear();
+
+    act(() =>
+      result.current.panelProps.version?.onVersionModeChange(
+        SaveVersionMode.New,
+      ),
+    );
+    act(() => result.current.panelProps.version?.onNewVersionChange('2.0.0'));
+    expect(checkPublishTarget).not.toHaveBeenCalled();
+    await settle();
+
+    expect(checkPublishTarget).toHaveBeenCalledOnce();
+    expect(checkPublishTarget).toHaveBeenCalledWith(
+      'application',
+      ID,
+      'Acme/Teams',
+      '2.0.0',
+    );
+    expect(result.current.panelProps.isSubmitDisabled).toBe(true);
+
+    act(() => result.current.panelProps.version?.onNewVersionChange('2.1.0'));
+    await settle();
+
+    expect(checkPublishTarget).toHaveBeenLastCalledWith(
+      'application',
+      ID,
+      'Acme/Teams',
+      '2.1.0',
+    );
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
+  });
+
+  it('asks only after 400 ms without typing', async () => {
+    const { result } = renderDirect();
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+    act(() =>
+      result.current.panelProps.version?.onVersionModeChange(
+        SaveVersionMode.New,
+      ),
+    );
+    checkPublishTarget.mockClear();
+
+    act(() => result.current.panelProps.version?.onNewVersionChange('2.0.0'));
+    await act(async () => vi.advanceTimersByTimeAsync(300));
+    act(() => result.current.panelProps.version?.onNewVersionChange('2.0.1'));
+    await act(async () => vi.advanceTimersByTimeAsync(300));
+    expect(checkPublishTarget).not.toHaveBeenCalled();
+    await act(async () => vi.advanceTimersByTimeAsync(150));
+
+    expect(checkPublishTarget).toHaveBeenCalledOnce();
+    expect(checkPublishTarget).toHaveBeenCalledWith(
+      'application',
+      ID,
+      'Acme/Teams',
+      '2.0.1',
+    );
+  });
+
+  it('does not ask for an invalid version or for the current one', async () => {
+    const { result } = renderDirect();
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+    act(() =>
+      result.current.panelProps.version?.onVersionModeChange(
+        SaveVersionMode.New,
+      ),
+    );
+    checkPublishTarget.mockClear();
+
+    act(() => result.current.panelProps.version?.onNewVersionChange('abc'));
+    await settle();
+    act(() => result.current.panelProps.version?.onNewVersionChange('1.0.0'));
+    await settle();
+
+    expect(checkPublishTarget).not.toHaveBeenCalled();
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBeUndefined();
+  });
+
+  it('keeps Save enabled when the check fails', async () => {
+    checkPublishTarget.mockRejectedValue(new Error('boom'));
+    const { result } = renderDirect();
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+
+    expect(checkPublishTarget).toHaveBeenCalledOnce();
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
+  });
+
+  it('discards an answer that arrives after the destination changed', async () => {
+    let resolveCheck: (value: { taken: boolean }) => void = () => undefined;
+    checkPublishTarget.mockReturnValue(
+      new Promise((resolve) => {
+        resolveCheck = resolve;
+      }),
+    );
+    const { result } = renderDirect();
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+    act(() => result.current.panelProps.onDestinationChange(PERSONAL));
+    await act(async () => resolveCheck({ taken: true }));
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
+  });
+
+  it('asks nothing for Personal, a folder created in this session or a publication-request destination', async () => {
+    checkPublishTarget.mockResolvedValue({ taken: true });
+    const { result } = renderDirect();
+
+    await settle();
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+    await settle();
+    await act(async () =>
+      result.current.panelProps.onCreateFolder(
+        SaveDestinationRoot.Organization,
+        ['Acme'],
+        'Fresh',
+      ),
+    );
+    act(() =>
+      result.current.panelProps.onDestinationChange({
+        rootKey: SaveDestinationRoot.Organization,
+        path: ['Acme', 'Fresh', 'Inner'],
+      }),
+    );
+    await settle();
+
+    expect(checkPublishTarget).not.toHaveBeenCalled();
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
+  });
+
+  it('asks nothing for a resource that does not exist yet', async () => {
+    const { result } = renderDirect({
+      adapter: {
+        publishEntityType: 'application',
+        isVersioned: false,
+        createIn: vi.fn(),
+        saveIntoOrgUnit: vi.fn(),
+      } as never,
+    });
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+
+    expect(checkPublishTarget).not.toHaveBeenCalled();
+  });
+
+  it('asks nothing without a reason callback', async () => {
+    const { result } = renderDirect({ getTargetTakenReason: undefined });
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+
+    expect(checkPublishTarget).not.toHaveBeenCalled();
+  });
+
+  it('asks nothing when the client has no check', async () => {
+    const { result } = renderDirect({
+      publishClient: {
+        publishCatalogEntity: vi.fn().mockResolvedValue({}),
+        getPublishRules: vi.fn().mockResolvedValue([]),
+      },
+    });
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+
+    expect(checkPublishTarget).not.toHaveBeenCalled();
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
   });
 });

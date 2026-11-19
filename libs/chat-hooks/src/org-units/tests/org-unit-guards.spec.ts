@@ -6,6 +6,7 @@ import { SaveDestinationRoot } from '../../catalog/resource-save';
 import {
   buildFolderGuards,
   getDependencyOrgUnitNamespaces,
+  getDependencyTypeOfNamespace,
   getMissingDirectWriteNamespaces,
   getOrgUnitNamespace,
   OrgUnitFolderGuardPurpose,
@@ -216,6 +217,20 @@ describe('getDependencyOrgUnitNamespaces', () => {
     expect(
       getDependencyOrgUnitNamespaces([{ type: PublishDependencyType.File }]),
     ).toEqual([]);
+  });
+});
+
+describe('getDependencyTypeOfNamespace', () => {
+  it('names the dependency kind of a namespace and none for others', () => {
+    expect(getDependencyTypeOfNamespace(OrgUnitNamespace.Prompts)).toBe(
+      PublishDependencyType.Prompt,
+    );
+    expect(getDependencyTypeOfNamespace(OrgUnitNamespace.Applications)).toBe(
+      PublishDependencyType.Application,
+    );
+    expect(
+      getDependencyTypeOfNamespace(OrgUnitNamespace.Files),
+    ).toBeUndefined();
   });
 });
 
