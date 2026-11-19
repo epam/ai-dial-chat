@@ -278,14 +278,12 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
             }
             footer={
               <div className="flex items-center justify-between gap-2">
-                {isLast ? (
-                  <span />
-                ) : (
-                  <GhostButton
-                    label={labels?.skip ?? 'Skip tour'}
-                    onClick={skip}
-                  />
-                )}
+                {/* On every step, the last one too: Done marks the shown
+                 * hints seen, Skip opts out of the ones still to come. */}
+                <GhostButton
+                  label={labels?.skip ?? 'Skip tour'}
+                  onClick={skip}
+                />
                 <div className="flex items-center gap-2">
                   {index > 0 && (
                     <NeutralButton

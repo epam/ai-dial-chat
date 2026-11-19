@@ -176,6 +176,20 @@ describe('OnboardingTour', () => {
     );
   });
 
+  it('offers Skip tour on the last step too', async () => {
+    const user = userEvent.setup();
+    const onFinish = vi.fn();
+    render(<Host initialSteps={stepsFixture()} onFinish={onFinish} />);
+
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('button', { name: 'Done' })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Skip tour' }));
+    expect(onFinish).toHaveBeenCalledWith(
+      ['new-chat', 'composer'],
+      OnboardingTourEndReason.Skipped,
+    );
+  });
+
   it('reports Skip tour as skipped', async () => {
     const user = userEvent.setup();
     const onFinish = vi.fn();
