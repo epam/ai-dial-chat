@@ -1,4 +1,5 @@
 export * from '../api-error/api-error';
+export * from '../api-error/map-api-error';
 export * from '../api-transport/create-csrf-middleware';
 export * from '../api-transport/create-unauthorized-middleware';
 export * from '../prompt/export-prompt';

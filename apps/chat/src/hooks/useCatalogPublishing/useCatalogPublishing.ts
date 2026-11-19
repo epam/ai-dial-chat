@@ -14,6 +14,8 @@ import {
   toPublishEntityType,
   toPublishRuleDto,
   findSchemaDisplayName,
+  usePublishTargetGuard,
+  type PublishTargetEntity,
   type UnpublishableFoldersClient,
 } from '@epam/ai-dial-chat-hooks';
 import type {
@@ -28,6 +30,7 @@ import {
   getCatalogPublishDependencies,
   getCatalogPublishHistory,
   getCatalogUnpublishAccess,
+  publishApiClient,
   publishCatalogEntity,
   unpublishCatalogEntity,
 } from '../../server-api/publish.api';
@@ -35,6 +38,7 @@ import { EntityOperation } from '../../types/entity-notification';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import { getPublishFolderLabel } from '../../utils/publish';
 import { useResolveCatalogIconUrl } from '../catalog/useResolveCatalogIconUrl';
+import type { PublishErrorOptions } from '../publish/usePublishErrorNotification';
 import type { useOperationNotification } from '../useOperationNotification';
 
 /* Built from the named wrappers, not `publishApiClient`, so tests that mock those wrappers keep covering this path. */
@@ -44,6 +48,14 @@ const unpublishableFoldersClient: UnpublishableFoldersClient = {
 };
 
 const NO_TOOLSETS: DialToolsetDto[] = [];
+
+/** The entity a catalog item publishes, or `undefined` for a type that cannot be published. */
+const getPublishTargetEntity = (
+  item: CatalogItem,
+): PublishTargetEntity | undefined => {
+  const entityType = toPublishEntityType(item.type);
+  return entityType ? { entityType, entityId: item.id } : undefined;
+};
 
 interface UseCatalogPublishingParams {
   deployments: DeploymentItemDto[];
@@ -55,7 +67,11 @@ interface UseCatalogPublishingParams {
   notifyOperationSuccess: ReturnType<
     typeof useOperationNotification
   >['notifyOperationSuccess'];
-  showPublishError: (error: unknown, operation?: EntityOperation) => void;
+  showPublishError: (
+    error: unknown,
+    operation?: EntityOperation,
+    options?: PublishErrorOptions,
+  ) => void;
   /** Whether the signed-in user is an administrator. */
   isAdmin: boolean;
 }
@@ -80,6 +96,13 @@ interface UseCatalogPublishingResult {
   handleFetchExistingRules: (
     folderPath: string[],
   ) => Promise<PublicationRule[]>;
+  /** Asks the backend whether another resource already holds the item's published path in a folder. */
+  checkTargetExists: (
+    item: CatalogItem,
+    folderPath: string[],
+  ) => Promise<boolean>;
+  /** Whether a publish rejection means the published path is taken. */
+  isTargetTakenError: (error: unknown) => boolean;
   isPublishVisible: (item: CatalogItem) => boolean;
   isUnpublishVisible: (item: CatalogItem) => boolean;
 }
@@ -217,7 +240,12 @@ export const useCatalogPublishing = ({
     [resolveDependencyIcon],
   );
 
-  const handlePublish = useCallback(
+  const targetGuard = usePublishTargetGuard({
+    client: publishApiClient,
+    getEntity: getPublishTargetEntity,
+  });
+
+  const publishItem = useCallback(
     async (
       item: CatalogItem,
       folderPath: string[],
@@ -243,6 +271,12 @@ export const useCatalogPublishing = ({
       });
     },
     [],
+  );
+
+  /* A `409` for a taken path is rejected as a `PublishTargetTakenError`, which `isTargetTakenError` recognises. */
+  const handlePublish = useMemo(
+    () => targetGuard.wrapPublish(publishItem),
+    [targetGuard, publishItem],
   );
 
   const handleFetchExistingRules = useCallback(
@@ -310,8 +344,10 @@ export const useCatalogPublishing = ({
   );
 
   const handlePublishError = useCallback(
-    (_item: CatalogItem, _folderPath: string[], error: unknown) =>
-      showPublishError(error),
+    (item: CatalogItem, _folderPath: string[], error: unknown) =>
+      showPublishError(error, undefined, {
+        isVersioned: Boolean(item.version),
+      }),
     [showPublishError],
   );
 
@@ -323,6 +359,8 @@ export const useCatalogPublishing = ({
     handlePublishSuccess,
     handlePublishError,
     handleFetchExistingRules,
+    checkTargetExists: targetGuard.onCheckTargetExists,
+    isTargetTakenError: targetGuard.isTargetTakenError,
     isPublishVisible,
     isUnpublishVisible,
   };

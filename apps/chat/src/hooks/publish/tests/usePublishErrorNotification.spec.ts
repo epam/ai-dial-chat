@@ -1,3 +1,4 @@
+import { PublishTargetTakenError } from '@epam/ai-dial-chat-hooks';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -40,6 +41,57 @@ describe('usePublishErrorNotification', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('shows the rename-or-choose-another-folder text for a taken path, not the raw message', async () => {
+    const { result } = renderHook(() => usePublishErrorNotification());
+
+    result.current(
+      new PublishTargetTakenError(
+        apiError({ message: 'Target resource already exists: x' }, 409),
+      ),
+    );
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Error,
+        title: 'publish.failedTitle',
+        message: 'publish.targetTakenMessage',
+      }),
+    );
+  });
+
+  it('adds the version part to the taken-path text for a versioned resource', async () => {
+    const { result } = renderHook(() => usePublishErrorNotification());
+
+    result.current(
+      new PublishTargetTakenError(apiError({ message: 'x' }, 409)),
+      undefined,
+      { isVersioned: true },
+    );
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Error,
+        title: 'publish.failedTitle',
+        message: 'publish.targetTakenVersionedMessage',
+      }),
+    );
+  });
+
+  it('shows the taken-path text even while offline is reported', async () => {
+    setOnLine(false);
+    const { result } = renderHook(() => usePublishErrorNotification());
+
+    result.current(
+      new PublishTargetTakenError(apiError({ message: 'x' }, 409)),
+    );
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'publish.targetTakenMessage' }),
+      ),
+    );
   });
 
   it('shows a connection-specific error notification without a request ID while offline', async () => {

@@ -515,6 +515,268 @@ describe('usePublishFlow', () => {
     ).toBe(false);
   });
 
+  describe('target check', () => {
+    const FREE_FOLDER = ['Shared'];
+    const deferred = <T>() => {
+      let resolve!: (value: T) => void;
+      let reject!: (reason?: unknown) => void;
+      const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+      });
+      return { promise, resolve, reject };
+    };
+    const setup = (
+      onCheckTargetExists: (
+        item: PublishFlowItem,
+        folderPath: string[],
+      ) => Promise<boolean>,
+      extra: Partial<Parameters<typeof usePublishFlow>[0]> = {},
+      flowItem: PublishFlowItem = item,
+    ) =>
+      renderHook(
+        ({ current }: { current: PublishFlowItem }) =>
+          usePublishFlow({
+            item: current,
+            history,
+            folderItems,
+            onPublish: vi.fn().mockResolvedValue(undefined),
+            onCheckTargetExists,
+            ...extra,
+          }),
+        { initialProps: { current: flowItem } },
+      );
+
+    it('checks once when a folder is selected and reports the answer', async () => {
+      const check = vi.fn().mockResolvedValue(true);
+      const { result } = setup(check);
+
+      act(() => result.current.setSelectedFolderPath(FREE_FOLDER));
+
+      expect(result.current.isTargetChecking).toBe(true);
+      await waitFor(() => expect(result.current.isTargetTaken).toBe(true));
+      expect(result.current.isTargetChecking).toBe(false);
+      expect(check).toHaveBeenCalledTimes(1);
+      expect(check).toHaveBeenCalledWith(item, FREE_FOLDER);
+    });
+
+    it('does not check while no folder is selected', () => {
+      const check = vi.fn().mockResolvedValue(true);
+      setup(check);
+
+      expect(check).not.toHaveBeenCalled();
+    });
+
+    it('checks again when the item version changes', async () => {
+      const check = vi.fn().mockResolvedValue(false);
+      const { result, rerender } = setup(check);
+      act(() => result.current.setSelectedFolderPath(FREE_FOLDER));
+      await waitFor(() => expect(result.current.isTargetChecking).toBe(false));
+
+      rerender({ current: { version: '5.0.0' } });
+
+      await waitFor(() => expect(check).toHaveBeenCalledTimes(2));
+      expect(check).toHaveBeenLastCalledWith({ version: '5.0.0' }, FREE_FOLDER);
+    });
+
+    it('discards an answer that arrives after another folder was selected', async () => {
+      const first = deferred<boolean>();
+      const check = vi
+        .fn()
+        .mockReturnValueOnce(first.promise)
+        .mockResolvedValueOnce(false);
+      const { result } = setup(check);
+
+      act(() => result.current.setSelectedFolderPath(FREE_FOLDER));
+      act(() =>
+        result.current.setSelectedFolderPath(['Shared', 'Data Science']),
+      );
+      await act(async () => first.resolve(true));
+
+      expect(result.current.isTargetTaken).toBe(false);
+    });
+
+    it('does not check a folder where the own history already holds the version', () => {
+      const check = vi.fn().mockResolvedValue(true);
+      const { result } = setup(check);
+
+      act(() =>
+        result.current.setSelectedFolderPath(['Shared', 'Data Science']),
+      );
+
+      expect(check).not.toHaveBeenCalled();
+      expect(result.current.isTargetChecking).toBe(false);
+    });
+
+    it('does not check a folder created in this session or one beneath it', async () => {
+      const check = vi.fn().mockResolvedValue(true);
+      const { result } = setup(check, {
+        onCreateFolder: vi.fn().mockResolvedValue(undefined),
+      });
+
+      await act(async () => {
+        await result.current.handleCreateFolder(['Shared'], 'Fresh');
+      });
+      act(() => result.current.setSelectedFolderPath(['Shared', 'Fresh']));
+      act(() =>
+        result.current.setSelectedFolderPath(['Shared', 'Fresh', 'Inner']),
+      );
+
+      expect(check).not.toHaveBeenCalled();
+      expect(result.current.isTargetTaken).toBe(false);
+    });
+
+    it('leaves submit unblocked and sets no submit error when the check rejects', async () => {
+      const check = vi.fn().mockRejectedValue(new Error('offline'));
+      const { result } = setup(check);
+
+      act(() => result.current.setSelectedFolderPath(FREE_FOLDER));
+
+      await waitFor(() => expect(result.current.isTargetChecking).toBe(false));
+      expect(result.current.isTargetTaken).toBe(false);
+      expect(result.current.hasSubmitError).toBe(false);
+    });
+
+    it('marks the target taken instead of a submit error when the host recognises the rejection', async () => {
+      class TakenError extends Error {}
+      const onPublishError = vi.fn();
+      const { result } = setup(vi.fn().mockResolvedValue(false), {
+        onPublish: vi.fn().mockRejectedValue(new TakenError()),
+        isTargetTakenError: (error) => error instanceof TakenError,
+        onPublishError,
+      });
+      act(() => result.current.setSelectedFolderPath(FREE_FOLDER));
+      await waitFor(() => expect(result.current.isTargetChecking).toBe(false));
+
+      let submitted = true;
+      await act(async () => {
+        submitted = await result.current.handleSubmit();
+      });
+
+      expect(submitted).toBe(false);
+      expect(result.current.isTargetTaken).toBe(true);
+      expect(result.current.hasSubmitError).toBe(false);
+      expect(onPublishError).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps a generic submit error for a rejection the host does not recognise', async () => {
+      const { result } = setup(vi.fn().mockResolvedValue(false), {
+        onPublish: vi.fn().mockRejectedValue(new Error('boom')),
+        isTargetTakenError: () => false,
+      });
+      act(() => result.current.setSelectedFolderPath(FREE_FOLDER));
+      await waitFor(() => expect(result.current.isTargetChecking).toBe(false));
+
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+
+      expect(result.current.hasSubmitError).toBe(true);
+      expect(result.current.isTargetTaken).toBe(false);
+    });
+
+    it('discards an answer that arrives after the item version changed', async () => {
+      const first = deferred<boolean>();
+      const check = vi
+        .fn()
+        .mockReturnValueOnce(first.promise)
+        .mockResolvedValueOnce(false);
+      const { result, rerender } = setup(check);
+      act(() => result.current.setSelectedFolderPath(FREE_FOLDER));
+
+      rerender({ current: { version: '5.0.0' } });
+      await act(async () => first.resolve(true));
+
+      expect(result.current.isTargetTaken).toBe(false);
+    });
+
+    it('never checks when the host supplies no check', () => {
+      const { result } = renderHook(() =>
+        usePublishFlow({
+          item,
+          history,
+          folderItems,
+          onPublish: vi.fn().mockResolvedValue(undefined),
+        }),
+      );
+
+      act(() => result.current.setSelectedFolderPath(FREE_FOLDER));
+
+      expect(result.current.isTargetChecking).toBe(false);
+      expect(result.current.isTargetTaken).toBe(false);
+    });
+
+    it('checks a folder again after the host fails to create it', async () => {
+      const check = vi.fn().mockResolvedValue(false);
+      const { result } = setup(check, {
+        onCreateFolder: vi.fn().mockRejectedValue(new Error('denied')),
+      });
+
+      await act(async () => {
+        await result.current.handleCreateFolder(['Shared'], 'Fresh');
+      });
+      act(() => result.current.setSelectedFolderPath(['Shared', 'Fresh']));
+
+      await waitFor(() => expect(check).toHaveBeenCalledTimes(1));
+    });
+
+    it('keeps a taken target found on submit when a later answer for the same folder is free', async () => {
+      class TakenError extends Error {}
+      const deferredCheck = deferred<boolean>();
+      const check = vi
+        .fn()
+        .mockResolvedValueOnce(false)
+        .mockReturnValue(deferredCheck.promise);
+      const { result, rerender } = setup(check, {
+        onPublish: vi.fn().mockRejectedValue(new TakenError()),
+        isTargetTakenError: (error) => error instanceof TakenError,
+      });
+      act(() => result.current.setSelectedFolderPath(FREE_FOLDER));
+      await waitFor(() => expect(result.current.isTargetChecking).toBe(false));
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+      expect(result.current.isTargetTaken).toBe(true);
+
+      rerender({ current: { version: '5.0.0' } });
+      rerender({ current: item });
+      await act(async () => deferredCheck.resolve(false));
+
+      expect(result.current.isTargetTaken).toBe(true);
+    });
+
+    it('does not carry a taken answer to another item with the same folder and version', async () => {
+      const check = vi
+        .fn()
+        .mockResolvedValueOnce(true)
+        .mockResolvedValue(false);
+      const first = { id: 'applications/a/one', version: '1.0.0' };
+      const { result, rerender } = setup(check, {}, first);
+      act(() => result.current.setSelectedFolderPath(FREE_FOLDER));
+      await waitFor(() => expect(result.current.isTargetTaken).toBe(true));
+
+      rerender({ current: { id: 'applications/a/two', version: '1.0.0' } });
+
+      await waitFor(() => expect(check).toHaveBeenCalledTimes(2));
+      expect(check).toHaveBeenLastCalledWith(
+        { id: 'applications/a/two', version: '1.0.0' },
+        FREE_FOLDER,
+      );
+      await waitFor(() => expect(result.current.isTargetTaken).toBe(false));
+    });
+
+    it('clears the taken state on reset', async () => {
+      const { result } = setup(vi.fn().mockResolvedValue(true));
+      act(() => result.current.setSelectedFolderPath(FREE_FOLDER));
+      await waitFor(() => expect(result.current.isTargetTaken).toBe(true));
+
+      act(() => result.current.reset());
+
+      expect(result.current.isTargetTaken).toBe(false);
+      expect(result.current.isTargetChecking).toBe(false);
+    });
+  });
+
   describe('rules', () => {
     const rule: PublicationRule = {
       source: 'role',
