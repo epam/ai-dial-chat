@@ -307,14 +307,7 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
   return (
     <div
       className={mergeClasses(
-        'flex w-full flex-col desktop:w-[280px]',
-        /*
-         * Inside a floating host (the slash menu's Dropdown) the panel may not
-         * outgrow the room the host left it, or the host clips the footer's
-         * bottom padding: the list wrapper (`min-h-0 flex-1`) shrinks instead.
-         * Without that host the variable is unset and the cap is `none`.
-         */
-        'max-h-(--fui-available-height,none)',
+        'flex min-h-0 w-full flex-col desktop:w-[280px]',
         className,
         SKILLS_CLASS.favoritesPanel,
       )}
@@ -332,8 +325,13 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
       </p>
 
       <div
+        /*
+         * `contain-paint` keeps this list's overflow out of the scrollable area
+         * of a floating host (the slash menu's overlay), so neither the wheel
+         * nor `scrollIntoView` from arrow-key navigation can scroll the host.
+         */
         className={mergeClasses(
-          'max-h-72 min-h-0 flex-1 overflow-y-auto',
+          'max-h-72 min-h-0 flex-1 overflow-y-auto contain-paint',
           styles.listContent,
         )}
         style={{ maxHeight: listHeight }}
