@@ -20696,8 +20696,8 @@
       },
       "PublishConflictCode": {
         "type": "string",
-        "enum": ["target-exists"],
-        "description": "Always `target-exists`: the published copy of this resource would land on a path that is already taken."
+        "enum": ["target-exists", "publish-in-progress"],
+        "description": "`target-exists`: the published copy of this resource would land on a path that is already taken. `publish-in-progress`: another publish of the same application has not finished yet."
       },
       "PublishConflictDto": {
         "type": "object",
@@ -20715,7 +20715,7 @@
             "example": "Conflict"
           },
           "code": {
-            "description": "Always `target-exists`: the published copy of this resource would land on a path that is already taken.",
+            "description": "`target-exists`: the published copy of this resource would land on a path that is already taken. `publish-in-progress`: another publish of the same application has not finished yet.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/PublishConflictCode"

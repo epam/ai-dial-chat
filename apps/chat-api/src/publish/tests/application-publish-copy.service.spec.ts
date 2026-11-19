@@ -7,6 +7,7 @@ import {
   STALE_PUBLISH_COPY_AGE_MS,
   ApplicationBeingPublishedException,
 } from '../application-publish-copy.service';
+import { PublishConflictCode } from '../dto/publish-conflict.dto';
 
 const ORIGINAL = { bucket: 'bucket-123', path: 'Design/Helper__1.0.0' };
 const COPY_ID = 'applications/bucket-123/Design/.publish-staging/Helper__1.0.0';
@@ -124,11 +125,78 @@ describe('ApplicationPublishCopyService', () => {
         response: { status: 200 },
       });
 
-      await expect(
-        service.create('u', 'token', ORIGINAL, async (body) => body),
-      ).rejects.toBeInstanceOf(ApplicationBeingPublishedException);
+      const failure = await service
+        .create('u', 'token', ORIGINAL, async (body) => body)
+        .catch((err: unknown) => err);
+
+      expect(failure).toBeInstanceOf(ApplicationBeingPublishedException);
+      expect(
+        (failure as ApplicationBeingPublishedException).getResponse(),
+      ).toMatchObject({
+        statusCode: 409,
+        code: PublishConflictCode.PublishInProgress,
+      });
       expect(client.deleteCustomApplication).not.toHaveBeenCalled();
       expect(client.copyResource).toHaveBeenCalledTimes(1);
+    });
+
+    it('passes a Core 409 through when no copy exists, so it is not read as already publishing', async () => {
+      const { service, client } = makeService();
+      client.copyResource.mockResolvedValue({
+        error: {},
+        response: { status: 409 },
+      });
+      client.getApplicationMetadata.mockResolvedValue({
+        error: {},
+        response: { status: 404 },
+      });
+
+      const failure = await service
+        .create('u', 'token', ORIGINAL, async (body) => body)
+        .catch((err: unknown) => err);
+
+      expect(failure).toBeInstanceOf(ConflictException);
+      expect(failure).not.toBeInstanceOf(ApplicationBeingPublishedException);
+      expect(client.deleteCustomApplication).not.toHaveBeenCalled();
+    });
+
+    it('passes a Core 409 through when the copy cannot be read', async () => {
+      const { service, client } = makeService();
+      client.copyResource.mockResolvedValue({
+        error: {},
+        response: { status: 409 },
+      });
+      client.getApplicationMetadata.mockRejectedValue(new Error('down'));
+
+      const failure = await service
+        .create('u', 'token', ORIGINAL, async (body) => body)
+        .catch((err: unknown) => err);
+
+      expect(failure).toBeInstanceOf(ConflictException);
+      expect(failure).not.toBeInstanceOf(ApplicationBeingPublishedException);
+    });
+
+    it('passes the retry conflict through when the reclaimed copy is gone and Core still answers 409', async () => {
+      const { service, client } = makeService();
+      client.copyResource
+        .mockResolvedValueOnce({ error: {}, response: { status: 400 } })
+        .mockResolvedValue({ error: {}, response: { status: 409 } });
+      const stale = {
+        data: { nodeType: 'ITEM', updatedAt: Date.now() - 4 * 60 * 1000 },
+        response: { status: 200 },
+      };
+      client.getApplicationMetadata
+        .mockResolvedValueOnce(stale)
+        .mockResolvedValueOnce(stale)
+        .mockResolvedValue({ error: {}, response: { status: 404 } });
+
+      const failure = await service
+        .create('u', 'token', ORIGINAL, async (body) => body)
+        .catch((err: unknown) => err);
+
+      expect(failure).toBeInstanceOf(ConflictException);
+      expect(failure).not.toBeInstanceOf(ApplicationBeingPublishedException);
+      expect(client.deleteCustomApplication).toHaveBeenCalledTimes(1);
     });
 
     it('reclaims a leftover copy last modified 4 minutes ago', async () => {

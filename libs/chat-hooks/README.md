@@ -762,7 +762,10 @@ publish endpoint's `409` with code `target-exists` as a `PublishTargetTakenError
 Wrap the host's `onPublish` with `wrapPublish` and pass the other two to
 `usePublishFlow`, so the panel shows its target-taken callout before and after a
 submit. `isPublishTargetTakenResponse(error)` is the underlying async test of a
-generated-client rejection.
+generated-client rejection. `isPublishInProgressDetails(details)` tells, from the
+result of `getApiErrorDetails`, the publish endpoint's other `409` (code
+`publish-in-progress`: the same application is already being published), which
+`wrapPublish` leaves unchanged so the host can show its own text.
 
 ```tsx
 const getEntity = useCallback(

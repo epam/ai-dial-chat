@@ -1,5 +1,6 @@
 import { PublishConflictCode } from '@epam/ai-dial-chat-api-client';
 import { getApiErrorDetails } from '../api-error/api-error';
+import type { ApiErrorDetails } from '../api-error/api-error';
 import { withApiErrorMapping } from '../api-error/map-api-error';
 
 /**
@@ -27,6 +28,17 @@ export const isPublishTargetTakenResponse = async (
   const { status, code } = await getApiErrorDetails(error);
   return status === 409 && code === PublishConflictCode.TargetExists;
 };
+
+/**
+ * Whether the details of a failed publish describe the endpoint's `409` for an
+ * application that is already being published (code `publish-in-progress`).
+ * @param details - the result of `getApiErrorDetails` for the rejection
+ */
+export const isPublishInProgressDetails = ({
+  status,
+  code,
+}: Pick<ApiErrorDetails, 'status' | 'code'>): boolean =>
+  status === 409 && code === PublishConflictCode.PublishInProgress;
 
 /**
  * Returns `publish` rejecting a taken-target `409` as a {@link PublishTargetTakenError}

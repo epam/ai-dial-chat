@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   PublishTargetTakenError,
+  isPublishInProgressDetails,
   isPublishTargetTakenResponse,
   wrapPublishTargetTaken,
 } from '../publish-target-taken';
@@ -78,5 +79,21 @@ describe('wrapPublishTargetTaken', () => {
     const wrapped = wrapPublishTargetTaken(vi.fn().mockRejectedValue(original));
 
     await expect(wrapped()).rejects.toBe(original);
+  });
+});
+
+describe('isPublishInProgressDetails', () => {
+  it('is true for a 409 with the publish-in-progress code', () => {
+    expect(
+      isPublishInProgressDetails({ status: 409, code: 'publish-in-progress' }),
+    ).toBe(true);
+  });
+
+  it.each([
+    { status: 409, code: 'target-exists' },
+    { status: 409 },
+    { status: 400, code: 'publish-in-progress' },
+  ])('is false for %o', (details) => {
+    expect(isPublishInProgressDetails(details)).toBe(false);
   });
 });

@@ -11,6 +11,7 @@ export enum PublishI18nKeys {
   TargetTakenVersionedLabel = 'publish.targetTakenVersionedLabel',
   TargetTakenMessage = 'publish.targetTakenMessage',
   TargetTakenVersionedMessage = 'publish.targetTakenVersionedMessage',
+  InProgressMessage = 'publish.inProgressMessage',
   AdminApprovalTitle = 'publish.adminApprovalTitle',
   AdminApprovalMessage = 'publish.adminApprovalMessage',
   AuthorLabel = 'publish.authorLabel',

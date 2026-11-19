@@ -8237,11 +8237,12 @@ export interface PublishCatalogEntityDto {
 }
 
 /**
- * Always `target-exists`: the published copy of this resource would land on a path that is already taken.
+ * `target-exists`: the published copy of this resource would land on a path that is already taken. `publish-in-progress`: another publish of the same application has not finished yet.
  * @export
  */
 export const PublishConflictCode = {
   TargetExists: 'target-exists',
+  PublishInProgress: 'publish-in-progress',
 } as const;
 export type PublishConflictCode =
   (typeof PublishConflictCode)[keyof typeof PublishConflictCode];
@@ -8271,7 +8272,7 @@ export interface PublishConflictDto {
    */
   error: string;
   /**
-   * Always `target-exists`: the published copy of this resource would land on a path that is already taken.
+   * `target-exists`: the published copy of this resource would land on a path that is already taken. `publish-in-progress`: another publish of the same application has not finished yet.
    * @type {PublishConflictCode}
    * @memberof PublishConflictDto
    */

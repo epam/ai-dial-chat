@@ -94,6 +94,29 @@ describe('usePublishErrorNotification', () => {
     );
   });
 
+  it('shows the translated in-progress text for a publish that is already running, not the raw message', async () => {
+    const { result } = renderHook(() => usePublishErrorNotification());
+
+    result.current(
+      apiError(
+        {
+          statusCode: 409,
+          message: 'This application is already being published',
+          code: 'publish-in-progress',
+        },
+        409,
+      ),
+    );
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Error,
+        title: 'publish.failedTitle',
+        message: 'publish.inProgressMessage',
+      }),
+    );
+  });
+
   it('shows a connection-specific error notification without a request ID while offline', async () => {
     setOnLine(false);
     const { result } = renderHook(() => usePublishErrorNotification());

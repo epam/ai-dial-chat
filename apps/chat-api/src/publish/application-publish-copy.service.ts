@@ -9,6 +9,7 @@ import {
   transferDialResource,
 } from '../common/utils/dial-resource-transfer';
 import { DialClientService } from '../dial/dial-client.service';
+import { PublishConflictCode } from './dto/publish-conflict.dto';
 import { PUBLISH_STAGING_SEGMENT } from './publish-target.util';
 
 /** A copy last modified longer ago than this is the leftover of an interrupted publish and is reclaimed. */
@@ -17,7 +18,12 @@ export const STALE_PUBLISH_COPY_AGE_MS = 3 * 60 * 1000;
 /** Another publish of the same application holds the temporary copy; the only preparation failure that is not absorbed. */
 export class ApplicationBeingPublishedException extends ConflictException {
   constructor() {
-    super('This application is already being published');
+    super({
+      statusCode: 409,
+      message: 'This application is already being published',
+      error: 'Conflict',
+      code: PublishConflictCode.PublishInProgress,
+    });
   }
 }
 
@@ -174,9 +180,9 @@ export class ApplicationPublishCopyService {
       await transfer();
     } catch (err) {
       if (!(err instanceof ConflictException)) throw err;
-      if (!(await this.isStale(accessToken, copy))) {
-        throw new ApplicationBeingPublishedException();
-      }
+      const state = await this.inspectCopy(accessToken, copy);
+      if (!state.exists) throw err;
+      if (!state.isStale) throw new ApplicationBeingPublishedException();
       this.logger.warn(
         `Reclaiming a leftover temporary publish copy "${copy.id}"`,
       );
@@ -184,7 +190,10 @@ export class ApplicationPublishCopyService {
       try {
         await transfer();
       } catch (retryErr) {
-        if (retryErr instanceof ConflictException) {
+        if (
+          retryErr instanceof ConflictException &&
+          (await this.inspectCopy(accessToken, copy)).exists
+        ) {
           throw new ApplicationBeingPublishedException();
         }
         throw retryErr;
@@ -193,27 +202,38 @@ export class ApplicationPublishCopyService {
   }
 
   /**
-   * Whether the copy was last modified more than {@link STALE_PUBLISH_COPY_AGE_MS}
-   * ago. A copy whose age cannot be read counts as current, so a live publish
-   * is never torn down.
+   * Reads the copy's metadata once: whether it exists and, if so, whether it
+   * was last modified more than {@link STALE_PUBLISH_COPY_AGE_MS} ago. A copy
+   * whose age cannot be read counts as current, so a live publish is never torn
+   * down. A copy that cannot be read at all counts as absent, so a `409` that
+   * is not about the copy (Core refuses to copy a running application, for one)
+   * is passed on and absorbed by the plain-publish fallback instead of being
+   * reported as "already being published".
+   * @param accessToken - caller's bearer token
+   * @param copy - the copy to look up
    */
-  private async isStale(
+  private async inspectCopy(
     accessToken: string,
     copy: ApplicationPublishCopy,
-  ): Promise<boolean> {
+  ): Promise<{ exists: boolean; isStale: boolean }> {
     try {
-      const { data } = await this.dialClient.client.getApplicationMetadata(
-        copy.resource.bucket,
-        copy.resource.path,
-        { headers: getBearerAuthHeaders(accessToken) },
-      );
+      const { data, response } =
+        await this.dialClient.client.getApplicationMetadata(
+          copy.resource.bucket,
+          copy.resource.path,
+          { headers: getBearerAuthHeaders(accessToken) },
+        );
+      if (response?.status !== 200) return { exists: false, isStale: false };
       const updatedAt =
         data != null && 'updatedAt' in data ? data.updatedAt : undefined;
-      return (
-        updatedAt != null && Date.now() - updatedAt > STALE_PUBLISH_COPY_AGE_MS
-      );
+      return {
+        exists: true,
+        isStale:
+          updatedAt != null &&
+          Date.now() - updatedAt > STALE_PUBLISH_COPY_AGE_MS,
+      };
     } catch {
-      return false;
+      return { exists: false, isStale: false };
     }
   }
 }

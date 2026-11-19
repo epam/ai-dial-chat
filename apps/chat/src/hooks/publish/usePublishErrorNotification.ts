@@ -1,5 +1,6 @@
 import {
   getApiErrorDetails,
+  isPublishInProgressDetails,
   PublishTargetTakenError,
 } from '@epam/ai-dial-chat-hooks';
 import { useCallback } from 'react';
@@ -42,7 +43,9 @@ export interface PublishErrorOptions {
  *
  * A `PublishTargetTakenError` (the publish endpoint's `409` for a path another
  * resource already holds) gets the rename-or-choose-another-folder text instead
- * of Core's raw message, with the version part when `options.isVersioned`.
+ * of Core's raw message, with the version part when `options.isVersioned`. The
+ * `409` for an application that is already being published (code
+ * `publish-in-progress`) gets its own translated text for the same reason.
  *
  * `operation` picks the copy. It defaults to publish, but an unpublish caller
  * must pass `EntityOperation.UnpublishRequested`: a failed unpublish used to be
@@ -112,10 +115,13 @@ export const usePublishErrorNotification = (): ((
       }
 
       const notify = async () => {
-        const { message, traceId } = await getApiErrorDetails(error);
+        const details = await getApiErrorDetails(error);
+        const { message, traceId } = details;
         showErrorNotification({
           title: t(copy.titleKey),
-          message: message ?? t(copy.messageKey),
+          message: isPublishInProgressDetails(details)
+            ? t(PublishI18nKeys.InProgressMessage)
+            : (message ?? t(copy.messageKey)),
           requestId: traceId,
         });
       };
