@@ -25,7 +25,10 @@ import {
   ResourceDependencyType,
   type ResourceDependencyDto,
 } from './dto/resource-dependency.dto';
-import { getPublishedDependencyTargetUrl } from './publish-target.util';
+import {
+  getPublishedDependencyTargetUrl,
+  getResourceBucket,
+} from './publish-target.util';
 
 /** One `ADD` resource of the publication, for a dependency that still has to be published. */
 export interface DependencyPublicationResource {
@@ -118,7 +121,7 @@ export const selectPublishableDependencies = (
   dependencies.filter(
     (dependency) =>
       dependency.type !== ResourceDependencyType.File &&
-      parseDialResourceUrl(dependency.id).bucket === ownBucket,
+      getResourceBucket(dependency.id) === ownBucket,
   );
 
 /**

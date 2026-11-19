@@ -401,8 +401,16 @@ export class OrgUnitCopyService {
             targetUrl: planned.targetUrl,
           });
         } catch (err) {
-          /* The target appeared since the plan was made: reuse it, as the plan does for an existing one. */
+          /* The target appeared since the plan was made: reuse it, as the plan does for an existing one. A conflict with nothing at the target is not that. */
           if (!(err instanceof ConflictException)) throw err;
+          const { bucket, path } = parseDialResourceUrl(planned.targetUrl);
+          const isPresent = await resourceExists(
+            this.dialClient.client,
+            type,
+            { bucket, path },
+            headers,
+          );
+          if (!isPresent) throw err;
         }
       }
       await transfer(DialResourceType.Applications, copy.resource, destination);

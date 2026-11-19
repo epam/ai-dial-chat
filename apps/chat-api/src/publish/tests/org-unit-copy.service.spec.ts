@@ -480,6 +480,31 @@ describe('OrgUnitCopyService', () => {
       expect(made.preparation.stage).toHaveBeenCalledTimes(1);
     });
 
+    it('reuses a dependency whose target appeared since the plan and still writes the application', async () => {
+      const made = makeService();
+      made.preparation.plan.mockResolvedValue(planOf(PROMPT));
+      made.copyResource
+        .mockResolvedValueOnce(err(409))
+        .mockResolvedValue({ response: { status: 200 } });
+      made.getPromptMetadata.mockResolvedValue({ response: { status: 200 } });
+
+      await expect(run(made.service)).resolves.toEqual({ id: APP_TARGET });
+
+      expect(copied(made)).toEqual([PROMPT.targetUrl, APP_TARGET]);
+    });
+
+    it('fails when a dependency copy conflicts with nothing at its target', async () => {
+      const made = makeService();
+      made.preparation.plan.mockResolvedValue(planOf(PROMPT));
+      made.copyResource.mockResolvedValueOnce(err(409));
+      made.getPromptMetadata.mockResolvedValue({ response: { status: 404 } });
+
+      await expect(run(made.service)).rejects.toBeInstanceOf(ConflictException);
+
+      expect(copied(made)).toEqual([PROMPT.targetUrl]);
+      expect(made.preparation.deleteCopy).toHaveBeenCalledOnce();
+    });
+
     it('takes the single copy for an application without dependencies or icon', async () => {
       const made = makeService();
 
