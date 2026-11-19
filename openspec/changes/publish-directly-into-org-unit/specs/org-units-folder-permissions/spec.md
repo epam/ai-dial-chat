@@ -5,7 +5,7 @@
 ### Requirement: A publish panel writes directly when the user may approve publications
 When the committed destination of the catalog Publish panel (application, toolset, prompt or skill) is a folder inside an org unit and the rights are `Ready`, the panel SHALL write the entity into that folder directly, and SHALL NOT create a publication request, if and only if the user is a DIAL admin or the owning unit grants all of: `write` on the entity's namespace, `read` on `publications`, and `write` on `publications`. For an application the unit SHALL also grant `write` on the namespace of each private dependency to be copied. The right to approve is what lets the direct path stand in for filing and approving one's own request, which DIAL Core allows (with the known differences below); `read` alone on `publications` never selects it, `write` on `publications` alone never selects it, and neither does `write` on the entity's namespace alone. A folder outside every unit, even for a DIAL admin, keeps the publication request. Conversations and projects keep the request.
 
-For a direct destination the panel SHALL NOT show the access rules editor, the author field or the credentials checkbox: DIAL Core stores no rules inside a unit and a copy takes neither a display author nor a toolset's credentials. The author of the copy is the source's own author. The panel SHALL show one neutral line that credentials are not shared by a direct save, for a toolset that would otherwise offer them. A folder where the user lacks `write` on the namespace of a dependency the panel knows SHALL be disabled with a reason naming the missing types, through the same disabled-row channel the Save panel uses; the server checks again before the first copy.
+For a direct destination the panel SHALL NOT show the access rules editor, the author field or the credentials checkbox: DIAL Core stores no rules inside a unit and a copy takes neither a display author nor a toolset's credentials. The author of the copy is the source's own author. The panel SHALL show one neutral line that credentials are not shared by a direct save, for a toolset that would otherwise offer them. When the user would otherwise write directly but lacks `write` on the namespace of a dependency the panel knows, the folder SHALL stay usable and the panel SHALL file a publication request as it does today, with a note naming the missing types and saying that a request is sent instead of a direct save; the server checks the namespaces again before the first copy.
 
 **Known differences from an approved publication (Core rules the chat neither prevents nor handles; the known risk of the direct write above applies as well).** The copy keeps the source's author; a toolset is copied without credentials; a non-admin's copy drops the admin consent of declared `resource_dependencies`, which an admin can grant afterwards; the copy keeps the source application's `reference`. No publication record exists, so the item's publish history does not list the folder.
 
@@ -27,9 +27,9 @@ For a direct destination the panel SHALL NOT show the access rules editor, the a
 - **THEN** the panel creates a publication request
 
 #### Scenario: Missing namespace of a dependency
-- **GIVEN** an application with a private toolset and a unit that grants `write` on `applications` but not on `toolsets`
-- **WHEN** the user browses to a folder of that unit in the Publish panel
-- **THEN** the folder is disabled with a reason naming toolsets
+- **GIVEN** an application with a private toolset and a unit that grants `write` on `applications` and the approval right but not `write` on `toolsets`
+- **WHEN** the user selects a folder of that unit in the Publish panel
+- **THEN** the folder stays selectable, a note names toolsets and says a request is sent instead of a direct save, and submit files a publication request
 
 #### Scenario: Conversation and project panels
 - **WHEN** the user publishes a conversation or a project into a unit folder

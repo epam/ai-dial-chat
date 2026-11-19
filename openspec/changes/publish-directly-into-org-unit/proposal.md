@@ -17,7 +17,7 @@ When the committed destination is a folder inside an org unit and the user may w
 
 1. **The right.** Direct publish is offered when all hold: the folder lies inside a listed unit; the unit (or the user's admin access) grants `write` on the entity's namespace and, for an application, on the namespace of each dependency to copy; and the user is a DIAL admin or the unit grants both `read` and `write` on `publications`. A new pure function next to `canWriteIntoOrgUnitAt` decides the `publications` half and `useOrgUnits` exposes the combined answer.
 2. **The flow.** `usePublishFlow` gets two optional inputs: `canPublishDirectlyTo(folderPath)` and `onPublishDirectly`. When the selected folder qualifies, submit calls `onPublishDirectly` instead of `onPublish`. The host passes two callbacks; the lib learns nothing about endpoints.
-3. **The panel.** For a direct destination the panel hides the rules editor and the author field (Core takes neither), hides the credentials checkbox with one neutral line that credentials are not shared by a direct save, and reports the success as "saved to the folder"; the submit button keeps its label. Dependencies keep their current list, loaded from Core as today; the folder is disabled with a typed reason when the user cannot write a dependency's namespace (`getMissingDirectWriteNamespaces`).
+3. **The panel.** For a direct destination the panel hides the rules editor and the author field (Core takes neither), hides the credentials checkbox with one neutral line that credentials are not shared by a direct save, and reports the success as "saved to the folder"; the submit button keeps its label. Dependencies keep their current list, loaded from Core as today; when the user cannot write a dependency's namespace the folder stays usable, a publication request is filed as today, and a note names the missing types.
 4. **The backend.** `copy-to-org-unit` gets an optional `version`; with it the copy lands at the path a publication would use (`resolvePublishTarget`), so the existing `checkPublishTarget` the panel already calls checks exactly the path that will be written. The `409` for a taken target carries the taken-target code and shows the existing callout. Everything else (dependencies, icon, rights before the first copy, staging, no rollback) is unchanged.
 5. **Everything else is as before.** A folder outside every unit, a unit where the user lacks any of the rights, conversations and projects, and the Save panel keep their current behaviour.
 
@@ -26,7 +26,7 @@ When the committed destination is a folder inside an org unit and the user may w
 - chat-shared: a `publications` approval right and the combined direct-publish right (pure functions).
 - chat-hooks: `useOrgUnits` exposes the combined check; the guards builder gets a publish-direct variant; the catalog publish hook wiring.
 - publish-panel: `usePublishFlow` options and result (`isDirectWrite`), panel sections hidden for a direct destination, one label for the credentials line.
-- apps/chat: `useCatalogPublishing` adds the direct callback over the generated client; `CatalogView` passes the right check and refreshes rights when the panel opens; new translated strings and notification variant.
+- apps/chat: `useCatalogPublishing` adds the direct callback over the generated client; `CatalogView` passes the right check (the guards hook already refreshes rights when the panel becomes active); one new translated string, the success text is the Save panel's.
 - chat-api: optional `version` on `CopyCatalogEntityToOrgUnitDto`; target naming through `resolvePublishTarget`; the taken-target code on the `409` where the target is confirmed. The `publications` right is not checked on the server (Core does not enforce it on a copy; it only selects the panel's mode).
 - generated client: `npm run openapi`, `npm run openapi:check`.
 - **No BREAKING change.** `version` is optional and the new panel inputs are optional.
@@ -48,7 +48,7 @@ None.
 ## Impact
 
 - Code: `libs/chat-shared/src/utils/org-unit.ts`, `libs/chat-hooks/src/org-units/`, `libs/publish-panel/src/` (`use-publish-flow.ts`, `PublishPanel`), `libs/catalog/src/components/Details/hooks/useDetailsPublish.ts` (threading), `apps/chat/src/hooks/useCatalogPublishing/`, `apps/chat/src/components/CatalogView/CatalogView.tsx`, `apps/chat-api/src/publish/` (copy service, DTO, target util), `libs/chat-api-client` (regenerated).
-- i18n: new strings for the direct-save wording, the credentials line, the typed reasons, and the success and error notifications, in `en.json` with enum members in their own module.
+- i18n: new strings for the direct-save wording, the credentials line and the dependency note, in `en.json` with enum members in their own module.
 - Docs: READMEs of `libs/publish-panel` and `libs/chat-hooks`, `docs/architecture.md` if its publish section names the request-only flow, `npm run validate:docs`, `npm run validate:specs`.
 - Library boundary: `libs/publish-panel` receives a predicate and a callback and a translated sentence; endpoints, rights data and the `publications` namespace stay in `libs/chat-shared`, `libs/chat-hooks` and the app adapters.
 
@@ -68,7 +68,7 @@ None.
 - Without `read` or without `write` on `publications`, the panel behaves exactly as today for that folder (request).
 - The copy lands at `{name}__{version}` of the panel's version, and a taken name is shown before submit by the existing target check and after a racing submit by the same callout.
 - For a direct destination the rules editor, the author field and the credentials checkbox are not shown; the credentials line is.
-- A missing namespace for a dependency disables the folder with a typed reason; the server answers `403` naming the missing namespaces before the first copy.
+- A missing namespace for a dependency does not block the folder: a publication request is filed and a note names the missing types; the server still answers `403` naming the missing namespaces before the first copy of a direct write.
 - A failure in the middle keeps the panel open with the error; submitting again completes the copy.
 - Conversations, projects and the Save panel behave exactly as before.
 
@@ -87,7 +87,7 @@ None.
 - A direct write is not an approved publication: the shared copy keeps the source's author, carries no toolset credentials, and a non-admin's copy drops declared-dependency consent; an admin grants it afterwards. These are the recorded Core rules of a plain copy.
 - The copy keeps the source application's `reference`, as the Save panel's direct write does (a publication's approval generates a new one); this change leaves it as it is.
 - No publication record exists for a direct write, so the item's publish history does not list the folder.
-- Rights come from a 60-second cache; the panel refreshes them on open, the server checks again, and Core stays the authority.
+- Rights come from a 60-second cache; the guards hook refreshes them when the panel becomes active, the server checks again, and Core stays the authority.
 
 ## Closest existing models
 
