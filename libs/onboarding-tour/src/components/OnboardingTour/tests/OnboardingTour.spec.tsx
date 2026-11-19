@@ -113,6 +113,24 @@ describe('OnboardingTour', () => {
     );
   });
 
+  it('counts the steps passed in an earlier visit', async () => {
+    const user = userEvent.setup();
+    render(
+      <Host
+        initialSteps={stepsFixture()}
+        onFinish={vi.fn()}
+        completedStepCount={2}
+      />,
+    );
+    expect(
+      screen.getByRole('dialog', { name: 'Start a chat' }).textContent,
+    ).toContain('Step 3 of 4');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    const last = screen.getByRole('dialog', { name: 'Ask here' });
+    expect(last.textContent).toContain('Step 4 of 4');
+    expect(screen.getByRole('button', { name: 'Done' })).toBeTruthy();
+  });
+
   it('reports each step the user moves past with Next', async () => {
     const user = userEvent.setup();
     const onStepComplete = vi.fn();

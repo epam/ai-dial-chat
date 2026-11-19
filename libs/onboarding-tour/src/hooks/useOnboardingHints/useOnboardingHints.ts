@@ -14,6 +14,8 @@ import { isEditableElement } from '../../utils/focus';
 
 const NO_STEPS: OnboardingTourStep[] = [];
 
+const isOnEveryPage = () => true;
+
 /** Picks the unseen hints whose element is on the current page and returns the steps and finish handler for `OnboardingTour`. */
 export const useOnboardingHints = ({
   hints,
@@ -22,8 +24,12 @@ export const useOnboardingHints = ({
   resolveTarget,
   isEnabled,
   pageKey,
+  isHintOnPage = isOnEveryPage,
 }: UseOnboardingHintsOptions): UseOnboardingHintsResult => {
   const [steps, setSteps] = useState<OnboardingTourStep[]>(NO_STEPS);
+  /* Taken when a tour starts, so a reload mid-tour keeps the step number:
+   * the hints of this page passed earlier count before the first new one. */
+  const [completedStepCount, setCompletedStepCount] = useState(0);
   /* Closing a tour (the close button, Escape) puts the onboarding off until
    * the host remounts the hook, usually the next visit: the hints not passed
    * stay unseen, but no card opens again on this page or the next one. */
@@ -48,9 +54,13 @@ export const useOnboardingHints = ({
   );
 
   /* One step object per hint, so its getTarget stays stable while it is shown. */
+  const pageHints = useMemo(
+    () => hints.filter((hint) => isHintOnPage(hint)),
+    [hints, isHintOnPage],
+  );
   const pendingSteps = useMemo<OnboardingTourStep[]>(
     () =>
-      hints
+      pageHints
         .filter((hint) => !seenIds.includes(hint.id))
         .map((hint) => ({
           id: hint.id,
@@ -58,8 +68,11 @@ export const useOnboardingHints = ({
           description: hint.description ?? undefined,
           getTarget: () => resolveTarget(hint.target),
         })),
-    [hints, seenIds, resolveTarget],
+    [pageHints, seenIds, resolveTarget],
   );
+  const seenOnPageCount = pageHints.filter((hint) =>
+    seenIds.includes(hint.id),
+  ).length;
 
   /* Leaving the page ends a running tour: its remaining steps point at
    * elements the next page does not render. Steps already passed with Next
@@ -87,6 +100,7 @@ export const useOnboardingHints = ({
       }
       const visible = pendingSteps.filter((step) => step.getTarget() != null);
       if (visible.length > 0) {
+        setCompletedStepCount(seenOnPageCount);
         setSteps(visible);
         return;
       }
@@ -97,7 +111,7 @@ export const useOnboardingHints = ({
     };
     timer = window.setTimeout(tryStart, ONBOARDING_START_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [isEnabled, isClosed, isRunning, pendingSteps, pageKey]);
+  }, [isEnabled, isClosed, isRunning, pendingSteps, seenOnPageCount, pageKey]);
 
   /* Each Next marks the step just passed, so a tour left halfway (another
    * page, a reload, a closed tab) resumes from the first step not passed. */
@@ -128,5 +142,5 @@ export const useOnboardingHints = ({
     [hints, markSeen],
   );
 
-  return { steps, onFinish, onStepComplete };
+  return { steps, onFinish, onStepComplete, completedStepCount };
 };

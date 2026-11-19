@@ -2,6 +2,7 @@ import type { OnboardingHintTarget } from '@epam/ai-dial-chat-api-client';
 import { useIsMobile } from '@epam/ai-dial-chat-shared';
 import {
   OnboardingHints as OnboardingHintsView,
+  type OnboardingHint,
   type OnboardingHintsLabels,
 } from '@epam/ai-dial-onboarding-tour';
 import {
@@ -37,6 +38,7 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { StorageKey } from '../../types/storage-key';
 import { UserConfigStatus } from '../../types/user-config-status';
+import { getOnboardingPage, isHintOnOnboardingPage } from './onboarding-page';
 import {
   getOnboardingAnchorTargets,
   resolveOnboardingTarget,
@@ -55,7 +57,8 @@ export const ONBOARDING_ANCHORS_PARAM = 'onboarding-anchors';
 
 /**
  * First-visit onboarding: feeds the operator-configured `onboardingHints`
- * whose element is on screen to the `OnboardingTour` lib. Each hint passed
+ * of the current page (`onboarding-page.ts`) whose element is on screen to
+ * the `OnboardingTour` lib. Each hint passed
  * with Next, and finishing or skipping the tour, stores the seen ids in
  * `localStorage`, so a hint is seen once per browser and a new id is shown
  * on the next visit. Hints whose element is not on screen wait for a page
@@ -219,6 +222,20 @@ const OnboardingHints: FC = () => {
   );
   const anchorTargets = useMemo(() => getOnboardingAnchorTargets(), []);
 
+  /* A hint belongs to the pages it names, or to the home page when it names
+   * none; a client-config from an older chat-api has no `pages` at all. */
+  const page = getOnboardingPage(pathname);
+  const pagesById = useMemo(
+    () =>
+      new Map(config.onboardingHints.map(({ id, pages }) => [id, pages ?? []])),
+    [config.onboardingHints],
+  );
+  const isHintOnPage = useCallback(
+    (hint: OnboardingHint) =>
+      isHintOnOnboardingPage(pagesById.get(hint.id) ?? [], page),
+    [pagesById, page],
+  );
+
   const handleCloseAnchorView = useCallback(() => {
     setIsKeptAnchorView(false);
     setSearchParams(
@@ -241,6 +258,7 @@ const OnboardingHints: FC = () => {
       onSeenIdsChange={setSeenIds}
       isEnabled={status === UserConfigStatus.Ready}
       pageKey={pathname}
+      isHintOnPage={isHintOnPage}
       isAnchorView={isAnchorView}
       onCloseAnchorView={handleCloseAnchorView}
       isMobile={isMobile}

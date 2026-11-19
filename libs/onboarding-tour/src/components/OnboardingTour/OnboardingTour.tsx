@@ -47,6 +47,7 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
   steps,
   onFinish,
   onStepComplete,
+  completedStepCount = 0,
   isMobile = false,
   dir,
   labels,
@@ -174,8 +175,8 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
     return null;
   }
 
-  const total = steps.length;
-  const isLast = index === total - 1;
+  const total = completedStepCount + steps.length;
+  const isLast = index === steps.length - 1;
   const stepCounter = labels?.stepCounter ?? defaultStepCounter;
 
   /* Without a target to sit next to (on mobile, or while a target is briefly
@@ -218,7 +219,7 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
             ref={cardRefs}
             heading={step.title}
             description={step.description}
-            counter={stepCounter(index + 1, total)}
+            counter={stepCounter(completedStepCount + index + 1, total)}
             closeLabel={labels?.close ?? 'Close tour'}
             onClose={close}
             counterClassName={counterClassName}
