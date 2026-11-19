@@ -4,7 +4,7 @@ Onboarding hints over any page: hint cards shown one after another, each next to
 
 ## Overview
 
-`@epam/ai-dial-onboarding-tour` presents operator-authored hints about a page. `OnboardingTour` is a first-visit walkthrough: it opens a hint card next to one element at a time, with Back/Next/Done, Skip (on every step, the last one too) and Escape. It dims the page around a cut-out over the element, so the element stays lit, and points the card at it with an arrow. The page stays usable while a card is open: the dimming lets clicks through. Each hint is an `OnboardingTourStep` — a title, an optional description and a `getTarget` callback that returns the element — and the card follows its target through scrolling, resizes and layout shifts.
+`@epam/ai-dial-onboarding-tour` presents operator-authored hints about a page. `OnboardingTour` is a first-visit walkthrough: it opens a hint card next to one element at a time, with Back/Next/Done, Skip (on every step, the last one too) and Escape. It points the card at the element with an arrow. The page is not dimmed and the element is not outlined, so the page stays usable while a card is open: only the card takes clicks. Each hint is an `OnboardingTourStep` — a title, an optional description and a `getTarget` callback that returns the element — and the card follows its target through scrolling, resizes and layout shifts.
 
 Cards are positioned with [Floating UI](https://floating-ui.com) (`@floating-ui/react`): a card goes below its target, otherwise above or beside it, start-aligned and kept inside the viewport; on mobile it is a bottom sheet. Each step moves focus to its card so the new title is announced. Focus is not trapped, and when the tour ends it goes back to where it was when the tour started. A step whose target is not on screen is skipped.
 
@@ -155,7 +155,7 @@ const Tour = () => {
 | `descriptionClassName` | `string`                                                            | `'dial-small-paragraph-text'` | Typography of the card description.                                                                                                                                                     |
 | `className`            | `string`                                                            | —                             | Extra class name(s) on the tour root.                                                                                                                                                   |
 
-`colors` fields and their defaults: `backdrop` (`--bg-backdrop`, the dimming around the cut-out), `counterText` (`--text-tertiary`), and the card fields `cardBackground` (`--bg-layer-raised`), `cardShadow` (`--shadow-lg`), `titleText` (`--text-primary`), `descriptionText` (`--text-secondary`).
+`colors` fields and their defaults: `counterText` (`--text-tertiary`), and the card fields `cardBackground` (`--bg-layer-raised`), `cardShadow` (`--shadow-lg`), `titleText` (`--text-primary`), `descriptionText` (`--text-secondary`).
 
 ### OnboardingAnchorMap
 

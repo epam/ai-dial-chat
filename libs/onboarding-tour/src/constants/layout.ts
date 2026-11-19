@@ -2,8 +2,6 @@
 export const VIEWPORT_MARGIN = 16;
 /** Distance, in px, between a hint card and its target. */
 export const TARGET_GAP = 12;
-/** Padding, in px, between the element and the edge of the cut-out around it. */
-export const SPOTLIGHT_PADDING = 6;
 /** Width, in px, of the arrow that points from a hint card at its target. */
 export const ARROW_WIDTH = 16;
 /** Height, in px, of that arrow. */
