@@ -519,7 +519,7 @@ describe('ConversationMessageItem', () => {
       'opens the selected cit document and page after reload (raw format: %s)',
       async (rawFormat) => {
         const entries = [
-          { id: 'first', page: 1, file: 'report.pdf' },
+          { id: 'first', page: 4, file: 'report.pdf' },
           { id: 'grouped', page: 2, file: 'other.pdf' },
           { id: 'grouped', page: 3, file: 'report.pdf' },
         ];
@@ -574,7 +574,7 @@ describe('ConversationMessageItem', () => {
         expect(mockOpenCanvas).toHaveBeenLastCalledWith(
           expect.objectContaining({
             url: 'https://example.com/report.pdf',
-            page: 1,
+            page: 4,
           }),
           expect.any(String),
         );
@@ -995,7 +995,7 @@ describe('ConversationMessageItem', () => {
       );
 
       const markers = screen.getAllByRole('button', {
-        name: CitationsI18nKeys.MarkerAriaLabelWithPage,
+        name: CitationsI18nKeys.MarkerAriaLabel,
       });
       expect(markers).toHaveLength(2);
 
@@ -1172,7 +1172,7 @@ describe('ConversationMessageItem', () => {
       );
 
       const markers = screen.getAllByRole('button', {
-        name: CitationsI18nKeys.MarkerAriaLabelWithPage,
+        name: CitationsI18nKeys.MarkerAriaLabel,
       });
       await userEvent.click(markers[1]);
       await userEvent.click(
@@ -1282,7 +1282,7 @@ describe('ConversationMessageItem', () => {
         );
 
         const markers = screen.getAllByRole('button', {
-          name: CitationsI18nKeys.MarkerAriaLabelWithPage,
+          name: CitationsI18nKeys.MarkerAriaLabel,
         });
         expect(markers).toHaveLength(4);
 
@@ -2714,7 +2714,7 @@ describe('ConversationMessageItem', () => {
               url: 'files/b/clm.pdf',
               title: 'clm.pdf',
             },
-            1,
+            2,
           )}
           index={1}
         />,
@@ -2733,7 +2733,28 @@ describe('ConversationMessageItem', () => {
             {
               type: 'application/pdf',
               url: 'files/b/clm.pdf',
-              title: 'clm.pdf, page 1',
+              title: 'clm.pdf, page 2',
+            },
+            2,
+          )}
+          index={1}
+        />,
+      );
+      const marker = screen.getByRole('button', {
+        name: CitationsI18nKeys.MarkerAriaLabel,
+      });
+      expect(marker.textContent).toBe(CitationsI18nKeys.MarkerLabel);
+    });
+
+    it('keeps the plain label for a citation of page 1', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={makeCitationMessage(
+            {
+              type: 'application/pdf',
+              url: 'files/b/clm.pdf',
+              title: 'clm.pdf',
             },
             1,
           )}
@@ -2772,7 +2793,7 @@ describe('ConversationMessageItem', () => {
               url: 'files/b/clm.pdf',
               title: 'clm.pdf',
             },
-            1,
+            2,
           )}
           index={1}
         />,

@@ -32,6 +32,12 @@ Baseline specs that still reference a 769px desktop boundary (e.g. `app-editor-f
 - **AND** `libs/chat-shared/src/constants/tests/breakpoint-sync.spec.ts` asserts that `tools/tailwind/theme.css` contains both `@custom-variant` declarations with the `MOBILE_MAX_WIDTH_PX` / `DESKTOP_BREAKPOINT_PX` literals
 - **AND** the new surface-policy checks are synchronized separately, alongside the unchanged Scheduled Tasks `.sortControlHidden` `@media (max-width: 767px)` cutoff
 
+#### Scenario: Breakpoint hooks agree within every render
+
+- **WHEN** one component calls `useIsMobile`, `useIsTablet` and `useIsPhone` and the viewport crosses 768px or 1280px
+- **THEN** every render reports the combination for the new width — never an intermediate one such as mobile but not tablet at 1279px
+- **AND** the hooks read the query during render through `useMediaQueryMatch` (`libs/chat-shared/src/hooks/useMediaQueryMatch.ts`), so a component that keys structure on the flags (the sources panel's resizable wrapper) does not remount its content on a crossing (issue #9907)
+
 #### Scenario: Scheduled Tasks hides the sort control on search focus only below 768px
 
 - **WHEN** the Scheduled Tasks search field is focused at a viewport width of 767px or less

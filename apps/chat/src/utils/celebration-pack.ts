@@ -1,4 +1,7 @@
 import {
+  CelebrationAnchor,
+  CelebrationAnchorEdge,
+  CelebrationAnchorFallback,
   CelebrationColorScheme,
   CelebrationDecorationTemplate,
   CelebrationDirectionMode,
@@ -10,10 +13,14 @@ import {
   type CelebrationPackDescriptor,
   type CelebrationPlacementDescriptor,
   type CelebrationSceneDescriptor,
+  type CelebrationSceneVariantDescriptor,
   type CelebrationVariantConditions,
 } from '@epam/ai-dial-celebrations';
 import {
   CelebrationDeliveryMode,
+  type CelebrationAnchor as CelebrationAnchorDto,
+  type CelebrationAnchorEdge as CelebrationAnchorEdgeDto,
+  type CelebrationAnchorFallback as CelebrationAnchorFallbackDto,
   type CelebrationDeliveryDto,
   type CelebrationEventDto,
   type CelebrationPackDto,
@@ -45,6 +52,23 @@ const STAGE_ALIGN: Record<CelebrationStageAlignDto, CelebrationStageAlign> = {
   'top-end': CelebrationStageAlign.TopEnd,
   'bottom-start': CelebrationStageAlign.BottomStart,
   'bottom-end': CelebrationStageAlign.BottomEnd,
+};
+
+const ANCHOR: Record<CelebrationAnchorDto, CelebrationAnchor> = {
+  composer: CelebrationAnchor.Composer,
+};
+
+const ANCHOR_EDGE: Record<CelebrationAnchorEdgeDto, CelebrationAnchorEdge> = {
+  top: CelebrationAnchorEdge.Top,
+  bottom: CelebrationAnchorEdge.Bottom,
+};
+
+const ANCHOR_FALLBACK: Record<
+  CelebrationAnchorFallbackDto,
+  CelebrationAnchorFallback
+> = {
+  'stage-anchor': CelebrationAnchorFallback.StageAnchor,
+  poster: CelebrationAnchorFallback.Poster,
 };
 
 const DIRECTION_MODE: Record<
@@ -117,18 +141,40 @@ export const resolveCelebrationPackPlan = (
     : null;
 };
 
+/* The BFF validated every bound before answering 200; only presence is checked here. */
+const toComposerAnchorPlacement = ({
+  anchor,
+  anchorRect,
+  edge,
+  scale,
+  fallback,
+}: CelebrationPlacementDto): CelebrationPlacementDescriptor | undefined =>
+  anchor && anchorRect && edge && scale && fallback
+    ? {
+        template: CelebrationPlacementTemplate.ComposerAnchorV1,
+        anchor: ANCHOR[anchor],
+        anchorRect: { ...anchorRect },
+        edge: ANCHOR_EDGE[edge],
+        scale: { min: scale.min, max: scale.max },
+        fallback: ANCHOR_FALLBACK[fallback],
+      }
+    : undefined;
+
 const toPlacement = (
   placement: CelebrationPlacementDto,
-): CelebrationPlacementDescriptor | undefined =>
-  placement.template === CelebrationPlacementTemplate.ViewportStageV1 &&
-  placement.fit &&
-  placement.align
+): CelebrationPlacementDescriptor | undefined => {
+  if (placement.template === CelebrationPlacementTemplate.ComposerAnchorV1)
+    return toComposerAnchorPlacement(placement);
+  return placement.template === CelebrationPlacementTemplate.ViewportStageV1 &&
+    placement.fit &&
+    placement.align
     ? {
         template: CelebrationPlacementTemplate.ViewportStageV1,
         fit: STAGE_FIT[placement.fit],
         align: STAGE_ALIGN[placement.align],
       }
     : undefined;
+};
 
 const toConditions = (
   when: CelebrationVariantConditionsDto,
@@ -149,6 +195,19 @@ const toSceneDescriptor = (
     !isSupported(scene.requiredCapabilities)
   )
     return undefined;
+  const variants: CelebrationSceneVariantDescriptor[] = [];
+  for (const variant of scene.variants) {
+    const variantPlacement =
+      variant.placement && toPlacement(variant.placement);
+    /* A variant frame this client cannot read, or one that changes the template, drops the scene. */
+    if (variant.placement && variantPlacement?.template !== placement.template)
+      return undefined;
+    variants.push({
+      when: toConditions(variant.when),
+      animationAssetId: variant.animationAssetId,
+      ...(variantPlacement && { placement: variantPlacement }),
+    });
+  }
   return {
     id: scene.id,
     labelId: scene.labelId,
@@ -159,10 +218,7 @@ const toSceneDescriptor = (
     timing: { ...scene.timing },
     posterAssetId: scene.posterAssetId,
     posterDurationMs: scene.posterDurationMs,
-    variants: scene.variants.map((variant) => ({
-      when: toConditions(variant.when),
-      animationAssetId: variant.animationAssetId,
-    })),
+    variants,
   };
 };
 

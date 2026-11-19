@@ -1658,6 +1658,7 @@
     "dialogDescription": "One or more tools or services need you to sign in before the conversation can continue.",
     "rowDecline": "Decline",
     "declineAll": "Decline all",
+    "logInTo": "Log in to {{name}}",
     "apiKeyLabel": "API key",
     "apiKeyPlaceholder": "Enter API key",
     "errorLoginFailed": "Failed to log in. Please try again.",

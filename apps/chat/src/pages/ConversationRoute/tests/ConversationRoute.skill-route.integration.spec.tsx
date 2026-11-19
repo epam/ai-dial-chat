@@ -71,12 +71,22 @@ vi.mock(
   '../../../context/AppConfigContext',
   async () => import('../../../context/tests/app-config-context-mock'),
 );
-vi.mock('../../../context/UserConfigContext', () => ({
-  useUserConfig: () => ({
-    selectedDeploymentId: null,
-    setSelectedDeployment: vi.fn(),
-  }),
-}));
+vi.mock('../../../context/UserConfigContext', () => {
+  /* One object, so `FavoriteApplicationsProvider` loads it once. */
+  const loadedFavorites = {
+    deployments: [],
+    toolsets: [],
+    prompts: [],
+    skills: [],
+  };
+  return {
+    useUserConfig: () => ({
+      selectedDeploymentId: null,
+      loadedFavorites,
+      setSelectedDeployment: vi.fn(),
+    }),
+  };
+});
 vi.mock('../../../context/IsolatedModelViewContext', () => ({
   useIsolatedModelView: () => ({
     isActive: false,

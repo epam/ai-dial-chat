@@ -20,13 +20,16 @@ import {
   type ManagedConfigArtifact,
 } from './app-config/managed-config/managed-config-artifact';
 import {
+  MANAGED_CONFIG_APP_ID,
   MANAGED_CONFIG_SCHEMA_VERSION,
   PINNED_MANAGED_CONFIG_SCHEMA_SHA256,
 } from './app-config/managed-config/managed-config.constants';
 
 const outputDirectory = join(__dirname, '..', 'managed-config-schema');
 const INDEX_FILE = 'index.json';
-const ARTIFACT_FILE_PATTERN = /^chat-ui-.+\.json$/;
+const ARTIFACT_FILE_PATTERN = new RegExp(
+  `^${MANAGED_CONFIG_APP_ID}-.+\\.json$`,
+);
 
 const toFileContent = (value: unknown): string =>
   `${JSON.stringify(value, null, 2)}\n`;

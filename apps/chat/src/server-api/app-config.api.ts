@@ -5,6 +5,6 @@ export const getClientConfig = (
   signal?: AbortSignal,
 ): Promise<ClientConfigResponseDto> =>
   appConfigApi.getClientConfig(
-    { appId: 'chat-ui' },
+    { appId: 'ai-dial-chat' },
     signal ? { signal } : undefined,
   );

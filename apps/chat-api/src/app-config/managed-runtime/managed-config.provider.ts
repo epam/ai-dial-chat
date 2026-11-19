@@ -16,7 +16,7 @@ import { ManagedConfigMode } from './managed-runtime.types';
  * explicitly present variables, and before the registry default, so a value
  * resolves as explicit ENV → managed → default. For a feature it supplies
  * only the enabled bit; the policy gates run after selection. Only a
- * `chat-ui` snapshot feeds the typed keys: another application's payload is
+ * `ai-dial-chat` snapshot feeds the typed keys: another application's payload is
  * delivered unchanged as `appConfig` and never read here.
  */
 @Injectable()

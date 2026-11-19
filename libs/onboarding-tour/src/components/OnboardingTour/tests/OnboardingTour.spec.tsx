@@ -113,6 +113,24 @@ describe('OnboardingTour', () => {
     );
   });
 
+  it('reports each step the user moves past with Next', async () => {
+    const user = userEvent.setup();
+    const onStepComplete = vi.fn();
+    render(
+      <Host
+        initialSteps={stepsFixture()}
+        onFinish={vi.fn()}
+        onStepComplete={onStepComplete}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(onStepComplete).toHaveBeenCalledExactlyOnceWith('new-chat');
+
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    expect(onStepComplete).toHaveBeenCalledOnce();
+  });
+
   it('keeps the page usable while a card is open', async () => {
     const user = userEvent.setup();
     const onPageClick = vi.fn();

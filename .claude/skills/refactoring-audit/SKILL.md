@@ -86,7 +86,7 @@ bash .claude/skills/refactoring-audit/scripts/collect-metrics.sh
 
 This is the **primary source of truth** for which files to inspect. Treat every ranked list, smell, violation, and dead-code section as the candidate set for Steps 3–3d.
 
-Run the dedicated dead-code collector separately because it may be slower and requires a local Knip installation for full coverage:
+Run the dedicated dead-code collector separately because it is slower. It uses the root devDependency `knip` with the repository config [`knip.ts`](../../../knip.ts):
 
 ```bash
 bash .claude/skills/refactoring-audit/scripts/collect-dead-code.sh
@@ -170,7 +170,7 @@ Use three complementary signals; no single signal is sufficient:
    npm exec -- nx run-many --target=typecheck
    ```
 
-2. Run [scripts/collect-dead-code.sh](scripts/collect-dead-code.sh). It performs both comprehensive and production Knip passes when a local Knip binary is available. The production pass identifies code kept alive only by tests/tooling; the comprehensive pass also covers unused test and tooling code.
+2. Run [scripts/collect-dead-code.sh](scripts/collect-dead-code.sh). It runs Knip in production and comprehensive mode with [`knip.ts`](../../../knip.ts) and the [`drop-root-manifest-repeats`](../../../tools/knip/drop-root-manifest-repeats.mjs) preprocessor (the same as `npm run knip:production` / `npm run knip`), prints each mode's exit code, load errors, configuration hints and findings, and keeps the raw JSON and text reports in the printed `raw-reports` folder. A mode with Knip exit code above 1 or an unparseable report is `FAILED`, and the collector then ends with `collector-status: FAILED` and coverage `PARTIAL`. The production pass identifies code kept alive only by tests/tooling; the comprehensive pass also covers unused test and tooling code.
 3. Inspect the Nx project graph for projects with no in-repo dependents:
 
    ```bash
@@ -192,7 +192,7 @@ Coverage rules:
 
 - Mark **Full** only when typecheck and both Knip passes complete, configuration hints and unresolved imports are investigated, and production hits are manually classified.
 - Mark **Partial** when Knip is unavailable/fails, typecheck cannot complete, or reachability/configuration gaps remain. List the missing signal explicitly; never report “no dead code” from partial coverage.
-- If Knip is not installed, do not download or add it automatically. Continue with TypeScript/Nx signals, mark coverage Partial, and ask before changing `package.json`/the lockfile when full analysis is required.
+- If the collector reports `UNAVAILABLE` (no `node_modules/.bin/knip`), the local install is stale: do not download Knip or install anything during the audit. Continue with TypeScript/Nx signals, mark coverage Partial, and ask the user to run `npm install`.
 - An Nx project with zero inbound edges is only a candidate: applications are graph roots, and publishable libraries may have external consumers.
 - Exclude generated `chat-api-client` findings. Do not hand-edit or recommend deleting generated client code.
 - Never run `knip --fix`, delete files, or remove dependencies during an audit. Produce planning findings only unless the user separately authorizes implementation.
@@ -291,4 +291,4 @@ Reply in **English** with:
 - Repo rules → grep mapping: [repo-rules-checklist.md](repo-rules-checklist.md)
 - Metrics script: [scripts/collect-metrics.sh](scripts/collect-metrics.sh)
 - Dead-code collector: [scripts/collect-dead-code.sh](scripts/collect-dead-code.sh)
-- Knip audit configuration: [knip-audit.json](knip-audit.json)
+- Knip configuration: [knip.ts](../../../knip.ts); root-manifest preprocessor: [tools/knip/drop-root-manifest-repeats.mjs](../../../tools/knip/drop-root-manifest-repeats.mjs)

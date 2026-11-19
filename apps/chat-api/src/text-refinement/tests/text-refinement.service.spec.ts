@@ -274,7 +274,7 @@ describe('TextRefinementService', () => {
         ),
       ).rejects.toMatchObject({ status: 403 });
       expect(enabled).toHaveBeenCalledWith(feature, {
-        appId: 'chat-ui',
+        appId: 'ai-dial-chat',
         userId: user.sub,
         roles: ['author'],
       });
@@ -295,7 +295,7 @@ describe('TextRefinementService', () => {
     );
     expect(getRoles).toHaveBeenCalledWith(keycloakUser);
     expect(enabled).toHaveBeenCalledWith(FeatureKey.ScheduledTasksEnabled, {
-      appId: 'chat-ui',
+      appId: 'ai-dial-chat',
       userId: keycloakUser.sub,
       roles: ['planner'],
     });

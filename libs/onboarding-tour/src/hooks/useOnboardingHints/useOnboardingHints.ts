@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ONBOARDING_RETRY_ATTEMPTS,
   ONBOARDING_RETRY_INTERVAL_MS,
@@ -25,6 +25,24 @@ export const useOnboardingHints = ({
 }: UseOnboardingHintsOptions): UseOnboardingHintsResult => {
   const [steps, setSteps] = useState<OnboardingTourStep[]>(NO_STEPS);
 
+  /* The latest seen ids, including the ones just reported: two quick Next
+   * presses must not each start from a `seenIds` the host has not re-rendered
+   * with yet, or the second would drop the first. */
+  const seenIdsRef = useRef(seenIds);
+  useEffect(() => {
+    seenIdsRef.current = seenIds;
+  }, [seenIds]);
+
+  const markSeen = useCallback(
+    (ids: string[]) => {
+      const current = seenIdsRef.current;
+      const next = [...current.filter((id) => !ids.includes(id)), ...ids];
+      seenIdsRef.current = next;
+      onSeenIdsChange(next);
+    },
+    [onSeenIdsChange],
+  );
+
   /* One step object per hint, so its getTarget stays stable while it is shown. */
   const pendingSteps = useMemo<OnboardingTourStep[]>(
     () =>
@@ -39,8 +57,9 @@ export const useOnboardingHints = ({
     [hints, seenIds, resolveTarget],
   );
 
-  /* Leaving the page ends a running tour without marking anything seen: its
-   * remaining steps point at elements the next page does not render. */
+  /* Leaving the page ends a running tour: its remaining steps point at
+   * elements the next page does not render. Steps already passed with Next
+   * were marked seen then; the rest stay unseen. */
   useEffect(() => {
     setSteps(NO_STEPS);
   }, [pageKey]);
@@ -76,23 +95,31 @@ export const useOnboardingHints = ({
     return () => window.clearTimeout(timer);
   }, [isEnabled, isRunning, pendingSteps, pageKey]);
 
+  /* Each Next marks the step just passed, so a tour left halfway (another
+   * page, a reload, a closed tab) resumes from the first step not passed. */
+  const onStepComplete = useCallback(
+    (stepId: string) => {
+      if (!seenIdsRef.current.includes(stepId)) {
+        markSeen([stepId]);
+      }
+    },
+    [markSeen],
+  );
+
   /* Done marks the hints that were shown; dismissing the tour (Skip, close,
    * Escape) opts out of every configured hint, so no later page starts a new
    * tour. */
   const onFinish = useCallback(
     (shownIds: string[], reason: OnboardingTourEndReason) => {
-      const newlySeen =
+      markSeen(
         reason === OnboardingTourEndReason.Dismissed
           ? [...new Set([...shownIds, ...hints.map(({ id }) => id)])]
-          : shownIds;
-      onSeenIdsChange([
-        ...seenIds.filter((id) => !newlySeen.includes(id)),
-        ...newlySeen,
-      ]);
+          : shownIds,
+      );
       setSteps(NO_STEPS);
     },
-    [hints, seenIds, onSeenIdsChange],
+    [hints, markSeen],
   );
 
-  return { steps, onFinish };
+  return { steps, onFinish, onStepComplete };
 };

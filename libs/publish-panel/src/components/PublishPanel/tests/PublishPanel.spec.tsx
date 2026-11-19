@@ -319,6 +319,45 @@ describe('PublishPanel', () => {
     expect(screen.getByText('Allow access if all match')).toBeTruthy();
   });
 
+  describe('optional author and access rules', () => {
+    it('omits the author field when onAuthorChange is not supplied', () => {
+      renderPanel({
+        author: undefined,
+        onAuthorChange: undefined,
+        selectedFolderPath: ['Shared', 'Data Science'],
+      });
+
+      expect(screen.queryByRole('textbox', { name: /Author/ })).toBeNull();
+    });
+
+    it('omits the access-rules section and its add-rule trigger when onRulesChange is not supplied', () => {
+      renderPanel({
+        rules: undefined,
+        onRulesChange: undefined,
+        ruleSourceOptions: undefined,
+        selectedFolderPath: ['Shared', 'Data Science'],
+      });
+
+      expect(screen.queryByText('Allow access if all match')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Add rule' })).toBeNull();
+    });
+
+    it('keeps the destination and credentials controls when both sections are omitted', () => {
+      renderPanel({
+        author: undefined,
+        onAuthorChange: undefined,
+        rules: undefined,
+        onRulesChange: undefined,
+        ruleSourceOptions: undefined,
+        onPublishCredentialsChange: vi.fn(),
+        selectedFolderPath: ['Shared', 'Data Science'],
+      });
+
+      expect(screen.getByText('ali.deepseek-v4-flash')).toBeTruthy();
+      expect(screen.getByRole('checkbox')).toBeTruthy();
+    });
+  });
+
   it('scopes the access-rules hint to the selected folder', () => {
     renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
     expect(

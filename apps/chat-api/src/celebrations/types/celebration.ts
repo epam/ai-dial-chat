@@ -19,6 +19,23 @@ export enum CelebrationStageFit {
   Cover = 'cover',
 }
 
+/** Host element a `composer-anchor-v1` stage attaches to. */
+export enum CelebrationAnchor {
+  Composer = 'composer',
+}
+
+/** Edge of the anchor a `composer-anchor-v1` stage aligns with. */
+export enum CelebrationAnchorEdge {
+  Top = 'top',
+  Bottom = 'bottom',
+}
+
+/** What a `composer-anchor-v1` scene does when no composer is eligible. */
+export enum CelebrationAnchorFallback {
+  StageAnchor = 'stage-anchor',
+  Poster = 'poster',
+}
+
 /** Where a `viewport-stage-v1` stage sits in the viewport, in logical terms. */
 export enum CelebrationStageAlign {
   Center = 'center',

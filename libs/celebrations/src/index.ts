@@ -18,6 +18,9 @@ export type {
 } from './models/celebration';
 export { SUPPORTED_CELEBRATION_CAPABILITIES } from './constants/celebration-capabilities';
 export {
+  CelebrationAnchor,
+  CelebrationAnchorEdge,
+  CelebrationAnchorFallback,
   CelebrationCapability,
   CelebrationColorScheme,
   CelebrationDecorationTemplate,
@@ -28,7 +31,9 @@ export {
   CelebrationStageFit,
 } from './types/celebration-pack';
 export type {
+  CelebrationAnchorScale,
   CelebrationAssetLoaders,
+  CelebrationComposerAnchorPlacement,
   CelebrationDecorationDescriptor,
   CelebrationExternalEventDescriptor,
   CelebrationPackDescriptor,
@@ -36,6 +41,7 @@ export type {
   CelebrationSceneDescriptor,
   CelebrationSceneTiming,
   CelebrationSceneVariantDescriptor,
+  CelebrationStageRect,
   CelebrationTextDirection,
   CelebrationVariantConditions,
   CelebrationVariantContext,

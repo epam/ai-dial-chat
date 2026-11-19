@@ -50,7 +50,6 @@ import {
 import { IconPrompt } from '@tabler/icons-react';
 import {
   FC,
-  lazy,
   memo,
   type ReactNode,
   Suspense,
@@ -87,6 +86,7 @@ import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/use
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { attachmentCanvasUrlResolvers } from '../../utils/attachment-display-resolvers';
 import { buildAttachmentValidationNotification } from '../../utils/attachment-validation-notification';
+import ConversationInput from '../ConversationInputLoader/ConversationInputLoader';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOverlay';
@@ -98,11 +98,6 @@ import ConversationMessageItem from './ConversationMessageItem';
 import ConversationReadOnlyFooter from './ConversationReadOnlyFooter';
 import { ConversationReloadNotification } from './ConversationReloadNotification';
 import { getInputMessageHistory } from './utils/message-display';
-
-const ConversationInput = lazy(async () => {
-  const module = await import('@epam/ai-dial-conversation-input');
-  return { default: module.ConversationInput };
-});
 
 interface Props {
   messages: MessageType[];

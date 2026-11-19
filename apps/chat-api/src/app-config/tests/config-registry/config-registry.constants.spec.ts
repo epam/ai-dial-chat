@@ -300,10 +300,8 @@ describe('CONFIG_DEFINITIONS', () => {
       owner: 'chat-team',
       envVar: 'SPENDING_LIMITS_MODE',
     });
-    expect(
-      entry?.management?.kind === KeyManagementKind.ManagedConfig &&
-        entry.management.contract.value,
-    ).toEqual({ type: 'string', enum: ['off', 'shadow', 'enforce'] });
+    /* Eligible but unmanaged until schema 1.1.0 exports it. */
+    expect(entry?.management).toBeUndefined();
   });
 
   it('contains an open-ended client-visible event selection without a feature flag', () => {
@@ -338,16 +336,10 @@ const ENVIRONMENT_VARIABLE_NAMES: readonly string[] = [
   ),
 ];
 
-const MANAGED_1_1_0_KEYS = [
-  'announcement.description',
-  'announcement.items',
-  'announcement.title',
-  'features.usageLimitsControl',
-  'fileManager.availableTabs',
-  'usageLimits.spendingLimitsMode',
-  'usageLimits.warningThresholdPercent',
-  'welcomeScreen.description',
-];
+/* Schema 1.0.0 manages only the onboarding tour; the announcement,
+ * welcome-text, File Manager, usage-limit and spending-limit keys and
+ * features.usageLimitsControl return in 1.1.0. */
+const MANAGED_1_0_0_KEYS = ['onboarding.hints'];
 
 /* Every string either has an upper length bound or an enum, and every array
  * an upper item bound, at every nesting level. */
@@ -386,15 +378,15 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it('declares exactly the 51 known keys: 8 managed, 31 local-only and 12 eligible', () => {
-    expect(CONFIG_DEFINITIONS).toHaveLength(51);
-    expect(managed).toHaveLength(8);
+  it('declares exactly the 53 known keys: 1 managed, 33 local-only and 19 eligible', () => {
+    expect(CONFIG_DEFINITIONS).toHaveLength(53);
+    expect(managed).toHaveLength(1);
     expect(
       CONFIG_DEFINITIONS.filter((d) => localOnlyReasonOf(d) !== undefined),
-    ).toHaveLength(31);
+    ).toHaveLength(33);
     expect(
       CONFIG_DEFINITIONS.filter((d) => d.management === undefined),
-    ).toHaveLength(12);
+    ).toHaveLength(19);
   });
 
   it('manages a config key as config and a feature as feature', () => {
@@ -436,8 +428,8 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     }
   });
 
-  it('manages exactly the eight 1.1.0 keys', () => {
-    expect(managed.map((d) => d.key).sort()).toEqual(MANAGED_1_1_0_KEYS);
+  it('manages exactly the 1.0.0 key', () => {
+    expect(managed.map((d) => d.key).sort()).toEqual(MANAGED_1_0_0_KEYS);
   });
 
   it('gives every managed key in a section a distinct display order', () => {
@@ -453,6 +445,8 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     ['asr.modelId', LocalOnlyReason.Capability],
     ['features.asrEnabled', LocalOnlyReason.Capability],
     ['utility.modelId', LocalOnlyReason.Capability],
+    ['analytics.url', LocalOnlyReason.DeploymentTopology],
+    ['analytics.timeoutMs', LocalOnlyReason.Capability],
     ['features.llmConversationNaming', LocalOnlyReason.Capability],
     ['features.responsesApiEnabled', LocalOnlyReason.Capability],
     ['features.responsesBackgroundEnabled', LocalOnlyReason.Capability],

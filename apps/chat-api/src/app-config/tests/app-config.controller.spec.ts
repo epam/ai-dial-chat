@@ -40,7 +40,7 @@ import {
 } from './managed-runtime/managed-runtime.fixtures';
 
 const ASR_RESPONSE = {
-  appId: 'chat-ui',
+  appId: 'ai-dial-chat',
   features: { asrEnabled: true },
   config: {
     asrModelId: 'whisper-1',
@@ -51,7 +51,7 @@ const ASR_RESPONSE = {
 };
 
 const DEFAULT_RESPONSE = {
-  appId: 'chat-ui',
+  appId: 'ai-dial-chat',
   features: { asrEnabled: false },
   config: {
     asrModelId: null,
@@ -62,7 +62,7 @@ const DEFAULT_RESPONSE = {
 };
 
 const EXTERNAL_URL_RESPONSE = {
-  appId: 'chat-ui',
+  appId: 'ai-dial-chat',
   features: { asrEnabled: false },
   config: {
     asrModelId: null,
@@ -174,7 +174,7 @@ describe('AppConfigController (integration)', () => {
           config: { ...DEFAULT_RESPONSE.config, activeEventId },
         });
         const result = await request(app.getHttpServer())
-          .get('/v1/client-config?appId=chat-ui')
+          .get('/v1/client-config?appId=ai-dial-chat')
           .expect(200);
         expect(result.body.config.activeEventId).toBe(activeEventId);
       },
@@ -184,10 +184,10 @@ describe('AppConfigController (integration)', () => {
       mockService.getClientConfig.mockResolvedValue(ASR_RESPONSE);
 
       const result = await request(app.getHttpServer())
-        .get('/v1/client-config?appId=chat-ui')
+        .get('/v1/client-config?appId=ai-dial-chat')
         .expect(200);
 
-      expect(result.body.appId).toBe('chat-ui');
+      expect(result.body.appId).toBe('ai-dial-chat');
       expect(result.body.features.asrEnabled).toBe(true);
       expect(result.body.config.asrModelId).toBe('whisper-1');
     });
@@ -196,7 +196,7 @@ describe('AppConfigController (integration)', () => {
       mockService.getClientConfig.mockResolvedValue(DEFAULT_RESPONSE);
 
       const result = await request(app.getHttpServer())
-        .get('/v1/client-config?appId=chat-ui')
+        .get('/v1/client-config?appId=ai-dial-chat')
         .expect(200);
 
       expect(result.body.features.asrEnabled).toBe(false);
@@ -210,11 +210,27 @@ describe('AppConfigController (integration)', () => {
       mockService.getClientConfig.mockResolvedValue(DEFAULT_RESPONSE);
 
       const result = await request(app.getHttpServer())
-        .get('/v1/client-config?appId=chat-ui')
+        .get('/v1/client-config?appId=ai-dial-chat')
         .expect(200);
 
       expect(result.headers['cache-control']).toBe('private, no-store');
     });
+
+    it.each(['chat-ui', 'ai-dial-chat'])(
+      'evaluates appId=%s as ai-dial-chat',
+      async (appId) => {
+        mockService.getClientConfig.mockResolvedValue(DEFAULT_RESPONSE);
+
+        const result = await request(app.getHttpServer())
+          .get(`/v1/client-config?appId=${appId}`)
+          .expect(200);
+
+        expect(result.body.appId).toBe('ai-dial-chat');
+        expect(mockService.getClientConfig).toHaveBeenCalledWith(
+          expect.objectContaining({ appId: 'ai-dial-chat' }),
+        );
+      },
+    );
 
     it('returns 400 when appId is missing', async () => {
       await request(app.getHttpServer()).get('/v1/client-config').expect(400);
@@ -234,7 +250,7 @@ describe('AppConfigController (integration)', () => {
 
     it('returns 400 when appId is repeated', async () => {
       await request(app.getHttpServer())
-        .get('/v1/client-config?appId=chat-ui&appId=chat-ui')
+        .get('/v1/client-config?appId=ai-dial-chat&appId=ai-dial-chat')
         .expect(400);
       expect(mockService.getClientConfig).not.toHaveBeenCalled();
     });
@@ -243,7 +259,7 @@ describe('AppConfigController (integration)', () => {
       mockService.getClientConfig.mockResolvedValue(ASR_RESPONSE);
 
       const result = await request(app.getHttpServer())
-        .get('/v1/client-config?appId=chat-ui')
+        .get('/v1/client-config?appId=ai-dial-chat')
         .expect(200);
 
       const body = result.body as Record<string, unknown>;
@@ -256,11 +272,11 @@ describe('AppConfigController (integration)', () => {
       mockService.getClientConfig.mockResolvedValue(DEFAULT_RESPONSE);
 
       await request(app.getHttpServer())
-        .get('/v1/client-config?appId=chat-ui')
+        .get('/v1/client-config?appId=ai-dial-chat')
         .expect(200);
 
       expect(mockService.getClientConfig).toHaveBeenCalledWith({
-        appId: 'chat-ui',
+        appId: 'ai-dial-chat',
         userId: undefined,
         roles: undefined,
       });
@@ -270,7 +286,7 @@ describe('AppConfigController (integration)', () => {
       mockService.getClientConfig.mockResolvedValue(DEFAULT_RESPONSE);
 
       await request(app.getHttpServer())
-        .get('/v1/client-config?appId=chat-ui')
+        .get('/v1/client-config?appId=ai-dial-chat')
         .set(
           SESSION_USER_HEADER,
           sessionHeader({ claims: { dial_roles: ['R'], roles: ['ignored'] } }),
@@ -278,7 +294,7 @@ describe('AppConfigController (integration)', () => {
         .expect(200);
 
       expect(mockService.getClientConfig).toHaveBeenCalledWith({
-        appId: 'chat-ui',
+        appId: 'ai-dial-chat',
         userId: 'user-1',
         roles: ['R'],
       });
@@ -288,7 +304,7 @@ describe('AppConfigController (integration)', () => {
       mockService.getClientConfig.mockResolvedValue(DEFAULT_RESPONSE);
 
       await request(app.getHttpServer())
-        .get('/v1/client-config?appId=chat-ui')
+        .get('/v1/client-config?appId=ai-dial-chat')
         .set(
           SESSION_USER_HEADER,
           sessionHeader({
@@ -299,7 +315,7 @@ describe('AppConfigController (integration)', () => {
         .expect(200);
 
       expect(mockService.getClientConfig).toHaveBeenCalledWith({
-        appId: 'chat-ui',
+        appId: 'ai-dial-chat',
         userId: 'user-1',
         roles: ['R', '7'],
       });
@@ -309,7 +325,7 @@ describe('AppConfigController (integration)', () => {
       mockService.getClientConfig.mockResolvedValue(DEFAULT_RESPONSE);
 
       await request(app.getHttpServer())
-        .get('/v1/client-config?appId=chat-ui')
+        .get('/v1/client-config?appId=ai-dial-chat')
         .set(
           SESSION_USER_HEADER,
           sessionHeader({ providerId: 'gone', claims: { roles: ['R'] } }),
@@ -317,7 +333,7 @@ describe('AppConfigController (integration)', () => {
         .expect(200);
 
       expect(mockService.getClientConfig).toHaveBeenCalledWith({
-        appId: 'chat-ui',
+        appId: 'ai-dial-chat',
         userId: 'user-1',
         roles: [],
       });
@@ -327,7 +343,7 @@ describe('AppConfigController (integration)', () => {
       mockService.getClientConfig.mockResolvedValue(EXTERNAL_URL_RESPONSE);
 
       const result = await request(app.getHttpServer())
-        .get('/v1/client-config?appId=chat-ui')
+        .get('/v1/client-config?appId=ai-dial-chat')
         .expect(200);
 
       expect(result.body.config.dialCoreExternalUrl).toBe(
@@ -339,7 +355,7 @@ describe('AppConfigController (integration)', () => {
       mockService.getClientConfig.mockResolvedValue(DEFAULT_RESPONSE);
 
       const result = await request(app.getHttpServer())
-        .get('/v1/client-config?appId=chat-ui')
+        .get('/v1/client-config?appId=ai-dial-chat')
         .expect(200);
 
       expect(result.body.config.dialCoreExternalUrl).toBeNull();
@@ -349,7 +365,7 @@ describe('AppConfigController (integration)', () => {
       mockService.getClientConfig.mockResolvedValue(EXTERNAL_URL_RESPONSE);
 
       const result = await request(app.getHttpServer())
-        .get('/v1/client-config?appId=chat-ui')
+        .get('/v1/client-config?appId=ai-dial-chat')
         .expect(200);
 
       expect(JSON.stringify(result.body)).not.toContain('DIAL_CORE_URL');
@@ -414,7 +430,7 @@ describe('AppConfigController catalogCreationPermissions (integration)', () => {
 
   const getConfig = (server: INestApplication, roles?: string[]) => {
     const pending = request(server.getHttpServer()).get(
-      '/v1/client-config?appId=chat-ui',
+      '/v1/client-config?appId=ai-dial-chat',
     );
     return roles === undefined
       ? pending
@@ -615,7 +631,7 @@ describe('AppConfigController served application identifiers (integration)', () 
   it.each(['Chat_UI', '-x', `a${'b'.repeat(63)}`, 'chat ui'])(
     'rejects the malformed identifier %j with a validation message',
     async (appId) => {
-      const server = await buildServingApp(['chat-ui', 'launchpad']);
+      const server = await buildServingApp(['ai-dial-chat', 'launchpad']);
 
       const result = await getConfig(server, appId).expect(400);
 
@@ -628,49 +644,49 @@ describe('AppConfigController served application identifiers (integration)', () 
     const server = await buildServingApp();
 
     await request(server.getHttpServer())
-      .get('/v1/client-config?appId=chat-ui&appId=chat-ui')
+      .get('/v1/client-config?appId=ai-dial-chat&appId=ai-dial-chat')
       .expect(400);
   });
 
-  it('serves only chat-ui with the default list', async () => {
+  it('serves only ai-dial-chat with the default list', async () => {
     const server = await buildServingApp();
 
-    await getConfig(server, 'chat-ui').expect(200);
+    await getConfig(server, 'ai-dial-chat').expect(200);
     const result = await getConfig(server, 'launchpad').expect(400);
 
     expect(result.body.message).toBe('Unknown appId');
   });
 
   it('serves every listed identifier with the same values and its own appId', async () => {
-    const server = await buildServingApp(['launchpad', 'chat-ui']);
+    const server = await buildServingApp(['launchpad', 'ai-dial-chat']);
 
     const launchpad = await getConfig(server, 'launchpad').expect(200);
-    const chat = await getConfig(server, 'chat-ui').expect(200);
+    const chat = await getConfig(server, 'ai-dial-chat').expect(200);
     await getConfig(server, 'models-garden').expect(400);
 
     expect(launchpad.body.appId).toBe('launchpad');
-    expect(chat.body.appId).toBe('chat-ui');
+    expect(chat.body.appId).toBe('ai-dial-chat');
     expect(launchpad.body.config.asrModelId).toBe('whisper-1');
     expect(launchpad.body.features).toEqual(chat.body.features);
     expect(launchpad.body.config).toEqual(chat.body.config);
   });
 
   it('keeps a separate cache entry per identifier', async () => {
-    const server = await buildServingApp(['launchpad', 'chat-ui']);
+    const server = await buildServingApp(['launchpad', 'ai-dial-chat']);
 
     await getConfig(server, 'launchpad').expect(200);
-    await getConfig(server, 'chat-ui').expect(200);
+    await getConfig(server, 'ai-dial-chat').expect(200);
     const cachedLaunchpad = await getConfig(server, 'launchpad').expect(200);
 
     expect([...cacheStore.keys()]).toEqual([
       'app-config:client:launchpad:user:user-1:roles:R',
-      'app-config:client:chat-ui:user:user-1:roles:R',
+      'app-config:client:ai-dial-chat:user:user-1:roles:R',
     ]);
     expect(cachedLaunchpad.body.appId).toBe('launchpad');
   });
 
   it('keeps the no-store header for another served identifier', async () => {
-    const server = await buildServingApp(['launchpad', 'chat-ui']);
+    const server = await buildServingApp(['launchpad', 'ai-dial-chat']);
 
     const result = await getConfig(server, 'launchpad').expect(200);
 
@@ -689,13 +705,46 @@ describe('AppConfigController managed configuration (integration)', () => {
     AUTH_CALLBACK_BASE_URL: 'http://localhost:5000',
   };
   const MANAGED = {
-    MANAGED_CONFIG_INSTANCES: 'chat-ui=chat-dev,launchpad=launchpad-dev',
-    CLIENT_CONFIG_APP_IDS: 'chat-ui,launchpad',
+    MANAGED_CONFIG_INSTANCES: 'ai-dial-chat=chat-dev,launchpad=launchpad-dev',
+    CLIENT_CONFIG_APP_IDS: 'ai-dial-chat,launchpad',
     MANAGED_CONFIG_API_KEY: 'reader-key',
     MANAGED_CONFIG_MAX_STALENESS_SECONDS: '900',
   };
+  /* Published order is the tour order: it is neither sorted nor grouped by
+   * target. The repeated id is valid under the schema; Chat keeps the first. */
+  const TOUR = [
+    {
+      id: 'tour.composer',
+      target: 'conversation-input',
+      title: '  Ask anything  ',
+      description: 'Type a question or attach files.',
+    },
+    { id: 'tour.new-chat', target: 'new-chat', title: 'Start a new chat' },
+    { id: 'tour.composer', target: 'catalog', title: 'Repeated id' },
+    { id: 'tour.catalog', target: 'catalog', title: 'Browse the catalog' },
+  ];
+  const NORMALIZED_TOUR = [
+    {
+      id: 'tour.composer',
+      target: 'conversation-input',
+      title: 'Ask anything',
+      description: 'Type a question or attach files.',
+    },
+    {
+      id: 'tour.new-chat',
+      target: 'new-chat',
+      title: 'Start a new chat',
+      description: null,
+    },
+    {
+      id: 'tour.catalog',
+      target: 'catalog',
+      title: 'Browse the catalog',
+      description: null,
+    },
+  ];
   const CHAT_PAYLOAD = {
-    config: { 'welcomeScreen.description': 'Hello from Studio' },
+    config: { 'onboarding.hints': TOUR },
     features: {},
   };
   const LAUNCHPAD_BODY = snapshotBody({
@@ -779,7 +828,7 @@ describe('AppConfigController managed configuration (integration)', () => {
   it('answers shadow mode exactly like off mode', async () => {
     const off = await buildManagedApp({});
     const offResponse = await request(off.server)
-      .get('/v1/client-config?appId=chat-ui')
+      .get('/v1/client-config?appId=ai-dial-chat')
       .expect(200);
     const offCache = cacheSets;
     runtime?.onModuleDestroy();
@@ -790,14 +839,14 @@ describe('AppConfigController managed configuration (integration)', () => {
       respondChat,
     );
     const shadowResponse = await request(shadow.server)
-      .get('/v1/client-config?appId=chat-ui')
+      .get('/v1/client-config?appId=ai-dial-chat')
       .expect(200);
 
-    expect(runtime?.captureView('chat-ui').state).toBe('fresh');
+    expect(runtime?.captureView('ai-dial-chat').state).toBe('fresh');
     expect(withoutTime(shadowResponse.body)).toEqual(
       withoutTime(offResponse.body),
     );
-    expect(shadowResponse.body.config.welcomeScreenDescription).toBeNull();
+    expect(shadowResponse.body.config.onboardingHints).toEqual([]);
     expect(shadowResponse.body).not.toHaveProperty('appConfig');
     expect(shadowResponse.body.metadata).not.toHaveProperty('managed');
     expect(shadowResponse.body.metadata).not.toHaveProperty('nextRefreshAt');
@@ -809,19 +858,17 @@ describe('AppConfigController managed configuration (integration)', () => {
       {
         ...MANAGED,
         MANAGED_CONFIG_MODE: 'active',
-        MANAGED_CONFIG_ACTIVE_KEYS: 'welcomeScreen.description',
+        MANAGED_CONFIG_ACTIVE_KEYS: 'onboarding.hints',
       },
       respondChat,
     );
 
     const response = await request(server)
-      .get('/v1/client-config?appId=chat-ui')
+      .get('/v1/client-config?appId=ai-dial-chat')
       .expect(200);
 
     expect(response.headers['cache-control']).toBe('private, no-store');
-    expect(response.body.config.welcomeScreenDescription).toBe(
-      'Hello from Studio',
-    );
+    expect(response.body.config.onboardingHints).toEqual(NORMALIZED_TOUR);
     expect(response.body).not.toHaveProperty('appConfig');
     expect(response.body.metadata).toEqual({
       resolvedAt: '2026-11-20T10:00:00.000Z',
@@ -837,26 +884,59 @@ describe('AppConfigController managed configuration (integration)', () => {
     });
     expect(cacheSets).toEqual([
       {
-        key: 'app-config:client:chat-ui:user:anonymous:roles:none:managed:chat-dev:20261120T095500000Z-0123456789abcdef:fresh',
+        key: 'app-config:client:ai-dial-chat:user:anonymous:roles:none:managed:chat-dev:20261120T095500000Z-0123456789abcdef:fresh',
         ttl: 60_000,
       },
     ]);
   });
 
+  it('delivers the published tour in order, normalized like the environment value', async () => {
+    const fromEnvironment = await buildManagedApp({
+      ONBOARDING_HINTS: JSON.stringify(TOUR),
+    });
+    const environmentResponse = await request(fromEnvironment.server)
+      .get('/v1/client-config?appId=ai-dial-chat')
+      .expect(200);
+    runtime?.onModuleDestroy();
+    await app?.close();
+
+    const managed = await buildManagedApp(
+      {
+        ...MANAGED,
+        MANAGED_CONFIG_MODE: 'active',
+        MANAGED_CONFIG_ACTIVE_KEYS: 'onboarding.hints',
+      },
+      respondChat,
+    );
+    const managedResponse = await request(managed.server)
+      .get('/v1/client-config?appId=ai-dial-chat')
+      .expect(200);
+
+    expect(environmentResponse.body.config.onboardingHints).toEqual(
+      NORMALIZED_TOUR,
+    );
+    expect(managedResponse.body.config.onboardingHints).toEqual(
+      environmentResponse.body.config.onboardingHints,
+    );
+  });
+
   it('keeps an explicit environment value over the managed one', async () => {
+    const local = [{ id: 'local', target: 'navigation', title: 'Local' }];
     const { server } = await buildManagedApp(
       {
         ...MANAGED,
         MANAGED_CONFIG_MODE: 'active',
-        MANAGED_CONFIG_ACTIVE_KEYS: 'welcomeScreen.description',
-        WELCOME_SCREEN_DESCRIPTION: 'Local',
+        MANAGED_CONFIG_ACTIVE_KEYS: 'onboarding.hints',
+        ONBOARDING_HINTS: JSON.stringify(local),
       },
       respondChat,
     );
     const response = await request(server)
-      .get('/v1/client-config?appId=chat-ui')
+      .get('/v1/client-config?appId=ai-dial-chat')
       .expect(200);
-    expect(response.body.config.welcomeScreenDescription).toBe('Local');
+    expect(response.body.config.onboardingHints).toEqual([
+      { ...local[0], description: null },
+    ]);
   });
 
   it('delivers a foreign payload unchanged, only to its own identifier', async () => {
@@ -869,7 +949,7 @@ describe('AppConfigController managed configuration (integration)', () => {
       .get('/v1/client-config?appId=launchpad')
       .expect(200);
     const chat = await request(server)
-      .get('/v1/client-config?appId=chat-ui')
+      .get('/v1/client-config?appId=ai-dial-chat')
       .expect(200);
 
     expect(launchpad.body.appConfig).toEqual({
@@ -890,25 +970,20 @@ describe('AppConfigController managed configuration (integration)', () => {
       {
         ...MANAGED,
         MANAGED_CONFIG_MODE: 'active',
-        MANAGED_CONFIG_ACTIVE_KEYS:
-          'welcomeScreen.description,features.usageLimitsControl',
+        MANAGED_CONFIG_ACTIVE_KEYS: 'onboarding.hints',
       },
       (fake) => {
-        fake.respondAlways(
-          'chat-dev',
-          candidate({
-            payload: {
-              config: { 'welcomeScreen.description': 'Chat value' },
-              features: { 'features.usageLimitsControl': { enabled: true } },
-            },
-          }),
-        );
+        fake.respondAlways('chat-dev', candidate({ payload: CHAT_PAYLOAD }));
         fake.respondAlways('launchpad-dev', {
           kind: RuntimeReadKind.Candidate,
           body: {
             ...LAUNCHPAD_BODY,
             payload: {
-              config: { 'welcomeScreen.description': 'Launchpad value' },
+              config: {
+                'onboarding.hints': [
+                  { id: 'lp', target: 'navigation', title: 'Launchpad value' },
+                ],
+              },
               features: {},
             },
           },
@@ -920,15 +995,15 @@ describe('AppConfigController managed configuration (integration)', () => {
       .get('/v1/client-config?appId=launchpad')
       .expect(200);
     const chat = await request(server)
-      .get('/v1/client-config?appId=chat-ui')
+      .get('/v1/client-config?appId=ai-dial-chat')
       .expect(200);
 
-    expect(chat.body.config.welcomeScreenDescription).toBe('Chat value');
-    expect(chat.body.features.usageLimitsControl).toBe(true);
-    expect(launchpad.body.config.welcomeScreenDescription).toBeNull();
-    expect(launchpad.body.features.usageLimitsControl).toBe(false);
+    expect(chat.body.config.onboardingHints).toEqual(NORMALIZED_TOUR);
+    expect(launchpad.body.config.onboardingHints).toEqual([]);
     expect(launchpad.body.appConfig.payload.config).toEqual({
-      'welcomeScreen.description': 'Launchpad value',
+      'onboarding.hints': [
+        { id: 'lp', target: 'navigation', title: 'Launchpad value' },
+      ],
     });
   });
 
@@ -958,7 +1033,7 @@ describe('AppConfigController managed configuration (integration)', () => {
       respondChat,
     );
     await request(server)
-      .get('/v1/client-config?appId=chat-ui&instance=chat-prod')
+      .get('/v1/client-config?appId=ai-dial-chat&instance=chat-prod')
       .expect(400);
     expect(fake.calls).not.toContain('chat-prod');
   });
@@ -970,7 +1045,9 @@ describe('AppConfigController managed configuration (integration)', () => {
     );
     const before = fake.calls.length;
     for (let index = 0; index < 5; index += 1) {
-      await request(server).get('/v1/client-config?appId=chat-ui').expect(200);
+      await request(server)
+        .get('/v1/client-config?appId=ai-dial-chat')
+        .expect(200);
     }
     expect(fake.calls.length).toBe(before);
   });

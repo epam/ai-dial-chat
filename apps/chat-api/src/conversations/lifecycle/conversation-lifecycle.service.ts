@@ -302,6 +302,10 @@ export class ConversationLifecycleService {
    * conversation (Issue #9183). The check reads the model the conversation
    * uses now: the path keeps the model it was created with, so a chat switched
    * to a hidden model afterwards would slip past a path-based check.
+   *
+   * A model the caller has no access to (DIAL Core answers 403) is not hidden:
+   * the copy is still the caller's to keep, and they pick another model to
+   * continue it (Issues #9895, #9893).
    */
   private async assertDuplicateModelVisible(
     conversation: ConversationResponseDto,
@@ -310,11 +314,22 @@ export class ConversationLifecycleService {
   ): Promise<void> {
     const modelId = conversation.assistantModelId || conversation.model?.id;
     if (!modelId) return;
-    const deployment = await this.deploymentsService.resolveDeploymentItem(
-      modelId,
-      token,
-      bucket,
-    );
+    let deployment: Awaited<
+      ReturnType<DeploymentsService['resolveDeploymentItem']>
+    >;
+    try {
+      deployment = await this.deploymentsService.resolveDeploymentItem(
+        modelId,
+        token,
+        bucket,
+      );
+    } catch (error) {
+      if (!(error instanceof ForbiddenException)) throw error;
+      this.logger.warn(
+        `Duplicating a conversation whose model "${modelId}" the caller cannot access`,
+      );
+      return;
+    }
     if (!deployment?.isHidden) return;
     this.logger.warn(
       `Refusing to duplicate a conversation whose model "${modelId}" is hidden`,

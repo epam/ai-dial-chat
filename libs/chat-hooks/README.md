@@ -232,7 +232,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-ui-kit` ^0.16.0
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.2
-- `@epam/pdf-highlighter-kit` ^0.0.22
+- `@epam/pdf-highlighter-kit` ^0.0.23
 
 `@epam/ai-dial-chat-api-client` is **not** a peer. Every entry that calls DIAL Core
 imports a runtime enum from it (`SendCompletionDtoModeEnum`,
@@ -5714,7 +5714,7 @@ const { handleLogin, handleLogout } = useCatalogToolsetCredentials({
 
 ### isValidSkillRelativePath / normalizeSkillName / buildSkillManifest / buildSkillManifestFromFrontmatter / parseSkillManifest / unpackSkillArchive
 
-Client-side skill-authoring helpers: validates a relative file path against the backend's naming rules (inline feedback only — the server stays authoritative), normalizes a skill name to the DIAL naming convention, builds/parses a `SKILL.md`'s YAML frontmatter plus instructions body, and unpacks a whole-skill ZIP archive into its manifest text, its `files` map, and the `folders` its empty-folder markers stand for.
+Client-side skill-authoring helpers: validates a relative file path against the backend's naming rules (inline feedback only — the server stays authoritative), normalizes a skill name to the DIAL naming convention, builds/parses a `SKILL.md`'s YAML frontmatter plus instructions body, and unpacks a whole-skill ZIP archive into its manifest text, its `files` map, and the `folders` its empty-folder markers stand for. `unpackSkillArchive` is async: it loads the ZIP engine (`fflate`) on first use, so the engine stays out of a host's entry chunk.
 
 ```ts
 import {
@@ -6484,6 +6484,22 @@ if (isTotalDeletionFailure(await deleteAllConversations())) throw new Error();
 
 const pinned = resolveConversationPinChange(targetGroupKey, item.isPinned);
 if (pinned != null) void pinConversation(id, pinned);
+```
+
+### toConversationListId / isConversationInBucket / toOwnConversationListItem
+
+Conversation-list rows built without re-reading the list. `toConversationListId(conversationId)` turns a decoded `<bucket>/<path>` conversation id into the list endpoint's id, `conversations/<bucket>/<encoded path>`, percent-encoding each segment. `isConversationInBucket(conversationId, bucket)` is `true` when the id lives in `bucket` (a bucket-name prefix does not count; a missing bucket is `false`). `toOwnConversationListItem(conversationId, conversation, title)` returns a `ConversationListItemDto` for a conversation in the user's own bucket — not shared, published, pinned, read-only or scheduled — stamped with the conversation's `updatedAt`, or the current time when it has none. Available from the root and `./conversation`.
+
+```ts
+import {
+  isConversationInBucket,
+  toOwnConversationListItem,
+} from '@epam/ai-dial-chat-hooks/conversation';
+
+if (isConversationInBucket(conversationId, user.bucket)) {
+  const row = toOwnConversationListItem(conversationId, conversation, title);
+  setConversations((rows) => [row, ...rows]);
+}
 ```
 
 ### useAsyncConfirmDialog

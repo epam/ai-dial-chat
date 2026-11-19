@@ -342,6 +342,8 @@ Each rendered marker SHALL be independently activatable by mouse and by keyboard
 2. otherwise `parsePdfPageReference(group.sourceUrl)?.page` when non-null (a reference attachment's `#page=N` fragment);
 3. otherwise `undefined`.
 
+The function SHALL return `undefined` when the resolved page is `1`. Page 1 is where a link to a whole document lands — StatGPT, for example, links every listed publication to its first page — so naming it adds noise to the pill (Issue [#9845](https://github.com/epam/ai-dial-chat/issues/9845)). Opening the citation does not read this value, so the marker still opens page 1 and highlights a non-empty box there.
+
 The function SHALL return `undefined` regardless of the resolved page when `group.sourceName` already mentions a page — because some sources write the page into the attachment title the pill displays. A page mention is a case-insensitive match of a page token followed by optional `.`/`:`/whitespace and a digit, where the page token is one of `page`, `pages`, `pg`, `pp`, `p` (each as a whole word), or the `#page=` fragment. A bare number in the name (e.g. `Group1-2.pdf`), or a `p`+digits run inside a word (e.g. `p2p.pdf`, `map3.pdf`), SHALL NOT count as a page mention.
 
 The function is pure, does no formatting, and returns no user-visible text.
@@ -359,8 +361,13 @@ The function is pure, does no formatting, and returns no user-visible text.
 
 #### Scenario: Page-only pdf_region selector still yields a page
 
-- **WHEN** the primary annotation's selector is `{ type: 'pdf_region', page: 1 }` with no box and `sourceName` is `"clm.pdf"`
-- **THEN** `getCitationGroupPage` returns `1`
+- **WHEN** the primary annotation's selector is `{ type: 'pdf_region', page: 2 }` with no box and `sourceName` is `"clm.pdf"`
+- **THEN** `getCitationGroupPage` returns `2`
+
+#### Scenario: Page 1 is not named
+
+- **WHEN** the primary annotation's selector page is `1` (a `pdf_bbox` or a page-only `pdf_region`), or it has no PDF selector and `sourceUrl` is `"files/abc/clm.pdf#page=1"`
+- **THEN** `getCitationGroupPage` returns `undefined`
 
 #### Scenario: Page taken from a reference URL fragment
 
@@ -374,7 +381,7 @@ The function is pure, does no formatting, and returns no user-visible text.
 
 #### Scenario: Title already names the page
 
-- **WHEN** the primary annotation's selector page is `1` and `sourceName` is `"clm.pdf, page 1"`
+- **WHEN** the primary annotation's selector page is `3` and `sourceName` is `"clm.pdf, page 3"`
 - **THEN** `getCitationGroupPage` returns `undefined`
 
 #### Scenario: Abbreviated page mention in the title suppresses the page
@@ -410,8 +417,13 @@ Clicking the marker keeps its current behaviour (open the canvas at the cited pa
 
 #### Scenario: Pill shows file name and page
 
-- **WHEN** an assistant message cites `<cit data-id="00000"></cit>` resolved to an annotation with `attachment.title = "clm.pdf"` and selector page `1`
-- **THEN** the pill reads `"clm.pdf, p. 1"` and its accessible name is `"Citation from clm.pdf, page 1"`
+- **WHEN** an assistant message cites `<cit data-id="00000"></cit>` resolved to an annotation with `attachment.title = "clm.pdf"` and selector page `5`
+- **THEN** the pill reads `"clm.pdf, p. 5"` and its accessible name is `"Citation from clm.pdf, page 5"`
+
+#### Scenario: Pill for page 1 shows the file name only
+
+- **WHEN** the same citation's selector page is `1`
+- **THEN** the pill reads `"clm.pdf"`, its accessible name is `"Citation from clm.pdf"`, and activating it still opens the canvas at page 1
 
 #### Scenario: Pill with overflow shows page and count
 

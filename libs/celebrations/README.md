@@ -239,7 +239,7 @@ export const loadAnniversary = async () => {
 };
 ```
 
-`LottieScene` plays one `CelebrationSceneDescriptor` inside the provider's scene layer. It picks the variant matching the most of layout (`isMobile`), direction and color scheme, places a `viewport-stage-v1` stage by `fit` and `align` (`start`/`end` follow the supplied direction, never the document language), flips a `mirror` scene in RTL, and clones the data before the player gets it. Under reduced motion, for an unsupported scene, or on a failure before playback, it shows the poster `<img alt="">` for `posterDurationMs` without loading the player or the data; after a failure past the first frame it renders nothing. A generated SVG with more than 800 elements counts as a failure before playback.
+`LottieScene` plays one `CelebrationSceneDescriptor` inside the provider's scene layer. It picks the variant matching the most of layout (`isMobile`), direction and color scheme, places a `viewport-stage-v1` stage by `fit` and `align` (`start`/`end` follow the supplied direction, never the document language) or a `composer-anchor-v1` stage on the measured composer (see below), flips a `mirror` scene in RTL, and clones the data before the player gets it. Under reduced motion, for an unsupported scene, or on a failure before playback, it shows the poster `<img alt="">` for `posterDurationMs` without loading the player or the data; after a failure past the first frame it renders nothing. A generated SVG with more than 800 elements counts as a failure before playback.
 
 ```tsx
 import { LottieScene } from '@epam/ai-dial-celebrations/packs';
@@ -261,6 +261,33 @@ export const SnowmanScene = () => (
 );
 ```
 
+#### Composer anchoring
+
+A scene with `composer-anchor-v1` placement is authored around a reference composer, `anchorRect`, in its own stage coordinates. After the player and data load, `LottieScene` measures the composer once through `anchors.composer` (at most four candidates and 24 ancestors each; the composer must be at least `anchorRect.width × scale.min` wide, 36–260 px tall, 12 px from the side edges, 20 px above the bottom, with stage headroom above it, and without a hidden, inert, aria-hidden or clipping ancestor). It then scales the stage uniformly by `clamp(composerWidth / anchorRect.width, scale.min, scale.max)` and aligns the center and `edge` of `anchorRect` with the composer. Content beyond the authored stage stays visible inside the viewport. A `mirror` scene flips around the anchor's center line in RTL.
+
+A variant may carry its own `placement` with the same template, so a mobile variant can be authored around a narrower reference composer than the desktop one. `LottieScene` uses the chosen variant's placement, or the scene's when it has none; a variant that changes the template makes the scene unsupported.
+
+With no eligible composer, `fallback: 'stage-anchor'` plays around a synthetic anchor (`anchorRect × scale.min`, centered at 57 % of the viewport height), and `fallback: 'poster'` shows the poster. A browser without `ResizeObserver` or `MutationObserver` shows the poster. Pointer, keyboard, focus, input, scrolling, viewport changes, a hidden tab, or a moved or changed composer cancel the scene; nothing is re-measured per frame. A scene that also requires `interaction-composer-outline-v1` has its `composer-outline` layer (one static path) redrawn around the measured composer, and its optional `composer-parcel` layer (one static rectangle) removed for a real composer or sized to the synthetic anchor. A missing or malformed slot is a failure before playback. Anchoring and fitting work on a private copy, so the object `loadAnimationData` returns is never changed.
+
+```ts
+import {
+  CelebrationAnchor,
+  CelebrationAnchorEdge,
+  CelebrationAnchorFallback,
+  CelebrationPlacementTemplate,
+  type CelebrationComposerAnchorPlacement,
+} from '@epam/ai-dial-celebrations';
+
+export const giftWrappingPlacement: CelebrationComposerAnchorPlacement = {
+  template: CelebrationPlacementTemplate.ComposerAnchorV1,
+  anchor: CelebrationAnchor.Composer,
+  anchorRect: { x: 340, y: 164, width: 520, height: 56 },
+  edge: CelebrationAnchorEdge.Top,
+  scale: { min: 0.6, max: 1 },
+  fallback: CelebrationAnchorFallback.StageAnchor,
+};
+```
+
 `StaticTriggerDecoration` is a native `<button type="button">` named by `label` (default `Play celebration` when empty), with an `aria-hidden` image from `imageUrl`. It calls `onActivate` on click, Enter and Space, draws its focus ring in `currentColor` and declares no colors of its own.
 
 ```tsx
@@ -277,7 +304,7 @@ export const Trigger = ({ onActivate }: { onActivate: () => void }) => (
 
 ## Capabilities
 
-`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `static-poster-v1` and `static-trigger-v1`. `composer-anchor-v1` is not implemented yet. A host keeps only scenes whose `requiredCapabilities` are all in the set:
+`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `composer-anchor-v1`, `interaction-composer-outline-v1`, `static-poster-v1` and `static-trigger-v1`. Any other `interaction-*` id is unsupported. A host keeps only scenes whose `requiredCapabilities` are all in the set:
 
 ```ts
 import {
@@ -347,11 +374,14 @@ and sleigh scenes are no longer included.
 
 From the main entry:
 
-- `CelebrationCapability`: `LottieLightSvgV1`, `ViewportStageV1`, `ComposerAnchorV1`, `StaticPosterV1`, `StaticTriggerV1`.
+- `CelebrationCapability`: `LottieLightSvgV1`, `ViewportStageV1`, `ComposerAnchorV1`, `InteractionComposerOutlineV1`, `StaticPosterV1`, `StaticTriggerV1`.
 - `CelebrationDirectionMode`: `None`, `Mirror`, `Variant`.
 - `CelebrationLayout`: `Mobile`, `Desktop`.
 - `CelebrationColorScheme`: `Light`, `Dark`.
-- `CelebrationPlacementTemplate`: `ViewportStageV1`, `ComposerAnchorV1` (only the first is rendered in this release).
+- `CelebrationPlacementTemplate`: `ViewportStageV1`, `ComposerAnchorV1`.
+- `CelebrationAnchor`: `Composer`.
+- `CelebrationAnchorEdge`: `Top`, `Bottom`.
+- `CelebrationAnchorFallback`: `StageAnchor`, `Poster`.
 - `CelebrationStageFit`: `Contain`, `Cover`.
 - `CelebrationStageAlign`: `Center`, `Top`, `Bottom`, `TopStart`, `TopEnd`, `BottomStart`, `BottomEnd`.
 - `CelebrationDecorationTemplate`: `StaticTriggerV1`.
@@ -360,7 +390,7 @@ From the main entry:
 
 `CelebrationProviderProps`, `CelebrationContextValue`, `CelebrationEvent`, `CelebrationEventLoader`, `CelebrationScene`, `CelebrationSecretTrigger`, `CelebrationDecorationProps`, `CelebrationEventSelection`, `CelebrationAnchors`, `CelebrationNotification`, `HalloweenEventOptions`, `HalloweenLabels`, `NewYearLabels`.
 
-Pack descriptors, from the main entry: `CelebrationPackDescriptor`, `CelebrationSceneDescriptor`, `CelebrationSceneVariantDescriptor`, `CelebrationVariantConditions`, `CelebrationSceneTiming`, `CelebrationPlacementDescriptor`, `CelebrationViewportStagePlacement`, `CelebrationExternalEventDescriptor`, `CelebrationDecorationDescriptor`, `CelebrationAssetLoaders`, `CelebrationVariantContext` and `CelebrationTextDirection`. From `./packs`: `LottieSceneProps` and `StaticTriggerDecorationProps`.
+Pack descriptors, from the main entry: `CelebrationPackDescriptor`, `CelebrationSceneDescriptor`, `CelebrationSceneVariantDescriptor`, `CelebrationVariantConditions`, `CelebrationSceneTiming`, `CelebrationPlacementDescriptor`, `CelebrationViewportStagePlacement`, `CelebrationComposerAnchorPlacement`, `CelebrationStageRect`, `CelebrationAnchorScale`, `CelebrationExternalEventDescriptor`, `CelebrationDecorationDescriptor`, `CelebrationAssetLoaders`, `CelebrationVariantContext` and `CelebrationTextDirection`. From `./packs`: `LottieSceneProps` and `StaticTriggerDecorationProps`.
 
 ## Scenes
 
@@ -386,7 +416,9 @@ greeting or prompts block the stage, the cast stands on a decorative snow
 ledge below the composer; an eligible prompt or selector can still be borrowed.
 The penguin follows a supplied image reference: front-facing
 black-and-white body, large pale belly, opaque sunglasses, tapered flippers,
-small pale feet and a restrained red Santa hat. The same full story runs on
+small pale feet and a restrained red Santa hat. A pale cheek and clear beak separate
+the face from the glasses; the head compresses for the effort and lifts into
+the throw beside a fir with rounded branch masses. The same full story runs on
 mobile and in RTL. Reduced motion, unsupported browser APIs and player failures
 show static art. The borrowed control is never clicked, cloned or reparented;
 its reversible visual transform is cancelled when playback stops.
@@ -411,8 +443,10 @@ presents his work while the frustrated master hops away with a chest bow and a
 ribbon around his
 ankles; the helper follows with the reel. Both elves and the full story remain
 on mobile and in RTL layouts.
-The original character contours remain intact: cap movement and recoil are
-restrained, while each frustrated hop slows on ascent and accelerates into
+Broad cheek and coat shadows soften the characters, with finer warm outlines
+in both animated and static artwork. The elves work nearer the composer corners,
+and the loose ribbon hangs toward its rim to leave more space around the greeting.
+Cap movement and recoil remain restrained, while each frustrated hop slows on ascent and accelerates into
 landing without stopping horizontally at its apex.
 
 The scene plays one sixteen-second Lottie vector composition and unmounts by
@@ -446,7 +480,9 @@ Steps follow distance traveled, with planted soles and bending joints. The
 bodies compress before pulling and takeoff; the calf turns before walking
 back. Forelegs and hind legs bend differently with staggered contacts. The
 adult has a fuller chest and longer antlers; the calf has a rounder face and
-compact proportions. Neck, gaze and ear gestures distinguish the adult's
+compact proportions. Broad fur shading and an open shoulder contour join the
+neck to the torso; the calf has a clearer eye and muzzle. Neck, gaze and ear
+gestures distinguish the adult's
 effort from the calf's curiosity. The nose and caught loop share the articulated
 neck/head geometry. During takeoff the legs extend, fold and settle into a
 relaxed glide instead of continuing to walk in the air. A continuous flight
@@ -503,6 +539,11 @@ spreads its mittens; the head sneezes, the bough flexes and drops it into the
 waiting mittens — backwards. He pauses, turns it the right way round,
 straightens the present, carries the card back, jumps it back into its exact
 slot and leaves holding his head with both mittens.
+
+Broad crescent shadows give the snowballs volume. The fir has rounded, uneven
+boughs, with a low foreground branch lip that leaves the lodged face visible;
+the supporting snow ledge has a soft outline. The static resolution uses the
+same drawing treatment.
 
 Staging follows the measured page: with starters below the composer (the
 chat's default) he works on a drawn snow ledge under the starter row, low

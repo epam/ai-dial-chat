@@ -40,7 +40,7 @@ const readJson = <T>(path: string): T =>
   JSON.parse(readFileSync(path, 'utf8')) as T;
 
 const committedArtifactFiles = readdirSync(ARTIFACT_DIRECTORY)
-  .filter((file) => /^chat-ui-.+\.json$/.test(file))
+  .filter((file) => /^ai-dial-chat-.+\.json$/.test(file))
   .sort();
 const committedArtifacts = committedArtifactFiles.map((file) =>
   readJson<ManagedConfigArtifact>(join(ARTIFACT_DIRECTORY, file)),
@@ -52,7 +52,7 @@ const index = readJson<ManagedConfigIndex>(
 const readValidFixtures = (schemaVersion: string): unknown[] => {
   const file = join(
     FIXTURE_DIRECTORY,
-    `chat-ui-${schemaVersion}.fixtures.json`,
+    `ai-dial-chat-${schemaVersion}.fixtures.json`,
   );
   return readJson<{ valid: { payload: unknown }[] }>(file).valid.map(
     (fixture) => fixture.payload,
@@ -88,7 +88,7 @@ describe('committed managed-config artifacts', () => {
         'schema',
         'schemaVersion',
       ]);
-      expect(artifact.appId).toBe('chat-ui');
+      expect(artifact.appId).toBe('ai-dial-chat');
       expect(committedArtifactFiles[position]).toBe(
         managedConfigArtifactFileName(artifact.schemaVersion),
       );

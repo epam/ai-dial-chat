@@ -1233,6 +1233,10 @@ import { useIsMobile } from '@epam/ai-dial-chat-shared';
 const isMobile = useIsMobile();
 ```
 
+`useIsMobile`, `useIsTablet` and `useIsPhone` read their media query during
+render, so when one component calls several of them they agree in every render
+of a breakpoint crossing.
+
 ### useIsTextClipped
 
 `useIsTextClipped(isMeasuring, contentKey)` reports whether an element's text

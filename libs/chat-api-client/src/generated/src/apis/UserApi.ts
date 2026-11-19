@@ -13,7 +13,11 @@
  */
 
 import * as runtime from '../runtime';
-import type { UserLimitStatsResponseDto } from '../models/index';
+import type {
+  UsageHistoryPeriod,
+  UserLimitStatsResponseDto,
+  UserUsageHistoryResponseDto,
+} from '../models/index';
 
 export interface GetUserLimitsRequest {
   deploymentTypes?: Array<GetUserLimitsDeploymentTypesEnum>;
@@ -21,6 +25,10 @@ export interface GetUserLimitsRequest {
 
 export interface GetUserUsageRequest {
   deploymentTypes?: Array<GetUserUsageDeploymentTypesEnum>;
+}
+
+export interface GetUserUsageHistoryRequest {
+  period: UsageHistoryPeriod;
 }
 
 /**
@@ -131,6 +139,68 @@ export class UserApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<UserLimitStatsResponseDto> {
     const response = await this.getUserUsageRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns the signed-in user\'s spend and request counts from DIAL Analytics (ADAS) for the current UTC day, ISO week (Monday start) or month, from its start to the request time: totals, one zero-filled entry per UTC date, the top 10 root deployments by spend plus an `other` remainder, and the split by client type when the `usage_client_identity` enrichment is available. Each user request counts once (root spans only), with its chain-inclusive price. The BFF forwards the caller\'s session access token to ADAS, whose row policy confines the rows to the caller; a caller whose ADAS view is not row-restricted gets `forbidden`. When ADAS cannot answer, the response is still `200`, with `available: false` and a `reason`. Not cached.
+   * Get the caller\'s own usage history for the current UTC day, week or month
+   */
+  async getUserUsageHistoryRaw(
+    requestParameters: GetUserUsageHistoryRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<UserUsageHistoryResponseDto>> {
+    if (requestParameters['period'] == null) {
+      throw new runtime.RequiredError(
+        'period',
+        'Required parameter "period" was null or undefined when calling getUserUsageHistory().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['period'] != null) {
+      queryParameters['period'] = requestParameters['period'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/user/usage/history`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<UserUsageHistoryResponseDto>(response);
+  }
+
+  /**
+   * Returns the signed-in user\'s spend and request counts from DIAL Analytics (ADAS) for the current UTC day, ISO week (Monday start) or month, from its start to the request time: totals, one zero-filled entry per UTC date, the top 10 root deployments by spend plus an `other` remainder, and the split by client type when the `usage_client_identity` enrichment is available. Each user request counts once (root spans only), with its chain-inclusive price. The BFF forwards the caller\'s session access token to ADAS, whose row policy confines the rows to the caller; a caller whose ADAS view is not row-restricted gets `forbidden`. When ADAS cannot answer, the response is still `200`, with `available: false` and a `reason`. Not cached.
+   * Get the caller\'s own usage history for the current UTC day, week or month
+   */
+  async getUserUsageHistory(
+    requestParameters: GetUserUsageHistoryRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<UserUsageHistoryResponseDto> {
+    const response = await this.getUserUsageHistoryRaw(
       requestParameters,
       initOverrides,
     );

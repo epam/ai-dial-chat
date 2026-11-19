@@ -244,7 +244,7 @@
             "description": "Application identifier served by this deployment. An identifier the deployment does not serve is rejected with 400.",
             "schema": {
               "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
-              "example": "chat-ui",
+              "example": "ai-dial-chat",
               "type": "string"
             }
           }
@@ -1826,6 +1826,43 @@
         },
         "summary": "Set the selected deployment",
         "tags": ["user-config"]
+      }
+    },
+    "/api/v1/user/usage/history": {
+      "get": {
+        "description": "Returns the signed-in user's spend and request counts from DIAL Analytics (ADAS) for the current UTC day, ISO week (Monday start) or month, from its start to the request time: totals, one zero-filled entry per UTC date, the top 10 root deployments by spend plus an `other` remainder, and the split by client type when the `usage_client_identity` enrichment is available. Each user request counts once (root spans only), with its chain-inclusive price. The BFF forwards the caller's session access token to ADAS, whose row policy confines the rows to the caller; a caller whose ADAS view is not row-restricted gets `forbidden`. When ADAS cannot answer, the response is still `200`, with `available: false` and a `reason`. Not cached.",
+        "operationId": "getUserUsageHistory",
+        "parameters": [
+          {
+            "name": "period",
+            "required": true,
+            "in": "query",
+            "description": "Calendar period, in UTC: `today` is the current day, `week` the current ISO week (Monday start) and `month` the current month, each from its start to the request time.",
+            "schema": {
+              "$ref": "#/components/schemas/UsageHistoryPeriod"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usage history (`available: true`), or why it is not available (`available: false` with `reason`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserUsageHistoryResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or unknown `period`, or an unexpected query parameter"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          }
+        },
+        "summary": "Get the caller's own usage history for the current UTC day, week or month",
+        "tags": ["user"]
       }
     },
     "/api/v1/models": {
@@ -13568,7 +13605,7 @@
           "appId": {
             "type": "string",
             "description": "Application identifier.",
-            "example": "chat-ui"
+            "example": "ai-dial-chat"
           },
           "features": {
             "type": "object",
@@ -13594,7 +13631,7 @@
             ]
           },
           "appConfig": {
-            "description": "The published Config Studio payload of an application other than chat-ui, unchanged. Present only when the deployment applies managed configuration and the snapshot is usable.",
+            "description": "The published Config Studio payload of an application other than ai-dial-chat, unchanged. Present only when the deployment applies managed configuration and the snapshot is usable.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ClientAppConfigDto"
@@ -15293,6 +15330,190 @@
             "nullable": true
           }
         }
+      },
+      "UsageHistoryPeriod": {
+        "type": "string",
+        "enum": ["today", "week", "month"]
+      },
+      "UsageHistoryUnavailableReason": {
+        "type": "string",
+        "enum": ["not_configured", "unavailable", "forbidden"],
+        "description": "Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. `forbidden`: DIAL Analytics refused the caller's token, or the caller's view of the usage log is not restricted to their own rows. `unavailable`: timeout, network error or server error."
+      },
+      "UsageHistoryWindowDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "The requested period.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UsageHistoryPeriod"
+              }
+            ]
+          },
+          "from": {
+            "type": "string",
+            "description": "Inclusive window start: 00:00:00.000Z of the current UTC day, ISO week Monday, or month 1st.",
+            "example": "2026-11-01T00:00:00.000Z"
+          },
+          "to": {
+            "type": "string",
+            "description": "Exclusive window end: the request time.",
+            "example": "2026-11-18T14:05:09.120Z"
+          }
+        },
+        "required": ["name", "from", "to"]
+      },
+      "UsageHistoryTotalsDto": {
+        "type": "object",
+        "properties": {
+          "spend": {
+            "type": "number",
+            "description": "Spend in USD, rounded to 6 decimal places (half away from zero), summed from the root span's chain-inclusive price: a call to an application includes the models it called.",
+            "example": 1.234568
+          },
+          "requests": {
+            "type": "number",
+            "description": "Number of user requests (root spans) in the window.",
+            "example": 42
+          }
+        },
+        "required": ["spend", "requests"]
+      },
+      "UsageHistoryDailyEntryDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "UTC calendar date, `YYYY-MM-DD`.",
+            "example": "2026-11-02"
+          },
+          "spend": {
+            "type": "number",
+            "description": "Spend in USD, rounded to 6 decimal places (half away from zero), summed from the root span's chain-inclusive price: a call to an application includes the models it called.",
+            "example": 1
+          },
+          "requests": {
+            "type": "number",
+            "description": "User requests on that date.",
+            "example": 30
+          },
+          "byModel": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "That date's spend per deployment, keyed by the deployment names of the top-level `byModel` (including `other`). Keys with no spend and no requests on that date are omitted, so a date without usage has an empty object.",
+            "example": {
+              "gpt-4o": 0.9,
+              "my-app": 0.1
+            }
+          }
+        },
+        "required": ["date", "spend", "requests", "byModel"]
+      },
+      "UsageHistoryModelEntryDto": {
+        "type": "object",
+        "properties": {
+          "deployment": {
+            "type": "string",
+            "description": "Root deployment the user called, or `other` for the remainder beyond the top 10 by spend.",
+            "example": "gpt-4o"
+          },
+          "spend": {
+            "type": "number",
+            "description": "Spend in USD, rounded to 6 decimal places (half away from zero), summed from the root span's chain-inclusive price: a call to an application includes the models it called.",
+            "example": 1.134568
+          },
+          "requests": {
+            "type": "number",
+            "description": "User requests to this deployment.",
+            "example": 39
+          }
+        },
+        "required": ["deployment", "spend", "requests"]
+      },
+      "UsageHistoryClientEntryDto": {
+        "type": "object",
+        "properties": {
+          "client": {
+            "type": "string",
+            "description": "Client type from DIAL Analytics' `usage_client_identity` enrichment (for example `chat`, `claudecode`, `claudedesktop`, `codex`, `opencode`, `dialcli`, `other`), or `unknown` when the enrichment has no value for the request.",
+            "example": "chat"
+          },
+          "spend": {
+            "type": "number",
+            "description": "Spend in USD, rounded to 6 decimal places (half away from zero), summed from the root span's chain-inclusive price: a call to an application includes the models it called.",
+            "example": 1
+          },
+          "requests": {
+            "type": "number",
+            "description": "User requests from this client.",
+            "example": 35
+          }
+        },
+        "required": ["client", "spend", "requests"]
+      },
+      "UserUsageHistoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "description": "Whether DIAL Analytics answered. `true`: `period`, `currency`, `totals`, `daily` and `byModel` are present (and `byClient` when the client-identity enrichment is available). `false`: only `reason` is present.",
+            "example": true
+          },
+          "reason": {
+            "description": "Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. `forbidden`: DIAL Analytics refused the caller's token, or the caller's view of the usage log is not restricted to their own rows. `unavailable`: timeout, network error or server error.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UsageHistoryUnavailableReason"
+              }
+            ]
+          },
+          "period": {
+            "description": "Present only when `available` is `true`. The half-open window `[from, to)`.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UsageHistoryWindowDto"
+              }
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "description": "Present only when `available` is `true`. Always `USD`: DIAL Analytics prices carry no currency.",
+            "example": "USD"
+          },
+          "totals": {
+            "description": "Present only when `available` is `true`. Spend and requests of the whole window.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UsageHistoryTotalsDto"
+              }
+            ]
+          },
+          "daily": {
+            "description": "Present only when `available` is `true`. One entry per UTC date of the window, ascending, zero-filled.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UsageHistoryDailyEntryDto"
+            }
+          },
+          "byModel": {
+            "description": "Present only when `available` is `true`. Root deployments by spend descending, at most 10, followed by one `other` entry with the remainder when more than 10 have usage.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UsageHistoryModelEntryDto"
+            }
+          },
+          "byClient": {
+            "description": "Present only when `available` is `true` and DIAL Analytics exposes the client-identity enrichment to the caller; absent (not empty) otherwise. Sorted by spend descending.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UsageHistoryClientEntryDto"
+            }
+          }
+        },
+        "required": ["available"]
       },
       "DialModelFeaturesDto": {
         "type": "object",
@@ -19471,12 +19692,69 @@
         ],
         "description": "Where the stage sits in the viewport, in logical terms (viewport-stage-v1)."
       },
+      "CelebrationAnchor": {
+        "type": "string",
+        "enum": ["composer"],
+        "description": "Host element the stage attaches to (composer-anchor-v1)."
+      },
+      "CelebrationAnchorRectDto": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number",
+            "description": "Left edge.",
+            "example": 340
+          },
+          "y": {
+            "type": "number",
+            "description": "Top edge.",
+            "example": 164
+          },
+          "width": {
+            "type": "number",
+            "description": "Width, at least 120.",
+            "example": 520
+          },
+          "height": {
+            "type": "number",
+            "description": "Height, at least 24.",
+            "example": 56
+          }
+        },
+        "required": ["x", "y", "width", "height"]
+      },
+      "CelebrationAnchorEdge": {
+        "type": "string",
+        "enum": ["top", "bottom"],
+        "description": "Edge of anchorRect aligned with the same edge of the composer (composer-anchor-v1)."
+      },
+      "CelebrationAnchorScaleDto": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "number",
+            "description": "Smallest scale; also the scale of the synthetic anchor.",
+            "example": 0.6
+          },
+          "max": {
+            "type": "number",
+            "description": "Largest scale.",
+            "example": 1
+          }
+        },
+        "required": ["min", "max"]
+      },
+      "CelebrationAnchorFallback": {
+        "type": "string",
+        "enum": ["stage-anchor", "poster"],
+        "description": "What happens when no composer is eligible (composer-anchor-v1)."
+      },
       "CelebrationPlacementDto": {
         "type": "object",
         "properties": {
           "template": {
             "type": "string",
-            "description": "Placement template ID. Templates other than viewport-stage-v1 are passed as the ID alone, and clients without the matching capability skip the scene.",
+            "description": "Placement template ID. Templates other than viewport-stage-v1 and composer-anchor-v1 are passed as the ID alone, and clients without the matching capability skip the scene.",
             "example": "viewport-stage-v1"
           },
           "fit": {
@@ -19492,6 +19770,46 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/CelebrationStageAlign"
+              }
+            ]
+          },
+          "anchor": {
+            "description": "Host element the stage attaches to (composer-anchor-v1).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationAnchor"
+              }
+            ]
+          },
+          "anchorRect": {
+            "description": "The reference composer the motion is authored around, in stage coordinates (composer-anchor-v1).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationAnchorRectDto"
+              }
+            ]
+          },
+          "edge": {
+            "description": "Edge of anchorRect aligned with the same edge of the composer (composer-anchor-v1).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationAnchorEdge"
+              }
+            ]
+          },
+          "scale": {
+            "description": "Bounds of composerWidth / anchorRect.width (composer-anchor-v1).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationAnchorScaleDto"
+              }
+            ]
+          },
+          "fallback": {
+            "description": "What happens when no composer is eligible (composer-anchor-v1).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationAnchorFallback"
               }
             ]
           }
@@ -19593,6 +19911,14 @@
             "type": "string",
             "description": "Asset ID of the Lottie JSON.",
             "example": "new-year-default-snowman-delivery-desktop-5b0c7e19a2d4f836"
+          },
+          "placement": {
+            "description": "Placement for this variant instead of the scene's, with the same template; lets a mobile variant use its own reference composer.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationPlacementDto"
+              }
+            ]
           }
         },
         "required": ["when", "animationAssetId"]

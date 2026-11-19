@@ -153,23 +153,39 @@ describe('validate - explicit environment presence', () => {
 });
 
 describe('validate - CLIENT_CONFIG_APP_IDS', () => {
-  it.each([undefined, '', ' , '])('defaults %j to chat-ui', (value) => {
+  it.each([undefined, '', ' , '])('defaults %j to ai-dial-chat', (value) => {
     const config = validate({
       ...validBaseConfig,
       ...(value === undefined ? {} : { CLIENT_CONFIG_APP_IDS: value }),
     });
 
-    expect(config.CLIENT_CONFIG_APP_IDS).toEqual(['chat-ui']);
+    expect(config.CLIENT_CONFIG_APP_IDS).toEqual(['ai-dial-chat']);
   });
 
   it('trims entries and drops repeats, keeping the first position', () => {
     const config = validate({
       ...validBaseConfig,
-      CLIENT_CONFIG_APP_IDS: ' launchpad , chat-ui,launchpad ,,',
+      CLIENT_CONFIG_APP_IDS: ' launchpad , ai-dial-chat,launchpad ,,',
     });
 
-    expect(config.CLIENT_CONFIG_APP_IDS).toEqual(['launchpad', 'chat-ui']);
+    expect(config.CLIENT_CONFIG_APP_IDS).toEqual(['launchpad', 'ai-dial-chat']);
   });
+
+  it.each([
+    ['launchpad,chat-ui', ['launchpad', 'ai-dial-chat']],
+    ['chat-ui,ai-dial-chat', ['ai-dial-chat']],
+    ['ai-dial-chat,launchpad,chat-ui', ['ai-dial-chat', 'launchpad']],
+  ])(
+    'replaces the legacy chat-ui in %j before dropping repeats',
+    (value, expected) => {
+      const config = validate({
+        ...validBaseConfig,
+        CLIENT_CONFIG_APP_IDS: value,
+      });
+
+      expect(config.CLIENT_CONFIG_APP_IDS).toEqual(expected);
+    },
+  );
 
   it('accepts a 63-character identifier', () => {
     const id = `a${'b'.repeat(62)}`;
@@ -178,7 +194,7 @@ describe('validate - CLIENT_CONFIG_APP_IDS', () => {
     expect(config.CLIENT_CONFIG_APP_IDS).toEqual([id]);
   });
 
-  it.each(['chat-ui,Bad_Id', '-x', `a${'b'.repeat(63)}`, 'chat ui'])(
+  it.each(['ai-dial-chat,Bad_Id', '-x', `a${'b'.repeat(63)}`, 'chat ui'])(
     'fails startup for %j, naming only the variable',
     (value) => {
       const secret = 'a'.repeat(64);
@@ -207,5 +223,40 @@ describe('validate - CLIENT_CONFIG_APP_IDS', () => {
     expect(() =>
       validate({ ...validBaseConfig, CLIENT_CONFIG_APP_IDS: ids(17) }),
     ).toThrow(/CLIENT_CONFIG_APP_IDS must list at most 16/);
+  });
+});
+
+describe('validate - DIAL Analytics', () => {
+  it('leaves ANALYTICS_URL unset and defaults ANALYTICS_TIMEOUT_MS to 10000', () => {
+    const config = validate(validBaseConfig);
+
+    expect(config.ANALYTICS_URL).toBeUndefined();
+    expect(config.ANALYTICS_TIMEOUT_MS).toBe(10_000);
+  });
+
+  it('accepts an in-cluster analytics URL and a numeric timeout', () => {
+    const config = validate({
+      ...validBaseConfig,
+      ANALYTICS_URL: 'http://ai-dial-analytics:8080',
+      ANALYTICS_TIMEOUT_MS: '5000',
+    });
+
+    expect(config.ANALYTICS_URL).toBe('http://ai-dial-analytics:8080');
+    expect(config.ANALYTICS_TIMEOUT_MS).toBe(5000);
+  });
+
+  it.each(['abc', '500'])(
+    'fails startup for ANALYTICS_TIMEOUT_MS=%s',
+    (value) => {
+      expect(() =>
+        validate({ ...validBaseConfig, ANALYTICS_TIMEOUT_MS: value }),
+      ).toThrow(/ANALYTICS_TIMEOUT_MS/);
+    },
+  );
+
+  it('fails startup for an ANALYTICS_URL that is not a URL', () => {
+    expect(() =>
+      validate({ ...validBaseConfig, ANALYTICS_URL: 'not a url' }),
+    ).toThrow(/ANALYTICS_URL/);
   });
 });

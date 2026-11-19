@@ -341,10 +341,10 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       onChangeFolderClick: () => void;
       onPendingFolderPathChange: (path: string[]) => void;
       onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
-      author: string;
-      onAuthorChange: (author: string) => void;
-      rules: PublicationRule[];
-      onRulesChange: (rules: PublicationRule[]) => void;
+      author?: string;
+      onAuthorChange?: (author: string) => void;
+      rules?: PublicationRule[];
+      onRulesChange?: (rules: PublicationRule[]) => void;
       ruleSourceOptions: string[];
       isRulesLoading?: boolean;
       hasRulesLoadError?: boolean;
@@ -371,10 +371,18 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
             ? 'none'
             : versionHistory.rows.map((row) => row.version).join(',')}
         </span>
-        <span>author:{author}</span>
-        <button onClick={() => onAuthorChange('DIAL Team')}>Set author</button>
+        {onAuthorChange != null && (
+          <>
+            <span>author:{author}</span>
+            <button onClick={() => onAuthorChange('DIAL Team')}>
+              Set author
+            </button>
+          </>
+        )}
         <span>ruleSourceOptions:{ruleSourceOptions.join(',')}</span>
-        <span>rules:{rules.map((r) => r.source).join(',')}</span>
+        {onRulesChange != null && (
+          <span>rules:{(rules ?? []).map((r) => r.source).join(',')}</span>
+        )}
         <span>rulesLoading:{String(isRulesLoading)}</span>
         <span>rulesLoadError:{String(hasRulesLoadError)}</span>
         {onPublishCredentialsChange != null && (
@@ -397,20 +405,22 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
         <button onClick={() => void onCreateFolder(['Shared'], 'New')}>
           Create folder
         </button>
-        <button
-          onClick={() =>
-            onRulesChange([
-              ...rules,
-              {
-                source: 'role',
-                function: PublicationRuleFunction.Contain,
-                targets: ['engineering'],
-              },
-            ])
-          }
-        >
-          Add mock rule
-        </button>
+        {onRulesChange != null && (
+          <button
+            onClick={() =>
+              onRulesChange([
+                ...(rules ?? []),
+                {
+                  source: 'role',
+                  function: PublicationRuleFunction.Contain,
+                  targets: ['engineering'],
+                },
+              ])
+            }
+          >
+            Add mock rule
+          </button>
+        )}
       </div>
     ),
     PublishFooter: ({
@@ -1691,6 +1701,40 @@ describe('DetailsPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
 
     expect(screen.getByText('author:Daniil Pavlov')).toBeTruthy();
+  });
+
+  it('hides the author field when hidePublishAuthor is set', async () => {
+    renderPanel({
+      publishDefaultAuthor: 'Daniil Pavlov',
+      hidePublishAuthor: true,
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    expect(screen.getByText('Publish panel')).toBeTruthy();
+    expect(screen.queryByText(/^author:/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Set author' })).toBeNull();
+  });
+
+  it('hides the access-rules section when hidePublishAccessRules is set', async () => {
+    renderPanel({ hidePublishAccessRules: true });
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    expect(screen.getByText('Publish panel')).toBeTruthy();
+    expect(screen.queryByText(/^rules:/)).toBeNull();
+  });
+
+  it('publishes with an empty author and no rules when both sections are hidden', async () => {
+    const onPublish = vi.fn().mockResolvedValue(undefined);
+    renderPanel({
+      onPublish,
+      hidePublishAuthor: true,
+      hidePublishAccessRules: true,
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    await selectSharedFolder();
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], '', false);
   });
 
   it('forwards an edited author to onPublish', async () => {

@@ -53,6 +53,14 @@ export const CELEBRATION_MAX_LIFETIME_MS = 32_000;
 export const CELEBRATION_MIN_POSTER_DURATION_MS = 1000;
 
 export const VIEWPORT_STAGE_TEMPLATE = 'viewport-stage-v1';
+export const COMPOSER_ANCHOR_TEMPLATE = 'composer-anchor-v1';
+/** Bounds of a `composer-anchor-v1` placement (celebration-lottie-authoring-profile). */
+export const CELEBRATION_ANCHOR_MIN_WIDTH = 120;
+export const CELEBRATION_ANCHOR_MIN_HEIGHT = 24;
+export const CELEBRATION_ANCHOR_MIN_SCALE = 0.25;
+export const CELEBRATION_ANCHOR_MAX_SCALE = 4;
+/** Largest stage coordinate a profile-conforming composition can have. */
+export const CELEBRATION_STAGE_MAX_SIZE = 4096;
 export const STATIC_TRIGGER_TEMPLATE = 'static-trigger-v1';
 
 export const CELEBRATION_INDEX_CACHE_KEY = 'celebrations:v1:index';

@@ -289,6 +289,33 @@ describe('CelebrationsController (integration)', () => {
         .expect(502);
     });
 
+    it('answers 502 for a manifest with an invalid composer-anchor placement', async () => {
+      const manifest = readJsonFixture<{ scenes: Record<string, unknown>[] }>(
+        NEW_YEAR_MANIFEST,
+      );
+      await start(
+        indexWithManifest(NEW_YEAR_MANIFEST, {
+          ...manifest,
+          scenes: [
+            {
+              ...manifest.scenes[0],
+              placement: {
+                template: 'composer-anchor-v1',
+                anchor: 'composer',
+                anchorRect: { x: 340, y: 164, width: 520, height: 56 },
+                edge: 'left',
+                scale: { min: 0.6, max: 1 },
+                fallback: 'stage-anchor',
+              },
+            },
+          ],
+        }),
+      );
+      await request(app.getHttpServer())
+        .get('/v1/celebrations/packs/new-year-default/1.0.0')
+        .expect(502);
+    });
+
     it('answers 502 when the themes host redirects', async () => {
       vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
       await start({

@@ -1,0 +1,16 @@
+export enum SkillSelectorI18nKeys {
+  RemoveSkillLabel = 'skillSelector.removeSkillLabel',
+  AddMenuLabel = 'skillSelector.addMenuLabel',
+  EmptyHint = 'skillSelector.emptyHint',
+  EmptyQueryHint = 'skillSelector.emptyQueryHint',
+  ModalTitle = 'skillSelector.modalTitle',
+  NoMatchingSkillsLabel = 'skillSelector.noMatchingSkillsLabel',
+  NoSkillsLabel = 'skillSelector.noSkillsLabel',
+  UnsupportedTooltipLabel = 'skillSelector.unsupportedTooltipLabel',
+  UnavailableHintLabel = 'skillSelector.unavailableHintLabel',
+  DeletedTooltipLabel = 'skillSelector.deletedTooltipLabel',
+  UnavailableSkillTooltip = 'skillSelector.unavailableSkillTooltip',
+  UnavailableSkillName = 'skillSelector.unavailableSkillName',
+  NotSharedTooltipLabel = 'skillSelector.notSharedTooltipLabel',
+  ViewDetailsLabel = 'skillSelector.viewDetailsLabel',
+}

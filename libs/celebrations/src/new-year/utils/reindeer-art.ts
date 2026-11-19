@@ -110,6 +110,30 @@ export const positioned = (p: ReindeerPoint, scale = 1): ReindeerTransform => ({
 });
 const P = REINDEER_PALETTE;
 
+/** Broad native shading follows the fur mass without adding a second contour. */
+const furGradient = (
+  start: ReindeerPoint,
+  end: ReindeerPoint,
+): ReindeerShape => ({
+  ty: 'gf',
+  t: 1,
+  s: fixed(start),
+  e: fixed(end),
+  o: fixed(100),
+  r: 1,
+  g: {
+    p: 3,
+    k: fixed([
+      0,
+      ...color(P.light).slice(0, 3),
+      0.52,
+      ...color(P.fur).slice(0, 3),
+      1,
+      ...color(P.shade).slice(0, 3),
+    ]),
+  },
+});
+
 /** Shared landmarks for the drawing, neck articulation and nose contact. */
 export const REINDEER_NECK: ReindeerPoint = [24, -65];
 export const headOrigin = (isCalf: boolean): ReindeerPoint =>
@@ -235,57 +259,40 @@ export const bodyArt = (isCalf: boolean): ReindeerShape[] => [
     P.cream,
   ),
   group(
-    'back-light',
-    [
-      path(
-        [
-          [-42, -74],
-          [-26, -84],
-          [-3, -83],
-          [18, -77],
-          [3, -73],
-          [-23, -77],
-        ],
-        true,
-        0.15,
-      ),
-    ],
-    P.light,
-  ),
-  group(
     'body',
     [
       path(
         isCalf
           ? [
-              [-47, -63],
-              [-42, -79],
-              [-28, -86],
-              [-5, -80],
-              [18, -85],
-              [34, -74],
-              [29, -52],
-              [9, -44],
-              [-18, -48],
-              [-38, -45],
+              [-48, -62],
+              [-44, -78],
+              [-28, -85],
+              [-4, -82],
+              [18, -86],
+              [34, -73],
+              [30, -53],
+              [10, -46],
+              [-15, -47],
+              [-39, -46],
             ]
           : [
-              [-51, -62],
-              [-47, -77],
-              [-28, -86],
-              [-5, -81],
-              [19, -90],
-              [35, -76],
-              [30, -54],
-              [12, -43],
-              [-16, -48],
-              [-39, -43],
+              [-52, -62],
+              [-47, -79],
+              [-29, -86],
+              [-5, -83],
+              [17, -91],
+              [36, -77],
+              [32, -55],
+              [13, -44],
+              [-15, -47],
+              [-40, -44],
             ],
         true,
-        0.14,
+        0.18,
       ),
+      furGradient([-18, -90], [0, -39]),
     ],
-    P.fur,
+    undefined,
     P.shade,
     1.2,
   ),
@@ -298,12 +305,13 @@ export const neckArt = (isCalf = false): ReindeerShape[] => [
     [
       path(
         [
-          [38, -100],
+          [38, -101],
           [48, -96],
-          [43, -78],
-          [37, -62],
-          [26, -53],
-          [29, -75],
+          [44, -79],
+          [38, -63],
+          [28, -50],
+          [27, -65],
+          [33, -84],
         ],
         true,
         0.14,
@@ -312,45 +320,40 @@ export const neckArt = (isCalf = false): ReindeerShape[] => [
     P.cream,
   ),
   group(
-    'neck-light',
+    'neck-contour',
     [
       path(
         [
-          [20, -77],
-          [25, -96],
-          [36, -107],
-          [40, -100],
-          [32, -82],
-          [29, -65],
+          [47, -97],
+          [45, -80],
+          [38, -63],
+          [30, -51],
         ],
-        true,
+        false,
         0.15,
       ),
     ],
-    P.light,
-  ),
-  group(
-    'neck',
-    [
-      path(
-        [
-          [11, -68],
-          [21, -88],
-          [29, isCalf ? -104 : -111],
-          [43, isCalf ? -107 : -113],
-          [48, -97],
-          [45, -78],
-          [33, -51],
-          [19, -53],
-        ],
-        true,
-        0.15,
-      ),
-    ],
-    P.fur,
+    undefined,
     P.shade,
     1.1,
   ),
+  group('neck', [
+    path(
+      [
+        [5, -70],
+        [17, -88],
+        [29, isCalf ? -104 : -111],
+        [43, isCalf ? -107 : -113],
+        [48, -97],
+        [45, -78],
+        [32, -50],
+        [15, -54],
+      ],
+      true,
+      0.18,
+    ),
+    furGradient([-18, -90], [0, -39]),
+  ]),
 ];
 
 /** The muzzle contact remains [33,5] in head space, including calf head scaling. */
@@ -449,7 +452,7 @@ export const headArt = (
       ],
       undefined,
       P.ink,
-      0.9,
+      isCalf ? 1.5 : 1.2,
     ),
     group(
       'eye-pose',
@@ -457,8 +460,12 @@ export const headArt = (
         group(
           'gaze',
           [
-            group('pupil-glint', [ellipse([8, -7], [1.8, 2])], P.white),
-            group('pupil', [ellipse([9, -5], [4.2, 6.5])], P.ink),
+            group('pupil-glint', [ellipse([8, -7], [2, 2.2])], P.white),
+            group(
+              'pupil',
+              [ellipse([9, -5], [isCalf ? 5.4 : 4.2, isCalf ? 7.5 : 6.5])],
+              P.ink,
+            ),
           ],
           undefined,
           undefined,
@@ -491,7 +498,7 @@ export const headArt = (
       ],
       undefined,
       P.ink,
-      1.4,
+      isCalf ? 1.8 : 1.4,
       { ...identity([9, -14]), r: brow },
     ),
     group(
@@ -512,24 +519,6 @@ export const headArt = (
         ),
       ],
       P.cream,
-    ),
-    group(
-      'forehead-light',
-      [
-        path(
-          [
-            [-12, -17],
-            [-2, -24],
-            [10, -20],
-            [15, -10],
-            [8, 1],
-            [-3, -2],
-          ],
-          true,
-          0.16,
-        ),
-      ],
-      P.light,
     ),
     group(
       'head',
@@ -559,8 +548,9 @@ export const headArt = (
           true,
           0.18,
         ),
+        furGradient([-8, -24], [-6, 25]),
       ],
-      P.fur,
+      undefined,
       P.shade,
       1,
     ),

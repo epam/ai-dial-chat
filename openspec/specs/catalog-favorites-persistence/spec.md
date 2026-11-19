@@ -13,7 +13,7 @@ Favorites SHALL live in a context at `apps/chat/src/context/FavoriteApplications
 A per-call-site hook is explicitly the wrong shape here: the catalog and the in-chat model selector both read and mutate favorites, and independent hook instances would leave one of them showing stale stars until a full page reload.
 
 The provider SHALL be a thin wrapper over `useFavoriteEntitiesState` from `@epam/ai-dial-chat-hooks` (see `chat-hooks-favorites-state`), which owns the load/toggle state machine. Together they SHALL:
-- On mount, call `getUserConfig()` from `apps/chat/src/server-api/user-config.api.ts` (through the module-level `loadFavorites` adapter in the context file) and seed `favoriteIds` with the **union** of `config.deployments.installed`, `config.toolsets.installed`, `config.prompts.installed`, and `config.skills.installed` — favorites are one flat id set spanning every favouritable entity kind, not a deployments-only list.
+- On mount, read `loadedFavorites` from `useUserConfig()` — the installed ids `UserConfigProvider` (`apps/chat/src/context/UserConfigContext.tsx`) already loaded, since the favorites provider renders inside it — and seed `favoriteIds` with the **union** of `config.deployments.installed`, `config.toolsets.installed`, `config.prompts.installed`, and `config.skills.installed` — favorites are one flat id set spanning every favouritable entity kind, not a deployments-only list. The provider SHALL NOT call `getUserConfig()` itself: a second request for the config `UserConfigProvider` just loaded is pure startup cost. `loadedFavorites` keeps one object identity per load, so the hook loads once per identity, and an identity change remounts both providers.
 - Use a `cancelled` flag inside the hook's `useEffect` to prevent `setState` after unmount, clearing `isLoading` in a `finally` so a failed load still settles.
 - Expose `favoriteIds: ReadonlySet<string>`, `isLoading: boolean`, and `toggleFavorite(id, isFavorite, entityType?): Promise<void>` through `FavoriteApplicationsContextType`.
 - Dispatch the persistence call by `entityType` through the context's `INSTALL_BY_ENTITY_TYPE: Record<FavoriteEntityType, …>` lookup over `updateInstalledDeployment` / `updateInstalledToolset` / `updateInstalledPrompt` / `updateInstalledSkill`, with the hook defaulting to `FavoriteEntityType.Deployment` when the caller omits it.
@@ -28,24 +28,24 @@ i18n keys needed: none (hook has no user-visible strings).
 
 RTL impact: none.
 
-#### Scenario: Favorites load from user config on mount
+#### Scenario: Favorites load from the user config snapshot on mount
 
-- **WHEN** the provider mounts and `getUserConfig()` resolves with installed ids across several sections
-- **THEN** `favoriteIds` is the union of every section's `installed` list and `isLoading` is `false`
+- **WHEN** the provider mounts under a `UserConfigProvider` whose `loadedFavorites` holds installed ids across several sections
+- **THEN** `favoriteIds` is the union of every section's list, `isLoading` settles to `false`, and `getUserConfig()` is not called
 
-#### Scenario: isLoading is true during the initial fetch
+#### Scenario: isLoading is true until the snapshot is applied
 
-- **WHEN** the provider is first rendered and `getUserConfig()` has not yet resolved
-- **THEN** `isLoading` is `true`
+- **WHEN** the provider is first rendered
+- **THEN** `isLoading` is `true` until the hook has applied `loadedFavorites`
 
-#### Scenario: Unmount before fetch completes — no state update
+#### Scenario: Unmount before the snapshot is applied — no state update
 
-- **WHEN** the provider unmounts before `getUserConfig()` resolves
+- **WHEN** the provider unmounts before the hook's load resolves
 - **THEN** `setState` is not called (cancelled flag prevents it)
 
-#### Scenario: getUserConfig failure — isLoading false, empty set
+#### Scenario: User config load failure — isLoading false, empty set
 
-- **WHEN** `getUserConfig()` rejects
+- **WHEN** `getUserConfig()` rejects in `UserConfigProvider`, so `loadedFavorites` stays empty
 - **THEN** `isLoading` is `false` and `favoriteIds` is an empty `Set`
 
 #### Scenario: toggleFavorite adds an ID optimistically

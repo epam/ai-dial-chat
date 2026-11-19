@@ -226,8 +226,24 @@ describe('getCitationGroupPage', () => {
   });
 
   it('returns the page of a page-only pdf_region selector', () => {
-    const selector = { type: 'pdf_region', page: 1 } as AnnotationSelector;
-    expect(getCitationGroupPage(makeGroup(selector))).toBe(1);
+    const selector = { type: 'pdf_region', page: 2 } as AnnotationSelector;
+    expect(getCitationGroupPage(makeGroup(selector))).toBe(2);
+  });
+
+  it.each([
+    [
+      'a page-only pdf_region selector',
+      { type: 'pdf_region', page: 1 },
+      'files/clm.pdf',
+    ],
+    ['a pdf_bbox selector', bbox({ page: 1 }), 'files/clm.pdf'],
+    ['the source URL fragment', undefined, 'files/abc/clm.pdf#page=1'],
+  ])('returns undefined for page 1 taken from %s', (_, selector, sourceUrl) => {
+    expect(
+      getCitationGroupPage(
+        makeGroup(selector as AnnotationSelector | undefined, { sourceUrl }),
+      ),
+    ).toBeUndefined();
   });
 
   it('falls back to the page fragment of the source URL', () => {
@@ -254,7 +270,7 @@ describe('getCitationGroupPage', () => {
     'returns undefined when the source name %j already mentions a page',
     (sourceName) => {
       expect(
-        getCitationGroupPage(makeGroup(bbox({ page: 1 }), { sourceName })),
+        getCitationGroupPage(makeGroup(bbox({ page: 3 }), { sourceName })),
       ).toBeUndefined();
     },
   );

@@ -1,0 +1,16 @@
+export enum DeploymentSelectorI18nKeys {
+  Title = 'deploymentSelector.title',
+  SearchPlaceholder = 'deploymentSelector.searchPlaceholder',
+  EmptyHint = 'deploymentSelector.emptyHint',
+  CurrentlySelectedLabel = 'deploymentSelector.currentlySelectedLabel',
+  UnavailableLabel = 'deploymentSelector.unavailableLabel',
+  AriaLabel = 'deploymentSelector.ariaLabel',
+  Loading = 'deploymentSelector.loading',
+  Error = 'deploymentSelector.error',
+  Empty = 'deploymentSelector.empty',
+  CloseLabel = 'deploymentSelector.closeLabel',
+  RefetchToolsetsFailed = 'deploymentSelector.refetchToolsetsFailed',
+  RefetchDeploymentsFailed = 'deploymentSelector.refetchDeploymentsFailed',
+  BrowseCatalogLabel = 'deploymentSelector.browseCatalogLabel',
+  UnavailableTooltip = 'deploymentSelector.unavailableTooltip',
+}

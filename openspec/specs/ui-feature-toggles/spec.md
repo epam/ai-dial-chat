@@ -33,7 +33,7 @@
 
 ### Requirement: Default baseline preserves current unconditional behavior
 
-`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 27 default-on keys and exclude the 28 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `catalog-table-view`, `file-manager`, `toolsets`, `prompts`, `skills`, `conversation-drafts`... are default-on; `hide-edit-user-message`, `disabled-send`, `hide-change-agent`, `hide-navigation-menu`, `hide-starter-icon`... are default-off — the full 55-key membership is the `OverlayFeature` enum itself (`libs/chat-overlay/src/protocol/overlay-protocol.ts`), not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 55 keys.
+`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 27 default-on keys and exclude the 29 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `catalog-table-view`, `file-manager`, `toolsets`, `prompts`, `skills`, `conversation-drafts`... are default-on; `hide-edit-user-message`, `disabled-send`, `hide-change-agent`, `hide-navigation-menu`, `hide-starter-icon`... are default-off — the full 57-key membership is the `OverlayFeature` enum itself (`libs/chat-overlay/src/protocol/overlay-protocol.ts`), not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 55 keys.
 
 `catalog-table-view` is the one initial-state modifier that defaults on rather than matching the surface's original unconditional behavior. It no longer gates anything: `CatalogView` leaves `initialViewMode` unset, so Browse always opens in `Catalog`'s own default view (`CatalogViewMode.Grid`, the card grid). The key stays default-on so an overlay host still sending it is not warned about an unknown feature. Every other modifier still defaults off, so a deployment that configures nothing observes no other behavior change.
 
@@ -337,6 +337,29 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 
 - **WHEN** `isEnabled('show-header-logo')` is `true` and `isEnabled('header')` is `false`
 - **THEN** the mobile header renders the logo link and no buttons
+
+### Requirement: show-mobile-header-full-logo shows the full logo in the mobile header
+
+`Logo` SHALL render the theme's full `logo` instead of its `favicon` below the desktop breakpoint when `isEnabled('show-mobile-header-full-logo')` is `true` and the active theme defines a `logo`. When the theme defines no `logo`, `Logo` SHALL keep showing the `favicon`. The key SHALL NOT change the desktop top bar or the navigation sidebar logo, and SHALL NOT change when the mobile header renders. The key is a modifier key and SHALL be absent from `DEFAULT_ENABLED_UI_FEATURES`, so a deployment that configures nothing observes no change.
+
+**Accessibility:** `Logo` keeps its single labeled link; no new interactive control is introduced.
+
+**i18n impact:** None — the link's accessible name is the existing `ChatI18nKeys.Logo` string.
+
+#### Scenario: The mobile header shows the full logo when the key is on
+
+- **WHEN** `isEnabled('show-mobile-header-full-logo')` is `true` and the theme defines a `logo` and a `favicon`
+- **THEN** below the desktop breakpoint `Logo` renders the full logo and no favicon
+
+#### Scenario: The favicon stays when the theme has no logo
+
+- **WHEN** `isEnabled('show-mobile-header-full-logo')` is `true` and the theme defines only a `favicon`
+- **THEN** below the desktop breakpoint `Logo` renders the favicon
+
+#### Scenario: Nothing changes when the key is off
+
+- **WHEN** `isEnabled('show-mobile-header-full-logo')` is `false`
+- **THEN** below the desktop breakpoint `Logo` renders the favicon, or the smaller full logo when the theme has no favicon
 
 ### Requirement: starters-below-greeting moves the starters between the greeting and the input
 

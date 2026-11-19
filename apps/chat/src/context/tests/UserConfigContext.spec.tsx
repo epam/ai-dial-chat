@@ -100,6 +100,19 @@ describe('UserConfigContext', () => {
       expect(result.current.installedDeploymentIds).toEqual(['dep-1']);
     });
 
+    it('exposes every installed section as the loaded favorites snapshot', async () => {
+      const { result } = renderHook(() => useUserConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      expect(result.current.loadedFavorites).toEqual({
+        deployments: ['dep-1'],
+        toolsets: ['ts-a'],
+        prompts: ['Work/AI/summarize'],
+        skills: ['skills/my-bucket/revenue-skill'],
+      });
+    });
+
     it('normalizes empty sections to []', async () => {
       mockGetUserConfig.mockResolvedValue({
         version: 2,

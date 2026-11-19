@@ -1,11 +1,13 @@
+import { CHAT_APP_ID } from '../../config/env/app-ids';
+
 /** The Config Studio application id of every Chat runner instance. */
-export const MANAGED_CONFIG_APP_ID = 'chat-ui';
+export const MANAGED_CONFIG_APP_ID = CHAT_APP_ID;
 
 /**
  * The version of the managed contract this build generates. It is the
  * contract's own semantic version, independent of Chat's release version.
  */
-export const MANAGED_CONFIG_SCHEMA_VERSION = '1.1.0';
+export const MANAGED_CONFIG_SCHEMA_VERSION = '1.0.0';
 
 /**
  * The exact schema versions this build accepts. A future reader accepts a
@@ -13,7 +15,6 @@ export const MANAGED_CONFIG_SCHEMA_VERSION = '1.1.0';
  */
 export const SUPPORTED_MANAGED_CONFIG_SCHEMA_VERSIONS: readonly string[] = [
   '1.0.0',
-  '1.1.0',
 ];
 
 /**
@@ -26,8 +27,7 @@ export const SUPPORTED_MANAGED_CONFIG_SCHEMA_VERSIONS: readonly string[] = [
 export const PINNED_MANAGED_CONFIG_SCHEMA_SHA256: Readonly<
   Record<string, string>
 > = {
-  '1.0.0': '9e2155b7857adf6cc51e8966ad02ebf79953c5a87875eaea929e384c02b55dd6',
-  '1.1.0': 'bfbad5396a9ef14fdcb39df44f9dd876b7ad3a2f7abf33bbf40bd694284711d8',
+  '1.0.0': 'edbe9267f6663eb7768ae7e2033e20b0b3c842994224a774968d348e3b9be71f',
 };
 
 /** Config Studio's limit on the canonical bytes of an uploaded schema (56 KiB). */

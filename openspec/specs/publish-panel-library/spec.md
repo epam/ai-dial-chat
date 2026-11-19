@@ -159,9 +159,9 @@ The library SHALL NOT resolve the author itself: it holds no notion of a session
 
 ### Requirement: PublishPanel renders a controlled author field below the destination folder
 
-`PublishPanel` SHALL render a labelled, single-line text input for the publication's display author inside the destination-folder block of the main view: after the destination row and its callout, and before the `PublishAccessRules` wrapper. `StandalonePublishPanel` SHALL forward the same props through to `PublishPanel` without inspecting them.
+`PublishPanel` SHALL render, only when `onAuthorChange` is supplied, a labelled, single-line text input for the publication's display author inside the destination-folder block of the main view: after the destination row and its callout, and before the `PublishAccessRules` wrapper. `StandalonePublishPanel` SHALL forward the same props through to `PublishPanel` without inspecting them.
 
-`PublishPanelProps` and `StandalonePublishPanelProps` SHALL each gain required controlled props `author: string` and `onAuthorChange: (author: string) => void`, mirroring the existing `rules` / `onRulesChange` pair. This is a breaking change for consumers implementing these prop types; both in-repo consumers are updated in the same change.
+`PublishPanelProps` and `StandalonePublishPanelProps` SHALL each carry controlled props `author?: string` (default `''`) and `onAuthorChange?: (author: string) => void`, mirroring the `rules` / `onRulesChange` pair. Supplying `onAuthorChange` is what renders the field, the same way `onPublishCredentialsChange` renders the credentials opt-in: a host that collects the author elsewhere omits it and gets a panel without the field, with no other layout change.
 
 The field SHALL be rendered with ui-kit 2.0 `Input` (`labelProps`, `placeholder`, `caption`, `maxLength={200}`, `disabled` while `isSubmitting` is true), matching how `PublishAccessRuleEditor` already uses `Input`. It SHALL never block submission: an empty author is a valid state, and no inline error or callout is introduced for it.
 
@@ -177,6 +177,11 @@ Memoisation: no new `useMemo`/`useCallback` is required. The field is a controll
 
 - **WHEN** the publish panel is open on its main view
 - **THEN** the author input appears after the destination row (and its callout, when shown) and before the access-rules section
+
+#### Scenario: Field is omitted without onAuthorChange
+
+- **WHEN** the publish panel renders on its main view without `onAuthorChange`
+- **THEN** no author input is rendered, and the destination row, credentials opt-in, and access-rules section are unaffected
 
 #### Scenario: Editing the field calls onAuthorChange
 

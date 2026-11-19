@@ -302,11 +302,20 @@ const ConversationRoute: FC = () => {
    * still reach READY_TO_INTERACT here after an inaccessible overlayConversationId
    * falls back to this route, rather than staying pre-interactive forever
    * waiting for a conversation that never loads.
+   *
+   * It waits for the deployments fetch to settle: READY_TO_INTERACT tells the
+   * host it may call `createConversation({ firstMessage })`, which needs the
+   * default deployment and failed with INVALID_ARGUMENT while it was unknown.
+   * A failed or empty fetch still settles, so the overlay never stays
+   * pre-interactive.
    */
+  const hasNotifiedOverlayRef = useRef(false);
   useEffect(() => {
-    overlay?.notifyConversationLoaded();
+    if (!overlay || isLoading || hasNotifiedOverlayRef.current) return;
+    hasNotifiedOverlayRef.current = true;
+    overlay.notifyConversationLoaded();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [Boolean(overlay)]);
+  }, [Boolean(overlay), isLoading]);
 
   const { toolsMenuItems, onToolToggle, toolConfigurationValue } = useToolsMenu(
     {

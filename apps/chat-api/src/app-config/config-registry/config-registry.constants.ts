@@ -4,11 +4,9 @@ import {
   DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
 } from '../../projects/constants/project-context.constants';
 import type { ConfigDefinition } from '../app-config.types';
-import { FILE_MANAGER_ALLOWED_TABS } from '../env-admission/file-manager-tabs.admission';
 import {
   localOnlyKey,
   managedConfigKey,
-  managedFeatureKey,
 } from '../managed-config/key-management';
 import {
   LocalOnlyReason,
@@ -16,13 +14,13 @@ import {
   type ManagedValueSchema,
 } from '../managed-config/managed-config.types';
 import { CelebrationDeliveryMode } from '../types/celebration-delivery';
+import { OnboardingHintTarget } from '../types/onboarding-hint-target';
 import { SpendingLimitsMode } from '../types/spending-limits-mode';
 
 /* Non-blank: at least one non-whitespace character. */
 const NON_BLANK_PATTERN = '\\S';
-/* http/https, matched case-insensitively by character classes because the
- * schema carries no regex flags. */
-const HTTP_URL_PATTERN = '^[Hh][Tt][Tt][Pp][Ss]?://[^\\s]+$';
+/* The id allowlist of `onboarding-hints.normalizer.ts`. */
+const ONBOARDING_HINT_ID_PATTERN = '^[A-Za-z0-9._-]{1,64}$';
 
 const boundedText = (
   maxLength: number,
@@ -43,65 +41,51 @@ const boundedText = (
     : { 'dial:meta': { 'dial:propertyOrder': annotations.order } }),
 });
 
-const ANNOUNCEMENT_TITLE_SCHEMA = boundedText(200);
-const ANNOUNCEMENT_DESCRIPTION_SCHEMA = boundedText(2000);
-const WELCOME_SCREEN_DESCRIPTION_SCHEMA = boundedText(1000);
-
-/* Mirrors the shared announcement normalizer: at most 10 entries of
- * { title, description?, link?: { label, href } } with an http(s) href. */
-const ANNOUNCEMENT_ITEMS_SCHEMA: ManagedValueSchema = {
+/* Mirrors `normalizeOnboardingHints`: at most 50 hints of
+ * { id, target, title, description? }. The target enum is every
+ * OnboardingHintTarget value, so a new anchor changes the generated schema and
+ * needs a new schema version. Unique ids cannot be expressed in JSON Schema;
+ * Chat keeps the first hint with an id and drops the rest with a warning.
+ *
+ * Schema 1.0.0 manages only this key. The announcement, welcome-text, File
+ * Manager, usage-limit and spending-limit keys and the usage-limits feature
+ * return, with their value schemas, in schema 1.1.0. */
+const ONBOARDING_HINTS_SCHEMA: ManagedValueSchema = {
   type: ManagedSchemaType.Array,
-  maxItems: 10,
+  maxItems: 50,
   items: {
     type: ManagedSchemaType.Object,
     additionalProperties: false,
-    required: ['title'],
+    required: ['id', 'target', 'title'],
     properties: {
-      title: boundedText(200, { title: 'Title', order: 1 }),
-      description: boundedText(2000, {
+      id: {
+        type: ManagedSchemaType.String,
+        minLength: 1,
+        maxLength: 64,
+        pattern: ONBOARDING_HINT_ID_PATTERN,
+        title: 'ID',
+        description:
+          'Letters, digits, dot, underscore or hyphen, at most 64. Each browser remembers the ids it has shown, so a new id shows the hint again to everyone; editing the text or the order does not. When two hints share an id, only the first is shown.',
+        'dial:meta': { 'dial:propertyOrder': 1 },
+      },
+      target: {
+        type: ManagedSchemaType.String,
+        enum: Object.values(OnboardingHintTarget),
+        title: 'Target',
+        description:
+          'The on-screen element the hint points at. The tour skips a hint whose element is not on the current page and shows it on a page that renders it.',
+        'dial:meta': { 'dial:propertyOrder': 2 },
+      },
+      title: boundedText(100, { title: 'Title', order: 3 }),
+      description: {
+        type: ManagedSchemaType.String,
+        maxLength: 500,
         title: 'Description',
-        description: 'Sanitized to a safe HTML subset.',
-        order: 2,
-      }),
-      link: {
-        type: ManagedSchemaType.Object,
-        additionalProperties: false,
-        required: ['label', 'href'],
-        title: 'Link',
-        'dial:meta': { 'dial:propertyOrder': 3 },
-        properties: {
-          label: boundedText(100, { title: 'Label', order: 1 }),
-          href: {
-            type: ManagedSchemaType.String,
-            maxLength: 2048,
-            pattern: HTTP_URL_PATTERN,
-            title: 'URL',
-            description: 'Absolute http or https URL.',
-            'dial:meta': { 'dial:propertyOrder': 2 },
-          },
-        },
+        description: 'Optional plain text below the title.',
+        'dial:meta': { 'dial:propertyOrder': 4 },
       },
     },
   },
-};
-
-const FILE_MANAGER_TABS_SCHEMA: ManagedValueSchema = {
-  type: ManagedSchemaType.Array,
-  minItems: 1,
-  maxItems: FILE_MANAGER_ALLOWED_TABS.length,
-  uniqueItems: true,
-  items: { type: ManagedSchemaType.String, enum: FILE_MANAGER_ALLOWED_TABS },
-};
-
-const USAGE_WARNING_THRESHOLD_SCHEMA: ManagedValueSchema = {
-  type: ManagedSchemaType.Integer,
-  minimum: 1,
-  maximum: 99,
-};
-
-const SPENDING_LIMITS_MODE_SCHEMA: ManagedValueSchema = {
-  type: ManagedSchemaType.String,
-  enum: Object.values(SpendingLimitsMode),
 };
 
 export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
@@ -255,13 +239,6 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Operator-authored plain-text heading shown in bold at the start of the announcement banner line. Rendered as text, never as markup. Null/blank omits the heading. Sourced from ANNOUNCEMENT_TITLE.',
     owner: 'chat-team',
     envVar: 'ANNOUNCEMENT_TITLE',
-    management: managedConfigKey({
-      title: 'Announcement title',
-      description:
-        'Plain-text heading at the start of the announcement banner. Never rendered as markup.',
-      order: 10,
-      value: ANNOUNCEMENT_TITLE_SCHEMA,
-    }),
   },
   {
     key: 'announcement.description',
@@ -274,13 +251,6 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Operator-authored supporting copy shown after the announcement banner title. Sanitized server-side to a safe HTML subset. Null/blank omits the description. Sourced from ANNOUNCEMENT_DESCRIPTION.',
     owner: 'chat-team',
     envVar: 'ANNOUNCEMENT_DESCRIPTION',
-    management: managedConfigKey({
-      title: 'Announcement description',
-      description:
-        'Supporting banner copy. Sanitized to a safe HTML subset before it reaches browsers.',
-      order: 11,
-      value: ANNOUNCEMENT_DESCRIPTION_SCHEMA,
-    }),
   },
   {
     key: 'announcement.items',
@@ -293,13 +263,6 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'List of announcements shown in the popover behind the banner\'s "+N announcements" pill. JSON array of { title, description?, link?: { label, href } }. Entries with a blank title, or with a link whose label is blank or whose href is not http/https, are dropped with a warning. Empty (pill hidden) when ANNOUNCEMENTS is unset or malformed; boot never fails on bad config.',
     owner: 'chat-team',
     envVar: 'ANNOUNCEMENTS',
-    management: managedConfigKey({
-      title: 'Announcements',
-      description:
-        'Entries behind the banner\'s "+N announcements" pill, at most 10.',
-      order: 12,
-      value: ANNOUNCEMENT_ITEMS_SCHEMA,
-    }),
   },
   {
     key: 'onboarding.hints',
@@ -312,6 +275,13 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Onboarding hints shown once, step by step, to a user who has not seen them. JSON array of { id, target, title, description? }; target is one of the anchors listed in docs/onboarding-anchors.md. Entries with an invalid or duplicate id, an unknown target or a blank title are dropped with a warning. Empty (no tour) when ONBOARDING_HINTS is unset or malformed; boot never fails on bad config.',
     owner: 'chat-team',
     envVar: 'ONBOARDING_HINTS',
+    management: managedConfigKey({
+      title: 'Onboarding tour',
+      description:
+        'Hints shown one at a time, in this order, to users who have not seen them. Each points at an on-screen element; at most 50. A hint whose id repeats an earlier one is dropped.',
+      order: 15,
+      value: ONBOARDING_HINTS_SCHEMA,
+    }),
   },
   {
     key: 'welcomeScreen.description',
@@ -324,13 +294,6 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Operator-authored plain-text copy shown below the greeting heading on the new-chat start screen. Rendered as text, never as markup. Null/blank hides it. Sourced from WELCOME_SCREEN_DESCRIPTION.',
     owner: 'chat-team',
     envVar: 'WELCOME_SCREEN_DESCRIPTION',
-    management: managedConfigKey({
-      title: 'Welcome text',
-      description:
-        'Plain-text copy below the greeting on the new-chat screen. Never rendered as markup.',
-      order: 20,
-      value: WELCOME_SCREEN_DESCRIPTION_SCHEMA,
-    }),
   },
   {
     key: 'footer.html',
@@ -380,6 +343,32 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Deployment ID of the utility model used for server-side tasks such as LLM conversation naming. Null when UTILITY_MODEL is not configured.',
     owner: 'chat-team',
     envVar: 'UTILITY_MODEL',
+    management: localOnlyKey(LocalOnlyReason.Capability),
+  },
+  {
+    key: 'analytics.url',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'server',
+    defaultValue: null,
+    critical: false,
+    description:
+      "Base URL of DIAL Analytics (ADAS), read by GET /api/v1/user/usage/history with the caller's own token. Null when ANALYTICS_URL is not configured, which turns the route off (it answers not_configured). Never exposed to the frontend client-config endpoint (visibility: server).",
+    owner: 'chat-team',
+    envVar: 'ANALYTICS_URL',
+    management: localOnlyKey(LocalOnlyReason.DeploymentTopology),
+  },
+  {
+    key: 'analytics.timeoutMs',
+    type: 'config',
+    valueType: 'number',
+    visibility: 'server',
+    defaultValue: 10_000,
+    critical: false,
+    description:
+      'Timeout in milliseconds of each DIAL Analytics call made for one usage-history request. No retries. Never exposed to the frontend client-config endpoint (visibility: server).',
+    owner: 'chat-team',
+    envVar: 'ANALYTICS_TIMEOUT_MS',
     management: localOnlyKey(LocalOnlyReason.Capability),
   },
   {
@@ -546,12 +535,6 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Which File Manager tabs are shown to users. Defaults to the All tab plus the three source tabs when FILE_MANAGER_AVAILABLE_TABS is unset or resolves to no valid ids.',
     owner: 'chat-team',
     envVar: 'FILE_MANAGER_AVAILABLE_TABS',
-    management: managedConfigKey({
-      title: 'File Manager tabs',
-      description: 'File Manager tabs shown to users, in order.',
-      order: 30,
-      value: FILE_MANAGER_TABS_SCHEMA,
-    }),
   },
   {
     key: 'features.liveChatInteraction',
@@ -641,12 +624,6 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'next to the model selector. Off by default.',
     owner: 'chat-team',
     envVar: 'USAGE_LIMITS_CONTROL_ENABLED',
-    management: managedFeatureKey({
-      title: 'Usage-limits control',
-      description:
-        'Shows the token and cost usage-limits control next to the model selector.',
-      order: 1,
-    }),
   },
   {
     key: 'features.orgUnitsEnabled',
@@ -788,13 +765,6 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Percentage (1–99) of a capped day/week/month token or cost limit at which the composer shows its usage banner above the input. Governs the banner only — the usage dial and the Settings → Usage page keep their fixed 75% running-low mark.',
     owner: 'chat-team',
     envVar: 'USAGE_LIMITS_WARNING_THRESHOLD_PERCENT',
-    management: managedConfigKey({
-      title: 'Usage warning threshold (%)',
-      description:
-        'Percentage of a capped token or cost limit at which the composer shows its usage banner.',
-      order: 40,
-      value: USAGE_WARNING_THRESHOLD_SCHEMA,
-    }),
   },
   {
     key: 'usageLimits.spendingLimitsMode',
@@ -807,12 +777,5 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       "DIAL Core's spendingLimits.mode (off, shadow or enforce), which DIAL Core does not report to the caller. Decides whether Settings → Usage shows the caller's budgets, and whether the Usage page, the usage banner and the usage dial present the role cost limit (off, shadow) or only the budgets (enforce). Must equal DIAL Core's value; off by default.",
     owner: 'chat-team',
     envVar: 'SPENDING_LIMITS_MODE',
-    management: managedConfigKey({
-      title: 'Spending limits mode',
-      description:
-        "DIAL Core's spending limits mode: off, shadow or enforce. Must match DIAL Core.",
-      order: 41,
-      value: SPENDING_LIMITS_MODE_SCHEMA,
-    }),
   },
 ];

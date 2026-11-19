@@ -3,7 +3,7 @@ import type {
   ManagedSnapshot,
 } from './managed-runtime.types';
 
-/** A managed feature state as the `chat-ui` schema defines it. */
+/** A managed feature state as the `ai-dial-chat` schema defines it. */
 export interface ManagedFeatureState {
   readonly enabled: boolean;
   readonly availability?: {

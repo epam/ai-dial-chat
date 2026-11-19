@@ -234,6 +234,8 @@ Accessibility: the submit-error callout SHALL use `role="alert"`.
 
 `DetailsPanel`'s `usePublishFlow` instance SHALL supply `rules`/`setRules` to its inline `PublishPanel` render via the `rules`/`onRulesChange` props, together with `ruleSourceOptions`. `ruleSourceOptions` is threaded down from `CatalogProps.ruleSourceOptions?: string[]` through `Catalog` and `DetailsPanelProps`, the same way `publishFolderItems`/`publishLabels` are, and `DetailsPanel` defaults it to an empty list when absent. `CatalogView` supplies it from `useAppConfig().config.publicationFilterSources`.
 
+A host MAY opt out of the section with `CatalogProps.hidePublishAccessRules?: boolean` (default `false`, threaded `Catalog` → `DetailsPanel` → `DetailsPublishContent`, the same way `hideCreateButton` is). When it is set, `DetailsPublishContent` SHALL NOT pass `rules`/`onRulesChange` to `PublishPanel`, so the section and its "Add rule" control are not rendered. The publish flow still owns `rules`: when `onFetchExistingRules` is supplied it keeps pre-filling them for the selected folder, and `onPublish` receives them unchanged (an empty array when none were fetched), so publishing without the section never drops a folder's existing rules.
+
 `CatalogView` SHALL pass `handlePublish` from the app hook `useCatalogPublishing` (`apps/chat/src/hooks/useCatalogPublishing/useCatalogPublishing.ts`) as `onPublish`. Its signature is `(item, folderPath, rules, author, publishCredentials)`; it SHALL map `rules` through `toPublishRuleDto` and forward them to `publishCatalogEntity`, which includes them in the request body sent to `POST /api/v1/catalog/{entityType}/{entityId}/publish` (see `catalog-publish-api`).
 
 #### Scenario: Rules entered in the details panel reach the publish call
@@ -245,6 +247,12 @@ Accessibility: the submit-error callout SHALL use `role="alert"`.
 - **GIVEN** the user has not added any rules
 - **WHEN** the user clicks Publish for a toolset
 - **THEN** `publishCatalogEntity` is called with `rules: []`, identical to today's behavior
+
+#### Scenario: Hidden access rules render no section and still publish
+- **GIVEN** the host sets `hidePublishAccessRules`
+- **WHEN** the Publish sub-view opens in `DetailsPanel`
+- **THEN** no "Allow access if all match" section or "Add rule" control is rendered
+- **AND** after the user selects a folder and clicks Publish, `onPublish` is called with the rules `onFetchExistingRules` resolved for that folder, or `[]` when none were resolved
 
 #### Scenario: Same rules section appears for applications and toolsets
 - **WHEN** the Publish sub-view opens inside `DetailsPanel` for an Application and, separately, for a Toolset
@@ -269,6 +277,8 @@ The catalog publish sub-view SHALL show the shared publish panel's author field,
 
 State ownership: `DetailsPanel`'s existing `usePublishFlow` instance owns `author`/`setAuthor` (see `publish-panel-library`) and supplies them to its inline `PublishPanel` render via the new required `author`/`onAuthorChange` props, threaded the same way `rules`/`onRulesChange` already are.
 
+A host that collects the author elsewhere MAY opt out of the field with `CatalogProps.hidePublishAuthor?: boolean` (default `false`, threaded `Catalog` → `DetailsPanel` → `DetailsPublishContent`, the same way `hideCreateButton` is). When it is set, `DetailsPublishContent` SHALL NOT pass `author`/`onAuthorChange` to `PublishPanel`, so the field is not rendered, and `onPublish` receives `publishDefaultAuthor` (or an empty string) as its author argument. `pg-chat` sets both `hidePublishAuthor` and `hidePublishAccessRules` and does not pass `publishDefaultAuthor`, so its publish requests carry no `author` and the backend's session-derived fallback applies.
+
 Prefill is host-resolved, not lib-resolved. `CatalogProps` and `DetailsPanelProps` (`libs/catalog/src/models/item-details-props.ts`) SHALL gain `publishDefaultAuthor?: string`, threaded `CatalogView` → `Catalog` → `DetailsPanel` → `usePublishFlow`'s `defaultAuthor` option, exactly as `publishFolderItems`/`publishLabels` already are. `CatalogView` SHALL resolve the value from `useUserProfile()`'s `displayName`. Neither `libs/catalog` nor `libs/publish-panel` reads `UserContext`, OIDC claims, or i18n for it, per AGENTS.md §Library isolation; `publishDefaultAuthor` is the app-level adapter contract that carries the host's session knowledge across the boundary.
 
 Submission: `CatalogProps.onPublish` and `DetailsPanelProps.onPublish` SHALL take the author as a fourth argument, matching `usePublishFlow`'s extended `onPublish` signature. `CatalogView.handlePublish` (delegating to `useCatalogPublishing`'s `handlePublish`) SHALL accept that argument and forward it to `publishCatalogEntity`, which SHALL include it in the request body's `author` field sent to `POST /api/v1/catalog/{entityType}/{entityId}/publish` (see `catalog-publish-api`). When the value is empty after trimming, `handlePublish` SHALL omit `author` from the request body entirely rather than sending an empty string, so the backend's session-derived fallback applies.
@@ -286,6 +296,11 @@ Feature gating: none. The field is not behind `ENABLED_FEATURES`/`ENABLED_FEATUR
 - **GIVEN** the signed-in user's profile resolves `displayName` to `"Daniil Pavlov"`
 - **WHEN** the user opens the publish sub-view for a toolset
 - **THEN** the author field shows `"Daniil Pavlov"` without the user typing anything
+
+#### Scenario: Hidden author renders no field and omits author from the request
+- **GIVEN** the host sets `hidePublishAuthor` and supplies no `publishDefaultAuthor`
+- **WHEN** the Publish sub-view opens in `DetailsPanel` and the user selects a folder and clicks Publish
+- **THEN** no author field is rendered, `onPublish` receives `''` as its author argument, and `publishCatalogEntity` is called with no `author` key
 
 #### Scenario: Edited author reaches the publish call
 

@@ -21,6 +21,8 @@ export interface DetailsPublishContentProps extends Pick<
   | 'resolvePublishDependenciesLabels'
   | 'resolvePublishApprovalLabels'
   | 'publishVersionHistory'
+  | 'hidePublishAuthor'
+  | 'hidePublishAccessRules'
 > {
   /** Rule source options, with the panel default already applied. */
   ruleSourceOptions: string[];
@@ -50,6 +52,8 @@ export const DetailsPublishContent: FC<DetailsPublishContentProps> = ({
   resolvePublishDependenciesLabels,
   resolvePublishApprovalLabels,
   publishVersionHistory,
+  hidePublishAuthor,
+  hidePublishAccessRules,
 }) => (
   <div className="p-4 desktop:p-[22px]">
     <PublishPanel
@@ -77,16 +81,16 @@ export const DetailsPublishContent: FC<DetailsPublishContentProps> = ({
       isSubmitting={publishFlow.isSubmitting}
       hasSubmitError={publishFlow.hasSubmitError}
       allowReplace={CATALOG_PUBLISH_ALLOWS_REPLACE}
-      author={publishFlow.author}
-      onAuthorChange={publishFlow.setAuthor}
+      author={hidePublishAuthor ? undefined : publishFlow.author}
+      onAuthorChange={hidePublishAuthor ? undefined : publishFlow.setAuthor}
       publishCredentials={publishFlow.publishCredentials}
       onPublishCredentialsChange={
         isPublishCredentialsEligible
           ? publishFlow.setPublishCredentials
           : undefined
       }
-      rules={publishFlow.rules}
-      onRulesChange={publishFlow.setRules}
+      rules={hidePublishAccessRules ? undefined : publishFlow.rules}
+      onRulesChange={hidePublishAccessRules ? undefined : publishFlow.setRules}
       ruleSourceOptions={ruleSourceOptions}
       isRulesLoading={publishFlow.isRulesLoading}
       hasRulesLoadError={publishFlow.hasRulesLoadError}

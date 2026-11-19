@@ -1958,14 +1958,19 @@ Its keyboard and Browse behavior is exercised by the packed scheduler consumer.
 ### SigninInterruptDialog
 
 `SigninInterruptDialog` is the non-dismissible popup a host shows while a running
-application or toolset waits for the user to sign in mid-flow. Each
-`SigninInterruptDialogRow` renders the resource name and version, an optional
-password-type API key field, an always-mounted assertive region for its
-`errorMessage` with a Retry action, an optional DIAL-native hint, and Decline /
-Log in actions — or the no-credentials label when `requiresNoCredentials` is set.
-A processing row is `aria-busy`, its controls are disabled and Log in shows a
-spinner. `Decline all` renders only while more than one row is listed, the
-offline-use consent checkbox only when `isOfflineUsageConsentShown` is set, and
+application or toolset waits for the user to sign in mid-flow. Rows are
+separated by spacing, not rules, and tint on hover or focus. Each
+`SigninInterruptDialogRow` is one line — the resource name, its version in
+secondary text, an icon-only Decline action and a Log in action (labelled Retry
+while `errorMessage` is set), or the no-credentials label when
+`requiresNoCredentials` is set — with an optional password-type API key field,
+an always-mounted assertive region for `errorMessage` and an optional DIAL-native
+hint below it. A processing row is `aria-busy`, its controls are disabled and
+its login action shows a spinner. While more than one row is listed, the heading
+shows the row count and the footer holds `Decline all` plus `Log in to <name>`,
+which calls `onLogin` with the first row that is idle, needs credentials and can
+submit (omitted when there is none). The offline-use consent checkbox renders
+only when `isOfflineUsageConsentShown` is set, and
 `statusMessage` is announced in a visually hidden polite region. An empty `rows`
 list renders nothing.
 
@@ -2003,15 +2008,17 @@ import { SigninInterruptDialog } from '@epam/ai-dial-catalog';
 ```
 
 `labels` (`SigninInterruptDialogLabels`) overrides `title`, `description`,
-`declineAll`, `decline`, `logIn`, `retry`, `apiKeyLabel`, `apiKeyPlaceholder`,
-`dialNativeHint`, `noCredentialsRequired`, `offlineUsageConsent` and
-`offlineUsageConsentHint`; each defaults to its English text. `colors`
-(`SigninInterruptDialogColors`) sets `rowBorder` (`--stroke-primary`), `nameText`
+`declineAll`, `logInTo` (a function of the row name, defaulting to
+`` (name) => `Log in to ${name}` ``), `decline` (the icon button's accessible
+name), `logIn`, `retry`, `apiKeyLabel`, `apiKeyPlaceholder`, `dialNativeHint`,
+`noCredentialsRequired`, `offlineUsageConsent` and `offlineUsageConsentHint`;
+each defaults to its English text. `colors` (`SigninInterruptDialogColors`) sets
+`rowHoverBackground` (`--bg-control-neutral-hover-muted`), `nameText`
 (`--text-primary`), `errorText` (`--text-error`), `hintText` and `descriptionText`
 (both `--text-secondary`) as `--cat-signin-*` custom properties inside the popup.
 Typography props: `descriptionClassName` (`'dial-small-text'`), `nameClassName`
 (`'dial-body-semi-text'`), `errorClassName` (`'dial-small-text'`) and
-`hintClassName` (`'dial-small-text'`).
+`hintClassName` (`'dial-small-text'`, also used for the version).
 
 ## Responsive menus and details
 
