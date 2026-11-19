@@ -24,11 +24,15 @@ Motivation, scope and acceptance criteria are in `proposal.md`; requirements are
 
 ## Decisions
 
-### D1. The right is one pure function plus one hook answer, mirrored on the server
+### D1. The right is one pure function plus one hook answer, decided in the client
 
-`canApprovePublicationsAt(access, publicPath)` joins `canWriteIntoOrgUnitAt` in `libs/chat-shared/src/utils/org-unit.ts`: admin, or `read` and `write` on `publications` at the owning unit. `useOrgUnits` adds `canPublishDirectlyAt(path, namespace)` = owning unit exists AND `canWriteIntoOrgUnitAt` AND `canApprovePublicationsAt`, `false` until `Ready`. `buildFolderGuards` exposes `canPublishDirectlyTo` for the Publish purpose; `getMissingDirectWriteNamespaces` already names missing dependency types and is reused as is. `apps/chat-api/src/org-units/org-unit-rights.util.ts` gains the mirror of `canApprovePublicationsAt` with a comment naming its frontend counterpart, and tests that copy the frontend's cases (as D3 of the archived save-with-dependencies change does).
+`canApprovePublicationsAt(access, publicPath)` joins `canWriteIntoOrgUnitAt` in `libs/chat-shared/src/utils/org-unit.ts`: admin, or `read` and `write` on `publications` at the owning unit. `useOrgUnits` adds `canPublishDirectlyAt(path, namespace)` = owning unit exists AND `canWriteIntoOrgUnitAt` AND `canApprovePublicationsAt`, `false` until `Ready`. `buildFolderGuards` exposes `canPublishDirectlyTo` for the Publish purpose; `getMissingDirectWriteNamespaces` already names missing dependency types and is reused as is.
 
-Alternative: one `canPublishDirectlyAt` that bakes the `write` half in without exposing `canApprovePublicationsAt` (rejected: the server mirror and the tests want the two halves apart).
+The right selects the panel's mode and nothing more: DIAL Core does not enforce `publications` on a copy, and any caller with `write` on the namespace can already write through the same endpoint (the Save panel does), so a server mirror would protect nothing and prevent no partial copy. This is the Save panel's pattern: the client decides the mode and highlights folders, the server checks namespaces only where a refusal in the middle would leave partial copies (an application's dependencies), and DIAL Core is the authority.
+
+DIAL Core decides an approval in every unit the request touches; all targets of one publication (application, dependencies, icon) lie in the one folder, so checking the folder's owning unit is the same check. Its further condition, that the caller is not an application acting for a user (`OrgUnitSubjects.isRoleHolder`), always holds for a chat session.
+
+Alternative: one `canPublishDirectlyAt` that bakes the `write` half in without exposing `canApprovePublicationsAt` (rejected: the two halves are tested apart).
 
 ### D2. The flow decides the branch; the host supplies two callbacks
 
@@ -38,24 +42,19 @@ Alternative: one `onPublish` with a sixth positional argument `isDirectWrite`, a
 
 ### D3. The panel hides publication-only controls and names the mode
 
-`PublishPanel` takes `isDirectWrite` and `directWriteNote`, hides the rules section, the author field and the credentials checkbox, shows the note where the credentials checkbox would be (only for a toolset that would offer one), and takes `labels.directSubmit`. `usePublishFlow`'s existing-rules effect must not fetch for a direct folder: it keys on `isDirectWrite`. `DetailsPanel` and `useDetailsPublish` thread the flow's `isDirectWrite` and `derivePublishState` keeps the footer states (`isTargetTaken`, `isTargetChecking`, `hasWriteAccess`). The host passes the direct label, the note and the typed disabled reasons as translated strings.
+`PublishPanel` takes `isDirectWrite`, hides the rules section, the author field and the credentials checkbox, and shows `labels.directWriteNote` where the credentials checkbox would be (the host supplies it only for a toolset that would offer one). The submit button keeps its label, as the Save panel's does between a direct write and a request. `usePublishFlow`'s existing-rules effect must not fetch for a direct folder: it keys on `isDirectWrite`. `DetailsPanel` and `useDetailsPublish` thread the flow's `isDirectWrite` and `derivePublishState` keeps the footer states (`isTargetTaken`, `isTargetChecking`, `hasWriteAccess`). The host passes the note and the typed disabled reasons as translated strings. For a direct folder the flow ignores the history marker `hasExistingPublicationInFolder`, does not send `rules` or `publishCredentials`, and clears the credentials choice on entering a direct folder; moving back to a request folder loads that folder's rules again through the existing effect.
 
-### D4. The copy endpoint takes `asPublication`, names by version and checks `publications`
+### D4. The copy endpoint takes `version` and names the copy like a publication
 
-`CopyCatalogEntityToOrgUnitDto` gains optional `asPublication` (boolean) and `version`. Without `asPublication` nothing changes (the Save panel). With it, chat-api:
+`CopyCatalogEntityToOrgUnitDto` gains an optional `version`. Without it nothing changes (the Save panel sends none). With it, chat-api rebuilds the entity's full plain id from the resolved source (the endpoint accepts a bare name too), calls `resolvePublishTarget` and takes its `targetResourceName` (versioned for an application or a toolset when `version` is valid and the stored name has a `__` suffix, else the stored name), and uses that name for the application, its `.{app}.deps` folder, the icon target and the staging copy, so every path matches a publication's. An unversioned type or a name without a suffix is not renamed.
 
-1. derives the target leaf with `resolvePublishTarget` (versioned name for an application or a toolset when `version` is valid, else the stored leaf), and uses that leaf for the application and for its `.{app}.deps` namespace, so every path matches a publication's;
-2. adds `publications` to the rights check before the first copy: the caller must be a DIAL admin or hold `read` and `write` on `publications` in the folder's unit (mirror of D1), otherwise `403` naming `publications`.
+A `409` gets the publish endpoint's `PublishConflictCode.TargetExists` only where the target is confirmed: the BFF's own check before the first copy, or a `409` from DIAL Core followed by a read that finds the target (the publish precedent, `isTargetTakenRejection`). Other Core `409`s, such as a skill named like a unit folder, keep no code, so the host's guard does not show a wrong callout. The code is added for every caller (status and message unchanged), so the Save panel is unaffected.
 
-The `publications` check is a policy for this panel's mode, not a security boundary: Core already allows any `write` on the entity's namespace. It is on the server so the panel and the server decide alike and a stale panel is refused before any copy. `asPublication` is an explicit flag, not inferred from `version`: prompts and skills have no version.
-
-A `409` for a taken target carries the same machine-readable code as the publish endpoint's (`PublishConflictCode.TargetExists`), so the host recognises it with the guard it already has.
-
-Alternatives: infer from `version` (rejected: unversioned types); a separate endpoint (rejected: same executor, same DTO, a second route to document and generate); put the check only in the client (rejected: stale panel, partial copies).
+Alternatives: a mode flag plus a server `publications` check (rejected, see D1: it protects nothing); a separate endpoint (rejected: same executor, same DTO, a second route to document and generate).
 
 ### D5. The host wraps the direct callback with the taken-target guard
 
-`useCatalogPublishing` adds `publishDirectly` calling the generated client's `copyCatalogEntityToOrgUnit` through `apps/chat/src/server-api/publish.api.ts` with `{ folderPath, version, asPublication: true }`, converted by the same guard that wraps `publishItem`, so `isTargetTakenError` recognises its `409`. `CatalogView` supplies `canPublishDirectlyTo` from `buildFolderGuards` (Publish purpose, entity namespace), refreshes rights when the panel opens (`refreshUnits`, as the Save panel does) and passes the typed disabled reasons for missing dependency namespaces. `checkTargetExists` is unchanged.
+`useCatalogPublishing` adds `publishDirectly` calling the generated client's `copyCatalogEntityToOrgUnit` through `apps/chat/src/server-api/publish.api.ts` with `{ folderPath, version }`, converted by the same guard that wraps `publishItem`, so `isTargetTakenError` recognises its `409`. `CatalogView` supplies `canPublishDirectlyTo` from `buildFolderGuards` (Publish purpose, entity namespace), refreshes rights when the panel opens (`refreshUnits`, as the Save panel does) and passes the typed disabled reasons for missing dependency namespaces. `checkTargetExists` is unchanged.
 
 ### D6. Success and notification
 
@@ -77,4 +76,4 @@ The list stays `getPublishDependencies` (Core-backed, best-effort for display); 
 
 ## Migration Plan
 
-No data migration. Deploy backend first or together (the new DTO fields `asPublication` and `version` are optional; the panel changes are additive and inactive until the host passes the callbacks). Rollback: revert the change; copies already written stay valid. Run `npm run openapi` and `npm run openapi:check`, `npm run validate:docs` and `npm run validate:specs`.
+No data migration. Deploy backend first or together (the new DTO field `version` is optional; the panel changes are additive and inactive until the host passes the callbacks). Rollback: revert the change; copies already written stay valid. Run `npm run openapi` and `npm run openapi:check`, `npm run validate:docs` and `npm run validate:specs`.

@@ -15,21 +15,21 @@ A publish panel always files a publication request, even for a user who holds th
 
 When the committed destination is a folder inside an org unit and the user may write there **and** may approve publications there, the catalog Publish panel writes the entity directly, reusing `copy-to-org-unit`, instead of filing a request.
 
-1. **The right.** Direct publish is offered when all hold: the folder lies inside a listed unit; the unit (or the user's admin access) grants `write` on the entity's namespace and, for an application, on the namespace of each dependency to copy; and the user is a DIAL admin or the unit grants both `read` and `write` on `publications`. A new pure function next to `canWriteIntoOrgUnitAt` decides the `publications` half and `useOrgUnits` exposes the combined answer. chat-api keeps its own mirror, as it does for `write` (no import of chat-shared).
+1. **The right.** Direct publish is offered when all hold: the folder lies inside a listed unit; the unit (or the user's admin access) grants `write` on the entity's namespace and, for an application, on the namespace of each dependency to copy; and the user is a DIAL admin or the unit grants both `read` and `write` on `publications`. A new pure function next to `canWriteIntoOrgUnitAt` decides the `publications` half and `useOrgUnits` exposes the combined answer.
 2. **The flow.** `usePublishFlow` gets two optional inputs: `canPublishDirectlyTo(folderPath)` and `onPublishDirectly`. When the selected folder qualifies, submit calls `onPublishDirectly` instead of `onPublish`. The host passes two callbacks; the lib learns nothing about endpoints.
-3. **The panel.** For a direct destination the panel hides the rules editor and the author field (Core takes neither), hides the credentials checkbox with one neutral line that credentials are not shared by a direct save, and changes the submit and success wording to "saved to the folder". Dependencies keep their current list, loaded from Core as today; the folder is disabled with a typed reason when the user cannot write a dependency's namespace (`getMissingDirectWriteNamespaces`).
-4. **The backend.** `copy-to-org-unit` gets optional `asPublication` and `version`; with `asPublication` the copy lands at the path a publication would use (and the server also checks the `publications` right) (`resolvePublishTarget`), so the existing `checkPublishTarget` the panel already calls checks exactly the path that will be written. The `409` for a taken target is mapped to the existing taken-target callout. Everything else (dependencies, icon, rights before the first copy, staging, no rollback) is unchanged.
+3. **The panel.** For a direct destination the panel hides the rules editor and the author field (Core takes neither), hides the credentials checkbox with one neutral line that credentials are not shared by a direct save, and reports the success as "saved to the folder"; the submit button keeps its label. Dependencies keep their current list, loaded from Core as today; the folder is disabled with a typed reason when the user cannot write a dependency's namespace (`getMissingDirectWriteNamespaces`).
+4. **The backend.** `copy-to-org-unit` gets an optional `version`; with it the copy lands at the path a publication would use (`resolvePublishTarget`), so the existing `checkPublishTarget` the panel already calls checks exactly the path that will be written. The `409` for a taken target carries the taken-target code and shows the existing callout. Everything else (dependencies, icon, rights before the first copy, staging, no rollback) is unchanged.
 5. **Everything else is as before.** A folder outside every unit, a unit where the user lacks any of the rights, conversations and projects, and the Save panel keep their current behaviour.
 
 ## What Changes
 
 - chat-shared: a `publications` approval right and the combined direct-publish right (pure functions).
 - chat-hooks: `useOrgUnits` exposes the combined check; the guards builder gets a publish-direct variant; the catalog publish hook wiring.
-- publish-panel: `usePublishFlow` options and result (`isDirectWrite`), panel sections hidden for a direct destination, labels for the new wording.
+- publish-panel: `usePublishFlow` options and result (`isDirectWrite`), panel sections hidden for a direct destination, one label for the credentials line.
 - apps/chat: `useCatalogPublishing` adds the direct callback over the generated client; `CatalogView` passes the right check and refreshes rights when the panel opens; new translated strings and notification variant.
-- chat-api: optional `asPublication` and `version` on `CopyCatalogEntityToOrgUnitDto`; target naming through `resolvePublishTarget`; the mirrored `publications` check on the server before the first copy; `409` carries the existing taken-target code.
+- chat-api: optional `version` on `CopyCatalogEntityToOrgUnitDto`; target naming through `resolvePublishTarget`; the taken-target code on the `409` where the target is confirmed. The `publications` right is not checked on the server (Core does not enforce it on a copy; it only selects the panel's mode).
 - generated client: `npm run openapi`, `npm run openapi:check`.
-- **No BREAKING change.** `asPublication` and `version` are optional and the new panel inputs are optional.
+- **No BREAKING change.** `version` is optional and the new panel inputs are optional.
 
 ## Capabilities
 
@@ -41,7 +41,7 @@ None.
 
 - `org-units-folder-permissions`: the sentence "Publications are unchanged everywhere" gives way to the rule that a publish panel writes directly when the user holds `write` on the namespaces and `read` and `write` on `publications`; the known-risk text names the differences from an approved publication.
 - `org-units-client-state`: the hook answers the combined direct-publish right per path.
-- `org-units-api`: `copy-to-org-unit` takes optional `asPublication` and `version`, names the copy like a publication when asked, and checks `publications` rights before the first copy.
+- `org-units-api`: `copy-to-org-unit` takes an optional `version`, names the copy like a publication when it is given, and marks a confirmed taken target with the publish endpoint's code.
 - `catalog-publish-flow`: the catalog Publish panel's direct branch, hidden sections, wording and notifications.
 - `publish-panel-library`: `usePublishFlow` options and result, panel behaviour for a direct destination, labels.
 
@@ -68,7 +68,7 @@ None.
 - Without `read` or without `write` on `publications`, the panel behaves exactly as today for that folder (request).
 - The copy lands at `{name}__{version}` of the panel's version, and a taken name is shown before submit by the existing target check and after a racing submit by the same callout.
 - For a direct destination the rules editor, the author field and the credentials checkbox are not shown; the credentials line is.
-- A missing namespace for a dependency disables the folder with a typed reason; the server answers `403` naming the missing namespaces, including `publications`, before the first copy.
+- A missing namespace for a dependency disables the folder with a typed reason; the server answers `403` naming the missing namespaces before the first copy.
 - A failure in the middle keeps the panel open with the error; submitting again completes the copy.
 - Conversations, projects and the Save panel behave exactly as before.
 
@@ -79,7 +79,7 @@ None.
 | Keep filing a request for everyone | Rejected. The user holds the rights to approve their own request; the request only adds a step. |
 | Let the BFF choose request or direct inside `/publish` and return a discriminator | Rejected. One endpoint with two outcomes; the panel must know the mode before submit anyway to hide fields and change wording. |
 | File the request and approve it in the same call | Rejected. It keeps Core's full publication semantics (author, credentials, consent) but needs the approval endpoint and leaves a publication record; adds a call and a failure mode (request filed, approval fails). Worth revisiting if the differences below prove unacceptable. |
-| **Reuse `copy-to-org-unit` with optional `asPublication` and `version`, branch in the flow** | **Chosen.** One executor already shipped for the Save panel; the path and the taken-name check match the publication. |
+| **Reuse `copy-to-org-unit` with an optional `version`, branch in the flow** | **Chosen.** One executor already shipped for the Save panel; the path and the taken-name check match the publication. |
 | Branch in the host's single `onPublish` through an extra positional argument | Rejected as the primary shape: the lib would not know when the panel changes shape. |
 
 ## Known limitations (documented, not guarded)
