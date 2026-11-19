@@ -120,6 +120,11 @@ Public types: `SkillSelectorFieldProps`, `SkillSelectorFieldLabels`,
 composition. Its optional favorite/details callbacks hide their actions when
 omitted.
 
+The slash menu searches the whole catalog: `useSkillSelectorOverlay` passes the
+favorites as `favorites` and every other listed skill as `otherSkills`. In
+search mode, an empty query included, matching `otherSkills` render after the
+matching favorites, without a star.
+
 The chat overlay's compatibility signal also depends on the selected reference,
 independently of catalog loading or deletion; unresolved selections keep a
 fallback chip and remain removable. `isSkillsSupported` still hides the chat
