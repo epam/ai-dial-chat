@@ -216,6 +216,8 @@ export interface ApplicationSavePanelConfig<TSetup = ApplicationSetupValues> {
     setup: TSetup,
     ctx: ApplicationEditorContext,
   ) => ApplicationValuesDependenciesRequestDto | undefined;
+  /** Whether the kind's form state lives inside an embedded editor, so the panel cannot list the dependencies of the current values and shows one sentence instead. Defaults to `false`. */
+  isFormStateEmbedded?: boolean;
 }
 
 /** Metadata field state an application kind derives from the editor mode. */

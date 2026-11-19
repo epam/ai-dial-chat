@@ -1,3 +1,4 @@
+import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import {
   PublicationRuleFunction,
   PublishDependencyType,
@@ -726,5 +727,203 @@ describe('useResourceSavePanel', () => {
 
       expect(result.current.panelProps.isSubmitDisabled).toBe(false);
     });
+  });
+});
+
+describe('useResourceSavePanel — dependency namespaces and notes', () => {
+  const UNIT = {
+    rootKey: SaveDestinationRoot.Organization,
+    path: ['Acme', 'Teams'],
+  };
+  const TOOLSET = {
+    ...DEPENDENCY,
+    id: 'toolsets/b1/Tools',
+    name: 'Tools',
+    type: PublishDependencyType.Toolset,
+  };
+  const FILE = {
+    ...DEPENDENCY,
+    id: 'files/b1/a.txt',
+    name: 'a.txt',
+    type: PublishDependencyType.File,
+  };
+  const directWrite = () => ({
+    adapter: makeAdapter({
+      saveIntoOrgUnit: vi.fn().mockResolvedValue({ id: ID }),
+    }),
+    canSaveDirectlyTo: (path: string[]) => path[0] === 'Acme',
+    getDisabledReason: () => undefined,
+    getMissingNamespacesReason: (missing: string[]) =>
+      `No write access: ${missing.join(', ')}`,
+  });
+  const loadAndChoose = async (
+    result: ReturnType<typeof renderPanel>['result'],
+    dependencies: unknown[],
+  ) => {
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await waitFor(() =>
+      expect(result.current.panelProps.dependencies).toHaveLength(
+        dependencies.length,
+      ),
+    );
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('leaves the unit folder usable when every dependency namespace is writable', async () => {
+    const getMissingNamespaces = vi.fn().mockReturnValue([]);
+    const { result } = renderPanel({
+      ...directWrite(),
+      loadDependencies: vi.fn().mockResolvedValue([DEPENDENCY, TOOLSET]),
+      getMissingNamespaces,
+    });
+
+    await loadAndChoose(result, [DEPENDENCY, TOOLSET]);
+
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBeUndefined();
+    expect(getMissingNamespaces).toHaveBeenCalledWith(UNIT.path, [
+      'prompts',
+      'toolsets',
+    ]);
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
+  });
+
+  it('disables the unit folder with a reason naming the missing namespaces', async () => {
+    const { result } = renderPanel({
+      ...directWrite(),
+      loadDependencies: vi.fn().mockResolvedValue([DEPENDENCY, TOOLSET]),
+      getMissingNamespaces: (_path, namespaces) =>
+        namespaces.filter((namespace) => namespace === 'toolsets'),
+    });
+
+    await loadAndChoose(result, [DEPENDENCY, TOOLSET]);
+
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBe(
+      'No write access: toolsets',
+    );
+    expect(result.current.panelProps.isSubmitDisabled).toBe(true);
+  });
+
+  it('ignores a file dependency', async () => {
+    const getMissingNamespaces = vi.fn().mockReturnValue(['files']);
+    const { result } = renderPanel({
+      ...directWrite(),
+      loadDependencies: vi.fn().mockResolvedValue([FILE]),
+      getMissingNamespaces,
+    });
+
+    await loadAndChoose(result, [FILE]);
+
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBeUndefined();
+    expect(getMissingNamespaces).not.toHaveBeenCalled();
+  });
+
+  it('disables nothing while no dependencies are known', () => {
+    const getMissingNamespaces = vi.fn().mockReturnValue(['toolsets']);
+    const { result } = renderPanel({
+      ...directWrite(),
+      getMissingNamespaces,
+    });
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBeUndefined();
+    expect(getMissingNamespaces).not.toHaveBeenCalled();
+  });
+
+  it('does not judge a folder that is not a direct write', async () => {
+    const getMissingNamespaces = vi.fn().mockReturnValue(['toolsets']);
+    const { result } = renderPanel({
+      ...directWrite(),
+      loadDependencies: vi.fn().mockResolvedValue([TOOLSET]),
+      getMissingNamespaces,
+    });
+
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+    await waitFor(() =>
+      expect(result.current.panelProps.dependencies).toHaveLength(1),
+    );
+
+    expect(result.current.panelProps.getDisabledReason?.(EPAM)).toBeUndefined();
+    expect(getMissingNamespaces).not.toHaveBeenCalled();
+  });
+
+  it('keeps a Personal destination free of dependency reasons and notes', () => {
+    const { result } = renderPanel({
+      ...directWrite(),
+      loadDependencies: vi.fn().mockResolvedValue([TOOLSET]),
+      getMissingNamespaces: () => [OrgUnitNamespace.Toolsets],
+      dependenciesNote: 'Saved together.',
+      iconNote: 'Icon not copied.',
+    });
+
+    expect(
+      result.current.panelProps.getDisabledReason?.(PERSONAL),
+    ).toBeUndefined();
+    expect(result.current.panelProps.dependenciesNote).toBeUndefined();
+    expect(result.current.panelProps.destinationNote).toBeUndefined();
+  });
+
+  it('reads the dependencies while an Organization folder is only being browsed', async () => {
+    const loadDependencies = vi.fn().mockResolvedValue([TOOLSET]);
+    const { result } = renderPanel({
+      ...directWrite(),
+      loadDependencies,
+    });
+
+    act(() => result.current.panelProps.onPendingDestinationChange?.(UNIT));
+
+    await waitFor(() => expect(loadDependencies).toHaveBeenCalledOnce());
+    expect(result.current.panelProps.dependencies).toEqual([]);
+  });
+
+  it('passes the dependencies note only under the Organization root', () => {
+    const { result } = renderPanel({ dependenciesNote: 'Saved together.' });
+
+    expect(result.current.panelProps.dependenciesNote).toBeUndefined();
+
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+
+    expect(result.current.panelProps.dependenciesNote).toBe('Saved together.');
+  });
+
+  it('shows the icon note only on a direct write where files are not writable', () => {
+    const { result } = renderPanel({
+      ...directWrite(),
+      getMissingNamespaces: (_path, namespaces) =>
+        namespaces.filter((namespace) => namespace === 'files'),
+      iconNote: 'Icon not copied.',
+    });
+
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+    expect(result.current.panelProps.destinationNote).toBeUndefined();
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    expect(result.current.panelProps.destinationNote).toBe('Icon not copied.');
+  });
+
+  it('shows no icon note when files are writable', () => {
+    const { result } = renderPanel({
+      ...directWrite(),
+      getMissingNamespaces: () => [],
+      iconNote: 'Icon not copied.',
+    });
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+
+    expect(result.current.panelProps.destinationNote).toBeUndefined();
+  });
+
+  it('shows no icon note when the host gives none', () => {
+    const { result } = renderPanel({
+      ...directWrite(),
+      getMissingNamespaces: () => [OrgUnitNamespace.Files],
+    });
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+
+    expect(result.current.panelProps.destinationNote).toBeUndefined();
   });
 });

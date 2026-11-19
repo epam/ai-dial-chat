@@ -1,9 +1,12 @@
 import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
+import { PublishDependencyType } from '@epam/ai-dial-publish-panel';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogPublishEntityType } from '../../catalog/publish';
 import { SaveDestinationRoot } from '../../catalog/resource-save';
 import {
   buildFolderGuards,
+  getDependencyOrgUnitNamespaces,
+  getMissingDirectWriteNamespaces,
   getOrgUnitNamespace,
   OrgUnitFolderGuardPurpose,
   toPublishDisabledReason,
@@ -186,5 +189,71 @@ describe('toPublishDisabledReason', () => {
 
   it('stays undefined while the guard has no reason callback', () => {
     expect(toPublishDisabledReason(undefined)).toBeUndefined();
+  });
+});
+
+describe('getDependencyOrgUnitNamespaces', () => {
+  it('maps each kind to its namespace once and drops files', () => {
+    expect(
+      getDependencyOrgUnitNamespaces([
+        { type: PublishDependencyType.Prompt },
+        { type: PublishDependencyType.Skill },
+        { type: PublishDependencyType.Prompt },
+        { type: PublishDependencyType.Toolset },
+        { type: PublishDependencyType.Application },
+        { type: PublishDependencyType.File },
+      ]),
+    ).toEqual([
+      OrgUnitNamespace.Prompts,
+      OrgUnitNamespace.Skills,
+      OrgUnitNamespace.Toolsets,
+      OrgUnitNamespace.Applications,
+    ]);
+  });
+
+  it('is empty for no dependencies and for files only', () => {
+    expect(getDependencyOrgUnitNamespaces([])).toEqual([]);
+    expect(
+      getDependencyOrgUnitNamespaces([{ type: PublishDependencyType.File }]),
+    ).toEqual([]);
+  });
+});
+
+describe('getMissingDirectWriteNamespaces', () => {
+  const canSaveDirectlyAt = vi.fn(
+    (path: string, namespace: OrgUnitNamespace) =>
+      path.startsWith('Acme') && namespace !== OrgUnitNamespace.Toolsets,
+  );
+  const ready = {
+    isEnabled: true,
+    status: OrgUnitsStatus.Ready,
+    canSaveDirectlyAt,
+  };
+  const namespaces = [OrgUnitNamespace.Prompts, OrgUnitNamespace.Toolsets];
+
+  it('returns the namespaces the strict check refuses, with the joined path', () => {
+    expect(
+      getMissingDirectWriteNamespaces(ready, ['Acme', 'Teams'], namespaces),
+    ).toEqual([OrgUnitNamespace.Toolsets]);
+    expect(canSaveDirectlyAt).toHaveBeenCalledWith(
+      'Acme/Teams',
+      OrgUnitNamespace.Prompts,
+    );
+  });
+
+  it('returns every namespace for a folder the user cannot write', () => {
+    expect(
+      getMissingDirectWriteNamespaces(ready, ['Other'], namespaces),
+    ).toEqual(namespaces);
+  });
+
+  it.each([
+    [{ ...ready, isEnabled: false }],
+    [{ ...ready, status: OrgUnitsStatus.Loading }],
+    [{ ...ready, status: OrgUnitsStatus.Error }],
+  ])('returns nothing while the rights are not known', (params) => {
+    expect(
+      getMissingDirectWriteNamespaces(params, ['Other'], namespaces),
+    ).toEqual([]);
   });
 });

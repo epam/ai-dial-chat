@@ -3,6 +3,7 @@ import type {
   ResourceFoldersResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
+  getMissingDirectWriteNamespaces,
   getOrgUnitNamespace,
   mapResourceDependencyDto,
   OrgUnitFolderGuardPurpose,
@@ -17,6 +18,7 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import {
   type CatalogEntityType,
+  type OrgUnitNamespace,
   RESOURCE_VERSION_PATTERN,
 } from '@epam/ai-dial-chat-shared';
 import { StandaloneSaveToFolderPanel } from '@epam/ai-dial-publish-panel';
@@ -29,10 +31,11 @@ import {
   CatalogI18nKeys,
   ConversationPublishI18nKeys,
   EditorI18nKeys,
-  PublishI18nKeys,
+  OrgUnitAccessI18nKeys,
   ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
-import { useAppConfig } from '../../context/AppConfigContext';
+import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
+import { useOrgUnitsContext } from '../../context/OrgUnitsContext';
 import { useOrgUnitFolderGuards } from '../../hooks/publish/useOrgUnitFolderGuards';
 import { usePublishDependencyIconResolver } from '../../hooks/publish/usePublishDependencyIconResolver';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
@@ -47,9 +50,10 @@ import {
   publishCatalogEntity,
 } from '../../server-api/publish.api';
 import { NotifiableEntity } from '../../types/entity-notification';
+import { getDependencyTypeKey } from '../../utils/org-unit-access';
 import {
   getAccessRulesLabels,
-  getPublishDependenciesLabels,
+  getApplicationPublishDependenciesLabels,
   getPublishPanelCommonLabels,
 } from '../../utils/publish';
 import { RESOURCE_NAME_CONFLICT_KEYS } from '../../utils/resource-name-conflict';
@@ -85,6 +89,10 @@ interface Props {
   canPublish: boolean;
   /** Schema and form values whose private dependencies the panel lists for an Organization destination; omit for a resource with none to list. */
   dependencyValues?: ApplicationValuesDependenciesRequestDto;
+  /** Whether the application's form state lives inside an embedded editor, so the panel shows one sentence about its dependencies instead of a list. Defaults to `false`. */
+  isFormStateEmbedded?: boolean;
+  /** Whether the application has an uploaded icon of the user's own, which a direct write into an org unit may be unable to copy. Defaults to `false`. */
+  hasUploadedIcon?: boolean;
   /** Called once a save whose first step succeeded has finished. */
   onSaved: (result: ResourceSaveResult) => void;
   /** Focus target restored when the panel closes. */
@@ -110,6 +118,8 @@ const ResourceSavePanelContainer: FC<Props> = ({
   notificationType,
   canPublish,
   dependencyValues,
+  isFormStateEmbedded = false,
+  hasUploadedIcon = false,
   onSaved,
   returnFocusRef,
 }) => {
@@ -187,6 +197,32 @@ const ResourceSavePanelContainer: FC<Props> = ({
     [dependencyValues, resolveDependencyIcon],
   );
 
+  const isOrgUnitsEnabled = useFeatureFlag('orgUnitsEnabled');
+  const { status: orgUnitsStatus, canSaveDirectlyAt } = useOrgUnitsContext();
+  const getMissingNamespaces = useCallback(
+    (folderPath: string[], namespaces: OrgUnitNamespace[]) =>
+      getMissingDirectWriteNamespaces(
+        {
+          isEnabled: isOrgUnitsEnabled,
+          status: orgUnitsStatus,
+          canSaveDirectlyAt,
+        },
+        folderPath,
+        namespaces,
+      ),
+    [canSaveDirectlyAt, isOrgUnitsEnabled, orgUnitsStatus],
+  );
+  const getMissingNamespacesReason = useCallback(
+    (missing: OrgUnitNamespace[]) =>
+      t(OrgUnitAccessI18nKeys.NoWriteAccessDependencies, {
+        types: missing
+          .flatMap((namespace) => getDependencyTypeKey(namespace) ?? [])
+          .map((key) => t(key))
+          .join(', '),
+      }),
+    [t],
+  );
+
   const { panelProps } = useResourceSavePanel({
     isOpen,
     adapter,
@@ -200,6 +236,14 @@ const ResourceSavePanelContainer: FC<Props> = ({
     canSaveDirectlyTo,
     getDisabledReason,
     loadDependencies,
+    getMissingNamespaces,
+    getMissingNamespacesReason,
+    dependenciesNote: isFormStateEmbedded
+      ? t(ResourceSavePanelI18nKeys.DependenciesEmbeddedNote)
+      : undefined,
+    iconNote: hasUploadedIcon
+      ? t(ResourceSavePanelI18nKeys.IconNotCopiedNotice)
+      : undefined,
     ruleSourceOptions: publicationFilterSources,
     labels: flowLabels,
     onSaved: handleSaved,
@@ -271,11 +315,7 @@ const ResourceSavePanelContainer: FC<Props> = ({
   );
 
   const dependenciesLabels = useMemo(
-    () =>
-      getPublishDependenciesLabels(
-        t,
-        PublishI18nKeys.DependenciesEntityApplication,
-      ),
+    () => getApplicationPublishDependenciesLabels(t),
     [t],
   );
 

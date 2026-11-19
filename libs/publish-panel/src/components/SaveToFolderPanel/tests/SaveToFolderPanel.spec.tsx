@@ -346,3 +346,113 @@ describe('SaveToFolderPanel — private dependencies', () => {
     expect(screen.queryByText('Greeting prompt')).toBeNull();
   });
 });
+
+describe('SaveToFolderPanel — dependencies note', () => {
+  const dependencies = [
+    {
+      id: 'prompts/b/Hi',
+      name: 'Greeting prompt',
+      type: PublishDependencyType.Prompt,
+      location: 'Support',
+    },
+  ];
+  const dependenciesLabels = { title: 'Saved together' };
+
+  it('renders the heading and the note when there is no list', () => {
+    renderPanel({
+      dependenciesNote: 'Dependencies are saved together.',
+      dependenciesLabels,
+    });
+
+    expect(
+      screen.getByRole('heading', { name: 'Saved together' }),
+    ).toBeTruthy();
+    expect(screen.getByText('Dependencies are saved together.')).toBeTruthy();
+    expect(screen.queryByText('Greeting prompt')).toBeNull();
+  });
+
+  it('renders the note when the list is empty', () => {
+    renderPanel({
+      dependencies: [],
+      dependenciesNote: 'Dependencies are saved together.',
+      dependenciesLabels,
+    });
+
+    expect(screen.getByText('Dependencies are saved together.')).toBeTruthy();
+  });
+
+  it('lists the dependencies and not the note when both are given', () => {
+    renderPanel({
+      dependencies,
+      dependenciesNote: 'Dependencies are saved together.',
+      dependenciesLabels,
+    });
+
+    expect(screen.getByText('Greeting prompt')).toBeTruthy();
+    expect(screen.queryByText('Dependencies are saved together.')).toBeNull();
+  });
+
+  it('renders nothing when neither a list nor a note is given', () => {
+    renderPanel({ dependenciesLabels });
+
+    expect(screen.queryByText('Saved together')).toBeNull();
+  });
+
+  it('does not render the note in the folder view', () => {
+    renderPanel({
+      view: SaveToFolderView.ChangeFolder,
+      dependenciesNote: 'Dependencies are saved together.',
+    });
+
+    expect(screen.queryByText('Dependencies are saved together.')).toBeNull();
+  });
+});
+
+describe('SaveToFolderPanel — destination note', () => {
+  it('shows the note under the destination without a live region', () => {
+    renderPanel({ destinationNote: 'The icon will not be copied.' });
+
+    expect(screen.getByText('The icon will not be copied.')).toBeTruthy();
+    for (const region of screen.queryAllByRole('alert')) {
+      expect(region.textContent).not.toContain('The icon will not be copied.');
+    }
+    expect(screen.queryAllByRole('status')).toHaveLength(0);
+  });
+
+  it('shows no note when none is given', () => {
+    renderPanel();
+
+    expect(screen.queryByText('The icon will not be copied.')).toBeNull();
+  });
+});
+
+describe('SaveToFolderPanel — notes in a right-to-left page', () => {
+  it('keeps both notes in reading order with no physical direction classes', () => {
+    render(
+      <div dir="rtl">
+        <SaveToFolderPanel
+          view={SaveToFolderView.Main}
+          resource={{ title: 'Design Review Agent' }}
+          roots={roots}
+          destination={{ rootKey: 'personal', path: [] }}
+          onDestinationChange={vi.fn()}
+          onCreateFolder={vi.fn()}
+          onChangeFolderClick={vi.fn()}
+          onPendingDestinationChange={vi.fn()}
+          destinationNote="Icon notice."
+          dependenciesNote="Dependencies note."
+        />
+      </div>,
+    );
+
+    const icon = screen.getByText('Icon notice.');
+    const dependencies = screen.getByText('Dependencies note.');
+    expect(
+      icon.compareDocumentPosition(dependencies) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    for (const note of [icon, dependencies]) {
+      expect(note.className).not.toMatch(/\b(ml|mr|pl|pr|left|right)-/);
+    }
+  });
+});

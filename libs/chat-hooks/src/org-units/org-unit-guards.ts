@@ -1,4 +1,5 @@
 import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
+import { PublishDependencyType } from '@epam/ai-dial-publish-panel';
 import type { CatalogPublishEntityType } from '../catalog/publish';
 import { SaveDestinationRoot } from '../catalog/save-destination-root';
 import { OrgUnitsStatus } from './types';
@@ -125,3 +126,60 @@ export const toPublishDisabledReason = (
   getDisabledReason: ((folderPath: string[]) => string | undefined) | undefined,
 ): ((destination: { path: string[] }) => string | undefined) | undefined =>
   getDisabledReason && ((destination) => getDisabledReason(destination.path));
+
+const NAMESPACE_BY_DEPENDENCY_TYPE: Record<
+  PublishDependencyType,
+  OrgUnitNamespace | undefined
+> = {
+  [PublishDependencyType.Application]: OrgUnitNamespace.Applications,
+  [PublishDependencyType.Toolset]: OrgUnitNamespace.Toolsets,
+  [PublishDependencyType.Prompt]: OrgUnitNamespace.Prompts,
+  [PublishDependencyType.Skill]: OrgUnitNamespace.Skills,
+  [PublishDependencyType.File]: undefined,
+};
+
+/**
+ * The org-unit namespaces a direct write must hold `write` on to copy the given
+ * dependencies, each once. A `file` has none: the files a schema marks travel
+ * with the application.
+ * @param dependencies - the dependencies the panel lists
+ */
+export const getDependencyOrgUnitNamespaces = (
+  dependencies: readonly { type: PublishDependencyType }[],
+): OrgUnitNamespace[] => {
+  const namespaces = new Set<OrgUnitNamespace>();
+  for (const { type } of dependencies) {
+    const namespace = NAMESPACE_BY_DEPENDENCY_TYPE[type];
+    if (namespace != null) namespaces.add(namespace);
+  }
+  return [...namespaces];
+};
+
+/** Inputs of {@link getMissingDirectWriteNamespaces}. */
+export interface MissingDirectWriteNamespacesParams {
+  /** Whether the `orgUnitsEnabled` feature flag is on. */
+  isEnabled: boolean;
+  /** Load status from `useOrgUnits`. */
+  status: OrgUnitsStatus;
+  /** Strict check from `useOrgUnits`. */
+  canSaveDirectlyAt: OrgUnitRightCheck;
+}
+
+/**
+ * The namespaces, among those asked, the user may not write straight into the
+ * org unit that owns the folder. Empty while the rights are not known (flag
+ * off or status not `Ready`), so missing data never disables a folder.
+ * @param params - flag, status and the hook's strict check
+ * @param folderPath - the destination folder inside the Organization root
+ * @param namespaces - the namespaces the write needs
+ */
+export const getMissingDirectWriteNamespaces = (
+  { isEnabled, status, canSaveDirectlyAt }: MissingDirectWriteNamespacesParams,
+  folderPath: string[],
+  namespaces: readonly OrgUnitNamespace[],
+): OrgUnitNamespace[] =>
+  !isEnabled || status !== OrgUnitsStatus.Ready
+    ? []
+    : namespaces.filter(
+        (namespace) => !canSaveDirectlyAt(folderPath.join('/'), namespace),
+      );

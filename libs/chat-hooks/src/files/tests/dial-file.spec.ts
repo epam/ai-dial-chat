@@ -7,6 +7,7 @@ import {
   isDialFolderId,
   isDialProjectFileId,
   isDialStoredFileId,
+  isOwnDialFileId,
   parseDialProjectFileId,
   resolveDialFileBucketAndPath,
   resolveDialFolderPath,
@@ -196,5 +197,23 @@ describe('resolveDialFolderPath', () => {
 
   it('returns null without a url or id', () => {
     expect(resolveDialFolderPath({}, 'b1')).toBeNull();
+  });
+});
+
+describe('isOwnDialFileId', () => {
+  it('accepts a file in the given bucket, ignoring a query or fragment', () => {
+    expect(isOwnDialFileId('files/b1/icons/logo.png', 'b1')).toBe(true);
+    expect(isOwnDialFileId('files/b1/logo.png?v=2#x', 'b1')).toBe(true);
+  });
+
+  it('rejects another bucket, a theme icon name and an absolute URL', () => {
+    expect(isOwnDialFileId('files/public/logo.png', 'b1')).toBe(false);
+    expect(isOwnDialFileId('IconRobot', 'b1')).toBe(false);
+    expect(isOwnDialFileId('https://example.com/logo.png', 'b1')).toBe(false);
+  });
+
+  it('rejects a path with a traversal segment, encoded or not', () => {
+    expect(isOwnDialFileId('files/b1/../b2/logo.png', 'b1')).toBe(false);
+    expect(isOwnDialFileId('files/b1/%2E%2E/logo.png', 'b1')).toBe(false);
   });
 });

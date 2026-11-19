@@ -4,9 +4,15 @@ import {
   type ResourceSaveAdapter,
 } from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import { PublishDependenciesAppearance } from '@epam/ai-dial-publish-panel';
 import { render, waitFor } from '@testing-library/react';
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  OrgUnitAccessI18nKeys,
+  PublishI18nKeys,
+  ResourceSavePanelI18nKeys,
+} from '../../../constants/translation-keys';
 import { useFeatureFlag } from '../../../context/AppConfigContext';
 import { OrgUnitsProvider } from '../../../context/OrgUnitsContext';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
@@ -35,6 +41,13 @@ type PanelProps = {
     path: string[];
   }) => string | undefined;
   dependencies: unknown[];
+  dependenciesNote?: string;
+  destinationNote?: string;
+  dependenciesLabels: {
+    title: string;
+    description: string;
+    appearance?: string;
+  };
   accessRules: {
     isHiddenFor: (destination: { rootKey: string; path: string[] }) => boolean;
   };
@@ -73,7 +86,10 @@ vi.mock('../../../hooks/resource-save/useResourceSaveNotification', () => ({
   useResourceSaveNotification: () => notifySaved,
 }));
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({
+    t: (key: string, options?: { types?: string }) =>
+      options?.types == null ? key : `${key}:${options.types}`,
+  }),
 }));
 
 const APP_ID = 'applications/b1/agent__1.0.0';
@@ -116,12 +132,17 @@ const organization = (...path: string[]) => ({
 
 const renderSchemaAppSave = async (
   dependencyValues: typeof VALUES | null = VALUES,
+  extraProps: {
+    isFormStateEmbedded?: boolean;
+    hasUploadedIcon?: boolean;
+  } = {},
+  permissions: Record<string, string[]> = DELIVERY.permissions,
 ) => {
   vi.mocked(useFeatureFlag).mockReturnValue(true);
   vi.mocked(listOrgUnits).mockResolvedValue({
     enabled: true,
     hasAdminAccess: false,
-    units: [DELIVERY],
+    units: [{ ...DELIVERY, permissions }],
   });
   const adapter: ResourceSaveAdapter = createEmbeddedApplicationSaveAdapter({
     applicationsApi: {
@@ -151,6 +172,7 @@ const renderSchemaAppSave = async (
         notifiableEntity={NotifiableEntity.QuickApp}
         canPublish
         dependencyValues={dependencyValues ?? undefined}
+        {...extraProps}
         onSaved={vi.fn()}
       />
     </OrgUnitsProvider>,
@@ -178,6 +200,18 @@ describe('ResourceSavePanelContainer private dependencies', () => {
     vi.mocked(
       publishApiClient.getApplicationValuesPublishDependencies,
     ).mockResolvedValue({ dependencies: [DEPENDENCY_DTO] } as never);
+  });
+
+  it('words the section as dependencies published together with the application', async () => {
+    await renderSchemaAppSave();
+
+    expect(lastPanel().dependenciesLabels).toEqual(
+      expect.objectContaining({
+        title: PublishI18nKeys.DependenciesPublishedTitle,
+        description: PublishI18nKeys.DependenciesPublishedDescription,
+        appearance: PublishDependenciesAppearance.Published,
+      }),
+    );
   });
 
   it('lists nothing and reads nothing for the Personal root', async () => {
@@ -244,5 +278,92 @@ describe('ResourceSavePanelContainer private dependencies', () => {
 
     expect(lastPanel().dependencies).toEqual([]);
     expect(lastPanel().isSubmitDisabled).toBe(false);
+  });
+
+  describe('namespaces, the embedded-editor sentence and the icon notice', () => {
+    const UNIT_FOLDER = organization('Delivery', 'Teams');
+    const APPLICATIONS_ONLY = { applications: ['read', 'write'] };
+
+    it('disables a unit folder whose dependency namespace the user cannot write, naming the type', async () => {
+      await renderSchemaAppSave(VALUES, {}, APPLICATIONS_ONLY);
+
+      await chooseDestination(UNIT_FOLDER);
+      await waitFor(() => expect(lastPanel().dependencies).toHaveLength(1));
+
+      expect(lastPanel().getDisabledReason?.(UNIT_FOLDER)).toBe(
+        `${OrgUnitAccessI18nKeys.NoWriteAccessDependencies}:${PublishI18nKeys.DependenciesTypePrompt}`,
+      );
+      expect(lastPanel().isSubmitDisabled).toBe(true);
+    });
+
+    it('leaves the unit folder usable when the dependency namespaces are writable', async () => {
+      await renderSchemaAppSave(
+        VALUES,
+        {},
+        {
+          applications: ['read', 'write'],
+          prompts: ['read', 'write'],
+        },
+      );
+
+      await chooseDestination(UNIT_FOLDER);
+      await waitFor(() => expect(lastPanel().dependencies).toHaveLength(1));
+
+      expect(lastPanel().getDisabledReason?.(UNIT_FOLDER)).toBeUndefined();
+      expect(lastPanel().isSubmitDisabled).toBe(false);
+    });
+
+    it('shows the neutral sentence, and no list, for an embedded editor under Organization only', async () => {
+      await renderSchemaAppSave(null, { isFormStateEmbedded: true });
+      expect(lastPanel().dependenciesNote).toBeUndefined();
+
+      await chooseDestination(organization('EPAM'));
+
+      expect(lastPanel().dependenciesNote).toBe(
+        ResourceSavePanelI18nKeys.DependenciesEmbeddedNote,
+      );
+      expect(lastPanel().dependencies).toEqual([]);
+    });
+
+    it('shows no sentence for a kind that is not embedded', async () => {
+      await renderSchemaAppSave(null);
+
+      await chooseDestination(organization('EPAM'));
+
+      expect(lastPanel().dependenciesNote).toBeUndefined();
+    });
+
+    it('shows the icon notice for a unit folder where files are not writable', async () => {
+      await renderSchemaAppSave(
+        null,
+        { hasUploadedIcon: true },
+        APPLICATIONS_ONLY,
+      );
+
+      await chooseDestination(UNIT_FOLDER);
+
+      expect(lastPanel().destinationNote).toBe(
+        ResourceSavePanelI18nKeys.IconNotCopiedNotice,
+      );
+      expect(lastPanel().isSubmitDisabled).toBe(false);
+    });
+
+    it.each([
+      [
+        'files are writable',
+        { hasUploadedIcon: true },
+        { applications: ['read', 'write'], files: ['read', 'write'] },
+      ],
+      ['the application has no uploaded icon', {}, APPLICATIONS_ONLY],
+    ])(
+      'shows no icon notice when %s',
+      async (_name, extraProps, permissions) => {
+        await renderSchemaAppSave(null, extraProps, permissions);
+
+        await chooseDestination(UNIT_FOLDER);
+
+        expect(lastPanel().destinationNote).toBeUndefined();
+      },
+    );
   });
 });

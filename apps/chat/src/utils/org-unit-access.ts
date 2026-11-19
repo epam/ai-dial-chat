@@ -1,6 +1,9 @@
 import { OrgUnitFolderGuardPurpose } from '@epam/ai-dial-chat-hooks';
 import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
-import { OrgUnitAccessI18nKeys } from '../constants/translation-keys';
+import {
+  OrgUnitAccessI18nKeys,
+  PublishI18nKeys,
+} from '../constants/translation-keys';
 
 const REASON_KEYS: Partial<
   Record<
@@ -62,3 +65,20 @@ export const getOrgUnitAccessReasonKey = (
   }
   return REASON_KEYS[purpose]?.[namespace];
 };
+
+const DEPENDENCY_TYPE_KEYS: Partial<Record<OrgUnitNamespace, PublishI18nKeys>> =
+  {
+    [OrgUnitNamespace.Applications]:
+      PublishI18nKeys.DependenciesTypeApplication,
+    [OrgUnitNamespace.Toolsets]: PublishI18nKeys.DependenciesTypeToolset,
+    [OrgUnitNamespace.Prompts]: PublishI18nKeys.DependenciesTypePrompt,
+    [OrgUnitNamespace.Skills]: PublishI18nKeys.DependenciesTypeSkill,
+  };
+
+/**
+ * The translation key of the type name shown for a namespace in the reason a folder cannot take an application's dependencies, or `undefined` for a namespace no dependency has.
+ * @param namespace - org-unit namespace of a dependency
+ */
+export const getDependencyTypeKey = (
+  namespace: OrgUnitNamespace,
+): PublishI18nKeys | undefined => DEPENDENCY_TYPE_KEYS[namespace];

@@ -619,6 +619,7 @@ describe('ApplicationEditorPage — quick app', () => {
             resourceId: APP_ID,
             currentFolderPath: [],
             typeLabel: SCHEMA.displayName,
+            isFormStateEmbedded: true,
           }),
         );
         expect(mockTriggerSave).not.toHaveBeenCalled();

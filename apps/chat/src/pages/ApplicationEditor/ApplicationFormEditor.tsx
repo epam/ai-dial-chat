@@ -12,6 +12,7 @@ import {
   createHostApplicationSaveAdapter,
   createOrgUnitWriter,
   getApiErrorDetails,
+  isOwnDialFileId,
   parseResourceFolderPath,
   type ResourceSaveAdapter,
   type ResourceSaveResult,
@@ -54,6 +55,7 @@ import {
   ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
+import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useApplicationAvatarPicker } from '../../hooks/application-editor/useApplicationAvatarPicker';
@@ -577,6 +579,14 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     () => parseResourceFolderPath(appId),
     [appId],
   );
+  const { user } = useUser();
+  const userBucket = user?.bucket;
+  const hasUploadedIcon = useMemo(
+    () =>
+      userBucket != null &&
+      isOwnDialFileId(metadata.values.iconUrl ?? '', userBucket),
+    [metadata.values.iconUrl, userBucket],
+  );
   const savePanelIconUrl = useMemo(
     () => avatarPicker?.resolveIconUrl?.(metadata.values.iconUrl),
     [avatarPicker, metadata.values.iconUrl],
@@ -858,6 +868,8 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
             notificationType={notificationType}
             canPublish={canPublishFromPanel}
             dependencyValues={savePanelDependencyValues}
+            isFormStateEmbedded={definition.savePanel.isFormStateEmbedded}
+            hasUploadedIcon={hasUploadedIcon}
             onSaved={handleSavePanelSaved}
           />
         </Suspense>

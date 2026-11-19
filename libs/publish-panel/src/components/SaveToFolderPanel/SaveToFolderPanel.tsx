@@ -44,6 +44,9 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
   dependencies,
   dependenciesLabels,
   dependenciesStyles,
+  dependenciesNote,
+  destinationNote,
+  noteClassName = 'dial-small-text',
   versionHistory,
   isSubmitting = false,
   submitError,
@@ -81,6 +84,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
     ...buildCssVars({
       '--stf-heading-text': colors?.headingText,
       '--stf-destination-text': colors?.destinationText,
+      '--stf-note-text': colors?.noteText,
     }),
     ...panelStyles.cssVars,
   };
@@ -93,6 +97,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const newVersionInputId = useId();
   const destinationReasonId = useId();
+  const dependenciesHeadingId = useId();
 
   const destinationSegments = useMemo(() => {
     const root = roots.find(
@@ -111,6 +116,8 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
 
   const headingClass = mergeClasses(headingClassName, styles.heading);
   const destinationDisabledReason = getDisabledReason?.(destination);
+  const hasDependenciesNote =
+    Boolean(dependenciesNote) && (dependencies?.length ?? 0) === 0;
 
   if (view === SaveToFolderView.ChangeFolder) {
     return (
@@ -259,6 +266,11 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
             onClick={onChangeFolderClick}
           />
         </div>
+        {destinationNote && (
+          <p className={mergeClasses(noteClassName, styles.note)}>
+            {destinationNote}
+          </p>
+        )}
       </section>
 
       {version && (
@@ -286,7 +298,21 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
         {submitError && <ErrorText text={submitError} />}
       </LiveRegion>
 
-      {dependencies != null && (
+      {hasDependenciesNote && (
+        <section
+          className="flex flex-col gap-2"
+          aria-labelledby={dependenciesHeadingId}
+        >
+          <h2 id={dependenciesHeadingId} className={headingClass}>
+            {dependenciesLabels?.title ?? 'Private dependencies'}
+          </h2>
+          <p className={mergeClasses(noteClassName, styles.note)}>
+            {dependenciesNote}
+          </p>
+        </section>
+      )}
+
+      {!hasDependenciesNote && dependencies != null && (
         <PublishDependenciesList
           dependencies={dependencies}
           labels={dependenciesLabels}

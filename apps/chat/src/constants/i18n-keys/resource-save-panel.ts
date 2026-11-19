@@ -25,4 +25,6 @@ export enum ResourceSavePanelI18nKeys {
   SavedButAlreadyInOrgUnit = 'resourceSavePanel.savedButAlreadyInOrgUnit',
   SavedButOrgUnitWriteFailed = 'resourceSavePanel.savedButOrgUnitWriteFailed',
   SavedButOrgUnitWriteFailedReason = 'resourceSavePanel.savedButOrgUnitWriteFailedReason',
+  DependenciesEmbeddedNote = 'resourceSavePanel.dependenciesEmbeddedNote',
+  IconNotCopiedNotice = 'resourceSavePanel.iconNotCopiedNotice',
 }

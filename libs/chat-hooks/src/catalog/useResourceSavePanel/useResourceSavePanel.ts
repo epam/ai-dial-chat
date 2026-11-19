@@ -1,4 +1,5 @@
 import type { ResourceFoldersResponseDto } from '@epam/ai-dial-chat-api-client';
+import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import {
   SaveVersionMode,
   toFolderPathKey,
@@ -13,6 +14,7 @@ import {
 } from '@epam/ai-dial-publish-panel';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getApiErrorDetails } from '../../api-error/api-error';
+import { getDependencyOrgUnitNamespaces } from '../../org-units/org-unit-guards';
 import type { PublishApiClient } from '../create-publish-api';
 import {
   createPublishSavedResource,
@@ -83,6 +85,17 @@ export interface UseResourceSavePanelParams {
    * Reads the private dependencies of what is being saved, already mapped to the panel's model; omit for a resource that has none to list. Called when the panel is open and the destination is under the Organization root, whichever way the save then goes (a publication request or a direct write); the list is advisory, so a failed read leaves it empty. The host reads the values it saves when called, so it should return the form's state at that moment.
    */
   loadDependencies?: () => Promise<PublishDependency[]>;
+  /** The namespaces, among those asked, in which the user may not write straight into the unit that owns the folder; omit while the org-unit rule does not apply. Used for the dependencies the panel lists and for the icon's `files` namespace, on a destination that takes a direct write. */
+  getMissingNamespaces?: (
+    folderPath: string[],
+    namespaces: OrgUnitNamespace[],
+  ) => OrgUnitNamespace[];
+  /** Reason shown for a folder where the dependencies' namespaces are missing; receives the missing namespaces. Without it a missing namespace disables nothing. */
+  getMissingNamespacesReason?: (missing: OrgUnitNamespace[]) => string;
+  /** One sentence for the dependencies section while the panel cannot list them (an application whose form state is inside an embedded editor); passed through only under the Organization root. */
+  dependenciesNote?: string;
+  /** Notice about the application's uploaded icon, shown under the committed destination when it is a unit folder where the user may not write `files`; pass it only when the saved resource has an uploaded icon. */
+  iconNote?: string;
   /** Options offered in the access-rules editor's source picker. */
   ruleSourceOptions: string[];
   /** Translated copy. */
@@ -109,6 +122,8 @@ export type ResourceSavePanelStateProps = Pick<
   | 'foldersError'
   | 'onRetryFolders'
   | 'dependencies'
+  | 'dependenciesNote'
+  | 'destinationNote'
 >;
 
 /** Result of {@link useResourceSavePanel}. */
@@ -140,6 +155,10 @@ export const useResourceSavePanel = ({
   canSaveDirectlyTo,
   getDisabledReason: getFolderDisabledReason,
   loadDependencies,
+  getMissingNamespaces,
+  getMissingNamespacesReason,
+  dependenciesNote,
+  iconNote,
   ruleSourceOptions,
   labels,
   onSaved,
@@ -165,6 +184,7 @@ export const useResourceSavePanel = ({
   const [conflictedVersion, setConflictedVersion] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
+  const [isPendingOrganization, setIsPendingOrganization] = useState(false);
   const [rules, setRules] = useState<PublicationRule[]>([]);
   const [isRulesLoading, setIsRulesLoading] = useState(false);
   const [hasRulesLoadError, setHasRulesLoadError] = useState(false);
@@ -183,6 +203,9 @@ export const useResourceSavePanel = ({
 
   const setPendingDestination = useCallback(
     (pending: FolderDestination | undefined) => {
+      setIsPendingOrganization(
+        pending?.rootKey === SaveDestinationRoot.Organization,
+      );
       /* Rules apply only to Organization folders; browsing Personal keeps the last ones untouched. */
       if (pending?.rootKey !== SaveDestinationRoot.Organization) return;
       /* A direct write stores no rules, so none are fetched for it. */
@@ -218,6 +241,7 @@ export const useResourceSavePanel = ({
     setRules([]);
     setIsRulesLoading(false);
     setHasRulesLoadError(false);
+    setIsPendingOrganization(false);
     setDestination(initialDestination);
     setVersionMode(SaveVersionMode.Keep);
     setNewVersionValue('');
@@ -235,10 +259,12 @@ export const useResourceSavePanel = ({
   useEffect(() => {
     loadDependenciesRef.current = loadDependencies;
   }, [loadDependencies]);
+  /* Browsing the Organization tree also reads them, so a folder the dependencies cannot be copied into is disabled before it is committed. */
   const shouldListDependencies =
     isOpen &&
     loadDependencies != null &&
-    destination.rootKey === SaveDestinationRoot.Organization;
+    (destination.rootKey === SaveDestinationRoot.Organization ||
+      isPendingOrganization);
   useEffect(() => {
     setDependencies(EMPTY_DEPENDENCIES);
     if (!shouldListDependencies) return;
@@ -281,17 +307,50 @@ export const useResourceSavePanel = ({
     conflictedVersion,
   ]);
 
-  const getDestinationDisabledReason = useMemo(
-    () =>
-      getFolderDisabledReason &&
-      ((candidate: FolderDestination) => {
-        const root = toSaveDestinationRoot(candidate.rootKey);
-        return root ? getFolderDisabledReason(candidate.path, root) : undefined;
-      }),
-    [getFolderDisabledReason],
+  const dependencyNamespaces = useMemo(
+    () => getDependencyOrgUnitNamespaces(dependencies),
+    [dependencies],
   );
+  const getDestinationDisabledReason = useMemo(() => {
+    if (!getFolderDisabledReason) return undefined;
+    return (candidate: FolderDestination) => {
+      const root = toSaveDestinationRoot(candidate.rootKey);
+      if (!root) return undefined;
+      const ownReason = getFolderDisabledReason(candidate.path, root);
+      if (ownReason != null) return ownReason;
+      if (
+        !getMissingNamespaces ||
+        !getMissingNamespacesReason ||
+        dependencyNamespaces.length === 0 ||
+        !isDirectDestination(candidate)
+      ) {
+        return undefined;
+      }
+      const missing = getMissingNamespaces(
+        candidate.path,
+        dependencyNamespaces,
+      );
+      return missing.length > 0
+        ? getMissingNamespacesReason(missing)
+        : undefined;
+    };
+  }, [
+    dependencyNamespaces,
+    getFolderDisabledReason,
+    getMissingNamespaces,
+    getMissingNamespacesReason,
+    isDirectDestination,
+  ]);
   const committedDisabledReason = getDestinationDisabledReason?.(destination);
   const isDirectWrite = isDirectDestination(destination);
+  const isOrganizationDestination =
+    destination.rootKey === SaveDestinationRoot.Organization;
+  const destinationNote =
+    iconNote != null &&
+    isDirectWrite &&
+    getMissingNamespaces?.(destination.path, [OrgUnitNamespace.Files]).length
+      ? iconNote
+      : undefined;
   /* Publishing before the folder's rules arrive would send `rules: []` and overwrite the folder's existing rules. */
   const isRulesPending =
     destination.rootKey === SaveDestinationRoot.Organization &&
@@ -480,7 +539,13 @@ export const useResourceSavePanel = ({
       onPendingDestinationChange: setPendingDestination,
       foldersError: personal.hasError ? labels.foldersLoadError : undefined,
       onRetryFolders: personal.retry,
-      dependencies,
+      dependencies: isOrganizationDestination
+        ? dependencies
+        : EMPTY_DEPENDENCIES,
+      dependenciesNote: isOrganizationDestination
+        ? dependenciesNote
+        : undefined,
+      destinationNote,
     },
     submit,
   };

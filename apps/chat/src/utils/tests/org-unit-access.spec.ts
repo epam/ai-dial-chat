@@ -1,9 +1,15 @@
 import { OrgUnitFolderGuardPurpose } from '@epam/ai-dial-chat-hooks';
 import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
-import { OrgUnitAccessI18nKeys } from '../../constants/translation-keys';
+import {
+  OrgUnitAccessI18nKeys,
+  PublishI18nKeys,
+} from '../../constants/translation-keys';
 import en from '../../i18n/locales/en.json';
-import { getOrgUnitAccessReasonKey } from '../org-unit-access';
+import {
+  getDependencyTypeKey,
+  getOrgUnitAccessReasonKey,
+} from '../org-unit-access';
 
 const RESOURCE_NAMESPACES = [
   OrgUnitNamespace.Applications,
@@ -69,10 +75,31 @@ describe('getOrgUnitAccessReasonKey', () => {
 
   it('declares every key in en.json with a non-empty sentence', () => {
     const texts = en.orgUnitAccess as Record<string, string>;
-    for (const key of Object.values(OrgUnitAccessI18nKeys)) {
+    for (const key of Object.values(OrgUnitAccessI18nKeys).filter(
+      (candidate) =>
+        candidate !== OrgUnitAccessI18nKeys.NoWriteAccessDependencies,
+    )) {
       expect(texts[key.replace('orgUnitAccess.', '')]).toMatch(
         /^You have no access to (save|publish) your .+ to this folder\.$/,
       );
     }
+  });
+});
+
+describe('dependency namespaces', () => {
+  it('names every dependency namespace and none other', () => {
+    expect(getDependencyTypeKey(OrgUnitNamespace.Prompts)).toBe(
+      PublishI18nKeys.DependenciesTypePrompt,
+    );
+    expect(getDependencyTypeKey(OrgUnitNamespace.Applications)).toBe(
+      PublishI18nKeys.DependenciesTypeApplication,
+    );
+    expect(getDependencyTypeKey(OrgUnitNamespace.Files)).toBeUndefined();
+  });
+
+  it('declares the missing-dependencies reason with the types placeholder', () => {
+    const texts = en.orgUnitAccess as Record<string, string>;
+
+    expect(texts.noWriteAccessDependencies).toContain('{{types}}');
   });
 });

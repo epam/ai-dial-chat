@@ -45,3 +45,14 @@ describe('save panel dependency values', () => {
     expect(customAppDefinition.savePanel?.getDependencyValues).toBeUndefined();
   });
 });
+
+describe('save panel embedded form state flag', () => {
+  it('is set by the Quick App, whose form state lives in an embedded editor', () => {
+    expect(quickAppDefinition.savePanel?.isFormStateEmbedded).toBe(true);
+  });
+
+  it('is not set by the schema-form and custom kinds', () => {
+    expect(schemaAppDefinition.savePanel?.isFormStateEmbedded).toBeUndefined();
+    expect(customAppDefinition.savePanel?.isFormStateEmbedded).toBeUndefined();
+  });
+});
