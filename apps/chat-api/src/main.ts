@@ -172,7 +172,7 @@ async function bootstrap() {
       },
     }),
   );
-  const globalPrefix = process.env.API_PREFIX || 'api';
+  const globalPrefix = configService.get('API_PREFIX', { infer: true });
 
   app.setGlobalPrefix(globalPrefix);
   app.enableCors(
@@ -200,11 +200,11 @@ async function bootstrap() {
       overlaySandboxEnabled: configService.get('OVERLAY_SANDBOX_ENABLED', {
         infer: true,
       }),
-      apiPrefix: configService.get('API_PREFIX', { infer: true }),
+      apiPrefix: globalPrefix,
     }),
   );
 
-  const port = process.env.PORT || 5000;
+  const port = configService.get('PORT', { infer: true });
   await app.listen(port);
 
   Logger.log(
