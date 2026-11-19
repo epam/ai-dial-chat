@@ -46,6 +46,7 @@ interface TitleRowProps {
   totalCount?: number;
   viewMode: CatalogViewMode;
   onViewModeChange: (mode: CatalogViewMode) => void;
+  onViewModeIntent?: () => void;
   title?: string;
   browseHeaderRenderer?: ReactNode;
   styles?: ToolbarStyles;
@@ -79,6 +80,7 @@ export const TitleRow: FC<TitleRowProps> = ({
   totalCount,
   viewMode,
   onViewModeChange,
+  onViewModeIntent,
   title = 'Browse',
   browseHeaderRenderer,
   styles: browseStyles,
@@ -233,12 +235,22 @@ export const TitleRow: FC<TitleRowProps> = ({
             ref={desktopControlsRef}
             className="ms-auto flex shrink-0 items-center gap-2"
           >
-            <SegmentedControl
-              aria-label={viewToggleLabel}
-              value={viewMode}
-              onChange={onViewModeChange}
-              items={viewModeItems}
-            />
+            {/* `contents` keeps the toggle a direct flex child; the wrapper
+                only reports intent so the hidden list view can be prepared
+                before the click instead of during page load. */}
+            <div
+              className="contents"
+              role="presentation"
+              onPointerEnter={onViewModeIntent}
+              onFocus={onViewModeIntent}
+            >
+              <SegmentedControl
+                aria-label={viewToggleLabel}
+                value={viewMode}
+                onChange={onViewModeChange}
+                items={viewModeItems}
+              />
+            </div>
 
             {sortOptions != null && sortOptions.length > 0 && (
               <>
@@ -281,7 +293,10 @@ export const TitleRow: FC<TitleRowProps> = ({
                 aria-label={sheetLabels.title}
                 aria-haspopup="dialog"
                 aria-expanded={isSettingsOpen}
-                onClick={() => setIsSettingsOpen(true)}
+                onClick={() => {
+                  onViewModeIntent?.();
+                  setIsSettingsOpen(true);
+                }}
                 icon={
                   <IconAdjustmentsHorizontal
                     size={DIAL_ICON_SIZE.LG}

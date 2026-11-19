@@ -3,7 +3,7 @@ import type {
   DialToolsetDto,
 } from '@epam/ai-dial-chat-api-client';
 import type { TFunction } from 'i18next';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { CatalogI18nKeys } from '../../constants/translation-keys';
 import {
   buildEntityDetailsLabels,
@@ -38,6 +38,20 @@ describe('mapDeploymentToCatalogItem', () => {
     type: 'application',
     isMy: true,
   };
+
+  it('builds the translated labels once per t(), not once per deployment', () => {
+    const countingT = vi.fn((key: string) => key) as unknown as TFunction;
+
+    mapDeploymentToCatalogItem(baseDeployment, { t: countingT });
+    const callsForOneDeployment = vi.mocked(countingT).mock.calls.length;
+    mapDeploymentToCatalogItem(
+      { ...baseDeployment, id: 'applications/bucket/Other__1.0' },
+      { t: countingT },
+    );
+
+    expect(callsForOneDeployment).toBeGreaterThan(0);
+    expect(vi.mocked(countingT).mock.calls).toHaveLength(callsForOneDeployment);
+  });
 
   it('translates the Personal folder via t()', () => {
     const result = mapDeploymentToCatalogItem(baseDeployment, { t });

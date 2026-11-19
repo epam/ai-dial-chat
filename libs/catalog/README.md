@@ -178,13 +178,13 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 
 ### Catalog
 
-The card view renders first by default. Once data is available, `Catalog`
-prepares the hidden list table during browser idle time using a React
-transition (with a short timer fallback when idle callbacks are unavailable).
-The first list-view click then reuses that instance. Clicking before preparation
-finishes opens the list immediately; it does not wait for the idle callback.
-Hidden views are inert, and pending preparation is cancelled when loading
-resumes, results become empty, or the catalog unmounts.
+The card view renders first by default. The hidden list table is not mounted
+during page load: `Catalog` prepares it in a React transition when the user
+shows intent to switch views — the pointer enters or focus reaches the view
+toggle, or the phone browse-settings sheet opens (`Toolbar`'s
+`onViewModeIntent`). The first list-view click then reuses that instance.
+Clicking without prior intent opens the list immediately. Hidden views are
+inert, and nothing is prepared while loading or when the results are empty.
 During preparation the table keeps its real width inside an invisible,
 zero-height wrapper, so AG Grid can lay out its columns without extending the
 page. After the first visit, the inactive table uses `display: none`.

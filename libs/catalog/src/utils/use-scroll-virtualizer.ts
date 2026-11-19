@@ -66,7 +66,22 @@ export const useScrollVirtualizer = (
       (isFullWidth ? available : Math.min(CONTENT_MAX_WIDTH, available)) - 64;
     const cols = getColumnCount(approxContainer);
     const rows = Math.ceil(itemCount / cols);
-    return { startRow: 0, endRow: Math.min(rows, 12), columnCount: cols };
+    /*
+     * Size the first window from the viewport, not a fixed 12 rows: every
+     * card runs the markdown pipeline on mount, and 12 rows (36 cards at 3
+     * columns) put roughly twice the cards a 768 px viewport can show into
+     * the first render's long task. The effect below corrects the window
+     * once the real scroll viewport is measured.
+     */
+    const viewportRows =
+      typeof window !== 'undefined'
+        ? Math.ceil(window.innerHeight / CARD_ROW_HEIGHT)
+        : 4;
+    return {
+      startRow: 0,
+      endRow: Math.min(rows, viewportRows + overscan),
+      columnCount: cols,
+    };
   });
 
   useEffect(() => {
@@ -93,14 +108,17 @@ export const useScrollVirtualizer = (
 
       // Pixels of the container that have scrolled above the viewport top.
       const scrolledPast = Math.max(0, scrollElRect.top - containerRect.top);
-      const startRow = Math.max(
-        0,
-        Math.floor(scrolledPast / CARD_ROW_HEIGHT) - overscan,
+      const firstVisibleRow = Math.floor(scrolledPast / CARD_ROW_HEIGHT);
+      const lastVisibleRow = Math.floor(
+        (scrolledPast + viewportHeight - 1) / CARD_ROW_HEIGHT,
       );
-      const endRow = Math.min(
-        rows,
-        startRow + Math.ceil(viewportHeight / CARD_ROW_HEIGHT) + 2 * overscan,
-      );
+      /*
+       * Overscan each edge from the visible rows. Deriving the end from the
+       * clamped start added the unused top overscan below the viewport too,
+       * so at the top of the list the grid mounted `2 * overscan` extra rows.
+       */
+      const startRow = Math.max(0, firstVisibleRow - overscan);
+      const endRow = Math.min(rows, lastVisibleRow + 1 + overscan);
 
       setState((previous) =>
         previous.startRow === startRow &&

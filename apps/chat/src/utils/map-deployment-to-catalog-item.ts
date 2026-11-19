@@ -63,6 +63,34 @@ export const buildEntityDetailsLabels = (
   oauthScopes: t(CatalogI18nKeys.EntityDetailsOauthScopes),
 });
 
+/*
+ * The mappers below run once per deployment or toolset — thousands of times
+ * per catalog build — and the label objects depend only on `t`. Building them
+ * per item cost 29 i18next lookups each, about a second of main-thread time
+ * for a 2,400-entity catalog. `t` changes identity when the language changes,
+ * so a cache keyed by it never serves labels of a previous language.
+ */
+const folderLabelsCache = new WeakMap<TFunction, DeploymentFolderLabels>();
+const entityDetailsLabelsCache = new WeakMap<TFunction, EntityDetailsLabels>();
+
+const getDeploymentFolderLabels = (t: TFunction): DeploymentFolderLabels => {
+  let labels = folderLabelsCache.get(t);
+  if (labels == null) {
+    labels = buildDeploymentFolderLabels(t);
+    folderLabelsCache.set(t, labels);
+  }
+  return labels;
+};
+
+const getEntityDetailsLabels = (t: TFunction): EntityDetailsLabels => {
+  let labels = entityDetailsLabelsCache.get(t);
+  if (labels == null) {
+    labels = buildEntityDetailsLabels(t);
+    entityDetailsLabelsCache.set(t, labels);
+  }
+  return labels;
+};
+
 export interface MapDeploymentToCatalogItemOptions {
   favoriteIds?: ReadonlySet<string>;
   entityDetails?: EntitySpecificDetails;
@@ -96,8 +124,8 @@ export const mapDeploymentToCatalogItem = (
     activeLocale,
     primaryLocale: PRIMARY_LOCALE,
     resolveIconUrl: (iconUrl) => resolveCatalogIconUrl(iconUrl, themesBaseUrl),
-    folderLabels: buildDeploymentFolderLabels(t),
-    entityDetailsLabels: buildEntityDetailsLabels(t),
+    folderLabels: getDeploymentFolderLabels(t),
+    entityDetailsLabels: getEntityDetailsLabels(t),
     isToolsetTabEnabled,
   };
   return mapDeploymentToCatalogItemLib(deployment, options);
@@ -128,7 +156,7 @@ export const mapToolsetToCatalogItem = (
     activeLocale,
     primaryLocale: PRIMARY_LOCALE,
     resolveIconUrl: (iconUrl) => resolveCatalogIconUrl(iconUrl, themesBaseUrl),
-    folderLabels: t != null ? buildDeploymentFolderLabels(t) : undefined,
+    folderLabels: t != null ? getDeploymentFolderLabels(t) : undefined,
   };
   return mapToolsetToCatalogItemLib(toolset, options);
 };
