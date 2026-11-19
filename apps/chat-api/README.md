@@ -1315,7 +1315,10 @@ BFF.
 `budget: { costObject, policy }`. DIAL Core writes the charged budget on model rows only (ai-dial-core#2308, ADAS
 columns `budget_cost_object`, `budget_policy`, `budget_outcome` from ai-dial-analytics V18), so this mode filters
 `budget_outcome = 'paid'` rows of that budget instead of root spans and sums their own `deployment_price`, which is
-what Core charged the budget. `requests` then counts those model calls, and `byModel` lists the models. Rows written
+what Core charged the budget. `requests` then counts those model calls, and `byModel` lists the models (including
+models an application called), not root deployments. `byClient` classifies each paid model call from its own request
+headers, so a model call made by an application may count toward that application's client rather than the client
+the user called the application from. Rows written
 before Core logged the budget carry none and are not counted. In `shadow` mode the paid budget is the one Core would
 have charged.
 

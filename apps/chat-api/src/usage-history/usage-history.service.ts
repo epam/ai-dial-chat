@@ -124,10 +124,12 @@ export class UsageHistoryService {
     const window = resolveUsageWindow(period, new Date());
 
     /*
-     * Step 1: the row-restriction guard. Client-identity discovery starts
-     * beside it but is only read (and its failure only logged) once the
-     * guard has passed; its rejection is captured here so it is never
-     * unhandled when the guard refuses.
+     * Step 1: the row-restriction guard. Schema discovery starts beside it
+     * but is only read once the guard has passed; its rejection is captured
+     * here so it is never unhandled when the guard refuses. In budget scope
+     * the schema read is required (Step 1b gates every query on it, so its
+     * latency and failure decide the response); otherwise it only feeds the
+     * optional client split and its failure is only logged.
      */
     const discovery = this.analytics
       .getUsageLogSchema(accessToken)
@@ -174,8 +176,9 @@ export class UsageHistoryService {
 
     /*
      * Step 2: daily totals and the model ranking start at once; the optional
-     * client split follows discovery on its own, so a slow schema endpoint
-     * never delays the required queries.
+     * client split follows discovery on its own. Without a budget a slow
+     * schema endpoint therefore never delays the required queries; in budget
+     * scope Step 1b has already awaited it.
      */
     const clientSplit = this.queryClientSplit(
       accessToken,

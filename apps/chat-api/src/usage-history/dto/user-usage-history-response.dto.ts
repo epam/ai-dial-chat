@@ -193,7 +193,9 @@ export class UserUsageHistoryResponseDto {
     type: () => [UsageHistoryModelEntryDto],
     description:
       'Present only when `available` is `true`. Root deployments by spend descending, at most 10, ' +
-      'followed by one `other` entry with the remainder when more than 10 have usage.',
+      'followed by one `other` entry with the remainder when more than 10 have usage. When the ' +
+      'request named a budget, the entries are the models whose calls that budget paid for, ' +
+      'including models called by an application or other deployment, not root deployments.',
   })
   byModel?: UsageHistoryModelEntryDto[];
 
@@ -201,7 +203,10 @@ export class UserUsageHistoryResponseDto {
     type: () => [UsageHistoryClientEntryDto],
     description:
       'Present only when `available` is `true` and DIAL Analytics exposes the client-identity ' +
-      'enrichment to the caller; absent (not empty) otherwise. Sorted by spend descending.',
+      'enrichment to the caller; absent (not empty) otherwise. Sorted by spend descending. When the ' +
+      'request named a budget, each paid model call is classified from its own request headers, so a ' +
+      "model call made by an application may count toward that application's client rather than " +
+      'the client the user called the application from.',
   })
   byClient?: UsageHistoryClientEntryDto[];
 }
