@@ -5,6 +5,7 @@ import type {
   PublishHistoryEntryDto,
   PublishResultDto,
   PublishRuleDto,
+  PublishTargetCheckDto,
   ResourceIdResponseDto,
   ResourceDependenciesResultDto,
   UnpublishAccessDto,
@@ -83,6 +84,18 @@ export interface PublishApiClient {
   ) => Promise<VersionStatusEntryDto[]>;
   /** Reads a destination folder's already-configured access rules. */
   getPublishRules: (folderPath: string) => Promise<PublicationRule[]>;
+  /**
+   * Reads whether the published copy of one catalog entity would land on a path
+   * that is already taken, for `folderPath` (plain, `/`-joined) and `version`.
+   * Advisory: a copy hidden from the caller, or still pending approval, is not
+   * found, and the publish request still answers `409` for it.
+   */
+  checkPublishTarget: (
+    entityType: CatalogPublishEntityType,
+    entityId: string,
+    folderPath: string,
+    version?: string,
+  ) => Promise<PublishTargetCheckDto>;
 }
 
 /**
@@ -127,4 +140,11 @@ export const createPublishApiClient = (
       function: ruleFunction as unknown as PublicationRuleFunction,
     }));
   },
+  checkPublishTarget: (entityType, entityId, folderPath, version) =>
+    publishApi.getCatalogPublishTarget({
+      entityType,
+      entityId,
+      folderPath,
+      version,
+    }),
 });

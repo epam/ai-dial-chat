@@ -1,4 +1,7 @@
-import { OrgUnitFolderGuardPurpose } from '@epam/ai-dial-chat-hooks';
+import {
+  OrgUnitFolderGuardPurpose,
+  PublishTargetTakenError,
+} from '@epam/ai-dial-chat-hooks';
 import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { PublicationRuleFunction } from '@epam/ai-dial-publish-panel';
@@ -16,6 +19,7 @@ import { getPublishRules } from '../../../server-api/publish-rules.api';
 import {
   getCatalogPublishDependencies,
   getCatalogPublishHistory,
+  publishApiClient,
   publishCatalogEntity,
 } from '../../../server-api/publish.api';
 import PublishProjectPanelContainer from '../PublishProjectPanelContainer';
@@ -38,6 +42,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       resource,
       allowReplace,
       hasExistingPublicationInFolder,
+      isTargetTaken,
+      isTargetChecking,
       rules,
       onRulesChange,
       onSelectedFolderPathChange,
@@ -59,6 +65,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       renderSummary?: () => ReactNode;
       allowReplace: boolean;
       hasExistingPublicationInFolder: boolean;
+      isTargetTaken?: boolean;
+      isTargetChecking?: boolean;
       rules: PublicationRule[];
       onRulesChange: (rules: PublicationRule[]) => void;
       onSelectedFolderPathChange: (path: string[] | undefined) => void;
@@ -79,6 +87,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
           {panelLabels?.dependenciesLabels?.appearance ?? 'warning'}
         </span>
         <span>alreadyPublished:{String(hasExistingPublicationInFolder)}</span>
+        <span>targetTaken:{String(isTargetTaken)}</span>
+        <span>targetChecking:{String(isTargetChecking)}</span>
         <button onClick={() => onSelectedFolderPathChange(['Marketing'])}>
           Select Marketing
         </button>
@@ -365,6 +375,76 @@ describe('PublishProjectPanelContainer', () => {
 
     await waitFor(() => expect(mockShowPublishError).toHaveBeenCalled());
     expect(onPublished).not.toHaveBeenCalled();
+  });
+
+  describe('target collision', () => {
+    const takenResponse = () =>
+      Object.assign(new Error('conflict'), {
+        response: new Response(
+          JSON.stringify({
+            statusCode: 409,
+            message: 'taken',
+            error: 'Conflict',
+            code: 'target-exists',
+          }),
+          { status: 409, headers: { 'Content-Type': 'application/json' } },
+        ),
+      });
+
+    it('asks whether the project name is taken in the selected folder and flags it', async () => {
+      const check = vi
+        .spyOn(publishApiClient, 'checkPublishTarget')
+        .mockResolvedValue({ taken: true });
+      renderContainer();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Select Marketing' }),
+      );
+
+      expect(await screen.findByText('targetTaken:true')).toBeTruthy();
+      expect(check).toHaveBeenCalledWith(
+        'project',
+        'projects/a1b2c3/q4-launch',
+        'Marketing',
+        undefined,
+      );
+    });
+
+    it('does not flag a free folder', async () => {
+      vi.spyOn(publishApiClient, 'checkPublishTarget').mockResolvedValue({
+        taken: false,
+      });
+      renderContainer();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Select Marketing' }),
+      );
+
+      expect(await screen.findByText('targetChecking:false')).toBeTruthy();
+      expect(screen.getByText('targetTaken:false')).toBeTruthy();
+    });
+
+    it('flags the target and reports an unversioned text when the publish answers target-exists', async () => {
+      vi.spyOn(publishApiClient, 'checkPublishTarget').mockResolvedValue({
+        taken: false,
+      });
+      vi.mocked(publishCatalogEntity).mockRejectedValue(takenResponse());
+      const { onClose } = renderContainer();
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Select Marketing' }),
+      );
+      expect(await screen.findByText('targetChecking:false')).toBeTruthy();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+      expect(await screen.findByText('targetTaken:true')).toBeTruthy();
+      expect(mockShowPublishError).toHaveBeenCalledWith(
+        expect.any(PublishTargetTakenError),
+        undefined,
+        { isVersioned: false },
+      );
+      expect(onClose).not.toHaveBeenCalled();
+    });
   });
 
   describe('PublishProjectPanelContainer — chats warning', () => {

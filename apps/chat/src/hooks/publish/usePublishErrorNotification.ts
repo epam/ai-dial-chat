@@ -1,4 +1,7 @@
-import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
+import {
+  getApiErrorDetails,
+  PublishTargetTakenError,
+} from '@epam/ai-dial-chat-hooks';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PublishI18nKeys } from '../../constants/translation-keys';
@@ -24,12 +27,22 @@ const UNPUBLISH_COPY: PublishErrorCopy = {
   networkMessageKey: PublishI18nKeys.UnpublishNetworkErrorMessage,
 };
 
+/** Extra facts about the failed publish that pick its text. */
+export interface PublishErrorOptions {
+  /** Whether the published resource has a version, which a taken-path text then tells the user to change. */
+  isVersioned?: boolean;
+}
+
 /**
  * Returns a handler that surfaces a failed publish or unpublish request as an
  * error notification. Wire it to `usePublishFlow`'s `onPublishError` so a
  * rejected publish is reported outside the panel too, not only through the
  * panel's inline callout. Shows the server-provided error message when the
  * response carries one, falling back to a generic message otherwise.
+ *
+ * A `PublishTargetTakenError` (the publish endpoint's `409` for a path another
+ * resource already holds) gets the rename-or-choose-another-folder text instead
+ * of Core's raw message, with the version part when `options.isVersioned`.
  *
  * `operation` picks the copy. It defaults to publish, but an unpublish caller
  * must pass `EntityOperation.UnpublishRequested`: a failed unpublish used to be
@@ -40,12 +53,17 @@ const UNPUBLISH_COPY: PublishErrorCopy = {
 export const usePublishErrorNotification = (): ((
   error: unknown,
   operation?: EntityOperation,
+  options?: PublishErrorOptions,
 ) => void) => {
   const { t } = useTranslation();
   const { showErrorNotification } = useNotification();
 
   return useCallback(
-    (error: unknown, operation?: EntityOperation) => {
+    (
+      error: unknown,
+      operation?: EntityOperation,
+      options?: PublishErrorOptions,
+    ) => {
       const copy =
         operation === EntityOperation.UnpublishRequested
           ? UNPUBLISH_COPY
@@ -57,6 +75,28 @@ export const usePublishErrorNotification = (): ((
           : 'Publish request failed',
         error,
       );
+
+      if (error instanceof PublishTargetTakenError) {
+        const notifyTargetTaken = async () => {
+          let traceId: string | undefined;
+          try {
+            ({ traceId } = await getApiErrorDetails(error.cause));
+          } catch {
+            /* The text is shown without a request ID when the cause cannot be read. */
+          }
+          showErrorNotification({
+            title: t(copy.titleKey),
+            message: t(
+              options?.isVersioned
+                ? PublishI18nKeys.TargetTakenVersionedMessage
+                : PublishI18nKeys.TargetTakenMessage,
+            ),
+            requestId: traceId,
+          });
+        };
+        void notifyTargetTaken();
+        return;
+      }
 
       /*
        * An offline failure never reaches the backend, so it has no trace ID and

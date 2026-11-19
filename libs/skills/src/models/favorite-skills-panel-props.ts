@@ -34,6 +34,13 @@ export interface FavoriteSkillsPanelColors {
 export interface FavoriteSkillsPanelProps {
   /** The user's favorited skills, already resolved by the host. */
   favorites: FavoriteSkillItem[];
+  /**
+   * Skills from the rest of the catalog (own, shared, public) that are not
+   * favorites. Rendered after the favorites, and only in search mode (an empty
+   * `searchQuery` included), so the list shows every skill while the favorites
+   * stay on top. These rows have no star action.
+   */
+  otherSkills?: FavoriteSkillItem[];
   /** Called when a row is activated (click, Enter, or Space — or, in listbox mode, Enter in the owning text field while the row is active). */
   onSelect: (item: FavoriteSkillItem) => void;
   /** Removes a favorite by id; omitted hides the star action. */

@@ -150,4 +150,60 @@ describe('derivePublishState', () => {
       isSubmitLoading: false,
     });
   });
+
+  describe('target taken', () => {
+    it('shows the target-taken callout and disables submit', () => {
+      expect(derivePublishState({ ...baseInput, isTargetTaken: true })).toEqual(
+        {
+          calloutKind: PublishCalloutKind.TargetTaken,
+          isSubmitDisabled: true,
+          isSubmitLoading: false,
+        },
+      );
+    });
+
+    it('disables submit without a callout while the check runs', () => {
+      expect(
+        derivePublishState({
+          ...baseInput,
+          isTargetChecking: true,
+          isTargetTaken: true,
+        }),
+      ).toEqual({
+        calloutKind: PublishCalloutKind.None,
+        isSubmitDisabled: true,
+        isSubmitLoading: false,
+      });
+    });
+
+    it('shows the no-access callout over a taken target', () => {
+      expect(
+        derivePublishState({
+          ...baseInput,
+          hasWriteAccess: false,
+          isTargetTaken: true,
+        }).calloutKind,
+      ).toBe(PublishCalloutKind.NoAccess);
+    });
+
+    it('shows the own-publication warning over a taken target', () => {
+      expect(
+        derivePublishState({
+          ...baseInput,
+          hasExistingPublicationInFolder: true,
+          isTargetTaken: true,
+        }).calloutKind,
+      ).toBe(PublishCalloutKind.ReplaceWarning);
+    });
+
+    it('keeps submit disabled for a taken target even when replace is allowed', () => {
+      expect(
+        derivePublishState({
+          ...baseInput,
+          isTargetTaken: true,
+          allowReplace: true,
+        }).isSubmitDisabled,
+      ).toBe(true);
+    });
+  });
 });

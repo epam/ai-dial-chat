@@ -1,4 +1,5 @@
 export * from './api-error/api-error';
+export * from './api-error/map-api-error';
 export * from './api-transport/create-csrf-middleware';
 export * from './api-transport/create-unauthorized-middleware';
 export * from './attachment/useAttachmentAction/useAttachmentAction';
@@ -24,6 +25,8 @@ export * from './catalog/mcp-endpoint-url';
 export * from './catalog/publish';
 export * from './catalog/publish-dependency-icons';
 export * from './catalog/use-publish-history';
+export * from './catalog/publish-target-taken';
+export * from './catalog/use-publish-target-guard';
 export * from './catalog/use-publish-dependencies';
 export * from './catalog/unpublishable-folders';
 export * from './catalog/useUnpublishableFolders/useUnpublishableFolders';

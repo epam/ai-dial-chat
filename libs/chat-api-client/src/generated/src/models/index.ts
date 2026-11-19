@@ -8235,6 +8235,49 @@ export interface PublishCatalogEntityDto {
    */
   publishCredentials?: boolean;
 }
+
+/**
+ * Always `target-exists`: the published copy of this resource would land on a path that is already taken.
+ * @export
+ */
+export const PublishConflictCode = {
+  TargetExists: 'target-exists',
+} as const;
+export type PublishConflictCode =
+  (typeof PublishConflictCode)[keyof typeof PublishConflictCode];
+
+/**
+ *
+ * @export
+ * @interface PublishConflictDto
+ */
+export interface PublishConflictDto {
+  /**
+   *
+   * @type {number}
+   * @memberof PublishConflictDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishConflictDto
+   */
+  message: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishConflictDto
+   */
+  error: string;
+  /**
+   * Always `target-exists`: the published copy of this resource would land on a path that is already taken.
+   * @type {PublishConflictCode}
+   * @memberof PublishConflictDto
+   */
+  code: PublishConflictCode;
+}
+
 /**
  *
  * @export
@@ -8462,6 +8505,19 @@ export interface PublishRulesResultDto {
    * @memberof PublishRulesResultDto
    */
   rules: Array<PublishRuleDto>;
+}
+/**
+ *
+ * @export
+ * @interface PublishTargetCheckDto
+ */
+export interface PublishTargetCheckDto {
+  /**
+   * True when the caller can read a resource at the target. False means none was found, not that none is there: a copy hidden from the caller by access rules, or one still pending approval, is not detected. The publish endpoint answers `409` for those.
+   * @type {boolean}
+   * @memberof PublishTargetCheckDto
+   */
+  taken: boolean;
 }
 /**
  *

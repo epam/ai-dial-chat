@@ -142,6 +142,15 @@ export const useSkillSelectorOverlay = ({
     [allSkills, favoriteIds],
   );
 
+  /* The rest of the catalog, so the slash menu can find a skill that was never starred. */
+  const otherSkillItems = useMemo<FavoriteSkillItem[]>(
+    () =>
+      allSkills
+        .filter((skill) => !favoriteIds.has(skill.url))
+        .map((skill) => buildFavoriteSkillItem(skill)),
+    [allSkills, favoriteIds],
+  );
+
   /*
    * A mention selected on a deployment that does not support skills: hosts
    * fold this into send-disabled, and every active mention's `HighlightedTextRange`
@@ -531,6 +540,7 @@ export const useSkillSelectorOverlay = ({
             }) => (
               <FavoriteSkillsPanel
                 favorites={favoriteSkillItems}
+                otherSkills={otherSkillItems}
                 searchQuery={query}
                 listboxId={listboxId}
                 activeOptionId={activeOptionId}
@@ -570,6 +580,7 @@ export const useSkillSelectorOverlay = ({
       addMenuLabel,
       emptyQueryHintLabel,
       favoriteSkillItems,
+      otherSkillItems,
       insertAndPush,
       mentions.anchors,
       onToggleFavorite,

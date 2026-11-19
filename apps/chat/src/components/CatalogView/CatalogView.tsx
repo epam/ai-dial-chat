@@ -477,6 +477,8 @@ const CatalogView: FC<Props> = ({
     handlePublishSuccess,
     handlePublishError,
     handleFetchExistingRules,
+    checkTargetExists,
+    isTargetTakenError,
     isPublishVisible,
     isUnpublishVisible,
   } = useCatalogPublishing({
@@ -737,6 +739,8 @@ const CatalogView: FC<Props> = ({
         onPublishError={handlePublishError}
         ruleSourceOptions={config.publicationFilterSources}
         onFetchExistingRules={handleFetchExistingRules}
+        onCheckTargetExists={checkTargetExists}
+        isTargetTakenError={isTargetTakenError}
         publishLabels={{
           searchPlaceholder: t(CatalogI18nKeys.PublishFolderSearchPlaceholder),
           cancelCreatingFolderLabel: t(ButtonsI18nKeys.Cancel),

@@ -678,6 +678,22 @@ export interface DetailsPanelProps {
    */
   onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
   /**
+   * Resolves whether another resource already holds the published path of
+   * `item` in a destination folder, called when the selected folder changes
+   * and when the item's version changes. A taken target shows a warning and
+   * keeps Publish disabled; a rejection does not block. Omit to skip the check.
+   */
+  onCheckTargetExists?: (
+    item: CatalogItem,
+    folderPath: string[],
+  ) => Promise<boolean>;
+  /**
+   * Tells whether the rejection of `onPublish` means the published path is
+   * taken, so the panel shows the same warning instead of the generic submit
+   * error. Must be synchronous.
+   */
+  isTargetTakenError?: (error: unknown) => boolean;
+  /**
    * Renders the Share popover content, anchored to whichever surface carries
    * Share — the header button, or the Manage trigger when `isSharePrimary`
    * has moved the entry into that menu. When provided, choosing Share opens

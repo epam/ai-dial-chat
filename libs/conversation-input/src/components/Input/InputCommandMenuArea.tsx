@@ -92,6 +92,8 @@ export const InputCommandMenuArea = ({
              so the overlay adds no role of its own. */
           overlayRole={DropdownOverlayRole.None}
           matchReferenceWidth={false}
+          /* The kit caps the overlay at the room above the caret. A clipping flex column lets the menu's own scroll area shrink to fit instead of the overlay scrolling the whole menu. */
+          listClassName="flex flex-col overflow-hidden"
           outsidePressIgnoreRef={textareaRef}
           renderOverlay={() => {
             /*
@@ -103,6 +105,7 @@ export const InputCommandMenuArea = ({
             return (
               <div
                 ref={overlayRef}
+                className="flex min-h-0 flex-col"
                 role={hasMenuLabel ? 'group' : undefined}
                 aria-label={commandMenu.menuLabel}
               >

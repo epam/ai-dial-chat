@@ -1,5 +1,6 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
 import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
+import { PublishTargetTakenError } from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { renderHook } from '@testing-library/react';
@@ -11,6 +12,7 @@ import {
   getCatalogPublishDependencies,
   getCatalogPublishHistory,
   getCatalogUnpublishAccess,
+  publishApiClient,
   publishCatalogEntity,
   unpublishCatalogEntity,
 } from '../../../server-api/publish.api';
@@ -433,6 +435,77 @@ describe('useCatalogPublishing', () => {
           false,
         ),
       ).rejects.toThrow('Forbidden');
+    });
+
+    it('rejects a target-exists 409 as a PublishTargetTakenError that the predicate recognises', async () => {
+      const original = Object.assign(new Error('conflict'), {
+        response: new Response(
+          JSON.stringify({ message: 'taken', code: 'target-exists' }),
+          { status: 409, headers: { 'Content-Type': 'application/json' } },
+        ),
+      });
+      vi.mocked(publishCatalogEntity).mockRejectedValue(original);
+      const { result } = renderPublishing();
+
+      const error = await result.current
+        .handlePublish(makeCatalogItem(), ['Organization'], [], '', false)
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(PublishTargetTakenError);
+      expect(result.current.isTargetTakenError(error)).toBe(true);
+      expect(result.current.isTargetTakenError(new Error('x'))).toBe(false);
+    });
+
+    it('asks the backend whether the published path is taken, with the item version', async () => {
+      const check = vi
+        .spyOn(publishApiClient, 'checkPublishTarget')
+        .mockResolvedValue({ taken: true });
+      const { result } = renderPublishing();
+
+      await expect(
+        result.current.checkTargetExists(makeCatalogItem(), [
+          'Organization',
+          'Team',
+        ]),
+      ).resolves.toBe(true);
+      expect(check).toHaveBeenCalledWith(
+        CatalogPublishEntityType.Toolset,
+        'tool-abc123',
+        'Organization/Team',
+        '1.2.0',
+      );
+    });
+
+    it('never reports an item that cannot be published as taken, and sends nothing', async () => {
+      const check = vi.spyOn(publishApiClient, 'checkPublishTarget');
+      const { result } = renderPublishing();
+
+      await expect(
+        result.current.checkTargetExists(
+          makeCatalogItem({ type: 'UNKNOWN' as CatalogEntityType }),
+          ['Organization'],
+        ),
+      ).resolves.toBe(false);
+      expect(check).not.toHaveBeenCalled();
+    });
+
+    it('tells the error notification whether the item has a version', () => {
+      const { result, showPublishError } = renderPublishing();
+      const error = new Error('x');
+
+      result.current.handlePublishError(makeCatalogItem(), [], error);
+      result.current.handlePublishError(
+        makeCatalogItem({ version: '' }),
+        [],
+        error,
+      );
+
+      expect(showPublishError).toHaveBeenNthCalledWith(1, error, undefined, {
+        isVersioned: true,
+      });
+      expect(showPublishError).toHaveBeenNthCalledWith(2, error, undefined, {
+        isVersioned: false,
+      });
     });
 
     it('fetches publish history from the endpoint and maps each entry', async () => {

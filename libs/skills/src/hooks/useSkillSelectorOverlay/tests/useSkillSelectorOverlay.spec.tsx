@@ -246,6 +246,43 @@ describe('useSkillSelectorOverlay', () => {
     expect(segmentChip.props).toMatchObject({ detailsTrigger: 'click' });
   });
 
+  it('passes the non-favorite skills of every source to the slash menu', () => {
+    const sharedSkill: SkillListingEntry = {
+      url: 'skills/other/shared',
+      name: 'shared',
+    };
+    const publicSkill: SkillListingEntry = {
+      url: 'skills/public/pub',
+      name: 'pub',
+    };
+    const { result } = renderHook(() =>
+      useSkillSelectorOverlay({
+        ...baseOptions,
+        sharedWithMe: [sharedSkill],
+        publicSkills: [publicSkill],
+        favoriteIds: new Set([csdSkill.url]),
+      }),
+    );
+
+    const menu = assertDefined(result.current.commandMenu).renderMenu({
+      query: 'a',
+      caretPosition: 0,
+      close: vi.fn(),
+      listboxId: 'skill-menu-listbox',
+      activeOptionId: null,
+    }) as ReactElement<{
+      favorites: { id: string }[];
+      otherSkills: { id: string }[];
+    }>;
+
+    expect(menu.props.favorites.map(({ id }) => id)).toEqual([csdSkill.url]);
+    expect(menu.props.otherSkills.map(({ id }) => id)).toEqual([
+      abcSkill.url,
+      sharedSkill.url,
+      publicSkill.url,
+    ]);
+  });
+
   it('tracks a mention selected via the slash command menu', () => {
     const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
 

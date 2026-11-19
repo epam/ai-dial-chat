@@ -168,3 +168,79 @@ describe('FavoriteSkillsPanel — no matches', () => {
     expect(status.textContent).toBe('No matching skills');
   });
 });
+
+describe('FavoriteSkillsPanel — catalog skills in search mode', () => {
+  const OTHERS: FavoriteSkillItem[] = [
+    { id: 'skills/bucket/alchemy', name: 'Alchemy' },
+    { id: 'skills/bucket/gamma', name: 'Gamma' },
+  ];
+
+  const renderSearch = (searchQuery: string) =>
+    renderPanel({
+      listboxId: 'skills-listbox',
+      searchQuery,
+      otherSkills: OTHERS,
+    });
+
+  it('lists matching catalog skills after the matching favorites', () => {
+    renderSearch('al');
+
+    expect(
+      screen
+        .getAllByRole('option')
+        .map((option) => option.getAttribute('aria-label')),
+    ).toEqual(['Alpha', 'Alchemy']);
+  });
+
+  it('finds a catalog skill that is not a favorite', () => {
+    renderSearch('gam');
+
+    expect(screen.getByRole('option', { name: 'Gamma' })).toBeTruthy();
+    expect(screen.queryByRole('option', { name: 'Alpha' })).toBeNull();
+  });
+
+  it('shows the star only on favorite rows', () => {
+    renderSearch('al');
+
+    const stars = screen.getAllByRole('button', {
+      name: 'Remove from favorites',
+    });
+    expect(stars).toHaveLength(1);
+  });
+
+  it('selects a catalog skill on click', async () => {
+    const onSelect = vi.fn();
+    renderPanel({
+      listboxId: 'skills-listbox',
+      searchQuery: 'gam',
+      otherSkills: OTHERS,
+      onSelect,
+    });
+
+    await userEvent.click(screen.getByRole('option', { name: 'Gamma' }));
+
+    expect(onSelect).toHaveBeenCalledWith(OTHERS[1]);
+  });
+
+  it('lists every skill, favorites first, while the query is empty', () => {
+    renderSearch('');
+
+    expect(
+      screen
+        .getAllByRole('option')
+        .map((option) => option.getAttribute('aria-label')),
+    ).toEqual(['Alpha', 'Beta', 'Alchemy', 'Gamma']);
+  });
+
+  it('ignores catalog skills outside search mode', () => {
+    renderPanel({ otherSkills: OTHERS });
+
+    expect(screen.queryByRole('button', { name: 'Gamma' })).toBeNull();
+  });
+
+  it('reports no matches when neither group matches', () => {
+    renderSearch('zzz');
+
+    expect(screen.getByRole('status').textContent).toBe('No matching skills');
+  });
+});

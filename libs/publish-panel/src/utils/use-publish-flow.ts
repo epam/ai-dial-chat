@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   PublicationRule,
   PublishFolderNode,
@@ -9,6 +9,8 @@ import {
 export interface PublishFlowItem {
   /** Version, when the item is versioned. `undefined` for unversioned resources. */
   version?: string;
+  /** Identity of the item, when the host can show several items through one flow; a taken-target answer is never carried from one id to another. */
+  id?: string;
 }
 
 const insertFolder = (
@@ -135,6 +137,27 @@ export interface UsePublishFlowOptions<TItem extends PublishFlowItem> {
    * `setRules`.
    */
   onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
+  /**
+   * Resolves whether another resource already holds the published path of
+   * `item` in a destination folder, so the panel can say so before submit.
+   * Called when the selected folder changes to a defined folder and when
+   * `item.version` changes while one is selected; never for a folder created
+   * in this session, nor for a folder where this item's own history already
+   * holds it. An answer that arrives after the folder or version changed again
+   * is discarded. A rejection leaves the target untaken and does not block
+   * submit: the backend's refusal on submit is the safety net. Omit to skip
+   * the check entirely.
+   */
+  onCheckTargetExists?: (item: TItem, folderPath: string[]) => Promise<boolean>;
+  /**
+   * Tells whether the rejection of `onPublish` means the target is taken. When
+   * it returns `true` the hook marks the selected folder's target as taken
+   * instead of setting `hasSubmitError`, so the panel shows the same callout as
+   * after the check; `onPublishError` is still called. Must be synchronous: a
+   * host that learns the cause asynchronously converts the error inside its
+   * `onPublish` before rethrowing it.
+   */
+  isTargetTakenError?: (error: unknown) => boolean;
 }
 
 /** State and handlers returned by {@link usePublishFlow}. */
@@ -192,6 +215,14 @@ export interface UsePublishFlowResult {
   publishCredentials: boolean;
   /** Replaces the credentials opt-in. */
   setPublishCredentials: (value: boolean) => void;
+  /**
+   * Whether another resource holds the published path in `selectedFolderPath`:
+   * `onCheckTargetExists` answered `true` for the current folder and version,
+   * or the last submit was rejected as a taken target.
+   */
+  isTargetTaken: boolean;
+  /** Whether `onCheckTargetExists` is currently resolving for the selected folder and version. */
+  isTargetChecking: boolean;
   /** Whether `onFetchExistingRules` is currently resolving for the selected folder. */
   isRulesLoading: boolean;
   /** Whether the most recent `onFetchExistingRules` call failed. `rules` is left unchanged when this is `true`. */
@@ -212,6 +243,8 @@ export const usePublishFlow = <
   onPublishSuccess,
   onPublishError,
   onFetchExistingRules,
+  onCheckTargetExists,
+  isTargetTakenError,
 }: UsePublishFlowOptions<TItem>): UsePublishFlowResult => {
   const [folderItems, setFolderItems] = useState(initialFolderItems);
   useEffect(() => {
@@ -292,12 +325,73 @@ export const usePublishFlow = <
     });
   }, [history, item.version, selectedFolderPath]);
 
+  /*
+   * A folder created in this session holds nothing yet, and neither does
+   * anything beneath it, so it cannot collide and is not checked.
+   */
+  const createdFolderKeys = useRef(new Set<string>());
+  /* Kept apart: a refusal on submit also covers a copy the check cannot see, so a later free answer must not clear it. */
+  const [checkedTakenKey, setCheckedTakenKey] = useState<string>();
+  const [submitTakenKey, setSubmitTakenKey] = useState<string>();
+  const [isTargetChecking, setIsTargetChecking] = useState(false);
+  const targetKey =
+    selectedFolderPath == null
+      ? undefined
+      : `${item.id ?? ''}\u0000${selectedFolderPath.join('/')}\u0000${item.version ?? ''}`;
+  const isTargetTaken =
+    targetKey != null &&
+    (checkedTakenKey === targetKey || submitTakenKey === targetKey);
+
+  useEffect(() => {
+    if (
+      selectedFolderPath == null ||
+      targetKey == null ||
+      !onCheckTargetExists ||
+      hasExistingPublicationInFolder
+    ) {
+      setIsTargetChecking(false);
+      return;
+    }
+    const folderKey = selectedFolderPath.join('/');
+    const isInCreatedFolder = [...createdFolderKeys.current].some(
+      (created) => folderKey === created || folderKey.startsWith(`${created}/`),
+    );
+    if (isInCreatedFolder) {
+      setIsTargetChecking(false);
+      return;
+    }
+
+    let isCancelled = false;
+    setIsTargetChecking(true);
+    onCheckTargetExists(item, selectedFolderPath)
+      .then((isTaken) => {
+        if (isCancelled) return;
+        setCheckedTakenKey((previous) => {
+          if (isTaken) return targetKey;
+          return previous === targetKey ? undefined : previous;
+        });
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!isCancelled) setIsTargetChecking(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+    /* `item` and the callback are read when the key changes; `targetKey` already carries the folder and version, and a new callback identity must not re-ask. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetKey, hasExistingPublicationInFolder, onCheckTargetExists == null]);
+
   const handleCreateFolder = useCallback(
     async (parentPath: string[], name: string) => {
+      const createdKey = [...parentPath, name].join('/');
+      createdFolderKeys.current.add(createdKey);
       setFolderItems((prev) => insertFolder(prev, parentPath, name));
       try {
         await onCreateFolder?.(parentPath, name);
       } catch {
+        createdFolderKeys.current.delete(createdKey);
         setFolderItems((prev) => removeFolder(prev, parentPath, name));
         setHasSubmitError(true);
       }
@@ -322,7 +416,11 @@ export const usePublishFlow = <
       onPublishSuccess?.(item, selectedFolderPath);
       return true;
     } catch (error) {
-      setHasSubmitError(true);
+      if (isTargetTakenError?.(error) && targetKey != null) {
+        setSubmitTakenKey(targetKey);
+      } else {
+        setHasSubmitError(true);
+      }
       onPublishError?.(item, selectedFolderPath, error);
       return false;
     } finally {
@@ -330,6 +428,7 @@ export const usePublishFlow = <
     }
   }, [
     author,
+    isTargetTakenError,
     item,
     onPublish,
     onPublishError,
@@ -337,6 +436,7 @@ export const usePublishFlow = <
     publishCredentials,
     rules,
     selectedFolderPath,
+    targetKey,
   ]);
 
   const reset = useCallback(() => {
@@ -348,6 +448,10 @@ export const usePublishFlow = <
     setAuthorState(defaultAuthor);
     setIsAuthorEdited(false);
     setPublishCredentials(false);
+    createdFolderKeys.current.clear();
+    setCheckedTakenKey(undefined);
+    setSubmitTakenKey(undefined);
+    setIsTargetChecking(false);
   }, [defaultAuthor, initialFolderItems]);
 
   return {
@@ -369,6 +473,8 @@ export const usePublishFlow = <
     setAuthor,
     publishCredentials,
     setPublishCredentials,
+    isTargetTaken,
+    isTargetChecking,
     isRulesLoading,
     hasRulesLoadError,
   };

@@ -106,6 +106,8 @@ export const Catalog: FC<CatalogProps> = ({
   hidePublishAccessRules = false,
   ruleSourceOptions,
   onFetchExistingRules,
+  onCheckTargetExists,
+  isTargetTakenError,
   shareOverlay,
   isShareVisible,
   isSharePrimary,
@@ -997,6 +999,8 @@ export const Catalog: FC<CatalogProps> = ({
           hidePublishAccessRules={hidePublishAccessRules}
           ruleSourceOptions={ruleSourceOptions}
           onFetchExistingRules={onFetchExistingRules}
+          onCheckTargetExists={onCheckTargetExists}
+          isTargetTakenError={isTargetTakenError}
           shareOverlay={shareOverlay}
           isShareVisible={isShareVisible}
           isSharePrimary={isSharePrimary}

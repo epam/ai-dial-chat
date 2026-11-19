@@ -84,6 +84,10 @@ export interface PublishPanelLabels {
   credentialsHint?: string;
   /** Warning callout body shown when the folder already has this version; `{version}` and `{folder}` are replaced, with the folder name rendered bold. */
   replaceWarning?: string;
+  /** Warning callout body shown when another resource already holds the published path in the folder and the resource has no version; `{folder}` is replaced, with the folder name rendered bold. */
+  targetTakenLabel?: string;
+  /** Like `targetTakenLabel`, used when the resource has a version; `{version}` and `{folder}` are replaced. */
+  targetTakenVersionedLabel?: string;
   /** Error callout body shown when the user lacks write access; `{folder}` is replaced, with the folder name rendered bold. */
   noAccessError?: string;
   /** Error callout body shown when the most recent submit attempt failed. */
@@ -180,6 +184,10 @@ export interface PublishPanelProps {
   isSubmitting: boolean;
   /** Whether the most recent submit attempt failed. */
   hasSubmitError?: boolean;
+  /** Whether the host found another resource at the published path in `selectedFolderPath`; shows a warning callout and disables submit. Default `false`. */
+  isTargetTaken?: boolean;
+  /** Whether the host's check of the published path is still running; disables submit without a callout. Default `false`. */
+  isTargetChecking?: boolean;
   /**
    * Whether resubmitting when `hasExistingPublicationInFolder` is true is
    * allowed or blocked — see `PublishDerivationInput.allowReplace`.
@@ -260,6 +268,8 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   hasWriteAccess,
   isSubmitting,
   hasSubmitError = false,
+  isTargetTaken = false,
+  isTargetChecking = false,
   allowReplace = true,
   author = '',
   onAuthorChange,
@@ -306,6 +316,8 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     changeFolderLabel = 'Change',
     chooseFolderLabel = 'Choose',
     replaceWarning = 'Version {version} is already published in {folder}. Publishing will replace it.',
+    targetTakenLabel = 'A resource with this name already exists in {folder}. Rename it or choose another folder.',
+    targetTakenVersionedLabel = 'Version {version} of a resource with this name already exists in {folder}. Rename it, change its version or choose another folder.',
     noAccessError = "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
     submitError = 'Publishing failed. Please try again.',
     adminApprovalTitle = 'Admin approval required',
@@ -366,6 +378,8 @@ export const PublishPanel: FC<PublishPanelProps> = ({
         hasWriteAccess,
         isSubmitting,
         hasSubmitError,
+        isTargetTaken,
+        isTargetChecking,
         allowReplace,
       }),
     [
@@ -374,6 +388,8 @@ export const PublishPanel: FC<PublishPanelProps> = ({
       hasWriteAccess,
       isSubmitting,
       hasSubmitError,
+      isTargetTaken,
+      isTargetChecking,
       allowReplace,
     ],
   );
@@ -534,6 +550,9 @@ export const PublishPanel: FC<PublishPanelProps> = ({
                 variant={calloutVariant(derived.calloutKind)}
                 message={calloutMessage(derived.calloutKind, {
                   replaceWarning,
+                  targetTaken: resource?.version
+                    ? targetTakenVersionedLabel
+                    : targetTakenLabel,
                   noAccessError,
                   submitError,
                   folderName,
@@ -620,10 +639,12 @@ export const PublishPanel: FC<PublishPanelProps> = ({
 const calloutVariant = (
   kind:
     | PublishCalloutKind.ReplaceWarning
+    | PublishCalloutKind.TargetTaken
     | PublishCalloutKind.NoAccess
     | PublishCalloutKind.SubmitError,
 ): NotificationVariant =>
-  kind === PublishCalloutKind.ReplaceWarning
+  kind === PublishCalloutKind.ReplaceWarning ||
+  kind === PublishCalloutKind.TargetTaken
     ? NotificationVariant.Warning
     : NotificationVariant.Error;
 
@@ -648,10 +669,12 @@ const withBoldFolderName = (
 const calloutMessage = (
   kind:
     | PublishCalloutKind.ReplaceWarning
+    | PublishCalloutKind.TargetTaken
     | PublishCalloutKind.NoAccess
     | PublishCalloutKind.SubmitError,
   strings: {
     replaceWarning: string;
+    targetTaken: string;
     noAccessError: string;
     submitError: string;
     folderName: string;
@@ -662,6 +685,13 @@ const calloutMessage = (
   if (kind === PublishCalloutKind.ReplaceWarning) {
     return withBoldFolderName(
       strings.replaceWarning.replace('{version}', strings.version ?? ''),
+      strings.folderName,
+      strings.folderNameClassName,
+    );
+  }
+  if (kind === PublishCalloutKind.TargetTaken) {
+    return withBoldFolderName(
+      strings.targetTaken.replace('{version}', strings.version ?? ''),
       strings.folderName,
       strings.folderNameClassName,
     );

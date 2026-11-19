@@ -327,6 +327,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       publishCredentials,
       onPublishCredentialsChange,
       allowReplace,
+      isTargetTaken,
+      isTargetChecking,
       dependencies,
       versionHistory,
       getDisabledReason,
@@ -336,6 +338,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
         path: string[];
       }) => string | undefined;
       allowReplace?: boolean;
+      isTargetTaken?: boolean;
+      isTargetChecking?: boolean;
       dependencies?: PublishDependency[];
       versionHistory?: { rows: { id: string; version: string }[] };
       onChangeFolderClick: () => void;
@@ -359,6 +363,8 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
             'none'}
         </span>
         <span>panelAllowReplace:{String(allowReplace)}</span>
+        <span>targetTaken:{String(isTargetTaken)}</span>
+        <span>targetChecking:{String(isTargetChecking)}</span>
         <span>
           dependencies:
           {dependencies == null
@@ -504,6 +510,50 @@ describe('DetailsPanel — republishing an existing version', () => {
 
     expect(screen.getByText('panelAllowReplace:false')).toBeTruthy();
     expect(screen.getByText('footerAllowReplace:false')).toBeTruthy();
+  });
+});
+
+describe('DetailsPanel — a taken published path', () => {
+  const selectFolder = async () => {
+    await openPublish();
+    await selectSharedFolder();
+  };
+
+  it('asks the host about the selected folder and shows the answer on the publish panel', async () => {
+    const onCheckTargetExists = vi.fn().mockResolvedValue(true);
+    const target = makeItem({ type: CatalogEntityType.Toolset });
+    renderPanel({ item: target, onCheckTargetExists });
+
+    await selectFolder();
+
+    expect(await screen.findByText('targetTaken:true')).toBeTruthy();
+    expect(onCheckTargetExists).toHaveBeenCalledWith(target, ['Shared']);
+  });
+
+  it('shows no taken target when the host does not check', async () => {
+    renderPanel({ item: makeItem({ type: CatalogEntityType.Toolset }) });
+
+    await selectFolder();
+
+    expect(screen.getByText('targetTaken:false')).toBeTruthy();
+    expect(screen.getByText('targetChecking:false')).toBeTruthy();
+  });
+
+  it('marks the target taken instead of failing when the publish is rejected as a taken path', async () => {
+    class TakenError extends Error {}
+    const onPublishError = vi.fn();
+    renderPanel({
+      item: makeItem({ type: CatalogEntityType.Toolset }),
+      onPublish: vi.fn().mockRejectedValue(new TakenError()),
+      isTargetTakenError: (error) => error instanceof TakenError,
+      onPublishError,
+    });
+    await selectFolder();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(await screen.findByText('targetTaken:true')).toBeTruthy();
+    expect(onPublishError).toHaveBeenCalledTimes(1);
   });
 });
 

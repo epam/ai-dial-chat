@@ -744,6 +744,41 @@ ignores a read that finishes after the panel closed or `entityId` changed. The
 request and its mapping to `PublishHistoryEntry` (for the catalog endpoint,
 `mapPublishHistoryEntryDto`) stay with the host.
 
+`usePublishTargetGuard({ client, getEntity })` (root and `./catalog`)
+wires a publish panel's check that another author's resource does not already
+hold the published path. `client` is the `publishApiClient` from your
+`createPublishApiClient` and must be referentially stable, as must `getEntity`,
+which maps a publish-flow item to its `{ entityType, entityId }` (or `undefined`
+for an item that is not publishable, which is then never reported as taken). The
+client's `checkPublishTarget(entityType, entityId, folderPath, version?)` reads the
+backend's answer, which is advisory (a copy hidden from the caller, or still
+pending approval, is not found). The hook returns three callbacks:
+`onCheckTargetExists(item, folderPath)` for `usePublishFlow`, which joins the
+folder segments with `/` and sends the item's version when it has one;
+`isTargetTakenError(error)`, a synchronous predicate that is `true` for a
+`PublishTargetTakenError`; and `wrapPublish(publish)`, which rejects the
+publish endpoint's `409` with code `target-exists` as a `PublishTargetTakenError`
+(keeping the original in `cause`) and rethrows every other failure unchanged.
+Wrap the host's `onPublish` with `wrapPublish` and pass the other two to
+`usePublishFlow`, so the panel shows its target-taken callout before and after a
+submit. `isPublishTargetTakenResponse(error)` is the underlying async test of a
+generated-client rejection.
+
+```tsx
+const getEntity = useCallback(
+  () => ({ entityType: 'project' as const, entityId: projectId }),
+  [projectId],
+);
+const guard = usePublishTargetGuard({ client: publishApiClient, getEntity });
+
+const publishFlow = usePublishFlow({
+  /* ... */
+  onPublish: guard.wrapPublish(publishProject),
+  onCheckTargetExists: guard.onCheckTargetExists,
+  isTargetTakenError: guard.isTargetTakenError,
+});
+```
+
 `usePublishDependencies({ isOpen, entityId, loadDependencies })` (root and `./catalog`)
 returns the `PublishDependency[]` a publish panel lists as resources the item refers to
 that are not in the public bucket. It follows `usePublishHistory`: it reads through your

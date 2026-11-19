@@ -32,6 +32,14 @@ export const derivePublishState = (
     };
   }
 
+  if (input.isTargetChecking) {
+    return {
+      calloutKind: PublishCalloutKind.None,
+      isSubmitDisabled: true,
+      isSubmitLoading: false,
+    };
+  }
+
   if (input.hasSubmitError) {
     return {
       calloutKind: PublishCalloutKind.SubmitError,
@@ -44,6 +52,14 @@ export const derivePublishState = (
     return {
       calloutKind: PublishCalloutKind.ReplaceWarning,
       isSubmitDisabled: input.allowReplace === false,
+      isSubmitLoading: false,
+    };
+  }
+
+  if (input.isTargetTaken) {
+    return {
+      calloutKind: PublishCalloutKind.TargetTaken,
+      isSubmitDisabled: true,
       isSubmitLoading: false,
     };
   }

@@ -11,12 +11,17 @@ import {
 import type { ResourceFolderDto } from '../dto/resource-folder.dto';
 import { encodePlainDialResourcePath } from './encode-dial-path';
 
-/** DIAL Core resource types whose personal items can be listed by folder and moved or copied. */
+/**
+ * DIAL Core resource types whose personal items can be listed by folder and
+ * moved or copied. `Projects` is only read: its metadata answers
+ * {@link dialResourceExists}; no project is moved or copied through here.
+ */
 export enum DialResourceType {
   Applications = 'applications',
   Toolsets = 'toolsets',
   Prompts = 'prompts',
   Skills = 'skills',
+  Projects = 'projects',
 }
 
 /** A resource inside one bucket; `path` is percent-encoded per segment. */
@@ -63,6 +68,13 @@ const getMetadata = (
   }
   if (type === DialResourceType.Prompts) {
     return client.getPromptMetadata(
+      bucket,
+      path,
+      init,
+    ) as Promise<MetadataListPage>;
+  }
+  if (type === DialResourceType.Projects) {
+    return client.listProjectMetadata(
       bucket,
       path,
       init,
@@ -177,22 +189,57 @@ export const listDialResourceFolders = async (
   return folders;
 };
 
-/** Whether the caller can read the resource's metadata; any failure reads as absent. */
-const existsQuietly = async (
+/**
+ * Whether `location` holds a resource of `type`, read with the caller's own
+ * token: `200` is present, `404` absent. A copy the caller cannot read answers
+ * `404` too, so `false` means "not found", never "does not exist".
+ * @param client - DIAL Core client
+ * @param type - resource type of `location`
+ * @param location - bucket and percent-encoded path to read
+ * @param headers - the caller's auth headers
+ * @param context - names the operation in the log and the mapped error
+ * @param logger - optional logger for the mapped error
+ * @throws {HttpException} The mapped exception when Core answers anything but `200` or `404`
+ */
+export const dialResourceExists = async (
   client: DialSdkClient,
   type: DialResourceType,
   location: DialResourceLocation,
   headers: AuthHeaders,
+  context: string,
+  logger?: Logger,
 ): Promise<boolean> => {
   try {
-    const { response } = await getMetadata(
+    const { error, response } = await getMetadata(
       client,
       type,
       location.bucket,
       location.path,
       headers,
     );
-    return response?.status === 200;
+    if (response?.status === 200) return true;
+    if (response?.status === 404) return false;
+    return handleDialSdkError(error, context, logger, response);
+  } catch (err) {
+    return handleDialSdkError(err, context, logger);
+  }
+};
+
+/** {@link dialResourceExists} where a failed read counts as "not found". */
+export const existsQuietly = async (
+  client: DialSdkClient,
+  type: DialResourceType,
+  location: DialResourceLocation,
+  headers: AuthHeaders,
+): Promise<boolean> => {
+  try {
+    return await dialResourceExists(
+      client,
+      type,
+      location,
+      headers,
+      'exists probe',
+    );
   } catch {
     return false;
   }

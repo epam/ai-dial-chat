@@ -74,6 +74,10 @@ export interface StandalonePublishPanelProps {
   isSubmitting: boolean;
   /** Whether the most recent submit attempt failed. */
   hasSubmitError?: boolean;
+  /** Whether the host found another resource at the published path in `selectedFolderPath`; see `PublishPanel`. Default `false`. */
+  isTargetTaken?: boolean;
+  /** Whether the host's check of the published path is still running; see `PublishPanel`. Default `false`. */
+  isTargetChecking?: boolean;
   /**
    * Whether resubmitting when `hasExistingPublicationInFolder` is true is
    * allowed or blocked — see `PublishDerivationInput.allowReplace`.
@@ -158,6 +162,8 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   hasWriteAccess,
   isSubmitting,
   hasSubmitError = false,
+  isTargetTaken = false,
+  isTargetChecking = false,
   allowReplace = true,
   author,
   onAuthorChange,
@@ -218,6 +224,8 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
         hasWriteAccess,
         isSubmitting,
         hasSubmitError,
+        isTargetTaken,
+        isTargetChecking,
         allowReplace,
       }),
     [
@@ -226,6 +234,8 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
       hasWriteAccess,
       isSubmitting,
       hasSubmitError,
+      isTargetTaken,
+      isTargetChecking,
       allowReplace,
     ],
   );
@@ -338,6 +348,8 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
             hasWriteAccess={hasWriteAccess}
             isSubmitting={isSubmitting}
             hasSubmitError={hasSubmitError}
+            isTargetTaken={isTargetTaken}
+            isTargetChecking={isTargetChecking}
             allowReplace={allowReplace}
             author={author}
             onAuthorChange={onAuthorChange}

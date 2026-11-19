@@ -1,15 +1,18 @@
 import { describe, expect, it } from 'vitest';
+import { DialResourceType } from '../../common/utils/dial-resource-transfer';
 import {
   getPublicTargetFolder,
   getPublishedAttachmentsFolderUrl,
   getPublishedAttachmentTargetUrl,
   getPublishedDependencyTargetUrl,
   getPublishableIconUrl,
+  getPublishTargetLocation,
   getPublishedIconTargetUrl,
   getPublishedTargetUrl,
   getResourceName,
   getResourceTypePrefix,
   getVersionedTargetResourceName,
+  resolvePublishTarget,
   stripPublicTargetFolder,
 } from '../publish-target.util';
 
@@ -337,5 +340,54 @@ describe('getPublishedDependencyTargetUrl', () => {
         target.startsWith(`${type}/${getPublicTargetFolder(FOLDER)}`),
       ).toBe(true);
     }
+  });
+});
+
+describe('resolvePublishTarget', () => {
+  it('encodes the source and derives a versioned target for an application', () => {
+    expect(
+      resolvePublishTarget(
+        'applications/b1/My App__1.0.0',
+        'Org/Data Science',
+        '2.0.0',
+      ),
+    ).toEqual({
+      sourceUrl: 'applications/b1/My%20App__1.0.0',
+      resourceTypePrefix: 'applications',
+      targetResourceName: 'My%20App__2.0.0',
+      targetUrl: 'applications/public/Org/Data%20Science/My%20App__2.0.0',
+    });
+  });
+
+  it.each([
+    ['prompts/b1/Folder/greet', 'prompts/public/Org/greet'],
+    ['skills/b1/Folder/review', 'skills/public/Org/review'],
+    ['projects/b1/q4-launch', 'projects/public/Org/q4-launch'],
+  ])('keeps the leaf name of %s and ignores a version', (entityId, target) => {
+    expect(resolvePublishTarget(entityId, 'Org', '3.0.0').targetUrl).toBe(
+      target,
+    );
+  });
+});
+
+describe('getPublishTargetLocation', () => {
+  it.each([
+    ['applications', DialResourceType.Applications],
+    ['toolsets', DialResourceType.Toolsets],
+    ['prompts', DialResourceType.Prompts],
+    ['skills', DialResourceType.Skills],
+    ['projects', DialResourceType.Projects],
+  ])('reads the %s target in the public bucket', (prefix, type) => {
+    expect(
+      getPublishTargetLocation(`${prefix}/public/Org/Data%20Science/x`),
+    ).toEqual({
+      type,
+      location: { bucket: 'public', path: 'Org/Data%20Science/x' },
+    });
+  });
+
+  it('has no location for a url that is not a published copy', () => {
+    expect(getPublishTargetLocation('models/public/x')).toBeUndefined();
+    expect(getPublishTargetLocation('applications/b1/x')).toBeUndefined();
   });
 });
