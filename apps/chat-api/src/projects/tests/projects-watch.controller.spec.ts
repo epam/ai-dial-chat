@@ -13,6 +13,7 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeatureGuard } from '../../app-config/feature-flags/feature.guard';
 import type { SessionUser } from '../../auth/session/session.types';
+import type { EnvironmentVariables } from '../../config/environment.config';
 import { ProjectArtifactsListService } from '../artifacts/projects-artifacts-list.service';
 import { ProjectsDownloadService } from '../download/projects-download.service';
 import { ProjectWatchAction } from '../dto/project-watch-action.enum';
@@ -211,6 +212,10 @@ describe('ProjectsController watchProjects (client disconnect)', () => {
       {} as ProjectsUpdateService,
       watchService as unknown as ProjectsWatchService,
       {} as ProjectArtifactsListService,
+      { get: () => undefined } as unknown as ConfigService<
+        EnvironmentVariables,
+        true
+      >,
     );
     const res = Object.assign(new EventEmitter(), {
       writableEnded: false,
