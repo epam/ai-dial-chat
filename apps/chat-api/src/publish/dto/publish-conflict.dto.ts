@@ -1,16 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
- * Domain code on a `409` that rejects a publication because the derived target
- * already holds a resource. Distinct from `ResourceNameConflictCode`, which
- * names a duplicate inside the caller's own bucket.
+ * Domain code on a `409` that rejects a publication: the derived target already
+ * holds a resource, or the same application is already being published.
+ * Distinct from `ResourceNameConflictCode`, which names a duplicate inside the
+ * caller's own bucket.
  */
 export enum PublishConflictCode {
   /** The published copy's path is already taken, by another author's resource or an earlier publication. */
   TargetExists = 'target-exists',
+  /** Another publish of the same application is in flight, so a second one cannot start yet. */
+  PublishInProgress = 'publish-in-progress',
 }
 
-/** Error body of a publish rejected with `409` because the target already exists. */
+/** Error body of a publish rejected with `409`: the target already exists, or the same application is already being published. */
 export class PublishConflictDto {
   @ApiProperty({ example: 409 })
   statusCode!: number;
@@ -28,7 +31,7 @@ export class PublishConflictDto {
     enum: PublishConflictCode,
     enumName: 'PublishConflictCode',
     description:
-      'Always `target-exists`: the published copy of this resource would land on a path that is already taken.',
+      '`target-exists`: the published copy of this resource would land on a path that is already taken. `publish-in-progress`: another publish of the same application has not finished yet.',
   })
   code!: PublishConflictCode;
 }

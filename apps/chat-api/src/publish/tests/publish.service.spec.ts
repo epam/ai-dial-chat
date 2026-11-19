@@ -3,10 +3,15 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AdminRoleService } from '../../auth/admin-role.service';
 import type { DialClientService } from '../../dial/dial-client.service';
+import { ApplicationPublishCopyService } from '../application-publish-copy.service';
+import { ApplicationPublishPreparationService } from '../application-publish-preparation.service';
+import { ApplicationDependencyResolver } from '../dependencies/application-dependency.resolver';
+import { PublishDependenciesService } from '../dependencies/publish-dependencies.service';
 import { CatalogEntityType } from '../dto/catalog-entity-params.dto';
 import { PublishRuleFunction } from '../dto/publish-rule.dto';
 import { PublishService } from '../publish.service';
@@ -49,12 +54,18 @@ const makeService = () => {
     },
   } as unknown as DialClientService;
   const cacheManager = makeCacheManager();
+  /* No private dependencies by default, so every case below takes the unchanged path. */
+  const preparation = {
+    prepare: vi.fn().mockResolvedValue(undefined),
+    cleanup: vi.fn().mockResolvedValue(undefined),
+  };
   const service = new PublishService(
     dialClient,
     cacheManager as never,
     { isAdmin: vi.fn().mockReturnValue(false) } as unknown as AdminRoleService,
+    preparation as never,
   );
-  return { service, dialClient, cacheManager };
+  return { service, dialClient, cacheManager, preparation };
 };
 
 describe('PublishService', () => {
@@ -1767,5 +1778,607 @@ describe('PublishService', () => {
         service.getBucketPublications('token-abc', TEST_BUCKET),
       ).rejects.toBeInstanceOf(BadGatewayException);
     });
+  });
+});
+
+/*
+ * The whole flow with the real preparation, copy and dependency services over
+ * a faked SDK client: what Core receives, what is written where, and what is
+ * left behind.
+ */
+describe('PublishService, publishing an application with its dependencies', () => {
+  const APP_ID = 'applications/bucket-123/Helper__1.0.0';
+  const COPY_ID = 'applications/bucket-123/.publish-staging/Helper__1.0.0';
+  const SCHEMA = {
+    $defs: {
+      Skill: {
+        properties: {
+          type: { const: 'dial-skill', type: 'string' },
+          url: { 'dial:resource': true, type: 'string' },
+        },
+      },
+      Toolset: {
+        properties: {
+          type: { const: 'dial-mcp', type: 'string' },
+          deployment_id: { 'dial:resource': true, type: 'string' },
+        },
+      },
+      App: {
+        properties: {
+          type: { const: 'dial-app', type: 'string' },
+          deployment_id: { 'dial:resource': true, type: 'string' },
+        },
+      },
+      File: {
+        properties: {
+          type: { const: 'file', type: 'string' },
+          url: { 'dial:resource': true, type: 'string' },
+        },
+      },
+    },
+    properties: {
+      skills: {
+        items: {
+          oneOf: [{ $ref: '#/$defs/Skill' }, { $ref: '#/$defs/File' }],
+        },
+      },
+      tool_sets: {
+        items: {
+          oneOf: [{ $ref: '#/$defs/Toolset' }, { $ref: '#/$defs/App' }],
+        },
+      },
+    },
+  };
+
+  const makeHarness = (
+    properties: Record<string, unknown>,
+    existingPublicPaths: string[] = [],
+  ) => {
+    const stored = new Map<string, unknown>([
+      [
+        'Helper__1.0.0',
+        {
+          application_type_schema_id: 'schema-1',
+          application_properties: properties,
+        },
+      ],
+    ]);
+    const existing = new Set(existingPublicPaths);
+    const written: { path: string; body: unknown; ifMatch?: string }[] = [];
+    const client = {
+      createPublication: vi
+        .fn()
+        .mockResolvedValue(okResponse({ createdAt: 1_700_000_000_000 })),
+      getCustomApplication: vi
+        .fn()
+        .mockImplementation(async (_bucket: string, path: string) => ({
+          data: stored.get(path) ?? {},
+          response: { status: 200, headers: new Headers({ etag: 'e1' }) },
+        })),
+      saveCustomApplication: vi.fn(),
+      copyResource: vi.fn().mockImplementation(async (init) => {
+        const target = String(init.body.destinationUrl).replace(
+          'applications/bucket-123/',
+          '',
+        );
+        stored.set(target, structuredClone(stored.get('Helper__1.0.0')));
+        return { response: { status: 200 } };
+      }),
+      deleteCustomApplication: vi.fn().mockImplementation(async (_b, path) => {
+        stored.delete(path);
+        return { response: { status: 200 } };
+      }),
+    };
+    const metadata = vi
+      .fn()
+      .mockImplementation(async (bucket: string, path: string) => ({
+        response: {
+          status: bucket === 'public' && existing.has(path) ? 200 : 404,
+        },
+      }));
+    Object.assign(client, {
+      getApplicationMetadata: metadata,
+      getPromptMetadata: metadata,
+      listSkillMetadata: metadata,
+      getToolSetMetadata: metadata,
+    });
+    const dialClient = { client } as unknown as DialClientService;
+    const schemas = { getApplicationSchema: vi.fn().mockResolvedValue(SCHEMA) };
+    const applications = {
+      resolveOwnApplication: vi
+        .fn()
+        .mockImplementation(async (_h, id: string) => ({
+          bucket: 'bucket-123',
+          path: id.replace('applications/bucket-123/', ''),
+        })),
+      readApplication: vi.fn().mockImplementation(async (_h, resource) => ({
+        body: structuredClone(stored.get(resource.path)),
+        etag: 'e1',
+      })),
+      writeApplication: vi
+        .fn()
+        .mockImplementation(async (_h, resource, body, _c, ifMatch) => {
+          written.push({ path: resource.path, body, ifMatch });
+          stored.set(resource.path, body);
+        }),
+      invalidateAfterWrite: vi.fn().mockResolvedValue(undefined),
+    };
+    const copyService = new ApplicationPublishCopyService(
+      dialClient,
+      applications as never,
+    );
+    const preparation = new ApplicationPublishPreparationService(
+      dialClient,
+      new PublishDependenciesService(
+        new ApplicationDependencyResolver(dialClient, schemas as never),
+      ),
+      copyService,
+      applications as never,
+      schemas as never,
+    );
+    const cacheManager = makeCacheManager();
+    const service = new PublishService(
+      dialClient,
+      cacheManager as never,
+      { isAdmin: vi.fn() } as unknown as AdminRoleService,
+      preparation,
+    );
+    const publish = (version?: string, publishCredentials?: boolean) =>
+      service.publish(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Application,
+        APP_ID,
+        'Organization/Agents',
+        version,
+        'Test User',
+        undefined,
+        publishCredentials,
+        'user-1',
+      );
+    return {
+      client,
+      stored,
+      written,
+      cacheManager,
+      publish,
+      applications,
+      service,
+      metadata,
+    };
+  };
+
+  const requestResources = (client: { createPublication: unknown }) =>
+    (
+      (client.createPublication as ReturnType<typeof vi.fn>).mock.calls[0][0]
+        .body as { resources: Record<string, unknown>[] }
+    ).resources;
+
+  beforeEach(() => {
+    vi.spyOn(Logger.prototype, 'warn').mockReturnValue(undefined);
+    vi.spyOn(Logger.prototype, 'debug').mockReturnValue(undefined);
+  });
+
+  it('publishes the application and its two skills in one request, the application from the rewritten copy', async () => {
+    const { client, stored, written, publish } = makeHarness({
+      skills: [
+        { type: 'dial-skill', url: 'skills/bucket-123/Docs%20helper' },
+        { type: 'dial-skill', url: 'skills/bucket-123/Writer' },
+      ],
+    });
+
+    const result = await publish();
+
+    expect(client.createPublication).toHaveBeenCalledTimes(1);
+    expect(requestResources(client)).toEqual([
+      {
+        action: 'ADD',
+        sourceUrl: COPY_ID,
+        targetUrl: 'applications/public/Organization/Agents/Helper__1.0.0',
+      },
+      {
+        action: 'ADD',
+        sourceUrl: 'skills/bucket-123/Docs%20helper',
+        targetUrl:
+          'skills/public/Organization/Agents/.Helper__1.0.0.deps/bucket-123/Docs%20helper',
+      },
+      {
+        action: 'ADD',
+        sourceUrl: 'skills/bucket-123/Writer',
+        targetUrl:
+          'skills/public/Organization/Agents/.Helper__1.0.0.deps/bucket-123/Writer',
+      },
+    ]);
+    expect(written).toHaveLength(1);
+    expect(written[0].path).toBe('.publish-staging/Helper__1.0.0');
+    expect(written[0].ifMatch).toBe('e1');
+    expect(
+      (written[0].body as { application_properties: unknown })
+        .application_properties,
+    ).toEqual({
+      skills: [
+        {
+          type: 'dial-skill',
+          url: 'skills/public/Organization/Agents/.Helper__1.0.0.deps/bucket-123/Docs%20helper',
+        },
+        {
+          type: 'dial-skill',
+          url: 'skills/public/Organization/Agents/.Helper__1.0.0.deps/bucket-123/Writer',
+        },
+      ],
+    });
+    expect(client.saveCustomApplication).not.toHaveBeenCalled();
+    expect(stored.has('.publish-staging/Helper__1.0.0')).toBe(false);
+    expect(result.entityId).toBe(APP_ID);
+  });
+
+  it('never writes the original', async () => {
+    const properties = {
+      skills: [{ type: 'dial-skill', url: 'skills/bucket-123/Writer' }],
+    };
+    const { stored, written, publish } = makeHarness(properties);
+
+    await publish();
+
+    expect(written.every(({ path }) => path !== 'Helper__1.0.0')).toBe(true);
+    expect(stored.get('Helper__1.0.0')).toEqual({
+      application_type_schema_id: 'schema-1',
+      application_properties: properties,
+    });
+  });
+
+  it('takes the unchanged path for an application without private dependencies', async () => {
+    const { client, publish } = makeHarness({
+      skills: [{ type: 'dial-skill', url: 'skills/public/Org/Shared' }],
+    });
+
+    await publish();
+
+    expect(requestResources(client)).toEqual([
+      {
+        action: 'ADD',
+        sourceUrl: APP_ID,
+        targetUrl: 'applications/public/Organization/Agents/Helper__1.0.0',
+      },
+    ]);
+    expect(client.copyResource).not.toHaveBeenCalled();
+  });
+
+  it('adds a dependency application beside, not under, the application and not its own skill', async () => {
+    const { client, publish } = makeHarness({
+      tool_sets: [
+        {
+          type: 'dial-app',
+          deployment_id: 'applications/bucket-123/Calc__1.0.0',
+        },
+      ],
+    });
+    /* The dependency's own private skill is never resolved. */
+    await publish();
+
+    expect(requestResources(client).map((r) => r.targetUrl)).toEqual([
+      'applications/public/Organization/Agents/Helper__1.0.0',
+      'applications/public/Organization/Agents/.Helper__1.0.0.deps/bucket-123/Calc__1.0.0',
+    ]);
+  });
+
+  it('adds the dependencies under the namespace of a new version', async () => {
+    const { client, publish } = makeHarness({
+      tool_sets: [
+        {
+          type: 'dial-mcp',
+          deployment_id: 'toolsets/bucket-123/Search__1.0.0',
+        },
+      ],
+    });
+
+    await publish('1.1.0');
+
+    expect(requestResources(client).map((r) => r.targetUrl)).toEqual([
+      'applications/public/Organization/Agents/Helper__1.1.0',
+      'toolsets/public/Organization/Agents/.Helper__1.1.0.deps/bucket-123/Search__1.0.0',
+    ]);
+  });
+
+  it('reuses a dependency that is already published, still pointing the application at it', async () => {
+    const existingPath =
+      'Organization/Agents/.Helper__1.0.0.deps/bucket-123/Writer';
+    const { client, written, publish } = makeHarness(
+      { skills: [{ type: 'dial-skill', url: 'skills/bucket-123/Writer' }] },
+      [existingPath],
+    );
+
+    await publish();
+
+    expect(requestResources(client).map((r) => r.sourceUrl)).toEqual([COPY_ID]);
+    expect(
+      (written[0].body as { application_properties: unknown })
+        .application_properties,
+    ).toEqual({
+      skills: [
+        {
+          type: 'dial-skill',
+          url: 'skills/public/Organization/Agents/.Helper__1.0.0.deps/bucket-123/Writer',
+        },
+      ],
+    });
+  });
+
+  it('does not carry publishCredentials to a toolset dependency', async () => {
+    const { client, publish } = makeHarness({
+      tool_sets: [
+        {
+          type: 'dial-mcp',
+          deployment_id: 'toolsets/bucket-123/Search__1.0.0',
+        },
+      ],
+    });
+
+    await publish(undefined, true);
+
+    const [application, toolset] = requestResources(client);
+    expect(application.publishCredentials).toBe(true);
+    expect(toolset).not.toHaveProperty('publishCredentials');
+  });
+
+  it('leaves a private file reference to Core: no ADD and no rewrite', async () => {
+    const { client, written, publish } = makeHarness({
+      skills: [
+        { type: 'file', url: 'files/bucket-123/notes.pdf' },
+        { type: 'dial-skill', url: 'skills/bucket-123/Writer' },
+      ],
+    });
+
+    await publish();
+
+    expect(requestResources(client).map((r) => r.sourceUrl)).toEqual([
+      COPY_ID,
+      'skills/bucket-123/Writer',
+    ]);
+    const skills = (
+      written[0].body as {
+        application_properties: { skills: { url: string }[] };
+      }
+    ).application_properties.skills;
+    expect(skills[0].url).toBe('files/bucket-123/notes.pdf');
+  });
+
+  const OLD_PATH_RESOURCES = [
+    {
+      action: 'ADD',
+      sourceUrl: APP_ID,
+      targetUrl: 'applications/public/Organization/Agents/Helper__1.0.0',
+    },
+  ];
+
+  it('publishes the application the way it was before when its dependencies cannot be read', async () => {
+    const { client, publish } = makeHarness({});
+    client.getCustomApplication.mockResolvedValue({
+      error: {},
+      response: { status: 500 },
+    });
+
+    await publish();
+
+    expect(client.copyResource).not.toHaveBeenCalled();
+    expect(requestResources(client)).toEqual(OLD_PATH_RESOURCES);
+  });
+
+  it('publishes the application the way it was before, with no copy left, when writing the copy is refused', async () => {
+    const { client, stored, applications, publish } = makeHarness({
+      skills: [{ type: 'dial-skill', url: 'skills/bucket-123/Writer' }],
+    });
+    applications.writeApplication.mockRejectedValue(
+      new ForbiddenException('Only DIAL admins set interceptors'),
+    );
+
+    await publish();
+
+    expect(requestResources(client)).toEqual(OLD_PATH_RESOURCES);
+    expect(stored.has('.publish-staging/Helper__1.0.0')).toBe(false);
+    expect(Logger.prototype.warn).toHaveBeenCalled();
+  });
+
+  it('publishes the application the way it was before when Core cannot tell whether a dependency target exists', async () => {
+    const { client, metadata, publish } = makeHarness({
+      skills: [{ type: 'dial-skill', url: 'skills/bucket-123/Writer' }],
+    });
+    metadata.mockResolvedValue({ response: { status: 503 } });
+
+    await publish();
+
+    expect(client.copyResource).not.toHaveBeenCalled();
+    expect(requestResources(client)).toEqual(OLD_PATH_RESOURCES);
+  });
+
+  it('publishes the application the way it was before when saving the copy loses a race with another write', async () => {
+    const { client, stored, applications, publish } = makeHarness({
+      skills: [{ type: 'dial-skill', url: 'skills/bucket-123/Writer' }],
+    });
+    applications.writeApplication.mockRejectedValue(
+      new ConflictException('The application changed while it was being saved'),
+    );
+
+    await publish();
+
+    expect(requestResources(client)).toEqual(OLD_PATH_RESOURCES);
+    expect(stored.has('.publish-staging/Helper__1.0.0')).toBe(false);
+  });
+
+  it("leaves a dependency in another user's bucket as it is: not added, not rewritten", async () => {
+    const { client, written, publish } = makeHarness({
+      skills: [
+        { type: 'dial-skill', url: 'skills/bucket-123/Writer' },
+        { type: 'dial-skill', url: 'skills/colleague-bucket/Shared' },
+      ],
+    });
+
+    await publish();
+
+    expect(requestResources(client).map((r) => r.sourceUrl)).toEqual([
+      COPY_ID,
+      'skills/bucket-123/Writer',
+    ]);
+    expect(
+      (
+        written[0].body as {
+          application_properties: { skills: { url: string }[] };
+        }
+      ).application_properties.skills[1].url,
+    ).toBe('skills/colleague-bucket/Shared');
+  });
+
+  it('does not take the dependency path for an application of another bucket', async () => {
+    const { client, service } = makeHarness({
+      skills: [{ type: 'dial-skill', url: 'skills/bucket-123/Writer' }],
+    });
+
+    await service.publish(
+      'token-abc',
+      TEST_BUCKET,
+      CatalogEntityType.Application,
+      'applications/other-bucket/Helper__1.0.0',
+      'Organization/Agents',
+      undefined,
+      'Test User',
+      undefined,
+      undefined,
+      'user-1',
+    );
+
+    expect(client.copyResource).not.toHaveBeenCalled();
+    expect(requestResources(client)).toEqual([
+      {
+        action: 'ADD',
+        sourceUrl: 'applications/other-bucket/Helper__1.0.0',
+        targetUrl: 'applications/public/Organization/Agents/Helper__1.0.0',
+      },
+    ]);
+  });
+
+  it('publishes the same version again to the same folder after a request that was rejected', async () => {
+    const { client, stored, publish } = makeHarness({
+      skills: [{ type: 'dial-skill', url: 'skills/bucket-123/Writer' }],
+    });
+
+    await publish();
+    /* An approver rejects: Core removes its review copies and creates no target, so nothing public exists. */
+    expect(stored.has('.publish-staging/Helper__1.0.0')).toBe(false);
+    await publish();
+
+    expect(client.createPublication).toHaveBeenCalledTimes(2);
+    const calls = (client.createPublication as ReturnType<typeof vi.fn>).mock
+      .calls;
+    expect(calls[1][0].body.resources).toEqual(calls[0][0].body.resources);
+    expect(calls[1][0].body.resources).toHaveLength(2);
+    expect(stored.has('.publish-staging/Helper__1.0.0')).toBe(false);
+  });
+
+  it("passes Core's refusal through and deletes the copy, as for a deleted dependency", async () => {
+    const { client, stored, publish } = makeHarness({
+      skills: [{ type: 'dial-skill', url: 'skills/bucket-123/Gone' }],
+    });
+    client.createPublication.mockResolvedValue({
+      error: {},
+      response: { ok: false, status: 400 },
+    });
+
+    await expect(publish()).rejects.toBeInstanceOf(BadRequestException);
+    expect(client.deleteCustomApplication).toHaveBeenCalledTimes(1);
+    expect(stored.has('.publish-staging/Helper__1.0.0')).toBe(false);
+  });
+
+  it('deletes the copy when createPublication throws', async () => {
+    const { client, publish } = makeHarness({
+      skills: [{ type: 'dial-skill', url: 'skills/bucket-123/Writer' }],
+    });
+    client.createPublication.mockRejectedValue(new Error('network'));
+
+    await expect(publish()).rejects.toBeInstanceOf(BadGatewayException);
+    expect(client.deleteCustomApplication).toHaveBeenCalledTimes(1);
+  });
+
+  it('answers 409 when the same application is already being published', async () => {
+    const { client, publish } = makeHarness({
+      skills: [{ type: 'dial-skill', url: 'skills/bucket-123/Writer' }],
+    });
+    client.copyResource.mockResolvedValue({
+      error: {},
+      response: { status: 400 },
+    });
+    (client as unknown as Record<string, unknown>).getApplicationMetadata = vi
+      .fn()
+      .mockResolvedValue({
+        data: { nodeType: 'ITEM', updatedAt: Date.now() },
+        response: { status: 200 },
+      });
+
+    await expect(publish()).rejects.toBeInstanceOf(ConflictException);
+    expect(client.createPublication).not.toHaveBeenCalled();
+    expect(client.deleteCustomApplication).not.toHaveBeenCalled();
+  });
+
+  it('still succeeds when deleting the copy fails, logging a warning without the token', async () => {
+    const { client, publish } = makeHarness({
+      skills: [{ type: 'dial-skill', url: 'skills/bucket-123/Writer' }],
+    });
+    client.deleteCustomApplication.mockResolvedValue({
+      error: {},
+      response: { status: 500 },
+    });
+    const warn = vi.spyOn(Logger.prototype, 'warn');
+
+    await expect(publish()).resolves.toMatchObject({ entityId: APP_ID });
+
+    const logged = JSON.stringify(warn.mock.calls);
+    expect(logged).toContain(COPY_ID);
+    expect(logged).not.toContain('token-abc');
+  });
+
+  it('clears the history cache of the application and of each published dependency', async () => {
+    const { cacheManager, publish } = makeHarness({
+      skills: [{ type: 'dial-skill', url: 'skills/bucket-123/Docs%20helper' }],
+      tool_sets: [
+        {
+          type: 'dial-mcp',
+          deployment_id: 'toolsets/bucket-123/Search__1.0.0',
+        },
+      ],
+    });
+
+    await publish();
+
+    const cleared = cacheManager.del.mock.calls.map(([key]) => key);
+    expect(cleared).toEqual(
+      expect.arrayContaining([
+        `publish-history:application:${APP_ID}`,
+        'publish-history:skill:skills/bucket-123/Docs helper',
+        'publish-history:toolset:toolsets/bucket-123/Search__1.0.0',
+        `publish:bucket-publications:${TEST_BUCKET}`,
+      ]),
+    );
+  });
+
+  it('logs how many dependencies were published and reused, without tokens or bodies', async () => {
+    const debug = vi.spyOn(Logger.prototype, 'debug');
+    const { publish } = makeHarness(
+      {
+        skills: [
+          { type: 'dial-skill', url: 'skills/bucket-123/Writer' },
+          { type: 'dial-skill', url: 'skills/bucket-123/Reader' },
+        ],
+      },
+      ['Organization/Agents/.Helper__1.0.0.deps/bucket-123/Reader'],
+    );
+
+    await publish();
+
+    const logged = debug.mock.calls.map(([message]) => String(message));
+    expect(
+      logged.some(
+        (m) => m.includes('Published 1 dependencies') && m.includes('reused 1'),
+      ),
+    ).toBe(true);
+    expect(JSON.stringify(logged)).not.toContain('token-abc');
   });
 });

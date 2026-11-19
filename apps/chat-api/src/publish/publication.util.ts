@@ -1,5 +1,6 @@
 import type { Logger } from '@nestjs/common';
 import { safeDecodeURIComponent } from '../common/utils/uri';
+import { stripPublishStagingSegment } from './publish-target.util';
 
 /**
  * Narrows DIAL Core's `getPublications` response to the publication array,
@@ -103,6 +104,19 @@ const isSameResourceUrl = (
   );
 };
 
+/**
+ * Source-side comparison: like {@link isSameResourceUrl}, but a publication
+ * resource whose `sourceUrl` names an application's temporary publication copy
+ * counts as naming the original. Never used for target urls, where a folder
+ * with the staging name is a real folder.
+ */
+const isSameSourceUrl = (
+  candidate: string | undefined,
+  sourceUrl: string,
+): boolean =>
+  candidate != null &&
+  isSameResourceUrl(stripPublishStagingSegment(candidate), sourceUrl);
+
 /*
  * The resource a publication publishes `sourceUrl` by, or `undefined`. Shared
  * so `getPublicationSourceAction` and `getPublicationSourceCredentials` read
@@ -114,7 +128,7 @@ const findPublishingResource = (
 ): PublicationResourceLike | undefined =>
   publication.resources?.find(
     (resource) =>
-      isSameResourceUrl(resource.sourceUrl, sourceUrl) &&
+      isSameSourceUrl(resource.sourceUrl, sourceUrl) &&
       resource.action !== PublicationResourceAction.Delete,
   );
 
@@ -135,7 +149,7 @@ export const getPublicationSourceAction = (
 ): PublicationResourceAction | null => {
   const resources =
     publication.resources?.filter((resource) =>
-      isSameResourceUrl(resource.sourceUrl, sourceUrl),
+      isSameSourceUrl(resource.sourceUrl, sourceUrl),
     ) ?? [];
   if (resources.length === 0) {
     return null;

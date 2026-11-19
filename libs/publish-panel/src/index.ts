@@ -11,6 +11,7 @@ export type {
 
 export { PublishDependencyType } from './models/publish-dependency';
 export type { PublishDependency } from './models/publish-dependency';
+export { PublishDependenciesAppearance } from './models/publish-dependencies-list';
 export type {
   PublishDependenciesColors,
   PublishDependenciesLabels,

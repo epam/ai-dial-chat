@@ -391,7 +391,7 @@ const dependencies: PublishDependency[] = [
 
 The list is informational: rows are not interactive, and it never changes what the submit button does. The library receives the list as data and knows nothing of how it was found. A `PublishDependency` is `{ id, name, version?, type, location, iconUrl?, isFolder? }`, with `type` a `PublishDependencyType` (`Application`, `Toolset`, `Prompt`, `Skill`, `File`), shown as text next to the folder. `iconUrl` is the already-resolved icon of the entity: an application, toolset, prompt or skill shows it in `DeploymentIcon`, or the initials of its name when there is none, and a `File` shows the UI kit's `FileIcon`, whose glyph is picked from the extension in `name` (the folder glyph when `isFolder` is `true`). `location` is the folder path inside the owner's bucket, empty at the bucket root.
 
-Copy comes from `PublishPanelLabels.dependenciesLabels` (`PublishDependenciesLabels`): `title` (default `'Private dependencies'`), `description` (the host names the published entity in it, such as application or conversation; the default says "this item"), `typeLabels` (default `'Application'`, `'Toolset'`, `'Prompt'`, `'Skill'`, `'File'`) and `getAnnouncement(count)`, the screen-reader text for the count, so a host can pluralise it in its own language. Colors come from `PublishPanelStyles.dependencies.colors` (`PublishDependenciesColors`: `headingText`, `nameText`, `metaText`, falling back to `--text-primary` and `--text-secondary`). `PublishDependenciesList` can also be used on its own; it then takes `labels`, `styles`, and the typography classes `headingClassName` (default `'dial-body-semi-text'`), `nameClassName` (default `'dial-small-semi-text'`) and `metaClassName` (default `'dial-small-text'`).
+Copy comes from `PublishPanelLabels.dependenciesLabels` (`PublishDependenciesLabels`): `title` (default `'Private dependencies'`), `description` (the host names the published entity in it, such as application or conversation; the default says "this item"), `appearance` (a `PublishDependenciesAppearance`: `Warning`, the default, with a warning notification and compact rows, or `Published`, for a host that publishes the listed dependencies together with the item and says so in `title` and `description`: a plain caption instead of the notification and rows with a 40px icon next to the type label over the name; the library does not know why a host picks one), `typeLabels` (default `'Application'`, `'Toolset'`, `'Prompt'`, `'Skill'`, `'File'`) and `getAnnouncement(count)`, the screen-reader text for the count, so a host can pluralise it in its own language. Colors come from `PublishPanelStyles.dependencies.colors` (`PublishDependenciesColors`: `headingText`, `nameText`, `metaText`, falling back to `--text-primary` and `--text-secondary`, and for `Published` also `captionText` falling back to `--text-secondary`, `typeText` falling back to `--text-accent-tertiary` and `divider` falling back to `--stroke-tertiary`). `PublishDependenciesList` can also be used on its own; it then takes `labels`, `styles`, and the typography classes `headingClassName` (default `'dial-body-semi-text'`), `nameClassName` (default `'dial-small-semi-text'`, or `'dial-body-semi-text'` for `Published`), `metaClassName` (default `'dial-small-text'`), and for `Published` `captionClassName` (default `'dial-tiny-text'`) and `typeClassName` (default `'dial-tiny-lead-semi-text'`, which also upper-cases the label).
 
 ### VersionHistorySection
 
@@ -565,6 +565,10 @@ const {
 ```
 
 ## Enums
+
+### PublishDependenciesAppearance
+
+`Warning` (default) and `Published`: how the dependencies section is presented, a warning notification with compact rows or a plain caption with larger rows for a host that publishes the dependencies with the item. Set through `PublishDependenciesLabels.appearance`.
 
 ### PublishDependencyType
 

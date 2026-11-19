@@ -26,9 +26,10 @@ export class PublishDependenciesController {
     summary: 'List the private dependencies of a catalog entity',
     description:
       'Returns the direct references of a catalog entity (Toolset, Application, Prompt, Skill or Project) ' +
-      'that are not in the public bucket, so the publisher can publish them too before the published copy ' +
-      'reaches its audience. Resources that publishing already carries along (the application icon and its ' +
-      'declared files) are not listed, and a dependency’s own dependencies are not followed. The list is ' +
+      'that are not in the public bucket. For an application, publishing carries the listed skills, prompts, ' +
+      'toolsets and applications along with it; for other kinds the publisher has to publish them separately ' +
+      'before the published copy reaches its audience. Resources that publishing already carries along (the ' +
+      'application icon and its declared files) are not listed, and a dependency’s own dependencies are not followed. The list is ' +
       'advisory: when it cannot be resolved the response is an empty list rather than an error. Kinds that ' +
       'reference no other resource always return an empty list.',
   })

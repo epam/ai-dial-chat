@@ -94,6 +94,29 @@ describe('usePublishErrorNotification', () => {
     );
   });
 
+  it('shows the translated in-progress text for a publish that is already running, not the raw message', async () => {
+    const { result } = renderHook(() => usePublishErrorNotification());
+
+    result.current(
+      apiError(
+        {
+          statusCode: 409,
+          message: 'This application is already being published',
+          code: 'publish-in-progress',
+        },
+        409,
+      ),
+    );
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Error,
+        title: 'publish.failedTitle',
+        message: 'publish.inProgressMessage',
+      }),
+    );
+  });
+
   it('shows a connection-specific error notification without a request ID while offline', async () => {
     setOnLine(false);
     const { result } = renderHook(() => usePublishErrorNotification());
@@ -128,6 +151,27 @@ describe('usePublishErrorNotification', () => {
       }),
     );
   });
+
+  it.each([
+    [409, 'This application is already being published'],
+    [502, "Failed to read the application's dependencies"],
+  ])(
+    'shows the server message of an application publish answered %i',
+    async (status, message) => {
+      const { result } = renderHook(() => usePublishErrorNotification());
+
+      result.current(apiError({ message, statusCode: status }, status));
+
+      await waitFor(() =>
+        expect(mockShowNotification).toHaveBeenCalledWith({
+          variant: NotificationVariant.Error,
+          title: 'publish.failedTitle',
+          message,
+          requestId: undefined,
+        }),
+      );
+    },
+  );
 
   it('names the missing attachment files when publish is refused with conversationAttachmentMissing', async () => {
     const { result } = renderHook(() => usePublishErrorNotification());

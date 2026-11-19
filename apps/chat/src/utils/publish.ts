@@ -2,6 +2,7 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   PublishAccessRulesLabels,
   PublishDependenciesLabels,
+  PublishDependenciesAppearance,
   PublishDependencyType,
   PublishFooterLabels,
   PublishPanelLabels,
@@ -190,6 +191,26 @@ export const getPublishDependenciesLabels = (
   },
   getAnnouncement: (count) =>
     t(PublishI18nKeys.DependenciesAnnouncement, { count }),
+});
+
+/**
+ * Builds the labels of the dependencies section for an application, whose private dependencies are published together with it: a plain caption and the `Published` row layout instead of a warning.
+ * @param t - translation function
+ */
+export const getApplicationPublishDependenciesLabels = (
+  t: TFunction,
+): PublishDependenciesLabels => ({
+  ...getPublishDependenciesLabels(
+    t,
+    PublishI18nKeys.DependenciesEntityApplication,
+  ),
+  title: t(PublishI18nKeys.DependenciesPublishedTitle),
+  description: t(PublishI18nKeys.DependenciesPublishedDescription, {
+    entity: t(PublishI18nKeys.DependenciesEntityApplication),
+  }),
+  appearance: PublishDependenciesAppearance.Published,
+  getAnnouncement: (count) =>
+    t(PublishI18nKeys.DependenciesPublishedAnnouncement, { count }),
 });
 
 /** Builds the translated Update and in-progress footer labels shared by the conversation and project publish panels. */

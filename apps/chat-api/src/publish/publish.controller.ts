@@ -63,7 +63,11 @@ export class PublishController {
       "Core to copy the publisher's own credential for the entity onto the published copy, so members of the " +
       'organization use it without authorising individually; it is forwarded unchanged and changes no ' +
       'authorization — Core still derives the actor from the bearer token, enforces target-folder write access, ' +
-      'and holds the publication PENDING until an administrator approves it.',
+      'and holds the publication PENDING until an administrator approves it. Publishing an application also ' +
+      'publishes its first-level private dependencies (skills, prompts, toolsets, applications) in the same ' +
+      'DIAL Core request, so the published application works for other users; a temporary copy of the ' +
+      "application, with its references rewritten, is the request's source and is deleted when the call returns. " +
+      "The author's own application is never modified.",
   })
   @ApiBody({ type: PublishCatalogEntityDto })
   @ApiDialCoreErrors()
@@ -88,7 +92,7 @@ export class PublishController {
   @ApiResponse({
     status: 409,
     description:
-      "The published copy would land on a path that is already taken (`code` `target-exists`): another author's resource, or an earlier publication, holds the same name (and version) in this folder",
+      "The same application is already being published, or the published copy would land on a path that is already taken (`code` `target-exists`): another author's resource, or an earlier publication, holds the same name (and version) in this folder. DIAL Core can also report a conflict",
     type: PublishConflictDto,
   })
   @ApiResponse({
@@ -112,7 +116,7 @@ export class PublishController {
       publishCredentials,
     }: PublishCatalogEntityDto,
   ): Promise<PublishResultDto> {
-    const { at, bucket, claims } = req.user as SessionUser;
+    const { at, bucket, claims, sub } = req.user as SessionUser;
     return this.publishService.publish(
       at,
       bucket,
@@ -123,6 +127,7 @@ export class PublishController {
       resolveDisplayAuthor(author, claims),
       rules,
       publishCredentials,
+      sub,
     );
   }
 

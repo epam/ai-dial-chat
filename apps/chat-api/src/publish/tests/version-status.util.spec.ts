@@ -171,3 +171,32 @@ describe('resolveVersionStatus', () => {
     ).toBe(VersionPublicationStatus.NotPublished);
   });
 });
+
+describe('resolveVersionStatus for a publication of the temporary copy', () => {
+  const STAGING =
+    'applications/bucket-123/Design/.publish-staging/Review__1.0.0';
+
+  const viaStaging = (status: PublicationStatus): StatusPublication => ({
+    ...publication(status),
+    resources: [{ action: 'ADD', sourceUrl: STAGING, targetUrl: TARGET }],
+  });
+
+  it('is In review for a pending publication naming the staging path', () => {
+    expect(
+      resolveVersionStatus([viaStaging(PublicationStatus.Pending)], SOURCE),
+    ).toEqual({
+      status: VersionPublicationStatus.InReview,
+      publishedFolders: [],
+    });
+  });
+
+  it('is Published for an approved publication naming the staging path', () => {
+    expect(
+      resolveVersionStatus([viaStaging(PublicationStatus.Approved)], SOURCE),
+    ).toEqual({
+      status: VersionPublicationStatus.Published,
+      publishedFolders: ['Organization'],
+      publishedBy: 'Jane Doe',
+    });
+  });
+});

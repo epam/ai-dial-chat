@@ -5,6 +5,8 @@ import { ApplicationsModule } from '../applications/applications.module';
 import { AuthModule } from '../auth/auth.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
 import { ToolsetsListingModule } from '../toolsets/listing/toolsets-listing.module';
+import { ApplicationPublishCopyService } from './application-publish-copy.service';
+import { ApplicationPublishPreparationService } from './application-publish-preparation.service';
 import { ApplicationDependencyResolver } from './dependencies/application-dependency.resolver';
 import { PublishDependenciesService } from './dependencies/publish-dependencies.service';
 import { OrgUnitCopyService } from './org-unit-copy.service';
@@ -31,6 +33,8 @@ import { VersionStatusesService } from './version-statuses.service';
   ],
   providers: [
     PublishService,
+    ApplicationPublishCopyService,
+    ApplicationPublishPreparationService,
     OrgUnitCopyService,
     VersionStatusesService,
     PublishRulesService,

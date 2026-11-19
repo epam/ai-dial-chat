@@ -8836,7 +8836,7 @@
     },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
       "post": {
-        "description": "Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication's displayed author (the catalog's **Hosted by** value); when it is omitted or blank the caller's own session display name is used, as it always was. The optional `publishCredentials` flag asks Core to copy the publisher's own credential for the entity onto the published copy, so members of the organization use it without authorising individually; it is forwarded unchanged and changes no authorization — Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication PENDING until an administrator approves it.",
+        "description": "Publishes a catalog entity (Toolset, Application, Prompt, or Skill) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The optional `author` sets the publication's displayed author (the catalog's **Hosted by** value); when it is omitted or blank the caller's own session display name is used, as it always was. The optional `publishCredentials` flag asks Core to copy the publisher's own credential for the entity onto the published copy, so members of the organization use it without authorising individually; it is forwarded unchanged and changes no authorization — Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication PENDING until an administrator approves it. Publishing an application also publishes its first-level private dependencies (skills, prompts, toolsets, applications) in the same DIAL Core request, so the published application works for other users; a temporary copy of the application, with its references rewritten, is the request's source and is deleted when the call returns. The author's own application is never modified.",
         "operationId": "publishCatalogEntity",
         "parameters": [
           {
@@ -8902,7 +8902,7 @@
             "description": "DIAL Core resource not found"
           },
           "409": {
-            "description": "The published copy would land on a path that is already taken (`code` `target-exists`): another author's resource, or an earlier publication, holds the same name (and version) in this folder",
+            "description": "The same application is already being published, or the published copy would land on a path that is already taken (`code` `target-exists`): another author's resource, or an earlier publication, holds the same name (and version) in this folder. DIAL Core can also report a conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -9459,7 +9459,7 @@
     },
     "/api/v1/catalog/{entityType}/{entityId}/publish-dependencies": {
       "get": {
-        "description": "Returns the direct references of a catalog entity (Toolset, Application, Prompt, Skill or Project) that are not in the public bucket, so the publisher can publish them too before the published copy reaches its audience. Resources that publishing already carries along (the application icon and its declared files) are not listed, and a dependency’s own dependencies are not followed. The list is advisory: when it cannot be resolved the response is an empty list rather than an error. Kinds that reference no other resource always return an empty list.",
+        "description": "Returns the direct references of a catalog entity (Toolset, Application, Prompt, Skill or Project) that are not in the public bucket. For an application, publishing carries the listed skills, prompts, toolsets and applications along with it; for other kinds the publisher has to publish them separately before the published copy reaches its audience. Resources that publishing already carries along (the application icon and its declared files) are not listed, and a dependency’s own dependencies are not followed. The list is advisory: when it cannot be resolved the response is an empty list rather than an error. Kinds that reference no other resource always return an empty list.",
         "operationId": "getCatalogPublishDependencies",
         "parameters": [
           {
@@ -20718,8 +20718,8 @@
       },
       "PublishConflictCode": {
         "type": "string",
-        "enum": ["target-exists"],
-        "description": "Always `target-exists`: the published copy of this resource would land on a path that is already taken."
+        "enum": ["target-exists", "publish-in-progress"],
+        "description": "`target-exists`: the published copy of this resource would land on a path that is already taken. `publish-in-progress`: another publish of the same application has not finished yet."
       },
       "PublishConflictDto": {
         "type": "object",
@@ -20737,7 +20737,7 @@
             "example": "Conflict"
           },
           "code": {
-            "description": "Always `target-exists`: the published copy of this resource would land on a path that is already taken.",
+            "description": "`target-exists`: the published copy of this resource would land on a path that is already taken. `publish-in-progress`: another publish of the same application has not finished yet.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/PublishConflictCode"

@@ -65,6 +65,7 @@ const makeService = ({ isAdmin = false } = {}) => {
     dialClient,
     cacheManager as never,
     adminRoleService as unknown as AdminRoleService,
+    {} as never,
   );
   return { service, dialClient, cacheManager };
 };
