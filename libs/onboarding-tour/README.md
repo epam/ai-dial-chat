@@ -49,9 +49,11 @@ A tour never starts while an input, textarea, select or editable region has
 focus, so it never takes the user's keystrokes; it waits until they leave the
 field. Next marks the hint just passed as seen at once, so a tour left halfway
 — another page, a reload, a closed tab — later resumes from the first hint the
-user has not passed. Done marks the hints that were on screen as seen; Skip,
-Close and Escape dismiss onboarding and mark every configured hint seen, so no
-later page opens another tour. A `pageKey` change ends a running tour; the
+user has not passed. Done marks the hints that were on screen as seen. Close
+and Escape mark the same hints seen and put the onboarding off until the hook
+remounts (usually the next visit): the hints not reached stay unseen, but no
+card opens again in the meantime. Skip opts out and marks every configured
+hint seen, so no later page opens another tour. A `pageKey` change ends a running tour; the
 hints not passed yet wait for a page that renders them.
 
 The host decides what a `target` means: `resolveTarget` turns it into the
@@ -139,19 +141,19 @@ const Tour = () => {
 };
 ```
 
-| Prop                   | Type                                                                | Default                       | Description                                                                                                                                                                    |
-| ---------------------- | ------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `steps`                | `OnboardingTourStep[]`                                              | —                             | Steps in order. An empty list renders nothing; a new list restarts from its first step.                                                                                        |
-| `onFinish`             | `(shownStepIds: string[], reason: OnboardingTourEndReason) => void` | —                             | Called with the ids of the steps that were on screen, and `Done` (Done, or no remaining step has a target) or `Dismissed` (Skip, Close, Escape). The host clears `steps` here. |
-| `onStepComplete`       | `(stepId: string) => void`                                          | —                             | Optional. Called with a step's id when the user moves past it with Next, so the host can keep the progress of a tour left unfinished.                                          |
-| `isMobile`             | `boolean`                                                           | `false`                       | Shows the card as a sheet instead of next to the target, docked at the bottom, or at the top when the target is in the lower half of the screen.                               |
-| `dir`                  | `'ltr' \| 'rtl'`                                                    | inherited                     | Direction of the card; it is start-aligned with its target.                                                                                                                    |
-| `labels`               | `OnboardingTourLabels`                                              | English                       | `stepCounter`, `next`, `back`, `done`, `skip`, `close`.                                                                                                                        |
-| `colors`               | `OnboardingTourColors`                                              | theme tokens                  | See below.                                                                                                                                                                     |
-| `counterClassName`     | `string`                                                            | `'dial-tiny-text'`            | Typography of the step counter.                                                                                                                                                |
-| `titleClassName`       | `string`                                                            | `'dial-body-semi-text'`       | Typography of the card title.                                                                                                                                                  |
-| `descriptionClassName` | `string`                                                            | `'dial-small-paragraph-text'` | Typography of the card description.                                                                                                                                            |
-| `className`            | `string`                                                            | —                             | Extra class name(s) on the tour root.                                                                                                                                          |
+| Prop                   | Type                                                                | Default                       | Description                                                                                                                                                                             |
+| ---------------------- | ------------------------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `steps`                | `OnboardingTourStep[]`                                              | —                             | Steps in order. An empty list renders nothing; a new list restarts from its first step.                                                                                                 |
+| `onFinish`             | `(shownStepIds: string[], reason: OnboardingTourEndReason) => void` | —                             | Called with the ids of the steps that were on screen, and `Done` (Done, or no remaining step has a target), `Closed` (Close, Escape) or `Skipped` (Skip). The host clears `steps` here. |
+| `onStepComplete`       | `(stepId: string) => void`                                          | —                             | Optional. Called with a step's id when the user moves past it with Next, so the host can keep the progress of a tour left unfinished.                                                   |
+| `isMobile`             | `boolean`                                                           | `false`                       | Shows the card as a sheet instead of next to the target, docked at the bottom, or at the top when the target is in the lower half of the screen.                                        |
+| `dir`                  | `'ltr' \| 'rtl'`                                                    | inherited                     | Direction of the card; it is start-aligned with its target.                                                                                                                             |
+| `labels`               | `OnboardingTourLabels`                                              | English                       | `stepCounter`, `next`, `back`, `done`, `skip`, `close`.                                                                                                                                 |
+| `colors`               | `OnboardingTourColors`                                              | theme tokens                  | See below.                                                                                                                                                                              |
+| `counterClassName`     | `string`                                                            | `'dial-tiny-text'`            | Typography of the step counter.                                                                                                                                                         |
+| `titleClassName`       | `string`                                                            | `'dial-body-semi-text'`       | Typography of the card title.                                                                                                                                                           |
+| `descriptionClassName` | `string`                                                            | `'dial-small-paragraph-text'` | Typography of the card description.                                                                                                                                                     |
+| `className`            | `string`                                                            | —                             | Extra class name(s) on the tour root.                                                                                                                                                   |
 
 `colors` fields and their defaults: `backdrop` (`--bg-backdrop`, the dimming around the cut-out), `counterText` (`--text-tertiary`), and the card fields `cardBackground` (`--bg-layer-raised`), `cardShadow` (`--shadow-lg`), `titleText` (`--text-primary`), `descriptionText` (`--text-secondary`).
 
@@ -266,7 +268,7 @@ const resolveTarget = (target: string): HTMLElement | null =>
 
 ## Enums
 
-`OnboardingTourEndReason` — `Done` or `Dismissed`, the second argument of `OnboardingTourProps.onFinish`.
+`OnboardingTourEndReason` — `Done`, `Closed` or `Skipped`, the second argument of `OnboardingTourProps.onFinish`.
 
 ## Types
 

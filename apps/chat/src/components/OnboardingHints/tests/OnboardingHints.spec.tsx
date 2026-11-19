@@ -164,11 +164,22 @@ describe('OnboardingHints', () => {
     expect(screen.getByRole('dialog', { name: 'Start a chat' })).toBeTruthy();
   });
 
-  it('marks the shown hints seen when skipped with Escape', async () => {
+  it('marks only the shown hint seen when closed with Escape', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     await startTour();
 
     await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(readSeen()).toEqual(['new-chat']);
+  });
+
+  it('marks every hint seen when the tour is skipped', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    await startTour();
+
+    await user.click(
+      screen.getByRole('button', { name: 'onboardingTour.skip' }),
+    );
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(readSeen()).toEqual(['new-chat', 'composer']);
   });

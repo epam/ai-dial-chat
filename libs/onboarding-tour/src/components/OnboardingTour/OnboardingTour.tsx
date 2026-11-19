@@ -116,8 +116,12 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
     () => finishWith(OnboardingTourEndReason.Done),
     [finishWith],
   );
-  const dismiss = useCallback(
-    () => finishWith(OnboardingTourEndReason.Dismissed),
+  const close = useCallback(
+    () => finishWith(OnboardingTourEndReason.Closed),
+    [finishWith],
+  );
+  const skip = useCallback(
+    () => finishWith(OnboardingTourEndReason.Skipped),
     [finishWith],
   );
 
@@ -126,7 +130,7 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
       open: isOpen,
       onOpenChange: (open) => {
         if (!open) {
-          dismiss();
+          close();
         }
       },
       elements: { reference: target },
@@ -249,7 +253,7 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
             description={step.description}
             counter={stepCounter(index + 1, total)}
             closeLabel={labels?.close ?? 'Close tour'}
-            onClose={dismiss}
+            onClose={close}
             counterClassName={counterClassName}
             titleClassName={titleClassName}
             descriptionClassName={descriptionClassName}
@@ -279,7 +283,7 @@ export const OnboardingTour: FC<OnboardingTourProps> = ({
                 ) : (
                   <GhostButton
                     label={labels?.skip ?? 'Skip tour'}
-                    onClick={dismiss}
+                    onClick={skip}
                   />
                 )}
                 <div className="flex items-center gap-2">

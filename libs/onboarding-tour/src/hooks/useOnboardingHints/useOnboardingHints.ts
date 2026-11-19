@@ -24,6 +24,10 @@ export const useOnboardingHints = ({
   pageKey,
 }: UseOnboardingHintsOptions): UseOnboardingHintsResult => {
   const [steps, setSteps] = useState<OnboardingTourStep[]>(NO_STEPS);
+  /* Closing a tour (the close button, Escape) puts the onboarding off until
+   * the host remounts the hook, usually the next visit: the hints not passed
+   * stay unseen, but no card opens again on this page or the next one. */
+  const [isClosed, setIsClosed] = useState(false);
 
   /* The latest seen ids, including the ones just reported: two quick Next
    * presses must not each start from a `seenIds` the host has not re-rendered
@@ -71,7 +75,7 @@ export const useOnboardingHints = ({
    * the user is typing: it would take their focus and keystrokes. */
   const isRunning = steps.length > 0;
   useEffect(() => {
-    if (!isEnabled || isRunning || pendingSteps.length === 0) {
+    if (!isEnabled || isClosed || isRunning || pendingSteps.length === 0) {
       return;
     }
     let attempts = 0;
@@ -93,7 +97,7 @@ export const useOnboardingHints = ({
     };
     timer = window.setTimeout(tryStart, ONBOARDING_START_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [isEnabled, isRunning, pendingSteps, pageKey]);
+  }, [isEnabled, isClosed, isRunning, pendingSteps, pageKey]);
 
   /* Each Next marks the step just passed, so a tour left halfway (another
    * page, a reload, a closed tab) resumes from the first step not passed. */
@@ -106,16 +110,19 @@ export const useOnboardingHints = ({
     [markSeen],
   );
 
-  /* Done marks the hints that were shown; dismissing the tour (Skip, close,
-   * Escape) opts out of every configured hint, so no later page starts a new
-   * tour. */
+  /* Done and close mark the hints that were shown; Skip opts out of every
+   * configured hint, so no later page starts a new tour. Close also puts the
+   * remaining hints off until the next visit. */
   const onFinish = useCallback(
     (shownIds: string[], reason: OnboardingTourEndReason) => {
       markSeen(
-        reason === OnboardingTourEndReason.Dismissed
+        reason === OnboardingTourEndReason.Skipped
           ? [...new Set([...shownIds, ...hints.map(({ id }) => id)])]
           : shownIds,
       );
+      if (reason === OnboardingTourEndReason.Closed) {
+        setIsClosed(true);
+      }
       setSteps(NO_STEPS);
     },
     [hints, markSeen],

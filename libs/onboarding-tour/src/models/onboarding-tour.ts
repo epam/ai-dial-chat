@@ -168,7 +168,7 @@ export interface UseOnboardingHintsOptions {
 export interface UseOnboardingHintsResult {
   /** Steps to pass to `OnboardingTour`; empty while no tour runs. */
   steps: OnboardingTourStep[];
-  /** Pass to `OnboardingTour` as `onFinish`: marks the shown ids seen (every hint's id when dismissed) and ends the tour. */
+  /** Pass to `OnboardingTour` as `onFinish`: marks the shown ids seen (every hint's id when skipped) and ends the tour; after a close no tour opens again until the hook remounts. */
   onFinish: (shownIds: string[], reason: OnboardingTourEndReason) => void;
   /** Pass to `OnboardingTour` as `onStepComplete`: marks a hint seen as soon as the user moves past it. */
   onStepComplete: (stepId: string) => void;

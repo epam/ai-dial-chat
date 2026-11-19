@@ -151,7 +151,7 @@ describe('OnboardingTour', () => {
     expect(screen.getByRole('dialog', { name: 'Start a chat' })).toBeTruthy();
   });
 
-  it('reports only the steps shown when dismissed with Escape', async () => {
+  it('reports only the steps shown when closed with Escape', async () => {
     const user = userEvent.setup();
     const onFinish = vi.fn();
     render(<Host initialSteps={stepsFixture()} onFinish={onFinish} />);
@@ -160,11 +160,23 @@ describe('OnboardingTour', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(onFinish).toHaveBeenCalledWith(
       ['new-chat'],
-      OnboardingTourEndReason.Dismissed,
+      OnboardingTourEndReason.Closed,
     );
   });
 
-  it('reports Skip tour as dismissed', async () => {
+  it('reports the close button as closed, not skipped', async () => {
+    const user = userEvent.setup();
+    const onFinish = vi.fn();
+    render(<Host initialSteps={stepsFixture()} onFinish={onFinish} />);
+
+    await user.click(screen.getByRole('button', { name: 'Close tour' }));
+    expect(onFinish).toHaveBeenCalledWith(
+      ['new-chat'],
+      OnboardingTourEndReason.Closed,
+    );
+  });
+
+  it('reports Skip tour as skipped', async () => {
     const user = userEvent.setup();
     const onFinish = vi.fn();
     render(<Host initialSteps={stepsFixture()} onFinish={onFinish} />);
@@ -172,7 +184,7 @@ describe('OnboardingTour', () => {
     await user.click(screen.getByRole('button', { name: 'Skip tour' }));
     expect(onFinish).toHaveBeenCalledWith(
       ['new-chat'],
-      OnboardingTourEndReason.Dismissed,
+      OnboardingTourEndReason.Skipped,
     );
   });
 

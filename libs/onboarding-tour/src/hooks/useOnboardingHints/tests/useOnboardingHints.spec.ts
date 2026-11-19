@@ -94,15 +94,38 @@ describe('useOnboardingHints', () => {
     expect(result.current.steps).toEqual([]);
   });
 
-  it('marks every configured hint seen when the tour is dismissed', () => {
+  it('marks every configured hint seen when the tour is skipped', () => {
     const onSeenIdsChange = vi.fn();
     const { result } = renderHints({ onSeenIdsChange });
     act(() => vi.advanceTimersByTime(ONBOARDING_START_DELAY_MS));
 
     act(() =>
-      result.current.onFinish(['new-chat'], OnboardingTourEndReason.Dismissed),
+      result.current.onFinish(['new-chat'], OnboardingTourEndReason.Skipped),
     );
     expect(onSeenIdsChange).toHaveBeenCalledWith(['new-chat', 'catalog']);
+  });
+
+  it('marks only the shown hints seen and opens no new tour when closed', () => {
+    const onSeenIdsChange = vi.fn();
+    const { result, rerender } = renderHints({ onSeenIdsChange });
+    act(() => vi.advanceTimersByTime(ONBOARDING_START_DELAY_MS));
+
+    act(() =>
+      result.current.onFinish(['new-chat'], OnboardingTourEndReason.Closed),
+    );
+    expect(onSeenIdsChange).toHaveBeenCalledWith(['new-chat']);
+
+    onScreen.add('catalog-create');
+    rerender({
+      hints: HINTS,
+      seenIds: ['new-chat'],
+      onSeenIdsChange,
+      resolveTarget: (target) => (onScreen.has(target) ? element : null),
+      isEnabled: true,
+      pageKey: '/catalog',
+    });
+    act(() => vi.advanceTimersByTime(ONBOARDING_START_DELAY_MS));
+    expect(result.current.steps).toEqual([]);
   });
 
   it('marks each step seen as soon as the user moves past it', () => {
