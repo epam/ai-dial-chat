@@ -5082,10 +5082,13 @@ every word through formatter objects. Available from the root and
 | `formatScheduledTaskTriggerTime(value, timezone, locale?)`                                        | A stored trigger datetime — zone-local, or an instant from an older client — as the wall time it shows in `timezone`                                                                                                                                                                                                                                                                                                                                                |
 | `formatScheduledTaskClockTime(time, locale?)`                                                     | A stored `HH:mm` wall time as the locale's short clock time (`9:00 AM` or `09:00`), never shifted to another zone                                                                                                                                                                                                                                                                                                                                                   |
 | `formatZonedDateTime(dateTime, locale?)`                                                          | A zone-local `YYYY-MM-DDTHH:mm` as a medium date and short time, never shifted to another zone                                                                                                                                                                                                                                                                                                                                                                      |
-| `formatScheduledTaskInstant(instant, locale?)`                                                    | An absolute instant such as `nextRunTime` as a medium date and short time in the viewer's zone; the raw value when it is not a date                                                                                                                                                                                                                                                                                                                                 |
+| `formatScheduledTaskInstant(instant, locale?, timeZone?)`                                         | An absolute instant such as `nextRunTime` as a medium date and short time in `timeZone` (default: the viewer's zone), so a host that labels the value with a zone formats it in that same zone; the raw value when it is not a date or the zone is unknown                                                                                                                                                                                                          |
 | `formatScheduledTaskRunTime(date, locale?)` / `formatScheduledTaskRunDate(date, locale?)`         | A run start's short time (`11:00 AM`) / its month and day without a year (`Nov 17`), in the viewer's zone                                                                                                                                                                                                                                                                                                                                                           |
 | `formatScheduledTaskWeekday(day, locale?, style?)` / `formatScheduledTaskWeekdays(days, locale?)` | An APScheduler weekday (`0` is Monday) as a `ScheduledTaskWeekdayStyle.Long` or `Narrow` name / several as one locale list                                                                                                                                                                                                                                                                                                                                          |
 | `hasScheduledTaskWindowEnded(endDate, now?)`                                                      | Whether a cron activity window's `endDate` is at or before `now` (default: the current time)                                                                                                                                                                                                                                                                                                                                                                        |
+| `formatScheduledTaskNextRunTime(nextRunTime, labels, options?)`                                   | The `nextRunTime` instant in `options.browserTimezone` (default: `getBrowserTimezone()`) wrapped in `labels.withTimezone`, so the clock time and the named zone agree; no suffix when no zone resolves                                                                                                                                                                                                                                                              |
+| `formatScheduledTaskActiveWindow(task, labels, locale?)`                                          | The cron activity window as task-zone wall times joined by `labels.range` and wrapped in `labels.withTimezone` (`UTC` when the task has none); it starts at `startDate`, else `nextRunTime`, else the next cron occurrence. Returns `undefined` without an `endDate`                                                                                                                                                                                                |
+| `getScheduledTaskActivationBlock(task, now?)`                                                     | Why a task cannot be turned on: `ScheduledTaskActivationBlock.OneTimeFired` (a `date` trigger with no next run) or `WindowEnded` (a `cron` window whose `endDate` passed); `undefined` when it can                                                                                                                                                                                                                                                                  |
 | `toScheduledTaskItem` / `toScheduledTaskItems`                                                    | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                                                                                                                                                                                                                                                                                                                                               |
 | `formatScheduledTaskRunDuration(seconds, labels)`                                                 | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                                                                                                                                                                                                                                                                                                                                            |
 | `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)`                               | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                                                                                                                                                                                                                                                                                                                                         |
@@ -5131,6 +5134,35 @@ const runItems = toScheduledTaskRunItems(runs, {
   conversations,
   conversationIdsMatch: (left, right) => left === right,
 });
+```
+
+The detail view's dates name the zone they are shown in. The host supplies the suffix and the range wording:
+
+```ts
+import {
+  formatScheduledTaskActiveWindow,
+  formatScheduledTaskNextRunTime,
+  getScheduledTaskActivationBlock,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+const withTimezone = (label: string, timezone: string) =>
+  `${label} (${timezone})`;
+
+// "Nov 19, 2026, 5:45 PM (Europe/Kyiv)" for a viewer in Kyiv
+const nextRun = task.nextRunTime
+  ? formatScheduledTaskNextRunTime(
+      task.nextRunTime,
+      { withTimezone },
+      { locale: 'en' },
+    )
+  : undefined;
+// "Dec 1, 2026, 9:00 AM – Dec 31, 2026, 6:00 PM (America/New_York)"
+const activeWindow = formatScheduledTaskActiveWindow(
+  task,
+  { withTimezone, range: (start, end) => `${start} – ${end}` },
+  'en',
+);
+const activationBlock = getScheduledTaskActivationBlock(task);
 ```
 
 Keep the formatter objects stable (module constants or `useMemo`) when the

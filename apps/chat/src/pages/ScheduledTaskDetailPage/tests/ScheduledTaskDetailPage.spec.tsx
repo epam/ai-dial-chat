@@ -1347,7 +1347,7 @@ describe('ScheduledTaskDetailPage', () => {
 
     expect(
       screen.getByText(
-        'activeWindowLabel:scheduledTasks.detail.activeWindowValue',
+        'activeWindowLabel:scheduledTasks.card.scheduleZoneSuffix',
       ),
     ).toBeTruthy();
   });
@@ -1418,7 +1418,7 @@ describe('ScheduledTaskDetailPage', () => {
 
     expect(
       screen.getByText(
-        'activeWindowLabel:scheduledTasks.detail.activeWindowValue',
+        'activeWindowLabel:scheduledTasks.card.scheduleZoneSuffix',
       ),
     ).toBeTruthy();
   });
@@ -1443,7 +1443,7 @@ describe('ScheduledTaskDetailPage', () => {
 
     expect(
       screen.getByText(
-        'activeWindowLabel:scheduledTasks.detail.activeWindowValue',
+        'activeWindowLabel:scheduledTasks.card.scheduleZoneSuffix',
       ),
     ).toBeTruthy();
   });

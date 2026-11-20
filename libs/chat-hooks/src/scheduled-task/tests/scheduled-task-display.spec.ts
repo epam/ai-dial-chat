@@ -8,16 +8,21 @@ import { ScheduledTaskRunStatus } from '@epam/ai-dial-scheduled-tasks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   classifyScheduledTaskDeleteError,
+  formatScheduledTaskActiveWindow,
+  formatScheduledTaskNextRunTime,
   formatScheduledTaskRunDuration,
   formatScheduledTaskRunTimestamp,
   formatScheduledTaskScheduleLabel,
   formatScheduledTaskTriggerTime,
+  getScheduledTaskActivationBlock,
+  ScheduledTaskActivationBlock,
   ScheduledTaskDeleteErrorKind,
   selectScheduledTaskErrorMessage,
   toScheduledTaskItem,
   toScheduledTaskItems,
   toScheduledTaskRunItem,
   toScheduledTaskRunItems,
+  type ScheduledTaskActiveWindowLabels,
   type ScheduledTaskRunDurationLabels,
   type ScheduledTaskRunItemOptions,
   type ScheduledTaskRunTimestampLabels,
@@ -828,5 +833,212 @@ describe('formatScheduledTaskTriggerTime', () => {
 
   it('returns a value that is not a date unchanged', () => {
     expect(formatScheduledTaskTriggerTime('soon', 'UTC', 'en')).toBe('soon');
+  });
+});
+
+/** ICU puts a narrow no-break space before AM/PM; compare with plain spaces. */
+const plainSpaces = (value: string | undefined): string | undefined =>
+  value?.replace(/[\u202f\u00a0]/g, ' ');
+
+const activeWindowLabels: ScheduledTaskActiveWindowLabels = {
+  range: (startDate, endDate) => `${startDate} – ${endDate}`,
+  withTimezone: (label, timezone) => `${label} (${timezone})`,
+};
+
+describe('formatScheduledTaskNextRunTime', () => {
+  const NEXT_RUN = '2026-11-19T15:45:00.000Z';
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('shows the instant in the given viewer zone and names it', () => {
+    expect(
+      plainSpaces(
+        formatScheduledTaskNextRunTime(NEXT_RUN, activeWindowLabels, {
+          locale: 'en-US',
+          browserTimezone: 'Europe/Kyiv',
+        }),
+      ),
+    ).toBe('Nov 19, 2026, 5:45 PM (Europe/Kyiv)');
+  });
+
+  it("defaults to the browser's resolved zone", () => {
+    const options = new Intl.DateTimeFormat().resolvedOptions();
+    vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({
+      ...options,
+      timeZone: 'America/New_York',
+    });
+
+    expect(
+      plainSpaces(
+        formatScheduledTaskNextRunTime(NEXT_RUN, activeWindowLabels, {
+          locale: 'en-US',
+        }),
+      ),
+    ).toBe('Nov 19, 2026, 10:45 AM (America/New_York)');
+  });
+
+  it('omits the suffix when no browser zone can be resolved', () => {
+    const options = new Intl.DateTimeFormat().resolvedOptions();
+    vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({
+      ...options,
+      timeZone: undefined as unknown as string,
+    });
+
+    expect(
+      formatScheduledTaskNextRunTime(NEXT_RUN, activeWindowLabels, {
+        locale: 'en-US',
+      }),
+    ).toBe(
+      new Intl.DateTimeFormat('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(new Date(NEXT_RUN)),
+    );
+  });
+});
+
+describe('formatScheduledTaskActiveWindow', () => {
+  const cronTask = ({
+    startDate,
+    endDate,
+    ...rest
+  }: Partial<ScheduledTaskDto> & {
+    startDate?: string;
+    endDate?: string;
+  }): Pick<ScheduledTaskDto, 'trigger' | 'timezone' | 'nextRunTime'> => ({
+    trigger: {
+      cron: { fields: { hour: '9', minute: '0' }, startDate, endDate },
+    },
+    ...rest,
+  });
+
+  it("formats both bounds in the task's zone and names it", () => {
+    expect(
+      plainSpaces(
+        formatScheduledTaskActiveWindow(
+          cronTask({
+            timezone: 'America/New_York',
+            startDate: '2026-12-01T09:00',
+            endDate: '2026-12-31T18:00',
+          }),
+          activeWindowLabels,
+          'en-US',
+        ),
+      ),
+    ).toBe('Dec 1, 2026, 9:00 AM – Dec 31, 2026, 6:00 PM (America/New_York)');
+  });
+
+  it("starts at the server's next run, shown in the task's zone", () => {
+    expect(
+      plainSpaces(
+        formatScheduledTaskActiveWindow(
+          cronTask({
+            timezone: 'Europe/Paris',
+            nextRunTime: '2026-11-19T15:45:00.000Z',
+            endDate: '2026-11-30T18:00',
+          }),
+          activeWindowLabels,
+          'en-US',
+        ),
+      ),
+    ).toBe('Nov 19, 2026, 4:45 PM – Nov 30, 2026, 6:00 PM (Europe/Paris)');
+  });
+
+  it('computes the start from the cron fields when the server has no next run', () => {
+    expect(
+      formatScheduledTaskActiveWindow(
+        cronTask({
+          timezone: 'UTC',
+          nextRunTime: undefined,
+          endDate: '2999-10-10T21:59',
+        }),
+        activeWindowLabels,
+        'en-US',
+      ),
+    ).toMatch(/^.+ – .+ \(UTC\)$/);
+  });
+
+  it('names UTC when the task has no zone', () => {
+    expect(
+      formatScheduledTaskActiveWindow(
+        cronTask({
+          startDate: '2026-12-01T09:00',
+          endDate: '2026-12-31T18:00',
+        }),
+        activeWindowLabels,
+        'en-US',
+      ),
+    ).toMatch(/ \(UTC\)$/);
+  });
+
+  it('returns undefined without an end date', () => {
+    expect(
+      formatScheduledTaskActiveWindow(
+        cronTask({ startDate: '2026-12-01T09:00' }),
+        activeWindowLabels,
+      ),
+    ).toBeUndefined();
+  });
+});
+
+describe('getScheduledTaskActivationBlock', () => {
+  const NOW = Date.parse('2026-11-20T12:00:00.000Z');
+
+  it('blocks a one-time task that has no next run', () => {
+    expect(
+      getScheduledTaskActivationBlock(
+        { triggerType: 'date', nextRunTime: undefined, trigger: {} },
+        NOW,
+      ),
+    ).toBe(ScheduledTaskActivationBlock.OneTimeFired);
+  });
+
+  it('allows a one-time task that still has a next run', () => {
+    expect(
+      getScheduledTaskActivationBlock(
+        {
+          triggerType: 'date',
+          nextRunTime: '2026-11-21T09:00:00.000Z',
+          trigger: {},
+        },
+        NOW,
+      ),
+    ).toBeUndefined();
+  });
+
+  it('blocks a cron task whose window ended', () => {
+    expect(
+      getScheduledTaskActivationBlock(
+        {
+          triggerType: 'cron',
+          trigger: {
+            cron: { fields: {}, endDate: '2026-11-19T00:00:00.000Z' },
+          },
+        },
+        NOW,
+      ),
+    ).toBe(ScheduledTaskActivationBlock.WindowEnded);
+  });
+
+  it('allows a cron task whose window is still open or unbounded', () => {
+    expect(
+      getScheduledTaskActivationBlock(
+        {
+          triggerType: 'cron',
+          trigger: {
+            cron: { fields: {}, endDate: '2026-12-31T00:00:00.000Z' },
+          },
+        },
+        NOW,
+      ),
+    ).toBeUndefined();
+    expect(
+      getScheduledTaskActivationBlock(
+        { triggerType: 'cron', trigger: { cron: { fields: {} } } },
+        NOW,
+      ),
+    ).toBeUndefined();
   });
 });

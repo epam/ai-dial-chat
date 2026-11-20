@@ -57,17 +57,21 @@ export const formatZonedDateTime = (
 
 /**
  * Formats an absolute instant (an ISO string such as `nextRunTime`) as a medium
- * date and short time in the viewer's zone. Returns the raw value when it is
- * not a date.
+ * date and short time in `timeZone`, or in the viewer's zone when it is
+ * omitted. A host that labels the value with a zone passes that same zone, so
+ * the clock time and the label cannot disagree. Returns the raw value when the
+ * instant is not a date or the zone is unknown.
  */
 export const formatScheduledTaskInstant = (
   instant: string,
   locale?: string,
+  timeZone?: string,
 ): string => {
   try {
     return new Intl.DateTimeFormat(locale, {
       dateStyle: 'medium',
       timeStyle: 'short',
+      timeZone,
     }).format(new Date(instant));
   } catch {
     return instant;

@@ -5,15 +5,13 @@ import {
 import {
   getApiErrorDetails,
   getApiErrorStatus,
-  formatScheduledTaskInstant,
-  formatScheduledTaskTriggerTime,
-  getNextCronOccurrence,
-  hasScheduledTaskWindowEnded,
+  getScheduledTaskActivationBlock,
   getScheduledTasksLoginRetryState,
   mergeScheduledTaskRuns,
   OfflineCredentialsGateStatus,
   OfflineCredentialsLoginOutcomeType,
   resolveScheduledTasksLoginBannerState,
+  ScheduledTaskActivationBlock,
   ScheduledTaskRunStatusFeedback,
   ScheduledTasksLoginBannerState,
   useStartScheduledTask,
@@ -76,6 +74,8 @@ import {
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
 import {
+  buildActiveWindowLabel,
+  buildNextRunLabel,
   buildScheduleLabel,
   getDeleteErrorMessageKey,
   resolveScheduledTaskErrorMessage,
@@ -404,43 +404,23 @@ const ScheduledTaskDetailPage: FC = () => {
     [task, t, displayLanguage],
   );
 
-  const cronWindow = task?.trigger.cron;
-  const taskNextRunTime = task?.nextRunTime;
-  const activeWindowLabel = useMemo(() => {
-    if (!cronWindow?.endDate) return undefined;
-    /*
-     * Without an explicit start date the window begins at the next scheduled
-     * occurrence: the server's `nextRunTime`, or one computed from the cron
-     * fields when the server has none (e.g. an inactive task).
-     */
-    const taskTimezone = task?.timezone ?? 'UTC';
-    const effectiveStartDate =
-      cronWindow.startDate ??
-      taskNextRunTime ??
-      getNextCronOccurrence(cronWindow, taskTimezone);
-    if (!effectiveStartDate) return undefined;
-    return t(ScheduledTasksI18nKeys.DetailActiveWindowValue, {
-      startDate: formatScheduledTaskTriggerTime(
-        effectiveStartDate,
-        taskTimezone,
-        displayLanguage,
-      ),
-      endDate: formatScheduledTaskTriggerTime(
-        cronWindow.endDate,
-        taskTimezone,
-        displayLanguage,
-      ),
-    });
-  }, [cronWindow, task?.timezone, taskNextRunTime, t, displayLanguage]);
+  /*
+   * Every date and time below names the zone it is shown in: the window in the
+   * task's zone, the next run (an absolute instant) in the viewer's.
+   */
+  const activeWindowLabel = useMemo(
+    () => (task ? buildActiveWindowLabel(task, t, displayLanguage) : undefined),
+    [task, t, displayLanguage],
+  );
 
-  const nextRunLabel = useMemo(() => {
-    if (!taskNextRunTime) return undefined;
-    const formatted = formatScheduledTaskInstant(
-      taskNextRunTime,
-      displayLanguage,
-    );
-    return t(ScheduledTasksI18nKeys.DetailNextRunLabel, { value: formatted });
-  }, [taskNextRunTime, t, displayLanguage]);
+  const taskNextRunTime = task?.nextRunTime;
+  const nextRunLabel = useMemo(
+    () =>
+      taskNextRunTime
+        ? buildNextRunLabel(taskNextRunTime, t, displayLanguage)
+        : undefined,
+    [taskNextRunTime, t, displayLanguage],
+  );
 
   const labels = useMemo(
     () => ({
@@ -527,12 +507,11 @@ const ScheduledTaskDetailPage: FC = () => {
    * that still renders, keeping the state visible without offering a
    * dead-end toggle.
    */
-  const cronWindowEndDate = task?.trigger.cron?.endDate;
+  const activationBlock = task
+    ? getScheduledTaskActivationBlock(task)
+    : undefined;
   const isActiveDisabled =
-    (task?.triggerType === 'date' && task?.nextRunTime == null) ||
-    (task?.triggerType === 'cron' &&
-      cronWindowEndDate != null &&
-      hasScheduledTaskWindowEnded(cronWindowEndDate)) ||
+    activationBlock != null ||
     /* Turning the task on runs the consent-checked resume; while the consent
      * is missing the switch renders disabled with no reason label — just the
      * disabled control (product decision). Pausing still works, so an active
@@ -548,16 +527,15 @@ const ScheduledTaskDetailPage: FC = () => {
    * without a reason of its own.
    */
   const getActiveDisabledReason = (): string | undefined => {
-    if (!isActiveDisabled || isTaskCompleted) return undefined;
-    if (task?.triggerType === 'date' && task?.nextRunTime == null)
-      return t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonCompleted);
-    if (
-      task?.triggerType === 'cron' &&
-      cronWindowEndDate != null &&
-      hasScheduledTaskWindowEnded(cronWindowEndDate)
-    )
-      return t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonExpired);
-    return undefined;
+    if (isTaskCompleted) return undefined;
+    switch (activationBlock) {
+      case ScheduledTaskActivationBlock.OneTimeFired:
+        return t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonCompleted);
+      case ScheduledTaskActivationBlock.WindowEnded:
+        return t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonExpired);
+      default:
+        return undefined;
+    }
   };
 
   const completedLabel = isTaskCompleted

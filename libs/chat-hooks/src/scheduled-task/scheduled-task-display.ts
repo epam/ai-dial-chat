@@ -1,4 +1,5 @@
 import {
+  ScheduledTaskDtoTriggerTypeEnum,
   ScheduledTaskErrorCode,
   ScheduledTaskRunDtoStatusEnum,
   type ConversationListItemDto,
@@ -13,13 +14,19 @@ import {
   type ScheduledTaskRunItem,
 } from '@epam/ai-dial-scheduled-tasks';
 import type { ApiErrorDetails } from '../api-error/api-error';
-import { isSameTimezone } from '../shared/timezones';
+import { getBrowserTimezone } from '../shared/browser-timezone';
+import { isSameTimezone, UTC_TIMEZONE_ID } from '../shared/timezones';
 import {
   describeScheduledTaskTrigger,
   ScheduledTaskTriggerDescriptionKind as Kind,
 } from './scheduled-task-description';
 import {
+  getNextCronOccurrence,
+  hasScheduledTaskWindowEnded,
+} from './scheduled-task-next-occurrence';
+import {
   formatScheduledTaskClockTime,
+  formatScheduledTaskInstant,
   formatScheduledTaskRunDate,
   formatScheduledTaskRunTime,
   formatScheduledTaskWeekdays,
@@ -47,6 +54,34 @@ export interface ScheduledTaskScheduleLabels {
   recurringFallback: string;
   /** Appends the task's zone to a schedule label, e.g. "Daily at 09:00 (Asia/Tokyo)". Omit to never show the zone. */
   withTimezone?: (label: string, timezone: string) => string;
+}
+
+/** Host-translated zone suffix for a detail value, e.g. "{label} ({timezone})". */
+export interface ScheduledTaskZoneLabels {
+  /** Appends `timezone` to an already formatted date or time. */
+  withTimezone: (label: string, timezone: string) => string;
+}
+
+/** Host-translated wording for a cron activity window. */
+export interface ScheduledTaskActiveWindowLabels extends ScheduledTaskZoneLabels {
+  /** The window between two locale-formatted task-zone wall times, e.g. "{startDate} – {endDate}". */
+  range: (startDate: string, endDate: string) => string;
+}
+
+/** Locale and viewer zone used to format a task's next run. */
+export interface ScheduledTaskNextRunOptions {
+  /** BCP 47 locale for the date and time. Defaults to the runtime default. */
+  locale?: string;
+  /** The viewer's IANA zone the instant is shown in and named after. Defaults to `getBrowserTimezone()`. */
+  browserTimezone?: string;
+}
+
+/** Why a task that is not completed still cannot be turned on. */
+export enum ScheduledTaskActivationBlock {
+  /** A one-time (`date`) schedule with no next run has already fired. */
+  OneTimeFired = 'oneTimeFired',
+  /** A recurring (`cron`) schedule's activity window `endDate` has passed. */
+  WindowEnded = 'windowEnded',
 }
 
 /** Host-translated duration units for a run. */
@@ -348,4 +383,81 @@ export const selectScheduledTaskErrorMessage = (
   if (details.code === ScheduledTaskErrorCode.ScheduledTaskAdminConsentRequired)
     return adminConsentRequired;
   return details.upstreamMessage?.trim() || fallback;
+};
+
+/**
+ * Formats a task's `nextRunTime`, an absolute instant, in the viewer's zone and
+ * names that zone, e.g. `Nov 19, 2026, 5:45 PM (Europe/Kyiv)`. The instant is
+ * formatted in the same zone the suffix names, so the two cannot disagree.
+ * Without a resolvable viewer zone the instant is shown in the runtime's
+ * default zone with no suffix.
+ */
+export const formatScheduledTaskNextRunTime = (
+  nextRunTime: string,
+  labels: ScheduledTaskZoneLabels,
+  {
+    locale,
+    browserTimezone = getBrowserTimezone(),
+  }: ScheduledTaskNextRunOptions = {},
+): string => {
+  const value = formatScheduledTaskInstant(
+    nextRunTime,
+    locale,
+    browserTimezone,
+  );
+  return browserTimezone ? labels.withTimezone(value, browserTimezone) : value;
+};
+
+/**
+ * Formats a cron activity window as task-zone wall times and always names the
+ * task's zone (`UTC` when it has none). Without an explicit start date the
+ * window begins at the next scheduled occurrence: the server's `nextRunTime`,
+ * or one computed from the cron fields when the server has none (e.g. an
+ * inactive task). Returns `undefined` when the window has no end date.
+ */
+export const formatScheduledTaskActiveWindow = (
+  task: Pick<ScheduledTaskDto, 'trigger' | 'timezone' | 'nextRunTime'>,
+  labels: ScheduledTaskActiveWindowLabels,
+  locale?: string,
+): string | undefined => {
+  const cronWindow = task.trigger.cron;
+  if (!cronWindow?.endDate) return undefined;
+  const timezone = task.timezone || UTC_TIMEZONE_ID;
+  const startDate =
+    cronWindow.startDate ??
+    task.nextRunTime ??
+    getNextCronOccurrence(cronWindow, timezone);
+  if (!startDate) return undefined;
+  return labels.withTimezone(
+    labels.range(
+      formatScheduledTaskTriggerTime(startDate, timezone, locale),
+      formatScheduledTaskTriggerTime(cronWindow.endDate, timezone, locale),
+    ),
+    timezone,
+  );
+};
+
+/**
+ * Returns why the task cannot be turned on, or `undefined` when it can. This is
+ * the fallback for tasks whose `isCompleted` is missing (a failed runs check)
+ * or whose last run is still in flight: a one-time schedule with no next run
+ * has already fired, and a cron schedule whose window ended cannot run again.
+ */
+export const getScheduledTaskActivationBlock = (
+  task: Pick<ScheduledTaskDto, 'triggerType' | 'nextRunTime' | 'trigger'>,
+  now: number = Date.now(),
+): ScheduledTaskActivationBlock | undefined => {
+  if (
+    task.triggerType === ScheduledTaskDtoTriggerTypeEnum.Date &&
+    task.nextRunTime == null
+  )
+    return ScheduledTaskActivationBlock.OneTimeFired;
+  const endDate = task.trigger.cron?.endDate;
+  if (
+    task.triggerType === ScheduledTaskDtoTriggerTypeEnum.Cron &&
+    endDate != null &&
+    hasScheduledTaskWindowEnded(endDate, now)
+  )
+    return ScheduledTaskActivationBlock.WindowEnded;
+  return undefined;
 };

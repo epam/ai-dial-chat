@@ -21,6 +21,7 @@ import {
   ErrorText,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  EllipsisTooltip,
   Input,
   Textarea,
   Calendar,
@@ -596,6 +597,8 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                           disabled={isSubmitting}
                         />
                         {timezoneProps && (
+                          /* A long zone ends in an ellipsis and its full name opens in the kit tooltip on hover (only while clipped). The text takes the pointer for that hover, so a click on it is passed on to the input it sits in. */
+                          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- pointer only: the time input stays the tab stop and owns the keyboard
                           <span
                             className={mergeClasses(
                               styles.timeFieldZone,
@@ -604,15 +607,19 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                               ).rowClassName,
                             )}
                             style={buildTimezoneCssVars(timezoneProps.colors)}
-                            title={getTimezoneSummary(
-                              timezoneProps.options,
-                              values.timezone,
-                            )}
+                            onClick={(event) =>
+                              event.currentTarget.ownerDocument
+                                .getElementById('scheduled-task-time')
+                                ?.focus()
+                            }
                           >
-                            {getTimezoneSummary(
-                              timezoneProps.options,
-                              values.timezone,
-                            )}
+                            <EllipsisTooltip
+                              className={styles.timeFieldZoneText}
+                              text={getTimezoneSummary(
+                                timezoneProps.options,
+                                values.timezone,
+                              )}
+                            />
                           </span>
                         )}
                       </div>
