@@ -312,7 +312,9 @@
     "publish": {
       "credentialsLabel": "Publish with my credentials",
       "credentialsHint": "Members will use this without signing in themselves. Your credential itself is never shown to them.",
-      "versionAlreadyPublishedWarning": "Version {version} is already published in {folder}. Change the version to publish it again."
+      "versionAlreadyPublishedWarning": "Version {version} is already published in {folder}. Change the version to publish it again.",
+      "directCredentialsNote": "Credentials are not shared when it is saved directly to the folder.",
+      "directUnavailableDependencies": "You can’t save this directly to the folder because you lack write access to its {{types}} there. A publication request is sent instead."
     },
     "skillsLoadError": "Failed to load skills",
     "promptsLoadError": "Failed to load prompts",

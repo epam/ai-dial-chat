@@ -78,6 +78,8 @@ export enum CatalogI18nKeys {
   PublishCredentialsLabel = 'catalog.publish.credentialsLabel',
   PublishCredentialsHint = 'catalog.publish.credentialsHint',
   PublishVersionAlreadyPublishedWarning = 'catalog.publish.versionAlreadyPublishedWarning',
+  PublishDirectCredentialsNote = 'catalog.publish.directCredentialsNote',
+  PublishDirectUnavailableDependencies = 'catalog.publish.directUnavailableDependencies',
   TabModels = 'catalog.tab.models',
   TabApplications = 'catalog.tab.applications',
   TabToolsets = 'catalog.tab.toolsets',

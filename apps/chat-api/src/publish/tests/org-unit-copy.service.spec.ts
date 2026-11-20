@@ -15,6 +15,12 @@ import { CatalogEntityType } from '../dto/catalog-entity-params.dto';
 import { OrgUnitCopyService } from '../org-unit-copy.service';
 
 const ENTITY_ID = 'applications/b1/agent__1.0.0';
+const conflictCode = (rejection: unknown): unknown => {
+  const response = (rejection as ConflictException).getResponse();
+  return typeof response === 'object'
+    ? (response as { code?: unknown }).code
+    : undefined;
+};
 const err = (status: number) =>
   ({ error: {}, response: { status } as Response }) as never;
 
@@ -95,7 +101,7 @@ const makeService = () => {
 
 const copy = (
   service: OrgUnitCopyService,
-  body: { folderPath: string } = { folderPath: 'Acme' },
+  body: { folderPath: string; version?: string } = { folderPath: 'Acme' },
   entityType = CatalogEntityType.Application,
 ) =>
   service.copyIntoOrgUnit('user1', 'b1', 'token', entityType, ENTITY_ID, body);
@@ -169,6 +175,134 @@ describe('OrgUnitCopyService', () => {
     getApplicationMetadata.mockResolvedValue({ response: { status: 200 } });
 
     await expect(copy(service)).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  describe('publish mode (version)', () => {
+    it('names an application copy like a publication of that version', async () => {
+      const { service, copyResource } = makeService();
+
+      const result = await copy(service, {
+        folderPath: 'Delivery/Teams',
+        version: '2.0',
+      });
+
+      expect(result).toEqual({
+        id: 'applications/public/Delivery/Teams/agent__2.0',
+      });
+      expect(copyResource).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token' },
+        body: {
+          sourceUrl: ENTITY_ID,
+          destinationUrl: 'applications/public/Delivery/Teams/agent__2.0',
+          overwrite: false,
+        },
+      });
+    });
+
+    it('keeps the stored name of a prompt, which has no version in its name', async () => {
+      const { service, copyResource } = makeService();
+
+      const result = await service.copyIntoOrgUnit(
+        'user1',
+        'b1',
+        'token',
+        CatalogEntityType.Prompt,
+        'prompts/b1/Work/Summarize',
+        { folderPath: 'Acme', version: '2.0' },
+      );
+
+      expect(result).toEqual({ id: 'prompts/public/Acme/Summarize' });
+      expect(copyResource).toHaveBeenCalledOnce();
+    });
+
+    it('keeps an application name that has no version suffix', async () => {
+      const { service, applicationsService } = makeService();
+      applicationsService.resolveOwnApplication.mockResolvedValue({
+        bucket: 'b1',
+        path: 'plain',
+      });
+
+      const result = await copy(service, {
+        folderPath: 'Acme',
+        version: '2.0',
+      });
+
+      expect(result).toEqual({ id: 'applications/public/Acme/plain' });
+    });
+
+    it('gives the pre-check 409 the taken-target code', async () => {
+      const made = makeService();
+      made.preparation.plan.mockResolvedValue({
+        dependencies: [{ id: 'skills/b1/Plan', name: 'Plan', type: 'skill' }],
+        toCopy: [],
+        targets: new Map(),
+      });
+      made.getApplicationMetadata.mockResolvedValue({
+        response: { status: 200 },
+      });
+
+      const rejection = await copy(made.service, {
+        folderPath: 'Acme',
+        version: '2.0',
+      }).catch((e: unknown) => e);
+
+      expect(rejection).toBeInstanceOf(ConflictException);
+      expect(conflictCode(rejection)).toBe('target-exists');
+    });
+
+    it('gives a Core 409 the code when a read of the target confirms it', async () => {
+      const { service, copyResource, getApplicationMetadata } = makeService();
+      copyResource.mockResolvedValue(err(409));
+      getApplicationMetadata.mockResolvedValue({ response: { status: 200 } });
+
+      const rejection = await copy(service).catch((e: unknown) => e);
+
+      expect(conflictCode(rejection)).toBe('target-exists');
+    });
+
+    it('gives the 409 for an existing target the code in a plain copy too', async () => {
+      const { service, copyResource, getApplicationMetadata } = makeService();
+      copyResource.mockResolvedValue(err(400));
+      getApplicationMetadata.mockResolvedValue({ response: { status: 200 } });
+
+      const rejection = await copy(service).catch((e: unknown) => e);
+
+      expect(conflictCode(rejection)).toBe('target-exists');
+      /* The transfer already confirmed the target; no second probe follows. */
+      expect(getApplicationMetadata).toHaveBeenCalledOnce();
+    });
+
+    it('derives the dependency folder, icon target and staged write from the versioned name', async () => {
+      const made = makeService();
+      made.preparation.plan.mockResolvedValue({
+        dependencies: [{ id: 'skills/b1/Plan', name: 'Plan', type: 'skill' }],
+        toCopy: [],
+        targets: new Map(),
+      });
+      made.getCustomApplication.mockResolvedValue({
+        data: { iconUrl: 'files/b1/icons/logo.png' },
+        response: { status: 200 },
+      });
+
+      await copy(made.service, { folderPath: 'Acme/Teams', version: '2.0' });
+
+      expect(made.preparation.plan).toHaveBeenCalledWith(
+        'user1',
+        'token',
+        'b1',
+        ENTITY_ID,
+        'Acme/Teams',
+        'agent__2.0',
+        true,
+      );
+      const destinations = made.copyResource.mock.calls.map(
+        ([call]) => call.body.destinationUrl as string,
+      );
+      expect(destinations).toEqual([
+        'files/public/Acme/Teams/agent__2.0/logo.png',
+        'applications/public/Acme/Teams/agent__2.0',
+      ]);
+    });
   });
 
   describe('toolsets', () => {
@@ -371,11 +505,12 @@ describe('OrgUnitCopyService', () => {
     it('passes the 409 Core gives for a name equal to a unit folder name through', async () => {
       const { service, copyResource, listSkillMetadata } = makeService();
       copyResource.mockResolvedValue(err(409));
+      listSkillMetadata.mockResolvedValue({ response: { status: 404 } });
 
-      await expect(copySkill(service)).rejects.toBeInstanceOf(
-        ConflictException,
-      );
-      expect(listSkillMetadata).not.toHaveBeenCalled();
+      const rejection = await copySkill(service).catch((e: unknown) => e);
+
+      expect(rejection).toBeInstanceOf(ConflictException);
+      expect(conflictCode(rejection)).toBeUndefined();
     });
 
     it('reports a repeated same-name copy as 409', async () => {

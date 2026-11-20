@@ -213,6 +213,75 @@ describe('PublishPanel', () => {
     });
   });
 
+  describe('direct destination', () => {
+    const selected = ['Shared', 'Data Science'];
+    const NOTE = 'Credentials are not shared by a direct save.';
+    const renderDirect = (
+      props?: Partial<ComponentProps<typeof PublishPanel>>,
+    ) =>
+      renderPanel({
+        selectedFolderPath: selected,
+        onPublishCredentialsChange: vi.fn(),
+        isDirectWrite: true,
+        labels: { directWriteNote: NOTE },
+        ...props,
+      });
+
+    it('renders none of the publication-only sections and shows the note', () => {
+      renderDirect();
+
+      expect(screen.queryByText('Allow access if all match')).toBeNull();
+      expect(screen.queryByRole('textbox', { name: /Author/ })).toBeNull();
+      expect(screen.queryByRole('checkbox')).toBeNull();
+      expect(screen.getByText(NOTE)).toBeTruthy();
+    });
+
+    it('drops the admin-approval callout, since nothing is sent for approval', () => {
+      renderDirect();
+
+      expect(screen.queryByText('Admin approval required')).toBeNull();
+    });
+
+    it('renders no note when the host supplies none', () => {
+      renderDirect({ labels: {} });
+
+      expect(screen.queryByText(NOTE)).toBeNull();
+    });
+
+    it('renders as before when isDirectWrite is omitted', () => {
+      renderPanel({
+        selectedFolderPath: selected,
+        onPublishCredentialsChange: vi.fn(),
+        labels: { directWriteNote: NOTE },
+      });
+
+      expect(screen.getByText('Allow access if all match')).toBeTruthy();
+      expect(screen.getByRole('textbox', { name: /Author/ })).toBeTruthy();
+      expect(screen.getByRole('checkbox')).toBeTruthy();
+      expect(screen.queryByText(NOTE)).toBeNull();
+    });
+  });
+
+  describe('direct path unavailable note', () => {
+    const NOTE = 'A request is sent instead of a direct save.';
+
+    it('shows the host sentence next to the request callout', () => {
+      renderPanel({
+        selectedFolderPath: ['Shared', 'Data Science'],
+        directUnavailableNote: NOTE,
+      });
+
+      expect(screen.getByText(NOTE)).toBeTruthy();
+      expect(screen.getByText('Admin approval required')).toBeTruthy();
+    });
+
+    it('shows nothing when the host supplies none', () => {
+      renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
+
+      expect(screen.queryByText(NOTE)).toBeNull();
+    });
+  });
+
   it('renders the folder section title', () => {
     renderPanel();
     expect(screen.getByText('Publish to folder')).toBeTruthy();

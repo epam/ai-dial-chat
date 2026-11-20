@@ -1,6 +1,12 @@
-import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
+import {
+  OrgUnitNamespace,
+  type CatalogEntityType,
+} from '@epam/ai-dial-chat-shared';
 import type { PublishDependencyType } from '@epam/ai-dial-publish-panel';
-import type { CatalogPublishEntityType } from '../catalog/publish';
+import {
+  toPublishEntityType,
+  type CatalogPublishEntityType,
+} from '../catalog/publish';
 import { SaveDestinationRoot } from '../catalog/save-destination-root';
 import { OrgUnitsStatus } from './types';
 import type { OrgUnitRightCheck } from './useOrgUnits/useOrgUnits';
@@ -173,7 +179,7 @@ interface MissingDirectWriteNamespacesParams {
   isEnabled: boolean;
   /** Load status from `useOrgUnits`. */
   status: OrgUnitsStatus;
-  /** Strict check from `useOrgUnits`. */
+  /** Strict write check from `useOrgUnits` (`canSaveDirectlyAt`). */
   canSaveDirectlyAt: OrgUnitRightCheck;
 }
 
@@ -195,3 +201,83 @@ export const getMissingDirectWriteNamespaces = (
     : namespaces.filter(
         (namespace) => !canSaveDirectlyAt(folderPath.join('/'), namespace),
       );
+
+/** Outcome of {@link getPublishDirectAvailability}. */
+export interface PublishDirectAvailability {
+  /** Whether the publish may write directly: the entity check holds and no dependency namespace is missing. */
+  isDirect: boolean;
+  /** Dependency namespaces the user may not write in the owning unit; empty unless the entity check holds. */
+  missingNamespaces: OrgUnitNamespace[];
+  /** The dependency kinds of `missingNamespaces`, for the host to name; same order, same emptiness. */
+  missingTypes: PublishDependencyType[];
+}
+
+/** Checks {@link getPublishDirectAvailability} reads, both from `useOrgUnits`. */
+export interface PublishDirectChecks {
+  /** The entity's own direct-publish check. */
+  canPublishDirectlyAt: OrgUnitRightCheck;
+  /** Strict write check, applied to each dependency namespace. */
+  canSaveDirectlyAt: OrgUnitRightCheck;
+}
+
+/**
+ * Whether a publish into the folder writes directly and which dependency
+ * namespaces block it. A user who may not publish the entity directly gets no
+ * missing list, since a request is filed anyway; a dependency type with no
+ * namespace (a file) never blocks.
+ * @param folderPath - the destination folder inside the Organization root
+ * @param namespace - the entity's org-unit namespace
+ * @param dependencyTypes - the types of the private dependencies the panel lists
+ * @param checks - the hook's direct-publish and strict write checks
+ */
+export const getPublishDirectAvailability = (
+  folderPath: string[],
+  namespace: OrgUnitNamespace,
+  dependencyTypes: readonly PublishDependencyType[],
+  { canPublishDirectlyAt, canSaveDirectlyAt }: PublishDirectChecks,
+): PublishDirectAvailability => {
+  const path = folderPath.join('/');
+  if (!canPublishDirectlyAt(path, namespace)) {
+    return { isDirect: false, missingNamespaces: [], missingTypes: [] };
+  }
+  const missingNamespaces = getDependencyOrgUnitNamespaces(
+    dependencyTypes.map((type) => ({ type })),
+  ).filter((dependency) => !canSaveDirectlyAt(path, dependency));
+  return {
+    isDirect: missingNamespaces.length === 0,
+    missingNamespaces,
+    missingTypes: missingNamespaces.flatMap((missing) => {
+      const type = getDependencyTypeOfNamespace(missing);
+      return type == null ? [] : [type];
+    }),
+  };
+};
+
+/**
+ * {@link getPublishDirectAvailability} for a catalog item type: the entity's
+ * namespace comes from its publish entity type, and a type that cannot be
+ * published (or has no namespace) is never direct.
+ * @param itemType - the catalog entity type of the item being published
+ * @param folderPath - the destination folder inside the Organization root
+ * @param dependencyTypes - the types of the private dependencies the panel lists
+ * @param checks - the hook's direct-publish and strict write checks
+ */
+export const getCatalogPublishDirectAvailability = (
+  itemType: CatalogEntityType,
+  folderPath: string[],
+  dependencyTypes: readonly PublishDependencyType[],
+  checks: PublishDirectChecks,
+): PublishDirectAvailability => {
+  const entityType = toPublishEntityType(itemType);
+  const namespace =
+    entityType == null ? undefined : getOrgUnitNamespace(entityType);
+  if (namespace == null) {
+    return { isDirect: false, missingNamespaces: [], missingTypes: [] };
+  }
+  return getPublishDirectAvailability(
+    folderPath,
+    namespace,
+    dependencyTypes,
+    checks,
+  );
+};

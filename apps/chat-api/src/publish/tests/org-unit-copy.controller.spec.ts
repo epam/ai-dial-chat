@@ -101,6 +101,32 @@ describe('POST /api/v1/catalog/:entityType/:entityId/copy-to-org-unit', () => {
     );
   });
 
+  it('accepts a valid version and forwards it', async () => {
+    await request(app.getHttpServer())
+      .post(URL)
+      .send({ folderPath: 'Acme', version: '2.0' })
+      .expect(200);
+    expect(service.copyIntoOrgUnit).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      { folderPath: 'Acme', version: '2.0' },
+    );
+  });
+
+  it.each(['bad version!', '../x', '', 5])(
+    'returns 400 for the version %j',
+    async (version) => {
+      await request(app.getHttpServer())
+        .post(URL)
+        .send({ folderPath: 'Acme', version })
+        .expect(400);
+      expect(service.copyIntoOrgUnit).not.toHaveBeenCalled();
+    },
+  );
+
   it.each(['', '../escape', 'trailing/', 'a//b'])(
     'returns 400 for the folder path %j',
     async (folderPath) => {

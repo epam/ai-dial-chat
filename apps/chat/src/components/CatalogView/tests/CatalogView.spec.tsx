@@ -658,6 +658,9 @@ vi.mock('../../../hooks/publish/useResourceVersionHistory', () => ({
     resourceId === '' ? undefined : { rows: [], resourceId },
   ),
 }));
+vi.mock('../../../context/OrgUnitsContext', () => ({
+  useOrgUnitsContext: vi.fn(() => ({})),
+}));
 vi.mock('../../../hooks/publish/useOrgUnitFolderGuards', () => ({
   useOrgUnitFolderGuards: vi.fn(),
 }));

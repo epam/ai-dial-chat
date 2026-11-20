@@ -275,6 +275,30 @@ describe('transferDialResource', () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
+  it('throws the caller-built conflict when the destination is confirmed to exist', async () => {
+    const taken = new ConflictException({ code: 'target-exists' });
+    const copyResource = vi
+      .fn()
+      .mockResolvedValue({ error: {}, response: { status: 400 } });
+    const getApplicationMetadata = vi
+      .fn()
+      .mockResolvedValue({ data: {}, response: { status: 200 } });
+
+    await expect(
+      transferDialResource({
+        client: makeClient({ copyResource, getApplicationMetadata }),
+        operation: 'copyResource',
+        type: DialResourceType.Applications,
+        headers: {},
+        source,
+        destination,
+        context: 'copy application',
+        logger,
+        createTargetExistsConflict: () => taken,
+      }),
+    ).rejects.toBe(taken);
+  });
+
   it('maps other failures to typed HTTP errors', async () => {
     const moveResource = vi
       .fn()

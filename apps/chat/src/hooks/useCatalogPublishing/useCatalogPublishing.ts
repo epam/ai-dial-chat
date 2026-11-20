@@ -25,8 +25,10 @@ import type {
 } from '@epam/ai-dial-publish-panel';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ResourceSavePanelI18nKeys } from '../../constants/translation-keys';
 import { getPublishRules } from '../../server-api/publish-rules.api';
 import {
+  copyCatalogEntityToOrgUnit,
   getCatalogPublishDependencies,
   getCatalogPublishHistory,
   getCatalogUnpublishAccess,
@@ -57,6 +59,27 @@ const getPublishTargetEntity = (
   return entityType ? { entityType, entityId: item.id } : undefined;
 };
 
+/**
+ * The publish entity type of an item and the request fields both publish
+ * calls share: the folder joined with `/` and the item's version when it has one.
+ * @param item - the catalog item being published
+ * @param folderPath - destination folder segments
+ * @throws {Error} When the item's type cannot be published
+ */
+const getPublishRequestBase = (item: CatalogItem, folderPath: string[]) => {
+  const entityType = toPublishEntityType(item.type);
+  if (!entityType) {
+    throw new Error(`Entity type "${item.type}" is not publishable`);
+  }
+  return {
+    entityType,
+    body: {
+      folderPath: folderPath.join('/'),
+      ...(item.version ? { version: item.version } : {}),
+    },
+  };
+};
+
 interface UseCatalogPublishingParams {
   deployments: DeploymentItemDto[];
   /** Toolsets the catalog has loaded; their icons are shown beside the private dependencies of a publication. */
@@ -67,6 +90,8 @@ interface UseCatalogPublishingParams {
   notifyOperationSuccess: ReturnType<
     typeof useOperationNotification
   >['notifyOperationSuccess'];
+  /** Shows a success notification with a ready message; used for a direct write into an org-unit folder. */
+  showSuccessNotification: (notification: { message: string }) => void;
   showPublishError: (
     error: unknown,
     operation?: EntityOperation,
@@ -86,8 +111,17 @@ interface UseCatalogPublishingResult {
     author: string,
     publishCredentials: boolean,
   ) => Promise<void>;
+  /** Writes the item straight into the folder through the copy operation, rejecting a taken path as a `PublishTargetTakenError`. */
+  handlePublishDirectly: (
+    item: CatalogItem,
+    folderPath: string[],
+  ) => Promise<void>;
   handleUnpublish: (item: CatalogItem, folderPath: string[]) => Promise<void>;
-  handlePublishSuccess: (item: CatalogItem, folderPath: string[]) => void;
+  handlePublishSuccess: (
+    item: CatalogItem,
+    folderPath: string[],
+    isDirectWrite?: boolean,
+  ) => void;
   handlePublishError: (
     item: CatalogItem,
     folderPath: string[],
@@ -118,6 +152,7 @@ export const useCatalogPublishing = ({
   schemas,
   rememberPublishFolder,
   notifyOperationSuccess,
+  showSuccessNotification,
   showPublishError,
   isAdmin,
 }: UseCatalogPublishingParams): UseCatalogPublishingResult => {
@@ -253,14 +288,10 @@ export const useCatalogPublishing = ({
       author: string,
       publishCredentials: boolean,
     ) => {
-      const entityType = toPublishEntityType(item.type);
-      if (!entityType) {
-        throw new Error(`Entity type "${item.type}" is not publishable`);
-      }
+      const { entityType, body } = getPublishRequestBase(item, folderPath);
       const trimmedAuthor = author.trim();
       await publishCatalogEntity(entityType, item.id, {
-        folderPath: folderPath.join('/'),
-        ...(item.version ? { version: item.version } : {}),
+        ...body,
         /* Omitted rather than sent empty, so the backend's own session-derived
            fallback applies instead of an empty "Hosted by". */
         ...(trimmedAuthor ? { author: trimmedAuthor } : {}),
@@ -279,6 +310,20 @@ export const useCatalogPublishing = ({
     [targetGuard, publishItem],
   );
 
+  const publishItemDirectly = useCallback(
+    async (item: CatalogItem, folderPath: string[]) => {
+      const { entityType, body } = getPublishRequestBase(item, folderPath);
+      await copyCatalogEntityToOrgUnit(entityType, item.id, body);
+    },
+    [],
+  );
+
+  /* A `409` for a taken path is rejected as a `PublishTargetTakenError`; any other `409`, such as an application already being published, keeps its own message. */
+  const handlePublishDirectly = useMemo(
+    () => targetGuard.wrapPublish(publishItemDirectly),
+    [targetGuard, publishItemDirectly],
+  );
+
   const handleFetchExistingRules = useCallback(
     (folderPath: string[]) => getPublishRules(folderPath.join('/')),
     [],
@@ -291,15 +336,9 @@ export const useCatalogPublishing = ({
    */
   const handleUnpublish = useCallback(
     async (item: CatalogItem, folderPath: string[]) => {
-      const entityType = toPublishEntityType(item.type);
-      if (!entityType) {
-        throw new Error(`Entity type "${item.type}" is not publishable`);
-      }
+      const { entityType, body } = getPublishRequestBase(item, folderPath);
       try {
-        await unpublishCatalogEntity(entityType, item.id, {
-          folderPath: folderPath.join('/'),
-          ...(item.version ? { version: item.version } : {}),
-        });
+        await unpublishCatalogEntity(entityType, item.id, body);
       } catch (error) {
         /* Notified here, then rethrown so the panel's own rejection path runs
          * — matching `handlePublish`, which lets the error reach the lib. */
@@ -324,8 +363,18 @@ export const useCatalogPublishing = ({
   );
 
   const handlePublishSuccess = useCallback(
-    (item: CatalogItem, folderPath: string[]) => {
+    (item: CatalogItem, folderPath: string[], isDirectWrite = false) => {
       rememberPublishFolder(folderPath);
+      /* A direct write files no request, so it is reported as a save into the folder. */
+      if (isDirectWrite) {
+        showSuccessNotification({
+          message: t(ResourceSavePanelI18nKeys.SavedToFolder, {
+            name: item.name,
+            folder: getPublishFolderLabel(folderPath, t),
+          }),
+        });
+        return;
+      }
       const deployment = findDeploymentByIdOrReference(deployments, item.id);
       notifyOperationSuccess(
         resolveCatalogItemEntity(item.type, deployment, schemas),
@@ -340,7 +389,14 @@ export const useCatalogPublishing = ({
         },
       );
     },
-    [deployments, rememberPublishFolder, notifyOperationSuccess, schemas, t],
+    [
+      deployments,
+      rememberPublishFolder,
+      notifyOperationSuccess,
+      showSuccessNotification,
+      schemas,
+      t,
+    ],
   );
 
   const handlePublishError = useCallback(
@@ -355,6 +411,7 @@ export const useCatalogPublishing = ({
     getPublishHistory,
     getPublishDependencies,
     handlePublish,
+    handlePublishDirectly,
     handleUnpublish,
     handlePublishSuccess,
     handlePublishError,

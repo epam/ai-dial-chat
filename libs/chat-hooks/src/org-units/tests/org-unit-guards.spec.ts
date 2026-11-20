@@ -1,4 +1,4 @@
-import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
+import { CatalogEntityType, OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import { PublishDependencyType } from '@epam/ai-dial-publish-panel';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogPublishEntityType } from '../../catalog/publish';
@@ -9,6 +9,8 @@ import {
   getDependencyTypeOfNamespace,
   getMissingDirectWriteNamespaces,
   getOrgUnitNamespace,
+  getCatalogPublishDirectAvailability,
+  getPublishDirectAvailability,
   OrgUnitFolderGuardPurpose,
   toPublishDisabledReason,
   type BuildFolderGuardsParams,
@@ -270,5 +272,115 @@ describe('getMissingDirectWriteNamespaces', () => {
     expect(
       getMissingDirectWriteNamespaces(params, ['Other'], namespaces),
     ).toEqual([]);
+  });
+});
+
+describe('getPublishDirectAvailability', () => {
+  const APPS = OrgUnitNamespace.Applications;
+  const checks = (
+    canPublish: boolean,
+    writable: OrgUnitNamespace[],
+  ): Parameters<typeof getPublishDirectAvailability>[3] => ({
+    canPublishDirectlyAt: () => canPublish,
+    canSaveDirectlyAt: (_path, namespace) => writable.includes(namespace),
+  });
+
+  it('is direct when every right is present', () => {
+    expect(
+      getPublishDirectAvailability(
+        ['Acme'],
+        APPS,
+        [PublishDependencyType.Toolset],
+        checks(true, [OrgUnitNamespace.Toolsets]),
+      ),
+    ).toEqual({ isDirect: true, missingNamespaces: [], missingTypes: [] });
+  });
+
+  it('names the dependency namespaces the user may not write', () => {
+    expect(
+      getPublishDirectAvailability(
+        ['Acme'],
+        APPS,
+        [PublishDependencyType.Toolset, PublishDependencyType.Prompt],
+        checks(true, [OrgUnitNamespace.Prompts]),
+      ),
+    ).toEqual({
+      isDirect: false,
+      missingNamespaces: [OrgUnitNamespace.Toolsets],
+      missingTypes: [PublishDependencyType.Toolset],
+    });
+  });
+
+  it('is direct without dependencies', () => {
+    expect(
+      getPublishDirectAvailability(['Acme'], APPS, [], checks(true, [])),
+    ).toEqual({ isDirect: true, missingNamespaces: [], missingTypes: [] });
+  });
+
+  it('never lets a file dependency block', () => {
+    expect(
+      getPublishDirectAvailability(
+        ['Acme'],
+        APPS,
+        [PublishDependencyType.File],
+        checks(true, []),
+      ),
+    ).toEqual({ isDirect: true, missingNamespaces: [], missingTypes: [] });
+  });
+
+  it('names nothing when the entity itself may not be published directly', () => {
+    expect(
+      getPublishDirectAvailability(
+        ['Acme'],
+        APPS,
+        [PublishDependencyType.Toolset],
+        checks(false, []),
+      ),
+    ).toEqual({ isDirect: false, missingNamespaces: [], missingTypes: [] });
+  });
+});
+
+describe('getCatalogPublishDirectAvailability', () => {
+  const checks = {
+    canPublishDirectlyAt: () => true,
+    canSaveDirectlyAt: (_path: string, namespace: OrgUnitNamespace) =>
+      namespace !== OrgUnitNamespace.Toolsets,
+  };
+
+  it('maps the item type to its namespace and names the missing dependency types', () => {
+    expect(
+      getCatalogPublishDirectAvailability(
+        CatalogEntityType.Agent,
+        ['Acme'],
+        [PublishDependencyType.Toolset, PublishDependencyType.Prompt],
+        checks,
+      ),
+    ).toEqual({
+      isDirect: false,
+      missingNamespaces: [OrgUnitNamespace.Toolsets],
+      missingTypes: [PublishDependencyType.Toolset],
+    });
+  });
+
+  it('is direct when nothing is missing', () => {
+    expect(
+      getCatalogPublishDirectAvailability(
+        CatalogEntityType.Prompt,
+        ['Acme'],
+        [],
+        checks,
+      ).isDirect,
+    ).toBe(true);
+  });
+
+  it('is never direct for a type that cannot be published', () => {
+    expect(
+      getCatalogPublishDirectAvailability(
+        CatalogEntityType.Model,
+        ['Acme'],
+        [],
+        checks,
+      ),
+    ).toEqual({ isDirect: false, missingNamespaces: [], missingTypes: [] });
   });
 });

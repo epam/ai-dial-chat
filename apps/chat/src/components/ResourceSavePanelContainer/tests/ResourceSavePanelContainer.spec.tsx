@@ -139,6 +139,7 @@ const mockOrgUnits = (status: OrgUnitsStatus) =>
     refreshUnits: vi.fn(),
     canSaveAt: vi.fn(),
     canSaveDirectlyAt,
+    canPublishDirectlyAt: vi.fn(() => false),
     canPublishAt: vi.fn(),
   });
 

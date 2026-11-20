@@ -36,9 +36,11 @@ import {
 } from './application-publish-preparation.service';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
 import type { CopyCatalogEntityToOrgUnitDto } from './dto/copy-catalog-entity-to-org-unit.dto';
+import { createTargetExistsConflict } from './dto/publish-conflict.dto';
 import {
   getPublishedIconTargetUrl,
   readPublishableApplicationIconUrl,
+  resolvePublishTarget,
 } from './publish-target.util';
 
 /**
@@ -109,8 +111,26 @@ interface CopyApplicationParams {
   folderPath: string;
   source: DialResourceLocation;
   destination: DialResourceLocation;
+  /** The application's target name, which also names its `.deps` folder and its icon target. */
+  targetName: string;
   context: string;
 }
+
+/** Message of the copy endpoint's `409` for a target that already exists; unchanged by the added code. */
+const COPY_TARGET_EXISTS_MESSAGE = 'Target resource already exists';
+
+/** The copy endpoint's taken-target `409`: its own message, the publish endpoint's code. */
+const targetTakenConflict = (): ConflictException =>
+  createTargetExistsConflict(COPY_TARGET_EXISTS_MESSAGE);
+
+/**
+ * Whether a `ConflictException` already carries a domain code.
+ * @param err - the exception
+ */
+const hasConflictCode = (err: ConflictException): boolean => {
+  const response = err.getResponse();
+  return typeof response === 'object' && response != null && 'code' in response;
+};
 
 /**
  * The org-unit namespace of a dependency kind, which is its resource type's group.
@@ -212,7 +232,7 @@ export class OrgUnitCopyService {
    * @param accessToken - bearer token for DIAL Core
    * @param entityType - catalog entity kind of `entityId`
    * @param entityId - own resource: a bare name or full id for applications and toolsets, the full `{type}/{bucket}/{path}` id for prompts and skills (a bare name answers 400)
-   * @param body - destination folder
+   * @param body - destination folder and the optional version that names the copy like a publication
    * @returns the full id of the copy in the public bucket
    * @throws {BadRequestException} When the entity type has no org-unit copy, or `entityId` is not a full id where one is required
    * @throws {ForbiddenException} When the entity is not in the caller's own bucket or Core refuses the write
@@ -242,12 +262,18 @@ export class OrgUnitCopyService {
         entityId,
         userBucket,
       );
+      /* With a version the copy is named as a publication of it would be. */
+      const targetName =
+        body.version == null
+          ? getResourceLeaf(source.path)
+          : resolvePublishTarget(
+              `${copyType.resourceType}/${source.bucket}/${source.path}`,
+              body.folderPath,
+              body.version,
+            ).targetResourceName;
       const destination: DialResourceLocation = {
         bucket: PUBLIC_BUCKET,
-        path: buildFolderResourcePath(
-          body.folderPath,
-          getResourceLeaf(source.path),
-        ),
+        path: buildFolderResourcePath(body.folderPath, targetName),
       };
       if (entityType === CatalogEntityType.Application) {
         copiedDependencies = await this.copyApplication({
@@ -257,19 +283,17 @@ export class OrgUnitCopyService {
           folderPath: body.folderPath,
           source,
           destination,
+          targetName,
           context,
         });
       } else {
-        await transferDialResource({
-          client: this.dialClient.client,
-          operation: 'copyResource',
-          type: copyType.resourceType,
-          headers: authHeaders,
+        await this.copyToTarget(
+          copyType.resourceType,
+          authHeaders,
           source,
           destination,
           context,
-          logger: this.logger,
-        });
+        );
       }
       id = `${copyType.resourceType}/${destination.bucket}/${destination.path}`;
     } catch (err) {
@@ -295,11 +319,11 @@ export class OrgUnitCopyService {
     params: CopyApplicationParams,
   ): Promise<CopiedDependency[]> {
     const { userSub, userBucket, accessToken, folderPath } = params;
-    const { source, destination, context } = params;
+    const { source, destination, targetName, context } = params;
     /* The caller may name the application by its bare name; the dependency resolver needs the full id. */
     const entityId = toDialResourceUrl(DialResourceType.Applications, source);
     const headers = getBearerAuthHeaders(accessToken);
-    const leaf = getResourceLeaf(source.path);
+    const leaf = targetName;
     const plan = (await this.preparation.plan(
       userSub,
       accessToken,
@@ -332,8 +356,17 @@ export class OrgUnitCopyService {
         logger: this.logger,
       });
 
+    const transferToTarget = (from: DialResourceLocation) =>
+      this.copyToTarget(
+        DialResourceType.Applications,
+        headers,
+        from,
+        destination,
+        context,
+      );
+
     if (plan.dependencies.length === 0 && iconUrl == null) {
-      await transfer(DialResourceType.Applications, source, destination);
+      await transferToTarget(source);
       return [];
     }
 
@@ -345,7 +378,7 @@ export class OrgUnitCopyService {
         headers,
       )
     ) {
-      throw new ConflictException('Target resource already exists');
+      throw targetTakenConflict();
     }
 
     const missing = await this.orgUnitsService.findMissingWriteNamespaces(
@@ -415,7 +448,7 @@ export class OrgUnitCopyService {
           if (!isPresent) throw err;
         }
       }
-      await transfer(DialResourceType.Applications, copy.resource, destination);
+      await transferToTarget(copy.resource);
     } catch (err) {
       await this.invalidateDependencies(userSub, copied, context);
       throw err;
@@ -423,6 +456,51 @@ export class OrgUnitCopyService {
       await this.preparation.deleteCopy(userSub, accessToken, copy);
     }
     return copied;
+  }
+
+  /**
+   * Copies a resource to the entity's own target. A Core `400` that a read
+   * confirms as an existing target is already coded by the transfer; a bare
+   * Core `409` is coded only when a read of the target confirms it exists. A
+   * `409` finding no target, and any other error, comes back unchanged.
+   * @param type - resource type of the target
+   * @param headers - the caller's bearer headers
+   * @param source - what to copy
+   * @param destination - where the copy lands
+   * @param context - what the call was doing, for the log
+   * @throws {ConflictException} With the taken-target code when the target exists
+   */
+  private async copyToTarget(
+    type: DialResourceType,
+    headers: ReturnType<typeof getBearerAuthHeaders>,
+    source: DialResourceLocation,
+    destination: DialResourceLocation,
+    context: string,
+  ): Promise<void> {
+    try {
+      await transferDialResource({
+        client: this.dialClient.client,
+        operation: 'copyResource',
+        type,
+        headers,
+        source,
+        destination,
+        context,
+        logger: this.logger,
+        createTargetExistsConflict: targetTakenConflict,
+      });
+    } catch (err) {
+      if (!(err instanceof ConflictException) || hasConflictCode(err)) {
+        throw err;
+      }
+      const isTaken = await existsQuietly(
+        this.dialClient.client,
+        type,
+        destination,
+        headers,
+      );
+      throw isTaken ? targetTakenConflict() : err;
+    }
   }
 
   /**

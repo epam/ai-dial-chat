@@ -48,15 +48,10 @@ describe('Org-unit copy contract fixtures', () => {
     readFixture<Record<string, unknown>>('copy-resource.schema.json'),
   );
 
-  const runExecutor = async (): Promise<CopyRequest[]> => {
+  const runExecutor = async (version?: string): Promise<CopyRequest[]> => {
     const copyResource = vi
       .fn()
       .mockResolvedValue({ response: { status: 200 } });
-    const skillTarget = getPublishedDependencyTargetUrl(
-      fixture.folderPath,
-      'Helper__1.0.0',
-      `skills/${BUCKET}/Plan`,
-    );
     const service = new OrgUnitCopyService(
       {
         client: {
@@ -78,21 +73,38 @@ describe('Org-unit copy contract fixtures', () => {
       } as unknown as ApplicationsService,
       {} as unknown as ToolsetsListingService,
       {
-        plan: vi.fn().mockResolvedValue({
-          dependencies: [],
-          toCopy: [
-            {
-              dependency: {
-                id: `skills/${BUCKET}/Plan`,
-                name: 'Plan',
-                type: ResourceDependencyType.Skill,
-              },
-              sourceUrl: `skills/${BUCKET}/Plan`,
-              targetUrl: skillTarget,
-            },
-          ],
-          targets: new Map(),
-        }),
+        /* The target of the dependency follows the name the executor hands the plan, as the real plan derives it. */
+        plan: vi
+          .fn()
+          .mockImplementation(
+            (
+              _sub: string,
+              _token: string,
+              _bucket: string,
+              _id: string,
+              folderPath: string,
+              targetName: string,
+            ) =>
+              Promise.resolve({
+                dependencies: [],
+                toCopy: [
+                  {
+                    dependency: {
+                      id: `skills/${BUCKET}/Plan`,
+                      name: 'Plan',
+                      type: ResourceDependencyType.Skill,
+                    },
+                    sourceUrl: `skills/${BUCKET}/Plan`,
+                    targetUrl: getPublishedDependencyTargetUrl(
+                      folderPath,
+                      targetName,
+                      `skills/${BUCKET}/Plan`,
+                    ),
+                  },
+                ],
+                targets: new Map(),
+              }),
+          ),
         stage: vi.fn().mockResolvedValue(STAGED),
         deleteCopy: vi.fn().mockResolvedValue(undefined),
       } as unknown as ApplicationPublishPreparationService,
@@ -107,7 +119,7 @@ describe('Org-unit copy contract fixtures', () => {
       'token',
       CatalogEntityType.Application,
       ENTITY_ID,
-      { folderPath: fixture.folderPath },
+      { folderPath: fixture.folderPath, version },
     );
     return copyResource.mock.calls.map(([call]) => call.body as CopyRequest);
   };
@@ -147,5 +159,20 @@ describe('Org-unit copy contract fixtures', () => {
     const application = fixture.requests[2];
     expect(application.sourceUrl).toContain('/.publish-staging/');
     expect(application.destinationUrl).not.toContain('.publish-staging');
+  });
+
+  it('derives the application, its dependency folder, the icon and the staged write from one versioned name', async () => {
+    const requests = await runExecutor('2.0');
+
+    expect(requests.map(({ destinationUrl }) => destinationUrl)).toEqual([
+      'files/public/Delivery/Teams/Helper__2.0/logo.png',
+      'skills/public/Delivery/Teams/.Helper__2.0.deps/bucket-123/Plan',
+      'applications/public/Delivery/Teams/Helper__2.0',
+    ]);
+    for (const request of requests) {
+      expect(validate(request)).toBe(true);
+      expect(request.overwrite).toBe(false);
+    }
+    expect(requests[2].sourceUrl).toContain('/.publish-staging/');
   });
 });

@@ -283,8 +283,12 @@ export interface CatalogProps {
     author: string,
     publishCredentials: boolean,
   ) => Promise<void>;
-  /** Called after a successful publish; use this to surface a success notification. */
-  onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
+  /** Called after a successful publish, with whether it was a direct write (`onPublishDirectly`) rather than a filed request; use this to surface a success notification. */
+  onPublishSuccess?: (
+    item: CatalogItem,
+    folderPath: string[],
+    isDirectWrite: boolean,
+  ) => void;
   /** Called with the rejection reason when a publish request fails; use this to surface an error notification. */
   onPublishError?: (
     item: CatalogItem,
@@ -331,6 +335,44 @@ export interface CatalogProps {
    * error. Must be synchronous.
    */
   isTargetTakenError?: (error: unknown) => boolean;
+  /**
+   * Whether the item is written straight into the folder instead of filing a
+   * publication request. Called with the item, the destination folder and the
+   * private dependencies the panel loaded, and only once that list has settled
+   * (immediately when `getPublishDependencies` is omitted): the panel shows the
+   * request layout while it loads and switches at most once, to direct, after it
+   * settles. A failed read leaves the list empty, so direct is offered and the
+   * server's namespace check is the backstop. Together with `onPublishDirectly` it selects the
+   * direct path; omit either and a request is always filed. For a direct
+   * folder the panel hides the access rules, author and credentials controls.
+   */
+  canPublishDirectlyTo?: (
+    item: CatalogItem,
+    folderPath: string[],
+    dependencies: PublishDependency[],
+  ) => boolean;
+  /**
+   * Writes the item into the folder directly; called instead of `onPublish`
+   * while `canPublishDirectlyTo` holds, with the same `onPublishSuccess`,
+   * `onPublishError` and `isTargetTakenError` handling. Omit it to keep the
+   * request path.
+   */
+  onPublishDirectly?: (
+    item: CatalogItem,
+    folderPath: string[],
+  ) => Promise<void>;
+  /**
+   * A finished sentence shown as an information callout for a folder where
+   * `canPublishDirectlyTo` is `false` but the host knows why a request is sent
+   * instead (for example a dependency type the user may not write). Called
+   * with the loaded dependencies; return `undefined` for no note. Omit it for
+   * no note.
+   */
+  getPublishDirectUnavailableNote?: (
+    item: CatalogItem,
+    folderPath: string[],
+    dependencies: PublishDependency[],
+  ) => string | undefined;
   /** Called when the "Edit" button is clicked in the details panel. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
   /**

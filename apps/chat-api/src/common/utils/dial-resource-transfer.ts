@@ -306,6 +306,8 @@ export interface TransferDialResourceParams {
   destination: DialResourceLocation;
   context: string;
   logger: Logger;
+  /** Builds the `409` thrown when Core's `400` is confirmed to mean the destination exists; defaults to a plain `ConflictException`. */
+  createTargetExistsConflict?: () => ConflictException;
 }
 
 /**
@@ -322,6 +324,8 @@ export const transferDialResource = async ({
   destination,
   context,
   logger,
+  createTargetExistsConflict = () =>
+    new ConflictException('Target resource already exists'),
 }: TransferDialResourceParams): Promise<void> => {
   const { error, response } = await client[operation]({
     headers,
@@ -338,7 +342,7 @@ export const transferDialResource = async ({
     (await existsQuietly(client, type, destination, headers))
   ) {
     logger.warn(`DIAL Core rejected ${context}: target already exists`);
-    throw new ConflictException('Target resource already exists');
+    throw createTargetExistsConflict();
   }
   return mapDialHttpStatus(response.status, context, logger);
 };

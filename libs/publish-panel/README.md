@@ -488,8 +488,8 @@ const publishFlow = usePublishFlow({
   onPublish: async (item, folderPath, rules, author, publishCredentials) => {
     /* ... */
   },
-  onPublishSuccess: (item, folderPath) => {
-    /* host-owned success notification */
+  onPublishSuccess: (item, folderPath, isDirectWrite) => {
+    /* host-owned success notification; `isDirectWrite` is `true` after `onPublishDirectly` */
   },
   onPublishError: (item, folderPath, error) => {
     /* host-owned error notification; the hook only sets `hasSubmitError` */
@@ -542,6 +542,46 @@ const publishFlow = usePublishFlow({
   /* ... */
   isTargetTaken={publishFlow.isTargetTaken}
   isTargetChecking={publishFlow.isTargetChecking}
+/>;
+```
+
+#### Direct write
+
+`canPublishDirectlyTo(folderPath)` and `onPublishDirectly(item, folderPath)` are
+two optional options that let a host write the item straight into a folder
+instead of filing a request. `usePublishFlow` returns `isDirectWrite`: `true`
+when a folder is selected, both options are supplied and the predicate holds for
+it. While it is `true`, `handleSubmit` calls `onPublishDirectly` instead of
+`onPublish`, with the same `onPublishSuccess`, `onPublishError`,
+`isTargetTakenError` and `hasSubmitError` handling, and sends no rules, author or
+credentials. For a direct folder the hook also skips `onFetchExistingRules`
+(`rules` is emptied, and loaded again on moving back to a request folder),
+reports `hasExistingPublicationInFolder` as `false` (a direct write leaves no
+history), and clears the credentials choice on entering it. A host that supplies
+neither option sees no change. The library learns nothing about endpoints, rights
+data or namespaces: both arrive from the host.
+
+Pass the flow's `isDirectWrite` to `PublishPanel`. For `true` the panel renders
+no access-rules section, author field or credentials checkbox, drops the
+admin-approval callout and shows `labels.directWriteNote` (a plain line, nothing
+when the host supplies none) in the credentials checkbox's place.
+`directUnavailableNote` is a finished host sentence rendered as an information
+callout when a request is filed although the host would otherwise write directly.
+`styles.colors.directNoteText` (default `--text-secondary`) and
+`directNoteClassName` (default `'dial-small-text'`) restyle the note.
+
+```tsx
+const publishFlow = usePublishFlow({
+  /* ... */
+  canPublishDirectlyTo: (folderPath) => isApprover(folderPath),
+  onPublishDirectly: (item, folderPath) => saveIntoFolder(item, folderPath),
+});
+
+<PublishPanel
+  /* ... */
+  isDirectWrite={publishFlow.isDirectWrite}
+  directUnavailableNote={note}
+  labels={{ directWriteNote: 'Credentials are not shared by a direct save.' }}
 />;
 ```
 

@@ -30,6 +30,8 @@ export interface DetailsPublishContentProps extends Pick<
   publishFlow: DetailsPublishState['publishFlow'];
   /** Private dependencies to list, from `useDetailsPublish`; `undefined` when the host supplies no lookup. */
   publishDependencies?: PublishDependency[];
+  /** Host sentence naming why a request is filed instead of a direct write, from `useDetailsPublish`; `undefined` for none. */
+  publishDirectUnavailableNote?: string;
   /** Main/change-folder view state, from `useDetailsPublish`. */
   publishFolderView: DetailsPublishState['publishFolderView'];
   /** Whether the item may pass its credentials on to the published copy. */
@@ -41,6 +43,7 @@ export const DetailsPublishContent: FC<DetailsPublishContentProps> = ({
   item,
   publishFlow,
   publishDependencies,
+  publishDirectUnavailableNote,
   publishFolderView,
   isPublishCredentialsEligible,
   publishExpandedPaths,
@@ -96,8 +99,14 @@ export const DetailsPublishContent: FC<DetailsPublishContentProps> = ({
       ruleSourceOptions={ruleSourceOptions}
       isRulesLoading={publishFlow.isRulesLoading}
       hasRulesLoadError={publishFlow.hasRulesLoadError}
+      isDirectWrite={publishFlow.isDirectWrite}
+      directUnavailableNote={publishDirectUnavailableNote}
       labels={{
         ...publishLabels,
+        /* The note replaces the credentials opt-in, so only an item that would offer one carries it. */
+        directWriteNote: isPublishCredentialsEligible
+          ? publishLabels?.directWriteNote
+          : undefined,
         ...resolvePublishApprovalLabels?.(item),
         ...(resolvePublishDependenciesLabels && {
           dependenciesLabels: {

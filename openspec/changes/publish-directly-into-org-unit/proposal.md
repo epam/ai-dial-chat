@@ -24,7 +24,7 @@ When the committed destination is a folder inside an org unit and the user may w
 ## What Changes
 
 - chat-shared: a `publications` approval right and the combined direct-publish right (pure functions).
-- chat-hooks: `useOrgUnits` exposes the combined check; the guards builder gets a publish-direct variant; the catalog publish hook wiring.
+- chat-hooks: `useOrgUnits` exposes the combined check; a pure `getPublishDirectAvailability` decides direct or request and names missing dependency types; the folder guards are unchanged.
 - publish-panel: `usePublishFlow` options and result (`isDirectWrite`), panel sections hidden for a direct destination, one label for the credentials line.
 - apps/chat: `useCatalogPublishing` adds the direct callback over the generated client; `CatalogView` passes the right check (the guards hook already refreshes rights when the panel becomes active); one new translated string, the success text is the Save panel's.
 - chat-api: optional `version` on `CopyCatalogEntityToOrgUnitDto`; target naming through `resolvePublishTarget`; the taken-target code on the `409` where the target is confirmed. The `publications` right is not checked on the server (Core does not enforce it on a copy; it only selects the panel's mode).

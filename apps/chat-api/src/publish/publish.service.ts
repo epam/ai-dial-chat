@@ -2,7 +2,6 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadGatewayException,
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   HttpException,
   Inject,
@@ -34,7 +33,7 @@ import {
   type PreparedApplicationPublication,
 } from './application-publish-preparation.service';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
-import { PublishConflictCode } from './dto/publish-conflict.dto';
+import { createTargetExistsConflict } from './dto/publish-conflict.dto';
 import { PublishHistoryEntryDto } from './dto/publish-history-entry.dto';
 import { PublishResultDto } from './dto/publish-result.dto';
 import type { PublishRuleDto } from './dto/publish-rule.dto';
@@ -82,9 +81,6 @@ const BUCKET_PUBLICATIONS_TTL_MS = 60 * 1000;
 
 /* Core's rejection of a publication whose target exists reads "Target resource already exists: {targetUrl}". */
 const TARGET_EXISTS_PATTERN = /target resource already exists/i;
-
-const TARGET_EXISTS_MESSAGE =
-  'A resource with this name already exists in the target folder. Rename it, change its version or choose another folder';
 
 /* Keyed by the caller's bucket, so one caller's answer is never served to another. */
 const unpublishAccessCacheKey = (
@@ -299,12 +295,7 @@ export class PublishService {
         this.logger.warn(
           `Publish of ${entityType} "${entityId}" rejected: target already exists`,
         );
-        throw new ConflictException({
-          statusCode: 409,
-          message: TARGET_EXISTS_MESSAGE,
-          error: 'Conflict',
-          code: PublishConflictCode.TargetExists,
-        });
+        throw createTargetExistsConflict();
       }
       return mapDialHttpStatus(
         result.response.status,

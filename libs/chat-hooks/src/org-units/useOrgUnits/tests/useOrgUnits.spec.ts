@@ -20,6 +20,33 @@ const READ_ONLY = {
   folder: 'public/Reports/',
   permissions: { applications: ['read'] },
 };
+const APPROVER = {
+  id: 'u-del',
+  name: 'Delivery',
+  displayName: 'Delivery',
+  path: 'public/Delivery',
+  folder: 'public/Delivery/',
+  permissions: {
+    applications: ['read', 'write'],
+    publications: ['read', 'write'],
+  },
+};
+const WRITER = {
+  ...APPROVER,
+  id: 'u-wr',
+  name: 'Writers',
+  path: 'public/Writers',
+  folder: 'public/Writers/',
+  permissions: { applications: ['read', 'write'] },
+};
+const APPROVAL_ONLY = {
+  ...APPROVER,
+  id: 'u-ap',
+  name: 'Approvers',
+  path: 'public/Approvers',
+  folder: 'public/Approvers/',
+  permissions: { publications: ['read', 'write'] },
+};
 const APPS = OrgUnitNamespace.Applications;
 const listResult = (
   units: unknown[],
@@ -237,5 +264,79 @@ describe('useOrgUnits', () => {
 
     expect(consoleError).not.toHaveBeenCalled();
     consoleError.mockRestore();
+  });
+
+  describe('canPublishDirectlyAt', () => {
+    const ready = async (
+      units: unknown[],
+      overrides: Record<string, unknown> = {},
+    ) => {
+      const listOrgUnits = vi
+        .fn()
+        .mockResolvedValue(listResult(units, overrides));
+      const { result } = renderHook(() => useOrgUnits({ listOrgUnits }));
+      act(() => result.current.ensureUnits());
+      await waitFor(() =>
+        expect(result.current.status).toBe(OrgUnitsStatus.Ready),
+      );
+      return result;
+    };
+
+    it('is true for an approver who may write the namespace', async () => {
+      const result = await ready([APPROVER, WRITER, APPROVAL_ONLY]);
+
+      expect(result.current.canPublishDirectlyAt('Delivery/Teams', APPS)).toBe(
+        true,
+      );
+    });
+
+    it('is false for a writer without approval and for approval without write', async () => {
+      const result = await ready([APPROVER, WRITER, APPROVAL_ONLY]);
+
+      expect(result.current.canPublishDirectlyAt('Writers/Q1', APPS)).toBe(
+        false,
+      );
+      expect(result.current.canPublishDirectlyAt('Approvers/Q1', APPS)).toBe(
+        false,
+      );
+    });
+
+    it('is false outside every unit, even for a DIAL admin, and true for an admin inside one', async () => {
+      const result = await ready([WRITER], { hasAdminAccess: true });
+
+      expect(result.current.canPublishDirectlyAt('Plain/Folder', APPS)).toBe(
+        false,
+      );
+      expect(result.current.canPublishDirectlyAt('Writers/Q1', APPS)).toBe(
+        true,
+      );
+    });
+
+    it('leaves the existing answers unchanged', async () => {
+      const result = await ready([APPROVER]);
+
+      expect(result.current.canSaveDirectlyAt('Delivery/Teams', APPS)).toBe(
+        true,
+      );
+      expect(result.current.canPublishAt('Delivery/Teams', APPS)).toBe(true);
+    });
+
+    it.each<[string, (() => Promise<unknown>) | undefined]>([
+      ['Idle', undefined],
+      ['Loading', () => new Promise<never>(() => undefined)],
+      ['Disabled', () => Promise.resolve({ enabled: false })],
+      ['Error', () => Promise.reject(new Error('boom'))],
+    ])('is false while the status is %s', async (_name, outcome) => {
+      const listOrgUnits = vi.fn(outcome as () => Promise<never>);
+      const { result } = renderHook(() => useOrgUnits({ listOrgUnits }));
+      if (outcome) act(() => result.current.ensureUnits());
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(result.current.canPublishDirectlyAt('Delivery/Teams', APPS)).toBe(
+        false,
+      );
+    });
   });
 });

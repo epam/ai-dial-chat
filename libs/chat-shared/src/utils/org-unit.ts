@@ -1,8 +1,8 @@
 import {
   OrgUnitAction,
+  OrgUnitNamespace,
   type OrgUnit,
   type OrgUnitAccess,
-  type OrgUnitNamespace,
 } from '../models/org-unit';
 
 /** The bucket segment every DIAL Core org-unit folder starts with. */
@@ -153,6 +153,21 @@ export const canReadAt = (
   publicPath: string,
   namespace: OrgUnitNamespace,
 ): boolean => canAccessAt(access, publicPath, namespace, OrgUnitAction.Read);
+
+/**
+ * Whether the caller may approve a publication into `publicPath`: a DIAL
+ * admin, or the owning unit grants both `read` and `write` on the
+ * `publications` namespace (a parent unit's grants do not extend to a child
+ * unit). A path under no listed unit is `false` for a non-admin.
+ * @param access - resolved org-unit data
+ * @param publicPath - decoded public-relative path
+ */
+export const canApprovePublicationsAt = (
+  access: OrgUnitAccess,
+  publicPath: string,
+): boolean =>
+  canReadAt(access, publicPath, OrgUnitNamespace.Publications) &&
+  canWriteAt(access, publicPath, OrgUnitNamespace.Publications);
 
 /**
  * Whether a publication request into `publicPath` can be sent: `true` for an
