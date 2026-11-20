@@ -57,6 +57,12 @@ vi.mock(
   }),
 );
 vi.mock('../../../../context/auth/UserContext');
+const { mockRefetchToolsets } = vi.hoisted(() => ({
+  mockRefetchToolsets: vi.fn(() => Promise.resolve()),
+}));
+vi.mock('../../../../context/DeploymentsContext', () => ({
+  useDeployments: () => ({ refetchToolsets: mockRefetchToolsets }),
+}));
 vi.mock('../../../../context/ThemeContext');
 vi.mock('../../../../server-api/toolsets', () => ({
   getToolset: vi.fn(),
@@ -1214,6 +1220,8 @@ describe('AppEditorIframe — toolset login request', () => {
         'https://editor.example.com',
       ),
     );
+    // The Catalog renders the toolset's sign-in badge from the shared list.
+    expect(mockRefetchToolsets).toHaveBeenCalledTimes(1);
   });
 
   it('refetches toolset details the same way Catalog does and includes credentials in the success result', async () => {
@@ -1450,6 +1458,7 @@ describe('AppEditorIframe — toolset logout request', () => {
         'https://editor.example.com',
       ),
     );
+    expect(mockRefetchToolsets).toHaveBeenCalledTimes(1);
   });
 
   it('includes refreshed credentials from getDeploymentDetails in the success result', async () => {
@@ -1497,6 +1506,7 @@ describe('AppEditorIframe — toolset logout request', () => {
         'https://editor.example.com',
       ),
     );
+    expect(mockRefetchToolsets).not.toHaveBeenCalled();
   });
 
   it('does not deliver an old logout result after loading another app at the same origin', async () => {
