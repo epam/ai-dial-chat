@@ -11,6 +11,7 @@ import {
   REQUESTS_ALIAS,
   SPEND_ALIAS,
   TOP_MODEL_COUNT,
+  type UsageBudget,
 } from './queries/usage-history.queries';
 import type { UsageHistoryPeriod } from './types/usage-history-period';
 import type { UsageWindow } from './usage-period';
@@ -185,6 +186,8 @@ export const selectTopDeployments = (
 export interface UsageHistorySources {
   period: UsageHistoryPeriod;
   window: UsageWindow;
+  /** The budget every query was narrowed to; absent for the user's whole history. */
+  budget?: UsageBudget;
   /** Q1 response. */
   dailyTotals: unknown;
   /** Q2 rows, already ranked. */
@@ -318,6 +321,14 @@ export const buildAvailableHistory = (
       from: sources.window.from.toISOString(),
       to: sources.window.to.toISOString(),
     },
+    ...(sources.budget === undefined
+      ? {}
+      : {
+          budget: {
+            costObject: sources.budget.costObject,
+            policy: sources.budget.policy,
+          },
+        }),
     currency: USAGE_CURRENCY,
     totals: { spend: toRoundedSpend(totals.spend), requests: totals.requests },
     daily,

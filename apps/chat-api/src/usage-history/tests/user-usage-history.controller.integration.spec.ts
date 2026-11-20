@@ -111,6 +111,14 @@ describe('UserUsageHistoryController (integration)', () => {
       ['an empty period', '?period='],
       ['a repeated period', '?period=today&period=week'],
       ['an extra query parameter', "?period=today&filter=user_hash%3D'x'"],
+      ['a cost object without a policy', '?period=today&costObject=eng'],
+      ['a policy without a cost object', '?period=today&policy=policies%2Fp'],
+      ['an empty cost object', '?period=today&costObject=&policy=policies%2Fp'],
+      [
+        'an over-long policy',
+        `?period=today&costObject=eng&policy=${'p'.repeat(1025)}`,
+      ],
+      ['a repeated policy', '?period=today&costObject=eng&policy=a&policy=b'],
     ])('rejects %s with 400 and calls no upstream', async (_label, query) => {
       await request(app?.getHttpServer())
         .get(`${HISTORY_PATH}${query}`)
@@ -216,6 +224,56 @@ describe('UserUsageHistoryController (integration)', () => {
       for (const recorded of analytics.requests) {
         expect(recorded.headers.authorization).toBe('Bearer test-access-token');
       }
+    });
+
+    it('narrows the queries to the requested budget and echoes it', async () => {
+      const base = adas();
+      analytics.setHandler((recorded) =>
+        recorded.path === '/v1/queries/entities/schema/dial_usage_log'
+          ? ok({
+              fields: [
+                { name: 'deployment' },
+                { name: 'budget_cost_object' },
+                { name: 'budget_policy' },
+                { name: 'budget_outcome' },
+              ],
+            })
+          : base(recorded),
+      );
+
+      const response = await request(app?.getHttpServer())
+        .get(
+          `${HISTORY_PATH}?period=today&costObject=engineering&policy=policies%2Fcompany%2Fpro`,
+        )
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        available: true,
+        budget: { costObject: 'engineering', policy: 'policies/company/pro' },
+        totals: { spend: 0.25, requests: 2 },
+      });
+      const executed = analytics.requests.filter(
+        (recorded) => recorded.path === '/v1/queries/execute',
+      );
+      expect(executed.length).toBeGreaterThan(0);
+      for (const recorded of executed) {
+        expect(JSON.stringify(recorded.body)).toContain(
+          '"value":"policies/company/pro"',
+        );
+      }
+    });
+
+    it('answers budget_unsupported when ADAS has no budget columns', async () => {
+      analytics.setHandler(adas());
+
+      const response = await request(app?.getHttpServer())
+        .get(`${HISTORY_PATH}?period=month&costObject=eng&policy=p`)
+        .expect(200);
+
+      expect(response.body).toEqual({
+        available: false,
+        reason: 'budget_unsupported',
+      });
     });
 
     it.each<

@@ -3,8 +3,26 @@ import { UsageHistoryPeriod } from '../types/usage-history-period';
 import { UsageHistoryUnavailableReason } from '../types/usage-history-unavailable-reason';
 
 const SPEND_DESCRIPTION =
-  'Spend in USD, rounded to 6 decimal places (half away from zero), summed from the ' +
-  "root span's chain-inclusive price: a call to an application includes the models it called.";
+  'Spend in USD, rounded to 6 decimal places (half away from zero). Without `budget`, summed ' +
+  "from the root span's chain-inclusive price: a call to an application includes the models it " +
+  'called. With `budget`, summed from the own price of the model calls that budget paid for.';
+
+const REQUESTS_SCOPE =
+  'Without `budget`, user requests (root spans); with `budget`, model calls the budget paid for.';
+
+export class UsageHistoryBudgetDto {
+  @ApiProperty({
+    description: 'Cost object of the budget the history is narrowed to.',
+    example: 'engineering',
+  })
+  costObject!: string;
+
+  @ApiProperty({
+    description: 'Policy of the budget the history is narrowed to.',
+    example: 'policies/company/pro',
+  })
+  policy!: string;
+}
 
 export class UsageHistoryWindowDto {
   @ApiProperty({
@@ -33,7 +51,7 @@ export class UsageHistoryTotalsDto {
   spend!: number;
 
   @ApiProperty({
-    description: 'Number of user requests (root spans) in the window.',
+    description: `Number in the window. ${REQUESTS_SCOPE}`,
     example: 42,
   })
   requests!: number;
@@ -49,7 +67,10 @@ export class UsageHistoryDailyEntryDto {
   @ApiProperty({ description: SPEND_DESCRIPTION, example: 1 })
   spend!: number;
 
-  @ApiProperty({ description: 'User requests on that date.', example: 30 })
+  @ApiProperty({
+    description: `Number on that date. ${REQUESTS_SCOPE}`,
+    example: 30,
+  })
   requests!: number;
 
   @ApiProperty({
@@ -67,7 +88,8 @@ export class UsageHistoryDailyEntryDto {
 export class UsageHistoryModelEntryDto {
   @ApiProperty({
     description:
-      'Root deployment the user called, or `other` for the remainder beyond the top 10 by spend.',
+      'Root deployment the user called (with `budget`: the model the budget paid for), or ' +
+      '`other` for the remainder beyond the top 10 by spend.',
     example: 'gpt-4o',
   })
   deployment!: string;
@@ -76,7 +98,7 @@ export class UsageHistoryModelEntryDto {
   spend!: number;
 
   @ApiProperty({
-    description: 'User requests to this deployment.',
+    description: `Number for this deployment. ${REQUESTS_SCOPE}`,
     example: 39,
   })
   requests!: number;
@@ -95,7 +117,10 @@ export class UsageHistoryClientEntryDto {
   @ApiProperty({ description: SPEND_DESCRIPTION, example: 1 })
   spend!: number;
 
-  @ApiProperty({ description: 'User requests from this client.', example: 35 })
+  @ApiProperty({
+    description: `Number from this client. ${REQUESTS_SCOPE}`,
+    example: 35,
+  })
   requests!: number;
 }
 
@@ -120,9 +145,20 @@ export class UserUsageHistoryResponseDto {
     description:
       'Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. ' +
       "`forbidden`: DIAL Analytics refused the caller's token, or the caller's view of the usage " +
-      'log is not restricted to their own rows. `unavailable`: timeout, network error or server error.',
+      'log is not restricted to their own rows. `unavailable`: timeout, network error or server error. ' +
+      "`budget_unsupported`: `costObject` and `policy` were given, but the caller's DIAL Analytics " +
+      'schema of the usage log has no budget columns.',
   })
   reason?: UsageHistoryUnavailableReason;
+
+  @ApiPropertyOptional({
+    type: () => UsageHistoryBudgetDto,
+    description:
+      'Present only when `available` is `true` and the request named a budget: every figure is ' +
+      "then that budget's, from the model calls it paid for. Rows written before DIAL Core logged " +
+      'the charged budget carry none and are not counted.',
+  })
+  budget?: UsageHistoryBudgetDto;
 
   @ApiPropertyOptional({
     type: () => UsageHistoryWindowDto,
@@ -157,7 +193,9 @@ export class UserUsageHistoryResponseDto {
     type: () => [UsageHistoryModelEntryDto],
     description:
       'Present only when `available` is `true`. Root deployments by spend descending, at most 10, ' +
-      'followed by one `other` entry with the remainder when more than 10 have usage.',
+      'followed by one `other` entry with the remainder when more than 10 have usage. When the ' +
+      'request named a budget, the entries are the models whose calls that budget paid for, ' +
+      'including models called by an application or other deployment, not root deployments.',
   })
   byModel?: UsageHistoryModelEntryDto[];
 
@@ -165,7 +203,10 @@ export class UserUsageHistoryResponseDto {
     type: () => [UsageHistoryClientEntryDto],
     description:
       'Present only when `available` is `true` and DIAL Analytics exposes the client-identity ' +
-      'enrichment to the caller; absent (not empty) otherwise. Sorted by spend descending.',
+      'enrichment to the caller; absent (not empty) otherwise. Sorted by spend descending. When the ' +
+      'request named a budget, each paid model call is classified from its own request headers, so a ' +
+      "model call made by an application may count toward that application's client rather than " +
+      'the client the user called the application from.',
   })
   byClient?: UsageHistoryClientEntryDto[];
 }

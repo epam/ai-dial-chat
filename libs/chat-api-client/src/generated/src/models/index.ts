@@ -11209,6 +11209,25 @@ export interface UploadArchiveResponseDto {
 /**
  *
  * @export
+ * @interface UsageHistoryBudgetDto
+ */
+export interface UsageHistoryBudgetDto {
+  /**
+   * Cost object of the budget the history is narrowed to.
+   * @type {string}
+   * @memberof UsageHistoryBudgetDto
+   */
+  costObject: string;
+  /**
+   * Policy of the budget the history is narrowed to.
+   * @type {string}
+   * @memberof UsageHistoryBudgetDto
+   */
+  policy: string;
+}
+/**
+ *
+ * @export
  * @interface UsageHistoryClientEntryDto
  */
 export interface UsageHistoryClientEntryDto {
@@ -11219,13 +11238,13 @@ export interface UsageHistoryClientEntryDto {
    */
   client: string;
   /**
-   * Spend in USD, rounded to 6 decimal places (half away from zero), summed from the root span's chain-inclusive price: a call to an application includes the models it called.
+   * Spend in USD, rounded to 6 decimal places (half away from zero). Without `budget`, summed from the root span's chain-inclusive price: a call to an application includes the models it called. With `budget`, summed from the own price of the model calls that budget paid for.
    * @type {number}
    * @memberof UsageHistoryClientEntryDto
    */
   spend: number;
   /**
-   * User requests from this client.
+   * Number from this client. Without `budget`, user requests (root spans); with `budget`, model calls the budget paid for.
    * @type {number}
    * @memberof UsageHistoryClientEntryDto
    */
@@ -11244,13 +11263,13 @@ export interface UsageHistoryDailyEntryDto {
    */
   date: string;
   /**
-   * Spend in USD, rounded to 6 decimal places (half away from zero), summed from the root span's chain-inclusive price: a call to an application includes the models it called.
+   * Spend in USD, rounded to 6 decimal places (half away from zero). Without `budget`, summed from the root span's chain-inclusive price: a call to an application includes the models it called. With `budget`, summed from the own price of the model calls that budget paid for.
    * @type {number}
    * @memberof UsageHistoryDailyEntryDto
    */
   spend: number;
   /**
-   * User requests on that date.
+   * Number on that date. Without `budget`, user requests (root spans); with `budget`, model calls the budget paid for.
    * @type {number}
    * @memberof UsageHistoryDailyEntryDto
    */
@@ -11269,19 +11288,19 @@ export interface UsageHistoryDailyEntryDto {
  */
 export interface UsageHistoryModelEntryDto {
   /**
-   * Root deployment the user called, or `other` for the remainder beyond the top 10 by spend.
+   * Root deployment the user called (with `budget`: the model the budget paid for), or `other` for the remainder beyond the top 10 by spend.
    * @type {string}
    * @memberof UsageHistoryModelEntryDto
    */
   deployment: string;
   /**
-   * Spend in USD, rounded to 6 decimal places (half away from zero), summed from the root span's chain-inclusive price: a call to an application includes the models it called.
+   * Spend in USD, rounded to 6 decimal places (half away from zero). Without `budget`, summed from the root span's chain-inclusive price: a call to an application includes the models it called. With `budget`, summed from the own price of the model calls that budget paid for.
    * @type {number}
    * @memberof UsageHistoryModelEntryDto
    */
   spend: number;
   /**
-   * User requests to this deployment.
+   * Number for this deployment. Without `budget`, user requests (root spans); with `budget`, model calls the budget paid for.
    * @type {number}
    * @memberof UsageHistoryModelEntryDto
    */
@@ -11307,13 +11326,13 @@ export type UsageHistoryPeriod =
  */
 export interface UsageHistoryTotalsDto {
   /**
-   * Spend in USD, rounded to 6 decimal places (half away from zero), summed from the root span's chain-inclusive price: a call to an application includes the models it called.
+   * Spend in USD, rounded to 6 decimal places (half away from zero). Without `budget`, summed from the root span's chain-inclusive price: a call to an application includes the models it called. With `budget`, summed from the own price of the model calls that budget paid for.
    * @type {number}
    * @memberof UsageHistoryTotalsDto
    */
   spend: number;
   /**
-   * Number of user requests (root spans) in the window.
+   * Number in the window. Without `budget`, user requests (root spans); with `budget`, model calls the budget paid for.
    * @type {number}
    * @memberof UsageHistoryTotalsDto
    */
@@ -11321,13 +11340,14 @@ export interface UsageHistoryTotalsDto {
 }
 
 /**
- * Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. `forbidden`: DIAL Analytics refused the caller's token, or the caller's view of the usage log is not restricted to their own rows. `unavailable`: timeout, network error or server error.
+ * Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. `forbidden`: DIAL Analytics refused the caller's token, or the caller's view of the usage log is not restricted to their own rows. `unavailable`: timeout, network error or server error. `budget_unsupported`: `costObject` and `policy` were given, but the caller's DIAL Analytics schema of the usage log has no budget columns.
  * @export
  */
 export const UsageHistoryUnavailableReason = {
   NotConfigured: 'not_configured',
   Unavailable: 'unavailable',
   Forbidden: 'forbidden',
+  BudgetUnsupported: 'budget_unsupported',
 } as const;
 export type UsageHistoryUnavailableReason =
   (typeof UsageHistoryUnavailableReason)[keyof typeof UsageHistoryUnavailableReason];
@@ -11512,11 +11532,17 @@ export interface UserUsageHistoryResponseDto {
    */
   available: boolean;
   /**
-   * Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. `forbidden`: DIAL Analytics refused the caller's token, or the caller's view of the usage log is not restricted to their own rows. `unavailable`: timeout, network error or server error.
+   * Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. `forbidden`: DIAL Analytics refused the caller's token, or the caller's view of the usage log is not restricted to their own rows. `unavailable`: timeout, network error or server error. `budget_unsupported`: `costObject` and `policy` were given, but the caller's DIAL Analytics schema of the usage log has no budget columns.
    * @type {UsageHistoryUnavailableReason}
    * @memberof UserUsageHistoryResponseDto
    */
   reason?: UsageHistoryUnavailableReason;
+  /**
+   * Present only when `available` is `true` and the request named a budget: every figure is then that budget's, from the model calls it paid for. Rows written before DIAL Core logged the charged budget carry none and are not counted.
+   * @type {UsageHistoryBudgetDto}
+   * @memberof UserUsageHistoryResponseDto
+   */
+  budget?: UsageHistoryBudgetDto;
   /**
    * Present only when `available` is `true`. The half-open window `[from, to)`.
    * @type {UsageHistoryWindowDto}
@@ -11542,13 +11568,13 @@ export interface UserUsageHistoryResponseDto {
    */
   daily?: Array<UsageHistoryDailyEntryDto>;
   /**
-   * Present only when `available` is `true`. Root deployments by spend descending, at most 10, followed by one `other` entry with the remainder when more than 10 have usage.
+   * Present only when `available` is `true`. Root deployments by spend descending, at most 10, followed by one `other` entry with the remainder when more than 10 have usage. When the request named a budget, the entries are the models whose calls that budget paid for, including models called by an application or other deployment, not root deployments.
    * @type {Array<UsageHistoryModelEntryDto>}
    * @memberof UserUsageHistoryResponseDto
    */
   byModel?: Array<UsageHistoryModelEntryDto>;
   /**
-   * Present only when `available` is `true` and DIAL Analytics exposes the client-identity enrichment to the caller; absent (not empty) otherwise. Sorted by spend descending.
+   * Present only when `available` is `true` and DIAL Analytics exposes the client-identity enrichment to the caller; absent (not empty) otherwise. Sorted by spend descending. When the request named a budget, each paid model call is classified from its own request headers, so a model call made by an application may count toward that application's client rather than the client the user called the application from.
    * @type {Array<UsageHistoryClientEntryDto>}
    * @memberof UserUsageHistoryResponseDto
    */
