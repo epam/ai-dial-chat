@@ -332,7 +332,13 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       dependencies,
       versionHistory,
       getDisabledReason,
+      isDirectWrite,
+      directUnavailableNote,
+      labels,
     }: {
+      labels?: { directWriteNote?: string };
+      isDirectWrite?: boolean;
+      directUnavailableNote?: string;
       getDisabledReason?: (destination: {
         rootKey: string;
         path: string[];
@@ -365,6 +371,11 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
         <span>panelAllowReplace:{String(allowReplace)}</span>
         <span>targetTaken:{String(isTargetTaken)}</span>
         <span>targetChecking:{String(isTargetChecking)}</span>
+        <span>direct:{String(isDirectWrite)}</span>
+        <span>directNote:{labels?.directWriteNote ?? 'none'}</span>
+        {directUnavailableNote != null && (
+          <span>note:{directUnavailableNote}</span>
+        )}
         <span>
           dependencies:
           {dependencies == null
@@ -554,6 +565,162 @@ describe('DetailsPanel — a taken published path', () => {
 
     expect(await screen.findByText('targetTaken:true')).toBeTruthy();
     expect(onPublishError).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('DetailsPanel — direct publish', () => {
+  const dependency = (name: string): PublishDependency => ({
+    id: `toolsets/b/${name}`,
+    name,
+    type: PublishDependencyType.Toolset,
+    location: '',
+  });
+  const selectFolder = async () => {
+    await openPublish();
+    await selectSharedFolder();
+  };
+
+  it('writes directly, with no request, when the host allows it for the folder', async () => {
+    const onPublish = vi.fn().mockResolvedValue(undefined);
+    const onPublishDirectly = vi.fn().mockResolvedValue(undefined);
+    const onPublishSuccess = vi.fn();
+    const canPublishDirectlyTo = vi.fn().mockReturnValue(true);
+    renderPanel({
+      onPublish,
+      onPublishDirectly,
+      onPublishSuccess,
+      canPublishDirectlyTo,
+    });
+
+    await selectFolder();
+    expect(screen.getByText('direct:true')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(onPublishDirectly).toHaveBeenCalledWith(item, ['Shared']);
+    expect(onPublish).not.toHaveBeenCalled();
+    expect(onPublishSuccess).toHaveBeenCalledWith(item, ['Shared'], true);
+    expect(canPublishDirectlyTo).toHaveBeenCalledWith(item, ['Shared'], []);
+  });
+
+  it('passes the direct-write note only for an item that would offer the credentials opt-in', async () => {
+    renderPanel({
+      item: toolsetWithCredentials({
+        authenticationType: ToolsetAuthenticationType.OAuth,
+        globalStatus: CredentialStatus.SignedIn,
+      }),
+      publishLabels: { directWriteNote: 'No credentials are shared.' },
+    });
+
+    await openPublish();
+
+    expect(
+      screen.getByText('directNote:No credentials are shared.'),
+    ).toBeTruthy();
+  });
+
+  it('withholds the direct-write note from an item with no credentials to share', async () => {
+    renderPanel({
+      publishLabels: { directWriteNote: 'No credentials are shared.' },
+    });
+
+    await openPublish();
+
+    expect(screen.getByText('directNote:none')).toBeTruthy();
+  });
+
+  it('files a request when the host refuses the folder', async () => {
+    const onPublish = vi.fn().mockResolvedValue(undefined);
+    const onPublishDirectly = vi.fn();
+    renderPanel({
+      onPublish,
+      onPublishDirectly,
+      canPublishDirectlyTo: () => false,
+    });
+
+    await selectFolder();
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(screen.queryByText('direct:true')).toBeNull();
+    expect(onPublish).toHaveBeenCalledOnce();
+    expect(onPublishDirectly).not.toHaveBeenCalled();
+  });
+
+  it('changes nothing when the direct props are omitted', async () => {
+    renderPanel();
+
+    await selectFolder();
+
+    expect(screen.getByText('direct:false')).toBeTruthy();
+  });
+
+  it('waits for the dependency list before offering the direct path and hands it to the host', async () => {
+    let resolveList: (list: PublishDependency[]) => void = () => undefined;
+    const getPublishDependencies = vi.fn(
+      () =>
+        new Promise<PublishDependency[]>((resolve) => {
+          resolveList = resolve;
+        }),
+    );
+    const canPublishDirectlyTo = vi.fn().mockReturnValue(true);
+    renderPanel({
+      getPublishDependencies,
+      canPublishDirectlyTo,
+      onPublishDirectly: vi.fn(),
+    });
+
+    await selectFolder();
+    expect(screen.getByText('direct:false')).toBeTruthy();
+    expect(canPublishDirectlyTo).not.toHaveBeenCalled();
+
+    await act(async () => resolveList([dependency('Tools')]));
+
+    expect(await screen.findByText('direct:true')).toBeTruthy();
+    expect(canPublishDirectlyTo).toHaveBeenCalledWith(
+      item,
+      ['Shared'],
+      [dependency('Tools')],
+    );
+  });
+
+  it('settles on the direct path when the dependency lookup fails', async () => {
+    renderPanel({
+      getPublishDependencies: vi.fn().mockRejectedValue(new Error('offline')),
+      canPublishDirectlyTo: () => true,
+      onPublishDirectly: vi.fn(),
+    });
+
+    await selectFolder();
+
+    expect(await screen.findByText('direct:true')).toBeTruthy();
+  });
+
+  it('shows the host note when a request is filed instead, and not for a direct folder', async () => {
+    const getPublishDirectUnavailableNote = vi
+      .fn()
+      .mockReturnValue('Toolsets are missing; a request is sent.');
+    renderPanel({
+      canPublishDirectlyTo: () => false,
+      onPublishDirectly: vi.fn(),
+      getPublishDirectUnavailableNote,
+    });
+
+    await selectFolder();
+
+    expect(
+      await screen.findByText('note:Toolsets are missing; a request is sent.'),
+    ).toBeTruthy();
+  });
+
+  it('shows no note while the folder is a direct destination', async () => {
+    renderPanel({
+      canPublishDirectlyTo: () => true,
+      onPublishDirectly: vi.fn(),
+      getPublishDirectUnavailableNote: () => 'never shown',
+    });
+
+    await selectFolder();
+
+    expect(screen.queryByText(/^note:/)).toBeNull();
   });
 });
 
@@ -1743,7 +1910,7 @@ describe('DetailsPanel', () => {
     await selectSharedFolder();
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
     expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], '', false);
-    expect(onPublishSuccess).toHaveBeenCalledWith(item, ['Shared']);
+    expect(onPublishSuccess).toHaveBeenCalledWith(item, ['Shared'], false);
   });
 
   it('seeds the publish panel author from publishDefaultAuthor', async () => {

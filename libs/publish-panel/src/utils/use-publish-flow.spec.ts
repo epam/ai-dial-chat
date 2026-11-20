@@ -198,7 +198,7 @@ describe('usePublishFlow', () => {
     });
 
     expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], '', false);
-    expect(onPublishSuccess).toHaveBeenCalledWith(item, ['Shared']);
+    expect(onPublishSuccess).toHaveBeenCalledWith(item, ['Shared'], false);
   });
 
   it('does nothing when submitting without a selected folder', async () => {
@@ -1079,6 +1079,171 @@ describe('usePublishFlow', () => {
       rerender({ author: 'Someone Else' });
 
       expect(result.current.author).toBe('Someone Else');
+    });
+  });
+
+  describe('direct write', () => {
+    const DIRECT = ['Delivery', 'Teams'];
+    const REQUEST = ['Shared'];
+    const canPublishDirectlyTo = (path: string[]) => path[0] === 'Delivery';
+    const render = (
+      overrides: Partial<Parameters<typeof usePublishFlow>[0]> = {},
+    ) => {
+      const onPublish = vi.fn().mockResolvedValue(undefined);
+      const onPublishDirectly = vi.fn().mockResolvedValue(undefined);
+      const onPublishSuccess = vi.fn();
+      const view = renderHook(() =>
+        usePublishFlow({
+          item,
+          history,
+          folderItems,
+          onPublish,
+          onPublishDirectly,
+          canPublishDirectlyTo,
+          onPublishSuccess,
+          ...overrides,
+        }),
+      );
+      return { ...view, onPublish, onPublishDirectly, onPublishSuccess };
+    };
+
+    it('writes directly, not through onPublish, and reports success', async () => {
+      const { result, onPublish, onPublishDirectly, onPublishSuccess } =
+        render();
+      act(() => result.current.setSelectedFolderPath(DIRECT));
+
+      expect(result.current.isDirectWrite).toBe(true);
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+
+      expect(onPublishDirectly).toHaveBeenCalledWith(item, DIRECT);
+      expect(onPublish).not.toHaveBeenCalled();
+      expect(onPublishSuccess).toHaveBeenCalledWith(item, DIRECT, true);
+    });
+
+    it('files a request for a folder the predicate refuses', async () => {
+      const { result, onPublish, onPublishDirectly } = render();
+      act(() => result.current.setSelectedFolderPath(REQUEST));
+
+      expect(result.current.isDirectWrite).toBe(false);
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+
+      expect(onPublish).toHaveBeenCalledOnce();
+      expect(onPublishDirectly).not.toHaveBeenCalled();
+    });
+
+    it('stays on the request path when onPublishDirectly is omitted', () => {
+      const { result } = render({ onPublishDirectly: undefined });
+      act(() => result.current.setSelectedFolderPath(DIRECT));
+
+      expect(result.current.isDirectWrite).toBe(false);
+    });
+
+    it('stays on the request path when canPublishDirectlyTo is omitted', async () => {
+      const { result, onPublish } = render({ canPublishDirectlyTo: undefined });
+      act(() => result.current.setSelectedFolderPath(DIRECT));
+
+      expect(result.current.isDirectWrite).toBe(false);
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+      expect(onPublish).toHaveBeenCalledOnce();
+    });
+
+    it('is not direct without a selected folder', () => {
+      const { result } = render();
+
+      expect(result.current.isDirectWrite).toBe(false);
+    });
+
+    it('marks the folder taken when the direct write is rejected as a taken target', async () => {
+      const taken = new Error('taken');
+      const onPublishError = vi.fn();
+      const { result } = render({
+        onPublishDirectly: vi.fn().mockRejectedValue(taken),
+        isTargetTakenError: (error) => error === taken,
+        onPublishError,
+      });
+      act(() => result.current.setSelectedFolderPath(DIRECT));
+
+      let isOk = true;
+      await act(async () => {
+        isOk = await result.current.handleSubmit();
+      });
+
+      expect(isOk).toBe(false);
+      expect(result.current.isTargetTaken).toBe(true);
+      expect(result.current.hasSubmitError).toBe(false);
+      expect(onPublishError).toHaveBeenCalledWith(item, DIRECT, taken);
+    });
+
+    it('sets hasSubmitError for any other direct failure', async () => {
+      const { result } = render({
+        onPublishDirectly: vi.fn().mockRejectedValue(new Error('boom')),
+      });
+      act(() => result.current.setSelectedFolderPath(DIRECT));
+
+      await act(async () => {
+        await result.current.handleSubmit();
+      });
+
+      expect(result.current.hasSubmitError).toBe(true);
+    });
+
+    it('does not fetch rules for a direct folder and loads them again on returning to a request folder', async () => {
+      const onFetchExistingRules = vi
+        .fn()
+        .mockResolvedValue([
+          { function: PublicationRuleFunction.Equal, source: 'roles' },
+        ] as unknown as PublicationRule[]);
+      const { result } = render({ onFetchExistingRules });
+
+      act(() => result.current.setSelectedFolderPath(REQUEST));
+      await waitFor(() => expect(result.current.rules).toHaveLength(1));
+      expect(onFetchExistingRules).toHaveBeenCalledTimes(1);
+
+      act(() => result.current.setSelectedFolderPath(DIRECT));
+      await waitFor(() => expect(result.current.rules).toHaveLength(0));
+      expect(onFetchExistingRules).toHaveBeenCalledTimes(1);
+
+      act(() => result.current.setSelectedFolderPath(REQUEST));
+      await waitFor(() => expect(result.current.rules).toHaveLength(1));
+      expect(onFetchExistingRules).toHaveBeenCalledTimes(2);
+    });
+
+    it('ignores the history marker for a direct folder', () => {
+      const { result } = render({
+        history: [{ version: '4.0.1', publishedAt: 1, folderPath: DIRECT }],
+      });
+      act(() => result.current.setSelectedFolderPath(DIRECT));
+
+      expect(result.current.hasExistingPublicationInFolder).toBe(false);
+    });
+
+    it('still asks the taken-target check for a direct folder whose history holds the item', async () => {
+      const onCheckTargetExists = vi.fn().mockResolvedValue(true);
+      const { result } = render({
+        history: [{ version: '4.0.1', publishedAt: 1, folderPath: DIRECT }],
+        onCheckTargetExists,
+      });
+      act(() => result.current.setSelectedFolderPath(DIRECT));
+
+      await waitFor(() => expect(result.current.isTargetTaken).toBe(true));
+      expect(onCheckTargetExists).toHaveBeenCalledWith(item, DIRECT);
+    });
+
+    it('clears the credentials choice on entering a direct folder', () => {
+      const { result } = render();
+      act(() => result.current.setSelectedFolderPath(REQUEST));
+      act(() => result.current.setPublishCredentials(true));
+      expect(result.current.publishCredentials).toBe(true);
+
+      act(() => result.current.setSelectedFolderPath(DIRECT));
+
+      expect(result.current.publishCredentials).toBe(false);
     });
   });
 });

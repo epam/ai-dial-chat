@@ -82,6 +82,8 @@ export interface PublishPanelLabels {
   credentialsLabel?: string;
   /** Caption below the credentials opt-in, stating what ticking it does. Default explains members will use the resource without authorising and that the credential itself is never shown to them. */
   credentialsHint?: string;
+  /** Plain text line shown in place of the credentials opt-in when the destination is a direct write. Default: none, nothing is rendered. */
+  directWriteNote?: string;
   /** Warning callout body shown when the folder already has this version; `{version}` and `{folder}` are replaced, with the folder name rendered bold. */
   replaceWarning?: string;
   /** Warning callout body shown when another resource already holds the published path in the folder and the resource has no version; `{folder}` is replaced, with the folder name rendered bold. */
@@ -229,6 +231,16 @@ export interface PublishPanelProps {
   onRulesChange?: (rules: PublicationRule[]) => void;
   /** Options offered in the access-rules editor's source picker. Default: `[]`. */
   ruleSourceOptions?: string[];
+  /**
+   * Whether the selected folder is written directly instead of filed as a
+   * request. For `true` the author field, the credentials opt-in and the
+   * access-rules section are not rendered, the admin-approval callout is
+   * dropped and `labels.directWriteNote` takes the credentials opt-in's place.
+   * The host passes the publish flow's `isDirectWrite`. Default: `false`.
+   */
+  isDirectWrite?: boolean;
+  /** A finished sentence shown as an information callout when the host knows why a direct write is unavailable (a request is filed instead). Default: none. */
+  directUnavailableNote?: string;
   /** Whether existing rules are currently being fetched for the selected folder. Default: `false`. */
   isRulesLoading?: boolean;
   /** Whether the most recent existing-rules fetch failed. Default: `false`. */
@@ -239,6 +251,8 @@ export interface PublishPanelProps {
   summaryTitleClassName?: string;
   /** Typography class for the "Publish to folder" section heading. Default: `'dial-body-semi-text'`. */
   headingClassName?: string;
+  /** Typography class for the direct-write note. Default: `'dial-small-text'`. */
+  directNoteClassName?: string;
   /** Typography class for the destination folder path. Default: `'dial-small-semi-text'`. */
   destinationClassName?: string;
   /** Typography class for the folder name emphasised inside the replace-warning and no-access callouts. Default: `'dial-small-paragraph-semi-text'`. */
@@ -280,9 +294,12 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   ruleSourceOptions = EMPTY_RULE_SOURCE_OPTIONS,
   isRulesLoading = false,
   hasRulesLoadError = false,
+  isDirectWrite = false,
+  directUnavailableNote,
   labels = {},
   summaryTitleClassName = 'dial-body-semi-text',
   headingClassName = 'dial-body-semi-text',
+  directNoteClassName = 'dial-small-text',
   destinationClassName = 'dial-small-semi-text',
   calloutFolderNameClassName = 'dial-small-paragraph-semi-text',
   styles: stylesProp = {},
@@ -298,6 +315,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
       '--pp-summary-title-text': colors?.summaryTitleText,
       '--pp-heading-text': colors?.headingText,
       '--pp-destination-text': colors?.destinationText,
+      '--pp-direct-note-text': colors?.directNoteText,
     }),
     ...stylesProp.cssVars,
   };
@@ -339,6 +357,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     authorPlaceholder = 'Author name',
     authorHint = 'Shown as the publication’s author. Defaults to you — replace it to credit a team instead.',
     credentialsLabel = 'Publish with my credentials',
+    directWriteNote,
     credentialsHint = 'Members will use this without signing in themselves. Your credential itself is never shown to them.',
   } = labels;
 
@@ -532,7 +551,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             onClick={onChangeFolderClick}
           />
         </div>
-        {derived.calloutKind === PublishCalloutKind.Info && (
+        {derived.calloutKind === PublishCalloutKind.Info && !isDirectWrite && (
           <div className="my-4">
             <Notification
               type={NotificationType.SectionMessage}
@@ -567,7 +586,17 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             folder and the author together say what this publication is, and
             the rules below say who may see it. An empty author is a valid
             state, so nothing here can block submit. */}
-        {onAuthorChange != null && (
+        {directUnavailableNote != null && !isDirectWrite && (
+          <div className="mt-4">
+            <Notification
+              type={NotificationType.SectionMessage}
+              variant={NotificationVariant.Info}
+              message={directUnavailableNote}
+            />
+          </div>
+        )}
+
+        {onAuthorChange != null && !isDirectWrite && (
           <div className="mt-4">
             <Input
               id={authorFieldId}
@@ -585,7 +614,19 @@ export const PublishPanel: FC<PublishPanelProps> = ({
         {/* The consequence of ticking this lives in the caption, not the
             label alone: the kit wires the caption as the control's accessible
             description, so nothing here hand-rolls `aria-describedby`. */}
-        {onPublishCredentialsChange != null && (
+        {isDirectWrite && directWriteNote != null && (
+          <p
+            className={mergeClasses(
+              'mt-4',
+              styles.directNote,
+              directNoteClassName,
+            )}
+          >
+            {directWriteNote}
+          </p>
+        )}
+
+        {onPublishCredentialsChange != null && !isDirectWrite && (
           <div className="mt-4">
             <Checkbox
               labelProps={{ label: credentialsLabel }}
@@ -600,7 +641,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
         {/* Nested inside the destination-folder block, and tighter than the
             inter-section gap, so the rules read as scoped to the selection
             above rather than as an independent control. */}
-        {onRulesChange != null && (
+        {onRulesChange != null && !isDirectWrite && (
           <div className="mt-4">
             <PublishAccessRules
               rules={rules}

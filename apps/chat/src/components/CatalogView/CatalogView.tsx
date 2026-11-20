@@ -13,6 +13,7 @@ import {
   findDeploymentByIdOrReference,
   findSchemaDisplayName,
   getOrgUnitNamespace,
+  getCatalogPublishDirectAvailability,
   OrgUnitFolderGuardPurpose,
   resolveFavoriteEntityType,
   toPublishDisabledReason,
@@ -23,6 +24,7 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import type { PublishDependency } from '@epam/ai-dial-publish-panel';
 import { SkillContentFileTree } from '@epam/ai-dial-skills';
 import { LiveRegion, LiveRegionElement } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
@@ -50,6 +52,7 @@ import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useOrgUnitsContext } from '../../context/OrgUnitsContext';
 import { usePrompts } from '../../context/PromptsContext';
 import { useSkills } from '../../context/SkillsContext';
 import { useCatalogCreationPermissions } from '../../hooks/catalog/useCatalogCreationPermissions';
@@ -473,6 +476,7 @@ const CatalogView: FC<Props> = ({
     getPublishHistory,
     getPublishDependencies,
     handlePublish,
+    handlePublishDirectly,
     handleUnpublish,
     handlePublishSuccess,
     handlePublishError,
@@ -487,9 +491,63 @@ const CatalogView: FC<Props> = ({
     schemas,
     rememberPublishFolder,
     notifyOperationSuccess,
+    showSuccessNotification,
     showPublishError,
     isAdmin,
   });
+
+  const orgUnits = useOrgUnitsContext();
+  const isOrgUnitsEnabled = useFeatureFlag('orgUnitsEnabled');
+
+  /* The mode is decided on the client from the user's unit rights, as the Save panel does; DIAL Core stays the authority. */
+  const getPublishDirectAvailabilityFor = useCallback(
+    (
+      item: CatalogItem,
+      folderPath: string[],
+      dependencies: PublishDependency[],
+    ) =>
+      isOrgUnitsEnabled
+        ? getCatalogPublishDirectAvailability(
+            item.type,
+            folderPath,
+            dependencies.map(({ type }) => type),
+            orgUnits,
+          )
+        : { isDirect: false, missingNamespaces: [], missingTypes: [] },
+    [isOrgUnitsEnabled, orgUnits],
+  );
+
+  const canPublishDirectlyTo = useCallback(
+    (
+      item: CatalogItem,
+      folderPath: string[],
+      dependencies: PublishDependency[],
+    ) =>
+      getPublishDirectAvailabilityFor(item, folderPath, dependencies).isDirect,
+    [getPublishDirectAvailabilityFor],
+  );
+
+  const getPublishDirectUnavailableNote = useCallback(
+    (
+      item: CatalogItem,
+      folderPath: string[],
+      dependencies: PublishDependency[],
+    ) => {
+      const { missingTypes } = getPublishDirectAvailabilityFor(
+        item,
+        folderPath,
+        dependencies,
+      );
+      if (missingTypes.length === 0) return undefined;
+      const { typeLabels } = getApplicationPublishDependenciesLabels(t);
+      return t(CatalogI18nKeys.PublishDirectUnavailableDependencies, {
+        types: missingTypes
+          .map((type) => typeLabels?.[type] ?? type)
+          .join(', '),
+      });
+    },
+    [getPublishDirectAvailabilityFor, t],
+  );
 
   const handlePublishOpenChange = useCallback(
     (isOpen: boolean, item: CatalogItem) =>
@@ -733,6 +791,9 @@ const CatalogView: FC<Props> = ({
         hasPublishWriteAccess={hasPublishWriteAccess}
         publishDefaultAuthor={displayName}
         onPublish={handlePublish}
+        onPublishDirectly={handlePublishDirectly}
+        canPublishDirectlyTo={canPublishDirectlyTo}
+        getPublishDirectUnavailableNote={getPublishDirectUnavailableNote}
         onPublishSuccess={handlePublishSuccess}
         onUnpublish={handleUnpublish}
         isUnpublishVisible={isUnpublishVisible}
@@ -749,6 +810,7 @@ const CatalogView: FC<Props> = ({
           }),
           credentialsLabel: t(CatalogI18nKeys.PublishCredentialsLabel),
           credentialsHint: t(CatalogI18nKeys.PublishCredentialsHint),
+          directWriteNote: t(CatalogI18nKeys.PublishDirectCredentialsNote),
           replaceWarning: t(
             CatalogI18nKeys.PublishVersionAlreadyPublishedWarning,
           ),

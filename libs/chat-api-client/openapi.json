@@ -9055,7 +9055,7 @@
     },
     "/api/v1/catalog/{entityType}/{entityId}/copy-to-org-unit": {
       "post": {
-        "description": "Copies a catalog entity of the caller's own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core's resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. An application is copied together with its first-level private dependencies (in the caller's own bucket, written under a `.{application}.deps` folder next to it) and its uploaded icon, and refers to the copies; a dependency already copied is reused, and an icon that cannot be copied is dropped from the shared copy. Before the first copy the caller must hold `write` in the folder's org unit on the namespace of the application and of every dependency to copy, otherwise the answer is 403 naming the missing namespaces and nothing is written. Answers 403 while the `features.orgUnitsEnabled` flag is off.",
+        "description": "Copies a catalog entity of the caller's own bucket into `folderPath` of the public bucket under the same name (or, when `version` is given, under the name a publication of that version would use), by proxying DIAL Core's resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. An application is copied together with its first-level private dependencies (in the caller's own bucket, written under a `.{application}.deps` folder next to it) and its uploaded icon, and refers to the copies; a dependency already copied is reused, and an icon that cannot be copied is dropped from the shared copy. A `publications` right is not checked here: DIAL Core does not enforce it on a copy. Before the first copy the caller must hold `write` in the folder's org unit on the namespace of the application and of every dependency to copy, otherwise the answer is 403 naming the missing namespaces and nothing is written. Answers 403 while the `features.orgUnitsEnabled` flag is off.",
         "operationId": "copyCatalogEntityToOrgUnit",
         "parameters": [
           {
@@ -9115,13 +9115,20 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "The `features.orgUnitsEnabled` flag is off, the entity is not in the caller's own bucket, the caller lacks `write` in the unit on the namespace of an application's dependency (the message names it), or DIAL Core refused the write (no `write` in the unit, or a Core per-type rule)"
+            "description": "The `features.orgUnitsEnabled` flag is off, the entity is not in the caller's own bucket, the caller lacks `write` in the unit on the namespace of the application or of one of its dependencies (the message names it), or DIAL Core refused the write (no `write` in the unit, or a Core per-type rule)"
           },
           "404": {
             "description": "Entity not found"
           },
           "409": {
-            "description": "The folder already holds an entity with this name, or DIAL Core refused the copy as a conflict"
+            "description": "The folder already holds an entity with this name (body `code` `target-exists` when the target is confirmed to exist), or DIAL Core refused the copy as a conflict without a code, or another publish of the same application holds its staging copy (`code` `publish-in-progress`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishConflictDto"
+                }
+              }
+            }
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -20853,6 +20860,11 @@
             "type": "string",
             "example": "Acme/US Risk/Teams",
             "description": "Plain-text destination folder relative to the public bucket, never empty: the public root is not an org unit. DIAL Core decides whether the caller may write there."
+          },
+          "version": {
+            "type": "string",
+            "description": "Optional version label. For an application or a toolset whose stored name ends in `__{version}` the copy is named with this version, as a publication of it would be; otherwise the stored name is kept.",
+            "example": "1.2.0"
           }
         },
         "required": ["folderPath"]

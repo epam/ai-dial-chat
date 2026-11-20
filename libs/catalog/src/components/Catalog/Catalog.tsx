@@ -108,6 +108,9 @@ export const Catalog: FC<CatalogProps> = ({
   onFetchExistingRules,
   onCheckTargetExists,
   isTargetTakenError,
+  canPublishDirectlyTo,
+  onPublishDirectly,
+  getPublishDirectUnavailableNote,
   shareOverlay,
   isShareVisible,
   isSharePrimary,
@@ -989,6 +992,9 @@ export const Catalog: FC<CatalogProps> = ({
           onFetchExistingRules={onFetchExistingRules}
           onCheckTargetExists={onCheckTargetExists}
           isTargetTakenError={isTargetTakenError}
+          canPublishDirectlyTo={canPublishDirectlyTo}
+          onPublishDirectly={onPublishDirectly}
+          getPublishDirectUnavailableNote={getPublishDirectUnavailableNote}
           shareOverlay={shareOverlay}
           isShareVisible={isShareVisible}
           isSharePrimary={isSharePrimary}

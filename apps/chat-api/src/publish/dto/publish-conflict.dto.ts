@@ -1,3 +1,4 @@
+import { ConflictException } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
@@ -12,6 +13,24 @@ export enum PublishConflictCode {
   /** Another publish of the same application is in flight, so a second one cannot start yet. */
   PublishInProgress = 'publish-in-progress',
 }
+
+/** Message of the publish endpoint's `409` for a taken target. */
+export const TARGET_EXISTS_MESSAGE =
+  'A resource with this name already exists in the target folder. Rename it, change its version or choose another folder';
+
+/**
+ * The `409` for a target that holds a resource, carrying the taken-target code.
+ * @param message - the user-facing message; defaults to the publish endpoint's
+ */
+export const createTargetExistsConflict = (
+  message: string = TARGET_EXISTS_MESSAGE,
+): ConflictException =>
+  new ConflictException({
+    statusCode: 409,
+    message,
+    error: 'Conflict',
+    code: PublishConflictCode.TargetExists,
+  });
 
 /** Error body of a publish rejected with `409`: the target already exists, or the same application is already being published. */
 export class PublishConflictDto {

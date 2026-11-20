@@ -1,4 +1,5 @@
 import {
+  canApprovePublicationsAt,
   canSaveToFolderAt,
   canWriteIntoOrgUnitAt,
   canRequestPublicationAt,
@@ -35,15 +36,17 @@ export interface UseOrgUnitsResult {
   canSaveDirectlyAt: OrgUnitRightCheck;
   /** Whether a publication request into the path can be sent; `true` until the status is `Ready`. */
   canPublishAt: OrgUnitRightCheck;
+  /** Whether a publish panel may write straight into the path instead of filing a request: it lies inside an org unit, the user may write the namespace there and may approve publications (`read` and `write` on `publications`, or DIAL admin). `false` until the status is `Ready`. */
+  canPublishDirectlyAt: OrgUnitRightCheck;
 }
 
 const NO_UNITS: OrgUnitAccess = { hasAdminAccess: false, units: [] };
 
 /**
- * Loads the current user's org units once, on demand, and answers save, direct-save
- * and publication-request rights per path. Until the status is `Ready` (and in
- * `Disabled` and `Error`) every answer is `true` except `canSaveDirectlyAt`, so missing
- * data never disables a folder.
+ * Loads the current user's org units once, on demand, and answers save, direct-save,
+ * direct-publish and publication-request rights per path. Until the status is `Ready`
+ * (and in `Disabled` and `Error`) every answer is `true` except `canSaveDirectlyAt` and
+ * `canPublishDirectlyAt`, so missing data never disables a folder or selects a write.
  * @param options - the host-supplied `listOrgUnits` read
  */
 export const useOrgUnits = ({
@@ -127,6 +130,14 @@ export const useOrgUnits = ({
     [isReady, access],
   );
 
+  const canPublishDirectlyAt = useCallback<OrgUnitRightCheck>(
+    (publicPath, namespace) =>
+      isReady &&
+      canWriteIntoOrgUnitAt(access, publicPath, namespace) &&
+      canApprovePublicationsAt(access, publicPath),
+    [isReady, access],
+  );
+
   return useMemo(
     () => ({
       status,
@@ -135,6 +146,7 @@ export const useOrgUnits = ({
       canSaveAt,
       canSaveDirectlyAt,
       canPublishAt,
+      canPublishDirectlyAt,
     }),
     [
       status,
@@ -143,6 +155,7 @@ export const useOrgUnits = ({
       canSaveAt,
       canSaveDirectlyAt,
       canPublishAt,
+      canPublishDirectlyAt,
     ],
   );
 };

@@ -121,8 +121,12 @@ export interface UsePublishFlowOptions<TItem extends PublishFlowItem> {
     author: string,
     publishCredentials: boolean,
   ) => Promise<void>;
-  /** Called after a successful publish; the host surfaces its own success notification. */
-  onPublishSuccess?: (item: TItem, folderPath: string[]) => void;
+  /** Called after a successful publish, with whether it was a direct write; the host surfaces its own success notification. */
+  onPublishSuccess?: (
+    item: TItem,
+    folderPath: string[],
+    isDirectWrite: boolean,
+  ) => void;
   /**
    * Called with the rejection reason when `onPublish` fails, before
    * `handleSubmit` resolves to `false`. The host surfaces its own error
@@ -158,6 +162,19 @@ export interface UsePublishFlowOptions<TItem extends PublishFlowItem> {
    * `onPublish` before rethrowing it.
    */
   isTargetTakenError?: (error: unknown) => boolean;
+  /**
+   * Whether the host writes the item straight into this folder instead of
+   * filing a publication request. Together with `onPublishDirectly` it selects
+   * the direct path; omit either and `onPublish` is always used.
+   */
+  canPublishDirectlyTo?: (folderPath: string[]) => boolean;
+  /**
+   * Writes the item into the folder directly. Called by `handleSubmit` instead
+   * of `onPublish` while {@link UsePublishFlowResult.isDirectWrite} is `true`,
+   * with the same success, error and taken-target handling; no rules, author or
+   * credentials are sent.
+   */
+  onPublishDirectly?: (item: TItem, folderPath: string[]) => Promise<void>;
 }
 
 /** State and handlers returned by {@link usePublishFlow}. */
@@ -227,6 +244,8 @@ export interface UsePublishFlowResult {
   isRulesLoading: boolean;
   /** Whether the most recent `onFetchExistingRules` call failed. `rules` is left unchanged when this is `true`. */
   hasRulesLoadError: boolean;
+  /** Whether the selected folder is written directly: a folder is selected, both direct options are supplied and `canPublishDirectlyTo` holds for it. */
+  isDirectWrite: boolean;
 }
 
 /** Manages all state for the Publish flow: folder selection, local folder creation, existing-publication detection, and submit handling. */
@@ -245,6 +264,8 @@ export const usePublishFlow = <
   onFetchExistingRules,
   onCheckTargetExists,
   isTargetTakenError,
+  canPublishDirectlyTo,
+  onPublishDirectly,
 }: UsePublishFlowOptions<TItem>): UsePublishFlowResult => {
   const [folderItems, setFolderItems] = useState(initialFolderItems);
   useEffect(() => {
@@ -278,10 +299,22 @@ export const usePublishFlow = <
     setAuthorState(next);
   }, []);
 
+  const isDirectWrite =
+    selectedFolderPath != null &&
+    canPublishDirectlyTo != null &&
+    onPublishDirectly != null &&
+    canPublishDirectlyTo(selectedFolderPath);
+
+  /* A direct write sends no credentials, and a choice made on an earlier request folder must not survive into it. */
   useEffect(() => {
-    if (selectedFolderPath == null) {
+    if (isDirectWrite) setPublishCredentials(false);
+  }, [isDirectWrite]);
+
+  useEffect(() => {
+    if (selectedFolderPath == null || isDirectWrite) {
       setRules([]);
       setHasRulesLoadError(false);
+      setIsRulesLoading(false);
       return;
     }
     if (!onFetchExistingRules) {
@@ -310,10 +343,11 @@ export const usePublishFlow = <
       isCancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFolderPath]);
+  }, [selectedFolderPath, isDirectWrite]);
 
   const hasExistingPublicationInFolder = useMemo(() => {
-    if (!selectedFolderPath) {
+    /* A direct write leaves no history, so an earlier request's marker does not apply. */
+    if (!selectedFolderPath || isDirectWrite) {
       return false;
     }
     const key = selectedFolderPath.join('/');
@@ -323,7 +357,7 @@ export const usePublishFlow = <
       }
       return item.version == null ? true : entry.version === item.version;
     });
-  }, [history, item.version, selectedFolderPath]);
+  }, [history, isDirectWrite, item.version, selectedFolderPath]);
 
   /*
    * A folder created in this session holds nothing yet, and neither does
@@ -406,14 +440,18 @@ export const usePublishFlow = <
     setIsSubmitting(true);
     setHasSubmitError(false);
     try {
-      await onPublish(
-        item,
-        selectedFolderPath,
-        rules,
-        author.trim(),
-        publishCredentials,
-      );
-      onPublishSuccess?.(item, selectedFolderPath);
+      if (isDirectWrite && onPublishDirectly) {
+        await onPublishDirectly(item, selectedFolderPath);
+      } else {
+        await onPublish(
+          item,
+          selectedFolderPath,
+          rules,
+          author.trim(),
+          publishCredentials,
+        );
+      }
+      onPublishSuccess?.(item, selectedFolderPath, isDirectWrite);
       return true;
     } catch (error) {
       if (isTargetTakenError?.(error) && targetKey != null) {
@@ -428,9 +466,11 @@ export const usePublishFlow = <
     }
   }, [
     author,
+    isDirectWrite,
     isTargetTakenError,
     item,
     onPublish,
+    onPublishDirectly,
     onPublishError,
     onPublishSuccess,
     publishCredentials,
@@ -477,5 +517,6 @@ export const usePublishFlow = <
     isTargetChecking,
     isRulesLoading,
     hasRulesLoadError,
+    isDirectWrite,
   };
 };

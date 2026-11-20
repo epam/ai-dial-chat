@@ -3,12 +3,18 @@ import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 import { PublishTargetTakenError } from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { PublicationRule } from '@epam/ai-dial-publish-panel';
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { BasicI18nKeys } from '../../../constants/translation-keys';
+import {
+  BasicI18nKeys,
+  PublishI18nKeys,
+  ResourceSavePanelI18nKeys,
+} from '../../../constants/translation-keys';
+import { useNotification } from '../../../context/NotificationContext';
 import { getPublishRules } from '../../../server-api/publish-rules.api';
 import {
   CatalogPublishEntityType,
+  copyCatalogEntityToOrgUnit,
   getCatalogPublishDependencies,
   getCatalogPublishHistory,
   getCatalogUnpublishAccess,
@@ -20,6 +26,7 @@ import {
   EntityOperation,
   NotifiableEntity,
 } from '../../../types/entity-notification';
+import { usePublishErrorNotification } from '../../publish/usePublishErrorNotification';
 import { useCatalogPublishing } from '../useCatalogPublishing';
 
 /* Components here render without AppConfigProvider; resolve icons without a themes base URL. */
@@ -31,10 +38,15 @@ vi.mock('../../../hooks/catalog/useResolveCatalogIconUrl', async () => {
 vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   publishCatalogEntity: vi.fn(),
+  copyCatalogEntityToOrgUnit: vi.fn(),
   unpublishCatalogEntity: vi.fn(),
   getCatalogPublishHistory: vi.fn().mockResolvedValue([]),
   getCatalogPublishDependencies: vi.fn(),
   getCatalogUnpublishAccess: vi.fn(),
+}));
+
+vi.mock('../../../context/NotificationContext', () => ({
+  useNotification: vi.fn(),
 }));
 
 vi.mock('../../../server-api/publish-rules.api', () => ({
@@ -60,12 +72,14 @@ const renderPublishing = (
   const rememberPublishFolder = vi.fn();
   const notifyOperationSuccess = vi.fn();
   const showPublishError = vi.fn();
+  const showSuccessNotification = vi.fn();
   const view = renderHook(() =>
     useCatalogPublishing({
       deployments: [] as DeploymentItemDto[],
       schemas: [],
       rememberPublishFolder,
       notifyOperationSuccess,
+      showSuccessNotification,
       showPublishError,
       isAdmin: false,
       ...overrides,
@@ -75,6 +89,7 @@ const renderPublishing = (
     ...view,
     rememberPublishFolder,
     notifyOperationSuccess,
+    showSuccessNotification,
     showPublishError,
   };
 };
@@ -101,6 +116,192 @@ describe('useCatalogPublishing', () => {
     /* Callers are publishers unless a test says otherwise. */
     vi.mocked(getCatalogUnpublishAccess).mockResolvedValue({
       canUnpublish: true,
+    });
+  });
+
+  describe('direct publish', () => {
+    const conflict = (code?: string, message = 'conflict') =>
+      Object.assign(new Error(message), {
+        response: new Response(
+          JSON.stringify({ message, ...(code ? { code } : {}) }),
+          { status: 409, headers: { 'Content-Type': 'application/json' } },
+        ),
+      });
+
+    it('copies through the generated client with the joined folder and the item version', async () => {
+      vi.mocked(copyCatalogEntityToOrgUnit).mockResolvedValue({
+        id: 'toolsets/public/Delivery/Teams/x',
+      });
+      const { result } = renderPublishing();
+
+      await result.current.handlePublishDirectly(makeCatalogItem(), [
+        'Delivery',
+        'Teams',
+      ]);
+
+      expect(copyCatalogEntityToOrgUnit).toHaveBeenCalledWith(
+        CatalogPublishEntityType.Toolset,
+        'tool-abc123',
+        { folderPath: 'Delivery/Teams', version: '1.2.0' },
+      );
+      expect(publishCatalogEntity).not.toHaveBeenCalled();
+    });
+
+    it('sends no version for an unversioned item', async () => {
+      vi.mocked(copyCatalogEntityToOrgUnit).mockResolvedValue({ id: 'x' });
+      const { result } = renderPublishing();
+
+      await result.current.handlePublishDirectly(
+        makeCatalogItem({ version: undefined }),
+        ['Delivery'],
+      );
+
+      expect(copyCatalogEntityToOrgUnit).toHaveBeenCalledWith(
+        CatalogPublishEntityType.Toolset,
+        'tool-abc123',
+        { folderPath: 'Delivery' },
+      );
+    });
+
+    it('rejects a target-exists 409 as a PublishTargetTakenError', async () => {
+      vi.mocked(copyCatalogEntityToOrgUnit).mockRejectedValue(
+        conflict('target-exists'),
+      );
+      const { result } = renderPublishing();
+
+      const error = await result.current
+        .handlePublishDirectly(makeCatalogItem(), ['Delivery'])
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(PublishTargetTakenError);
+      expect(result.current.isTargetTakenError(error)).toBe(true);
+    });
+
+    /* The real error notification, so the text the user sees is asserted, not only the routing. */
+    const renderWithErrorNotification = () => {
+      const showErrorNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        showErrorNotification,
+      } as unknown as ReturnType<typeof useNotification>);
+      const view = renderHook(() => ({
+        publishing: renderPublishingHook(),
+        showPublishError: usePublishErrorNotification(),
+      }));
+      return { ...view, showErrorNotification };
+    };
+    const renderPublishingHook = () =>
+      useCatalogPublishing({
+        deployments: [] as DeploymentItemDto[],
+        schemas: [],
+        rememberPublishFolder: vi.fn(),
+        notifyOperationSuccess: vi.fn(),
+        showSuccessNotification: vi.fn(),
+        showPublishError: vi.fn(),
+        isAdmin: false,
+      });
+
+    const response = (status: number, body: object) =>
+      Object.assign(new Error(`status ${status}`), {
+        response: new Response(JSON.stringify(body), {
+          status,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      });
+
+    it('shows the missing-namespace message of a 403 in the error notification', async () => {
+      const message = 'Write access in this org unit is missing for: toolsets';
+      vi.mocked(copyCatalogEntityToOrgUnit).mockRejectedValue(
+        response(403, { statusCode: 403, message }),
+      );
+      const { result, showErrorNotification } = renderWithErrorNotification();
+      const item = makeCatalogItem();
+
+      const error = await result.current.publishing
+        .handlePublishDirectly(item, ['Delivery'])
+        .catch((e: unknown) => e);
+      expect(result.current.publishing.isTargetTakenError(error)).toBe(false);
+      result.current.showPublishError(error, undefined, { isVersioned: true });
+
+      await waitFor(() =>
+        expect(showErrorNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ message }),
+        ),
+      );
+    });
+
+    it('shows the already-being-published text for the in-progress 409, not the taken-target text', async () => {
+      vi.mocked(copyCatalogEntityToOrgUnit).mockRejectedValue(
+        response(409, {
+          statusCode: 409,
+          message: 'This application is already being published',
+          code: 'publish-in-progress',
+        }),
+      );
+      const { result, showErrorNotification } = renderWithErrorNotification();
+
+      const error = await result.current.publishing
+        .handlePublishDirectly(makeCatalogItem(), ['Delivery'])
+        .catch((e: unknown) => e);
+      expect(result.current.publishing.isTargetTakenError(error)).toBe(false);
+      result.current.showPublishError(error, undefined, { isVersioned: true });
+
+      await waitFor(() =>
+        expect(showErrorNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: PublishI18nKeys.InProgressMessage,
+          }),
+        ),
+      );
+    });
+
+    it('reports a save into the folder, remembers it and never says publish requested', () => {
+      const {
+        result,
+        showSuccessNotification,
+        notifyOperationSuccess,
+        rememberPublishFolder,
+      } = renderPublishing();
+
+      result.current.handlePublishSuccess(
+        makeCatalogItem(),
+        ['Delivery', 'Teams'],
+        true,
+      );
+
+      expect(showSuccessNotification).toHaveBeenCalledWith({
+        message: ResourceSavePanelI18nKeys.SavedToFolder,
+      });
+      expect(notifyOperationSuccess).not.toHaveBeenCalled();
+      expect(rememberPublishFolder).toHaveBeenCalledWith(['Delivery', 'Teams']);
+    });
+
+    it('still reports a request for a request-mode success', () => {
+      const { result, showSuccessNotification, notifyOperationSuccess } =
+        renderPublishing();
+
+      result.current.handlePublishSuccess(
+        makeCatalogItem(),
+        ['Delivery'],
+        false,
+      );
+
+      expect(notifyOperationSuccess).toHaveBeenCalledOnce();
+      expect(showSuccessNotification).not.toHaveBeenCalled();
+    });
+
+    it('routes a failure through the existing publish error notification', () => {
+      const { result, showPublishError } = renderPublishing();
+      const failure = new Error('copy failed');
+
+      result.current.handlePublishError(
+        makeCatalogItem(),
+        ['Delivery'],
+        failure,
+      );
+
+      expect(showPublishError).toHaveBeenCalledWith(failure, undefined, {
+        isVersioned: true,
+      });
     });
   });
 

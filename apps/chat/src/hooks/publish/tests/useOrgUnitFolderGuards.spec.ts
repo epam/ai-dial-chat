@@ -38,6 +38,7 @@ describe('useOrgUnitFolderGuards', () => {
       refreshUnits,
       canSaveAt,
       canSaveDirectlyAt,
+      canPublishDirectlyAt: vi.fn(() => false),
       canPublishAt,
     });
   });

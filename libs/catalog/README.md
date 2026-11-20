@@ -1336,6 +1336,47 @@ and its mapping to `PublishDependency` stay with the host (see
 />
 ```
 
+### Direct publish
+
+`canPublishDirectlyTo(item, folderPath, dependencies)`, `onPublishDirectly(item, folderPath)`
+and `getPublishDirectUnavailableNote(item, folderPath, dependencies)` (on
+`DetailsPanel` and `Catalog`, all optional) let a host write the item straight
+into a folder instead of filing a publication request. When the predicate holds
+for the selected folder, submit calls `onPublishDirectly` instead of `onPublish`
+(with the same `onPublishSuccess`, whose third argument says the write was
+direct, `onPublishError` and `isTargetTakenError` handling) and the publish panel hides the access rules, author and credentials
+controls. The predicate is asked only once the dependency list has settled (with
+no `getPublishDependencies` there is nothing to wait for): the panel shows the
+request layout while the list loads and switches at most once, to direct, after
+it settles. A failed lookup leaves the list empty, so direct is offered and the
+server's namespace check is the backstop. The predicate receives that list so
+the host can decide on it. When the predicate is `false`,
+`getPublishDirectUnavailableNote` may return a finished sentence that the panel
+shows as an information callout (a request is filed). Omit `canPublishDirectlyTo`
+or `onPublishDirectly` and the panel behaves exactly as before. The line a direct
+destination shows in place of the credentials opt-in is `publishLabels.directWriteNote`;
+the panel passes it on only for an item that would otherwise offer the
+credentials opt-in (a toolset the publisher holds a global credential for). The library knows
+nothing about rights, endpoints or the copy operation: the host decides and
+writes.
+
+```tsx
+<DetailsPanel
+  item={item}
+  isOpen
+  onClose={handleClose}
+  canPublishDirectlyTo={(candidate, folderPath, dependencies) =>
+    mayWriteDirectly(candidate, folderPath, dependencies)
+  }
+  onPublishDirectly={(candidate, folderPath) =>
+    copyIntoFolder(candidate, folderPath)
+  }
+  getPublishDirectUnavailableNote={(candidate, folderPath, dependencies) =>
+    describeMissingRights(candidate, folderPath, dependencies)
+  }
+/>
+```
+
 ### Versions history in the publish panel
 
 `publishVersionHistory` (on `DetailsPanel`) is the `VersionHistorySectionProps`

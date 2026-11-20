@@ -38,6 +38,9 @@ export type UseDetailsPublishParams = Pick<
   | 'onFetchExistingRules'
   | 'onCheckTargetExists'
   | 'isTargetTakenError'
+  | 'canPublishDirectlyTo'
+  | 'onPublishDirectly'
+  | 'getPublishDirectUnavailableNote'
   | 'onUnpublish'
   | 'isUnpublishVisible'
   | 'publishLabels'
@@ -59,6 +62,9 @@ export const useDetailsPublish = ({
   onFetchExistingRules,
   onCheckTargetExists,
   isTargetTakenError,
+  canPublishDirectlyTo,
+  onPublishDirectly,
+  getPublishDirectUnavailableNote,
   onUnpublish,
   isUnpublishVisible,
   publishLabels,
@@ -174,13 +180,41 @@ export const useDetailsPublish = ({
    * Unpublish hidden for the folder the user just published to.
    */
   const handlePublishSuccess = useCallback(
-    (publishedItem: CatalogItem, folderPath: string[]) => {
+    (
+      publishedItem: CatalogItem,
+      folderPath: string[],
+      isDirectWrite: boolean,
+    ) => {
       publishHistoryRequestedItemIdRef.current = null;
       setIsPublishHistoryResolved(false);
       requestPublishHistory();
-      onPublishSuccess?.(publishedItem, folderPath);
+      onPublishSuccess?.(publishedItem, folderPath, isDirectWrite);
     },
     [requestPublishHistory, onPublishSuccess],
+  );
+
+  /*
+   * The direct path is offered only once the dependency list has settled
+   * (success or failure), so the panel shows the request layout while it
+   * loads and switches at most once, to direct, after it settles. A failed
+   * read leaves the list empty, so direct is offered and the server's
+   * namespace check is the backstop; a host with no lookup has nothing to
+   * wait for.
+   */
+  let settledDependencies: PublishDependency[] | undefined =
+    EMPTY_PUBLISH_DEPENDENCIES;
+  if (hasPublishDependencies) {
+    settledDependencies =
+      loadedDependencies?.itemId === itemId
+        ? loadedDependencies.dependencies
+        : undefined;
+  }
+
+  const handleCanPublishDirectlyTo = useCallback(
+    (folderPath: string[]) =>
+      settledDependencies != null &&
+      canPublishDirectlyTo?.(item, folderPath, settledDependencies) === true,
+    [canPublishDirectlyTo, item, settledDependencies],
   );
 
   const publishFlow = usePublishFlow<CatalogItem>({
@@ -191,12 +225,36 @@ export const useDetailsPublish = ({
     defaultAuthor: publishDefaultAuthor,
     onCreateFolder: onCreatePublishFolder,
     onPublish: onPublish ?? NO_OP_PUBLISH,
+    canPublishDirectlyTo: onPublishDirectly
+      ? handleCanPublishDirectlyTo
+      : undefined,
+    onPublishDirectly,
     onPublishSuccess: handlePublishSuccess,
     onPublishError,
     onFetchExistingRules,
     onCheckTargetExists,
     isTargetTakenError,
   });
+
+  const selectedFolderPath = publishFlow.selectedFolderPath;
+  const isDirectWrite = publishFlow.isDirectWrite;
+  const publishDirectUnavailableNote = useMemo(
+    () =>
+      selectedFolderPath == null || isDirectWrite || settledDependencies == null
+        ? undefined
+        : getPublishDirectUnavailableNote?.(
+            item,
+            selectedFolderPath,
+            settledDependencies,
+          ),
+    [
+      getPublishDirectUnavailableNote,
+      isDirectWrite,
+      item,
+      selectedFolderPath,
+      settledDependencies,
+    ],
+  );
 
   /*
    * Offering the option is the catalog's call, not the panel's: only a toolset
@@ -312,6 +370,7 @@ export const useDetailsPublish = ({
     requestPublishHistory,
     publishFlow,
     publishDependencies,
+    publishDirectUnavailableNote,
     isPublishCredentialsEligible,
     publishDerived,
     publishedFolders,

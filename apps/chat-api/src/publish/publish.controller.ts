@@ -191,10 +191,11 @@ export class PublishController {
     operationId: 'copyCatalogEntityToOrgUnit',
     summary: 'Copy an own catalog entity into an org-unit folder',
     description:
-      "Copies a catalog entity of the caller's own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core's resource copy. " +
+      "Copies a catalog entity of the caller's own bucket into `folderPath` of the public bucket under the same name (or, when `version` is given, under the name a publication of that version would use), by proxying DIAL Core's resource copy. " +
       'No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. ' +
       'Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. ' +
       "An application is copied together with its first-level private dependencies (in the caller's own bucket, written under a `.{application}.deps` folder next to it) and its uploaded icon, and refers to the copies; a dependency already copied is reused, and an icon that cannot be copied is dropped from the shared copy. " +
+      'A `publications` right is not checked here: DIAL Core does not enforce it on a copy. ' +
       "Before the first copy the caller must hold `write` in the folder's org unit on the namespace of the application and of every dependency to copy, otherwise the answer is 403 naming the missing namespaces and nothing is written. " +
       'Answers 403 while the `features.orgUnitsEnabled` flag is off.',
   })
@@ -217,13 +218,14 @@ export class PublishController {
   @ApiResponse({
     status: 403,
     description:
-      "The `features.orgUnitsEnabled` flag is off, the entity is not in the caller's own bucket, the caller lacks `write` in the unit on the namespace of an application's dependency (the message names it), or DIAL Core refused the write (no `write` in the unit, or a Core per-type rule)",
+      "The `features.orgUnitsEnabled` flag is off, the entity is not in the caller's own bucket, the caller lacks `write` in the unit on the namespace of the application or of one of its dependencies (the message names it), or DIAL Core refused the write (no `write` in the unit, or a Core per-type rule)",
   })
   @ApiResponse({ status: 404, description: 'Entity not found' })
   @ApiResponse({
     status: 409,
     description:
-      'The folder already holds an entity with this name, or DIAL Core refused the copy as a conflict',
+      'The folder already holds an entity with this name (body `code` `target-exists` when the target is confirmed to exist), or DIAL Core refused the copy as a conflict without a code, or another publish of the same application holds its staging copy (`code` `publish-in-progress`)',
+    type: PublishConflictDto,
   })
   @ApiResponse({
     status: 502,

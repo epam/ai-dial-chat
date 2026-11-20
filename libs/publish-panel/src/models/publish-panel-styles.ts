@@ -15,6 +15,8 @@ export interface PublishPanelColors {
   headingText?: string;
   /** Destination folder path text color. Defaults to `--text-secondary`. */
   destinationText?: string;
+  /** Text color of the direct-write note. Defaults to `--text-secondary`. */
+  directNoteText?: string;
 }
 
 /** Style overrides for the publish panel body and its nested components. */

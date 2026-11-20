@@ -3231,6 +3231,12 @@ export interface CopyCatalogEntityToOrgUnitDto {
    * @memberof CopyCatalogEntityToOrgUnitDto
    */
   folderPath: string;
+  /**
+   * Optional version label. For an application or a toolset whose stored name ends in `__{version}` the copy is named with this version, as a publication of it would be; otherwise the stored name is kept.
+   * @type {string}
+   * @memberof CopyCatalogEntityToOrgUnitDto
+   */
+  version?: string;
 }
 /**
  *

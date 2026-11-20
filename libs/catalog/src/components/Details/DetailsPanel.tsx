@@ -68,6 +68,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onFetchExistingRules,
   onCheckTargetExists,
   isTargetTakenError,
+  canPublishDirectlyTo,
+  onPublishDirectly,
+  getPublishDirectUnavailableNote,
   shareOverlay,
   isShareVisible,
   isSharePrimary,
@@ -120,6 +123,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     requestPublishHistory,
     publishFlow,
     publishDependencies,
+    publishDirectUnavailableNote,
     isPublishCredentialsEligible,
     publishDerived,
     publishedFolders,
@@ -145,6 +149,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     onFetchExistingRules,
     onCheckTargetExists,
     isTargetTakenError,
+    canPublishDirectlyTo,
+    onPublishDirectly,
+    getPublishDirectUnavailableNote,
     onUnpublish,
     isUnpublishVisible,
     publishLabels,
@@ -411,6 +418,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             item={item}
             publishFlow={publishFlow}
             publishDependencies={publishDependencies}
+            publishDirectUnavailableNote={publishDirectUnavailableNote}
             publishFolderView={publishFolderView}
             isPublishCredentialsEligible={isPublishCredentialsEligible}
             publishExpandedPaths={publishExpandedPaths}

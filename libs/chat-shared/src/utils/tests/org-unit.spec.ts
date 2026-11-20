@@ -5,6 +5,7 @@ import {
   type OrgUnitAccess,
 } from '../../models/org-unit';
 import {
+  canApprovePublicationsAt,
   canReadAt,
   canSaveToFolderAt,
   canWriteIntoOrgUnitAt,
@@ -294,6 +295,44 @@ describe('canWriteIntoOrgUnitAt', () => {
         OrgUnitNamespace.Applications,
       ),
     ).toBe(true);
+  });
+});
+
+describe('canApprovePublicationsAt', () => {
+  const both = unit('public/Acme/', { publications: ['read', 'write'] });
+  const readOnly = unit('public/RO/', { publications: ['read'] });
+  const writeOnly = unit('public/WO/', { publications: ['write'] });
+  const child = unit('public/Acme/Child/', { applications: ['write'] });
+  const data = access([both, readOnly, writeOnly, child]);
+
+  it('allows a unit granting read and write on publications', () => {
+    expect(canApprovePublicationsAt(data, 'Acme/Teams')).toBe(true);
+  });
+
+  it('refuses read only', () => {
+    expect(canApprovePublicationsAt(data, 'RO/Teams')).toBe(false);
+  });
+
+  it('refuses write only', () => {
+    expect(canApprovePublicationsAt(data, 'WO/Teams')).toBe(false);
+  });
+
+  it('refuses a path under no unit', () => {
+    expect(canApprovePublicationsAt(data, 'Plain/Folder')).toBe(false);
+  });
+
+  it('allows a DIAL admin anywhere', () => {
+    expect(canApprovePublicationsAt(access([], true), 'Plain/Folder')).toBe(
+      true,
+    );
+  });
+
+  it('does not match a sibling folder sharing leading characters', () => {
+    expect(canApprovePublicationsAt(data, 'Acme2/Teams')).toBe(false);
+  });
+
+  it('lets the child unit decide, not its parent', () => {
+    expect(canApprovePublicationsAt(data, 'Acme/Child/Teams')).toBe(false);
   });
 });
 
