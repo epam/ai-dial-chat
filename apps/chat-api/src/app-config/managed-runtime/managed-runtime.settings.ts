@@ -3,6 +3,7 @@ import { DEFAULT_CLIENT_CONFIG_APP_IDS } from '../../config/env/client-ui.env';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { CONFIG_DEFINITIONS } from '../config-registry/config-registry.constants';
 import { isManagedKey } from '../managed-config/key-management';
+import { MANAGED_KEY_GROUPS } from '../managed-config/managed-config.constants';
 import { ManagedConfigMode } from './managed-runtime.types';
 
 /** The validated managed-configuration settings of this deployment. */
@@ -109,6 +110,16 @@ export const validateManagedRuntimeEnvironment = (
       errors.push(
         `MANAGED_CONFIG_ACTIVE_KEYS lists "${key}", which is not a managed key`,
       );
+    }
+  }
+  if (mode === ManagedConfigMode.Active) {
+    for (const group of MANAGED_KEY_GROUPS) {
+      const missing = group.filter((key) => !activeKeys.includes(key));
+      if (missing.length > 0 && missing.length < group.length) {
+        errors.push(
+          `MANAGED_CONFIG_ACTIVE_KEYS must list ${group.join(', ')} together; missing ${missing.join(', ')}`,
+        );
+      }
     }
   }
   return errors;

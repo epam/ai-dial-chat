@@ -69,7 +69,7 @@ describe('buildManagedConfigSchema', () => {
     expect(schema['$schema']).toBe(
       'https://json-schema.org/draft/2020-12/schema',
     );
-    expect(schema['$id']).toBe('urn:dial:ai-dial-chat:managed-config:1.0.0');
+    expect(schema['$id']).toBe('urn:dial:ai-dial-chat:managed-config:1.1.0');
     expect(managedConfigSchemaId('2.3.4')).toBe(
       'urn:dial:ai-dial-chat:managed-config:2.3.4',
     );
@@ -89,10 +89,19 @@ describe('buildManagedConfigSchema', () => {
     }
   });
 
-  it('exports exactly the 1.0.0 managed key and no feature', () => {
+  it('exports exactly the 1.1.0 managed keys, in display order, and no feature', () => {
     const schema = generate();
     expect(Object.keys(propertiesOf(schema, 'config'))).toEqual([
+      'announcement.title',
+      'announcement.description',
+      'announcement.items',
       'onboarding.hints',
+      'ui.activeEventId',
+      'ui.celebrationsEnabledByDefault',
+      'ui.celebrationDelivery.mode',
+      'ui.celebrationDelivery.revision',
+      'ui.celebrationDelivery.externalScenes',
+      'ui.celebrationDelivery.externalEvents',
     ]);
     expect(Object.keys(propertiesOf(schema, 'features'))).toEqual([]);
   });
@@ -117,7 +126,7 @@ describe('buildManagedConfigSchema', () => {
     expect(hints['title']).toBe('Onboarding tour');
     expect(hints['dial:meta']).toEqual({ 'dial:propertyOrder': 15 });
     expect(hints).not.toHaveProperty('isHidden');
-    /* Schema 1.0.0 has no feature; the test contract shows how one is emitted. */
+    /* No committed version has a feature; the test contract shows how one is emitted. */
     const feature = propertiesOf(
       buildManagedConfigSchema(
         withTestManagedKeys(CONFIG_DEFINITIONS),
@@ -158,7 +167,24 @@ describe('buildManagedConfigSchema', () => {
         ] as JsonSchemaObject
       )['default'],
     ).toEqual([]);
-    /* No 1.0.0 key has a null default; a managed text of the test contract does. */
+    const real = propertiesOf(generate(), 'config');
+    expect(
+      (real['ui.celebrationDelivery.mode'] as JsonSchemaObject)['default'],
+    ).toBe('bundled');
+    expect(
+      (real['ui.celebrationDelivery.revision'] as JsonSchemaObject)['default'],
+    ).toBe('0');
+    expect(
+      (real['ui.celebrationsEnabledByDefault'] as JsonSchemaObject)['default'],
+    ).toBe(true);
+    for (const nullDefault of [
+      'announcement.title',
+      'announcement.description',
+      'ui.activeEventId',
+    ]) {
+      expect(real[nullDefault], nullDefault).not.toHaveProperty('default');
+    }
+    /* The test contract adds a number default and another null one. */
     const config = propertiesOf(
       buildManagedConfigSchema(
         withTestManagedKeys(CONFIG_DEFINITIONS),
@@ -239,13 +265,13 @@ describe('buildManagedConfigSchema', () => {
     expect(index).toMatchObject({
       format: 'dial-managed-config-schema-index@1',
       appId: 'ai-dial-chat',
-      current: '1.0.0',
+      current: '1.1.0',
       supported: SUPPORTED_MANAGED_CONFIG_SCHEMA_VERSIONS,
     });
     expect(index.versions).toEqual([
       {
-        schemaVersion: '1.0.0',
-        file: 'ai-dial-chat-1.0.0.json',
+        schemaVersion: '1.1.0',
+        file: 'ai-dial-chat-1.1.0.json',
         schemaSha256: expect.stringMatching(/^[0-9a-f]{64}$/),
         canonicalBytes: canonicalByteLength(artifact.schema),
       },

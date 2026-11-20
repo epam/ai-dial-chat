@@ -476,9 +476,11 @@ describe('EnvConfigProvider', () => {
       },
     );
 
-    it('explicitly disables celebrations when UI_EVENT is none', async () => {
+    /* An explicit value, so it wins over a published event; the client
+     * mapping turns `none` into `null`. */
+    it('returns an explicit UI_EVENT=none unchanged', async () => {
       const { provider } = makeProvider({ UI_EVENT: 'none' });
-      expect(await provider.resolve('ui.activeEventId', ctx)).toBeNull();
+      expect(await provider.resolve('ui.activeEventId', ctx)).toBe('none');
     });
 
     it('uses the registry null default when UI_EVENT is absent', async () => {

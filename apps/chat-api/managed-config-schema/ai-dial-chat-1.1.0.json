@@ -1,0 +1,424 @@
+{
+  "appId": "ai-dial-chat",
+  "schemaVersion": "1.1.0",
+  "schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "urn:dial:ai-dial-chat:managed-config:1.1.0",
+    "title": "DIAL Chat managed configuration",
+    "description": "Values published through Config Studio for one ai-dial-chat instance. A Chat deployment applies them only when its managed reading is enabled; an explicit deployment environment override still wins, and omitted keys use the application default.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["config", "features"],
+    "properties": {
+      "config": {
+        "type": "object",
+        "additionalProperties": false,
+        "title": "Configuration",
+        "properties": {
+          "announcement.title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "pattern": "\\S",
+            "title": "Banner title",
+            "description": "Plain text in bold at the start of the announcement banner; markup is shown as typed. Omit it for a banner without a heading.",
+            "dial:meta": {
+              "dial:propertyOrder": 1
+            }
+          },
+          "announcement.description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "pattern": "\\S",
+            "title": "Banner text",
+            "description": "Shown after the banner title. HTML: bold (<b>, <strong>), italic (<em>), line break (<br>), <span> and links (<a href>). Everything else is removed, and a link keeps only its address, target and rel; links to other pages open in a new tab.",
+            "dial:meta": {
+              "dial:propertyOrder": 2
+            }
+          },
+          "announcement.items": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["title"],
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "pattern": "\\S",
+                  "title": "Title",
+                  "description": "Plain text; markup is shown as typed.",
+                  "dial:meta": {
+                    "dial:propertyOrder": 1
+                  }
+                },
+                "description": {
+                  "type": "string",
+                  "maxLength": 2000,
+                  "title": "Description",
+                  "description": "Optional. HTML: bold (<b>, <strong>), italic (<em>), line break (<br>), <span> and links (<a href>). Everything else is removed, and a link keeps only its address, target and rel; links to other pages open in a new tab.",
+                  "dial:meta": {
+                    "dial:propertyOrder": 2
+                  }
+                },
+                "link": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["label", "href"],
+                  "title": "Link",
+                  "description": "Optional call to action shown after the description.",
+                  "properties": {
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100,
+                      "pattern": "\\S",
+                      "title": "Label",
+                      "dial:meta": {
+                        "dial:propertyOrder": 1
+                      }
+                    },
+                    "href": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "pattern": "^https?://\\S+$",
+                      "title": "Address",
+                      "description": "An http:// or https:// address. It opens in a new tab.",
+                      "dial:meta": {
+                        "dial:propertyOrder": 2
+                      }
+                    }
+                  },
+                  "dial:meta": {
+                    "dial:propertyOrder": 3
+                  }
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": ["info", "warning"],
+                  "title": "Severity",
+                  "description": "warning highlights the entry; info is the default.",
+                  "dial:meta": {
+                    "dial:propertyOrder": 4
+                  }
+                }
+              }
+            },
+            "default": [],
+            "title": "Announcements",
+            "description": "Listed, in this order, behind the banner's \"+N announcements\" pill; at most 10. An entry whose link address cannot be opened is dropped.",
+            "dial:meta": {
+              "dial:propertyOrder": 3
+            }
+          },
+          "onboarding.hints": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "target", "title"],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[A-Za-z0-9._-]{1,64}$",
+                  "title": "ID",
+                  "description": "Letters, digits, dot, underscore or hyphen, at most 64. Each browser remembers the ids it has shown, so a new id shows the hint again to everyone; editing the text or the order does not. When two hints share an id, only the first is shown.",
+                  "dial:meta": {
+                    "dial:propertyOrder": 1
+                  }
+                },
+                "target": {
+                  "type": "string",
+                  "enum": [
+                    "new-chat",
+                    "navigation",
+                    "projects",
+                    "scheduled-tasks",
+                    "catalog",
+                    "file-manager",
+                    "conversation-input",
+                    "add-attachment",
+                    "send-message",
+                    "model-selector",
+                    "voice-input",
+                    "conversation-starters",
+                    "conversation-messages",
+                    "sources-panel-toggle",
+                    "sidebar-toggle",
+                    "chats",
+                    "chats-search",
+                    "chats-filter",
+                    "user-menu",
+                    "usage",
+                    "projects-create",
+                    "projects-search",
+                    "project-chats",
+                    "project-details",
+                    "scheduled-tasks-create",
+                    "scheduled-tasks-search",
+                    "settings-sections",
+                    "catalog-create",
+                    "catalog-search",
+                    "catalog-tabs",
+                    "catalog-view-mode",
+                    "catalog-filter",
+                    "catalog-sort",
+                    "catalog-card",
+                    "catalog-favorite",
+                    "message-actions",
+                    "catalog-details",
+                    "catalog-details-use-in-chat",
+                    "catalog-details-manage",
+                    "catalog-details-credentials",
+                    "catalog-details-share",
+                    "catalog-details-publish",
+                    "catalog-details-tabs",
+                    "project-form-submit",
+                    "project-form-context",
+                    "project-view-edit",
+                    "project-view-more-actions",
+                    "project-view-pin",
+                    "project-view-publish",
+                    "project-context-search",
+                    "projects-sort",
+                    "scheduled-task-form-submit",
+                    "scheduled-task-configuration",
+                    "scheduled-task-repeat",
+                    "scheduled-task-model",
+                    "scheduled-task-start-now",
+                    "scheduled-task-edit",
+                    "scheduled-task-history",
+                    "scheduled-task-active",
+                    "scheduled-tasks-sort",
+                    "settings-extensions",
+                    "settings-extensions-log-in",
+                    "settings-theme",
+                    "settings-language",
+                    "duplicate-shared-chat",
+                    "sources-panel",
+                    "sources-download-all",
+                    "project-chat-back",
+                    "tools-selector",
+                    "editor-setup",
+                    "active-chat",
+                    "active-chat-actions"
+                  ],
+                  "title": "Target",
+                  "description": "The on-screen element the hint points at. The tour skips a hint whose element is not on the current page and shows it on a page that renders it.",
+                  "dial:meta": {
+                    "dial:propertyOrder": 2
+                  }
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100,
+                  "pattern": "\\S",
+                  "title": "Title",
+                  "dial:meta": {
+                    "dial:propertyOrder": 3
+                  }
+                },
+                "description": {
+                  "type": "string",
+                  "maxLength": 500,
+                  "title": "Description",
+                  "description": "Optional plain text below the title.",
+                  "dial:meta": {
+                    "dial:propertyOrder": 4
+                  }
+                }
+              }
+            },
+            "default": [],
+            "title": "Onboarding tour",
+            "description": "Hints shown one at a time, in this order, to users who have not seen them. Each points at an on-screen element; at most 50. A hint whose id repeats an earlier one is dropped.",
+            "dial:meta": {
+              "dial:propertyOrder": 15
+            }
+          },
+          "ui.activeEventId": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "title": "Celebration event",
+            "description": "The seasonal celebration shown on the start page: halloween or new-year, or none to turn celebrations off. An event without a built-in module plays only when it is listed under external events and its pack is available; an unknown event shows nothing.",
+            "dial:meta": {
+              "dial:propertyOrder": 20
+            }
+          },
+          "ui.celebrationsEnabledByDefault": {
+            "type": "boolean",
+            "default": true,
+            "title": "Celebrations on by default",
+            "description": "Whether users who never changed the celebrations switch in Settings see the celebration event. A choice a user saved always wins.",
+            "dial:meta": {
+              "dial:propertyOrder": 21
+            }
+          },
+          "ui.celebrationDelivery.mode": {
+            "type": "string",
+            "enum": ["bundled", "prefer-external"],
+            "default": "bundled",
+            "title": "Celebration scene source",
+            "description": "For built-in events: bundled plays only built-in scenes; prefer-external also takes the scenes listed under Scenes from packs from the celebration packs this deployment serves, and keeps the built-in scenes when a pack is unavailable. External events come from their pack either way.",
+            "dial:meta": {
+              "dial:propertyOrder": 22
+            }
+          },
+          "ui.celebrationDelivery.revision": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9._-]{1,64}$",
+            "default": "0",
+            "title": "Celebration restart token",
+            "description": "Change it to restart a scene that is already playing; changing the event, the source or the allowed scenes restarts it anyway. 1–64 letters, digits, dot, dash or underscore.",
+            "dial:meta": {
+              "dial:propertyOrder": 23
+            }
+          },
+          "ui.celebrationDelivery.externalScenes": {
+            "type": "array",
+            "maxItems": 64,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "maxLength": 129,
+              "pattern": "^(?=[^/]{1,64}/)[a-z][a-z0-9]*(?:-[a-z0-9]+)*/(?=[^/]{1,64}$)[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+            },
+            "default": [],
+            "title": "Scenes from packs",
+            "description": "Scenes of built-in events that may come from a celebration pack, each as eventId/sceneId, for example new-year/snowman-delivery; at most 64. Used only when the scene source is prefer-external.",
+            "dial:meta": {
+              "dial:propertyOrder": 24
+            }
+          },
+          "ui.celebrationDelivery.externalEvents": {
+            "type": "array",
+            "maxItems": 64,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+            },
+            "default": [],
+            "title": "External events",
+            "description": "Events without a built-in module that may come entirely from a celebration pack this deployment serves, for example company-anniversary; at most 64. An external event that is selected but not listed here shows nothing.",
+            "dial:meta": {
+              "dial:propertyOrder": 25
+            }
+          }
+        },
+        "dial:meta": {
+          "dial:propertyOrder": 1
+        }
+      },
+      "features": {
+        "type": "object",
+        "additionalProperties": false,
+        "title": "Features",
+        "properties": {},
+        "dial:meta": {
+          "dial:propertyOrder": 2
+        }
+      }
+    },
+    "dial:semanticConstraints": [
+      {
+        "code": "calendar_date",
+        "pointer": "/$defs/utcTimestamp",
+        "description": "The date and time must exist in the proleptic Gregorian calendar."
+      },
+      {
+        "code": "window_order",
+        "pointer": "/$defs/featureState/properties/availability",
+        "description": "When both are present, startsAt must be earlier than endsAt."
+      }
+    ],
+    "$defs": {
+      "utcTimestamp": {
+        "type": "string",
+        "maxLength": 30,
+        "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]{1,3})?Z$",
+        "title": "UTC timestamp",
+        "description": "RFC 3339 instant in UTC (Z suffix), for example 2026-11-01T08:00:00Z."
+      },
+      "role": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128,
+        "pattern": "^[^\\s,]+$"
+      },
+      "featureState": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["enabled"],
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "dial:meta": {
+              "dial:propertyOrder": 1
+            }
+          },
+          "availability": {
+            "type": "object",
+            "additionalProperties": false,
+            "minProperties": 1,
+            "title": "Availability window",
+            "description": "startsAt is inclusive, endsAt exclusive; omit a boundary for no limit. startsAt must precede endsAt.",
+            "properties": {
+              "startsAt": {
+                "$ref": "#/$defs/utcTimestamp",
+                "title": "Starts at",
+                "dial:meta": {
+                  "dial:propertyOrder": 1
+                }
+              },
+              "endsAt": {
+                "$ref": "#/$defs/utcTimestamp",
+                "title": "Ends at",
+                "dial:meta": {
+                  "dial:propertyOrder": 2
+                }
+              }
+            },
+            "dial:meta": {
+              "dial:propertyOrder": 2
+            }
+          },
+          "targeting": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["roles"],
+            "title": "Targeting",
+            "description": "Users need at least one listed verified role. Omit targeting for no restriction.",
+            "properties": {
+              "roles": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 50,
+                "uniqueItems": true,
+                "items": {
+                  "$ref": "#/$defs/role"
+                },
+                "title": "Roles"
+              }
+            },
+            "dial:meta": {
+              "dial:propertyOrder": 3
+            }
+          }
+        }
+      }
+    }
+  }
+}

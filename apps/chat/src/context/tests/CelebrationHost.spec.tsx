@@ -303,6 +303,52 @@ describe('CelebrationHost', () => {
     });
   });
 
+  describe('runtime config refresh', () => {
+    it('switches to the newly configured event without a reload', () => {
+      const { rerender } = renderHost();
+      const initialKey = lastProps().resetKey;
+
+      setConfig('new-year');
+      rerender(hostTree('/'));
+
+      expect(lastProps().activeEventId).toBe('new-year');
+      expect(lastProps().resetKey).not.toBe(initialKey);
+    });
+
+    it('keeps the reset key when an unrelated config field changes', () => {
+      const { rerender } = renderHost();
+      const initialKey = lastProps().resetKey;
+
+      vi.mocked(useAppConfig).mockReturnValue({
+        status: UserConfigStatus.Ready,
+        features: {},
+        config: {
+          activeEventId: 'halloween',
+          celebrationsEnabledByDefault: true,
+          celebrationDelivery: { ...BUNDLED_DELIVERY },
+          announcementTitle: 'Maintenance tonight',
+        },
+      } as ReturnType<typeof useAppConfig>);
+      rerender(hostTree('/'));
+
+      expect(lastProps().activeEventId).toBe('halloween');
+      expect(lastProps().resetKey).toBe(initialKey);
+    });
+
+    it('requests nothing for an event that is neither compiled nor admitted', () => {
+      setConfig('easter', UserConfigStatus.Ready, true, PILOT_DELIVERY);
+      renderHost();
+
+      expect(lastProps().activeEventId).toBe('easter');
+      expect(Object.keys(lastProps().events)).toEqual([
+        'halloween',
+        'new-year',
+      ]);
+      expect(getCelebrationCatalog).not.toHaveBeenCalled();
+      expect(getCelebrationPack).not.toHaveBeenCalled();
+    });
+  });
+
   describe('cancellation identity', () => {
     it.each([
       ['the theme', () => setTheme('dark')],

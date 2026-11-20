@@ -7,6 +7,7 @@ import {
   localOnlyReasonOf,
   managedKeyOf,
 } from '../../managed-config/key-management';
+import { MANAGED_KEY_GROUPS } from '../../managed-config/managed-config.constants';
 import {
   KeyManagementKind,
   LocalOnlyReason,
@@ -300,7 +301,7 @@ describe('CONFIG_DEFINITIONS', () => {
       owner: 'chat-team',
       envVar: 'SPENDING_LIMITS_MODE',
     });
-    /* Eligible but unmanaged until schema 1.1.0 exports it. */
+    /* Eligible but unmanaged until schema 1.2.0 exports it. */
     expect(entry?.management).toBeUndefined();
   });
 
@@ -336,10 +337,21 @@ const ENVIRONMENT_VARIABLE_NAMES: readonly string[] = [
   ),
 ];
 
-/* Schema 1.0.0 manages only the onboarding tour; the announcement,
- * welcome-text, File Manager, usage-limit and spending-limit keys and
- * features.usageLimitsControl return in 1.1.0. */
-const MANAGED_1_0_0_KEYS = ['onboarding.hints'];
+/* Schema 1.1.0 adds the announcements and the celebrations to the 1.0.0
+ * onboarding tour; the welcome-text, File Manager, usage-limit and
+ * spending-limit keys and features.usageLimitsControl follow in 1.2.0. */
+const MANAGED_1_1_0_KEYS = [
+  'announcement.description',
+  'announcement.items',
+  'announcement.title',
+  'onboarding.hints',
+  'ui.activeEventId',
+  'ui.celebrationDelivery.externalEvents',
+  'ui.celebrationDelivery.externalScenes',
+  'ui.celebrationDelivery.mode',
+  'ui.celebrationDelivery.revision',
+  'ui.celebrationsEnabledByDefault',
+];
 
 /* Every string either has an upper length bound or an enum, and every array
  * an upper item bound, at every nesting level. */
@@ -378,15 +390,15 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it('declares exactly the 53 known keys: 1 managed, 33 local-only and 19 eligible', () => {
+  it('declares exactly the 53 known keys: 10 managed, 29 local-only and 14 eligible', () => {
     expect(CONFIG_DEFINITIONS).toHaveLength(53);
-    expect(managed).toHaveLength(1);
+    expect(managed).toHaveLength(10);
     expect(
       CONFIG_DEFINITIONS.filter((d) => localOnlyReasonOf(d) !== undefined),
-    ).toHaveLength(33);
+    ).toHaveLength(29);
     expect(
       CONFIG_DEFINITIONS.filter((d) => d.management === undefined),
-    ).toHaveLength(19);
+    ).toHaveLength(14);
   });
 
   it('manages a config key as config and a feature as feature', () => {
@@ -428,8 +440,8 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     }
   });
 
-  it('manages exactly the 1.0.0 key', () => {
-    expect(managed.map((d) => d.key).sort()).toEqual(MANAGED_1_0_0_KEYS);
+  it('manages exactly the 1.1.0 keys', () => {
+    expect(managed.map((d) => d.key).sort()).toEqual(MANAGED_1_1_0_KEYS);
   });
 
   it('gives every managed key in a section a distinct display order', () => {
@@ -462,10 +474,6 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     ['customVisualizers', LocalOnlyReason.SecurityPolicy],
     ['applicationVisualizers', LocalOnlyReason.SecurityPolicy],
     ['features.visualizerSendMessages', LocalOnlyReason.SecurityPolicy],
-    ['ui.celebrationDelivery.mode', LocalOnlyReason.SecurityPolicy],
-    ['ui.celebrationDelivery.revision', LocalOnlyReason.SecurityPolicy],
-    ['ui.celebrationDelivery.externalScenes', LocalOnlyReason.SecurityPolicy],
-    ['ui.celebrationDelivery.externalEvents', LocalOnlyReason.SecurityPolicy],
     ['announcement.html', LocalOnlyReason.SecurityPolicy],
     ['asr.transcribeSizeLimitBytes', LocalOnlyReason.BackendEnforcedLimit],
     ['attachments.maxFileSizeBytes', LocalOnlyReason.BackendEnforcedLimit],
@@ -499,6 +507,25 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
       expect(
         isManagedKey(definitionOf('features.defaultDeploymentPinned')),
       ).toBe(isManagedKey(definitionOf('deployments.defaultDeploymentId')));
+    });
+
+    it.each(MANAGED_KEY_GROUPS.map((group) => [group.join(', '), group]))(
+      'manages the group %s in one version',
+      (_name, group) => {
+        const managedFlags = group.map((key) =>
+          isManagedKey(definitionOf(key)),
+        );
+        expect(new Set(managedFlags).size).toBe(1);
+      },
+    );
+
+    it('groups the four delivery keys', () => {
+      expect(MANAGED_KEY_GROUPS).toContainEqual([
+        'ui.celebrationDelivery.mode',
+        'ui.celebrationDelivery.revision',
+        'ui.celebrationDelivery.externalScenes',
+        'ui.celebrationDelivery.externalEvents',
+      ]);
     });
   });
 

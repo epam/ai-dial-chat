@@ -2,7 +2,10 @@ import { ConfigService } from '@nestjs/config';
 import { vi } from 'vitest';
 import type { EnvironmentVariables } from '../../../config/environment.config';
 import { canonicalSha256 } from '../../managed-config/canonical-json';
-import { PINNED_MANAGED_CONFIG_SCHEMA_SHA256 } from '../../managed-config/managed-config.constants';
+import {
+  MANAGED_CONFIG_SCHEMA_VERSION,
+  PINNED_MANAGED_CONFIG_SCHEMA_SHA256,
+} from '../../managed-config/managed-config.constants';
 import { ManagedConfigProvider } from '../../managed-runtime/managed-config.provider';
 import { ManagedRuntimeService } from '../../managed-runtime/managed-runtime.service';
 import type { ManagedRuntimeClock } from '../../managed-runtime/refresh-scheduler';
@@ -146,9 +149,8 @@ export const createManagedProvider = (
   runtime: ManagedRuntimeService = createInertManagedRuntime(),
 ): ManagedConfigProvider => new ManagedConfigProvider(runtime);
 
-const CHAT_UI_SCHEMA_SHA256 = PINNED_MANAGED_CONFIG_SCHEMA_SHA256['1.0.0'];
-
-/** A runtime-read 200 body for `ai-dial-chat` → `chat-dev`, with overrides. */
+/** A runtime-read 200 body for `ai-dial-chat` → `chat-dev`, with overrides.
+ * It carries the current schema version and its pin unless overridden. */
 export const snapshotBody = (
   overrides: Record<string, unknown> = {},
 ): Record<string, unknown> => {
@@ -160,8 +162,9 @@ export const snapshotBody = (
     instanceId: 'chat-dev',
     appId: 'ai-dial-chat',
     environment: 'dev',
-    schemaVersion: '1.0.0',
-    schemaSha256: CHAT_UI_SCHEMA_SHA256,
+    schemaVersion: MANAGED_CONFIG_SCHEMA_VERSION,
+    schemaSha256:
+      PINNED_MANAGED_CONFIG_SCHEMA_SHA256[MANAGED_CONFIG_SCHEMA_VERSION],
     revisionId: '20261120T095500000Z-0123456789abcdef',
     sha256:
       (overrides['sha256'] as string | undefined) ??

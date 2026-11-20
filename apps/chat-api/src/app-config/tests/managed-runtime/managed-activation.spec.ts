@@ -1,37 +1,22 @@
 import { ForbiddenException, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import type { Reflector } from '@nestjs/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UserRolesService } from '../../../auth/user-roles.service';
-import type { EnvironmentVariables } from '../../../config/environment.config';
-import { ExplicitEnvironment } from '../../../config/explicit-environment';
-import { validate } from '../../../config/validation';
-import { AppConfigService } from '../../app-config.service';
 import type { AppConfigEvalContext } from '../../app-config.types';
-import { CompositeConfigProvider } from '../../config-registry/composite-config.provider';
-import { EnvConfigProvider } from '../../config-registry/env-config.provider';
-import { StaticDefaultsProvider } from '../../config-registry/static-defaults.provider';
-import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
+import type { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { FeatureKey } from '../../feature-flags/feature-key.enum';
 import { FeatureGuard } from '../../feature-flags/feature.guard';
-import { canonicalSha256 } from '../../managed-config/canonical-json';
-import { ManagedConfigProvider } from '../../managed-runtime/managed-config.provider';
-import { ManagedRuntimeService } from '../../managed-runtime/managed-runtime.service';
+import { RuntimeReadKind } from '../../managed-runtime/snapshot-reader';
 import {
-  RuntimeReadKind,
-  type RuntimeReadResult,
-} from '../../managed-runtime/snapshot-reader';
-import {
-  candidate,
-  createFakeClock,
-  createFakeReader,
-  type FakeClock,
-  type FakeReader,
-} from './managed-runtime.fixtures';
+  buildManagedStack,
+  destroyManagedStacks,
+  publishedRevision,
+} from './managed-stack.fixtures';
 
-/* Schema 1.0.0 manages only onboarding.hints. These tests exercise managed
- * features and several managed config keys, so they run on the test-only
- * contract (see test-managed-contract.fixtures.ts). */
+/* The real schema manages no feature, and none of the welcome-text or
+ * usage-limit keys these tests use, so they run on the test-only contract
+ * (see test-managed-contract.fixtures.ts). The real announcement and
+ * celebration keys are covered by managed-content-activation.spec.ts. */
 vi.mock(
   '../../config-registry/config-registry.constants',
   async (importOriginal) =>
@@ -49,11 +34,6 @@ vi.mock('../../managed-runtime/snapshot-acceptance', async (importOriginal) =>
   ),
 );
 
-const REQUIRED = {
-  DIAL_CORE_URL: 'https://dial-core.example.com',
-  AUTH_SESSION_SECRET: 'a'.repeat(64),
-  AUTH_CALLBACK_BASE_URL: 'http://localhost:5000',
-};
 const ACTIVE = {
   MANAGED_CONFIG_MODE: 'active',
   MANAGED_CONFIG_INSTANCES: 'ai-dial-chat=chat-dev',
@@ -75,84 +55,11 @@ const staff: AppConfigEvalContext = {
   roles: ['staff'],
 };
 
-/* A runtime-read 200 for one revision of `payload`. */
-const published = (
-  revisionId: string,
-  payload: Record<string, unknown>,
-): RuntimeReadResult =>
-  candidate({
-    revisionId,
-    sha256: canonicalSha256({ revisionId, payload }),
-    payload,
-  });
+const published = publishedRevision;
 
 const iso = (epochMs: number) => new Date(epochMs).toISOString();
 
-interface Stack {
-  readonly service: AppConfigService;
-  readonly runtime: ManagedRuntimeService;
-  readonly clock: FakeClock;
-  readonly fake: FakeReader;
-  readonly flags: FeatureFlagsService;
-  readonly cacheTtls: number[];
-}
-
-const stacks: Stack[] = [];
-
-/*
- * The real resolution stack over a fake Core reader. The memory cache
- * honors TTLs on the fake clock, so cache tests observe real expiry.
- */
-const buildStack = async (
-  raw: Record<string, unknown>,
-  respond: (fake: FakeReader, clock: FakeClock) => void,
-): Promise<Stack> => {
-  const configService = new ConfigService<EnvironmentVariables>(
-    validate({ ...REQUIRED, ...raw }),
-  );
-  const clock = createFakeClock();
-  const fake = createFakeReader();
-  respond(fake, clock);
-  const runtime = new ManagedRuntimeService(configService, fake.reader, clock);
-  await runtime.onApplicationBootstrap();
-  const envProvider = new EnvConfigProvider(
-    configService,
-    ExplicitEnvironment.fromConfigService(configService),
-  );
-  const composite = new CompositeConfigProvider(
-    envProvider,
-    new StaticDefaultsProvider(),
-    new ManagedConfigProvider(runtime),
-  );
-  const entries = new Map<string, { value: unknown; expiresAt: number }>();
-  const cacheTtls: number[] = [];
-  const cache = {
-    get: async (key: string) => {
-      const entry = entries.get(key);
-      return entry && entry.expiresAt > clock.now() ? entry.value : undefined;
-    },
-    set: async (key: string, value: unknown, ttl: number) => {
-      cacheTtls.push(ttl);
-      entries.set(key, { value, expiresAt: clock.now() + ttl });
-    },
-  };
-  const service = new AppConfigService(
-    composite,
-    cache as never,
-    configService,
-    runtime,
-  );
-  const stack = {
-    service,
-    runtime,
-    clock,
-    fake,
-    flags: new FeatureFlagsService(service),
-    cacheTtls,
-  };
-  stacks.push(stack);
-  return stack;
-};
+const buildStack = buildManagedStack;
 
 const activeKeys = (...keys: string[]) => ({
   ...ACTIVE,
@@ -182,7 +89,7 @@ describe('managed configuration activation', () => {
     vi.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
   });
   afterEach(() => {
-    for (const stack of stacks.splice(0)) stack.runtime.onModuleDestroy();
+    destroyManagedStacks();
     vi.restoreAllMocks();
   });
 

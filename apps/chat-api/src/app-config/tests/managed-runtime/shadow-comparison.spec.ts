@@ -5,6 +5,7 @@ import type { EnvironmentVariables } from '../../../config/environment.config';
 import { ExplicitEnvironment } from '../../../config/explicit-environment';
 import { validate } from '../../../config/validation';
 import { EnvConfigProvider } from '../../config-registry/env-config.provider';
+import { PINNED_MANAGED_CONFIG_SCHEMA_SHA256 } from '../../managed-config/managed-config.constants';
 import { ManagedConfigMode } from '../../managed-runtime/managed-runtime.types';
 import {
   ManagedShadowComparator,
@@ -31,8 +32,24 @@ const REQUIRED = {
 
 const HINT = { id: 'tour.start', target: 'new-chat', title: 'Start here' };
 
-const acceptedSnapshot = (payload: Record<string, unknown>) => {
-  const result = acceptSnapshot(snapshotBody({ payload }), {
+const MANAGED_KEYS = [
+  'announcement.title',
+  'announcement.description',
+  'announcement.items',
+  'onboarding.hints',
+  'ui.activeEventId',
+  'ui.celebrationsEnabledByDefault',
+  'ui.celebrationDelivery.mode',
+  'ui.celebrationDelivery.revision',
+  'ui.celebrationDelivery.externalScenes',
+  'ui.celebrationDelivery.externalEvents',
+];
+
+const acceptedSnapshot = (
+  payload: Record<string, unknown>,
+  envelope: Record<string, unknown> = {},
+) => {
+  const result = acceptSnapshot(snapshotBody({ payload, ...envelope }), {
     appId: 'ai-dial-chat',
     instanceId: 'chat-dev',
     knownRevision: () => undefined,
@@ -87,9 +104,9 @@ describe('ManagedShadowComparator', () => {
     const comparisons = await comparator.compare(
       acceptedSnapshot({ config: {}, features: {} }),
     );
-    expect(comparisons.map((comparison) => comparison.key)).toEqual([
-      'onboarding.hints',
-    ]);
+    expect(comparisons.map((comparison) => comparison.key)).toEqual(
+      MANAGED_KEYS,
+    );
     expect(
       comparisons.every(
         (comparison) => comparison.result === ShadowComparisonResult.Absent,
@@ -130,6 +147,59 @@ describe('ManagedShadowComparator', () => {
         'onboarding.hints',
       ),
     ).resolves.toBe(ShadowComparisonResult.EnvShadowed);
+  });
+
+  it('compares every key of the build for a 1.0.0 snapshot', async () => {
+    const { comparator } = makeComparator();
+    const comparisons = await comparator.compare(
+      acceptedSnapshot(
+        { config: { 'onboarding.hints': [HINT] }, features: {} },
+        {
+          schemaVersion: '1.0.0',
+          schemaSha256: PINNED_MANAGED_CONFIG_SCHEMA_SHA256['1.0.0'],
+        },
+      ),
+    );
+    expect(comparisons).toHaveLength(10);
+    expect(
+      comparisons.filter(
+        (comparison) => comparison.result !== ShadowComparisonResult.Absent,
+      ),
+    ).toEqual([
+      { key: 'onboarding.hints', result: ShadowComparisonResult.Differs },
+    ]);
+  });
+
+  it('reports a published event shadowed by the environment', async () => {
+    const { comparator } = makeComparator({ UI_EVENT: 'halloween' });
+    await expect(
+      resultOf(
+        comparator,
+        { config: { 'ui.activeEventId': 'new-year' }, features: {} },
+        'ui.activeEventId',
+      ),
+    ).resolves.toBe(ShadowComparisonResult.EnvShadowed);
+  });
+
+  it('does not let a malformed environment list shadow a published one', async () => {
+    vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    const { comparator } = makeComparator({
+      ANNOUNCEMENTS: '[{"title":"A"},"title":"B"}]',
+    });
+    await expect(
+      resultOf(
+        comparator,
+        { config: { 'announcement.items': [{ title: 'A' }] }, features: {} },
+        'announcement.items',
+      ),
+    ).resolves.toBe(ShadowComparisonResult.Differs);
+    await expect(
+      resultOf(
+        comparator,
+        { config: { 'announcement.items': [] }, features: {} },
+        'announcement.items',
+      ),
+    ).resolves.toBe(ShadowComparisonResult.Equal);
   });
 
   it('subscribes in shadow mode and logs one summary per revision without values', async () => {
@@ -176,8 +246,8 @@ describe('ManagedShadowComparator', () => {
       'onboarding.hints',
       ShadowComparisonResult.Differs,
     );
-    /* One managed key, compared at startup and after one interval. */
-    expect(record).toHaveBeenCalledTimes(2);
+    /* Ten managed keys, compared at startup and after one interval. */
+    expect(record).toHaveBeenCalledTimes(20);
     const summaries = log.mock.calls
       .map(([message]) => String(message))
       .filter((message) => message.startsWith('Shadow comparison'));

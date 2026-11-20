@@ -2173,8 +2173,15 @@ describe('AppConfigService', () => {
           ONBOARDING_HINTS:
             '[{"id":"a","target":"new-chat","title":"Start"},{"id":"a","target":"catalog","title":"Again"}]',
           ANNOUNCEMENT_TITLE: 'Maintenance',
-          ANNOUNCEMENT_DESCRIPTION: 'Tonight',
-          ANNOUNCEMENTS: '[{"title":"A"}]',
+          ANNOUNCEMENT_DESCRIPTION: 'Tonight <script>x</script><b>only</b>',
+          ANNOUNCEMENTS:
+            '[{"title":" A ","severity":"Warning"},{"title":"B","link":{"label":"Go","href":"javascript:x"}}]',
+          UI_EVENT: 'new-year',
+          UI_EVENT_ENABLED_BY_DEFAULT: 'false',
+          UI_EVENT_DELIVERY_MODE: 'prefer-external',
+          UI_EVENT_DELIVERY_REVISION: '7',
+          UI_EVENT_EXTERNAL_SCENES: 'new-year/snowman-delivery',
+          UI_EVENT_EXTERNAL_EVENTS: 'company-anniversary',
           WELCOME_SCREEN_DESCRIPTION: 'Welcome',
           FILE_MANAGER_AVAILABLE_TABS: 'shared',
           USAGE_LIMITS_WARNING_THRESHOLD_PERCENT: '80',
@@ -2201,6 +2208,7 @@ describe('AppConfigService', () => {
           WELCOME_SCREEN_DESCRIPTION: '',
         },
       ],
+      ['an explicit celebration off switch', { UI_EVENT: 'none' }],
     ])(
       'resolves identically with and without managed metadata for %s',
       async (_name, env) => {
@@ -2210,7 +2218,7 @@ describe('AppConfigService', () => {
           snapshotResolution(env),
         );
 
-        expect(CONFIG_DEFINITIONS.filter(isManagedKey)).toHaveLength(1);
+        expect(CONFIG_DEFINITIONS.filter(isManagedKey)).toHaveLength(10);
         expect(stripped).toEqual(withMetadata);
       },
     );
