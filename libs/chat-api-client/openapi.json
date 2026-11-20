@@ -1830,7 +1830,7 @@
     },
     "/api/v1/user/usage/history": {
       "get": {
-        "description": "Returns the signed-in user's spend and request counts from DIAL Analytics (ADAS) for the current UTC day, ISO week (Monday start) or month, from its start to the request time: totals, one zero-filled entry per UTC date, the top 10 root deployments by spend plus an `other` remainder, and the split by client type when the `usage_client_identity` enrichment is available. Each user request counts once (root spans only), with its chain-inclusive price. With `costObject` and `policy` (a `budgets` entry of `GET /user/limits`), every figure is narrowed to the model calls that budget paid for, each at its own price, as DIAL Core logs the charged budget (ai-dial-core#2308); without budget columns in DIAL Analytics the answer is `budget_unsupported`. The BFF forwards the caller's session access token to ADAS, whose row policy confines the rows to the caller; a caller whose ADAS view is not row-restricted gets `forbidden`. When ADAS cannot answer, the response is still `200`, with `available: false` and a `reason`. Not cached.",
+        "description": "Returns the signed-in user's spend and request counts from DIAL Analytics (ADAS) for the current UTC day, ISO week (Monday start) or month, from its start to the request time: totals, one zero-filled entry per UTC date, the top 10 root deployments by spend plus an `other` remainder, and the split by client type when the `usage_client_identity` enrichment is available. Each user request counts once (root spans only), with its chain-inclusive price. With `costObject` and `policy` (a `budgets` entry of `GET /user/limits`), every figure is narrowed to the model calls that budget paid for, each at its own price, as DIAL Core logs the charged budget (ai-dial-core#2308); without budget columns in DIAL Analytics the answer is `budget_unsupported`. The BFF forwards the caller's session access token to ADAS, and every query keeps only the caller's own rows (`user_hash = caller.user_hash`, resolved by ADAS from the token), on top of the ADAS row policies, so an ADAS administrator also sees only their own usage; a caller who cannot read the usage log, an ADAS without query caller values, or a column policy that hides `user_hash` from the caller gets `forbidden`. When ADAS cannot answer, the response is still `200`, with `available: false` and a `reason`. Not cached.",
         "operationId": "getUserUsageHistory",
         "parameters": [
           {
@@ -15538,7 +15538,7 @@
           "forbidden",
           "budget_unsupported"
         ],
-        "description": "Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. `forbidden`: DIAL Analytics refused the caller's token, or the caller's view of the usage log is not restricted to their own rows. `unavailable`: timeout, network error or server error. `budget_unsupported`: `costObject` and `policy` were given, but the caller's DIAL Analytics schema of the usage log has no budget columns."
+        "description": "Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. `forbidden`: DIAL Analytics refused the caller's token, the caller cannot read the usage log, or DIAL Analytics cannot run the own-rows filter (no query caller values, or `user_hash` hidden from the caller). `unavailable`: timeout, network error or server error. `budget_unsupported`: `costObject` and `policy` were given, but the caller's DIAL Analytics schema of the usage log has no budget columns."
       },
       "UsageHistoryBudgetDto": {
         "type": "object",
@@ -15679,7 +15679,7 @@
             "example": true
           },
           "reason": {
-            "description": "Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. `forbidden`: DIAL Analytics refused the caller's token, or the caller's view of the usage log is not restricted to their own rows. `unavailable`: timeout, network error or server error. `budget_unsupported`: `costObject` and `policy` were given, but the caller's DIAL Analytics schema of the usage log has no budget columns.",
+            "description": "Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. `forbidden`: DIAL Analytics refused the caller's token, the caller cannot read the usage log, or DIAL Analytics cannot run the own-rows filter (no query caller values, or `user_hash` hidden from the caller). `unavailable`: timeout, network error or server error. `budget_unsupported`: `costObject` and `policy` were given, but the caller's DIAL Analytics schema of the usage log has no budget columns.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/UsageHistoryUnavailableReason"

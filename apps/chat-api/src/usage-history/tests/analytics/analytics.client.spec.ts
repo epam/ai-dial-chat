@@ -43,15 +43,15 @@ describe('AnalyticsClient', () => {
     expect(buildClient(analytics.url).isConfigured).toBe(true);
   });
 
-  it('sends only the bearer token to the fixed table and schema paths', async () => {
+  it('sends only the bearer token to the fixed schema and query paths', async () => {
     const client = buildClient(analytics.url);
 
-    await client.getUsageLogTable(TOKEN);
     await client.getUsageLogSchema(TOKEN);
+    await client.executeQuery(TOKEN, {});
 
     expect(analytics.requests.map((r) => `${r.method} ${r.path}`)).toEqual([
-      'GET /v1/tables/dial_usage_log',
       'GET /v1/queries/entities/schema/dial_usage_log',
+      'POST /v1/queries/execute',
     ]);
     for (const recorded of analytics.requests) {
       expect(recorded.headers.authorization).toBe(`Bearer ${TOKEN}`);
@@ -184,7 +184,7 @@ describe('AnalyticsClient', () => {
     }));
     const client = buildClient(analytics.url);
 
-    await expect(client.getUsageLogTable(TOKEN)).rejects.toBeInstanceOf(
+    await expect(client.getUsageLogSchema(TOKEN)).rejects.toBeInstanceOf(
       ForbiddenException,
     );
     analytics.setHandler(() => ({ status: 200, body: { rows: [] } }));

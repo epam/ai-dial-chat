@@ -6,10 +6,13 @@ import type { UsageWindow } from '../usage-period';
  * epoch-millisecond timestamp literals and, for the per-day model query, the
  * deployment names ADAS itself returned vary, and for a budget scope its cost
  * object and policy (validated request input, sent only as string literals).
- * There is no user filter — the ADAS row policy confines the rows — and no SQL. Aliases carry a `usage_`
- * prefix because ADAS rejects an alias equal to a column name that projects
- * another expression. See
- * openspec/changes/add-user-usage-history-api/design.md (D3).
+ * Two mechanisms confine the rows to the caller: the ADAS row policies of the
+ * caller's read, and OWN_ROWS_PREDICATE in every filter, a caller value ADAS
+ * resolves from the request's own token (ai-dial-analytics#86), so the BFF
+ * never sees a user hash. There is no SQL. Aliases carry a `usage_` prefix
+ * because ADAS rejects an alias equal to a column name that projects another
+ * expression. See openspec/changes/archive/2026-11-20-add-user-usage-history-api/design.md (D3)
+ * and openspec/changes/archive/2026-11-20-filter-usage-history-own-rows/design.md (D1).
  */
 
 const ENTITY = 'dial_usage_log';
@@ -77,6 +80,17 @@ const ROOT_SPAN_PREDICATE = {
   ],
 };
 
+/**
+ * The caller's own rows: ADAS compares `user_hash` with the hash of whoever
+ * runs the query, so a caller whose role reads every row (an administrator)
+ * still gets only its own, and a caller without a hash matches no row. A
+ * top-level conjunct of every filter, so nothing else in it can widen it.
+ */
+export const OWN_ROWS_PREDICATE = {
+  op: 'eq',
+  args: [field('user_hash'), { type: 'param', name: 'caller.user_hash' }],
+};
+
 const equals = (name: string, value: string) => ({
   op: 'eq',
   args: [field(name), stringValue(value)],
@@ -104,6 +118,7 @@ const windowFilter = (
   args: [
     { op: 'ge', args: [field('request_time'), timestampValue(window.from)] },
     { op: 'lt', args: [field('request_time'), timestampValue(window.to)] },
+    OWN_ROWS_PREDICATE,
     ...scopePredicates(budget),
     ...extra,
   ],

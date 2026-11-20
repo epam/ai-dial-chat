@@ -10,7 +10,7 @@ import { UsageHistoryService } from './usage-history.service';
  * Mounted at `user` beside UserLimitsController, which proxies DIAL Core's
  * live counters; this route reads history from DIAL Analytics (ADAS) instead,
  * so it lives in its own domain (see
- * openspec/changes/add-user-usage-history-api/design.md).
+ * openspec/changes/archive/2026-11-20-add-user-usage-history-api/design.md).
  */
 @ApiTags('user')
 @Controller({ path: 'user', version: '1' })
@@ -32,9 +32,12 @@ export class UserUsageHistoryController {
       '`GET /user/limits`), every figure is narrowed to the model calls that budget paid for, ' +
       'each at its own price, as DIAL Core logs the charged budget (ai-dial-core#2308); ' +
       'without budget columns in DIAL Analytics the answer is `budget_unsupported`. ' +
-      "The BFF forwards the caller's session access token to ADAS, whose " +
-      'row policy confines the rows to the caller; a caller whose ADAS view is not ' +
-      'row-restricted gets `forbidden`. When ADAS cannot answer, the response is still `200`, ' +
+      "The BFF forwards the caller's session access token to ADAS, and every query keeps only " +
+      "the caller's own rows (`user_hash = caller.user_hash`, resolved by ADAS from the token), " +
+      'on top of the ADAS row policies, so an ADAS administrator also sees only their own usage; ' +
+      'a caller who cannot read the usage log, an ADAS without query caller values, or a column ' +
+      'policy that hides `user_hash` from the caller gets ' +
+      '`forbidden`. When ADAS cannot answer, the response is still `200`, ' +
       'with `available: false` and a `reason`. Not cached.',
   })
   @ApiResponse({

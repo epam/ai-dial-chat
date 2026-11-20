@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   HttpException,
   Injectable,
@@ -28,7 +29,12 @@ import { resolveUsageWindow, type UsageWindow } from './usage-period';
 
 const FORBIDDEN_HINT =
   'check the ADAS identity providers (issuer, jwk-set-uri, audiences) for the BFF sign-in ' +
-  'providers, the `*` grant on dial_usage_log and its `user_hash = caller.user_hash` row policy';
+  'providers and the `*` read grant on dial_usage_log';
+
+const OWN_ROWS_HINT =
+  'every usage query filters on `user_hash = caller.user_hash`, so ADAS rejects it when it is ' +
+  'older than 0.24 (no query caller values, ai-dial-analytics#86) or when a column policy hides ' +
+  '`user_hash` from the caller; no query is sent without the filter';
 
 const unavailable = (
   reason: UsageHistoryUnavailableReason,
@@ -54,19 +60,6 @@ interface SchemaDiscovery {
 
 const isRefusal = (error: unknown): boolean =>
   error instanceof UnauthorizedException || error instanceof ForbiddenException;
-
-/* The caller's ADAS view of the usage log is confined by a row policy. */
-const isRowRestricted = (table: unknown): boolean => {
-  const permissions =
-    table != null && typeof table === 'object'
-      ? (
-          table as {
-            permissions?: { read?: unknown; rows_restricted?: unknown };
-          }
-        ).permissions
-      : undefined;
-  return permissions?.read === true && permissions.rows_restricted === true;
-};
 
 /* The field names the caller's schema of the usage log lists. */
 const schemaFieldNames = (schema: unknown): Set<string> => {
@@ -96,9 +89,12 @@ const discover = (schema: unknown): SchemaDiscovery => {
 
 /**
  * Builds the signed-in user's usage history from DIAL Analytics (ADAS) with
- * the caller's own token. Every failure becomes an `available: false` body
- * with a reason, never an HTTP error, and partial data is never returned. See
- * openspec/changes/add-user-usage-history-api/design.md (D4, D6).
+ * the caller's own token. Every query is confined to the caller's own rows by
+ * the ADAS caller value `caller.user_hash`, on top of the caller's row
+ * policies. Every failure becomes an `available: false` body with a reason,
+ * never an HTTP error, and partial data is never returned. See
+ * openspec/changes/archive/2026-11-20-add-user-usage-history-api/design.md (D4, D6) and
+ * openspec/changes/archive/2026-11-20-filter-usage-history-own-rows/design.md (D2, D3).
  */
 @Injectable()
 export class UsageHistoryService {
@@ -124,12 +120,11 @@ export class UsageHistoryService {
     const window = resolveUsageWindow(period, new Date());
 
     /*
-     * Step 1: the row-restriction guard. Schema discovery starts beside it
-     * but is only read once the guard has passed; its rejection is captured
-     * here so it is never unhandled when the guard refuses. In budget scope
-     * the schema read is required (Step 1b gates every query on it, so its
-     * latency and failure decide the response); otherwise it only feeds the
-     * optional client split and its failure is only logged.
+     * There is no permissions pre-check: every query carries
+     * OWN_ROWS_PREDICATE, so it is safe whether or not the caller's view is
+     * row-restricted, and a caller who cannot read the table is refused by
+     * the queries themselves. Schema discovery starts first; its rejection
+     * is captured here so it is never unhandled.
      */
     const discovery = this.analytics
       .getUsageLogSchema(accessToken)
@@ -138,24 +133,9 @@ export class UsageHistoryService {
         budgetColumns: false,
         error,
       }));
-    try {
-      const table = await this.analytics.getUsageLogTable(accessToken);
-      if (!isRowRestricted(table)) {
-        this.logger.warn(
-          `Usage history (${period}) refused: the caller's DIAL Analytics view of dial_usage_log ` +
-            `is not row-restricted, so it would show other users' usage; ${FORBIDDEN_HINT}`,
-        );
-        return unavailable(UsageHistoryUnavailableReason.Forbidden);
-      }
-    } catch (error) {
-      if (isRefusal(error) || error instanceof NotFoundException) {
-        return this.forbidden(period, error);
-      }
-      return this.unavailableAfter(period, error);
-    }
 
     /*
-     * Step 1b, budget scope only: the budget columns must be visible, or the
+     * Step 1, budget scope only: the budget columns must be visible, or the
      * queries would fail on an unknown field instead of saying the narrowing
      * is unsupported.
      */
@@ -178,7 +158,7 @@ export class UsageHistoryService {
      * Step 2: daily totals and the model ranking start at once; the optional
      * client split follows discovery on its own. Without a budget a slow
      * schema endpoint therefore never delays the required queries; in budget
-     * scope Step 1b has already awaited it.
+     * scope Step 1 has already awaited it.
      */
     const clientSplit = this.queryClientSplit(
       accessToken,
@@ -187,6 +167,8 @@ export class UsageHistoryService {
       discovery,
       budget,
     );
+    /* Set once ADAS has run a query with the own-rows caller value. */
+    let hasAcceptedOwnRows = false;
     try {
       const [dailyTotals, ranking] = await Promise.all([
         this.analytics.executeQuery(
@@ -198,6 +180,7 @@ export class UsageHistoryService {
           buildModelRankingQuery(window, budget),
         ),
       ]);
+      hasAcceptedOwnRows = true;
       const ranked = rankDeployments(ranking);
 
       /* Step 3: the per-day split of the ranked top deployments. */
@@ -222,8 +205,21 @@ export class UsageHistoryService {
         clientSplit: await clientSplit,
       });
     } catch (error) {
-      if (isRefusal(error)) {
+      if (isRefusal(error) || error instanceof NotFoundException) {
         return this.forbidden(period, error);
+      }
+      /*
+       * The query documents are fixed, so a 400 to the first queries means
+       * ADAS cannot run the own-rows filter (see OWN_ROWS_HINT). It is never
+       * retried without it: there is no unconfined query to fall back to.
+       * After ADAS has accepted the filter, a 400 is a BFF defect.
+       */
+      if (error instanceof BadRequestException && !hasAcceptedOwnRows) {
+        this.logger.warn(
+          `Usage history (${period}) refused: DIAL Analytics answered ${describeError(error)} ` +
+            `to a usage query; ${OWN_ROWS_HINT}`,
+        );
+        return unavailable(UsageHistoryUnavailableReason.Forbidden);
       }
       return this.unavailableAfter(period, error);
     }

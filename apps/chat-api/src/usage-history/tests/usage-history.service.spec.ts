@@ -38,14 +38,6 @@ const rows = (...values: object[]): FakeResponse => ({
   body: { rows: values, totalCount: null },
 });
 
-const ROW_RESTRICTED: FakeResponse = {
-  status: 200,
-  body: {
-    name: 'dial_usage_log',
-    permissions: { get: true, read: true, rows_restricted: true },
-  },
-};
-
 const SCHEMA_WITH_CLIENT: FakeResponse = {
   status: 200,
   body: {
@@ -143,19 +135,13 @@ const EXAMPLE_QUERIES: Record<QueryKind, FakeResponse> = {
 };
 
 interface AdasScript {
-  table?: FakeResponse;
   schema?: FakeResponse;
   queries?: Partial<Record<QueryKind, FakeResponse>>;
 }
 
 const adas =
-  ({
-    table = ROW_RESTRICTED,
-    schema = SCHEMA_WITH_CLIENT,
-    queries = {},
-  }: AdasScript = {}) =>
+  ({ schema = SCHEMA_WITH_CLIENT, queries = {} }: AdasScript = {}) =>
   (request: RecordedRequest): FakeResponse => {
-    if (request.path === '/v1/tables/dial_usage_log') return table;
     if (request.path === '/v1/queries/entities/schema/dial_usage_log')
       return schema;
     if (request.path === '/v1/queries/execute') {
@@ -169,6 +155,17 @@ const executed = (server: FakeAnalyticsServer): QueryKind[] =>
   server.requests
     .filter((request) => request.path === '/v1/queries/execute')
     .map((request) => queryKind(request.body));
+
+/* The own-rows caller value every query filter must carry. */
+const OWN_ROWS =
+  '{"op":"eq","args":[{"type":"field","name":"user_hash"},{"type":"param","name":"caller.user_hash"}]}';
+
+const executedFilters = (server: FakeAnalyticsServer): string[] =>
+  server.requests
+    .filter((request) => request.path === '/v1/queries/execute')
+    .map((request) =>
+      JSON.stringify((request.body as { filter: unknown }).filter),
+    );
 
 describe('UsageHistoryService', () => {
   let analytics: FakeAnalyticsServer;
@@ -203,70 +200,43 @@ describe('UsageHistoryService', () => {
     await analytics.close();
   });
 
-  describe('row-restriction guard', () => {
-    it.each([
-      [
-        'an unrestricted administrator view',
-        { read: true, rows_restricted: false },
-      ],
-      [
-        'the none security mode shape',
-        { get: true, read: true, write: true, rows_restricted: false },
-      ],
-      ['a view without read', { read: false, rows_restricted: true }],
-      ['a table without permissions', undefined],
-    ])(
-      'answers forbidden and runs no usage query for %s',
-      async (_label, permissions) => {
+  describe('access', () => {
+    it('sends every query with the own-rows filter and no permissions pre-check', async () => {
+      await expect(history()).resolves.toMatchObject({
+        available: true,
+        totals: { spend: 1.234568, requests: 42 },
+      });
+
+      expect(
+        analytics.requests.some((request) =>
+          request.path.startsWith('/v1/tables/'),
+        ),
+      ).toBe(false);
+      expect(executed(analytics).sort()).toEqual(
+        ['clients', 'daily', 'dailyModels', 'ranking'].sort(),
+      );
+      for (const filter of executedFilters(analytics)) {
+        expect(filter).toContain(OWN_ROWS);
+      }
+      expect(logged()).not.toContain(TOKEN);
+    });
+
+    it.each([401, 403, 404])(
+      'answers forbidden when ADAS answers the required queries %i',
+      async (status) => {
         analytics.setHandler(
-          adas({
-            table: {
-              status: 200,
-              body: { name: 'dial_usage_log', permissions },
-            },
-          }),
+          adas({ queries: { daily: { status }, ranking: { status } } }),
         );
 
         await expect(history()).resolves.toEqual({
           available: false,
           reason: 'forbidden',
         });
-        expect(executed(analytics)).toEqual([]);
-        expect(logged()).toContain('not row-restricted');
+        expect(executed(analytics)).not.toContain('dailyModels');
+        expect(logged()).toContain('configuration problem');
+        expect(logged()).not.toContain(TOKEN);
       },
     );
-
-    it.each([401, 403, 404])(
-      'answers forbidden when the table read is answered %i',
-      async (status) => {
-        analytics.setHandler(adas({ table: { status } }));
-
-        await expect(history()).resolves.toEqual({
-          available: false,
-          reason: 'forbidden',
-        });
-        expect(executed(analytics)).toEqual([]);
-      },
-    );
-
-    it('answers unavailable when the table read fails with a server error', async () => {
-      analytics.setHandler(adas({ table: { status: 502 } }));
-
-      await expect(history()).resolves.toEqual({
-        available: false,
-        reason: 'unavailable',
-      });
-      expect(executed(analytics)).toEqual([]);
-    });
-
-    it('answers unavailable when the table read times out', async () => {
-      analytics.setHandler(adas({ table: { hang: true } }));
-
-      await expect(history()).resolves.toEqual({
-        available: false,
-        reason: 'unavailable',
-      });
-    });
   });
 
   describe('available history', () => {
@@ -309,7 +279,7 @@ describe('UsageHistoryService', () => {
     it('sends the session token on every call and queries only root spans of the window', async () => {
       await history();
 
-      expect(analytics.requests).toHaveLength(6);
+      expect(analytics.requests).toHaveLength(5);
       for (const request of analytics.requests) {
         expect(request.headers.authorization).toBe(`Bearer ${TOKEN}`);
       }
@@ -326,10 +296,11 @@ describe('UsageHistoryService', () => {
           `"value":"${Date.parse('2026-11-01T00:00:00.000Z')}"`,
         );
         expect(filter).toContain(`"value":"${NOW.getTime()}"`);
+        expect(filter).toContain(OWN_ROWS);
       }
       expect(
         new Set(analytics.requests.map((r) => `${r.method} ${r.path}`)).size,
-      ).toBe(3);
+      ).toBe(2);
     });
 
     it('asks the per-day query only for the ranked deployments', async () => {
@@ -368,6 +339,25 @@ describe('UsageHistoryService', () => {
       ]);
     });
 
+    it('answers zero totals and zero-filled days when ADAS returns no own rows', async () => {
+      analytics.setHandler(
+        adas({
+          queries: { daily: rows(), ranking: rows(), clients: rows() },
+        }),
+      );
+
+      await expect(history()).resolves.toMatchObject({
+        available: true,
+        totals: { spend: 0, requests: 0 },
+        daily: [
+          { date: '2026-11-01', spend: 0, requests: 0, byModel: {} },
+          { date: '2026-11-02', spend: 0, requests: 0, byModel: {} },
+          { date: '2026-11-03', spend: 0, requests: 0, byModel: {} },
+        ],
+        byModel: [],
+      });
+    });
+
     it('queries ADAS again for every request', async () => {
       await expect(history()).resolves.toMatchObject({ available: true });
       const first = analytics.requests.length;
@@ -401,7 +391,14 @@ describe('UsageHistoryService', () => {
         { status: 422 },
         'unavailable',
       ],
-      ['daily totals answer 400', 'daily', { status: 400 }, 'unavailable'],
+      ['daily totals answer 400', 'daily', { status: 400 }, 'forbidden'],
+      ['the ranking answers 400', 'ranking', { status: 400 }, 'forbidden'],
+      [
+        'the per-day query answers 400 after the own-rows filter was accepted',
+        'dailyModels',
+        { status: 400 },
+        'unavailable',
+      ],
       [
         'the per-day query answers 429',
         'dailyModels',
@@ -431,7 +428,35 @@ describe('UsageHistoryService', () => {
 
       const kinds = executed(analytics);
       expect(kinds.filter((kind) => kind === 'daily')).toHaveLength(1);
-      expect(analytics.requests.length).toBeLessThanOrEqual(6);
+      expect(analytics.requests.length).toBeLessThanOrEqual(5);
+    });
+
+    it('refuses an ADAS that rejects the own-rows filter and never sends a query without it', async () => {
+      const rejected: FakeResponse = { status: 400 };
+      analytics.setHandler(
+        adas({
+          queries: {
+            daily: rejected,
+            ranking: rejected,
+            dailyModels: rejected,
+            clients: rejected,
+          },
+        }),
+      );
+
+      await expect(history()).resolves.toEqual({
+        available: false,
+        reason: 'forbidden',
+      });
+      const kinds = executed(analytics);
+      expect(new Set(kinds).size).toBe(kinds.length);
+      for (const filter of executedFilters(analytics)) {
+        expect(filter).toContain(OWN_ROWS);
+      }
+      const warned = JSON.stringify(logs[2].mock.calls);
+      expect(warned).toContain('ai-dial-analytics#86');
+      expect(warned).toContain('column policy hides `user_hash`');
+      expect(logged()).not.toContain(TOKEN);
     });
 
     it('logs a refused token at warn with a configuration hint', async () => {
@@ -478,19 +503,6 @@ describe('UsageHistoryService', () => {
       });
     });
 
-    it('does not log a discovery failure when the guard refuses', async () => {
-      analytics.setHandler(
-        adas({ table: { status: 403 }, schema: { status: 500 } }),
-      );
-
-      await expect(history()).resolves.toEqual({
-        available: false,
-        reason: 'forbidden',
-      });
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      expect(logged()).not.toContain('client breakdown omitted');
-    });
-
     it('omits byClient and skips its query when the enrichment field is absent', async () => {
       analytics.setHandler(adas({ schema: SCHEMA_WITHOUT_CLIENT }));
 
@@ -524,6 +536,7 @@ describe('UsageHistoryService', () => {
         totals: { requests: 42 },
       });
       expect('byClient' in result).toBe(false);
+      expect(logged()).toContain('client breakdown omitted');
     });
   });
 
@@ -571,6 +584,7 @@ describe('UsageHistoryService', () => {
           '{"op":"eq","args":[{"type":"field","name":"budget_outcome"},{"type":"value","value_type":"string","value":"paid"}]}',
         );
         expect(filter).not.toContain('parent_deployment');
+        expect(filter).toContain(OWN_ROWS);
       }
       for (const select of selects()) {
         expect(select).toContain('"name":"deployment_price"');
@@ -587,27 +601,6 @@ describe('UsageHistoryService', () => {
       });
       expect(executed(analytics)).toEqual([]);
       expect(logged()).toContain('no budget columns');
-    });
-
-    it('still applies the row-restriction guard first', async () => {
-      analytics.setHandler(
-        adas({
-          schema: SCHEMA_WITH_BUDGET,
-          table: {
-            status: 200,
-            body: {
-              name: 'dial_usage_log',
-              permissions: { read: true, rows_restricted: false },
-            },
-          },
-        }),
-      );
-
-      await expect(budgetHistory()).resolves.toEqual({
-        available: false,
-        reason: 'forbidden',
-      });
-      expect(executed(analytics)).toEqual([]);
     });
 
     it.each([

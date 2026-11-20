@@ -1326,36 +1326,47 @@ The route answers `200` whenever the request is valid (`400` for a missing or un
 `costObject` and `policy`, an empty or over-long one, or a repeated parameter; `401` without a session). When ADAS
 cannot answer, the body is `{ "available": false, "reason": "<reason>" }`:
 
-| `reason`             | When                                                                                                                                                                                      |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `not_configured`     | `ANALYTICS_URL` is unset. No outbound call is made.                                                                                                                                       |
-| `forbidden`          | ADAS answered `401`/`403` (or `404` on the table read), or the caller's view of `dial_usage_log` is not row-restricted (an ADAS administrator, or ADAS in `none` mode). Logged at `warn`. |
-| `unavailable`        | Timeout, network error, ADAS `5xx`, or any other unexpected ADAS response. Logged at `error`.                                                                                             |
-| `budget_unsupported` | A budget was requested, but the caller's ADAS schema of `dial_usage_log` has no budget columns. No usage query is run. Logged at `warn`.                                                  |
+| `reason`             | When                                                                                                                                                                                                                                                                                        |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `not_configured`     | `ANALYTICS_URL` is unset. No outbound call is made.                                                                                                                                                                                                                                         |
+| `forbidden`          | ADAS answered `401`/`403`/`404` to a usage query (the token is refused, or the caller cannot read `dial_usage_log`), or `400` to the first usage queries: an ADAS older than 0.24 without query caller values, or a column policy that hides `user_hash` from the caller. Logged at `warn`. |
+| `unavailable`        | Timeout, network error, ADAS `5xx`, or any other unexpected ADAS response. Logged at `error`.                                                                                                                                                                                               |
+| `budget_unsupported` | A budget was requested, but the caller's ADAS schema of `dial_usage_log` has no budget columns. No usage query is run. Logged at `warn`.                                                                                                                                                    |
 
 **Security model.** The BFF forwards the caller's own session access token as `Authorization: Bearer` and holds no
-ADAS credential, service account or hashing salt. It adds no user filter: the ADAS row policy confines the rows. The
-browser's only inputs are `period` and the optional budget, which is validated and sent only as string literals of
-a fixed structured query (`POST /v1/queries/execute`), never as SQL or a query document. A
-caller whose ADAS view is not row-restricted gets `forbidden`, because ADAS policies narrow access and never widen
-it, so such a caller would otherwise see every user's spend as their own.
+ADAS credential, service account or hashing salt. Two mechanisms confine the rows to the caller: the ADAS row policies
+of the caller's read, and an own-rows filter in every query, `user_hash = caller.user_hash`
+(`{"type": "param", "name": "caller.user_hash"}`, ai-dial-analytics#86). ADAS resolves that caller value from the same
+token on every execution, so the BFF never computes or sees a user hash. An ADAS administrator, whose role reads every
+row, therefore sees only their own history. The browser's only inputs are `period` and the optional budget, which is
+validated and sent only as string literals of a fixed structured query (`POST /v1/queries/execute`), never as SQL or
+a query document. No query is ever sent without the own-rows filter: an ADAS that rejects it gets `forbidden`, never
+an unfiltered retry. Because every query is confined, the BFF does not pre-check the caller's table permissions; a
+caller who cannot read the table is refused by the queries themselves.
 
 **ADAS prerequisites** (configured in ADAS, not in chat-api):
 
-1. `SECURITY_MODE=oidc`, with `providers.<name>` entries for the same identity providers chat-api signs users in
+1. ADAS 0.24 or later, a build with query caller values (ai-dial-analytics#86). An older ADAS answers every usage
+   query with `400`, so every user, administrator or not, gets `forbidden`.
+2. `SECURITY_MODE=oidc`, with `providers.<name>` entries for the same identity providers chat-api signs users in
    with: `issuer` and `jwk-set-uri` (JWT) or `user-info-endpoint` (opaque), and `audiences` that accept chat-api's
    access tokens.
-2. `providers.<name>.logging-key` and `logging-salt` (and `obfuscate-user-email`) equal to DIAL Core's
+3. `providers.<name>.logging-key` and `logging-salt` (and `obfuscate-user-email`) equal to DIAL Core's
    `loggingKey`/`loggingSalt` for that provider. Symptom of a mismatch: every user sees `available: true` with zero
    usage.
-3. A grant on `dial_usage_log` for `*`: `{"privileges": ["get", "read"], "rows": {"where": "user_hash = caller.user_hash"}}`.
-   Never grant `read` to `*` without `rows`: that gives every caller every row.
-4. For `byClient`: the recommended catalog's `usage_client_identity` enrichment, with its `usage-client-identity-live`
+4. A grant on `dial_usage_log` for `*`: `{"privileges": ["get", "read"], "rows": {"where": "user_hash = caller.user_hash"}}`.
+   The route needs `read`; its own queries do not depend on the `rows` policy, but it is still the least-privilege
+   grant: it keeps every other ADAS read of a regular user confined to their own rows. Never grant `read` to `*`
+   without `rows`: that gives every caller every row.
+5. `user_hash` visible to every caller: no column policy may hide it. ADAS answers a query over a hidden column as
+   over a column the table does not have (`400`), so every user would get `forbidden`.
+6. For `byClient`: the recommended catalog's `usage_client_identity` enrichment, with its `usage-client-identity-live`
    pipeline armed.
-5. Network access from chat-api to `ANALYTICS_URL` (honours `HTTP(S)_PROXY`/`NO_PROXY`).
+7. Network access from chat-api to `ANALYTICS_URL` (honours `HTTP(S)_PROXY`/`NO_PROXY`).
 
-ADAS with `SECURITY_MODE=none` fails every authorization check open, so every user gets `forbidden`. Use it only to
-exercise query mapping. Verify the token and row-policy path against an `oidc` ADAS.
+ADAS with `SECURITY_MODE=none` fails every authorization check open and resolves no user hash, so every user gets
+`available: true` with zero usage, the same symptom as a `logging-*` mismatch. Use it only to exercise query mapping.
+Verify the token, own-rows and row-policy path against an `oidc` ADAS.
 
 ## Project Structure
 
