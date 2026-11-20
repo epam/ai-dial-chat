@@ -2,6 +2,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { StorybookConfig } from '@storybook/react-vite';
 import tailwindcss from '@tailwindcss/vite';
+import { defaultClientConditions } from 'vite';
 
 const getAbsolutePath = (value: string): string =>
   dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)));
@@ -29,11 +30,26 @@ const config: StorybookConfig = {
        checkout has no built dist for them. */
     resolve: {
       ...viteConfig.resolve,
+      conditions: ['@epam/source', ...defaultClientConditions],
       alias: {
         ...viteConfig.resolve?.alias,
         '@epam/ai-dial-chat-shared': resolve(
           dirname(fileURLToPath(import.meta.url)),
           '../../chat-shared/src/index.ts',
+        ),
+        /* Story-only: the borrowing scenes measure the real composer and
+           starters (`ConversationInputHostPage`); the library never imports them. */
+        '@epam/ai-dial-conversation-input': resolve(
+          dirname(fileURLToPath(import.meta.url)),
+          '../../conversation-input/src/index.ts',
+        ),
+        '@epam/ai-dial-attachment-input': resolve(
+          dirname(fileURLToPath(import.meta.url)),
+          '../../attachment-input/src/index.ts',
+        ),
+        '@epam/ai-dial-starter-buttons': resolve(
+          dirname(fileURLToPath(import.meta.url)),
+          '../../starter-buttons/src/index.ts',
         ),
       },
     },

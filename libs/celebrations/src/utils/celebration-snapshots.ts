@@ -15,7 +15,14 @@ interface SnapshotAnimationOptions {
   onStop?: () => void;
   /** Align snapshots with another actor after all copies have been prepared. */
   startTime?: number;
+  /** Share of `durationMs` over which each original fades back in from `restoreAt`. Defaults to `0.04`. */
+  restoreShare?: number;
 }
+
+const DEFAULT_RESTORE_SHARE = 0.04;
+
+/** Share of `durationMs` over which each original fades out before `hideAt`; `hideAt` must not lie below it. */
+export const SNAPSHOT_HIDE_FADE_SHARE = 0.01;
 
 let snapshotId = 0;
 
@@ -109,17 +116,31 @@ const makeSnapshot = (element: HTMLElement, rect: DOMRect): HTMLElement => {
   return wrapper;
 };
 
-/** All borrowing lives in the decorative layer; canceling WAAPI restores the real UI. */
-export const animateCelebrationSnapshots = (
+/** Decorative copies prepared ahead of time, started on another actor's clock. */
+export interface CelebrationSnapshotSession {
+  /** Appends the copies to `host`, invisible, and restores their scroll positions. */
+  attach: (host: HTMLElement) => void;
+  /** Starts the copy and original animations, at `startTime` when given. */
+  start: (startTime?: number) => void;
+  /** Removes the copies and cancels every animation once; later calls do nothing. */
+  stop: () => void;
+}
+
+/**
+ * Clones `targets` without touching them; throws when a target exceeds the
+ * node budget. No original is animated before `start`.
+ */
+export const prepareCelebrationSnapshots = (
   targets: readonly CelebrationSnapshotTarget[],
-  host: HTMLElement,
   options: SnapshotAnimationOptions,
-): (() => void) => {
-  if (!targets.length || typeof host.animate !== 'function')
-    return () => undefined;
-  const copies: HTMLElement[] = [];
+): CelebrationSnapshotSession => {
+  const copies = targets.map(({ element, rect }) =>
+    makeSnapshot(element, rect),
+  );
   const animations: Animation[] = [];
-  let stopped = false;
+  let attachedHost: HTMLElement | null = null;
+  let isStarted = false;
+  let isStopped = false;
   let deadline: ReturnType<typeof setTimeout> | undefined;
   const events = [
     'scroll',
@@ -132,12 +153,14 @@ export const animateCelebrationSnapshots = (
     'visibilitychange',
   ];
   const stop = () => {
-    if (stopped) return;
-    stopped = true;
+    if (isStopped) return;
+    isStopped = true;
     clearTimeout(deadline);
     observer.disconnect();
-    animations.forEach((animation) => animation.cancel());
-    copies.forEach((copy) => copy.remove());
+    animations.splice(0).forEach((animation) => animation.cancel());
+    /* Removed copies are released too, so a retained session holds no DOM. */
+    copies.splice(0).forEach((copy) => copy.remove());
+    attachedHost = null;
     events.forEach((name) =>
       document.removeEventListener(name, onInteraction, true),
     );
@@ -149,7 +172,7 @@ export const animateCelebrationSnapshots = (
     if (
       event.type === 'scroll' &&
       event.target instanceof Node &&
-      host.contains(event.target)
+      attachedHost?.contains(event.target)
     )
       return;
     stop();
@@ -171,12 +194,17 @@ export const animateCelebrationSnapshots = (
     )
       stop();
   });
-  try {
-    targets.forEach(({ element, rect }, index) => {
-      const copy = makeSnapshot(element, rect);
-      copies.push(copy);
+  const attach = (host: HTMLElement) => {
+    if (isStopped || attachedHost) return;
+    attachedHost = host;
+    copies.forEach((copy, index) => {
+      /* Invisible until `start`: the clone's own nodes copy `visibility: visible`. */
+      copy.style.opacity = '0';
       host.appendChild(copy);
-      const originals = [element, ...element.querySelectorAll('*')];
+      const originals = [
+        targets[index].element,
+        ...targets[index].element.querySelectorAll('*'),
+      ];
       const clone = copy.firstElementChild;
       if (!clone) throw new Error('Snapshot is empty');
       const clones = [clone, ...clone.querySelectorAll('*')];
@@ -184,7 +212,17 @@ export const animateCelebrationSnapshots = (
         clones[i].scrollTop = original.scrollTop;
         clones[i].scrollLeft = original.scrollLeft;
       });
+      /* Runs after attachment, as before the split: a decorator may move the copy. */
       options.decorateCopy?.(copy, index);
+    });
+  };
+  const start = (startTime?: number) => {
+    if (isStopped || isStarted) return;
+    if (!attachedHost) throw new Error('Snapshots are not attached');
+    isStarted = true;
+    copies.forEach((copy, index) => {
+      const { element, rect } = targets[index];
+      copy.style.opacity = '';
       animations.push(
         copy.animate(
           options.frames(rect, index).map((frame) => ({
@@ -204,10 +242,17 @@ export const animateCelebrationSnapshots = (
           element.animate(
             [
               { offset: 0, opacity },
-              { offset: hideAt - 0.01, opacity },
+              { offset: hideAt - SNAPSHOT_HIDE_FADE_SHARE, opacity },
               { offset: hideAt, opacity: 0 },
               { offset: options.restoreAt, opacity: 0 },
-              { offset: Math.min(1, options.restoreAt + 0.04), opacity },
+              {
+                offset: Math.min(
+                  1,
+                  options.restoreAt +
+                    (options.restoreShare ?? DEFAULT_RESTORE_SHARE),
+                ),
+                opacity,
+              },
               { offset: 1, opacity },
             ],
             { duration: options.durationMs, fill: 'both' },
@@ -215,9 +260,9 @@ export const animateCelebrationSnapshots = (
         );
       }
     });
-    if (options.startTime !== undefined) {
+    if (startTime !== undefined) {
       animations.forEach((animation) => {
-        animation.startTime = options.startTime ?? null;
+        animation.startTime = startTime;
       });
     }
     observer.observe(document.body, {
@@ -240,9 +285,27 @@ export const animateCelebrationSnapshots = (
     );
     window.addEventListener('resize', stop);
     deadline = setTimeout(stop, options.durationMs);
+  };
+  return { attach, start, stop };
+};
+
+/** All borrowing lives in the decorative layer; canceling WAAPI restores the real UI. */
+export const animateCelebrationSnapshots = (
+  targets: readonly CelebrationSnapshotTarget[],
+  host: HTMLElement,
+  options: SnapshotAnimationOptions,
+): (() => void) => {
+  if (!targets.length || typeof host.animate !== 'function')
+    return () => undefined;
+  let session: CelebrationSnapshotSession | undefined;
+  try {
+    session = prepareCelebrationSnapshots(targets, options);
+    session.attach(host);
+    session.start(options.startTime);
   } catch {
     /* Unsupported animation or an oversized snapshot must leave chat usable. */
-    stop();
+    if (session) session.stop();
+    else options.onStop?.();
   }
-  return stop;
+  return session?.stop ?? (() => undefined);
 };

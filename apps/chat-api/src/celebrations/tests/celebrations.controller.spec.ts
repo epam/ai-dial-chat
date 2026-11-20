@@ -439,8 +439,53 @@ describe('CelebrationsController (integration)', () => {
         .expect(502);
     });
 
+    it('serves a Lottie asset above the former 300 KiB cap', async () => {
+      /* 400 KiB: rejected by the S0–S3 cap, inside the S4 cap of 512 KiB. */
+      const body = Buffer.from(
+        JSON.stringify({ padding: ' '.repeat(400 * 1024) }),
+      );
+      const hash = sha256(body);
+      const prefix = hash.slice(0, 16);
+      const { assetId, file, path } = desktop();
+      const nextId = assetId.replace(/[0-9a-f]{16}$/, prefix);
+      const nextFile = file.replace(/[0-9a-f]{16}\.json$/, `${prefix}.json`);
+      const manifest = readJsonFixture<{
+        assets: Record<string, unknown>[];
+        scenes: { variants: Record<string, unknown>[] }[];
+      }>(NEW_YEAR_MANIFEST);
+      const rewritten = {
+        ...manifest,
+        assets: manifest.assets.map((asset) =>
+          asset.assetId === assetId
+            ? {
+                ...asset,
+                assetId: nextId,
+                file: nextFile,
+                bytes: body.length,
+                sha256: hash,
+              }
+            : asset,
+        ),
+        scenes: manifest.scenes.map((scene) => ({
+          ...scene,
+          variants: scene.variants.map((variant) =>
+            variant.animationAssetId === assetId
+              ? { ...variant, animationAssetId: nextId }
+              : variant,
+          ),
+        })),
+      };
+      await start({
+        ...indexWithManifest(NEW_YEAR_MANIFEST, rewritten),
+        [path.replace(file, nextFile)]: body,
+      });
+      const response = await rawGet(app, `/v1/celebrations/assets/${nextId}`);
+      expect(response.status).toBe(200);
+      expect(sha256(response.body)).toBe(hash);
+    });
+
     it('answers 502 for an asset larger than its cap, whatever it declares', async () => {
-      await start({ [desktop().path]: Buffer.alloc(300 * 1024 + 1, 0x20) });
+      await start({ [desktop().path]: Buffer.alloc(512 * 1024 + 1, 0x20) });
       await request(app.getHttpServer())
         .get(`/v1/celebrations/assets/${desktop().assetId}`)
         .expect(502);

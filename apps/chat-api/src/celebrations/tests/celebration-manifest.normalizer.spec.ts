@@ -168,6 +168,54 @@ describe('normalizeCelebrationManifest', () => {
     expect(phone.placement).toEqual(mobile);
   });
 
+  it('forwards a cat-borrow scene unchanged and keeps its animation opaque', () => {
+    const manifest = newYear();
+    const scene = manifest.scenes[0] as {
+      variants: Record<string, unknown>[];
+    };
+    const catBorrow = {
+      requiredCapabilities: [
+        'lottie-light-svg-v1',
+        'composer-anchor-v1',
+        'interaction-cat-borrow-v1',
+        'static-poster-v1',
+      ],
+      placement: composerAnchor({ scale: { min: 1, max: 1 } }),
+      direction: 'none',
+      variants: [
+        scene.variants[0],
+        {
+          ...scene.variants[1],
+          placement: composerAnchor({ scale: { min: 0.8, max: 0.8 } }),
+        },
+      ],
+    };
+    const result = normalizeCelebrationManifest(
+      withScene(manifest, catBorrow),
+      newYearRef(),
+    );
+    if ('error' in result) throw new Error(result.error);
+
+    const { pack } = result.value;
+    expect(pack.scenes[0]).toMatchObject({
+      requiredCapabilities: catBorrow.requiredCapabilities,
+      placement: catBorrow.placement,
+      direction: 'none',
+    });
+    expect(pack.scenes[0].variants[1].placement).toEqual(
+      catBorrow.variants[1].placement,
+    );
+    /* Markers and slots live inside the animation, which passes by hash only. */
+    expect(pack.assets).toEqual(
+      manifest.assets.map(({ assetId, mediaType, bytes, sha256 }) => ({
+        assetId,
+        mediaType,
+        bytes,
+        sha256,
+      })),
+    );
+  });
+
   it.each<[string, Record<string, unknown>]>([
     [
       'a different template',

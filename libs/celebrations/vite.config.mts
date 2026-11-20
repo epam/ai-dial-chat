@@ -1,6 +1,6 @@
 /// <reference types='vitest' />
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defaultClientConditions, defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 import { createLibTailwindUtilities } from '../../tools/vite-lib-tailwind-utilities.mjs';
 import * as path from 'path';
@@ -19,10 +19,17 @@ const isExternalPeerImport = createIsExternalPeerImport([
   '@epam/ai-dial-chat-shared',
 ]);
 
-export default defineConfig(({ command }) => ({
+export default defineConfig(({ command, mode }) => ({
   // Published libraries must also run with React's production runtime.
   oxc: command === 'build' ? { jsx: { development: false } } : undefined,
   root: import.meta.dirname,
+  /* Tests resolve workspace packages (the stories' ConversationInput and
+     StarterButtons, and what they import) from source: CI builds no dist for
+     them. Kept out of the library build. */
+  resolve:
+    mode === 'test'
+      ? { conditions: ['@epam/source', ...defaultClientConditions] }
+      : undefined,
   cacheDir: '../../node_modules/.vite/libs/celebrations',
   plugins: [
     createLibTailwindUtilities({ root: import.meta.dirname }),

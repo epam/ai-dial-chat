@@ -2,17 +2,33 @@ import { CELEBRATIONS_CLASS } from '../constants/public-class-names';
 
 const GEOMETRY_TOLERANCE = 0.5;
 
-/** Observe selected scene anchors without polling layout during playback. */
+/** A scene target with the rectangle it was measured at. */
+export interface SceneTargetBaseline {
+  /** The observed element. */
+  element: Element;
+  /** Its rectangle when the scene measured it; geometry is compared against it. */
+  rect: DOMRectReadOnly;
+}
+
+/** Observe selected scene anchors without polling layout during playback; a baseline target keeps its measured rectangle. */
 export const observeSceneTargets = (
-  targets: readonly Element[],
+  targets: readonly (Element | SceneTargetBaseline)[],
   onChange: () => void,
   ownedRoots: readonly Element[] = [],
 ): (() => void) => {
   if (!targets.length) return () => undefined;
-  const anchors = [...new Set(targets)].map((element) => ({
-    element,
-    rect: element.getBoundingClientRect(),
-  }));
+  const baselines = new Map<Element, DOMRectReadOnly>();
+  for (const target of targets) {
+    const element = target instanceof Element ? target : target.element;
+    if (!baselines.has(element))
+      baselines.set(
+        element,
+        target instanceof Element
+          ? element.getBoundingClientRect()
+          : target.rect,
+      );
+  }
+  const anchors = [...baselines].map(([element, rect]) => ({ element, rect }));
   let disposed = false;
   const dispose = () => {
     if (disposed) return;

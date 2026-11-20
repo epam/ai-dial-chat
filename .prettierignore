@@ -22,3 +22,8 @@ openspec
 scripts/.agent-docs-fixtures*
 # Hash-pinned celebration fixtures: their sha256 covers the exact bytes
 apps/chat-api/src/celebrations/tests/fixtures
+libs/celebrations/src/stories/fixtures/external
+# Minified Lottie fixtures; cat-borrow-full is byte-identical to the published
+# halloween-default@1.0.0 asset and its sha256 is pinned by a unit test.
+libs/celebrations/src/stories/fixtures/cat-borrow-full.lottie.json
+libs/celebrations/src/stories/fixtures/cat-borrow-spike.lottie.json

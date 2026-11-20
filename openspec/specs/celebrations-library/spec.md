@@ -167,16 +167,16 @@ The library SHALL own a Storybook (`libs/celebrations/.storybook`, React/Vite fr
 
 `@epam/ai-dial-celebrations` SHALL export from `libs/celebrations/src/index.ts` the C3 shapes named in `celebration-pack-contracts` ("Library descriptors and asset-loader callbacks"):
 
-- `CelebrationCapability`, plus `SUPPORTED_CELEBRATION_CAPABILITIES`: the read-only set this release implements, `lottie-light-svg-v1`, `viewport-stage-v1`, `composer-anchor-v1`, `interaction-composer-outline-v1`, `static-poster-v1` and `static-trigger-v1`. `composer-anchor-v1` and `interaction-composer-outline-v1` were added by S3 (#9222).
+- `CelebrationCapability`, plus `SUPPORTED_CELEBRATION_CAPABILITIES`: the read-only set this release implements, `lottie-light-svg-v1`, `viewport-stage-v1`, `composer-anchor-v1`, `interaction-composer-outline-v1`, `interaction-cat-borrow-v1`, `static-poster-v1` and `static-trigger-v1`. `composer-anchor-v1` and `interaction-composer-outline-v1` were added by S3 (#9222). `interaction-cat-borrow-v1` (`CelebrationCapability.InteractionCatBorrowV1`) was added by S4 (#9223).
 - `CelebrationSceneDescriptor`, `CelebrationSceneVariantDescriptor`, `CelebrationPlacementDescriptor` (the union of `CelebrationViewportStagePlacement` and `CelebrationComposerAnchorPlacement`), `CelebrationPackDescriptor`, `CelebrationExternalEventDescriptor` and `CelebrationAssetLoaders`.
 - The string enums `CelebrationDirectionMode` (`none`, `mirror`, `variant`), `CelebrationLayout` (`mobile`, `desktop`), `CelebrationColorScheme` (`light`, `dark`), `CelebrationPlacementTemplate`, `CelebrationStageFit`/`CelebrationStageAlign`, and `CelebrationAnchor`/`CelebrationAnchorEdge`/`CelebrationAnchorFallback`.
 - `CelebrationVariantContext`: `{ direction: 'ltr' | 'rtl'; colorScheme: CelebrationColorScheme }`. Layout comes from the provider's `isMobile`.
 
-Every type reachable from these exports SHALL be exported. `libs/celebrations/README.md` SHALL document each export with a compiling example.
+Every type reachable from these exports SHALL be exported. The adapter's marker parser, retargeting, time-remap and copy-track helpers are internal and SHALL NOT be exported. `libs/celebrations/README.md` SHALL document each export with a compiling example.
 
 #### Scenario: A host checks support
 - **WHEN** a host intersects a scene's `requiredCapabilities` with `SUPPORTED_CELEBRATION_CAPABILITIES`
-- **THEN** `composer-anchor-v1` and `interaction-composer-outline-v1` are reported as supported, and any other `interaction-*` ID as unsupported
+- **THEN** `composer-anchor-v1`, `interaction-composer-outline-v1` and `interaction-cat-borrow-v1` are reported as supported, and any other `interaction-*` ID as unsupported
 
 ### Requirement: Generic Lottie scene renders one descriptor
 
@@ -186,18 +186,27 @@ The library SHALL provide a generic `LottieScene`, built on `useLottieSceneSessi
 - It renders the `viewport-stage-v1` placement inside the provider's existing scene layer, with `fit` and `align`. `start`/`end` resolve against the supplied direction. `direction: mirror` flips the stage horizontally in RTL. The stage is `inert`.
 - It uses the chosen variant's `placement` when present, else the scene's. A variant placement with a different template makes the scene unsupported, so it renders its poster.
 - It renders the `composer-anchor-v1` placement as defined by `celebration-composer-anchoring`. It reads the composer class from `CelebrationEnvironment` `anchors.composer`, measures once after loading, applies the bounded uniform mapping and the fallback, and cancels on layout change or user interaction. When the scene requires `interaction-composer-outline-v1`, it fits that adapter's slots on a private copy of the data.
-- It treats a scene as unsupported, and renders its poster, when any of these holds: its renderer is not `lottie-light-svg-v1`, a required capability is missing from `SUPPORTED_CELEBRATION_CAPABILITIES`, its placement template is unknown, or it requires `interaction-composer-outline-v1` without `composer-anchor-v1` placement.
-- A `composer-anchor-v1` scene in a browser without `ResizeObserver` or `MutationObserver` renders its poster, and loads neither the player nor the data.
+- When the scene requires `interaction-cat-borrow-v1`, it runs that adapter as defined by `celebration-ui-borrowing`, after the anchor mapping and on the same private copy:
+  - It reads `anchors.composer`, `anchors.starterList` and `anchors.welcomeRegion` from `CelebrationEnvironment`. A change to any of them ends the scene.
+  - It prepares the borrowed copies before readiness, starts them from `onPlaybackStarted` on the reported `timelineZeroMs`, and watches every borrowed target as well as the composer.
+- It treats a scene as unsupported, and renders its poster, when any of these holds:
+  - its renderer is not `lottie-light-svg-v1`
+  - a required capability is missing from `SUPPORTED_CELEBRATION_CAPABILITIES`
+  - its placement template is unknown
+  - it requires `interaction-composer-outline-v1` or `interaction-cat-borrow-v1` without `composer-anchor-v1` placement
+  - it requires `interaction-cat-borrow-v1` with a `direction` other than `none`
+  - it requires both adapters
+- A `composer-anchor-v1` scene renders its poster, and loads neither the player nor the data, in a browser without `ResizeObserver` or `MutationObserver`. A cat-borrow scene does the same in a browser without `Element.prototype.animate`.
 - It requests animation data only after the scene mounts, through `loadAnimationData(assetId, signal)`. It aborts the signal on cancellation and ignores a late resolution.
 - It clones the data before the player gets it (`LottieDataOwnership.Shared`). For a `composer-anchor-v1` scene, the mapped and fitted copy is made per preparation and handed over once (`LottieDataOwnership.Transferred`).
-- It uses the descriptor's `loadTimeoutMs`, `readyTimeoutMs` and `playbackDurationMs`. The provider lifetime is `maxLifetimeMs`.
+- It uses the descriptor's `loadTimeoutMs`, `readyTimeoutMs` and `playbackDurationMs`. The provider lifetime is `maxLifetimeMs`. A cat-borrow scene whose selected section is shorter than `playbackDurationMs` completes at that section's end.
 - It rejects at runtime a generated SVG with more than 800 elements, treated as a failure before playback.
-- Under `prefers-reduced-motion: reduce`, it renders only the poster, through `<img alt="" src={resolveImageUrl(posterAssetId)}>`, for `posterDurationMs`. It loads neither the player nor the animation data, and reads no composer geometry.
-- On a failure before playback starts, it renders the poster for `posterDurationMs`, or nothing when `resolveImageUrl` returns `undefined`.
-- On a failure after the first rendered frame, it releases the player, observers and listeners exactly once and renders nothing.
+- Under `prefers-reduced-motion: reduce`, it renders only the poster, through `<img alt="" src={resolveImageUrl(posterAssetId)}>`, for `posterDurationMs`. It loads neither the player nor the animation data, reads no composer geometry and borrows no control.
+- On a failure before playback starts, it renders the poster for `posterDurationMs`, or nothing when `resolveImageUrl` returns `undefined`. Malformed adapter markers or slots and a failed snapshot are failures before playback.
+- On a failure after the first rendered frame, it releases the player, observers, listeners and borrowed copies exactly once, restores every original, and renders nothing.
 - It never calls `fetch`, `import()`s a URL, or injects markup through `innerHTML`.
 
-The scene is direction-aware only through the supplied direction and logical alignment. It reads no language. Its state lives in the component and its `useLottieSceneSession` session. No new context or provider state is added. The playback object stays memoised on the descriptor's timing and placement.
+The scene is direction-aware only through the supplied direction and logical alignment. A cat-borrow scene is direction-aware only through physical geometry. It reads no language. Its state lives in the component and its `useLottieSceneSession` session. No new context or provider state is added. The playback object stays memoised on the descriptor's timing, its placement and the selected adapter.
 
 #### Scenario: Reduced motion
 - **WHEN** reduced motion matches at activation of an external scene
@@ -226,6 +235,14 @@ The scene is direction-aware only through the supplied direction and logical ali
 #### Scenario: Mobile variant placement on a tablet
 - **WHEN** a mobile-layout host plays an anchored scene whose mobile variant declares `anchorRect 300 × 56` and `scale.max 1`, and the composer is 736 px wide
 - **THEN** the mobile variant loads, the stage maps at scale 1 around the variant's anchor, and the characters keep their authored size
+
+#### Scenario: Cat-borrow scene starts its copies on the Lottie clock
+- **WHEN** a cat-borrow scene reaches its first rendered frame with two borrowed buttons
+- **THEN** both copies and both originals' opacity animations start with the reported `timelineZeroMs` as their start time, and no other component re-renders the scene
+
+#### Scenario: Starter anchor changes mid-scene
+- **WHEN** `anchors.starterList` changes while a cat-borrow scene plays
+- **THEN** the scene ends, every original is restored, and nothing renders
 
 ### Requirement: Descriptor factory and scene replacement
 

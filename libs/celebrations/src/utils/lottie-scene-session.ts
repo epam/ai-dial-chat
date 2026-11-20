@@ -86,6 +86,12 @@ export const createLottieSceneSession = <P>({
         attempt(() => element?.replaceChildren());
       }
     }
+    /* A finished session keeps no DOM or preparation alive for its owner. */
+    host = undefined;
+    animation = undefined;
+    context = undefined;
+    prepared = undefined;
+    player = undefined;
     if (!isSilent) onTerminal(outcome);
   };
   const complete = () => finish(LottieSceneOutcome.Completed);
