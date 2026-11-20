@@ -20,7 +20,7 @@ Real composer buttons are 40 px tall, not the 32 px the design assumed. The spik
 
 ## Spike asset (3.2)
 
-The asset was bootstrapped once by a throwaway script (session scratchpad, not committed) from `buildCatPlan`. The input is the one-prize story at the reference geometry above: Send as the prize, side +1, no support, and a drop of 348 px to the floor. The clip covers story time 7.0–16.5 s: perch, hop down, nudge, push, release, fall, rebound, recoil and the start of grooming. It is committed as `libs/celebrations/src/stories/fixtures/cat-borrow-spike.lottie.json`, formatted by Prettier like the other Lottie fixtures.
+The asset was bootstrapped once by a throwaway script (session scratchpad, not committed) from `buildCatPlan`. The input is the one-prize story at the reference geometry above: Send as the prize, side +1, no support, and a drop of 348 px to the floor. The clip covers story time 7.0–16.5 s: perch, hop down, nudge, push, release, fall, rebound, recoil and the start of grooming. It is committed as `libs/celebrations/src/stories/fixtures/cat-borrow-spike.lottie.json`, committed minified (78,208 B), like the published pack assets.
 
 | Measure | Value | v1 cap |
 | --- | --- | --- |

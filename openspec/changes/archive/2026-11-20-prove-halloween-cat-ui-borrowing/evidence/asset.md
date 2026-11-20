@@ -6,7 +6,7 @@ The asset was bootstrapped once by a throwaway script (design D10), which sits i
 - `buildCatPlan` with the model selector alone, for the one-prize story
 - the CSS keyframes of the compiled crossing fallback
 
-The Storybook fixture is `libs/celebrations/src/stories/fixtures/cat-borrow-full.lottie.json`. The published file is task 5.3.
+The Storybook fixture is `libs/celebrations/src/stories/fixtures/cat-borrow-full.lottie.json`. It is committed minified and is byte-identical to the published `cat.eaf1803ee95992a9.json` (task 5.3); `cat-borrow-fixtures.spec.ts` pins its sha256.
 
 | Measure | Value | v1 cap (amended) |
 | --- | --- | --- |

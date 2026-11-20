@@ -1,3 +1,6 @@
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   CAT_BORROW_ANCHOR_PREFIX,
@@ -12,6 +15,25 @@ import spike from '../../stories/fixtures/cat-borrow-spike.lottie.json';
 import { CatBorrowSlot } from '../../types/cat-borrow';
 import { bindStationKeyframes } from '../lottie-anchor-binding';
 import { readNamespacedMarkers } from '../lottie-markers';
+
+/* sha256 of `cat.eaf1803ee95992a9.json` in the themes pack halloween-default@1.0.0. */
+const PUBLISHED_FULL_SHA256 =
+  'eaf1803ee95992a9a740b4606521b7aa69d0d5c2ee85ad859a2ad2e8474d4a5e';
+
+describe('cat-borrow-full fixture', () => {
+  it('is byte-identical to the published halloween-default@1.0.0 asset', () => {
+    const bytes = readFileSync(
+      join(
+        import.meta.dirname,
+        '../../stories/fixtures/cat-borrow-full.lottie.json',
+      ),
+    );
+
+    expect(createHash('sha256').update(bytes).digest('hex')).toBe(
+      PUBLISHED_FULL_SHA256,
+    );
+  });
+});
 
 type Asset = LottieComposition & {
   assets: { id: string; layers: LottieLayer[] }[];
