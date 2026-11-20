@@ -30,6 +30,8 @@ export interface UseCitationMarkdownComponentsCallbacks {
   isPreviewOpen?: boolean;
   /** Whether a marker click previews a single-citation file source directly instead of showing the card; web-link (HTML/XHTML) sources and multi-citation groups keep the card. Defaults to `false`. */
   previewFilesOnMarkerClick?: boolean;
+  /** Whether a marker click always opens the card, even for a single-citation file source or while the preview panel is open; overrides `isPreviewOpen` and `previewFilesOnMarkerClick`. Defaults to `false`. */
+  alwaysShowCard?: boolean;
   /** Typography class of a cited paragraph. Defaults to `'dial-body-paragraph-text'`. */
   paragraphClassName?: string;
   /** Typography class of a cited paragraph while `isCompactTypography` is set. Defaults to `'dial-small-paragraph-text'`. */
@@ -101,6 +103,7 @@ export const useCitationMarkdownComponents = (
     isDownloadEnabled = true,
     isPreviewOpen = false,
     previewFilesOnMarkerClick = false,
+    alwaysShowCard = false,
     paragraphClassName = 'dial-body-paragraph-text',
     compactParagraphClassName = 'dial-small-paragraph-text',
     buildLabels,
@@ -125,6 +128,7 @@ export const useCitationMarkdownComponents = (
       isDownloadEnabled,
       isPreviewOpen,
       previewFilesOnMarkerClick,
+      alwaysShowCard,
       buildLabels,
     });
 
@@ -187,6 +191,7 @@ export const useCitationMarkdownComponents = (
     isDownloadEnabled,
     isPreviewOpen,
     previewFilesOnMarkerClick,
+    alwaysShowCard,
     buildLabels,
     paragraphClassName,
     compactParagraphClassName,

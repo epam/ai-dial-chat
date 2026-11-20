@@ -809,6 +809,7 @@ hide-usage-page
 show-header-logo
 hide-starter-icon
 show-mobile-header-full-logo
+always-show-citation-card
 ```
 
 #### Navigation sidebar
@@ -964,6 +965,13 @@ theme defines no `favicon`.
 `show-mobile-header-full-logo` shows the theme's full `logo` in the mobile
 header instead of its `favicon`. A theme that defines no `logo` keeps the
 `favicon`. The desktop top bar and the navigation sidebar are unaffected.
+
+`always-show-citation-card` makes a click on an inline citation marker always
+open the citation card (Preview, Download and source details). Without it, a
+marker that cites a single file opens the preview directly, and a marker clicked
+while the preview panel is open previews directly too. A marker that groups
+several citations already opens the card; this key gives single-citation
+markers the same behavior. Reference chips are unaffected.
 
 `hide-starter-icon` removes the sparkles icon the UI kit renders by default on
 every conversation-starter pill, leaving a label-only button. It does not

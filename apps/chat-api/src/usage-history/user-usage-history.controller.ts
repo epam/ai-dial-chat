@@ -28,7 +28,11 @@ export class UserUsageHistoryController {
       'totals, one zero-filled entry per UTC date, the top 10 root deployments by spend plus an ' +
       '`other` remainder, and the split by client type when the `usage_client_identity` ' +
       'enrichment is available. Each user request counts once (root spans only), with its ' +
-      "chain-inclusive price. The BFF forwards the caller's session access token to ADAS, whose " +
+      'chain-inclusive price. With `costObject` and `policy` (a `budgets` entry of ' +
+      '`GET /user/limits`), every figure is narrowed to the model calls that budget paid for, ' +
+      'each at its own price, as DIAL Core logs the charged budget (ai-dial-core#2308); ' +
+      'without budget columns in DIAL Analytics the answer is `budget_unsupported`. ' +
+      "The BFF forwards the caller's session access token to ADAS, whose " +
       'row policy confines the rows to the caller; a caller whose ADAS view is not ' +
       'row-restricted gets `forbidden`. When ADAS cannot answer, the response is still `200`, ' +
       'with `available: false` and a `reason`. Not cached.',
@@ -42,7 +46,8 @@ export class UserUsageHistoryController {
   @ApiResponse({
     status: 400,
     description:
-      'Missing or unknown `period`, or an unexpected query parameter',
+      'Missing or unknown `period`, only one of `costObject` and `policy`, an empty or ' +
+      'over-long one, or an unexpected query parameter',
   })
   @ApiResponse({
     status: 401,
@@ -53,6 +58,12 @@ export class UserUsageHistoryController {
     @Query() query: GetUserUsageHistoryQueryDto,
   ): Promise<UserUsageHistoryResponseDto> {
     const { at } = req.user as SessionUser;
-    return this.usageHistoryService.getUsageHistory(at, query.period);
+    const { period, costObject, policy } = query;
+    /* The DTO validates both budget parameters as soon as either is present. */
+    const budget =
+      costObject !== undefined && policy !== undefined
+        ? { costObject, policy }
+        : undefined;
+    return this.usageHistoryService.getUsageHistory(at, period, budget);
   }
 }

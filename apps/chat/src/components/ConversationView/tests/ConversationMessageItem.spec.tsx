@@ -266,7 +266,8 @@ describe('ConversationMessageItem', () => {
       (feature) =>
         feature !== OverlayFeature.HideEditUserMessage &&
         feature !== OverlayFeature.HideRegenerateAssistantMessage &&
-        feature !== OverlayFeature.HideDeleteUserMessage,
+        feature !== OverlayFeature.HideDeleteUserMessage &&
+        feature !== OverlayFeature.AlwaysShowCitationCard,
     );
   });
 
@@ -1014,6 +1015,52 @@ describe('ConversationMessageItem', () => {
         }),
         expect.any(String),
       );
+    });
+
+    it('opens the citation card for a single file citation when always-show-citation-card is enabled', async () => {
+      vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
+        (feature) => feature === OverlayFeature.AlwaysShowCitationCard,
+      );
+      const message: Message = {
+        role: MessageRole.Assistant,
+        content: 'Alice did X<cit data-id="e1"></cit>',
+        timestamp: '2026-09-11T10:00:00Z',
+        custom_content: {
+          annotations: [
+            {
+              target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+              body: {
+                title: 'report.pdf',
+                selector: {
+                  type: 'pdf_bbox',
+                  page: 1,
+                  x1: 0,
+                  y1: 0,
+                  x2: 0,
+                  y2: 0,
+                },
+                source: {
+                  type: 'attachment',
+                  attachment: {
+                    type: 'application/pdf',
+                    url: 'https://example.com/report.pdf',
+                  },
+                },
+              },
+            },
+          ],
+        },
+      };
+
+      render(
+        <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+      );
+
+      await userEvent.click(
+        screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+      );
+      expect(screen.getByRole('dialog')).toBeTruthy();
+      expect(mockOpenCanvas).not.toHaveBeenCalled();
     });
 
     it('keeps two distinct cit ids independently previewable when their annotations share quote text and source URL', async () => {

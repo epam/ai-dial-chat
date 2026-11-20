@@ -14,7 +14,7 @@ import {
  */
 describe('KNOWN_UI_FEATURES', () => {
   it('has exactly 57 members, one per OverlayFeature key', () => {
-    expect(KNOWN_UI_FEATURES.size).toBe(57);
+    expect(KNOWN_UI_FEATURES.size).toBe(58);
   });
 
   it('includes representative transferable keys', () => {

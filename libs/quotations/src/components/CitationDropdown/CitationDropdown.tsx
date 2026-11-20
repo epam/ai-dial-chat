@@ -36,6 +36,8 @@ export interface CitationDropdownProps {
   isPreviewOpen?: boolean;
   /** Whether a marker click previews a single-citation file source directly instead of showing the card; web-link (HTML/XHTML) sources and multi-citation groups keep the card. Defaults to `false`. */
   previewFilesOnMarkerClick?: boolean;
+  /** Whether a marker click always opens the card, even for a single-citation file source or while the host's preview panel is open; overrides `isPreviewOpen` and `previewFilesOnMarkerClick`. Defaults to `false`. */
+  alwaysShowCard?: boolean;
   /** Optional icon rendered before the marker's label. */
   icon?: ReactNode;
   /** Optional icon rendered in the card header. When absent, no header icon is shown. */
@@ -59,6 +61,7 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
   isDownloadEnabled = true,
   isPreviewOpen = false,
   previewFilesOnMarkerClick = false,
+  alwaysShowCard = false,
   icon,
   headerIcon,
   cardLabels,
@@ -99,8 +102,9 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
     const isSingleFileCitation =
       isSingleCitation && !isWebLinkAnnotation(annotation);
     const previewsDirectly =
-      (isPreviewOpen && isSingleCitation) ||
-      (previewFilesOnMarkerClick && isSingleFileCitation);
+      !alwaysShowCard &&
+      ((isPreviewOpen && isSingleCitation) ||
+        (previewFilesOnMarkerClick && isSingleFileCitation));
     if (previewsDirectly && handlePreview) {
       handlePreview(annotation);
       return;
@@ -109,6 +113,7 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
   }, [
     isPreviewOpen,
     previewFilesOnMarkerClick,
+    alwaysShowCard,
     group.annotations.length,
     handlePreview,
     annotation,

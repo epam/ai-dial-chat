@@ -71,6 +71,8 @@ interface CitationDropdownProps {
 
 When `previewFilesOnMarkerClick` is `true` (defaults to `false`), a marker click SHALL likewise preview the active annotation directly — calling `onPreview` exactly once and opening no card — whenever a preview action exists for it (`onPreview` is provided and `isPreviewable` does not return `false`), the group holds exactly one annotation, and the annotation is not a web link. An annotation is a web link when its source attachment type is `text/html` or `application/xhtml+xml`; this classification SHALL be the single helper `isWebLinkAnnotation` in `libs/quotations/src/utils/citation-source-kind.ts`, shared with the card's "Open in browser" vs "Download" label so the two cannot disagree. A web-link annotation, one with no preview action, or a group holding more than one annotation SHALL open the card exactly as when the flag is `false` — the card's switcher is the only way to reach a grouped marker's other citations, which may point at different files. The flag is a plain boolean; DIAL-specific previewability stays in the host's `isPreviewable` callback.
 
+When `alwaysShowCard` is `true` (defaults to `false`), a marker click SHALL always open the card, overriding `isPreviewOpen` and `previewFilesOnMarkerClick`, so a single-citation marker offers the same Preview/Download/details card as a multi-citation one; Preview stays available from the card. The chat app SHALL set it from the `always-show-citation-card` UI feature (`OverlayFeature.AlwaysShowCitationCard`), off by default, for inline message citations only.
+
 The chat app SHALL pass `previewFilesOnMarkerClick: true` for inline message citations (`citationCallbacks` in `apps/chat/src/components/ConversationView/ConversationMessageItem.tsx`) and SHALL NOT pass it to the reference-chip `CitationDropdown` row, so reference chips keep opening the card.
 
 `useCitationMarkdownComponents` SHALL accept an optional host-supplied
@@ -156,6 +158,11 @@ DIAL-specific classification SHALL remain outside `libs/quotations`.
 
 - **WHEN** `isPreviewOpen` is `true` (for example, a document was opened from the Sources panel) and the user clicks a marker whose group holds two annotations, with or without `previewFilesOnMarkerClick`
 - **THEN** the citation card opens with its Previous/Next switcher, `onPreview` is not called by the click, and choosing Next then Preview calls `onPreview` once with the second annotation
+
+#### Scenario: alwaysShowCard opens the card for a single citation
+
+- **WHEN** `alwaysShowCard` is `true` and the user clicks a marker holding one PDF annotation, with the canvas open or closed
+- **THEN** the citation card opens, `onPreview` is not called by the click, and the card's Preview button calls `onPreview` once
 
 #### Scenario: Flag omitted preserves the card-first behaviour
 

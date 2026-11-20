@@ -57,6 +57,22 @@ const SCHEMA_WITH_CLIENT: FakeResponse = {
   },
 };
 
+const SCHEMA_WITH_BUDGET: FakeResponse = {
+  status: 200,
+  body: {
+    entity: 'dial_usage_log',
+    fields: [
+      { name: 'deployment' },
+      { name: 'usage_client_identity.client_type' },
+      { name: 'budget_cost_object' },
+      { name: 'budget_policy' },
+      { name: 'budget_outcome' },
+    ],
+  },
+};
+
+const BUDGET = { costObject: 'engineering', policy: 'policies/company/pro' };
+
 const SCHEMA_WITHOUT_CLIENT: FakeResponse = {
   status: 200,
   body: { entity: 'dial_usage_log', fields: [{ name: 'deployment' }] },
@@ -508,6 +524,119 @@ describe('UsageHistoryService', () => {
         totals: { requests: 42 },
       });
       expect('byClient' in result).toBe(false);
+    });
+  });
+
+  describe('budget scope', () => {
+    const budgetHistory = () =>
+      service.getUsageHistory(TOKEN, UsageHistoryPeriod.Month, BUDGET);
+
+    const filters = (): string[] =>
+      analytics.requests
+        .filter((request) => request.path === '/v1/queries/execute')
+        .map((request) =>
+          JSON.stringify((request.body as { filter: unknown }).filter),
+        );
+
+    const selects = (): string[] =>
+      analytics.requests
+        .filter((request) => request.path === '/v1/queries/execute')
+        .map((request) =>
+          JSON.stringify((request.body as { select: unknown }).select),
+        );
+
+    it('narrows every query to the paid model calls of the budget and echoes it', async () => {
+      analytics.setHandler(adas({ schema: SCHEMA_WITH_BUDGET }));
+
+      await expect(budgetHistory()).resolves.toMatchObject({
+        available: true,
+        budget: BUDGET,
+        totals: { spend: 1.234568, requests: 42 },
+        byClient: [
+          { client: 'chat', spend: 1, requests: 35 },
+          { client: 'claudecode', spend: 0.234568, requests: 7 },
+        ],
+      });
+      expect(executed(analytics).sort()).toEqual(
+        ['clients', 'daily', 'dailyModels', 'ranking'].sort(),
+      );
+      for (const filter of filters()) {
+        expect(filter).toContain(
+          '{"op":"eq","args":[{"type":"field","name":"budget_cost_object"},{"type":"value","value_type":"string","value":"engineering"}]}',
+        );
+        expect(filter).toContain(
+          '{"op":"eq","args":[{"type":"field","name":"budget_policy"},{"type":"value","value_type":"string","value":"policies/company/pro"}]}',
+        );
+        expect(filter).toContain(
+          '{"op":"eq","args":[{"type":"field","name":"budget_outcome"},{"type":"value","value_type":"string","value":"paid"}]}',
+        );
+        expect(filter).not.toContain('parent_deployment');
+      }
+      for (const select of selects()) {
+        expect(select).toContain('"name":"deployment_price"');
+        expect(select).not.toContain('total_price');
+      }
+    });
+
+    it('answers budget_unsupported and runs no query without the budget columns', async () => {
+      analytics.setHandler(adas({ schema: SCHEMA_WITH_CLIENT }));
+
+      await expect(budgetHistory()).resolves.toEqual({
+        available: false,
+        reason: 'budget_unsupported',
+      });
+      expect(executed(analytics)).toEqual([]);
+      expect(logged()).toContain('no budget columns');
+    });
+
+    it('still applies the row-restriction guard first', async () => {
+      analytics.setHandler(
+        adas({
+          schema: SCHEMA_WITH_BUDGET,
+          table: {
+            status: 200,
+            body: {
+              name: 'dial_usage_log',
+              permissions: { read: true, rows_restricted: false },
+            },
+          },
+        }),
+      );
+
+      await expect(budgetHistory()).resolves.toEqual({
+        available: false,
+        reason: 'forbidden',
+      });
+      expect(executed(analytics)).toEqual([]);
+    });
+
+    it.each([
+      [403, 'forbidden'],
+      [502, 'unavailable'],
+    ])(
+      'answers %s schema reads with %s and runs no query',
+      async (status, reason) => {
+        analytics.setHandler(adas({ schema: { status } }));
+
+        await expect(budgetHistory()).resolves.toEqual({
+          available: false,
+          reason,
+        });
+        expect(executed(analytics)).toEqual([]);
+      },
+    );
+
+    it('does not echo a budget for the user scope', async () => {
+      analytics.setHandler(adas({ schema: SCHEMA_WITH_BUDGET }));
+
+      const result = await history();
+
+      expect(result.available).toBe(true);
+      expect('budget' in result).toBe(false);
+      for (const filter of filters()) {
+        expect(filter).toContain('parent_deployment');
+        expect(filter).not.toContain('budget_');
+      }
     });
   });
 });
