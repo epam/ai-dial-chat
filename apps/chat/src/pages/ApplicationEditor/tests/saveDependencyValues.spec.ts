@@ -38,6 +38,12 @@ describe('save panel dependency values', () => {
         makeContext(),
       ),
     ).toBeUndefined();
+    expect(
+      getValues?.(
+        { properties: {}, requiredProperties: [] },
+        makeContext('https://schema/x'),
+      ),
+    ).toBeUndefined();
   });
 
   it('is offered by no other kind', () => {

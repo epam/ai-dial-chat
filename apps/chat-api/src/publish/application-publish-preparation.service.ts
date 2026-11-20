@@ -19,16 +19,14 @@ import {
   type ApplicationPublishCopy,
 } from './application-publish-copy.service';
 import { PublishDependenciesService } from './dependencies/publish-dependencies.service';
+import { selectPublishableDependencies } from './dependencies/publish-dependency.util';
 import { replaceSchemaResources } from './dependencies/schema-resource-collector.util';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
 import {
   ResourceDependencyType,
   type ResourceDependencyDto,
 } from './dto/resource-dependency.dto';
-import {
-  getPublishedDependencyTargetUrl,
-  getResourceBucket,
-} from './publish-target.util';
+import { getPublishedDependencyTargetUrl } from './publish-target.util';
 
 /** One `ADD` resource of the publication, for a dependency that still has to be published. */
 export interface DependencyPublicationResource {
@@ -103,26 +101,6 @@ export const CATALOG_TYPE_BY_DEPENDENCY: Partial<
   [ResourceDependencyType.Prompt]: CatalogEntityType.Prompt,
   [ResourceDependencyType.Skill]: CatalogEntityType.Skill,
 };
-
-/**
- * The dependencies that are added to the request and rewritten. A `file` is
- * left out on purpose: DIAL Core copies and relinks every FILE-typed value a
- * schema marks when it copies the application, so adding it here as well would
- * publish it twice. A dependency in another user's bucket is left as it is, as
- * the files of a published conversation are: publishing it would publish a
- * resource its owner never chose to share.
- * @param dependencies - the application's private dependencies
- * @param ownBucket - the caller's own bucket
- */
-export const selectPublishableDependencies = (
-  dependencies: ResourceDependencyDto[],
-  ownBucket: string,
-): ResourceDependencyDto[] =>
-  dependencies.filter(
-    (dependency) =>
-      dependency.type !== ResourceDependencyType.File &&
-      getResourceBucket(dependency.id) === ownBucket,
-  );
 
 /**
  * Prepares the publication of an application together with its first-level

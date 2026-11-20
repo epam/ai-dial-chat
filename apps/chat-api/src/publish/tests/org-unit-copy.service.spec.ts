@@ -36,6 +36,7 @@ const makeService = () => {
   const getToolSetMetadata = vi.fn();
   const getPromptMetadata = vi.fn();
   const listSkillMetadata = vi.fn();
+  const getFileMetadata = vi.fn();
   const dialClient = {
     client: {
       copyResource,
@@ -44,6 +45,7 @@ const makeService = () => {
       getToolSetMetadata,
       getPromptMetadata,
       listSkillMetadata,
+      getFileMetadata,
     },
   } as unknown as DialClientService;
   const applicationsService = {
@@ -83,6 +85,7 @@ const makeService = () => {
     getToolSetMetadata,
     getPromptMetadata,
     listSkillMetadata,
+    getFileMetadata,
     preparation,
     orgUnitsService,
     applicationsService,
@@ -548,6 +551,38 @@ describe('OrgUnitCopyService', () => {
 
       expect(made.preparation.stage.mock.calls[0][5]).toBeNull();
       expect(copied(made)).toEqual([ICON_TARGET, APP_TARGET]);
+    });
+
+    it('reuses an icon that is already there when its copy conflicts', async () => {
+      const made = makeService();
+      made.getCustomApplication.mockResolvedValue({
+        data: { iconUrl: ICON },
+        response: { status: 200 },
+      });
+      made.copyResource
+        .mockResolvedValueOnce(err(409))
+        .mockResolvedValue({ response: { status: 200 } });
+      made.getFileMetadata.mockResolvedValue({ response: { status: 200 } });
+
+      await expect(run(made.service)).resolves.toEqual({ id: APP_TARGET });
+
+      expect(made.preparation.stage.mock.calls[0][5]).toBe(ICON_TARGET);
+    });
+
+    it('drops the icon when its copy conflicts with nothing at the target', async () => {
+      const made = makeService();
+      made.getCustomApplication.mockResolvedValue({
+        data: { iconUrl: ICON },
+        response: { status: 200 },
+      });
+      made.copyResource
+        .mockResolvedValueOnce(err(409))
+        .mockResolvedValue({ response: { status: 200 } });
+      made.getFileMetadata.mockResolvedValue({ response: { status: 404 } });
+
+      await expect(run(made.service)).resolves.toEqual({ id: APP_TARGET });
+
+      expect(made.preparation.stage.mock.calls[0][5]).toBeNull();
     });
 
     it('answers 403 naming the namespace and copies nothing when a dependency namespace is missing', async () => {

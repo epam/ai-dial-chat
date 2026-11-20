@@ -45,6 +45,8 @@ The request and the success response (`{ id }`, the id of the application in the
 
 Before it copies anything, the backend SHALL check that the caller holds `write` in the destination folder's org unit on the namespace of the application and on the namespace of every dependency it is about to copy (`applications`, `toolsets`, `prompts`, `skills`; a reused dependency needs none). If any is missing it SHALL answer `403` with a message that names the missing namespaces, and SHALL NOT write anything. The check SHALL use the same unit rights the Save panel uses (`org-units-api`, `org-units-folder-permissions`). It SHALL be skipped, leaving DIAL Core as the authority, when the caller's rights cannot be read or org units are off for the deployment.
 
+The Save panel's hint before the save is broader than this check: it judges every dependency the dependencies endpoint lists (the caller's own and files), including one whose copy already exists in the unit and so would be reused, which the server needs no right for. A folder can therefore be disabled in the panel for a namespace the server would not need; the server's check after the save remains the authority.
+
 #### Scenario: No write on the dependency's namespace
 - **GIVEN** the user may write `applications` in unit `Delivery` but not `toolsets`, and the saved application refers to a private toolset
 - **WHEN** the application is saved into `Delivery/Teams`
@@ -60,7 +62,7 @@ Before it copies anything, the backend SHALL check that the caller holds `write`
 
 ### Requirement: The icon is copied when the user may write files, and never blocks the write
 
-When the application's `iconUrl` is an uploaded file in the caller's own bucket, the backend SHALL copy it to `files/public/{folderPath}/{applicationResourceName}/{icon file name}` and SHALL write the application with `iconUrl` pointing at that copy, provided the caller holds `write` on `files` in the destination folder's unit. Without that right, or when copying the icon fails, the application SHALL still be written, with its icon reference removed from the shared copy (the member sees the default icon); the user's own application keeps its icon. An `iconUrl` that is a theme icon name, an absolute URL, or a file outside the caller's bucket SHALL be left as it is.
+When the application's `iconUrl` is an uploaded file in the caller's own bucket, the backend SHALL copy it to `files/public/{folderPath}/{applicationResourceName}/{icon file name}` and SHALL write the application with `iconUrl` pointing at that copy, provided the caller holds `write` on `files` in the destination folder's unit. Without that right, or when copying the icon fails, the application SHALL still be written, with its icon reference removed from the shared copy (the member sees the default icon); the user's own application keeps its icon. An `iconUrl` that is a theme icon name, an absolute URL, or a file outside the caller's bucket SHALL be left as it is. When copying the icon conflicts with a file already at the target, that file SHALL be reused only if it is present there; otherwise the icon SHALL be dropped as for any failed copy. A retry whose icon has the same file name as an earlier copy keeps the earlier file.
 
 #### Scenario: Icon copied with write on files
 - **GIVEN** an application with an uploaded icon and `write` on `files` in the unit

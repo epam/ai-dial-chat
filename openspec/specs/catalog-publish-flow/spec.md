@@ -503,7 +503,7 @@ i18n keys: `publish.dependenciesTitle`, `publish.dependenciesDescription`, `publ
 
 ### Requirement: The Save panel shows the private dependencies of an unsaved schema app
 
-`POST /api/v1/catalog/application-values/publish-dependencies` (`PublishDependenciesController`) SHALL accept `{ schemaId, properties }` (`ApplicationValuesDependenciesRequestDto`, `properties` a non-empty object of at most 64 KiB serialized) and return a `ResourceDependenciesResultDto` built by `ApplicationDependencyResolver.resolveFromValues` from the application type schema and the given values, without reading any application from DIAL Core. Like the entity route it SHALL answer an empty list when the schema cannot be read.
+`POST /api/v1/catalog/application-values/publish-dependencies` (`PublishDependenciesController`) SHALL accept `{ schemaId, properties }` (`ApplicationValuesDependenciesRequestDto`, `properties` a non-empty object of at most 64 KiB serialized) and return a `ResourceDependenciesResultDto` built by `ApplicationDependencyResolver.resolveFromValues` from the application type schema and the given values, without reading any application from DIAL Core. Like the entity route it SHALL answer an empty list when the schema cannot be read. The list SHALL hold the dependencies that travel with the application when it is written into an org unit: those in the caller's own bucket, and files; a resource in another user's bucket SHALL be left out, as the copy leaves it. While the caller's bucket is not resolved the list SHALL NOT be filtered. `schemaId` SHALL be accepted only when it holds URL characters (no whitespace or control character), because it reaches a DIAL Core request, a cache key and a log line; anything else SHALL answer `400`.
 
 `useResourceSavePanel` (`libs/chat-hooks/src/catalog/useResourceSavePanel/useResourceSavePanel.ts`) SHALL accept an optional `loadDependencies` and return `panelProps.dependencies`: the loaded list while the committed destination is under the Organization root, otherwise an empty list. The list SHALL be empty while loading and after a failed read, SHALL ignore a read that finishes after the destination left the Organization root or the panel closed, and SHALL never disable Save. It SHALL apply to a public-folder save that sends a publication request and to a direct write into an org unit alike.
 
@@ -528,6 +528,19 @@ i18n keys: `publish.dependenciesTitle`, `publish.dependenciesDescription`, `publ
 #### Scenario: Failed read
 - **WHEN** the dependencies request rejects
 - **THEN** the list is empty and Save stays enabled
+
+#### Scenario: Resource of another user
+- **GIVEN** a schema app whose values refer to a skill in another user's bucket and to a prompt in the caller's own bucket
+- **WHEN** the dependencies of the values are requested
+- **THEN** only the prompt is listed
+
+#### Scenario: Schema id with a line break
+- **WHEN** the request carries a `schemaId` containing a line break or a space
+- **THEN** the response is `400` and nothing is resolved
+
+#### Scenario: Empty form
+- **WHEN** a schema app's form holds no values
+- **THEN** the panel makes no dependencies request
 
 #### Scenario: Project publish panel
 - **WHEN** the user opens Publish for a project

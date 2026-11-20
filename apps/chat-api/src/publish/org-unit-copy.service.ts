@@ -13,6 +13,7 @@ import {
   DialResourceType,
   assertOwnBucket,
   buildFolderResourcePath,
+  existsQuietly,
   getResourceLeaf,
   parseDialResourceUrl,
   resourceExists,
@@ -375,6 +376,7 @@ export class OrgUnitCopyService {
             mayWriteFiles,
             folderPath,
             leaf,
+            headers,
             transfer,
           );
     const copy = await this.preparation.stage(
@@ -431,6 +433,7 @@ export class OrgUnitCopyService {
    * @param mayWriteFiles - whether the caller may write `files` in the unit; `false` skips the copy
    * @param folderPath - plain target folder
    * @param leaf - the application's target name
+   * @param headers - the caller's auth headers
    * @param transfer - the copy call
    * @returns the url the staging copy's `iconUrl` takes, or `null` when the icon is dropped
    */
@@ -439,6 +442,7 @@ export class OrgUnitCopyService {
     mayWriteFiles: boolean,
     folderPath: string,
     leaf: string,
+    headers: ReturnType<typeof getBearerAuthHeaders>,
     transfer: (
       type: DialResourceType,
       from: DialResourceLocation,
@@ -454,8 +458,18 @@ export class OrgUnitCopyService {
         parseDialResourceUrl(targetUrl),
       );
     } catch (err) {
-      /* An icon already copied by an earlier attempt is reused. */
-      if (err instanceof ConflictException) return targetUrl;
+      /* An icon already copied by an earlier attempt is reused, when it is really there. */
+      if (
+        err instanceof ConflictException &&
+        (await existsQuietly(
+          this.dialClient.client,
+          DialResourceType.Files,
+          parseDialResourceUrl(targetUrl),
+          headers,
+        ))
+      ) {
+        return targetUrl;
+      }
       this.logger.warn(
         `Copying the icon "${iconUrl}" failed, the application is written without it: ${
           err instanceof Error ? err.message : 'unknown error'

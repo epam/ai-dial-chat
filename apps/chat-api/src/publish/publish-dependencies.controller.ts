@@ -74,10 +74,11 @@ export class PublishDependenciesController {
     operationId: 'getApplicationValuesPublishDependencies',
     summary: 'List the private dependencies of unsaved application values',
     description:
-      'Returns the references in the given application property values that are not in the public bucket. ' +
-      'Unlike the entity route it reads no application from DIAL Core, only the application type schema, so ' +
-      'it works before the first save. The list is advisory: when it cannot be resolved the response is an ' +
-      'empty list rather than an error.',
+      'Returns the references in the given application property values that are not in the public bucket ' +
+      'and travel with the application when it is written into an org unit: the caller’s own resources and ' +
+      'files; resources in another user’s bucket are left out. Unlike the entity route it reads no application ' +
+      'from DIAL Core, only the application type schema, so it works before the first save. The list is ' +
+      'advisory: when it cannot be resolved the response is an empty list rather than an error.',
   })
   @ApiResponse({
     status: 200,
@@ -97,10 +98,11 @@ export class PublishDependenciesController {
     @Req() req: Request,
     @Body() { schemaId, properties }: ApplicationValuesDependenciesRequestDto,
   ): Promise<ResourceDependenciesResultDto> {
-    const { at, sub } = req.user as SessionUser;
+    const { at, sub, bucket } = req.user as SessionUser;
     return this.publishDependenciesService.getApplicationValueDependencies(
       at,
       sub,
+      bucket,
       schemaId,
       properties,
     );

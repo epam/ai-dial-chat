@@ -124,7 +124,7 @@ describe('SaveToFolderPanel', () => {
 
   it('announces a submit error through a region that stays mounted', () => {
     const { rerender } = renderPanel();
-    const region = screen.getByRole('alert');
+    const region = screen.getAllByRole('alert').at(-1) as HTMLElement;
     expect(region.textContent).toBe('');
     rerender(
       <SaveToFolderPanel
@@ -139,7 +139,7 @@ describe('SaveToFolderPanel', () => {
         submitError="Saving failed"
       />,
     );
-    expect(screen.getByRole('alert')).toBe(region);
+    expect(screen.getAllByRole('alert').at(-1)).toBe(region);
     expect(region.textContent).toBe('Saving failed');
   });
 
@@ -303,6 +303,30 @@ describe('SaveToFolderPanel — versions history', () => {
       reason.compareDocumentPosition(versionHeading) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  it('announces the reason through a region that is mounted before it and holds no nested alert', () => {
+    const { rerender } = renderPanel({ getDisabledReason: () => undefined });
+    const [region] = screen.getAllByRole('alert');
+    expect(region.textContent).toBe('');
+
+    rerender(
+      <SaveToFolderPanel
+        view={SaveToFolderView.Main}
+        resource={{ title: 'Design Review Agent', version: '1.0.0' }}
+        roots={roots}
+        destination={{ rootKey: 'personal', path: ['Design', 'Audit'] }}
+        onDestinationChange={vi.fn()}
+        onCreateFolder={vi.fn()}
+        onChangeFolderClick={vi.fn()}
+        onPendingDestinationChange={vi.fn()}
+        getDisabledReason={() => 'You have no access to save here.'}
+      />,
+    );
+
+    expect(screen.getAllByRole('alert')).toHaveLength(2);
+    expect(screen.getAllByRole('alert')[0]).toBe(region);
+    expect(region.textContent).toBe('You have no access to save here.');
   });
 
   it('shows no reason for a usable committed destination', () => {

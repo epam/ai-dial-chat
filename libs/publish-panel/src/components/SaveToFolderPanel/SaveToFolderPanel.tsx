@@ -270,15 +270,18 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
             onClick={onChangeFolderClick}
           />
         </div>
-        {destinationDisabledReason && (
-          <div id={destinationReasonId}>
-            <Notification
-              type={NotificationType.SectionMessage}
-              variant={NotificationVariant.Error}
-              message={destinationDisabledReason}
-            />
-          </div>
-        )}
+        <LiveRegion politeness={LiveRegionPoliteness.Assertive}>
+          {destinationDisabledReason && (
+            <div id={destinationReasonId}>
+              <Notification
+                type={NotificationType.SectionMessage}
+                variant={NotificationVariant.Error}
+                role="none"
+                message={destinationDisabledReason}
+              />
+            </div>
+          )}
+        </LiveRegion>
         {destinationNote && (
           <p className={mergeClasses(noteClassName, styles.note)}>
             {destinationNote}

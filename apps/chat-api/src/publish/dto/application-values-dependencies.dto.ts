@@ -3,6 +3,7 @@ import {
   IsNotEmptyObject,
   IsObject,
   IsString,
+  Matches,
   MaxLength,
   Validate,
   ValidatorConstraint,
@@ -14,6 +15,9 @@ export const MAX_APPLICATION_VALUES_LENGTH = 64 * 1024;
 
 /** Longest accepted application type schema id. */
 const MAX_SCHEMA_ID_LENGTH = 2048;
+
+/** The characters of a URL: a schema id reaches a DIAL Core request, a cache key and a log line, so no whitespace or control character is accepted. */
+const SCHEMA_ID_PATTERN = /^[\w.~:/?#@!$&'()*+,;=%[\]-]+$/;
 
 /** Rejects a value whose JSON form is larger than {@link MAX_APPLICATION_VALUES_LENGTH}. */
 @ValidatorConstraint({ name: 'maxSerializedLength', async: false })
@@ -38,6 +42,9 @@ export class ApplicationValuesDependenciesRequestDto {
   })
   @IsString()
   @MaxLength(MAX_SCHEMA_ID_LENGTH)
+  @Matches(SCHEMA_ID_PATTERN, {
+    message: 'schemaId must contain only URL characters',
+  })
   schemaId!: string;
 
   @ApiProperty({

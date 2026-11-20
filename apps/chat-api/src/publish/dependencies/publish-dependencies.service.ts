@@ -6,6 +6,7 @@ import {
 } from '../dto/resource-dependency.dto';
 import { ApplicationDependencyResolver } from './application-dependency.resolver';
 import type { DependencyResolver } from './dependency-resolver';
+import { selectDependenciesSavedWithApplication } from './publish-dependency.util';
 
 /**
  * Lists the direct dependencies of a catalog entity that are not in the public
@@ -86,15 +87,19 @@ export class PublishDependenciesService {
 
   /**
    * Lists the private dependencies of an application that is not saved yet,
-   * from the values of its form. Best-effort like {@link getDependencies}.
+   * from the values of its form, that travel with the application when it is
+   * written into an org unit: the caller's own, and files. Best-effort like
+   * {@link getDependencies}.
    * @param accessToken - caller's bearer token
    * @param userSub - caller's session subject, used to scope cached schemas
+   * @param userBucket - caller's own bucket, empty while it is not resolved
    * @param schemaId - the application type schema the values belong to
    * @param properties - the application property values
    */
   async getApplicationValueDependencies(
     accessToken: string,
     userSub: string,
+    userBucket: string,
     schemaId: string,
     properties: Record<string, unknown>,
   ): Promise<ResourceDependenciesResultDto> {
@@ -112,6 +117,11 @@ export class PublishDependenciesService {
         }`,
       );
     }
-    return { dependencies };
+    return {
+      dependencies: selectDependenciesSavedWithApplication(
+        dependencies,
+        userBucket,
+      ),
+    };
   }
 }

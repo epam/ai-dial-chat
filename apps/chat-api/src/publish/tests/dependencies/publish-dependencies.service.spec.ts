@@ -122,6 +122,7 @@ describe('PublishDependenciesService', () => {
       const result = await service.getApplicationValueDependencies(
         'secret-token',
         'user-1',
+        'b',
         'https://schema/form',
         { a: 1 },
       );
@@ -135,12 +136,49 @@ describe('PublishDependenciesService', () => {
       expect(resolve).not.toHaveBeenCalled();
     });
 
+    it('leaves out the dependencies of another bucket and keeps files', async () => {
+      const foreign = { ...DEPENDENCY, id: 'skills/other/Plan', name: 'Plan' };
+      const file = {
+        id: 'files/other/icon.png',
+        name: 'icon.png',
+        type: ResourceDependencyType.File,
+        location: '',
+      };
+      resolveFromValues.mockResolvedValue([DEPENDENCY, foreign, file]);
+
+      const result = await service.getApplicationValueDependencies(
+        'secret-token',
+        'user-1',
+        'b',
+        'https://schema/form',
+        { a: 1 },
+      );
+
+      expect(result).toEqual({ dependencies: [DEPENDENCY, file] });
+    });
+
+    it('lists every dependency while the caller bucket is not resolved', async () => {
+      const foreign = { ...DEPENDENCY, id: 'skills/other/Plan', name: 'Plan' };
+      resolveFromValues.mockResolvedValue([DEPENDENCY, foreign]);
+
+      const result = await service.getApplicationValueDependencies(
+        'secret-token',
+        'user-1',
+        '',
+        'https://schema/form',
+        { a: 1 },
+      );
+
+      expect(result).toEqual({ dependencies: [DEPENDENCY, foreign] });
+    });
+
     it('returns an empty list and logs without the token when the resolver fails', async () => {
       resolveFromValues.mockRejectedValue(new Error('boom'));
 
       const result = await service.getApplicationValueDependencies(
         'secret-token',
         'user-1',
+        'b',
         'https://schema/form',
         { a: 1 },
       );

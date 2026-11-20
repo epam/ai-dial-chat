@@ -128,6 +128,7 @@ describe('PublishDependenciesController (integration)', () => {
       expect(service.getApplicationValueDependencies).toHaveBeenCalledWith(
         TEST_USER.at,
         TEST_USER.sub,
+        TEST_USER.bucket,
         BODY.schemaId,
         BODY.properties,
       );
@@ -150,6 +151,11 @@ describe('PublishDependenciesController (integration)', () => {
         },
       ],
       ['an unknown field', { ...BODY, extra: true }],
+      [
+        'a schemaId with a line break',
+        { ...BODY, schemaId: 'https://schema/form\nforged log line' },
+      ],
+      ['a schemaId with a space', { ...BODY, schemaId: 'https://schema/a b' }],
     ])('rejects %s with 400', async (_name, body) => {
       await request(app.getHttpServer()).post(URL).send(body).expect(400);
 
