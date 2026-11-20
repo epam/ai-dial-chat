@@ -289,6 +289,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </button>
   ),
   Spinner: () => <div>Loading</div>,
+  EllipsisTooltip: ({ text }: { text?: ReactNode }) => (
+    <span data-testid="ellipsis-tooltip">{text}</span>
+  ),
   Label: ({
     id,
     htmlFor,
@@ -1556,11 +1559,41 @@ describe('ScheduledTaskCreateForm — time zone', () => {
     });
 
     const zone = screen.getByText('(GMT+01:00) Europe/Berlin');
-    expect(zone.getAttribute('title')).toBe('(GMT+01:00) Europe/Berlin');
     expect(zone.textContent).toBe('(GMT+01:00) Europe/Berlin');
     expect(
       screen.getByRole('button', { name: /Change timezone/ }),
     ).toBeTruthy();
+  });
+
+  it('truncates a long zone with the kit ellipsis tooltip instead of a native title', async () => {
+    await renderForm({
+      timezone: {
+        ...timezone,
+        options: [
+          {
+            id: 'America/Miquelon',
+            offsetLabel: 'GMT-03:00',
+            offsetMinutes: -180,
+            searchTerms: ['america/miquelon'],
+          },
+        ],
+      },
+      values: { ...baseValues, timezone: 'America/Miquelon' },
+    });
+
+    const zone = screen.getByText('(GMT-03:00) America/Miquelon');
+    expect(zone.getAttribute('data-testid')).toBe('ellipsis-tooltip');
+    expect(screen.queryByTitle('(GMT-03:00) America/Miquelon')).toBeNull();
+  });
+
+  it('focuses the time input when the zone text inside it is clicked', async () => {
+    await renderForm({ timezone, values: { ...baseValues, timezone: 'UTC' } });
+
+    fireEvent.click(screen.getByTestId('ellipsis-tooltip'));
+
+    /* Focus has no semantic query. */
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.activeElement).toBe(screen.getByLabelText('Time *'));
   });
 
   it('names a zone missing from the list by its id', async () => {

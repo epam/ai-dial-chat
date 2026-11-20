@@ -37,9 +37,12 @@
   align-items: center;
   block-size: 46px;
   max-inline-size: 60%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  pointer-events: none;
+  /* Reads as part of the input: a click on the zone focuses it. */
+  cursor: text;
   color: var(--stz-offset, var(--text-secondary, #57647a));
+}
+
+/* `text-overflow` has no effect on text that sits directly in a flex box, so the ellipsis lives on the kit `EllipsisTooltip` block inside it. */
+.timeFieldZoneText {
+  min-inline-size: 0;
 }
