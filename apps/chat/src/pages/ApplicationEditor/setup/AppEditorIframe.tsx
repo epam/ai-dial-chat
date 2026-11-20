@@ -56,6 +56,7 @@ import {
 } from '../../../constants/translation-keys';
 import { useFeatureFlag } from '../../../context/AppConfigContext';
 import { useUser } from '../../../context/auth/UserContext';
+import { useDeployments } from '../../../context/DeploymentsContext';
 import { useTheme } from '../../../context/ThemeContext';
 import { useExternalServiceLogin } from '../../../hooks/externalServices/useExternalServiceLogin';
 import { useUiFeature } from '../../../hooks/useUiFeature';
@@ -285,6 +286,18 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
       });
     };
 
+    const { refetchToolsets } = useDeployments();
+
+    /*
+     * A login or logout from the embedded editor changes the toolset's
+     * credential status, which the Catalog renders from the shared toolset
+     * list — refetch it so its "authorize" badge does not stay stale until a
+     * page reload. Best-effort: `refetchToolsets` reports its own failure.
+     */
+    const syncToolsets = useCallback(() => {
+      void refetchToolsets();
+    }, [refetchToolsets]);
+
     /**
      * Refreshes a toolset's credentials/status the same way Catalog's
      * Details panel does after login/logout (`CatalogView.handleFetchDetails`
@@ -407,6 +420,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
           },
         );
         if (result.type === ToolsetOAuthResultType.Success) {
+          syncToolsets();
           postToolsetLoginResult(host, {
             toolsetId,
             success: true,
@@ -437,6 +451,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
             credentialsLevel,
           );
           if (statusField === 'SIGNED_IN') {
+            syncToolsets();
             postToolsetLoginResult(host, {
               toolsetId,
               success: true,
@@ -454,7 +469,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
           reason: 'cancelled',
         });
       },
-      [fetchToolsetCredentials],
+      [fetchToolsetCredentials, syncToolsets],
     );
 
     /**
@@ -476,6 +491,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
             url: encodedToolsetId,
             credentialsLevel,
           });
+          syncToolsets();
           postToolsetLogoutResult(host, {
             toolsetId,
             success: true,
@@ -490,7 +506,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
           });
         }
       },
-      [fetchToolsetCredentials],
+      [fetchToolsetCredentials, syncToolsets],
     );
 
     const postExternalServiceLoginResult = (
