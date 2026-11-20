@@ -127,7 +127,7 @@ export class UsageHistoryClientEntryDto {
 /**
  * `GET /user/usage/history` response. One flattened schema with a required
  * `available` flag, because OpenAPI 3.0 cannot discriminate a `oneOf` on a
- * boolean (see openspec/changes/add-user-usage-history-api/design.md, D7).
+ * boolean (see openspec/changes/archive/2026-11-20-add-user-usage-history-api/design.md, D7).
  */
 export class UserUsageHistoryResponseDto {
   @ApiProperty({
@@ -144,8 +144,10 @@ export class UserUsageHistoryResponseDto {
     enumName: 'UsageHistoryUnavailableReason',
     description:
       'Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. ' +
-      "`forbidden`: DIAL Analytics refused the caller's token, or the caller's view of the usage " +
-      'log is not restricted to their own rows. `unavailable`: timeout, network error or server error. ' +
+      "`forbidden`: DIAL Analytics refused the caller's token, the caller cannot read the usage " +
+      'log, or DIAL Analytics cannot run the own-rows filter (no query caller values, or `user_hash` ' +
+      'hidden from the caller). `unavailable`: timeout, ' +
+      'network error or server error. ' +
       "`budget_unsupported`: `costObject` and `policy` were given, but the caller's DIAL Analytics " +
       'schema of the usage log has no budget columns.',
   })

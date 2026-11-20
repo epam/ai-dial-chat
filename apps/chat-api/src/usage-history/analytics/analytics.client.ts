@@ -7,7 +7,6 @@ import {
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import type { EnvironmentVariables } from '../../config/environment.config';
 
-const USAGE_LOG_TABLE_PATH = '/v1/tables/dial_usage_log';
 const USAGE_LOG_SCHEMA_PATH = '/v1/queries/entities/schema/dial_usage_log';
 const EXECUTE_QUERY_PATH = '/v1/queries/execute';
 
@@ -43,11 +42,6 @@ export class AnalyticsClient {
   /** Whether `ANALYTICS_URL` is set; without it no call may be made. */
   get isConfigured(): boolean {
     return this.baseUrl !== undefined;
-  }
-
-  /** `GET /v1/tables/dial_usage_log` as the caller: its effective `permissions`. */
-  getUsageLogTable(accessToken: string): Promise<unknown> {
-    return this.request('GET', USAGE_LOG_TABLE_PATH, accessToken);
   }
 
   /** `GET /v1/queries/entities/schema/dial_usage_log` as the caller. */

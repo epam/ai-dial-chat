@@ -158,16 +158,10 @@ describe('UserUsageHistoryController (integration)', () => {
   describe('with DIAL Analytics configured', () => {
     const ok = (body: unknown): FakeResponse => ({ status: 200, body });
 
-    /* A minimal row-restricted caller with one request today on gpt-4o. */
+    /* A minimal caller with one request today on gpt-4o. */
     const adas =
-      (overrides: Partial<Record<'table' | 'execute', FakeResponse>> = {}) =>
+      (overrides: Partial<Record<'execute', FakeResponse>> = {}) =>
       (recorded: RecordedRequest): FakeResponse => {
-        if (recorded.path === '/v1/tables/dial_usage_log') {
-          return (
-            overrides.table ??
-            ok({ permissions: { read: true, rows_restricted: true } })
-          );
-        }
         if (recorded.path === '/v1/queries/entities/schema/dial_usage_log') {
           return ok({ fields: [{ name: 'deployment' }] });
         }
@@ -226,6 +220,40 @@ describe('UserUsageHistoryController (integration)', () => {
       }
     });
 
+    it('confines every query to the caller own rows without a permissions pre-check', async () => {
+      analytics.setHandler(adas());
+
+      const response = await request(app?.getHttpServer())
+        .get(`${HISTORY_PATH}?period=today`)
+        .expect(200);
+
+      expect(response.headers['cache-control']).toBe('private, no-store');
+      expect(response.body).toMatchObject({
+        available: true,
+        totals: { spend: 0.25, requests: 2 },
+      });
+      const executed = analytics.requests.filter(
+        (recorded) => recorded.path === '/v1/queries/execute',
+      );
+      expect(executed.length).toBeGreaterThan(0);
+      expect(
+        analytics.requests.some((recorded) =>
+          recorded.path.startsWith('/v1/tables/'),
+        ),
+      ).toBe(false);
+      for (const recorded of executed) {
+        expect(
+          (recorded.body as { filter: { args: unknown[] } }).filter.args,
+        ).toContainEqual({
+          op: 'eq',
+          args: [
+            { type: 'field', name: 'user_hash' },
+            { type: 'param', name: 'caller.user_hash' },
+          ],
+        });
+      }
+    });
+
     it('narrows the queries to the requested budget and echoes it', async () => {
       const base = adas();
       analytics.setHandler((recorded) =>
@@ -276,11 +304,15 @@ describe('UserUsageHistoryController (integration)', () => {
       });
     });
 
-    it.each<
-      [string, Partial<Record<'table' | 'execute', FakeResponse>>, string]
-    >([
+    it.each<[string, Partial<Record<'execute', FakeResponse>>, string]>([
       ['ADAS 401', { execute: { status: 401 } }, 'forbidden'],
-      ['ADAS 403', { table: { status: 403 } }, 'forbidden'],
+      ['ADAS 403', { execute: { status: 403 } }, 'forbidden'],
+      ['ADAS 404', { execute: { status: 404 } }, 'forbidden'],
+      [
+        'an ADAS without caller values (400)',
+        { execute: { status: 400 } },
+        'forbidden',
+      ],
       ['ADAS 503', { execute: { status: 503 } }, 'unavailable'],
       ['an ADAS timeout', { execute: { hang: true } }, 'unavailable'],
     ])('answers 200 with reason %s → %s', async (_label, overrides, reason) => {

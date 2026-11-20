@@ -11365,7 +11365,7 @@ export interface UsageHistoryTotalsDto {
 }
 
 /**
- * Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. `forbidden`: DIAL Analytics refused the caller's token, or the caller's view of the usage log is not restricted to their own rows. `unavailable`: timeout, network error or server error. `budget_unsupported`: `costObject` and `policy` were given, but the caller's DIAL Analytics schema of the usage log has no budget columns.
+ * Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. `forbidden`: DIAL Analytics refused the caller's token, the caller cannot read the usage log, or DIAL Analytics cannot run the own-rows filter (no query caller values, or `user_hash` hidden from the caller). `unavailable`: timeout, network error or server error. `budget_unsupported`: `costObject` and `policy` were given, but the caller's DIAL Analytics schema of the usage log has no budget columns.
  * @export
  */
 export const UsageHistoryUnavailableReason = {
@@ -11557,7 +11557,7 @@ export interface UserUsageHistoryResponseDto {
    */
   available: boolean;
   /**
-   * Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. `forbidden`: DIAL Analytics refused the caller's token, or the caller's view of the usage log is not restricted to their own rows. `unavailable`: timeout, network error or server error. `budget_unsupported`: `costObject` and `policy` were given, but the caller's DIAL Analytics schema of the usage log has no budget columns.
+   * Present only when `available` is `false`. `not_configured`: ANALYTICS_URL is unset. `forbidden`: DIAL Analytics refused the caller's token, the caller cannot read the usage log, or DIAL Analytics cannot run the own-rows filter (no query caller values, or `user_hash` hidden from the caller). `unavailable`: timeout, network error or server error. `budget_unsupported`: `costObject` and `policy` were given, but the caller's DIAL Analytics schema of the usage log has no budget columns.
    * @type {UsageHistoryUnavailableReason}
    * @memberof UserUsageHistoryResponseDto
    */

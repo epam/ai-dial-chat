@@ -84,7 +84,7 @@ export class IntegrationsEnv {
 
   /*
    * Base URL of DIAL Analytics (ADAS), read by GET /api/v1/user/usage/history
-   * (see openspec/changes/add-user-usage-history-api/design.md). Unset turns
+   * (see openspec/changes/archive/2026-11-20-add-user-usage-history-api/design.md). Unset turns
    * the route off: it answers `not_configured` and makes no outbound call.
    * Server-only: never exposed through client-config, CUSTOM_CLIENT_VARIABLES
    * or browser build variables.

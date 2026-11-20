@@ -4,6 +4,8 @@ import {
   buildDailyTopModelsQuery,
   buildDailyTotalsQuery,
   buildModelRankingQuery,
+  OWN_ROWS_PREDICATE,
+  type UsageBudget,
 } from '../queries/usage-history.queries';
 import { UsageHistoryPeriod } from '../types/usage-history-period';
 import { resolveUsageWindow } from '../usage-period';
@@ -29,6 +31,10 @@ const WINDOW_AND_ROOT = [
       field('request_time'),
       { type: 'value', value_type: 'timestamp', value: TO_MS },
     ],
+  },
+  {
+    op: 'eq',
+    args: [field('user_hash'), { type: 'param', name: 'caller.user_hash' }],
   },
   {
     op: 'eq',
@@ -76,12 +82,36 @@ const REQUESTS = {
   as: 'usage_requests',
 };
 
-const ALL_QUERIES = (window = MONTH) => [
-  buildDailyTotalsQuery(window),
-  buildModelRankingQuery(window),
-  buildDailyTopModelsQuery(window, ['gpt-4o']),
-  buildClientSplitQuery(window),
+const BUDGET: UsageBudget = {
+  costObject: 'engineering',
+  policy: 'policies/company/pro',
+};
+
+const ALL_QUERIES = (window = MONTH, budget?: UsageBudget) => [
+  buildDailyTotalsQuery(window, budget),
+  buildModelRankingQuery(window, budget),
+  buildDailyTopModelsQuery(window, ['gpt-4o'], budget),
+  buildClientSplitQuery(window, budget),
 ];
+
+/* Every `eq`/`ne` that compares `user_hash` with anything, at any depth. */
+const userHashComparisons = (node: unknown): unknown[] => {
+  if (Array.isArray(node)) return node.flatMap(userHashComparisons);
+  if (node == null || typeof node !== 'object') return [];
+  const { op, args } = node as { op?: unknown; args?: unknown };
+  const isUserHashComparison =
+    (op === 'eq' || op === 'ne') &&
+    Array.isArray(args) &&
+    args.some(
+      (arg) =>
+        (arg as { type?: unknown; name?: unknown })?.type === 'field' &&
+        (arg as { name?: unknown }).name === 'user_hash',
+    );
+  return [
+    ...(isUserHashComparison ? [node] : []),
+    ...Object.values(node).flatMap(userHashComparisons),
+  ];
+};
 
 describe('usage history queries', () => {
   it('builds the daily totals query', () => {
@@ -191,10 +221,37 @@ describe('usage history queries', () => {
     );
   });
 
-  it('never references a user identifier', () => {
-    const serialized = JSON.stringify(ALL_QUERIES());
+  it.each([
+    ['user scope', undefined],
+    ['budget scope', BUDGET],
+  ])(
+    'confines every query of the %s to the caller own rows with the caller value',
+    (_label, budget) => {
+      for (const query of ALL_QUERIES(MONTH, budget)) {
+        expect(query.filter.op).toBe('and');
+        expect(query.filter.args).toContainEqual(OWN_ROWS_PREDICATE);
+        expect(userHashComparisons(query)).toEqual([OWN_ROWS_PREDICATE]);
+      }
+    },
+  );
 
-    for (const identifier of ['user_hash', 'user_ref', 'user_email', 'jwt_']) {
+  it('filters the client split on the usage log field, not the enrichment', () => {
+    const { filter } = buildClientSplitQuery(MONTH);
+
+    expect(filter.args).toContainEqual({
+      op: 'eq',
+      args: [field('user_hash'), { type: 'param', name: 'caller.user_hash' }],
+    });
+    expect(JSON.stringify(filter)).not.toContain('usage_client_identity');
+  });
+
+  it('holds no user identifier as a literal', () => {
+    const serialized = JSON.stringify([
+      ...ALL_QUERIES(),
+      ...ALL_QUERIES(MONTH, BUDGET),
+    ]);
+
+    for (const identifier of ['user_ref', 'user_email', 'jwt_']) {
       expect(serialized).not.toContain(identifier);
     }
   });
