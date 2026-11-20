@@ -54,7 +54,11 @@ describe('UserUsageHistoryResponseDto OpenAPI schema', () => {
   it('requires a period query parameter typed by the named UsageHistoryPeriod enum', () => {
     const parameters = (operation()?.parameters ?? []) as QueryParameter[];
 
-    expect(parameters.map((parameter) => parameter.name)).toEqual(['period']);
+    expect(parameters.map((parameter) => parameter.name)).toEqual([
+      'period',
+      'costObject',
+      'policy',
+    ]);
     expect(parameters[0]).toMatchObject({ in: 'query', required: true });
     expect(parameters[0].schema).toMatchObject({
       $ref: '#/components/schemas/UsageHistoryPeriod',
@@ -63,6 +67,20 @@ describe('UserUsageHistoryResponseDto OpenAPI schema', () => {
       type: 'string',
       enum: ['today', 'week', 'month'],
     });
+  });
+
+  it('accepts an optional budget as costObject and policy string query parameters', () => {
+    const parameters = (operation()?.parameters ?? []) as QueryParameter[];
+
+    for (const name of ['costObject', 'policy']) {
+      expect(
+        parameters.find((parameter) => parameter.name === name),
+      ).toMatchObject({
+        in: 'query',
+        required: false,
+        schema: { type: 'string', maxLength: 1024 },
+      });
+    }
   });
 
   it('returns UserUsageHistoryResponseDto with available as the only required field', () => {
@@ -80,6 +98,7 @@ describe('UserUsageHistoryResponseDto OpenAPI schema', () => {
     expect(response.required).toEqual(['available']);
     expect(Object.keys(response.properties ?? {}).sort()).toEqual([
       'available',
+      'budget',
       'byClient',
       'byModel',
       'currency',
@@ -98,8 +117,25 @@ describe('UserUsageHistoryResponseDto OpenAPI schema', () => {
     });
     expect(schemas['UsageHistoryUnavailableReason']).toMatchObject({
       type: 'string',
-      enum: ['not_configured', 'unavailable', 'forbidden'],
+      enum: [
+        'not_configured',
+        'unavailable',
+        'forbidden',
+        'budget_unsupported',
+      ],
     });
+  });
+
+  it('echoes the budget as UsageHistoryBudgetDto with both fields required', () => {
+    expect(
+      schemas['UserUsageHistoryResponseDto'].properties?.['budget'],
+    ).toMatchObject({
+      allOf: [{ $ref: '#/components/schemas/UsageHistoryBudgetDto' }],
+    });
+    expect(schemas['UsageHistoryBudgetDto'].required).toEqual([
+      'costObject',
+      'policy',
+    ]);
   });
 
   it('types the per-date model map as numbers keyed by deployment', () => {

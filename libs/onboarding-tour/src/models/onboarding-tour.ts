@@ -42,6 +42,8 @@ export interface OnboardingTourLabels {
 
 /** Color overrides of the `OnboardingTour` component. */
 export interface OnboardingTourColors extends OnboardingCardColors {
+  /** Dimming layer over the page behind the card. Defaults to `--bg-backdrop`. */
+  backdrop?: string;
   /** Step counter text. Defaults to `--text-tertiary`. */
   counterText?: string;
 }

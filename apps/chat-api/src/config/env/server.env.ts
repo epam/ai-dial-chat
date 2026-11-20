@@ -3,15 +3,16 @@ import {
   IsBoolean,
   IsEnum,
   IsInt,
-  IsNumber,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsUrl,
   Matches,
+  Max,
   Min,
 } from 'class-validator';
 import { CspMode } from '../csp';
-import { IFRAME_ORIGIN_PATTERN } from './env-patterns';
+import { API_PREFIX_PATTERN, IFRAME_ORIGIN_PATTERN } from './env-patterns';
 
 export enum ApplicationLogLevel {
   Debug = 'debug',
@@ -69,18 +70,36 @@ export class ServerEnv {
   @IsEnum(ApplicationLogLevel)
   LOG_LEVEL?: ApplicationLogLevel;
 
+  /*
+   * Parses the raw source value: implicit conversion alone would turn an empty
+   * `PORT=` into 0 (a random port) instead of failing validation.
+   */
   @IsOptional()
-  @Transform(({ value }) => parseInt(value, 10))
-  @IsNumber()
-  PORT?: number = 5000;
+  @Transform(({ obj, key }) => parseInt(String(obj[key]), 10))
+  @IsInt()
+  @Min(0)
+  @Max(65535)
+  PORT = 5000;
 
+  /*
+   * Global route prefix (`<prefix>/v1/...`). One or more URL-safe path
+   * segments without leading or trailing slashes.
+   */
   @IsOptional()
   @IsString()
-  API_PREFIX?: string = 'api';
+  @Matches(API_PREFIX_PATTERN, {
+    message:
+      'API_PREFIX must be one or more URL-safe path segments (letters, digits, ".", "_", "~", "-") separated by "/", without leading or trailing slashes',
+  })
+  API_PREFIX = 'api';
 
-  @IsOptional()
+  /*
+   * Always set after validation: `validate()` falls it back to the required
+   * AUTH_CALLBACK_BASE_URL when unset or empty.
+   */
+  @IsNotEmpty()
   @IsString()
-  CORS_ORIGIN?: string;
+  CORS_ORIGIN!: string;
 
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))
