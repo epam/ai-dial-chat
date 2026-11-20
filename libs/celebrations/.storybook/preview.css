@@ -11,5 +11,7 @@
 @source '../../attachment-input/src/**/*.{ts,tsx}';
 @source '../../starter-buttons/src/**/*.{ts,tsx}';
 @source '../../../node_modules/@epam/ai-dial-ui-kit/dist/components/**/*.js';
-@source not '../../{conversation-input,attachment-input,starter-buttons}/src/**/*.{spec,test,stories}.{ts,tsx}';
-@source not '../../{conversation-input,attachment-input,starter-buttons}/src/**/{tests,stories}/**';
+@source not
+  '../../{conversation-input,attachment-input,starter-buttons}/src/**/*.{spec,test,stories}.{ts,tsx}';
+@source not
+  '../../{conversation-input,attachment-input,starter-buttons}/src/**/{tests,stories}/**';

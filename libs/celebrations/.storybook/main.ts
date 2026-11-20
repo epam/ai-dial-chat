@@ -2,6 +2,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { StorybookConfig } from '@storybook/react-vite';
 import tailwindcss from '@tailwindcss/vite';
+import { defaultClientConditions } from 'vite';
 
 const getAbsolutePath = (value: string): string =>
   dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)));
@@ -29,6 +30,7 @@ const config: StorybookConfig = {
        checkout has no built dist for them. */
     resolve: {
       ...viteConfig.resolve,
+      conditions: ['@epam/source', ...defaultClientConditions],
       alias: {
         ...viteConfig.resolve?.alias,
         '@epam/ai-dial-chat-shared': resolve(
