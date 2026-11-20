@@ -2041,6 +2041,7 @@ regenerated output — never hand-edit generated files.
 - [Theme Customization](../../docs/theme-customization.md)
 - [Responses API Integration](../../docs/responses-api-integration.md)
 - [Managed configuration schema](../../docs/managed-config-schema.md) — the Config Studio contract generated from the config registry
+- [Managed configuration onboarding](../../docs/managed-config-onboarding.md) — connecting a deployment: DIAL Admin instance, reader key, upload, values, checks
 - [NestJS best practices for this app](../../.claude/rules/nestjs-best-practices.md)
 - [NestJS Documentation](https://docs.nestjs.com/)
 - [AI DIAL SDK](https://github.com/epam/ai-dial-sdk)

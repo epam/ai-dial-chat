@@ -420,6 +420,9 @@ read independently, so for one interval they may serve different revisions.
 
 ### Migration runbook
 
+The DIAL Admin, reader key, upload and verification steps are spelled out in
+[managed-config-onboarding.md](managed-config-onboarding.md).
+
 1. Deploy with the mode `off`.
 2. Create the Studio instance with a reader role for the BFF's key; set
    `MANAGED_CONFIG_INSTANCES`, `MANAGED_CONFIG_API_KEY` and
