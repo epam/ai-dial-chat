@@ -9,7 +9,14 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
-import { CelebrationDeliveryMode } from '../app-config/types/celebration-delivery';
+import {
+  CELEBRATION_DELIVERY_REVISION_PATTERN,
+  CELEBRATION_EVENT_ID_PATTERN,
+  CELEBRATION_ID_MAX_LENGTH,
+  CELEBRATION_POLICY_MAX_ENTRIES,
+  CELEBRATION_SCENE_PAIR_PATTERN,
+  CelebrationDeliveryMode,
+} from '../app-config/types/celebration-delivery';
 import { AuthProvidersEnv } from './env/auth-providers.env';
 import { AuthEnv } from './env/auth.env';
 import { ClientUiEnv } from './env/client-ui.env';
@@ -24,13 +31,10 @@ import { ServerEnv } from './env/server.env';
 export { IFRAME_ORIGIN_PATTERN } from './env/env-patterns';
 export { ApplicationLogLevel } from './env/server.env';
 
-const CELEBRATION_ID_MAX_LENGTH = 64;
-const CELEBRATION_POLICY_MAX_ENTRIES = 64;
-const CELEBRATION_ID = '[a-z][a-z0-9]*(?:-[a-z0-9]+)*';
-const CELEBRATION_EVENT_ID_PATTERN = new RegExp(`^${CELEBRATION_ID}$`);
-/* The lookaheads cap each part at 64 characters. */
-const CELEBRATION_SCENE_PAIR_PATTERN = new RegExp(
-  `^(?=[^/]{1,${CELEBRATION_ID_MAX_LENGTH}}/)${CELEBRATION_ID}/(?=[^/]{1,${CELEBRATION_ID_MAX_LENGTH}}$)${CELEBRATION_ID}$`,
+const EVENT_ID_REGEXP = new RegExp(CELEBRATION_EVENT_ID_PATTERN);
+const SCENE_PAIR_REGEXP = new RegExp(CELEBRATION_SCENE_PAIR_PATTERN);
+const DELIVERY_REVISION_REGEXP = new RegExp(
+  CELEBRATION_DELIVERY_REVISION_PATTERN,
 );
 
 /* Splits a comma-separated list, dropping blanks and repeats, so the
@@ -70,7 +74,7 @@ export class EnvironmentVariables extends IntersectionType(
 ) {
   @IsOptional()
   @IsString()
-  @Matches(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/, {
+  @Matches(EVENT_ID_REGEXP, {
     message: 'UI_EVENT must be a lowercase kebab-case event ID or none',
   })
   UI_EVENT?: string;
@@ -109,7 +113,7 @@ export class EnvironmentVariables extends IntersectionType(
     value == null || value === '' ? undefined : String(value).trim(),
   )
   @IsString()
-  @Matches(/^[A-Za-z0-9._-]{1,64}$/, {
+  @Matches(DELIVERY_REVISION_REGEXP, {
     message:
       'UI_EVENT_DELIVERY_REVISION must be 1–64 characters of letters, digits, dot, dash or underscore',
   })
@@ -119,7 +123,7 @@ export class EnvironmentVariables extends IntersectionType(
   @IsOptional()
   @Transform(({ value }) => parseCelebrationList(value))
   @ArrayMaxSize(CELEBRATION_POLICY_MAX_ENTRIES)
-  @Matches(CELEBRATION_SCENE_PAIR_PATTERN, {
+  @Matches(SCENE_PAIR_REGEXP, {
     each: true,
     message:
       'UI_EVENT_EXTERNAL_SCENES entries must be eventId/sceneId pairs of lowercase kebab-case IDs',
@@ -130,7 +134,7 @@ export class EnvironmentVariables extends IntersectionType(
   @IsOptional()
   @Transform(({ value }) => parseCelebrationList(value))
   @ArrayMaxSize(CELEBRATION_POLICY_MAX_ENTRIES)
-  @Matches(CELEBRATION_EVENT_ID_PATTERN, {
+  @Matches(EVENT_ID_REGEXP, {
     each: true,
     message:
       'UI_EVENT_EXTERNAL_EVENTS entries must be lowercase kebab-case event IDs',

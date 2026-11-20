@@ -166,7 +166,7 @@ All providers MUST implement this interface. Providers MUST return `undefined` w
 
 `EnvConfigProvider` SHALL read values from `ConfigService<EnvironmentVariables>` (never from `process.env` directly) using the `envVar` field from the matching `ConfigDefinition`.
 
-`EnvConfigProvider` SHALL return a value from a key's `envVar` only when that variable is explicitly present in the deployment environment. A value that exists only because the environment class declares a typed default (for example `SCHEDULED_TASKS_ENABLED = false`, `USAGE_LIMITS_WARNING_THRESHOLD_PERCENT = 75`, `UI_EVENT_ENABLED_BY_DEFAULT = true`) SHALL NOT be treated as explicit; the provider SHALL return `undefined` so that the next provider applies. Explicit presence SHALL be determined from the raw environment input (process variables and loaded `.env` files) before class defaults are applied; a variable set to the empty string is present. For a managed key, an explicit string value that is empty or whitespace-only SHALL resolve to `undefined`: the client mapping hides blank and null alike, so the effective value is unchanged, and a blank variable cannot shadow a lower-priority source. Schema 1.0.0 manages no string key, so this rule applies to no key of 1.0.0; a blank text of an unmanaged key resolves to `''`, and its client-config field is `null` either way. Derived feature keys (`features.asrEnabled`, `features.llmConversationNaming`, `features.footer`) keep their documented derivations.
+`EnvConfigProvider` SHALL return a value from a key's `envVar` only when that variable is explicitly present in the deployment environment. A value that exists only because the environment class declares a typed default (for example `SCHEDULED_TASKS_ENABLED = false`, `USAGE_LIMITS_WARNING_THRESHOLD_PERCENT = 75`, `UI_EVENT_ENABLED_BY_DEFAULT = true`) SHALL NOT be treated as explicit; the provider SHALL return `undefined` so that the next provider applies. Explicit presence SHALL be determined from the raw environment input (process variables and loaded `.env` files) before class defaults are applied; a variable set to the empty string is present. For a managed key, an explicit string value that is empty or whitespace-only SHALL resolve to `undefined`: the client mapping hides blank and null alike, so the effective value is unchanged, and a blank variable cannot shadow a lower-priority source. From schema 1.1.0 this rule applies to `announcement.title` and `announcement.description`; the celebration variables already reject or drop a blank value during environment validation. A blank text of an unmanaged key resolves to `''`, and its client-config field is `null` either way. Derived feature keys (`features.asrEnabled`, `features.llmConversationNaming`, `features.footer`) keep their documented derivations.
 
 For `type='feature'` keys derived from a config key (e.g. `features.asrEnabled` derived from `asr.modelId`), the provider SHALL apply the derivation logic declared in the registry.
 
@@ -210,8 +210,18 @@ Type coercion MUST NOT be performed — `ConfigService` already returns typed va
 
 #### Scenario: A blank managed text is not an operator value
 
-- **WHEN** the variable of a managed string key is set to the empty string or to spaces
-- **THEN** `EnvConfigProvider.resolve` returns `undefined` for that key, while a blank `ANNOUNCEMENT_TITLE`, unmanaged in 1.0.0, resolves to `''` and the client-config `announcementTitle` is `null` as before
+- **WHEN** `ANNOUNCEMENT_TITLE` or `ANNOUNCEMENT_DESCRIPTION` is set to the empty string or to spaces
+- **THEN** `EnvConfigProvider.resolve` returns `undefined` for that key, so a published value can apply, and with nothing published the client-config `announcementTitle` or `announcementDescription` is `null` as before
+
+#### Scenario: A blank unmanaged text is unchanged
+
+- **WHEN** `WELCOME_SCREEN_DESCRIPTION`, unmanaged in 1.1.0, is set to spaces
+- **THEN** `EnvConfigProvider.resolve('welcomeScreen.description', ctx)` returns the spaces and the client-config `welcomeScreenDescription` is `null`
+
+#### Scenario: A typed delivery default does not shadow a published policy
+
+- **WHEN** none of the `UI_EVENT_DELIVERY_*` or `UI_EVENT_EXTERNAL_*` variables is set
+- **THEN** `EnvConfigProvider.resolve` returns `undefined` for each of the four `ui.celebrationDelivery.*` keys, although their class defaults are `bundled`, `"0"` and empty lists
 
 #### Scenario: Effective values are unchanged for unset variables
 
@@ -604,7 +614,7 @@ The `CONFIG_DEFINITIONS` registry SHALL include an `attachments.maxFileSizeBytes
 
 ### Requirement: UI_EVENT selects one decorative event
 
-UI_EVENT SHALL be an optional validated lowercase kebab-case identifier. An absent value or `none` SHALL resolve to null; other valid identifiers SHALL be exposed as config.activeEventId:string|null by existing GET /api/v1/client-config. Unknown valid IDs SHALL be allowed through the API and result in no decoration when absent from the frontend registry. HALLOWEEN_ENABLED and features.halloweenEnabled SHALL be removed with no fallback. There SHALL be no new role-gating flag or scheduling behavior. Existing endpoint authentication, status codes, configuration cache and refresh behavior SHALL be retained. Swagger and the generated AppConfigApi.getClientConfig response model SHALL reflect the new config field; callers SHALL continue using the normal method through the existing app adapter.
+UI_EVENT SHALL be an optional validated lowercase kebab-case identifier. An absent value or `none` SHALL resolve to null; other valid identifiers SHALL be exposed as config.activeEventId:string|null by existing GET /api/v1/client-config. The value `none` SHALL map to null for every source, so a `ui.activeEventId` of `none` published through Config Studio also yields `config.activeEventId: null`; an explicit `UI_EVENT=none` SHALL still win over a published event. Unknown valid IDs SHALL be allowed through the API and result in no decoration when absent from the frontend registry. HALLOWEEN_ENABLED and features.halloweenEnabled SHALL be removed with no fallback. There SHALL be no new role-gating flag or scheduling behavior. Existing endpoint authentication, status codes, configuration cache and refresh behavior SHALL be retained. Swagger and the generated AppConfigApi.getClientConfig response model SHALL reflect the new config field; callers SHALL continue using the normal method through the existing app adapter.
 
 #### Scenario: Event explicitly selected
 - **WHEN** UI_EVENT is halloween or new-year
@@ -617,6 +627,18 @@ UI_EVENT SHALL be an optional validated lowercase kebab-case identifier. An abse
 #### Scenario: Explicit off
 - **WHEN** UI_EVENT is none
 - **THEN** config.activeEventId is null
+
+#### Scenario: Published off
+- **WHEN** `ui.activeEventId` is active, UI_EVENT is not set, and the fresh snapshot sets `none`
+- **THEN** config.activeEventId is null
+
+#### Scenario: Environment off wins over a published event
+- **WHEN** `ui.activeEventId` is active, UI_EVENT is none, and the fresh snapshot sets `new-year`
+- **THEN** config.activeEventId is null
+
+#### Scenario: Unknown published event passes through
+- **WHEN** `ui.activeEventId` is active, UI_EVENT is not set, and the fresh snapshot sets `easter`
+- **THEN** config.activeEventId is `easter`
 
 ### Requirement: Registry declares the applicationVisualizers key
 

@@ -469,7 +469,7 @@
       ]
     },
     {
-      "name": "welcome text, which returns in 1.1.0",
+      "name": "welcome text, which a later version manages",
       "payload": {
         "config": {
           "welcomeScreen.description": "Welcome"
@@ -484,7 +484,7 @@
       ]
     },
     {
-      "name": "usage-limits feature, which returns in 1.1.0",
+      "name": "usage-limits feature, which a later version manages",
       "payload": {
         "config": {},
         "features": {
@@ -501,7 +501,7 @@
       ]
     },
     {
-      "name": "threshold, which returns in 1.1.0",
+      "name": "threshold, which a later version manages",
       "payload": {
         "config": {
           "usageLimits.warningThresholdPercent": 100
@@ -516,7 +516,7 @@
       ]
     },
     {
-      "name": "file-manager tabs, which return in 1.1.0",
+      "name": "file-manager tabs, which a later version manages",
       "payload": {
         "config": {
           "fileManager.availableTabs": ["all", "nope"]

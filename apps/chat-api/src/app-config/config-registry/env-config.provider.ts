@@ -63,11 +63,6 @@ export class EnvConfigProvider implements ConfigProvider, OnModuleInit {
       return undefined;
     }
 
-    if (key === 'ui.activeEventId') {
-      const eventId = this.configService.get('UI_EVENT', { infer: true });
-      return eventId === 'none' ? null : eventId;
-    }
-
     /* features.asrEnabled, features.llmConversationNaming and features.footer
      * are derived from local capabilities, not read from a variable of their
      * own. Role gating is not applied here: AppConfigService applies it after

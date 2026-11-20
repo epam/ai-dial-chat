@@ -4,6 +4,7 @@ import {
   DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
 } from '../../projects/constants/project-context.constants';
 import type { ConfigDefinition } from '../app-config.types';
+import { AnnouncementSeverity } from '../dto/announcement-severity.enum';
 import {
   localOnlyKey,
   managedConfigKey,
@@ -13,7 +14,15 @@ import {
   ManagedSchemaType,
   type ManagedValueSchema,
 } from '../managed-config/managed-config.types';
-import { CelebrationDeliveryMode } from '../types/celebration-delivery';
+import {
+  CELEBRATION_DELIVERY_REVISION_PATTERN,
+  CELEBRATION_EVENT_ID_PATTERN,
+  CELEBRATION_ID_MAX_LENGTH,
+  CELEBRATION_POLICY_MAX_ENTRIES,
+  CELEBRATION_SCENE_PAIR_MAX_LENGTH,
+  CELEBRATION_SCENE_PAIR_PATTERN,
+  CelebrationDeliveryMode,
+} from '../types/celebration-delivery';
 import { OnboardingHintTarget } from '../types/onboarding-hint-target';
 import { SpendingLimitsMode } from '../types/spending-limits-mode';
 
@@ -47,9 +56,7 @@ const boundedText = (
  * needs a new schema version. Unique ids cannot be expressed in JSON Schema;
  * Chat keeps the first hint with an id and drops the rest with a warning.
  *
- * Schema 1.0.0 manages only this key. The announcement, welcome-text, File
- * Manager, usage-limit and spending-limit keys and the usage-limits feature
- * return, with their value schemas, in schema 1.1.0. */
+ * Unchanged since schema 1.0.0. */
 const ONBOARDING_HINTS_SCHEMA: ManagedValueSchema = {
   type: ManagedSchemaType.Array,
   maxItems: 50,
@@ -86,6 +93,97 @@ const ONBOARDING_HINTS_SCHEMA: ManagedValueSchema = {
       },
     },
   },
+};
+
+/* Schema 1.1.0: the announcement banner, its list and the celebrations. The
+ * welcome-text, File Manager and usage-limit keys follow in 1.2.0. */
+
+/* Both sanitizers (`sanitizeAnnouncementHtml` on the server, DOMPurify in the
+ * banner) keep exactly these tags. */
+const ANNOUNCEMENT_HTML_HELP =
+  'HTML: bold (<b>, <strong>), italic (<em>), line break (<br>), <span> and links (<a href>). Everything else is removed, and a link keeps only its address, target and rel; links to other pages open in a new tab.';
+/* Mirrors `isExternalHttpUrl` in `announcements.normalizer.ts`, stricter: a
+ * lowercase scheme and no whitespace. A value the pattern accepts but `URL`
+ * cannot parse is dropped by the normalizer with a warning, as from ENV. */
+const ANNOUNCEMENT_LINK_HREF_PATTERN = '^https?://\\S+$';
+
+/* Mirrors `normalizeAnnouncements`: at most 10 entries of
+ * { title, description?, link?: { label, href }, severity? }. */
+const ANNOUNCEMENT_ITEMS_SCHEMA: ManagedValueSchema = {
+  type: ManagedSchemaType.Array,
+  maxItems: 10,
+  items: {
+    type: ManagedSchemaType.Object,
+    additionalProperties: false,
+    required: ['title'],
+    properties: {
+      title: boundedText(200, {
+        title: 'Title',
+        description: 'Plain text; markup is shown as typed.',
+        order: 1,
+      }),
+      description: {
+        type: ManagedSchemaType.String,
+        maxLength: 2000,
+        title: 'Description',
+        description: `Optional. ${ANNOUNCEMENT_HTML_HELP}`,
+        'dial:meta': { 'dial:propertyOrder': 2 },
+      },
+      link: {
+        type: ManagedSchemaType.Object,
+        additionalProperties: false,
+        required: ['label', 'href'],
+        title: 'Link',
+        description: 'Optional call to action shown after the description.',
+        properties: {
+          label: boundedText(100, { title: 'Label', order: 1 }),
+          href: {
+            type: ManagedSchemaType.String,
+            maxLength: 2048,
+            pattern: ANNOUNCEMENT_LINK_HREF_PATTERN,
+            title: 'Address',
+            description:
+              'An http:// or https:// address. It opens in a new tab.',
+            'dial:meta': { 'dial:propertyOrder': 2 },
+          },
+        },
+        'dial:meta': { 'dial:propertyOrder': 3 },
+      },
+      severity: {
+        type: ManagedSchemaType.String,
+        enum: Object.values(AnnouncementSeverity),
+        title: 'Severity',
+        description: 'warning highlights the entry; info is the default.',
+        'dial:meta': { 'dial:propertyOrder': 4 },
+      },
+    },
+  },
+};
+
+const CELEBRATION_EVENT_ID_SCHEMA: ManagedValueSchema = {
+  type: ManagedSchemaType.String,
+  maxLength: CELEBRATION_ID_MAX_LENGTH,
+  pattern: CELEBRATION_EVENT_ID_PATTERN,
+};
+
+/* The shape ENV produces after admission: "eventId/sceneId" strings, which
+ * `toExternalScenes` splits without re-validating. */
+const CELEBRATION_EXTERNAL_SCENES_SCHEMA: ManagedValueSchema = {
+  type: ManagedSchemaType.Array,
+  maxItems: CELEBRATION_POLICY_MAX_ENTRIES,
+  uniqueItems: true,
+  items: {
+    type: ManagedSchemaType.String,
+    maxLength: CELEBRATION_SCENE_PAIR_MAX_LENGTH,
+    pattern: CELEBRATION_SCENE_PAIR_PATTERN,
+  },
+};
+
+const CELEBRATION_EXTERNAL_EVENTS_SCHEMA: ManagedValueSchema = {
+  type: ManagedSchemaType.Array,
+  maxItems: CELEBRATION_POLICY_MAX_ENTRIES,
+  uniqueItems: true,
+  items: CELEBRATION_EVENT_ID_SCHEMA,
 };
 
 export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
@@ -239,6 +337,13 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Operator-authored plain-text heading shown in bold at the start of the announcement banner line. Rendered as text, never as markup. Null/blank omits the heading. Sourced from ANNOUNCEMENT_TITLE.',
     owner: 'chat-team',
     envVar: 'ANNOUNCEMENT_TITLE',
+    management: managedConfigKey({
+      title: 'Banner title',
+      description:
+        'Plain text in bold at the start of the announcement banner; markup is shown as typed. Omit it for a banner without a heading.',
+      order: 1,
+      value: boundedText(200),
+    }),
   },
   {
     key: 'announcement.description',
@@ -251,6 +356,12 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Operator-authored supporting copy shown after the announcement banner title. Sanitized server-side to a safe HTML subset. Null/blank omits the description. Sourced from ANNOUNCEMENT_DESCRIPTION.',
     owner: 'chat-team',
     envVar: 'ANNOUNCEMENT_DESCRIPTION',
+    management: managedConfigKey({
+      title: 'Banner text',
+      description: `Shown after the banner title. ${ANNOUNCEMENT_HTML_HELP}`,
+      order: 2,
+      value: boundedText(2000),
+    }),
   },
   {
     key: 'announcement.items',
@@ -263,6 +374,13 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'List of announcements shown in the popover behind the banner\'s "+N announcements" pill. JSON array of { title, description?, link?: { label, href } }. Entries with a blank title, or with a link whose label is blank or whose href is not http/https, are dropped with a warning. Empty (pill hidden) when ANNOUNCEMENTS is unset or malformed; boot never fails on bad config.',
     owner: 'chat-team',
     envVar: 'ANNOUNCEMENTS',
+    management: managedConfigKey({
+      title: 'Announcements',
+      description:
+        'Listed, in this order, behind the banner\'s "+N announcements" pill; at most 10. An entry whose link address cannot be opened is dropped.',
+      order: 3,
+      value: ANNOUNCEMENT_ITEMS_SCHEMA,
+    }),
   },
   {
     key: 'onboarding.hints',
@@ -420,6 +538,13 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Active start-page celebration module ID selected by UI_EVENT. Missing or none disables celebrations. The frontend owns the event registry and ignores IDs it does not support; adding an event does not require a backend enum change.',
     owner: 'chat-team',
     envVar: 'UI_EVENT',
+    management: managedConfigKey({
+      title: 'Celebration event',
+      description:
+        'The seasonal celebration shown on the start page: halloween or new-year, or none to turn celebrations off. An event without a built-in module plays only when it is listed under external events and its pack is available; an unknown event shows nothing.',
+      order: 20,
+      value: CELEBRATION_EVENT_ID_SCHEMA,
+    }),
   },
   {
     key: 'ui.celebrationsEnabledByDefault',
@@ -432,6 +557,13 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Operator default for the seasonal-celebrations switch in Settings → Preferences, applied to users who have not saved a choice of their own; a saved choice overrides it. On by default; only false, 0 or no turns it off. Has no visible effect without ui.activeEventId.',
     owner: 'chat-team',
     envVar: 'UI_EVENT_ENABLED_BY_DEFAULT',
+    management: managedConfigKey({
+      title: 'Celebrations on by default',
+      description:
+        'Whether users who never changed the celebrations switch in Settings see the celebration event. A choice a user saved always wins.',
+      order: 21,
+      value: { type: ManagedSchemaType.Boolean },
+    }),
   },
   {
     key: 'ui.celebrationDelivery.mode',
@@ -444,7 +576,16 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Where celebration scenes come from: bundled (compiled scenes only, no celebration request) or prefer-external (allowlisted scenes and admitted events from external packs served by /api/v1/celebrations). Sourced from UI_EVENT_DELIVERY_MODE; bundled by default.',
     owner: 'chat-team',
     envVar: 'UI_EVENT_DELIVERY_MODE',
-    management: localOnlyKey(LocalOnlyReason.SecurityPolicy),
+    management: managedConfigKey({
+      title: 'Celebration scene source',
+      description:
+        'For built-in events: bundled plays only built-in scenes; prefer-external also takes the scenes listed under Scenes from packs from the celebration packs this deployment serves, and keeps the built-in scenes when a pack is unavailable. External events come from their pack either way.',
+      order: 22,
+      value: {
+        type: ManagedSchemaType.String,
+        enum: Object.values(CelebrationDeliveryMode),
+      },
+    }),
   },
   {
     key: 'ui.celebrationDelivery.revision',
@@ -457,7 +598,17 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Operator revision of the celebration delivery policy; a change restarts a playing scene. Sourced from UI_EVENT_DELIVERY_REVISION; "0" by default.',
     owner: 'chat-team',
     envVar: 'UI_EVENT_DELIVERY_REVISION',
-    management: localOnlyKey(LocalOnlyReason.SecurityPolicy),
+    management: managedConfigKey({
+      title: 'Celebration restart token',
+      description:
+        'Change it to restart a scene that is already playing; changing the event, the source or the allowed scenes restarts it anyway. 1–64 letters, digits, dot, dash or underscore.',
+      order: 23,
+      value: {
+        type: ManagedSchemaType.String,
+        maxLength: CELEBRATION_ID_MAX_LENGTH,
+        pattern: CELEBRATION_DELIVERY_REVISION_PATTERN,
+      },
+    }),
   },
   {
     key: 'ui.celebrationDelivery.externalScenes',
@@ -470,7 +621,13 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Scenes of compiled celebration events that may come from an external pack, as eventId/sceneId pairs. Sourced from UI_EVENT_EXTERNAL_SCENES (comma-separated, at most 64); empty by default.',
     owner: 'chat-team',
     envVar: 'UI_EVENT_EXTERNAL_SCENES',
-    management: localOnlyKey(LocalOnlyReason.SecurityPolicy),
+    management: managedConfigKey({
+      title: 'Scenes from packs',
+      description:
+        'Scenes of built-in events that may come from a celebration pack, each as eventId/sceneId, for example new-year/snowman-delivery; at most 64. Used only when the scene source is prefer-external.',
+      order: 24,
+      value: CELEBRATION_EXTERNAL_SCENES_SCHEMA,
+    }),
   },
   {
     key: 'ui.celebrationDelivery.externalEvents',
@@ -483,7 +640,13 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Celebration event IDs without a compiled module that may come entirely from an external pack. Sourced from UI_EVENT_EXTERNAL_EVENTS (comma-separated, at most 64); empty by default.',
     owner: 'chat-team',
     envVar: 'UI_EVENT_EXTERNAL_EVENTS',
-    management: localOnlyKey(LocalOnlyReason.SecurityPolicy),
+    management: managedConfigKey({
+      title: 'External events',
+      description:
+        'Events without a built-in module that may come entirely from a celebration pack this deployment serves, for example company-anniversary; at most 64. An external event that is selected but not listed here shows nothing.',
+      order: 25,
+      value: CELEBRATION_EXTERNAL_EVENTS_SCHEMA,
+    }),
   },
   {
     key: 'overlay.enabled',

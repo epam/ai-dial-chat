@@ -78,14 +78,16 @@ Chat needs its own Core API key, separate from `DIAL_API_KEY` and
 
 ## 3. Upload the schema and publish
 
-Upload the schema version this Chat build pins (see
-[Verifying an upload](managed-config-schema.md#verifying-an-upload)) as a user
+Upload the schema version you publish against (see
+[Verifying an upload](managed-config-schema.md#verifying-an-upload)): `1.1.0`
+manages the tour, the announcements and the celebrations, `1.0.0` only the
+tour, and this build accepts both. Upload it as a user
 with a role in `schemaManagerRoles`. Studio's UI has no upload screen, and an
 API key is refused with 403, so call the instance route with the user's token:
 
 ```sh
 BODY=$(jq --arg op "$(uuidgen | tr A-Z a-z)" '. + {operationId: $op}' \
-  apps/chat-api/managed-config-schema/ai-dial-chat-1.0.0.json)
+  apps/chat-api/managed-config-schema/ai-dial-chat-1.1.0.json)
 ROUTE="$DIAL_CORE_URL/v1/deployments/ai-dial-chat/route/v1"
 curl -sS -X POST "$ROUTE/schema-validations" -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' -d "$BODY"   # {"valid":true,"errors":[]}
@@ -96,7 +98,8 @@ curl -sS -X POST "$ROUTE/schemas" -H "Authorization: Bearer $TOKEN" \
 Then publish in Studio (standalone, or on the instance's Parameters tab in
 DIAL Admin): fill in the **Edit** form, or import an export file from another
 environment; select **Validate**, then **Review and publish**, enter a reason,
-and **Publish**. The **Configuration** tab shows the new revision.
+and **Publish**. The **Configuration** tab shows the new revision. What each
+field means for editors is in [managed-content.md](managed-content.md).
 
 ## 4. Configure the deployment
 
@@ -106,14 +109,18 @@ env:
   MANAGED_CONFIG_INSTANCES: 'ai-dial-chat=ai-dial-chat' # <appId>=<instance ID>
   MANAGED_CONFIG_MAX_STALENESS_SECONDS: '900'
   MANAGED_CONFIG_ACTIVE_KEYS: 'onboarding.hints'
+  # With schema 1.1.0, for example:
+  # 'onboarding.hints,announcement.title,announcement.description,announcement.items,ui.activeEventId,ui.celebrationsEnabledByDefault,ui.celebrationDelivery.mode,ui.celebrationDelivery.revision,ui.celebrationDelivery.externalScenes,ui.celebrationDelivery.externalEvents'
 # secret: MANAGED_CONFIG_API_KEY
 ```
 
 1. Deploy with `off` and check that the pod starts with the key.
 2. Optionally switch to `shadow` and watch the shadow comparisons.
 3. Remove the environment variable of every key you activate (for
-   `onboarding.hints`, `ONBOARDING_HINTS`): an explicit environment value
-   always wins over the managed one.
+   `onboarding.hints`, `ONBOARDING_HINTS`; for `ui.activeEventId`, `UI_EVENT`):
+   an explicit environment value always wins over the managed one.
+   Activate the four `ui.celebrationDelivery.*` keys together: in `active`
+   mode a list with only some of them fails startup.
 4. Switch to `active` with the keys in `MANAGED_CONFIG_ACTIVE_KEYS`.
 
 ## 5. Verify
@@ -155,7 +162,7 @@ curl -sS "$DIAL_CORE_URL/v1/deployments/ai-dial-chat/route/v1/published" \
 | Fixed in DIAL Admin, still `unavailable` minutes later                                       | Failed reads back off up to five refresh intervals, plus the response cache | Wait about six minutes, or restart the pod               |
 
 To stop applying managed values, set `MANAGED_CONFIG_MODE=off` or remove the
-key from `MANAGED_CONFIG_ACTIVE_KEYS`. To roll back the values themselves, roll
+key from `MANAGED_CONFIG_ACTIVE_KEYS` (the four delivery keys only together). To roll back the values themselves, roll
 back to an earlier revision in Studio's History. To rotate the reader key,
 deploy the new key with the same role, confirm `state fresh`, then revoke the
 old one.

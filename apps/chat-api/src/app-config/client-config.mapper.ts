@@ -14,7 +14,10 @@ import { normalizeEnabledUiFeatures } from './enabled-ui-features.normalizer';
 import { sanitizeAnnouncementHtml, sanitizeFooterHtml } from './html-sanitizer';
 import { normalizeOnboardingHints } from './onboarding-hints.normalizer';
 import { toNullableText } from './text.util';
-import { CelebrationDeliveryMode } from './types/celebration-delivery';
+import {
+  CELEBRATION_EVENT_NONE,
+  CelebrationDeliveryMode,
+} from './types/celebration-delivery';
 import { SpendingLimitsMode } from './types/spending-limits-mode';
 
 const DEFAULT_TRANSCRIBE_SIZE_LIMIT_BYTES = 5 * 1024 * 1024;
@@ -205,9 +208,12 @@ export const CLIENT_CONFIG_MAPPINGS: ReadonlyMap<string, ClientConfigMapping> =
   new Map<string, ClientConfigMapping>([
     [
       'ui.activeEventId',
-      defineMapping('activeEventId', ({ resolved }) =>
-        toNullableString(resolved),
-      ),
+      /* `none` means off from every source. The provider returns an explicit
+       * UI_EVENT=none unchanged, so it still wins over a published event. */
+      defineMapping('activeEventId', ({ resolved }) => {
+        const eventId = toNullableString(resolved);
+        return eventId === CELEBRATION_EVENT_NONE ? null : eventId;
+      }),
     ],
     [
       'asr.modelId',

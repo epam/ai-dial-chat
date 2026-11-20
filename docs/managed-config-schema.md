@@ -8,7 +8,8 @@ registry, `CONFIG_DEFINITIONS` in
 and committed in
 [`apps/chat-api/managed-config-schema/`](../apps/chat-api/managed-config-schema/).
 Studio consumes only those JSON files. It needs no Chat source, no Chat build
-and no running Chat deployment.
+and no running Chat deployment. Content editors who use Config Studio have their
+own guide, [managed-content.md](managed-content.md).
 
 ## Export is not activation
 
@@ -21,8 +22,8 @@ control, described in
 The one provider-level difference is that a blank managed text from ENV
 resolves to `undefined` instead of `""` (see
 [Related environment resolution](#related-environment-resolution)); the
-client-config field is `null` either way. Schema 1.0.0 manages no text key,
-so this difference applies to no key today. A managed classification only makes
+client-config field is `null` either way. From schema 1.1.0 this difference
+applies to `announcement.title` and `announcement.description`. A managed classification only makes
 a key eligible for `MANAGED_CONFIG_ACTIVE_KEYS`; it is never permission to read.
 
 The schema's root description tells operators that a deployment applies the
@@ -58,29 +59,35 @@ or enforces, even when the deployment already degrades safely without it:
 | `opaque`                 | Client-owned JSON with no declared schema                | `customVariables`                                                                                                                               |
 
 Schema version 1.0.0 manages one key, the onboarding tour `onboarding.hints`
-(see [The onboarding tour](#the-onboarding-tour)), and no feature. Thirty-one
-keys are local-only, and the other 19 are eligible but unmanaged.
+(see [The onboarding tour](#the-onboarding-tour)). Schema 1.1.0 adds the
+announcement banner and its list, the celebration event, its default switch and
+the four celebration delivery keys (see
+[Announcements and celebrations](#announcements-and-celebrations)). Neither
+manages a feature. Of the 53 registry keys, 10 are managed, 29 are local-only,
+and the other 14 are eligible but unmanaged.
 
 ### Rollout
 
 Each step is a separate change with its own schema version. The first
 schema an `ai-dial-chat` instance receives manages only the onboarding tour;
-the keys managed before it come back in the next version.
+the second adds the content operators change most often without a redeploy.
 
-| Schema | Keys                                                                                                                                                                                                                                                                                   | Needs first                                                                                                                                             |
-| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1.0.0  | `onboarding.hints`                                                                                                                                                                                                                                                                     | Nothing                                                                                                                                                 |
-| 1.1.0  | `announcement.title`, `announcement.description`, `announcement.items` with `severity` on its entries, `welcomeScreen.description`, `fileManager.availableTabs`, `usageLimits.warningThresholdPercent`, `usageLimits.spendingLimitsMode` and the feature `features.usageLimitsControl` | Nothing. Activating `features.usageLimitsControl` needs Config Studio to enforce `calendar_date` and `window_order`                                     |
-| Next   | `ui.celebrationsEnabledByDefault`, `ui.activeEventId`, `mcpApps.theme`                                                                                                                                                                                                                 | Nothing                                                                                                                                                 |
-| Next   | `features.projectsEnabled`                                                                                                                                                                                                                                                             | `features.usageLimitsControl` active on a deployment, proving the managed feature path                                                                  |
-| Next   | `footer.html`; `uiFeatures.enabledUiFeatures`; `deployments.defaultDeploymentId` with `features.defaultDeploymentPinned`                                                                                                                                                               | Footer: `features.footer` derived from the effective `footer.html`, decided together with `announcement.html`. The deployment pair moves in one version |
+| Schema | Keys                                                                                                                                                                                                       | Needs first                                                                                                                                             |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0.0  | `onboarding.hints`                                                                                                                                                                                         | Nothing                                                                                                                                                 |
+| 1.1.0  | `announcement.title`, `announcement.description`, `announcement.items` with `severity` on its entries, `ui.activeEventId`, `ui.celebrationsEnabledByDefault`, and the four `ui.celebrationDelivery.*` keys | Nothing. The four delivery keys are managed and activated together                                                                                      |
+| 1.2.0  | `welcomeScreen.description`, `fileManager.availableTabs`, `usageLimits.warningThresholdPercent`, `usageLimits.spendingLimitsMode` and the feature `features.usageLimitsControl`                            | Nothing. Activating `features.usageLimitsControl` needs Config Studio to enforce `calendar_date` and `window_order`                                     |
+| Next   | `mcpApps.theme`                                                                                                                                                                                            | Nothing                                                                                                                                                 |
+| Next   | `features.projectsEnabled`                                                                                                                                                                                 | `features.usageLimitsControl` active on a deployment, proving the managed feature path                                                                  |
+| Next   | `footer.html`; `uiFeatures.enabledUiFeatures`; `deployments.defaultDeploymentId` with `features.defaultDeploymentPinned`                                                                                   | Footer: `features.footer` derived from the effective `footer.html`, decided together with `announcement.html`. The deployment pair moves in one version |
 
-The keys of 1.1.0 were managed by a 1.0.0 and a 1.1.0 that no Chat release or
+The keys of 1.2.0 were managed by a 1.0.0 and a 1.1.0 that no Chat release or
 Config Studio instance ever carried; both were replaced before the first
-upload.
+upload. The committed 1.1.0 is the announcements and celebrations version.
 
-The two rules for the footer and the deployment pair are contract
-requirements, and registry tests fail when a version breaks them. The other
+The rules for the footer, the deployment pair and the celebration delivery
+keys are contract requirements, and registry tests fail when a version breaks
+them. The other
 "needs first" entries are delivery order, not code conditions.
 
 `features.scheduledTasksEnabled` is local-only because it needs the DIAL
@@ -151,6 +158,76 @@ Its managed value mirrors `normalizeOnboardingHints`
   hint has no `pages` and shows on the home page only. Adding it to the
   managed schema needs a MINOR bump like a new anchor.
 
+### Announcements and celebrations
+
+Schema 1.1.0 manages nine keys whose values mirror the client-config
+normalization (`client-config.mapper.ts`). A published value goes through the
+same sanitizer and normalizer as its ENV variable, so the same content gives
+the same client field.
+
+| Key                                     | Value                                                                                                                                                                                                                                              |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `announcement.title`                    | 1–200 characters, not only whitespace. Plain text: markup is shown as typed                                                                                                                                                                        |
+| `announcement.description`              | 1–2,000 characters, not only whitespace. Sanitized to `a b strong em br span`, only `href`, `target` and `rel` on links, links to other pages opened in a new tab                                                                                  |
+| `announcement.items`                    | At most 10 `{ title, description?, link?, severity? }`: `title` 1–200, `description` ≤ 2,000 (sanitized like the banner), `link` `{ label, href }` with `label` 1–100 and `href` ≤ 2,048 matching `^https?://\S+$`, `severity` `info` or `warning` |
+| `ui.activeEventId`                      | ≤ 64 characters, lowercase kebab-case (`halloween`, `new-year`, an external event, or `none`)                                                                                                                                                      |
+| `ui.celebrationsEnabledByDefault`       | Boolean, default `true`                                                                                                                                                                                                                            |
+| `ui.celebrationDelivery.mode`           | `bundled` (default) or `prefer-external`                                                                                                                                                                                                           |
+| `ui.celebrationDelivery.revision`       | 1–64 letters, digits, `.`, `_` or `-`; default `"0"`                                                                                                                                                                                               |
+| `ui.celebrationDelivery.externalScenes` | At most 64 distinct `eventId/sceneId` strings, each part kebab-case and ≤ 64 characters                                                                                                                                                            |
+| `ui.celebrationDelivery.externalEvents` | At most 64 distinct kebab-case event IDs, each ≤ 64 characters                                                                                                                                                                                     |
+
+- **One set of ID rules.** The celebration ID patterns and limits are defined
+  once, in `apps/chat-api/src/app-config/types/celebration-delivery.ts`, and both
+  environment validation and the value schemas use them. The only differences:
+  the schema also bounds the active event ID to 64 characters, and it rejects
+  repeated list entries, which the environment de-duplicates.
+- **HTML is a subset, stated in the form.** The operator descriptions of the
+  banner text and of an announcement's description list the tags that survive.
+  The schema accepts any text, because sanitizing is Chat's job: `<script>` in
+  a published description is removed exactly as from `ANNOUNCEMENT_DESCRIPTION`.
+- **A link the pattern accepts can still be dropped.** `^https?://\S+$` is
+  stricter than the normalizer's scheme check, but an address `URL` cannot
+  parse (`https://[`) passes the pattern; the normalizer drops that entry with
+  a warning, as for `ANNOUNCEMENTS`.
+- **Event IDs are not enumerated.** External events cannot be listed in the
+  schema, so `ui.activeEventId` is a pattern, not an `enum`, and no semantic
+  constraint ties it to `externalEvents`: Config Studio fails closed on an
+  unknown code, and the frontend already shows nothing for an event that is
+  neither compiled nor admitted. The key's description names the compiled
+  events. `none` maps to `null` for every source.
+- **The delivery policy is managed; its source is not.** The four
+  `ui.celebrationDelivery.*` keys were local-only `security-policy` keys. They
+  are managed from 1.1.0 because pack admission stays local:
+  - packs are read only under `<THEMES_CONFIG_URL>/celebrations/`, with
+    redirects refused, and `THEMES_CONFIG_URL` stays a deployment variable;
+  - the BFF checks every pack resource's declared size, SHA-256 and media type
+    before anything parses it;
+  - the client composes packs only through a fixed library import and derives
+    no path from an ID.
+
+  A publisher therefore chooses only among packs the deployment's own themes
+  host serves and the BFF admits. On a themes host shared by several
+  deployments, a publisher can enable a pack the host serves for another
+  deployment; an explicit `UI_EVENT_DELIVERY_MODE=bundled` keeps every
+  built-in scene whatever is published.
+
+- **The four delivery keys move together.** They build one
+  `celebrationDelivery` object, so a registry test requires them to be managed
+  in the same version, and `MANAGED_CONFIG_ACTIVE_KEYS` in `active` mode lists
+  all four or none: a partial list fails startup and names the missing keys.
+  An explicit ENV value still wins for its own part, and shadow mode reports it
+  as `env_shadowed`.
+- **`revision` is an operator value.** It is not derived from the published
+  revision, because every publication, an announcement edit included, would
+  then restart a playing scene. Changing the event, the mode or the scene
+  allowlist restarts a scene anyway.
+- **The payload limit is a total.** Every key at its largest value fits in the
+  57,344-byte payload limit on its own (the announcement list at its maximum is
+  about 44 KB), and a realistic publication fits easily, but all keys at their
+  maximum together do not. Config Studio refuses such a publication, and Chat
+  rejects such a snapshot with `payload_too_large` and keeps the previous one.
+
 ## Payload contract
 
 A publication is `{ "config": { … }, "features": { … } }`. Both members are
@@ -180,8 +257,8 @@ undeclared is rejected.
 
 - A config value is a plain JSON value, never `null`. To fall back to the
   registry default, omit the key.
-- A feature state is `{ enabled, availability?, targeting? }`. Schema 1.0.0
-  exports no feature, but it exports this state as `$defs/featureState`, and
+- A feature state is `{ enabled, availability?, targeting? }`. No committed
+  schema exports a feature yet, but each exports this state as `$defs/featureState`, and
   every feature of a later version references it.
   - `availability` has at least one of `startsAt` (inclusive) and `endsAt`
     (exclusive). Each is `YYYY-MM-DDTHH:MM:SS[.fff]Z`, in UTC only.
@@ -205,14 +282,20 @@ without the client-supplied `operationId`. `index.json` sits next to it:
 {
   "format": "dial-managed-config-schema-index@1",
   "appId": "ai-dial-chat",
-  "current": "1.0.0",
-  "supported": ["1.0.0"],
+  "current": "1.1.0",
+  "supported": ["1.0.0", "1.1.0"],
   "versions": [
     {
       "schemaVersion": "1.0.0",
       "file": "ai-dial-chat-1.0.0.json",
       "schemaSha256": "edbe9267f6663eb7768ae7e2033e20b0b3c842994224a774968d348e3b9be71f",
       "canonicalBytes": 5259
+    },
+    {
+      "schemaVersion": "1.1.0",
+      "file": "ai-dial-chat-1.1.0.json",
+      "schemaSha256": "d1b5d59e7fbefad252109ef504d1ff9955403d94b84be937beb7da1b895113df",
+      "canonicalBytes": 10155
     }
   ]
 }
@@ -348,7 +431,10 @@ must be in the instance's `userRoles` and `readerRoles`. Variables are listed in
 | `active`              | The keys in `MANAGED_CONFIG_ACTIVE_KEYS` take managed values and policies; responses carry `metadata.managed`, `metadata.nextRefreshAt` and `appConfig`.              |
 
 A failure never changes the mode. Setting `off`, or removing a key, is the
-explicit rollback; it applies to the next request. The key list may stay in
+explicit rollback; it applies to the next request. Keys of one group, today the
+four `ui.celebrationDelivery.*` keys, are removed or added together: in
+`active` mode a list with only some of them fails startup and names the
+missing ones. The key list may stay in
 place: outside `active` it is ignored, with a startup warning. Rolling back a configuration
 is done in Studio, as a new revision.
 
@@ -433,7 +519,15 @@ The DIAL Admin, reader key, upload and verification steps are spelled out in
 4. Switch to `active` with `MANAGED_CONFIG_ACTIVE_KEYS=onboarding.hints`,
    after removing `ONBOARDING_HINTS`. Publish the current tour first, so
    shadow comparison reports `equal` before the switch.
-5. With schema 1.1.0, add its texts and lists, then
+5. With schema 1.1.0, upload it, publish the current announcements and
+   celebration values, and add the announcement keys, `ui.activeEventId`,
+   `ui.celebrationsEnabledByDefault` and the four delivery keys together.
+   Remove each ENV variable when its key is activated, not later: an explicit
+   variable keeps winning (`UI_EVENT`, `ANNOUNCEMENT_TITLE`,
+   `ANNOUNCEMENT_DESCRIPTION`), while malformed `ANNOUNCEMENTS` JSON already
+   resolves to nothing. A build keeps accepting 1.0.0 snapshots, so the
+   upgrade can precede the first 1.1.0 publication.
+6. With schema 1.2.0, add its texts and lists, then
    `features.usageLimitsControl` only after Config Studio enforces
    `calendar_date` and `window_order`; until then a publication with an
    invalid window is rejected here as a whole and the instance goes

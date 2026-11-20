@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { CONFIG_DEFINITIONS } from '../../config-registry/config-registry.constants';
 import { canonicalSha256 } from '../../managed-config/canonical-json';
+import { PINNED_MANAGED_CONFIG_SCHEMA_SHA256 } from '../../managed-config/managed-config.constants';
 import { ManagedRejectionReason } from '../../managed-runtime/managed-runtime.types';
 import {
   acceptSnapshot,
@@ -49,7 +50,13 @@ const VALID_PAYLOAD = {
   features: {},
 };
 
-/* Schema 1.0.0 manages no feature. Feature-policy admission is checked
+/* A 1.0.0 envelope, for the snapshots published before the upgrade. */
+const V100 = {
+  schemaVersion: '1.0.0',
+  schemaSha256: PINNED_MANAGED_CONFIG_SCHEMA_SHA256['1.0.0'],
+};
+
+/* The real schema manages no feature. Feature-policy admission is checked
  * against the test-only contract, which adds a managed feature. */
 const featureContext = () =>
   chatContext({
@@ -177,8 +184,61 @@ describe('acceptSnapshot', () => {
   });
 
   it('rejects a version this build does not support', () => {
-    expect(rejectionOf(snapshotBody({ schemaVersion: '1.1.0' }))).toBe(
+    expect(rejectionOf(snapshotBody({ schemaVersion: '1.2.0' }))).toBe(
       ManagedRejectionReason.UnsupportedSchema,
+    );
+  });
+
+  it('keeps accepting a 1.0.0 snapshot against its own artifact', () => {
+    const result = acceptSnapshot(
+      snapshotBody({ ...V100, payload: VALID_PAYLOAD }),
+      chatContext(),
+    );
+    expect(result.accepted).toBe(true);
+    if (!result.accepted) return;
+    expect(result.snapshot.schemaVersion).toBe('1.0.0');
+  });
+
+  it('rejects a 1.1.0 key under the 1.0.0 version', () => {
+    const payload = {
+      config: { 'announcement.title': 'Maintenance tonight' },
+      features: {},
+    };
+    expect(rejectionOf(snapshotBody({ ...V100, payload }))).toBe(
+      ManagedRejectionReason.InvalidPayload,
+    );
+  });
+
+  it('accepts a 1.1.0 snapshot with announcements and an event', () => {
+    const payload = {
+      config: {
+        'announcement.title': 'Maintenance',
+        'announcement.description': 'Saturday <b>10:00 UTC</b>',
+        'announcement.items': [
+          { title: 'DIAL 1.49', severity: 'warning' },
+          {
+            title: 'Changelog',
+            link: { label: 'Read', href: 'https://example.com/changelog' },
+          },
+          { title: 'Tips', description: 'Use <em>projects</em>.' },
+        ],
+        'ui.activeEventId': 'new-year',
+      },
+      features: {},
+    };
+    const result = acceptSnapshot(snapshotBody({ payload }), chatContext());
+    expect(result.accepted).toBe(true);
+    if (!result.accepted) return;
+    expect(result.snapshot.schemaVersion).toBe('1.1.0');
+  });
+
+  it('rejects an announcement title Studio would never publish', () => {
+    const payload = {
+      config: { 'announcement.title': 't'.repeat(201) },
+      features: {},
+    };
+    expect(rejectionOf(snapshotBody({ payload }))).toBe(
+      ManagedRejectionReason.InvalidPayload,
     );
   });
 
@@ -198,11 +258,11 @@ describe('acceptSnapshot', () => {
     ['a local-only key', { config: { 'footer.html': 'x' }, features: {} }],
     ['a null value', { config: { 'onboarding.hints': null }, features: {} }],
     [
-      'a key 1.0.0 does not manage',
+      'a key the current schema does not manage',
       { config: { 'welcomeScreen.description': 'Welcome' }, features: {} },
     ],
     [
-      'a feature 1.0.0 does not manage',
+      'a feature the current schema does not manage',
       {
         config: {},
         features: { 'features.usageLimitsControl': { enabled: true } },
@@ -327,7 +387,7 @@ describe('acceptSnapshot', () => {
 
 describe('compileManagedPayloadValidators', () => {
   it('compiles every supported version from the bundled artifacts', () => {
-    expect([...validators.keys()]).toEqual(['1.0.0']);
+    expect([...validators.keys()]).toEqual(['1.0.0', '1.1.0']);
   });
 
   it('refuses an artifact whose hash differs from its pin', () => {

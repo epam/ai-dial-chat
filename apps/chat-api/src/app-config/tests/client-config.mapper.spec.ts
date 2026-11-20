@@ -182,6 +182,21 @@ describe('CLIENT_CONFIG_MAPPINGS', () => {
       },
     );
 
+    it.each([
+      ['none', null],
+      ['easter', 'easter'],
+      ['new-year', 'new-year'],
+      [null, null],
+    ])('maps the event %j to %j for every source', (resolved, expected) => {
+      const config = createDefaultClientConfig();
+      applyClientConfigValue(
+        config,
+        'ui.activeEventId',
+        makeInput({ resolved }),
+      );
+      expect(config.activeEventId).toBe(expected);
+    });
+
     it('returns a fresh copy for a wrong-shape fallback', () => {
       const first = createDefaultClientConfig();
       const second = createDefaultClientConfig();

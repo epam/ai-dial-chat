@@ -196,8 +196,20 @@ describe('managed configuration environment', () => {
     expect(config.MANAGED_CONFIG_ACTIVE_KEYS).toEqual(['onboarding.hints']);
   });
 
-  /* Schema 1.0.0 manages only the onboarding tour; these keys were managed
-   * before it and return in schema 1.1.0. */
+  it('accepts the 1.1.0 announcement and event keys', () => {
+    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    expect(() =>
+      validate({
+        ...MANAGED,
+        MANAGED_CONFIG_MODE: 'active',
+        MANAGED_CONFIG_ACTIVE_KEYS:
+          'onboarding.hints,announcement.title,announcement.description,announcement.items,ui.activeEventId,ui.celebrationsEnabledByDefault',
+      }),
+    ).not.toThrow();
+  });
+
+  /* Schema 1.1.0 manages the tour, the announcements and the celebrations;
+   * these keys follow in schema 1.2.0. */
   it.each([
     'welcomeScreen.description',
     'usageLimits.spendingLimitsMode',
@@ -211,5 +223,50 @@ describe('managed configuration environment', () => {
       },
       `MANAGED_CONFIG_ACTIVE_KEYS lists "${key}", which is not a managed key`,
     );
+  });
+
+  describe('celebration delivery group', () => {
+    const DELIVERY = [
+      'ui.celebrationDelivery.mode',
+      'ui.celebrationDelivery.revision',
+      'ui.celebrationDelivery.externalScenes',
+      'ui.celebrationDelivery.externalEvents',
+    ];
+
+    it('refuses a partial group in active mode and names the missing keys', () => {
+      expectFailure(
+        {
+          ...MANAGED,
+          MANAGED_CONFIG_MODE: 'active',
+          MANAGED_CONFIG_ACTIVE_KEYS:
+            'ui.activeEventId,ui.celebrationDelivery.mode',
+        },
+        'missing ui.celebrationDelivery.revision, ui.celebrationDelivery.externalScenes, ui.celebrationDelivery.externalEvents',
+      );
+    });
+
+    it('accepts the whole group with the event', () => {
+      vi.spyOn(console, 'info').mockImplementation(() => undefined);
+      expect(() =>
+        validate({
+          ...MANAGED,
+          MANAGED_CONFIG_MODE: 'active',
+          MANAGED_CONFIG_ACTIVE_KEYS: ['ui.activeEventId', ...DELIVERY].join(
+            ',',
+          ),
+        }),
+      ).not.toThrow();
+    });
+
+    it('ignores a partial group outside active mode', () => {
+      vi.spyOn(console, 'info').mockImplementation(() => undefined);
+      expect(() =>
+        validate({
+          ...MANAGED,
+          MANAGED_CONFIG_MODE: 'shadow',
+          MANAGED_CONFIG_ACTIVE_KEYS: 'ui.celebrationDelivery.mode',
+        }),
+      ).not.toThrow();
+    });
   });
 });

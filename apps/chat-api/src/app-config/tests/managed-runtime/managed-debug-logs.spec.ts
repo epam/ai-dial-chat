@@ -54,6 +54,22 @@ describe('managed configuration debug logs', () => {
     expect(messages(log).join('\n')).not.toContain('reader-key');
   });
 
+  it('lists the celebration keys in the startup line', () => {
+    createManagedRuntime({
+      ...ACTIVE,
+      MANAGED_CONFIG_ACTIVE_KEYS: [
+        'ui.activeEventId',
+        'ui.celebrationDelivery.mode',
+        'ui.celebrationDelivery.revision',
+        'ui.celebrationDelivery.externalScenes',
+        'ui.celebrationDelivery.externalEvents',
+      ],
+    });
+    expect(messages(log).join('\n')).toContain(
+      'active keys ui.activeEventId, ui.celebrationDelivery.mode, ui.celebrationDelivery.revision, ui.celebrationDelivery.externalScenes, ui.celebrationDelivery.externalEvents,',
+    );
+  });
+
   it('logs each read at debug level without the payload', async () => {
     const clock = createFakeClock();
     const fake = createFakeReader();

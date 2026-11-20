@@ -1,14 +1,20 @@
 {
   "format": "dial-managed-config-schema-index@1",
   "appId": "ai-dial-chat",
-  "current": "1.0.0",
-  "supported": ["1.0.0"],
+  "current": "1.1.0",
+  "supported": ["1.0.0", "1.1.0"],
   "versions": [
     {
       "schemaVersion": "1.0.0",
       "file": "ai-dial-chat-1.0.0.json",
       "schemaSha256": "edbe9267f6663eb7768ae7e2033e20b0b3c842994224a774968d348e3b9be71f",
       "canonicalBytes": 5259
+    },
+    {
+      "schemaVersion": "1.1.0",
+      "file": "ai-dial-chat-1.1.0.json",
+      "schemaSha256": "d1b5d59e7fbefad252109ef504d1ff9955403d94b84be937beb7da1b895113df",
+      "canonicalBytes": 10155
     }
   ]
 }

@@ -13,14 +13,15 @@ import {
 import { createStudioAjv } from './studio-contract.fixtures';
 
 /*
- * A managed contract for tests only. Schema 1.0.0 manages only
- * `onboarding.hints`, so it reaches neither a managed feature (policies,
- * availability windows, targeting, FeatureGuard) nor a second managed config
- * key. Tests of those mechanisms mark the eligible keys below managed on top
+ * A managed contract for tests only. The real schema manages no feature, so
+ * it reaches no managed feature (policies, availability windows, targeting,
+ * FeatureGuard). Tests of those mechanisms mark the keys below managed on top
  * of the real registry and validate payloads against a schema generated from
- * that registry. Snapshots still carry the real 1.0.0 version and pin. The
- * contract is never committed as an artifact; schema 1.1.0 exports these keys
- * with their real value schemas.
+ * that registry as the current version. Snapshots still carry the real current
+ * version and pin. The contract is never committed as an artifact; a later
+ * schema version exports these keys with their real value schemas.
+ * Keys the real schema already manages, such as `announcement.description`,
+ * come from the registry unchanged.
  *
  * A spec opts in with two hoisted mocks:
  *
@@ -40,17 +41,6 @@ import { createStudioAjv } from './studio-contract.fixtures';
 
 /** The eligible keys the test contract manages besides `onboarding.hints`. */
 export const TEST_MANAGED_KEYS: Readonly<Record<string, KeyManagement>> = {
-  'announcement.description': managedConfigKey({
-    title: 'Announcement description',
-    description: 'Test-only managed text.',
-    order: 11,
-    value: {
-      type: ManagedSchemaType.String,
-      minLength: 1,
-      maxLength: 2000,
-      pattern: '\\S',
-    },
-  }),
   'welcomeScreen.description': managedConfigKey({
     title: 'Welcome text',
     description: 'Test-only managed text.',
