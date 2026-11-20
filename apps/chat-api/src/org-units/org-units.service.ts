@@ -7,6 +7,10 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import type { OrgUnitDto, OrgUnitsResponseDto } from './dto/org-unit.dto';
+import {
+  canWriteIntoOrgUnitAt,
+  findOwningOrgUnit,
+} from './org-unit-rights.util';
 
 const CACHE_TTL_MS = 60 * 1000;
 const NOT_FOUND = 404;
@@ -67,6 +71,41 @@ export class OrgUnitsService {
         };
       },
     });
+  }
+
+  /**
+   * The namespaces the caller may not write in the org unit that owns
+   * `folderPath`. Answers `undefined` (unknown, DIAL Core decides) when org
+   * units are off, the caller's rights cannot be read, or no unit owns the
+   * folder.
+   * @param userSub - caller's session subject
+   * @param accessToken - caller's bearer token
+   * @param folderPath - plain target folder relative to the public bucket
+   * @param namespaces - Core namespaces that need `write` (`applications`, `skills`, `files`, ...)
+   * @returns the missing namespaces in the order given, `[]` when all are writable, `undefined` when unknown
+   */
+  async findMissingWriteNamespaces(
+    userSub: string,
+    accessToken: string,
+    folderPath: string,
+    namespaces: readonly string[],
+  ): Promise<string[] | undefined> {
+    let rights: OrgUnitsResponseDto;
+    try {
+      rights = await this.listOrgUnits(userSub, accessToken);
+    } catch (err) {
+      this.logger.warn(
+        `Skipping the org-unit write check, rights could not be read: ${
+          err instanceof Error ? err.message : 'unknown error'
+        }`,
+      );
+      return undefined;
+    }
+    if (!rights.enabled) return undefined;
+    if (findOwningOrgUnit(rights.units, folderPath) == null) return undefined;
+    return [...new Set(namespaces)].filter(
+      (namespace) => !canWriteIntoOrgUnitAt(rights, folderPath, namespace),
+    );
   }
 
   private toDto(item: CoreOrgUnitItem): OrgUnitDto[] {

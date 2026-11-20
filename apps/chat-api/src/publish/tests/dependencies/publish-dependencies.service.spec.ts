@@ -13,12 +13,17 @@ const DEPENDENCY = {
 
 describe('PublishDependenciesService', () => {
   let resolve: ReturnType<typeof vi.fn>;
+  let resolveFromValues: ReturnType<typeof vi.fn>;
   let service: PublishDependenciesService;
   let warn: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     resolve = vi.fn().mockResolvedValue([DEPENDENCY]);
-    service = new PublishDependenciesService({ resolve } as never);
+    resolveFromValues = vi.fn().mockResolvedValue([DEPENDENCY]);
+    service = new PublishDependenciesService({
+      resolve,
+      resolveFromValues,
+    } as never);
     warn = vi.spyOn(Logger.prototype, 'warn').mockReturnValue(undefined);
   });
 
@@ -57,6 +62,28 @@ describe('PublishDependenciesService', () => {
     },
   );
 
+  it('getDependenciesStrict returns the resolver result and lets a resolver failure through', async () => {
+    await expect(
+      service.getDependenciesStrict(
+        't',
+        'u',
+        CatalogEntityType.Application,
+        'applications/b/App__1.0.0',
+      ),
+    ).resolves.toEqual({ dependencies: [DEPENDENCY] });
+
+    resolve.mockRejectedValue(new Error('application read failed'));
+    await expect(
+      service.getDependenciesStrict(
+        't',
+        'u',
+        CatalogEntityType.Application,
+        'applications/b/App__1.0.0',
+      ),
+    ).rejects.toThrow('application read failed');
+    expect(warn).not.toHaveBeenCalled();
+  });
+
   it('returns an empty list and logs a warning without the token when the resolver fails', async () => {
     resolve.mockRejectedValue(
       new Error('application read failed with status 500'),
@@ -88,5 +115,77 @@ describe('PublishDependenciesService', () => {
 
     expect(result).toEqual({ dependencies: [] });
     expect(warn).toHaveBeenCalledOnce();
+  });
+
+  describe('getApplicationValueDependencies', () => {
+    it('returns the resolver result for the given values', async () => {
+      const result = await service.getApplicationValueDependencies(
+        'secret-token',
+        'user-1',
+        'b',
+        'https://schema/form',
+        { a: 1 },
+      );
+
+      expect(result).toEqual({ dependencies: [DEPENDENCY] });
+      expect(resolveFromValues).toHaveBeenCalledWith(
+        { accessToken: 'secret-token', userSub: 'user-1' },
+        'https://schema/form',
+        { a: 1 },
+      );
+      expect(resolve).not.toHaveBeenCalled();
+    });
+
+    it('leaves out the dependencies of another bucket and keeps files', async () => {
+      const foreign = { ...DEPENDENCY, id: 'skills/other/Plan', name: 'Plan' };
+      const file = {
+        id: 'files/other/icon.png',
+        name: 'icon.png',
+        type: ResourceDependencyType.File,
+        location: '',
+      };
+      resolveFromValues.mockResolvedValue([DEPENDENCY, foreign, file]);
+
+      const result = await service.getApplicationValueDependencies(
+        'secret-token',
+        'user-1',
+        'b',
+        'https://schema/form',
+        { a: 1 },
+      );
+
+      expect(result).toEqual({ dependencies: [DEPENDENCY, file] });
+    });
+
+    it('lists every dependency while the caller bucket is not resolved', async () => {
+      const foreign = { ...DEPENDENCY, id: 'skills/other/Plan', name: 'Plan' };
+      resolveFromValues.mockResolvedValue([DEPENDENCY, foreign]);
+
+      const result = await service.getApplicationValueDependencies(
+        'secret-token',
+        'user-1',
+        '',
+        'https://schema/form',
+        { a: 1 },
+      );
+
+      expect(result).toEqual({ dependencies: [DEPENDENCY, foreign] });
+    });
+
+    it('returns an empty list and logs without the token when the resolver fails', async () => {
+      resolveFromValues.mockRejectedValue(new Error('boom'));
+
+      const result = await service.getApplicationValueDependencies(
+        'secret-token',
+        'user-1',
+        'b',
+        'https://schema/form',
+        { a: 1 },
+      );
+
+      expect(result).toEqual({ dependencies: [] });
+      expect(warn).toHaveBeenCalledOnce();
+      expect(String(warn.mock.calls[0][0])).not.toContain('secret-token');
+    });
   });
 });

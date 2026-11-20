@@ -14,14 +14,19 @@ import {
   LinkButton,
   LiveRegion,
   LiveRegionPoliteness,
+  Notification,
+  NotificationType,
+  NotificationVariant,
   RadioGroup,
   Search,
 } from '@epam/ai-dial-ui-kit';
 import { IconFolder } from '@tabler/icons-react';
 import { FC, useId, useMemo, useState } from 'react';
+import { DEFAULT_DEPENDENCIES_TITLE } from '../../constants/publish-dependencies';
 import type { SaveToFolderPanelProps } from '../../models/save-to-folder-panel';
 import { SaveToFolderView, SaveVersionMode } from '../../types/save-to-folder';
 import { PublishAccessRules } from '../PublishAccessRules/PublishAccessRules';
+import { PublishDependenciesList } from '../PublishDependenciesList/PublishDependenciesList';
 import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
 import { VersionHistorySection } from '../VersionHistorySection/VersionHistorySection';
 import styles from './SaveToFolderPanel.module.scss';
@@ -40,6 +45,12 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
   onPendingDestinationChange,
   version,
   accessRules,
+  dependencies,
+  dependenciesLabels,
+  dependenciesStyles,
+  dependenciesNote,
+  destinationNote,
+  noteClassName = 'dial-small-text',
   versionHistory,
   isSubmitting = false,
   submitError,
@@ -77,6 +88,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
     ...buildCssVars({
       '--stf-heading-text': colors?.headingText,
       '--stf-destination-text': colors?.destinationText,
+      '--stf-note-text': colors?.noteText,
     }),
     ...panelStyles.cssVars,
   };
@@ -89,6 +101,7 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const newVersionInputId = useId();
   const destinationReasonId = useId();
+  const dependenciesHeadingId = useId();
 
   const destinationSegments = useMemo(() => {
     const root = roots.find(
@@ -107,6 +120,8 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
 
   const headingClass = mergeClasses(headingClassName, styles.heading);
   const destinationDisabledReason = getDisabledReason?.(destination);
+  const hasDependenciesNote =
+    Boolean(dependenciesNote) && (dependencies?.length ?? 0) === 0;
 
   if (view === SaveToFolderView.ChangeFolder) {
     return (
@@ -255,6 +270,23 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
             onClick={onChangeFolderClick}
           />
         </div>
+        <LiveRegion politeness={LiveRegionPoliteness.Assertive}>
+          {destinationDisabledReason && (
+            <div id={destinationReasonId}>
+              <Notification
+                type={NotificationType.SectionMessage}
+                variant={NotificationVariant.Error}
+                role="none"
+                message={destinationDisabledReason}
+              />
+            </div>
+          )}
+        </LiveRegion>
+        {destinationNote && (
+          <p className={mergeClasses(noteClassName, styles.note)}>
+            {destinationNote}
+          </p>
+        )}
       </section>
 
       {version && (
@@ -273,14 +305,31 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
       )}
 
       <LiveRegion politeness={LiveRegionPoliteness.Assertive}>
-        {destinationDisabledReason && (
-          <ErrorText
-            id={destinationReasonId}
-            text={destinationDisabledReason}
-          />
-        )}
         {submitError && <ErrorText text={submitError} />}
       </LiveRegion>
+
+      {hasDependenciesNote && (
+        <section
+          className="flex flex-col gap-2"
+          aria-labelledby={dependenciesHeadingId}
+        >
+          <h2 id={dependenciesHeadingId} className={headingClass}>
+            {dependenciesLabels?.title ?? DEFAULT_DEPENDENCIES_TITLE}
+          </h2>
+          <p className={mergeClasses(noteClassName, styles.note)}>
+            {dependenciesNote}
+          </p>
+        </section>
+      )}
+
+      {!hasDependenciesNote && dependencies != null && (
+        <PublishDependenciesList
+          dependencies={dependencies}
+          labels={dependenciesLabels}
+          headingClassName={headingClassName}
+          styles={dependenciesStyles}
+        />
+      )}
 
       {versionHistory != null && (
         <VersionHistorySection

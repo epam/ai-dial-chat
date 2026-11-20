@@ -688,6 +688,25 @@ export interface ApplicationSchemasResponseDto {
 /**
  *
  * @export
+ * @interface ApplicationValuesDependenciesRequestDto
+ */
+export interface ApplicationValuesDependenciesRequestDto {
+  /**
+   * The application type schema the values belong to.
+   * @type {string}
+   * @memberof ApplicationValuesDependenciesRequestDto
+   */
+  schemaId: string;
+  /**
+   * The application property values as the form holds them, keyed by schema property.
+   * @type {{ [key: string]: unknown }}
+   * @memberof ApplicationValuesDependenciesRequestDto
+   */
+  properties: { [key: string]: unknown };
+}
+/**
+ *
+ * @export
  * @interface ApplicationVisualizerDto
  */
 export interface ApplicationVisualizerDto {

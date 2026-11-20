@@ -1,6 +1,12 @@
-import type { ResourceFoldersResponseDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  ApplicationValuesDependenciesRequestDto,
+  ResourceFoldersResponseDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
+  getDependencyTypeOfNamespace,
+  getMissingDirectWriteNamespaces,
   getOrgUnitNamespace,
+  mapResourceDependencyDto,
   OrgUnitFolderGuardPurpose,
   ResourceNameConflictKind,
   ResourceSaveVersionError,
@@ -13,6 +19,7 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import {
   type CatalogEntityType,
+  type OrgUnitNamespace,
   RESOURCE_VERSION_PATTERN,
 } from '@epam/ai-dial-chat-shared';
 import { StandaloneSaveToFolderPanel } from '@epam/ai-dial-publish-panel';
@@ -25,10 +32,13 @@ import {
   CatalogI18nKeys,
   ConversationPublishI18nKeys,
   EditorI18nKeys,
+  OrgUnitAccessI18nKeys,
   ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
-import { useAppConfig } from '../../context/AppConfigContext';
+import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
+import { useOrgUnitsContext } from '../../context/OrgUnitsContext';
 import { useOrgUnitFolderGuards } from '../../hooks/publish/useOrgUnitFolderGuards';
+import { usePublishDependencyIconResolver } from '../../hooks/publish/usePublishDependencyIconResolver';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import { useResourceVersionHistory } from '../../hooks/publish/useResourceVersionHistory';
 import {
@@ -36,10 +46,15 @@ import {
   useResourceSaveNotification,
 } from '../../hooks/resource-save/useResourceSaveNotification';
 import { getPublishRules } from '../../server-api/publish-rules.api';
-import { publishCatalogEntity } from '../../server-api/publish.api';
+import {
+  publishApiClient,
+  publishCatalogEntity,
+} from '../../server-api/publish.api';
 import { NotifiableEntity } from '../../types/entity-notification';
 import {
   getAccessRulesLabels,
+  getPublishFolderLabel,
+  getApplicationPublishDependenciesLabels,
   getPublishPanelCommonLabels,
 } from '../../utils/publish';
 import { RESOURCE_NAME_CONFLICT_KEYS } from '../../utils/resource-name-conflict';
@@ -73,13 +88,25 @@ interface Props {
   notificationType?: string;
   /** Whether the user may publish this resource, which offers the Organization root. */
   canPublish: boolean;
+  /** Schema and form values whose private dependencies the panel lists for an Organization destination; omit for a resource with none to list. */
+  dependencyValues?: ApplicationValuesDependenciesRequestDto;
+  /** Whether the application's form state lives inside an embedded editor, so the panel shows one sentence about its dependencies instead of a list. Defaults to `false`. */
+  isFormStateEmbedded?: boolean;
+  /** Whether the application has an uploaded icon of the user's own, which a direct write into an org unit may be unable to copy. Defaults to `false`. */
+  hasUploadedIcon?: boolean;
   /** Called once a save whose first step succeeded has finished. */
   onSaved: (result: ResourceSaveResult) => void;
   /** Focus target restored when the panel closes. */
   returnFocusRef?: RefObject<HTMLElement | null>;
 }
 
-const publishClient = { publishCatalogEntity, getPublishRules };
+const publishClient = {
+  publishCatalogEntity,
+  getPublishRules,
+  checkPublishTarget: (
+    ...args: Parameters<typeof publishApiClient.checkPublishTarget>
+  ) => publishApiClient.checkPublishTarget(...args),
+};
 
 /** App adapter for the Save panel: translated copy, notifications and the app's API clients around `useResourceSavePanel`. */
 const ResourceSavePanelContainer: FC<Props> = ({
@@ -97,6 +124,9 @@ const ResourceSavePanelContainer: FC<Props> = ({
   notifiableEntity,
   notificationType,
   canPublish,
+  dependencyValues,
+  isFormStateEmbedded = false,
+  hasUploadedIcon = false,
   onSaved,
   returnFocusRef,
 }) => {
@@ -159,6 +189,69 @@ const ResourceSavePanelContainer: FC<Props> = ({
     [t],
   );
 
+  const resolveDependencyIcon = usePublishDependencyIconResolver();
+  const loadDependencies = useMemo(
+    () =>
+      dependencyValues &&
+      (async () =>
+        (
+          await publishApiClient.getApplicationValuesPublishDependencies(
+            dependencyValues,
+          )
+        ).dependencies.map((dependency) =>
+          mapResourceDependencyDto(dependency, resolveDependencyIcon),
+        )),
+    [dependencyValues, resolveDependencyIcon],
+  );
+
+  const isOrgUnitsEnabled = useFeatureFlag('orgUnitsEnabled');
+  const { status: orgUnitsStatus, canSaveDirectlyAt } = useOrgUnitsContext();
+  const getMissingNamespaces = useCallback(
+    (folderPath: string[], namespaces: OrgUnitNamespace[]) =>
+      getMissingDirectWriteNamespaces(
+        {
+          isEnabled: isOrgUnitsEnabled,
+          status: orgUnitsStatus,
+          canSaveDirectlyAt,
+        },
+        folderPath,
+        namespaces,
+      ),
+    [canSaveDirectlyAt, isOrgUnitsEnabled, orgUnitsStatus],
+  );
+  const dependenciesLabels = useMemo(
+    () => getApplicationPublishDependenciesLabels(t),
+    [t],
+  );
+
+  const getMissingNamespacesReason = useCallback(
+    (missing: OrgUnitNamespace[]) =>
+      t(OrgUnitAccessI18nKeys.NoWriteAccessDependencies, {
+        types: missing
+          .flatMap((namespace) => {
+            const type = getDependencyTypeOfNamespace(namespace);
+            return (type && dependenciesLabels.typeLabels?.[type]) || [];
+          })
+          .join(', '),
+      }),
+    [dependenciesLabels, t],
+  );
+
+  const getTargetTakenReason = useCallback(
+    (folderPath: string[], version?: string) =>
+      t(
+        version == null
+          ? ResourceSavePanelI18nKeys.TargetTaken
+          : ResourceSavePanelI18nKeys.TargetTakenVersion,
+        {
+          name: resourceName,
+          version,
+          folder: getPublishFolderLabel(folderPath, t),
+        },
+      ),
+    [resourceName, t],
+  );
+
   const { panelProps } = useResourceSavePanel({
     isOpen,
     adapter,
@@ -171,6 +264,16 @@ const ResourceSavePanelContainer: FC<Props> = ({
     publishClient,
     canSaveDirectlyTo,
     getDisabledReason,
+    loadDependencies,
+    getMissingNamespaces,
+    getMissingNamespacesReason,
+    getTargetTakenReason,
+    dependenciesNote: isFormStateEmbedded
+      ? t(ResourceSavePanelI18nKeys.DependenciesEmbeddedNote)
+      : undefined,
+    iconNote: hasUploadedIcon
+      ? t(ResourceSavePanelI18nKeys.IconNotCopiedNotice)
+      : undefined,
     ruleSourceOptions: publicationFilterSources,
     labels: flowLabels,
     onSaved: handleSaved,
@@ -257,6 +360,7 @@ const ResourceSavePanelContainer: FC<Props> = ({
       resource={resource}
       panelLabels={panelLabels}
       labels={labels}
+      dependenciesLabels={dependenciesLabels}
     />
   );
 };

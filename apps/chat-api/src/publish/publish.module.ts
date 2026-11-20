@@ -4,6 +4,7 @@ import { ApplicationSchemasModule } from '../application-schemas/application-sch
 import { ApplicationsModule } from '../applications/applications.module';
 import { AuthModule } from '../auth/auth.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
+import { OrgUnitsModule } from '../org-units/org-units.module';
 import { ToolsetsListingModule } from '../toolsets/listing/toolsets-listing.module';
 import { ApplicationPublishCopyService } from './application-publish-copy.service';
 import { ApplicationPublishPreparationService } from './application-publish-preparation.service';
@@ -24,6 +25,7 @@ import { VersionStatusesService } from './version-statuses.service';
     AuthModule,
     ApplicationSchemasModule,
     DeploymentsModule,
+    OrgUnitsModule,
     ToolsetsListingModule,
   ],
   controllers: [

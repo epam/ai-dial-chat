@@ -118,6 +118,9 @@ export const quickAppDefinition =
     Preview: QuickAppPreview,
     isPreviewAvailable,
     create,
-    savePanel: { getTypeLabel: getSchemaAppTypeName },
+    savePanel: {
+      getTypeLabel: getSchemaAppTypeName,
+      isFormStateEmbedded: true,
+    },
     getMetadataFieldState: getVersionLockedInEditMode,
   });

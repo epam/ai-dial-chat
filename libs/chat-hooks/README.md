@@ -1201,7 +1201,7 @@ and `getDisabledReason`, plus `canSaveDirectlyTo` when the host passes the stric
 translated sentence) only for a disabled folder; without it `getDisabledReason`
 is `undefined`. Both `isDestinationUsable` and `getDisabledReason` take an optional `SaveDestinationRoot` as a second argument: only `SaveDestinationRoot.Organization` (also the meaning of an omitted root, since the publish panels have one tree) is matched against units, and a Personal folder is always usable even when it is named like a unit. With the flag off, a status
 other than `Ready`, or no namespace, both guards are `undefined`, so the panel
-keeps its default behaviour. `canSaveDirectlyTo` takes the same optional root and is `false` for any root but Organization, so a Personal folder named like a unit never direct-writes. `useFolderGuards({ purpose, namespace, isActive, isEnabled, orgUnits, shouldRefreshOnOpen?, getReason? })` wraps it for a panel: it calls `orgUnits.ensureUnits()` while `isActive`, re-reads loaded rights on open when `shouldRefreshOnOpen`, and returns the guards; `orgUnits` is the `useOrgUnits` result (or one shared through a host context) and `isEnabled` the host's flag. `toPublishDisabledReason(getDisabledReason)` adapts a guard's `getDisabledReason(folderPath)` to a publish panel's `getDisabledReason(destination)`. `toSaveDestinationRoot(rootKey)` turns a destination's `rootKey` into a `SaveDestinationRoot`, or `undefined`. All are available from the root and `./utils`.
+keeps its default behaviour. `canSaveDirectlyTo` takes the same optional root and is `false` for any root but Organization, so a Personal folder named like a unit never direct-writes. `useFolderGuards({ purpose, namespace, isActive, isEnabled, orgUnits, shouldRefreshOnOpen?, getReason? })` wraps it for a panel: it calls `orgUnits.ensureUnits()` while `isActive`, re-reads loaded rights on open when `shouldRefreshOnOpen`, and returns the guards; `orgUnits` is the `useOrgUnits` result (or one shared through a host context) and `isEnabled` the host's flag. `toPublishDisabledReason(getDisabledReason)` adapts a guard's `getDisabledReason(folderPath)` to a publish panel's `getDisabledReason(destination)`. `toSaveDestinationRoot(rootKey)` turns a destination's `rootKey` into a `SaveDestinationRoot`, or `undefined`. `getDependencyOrgUnitNamespaces(dependencies)` lists the namespaces a direct write needs to copy the given dependencies (a `file` needs none), and `getMissingDirectWriteNamespaces({ isEnabled, status, canSaveDirectlyAt }, folderPath, namespaces)` returns those of `namespaces` the user may not write in the folder's unit, or none while the rights are not known. All are available from the root and `./utils`.
 
 ```tsx
 import {
@@ -5561,7 +5561,50 @@ returns `panelProps` to spread on `StandaloneSaveToFolderPanel` from
   `ResourceSaveVersionError` (`Invalid`, `Unchanged`, `Exists`) that
   `labels.getVersionError` turns into text;
 - the access rules of the pending Organization folder, fetched with
-  `publishClient.getPublishRules`, and kept while the same folder stays chosen.
+  `publishClient.getPublishRules`, and kept while the same folder stays chosen;
+- the private dependencies of what is being saved: pass `loadDependencies`
+  (`() => Promise<PublishDependency[]>`, already mapped with
+  `mapResourceDependencyDto`) and `panelProps.dependencies` holds its result while
+  the committed destination is under the Organization root, whether the save then
+  sends a publication request or writes directly into an org unit. It is empty for
+  the Personal root, while the read is in flight, after a failed read and after a
+  read that finished once the destination moved away; it never blocks Save. For
+  application values that are not saved yet, build the read with
+  `PublishApiClient.getApplicationValuesPublishDependencies({ schemaId, properties })`.
+  The list is also read while an Organization folder is only being browsed in
+  the folder view, so a folder that cannot take the dependencies is disabled
+  before it is committed; `panelProps.dependencies` still shows it only for a
+  committed Organization destination.
+- the namespaces a direct write needs: pass `getMissingNamespaces(folderPath,
+namespaces)` (the namespaces, among those asked, where the user may not write
+  into the unit that owns the folder; `getMissingDirectWriteNamespaces` builds it
+  from the `useOrgUnits` answers) and `getMissingNamespacesReason(missing)` (the
+  host's translated text). With a `getDisabledReason` given, a folder on the
+  direct path where the namespace of any listed dependency
+  (`getDependencyOrgUnitNamespaces`: a `file` has none) is missing is returned
+  with that reason through `panelProps.getDisabledReason`, like the application's
+  own namespace. Without the dependencies known (an application with an embedded
+  editor) nothing is disabled and the server's check after the save decides.
+- a taken name found before Save: when `publishClient` has `checkPublishTarget`
+  (the `PublishApiClient` from `createPublishApiClient` does) and the host gives
+  `getTargetTakenReason(folderPath, version)` (`version` is the typed one for
+  "Save as new version", `undefined` for "Keep version") and `getDisabledReason`
+  (the reason is returned through it), the committed destination of a direct write into a unit
+  folder is checked through `checkPublishTarget` (entity type, resource id, folder,
+  version): without a version for "Keep version", and with
+  the typed version for "Save as new version", only once it matches
+  `versionPattern`, differs from `currentVersion` and 400 ms have passed without
+  typing. A taken name disables Save with the reason; an answer that arrives
+  after the folder or version changed is discarded, a failed check leaves Save
+  enabled, and nothing is asked for a Personal folder, a folder created in this
+  session, a destination that sends a publication request or a resource that is
+  not saved yet (a create adapter). The refusal after the save stays as the
+  safety net.
+- two host-supplied sentences: `dependenciesNote` is passed through as
+  `panelProps.dependenciesNote` only for a committed Organization destination,
+  and `iconNote` becomes `panelProps.destinationNote` only on a direct write into
+  a unit folder where `getMissingNamespaces` reports `files` as missing; pass
+  `iconNote` only when the saved resource has an uploaded icon.
 
 The host owns everything else: the resource summary, the panel's own labels,
 `onClose`, and the notification it shows from `onSaved(result, choice)`. The
@@ -5604,7 +5647,10 @@ The module also exports:
 All of it is available from the root and `./catalog`.
 
 ```ts
-import { useResourceSavePanel } from '@epam/ai-dial-chat-hooks/catalog';
+import {
+  getMissingDirectWriteNamespaces,
+  useResourceSavePanel,
+} from '@epam/ai-dial-chat-hooks';
 
 const { panelProps } = useResourceSavePanel({
   isOpen,
@@ -5616,6 +5662,14 @@ const { panelProps } = useResourceSavePanel({
   listPersonalFolders: listApplicationFolders,
   organizationFolders: canPublish ? publishFolders : undefined,
   publishClient,
+  getMissingNamespaces: (folderPath, namespaces) =>
+    getMissingDirectWriteNamespaces(
+      { isEnabled, status, canSaveDirectlyAt },
+      folderPath,
+      namespaces,
+    ),
+  getMissingNamespacesReason: (missing) =>
+    `You have no write access to ${missing.join(', ')} in this folder`,
   ruleSourceOptions: ['roles'],
   labels: {
     personalRoot: 'Personal',
@@ -5646,7 +5700,7 @@ Each one takes a configured generated client and never creates one:
   It also gives the adapter `saveIntoOrgUnit(id, folderPath)`, which copies the
   saved application into an org-unit folder of the public bucket through
   `publishClient.copyCatalogEntityToOrgUnit('application', id, { folderPath })`
-  and never overwrites. `publishClient` is a `ResourceSavePublishClient`, the
+  and never overwrites; for an application the BFF also copies its first-level private dependencies and its uploaded icon and answers 403 naming the namespaces the user cannot write. `publishClient` is a `ResourceSavePublishClient`, the
   `PublishApiClient` from `createPublishApiClient`; `createOrgUnitWriter(publishClient, entityType)`
   builds the same `saveIntoOrgUnit` for any other adapter. `publishClient` is optional on every adapter factory (as in `useSkillEditorSubmit`): without it the adapter has no `saveIntoOrgUnit` and keeps only the publish path, and `isWrittenToOrgUnit` on a result is optional, so a host built before org units needs no change. A host that wants the direct write passes the client and a BFF that serves `copy-to-org-unit`.
 
@@ -6168,11 +6222,13 @@ import { sanitizeFileName } from '@epam/ai-dial-chat-hooks';
 sanitizeFileName('report:final?.pdf'); // 'report_final_.pdf'
 ```
 
-### isDialFileId / isDialFolderId / isDialProjectFileId / parseDialProjectFileId / isDialStoredFileId / resolveRelativeDialFilePath / resolveDialFileBucketAndPath
+### isDialFileId / isOwnDialFileId / isDialFolderId / isDialProjectFileId / parseDialProjectFileId / isDialStoredFileId / resolveRelativeDialFilePath / resolveDialFileBucketAndPath
 
 Recognizes a DIAL Core file id (`files/{bucket}/{path}`) or folder id (a file id ending with `/`) and resolves it to a bucket-relative path or its `{ bucket, path }` parts.
 
 `parseDialProjectFileId` splits a file inside a project, `projects/{bucket}/{path}/files/{filePath}` (as an agent in a project conversation returns it), into a `DialProjectFileIdParts` value: the decoded `projectId` and the decoded `filePath` segments. The id is percent-encoded per segment, as DIAL Core writes it, so a `#` in a name is `%23` and a raw `#...` is a fragment it ignores. It returns `undefined` for a folder, an empty segment or a malformed escape; `isDialProjectFileId` is the same test as a boolean. The host maps the parts to its own route.
+
+`isOwnDialFileId(url, bucket)` is true for a file id in `bucket` that has no `..` segment (decoded), ignoring a query string or fragment; a theme icon name, an absolute URL and a file in another bucket are `false`. A host uses it to tell an application's uploaded icon of the user's own from any other `iconUrl`.
 
 `isDialStoredFileId` is true for either kind of id — the ids a host resolves to its own download routes. The citation, reference and canvas resolvers use it to decide between the host resolver and opening the URL as-is.
 
@@ -6180,6 +6236,7 @@ Recognizes a DIAL Core file id (`files/{bucket}/{path}`) or folder id (a file id
 import {
   isDialFolderId,
   isDialProjectFileId,
+  isOwnDialFileId,
   isDialStoredFileId,
   parseDialProjectFileId,
   resolveDialFileBucketAndPath,
@@ -6194,6 +6251,8 @@ parseDialProjectFileId(
 );
 // { projectId: 'projects/my-bucket/Q4 launch', filePath: ['artifacts', 'run-1', 'a.csv'] }
 isDialStoredFileId('files/my-bucket/reports/q1.pdf'); // true
+isOwnDialFileId('files/my-bucket/icons/logo.png?v=2', 'my-bucket'); // true
+isOwnDialFileId('files/public/logo.png', 'my-bucket'); // false
 ```
 
 ### FileSelectionKind / getFileSelectionKind / resolveDialFolderPath

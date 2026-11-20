@@ -1,8 +1,17 @@
-import { Controller, Get, HttpCode, Param, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Req,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { PublishDependenciesService } from './dependencies/publish-dependencies.service';
+import { ApplicationValuesDependenciesRequestDto } from './dto/application-values-dependencies.dto';
 import { CatalogEntityParamsDto } from './dto/catalog-entity-params.dto';
 import { ResourceDependenciesResultDto } from './dto/resource-dependency.dto';
 
@@ -56,6 +65,46 @@ export class PublishDependenciesController {
       sub,
       entityType,
       entityId,
+    );
+  }
+
+  @Post('application-values/publish-dependencies')
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'getApplicationValuesPublishDependencies',
+    summary: 'List the private dependencies of unsaved application values',
+    description:
+      'Returns the references in the given application property values that are not in the public bucket ' +
+      'and travel with the application when it is written into an org unit: the caller’s own resources and ' +
+      'files; resources in another user’s bucket are left out. Unlike the entity route it reads no application ' +
+      'from DIAL Core, only the application type schema, so it works before the first save. The list is ' +
+      'advisory: when it cannot be resolved the response is an empty list rather than an error.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The values’ private dependencies, possibly empty',
+    type: ResourceDependenciesResultDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Validation error — missing schemaId, or properties empty or too large',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  getApplicationValuesPublishDependencies(
+    @Req() req: Request,
+    @Body() { schemaId, properties }: ApplicationValuesDependenciesRequestDto,
+  ): Promise<ResourceDependenciesResultDto> {
+    const { at, sub, bucket } = req.user as SessionUser;
+    return this.publishDependenciesService.getApplicationValueDependencies(
+      at,
+      sub,
+      bucket,
+      schemaId,
+      properties,
     );
   }
 }

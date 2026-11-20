@@ -14,4 +14,5 @@ export enum OrgUnitAccessI18nKeys {
   NoPublishAccessSkill = 'orgUnitAccess.noPublishAccessSkill',
   NoPublishAccessConversation = 'orgUnitAccess.noPublishAccessConversation',
   NoPublishAccessProject = 'orgUnitAccess.noPublishAccessProject',
+  NoWriteAccessDependencies = 'orgUnitAccess.noWriteAccessDependencies',
 }

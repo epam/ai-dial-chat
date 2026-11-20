@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   collectDependencies,
   isResourceInBucket,
+  selectDependenciesSavedWithApplication,
+  selectPublishableDependencies,
   toResourceDependency,
 } from '../../dependencies/publish-dependency.util';
 import { ResourceDependencyType } from '../../dto/resource-dependency.dto';
@@ -120,5 +122,39 @@ describe('isResourceInBucket', () => {
 
   it('ignores a legacy metadata prefix', () => {
     expect(isResourceInBucket('metadata/files/b/docs/', 'b')).toBe(true);
+  });
+});
+
+describe('selecting the dependencies an application is written with', () => {
+  const own = {
+    id: 'prompts/b/Hi',
+    name: 'Hi',
+    type: ResourceDependencyType.Prompt,
+    location: '',
+  };
+  const foreign = { ...own, id: 'skills/other/Plan', name: 'Plan' };
+  const file = {
+    id: 'files/other/icon.png',
+    name: 'icon.png',
+    type: ResourceDependencyType.File,
+    location: '',
+  };
+
+  it('keeps only own, non-file dependencies for the copy', () => {
+    expect(selectPublishableDependencies([own, foreign, file], 'b')).toEqual([
+      own,
+    ]);
+  });
+
+  it('keeps own dependencies and every file for the panel list, in order', () => {
+    expect(
+      selectDependenciesSavedWithApplication([file, foreign, own], 'b'),
+    ).toEqual([file, own]);
+  });
+
+  it('keeps everything while the bucket is not resolved', () => {
+    expect(
+      selectDependenciesSavedWithApplication([own, foreign, file], ''),
+    ).toEqual([own, foreign, file]);
   });
 });

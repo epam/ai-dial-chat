@@ -15,6 +15,7 @@ import {
   existsQuietly,
   getResourceLeaf,
   listDialResourceFolders,
+  parseDialResourceUrl,
   resourceExists,
   toDialResourceUrl,
   transferDialResource,
@@ -64,6 +65,16 @@ describe('path helpers', () => {
         path: 'Search/search__1.0.0',
       }),
     ).toBe('toolsets/b1/Search/search__1.0.0');
+  });
+
+  it('splits a resource url into type, bucket and encoded path, the inverse of toDialResourceUrl', () => {
+    const location = { bucket: 'b1', path: 'My%20Folder/agent__1.0.0' };
+    const url = toDialResourceUrl(DialResourceType.Applications, location);
+
+    expect(parseDialResourceUrl(url)).toEqual({
+      type: 'applications',
+      ...location,
+    });
   });
 
   it('rejects a resource outside the session bucket', () => {
@@ -292,6 +303,7 @@ describe('dialResourceExists', () => {
     [DialResourceType.Prompts]: 'getPromptMetadata',
     [DialResourceType.Skills]: 'listSkillMetadata',
     [DialResourceType.Projects]: 'listProjectMetadata',
+    [DialResourceType.Files]: 'getFileMetadata',
   };
 
   it.each(Object.values(DialResourceType))(
@@ -341,5 +353,61 @@ describe('dialResourceExists', () => {
     await expect(
       existsQuietly(client, DialResourceType.Applications, location, {}),
     ).resolves.toBe(false);
+  });
+});
+
+describe('transferDialResource for files', () => {
+  const source = { bucket: 'b1', path: 'icons/logo.png' };
+  const destination = { bucket: 'public', path: 'Org/Helper__1.0.0/logo.png' };
+
+  it('copies a file without overwriting', async () => {
+    const copyResource = vi
+      .fn()
+      .mockResolvedValue({ error: undefined, response: { status: 200 } });
+
+    await transferDialResource({
+      client: makeClient({ copyResource }),
+      operation: 'copyResource',
+      type: DialResourceType.Files,
+      headers: {},
+      source,
+      destination,
+      context: 'copy icon',
+      logger,
+    });
+
+    expect(copyResource).toHaveBeenCalledWith({
+      headers: {},
+      body: {
+        sourceUrl: 'files/b1/icons/logo.png',
+        destinationUrl: 'files/public/Org/Helper__1.0.0/logo.png',
+        overwrite: false,
+      },
+    });
+  });
+
+  it('reports an existing file target as a conflict', async () => {
+    const copyResource = vi
+      .fn()
+      .mockResolvedValue({ error: {}, response: { status: 400 } });
+    const getFileMetadata = vi
+      .fn()
+      .mockResolvedValue({ data: {}, response: { status: 200 } });
+
+    await expect(
+      transferDialResource({
+        client: makeClient({ copyResource, getFileMetadata }),
+        operation: 'copyResource',
+        type: DialResourceType.Files,
+        headers: {},
+        source,
+        destination,
+        context: 'copy icon',
+        logger,
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(getFileMetadata).toHaveBeenCalledWith('public', destination.path, {
+      headers: {},
+    });
   });
 });

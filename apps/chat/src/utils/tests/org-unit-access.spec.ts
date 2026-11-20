@@ -69,10 +69,21 @@ describe('getOrgUnitAccessReasonKey', () => {
 
   it('declares every key in en.json with a non-empty sentence', () => {
     const texts = en.orgUnitAccess as Record<string, string>;
-    for (const key of Object.values(OrgUnitAccessI18nKeys)) {
+    for (const key of Object.values(OrgUnitAccessI18nKeys).filter(
+      (candidate) =>
+        candidate !== OrgUnitAccessI18nKeys.NoWriteAccessDependencies,
+    )) {
       expect(texts[key.replace('orgUnitAccess.', '')]).toMatch(
         /^You have no access to (save|publish) your .+ to this folder\.$/,
       );
     }
+  });
+});
+
+describe('dependency namespaces', () => {
+  it('declares the missing-dependencies reason with the types placeholder', () => {
+    const texts = en.orgUnitAccess as Record<string, string>;
+
+    expect(texts.noWriteAccessDependencies).toContain('{{types}}');
   });
 });

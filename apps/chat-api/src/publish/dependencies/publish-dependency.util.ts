@@ -118,3 +118,45 @@ export const collectDependencies = (
   }
   return dedupeDependencies(dependencies);
 };
+
+/**
+ * The dependencies that are added to the request and rewritten. A `file` is
+ * left out on purpose: DIAL Core copies and relinks every FILE-typed value a
+ * schema marks when it copies the application, so adding it here as well would
+ * publish it twice. A dependency in another user's bucket is left as it is, as
+ * the files of a published conversation are: publishing it would publish a
+ * resource its owner never chose to share.
+ * @param dependencies - the application's private dependencies
+ * @param ownBucket - the caller's own bucket
+ */
+export const selectPublishableDependencies = (
+  dependencies: ResourceDependencyDto[],
+  ownBucket: string,
+): ResourceDependencyDto[] =>
+  dependencies.filter(
+    (dependency) =>
+      dependency.type !== ResourceDependencyType.File &&
+      isResourceInBucket(dependency.id, ownBucket),
+  );
+
+/**
+ * The dependencies that travel with an application written into an org unit:
+ * those {@link selectPublishableDependencies} keeps, and every `file`, which
+ * DIAL Core relinks itself. Left unfiltered while the caller's bucket is not
+ * known yet.
+ * @param dependencies - the application's private dependencies
+ * @param ownBucket - the caller's own bucket, empty while it is not resolved
+ */
+export const selectDependenciesSavedWithApplication = (
+  dependencies: ResourceDependencyDto[],
+  ownBucket: string,
+): ResourceDependencyDto[] => {
+  if (!ownBucket) return dependencies;
+  const copied = new Set(
+    selectPublishableDependencies(dependencies, ownBucket),
+  );
+  return dependencies.filter(
+    (dependency) =>
+      dependency.type === ResourceDependencyType.File || copied.has(dependency),
+  );
+};

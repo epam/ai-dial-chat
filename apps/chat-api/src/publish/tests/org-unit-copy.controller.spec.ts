@@ -132,6 +132,36 @@ describe('POST /api/v1/catalog/:entityType/:entityId/copy-to-org-unit', () => {
       .expect(403);
   });
 
+  it('returns 403 naming the namespace an application with dependencies lacks', async () => {
+    service.copyIntoOrgUnit.mockRejectedValue(
+      new ForbiddenException(
+        'Write access in this org unit is missing for: toolsets',
+      ),
+    );
+
+    const res = await request(app.getHttpServer())
+      .post(URL)
+      .send({ folderPath: 'Acme/Teams' })
+      .expect(403);
+
+    expect(res.body.message).toContain('toolsets');
+  });
+
+  it('returns 200 with the application id when it is copied with its dependencies', async () => {
+    service.copyIntoOrgUnit.mockResolvedValue({
+      id: 'applications/public/Acme/Teams/agent__1.0.0',
+    });
+
+    const res = await request(app.getHttpServer())
+      .post(URL)
+      .send({ folderPath: 'Acme/Teams' })
+      .expect(200);
+
+    expect(res.body).toEqual({
+      id: 'applications/public/Acme/Teams/agent__1.0.0',
+    });
+  });
+
   it('returns 409 when the target exists', async () => {
     service.copyIntoOrgUnit.mockRejectedValue(new ConflictException());
     await request(app.getHttpServer())

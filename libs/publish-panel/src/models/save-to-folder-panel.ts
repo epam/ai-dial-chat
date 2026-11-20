@@ -10,6 +10,11 @@ import type {
 } from './folder-destination';
 import type { PublicationRule, PublishResourceSummary } from './publish';
 import type { PublishAccessRulesStyles } from './publish-access-rules-styles';
+import type {
+  PublishDependenciesLabels,
+  PublishDependenciesStyles,
+} from './publish-dependencies-list';
+import type { PublishDependency } from './publish-dependency';
 import type { PublishFoldersTreeStyles } from './publish-folders-tree';
 import type { VersionHistorySectionProps } from './version-history';
 
@@ -63,6 +68,8 @@ export interface SaveToFolderPanelColors {
   headingText?: string;
   /** Destination path text color. Defaults to `--text-secondary`. */
   destinationText?: string;
+  /** Text color of `dependenciesNote` and `destinationNote`. Defaults to `--text-secondary`. */
+  noteText?: string;
   /** Summary row border color. Defaults to `--stroke-tertiary`. */
   summaryBorder?: string;
   /** Summary row background color. Defaults to `--bg-layer-sunken`. */
@@ -139,6 +146,18 @@ export interface SaveToFolderPanelBaseProps {
   version?: SaveToFolderVersionProps;
   /** Access rules for a destination under a root with `hasAccessRules`; omit to hide the section. */
   accessRules?: SaveToFolderAccessRulesProps;
+  /** Resources the item refers to that are not in the public bucket, listed in the main view as in `PublishPanel`; informational only, it never blocks Save. The host passes them only when they apply (for example, an Organization destination); the section is hidden while this is empty or omitted. */
+  dependencies?: PublishDependency[];
+  /** One sentence shown in the dependencies section, under its heading, while `dependencies` is omitted or empty; ignored while the list has rows. The host passes it only when the panel cannot list the dependencies itself. Plain text in reading order, not a live region. */
+  dependenciesNote?: string;
+  /** Notice shown under the destination in the main view, already translated; plain text, never blocks Save and is not announced. The host decides when it applies. */
+  destinationNote?: string;
+  /** Text overrides for the private-dependencies section. */
+  dependenciesLabels?: PublishDependenciesLabels;
+  /** Style overrides for the private-dependencies section. */
+  dependenciesStyles?: PublishDependenciesStyles;
+  /** Typography class of `dependenciesNote` and `destinationNote`. Defaults to `'dial-small-text'`. */
+  noteClassName?: string;
   /** Versions history shown as the last section of the main view; omit to hide the section. */
   versionHistory?: VersionHistorySectionProps;
   /** Whether a save is in flight; every control is disabled meanwhile. Defaults to `false`. */

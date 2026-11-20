@@ -7,5 +7,6 @@ import { OrgUnitsService } from './org-units.service';
   imports: [AppConfigModule],
   controllers: [OrgUnitsController],
   providers: [OrgUnitsService],
+  exports: [OrgUnitsService],
 })
 export class OrgUnitsModule {}

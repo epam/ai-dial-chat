@@ -15,6 +15,7 @@ import { encodePlainDialResourcePath } from './encode-dial-path';
  * DIAL Core resource types whose personal items can be listed by folder and
  * moved or copied. `Projects` is only read: its metadata answers
  * {@link dialResourceExists}; no project is moved or copied through here.
+ * `Files` can be copied and checked for existence, not listed here.
  */
 export enum DialResourceType {
   Applications = 'applications',
@@ -22,6 +23,7 @@ export enum DialResourceType {
   Prompts = 'prompts',
   Skills = 'skills',
   Projects = 'projects',
+  Files = 'files',
 }
 
 /** A resource inside one bucket; `path` is percent-encoded per segment. */
@@ -59,6 +61,11 @@ const getMetadata = (
       init,
     ) as Promise<MetadataListPage>;
   }
+  if (type === DialResourceType.Files) {
+    return client.getFileMetadata(bucket, path, {
+      headers,
+    }) as Promise<MetadataListPage>;
+  }
   if (type === DialResourceType.Skills) {
     return client.listSkillMetadata(
       bucket,
@@ -92,6 +99,21 @@ export const toDialResourceUrl = (
   type: DialResourceType,
   location: DialResourceLocation,
 ): string => `${type}/${location.bucket}/${location.path}`;
+
+/** The parts of a `{type}/{bucket}/{path}` resource url; `path` stays encoded. */
+export interface DialResourceUrlParts extends DialResourceLocation {
+  /** First segment, e.g. `applications`. */
+  type: string;
+}
+
+/**
+ * Splits a `{type}/{bucket}/{path}` resource url, the inverse of {@link toDialResourceUrl}.
+ * @param url - a resource url with its path still encoded
+ */
+export const parseDialResourceUrl = (url: string): DialResourceUrlParts => {
+  const [type, bucket, ...path] = url.split('/');
+  return { type, bucket, path: path.join('/') };
+};
 
 /** The last, still-encoded segment of a resource path: the item's own name. */
 export const getResourceLeaf = (encodedPath: string): string =>

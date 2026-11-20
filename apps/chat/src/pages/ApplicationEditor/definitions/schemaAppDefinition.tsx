@@ -55,6 +55,17 @@ const validateSetup = (
     ? { properties: t(AppsEditorI18nKeys.SchemaFormRequiredMissing) }
     : {};
 
+/** Returns the schema and form values to list the private dependencies of, or `undefined` while the form holds no values (the endpoint answers 400 to an empty object) or the schema is unknown. */
+const getDependencyValues = (
+  setup: SchemaApplicationSetup,
+  ctx: ApplicationEditorContext,
+) => {
+  const schemaId = getSchemaId(ctx);
+  if (!schemaId || setup.properties == null) return undefined;
+  if (Object.keys(setup.properties).length === 0) return undefined;
+  return { schemaId, properties: setup.properties };
+};
+
 const create = (
   metadata: DeploymentCreationFormValues,
   setup: SchemaApplicationSetup,
@@ -120,6 +131,6 @@ export const schemaAppDefinition =
     Setup: SchemaAppSetup,
     create,
     update,
-    savePanel: { getTypeLabel: getSchemaAppTypeName },
+    savePanel: { getTypeLabel: getSchemaAppTypeName, getDependencyValues },
     getMetadataFieldState: getVersionLockedInEditMode,
   });

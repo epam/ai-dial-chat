@@ -5,6 +5,7 @@ import type {
 } from '@epam/ai-dial-builder-form';
 import type {
   ApplicationSchemaSummaryDto,
+  ApplicationValuesDependenciesRequestDto,
   CatalogCreationType,
   DeploymentItemDto,
 } from '@epam/ai-dial-chat-api-client';
@@ -199,7 +200,7 @@ export interface ApplicationEditorFormDefinition<TSetup> {
     setup: TSetup,
   ) => Promise<unknown>;
   /** Opts the kind into the Save panel for edit-mode Save; absent keeps Save in place. */
-  savePanel?: ApplicationSavePanelConfig;
+  savePanel?: ApplicationSavePanelConfig<TSetup>;
   /** Metadata field state that depends on the mode, e.g. a version that is read-only while editing. */
   getMetadataFieldState?: (
     isEditMode: boolean,
@@ -207,9 +208,16 @@ export interface ApplicationEditorFormDefinition<TSetup> {
 }
 
 /** How an application kind presents itself in the Save panel. */
-export interface ApplicationSavePanelConfig {
+export interface ApplicationSavePanelConfig<TSetup = ApplicationSetupValues> {
   /** Returns the translated resource type the panel title names, e.g. the schema's display name. */
   getTypeLabel: (ctx: ApplicationEditorContext) => string;
+  /** Returns the schema and form values whose private dependencies the panel lists for an Organization destination; absent for kinds whose form state lives outside the page (an embedded editor) or that have no schema. */
+  getDependencyValues?: (
+    setup: TSetup,
+    ctx: ApplicationEditorContext,
+  ) => ApplicationValuesDependenciesRequestDto | undefined;
+  /** Whether the kind's form state lives inside an embedded editor, so the panel cannot list the dependencies of the current values and shows one sentence instead. Defaults to `false`. */
+  isFormStateEmbedded?: boolean;
 }
 
 /** Metadata field state an application kind derives from the editor mode. */

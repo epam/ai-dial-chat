@@ -67,9 +67,11 @@ All strings come from `*Labels` props with English defaults in the libraries and
 ### Requirement: A unit writer saves directly into a unit folder
 When a save panel's committed destination is a folder inside an org unit whose owner grants `write` on the resource type's namespace, and the rights are `Ready`, Save SHALL write the resource into that folder directly and SHALL NOT create a publication request. This holds for a user who is not an admin; an admin on a folder inside a unit takes the same direct path, while for a DIAL admin plain `public/` outside units is unchanged. The panel SHALL NOT show the access rules editor or the admin-approval banner for such a destination (Core stores no rules inside units). Success is reported through the existing operation notifications as a save into the folder, not as "publish requested". A destination outside every unit keeps the current sequence (save in place, then a publication request). The owning unit's `read` right alone never selects the direct path.
 
+For an application the direct path also copies its first-level private dependencies (`org-unit-application-dependencies`), which needs `write` in the same unit on the namespace of each of them. When the panel knows the dependencies (a schema-form application, from the list the panel loads), a unit folder where the user lacks `write` on the namespace of any of them SHALL be disabled with a reason that names the missing types, through the same disabled-row channel as the application's own namespace. When the panel cannot know them (an application with an embedded editor), the check runs on the server after the save, and a refusal is reported as a failure of the write into the folder with the server's reason. The application's icon needs `write` on `files` but never disables a folder (see `org-unit-application-dependencies`).
+
 Publications are unchanged everywhere: a publish panel always creates a request that someone with `read` and `write` on `publications` in the unit approves, for a unit as for plain `public/`.
 
-**Known risk (Core rules the chat neither prevents nor handles).** A copy by a non-admin into a unit makes Core reset `forward_auth_token` on the copy, keep interceptors but not add new ones, and drop the admin consent of declared `resource_dependencies`; files an application's schemas point to are duplicated and need `read` on each (folders are not copied). Today the chat never copies into the shared space directly, so users meet these rules for the first time with direct save.
+**Known risk (Core rules the chat neither prevents nor handles).** A copy by a non-admin into a unit makes Core reset `forward_auth_token` on the copy, keep interceptors but not add new ones, and drop the admin consent of declared `resource_dependencies`; files an application's schemas point to are duplicated and need `read` on each (folders are not copied). The same rules apply to the copies of an application's dependencies. Users meet these rules with direct save, since the chat copies into the shared space directly only there.
 
 The direct path honours Core's per-type limits:
 - **Skills and projects.** A name equal to a unit's folder name is refused by Core with 409; the chat shows Core's refusal on the name field and has no client-side rule of its own.
@@ -83,6 +85,16 @@ The direct path honours Core's per-type limits:
 #### Scenario: Reader cannot take the direct path
 - **WHEN** the user holds only `read` on `applications` in `Sales`
 - **THEN** `Sales` is disabled in the save panel and no write is sent
+
+#### Scenario: Missing namespace of a known dependency
+- **GIVEN** a schema-form application whose form values refer to a private toolset, and a user with `write` on `applications` but not on `toolsets` in unit `Delivery`
+- **WHEN** the user opens the Save panel and browses to `Delivery/Teams`
+- **THEN** the folder is disabled with a reason naming toolsets and Save is not offered for it
+
+#### Scenario: Missing namespace found after the save
+- **GIVEN** a Quick App whose saved state now refers to a private prompt, and a user without `write` on `prompts` in the unit
+- **WHEN** the user saves it into the unit folder
+- **THEN** the application is saved in the user's own bucket, nothing is written into the unit, and the notification names the failure with the server's reason
 
 #### Scenario: Outside units the flow is unchanged
 - **WHEN** a non-admin saves to the folder `Shared/Reports` under no unit

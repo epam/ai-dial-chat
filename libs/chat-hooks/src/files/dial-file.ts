@@ -4,6 +4,18 @@ import { safeDecodeURI } from '../shared/string-utils';
 /** True when `url` looks like a DIAL Core file id (`files/{bucket}/{path}`). */
 export const isDialFileId = (url: string): boolean => url.startsWith('files/');
 
+/**
+ * True when `url` is a DIAL Core file id in `bucket` without a `..` segment, ignoring a query or fragment; a theme icon name, an absolute URL or a file in another bucket is `false`.
+ * @param url - the stored value, e.g. an application's `iconUrl`
+ * @param bucket - the bucket the file must lie in
+ */
+export const isOwnDialFileId = (url: string, bucket: string): boolean => {
+  const [fileId] = url.split(/[?#]/, 1);
+  if (!isDialFileId(fileId)) return false;
+  const segments = safeDecodeURI(fileId).split('/');
+  return !segments.includes('..') && segments[1] === safeDecodeURI(bucket);
+};
+
 const PROJECT_ID_PREFIX = 'projects/';
 const PROJECT_FILES_SEGMENT = '/files/';
 

@@ -3,7 +3,9 @@
 ## Purpose
 
 Publishing a catalog entity: folder-tree destination picking, inline folder creation, access rules, and submission against real backend data.
+
 ## Requirements
+
 ### Requirement: Folder selection uses the file-manager folder tree
 The catalog publish panel SHALL present the destination-folder picker using the `DialFoldersTree` component from `@epam/ai-dial-react-file-manager` (a peer dependency of `libs/publish-panel`) (`showFiles={false}`, with the per-row "Add child"/"Add sibling" context menu described below) rendered inside the shared `PublishFoldersTree` wrapper (exported from `@epam/ai-dial-publish-panel`), instead of the bespoke `PublishFolderPicker` tree. Selection SHALL remain single-folder: selecting a new folder replaces the prior selection.
 
@@ -498,6 +500,47 @@ i18n keys: `publish.dependenciesTitle`, `publish.dependenciesDescription`, `publ
 #### Scenario: Toolset shows nothing
 - **WHEN** the user opens Publish for a toolset
 - **THEN** no dependencies section is rendered
+
+### Requirement: The Save panel shows the private dependencies of an unsaved schema app
+
+`POST /api/v1/catalog/application-values/publish-dependencies` (`PublishDependenciesController`) SHALL accept `{ schemaId, properties }` (`ApplicationValuesDependenciesRequestDto`, `properties` a non-empty object of at most 64 KiB serialized) and return a `ResourceDependenciesResultDto` built by `ApplicationDependencyResolver.resolveFromValues` from the application type schema and the given values, without reading any application from DIAL Core. Like the entity route it SHALL answer an empty list when the schema cannot be read. The list SHALL hold the dependencies that travel with the application when it is written into an org unit: those in the caller's own bucket, and files; a resource in another user's bucket SHALL be left out, as the copy leaves it. While the caller's bucket is not resolved the list SHALL NOT be filtered. `schemaId` SHALL be accepted only when it holds URL characters (no whitespace or control character), because it reaches a DIAL Core request, a cache key and a log line; anything else SHALL answer `400`.
+
+`useResourceSavePanel` (`libs/chat-hooks/src/catalog/useResourceSavePanel/useResourceSavePanel.ts`) SHALL accept an optional `loadDependencies` and return `panelProps.dependencies`: the loaded list while the committed destination is under the Organization root, otherwise an empty list. The list SHALL be empty while loading and after a failed read, SHALL ignore a read that finishes after the destination left the Organization root or the panel closed, and SHALL never disable Save. It SHALL apply to a public-folder save that sends a publication request and to a direct write into an org unit alike.
+
+`apps/chat` SHALL pass `dependencyValues` to `ResourceSavePanelContainer` only for a schema-form app, from `ApplicationSavePanelConfig.getDependencyValues` of `schemaAppDefinition` (the schema id and `setup.properties`); the Quick App and custom app definitions SHALL provide none. For an application with an embedded editor (the Quick App definition sets `ApplicationSavePanelConfig.isFormStateEmbedded`) the container SHALL instead pass the neutral dependencies sentence of `resource-save-panel`, because its form state is inside the embedded editor; a custom app has no schema and so nothing to list or say. The container SHALL fill the section's copy with the `Published` variant of `getPublishDependenciesLabels` and the `publish.dependenciesPublished*` keys, since the dependencies of an application are published or copied together with it on both Save paths (a publication request and a direct write into an org unit).
+
+#### Scenario: Schema app saved to an Organization folder through a publication request
+- **WHEN** the committed destination is a public folder outside every org unit and the app has form values
+- **THEN** the panel lists the private dependencies of those values
+
+#### Scenario: Schema app saved by a direct write into an org unit
+- **WHEN** the committed destination is a unit folder the user may write to, and the app has form values
+- **THEN** the panel lists the private dependencies of those values and the rules editor stays hidden
+
+#### Scenario: Personal destination
+- **WHEN** the committed destination is under the Personal root
+- **THEN** no dependencies are listed and no request is made
+
+#### Scenario: Kind without a form
+- **WHEN** the Save panel opens for an application with an embedded editor (a Quick App) or a custom app
+- **THEN** no dependencies are requested or listed under any root, an application with an embedded editor shows the neutral sentence for an Organization destination, and a custom app shows nothing
+
+#### Scenario: Failed read
+- **WHEN** the dependencies request rejects
+- **THEN** the list is empty and Save stays enabled
+
+#### Scenario: Resource of another user
+- **GIVEN** a schema app whose values refer to a skill in another user's bucket and to a prompt in the caller's own bucket
+- **WHEN** the dependencies of the values are requested
+- **THEN** only the prompt is listed
+
+#### Scenario: Schema id with a line break
+- **WHEN** the request carries a `schemaId` containing a line break or a space
+- **THEN** the response is `400` and nothing is resolved
+
+#### Scenario: Empty form
+- **WHEN** a schema app's form holds no values
+- **THEN** the panel makes no dependencies request
 
 #### Scenario: Project publish panel
 - **WHEN** the user opens Publish for a project

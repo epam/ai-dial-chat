@@ -2178,7 +2178,11 @@
     "savedButAlreadyInOrgUnit": "“{{name}}” was saved, but it could not be written to {{folder}} because the name is already taken there. Choose another folder or save as a new version.",
     "savedToFolder": "“{{name}}” was saved to {{folder}}.",
     "savedButOrgUnitWriteFailed": "“{{name}}” was saved, but it could not be written to {{folder}}.",
-    "savedButOrgUnitWriteFailedReason": "“{{name}}” was saved, but it could not be written to {{folder}}: {{reason}}"
+    "savedButOrgUnitWriteFailedReason": "“{{name}}” was saved, but it could not be written to {{folder}}: {{reason}}",
+    "dependenciesEmbeddedNote": "The prompts, skills, toolsets and applications this application uses will be saved to the folder together with it.",
+    "iconNotCopiedNotice": "The application's icon will not be copied to this folder: you have no write access to files in it.",
+    "targetTaken": "“{{name}}” already exists in {{folder}}. Choose another folder or save as a new version.",
+    "targetTakenVersion": "Version {{version}} of “{{name}}” already exists in {{folder}}. Choose another folder or version."
   },
   "orgUnitAccess": {
     "noSaveAccessQuickApp": "You have no access to save your QuickApp to this folder.",
@@ -2194,7 +2198,8 @@
     "noPublishAccessPrompt": "You have no access to publish your prompt to this folder.",
     "noPublishAccessSkill": "You have no access to publish your skill to this folder.",
     "noPublishAccessConversation": "You have no access to publish your conversation to this folder.",
-    "noPublishAccessProject": "You have no access to publish your project to this folder."
+    "noPublishAccessProject": "You have no access to publish your project to this folder.",
+    "noWriteAccessDependencies": "You have no access to save the following to this folder, and this application uses them: {{types}}."
   },
   "versionHistory": {
     "heading": "Versions history",

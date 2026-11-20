@@ -169,4 +169,42 @@ describe('ApplicationDependencyResolver', () => {
       'status 500',
     );
   });
+
+  describe('resolveFromValues', () => {
+    it('lists private references of unsaved values without reading the application', async () => {
+      const result = await resolver.resolveFromValues(
+        CONTEXT,
+        'https://schema/form',
+        {
+          skills: [
+            { type: 'dial-prompt', url: 'prompts/bucket-1/Support/Hi' },
+            { type: 'dial-prompt', url: 'prompts/public/Org/Shared' },
+          ],
+        },
+      );
+
+      expect(result).toEqual([
+        {
+          id: 'prompts/bucket-1/Support/Hi',
+          name: 'Hi',
+          type: ResourceDependencyType.Prompt,
+          location: 'Support',
+        },
+      ]);
+      expect(getCustomApplication).not.toHaveBeenCalled();
+      expect(getApplicationSchema).toHaveBeenCalledWith(
+        'user-1',
+        'token-1',
+        'https://schema/form',
+      );
+    });
+
+    it('throws when the schema cannot be fetched', async () => {
+      getApplicationSchema.mockRejectedValue(new Error('schema failed'));
+
+      await expect(
+        resolver.resolveFromValues(CONTEXT, 'https://schema/form', { a: 1 }),
+      ).rejects.toThrow('schema failed');
+    });
+  });
 });

@@ -26,6 +26,24 @@ describe('createPublishApiClient', () => {
     });
   });
 
+  it('reads the dependencies of unsaved application values through the generated operation', async () => {
+    const result = { dependencies: [] };
+    const getApplicationValuesPublishDependencies = vi
+      .fn()
+      .mockResolvedValue(result);
+    const client = createPublishApiClient({
+      getApplicationValuesPublishDependencies,
+    } as unknown as PublishApi);
+    const body = { schemaId: 'https://schema/form', properties: { a: 1 } };
+
+    expect(await client.getApplicationValuesPublishDependencies(body)).toBe(
+      result,
+    );
+    expect(getApplicationValuesPublishDependencies).toHaveBeenCalledWith({
+      applicationValuesDependenciesRequestDto: body,
+    });
+  });
+
   it('reads the version statuses of a catalog entity through the generated operation', async () => {
     const result = [
       {

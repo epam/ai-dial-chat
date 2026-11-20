@@ -1,10 +1,12 @@
+import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import {
   PublicationRuleFunction,
+  PublishDependencyType,
   SaveVersionMode,
   type PublicationRule,
 } from '@epam/ai-dial-publish-panel';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ResourceSaveOutcome,
   ResourceSaveVersionError,
@@ -90,6 +92,126 @@ const renderPanel = (overrides: Partial<UseResourceSavePanelParams> = {}) => {
   };
   return { params, ...renderHook(() => useResourceSavePanel(params)) };
 };
+
+const DEPENDENCY = {
+  id: 'prompts/b1/Hi',
+  name: 'Hi',
+  type: PublishDependencyType.Prompt,
+  location: '',
+};
+const PERSONAL = { rootKey: SaveDestinationRoot.Personal, path: [] };
+
+describe('useResourceSavePanel — private dependencies', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('lists nothing for a Personal destination and never reads', () => {
+    const loadDependencies = vi.fn().mockResolvedValue([DEPENDENCY]);
+    const { result } = renderPanel({ loadDependencies });
+    expect(result.current.panelProps.dependencies).toEqual([]);
+    expect(loadDependencies).not.toHaveBeenCalled();
+  });
+
+  it('lists them for an Organization destination that goes through a publication request', async () => {
+    const loadDependencies = vi.fn().mockResolvedValue([DEPENDENCY]);
+    const { result } = renderPanel({ loadDependencies });
+
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+
+    await waitFor(() =>
+      expect(result.current.panelProps.dependencies).toEqual([DEPENDENCY]),
+    );
+    expect(loadDependencies).toHaveBeenCalledOnce();
+  });
+
+  it('lists them for a direct write into an org unit too', async () => {
+    const UNIT = {
+      rootKey: SaveDestinationRoot.Organization,
+      path: ['Acme', 'Teams'],
+    };
+    const loadDependencies = vi.fn().mockResolvedValue([DEPENDENCY]);
+    const { result } = renderPanel({
+      loadDependencies,
+      adapter: makeAdapter({
+        saveIntoOrgUnit: vi.fn().mockResolvedValue({ id: ID }),
+      }),
+      canSaveDirectlyTo: (path) => path[0] === 'Acme',
+    });
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+
+    await waitFor(() =>
+      expect(result.current.panelProps.dependencies).toEqual([DEPENDENCY]),
+    );
+    expect(result.current.panelProps.accessRules?.isHiddenFor?.(UNIT)).toBe(
+      true,
+    );
+  });
+
+  it('clears the list when the destination goes back to Personal', async () => {
+    const loadDependencies = vi.fn().mockResolvedValue([DEPENDENCY]);
+    const { result } = renderPanel({ loadDependencies });
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+    await waitFor(() =>
+      expect(result.current.panelProps.dependencies).toHaveLength(1),
+    );
+
+    act(() => result.current.panelProps.onDestinationChange(PERSONAL));
+
+    expect(result.current.panelProps.dependencies).toEqual([]);
+  });
+
+  it('leaves the list empty and Save enabled when the read fails', async () => {
+    const loadDependencies = vi.fn().mockRejectedValue(new Error('boom'));
+    const { result } = renderPanel({ loadDependencies });
+
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+    await waitFor(() => expect(loadDependencies).toHaveBeenCalledOnce());
+
+    expect(result.current.panelProps.dependencies).toEqual([]);
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
+  });
+
+  it('ignores a read that finishes after the destination left Organization', async () => {
+    let resolve!: (value: (typeof DEPENDENCY)[]) => void;
+    const loadDependencies = vi.fn(
+      () => new Promise<(typeof DEPENDENCY)[]>((r) => (resolve = r)),
+    );
+    const { result } = renderPanel({ loadDependencies });
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+    act(() => result.current.panelProps.onDestinationChange(PERSONAL));
+
+    await act(async () => resolve([DEPENDENCY]));
+
+    expect(result.current.panelProps.dependencies).toEqual([]);
+  });
+
+  it('reads again each time the panel opens', async () => {
+    const loadDependencies = vi.fn().mockResolvedValue([DEPENDENCY]);
+    const { result, rerender, params } = renderPanel({ loadDependencies });
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+    await waitFor(() => expect(loadDependencies).toHaveBeenCalledOnce());
+
+    params.isOpen = false;
+    rerender();
+    expect(result.current.panelProps.dependencies).toEqual([]);
+    params.isOpen = true;
+    rerender();
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+
+    await waitFor(() =>
+      expect(result.current.panelProps.dependencies).toEqual([DEPENDENCY]),
+    );
+    expect(loadDependencies.mock.calls.length).toBeGreaterThan(1);
+  });
+
+  it('shows nothing without a provider', () => {
+    const { result } = renderPanel();
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+    expect(result.current.panelProps.dependencies).toEqual([]);
+  });
+});
 
 describe('useResourceSavePanel', () => {
   beforeEach(() => {
@@ -605,5 +727,481 @@ describe('useResourceSavePanel', () => {
 
       expect(result.current.panelProps.isSubmitDisabled).toBe(false);
     });
+  });
+});
+
+describe('useResourceSavePanel — dependency namespaces and notes', () => {
+  const UNIT = {
+    rootKey: SaveDestinationRoot.Organization,
+    path: ['Acme', 'Teams'],
+  };
+  const TOOLSET = {
+    ...DEPENDENCY,
+    id: 'toolsets/b1/Tools',
+    name: 'Tools',
+    type: PublishDependencyType.Toolset,
+  };
+  const FILE = {
+    ...DEPENDENCY,
+    id: 'files/b1/a.txt',
+    name: 'a.txt',
+    type: PublishDependencyType.File,
+  };
+  const directWrite = () => ({
+    adapter: makeAdapter({
+      saveIntoOrgUnit: vi.fn().mockResolvedValue({ id: ID }),
+    }),
+    canSaveDirectlyTo: (path: string[]) => path[0] === 'Acme',
+    getDisabledReason: () => undefined,
+    getMissingNamespacesReason: (missing: string[]) =>
+      `No write access: ${missing.join(', ')}`,
+  });
+  const loadAndChoose = async (
+    result: ReturnType<typeof renderPanel>['result'],
+    dependencies: unknown[],
+  ) => {
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await waitFor(() =>
+      expect(result.current.panelProps.dependencies).toHaveLength(
+        dependencies.length,
+      ),
+    );
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('leaves the unit folder usable when every dependency namespace is writable', async () => {
+    const getMissingNamespaces = vi.fn().mockReturnValue([]);
+    const { result } = renderPanel({
+      ...directWrite(),
+      loadDependencies: vi.fn().mockResolvedValue([DEPENDENCY, TOOLSET]),
+      getMissingNamespaces,
+    });
+
+    await loadAndChoose(result, [DEPENDENCY, TOOLSET]);
+
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBeUndefined();
+    expect(getMissingNamespaces).toHaveBeenCalledWith(UNIT.path, [
+      'prompts',
+      'toolsets',
+    ]);
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
+  });
+
+  it('disables the unit folder with a reason naming the missing namespaces', async () => {
+    const { result } = renderPanel({
+      ...directWrite(),
+      loadDependencies: vi.fn().mockResolvedValue([DEPENDENCY, TOOLSET]),
+      getMissingNamespaces: (_path, namespaces) =>
+        namespaces.filter((namespace) => namespace === 'toolsets'),
+    });
+
+    await loadAndChoose(result, [DEPENDENCY, TOOLSET]);
+
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBe(
+      'No write access: toolsets',
+    );
+    expect(result.current.panelProps.isSubmitDisabled).toBe(true);
+  });
+
+  it('ignores a file dependency', async () => {
+    const getMissingNamespaces = vi.fn().mockReturnValue(['files']);
+    const { result } = renderPanel({
+      ...directWrite(),
+      loadDependencies: vi.fn().mockResolvedValue([FILE]),
+      getMissingNamespaces,
+    });
+
+    await loadAndChoose(result, [FILE]);
+
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBeUndefined();
+    expect(getMissingNamespaces).not.toHaveBeenCalled();
+  });
+
+  it('disables nothing while no dependencies are known', () => {
+    const getMissingNamespaces = vi.fn().mockReturnValue(['toolsets']);
+    const { result } = renderPanel({
+      ...directWrite(),
+      getMissingNamespaces,
+    });
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBeUndefined();
+    expect(getMissingNamespaces).not.toHaveBeenCalled();
+  });
+
+  it('does not judge a folder that is not a direct write', async () => {
+    const getMissingNamespaces = vi.fn().mockReturnValue(['toolsets']);
+    const { result } = renderPanel({
+      ...directWrite(),
+      loadDependencies: vi.fn().mockResolvedValue([TOOLSET]),
+      getMissingNamespaces,
+    });
+
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+    await waitFor(() =>
+      expect(result.current.panelProps.dependencies).toHaveLength(1),
+    );
+
+    expect(result.current.panelProps.getDisabledReason?.(EPAM)).toBeUndefined();
+    expect(getMissingNamespaces).not.toHaveBeenCalled();
+  });
+
+  it('keeps a Personal destination free of dependency reasons and notes', () => {
+    const { result } = renderPanel({
+      ...directWrite(),
+      loadDependencies: vi.fn().mockResolvedValue([TOOLSET]),
+      getMissingNamespaces: () => [OrgUnitNamespace.Toolsets],
+      dependenciesNote: 'Saved together.',
+      iconNote: 'Icon not copied.',
+    });
+
+    expect(
+      result.current.panelProps.getDisabledReason?.(PERSONAL),
+    ).toBeUndefined();
+    expect(result.current.panelProps.dependenciesNote).toBeUndefined();
+    expect(result.current.panelProps.destinationNote).toBeUndefined();
+  });
+
+  it('reads the dependencies while an Organization folder is only being browsed', async () => {
+    const loadDependencies = vi.fn().mockResolvedValue([TOOLSET]);
+    const { result } = renderPanel({
+      ...directWrite(),
+      loadDependencies,
+    });
+
+    act(() => result.current.panelProps.onPendingDestinationChange?.(UNIT));
+
+    await waitFor(() => expect(loadDependencies).toHaveBeenCalledOnce());
+    expect(result.current.panelProps.dependencies).toEqual([]);
+  });
+
+  it('passes the dependencies note only under the Organization root', () => {
+    const { result } = renderPanel({ dependenciesNote: 'Saved together.' });
+
+    expect(result.current.panelProps.dependenciesNote).toBeUndefined();
+
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+
+    expect(result.current.panelProps.dependenciesNote).toBe('Saved together.');
+  });
+
+  it('shows the icon note only on a direct write where files are not writable', () => {
+    const { result } = renderPanel({
+      ...directWrite(),
+      getMissingNamespaces: (_path, namespaces) =>
+        namespaces.filter((namespace) => namespace === 'files'),
+      iconNote: 'Icon not copied.',
+    });
+
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+    expect(result.current.panelProps.destinationNote).toBeUndefined();
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    expect(result.current.panelProps.destinationNote).toBe('Icon not copied.');
+  });
+
+  it('shows no icon note when files are writable', () => {
+    const { result } = renderPanel({
+      ...directWrite(),
+      getMissingNamespaces: () => [],
+      iconNote: 'Icon not copied.',
+    });
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+
+    expect(result.current.panelProps.destinationNote).toBeUndefined();
+  });
+
+  it('shows no icon note when the host gives none', () => {
+    const { result } = renderPanel({
+      ...directWrite(),
+      getMissingNamespaces: () => [OrgUnitNamespace.Files],
+    });
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+
+    expect(result.current.panelProps.destinationNote).toBeUndefined();
+  });
+});
+
+describe('useResourceSavePanel — taken name in a direct-write folder', () => {
+  const UNIT = {
+    rootKey: SaveDestinationRoot.Organization,
+    path: ['Acme', 'Teams'],
+  };
+  const TAKEN_REASON = 'Already exists in Acme / Teams';
+  const checkPublishTarget = vi.fn();
+  const renderDirect = (overrides: Partial<UseResourceSavePanelParams> = {}) =>
+    renderPanel({
+      adapter: makeAdapter({
+        saveIntoOrgUnit: vi.fn().mockResolvedValue({ id: ID }),
+      }),
+      canSaveDirectlyTo: (path) => path[0] === 'Acme',
+      publishClient: {
+        publishCatalogEntity: vi.fn().mockResolvedValue({}),
+        getPublishRules: vi.fn().mockResolvedValue([]),
+        checkPublishTarget,
+      },
+      getDisabledReason: () => undefined,
+      getTargetTakenReason: () => TAKEN_REASON,
+      ...overrides,
+    });
+  const settle = () => act(async () => vi.advanceTimersByTimeAsync(450));
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    checkPublishTarget.mockResolvedValue({ taken: false });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('asks without a version for "keep version" and disables Save with the reason when the name is taken', async () => {
+    checkPublishTarget.mockResolvedValue({ taken: true });
+    const { result } = renderDirect();
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+
+    expect(checkPublishTarget).toHaveBeenCalledOnce();
+    expect(checkPublishTarget).toHaveBeenCalledWith(
+      'application',
+      ID,
+      'Acme/Teams',
+      undefined,
+    );
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBe(
+      TAKEN_REASON,
+    );
+    expect(result.current.panelProps.isSubmitDisabled).toBe(true);
+  });
+
+  it('keeps Save enabled when the name is free', async () => {
+    const { result } = renderDirect();
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+
+    expect(checkPublishTarget).toHaveBeenCalledOnce();
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBeUndefined();
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
+  });
+
+  it('gives the typed version to the reason when the new version is the taken one', async () => {
+    checkPublishTarget.mockResolvedValue({ taken: true });
+    const getTargetTakenReason = vi.fn().mockReturnValue(TAKEN_REASON);
+    const { result } = renderDirect({ getTargetTakenReason });
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBe(
+      TAKEN_REASON,
+    );
+    expect(getTargetTakenReason).toHaveBeenLastCalledWith(
+      ['Acme', 'Teams'],
+      undefined,
+    );
+
+    act(() =>
+      result.current.panelProps.version?.onVersionModeChange(
+        SaveVersionMode.New,
+      ),
+    );
+    act(() => result.current.panelProps.version?.onNewVersionChange('2.0.0'));
+    await settle();
+
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBe(
+      TAKEN_REASON,
+    );
+    expect(getTargetTakenReason).toHaveBeenLastCalledWith(
+      ['Acme', 'Teams'],
+      '2.0.0',
+    );
+  });
+
+  it('asks with the typed version once it is valid and settled, and re-enables Save when the next version is free', async () => {
+    checkPublishTarget.mockImplementation(
+      async (_type, _id, _folder, version) => ({ taken: version === '2.0.0' }),
+    );
+    const { result } = renderDirect();
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+    checkPublishTarget.mockClear();
+
+    act(() =>
+      result.current.panelProps.version?.onVersionModeChange(
+        SaveVersionMode.New,
+      ),
+    );
+    act(() => result.current.panelProps.version?.onNewVersionChange('2.0.0'));
+    expect(checkPublishTarget).not.toHaveBeenCalled();
+    await settle();
+
+    expect(checkPublishTarget).toHaveBeenCalledOnce();
+    expect(checkPublishTarget).toHaveBeenCalledWith(
+      'application',
+      ID,
+      'Acme/Teams',
+      '2.0.0',
+    );
+    expect(result.current.panelProps.isSubmitDisabled).toBe(true);
+
+    act(() => result.current.panelProps.version?.onNewVersionChange('2.1.0'));
+    await settle();
+
+    expect(checkPublishTarget).toHaveBeenLastCalledWith(
+      'application',
+      ID,
+      'Acme/Teams',
+      '2.1.0',
+    );
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
+  });
+
+  it('asks only after 400 ms without typing', async () => {
+    const { result } = renderDirect();
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+    act(() =>
+      result.current.panelProps.version?.onVersionModeChange(
+        SaveVersionMode.New,
+      ),
+    );
+    checkPublishTarget.mockClear();
+
+    act(() => result.current.panelProps.version?.onNewVersionChange('2.0.0'));
+    await act(async () => vi.advanceTimersByTimeAsync(300));
+    act(() => result.current.panelProps.version?.onNewVersionChange('2.0.1'));
+    await act(async () => vi.advanceTimersByTimeAsync(300));
+    expect(checkPublishTarget).not.toHaveBeenCalled();
+    await act(async () => vi.advanceTimersByTimeAsync(150));
+
+    expect(checkPublishTarget).toHaveBeenCalledOnce();
+    expect(checkPublishTarget).toHaveBeenCalledWith(
+      'application',
+      ID,
+      'Acme/Teams',
+      '2.0.1',
+    );
+  });
+
+  it('does not ask for an invalid version or for the current one', async () => {
+    const { result } = renderDirect();
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+    act(() =>
+      result.current.panelProps.version?.onVersionModeChange(
+        SaveVersionMode.New,
+      ),
+    );
+    checkPublishTarget.mockClear();
+
+    act(() => result.current.panelProps.version?.onNewVersionChange('abc'));
+    await settle();
+    act(() => result.current.panelProps.version?.onNewVersionChange('1.0.0'));
+    await settle();
+
+    expect(checkPublishTarget).not.toHaveBeenCalled();
+    expect(result.current.panelProps.getDisabledReason?.(UNIT)).toBeUndefined();
+  });
+
+  it('keeps Save enabled when the check fails', async () => {
+    checkPublishTarget.mockRejectedValue(new Error('boom'));
+    const { result } = renderDirect();
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+
+    expect(checkPublishTarget).toHaveBeenCalledOnce();
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
+  });
+
+  it('discards an answer that arrives after the destination changed', async () => {
+    let resolveCheck: (value: { taken: boolean }) => void = () => undefined;
+    checkPublishTarget.mockReturnValue(
+      new Promise((resolve) => {
+        resolveCheck = resolve;
+      }),
+    );
+    const { result } = renderDirect();
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+    act(() => result.current.panelProps.onDestinationChange(PERSONAL));
+    await act(async () => resolveCheck({ taken: true }));
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
+  });
+
+  it('asks nothing for Personal, a folder created in this session or a publication-request destination', async () => {
+    checkPublishTarget.mockResolvedValue({ taken: true });
+    const { result } = renderDirect();
+
+    await settle();
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
+    await settle();
+    await act(async () =>
+      result.current.panelProps.onCreateFolder(
+        SaveDestinationRoot.Organization,
+        ['Acme'],
+        'Fresh',
+      ),
+    );
+    act(() =>
+      result.current.panelProps.onDestinationChange({
+        rootKey: SaveDestinationRoot.Organization,
+        path: ['Acme', 'Fresh', 'Inner'],
+      }),
+    );
+    await settle();
+
+    expect(checkPublishTarget).not.toHaveBeenCalled();
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
+  });
+
+  it('asks nothing for a resource that does not exist yet', async () => {
+    const { result } = renderDirect({
+      adapter: {
+        publishEntityType: 'application',
+        isVersioned: false,
+        createIn: vi.fn(),
+        saveIntoOrgUnit: vi.fn(),
+      } as never,
+    });
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+
+    expect(checkPublishTarget).not.toHaveBeenCalled();
+  });
+
+  it('asks nothing without a reason callback', async () => {
+    const { result } = renderDirect({ getTargetTakenReason: undefined });
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+
+    expect(checkPublishTarget).not.toHaveBeenCalled();
+  });
+
+  it('asks nothing when the client has no check', async () => {
+    const { result } = renderDirect({
+      publishClient: {
+        publishCatalogEntity: vi.fn().mockResolvedValue({}),
+        getPublishRules: vi.fn().mockResolvedValue([]),
+      },
+    });
+
+    act(() => result.current.panelProps.onDestinationChange(UNIT));
+    await settle();
+
+    expect(checkPublishTarget).not.toHaveBeenCalled();
+    expect(result.current.panelProps.isSubmitDisabled).toBe(false);
   });
 });

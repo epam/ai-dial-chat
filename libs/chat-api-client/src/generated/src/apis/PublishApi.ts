@@ -14,6 +14,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApplicationValuesDependenciesRequestDto,
   CopyCatalogEntityToOrgUnitDto,
   PublishCatalogEntityDto,
   PublishConflictDto,
@@ -33,6 +34,10 @@ export interface CopyCatalogEntityToOrgUnitRequest {
   entityType: CopyCatalogEntityToOrgUnitEntityTypeEnum;
   entityId: string;
   copyCatalogEntityToOrgUnitDto: CopyCatalogEntityToOrgUnitDto;
+}
+
+export interface GetApplicationValuesPublishDependenciesRequest {
+  applicationValuesDependenciesRequestDto: ApplicationValuesDependenciesRequestDto;
 }
 
 export interface GetCatalogPublishDependenciesRequest {
@@ -83,7 +88,7 @@ export interface UnpublishCatalogEntityRequest {
  */
 export class PublishApi extends runtime.BaseAPI {
   /**
-   * Copies a catalog entity of the caller\'s own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core\'s resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. Answers 403 while the `features.orgUnitsEnabled` flag is off.
+   * Copies a catalog entity of the caller\'s own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core\'s resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. An application is copied together with its first-level private dependencies (in the caller\'s own bucket, written under a `.{application}.deps` folder next to it) and its uploaded icon, and refers to the copies; a dependency already copied is reused, and an icon that cannot be copied is dropped from the shared copy. Before the first copy the caller must hold `write` in the folder\'s org unit on the namespace of the application and of every dependency to copy, otherwise the answer is 403 naming the missing namespaces and nothing is written. Answers 403 while the `features.orgUnitsEnabled` flag is off.
    * Copy an own catalog entity into an org-unit folder
    */
   async copyCatalogEntityToOrgUnitRaw(
@@ -151,7 +156,7 @@ export class PublishApi extends runtime.BaseAPI {
   }
 
   /**
-   * Copies a catalog entity of the caller\'s own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core\'s resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. Answers 403 while the `features.orgUnitsEnabled` flag is off.
+   * Copies a catalog entity of the caller\'s own bucket into `folderPath` of the public bucket under the same name, by proxying DIAL Core\'s resource copy. No publication request is created: DIAL Core decides whether the caller may write into the folder and applies its per-type rules to the copy, and its 403 and 409 are returned as they are. Applications, toolsets, prompts and skills are supported; other types answer 400. A target that already exists answers 409: the copy never overwrites. An application is copied together with its first-level private dependencies (in the caller\'s own bucket, written under a `.{application}.deps` folder next to it) and its uploaded icon, and refers to the copies; a dependency already copied is reused, and an icon that cannot be copied is dropped from the shared copy. Before the first copy the caller must hold `write` in the folder\'s org unit on the namespace of the application and of every dependency to copy, otherwise the answer is 403 naming the missing namespaces and nothing is written. Answers 403 while the `features.orgUnitsEnabled` flag is off.
    * Copy an own catalog entity into an org-unit folder
    */
   async copyCatalogEntityToOrgUnit(
@@ -159,6 +164,67 @@ export class PublishApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ResourceIdResponseDto> {
     const response = await this.copyCatalogEntityToOrgUnitRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns the references in the given application property values that are not in the public bucket and travel with the application when it is written into an org unit: the caller’s own resources and files; resources in another user’s bucket are left out. Unlike the entity route it reads no application from DIAL Core, only the application type schema, so it works before the first save. The list is advisory: when it cannot be resolved the response is an empty list rather than an error.
+   * List the private dependencies of unsaved application values
+   */
+  async getApplicationValuesPublishDependenciesRaw(
+    requestParameters: GetApplicationValuesPublishDependenciesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ResourceDependenciesResultDto>> {
+    if (requestParameters['applicationValuesDependenciesRequestDto'] == null) {
+      throw new runtime.RequiredError(
+        'applicationValuesDependenciesRequestDto',
+        'Required parameter "applicationValuesDependenciesRequestDto" was null or undefined when calling getApplicationValuesPublishDependencies().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/catalog/application-values/publish-dependencies`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['applicationValuesDependenciesRequestDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ResourceDependenciesResultDto>(response);
+  }
+
+  /**
+   * Returns the references in the given application property values that are not in the public bucket and travel with the application when it is written into an org unit: the caller’s own resources and files; resources in another user’s bucket are left out. Unlike the entity route it reads no application from DIAL Core, only the application type schema, so it works before the first save. The list is advisory: when it cannot be resolved the response is an empty list rather than an error.
+   * List the private dependencies of unsaved application values
+   */
+  async getApplicationValuesPublishDependencies(
+    requestParameters: GetApplicationValuesPublishDependenciesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ResourceDependenciesResultDto> {
+    const response = await this.getApplicationValuesPublishDependenciesRaw(
       requestParameters,
       initOverrides,
     );

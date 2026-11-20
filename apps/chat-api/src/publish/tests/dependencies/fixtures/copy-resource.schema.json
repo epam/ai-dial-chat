@@ -1,0 +1,11 @@
+{
+  "$comment": "Core's CopyResourcesRequest for POST /v1/ops/resource/copy, as in @epam/ai-dial-typescript-sdk components.schemas.CopyResourcesRequest; sourceUrl and destinationUrl are required by ResourceOperationService.",
+  "type": "object",
+  "required": ["sourceUrl", "destinationUrl", "overwrite"],
+  "additionalProperties": false,
+  "properties": {
+    "sourceUrl": { "type": "string", "minLength": 1 },
+    "destinationUrl": { "type": "string", "minLength": 1 },
+    "overwrite": { "type": "boolean" }
+  }
+}
