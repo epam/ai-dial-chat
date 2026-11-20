@@ -52,8 +52,12 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       labels,
       renderSummary,
       dependencies,
+      panelLabels,
     }: {
       dependencies?: { name: string }[];
+      panelLabels?: {
+        dependenciesLabels?: { title?: string; appearance?: string };
+      };
       getDisabledReason?: (destination: {
         path: string[];
       }) => string | undefined;
@@ -77,6 +81,10 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
         <span>
           dependencies:
           {dependencies?.map((dependency) => dependency.name).join(',')}
+        </span>
+        <span>
+          dependenciesTitle:{panelLabels?.dependenciesLabels?.title}:
+          {panelLabels?.dependenciesLabels?.appearance ?? 'warning'}
         </span>
         <span>alreadyPublished:{String(hasExistingPublicationInFolder)}</span>
         <span>targetTaken:{String(isTargetTaken)}</span>
@@ -459,6 +467,16 @@ describe('PublishProjectPanelContainer', () => {
   });
 
   describe('private dependencies', () => {
+    it('keeps the warning copy of the shared dependencies section', () => {
+      renderContainer();
+
+      expect(
+        screen.getByText(
+          /dependenciesTitle:publish\.dependenciesTitle:\s*warning/,
+        ),
+      ).toBeTruthy();
+    });
+
     it("asks for the project's dependencies and shows none while the list is empty", async () => {
       vi.mocked(getCatalogPublishDependencies).mockResolvedValue({
         dependencies: [],

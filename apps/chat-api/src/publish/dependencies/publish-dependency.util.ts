@@ -29,7 +29,7 @@ const LEGACY_METADATA_PREFIX = 'metadata/';
  * `?query`, a `#fragment` and the legacy `metadata/` prefix.
  * @param resourceUrl - a reference as stored in an entity or a conversation
  */
-const normalizeResourceUrl = (resourceUrl: string): string => {
+export const normalizeResourceUrl = (resourceUrl: string): string => {
   const withoutSuffix = resourceUrl.split(/[?#]/, 1)[0];
   return withoutSuffix.startsWith(LEGACY_METADATA_PREFIX)
     ? withoutSuffix.slice(LEGACY_METADATA_PREFIX.length)

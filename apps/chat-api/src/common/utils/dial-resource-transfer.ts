@@ -245,6 +245,35 @@ export const existsQuietly = async (
   }
 };
 
+/**
+ * Whether a resource exists: `true` for 200 and `false` for 404.
+ * Any other answer, or a failed request, throws, so a transient failure is never read as "absent".
+ * @param client - DIAL Core SDK client
+ * @param type - resource type of `location`
+ * @param location - bucket and path of the resource
+ * @param headers - bearer headers for DIAL Core
+ * @throws {Error} When Core answers with anything but 200 or 404
+ */
+export const resourceExists = async (
+  client: DialSdkClient,
+  type: DialResourceType,
+  location: DialResourceLocation,
+  headers: AuthHeaders,
+): Promise<boolean> => {
+  const { response } = await getMetadata(
+    client,
+    type,
+    location.bucket,
+    location.path,
+    headers,
+  );
+  if (response?.status === 200) return true;
+  if (response?.status === 404) return false;
+  throw new Error(
+    `Could not tell whether ${toDialResourceUrl(type, location)} exists (status ${response?.status})`,
+  );
+};
+
 /** Parameters for {@link transferDialResource}. */
 export interface TransferDialResourceParams {
   client: DialSdkClient;

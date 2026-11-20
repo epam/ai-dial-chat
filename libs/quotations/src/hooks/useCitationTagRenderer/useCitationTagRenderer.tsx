@@ -36,6 +36,7 @@ export const useCitationTagRenderer = (
     isDownloadEnabled,
     isPreviewOpen,
     previewFilesOnMarkerClick,
+    alwaysShowCard,
     buildLabels,
   } = callbacks;
 
@@ -48,6 +49,7 @@ export const useCitationTagRenderer = (
       isDownloadEnabled,
       isPreviewOpen,
       previewFilesOnMarkerClick,
+      alwaysShowCard,
       buildLabels,
     });
 
@@ -64,6 +66,7 @@ export const useCitationTagRenderer = (
     isDownloadEnabled,
     isPreviewOpen,
     previewFilesOnMarkerClick,
+    alwaysShowCard,
     buildLabels,
   ]);
 };

@@ -1,5 +1,8 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   BadGatewayException,
+  ConflictException,
   ForbiddenException,
   INestApplication,
   NotFoundException,
@@ -10,11 +13,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeatureGuard } from '../../app-config/feature-flags/feature.guard';
+import { ApplicationPublishCopyService } from '../application-publish-copy.service';
+import { ApplicationPublishPreparationService } from '../application-publish-preparation.service';
+import { ApplicationDependencyResolver } from '../dependencies/application-dependency.resolver';
+import { PublishDependenciesService } from '../dependencies/publish-dependencies.service';
 import { CatalogEntityType } from '../dto/catalog-entity-params.dto';
 import { PublishResultDto } from '../dto/publish-result.dto';
+import { VersionPublicationStatus } from '../dto/version-status-entry.dto';
 import { OrgUnitCopyService } from '../org-unit-copy.service';
 import { PublishController } from '../publish.controller';
 import { PublishService } from '../publish.service';
+import { resolveVersionStatus } from '../version-status.util';
 import { VersionStatusesService } from '../version-statuses.service';
 
 const TEST_USER = {
@@ -182,6 +191,7 @@ describe('PublishController (integration)', () => {
         'Test User',
         undefined,
         undefined,
+        TEST_USER.sub,
       );
     });
 
@@ -209,6 +219,7 @@ describe('PublishController (integration)', () => {
         'Test User',
         rules,
         undefined,
+        TEST_USER.sub,
       );
     });
 
@@ -228,6 +239,7 @@ describe('PublishController (integration)', () => {
         'DIAL Team',
         undefined,
         undefined,
+        TEST_USER.sub,
       );
     });
 
@@ -247,6 +259,7 @@ describe('PublishController (integration)', () => {
         'DIAL Team',
         undefined,
         undefined,
+        TEST_USER.sub,
       );
     });
 
@@ -266,6 +279,7 @@ describe('PublishController (integration)', () => {
         'Test User',
         undefined,
         undefined,
+        TEST_USER.sub,
       );
     });
 
@@ -285,6 +299,7 @@ describe('PublishController (integration)', () => {
         'Test User',
         undefined,
         true,
+        TEST_USER.sub,
       );
     });
 
@@ -305,6 +320,7 @@ describe('PublishController (integration)', () => {
         'Test User',
         undefined,
         false,
+        TEST_USER.sub,
       );
     });
 
@@ -386,6 +402,7 @@ describe('PublishController (integration)', () => {
         'Test User',
         undefined,
         undefined,
+        TEST_USER.sub,
       );
     });
 
@@ -403,6 +420,64 @@ describe('PublishController (integration)', () => {
         .post('/api/v1/catalog/toolset/tool-abc123/publish')
         .send(validBody)
         .expect(502);
+    });
+
+    describe('an application with dependencies', () => {
+      const APPLICATION_URL =
+        '/api/v1/catalog/application/applications%2Fbucket-123%2FHelper__1.0.0/publish';
+
+      it('returns 409 with its own message when the application is already being published', async () => {
+        service.publish.mockRejectedValue(
+          new ConflictException('This application is already being published'),
+        );
+
+        const res = await request(app.getHttpServer())
+          .post(APPLICATION_URL)
+          .send(validBody)
+          .expect(409);
+
+        expect(res.body.message).toBe(
+          'This application is already being published',
+        );
+      });
+
+      it('returns 502 with the dependency message when the dependencies cannot be read', async () => {
+        service.publish.mockRejectedValue(
+          new BadGatewayException(
+            "Failed to read the application's dependencies",
+          ),
+        );
+
+        const res = await request(app.getHttpServer())
+          .post(APPLICATION_URL)
+          .send(validBody)
+          .expect(502);
+
+        expect(res.body.message).toBe(
+          "Failed to read the application's dependencies",
+        );
+      });
+
+      it('keeps the success response unchanged', async () => {
+        const res = await request(app.getHttpServer())
+          .post(APPLICATION_URL)
+          .send(validBody)
+          .expect(201);
+
+        expect(res.body).toEqual(publishResult);
+        expect(service.publish).toHaveBeenCalledWith(
+          TEST_USER.at,
+          TEST_USER.bucket,
+          'application',
+          'applications/bucket-123/Helper__1.0.0',
+          'Organization/Data Science',
+          '1.2.0',
+          'Test User',
+          undefined,
+          undefined,
+          TEST_USER.sub,
+        );
+      });
     });
   });
 
@@ -523,5 +598,248 @@ describe('PublishController (integration)', () => {
         .get('/api/v1/catalog/toolset/toolsets%2Fb%2FX__1.0.0/version-statuses')
         .expect(502);
     });
+  });
+});
+
+/*
+ * The publish endpoint end to end with the real service, preparation and copy
+ * code over a Core client faked at the SDK boundary, replaying the hand-built
+ * fixtures of `dependencies/fixtures`.
+ */
+describe('PublishController with application dependencies (integration)', () => {
+  const FIXTURES = join(__dirname, 'dependencies', 'fixtures');
+  const readFixture = <T>(name: string): T =>
+    JSON.parse(readFileSync(join(FIXTURES, name), 'utf8')) as T;
+  const requestFixture = readFixture<Record<string, unknown>>(
+    'create-publication.request.json',
+  );
+  const responseFixture = readFixture<{
+    status: string;
+    targetFolder: string;
+    resources: { sourceUrl: string; targetUrl: string; action: string }[];
+  }>('create-publication.response.json');
+
+  const SCHEMA = {
+    $defs: {
+      Skill: {
+        properties: {
+          type: { const: 'dial-skill', type: 'string' },
+          url: { 'dial:resource': true, type: 'string' },
+        },
+      },
+      App: {
+        properties: {
+          type: { const: 'dial-app', type: 'string' },
+          deployment_id: { 'dial:resource': true, type: 'string' },
+        },
+      },
+    },
+    properties: {
+      skills: { items: { oneOf: [{ $ref: '#/$defs/Skill' }] } },
+      tool_sets: { items: { oneOf: [{ $ref: '#/$defs/App' }] } },
+    },
+  };
+
+  let app: INestApplication;
+  let stored: Map<string, unknown>;
+  let client: Record<string, ReturnType<typeof vi.fn>>;
+
+  beforeEach(async () => {
+    stored = new Map([
+      [
+        'Helper__1.0.0',
+        {
+          application_type_schema_id: 'schema-1',
+          application_properties: {
+            skills: [
+              { type: 'dial-skill', url: 'skills/bucket-123/Docs%20helper' },
+            ],
+            tool_sets: [
+              {
+                type: 'dial-app',
+                deployment_id: 'applications/bucket-123/Calculator__1.0.0',
+              },
+            ],
+          },
+        },
+      ],
+    ]);
+    const notFound = vi.fn().mockResolvedValue({ response: { status: 404 } });
+    client = {
+      createPublication: vi.fn().mockResolvedValue({
+        data: responseFixture,
+        response: { ok: true, status: 200 },
+      }),
+      getCustomApplication: vi
+        .fn()
+        .mockImplementation(async (_b: string, path: string) => ({
+          data: stored.get(path),
+          response: { status: 200, headers: new Headers({ etag: 'e1' }) },
+        })),
+      saveCustomApplication: vi
+        .fn()
+        .mockImplementation(async (_b: string, path: string, init) => {
+          stored.set(path, init.body);
+          return { response: { status: 200 } };
+        }),
+      copyResource: vi.fn().mockImplementation(async (init) => {
+        const target = String(init.body.destinationUrl).replace(
+          'applications/bucket-123/',
+          '',
+        );
+        stored.set(target, structuredClone(stored.get('Helper__1.0.0')));
+        return { response: { status: 200 } };
+      }),
+      deleteCustomApplication: vi
+        .fn()
+        .mockImplementation(async (_b: string, path: string) => {
+          stored.delete(path);
+          return { response: { status: 200 } };
+        }),
+      getApplicationMetadata: notFound,
+      getPromptMetadata: notFound,
+      listSkillMetadata: notFound,
+      getToolSetMetadata: notFound,
+    };
+    const dialClient = { client } as never;
+    const schemas = { getApplicationSchema: vi.fn().mockResolvedValue(SCHEMA) };
+    const applications = {
+      resolveOwnApplication: vi.fn().mockResolvedValue({
+        bucket: 'bucket-123',
+        path: 'Helper__1.0.0',
+      }),
+      readApplication: vi
+        .fn()
+        .mockImplementation(
+          async (_h: unknown, resource: { path: string }) => ({
+            body: structuredClone(stored.get(resource.path)),
+            etag: 'e1',
+          }),
+        ),
+      writeApplication: vi
+        .fn()
+        .mockImplementation(
+          async (_h: unknown, resource: { path: string }, body: unknown) => {
+            stored.set(resource.path, body);
+          },
+        ),
+      invalidateAfterWrite: vi.fn().mockResolvedValue(undefined),
+    };
+    const preparation = new ApplicationPublishPreparationService(
+      dialClient,
+      new PublishDependenciesService(
+        new ApplicationDependencyResolver(dialClient, schemas as never),
+      ),
+      new ApplicationPublishCopyService(dialClient, applications as never),
+      applications as never,
+      schemas as never,
+    );
+    const publishService = new PublishService(
+      dialClient,
+      { get: vi.fn(), set: vi.fn(), del: vi.fn() } as never,
+      { isAdmin: vi.fn() } as never,
+      preparation,
+    );
+    app = await buildApp(publishService);
+  });
+
+  afterEach(async () => {
+    await app.close();
+  });
+
+  const publishApplication = () =>
+    request(app.getHttpServer())
+      .post(
+        '/api/v1/catalog/application/applications%2Fbucket-123%2FHelper__1.0.0/publish',
+      )
+      .send({ folderPath: 'Organization/Agents', version: '1.0.0' });
+
+  it('sends one createPublication shaped like the fixture and deletes the copy', async () => {
+    const res = await publishApplication().expect(201);
+
+    expect(client.createPublication).toHaveBeenCalledTimes(1);
+    expect(client.createPublication.mock.calls[0][0].body).toEqual(
+      requestFixture,
+    );
+    expect(stored.has('.publish-staging/Helper__1.0.0')).toBe(false);
+    expect(res.body.entityId).toBe('applications/bucket-123/Helper__1.0.0');
+  });
+
+  it('writes only the copy, rewritten to the published dependencies', async () => {
+    let copyBody: unknown;
+    client.createPublication.mockImplementation(async () => {
+      copyBody = structuredClone(stored.get('.publish-staging/Helper__1.0.0'));
+      return { data: responseFixture, response: { ok: true, status: 200 } };
+    });
+
+    await publishApplication().expect(201);
+
+    expect(client.saveCustomApplication).not.toHaveBeenCalled();
+    expect(copyBody).toEqual({
+      application_type_schema_id: 'schema-1',
+      application_properties: {
+        skills: [
+          {
+            type: 'dial-skill',
+            url: 'skills/public/Organization/Agents/.Helper__1.0.0.deps/bucket-123/Docs%20helper',
+          },
+        ],
+        tool_sets: [
+          {
+            type: 'dial-app',
+            deployment_id:
+              'applications/public/Organization/Agents/.Helper__1.0.0.deps/bucket-123/Calculator__1.0.0',
+          },
+        ],
+      },
+    });
+    expect(
+      (stored.get('Helper__1.0.0') as { application_properties: unknown })
+        .application_properties,
+    ).toEqual({
+      skills: [{ type: 'dial-skill', url: 'skills/bucket-123/Docs%20helper' }],
+      tool_sets: [
+        {
+          type: 'dial-app',
+          deployment_id: 'applications/bucket-123/Calculator__1.0.0',
+        },
+      ],
+    });
+  });
+
+  it('lists the dependency application as a sibling ADD resource', async () => {
+    await publishApplication().expect(201);
+
+    const resources = client.createPublication.mock.calls[0][0].body
+      .resources as { sourceUrl: string; targetUrl: string }[];
+    const dependency = resources.find(
+      ({ sourceUrl }) =>
+        sourceUrl === 'applications/bucket-123/Calculator__1.0.0',
+    );
+    expect(dependency?.targetUrl).toBe(
+      'applications/public/Organization/Agents/.Helper__1.0.0.deps/bucket-123/Calculator__1.0.0',
+    );
+  });
+
+  it('reads the original as In review while the publication is pending', async () => {
+    await publishApplication().expect(201);
+
+    const status = resolveVersionStatus(
+      [responseFixture as never],
+      'applications/bucket-123/Helper__1.0.0',
+    );
+    expect(status.status).toBe(VersionPublicationStatus.InReview);
+  });
+
+  it('publishes the application the way it was before when its dependencies cannot be read', async () => {
+    client.getCustomApplication.mockResolvedValue({
+      error: {},
+      response: { status: 500 },
+    });
+
+    await publishApplication().expect(201);
+
+    expect(client.copyResource).not.toHaveBeenCalled();
+    expect(client.createPublication).toHaveBeenCalledOnce();
   });
 });

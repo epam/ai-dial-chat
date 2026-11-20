@@ -74,7 +74,7 @@ import {
 } from './utils/application-body-mapping';
 import { throwApplicationSaveError } from './utils/application-save-error';
 
-type DialApplication = components['schemas']['Application'];
+export type DialApplication = components['schemas']['Application'];
 
 @Injectable()
 export class ApplicationsService {
@@ -679,7 +679,7 @@ export class ApplicationsService {
     }
   }
 
-  private async readApplication(
+  async readApplication(
     authHeaders: ReturnType<typeof getBearerAuthHeaders>,
     resource: DialApplicationResource,
     context: string,
@@ -698,7 +698,7 @@ export class ApplicationsService {
     };
   }
 
-  private async writeApplication(
+  async writeApplication(
     authHeaders: ReturnType<typeof getBearerAuthHeaders>,
     resource: DialApplicationResource,
     body: DialApplication,

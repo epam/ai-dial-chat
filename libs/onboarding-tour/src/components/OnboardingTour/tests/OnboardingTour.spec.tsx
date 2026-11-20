@@ -63,6 +63,40 @@ describe('OnboardingTour', () => {
     vi.restoreAllMocks();
   });
 
+  /* The dimming is visual only, so it is asserted through its CSS classes. */
+  const tourRoot = () =>
+    // eslint-disable-next-line testing-library/no-node-access
+    document.querySelector<HTMLElement>('.dial-onboarding-tour-root');
+  const findCutout = () =>
+    // eslint-disable-next-line testing-library/no-node-access
+    tourRoot()?.querySelector<HTMLElement>('[class*="cutout"]');
+
+  it('dims the page around a cut-out padded around the target', async () => {
+    render(<Host initialSteps={stepsFixture()} onFinish={vi.fn()} />);
+    /* jsdom gives Floating UI no layout, so only the padding around the
+       40×20 target is asserted, not its position. */
+    await waitFor(() => expect(findCutout()?.style.width).toBe('52px'));
+    const cutout = findCutout();
+    expect(cutout?.style.height).toBe('32px');
+    expect(cutout?.getAttribute('aria-hidden')).toBe('true');
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(tourRoot()?.querySelector('[class*="backdrop"]')).toBeNull();
+  });
+
+  it('applies the backdrop color override and lets clicks through the dimming', () => {
+    render(
+      <Host
+        initialSteps={stepsFixture()}
+        onFinish={vi.fn()}
+        colors={{ backdrop: 'rgb(1, 2, 3)' }}
+      />,
+    );
+    expect(tourRoot()?.style.getPropertyValue('--ot-backdrop')).toBe(
+      'rgb(1, 2, 3)',
+    );
+    expect(tourRoot()?.className).toContain('pointer-events-none');
+  });
+
   it('docks the mobile sheet away from a target low on the screen', async () => {
     vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
       top: window.innerHeight - 40,

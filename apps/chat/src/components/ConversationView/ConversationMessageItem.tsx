@@ -370,6 +370,9 @@ const ConversationMessageItem: FC<Props> = ({
   const isDeleteUserMessageHidden = useUiFeature(
     OverlayFeature.HideDeleteUserMessage,
   );
+  const isCitationCardAlwaysShown = useUiFeature(
+    OverlayFeature.AlwaysShowCitationCard,
+  );
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
   const handleTableOpenInCanvas = useCallback(
@@ -441,6 +444,7 @@ const ConversationMessageItem: FC<Props> = ({
   } = useMessageCitations({
     msg,
     isStreaming,
+    isCitationCardAlwaysShown,
     stages,
     fallbackCitationGroups,
     isCompactTypography,

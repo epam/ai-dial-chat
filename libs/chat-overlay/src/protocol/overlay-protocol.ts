@@ -254,6 +254,12 @@ export enum OverlayFeature {
    * The desktop top bar and the navigation sidebar are unaffected.
    */
   ShowMobileHeaderFullLogo = 'show-mobile-header-full-logo',
+  /**
+   * Makes a click on an inline citation marker always open the citation card
+   * (preview, download and source details), including for a marker that cites
+   * a single file, which otherwise opens the preview directly.
+   */
+  AlwaysShowCitationCard = 'always-show-citation-card',
 }
 
 /**

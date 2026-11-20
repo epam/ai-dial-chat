@@ -97,6 +97,7 @@ import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
   getPublishApprovalLabels,
+  getApplicationPublishDependenciesLabels,
   getPublishDependenciesEntityKey,
   getPublishDependenciesLabels,
   getPublishPanelCommonLabels,
@@ -708,10 +709,12 @@ const CatalogView: FC<Props> = ({
         publishVersionHistory={versionHistory}
         onPublishOpenChange={handlePublishOpenChange}
         resolvePublishDependenciesLabels={(item) =>
-          getPublishDependenciesLabels(
-            t,
-            getPublishDependenciesEntityKey(item.type),
-          )
+          item.type === CatalogEntityType.Agent
+            ? getApplicationPublishDependenciesLabels(t)
+            : getPublishDependenciesLabels(
+                t,
+                getPublishDependenciesEntityKey(item.type),
+              )
         }
         resolvePublishApprovalLabels={(item) =>
           getPublishApprovalLabels(

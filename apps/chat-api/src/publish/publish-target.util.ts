@@ -252,6 +252,43 @@ export const getVersionedTargetResourceName = (
   return `${resourceName.slice(0, separatorIndex)}${RESOURCE_VERSION_SEPARATOR}${encodeURIComponent(version)}`;
 };
 
+/** Folder, next to an application, that holds its temporary publication copy. */
+export const PUBLISH_STAGING_SEGMENT = '.publish-staging';
+
+/**
+ * Maps the url of an application's temporary publication copy back to the
+ * application it was copied from; any other url comes back unchanged.
+ * @param resourceUrl - a source url of a publication resource
+ */
+export const stripPublishStagingSegment = (resourceUrl: string): string =>
+  resourceUrl.replace(`/${PUBLISH_STAGING_SEGMENT}/`, '/');
+
+/**
+ * The published path of one private dependency of an application:
+ * `{type}/public/{folderPath}/.{applicationResourceName}.deps/{source bucket}/{path in that bucket}`.
+ *
+ * The namespace is a sibling of the published application, never nested under
+ * its name, so a dependency that is itself an application cannot share a path
+ * with it. The source bucket is its own segment, so same-named dependencies of
+ * two authors never collide; segments, including a `__version` suffix, are
+ * carried over unchanged. The one derivation shared by every caller.
+ * @param folderPath - plain publish target folder
+ * @param applicationResourceName - last segment of the published application's `targetUrl`
+ * @param dependencyId - `{type}/{bucket}/{path}` of the dependency, encoded or plain
+ */
+export const getPublishedDependencyTargetUrl = (
+  folderPath: string,
+  applicationResourceName: string,
+  dependencyId: string,
+): string => {
+  const [typePrefix, ...rest] = encodeDialResourcePath(dependencyId).split('/');
+  return getPublishedTargetUrl(
+    typePrefix,
+    folderPath,
+    `.${applicationResourceName}.deps/${rest.join('/')}`,
+  );
+};
+
 /** The published copy's address, as derived from a publish request. */
 export interface PublishTarget {
   /** The entity's own resource url, percent-encoded per segment. */

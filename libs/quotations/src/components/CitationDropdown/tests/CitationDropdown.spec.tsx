@@ -57,6 +57,7 @@ const Wrapper = (props: {
   onOpenInBrowser: (annotation: Annotation) => void;
   isPreviewOpen?: boolean;
   previewFilesOnMarkerClick?: boolean;
+  alwaysShowCard?: boolean;
 }) => {
   const citationCard = useCitationCard();
   return (
@@ -168,6 +169,36 @@ describe('CitationDropdown', () => {
     await userEvent.click(screen.getByRole('button'));
     expect(onPreview).toHaveBeenCalledExactlyOnceWith(group.primaryAnnotation);
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  describe('with alwaysShowCard', () => {
+    it.each([
+      { isPreviewOpen: false, previewFilesOnMarkerClick: true },
+      { isPreviewOpen: true, previewFilesOnMarkerClick: false },
+    ])(
+      'opens the card for a single citation instead of previewing (%o)',
+      async (props) => {
+        const group = makeGroup();
+        const onPreview = vi.fn();
+        render(
+          <Wrapper
+            group={group}
+            onPreview={onPreview}
+            onOpenInBrowser={vi.fn()}
+            alwaysShowCard
+            {...props}
+          />,
+        );
+        await userEvent.click(screen.getByRole('button'));
+        expect(screen.getByRole('dialog')).toBeTruthy();
+        expect(onPreview).not.toHaveBeenCalled();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Preview' }));
+        expect(onPreview).toHaveBeenCalledExactlyOnceWith(
+          group.primaryAnnotation,
+        );
+      },
+    );
   });
 
   describe('with a multi-citation group while the preview panel is open', () => {

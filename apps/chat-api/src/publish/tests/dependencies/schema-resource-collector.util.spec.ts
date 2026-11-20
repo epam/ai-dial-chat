@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { collectSchemaResources } from '../../dependencies/schema-resource-collector.util';
+import {
+  collectSchemaResources,
+  replaceSchemaResources,
+} from '../../dependencies/schema-resource-collector.util';
 
 /* A trimmed copy of the quick app schema's shape: discriminated unions behind `$ref`, `dial:resource` and `dial:file` markers. */
 const SCHEMA = {
@@ -178,5 +181,161 @@ describe('collectSchemaResources', () => {
       $ref: '#/$defs/Loop',
     };
     expect(collectSchemaResources(recursive, { a: 1 })).toEqual([]);
+  });
+});
+
+describe('replaceSchemaResources', () => {
+  const SKILL_TARGET = 'skills/public/Org/.App__1.0.0.deps/b/Docs%20helper';
+  const replacements = new Map([
+    ['skills/b/Docs%20helper', SKILL_TARGET],
+    ['prompts/b/Greeting', 'prompts/public/Org/.App__1.0.0.deps/b/Greeting'],
+    [
+      'applications/b/Calc__1.0.0',
+      'applications/public/Org/.App__1.0.0.deps/b/Calc__1.0.0',
+    ],
+  ]);
+
+  it('replaces values reached through $ref, oneOf and arrays', () => {
+    const value = {
+      skills: [
+        { type: 'dial-skill', url: 'skills/b/Docs%20helper' },
+        { type: 'dial-prompt', url: 'prompts/b/Greeting' },
+      ],
+      tool_sets: [
+        { type: 'dial-app', deployment_id: 'applications/b/Calc__1.0.0' },
+      ],
+    };
+
+    expect(replaceSchemaResources(SCHEMA, value, replacements)).toEqual({
+      skills: [
+        { type: 'dial-skill', url: SKILL_TARGET },
+        {
+          type: 'dial-prompt',
+          url: 'prompts/public/Org/.App__1.0.0.deps/b/Greeting',
+        },
+      ],
+      tool_sets: [
+        {
+          type: 'dial-app',
+          deployment_id:
+            'applications/public/Org/.App__1.0.0.deps/b/Calc__1.0.0',
+        },
+      ],
+    });
+  });
+
+  it('replaces an optional marked string', () => {
+    expect(
+      replaceSchemaResources(
+        SCHEMA,
+        { system_prompt_ref: 'prompts/b/Greeting' },
+        replacements,
+      ),
+    ).toEqual({
+      system_prompt_ref: 'prompts/public/Org/.App__1.0.0.deps/b/Greeting',
+    });
+  });
+
+  it('matches a value carrying a fragment, a query or the legacy metadata prefix', () => {
+    const result = replaceSchemaResources(
+      SCHEMA,
+      {
+        skills: [
+          { type: 'dial-prompt', url: 'prompts/b/Greeting#v2' },
+          { type: 'dial-prompt', url: 'prompts/b/Greeting?x=1' },
+          { type: 'dial-skill', url: 'metadata/skills/b/Docs helper' },
+        ],
+      },
+      replacements,
+    ) as { skills: { url: string }[] };
+
+    expect(result.skills.map((skill) => skill.url)).toEqual([
+      'prompts/public/Org/.App__1.0.0.deps/b/Greeting',
+      'prompts/public/Org/.App__1.0.0.deps/b/Greeting',
+      SKILL_TARGET,
+    ]);
+  });
+
+  it('leaves unmarked values, unrelated strings and dial:file values alone', () => {
+    const value = {
+      skills: [{ type: 'dial-skill', url: 'skills/b/Other' }],
+      contexts: [{ type: 'file', url: 'files/b/prompts/b/Greeting' }],
+      tool_sets: [{ type: 'rest-api', url: 'prompts/b/Greeting' }],
+      note: 'prompts/b/Greeting',
+    };
+
+    expect(replaceSchemaResources(SCHEMA, value, replacements)).toEqual(value);
+  });
+
+  it('never mutates its input and shares untouched branches', () => {
+    const untouched = { type: 'rest-api', url: 'https://x' };
+    const value = {
+      skills: [{ type: 'dial-skill', url: 'skills/b/Docs%20helper' }],
+      tool_sets: [untouched],
+    };
+    const snapshot = structuredClone(value);
+
+    const result = replaceSchemaResources(SCHEMA, value, replacements) as {
+      tool_sets: unknown[];
+    };
+
+    expect(value).toEqual(snapshot);
+    expect(result.tool_sets[0]).toBe(untouched);
+  });
+
+  it('returns the same value when nothing matches', () => {
+    const value = { skills: [{ type: 'dial-skill', url: 'skills/b/Other' }] };
+
+    expect(replaceSchemaResources(SCHEMA, value, replacements)).toBe(value);
+  });
+
+  it('follows allOf and additionalProperties', () => {
+    const schema = {
+      allOf: [
+        {
+          properties: {
+            extra: {
+              additionalProperties: { 'dial:resource': true, type: 'string' },
+            },
+          },
+        },
+      ],
+    };
+    const value = { extra: { a: 'prompts/b/Greeting', b: 'keep' } };
+
+    expect(collectSchemaResources(schema, value)).toEqual([
+      'prompts/b/Greeting',
+      'keep',
+    ]);
+    expect(replaceSchemaResources(schema, value, replacements)).toEqual({
+      extra: {
+        a: 'prompts/public/Org/.App__1.0.0.deps/b/Greeting',
+        b: 'keep',
+      },
+    });
+  });
+
+  it('replaces exactly what collectSchemaResources collects', () => {
+    const value = {
+      orchestrator: {
+        deployment: { deployment_id: 'applications/b/Calc__1.0.0' },
+      },
+      skills: [
+        { type: 'dial-skill', url: 'skills/b/Docs%20helper' },
+        { type: 'dial-prompt', url: 'prompts/b/Greeting' },
+      ],
+      system_prompt_ref: 'prompts/b/Greeting',
+      tool_sets: [{ type: 'dial-mcp', deployment_id: 'toolsets/b/S__1' }],
+    };
+    const collected = collectSchemaResources(SCHEMA, value);
+    const all = new Map(
+      collected.map((resource) => [resource, `T/${resource}`]),
+    );
+
+    const replaced = replaceSchemaResources(SCHEMA, value, all);
+
+    expect(collectSchemaResources(SCHEMA, replaced)).toEqual(
+      collected.map((resource) => `T/${resource}`),
+    );
   });
 });

@@ -127,6 +127,11 @@ the preview panel is closed, with no card. A web-link source (`text/html` or
 the card: the card is where a link's quote and "Open in browser" live, and its
 switcher is the only way to reach a grouped marker's other citations.
 
+Pass `alwaysShowCard` (defaults to `false`) to make every marker open the card,
+including one that holds a single file citation and one clicked while the
+preview panel is open. It overrides `isPreviewOpen` and
+`previewFilesOnMarkerClick`; Preview stays one click away on the card.
+
 ```tsx
 import {
   CitationDropdown,
@@ -169,8 +174,8 @@ While `isStreaming` is `true`, `processedContent` hides only complete supported 
 The hook owns no PDF-detection, attachment-DTO, or canvas-opening logic — that belongs in the host's `onPreview` implementation.
 
 Its callbacks also accept optional `isPreviewable(annotation)`, forwarded to
-`CitationDropdown`, and optional `isPreviewOpen` and
-`previewFilesOnMarkerClick` booleans with the same meaning as the
+`CitationDropdown`, and optional `isPreviewOpen`,
+`previewFilesOnMarkerClick` and `alwaysShowCard` booleans with the same meaning as the
 `CitationDropdown` props. The host supplies its source classification policy: DIAL Chat
 keeps Preview for DIAL files and supported external file sources, and hides it
 for ordinary external web pages such as `https://data.imf.org/en/datasets/IMF.RES:WEO`.
