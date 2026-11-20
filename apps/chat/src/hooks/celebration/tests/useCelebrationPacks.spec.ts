@@ -181,7 +181,7 @@ describe('useCelebrationPacks', () => {
         ...pack,
         scenes: pack.scenes.map((scene) => ({
           ...scene,
-          requiredCapabilities: ['interaction-cat-borrow-v1'],
+          requiredCapabilities: ['interaction-penguin-grip-v1'],
         })),
       });
       const { result } = renderPacks();

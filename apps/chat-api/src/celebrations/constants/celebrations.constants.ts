@@ -34,7 +34,7 @@ export const CELEBRATION_LOTTIE_MAX_DEPTH = 64;
 /** Largest accepted asset per declared media type. */
 export const CELEBRATION_ASSET_MAX_BYTES: Record<CelebrationMediaType, number> =
   {
-    [CelebrationMediaType.Json]: 300 * KIB,
+    [CelebrationMediaType.Json]: 512 * KIB,
     [CelebrationMediaType.Svg]: 100 * KIB,
     [CelebrationMediaType.Png]: 100 * KIB,
     [CelebrationMediaType.Webp]: 100 * KIB,
@@ -73,7 +73,11 @@ export const celebrationAssetStoreKey = (assetId: string) =>
 /** Total bytes, compressed copies included, the immutable resource store may hold. */
 export const IMMUTABLE_STORE_MAX_TOTAL_BYTES = 16 * 1024 * KIB;
 /** Largest identity body the immutable resource store accepts, the largest resource cap. */
-export const IMMUTABLE_STORE_MAX_ENTRY_BYTES = 300 * KIB;
+export const IMMUTABLE_STORE_MAX_ENTRY_BYTES = Math.max(
+  CELEBRATION_INDEX_MAX_BYTES,
+  CELEBRATION_MANIFEST_MAX_BYTES,
+  ...Object.values(CELEBRATION_ASSET_MAX_BYTES),
+);
 
 export const CELEBRATION_INDEX_CACHE_CONTROL =
   'public, max-age=60, must-revalidate';

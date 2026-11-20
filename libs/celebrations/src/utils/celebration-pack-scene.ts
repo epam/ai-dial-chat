@@ -1,4 +1,5 @@
 import { SUPPORTED_CELEBRATION_CAPABILITIES } from '../constants/celebration-capabilities';
+import type { CatBorrowPreparation } from '../models/cat-borrow';
 import type {
   CelebrationComposerAnchorPlacement,
   CelebrationPlacementDescriptor,
@@ -9,6 +10,7 @@ import type {
 } from '../models/celebration-pack';
 import {
   CelebrationCapability,
+  CelebrationDirectionMode,
   CelebrationPlacementTemplate,
   CelebrationStageEdge,
 } from '../types/celebration-pack';
@@ -30,7 +32,15 @@ export interface PackScenePreparation {
   aspectRatio: number;
   /** How an anchored stage maps onto the viewport; absent for a viewport stage. */
   anchor?: ComposerAnchorMapping;
+  /** The borrowed copies of an `interaction-cat-borrow-v1` scene. */
+  borrow?: CatBorrowPreparation;
 }
+
+/** Whether the scene asks for the `interaction-cat-borrow-v1` adapter. */
+export const requiresCatBorrow = (scene: CelebrationSceneDescriptor): boolean =>
+  scene.requiredCapabilities.includes(
+    CelebrationCapability.InteractionCatBorrowV1,
+  );
 
 /** Whether this release can play the scene's renderer, capabilities and placement. */
 export const isCelebrationSceneSupported = (
@@ -38,10 +48,14 @@ export const isCelebrationSceneSupported = (
 ): boolean => {
   const { template } = scene.placement;
   const isAnchored = template === CelebrationPlacementTemplate.ComposerAnchorV1;
+  const isCatBorrow = requiresCatBorrow(scene);
   return (
     scene.renderer === CelebrationCapability.LottieLightSvgV1 &&
     (isAnchored || template === CelebrationPlacementTemplate.ViewportStageV1) &&
-    (isAnchored || !requiresComposerOutline(scene)) &&
+    (isAnchored || (!requiresComposerOutline(scene) && !isCatBorrow)) &&
+    (!isCatBorrow ||
+      (scene.direction === CelebrationDirectionMode.None &&
+        !requiresComposerOutline(scene))) &&
     scene.requiredCapabilities.every((capability) =>
       SUPPORTED_CELEBRATION_CAPABILITIES.has(capability),
     )

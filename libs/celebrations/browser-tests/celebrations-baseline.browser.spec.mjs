@@ -21,43 +21,24 @@
  * written again.
  */
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { arch, cpus, platform, release } from 'node:os';
 import { resolve } from 'node:path';
 import { test } from 'node:test';
-import express from 'express';
 import { chromium } from 'playwright';
+import {
+  captureId,
+  fingerprint,
+  heapAndDetached,
+  output,
+  percentile,
+  revision,
+  startServer,
+  storybook,
+  waitUntil,
+} from './storybook-harness.mjs';
 
-const workspace = resolve(import.meta.dirname, '../../..');
-const storybook = resolve(import.meta.dirname, '../storybook-static');
-const git = (...args) =>
-  execFileSync('git', args, { cwd: workspace, maxBuffer: 512 * 1024 * 1024 });
-const revision = git('rev-parse', '--short=9', 'HEAD').toString().trim();
-
-/* Tracked differences from HEAD plus every untracked, non-ignored file. */
-const fingerprintWorkingTree = () => {
-  const diff = git('diff', 'HEAD', '--binary');
-  const untracked = git('ls-files', '--others', '--exclude-standard', '-z')
-    .toString()
-    .split('\0')
-    .filter(Boolean)
-    .sort();
-  if (diff.length === 0 && untracked.length === 0) return null;
-  const hash = createHash('sha256').update(diff);
-  for (const path of untracked)
-    hash.update(`\0${path}\0`).update(readFileSync(resolve(workspace, path)));
-  return hash.digest('hex').slice(0, 8);
-};
-const fingerprint = fingerprintWorkingTree();
-const captureId = fingerprint ? `${revision}-wt-${fingerprint}` : revision;
-const output = resolve(workspace, 'tmp/celebrations-baseline', captureId);
-if (existsSync(resolve(output, 'artefacts.sha256')))
-  throw new Error(
-    `${output} is a finalized capture (artefacts.sha256 exists); change the working tree or commit to get a new capture identity`,
-  );
 const SEED = 9219;
 const CYCLES = 20;
 
@@ -232,12 +213,6 @@ const sample = () => {
   };
 };
 
-const percentile = (values, p) => {
-  if (values.length === 0) return null;
-  const sorted = [...values].sort((a, b) => a - b);
-  return sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))];
-};
-
 const frameStats = async (page, from, to) =>
   page.evaluate(
     ({ from, to }) => {
@@ -267,11 +242,6 @@ const summarizeFrames = ({ deltas, longTaskCount, longTaskTotalMs }) => ({
   longTaskTotalMs,
 });
 
-const waitUntil = async (page, pageTime) => {
-  const now = await page.evaluate(() => performance.now());
-  if (pageTime > now) await page.waitForTimeout(pageTime - now);
-};
-
 const waitFor = async (page, key, index, timeout) => {
   await page.waitForFunction(
     ({ key, index }) => window.__baseline[key].length > index,
@@ -290,32 +260,6 @@ const pointerDown = async (page) => {
   await page.mouse.up();
 };
 
-const heapAndDetached = async (cdp) => {
-  const result = { heapUsedBytes: null, detachedSvgNodes: null };
-  try {
-    await cdp.send('HeapProfiler.enable');
-    await cdp.send('HeapProfiler.collectGarbage');
-    result.heapUsedBytes = (await cdp.send('Runtime.getHeapUsage')).usedSize;
-  } catch (error) {
-    result.heapError = String(error.message ?? error);
-  }
-  try {
-    await cdp.send('DOM.enable');
-    const { detachedNodes } = await cdp.send('DOM.getDetachedDomNodes');
-    const count = (node) =>
-      (node.nodeName?.toLowerCase() === 'svg' ? 1 : 0) +
-      (node.children ?? []).reduce((sum, child) => sum + count(child), 0);
-    result.detachedSvgNodes = detachedNodes.reduce(
-      (sum, { treeNode }) => sum + count(treeNode),
-      0,
-    );
-    result.detachedRoots = detachedNodes.length;
-  } catch (error) {
-    result.detachedError = String(error.message ?? error);
-  }
-  return result;
-};
-
 const storyUrl = (base, scene, { layout, dir, reduced }) => {
   const args = [
     `isMobile:!${layout === 'mobile'}`,
@@ -323,19 +267,6 @@ const storyUrl = (base, scene, { layout, dir, reduced }) => {
     `isReducedMotion:!${reduced}`,
   ].join(';');
   return `${base}/iframe.html?id=${SCENES[scene].story}&viewMode=story&args=${args}`;
-};
-
-const startServer = async () => {
-  assert.ok(
-    existsSync(resolve(storybook, 'index.json')),
-    'run build-storybook first (the Nx target depends on it)',
-  );
-  const app = express();
-  app.use(express.static(storybook));
-  const server = await new Promise((resolveServer) => {
-    const instance = app.listen(0, '127.0.0.1', () => resolveServer(instance));
-  });
-  return { server, base: `http://127.0.0.1:${server.address().port}` };
 };
 
 const openContext = async (browser, viewportKey, reduced) => {
@@ -636,8 +567,9 @@ const mergeResults = async (key, value) => {
    older scene results with newer environment metadata. */
 const withBrowser = async (run) => {
   const { server, base } = await startServer();
-  const browser = await chromium.launch();
+  let browser;
   try {
+    browser = await chromium.launch();
     const environment = {
       captureId,
       revision,
@@ -656,7 +588,7 @@ const withBrowser = async (run) => {
     };
     return await run(browser, base, environment);
   } finally {
-    await browser.close();
+    await browser?.close();
     await new Promise((resolveClose) => server.close(resolveClose));
   }
 };

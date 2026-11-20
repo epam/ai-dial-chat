@@ -35,6 +35,20 @@ const config: StorybookConfig = {
           dirname(fileURLToPath(import.meta.url)),
           '../../chat-shared/src/index.ts',
         ),
+        /* Story-only: the borrowing scenes measure the real composer and
+           starters (`ConversationInputHostPage`); the library never imports them. */
+        '@epam/ai-dial-conversation-input': resolve(
+          dirname(fileURLToPath(import.meta.url)),
+          '../../conversation-input/src/index.ts',
+        ),
+        '@epam/ai-dial-attachment-input': resolve(
+          dirname(fileURLToPath(import.meta.url)),
+          '../../attachment-input/src/index.ts',
+        ),
+        '@epam/ai-dial-starter-buttons': resolve(
+          dirname(fileURLToPath(import.meta.url)),
+          '../../starter-buttons/src/index.ts',
+        ),
       },
     },
     build: { ...viteConfig.build, lib: false },

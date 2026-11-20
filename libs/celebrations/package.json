@@ -55,7 +55,24 @@
       "publishable",
       "type:ui"
     ],
+    "implicitDependencies": [
+      "!@epam/ai-dial-conversation-input",
+      "!@epam/ai-dial-starter-buttons"
+    ],
     "targets": {
+      "build-storybook": {
+        "inputs": [
+          "production",
+          "^production",
+          "{workspaceRoot}/libs/conversation-input/src/**/*",
+          "{workspaceRoot}/libs/starter-buttons/src/**/*",
+          {
+            "externalDependencies": [
+              "storybook"
+            ]
+          }
+        ]
+      },
       "publish": {
         "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
       },
@@ -68,6 +85,28 @@
         "options": {
           "cwd": "libs/celebrations",
           "command": "node --test browser-tests/celebrations-baseline.browser.spec.mjs"
+        }
+      },
+      "test-cat-borrow-browser": {
+        "executor": "nx:run-commands",
+        "dependsOn": [
+          "build-storybook"
+        ],
+        "cache": false,
+        "options": {
+          "cwd": "libs/celebrations",
+          "command": "node --test browser-tests/cat-borrow.browser.spec.mjs"
+        }
+      },
+      "test-external-gift-wrapping-browser": {
+        "executor": "nx:run-commands",
+        "dependsOn": [
+          "build-storybook"
+        ],
+        "cache": false,
+        "options": {
+          "cwd": "libs/celebrations",
+          "command": "node --test browser-tests/external-gift-wrapping.browser.spec.mjs"
         }
       }
     }

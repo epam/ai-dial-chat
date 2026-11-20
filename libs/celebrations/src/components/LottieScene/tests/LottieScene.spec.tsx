@@ -10,6 +10,7 @@ import type {
   CelebrationVariantContext,
 } from '../../../models/celebration-pack';
 import type { LottieComposition } from '../../../models/lottie-composition';
+import catSpike from '../../../stories/fixtures/cat-borrow-spike.lottie.json';
 import {
   lottieFixture,
   packSceneFixture,
@@ -20,6 +21,7 @@ import {
   CelebrationAnchorFallback,
   CelebrationCapability,
   CelebrationColorScheme,
+  CelebrationDirectionMode,
   CelebrationLayout,
   CelebrationPlacementTemplate,
   CelebrationStageAlign,
@@ -29,7 +31,11 @@ import { loadLottiePlayer } from '../../../utils/lottie-player';
 import outlineFixture from '../../../utils/tests/fixtures/composer-outline.lottie.json';
 import { LottieScene } from '../LottieScene';
 
-const state = vi.hoisted(() => ({ mobile: false, reduced: false }));
+const state = vi.hoisted(() => ({
+  mobile: false,
+  reduced: false,
+  starterList: undefined as string | undefined,
+}));
 vi.mock('../../../context/CelebrationEnvironmentContext', async () => {
   const { testAnchors, testEnvironment } =
     await import('../../../test-utils/environment');
@@ -37,7 +43,10 @@ vi.mock('../../../context/CelebrationEnvironmentContext', async () => {
     useCelebrationEnvironment: () =>
       testEnvironment({
         isMobile: state.mobile,
-        anchors: testAnchors({ composer: 'test-composer' }),
+        anchors: testAnchors({
+          composer: 'test-composer',
+          starterList: state.starterList,
+        }),
       }),
   };
 });
@@ -117,6 +126,7 @@ describe('LottieScene', () => {
     vi.clearAllMocks();
     state.mobile = false;
     state.reduced = false;
+    state.starterList = undefined;
     animations.length = 0;
     extraElements = 0;
     source = lottieFixture();
@@ -698,6 +708,195 @@ describe('LottieScene', () => {
         p: { k: [700, 700, 0] },
         s: { k: [-100, 100, 100] },
       });
+    });
+  });
+  describe('LottieScene — cat borrowing', () => {
+    const rects = new Map<Element, DOMRect>();
+    const originalTimeline = Object.getOwnPropertyDescriptor(
+      document,
+      'timeline',
+    );
+    const originalAnimate = Object.getOwnPropertyDescriptor(
+      Element.prototype,
+      'animate',
+    );
+    const started: {
+      element: Element;
+      animation: { startTime: number | null; cancel: () => void };
+    }[] = [];
+    let send: HTMLButtonElement;
+
+    const catScene = (overrides: Partial<CelebrationSceneDescriptor> = {}) =>
+      packSceneFixture({
+        id: 'cat',
+        requiredCapabilities: [
+          CelebrationCapability.LottieLightSvgV1,
+          CelebrationCapability.ComposerAnchorV1,
+          CelebrationCapability.InteractionCatBorrowV1,
+          CelebrationCapability.StaticPosterV1,
+        ],
+        placement: {
+          template: CelebrationPlacementTemplate.ComposerAnchorV1,
+          anchor: CelebrationAnchor.Composer,
+          anchorRect: { x: 600, y: 98, width: 240, height: 56 },
+          edge: CelebrationAnchorEdge.Top,
+          scale: { min: 1, max: 1 },
+          fallback: CelebrationAnchorFallback.StageAnchor,
+        },
+        direction: CelebrationDirectionMode.None,
+        timing: {
+          playbackDurationMs: 9500,
+          loadTimeoutMs: 2000,
+          readyTimeoutMs: 250,
+          maxLifetimeMs: 12250,
+        },
+        variants: [{ when: {}, animationAssetId: 'cat-spike' }],
+        ...overrides,
+      });
+
+    const startPlayback = async () => {
+      await flush();
+      animations[0].emit('DOMLoaded');
+      animations[0].emit('enterFrame');
+    };
+
+    beforeEach(() => {
+      source = JSON.parse(JSON.stringify(catSpike));
+      started.length = 0;
+      rects.clear();
+      const region = document.createElement('main');
+      region.setAttribute('role', 'region');
+      const composer = document.createElement('div');
+      composer.className = 'test-composer';
+      send = document.createElement('button');
+      send.type = 'button';
+      send.textContent = 'Send';
+      composer.append(send);
+      region.append(composer);
+      document.body.append(region);
+      rects.set(composer, new DOMRect(290, 353, 700, 114));
+      rects.set(send, new DOMRect(933, 410, 40, 40));
+      vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(
+        function (this: Element) {
+          return rects.get(this) ?? new DOMRect(0, 0, 0, 0);
+        },
+      );
+      vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(
+        1280,
+      );
+      vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(
+        800,
+      );
+      const original = window.getComputedStyle;
+      vi.spyOn(window, 'getComputedStyle').mockImplementation((element) => {
+        const style = original(element);
+        return {
+          ...style,
+          visibility: style.visibility || 'visible',
+          opacity: style.opacity || '1',
+        } as CSSStyleDeclaration;
+      });
+      vi.stubGlobal(
+        'ResizeObserver',
+        class {
+          observe = vi.fn();
+          disconnect = vi.fn();
+        },
+      );
+      Object.defineProperty(document, 'timeline', {
+        configurable: true,
+        value: { currentTime: 4200 },
+      });
+      Object.defineProperty(Element.prototype, 'animate', {
+        configurable: true,
+        value(this: Element) {
+          const animation = { startTime: null, cancel: vi.fn() };
+          started.push({ element: this, animation });
+          return animation;
+        },
+      });
+    });
+
+    afterEach(() => {
+      document.body.replaceChildren();
+      vi.unstubAllGlobals();
+      if (originalTimeline)
+        Object.defineProperty(document, 'timeline', originalTimeline);
+      else Reflect.deleteProperty(document, 'timeline');
+      if (originalAnimate)
+        Object.defineProperty(Element.prototype, 'animate', originalAnimate);
+      else Reflect.deleteProperty(Element.prototype, 'animate');
+    });
+
+    it('starts the borrowed copy and the original on the reported frame-0 time', async () => {
+      const { container } = renderScene(catScene());
+      await startPlayback();
+
+      const copy = container.querySelector('[data-cat-prize="0"]');
+      expect(copy).toBeTruthy();
+      expect(started.map(({ element }) => element)).toEqual([copy, send]);
+      started.forEach(({ animation }) =>
+        expect(animation.startTime).toBe(4200),
+      );
+    });
+
+    it('ends the scene and restores the original when the starter anchor changes', async () => {
+      state.starterList = 'starters-a';
+      const { container, rerender } = renderScene(catScene());
+      await startPlayback();
+      state.starterList = 'starters-b';
+      rerender(
+        <LottieScene scene={catScene()} loaders={loaders()} context={LTR} />,
+      );
+      await flush();
+
+      expect(container.querySelector('[data-cat-prize]')).toBeNull();
+      expect(container.querySelector('svg, img')).toBeNull();
+      started.forEach(({ animation }) =>
+        expect(animation.cancel).toHaveBeenCalledOnce(),
+      );
+    });
+
+    it('shows the poster without loading the player when Web Animations are missing', async () => {
+      Object.defineProperty(Element.prototype, 'animate', {
+        configurable: true,
+        value: undefined,
+      });
+      const { container } = renderScene(catScene());
+      await flush();
+
+      expect(poster(container)).toBeTruthy();
+      expect(loadLottiePlayer).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      [
+        'a mirrored cat-borrow scene',
+        { direction: CelebrationDirectionMode.Mirror },
+      ],
+      [
+        'a cat-borrow scene on a viewport stage',
+        { placement: packSceneFixture().placement },
+      ],
+    ])('shows the poster for %s', async (_case, overrides) => {
+      const { container } = renderScene(catScene(overrides));
+      await flush();
+
+      expect(poster(container)).toBeTruthy();
+      expect(loadLottiePlayer).not.toHaveBeenCalled();
+    });
+
+    it('renders nothing and restores the original when the player fails after the first frame', async () => {
+      const { container } = renderScene(catScene());
+      await startPlayback();
+      act(() => animations[0].emit('data_failed'));
+      await flush();
+
+      expect(poster(container)).toBeNull();
+      expect(container.querySelector('[data-cat-prize]')).toBeNull();
+      started.forEach(({ animation }) =>
+        expect(animation.cancel).toHaveBeenCalledOnce(),
+      );
     });
   });
 });

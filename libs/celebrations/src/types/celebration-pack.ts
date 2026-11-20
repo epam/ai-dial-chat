@@ -8,6 +8,8 @@ export enum CelebrationCapability {
   ComposerAnchorV1 = 'composer-anchor-v1',
   /** Fits the `composer-outline` and `composer-parcel` layers to the measured composer. */
   InteractionComposerOutlineV1 = 'interaction-composer-outline-v1',
+  /** Borrows reversible copies of host buttons and retargets the cat's stations onto them. */
+  InteractionCatBorrowV1 = 'interaction-cat-borrow-v1',
   /** Shows a static poster image instead of motion. */
   StaticPosterV1 = 'static-poster-v1',
   /** Renders a static image button as an external event's decoration. */

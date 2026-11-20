@@ -136,6 +136,27 @@ describe('scene target observation', () => {
     expect(onChange).toHaveBeenCalledOnce();
   });
 
+  it('compares a baseline target against the rectangle it was measured at', () => {
+    /* The target already sits 10 px lower than when the scene measured it. */
+    rect = new DOMRect(20, 50, 100, 60);
+    dispose = observeSceneTargets(
+      [{ element: source, rect: new DOMRect(20, 40, 100, 60) }],
+      onChange,
+    );
+    notifyResize();
+    expect(onChange).toHaveBeenCalledOnce();
+  });
+
+  it('keeps playing when a baseline target is still where it was measured', () => {
+    dispose = observeSceneTargets(
+      [{ element: source, rect: new DOMRect(20, 40, 100, 60) }, source],
+      onChange,
+    );
+    notifyResize();
+    expect(onChange).not.toHaveBeenCalled();
+    expect(observe).toHaveBeenCalledOnce();
+  });
+
   it('allocates no observers when there are no targets', () => {
     dispose = observeSceneTargets([], onChange);
     dispose();

@@ -138,14 +138,14 @@ Every upstream read for the celebrations endpoints SHALL go through one reader i
 - It requires the resolved URL to keep the origin of `THEMES_CONFIG_URL` and to stay under its `celebrations/` path. `..`, an absolute URL, a scheme or a backslash in the stored path makes the resource unavailable.
 - It never builds a URL from client input other than the validated IDs used as registry keys.
 - It never follows a redirect (`redirect: 'manual'`, so a 3xx is treated as an invalid upstream status) and uses the existing `THEMES_SERVICE_TIMEOUT_MS` through an `AbortController`.
-- It reads the body as a stream and aborts once the cap is exceeded. The caps are 64 KiB for the index, 64 KiB for a manifest, 300 KiB for Lottie JSON and 100 KiB for a poster or icon.
+- It reads the body as a stream and aborts once the cap is exceeded. The caps are 64 KiB for the index, 64 KiB for a manifest, 512 KiB for Lottie JSON (raised from 300 KiB by S4, #9223) and 100 KiB for a poster or icon.
 - It verifies the exact declared `bytes` and the lowercase SHA-256 before parsing, caching or serving, and verifies the declared media type against the allowlist `application/json`, `image/svg+xml`, `image/png`, `image/webp`.
 - It parses JSON with a depth limit: 32 for the index and manifests, 64 for Lottie.
 
 The index has no declared hash. It is bounded by its cap and validated by schema. Raw `fetch` is used because the themes host is a non-DIAL static upstream (`apps/chat-api/AGENTS.md`).
 
 #### Scenario: Oversized animation
-- **WHEN** an asset's actual bytes exceed 300 KiB, whatever its declared `bytes` says
+- **WHEN** an asset's actual bytes exceed 512 KiB, whatever its declared `bytes` says
 - **THEN** the reader stops at the cap and `GET /api/v1/celebrations/assets/{assetId}` responds `502`
 
 #### Scenario: Republished bytes under an existing version

@@ -288,6 +288,19 @@ export const giftWrappingPlacement: CelebrationComposerAnchorPlacement = {
 };
 ```
 
+#### Borrowing host buttons (`interaction-cat-borrow-v1`)
+
+A `composer-anchor-v1` scene with `direction: 'none'` may require `interaction-cat-borrow-v1`. After the player and data load, `LottieScene` does the following:
+
+- **Targets.** It measures the composer once, with up to two buttons in it or in the starter list (`anchors.composer`, `anchors.starterList`, `anchors.welcomeRegion`). A button qualifies with at most 60 descendants, 300 × 96 px and 24,000 px², and when it is not focused, editable, disabled, expanded, hidden or clipped. The composer is never copied or moved.
+- **Story.** It picks the asset's `two-prizes`, `one-prize` or `crossing` section from how many buttons the authored push reaches before the viewport edge.
+- **Stations.** It moves the keyframes of the `cat-root` null onto the measured perch, button edges and viewport edges. Each `cat:bind:<anchor>` marker range keeps its authored offset from the matching `anchor:<anchor>` null, mirrored for the measured side, and the `cat-facing` null flips with it. No keyframe is added, and no time or easing changes.
+- **Timing.** It writes a time remap on the `cat-rig` precomposition. The remap selects the section and lets the cat's reaction after a `cat:landing:<n>` marker follow the physical fall, at 0.8–1.25 × speed. A fall outside that range drops the button from the story.
+- **Floor.** It fits the `cat-floor` rectangle under copies that fall to the bottom.
+- **Copies.** It clones the buttons before readiness into an inert, aria-hidden layer beneath the renderer, and starts them on the Lottie clock. Each copy follows its `prize-<n>` track up to `cat:release:<n>`, then falls at 2,000 px/s² onto a starter button or the floor, tilts by at most 12°, rebounds when it is the last one, and fades back at `cat:restore`. Copies only translate and rotate, so copied RTL text stays readable. The original is hidden only between `cat:entry:<n>` and `cat:restore`.
+
+A browser without `Element.prototype.animate`, `ResizeObserver` or `MutationObserver` shows the poster. So does a malformed `cat:` marker or slot. Interaction, scrolling, viewport changes, a hidden tab, a moved or changed button, composer or support, or a change of any of the three anchors ends the scene, and the originals are restored. A failure after the first frame renders nothing.
+
 `StaticTriggerDecoration` is a native `<button type="button">` named by `label` (default `Play celebration` when empty), with an `aria-hidden` image from `imageUrl`. It calls `onActivate` on click, Enter and Space, draws its focus ring in `currentColor` and declares no colors of its own.
 
 ```tsx
@@ -304,7 +317,7 @@ export const Trigger = ({ onActivate }: { onActivate: () => void }) => (
 
 ## Capabilities
 
-`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `composer-anchor-v1`, `interaction-composer-outline-v1`, `static-poster-v1` and `static-trigger-v1`. Any other `interaction-*` id is unsupported. A host keeps only scenes whose `requiredCapabilities` are all in the set:
+`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `composer-anchor-v1`, `interaction-composer-outline-v1`, `interaction-cat-borrow-v1`, `static-poster-v1` and `static-trigger-v1`. Any other `interaction-*` id is unsupported. A host keeps only scenes whose `requiredCapabilities` are all in the set:
 
 ```ts
 import {
@@ -374,7 +387,7 @@ and sleigh scenes are no longer included.
 
 From the main entry:
 
-- `CelebrationCapability`: `LottieLightSvgV1`, `ViewportStageV1`, `ComposerAnchorV1`, `InteractionComposerOutlineV1`, `StaticPosterV1`, `StaticTriggerV1`.
+- `CelebrationCapability`: `LottieLightSvgV1`, `ViewportStageV1`, `ComposerAnchorV1`, `InteractionComposerOutlineV1`, `InteractionCatBorrowV1`, `StaticPosterV1`, `StaticTriggerV1`.
 - `CelebrationDirectionMode`: `None`, `Mirror`, `Variant`.
 - `CelebrationLayout`: `Mobile`, `Desktop`.
 - `CelebrationColorScheme`: `Light`, `Dark`.

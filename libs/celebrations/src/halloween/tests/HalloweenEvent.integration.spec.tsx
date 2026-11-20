@@ -13,10 +13,26 @@ import {
   CelebrationProvider,
   useCelebration,
 } from '../../context/CelebrationContext';
+import type { CelebrationSceneDescriptor } from '../../models/celebration-pack';
 import { NEW_YEAR_LABELS } from '../../new-year/constants/labels';
 import { newYearEvent } from '../../new-year/event';
+import { packSceneFixture } from '../../test-utils/pack-fixtures';
+import {
+  CelebrationAnchor,
+  CelebrationAnchorEdge,
+  CelebrationAnchorFallback,
+  CelebrationCapability,
+  CelebrationColorScheme,
+  CelebrationDirectionMode,
+  CelebrationPlacementTemplate,
+} from '../../types/celebration-pack';
+import {
+  replaceCelebrationScenes,
+  createCelebrationSceneFromDescriptor,
+} from '../../utils/celebration-descriptor-event';
 import {
   HALLOWEEN_BURST_DURATION_MS,
+  HALLOWEEN_CLICK_BURSTS,
   HALLOWEEN_SCENE_DURATIONS,
   HALLOWEEN_WEB_COUNT,
   HALLOWEEN_BAT_COUNT,
@@ -537,5 +553,115 @@ describe('Halloween event through the celebration runtime', () => {
       screen.getByRole('button', { name: 'other event phrase' }),
     );
     expect(lastConsumeResult).toBe(false);
+  });
+});
+
+describe('Halloween with an external cat-borrow Cat', () => {
+  const CAT_DESCRIPTOR: CelebrationSceneDescriptor = packSceneFixture({
+    id: HalloweenScene.Cat,
+    labelId: 'packCatLabel',
+    requiredCapabilities: [
+      CelebrationCapability.LottieLightSvgV1,
+      CelebrationCapability.ComposerAnchorV1,
+      CelebrationCapability.InteractionCatBorrowV1,
+      CelebrationCapability.StaticPosterV1,
+    ],
+    placement: {
+      template: CelebrationPlacementTemplate.ComposerAnchorV1,
+      anchor: CelebrationAnchor.Composer,
+      anchorRect: { x: 600, y: 98, width: 240, height: 56 },
+      edge: CelebrationAnchorEdge.Top,
+      scale: { min: 1, max: 1 },
+      fallback: CelebrationAnchorFallback.StageAnchor,
+    },
+    direction: CelebrationDirectionMode.None,
+    timing: {
+      playbackDurationMs: 25000,
+      loadTimeoutMs: 2000,
+      readyTimeoutMs: 250,
+      maxLifetimeMs: 27750,
+    },
+    posterAssetId: 'cat-poster',
+    variants: [{ when: {}, animationAssetId: 'cat-animation' }],
+  });
+  const loadAnimationData = vi.fn(() =>
+    Promise.reject(new Error('Pack asset unavailable')),
+  );
+  const externalHalloween = replaceCelebrationScenes(halloweenEvent, [
+    createCelebrationSceneFromDescriptor(
+      CAT_DESCRIPTOR,
+      {
+        loadAnimationData,
+        resolveImageUrl: (id) => `/assets/${id}`,
+      },
+      { direction: 'ltr', colorScheme: CelebrationColorScheme.Light },
+    ),
+  ]);
+
+  /* The poster and the bundled Cat are decorative, aria-hidden markup. */
+  const queryScene = (selector: string) =>
+    // eslint-disable-next-line testing-library/no-node-access
+    document.body.querySelector(selector);
+
+  const CatTrigger: FC = () => {
+    const { isEnabled, celebrate } = useCelebration();
+    return (
+      <button
+        type="button"
+        disabled={!isEnabled}
+        onClick={() => celebrate(HalloweenScene.Cat)}
+      >
+        external cat
+      </button>
+    );
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('keeps the eleven click scenes, the secret pool and the bundled label', () => {
+    expect(externalHalloween.clickSceneIds).toEqual(HALLOWEEN_CLICK_BURSTS);
+    expect(externalHalloween.clickSceneIds).toHaveLength(11);
+    expect(externalHalloween.secretTrigger).toBe(halloweenEvent.secretTrigger);
+    const cat = externalHalloween.scenes.find(
+      ({ id }) => id === HalloweenScene.Cat,
+    );
+    expect(cat?.labelId).toBe('catToastMessage');
+    expect(cat?.durationMs).toBe(27750);
+  });
+
+  it('notifies with the cat message, shows the poster after a failed load and never starts the bundled Cat', async () => {
+    render(
+      <CelebrationProvider
+        events={{ halloween: async () => externalHalloween }}
+        activeEventId="halloween"
+        onNotify={showSuccessNotification}
+      >
+        <CatTrigger />
+      </CelebrationProvider>,
+    );
+    const trigger = await screen.findByRole('button', { name: 'external cat' });
+    await waitFor(() => expect(trigger).toHaveProperty('disabled', false));
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    fireEvent.click(trigger);
+
+    expect(showSuccessNotification).toHaveBeenCalledOnce();
+    expect(showSuccessNotification).toHaveBeenLastCalledWith({
+      title: TITLE,
+      message: message('catToastMessage'),
+    });
+    await waitFor(() =>
+      expect(queryScene('img[src="/assets/cat-poster"]')).toBeTruthy(),
+    );
+
+    expect(queryScene('[data-halloween-scene="cat"]')).toBeNull();
+    act(() => vi.advanceTimersByTime(27750));
+
+    expect(queryScene('img[src="/assets/cat-poster"]')).toBeNull();
+    expect(showSuccessNotification).toHaveBeenCalledOnce();
   });
 });

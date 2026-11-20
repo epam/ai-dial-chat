@@ -32,9 +32,7 @@ import {
 import {
   isCelebrationSceneSupported,
   isPackRendererWithinBudget,
-  prepareAnchoredSceneData,
   preparePackSceneData,
-  requiresComposerOutline,
   resolveVariantPlacement,
   resolvePosterObjectPosition,
   type PackScenePreparation,
@@ -43,7 +41,7 @@ import {
   resolveStageAlignment,
   selectCelebrationVariant,
 } from '../../utils/celebration-variant';
-import { watchComposer } from '../../utils/composer-watch';
+import { resolvePackSceneAdapter } from '../../utils/pack-scene-adapter';
 import styles from './LottieScene.module.scss';
 
 /** Props of `LottieScene`. */
@@ -78,22 +76,22 @@ export const LottieScene: FC<LottieSceneProps> = ({
   const isReducedMotion = useReducedMotion();
   const isAnchored =
     scene.placement.template === CelebrationPlacementTemplate.ComposerAnchorV1;
+  /* The anchored adapter (outline or cat-borrow); none for a viewport stage. */
+  const [adapter] = useState(() => resolvePackSceneAdapter(scene));
   /* Layout, anchors and motion preference are fixed at activation; a change ends the scene. */
   const [initial] = useState(() => ({ anchors, isMobile, isReducedMotion }));
   const isChanged =
     initial.isMobile !== isMobile ||
     initial.isReducedMotion !== isReducedMotion ||
-    (isAnchored && initial.anchors.composer !== anchors.composer);
-  /* Anchored scenes watch the composer, so they need both observers. */
-  const [hasObservers] = useState(
-    () =>
-      typeof ResizeObserver === 'function' &&
-      typeof MutationObserver === 'function',
-  );
+    (adapter?.watchedAnchors.some(
+      (name) => initial.anchors[name] !== anchors[name],
+    ) ??
+      false);
+  const [isAdapterAvailable] = useState(() => adapter?.isAvailable() ?? true);
   /* The variant and its placement are chosen together; a variant that changes
      the template makes the scene unsupported. */
   const [selected] = useState(() => {
-    if (!isCelebrationSceneSupported(scene) || (isAnchored && !hasObservers))
+    if (!isCelebrationSceneSupported(scene) || !isAdapterAvailable)
       return undefined;
     const match = selectCelebrationVariant(scene.variants, {
       ...context,
@@ -127,18 +125,13 @@ export const LottieScene: FC<LottieSceneProps> = ({
         : LottieDataOwnership.Shared,
       getAnimationData: ({ data }) => data,
       isRendererAccepted: isPackRendererWithinBudget,
-      onAnimationCreated: isAnchored
-        ? ({ preparation, host, addDisposer, cancel }) =>
-            watchComposer({
-              source: preparation.anchor?.source ?? null,
-              host,
-              addDisposer,
-              cancel,
-            })
-        : undefined,
-      onPlaybackStarted: () => setHasPlaybackStarted(true),
+      onAnimationCreated: adapter?.onAnimationCreated,
+      onPlaybackStarted: (started) => {
+        setHasPlaybackStarted(true);
+        adapter?.onPlaybackStarted?.(started);
+      },
     }),
-    [scene.timing, isAnchored],
+    [scene.timing, isAnchored, adapter],
   );
   const animationAssetId = variant?.animationAssetId;
   const loadData = useCallback(
@@ -152,16 +145,17 @@ export const LottieScene: FC<LottieSceneProps> = ({
     enabled: !initial.isReducedMotion && variant !== undefined && !isChanged,
     playback,
     /* Runs after the player and data load, so the composer is measured as it is then. */
-    prepare: (_player, data) =>
-      placement.template === CelebrationPlacementTemplate.ComposerAnchorV1
-        ? prepareAnchoredSceneData(
-            data,
-            placement,
-            initial.anchors.composer,
-            isMirrored,
-            requiresComposerOutline(scene),
-          )
-        : preparePackSceneData(data),
+    prepare: (_player, data) => {
+      if (
+        !adapter ||
+        placement.template !== CelebrationPlacementTemplate.ComposerAnchorV1
+      )
+        return preparePackSceneData(data);
+      return adapter.prepare(data, placement, {
+        anchors: initial.anchors,
+        isMirrored,
+      });
+    },
     loadData,
   });
 
