@@ -117,6 +117,23 @@ describe('useScrollVirtualizer', () => {
     expect(screen.getByLabelText('Rows').textContent).toBe('7:16');
   });
 
+  it('keeps a row that is only partly scrolled into view in the window', () => {
+    render(<Probe />);
+    const scroller = screen.getByRole('region', { name: 'Results' });
+    /* 250 px into row 0 with a 600 px viewport shows rows 0–3. */
+    scrollOffset = 250;
+    fireEvent.scroll(scroller);
+    expect(screen.getByLabelText('Rows').textContent).toBe('0:7');
+  });
+
+  it('sizes the first render from the window height', () => {
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(768);
+    width = 0;
+    render(<Probe />);
+    /* ceil(768 / 268) = 3 visible rows + 3 overscan, not a fixed 12. */
+    expect(screen.getByLabelText('Rows').textContent).toBe('0:6');
+  });
+
   it('recalculates columns when revealed at a different width', () => {
     render(<Probe />);
     const grid = screen.getByRole('grid', { name: 'Cards' });
@@ -133,10 +150,10 @@ describe('useScrollVirtualizer', () => {
 
   it('updates the visible window when only the scroll viewport height changes', () => {
     render(<Probe />);
-    expect(screen.getByLabelText('Rows').textContent).toBe('0:9');
+    expect(screen.getByLabelText('Rows').textContent).toBe('0:6');
     viewportHeight = 1200;
     resize(screen.getByRole('region', { name: 'Results' }));
-    expect(screen.getByLabelText('Rows').textContent).toBe('0:11');
+    expect(screen.getByLabelText('Rows').textContent).toBe('0:8');
   });
 
   it('keeps the initial estimate when mounted hidden until real dimensions exist', () => {
@@ -151,6 +168,6 @@ describe('useScrollVirtualizer', () => {
     width = 1100;
     resize(screen.getByRole('grid', { name: 'Cards' }));
     expect(screen.getByLabelText('Columns').textContent).toBe('3');
-    expect(screen.getByLabelText('Rows').textContent).toBe('0:9');
+    expect(screen.getByLabelText('Rows').textContent).toBe('0:6');
   });
 });

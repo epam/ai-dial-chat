@@ -72,6 +72,12 @@ export interface ToolbarProps {
   viewMode: CatalogViewMode;
   /** Called when the display mode changes. */
   onViewModeChange: (mode: CatalogViewMode) => void;
+  /**
+   * Called when the user is likely about to change the display mode: the
+   * pointer enters or focus reaches the view toggle, or the phone browse
+   * settings sheet opens. `Catalog` uses it to prepare the hidden list view.
+   */
+  onViewModeIntent?: () => void;
   /** Current search query. */
   query: string;
   /** Called when the query changes. */

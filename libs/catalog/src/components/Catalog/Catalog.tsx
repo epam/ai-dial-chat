@@ -526,37 +526,24 @@ export const Catalog: FC<CatalogProps> = ({
     [myAppsFiltered, activeTab],
   );
 
-  useEffect(() => {
-    if (
-      listMountState !== ListMountState.Unmounted ||
-      isLoading ||
-      tabFiltered.length === 0
-    ) {
-      return;
-    }
+  const canPrepareList = !isLoading && tabFiltered.length > 0;
 
-    /*
-     * Initialize the hidden grid after cards have rendered, so the first
-     * list-view click can reveal an existing instance. The transition lets
-     * user input take priority over this optional preparation.
-     */
-    const prepareList = () => {
-      startTransition(() => {
-        setListMountState((state) =>
-          state === ListMountState.Unmounted ? ListMountState.Prepared : state,
-        );
-      });
-    };
-
-    if (typeof window.requestIdleCallback === 'function') {
-      const id = window.requestIdleCallback(prepareList);
-      return () => window.cancelIdleCallback(id);
-    }
-
-    // Give the initial view time to paint in browsers without idle callbacks.
-    const id = window.setTimeout(prepareList, 200);
-    return () => window.clearTimeout(id);
-  }, [listMountState, isLoading, tabFiltered.length]);
+  /*
+   * Mount the hidden list table when the user reaches for the view toggle,
+   * so the first list-view click can reveal an existing instance. Preparing
+   * it during idle time right after load mounted AG Grid inside the page-load
+   * window: on /catalog that was a ~1 s long task and most of the page's
+   * Total Blocking Time, paid by every visitor whether or not they ever
+   * opened the list. The transition lets the click itself take priority.
+   */
+  const handleViewModeIntent = useCallback(() => {
+    if (!canPrepareList) return;
+    startTransition(() => {
+      setListMountState((state) =>
+        state === ListMountState.Unmounted ? ListMountState.Prepared : state,
+      );
+    });
+  }, [canPrepareList]);
 
   const isSelectedItemStarred =
     selectedItem != null && favorites.some((f) => f.id === selectedItem.id);
@@ -808,6 +795,7 @@ export const Catalog: FC<CatalogProps> = ({
             totalCount={myAppsFiltered.length}
             viewMode={viewMode}
             onViewModeChange={handleViewModeChange}
+            onViewModeIntent={handleViewModeIntent}
             sortKey={sortKey}
             query={query}
             onQueryChange={setQuery}

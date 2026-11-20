@@ -6,6 +6,10 @@
     <base href="/" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Mirrors the Referrer-Policy header chat-api sets via Helmet
+         (apps/chat-api/src/config/csp.ts), so the policy also holds when the
+         static build is served without that header. -->
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta
       name="description"
       content="AI DIAL Chat: talk to AI models, applications and agents in one workspace."

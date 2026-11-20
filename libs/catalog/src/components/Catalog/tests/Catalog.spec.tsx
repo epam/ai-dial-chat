@@ -130,6 +130,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     isMyAppsActive,
     onMyAppsChange,
     onViewModeChange,
+    onViewModeIntent,
     sortKey,
     sortOptions = [],
     onSortChange,
@@ -145,6 +146,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     isMyAppsActive?: boolean;
     onMyAppsChange?: (isActive: boolean) => void;
     onViewModeChange?: (mode: CatalogViewMode) => void;
+    onViewModeIntent?: () => void;
     sortKey?: string;
     sortOptions?: { value: string; label: string }[];
     onSortChange?: (sortKey: string) => void;
@@ -175,12 +177,20 @@ vi.mock('../../Toolbar/Toolbar', () => ({
         </button>
       ))}
       <button onClick={() => onMyAppsChange?.(!isMyAppsActive)}>My Apps</button>
-      <button onClick={() => onViewModeChange?.(CatalogViewMode.Cards)}>
-        List view
-      </button>
-      <button onClick={() => onViewModeChange?.(CatalogViewMode.Grid)}>
-        Grid view
-      </button>
+      {/* Mirrors TitleRow: the toggle's wrapper reports view-mode intent. */}
+      <div
+        className="contents"
+        role="presentation"
+        onPointerEnter={onViewModeIntent}
+        onFocus={onViewModeIntent}
+      >
+        <button onClick={() => onViewModeChange?.(CatalogViewMode.Cards)}>
+          List view
+        </button>
+        <button onClick={() => onViewModeChange?.(CatalogViewMode.Grid)}>
+          Grid view
+        </button>
+      </div>
       {sortOptions.map((option) => (
         <button key={option.value} onClick={() => onSortChange?.(option.value)}>
           Sort {option.label}
@@ -429,14 +439,17 @@ describe('Catalog', () => {
     expect(screen.queryByLabelText('catalog list')).toBeNull();
   });
 
-  it('prepares the hidden table during idle time and reuses it on the first list click', async () => {
+  it('does not mount the hidden table during page load', () => {
+    render(<Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />);
+    expect(screen.queryByLabelText('catalog list')).toBeNull();
+    expect(window.requestIdleCallback).not.toHaveBeenCalled();
+  });
+
+  it('prepares the hidden table on view-toggle hover and reuses it on the first list click', async () => {
     render(<Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />);
     expect(screen.queryByLabelText('catalog list')).toBeNull();
 
-    const prepareList = vi.mocked(window.requestIdleCallback).mock.calls[0][0];
-    act(() => {
-      prepareList({ didTimeout: false, timeRemaining: () => 50 });
-    });
+    await userEvent.hover(screen.getByRole('button', { name: 'List view' }));
     const list = screen.getByLabelText('catalog list');
     /* The mock grid has no view wrapper of its own; assert that preparation
        cannot expose its controls before the user selects the list. */
@@ -456,89 +469,34 @@ describe('Catalog', () => {
     expect(list.closest('[inert]')?.className).toContain('hidden');
   });
 
-  it('opens the table without waiting when the first click precedes idle preparation', async () => {
+  it('prepares the hidden table when focus reaches the view toggle', () => {
     render(<Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />);
-    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
-    expect(screen.getByLabelText('catalog list')).toBeTruthy();
-    expect(window.cancelIdleCallback).toHaveBeenCalledWith(1);
-    expect(window.requestIdleCallback).toHaveBeenCalledTimes(1);
+    act(() => {
+      screen.getByRole('button', { name: 'List view' }).focus();
+    });
+    // eslint-disable-next-line testing-library/no-node-access
+    const wrapper = screen.getByLabelText('catalog list').closest('[inert]');
+    expect(wrapper?.className).toContain('invisible');
   });
 
-  it('does not prepare an empty, loading, or already visible table', () => {
+  it('does not prepare an empty or loading table on intent', async () => {
     const { rerender } = render(<Catalog items={[]} favorites={[]} />);
-    expect(window.requestIdleCallback).not.toHaveBeenCalled();
+    await userEvent.hover(screen.getByRole('button', { name: 'List view' }));
+    expect(screen.queryByLabelText('catalog list')).toBeNull();
 
     rerender(
       <Catalog items={[makeItem('1', 'Claude')]} favorites={[]} isLoading />,
     );
-    expect(window.requestIdleCallback).not.toHaveBeenCalled();
-
-    rerender(
-      <Catalog
-        key="list"
-        items={[makeItem('1', 'Claude')]}
-        favorites={[]}
-        initialViewMode={CatalogViewMode.Cards}
-      />,
-    );
-    expect(screen.getByLabelText('catalog list')).toBeTruthy();
-    expect(window.requestIdleCallback).not.toHaveBeenCalled();
-  });
-
-  it('cancels pending preparation on unmount', () => {
-    const { unmount } = render(
-      <Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />,
-    );
-    unmount();
-    expect(window.cancelIdleCallback).toHaveBeenCalledWith(1);
-  });
-
-  it('cancels and reschedules preparation as data becomes unavailable and returns', () => {
-    const items = [makeItem('1', 'Claude')];
-    const { rerender } = render(<Catalog items={items} favorites={[]} />);
-    rerender(<Catalog items={items} favorites={[]} isLoading />);
-    expect(window.cancelIdleCallback).toHaveBeenCalledTimes(1);
-
-    rerender(<Catalog items={items} favorites={[]} />);
-    expect(window.requestIdleCallback).toHaveBeenCalledTimes(2);
-
-    rerender(<Catalog items={[]} favorites={[]} />);
-    expect(window.cancelIdleCallback).toHaveBeenCalledTimes(2);
+    /* Loading replaces the toolbar's content area; the toggle may or may not
+       be present, so only assert that nothing was prepared. */
     expect(screen.queryByLabelText('catalog list')).toBeNull();
   });
 
-  it('prepares the table after a delay when idle callbacks are unavailable', () => {
-    vi.useFakeTimers();
-    vi.stubGlobal('requestIdleCallback', undefined);
-    render(<Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />);
-    expect(screen.queryByLabelText('catalog list')).toBeNull();
-
-    act(() => {
-      vi.advanceTimersByTime(200);
-    });
-    expect(screen.getByLabelText('catalog list')).toBeTruthy();
-  });
-
-  it('cancels the fallback timer when the catalog unmounts', () => {
-    vi.useFakeTimers();
-    vi.stubGlobal('requestIdleCallback', undefined);
-    const clearTimeout = vi.spyOn(window, 'clearTimeout');
-    const { unmount } = render(
-      <Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />,
-    );
-    unmount();
-    expect(clearTimeout).toHaveBeenCalledTimes(1);
-    clearTimeout.mockRestore();
-  });
-
-  it('keeps the prepared table collapsed if the results become empty', () => {
+  it('keeps the prepared table collapsed if the results become empty', async () => {
     const { rerender } = render(
       <Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />,
     );
-    const prepareList = vi.mocked(window.requestIdleCallback).mock.calls[0][0];
-    act(() => {
-      prepareList({ didTimeout: false, timeRemaining: () => 50 });
-    });
+    await userEvent.hover(screen.getByRole('button', { name: 'List view' }));
     rerender(<Catalog items={[]} favorites={[]} />);
     // eslint-disable-next-line testing-library/no-node-access
     const wrapper = screen.getByLabelText('catalog list').closest('[inert]');
