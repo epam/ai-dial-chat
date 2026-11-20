@@ -60,9 +60,7 @@ export class CsrfGuard implements CanActivate {
   }
 
   private validateOrigin(req: Request): void {
-    const corsOrigin = this.config.get('CORS_ORIGIN', {
-      infer: true,
-    }) as string;
+    const corsOrigin = this.config.get('CORS_ORIGIN', { infer: true });
     const appOrigin = new URL(corsOrigin).origin;
 
     const originHeader = req.headers['origin'];

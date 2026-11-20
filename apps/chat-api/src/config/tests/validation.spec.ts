@@ -296,6 +296,50 @@ describe('validate', () => {
     expect(config.CORS_ORIGIN).toBe('https://chat.example.com');
   });
 
+  it('falls back an empty CORS_ORIGIN to AUTH_CALLBACK_BASE_URL', () => {
+    const config = validate({ ...baseConfig, CORS_ORIGIN: '' });
+    expect(config.CORS_ORIGIN).toBe(baseConfig['AUTH_CALLBACK_BASE_URL']);
+  });
+
+  describe('PORT', () => {
+    it('defaults PORT to 5000 when unset', () => {
+      expect(validate({ ...baseConfig }).PORT).toBe(5000);
+    });
+
+    it.each(['', 'abc', '-1', '65536'])(
+      'rejects PORT=%j at startup',
+      (port) => {
+        expect(() => validate({ ...baseConfig, PORT: port })).toThrow(
+          'Environment validation failed',
+        );
+      },
+    );
+  });
+
+  describe('API_PREFIX', () => {
+    it('defaults API_PREFIX to api when unset', () => {
+      expect(validate({ ...baseConfig }).API_PREFIX).toBe('api');
+    });
+
+    it.each(['api', 'chat/api', 'v-1.api_x~y'])(
+      'accepts API_PREFIX=%j',
+      (prefix) => {
+        expect(validate({ ...baseConfig, API_PREFIX: prefix }).API_PREFIX).toBe(
+          prefix,
+        );
+      },
+    );
+
+    it.each(['', '/api', 'api/', 'a//b', '..', 'api/../x', 'api?x=1', 'a b'])(
+      'rejects API_PREFIX=%j at startup',
+      (prefix) => {
+        expect(() => validate({ ...baseConfig, API_PREFIX: prefix })).toThrow(
+          'API_PREFIX must be one or more URL-safe path segments',
+        );
+      },
+    );
+  });
+
   it('parses AUTH_COOKIE_SECURE=false as false', () => {
     const config = validate({
       ...baseConfig,
