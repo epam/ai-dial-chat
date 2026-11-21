@@ -129,6 +129,7 @@ conflicting utility replaces the default instead of landing beside it.
 | `selectedItemText`       | The selected row's label                                         | `itemText`                                                     |
 | `checkIcon`              | The selected row's check mark                                    | The row's text colour on desktop, `--text-accent` in the sheet |
 | `overlayBackground`      | The desktop panel when `modelPickerOverlay` supplies the content | `--bg-layer-raised`                                            |
+| `skeletonColor`          | Loading skeleton bars in the desktop panel                       | `--bg-control-disable-primary`                                 |
 
 A row colour that is not set leaves that part of the row exactly as the kit
 draws it. The desktop panel renders in a portal outside the composer, so these
@@ -433,6 +434,20 @@ import { BottomSheetShell } from '@epam/ai-dial-conversation-input';
 >
   {sheetContent}
 </BottomSheetShell>;
+```
+
+### ModelSelectorPanelSkeleton
+
+Placeholder for the whole model picker panel (search row, selected row, favourites, footer) at the design's 368px width. `ModelSelectorControl` shows it by itself while `modelSelectorLabels.loading` is set; a host that lazy-loads its `modelPickerOverlay` passes it as the `Suspense` fallback so the popup is never empty while the picker's chunk downloads. `loadingLabel` is announced through a visually hidden live region, and `skeletonColor` overrides the bar colour (default `--bg-control-disable-primary`).
+
+```tsx
+import { ModelSelectorPanelSkeleton } from '@epam/ai-dial-conversation-input';
+
+<Suspense
+  fallback={<ModelSelectorPanelSkeleton loadingLabel="Loading models…" />}
+>
+  <LazyModelPicker />
+</Suspense>;
 ```
 
 ## Hooks

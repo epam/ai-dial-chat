@@ -1,5 +1,6 @@
 import { findDeploymentByIdOrReference } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import { ModelSelectorPanelSkeleton } from '@epam/ai-dial-conversation-input';
 import {
   lazy,
   Suspense,
@@ -9,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { DeploymentSelectorI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
@@ -120,7 +122,13 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
 
   const renderOverlay = useCallback(
     (onClose: () => void): ReactNode => (
-      <Suspense fallback={null}>
+      <Suspense
+        fallback={
+          <ModelSelectorPanelSkeleton
+            loadingLabel={t(DeploymentSelectorI18nKeys.Loading)}
+          />
+        }
+      >
         <DeploymentSelectorOverlay
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}
@@ -143,6 +151,7 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
       selectedCatalogItem,
       setSelectedItemId,
       toggleFavorite,
+      t,
     ],
   );
 

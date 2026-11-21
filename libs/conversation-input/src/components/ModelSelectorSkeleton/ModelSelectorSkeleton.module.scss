@@ -1,0 +1,7 @@
+/* Read from TSX as `styles.skeletonColor` — Skeleton takes a color value, not a class. */
+:export {
+  skeletonColor: var(
+    --ci-skeleton-color,
+    var(--bg-control-disable-primary, #dce0e8)
+  );
+}
