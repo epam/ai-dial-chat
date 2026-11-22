@@ -18,7 +18,10 @@ import {
 } from 'node:fs';
 import { join, relative } from 'node:path';
 
-const SCENES = ['sleigh', 'gift-wrapping', 'cat'];
+/* The harness matrix in capture order. PenguinStar took the first slot when
+   Sleigh was removed (#9631); the S0 capture at 1cfb11468 keeps Sleigh. */
+const CURRENT_SCENES = ['penguin-star', 'gift-wrapping', 'cat'];
+const LEGACY_SCENES = ['sleigh', 'gift-wrapping', 'cat'];
 const captureId = process.argv[2];
 if (!captureId) {
   console.error('Usage: summarize-baseline.mjs <captureId>');
@@ -26,6 +29,16 @@ if (!captureId) {
 }
 const root = join('tmp/celebrations-baseline', captureId);
 const results = JSON.parse(readFileSync(join(root, 'results.json'), 'utf8'));
+
+const recorded = Object.keys(results).filter((key) => key !== 'environment');
+const SCENES = recorded.includes('sleigh') ? LEGACY_SCENES : CURRENT_SCENES;
+const unknown = recorded.filter((scene) => !SCENES.includes(scene));
+if (unknown.length) {
+  console.error(
+    `Scenes outside the ${SCENES.join(', ')} matrix in ${root}: ${unknown.join(', ')}`,
+  );
+  process.exit(1);
+}
 
 /* Captures from S1 on carry provenance per scene; the 1cfb11468 layout has
    one top-level record. */
