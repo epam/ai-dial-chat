@@ -58,8 +58,14 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   labels,
   selectedAttachmentId,
 }) => {
-  const { colors, typography, className, bubbleClassName, timestampClassName } =
-    bubbleStyles ?? {};
+  const {
+    colors,
+    typography,
+    className,
+    bubbleClassName,
+    timestampClassName,
+    attachmentGroupStyles,
+  } = bubbleStyles ?? {};
   const timestampNode =
     timestamp != null ? (
       <MessageTimestamp
@@ -261,6 +267,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
               retryLabel: attachmentRetryLabel,
               openInNewTabLabel: attachmentOpenInNewTabLabel,
             }}
+            styles={attachmentGroupStyles}
             selectedAttachmentId={selectedAttachmentId}
           />
           {afterContent}

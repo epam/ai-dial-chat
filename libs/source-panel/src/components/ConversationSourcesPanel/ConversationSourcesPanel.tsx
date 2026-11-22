@@ -133,6 +133,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
               searchQuery={searchQuery}
               titleClassName={styles?.typography?.sectionTitleClassName}
               className={styles?.sectionClassName}
+              listClassName={styles?.filesListClassName}
               onAttachmentClick={onAttachmentClick}
               attachmentClickLabel={labels.attachmentClickLabel}
             />
@@ -142,6 +143,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
               searchQuery={searchQuery}
               titleClassName={styles?.typography?.sectionTitleClassName}
               className={styles?.sectionClassName}
+              listClassName={styles?.filesListClassName}
               onAttachmentClick={onAttachmentClick}
               attachmentClickLabel={labels.attachmentClickLabel}
             />

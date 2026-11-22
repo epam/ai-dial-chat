@@ -1,3 +1,4 @@
+import type { AttachmentGroupStyles } from '@epam/ai-dial-attachment-input';
 import type {
   CodeBlockTheme,
   DisplayAttachment,
@@ -44,6 +45,8 @@ export interface MessageBubbleStyles {
   className?: string;
   /** Extra class(es) on the bubble element. */
   bubbleClassName?: string;
+  /** Style overrides forwarded to the message's `AttachmentGroup`. */
+  attachmentGroupStyles?: AttachmentGroupStyles;
   /** Typography class on the send time shown when `timestamp` is set. Defaults to `'dial-small-text'`. */
   timestampClassName?: string;
 }

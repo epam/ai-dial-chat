@@ -690,4 +690,33 @@ describe('ProjectView', () => {
       screen.queryByRole('region', { name: 'Project content' }),
     ).toBeNull();
   });
+
+  describe('context list layout', () => {
+    const getContextList = (): HTMLElement => {
+      const list = screen.getAllByRole('list').find((candidate) =>
+        within(candidate).queryByRole('button', {
+          name: 'Preview tickets.csv',
+        }),
+      );
+      if (!list) throw new Error('Context list not found');
+      return list;
+    };
+
+    it('keeps the default wrapping flex layout without a host class', () => {
+      renderView();
+
+      const classes = getContextList().className.split(' ');
+      expect(classes).toContain('flex');
+      expect(classes).toContain('flex-wrap');
+    });
+
+    it('merges styles.contextListClassName over the default layout', () => {
+      renderView({ styles: { contextListClassName: 'grid grid-cols-2' } });
+
+      const classes = getContextList().className.split(' ');
+      expect(classes).toContain('grid');
+      expect(classes).toContain('grid-cols-2');
+      expect(classes).not.toContain('flex');
+    });
+  });
 });

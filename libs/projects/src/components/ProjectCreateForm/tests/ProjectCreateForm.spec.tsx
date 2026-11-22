@@ -842,4 +842,36 @@ describe('@epam/ai-dial-projects — library isolation', () => {
 
     expect(offenders).toEqual([]);
   });
+
+  describe('context list layout', () => {
+    const getContextList = (): HTMLElement => {
+      const list = screen.getAllByRole('list').find((candidate) =>
+        within(candidate).queryByRole('button', {
+          name: 'Remove tickets.csv',
+        }),
+      );
+      if (!list) throw new Error('Context list not found');
+      return list;
+    };
+
+    it('keeps the default wrapping flex layout without a host class', () => {
+      renderForm({ contextFiles: stageFiles([makeFile('tickets.csv', 10)]) });
+
+      const classes = getContextList().className.split(' ');
+      expect(classes).toContain('flex');
+      expect(classes).toContain('flex-wrap');
+    });
+
+    it('merges styles.contextListClassName over the default layout', () => {
+      renderForm({
+        contextFiles: stageFiles([makeFile('tickets.csv', 10)]),
+        styles: { contextListClassName: 'grid grid-cols-4' },
+      });
+
+      const classes = getContextList().className.split(' ');
+      expect(classes).toContain('grid');
+      expect(classes).toContain('grid-cols-4');
+      expect(classes).not.toContain('flex');
+    });
+  });
 });

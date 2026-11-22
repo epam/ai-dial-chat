@@ -82,4 +82,12 @@ describe('FilesSection', () => {
     fireEvent.click(screen.getByRole('button'));
     expect(onAttachmentClick).toHaveBeenCalledWith(att);
   });
+
+  it('merges listClassName over the default grid of the list', () => {
+    renderSection([makeAttachment('a.pdf')], { listClassName: 'grid-cols-2' });
+
+    const list = screen.getByRole('list');
+    expect(list.className).toContain('grid-cols-2');
+    expect(list.className).not.toContain('minmax(100px,1fr)');
+  });
 });

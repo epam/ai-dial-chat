@@ -212,4 +212,58 @@ describe('AttachmentGroup', () => {
       expect(onAttachmentClick).toHaveBeenCalledWith('a');
     });
   });
+
+  describe('styles.listClassName', () => {
+    it('leaves the default layout untouched when it is not given', () => {
+      const { unmount } = render(
+        <AttachmentGroup attachments={[makeFile('a'), makeFile('b')]} />,
+      );
+      const flexClasses = screen.getByRole('list').className.split(' ');
+      expect(flexClasses).toContain('flex');
+      expect(flexClasses).toContain('flex-wrap');
+      expect(flexClasses).not.toContain('grid');
+      unmount();
+
+      const files = Array.from(
+        { length: ATTACHMENT_COLLAPSE_THRESHOLD },
+        (_, i) => makeFile(`f${i}`),
+      );
+      render(<AttachmentGroup attachments={files} />);
+      const gridClasses = screen.getByRole('list').className.split(' ');
+      expect(gridClasses).toContain('grid');
+      expect(gridClasses).toContain('grid-cols-[repeat(5,100px)]');
+    });
+
+    it('is merged over the default layout classes of the list', () => {
+      render(
+        <AttachmentGroup
+          attachments={[makeFile('a'), makeFile('b')]}
+          styles={{ listClassName: 'grid grid-cols-3' }}
+        />,
+      );
+
+      const list = screen.getByRole('list');
+      const classes = list.className.split(' ');
+      expect(classes).toContain('grid');
+      expect(classes).toContain('grid-cols-3');
+      expect(classes).not.toContain('flex');
+    });
+
+    it('overrides the fixed 5-column grid at the collapse threshold', () => {
+      const files = Array.from(
+        { length: ATTACHMENT_COLLAPSE_THRESHOLD },
+        (_, i) => makeFile(`f${i}`),
+      );
+      render(
+        <AttachmentGroup
+          attachments={files}
+          styles={{ listClassName: 'grid-cols-3' }}
+        />,
+      );
+
+      const list = screen.getByRole('list');
+      expect(list.className).toContain('grid-cols-3');
+      expect(list.className).not.toContain('repeat(5,100px)');
+    });
+  });
 });

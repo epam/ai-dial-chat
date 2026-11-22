@@ -74,6 +74,8 @@ export interface ConversationSourcesPanelStyles {
   typography?: ConversationSourcesPanelTypography;
   /** Extra class name(s) merged onto each files/sources section root. Defaults to none. */
   sectionClassName?: string;
+  /** Extra class name(s) merged after the default layout classes of each files section's attachment list, so a host can change the column layout. Defaults to none. */
+  filesListClassName?: string;
 }
 
 /** Props for the ConversationSourcesPanel component. */

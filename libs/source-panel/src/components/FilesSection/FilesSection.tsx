@@ -15,6 +15,8 @@ interface FilesSectionProps {
   titleClassName?: string;
   /** Extra class name(s) merged onto the section root. */
   className?: string;
+  /** Extra class name(s) merged after the default layout classes of the attachment list, so a host can change the column layout. */
+  listClassName?: string;
   /** Called when the user clicks an attachment card. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
   /** Accessible label for the attachment click action, forwarded to `AttachmentCard`. */
@@ -28,6 +30,7 @@ const FilesSection: FC<FilesSectionProps> = ({
   searchQuery,
   titleClassName = 'dial-body-semi-text',
   className,
+  listClassName,
   onAttachmentClick,
   attachmentClickLabel,
 }) => {
@@ -40,7 +43,10 @@ const FilesSection: FC<FilesSectionProps> = ({
       <h2 className={mergeClasses(titleClassName, 'mb-3')}>{title}</h2>
       <div
         role="list"
-        className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-3"
+        className={mergeClasses(
+          'grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-3',
+          listClassName,
+        )}
       >
         {attachments.map((att, index) => (
           <div key={`${att.id}-${index}`} role="listitem">

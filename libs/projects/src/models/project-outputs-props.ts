@@ -47,6 +47,8 @@ export interface ProjectOutputsStyles {
   colors?: ProjectOutputsColors;
   /** Typography class overrides. */
   typography?: ProjectOutputsTypography;
+  /** Extra class name(s) merged after the default layout classes of the outputs list, so a host can change the column layout. */
+  listClassName?: string;
 }
 
 /** Props for the {@link ProjectOutputs} component. */

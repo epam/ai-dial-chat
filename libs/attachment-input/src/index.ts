@@ -1,6 +1,10 @@
 export { AttachmentCard } from './components/AttachmentCard/AttachmentCard';
 export { AttachmentTray } from './components/AttachmentTray/AttachmentTray';
 export { AttachmentGroup } from './components/AttachmentGroup/AttachmentGroup';
+export {
+  AttachmentCardProvider,
+  type AttachmentCardProviderProps,
+} from './context/AttachmentCardContext';
 export { FileDndOverlay } from './components/FileDndOverlay/FileDndOverlay';
 
 export type {

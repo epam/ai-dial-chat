@@ -115,7 +115,7 @@ const labels: ConversationSourcesPanelLabels = {
 
 ### ConversationSourcesPanelStyles
 
-Optional style overrides: `colors` (CSS custom properties for the sources section), `typography` (heading/link/quote classes), and `sectionClassName` — extra class name(s) merged onto each files/sources section root, e.g. `'px-4'` to line the sections up with host-rendered accordions inside `additionalSections`.
+Optional style overrides: `colors` (CSS custom properties for the sources section), `typography` (heading/link/quote classes), and `sectionClassName` — extra class name(s) merged onto each files/sources section root, e.g. `'px-4'` to line the sections up with host-rendered accordions inside `additionalSections`. `filesListClassName` is merged after the default grid classes of each files section's attachment list, e.g. `'grid-cols-2'` for two full-width columns.
 
 ## Public class names
 

@@ -1,6 +1,6 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MouseEventHandler, ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -198,6 +198,16 @@ const renderPanel = ({
     />,
   );
 
+/** The list inside a panel section, found through its heading since the section has no role of its own. */
+const listOf = (heading: string): HTMLElement => {
+  const section = screen
+    .getByRole('heading', { name: heading })
+    // eslint-disable-next-line testing-library/no-node-access -- the section element has no semantic query; the list is read from inside it
+    .closest('section');
+  if (!section) throw new Error(`No section around heading "${heading}"`);
+  return within(section).getByRole('list');
+};
+
 describe('ConversationSourcesPanel', () => {
   it('renders uploaded attachments', () => {
     renderPanel({ uploaded: [makeAttachment('upload.pdf')] });
@@ -276,6 +286,36 @@ describe('ConversationSourcesPanel', () => {
       const section = screen.getByRole('heading', { name }).closest('section');
       /* The host's History/Details accordions add the kit's own px-4 on top of the body padding, so the host passes sectionClassName to line up with them. */
       expect(section?.className).toContain('px-4');
+    }
+  });
+
+  it('passes styles.filesListClassName to the uploaded and the generated lists, and to nothing else', () => {
+    render(
+      <ConversationSourcesPanel
+        isOpen
+        onClose={vi.fn()}
+        uploaded={[makeAttachment('upload.pdf')]}
+        generated={[makeAttachment('result.csv')]}
+        sources={[makeSource('https://example.com', 'Example')]}
+        isMobile={false}
+        labels={LABELS}
+        styles={{ filesListClassName: 'grid-cols-2' }}
+      />,
+    );
+
+    expect(listOf('Uploaded files').className).toContain('grid-cols-2');
+    expect(listOf('Generated files').className).toContain('grid-cols-2');
+    expect(listOf('Sources').className).not.toContain('grid-cols-2');
+  });
+
+  it('keeps the default auto-fill file grid without styles.filesListClassName', () => {
+    renderPanel({
+      uploaded: [makeAttachment('upload.pdf')],
+      generated: [makeAttachment('result.csv')],
+    });
+
+    for (const name of ['Uploaded files', 'Generated files']) {
+      expect(listOf(name).className).toContain('auto-fill');
     }
   });
 

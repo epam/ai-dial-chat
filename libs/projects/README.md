@@ -163,6 +163,8 @@ Controlled New project form inside the builder-form shell: a header with a back 
 
 The form shows no unsaved-changes dialog: leaving is the host's decision through `onBack` / `onCancel`.
 
+`styles.contextListClassName` is merged after the default layout classes of the context files list, e.g. `'grid grid-cols-4'` for four columns.
+
 The same form edits an existing project: the host passes the project's files as `StoredProjectContextFile`s (`size`, `isStored: true`) alongside newly added `Attachment`s, and supplies the edit strings through `labels` (`title`, `createLabel`, `submittingLabel`, `creatingStatus`). Stored files count toward `maxTotalBytes` and render as removable cards; `isStoredContextFile` separates them when the host builds its save request. In `apps/chat`, every edit page passes `isNameReadOnly` and `labels.nameReadOnlyHint`: owners and shared editors can edit instructions and files, but cannot rename an existing project. New-project names remain editable.
 
 ```tsx
@@ -325,7 +327,7 @@ import { ProjectView } from '@epam/ai-dial-projects';
 />;
 ```
 
-`styles.colors` fields fall back to `--bg-layer-base` (`background`), `--stroke-tertiary` (`border`), `--text-primary` (`headingText`, `bodyText`) and `--text-secondary` (`secondaryText`). `styles.typography` defaults to `'dial-h1-text'` (`titleClassName`), `'dial-body-semi-text'` (`panelTitleClassName`), `'dial-tiny-text'` (`sectionTitleClassName`, `helperClassName`) and `'dial-small-text'` (`bodyClassName`).
+`styles.colors` fields fall back to `--bg-layer-base` (`background`), `--stroke-tertiary` (`border`), `--text-primary` (`headingText`, `bodyText`) and `--text-secondary` (`secondaryText`). `styles.typography` defaults to `'dial-h1-text'` (`titleClassName`), `'dial-body-semi-text'` (`panelTitleClassName`), `'dial-tiny-text'` (`sectionTitleClassName`, `helperClassName`) and `'dial-small-text'` (`bodyClassName`). `styles.contextListClassName` is merged after the default layout classes of the context files list, so a host can pick its own columns, e.g. `'grid grid-cols-2'`.
 
 ### ProjectConversationList
 
@@ -451,7 +453,7 @@ import { ProjectOutputs } from '@epam/ai-dial-projects';
 />;
 ```
 
-`styles.colors` fields fall back to `--text-primary` (`headingText`) and `--text-secondary` (`secondaryText`). `styles.typography` defaults to `'dial-body-semi-text'` (`titleClassName`) and `'dial-tiny-text'` (`helperClassName`).
+`styles.colors` fields fall back to `--text-primary` (`headingText`) and `--text-secondary` (`secondaryText`). `styles.typography` defaults to `'dial-body-semi-text'` (`titleClassName`) and `'dial-tiny-text'` (`helperClassName`). `styles.listClassName` is merged after the default layout classes of the outputs list, e.g. `'grid grid-cols-3'` for three columns.
 
 ### ProjectChatHeader
 

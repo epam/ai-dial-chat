@@ -330,6 +330,38 @@ describe('MessageBubble', () => {
       expect(screen.getByRole('list')).toBeTruthy();
     });
 
+    it('forwards attachmentGroupStyles to the attachment group of a user message', () => {
+      render(
+        <UserMessageBubble
+          text="Hello"
+          attachments={[ATTACHMENT]}
+          styles={{
+            attachmentGroupStyles: {
+              listClassName: 'grid-cols-3',
+              className: 'max-w-full',
+            },
+          }}
+        />,
+      );
+
+      expect(screen.getByRole('list').className).toContain('grid-cols-3');
+      const group = screen.getByRole('group', { name: 'Attachments' });
+      expect(group.className).toContain('max-w-full');
+      expect(group.className).not.toContain('max-w-[640px]');
+    });
+
+    it('forwards attachmentGroupStyles to the attachment group of an assistant message', () => {
+      render(
+        <AssistantMessageBubble
+          text="Hello"
+          attachments={[ATTACHMENT]}
+          styles={{ attachmentGroupStyles: { listClassName: 'grid-cols-3' } }}
+        />,
+      );
+
+      expect(screen.getByRole('list').className).toContain('grid-cols-3');
+    });
+
     it('renders no attachment tray when attachments prop is absent', () => {
       render(<UserMessageBubble text="Hello" />);
       expect(screen.queryByRole('list')).toBeNull();
@@ -1259,6 +1291,16 @@ describe('MessageBubble', () => {
       expect(body.parentElement?.parentElement?.className).toContain(
         'cm-bubble-markdown',
       );
+    });
+  });
+
+  describe('attachment group defaults', () => {
+    it('caps the user message group at 640px without attachmentGroupStyles', () => {
+      render(<UserMessageBubble text="Hello" attachments={[ATTACHMENT]} />);
+
+      expect(
+        screen.getByRole('group', { name: 'Attachments' }).className,
+      ).toContain('max-w-[640px]');
     });
   });
 });
