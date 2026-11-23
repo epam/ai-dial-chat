@@ -8,11 +8,15 @@ The destination-folder side panel opened from the Copy and Move actions.
 
 ### Requirement: Destination-folder panel opens from Copy/Move actions
 
-Clicking a `DialFileManagerActions.Copy` or `.Move` action (grid row menu, tree row menu, or bulk actions toolbar — wherever the action is present per `file-manager-tabs`) SHALL open the end-edge destination panel built into `@epam/ai-dial-react-file-manager` (`FolderDestinationPanel`, mounted internally by `DialFileManager` as `FileManagerDestinationPanel`). The shell does not pass `onDestinationRequest`, so the built-in panel is always used. No component in this repo owns the panel's mount/unmount lifecycle; open state, mode and items are package-internal.
+Clicking a `DialFileManagerActions.Copy` or `.Move` action (grid row menu, tree row menu, or bulk actions toolbar — wherever the action is present per `file-manager-tabs`) SHALL open an end-edge destination panel: `FolderDestinationPanel` from `@epam/ai-dial-react-file-manager`, rendered by `FileManagerDestinationPanel` (`libs/chat-shared/src/file-manager/FileManagerDestinationPanel/FileManagerDestinationPanel.tsx`).
 
-**State ownership**: the shared `DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileManagerShell/DialFileManagerShell.tsx`, `@epam/ai-dial-chat-shared/file-manager`) owns only the _options_ passed to the panel via `destinationPanelOptions`; it owns no panel open/closed state. `apps/chat/src/components/DialFileManagerShell/DialFileManagerShell.tsx` is a thin wrapper that passes the `useDialFileManager` result to it as `controller`.
+`DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileManagerShell/DialFileManagerShell.tsx`, `@epam/ai-dial-chat-shared/file-manager`) SHALL pass `onDestinationRequest` to `DialFileManager`, keep the received `DialDestinationRequest` in state, and render the panel while it is set; it SHALL NOT pass `destinationPanelOptions`, which the package ignores once `onDestinationRequest` is set, nor `destinationFolderPopupOptions`. The built-in panel is not used because, with several sections enabled, it shows a virtual "All files" root and disables folder creation everywhere.
 
-The shell SHALL NOT pass `destinationFolderPopupOptions` or `onFolderPopupPathChange`; both belong to the retired modal popup.
+The panel SHALL show only the section the items come from: the root in `controller.items` whose first path segment matches the request's `sourceFolder`, or the first root when none matches. Its tree lists that root's folders; the committed destination starts at the source folder. `apps/chat/src/components/DialFileManagerShell/DialFileManagerShell.tsx` is a thin wrapper that passes the `useDialFileManager` result to the shell as `controller`.
+
+Choosing or expanding a folder SHALL load its contents through `controller.onFolderPopupPathChange`; folders whose contents are not loaded keep `children` undefined so the tree does not show them as empty, and `controller.folderPopupLoadingPaths` marks the folders being fetched. Folder creation SHALL call `controller.onCreateFolder` with the new folder's full virtual path.
+
+Confirming SHALL call `request.confirm(destinationFolder, destinationItems)` with the loaded items of the destination folder, so name conflicts are detected, and close the panel. Closing without confirming SHALL call `request.cancel()`.
 
 #### Scenario: Copy action opens the panel in copy mode
 
@@ -44,18 +48,18 @@ Confirming a destination in the panel SHALL run name-conflict resolution and the
 
 ### Requirement: Panel text is translated via i18n
 
-`DialFileManagerShell` SHALL pass a `destinationPanelOptions` object to `DialFileManager` built from its host-supplied `labels` (`DialFileManagerShellLabels`, `libs/chat-shared/src/file-manager/labels.ts`):
+`DialFileManagerShell` SHALL give `FileManagerDestinationPanel` a `FileManagerDestinationPanelLabels` object (`libs/chat-shared/src/file-manager/labels.ts`) built from its host-supplied `labels` (`DialFileManagerShellLabels`):
 
-| `destinationPanelOptions` field | Shell label |
+| Panel label | Shell label |
 | --- | --- |
 | `copyTitle` | `copyDestinationTitle` |
 | `moveTitle` | `moveDestinationTitle` |
 | `copyLabel` | `copyLabel` |
 | `moveLabel` | `moveLabel` |
-| `getSourceItemsLabel` | `getDestinationItemsLabel` |
-| `disabledPathTooltip` | `moveSourceDisabledTooltip` |
+| `getItemsLabel` | `getDestinationItemsLabel` |
+| `sourceFolderTooltip` | `moveSourceDisabledTooltip` |
 | `movedIntoItselfTooltip` | `movedIntoItselfTooltip` |
-| `panelLabels.createFolderLabel` | `addFolderLabel` |
+| `addFolderLabel` | `addFolderLabel` |
 
 The shell calls no `useTranslation`; the hosts (`DialFileManagerPage`, `DialFileManagerModal`) resolve every label with `t()` and an enum key. Panel text not listed above (search placeholder, folder-name errors, retry) keeps the package's English default until a label is added.
 
@@ -78,7 +82,7 @@ The shell calls no `useTranslation`; the hosts (`DialFileManagerPage`, `DialFile
 
 ### Requirement: Copy and Move disable unusable destinations
 
-The built-in panel disables the folder a Move starts from, and, for a moved folder, that folder and its subfolders. The shell supplies the tooltip text as `moveSourceDisabledTooltip` and `movedIntoItselfTooltip`; the BFF rejects the same move as a fallback (see `file-manager-copy-move`). The shell does not compute the source folder; the package derives it from the staged items.
+For Move, `FileManagerDestinationPanel` SHALL give `getDisabledReason` a reason for the folder the items start from (`moveSourceDisabledTooltip`) and, for a moved folder, that folder and its subfolders (`movedIntoItselfTooltip`); a disabled destination disables the Move button. Copy has no disabled destinations. The BFF rejects an invalid move as a fallback (see `file-manager-copy-move`).
 
 #### Scenario: Move disables the source folder
 
@@ -94,7 +98,7 @@ The built-in panel disables the folder a Move starts from, and, for a moved fold
 
 ### Requirement: Panel lists folders and keeps files for conflict detection
 
-The panel's tree lists folders only. The application SHALL keep the browsed listings, files included, in the `DialFileManager.items` tree so the copy/move conflict resolver can detect destination-name collisions. Folders whose contents are not yet loaded are loaded through the tree's expanded-path callback (`treeOptions.onExpandedPathsChange`) and shown as loading through `treeOptions.loadingPaths`.
+The panel's tree lists folders only. The application SHALL keep the browsed listings, files included, in the `DialFileManager.items` tree so the copy/move conflict resolver can detect destination-name collisions. Folders whose contents are not yet loaded are loaded when the user expands or selects them, as described above.
 
 #### Scenario: Loaded destination can trigger conflict resolution
 
@@ -106,7 +110,7 @@ The panel's tree lists folders only. The application SHALL keep the browsed list
 
 ### Requirement: Add-folder inside the panel
 
-The panel offers folder creation through the `onCreateFolder`/`onCreateFolderValidate` callbacks already passed to the outer `DialFileManager`; no separate override is introduced. The button label is `addFolderLabel`.
+The panel offers folder creation through `controller.onCreateFolder`, the callback already passed to the outer `DialFileManager`; no separate override is introduced. Name checks are the package panel's own. The button label is `addFolderLabel`.
 
 #### Scenario: Add folder creates inside the chosen parent
 

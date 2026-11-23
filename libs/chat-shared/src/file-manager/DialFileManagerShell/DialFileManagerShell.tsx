@@ -4,7 +4,7 @@ import {
   DialFileManagerTabs,
   GridSelectionMode,
   type DialFileAcceptType,
-  type DialFileManagerDestinationPanelOptions,
+  type DialDestinationRequest,
   type FileManagerGridRow,
   type FileTreeOptions,
 } from '@epam/ai-dial-react-file-manager';
@@ -20,7 +20,14 @@ import {
   LiveRegion,
   LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
-import { memo, useCallback, useEffect, useMemo, type FC } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import type { FileManagerSelectableNode } from '../../types/file-manager-node';
 import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
@@ -29,6 +36,7 @@ import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
 } from '../file-manager-variant';
+import { FileManagerDestinationPanel } from '../FileManagerDestinationPanel/FileManagerDestinationPanel';
 import type { DialFileManagerShellLabels, EmptyStateCopy } from '../labels';
 import { OperationLoaderModal } from '../OperationLoaderModal/OperationLoaderModal';
 import type { DialFileManagerShellStyles } from '../shell-styles';
@@ -166,6 +174,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     loadedPaths,
     onExpandedPathsChange,
     folderPopupLoadingPaths,
+    onFolderPopupPathChange,
     onUploadFiles,
     onUploadArchive,
     onValidateUpload,
@@ -434,28 +443,37 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     ],
   );
 
-  /* Copy and Move open the file manager's built-in `FolderDestinationPanel`; the shell only supplies its text. */
-  const destinationPanelOptions = useMemo(
-    (): DialFileManagerDestinationPanelOptions => ({
+  /*
+   * Copy and Move are handed to the shell instead of the file manager's built-in panel, which cannot
+   * create folders when several sections are enabled. The shell shows the section the items come from.
+   */
+  const [destinationRequest, setDestinationRequest] =
+    useState<DialDestinationRequest | null>(null);
+  const destinationPanelLabels = useMemo(
+    () => ({
       copyTitle: labels.copyDestinationTitle,
       moveTitle: labels.moveDestinationTitle,
       copyLabel: labels.copyLabel,
       moveLabel: labels.moveLabel,
-      getSourceItemsLabel: labels.getDestinationItemsLabel,
-      disabledPathTooltip: labels.moveSourceDisabledTooltip,
+      addFolderLabel: labels.addFolderLabel,
+      getItemsLabel: labels.getDestinationItemsLabel,
+      sourceFolderTooltip: labels.moveSourceDisabledTooltip,
       movedIntoItselfTooltip: labels.movedIntoItselfTooltip,
-      panelLabels: { createFolderLabel: labels.addFolderLabel },
     }),
     [
       labels.copyDestinationTitle,
       labels.moveDestinationTitle,
       labels.copyLabel,
       labels.moveLabel,
+      labels.addFolderLabel,
       labels.getDestinationItemsLabel,
       labels.moveSourceDisabledTooltip,
       labels.movedIntoItselfTooltip,
-      labels.addFolderLabel,
     ],
+  );
+  const handleDestinationFinish = useCallback(
+    () => setDestinationRequest(null),
+    [],
   );
 
   /* The queue confirms first when work is still running, so closing it aborts whatever is left. */
@@ -669,7 +687,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             conflictResolutionPopupOptions={
               labels.conflictResolutionPopupOptions
             }
-            destinationPanelOptions={destinationPanelOptions}
+            onDestinationRequest={setDestinationRequest}
             forbiddenSymbolsRegExp={NOT_ALLOWED_SYMBOLS_REGEXP}
             forbiddenSymbolsTooltip={labels.forbiddenSymbolsTooltip}
             getDisabledTooltip={getDisabledTooltip}
@@ -706,6 +724,19 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
           labels={transferQueueLabels}
         />
       </div>
+
+      {destinationRequest != null && (
+        <FileManagerDestinationPanel
+          request={destinationRequest}
+          roots={items}
+          loadedPaths={loadedPaths}
+          loadingPaths={folderPopupLoadingPaths}
+          onFolderPopupPathChange={onFolderPopupPathChange}
+          onCreateFolder={onCreateFolder}
+          labels={destinationPanelLabels}
+          onFinish={handleDestinationFinish}
+        />
+      )}
 
       {(isCopying || isMoving) && (
         <OperationLoaderModal

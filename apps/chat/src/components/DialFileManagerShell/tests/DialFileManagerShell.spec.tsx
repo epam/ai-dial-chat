@@ -13,10 +13,12 @@ import {
 import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerActions,
+  DestinationFolderMode,
   DialFileManagerTabs,
+  DialFileNodeType,
   type FileManagerGridRow,
 } from '@epam/ai-dial-react-file-manager';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import DialFileManagerShell from '../DialFileManagerShell';
@@ -65,16 +67,9 @@ const capturedDialFileManagerProps: {
       sizeLabel?: string;
       authorLabel?: string;
     };
-    destinationPanelOptions?: {
-      copyTitle?: string;
-      moveTitle?: string;
-      copyLabel?: string;
-      moveLabel?: string;
-      getSourceItemsLabel?: (count: number) => string;
-      disabledPathTooltip?: string;
-      movedIntoItselfTooltip?: string;
-      panelLabels?: { createFolderLabel?: string };
-    };
+    onDestinationRequest?: (request: unknown) => void;
+    destinationPanelOptions?: unknown;
+    destinationFolderPopupOptions?: unknown;
   } | null;
 } = { current: null };
 
@@ -83,19 +78,32 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
     await importOriginal<typeof import('@epam/ai-dial-react-file-manager')>();
   return {
     ...actual,
+    FolderDestinationPanel: (props: {
+      labels?: { title?: string };
+      item: { title: string };
+      action: { label: string; isDisabled?: boolean; onClick: () => void };
+      onClose: () => void;
+    }) => (
+      <div role="dialog" aria-label={props.labels?.title}>
+        <span>{props.item.title}</span>
+        <button type="button" onClick={props.onClose}>
+          Close panel
+        </button>
+        <button
+          type="button"
+          disabled={props.action.isDisabled}
+          onClick={props.action.onClick}
+        >
+          {props.action.label}
+        </button>
+      </div>
+    ),
     DialFileManager: (props: {
       emptyStateTitle?: string;
       searchEmptyStateTitle?: string;
-      destinationPanelOptions?: {
-        copyTitle?: string;
-        moveTitle?: string;
-        copyLabel?: string;
-        moveLabel?: string;
-        getSourceItemsLabel?: (count: number) => string;
-        disabledPathTooltip?: string;
-        movedIntoItselfTooltip?: string;
-        panelLabels?: { createFolderLabel?: string };
-      };
+      onDestinationRequest?: (request: unknown) => void;
+      destinationPanelOptions?: unknown;
+      destinationFolderPopupOptions?: unknown;
       onCreateFolder?: unknown;
       onFolderPopupPathChange?: unknown;
       onGetInfo?: unknown;
@@ -507,37 +515,111 @@ describe('DialFileManagerShell', () => {
     expect(clearUploadBatch).toHaveBeenCalledOnce();
   });
 
-  it('passes the destination panel text from the labels', () => {
-    renderShell();
+  describe('Copy and Move destination panel', () => {
+    const file = {
+      id: 'a',
+      name: 'a.txt',
+      path: '/My files/reports/a.txt',
+      parentPath: '/My files/reports',
+      folderId: 'f',
+      nodeType: DialFileNodeType.ITEM,
+    };
+    const root = {
+      id: 'root',
+      name: 'My files',
+      path: '/My files',
+      parentPath: '',
+      folderId: 'root',
+      nodeType: DialFileNodeType.FOLDER,
+      items: [
+        {
+          id: 'reports',
+          name: 'reports',
+          path: '/My files/reports',
+          parentPath: '/My files',
+          folderId: 'reports',
+          nodeType: DialFileNodeType.FOLDER,
+          items: [file],
+        },
+      ],
+    };
+    const startRequest = (mode: DestinationFolderMode) => {
+      const request = {
+        mode,
+        items: [file],
+        sourceFolder: '/My files/reports/',
+        confirm: vi.fn(),
+        cancel: vi.fn(),
+      };
+      act(() => {
+        capturedDialFileManagerProps.current?.onDestinationRequest?.(request);
+      });
+      return request;
+    };
 
-    const options =
-      capturedDialFileManagerProps.current?.destinationPanelOptions;
-    expect(options?.copyTitle).toBe(baseLabels.copyDestinationTitle);
-    expect(options?.moveTitle).toBe(baseLabels.moveDestinationTitle);
-    expect(options?.getSourceItemsLabel?.(3)).toBe('3 items');
-    expect(options?.disabledPathTooltip).toBe(
-      baseLabels.moveSourceDisabledTooltip,
-    );
-    expect(options?.panelLabels?.createFolderLabel).toBe(
-      baseLabels.addFolderLabel,
-    );
-  });
+    it('takes Copy and Move requests itself instead of using the built-in panel', () => {
+      renderShell({ items: [root] });
 
-  it('does not hand DialFileManager the retired destination popup options', () => {
-    renderShell();
+      expect(
+        capturedDialFileManagerProps.current?.onDestinationRequest,
+      ).toBeTypeOf('function');
+      expect(
+        capturedDialFileManagerProps.current?.destinationPanelOptions,
+      ).toBeUndefined();
+      expect(
+        capturedDialFileManagerProps.current?.destinationFolderPopupOptions,
+      ).toBeUndefined();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
 
-    expect(
-      capturedDialFileManagerProps.current?.destinationFolderPopupOptions,
-    ).toBeUndefined();
-  });
+    it('opens the panel with the mode title and the item name', () => {
+      renderShell({ items: [root] });
+      startRequest(DestinationFolderMode.Move);
 
-  it('passes the moved-into-itself tooltip to the destination panel', () => {
-    renderShell();
+      expect(
+        screen.getByRole('dialog', { name: baseLabels.moveDestinationTitle }),
+      ).toBeTruthy();
+      expect(screen.getByText('a.txt')).toBeTruthy();
+    });
 
-    expect(
-      capturedDialFileManagerProps.current?.destinationPanelOptions
-        ?.movedIntoItselfTooltip,
-    ).toBe(baseLabels.movedIntoItselfTooltip);
+    it('disables Move while the destination is the source folder', () => {
+      renderShell({ items: [root] });
+      startRequest(DestinationFolderMode.Move);
+      expect(
+        (
+          screen.getByRole('button', {
+            name: baseLabels.moveLabel,
+          }) as HTMLButtonElement
+        ).disabled,
+      ).toBe(true);
+    });
+
+    it('confirms the destination and closes the panel', async () => {
+      renderShell({ items: [root] });
+      const request = startRequest(DestinationFolderMode.Copy);
+
+      await userEvent.click(
+        screen.getByRole('button', { name: baseLabels.copyLabel }),
+      );
+
+      expect(request.confirm).toHaveBeenCalledWith(
+        '/My files/reports',
+        root.items[0].items,
+      );
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('cancels the request when the panel is closed', async () => {
+      renderShell({ items: [root] });
+      const request = startRequest(DestinationFolderMode.Copy);
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Close panel' }),
+      );
+
+      expect(request.cancel).toHaveBeenCalledOnce();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
   });
 
   it('passes the hook result onCreateFolder straight through to DialFileManager without wrapping it, so the destination-folder popup targets its own browsed path via the same fallback', () => {
@@ -633,12 +715,6 @@ describe('DialFileManagerShell', () => {
         DialFileManagerActions.Move
       ],
     ).toBe(baseLabels.moveLabel);
-    expect(props?.destinationPanelOptions?.copyLabel).toBe(
-      baseLabels.copyLabel,
-    );
-    expect(props?.destinationPanelOptions?.moveLabel).toBe(
-      baseLabels.moveLabel,
-    );
   });
 
   it('omits Duplicate from DialFileManager action labels when the hook result excludes it', () => {

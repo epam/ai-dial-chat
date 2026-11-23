@@ -25,6 +25,26 @@ export type RenameValidationMessages = NonNullable<
   DialFileManagerComponentProps['renameValidationMessages']
 >;
 
+/** Text of the Copy/Move destination side panel. */
+export interface FileManagerDestinationPanelLabels {
+  /** Panel title for Copy. */
+  copyTitle: string;
+  /** Panel title for Move. */
+  moveTitle: string;
+  /** Label of the panel's Copy button. */
+  copyLabel: string;
+  /** Label of the panel's Move button. */
+  moveLabel: string;
+  /** Label of the folder-creation button. */
+  addFolderLabel: string;
+  /** Returns the text naming several items in the panel's summary row. */
+  getItemsLabel: (count: number) => string;
+  /** Reason shown when Move targets the folder the items are already in. */
+  sourceFolderTooltip: string;
+  /** Reason shown when Move targets a moved folder or one inside it. */
+  movedIntoItselfTooltip: string;
+}
+
 /** Title and description pair for an empty-state display. */
 export interface EmptyStateCopy {
   /** Primary empty-state heading. */
