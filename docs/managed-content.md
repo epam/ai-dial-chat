@@ -1,6 +1,6 @@
 # Editing DIAL Chat content in Config Studio
 
-This guide is for the people who edit and publish DIAL Chat's content in DIAL Config Studio: the onboarding tour, the announcement banner and its list, and the seasonal celebrations. The schema contract behind the form, and how a deployment reads published content, are in [managed-config-schema.md](managed-config-schema.md).
+This guide is for the people who edit and publish DIAL Chat's content in DIAL Config Studio: the onboarding tour, the announcement banner and its list, the seasonal celebrations, the welcome text, the File Manager tabs, the usage limits and the usage-limits control. The schema contract behind the form, and how a deployment reads published content, are in [managed-config-schema.md](managed-config-schema.md).
 
 ## Overview
 
@@ -14,11 +14,11 @@ The Config Studio instance for Chat (for example `ai-dial-chat` on dev) holds Ch
 
 **Save** keeps your draft; nobody else sees it. **Publish** makes it live for every Chat user, signed in or not. Never put secrets, internal-only hostnames or personal data in published content.
 
-Pick schema version `1.1.0` in the **Edit** tab to edit announcements and celebrations; `1.0.0` has only the tour. Each version is uploaded once per environment by a schema manager from Chat's repository artifact (`apps/chat-api/managed-config-schema/ai-dial-chat-<version>.json`).
+Pick schema version `1.2.0` in the **Edit** tab to edit everything in this guide; `1.1.0` has the tour, the announcements and the celebrations, and `1.0.0` only the tour. Each version is uploaded once per environment by a schema manager from Chat's repository artifact (`apps/chat-api/managed-config-schema/ai-dial-chat-<version>.json`).
 
 ## What you can edit
 
-A publication is one object with a `config` section; `features` stays empty for now. Leave a field out to keep the deployment's own value or Chat's default.
+A publication is one object with a `config` section for values and a `features` section for features you switch on and off; from `1.2.0` that section has the usage-limits control. Leave a field out to keep the deployment's own value or Chat's default.
 
 ### Onboarding tour (`onboarding.hints`)
 
@@ -76,9 +76,49 @@ An entry whose link address passes the form but cannot be opened (for example `h
 
 **Switching seasons.** Change `ui.activeEventId` from `halloween` to `new-year` and publish. Open Chat tabs switch on their next refresh (see [When users see a change](#when-users-see-a-change)); a playing Halloween scene stops and the New Year event takes over. To end the season, publish `none`.
 
+### Welcome text (`welcomeScreen.description`)
+
+One line of plain text below the greeting on the new-chat screen, up to 1,000 characters. Markup is shown as typed, and spaces at either end are removed. Leave the field out to show no text.
+
+### File Manager tabs (`fileManager.availableTabs`)
+
+Which tabs users see in File Manager. Pick one to four of:
+
+| Value          | Tab          |
+| -------------- | ------------ |
+| `all`          | All          |
+| `my_files`     | My files     |
+| `shared`       | Shared       |
+| `organization` | Organization |
+
+- **The order you choose does not matter.** Tabs always appear as All, My files, Shared, Organization. The form still offers **Move up** and **Move down** for the rows; they change nothing in Chat.
+- **All needs two other tabs.** All combines the other tabs, so it appears only when at least two of them are chosen. If you choose only `all`, Chat shows every tab instead.
+- Each value can appear once; Studio reports a repeat or an empty list.
+
+### Usage limits (`usageLimits.warningThresholdPercent`, `usageLimits.spendingLimitsMode`)
+
+| Field                                 | Rules                                                                                                                                                                                        |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `usageLimits.warningThresholdPercent` | A whole number from 1 to 99 (default 75): the share of a user's daily, weekly or monthly limit at which a banner above the message box warns them. The usage dial keeps its own 75% mark     |
+| `usageLimits.spendingLimitsMode`      | `off` (default): budgets are hidden. `shadow`: budgets are shown as not yet enforced. `enforce`: only budgets are shown. It must match how DIAL Core is configured, which Chat cannot detect |
+
+**Set the spending mode only together with the platform team.** It changes only what Chat shows; DIAL Core enforces budgets whatever you publish. A wrong value shows users the wrong limit.
+
+### Usage-limits control (`features.usageLimitsControl`)
+
+A control next to the model selector that shows the user's token and cost limits. Without it, users see the usage banner instead. The form shows:
+
+| Field                     | Rules                                                                                                                                                                            |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Enabled**               | On or off                                                                                                                                                                        |
+| **Availability window**   | Optional. **Starts at** (included) and **Ends at** (excluded), in UTC. Leave a boundary empty for no limit. The control appears and disappears on time without a new publication |
+| **Targeting** → **Roles** | Optional. Up to 50 roles; only users who have at least one of them see the control. Users who are not signed in never match a role                                               |
+
+Studio rejects a date that does not exist (30 February), a start that is not before the end, and an empty window or role list, before anything reaches Chat.
+
 ### Example
 
-This configuration passes validation against schema `1.1.0`. Paste it in the **JSON** mode of the editor, then replace the example values.
+This configuration passes validation against schema `1.2.0`. Paste it in the **JSON** mode of the editor, then replace the example values.
 
 ```json
 {
@@ -112,16 +152,26 @@ This configuration passes validation against schema `1.1.0`. Paste it in the **J
     "ui.celebrationDelivery.mode": "bundled",
     "ui.celebrationDelivery.revision": "0",
     "ui.celebrationDelivery.externalScenes": [],
-    "ui.celebrationDelivery.externalEvents": []
+    "ui.celebrationDelivery.externalEvents": [],
+    "welcomeScreen.description": "Your secure AI assistant for search, documents and research.",
+    "fileManager.availableTabs": ["all", "my_files", "shared", "organization"],
+    "usageLimits.warningThresholdPercent": 80,
+    "usageLimits.spendingLimitsMode": "off"
   },
-  "features": {}
+  "features": {
+    "features.usageLimitsControl": {
+      "enabled": true,
+      "availability": { "startsAt": "2026-12-01T00:00:00Z" },
+      "targeting": { "roles": ["beta"] }
+    }
+  }
 }
 ```
 
 ## Fill in and publish
 
-1. Open the instance and select the **Edit** tab. Check that **Schema version** is `1.1.0`.
-2. Edit in **Form** or **JSON** mode. In the form, lists have **Add item**, and each entry has **Move up** and **Move down**: the order is the tour order and the announcement order.
+1. Open the instance and select the **Edit** tab. Check that **Schema version** is `1.2.0`.
+2. Edit in **Form** or **JSON** mode. In the form, lists have **Add item**, and each entry has **Move up** and **Move down**: the order is the tour order and the announcement order. The order of File Manager tabs does not matter.
 3. Select **Save draft** whenever you stop. The draft is private and survives reloads.
 4. Select **Validate** and fix every reported field. Studio rejects a value that is too long, an unknown option, a link that is not `http(s)://`, or an event ID with capitals, before anything reaches Chat.
 5. Select **Review and publish** (publishers only), check the changes, enter a reason and confirm.
@@ -140,7 +190,7 @@ Chat's backend reads the published revision about once a minute. An open, visibl
 
 If a published value does not appear:
 
-- **The deployment still sets that value itself.** A value set in the deployment's own configuration always wins over a publication. Ask the platform team to remove it for the fields you manage.
+- **The deployment still sets that value itself.** A value set in the deployment's own configuration always wins over a publication. Ask the platform team to remove it for the fields you manage. For the usage-limits control this includes switching it on: if the deployment switches the control on itself, publishing **Enabled** off does not hide it.
 - **The field is not active.** Each deployment chooses which fields it takes from Config Studio. Ask the platform team whether your field is active there.
 - **Studio is unreachable from Chat.** Chat keeps serving the last revision it read for a while (the deployment decides how long), then falls back to the deployment's own values.
 

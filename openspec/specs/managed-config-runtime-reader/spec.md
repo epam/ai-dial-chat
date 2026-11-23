@@ -136,13 +136,13 @@ Every supported version SHALL have its committed artifact bundled into the build
 
 #### Scenario: Unsupported version
 
-- **WHEN** a `ai-dial-chat` snapshot carries `schemaVersion` `1.2.0` and this build supports only `1.0.0` and `1.1.0`
+- **WHEN** a `ai-dial-chat` snapshot carries `schemaVersion` `1.3.0` and this build supports only `1.0.0`, `1.1.0` and `1.2.0`
 - **THEN** it is rejected with `unsupported_schema`
 
 #### Scenario: A 1.0.0 snapshot keeps working after the upgrade
 
-- **WHEN** a build that supports `1.0.0` and `1.1.0` reads a `1.0.0` snapshot that sets only `onboarding.hints`
-- **THEN** it is accepted against `ai-dial-chat-1.0.0.json`, the tour applies when `onboarding.hints` is active, and the announcement and celebration keys resolve from explicit ENV or their registry defaults
+- **WHEN** a build that supports `1.0.0`, `1.1.0` and `1.2.0` reads a `1.0.0` snapshot that sets only `onboarding.hints`
+- **THEN** it is accepted against `ai-dial-chat-1.0.0.json`, the tour applies when `onboarding.hints` is active, and the keys added in 1.1.0 and 1.2.0 resolve from explicit ENV or their registry defaults
 
 #### Scenario: A 1.1.0 member under the 1.0.0 version
 
@@ -153,6 +153,26 @@ Every supported version SHALL have its committed artifact bundled into the build
 
 - **WHEN** a `ai-dial-chat` snapshot carries `schemaVersion` `1.1.0` with its pinned `schemaSha256` and a payload that sets the banner, three announcements and `ui.activeEventId` `new-year`
 - **THEN** it is accepted as the instance's snapshot
+
+#### Scenario: A 1.1.0 snapshot keeps working on a 1.2.0 build
+
+- **WHEN** a build that supports `1.2.0` reads a `1.1.0` snapshot with its pinned hash
+- **THEN** it is accepted against `ai-dial-chat-1.1.0.json`, and an active `welcomeScreen.description` without an explicit variable resolves to `null`
+
+#### Scenario: A 1.2.0 member under the 1.1.0 version
+
+- **WHEN** a snapshot that claims `schemaVersion` `1.1.0` with its pinned hash sets `features["features.usageLimitsControl"]`
+- **THEN** it is rejected with `invalid_payload`, because the 1.1.0 artifact does not declare the feature
+
+#### Scenario: A 1.2.0 snapshot is accepted
+
+- **WHEN** a `ai-dial-chat` snapshot carries `schemaVersion` `1.2.0` with its pinned `schemaSha256` and sets the welcome text, `["my_files", "shared"]`, threshold `90`, mode `enforce` and `{ "enabled": true }` for `features.usageLimitsControl`
+- **THEN** it is accepted as the instance's snapshot
+
+#### Scenario: Inverted usage-limits window in a snapshot
+
+- **WHEN** a `1.2.0` snapshot sets `features.usageLimitsControl` with `startsAt` later than `endsAt`, which Studio would never publish
+- **THEN** it is rejected with `semantic_violation`, and the previous snapshot stays active
 
 #### Scenario: Oversized announcement title in a snapshot
 

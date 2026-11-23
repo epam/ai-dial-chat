@@ -37,12 +37,17 @@ const MANAGED_KEYS = [
   'announcement.description',
   'announcement.items',
   'onboarding.hints',
+  'welcomeScreen.description',
   'ui.activeEventId',
   'ui.celebrationsEnabledByDefault',
   'ui.celebrationDelivery.mode',
   'ui.celebrationDelivery.revision',
   'ui.celebrationDelivery.externalScenes',
   'ui.celebrationDelivery.externalEvents',
+  'fileManager.availableTabs',
+  'features.usageLimitsControl',
+  'usageLimits.warningThresholdPercent',
+  'usageLimits.spendingLimitsMode',
 ];
 
 const acceptedSnapshot = (
@@ -160,7 +165,7 @@ describe('ManagedShadowComparator', () => {
         },
       ),
     );
-    expect(comparisons).toHaveLength(10);
+    expect(comparisons).toHaveLength(15);
     expect(
       comparisons.filter(
         (comparison) => comparison.result !== ShadowComparisonResult.Absent,
@@ -168,6 +173,83 @@ describe('ManagedShadowComparator', () => {
     ).toEqual([
       { key: 'onboarding.hints', result: ShadowComparisonResult.Differs },
     ]);
+  });
+
+  it('reports the five 1.2.0 keys as absent for a 1.1.0 snapshot', async () => {
+    const { comparator } = makeComparator();
+    const comparisons = await comparator.compare(
+      acceptedSnapshot(
+        { config: { 'announcement.title': 'Maintenance' }, features: {} },
+        {
+          schemaVersion: '1.1.0',
+          schemaSha256: PINNED_MANAGED_CONFIG_SCHEMA_SHA256['1.1.0'],
+        },
+      ),
+    );
+    expect(comparisons).toHaveLength(15);
+    expect(
+      comparisons
+        .filter(
+          (comparison) => comparison.result === ShadowComparisonResult.Absent,
+        )
+        .map((comparison) => comparison.key),
+    ).toEqual(
+      expect.arrayContaining([
+        'welcomeScreen.description',
+        'fileManager.availableTabs',
+        'features.usageLimitsControl',
+        'usageLimits.warningThresholdPercent',
+        'usageLimits.spendingLimitsMode',
+      ]),
+    );
+  });
+
+  it('reports a reordered tab list as equal to the same set', async () => {
+    const { comparator } = makeComparator({
+      FILE_MANAGER_AVAILABLE_TABS: 'my_files,organization',
+    });
+    await expect(
+      resultOf(
+        comparator,
+        {
+          config: { 'fileManager.availableTabs': ['organization', 'my_files'] },
+          features: {},
+        },
+        'fileManager.availableTabs',
+      ),
+    ).resolves.toBe(ShadowComparisonResult.EnvShadowed);
+    const { comparator: unshadowed } = makeComparator();
+    await expect(
+      resultOf(
+        unshadowed,
+        {
+          config: {
+            'fileManager.availableTabs': [
+              'organization',
+              'shared',
+              'my_files',
+              'all',
+            ],
+          },
+          features: {},
+        },
+        'fileManager.availableTabs',
+      ),
+    ).resolves.toBe(ShadowComparisonResult.Equal);
+  });
+
+  it('reports an explicit spending mode that would shadow the published one', async () => {
+    const { comparator } = makeComparator({ SPENDING_LIMITS_MODE: 'enforce' });
+    await expect(
+      resultOf(
+        comparator,
+        {
+          config: { 'usageLimits.spendingLimitsMode': 'off' },
+          features: {},
+        },
+        'usageLimits.spendingLimitsMode',
+      ),
+    ).resolves.toBe(ShadowComparisonResult.EnvShadowed);
   });
 
   it('reports a published event shadowed by the environment', async () => {
@@ -246,8 +328,8 @@ describe('ManagedShadowComparator', () => {
       'onboarding.hints',
       ShadowComparisonResult.Differs,
     );
-    /* Ten managed keys, compared at startup and after one interval. */
-    expect(record).toHaveBeenCalledTimes(20);
+    /* Fifteen managed keys, compared at startup and after one interval. */
+    expect(record).toHaveBeenCalledTimes(30);
     const summaries = log.mock.calls
       .map(([message]) => String(message))
       .filter((message) => message.startsWith('Shadow comparison'));

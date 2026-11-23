@@ -26,7 +26,6 @@ import {
   findStudioStructuralViolations,
   findStudioUploadViolations,
 } from './studio-contract.fixtures';
-import { withTestManagedKeys } from './test-managed-contract.fixtures';
 
 const generate = () =>
   buildManagedConfigSchema(CONFIG_DEFINITIONS, MANAGED_CONFIG_SCHEMA_VERSION);
@@ -69,7 +68,7 @@ describe('buildManagedConfigSchema', () => {
     expect(schema['$schema']).toBe(
       'https://json-schema.org/draft/2020-12/schema',
     );
-    expect(schema['$id']).toBe('urn:dial:ai-dial-chat:managed-config:1.1.0');
+    expect(schema['$id']).toBe('urn:dial:ai-dial-chat:managed-config:1.2.0');
     expect(managedConfigSchemaId('2.3.4')).toBe(
       'urn:dial:ai-dial-chat:managed-config:2.3.4',
     );
@@ -89,12 +88,13 @@ describe('buildManagedConfigSchema', () => {
     }
   });
 
-  it('exports exactly the 1.1.0 managed keys, in display order, and no feature', () => {
+  it('exports exactly the 1.2.0 managed keys and feature, in display order', () => {
     const schema = generate();
     expect(Object.keys(propertiesOf(schema, 'config'))).toEqual([
       'announcement.title',
       'announcement.description',
       'announcement.items',
+      'welcomeScreen.description',
       'onboarding.hints',
       'ui.activeEventId',
       'ui.celebrationsEnabledByDefault',
@@ -102,8 +102,13 @@ describe('buildManagedConfigSchema', () => {
       'ui.celebrationDelivery.revision',
       'ui.celebrationDelivery.externalScenes',
       'ui.celebrationDelivery.externalEvents',
+      'fileManager.availableTabs',
+      'usageLimits.warningThresholdPercent',
+      'usageLimits.spendingLimitsMode',
     ]);
-    expect(Object.keys(propertiesOf(schema, 'features'))).toEqual([]);
+    expect(Object.keys(propertiesOf(schema, 'features'))).toEqual([
+      'features.usageLimitsControl',
+    ]);
   });
 
   it('never exports a local-only or unmanaged key', () => {
@@ -126,14 +131,9 @@ describe('buildManagedConfigSchema', () => {
     expect(hints['title']).toBe('Onboarding tour');
     expect(hints['dial:meta']).toEqual({ 'dial:propertyOrder': 15 });
     expect(hints).not.toHaveProperty('isHidden');
-    /* No committed version has a feature; the test contract shows how one is emitted. */
-    const feature = propertiesOf(
-      buildManagedConfigSchema(
-        withTestManagedKeys(CONFIG_DEFINITIONS),
-        MANAGED_CONFIG_SCHEMA_VERSION,
-      ),
-      'features',
-    )['features.usageLimitsControl'] as JsonSchemaObject;
+    const feature = propertiesOf(schema, 'features')[
+      'features.usageLimitsControl'
+    ] as JsonSchemaObject;
     expect(feature['$ref']).toBe('#/$defs/featureState');
     expect(feature['title']).toBe('Usage-limits control');
   });
@@ -184,20 +184,18 @@ describe('buildManagedConfigSchema', () => {
     ]) {
       expect(real[nullDefault], nullDefault).not.toHaveProperty('default');
     }
-    /* The test contract adds a number default and another null one. */
-    const config = propertiesOf(
-      buildManagedConfigSchema(
-        withTestManagedKeys(CONFIG_DEFINITIONS),
-        MANAGED_CONFIG_SCHEMA_VERSION,
-      ),
-      'config',
-    );
     expect(
-      (config['usageLimits.warningThresholdPercent'] as JsonSchemaObject)[
+      (real['usageLimits.warningThresholdPercent'] as JsonSchemaObject)[
         'default'
       ],
     ).toBe(75);
-    expect(config['welcomeScreen.description']).not.toHaveProperty('default');
+    expect(
+      (real['usageLimits.spendingLimitsMode'] as JsonSchemaObject)['default'],
+    ).toBe('off');
+    expect(
+      (real['fileManager.availableTabs'] as JsonSchemaObject)['default'],
+    ).toEqual(['all', 'my_files', 'shared', 'organization']);
+    expect(real['welcomeScreen.description']).not.toHaveProperty('default');
   });
 
   it('validates each default against its own schema', () => {
@@ -265,13 +263,13 @@ describe('buildManagedConfigSchema', () => {
     expect(index).toMatchObject({
       format: 'dial-managed-config-schema-index@1',
       appId: 'ai-dial-chat',
-      current: '1.1.0',
+      current: '1.2.0',
       supported: SUPPORTED_MANAGED_CONFIG_SCHEMA_VERSIONS,
     });
     expect(index.versions).toEqual([
       {
-        schemaVersion: '1.1.0',
-        file: 'ai-dial-chat-1.1.0.json',
+        schemaVersion: '1.2.0',
+        file: 'ai-dial-chat-1.2.0.json',
         schemaSha256: expect.stringMatching(/^[0-9a-f]{64}$/),
         canonicalBytes: canonicalByteLength(artifact.schema),
       },

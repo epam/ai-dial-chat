@@ -13,26 +13,10 @@ import {
   publishedRevision,
 } from './managed-stack.fixtures';
 
-/* The real schema manages no feature, and none of the welcome-text or
- * usage-limit keys these tests use, so they run on the test-only contract
- * (see test-managed-contract.fixtures.ts). The real announcement and
- * celebration keys are covered by managed-content-activation.spec.ts. */
-vi.mock(
-  '../../config-registry/config-registry.constants',
-  async (importOriginal) =>
-    (
-      await import('../managed-config/test-managed-contract.fixtures')
-    ).withTestManagedRegistry(await importOriginal()),
-);
-vi.mock('../../managed-runtime/snapshot-acceptance', async (importOriginal) =>
-  (
-    await import('../managed-config/test-managed-contract.fixtures')
-  ).withTestManagedValidators(
-    await importOriginal(),
-    (await import('../../config-registry/config-registry.constants'))
-      .CONFIG_DEFINITIONS,
-  ),
-);
+/* These tests run on the real 1.2.0 contract: the welcome text, the usage
+ * threshold and features.usageLimitsControl, its only managed feature. The
+ * announcement and celebration keys are covered by
+ * managed-content-activation.spec.ts. */
 
 const ACTIVE = {
   MANAGED_CONFIG_MODE: 'active',
@@ -368,6 +352,30 @@ describe('managed configuration activation', () => {
       await expect(
         service.isEnabled(FeatureKey.UsageLimitsControl, beta),
       ).resolves.toBe(false);
+    });
+
+    /* The explicit variable supplies the configured bit, so it wins over a
+     * published off; the dev rollout removes it when the feature is activated. */
+    it('lets an explicit environment true override a published enabled: false', async () => {
+      const { service } = await featureStack(
+        { enabled: false },
+        { USAGE_LIMITS_CONTROL_ENABLED: 'true' },
+      );
+      await expect(
+        service.isEnabled(FeatureKey.UsageLimitsControl, anonymous),
+      ).resolves.toBe(true);
+    });
+
+    it('follows a published enabled: false once the variable is removed', async () => {
+      const { service } = await featureStack({ enabled: false });
+      await expect(
+        service.isEnabled(FeatureKey.UsageLimitsControl, anonymous),
+      ).resolves.toBe(false);
+      expect(
+        (await service.getClientConfig(anonymous)).features[
+          'usageLimitsControl'
+        ],
+      ).toBe(false);
     });
 
     it('closes an active feature the usable snapshot has no policy for', async () => {

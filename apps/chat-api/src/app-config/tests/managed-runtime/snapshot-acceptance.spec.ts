@@ -1,7 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { CONFIG_DEFINITIONS } from '../../config-registry/config-registry.constants';
 import { canonicalSha256 } from '../../managed-config/canonical-json';
 import { PINNED_MANAGED_CONFIG_SCHEMA_SHA256 } from '../../managed-config/managed-config.constants';
 import { ManagedRejectionReason } from '../../managed-runtime/managed-runtime.types';
@@ -10,10 +9,6 @@ import {
   compileManagedPayloadValidators,
   type AcceptanceContext,
 } from '../../managed-runtime/snapshot-acceptance';
-import {
-  compileTestManagedPayloadValidators,
-  withTestManagedKeys,
-} from '../managed-config/test-managed-contract.fixtures';
 import { snapshotBody } from './managed-runtime.fixtures';
 
 const validators = compileManagedPayloadValidators();
@@ -56,14 +51,11 @@ const V100 = {
   schemaSha256: PINNED_MANAGED_CONFIG_SCHEMA_SHA256['1.0.0'],
 };
 
-/* The real schema manages no feature. Feature-policy admission is checked
- * against the test-only contract, which adds a managed feature. */
-const featureContext = () =>
-  chatContext({
-    validators: compileTestManagedPayloadValidators(
-      withTestManagedKeys(CONFIG_DEFINITIONS),
-    ),
-  });
+/* A 1.1.0 envelope: announcements and celebrations, no managed feature. */
+const V110 = {
+  schemaVersion: '1.1.0',
+  schemaSha256: PINNED_MANAGED_CONFIG_SCHEMA_SHA256['1.1.0'],
+};
 
 const tour = (...hints: unknown[]) => ({
   config: { 'onboarding.hints': hints },
@@ -184,7 +176,7 @@ describe('acceptSnapshot', () => {
   });
 
   it('rejects a version this build does not support', () => {
-    expect(rejectionOf(snapshotBody({ schemaVersion: '1.2.0' }))).toBe(
+    expect(rejectionOf(snapshotBody({ schemaVersion: '1.3.0' }))).toBe(
       ManagedRejectionReason.UnsupportedSchema,
     );
   });
@@ -226,10 +218,39 @@ describe('acceptSnapshot', () => {
       },
       features: {},
     };
-    const result = acceptSnapshot(snapshotBody({ payload }), chatContext());
+    const result = acceptSnapshot(
+      snapshotBody({ ...V110, payload }),
+      chatContext(),
+    );
     expect(result.accepted).toBe(true);
     if (!result.accepted) return;
     expect(result.snapshot.schemaVersion).toBe('1.1.0');
+  });
+
+  it('rejects a 1.2.0 feature under the 1.1.0 version', () => {
+    const payload = {
+      config: {},
+      features: { 'features.usageLimitsControl': { enabled: true } },
+    };
+    expect(rejectionOf(snapshotBody({ ...V110, payload }))).toBe(
+      ManagedRejectionReason.InvalidPayload,
+    );
+  });
+
+  it('accepts a 1.2.0 snapshot with the welcome text, tabs, usage values and feature', () => {
+    const payload = {
+      config: {
+        'welcomeScreen.description': 'Ask me anything',
+        'fileManager.availableTabs': ['my_files', 'shared'],
+        'usageLimits.warningThresholdPercent': 90,
+        'usageLimits.spendingLimitsMode': 'enforce',
+      },
+      features: { 'features.usageLimitsControl': { enabled: true } },
+    };
+    const result = acceptSnapshot(snapshotBody({ payload }), chatContext());
+    expect(result.accepted).toBe(true);
+    if (!result.accepted) return;
+    expect(result.snapshot.schemaVersion).toBe('1.2.0');
   });
 
   it('rejects an announcement title Studio would never publish', () => {
@@ -249,7 +270,7 @@ describe('acceptSnapshot', () => {
         'features.usageLimitsControl': { enabled: true, percentage: 5 },
       },
     };
-    expect(rejectionOf(snapshotBody({ payload }), featureContext())).toBe(
+    expect(rejectionOf(snapshotBody({ payload }))).toBe(
       ManagedRejectionReason.InvalidPayload,
     );
   });
@@ -259,13 +280,13 @@ describe('acceptSnapshot', () => {
     ['a null value', { config: { 'onboarding.hints': null }, features: {} }],
     [
       'a key the current schema does not manage',
-      { config: { 'welcomeScreen.description': 'Welcome' }, features: {} },
+      { config: { 'mcpApps.theme': 'dark' }, features: {} },
     ],
     [
       'a feature the current schema does not manage',
       {
         config: {},
-        features: { 'features.usageLimitsControl': { enabled: true } },
+        features: { 'features.projectsEnabled': { enabled: true } },
       },
     ],
   ])('rejects %s as an invalid payload', (_label, payload) => {
@@ -342,7 +363,7 @@ describe('acceptSnapshot', () => {
   ])(
     'rejects a feature policy with %s as an invalid payload',
     (_label, payload) => {
-      expect(rejectionOf(snapshotBody({ payload }), featureContext())).toBe(
+      expect(rejectionOf(snapshotBody({ payload }))).toBe(
         ManagedRejectionReason.InvalidPayload,
       );
     },
@@ -364,7 +385,7 @@ describe('acceptSnapshot', () => {
         'features.usageLimitsControl': { enabled: true, availability },
       },
     };
-    expect(rejectionOf(snapshotBody({ payload }), featureContext())).toBe(
+    expect(rejectionOf(snapshotBody({ payload }))).toBe(
       ManagedRejectionReason.SemanticViolation,
     );
   });
@@ -387,7 +408,7 @@ describe('acceptSnapshot', () => {
 
 describe('compileManagedPayloadValidators', () => {
   it('compiles every supported version from the bundled artifacts', () => {
-    expect([...validators.keys()]).toEqual(['1.0.0', '1.1.0']);
+    expect([...validators.keys()]).toEqual(['1.0.0', '1.1.0', '1.2.0']);
   });
 
   it('refuses an artifact whose hash differs from its pin', () => {

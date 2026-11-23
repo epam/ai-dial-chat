@@ -30,11 +30,15 @@ import {
  *   (role-gate rows with `roles beta`), and the gate turns it off later;
  * - a blank managed text resolves to `undefined` at the provider instead of
  *   `''`, so it cannot shadow a lower-priority source; the client mapping
- *   hides blank and null alike. Schema 1.1.0 manages the two banner texts,
- *   so the `empty` rows of `announcement.title` and
- *   `announcement.description` record `undefined`, while the unmanaged
- *   `welcomeScreen.description` records `''` until 1.2.0 manages it.
- * The effective value of every row is the one recorded before both changes.
+ *   hides blank and null alike. Schema 1.1.0 manages the two banner texts
+ *   and 1.2.0 the welcome text, so the `empty` rows of
+ *   `announcement.title`, `announcement.description` and
+ *   `welcomeScreen.description` record `undefined`.
+ * One effective value changed on purpose, with schema 1.2.0:
+ * `fileManagerTabs` is normalized into the fixed tab order, without `all`
+ * below two source tabs (rows `nonDefault` and `valid`), so a published or
+ * environment list cannot empty File Manager.
+ * Every other effective value is the one recorded before these changes.
  */
 
 type LoggedOutcome = Outcome & { readonly logs?: readonly string[] };
@@ -171,7 +175,7 @@ const KEY_EXPECTATIONS: Readonly<
   'welcomeScreen.description': {
     [EnvCaseName.Absent]: { provider: undefined, effective: null },
     [EnvCaseName.NonDefault]: { provider: 'Welcome', effective: 'Welcome' },
-    [EnvCaseName.Empty]: { provider: '', effective: null },
+    [EnvCaseName.Empty]: { provider: undefined, effective: null },
   },
   'footer.html': {
     [EnvCaseName.Absent]: { provider: undefined, effective: '' },
@@ -300,7 +304,7 @@ const KEY_EXPECTATIONS: Readonly<
     },
     [EnvCaseName.NonDefault]: {
       provider: ['shared', 'my_files'],
-      effective: ['shared', 'my_files'],
+      effective: ['my_files', 'shared'],
     },
     [EnvCaseName.Empty]: {
       provider: undefined,
@@ -1119,7 +1123,7 @@ const PARSER_EXPECTATIONS: Readonly<Record<string, LoggedOutcome>> = {
   },
   'fileManager.availableTabs valid': {
     provider: ['organization', 'all'],
-    effective: ['organization', 'all'],
+    effective: ['organization'],
     logs: [],
   },
   'fileManager.availableTabs partly unknown': {
