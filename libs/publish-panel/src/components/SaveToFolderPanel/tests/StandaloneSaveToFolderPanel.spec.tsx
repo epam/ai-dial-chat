@@ -1,28 +1,51 @@
+import type { FolderDestination } from '@epam/ai-dial-react-file-manager';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import type { ReactNode } from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FolderDestinationRoot } from '../../../models/folder-destination';
 import type { StandaloneSaveToFolderPanelProps } from '../../../models/save-to-folder-panel';
+import { SaveVersionMode } from '../../../types/save-to-folder';
 import { StandaloneSaveToFolderPanel } from '../StandaloneSaveToFolderPanel';
 
-const treeProps = vi.fn();
+interface PanelStubProps {
+  isOpen: boolean;
+  labels: { title: string };
+  item: { title: string; summary?: ReactNode };
+  action: {
+    label: string;
+    busyLabel: string;
+    isDisabled?: boolean;
+    onClick: () => void;
+  };
+  isSubmitting?: boolean;
+  submitError?: string;
+  roots: unknown[];
+  mainSections: ReactNode;
+  renderFolderViewFooter: (pending: FolderDestination | undefined) => ReactNode;
+  getDisabledReason?: unknown;
+}
 
-vi.mock('../../PublishFoldersTree/PublishFoldersTree', () => ({
-  PublishFoldersTree: (props: {
-    onDestinationChange: (destination: unknown) => void;
-  }) => {
-    treeProps(props);
+const panelProps = vi.fn();
+let pendingForFooter: FolderDestination | undefined;
+
+/* The real panel and its tree live in the file-manager package; this lib owns only the mapping onto them. */
+vi.mock('@epam/ai-dial-react-file-manager', () => ({
+  FolderDestinationPanel: (props: PanelStubProps) => {
+    panelProps(props);
     return (
-      <div role="tree" aria-label="Folders">
+      <div role="dialog" aria-label={props.labels.title}>
+        <div role="group" aria-label="Summary">
+          {props.item.summary ?? props.item.title}
+        </div>
+        {props.mainSections}
+        <div>{props.renderFolderViewFooter(pendingForFooter)}</div>
+        {props.submitError && <p>{props.submitError}</p>}
         <button
-          onClick={() =>
-            props.onDestinationChange({
-              rootKey: 'organization',
-              path: ['EPAM'],
-            })
-          }
+          disabled={props.action.isDisabled}
+          onClick={props.action.onClick}
         >
-          EPAM
+          {props.isSubmitting ? props.action.busyLabel : props.action.label}
         </button>
       </div>
     );
@@ -68,138 +91,118 @@ const renderPanel = (props: Partial<StandaloneSaveToFolderPanelProps> = {}) =>
   );
 
 describe('StandaloneSaveToFolderPanel', () => {
-  it('opens on the main view, named by its title', () => {
+  beforeEach(() => {
+    panelProps.mockClear();
+    pendingForFooter = undefined;
+  });
+
+  it('names the dialog by its title and shows the resource title when there is no entity type', () => {
     renderPanel();
     expect(screen.getByRole('dialog', { name: 'Save QuickApp' })).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'Summary' }).textContent).toBe(
+      'Design Review Agent',
+    );
     expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
   });
 
-  it('submits from Save and closes from Cancel', async () => {
+  it('submits from the panel action and disables it when the host says so', async () => {
     const onSubmit = vi.fn();
-    const onClose = vi.fn();
-    renderPanel({ onSubmit, onClose });
+    const { rerender } = renderPanel({ onSubmit });
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(onSubmit).toHaveBeenCalledOnce();
-    expect(onClose).toHaveBeenCalledOnce();
+
+    rerender(
+      <StandaloneSaveToFolderPanel
+        isOpen
+        onClose={vi.fn()}
+        onSubmit={onSubmit}
+        isSubmitDisabled
+        resource={{ title: 'Design Review Agent' }}
+        roots={roots}
+        destination={{ rootKey: 'personal', path: [] }}
+        onDestinationChange={vi.fn()}
+        onCreateFolder={vi.fn()}
+      />,
+    );
+    expect(
+      (screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
   });
 
-  it('disables Save when the host says so', () => {
-    renderPanel({ isSubmitDisabled: true });
-    expect(screen.getByRole('button', { name: 'Save' })).toHaveProperty(
-      'disabled',
-      true,
-    );
+  it('shows the saving label while submitting and forwards the submit error', () => {
+    renderPanel({ isSubmitting: true, submitError: 'Could not save' });
+    expect(screen.getByRole('button', { name: 'Saving…' })).toBeTruthy();
+    expect(screen.getByText('Could not save')).toBeTruthy();
   });
 
-  it('shows the saving label and keeps controls disabled while submitting', () => {
-    renderPanel({ isSubmitting: true });
-    expect(screen.getByRole('button', { name: 'Saving…' })).toHaveProperty(
-      'disabled',
-      true,
-    );
-    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveProperty(
-      'disabled',
-      true,
-    );
-  });
-
-  it('switches to the folder view, moving focus to its heading', async () => {
+  it('hands the panel roots without the host-only access-rules flag', () => {
     renderPanel();
-    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
-    const heading = screen.getByText('Change folder');
-    expect(heading.matches(':focus')).toBe(true);
-    expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Select' })).toBeTruthy();
+    expect(panelProps).toHaveBeenCalledWith(
+      expect.objectContaining({
+        roots: [
+          { key: 'personal', label: 'Personal', items: [] },
+          { key: 'organization', label: 'Organization', items: [] },
+        ],
+      }),
+    );
   });
 
-  it('forwards getDisabledReason to the folder tree in the folder view', async () => {
+  it('forwards getDisabledReason to the panel', () => {
     const getDisabledReason = vi.fn();
     renderPanel({ getDisabledReason });
-    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
-
-    expect(treeProps).toHaveBeenLastCalledWith(
+    expect(panelProps).toHaveBeenCalledWith(
       expect.objectContaining({ getDisabledReason }),
     );
   });
 
-  it('commits the pending destination only on Select', async () => {
-    const onDestinationChange = vi.fn();
-    renderPanel({ onDestinationChange });
-    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
-    await userEvent.click(screen.getByRole('button', { name: 'EPAM' }));
-    expect(onDestinationChange).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole('button', { name: 'Select' }));
-    expect(onDestinationChange).toHaveBeenCalledWith({
-      rootKey: 'organization',
-      path: ['EPAM'],
+  it('renders the version choice, the destination note and the dependencies note in the main view', () => {
+    renderPanel({
+      destinationNote: 'Org note',
+      dependenciesNote: 'Dependencies note',
+      version: {
+        versionMode: SaveVersionMode.Keep,
+        onVersionModeChange: vi.fn(),
+        currentVersion: '1.0.0',
+        newVersion: '',
+        onNewVersionChange: vi.fn(),
+      },
     });
-    expect(
-      screen.getByRole('button', { name: 'Change' }).matches(':focus'),
-    ).toBe(true);
+    expect(screen.getByText('Org note')).toBeTruthy();
+    expect(screen.getByText('Dependencies note')).toBeTruthy();
+    expect(screen.getByText('Keep version 1.0.0')).toBeTruthy();
   });
 
-  it('discards the pending destination on Back and on Cancel', async () => {
-    const onDestinationChange = vi.fn();
-    const onClose = vi.fn();
-    renderPanel({ onDestinationChange, onClose });
-
-    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
-    await userEvent.click(screen.getByRole('button', { name: 'EPAM' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
-    expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
-
-    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
-    await userEvent.click(screen.getByRole('button', { name: 'EPAM' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-
-    expect(onDestinationChange).not.toHaveBeenCalled();
-    expect(onClose).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
-  });
-
-  it('shows access rules under the tree for a folder of a root that takes them', async () => {
+  it('shows access rules under the tree for a folder of a root that takes them', () => {
+    pendingForFooter = { rootKey: 'organization', path: ['EPAM'] };
     renderPanel({ accessRules });
-    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
-    expect(screen.queryByRole('region', { name: 'Access rules' })).toBeNull();
-
-    await userEvent.click(screen.getByRole('button', { name: 'EPAM' }));
-
     expect(
       screen.getByRole('region', { name: 'Access rules' }).textContent,
     ).toBe('EPAM');
   });
 
-  it('hides the access rules for a destination the host marks as taking none', async () => {
+  it('shows no access rules for a root that takes none or before a folder is picked', () => {
+    pendingForFooter = { rootKey: 'personal', path: ['Notes'] };
+    const { unmount } = renderPanel({ accessRules });
+    expect(screen.queryByRole('region', { name: 'Access rules' })).toBeNull();
+    unmount();
+
+    pendingForFooter = undefined;
+    renderPanel({ accessRules });
+    expect(screen.queryByRole('region', { name: 'Access rules' })).toBeNull();
+  });
+
+  it('hides the access rules for a destination the host marks as taking none', () => {
+    pendingForFooter = { rootKey: 'organization', path: ['EPAM'] };
     const isHiddenFor = vi.fn(
       (destination: { path: string[] }) => destination.path[0] === 'EPAM',
     );
     renderPanel({ accessRules: { ...accessRules, isHiddenFor } });
-    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
-
-    await userEvent.click(screen.getByRole('button', { name: 'EPAM' }));
 
     expect(screen.queryByRole('region', { name: 'Access rules' })).toBeNull();
     expect(isHiddenFor).toHaveBeenCalledWith({
       rootKey: 'organization',
       path: ['EPAM'],
     });
-  });
-
-  it('reports the pending destination and resets it to the committed one on Back', async () => {
-    const onPendingDestinationChange = vi.fn();
-    renderPanel({ onPendingDestinationChange });
-    const committed = { rootKey: 'personal', path: [] };
-
-    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
-    expect(onPendingDestinationChange).toHaveBeenLastCalledWith(committed);
-    await userEvent.click(screen.getByRole('button', { name: 'EPAM' }));
-    expect(onPendingDestinationChange).toHaveBeenLastCalledWith({
-      rootKey: 'organization',
-      path: ['EPAM'],
-    });
-    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
-    expect(onPendingDestinationChange).toHaveBeenLastCalledWith(committed);
   });
 });

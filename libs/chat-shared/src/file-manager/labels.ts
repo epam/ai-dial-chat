@@ -25,11 +25,6 @@ export type RenameValidationMessages = NonNullable<
   DialFileManagerComponentProps['renameValidationMessages']
 >;
 
-/** Configuration for the destination-folder picker popup. */
-export type DialFileManagerDestinationFolderPopupOptions = NonNullable<
-  DialFileManagerComponentProps['destinationFolderPopupOptions']
->;
-
 /** Title and description pair for an empty-state display. */
 export interface EmptyStateCopy {
   /** Primary empty-state heading. */
@@ -85,22 +80,16 @@ export interface DialFileManagerShellLabels {
   duplicateLabel: string;
   /** Label for the "Add folder" button in the destination picker. */
   addFolderLabel: string;
-  /** Label for the hidden-files toggle in the destination-folder picker. */
-  hiddenFilesSwitcherLabel: string;
-  /** Returns the header for the copy destination popup. */
-  getCopyHeader: (count: number, name?: string) => string;
-  /** Returns the header for the move destination popup. */
-  getMoveHeader: (count: number, name?: string) => string;
+  /** Title of the Copy destination panel. */
+  copyDestinationTitle: string;
+  /** Title of the Move destination panel. */
+  moveDestinationTitle: string;
+  /** Returns the text naming several items in the destination panel's summary row. */
+  getDestinationItemsLabel: (count: number) => string;
   /** Tooltip shown on the disabled source folder in the destination picker. */
   moveSourceDisabledTooltip: string;
   /** Tooltip shown when the move destination is a moved folder or lies inside one. */
   movedIntoItselfTooltip: string;
-  /** Tooltip shown when a destination folder is still loading. */
-  folderPickerLoadingTooltip: string;
-  /** Empty-state title in the destination-folder picker. */
-  folderPickerEmptyStateTitle: string;
-  /** Empty-state description in the destination-folder picker. */
-  folderPickerEmptyStateDescription: string;
   /** Overlay text shown during a copy operation. */
   copyingLabel: string;
   /** Overlay text shown during a move operation. */

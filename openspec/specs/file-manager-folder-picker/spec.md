@@ -2,31 +2,33 @@
 
 ## Purpose
 
-The destination-folder popup opened from the Copy and Move actions.
+The destination-folder side panel opened from the Copy and Move actions.
 
 ## Requirements
 
-### Requirement: Destination-folder popup opens from Copy/Move actions
+### Requirement: Destination-folder panel opens from Copy/Move actions
 
-Clicking a `DialFileManagerActions.Copy` or `.Move` action (grid row menu, tree row menu, or bulk actions toolbar — wherever the action is present per `file-manager-tabs`) SHALL open the destination-folder popup built into `@epam/ai-dial-react-file-manager` (`DialDestinationFolderPopup`, mounted internally by `DialFileManager`'s `FileManagerContext`). No component in this repo owns this popup's mount/unmount lifecycle — it is entirely package-internal state (`openDestinationFolderPopup`, `handleOpenDestinationFolderPopup`, `handleCloseDestinationFolderPopup`).
+Clicking a `DialFileManagerActions.Copy` or `.Move` action (grid row menu, tree row menu, or bulk actions toolbar — wherever the action is present per `file-manager-tabs`) SHALL open the end-edge destination panel built into `@epam/ai-dial-react-file-manager` (`FolderDestinationPanel`, mounted internally by `DialFileManager` as `FileManagerDestinationPanel`). The shell does not pass `onDestinationRequest`, so the built-in panel is always used. No component in this repo owns the panel's mount/unmount lifecycle; open state, mode and items are package-internal.
 
-**State ownership**: the shared `DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileManagerShell/DialFileManagerShell.tsx`, `@epam/ai-dial-chat-shared/file-manager`) owns only the *options* passed into the popup via `destinationFolderPopupOptions`; it owns no popup open/closed state itself. `apps/chat/src/components/DialFileManagerShell/DialFileManagerShell.tsx` is a thin wrapper that passes the `useDialFileManager` result to it as `controller`.
+**State ownership**: the shared `DialFileManagerShell` (`libs/chat-shared/src/file-manager/DialFileManagerShell/DialFileManagerShell.tsx`, `@epam/ai-dial-chat-shared/file-manager`) owns only the _options_ passed to the panel via `destinationPanelOptions`; it owns no panel open/closed state. `apps/chat/src/components/DialFileManagerShell/DialFileManagerShell.tsx` is a thin wrapper that passes the `useDialFileManager` result to it as `controller`.
 
-#### Scenario: Copy action opens the popup in copy mode
+The shell SHALL NOT pass `destinationFolderPopupOptions` or `onFolderPopupPathChange`; both belong to the retired modal popup.
+
+#### Scenario: Copy action opens the panel in copy mode
 
 - **WHEN** the user triggers the Copy action on one or more items
-- **THEN** the destination-folder popup opens, browsing the same folder tree already loaded for the active tab, listing its files and folders without row actions
+- **THEN** the destination panel opens over the file manager, showing the folder tree already loaded for the active tab
 
-#### Scenario: Move action opens the popup in move mode
+#### Scenario: Move action opens the panel in move mode
 
 - **WHEN** the user triggers the Move action on one or more items
-- **THEN** the destination-folder popup opens in move mode, browsing the same folder tree, listing its files and folders without row actions
+- **THEN** the destination panel opens in move mode over the same folder tree
 
 ---
 
-### Requirement: Popup confirm dispatches to the already-wired copy/move handlers
+### Requirement: Panel confirm dispatches to the already-wired copy/move handlers
 
-Confirming a destination in the popup SHALL invoke the same `onCopyFiles(items, destinationFolder)` / `onMoveToFiles(items, sourceFolder, destinationFolder)` callbacks already wired on `DialFileManagerShell` per [file-manager-copy-move](../file-manager-copy-move/spec.md) — no new callback prop is introduced by this capability.
+Confirming a destination in the panel SHALL run name-conflict resolution and then invoke the same `onCopyFiles(items, destinationFolder)` / `onMoveToFiles(items, sourceFolder, destinationFolder)` callbacks already wired on `DialFileManagerShell` per [file-manager-copy-move](../file-manager-copy-move/spec.md) — no new callback prop is introduced by this capability.
 
 #### Scenario: Confirming copy destination calls onCopyFiles
 
@@ -40,196 +42,93 @@ Confirming a destination in the popup SHALL invoke the same `onCopyFiles(items, 
 
 ---
 
-### Requirement: Popup labels are translated via i18n
+### Requirement: Panel text is translated via i18n
 
-`DialFileManagerShell` SHALL pass a `destinationFolderPopupOptions` object to `DialFileManager` containing `copyLabel`, `moveLabel`, `addFolderLabel`, and `hiddenFilesSwitcherLabel` taken from its host-supplied `labels` (`DialFileManagerShellLabels`, `libs/chat-shared/src/file-manager/labels.ts`). The shell calls no `useTranslation`; the hosts (`DialFileManagerPage`, `DialFileManagerModal`) resolve every label with `t()`. No hardcoded English string SHALL be visible in the popup regardless of active locale.
+`DialFileManagerShell` SHALL pass a `destinationPanelOptions` object to `DialFileManager` built from its host-supplied `labels` (`DialFileManagerShellLabels`, `libs/chat-shared/src/file-manager/labels.ts`):
 
-`copyLabel`/`moveLabel` SHALL reuse the same translation keys already used for the Copy/Move action labels (`DialFileManagerI18nKeys.CopyAction` = "Copy to" / `DialFileManagerI18nKeys.MoveAction` = "Move to"). `hiddenFilesSwitcherLabel` reuses `DialFileManagerI18nKeys.HiddenFiles` ("Hidden files").
+| `destinationPanelOptions` field | Shell label |
+| --- | --- |
+| `copyTitle` | `copyDestinationTitle` |
+| `moveTitle` | `moveDestinationTitle` |
+| `copyLabel` | `copyLabel` |
+| `moveLabel` | `moveLabel` |
+| `getSourceItemsLabel` | `getDestinationItemsLabel` |
+| `disabledPathTooltip` | `moveSourceDisabledTooltip` |
+| `movedIntoItselfTooltip` | `movedIntoItselfTooltip` |
+| `panelLabels.createFolderLabel` | `addFolderLabel` |
 
-#### Scenario: Popup shows translated Copy button label
+The shell calls no `useTranslation`; the hosts (`DialFileManagerPage`, `DialFileManagerModal`) resolve every label with `t()` and an enum key. Panel text not listed above (search placeholder, folder-name errors, retry) keeps the package's English default until a label is added.
 
-- **WHEN** the popup opens in copy mode with `i18n.language` set to a non-English locale that has a translation for `dialFileManager.copyAction`
-- **THEN** the popup's confirm button displays the translated string, not the package default
+#### Scenario: Panel shows translated Copy button label
 
-#### Scenario: Popup shows translated Add folder button
+- **WHEN** the panel opens in copy mode with a locale that translates `dialFileManager.copyAction`
+- **THEN** the panel's primary button displays the translated string, not the package default
 
-- **WHEN** the popup is open
-- **THEN** the "Add folder" button displays `t(DialFileManagerI18nKeys.FolderPickerAddFolderLabel)`, not the ui-kit default `"Add folder"`
+#### Scenario: Panel title follows the mode
 
-#### Scenario: Popup shows translated hidden-files toggle
+- **WHEN** the panel opens in move mode
+- **THEN** its title is `t(DialFileManagerI18nKeys.MoveAction)`
 
-- **WHEN** the popup is open
-- **THEN** the hidden-files toggle label displays `t(DialFileManagerI18nKeys.HiddenFiles)`, not the package default
+#### Scenario: Several items are named by count
 
----
-
-### Requirement: Popup title reflects item count and name
-
-`destinationFolderPopupOptions` SHALL include `getCopyHeader(itemsCount, itemName)` and `getMoveHeader(itemsCount, itemName)` render functions. For a single item, the title SHALL include the item's name. For multiple items, the title SHALL include the count.
-
-#### Scenario: Single-item copy shows the item name in the title
-
-- **WHEN** the user copies a single file named `report.pdf`
-- **THEN** the popup title is produced via `t(DialFileManagerI18nKeys.CopyHeaderSingle, { name: 'report.pdf' })`
-
-#### Scenario: Multi-item move shows the count in the title
-
-- **WHEN** the user moves 3 selected items
-- **THEN** the popup title is produced via `t(DialFileManagerI18nKeys.MoveHeaderMultiple, { count: 3 })`
+- **WHEN** the user copies or moves 3 selected items
+- **THEN** the panel's summary row reads `t(DialFileManagerI18nKeys.DestinationItemsLabel, { count: 3 })`
 
 ---
 
-### Requirement: Copy and Move disable the source folder as a destination
+### Requirement: Copy and Move disable unusable destinations
 
-`DialFileManagerShell` (`libs/chat-shared`) SHALL set `destinationFolderPopupOptions.sourceFolder` the same way in copy and move mode. While the folder the popup is pointed at is still loading, `sourceFolder` SHALL be that loading path and `disabledPathTooltip` SHALL be `labels.folderPickerLoadingTooltip`. Otherwise, when every selected item shares the same parent folder, `sourceFolder` SHALL be that common parent folder and `disabledPathTooltip` SHALL be `labels.moveSourceDisabledTooltip`. When the selected items do not share one parent folder, the shell SHALL leave `sourceFolder` `undefined`, and `DialFileManager` (`@epam/ai-dial-react-file-manager`) then falls back to its current folder path as the disabled source.
+The built-in panel disables the folder a Move starts from, and, for a moved folder, that folder and its subfolders. The shell supplies the tooltip text as `moveSourceDisabledTooltip` and `movedIntoItselfTooltip`; the BFF rejects the same move as a fallback (see `file-manager-copy-move`). The shell does not compute the source folder; the package derives it from the staged items.
 
-Copying an item into its own folder is therefore not offered by the picker; the dedicated duplicate action covers that case. DIAL Core's `moveResource`/copy rejection remains the fallback for any other invalid destination.
+#### Scenario: Move disables the source folder
 
-The shell SHALL also pass `destinationFolderPopupOptions.movedIntoItselfTooltip` as `labels.movedIntoItselfTooltip`. In move mode `DialFileManager` disables Move whenever the destination is a moved folder or lies inside one, and shows that tooltip on the disabled button; the BFF rejects the same move as a fallback (see `file-manager-copy-move`).
-
-#### Scenario: Move disables the single common source folder
-
-- **WHEN** the user selects items that all live in `/My files/reports/` and triggers Move
-- **THEN** `/My files/reports/` is disabled as a destination in the popup, with the translated `moveSourceDisabledTooltip` shown on hover/focus
-
-#### Scenario: Copy disables the single common source folder
-
-- **WHEN** the user selects items that all live in `/My files/reports/` and triggers Copy
-- **THEN** `/My files/reports/` is disabled as a destination in the popup, exactly as in move mode
+- **WHEN** the user moves items that all live in `/My files/reports/`
+- **THEN** that folder cannot be chosen as the destination, and the translated `moveSourceDisabledTooltip` explains why
 
 #### Scenario: Move disables the moved folder and its subfolders
 
-- **WHEN** the user moves the folder `/My files/reports/` and opens `/My files/reports/` or any folder inside it in the popup
-- **THEN** Move is disabled, with the translated `movedIntoItselfTooltip` shown on hover/focus
-
-#### Scenario: Mixed source folders fall back to the current folder
-
-- **WHEN** the user selects items from two different parent folders and triggers Copy or Move
-- **THEN** the shell passes no `sourceFolder`, and the file manager disables its current folder path instead
-- **AND** a copy or move into another invalid destination surfaces via the existing `file-manager-copy-move` partial-failure toast if DIAL Core rejects it
-
-#### Scenario: Loading destination is disabled with the loading tooltip
-
-- **WHEN** the folder the popup is pointed at is still loading its contents
-- **THEN** that path is disabled and the tooltip reads `folderPickerLoadingTooltip` until loading finishes
+- **WHEN** the user moves the folder `/My files/reports/` and picks it or a folder inside it
+- **THEN** Move is unavailable, with the translated `movedIntoItselfTooltip` shown
 
 ---
 
-### Requirement: Action-free browsing inside the popup, with files shown for context
+### Requirement: Panel lists folders and keeps files for conflict detection
 
-The popup SHALL list the browsed folder's full contents — **files as well as subfolders** — and SHALL NOT render row-level context actions (no Rename/Delete/etc. on rows shown inside the popup).
-
-Listing files is deliberate. An earlier revision of this requirement specified a folder-only grid; bug epam/ai-dial-chat#7796 ("[File Manager] Copy/Move Dialog — Files Not Shown Inside Selected Folder") asked for the opposite and was closed by the fix that shows them, so that a user choosing a destination can see what the folder already holds and anticipate a name collision. This requirement now records the shipped behaviour.
-
-The destination is always the **browsed folder**, carried by `DestinationFolderPopup`'s `destinationFolderPath`, never a row the user ticks; a file row is context, not a selectable target. The confirm action stays disabled while the browsed folder is the source folder.
-
-The application SHALL keep that listing complete in the `DialFileManager.items` tree regardless, so the copy/move conflict resolver can detect destination-name collisions.
-
-#### Scenario: Files are shown alongside subfolders
-
-- **WHEN** the popup is open and the current folder contains both files and subfolders
-- **THEN** both are listed
-- **AND** neither carries a row action menu
-- **AND** the confirm action still resolves to the browsed folder, not to any listed row
-
-#### Scenario: No context menu on popup rows
-
-- **WHEN** the user right-clicks or opens the row menu on a folder inside the popup
-- **THEN** no Rename/Delete/other action menu appears (known ui-kit limitation)
-
----
-
-### Requirement: Popup blocks Copy/Move confirmation while destination contents are loading
-
-When the popup browses into a folder whose listing is not already cached, `useDialFileManager` (via `useDialFileListing`, `libs/chat-hooks/src/files/useDialFileListing/useDialFileListing.ts`) SHALL preload the folder contents through the same active-tab list API used by normal navigation, without changing the outer file-manager path. The preloaded listing SHALL include both files and folders, which the popup lists (per the previous requirement) and the conflict resolver uses for collision detection.
-
-While that destination-folder preload request is pending, `DialFileManagerShell` SHALL pass a popup loading state and SHALL temporarily disable confirmation for the currently browsed destination folder. The disabled-state tooltip SHALL use `t(DialFileManagerI18nKeys.FolderPickerLoadingTooltip)`.
-
-#### Scenario: Uncached destination disables confirmation until loaded
-
-- **WHEN** the popup navigates to `/My files/Folder1/` and that folder is not yet present in the listing cache
-- **THEN** the app starts a preload request for `Folder1/`
-- **AND** the popup disables the Copy/Move confirm action for `/My files/Folder1/` while the request is pending
+The panel's tree lists folders only. The application SHALL keep the browsed listings, files included, in the `DialFileManager.items` tree so the copy/move conflict resolver can detect destination-name collisions. Folders whose contents are not yet loaded are loaded through the tree's expanded-path callback (`treeOptions.onExpandedPathsChange`) and shown as loading through `treeOptions.loadingPaths`.
 
 #### Scenario: Loaded destination can trigger conflict resolution
 
-- **WHEN** the preload for `/My files/Folder1/` completes and the folder contains `requirements.txt`
+- **WHEN** the listing of `/My files/Folder1/` has loaded and contains `requirements.txt`
 - **AND** the user confirms copying or moving an item named `requirements.txt` there
-- **THEN** ui-kit's conflict resolver sees the loaded file and can show the Replace/Duplicate decision before dispatching the copy/move handler
-
-#### Scenario: Cached destination does not show a loading block
-
-- **WHEN** the popup browses to a destination folder already present in the listing cache
-- **THEN** no additional preload is started and the Copy/Move confirm action remains governed only by the normal destination-validity rules
+- **THEN** the conflict resolver shows the Replace/Duplicate decision before the copy/move handler runs
 
 ---
 
-### Requirement: Add-folder inside the popup targets the popup's own path
+### Requirement: Add-folder inside the panel
 
-Clicking "Add folder" inside the popup SHALL create the new folder inside the folder currently browsed *within the popup*, not the outer grid's currently browsed folder. This SHALL work via the same `onCreateFolder`/`onCreateFolderValidate` callbacks already passed to the outer `DialFileManager` (no separate override is introduced) because the popup invokes them with its own current path as the call-time argument.
+The panel offers folder creation through the `onCreateFolder`/`onCreateFolderValidate` callbacks already passed to the outer `DialFileManager`; no separate override is introduced. The button label is `addFolderLabel`.
 
-#### Scenario: Add folder creates inside the popup's browsed folder
+#### Scenario: Add folder creates inside the chosen parent
 
-- **WHEN** the user opens the popup, navigates to a different folder than the one they started from in the outer grid, and clicks "Add folder"
-- **THEN** the new folder is created inside the folder currently browsed in the popup, not the outer grid's folder
-
----
-
-### Requirement: Folder-picker empty state
-
-`destinationFolderPopupOptions` SHALL include i18n-resolved `emptyStateTitle` and `emptyStateDescription` for when the currently-browsed popup folder has no subfolders.
-
-#### Scenario: Empty folder shows translated empty state
-
-- **WHEN** the popup browses into a folder with no subfolders
-- **THEN** the empty state displays `t(DialFileManagerI18nKeys.FolderPickerEmptyStateTitle)` and `t(DialFileManagerI18nKeys.FolderPickerEmptyStateDescription)`, not a blank or ui-kit-default empty state
+- **WHEN** the user creates a folder under a node of the panel's tree
+- **THEN** the folder is created inside that node, not inside the outer grid's current folder
 
 ---
 
-### Requirement: i18n keys for the folder picker
+### Requirement: i18n keys for the destination panel
 
-The following keys SHALL be added to `apps/chat/src/i18n/locales/en.json` with matching members added to `DialFileManagerI18nKeys` in `apps/chat/src/constants/translation-keys.ts`:
+The following keys SHALL exist in `apps/chat/src/i18n/locales/en.json` with matching members in `DialFileManagerI18nKeys` (`apps/chat/src/constants/i18n-keys/dial-file-manager.ts`):
 
-| Key | English value (example) |
-|-----|--------------------------|
+| Key | English value |
+| --- | --- |
 | `dialFileManager.folderPickerAddFolderLabel` | `Add folder` |
-| `dialFileManager.copyHeaderSingle` | `Copy "{{name}}"` |
-| `dialFileManager.copyHeaderMultiple` | `Copy {{count}} items` |
-| `dialFileManager.moveHeaderSingle` | `Move "{{name}}"` |
-| `dialFileManager.moveHeaderMultiple` | `Move {{count}} items` |
+| `dialFileManager.destinationItemsLabel` | `{{count}} items` |
 | `dialFileManager.moveSourceDisabledTooltip` | `Unavailable for the original location. Please select another folder` |
 | `dialFileManager.movedIntoItselfTooltip` | `A folder can't be moved into itself or its subfolders` |
-| `dialFileManager.folderPickerLoadingTooltip` | `Loading folder contents. Please wait` |
-| `dialFileManager.folderPickerEmptyStateTitle` | `This folder is empty` |
-| `dialFileManager.folderPickerEmptyStateDescription` | `Create a folder or choose another location` |
 
-The popup also reuses existing keys rather than adding its own: `dialFileManager.copyAction` (`Copy to`), `dialFileManager.moveAction` (`Move to`), and `dialFileManager.hiddenFiles` (`Hidden files`).
+The panel also reuses `dialFileManager.copyAction` (`Copy to`) and `dialFileManager.moveAction` (`Move to`) for its titles and button labels. No raw string literal keys are passed to `t()` anywhere in this capability.
 
-No raw string literal keys are passed to `t()` anywhere in this capability.
-
-#### Scenario: All popup strings resolve through the enum
+#### Scenario: All panel strings resolve through the enum
 
 - **WHEN** any of the strings above is rendered
 - **THEN** it is produced via `t(DialFileManagerI18nKeys.<Member>)`, never a raw string literal
-
----
-
-### Requirement: No feature-flag gating
-
-The folder picker SHALL NOT be gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — it is a direct, unconditional consequence of the Copy/Move actions already shipped in `file-manager-copy-move`, which are themselves ungated.
-
-#### Scenario: Folder picker is available whenever Copy/Move actions are available
-
-- **WHEN** a user has WRITE permission and the Copy/Move actions are visible per `file-manager-tabs`
-- **THEN** the destination-folder popup is available without checking any `ENABLED_FEATURES` entry
-
----
-
-### Requirement: RTL and accessibility
-
-The popup SHALL be rendered entirely by `@epam/ai-dial-react-file-manager` using logical CSS properties and the inherited `dir` attribute from `<html>`. This change SHALL NOT introduce any physical-direction Tailwind classes or app-level RTL handling. Keyboard navigation and ARIA roles within the popup SHALL remain package-owned; the app-level change here is limited to supplying translated strings, which SHALL NOT alter focus order or semantics.
-
-#### Scenario: Popup inherits RTL layout
-
-- **WHEN** the active language is Arabic (`dir="rtl"` on `<html>`)
-- **THEN** the popup's layout mirrors correctly without any app-level RTL-specific code, since no app-level layout is introduced by this change

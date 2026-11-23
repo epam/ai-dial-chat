@@ -1,9 +1,7 @@
-import type { CSSProperties, Ref, RefObject } from 'react';
+import type { FolderDestinationTreeStyles } from '@epam/ai-dial-react-file-manager';
+import type { CSSProperties, RefObject } from 'react';
 import type { PublishAccessRulesLabels } from '../components/PublishAccessRules/PublishAccessRules';
-import type {
-  SaveToFolderView,
-  SaveVersionMode,
-} from '../types/save-to-folder';
+import type { SaveVersionMode } from '../types/save-to-folder';
 import type {
   FolderDestination,
   FolderDestinationRoot,
@@ -15,7 +13,6 @@ import type {
   PublishDependenciesStyles,
 } from './publish-dependencies-list';
 import type { PublishDependency } from './publish-dependency';
-import type { PublishFoldersTreeStyles } from './publish-folders-tree';
 import type { VersionHistorySectionProps } from './version-history';
 
 /** Text overrides for the body of the save-to-folder panel. */
@@ -62,18 +59,10 @@ export interface SaveToFolderPanelLabels {
   retryLabel?: string;
 }
 
-/** Color overrides for the body of the save-to-folder panel. */
+/** Color overrides for the sections the save-to-folder panel adds to the main view. */
 export interface SaveToFolderPanelColors {
-  /** Section heading text color. Defaults to `--text-primary`. */
-  headingText?: string;
-  /** Destination path text color. Defaults to `--text-secondary`. */
-  destinationText?: string;
   /** Text color of `dependenciesNote` and `destinationNote`. Defaults to `--text-secondary`. */
   noteText?: string;
-  /** Summary row border color. Defaults to `--stroke-tertiary`. */
-  summaryBorder?: string;
-  /** Summary row background color. Defaults to `--bg-layer-sunken`. */
-  summaryBackground?: string;
 }
 
 /** Style overrides for the body of the save-to-folder panel. */
@@ -81,7 +70,7 @@ export interface SaveToFolderPanelStyles {
   /** Color overrides. */
   colors?: SaveToFolderPanelColors;
   /** Style overrides forwarded to the folder tree. */
-  folderTree?: PublishFoldersTreeStyles;
+  folderTree?: FolderDestinationTreeStyles;
   /** Additional CSS custom properties applied to the body root. */
   cssVars?: CSSProperties;
 }
@@ -124,8 +113,28 @@ export interface SaveToFolderAccessRulesProps {
   isHiddenFor?: (destination: FolderDestination) => boolean;
 }
 
-/** Props shared by the body and the standalone shell of the save-to-folder panel. */
-export interface SaveToFolderPanelBaseProps {
+/** Text overrides for the shell of the standalone save-to-folder panel. */
+export interface StandaloneSaveToFolderPanelLabels {
+  /** Main view title and dialog name. Defaults to `'Save'`. */
+  title?: string;
+  /** Folder view title. Defaults to `'Change folder'`. */
+  changeFolderTitle?: string;
+  /** Accessible name of the close button. Defaults to `'Close'`. */
+  closeAriaLabel?: string;
+  /** Accessible name of the folder view's back button. Defaults to `'Back'`. */
+  backAriaLabel?: string;
+  /** Cancel button label. Defaults to `'Cancel'`. */
+  cancelLabel?: string;
+  /** Save button label. Defaults to `'Save'`. */
+  saveLabel?: string;
+  /** Save button label while saving. Defaults to `'Saving…'`. */
+  savingLabel?: string;
+  /** Select button label in the folder view. Defaults to `'Select'`. */
+  selectLabel?: string;
+}
+
+/** Props of the standalone save-to-folder panel. */
+export interface StandaloneSaveToFolderPanelProps {
   /** Summary row content; a `type` renders the entity header with icon and type badge. */
   resource: PublishResourceSummary;
   /** Top-level destination roots, in display order. */
@@ -134,7 +143,7 @@ export interface SaveToFolderPanelBaseProps {
   destination: FolderDestination;
   /** Called with the destination the user selected and confirmed in the folder tree. */
   onDestinationChange: (destination: FolderDestination) => void;
-  /** Reason a folder is unavailable as a destination, or `undefined` when it is usable; forwarded to the folder tree, see `PublishFoldersTreeProps.getDisabledReason`. */
+  /** Reason a folder is unavailable as a destination, or `undefined` when it is usable; forwarded to the folder tree, see `FolderDestinationTreeProps.getDisabledReason`. */
   getDisabledReason?: (destination: FolderDestination) => string | undefined;
   /** Called when a new folder name is confirmed under `rootKey` at `parentPath`. */
   onCreateFolder: (
@@ -176,62 +185,6 @@ export interface SaveToFolderPanelBaseProps {
   headingClassName?: string;
   /** Typography class of the destination path. Defaults to `'dial-small-semi-text'`. */
   destinationClassName?: string;
-}
-
-/** Props of the body of the save-to-folder panel. */
-export interface SaveToFolderPanelProps extends SaveToFolderPanelBaseProps {
-  /** Which view to render. */
-  view: SaveToFolderView;
-  /** Called when the user activates Change in the main view. */
-  onChangeFolderClick: () => void;
-  /** Ref attached to the Change button, for returning focus after the folder view closes. */
-  changeFolderButtonRef?: Ref<HTMLButtonElement>;
-  /** Destination selected in the folder view but not yet confirmed. */
-  pendingDestination?: FolderDestination;
-  /** Called when the user selects or deselects a folder in the folder view. */
-  onPendingDestinationChange: (
-    destination: FolderDestination | undefined,
-  ) => void;
-}
-
-/** Text overrides for the shell of the standalone save-to-folder panel. */
-export interface StandaloneSaveToFolderPanelLabels {
-  /** Main view title and dialog name. Defaults to `'Save'`. */
-  title?: string;
-  /** Folder view title. Defaults to `'Change folder'`. */
-  changeFolderTitle?: string;
-  /** Accessible name of the close button. Defaults to `'Close'`. */
-  closeAriaLabel?: string;
-  /** Accessible name of the folder view's back button. Defaults to `'Back'`. */
-  backAriaLabel?: string;
-  /** Cancel button label. Defaults to `'Cancel'`. */
-  cancelLabel?: string;
-  /** Save button label. Defaults to `'Save'`. */
-  saveLabel?: string;
-  /** Save button label while saving. Defaults to `'Saving…'`. */
-  savingLabel?: string;
-  /** Select button label in the folder view. Defaults to `'Select'`. */
-  selectLabel?: string;
-}
-
-/** Color overrides for the shell of the standalone save-to-folder panel. */
-export interface StandaloneSaveToFolderPanelColors {
-  /** Backdrop background color. Defaults to `--bg-backdrop`. */
-  backdropBackground?: string;
-  /** Panel background color. Defaults to `--bg-layer-raised`. */
-  panelBackground?: string;
-  /** Panel leading-edge border color. Defaults to `--stroke-secondary`. */
-  panelBorder?: string;
-  /** Divider color below the header and above the footer. Defaults to `--stroke-tertiary`. */
-  dividerBorder?: string;
-  /** Scrollbar thumb color of the scrollable body. Defaults to `--stroke-secondary`. */
-  scrollbarThumb?: string;
-  /** Header title text color. Defaults to `--text-primary`. */
-  titleText?: string;
-}
-
-/** Props of the standalone save-to-folder panel. */
-export interface StandaloneSaveToFolderPanelProps extends SaveToFolderPanelBaseProps {
   /** Whether the panel is open. */
   isOpen: boolean;
   /** Called when the panel asks to close: Close, Cancel in the main view, backdrop, or Escape. */
@@ -248,8 +201,6 @@ export interface StandaloneSaveToFolderPanelProps extends SaveToFolderPanelBaseP
   ) => void;
   /** Text overrides for the shell. */
   labels?: StandaloneSaveToFolderPanelLabels;
-  /** Color overrides for the shell. */
-  colors?: StandaloneSaveToFolderPanelColors;
   /** Typography class of the header title. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;
 }

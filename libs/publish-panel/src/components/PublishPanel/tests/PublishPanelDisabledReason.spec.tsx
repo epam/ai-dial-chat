@@ -3,17 +3,22 @@ import { describe, expect, it, vi } from 'vitest';
 import { PublishPanelView } from '../../../types/publish-panel';
 import { PublishPanel } from '../PublishPanel';
 
-const treeProps = vi.fn();
+const bodyProps = vi.fn();
 
-vi.mock('../../PublishFoldersTree/PublishFoldersTree', () => ({
-  PublishFoldersTree: (props: unknown) => {
-    treeProps(props);
-    return <div role="tree" aria-label="Folders" />;
-  },
-}));
+vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-react-file-manager')>();
+  return {
+    ...actual,
+    FolderDestinationPanelBody: (props: unknown) => {
+      bodyProps(props);
+      return <div role="tree" aria-label="Folders" />;
+    },
+  };
+});
 
 describe('PublishPanel getDisabledReason', () => {
-  it('forwards getDisabledReason to the folder view tree', () => {
+  it('forwards getDisabledReason to the folder view body', () => {
     const getDisabledReason = vi.fn();
 
     render(
@@ -36,7 +41,7 @@ describe('PublishPanel getDisabledReason', () => {
       />,
     );
 
-    expect(treeProps).toHaveBeenLastCalledWith(
+    expect(bodyProps).toHaveBeenLastCalledWith(
       expect.objectContaining({ getDisabledReason }),
     );
   });

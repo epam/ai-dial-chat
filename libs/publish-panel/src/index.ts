@@ -85,13 +85,6 @@ export type {
   PublishHistoryListProps,
 } from './components/PublishHistoryList/PublishHistoryList';
 
-export { PublishFoldersTree } from './components/PublishFoldersTree/PublishFoldersTree';
-export type {
-  PublishFoldersTreeColors,
-  PublishFoldersTreeProps,
-  PublishFoldersTreeStyles,
-} from './models/publish-folders-tree';
-
 export { PublishPanel } from './components/PublishPanel/PublishPanel';
 export type {
   PublishPanelProps,
@@ -129,18 +122,14 @@ export type {
   UnpublishConfirmationDialogProps,
 } from './models/unpublish-confirmation-dialog';
 
-export { SaveToFolderView, SaveVersionMode } from './types/save-to-folder';
-export { SaveToFolderPanel } from './components/SaveToFolderPanel/SaveToFolderPanel';
+export { SaveVersionMode } from './types/save-to-folder';
 export { StandaloneSaveToFolderPanel } from './components/SaveToFolderPanel/StandaloneSaveToFolderPanel';
 export type {
   SaveToFolderAccessRulesProps,
-  SaveToFolderPanelBaseProps,
   SaveToFolderPanelColors,
   SaveToFolderPanelLabels,
-  SaveToFolderPanelProps,
   SaveToFolderPanelStyles,
   SaveToFolderVersionProps,
-  StandaloneSaveToFolderPanelColors,
   StandaloneSaveToFolderPanelLabels,
   StandaloneSaveToFolderPanelProps,
 } from './models/save-to-folder-panel';

@@ -4,6 +4,7 @@ import {
   DialFileManagerTabs,
   GridSelectionMode,
   type DialFileAcceptType,
+  type DialFileManagerDestinationPanelOptions,
   type FileManagerGridRow,
   type FileTreeOptions,
 } from '@epam/ai-dial-react-file-manager';
@@ -19,14 +20,7 @@ import {
   LiveRegion,
   LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type FC,
-} from 'react';
+import { memo, useCallback, useEffect, useMemo, type FC } from 'react';
 import type { FileManagerSelectableNode } from '../../types/file-manager-node';
 import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
@@ -35,13 +29,8 @@ import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
 } from '../file-manager-variant';
-import type {
-  DialFileManagerDestinationFolderPopupOptions,
-  DialFileManagerShellLabels,
-  EmptyStateCopy,
-} from '../labels';
+import type { DialFileManagerShellLabels, EmptyStateCopy } from '../labels';
 import { OperationLoaderModal } from '../OperationLoaderModal/OperationLoaderModal';
-import { getParentFolderPath } from '../path';
 import type { DialFileManagerShellStyles } from '../shell-styles';
 import {
   buildTransferQueueLabels,
@@ -51,14 +40,6 @@ import {
 } from '../upload-queue';
 import { useGridEditingScroll } from '../useGridEditingScroll/useGridEditingScroll';
 import styles from './DialFileManagerShell.module.scss';
-
-type DestinationFolderPopupOptions =
-  DialFileManagerDestinationFolderPopupOptions & {
-    sourceFolder?: string;
-    destinationFolderPath?: string;
-    setDestinationFolderPath?: (path?: string) => void;
-    filesLoading?: boolean;
-  };
 
 interface OverlayFlags {
   isDeleting: boolean;
@@ -184,7 +165,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     expandedPaths,
     loadedPaths,
     onExpandedPathsChange,
-    onFolderPopupPathChange,
     folderPopupLoadingPaths,
     onUploadFiles,
     onUploadArchive,
@@ -231,10 +211,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
 
   /* Per-tab rules follow the browsed folder's source tab; the strip keeps `activeTab`. */
   const gateTab = sectionTab ?? activeTab;
-
-  const [destinationFolderPath, setDestinationFolderPath] = useState<
-    string | undefined
-  >(undefined);
 
   const { handleGridApiChange, reset: resetGridEditingScroll } =
     useGridEditingScroll();
@@ -458,61 +434,27 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
     ],
   );
 
-  const commonSelectedParentFolder = useMemo(() => {
-    let commonParent: string | undefined;
-    for (const selectedPath of selectedPaths) {
-      const parent = getParentFolderPath(selectedPath);
-      if (commonParent === undefined) {
-        commonParent = parent;
-      } else if (commonParent !== parent) {
-        return undefined;
-      }
-    }
-    return commonParent;
-  }, [selectedPaths]);
-
-  const isDestinationFolderLoading =
-    destinationFolderPath != null &&
-    folderPopupLoadingPaths.has(destinationFolderPath);
-
-  const disabledDestinationPath = isDestinationFolderLoading
-    ? destinationFolderPath
-    : commonSelectedParentFolder;
-
-  const destinationFolderPopupOptions = useMemo(
-    (): DestinationFolderPopupOptions => ({
+  /* Copy and Move open the file manager's built-in `FolderDestinationPanel`; the shell only supplies its text. */
+  const destinationPanelOptions = useMemo(
+    (): DialFileManagerDestinationPanelOptions => ({
+      copyTitle: labels.copyDestinationTitle,
+      moveTitle: labels.moveDestinationTitle,
       copyLabel: labels.copyLabel,
       moveLabel: labels.moveLabel,
-      addFolderLabel: labels.addFolderLabel,
-      hiddenFilesSwitcherLabel: labels.hiddenFilesSwitcherLabel,
-      getCopyHeader: labels.getCopyHeader,
-      getMoveHeader: labels.getMoveHeader,
-      disabledPathTooltip: isDestinationFolderLoading
-        ? labels.folderPickerLoadingTooltip
-        : labels.moveSourceDisabledTooltip,
+      getSourceItemsLabel: labels.getDestinationItemsLabel,
+      disabledPathTooltip: labels.moveSourceDisabledTooltip,
       movedIntoItselfTooltip: labels.movedIntoItselfTooltip,
-      emptyStateTitle: labels.folderPickerEmptyStateTitle,
-      emptyStateDescription: labels.folderPickerEmptyStateDescription,
-      sourceFolder: disabledDestinationPath,
-      destinationFolderPath,
-      setDestinationFolderPath,
-      filesLoading: isDestinationFolderLoading,
+      panelLabels: { createFolderLabel: labels.addFolderLabel },
     }),
     [
+      labels.copyDestinationTitle,
+      labels.moveDestinationTitle,
       labels.copyLabel,
       labels.moveLabel,
-      labels.addFolderLabel,
-      labels.hiddenFilesSwitcherLabel,
-      labels.getCopyHeader,
-      labels.getMoveHeader,
-      labels.folderPickerLoadingTooltip,
+      labels.getDestinationItemsLabel,
       labels.moveSourceDisabledTooltip,
       labels.movedIntoItselfTooltip,
-      labels.folderPickerEmptyStateTitle,
-      labels.folderPickerEmptyStateDescription,
-      isDestinationFolderLoading,
-      disabledDestinationPath,
-      destinationFolderPath,
+      labels.addFolderLabel,
     ],
   );
 
@@ -695,7 +637,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             clearSearchResults={clearSearchResults}
             gridOptions={gridOptions}
             treeOptions={treeOptions}
-            onFolderPopupPathChange={onFolderPopupPathChange}
             toolbarOptions={toolbarOptions}
             bulkActionsToolbarOptions={bulkActionsToolbarOptions}
             autoSelectUploadedItems={autoSelectUploadedItems}
@@ -728,7 +669,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             conflictResolutionPopupOptions={
               labels.conflictResolutionPopupOptions
             }
-            destinationFolderPopupOptions={destinationFolderPopupOptions}
+            destinationPanelOptions={destinationPanelOptions}
             forbiddenSymbolsRegExp={NOT_ALLOWED_SYMBOLS_REGEXP}
             forbiddenSymbolsTooltip={labels.forbiddenSymbolsTooltip}
             getDisabledTooltip={getDisabledTooltip}

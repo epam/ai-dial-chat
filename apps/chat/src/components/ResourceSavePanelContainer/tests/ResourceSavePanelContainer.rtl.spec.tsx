@@ -3,7 +3,7 @@ import {
   SaveDestinationRoot,
 } from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { type SaveToFolderPanelProps } from '@epam/ai-dial-publish-panel';
+import { type StandaloneSaveToFolderPanelProps } from '@epam/ai-dial-publish-panel';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -17,13 +17,13 @@ import { getPublishRules } from '../../../server-api/publish-rules.api';
 import { NotifiableEntity } from '../../../types/entity-notification';
 import ResourceSavePanelContainer from '../ResourceSavePanelContainer';
 
-/* The real panel body stands in for the drawer shell, so the notes are rendered by the library under `dir="rtl"`. */
+/* The real panel is rendered next to a button that picks a destination, so the notes are rendered by the library under `dir="rtl"`. */
 vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-publish-panel')>();
   return {
     ...actual,
-    StandaloneSaveToFolderPanel: (props: SaveToFolderPanelProps) => (
+    StandaloneSaveToFolderPanel: (props: StandaloneSaveToFolderPanelProps) => (
       <>
         <button
           type="button"
@@ -36,10 +36,7 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
         >
           Pick unit folder
         </button>
-        <actual.SaveToFolderPanel
-          {...props}
-          view={actual.SaveToFolderView.Main}
-        />
+        <actual.StandaloneSaveToFolderPanel {...props} />
       </>
     ),
   };
@@ -142,7 +139,7 @@ describe('ResourceSavePanelContainer — notes in a right-to-left page', () => {
     await waitFor(() => expect(listOrgUnits).toHaveBeenCalled());
 
     await userEvent.click(
-      screen.getByRole('button', { name: 'Pick unit folder' }),
+      screen.getByRole('button', { name: 'Pick unit folder', hidden: true }),
     );
 
     const icon = await screen.findByText(
