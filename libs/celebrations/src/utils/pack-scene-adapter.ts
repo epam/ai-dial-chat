@@ -17,10 +17,16 @@ import {
 import {
   prepareAnchoredSceneData,
   requiresCatBorrow,
+  requiresComposerCarry,
   requiresComposerOutline,
   requiresCopyTrack,
   type PackScenePreparation,
 } from './celebration-pack-scene';
+import {
+  onComposerCarryAnimationCreated,
+  onComposerCarryPlaybackStarted,
+  prepareComposerCarryScene,
+} from './composer-carry-adapter';
 import { watchComposer } from './composer-watch';
 import {
   onCopyTrackAnimationCreated,
@@ -122,6 +128,18 @@ const COPY_TRACK_ADAPTER: PackSceneAdapter = {
   onPlaybackStarted: onCopyTrackPlaybackStarted,
 };
 
+const COMPOSER_CARRY_ADAPTER: PackSceneAdapter = {
+  watchedAnchors: ['composer'],
+  isAvailable: () => hasObservers() && hasWebAnimations(),
+  prepare: (data, placement, { anchors }) =>
+    prepareComposerCarryScene(data, placement, anchors.composer),
+  onAnimationCreated: (context) => {
+    watchAnchor(context);
+    onComposerCarryAnimationCreated(context);
+  },
+  onPlaybackStarted: onComposerCarryPlaybackStarted,
+};
+
 /** Returns the adapter of a `composer-anchor-v1` scene, or `undefined` for a viewport stage. */
 export const resolvePackSceneAdapter = (
   scene: CelebrationSceneDescriptor,
@@ -132,5 +150,6 @@ export const resolvePackSceneAdapter = (
     return undefined;
   if (requiresCatBorrow(scene)) return CAT_BORROW_ADAPTER;
   if (requiresCopyTrack(scene)) return COPY_TRACK_ADAPTER;
+  if (requiresComposerCarry(scene)) return COMPOSER_CARRY_ADAPTER;
   return anchoredAdapter(requiresComposerOutline(scene));
 };
