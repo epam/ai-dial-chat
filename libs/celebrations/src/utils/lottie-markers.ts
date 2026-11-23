@@ -149,3 +149,21 @@ export const readNamespacedMarkers = (
   );
   return scopes;
 };
+
+/* Frames come from seconds, so boundaries compare within this tolerance. */
+const RANGE_EPSILON = 1e-6;
+
+/**
+ * Returns the range that holds `frame`: ranges are half-open, so a frame on a
+ * shared boundary belongs to the later range, and a frame on an end no range
+ * continues belongs to the range it ends; `undefined` when no range holds it.
+ */
+export const findNamespacedRange = (
+  ranges: readonly LottieNamespacedMarker[],
+  frame: number,
+): LottieNamespacedMarker | undefined =>
+  ranges.find(
+    (range) =>
+      frame >= range.frame - RANGE_EPSILON &&
+      frame < end(range) - RANGE_EPSILON,
+  ) ?? ranges.find((range) => Math.abs(frame - end(range)) <= RANGE_EPSILON);

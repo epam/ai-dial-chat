@@ -1,6 +1,7 @@
 import type { CelebrationAnchors } from '../models/celebration';
 
-const DEFAULT_WELCOME_REGION = '[role="region"]';
+/** Selector of the welcome region when the host names none. */
+export const DEFAULT_WELCOME_REGION = '[role="region"]';
 
 /** Selector of conversation links in the host history, or `null` without history anchors. */
 export const getHistoryLinkSelector = ({

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LottieMarkerVocabulary } from '../../models/lottie-markers';
-import { readNamespacedMarkers } from '../lottie-markers';
+import { findNamespacedRange, readNamespacedMarkers } from '../lottie-markers';
 
 const PRIZES = ['0', '1'];
 
@@ -224,5 +224,27 @@ describe('readNamespacedMarkers', () => {
     expect(() =>
       readNamespacedMarkers({ markers: {} }, VOCABULARY, RANGE),
     ).toThrow('not a list');
+  });
+});
+
+describe('findNamespacedRange', () => {
+  const range = (frame: number, duration: number) => ({
+    kind: 'bind',
+    argument: String(frame),
+    frame,
+    duration,
+  });
+  const ranges = [range(0, 10), range(10, 5)];
+
+  it('gives a shared boundary to the later range and a final end to the range it ends', () => {
+    expect(findNamespacedRange(ranges, 10)?.frame).toBe(10);
+    expect(findNamespacedRange(ranges, 15)?.frame).toBe(10);
+    expect(findNamespacedRange(ranges, 9.999_999_9)?.frame).toBe(10);
+    expect(findNamespacedRange(ranges, 4)?.frame).toBe(0);
+  });
+
+  it('finds no range outside every range', () => {
+    expect(findNamespacedRange(ranges, 15.1)).toBeUndefined();
+    expect(findNamespacedRange(ranges, -1)).toBeUndefined();
   });
 });
