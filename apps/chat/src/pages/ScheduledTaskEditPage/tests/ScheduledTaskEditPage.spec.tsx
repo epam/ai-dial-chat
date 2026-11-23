@@ -364,9 +364,7 @@ describe('ScheduledTaskEditPage', () => {
       const save = await screen.findByRole('button', { name: 'buttons.save' });
       expect((save as HTMLButtonElement).disabled).toBe(true);
       if (kind === 'skill') {
-        expect(screen.getByTestId('skill-field-error').textContent).toBe(
-          'skillSelector.unavailableSkillTooltip',
-        );
+        expect(screen.queryByTestId('skill-field-error')).toBeNull();
       }
       await userEvent.click(save);
       await userEvent.click(

@@ -135,9 +135,7 @@ const ScheduledTaskEditPage: FC = () => {
     );
   }, [isSkillsSupported]);
   const resolveSkillUrlsError = () => {
-    if (hasUnavailableSkills) {
-      return t(SkillSelectorI18nKeys.UnavailableSkillTooltip);
-    }
+    /* An unavailable skill is flagged on its own tag only, not on the field. */
     if (
       values?.skillUrls?.some((url) =>
         isSkillSelectionUnsupported(url, isSkillsSupported),
