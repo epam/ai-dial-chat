@@ -44,8 +44,8 @@ Peers:
 
 - `react` ^19.2.8
 - `react-dom` ^19.2.8 (`NotificationStack` portals into `document.body`)
-- `@epam/ai-dial-ui-kit` ^0.16.0
-- `@epam/ai-dial-react-file-manager` ^0.4.3
+- `@epam/ai-dial-ui-kit` ^0.17.0-dev.1
+- `@epam/ai-dial-react-file-manager` 0.5.0-dev.5
 
 Installed for you as dependencies: `ag-grid-community`, `@tabler/icons-react`, `react-markdown`,
 `react-syntax-highlighter`, `remark-breaks`, `remark-gfm`, `remark-math`, `rehype-katex`,
