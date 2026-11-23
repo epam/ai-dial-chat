@@ -17,7 +17,7 @@ The system SHALL expose `POST /api/v1/conversations/duplicate?path=<sourcePath>`
 
 The returned `newPath` is the encoded full DIAL Core resource path and SHALL be treated as an opaque conversation identifier by callers.
 
-The duplicated conversation SHALL keep the source conversation's stored display name, sanitised via `prepareEntityName`, without adding a numeric title suffix. Its destination storage path SHALL be the clean path, and SHALL gain a fresh `generateUUID()` segment only when a resource already exists there:
+The duplicated conversation SHALL keep the source conversation's stored display name, sanitised via `prepareEntityName` and cut to `getConversationTitleMaxBytes(deploymentKey)` UTF-8 bytes so that the file name, UUID included, fits `DIAL_STORED_FILE_NAME_MAX_BYTES` (see the `auto-index-duplicate-names` capability, Requirement: Conversation file names fit DIAL Core's file-system limit), without adding a numeric title suffix. Its destination storage path SHALL be the clean path, and SHALL gain a fresh `generateUUID()` segment only when a resource already exists there:
 
 ```
 {deploymentKey}__{displayName}            // clean path is free
