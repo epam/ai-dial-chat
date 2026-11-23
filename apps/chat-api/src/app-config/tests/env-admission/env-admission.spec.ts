@@ -6,16 +6,14 @@ import {
   isLegacyContentLocalesInEffect,
 } from '../../env-admission/content-locales.admission';
 import { admitCustomVariables } from '../../env-admission/custom-variables.admission';
-import {
-  FILE_MANAGER_ALLOWED_TABS,
-  admitFileManagerTabs,
-} from '../../env-admission/file-manager-tabs.admission';
+import { admitFileManagerTabs } from '../../env-admission/file-manager-tabs.admission';
 import { admitOnboardingHints } from '../../env-admission/onboarding-hints.admission';
 import { admitPublicationFilterSources } from '../../env-admission/publication-filter-sources.admission';
 import {
   admitApplicationVisualizers,
   admitCustomVisualizers,
 } from '../../env-admission/visualizers.admission';
+import { FILE_MANAGER_ALLOWED_TABS } from '../../types/file-manager-tabs';
 
 const recordingLog = () => {
   const messages: string[] = [];

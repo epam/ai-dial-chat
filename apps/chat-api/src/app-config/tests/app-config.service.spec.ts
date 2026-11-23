@@ -1625,7 +1625,12 @@ describe('AppConfigService', () => {
         null,
         ['all', 'my_files', 'shared', 'organization'],
       ],
-      ['fileManager.availableTabs', 'fileManagerTabs', [1, null], [1, null]],
+      [
+        'fileManager.availableTabs',
+        'fileManagerTabs',
+        [1, null],
+        ['all', 'my_files', 'shared', 'organization'],
+      ],
       [
         'publish.publicationFilterSources',
         'publicationFilterSources',
@@ -2185,6 +2190,7 @@ describe('AppConfigService', () => {
           WELCOME_SCREEN_DESCRIPTION: 'Welcome',
           FILE_MANAGER_AVAILABLE_TABS: 'shared',
           USAGE_LIMITS_WARNING_THRESHOLD_PERCENT: '80',
+          SPENDING_LIMITS_MODE: 'shadow',
           USAGE_LIMITS_CONTROL_ENABLED: 'true',
           SCHEDULED_TASKS_ENABLED: 'true',
           SCHEDULED_TASKS_ENABLED_ROLES: 'beta',
@@ -2218,7 +2224,7 @@ describe('AppConfigService', () => {
           snapshotResolution(env),
         );
 
-        expect(CONFIG_DEFINITIONS.filter(isManagedKey)).toHaveLength(10);
+        expect(CONFIG_DEFINITIONS.filter(isManagedKey)).toHaveLength(15);
         expect(stripped).toEqual(withMetadata);
       },
     );

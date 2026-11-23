@@ -484,7 +484,7 @@ const ProjectsPage = () => {
     projectsClient,
     isProjectsEnabled,
   );
-  const { project, isNotFound } = useProject(
+  const { project, isNotFound, isAccessDenied } = useProject(
     projectsClient,
     projectId,
     isProjectsEnabled,
@@ -508,6 +508,8 @@ successful load it watches the first 1000 listed ids:
 
 A client without `watchProjects` gets a one-off load, as before.
 
+`useProject` returns `{ project, isLoading, hasError, isNotFound, isAccessDenied, retry, refresh }`. A `404` sets `isNotFound`, and a `403` sets `isAccessDenied`: the caller lost access to a project in another user's bucket, because the owner stopped sharing it or deleted it (DIAL Core answers both the same way). Any other failure sets `hasError`, the only state where `retry` can help.
+
 `useProjects` also returns `refresh()`, which re-reads the list without the loading state and keeps the current list when the request fails. Use it for a change the watch cannot report, such as the caller dropping a shared project from their list (DIAL Core emits no `DELETE` event for that).
 
 `useProjectConversations` reads a project's whole conversation list once,
@@ -525,7 +527,7 @@ meanwhile), calls `onDelete` once on a delete, and reconnects with the same
 backoff as `useProjects`, followed by one `onChange`. `useProject().refresh()`
 and `useProjectConversations().refresh()` re-read without the loading state;
 `refresh` of `useProject` resolves a `ProjectRefreshOutcome` (`Updated`,
-`NotFound`, `Failed`, `Skipped`). `useProjectConversations().markViewed(id)`
+`NotFound`, `AccessLost` on a `403`, `Failed`, `Skipped`). `useProjectConversations().markViewed(id)`
 clears a row's `isUnread` at once and calls the optional
 `ProjectsApiClient.markProjectConversationViewed`.
 `useProjectArtifacts(client, projectId)` reads the files the agents of the
@@ -904,7 +906,12 @@ const ProjectPage = () => {
         conversations.refresh(),
         artifacts.refresh(),
       ]);
-      if (outcome === ProjectRefreshOutcome.NotFound) leavePage();
+      if (
+        outcome === ProjectRefreshOutcome.NotFound ||
+        outcome === ProjectRefreshOutcome.AccessLost
+      ) {
+        leavePage();
+      }
     },
     onDelete: leavePage,
   });

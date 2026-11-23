@@ -6,6 +6,10 @@ import { CONFIG_DEFINITIONS } from '../../config-registry/config-registry.consta
 import { canonicalByteLength } from '../../managed-config/canonical-json';
 import type { ManagedConfigArtifact } from '../../managed-config/managed-config-artifact';
 import { MAX_MANAGED_PAYLOAD_BYTES } from '../../managed-config/managed-config.constants';
+import {
+  validateManagedSemantics,
+  type ManagedSemanticIssue,
+} from '../../managed-config/managed-semantics';
 import { createStudioAjv } from './studio-contract.fixtures';
 
 /*
@@ -13,10 +17,12 @@ import { createStudioAjv } from './studio-contract.fixtures';
  * schema with Config Studio's Ajv options. The fixtures are versioned with
  * the schema: a MINOR successor must still accept every valid one.
  *
- * No committed version manages a feature, so no payload can carry a feature
- * state. The 1.0.0 `featureStates` fixtures validate bare states against the
- * exported `$defs/featureState`, which every managed feature of a later
- * version references; the definition is unchanged in 1.1.0.
+ * 1.0.0 and 1.1.0 manage no feature. Their `featureStates` fixtures validate
+ * bare states against the exported `$defs/featureState`, which
+ * `features.usageLimitsControl` references from 1.2.0; the definition is
+ * unchanged in every version. From 1.2.0 the `semantic` fixtures also run
+ * Chat's semantic validator, with the issues Config Studio reports for the
+ * same `calendar_date` and `window_order` rules.
  */
 interface ExpectedError {
   readonly keyword: string;
@@ -30,6 +36,11 @@ interface ContractFixtures {
     name: string;
     payload: unknown;
     errors: readonly ExpectedError[];
+  }[];
+  readonly semantic?: readonly {
+    name: string;
+    payload: unknown;
+    issues: readonly ManagedSemanticIssue[];
   }[];
   readonly featureStates?: {
     readonly valid: readonly { name: string; state: unknown }[];
@@ -68,86 +79,104 @@ const errorsWith =
     }));
   };
 
-describe.each(['1.0.0', '1.1.0'])('managed-config %s contract', (version) => {
-  const fixtures = fixturesOf(version);
-  const artifact = artifactOf(version);
-  const errorsOf = errorsWith(createStudioAjv().compile(artifact.schema));
-  const featureStateSchema: typeof artifact.schema = {
-    $schema: artifact.schema['$schema'],
-    $defs: artifact.schema['$defs'],
-    $ref: '#/$defs/featureState',
-  };
-  const featureStateErrorsOf = errorsWith(
-    createStudioAjv().compile(featureStateSchema),
-  );
-  const managedKeys = Object.keys(
-    (
-      (artifact.schema['properties'] as Record<string, unknown>)['config'] as {
-        properties: Record<string, unknown>;
-      }
-    ).properties,
-  );
+describe.each(['1.0.0', '1.1.0', '1.2.0'])(
+  'managed-config %s contract',
+  (version) => {
+    const fixtures = fixturesOf(version);
+    const artifact = artifactOf(version);
+    const errorsOf = errorsWith(createStudioAjv().compile(artifact.schema));
+    const featureStateSchema: typeof artifact.schema = {
+      $schema: artifact.schema['$schema'],
+      $defs: artifact.schema['$defs'],
+      $ref: '#/$defs/featureState',
+    };
+    const featureStateErrorsOf = errorsWith(
+      createStudioAjv().compile(featureStateSchema),
+    );
+    const sections = artifact.schema['properties'] as Record<
+      string,
+      { properties: Record<string, unknown> }
+    >;
+    const managedKeys = [
+      ...Object.keys(sections['config'].properties),
+      ...Object.keys(sections['features'].properties),
+    ];
 
-  it('validates fixtures of its own version', () => {
-    expect(fixtures.schemaVersion).toBe(artifact.schemaVersion);
-  });
+    it('validates fixtures of its own version', () => {
+      expect(fixtures.schemaVersion).toBe(artifact.schemaVersion);
+    });
 
-  it.each(fixtures.valid)('accepts $name', ({ payload }) => {
-    expect(errorsOf(payload)).toEqual([]);
-  });
+    it.each(fixtures.valid)('accepts $name', ({ payload }) => {
+      expect(errorsOf(payload)).toEqual([]);
+    });
 
-  it.each(fixtures.invalid)('rejects $name', ({ payload, errors }) => {
-    const actual = errorsOf(payload);
-    expect(actual.length).toBeGreaterThan(0);
-    for (const expected of errors) {
-      expect(actual).toContainEqual(expected);
-    }
-  });
-
-  it.each(fixtures.featureStates?.valid ?? [])(
-    'accepts the feature state $name',
-    ({ state }) => {
-      expect(featureStateErrorsOf(state)).toEqual([]);
-    },
-  );
-
-  it.each(fixtures.featureStates?.invalid ?? [])(
-    'rejects the feature state $name',
-    ({ state, errors }) => {
-      const actual = featureStateErrorsOf(state);
+    it.each(fixtures.invalid)('rejects $name', ({ payload, errors }) => {
+      const actual = errorsOf(payload);
       expect(actual.length).toBeGreaterThan(0);
       for (const expected of errors) {
         expect(actual).toContainEqual(expected);
       }
-    },
-  );
+    });
 
-  it('fits every valid fixture within the Studio payload limit', () => {
-    for (const { name, payload } of fixtures.valid) {
-      expect(canonicalByteLength(payload), name).toBeLessThanOrEqual(
-        MAX_MANAGED_PAYLOAD_BYTES,
-      );
-    }
-  });
+    it.each(fixtures.featureStates?.valid ?? [])(
+      'accepts the feature state $name',
+      ({ state }) => {
+        expect(featureStateErrorsOf(state)).toEqual([]);
+      },
+    );
 
-  it('rejects every registry key this version does not export', () => {
-    for (const definition of CONFIG_DEFINITIONS) {
-      if (managedKeys.includes(definition.key)) continue;
-      const section = definition.type === 'feature' ? 'features' : 'config';
-      expect(
-        errorsOf({
-          config: {},
-          features: {},
-          [section]: { [definition.key]: 1 },
-        }),
-        definition.key,
-      ).toContainEqual({
-        keyword: 'additionalProperties',
-        instancePath: `/${section}`,
-      });
-    }
-  });
-});
+    it.each(fixtures.featureStates?.invalid ?? [])(
+      'rejects the feature state $name',
+      ({ state, errors }) => {
+        const actual = featureStateErrorsOf(state);
+        expect(actual.length).toBeGreaterThan(0);
+        for (const expected of errors) {
+          expect(actual).toContainEqual(expected);
+        }
+      },
+    );
+
+    it('finds no semantic issue in a valid fixture', () => {
+      for (const { name, payload } of fixtures.valid) {
+        expect(validateManagedSemantics(payload), name).toEqual([]);
+      }
+    });
+
+    it.each(fixtures.semantic ?? [])(
+      'reports the semantic issues of $name',
+      ({ payload, issues }) => {
+        expect(errorsOf(payload)).toEqual([]);
+        expect(validateManagedSemantics(payload)).toEqual(issues);
+      },
+    );
+
+    it('fits every valid fixture within the Studio payload limit', () => {
+      for (const { name, payload } of fixtures.valid) {
+        expect(canonicalByteLength(payload), name).toBeLessThanOrEqual(
+          MAX_MANAGED_PAYLOAD_BYTES,
+        );
+      }
+    });
+
+    it('rejects every registry key this version does not export', () => {
+      for (const definition of CONFIG_DEFINITIONS) {
+        if (managedKeys.includes(definition.key)) continue;
+        const section = definition.type === 'feature' ? 'features' : 'config';
+        expect(
+          errorsOf({
+            config: {},
+            features: {},
+            [section]: { [definition.key]: 1 },
+          }),
+          definition.key,
+        ).toContainEqual({
+          keyword: 'additionalProperties',
+          instancePath: `/${section}`,
+        });
+      }
+    });
+  },
+);
 
 describe('managed-config 1.1.0 announcements and celebrations', () => {
   const fixtures = fixturesOf('1.1.0');
@@ -327,6 +356,130 @@ describe('managed-config 1.1.0 announcements and celebrations', () => {
     }
     for (const value of rejected) {
       expect(errorsOf(payload(value)).length, value).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('managed-config 1.2.0 welcome text, File Manager and usage limits', () => {
+  const fixtures = fixturesOf('1.2.0');
+  const artifact = artifactOf('1.2.0');
+  const previous = artifactOf('1.1.0');
+  const errorsOf = errorsWith(createStudioAjv().compile(artifact.schema));
+  const schema = artifact.schema as {
+    properties: {
+      config: { properties: Record<string, JsonNode> };
+      features: { properties: Record<string, JsonNode> };
+    };
+  };
+  const property = (key: string): JsonNode =>
+    schema.properties.config.properties[key];
+  const payloadOf = (name: string) => {
+    const fixture = fixtures.valid.find((candidate) => candidate.name === name);
+    if (!fixture) throw new Error(`No fixture named ${name}`);
+    return fixture.payload as {
+      config: Record<string, unknown>;
+      features: Record<string, { targeting?: { roles: unknown[] } }>;
+    };
+  };
+
+  it('exports the 1.1.0 keys, the four new config keys and one feature', () => {
+    const previousKeys = Object.keys(
+      (previous.schema['properties'] as typeof schema.properties).config
+        .properties,
+    );
+    expect(Object.keys(schema.properties.config.properties).sort()).toEqual(
+      [
+        ...previousKeys,
+        'fileManager.availableTabs',
+        'usageLimits.spendingLimitsMode',
+        'usageLimits.warningThresholdPercent',
+        'welcomeScreen.description',
+      ].sort(),
+    );
+    expect(schema.properties.features.properties).toEqual({
+      'features.usageLimitsControl': expect.objectContaining({
+        $ref: '#/$defs/featureState',
+      }),
+    });
+  });
+
+  it('keeps the definitions and semantic constraints of 1.1.0', () => {
+    expect(artifact.schema['$defs']).toEqual(previous.schema['$defs']);
+    expect(artifact.schema['dial:semanticConstraints']).toEqual(
+      previous.schema['dial:semanticConstraints'],
+    );
+  });
+
+  it('tells editors that the tab order does not matter and the mode must match DIAL Core', () => {
+    const tabs = String(property('fileManager.availableTabs')['description']);
+    expect(tabs).toContain('the order here does not matter');
+    expect(tabs).toContain('All appears only with at least two other tabs');
+    expect(
+      String(property('usageLimits.spendingLimitsMode')['description']),
+    ).toContain("Must equal DIAL Core's spending-limits mode");
+    expect(property('welcomeScreen.description')['description']).toContain(
+      'markup is shown as typed',
+    );
+  });
+
+  it('adds no URL member', () => {
+    for (const key of [
+      'welcomeScreen.description',
+      'fileManager.availableTabs',
+      'usageLimits.warningThresholdPercent',
+      'usageLimits.spendingLimitsMode',
+    ]) {
+      expect(JSON.stringify(property(key))).not.toMatch(/url|href|host/i);
+    }
+  });
+
+  it('fits the representative publication', () => {
+    const { config, features } = payloadOf('the representative publication');
+    expect(config['onboarding.hints']).toHaveLength(10);
+    expect(config['announcement.items']).toHaveLength(3);
+    expect(config['fileManager.availableTabs']).toHaveLength(3);
+    expect(
+      features['features.usageLimitsControl'].targeting?.roles,
+    ).toHaveLength(10);
+  });
+
+  it('fits the usage-limits policy with 50 roles of 128 characters on its own', () => {
+    const { features } = payloadOf('the usage-limits policy at its maximum');
+    const roles = features['features.usageLimitsControl'].targeting
+      ?.roles as string[];
+    expect(roles).toHaveLength(50);
+    expect(roles.every((role) => role.length === 128)).toBe(true);
+  });
+
+  /* The examples of config/tests/validation.spec.ts and the environment
+   * decorators. The tab ids are those `admitFileManagerTabs` keeps; the
+   * environment drops an unknown id and keeps a repeat, the schema rejects
+   * both. */
+  it.each([
+    ['usageLimits.warningThresholdPercent', [1, 75, 99], [0, 100, 80.5, '75']],
+    [
+      'usageLimits.spendingLimitsMode',
+      ['off', 'shadow', 'enforce'],
+      ['ENFORCE ', 'on', 'true', ''],
+    ],
+    [
+      'fileManager.availableTabs',
+      [['all'], ['my_files', 'organization'], ['shared']],
+      [['review'], ['nope'], ['all', 'all']],
+    ],
+  ])('applies the environment rules to %s', (key, accepted, rejected) => {
+    const payload = (value: unknown) => ({
+      config: { [key]: value },
+      features: {},
+    });
+    for (const value of accepted) {
+      expect(errorsOf(payload(value)), JSON.stringify(value)).toEqual([]);
+    }
+    for (const value of rejected) {
+      expect(
+        errorsOf(payload(value)).length,
+        JSON.stringify(value),
+      ).toBeGreaterThan(0);
     }
   });
 });

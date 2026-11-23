@@ -80,6 +80,10 @@ export interface ProjectViewLabels {
   notFoundLabel: string;
   /** Label of the action that returns to the projects list. */
   browseProjectsLabel: string;
+  /** Title of the access-denied state. Defaults to `'You no longer have access to this project'`. */
+  accessDeniedLabel?: string;
+  /** Explanation under the access-denied title. Defaults to `'The owner may have stopped sharing it or deleted it.'`. */
+  accessDeniedDescription?: string;
   /** Accessible label of the loading spinner. Defaults to `'Loading project'`. */
   loadingAriaLabel?: string;
 }
@@ -137,6 +141,8 @@ export interface ProjectViewProps {
   hasError?: boolean;
   /** Shows the not-found state. Defaults to `false`. */
   isNotFound?: boolean;
+  /** Shows the access-denied state, with a way back to the list and no retry; it wins over `hasError`. Defaults to `false`. */
+  isAccessDenied?: boolean;
   /** Whether the project is pinned. */
   isPinned: boolean;
   /** Ignores Pin toggle activations while a pin change is saved; the toggle stays focusable. Defaults to `false`. */
@@ -177,7 +183,7 @@ export interface ProjectViewProps {
   isDetailsStacked?: boolean;
   /** Called from the retry action of the error state. */
   onRetry: () => void;
-  /** Called from the not-found state's action. */
+  /** Called from the action of the not-found and access-denied states. */
   onBrowseProjects: () => void;
   /** Content of the main column, before the Details panel (stacked above it on mobile); the column is omitted when unset. */
   mainContent?: ReactNode;

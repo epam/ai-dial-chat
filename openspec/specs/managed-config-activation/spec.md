@@ -58,12 +58,17 @@ A change of mode SHALL be a deployment configuration change. The backend SHALL N
 
 #### Scenario: Key the current schema does not manage is refused
 
-- **WHEN** the mode is `active` and `MANAGED_CONFIG_ACTIVE_KEYS=onboarding.hints,welcomeScreen.description` while the current schema is 1.1.0
-- **THEN** environment validation fails and names `MANAGED_CONFIG_ACTIVE_KEYS` and `welcomeScreen.description`
+- **WHEN** the mode is `active` and `MANAGED_CONFIG_ACTIVE_KEYS=onboarding.hints,mcpApps.theme` while the current schema is 1.2.0
+- **THEN** environment validation fails and names `MANAGED_CONFIG_ACTIVE_KEYS` and `mcpApps.theme`
 
 #### Scenario: 1.1.0 keys are accepted
 
 - **WHEN** the mode is `active` and `MANAGED_CONFIG_ACTIVE_KEYS=onboarding.hints,announcement.title,announcement.description,announcement.items,ui.activeEventId,ui.celebrationsEnabledByDefault`
+- **THEN** startup succeeds
+
+#### Scenario: 1.2.0 keys are accepted
+
+- **WHEN** the mode is `active` and `MANAGED_CONFIG_ACTIVE_KEYS` lists the five 1.1.0 keys above plus `welcomeScreen.description`, `fileManager.availableTabs`, `usageLimits.warningThresholdPercent`, `usageLimits.spendingLimitsMode` and `features.usageLimitsControl`
 - **THEN** startup succeeds
 
 #### Scenario: Active key missing from an older snapshot
@@ -107,7 +112,7 @@ For an active managed feature of a mapped `ai-dial-chat`, the effective value SH
 6. Role targeting matches.
 7. The deployment role gate of the feature, when it declares one, allows the caller.
 
-These gates SHALL apply to every schema version that exports a managed feature; schema 1.0.0 exports none, so in 1.0.0 no feature can be listed in `MANAGED_CONFIG_ACTIVE_KEYS`. An explicit environment `true` SHALL NOT satisfy any condition other than the first. An explicit environment `false` SHALL make the feature `false`. A feature that is not active SHALL keep its environment behavior.
+These gates SHALL apply to every schema version that exports a managed feature. Schemas 1.0.0 and 1.1.0 export none; 1.2.0 exports `features.usageLimitsControl`, which has no local capability rule and no deployment role gate, so conditions 4 and 7 always hold for it. An explicit environment `true` SHALL NOT satisfy any condition other than the first. An explicit environment `false` SHALL make the feature `false`. A feature that is not active SHALL keep its environment behavior.
 
 #### Scenario: Environment false is a kill switch
 
@@ -133,6 +138,21 @@ These gates SHALL apply to every schema version that exports a managed feature; 
 
 - **WHEN** the feature is active, its variable is unset, and a fresh snapshot sets `{ "enabled": true }`
 - **THEN** the feature is `true` for every caller
+
+#### Scenario: Usage-limits control follows a published window
+
+- **WHEN** `features.usageLimitsControl` is active, `USAGE_LIMITS_CONTROL_ENABLED` is unset, and a fresh 1.2.0 snapshot sets `{ "enabled": true, "availability": { "startsAt": "2026-12-01T00:00:00Z" } }`
+- **THEN** `features.usageLimitsControl` is `false` before that instant and `true` from it, without a new publication
+
+#### Scenario: Usage-limits control for a targeted role
+
+- **WHEN** the snapshot sets `{ "enabled": true, "targeting": { "roles": ["beta"] } }` and the caller's verified roles are `["staff"]`
+- **THEN** `features.usageLimitsControl` is `false` for that caller and `true` for a caller with `beta`
+
+#### Scenario: Explicit environment true overrides a published off
+
+- **WHEN** the feature is active, `USAGE_LIMITS_CONTROL_ENABLED=true` is explicit, and a fresh snapshot sets `{ "enabled": false }` with no window or targeting
+- **THEN** the feature is `true`, because the explicit variable supplies the configured bit; removing the variable makes it `false`
 
 ### Requirement: Availability window evaluation
 
@@ -337,3 +357,37 @@ Publishing an earlier revision's payload again (Studio's rollback) SHALL be an o
 
 - **WHEN** the rollback target was published under schema `1.0.0` and is republished against `1.0.0`
 - **THEN** the new revision is accepted against `ai-dial-chat-1.0.0.json`, and the 1.1.0 keys resolve from explicit ENV or their registry defaults
+
+### Requirement: Managed welcome text, tab list and usage limits match their environment output
+
+For `welcomeScreen.description`, `fileManager.availableTabs`, `usageLimits.warningThresholdPercent` and `usageLimits.spendingLimitsMode`, the same raw value SHALL produce the same client-config field from an explicit environment variable and from an active key in a usable 1.2.0 snapshot. An explicit variable SHALL still win. When the state is unusable, the registry default SHALL apply.
+
+#### Scenario: Welcome text from Config Studio
+
+- **WHEN** `welcomeScreen.description` is active, `WELCOME_SCREEN_DESCRIPTION` is unset, and a fresh snapshot sets `  Ask me anything  `
+- **THEN** `config.welcomeScreenDescription` equals what the same value in `WELCOME_SCREEN_DESCRIPTION` produces
+
+#### Scenario: Tab list from Config Studio
+
+- **WHEN** `fileManager.availableTabs` is active, `FILE_MANAGER_AVAILABLE_TABS` is unset, and a fresh snapshot sets `["organization", "my_files"]`
+- **THEN** `config.fileManagerTabs` is `["my_files", "organization"]`, in the fixed order, as from `FILE_MANAGER_AVAILABLE_TABS=organization,my_files`
+
+#### Scenario: Usage values from Config Studio
+
+- **WHEN** both usage keys are active, their variables are unset, and a fresh snapshot sets threshold `90` and mode `enforce`
+- **THEN** `config.usageLimitsWarningThresholdPercent` is `90` and `config.spendingLimitsMode` is `"enforce"`
+
+#### Scenario: Explicit mode still wins
+
+- **WHEN** `usageLimits.spendingLimitsMode` is active, `SPENDING_LIMITS_MODE=enforce` is explicit, and the snapshot sets `off`
+- **THEN** `config.spendingLimitsMode` is `"enforce"`, and shadow mode would report `env_shadowed` for the key
+
+#### Scenario: Stale snapshot drops to defaults
+
+- **WHEN** the four keys are active, their variables are unset, and the state is `stale`
+- **THEN** the fields are `null`, all four tabs, `75` and `"off"`, and `metadata.managed.state` is `stale`
+
+#### Scenario: Activated before publication
+
+- **WHEN** `usageLimits.spendingLimitsMode` is active, `SPENDING_LIMITS_MODE` was removed, and the fresh snapshot does not set the key
+- **THEN** `config.spendingLimitsMode` is `"off"`, the registry default

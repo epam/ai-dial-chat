@@ -1,4 +1,4 @@
-import { ProjectSource } from '@epam/ai-dial-chat-api-client';
+import { ProjectSource, ResponseError } from '@epam/ai-dial-chat-api-client';
 import { useIsMobile } from '@epam/ai-dial-chat-shared';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -150,6 +150,46 @@ describe('ProjectChatPage', () => {
         'conversation projects/a1b2c3/q4/conversations/x read-only:false duplicate:false exit:/projects/view/a1b2c3/q4',
       ),
     ).toBeTruthy();
+  });
+
+  it('replaces the chat with the lost-access state even when the opening page passed the project', async () => {
+    vi.mocked(getProject).mockRejectedValue(
+      new ResponseError(new Response(null, { status: 403 })),
+    );
+    const { router } = renderAt(undefined, {
+      project: { id: 'projects/a1b2c3/q4', name: 'Q4 launch', canEdit: true },
+    });
+
+    expect(
+      await screen.findByRole('heading', {
+        name: ProjectsI18nKeys.ViewAccessDenied,
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(ProjectsI18nKeys.ViewAccessDeniedDescription),
+    ).toBeTruthy();
+    expect(screen.queryByText(/^conversation /)).toBeNull();
+    await userEvent.click(
+      screen.getByRole('button', { name: ProjectsI18nKeys.ViewBrowseProjects }),
+    );
+    expect(router.state.location.pathname).toBe('/projects');
+  });
+
+  it('keeps the chat open when the details fail for another reason', async () => {
+    vi.mocked(getProject).mockRejectedValue(
+      new ResponseError(new Response(null, { status: 503 })),
+    );
+    renderAt(undefined, {
+      project: { id: 'projects/a1b2c3/q4', name: 'Q4 launch', canEdit: true },
+    });
+
+    await waitFor(() => expect(getProject).toHaveBeenCalled());
+    expect(screen.getByText(/^conversation /)).toBeTruthy();
+    expect(
+      screen.queryByRole('heading', {
+        name: ProjectsI18nKeys.ViewAccessDenied,
+      }),
+    ).toBeNull();
   });
 
   it('ignores a navigation project of another project', () => {

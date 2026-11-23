@@ -223,8 +223,8 @@ describe('CLIENT_CONFIG_MAPPINGS', () => {
       expect(first.fileManagerTabs).not.toBe(second.fileManagerTabs);
     });
 
-    it('passes a provider array through by reference without copying it', () => {
-      const tabs = ['my_files'];
+    it('normalizes a provider tab list into the fixed order, as a fresh array', () => {
+      const tabs = ['organization', 'my_files'];
       const config = createDefaultClientConfig();
 
       applyClientConfigValue(
@@ -233,7 +233,8 @@ describe('CLIENT_CONFIG_MAPPINGS', () => {
         makeInput({ resolved: tabs }),
       );
 
-      expect(config.fileManagerTabs).toBe(tabs);
+      expect(config.fileManagerTabs).toEqual(['my_files', 'organization']);
+      expect(config.fileManagerTabs).not.toBe(tabs);
     });
 
     it('substitutes the given appVersion into the footer', () => {

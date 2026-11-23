@@ -23,7 +23,8 @@ The one provider-level difference is that a blank managed text from ENV
 resolves to `undefined` instead of `""` (see
 [Related environment resolution](#related-environment-resolution)); the
 client-config field is `null` either way. From schema 1.1.0 this difference
-applies to `announcement.title` and `announcement.description`. A managed classification only makes
+applies to `announcement.title` and `announcement.description`, and from 1.2.0
+also to `welcomeScreen.description`. A managed classification only makes
 a key eligible for `MANAGED_CONFIG_ACTIVE_KEYS`; it is never permission to read.
 
 The schema's root description tells operators that a deployment applies the
@@ -63,27 +64,34 @@ Schema version 1.0.0 manages one key, the onboarding tour `onboarding.hints`
 announcement banner and its list, the celebration event, its default switch and
 the four celebration delivery keys (see
 [Announcements and celebrations](#announcements-and-celebrations)). Neither
-manages a feature. Of the 53 registry keys, 10 are managed, 29 are local-only,
-and the other 14 are eligible but unmanaged.
+manages a feature. Schema 1.2.0 adds the welcome text, the File Manager tabs,
+the two usage values and the first managed feature, `features.usageLimitsControl`
+(see
+[Welcome text, File Manager and usage limits](#welcome-text-file-manager-and-usage-limits)).
+Of the 53 registry keys, 15 are managed, 29 are local-only, and the other 9 are
+eligible but unmanaged.
 
 ### Rollout
 
 Each step is a separate change with its own schema version. The first
 schema an `ai-dial-chat` instance receives manages only the onboarding tour;
-the second adds the content operators change most often without a redeploy.
+the second adds the content operators change most often without a redeploy;
+the third adds smaller settings and the first managed feature.
 
 | Schema | Keys                                                                                                                                                                                                       | Needs first                                                                                                                                             |
 | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1.0.0  | `onboarding.hints`                                                                                                                                                                                         | Nothing                                                                                                                                                 |
 | 1.1.0  | `announcement.title`, `announcement.description`, `announcement.items` with `severity` on its entries, `ui.activeEventId`, `ui.celebrationsEnabledByDefault`, and the four `ui.celebrationDelivery.*` keys | Nothing. The four delivery keys are managed and activated together                                                                                      |
-| 1.2.0  | `welcomeScreen.description`, `fileManager.availableTabs`, `usageLimits.warningThresholdPercent`, `usageLimits.spendingLimitsMode` and the feature `features.usageLimitsControl`                            | Nothing. Activating `features.usageLimitsControl` needs Config Studio to enforce `calendar_date` and `window_order`                                     |
+| 1.2.0  | `welcomeScreen.description`, `fileManager.availableTabs`, `usageLimits.warningThresholdPercent`, `usageLimits.spendingLimitsMode` and the feature `features.usageLimitsControl`                            | Config Studio enforces `calendar_date` and `window_order` (met). Texts and lists are activated before the feature                                       |
 | Next   | `mcpApps.theme`                                                                                                                                                                                            | Nothing                                                                                                                                                 |
 | Next   | `features.projectsEnabled`                                                                                                                                                                                 | `features.usageLimitsControl` active on a deployment, proving the managed feature path                                                                  |
 | Next   | `footer.html`; `uiFeatures.enabledUiFeatures`; `deployments.defaultDeploymentId` with `features.defaultDeploymentPinned`                                                                                   | Footer: `features.footer` derived from the effective `footer.html`, decided together with `announcement.html`. The deployment pair moves in one version |
 
 The keys of 1.2.0 were managed by a 1.0.0 and a 1.1.0 that no Chat release or
 Config Studio instance ever carried; both were replaced before the first
-upload. The committed 1.1.0 is the announcements and celebrations version.
+upload. The committed 1.1.0 is the announcements and celebrations version, and
+the committed 1.2.0 takes its value schemas from that earlier draft, rechecked
+against today's environment rules.
 
 The rules for the footer, the deployment pair and the celebration delivery
 keys are contract requirements, and registry tests fail when a version breaks
@@ -228,6 +236,57 @@ the same client field.
   maximum together do not. Config Studio refuses such a publication, and Chat
   rejects such a snapshot with `payload_too_large` and keeps the previous one.
 
+### Welcome text, File Manager and usage limits
+
+Schema 1.2.0 manages four config keys and one feature. Each value has the rules
+its environment variable is validated or admitted with, and goes through the
+same client-config mapping.
+
+| Key                                   | Value                                                                                                  |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `welcomeScreen.description`           | 1–1,000 characters, not only whitespace. Plain text: trimmed, markup shown as typed                    |
+| `fileManager.availableTabs`           | 1–4 distinct ids from `all`, `my_files`, `shared`, `organization`; default all four                    |
+| `usageLimits.warningThresholdPercent` | Integer 1–99, default 75                                                                               |
+| `usageLimits.spendingLimitsMode`      | `off` (default), `shadow` or `enforce`                                                                 |
+| `features.usageLimitsControl`         | The shared feature state: `enabled`, an optional `availability { startsAt?, endsAt? }` and `targeting` |
+
+- **The tab list is a set.** File Manager shows tabs in the fixed order All,
+  My files, Shared, Organization and uses the list only to decide which ones
+  appear; All appears only with at least two other tabs. Config Studio lets an
+  editor reorder the rows, which changes nothing, and the key's description
+  says so. The ids come from one list in
+  `apps/chat-api/src/app-config/types/file-manager-tabs.ts`; the schema also
+  rejects an unknown id and a repeat, which the environment drops or keeps.
+  The client-config normalizer (`file-manager-tabs.normalizer.ts`) applies the
+  set rules to every source: it emits the fixed order, drops `all` below two
+  source tabs, and falls back to every tab, with a warning, when no source tab
+  is listed. A list of only `all` therefore cannot leave File Manager and the
+  attach picker without a section, and shadow mode sees a reordered list as
+  equal.
+- **The spending mode mirrors DIAL Core.** DIAL Core does not report its
+  `spendingLimits.mode`, so the value only decides what Chat shows; DIAL Core
+  enforces budgets whatever it says. While the key is active and nothing is
+  published, or the publication is stale, the mode is the default `off`, so a
+  deployment whose DIAL Core enforces budgets would show the role cost limit.
+  Publish the mode before removing `SPENDING_LIMITS_MODE`, or keep the variable
+  to pin it.
+- **The first managed feature.** `features.usageLimitsControl` references the
+  feature state unchanged since 1.0.0, so 1.2.0 is a MINOR bump. It has no
+  capability rule and no deployment role gate; the window and role targeting
+  are its only managed gates. No server endpoint is guarded by it, so a browser
+  that still shows the control after `endsAt` hides it at its next
+  client-config refresh, which is scheduled at the boundary.
+- **Window rules match Config Studio.** Chat's semantic validator
+  (`managed-semantics.ts`, unchanged since `890a7ff1e`) and Studio's
+  `libs/feature-policy` (`semantics.ts` and `instant.ts`, unchanged since
+  `ff9e1f0` in Config Studio) accept the same UTC form, check calendar dates
+  the same way, and require `startsAt` strictly before `endsAt` only when both
+  are real dates. The 1.2.0 contract fixtures pin 30 February, 29 February in
+  common and leap years, equal boundaries and an inverted window.
+- **Payload.** The new keys at their maximum add about 7.9 KB, most of it a
+  policy with 50 roles of 128 characters; each fits on its own, and a
+  representative publication with every content key fits easily.
+
 ## Payload contract
 
 A publication is `{ "config": { … }, "features": { … } }`. Both members are
@@ -257,9 +316,9 @@ undeclared is rejected.
 
 - A config value is a plain JSON value, never `null`. To fall back to the
   registry default, omit the key.
-- A feature state is `{ enabled, availability?, targeting? }`. No committed
-  schema exports a feature yet, but each exports this state as `$defs/featureState`, and
-  every feature of a later version references it.
+- A feature state is `{ enabled, availability?, targeting? }`. Every committed
+  schema exports this state as `$defs/featureState`; 1.2.0 is the first to
+  export a feature, `features.usageLimitsControl`, which references it.
   - `availability` has at least one of `startsAt` (inclusive) and `endsAt`
     (exclusive). Each is `YYYY-MM-DDTHH:MM:SS[.fff]Z`, in UTC only.
   - `targeting.roles` holds 1–50 distinct roles, each 1–128 characters with no
@@ -282,8 +341,8 @@ without the client-supplied `operationId`. `index.json` sits next to it:
 {
   "format": "dial-managed-config-schema-index@1",
   "appId": "ai-dial-chat",
-  "current": "1.1.0",
-  "supported": ["1.0.0", "1.1.0"],
+  "current": "1.2.0",
+  "supported": ["1.0.0", "1.1.0", "1.2.0"],
   "versions": [
     {
       "schemaVersion": "1.0.0",
@@ -296,6 +355,12 @@ without the client-supplied `operationId`. `index.json` sits next to it:
       "file": "ai-dial-chat-1.1.0.json",
       "schemaSha256": "d1b5d59e7fbefad252109ef504d1ff9955403d94b84be937beb7da1b895113df",
       "canonicalBytes": 10155
+    },
+    {
+      "schemaVersion": "1.2.0",
+      "file": "ai-dial-chat-1.2.0.json",
+      "schemaSha256": "5761c06c65b9846e965b02074f7291e92d651ffff074c6ad7653b25376fef2e1",
+      "canonicalBytes": 11847
     }
   ]
 }
@@ -527,11 +592,17 @@ The DIAL Admin, reader key, upload and verification steps are spelled out in
    `ANNOUNCEMENT_DESCRIPTION`), while malformed `ANNOUNCEMENTS` JSON already
    resolves to nothing. A build keeps accepting 1.0.0 snapshots, so the
    upgrade can precede the first 1.1.0 publication.
-6. With schema 1.2.0, add its texts and lists, then
-   `features.usageLimitsControl` only after Config Studio enforces
-   `calendar_date` and `window_order`; until then a publication with an
-   invalid window is rejected here as a whole and the instance goes
-   `degraded`, then `stale`.
+6. With schema 1.2.0, in two steps. First the texts and lists: upload the
+   schema, publish the welcome text, the tabs, the threshold and the spending
+   mode, then, in one deployment change, remove `WELCOME_SCREEN_DESCRIPTION`,
+   `FILE_MANAGER_AVAILABLE_TABS`, `USAGE_LIMITS_WARNING_THRESHOLD_PERCENT` and
+   `SPENDING_LIMITS_MODE` and activate the four keys. Publish the mode before
+   removing its variable, or the mode shows `off`. Then the feature: publish its
+   policy, and in one deployment change remove `USAGE_LIMITS_CONTROL_ENABLED`
+   and activate `features.usageLimitsControl`. An explicit `true` would keep the
+   control on even when the publication switches it off. Config Studio rejects
+   an impossible date or an inverted window at publish; Chat would reject such
+   a snapshot with `semantic_violation` and keep the previous one.
 
 ## Not authorized by this contract
 

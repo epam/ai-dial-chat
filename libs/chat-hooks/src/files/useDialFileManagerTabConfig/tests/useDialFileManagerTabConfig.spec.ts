@@ -36,6 +36,29 @@ describe('useDialFileManagerTabConfig', () => {
     expect(onTabChange).not.toHaveBeenCalled();
   });
 
+  /* The configured list decides which tabs show, never their order: a list
+   * published in Config Studio in any order keeps the fixed tab order. */
+  it('keeps the fixed tab order whatever order the config lists', () => {
+    const onTabChange = vi.fn();
+
+    const { result } = renderHook(() =>
+      useDialFileManagerTabConfig(
+        DialFileManagerTabs.All,
+        onTabChange,
+        TABS_WITH_ALL,
+        ['organization', 'shared', 'my_files', 'all'],
+      ),
+    );
+
+    expect(result.current.tabs?.map((tab) => tab.value)).toEqual([
+      'all',
+      'my_files',
+      'shared',
+      'organization',
+    ]);
+    expect(onTabChange).not.toHaveBeenCalled();
+  });
+
   it('hides a tab excluded by a narrowed config', () => {
     const onTabChange = vi.fn();
 
