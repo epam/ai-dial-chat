@@ -20,24 +20,8 @@ import {
   snapshotBody,
 } from './managed-runtime.fixtures';
 
-/* Schema 1.0.0 manages no feature, so the feature comparison runs on the
- * test-only contract (see test-managed-contract.fixtures.ts). */
-vi.mock(
-  '../../config-registry/config-registry.constants',
-  async (importOriginal) =>
-    (
-      await import('../managed-config/test-managed-contract.fixtures')
-    ).withTestManagedRegistry(await importOriginal()),
-);
-vi.mock('../../managed-runtime/snapshot-acceptance', async (importOriginal) =>
-  (
-    await import('../managed-config/test-managed-contract.fixtures')
-  ).withTestManagedValidators(
-    await importOriginal(),
-    (await import('../../config-registry/config-registry.constants'))
-      .CONFIG_DEFINITIONS,
-  ),
-);
+/* The feature comparison runs on features.usageLimitsControl, the managed
+ * feature of the real 1.2.0 contract. */
 
 const REQUIRED = {
   DIAL_CORE_URL: 'https://dial-core.example.com',
@@ -46,9 +30,9 @@ const REQUIRED = {
 };
 const FEATURE = 'features.usageLimitsControl';
 
-const makeComparator = () => {
+const makeComparator = (raw: Record<string, unknown> = {}) => {
   const configService = new ConfigService<EnvironmentVariables>(
-    validate(REQUIRED),
+    validate({ ...REQUIRED, ...raw }),
   );
   return new ManagedShadowComparator(
     createManagedRuntime({
@@ -105,5 +89,12 @@ describe('ManagedShadowComparator with a managed feature', () => {
         targeting: { roles: ['beta'] },
       }),
     ).resolves.toBe(ShadowComparisonResult.Equal);
+  });
+
+  it('reports an explicit environment value that would shadow the published policy', async () => {
+    const comparator = makeComparator({ USAGE_LIMITS_CONTROL_ENABLED: 'true' });
+    await expect(featureResult(comparator, { enabled: false })).resolves.toBe(
+      ShadowComparisonResult.EnvShadowed,
+    );
   });
 });

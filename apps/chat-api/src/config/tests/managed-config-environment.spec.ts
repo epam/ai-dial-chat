@@ -208,22 +208,42 @@ describe('managed configuration environment', () => {
     ).not.toThrow();
   });
 
-  /* Schema 1.1.0 manages the tour, the announcements and the celebrations;
-   * these keys follow in schema 1.2.0. */
-  it.each([
-    'welcomeScreen.description',
-    'usageLimits.spendingLimitsMode',
-    'features.usageLimitsControl',
-  ])('rejects the eligible but unmanaged key %s in the active list', (key) => {
-    expectFailure(
-      {
+  it('accepts the dev list plus the 1.2.0 keys and feature', () => {
+    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    expect(() =>
+      validate({
         ...MANAGED,
         MANAGED_CONFIG_MODE: 'active',
-        MANAGED_CONFIG_ACTIVE_KEYS: `onboarding.hints,${key}`,
-      },
-      `MANAGED_CONFIG_ACTIVE_KEYS lists "${key}", which is not a managed key`,
-    );
+        MANAGED_CONFIG_ACTIVE_KEYS: [
+          'onboarding.hints',
+          'announcement.title',
+          'announcement.description',
+          'announcement.items',
+          'ui.activeEventId',
+          'welcomeScreen.description',
+          'fileManager.availableTabs',
+          'usageLimits.warningThresholdPercent',
+          'usageLimits.spendingLimitsMode',
+          'features.usageLimitsControl',
+        ].join(','),
+      }),
+    ).not.toThrow();
   });
+
+  /* Schema 1.2.0 manages neither key; both follow in a later version. */
+  it.each(['mcpApps.theme', 'features.projectsEnabled'])(
+    'rejects the eligible but unmanaged key %s in the active list',
+    (key) => {
+      expectFailure(
+        {
+          ...MANAGED,
+          MANAGED_CONFIG_MODE: 'active',
+          MANAGED_CONFIG_ACTIVE_KEYS: `onboarding.hints,${key}`,
+        },
+        `MANAGED_CONFIG_ACTIVE_KEYS lists "${key}", which is not a managed key`,
+      );
+    },
+  );
 
   describe('celebration delivery group', () => {
     const DELIVERY = [

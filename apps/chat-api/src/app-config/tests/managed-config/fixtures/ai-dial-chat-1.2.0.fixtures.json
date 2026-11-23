@@ -1,0 +1,679 @@
+{
+  "schemaVersion": "1.2.0",
+  "valid": [
+    {
+      "name": "empty publication",
+      "payload": {
+        "config": {},
+        "features": {}
+      }
+    },
+    {
+      "name": "the representative publication",
+      "payload": {
+        "config": {
+          "onboarding.hints": [
+            {
+              "id": "tour.step-0",
+              "target": "conversation-input",
+              "title": "Step 0",
+              "description": "Short help for this step."
+            },
+            {
+              "id": "tour.step-1",
+              "target": "new-chat",
+              "title": "Step 1",
+              "description": "Short help for this step."
+            },
+            {
+              "id": "tour.step-2",
+              "target": "catalog",
+              "title": "Step 2",
+              "description": "Short help for this step."
+            },
+            {
+              "id": "tour.step-3",
+              "target": "navigation",
+              "title": "Step 3",
+              "description": "Short help for this step."
+            },
+            {
+              "id": "tour.step-4",
+              "target": "conversation-input",
+              "title": "Step 4",
+              "description": "Short help for this step."
+            },
+            {
+              "id": "tour.step-5",
+              "target": "new-chat",
+              "title": "Step 5",
+              "description": "Short help for this step."
+            },
+            {
+              "id": "tour.step-6",
+              "target": "catalog",
+              "title": "Step 6",
+              "description": "Short help for this step."
+            },
+            {
+              "id": "tour.step-7",
+              "target": "navigation",
+              "title": "Step 7",
+              "description": "Short help for this step."
+            },
+            {
+              "id": "tour.step-8",
+              "target": "conversation-input",
+              "title": "Step 8",
+              "description": "Short help for this step."
+            },
+            {
+              "id": "tour.step-9",
+              "target": "new-chat",
+              "title": "Step 9",
+              "description": "Short help for this step."
+            }
+          ],
+          "announcement.title": "🎄 Happy holidays",
+          "announcement.description": "Read the <a href=\"https://example.com/notes\">release notes</a> and <b>enjoy</b>.",
+          "announcement.items": [
+            {
+              "title": "Upcoming maintenance: DIAL 1.49",
+              "description": "Saturday 10:00 UTC",
+              "severity": "warning"
+            },
+            {
+              "title": "We have upgraded to DIAL 1.43",
+              "description": "Check what's new:",
+              "link": {
+                "label": "Changelog",
+                "href": "https://example.com/changelog"
+              }
+            },
+            {
+              "title": "New Year scene",
+              "severity": "info"
+            }
+          ],
+          "ui.activeEventId": "new-year",
+          "ui.celebrationsEnabledByDefault": true,
+          "ui.celebrationDelivery.mode": "prefer-external",
+          "ui.celebrationDelivery.revision": "2026-12-01.1",
+          "ui.celebrationDelivery.externalScenes": [
+            "new-year/scene-0",
+            "new-year/scene-1",
+            "new-year/scene-2",
+            "new-year/scene-3",
+            "new-year/scene-4",
+            "new-year/scene-5",
+            "new-year/scene-6",
+            "new-year/scene-7"
+          ],
+          "ui.celebrationDelivery.externalEvents": [
+            "company-anniversary",
+            "product-launch",
+            "hackathon",
+            "spring-sale"
+          ],
+          "welcomeScreen.description": "Your secure AI assistant for search, documents, research and brainstorming.",
+          "fileManager.availableTabs": ["all", "my_files", "organization"],
+          "usageLimits.warningThresholdPercent": 80,
+          "usageLimits.spendingLimitsMode": "enforce"
+        },
+        "features": {
+          "features.usageLimitsControl": {
+            "enabled": true,
+            "availability": {
+              "startsAt": "2026-12-01T00:00:00Z",
+              "endsAt": "2027-01-01T00:00:00Z"
+            },
+            "targeting": {
+              "roles": [
+                "role-0",
+                "role-1",
+                "role-2",
+                "role-3",
+                "role-4",
+                "role-5",
+                "role-6",
+                "role-7",
+                "role-8",
+                "role-9"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "the welcome text at its maximum",
+      "payload": {
+        "config": {
+          "welcomeScreen.description": "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+        },
+        "features": {}
+      }
+    },
+    {
+      "name": "the tabs at their maximum",
+      "payload": {
+        "config": {
+          "fileManager.availableTabs": [
+            "all",
+            "my_files",
+            "shared",
+            "organization"
+          ]
+        },
+        "features": {}
+      }
+    },
+    {
+      "name": "the usage values at their maximum",
+      "payload": {
+        "config": {
+          "usageLimits.warningThresholdPercent": 99,
+          "usageLimits.spendingLimitsMode": "shadow"
+        },
+        "features": {}
+      }
+    },
+    {
+      "name": "the usage-limits policy at its maximum",
+      "payload": {
+        "config": {},
+        "features": {
+          "features.usageLimitsControl": {
+            "enabled": true,
+            "availability": {
+              "startsAt": "2026-12-01T00:00:00.000Z",
+              "endsAt": "2027-01-01T00:00:00.000Z"
+            },
+            "targeting": {
+              "roles": [
+                "000rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "001rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "002rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "003rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "004rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "005rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "006rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "007rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "008rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "009rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "010rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "011rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "012rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "013rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "014rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "015rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "016rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "017rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "018rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "019rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "020rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "021rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "022rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "023rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "024rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "025rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "026rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "027rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "028rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "029rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "030rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "031rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "032rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "033rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "034rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "035rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "036rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "037rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "038rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "039rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "040rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "041rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "042rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "043rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "044rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "045rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "046rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "047rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "048rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+                "049rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "tabs in another order",
+      "payload": {
+        "config": {
+          "fileManager.availableTabs": ["organization", "my_files"]
+        },
+        "features": {}
+      }
+    },
+    {
+      "name": "the lowest threshold with usage limits off",
+      "payload": {
+        "config": {
+          "usageLimits.warningThresholdPercent": 1,
+          "usageLimits.spendingLimitsMode": "off"
+        },
+        "features": {}
+      }
+    },
+    {
+      "name": "markup in the welcome text",
+      "payload": {
+        "config": {
+          "welcomeScreen.description": "<b>Hi</b>"
+        },
+        "features": {}
+      }
+    },
+    {
+      "name": "usage-limits control on for everyone",
+      "payload": {
+        "config": {},
+        "features": {
+          "features.usageLimitsControl": {
+            "enabled": true
+          }
+        }
+      }
+    },
+    {
+      "name": "usage-limits control off",
+      "payload": {
+        "config": {},
+        "features": {
+          "features.usageLimitsControl": {
+            "enabled": false
+          }
+        }
+      }
+    },
+    {
+      "name": "a window on a leap day",
+      "payload": {
+        "config": {},
+        "features": {
+          "features.usageLimitsControl": {
+            "enabled": true,
+            "availability": {
+              "startsAt": "2028-02-29T00:00:00Z",
+              "endsAt": "2028-03-01T00:00:00Z"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "a window with milliseconds and no end",
+      "payload": {
+        "config": {},
+        "features": {
+          "features.usageLimitsControl": {
+            "enabled": true,
+            "availability": {
+              "startsAt": "2026-12-01T08:30:00.5Z"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "a welcome text over 1,000 characters",
+      "payload": {
+        "config": {
+          "welcomeScreen.description": "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+        },
+        "features": {}
+      },
+      "errors": [
+        {
+          "keyword": "maxLength",
+          "instancePath": "/config/welcomeScreen.description"
+        }
+      ]
+    },
+    {
+      "name": "a blank welcome text",
+      "payload": {
+        "config": {
+          "welcomeScreen.description": "   "
+        },
+        "features": {}
+      },
+      "errors": [
+        {
+          "keyword": "pattern",
+          "instancePath": "/config/welcomeScreen.description"
+        }
+      ]
+    },
+    {
+      "name": "an unknown tab",
+      "payload": {
+        "config": {
+          "fileManager.availableTabs": ["all", "review"]
+        },
+        "features": {}
+      },
+      "errors": [
+        {
+          "keyword": "enum",
+          "instancePath": "/config/fileManager.availableTabs/1"
+        }
+      ]
+    },
+    {
+      "name": "a repeated tab",
+      "payload": {
+        "config": {
+          "fileManager.availableTabs": ["my_files", "my_files"]
+        },
+        "features": {}
+      },
+      "errors": [
+        {
+          "keyword": "uniqueItems",
+          "instancePath": "/config/fileManager.availableTabs"
+        }
+      ]
+    },
+    {
+      "name": "no tab",
+      "payload": {
+        "config": {
+          "fileManager.availableTabs": []
+        },
+        "features": {}
+      },
+      "errors": [
+        {
+          "keyword": "minItems",
+          "instancePath": "/config/fileManager.availableTabs"
+        }
+      ]
+    },
+    {
+      "name": "a threshold of 100",
+      "payload": {
+        "config": {
+          "usageLimits.warningThresholdPercent": 100
+        },
+        "features": {}
+      },
+      "errors": [
+        {
+          "keyword": "maximum",
+          "instancePath": "/config/usageLimits.warningThresholdPercent"
+        }
+      ]
+    },
+    {
+      "name": "a threshold of 0",
+      "payload": {
+        "config": {
+          "usageLimits.warningThresholdPercent": 0
+        },
+        "features": {}
+      },
+      "errors": [
+        {
+          "keyword": "minimum",
+          "instancePath": "/config/usageLimits.warningThresholdPercent"
+        }
+      ]
+    },
+    {
+      "name": "a fractional threshold",
+      "payload": {
+        "config": {
+          "usageLimits.warningThresholdPercent": 80.5
+        },
+        "features": {}
+      },
+      "errors": [
+        {
+          "keyword": "type",
+          "instancePath": "/config/usageLimits.warningThresholdPercent"
+        }
+      ]
+    },
+    {
+      "name": "an upper-case mode",
+      "payload": {
+        "config": {
+          "usageLimits.spendingLimitsMode": "ENFORCE"
+        },
+        "features": {}
+      },
+      "errors": [
+        {
+          "keyword": "enum",
+          "instancePath": "/config/usageLimits.spendingLimitsMode"
+        }
+      ]
+    },
+    {
+      "name": "a window start with an offset",
+      "payload": {
+        "config": {},
+        "features": {
+          "features.usageLimitsControl": {
+            "enabled": true,
+            "availability": {
+              "startsAt": "2026-12-01T00:00:00+01:00"
+            }
+          }
+        }
+      },
+      "errors": [
+        {
+          "keyword": "pattern",
+          "instancePath": "/features/features.usageLimitsControl/availability/startsAt"
+        }
+      ]
+    },
+    {
+      "name": "an empty window",
+      "payload": {
+        "config": {},
+        "features": {
+          "features.usageLimitsControl": {
+            "enabled": true,
+            "availability": {}
+          }
+        }
+      },
+      "errors": [
+        {
+          "keyword": "minProperties",
+          "instancePath": "/features/features.usageLimitsControl/availability"
+        }
+      ]
+    },
+    {
+      "name": "an empty role list",
+      "payload": {
+        "config": {},
+        "features": {
+          "features.usageLimitsControl": {
+            "enabled": true,
+            "targeting": {
+              "roles": []
+            }
+          }
+        }
+      },
+      "errors": [
+        {
+          "keyword": "minItems",
+          "instancePath": "/features/features.usageLimitsControl/targeting/roles"
+        }
+      ]
+    },
+    {
+      "name": "an unknown policy member",
+      "payload": {
+        "config": {},
+        "features": {
+          "features.usageLimitsControl": {
+            "enabled": true,
+            "percentage": 5
+          }
+        }
+      },
+      "errors": [
+        {
+          "keyword": "additionalProperties",
+          "instancePath": "/features/features.usageLimitsControl"
+        }
+      ]
+    },
+    {
+      "name": "a policy without enabled",
+      "payload": {
+        "config": {},
+        "features": {
+          "features.usageLimitsControl": {
+            "availability": {
+              "startsAt": "2026-12-01T00:00:00Z"
+            }
+          }
+        }
+      },
+      "errors": [
+        {
+          "keyword": "required",
+          "instancePath": "/features/features.usageLimitsControl"
+        }
+      ]
+    },
+    {
+      "name": "the MCP Apps theme, which a later version manages",
+      "payload": {
+        "config": {
+          "mcpApps.theme": "dark"
+        },
+        "features": {}
+      },
+      "errors": [
+        {
+          "keyword": "additionalProperties",
+          "instancePath": "/config"
+        }
+      ]
+    },
+    {
+      "name": "the Projects feature, which a later version manages",
+      "payload": {
+        "config": {},
+        "features": {
+          "features.projectsEnabled": {
+            "enabled": true
+          }
+        }
+      },
+      "errors": [
+        {
+          "keyword": "additionalProperties",
+          "instancePath": "/features"
+        }
+      ]
+    }
+  ],
+  "semantic": [
+    {
+      "name": "30 February",
+      "payload": {
+        "config": {},
+        "features": {
+          "features.usageLimitsControl": {
+            "enabled": true,
+            "availability": {
+              "startsAt": "2026-02-30T00:00:00Z"
+            }
+          }
+        }
+      },
+      "issues": [
+        {
+          "pointer": "/features/features.usageLimitsControl/availability/startsAt",
+          "code": "calendar_date"
+        }
+      ]
+    },
+    {
+      "name": "equal boundaries",
+      "payload": {
+        "config": {},
+        "features": {
+          "features.usageLimitsControl": {
+            "enabled": true,
+            "availability": {
+              "startsAt": "2026-12-01T00:00:00Z",
+              "endsAt": "2026-12-01T00:00:00Z"
+            }
+          }
+        }
+      },
+      "issues": [
+        {
+          "pointer": "/features/features.usageLimitsControl/availability",
+          "code": "window_order"
+        }
+      ]
+    },
+    {
+      "name": "an inverted window",
+      "payload": {
+        "config": {},
+        "features": {
+          "features.usageLimitsControl": {
+            "enabled": true,
+            "availability": {
+              "startsAt": "2027-01-01T00:00:00Z",
+              "endsAt": "2026-12-01T00:00:00Z"
+            }
+          }
+        }
+      },
+      "issues": [
+        {
+          "pointer": "/features/features.usageLimitsControl/availability",
+          "code": "window_order"
+        }
+      ]
+    },
+    {
+      "name": "29 February of a common year with a valid end",
+      "payload": {
+        "config": {},
+        "features": {
+          "features.usageLimitsControl": {
+            "enabled": true,
+            "availability": {
+              "startsAt": "2027-02-29T00:00:00Z",
+              "endsAt": "2027-03-01T00:00:00Z"
+            }
+          }
+        }
+      },
+      "issues": [
+        {
+          "pointer": "/features/features.usageLimitsControl/availability/startsAt",
+          "code": "calendar_date"
+        }
+      ]
+    }
+  ]
+}
