@@ -333,6 +333,37 @@ export default defineConfig(() => ({
               test: /[\\/]node_modules[\\/]@epam[\\/]ai-dial-react-file-manager[\\/].*\.m?js$/,
               includeDependenciesRecursively: false,
             },
+            /*
+             * Everything the entry imports statically goes into two chunks
+             * instead of ~150. Left to automatic splitting, every module that
+             * a lazy chunk shares with the entry becomes a chunk of its own,
+             * so a cold load fetched ~157 module-preloads and 11 render-blocking
+             * CSS files of 84 B–2.8 KB each. `$initial` keeps lazy-only code
+             * out. Third-party code changes rarely, so it stays cacheable
+             * across deploys on its own.
+             */
+            {
+              name: 'vendor',
+              tags: ['$initial'],
+              test: /[\\/]node_modules[\\/].*\.m?js$/,
+            },
+            /*
+             * App and lib modules plus every stylesheet the entry imports.
+             * They ship as one stylesheet in module execution order — Inter,
+             * kit, file manager, CSS Modules, Tailwind, `styles.scss` — the
+             * order the dev server applies. Split per chunk, CSS Modules of
+             * shared chunks were linked before the kit's stylesheet and those
+             * of the entry chunk after it.
+             */
+            {
+              name: 'app-shell',
+              tags: ['$initial'],
+              test: (id) =>
+                !/[\\/]src[\\/]main\.tsx$/.test(id) &&
+                (/\.s?css(?:\?.*)?$/.test(id) ||
+                  (!/[\\/]node_modules[\\/]/.test(id) &&
+                    /\.[mc]?[jt]sx?(?:\?.*)?$/.test(id))),
+            },
           ],
         },
       },

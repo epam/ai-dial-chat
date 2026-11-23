@@ -100,6 +100,10 @@ build-time bytes are hashed, and anything else is blocked.
 ## Check the entry before and after
 
 After touching `app.tsx`, `AppRoot.tsx`, a context provider or a lib barrel,
-build `chat` and compare the `<link rel="modulepreload">` list and the size of
-`assets/index-*.js` in `apps/chat/dist/index.html` with the previous build. A
-new heavy chunk in that list is a new cost on every page.
+build `chat` and run `node scripts/measure-initial-bundle.mjs`, comparing its
+totals with the previous build. Everything the entry imports statically lands
+in the `vendor` and `app-shell` chunks (`codeSplitting.groups` in
+`apps/chat/vite.config.mts`), so a heavy module shows up as growth of those two
+files, not as a new `<link rel="modulepreload">`. A new preload or stylesheet in
+`dist/index.html` means a group stopped matching — fix the group, do not accept
+the extra request.
