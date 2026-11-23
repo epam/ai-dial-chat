@@ -95,9 +95,42 @@ describe('project hooks', () => {
 
       await waitFor(() => expect(result.current.isNotFound).toBe(true));
       expect(result.current.hasError).toBe(false);
+      expect(result.current.isAccessDenied).toBe(false);
       act(() => result.current.retry());
 
       await waitFor(() => expect(result.current.project).toEqual(details));
+    });
+
+    it('reports a 403 as lost access, not as a retryable error', async () => {
+      client.getProject.mockRejectedValueOnce(rejection(403));
+      const { result } = renderHook(() => useProject(client, PROJECT_ID, true));
+
+      await waitFor(() => expect(result.current.isAccessDenied).toBe(true));
+      expect(result.current.hasError).toBe(false);
+      expect(result.current.isNotFound).toBe(false);
+      expect(result.current.project).toBeNull();
+    });
+
+    it('reports any other failure as an error, not as lost access', async () => {
+      client.getProject.mockRejectedValueOnce(rejection(503));
+      const { result } = renderHook(() => useProject(client, PROJECT_ID, true));
+
+      await waitFor(() => expect(result.current.hasError).toBe(true));
+      expect(result.current.isAccessDenied).toBe(false);
+      expect(result.current.isNotFound).toBe(false);
+    });
+
+    it('clears lost access while a retried read is in flight', async () => {
+      client.getProject
+        .mockRejectedValueOnce(rejection(403))
+        .mockReturnValueOnce(new Promise(() => undefined));
+      const { result } = renderHook(() => useProject(client, PROJECT_ID, true));
+      await waitFor(() => expect(result.current.isAccessDenied).toBe(true));
+
+      act(() => result.current.retry());
+
+      expect(result.current.isAccessDenied).toBe(false);
+      expect(result.current.isLoading).toBe(true);
     });
 
     it('refreshes silently without entering the loading state', async () => {
@@ -153,6 +186,23 @@ describe('project hooks', () => {
 
       expect(outcome).toBe(ProjectRefreshOutcome.NotFound);
       expect(result.current.isNotFound).toBe(false);
+      expect(result.current.project).toEqual(details);
+    });
+
+    it('reports a refresh that finds the access lost and keeps the project', async () => {
+      client.getProject
+        .mockResolvedValueOnce(details)
+        .mockRejectedValueOnce(rejection(403));
+      const { result } = renderHook(() => useProject(client, PROJECT_ID, true));
+      await waitFor(() => expect(result.current.project).toEqual(details));
+
+      let outcome: ProjectRefreshOutcome | undefined;
+      await act(async () => {
+        outcome = await result.current.refresh();
+      });
+
+      expect(outcome).toBe(ProjectRefreshOutcome.AccessLost);
+      expect(result.current.isAccessDenied).toBe(false);
       expect(result.current.project).toEqual(details);
     });
 

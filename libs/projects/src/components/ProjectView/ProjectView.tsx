@@ -57,6 +57,9 @@ const toDisplayAttachment = (
 
 const DEFAULT_DOWNLOAD_FILE_LABEL = (name: string): string =>
   `Download ${name}`;
+const DEFAULT_ACCESS_DENIED_LABEL = 'You no longer have access to this project';
+const DEFAULT_ACCESS_DENIED_DESCRIPTION =
+  'The owner may have stopped sharing it or deleted it.';
 
 /** Project home page: a header with the project actions and a Details panel with description, instructions and context. */
 const ProjectViewComponent: FC<ProjectViewProps> = ({
@@ -64,6 +67,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   isLoading = false,
   hasError = false,
   isNotFound = false,
+  isAccessDenied = false,
   isPinned,
   isPinPending = false,
   contextSearchQuery,
@@ -93,6 +97,10 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   const { colors, typography, contextListClassName } = viewStyles ?? {};
   const downloadFileLabel =
     labels.downloadFileLabel ?? DEFAULT_DOWNLOAD_FILE_LABEL;
+  const accessDeniedLabel =
+    labels.accessDeniedLabel ?? DEFAULT_ACCESS_DENIED_LABEL;
+  const accessDeniedDescription =
+    labels.accessDeniedDescription ?? DEFAULT_ACCESS_DENIED_DESCRIPTION;
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const panelTitleClassName =
     typography?.panelTitleClassName ?? 'dial-body-semi-text';
@@ -262,6 +270,25 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
         <Spinner ariaLabel={labels.loadingAriaLabel ?? 'Loading project'} />
       );
     }
+    /* Retrying cannot restore access, so the only way out is the list. */
+    if (isAccessDenied) {
+      return (
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="flex flex-col items-center gap-1">
+            <p aria-hidden className={mergeClasses(bodyClassName, styles.body)}>
+              {accessDeniedLabel}
+            </p>
+            <p className={mergeClasses(helperClassName, styles.secondary)}>
+              {accessDeniedDescription}
+            </p>
+          </div>
+          <GhostButton
+            label={labels.browseProjectsLabel}
+            onClick={onBrowseProjects}
+          />
+        </div>
+      );
+    }
     if (hasError) {
       return (
         <div className="flex flex-col items-center gap-3">
@@ -285,7 +312,21 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
     );
   };
 
-  if (isLoading || hasError || isNotFound || project == null) {
+  /* The live region is mounted while loading, so the failure that replaces the spinner is announced. */
+  let failureAnnouncement: string | null = null;
+  if (!isLoading && isAccessDenied) {
+    failureAnnouncement = accessDeniedLabel;
+  } else if (!isLoading && hasError) {
+    failureAnnouncement = labels.errorLabel;
+  }
+
+  if (
+    isLoading ||
+    isAccessDenied ||
+    hasError ||
+    isNotFound ||
+    project == null
+  ) {
     return (
       <div
         style={cssVars}
@@ -294,10 +335,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
           styles.container,
         )}
       >
-        {/* Mounted while loading, so the load failure is announced when it replaces the spinner. */}
-        <LiveRegion visuallyHidden>
-          {!isLoading && hasError && labels.errorLabel}
-        </LiveRegion>
+        <LiveRegion visuallyHidden>{failureAnnouncement}</LiveRegion>
         {renderState()}
       </div>
     );

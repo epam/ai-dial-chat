@@ -270,7 +270,9 @@ When the host supplies `onRemoveFromMyList` (a project shared with the user, whi
 
 Activating a context card calls `onContextFileClick` with the file's name, and the card whose name equals `selectedContextFileId` renders selected (`aria-pressed`). When the host passes `onContextFileDownload`, each card also shows a download button named `labels.downloadFileLabel(name)` (optional, defaulting to `Download {name}`) that calls it with the file's name. The lib downloads and opens nothing: the host decides, for example by previewing the file in a canvas beside the page. While such a preview takes the inline end, the host sets `isDetailsStacked` (default `false`) so the Details panel and its cards move below the main column at every width, with a top border instead of the inline-start one, and stay reachable.
 
-Read-only mode is the host omitting `onPublish`, `onUnpublish`, `onEdit`, `onShare`, `onDelete` and `onRemoveFromMyList`: each hides its action. Exactly one state renders — loading (`isLoading`), error with Retry (`hasError`), not found with a way back (`isNotFound`), or the loaded `project`.
+Read-only mode is the host omitting `onPublish`, `onUnpublish`, `onEdit`, `onShare`, `onDelete` and `onRemoveFromMyList`: each hides its action. Exactly one state renders — loading (`isLoading`), access denied (`isAccessDenied`), error with Retry (`hasError`), not found with a way back (`isNotFound`), or the loaded `project`, checked in that order.
+
+The access-denied state is for a project the user can no longer open, because its owner stopped sharing it or deleted it. It shows `labels.accessDeniedLabel` (default `'You no longer have access to this project'`), `labels.accessDeniedDescription` (default `'The owner may have stopped sharing it or deleted it.'`) in the secondary text colour and `helperClassName`, and one button, `labels.browseProjectsLabel`, which calls `onBrowseProjects`. It offers no Retry. The title of the access-denied and error states is announced through a live region that stays mounted while loading.
 
 ```tsx
 import { ProjectView } from '@epam/ai-dial-projects';
@@ -293,6 +295,7 @@ import { ProjectView } from '@epam/ai-dial-projects';
   onContextFileDownload={(id) => {}}
   selectedContextFileId={undefined}
   isDetailsStacked={false}
+  isAccessDenied={false}
   onRetry={() => {}}
   onBrowseProjects={() => {}}
   labels={{
@@ -322,6 +325,9 @@ import { ProjectView } from '@epam/ai-dial-projects';
     retryLabel: 'Retry',
     notFoundLabel: 'Project not found',
     browseProjectsLabel: 'Back to projects',
+    accessDeniedLabel: 'You no longer have access to this project',
+    accessDeniedDescription:
+      'The owner may have stopped sharing it or deleted it.',
     loadingAriaLabel: 'Loading project',
   }}
 />;

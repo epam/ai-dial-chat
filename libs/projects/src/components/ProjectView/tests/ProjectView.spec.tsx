@@ -603,6 +603,73 @@ describe('ProjectView', () => {
     expect(onBrowseProjects).toHaveBeenCalledOnce();
   });
 
+  describe('ProjectView — access denied', () => {
+    const accessLabels: ProjectViewLabels = {
+      ...labels,
+      accessDeniedLabel: 'Access lost',
+      accessDeniedDescription: 'Ask the owner to share it again.',
+    };
+
+    it('explains the lost access and offers only the way back to the list', async () => {
+      const { onBrowseProjects, onRetry } = renderView({
+        project: null,
+        isAccessDenied: true,
+        labels: accessLabels,
+      });
+
+      expect(screen.getByText('Ask the owner to share it again.')).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Back to projects' }),
+      );
+      expect(onBrowseProjects).toHaveBeenCalledOnce();
+      expect(onRetry).not.toHaveBeenCalled();
+    });
+
+    it('announces the lost access through the status region mounted while loading', () => {
+      const props = { ...baseProps(), project: null, labels: accessLabels };
+      const { rerender } = render(<ProjectView {...props} isLoading />);
+      const emptyRegions = screen
+        .getAllByRole('status')
+        .filter((node) => node.textContent === '');
+
+      rerender(<ProjectView {...props} isAccessDenied />);
+
+      expect(
+        emptyRegions.some(
+          (node) => node.isConnected && node.textContent === 'Access lost',
+        ),
+      ).toBe(true);
+      expect(screen.queryByRole('alert')).toBeNull();
+    });
+
+    it('renders the English defaults when the host passes no access-denied labels', () => {
+      renderView({ project: null, isAccessDenied: true });
+
+      expect(
+        screen.getAllByText('You no longer have access to this project').length,
+      ).toBeGreaterThan(0);
+      expect(
+        screen.getByText(
+          'The owner may have stopped sharing it or deleted it.',
+        ),
+      ).toBeTruthy();
+    });
+
+    it('prefers the access-denied state over the error state', () => {
+      renderView({
+        project: null,
+        isAccessDenied: true,
+        hasError: true,
+        labels: accessLabels,
+      });
+
+      expect(screen.getByText('Ask the owner to share it again.')).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
+      expect(screen.queryByText('Could not load the project')).toBeNull();
+    });
+  });
+
   it('renders the main column before the Details panel, named by its label', () => {
     renderView({
       mainContent: <p>Chats go here</p>,

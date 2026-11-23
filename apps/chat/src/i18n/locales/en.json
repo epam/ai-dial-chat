@@ -948,6 +948,8 @@
       "error": "Could not load the project",
       "notFound": "Project not found",
       "browseProjects": "Back to projects",
+      "accessDenied": "You no longer have access to this project",
+      "accessDeniedDescription": "The owner may have stopped sharing it or deleted it.",
       "deletedElsewhere": "This project was deleted",
       "mainContent": "Project chats"
     },

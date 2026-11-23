@@ -10,12 +10,38 @@ interface ProjectResult {
   project: ProjectDetailsDto | null;
   hasError: boolean;
   isNotFound: boolean;
+  isAccessDenied: boolean;
 }
+
+/** The failure flags of a settled load, keyed by the HTTP status of its error. */
+const describeLoadFailure = (
+  err: unknown,
+): Pick<ProjectResult, 'hasError' | 'isNotFound' | 'isAccessDenied'> => {
+  const status = getApiErrorStatus(err);
+  return {
+    hasError: status !== 404 && status !== 403,
+    isNotFound: status === 404,
+    isAccessDenied: status === 403,
+  };
+};
+
+/** How a silent refresh that failed with `err` ended. */
+const describeRefreshFailure = (err: unknown): ProjectRefreshOutcome => {
+  switch (getApiErrorStatus(err)) {
+    case 404:
+      return ProjectRefreshOutcome.NotFound;
+    case 403:
+      return ProjectRefreshOutcome.AccessLost;
+    default:
+      return ProjectRefreshOutcome.Failed;
+  }
+};
 
 /**
  * Loads one project's details. Loading is derived from whether a result
  * answers the current id and reload token, so a page never renders a stale
- * project for a new id. A `404` is a not-found result, every other failure an
+ * project for a new id. A `404` is a not-found result, a `403` lost access (the
+ * owner stopped sharing the project or deleted it), every other failure an
  * error; the request is aborted on unmount and on an id change. `refresh`
  * re-reads the loaded project without the loading state, for live updates.
  *
@@ -40,11 +66,16 @@ export const useProject = (
       try {
         const project = await client.getProject(id, controller.signal);
         if (controller.signal.aborted) return;
-        setResult({ key, project, hasError: false, isNotFound: false });
+        setResult({
+          key,
+          project,
+          hasError: false,
+          isNotFound: false,
+          isAccessDenied: false,
+        });
       } catch (err) {
         if (controller.signal.aborted) return;
-        const isNotFound = getApiErrorStatus(err) === 404;
-        setResult({ key, project: null, hasError: !isNotFound, isNotFound });
+        setResult({ key, project: null, ...describeLoadFailure(err) });
       }
     };
 
@@ -85,9 +116,7 @@ export const useProject = (
       return ProjectRefreshOutcome.Updated;
     } catch (err) {
       if (controller.signal.aborted) return ProjectRefreshOutcome.Skipped;
-      return getApiErrorStatus(err) === 404
-        ? ProjectRefreshOutcome.NotFound
-        : ProjectRefreshOutcome.Failed;
+      return describeRefreshFailure(err);
     }
   }, [client, id, key, loadedProject]);
 
@@ -96,6 +125,7 @@ export const useProject = (
     isLoading: enabled && id != null && settled == null,
     hasError: settled?.hasError ?? false,
     isNotFound: settled?.isNotFound ?? false,
+    isAccessDenied: settled?.isAccessDenied ?? false,
     retry,
     refresh,
   };
