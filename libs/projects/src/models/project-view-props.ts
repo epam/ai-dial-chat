@@ -123,6 +123,8 @@ export interface ProjectViewStyles {
   colors?: ProjectViewColors;
   /** Typography class overrides. */
   typography?: ProjectViewTypography;
+  /** Extra class name(s) merged after the default layout classes of the context files list, so a host can change the column layout. */
+  contextListClassName?: string;
 }
 
 /** Props for the {@link ProjectView} component. */

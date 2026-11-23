@@ -43,6 +43,8 @@ export interface AttachmentGroupStyles {
   typography?: AttachmentGroupTypography;
   /** Extra class name(s) merged onto the root element. */
   className?: string;
+  /** Extra class name(s) merged after the default layout classes of the attachment list, so a host can change the column layout. */
+  listClassName?: string;
 }
 
 /** Props accepted by the `AttachmentGroup` component. */

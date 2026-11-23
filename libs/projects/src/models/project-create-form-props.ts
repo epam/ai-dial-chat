@@ -128,6 +128,8 @@ export interface ProjectCreateFormStyles {
   colors?: ProjectCreateFormColors;
   /** Typography class overrides. */
   typography?: ProjectCreateFormTypography;
+  /** Extra class name(s) merged after the default layout classes of the context files list, so a host can change the column layout. */
+  contextListClassName?: string;
 }
 
 /** Props for the {@link ProjectCreateForm} component. */

@@ -49,7 +49,7 @@ const ProjectOutputsComponent: FC<ProjectOutputsProps> = ({
   /* Set when Retry is activated, so focus can follow the button it removes. */
   const isRetryingRef = useRef(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const { colors, typography } = outputStyles ?? {};
+  const { colors, typography, listClassName } = outputStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-body-semi-text';
   const helperClassName = typography?.helperClassName ?? 'dial-tiny-text';
   const title = labels?.title ?? 'Outputs';
@@ -140,6 +140,7 @@ const ProjectOutputsComponent: FC<ProjectOutputsProps> = ({
               className={mergeClasses(
                 'm-0 flex min-w-0 list-none gap-2 p-0',
                 isExpanded ? 'flex-wrap' : 'flex-nowrap overflow-x-auto',
+                listClassName,
               )}
             >
               {visibleItems.map((item) => (

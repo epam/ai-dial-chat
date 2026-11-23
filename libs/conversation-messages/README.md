@@ -364,6 +364,8 @@ no `text` has no bubble at all (this holds even when `textSegments` is passed,
 since a `textSegments`-carrying message always has non-empty `text`). It is
 additive to `styles.bubbleClassName`, which keeps working exactly as before.
 
+`styles.attachmentGroupStyles` is forwarded to the message's `AttachmentGroup` (`AttachmentGroupStyles` from `@epam/ai-dial-attachment-input`), e.g. `{ listClassName: 'grid grid-cols-3', className: 'max-w-full' }`; its `className` is merged after the user bubble's default `max-w-[640px]`.
+
 These classes carry no declarations of their own, so they change nothing until
 you style them.
 

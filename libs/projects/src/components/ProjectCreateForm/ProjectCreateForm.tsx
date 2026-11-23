@@ -197,7 +197,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
     if (!isCreateDisabled) onSubmit();
   };
 
-  const { colors, typography } = formStyles ?? {};
+  const { colors, typography, contextListClassName } = formStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const labelClassName = mergeClasses(
     typography?.labelClassName ?? 'dial-tiny-semi-text',
@@ -402,7 +402,12 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
               {contextError}
             </LiveRegion>
             {contextFiles.length > 0 && (
-              <ul className="flex min-w-0 flex-wrap gap-2 pt-3">
+              <ul
+                className={mergeClasses(
+                  'flex min-w-0 flex-wrap gap-2 pt-3',
+                  contextListClassName,
+                )}
+              >
                 {contextFiles.map((file) => (
                   <li key={file.id} className="min-w-0">
                     <AttachmentCard

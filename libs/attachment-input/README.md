@@ -121,6 +121,31 @@ import {
 />;
 ```
 
+`styles.listClassName` is merged after the list's default layout classes (a wrapping flex row, or the fixed 5-column grid at the threshold), so a host can pick its own columns, e.g. `'grid grid-cols-3'`. Pair it with `styles.className` to lift the group's default `max-w-*` cap.
+
+### AttachmentCardProvider
+
+Replaces the card that every `AttachmentCard` below it renders. `AttachmentTray`, `AttachmentGroup` and the sibling libs that show attachments (`projects`, `source-panel`, `conversation-stages`) all render `AttachmentCard`, so one provider restyles all of them without those libs knowing. The host's `component` receives the same props as `AttachmentCard` and owns every state, action and accessible name of the card. Without a provider, or below one with no `component`, the built-in square tile renders.
+
+Every package that renders an `AttachmentCard` must resolve this package to the same installed copy as the host, or the provider does not reach them.
+
+```tsx
+import {
+  AttachmentCardProvider,
+  type AttachmentCardProps,
+} from '@epam/ai-dial-attachment-input';
+
+const RowCard: FC<AttachmentCardProps> = ({ attachment, onClick }) => (
+  <button type="button" onClick={() => onClick?.(attachment.id)}>
+    {attachment.name}
+  </button>
+);
+
+<AttachmentCardProvider component={RowCard}>
+  <App />
+</AttachmentCardProvider>;
+```
+
 ### FileDndOverlay
 
 Full-area drag-and-drop overlay. Set `isAttachmentsAllowed={false}` to render the denied state, which suppresses the drop instead of forwarding it.

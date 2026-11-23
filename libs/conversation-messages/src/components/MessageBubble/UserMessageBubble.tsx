@@ -58,8 +58,14 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   codeBlockTheme,
   tableOnOpenInCanvas,
 }) => {
-  const { colors, typography, className, bubbleClassName, timestampClassName } =
-    bubbleStyles ?? {};
+  const {
+    colors,
+    typography,
+    className,
+    bubbleClassName,
+    timestampClassName,
+    attachmentGroupStyles,
+  } = bubbleStyles ?? {};
   const timestampNode =
     timestamp != null ? (
       <MessageTimestamp
@@ -189,7 +195,13 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
             retryLabel: attachmentRetryLabel,
             openInNewTabLabel: attachmentOpenInNewTabLabel,
           }}
-          styles={{ className: 'max-w-[640px]' }}
+          styles={{
+            ...attachmentGroupStyles,
+            className: mergeClasses(
+              'max-w-[640px]',
+              attachmentGroupStyles?.className,
+            ),
+          }}
           selectedAttachmentId={selectedAttachmentId}
         />
         {text && (

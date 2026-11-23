@@ -49,7 +49,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
     pastedLabel,
     imageLabel,
   } = labels ?? {};
-  const { typography, colors, className } = groupStyles ?? {};
+  const { typography, colors, className, listClassName } = groupStyles ?? {};
   const cssVars = buildCssVars({
     '--ai-group-text': colors?.text,
   });
@@ -153,6 +153,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
         className={mergeClasses(
           'gap-2',
           isCollapsible ? 'grid grid-cols-[repeat(5,100px)]' : 'flex flex-wrap',
+          listClassName,
         )}
       >
         {attachments.map((attachment, index) => (

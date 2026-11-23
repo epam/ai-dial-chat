@@ -90,7 +90,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   labels,
   styles: viewStyles,
 }) => {
-  const { colors, typography } = viewStyles ?? {};
+  const { colors, typography, contextListClassName } = viewStyles ?? {};
   const downloadFileLabel =
     labels.downloadFileLabel ?? DEFAULT_DOWNLOAD_FILE_LABEL;
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
@@ -325,7 +325,12 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
             {labels.noContextMatchesLabel}
           </p>
         ) : (
-          <ul className="m-0 flex min-w-0 list-none flex-wrap gap-2 p-0 pt-2">
+          <ul
+            className={mergeClasses(
+              'm-0 flex min-w-0 list-none flex-wrap gap-2 p-0 pt-2',
+              contextListClassName,
+            )}
+          >
             {visibleFiles.map((file) => (
               <li key={file.name} className="min-w-0">
                 <AttachmentCard

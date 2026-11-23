@@ -233,4 +233,45 @@ describe('ProjectOutputs', () => {
       /(^|\s)(ml|mr|pl|pr|left|right)-|text-(left|right)(\s|$)/,
     );
   });
+
+  it('merges styles.listClassName over the default layout of the list', () => {
+    renderOutputs({ styles: { listClassName: 'grid grid-cols-3' } });
+
+    const list = screen.getByRole('list');
+    const classes = list.className.split(' ');
+    expect(classes).toContain('grid');
+    expect(classes).toContain('grid-cols-3');
+    expect(classes).not.toContain('flex');
+  });
+
+  it('keeps the flex row and adds no grid class without styles.listClassName', async () => {
+    renderOutputs({ items: itemsOf(9) });
+
+    expect(screen.getByRole('list').className.split(' ')).toContain('flex');
+    expect(screen.getByRole('list').className.split(' ')).not.toContain('grid');
+
+    await userEvent.click(screen.getByRole('button', { name: 'See all (9)' }));
+
+    expect(screen.getByRole('list').className.split(' ')).toContain('flex');
+    expect(screen.getByRole('list').className.split(' ')).not.toContain('grid');
+  });
+
+  it('applies styles.listClassName both collapsed and expanded', async () => {
+    renderOutputs({
+      items: itemsOf(9),
+      styles: { listClassName: 'grid grid-cols-3' },
+    });
+
+    const collapsed = screen.getByRole('list').className.split(' ');
+    expect(collapsed).toContain('grid');
+    expect(collapsed).toContain('grid-cols-3');
+    expect(collapsed).not.toContain('flex');
+
+    await userEvent.click(screen.getByRole('button', { name: 'See all (9)' }));
+
+    const expanded = screen.getByRole('list').className.split(' ');
+    expect(expanded).toContain('grid');
+    expect(expanded).toContain('grid-cols-3');
+    expect(expanded).not.toContain('flex');
+  });
 });
