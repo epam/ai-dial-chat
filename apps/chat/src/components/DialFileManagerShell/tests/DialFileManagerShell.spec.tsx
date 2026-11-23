@@ -20,6 +20,7 @@ import {
 } from '@epam/ai-dial-react-file-manager';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import DialFileManagerShell from '../DialFileManagerShell';
 
@@ -80,12 +81,12 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
     ...actual,
     FolderDestinationPanel: (props: {
       labels?: { title?: string };
-      item: { title: string };
+      item: { title: string; summary?: ReactNode };
       action: { label: string; isDisabled?: boolean; onClick: () => void };
       onClose: () => void;
     }) => (
       <div role="dialog" aria-label={props.labels?.title}>
-        <span>{props.item.title}</span>
+        <div>{props.item.summary ?? props.item.title}</div>
         <button type="button" onClick={props.onClose}>
           Close panel
         </button>
@@ -223,9 +224,12 @@ const baseLabels: DialFileManagerShellLabels = {
   moveLabel: 'Move to',
   duplicateLabel: 'Duplicate',
   addFolderLabel: 'Add folder',
-  copyDestinationTitle: 'Copy to',
-  moveDestinationTitle: 'Move to',
-  getDestinationItemsLabel: (count) => `${count} items`,
+  getCopyDestinationTitle: (count) => `Copy ${count}`,
+  getMoveDestinationTitle: (count) => `Move ${count}`,
+  copyDestinationHeading: 'Copy to folder',
+  moveDestinationHeading: 'Move to folder',
+  copyDestinationButton: 'Copy',
+  moveDestinationButton: 'Move',
   moveSourceDisabledTooltip: 'Unavailable for the original location',
   movedIntoItselfTooltip: 'Not into itself',
   copyingLabel: 'Copying…',
@@ -572,14 +576,35 @@ describe('DialFileManagerShell', () => {
       expect(screen.queryByRole('dialog')).toBeNull();
     });
 
-    it('opens the panel with the mode title and the item name', () => {
+    it('opens the panel with the mode title and lists the affected item', () => {
       renderShell({ items: [root] });
       startRequest(DestinationFolderMode.Move);
 
-      expect(
-        screen.getByRole('dialog', { name: baseLabels.moveDestinationTitle }),
-      ).toBeTruthy();
+      expect(screen.getByRole('dialog', { name: 'Move 1' })).toBeTruthy();
       expect(screen.getByText('a.txt')).toBeTruthy();
+    });
+
+    it('lists every affected item when several are copied or moved', () => {
+      renderShell({ items: [root] });
+      const second = {
+        ...file,
+        id: 'b',
+        name: 'b.txt',
+        path: '/My files/reports/b.txt',
+      };
+      act(() => {
+        capturedDialFileManagerProps.current?.onDestinationRequest?.({
+          mode: DestinationFolderMode.Copy,
+          items: [file, second],
+          sourceFolder: '/My files/reports/',
+          confirm: vi.fn(),
+          cancel: vi.fn(),
+        });
+      });
+
+      expect(screen.getByRole('dialog', { name: 'Copy 2' })).toBeTruthy();
+      expect(screen.getByText('a.txt')).toBeTruthy();
+      expect(screen.getByText('b.txt')).toBeTruthy();
     });
 
     it('disables Move while the destination is the source folder', () => {
@@ -588,7 +613,7 @@ describe('DialFileManagerShell', () => {
       expect(
         (
           screen.getByRole('button', {
-            name: baseLabels.moveLabel,
+            name: baseLabels.moveDestinationButton,
           }) as HTMLButtonElement
         ).disabled,
       ).toBe(true);
@@ -599,7 +624,7 @@ describe('DialFileManagerShell', () => {
       const request = startRequest(DestinationFolderMode.Copy);
 
       await userEvent.click(
-        screen.getByRole('button', { name: baseLabels.copyLabel }),
+        screen.getByRole('button', { name: baseLabels.copyDestinationButton }),
       );
 
       expect(request.confirm).toHaveBeenCalledWith(

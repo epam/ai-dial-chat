@@ -15,6 +15,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { FileManagerAttachModal } from '@epam/ai-dial-chat-shared/file-manager';
 import {
+  DestinationFolderMode,
   DialFileManagerTabs,
   type DialFile,
   type FileManagerGridRow,
@@ -35,6 +36,7 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
+import { getDestinationPanelTitle } from '../../utils/dial-file';
 import { useDialFileManagerHostOptions } from '../DialFileManagerShell/useDialFileManagerHostOptions';
 import { getFileDeleteConfirmTitle } from '../FileDeleteConfirmContent/file-delete-confirm-title';
 import { useFileUnshareConfirmation } from '../FileUnshareConfirmation/useFileUnshareConfirmation';
@@ -349,10 +351,24 @@ const DialFileManagerModal: FC<Props> = ({
       moveLabel: t(DialFileManagerI18nKeys.MoveAction),
       duplicateLabel: t(ButtonsI18nKeys.Duplicate),
       addFolderLabel: t(DialFileManagerI18nKeys.FolderPickerAddFolderLabel),
-      copyDestinationTitle: t(DialFileManagerI18nKeys.CopyAction),
-      moveDestinationTitle: t(DialFileManagerI18nKeys.MoveAction),
-      getDestinationItemsLabel: (count) =>
-        t(DialFileManagerI18nKeys.DestinationItemsLabel, { count }),
+      getCopyDestinationTitle: (count, isFolder) =>
+        getDestinationPanelTitle(
+          t,
+          DestinationFolderMode.Copy,
+          count,
+          isFolder,
+        ),
+      getMoveDestinationTitle: (count, isFolder) =>
+        getDestinationPanelTitle(
+          t,
+          DestinationFolderMode.Move,
+          count,
+          isFolder,
+        ),
+      copyDestinationHeading: t(DialFileManagerI18nKeys.CopyDestinationHeading),
+      moveDestinationHeading: t(DialFileManagerI18nKeys.MoveDestinationHeading),
+      copyDestinationButton: t(ButtonsI18nKeys.Copy),
+      moveDestinationButton: t(ButtonsI18nKeys.Move),
       moveSourceDisabledTooltip: t(
         DialFileManagerI18nKeys.MoveSourceDisabledTooltip,
       ),

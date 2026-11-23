@@ -16,6 +16,8 @@ The panel SHALL show only the section the items come from: the root in `controll
 
 Choosing or expanding a folder SHALL load its contents through `controller.onFolderPopupPathChange`; folders whose contents are not loaded keep `children` undefined so the tree does not show them as empty, and `controller.folderPopupLoadingPaths` marks the folders being fetched. Folder creation SHALL call `controller.onCreateFolder` with the new folder's full virtual path.
 
+The panel SHALL use `FolderDestinationLayout.Inline`: one view with the affected items, the "Copy to folder" / "Move to folder" heading, the folder search and the folder tree, and a Cancel / Copy-or-Move footer. There is no separate destination row with a Change action and no Select step; picking a folder in the tree is the destination. Every affected item is listed in the summary row with its file or folder icon (`FileName` from `@epam/ai-dial-ui-kit`), in a scrollable list when there are many.
+
 Confirming SHALL call `request.confirm(destinationFolder, destinationItems)` with the loaded items of the destination folder, so name conflicts are detected, and close the panel. Closing without confirming SHALL call `request.cancel()`.
 
 #### Scenario: Copy action opens the panel in copy mode
@@ -52,31 +54,27 @@ Confirming a destination in the panel SHALL run name-conflict resolution and the
 
 | Panel label | Shell label |
 | --- | --- |
-| `copyTitle` | `copyDestinationTitle` |
-| `moveTitle` | `moveDestinationTitle` |
-| `copyLabel` | `copyLabel` |
-| `moveLabel` | `moveLabel` |
-| `getItemsLabel` | `getDestinationItemsLabel` |
+| `getCopyTitle` | `getCopyDestinationTitle` |
+| `getMoveTitle` | `getMoveDestinationTitle` |
+| `copyHeading` | `copyDestinationHeading` |
+| `moveHeading` | `moveDestinationHeading` |
+| `copyButtonLabel` | `copyDestinationButton` |
+| `moveButtonLabel` | `moveDestinationButton` |
 | `sourceFolderTooltip` | `moveSourceDisabledTooltip` |
 | `movedIntoItselfTooltip` | `movedIntoItselfTooltip` |
 | `addFolderLabel` | `addFolderLabel` |
 
 The shell calls no `useTranslation`; the hosts (`DialFileManagerPage`, `DialFileManagerModal`) resolve every label with `t()` and an enum key. Panel text not listed above (search placeholder, folder-name errors, retry) keeps the package's English default until a label is added.
 
-#### Scenario: Panel shows translated Copy button label
+#### Scenario: Panel shows translated button label
 
-- **WHEN** the panel opens in copy mode with a locale that translates `dialFileManager.copyAction`
-- **THEN** the panel's primary button displays the translated string, not the package default
+- **WHEN** the panel opens in copy mode
+- **THEN** its primary button displays `t(ButtonsI18nKeys.Copy)`, and `t(ButtonsI18nKeys.Move)` in move mode
 
-#### Scenario: Panel title follows the mode
+#### Scenario: Panel title follows the mode and the items
 
-- **WHEN** the panel opens in move mode
-- **THEN** its title is `t(DialFileManagerI18nKeys.MoveAction)`
-
-#### Scenario: Several items are named by count
-
-- **WHEN** the user copies or moves 3 selected items
-- **THEN** the panel's summary row reads `t(DialFileManagerI18nKeys.DestinationItemsLabel, { count: 3 })`
+- **WHEN** the panel opens to move one file, one folder, or 3 items
+- **THEN** its title is `t(DialFileManagerI18nKeys.MoveFileTitle)`, `MoveFolderTitle`, or `MoveItemsTitle` with `{ count: 3 }`
 
 ---
 
@@ -126,11 +124,18 @@ The following keys SHALL exist in `apps/chat/src/i18n/locales/en.json` with matc
 | Key | English value |
 | --- | --- |
 | `dialFileManager.folderPickerAddFolderLabel` | `Add folder` |
-| `dialFileManager.destinationItemsLabel` | `{{count}} items` |
+| `dialFileManager.copyFileTitle` | `Copy file` |
+| `dialFileManager.copyFolderTitle` | `Copy folder` |
+| `dialFileManager.copyItemsTitle` | `Copy {{count}} items` |
+| `dialFileManager.moveFileTitle` | `Move file` |
+| `dialFileManager.moveFolderTitle` | `Move folder` |
+| `dialFileManager.moveItemsTitle` | `Move {{count}} items` |
+| `dialFileManager.copyDestinationHeading` | `Copy to folder` |
+| `dialFileManager.moveDestinationHeading` | `Move to folder` |
 | `dialFileManager.moveSourceDisabledTooltip` | `Unavailable for the original location. Please select another folder` |
 | `dialFileManager.movedIntoItselfTooltip` | `A folder can't be moved into itself or its subfolders` |
 
-The panel also reuses `dialFileManager.copyAction` (`Copy to`) and `dialFileManager.moveAction` (`Move to`) for its titles and button labels. No raw string literal keys are passed to `t()` anywhere in this capability.
+The panel's buttons reuse `buttons.copy` (`Copy`) and `buttons.move` (`Move`). No raw string literal keys are passed to `t()` anywhere in this capability.
 
 #### Scenario: All panel strings resolve through the enum
 

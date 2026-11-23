@@ -1,7 +1,7 @@
 import {
   DestinationFolderMode,
   DialFileNodeType,
-  FolderDestinationItemIcon,
+  FolderDestinationLayout,
   FolderDestinationPanel,
   fromFolderPathKey,
   toFolderPathKey,
@@ -9,6 +9,13 @@ import {
   type DialFile,
   type FolderDestination,
 } from '@epam/ai-dial-react-file-manager';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  DialItemType,
+  FileName,
+} from '@epam/ai-dial-ui-kit';
+import { IconFolderShare } from '@tabler/icons-react';
 import { FC, useCallback, useMemo, useState } from 'react';
 import {
   findFolder,
@@ -181,9 +188,11 @@ export const FileManagerDestinationPanel: FC<
     [onCreateFolder, rootPath],
   );
 
-  const handlePendingDestinationChange = useCallback(
-    (pending: FolderDestination | undefined) => {
-      if (pending) loadFolder(pending.path);
+  /* A pick is the destination in the inline layout, so it also loads that folder for conflict detection. */
+  const handleDestinationChange = useCallback(
+    (picked: FolderDestination) => {
+      setDestination(picked);
+      loadFolder(picked.path);
     },
     [loadFolder],
   );
@@ -196,6 +205,28 @@ export const FileManagerDestinationPanel: FC<
   );
   const itemCount = request.items.length;
   const [firstItem] = request.items;
+  const isSingleFolder =
+    itemCount === 1 && firstItem.nodeType === DialFileNodeType.FOLDER;
+  const title = isMove
+    ? labels.getMoveTitle(itemCount, isSingleFolder)
+    : labels.getCopyTitle(itemCount, isSingleFolder);
+  /* Every affected item is listed, so the user sees what the action touches. */
+  const affectedItems = (
+    <ul className="flex max-h-60 min-w-0 flex-col gap-1 overflow-y-auto">
+      {request.items.map((item) => (
+        <li key={item.path} className="min-w-0">
+          <FileName
+            name={item.name}
+            type={
+              item.nodeType === DialFileNodeType.FOLDER
+                ? DialItemType.Folder
+                : DialItemType.File
+            }
+          />
+        </li>
+      ))}
+    </ul>
+  );
 
   const handleClose = () => {
     request.cancel();
@@ -211,23 +242,29 @@ export const FileManagerDestinationPanel: FC<
       isOpen
       onClose={handleClose}
       item={{
-        title:
-          itemCount === 1 ? firstItem.name : labels.getItemsLabel(itemCount),
-        iconKind:
-          itemCount === 1 && firstItem.nodeType === DialFileNodeType.FOLDER
-            ? FolderDestinationItemIcon.Folder
-            : FolderDestinationItemIcon.File,
+        title: firstItem.name,
+        summary: affectedItems,
       }}
       roots={panelRoots}
       destination={destination}
-      onDestinationChange={setDestination}
-      onPendingDestinationChange={handlePendingDestinationChange}
+      layout={FolderDestinationLayout.Inline}
+      onDestinationChange={handleDestinationChange}
       onCreateFolder={handleCreateFolder}
       getDisabledReason={getDisabledReason}
-      labels={{ title: isMove ? labels.moveTitle : labels.copyTitle }}
-      panelLabels={{ createFolderLabel: labels.addFolderLabel }}
+      labels={{ title }}
+      panelLabels={{
+        destinationHeading: isMove ? labels.moveHeading : labels.copyHeading,
+        createFolderLabel: labels.addFolderLabel,
+      }}
       action={{
-        label: isMove ? labels.moveLabel : labels.copyLabel,
+        label: isMove ? labels.moveButtonLabel : labels.copyButtonLabel,
+        icon: (
+          <IconFolderShare
+            size={DIAL_ICON_SIZE.SM}
+            stroke={DIAL_KIT_ICON_STROKE}
+            aria-hidden
+          />
+        ),
         isDisabled:
           isDestinationLoading || getDisabledReason(destination) != null,
         onClick: handleConfirm,

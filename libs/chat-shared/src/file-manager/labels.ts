@@ -27,18 +27,20 @@ export type RenameValidationMessages = NonNullable<
 
 /** Text of the Copy/Move destination side panel. */
 export interface FileManagerDestinationPanelLabels {
-  /** Panel title for Copy. */
-  copyTitle: string;
-  /** Panel title for Move. */
-  moveTitle: string;
+  /** Returns the Copy panel title for `count` items; `isFolder` is true for a single folder. */
+  getCopyTitle: (count: number, isFolder: boolean) => string;
+  /** Returns the Move panel title for `count` items; `isFolder` is true for a single folder. */
+  getMoveTitle: (count: number, isFolder: boolean) => string;
+  /** Heading above the folder list for Copy. */
+  copyHeading: string;
+  /** Heading above the folder list for Move. */
+  moveHeading: string;
   /** Label of the panel's Copy button. */
-  copyLabel: string;
+  copyButtonLabel: string;
   /** Label of the panel's Move button. */
-  moveLabel: string;
+  moveButtonLabel: string;
   /** Label of the folder-creation button. */
   addFolderLabel: string;
-  /** Returns the text naming several items in the panel's summary row. */
-  getItemsLabel: (count: number) => string;
   /** Reason shown when Move targets the folder the items are already in. */
   sourceFolderTooltip: string;
   /** Reason shown when Move targets a moved folder or one inside it. */
@@ -100,12 +102,18 @@ export interface DialFileManagerShellLabels {
   duplicateLabel: string;
   /** Label for the "Add folder" button in the destination picker. */
   addFolderLabel: string;
-  /** Title of the Copy destination panel. */
-  copyDestinationTitle: string;
-  /** Title of the Move destination panel. */
-  moveDestinationTitle: string;
-  /** Returns the text naming several items in the destination panel's summary row. */
-  getDestinationItemsLabel: (count: number) => string;
+  /** Returns the Copy destination panel title for `count` items; `isFolder` is true for a single folder. */
+  getCopyDestinationTitle: (count: number, isFolder: boolean) => string;
+  /** Returns the Move destination panel title for `count` items; `isFolder` is true for a single folder. */
+  getMoveDestinationTitle: (count: number, isFolder: boolean) => string;
+  /** Heading above the folder list in the Copy destination panel. */
+  copyDestinationHeading: string;
+  /** Heading above the folder list in the Move destination panel. */
+  moveDestinationHeading: string;
+  /** Label of the Copy button in the destination panel. */
+  copyDestinationButton: string;
+  /** Label of the Move button in the destination panel. */
+  moveDestinationButton: string;
   /** Tooltip shown on the disabled source folder in the destination picker. */
   moveSourceDisabledTooltip: string;
   /** Tooltip shown when the move destination is a moved folder or lies inside one. */

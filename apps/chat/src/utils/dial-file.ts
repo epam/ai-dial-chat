@@ -6,6 +6,9 @@ import {
   type DialProjectFileIdParts,
 } from '@epam/ai-dial-chat-hooks';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import { DestinationFolderMode } from '@epam/ai-dial-react-file-manager';
+import type { TFunction } from 'i18next';
+import { DialFileManagerI18nKeys } from '../constants/translation-keys';
 import { ApiEndpoints } from '../server-api/base';
 
 /**
@@ -208,4 +211,34 @@ const isExternalHttpUrl = (url: string): boolean => {
   } catch {
     return false;
   }
+};
+
+/** Returns the title of the Copy/Move destination panel: "Move file", "Move folder" or "Move N items". */
+export const getDestinationPanelTitle = (
+  t: TFunction,
+  mode: DestinationFolderMode,
+  count: number,
+  isFolder: boolean,
+): string => {
+  const isMove = mode === DestinationFolderMode.Move;
+  if (count > 1) {
+    return t(
+      isMove
+        ? DialFileManagerI18nKeys.MoveItemsTitle
+        : DialFileManagerI18nKeys.CopyItemsTitle,
+      { count },
+    );
+  }
+  if (isFolder) {
+    return t(
+      isMove
+        ? DialFileManagerI18nKeys.MoveFolderTitle
+        : DialFileManagerI18nKeys.CopyFolderTitle,
+    );
+  }
+  return t(
+    isMove
+      ? DialFileManagerI18nKeys.MoveFileTitle
+      : DialFileManagerI18nKeys.CopyFileTitle,
+  );
 };
