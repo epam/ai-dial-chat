@@ -8,6 +8,7 @@ import {
   CelebrationAnchorFallback,
   CelebrationPlacementTemplate,
 } from '../../types/celebration-pack';
+import { PackSceneCompanionKind } from '../../types/pack-scene';
 import {
   onCatBorrowAnimationCreated,
   onCatBorrowPlaybackStarted,
@@ -237,7 +238,11 @@ describe('prepareCatBorrowScene', () => {
     place(decoy, 40, 600, 200, 60);
     place(decoyButton, 60, 610, 40, 40);
     const { send } = buildPage();
-    const { borrow } = prepareCatBorrowScene(spike, PLACEMENT, ANCHORS);
+    const { companion } = prepareCatBorrowScene(spike, PLACEMENT, ANCHORS);
+    const borrow =
+      companion?.kind === PackSceneCompanionKind.CatBorrow
+        ? companion
+        : undefined;
 
     expect(borrow?.watched.map(({ element }) => element)).toEqual([send]);
   });
@@ -449,7 +454,14 @@ describe('cat-borrow session callbacks', () => {
     });
     Object.defineProperty(document, 'timeline', {
       configurable: true,
-      value: { currentTime: 4200 + (preparation.borrow?.restoreMs ?? 0) + 1 },
+      value: {
+        currentTime:
+          4200 +
+          ((preparation.companion?.kind === PackSceneCompanionKind.CatBorrow
+            ? preparation.companion.restoreMs
+            : 0) ?? 0) +
+          1,
+      },
     });
     document.dispatchEvent(new Event('pointerdown'));
 
@@ -458,7 +470,10 @@ describe('cat-borrow session callbacks', () => {
   });
 
   it('removes the copy layer when attaching the copies throws', () => {
-    const copies = preparation.borrow?.copies;
+    const copies =
+      preparation.companion?.kind === PackSceneCompanionKind.CatBorrow
+        ? preparation.companion.copies
+        : undefined;
     if (!copies) throw new Error('No copies');
     vi.spyOn(copies, 'attach').mockImplementation((layer) => {
       layer.append(document.createElement('span'));

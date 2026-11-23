@@ -301,6 +301,19 @@ A `composer-anchor-v1` scene with `direction: 'none'` may require `interaction-c
 
 A browser without `Element.prototype.animate`, `ResizeObserver` or `MutationObserver` shows the poster. So does a malformed `cat:` marker or slot. Interaction, scrolling, viewport changes, a hidden tab, a moved or changed button, composer or support, or a change of any of the three anchors ends the scene, and the originals are restored. A failure after the first frame renders nothing.
 
+#### Copying host content along authored tracks (`interaction-copy-track-v1`)
+
+A `composer-anchor-v1` scene with `direction: 'none'` may require `interaction-copy-track-v1`. The asset is authored at reference geometry; the adapter only fits it to the page. After the player and data load, `LottieScene` does the following:
+
+- **Sections.** The asset declares `ct:section:<kind>` markers in priority order: `ledge-card`, `rim-card`, `rim`, `platform` or `rim-word`. The adapter plays the first one whose stage fits the page and whose copy role resolves.
+- **Stages.** `ledge` stands under the bottom starter row, `rim` stands on the composer's upper edge, and `platform` stands below the lowest host content. Each is measured once from `anchors.composer`, `anchors.starterList` and `anchors.welcomeRegion`. The longest span the welcome region allows is chosen between the asset's `anchor:<name>` and `anchor:<name>@min` references, from the maximum down in 8 px steps and then the minimum itself. A root null named `<base>#<kind>[,<kind>…]` gives the named sections their own reference (`anchor:<name>` or `anchor:<name>@min` for `span-start`, `span-end` and `far`), follow-group position (`ct-follow:<anchor>`) or travel (`ct-travel`); follow groups and the `ct-band` stay authored against the base references.
+- **Copy roles.** `starter-card` clones one starter button: at most four are inspected, and a card qualifies within 0.75–1.5 × the reference card's width (and at most 240 px) and 0.95–1.05 × its height, with at most 40 nodes, when it is enabled, idle, untransformed, visible and unclipped. `composer-word` copies the first word of the composer textarea's value or placeholder as an inert span over a cover in the background colour; the textarea is never touched.
+- **Tracks.** Keyframes of the `ct-track:*` nulls are bound to measured anchors (`ct:bind:<anchor>`), stretched between them by each track's own progress (`ct:stretch`), or held where a resting object was put. `ct-follow:<anchor>` groups move rigidly. No keyframe is added, and no time or easing changes. Travel toward −x mirrors the whole stage.
+- **Timing.** One time remap on the `ct-actor` precomposition splices the section's windows (`ct:cut:<kind>` / `ct:fill:<kind>`, equal lengths, so later beats keep their times) and repeats step cycles (`ct:cycle:<n>` over `ct:cycle-window:<n>`) a whole number of times (at most 24 per window) to cover the measured distance while the `ct-travel` null carries the actor. Each cycle's x offsets are scaled to the distance per cycle, so a planted foot stands still.
+- **Copies.** The copy is prepared before readiness beneath the renderer and starts on the Lottie clock. It follows the `ct-track:copy` track and the travel, is visible from `ct:entry`, and fades back to its original at `ct:restore`. Copies only translate and rotate. `ct-if:copy` and `ct-if:no-copy` layers show only when the chosen section has, or has no, copy. A card section's grips fit the `ct-if:copy card-ref` rectangle, the reference card. The `ct-band` rectangle is read in stage units, so its layer and group are never moved, scaled or rotated.
+
+A browser without `Element.prototype.animate`, `ResizeObserver` or `MutationObserver` shows the poster. So does a malformed `ct:` marker or slot (every rule that needs no page is checked before the page is measured, including closed cycles), or a page where no section fits. In every section, with or without a copy, interaction, typing, scrolling, viewport changes, a hidden tab, a moved or changed target, or a change of any of the three anchors ends the scene, and the original is restored. A failure after the first frame renders nothing.
+
 `StaticTriggerDecoration` is a native `<button type="button">` named by `label` (default `Play celebration` when empty), with an `aria-hidden` image from `imageUrl`. It calls `onActivate` on click, Enter and Space, draws its focus ring in `currentColor` and declares no colors of its own.
 
 ```tsx
@@ -317,7 +330,7 @@ export const Trigger = ({ onActivate }: { onActivate: () => void }) => (
 
 ## Capabilities
 
-`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `composer-anchor-v1`, `interaction-composer-outline-v1`, `interaction-cat-borrow-v1`, `static-poster-v1` and `static-trigger-v1`. Any other `interaction-*` id is unsupported. A host keeps only scenes whose `requiredCapabilities` are all in the set:
+`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `composer-anchor-v1`, `interaction-composer-outline-v1`, `interaction-cat-borrow-v1`, `interaction-copy-track-v1`, `static-poster-v1` and `static-trigger-v1`. Any other `interaction-*` id is unsupported. A host keeps only scenes whose `requiredCapabilities` are all in the set:
 
 ```ts
 import {
@@ -387,7 +400,7 @@ and sleigh scenes are no longer included.
 
 From the main entry:
 
-- `CelebrationCapability`: `LottieLightSvgV1`, `ViewportStageV1`, `ComposerAnchorV1`, `InteractionComposerOutlineV1`, `InteractionCatBorrowV1`, `StaticPosterV1`, `StaticTriggerV1`.
+- `CelebrationCapability`: `LottieLightSvgV1`, `ViewportStageV1`, `ComposerAnchorV1`, `InteractionComposerOutlineV1`, `InteractionCatBorrowV1`, `InteractionCopyTrackV1`, `StaticPosterV1`, `StaticTriggerV1`.
 - `CelebrationDirectionMode`: `None`, `Mirror`, `Variant`.
 - `CelebrationLayout`: `Mobile`, `Desktop`.
 - `CelebrationColorScheme`: `Light`, `Dark`.

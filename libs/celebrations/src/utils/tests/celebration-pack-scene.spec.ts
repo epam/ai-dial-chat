@@ -74,4 +74,53 @@ describe('isCelebrationSceneSupported', () => {
       ),
     ).toBe(false);
   });
+
+  describe('copy-track scenes', () => {
+    const copyTrackScene = (overrides = {}) =>
+      catScene({
+        requiredCapabilities: [
+          CelebrationCapability.LottieLightSvgV1,
+          CelebrationCapability.ComposerAnchorV1,
+          CelebrationCapability.InteractionCopyTrackV1,
+          CelebrationCapability.StaticPosterV1,
+        ],
+        ...overrides,
+      });
+
+    it('supports a copy-track scene on a composer anchor with direction none', () => {
+      expect(
+        SUPPORTED_CELEBRATION_CAPABILITIES.has('interaction-copy-track-v1'),
+      ).toBe(true);
+      expect(isCelebrationSceneSupported(copyTrackScene())).toBe(true);
+    });
+
+    it('rejects a copy-track scene on a viewport stage', () => {
+      expect(
+        isCelebrationSceneSupported(
+          copyTrackScene({ placement: packSceneFixture().placement }),
+        ),
+      ).toBe(false);
+    });
+
+    it('rejects a copy-track scene with direction mirror', () => {
+      expect(
+        isCelebrationSceneSupported(
+          copyTrackScene({ direction: CelebrationDirectionMode.Mirror }),
+        ),
+      ).toBe(false);
+    });
+
+    it('rejects a scene that requires copy-track and another adapter', () => {
+      expect(
+        isCelebrationSceneSupported(
+          copyTrackScene({
+            requiredCapabilities: [
+              ...copyTrackScene().requiredCapabilities,
+              CelebrationCapability.InteractionCatBorrowV1,
+            ],
+          }),
+        ),
+      ).toBe(false);
+    });
+  });
 });

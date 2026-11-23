@@ -160,6 +160,36 @@ describe('prepareCelebrationSnapshots', () => {
     expect(offsets[4]).toBeCloseTo(0.95, 9);
   });
 
+  it('carries each copy on a travel layer that starts on the same clock and leaves with it', () => {
+    const travelFrames = vi.fn(() => [
+      { transform: 'translate(0px, 0px)' },
+      { transform: 'translate(120px, 0px)' },
+    ]);
+    const session = prepareCelebrationSnapshots(targets(), {
+      ...options,
+      travelFrames,
+    });
+    session.attach(layer);
+    const travel = layer.firstElementChild as HTMLElement;
+    const copy = travel.firstElementChild as HTMLElement;
+
+    expect(travel.inert).toBe(true);
+    expect(travel.getAttribute('aria-hidden')).toBe('true');
+    expect(travel.style.width).toBe('0px');
+    expect(copy.dataset.celebrationSnapshot).toBe('true');
+
+    session.start(1234);
+    expect(travelFrames).toHaveBeenCalledWith(0);
+    expect(animationsOn(travel)).toHaveLength(1);
+    expect(animationsOn(travel)[0].keyframes.at(-1)).toEqual({
+      transform: 'translate(120px, 0px)',
+    });
+    recorded.forEach(({ animation }) => expect(animation.startTime).toBe(1234));
+
+    session.stop();
+    expect(layer.children).toHaveLength(0);
+  });
+
   it('refuses to start copies that were never attached', () => {
     const session = prepareCelebrationSnapshots(targets(), options);
 
