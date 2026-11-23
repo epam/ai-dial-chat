@@ -10,6 +10,8 @@ export enum CelebrationCapability {
   InteractionComposerOutlineV1 = 'interaction-composer-outline-v1',
   /** Borrows reversible copies of host buttons and retargets the cat's stations onto them. */
   InteractionCatBorrowV1 = 'interaction-cat-borrow-v1',
+  /** The copy-track adapter (S7 batch 1): stage templates, copy roles and authored tracks on measured geometry. */
+  InteractionCopyTrackV1 = 'interaction-copy-track-v1',
   /** Shows a static poster image instead of motion. */
   StaticPosterV1 = 'static-poster-v1',
   /** Renders a static image button as an external event's decoration. */

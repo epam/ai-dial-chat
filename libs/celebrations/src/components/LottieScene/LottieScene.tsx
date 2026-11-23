@@ -154,6 +154,8 @@ export const LottieScene: FC<LottieSceneProps> = ({
       return adapter.prepare(data, placement, {
         anchors: initial.anchors,
         isMirrored,
+        isMobile: initial.isMobile,
+        direction: context.direction,
       });
     },
     loadData,

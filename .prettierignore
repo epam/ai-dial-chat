@@ -27,3 +27,7 @@ libs/celebrations/src/stories/fixtures/external
 # halloween-default@1.0.0 asset and its sha256 is pinned by a unit test.
 libs/celebrations/src/stories/fixtures/cat-borrow-full.lottie.json
 libs/celebrations/src/stories/fixtures/cat-borrow-spike.lottie.json
+libs/celebrations/src/stories/fixtures/copy-track-snowman.desktop.lottie.json
+libs/celebrations/src/stories/fixtures/copy-track-snowman.mobile.lottie.json
+libs/celebrations/src/stories/fixtures/copy-track-snowman.poster.svg
+libs/celebrations/src/stories/fixtures/copy-track-word-probe.lottie.json

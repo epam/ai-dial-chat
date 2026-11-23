@@ -246,7 +246,13 @@ export class ProjectConversationStore {
     }
   }
 
-  /* The body's `id` is its locator and its `folderId` the project id, whatever the caller sent. */
+  /*
+   * The body's `id` is its locator and its `folderId` the project id, whatever
+   * the caller sent. `updatedAt` is the time of this write: the file's own
+   * `updatedAt` orders a project's chats, but publishing copies the files and
+   * stamps every copy with the copy time, so the body is the one record of
+   * the last change that survives the copy.
+   */
   private withIdentity(
     parsed: ParsedProjectConversationLocator,
     conversation: ConversationResponseDto,
@@ -255,6 +261,7 @@ export class ProjectConversationStore {
       ...conversation,
       id: parsed.locator,
       folderId: parsed.project.id,
+      updatedAt: Date.now(),
     };
   }
 

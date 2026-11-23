@@ -1,3 +1,6 @@
+import type { Point } from './lottie-composition';
+import type { LottieTimeRemapSegment } from './lottie-time-remap';
+
 /** How an authored null-layer track becomes the WAAPI track of a DOM copy. */
 export interface CopyTrackOptions {
   /** Length of the WAAPI animation, in milliseconds. */
@@ -38,4 +41,34 @@ export interface CopyTrack {
   keyframes: Keyframe[];
   /** Horizontal displacement at the release, in CSS pixels. */
   releaseX: number;
+}
+
+/** How an authored copy track becomes WAAPI keyframes over a whole section path. */
+export interface CopyPathOptions {
+  /** Length of the WAAPI animation, in milliseconds. */
+  durationMs: number;
+  /** Composition frame rate. */
+  frameRate: number;
+  /** The remap pieces of the chosen section, in order. */
+  segments: readonly LottieTimeRemapSegment[];
+  /** Track position at which the copy sits on its original, in stage units. */
+  origin: Point;
+  /** CSS pixels per stage unit. */
+  scale: number;
+  /** `-1` mirrors the horizontal motion and the rotation of a mirrored stage. Defaults to `1`. */
+  mirror?: 1 | -1;
+}
+
+/** How a travel null becomes the WAAPI keyframes of a copy's carrying layer. */
+export interface CopyTravelOptions {
+  /** Length of the WAAPI animation, in milliseconds. */
+  durationMs: number;
+  /** Composition frame rate. */
+  frameRate: number;
+  /** Travel position that leaves the copy in place, in stage units. */
+  origin: Point;
+  /** CSS pixels per stage unit. */
+  scale: number;
+  /** `-1` mirrors the horizontal motion of a mirrored stage. Defaults to `1`. */
+  mirror?: 1 | -1;
 }

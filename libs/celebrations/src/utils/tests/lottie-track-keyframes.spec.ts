@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { LottieLayer } from '../../models/lottie-composition';
 import type { CopyTrackOptions } from '../../models/lottie-track-keyframes';
+import { buildSectionPath, repeatCycle } from '../lottie-time-remap';
 import {
   COPY_MAX_TILT_DEG,
   appendCopyFall,
   copyFallMs,
+  copyPathKeyframes,
   copyTrackKeyframes,
+  copyTravelKeyframes,
 } from '../lottie-track-keyframes';
 
 const EASE = { o: { x: [0.42], y: [0] }, i: { x: [0.58], y: [1] } };
@@ -225,5 +228,152 @@ describe('appendCopyFall', () => {
     expect(() =>
       appendCopyFall(track(), { ...fall, restoreMs: fall.releaseMs + 100 }),
     ).toThrow('still moving at the restore');
+  });
+});
+
+describe('copyPathKeyframes', () => {
+  const OUT = { x: [0.33], y: [0] };
+  const IN = { x: [0.67], y: [1] };
+  /* The card sits on its slot (100, 50), rides off and comes back. */
+  const card = (): LottieLayer => ({
+    ty: 3,
+    nm: 'ct-track:copy',
+    ks: {
+      p: {
+        a: 1,
+        k: [
+          { t: 0, s: [100, 50, 0], h: 1 },
+          { t: 60, s: [100, 50, 0], o: OUT, i: IN },
+          { t: 120, s: [300, 20, 0], o: OUT, i: IN },
+          { t: 130, s: [310, 20, 0], o: OUT, i: IN },
+          { t: 140, s: [300, 20, 0], o: OUT, i: IN },
+          { t: 180, s: [100, 50, 0] },
+        ],
+      },
+      r: {
+        a: 1,
+        k: [
+          { t: 0, s: [0], h: 1 },
+          { t: 60, s: [0], o: OUT, i: IN },
+          { t: 120, s: [-14], o: OUT, i: IN },
+          { t: 130, s: [-10], o: OUT, i: IN },
+          { t: 140, s: [-14], o: OUT, i: IN },
+          { t: 180, s: [0] },
+        ],
+      },
+      o: {
+        a: 1,
+        k: [
+          { t: 0, s: [0], h: 1 },
+          { t: 60, s: [100], o: OUT, i: IN },
+          { t: 120, s: [100], o: OUT, i: IN },
+          { t: 130, s: [100], o: OUT, i: IN },
+          { t: 140, s: [100], o: OUT, i: IN },
+          { t: 180, s: [100] },
+        ],
+      },
+    },
+  });
+  const options = {
+    durationMs: 3000,
+    frameRate: 60,
+    segments: buildSectionPath([{ from: 0, to: 180 }]),
+    origin: { x: 100, y: 50 },
+    scale: 0.5,
+  };
+
+  it('carries x and y as a translation from the origin, with rotation and opacity', () => {
+    const keyframes = copyPathKeyframes(card(), options);
+
+    expect(keyframes[2]).toEqual({
+      offset: 2 / 3,
+      opacity: 1,
+      transform: 'translate(100px, -15px) rotate(-14deg)',
+      easing: 'cubic-bezier(0.33, 0, 0.67, 1)',
+    });
+    expect(keyframes[0].easing).toBe('steps(1, end)');
+  });
+
+  it('emits a cycle keyframe once per repetition, at its composition time', () => {
+    const segments = repeatCycle(buildSectionPath([{ from: 0, to: 180 }]), {
+      cycle: { from: 120, to: 140 },
+      from: 120,
+      to: 180,
+      count: 4,
+    });
+    const keyframes = copyPathKeyframes(card(), { ...options, segments });
+    const offsets = keyframes.map(({ offset }) => offset as number);
+
+    expect(
+      keyframes.filter(({ transform }) =>
+        String(transform).startsWith('translate(105px'),
+      ),
+    ).toHaveLength(4);
+    expect(
+      offsets.every(
+        (offset, index) => index === 0 || offset >= offsets[index - 1],
+      ),
+    ).toBe(true);
+  });
+
+  it('rejects a step that lands between keyframes', () => {
+    const segments = repeatCycle(buildSectionPath([{ from: 0, to: 180 }]), {
+      cycle: { from: 125, to: 140 },
+      from: 120,
+      to: 160,
+      count: 2,
+    });
+
+    expect(() => copyPathKeyframes(card(), { ...options, segments })).toThrow(
+      'no keyframe at local frame 125',
+    );
+  });
+});
+
+describe('copyTravelKeyframes', () => {
+  it('translates the carrying layer from the origin with the authored easing', () => {
+    const travel: LottieLayer = {
+      ty: 3,
+      nm: 'ct-travel',
+      ks: {
+        p: {
+          a: 1,
+          k: [
+            { t: 0, s: [0, 0, 0], h: 1 },
+            {
+              t: 1311,
+              s: [0, 0, 0],
+              o: { x: [0], y: [0] },
+              i: { x: [1], y: [1] },
+            },
+            { t: 1353, s: [-400, 0, 0] },
+          ],
+        },
+      },
+    };
+
+    const keyframes = copyTravelKeyframes(travel, {
+      durationMs: 25000,
+      frameRate: 60,
+      origin: { x: 0, y: 0 },
+      scale: 0.9,
+    });
+
+    /* The last key holds to offset 1, so WAAPI never falls back to the underlying value. */
+    expect(keyframes.map(({ transform }) => transform)).toEqual([
+      'translate(0px, 0px)',
+      'translate(0px, 0px)',
+      'translate(-360px, 0px)',
+      'translate(-360px, 0px)',
+    ]);
+    expect(keyframes.at(-1)?.offset).toBe(1);
+    expect(keyframes.map(({ easing }) => easing)).toEqual([
+      'steps(1, end)',
+      'linear',
+      'linear',
+      'linear',
+    ]);
+    expect(keyframes[1].offset).toBeCloseTo(0.874, 9);
+    expect(keyframes[2].offset).toBeCloseTo(0.902, 9);
   });
 });

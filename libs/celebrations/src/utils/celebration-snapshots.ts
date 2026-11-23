@@ -1,3 +1,5 @@
+import { COPY_INTERACTION_EVENTS, makeTravelLayer } from './copy-layers';
+
 /** A live application element paired with its pre-animation viewport bounds. */
 export interface CelebrationSnapshotTarget {
   element: HTMLElement;
@@ -17,6 +19,8 @@ interface SnapshotAnimationOptions {
   startTime?: number;
   /** Share of `durationMs` over which each original fades back in from `restoreAt`. Defaults to `0.04`. */
   restoreShare?: number;
+  /** Keyframes of an outer layer that carries each copy, composed with `frames` like a parent transform. */
+  travelFrames?: (index: number) => Keyframe[];
 }
 
 const DEFAULT_RESTORE_SHARE = 0.04;
@@ -138,20 +142,12 @@ export const prepareCelebrationSnapshots = (
     makeSnapshot(element, rect),
   );
   const animations: Animation[] = [];
+  const travelLayers: HTMLElement[] = [];
   let attachedHost: HTMLElement | null = null;
   let isStarted = false;
   let isStopped = false;
   let deadline: ReturnType<typeof setTimeout> | undefined;
-  const events = [
-    'scroll',
-    'pointerdown',
-    'focusin',
-    'keydown',
-    'beforeinput',
-    'input',
-    'compositionstart',
-    'visibilitychange',
-  ];
+  const events = COPY_INTERACTION_EVENTS;
   const stop = () => {
     if (isStopped) return;
     isStopped = true;
@@ -160,6 +156,7 @@ export const prepareCelebrationSnapshots = (
     animations.splice(0).forEach((animation) => animation.cancel());
     /* Removed copies are released too, so a retained session holds no DOM. */
     copies.splice(0).forEach((copy) => copy.remove());
+    travelLayers.splice(0).forEach((layer) => layer.remove());
     attachedHost = null;
     events.forEach((name) =>
       document.removeEventListener(name, onInteraction, true),
@@ -200,7 +197,14 @@ export const prepareCelebrationSnapshots = (
     copies.forEach((copy, index) => {
       /* Invisible until `start`: the clone's own nodes copy `visibility: visible`. */
       copy.style.opacity = '0';
-      host.appendChild(copy);
+      if (options.travelFrames) {
+        const layer = makeTravelLayer();
+        layer.appendChild(copy);
+        host.appendChild(layer);
+        travelLayers.push(layer);
+      } else {
+        host.appendChild(copy);
+      }
       const originals = [
         targets[index].element,
         ...targets[index].element.querySelectorAll('*'),
@@ -232,6 +236,14 @@ export const prepareCelebrationSnapshots = (
           { duration: options.durationMs, fill: 'both' },
         ),
       );
+      const travel = travelLayers[index];
+      if (travel && options.travelFrames)
+        animations.push(
+          travel.animate(options.travelFrames(index), {
+            duration: options.durationMs,
+            fill: 'both',
+          }),
+        );
       if (options.hideOriginal !== false) {
         const opacity = getComputedStyle(element).opacity;
         const hideAt =

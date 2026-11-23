@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import type { LottieStationBinding } from '../../models/lottie-anchor-binding';
+import type {
+  LottieStationBinding,
+  LottieTrackBinding,
+} from '../../models/lottie-anchor-binding';
 import type { LottieLayer } from '../../models/lottie-composition';
-import { bindStationKeyframes } from '../lottie-anchor-binding';
+import {
+  bindStationKeyframes,
+  bindTrackLayers,
+} from '../lottie-anchor-binding';
 
 const EASE = { o: { x: [0.33], y: [0] }, i: { x: [0.67], y: [1] } };
 
@@ -227,5 +233,241 @@ describe('bindStationKeyframes', () => {
     expect(() => bindStationKeyframes(layers, binding())).toThrow(
       'without a start value',
     );
+  });
+});
+
+/* A sled rides from the seat (x 100) to the impact (x 400); the snowbank waits
+   at the impact and the tree further on. */
+const travelLayers = (): LottieLayer[] => [
+  nullLayer('anchor:span-start', { p: { a: 0, k: [100, 0, 0] } }),
+  nullLayer('anchor:span-end', { p: { a: 0, k: [400, 0, 0] } }),
+  nullLayer('ct-track:sled', {
+    p: {
+      a: 1,
+      k: [
+        { t: 0, s: [100, 0, 0], ...EASE },
+        { t: 10, s: [112, 0, 0], ...EASE },
+        { t: 20, s: [130, 0, 0], ...EASE },
+        { t: 30, s: [400, 0, 0], ...EASE },
+        { t: 40, s: [400, 0, 0] },
+      ],
+    },
+    r: {
+      a: 1,
+      k: [
+        { t: 0, s: [0] },
+        { t: 30, s: [-14] },
+      ],
+    },
+  }),
+  nullLayer('ct-follow:span-end', { p: { a: 0, k: [409, 0, 0] } }),
+  { ty: 4, nm: 'snowbank', parent: 4, shapes: [] },
+];
+
+const travel = (
+  overrides: Partial<LottieTrackBinding> = {},
+): LottieTrackBinding => ({
+  trackLayers: ['ct-track:sled'],
+  referencePrefix: 'anchor:',
+  followPrefix: 'ct-follow:',
+  bindings: [
+    { kind: 'bind', argument: 'span-start', frame: 0, duration: 5 },
+    { kind: 'bind', argument: 'span-end', frame: 30, duration: 11 },
+  ],
+  stretches: [{ kind: 'stretch', frame: 5, duration: 25 }],
+  anchors: {
+    'span-start': { point: { x: 1000, y: 500 }, side: 1 },
+    'span-end': { point: { x: 1150, y: 500 }, side: 1 },
+  },
+  ...overrides,
+});
+
+describe('bindTrackLayers', () => {
+  it('keeps each stretched key at its authored share of the span', () => {
+    const layers = bindTrackLayers(travelLayers(), travel());
+
+    expect(
+      keyframes(layers, 'ct-track:sled', 'p').map(({ s }) => s[0]),
+    ).toEqual([1000, 1006, 1015, 1150, 1150]);
+  });
+
+  it('moves an offset track in proportion to its own progress, and holds a still track with the bind before until the next bind', () => {
+    const layers = [
+      ...travelLayers(),
+      nullLayer('ct-track:corner', {
+        p: {
+          a: 1,
+          k: [
+            { t: 0, s: [-16, 0, 0] },
+            { t: 10, s: [-4, 0, 0] },
+            { t: 20, s: [14, 0, 0] },
+            { t: 30, s: [284, 0, 0] },
+          ],
+        },
+      }),
+      nullLayer('ct-track:body', {
+        p: {
+          a: 1,
+          k: [
+            { t: 0, s: [100, 0, 0] },
+            { t: 20, s: [100, 0, 0] },
+            { t: 30, s: [100, 0, 0] },
+          ],
+        },
+      }),
+    ];
+    const bound = bindTrackLayers(
+      layers,
+      travel({
+        trackLayers: ['ct-track:sled', 'ct-track:corner', 'ct-track:body'],
+      }),
+    );
+
+    expect(
+      keyframes(bound, 'ct-track:corner', 'p').map(({ s }) => s[0]),
+    ).toEqual([884, 890, 899, 1034]);
+    expect(keyframes(bound, 'ct-track:body', 'p').map(({ s }) => s[0])).toEqual(
+      [1000, 1000, 850],
+    );
+  });
+
+  it('keeps a resting track where it was put when the scene moves on to another anchor', () => {
+    const layers = [
+      ...travelLayers(),
+      nullLayer('ct-track:card', {
+        p: {
+          a: 1,
+          k: [
+            { t: 0, s: [100, 0, 0] },
+            { t: 30, s: [380, 0, 0] },
+            { t: 35, s: [380, 0, 0] },
+            { t: 40, s: [380, 0, 0] },
+          ],
+        },
+      }),
+    ];
+    const options = travel({
+      trackLayers: ['ct-track:sled', 'ct-track:card'],
+      bindings: [
+        { kind: 'bind', argument: 'span-start', frame: 0, duration: 5 },
+        { kind: 'bind', argument: 'span-end', frame: 30, duration: 5 },
+        { kind: 'bind', argument: 'span-start', frame: 35, duration: 6 },
+      ],
+    });
+
+    expect(
+      keyframes(
+        bindTrackLayers(layers, { ...options, holdsRest: true }),
+        'ct-track:card',
+        'p',
+      ).map(({ s }) => s[0]),
+    ).toEqual([1000, 1130, 1130, 1130]);
+    expect(
+      keyframes(bindTrackLayers(layers, options), 'ct-track:card', 'p').map(
+        ({ s }) => s[0],
+      ),
+    ).toEqual([1000, 1130, 1280, 1280]);
+  });
+
+  it('moves a follow group rigidly with its anchor and leaves its children alone', () => {
+    const input = travelLayers();
+    const layers = bindTrackLayers(input, travel());
+
+    expect(layers[3].ks?.p?.k).toEqual([1159, 500, 0]);
+    expect(layers[4]).toBe(input[4]);
+  });
+
+  it('mirrors stretched keys and follow groups when the measured side is −1', () => {
+    const layers = bindTrackLayers(
+      travelLayers(),
+      travel({
+        anchors: {
+          'span-start': { point: { x: 1000, y: 500 }, side: -1 },
+          'span-end': { point: { x: 850, y: 500 }, side: -1 },
+        },
+      }),
+    );
+
+    expect(
+      keyframes(layers, 'ct-track:sled', 'p').map(({ s }) => s[0]),
+    ).toEqual([1000, 994, 985, 850, 850]);
+    expect(layers[3].ks?.p?.k).toEqual([841, 500, 0]);
+    expect(layers[3].ks?.s?.k).toEqual([-100, 100, 100]);
+  });
+
+  it('holds a stretched key with the bind before when both anchors share an x', () => {
+    const layers = bindTrackLayers(
+      travelLayers(),
+      travel({
+        anchors: {
+          'span-start': { point: { x: 700, y: 500 }, side: 1 },
+          'span-end': { point: { x: 700, y: 500 }, side: 1 },
+        },
+      }),
+    );
+
+    expect(
+      keyframes(layers, 'ct-track:sled', 'p').every(({ s }) =>
+        s.every(Number.isFinite),
+      ),
+    ).toBe(true);
+  });
+
+  it('rejects a facing layer that is also a track', () => {
+    expect(() =>
+      bindTrackLayers(
+        travelLayers(),
+        travel({ facingLayer: 'ct-track:sled' } as never),
+      ),
+    ).toThrow('is both a track and the facing');
+  });
+
+  it('keeps keyframe times, counts and easing on every track', () => {
+    const input = travelLayers();
+    const layers = bindTrackLayers(input, travel());
+    const strip = (layer: LottieLayer) =>
+      (layer.ks?.p?.k as { s: number[] }[]).map(({ s: _s, ...rest }) => rest);
+
+    expect(strip(layers[2])).toEqual(strip(input[2]));
+  });
+
+  it('leaves the input untouched', () => {
+    const input = travelLayers();
+    const before = structuredClone(input);
+    bindTrackLayers(input, travel());
+
+    expect(input).toEqual(before);
+  });
+
+  it.each([
+    [
+      'a stretch that is not between two binds',
+      travel({ stretches: [{ kind: 'stretch', frame: 6, duration: 24 }] }),
+      'is not between two binds',
+    ],
+    [
+      'a stretch whose neighbours face different sides',
+      travel({
+        anchors: {
+          'span-start': { point: { x: 1000, y: 500 }, side: 1 },
+          'span-end': { point: { x: 850, y: 500 }, side: -1 },
+        },
+      }),
+      'changes side',
+    ],
+    [
+      'an unbound track keyframe',
+      travel({ stretches: [] }),
+      'unbound keyframe at frame 10',
+    ],
+  ])('rejects %s', (_case, options, message) => {
+    expect(() => bindTrackLayers(travelLayers(), options)).toThrow(message);
+  });
+
+  it('rejects a follow group that is not a null', () => {
+    const layers = travelLayers();
+    layers[3] = { ...layers[3], ty: 4 };
+
+    expect(() => bindTrackLayers(layers, travel())).toThrow('is not a null');
   });
 });

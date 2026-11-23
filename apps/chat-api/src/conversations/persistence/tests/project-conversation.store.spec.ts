@@ -156,6 +156,40 @@ describe('ProjectConversationStore', () => {
     expect(init.body).toBeInstanceOf(FormData);
   });
 
+  it('stamps the time of the write as the body updatedAt, whatever the caller sent', async () => {
+    vi.useFakeTimers({ now: 5000 });
+    try {
+      const { store, client } = makeStore();
+      client.uploadProjectFile.mockResolvedValue(status(200));
+      client.listProjectMetadata.mockResolvedValue(metadata('"p1"'));
+      const text = JSON.stringify(body());
+      client.downloadProjectFile.mockResolvedValue(download(text));
+
+      const saved = await store.saveConversation(LOCATOR, 'token', {
+        ...body(),
+        updatedAt: 10,
+      });
+      const conditional = await store.saveConversationIfMatch(
+        LOCATOR,
+        'token',
+        { ...body('Renamed'), updatedAt: 10 },
+        hashProjectConversation(text),
+      );
+
+      expect(saved.updatedAt).toBe(5000);
+      expect(conditional).toMatchObject({
+        isSaved: true,
+        conversation: { updatedAt: 5000 },
+      });
+      const written = client.uploadProjectFile.mock.calls[0][3]
+        .body as unknown as FormData;
+      const bytes = await (written.get('file') as Blob).text();
+      expect(JSON.parse(bytes).updatedAt).toBe(5000);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('retries a write that met a change to another file and saves', async () => {
     const { store, client } = makeStore();
     const text = JSON.stringify(body());

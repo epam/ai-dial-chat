@@ -29,3 +29,23 @@ export interface LottieElasticRange {
   /** Length of the physical fall, in composition frames. */
   physicalFallFrames: number;
 }
+
+/** A trunk range and the equal-length window that replaces it. */
+export interface LottieSplice {
+  /** The trunk range that is cut out, in local frames. */
+  cut: LottieLocalRange;
+  /** The replacement window, in local frames. */
+  fill: LottieLocalRange;
+}
+
+/** A step cycle repeated inside a composition window. */
+export interface LottieCycleRepetition {
+  /** The cycle, in local frames. */
+  cycle: LottieLocalRange;
+  /** First composition frame of the window. */
+  from: number;
+  /** Composition frame the window ends at. */
+  to: number;
+  /** How many times the cycle plays in the window. */
+  count: number;
+}
