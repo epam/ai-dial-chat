@@ -14,7 +14,7 @@ import {
 } from '../../scheduled-task-unread/conversation-read-state.service';
 import { ProjectSource } from '../dto/project-source.enum';
 import { resolveProjectSource } from '../utils/project-access.util';
-import { getLastMessageTime } from '../utils/project-conversation-activity.util';
+import { getConversationActivityTime } from '../utils/project-conversation-activity.util';
 import {
   buildProjectConversationLocator,
   PROJECT_CONVERSATIONS_FOLDER,
@@ -54,18 +54,18 @@ interface CachedTitle {
   title: string;
   /** Content version of the body the title was read from; decides the read state. */
   version?: string;
-  /** Time of the body's last message; absent in an entry cached before it was kept, or for a chat without dated messages. */
-  lastMessageAt?: number;
-  /** The body was read for this entry, so an absent `lastMessageAt` is final and needs no re-read. */
-  hasActivity?: true;
+  /** Time of the body's last change (`getConversationActivityTime`); absent for a body that carries none. */
+  activityAt?: number;
+  /** `activityAt` was taken from the body, so its absence is final; an entry without it is re-read once. */
+  hasActivityTime?: true;
 }
 
 /** A title and the version it was read from; the version is unknown when the body could not be read. */
 interface ResolvedTitle {
   title: string;
   version?: string;
-  /** Time of the body's last message; unknown when the body was not read or has no dated message. */
-  lastMessageAt?: number;
+  /** Time of the body's last change; unknown when the body was not read or carries none. */
+  activityAt?: number;
   /** The body was not read, so the title is the file-name one. */
   isPending?: boolean;
 }
@@ -75,7 +75,7 @@ type ListedFile = CoreFileItem & { name: string };
 /** A listing row with the time its position is decided by. */
 interface ListedItem {
   item: ProjectConversationItemDto;
-  lastMessageAt: number | undefined;
+  activityAt: number | undefined;
 }
 
 /* `openapi-fetch` resolves an empty-bodied error with `error: undefined`, so the status decides. */
@@ -92,9 +92,9 @@ const newestFirst = (a: CoreFileItem, b: CoreFileItem): number => {
   return (a.name ?? '') < (b.name ?? '') ? -1 : 1;
 };
 
-/* Rows without a known last message sink to the end, in name order. */
-const byLastMessage = (a: ListedItem, b: ListedItem): number => {
-  const byTime = (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0);
+/* Rows without a known last change sink to the end, in name order. */
+const byLastChange = (a: ListedItem, b: ListedItem): number => {
+  const byTime = (b.activityAt ?? 0) - (a.activityAt ?? 0);
   if (byTime !== 0) return byTime;
   if (a.item.name === b.item.name) return 0;
   return a.item.name < b.item.name ? -1 : 1;
@@ -132,7 +132,8 @@ const mapWithConcurrency = async <T, R>(
  * is unchanged, and the write endpoints evict them. A published (organization)
  * project is the exception: publishing copies the files and stamps them all
  * with the copy time, so its listing reads every body and orders the chats by
- * their last message, resolving every title on the way. Logs carry counts
+ * the last change each body records, which is the personal project's order at
+ * the time of publishing, resolving every title on the way. Logs carry counts
  * only, never names.
  */
 @Injectable()
@@ -164,7 +165,8 @@ export class ProjectConversationsListService {
     /*
      * A published copy is read-only and its files all carry the time of the
      * copy, so the file order is meaningless there: every body is read and the
-     * chats are ordered by their last message. Other projects keep Core's order.
+     * chats are ordered by the last change the body records, which every
+     * project write stamps. Other projects keep Core's order.
      */
     const isPublished =
       resolveProjectSource(project.bucket, sessionBucket) ===
@@ -187,7 +189,7 @@ export class ProjectConversationsListService {
       ),
     ]);
     const rows = [...head, ...tail];
-    if (isPublished) rows.sort(byLastMessage);
+    if (isPublished) rows.sort(byLastChange);
     const items = rows.map(({ item }) => item);
     this.logger.debug(
       `Listed project conversations (total=${items.length}, pending=${items.filter((item) => item.isTitlePending).length})`,
@@ -303,19 +305,18 @@ export class ProjectConversationsListService {
     accessToken: string,
     readState: ProjectReadState | null,
     canReadBody: boolean,
-    needsLastMessage: boolean,
+    needsActivity: boolean,
   ): Promise<ListedItem> {
     const locator = buildProjectConversationLocator(project, file.name);
-    const { title, version, lastMessageAt, isPending } =
-      await this.resolveTitle(
-        locator,
-        file,
-        accessToken,
-        canReadBody,
-        needsLastMessage,
-      );
+    const { title, version, activityAt, isPending } = await this.resolveTitle(
+      locator,
+      file,
+      accessToken,
+      canReadBody,
+      needsActivity,
+    );
     return {
-      lastMessageAt,
+      activityAt,
       item: {
         id: locator,
         name: file.name,
@@ -340,24 +341,24 @@ export class ProjectConversationsListService {
     file: ListedFile,
     accessToken: string,
     canReadBody: boolean,
-    needsLastMessage: boolean,
+    needsActivity: boolean,
   ): Promise<ResolvedTitle> {
     const key = titleCacheKey(locator);
     const cached = await this.cacheManager.get<CachedTitle>(key);
     /*
      * An entry cached before versions were kept has none, and one cached before
-     * the last message was kept lacks it; each is re-read once.
+     * the last change was kept lacks it; each is re-read once.
      */
     if (
       cached != null &&
       cached.updatedAt === file.updatedAt &&
       typeof cached.version === 'string' &&
-      (!needsLastMessage || cached.hasActivity === true)
+      (!needsActivity || cached.hasActivityTime === true)
     ) {
       return {
         title: cached.title,
         version: cached.version,
-        lastMessageAt: cached.lastMessageAt,
+        activityAt: cached.activityAt,
       };
     }
 
@@ -371,19 +372,19 @@ export class ProjectConversationsListService {
       if (stored == null) return { title: pathTitle };
       const title = stored.conversation.name?.trim() || pathTitle;
       const version = stored.etag ?? undefined;
-      const lastMessageAt = getLastMessageTime(stored.conversation);
+      const activityAt = getConversationActivityTime(stored.conversation);
       await this.cacheManager.set(
         key,
         {
           updatedAt: file.updatedAt,
           title,
           version,
-          lastMessageAt,
-          hasActivity: true,
+          activityAt,
+          hasActivityTime: true,
         } satisfies CachedTitle,
         TITLE_CACHE_TTL_MS,
       );
-      return { title, version, lastMessageAt };
+      return { title, version, activityAt };
     } catch (err) {
       this.logger.warn(
         `Project conversation title read failed (${err instanceof Error ? err.name : 'unknown error'}); using the file name`,

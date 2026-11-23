@@ -167,10 +167,10 @@ A project conversation SHALL be stored as the file `conversations/{name}` inside
 **Published projects.** Publishing copies the project's files and stamps each copy with the time of the copy, so for a project in the organization bucket (`ProjectSource.Organization`, read-only for every user) the file `updatedAt` no longer tells which chat was active last. The listing of such a project therefore:
 
 - reads every body, not only the 20 newest, so no item carries `isTitlePending`;
-- orders the items by the newest `timestamp` among the body's messages (`getLastMessageTime`, `apps/chat-api/src/projects/utils/project-conversation-activity.util.ts`), newest first, then by name;
-- puts an item without a dated message, or whose body cannot be read, last, in name order.
+- orders the items by the last change each body records (`getConversationActivityTime`, `apps/chat-api/src/projects/utils/project-conversation-activity.util.ts`), newest first, then by name. That time is the later of the body's `updatedAt` and the newest `timestamp` among its messages (`getLastMessageTime`). `ProjectConversationStore` (`apps/chat-api/src/conversations/persistence/project-conversation.store.ts`) stamps `updatedAt` with the time of every project conversation write, so it follows the file's own `updatedAt` that orders the personal project, and the published copy keeps the personal order as it was when the project was published — a chat renamed, rated or edited after its last message included. A body written before the stamp carries its creation time in `updatedAt`, so its last message decides;
+- puts an item without a recorded change, or whose body cannot be read, last, in name order.
 
-The items' `updatedAt`, `isUnread` and the personal and shared listings are unchanged. The title cache entry also holds `lastMessageAt` and `hasActivity`; an entry cached without them is read once more for a published project.
+The items' `updatedAt`, `isUnread` and the personal and shared listings are unchanged. The title cache entry also holds `activityAt` and `hasActivityTime`; an entry cached without them is read once more for a published project.
 
 **Titles.** Every returned item's `title` is the conversation's display name, resolved for the 20 newest items and for any item whose title is cached:
 
@@ -247,10 +247,15 @@ Status codes:
 - **WHEN** the project holds 22 conversations and none of their titles is cached
 - **THEN** the response holds all 22, the bodies of the 20 newest are read, and the two oldest carry `isTitlePending: true` with their file-name titles
 
-#### Scenario: A published project is ordered by its last message
+#### Scenario: A published project is ordered by its last change
 
-- **WHEN** a project in the organization bucket holds files that all carry the time of the copy, and their bodies' newest message times differ
-- **THEN** the response lists every conversation with its title read, newest last message first, regardless of the files' `updatedAt`
+- **WHEN** a project in the organization bucket holds files that all carry the time of the copy, and their bodies' recorded last changes differ
+- **THEN** the response lists every conversation with its title read, newest last change first, regardless of the files' `updatedAt`
+
+#### Scenario: A chat changed after its last message keeps its personal position
+
+- **WHEN** a chat of a published project was renamed after its last message, so its body's `updatedAt` is later than another chat's last message
+- **THEN** it is listed before that chat, as it was in the personal project
 
 #### Scenario: A personal or shared project keeps the file order
 

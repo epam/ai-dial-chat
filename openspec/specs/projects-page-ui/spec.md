@@ -223,6 +223,8 @@ The reference time SHALL be taken from `Date.now()` again whenever the `projects
 
 No description or source badge is rendered: the listing carries no description, and the design shows the source only in the folder path.
 
+The card has no action menu: the pin toggle is its only control. Edit, Publish, Share, Revoke access, Delete and Remove from My List are offered on the project view page and in a pinned project's sidebar menu (see `project-view-ui` and `sidebar-pinned-project-chats`). The listing (`ProjectDto`) carries no `canEdit` or `canManage`, so the card could not gate them anyway.
+
 **Interactive cards.** When `onOpenProject` and `getProjectHref` are supplied, the name SHALL be an `<a href={getProjectHref(id)}>`. Its `::after` is stretched over the card, so the whole card is the click target, while the link remains the single tab stop. A primary click without modifier keys calls `event.preventDefault()` and then `onOpenProject(id)`. A modified or middle click follows the `href`, so the project opens in a new tab. Hover and `:focus-visible` apply the same card highlight: the kit `CardShell` lift with `shadow-lg` (none under `prefers-reduced-motion`), plus a focus outline in `--stroke-focus` on `:focus-visible`. The card background does not change.
 
 Without those props, cards are not interactive: no link, button or `tabIndex`.

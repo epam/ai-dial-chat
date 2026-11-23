@@ -303,6 +303,10 @@ The error and not-found titles are announced through `role="alert"`.
 
 Changing the access in the popover requests a new link, as for catalog entities (`useShareLink`). A link already handed out keeps the permissions it was created with, and the existing revoke flow removes every recipient's access.
 
+**Where Share opens.** The owner reaches the popover from two places, both gated on `canManage`: Share in the view page's ⋮ menu, and Share in the ⋮ menu of the project's row in the sidebar's Pinned section (`sidebar-pinned-project-chats`), which lists pinned projects only. The Projects page card offers no Share (see `projects-page-ui`).
+
+**Access only grows through links.** Accepting a link adds its permissions to the ones the recipient already holds: DIAL Core stores the union, so an editor who accepts a Can view link stays an editor. DIAL Core's revoke cannot target one recipient. To take edit access away, the owner chooses Revoke access (see `project-remove-from-list`), which removes every recipient's access, and then shares a new Can view link with the people who should keep reading the project.
+
 **Publish.** `PublishProjectPanelContainer` is rendered with `projectId`, `projectName`, `conversationCount`, `onClose` and `returnFocusRef` (the Publish trigger).
 
 **Gating.** The page reads two flags from the loaded `ProjectDetailsDto`:
@@ -356,6 +360,12 @@ Every key SHALL exist in every locale file.
 - **WHEN** the owner chooses Share on their project
 - **THEN** the popover shows the access dropdown and the note `share.visibilityNoteProject`
 - **AND** choosing Can edit requests a link with access `['view', 'edit']` and shows `share.visibilityNoteEditProject`
+
+#### Scenario: A view link does not downgrade an editor
+
+- **WHEN** a recipient who accepted a Can edit link accepts a Can view link to the same project
+- **THEN** the project still answers `canEdit: true` for them
+- **AND** only Revoke access, followed by a new Can view link, leaves them with read access only
 
 #### Scenario: Download the archive
 
