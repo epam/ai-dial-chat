@@ -90,10 +90,12 @@ the list instead.
 ## Synchronous head scripts
 
 A classic script the `index.html` head must run before the bundle stays in
-`apps/chat/public/` and is loaded through `hashedPublicScriptPlugin`
-(`tools/vite/hashed-public-script.mjs`), which serves a content-hashed copy
-that chat-api caches as `immutable`. Do not inline it: the app-shell CSP
-`script-src` deliberately allows no inline scripts.
+`apps/chat/public/` and is inlined by `inlinePublicScriptPlugin`
+(`tools/vite/inline-public-script.mjs`), so first paint does not wait on a
+request for it. chat-api allows each inline script of the built `index.html`
+by its SHA-256 hash (`collectInlineScriptHashes`), never `'unsafe-inline'`.
+Never add an inline script by hand or build it from runtime values: only the
+build-time bytes are hashed, and anything else is blocked.
 
 ## Check the entry before and after
 

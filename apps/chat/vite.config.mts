@@ -8,7 +8,7 @@ import {
   CSP_NONCE_PLACEHOLDER,
   trustedStyleNoncePlugin,
 } from '../../tools/vite/csp-nonce.mjs';
-import { hashedPublicScriptPlugin } from '../../tools/vite/hashed-public-script.mjs';
+import { inlinePublicScriptPlugin } from '../../tools/vite/inline-public-script.mjs';
 import { nxReadySignal } from '@nx/vite/plugins/nx-ready-signal.plugin';
 
 export default defineConfig(() => ({
@@ -31,8 +31,8 @@ export default defineConfig(() => ({
   },
   plugins: [
     trustedStyleNoncePlugin(),
-    // The synchronous theme-paint script in the `index.html` head; see the plugin's doc.
-    hashedPublicScriptPlugin('theme-init.js'),
+    // Inlines the synchronous theme-paint script into the `index.html` head; see the plugin's doc.
+    inlinePublicScriptPlugin('theme-init.js'),
     tailwindcss(),
     react(),
     svgr(),
