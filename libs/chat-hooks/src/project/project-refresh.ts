@@ -4,6 +4,8 @@ export enum ProjectRefreshOutcome {
   Updated = 'updated',
   /** The project no longer exists; the page should leave it. */
   NotFound = 'not-found',
+  /** The caller lost READ access: the owner stopped sharing the project or deleted it; the page should leave it. */
+  AccessLost = 'access-lost',
   /** The read failed; the loaded details are kept. */
   Failed = 'failed',
   /** No project was loaded, or a newer refresh or an id change superseded this one. */

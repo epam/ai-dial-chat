@@ -68,8 +68,15 @@ const ProjectViewPage: FC = () => {
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('projectsEnabled');
   const projectId = parseProjectRouteParams(params);
-  const { project, isLoading, hasError, isNotFound, retry, refresh } =
-    useProject(projectsClient, projectId, isEnabled);
+  const {
+    project,
+    isLoading,
+    hasError,
+    isNotFound,
+    isAccessDenied,
+    retry,
+    refresh,
+  } = useProject(projectsClient, projectId, isEnabled);
   const actions = useProjectActions(project, retry);
   const conversations = useProjectConversations(
     projectsClient,
@@ -85,15 +92,23 @@ const ProjectViewPage: FC = () => {
   useEffect(() => {
     isOwnDeleteRef.current = actions.isDeleting;
   }, [actions.isDeleting]);
-  const handleDeletedElsewhere = useCallback(() => {
-    if (isOwnDeleteRef.current || hasLeftRef.current || projectId == null) {
-      return;
-    }
-    hasLeftRef.current = true;
-    showInfoNotification({ message: t(ProjectsI18nKeys.ViewDeletedElsewhere) });
-    replacePinnedProjectId(projectId, null);
-    navigate(ROUTES.Projects, { replace: true });
-  }, [navigate, projectId, replacePinnedProjectId, showInfoNotification, t]);
+  /* A delete elsewhere and lost access leave the same way, at most once per project. */
+  const leaveProject = useCallback(
+    (message: ProjectsI18nKeys) => {
+      if (isOwnDeleteRef.current || hasLeftRef.current || projectId == null) {
+        return;
+      }
+      hasLeftRef.current = true;
+      showInfoNotification({ message: t(message) });
+      replacePinnedProjectId(projectId, null);
+      navigate(ROUTES.Projects, { replace: true });
+    },
+    [navigate, projectId, replacePinnedProjectId, showInfoNotification, t],
+  );
+  const handleDeletedElsewhere = useCallback(
+    () => leaveProject(ProjectsI18nKeys.ViewDeletedElsewhere),
+    [leaveProject],
+  );
   const { refresh: refreshConversations } = conversations;
   const { refresh: refreshArtifacts } = artifacts;
   const handleProjectChanged = useCallback(async () => {
@@ -102,8 +117,12 @@ const ProjectViewPage: FC = () => {
       refreshConversations(),
       refreshArtifacts(),
     ]);
-    if (outcome === ProjectRefreshOutcome.NotFound) handleDeletedElsewhere();
-  }, [handleDeletedElsewhere, refresh, refreshArtifacts, refreshConversations]);
+    if (outcome === ProjectRefreshOutcome.NotFound) {
+      leaveProject(ProjectsI18nKeys.ViewDeletedElsewhere);
+    } else if (outcome === ProjectRefreshOutcome.AccessLost) {
+      leaveProject(ProjectsI18nKeys.ViewAccessDenied);
+    }
+  }, [leaveProject, refresh, refreshArtifacts, refreshConversations]);
   /*
    * A created chat opens right away, and the page's own writes would only
    * trigger refreshes that the navigation cancels. A created chat always
@@ -293,6 +312,7 @@ const ProjectViewPage: FC = () => {
         isLoading={isLoading}
         hasError={hasError}
         isNotFound={isNotFound || projectId == null}
+        isAccessDenied={isAccessDenied}
         isPinned={actions.isPinned}
         isPinPending={actions.isPinPending}
         contextSearchQuery={contextSearchQuery}

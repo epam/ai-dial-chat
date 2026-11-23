@@ -75,11 +75,8 @@ const ProjectEditPage: FC = () => {
   );
 
   const projectId = parseProjectRouteParams(params);
-  const { project, isLoading, hasError, isNotFound, retry } = useProject(
-    projectsClient,
-    projectId,
-    isEnabled,
-  );
+  const { project, isLoading, hasError, isNotFound, isAccessDenied, retry } =
+    useProject(projectsClient, projectId, isEnabled);
   const viewLabels = useProjectViewLabels();
 
   const {
@@ -289,6 +286,7 @@ const ProjectEditPage: FC = () => {
         project={null}
         hasError={hasError}
         isNotFound={isNotFound || projectId == null}
+        isAccessDenied={isAccessDenied}
         isPinned={false}
         contextSearchQuery=""
         onContextSearchQueryChange={noop}
