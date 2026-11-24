@@ -39,8 +39,6 @@ export const EMPTY_PUBLISH_FOLDERS: PublishFolderNode[] = [];
 
 /** Shared empty list so an unresolved dependencies lookup keeps one identity between renders. */
 export const EMPTY_PUBLISH_DEPENDENCIES: PublishDependency[] = [];
-/** Stable empty list for the `ruleSourceOptions` default. */
-export const EMPTY_RULE_SOURCE_OPTIONS: string[] = [];
 
 /** Default consequences listed under the Delete confirmation. */
 export const DEFAULT_DELETE_CONSEQUENCES = [

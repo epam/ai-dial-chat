@@ -29,7 +29,6 @@ import {
 import { PUBLISH_PANEL_CLASS } from '../../constants/public-class-names';
 import type { FolderDestination } from '../../models/folder-destination';
 import {
-  PublicationRule,
   PublishCalloutKind,
   PublishFolderNode,
   PublishResourceSummary,
@@ -40,10 +39,6 @@ import type { PublishPanelStyles } from '../../models/publish-panel-styles';
 import type { VersionHistorySectionProps } from '../../models/version-history';
 import { PublishPanelView } from '../../types/publish-panel';
 import { derivePublishState } from '../../utils/publish-state';
-import {
-  PublishAccessRules,
-  PublishAccessRulesLabels,
-} from '../PublishAccessRules/PublishAccessRules';
 import { PublishDependenciesList } from '../PublishDependenciesList/PublishDependenciesList';
 import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
 import { VersionHistorySection } from '../VersionHistorySection/VersionHistorySection';
@@ -51,10 +46,6 @@ import styles from './PublishPanel.module.scss';
 
 /** Matches the publish endpoints' own `author` limit, so the field cannot compose a request the backend rejects. */
 const MAX_AUTHOR_LENGTH = 200;
-
-/** Stable defaults, so an omitted prop does not hand the rules section a new array every render. */
-const EMPTY_RULES: PublicationRule[] = [];
-const EMPTY_RULE_SOURCE_OPTIONS: string[] = [];
 
 /** Text overrides for all user-visible strings in {@link PublishPanel}. */
 export interface PublishPanelLabels {
@@ -116,8 +107,6 @@ export interface PublishPanelLabels {
   createFolderSameAsParentNameError?: string;
   /** Label used for the bucket root as a destination and as `{folder}` in callouts when it is selected. Default: `'Organization'`. */
   rootFolderLabel?: string;
-  /** Text overrides for the access-rules section. */
-  accessRulesLabels?: PublishAccessRulesLabels;
   /** Text overrides for the private-dependencies section. */
   dependenciesLabels?: PublishDependenciesLabels;
 }
@@ -221,30 +210,16 @@ export interface PublishPanelProps {
    * own for the value.
    */
   onPublishCredentialsChange?: (value: boolean) => void;
-  /** Current access rules, combined with AND. Default: `[]`. */
-  rules?: PublicationRule[];
-  /**
-   * Called with the full next rules array on add, remove, or clear. Supplying
-   * it is what renders the access-rules section at all — a host that does not
-   * manage rules here omits it and gets a panel without the section.
-   */
-  onRulesChange?: (rules: PublicationRule[]) => void;
-  /** Options offered in the access-rules editor's source picker. Default: `[]`. */
-  ruleSourceOptions?: string[];
   /**
    * Whether the selected folder is written directly instead of filed as a
-   * request. For `true` the author field, the credentials opt-in and the
-   * access-rules section are not rendered, the admin-approval callout is
+   * request. For `true` the author field and the credentials opt-in are
+   * not rendered, the admin-approval callout is
    * dropped and `labels.directWriteNote` takes the credentials opt-in's place.
    * The host passes the publish flow's `isDirectWrite`. Default: `false`.
    */
   isDirectWrite?: boolean;
   /** A finished sentence shown as an information callout when the host knows why a direct write is unavailable (a request is filed instead). Default: none. */
   directUnavailableNote?: string;
-  /** Whether existing rules are currently being fetched for the selected folder. Default: `false`. */
-  isRulesLoading?: boolean;
-  /** Whether the most recent existing-rules fetch failed. Default: `false`. */
-  hasRulesLoadError?: boolean;
   /** Text overrides for all user-visible strings. */
   labels?: PublishPanelLabels;
   /** Typography class for the default summary title (unused when `renderSummary` or `resource.type` is passed). Default: `'dial-body-semi-text'`. */
@@ -261,7 +236,7 @@ export interface PublishPanelProps {
   styles?: PublishPanelStyles;
 }
 
-/** Scrollable body of the Publish flow: entity summary, destination row with callout, author, credentials and access rules, or the destination folder tree. */
+/** Scrollable body of the Publish flow: entity summary, destination row with callout, author and credentials, or the destination folder tree. */
 export const PublishPanel: FC<PublishPanelProps> = ({
   view = PublishPanelView.Main,
   onChangeFolderClick,
@@ -289,11 +264,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   onAuthorChange,
   publishCredentials = false,
   onPublishCredentialsChange,
-  rules = EMPTY_RULES,
-  onRulesChange,
-  ruleSourceOptions = EMPTY_RULE_SOURCE_OPTIONS,
-  isRulesLoading = false,
-  hasRulesLoadError = false,
   isDirectWrite = false,
   directUnavailableNote,
   labels = {},
@@ -307,7 +277,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   const {
     colors,
     folderTree: folderTreeStyles,
-    accessRules: accessRulesStyles,
     dependencies: dependenciesStyles,
   } = stylesProp;
   const cssVars = {
@@ -349,7 +318,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     createFolderDuplicateNameError,
     createFolderSameAsParentNameError,
     rootFolderLabel = 'Organization',
-    accessRulesLabels,
     dependenciesLabels,
     searchPlaceholder,
     clearSearchAriaLabel,
@@ -583,8 +551,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           )}
 
         {/* Sits with the destination rather than in its own section: the
-            folder and the author together say what this publication is, and
-            the rules below say who may see it. An empty author is a valid
+            folder and the author together say what this publication is. An empty author is a valid
             state, so nothing here can block submit. */}
         {directUnavailableNote != null && !isDirectWrite && (
           <div className="mt-4">
@@ -634,25 +601,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
               isSelected={publishCredentials}
               onChange={onPublishCredentialsChange}
               disabled={isSubmitting}
-            />
-          </div>
-        )}
-
-        {/* Nested inside the destination-folder block, and tighter than the
-            inter-section gap, so the rules read as scoped to the selection
-            above rather than as an independent control. */}
-        {onRulesChange != null && !isDirectWrite && (
-          <div className="mt-4">
-            <PublishAccessRules
-              rules={rules}
-              onRulesChange={onRulesChange}
-              sourceOptions={ruleSourceOptions}
-              folderName={isFolderSelected ? folderName : undefined}
-              disabled={isSubmitting}
-              isLoading={isRulesLoading}
-              hasLoadError={hasRulesLoadError}
-              labels={accessRulesLabels}
-              styles={accessRulesStyles}
             />
           </div>
         )}

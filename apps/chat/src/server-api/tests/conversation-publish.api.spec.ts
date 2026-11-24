@@ -1,5 +1,3 @@
-import type { PublicationRule } from '@epam/ai-dial-publish-panel';
-import { PublicationRuleFunction } from '@epam/ai-dial-publish-panel';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { conversationsApi } from '../api-client';
 import {
@@ -22,14 +20,7 @@ describe('conversation-publish API', () => {
     vi.clearAllMocks();
   });
 
-  it('forwards folderPath and rules to the generated client', async () => {
-    const rules: PublicationRule[] = [
-      {
-        source: 'role',
-        function: PublicationRuleFunction.Contain,
-        targets: ['engineering'],
-      },
-    ];
+  it('forwards the path, folderPath and author to the generated client', async () => {
     vi.mocked(conversationsApi.publishConversation).mockResolvedValue({
       path: 'conversations/bucket-123/my-conversation',
       folderPath: 'Organization/Data Science',
@@ -40,7 +31,6 @@ describe('conversation-publish API', () => {
     await publishConversation(
       'bucket-123/my-conversation',
       'Organization/Data Science',
-      rules,
       'DIAL Team',
     );
 
@@ -49,18 +39,11 @@ describe('conversation-publish API', () => {
       publishConversationDto: {
         folderPath: 'Organization/Data Science',
         author: 'DIAL Team',
-        rules: [
-          {
-            source: 'role',
-            function: PublicationRuleFunction.Contain,
-            targets: ['engineering'],
-          },
-        ],
       },
     });
   });
 
-  it('sends an empty rules array when no rules were added', async () => {
+  it('never sends a rules key in the publish body', async () => {
     vi.mocked(conversationsApi.publishConversation).mockResolvedValue({
       path: 'conversations/bucket-123/my-conversation',
       folderPath: 'Organization',
@@ -68,17 +51,10 @@ describe('conversation-publish API', () => {
       publishedBy: 'Test User',
     });
 
-    await publishConversation(
-      'bucket-123/my-conversation',
-      'Organization',
-      [],
-      '',
-    );
+    await publishConversation('bucket-123/my-conversation', 'Organization', '');
 
-    expect(conversationsApi.publishConversation).toHaveBeenCalledWith({
-      path: 'bucket-123/my-conversation',
-      publishConversationDto: { folderPath: 'Organization', rules: [] },
-    });
+    const [call] = vi.mocked(conversationsApi.publishConversation).mock.calls;
+    expect(call[0].publishConversationDto).not.toHaveProperty('rules');
   });
 });
 
@@ -145,7 +121,6 @@ describe('unpublishConversation', () => {
     await publishConversation(
       'bucket-123/my-conversation',
       'Organization',
-      [],
       '  DIAL Team  ',
     );
 
@@ -154,7 +129,6 @@ describe('unpublishConversation', () => {
       publishConversationDto: {
         folderPath: 'Organization',
         author: 'DIAL Team',
-        rules: [],
       },
     });
   });
@@ -170,13 +144,12 @@ describe('unpublishConversation', () => {
     await publishConversation(
       'bucket-123/my-conversation',
       'Organization',
-      [],
       '   ',
     );
 
     expect(conversationsApi.publishConversation).toHaveBeenCalledWith({
       path: 'bucket-123/my-conversation',
-      publishConversationDto: { folderPath: 'Organization', rules: [] },
+      publishConversationDto: { folderPath: 'Organization' },
     });
   });
 

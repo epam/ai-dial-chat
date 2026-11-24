@@ -21,7 +21,6 @@ import {
   PublishI18nKeys,
   ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
-import { useAppConfig } from '../../context/AppConfigContext';
 import { useOrgUnitFolderGuards } from '../../hooks/publish/useOrgUnitFolderGuards';
 import { usePublishDependencyIconResolver } from '../../hooks/publish/usePublishDependencyIconResolver';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
@@ -32,13 +31,11 @@ import {
   getConversationPublishDependencies,
   publishConversation,
 } from '../../server-api/conversation-publish.api';
-import { getPublishRules } from '../../server-api/publish-rules.api';
 import {
   EntityOperation,
   NotifiableEntity,
 } from '../../types/entity-notification';
 import {
-  getAccessRulesLabels,
   getPublishAuthorLabels,
   getPublishApprovalLabels,
   getPublishDependenciesLabels,
@@ -89,9 +86,6 @@ const PublishConversationPanelContainer: FC<Props> = ({
   const { t } = useTranslation();
   const { notifyOperationSuccess } = useOperationNotification();
   const showPublishError = usePublishErrorNotification();
-  const {
-    config: { publicationFilterSources },
-  } = useAppConfig();
   /* The publish panel pre-fills its author field with this; the lib cannot read the session itself. */
   const { displayName } = useUserProfile();
 
@@ -135,13 +129,8 @@ const PublishConversationPanelContainer: FC<Props> = ({
     hasWriteAccess: hasPublishWriteAccess,
     onCreateFolder: onCreatePublishFolder,
     defaultAuthor: displayName,
-    onPublish: async (_item, folderPath, rules, author) => {
-      await publishConversation(
-        conversationPath,
-        folderPath.join('/'),
-        rules,
-        author,
-      );
+    onPublish: async (_item, folderPath, author) => {
+      await publishConversation(conversationPath, folderPath.join('/'), author);
     },
     onPublishSuccess: (_item, folderPath) => {
       rememberPublishFolder(folderPath);
@@ -155,7 +144,6 @@ const PublishConversationPanelContainer: FC<Props> = ({
       );
     },
     onPublishError: (_item, _folderPath, error) => showPublishError(error),
-    onFetchExistingRules: (folderPath) => getPublishRules(folderPath.join('/')),
   });
 
   useEffect(() => {
@@ -195,11 +183,6 @@ const PublishConversationPanelContainer: FC<Props> = ({
       allowReplace={false}
       author={publishFlow.author}
       onAuthorChange={publishFlow.setAuthor}
-      rules={publishFlow.rules}
-      onRulesChange={publishFlow.setRules}
-      ruleSourceOptions={publicationFilterSources}
-      isRulesLoading={publishFlow.isRulesLoading}
-      hasRulesLoadError={publishFlow.hasRulesLoadError}
       onClose={onClose}
       returnFocusRef={returnFocusRef}
       onSubmit={handleSubmit}
@@ -225,7 +208,6 @@ const PublishConversationPanelContainer: FC<Props> = ({
         ),
         submitError: t(PublishI18nKeys.SubmitErrorCallout),
         rootFolderLabel: t(BasicI18nKeys.Organization),
-        accessRulesLabels: getAccessRulesLabels(t),
         dependenciesLabels: getPublishDependenciesLabels(
           t,
           PublishI18nKeys.DependenciesEntityConversation,

@@ -5,7 +5,6 @@ import type {
   PublishCatalogEntityDto,
   PublishHistoryEntryDto,
   PublishResultDto,
-  PublishRuleDto,
   PublishTargetCheckDto,
   ResourceIdResponseDto,
   ResourceDependenciesResultDto,
@@ -14,22 +13,7 @@ import type {
   UnpublishResultDto,
   VersionStatusEntryDto,
 } from '@epam/ai-dial-chat-api-client';
-import type {
-  PublicationRule,
-  PublicationRuleFunction,
-} from '@epam/ai-dial-publish-panel';
 import type { CatalogPublishEntityType } from './publish';
-
-/**
- * Converts a `PublicationRule` (publish-panel lib model) to the generated
- * client's `PublishRuleDto` shape. The two differ only in how the comparison
- * function is typed, so the value passes through unchanged.
- */
-export const toPublishRuleDto = (rule: PublicationRule): PublishRuleDto => ({
-  source: rule.source,
-  targets: rule.targets,
-  function: rule.function as unknown as PublishRuleDto['function'],
-});
 
 /** The DIAL publish API surface produced by {@link createPublishApiClient}. */
 export interface PublishApiClient {
@@ -91,8 +75,6 @@ export interface PublishApiClient {
     entityType: CatalogPublishEntityType,
     entityId: string,
   ) => Promise<VersionStatusEntryDto[]>;
-  /** Reads a destination folder's already-configured access rules. */
-  getPublishRules: (folderPath: string) => Promise<PublicationRule[]>;
   /**
    * Reads whether the published copy of one catalog entity would land on a path
    * that is already taken, for `folderPath` (plain, `/`-joined) and `version`.
@@ -146,13 +128,6 @@ export const createPublishApiClient = (
     publishApi.getCatalogUnpublishAccess({ entityType, entityId }),
   getCatalogVersionStatuses: (entityType, entityId) =>
     publishApi.getCatalogVersionStatuses({ entityType, entityId }),
-  getPublishRules: async (folderPath) => {
-    const response = await publishApi.getPublishRules({ folderPath });
-    return response.rules.map(({ function: ruleFunction, ...rule }) => ({
-      ...rule,
-      function: ruleFunction as unknown as PublicationRuleFunction,
-    }));
-  },
   checkPublishTarget: (entityType, entityId, folderPath, version) =>
     publishApi.getCatalogPublishTarget({
       entityType,

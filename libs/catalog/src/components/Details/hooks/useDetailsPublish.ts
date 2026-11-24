@@ -35,7 +35,6 @@ export type UseDetailsPublishParams = Pick<
   | 'onPublishSuccess'
   | 'onPublishError'
   | 'onCreatePublishFolder'
-  | 'onFetchExistingRules'
   | 'onCheckTargetExists'
   | 'isTargetTakenError'
   | 'canPublishDirectlyTo'
@@ -59,7 +58,6 @@ export const useDetailsPublish = ({
   onPublishSuccess,
   onPublishError,
   onCreatePublishFolder,
-  onFetchExistingRules,
   onCheckTargetExists,
   isTargetTakenError,
   canPublishDirectlyTo,
@@ -231,7 +229,6 @@ export const useDetailsPublish = ({
     onPublishDirectly,
     onPublishSuccess: handlePublishSuccess,
     onPublishError,
-    onFetchExistingRules,
     onCheckTargetExists,
     isTargetTakenError,
   });

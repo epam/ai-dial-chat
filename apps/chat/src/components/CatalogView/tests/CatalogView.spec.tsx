@@ -17,7 +17,6 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -55,7 +54,7 @@ const capturedPublishProps: {
     onPublish?: (
       item: CatalogItem,
       folderPath: string[],
-      rules: PublicationRule[],
+      author: string,
     ) => Promise<void>;
     onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
@@ -75,8 +74,6 @@ const capturedPublishProps: {
       rootKey: string;
       path: string[];
     }) => string | undefined;
-    ruleSourceOptions?: string[];
-    onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
     isShareVisible?: (item: CatalogItem) => boolean;
     sortKey?: string;
     onSortChange?: (key: string) => void;
@@ -110,10 +107,6 @@ vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
   unpublishCatalogEntity: vi.fn(),
   getCatalogPublishHistory: vi.fn().mockResolvedValue([]),
   getCatalogUnpublishAccess: vi.fn(),
-}));
-
-vi.mock('../../../server-api/publish-rules.api', () => ({
-  getPublishRules: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
@@ -161,8 +154,6 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     publishLabels,
     detailsTexts,
     detailsLimitsFooterNote,
-    ruleSourceOptions,
-    onFetchExistingRules,
     isShareVisible,
     sortKey,
     onSortChange,
@@ -216,7 +207,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onPublish?: (
       item: CatalogItem,
       folderPath: string[],
-      rules: PublicationRule[],
+      author: string,
     ) => Promise<void>;
     onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
@@ -235,8 +226,6 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       credentialsLabel?: string;
       credentialsHint?: string;
     };
-    ruleSourceOptions?: string[];
-    onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
     isShareVisible?: (item: CatalogItem) => boolean;
     sortKey?: string;
     onSortChange?: (key: string) => void;
@@ -263,8 +252,6 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       onPublishExpandedPathsChange,
       publishLoadingPaths,
       getPublishDisabledReason,
-      ruleSourceOptions,
-      onFetchExistingRules,
       isShareVisible,
       sortKey,
       onSortChange,
@@ -810,7 +797,6 @@ describe('CatalogView', () => {
         footerHtmlMessage: '',
         customVisualizers: [],
         applicationVisualizers: {},
-        publicationFilterSources: ['title', 'role', 'dial_roles'],
         maxAttachmentFileSizeBytes: 536_870_912,
         usageLimitsWarningThresholdPercent: 75,
         spendingLimitsMode: SpendingLimitsMode.Off,
@@ -1050,16 +1036,6 @@ describe('CatalogView', () => {
   });
 
   describe('publish wiring', () => {
-    it('sources ruleSourceOptions from useAppConfig, not a hardcoded list', () => {
-      render(<CatalogView />);
-
-      expect(capturedPublishProps.current?.ruleSourceOptions).toEqual([
-        'title',
-        'role',
-        'dial_roles',
-      ]);
-    });
-
     /* `t` echoes the key here; what matters is that the app supplies both. */
     it('supplies the credentials labels the publish panel needs', () => {
       render(<CatalogView />);

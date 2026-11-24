@@ -97,7 +97,6 @@ import {
 } from '../../utils/catalog';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import {
-  getAccessRulesLabels,
   getPublishAuthorLabels,
   getPublishApprovalLabels,
   getApplicationPublishDependenciesLabels,
@@ -480,7 +479,6 @@ const CatalogView: FC<Props> = ({
     handleUnpublish,
     handlePublishSuccess,
     handlePublishError,
-    handleFetchExistingRules,
     checkTargetExists,
     isTargetTakenError,
     isPublishVisible,
@@ -798,8 +796,6 @@ const CatalogView: FC<Props> = ({
         onUnpublish={handleUnpublish}
         isUnpublishVisible={isUnpublishVisible}
         onPublishError={handlePublishError}
-        ruleSourceOptions={config.publicationFilterSources}
-        onFetchExistingRules={handleFetchExistingRules}
         onCheckTargetExists={checkTargetExists}
         isTargetTakenError={isTargetTakenError}
         publishLabels={{
@@ -817,7 +813,6 @@ const CatalogView: FC<Props> = ({
           submitError: t(PublishI18nKeys.SubmitErrorCallout),
           rootFolderLabel: t(BasicI18nKeys.Organization),
           selectFolderLabel: t(ButtonsI18nKeys.Select),
-          accessRulesLabels: getAccessRulesLabels(t),
           dependenciesLabels: getPublishDependenciesLabels(
             t,
             PublishI18nKeys.DependenciesEntityItem,

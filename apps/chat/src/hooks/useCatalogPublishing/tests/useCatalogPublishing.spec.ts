@@ -2,7 +2,6 @@ import type { CatalogItem } from '@epam/ai-dial-catalog';
 import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 import { PublishTargetTakenError } from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -11,7 +10,6 @@ import {
   ResourceSavePanelI18nKeys,
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
-import { getPublishRules } from '../../../server-api/publish-rules.api';
 import {
   CatalogPublishEntityType,
   copyCatalogEntityToOrgUnit,
@@ -47,10 +45,6 @@ vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
 
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),
-}));
-
-vi.mock('../../../server-api/publish-rules.api', () => ({
-  getPublishRules: vi.fn().mockResolvedValue([]),
 }));
 
 const makeCatalogItem = (overrides?: Partial<CatalogItem>): CatalogItem => ({
@@ -320,7 +314,6 @@ describe('useCatalogPublishing', () => {
       await result.current.handlePublish(
         makeCatalogItem(),
         ['Organization', 'Data Science'],
-        [],
         '',
         false,
       );
@@ -331,9 +324,10 @@ describe('useCatalogPublishing', () => {
         {
           folderPath: 'Organization/Data Science',
           version: '1.2.0',
-          rules: [],
         },
       );
+      const [[, , body]] = vi.mocked(publishCatalogEntity).mock.calls;
+      expect(body).not.toHaveProperty('rules');
     });
 
     it('sends publishCredentials: true when the publisher opted in', async () => {
@@ -350,7 +344,6 @@ describe('useCatalogPublishing', () => {
       await result.current.handlePublish(
         makeCatalogItem(),
         ['Organization', 'Data Science'],
-        [],
         '',
         true,
       );
@@ -361,7 +354,6 @@ describe('useCatalogPublishing', () => {
         {
           folderPath: 'Organization/Data Science',
           version: '1.2.0',
-          rules: [],
           publishCredentials: true,
         },
       );
@@ -382,7 +374,6 @@ describe('useCatalogPublishing', () => {
       await result.current.handlePublish(
         makeCatalogItem(),
         ['Organization', 'Data Science'],
-        [],
         '',
         false,
       );
@@ -405,7 +396,6 @@ describe('useCatalogPublishing', () => {
       await result.current.handlePublish(
         makeCatalogItem(),
         ['Organization', 'Data Science'],
-        [],
         'DIAL Team',
         false,
       );
@@ -417,7 +407,6 @@ describe('useCatalogPublishing', () => {
           folderPath: 'Organization/Data Science',
           version: '1.2.0',
           author: 'DIAL Team',
-          rules: [],
         },
       );
     });
@@ -436,7 +425,6 @@ describe('useCatalogPublishing', () => {
       await result.current.handlePublish(
         makeCatalogItem(),
         ['Organization', 'Data Science'],
-        [],
         '  DIAL Team  ',
         false,
       );
@@ -467,7 +455,6 @@ describe('useCatalogPublishing', () => {
         await result.current.handlePublish(
           makeCatalogItem(),
           ['Organization', 'Data Science'],
-          [],
           author,
           false,
         );
@@ -478,7 +465,6 @@ describe('useCatalogPublishing', () => {
           {
             folderPath: 'Organization/Data Science',
             version: '1.2.0',
-            rules: [],
           },
         );
       },
@@ -502,7 +488,6 @@ describe('useCatalogPublishing', () => {
           version: '',
         }),
         ['Organization', 'Data Science'],
-        [],
         '',
         false,
       );
@@ -512,7 +497,6 @@ describe('useCatalogPublishing', () => {
         'skills/my-bucket/analysis/revenue-skill',
         {
           folderPath: 'Organization/Data Science',
-          rules: [],
         },
       );
     });
@@ -571,58 +555,6 @@ describe('useCatalogPublishing', () => {
       );
     });
 
-    it('forwards rules added in the panel to publishCatalogEntity', async () => {
-      vi.mocked(publishCatalogEntity).mockResolvedValue({
-        entityId: 'tool-abc123',
-        entityType: 'toolset',
-        folderPath: 'Organization/Data Science',
-        version: '1.2.0',
-        publishedAt: '2026-07-13T10:00:00.000Z',
-        publishedBy: 'user@example.com',
-      });
-      const rules: PublicationRule[] = [
-        {
-          source: 'role',
-          function: 'CONTAIN' as PublicationRule['function'],
-          targets: ['engineering'],
-        },
-      ];
-      const { result } = renderPublishing();
-
-      await result.current.handlePublish(
-        makeCatalogItem(),
-        ['Organization', 'Data Science'],
-        rules,
-        '',
-        false,
-      );
-
-      expect(publishCatalogEntity).toHaveBeenCalledWith(
-        'toolset',
-        'tool-abc123',
-        {
-          folderPath: 'Organization/Data Science',
-          version: '1.2.0',
-          rules: [
-            { source: 'role', function: 'CONTAIN', targets: ['engineering'] },
-          ],
-        },
-      );
-    });
-
-    it('onFetchExistingRules forwards the joined folder path to getPublishRules', async () => {
-      const { result } = renderPublishing();
-
-      await result.current.handleFetchExistingRules([
-        'Organization',
-        'Data Science',
-      ]);
-
-      expect(vi.mocked(getPublishRules)).toHaveBeenCalledWith(
-        'Organization/Data Science',
-      );
-    });
-
     it('propagates a publish API failure (e.g. 403) to the caller', async () => {
       vi.mocked(publishCatalogEntity).mockRejectedValue(new Error('Forbidden'));
       const { result } = renderPublishing();
@@ -631,7 +563,6 @@ describe('useCatalogPublishing', () => {
         result.current.handlePublish(
           makeCatalogItem(),
           ['Organization'],
-          [],
           '',
           false,
         ),
@@ -649,7 +580,7 @@ describe('useCatalogPublishing', () => {
       const { result } = renderPublishing();
 
       const error = await result.current
-        .handlePublish(makeCatalogItem(), ['Organization'], [], '', false)
+        .handlePublish(makeCatalogItem(), ['Organization'], '', false)
         .catch((e: unknown) => e);
 
       expect(error).toBeInstanceOf(PublishTargetTakenError);

@@ -1,7 +1,5 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
-  PublicationRule,
-  PublicationRuleFunction,
   PublishDependency,
   PublishDependencyType,
   PublishFolderNode,
@@ -319,11 +317,6 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       onCreateFolder,
       author,
       onAuthorChange,
-      rules,
-      onRulesChange,
-      ruleSourceOptions,
-      isRulesLoading,
-      hasRulesLoadError,
       publishCredentials,
       onPublishCredentialsChange,
       allowReplace,
@@ -353,11 +346,6 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
       author?: string;
       onAuthorChange?: (author: string) => void;
-      rules?: PublicationRule[];
-      onRulesChange?: (rules: PublicationRule[]) => void;
-      ruleSourceOptions: string[];
-      isRulesLoading?: boolean;
-      hasRulesLoadError?: boolean;
       publishCredentials?: boolean;
       onPublishCredentialsChange?: (value: boolean) => void;
     }) => (
@@ -396,12 +384,6 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
             </button>
           </>
         )}
-        <span>ruleSourceOptions:{ruleSourceOptions.join(',')}</span>
-        {onRulesChange != null && (
-          <span>rules:{(rules ?? []).map((r) => r.source).join(',')}</span>
-        )}
-        <span>rulesLoading:{String(isRulesLoading)}</span>
-        <span>rulesLoadError:{String(hasRulesLoadError)}</span>
         {onPublishCredentialsChange != null && (
           <button
             onClick={() =>
@@ -422,22 +404,6 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
         <button onClick={() => void onCreateFolder(['Shared'], 'New')}>
           Create folder
         </button>
-        {onRulesChange != null && (
-          <button
-            onClick={() =>
-              onRulesChange([
-                ...(rules ?? []),
-                {
-                  source: 'role',
-                  function: PublicationRuleFunction.Contain,
-                  targets: ['engineering'],
-                },
-              ])
-            }
-          >
-            Add mock rule
-          </button>
-        )}
       </div>
     ),
     PublishFooter: ({
@@ -921,13 +887,7 @@ describe('DetailsPanel — publish credentials opt-in', () => {
     await userEvent.click(credentialsToggle() as HTMLElement);
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
-    expect(onPublish).toHaveBeenCalledWith(
-      eligibleItem,
-      ['Shared'],
-      [],
-      '',
-      true,
-    );
+    expect(onPublish).toHaveBeenCalledWith(eligibleItem, ['Shared'], '', true);
   });
 
   /* [#5074](https://github.com/epam/ai-dial-chat/issues/5074): the option survived a publish and the next open started ticked. */
@@ -1909,7 +1869,7 @@ describe('DetailsPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
     await selectSharedFolder();
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
-    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], '', false);
+    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], '', false);
     expect(onPublishSuccess).toHaveBeenCalledWith(item, ['Shared'], false);
   });
 
@@ -1932,26 +1892,17 @@ describe('DetailsPanel', () => {
     expect(screen.queryByRole('button', { name: 'Set author' })).toBeNull();
   });
 
-  it('hides the access-rules section when hidePublishAccessRules is set', async () => {
-    renderPanel({ hidePublishAccessRules: true });
-    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-
-    expect(screen.getByText('Publish panel')).toBeTruthy();
-    expect(screen.queryByText(/^rules:/)).toBeNull();
-  });
-
-  it('publishes with an empty author and no rules when both sections are hidden', async () => {
+  it('publishes with an empty author when the author section is hidden', async () => {
     const onPublish = vi.fn().mockResolvedValue(undefined);
     renderPanel({
       onPublish,
       hidePublishAuthor: true,
-      hidePublishAccessRules: true,
     });
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
     await selectSharedFolder();
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
-    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], [], '', false);
+    expect(onPublish).toHaveBeenCalledWith(item, ['Shared'], '', false);
   });
 
   it('forwards an edited author to onPublish', async () => {
@@ -1965,7 +1916,6 @@ describe('DetailsPanel', () => {
     expect(onPublish).toHaveBeenCalledWith(
       item,
       ['Shared'],
-      [],
       'DIAL Team',
       false,
     );
@@ -1981,76 +1931,9 @@ describe('DetailsPanel', () => {
     expect(onPublish).toHaveBeenCalledWith(
       item,
       ['Shared'],
-      [],
       'Daniil Pavlov',
       false,
     );
-  });
-
-  it('forwards rules added in the publish panel to onPublish', async () => {
-    const onPublish = vi.fn().mockResolvedValue(undefined);
-    renderPanel({ onPublish });
-    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    await selectSharedFolder();
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Add mock rule' }),
-    );
-    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
-
-    expect(onPublish).toHaveBeenCalledWith(
-      item,
-      ['Shared'],
-      [
-        {
-          source: 'role',
-          function: PublicationRuleFunction.Contain,
-          targets: ['engineering'],
-        },
-      ],
-      '',
-      false,
-    );
-  });
-
-  it('forwards ruleSourceOptions from CatalogProps/DetailsPanelProps down to the publish panel', async () => {
-    renderPanel({ ruleSourceOptions: ['roles', 'department'] });
-    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    expect(screen.getByText('ruleSourceOptions:roles,department')).toBeTruthy();
-  });
-
-  it('calls onFetchExistingRules on folder selection and pre-fills the editor', async () => {
-    const onFetchExistingRules = vi.fn().mockResolvedValue([
-      {
-        source: 'title',
-        function: PublicationRuleFunction.Equal,
-        targets: ['Internal Tools'],
-      },
-    ]);
-    renderPanel({ onFetchExistingRules });
-    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    await selectSharedFolder();
-
-    expect(onFetchExistingRules).toHaveBeenCalledWith(['Shared']);
-    await waitFor(() => {
-      expect(screen.getByText('rules:title')).toBeTruthy();
-    });
-  });
-
-  it('a rules-lookup failure does not block folder selection or submission', async () => {
-    const onFetchExistingRules = vi
-      .fn()
-      .mockRejectedValue(new Error('network'));
-    const onPublish = vi.fn().mockResolvedValue(undefined);
-    renderPanel({ onFetchExistingRules, onPublish });
-    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    await selectSharedFolder();
-
-    await waitFor(() => {
-      expect(screen.getByText('rulesLoadError:true')).toBeTruthy();
-    });
-
-    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
-    expect(onPublish).toHaveBeenCalled();
   });
 
   it('returns to the details content after a successful publish submit', async () => {

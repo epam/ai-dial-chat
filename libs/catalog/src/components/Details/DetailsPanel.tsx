@@ -13,7 +13,6 @@ import {
   CATALOG_PUBLISH_ALLOWS_REPLACE,
   defaultCredentialsManagementTitle,
   EMPTY_PUBLISH_FOLDERS,
-  EMPTY_RULE_SOURCE_OPTIONS,
   getDetailsPanelCssVars,
 } from '../../utils/details-panel';
 import { getCatalogDetailsTabs } from '../../utils/details-tabs';
@@ -63,9 +62,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onCreatePublishFolder,
   publishLabels,
   hidePublishAuthor = false,
-  hidePublishAccessRules = false,
-  ruleSourceOptions = EMPTY_RULE_SOURCE_OPTIONS,
-  onFetchExistingRules,
   onCheckTargetExists,
   isTargetTakenError,
   canPublishDirectlyTo,
@@ -146,7 +142,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     onPublishSuccess,
     onPublishError,
     onCreatePublishFolder,
-    onFetchExistingRules,
     onCheckTargetExists,
     isTargetTakenError,
     canPublishDirectlyTo,
@@ -426,8 +421,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             publishLoadingPaths={publishLoadingPaths}
             getPublishDisabledReason={getPublishDisabledReason}
             hidePublishAuthor={hidePublishAuthor}
-            hidePublishAccessRules={hidePublishAccessRules}
-            ruleSourceOptions={ruleSourceOptions}
             publishLabels={publishLabels}
             resolvePublishDependenciesLabels={resolvePublishDependenciesLabels}
             resolvePublishApprovalLabels={resolvePublishApprovalLabels}

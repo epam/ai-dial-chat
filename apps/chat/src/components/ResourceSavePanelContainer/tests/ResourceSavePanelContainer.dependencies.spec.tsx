@@ -18,7 +18,6 @@ import { OrgUnitsProvider } from '../../../context/OrgUnitsContext';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { useResourceVersionHistory } from '../../../hooks/publish/useResourceVersionHistory';
 import { listOrgUnits } from '../../../server-api/org-units.api';
-import { getPublishRules } from '../../../server-api/publish-rules.api';
 import {
   publishApiClient,
   publishCatalogEntity,
@@ -48,9 +47,6 @@ type PanelProps = {
     description: string;
     appearance?: string;
   };
-  accessRules: {
-    isHiddenFor: (destination: { rootKey: string; path: string[] }) => boolean;
-  };
 };
 
 const panelProps = vi.fn<(props: PanelProps) => void>();
@@ -64,14 +60,11 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => ({
   },
 }));
 vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ config: { publicationFilterSources: ['roles'] } }),
+  useAppConfig: () => ({ config: {} }),
   useFeatureFlag: vi.fn(),
 }));
 vi.mock('../../../server-api/org-units.api', () => ({
   listOrgUnits: vi.fn(),
-}));
-vi.mock('../../../server-api/publish-rules.api', () => ({
-  getPublishRules: vi.fn(),
 }));
 vi.mock('../../../server-api/publish.api', () => ({
   publishCatalogEntity: vi.fn(),
@@ -195,7 +188,6 @@ describe('ResourceSavePanelContainer private dependencies', () => {
     vi.clearAllMocks();
     vi.mocked(usePublishFolders).mockReturnValue(organizationFolders);
     vi.mocked(useResourceVersionHistory).mockReturnValue(undefined);
-    vi.mocked(getPublishRules).mockResolvedValue([]);
     vi.mocked(publishCatalogEntity).mockResolvedValue({} as never);
     vi.mocked(
       publishApiClient.getApplicationValuesPublishDependencies,
@@ -226,7 +218,6 @@ describe('ResourceSavePanelContainer private dependencies', () => {
   it('lists them for a public-folder save that sends a publication request', async () => {
     await renderSchemaAppSave();
     const folder = organization('EPAM');
-    expect(lastPanel().accessRules.isHiddenFor(folder)).toBe(false);
 
     await chooseDestination(folder);
 
@@ -243,7 +234,6 @@ describe('ResourceSavePanelContainer private dependencies', () => {
   it('lists them for a direct write into an org unit the user may write to', async () => {
     await renderSchemaAppSave();
     const unitFolder = organization('Delivery', 'Teams');
-    expect(lastPanel().accessRules.isHiddenFor(unitFolder)).toBe(true);
 
     await chooseDestination(unitFolder);
 

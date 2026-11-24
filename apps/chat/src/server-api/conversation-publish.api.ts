@@ -3,8 +3,6 @@ import type {
   ResourceDependenciesResultDto,
   UnpublishConversationResultDto,
 } from '@epam/ai-dial-chat-api-client';
-import { toPublishRuleDto } from '@epam/ai-dial-chat-hooks';
-import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { conversationsApi } from './api-client';
 
 /**
@@ -15,7 +13,6 @@ import { conversationsApi } from './api-client';
 export const publishConversation = (
   path: string,
   folderPath: string,
-  rules: PublicationRule[],
   author: string,
 ): Promise<PublishConversationResultDto> => {
   const trimmedAuthor = author.trim();
@@ -24,7 +21,6 @@ export const publishConversation = (
     publishConversationDto: {
       folderPath,
       ...(trimmedAuthor ? { author: trimmedAuthor } : {}),
-      rules: rules.map(toPublishRuleDto),
     },
   });
 };

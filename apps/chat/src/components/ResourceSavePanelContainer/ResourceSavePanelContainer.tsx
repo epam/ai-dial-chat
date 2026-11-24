@@ -35,7 +35,7 @@ import {
   OrgUnitAccessI18nKeys,
   ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
-import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
+import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useOrgUnitsContext } from '../../context/OrgUnitsContext';
 import { useOrgUnitFolderGuards } from '../../hooks/publish/useOrgUnitFolderGuards';
 import { usePublishDependencyIconResolver } from '../../hooks/publish/usePublishDependencyIconResolver';
@@ -45,14 +45,12 @@ import {
   type SaveNotifiableEntity,
   useResourceSaveNotification,
 } from '../../hooks/resource-save/useResourceSaveNotification';
-import { getPublishRules } from '../../server-api/publish-rules.api';
 import {
   publishApiClient,
   publishCatalogEntity,
 } from '../../server-api/publish.api';
 import { NotifiableEntity } from '../../types/entity-notification';
 import {
-  getAccessRulesLabels,
   getPublishFolderLabel,
   getApplicationPublishDependenciesLabels,
   getPublishPanelCommonLabels,
@@ -102,7 +100,6 @@ interface Props {
 
 const publishClient = {
   publishCatalogEntity,
-  getPublishRules,
   checkPublishTarget: (
     ...args: Parameters<typeof publishApiClient.checkPublishTarget>
   ) => publishApiClient.checkPublishTarget(...args),
@@ -143,9 +140,6 @@ const ResourceSavePanelContainer: FC<Props> = ({
       }),
     [editorAdapter, t],
   );
-  const {
-    config: { publicationFilterSources },
-  } = useAppConfig();
   const organization = usePublishFolders();
   const { canSaveDirectlyTo, getDisabledReason } = useOrgUnitFolderGuards({
     purpose: OrgUnitFolderGuardPurpose.Save,
@@ -184,7 +178,6 @@ const ResourceSavePanelContainer: FC<Props> = ({
         }
         return t(ResourceSavePanelI18nKeys.VersionExists, { version });
       },
-      accessRules: getAccessRulesLabels(t),
     }),
     [t],
   );
@@ -274,7 +267,6 @@ const ResourceSavePanelContainer: FC<Props> = ({
     iconNote: hasUploadedIcon
       ? t(ResourceSavePanelI18nKeys.IconNotCopiedNotice)
       : undefined,
-    ruleSourceOptions: publicationFilterSources,
     labels: flowLabels,
     onSaved: handleSaved,
   });

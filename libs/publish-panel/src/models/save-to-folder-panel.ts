@@ -1,5 +1,4 @@
 import type { CSSProperties, Ref, RefObject } from 'react';
-import type { PublishAccessRulesLabels } from '../components/PublishAccessRules/PublishAccessRules';
 import type {
   SaveToFolderView,
   SaveVersionMode,
@@ -8,8 +7,7 @@ import type {
   FolderDestination,
   FolderDestinationRoot,
 } from './folder-destination';
-import type { PublicationRule, PublishResourceSummary } from './publish';
-import type { PublishAccessRulesStyles } from './publish-access-rules-styles';
+import type { PublishResourceSummary } from './publish';
 import type {
   PublishDependenciesLabels,
   PublishDependenciesStyles,
@@ -104,26 +102,6 @@ export interface SaveToFolderVersionProps {
   newVersionError?: string;
 }
 
-/** Access-rules props; the rules section renders below the tree while a folder of a root with `hasAccessRules` is selected. */
-export interface SaveToFolderAccessRulesProps {
-  /** Access rules of the selected folder, combined with AND. */
-  rules: PublicationRule[];
-  /** Called with the full next rules array on add, remove, or clear. */
-  onRulesChange: (rules: PublicationRule[]) => void;
-  /** Options offered in the rule editor's source picker. */
-  sourceOptions: string[];
-  /** Whether the selected folder's existing rules are being fetched. Defaults to `false`. */
-  isLoading?: boolean;
-  /** Whether the most recent existing-rules fetch failed. Defaults to `false`. */
-  hasLoadError?: boolean;
-  /** Text overrides for the rules section. */
-  labels?: PublishAccessRulesLabels;
-  /** Style overrides for the rules section. */
-  styles?: PublishAccessRulesStyles;
-  /** Returns `true` for a destination that takes no rules, which hides the section while it is selected. Omit to show the section for every folder of a root with `hasAccessRules`. */
-  isHiddenFor?: (destination: FolderDestination) => boolean;
-}
-
 /** Props shared by the body and the standalone shell of the save-to-folder panel. */
 export interface SaveToFolderPanelBaseProps {
   /** Summary row content; a `type` renders the entity header with icon and type badge. */
@@ -144,8 +122,6 @@ export interface SaveToFolderPanelBaseProps {
   ) => Promise<void>;
   /** Version choice; omit for an unversioned resource. */
   version?: SaveToFolderVersionProps;
-  /** Access rules for a destination under a root with `hasAccessRules`; omit to hide the section. */
-  accessRules?: SaveToFolderAccessRulesProps;
   /** Resources the item refers to that are not in the public bucket, listed in the main view as in `PublishPanel`; informational only, it never blocks Save. The host passes them only when they apply (for example, an Organization destination); the section is hidden while this is empty or omitted. */
   dependencies?: PublishDependency[];
   /** One sentence shown in the dependencies section, under its heading, while `dependencies` is omitted or empty; ignored while the list has rows. The host passes it only when the panel cannot list the dependencies itself. Plain text in reading order, not a live region. */

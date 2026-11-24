@@ -103,9 +103,6 @@ export const Catalog: FC<CatalogProps> = ({
   onCreatePublishFolder,
   publishLabels,
   hidePublishAuthor = false,
-  hidePublishAccessRules = false,
-  ruleSourceOptions,
-  onFetchExistingRules,
   onCheckTargetExists,
   isTargetTakenError,
   canPublishDirectlyTo,
@@ -987,9 +984,6 @@ export const Catalog: FC<CatalogProps> = ({
           onCreatePublishFolder={onCreatePublishFolder}
           publishLabels={publishLabels}
           hidePublishAuthor={hidePublishAuthor}
-          hidePublishAccessRules={hidePublishAccessRules}
-          ruleSourceOptions={ruleSourceOptions}
-          onFetchExistingRules={onFetchExistingRules}
           onCheckTargetExists={onCheckTargetExists}
           isTargetTakenError={isTargetTakenError}
           canPublishDirectlyTo={canPublishDirectlyTo}

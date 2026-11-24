@@ -63,9 +63,6 @@ const renderPanel = (
       isSubmitting={false}
       author=""
       onAuthorChange={vi.fn()}
-      rules={[]}
-      onRulesChange={vi.fn()}
-      ruleSourceOptions={[]}
       onClose={vi.fn()}
       onSubmit={vi.fn()}
       {...props}

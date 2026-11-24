@@ -1,9 +1,7 @@
 import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
 import {
-  PublicationRuleFunction,
   PublishDependencyType,
   SaveVersionMode,
-  type PublicationRule,
 } from '@epam/ai-dial-publish-panel';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -35,11 +33,6 @@ vi.mock('../../useResourceFolders/useResourceFolders', () => ({
 
 const ID = 'applications/b1/agent__1.0.0';
 const EPAM = { rootKey: SaveDestinationRoot.Organization, path: ['EPAM'] };
-const RULE = {
-  source: 'roles',
-  function: PublicationRuleFunction.Equal,
-  targets: ['dev'],
-};
 
 const makeAdapter = (
   overrides: Partial<ResourceEditSaveAdapter> = {},
@@ -77,9 +70,7 @@ const renderPanel = (overrides: Partial<UseResourceSavePanelParams> = {}) => {
     organizationFolders: makeOrganization(),
     publishClient: {
       publishCatalogEntity: vi.fn().mockResolvedValue({}),
-      getPublishRules: vi.fn().mockResolvedValue([]),
     },
-    ruleSourceOptions: ['roles'],
     labels: {
       personalRoot: 'Personal',
       organizationRoot: 'Organization',
@@ -143,9 +134,6 @@ describe('useResourceSavePanel — private dependencies', () => {
 
     await waitFor(() =>
       expect(result.current.panelProps.dependencies).toEqual([DEPENDENCY]),
-    );
-    expect(result.current.panelProps.accessRules?.isHiddenFor?.(UNIT)).toBe(
-      true,
     );
   });
 
@@ -229,14 +217,14 @@ describe('useResourceSavePanel', () => {
     expect(panelProps.isSubmitDisabled).toBe(false);
   });
 
-  it('offers Personal then Organization, with rules and plain loading keys on Organization', () => {
+  it('offers Personal then Organization, with plain loading keys on Organization', () => {
     const { result } = renderPanel();
     const [personal, organization] = result.current.panelProps.roots;
     expect([personal.key, personal.label]).toEqual([
       SaveDestinationRoot.Personal,
       'Personal',
     ]);
-    expect(organization.hasAccessRules).toBe(true);
+    expect(organization.key).toBe(SaveDestinationRoot.Organization);
     expect(organization.loadingPaths).toEqual(new Set(['EPAM']));
   });
 
@@ -381,7 +369,7 @@ describe('useResourceSavePanel', () => {
     expect(params.onSaved).not.toHaveBeenCalled();
   });
 
-  it('publishes to an Organization folder with its rules and remembers it', async () => {
+  it('publishes to an Organization folder and remembers it', async () => {
     const { result, params } = renderPanel();
     act(() => result.current.panelProps.onDestinationChange(EPAM));
 
@@ -390,108 +378,34 @@ describe('useResourceSavePanel', () => {
     expect(params.publishClient.publishCatalogEntity).toHaveBeenCalledWith(
       'application',
       ID,
-      { folderPath: 'EPAM', version: '1.0.0', rules: [] },
+      { folderPath: 'EPAM', version: '1.0.0' },
     );
     expect(
       params.organizationFolders?.rememberPublishFolder,
     ).toHaveBeenCalledWith(['EPAM']);
   });
 
-  it('loads the pending Organization folder rules once and publishes the edited ones', async () => {
-    const edited = { ...RULE, targets: ['qa'] };
-    const getPublishRules = vi.fn().mockResolvedValue([RULE]);
-    const { result, params } = renderPanel({
-      publishClient: {
-        publishCatalogEntity: vi.fn().mockResolvedValue({}),
-        getPublishRules,
-      },
-    });
-
-    act(() => result.current.panelProps.onPendingDestinationChange?.(EPAM));
-    await waitFor(() =>
-      expect(result.current.panelProps.accessRules?.rules).toEqual([RULE]),
-    );
-    expect(getPublishRules).toHaveBeenCalledWith('EPAM');
-
-    act(() => result.current.panelProps.accessRules?.onRulesChange([edited]));
-    act(() =>
-      result.current.panelProps.onPendingDestinationChange?.({
-        rootKey: SaveDestinationRoot.Personal,
-        path: [],
-      }),
-    );
-    act(() => result.current.panelProps.onPendingDestinationChange?.(EPAM));
-    expect(getPublishRules).toHaveBeenCalledOnce();
-    expect(result.current.panelProps.accessRules?.rules).toEqual([edited]);
-
-    act(() => result.current.panelProps.onDestinationChange(EPAM));
-    await act(() => result.current.submit());
-    expect(params.publishClient.publishCatalogEntity).toHaveBeenCalledWith(
-      'application',
-      ID,
-      expect.objectContaining({
-        rules: [{ source: 'roles', function: 'EQUAL', targets: ['qa'] }],
-      }),
-    );
-  });
-
-  it('flags a failed rules fetch', async () => {
-    const { result } = renderPanel({
-      publishClient: {
-        publishCatalogEntity: vi.fn(),
-        getPublishRules: vi.fn().mockRejectedValue(new Error('boom')),
-      },
-    });
-    act(() => result.current.panelProps.onPendingDestinationChange?.(EPAM));
-    await waitFor(() =>
-      expect(result.current.panelProps.accessRules?.hasLoadError).toBe(true),
-    );
-    expect(result.current.panelProps.accessRules?.isLoading).toBe(false);
-  });
-
-  it('blocks Save on an Organization folder while its rules load or after they fail', async () => {
-    let rejectRules: (error: Error) => void = () => undefined;
-    const publishCatalogEntity = vi.fn();
-    const adapter = makeAdapter();
-    const { result } = renderPanel({
-      adapter,
-      publishClient: {
-        publishCatalogEntity,
-        getPublishRules: vi.fn(
-          () =>
-            new Promise<PublicationRule[]>((_resolve, reject) => {
-              rejectRules = reject;
-            }),
-        ),
-      },
-    });
+  it('sends a publish body without access rules for an Organization destination', async () => {
+    const publishCatalogEntity = vi.fn().mockResolvedValue({});
+    const { result } = renderPanel({ publishClient: { publishCatalogEntity } });
     act(() => result.current.panelProps.onPendingDestinationChange?.(EPAM));
     act(() => result.current.panelProps.onDestinationChange(EPAM));
 
-    expect(result.current.panelProps.isSubmitDisabled).toBe(true);
-
-    act(() => rejectRules(new Error('boom')));
-    await waitFor(() =>
-      expect(result.current.panelProps.accessRules?.hasLoadError).toBe(true),
-    );
-    expect(result.current.panelProps.isSubmitDisabled).toBe(true);
-
     await act(() => result.current.submit());
-    expect(adapter.saveInPlace).not.toHaveBeenCalled();
-    expect(publishCatalogEntity).not.toHaveBeenCalled();
+
+    expect(publishCatalogEntity).toHaveBeenCalledOnce();
+    const [, , body] = publishCatalogEntity.mock.calls[0];
+    expect(body).not.toHaveProperty('rules');
   });
 
-  it('keeps Save enabled on a Personal folder when the last Organization rules failed', async () => {
-    const { result } = renderPanel({
-      publishClient: {
-        publishCatalogEntity: vi.fn(),
-        getPublishRules: vi.fn().mockRejectedValue(new Error('boom')),
-      },
-    });
+  it('enables Save for an Organization destination without fetching any rules', () => {
+    const publishClient = {
+      publishCatalogEntity: vi.fn().mockResolvedValue({}),
+      checkPublishTarget: vi.fn().mockResolvedValue(false),
+    };
+    const { result } = renderPanel({ publishClient });
     act(() => result.current.panelProps.onPendingDestinationChange?.(EPAM));
-    await waitFor(() =>
-      expect(result.current.panelProps.accessRules?.hasLoadError).toBe(true),
-    );
+    act(() => result.current.panelProps.onDestinationChange(EPAM));
 
     expect(result.current.panelProps.isSubmitDisabled).toBe(false);
   });
@@ -508,23 +422,17 @@ describe('useResourceSavePanel', () => {
           .mockResolvedValue({ id: 'applications/public/Acme/Teams/agent' }),
       });
 
-    it('writes into the unit folder with no publish request and no rules fetch', async () => {
+    it('writes into the unit folder with no publish request', async () => {
       const adapter = makeDirectAdapter();
-      const getPublishRules = vi.fn().mockResolvedValue([]);
       const { result, params } = renderPanel({
         adapter,
         canSaveDirectlyTo: (path) => path[0] === 'Acme',
-        publishClient: {
-          publishCatalogEntity: vi.fn().mockResolvedValue({}),
-          getPublishRules,
-        },
       });
       act(() => result.current.panelProps.onPendingDestinationChange?.(UNIT));
       act(() => result.current.panelProps.onDestinationChange(UNIT));
 
       await act(() => result.current.submit());
 
-      expect(getPublishRules).not.toHaveBeenCalled();
       expect(adapter.saveIntoOrgUnit).toHaveBeenCalledWith(ID, [
         'Acme',
         'Teams',
@@ -534,27 +442,6 @@ describe('useResourceSavePanel', () => {
         expect.objectContaining({ isWrittenToOrgUnit: true }),
         expect.objectContaining({ isDirectWrite: true }),
       );
-    });
-
-    it('hides the access rules for a direct destination only', () => {
-      const { result } = renderPanel({
-        adapter: makeDirectAdapter(),
-        canSaveDirectlyTo: (path) => path[0] === 'Acme',
-      });
-      const isHiddenFor = result.current.panelProps.accessRules?.isHiddenFor;
-
-      expect(isHiddenFor?.(UNIT)).toBe(true);
-      expect(isHiddenFor?.(EPAM)).toBe(false);
-    });
-
-    it('does not block Save while rules would be loading for a direct destination', () => {
-      const { result } = renderPanel({
-        adapter: makeDirectAdapter(),
-        canSaveDirectlyTo: () => true,
-      });
-      act(() => result.current.panelProps.onDestinationChange(UNIT));
-
-      expect(result.current.panelProps.isSubmitDisabled).toBe(false);
     });
 
     it('keeps a Personal folder named like a unit on the normal path', async () => {
@@ -635,7 +522,6 @@ describe('useResourceSavePanel', () => {
     const { result, params } = renderPanel({
       publishClient: {
         publishCatalogEntity: vi.fn().mockRejectedValue(new Error('denied')),
-        getPublishRules: vi.fn().mockResolvedValue([]),
       },
     });
     act(() => result.current.panelProps.onDestinationChange(EPAM));
@@ -943,7 +829,6 @@ describe('useResourceSavePanel — taken name in a direct-write folder', () => {
       canSaveDirectlyTo: (path) => path[0] === 'Acme',
       publishClient: {
         publishCatalogEntity: vi.fn().mockResolvedValue({}),
-        getPublishRules: vi.fn().mockResolvedValue([]),
         checkPublishTarget,
       },
       getDisabledReason: () => undefined,
@@ -1194,7 +1079,6 @@ describe('useResourceSavePanel — taken name in a direct-write folder', () => {
     const { result } = renderDirect({
       publishClient: {
         publishCatalogEntity: vi.fn().mockResolvedValue({}),
-        getPublishRules: vi.fn().mockResolvedValue([]),
       },
     });
 
