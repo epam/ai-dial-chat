@@ -20,6 +20,12 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./mcp-app-renderer": {
+      "@epam/source": "./src/mcp-app-renderer.ts",
+      "types": "./dist/mcp-app-renderer.d.ts",
+      "import": "./dist/mcp-app-renderer.js",
+      "default": "./dist/mcp-app-renderer.js"
     }
   },
   "dependencies": {

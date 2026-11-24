@@ -23,19 +23,10 @@ import { McpAppInlinePreview } from '../McpAppInlinePreview';
  * the class would still pass with the class on the wrong node.
  */
 
-/*
- * Only the renderer is stubbed: the module also carries the enums this lib
- * imports, and an object-literal mock would drop them, failing the whole file
- * at import time rather than at an assertion.
- */
-vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@epam/ai-dial-attachment-canvas')>();
-  return {
-    ...actual,
-    McpAppCanvasRenderer: () => <div>mounted app</div>,
-  };
-});
+/* The preview loads the renderer on demand from this subpath. */
+vi.mock('@epam/ai-dial-attachment-canvas/mcp-app-renderer', () => ({
+  McpAppCanvasRenderer: () => <div>mounted app</div>,
+}));
 
 /*
  * Walking up to an unlabeled container is the only way to assert a class on it:
@@ -147,7 +138,8 @@ describe('McpAppInlinePreview — public class names', () => {
 describe('McpAppInlinePreview — opened in canvas announcement', () => {
   it('keeps the status region mounted and fills it once the app opens in the canvas', async () => {
     const { rerender } = renderPreview();
-    await screen.findByRole('toolbar', { name: 'MCP app actions' });
+    /* Once the app is mounted, its loading spinner (also a status) is gone. */
+    await screen.findByText('mounted app');
     const status = screen.getByRole('status');
     expect(status.textContent).toBe('');
 

@@ -37,6 +37,8 @@ const mocks = vi.hoisted(() => ({
   } | null,
   isMobile: false,
   isTablet: false,
+  isSourcesOpen: false,
+  isAfterLoadIdle: false,
 }));
 
 vi.mock('@epam/ai-dial-attachment-canvas', () => ({
@@ -67,7 +69,10 @@ vi.mock('@epam/ai-dial-chat-hooks/viewport-layout', async (original) => ({
 vi.mock('../../context/SourcesSidebarContext', () => ({
   useSourcesSidebar: () => {
     useContext(SidebarValueContext);
-    return { handleClose: mocks.closeSourcesPanel };
+    return {
+      handleClose: mocks.closeSourcesPanel,
+      isOpen: mocks.isSourcesOpen,
+    };
   },
 }));
 vi.mock('../../context/ThemeContext', () => ({
@@ -128,15 +133,18 @@ vi.mock(
 vi.mock('../../components/AnnouncementBanner/AnnouncementBanner', () => ({
   default: () => null,
 }));
+vi.mock('../../hooks/useIsAfterLoadIdle', () => ({
+  useIsAfterLoadIdle: () => mocks.isAfterLoadIdle,
+}));
 vi.mock('../../components/OnboardingHints/OnboardingHints', () => ({
-  default: () => null,
+  default: () => <p>onboarding tour</p>,
 }));
 vi.mock('../../components/ChatLayout/ChatLayout', () => ({
   default: () => null,
 }));
 vi.mock(
   '../../components/ConversationSourcesPanel/ConversationSourcesPanel',
-  () => ({ default: () => null }),
+  () => ({ default: () => <aside aria-label="sources panel" /> }),
 );
 vi.mock('../../components/Header/Header', () => ({ default: () => null }));
 vi.mock('../../components/Header/SourcesSidebarToggle', () => ({
@@ -148,7 +156,7 @@ vi.mock('../../components/Navigation/SidebarNavigation', () => ({
 vi.mock('../../components/NewVersionFallback/NewVersionFallback', () => ({
   default: () => null,
 }));
-vi.mock('../../components/SigninInterruptDialog/SigninInterruptDialog', () => ({
+vi.mock('../../components/SigninInterruptGate/SigninInterruptGate', () => ({
   default: () => null,
 }));
 vi.mock('../../pages/ConversationRoute/ConversationRoute', () => ({
@@ -199,6 +207,9 @@ describe('app', () => {
     mocks.canvasProps = null;
     mocks.isMobile = false;
     mocks.isTablet = false;
+    mocks.isSourcesOpen = false;
+    mocks.isAfterLoadIdle = false;
+    mocks.canvas.isOpen = false;
   });
 
   describe('App — conversation panel memo boundary', () => {
@@ -213,6 +224,11 @@ describe('app', () => {
   });
 
   describe('App — attachment canvas container mounting', () => {
+    /* These cover where the canvas may appear once the page has loaded. */
+    beforeEach(() => {
+      mocks.isAfterLoadIdle = true;
+    });
+
     const renderAt = async (
       path: string,
       features: OverlayFeature[] = [],
@@ -327,6 +343,52 @@ describe('app', () => {
       await renderWithCanvas('/', [OverlayFeature.AttachmentsManager]);
 
       expect(mocks.canvasProps?.leftActions).toBeTruthy();
+    });
+  });
+
+  describe('App — closed overlays while the page loads', () => {
+    const renderAt = async (
+      path: string,
+      features: OverlayFeature[] = [],
+    ): Promise<void> => {
+      mocks.enabledFeatures = new Set(features);
+      render(
+        <MemoryRouter initialEntries={[path]}>
+          <App />
+        </MemoryRouter>,
+      );
+      await screen.findByRole('main');
+    };
+
+    it('mounts no closed canvas, sources panel or onboarding tour before the page has loaded', async () => {
+      await renderAt('/', [OverlayFeature.AttachmentsManager]);
+
+      expect(screen.queryByLabelText('attachment canvas')).toBeNull();
+      expect(screen.queryByLabelText('sources panel')).toBeNull();
+      expect(screen.queryByText('onboarding tour')).toBeNull();
+    });
+
+    it('mounts the canvas as soon as it opens, even before the page has loaded', async () => {
+      mocks.canvas.isOpen = true;
+      await renderAt('/files', [OverlayFeature.FileManager]);
+
+      expect(await screen.findByLabelText('attachment canvas')).toBeTruthy();
+    });
+
+    it('mounts the sources panel as soon as it opens, even before the page has loaded', async () => {
+      mocks.isSourcesOpen = true;
+      await renderAt('/');
+
+      expect(await screen.findByLabelText('sources panel')).toBeTruthy();
+    });
+
+    it('mounts the closed overlays and the onboarding tour once the page has loaded', async () => {
+      mocks.isAfterLoadIdle = true;
+      await renderAt('/', [OverlayFeature.AttachmentsManager]);
+
+      expect(await screen.findByLabelText('attachment canvas')).toBeTruthy();
+      expect(await screen.findByLabelText('sources panel')).toBeTruthy();
+      expect(await screen.findByText('onboarding tour')).toBeTruthy();
     });
   });
 

@@ -26,6 +26,11 @@ export default defineConfig(() => ({
      * them need an alias here too.
      */
     alias: {
+      /* Before the root alias: a string alias also matches every subpath. */
+      '@epam/ai-dial-attachment-canvas/mcp-app-renderer': path.resolve(
+        import.meta.dirname,
+        '../attachment-canvas/src/mcp-app-renderer.ts',
+      ),
       '@epam/ai-dial-attachment-canvas': path.resolve(
         import.meta.dirname,
         '../attachment-canvas/src/index.ts',

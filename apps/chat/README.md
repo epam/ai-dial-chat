@@ -156,7 +156,7 @@ the shared `/file-manager` entry and lazy conversation and pinned-project
 publishing panels. Heavy feature engines load when their features are
 activated.
 
-Three things keep them off the first paint:
+Six things keep them off the first paint:
 
 - Every lib declares `sideEffects` in its `package.json` (CSS/SCSS only, or
   `false`), so importing one symbol from a lib's root barrel does not keep
@@ -170,6 +170,20 @@ Three things keep them off the first paint:
   one stylesheet instead of ~150 module preloads and a dozen render-blocking
   stylesheets. That stylesheet keeps the dev server's cascade order: Inter,
   kit, file manager, CSS Modules, Tailwind, `styles.scss`.
+- Conversation messages are lazy (`ConversationMessageItemLoader`,
+  `src/utils/conversation-message-loader.ts`): the message bubbles, stages and
+  citations carry the markdown engine, which the home page — a conversation
+  without messages — never renders. `app.tsx` fetches the chunk at once on any
+  other entry route, where messages can be the LCP element, and after the page
+  has loaded on `/`; once loaded, a message renders without suspending.
+- Closed lazy overlays (the sources panel, the attachment canvas, the sign-in
+  interrupt dialog, the onboarding tour, the model and prompt catalogs, the
+  skill details panel) mount, still closed, only at the first idle period after
+  both the document `load` event and the conversation view's first commit
+  (`markFirstScreenRendered`, with a 3 s fallback after `load`), or earlier if
+  they open first (`useDeferredOverlayMount`, `src/utils/load-idle.ts`). A
+  mounted `lazy()` component downloads its chunk even while it renders nothing,
+  so mounting them at page load fetched their chunks alongside the home route's.
 - `public/boot-prefetch.js`, inlined into the `index.html` head, sends
   `GET /api/v1/auth/me`, `/api/v1/client-config?appId=ai-dial-chat` and
   `/api/v1/user-config` while the bundle downloads.

@@ -164,7 +164,7 @@ vi.mock('../../components/Navigation/SidebarNavigation', () => ({
 vi.mock('../../components/NewVersionFallback/NewVersionFallback', () => ({
   default: () => null,
 }));
-vi.mock('../../components/SigninInterruptDialog/SigninInterruptDialog', () => ({
+vi.mock('../../components/SigninInterruptGate/SigninInterruptGate', () => ({
   default: () => null,
 }));
 vi.mock('../../pages/ConversationRoute/ConversationRoute', () => ({

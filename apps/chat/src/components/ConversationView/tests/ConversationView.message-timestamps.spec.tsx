@@ -5,7 +5,8 @@ import {
   type Message,
 } from '@epam/ai-dial-chat-shared';
 import { render } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { loadConversationMessageItem } from '../../../utils/conversation-message-loader';
 import ConversationView from '../ConversationView';
 
 /*
@@ -156,6 +157,12 @@ const messages = [
 ];
 
 describe('ConversationView — message timestamps', () => {
+  /* As on a conversation route, where app.tsx preloads it, the message
+   * renderer is already loaded when the view renders. */
+  beforeAll(async () => {
+    await loadConversationMessageItem();
+  });
+
   beforeEach(() => {
     mocks.hasTimestampByIndex.clear();
   });

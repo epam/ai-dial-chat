@@ -1223,6 +1223,26 @@ useControlErrorAssociation(
 <ErrorText id={errorId} text={error} />;
 ```
 
+### useHasBeenTrue
+
+Returns `true` from the first render in which its argument is `true`, and keeps
+returning `true` afterwards. Use it to mount a lazily loaded overlay the first
+time it opens: a mounted `React.lazy` component requests its chunk even while it
+renders nothing. The overlay then stays mounted after it closes, so its close
+transition and focus return behave as before.
+
+```tsx
+import { useHasBeenTrue } from '@epam/ai-dial-chat-shared';
+
+const hasOpened = useHasBeenTrue(isOpen);
+
+return hasOpened ? (
+  <Suspense fallback={null}>
+    <LazyPanel isOpen={isOpen} />
+  </Suspense>
+) : null;
+```
+
 ### useIsMobile
 
 Returns `true` when the viewport matches the mobile breakpoint.

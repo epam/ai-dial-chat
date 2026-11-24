@@ -41,6 +41,7 @@ import SourcesSidebarToggle from '../components/Header/SourcesSidebarToggle';
 import SidebarNavigation from '../components/Navigation/SidebarNavigation';
 import NewVersionFallback from '../components/NewVersionFallback/NewVersionFallback';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
+import SigninInterruptGate from '../components/SigninInterruptGate/SigninInterruptGate';
 import { MIN_CONTENT_AREA_WIDTH } from '../constants/layout';
 import {
   getConversationRoute,
@@ -63,6 +64,8 @@ import { usePdfPreviewLoader } from '../hooks/attachment/usePdfPreviewLoader';
 import { useConversationListBridge } from '../hooks/conversation/useConversationListBridge';
 import { useConversationPanelRouteState } from '../hooks/conversation-panel/useConversationPanelRouteState';
 import { useOverlayPendingModel } from '../hooks/overlay/useOverlayPendingModel';
+import { useDeferredOverlayMount } from '../hooks/useDeferredOverlayMount';
+import { useIsAfterLoadIdle } from '../hooks/useIsAfterLoadIdle';
 import { useUiFeature } from '../hooks/useUiFeature';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { checkHealth } from '../server-api/health.api';
@@ -74,6 +77,8 @@ import {
   resolveCanvasWidth,
 } from '../utils/canvas-width';
 import { loadConversationInput } from '../utils/conversation-input-loader';
+import { loadConversationMessageItem } from '../utils/conversation-message-loader';
+import { scheduleAfterLoadIdle } from '../utils/load-idle';
 import { configurePdfWorker } from '../utils/pdf';
 import { renderSettingsRoutes, renderUsageRoute } from './settings-routes';
 
@@ -81,22 +86,26 @@ const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 /*
  * Lazy so the sources panel's scheduled-task section, and the markdown stack
  * it renders (`MDMessageViewer` → rehype-raw → parse5), stay out of the entry
- * chunk every page waits on. The panel is closed until the user opens it.
+ * chunk every page waits on. The panel is closed until the user opens it, and
+ * mounts (closed) only after the page has loaded — see
+ * `useDeferredOverlayMount`: a mounted `lazy()` component downloads its chunk
+ * even while it renders nothing, which would compete with the first paint.
  */
 const ConversationSourcesPanel = lazy(
   () =>
     import('../components/ConversationSourcesPanel/ConversationSourcesPanel'),
 );
 /*
- * Lazy for the same reason: the canvas body renders markdown, code and
- * visualizer content, and it is closed until an attachment is opened. The
- * chunk starts loading as soon as a canvas route mounts, so it is in place by
- * the first click.
+ * The same for the canvas: its body renders markdown, code and visualizer
+ * content, and it is closed until an attachment is opened.
  */
 const McpAppCanvasContainer = lazy(
   () => import('../components/McpAppCanvasContainer/McpAppCanvasContainer'),
 );
-// Lazy: the tour shows its first hint only after a start delay, never at first paint.
+/*
+ * Lazy, and mounted only after the page has loaded: the tour shows its first
+ * hint only after a start delay, never at first paint.
+ */
 const OnboardingHints = lazy(
   () => import('../components/OnboardingHints/OnboardingHints'),
 );
@@ -141,9 +150,6 @@ const SkillEditorPage = lazy(() => import('../pages/SkillEditor/SkillEditor'));
 const ToolsetAuthCallbackPage = lazy(
   () => import('../pages/ToolsetAuthCallback/ToolsetAuthCallback'),
 );
-const SigninInterruptDialog = lazy(
-  () => import('../components/SigninInterruptDialog/SigninInterruptDialog'),
-);
 const SharedInvitationPage = lazy(
   () => import('../pages/SharedInvitation/SharedInvitation'),
 );
@@ -162,6 +168,22 @@ const conversationPageModule = import('../pages/Conversation/Conversation');
  * first. `import()` caches the module, so the composer's own `lazy` reuses it.
  */
 void loadConversationInput();
+/*
+ * Messages are lazy so a conversation without any — the home page — does not
+ * wait for the message renderer and the markdown engine it carries. Any other
+ * entry route may open straight onto a conversation whose messages are the
+ * LCP element, so there the chunk is fetched now, alongside the page module.
+ * On the home page it is fetched once the page has loaded, in time for the
+ * first message sent.
+ */
+const preloadConversationMessages = () => {
+  loadConversationMessageItem().catch(() => undefined);
+};
+if (window.location.pathname === ROUTES.Root) {
+  scheduleAfterLoadIdle(preloadConversationMessages);
+} else {
+  preloadConversationMessages();
+}
 
 const ConversationPage = lazy(async () => {
   const module = await conversationPageModule;
@@ -218,7 +240,12 @@ const App: FC = () => {
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const handleCanvasVisualizerSendMessage = useCanvasVisualizerMessageHandler();
-  const { handleClose: closeSourcesPanel } = useSourcesSidebar();
+  const { handleClose: closeSourcesPanel, isOpen: isSourcesPanelOpen } =
+    useSourcesSidebar();
+  /* Closed overlays mount after the page has loaded, or when they first open. */
+  const isCanvasMounted = useDeferredOverlayMount(isCanvasOpen);
+  const isSourcesPanelMounted = useDeferredOverlayMount(isSourcesPanelOpen);
+  const isOnboardingReady = useIsAfterLoadIdle();
 
   const { isPanelOpen, togglePanel } = useConversationPanelRouteState({
     pathname,
@@ -355,13 +382,13 @@ const App: FC = () => {
   return (
     <div className="flex size-full flex-col">
       <AnnouncementBanner />
-      <Suspense fallback={null}>
-        <OnboardingHints />
-      </Suspense>
-      <div className="relative flex min-h-0 flex-1 flex-row tablet:overflow-hidden">
+      {isOnboardingReady && (
         <Suspense fallback={null}>
-          <SigninInterruptDialog />
+          <OnboardingHints />
         </Suspense>
+      )}
+      <div className="relative flex min-h-0 flex-1 flex-row tablet:overflow-hidden">
+        <SigninInterruptGate />
         <SidebarNavigation
           chats={conversationPanelView}
           isCollapsed={!isPanelOpen}
@@ -635,107 +662,114 @@ const App: FC = () => {
               />
             </Routes>
           </main>
-          {isConversationRoute && (
+          {isConversationRoute && isSourcesPanelMounted && (
             <Suspense fallback={null}>
               <ConversationSourcesPanel />
             </Suspense>
           )}
         </ActiveScheduledTaskProvider>
-        {(isFileManagerRoute ||
-          isProjectPageRoute ||
-          (isConversationRoute && isAttachmentsManagerEnabled)) && (
-          <Suspense fallback={null}>
-            <McpAppCanvasContainer
-              loadPdf={loadPdf}
-              onVisualizerSendMessage={handleCanvasVisualizerSendMessage}
-              labels={{
-                ariaLabel: t(AttachmentCanvasI18nKeys.AriaLabel),
-                closeLabel: t(AttachmentCanvasI18nKeys.CloseLabel),
-                resizeLabel: t(SidebarI18nKeys.ResizePanel),
-                visualizerErrorLabel: t(
-                  AttachmentCanvasI18nKeys.VisualizerLoadErrorLabel,
-                ),
-                downloadLabel: t(AttachmentCanvasI18nKeys.DownloadLabel),
-                unsupportedLabel: t(AttachmentCanvasI18nKeys.UnsupportedLabel),
-                loadErrorLabel: t(AttachmentCanvasI18nKeys.LoadErrorLabel),
-                loadErrorRetryLabel: t(ButtonsI18nKeys.Retry),
-                forbiddenErrorLabel: t(
-                  AttachmentCanvasI18nKeys.ForbiddenErrorLabel,
-                ),
-                copyTextLabel: t(ButtonsI18nKeys.CopyText),
-                copiedTextLabel: t(ButtonsI18nKeys.Copied),
-                copyMarkdownLabel: t(ButtonsI18nKeys.CopyAsMarkdown),
-                copiedMarkdownLabel: t(ButtonsI18nKeys.Copied),
-                copyJsonLabel: t(ButtonsI18nKeys.CopyAsJson),
-                copiedJsonLabel: t(ButtonsI18nKeys.Copied),
-                htmlFrameBlockedLabel: t(
-                  AttachmentCanvasI18nKeys.HtmlFrameBlocked,
-                ),
-                htmlOpenInNewTabLabel: t(AttachmentsI18nKeys.OpenInNewTab),
-                htmlViewSourceLabel: t(AttachmentCanvasI18nKeys.HtmlViewSource),
-                htmlViewRenderedLabel: t(
-                  AttachmentCanvasI18nKeys.HtmlViewRendered,
-                ),
-                pdfThumbnailsLabel: t(
-                  AttachmentCanvasI18nKeys.PdfThumbnailsLabel,
-                ),
-                pdfShowThumbnailsLabel: t(
-                  AttachmentCanvasI18nKeys.PdfShowThumbnailsLabel,
-                ),
-                pdfHideThumbnailsLabel: t(
-                  AttachmentCanvasI18nKeys.PdfHideThumbnailsLabel,
-                ),
-                pdfPageNumberLabel: t(
-                  AttachmentCanvasI18nKeys.PdfPageNumberLabel,
-                ),
-                mcpAppReloadLabel: t(ButtonsI18nKeys.Reload),
-                pdfContentLoadingLabel: t(
-                  AttachmentCanvasI18nKeys.PdfContentLoadingLabel,
-                ),
-                pdfContentErrorLabel: t(
-                  AttachmentCanvasI18nKeys.PdfContentErrorLabel,
-                ),
-                pdfContentRetryLabel: t(ButtonsI18nKeys.Retry),
-                xlsxFormulaLabel: t(AttachmentCanvasI18nKeys.XlsxFormulaLabel),
-                codeContentLoadingLabel: t(
-                  AttachmentCanvasI18nKeys.CodeContentLoadingLabel,
-                ),
-                codeContentErrorLabel: t(
-                  AttachmentCanvasI18nKeys.CodeContentErrorLabel,
-                ),
-                codeContentRetryLabel: t(ButtonsI18nKeys.Retry),
-                tableCopyLabel: t(ButtonsI18nKeys.Copy),
-                tableCopiedLabel: t(ButtonsI18nKeys.Copied),
-                tableDownloadCsvLabel: t(ButtonsI18nKeys.DownloadAsCsv),
-                codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
-                codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
-                codeBlockDownloadLabel: t(ButtonsI18nKeys.Download),
-                tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
-                mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
-                ooxmlHighlightsLabel: t(
-                  AttachmentCanvasI18nKeys.OoxmlHighlightsLabel,
-                ),
-                ooxmlHighlightNavigatedLabel: t(
-                  AttachmentCanvasI18nKeys.OoxmlHighlightNavigatedLabel,
-                ),
-                loadingLabel: t(BasicI18nKeys.Loading),
-              }}
-              /* The project pages have no sources panel for the toggle to drive. */
-              leftActions={
-                isMobile && !isProjectPageRoute ? (
-                  <SourcesSidebarToggle />
-                ) : undefined
-              }
-              isMobile={isMobile}
-              isBoundedOverlay={isTablet}
-              defaultWidth={canvasDefaultWidth}
-              minWidth={canvasMinWidth}
-              maxWidth={canvasMaxWidth}
-              codeBlockTheme={codeBlockTheme}
-              configurePdfWorker={configurePdfWorker}
-            />
-          </Suspense>
-        )}
+        {isCanvasMounted &&
+          (isFileManagerRoute ||
+            isProjectPageRoute ||
+            (isConversationRoute && isAttachmentsManagerEnabled)) && (
+            <Suspense fallback={null}>
+              <McpAppCanvasContainer
+                loadPdf={loadPdf}
+                onVisualizerSendMessage={handleCanvasVisualizerSendMessage}
+                labels={{
+                  ariaLabel: t(AttachmentCanvasI18nKeys.AriaLabel),
+                  closeLabel: t(AttachmentCanvasI18nKeys.CloseLabel),
+                  resizeLabel: t(SidebarI18nKeys.ResizePanel),
+                  visualizerErrorLabel: t(
+                    AttachmentCanvasI18nKeys.VisualizerLoadErrorLabel,
+                  ),
+                  downloadLabel: t(AttachmentCanvasI18nKeys.DownloadLabel),
+                  unsupportedLabel: t(
+                    AttachmentCanvasI18nKeys.UnsupportedLabel,
+                  ),
+                  loadErrorLabel: t(AttachmentCanvasI18nKeys.LoadErrorLabel),
+                  loadErrorRetryLabel: t(ButtonsI18nKeys.Retry),
+                  forbiddenErrorLabel: t(
+                    AttachmentCanvasI18nKeys.ForbiddenErrorLabel,
+                  ),
+                  copyTextLabel: t(ButtonsI18nKeys.CopyText),
+                  copiedTextLabel: t(ButtonsI18nKeys.Copied),
+                  copyMarkdownLabel: t(ButtonsI18nKeys.CopyAsMarkdown),
+                  copiedMarkdownLabel: t(ButtonsI18nKeys.Copied),
+                  copyJsonLabel: t(ButtonsI18nKeys.CopyAsJson),
+                  copiedJsonLabel: t(ButtonsI18nKeys.Copied),
+                  htmlFrameBlockedLabel: t(
+                    AttachmentCanvasI18nKeys.HtmlFrameBlocked,
+                  ),
+                  htmlOpenInNewTabLabel: t(AttachmentsI18nKeys.OpenInNewTab),
+                  htmlViewSourceLabel: t(
+                    AttachmentCanvasI18nKeys.HtmlViewSource,
+                  ),
+                  htmlViewRenderedLabel: t(
+                    AttachmentCanvasI18nKeys.HtmlViewRendered,
+                  ),
+                  pdfThumbnailsLabel: t(
+                    AttachmentCanvasI18nKeys.PdfThumbnailsLabel,
+                  ),
+                  pdfShowThumbnailsLabel: t(
+                    AttachmentCanvasI18nKeys.PdfShowThumbnailsLabel,
+                  ),
+                  pdfHideThumbnailsLabel: t(
+                    AttachmentCanvasI18nKeys.PdfHideThumbnailsLabel,
+                  ),
+                  pdfPageNumberLabel: t(
+                    AttachmentCanvasI18nKeys.PdfPageNumberLabel,
+                  ),
+                  mcpAppReloadLabel: t(ButtonsI18nKeys.Reload),
+                  pdfContentLoadingLabel: t(
+                    AttachmentCanvasI18nKeys.PdfContentLoadingLabel,
+                  ),
+                  pdfContentErrorLabel: t(
+                    AttachmentCanvasI18nKeys.PdfContentErrorLabel,
+                  ),
+                  pdfContentRetryLabel: t(ButtonsI18nKeys.Retry),
+                  xlsxFormulaLabel: t(
+                    AttachmentCanvasI18nKeys.XlsxFormulaLabel,
+                  ),
+                  codeContentLoadingLabel: t(
+                    AttachmentCanvasI18nKeys.CodeContentLoadingLabel,
+                  ),
+                  codeContentErrorLabel: t(
+                    AttachmentCanvasI18nKeys.CodeContentErrorLabel,
+                  ),
+                  codeContentRetryLabel: t(ButtonsI18nKeys.Retry),
+                  tableCopyLabel: t(ButtonsI18nKeys.Copy),
+                  tableCopiedLabel: t(ButtonsI18nKeys.Copied),
+                  tableDownloadCsvLabel: t(ButtonsI18nKeys.DownloadAsCsv),
+                  codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
+                  codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
+                  codeBlockDownloadLabel: t(ButtonsI18nKeys.Download),
+                  tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
+                  mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
+                  ooxmlHighlightsLabel: t(
+                    AttachmentCanvasI18nKeys.OoxmlHighlightsLabel,
+                  ),
+                  ooxmlHighlightNavigatedLabel: t(
+                    AttachmentCanvasI18nKeys.OoxmlHighlightNavigatedLabel,
+                  ),
+                  loadingLabel: t(BasicI18nKeys.Loading),
+                }}
+                /* The project pages have no sources panel for the toggle to drive. */
+                leftActions={
+                  isMobile && !isProjectPageRoute ? (
+                    <SourcesSidebarToggle />
+                  ) : undefined
+                }
+                isMobile={isMobile}
+                isBoundedOverlay={isTablet}
+                defaultWidth={canvasDefaultWidth}
+                minWidth={canvasMinWidth}
+                maxWidth={canvasMaxWidth}
+                codeBlockTheme={codeBlockTheme}
+                configurePdfWorker={configurePdfWorker}
+              />
+            </Suspense>
+          )}
       </div>
     </div>
   );

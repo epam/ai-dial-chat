@@ -16,6 +16,7 @@ import {
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { usePrompts } from '../../context/PromptsContext';
 import { useUiFeature } from '../../hooks/useUiFeature';
+import PromptCatalogGate from './PromptCatalogGate';
 
 const PromptCatalogModal = lazy(async () => {
   const module = await import('./PromptCatalogModal');
@@ -55,16 +56,18 @@ export const usePromptSelectorOverlay = ({
 
   const renderCatalog = useCallback(
     ({ isOpen, onSelect, onClose }: RenderPromptCatalogProps) => (
-      <Suspense fallback={null}>
-        <PromptCatalogModal
-          isOpen={isOpen}
-          onClose={onClose}
-          onSelect={(id) => {
-            const prompt = allPrompts.find((p) => p.id === id);
-            if (prompt) onSelect(prompt);
-          }}
-        />
-      </Suspense>
+      <PromptCatalogGate isOpen={isOpen}>
+        <Suspense fallback={null}>
+          <PromptCatalogModal
+            isOpen={isOpen}
+            onClose={onClose}
+            onSelect={(id) => {
+              const prompt = allPrompts.find((p) => p.id === id);
+              if (prompt) onSelect(prompt);
+            }}
+          />
+        </Suspense>
+      </PromptCatalogGate>
     ),
     [allPrompts],
   );

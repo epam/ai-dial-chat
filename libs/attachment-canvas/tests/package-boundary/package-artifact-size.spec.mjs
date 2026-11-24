@@ -93,8 +93,10 @@ describe('publish-ready package artifact size', () => {
      * panel, body and MCP App renderer, plus its README paragraph; measured at 255,672.
      * Raised from 256_500: `AttachmentCanvasBody` loads `McpAppCanvasRenderer` lazily behind a
      * `LazyContentBoundary` with retry, plus its README paragraph; measured at 256,958 before
-     * the README paragraph. */
-    expect(artifact.unpackedSize).toBeLessThanOrEqual(258_000);
+     * the README paragraph.
+     * Raised from 258_000: the `./mcp-app-renderer` subpath entry (its dist chunk, declaration
+     * and `exports` row) plus its README section; measured at 258,291. */
+    expect(artifact.unpackedSize).toBeLessThanOrEqual(259_000);
   });
 
   it('contains no private OOXML renderer or worker chunks', () => {
