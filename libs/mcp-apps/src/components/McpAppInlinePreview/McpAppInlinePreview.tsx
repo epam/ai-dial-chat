@@ -1,4 +1,3 @@
-import { McpAppCanvasRenderer } from '@epam/ai-dial-attachment-canvas';
 import type { McpAppDisplayMode } from '@epam/ai-dial-attachment-canvas';
 import { buildCssVars } from '@epam/ai-dial-chat-shared';
 import {
@@ -18,7 +17,16 @@ import {
   IconArrowsMaximize,
   IconRefresh,
 } from '@tabler/icons-react';
-import { FC, memo, useCallback, useEffect, useState } from 'react';
+import {
+  FC,
+  lazy,
+  memo,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { MCP_APPS_CLASS } from '../../constants/public-class-names';
 import { useMcpAppInlinePreview } from '../../hooks/useMcpAppInlinePreview/useMcpAppInlinePreview';
 import {
@@ -30,7 +38,27 @@ import {
   type McpAppToolCallSeed,
   type McpAppToolRef,
 } from '../../models/mcp-apps';
+import { RendererLoadBoundary } from '../RendererLoadBoundary/RendererLoadBoundary';
 import styles from './McpAppInlinePreview.module.scss';
+
+/*
+ * The renderer pulls in `@mcp-ui/client`, the MCP SDK and `zod`, which only a
+ * message with an MCP App needs. It comes from its own subpath: the host's
+ * entry already imports the package root statically, so an `import()` of the
+ * root would split nothing off.
+ */
+const loadMcpAppCanvasRenderer = async () => {
+  const module =
+    await import('@epam/ai-dial-attachment-canvas/mcp-app-renderer');
+  return { default: module.McpAppCanvasRenderer };
+};
+
+/*
+ * A `lazy()` reference keeps a rejected import forever, so a reload needs a
+ * new one; the preview creates it per load attempt, as `AttachmentCanvasBody`
+ * does for its own renderers.
+ */
+const createMcpAppCanvasRenderer = () => lazy(loadMcpAppCanvasRenderer);
 
 /** Props for the `McpAppInlinePreview` component. */
 export interface McpAppInlinePreviewProps {
@@ -130,14 +158,37 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
     handleRequestDisplayMode,
   );
 
+  /* Starts the renderer download while the resource is still being fetched. */
+  useEffect(() => {
+    loadMcpAppCanvasRenderer().catch(() => undefined);
+  }, []);
+
+  const McpAppCanvasRenderer = useMemo(createMcpAppCanvasRenderer, [attemptId]);
+  /* The attempt whose renderer failed to load; a reload starts a new one. */
+  const [failedRendererAttempt, setFailedRendererAttempt] = useState<
+    number | undefined
+  >(undefined);
+  const isRendererFailed = failedRendererAttempt === attemptId;
+  const handleRendererError = useCallback(
+    () => setFailedRendererAttempt(attemptId),
+    [attemptId],
+  );
+
   if (status === McpAppInlinePreviewStatus.Unavailable) {
     return null;
   }
 
+  const isError =
+    status === McpAppInlinePreviewStatus.Error || isRendererFailed;
   let statusText = '';
   if (isOpenedInCanvas) statusText = openedInCanvasLabel;
-  else if (status === McpAppInlinePreviewStatus.Error)
-    statusText = loadErrorLabel;
+  else if (isError) statusText = loadErrorLabel;
+
+  const spinner = (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <Spinner ariaLabel={loadingAriaLabel} />
+    </div>
+  );
 
   return (
     <div
@@ -230,12 +281,8 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
           </div>
         ) : (
           <>
-            {status === McpAppInlinePreviewStatus.Loading && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Spinner ariaLabel={loadingAriaLabel} />
-              </div>
-            )}
-            {status === McpAppInlinePreviewStatus.Error && (
+            {status === McpAppInlinePreviewStatus.Loading && spinner}
+            {isError && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4">
                 <IconAlertTriangle
                   size={40}
@@ -255,15 +302,23 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
                 </p>
               </div>
             )}
-            {status === McpAppInlinePreviewStatus.Ready && content && (
-              <McpAppCanvasRenderer
+            {status === McpAppInlinePreviewStatus.Ready &&
+              content &&
+              !isRendererFailed && (
                 /* Remounts on reload so a prior error doesn't stick — see `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D23. */
-                key={attemptId}
-                content={content}
-                errorLabel={loadErrorLabel}
-                onAppInfo={setAppInfo}
-              />
-            )}
+                <RendererLoadBoundary
+                  key={attemptId}
+                  onError={handleRendererError}
+                >
+                  <Suspense fallback={spinner}>
+                    <McpAppCanvasRenderer
+                      content={content}
+                      errorLabel={loadErrorLabel}
+                      onAppInfo={setAppInfo}
+                    />
+                  </Suspense>
+                </RendererLoadBoundary>
+              )}
           </>
         )}
       </div>

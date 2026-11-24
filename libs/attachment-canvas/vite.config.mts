@@ -14,17 +14,23 @@ import { isExternalPackageImport } from './src/utils/vite-external-matcher';
  * re-bundles this lib's *source* through its own application-mode Vite
  * build. A consumer that installs the packaged `dist/` output directly would
  * get the on-demand JS chunk but never its CSS. This plugin restores that
- * association in the built artifact itself: for every dynamic-import chunk
- * that has a same-named CSS asset, it prepends a CSS side-effect import. A
+ * association in the built artifact itself: for every non-entry chunk that
+ * has a same-named CSS asset, it prepends a CSS side-effect import. A
  * consuming bundler can then include that stylesheet in its normal dynamic
  * import preload contract and wait for it before resolving the JS chunk,
  * avoiding a flash of unstyled PDF UI without library-owned DOM mutation.
+ *
+ * Shared chunks get the same import. The `./mcp-app-renderer` entry and the
+ * root both import the MCP App renderer, so it lands in a chunk of its own
+ * whose CSS is no longer part of `index.css`; the import keeps it styled for
+ * either entry. Entries are skipped: their CSS is the `./styles.css` the host
+ * imports itself.
  */
 const associateDynamicChunkCss = (): Plugin => ({
   name: 'attachment-canvas-associate-dynamic-chunk-css',
   generateBundle(_options, bundle) {
     for (const chunk of Object.values(bundle)) {
-      if (chunk.type !== 'chunk' || !chunk.isDynamicEntry) continue;
+      if (chunk.type !== 'chunk' || chunk.isEntry) continue;
 
       const cssAsset = Object.values(bundle).find(
         (output) =>
@@ -78,9 +84,14 @@ export default defineConfig(() => ({
       transformMixedEsModules: true,
     },
     lib: {
-      entry: 'src/index.ts',
+      entry: {
+        index: 'src/index.ts',
+        /* Published as `./mcp-app-renderer`, for hosts that load the MCP App
+         * renderer on demand. */
+        'mcp-app-renderer': 'src/mcp-app-renderer.ts',
+      },
       name: '@epam/ai-dial-attachment-canvas',
-      fileName: 'index',
+      fileName: (_format: string, entryName: string) => `${entryName}.js`,
       formats: ['es' as const],
     },
     rolldownOptions: {

@@ -44,6 +44,7 @@ export default defineConfig(() => ({
         'react-dom',
         'react/jsx-runtime',
         '@epam/ai-dial-attachment-canvas',
+        '@epam/ai-dial-attachment-canvas/mcp-app-renderer',
         '@epam/ai-dial-chat-shared',
         '@epam/ai-dial-ui-kit',
         '@tabler/icons-react',
@@ -62,6 +63,11 @@ export default defineConfig(() => ({
      * affects this lib's own production build.
      */
     alias: {
+      /* Before the root alias: a string alias also matches every subpath. */
+      '@epam/ai-dial-attachment-canvas/mcp-app-renderer': path.resolve(
+        import.meta.dirname,
+        '../attachment-canvas/src/mcp-app-renderer.ts',
+      ),
       '@epam/ai-dial-attachment-canvas': path.resolve(
         import.meta.dirname,
         '../attachment-canvas/src/index.ts',

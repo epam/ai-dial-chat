@@ -87,7 +87,10 @@ their `zod` schemas, is imported the first time the canvas shows
 `loadingLabel`, `loadErrorLabel` and `loadErrorRetryLabel`. A host that builds
 from source and does not import `McpAppCanvasRenderer` itself keeps that chain
 out of its initial bundle; the published `dist/index.js` still carries it,
-because `McpAppCanvasRenderer` is also a public export.
+because `McpAppCanvasRenderer` is also a public export. A host that renders the
+renderer itself and loads it on demand imports it from the
+`@epam/ai-dial-attachment-canvas/mcp-app-renderer` subpath (see
+[McpAppCanvasRenderer](#mcpappcanvasrenderer)).
 
 The library never configures `pdfjs-dist`'s worker itself —
 `GlobalWorkerOptions.workerSrc` is a global shared by every `pdfjs-dist`
@@ -257,6 +260,23 @@ const content: McpAppCanvasContent = {
   loadingLabel="Loading…"
   onAppInfo={(appInfo) => console.log(appInfo.name, appInfo.version)}
 />;
+```
+
+The package root and the `./mcp-app-renderer` subpath export the same
+component. Load it on demand from the subpath: when the host's entry already
+imports the package root (for `AttachmentCanvasProvider`, say), an `import()` of
+the root splits nothing off and keeps `@mcp-ui/client`, the MCP SDK and `zod`
+in the eager graph. The subpath's built module imports the renderer's
+stylesheet itself.
+
+```tsx
+import { lazy } from 'react';
+
+const McpAppCanvasRenderer = lazy(async () => {
+  const module =
+    await import('@epam/ai-dial-attachment-canvas/mcp-app-renderer');
+  return { default: module.McpAppCanvasRenderer };
+});
 ```
 
 ## Context

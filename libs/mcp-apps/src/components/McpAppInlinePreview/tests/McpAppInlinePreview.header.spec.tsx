@@ -13,11 +13,8 @@ import {
 } from '../../../types/mcp-apps';
 import { McpAppInlinePreview } from '../McpAppInlinePreview';
 
-vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@epam/ai-dial-attachment-canvas')>();
+vi.mock('@epam/ai-dial-attachment-canvas/mcp-app-renderer', () => {
   return {
-    ...actual,
     McpAppCanvasRenderer: ({
       onAppInfo,
     }: {
