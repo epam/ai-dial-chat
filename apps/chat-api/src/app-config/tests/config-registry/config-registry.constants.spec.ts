@@ -64,22 +64,6 @@ describe('CONFIG_DEFINITIONS', () => {
     });
   });
 
-  it('contains the publish.publicationFilterSources entry with the expected shape', () => {
-    const entry = CONFIG_DEFINITIONS.find(
-      (definition) => definition.key === 'publish.publicationFilterSources',
-    );
-
-    expect(entry).toMatchObject({
-      key: 'publish.publicationFilterSources',
-      type: 'config',
-      valueType: 'json',
-      visibility: 'client',
-      defaultValue: ['title', 'role', 'dial_roles'],
-      critical: false,
-      envVar: 'PUBLICATION_FILTER_SOURCES',
-    });
-  });
-
   it('contains the content.additionalLocales entry with the expected shape', () => {
     const entry = CONFIG_DEFINITIONS.find(
       (definition) => definition.key === 'content.additionalLocales',
@@ -398,12 +382,12 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it('declares exactly the 53 known keys: 15 managed, 29 local-only and 9 eligible', () => {
-    expect(CONFIG_DEFINITIONS).toHaveLength(53);
+  it('declares exactly the 52 known keys: 15 managed, 28 local-only and 9 eligible', () => {
+    expect(CONFIG_DEFINITIONS).toHaveLength(52);
     expect(managed).toHaveLength(15);
     expect(
       CONFIG_DEFINITIONS.filter((d) => localOnlyReasonOf(d) !== undefined),
-    ).toHaveLength(29);
+    ).toHaveLength(28);
     expect(
       CONFIG_DEFINITIONS.filter((d) => d.management === undefined),
     ).toHaveLength(9);
@@ -480,7 +464,6 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     ['features.responsesBackgroundEnabled', LocalOnlyReason.Capability],
     ['features.orgUnitsEnabled', LocalOnlyReason.Capability],
     ['features.liveChatInteraction', LocalOnlyReason.Capability],
-    ['publish.publicationFilterSources', LocalOnlyReason.Capability],
     ['features.scheduledTasksEnabled', LocalOnlyReason.Capability],
     ['dialCore.externalUrl', LocalOnlyReason.DeploymentTopology],
     ['mcpApps.sandboxUrl', LocalOnlyReason.DeploymentTopology],

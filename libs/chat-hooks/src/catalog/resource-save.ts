@@ -2,9 +2,8 @@ import {
   SaveVersionMode,
   toFolderPathKey,
   type FolderDestination,
-  type PublicationRule,
 } from '@epam/ai-dial-publish-panel';
-import { toPublishRuleDto, type PublishApiClient } from './create-publish-api';
+import type { PublishApiClient } from './create-publish-api';
 import type { CatalogPublishEntityType } from './publish';
 import {
   isResourceCreateAdapter,
@@ -62,8 +61,6 @@ export interface ResourceSaveChoice {
   versionMode: SaveVersionMode;
   /** The new version, used when `versionMode` is `New`. */
   newVersion: string;
-  /** Access rules sent with the publish request for an Organization destination. */
-  rules?: PublicationRule[];
   /** Whether the Organization destination takes a direct write (an org unit the user may write to) instead of a publish request. Defaults to `false`. */
   isDirectWrite?: boolean;
 }
@@ -74,7 +71,6 @@ export type PublishSavedResource = (
   id: string,
   folderPath: string[],
   version: string | undefined,
-  rules: PublicationRule[],
 ) => Promise<void>;
 
 /** The result of a save whose first step succeeded. */
@@ -103,11 +99,10 @@ export const createPublishSavedResource =
   (
     client: Pick<PublishApiClient, 'publishCatalogEntity'>,
   ): PublishSavedResource =>
-  async (entityType, id, folderPath, version, rules) => {
+  async (entityType, id, folderPath, version) => {
     await client.publishCatalogEntity(entityType, id, {
       folderPath: folderPath.join('/'),
       ...(version ? { version } : {}),
-      rules: rules.map(toPublishRuleDto),
     });
   };
 
@@ -197,7 +192,6 @@ export const runResourceSave = async (
         result.savedId,
         choice.destination.path,
         isNewVersion ? choice.newVersion : choice.currentVersion,
-        choice.rules ?? [],
       );
       result.isPublished = true;
     } catch (error) {

@@ -4,7 +4,7 @@
  * so the two endpoints cannot drift into different limits for the same field.
  */
 
-/** Matches the existing `PublishRuleDto.source`/`targets` free-text limit. */
+/** Maximum length of the display author. */
 export const DISPLAY_AUTHOR_MAX_LENGTH = 200;
 
 /*

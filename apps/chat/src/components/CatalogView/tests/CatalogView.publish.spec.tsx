@@ -93,10 +93,6 @@ vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
   getCatalogUnpublishAccess: vi.fn(),
 }));
 
-vi.mock('../../../server-api/publish-rules.api', () => ({
-  getPublishRules: vi.fn().mockResolvedValue([]),
-}));
-
 vi.mock('../../../context/OrgUnitsContext', () => ({
   useOrgUnitsContext: vi.fn(),
 }));
@@ -355,7 +351,6 @@ const setupDefaults = () => {
       footerHtmlMessage: '',
       customVisualizers: [],
       applicationVisualizers: {},
-      publicationFilterSources: ['title', 'role', 'dial_roles'],
       maxAttachmentFileSizeBytes: 536_870_912,
       usageLimitsWarningThresholdPercent: 75,
       spendingLimitsMode: SpendingLimitsMode.Off,

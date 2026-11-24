@@ -49,7 +49,6 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       footerHtmlMessage: '',
       customVisualizers: [],
       applicationVisualizers: {},
-      publicationFilterSources: ['title', 'role', 'dial_roles'],
       maxAttachmentFileSizeBytes: 536_870_912,
       usageLimitsWarningThresholdPercent: 75,
       spendingLimitsMode: SpendingLimitsMode.Off,

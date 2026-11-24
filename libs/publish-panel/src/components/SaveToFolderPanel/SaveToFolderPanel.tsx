@@ -25,7 +25,6 @@ import { FC, useId, useMemo, useState } from 'react';
 import { DEFAULT_DEPENDENCIES_TITLE } from '../../constants/publish-dependencies';
 import type { SaveToFolderPanelProps } from '../../models/save-to-folder-panel';
 import { SaveToFolderView, SaveVersionMode } from '../../types/save-to-folder';
-import { PublishAccessRules } from '../PublishAccessRules/PublishAccessRules';
 import { PublishDependenciesList } from '../PublishDependenciesList/PublishDependenciesList';
 import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
 import { VersionHistorySection } from '../VersionHistorySection/VersionHistorySection';
@@ -44,7 +43,6 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
   pendingDestination,
   onPendingDestinationChange,
   version,
-  accessRules,
   dependencies,
   dependenciesLabels,
   dependenciesStyles,
@@ -110,14 +108,6 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
     return [root?.label ?? destination.rootKey, ...destination.path];
   }, [roots, destination]);
 
-  const pendingRoot = roots.find(
-    (candidate) => candidate.key === pendingDestination?.rootKey,
-  );
-  const pendingFolderName = pendingDestination
-    ? (pendingDestination.path[pendingDestination.path.length - 1] ??
-      pendingRoot?.label)
-    : undefined;
-
   const headingClass = mergeClasses(headingClassName, styles.heading);
   const destinationDisabledReason = getDisabledReason?.(destination);
   const hasDependenciesNote =
@@ -164,26 +154,6 @@ export const SaveToFolderPanel: FC<SaveToFolderPanelProps> = ({
           sameAsParentFolderNameError={createFolderSameAsParentNameError}
           styles={folderTreeStyles}
         />
-        {/* Rules are scoped to the folder picked above, so they sit with the tree, as in the Publish panel. */}
-        {accessRules &&
-          pendingRoot?.hasAccessRules &&
-          !(
-            pendingDestination && accessRules.isHiddenFor?.(pendingDestination)
-          ) && (
-            <div className="mt-1">
-              <PublishAccessRules
-                rules={accessRules.rules}
-                onRulesChange={accessRules.onRulesChange}
-                sourceOptions={accessRules.sourceOptions}
-                folderName={pendingFolderName}
-                disabled={isSubmitting}
-                isLoading={accessRules.isLoading}
-                hasLoadError={accessRules.hasLoadError}
-                labels={accessRules.labels}
-                styles={accessRules.styles}
-              />
-            </div>
-          )}
       </div>
     );
   }

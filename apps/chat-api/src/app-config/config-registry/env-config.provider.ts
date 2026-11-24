@@ -12,7 +12,6 @@ import {
 import { admitCustomVariables } from '../env-admission/custom-variables.admission';
 import { admitFileManagerTabs } from '../env-admission/file-manager-tabs.admission';
 import { admitOnboardingHints } from '../env-admission/onboarding-hints.admission';
-import { admitPublicationFilterSources } from '../env-admission/publication-filter-sources.admission';
 import {
   admitApplicationVisualizers,
   admitCustomVisualizers,
@@ -78,13 +77,6 @@ export class EnvConfigProvider implements ConfigProvider, OnModuleInit {
     if (key === 'fileManager.availableTabs') {
       return admitFileManagerTabs(
         this.configService.get('FILE_MANAGER_AVAILABLE_TABS', { infer: true }),
-      );
-    }
-
-    // publish.publicationFilterSources falls back to the registry default when unset/empty
-    if (key === 'publish.publicationFilterSources') {
-      return admitPublicationFilterSources(
-        this.configService.get('PUBLICATION_FILTER_SOURCES', { infer: true }),
       );
     }
 

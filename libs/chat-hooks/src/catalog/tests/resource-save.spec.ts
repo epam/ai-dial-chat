@@ -150,7 +150,6 @@ describe('runResourceSave', () => {
       ID,
       ['EPAM', 'Delivery'],
       '1.0.0',
-      [],
     );
     expect(result.isPublished).toBe(true);
   });
@@ -176,7 +175,6 @@ describe('runResourceSave', () => {
       'applications/b1/Design/agent__1.1.0',
       ['EPAM'],
       '1.1.0',
-      [],
     );
   });
 
@@ -404,7 +402,6 @@ describe('runResourceSave', () => {
         NEW_ID,
         ['EPAM'],
         '1.0.0',
-        [],
       );
     });
   });

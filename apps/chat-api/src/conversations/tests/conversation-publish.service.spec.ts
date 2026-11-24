@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
-import { PublishRuleFunction } from '../../publish/dto/publish-rule.dto';
 import {
   ConversationPublishService,
   PUBLISH_WHILE_GENERATING_MESSAGE,
@@ -106,7 +105,6 @@ describe('ConversationPublishService', () => {
             },
           ],
           displayAuthor: 'Test User',
-          rules: [],
         },
       });
       expect(result).toEqual({
@@ -145,38 +143,7 @@ describe('ConversationPublishService', () => {
       expect(result.publishedBy).toBe('DIAL Team');
     });
 
-    it('passes the caller-supplied rules through to createPublication unchanged', async () => {
-      const { service, dialClient } = makeService();
-      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
-        okResponse({ name: 'Q3 planning notes' }),
-      );
-      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
-        okResponse({ createdAt: 1_700_000_000_000 }),
-      );
-
-      const rules = [
-        {
-          source: 'role',
-          function: PublishRuleFunction.Contain,
-          targets: ['engineering'],
-        },
-      ];
-
-      await service.publish(
-        'token-abc',
-        'bucket-123',
-        'my-conversation-abc',
-        'Organization/Data Science/Shared chats',
-        'User Name',
-        rules,
-      );
-
-      expect(dialClient.client.createPublication).toHaveBeenCalledWith(
-        expect.objectContaining({ body: expect.objectContaining({ rules }) }),
-      );
-    });
-
-    it('defaults rules to [] when omitted', async () => {
+    it('sends no rules key to createPublication, leaving the folder rules untouched', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
         okResponse({ name: 'Q3 planning notes' }),
@@ -193,11 +160,9 @@ describe('ConversationPublishService', () => {
         'User Name',
       );
 
-      expect(dialClient.client.createPublication).toHaveBeenCalledWith(
-        expect.objectContaining({
-          body: expect.objectContaining({ rules: [] }),
-        }),
-      );
+      const [[{ body }]] = vi.mocked(dialClient.client.createPublication).mock
+        .calls;
+      expect(body).not.toHaveProperty('rules');
     });
 
     it('uses one normalized path for the title lookup, publication URLs, and cache key', async () => {

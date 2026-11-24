@@ -1,7 +1,6 @@
 import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type {
   FolderDestination,
-  PublicationRule,
   PublishDependenciesLabels,
   PublishDependency,
   PublishFolderNode,
@@ -271,15 +270,13 @@ export interface CatalogProps {
    */
   publishDefaultAuthor?: string;
   /**
-   * Called with the destination folder path, current access rules, trimmed
-   * display author, and the credentials opt-in when the user confirms
-   * publish/update. The fifth argument is additive — a callback declaring only
-   * the first four parameters stays assignable.
+   * Called with the destination folder path, trimmed display author, and the
+   * credentials opt-in when the user confirms publish/update. A callback
+   * declaring only the first three parameters stays assignable.
    */
   onPublish?: (
     item: CatalogItem,
     folderPath: string[],
-    rules: PublicationRule[],
     author: string,
     publishCredentials: boolean,
   ) => Promise<void>;
@@ -306,20 +303,6 @@ export interface CatalogProps {
    */
   hidePublishAuthor?: boolean;
   /**
-   * Hides the access-rules section in the publish panel. Set it when access
-   * is managed elsewhere; the publish callback then receives the rules
-   * resolved by `onFetchExistingRules`, or an empty list. Default: `false`.
-   */
-  hidePublishAccessRules?: boolean;
-  /** Options offered in the access-rules editor's source picker. Defaults to `[]` when absent. */
-  ruleSourceOptions?: string[];
-  /**
-   * Resolves the access rules already configured for a destination folder,
-   * called whenever the selected folder changes. The result fully replaces
-   * the rules editor's contents. Omit to skip pre-filling entirely.
-   */
-  onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
-  /**
    * Resolves whether another resource already holds the published path of
    * `item` in a destination folder, called when the selected folder changes
    * and when the item's version changes. A taken target shows a warning and
@@ -344,7 +327,7 @@ export interface CatalogProps {
    * settles. A failed read leaves the list empty, so direct is offered and the
    * server's namespace check is the backstop. Together with `onPublishDirectly` it selects the
    * direct path; omit either and a request is always filed. For a direct
-   * folder the panel hides the access rules, author and credentials controls.
+   * folder the panel hides the author and credentials controls.
    */
   canPublishDirectlyTo?: (
     item: CatalogItem,

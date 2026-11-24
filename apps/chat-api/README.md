@@ -809,7 +809,6 @@ maps each backend domain to its base path.
 | `files`               | `files/`               | Multipart/streamed upload, download, archive upload, ZIP streaming        |
 | `share`               | `share/`               | Share links and recipient management                                      |
 | `catalog`             | `publish/`             | Publication requests and published-resource listing                       |
-| `publish`             | `publish/`             | Publication rules                                                         |
 | `rate`                | `rate/`                | Message rating (like/dislike) and feedback                                |
 | `transcription`       | `transcription/`       | Audio transcription through the ASR model                                 |
 | `scheduled-tasks`     | `scheduled-tasks/`     | DIAL Scheduler proxy — schedules and run history                          |

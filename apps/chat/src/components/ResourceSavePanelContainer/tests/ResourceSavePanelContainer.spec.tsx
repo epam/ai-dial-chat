@@ -43,14 +43,11 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => ({
 }));
 
 vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ config: { publicationFilterSources: ['roles'] } }),
+  useAppConfig: () => ({ config: {} }),
   useFeatureFlag: vi.fn(),
 }));
 vi.mock('../../../context/OrgUnitsContext', () => ({
   useOrgUnitsContext: vi.fn(),
-}));
-vi.mock('../../../server-api/publish-rules.api', () => ({
-  getPublishRules: vi.fn(),
 }));
 vi.mock('../../../server-api/publish.api', () => ({
   publishCatalogEntity: vi.fn(),
@@ -156,11 +153,10 @@ describe('ResourceSavePanelContainer', () => {
     });
   });
 
-  it('runs the flow with the Organization folders and the configured rule sources', () => {
+  it('runs the flow with the Organization folders and the translated labels', () => {
     renderContainer();
     const params = lastFlowParams();
     expect(params.organizationFolders).toBe(organizationFolders);
-    expect(params.ruleSourceOptions).toEqual(['roles']);
     expect(params.labels.personalRoot).toBe(CatalogI18nKeys.FolderPersonal);
     expect(params.labels.foldersLoadError).toBe(
       ResourceSavePanelI18nKeys.FoldersLoadFailed,

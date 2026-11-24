@@ -7,7 +7,7 @@ The standalone publish-panel library: its public surface, and the independence f
 ## Requirements
 
 ### Requirement: Public package surface exports the shared publish UI and state
-`libs/publish-panel/src/index.ts` SHALL be the only public entry for the publish UI (`libs/catalog/src/index.ts` no longer re-exports any publish symbol; it only imports `@epam/ai-dial-publish-panel/styles.css`) and SHALL export: components `PublishPanel`, `StandalonePublishPanel`, `PublishFooter`, `PublishFoldersTree`, `PublishHistoryList`, `PublishAccessRules`, `PublishAccessRuleEditor`; the `usePublishFlow` hook (its `UsePublishFlowOptions.onPublish` signature now `(item: TItem, folderPath: string[], rules: PublicationRule[], author: string, publishCredentials: boolean) => Promise<void>`, `UsePublishFlowOptions` now also accepting an optional `onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>` and an optional `defaultAuthor?: string`, and `UsePublishFlowResult` now including `rules: PublicationRule[]`, `setRules: (rules: PublicationRule[]) => void`, `isRulesLoading: boolean`, `hasRulesLoadError: boolean`, `author: string`, `setAuthor: (author: string) => void`, `publishCredentials: boolean`, and `setPublishCredentials: (value: boolean) => void`); the pure functions `derivePublishState`, `formatPublishedDate`, and the `publish-folder-tree` helpers (`filterFolderTree`, `sortFolderTree`, `mergeFolderPaths`, `collectFolderKeys`, `toFolderPathKey`, `fromFolderPathKey`, `toDialFileTree`, `validateFolderName`, `getUniqueFolderName`, `getSiblingFolderNames`); the `PUBLISH_PANEL_CLASS` public class-name constant; and all associated types/interfaces (`PublishFolderNode`, `PublishHistoryEntry`, `PublishResourceSummary`, `PublishCalloutKind`, `PublishDerivationInput`, `PublishDerivedState`, `PublishFlowItem`, `UsePublishFlowOptions`, `UsePublishFlowResult`, `PublicationRule`, `PublicationRuleFunction`, `FolderNameValidationMessages`, every `*Labels`, `*Props`, `*Colors`, and `*Styles` interface, including `PublishAccessRulesProps`/`PublishAccessRuleEditorProps` and their labels). Internal-only helpers (e.g. `PublishPanel.tsx`'s unexported `calloutVariant`/`calloutMessage`/`withBoldFolderName`) SHALL NOT be exported from the barrel.
+`libs/publish-panel/src/index.ts` SHALL be the only public entry for the publish UI (`libs/catalog/src/index.ts` no longer re-exports any publish symbol; it only imports `@epam/ai-dial-publish-panel/styles.css`) and SHALL export: components `PublishPanel`, `StandalonePublishPanel`, `PublishFooter`, `PublishFoldersTree`, `PublishHistoryList`; the `usePublishFlow` hook (its `UsePublishFlowOptions.onPublish` signature now `(item: TItem, folderPath: string[], author: string, publishCredentials: boolean) => Promise<void>`, `UsePublishFlowOptions` now also accepting an optional `defaultAuthor?: string`, and `UsePublishFlowResult` now including `author: string`, `setAuthor: (author: string) => void`, `publishCredentials: boolean`, and `setPublishCredentials: (value: boolean) => void`); the pure functions `derivePublishState`, `formatPublishedDate`, and the `publish-folder-tree` helpers (`filterFolderTree`, `sortFolderTree`, `mergeFolderPaths`, `collectFolderKeys`, `toFolderPathKey`, `fromFolderPathKey`, `toDialFileTree`, `validateFolderName`, `getUniqueFolderName`, `getSiblingFolderNames`); the `PUBLISH_PANEL_CLASS` public class-name constant; and all associated types/interfaces (`PublishFolderNode`, `PublishHistoryEntry`, `PublishResourceSummary`, `PublishCalloutKind`, `PublishDerivationInput`, `PublishDerivedState`, `PublishFlowItem`, `UsePublishFlowOptions`, `UsePublishFlowResult`, `FolderNameValidationMessages`, every `*Labels`, `*Props`, `*Colors`, and `*Styles` interface). The barrel SHALL NOT export `PublishAccessRules`, `PublishAccessRuleEditor`, `PublicationRule`, `PublicationRuleFunction`, `SaveToFolderAccessRulesProps` or any `PublishAccessRule*`/`PublishAccessRules*` type. Internal-only helpers (e.g. `PublishPanel.tsx`'s unexported `calloutVariant`/`calloutMessage`/`withBoldFolderName`) SHALL NOT be exported from the barrel.
 
 #### Scenario: Consumer imports the publish panel from the new package
 - **WHEN** `apps/chat` or `libs/catalog` code writes `import { StandalonePublishPanel, usePublishFlow } from '@epam/ai-dial-publish-panel'`
@@ -17,17 +17,13 @@ The standalone publish-panel library: its public surface, and the independence f
 - **WHEN** code outside `libs/publish-panel` attempts to import `calloutVariant` (or any other unexported internal helper) from `@epam/ai-dial-publish-panel`
 - **THEN** the import fails to resolve, since the barrel does not re-export it
 
-#### Scenario: New access-rules types and components are part of the public surface
-- **WHEN** `apps/chat` code writes `import { PublicationRule, PublicationRuleFunction, PublishAccessRules } from '@epam/ai-dial-publish-panel'`
-- **THEN** the import resolves successfully
+#### Scenario: Access-rules symbols are not part of the public surface
+- **WHEN** `apps/chat` code writes `import { PublicationRule, PublishAccessRules } from '@epam/ai-dial-publish-panel'`
+- **THEN** type-checking fails, since the barrel exports neither
 
 #### Scenario: usePublishFlow's extended onPublish signature is exercised by both consumers
 - **WHEN** `PublishConversationPanelContainer` and `DetailsPanel` each call `usePublishFlow`
-- **THEN** both supply an `onPublish` assignable to the five-argument signature `(item, folderPath, rules, author, publishCredentials) => Promise<void>` — a callback declaring only the first four parameters remains assignable — and both read `rules`/`setRules` and `author`/`setAuthor` from the hook's return value to wire into `PublishPanel`'s controlled props
-
-#### Scenario: usePublishFlow's onFetchExistingRules option is exercised by both consumers
-- **WHEN** `PublishConversationPanelContainer` and `DetailsPanel` each call `usePublishFlow`
-- **THEN** both supply an `onFetchExistingRules` calling the shared `apps/chat/src/server-api/publish-rules.api.ts` wrapper, and both read `isRulesLoading`/`hasRulesLoadError` from the hook's return value
+- **THEN** both supply an `onPublish` assignable to the four-argument signature `(item, folderPath, author, publishCredentials) => Promise<void>` — a callback declaring only the first three parameters remains assignable — and both read `author`/`setAuthor` from the hook's return value to wire into `PublishPanel`'s controlled props
 
 #### Scenario: usePublishFlow's defaultAuthor option is exercised by both consumers
 - **WHEN** `PublishConversationPanelContainer` and `DetailsPanel` each call `usePublishFlow`
@@ -113,13 +109,13 @@ The library SHALL NOT itself display a notification, toast, or any user-visible 
 
 ### Requirement: usePublishFlow owns the publication's display author
 
-`usePublishFlow` SHALL own the display-author value for the publish flow, exactly as it already owns folder selection and access rules.
+`usePublishFlow` SHALL own the display-author value for the publish flow, exactly as it already owns folder selection.
 
 `UsePublishFlowOptions` SHALL gain an optional `defaultAuthor?: string`, defaulting to `''`. `UsePublishFlowResult` SHALL gain `author: string` and `setAuthor: (author: string) => void`.
 
 The hook SHALL seed `author` from `defaultAuthor` and SHALL keep an internal "edited" flag, initially false. While that flag is false, a subsequent change to `defaultAuthor` SHALL replace the current `author`; once `setAuthor` has been called, later `defaultAuthor` changes SHALL be ignored. This exists because the host resolves the display name asynchronously — it can arrive after the panel first renders, and it changes when a different user's session loads — so neither a one-shot `useState` seed nor an unconditional sync is correct on its own.
 
-`handleSubmit` SHALL pass the current `author`, trimmed, as `onPublish`'s fourth argument. `reset()` SHALL restore `author` to the current `defaultAuthor` and clear the edited flag, alongside the folder, rules, and submit-error state it already resets.
+`handleSubmit` SHALL pass the current `author`, trimmed, as `onPublish`'s third argument. `reset()` SHALL restore `author` to the current `defaultAuthor` and clear the edited flag, alongside the folder and submit-error state it already resets.
 
 The library SHALL NOT resolve the author itself: it holds no notion of a session, OIDC claims, or the signed-in user, per AGENTS.md §Library isolation. `defaultAuthor` is the app-level adapter contract carrying that host knowledge into the lib.
 
@@ -159,29 +155,29 @@ The library SHALL NOT resolve the author itself: it holds no notion of a session
 
 ### Requirement: PublishPanel renders a controlled author field below the destination folder
 
-`PublishPanel` SHALL render, only when `onAuthorChange` is supplied, a labelled, single-line text input for the publication's display author inside the destination-folder block of the main view: after the destination row and its callout, and before the `PublishAccessRules` wrapper. `StandalonePublishPanel` SHALL forward the same props through to `PublishPanel` without inspecting them.
+`PublishPanel` SHALL render, only when `onAuthorChange` is supplied, a labelled, single-line text input for the publication's display author inside the destination-folder block of the main view: after the destination row and its callout. `StandalonePublishPanel` SHALL forward the same props through to `PublishPanel` without inspecting them.
 
-`PublishPanelProps` and `StandalonePublishPanelProps` SHALL each carry controlled props `author?: string` (default `''`) and `onAuthorChange?: (author: string) => void`, mirroring the `rules` / `onRulesChange` pair. Supplying `onAuthorChange` is what renders the field, the same way `onPublishCredentialsChange` renders the credentials opt-in: a host that collects the author elsewhere omits it and gets a panel without the field, with no other layout change.
+`PublishPanelProps` and `StandalonePublishPanelProps` SHALL each carry controlled props `author?: string` (default `''`) and `onAuthorChange?: (author: string) => void`, following the controlled-prop pattern of `onPublishCredentialsChange`. Supplying `onAuthorChange` is what renders the field, the same way `onPublishCredentialsChange` renders the credentials opt-in: a host that collects the author elsewhere omits it and gets a panel without the field, with no other layout change.
 
-The field SHALL be rendered with ui-kit 2.0 `Input` (`labelProps`, `placeholder`, `caption`, `maxLength={200}`, `disabled` while `isSubmitting` is true), matching how `PublishAccessRuleEditor` already uses `Input`. It SHALL never block submission: an empty author is a valid state, and no inline error or callout is introduced for it.
+The field SHALL be rendered with ui-kit 2.0 `Input` (`labelProps`, `placeholder`, `caption`, `maxLength={200}`, `disabled` while `isSubmitting` is true), matching the panel's other kit 2.0 fields. It SHALL never block submission: an empty author is a valid state, and no inline error or callout is introduced for it.
 
 `PublishPanelLabels` SHALL gain optional `authorLabel`, `authorPlaceholder`, and `authorHint` entries with English defaults (`'Author'`, `'Author name'`, and `'Shown as the publication’s author. Defaults to you — replace it to credit a team instead.'`), so the library stays free of i18n per AGENTS.md §Library isolation.
 
-Accessibility: the input SHALL be associated with its visible label through `Input`'s `labelProps` (not a bare `aria-label`), SHALL be reachable in the panel's natural tab order between the destination row and the access-rules controls, and SHALL carry its hint as the field's `caption` so it is announced as the field's description. No new live region is required, because the field produces no dynamic feedback.
+Accessibility: the input SHALL be associated with its visible label through `Input`'s `labelProps` (not a bare `aria-label`), SHALL be reachable in the panel's natural tab order directly after the destination row, and SHALL carry its hint as the field's `caption` so it is announced as the field's description. No new live region is required, because the field produces no dynamic feedback.
 
 RTL/direction impact: none beyond what the surrounding panel already provides. The field uses ui-kit `Input` and existing layout utilities with CSS logical properties only; no directional icon is added, so no `rtl:` mirroring applies.
 
 Memoisation: no new `useMemo`/`useCallback` is required. The field is a controlled input whose value and change handler come from `usePublishFlow`, whose `setAuthor` is already stable.
 
-#### Scenario: Field renders between the destination row and the access rules
+#### Scenario: Field renders after the destination row
 
 - **WHEN** the publish panel is open on its main view
-- **THEN** the author input appears after the destination row (and its callout, when shown) and before the access-rules section
+- **THEN** the author input appears after the destination row (and its callout, when shown)
 
 #### Scenario: Field is omitted without onAuthorChange
 
 - **WHEN** the publish panel renders on its main view without `onAuthorChange`
-- **THEN** no author input is rendered, and the destination row, credentials opt-in, and access-rules section are unaffected
+- **THEN** no author input is rendered, and the destination row and credentials opt-in are unaffected
 
 #### Scenario: Editing the field calls onAuthorChange
 
@@ -191,7 +187,7 @@ Memoisation: no new `useMemo`/`useCallback` is required. The field is a controll
 #### Scenario: Field is disabled while a publish request is in flight
 
 - **GIVEN** `isSubmitting` is true
-- **THEN** the author input is disabled, alongside the folder tree and access-rules controls
+- **THEN** the author input is disabled, alongside the folder tree
 
 #### Scenario: Empty author does not block submission
 
@@ -217,7 +213,7 @@ Memoisation: no new `useMemo`/`useCallback` is required. The field is a controll
 - `labels.credentialsLabel?: string` — the checkbox label, defaulting to `'Publish with my credentials'`;
 - `labels.credentialsHint?: string` — the caption below it, defaulting to `'Members will use this without signing in themselves. Your credential itself is never shown to them.'`.
 
-The section SHALL render only when `onPublishCredentialsChange` is supplied, so a host that has no use for it (a conversation publish panel, for example) gets exactly the panel it has today. When rendered, it SHALL sit inside the destination block alongside the author field and the access rules, and SHALL be `disabled` while `isSubmitting` is `true`, matching every other field in the panel.
+The section SHALL render only when `onPublishCredentialsChange` is supplied, so a host that has no use for it (a conversation publish panel, for example) gets exactly the panel it has today. When rendered, it SHALL sit inside the destination block alongside the author field, and SHALL be `disabled` while `isSubmitting` is `true`, matching every other field in the panel.
 
 The control SHALL be ui-kit's 2.0 `Checkbox` with `labelProps={{ label }}`, `caption={hint}`, and `isSelected={publishCredentials}`, so the hint is wired as the control's accessible description by the kit rather than by hand-rolled ARIA. The hint SHALL state the consequence of ticking the box, not merely restate the label.
 
@@ -250,15 +246,15 @@ The library SHALL hold no knowledge of what the flag means to any backend. It SH
 
 ### Requirement: usePublishFlow owns the credentials opt-in and always clears it
 
-`usePublishFlow` SHALL own the credentials opt-in as flow state alongside `rules` and `author`:
+`usePublishFlow` SHALL own the credentials opt-in as flow state alongside `author`:
 
 - `publishCredentials: boolean`, initialised to `false`;
 - `setPublishCredentials: (value: boolean) => void`;
-- `reset()` SHALL restore it to `false`, together with the folder selection, locally created folders, rules, and submit error it already resets.
+- `reset()` SHALL restore it to `false`, together with the folder selection, locally created folders, and submit error it already resets.
 
-The value SHALL NOT be derived from, or pre-filled by, publish history, the selected destination folder, or a previous publication — unlike `rules`, which pre-fill from the destination folder. Selecting it is always a deliberate act, so a folder whose previous publication carried shared credentials SHALL still open with the option cleared.
+The value SHALL NOT be derived from, or pre-filled by, publish history, the selected destination folder, or a previous publication. Selecting it is always a deliberate act, so a folder whose previous publication carried shared credentials SHALL still open with the option cleared.
 
-`onPublish` SHALL receive it as a fifth positional argument: `onPublish(item, folderPath, rules, author, publishCredentials)`. The argument is additive — a host callback that declares only the first four parameters remains assignable and keeps compiling.
+`onPublish` SHALL receive it as a fourth positional argument: `onPublish(item, folderPath, author, publishCredentials)`. A host callback that declares only the first three parameters remains assignable and keeps compiling.
 
 `handleSubmit` SHALL pass the current value; a successful publish SHALL NOT clear it on its own, because the flow is closed and `reset()` runs on close.
 
@@ -283,11 +279,11 @@ The value SHALL NOT be derived from, or pre-filled by, publish history, the sele
 
 - **GIVEN** `publishCredentials` is `true` and a destination folder is selected
 - **WHEN** `handleSubmit()` runs
-- **THEN** `onPublish` is called with `true` as its fifth argument
+- **THEN** `onPublish` is called with `true` as its fourth argument
 
-#### Scenario: A four-parameter host callback still works
+#### Scenario: A three-parameter host callback still works
 
-- **WHEN** a host passes an `onPublish` declaring only `(item, folderPath, rules, author)`
+- **WHEN** a host passes an `onPublish` declaring only `(item, folderPath, author)`
 - **THEN** the call type-checks and behaves exactly as before, ignoring the extra argument
 
 ### Requirement: PublishHistoryEntry records whether a publication carried shared credentials
@@ -326,7 +322,7 @@ The components SHALL know no resource ids, REST paths, i18n, routing or storage.
 
 The version section renders only when `version` (`SaveToFolderVersionProps`) is provided. `StandaloneSaveToFolderPanel` owns the view state (`SaveToFolderView`: `Main`, `ChangeFolder`) and the pending Change-view destination, and renders the per-view header (the kit `SideDrawer`'s `onBack` in the Change view) and footer (Save, or Select). `SaveToFolderPanel` is the controlled body: it takes `view`, `pendingDestination`, `onPendingDestinationChange` and `onChangeFolderClick`.
 
-The main view shows the committed destination as the kit `FolderName` (the path joined with " / ", `destinationClassName` defaulting to `dial-small-semi-text`, color `destinationText`) followed by a small ghost Change button. When `accessRules` (`SaveToFolderAccessRulesProps`) is passed and the pending destination belongs to a root with `hasAccessRules`, `PublishAccessRules` renders below the tree in the Change view; the shell reports the pending destination through `onPendingDestinationChange`, including the reset to `destination` on entering and leaving that view, so the host can load that folder's rules.
+The main view shows the committed destination as the kit `FolderName` (the path joined with " / ", `destinationClassName` defaulting to `dial-small-semi-text`, color `destinationText`) followed by a small ghost Change button. `StandaloneSaveToFolderPanel` SHALL NOT render an access-rules section and SHALL NOT accept an `accessRules` prop; `FolderDestinationRoot` SHALL NOT carry `hasAccessRules`. The shell reports the pending destination through `onPendingDestinationChange`, including the reset to `destination` on entering and leaving that view, so the host can react to the folder the user is browsing.
 
 #### Scenario: Unversioned host
 - **WHEN** a host renders `SaveToFolderPanel` without `versionMode`
@@ -384,7 +380,7 @@ When `roots` is absent, `items` / `rootLabel` / `selectedPath` / `onSelectedPath
 - **THEN** it renders and selects exactly as before this change
 
 ### Requirement: PublishPanel picks the destination through a drill-in folder view
-`PublishPanel` SHALL render one of two views, chosen by its `view` prop (`PublishPanelView`, default `Main`), matching the save-to-folder panel. The main view SHALL show the entity summary, a "Publish to folder" heading, and a destination row with the committed path (`rootFolderLabel` followed by `selectedFolderPath`, joined with ` / ` in one truncating `FolderName`), or `noFolderSelectedLabel` when nothing is selected, beside a button labelled `changeFolderLabel` or `chooseFolderLabel` that calls `onChangeFolderClick`. The callout, author field, credentials opt-in and access rules SHALL follow the row. The `ChangeFolder` view SHALL show only the folder search and `PublishFoldersTree`, bound to `pendingFolderPath` and `onPendingFolderPathChange`.
+`PublishPanel` SHALL render one of two views, chosen by its `view` prop (`PublishPanelView`, default `Main`), matching the save-to-folder panel. The main view SHALL show the entity summary, a "Publish to folder" heading, and a destination row with the committed path (`rootFolderLabel` followed by `selectedFolderPath`, joined with ` / ` in one truncating `FolderName`), or `noFolderSelectedLabel` when nothing is selected, beside a button labelled `changeFolderLabel` or `chooseFolderLabel` that calls `onChangeFolderClick`. The callout, author field and credentials opt-in SHALL follow the row. The `ChangeFolder` view SHALL show only the folder search and `PublishFoldersTree`, bound to `pendingFolderPath` and `onPendingFolderPathChange`.
 
 `usePublishFolderView` SHALL hold the view and the pending folder: opening copies the committed folder into the pending one, `selectFolder` commits a defined pending folder through `onSelectedFolderPathChange` and returns to the main view, `backToMain` returns without committing, and every opening of the flow starts on the main view. `PublishFooter` SHALL render Cancel and Select in place of the submit action when `view` is `ChangeFolder`. `StandalonePublishPanel` and the catalog `DetailsPanel` SHALL title the folder view "Change folder" and show a Back button that returns to the main view.
 
@@ -400,11 +396,11 @@ Accessibility: the folder view root SHALL be a named `group` that receives focus
 
 ### Requirement: PublishPanel lists private dependencies in a read-only section
 
-`PublishPanel` (`libs/publish-panel/src/components/PublishPanel/PublishPanel.tsx`) SHALL accept an optional `dependencies?: PublishDependency[]` prop, and, in the way `accessRulesLabels` and `styles.accessRules` already work, an optional `dependenciesLabels?: PublishDependenciesLabels` field inside `PublishPanelLabels` and an optional `dependencies?: PublishDependenciesStyles` field inside `PublishPanelStyles`. `StandalonePublishPanel` SHALL forward the new `dependencies` prop unchanged, without inspecting it; its existing `labels` and `styles` already reach `PublishPanel`, so no other new prop is added to it, to `libs/catalog` or to a host.
+`PublishPanel` (`libs/publish-panel/src/components/PublishPanel/PublishPanel.tsx`) SHALL accept an optional `dependencies?: PublishDependency[]` prop, and, in the way `PublishPanelLabels` and `PublishPanelStyles` already nest per-section fields, an optional `dependenciesLabels?: PublishDependenciesLabels` field inside `PublishPanelLabels` and an optional `dependencies?: PublishDependenciesStyles` field inside `PublishPanelStyles`. `StandalonePublishPanel` SHALL forward the new `dependencies` prop unchanged, without inspecting it; its existing `labels` and `styles` already reach `PublishPanel`, so no other new prop is added to it, to `libs/catalog` or to a host.
 
 `PublishDependency` is `{ id: string; name: string; version?: string; type: PublishDependencyType; location: string; iconUrl?: string; isFolder?: boolean }`, where `PublishDependencyType` is a string enum with the members `Application`, `Toolset`, `Prompt`, `Skill` and `File`. Both are exported from `libs/publish-panel/src/index.ts`.
 
-When `dependencies` is absent or empty the section SHALL NOT render and SHALL leave no gap, so a host that supplies nothing renders exactly today's panel. When it is non-empty, the section SHALL render in the Main view as its last section, below the destination folder, author and access-rules block, as:
+When `dependencies` is absent or empty the section SHALL NOT render and SHALL leave no gap, so a host that supplies nothing renders exactly today's panel. When it is non-empty, the section SHALL render in the Main view as its last section, below the destination folder and author block, as:
 
 - a heading from `dependenciesLabels.title`;
 - the description `dependenciesLabels.description`, presented according to `dependenciesLabels.appearance`, a member of the exported string enum `PublishDependenciesAppearance` (`Warning`, `Published`). When the host passes nothing the appearance SHALL be `Warning` and the title, description and announcement defaults SHALL be today's, so a host that supplies nothing renders exactly today's section;
@@ -537,7 +533,7 @@ Both notes (`dependenciesNote` and `destinationNote`) SHALL take their typograph
 - **THEN** both are plain text in reading order and carry no physical direction classes
 
 ### Requirement: usePublishFlow can submit through a direct write
-`UsePublishFlowOptions` SHALL gain two optional options: `canPublishDirectlyTo?: (folderPath: string[]) => boolean` and `onPublishDirectly?: (item: TItem, folderPath: string[]) => Promise<void>`. `UsePublishFlowResult` SHALL gain `isDirectWrite: boolean`, `true` when a folder is selected and both options are supplied and `canPublishDirectlyTo` holds for it. While `isDirectWrite` is `true`, `handleSubmit` SHALL call `onPublishDirectly` instead of `onPublish`, with the same success, error and taken-target handling (`onPublishSuccess`, `onPublishError`, `isTargetTakenError`, `hasSubmitError`), and SHALL NOT send rules, author or credentials. `onPublishSuccess` receives `isDirectWrite` as an additive third argument, so a host can word a save into the folder differently from a filed request; a callback declaring two parameters stays assignable. A host that supplies neither option sees no change. The library SHALL learn nothing about endpoints, rights data or the `publications` namespace: the predicate and the callback arrive from the host.
+`UsePublishFlowOptions` SHALL gain two optional options: `canPublishDirectlyTo?: (folderPath: string[]) => boolean` and `onPublishDirectly?: (item: TItem, folderPath: string[]) => Promise<void>`. `UsePublishFlowResult` SHALL gain `isDirectWrite: boolean`, `true` when a folder is selected and both options are supplied and `canPublishDirectlyTo` holds for it. While `isDirectWrite` is `true`, `handleSubmit` SHALL call `onPublishDirectly` instead of `onPublish`, with the same success, error and taken-target handling (`onPublishSuccess`, `onPublishError`, `isTargetTakenError`, `hasSubmitError`), and SHALL NOT send author or credentials. `onPublishSuccess` receives `isDirectWrite` as an additive third argument, so a host can word a save into the folder differently from a filed request; a callback declaring two parameters stays assignable. A host that supplies neither option sees no change. The library SHALL learn nothing about endpoints, rights data or the `publications` namespace: the predicate and the callback arrive from the host.
 
 #### Scenario: Direct folder
 - **WHEN** `canPublishDirectlyTo` returns `true` for the selected folder and the user submits
@@ -556,7 +552,7 @@ Both notes (`dependenciesNote` and `destinationNote`) SHALL take their typograph
 - **THEN** the selected folder is marked taken instead of setting `hasSubmitError`
 
 ### Requirement: PublishPanel renders a direct destination
-`PublishPanel` SHALL also accept an optional host-supplied `directUnavailableNote?: string` (default none), a finished sentence rendered as an information callout when the direct path is unavailable for a reason the host names; the library decides nothing about it. `PublishPanel` SHALL accept optional `isDirectWrite?: boolean` (default `false`) and, for `true`, SHALL NOT render the access rules section, the author field or the credentials checkbox, SHALL render `labels.directWriteNote` (optional, default none: rendered only when the host supplies it) in the credentials section's place. The panel takes no decision of its own: the host passes the flow's `isDirectWrite`.
+`PublishPanel` SHALL also accept an optional host-supplied `directUnavailableNote?: string` (default none), a finished sentence rendered as an information callout when the direct path is unavailable for a reason the host names; the library decides nothing about it. `PublishPanel` SHALL accept optional `isDirectWrite?: boolean` (default `false`) and, for `true`, SHALL NOT render the author field or the credentials checkbox, SHALL render `labels.directWriteNote` (optional, default none: rendered only when the host supplies it) in the credentials section's place. The panel takes no decision of its own: the host passes the flow's `isDirectWrite`.
 
 #### Scenario: Direct destination
 - **WHEN** `isDirectWrite` is `true`

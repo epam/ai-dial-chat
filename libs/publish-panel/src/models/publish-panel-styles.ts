@@ -1,5 +1,4 @@
 import type { CSSProperties } from 'react';
-import type { PublishAccessRulesStyles } from './publish-access-rules-styles';
 import type { PublishDependenciesStyles } from './publish-dependencies-list';
 import type { PublishFoldersTreeStyles } from './publish-folders-tree';
 
@@ -25,8 +24,6 @@ export interface PublishPanelStyles {
   colors?: PublishPanelColors;
   /** Style overrides forwarded to the destination folder tree. */
   folderTree?: PublishFoldersTreeStyles;
-  /** Style overrides forwarded to the access-rules section. */
-  accessRules?: PublishAccessRulesStyles;
   /** Style overrides forwarded to the private-dependencies section. */
   dependencies?: PublishDependenciesStyles;
   /** Additional CSS custom properties applied to the panel body root. */

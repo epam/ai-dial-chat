@@ -263,14 +263,6 @@ export class ClientConfigDto {
 
   @ApiProperty({
     description:
-      "Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES; falls back to the legacy default when unset or empty.",
-    type: [String],
-    example: ['title', 'role', 'dial_roles'],
-  })
-  publicationFilterSources!: string[];
-
-  @ApiProperty({
-    description:
       "Additional content locales (canonical BCP-47 tags) a toolset's or application's Name/Description can be translated into. Sourced from ADDITIONAL_CONTENT_LOCALES, or the deprecated AVAILABLE_LOCALES when that is absent; empty when neither is set. May include the primary locale, which the client drops.",
     type: [String],
     example: ['de', 'fr-FR'],

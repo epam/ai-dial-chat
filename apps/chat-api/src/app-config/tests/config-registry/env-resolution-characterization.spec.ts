@@ -390,24 +390,6 @@ const KEY_EXPECTATIONS: Readonly<
     },
     [EnvCaseName.Empty]: { provider: undefined, effective: {} },
   },
-  'publish.publicationFilterSources': {
-    [EnvCaseName.Absent]: {
-      provider: undefined,
-      effective: ['title', 'role', 'dial_roles'],
-    },
-    [EnvCaseName.TypedDefault]: {
-      provider: undefined,
-      effective: ['title', 'role', 'dial_roles'],
-    },
-    [EnvCaseName.NonDefault]: {
-      provider: ['title', 'department'],
-      effective: ['title', 'department'],
-    },
-    [EnvCaseName.Empty]: {
-      provider: undefined,
-      effective: ['title', 'role', 'dial_roles'],
-    },
-  },
   'content.additionalLocales': {
     [EnvCaseName.Absent]: { provider: undefined, effective: [] },
     [EnvCaseName.NonDefault]: {
@@ -1141,26 +1123,6 @@ const PARSER_EXPECTATIONS: Readonly<Record<string, LoggedOutcome>> = {
     effective: ['all', 'my_files', 'shared', 'organization'],
     logs: [],
   },
-  'publish.publicationFilterSources absent': {
-    provider: undefined,
-    effective: ['title', 'role', 'dial_roles'],
-    logs: [],
-  },
-  'publish.publicationFilterSources empty': {
-    provider: undefined,
-    effective: ['title', 'role', 'dial_roles'],
-    logs: [],
-  },
-  'publish.publicationFilterSources valid': {
-    provider: ['title', 'department'],
-    effective: ['title', 'department'],
-    logs: [],
-  },
-  'publish.publicationFilterSources separators only': {
-    provider: undefined,
-    effective: ['title', 'role', 'dial_roles'],
-    logs: [],
-  },
   'content.additionalLocales absent': {
     provider: undefined,
     effective: [],
@@ -1210,10 +1172,6 @@ const PARSER_EXPECTATIONS: Readonly<Record<string, LoggedOutcome>> = {
  */
 const INITIALIZERS_RESOLVED_AS_UNSET: ReadonlyMap<string, string> = new Map([
   ['FILE_MANAGER_AVAILABLE_TABS', 'an empty tab list falls back to every tab'],
-  [
-    'PUBLICATION_FILTER_SOURCES',
-    'an empty source list falls back to the legacy default',
-  ],
   ['ENABLED_UI_FEATURES', 'null means the compiled-in UI feature baseline'],
 ]);
 

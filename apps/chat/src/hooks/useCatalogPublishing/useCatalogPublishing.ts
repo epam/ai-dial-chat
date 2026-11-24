@@ -12,21 +12,18 @@ import {
   mapResourceDependencyDto,
   resolveUnpublishableFolders,
   toPublishEntityType,
-  toPublishRuleDto,
   findSchemaDisplayName,
   usePublishTargetGuard,
   type PublishTargetEntity,
   type UnpublishableFoldersClient,
 } from '@epam/ai-dial-chat-hooks';
 import type {
-  PublicationRule,
   PublishDependency,
   PublishHistoryEntry,
 } from '@epam/ai-dial-publish-panel';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ResourceSavePanelI18nKeys } from '../../constants/translation-keys';
-import { getPublishRules } from '../../server-api/publish-rules.api';
 import {
   copyCatalogEntityToOrgUnit,
   getCatalogPublishDependencies,
@@ -107,7 +104,6 @@ interface UseCatalogPublishingResult {
   handlePublish: (
     item: CatalogItem,
     folderPath: string[],
-    rules: PublicationRule[],
     author: string,
     publishCredentials: boolean,
   ) => Promise<void>;
@@ -127,9 +123,6 @@ interface UseCatalogPublishingResult {
     folderPath: string[],
     error: unknown,
   ) => void;
-  handleFetchExistingRules: (
-    folderPath: string[],
-  ) => Promise<PublicationRule[]>;
   /** Asks the backend whether another resource already holds the item's published path in a folder. */
   checkTargetExists: (
     item: CatalogItem,
@@ -142,9 +135,8 @@ interface UseCatalogPublishingResult {
 }
 
 /**
- * Owns the catalog's publish/unpublish flow: publish history lookup, the
- * publish/unpublish mutations and their success/error notifications, and
- * existing-rule lookup for the publish panel.
+ * Owns the catalog's publish/unpublish flow: publish history lookup, and the
+ * publish/unpublish mutations and their success/error notifications.
  */
 export const useCatalogPublishing = ({
   deployments,
@@ -284,7 +276,6 @@ export const useCatalogPublishing = ({
     async (
       item: CatalogItem,
       folderPath: string[],
-      rules: PublicationRule[],
       author: string,
       publishCredentials: boolean,
     ) => {
@@ -295,7 +286,6 @@ export const useCatalogPublishing = ({
         /* Omitted rather than sent empty, so the backend's own session-derived
            fallback applies instead of an empty "Hosted by". */
         ...(trimmedAuthor ? { author: trimmedAuthor } : {}),
-        rules: rules.map(toPublishRuleDto),
         /* Omitted rather than sent as `false`, so a publish without shared
            access sends exactly the request it sent before this field. */
         ...(publishCredentials ? { publishCredentials: true } : {}),
@@ -322,11 +312,6 @@ export const useCatalogPublishing = ({
   const handlePublishDirectly = useMemo(
     () => targetGuard.wrapPublish(publishItemDirectly),
     [targetGuard, publishItemDirectly],
-  );
-
-  const handleFetchExistingRules = useCallback(
-    (folderPath: string[]) => getPublishRules(folderPath.join('/')),
-    [],
   );
 
   /*
@@ -415,7 +400,6 @@ export const useCatalogPublishing = ({
     handleUnpublish,
     handlePublishSuccess,
     handlePublishError,
-    handleFetchExistingRules,
     checkTargetExists: targetGuard.onCheckTargetExists,
     isTargetTakenError: targetGuard.isTargetTakenError,
     isPublishVisible,

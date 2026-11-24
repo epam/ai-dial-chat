@@ -145,8 +145,8 @@ describe('CLIENT_CONFIG_MAPPINGS', () => {
       expect(second).toEqual(first);
       expect(second).not.toBe(first);
       expect(second.fileManagerTabs).not.toBe(first.fileManagerTabs);
-      expect(second.publicationFilterSources).not.toBe(
-        first.publicationFilterSources,
+      expect(second.additionalContentLocales).not.toBe(
+        first.additionalContentLocales,
       );
       expect(second.overlayAllowedOrigins).not.toBe(
         first.overlayAllowedOrigins,

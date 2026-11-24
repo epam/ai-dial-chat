@@ -29,25 +29,12 @@ vi.mock('../../PublishFoldersTree/PublishFoldersTree', () => ({
   },
 }));
 
-vi.mock('../../PublishAccessRules/PublishAccessRules', () => ({
-  PublishAccessRules: (props: { folderName?: string }) => (
-    <section aria-label="Access rules">{props.folderName}</section>
-  ),
-}));
-
-const accessRules = {
-  rules: [],
-  onRulesChange: vi.fn(),
-  sourceOptions: ['roles'],
-};
-
 const roots: FolderDestinationRoot[] = [
   { key: 'personal', label: 'Personal', items: [] },
   {
     key: 'organization',
     label: 'Organization',
     items: [],
-    hasAccessRules: true,
   },
 ];
 
@@ -159,33 +146,23 @@ describe('StandaloneSaveToFolderPanel', () => {
     expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
   });
 
-  it('shows access rules under the tree for a folder of a root that takes them', async () => {
-    renderPanel({ accessRules });
-    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
-    expect(screen.queryByRole('region', { name: 'Access rules' })).toBeNull();
+  it.each([
+    ['a personal folder', 'Personal'],
+    ['an organization folder', 'EPAM'],
+  ])(
+    'shows no access-rules section in the Change-folder view for %s',
+    async (_case, folder) => {
+      renderPanel();
+      await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+      const folderButton = screen.queryByRole('button', { name: folder });
+      if (folderButton) await userEvent.click(folderButton);
 
-    await userEvent.click(screen.getByRole('button', { name: 'EPAM' }));
-
-    expect(
-      screen.getByRole('region', { name: 'Access rules' }).textContent,
-    ).toBe('EPAM');
-  });
-
-  it('hides the access rules for a destination the host marks as taking none', async () => {
-    const isHiddenFor = vi.fn(
-      (destination: { path: string[] }) => destination.path[0] === 'EPAM',
-    );
-    renderPanel({ accessRules: { ...accessRules, isHiddenFor } });
-    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
-
-    await userEvent.click(screen.getByRole('button', { name: 'EPAM' }));
-
-    expect(screen.queryByRole('region', { name: 'Access rules' })).toBeNull();
-    expect(isHiddenFor).toHaveBeenCalledWith({
-      rootKey: 'organization',
-      path: ['EPAM'],
-    });
-  });
+      expect(
+        screen.queryByRole('region', { name: /access rules/i }),
+      ).toBeNull();
+      expect(screen.queryByText(/allow access if all match/i)).toBeNull();
+    },
+  );
 
   it('reports the pending destination and resets it to the committed one on Back', async () => {
     const onPendingDestinationChange = vi.fn();

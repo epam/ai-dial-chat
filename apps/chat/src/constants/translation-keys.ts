@@ -52,7 +52,6 @@ export { ProjectsI18nKeys } from './i18n-keys/projects';
 export { PromptEditorI18nKeys } from './i18n-keys/prompt-editor';
 export { PromptSelectorI18nKeys } from './i18n-keys/prompt-selector';
 export { PublishI18nKeys } from './i18n-keys/publish';
-export { PublishAccessRulesI18nKeys } from './i18n-keys/publish-access-rules';
 export { RateI18nKeys } from './i18n-keys/rate';
 export { ResourceSavePanelI18nKeys } from './i18n-keys/resource-save-panel';
 export { ScheduledTasksI18nKeys } from './i18n-keys/scheduled-tasks';

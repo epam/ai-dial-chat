@@ -5,7 +5,6 @@ import { ComponentProps, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { PUBLISH_PANEL_CLASS } from '../../../constants/public-class-names';
 import {
-  PublicationRuleFunction,
   PublishFolderNode,
   PublishResourceSummary,
 } from '../../../models/publish';
@@ -95,9 +94,6 @@ const renderPanel = (props?: Partial<ComponentProps<typeof PublishPanel>>) =>
       isSubmitting={false}
       author=""
       onAuthorChange={vi.fn()}
-      rules={[]}
-      onRulesChange={vi.fn()}
-      ruleSourceOptions={['title', 'role', 'dial_roles']}
       {...props}
     />,
   );
@@ -230,7 +226,6 @@ describe('PublishPanel', () => {
     it('renders none of the publication-only sections and shows the note', () => {
       renderDirect();
 
-      expect(screen.queryByText('Allow access if all match')).toBeNull();
       expect(screen.queryByRole('textbox', { name: /Author/ })).toBeNull();
       expect(screen.queryByRole('checkbox')).toBeNull();
       expect(screen.getByText(NOTE)).toBeTruthy();
@@ -255,7 +250,6 @@ describe('PublishPanel', () => {
         labels: { directWriteNote: NOTE },
       });
 
-      expect(screen.getByText('Allow access if all match')).toBeTruthy();
       expect(screen.getByRole('textbox', { name: /Author/ })).toBeTruthy();
       expect(screen.getByRole('checkbox')).toBeTruthy();
       expect(screen.queryByText(NOTE)).toBeNull();
@@ -346,7 +340,6 @@ describe('PublishPanel', () => {
       expect(screen.getByRole('search')).toBeTruthy();
       expect(screen.getByText('Shared')).toBeTruthy();
       expect(screen.queryByRole('textbox', { name: /Author/ })).toBeNull();
-      expect(screen.queryByText('Allow access if all match')).toBeNull();
     });
 
     it('moves focus into the folder view and back to the action on return', () => {
@@ -362,9 +355,6 @@ describe('PublishPanel', () => {
         isSubmitting: false,
         author: '',
         onAuthorChange: vi.fn(),
-        rules: [],
-        onRulesChange: vi.fn(),
-        ruleSourceOptions: [],
       };
 
       rerender(
@@ -383,12 +373,7 @@ describe('PublishPanel', () => {
     });
   });
 
-  it('renders the access-rules section inside the folder block', () => {
-    renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
-    expect(screen.getByText('Allow access if all match')).toBeTruthy();
-  });
-
-  describe('optional author and access rules', () => {
+  describe('optional author', () => {
     it('omits the author field when onAuthorChange is not supplied', () => {
       renderPanel({
         author: undefined,
@@ -399,25 +384,10 @@ describe('PublishPanel', () => {
       expect(screen.queryByRole('textbox', { name: /Author/ })).toBeNull();
     });
 
-    it('omits the access-rules section and its add-rule trigger when onRulesChange is not supplied', () => {
-      renderPanel({
-        rules: undefined,
-        onRulesChange: undefined,
-        ruleSourceOptions: undefined,
-        selectedFolderPath: ['Shared', 'Data Science'],
-      });
-
-      expect(screen.queryByText('Allow access if all match')).toBeNull();
-      expect(screen.queryByRole('button', { name: 'Add rule' })).toBeNull();
-    });
-
-    it('keeps the destination and credentials controls when both sections are omitted', () => {
+    it('keeps the destination and credentials controls when the author field is omitted', () => {
       renderPanel({
         author: undefined,
         onAuthorChange: undefined,
-        rules: undefined,
-        onRulesChange: undefined,
-        ruleSourceOptions: undefined,
         onPublishCredentialsChange: vi.fn(),
         selectedFolderPath: ['Shared', 'Data Science'],
       });
@@ -427,47 +397,29 @@ describe('PublishPanel', () => {
     });
   });
 
-  it('scopes the access-rules hint to the selected folder', () => {
-    renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
-    expect(
-      screen.getByText(/These rules apply to "Data Science"/),
-    ).toBeTruthy();
-  });
-
-  it('uses the root folder label in the access-rules hint when the root is selected', () => {
-    renderPanel({ selectedFolderPath: [] });
-    expect(
-      screen.getByText(/These rules apply to "Organization"/),
-    ).toBeTruthy();
-  });
-
-  it('prompts for a destination folder in the access-rules hint when none is selected', () => {
-    renderPanel();
-    expect(
-      screen.getByText(/pick a folder above to set its rules/),
-    ).toBeTruthy();
-  });
-
-  it('renders existing rules as chips and forwards removals via onRulesChange', async () => {
-    const onRulesChange = vi.fn();
+  it('renders no access-rules section or add-rule button even when every optional prop is supplied', () => {
     renderPanel({
-      rules: [
-        {
-          source: 'role',
-          function: PublicationRuleFunction.Contain,
-          targets: ['engineering'],
-        },
-      ],
-      onRulesChange,
+      selectedFolderPath: ['Shared', 'Data Science'],
+      author: 'DIAL Team',
+      onAuthorChange: vi.fn(),
+      publishCredentials: true,
+      onPublishCredentialsChange: vi.fn(),
+      hasSubmitError: false,
+      isTargetTaken: false,
+      isTargetChecking: false,
+      allowReplace: true,
+      directUnavailableNote: 'Direct publishing is unavailable here.',
+      getDisabledReason: () => undefined,
+      expandedPaths: new Set<string>(),
+      onExpandedPathsChange: vi.fn(),
+      loadingPaths: new Set<string>(),
+      dependencies: [],
+      versionHistory: { rows: [{ id: 'a', version: '1.0.0' }] },
     });
 
-    await userEvent.click(
-      screen.getByRole('button', {
-        name: 'Remove rule for role: engineering',
-      }),
-    );
-
-    expect(onRulesChange).toHaveBeenCalledWith([]);
+    expect(screen.queryByRole('button', { name: 'Add rule' })).toBeNull();
+    expect(screen.queryByText('Allow access if all match')).toBeNull();
+    expect(screen.queryByRole('heading', { name: /access rules/i })).toBeNull();
   });
 
   it('shows the replace-warning callout when the version already exists in the folder, with the folder name bold', () => {
@@ -716,15 +668,17 @@ describe('PublishPanel', () => {
       expect(screen.getByText('Кто стоит за публикацией')).toBeTruthy();
     });
 
-    it('renders between the destination folder section and the access rules', () => {
-      const { container } = renderPanel();
+    it('renders between the destination folder section and the credentials opt-in', () => {
+      const { container } = renderPanel({
+        onPublishCredentialsChange: vi.fn(),
+      });
       const text = container.textContent ?? '';
 
       expect(text.indexOf('Publish to folder')).toBeLessThan(
         text.indexOf('Author'),
       );
       expect(text.indexOf('Author')).toBeLessThan(
-        text.indexOf('Allow access if all match'),
+        text.indexOf('Publish with my credentials'),
       );
     });
   });

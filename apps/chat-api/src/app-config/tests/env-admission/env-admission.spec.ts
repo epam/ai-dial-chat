@@ -8,7 +8,6 @@ import {
 import { admitCustomVariables } from '../../env-admission/custom-variables.admission';
 import { admitFileManagerTabs } from '../../env-admission/file-manager-tabs.admission';
 import { admitOnboardingHints } from '../../env-admission/onboarding-hints.admission';
-import { admitPublicationFilterSources } from '../../env-admission/publication-filter-sources.admission';
 import {
   admitApplicationVisualizers,
   admitCustomVisualizers,
@@ -222,19 +221,6 @@ describe('admitFileManagerTabs', () => {
       'my_files',
       'shared',
       'organization',
-    ]);
-  });
-});
-
-describe('admitPublicationFilterSources', () => {
-  it.each([undefined, []])('resolves %j to undefined', (sources) => {
-    expect(admitPublicationFilterSources(sources)).toBeUndefined();
-  });
-
-  it('returns the configured sources', () => {
-    expect(admitPublicationFilterSources(['title', 'department'])).toEqual([
-      'title',
-      'department',
     ]);
   });
 });

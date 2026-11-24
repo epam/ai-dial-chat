@@ -50,7 +50,6 @@ import { useUser } from './auth/UserContext';
 
 const DEFAULT_TRANSCRIBE_SIZE_LIMIT = 5 * 1024 * 1024;
 const DEFAULT_FILE_MANAGER_TABS = ['all', 'my_files', 'shared', 'organization'];
-const DEFAULT_PUBLICATION_FILTER_SOURCES = ['title', 'role', 'dial_roles'];
 const DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES = 536_870_912;
 const DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT = 75;
 /* Used until the config arrives or when it omits the policy: every scene stays bundled. */
@@ -93,7 +92,6 @@ export interface AppConfigState {
     footerHtmlMessage: string;
     customVisualizers: CustomVisualizer[];
     applicationVisualizers: ApplicationVisualizerRegistry;
-    publicationFilterSources: string[];
     /** Additional content locales (BCP-47) the editors offer for Name/Description translations; may include the primary locale. */
     additionalContentLocales: string[];
     maxAttachmentFileSizeBytes: number;
@@ -177,7 +175,6 @@ const INITIAL_STATE: ProviderState = {
     footerHtmlMessage: '',
     customVisualizers: [],
     applicationVisualizers: {},
-    publicationFilterSources: DEFAULT_PUBLICATION_FILTER_SOURCES,
     additionalContentLocales: [],
     maxAttachmentFileSizeBytes: DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES,
     usageLimitsWarningThresholdPercent:
@@ -248,9 +245,6 @@ const toProviderState = (
       footerHtmlMessage: response.config?.footerHtmlMessage ?? '',
       customVisualizers: response.config?.customVisualizers ?? [],
       applicationVisualizers: response.config?.applicationVisualizers ?? {},
-      publicationFilterSources:
-        response.config?.publicationFilterSources ??
-        DEFAULT_PUBLICATION_FILTER_SOURCES,
       additionalContentLocales: response.config?.additionalContentLocales ?? [],
       maxAttachmentFileSizeBytes:
         response.config?.maxAttachmentFileSizeBytes ??

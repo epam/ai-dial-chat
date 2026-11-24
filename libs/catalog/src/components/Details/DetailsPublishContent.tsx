@@ -22,10 +22,7 @@ export interface DetailsPublishContentProps extends Pick<
   | 'resolvePublishApprovalLabels'
   | 'publishVersionHistory'
   | 'hidePublishAuthor'
-  | 'hidePublishAccessRules'
 > {
-  /** Rule source options, with the panel default already applied. */
-  ruleSourceOptions: string[];
   /** Publish form state, from `useDetailsPublish`. */
   publishFlow: DetailsPublishState['publishFlow'];
   /** Private dependencies to list, from `useDetailsPublish`; `undefined` when the host supplies no lookup. */
@@ -50,13 +47,11 @@ export const DetailsPublishContent: FC<DetailsPublishContentProps> = ({
   onPublishExpandedPathsChange,
   publishLoadingPaths,
   getPublishDisabledReason,
-  ruleSourceOptions,
   publishLabels,
   resolvePublishDependenciesLabels,
   resolvePublishApprovalLabels,
   publishVersionHistory,
   hidePublishAuthor,
-  hidePublishAccessRules,
 }) => (
   <div className="p-4 desktop:p-[22px]">
     <PublishPanel
@@ -94,11 +89,6 @@ export const DetailsPublishContent: FC<DetailsPublishContentProps> = ({
           ? publishFlow.setPublishCredentials
           : undefined
       }
-      rules={hidePublishAccessRules ? undefined : publishFlow.rules}
-      onRulesChange={hidePublishAccessRules ? undefined : publishFlow.setRules}
-      ruleSourceOptions={ruleSourceOptions}
-      isRulesLoading={publishFlow.isRulesLoading}
-      hasRulesLoadError={publishFlow.hasRulesLoadError}
       isDirectWrite={publishFlow.isDirectWrite}
       directUnavailableNote={publishDirectUnavailableNote}
       labels={{

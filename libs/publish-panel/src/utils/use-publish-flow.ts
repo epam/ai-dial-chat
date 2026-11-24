@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  PublicationRule,
-  PublishFolderNode,
-  PublishHistoryEntry,
-} from '../models/publish';
+import { PublishFolderNode, PublishHistoryEntry } from '../models/publish';
 
 /** An item publishable through {@link usePublishFlow} — versioned or not (e.g. a conversation). */
 export interface PublishFlowItem {
@@ -107,17 +103,13 @@ export interface UsePublishFlowOptions<TItem extends PublishFlowItem> {
    */
   defaultAuthor?: string;
   /**
-   * Called with the destination folder path, current rules, trimmed display
-   * author, and the credentials opt-in when the user confirms publish/update.
-   *
-   * `publishCredentials` is additive and positional: a host callback that
-   * declares only the first four parameters stays assignable and keeps
-   * behaving exactly as it did.
+   * Called with the destination folder path, trimmed display author, and the
+   * credentials opt-in when the user confirms publish/update. A host callback
+   * that declares only the first three parameters stays assignable.
    */
   onPublish: (
     item: TItem,
     folderPath: string[],
-    rules: PublicationRule[],
     author: string,
     publishCredentials: boolean,
   ) => Promise<void>;
@@ -133,14 +125,6 @@ export interface UsePublishFlowOptions<TItem extends PublishFlowItem> {
    * notification; the hook only sets `hasSubmitError` for the inline callout.
    */
   onPublishError?: (item: TItem, folderPath: string[], error: unknown) => void;
-  /**
-   * Resolves the access rules already configured for a destination folder.
-   * Called whenever `selectedFolderPath` changes to a defined folder; the
-   * result fully replaces the current `rules` state (never merged). Omit to
-   * skip pre-filling entirely — `rules` then only ever changes via
-   * `setRules`.
-   */
-  onFetchExistingRules?: (folderPath: string[]) => Promise<PublicationRule[]>;
   /**
    * Resolves whether another resource already holds the published path of
    * `item` in a destination folder, so the panel can say so before submit.
@@ -171,7 +155,7 @@ export interface UsePublishFlowOptions<TItem extends PublishFlowItem> {
   /**
    * Writes the item into the folder directly. Called by `handleSubmit` instead
    * of `onPublish` while {@link UsePublishFlowResult.isDirectWrite} is `true`,
-   * with the same success, error and taken-target handling; no rules, author or
+   * with the same success, error and taken-target handling; no author or
    * credentials are sent.
    */
   onPublishDirectly?: (item: TItem, folderPath: string[]) => Promise<void>;
@@ -209,12 +193,8 @@ export interface UsePublishFlowResult {
    * decide whether to close the flow.
    */
   handleSubmit: () => Promise<boolean>;
-  /** Resets folder selection, any locally-created folders, rules, the credentials opt-in, and the submit error back to their initial state. */
+  /** Resets folder selection, any locally-created folders, the author, the credentials opt-in, and the submit error back to their initial state. */
   reset: () => void;
-  /** Current access rules for the selected folder — fetched, manually edited, or both. */
-  rules: PublicationRule[];
-  /** Replaces the current rules; used by manual add/remove/clear actions. */
-  setRules: (rules: PublicationRule[]) => void;
   /**
    * Current display author for the publication — the host-supplied
    * `defaultAuthor` until the user edits it.
@@ -240,10 +220,6 @@ export interface UsePublishFlowResult {
   isTargetTaken: boolean;
   /** Whether `onCheckTargetExists` is currently resolving for the selected folder and version. */
   isTargetChecking: boolean;
-  /** Whether `onFetchExistingRules` is currently resolving for the selected folder. */
-  isRulesLoading: boolean;
-  /** Whether the most recent `onFetchExistingRules` call failed. `rules` is left unchanged when this is `true`. */
-  hasRulesLoadError: boolean;
   /** Whether the selected folder is written directly: a folder is selected, both direct options are supplied and `canPublishDirectlyTo` holds for it. */
   isDirectWrite: boolean;
 }
@@ -261,7 +237,6 @@ export const usePublishFlow = <
   onPublish,
   onPublishSuccess,
   onPublishError,
-  onFetchExistingRules,
   onCheckTargetExists,
   isTargetTakenError,
   canPublishDirectlyTo,
@@ -274,9 +249,6 @@ export const usePublishFlow = <
   const [selectedFolderPath, setSelectedFolderPath] = useState<string[]>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitError, setHasSubmitError] = useState(false);
-  const [rules, setRules] = useState<PublicationRule[]>([]);
-  const [isRulesLoading, setIsRulesLoading] = useState(false);
-  const [hasRulesLoadError, setHasRulesLoadError] = useState(false);
   const [author, setAuthorState] = useState(defaultAuthor);
   const [publishCredentials, setPublishCredentials] = useState(false);
   /*
@@ -309,41 +281,6 @@ export const usePublishFlow = <
   useEffect(() => {
     if (isDirectWrite) setPublishCredentials(false);
   }, [isDirectWrite]);
-
-  useEffect(() => {
-    if (selectedFolderPath == null || isDirectWrite) {
-      setRules([]);
-      setHasRulesLoadError(false);
-      setIsRulesLoading(false);
-      return;
-    }
-    if (!onFetchExistingRules) {
-      return;
-    }
-
-    let isCancelled = false;
-    setIsRulesLoading(true);
-    setHasRulesLoadError(false);
-
-    onFetchExistingRules(selectedFolderPath)
-      .then((fetchedRules) => {
-        if (isCancelled) return;
-        setRules(fetchedRules);
-      })
-      .catch(() => {
-        if (isCancelled) return;
-        setHasRulesLoadError(true);
-      })
-      .finally(() => {
-        if (isCancelled) return;
-        setIsRulesLoading(false);
-      });
-
-    return () => {
-      isCancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFolderPath, isDirectWrite]);
 
   const hasExistingPublicationInFolder = useMemo(() => {
     /* A direct write leaves no history, so an earlier request's marker does not apply. */
@@ -446,7 +383,6 @@ export const usePublishFlow = <
         await onPublish(
           item,
           selectedFolderPath,
-          rules,
           author.trim(),
           publishCredentials,
         );
@@ -474,7 +410,6 @@ export const usePublishFlow = <
     onPublishError,
     onPublishSuccess,
     publishCredentials,
-    rules,
     selectedFolderPath,
     targetKey,
   ]);
@@ -483,8 +418,6 @@ export const usePublishFlow = <
     setFolderItems(initialFolderItems);
     setSelectedFolderPath(undefined);
     setHasSubmitError(false);
-    setRules([]);
-    setHasRulesLoadError(false);
     setAuthorState(defaultAuthor);
     setIsAuthorEdited(false);
     setPublishCredentials(false);
@@ -507,16 +440,12 @@ export const usePublishFlow = <
     hasSubmitError,
     handleSubmit,
     reset,
-    rules,
-    setRules,
     author,
     setAuthor,
     publishCredentials,
     setPublishCredentials,
     isTargetTaken,
     isTargetChecking,
-    isRulesLoading,
-    hasRulesLoadError,
     isDirectWrite,
   };
 };
