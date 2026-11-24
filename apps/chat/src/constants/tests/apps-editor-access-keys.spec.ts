@@ -18,8 +18,8 @@ const ACCESS_KEYS = Object.entries(AppsEditorI18nKeys).filter(([name]) =>
 );
 
 describe('AppsEditorI18nKeys Access members', () => {
-  it('lists the 25 keys of the Access section', () => {
-    expect(ACCESS_KEYS).toHaveLength(25);
+  it('lists the 23 keys of the Access section', () => {
+    expect(ACCESS_KEYS).toHaveLength(23);
   });
 
   it.each(ACCESS_KEYS)('%s resolves to English text in en.json', (_, key) => {

@@ -1538,7 +1538,6 @@
       "title": "Access",
       "description": "What this app can reach. Shown to users before they install.",
       "configure": "Configure",
-      "modalTitle": "Access",
       "selectContent": "Select content",
       "selectAccess": "Select access",
       "contentFiles": "Files",
@@ -1556,7 +1555,6 @@
       "announceRemoved": "{{label}} removed",
       "loading": "Loading access settings",
       "loadFailed": "Could not load the access settings.",
-      "retry": "Retry",
       "approvalNotice": "The access takes effect only after the application is published and an administrator approves it.",
       "approvalResetNotice": "Saving changes can remove an earlier approval.",
       "adminOnlyError": "The access was not saved: only an administrator can change the access of an application."

@@ -169,6 +169,7 @@ export const partitionResourceDependencies = (
       linkId: stored.linkId,
       url: stored.target.url,
       access: [...stored.access],
+      level: accessLevel,
       isRequired: stored.required === true,
     });
   });

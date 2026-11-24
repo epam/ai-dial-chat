@@ -7,7 +7,10 @@ import {
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AppsEditorI18nKeys } from '../../../constants/translation-keys';
+import {
+  AppsEditorI18nKeys,
+  ButtonsI18nKeys,
+} from '../../../constants/translation-keys';
 import type { ApplicationAccessEditor } from '../../../hooks/application-editor/useApplicationAccessEditor';
 import { ApplicationAccessLoadStatus } from '../../../types/application-editor';
 import ApplicationAccessSection from '../ApplicationAccessSection';
@@ -80,7 +83,7 @@ describe('ApplicationAccessSection', () => {
     expect(screen.getByText(AppsEditorI18nKeys.AccessLoadFailed)).toBeTruthy();
 
     await user.click(
-      screen.getByRole('button', { name: AppsEditorI18nKeys.AccessRetry }),
+      screen.getByRole('button', { name: ButtonsI18nKeys.Retry }),
     );
 
     expect(retry).toHaveBeenCalledOnce();
@@ -155,6 +158,7 @@ describe('ApplicationAccessSection', () => {
                 linkId: 'p',
                 url: 'files/public/policies/',
                 access: [ResourceDependencyAccess.Read],
+                level: ApplicationAccessLevel.Read,
                 isRequired: true,
               },
             ],
@@ -173,6 +177,45 @@ describe('ApplicationAccessSection', () => {
       }),
     ).toBeNull();
   });
+
+  it.each([
+    [
+      'read and write',
+      [ResourceDependencyAccess.Read, ResourceDependencyAccess.Write],
+      ApplicationAccessLevel.ReadWrite,
+      AppsEditorI18nKeys.AccessReadWrite,
+    ],
+    [
+      'write only',
+      [ResourceDependencyAccess.Write],
+      undefined,
+      ResourceDependencyAccess.Write,
+    ],
+  ])(
+    'labels a preserved entry with %s rights from its level, or the raw rights without one',
+    (_, access, level, expected) => {
+      render(
+        <ApplicationAccessSection
+          editor={makeEditor(
+            {},
+            {
+              preserved: [
+                {
+                  index: 0,
+                  linkId: 'x',
+                  url: 'files/b/x/',
+                  access,
+                  level,
+                  isRequired: false,
+                },
+              ],
+            },
+          )}
+        />,
+      );
+      expect(screen.getByText(`files/b/x/: ${expected}`)).toBeTruthy();
+    },
+  );
 
   describe('approval notice', () => {
     const entry = {

@@ -6,7 +6,6 @@ import {
   type AccessFieldLabels,
   type AccessReadOnlyChip,
 } from '@epam/ai-dial-builder-form';
-import { ResourceDependencyAccess } from '@epam/ai-dial-chat-api-client';
 import {
   APPLICATION_ACCESS_ALLOWED_LEVELS,
   APPLICATION_ACCESS_CONTENT_TYPES,
@@ -80,7 +79,7 @@ const ApplicationAccessSection: FC<Props> = ({ editor }) => {
       title: t(AppsEditorI18nKeys.AccessTitle),
       description: t(AppsEditorI18nKeys.AccessDescription),
       configureLabel: t(AppsEditorI18nKeys.AccessConfigure),
-      modalTitle: t(AppsEditorI18nKeys.AccessModalTitle),
+      modalTitle: t(AppsEditorI18nKeys.AccessTitle),
       selectContent: t(AppsEditorI18nKeys.AccessSelectContent),
       selectAccess: t(AppsEditorI18nKeys.AccessSelectAccess),
       accessRead: t(AppsEditorI18nKeys.AccessRead),
@@ -111,16 +110,12 @@ const ApplicationAccessSection: FC<Props> = ({ editor }) => {
   const readOnlyChips = useMemo<AccessReadOnlyChip[]>(
     () =>
       preserved.map((entry) => {
-        const rights = new Set(entry.access);
-        const isReadWrite =
-          rights.size === 2 &&
-          rights.has(ResourceDependencyAccess.Read) &&
-          rights.has(ResourceDependencyAccess.Write);
-        const isRead =
-          rights.size === 1 && rights.has(ResourceDependencyAccess.Read);
         let rightsLabel = entry.access.join('/');
-        if (isReadWrite) rightsLabel = t(AppsEditorI18nKeys.AccessReadWrite);
-        else if (isRead) rightsLabel = t(AppsEditorI18nKeys.AccessRead);
+        if (entry.level === ApplicationAccessLevel.ReadWrite) {
+          rightsLabel = t(AppsEditorI18nKeys.AccessReadWrite);
+        } else if (entry.level === ApplicationAccessLevel.Read) {
+          rightsLabel = t(AppsEditorI18nKeys.AccessRead);
+        }
         return {
           id: `${entry.index}-${entry.linkId}`,
           label: `${entry.url}: ${rightsLabel}`,
@@ -169,10 +164,7 @@ const ApplicationAccessSection: FC<Props> = ({ editor }) => {
         </LiveRegion>
         {hasFailed ? (
           <div>
-            <GhostButton
-              label={t(AppsEditorI18nKeys.AccessRetry)}
-              onClick={retry}
-            />
+            <GhostButton label={t(ButtonsI18nKeys.Retry)} onClick={retry} />
           </div>
         ) : (
           <Spinner ariaLabel={t(AppsEditorI18nKeys.AccessLoading)} />

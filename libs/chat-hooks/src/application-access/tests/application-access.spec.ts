@@ -70,9 +70,36 @@ describe('partitionResourceDependencies', () => {
         linkId: 'p',
         url: 'files/public/policies/',
         access: [Read],
+        level: Level.Read,
         isRequired: false,
       },
     ]);
+  });
+
+  it.each([
+    ['Read', [Read], Level.Read],
+    ['Read and Write', [Read, Write], Level.ReadWrite],
+    ['Write and Read in another order', [Write, Read], Level.ReadWrite],
+  ])('gives a preserved entry with %s rights its level', (_, access, level) => {
+    const { preserved } = partitionResourceDependencies([
+      dep('x', 'files/public/x/', access),
+    ]);
+    expect(preserved[0].level).toBe(level);
+  });
+
+  it('gives a preserved entry that is kept only for being required its level', () => {
+    const { preserved } = partitionResourceDependencies([
+      dep('x', 'files/{current-user}/', [Read, Write], true),
+    ]);
+    expect(preserved[0].level).toBe(Level.ReadWrite);
+  });
+
+  it('leaves the level out for write-only and unknown rights', () => {
+    const { preserved } = partitionResourceDependencies([
+      dep('w', 'files/public/w/', [Write]),
+      dep('s', 'files/public/s/', ['SHARE' as ResourceDependencyAccess]),
+    ]);
+    expect(preserved.map((item) => item.level)).toEqual([undefined, undefined]);
   });
 
   it('preserves a path below the bucket root and a url that differs by one byte', () => {

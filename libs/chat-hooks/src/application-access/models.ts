@@ -25,6 +25,8 @@ export interface ApplicationAccessPreservedEntry {
   url: string;
   /** Stored rights, in stored order. */
   access: ResourceDependencyAccess[];
+  /** `Read` or `ReadWrite` when the stored rights, compared as a set, equal Read or Read and Write, whatever kept the entry from being editable; `undefined` for any other set of rights. */
+  level?: ApplicationAccessLevel;
   /** Whether the entry is stored with `required: true`. */
   isRequired: boolean;
 }

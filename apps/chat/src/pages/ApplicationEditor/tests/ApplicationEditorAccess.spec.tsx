@@ -440,7 +440,7 @@ describe('ApplicationEditor Access section', () => {
 
     await user.click(
       await screen.findByRole('button', {
-        name: AppsEditorI18nKeys.AccessRetry,
+        name: ButtonsI18nKeys.Retry,
       }),
     );
 
