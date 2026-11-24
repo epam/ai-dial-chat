@@ -287,7 +287,8 @@ describe('CelebrationHost with the celebrations library', () => {
 
   it.each([
     [0, 'newYear.penguinStarToastMessage happy new year'],
-    [0.99, 'newYear.snowmanDeliveryToastMessage happy new year'],
+    [0.5, 'newYear.snowmanDeliveryToastMessage happy new year'],
+    [0.99, 'newYear.elfFireworksToastMessage happy new year'],
   ])(
     'loads New Year through the same decor slot with its translated trigger (random %s)',
     async (roll, message) => {
@@ -323,7 +324,7 @@ describe('CelebrationHost with the celebrations library', () => {
 
   describe('with external packs', () => {
     it('plays the allowlisted snowman from its pack with the bundled notification', async () => {
-      vi.spyOn(Math, 'random').mockReturnValue(0.5);
+      vi.spyOn(Math, 'random').mockReturnValue(0.4);
       const { gift } = await renderPilotNewYear();
 
       await userEvent.click(gift);
@@ -354,7 +355,7 @@ describe('CelebrationHost with the celebrations library', () => {
     });
 
     it('keeps the bundled snowman when only the couriers are added', async () => {
-      vi.spyOn(Math, 'random').mockReturnValue(0.5);
+      vi.spyOn(Math, 'random').mockReturnValue(0.4);
       const { gift } = await renderPilotNewYear(COURIERS_DELIVERY);
 
       await userEvent.click(gift);
@@ -396,7 +397,7 @@ describe('CelebrationHost with the celebrations library', () => {
 
     it('mirrors the external snowman under dir="rtl"', async () => {
       host.language = 'ar';
-      vi.spyOn(Math, 'random').mockReturnValue(0.5);
+      vi.spyOn(Math, 'random').mockReturnValue(0.4);
       const { gift } = await renderPilotNewYear();
 
       await userEvent.click(gift);
@@ -415,7 +416,7 @@ describe('CelebrationHost with the celebrations library', () => {
       ['the direction', () => (host.language = 'ar')],
       ['the layout', () => (host.isMobile = true)],
     ])('cancels the playing scene when %s changes', async (_name, change) => {
-      vi.spyOn(Math, 'random').mockReturnValue(0.5);
+      vi.spyOn(Math, 'random').mockReturnValue(0.4);
       const { gift, rerender } = await renderPilotNewYear();
       await userEvent.click(gift);
       await waitFor(() =>
@@ -429,7 +430,7 @@ describe('CelebrationHost with the celebrations library', () => {
     });
 
     it('keeps the playing scene when only the language changes', async () => {
-      vi.spyOn(Math, 'random').mockReturnValue(0.5);
+      vi.spyOn(Math, 'random').mockReturnValue(0.4);
       const { gift, rerender } = await renderPilotNewYear();
       await userEvent.click(gift);
       await waitFor(() =>

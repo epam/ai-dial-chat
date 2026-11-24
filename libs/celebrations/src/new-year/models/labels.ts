@@ -8,6 +8,8 @@ export interface NewYearLabels {
   snowmanDeliveryToastMessage?: string;
   /** Notification message of the reindeer takeoff scene. */
   reindeerTakeoffToastMessage?: string;
+  /** Notification message of the elf fireworks scene. */
+  elfFireworksToastMessage?: string;
   /** Title of every scene notification. */
   toastTitle: string;
   /** Accessible name of the gift trigger. */
