@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   isAfterLoadIdle,
+  markFirstScreenRendered,
   resetAfterLoadIdleForTests,
   scheduleAfterLoadIdle,
 } from '../load-idle';
@@ -10,6 +11,17 @@ const setReadyState = (state: DocumentReadyState) => {
     configurable: true,
     get: () => state,
   });
+};
+
+const stubIdleCallback = () => {
+  let idleCallback: () => void = () => undefined;
+  const requestIdleCallback = vi.fn((callback: () => void) => {
+    idleCallback = callback;
+    return 1;
+  });
+  vi.stubGlobal('requestIdleCallback', requestIdleCallback);
+  vi.stubGlobal('cancelIdleCallback', vi.fn());
+  return { requestIdleCallback, runIdle: () => idleCallback() };
 };
 
 describe('load-idle', () => {
@@ -26,6 +38,7 @@ describe('load-idle', () => {
 
   it('waits for the load event while the document is still loading', () => {
     setReadyState('loading');
+    markFirstScreenRendered();
     const callback = vi.fn();
 
     scheduleAfterLoadIdle(callback);
@@ -38,29 +51,39 @@ describe('load-idle', () => {
     expect(isAfterLoadIdle()).toBe(true);
   });
 
-  it('runs at the next idle period when the document has already loaded', () => {
+  it('waits for the first screen after load, then runs at the next idle period', () => {
     setReadyState('complete');
-    let idleCallback: () => void = () => undefined;
-    const requestIdleCallback = vi.fn((callback: () => void) => {
-      idleCallback = callback;
-      return 1;
-    });
-    vi.stubGlobal('requestIdleCallback', requestIdleCallback);
-    vi.stubGlobal('cancelIdleCallback', vi.fn());
+    const { requestIdleCallback, runIdle } = stubIdleCallback();
     const callback = vi.fn();
 
     scheduleAfterLoadIdle(callback);
+    expect(requestIdleCallback).not.toHaveBeenCalled();
+
+    markFirstScreenRendered();
     expect(requestIdleCallback).toHaveBeenCalledWith(expect.any(Function), {
       timeout: 2000,
     });
     expect(callback).not.toHaveBeenCalled();
 
-    idleCallback();
+    runIdle();
     expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops waiting for a first screen 3 s after load', () => {
+    setReadyState('complete');
+    const { requestIdleCallback } = stubIdleCallback();
+
+    scheduleAfterLoadIdle(vi.fn());
+    vi.advanceTimersByTime(2999);
+    expect(requestIdleCallback).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1);
+    expect(requestIdleCallback).toHaveBeenCalledTimes(1);
   });
 
   it('falls back to a timeout where requestIdleCallback is unavailable', () => {
     setReadyState('complete');
+    markFirstScreenRendered();
     vi.stubGlobal('requestIdleCallback', undefined);
     const callback = vi.fn();
 
@@ -92,6 +115,7 @@ describe('load-idle', () => {
     const cancel = scheduleAfterLoadIdle(callback);
     cancel();
     window.dispatchEvent(new Event('load'));
+    markFirstScreenRendered();
     vi.runAllTimers();
 
     expect(callback).not.toHaveBeenCalled();
@@ -99,6 +123,7 @@ describe('load-idle', () => {
 
   it('serves every pending callback from one load listener and one idle callback', () => {
     setReadyState('loading');
+    markFirstScreenRendered();
     const addEventListener = vi.spyOn(window, 'addEventListener');
     let idleCallback: () => void = () => undefined;
     const requestIdleCallback = vi.fn((callback: () => void) => {
@@ -141,6 +166,7 @@ describe('load-idle', () => {
 
   it('cancels the idle callback once the last pending callback is cancelled', () => {
     setReadyState('complete');
+    markFirstScreenRendered();
     const requestIdleCallback = vi.fn(() => 7);
     const cancelIdleCallback = vi.fn();
     vi.stubGlobal('requestIdleCallback', requestIdleCallback);

@@ -77,6 +77,8 @@ import {
   resolveCanvasWidth,
 } from '../utils/canvas-width';
 import { loadConversationInput } from '../utils/conversation-input-loader';
+import { loadConversationMessageItem } from '../utils/conversation-message-loader';
+import { scheduleAfterLoadIdle } from '../utils/load-idle';
 import { configurePdfWorker } from '../utils/pdf';
 import { renderSettingsRoutes, renderUsageRoute } from './settings-routes';
 
@@ -166,6 +168,22 @@ const conversationPageModule = import('../pages/Conversation/Conversation');
  * first. `import()` caches the module, so the composer's own `lazy` reuses it.
  */
 void loadConversationInput();
+/*
+ * Messages are lazy so a conversation without any — the home page — does not
+ * wait for the message renderer and the markdown engine it carries. Any other
+ * entry route may open straight onto a conversation whose messages are the
+ * LCP element, so there the chunk is fetched now, alongside the page module.
+ * On the home page it is fetched once the page has loaded, in time for the
+ * first message sent.
+ */
+const preloadConversationMessages = () => {
+  loadConversationMessageItem().catch(() => undefined);
+};
+if (window.location.pathname === ROUTES.Root) {
+  scheduleAfterLoadIdle(preloadConversationMessages);
+} else {
+  preloadConversationMessages();
+}
 
 const ConversationPage = lazy(async () => {
   const module = await conversationPageModule;

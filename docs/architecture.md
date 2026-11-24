@@ -385,9 +385,12 @@ from the publish-panel-attached UI on catalog's root. The MCP App renderer
 `@epam/ai-dial-attachment-canvas/mcp-app-renderer`, which `mcp-apps`'
 `McpAppInlinePreview` lazy-loads, so the conversation route's static graph
 does not carry it. Closed overlays in `apps/chat` (the sources panel, the
-canvas, the sign-in dialog, the onboarding tour, the catalog modals) mount,
-still closed, only after the document `load` event, through
-`useDeferredOverlayMount`, so their chunks do not download during first paint.
+canvas, the sign-in dialog, the onboarding tour, the catalog modals, the skill
+details panel) mount, still closed, only after the document `load` event and
+the conversation view's first commit, through `useDeferredOverlayMount`, so
+their chunks do not download during first paint. Conversation messages load
+through `ConversationMessageItemLoader`, keeping the markdown engine out of the
+home route's graph.
 Every other lib declares
 CSS/SCSS side effects only (or `sideEffects: false` when it ships no
 stylesheet); `chat-hooks` declares its

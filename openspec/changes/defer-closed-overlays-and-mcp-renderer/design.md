@@ -114,13 +114,33 @@ The first version also had `preloadAfterLoad`, a separate `import()` per overlay
 
 A plain idle callback without waiting for `load` was rejected. The profile shows the main thread idle for ~1.1 s before LCP, waiting on the network, so idle alone would fire inside the critical window and change nothing.
 
-**This ordering is a timing property, not a guarantee.** On a slow enough device the 2000 ms timeout after `load` can still fall before the route's LCP.
+**Revised: wait for the first screen too.** `load` alone proved too early. With a slower backend, LCP landed at ~5.8 s while `load` fired at ~2 s, so the "deferred" wave, ~730 KB of lazy JS including the catalog, the file manager and ag-grid, downloaded before LCP. A CPU profile showed the overlays rendering inside the 1.9 s task that paints the greeting. Hooks mounted inside the route after `load` saw `readyState === 'complete'` and scheduled at once.
 
-In the lab profile:
+So the point now also waits for `markFirstScreenRendered()`, which `ConversationView` calls on its first commit:
 
-- The overlay chunks started after LCP in all 7 runs.
-- One chunk shared by the deferred overlays (`AttachmentCanvasBody`) started ~350 ms before LCP, as the wave began.
-- The spec therefore states the deterministic property, "not before the post-load idle point", and the LCP relation is reported as a measurement.
+- The first commit of the conversation view is the first screen of every route that renders a conversation, `/` included.
+- A route that never calls it stops waiting 3000 ms after `load`.
+- Only then does the idle callback run.
+
+This is still not a hard guarantee, since the 2000 ms idle bound can fire while a later render is running, but it no longer depends on `load` happening to coincide with the first paint.
+
+### D6. Messages load outside the home route's graph
+
+A source-mapped build showed that the markdown engine (unified, micromark, `hast-util-raw`; 100 KB gz) and the shared conversation chunk reached the home route only through `ConversationMessageItem`. Its message bubbles, stages and citations import the markdown renderer statically, and an empty conversation renders none of them.
+
+The first guess, `AgentDescription`, was wrong: that component is already lazy behind `ShowAgentDescription`.
+
+`ConversationView` now renders messages through `ConversationMessageItemLoader`, following the same pattern as `ConversationInputLoader`:
+
+- `loadConversationMessageItem()` loads the chunk once.
+- `app.tsx` starts it at module scope on every entry path except `/`, where messages can be LCP. On `/` it starts at the post-load idle point.
+- When the module is already in memory, the message renders directly and skips React's ~300 ms Suspense fallback throttle.
+
+### D7. The skill details panel
+
+The `@epam/ai-dial-skills` skill selector always renders its host-supplied `detailsPanelComponent`, with `skillId={null}` while closed. The app passed the lazy `SkillDetailsPanelContainer` straight in, so the composer on `/` fetched that chunk at first render. Through it came the catalog, credentials rows, the file manager grid with ag-grid, the canvas body and markdown: the largest single pre-LCP download.
+
+The app now passes `SkillDetailsPanelGate`, which mounts the container through `useDeferredOverlayMount(skillId != null)`. The lib is unchanged and still supplies the `Suspense` boundary.
 
 ### D5. Verification tooling
 
@@ -133,7 +153,9 @@ In the lab profile:
 ## Risks / Trade-offs
 
 - **[Risk] A user opens the canvas or the sources panel before the post-load idle point, for example on a very fast first click.** The panel mounts already open, without its opening transition, and appears once its chunk arrives, with a `null` fallback. → The point is at most ~2 s after `load`, and a later open is the common case.
-- **[Risk] The deferred wave can overlap the route's last rendering on slow devices (see D4).** → It is still later than today, where these chunks were requested from ~2.6 s, in parallel with the route's own chunks.
+- **[Risk] The deferred wave can still overlap a later render on slow devices (see D4).** → It now waits for the conversation view's first commit, not just `load`.
+- **[Risk] A new route that renders a first screen without `ConversationView` waits out the 3000 ms fallback.** → Its overlays then mount ~3 s after `load`, which is safe, only later than necessary. Such a route can call `markFirstScreenRendered` itself.
+- **[Risk] On `/`, the first message sent before the idle point renders through `lazy`.** → It appears once its chunk arrives, which is the same chunk the route used to fetch up front.
 - **[Risk] An MCP App preview now waits on the renderer chunk as well as the resource.** → The import starts at mount, in parallel with the resource fetch, and the chunk is cached after the first preview.
 - **[Risk] A host of the published `libs/mcp-apps` build must resolve the new subpath.** → Both packages ship from this repo at the same version; the subpath is an additive export, and the consumer fixture build is part of verification.
 - **[Risk] The latch keeps an overlay mounted after its first use, holding memory that an unmount-on-close design would release.** → This is unchanged from today, where these overlays are always mounted.
@@ -152,6 +174,17 @@ Measured in `vite preview` against a local chat-api with 150 ms RTT, ~6.4 Mbit/s
 | Overlay chunks before LCP | all eight, every run | `AttachmentCanvasBody` (shared) only |
 
 The initial graph stays at 476 KB JS gz and 35 KB CSS gz. The extra 0.5 KB JS gz is the new hooks.
+
+**Second round** (D4 revision, D6, D7). The local chat-api was restarted between rounds and answered more slowly, so absolute LCP is higher. Each row compares against the first-round build under the same conditions, with 7 alternating runs.
+
+| | First round | Second round |
+| --- | --- | --- |
+| Home LCP median | 6588 ms | 5872 ms |
+| Lazy JS requested before LCP (median) | 732 KB | 136 KB |
+| Conversation route closure | 23 chunks, 186.8 KB gz | 13 chunks, 45.1 KB gz |
+| Markdown engine in that closure | yes | no |
+
+The 136 KB left before LCP are the route's own chunks and the active celebration scene.
 
 ## Migration Plan
 

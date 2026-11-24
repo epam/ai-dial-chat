@@ -54,6 +54,7 @@ import {
   type ReactNode,
   Suspense,
   useCallback,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -86,7 +87,9 @@ import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/use
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { attachmentCanvasUrlResolvers } from '../../utils/attachment-display-resolvers';
 import { buildAttachmentValidationNotification } from '../../utils/attachment-validation-notification';
+import { markFirstScreenRendered } from '../../utils/load-idle';
 import ConversationInput from '../ConversationInputLoader/ConversationInputLoader';
+import ConversationMessageItem from '../ConversationMessageItemLoader/ConversationMessageItemLoader';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOverlay';
@@ -94,7 +97,6 @@ import { useSkillSelectorOverlay } from '../SkillSelector/useSkillSelectorOverla
 import UsageLimitBanner from '../UsageLimitBanner/UsageLimitBanner';
 import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 import ConversationFileManagerModal from './ConversationFileManagerModal';
-import ConversationMessageItem from './ConversationMessageItem';
 import ConversationReadOnlyFooter from './ConversationReadOnlyFooter';
 import { ConversationReloadNotification } from './ConversationReloadNotification';
 import { getInputMessageHistory } from './utils/message-display';
@@ -256,6 +258,12 @@ const ConversationView: FC<Props> = ({
     onOpenChange: onModelPickerOpenChange,
   } = useDeploymentSelectorOverlay();
   const { t } = useTranslation();
+  /* The view's first commit is the first screen: deferred overlays and
+   * preloads wait for it (`scheduleAfterLoadIdle`), so they stay out of the
+   * render that paints the greeting or the messages. */
+  useEffect(() => {
+    markFirstScreenRendered();
+  }, []);
   const {
     items,
     setSelectedItemId,

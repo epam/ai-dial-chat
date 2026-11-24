@@ -157,7 +157,16 @@ Every slice keeps the app working.
 
   With the environment limits of 1.7: the full test suites of `chat`, `mcp-apps`, `attachment-canvas`, `chat-shared`, `chat-hooks` and `toolset-editor` ran 4,702 tests and 313 files; two `chat` files that failed under the parallel run (`CelebrationHost.integration.spec.tsx`, `quickAppDefinition.spec.tsx`) pass in isolation (55/55). ESLint and Prettier pass on every changed file; `validate:docs` and `validate:specs` pass.
 
-## 6. Follow-ups (out of scope, record only)
+## 6. Second round (`design.md` D4 revision, D6, D7)
 
-- [ ] 6.1 Open a follow-up for the markdown engine in the conversation route closure (100 KB gz, used by `AgentDescription` on the welcome screen). It needs a decision on a plain-text fallback for the description.
-- [ ] 6.2 Open a follow-up in the UI kit repository for `EllipsisTooltip` `use-truncation` measurement: 113 ms of main-thread time before LCP in the profile.
+- [x] 6.1 Load messages outside the home route's graph (`design.md` D6):
+  - Add `apps/chat/src/utils/conversation-message-loader.ts` and `apps/chat/src/components/ConversationMessageItemLoader/ConversationMessageItemLoader.tsx`, and render messages through the loader in `ConversationView`.
+  - In `app.tsx`, start the load at once except on `/`, where it waits for the post-load idle point.
+  - Tests: `ConversationMessageItemLoader.spec.tsx`; the message-memo and message-timestamps specs preload the module, as a conversation route does.
+  - `check-route-graph.mjs` with the markdown packages forbidden: 13 chunks, 45.1 KB gzip, none reachable.
+- [x] 6.2 Gate the skill details panel with `apps/chat/src/components/SkillSelector/SkillDetailsPanelGate.tsx` (`design.md` D7). Tests: `SkillDetailsPanelGate.spec.tsx`.
+- [x] 6.3 Make the post-load idle point wait for the first screen (`design.md` D4):
+  - Add `markFirstScreenRendered` in `apps/chat/src/utils/load-idle.ts`, called from `ConversationView`'s first commit, with a 3000 ms fallback after `load`.
+  - Extend `apps/chat/src/utils/tests/load-idle.spec.ts` with the first-screen wait and its fallback.
+- [x] 6.4 Re-measure against the first-round build: median LCP 6588 → 5872 ms, and lazy JS before LCP 732 → 136 KB (`design.md` "Results").
+- [x] 6.5 `EllipsisTooltip` `use-truncation` is not a real cost. A trace with layout stacks shows it forces no layout; the 113 ms in the first CPU profile was a source-map misattribution in the minified vendor chunk. The forced layouts before LCP (~92 ms of 95 ms) come from `react-window`'s layout effect in `libs/conversation-panel`'s `ConversationList`, handled separately.

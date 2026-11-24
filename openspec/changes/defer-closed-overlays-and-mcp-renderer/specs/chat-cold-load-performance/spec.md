@@ -35,7 +35,12 @@ Accessibility, RTL and feature gating are unchanged: the fallback is the existin
 
 ### Requirement: Closed lazy overlays mount after the page has loaded
 
-`apps/chat` SHALL NOT render a lazily loaded overlay while it is closed until the post-load idle point. That point is the first idle period after the document `load` event, bounded by a 2000 ms timeout, or a 2000 ms timer where `requestIdleCallback` is unavailable (`scheduleAfterLoadIdle` in `apps/chat/src/utils/load-idle.ts`).
+`apps/chat` SHALL NOT render a lazily loaded overlay while it is closed until the post-load idle point (`scheduleAfterLoadIdle` in `apps/chat/src/utils/load-idle.ts`). That point is the first idle period, bounded by a 2000 ms timeout (or a 2000 ms timer where `requestIdleCallback` is unavailable), after both of these:
+
+- the document `load` event;
+- the route's first screen, which `ConversationView` reports through `markFirstScreenRendered` on its first commit. A route that never reports one stops waiting 3000 ms after `load`.
+
+`load` alone is not enough: in a single-page app it fires while the route is still rendering, so work scheduled from it ran inside the render that paints the LCP element.
 
 - An overlay that opens before that point mounts when it opens.
 - Once mounted, an overlay stays mounted, so close transitions, focus return and live-region announcements behave as before.
@@ -48,6 +53,7 @@ Accessibility, RTL and feature gating are unchanged: the fallback is the existin
 | `SigninInterruptDialog` | a non-empty `pendingEvents` from `useClientChannel` (`apps/chat/src/context/ClientChannelContext.tsx`) | `apps/chat/src/components/SigninInterruptGate/SigninInterruptGate.tsx` |
 | `CatalogModal` | `isCatalogOpen` in `useDeploymentSelectorOverlay` and `useDeploymentSelectorFieldOverlay` | the same hooks |
 | `PromptCatalogModal` | the `isOpen` argument of the prompt catalog render callback in `usePromptSelectorOverlay` | `apps/chat/src/components/PromptSelector/PromptCatalogGate.tsx` |
+| `SkillDetailsPanelContainer` | a non-null `skillId` passed by the `@epam/ai-dial-skills` skill selector | `apps/chat/src/components/SkillSelector/SkillDetailsPanelGate.tsx` |
 
 Each gate SHALL decide through `useDeferredOverlayMount` (`apps/chat/src/hooks/useDeferredOverlayMount.ts`). It combines two hooks:
 
@@ -63,7 +69,7 @@ No user-visible string, ARIA contract, RTL behaviour or feature gate changes.
 #### Scenario: Cold load of `/`
 
 - **WHEN** an authenticated user loads `/` with an empty cache in a production build and opens nothing
-- **THEN** no request for the `ConversationSourcesPanel`, `McpAppCanvasContainer`, `SigninInterruptDialog`, `OnboardingHints`, `CatalogModal` or `PromptCatalogModal` chunk starts before the post-load idle point
+- **THEN** no request for the `ConversationSourcesPanel`, `McpAppCanvasContainer`, `SigninInterruptDialog`, `OnboardingHints`, `CatalogModal`, `PromptCatalogModal` or `SkillDetailsPanelContainer` chunk starts before the post-load idle point
 - **AND** after that point those overlays mount closed and their chunks are requested
 
 #### Scenario: Opening an overlay before the page has loaded
@@ -89,3 +95,23 @@ No user-visible string, ARIA contract, RTL behaviour or feature gate changes.
 - **WHEN** the client channel delivers the first pending sign-in event before the post-load idle point
 - **THEN** `SigninInterruptGate` mounts `SigninInterruptDialog`, which shows the event
 - **AND** after the last event resolves it stays mounted, so its success announcement is still delivered through its live region
+
+### Requirement: Conversation messages load outside the home route's graph
+
+`ConversationView` (`apps/chat/src/components/ConversationView/ConversationView.tsx`) SHALL render each message through `ConversationMessageItemLoader` (`apps/chat/src/components/ConversationMessageItemLoader/ConversationMessageItemLoader.tsx`), never through a static import of `ConversationMessageItem`. The message bubbles, stages and citations, and the markdown engine they import (unified, micromark, `hast-util-raw`), are then outside the static graph of the conversation route that `/` loads.
+
+- `loadConversationMessageItem` (`apps/chat/src/utils/conversation-message-loader.ts`) loads the module once, and retries after a failed chunk request.
+- `apps/chat/src/app/app.tsx` SHALL start that load at module scope on every entry path except `/`, where messages can be the LCP element. On `/` it starts at the post-load idle point.
+- When the module has already loaded, the loader SHALL render the message in the same commit, without suspending, so a conversation page does not wait out React's Suspense fallback throttle. Otherwise it renders through `React.lazy` behind a `null` fallback.
+- The rendering path is chosen once per instance, so a message never remounts.
+
+#### Scenario: Cold load of `/`
+
+- **WHEN** an authenticated user loads `/` with an empty cache in a production build
+- **THEN** the static closure of the conversation route chunk contains no unified, micromark, `hast-util-raw` or `react-markdown` code
+
+#### Scenario: Opening an existing conversation directly
+
+- **WHEN** a user loads a conversation URL with messages
+- **THEN** the message chunk is requested alongside the page module
+- **AND** each message renders without a Suspense fallback once that chunk has arrived
