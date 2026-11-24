@@ -54,7 +54,7 @@ export interface EmbeddedApplicationSaveAdapterParams {
   /** Runs the embedded editor's own save of the edited application. */
   runEmbeddedSave: () => Promise<void>;
   /**
-   * Runs right before every `runEmbeddedSave`, with the id the embedded editor saves to: the original, also when the save is for a new version. A rejection aborts that save, and a fork made for a new version is deleted. Absent means nothing runs.
+   * Runs right before every `runEmbeddedSave`, with the id the embedded editor saves to: the original, also when the save is for a new version. A rejection aborts that save, and a fork made for a new version is deleted. Absent means nothing runs. When this step has written something and `runEmbeddedSave` then fails, the write stays: the host's step is not undone and a retry runs it again, so the host must make it idempotent or skip it once done.
    */
   beforeEmbeddedSave?: (applicationId: string) => Promise<void>;
   /** Translated message for a fork whose commit failed, naming the new version. */

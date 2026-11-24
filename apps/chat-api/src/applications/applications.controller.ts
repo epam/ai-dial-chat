@@ -362,7 +362,7 @@ export class ApplicationsController {
   @ApiResponse({
     status: 403,
     description:
-      'Caller lacks permission to create applications in their bucket, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available, or, with `code` `applicationResourceDependenciesNotAllowed`, only an administrator can change the resource dependencies',
+      'Caller lacks permission to create applications in their bucket, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available',
     type: ApplicationErrorDto,
   })
   @ApiResponse({

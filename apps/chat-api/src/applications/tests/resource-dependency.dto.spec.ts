@@ -1,7 +1,6 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { describe, expect, it } from 'vitest';
-import { CreateApplicationBodyDto } from '../dto/create-application.dto';
 import {
   ApplicationResourceDependencyDto,
   MAX_RESOURCE_DEPENDENCIES,
@@ -130,21 +129,6 @@ describe('resourceDependencies on the application bodies', () => {
     expect(errors.some((e) => e.property === 'resourceDependencies')).toBe(
       true,
     );
-  });
-
-  it('accepts and rejects entries on create', async () => {
-    const build = (list: unknown) =>
-      validate(
-        plainToInstance(CreateApplicationBodyDto, {
-          name: 'My App',
-          resourceDependencies: list,
-        }),
-        { whitelist: true, forbidNonWhitelisted: true },
-      );
-    expect(await build([entry()])).toHaveLength(0);
-    expect(
-      (await build([entry({ access: ['SHARE'] })])).length,
-    ).toBeGreaterThan(0);
   });
 
   it('keeps a stored administrator entry byte-exact', async () => {

@@ -516,7 +516,7 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks permission to create applications in their bucket, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available, or, with `code` `applicationResourceDependenciesNotAllowed`, only an administrator can change the resource dependencies",
+            "description": "Caller lacks permission to create applications in their bucket, or, with `code` `applicationDependentResourceMissing`, a resource the application depends on is no longer available",
             "content": {
               "application/json": {
                 "schema": {
@@ -14268,14 +14268,6 @@
           "primaryLocale": {
             "type": "string",
             "example": "en"
-          },
-          "resourceDependencies": {
-            "maxItems": 100,
-            "description": "Resource dependencies the application requests. Omit to send none.",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ApplicationResourceDependencyDto"
-            }
           }
         },
         "required": ["name"]

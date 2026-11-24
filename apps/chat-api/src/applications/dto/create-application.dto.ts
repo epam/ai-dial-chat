@@ -36,10 +36,6 @@ import {
   RESOURCE_VERSION_VALIDATION_MESSAGE,
 } from '../../common/validators/resource-version.pattern';
 import { IsValidFilePath } from '../../files/dto/file-path.validator';
-import {
-  ApplicationResourceDependencyDto,
-  MAX_RESOURCE_DEPENDENCIES,
-} from './resource-dependency.dto';
 
 export class CreateApplicationBodyDto {
   @ApiProperty({ example: 'My App', maxLength: ENTITY_NAME_MAX_LENGTH })
@@ -187,19 +183,6 @@ export class CreateApplicationBodyDto {
   @IsString()
   @Matches(LOCALE_CODE_PATTERN, { message: LOCALE_CODE_VALIDATION_MESSAGE })
   primaryLocale?: string;
-
-  @ApiPropertyOptional({
-    type: () => [ApplicationResourceDependencyDto],
-    maxItems: MAX_RESOURCE_DEPENDENCIES,
-    description:
-      'Resource dependencies the application requests. Omit to send none.',
-  })
-  @IsArray()
-  @ArrayMaxSize(MAX_RESOURCE_DEPENDENCIES)
-  @ValidateNested({ each: true })
-  @Type(() => ApplicationResourceDependencyDto)
-  @IsOptional()
-  resourceDependencies?: ApplicationResourceDependencyDto[];
 }
 
 export class CreatedApplicationDto {

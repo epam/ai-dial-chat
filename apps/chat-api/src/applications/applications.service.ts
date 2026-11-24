@@ -279,13 +279,6 @@ export class ApplicationsService {
       if (body.topics != null && body.topics.length > 0)
         dialBody.descriptionKeywords = body.topics;
       if (endpoint != null) dialBody.endpoint = endpoint;
-      if (
-        body.resourceDependencies != null &&
-        body.resourceDependencies.length > 0
-      )
-        dialBody.resource_dependencies = toDialResourceDependencies(
-          body.resourceDependencies,
-        );
       const effectiveFeatures = body.features ?? features;
       if (effectiveFeatures != null)
         dialBody.features = effectiveFeatures as (typeof dialBody)['features'];

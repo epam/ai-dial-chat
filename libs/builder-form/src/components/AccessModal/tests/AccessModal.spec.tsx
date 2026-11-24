@@ -22,6 +22,7 @@ const options: AccessContentOption[] = [
     allowedAccess: [AccessLevel.Read, AccessLevel.ReadWrite],
   },
   { id: 'c', label: 'Gamma', allowedAccess: [AccessLevel.Read] },
+  { id: 'w', label: 'Writer', allowedAccess: [AccessLevel.ReadWrite] },
 ];
 
 const user = userEvent.setup({ delay: null });
@@ -90,8 +91,6 @@ describe('AccessModal', () => {
     renderModal();
     const [first] = cards();
     await choose(contentSelect(first), 'Alpha');
-    expect(cards()).toHaveLength(1);
-    await choose(accessSelect(first), 'Read');
     expect(cards()).toHaveLength(2);
   });
 
@@ -112,16 +111,38 @@ describe('AccessModal', () => {
     ]);
   });
 
-  it('drops a card with only content chosen on save', async () => {
+  it('defaults the access of a chosen content to read and keeps the entry on save', async () => {
     const { onSave } = renderModal([
       { contentId: 'a', level: AccessLevel.Read },
     ]);
     await choose(contentSelect(cards()[1]), 'Beta');
+    expect(accessSelect(cards()[1]).getAttribute('value')).toBe('Read');
 
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(onSave).toHaveBeenCalledWith([
       { contentId: 'a', level: AccessLevel.Read },
+      { contentId: 'b', level: AccessLevel.Read },
+    ]);
+  });
+
+  it('keeps Save enabled while a card has only content chosen', async () => {
+    renderModal();
+    await choose(contentSelect(cards()[0]), 'Alpha');
+
+    expect(
+      screen.getByRole('button', { name: 'Save' }).hasAttribute('disabled'),
+    ).toBe(false);
+  });
+
+  it('defaults to the first allowed level when the content does not allow read', async () => {
+    const { onSave } = renderModal();
+    await choose(contentSelect(cards()[0]), 'Writer');
+
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(onSave).toHaveBeenCalledWith([
+      { contentId: 'w', level: AccessLevel.ReadWrite },
     ]);
   });
 

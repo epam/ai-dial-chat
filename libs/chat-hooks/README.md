@@ -5848,7 +5848,11 @@ Each one takes a configured generated client and never creates one:
   `beforeEmbeddedSave(applicationId)` is an optional host step that runs right
   before every `runEmbeddedSave` (after the fork, for a new version) with the
   original's id; a rejection aborts that save and deletes the fork, and
-  without it nothing changes.
+  without it nothing changes. If the step succeeds and `runEmbeddedSave` then
+  fails, what the step wrote stays written and is not undone, and a retry runs
+  the step again; the Access step relies on its baseline already being reset,
+  so after such a failure the stored Access list is the new one, the rest of
+  the form is not saved, and the retry sends no Access request.
 
   It also gives the adapter `saveIntoOrgUnit(id, folderPath)`, which copies the
   saved application into an org-unit folder of the public bucket through

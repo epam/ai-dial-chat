@@ -3498,12 +3498,6 @@ export interface CreateApplicationBodyDto {
    * @memberof CreateApplicationBodyDto
    */
   primaryLocale?: string;
-  /**
-   * Resource dependencies the application requests. Omit to send none.
-   * @type {Array<ApplicationResourceDependencyDto>}
-   * @memberof CreateApplicationBodyDto
-   */
-  resourceDependencies?: Array<ApplicationResourceDependencyDto>;
 }
 /**
  *

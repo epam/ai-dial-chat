@@ -106,8 +106,27 @@ describe('resetLevelForOption', () => {
     );
   });
 
-  it('leaves an unset level unset', () => {
-    expect(resetLevelForOption(readOnlyOption, '')).toBe('');
+  it('defaults an unset level to read when the option allows it', () => {
+    expect(resetLevelForOption(readOnlyOption, '')).toBe(AccessLevel.Read);
+    expect(resetLevelForOption(readWriteOption, '')).toBe(AccessLevel.Read);
+  });
+
+  it('defaults an unset level to the first allowed one when the option does not allow read', () => {
+    const writeOnly: AccessContentOption = {
+      id: 'w',
+      label: 'Writer',
+      allowedAccess: [AccessLevel.ReadWrite],
+    };
+    expect(resetLevelForOption(writeOnly, '')).toBe(AccessLevel.ReadWrite);
+    expect(resetLevelForOption(writeOnly, AccessLevel.Read)).toBe(
+      AccessLevel.ReadWrite,
+    );
+  });
+
+  it('leaves the level empty for an option that allows nothing', () => {
+    expect(
+      resetLevelForOption({ id: 'n', label: 'None', allowedAccess: [] }, ''),
+    ).toBe('');
   });
 
   it('leaves the level alone when the option is unknown', () => {

@@ -79,13 +79,14 @@ The editor page is already a lazy route chunk, and `AccessField` renders `Access
 - **Nothing works until the app is published and approved** -> the notice states it; no indicator in this change.
 - **Core default (flag off) refuses every non-admin change, whoever owns the bucket** (Core decides on the caller not being an administrator) -> the refusal is non-blocking: the save completes without the new list, a warning says the access was not saved, and the draft is kept; removing a chip from an administrator-authored list is refused the same way. Consequence: a published copy then carries the list it had before. Accepted: the section stays visible to everyone for now.
 - **Partial success** (definition saved, Access refused or failed) -> explicit in D6, draft kept, a warning for the user-authored-dependencies refusal and an error for anything else.
+- **Embedded save fails after the Access step** -> the Access step runs before the embedded editor's save (and before the commit of a new version) on purpose, so a refusal aborts before anything is written. When the editor's own save then fails, the stored Access list stays written while the rest of the form is not. A retry sends no Access request, because the baseline was already reset by the successful step; for a new version the fork is deleted and nothing is committed, but the source keeps the new list. Accepted: reordering would let a refusal leave the editor's edits written without the list.
 - **A write race** if another writer saves the same application at the same time -> the Access step reads fresh stored state in the read-modify-write; ordering after the definition's save is the only guarantee we give.
 - **Coupling to Core's 403 text** -> D7 fallback and a pinned test.
 - **Conversations access is sensitive** -> included by product choice; stronger wording is open question 2.
 
 ## Migration Plan
 
-Additive and optional end to end: new optional DTO field, a new read endpoint, new optional UI. Deploy chat-api first, then the frontend. Rollback: revert the frontend (the section disappears) or both; applications keep their stored `resource_dependencies`, and later non-admin writes preserve them because an omitted field keeps the stored list.
+Additive and optional end to end: new optional update-DTO field, a new read endpoint, new optional UI. Deploy chat-api first, then the frontend. Rollback: revert the frontend (the section disappears) or both; applications keep their stored `resource_dependencies`, and later non-admin writes preserve them because an omitted field keeps the stored list.
 
 ## Open Questions
 

@@ -248,6 +248,14 @@ describe('ApplicationsController (integration)', () => {
       expect(service.createApplication).not.toHaveBeenCalled();
     });
 
+    it('returns 400 when resourceDependencies is sent, as create no longer takes it', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/applications')
+        .send({ name: 'My App', resourceDependencies: [storedEntry] })
+        .expect(400);
+      expect(service.createApplication).not.toHaveBeenCalled();
+    });
+
     it('returns 409 when service throws ConflictException', async () => {
       service.createApplication.mockRejectedValue(new ConflictException());
       await request(app.getHttpServer())
@@ -475,44 +483,6 @@ describe('ApplicationsController (integration)', () => {
         .get('/api/v1/applications/..%2Fsecret/resource-dependencies')
         .expect(400);
       expect(service.getApplicationResourceDependencies).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('POST /api/v1/applications with resourceDependencies', () => {
-    const body = { name: 'My App', resourceDependencies: [storedEntry] };
-
-    it('forwards a valid list to the service', async () => {
-      await request(app.getHttpServer())
-        .post('/api/v1/applications')
-        .send(body)
-        .expect(201);
-      expect(service.createApplication).toHaveBeenCalledWith(
-        TEST_USER.sub,
-        TEST_USER.at,
-        body,
-      );
-    });
-
-    it('returns 400 for a malformed entry without calling the service', async () => {
-      await request(app.getHttpServer())
-        .post('/api/v1/applications')
-        .send({
-          ...body,
-          resourceDependencies: [{ ...storedEntry, access: [] }],
-        })
-        .expect(400);
-      expect(service.createApplication).not.toHaveBeenCalled();
-    });
-
-    it('returns the coded 403 when Core refuses the dependencies', async () => {
-      service.createApplication.mockRejectedValue(notAllowed403());
-      const res = await request(app.getHttpServer())
-        .post('/api/v1/applications')
-        .send(body)
-        .expect(403);
-      expect(res.body).toMatchObject({
-        code: 'applicationResourceDependenciesNotAllowed',
-      });
     });
   });
 

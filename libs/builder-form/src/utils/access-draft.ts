@@ -59,16 +59,20 @@ export const buildAccessDraft = (value: AccessEntry[]): AccessDraftCard[] =>
   );
 
 /**
- * Returns the level when the option allows it, otherwise `Read`; an unset level stays unset.
+ * Returns the level the card keeps for the option: the held level when the
+ * option allows it, otherwise `Read`, or the option's first allowed level when
+ * it does not allow `Read`. An unknown option leaves the level as it is.
  * @param option - the option the card now holds
- * @param level - the level the card held
+ * @param level - the level the card held, `''` while none is chosen
  */
 export const resetLevelForOption = (
   option: AccessContentOption | undefined,
   level: AccessLevel | '',
 ): AccessLevel | '' => {
-  if (level === '' || option == null) return level;
-  return option.allowedAccess.includes(level) ? level : AccessLevel.Read;
+  if (option == null) return level;
+  if (level !== '' && option.allowedAccess.includes(level)) return level;
+  if (option.allowedAccess.includes(AccessLevel.Read)) return AccessLevel.Read;
+  return option.allowedAccess[0] ?? '';
 };
 
 /**

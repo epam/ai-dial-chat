@@ -242,6 +242,29 @@ describe('resource save adapters', () => {
       expect(save).toBeLessThan(commit);
     });
 
+    it('keeps what the step wrote and propagates the error when the embedded save fails after it', async () => {
+      runEmbeddedSave.mockRejectedValue(new Error('editor failed'));
+
+      await expect(adapter.saveInPlace()).rejects.toThrow('editor failed');
+
+      expect(beforeEmbeddedSave).toHaveBeenCalledOnce();
+      expect(runEmbeddedSave).toHaveBeenCalledOnce();
+    });
+
+    it('runs the step once, deletes the fork and never commits when the embedded save fails after it for a new version', async () => {
+      runEmbeddedSave.mockRejectedValue(new Error('editor failed'));
+
+      await expect(adapter.saveAsNewVersion?.('1.1.0', [])).rejects.toThrow(
+        'editor failed',
+      );
+
+      expect(beforeEmbeddedSave).toHaveBeenCalledOnce();
+      expect(applicationsApi.deleteApplication).toHaveBeenCalledWith({
+        applicationName: SNAPSHOT,
+      });
+      expect(applicationsApi.commitApplicationVersion).not.toHaveBeenCalled();
+    });
+
     it('aborts an in-place save when it rejects, without running the embedded save', async () => {
       beforeEmbeddedSave.mockRejectedValue(new ResourceSaveError('no'));
 
