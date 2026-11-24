@@ -20,7 +20,7 @@ The panel opens when creating a resource, and when editing one the user owns (`i
 
 In create mode the editor passes a `ResourceCreateSaveAdapter` (`createIn(folderPath)`, `libs/chat-hooks/src/catalog/resource-save-adapter.ts`) and the panel offers no Version section; the version comes from the form. A new Quick App, which that Save only starts before its embedded editor is set up, SHALL offer the Personal root only; after the create the page switches to edit mode in place, and later Saves offer both roots.
 
-State ownership: each editor owns `isOpen` and the adapter it built when the panel opened; `useResourceSavePanel` (`libs/chat-hooks/src/catalog/useResourceSavePanel/useResourceSavePanel.ts`) owns the committed destination, the version mode, the new-version value, the version error, the access rules and the submitting state.
+State ownership: each editor owns `isOpen` and the adapter it built when the panel opened; `useResourceSavePanel` (`libs/chat-hooks/src/catalog/useResourceSavePanel/useResourceSavePanel.ts`) owns the committed destination, the version mode, the new-version value, the version error and the submitting state.
 
 #### Scenario: Save opens the panel without persisting
 - **WHEN** a user edits an existing Quick App, toolset, custom app, schema-form app, prompt or skill they own and clicks Save with a valid form
@@ -174,8 +174,8 @@ On the panel's Save, `runResourceSave` (`libs/chat-hooks/src/catalog/resource-sa
 | Org-unit folder the user may write to, New | New | `saveAsNewVersion(version, currentPersonalFolder)`, then the direct write of the new id into the unit folder; no `publishCatalogEntity` |
 | Org-unit folder the user may write to (create) | — | `createIn([])`, then the direct write into the unit folder; no `publishCatalogEntity` |
 
-An Organization destination takes a direct-write row only when it lies inside an org unit whose owner grants `write` on the resource type's namespace and the rights are loaded (`org-units-folder-permissions`); every other Organization destination keeps the publish rows. The access rules editor SHALL NOT render for a direct-write destination, and a failure of the direct write after the first step SHALL be reported like a failed publish (`ResourceSavePanelI18nKeys.SavedButPublishFailed` is replaced there by a dedicated key naming the unit folder).
-In the Change folder view, while an Organization folder is selected, the access rules editor (`PublishAccessRules`) SHALL render below the tree, pre-filled with that folder's existing rules. The publish request SHALL carry those rules, and no `author` and no `publishCredentials`. While the committed destination is an Organization folder whose rules are still loading or failed to load, Save SHALL be disabled and `submit` SHALL do nothing, so a publish never sends empty rules over the folder's existing ones. After a successful publish the orchestrator SHALL call `rememberPublishFolder(folderPath)`.
+An Organization destination takes a direct-write row only when it lies inside an org unit whose owner grants `write` on the resource type's namespace and the rights are loaded (`org-units-folder-permissions`); every other Organization destination keeps the publish rows. A failure of the direct write after the first step SHALL be reported like a failed publish (`ResourceSavePanelI18nKeys.SavedButPublishFailed` is replaced there by a dedicated key naming the unit folder).
+The Save panel SHALL NOT render an access-rules editor for any destination and SHALL NOT load folder rules. The publish request SHALL carry no `rules`, no `author` and no `publishCredentials`, so DIAL Core keeps the folder's existing rules. After a successful publish the orchestrator SHALL call `rememberPublishFolder(folderPath)`.
 
 Notifications, shown on success through `useOperationNotification` / `useNotification` helpers:
 
@@ -204,9 +204,9 @@ While a save runs, every panel control SHALL be disabled, and the Save button SH
 - **WHEN** the save succeeds and the move into the Personal root fails
 - **THEN** the "SavedButMoveFailed" notification names the folder "Personal" (`CatalogI18nKeys.FolderPersonal`), not "Organization"
 
-#### Scenario: Organization rules not loaded
-- **WHEN** the committed destination is Organization `EPAM` and its rules are still loading or failed to load
-- **THEN** Save is disabled and no save or publish request is sent
+#### Scenario: Organization destination shows no rules editor
+- **WHEN** the committed destination is Organization `EPAM`
+- **THEN** no access-rules section renders in the Change folder view, no folder-rules request is made, and Save is enabled once the destination and version are valid
 
 #### Scenario: New version keeps the old version unchanged
 - **WHEN** the user saves toolset `search@1.0.0`, with unsaved edits, as new version `1.1.0` in Personal
@@ -214,7 +214,7 @@ While a save runs, every panel control SHALL be disabled, and the Save button SH
 
 #### Scenario: Organization destination saves then publishes
 - **WHEN** the user keeps the version and selects Organization `EPAM/Delivery`
-- **THEN** the resource is saved in place, then a publication request is created with `folderPath: "EPAM/Delivery"`, the folder's access rules and no author, and the `EntityOperation.PublishRequested` notification shows
+- **THEN** the resource is saved in place, then a publication request is created with `folderPath: "EPAM/Delivery"`, no `rules` and no author, and the `EntityOperation.PublishRequested` notification shows
 
 #### Scenario: Direct write into a unit
 - **WHEN** the user holds `write` on `applications` in unit `Delivery`, keeps the version and selects `Delivery/Teams`

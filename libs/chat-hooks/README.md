@@ -5602,8 +5602,6 @@ returns `panelProps` to spread on `StandaloneSaveToFolderPanel` from
 - the version choice, checked against `versionPattern` and reported as a
   `ResourceSaveVersionError` (`Invalid`, `Unchanged`, `Exists`) that
   `labels.getVersionError` turns into text;
-- the access rules of the pending Organization folder, fetched with
-  `publishClient.getPublishRules`, and kept while the same folder stays chosen;
 - the private dependencies of what is being saved: pass `loadDependencies`
   (`() => Promise<PublishDependency[]>`, already mapped with
   `mapResourceDependencyDto`) and `panelProps.dependencies` holds its result while
@@ -5655,7 +5653,8 @@ hook reads no i18n, app context or storage.
 `runResourceSave(adapter, choice, publish)` is the orchestrator the hook runs.
 With an edit adapter (`ResourceEditSaveAdapter`) it saves in place or as a
 new version, then moves into another Personal folder, or publishes to an
-Organization folder. With a create adapter (`ResourceCreateSaveAdapter`, told
+Organization folder. The publish request carries no access rules, so DIAL Core keeps any
+rules already stored on the folder. With a create adapter (`ResourceCreateSaveAdapter`, told
 apart by `isResourceCreateAdapter`) it calls `createIn` with the chosen
 Personal folder, or with the root before publishing; the result's `isCreated`
 is then `true`, and the panel offers no version choice. A failure after the save resolves with the
@@ -5668,9 +5667,7 @@ when `choice.isDirectWrite` is `true` and the adapter has `saveIntoOrgUnit`
 `saveIntoOrgUnit(savedId, folderPath)` replaces `publish`, and the result's
 `isWrittenToOrgUnit` is `true`. `useResourceSavePanel` sets `isDirectWrite`
 from its optional `canSaveDirectlyTo(folderPath)` parameter (for example from
-`buildFolderGuards`), only for the Organization root, and for such a
-destination it fetches no rules, does not wait for them and hides the rules
-editor through `accessRules.isHiddenFor`. Without the parameter every
+`buildFolderGuards`), only for the Organization root. Without the parameter every
 Organization destination keeps the publish rows. The optional
 `getDisabledReason(folderPath, root)` parameter (for example the guards'
 `getDisabledReason`) is returned to the panel as
@@ -5712,7 +5709,6 @@ const { panelProps } = useResourceSavePanel({
     ),
   getMissingNamespacesReason: (missing) =>
     `You have no write access to ${missing.join(', ')} in this folder`,
-  ruleSourceOptions: ['roles'],
   labels: {
     personalRoot: 'Personal',
     organizationRoot: 'Organization',

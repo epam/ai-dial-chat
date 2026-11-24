@@ -14,8 +14,9 @@ The backend SHALL expose authenticated `POST /api/v1/catalog/{entityType}/{entit
 
 - required `folderPath: string`, validated with `IsValidFilePath`;
 - optional `version?: string`, validated with `@IsOptional()` and `@IsString()`;
-- optional `author?: string`, validated with `@IsOptional()`, `@IsString()`, `@MaxLength(200)`, and `@Matches(/^[^\p{Cc}]*$/u)`;
-- optional validated `rules?: PublishRuleDto[]` under the existing maximum and nested-validation constraints.
+- optional `author?: string`, validated with `@IsOptional()`, `@IsString()`, `@MaxLength(200)`, and `@Matches(/^[^\p{Cc}]*$/u)`.
+
+`PublishCatalogEntityDto` SHALL NOT declare a `rules` field. Because the global `ValidationPipe` uses `forbidNonWhitelisted`, a request that still sends `rules` SHALL be rejected with 400 before Core is called. The `createPublication` body built by `PublishService.publish` SHALL NOT contain a `rules` key, so DIAL Core leaves the target folder's existing publication rules untouched.
 
 Existing callers MAY continue sending `version`. When it is absent or empty, `PublishService` SHALL recover it from a versioned `{name}__{version}` resource id. An unversioned Prompt or Skill SHALL use an empty string in `PublishResultDto.version`, and the Core publication title SHALL contain only the decoded resource name without a synthetic version or trailing space.
 
@@ -32,8 +33,7 @@ Content-Type: application/json
 {
   "folderPath": "Organization/Data Science",
   "version": "1.2.0",
-  "author": "DIAL Team",
-  "rules": []
+  "author": "DIAL Team"
 }
 ```
 
@@ -46,8 +46,7 @@ POST /api/v1/catalog/skill/skills%2Fbucket-123%2Fteam-a%2Fdocs-helper/publish
 Content-Type: application/json
 
 {
-  "folderPath": "Organization/Data Science",
-  "rules": []
+  "folderPath": "Organization/Data Science"
 }
 ```
 
@@ -128,83 +127,18 @@ OpenAPI operation `publishCatalogEntity` SHALL expose `PublishCatalogEntityDto.v
 
 #### Scenario: Invalid request is rejected before Core
 
-- **WHEN** `entityType`, `entityId`, `folderPath`, `version`, `author`, or `rules` fails DTO validation
+- **WHEN** `entityType`, `entityId`, `folderPath`, `version`, or `author` fails DTO validation, or the body carries a field the DTO does not declare (such as `rules`)
 - **THEN** the request returns 400 without calling Core
+
+#### Scenario: Core request carries no rules
+
+- **WHEN** a valid publish request reaches `PublishService.publish`
+- **THEN** the `createPublication` body has no `rules` key, and the folder's existing Core rules are unchanged
 
 #### Scenario: Core rejects publication
 
 - **WHEN** Core denies access or returns a structured upstream failure
 - **THEN** the BFF maps it to the documented 403/502/503 response without logging tokens or request bodies
----
-
-### Requirement: Publish request accepts optional, validated access rules
-`PublishCatalogEntityDto` SHALL gain an optional `rules?: PublishRuleDto[]` field (`@IsOptional`, `@IsArray`, `@ArrayMaxSize(20)`, `@ValidateNested({ each: true })`, `@Type(() => PublishRuleDto)`). `PublishRuleDto` (new, `apps/chat-api/src/publish/dto/publish-rule.dto.ts`) SHALL validate:
-- `source: string` — `@IsString`, `@IsNotEmpty`, `@MaxLength(200)`.
-- `function: PublishRuleFunction` — `@IsEnum(PublishRuleFunction)`, where `PublishRuleFunction` has exactly the members `Equal = 'EQUAL'`, `Contain = 'CONTAIN'`, `Regex = 'REGEX'`.
-- `targets: string[]` — `@IsArray`, `@ArrayMinSize(1)`, `@ArrayMaxSize(20)`, `@IsString({ each: true })`, `@IsNotEmpty({ each: true })`, `@MaxLength(200, { each: true })`.
-
-`source` values SHALL NOT be validated against `publish.publicationFilterSources` (or any other allowlist) at the DTO layer — DIAL Core's own `Rule.source` field is untyped `string`, and Core treats an unrecognized source as "never matches" rather than a validation error; enforcing an allowlist here would require the DTO layer to read live, operator-configurable config-registry state, which is a layering violation for a pure request-shape validator. The frontend still only ever offers the configured sources in its selector, so an out-of-allowlist `source` reaching this endpoint can only come from a deliberately hand-crafted request, which Core already neutralizes harmlessly.
-
-`function: REGEX` rules are not required to have `targets.length === 1` at the DTO layer (the same `@ArrayMaxSize(20)` applies uniformly); the UI enforces "exactly one pattern for REGEX" before submission, and a non-UI client sending more than one target under `REGEX` is harmless (Core would only ever evaluate meaningfully against the rule as DIAL Core's own semantics define, and is not a security concern this backend needs to additionally police).
-
-`PublishService.publish`'s `requestBody` SHALL carry `rules: rules ?? []` (the controller forwards `dto.rules`), passed through unchanged to `createPublication`.
-
-#### Scenario: Valid EQUAL rule is accepted
-- **WHEN** a publish request includes `rules: [{ source: 'title', function: 'EQUAL', targets: ['Internal Tools'] }]`
-- **THEN** the request passes validation and Core receives that exact rule object
-
-#### Scenario: Valid multi-target CONTAIN rule is accepted
-- **WHEN** a publish request includes `rules: [{ source: 'roles', function: 'CONTAIN', targets: ['engineering', 'support'] }]`
-- **THEN** the request passes validation and Core receives that exact rule object
-
-#### Scenario: Valid REGEX rule with one target is accepted
-- **WHEN** a publish request includes `rules: [{ source: 'dial_roles', function: 'REGEX', targets: ['^eng-.*$'] }]`
-- **THEN** the request passes validation and Core receives that exact rule object
-
-#### Scenario: Missing rules field defaults to an empty array
-- **WHEN** a publish request omits `rules` entirely
-- **THEN** validation passes and `dto.rules` resolves to `undefined`, and `publish.service.ts` sends Core `rules: []`
-
-#### Scenario: Empty rules array is accepted
-- **WHEN** a publish request includes `rules: []`
-- **THEN** validation passes and Core receives `rules: []`
-
-#### Scenario: Invalid function enum value is rejected with 400
-- **WHEN** a publish request includes a rule with `function: 'MATCHES'` (not a member of `PublishRuleFunction`)
-- **THEN** the `ValidationPipe` rejects the request with 400 before it reaches the service or Core
-
-#### Scenario: Empty source string is rejected with 400
-- **WHEN** a publish request includes a rule with `source: ''`
-- **THEN** the `ValidationPipe` rejects the request with 400
-
-#### Scenario: Empty targets array is rejected with 400
-- **WHEN** a publish request includes a rule with `targets: []`
-- **THEN** the `ValidationPipe` rejects the request with 400 (`@ArrayMinSize(1)`)
-
-#### Scenario: A target that is an empty string is rejected with 400
-- **WHEN** a publish request includes a rule with `targets: ['engineering', '']`
-- **THEN** the `ValidationPipe` rejects the request with 400 (`@IsNotEmpty({ each: true })`)
-
-#### Scenario: More than 20 rules is rejected with 400
-- **WHEN** a publish request includes 21 rule objects
-- **THEN** the `ValidationPipe` rejects the request with 400 (`@ArrayMaxSize(20)` on `PublishCatalogEntityDto.rules`)
-
-#### Scenario: More than 20 targets in one rule is rejected with 400
-- **WHEN** a publish request includes a rule with 21 entries in `targets`
-- **THEN** the `ValidationPipe` rejects the request with 400 (`@ArrayMaxSize(20)` on `PublishRuleDto.targets`)
-
-#### Scenario: A source or target string longer than 200 characters is rejected with 400
-- **WHEN** a publish request includes a rule with a `source` or a `targets` entry longer than 200 characters
-- **THEN** the `ValidationPipe` rejects the request with 400 (`@MaxLength(200)`)
-
-#### Scenario: Malformed nested rule object is rejected with 400
-- **WHEN** a publish request includes `rules: [{ source: 123, function: 'CONTAIN', targets: 'engineering' }]` (wrong types, not arrays/strings as required)
-- **THEN** the `ValidationPipe` rejects the request with 400, since `@ValidateNested` + `@Type(() => PublishRuleDto)` validates the nested object's own decorators
-
-#### Scenario: An unrecognized source is accepted, not rejected
-- **WHEN** a publish request includes a rule with `source: 'not_a_configured_source'` that is not present in `publish.publicationFilterSources`
-- **THEN** the request still passes DTO validation and is forwarded to Core unchanged — the backend does not enforce source-allowlist membership
-
 ---
 
 ### Requirement: Publish history endpoint derives history from Core publications, not chat-api storage
@@ -529,7 +463,7 @@ Example request:
 POST /api/v1/catalog/project/projects%2Fa1b2c3%2Fq4-launch/publish HTTP/1.1
 Content-Type: application/json
 
-{ "folderPath": "Marketing", "rules": [] }
+{ "folderPath": "Marketing" }
 ```
 
 Example `201` response:

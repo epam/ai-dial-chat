@@ -419,7 +419,7 @@ Every key SHALL exist in every locale file.
 `PublishProjectPanelContainer` (`apps/chat/src/components/PublishProjectPanelContainer/PublishProjectPanelContainer.tsx`) SHALL follow the structure of `PublishConversationPanelContainer`:
 
 - `StandalonePublishPanel` from `@epam/ai-dial-publish-panel`;
-- `usePublishFolders`, `usePublishErrorNotification` and `getPublishRules`.
+- `usePublishFolders` and `usePublishErrorNotification`.
 
 It submits through `publishCatalogEntity({ entityType: CatalogPublishEntityType.Project, entityId: projectId, publishCatalogEntityDto })` from `apps/chat/src/server-api/publish.api.ts`. On success it calls `notifyOperationSuccess(NotifiableEntity.Project, EntityOperation.PublishRequested, { name })`, then the optional `onPublished?: () => void` prop, which `ProjectViewPage` uses to re-fetch the project's publish state (see `project-unpublish-flow`). Its strings come from `projects.publish.*` keys, plus the shared publish keys where they exist.
 
