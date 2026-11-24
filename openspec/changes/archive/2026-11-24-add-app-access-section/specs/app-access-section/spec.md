@@ -133,3 +133,10 @@ Every user-visible string of the section SHALL be a translation key filled by th
 #### Scenario: RTL layout
 - **WHEN** the interface language is right-to-left
 - **THEN** the Configure button, chips and card controls mirror without physical left/right classes
+
+### Requirement: No feature flag and no telemetry
+The Access section SHALL NOT be gated by `ENABLED_FEATURES` or `ENABLED_FEATURES_ROLES`: it is shown for every app definition that enables Access (today the Quick App), and who may change the list is decided by DIAL Core. The section SHALL emit no telemetry or metrics of its own.
+
+#### Scenario: Shown without a feature key
+- **WHEN** an app definition enables Access and no feature key is configured
+- **THEN** the Access section is shown
