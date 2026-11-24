@@ -25,6 +25,7 @@ import {
   toDestinationPath,
   toPathSegments,
 } from '../destination-folders';
+import { isHiddenPath } from '../path';
 import type { FileManagerController } from '../file-manager-controller';
 import type { FileManagerDestinationPanelLabels } from '../labels';
 
@@ -71,10 +72,58 @@ export const FileManagerDestinationPanel: FC<
   const rootSegmentCount = toPathSegments(rootPath).length;
   const isMove = request.mode === DestinationFolderMode.Move;
 
-  const [destination, setDestination] = useState<FolderDestination>(() => ({
-    rootKey: ROOT_KEY,
-    path: toPathSegments(request.sourceFolder).slice(rootSegmentCount),
-  }));
+  const movedFolderPaths = useMemo(
+    () =>
+      request.items
+        .filter((item) => item.nodeType === DialFileNodeType.FOLDER)
+        .map((item) => item.path),
+    [request.items],
+  );
+
+  const getDisabledReason = useCallback(
+    ({ path }: FolderDestination): string | undefined => {
+      if (!isMove) return undefined;
+      const destinationPath = toDestinationPath(rootPath, path);
+      if (
+        movedFolderPaths.some((moved) =>
+          isSameOrInsidePath(destinationPath, moved),
+        )
+      ) {
+        return labels.movedIntoItselfTooltip;
+      }
+      if (
+        toPathSegments(destinationPath).join('/') ===
+        toPathSegments(request.sourceFolder).join('/')
+      ) {
+        return labels.sourceFolderTooltip;
+      }
+      return undefined;
+    },
+    [isMove, rootPath, movedFolderPaths, request.sourceFolder, labels],
+  );
+
+  const sourcePath = toPathSegments(request.sourceFolder).slice(
+    rootSegmentCount,
+  );
+  const [destination, setDestination] = useState<FolderDestination>(() => {
+    const source = { rootKey: ROOT_KEY, path: sourcePath };
+    if (!isMove || getDisabledReason(source) == null) return source;
+    /* Move disables the source folder, so the panel opens on the first folder it accepts instead of an error state. */
+    const candidates = [
+      { rootKey: ROOT_KEY, path: [] },
+      ...(root?.items ?? [])
+        .filter(
+          (item) =>
+            item.nodeType === DialFileNodeType.FOLDER &&
+            !isHiddenPath(item.name),
+        )
+        .map((item) => ({
+          rootKey: ROOT_KEY,
+          path: toPathSegments(item.path).slice(rootSegmentCount),
+        })),
+    ];
+    return candidates.find((c) => getDisabledReason(c) == null) ?? source;
+  });
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(
     () => new Set(),
   );
@@ -139,36 +188,6 @@ export const FileManagerDestinationPanel: FC<
       handleExpandedPathsChange,
       loadingPathKeys,
     ],
-  );
-
-  const movedFolderPaths = useMemo(
-    () =>
-      request.items
-        .filter((item) => item.nodeType === DialFileNodeType.FOLDER)
-        .map((item) => item.path),
-    [request.items],
-  );
-
-  const getDisabledReason = useCallback(
-    ({ path }: FolderDestination): string | undefined => {
-      if (!isMove) return undefined;
-      const destinationPath = toDestinationPath(rootPath, path);
-      if (
-        movedFolderPaths.some((moved) =>
-          isSameOrInsidePath(destinationPath, moved),
-        )
-      ) {
-        return labels.movedIntoItselfTooltip;
-      }
-      if (
-        toPathSegments(destinationPath).join('/') ===
-        toPathSegments(request.sourceFolder).join('/')
-      ) {
-        return labels.sourceFolderTooltip;
-      }
-      return undefined;
-    },
-    [isMove, rootPath, movedFolderPaths, request.sourceFolder, labels],
   );
 
   const handleCreateFolder = useCallback(

@@ -24,7 +24,7 @@ describe('PromptFolderField — public class names', () => {
   it('stamps the field root', () => {
     render(<PromptFolderField value="" folders={FOLDERS} onChange={vi.fn()} />);
 
-    const control = screen.getByRole('combobox', { name: 'Folder' });
+    const control = screen.getByRole('combobox', { name: /^Folder/ });
     expect(
       closestWithClass(control, PROMPT_EDITOR_CLASS.folderField),
     ).toBeTruthy();

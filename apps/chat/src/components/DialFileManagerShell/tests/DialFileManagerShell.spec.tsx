@@ -84,9 +84,23 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       item: { title: string; summary?: ReactNode };
       action: { label: string; isDisabled?: boolean; onClick: () => void };
       onClose: () => void;
+      destination?: { path: string[] };
+      onDestinationChange?: (destination: {
+        rootKey: string;
+        path: string[];
+      }) => void;
     }) => (
       <div role="dialog" aria-label={props.labels?.title}>
         <div>{props.item.summary ?? props.item.title}</div>
+        <p aria-label="Destination">{props.destination?.path.join('/')}</p>
+        <button
+          type="button"
+          onClick={() =>
+            props.onDestinationChange?.({ rootKey: 'files', path: ['reports'] })
+          }
+        >
+          Pick reports
+        </button>
         <button type="button" onClick={props.onClose}>
           Close panel
         </button>
@@ -607,9 +621,31 @@ describe('DialFileManagerShell', () => {
       expect(screen.getByText('b.txt')).toBeTruthy();
     });
 
-    it('disables Move while the destination is the source folder', () => {
+    it('starts Copy on the source folder', () => {
+      renderShell({ items: [root] });
+      startRequest(DestinationFolderMode.Copy);
+      expect(screen.getByLabelText('Destination').textContent).toBe('reports');
+    });
+
+    it('starts Move on a folder it accepts, not on the disabled source folder', () => {
       renderShell({ items: [root] });
       startRequest(DestinationFolderMode.Move);
+      expect(screen.getByLabelText('Destination').textContent).toBe('');
+      expect(
+        (
+          screen.getByRole('button', {
+            name: baseLabels.moveDestinationButton,
+          }) as HTMLButtonElement
+        ).disabled,
+      ).toBe(false);
+    });
+
+    it('disables Move once the source folder is picked', async () => {
+      renderShell({ items: [root] });
+      startRequest(DestinationFolderMode.Move);
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Pick reports' }),
+      );
       expect(
         (
           screen.getByRole('button', {
