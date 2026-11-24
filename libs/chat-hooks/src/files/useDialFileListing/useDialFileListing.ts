@@ -51,7 +51,49 @@ export interface UseDialFileListingOptions {
   isActive?: boolean;
   /** Changing this value resets cache and navigation exactly like an `activeTab` change. Defaults to `undefined`. */
   sessionKey?: string;
+  /**
+   * Host rule for whether a public folder is listed, given its decoded path
+   * relative to the public bucket (`Acme/Reports`). Applies only to the
+   * Organization tab: a refused folder is dropped from `items` with its
+   * subtree, search results inside it are dropped, and a current folder inside
+   * it falls back to the root. Omit it to list every folder.
+   */
+  isPublicFolderVisible?: (publicPath: string) => boolean;
 }
+
+/* The decoded public-relative path of a virtual `/<rootLabel>/a/b/` path (`a/b`; `''` for the root). */
+const toPublicPath = (virtualPath: string, rootLabel: string): string => {
+  const trimmed = virtualPath.replace(/^\/+|\/+$/g, '');
+  if (trimmed === rootLabel) return '';
+  return trimmed.startsWith(`${rootLabel}/`)
+    ? trimmed.slice(rootLabel.length + 1)
+    : trimmed;
+};
+
+/* Drops every folder `isVisible` refuses, with its subtree; files and untouched branches keep their identity. */
+const pruneHiddenFolders = (
+  files: DialFile[],
+  isVisible: (virtualPath: string) => boolean,
+): DialFile[] =>
+  files.reduce<DialFile[]>((acc, file) => {
+    if (file.nodeType !== DialFileNodeType.FOLDER) {
+      acc.push(file);
+      return acc;
+    }
+    if (!isVisible(file.path)) return acc;
+    if (!file.items) {
+      acc.push(file);
+      return acc;
+    }
+    const children = pruneHiddenFolders(file.items, isVisible);
+    acc.push(
+      children.length === file.items.length &&
+        children.every((child, index) => child === file.items?.[index])
+        ? file
+        : { ...file, items: children },
+    );
+    return acc;
+  }, []);
 
 /** Values returned by `useDialFileListing`. */
 export interface UseDialFileListingResult {
@@ -124,8 +166,26 @@ export const useDialFileListing = ({
   onNotification,
   isActive = true,
   sessionKey,
+  isPublicFolderVisible,
 }: UseDialFileListingOptions): UseDialFileListingResult => {
   const [folderPath, setFolderPath] = useState('');
+  /* The visibility rule judges only the Organization tab's public folders. */
+  const isFolderVisible = useMemo(
+    () =>
+      activeTab === DialFileManagerTabs.Organization && isPublicFolderVisible
+        ? (virtualPath: string) =>
+            isPublicFolderVisible(toPublicPath(virtualPath, rootLabel))
+        : undefined,
+    [activeTab, isPublicFolderVisible, rootLabel],
+  );
+  /* A current folder inside a hidden one (deep link, stale path, rule loaded after navigation) shows the root instead. */
+  if (
+    isFolderVisible &&
+    folderPath !== '' &&
+    !isFolderVisible(`/${rootLabel}/${folderPath}`)
+  ) {
+    setFolderPath('');
+  }
   const [cache, setCache] = useState<Map<string, ListFilesItemDto[]>>(
     () => new Map(),
   );
@@ -333,8 +393,15 @@ export const useDialFileListing = ({
     };
   }, [activeTab, bucket, filesApi, isActive, retryCounter, rootLabel]);
 
-  const items = useMemo(
-    (): DialFile[] => [
+  const items = useMemo((): DialFile[] => {
+    const rootItems = buildFromCache(
+      cache,
+      listingPermissionsCache,
+      '',
+      `/${rootLabel}`,
+      bucket,
+    );
+    return [
       {
         id: bucket,
         name: rootLabel,
@@ -343,16 +410,26 @@ export const useDialFileListing = ({
         nodeType: DialFileNodeType.FOLDER,
         folderId: bucket,
         permissions: mapCorePermissions(listingPermissionsCache.get('')),
-        items: buildFromCache(
-          cache,
-          listingPermissionsCache,
-          '',
-          `/${rootLabel}`,
-          bucket,
-        ),
+        items: isFolderVisible
+          ? pruneHiddenFolders(rootItems, isFolderVisible)
+          : rootItems,
       },
-    ],
-    [cache, listingPermissionsCache, rootLabel, bucket],
+    ];
+  }, [cache, listingPermissionsCache, rootLabel, bucket, isFolderVisible]);
+
+  /* A search result is listed while the folder it is (a folder) or sits in (a file) is visible. */
+  const visibleSearchResults = useMemo(
+    (): DialFile[] | null =>
+      searchResults && isFolderVisible
+        ? searchResults.filter((result) =>
+            isFolderVisible(
+              result.nodeType === DialFileNodeType.FOLDER
+                ? result.path
+                : (result.parentPath ?? ''),
+            ),
+          )
+        : searchResults,
+    [searchResults, isFolderVisible],
   );
 
   const onPathChange = useCallback(
@@ -798,7 +875,7 @@ export const useDialFileListing = ({
     retry,
     onSearchFiles,
     isSearching,
-    searchResults,
+    searchResults: visibleSearchResults,
     clearSearchResults,
     expandedPaths,
     loadedPaths,

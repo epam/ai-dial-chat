@@ -55,7 +55,7 @@ Architecture guard for every slice that touches `libs/*`: the lib receives only 
 
 ## 4. File manager Organization section
 
-- [ ] 4.1 `libs/chat-hooks/src/files/useDialFileListing/useDialFileListing.ts`: add the optional `isPublicFolderVisible?: (publicPath: string) => boolean` to `UseDialFileListingOptions`, applied only when `activeTab` is Organization:
+- [x] 4.1 `libs/chat-hooks/src/files/useDialFileListing/useDialFileListing.ts`: add the optional `isPublicFolderVisible?: (publicPath: string) => boolean` to `UseDialFileListingOptions`, applied only when `activeTab` is Organization:
   - prune hidden folder `DialFile`s and their subtrees in the `items` memo (public path = the virtual path without its `/<rootLabel>` segment);
   - drop `searchResults` whose decoded parent folder is hidden;
   - make `currentFolder` / the effective path fall back to the section root when the current path is inside a hidden folder.
@@ -67,9 +67,9 @@ Architecture guard for every slice that touches `libs/*`: the lib receives only 
   - a hidden current path → root;
   - no predicate → unchanged.
   - Verification: `npm run test:file -- libs/chat-hooks/src/files/useDialFileListing/tests/useDialFileListing.spec.tsx`, `npm run test:file -- libs/chat-hooks/src/files/useDialFileManager/tests/useDialFileManager.spec.tsx`
-- [ ] 4.2 `apps/chat/src/components/DialFileManagerShell/useDialFileManagerHostOptions.ts`: add `isPublicFolderVisible` from `useOrgUnitsContext()` to the host options (`DialFileManagerHostOptions` pick), and call `ensureUnits()` in an effect. `DialFileManagerPage` and `DialFileManagerModal` both read these options. Add a case to `apps/chat/src/components/DialFileManagerShell/tests/DialFileManagerShell.spec.tsx` or a new `tests/useDialFileManagerHostOptions.spec.ts`: a plain Organization folder is not rendered once units are `Ready`, and is rendered while they load.
+- [x] 4.2 `apps/chat/src/components/DialFileManagerShell/useDialFileManagerHostOptions.ts`: add `isPublicFolderVisible` from `useOrgUnitsContext()` to the host options (`DialFileManagerHostOptions` pick), and call `ensureUnits()` in an effect. `DialFileManagerPage` and `DialFileManagerModal` both read these options. Add a case to `apps/chat/src/components/DialFileManagerShell/tests/DialFileManagerShell.spec.tsx` or a new `tests/useDialFileManagerHostOptions.spec.ts`: a plain Organization folder is not rendered once units are `Ready`, and is rendered while they load.
   - Verification: `npm run test:file --` the touched spec file(s)
-- [ ] 4.3 Slice check: `npm run verify:changed`.
+- [ ] 4.3 Slice check: `npm run verify:changed`. Done in the worktree: typecheck and lint for chat-hooks, `tsc` and eslint for the app, and the chat-hooks `src/files` tests (638 passed). The app's test run was skipped at the user's request, because the shared `node_modules` made vitest mocks fail intermittently, including on untouched specs.
 
 ## 5. Docs
 

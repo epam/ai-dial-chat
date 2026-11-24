@@ -190,6 +190,8 @@ export interface UseDialFileManagerOptions {
   isActive?: boolean;
   /** Changing this value resets cache and navigation exactly like an `activeTab` change. Defaults to `undefined`. */
   sessionKey?: string;
+  /** Host rule for whether a public folder (decoded, public-relative path such as `Acme/Reports`) is listed; applies only to the Organization tab, where a refused folder disappears from the tree, the grid, the Copy/Move destination and search, and a current folder inside it falls back to the root. Omit it to list every folder. */
+  isPublicFolderVisible?: (publicPath: string) => boolean;
   /** Called when a file-manager action should surface a toast notification. */
   onNotification?: (notification: FileManagerNotification) => void;
   /** Called when a mutation succeeds, instead of invoking an application notification service directly. */

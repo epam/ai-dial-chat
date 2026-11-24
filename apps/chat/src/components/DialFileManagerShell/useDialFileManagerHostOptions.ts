@@ -4,13 +4,14 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import { triggerBrowserDownload } from '@epam/ai-dial-chat-hooks/utils';
 import { DialFileManagerActions } from '@epam/ai-dial-react-file-manager';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
   DialFileManagerI18nKeys,
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
+import { useOrgUnitsContext } from '../../context/OrgUnitsContext';
 import { useMaxUploadFileSizeLabel } from '../../hooks/files/useMaxUploadFileSizeLabel';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { dialFilesApiAdapter } from '../../server-api/dial-files-api.adapter';
@@ -31,12 +32,15 @@ type DialFileManagerHostOptions = Pick<
   | 'buildValidationErrorMessage'
   | 'onNotification'
   | 'onOperationSuccess'
+  | 'isPublicFolderVisible'
 >;
 
 /**
  * Builds the host-owned portion of `useDialFileManager`'s options —
  * translated action labels, the `DialFilesApi` adapter, the browser
- * download seam, and the structured-event-to-toast adapters — shared by
+ * download seam, the structured-event-to-toast adapters, and the org-unit
+ * rule that hides public folders outside org units (it starts the org-unit
+ * read; nothing is hidden until the units are `Ready`) — shared by
  * `DialFileManagerModal` and `DialFileManagerPage` so the wiring lives once.
  */
 export const useDialFileManagerHostOptions = (): DialFileManagerHostOptions => {
@@ -44,6 +48,11 @@ export const useDialFileManagerHostOptions = (): DialFileManagerHostOptions => {
   const { showNotification, showSuccessNotification } = useNotification();
   const { notifyOperationSuccess } = useOperationNotification();
   const maxUploadSize = useMaxUploadFileSizeLabel();
+  const { ensureUnits, isPublicFolderVisible } = useOrgUnitsContext();
+
+  useEffect(() => {
+    ensureUnits();
+  }, [ensureUnits]);
 
   const labels = useMemo(
     (): Partial<Record<DialFileManagerActions, string>> => ({
@@ -106,5 +115,6 @@ export const useDialFileManagerHostOptions = (): DialFileManagerHostOptions => {
     buildValidationErrorMessage: buildValidationErrorMessageOption,
     onNotification,
     onOperationSuccess,
+    isPublicFolderVisible,
   };
 };
