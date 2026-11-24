@@ -20,6 +20,7 @@ import { NotifiableEntity } from '../../../types/entity-notification';
 import {
   defineApplicationEditor,
   resolveSchemaNotificationTarget,
+  toApplicationMetadataFields,
   toFolderPathField,
 } from '../../../utils/application-editor';
 import QuickAppPreview from '../setup/QuickAppPreview';
@@ -31,7 +32,6 @@ import {
   getSchemaAppTypeName,
   getSchemaId,
   getVersionLockedInEditMode,
-  toLocaleFields,
 } from './schemaDefinitionHelpers';
 
 const EMPTY_SETUP: EmptyApplicationSetup = {};
@@ -72,14 +72,9 @@ const create = async (
       }
     : undefined;
   const result = await createApplication({
-    name: metadata.name.trim(),
+    ...toApplicationMetadataFields(metadata, { shouldOmitEmptyTopics: true }),
     type: schemaId,
-    description: metadata.description.trim() || undefined,
-    iconUrl: metadata.iconUrl.trim() || undefined,
-    version: metadata.version.trim() || undefined,
-    topics: metadata.topics.length > 0 ? metadata.topics : undefined,
     applicationProperties,
-    ...toLocaleFields(metadata),
     ...toFolderPathField(options),
   });
   return { id: result.id };

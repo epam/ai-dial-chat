@@ -7,10 +7,10 @@ import {
 } from '@epam/ai-dial-chat-api-client';
 import {
   ApplicationAccessContentType,
-  ApplicationAccessLevel,
   getApiErrorDetails,
   ResourceSaveError,
 } from '@epam/ai-dial-chat-hooks';
+import { AccessLevel } from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -22,6 +22,7 @@ import {
   updateApplicationAccess,
 } from '../../../server-api/applications';
 import { ApplicationAccessLoadStatus } from '../../../types/application-editor';
+import { toApplicationMetadataFields } from '../../../utils/application-editor';
 import { useApplicationAccessEditor } from '../useApplicationAccessEditor';
 
 vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
@@ -106,7 +107,7 @@ describe('useApplicationAccessEditor', () => {
       expect(result.current.access.entries).toEqual([
         {
           contentType: ApplicationAccessContentType.Files,
-          accessLevel: ApplicationAccessLevel.Read,
+          accessLevel: AccessLevel.Read,
         },
       ]);
       expect(result.current.access.preserved).toHaveLength(1);
@@ -185,11 +186,11 @@ describe('useApplicationAccessEditor', () => {
         result.current.access.setEntries([
           {
             contentType: ApplicationAccessContentType.Files,
-            accessLevel: ApplicationAccessLevel.ReadWrite,
+            accessLevel: AccessLevel.ReadWrite,
           },
           {
             contentType: ApplicationAccessContentType.Prompts,
-            accessLevel: ApplicationAccessLevel.Read,
+            accessLevel: AccessLevel.Read,
           },
         ]),
       );
@@ -201,7 +202,7 @@ describe('useApplicationAccessEditor', () => {
       const [id, sentMetadata, list] = vi.mocked(updateApplicationAccess).mock
         .calls[0];
       expect(id).toBe('applications/b/app');
-      expect(sentMetadata).toBe(metadata);
+      expect(sentMetadata).toEqual(toApplicationMetadataFields(metadata));
       expect(list.map((entry) => entry.linkId)).toEqual([
         'f',
         'p',
@@ -244,7 +245,7 @@ describe('useApplicationAccessEditor', () => {
         result.current.access.setEntries([
           {
             contentType: ApplicationAccessContentType.Skills,
-            accessLevel: ApplicationAccessLevel.Read,
+            accessLevel: AccessLevel.Read,
           },
         ]),
       );

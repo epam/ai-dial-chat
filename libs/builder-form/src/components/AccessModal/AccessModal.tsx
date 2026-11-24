@@ -1,4 +1,8 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  AccessLevel,
+  buildCssVars,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
   ButtonVariant,
@@ -11,7 +15,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconTrashX } from '@tabler/icons-react';
 import { useId, useState, type FC } from 'react';
-import { AccessLevel, type AccessContentOption } from '../../models/access';
+import type { AccessContentOption } from '../../models/access';
 import type { AccessModalProps } from '../../models/access-field-props';
 import {
   buildAccessDraft,

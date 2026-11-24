@@ -11,9 +11,3 @@ export enum ApplicationAccessContentType {
   Applications = 'applications',
   Toolsets = 'toolsets',
 }
-
-/** What an application may do with the user's resources of one content type. */
-export enum ApplicationAccessLevel {
-  Read = 'read',
-  ReadWrite = 'readWrite',
-}

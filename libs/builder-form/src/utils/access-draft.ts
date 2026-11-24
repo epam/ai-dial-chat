@@ -1,8 +1,5 @@
-import {
-  AccessLevel,
-  type AccessContentOption,
-  type AccessEntry,
-} from '../models/access';
+import { AccessLevel } from '@epam/ai-dial-chat-shared';
+import type { AccessContentOption, AccessEntry } from '../models/access';
 
 /** One card of the modal draft; either field may still be empty. */
 export interface AccessDraftCard {

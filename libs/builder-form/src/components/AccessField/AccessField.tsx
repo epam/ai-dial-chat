@@ -1,4 +1,8 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  AccessLevel,
+  buildCssVars,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
@@ -14,7 +18,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconPlus } from '@tabler/icons-react';
 import { useEffect, useRef, useState, type FC } from 'react';
-import { AccessLevel, type AccessEntry } from '../../models/access';
+import type { AccessEntry } from '../../models/access';
 import type { AccessFieldProps } from '../../models/access-field-props';
 import { AccessModal } from '../AccessModal/AccessModal';
 import styles from './AccessField.module.scss';

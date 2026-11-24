@@ -73,7 +73,7 @@ describe('updateApplicationAccess', () => {
     vi.restoreAllMocks();
   });
 
-  it('sends the trimmed metadata fields together with the dependency list', async () => {
+  it('sends the given display fields together with the dependency list', async () => {
     const spy = vi
       .spyOn(applicationsApi, 'updateApplication')
       .mockResolvedValue({ id: 'my-app' });
@@ -87,14 +87,7 @@ describe('updateApplicationAccess', () => {
 
     await updateApplicationAccess(
       'my-app',
-      {
-        name: ' My App ',
-        description: ' ',
-        iconUrl: '',
-        version: '1.0.0',
-        topics: ['a'],
-        otherLocales: [],
-      },
+      { name: 'My App', version: '1.0.0', topics: ['a'] },
       list,
     );
 
@@ -102,12 +95,8 @@ describe('updateApplicationAccess', () => {
       applicationName: 'my-app',
       updateApplicationBodyDto: {
         name: 'My App',
-        description: undefined,
-        iconUrl: undefined,
         version: '1.0.0',
         topics: ['a'],
-        locales: undefined,
-        primaryLocale: undefined,
         resourceDependencies: list,
       },
     });
@@ -118,18 +107,7 @@ describe('updateApplicationAccess', () => {
       .spyOn(applicationsApi, 'updateApplication')
       .mockResolvedValue({ id: 'my-app' });
 
-    await updateApplicationAccess(
-      'my-app',
-      {
-        name: 'My App',
-        description: '',
-        iconUrl: '',
-        version: '',
-        topics: [],
-        otherLocales: [],
-      },
-      [],
-    );
+    await updateApplicationAccess('my-app', { name: 'My App' }, []);
 
     expect(spy.mock.calls[0][0].updateApplicationBodyDto).toMatchObject({
       resourceDependencies: [],

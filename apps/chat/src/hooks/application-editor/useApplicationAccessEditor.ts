@@ -15,6 +15,7 @@ import {
   updateApplicationAccess,
 } from '../../server-api/applications';
 import { ApplicationAccessLoadStatus } from '../../types/application-editor';
+import { toApplicationMetadataFields } from '../../utils/application-editor';
 
 interface Params {
   /** Whether the edited kind has the Access section. */
@@ -126,7 +127,11 @@ export const useApplicationAccessEditor = ({
       const list = toRequestValue();
       if (!isEnabled || !isDirty || list == null) return undefined;
       try {
-        await updateApplicationAccess(applicationId, metadata, list);
+        await updateApplicationAccess(
+          applicationId,
+          toApplicationMetadataFields(metadata),
+          list,
+        );
         resetAccess(list);
         setHasStoredEntries(list.length > 0);
         return undefined;

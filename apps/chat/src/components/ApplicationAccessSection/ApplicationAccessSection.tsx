@@ -10,7 +10,6 @@ import {
   APPLICATION_ACCESS_ALLOWED_LEVELS,
   APPLICATION_ACCESS_CONTENT_TYPES,
   ApplicationAccessContentType,
-  ApplicationAccessLevel,
 } from '@epam/ai-dial-chat-hooks';
 import { GhostButton, LiveRegion, Spinner } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
@@ -46,16 +45,6 @@ const CONTENT_LABEL_KEYS: Record<
     AppsEditorI18nKeys.AccessContentToolsets,
 };
 
-const TO_UI_LEVEL: Record<ApplicationAccessLevel, AccessLevel> = {
-  [ApplicationAccessLevel.Read]: AccessLevel.Read,
-  [ApplicationAccessLevel.ReadWrite]: AccessLevel.ReadWrite,
-};
-
-const FROM_UI_LEVEL: Record<AccessLevel, ApplicationAccessLevel> = {
-  [AccessLevel.Read]: ApplicationAccessLevel.Read,
-  [AccessLevel.ReadWrite]: ApplicationAccessLevel.ReadWrite,
-};
-
 /** Access section of the application editor: the stored list's load state, then the field that edits it. */
 const ApplicationAccessSection: FC<Props> = ({ editor }) => {
   const { t } = useTranslation();
@@ -67,9 +56,7 @@ const ApplicationAccessSection: FC<Props> = ({ editor }) => {
       APPLICATION_ACCESS_CONTENT_TYPES.map((type) => ({
         id: type,
         label: t(CONTENT_LABEL_KEYS[type]),
-        allowedAccess: APPLICATION_ACCESS_ALLOWED_LEVELS[type].map(
-          (level) => TO_UI_LEVEL[level],
-        ),
+        allowedAccess: [...APPLICATION_ACCESS_ALLOWED_LEVELS[type]],
       })),
     [t],
   );
@@ -102,7 +89,7 @@ const ApplicationAccessSection: FC<Props> = ({ editor }) => {
     () =>
       entries.map((entry) => ({
         contentId: entry.contentType,
-        level: TO_UI_LEVEL[entry.accessLevel],
+        level: entry.accessLevel,
       })),
     [entries],
   );
@@ -111,9 +98,9 @@ const ApplicationAccessSection: FC<Props> = ({ editor }) => {
     () =>
       preserved.map((entry) => {
         let rightsLabel = entry.access.join('/');
-        if (entry.level === ApplicationAccessLevel.ReadWrite) {
+        if (entry.level === AccessLevel.ReadWrite) {
           rightsLabel = t(AppsEditorI18nKeys.AccessReadWrite);
-        } else if (entry.level === ApplicationAccessLevel.Read) {
+        } else if (entry.level === AccessLevel.Read) {
           rightsLabel = t(AppsEditorI18nKeys.AccessRead);
         }
         return {
@@ -142,7 +129,7 @@ const ApplicationAccessSection: FC<Props> = ({ editor }) => {
             : [
                 {
                   contentType,
-                  accessLevel: FROM_UI_LEVEL[entry.level],
+                  accessLevel: entry.level,
                 },
               ];
         }),

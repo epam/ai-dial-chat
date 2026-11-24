@@ -1,9 +1,9 @@
 import { ResourceDependencyAccess } from '@epam/ai-dial-chat-api-client';
 import {
   ApplicationAccessContentType,
-  ApplicationAccessLevel,
   type UseApplicationAccessResult,
 } from '@epam/ai-dial-chat-hooks';
+import { AccessLevel } from '@epam/ai-dial-chat-shared';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -124,7 +124,7 @@ describe('ApplicationAccessSection', () => {
             entries: [
               {
                 contentType: ApplicationAccessContentType.Files,
-                accessLevel: ApplicationAccessLevel.ReadWrite,
+                accessLevel: AccessLevel.ReadWrite,
               },
             ],
           },
@@ -158,7 +158,7 @@ describe('ApplicationAccessSection', () => {
                 linkId: 'p',
                 url: 'files/public/policies/',
                 access: [ResourceDependencyAccess.Read],
-                level: ApplicationAccessLevel.Read,
+                level: AccessLevel.Read,
                 isRequired: true,
               },
             ],
@@ -182,7 +182,7 @@ describe('ApplicationAccessSection', () => {
     [
       'read and write',
       [ResourceDependencyAccess.Read, ResourceDependencyAccess.Write],
-      ApplicationAccessLevel.ReadWrite,
+      AccessLevel.ReadWrite,
       AppsEditorI18nKeys.AccessReadWrite,
     ],
     [
@@ -220,7 +220,7 @@ describe('ApplicationAccessSection', () => {
   describe('approval notice', () => {
     const entry = {
       contentType: ApplicationAccessContentType.Files,
-      accessLevel: ApplicationAccessLevel.Read,
+      accessLevel: AccessLevel.Read,
     };
 
     it('is hidden without entries', () => {

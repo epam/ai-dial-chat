@@ -1,4 +1,3 @@
-import type { DeploymentCreationFormValues } from '@epam/ai-dial-builder-form';
 import type {
   ApplicationResourceDependenciesDto,
   ApplicationResourceDependencyDto,
@@ -9,8 +8,6 @@ import type {
   UpdateApplicationBodyDto,
   UpdatedApplicationDto,
 } from '@epam/ai-dial-chat-api-client';
-import { composeLocalePayload } from '@epam/ai-dial-chat-hooks';
-import { PRIMARY_LOCALE } from '../utils/locale';
 import { applicationsApi } from './api-client';
 
 export const getApplications = (): Promise<ApplicationsResponseDto> =>
@@ -45,28 +42,32 @@ export const getApplicationResourceDependencies = (
 ): Promise<ApplicationResourceDependenciesDto> =>
   applicationsApi.getApplicationResourceDependencies({ applicationName });
 
+/** The display fields an application update replaces, already trimmed and mapped. */
+export type ApplicationDisplayFields = Pick<
+  UpdateApplicationBodyDto,
+  | 'name'
+  | 'description'
+  | 'iconUrl'
+  | 'version'
+  | 'topics'
+  | 'locales'
+  | 'primaryLocale'
+>;
+
 /*
  * The update replaces the display fields it receives, so the Access step
- * sends the values the Metadata form holds, trimmed the way each definition's
- * own update trims them, together with the full dependency list.
+ * sends the values the Metadata form holds, together with the full
+ * dependency list.
  */
 export const updateApplicationAccess = (
   applicationName: string,
-  metadata: DeploymentCreationFormValues,
+  displayFields: ApplicationDisplayFields,
   resourceDependencies: ApplicationResourceDependencyDto[],
-): Promise<UpdatedApplicationDto> => {
-  const locales = composeLocalePayload(metadata.otherLocales, PRIMARY_LOCALE);
-  return updateApplication(applicationName, {
-    name: metadata.name.trim(),
-    description: metadata.description.trim() || undefined,
-    iconUrl: metadata.iconUrl.trim() || undefined,
-    version: metadata.version.trim() || undefined,
-    topics: metadata.topics,
-    locales,
-    primaryLocale: locales ? PRIMARY_LOCALE : undefined,
+): Promise<UpdatedApplicationDto> =>
+  updateApplication(applicationName, {
+    ...displayFields,
     resourceDependencies,
   });
-};
 
 export const deleteApplication = (applicationName: string): Promise<void> =>
   applicationsApi.deleteApplication({ applicationName });

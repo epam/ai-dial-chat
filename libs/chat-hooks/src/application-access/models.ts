@@ -2,17 +2,15 @@ import type {
   ApplicationResourceDependencyDto,
   ResourceDependencyAccess,
 } from '@epam/ai-dial-chat-api-client';
-import type {
-  ApplicationAccessContentType,
-  ApplicationAccessLevel,
-} from './types';
+import type { AccessLevel } from '@epam/ai-dial-chat-shared';
+import type { ApplicationAccessContentType } from './types';
 
 /** One configured Access entry: the user's own bucket of one content type with a level. */
 export interface ApplicationAccessEntry {
   /** Resource type the entry grants access to; unique among the entries. */
   contentType: ApplicationAccessContentType;
   /** Rights requested on that type. */
-  accessLevel: ApplicationAccessLevel;
+  accessLevel: AccessLevel;
 }
 
 /** A stored dependency the editor cannot represent; shown read-only and sent back unchanged. */
@@ -26,7 +24,7 @@ export interface ApplicationAccessPreservedEntry {
   /** Stored rights, in stored order. */
   access: ResourceDependencyAccess[];
   /** `Read` or `ReadWrite` when the stored rights, compared as a set, equal Read or Read and Write, whatever kept the entry from being editable; `undefined` for any other set of rights. */
-  level?: ApplicationAccessLevel;
+  level?: AccessLevel;
   /** Whether the entry is stored with `required: true`. */
   isRequired: boolean;
 }

@@ -43,7 +43,7 @@ export { EntityEditor } from './components/EntityEditor/EntityEditor';
 export { MetadataForm } from './components/MetadataForm/MetadataForm';
 export { useMetadataForm } from './hooks/useMetadataForm';
 export { MetadataField } from './models/metadata-field';
-export { AccessLevel } from './models/access';
+export { AccessLevel } from '@epam/ai-dial-chat-shared';
 export type {
   AccessContentOption,
   AccessEntry,

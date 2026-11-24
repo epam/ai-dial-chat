@@ -658,6 +658,7 @@ MetadataField.Tags;
 ```tsx
 import { AccessLevel } from '@epam/ai-dial-builder-form';
 
+// Re-exported from @epam/ai-dial-chat-shared, where the enum is declared.
 AccessLevel.Read; // the entry grants read only
 AccessLevel.ReadWrite; // the entry grants read and write
 ```

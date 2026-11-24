@@ -1,6 +1,6 @@
+import { AccessLevel } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
-  AccessLevel,
   type AccessContentOption,
   type AccessEntry,
 } from '../../models/access';

@@ -17,6 +17,7 @@ export * from './models/entity';
 export * from './models/locale';
 export * from './models/inline-segment';
 export * from './models/org-unit';
+export * from './types/access-level';
 export * from './types/attachment';
 export * from './types/entity-type';
 export * from './types/mime-type';

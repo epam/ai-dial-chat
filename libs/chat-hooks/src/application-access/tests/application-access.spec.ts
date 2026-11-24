@@ -2,6 +2,7 @@ import {
   ResourceDependencyAccess,
   type ApplicationResourceDependencyDto,
 } from '@epam/ai-dial-chat-api-client';
+import { AccessLevel as Level } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
   APPLICATION_ACCESS_CONTENT_TYPES,
@@ -12,10 +13,7 @@ import {
   mergeApplicationAccess,
   partitionResourceDependencies,
 } from '../application-access';
-import {
-  ApplicationAccessContentType as Type,
-  ApplicationAccessLevel as Level,
-} from '../types';
+import { ApplicationAccessContentType as Type } from '../types';
 
 const { Read, Write } = ResourceDependencyAccess;
 

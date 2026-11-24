@@ -1,10 +1,10 @@
+import { AccessLevel } from '@epam/ai-dial-chat-shared';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_ACCESS_FIELD_LABELS } from '../../../constants/access';
 import {
-  AccessLevel,
   type AccessContentOption,
   type AccessEntry,
 } from '../../../models/access';

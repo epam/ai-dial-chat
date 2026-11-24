@@ -2,12 +2,13 @@ import {
   ResourceDependencyAccess,
   type ApplicationResourceDependencyDto,
 } from '@epam/ai-dial-chat-api-client';
+import { AccessLevel } from '@epam/ai-dial-chat-shared';
 import type {
   ApplicationAccessEntry,
   ApplicationAccessPartition,
   ApplicationAccessPreservedEntry,
 } from './models';
-import { ApplicationAccessContentType, ApplicationAccessLevel } from './types';
+import { ApplicationAccessContentType } from './types';
 
 const CURRENT_USER_PLACEHOLDER = '{current-user}';
 
@@ -27,30 +28,30 @@ export const APPLICATION_ACCESS_CONTENT_TYPES: readonly ApplicationAccessContent
 
 /** Rights each content type allows. DIAL Core refuses `write` on applications and toolsets. */
 export const APPLICATION_ACCESS_ALLOWED_LEVELS: Readonly<
-  Record<ApplicationAccessContentType, readonly ApplicationAccessLevel[]>
+  Record<ApplicationAccessContentType, readonly AccessLevel[]>
 > = {
   [ApplicationAccessContentType.Files]: [
-    ApplicationAccessLevel.Read,
-    ApplicationAccessLevel.ReadWrite,
+    AccessLevel.Read,
+    AccessLevel.ReadWrite,
   ],
   [ApplicationAccessContentType.Projects]: [
-    ApplicationAccessLevel.Read,
-    ApplicationAccessLevel.ReadWrite,
+    AccessLevel.Read,
+    AccessLevel.ReadWrite,
   ],
   [ApplicationAccessContentType.Skills]: [
-    ApplicationAccessLevel.Read,
-    ApplicationAccessLevel.ReadWrite,
+    AccessLevel.Read,
+    AccessLevel.ReadWrite,
   ],
   [ApplicationAccessContentType.Prompts]: [
-    ApplicationAccessLevel.Read,
-    ApplicationAccessLevel.ReadWrite,
+    AccessLevel.Read,
+    AccessLevel.ReadWrite,
   ],
   [ApplicationAccessContentType.Conversations]: [
-    ApplicationAccessLevel.Read,
-    ApplicationAccessLevel.ReadWrite,
+    AccessLevel.Read,
+    AccessLevel.ReadWrite,
   ],
-  [ApplicationAccessContentType.Applications]: [ApplicationAccessLevel.Read],
-  [ApplicationAccessContentType.Toolsets]: [ApplicationAccessLevel.Read],
+  [ApplicationAccessContentType.Applications]: [AccessLevel.Read],
+  [ApplicationAccessContentType.Toolsets]: [AccessLevel.Read],
 };
 
 /**
@@ -59,8 +60,7 @@ export const APPLICATION_ACCESS_ALLOWED_LEVELS: Readonly<
  */
 export const getAllowedAccessLevels = (
   contentType: ApplicationAccessContentType,
-): readonly ApplicationAccessLevel[] =>
-  APPLICATION_ACCESS_ALLOWED_LEVELS[contentType];
+): readonly AccessLevel[] => APPLICATION_ACCESS_ALLOWED_LEVELS[contentType];
 
 /**
  * Returns the level when the content type allows it, otherwise `Read`.
@@ -69,11 +69,11 @@ export const getAllowedAccessLevels = (
  */
 export const clampAccessLevel = (
   contentType: ApplicationAccessContentType,
-  level: ApplicationAccessLevel,
-): ApplicationAccessLevel =>
+  level: AccessLevel,
+): AccessLevel =>
   getAllowedAccessLevels(contentType).includes(level)
     ? level
-    : ApplicationAccessLevel.Read;
+    : AccessLevel.Read;
 
 /**
  * Switches an entry to another content type, resetting its level to `Read`
@@ -102,9 +102,9 @@ export const buildApplicationAccessUrl = (
  * @param level - the level to map
  */
 export const toResourceDependencyAccess = (
-  level: ApplicationAccessLevel,
+  level: AccessLevel,
 ): ResourceDependencyAccess[] =>
-  level === ApplicationAccessLevel.ReadWrite
+  level === AccessLevel.ReadWrite
     ? [ResourceDependencyAccess.Read, ResourceDependencyAccess.Write]
     : [ResourceDependencyAccess.Read];
 
@@ -125,10 +125,10 @@ const contentTypeOfUrl = (
 
 const levelOfAccess = (
   access: readonly ResourceDependencyAccess[],
-): ApplicationAccessLevel | undefined => {
+): AccessLevel | undefined => {
   const key = accessSetKey(access);
-  if (key === READ_KEY) return ApplicationAccessLevel.Read;
-  if (key === READ_WRITE_KEY) return ApplicationAccessLevel.ReadWrite;
+  if (key === READ_KEY) return AccessLevel.Read;
+  if (key === READ_WRITE_KEY) return AccessLevel.ReadWrite;
   return undefined;
 };
 

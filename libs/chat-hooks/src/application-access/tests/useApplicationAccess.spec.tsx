@@ -2,12 +2,10 @@ import {
   ResourceDependencyAccess,
   type ApplicationResourceDependencyDto,
 } from '@epam/ai-dial-chat-api-client';
+import { AccessLevel as Level } from '@epam/ai-dial-chat-shared';
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import {
-  ApplicationAccessContentType as Type,
-  ApplicationAccessLevel as Level,
-} from '../types';
+import { ApplicationAccessContentType as Type } from '../types';
 import { useApplicationAccess } from '../useApplicationAccess/useApplicationAccess';
 
 const { Read } = ResourceDependencyAccess;

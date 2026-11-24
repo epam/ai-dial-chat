@@ -361,6 +361,8 @@ FilterTab.Organization; // 'organization'
 `SKILL`, `PROMPT`) shared by the catalog UI. `ENTITY_TYPE_COLOR` and
 `ENTITY_TYPE_BG_COLOR` map each type to its text and surface color.
 
+`AccessLevel` (`Read` = `'read'`, `ReadWrite` = `'readWrite'`) is the one enum for the rights an access entry grants on a kind of content. `@epam/ai-dial-builder-form` re-exports it and `@epam/ai-dial-chat-hooks` uses it in its application-access functions, so a host passes the same values to both.
+
 ## Components
 
 ### MarkdownRenderer

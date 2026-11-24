@@ -1,8 +1,4 @@
-/** Rights an entry grants on one kind of content. */
-export enum AccessLevel {
-  Read = 'read',
-  ReadWrite = 'readWrite',
-}
+import type { AccessLevel } from '@epam/ai-dial-chat-shared';
 
 /** One kind of content the host lets the author grant access to. */
 export interface AccessContentOption {

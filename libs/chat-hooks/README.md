@@ -1246,15 +1246,15 @@ The host loads the stored list (the `getApplicationResourceDependencies` operati
 | `reset`            | `(nextBaseline?) => void`                         | Discards the draft; a list argument becomes the new baseline, for example the one just saved.                                                                                                                                                                                  |
 | `toRequestValue()` | `ApplicationResourceDependencyDto[] \| undefined` | `undefined` while the merged list equals the baseline; otherwise the full list, `[]` only for an explicit clear with nothing preserved.                                                                                                                                        |
 
-The merge keeps every stored position: an edited entry is replaced in place with its stored `linkId`, a removed one is dropped, a new one is appended last as `access-<type>` (numeric suffix on a collision), and a preserved one never moves. Applications and toolsets are never given `write`. The pure functions behind the hook are exported too: `partitionResourceDependencies`, `mergeApplicationAccess`, `areResourceDependenciesEqual`, `buildApplicationAccessLinkId`, `buildApplicationAccessUrl`, `toResourceDependencyAccess`, `getAllowedAccessLevels`, `clampAccessLevel`, `changeApplicationAccessContentType` (resets the level to `Read` when the new type does not allow it), and the data `APPLICATION_ACCESS_CONTENT_TYPES` and `APPLICATION_ACCESS_ALLOWED_LEVELS`, from which a host derives its option list.
+The merge keeps every stored position: an edited entry is replaced in place with its stored `linkId`, a removed one is dropped, a new one is appended last as `access-<type>` (numeric suffix on a collision), and a preserved one never moves. Applications and toolsets are never given `write`. Rights are the shared `AccessLevel` enum from `@epam/ai-dial-chat-shared`. The pure functions behind the hook are exported too: `partitionResourceDependencies`, `mergeApplicationAccess`, `areResourceDependenciesEqual`, `buildApplicationAccessLinkId`, `buildApplicationAccessUrl`, `toResourceDependencyAccess`, `getAllowedAccessLevels`, `clampAccessLevel`, `changeApplicationAccessContentType` (resets the level to `Read` when the new type does not allow it), and the data `APPLICATION_ACCESS_CONTENT_TYPES` and `APPLICATION_ACCESS_ALLOWED_LEVELS`, from which a host derives its option list.
 
 ```tsx
 import type { ApplicationResourceDependencyDto } from '@epam/ai-dial-chat-api-client';
 import {
   ApplicationAccessContentType,
-  ApplicationAccessLevel,
   useApplicationAccess,
 } from '@epam/ai-dial-chat-hooks';
+import { AccessLevel } from '@epam/ai-dial-chat-shared';
 
 const AccessState = ({
   storedList,
@@ -1280,7 +1280,7 @@ const AccessState = ({
             ...access.entries,
             {
               contentType: ApplicationAccessContentType.Files,
-              accessLevel: ApplicationAccessLevel.Read,
+              accessLevel: AccessLevel.Read,
             },
           ])
         }

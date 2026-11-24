@@ -7,6 +7,18 @@ import { ApplicationErrorCode } from '../types/application-error-code.enum';
 
 const FORBIDDEN_STATUS = 403;
 
+/*
+ * Core gives these refusals no machine-readable field, so each is recognised
+ * by its text. Each caller keeps its own normalisation of that text.
+ */
+const hasErrorText = (
+  errorBody: unknown,
+  matches: (message: string) => boolean,
+): boolean => {
+  const message = extractDialErrorMessage(errorBody);
+  return message != null && matches(message);
+};
+
 /** Message of the coded 403 returned when a saved application's dependency is missing. */
 export const DEPENDENT_RESOURCE_MISSING_MESSAGE =
   'This application refers to a resource that is no longer available. Remove or replace it to continue.';
@@ -31,10 +43,9 @@ const DEPENDENT_RESOURCE_PREFIX = 'failed to access application resource';
  * @param errorBody - the parsed error body of the failed Core call
  */
 export const isDependentResourceError = (errorBody: unknown): boolean =>
-  extractDialErrorMessage(errorBody)
-    ?.trim()
-    .toLowerCase()
-    .startsWith(DEPENDENT_RESOURCE_PREFIX) ?? false;
+  hasErrorText(errorBody, (message) =>
+    message.trim().toLowerCase().startsWith(DEPENDENT_RESOURCE_PREFIX),
+  );
 
 /*
  * With `applications.allowUserAuthoredDependencies` disabled, Core answers a
@@ -52,10 +63,12 @@ const DEPENDENCIES_NOT_ALLOWED_MARKER = 'allowuserauthoreddependencies';
 export const isResourceDependenciesNotAllowedError = (
   errorBody: unknown,
 ): boolean =>
-  extractDialErrorMessage(errorBody)
-    ?.toLowerCase()
-    .replace(/[^a-z]/g, '')
-    .includes(DEPENDENCIES_NOT_ALLOWED_MARKER) ?? false;
+  hasErrorText(errorBody, (message) =>
+    message
+      .toLowerCase()
+      .replace(/[^a-z]/g, '')
+      .includes(DEPENDENCIES_NOT_ALLOWED_MARKER),
+  );
 
 /**
  * Throws the exception for a failed application save: a coded 403 when DIAL

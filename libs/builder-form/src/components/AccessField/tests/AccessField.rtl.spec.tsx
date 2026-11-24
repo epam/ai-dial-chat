@@ -2,11 +2,11 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { AccessLevel } from '@epam/ai-dial-chat-shared';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_ACCESS_FIELD_LABELS } from '../../../constants/access';
-import { AccessLevel } from '../../../models/access';
 import { AccessField } from '../AccessField';
 
 const here = dirname(fileURLToPath(import.meta.url));

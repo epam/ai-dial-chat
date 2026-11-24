@@ -1,3 +1,4 @@
+import type { DeploymentCreationFormValues } from '@epam/ai-dial-builder-form';
 import { describe, expect, it } from 'vitest';
 import { ApplicationEditorKind } from '../../types/application-editor';
 import { NotifiableEntity } from '../../types/entity-notification';
@@ -7,6 +8,8 @@ import {
   hasVisibleSchemaProperties,
   resolveSchemaEditorKind,
   resolveSchemaNotificationTarget,
+  toApplicationMetadataFields,
+  toLocaleFields,
 } from '../application-editor';
 
 describe('resolveSchemaEditorKind', () => {
@@ -150,5 +153,93 @@ describe('hasVisibleSchemaProperties', () => {
         $defs: { Internal: { type: 'object', isHidden: true } },
       }),
     ).toBe(false);
+  });
+});
+
+const makeMetadata = (
+  overrides: Partial<DeploymentCreationFormValues> = {},
+): DeploymentCreationFormValues => ({
+  name: ' My App ',
+  description: ' About ',
+  iconUrl: ' files/b/icon.png ',
+  version: ' 1.0.0 ',
+  topics: ['a', 'b'],
+  otherLocales: [],
+  ...overrides,
+});
+
+describe('toLocaleFields', () => {
+  it('leaves both fields out when there are no additional locales', () => {
+    expect(toLocaleFields(makeMetadata())).toEqual({
+      locales: undefined,
+      primaryLocale: undefined,
+    });
+  });
+
+  it('pairs the composed locales with the primary locale', () => {
+    const fields = toLocaleFields(
+      makeMetadata({
+        otherLocales: [
+          { id: 'l1', language: 'de', name: 'Name DE', description: '' },
+        ],
+      }),
+    );
+    expect(fields.locales).toEqual([
+      { language: 'de', name: 'Name DE', description: undefined },
+    ]);
+    expect(fields.primaryLocale).toBe('en');
+  });
+});
+
+describe('toApplicationMetadataFields', () => {
+  it('trims name, description, icon and version', () => {
+    expect(toApplicationMetadataFields(makeMetadata())).toEqual({
+      name: 'My App',
+      description: 'About',
+      iconUrl: 'files/b/icon.png',
+      version: '1.0.0',
+      topics: ['a', 'b'],
+      locales: undefined,
+      primaryLocale: undefined,
+    });
+  });
+
+  it('leaves out a description, icon and version that are blank', () => {
+    const fields = toApplicationMetadataFields(
+      makeMetadata({ description: '  ', iconUrl: '', version: ' ' }),
+    );
+    expect(fields.description).toBeUndefined();
+    expect(fields.iconUrl).toBeUndefined();
+    expect(fields.version).toBeUndefined();
+  });
+
+  it('sends an empty topics list by default', () => {
+    expect(
+      toApplicationMetadataFields(makeMetadata({ topics: [] })).topics,
+    ).toEqual([]);
+  });
+
+  it('leaves empty topics out when asked to', () => {
+    const options = { shouldOmitEmptyTopics: true };
+    expect(
+      toApplicationMetadataFields(makeMetadata({ topics: [] }), options).topics,
+    ).toBeUndefined();
+    expect(toApplicationMetadataFields(makeMetadata(), options).topics).toEqual(
+      ['a', 'b'],
+    );
+  });
+
+  it('includes the locale fields', () => {
+    const fields = toApplicationMetadataFields(
+      makeMetadata({
+        otherLocales: [
+          { id: 'l1', language: 'fr', name: 'Nom', description: 'D' },
+        ],
+      }),
+    );
+    expect(fields.locales).toEqual([
+      { language: 'fr', name: 'Nom', description: 'D' },
+    ]);
+    expect(fields.primaryLocale).toBe('en');
   });
 });

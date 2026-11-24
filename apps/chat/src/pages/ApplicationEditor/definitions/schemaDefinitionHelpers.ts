@@ -2,10 +2,7 @@ import {
   DEFAULT_DEPLOYMENT_VERSION,
   type DeploymentCreationFormValues,
 } from '@epam/ai-dial-builder-form';
-import {
-  appendLocaleCode,
-  composeLocalePayload,
-} from '@epam/ai-dial-chat-hooks';
+import { appendLocaleCode } from '@epam/ai-dial-chat-hooks';
 import type { TFunction } from 'i18next';
 import {
   AppsEditorI18nKeys,
@@ -66,10 +63,4 @@ export const getSchemaAppTitle = (
   return isEditMode
     ? ctx.t(AppsEditorI18nKeys.EditTitle, { type })
     : ctx.t(AppsEditorI18nKeys.CreateTitle, { type });
-};
-
-/** Returns the `locales` and `primaryLocale` request fields of the Metadata's other locales. */
-export const toLocaleFields = (metadata: DeploymentCreationFormValues) => {
-  const locales = composeLocalePayload(metadata.otherLocales, PRIMARY_LOCALE);
-  return { locales, primaryLocale: locales ? PRIMARY_LOCALE : undefined };
 };
