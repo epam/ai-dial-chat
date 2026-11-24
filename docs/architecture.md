@@ -1006,6 +1006,8 @@ authoritative for direct API calls. Configuration:
 
 Frontend bootstraps the CSRF token from the `x-csrf-token` response header on `GET /api/v1/auth/me` and stores it in memory. The typed `post`/`put`/`del` helpers inject it automatically.
 
+That first `GET /api/v1/auth/me`, together with `GET /api/v1/client-config` and `GET /api/v1/user-config`, leaves from the `index.html` head, not from the bundle: `apps/chat/public/boot-prefetch.js` (inlined and allowed by its CSP hash like `theme-init.js`) starts them while the bundle downloads. The generated client's `fetchApi` (`apps/chat/src/server-api/boot-prefetch.ts`) answers the first GET of each URL with that response, so the CSRF and 401 middleware see it as usual.
+
 Full detail — encrypted cookie format, transparent refresh, BFF flow, `SessionGuard` behaviour — lives in [`docs/auth/`](./auth/).
 
 ---

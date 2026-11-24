@@ -97,6 +97,13 @@ by its SHA-256 hash (`collectInlineScriptHashes`), never `'unsafe-inline'`.
 Never add an inline script by hand or build it from runtime values: only the
 build-time bytes are hashed, and anything else is blocked.
 
+A GET the app awaits before its first screen starts from the head, not from
+the bundle: add its exact URL to `public/boot-prefetch.js` and
+`BOOT_PREFETCH_URLS` (`apps/chat/src/server-api/boot-prefetch.ts`). Otherwise
+every cold load pays the bundle download and that round trip one after the
+other. Only side-effect-free GETs belong there, because the head script sends
+them before the app decides whether it needs them.
+
 ## Check the entry before and after
 
 After touching `app.tsx`, `AppRoot.tsx`, a context provider or a lib barrel,
