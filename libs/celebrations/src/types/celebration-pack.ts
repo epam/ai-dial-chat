@@ -14,6 +14,8 @@ export enum CelebrationCapability {
   InteractionCopyTrackV1 = 'interaction-copy-track-v1',
   /** Carries one inert composer copy along an authored horizontal out-and-back track. */
   InteractionComposerCarryV1 = 'interaction-composer-carry-v1',
+  /** Binds native tracks to six history stations and one reversible row copy. */
+  InteractionHistoryLadderV1 = 'interaction-history-ladder-v1',
   /** Shows a static poster image instead of motion. */
   StaticPosterV1 = 'static-poster-v1',
   /** Renders a static image button as an external event's decoration. */

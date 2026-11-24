@@ -1,0 +1,23 @@
+{
+  "giftDoesNotLoadSanta": true,
+  "phraseLoadsSanta": true,
+  "scene": {
+    "svgs": 1,
+    "images": 0,
+    "copies": 0,
+    "toast": true
+  },
+  "santaRequests": [
+    {
+      "path": "/api/v1/celebrations/assets/santa-history-full-desktop-0166262c3d3c46ae",
+      "method": "GET"
+    }
+  ],
+  "sent": [],
+  "cleanup": {
+    "copies": 0,
+    "svg": 0,
+    "hiddenRows": 0
+  },
+  "errors": []
+}

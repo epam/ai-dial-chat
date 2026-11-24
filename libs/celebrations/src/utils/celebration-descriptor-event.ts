@@ -48,7 +48,7 @@ export const replaceCelebrationScenes = (
   };
 };
 
-/** Returns a copy of `event` with the scenes it does not define appended to its scenes and click pool; bundled labels win over `labels`. */
+/** Appends new scenes to the click pool or the event's declared external secret pool; bundled labels win over `labels`. */
 export const addCelebrationScenes = (
   event: CelebrationEvent,
   scenes: readonly CelebrationScene[],
@@ -57,10 +57,22 @@ export const addCelebrationScenes = (
   const existing = new Set(event.scenes.map(({ id }) => id));
   const added = scenes.filter(({ id }) => !existing.has(id));
   if (!added.length) return event;
+  const secret = event.secretTrigger;
+  const secretIds = new Set(secret?.externalSceneIds);
+  const addedSecretIds = added
+    .filter(({ id }) => secretIds.has(id))
+    .map(({ id }) => id);
   return {
     ...event,
     scenes: [...event.scenes, ...added],
-    clickSceneIds: [...event.clickSceneIds, ...added.map(({ id }) => id)],
+    clickSceneIds: [
+      ...event.clickSceneIds,
+      ...added.filter(({ id }) => !secretIds.has(id)).map(({ id }) => id),
+    ],
+    secretTrigger:
+      secret && addedSecretIds.length
+        ? { ...secret, sceneIds: [...secret.sceneIds, ...addedSecretIds] }
+        : secret,
     labels: { ...labels, ...event.labels },
   };
 };

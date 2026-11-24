@@ -72,6 +72,7 @@ const NEW_YEAR: CelebrationEvent = {
     phrases: ['happy new year'],
     hintPhrase: 'happy new year',
     sceneIds: ['gift-wrapping'],
+    externalSceneIds: ['santa-history-delivery'],
   },
 };
 
@@ -108,6 +109,38 @@ const loadActive = async (
 /* Lets pending effects and microtasks settle before asserting on silence. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+const santaScene = () =>
+  giftWrappingScene({
+    id: 'santa-history-delivery',
+    labelId: 'santaHistoryDeliveryToastMessage',
+    requiredCapabilities: [
+      'lottie-light-svg-v1',
+      'viewport-stage-v1',
+      'interaction-history-ladder-v1',
+      'static-poster-v1',
+    ],
+    placement: {
+      template: 'viewport-stage-v1',
+      fit: 'contain',
+      align: 'center',
+    },
+    direction: 'none',
+    timing: {
+      playbackDurationMs: 27000,
+      loadTimeoutMs: 2000,
+      readyTimeoutMs: 250,
+      maxLifetimeMs: 29500,
+    },
+  });
+const SANTA_DELIVERY = {
+  ...PILOT_DELIVERY,
+  revision: 'santa-enabled',
+  externalScenes: [
+    ...PILOT_DELIVERY.externalScenes,
+    { eventId: 'new-year', sceneId: 'santa-history-delivery' },
+  ],
+};
+
 describe('useCelebrationPacks', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -116,6 +149,122 @@ describe('useCelebrationPacks', () => {
       packId === 'company-anniversary' ? anniversaryPack() : newYearPack(),
     );
     vi.mocked(loadCelebrationAssetJson).mockResolvedValue(ANIMATION_DATA);
+  });
+
+  it('routes Santa only to happy new year and removes only Santa on policy rollback', async () => {
+    const pack = newYearPack();
+    vi.mocked(getCelebrationPack).mockResolvedValue({
+      ...pack,
+      scenes: [...pack.scenes, santaScene()],
+      labels: {
+        en: {
+          ...pack.labels.en,
+          santaHistoryDeliveryToastMessage:
+            'Special delivery, with a little help from friends.',
+        },
+      },
+    });
+    const { result, rerender } = renderPacks({ delivery: SANTA_DELIVERY });
+    await waitFor(() =>
+      expect(result.current.packKey).toContain('santa-history-delivery'),
+    );
+
+    expect(getCelebrationPack).toHaveBeenCalledWith(
+      CATALOG.defaults['new-year'].packId,
+      CATALOG.defaults['new-year'].version,
+      expect.any(AbortSignal),
+    );
+    const enabled = await loadActive(result.current.events, 'new-year');
+    expect(enabled.clickSceneIds).toEqual([
+      ...NEW_YEAR.clickSceneIds,
+      'bullfinch-couriers',
+    ]);
+    expect(enabled.scenes.find(({ id }) => id === 'gift-wrapping')).toBe(
+      NEW_YEAR.scenes[1],
+    );
+    expect(enabled.secretTrigger?.sceneIds).toEqual([
+      ...NEW_YEAR.secretTrigger!.sceneIds,
+      'santa-history-delivery',
+    ]);
+    expect(enabled.secretTrigger?.phrases).toEqual(['happy new year']);
+
+    rerender(
+      options({ delivery: { ...PILOT_DELIVERY, revision: 'santa-disabled' } }),
+    );
+    await waitFor(() =>
+      expect(result.current.packKey).toBe(
+        'new-year-default@1.0.0:snowman-delivery,bullfinch-couriers',
+      ),
+    );
+    const rolledBack = await loadActive(result.current.events, 'new-year');
+    expect(rolledBack.clickSceneIds).toEqual([
+      ...NEW_YEAR.clickSceneIds,
+      'bullfinch-couriers',
+    ]);
+    expect(
+      rolledBack.scenes.some(({ id }) => id === 'santa-history-delivery'),
+    ).toBe(false);
+    expect(rolledBack.secretTrigger).toBe(NEW_YEAR.secretTrigger);
+    expect(getCelebrationPack).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the other external scenes when an allowlisted Santa is absent', async () => {
+    const { result } = renderPacks({ delivery: SANTA_DELIVERY });
+    await waitFor(() =>
+      expect(result.current.packKey).toBe(
+        'new-year-default@1.0.0:snowman-delivery,bullfinch-couriers',
+      ),
+    );
+    const event = await loadActive(result.current.events, 'new-year');
+    expect(event.clickSceneIds).toEqual([
+      ...NEW_YEAR.clickSceneIds,
+      'bullfinch-couriers',
+    ]);
+    expect(event.secretTrigger).toBe(NEW_YEAR.secretTrigger);
+  });
+
+  it('updates the Santa notification locale without reloading its immutable pack', async () => {
+    const pack = newYearPack();
+    vi.mocked(getCelebrationPack).mockResolvedValue({
+      ...pack,
+      scenes: [...pack.scenes, santaScene()],
+      labels: {
+        en: {
+          santaHistoryDeliveryToastMessage:
+            'Special delivery, with a little help from friends.',
+        },
+        fr: {
+          santaHistoryDeliveryToastMessage:
+            'Un petit tour fait toute la différence.',
+        },
+        'fr-CA': {
+          santaHistoryDeliveryToastMessage: 'Un petit virage change tout.',
+        },
+      },
+    });
+    const { result, rerender } = renderPacks({
+      delivery: SANTA_DELIVERY,
+      language: 'fr-CA',
+    });
+    await waitFor(() =>
+      expect(result.current.packKey).toContain('santa-history-delivery'),
+    );
+    const events = result.current.events;
+    expect(
+      result.current.labels['new-year'].santaHistoryDeliveryToastMessage,
+    ).toBe('Un petit virage change tout.');
+
+    rerender(options({ delivery: SANTA_DELIVERY, language: 'fr-BE' }));
+    expect(
+      result.current.labels['new-year'].santaHistoryDeliveryToastMessage,
+    ).toBe('Un petit tour fait toute la différence.');
+    rerender(options({ delivery: SANTA_DELIVERY, language: 'ja' }));
+    expect(
+      result.current.labels['new-year'].santaHistoryDeliveryToastMessage,
+    ).toBe('Special delivery, with a little help from friends.');
+    expect(result.current.events).toBe(events);
+    expect(getCelebrationCatalog).toHaveBeenCalledOnce();
+    expect(getCelebrationPack).toHaveBeenCalledOnce();
   });
 
   describe('requests nothing', () => {

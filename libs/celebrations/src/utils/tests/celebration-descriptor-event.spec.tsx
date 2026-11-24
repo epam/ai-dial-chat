@@ -1,8 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useEffect } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { CelebrationDecor } from '../../components/CelebrationDecor/CelebrationDecor';
-import { CelebrationProvider } from '../../context/CelebrationContext';
+import {
+  CelebrationProvider,
+  useCelebration,
+} from '../../context/CelebrationContext';
+import type { CelebrationScene } from '../../models/celebration';
 import type { CelebrationAssetLoaders } from '../../models/celebration-pack';
 import { newYearEvent } from '../../new-year';
 import { NewYearScene } from '../../new-year/types/new-year';
@@ -213,5 +218,88 @@ describe('addCelebrationScenes', () => {
       ),
     );
     vi.restoreAllMocks();
+  });
+
+  it('plays Santa only from happy new year and dismisses it on a host policy reset', async () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    const onNotify = vi.fn();
+    const onDispose = vi.fn();
+    const Santa = () => {
+      useEffect(() => () => onDispose(), []);
+      return null;
+    };
+    const santa: CelebrationScene = {
+      id: 'santa-history-delivery',
+      labelId: 'santaHistoryDeliveryToastMessage',
+      durationMs: 29500,
+      Component: Santa,
+    };
+    const withCouriers = addCelebrationScenes(newYearEvent, [couriers]);
+    const event = addCelebrationScenes(withCouriers, [santa], {
+      santaHistoryDeliveryToastMessage:
+        'Special delivery, with a little help from friends.',
+    });
+    expect(event.scenes).toEqual([...withCouriers.scenes, santa]);
+    expect(event.clickSceneIds).toEqual([
+      ...newYearEvent.clickSceneIds,
+      'bullfinch-couriers',
+    ]);
+    expect(event.secretTrigger).toEqual({
+      phrases: ['happy new year'],
+      hintPhrase: 'happy new year',
+      sceneIds: [
+        ...newYearEvent.secretTrigger!.sceneIds,
+        'santa-history-delivery',
+      ],
+      externalSceneIds: ['santa-history-delivery'],
+    });
+    const SecretTrigger = () => {
+      const { consumeSecretPhrase } = useCelebration();
+      return (
+        <button onClick={() => consumeSecretPhrase('happy new year')}>
+          Send phrase
+        </button>
+      );
+    };
+    const events = { 'new-year': async () => event };
+    const view = (resetKey: string) => (
+      <CelebrationProvider
+        events={events}
+        activeEventId="new-year"
+        resetKey={resetKey}
+        onNotify={onNotify}
+      >
+        <CelebrationDecor />
+        <SecretTrigger />
+      </CelebrationProvider>
+    );
+    try {
+      const { rerender } = render(view('santa-enabled'));
+      await userEvent.click(
+        await screen.findByRole('button', {
+          name: newYearEvent.labels.giftLabel,
+        }),
+      );
+      expect(onNotify).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Special delivery, with a little help from friends.',
+        }),
+      );
+      onNotify.mockClear();
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Send phrase' }),
+      );
+      expect(onNotify).toHaveBeenCalledExactlyOnceWith({
+        title: newYearEvent.labels.toastTitle,
+        message: 'Special delivery, with a little help from friends.',
+      });
+      expect(onDispose).not.toHaveBeenCalled();
+
+      rerender(view('santa-disabled'));
+      await waitFor(() => expect(onDispose).toHaveBeenCalledOnce());
+      expect(onNotify).toHaveBeenCalledOnce();
+    } finally {
+      random.mockRestore();
+    }
   });
 });

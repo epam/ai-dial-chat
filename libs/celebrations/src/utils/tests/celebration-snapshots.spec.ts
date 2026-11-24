@@ -78,6 +78,93 @@ describe('prepareCelebrationSnapshots', () => {
     expect(recorded).toHaveLength(0);
   });
 
+  it('freezes computed colors, custom values and quoted URLs without changing source priorities', () => {
+    button.style.setProperty('color', 'rgb(12, 34, 56)', 'important');
+    button.style.setProperty('--caption', '"Winter; bright: yes!important"');
+    button.style.setProperty(
+      '--image',
+      'url("https://example.test/a;b:c.svg")',
+    );
+    button.style.transform = 'translateX(8px)';
+    const child = document.createElement('span');
+    child.style.transform = 'rotate(12deg)';
+    child.style.backgroundImage = 'url("https://example.test/a;b:c.svg")';
+    child.style.animation = 'pulse 1s infinite';
+    child.style.transition = 'opacity 1s';
+    button.append(child);
+    const before = button.getAttribute('style');
+    const session = prepareCelebrationSnapshots(targets(), options);
+    session.attach(layer);
+
+    const copy = layer.querySelector('button') as HTMLButtonElement;
+    const copiedChild = copy.querySelector('span') as HTMLSpanElement;
+    expect(copy.style.color).toBe('rgb(12, 34, 56)');
+    expect(copy.style.getPropertyPriority('color')).toBe('');
+    expect(copy.style.getPropertyValue('--caption')).toBe(
+      '"Winter; bright: yes!important"',
+    );
+    expect(copy.style.getPropertyValue('--image')).toBe(
+      'url("https://example.test/a;b:c.svg")',
+    );
+    expect(copy.style.transform).toBe('none');
+    expect(copiedChild.style.transform).toBe('rotate(12deg)');
+    expect(copiedChild.style.backgroundImage).toBe(child.style.backgroundImage);
+    expect(copiedChild.style.animation).toBe('none');
+    expect(copiedChild.style.transition).toBe('none');
+    expect(button.getAttribute('style')).toBe(before);
+    expect(button.style.getPropertyPriority('color')).toBe('important');
+    session.stop();
+  });
+
+  it('keeps an inline custom property when computed style omits its invalid value', () => {
+    button.style.setProperty('--cyclic', 'var(--cyclic)', 'important');
+    const computed = document.createElement('div').style;
+    computed.setProperty('color', 'rgb(1, 2, 3)');
+    const getStyle = window.getComputedStyle.bind(window);
+    const read = vi
+      .spyOn(window, 'getComputedStyle')
+      .mockImplementation((element) =>
+        element === button ? computed : getStyle(element),
+      );
+    const session = prepareCelebrationSnapshots(targets(), options);
+    read.mockRestore();
+    session.attach(layer);
+
+    const copy = layer.querySelector('button') as HTMLButtonElement;
+    expect(copy.style.getPropertyValue('--cyclic')).toBe('var(--cyclic)');
+    expect(copy.style.getPropertyPriority('--cyclic')).toBe('important');
+    session.stop();
+  });
+
+  it('remaps local SVG paint references after computed presentation is frozen', () => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    const gradient = document.createElementNS(
+      'http://www.w3.org/2000/svg',
+      'linearGradient',
+    );
+    gradient.id = 'snapshot-paint';
+    defs.append(gradient);
+    const shape = document.createElementNS(
+      'http://www.w3.org/2000/svg',
+      'rect',
+    );
+    shape.setAttribute('fill', 'url(#snapshot-paint)');
+    shape.style.fill = 'url(#snapshot-paint)';
+    svg.append(defs, shape);
+    button.append(svg);
+    const session = prepareCelebrationSnapshots(targets(), options);
+    session.attach(layer);
+
+    const copiedGradient = layer.querySelector('linearGradient') as SVGElement;
+    const copiedShape = layer.querySelector('rect') as SVGElement;
+    expect(copiedGradient.id).not.toBe(gradient.id);
+    expect(copiedShape.getAttribute('fill')).toBe(`url(#${copiedGradient.id})`);
+    expect(copiedShape.style.fill).toBe(`url(#${copiedGradient.id})`);
+    expect(shape.getAttribute('fill')).toBe('url(#snapshot-paint)');
+    session.stop();
+  });
+
   it('lets a decorator move each copy after it is attached', () => {
     const slot = document.createElement('div');
     layer.appendChild(slot);

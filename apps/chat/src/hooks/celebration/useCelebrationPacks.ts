@@ -77,7 +77,8 @@ const createAssetLoaders = (
 /**
  * Resolves the celebration pack an eligible event may use and composes it with
  * the compiled loaders: allowlisted scenes replace bundled ones by ID or, for
- * an ID the bundled event lacks, join its click pool. Requests nothing while the delivery policy admits no
+ * an ID the bundled event lacks, join its declared secret pool or click pool.
+ * Requests nothing while the delivery policy admits no
  * pack for the event; any failure leaves the compiled registry in place.
  *
  * @example
@@ -189,8 +190,8 @@ export const useCelebrationPacks = ({
           const scenes = descriptor.scenes.map((scene) =>
             packs.createCelebrationSceneFromDescriptor(scene, loaders, context),
           );
-          /* An allowlisted ID the bundled event defines is a replacement;
-             any other allowlisted ID is an addition to the click pool. */
+          /* Bundled IDs are replacements. Additional IDs use the compiled
+             event's secret routing, or its click pool by default. */
           return packs.addCelebrationScenes(
             packs.replaceCelebrationScenes(bundled, scenes),
             scenes,
