@@ -53,6 +53,10 @@ export interface EmbeddedApplicationSaveAdapterParams {
   applicationId: string;
   /** Runs the embedded editor's own save of the edited application. */
   runEmbeddedSave: () => Promise<void>;
+  /**
+   * Runs right before every `runEmbeddedSave`, with the id the embedded editor saves to: the original, also when the save is for a new version. A rejection aborts that save, and a fork made for a new version is deleted. Absent means nothing runs.
+   */
+  beforeEmbeddedSave?: (applicationId: string) => Promise<void>;
   /** Translated message for a fork whose commit failed, naming the new version. */
   getCommitFailedMessage: (version: string) => string;
   /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls; without it the adapter offers no direct write. */
@@ -72,6 +76,13 @@ export interface HostApplicationSaveAdapterParams {
     version: string,
     folderPath: string[],
   ) => Promise<{ id?: string } | void>;
+  /**
+   * Runs after `update` with the edited application's id, and after `createVersion` with the created version's id and its `version`, before the panel moves, publishes or copies anything. A rejection aborts the save. Absent means nothing runs; it is skipped for a created version that has no id.
+   */
+  afterSave?: (
+    applicationId: string,
+    saved: { version?: string },
+  ) => Promise<void>;
   /** Client whose `copyCatalogEntityToOrgUnit` the direct write into an org unit calls; without it the adapter offers no direct write. */
   publishClient?: ResourceSavePublishClient;
 }
@@ -139,42 +150,52 @@ const moveApplicationToFolder =
 export const createEmbeddedApplicationSaveAdapter = ({
   applicationsApi,
   applicationId,
-  runEmbeddedSave,
+  runEmbeddedSave: runEditorSave,
+  beforeEmbeddedSave,
   getCommitFailedMessage,
   publishClient,
-}: EmbeddedApplicationSaveAdapterParams): ResourceEditSaveAdapter => ({
-  publishEntityType: 'application',
-  isVersioned: true,
-  saveInPlace: async () => {
-    await runEmbeddedSave();
-    return { id: applicationId };
-  },
-  saveAsNewVersion: async (version, folderPath) => {
-    const { id: snapshotId } = await applicationsApi.forkApplicationVersion({
-      applicationName: applicationId,
-      forkApplicationVersionDto: { version, folderPath: folderPath.join('/') },
-    });
-    try {
+}: EmbeddedApplicationSaveAdapterParams): ResourceEditSaveAdapter => {
+  const runEmbeddedSave = async () => {
+    await beforeEmbeddedSave?.(applicationId);
+    await runEditorSave();
+  };
+  return {
+    publishEntityType: 'application',
+    isVersioned: true,
+    saveInPlace: async () => {
       await runEmbeddedSave();
-    } catch (error) {
-      // Nothing was committed, so the snapshot must not survive as a stray version.
-      await applicationsApi
-        .deleteApplication({ applicationName: snapshotId })
-        .catch(() => undefined);
-      throw error;
-    }
-    try {
-      return await applicationsApi.commitApplicationVersion({
+      return { id: applicationId };
+    },
+    saveAsNewVersion: async (version, folderPath) => {
+      const { id: snapshotId } = await applicationsApi.forkApplicationVersion({
         applicationName: applicationId,
-        commitApplicationVersionDto: { snapshotId },
+        forkApplicationVersionDto: {
+          version,
+          folderPath: folderPath.join('/'),
+        },
       });
-    } catch {
-      throw new ResourceSaveError(getCommitFailedMessage(version));
-    }
-  },
-  move: moveApplicationToFolder(applicationsApi),
-  ...createOrgUnitWriter(publishClient, 'application'),
-});
+      try {
+        await runEmbeddedSave();
+      } catch (error) {
+        // Nothing was committed, so the snapshot must not survive as a stray version.
+        await applicationsApi
+          .deleteApplication({ applicationName: snapshotId })
+          .catch(() => undefined);
+        throw error;
+      }
+      try {
+        return await applicationsApi.commitApplicationVersion({
+          applicationName: applicationId,
+          commitApplicationVersionDto: { snapshotId },
+        });
+      } catch {
+        throw new ResourceSaveError(getCommitFailedMessage(version));
+      }
+    },
+    move: moveApplicationToFolder(applicationsApi),
+    ...createOrgUnitWriter(publishClient, 'application'),
+  };
+};
 
 /**
  * Save operations for an application the host writes itself (schema-form
@@ -186,17 +207,20 @@ export const createHostApplicationSaveAdapter = ({
   applicationId,
   update,
   createVersion,
+  afterSave,
   publishClient,
 }: HostApplicationSaveAdapterParams): ResourceEditSaveAdapter => ({
   publishEntityType: 'application',
   isVersioned: true,
   saveInPlace: async () => {
     await update();
+    await afterSave?.(applicationId, {});
     return { id: applicationId };
   },
   saveAsNewVersion: async (version, folderPath) => {
     const created = await createVersion(version, folderPath);
     if (!created?.id) throw new Error('Created version has no id');
+    await afterSave?.(created.id, { version });
     return { id: created.id };
   },
   move: moveApplicationToFolder(applicationsApi),

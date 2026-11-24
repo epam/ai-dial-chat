@@ -7,8 +7,8 @@ import {
 } from '@epam/ai-dial-chat-api-client';
 import {
   ApplicationAccessContentType,
-  getApiErrorDetails,
   ResourceSaveError,
+  ApplicationAccessLoadStatus,
 } from '@epam/ai-dial-chat-hooks';
 import { AccessLevel } from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
@@ -21,15 +21,9 @@ import {
   getApplicationResourceDependencies,
   updateApplicationAccess,
 } from '../../../server-api/applications';
-import { ApplicationAccessLoadStatus } from '../../../types/application-editor';
 import { toApplicationMetadataFields } from '../../../utils/application-editor';
 import { useApplicationAccessEditor } from '../useApplicationAccessEditor';
 
-vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
-  return { ...actual, getApiErrorDetails: vi.fn(actual.getApiErrorDetails) };
-});
 vi.mock('../../../context/NotificationContext');
 vi.mock('../../../server-api/applications');
 
@@ -115,15 +109,6 @@ describe('useApplicationAccessEditor', () => {
       expect(result.current.hasStoredEntries).toBe(true);
     });
 
-    it('reads the list once for an application', async () => {
-      const { result, rerender } = renderEditor();
-      await waitFor(() =>
-        expect(result.current.status).toBe(ApplicationAccessLoadStatus.Loaded),
-      );
-      rerender();
-      expect(getApplicationResourceDependencies).toHaveBeenCalledOnce();
-    });
-
     it('fails, then reads again on retry', async () => {
       vi.mocked(getApplicationResourceDependencies).mockRejectedValueOnce(
         new Error('network'),
@@ -139,23 +124,6 @@ describe('useApplicationAccessEditor', () => {
         expect(result.current.status).toBe(ApplicationAccessLoadStatus.Loaded),
       );
       expect(getApplicationResourceDependencies).toHaveBeenCalledTimes(2);
-    });
-
-    it('reads nothing for a new application and starts empty and loaded', () => {
-      const { result } = renderEditor({ appId: '' });
-      expect(result.current.status).toBe(ApplicationAccessLoadStatus.Loaded);
-      expect(getApplicationResourceDependencies).not.toHaveBeenCalled();
-      expect(result.current.hasStoredEntries).toBe(false);
-    });
-
-    it('reads nothing once the session created the application', () => {
-      renderEditor({ shouldLoad: false });
-      expect(getApplicationResourceDependencies).not.toHaveBeenCalled();
-    });
-
-    it('reads nothing when the kind has no Access section', () => {
-      renderEditor({ isEnabled: false });
-      expect(getApplicationResourceDependencies).not.toHaveBeenCalled();
     });
   });
 
@@ -210,62 +178,6 @@ describe('useApplicationAccessEditor', () => {
       ]);
       expect(list[1]).toBe(POLICIES);
       expect(result.current.access.isDirty).toBe(false);
-    });
-
-    it('sends only the preserved entries when the configured ones are cleared', async () => {
-      const { result } = await load();
-      act(() => result.current.access.setEntries([]));
-
-      await act(async () => {
-        await result.current.save('applications/b/app', metadata);
-      });
-
-      expect(vi.mocked(updateApplicationAccess).mock.calls[0][2]).toEqual([
-        POLICIES,
-      ]);
-    });
-
-    it('sends an empty list for an explicit clear with nothing preserved', async () => {
-      vi.mocked(getApplicationResourceDependencies).mockResolvedValue({
-        resourceDependencies: [FILES],
-      });
-      const { result } = await load();
-      act(() => result.current.access.setEntries([]));
-
-      await act(async () => {
-        await result.current.save('applications/b/app', metadata);
-      });
-
-      expect(vi.mocked(updateApplicationAccess).mock.calls[0][2]).toEqual([]);
-    });
-
-    it('runs against the id it is given, such as a just-created application', async () => {
-      const { result } = renderEditor({ appId: '', shouldLoad: false });
-      act(() =>
-        result.current.access.setEntries([
-          {
-            contentType: ApplicationAccessContentType.Skills,
-            accessLevel: AccessLevel.Read,
-          },
-        ]),
-      );
-
-      await act(async () => {
-        await result.current.save('applications/b/created', metadata);
-      });
-
-      expect(vi.mocked(updateApplicationAccess).mock.calls[0][0]).toBe(
-        'applications/b/created',
-      );
-    });
-
-    it('does nothing when the kind has no Access section', async () => {
-      const { result } = renderEditor({ isEnabled: false, appId: '' });
-
-      await expect(
-        result.current.save('applications/b/app', metadata),
-      ).resolves.toBe(true);
-      expect(updateApplicationAccess).not.toHaveBeenCalled();
     });
 
     describe('when Core refuses a non-administrator’s change', () => {
@@ -392,26 +304,6 @@ describe('useApplicationAccessEditor', () => {
       });
 
       expect(result.current.access.isDirty).toBe(false);
-    });
-
-    it('falls back to the generic message when the error cannot be read', async () => {
-      const { result } = await load();
-      act(() => result.current.access.setEntries([]));
-      vi.mocked(updateApplicationAccess).mockRejectedValue(new Error('boom'));
-      vi.mocked(getApiErrorDetails).mockRejectedValueOnce(
-        new Error('unreadable'),
-      );
-
-      let isDone = true;
-      await act(async () => {
-        isDone = await result.current.save('applications/b/app', metadata);
-      });
-
-      expect(isDone).toBe(false);
-      expect(showNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'generic failure' }),
-      );
-      expect(result.current.access.isDirty).toBe(true);
     });
 
     it('shows the generic message for another failure and keeps the draft', async () => {

@@ -25,6 +25,7 @@ export * from '../application-access/application-access';
 export * from '../application-access/models';
 export * from '../application-access/types';
 export * from '../application-access/useApplicationAccess/useApplicationAccess';
+export * from '../application-access/useApplicationAccessSync/useApplicationAccessSync';
 export * from '../org-units/types';
 export * from '../org-units/models';
 export * from '../org-units/useOrgUnits/useOrgUnits';

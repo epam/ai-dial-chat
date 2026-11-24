@@ -10,6 +10,7 @@ import {
   APPLICATION_ACCESS_ALLOWED_LEVELS,
   APPLICATION_ACCESS_CONTENT_TYPES,
   ApplicationAccessContentType,
+  ApplicationAccessLoadStatus,
 } from '@epam/ai-dial-chat-hooks';
 import { GhostButton, LiveRegion, Spinner } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
@@ -20,7 +21,6 @@ import {
   ButtonsI18nKeys,
 } from '../../constants/translation-keys';
 import type { ApplicationAccessEditor } from '../../hooks/application-editor/useApplicationAccessEditor';
-import { ApplicationAccessLoadStatus } from '../../types/application-editor';
 
 interface Props {
   /** The Access state of the editor this section belongs to. */

@@ -11,11 +11,13 @@ import {
   createEmbeddedApplicationSaveAdapter,
   createHostApplicationSaveAdapter,
   createOrgUnitWriter,
+  createReusingCreateIn,
   getApiErrorDetails,
   isOwnDialFileId,
   parseResourceFolderPath,
   type ResourceSaveAdapter,
   type ResourceSaveResult,
+  useCreatedResourceMemory,
 } from '@epam/ai-dial-chat-hooks';
 import {
   CatalogEntityType,
@@ -566,9 +568,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
    * saves successfully or is dismissed, so a retry in the same folder reuses
    * it and a dismissed panel leaves the editor in edit mode for it.
    */
-  const createdApplicationRef = useRef<
-    { id: string; folderKey: string } | undefined
-  >(undefined);
+  const createdApplication = useCreatedResourceMemory();
   const openSavePanel = useCallback(() => {
     const values = metadata.values;
     const { update } = definition;
@@ -584,20 +584,12 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
       setSaveAdapter({
         publishEntityType: 'application',
         isVersioned: false,
-        createIn: async (folderPath) => {
-          const folderKey = folderPath.join('/');
-          let created = createdApplicationRef.current;
-          if (created?.folderKey !== folderKey) {
-            const result = await definition.create(values, setup, context, {
-              folderPath,
-            });
-            if (!result?.id) throw new Error('Created application has no id');
-            created = { id: result.id, folderKey };
-            createdApplicationRef.current = created;
-          }
-          await saveAccessStep(created.id);
-          return { id: created.id };
-        },
+        createIn: createReusingCreateIn({
+          memory: createdApplication,
+          create: (folderPath) =>
+            definition.create(values, setup, context, { folderPath }),
+          afterCreate: (id) => saveAccessStep(id),
+        }),
         ...createOrgUnitWriter(publishApiClient, 'application'),
       });
       setIsSavePanelOpen(true);
@@ -609,22 +601,13 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
             applicationsApi,
             applicationId: appId,
             publishClient: publishApiClient,
-            update: async () => {
-              await update(appId, values, setup);
-              await saveAccessStep(appId);
-            },
-            createVersion: async (version, folderPath) => {
-              const created = await definition.create(
-                { ...values, version },
-                setup,
-                context,
-                { folderPath },
-              );
-              if (created?.id) {
-                await saveAccessStep(created.id, { ...values, version });
-              }
-              return created;
-            },
+            update: () => update(appId, values, setup),
+            createVersion: (version, folderPath) =>
+              definition.create({ ...values, version }, setup, context, {
+                folderPath,
+              }),
+            afterSave: (id, { version }) =>
+              saveAccessStep(id, version ? { ...values, version } : values),
           })
         : createEmbeddedApplicationSaveAdapter({
             applicationsApi,
@@ -638,8 +621,8 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
              * commit then moves the saved body, list included, to the new
              * version.
              */
+            beforeEmbeddedSave: (id) => saveAccessStep(id),
             runEmbeddedSave: async () => {
-              await saveAccessStep(appId);
               await setupRef.current?.save(values);
             },
             getCommitFailedMessage: (version) =>
@@ -650,13 +633,21 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
           }),
     );
     setIsSavePanelOpen(true);
-  }, [appId, context, definition, isEditMode, metadata.values, setup, t]);
+  }, [
+    appId,
+    context,
+    createdApplication,
+    definition,
+    isEditMode,
+    metadata.values,
+    setup,
+    t,
+  ]);
   const handleSavePanelClose = useCallback(() => {
     setIsSavePanelOpen(false);
-    const created = createdApplicationRef.current;
-    createdApplicationRef.current = undefined;
+    const created = createdApplication.take();
     if (created) switchToCreatedApp(created.id, metadata.values);
-  }, [metadata.values, switchToCreatedApp]);
+  }, [createdApplication, metadata.values, switchToCreatedApp]);
   const currentFolderPath = useMemo(
     () => parseResourceFolderPath(appId),
     [appId],
@@ -677,7 +668,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
   /* Every outcome reaching here saved the application; the panel notifies once this returns. */
   const handleSavePanelSaved = useCallback(
     (result: ResourceSaveResult) => {
-      createdApplicationRef.current = undefined;
+      createdApplication.take();
       if (result.isCreated && isMetadataFirst) {
         setIsSavePanelOpen(false);
         switchToCreatedApp(result.savedId, metadata.values);
@@ -692,6 +683,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     },
     [
       allowNextNavigation,
+      createdApplication,
       isMetadataFirst,
       metadata.values,
       navigate,

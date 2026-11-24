@@ -2,6 +2,7 @@ import { ResourceDependencyAccess } from '@epam/ai-dial-chat-api-client';
 import {
   ApplicationAccessContentType,
   type UseApplicationAccessResult,
+  ApplicationAccessLoadStatus,
 } from '@epam/ai-dial-chat-hooks';
 import { AccessLevel } from '@epam/ai-dial-chat-shared';
 import { render, screen, within } from '@testing-library/react';
@@ -12,7 +13,6 @@ import {
   ButtonsI18nKeys,
 } from '../../../constants/translation-keys';
 import type { ApplicationAccessEditor } from '../../../hooks/application-editor/useApplicationAccessEditor';
-import { ApplicationAccessLoadStatus } from '../../../types/application-editor';
 import ApplicationAccessSection from '../ApplicationAccessSection';
 
 const user = userEvent.setup({ delay: null });

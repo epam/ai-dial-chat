@@ -1,12 +1,13 @@
 import type { DeploymentCreationFormValues } from '@epam/ai-dial-builder-form';
-import { ApplicationErrorCode } from '@epam/ai-dial-chat-api-client';
 import {
-  getApiErrorDetails,
+  ApplicationAccessSaveOutcome,
   ResourceSaveError,
-  useApplicationAccess,
+  useApplicationAccessSync,
+  type ApplicationAccessLoadStatus,
+  type ApplicationAccessSaveResult,
   type UseApplicationAccessResult,
 } from '@epam/ai-dial-chat-hooks';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppsEditorI18nKeys } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
@@ -14,7 +15,6 @@ import {
   getApplicationResourceDependencies,
   updateApplicationAccess,
 } from '../../server-api/applications';
-import { ApplicationAccessLoadStatus } from '../../types/application-editor';
 import { toApplicationMetadataFields } from '../../utils/application-editor';
 
 interface Params {
@@ -61,9 +61,19 @@ export interface ApplicationAccessEditor {
   ) => Promise<void>;
 }
 
+const loadStoredList = async (appId: string) =>
+  (await getApplicationResourceDependencies(appId)).resourceDependencies;
+
+const saveList = (
+  appId: string,
+  list: Parameters<typeof updateApplicationAccess>[2],
+  metadata: DeploymentCreationFormValues,
+) =>
+  updateApplicationAccess(appId, toApplicationMetadataFields(metadata), list);
+
 /**
- * Loads the stored Access list of an edited application once, holds its draft
- * and saves it in its own step after the definition's save.
+ * Wires the Access state of an application editor to the generated client,
+ * and shows the refusal and failure notifications with translated text.
  */
 export const useApplicationAccessEditor = ({
   isEnabled,
@@ -73,100 +83,35 @@ export const useApplicationAccessEditor = ({
 }: Params): ApplicationAccessEditor => {
   const { t } = useTranslation();
   const { showErrorNotification, showWarningNotification } = useNotification();
-  const access = useApplicationAccess();
-  const { reset: resetAccess, isDirty, toRequestValue } = access;
-  const willLoad = isEnabled && Boolean(appId) && shouldLoad;
-  const [status, setStatus] = useState(
-    willLoad
-      ? ApplicationAccessLoadStatus.Loading
-      : ApplicationAccessLoadStatus.Loaded,
-  );
-  const [hasStoredEntries, setHasStoredEntries] = useState(false);
-  const [attempt, setAttempt] = useState(0);
+  const {
+    access,
+    status,
+    hasStoredEntries,
+    retry,
+    save: sync,
+  } = useApplicationAccessSync<DeploymentCreationFormValues>({
+    isEnabled,
+    appId,
+    shouldLoad,
+    loadStoredList,
+    saveList,
+  });
 
-  useEffect(() => {
-    if (!willLoad) return;
-    let cancelled = false;
-    setStatus(ApplicationAccessLoadStatus.Loading);
-
-    const load = async () => {
-      try {
-        const { resourceDependencies } =
-          await getApplicationResourceDependencies(appId);
-        if (cancelled) return;
-        resetAccess(resourceDependencies);
-        setHasStoredEntries(resourceDependencies.length > 0);
-        setStatus(ApplicationAccessLoadStatus.Loaded);
-      } catch {
-        if (!cancelled) setStatus(ApplicationAccessLoadStatus.Failed);
+  /* Resolves to the message of a failed save, or `undefined` when the save carries on. */
+  const report = useCallback(
+    (result: ApplicationAccessSaveResult): string | undefined => {
+      if (result.outcome === ApplicationAccessSaveOutcome.Refused) {
+        showWarningNotification({
+          message: t(AppsEditorI18nKeys.AccessAdminOnlyError),
+          requestId: result.traceId,
+        });
       }
-    };
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [appId, attempt, resetAccess, willLoad]);
-
-  const retry = useCallback(() => setAttempt((previous) => previous + 1), []);
-
-  /*
-   * Resolves to `undefined` once the step is done, to `{ isRefused: true }`
-   * when Core refuses a non-administrator's change (the draft is kept and the
-   * warning is shown here), and to the message of any other failure.
-   */
-  const runStep = useCallback(
-    async (
-      applicationId: string,
-      metadata: DeploymentCreationFormValues,
-    ): Promise<
-      | { isRefused?: false; message: string; traceId?: string }
-      | { isRefused: true }
-      | undefined
-    > => {
-      const list = toRequestValue();
-      if (!isEnabled || !isDirty || list == null) return undefined;
-      try {
-        await updateApplicationAccess(
-          applicationId,
-          toApplicationMetadataFields(metadata),
-          list,
-        );
-        resetAccess(list);
-        setHasStoredEntries(list.length > 0);
-        return undefined;
-      } catch (error) {
-        let details: Awaited<ReturnType<typeof getApiErrorDetails>> = {
-          message: null,
-        };
-        try {
-          details = await getApiErrorDetails(error);
-        } catch {
-          // An unreadable error body falls back to the generic message.
-        }
-        const { code, message, traceId } = details;
-        if (
-          code ===
-          ApplicationErrorCode.ApplicationResourceDependenciesNotAllowed
-        ) {
-          showWarningNotification({
-            message: t(AppsEditorI18nKeys.AccessAdminOnlyError),
-            requestId: traceId,
-          });
-          return { isRefused: true };
-        }
-        return { message: message ?? failedMessage, traceId };
+      if (result.outcome === ApplicationAccessSaveOutcome.Failed) {
+        return result.message ?? failedMessage;
       }
+      return undefined;
     },
-    [
-      failedMessage,
-      isDirty,
-      isEnabled,
-      resetAccess,
-      showWarningNotification,
-      t,
-      toRequestValue,
-    ],
+    [failedMessage, showWarningNotification, t],
   );
 
   const save = useCallback(
@@ -174,15 +119,13 @@ export const useApplicationAccessEditor = ({
       applicationId: string,
       metadata: DeploymentCreationFormValues,
     ): Promise<boolean> => {
-      const failure = await runStep(applicationId, metadata);
-      if (failure == null || failure.isRefused) return true;
-      showErrorNotification({
-        message: failure.message,
-        requestId: failure.traceId,
-      });
+      const result = await sync(applicationId, metadata);
+      const failedWith = report(result);
+      if (failedWith == null) return true;
+      showErrorNotification({ message: failedWith, requestId: result.traceId });
       return false;
     },
-    [runStep, showErrorNotification],
+    [report, showErrorNotification, sync],
   );
 
   const saveOrThrow = useCallback(
@@ -190,12 +133,10 @@ export const useApplicationAccessEditor = ({
       applicationId: string,
       metadata: DeploymentCreationFormValues,
     ): Promise<void> => {
-      const failure = await runStep(applicationId, metadata);
-      if (failure != null && !failure.isRefused) {
-        throw new ResourceSaveError(failure.message);
-      }
+      const failedWith = report(await sync(applicationId, metadata));
+      if (failedWith != null) throw new ResourceSaveError(failedWith);
     },
-    [runStep],
+    [report, sync],
   );
 
   return { access, status, hasStoredEntries, retry, save, saveOrThrow };

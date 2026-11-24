@@ -3,7 +3,11 @@ import type {
   ResourceDependencyAccess,
 } from '@epam/ai-dial-chat-api-client';
 import type { AccessLevel } from '@epam/ai-dial-chat-shared';
-import type { ApplicationAccessContentType } from './types';
+import type {
+  ApplicationAccessContentType,
+  ApplicationAccessLoadStatus,
+  ApplicationAccessSaveOutcome,
+} from './types';
 
 /** One configured Access entry: the user's own bucket of one content type with a level. */
 export interface ApplicationAccessEntry {
@@ -62,4 +66,51 @@ export interface UseApplicationAccessResult {
   reset: (nextBaseline?: ApplicationResourceDependencyDto[]) => void;
   /** The full list to send: `undefined` while untouched, `[]` for an explicit clear. */
   toRequestValue: () => ApplicationResourceDependencyDto[] | undefined;
+}
+
+/** Options of {@link useApplicationAccessSync}. */
+export interface UseApplicationAccessSyncOptions<TContext = void> {
+  /** Whether the edited kind has the Access section; a disabled section loads and saves nothing. */
+  isEnabled: boolean;
+  /** Id of the edited application; empty while a new one is being created. */
+  appId: string;
+  /** Whether the stored list is read for `appId`; `false` once the editor created the application itself, whose list it already holds. */
+  shouldLoad: boolean;
+  /** Reads the dependency list stored on an application. */
+  loadStoredList: (
+    appId: string,
+  ) => Promise<ApplicationResourceDependencyDto[]>;
+  /** Writes the full dependency list to an application, with whatever `context` the caller passed to `save`. */
+  saveList: (
+    appId: string,
+    list: ApplicationResourceDependencyDto[],
+    context: TContext,
+  ) => Promise<unknown>;
+}
+
+/** What {@link UseApplicationAccessSyncResult.save} reports. */
+export interface ApplicationAccessSaveResult {
+  /** How the save ended. */
+  outcome: ApplicationAccessSaveOutcome;
+  /** The API's message for a `Failed` save, or `null` when it carried none or could not be read; absent otherwise. */
+  message?: string | null;
+  /** Trace id of the failed or refused request, when the API sent one. */
+  traceId?: string;
+}
+
+/** Result of {@link useApplicationAccessSync}. */
+export interface UseApplicationAccessSyncResult<TContext = void> {
+  /** The draft and its derived state. */
+  access: UseApplicationAccessResult;
+  /** Where the stored list stands; the draft is editable only once `Loaded`. */
+  status: ApplicationAccessLoadStatus;
+  /** Whether the stored list that was loaded or last saved holds at least one entry. */
+  hasStoredEntries: boolean;
+  /** Reads the stored list again after a failed read. */
+  retry: () => void;
+  /** Sends the draft to `applicationId` when it differs from the stored list; a failure never rejects and the draft is kept. */
+  save: (
+    applicationId: string,
+    context: TContext,
+  ) => Promise<ApplicationAccessSaveResult>;
 }
