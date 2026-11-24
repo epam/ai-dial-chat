@@ -156,7 +156,7 @@ the shared `/file-manager` entry and lazy conversation and pinned-project
 publishing panels. Heavy feature engines load when their features are
 activated.
 
-Three things keep them off the first paint:
+Four things keep them off the first paint:
 
 - Every lib declares `sideEffects` in its `package.json` (CSS/SCSS only, or
   `false`), so importing one symbol from a lib's root barrel does not keep
@@ -170,6 +170,13 @@ Three things keep them off the first paint:
   one stylesheet instead of ~150 module preloads and a dozen render-blocking
   stylesheets. That stylesheet keeps the dev server's cascade order: Inter,
   kit, file manager, CSS Modules, Tailwind, `styles.scss`.
+- Closed lazy overlays (the sources panel, the attachment canvas, the sign-in
+  interrupt dialog, the onboarding tour, the model and prompt catalogs) mount,
+  still closed, only at the first idle period after the document `load` event,
+  or earlier if they open first (`useDeferredOverlayMount`,
+  `src/utils/load-idle.ts`). A mounted `lazy()` component downloads its chunk
+  even while it renders nothing, so mounting them at page load fetched their
+  chunks alongside the home route's.
 - Inter is self-hosted through `@fontsource-variable/inter`, imported in
   `main.tsx`; the page loads no third-party stylesheet. `index.html` preloads
   the Latin subset, which every page draws, so the font request starts with the

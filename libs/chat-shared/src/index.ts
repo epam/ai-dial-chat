@@ -81,6 +81,7 @@ export * from './components/TextRefinementField/TextRefinementField';
 export * from './entry-points/markdown';
 export * from './hooks/useAvailableHeightCap';
 export * from './hooks/useControlErrorAssociation';
+export * from './hooks/useHasBeenTrue';
 export * from './hooks/useIsMobile';
 export * from './hooks/useIsPhone';
 export * from './hooks/useIsTablet';

@@ -39,6 +39,31 @@ directly when its module is already in memory, and keep `lazy` only as the
 fallback path (`ConversationInputLoader`, `conversation-input-loader.ts`);
 pick the path once per instance so the component never remounts.
 
+`lazy` alone does not keep a closed overlay off the first paint: a mounted
+`lazy` component requests its chunk on its first render even when it renders
+nothing. The sources panel, the canvas, the sign-in dialog, the onboarding tour
+and both catalog modals were all mounted closed at page load, and their chunks
+downloaded in waves alongside the home route's own. Gate a closed overlay with
+`useDeferredOverlayMount(isOpen)` (`apps/chat/src/hooks/useDeferredOverlayMount.ts`).
+It mounts the overlay, still closed, at the first idle period after the
+document `load` event, or earlier if the overlay opens first, and keeps it
+mounted after that. Mounting closed keeps the first open's transition, which a
+mount-on-open would lose.
+
+## Never `import()` another lib's root barrel either
+
+The same applies across libs. `McpAppInlinePreview` needs the MCP App renderer
+only for a message with an MCP App, but it imported it from the
+`@epam/ai-dial-attachment-canvas` root, so `zod`, `@mcp-ui/client` and the MCP
+SDK (102 KB gzip, ~230 ms of evaluation) sat in the home route's static graph.
+The entry imports that root statically, so an `import()` of it would split
+nothing off. The lib exports the component from a subpath
+(`./mcp-app-renderer`), and the consumer lazy-loads that subpath. A Vite config
+that aliases the package root to its source needs the subpath alias **before**
+the root one, because a string alias also matches every subpath of its key.
+Check a route's static closure with `node scripts/check-route-graph.mjs` against
+a `vite build --sourcemap` output.
+
 ## Never `import()` a lib barrel that the entry imports statically
 
 `lazy(() => import('@epam/ai-dial-conversation-input'))` split nothing off:

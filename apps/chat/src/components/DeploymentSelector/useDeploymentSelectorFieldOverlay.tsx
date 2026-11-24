@@ -14,6 +14,7 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
+import { useDeferredOverlayMount } from '../../hooks/useDeferredOverlayMount';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 
@@ -153,7 +154,9 @@ export function useDeploymentSelectorFieldOverlay(
     ],
   );
 
-  const catalogModal = (
+  /* Mounted after the page has loaded, so the catalog chunk stays out of first paint. */
+  const isCatalogMounted = useDeferredOverlayMount(isCatalogOpen);
+  const catalogModal = isCatalogMounted ? (
     <Suspense fallback={null}>
       <CatalogModal
         isOpen={isCatalogOpen}
@@ -161,7 +164,7 @@ export function useDeploymentSelectorFieldOverlay(
         onSelect={onSelect}
       />
     </Suspense>
-  );
+  ) : null;
 
   return {
     onOpenChange,
