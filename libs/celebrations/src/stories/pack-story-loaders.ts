@@ -1,5 +1,7 @@
 import type { CelebrationAssetLoaders } from '../models/celebration-pack';
 import { EXTERNAL_GIFT_WRAPPING_ASSETS } from '../test-utils/external-gift-wrapping';
+import { SANTA_HISTORY_ASSETS } from '../test-utils/santa-history-delivery';
+import { SANTA_HISTORY_FULL_ASSETS } from '../test-utils/santa-history-full';
 import { CAT_BORROW_ASSET_IDS, CatAsset } from './cat-borrow-scenes';
 import anchoredAnimation from './fixtures/anchored-scene.lottie.json';
 import catBorrowFull from './fixtures/cat-borrow-full.lottie.json';
@@ -7,6 +9,11 @@ import catBorrowSpike from './fixtures/cat-borrow-spike.lottie.json';
 import giftWrappingDesktop from './fixtures/external/gift-wrapping.desktop.28260bbcf8f593a6.json';
 import giftWrappingMobile from './fixtures/external/gift-wrapping.mobile.3d541976f665e859.json';
 import giftWrappingPosterUrl from './fixtures/external/gift-wrapping.poster.964179e2cd040815.svg';
+import santaHistoryDesktop from './fixtures/external/santa-history-delivery.desktop.0f2b71021b89f641.json';
+import santaHistoryFullDesktop from './fixtures/external/santa-history-delivery.full.desktop.0166262c3d3c46ae.json';
+import santaHistoryFullMobile from './fixtures/external/santa-history-delivery.full.mobile.e44dde821ea6b972.json';
+import santaHistoryMobile from './fixtures/external/santa-history-delivery.mobile.45241e4de535e5a0.json';
+import santaHistoryPosterUrl from './fixtures/external/santa-history-delivery.poster.dbf68dbaca2e2cac.svg';
 import posterUrl from './fixtures/pack-poster.svg';
 import animation from './fixtures/pack-scene.lottie.json';
 import triggerUrl from './fixtures/pack-trigger.svg';
@@ -31,6 +38,10 @@ const DELAY_MS: Record<PackStoryLoader, number> = {
 };
 
 const ANIMATIONS: Readonly<Record<string, unknown>> = {
+  [SANTA_HISTORY_FULL_ASSETS.desktop.assetId]: santaHistoryFullDesktop,
+  [SANTA_HISTORY_FULL_ASSETS.mobile.assetId]: santaHistoryFullMobile,
+  [SANTA_HISTORY_ASSETS.desktop.assetId]: santaHistoryDesktop,
+  [SANTA_HISTORY_ASSETS.mobile.assetId]: santaHistoryMobile,
   fixture: animation,
   'anchored-fixture': anchoredAnimation,
   [CAT_BORROW_ASSET_IDS[CatAsset.Spike]]: catBorrowSpike,
@@ -40,6 +51,7 @@ const ANIMATIONS: Readonly<Record<string, unknown>> = {
 };
 
 const IMAGES: Readonly<Record<string, string>> = {
+  [SANTA_HISTORY_ASSETS.poster.assetId]: santaHistoryPosterUrl,
   'fixture-poster': posterUrl,
   'fixture-trigger': triggerUrl,
   [EXTERNAL_GIFT_WRAPPING_ASSETS.poster.assetId]: giftWrappingPosterUrl,

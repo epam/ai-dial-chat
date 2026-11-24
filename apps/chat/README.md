@@ -177,6 +177,13 @@ Four things keep them off the first paint:
   `src/utils/load-idle.ts`). A mounted `lazy()` component downloads its chunk
   even while it renders nothing, so mounting them at page load fetched their
   chunks alongside the home route's.
+- `public/boot-prefetch.js`, inlined into the `index.html` head, sends
+  `GET /api/v1/auth/me`, `/api/v1/client-config?appId=ai-dial-chat` and
+  `/api/v1/user-config` while the bundle downloads.
+  `createBootPrefetchFetch` (`src/server-api/boot-prefetch.ts`) is the generated
+  client's `fetchApi`. The first GET of each of these URLs within 10 s takes the
+  early response instead of a second request, and every later request goes to
+  the network. The load right after a logout sends none of them.
 - Inter is self-hosted through `@fontsource-variable/inter`, imported in
   `main.tsx`; the page loads no third-party stylesheet. `index.html` preloads
   the Latin subset, which every page draws, so the font request starts with the

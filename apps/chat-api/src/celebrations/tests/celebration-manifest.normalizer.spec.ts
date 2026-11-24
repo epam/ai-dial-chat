@@ -216,6 +216,62 @@ describe('normalizeCelebrationManifest', () => {
     );
   });
 
+  it('adds Santa to the ordinary pack while keeping its history capability scene-level and its assets opaque', () => {
+    const manifest = newYear();
+    const original = normalizeCelebrationManifest(manifest, newYearRef());
+    if ('error' in original) throw new Error(original.error);
+    const santa = {
+      ...manifest.scenes[0],
+      id: 'santa-history-delivery',
+      labelId: 'santaHistoryDeliveryToastMessage',
+      requiredCapabilities: [
+        'lottie-light-svg-v1',
+        'viewport-stage-v1',
+        'interaction-history-ladder-v1',
+        'static-poster-v1',
+      ],
+      placement: {
+        template: 'viewport-stage-v1',
+        fit: 'contain',
+        align: 'center',
+      },
+      direction: 'none',
+      timing: {
+        playbackDurationMs: 27000,
+        loadTimeoutMs: 2000,
+        readyTimeoutMs: 250,
+        maxLifetimeMs: 29500,
+      },
+      posterDurationMs: 4000,
+    };
+    const labels = {
+      en: {
+        santaHistoryDeliveryToastMessage:
+          'Special delivery, with a little help from friends.',
+      },
+    };
+    const result = normalizeCelebrationManifest(
+      { ...manifest, scenes: [...manifest.scenes, santa], labels },
+      newYearRef(),
+    );
+    if ('error' in result) throw new Error(result.error);
+
+    const { pack } = result.value;
+    expect(pack.eventId).toBe('new-year');
+    expect(pack.event).toBeUndefined();
+    expect(pack.requiredCapabilities).toEqual(
+      original.value.pack.requiredCapabilities,
+    );
+    expect(pack.requiredCapabilities).not.toContain(
+      'interaction-history-ladder-v1',
+    );
+    expect(pack.scenes.slice(0, -1)).toEqual(original.value.pack.scenes);
+    expect(pack.scenes.at(-1)).toEqual(santa);
+    expect(pack.labels).toEqual(labels);
+    expect(pack.assets).toEqual(original.value.pack.assets);
+    expect(result.value.files).toEqual(original.value.files);
+  });
+
   it.each<[string, Record<string, unknown>]>([
     [
       'a different template',

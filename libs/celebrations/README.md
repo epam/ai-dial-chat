@@ -184,7 +184,7 @@ export const loadNewYear = async () => {
 };
 ```
 
-Add a scene the event does not have with `addCelebrationScenes`. It appends only unknown ids to the scenes and the click pool, never to the secret pool, and merges `labels` under the event's own labels, so a bundled label id always wins. The host decides which ids may be added; it returns the same event when nothing is new:
+Add a scene the event does not have with `addCelebrationScenes`. It appends only unknown ids to the scenes and routes them to the secret pool when listed in the compiled event’s `secretTrigger.externalSceneIds`, otherwise to the click pool, and merges `labels` under the event's own labels, so a bundled label id always wins. The host decides which ids may be added; it returns the same event when nothing is new:
 
 ```ts
 import {
@@ -239,7 +239,7 @@ export const loadAnniversary = async () => {
 };
 ```
 
-`LottieScene` plays one `CelebrationSceneDescriptor` inside the provider's scene layer. It picks the variant matching the most of layout (`isMobile`), direction and color scheme, places a `viewport-stage-v1` stage by `fit` and `align` (`start`/`end` follow the supplied direction, never the document language) or a `composer-anchor-v1` stage on the measured composer (see below), flips a `mirror` scene in RTL, and clones the data before the player gets it. Under reduced motion, for an unsupported scene, or on a failure before playback, it shows the poster `<img alt="">` for `posterDurationMs` without loading the player or the data; after a failure past the first frame it renders nothing. A generated SVG with more than 800 elements counts as a failure before playback.
+`LottieScene` plays one `CelebrationSceneDescriptor` inside the provider's scene layer. It picks the variant matching the most of layout (`isMobile`), direction and color scheme, places a `viewport-stage-v1` stage by `fit` and `align` (`start`/`end` follow the supplied direction, never the document language) or a `composer-anchor-v1` stage on the measured composer (see below), flips a `mirror` scene in RTL, and clones the data before the player gets it. Reduced motion or an unsupported scene uses the poster `<img alt="">` for `posterDurationMs` without requesting the player or animation data. A failure before playback also uses the poster; after a failure past the first frame it renders nothing. History scenes additionally require a safe, readable poster region, as described below. A generated SVG with more than 800 elements counts as a failure before playback.
 
 ```tsx
 import { LottieScene } from '@epam/ai-dial-celebrations/packs';
@@ -287,6 +287,32 @@ export const giftWrappingPlacement: CelebrationComposerAnchorPlacement = {
   fallback: CelebrationAnchorFallback.StageAnchor,
 };
 ```
+
+#### Following conversation rows (`interaction-history-ladder-v1`)
+
+This capability uses `viewport-stage-v1`, `direction: 'none'` and no second interaction. The adapter maps authored stations into viewport coordinates once; the player does not apply a second contain/cover fit. It mirrors native artwork from the host's logical side and keeps copied DOM text upright.
+
+The asset declares six static reference nulls `hl-anchor:row-0` through `hl-anchor:row-5`, independent `hl-track:actor` / `hl-track:copy` position tracks, and optional rigid `hl-follow:row-N` roots. Contiguous marker streams `hl:actor:row-N` and `hl:copy:row-N` bind their respective keys. Single `hl:entry` / `hl:restore` markers delimit borrowing. The copy enters at its source reference with zero rotation, has fixed scale, and is visible only within the bounded entry/restore fade window. Native times, easing and key counts stay authored.
+
+The optional frame-zero `hl:edge-start` marker selects the logical start of each row (left in LTR), including the inert copy's pivot; assets without it keep the end-edge pivot. Native art mirrors in RTL, while copied text remains upright.
+
+An optional `hl-track:flight` and contiguous `hl:flight:*` windows may bind to `row-5`, `viewport-start` and `viewport-end`. This requires matching static `hl-anchor:viewport-start` / `hl-anchor:viewport-end` references and an invisible `hl-flight-bounds` rectangle in flight-local coordinates, enclosing the vehicle and seated rider. The actor may also bind to `viewport-end`. The adapter maps these points to the actual visible window edges, independently of the safety inset used for resting poses; it checks the full swept flight against protected controls while allowing clipping beyond the window. Times, easing and scale stay authored.
+
+A single optional `hl-if:drawn:top-line:row-0` shape, directly parented to `hl-follow:row-0`, can extend its first path vertex just beyond the visible top. It requires identity transforms, one static open vertical two-vertex path with zero tangents, and one or two strokes of at most 8 px. It has no masks or effects. Only the private endpoint changes; the extended line must clear protected controls.
+
+Six invisible static rectangles `hl-bounds:row-N` bound shared visible art at each station. Optional `hl-drawn-bounds` adds the alternative-only envelope without reserving hidden artwork width against real history headers. `hl-range` declares permitted horizontal drift and vertical gap. `hl-if:drawn` and optional `hl-if:history` layer prefixes choose native branches; the drawn alternative can use rope artwork and does not require cards. Malformed or duplicate slots, parent cycles, reserved names, uncovered keys or invalid transforms fail before copying UI. Preparation removes metadata from a private clone; actual rendered bounds still require browser verification.
+
+The host's existing `historyContainer` / `historyRowLink` anchors supply visible idle rows. Discovery is bounded to 120 links and 24 ancestors. Six distributed stations are chosen from a safe reachable corridor, preferring the lowest usable ending row and then the earliest compatible start. Unsafe leading/trailing rows or excessive gaps do not discard a shorter valid descent. At most 720 station envelopes are cached and 24 candidate copy paths are checked; candidate search does not remeasure the DOM. Focused, expanded, editable, clipped or oversized rows are excluded. At most one inert row is copied: 320×64 CSS px and 80 nodes, including its root. Noninteractive decorative `aria-hidden` descendants and static planar translations on ancestor wrappers are supported. Transforms shared with the viewport scene, including `body`/`html` or a custom portal ancestor, remain unsupported to avoid applying the measured offset twice. Hidden rows/ancestors, accessibility-hidden controls, transforms on the row itself, ancestor scale/rotation/skew/perspective/zoom and active/pending ancestor animations remain ineligible. Its swept translation/rotation bounds must avoid the viewport margins and protected controls. The real node remains in place; its appearance is restored on completion or any cancellation.
+
+Missing, closed, empty or unsafe history uses the complete authored alternative near the composer with zero snapshots. Santa's alternative is a rope descent with a slip, catch and recovery before the gift/phone/rescue ending. The adapter searches safe free regions around the composer and its heading/starters, without opening a sidebar. If no animated route fits, the shared safe-poster path protects the supplied composer and history surfaces. Reduced motion loads no player. If no readable poster fits or its image fails, only the host's existing notification remains. Interaction, content/geometry/anchor changes, scrolling, viewport changes, hidden tabs and host resets cancel immediately; no per-frame host measurement or React update is used.
+
+The [Santa history Storybook preview](src/stories/SantaHistoryDelivery.stories.tsx) contains a 12-second representative descent/catch and a separate unpublished 27-second full story: gifts, failed return climb, phone call, reindeer arrival, boarding and departure. The rope fallback, carried gift sack and centered head are revisions to the previously accepted assets. [Representative provenance](src/test-utils/santa-history-delivery.ts) and [full asset identities](src/test-utils/santa-history-full.ts) pin Themes native JSON/SVG bytes. Artwork/normal-speed acceptance, geometry, resource measurements and publication are separate outcomes; a local fixture does not establish a released pack.
+
+##### Future Santa activation and rollback
+
+After runtime and pack release prerequisites pass, append `new-year/santa-history-delivery` to the deployment's existing `UI_EVENT_EXTERNAL_SCENES`, keeping every existing entry, `UI_EVENT=new-year` and `UI_EVENT_DELIVERY_MODE=prefer-external`. Change `UI_EVENT_DELIVERY_REVISION` and reload/reset clients to adopt delivery changes. Santa joins the existing `happy new year` secret pool. Gift clicks never select Santa; the other click and secret scenes remain available. No Shift-click routing or separate event is introduced.
+
+Declare the new capability at scene level only, so older clients omit Santa while preserving supported scenes. Remove only its allowlist entry and refresh the delivery revision to roll it back. Ordinary-pack publication still requires a separately eligible retained-version retirement; the local preview does not change catalog defaults or immutable assets.
 
 #### Borrowing host buttons (`interaction-cat-borrow-v1`)
 
@@ -342,7 +368,7 @@ export const Trigger = ({ onActivate }: { onActivate: () => void }) => (
 
 ## Capabilities
 
-`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `composer-anchor-v1`, `interaction-composer-outline-v1`, `interaction-cat-borrow-v1`, `interaction-copy-track-v1`, `interaction-composer-carry-v1`, `static-poster-v1` and `static-trigger-v1`. Any other `interaction-*` id is unsupported. A host keeps only scenes whose `requiredCapabilities` are all in the set:
+`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `composer-anchor-v1`, `interaction-composer-outline-v1`, `interaction-cat-borrow-v1`, `interaction-copy-track-v1`, `interaction-composer-carry-v1`, `interaction-history-ladder-v1`, `static-poster-v1` and `static-trigger-v1`. Any other `interaction-*` id is unsupported. A host keeps only scenes whose `requiredCapabilities` are all in the set:
 
 ```ts
 import {
@@ -412,7 +438,7 @@ and sleigh scenes are no longer included.
 
 From the main entry:
 
-- `CelebrationCapability`: `LottieLightSvgV1`, `ViewportStageV1`, `ComposerAnchorV1`, `InteractionComposerOutlineV1`, `InteractionCatBorrowV1`, `InteractionCopyTrackV1`, `InteractionComposerCarryV1`, `StaticPosterV1`, `StaticTriggerV1`.
+- `CelebrationCapability`: `LottieLightSvgV1`, `ViewportStageV1`, `ComposerAnchorV1`, `InteractionComposerOutlineV1`, `InteractionCatBorrowV1`, `InteractionCopyTrackV1`, `InteractionComposerCarryV1`, `InteractionHistoryLadderV1`, `StaticPosterV1`, `StaticTriggerV1`.
 - `CelebrationDirectionMode`: `None`, `Mirror`, `Variant`.
 - `CelebrationLayout`: `Mobile`, `Desktop`.
 - `CelebrationColorScheme`: `Light`, `Dark`.

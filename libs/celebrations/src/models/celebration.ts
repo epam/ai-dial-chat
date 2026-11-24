@@ -26,6 +26,8 @@ export interface CelebrationSecretTrigger {
   hintPhrase: string;
   /** Scenes the phrase may play. */
   sceneIds: readonly string[];
+  /** Additional pack scenes routed to this phrase when the host admits them. */
+  externalSceneIds?: readonly string[];
 }
 
 /** A compiled celebration event, loaded only when a host selects it. */

@@ -400,6 +400,159 @@ describe('LottieScene', () => {
     expect(container.innerHTML).toBe('');
     expect(animations[0].destroy).toHaveBeenCalledOnce();
   });
+  describe('LottieScene — safe history poster', () => {
+    let composer: HTMLDivElement;
+    const historyScene = () =>
+      packSceneFixture({
+        requiredCapabilities: [
+          CelebrationCapability.LottieLightSvgV1,
+          CelebrationCapability.ViewportStageV1,
+          CelebrationCapability.InteractionHistoryLadderV1,
+          CelebrationCapability.StaticPosterV1,
+        ],
+        placement: packSceneFixture().placement,
+        direction: CelebrationDirectionMode.None,
+      });
+    const loadPoster = (container: HTMLElement) => {
+      const image = poster(container) as HTMLImageElement;
+      Object.defineProperties(image, {
+        naturalWidth: { configurable: true, value: 100 },
+        naturalHeight: { configurable: true, value: 125 },
+      });
+      fireEvent.load(image);
+      return image;
+    };
+    beforeEach(() => {
+      state.reduced = true;
+      composer = document.createElement('div');
+      composer.className = 'test-composer';
+      document.body.append(composer);
+      vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(
+        function (this: Element) {
+          return this === composer
+            ? new DOMRect(16, 610, 328, 90)
+            : new DOMRect(0, 0, 0, 0);
+        },
+      );
+      vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(
+        360,
+      );
+      vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(
+        720,
+      );
+      vi.stubGlobal(
+        'ResizeObserver',
+        class {
+          observe = vi.fn();
+          disconnect = vi.fn();
+        },
+      );
+    });
+    afterEach(() => {
+      composer.remove();
+      vi.unstubAllGlobals();
+    });
+
+    it('loads only a safely placed static image and keeps the existing expiry deadline', async () => {
+      const sceneLoaders = loaders();
+      const { container } = renderScene(historyScene(), sceneLoaders);
+      await flush();
+      expect(poster(container)?.style.visibility).toBe('hidden');
+      const image = loadPoster(container);
+      expect(image.style.visibility).toBe('visible');
+      expect(
+        parseFloat(image.style.top) + parseFloat(image.style.height),
+      ).toBeLessThanOrEqual(610);
+      expect(sceneLoaders.loadAnimationData).not.toHaveBeenCalled();
+      expect(loadLottiePlayer).not.toHaveBeenCalled();
+      act(() => vi.advanceTimersByTime(4000));
+      expect(poster(container)).toBeNull();
+    });
+
+    it('cancels a reduced-motion image while pending and cannot resurrect it on load', async () => {
+      const { container } = renderScene(historyScene());
+      await flush();
+      const image = poster(container) as HTMLImageElement;
+      fireEvent.input(window);
+      fireEvent.load(image);
+      await flush();
+      expect(poster(container)).toBeNull();
+      expect(loadLottiePlayer).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('uses the same safe static path after a failed animation preparation', async () => {
+      state.reduced = false;
+      const { container } = renderScene(historyScene());
+      await flush();
+      const image = loadPoster(container);
+      expect(image.style.visibility).toBe('visible');
+      expect(player.loadAnimation).not.toHaveBeenCalled();
+      fireEvent.pointerDown(window);
+      fireEvent.load(image);
+      expect(poster(container)).toBeNull();
+    });
+
+    it('uses the safe image for an invalid recognized combination without starting the player', async () => {
+      state.reduced = false;
+      const scene = {
+        ...historyScene(),
+        direction: CelebrationDirectionMode.Mirror,
+      };
+      const { container } = renderScene(scene);
+      await flush();
+      expect(loadPoster(container).style.visibility).toBe('visible');
+      expect(loadLottiePlayer).not.toHaveBeenCalled();
+    });
+
+    it('uses the safe image when no history variant matches without loading animation data', async () => {
+      state.reduced = false;
+      const scene = {
+        ...historyScene(),
+        variants: [
+          {
+            when: { layout: CelebrationLayout.Mobile },
+            animationAssetId: 'santa-mobile',
+          },
+        ],
+      };
+      const sceneLoaders = loaders();
+      const { container } = renderScene(scene, sceneLoaders);
+      await flush();
+      expect(loadPoster(container).style.visibility).toBe('visible');
+      expect(sceneLoaders.loadAnimationData).not.toHaveBeenCalled();
+      expect(loadLottiePlayer).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      { ...LTR, direction: 'rtl' as const },
+      { ...LTR, colorScheme: CelebrationColorScheme.Dark },
+    ])(
+      'terminates a static activation when its supplied context changes',
+      async (context) => {
+        const scene = historyScene();
+        const sceneLoaders = loaders();
+        const { container, rerender } = renderScene(scene, sceneLoaders);
+        await flush();
+        loadPoster(container);
+        rerender(
+          <LottieScene
+            scene={scene}
+            loaders={sceneLoaders}
+            context={context}
+          />,
+        );
+        await flush();
+        expect(poster(container)).toBeNull();
+        rerender(
+          <LottieScene scene={scene} loaders={sceneLoaders} context={LTR} />,
+        );
+        await flush();
+        expect(poster(container)).toBeNull();
+      },
+    );
+  });
+
   describe('LottieScene — composer anchoring', () => {
     let composer: HTMLDivElement;
     let composerRect: DOMRect;
