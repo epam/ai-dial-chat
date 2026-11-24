@@ -8,7 +8,7 @@ import { createIsExternalPeerImport } from '../../tools/vite-external-matcher.mj
 import { createVerifyPublishedStyles } from '../../tools/vite-verify-published-styles.mjs';
 
 const REQUIRED_PUBLISHED_STYLE_MARKERS = [
-  '.desktop\\:mt-2',
+  '.desktop\\:px-3\\.5',
   '.rtl\\:flex-row-reverse',
 ] as const;
 const EXTERNAL_PEER_NAMES = [
