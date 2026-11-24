@@ -64,22 +64,6 @@ describe('CONFIG_DEFINITIONS', () => {
     });
   });
 
-  it('contains the publish.publicationFilterSources entry with the expected shape', () => {
-    const entry = CONFIG_DEFINITIONS.find(
-      (definition) => definition.key === 'publish.publicationFilterSources',
-    );
-
-    expect(entry).toMatchObject({
-      key: 'publish.publicationFilterSources',
-      type: 'config',
-      valueType: 'json',
-      visibility: 'client',
-      defaultValue: ['title', 'role', 'dial_roles'],
-      critical: false,
-      envVar: 'PUBLICATION_FILTER_SOURCES',
-    });
-  });
-
   it('contains the content.additionalLocales entry with the expected shape', () => {
     const entry = CONFIG_DEFINITIONS.find(
       (definition) => definition.key === 'content.additionalLocales',
@@ -301,8 +285,11 @@ describe('CONFIG_DEFINITIONS', () => {
       owner: 'chat-team',
       envVar: 'SPENDING_LIMITS_MODE',
     });
-    /* Eligible but unmanaged until schema 1.2.0 exports it. */
-    expect(entry?.management).toBeUndefined();
+    /* Managed from schema 1.2.0, with the mode enum. */
+    expect(entry?.management).toMatchObject({
+      kind: KeyManagementKind.ManagedConfig,
+      contract: { value: { enum: ['off', 'shadow', 'enforce'] } },
+    });
   });
 
   it('contains an open-ended client-visible event selection without a feature flag', () => {
@@ -337,13 +324,15 @@ const ENVIRONMENT_VARIABLE_NAMES: readonly string[] = [
   ),
 ];
 
-/* Schema 1.1.0 adds the announcements and the celebrations to the 1.0.0
- * onboarding tour; the welcome-text, File Manager, usage-limit and
- * spending-limit keys and features.usageLimitsControl follow in 1.2.0. */
-const MANAGED_1_1_0_KEYS = [
+/* Schema 1.2.0 adds the welcome text, the File Manager tabs, the two usage
+ * values and features.usageLimitsControl, the only managed feature, to the
+ * 1.1.0 announcements, celebrations and onboarding tour. */
+const MANAGED_1_2_0_KEYS = [
   'announcement.description',
   'announcement.items',
   'announcement.title',
+  'features.usageLimitsControl',
+  'fileManager.availableTabs',
   'onboarding.hints',
   'ui.activeEventId',
   'ui.celebrationDelivery.externalEvents',
@@ -351,6 +340,9 @@ const MANAGED_1_1_0_KEYS = [
   'ui.celebrationDelivery.mode',
   'ui.celebrationDelivery.revision',
   'ui.celebrationsEnabledByDefault',
+  'usageLimits.spendingLimitsMode',
+  'usageLimits.warningThresholdPercent',
+  'welcomeScreen.description',
 ];
 
 /* Every string either has an upper length bound or an enum, and every array
@@ -390,15 +382,15 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it('declares exactly the 53 known keys: 10 managed, 29 local-only and 14 eligible', () => {
-    expect(CONFIG_DEFINITIONS).toHaveLength(53);
-    expect(managed).toHaveLength(10);
+  it('declares exactly the 52 known keys: 15 managed, 28 local-only and 9 eligible', () => {
+    expect(CONFIG_DEFINITIONS).toHaveLength(52);
+    expect(managed).toHaveLength(15);
     expect(
       CONFIG_DEFINITIONS.filter((d) => localOnlyReasonOf(d) !== undefined),
-    ).toHaveLength(29);
+    ).toHaveLength(28);
     expect(
       CONFIG_DEFINITIONS.filter((d) => d.management === undefined),
-    ).toHaveLength(14);
+    ).toHaveLength(9);
   });
 
   it('manages a config key as config and a feature as feature', () => {
@@ -440,8 +432,16 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     }
   });
 
-  it('manages exactly the 1.1.0 keys', () => {
-    expect(managed.map((d) => d.key).sort()).toEqual(MANAGED_1_1_0_KEYS);
+  it('manages exactly the 1.2.0 keys', () => {
+    expect(managed.map((d) => d.key).sort()).toEqual(MANAGED_1_2_0_KEYS);
+  });
+
+  it('manages features.usageLimitsControl as the only managed feature', () => {
+    expect(
+      managed
+        .filter((d) => d.management?.kind === KeyManagementKind.ManagedFeature)
+        .map((d) => d.key),
+    ).toEqual(['features.usageLimitsControl']);
   });
 
   it('gives every managed key in a section a distinct display order', () => {
@@ -464,7 +464,6 @@ describe('CONFIG_DEFINITIONS managed classification', () => {
     ['features.responsesBackgroundEnabled', LocalOnlyReason.Capability],
     ['features.orgUnitsEnabled', LocalOnlyReason.Capability],
     ['features.liveChatInteraction', LocalOnlyReason.Capability],
-    ['publish.publicationFilterSources', LocalOnlyReason.Capability],
     ['features.scheduledTasksEnabled', LocalOnlyReason.Capability],
     ['dialCore.externalUrl', LocalOnlyReason.DeploymentTopology],
     ['mcpApps.sandboxUrl', LocalOnlyReason.DeploymentTopology],

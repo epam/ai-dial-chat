@@ -35,9 +35,6 @@ describe('PublishPanel getDisabledReason', () => {
         isSubmitting={false}
         author=""
         onAuthorChange={vi.fn()}
-        rules={[]}
-        onRulesChange={vi.fn()}
-        ruleSourceOptions={[]}
       />,
     );
 

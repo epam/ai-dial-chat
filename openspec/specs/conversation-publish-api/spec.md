@@ -21,17 +21,10 @@ Content-Type: application/json
 
 {
   "folderPath": "Organization/Data Science/Shared chats",
-  "author": "DIAL Team",
-  "rules": [
-    {
-      "source": "role",
-      "function": "CONTAIN",
-      "targets": ["engineering"]
-    }
-  ]
+  "author": "DIAL Team"
 }
 ```
-(`rules` is optional; omitting it is equivalent to `rules: []`. `author` is optional; omitting it, or sending it blank, is equivalent to the pre-existing session-derived behavior.)
+(`author` is optional; omitting it, or sending it blank, is equivalent to the pre-existing session-derived behavior.)
 
 Core call made by the service (via `DialClientService.client.createPublication`):
 ```json
@@ -45,19 +38,12 @@ Core call made by the service (via `DialClientService.client.createPublication`)
       "targetUrl": "conversations/public/Organization/Data Science/Shared chats/my-conversation-abc"
     }
   ],
-  "displayAuthor": "DIAL Team",
-  "rules": [
-    {
-      "source": "role",
-      "function": "CONTAIN",
-      "targets": ["engineering"]
-    }
-  ]
+  "displayAuthor": "DIAL Team"
 }
 ```
-`name` SHALL be the conversation's current title, re-fetched server-side via `ConversationService` at publish time (not accepted from the request body) so a stale or client-forged title cannot be sent to Core — see design.md's Open Questions for the rationale. `targetUrl`'s final segment SHALL be the conversation resource path's own last segment (its resource name), not its title, so the destination path stays stable across renames. `displayAuthor` SHALL be resolved by `ConversationPublishController.publish` through `resolveDisplayAuthor(author, claims)` (`apps/chat-api/src/common/utils/user-display-name.ts`, i.e. `author?.trim() || getUserDisplayName(claims)`) and passed as the existing single `author` string parameter to `ConversationPublishService.publish`, whose signature and its `displayAuthor: author` line SHALL remain unchanged — identical in shape to catalog publish (see `catalog-publish-api`). `rules` is the caller-supplied, validated array of access-restriction rules (at most 20 entries, `@ArrayMaxSize(20)`), normalized by the service to `rules ?? []` and passed through to Core unchanged, using the same `PublishRuleDto`/`PublishRuleFunction` shared with catalog publish (see `catalog-publish-api`'s "Publish request accepts optional access rules" requirement — the validation rules, limits, and source-allowlist rationale are identical and not repeated here).
+`name` SHALL be the conversation's current title, re-fetched server-side via `ConversationService` at publish time (not accepted from the request body) so a stale or client-forged title cannot be sent to Core — see design.md's Open Questions for the rationale. `targetUrl`'s final segment SHALL be the conversation resource path's own last segment (its resource name), not its title, so the destination path stays stable across renames. `displayAuthor` SHALL be resolved by `ConversationPublishController.publish` through `resolveDisplayAuthor(author, claims)` (`apps/chat-api/src/common/utils/user-display-name.ts`, i.e. `author?.trim() || getUserDisplayName(claims)`) and passed as the existing single `author` string parameter to `ConversationPublishService.publish`, whose signature and its `displayAuthor: author` line SHALL remain unchanged — identical in shape to catalog publish (see `catalog-publish-api`). The `createPublication` body SHALL NOT contain a `rules` key, so DIAL Core leaves the target folder's existing publication rules untouched.
 
-`folderPath` is validated with `class-validator` reusing `IsValidFilePath` (blocks `..`/absolute-path escapes) exactly as `PublishCatalogEntityDto` does. `path` (the conversation path) reuses `ConversationPathDto`'s existing validation. `rules` is validated exactly as in `PublishCatalogEntityDto` (same `PublishRuleDto`, same limits). `author` is validated exactly as in `PublishCatalogEntityDto`, through the shared constants in `apps/chat-api/src/publish/dto/publish-author.ts`: `@IsOptional()`, `@IsString()`, `@MaxLength(DISPLAY_AUTHOR_MAX_LENGTH)` (200), `@Matches(NO_CONTROL_CHARACTERS)` (`/^[^\p{Cc}]*$/u`).
+`folderPath` is validated with `class-validator` reusing `IsValidFilePath` (blocks `..`/absolute-path escapes) exactly as `PublishCatalogEntityDto` does. `path` (the conversation path) reuses `ConversationPathDto`'s existing validation. `PublishConversationDto` SHALL NOT declare `rules`; a body that still sends it is rejected with 400 by the `forbidNonWhitelisted` pipe. `author` is validated exactly as in `PublishCatalogEntityDto`, through the shared constants in `apps/chat-api/src/publish/dto/publish-author.ts`: `@IsOptional()`, `@IsString()`, `@MaxLength(DISPLAY_AUTHOR_MAX_LENGTH)` (200), `@Matches(NO_CONTROL_CHARACTERS)` (`/^[^\p{Cc}]*$/u`).
 
 Before creating the publication the service SHALL reject a conversation that still has a pending background-generated message (`findPendingBackgroundMessage`) with `ConflictException` (409, `PUBLISH_WHILE_GENERATING_MESSAGE`), because Core copies the stored file and the published copy would keep a `pending` message no viewer can resolve.
 
@@ -72,11 +58,11 @@ Response (201):
   "publishedBy": "Test User"
 }
 ```
-(`PublishConversationResultDto` — no `version`, no `entityType`/`entityId` pair, since there is exactly one resource kind and no version dimension. The response SHALL NOT echo back `rules` or `author`, matching `catalog-publish-api`'s response contract.)
+(`PublishConversationResultDto` — no `version`, no `entityType`/`entityId` pair, since there is exactly one resource kind and no version dimension. The response SHALL NOT echo back `author`, matching `catalog-publish-api`'s response contract.)
 
-Generated-client impact: OpenAPI `operationId: publishConversation`; request DTO `PublishConversationDto` (including optional `rules?: PublishRuleDto[]`, reusing the same `PublishRuleDto`/`PublishRuleFunction` as `PublishCatalogEntityDto`, and optional `author?: string`); response DTO `PublishConversationResultDto` (unchanged). Frontend caller: `apps/chat/src/server-api/conversation-publish.api.ts` thin wrapper using the normal (non-`Raw`) generated method, whose `publishConversation` helper SHALL take the author as a fourth positional parameter and omit the field from the request body when it is empty after trimming. Because `author` is optional, the regenerated client SHALL stay source-compatible with request literals that omit it.
+Generated-client impact: OpenAPI `operationId: publishConversation`; request DTO `PublishConversationDto` (optional `author?: string`; no `rules` field); response DTO `PublishConversationResultDto` (unchanged). Frontend caller: `apps/chat/src/server-api/conversation-publish.api.ts` thin wrapper using the normal (non-`Raw`) generated method, whose `publishConversation` helper SHALL take the author as a fourth positional parameter and omit the field from the request body when it is empty after trimming. Because `author` is optional, the regenerated client SHALL stay source-compatible with request literals that omit it.
 
-Authorization: caller SHALL be authenticated (existing session guard). The service SHALL resolve the bucket exclusively from the authenticated session and SHALL never accept a bucket from the request. Consequently, a path that exists only in another user's bucket is indistinguishable from a missing path and returns 404, avoiding disclosure of another user's resources. Write access to `folderPath` is enforced by DIAL Core itself when `createPublication` is called. A Core 403 SHALL map to `ForbiddenException` via `handleDialSdkError`/`mapDialHttpStatus`. This is unchanged by adding `rules` or `author`.
+Authorization: caller SHALL be authenticated (existing session guard). The service SHALL resolve the bucket exclusively from the authenticated session and SHALL never accept a bucket from the request. Consequently, a path that exists only in another user's bucket is indistinguishable from a missing path and returns 404, avoiding disclosure of another user's resources. Write access to `folderPath` is enforced by DIAL Core itself when `createPublication` is called. A Core 403 SHALL map to `ForbiddenException` via `handleDialSdkError`/`mapDialHttpStatus`. This is unchanged by `author`.
 
 #### Scenario: Successful publish
 - **WHEN** an authenticated user with write access to the target folder submits a valid publish request for their own conversation
@@ -126,13 +112,13 @@ Authorization: caller SHALL be authenticated (existing session guard). The servi
 - **WHEN** `createPublication` resolves with a structured error response (`result.error`), e.g. a 400 for an invalid destination
 - **THEN** the service calls `mapDialHttpStatus` with `result.error` as `errorBody` and `extractDialErrorMessage(result.error)` as `upstreamMessage`, so the thrown exception's `message` is Core's own reason instead of a generic placeholder — matching `catalog-publish-api`'s equivalent behavior for `PublishService.publish`
 
-#### Scenario: Request omitting rules behaves exactly as before this change
-- **WHEN** a request body has no `rules` field at all (an older client, or a client not using the new UI)
-- **THEN** the service normalizes the missing field to `rules: []`, Core receives `rules: []`, and the request succeeds exactly as it did before this change
+#### Scenario: Core request carries no rules
+- **WHEN** a valid conversation publish request reaches `ConversationPublishService.publish`
+- **THEN** the `createPublication` body has no `rules` key, and the folder's existing Core rules are unchanged
 
-#### Scenario: Invalid rules payload is rejected with 400
-- **WHEN** a request includes a malformed `rules` entry (invalid `function` enum value, empty `source`, or empty `targets`)
-- **THEN** the `ValidationPipe` rejects the request with 400 before reaching the service or Core, per the same validation contract defined in `catalog-publish-api`'s "Publish request accepts optional access rules" requirement
+#### Scenario: A request still sending rules is rejected with 400
+- **WHEN** a request body includes a `rules` field
+- **THEN** the `ValidationPipe` rejects it with 400 before reaching the service or Core
 
 ### Requirement: Publish history endpoint derives history from Core publications, scoped by conversation path
 

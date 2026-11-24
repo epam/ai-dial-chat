@@ -7,11 +7,16 @@ import {
   CelebrationAnchorFallback,
   CelebrationPlacementTemplate,
 } from '../../types/celebration-pack';
+import { PackSceneCompanionKind } from '../../types/pack-scene';
 import {
   onCatBorrowAnimationCreated,
   onCatBorrowPlaybackStarted,
   prepareCatBorrowScene,
 } from '../cat-borrow-adapter';
+import type { PackScenePreparation } from '../celebration-pack-scene';
+
+const catBorrowOf = (companion: PackScenePreparation['companion']) =>
+  companion?.kind === PackSceneCompanionKind.CatBorrow ? companion : undefined;
 
 const FPS = 60;
 const PLACEMENT: CelebrationComposerAnchorPlacement = {
@@ -219,11 +224,12 @@ describe('prepareCatBorrowScene — story sections', () => {
       ],
       490,
     );
-    const { data, borrow } = prepareCatBorrowScene(
+    const { data, companion } = prepareCatBorrowScene(
       buildAsset(),
       PLACEMENT,
       ANCHORS,
     );
+    const borrow = catBorrowOf(companion);
     const remap = remapOf(data);
 
     expect(remap[0]).toMatchObject({ t: 0, s: [0] });
@@ -236,11 +242,12 @@ describe('prepareCatBorrowScene — story sections', () => {
       [875, 56],
       [933, 40],
     ]);
-    const { data, borrow } = prepareCatBorrowScene(
+    const { data, companion } = prepareCatBorrowScene(
       buildAsset(),
       PLACEMENT,
       ANCHORS,
     );
+    const borrow = catBorrowOf(companion);
     const remap = remapOf(data);
     const step = remap.findIndex(({ h }) => h === 1);
 
@@ -258,11 +265,12 @@ describe('prepareCatBorrowScene — story sections', () => {
       ],
       490,
     );
-    const { data, borrow } = prepareCatBorrowScene(
+    const { data, companion } = prepareCatBorrowScene(
       buildAsset({ withMove: true }),
       PLACEMENT,
       ANCHORS,
     );
+    const borrow = catBorrowOf(companion);
 
     expect(borrow?.watched).toHaveLength(2);
     expect(facingOf(data).slice(0, 3)).toEqual([
@@ -276,11 +284,12 @@ describe('prepareCatBorrowScene — story sections', () => {
   it('reads the stand of a standalone one-prize section from that section', () => {
     /* Without the branch, the one-prize story is the whole tail, which stands 200 units past its anchor. */
     buildPage([[1050, 40]]);
-    const { data, borrow } = prepareCatBorrowScene(
+    const { data, companion } = prepareCatBorrowScene(
       withoutMarker(buildAsset(), 'cat:branch:one-prize'),
       PLACEMENT,
       ANCHORS,
     );
+    const borrow = catBorrowOf(companion);
 
     expect(borrow?.watched).toHaveLength(1);
     /* That stand does not fit right of the button, so the cat works it from its end side. */
@@ -344,11 +353,12 @@ describe('prepareCatBorrowScene — story sections', () => {
 
   it('plays only the crossing section, trimmed to its length, when no button is reachable', () => {
     buildPage([]);
-    const { data, borrow } = prepareCatBorrowScene(
+    const { data, companion } = prepareCatBorrowScene(
       buildAsset(),
       PLACEMENT,
       ANCHORS,
     );
+    const borrow = catBorrowOf(companion);
     const remap = remapOf(data);
 
     expect((data as { op: number }).op).toBe(90);

@@ -1975,7 +1975,7 @@ export interface ClientConfigDto {
    */
   mcpAppHostName?: string | null;
   /**
-   * Which File Manager tabs are shown to users. Defaults to the All tab plus the three source tabs.
+   * Which File Manager tabs are shown to users, as a set in the fixed order all, my_files, shared, organization. all is present only with at least two source tabs; a configured list with no source tab falls back to all four. Defaults to the All tab plus the three source tabs.
    * @type {Array<string>}
    * @memberof ClientConfigDto
    */
@@ -2064,12 +2064,6 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   customVariables: { [key: string]: unknown };
-  /**
-   * Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES; falls back to the legacy default when unset or empty.
-   * @type {Array<string>}
-   * @memberof ClientConfigDto
-   */
-  publicationFilterSources: Array<string>;
   /**
    * Additional content locales (canonical BCP-47 tags) a toolset's or application's Name/Description can be translated into. Sourced from ADDITIONAL_CONTENT_LOCALES, or the deprecated AVAILABLE_LOCALES when that is absent; empty when neither is set. May include the primary locale, which the client drops.
    * @type {Array<string>}
@@ -8271,12 +8265,6 @@ export interface PublishCatalogEntityDto {
    */
   author?: string;
   /**
-   * Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.
-   * @type {Array<PublishRuleDto>}
-   * @memberof PublishCatalogEntityDto
-   */
-  rules?: Array<PublishRuleDto>;
-  /**
    * Publish the entity together with the publisher's own credentials for it. DIAL Core honours it by copying the credential onto the published copy, so members of the organization use the entity without authorising individually. Omitted or `false` sends exactly the request every caller sent before this field existed. The flag grants no additional authorization: Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication `PENDING` until an administrator approves it. No credential value ever crosses the wire — only this boolean.
    * @type {boolean}
    * @memberof PublishCatalogEntityDto
@@ -8345,12 +8333,6 @@ export interface PublishConversationDto {
    * @memberof PublishConversationDto
    */
   author?: string;
-  /**
-   * Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.
-   * @type {Array<PublishRuleDto>}
-   * @memberof PublishConversationDto
-   */
-  rules?: Array<PublishRuleDto>;
 }
 /**
  *
@@ -8505,56 +8487,6 @@ export const PublishResultDtoEntityTypeEnum = {
 export type PublishResultDtoEntityTypeEnum =
   (typeof PublishResultDtoEntityTypeEnum)[keyof typeof PublishResultDtoEntityTypeEnum];
 
-/**
- *
- * @export
- * @interface PublishRuleDto
- */
-export interface PublishRuleDto {
-  /**
-   * Claim/category name this rule matches against.
-   * @type {string}
-   * @memberof PublishRuleDto
-   */
-  source: string;
-  /**
-   *
-   * @type {string}
-   * @memberof PublishRuleDto
-   */
-  function: PublishRuleDtoFunctionEnum;
-  /**
-   * Values combined with OR; exactly one pattern when function is REGEX.
-   * @type {Array<string>}
-   * @memberof PublishRuleDto
-   */
-  targets: Array<string>;
-}
-
-/**
- * @export
- */
-export const PublishRuleDtoFunctionEnum = {
-  Equal: 'EQUAL',
-  Contain: 'CONTAIN',
-  Regex: 'REGEX',
-} as const;
-export type PublishRuleDtoFunctionEnum =
-  (typeof PublishRuleDtoFunctionEnum)[keyof typeof PublishRuleDtoFunctionEnum];
-
-/**
- *
- * @export
- * @interface PublishRulesResultDto
- */
-export interface PublishRulesResultDto {
-  /**
-   * The requested folder's own access-restriction rules, or an empty array when the folder has none configured.
-   * @type {Array<PublishRuleDto>}
-   * @memberof PublishRulesResultDto
-   */
-  rules: Array<PublishRuleDto>;
-}
 /**
  *
  * @export

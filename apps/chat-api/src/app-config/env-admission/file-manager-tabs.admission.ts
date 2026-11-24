@@ -1,10 +1,4 @@
-/** The File Manager tab ids the client knows. */
-export const FILE_MANAGER_ALLOWED_TABS: readonly string[] = [
-  'all',
-  'my_files',
-  'shared',
-  'organization',
-];
+import { FILE_MANAGER_ALLOWED_TABS } from '../types/file-manager-tabs';
 
 /**
  * Admits `FILE_MANAGER_AVAILABLE_TABS` against the fixed allow-list, dropping

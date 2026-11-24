@@ -8,7 +8,7 @@ import {
   CSP_NONCE_PLACEHOLDER,
   trustedStyleNoncePlugin,
 } from '../../tools/vite/csp-nonce.mjs';
-import { hashedPublicScriptPlugin } from '../../tools/vite/hashed-public-script.mjs';
+import { inlinePublicScriptPlugin } from '../../tools/vite/inline-public-script.mjs';
 import { nxReadySignal } from '@nx/vite/plugins/nx-ready-signal.plugin';
 
 export default defineConfig(() => ({
@@ -31,8 +31,8 @@ export default defineConfig(() => ({
   },
   plugins: [
     trustedStyleNoncePlugin(),
-    // The synchronous theme-paint script in the `index.html` head; see the plugin's doc.
-    hashedPublicScriptPlugin('theme-init.js'),
+    // Inlines the synchronous theme-paint script into the `index.html` head; see the plugin's doc.
+    inlinePublicScriptPlugin('theme-init.js'),
     tailwindcss(),
     react(),
     svgr(),
@@ -332,6 +332,37 @@ export default defineConfig(() => ({
               name: 'file-manager',
               test: /[\\/]node_modules[\\/]@epam[\\/]ai-dial-react-file-manager[\\/].*\.m?js$/,
               includeDependenciesRecursively: false,
+            },
+            /*
+             * Everything the entry imports statically goes into two chunks
+             * instead of ~150. Left to automatic splitting, every module that
+             * a lazy chunk shares with the entry becomes a chunk of its own,
+             * so a cold load fetched ~157 module-preloads and 11 render-blocking
+             * CSS files of 84 B–2.8 KB each. `$initial` keeps lazy-only code
+             * out. Third-party code changes rarely, so it stays cacheable
+             * across deploys on its own.
+             */
+            {
+              name: 'vendor',
+              tags: ['$initial'],
+              test: /[\\/]node_modules[\\/].*\.m?js$/,
+            },
+            /*
+             * App and lib modules plus every stylesheet the entry imports.
+             * They ship as one stylesheet in module execution order — Inter,
+             * kit, file manager, CSS Modules, Tailwind, `styles.scss` — the
+             * order the dev server applies. Split per chunk, CSS Modules of
+             * shared chunks were linked before the kit's stylesheet and those
+             * of the entry chunk after it.
+             */
+            {
+              name: 'app-shell',
+              tags: ['$initial'],
+              test: (id) =>
+                !/[\\/]src[\\/]main\.tsx$/.test(id) &&
+                (/\.s?css(?:\?.*)?$/.test(id) ||
+                  (!/[\\/]node_modules[\\/]/.test(id) &&
+                    /\.[mc]?[jt]sx?(?:\?.*)?$/.test(id))),
             },
           ],
         },

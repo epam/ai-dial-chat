@@ -20,7 +20,6 @@ import {
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { useResourceVersionHistory } from '../../../hooks/publish/useResourceVersionHistory';
 import { listOrgUnits } from '../../../server-api/org-units.api';
-import { getPublishRules } from '../../../server-api/publish-rules.api';
 import {
   publishApiClient,
   publishCatalogEntity,
@@ -42,9 +41,6 @@ type PanelProps = {
     rootKey: string;
     path: string[];
   }) => string | undefined;
-  accessRules: {
-    isHiddenFor: (destination: { rootKey: string; path: string[] }) => boolean;
-  };
 };
 
 const panelProps = vi.fn<(props: PanelProps) => void>();
@@ -58,14 +54,11 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => ({
   },
 }));
 vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ config: { publicationFilterSources: ['roles'] } }),
+  useAppConfig: () => ({ config: {} }),
   useFeatureFlag: vi.fn(),
 }));
 vi.mock('../../../server-api/org-units.api', () => ({
   listOrgUnits: vi.fn(),
-}));
-vi.mock('../../../server-api/publish-rules.api', () => ({
-  getPublishRules: vi.fn(),
 }));
 vi.mock('../../../server-api/publish.api', () => ({
   publishCatalogEntity: vi.fn(),
@@ -191,7 +184,7 @@ const renderEditorSave = async ({
 
 const chooseAndSave = async (destination: ReturnType<typeof organization>) => {
   act(() => lastPanel().onPendingDestinationChange(destination));
-  /* The folder's existing rules load before Save is allowed on a publish destination. */
+  /* Let the destination's pending checks settle before Save. */
   await act(async () => undefined);
   act(() => lastPanel().onDestinationChange(destination));
   await act(async () => lastPanel().onSubmit());
@@ -202,7 +195,6 @@ describe('ResourceSavePanelContainer with org units', () => {
     vi.clearAllMocks();
     vi.mocked(usePublishFolders).mockReturnValue(organizationFolders);
     vi.mocked(useResourceVersionHistory).mockReturnValue(undefined);
-    vi.mocked(getPublishRules).mockResolvedValue([]);
     vi.mocked(publishCatalogEntity).mockResolvedValue({} as never);
     runEmbeddedSave.mockResolvedValue(undefined);
     publishClient.copyCatalogEntityToOrgUnit.mockResolvedValue({
@@ -224,7 +216,6 @@ describe('ResourceSavePanelContainer with org units', () => {
     );
     expect(runEmbeddedSave).toHaveBeenCalledOnce();
     expect(publishCatalogEntity).not.toHaveBeenCalled();
-    expect(getPublishRules).not.toHaveBeenCalled();
     expect(notifySaved).toHaveBeenCalledWith(
       expect.objectContaining({
         outcome: ResourceSaveOutcome.Saved,
@@ -233,21 +224,6 @@ describe('ResourceSavePanelContainer with org units', () => {
       }),
       expect.objectContaining({ isDirectWrite: true }),
     );
-  });
-
-  it('hides the access rules editor for a direct destination and keeps it for the others', async () => {
-    await renderEditorSave();
-    const { isHiddenFor } = lastPanel().accessRules;
-
-    expect(isHiddenFor(organization('Delivery', 'Teams'))).toBe(true);
-    expect(isHiddenFor(organization('Shared', 'Reports'))).toBe(false);
-    expect(isHiddenFor(organization('Sales', 'Q1'))).toBe(false);
-    expect(
-      isHiddenFor({
-        rootKey: SaveDestinationRoot.Personal,
-        path: ['Delivery'],
-      }),
-    ).toBe(false);
   });
 
   it('does not let a read-only user save into the unit: the folder is disabled and nothing is sent', async () => {
@@ -275,6 +251,8 @@ describe('ResourceSavePanelContainer with org units', () => {
         expect.objectContaining({ folderPath: 'Shared/Reports' }),
       ),
     );
+    const [[, , body]] = vi.mocked(publishCatalogEntity).mock.calls;
+    expect(body).not.toHaveProperty('rules');
     expect(publishClient.copyCatalogEntityToOrgUnit).not.toHaveBeenCalled();
     expect(runEmbeddedSave).toHaveBeenCalledOnce();
   });
@@ -467,7 +445,6 @@ describe('ResourceSavePanelContainer taken name in a unit folder', () => {
     vi.clearAllMocks();
     vi.mocked(usePublishFolders).mockReturnValue(organizationFolders);
     vi.mocked(useResourceVersionHistory).mockReturnValue(undefined);
-    vi.mocked(getPublishRules).mockResolvedValue([]);
     vi.mocked(publishApiClient.checkPublishTarget).mockResolvedValue({
       taken: false,
     });

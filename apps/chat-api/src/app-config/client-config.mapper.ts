@@ -11,6 +11,7 @@ import type {
 } from './dto/celebration-delivery.dto';
 import type { ClientConfigDto } from './dto/client-config-response.dto';
 import { normalizeEnabledUiFeatures } from './enabled-ui-features.normalizer';
+import { normalizeFileManagerTabs } from './file-manager-tabs.normalizer';
 import { sanitizeAnnouncementHtml, sanitizeFooterHtml } from './html-sanitizer';
 import { normalizeOnboardingHints } from './onboarding-hints.normalizer';
 import { toNullableText } from './text.util';
@@ -18,22 +19,12 @@ import {
   CELEBRATION_EVENT_NONE,
   CelebrationDeliveryMode,
 } from './types/celebration-delivery';
+import { FILE_MANAGER_ALLOWED_TABS } from './types/file-manager-tabs';
 import { SpendingLimitsMode } from './types/spending-limits-mode';
 
 const DEFAULT_TRANSCRIBE_SIZE_LIMIT_BYTES = 5 * 1024 * 1024;
 const DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES = 536_870_912;
 const DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT = 75;
-const DEFAULT_FILE_MANAGER_TABS: readonly string[] = [
-  'all',
-  'my_files',
-  'shared',
-  'organization',
-];
-const DEFAULT_PUBLICATION_FILTER_SOURCES: readonly string[] = [
-  'title',
-  'role',
-  'dial_roles',
-];
 
 const SPENDING_LIMITS_MODES: ReadonlySet<unknown> = new Set(
   Object.values(SpendingLimitsMode),
@@ -167,7 +158,7 @@ export const createDefaultClientConfig = (): MappedClientConfig => ({
   mcpAppTheme: null,
   mcpAppUserAgent: null,
   mcpAppHostName: null,
-  fileManagerTabs: [...DEFAULT_FILE_MANAGER_TABS],
+  fileManagerTabs: [...FILE_MANAGER_ALLOWED_TABS],
   overlayEnabled: false,
   overlayAllowedOrigins: [],
   allowedConnectOrigins: [],
@@ -182,7 +173,6 @@ export const createDefaultClientConfig = (): MappedClientConfig => ({
   customVisualizers: [],
   applicationVisualizers: {},
   customVariables: {},
-  publicationFilterSources: [...DEFAULT_PUBLICATION_FILTER_SOURCES],
   additionalContentLocales: [],
   maxAttachmentFileSizeBytes: DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES,
   usageLimitsWarningThresholdPercent:
@@ -265,8 +255,9 @@ export const CLIENT_CONFIG_MAPPINGS: ReadonlyMap<string, ClientConfigMapping> =
     ],
     [
       'fileManager.availableTabs',
-      defineMapping('fileManagerTabs', ({ resolved }) =>
-        Array.isArray(resolved) ? resolved : [...DEFAULT_FILE_MANAGER_TABS],
+      /* A set in the fixed tab order, from ENV and Config Studio alike. */
+      defineMapping('fileManagerTabs', ({ resolved, warn }) =>
+        normalizeFileManagerTabs(resolved, warn),
       ),
     ],
     [
@@ -355,14 +346,6 @@ export const CLIENT_CONFIG_MAPPINGS: ReadonlyMap<string, ClientConfigMapping> =
       'applicationVisualizers',
       defineMapping('applicationVisualizers', ({ resolved }) =>
         isApplicationVisualizerRegistry(resolved) ? resolved : {},
-      ),
-    ],
-    [
-      'publish.publicationFilterSources',
-      defineMapping('publicationFilterSources', ({ resolved }) =>
-        Array.isArray(resolved)
-          ? resolved
-          : [...DEFAULT_PUBLICATION_FILTER_SOURCES],
       ),
     ],
     [

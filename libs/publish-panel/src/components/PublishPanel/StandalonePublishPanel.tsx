@@ -3,7 +3,6 @@ import { SideDrawer } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, RefObject, useEffect, useMemo, useState } from 'react';
 import type { FolderDestination } from '../../models/folder-destination';
 import {
-  PublicationRule,
   PublishFolderNode,
   PublishResourceSummary,
 } from '../../models/publish';
@@ -91,16 +90,6 @@ export interface StandalonePublishPanelProps {
   author?: string;
   /** Called with the next author value on every edit. Omit to hide the author field. */
   onAuthorChange?: (author: string) => void;
-  /** Current access rules, combined with AND. */
-  rules?: PublicationRule[];
-  /** Called with the full next rules array on add, remove, or clear. Omit to hide the access-rules section. */
-  onRulesChange?: (rules: PublicationRule[]) => void;
-  /** Options offered in the access-rules editor's source picker. */
-  ruleSourceOptions?: string[];
-  /** Whether existing rules are currently being fetched for the selected folder. Default: `false`. */
-  isRulesLoading?: boolean;
-  /** Whether the most recent existing-rules fetch failed. Default: `false`. */
-  hasRulesLoadError?: boolean;
   /** Called when the panel should be dismissed — Close button, Cancel button, backdrop click, or Escape. */
   onClose: () => void;
   /** Focus target restored when an open panel closes or unmounts. */
@@ -167,11 +156,6 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   allowReplace = true,
   author,
   onAuthorChange,
-  rules,
-  onRulesChange,
-  ruleSourceOptions,
-  isRulesLoading = false,
-  hasRulesLoadError = false,
   onClose,
   returnFocusRef,
   onSubmit,
@@ -262,7 +246,7 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
      * panel, so it lands after the synchronous focus above. Guarding the first
      * frame pulls any such hand-back straight back into the panel. The guard
      * is torn down on the next frame so that popovers the panel itself renders
-     * through a portal (folder row menus, the rule source picker) keep focus.
+     * through a portal (folder row menus) keep focus.
      */
     const handleFocusIn = (event: FocusEvent) => {
       if (!panel.contains(event.target as Node)) {
@@ -353,11 +337,6 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
             allowReplace={allowReplace}
             author={author}
             onAuthorChange={onAuthorChange}
-            rules={rules}
-            onRulesChange={onRulesChange}
-            ruleSourceOptions={ruleSourceOptions}
-            isRulesLoading={isRulesLoading}
-            hasRulesLoadError={hasRulesLoadError}
             labels={panelLabels}
             styles={panelStyles}
             summaryTitleClassName={panelSummaryTitleClassName}

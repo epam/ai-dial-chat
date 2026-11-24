@@ -89,12 +89,12 @@ Click and secret pools SHALL stay unchanged.
 
 #### Scenario: SnowmanDelivery
 - **WHEN** the `snowman-delivery` row is read
-- **THEN** it names batch 1, the `composer-anchor-v1` placement, and a card-borrowing adapter built on the generic borrowing modules released by S4, which that batch must justify. It also requires the batch to preserve the stage choices of `SnowmanStage` (`ledge`, `rim`, `rim-sled`, `platform`, `static`) and the borrowed starter card's return
+- **THEN** it names batch 1, the `composer-anchor-v1` placement, and the generic `interaction-copy-track-v1` adapter built on the generic borrowing modules released by S4, whose spike passed its gate with amendments on 2026-11-22. It also requires the batch to preserve the stage choices of `SnowmanStage` (`ledge`, `rim`, `rim-sled`, `platform`, `static`) and the borrowed starter card's return
 
 #### Scenario: ReindeerTakeoff
 - **WHEN** the `reindeer-takeoff` row is read
 - **THEN** it records the interactions to preserve. The ribbon, drawn in the composition, catches a word from the textarea value or placeholder. An inert copy of that word, with a cover over the original pixels, is lifted and returned, and the textarea is never touched. When no word can be measured safely, the ribbon catches a drawn ice catch instead
-- **AND** it reopens when batch 1 reaches go and its adapter, justified by SnowmanDelivery, also covers a copied word on the composition's clock
+- **AND** its reopen condition is met: batch 1 reached go on 2026-11-22, and `interaction-copy-track-v1` covers a copied word on the composition's clock through its `composer-word` role. The row stays `retain` until a later batch's own change decides it
 
 #### Scenario: No page button in ReindeerTakeoff
 - **WHEN** the `reindeer-takeoff` row is compared with the `NewYearScene.ReindeerTakeoff` documentation, which mentions a page button
@@ -173,7 +173,7 @@ Decisions and their reasons SHALL live in this spec. Sizes, payloads and browser
 
 ### Requirement: Every migration batch produces the same evidence
 
-A batch SHALL pass the affected scene's component, target, animation and event integration suites. It SHALL pass browser checks on mobile and desktop, LTR and RTL, with reduced motion, missing targets, replay and interruption. It SHALL record contact frames, browser profiles and resource retention against the current artwork baseline.
+A batch SHALL pass the affected scene's component, target, animation and event integration suites. It SHALL pass browser checks on mobile and desktop, LTR and RTL, with reduced motion, missing targets, replay and interruption. It SHALL record contact frames, browser profiles and resource retention against the current artwork baseline. Batch 1 (`snowman-delivery`) is the one approved exception, described in its scenario (issue owner, 2026-11-22).
 
 #### Scenario: Continuous playback
 - **WHEN** a batch claims visual parity
@@ -186,6 +186,10 @@ A batch SHALL pass the affected scene's component, target, animation and event i
 #### Scenario: Frames of an anchored scene on mobile
 - **WHEN** a batch captures frames of a scene that cancels on viewport resize in a mobile-emulated context
 - **THEN** it captures through the DevTools protocol without re-applying device metrics, and asserts that the stage is present in every frame, so a silently cancelled scene fails instead of producing empty frames
+
+#### Scenario: Batch 1 evidence on data
+- **WHEN** batch 1 records its evidence
+- **THEN** it records the data-level checks of its gate and full asset, states that no browser run was made, and lists the browser evidence S8 must produce before rolling out the external SnowmanDelivery
 
 ### Requirement: Batches stay independently reversible
 

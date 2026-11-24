@@ -210,13 +210,13 @@ Type coercion MUST NOT be performed — `ConfigService` already returns typed va
 
 #### Scenario: A blank managed text is not an operator value
 
-- **WHEN** `ANNOUNCEMENT_TITLE` or `ANNOUNCEMENT_DESCRIPTION` is set to the empty string or to spaces
-- **THEN** `EnvConfigProvider.resolve` returns `undefined` for that key, so a published value can apply, and with nothing published the client-config `announcementTitle` or `announcementDescription` is `null` as before
+- **WHEN** `ANNOUNCEMENT_TITLE`, `ANNOUNCEMENT_DESCRIPTION` or `WELCOME_SCREEN_DESCRIPTION` is set to the empty string or to spaces
+- **THEN** `EnvConfigProvider.resolve` returns `undefined` for that key, so a published value can apply, and with nothing published the client-config `announcementTitle`, `announcementDescription` or `welcomeScreenDescription` is `null` as before
 
 #### Scenario: A blank unmanaged text is unchanged
 
-- **WHEN** `WELCOME_SCREEN_DESCRIPTION`, unmanaged in 1.1.0, is set to spaces
-- **THEN** `EnvConfigProvider.resolve('welcomeScreen.description', ctx)` returns the spaces and the client-config `welcomeScreenDescription` is `null`
+- **WHEN** `MCP_APP_USER_AGENT`, unmanaged in 1.2.0, is set to spaces
+- **THEN** `EnvConfigProvider.resolve('mcpApps.userAgent', ctx)` returns the spaces
 
 #### Scenario: A typed delivery default does not shadow a published policy
 
@@ -227,6 +227,11 @@ Type coercion MUST NOT be performed — `ConfigService` already returns typed va
 
 - **WHEN** every registry key whose environment variable declares a typed default is resolved with that variable absent
 - **THEN** the client-config response and every `FeatureFlagsService.isEnabled` result equal the values produced before explicit presence was introduced
+
+#### Scenario: A typed usage default does not shadow a published value
+
+- **WHEN** neither `USAGE_LIMITS_WARNING_THRESHOLD_PERCENT`, `SPENDING_LIMITS_MODE` nor `USAGE_LIMITS_CONTROL_ENABLED` is set
+- **THEN** `EnvConfigProvider.resolve` returns `undefined` for `usageLimits.warningThresholdPercent`, `usageLimits.spendingLimitsMode` and `features.usageLimitsControl`, although their class defaults are `75`, `off` and `false`
 
 ### Requirement: StaticDefaultsProvider returns the registry defaultValue
 
@@ -449,53 +454,6 @@ The parsed value type MUST be `CustomVisualizer[]` (see `custom-visualizers` cap
 
 - **WHEN** `CUSTOM_VISUALIZERS` is unset
 - **THEN** the `customVisualizers` value on the resolved config equals `[]`
-
----
-
-### Requirement: Registry declares the publish.publicationFilterSources key
-
-`CONFIG_DEFINITIONS` (`apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`) SHALL include a new entry:
-
-- `key='publish.publicationFilterSources'`
-- `type='config'`
-- `valueType='json'`
-- `visibility='client'`
-- `defaultValue=['title', 'role', 'dial_roles']`
-- `critical=false`
-- `envVar='PUBLICATION_FILTER_SOURCES'`
-- `description` — summarizes that this is the allowed set of claim/category names selectable as a publication access rule's `source`.
-- `owner` — matches the ownership convention used by other registry entries (`'chat-team'`).
-
-This follows the exact pattern of the existing `customVisualizers` and `uiFeatures.enabledUiFeatures` entries: a `valueType='json'` array resolved from a comma-separated environment variable, with a non-empty compiled-in default so the feature (the access-rules source picker) is always usable even when the operator has not configured anything.
-
-**Feature flag:** Not gated. The registry entry is a backend implementation detail with no user-visible feature flag of its own — the rules editor UI is always shown (see `publish-access-rules-editor`), and this key only controls the *content* of its source list.
-
-**RTL impact:** None. **i18n impact:** None (raw claim/category strings, not localized labels — see design.md's Open Questions).
-
-#### Scenario: Registry contains the publish.publicationFilterSources key
-
-- **WHEN** the registry is imported
-- **THEN** it MUST contain an entry with `key='publish.publicationFilterSources'`, `type='config'`, `valueType='json'`, `visibility='client'`, `envVar='PUBLICATION_FILTER_SOURCES'`, and `defaultValue=['title', 'role', 'dial_roles']`
-
-#### Scenario: Env resolves to a parsed, trimmed array
-
-- **WHEN** `PUBLICATION_FILTER_SOURCES=roles, department , title` is set and the config is resolved
-- **THEN** the resolved value is `['roles', 'department', 'title']` (trimmed, comma-separated)
-
-#### Scenario: Missing env falls back to the product default
-
-- **WHEN** `PUBLICATION_FILTER_SOURCES` is unset
-- **THEN** the resolved value is `['title', 'role', 'dial_roles']`
-
-#### Scenario: Empty env value falls back to the default, not an empty list
-
-- **WHEN** `PUBLICATION_FILTER_SOURCES` is set to an empty string
-- **THEN** the resolved value is `['title', 'role', 'dial_roles']`, not `[]` — an empty source list would make the access-rules source picker unusable, the same footgun already prevented for `uiFeatures.enabledUiFeatures`
-
-#### Scenario: Oversized source fails environment validation
-
-- **WHEN** any comma-separated `PUBLICATION_FILTER_SOURCES` entry is longer than 200 characters after trimming
-- **THEN** environment validation fails at application startup instead of exposing the oversized value through client config
 
 ---
 

@@ -276,6 +276,24 @@ describe('ProjectEditPage', () => {
     expect(formProps.current).toBeUndefined();
   });
 
+  it('explains lost access instead of the editor and offers only the way back', async () => {
+    vi.mocked(getProject).mockRejectedValue(responseError(403, {}));
+    const { router } = renderAt();
+
+    expect(
+      (await screen.findAllByText(ProjectsI18nKeys.ViewAccessDenied)).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByText(ProjectsI18nKeys.ViewAccessDeniedDescription),
+    ).toBeTruthy();
+    expect(formProps.current).toBeUndefined();
+    expect(screen.queryByRole('button', { name: 'buttons.retry' })).toBeNull();
+    await userEvent.click(
+      screen.getByRole('button', { name: ProjectsI18nKeys.ViewBrowseProjects }),
+    );
+    expect(router.state.location.pathname).toBe('/projects');
+  });
+
   it('leaves without a prompt when nothing changed', async () => {
     const { router } = renderAt();
     await screen.findByRole('heading', { name: ProjectsI18nKeys.EditTitle });

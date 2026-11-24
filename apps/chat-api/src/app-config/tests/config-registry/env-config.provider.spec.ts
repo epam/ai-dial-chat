@@ -808,24 +808,6 @@ describe('EnvConfigProvider', () => {
     });
   });
 
-  describe('publish.publicationFilterSources', () => {
-    it('returns undefined when PUBLICATION_FILTER_SOURCES is not set', async () => {
-      const { provider } = makeProvider({ PUBLICATION_FILTER_SOURCES: [] });
-      expect(
-        await provider.resolve('publish.publicationFilterSources', ctx),
-      ).toBeUndefined();
-    });
-
-    it('returns the parsed, trimmed array when PUBLICATION_FILTER_SOURCES is set', async () => {
-      const { provider } = makeProvider({
-        PUBLICATION_FILTER_SOURCES: ['roles', 'department', 'title'],
-      });
-      expect(
-        await provider.resolve('publish.publicationFilterSources', ctx),
-      ).toEqual(['roles', 'department', 'title']);
-    });
-  });
-
   describe('content.additionalLocales', () => {
     const KEY = 'content.additionalLocales';
 

@@ -1,7 +1,6 @@
 // Models
-export { PublishCalloutKind, PublicationRuleFunction } from './models/publish';
+export { PublishCalloutKind } from './models/publish';
 export type {
-  PublicationRule,
   PublishDerivationInput,
   PublishDerivedState,
   PublishFolderNode,
@@ -49,24 +48,6 @@ export {
 export type { FolderNameValidationMessages } from './utils/publish-folder-tree';
 
 // Components
-export { PublishAccessRuleEditor } from './components/PublishAccessRuleEditor/PublishAccessRuleEditor';
-export type {
-  PublishAccessRuleEditorColors,
-  PublishAccessRuleEditorLabels,
-  PublishAccessRuleEditorProps,
-  PublishAccessRuleEditorStyles,
-} from './models/publish-access-rule-editor';
-
-export { PublishAccessRules } from './components/PublishAccessRules/PublishAccessRules';
-export type {
-  PublishAccessRulesLabels,
-  PublishAccessRulesProps,
-} from './components/PublishAccessRules/PublishAccessRules';
-export type {
-  PublishAccessRulesColors,
-  PublishAccessRulesStyles,
-} from './models/publish-access-rules-styles';
-
 export { VersionHistorySection } from './components/VersionHistorySection/VersionHistorySection';
 export { VersionHistoryStatus } from './models/version-history';
 export type {
@@ -125,7 +106,6 @@ export type {
 export { SaveVersionMode } from './types/save-to-folder';
 export { StandaloneSaveToFolderPanel } from './components/SaveToFolderPanel/StandaloneSaveToFolderPanel';
 export type {
-  SaveToFolderAccessRulesProps,
   SaveToFolderPanelColors,
   SaveToFolderPanelLabels,
   SaveToFolderPanelStyles,

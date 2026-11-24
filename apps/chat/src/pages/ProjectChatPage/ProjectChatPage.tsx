@@ -4,6 +4,7 @@ import { ProjectChatHeader } from '@epam/ai-dial-projects';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  LiveRegionPoliteness,
   PrimaryButton,
   Spinner,
   StateScreen,
@@ -61,7 +62,7 @@ const ProjectChatPage: FC = () => {
     [bucket, splat],
   );
   const projectId = route?.projectId ?? null;
-  const { project, isNotFound, hasError } = useProject(
+  const { project, isNotFound, isAccessDenied, hasError } = useProject(
     projectsClient,
     projectId,
     isEnabled,
@@ -109,7 +110,14 @@ const ProjectChatPage: FC = () => {
     return <NotFoundPage />;
   }
 
-  if (!route || !dataSource || isNotFound || (hasError && !summary)) {
+  /* Lost access closes the chat even when the opening page passed the project: every read and write would fail. */
+  if (
+    !route ||
+    !dataSource ||
+    isNotFound ||
+    isAccessDenied ||
+    (hasError && !summary)
+  ) {
     return (
       <div className="flex size-full items-center justify-center p-4">
         <StateScreen
@@ -120,7 +128,17 @@ const ProjectChatPage: FC = () => {
               stroke={DIAL_KIT_ICON_STROKE}
             />
           }
-          title={t(ProjectsI18nKeys.ViewNotFound)}
+          title={t(
+            isAccessDenied
+              ? ProjectsI18nKeys.ViewAccessDenied
+              : ProjectsI18nKeys.ViewNotFound,
+          )}
+          description={
+            isAccessDenied
+              ? t(ProjectsI18nKeys.ViewAccessDeniedDescription)
+              : undefined
+          }
+          announce={isAccessDenied ? LiveRegionPoliteness.Polite : undefined}
           action={
             <PrimaryButton
               label={t(ProjectsI18nKeys.ViewBrowseProjects)}

@@ -301,6 +301,31 @@ A `composer-anchor-v1` scene with `direction: 'none'` may require `interaction-c
 
 A browser without `Element.prototype.animate`, `ResizeObserver` or `MutationObserver` shows the poster. So does a malformed `cat:` marker or slot. Interaction, scrolling, viewport changes, a hidden tab, a moved or changed button, composer or support, or a change of any of the three anchors ends the scene, and the originals are restored. A failure after the first frame renders nothing.
 
+#### Copying host content along authored tracks (`interaction-copy-track-v1`)
+
+A `composer-anchor-v1` scene with `direction: 'none'` may require `interaction-copy-track-v1`. The asset is authored at reference geometry; the adapter only fits it to the page. After the player and data load, `LottieScene` does the following:
+
+- **Sections.** The asset declares `ct:section:<kind>` markers in priority order: `ledge-card`, `rim-card`, `rim`, `platform` or `rim-word`. The adapter plays the first one whose stage fits the page and whose copy role resolves.
+- **Stages.** `ledge` stands under the bottom starter row, `rim` stands on the composer's upper edge, and `platform` stands below the lowest host content. Each is measured once from `anchors.composer`, `anchors.starterList` and `anchors.welcomeRegion`. The longest span the welcome region allows is chosen between the asset's `anchor:<name>` and `anchor:<name>@min` references, from the maximum down in 8 px steps and then the minimum itself. A root null named `<base>#<kind>[,<kind>…]` gives the named sections their own reference (`anchor:<name>` or `anchor:<name>@min` for `span-start`, `span-end` and `far`), follow-group position (`ct-follow:<anchor>`) or travel (`ct-travel`); follow groups and the `ct-band` stay authored against the base references.
+- **Copy roles.** `starter-card` clones one starter button: at most four are inspected, and a card qualifies within 0.75–1.5 × the reference card's width (and at most 240 px) and 0.95–1.05 × its height, with at most 40 nodes, when it is enabled, idle, untransformed, visible and unclipped. `composer-word` copies the first word of the composer textarea's value or placeholder as an inert span over a cover in the background colour; the textarea is never touched.
+- **Tracks.** Keyframes of the `ct-track:*` nulls are bound to measured anchors (`ct:bind:<anchor>`), stretched between them by each track's own progress (`ct:stretch`), or held where a resting object was put. `ct-follow:<anchor>` groups move rigidly. No keyframe is added, and no time or easing changes. Travel toward −x mirrors the whole stage.
+- **Timing.** One time remap on the `ct-actor` precomposition splices the section's windows (`ct:cut:<kind>` / `ct:fill:<kind>`, equal lengths, so later beats keep their times) and repeats step cycles (`ct:cycle:<n>` over `ct:cycle-window:<n>`) a whole number of times (at most 24 per window) to cover the measured distance while the `ct-travel` null carries the actor. Each cycle's x offsets are scaled to the distance per cycle, so a planted foot stands still.
+- **Copies.** The copy is prepared before readiness beneath the renderer and starts on the Lottie clock. It follows the `ct-track:copy` track and the travel, is visible from `ct:entry`, and fades back to its original at `ct:restore`. Copies only translate and rotate. `ct-if:copy` and `ct-if:no-copy` layers show only when the chosen section has, or has no, copy. A card section's grips fit the `ct-if:copy card-ref` rectangle, the reference card. The `ct-band` rectangle is read in stage units, so its layer and group are never moved, scaled or rotated.
+
+A browser without `Element.prototype.animate`, `ResizeObserver` or `MutationObserver` shows the poster. So does a malformed `ct:` marker or slot (every rule that needs no page is checked before the page is measured, including closed cycles), or a page where no section fits. In every section, with or without a copy, interaction, typing, scrolling, viewport changes, a hidden tab, a moved or changed target, or a change of any of the three anchors ends the scene, and the original is restored. A failure after the first frame renders nothing.
+
+#### Carrying the composer (`interaction-composer-carry-v1`)
+
+This adapter supports a finite horizontal out-and-back story. It requires `composer-anchor-v1`, the top edge and `direction: 'none'`. A pack using it requires a compatible Chat runtime and Themes release that accept `interaction-composer-carry-v1`; publishing an asset alone does not deploy runtime support.
+
+The asset defines a root null named `composer-carry` and a direct-child null named `composer-decoration`. All artwork descends from the carrier. The carrier has identity scale, anchor and rotation, and a keyframed three-dimensional position with zero y/z. Its x values are in 0–1000, with the first and final keyframes at rest. The final keyframe is at the composition's out point. The adapter maps x1000 to a measured offscreen position and applies the same authored timing and easing to an inert copy of the entire composer. The decoration slot's reference width is 520; only that slot is fitted horizontally, preserving character proportions and readable RTL text.
+
+An optional direct-child null named `composer-side` binds its descendants to measured side or corner contacts. It has identity anchor, scale and rotation, and a static position or at most 64 ordered position keyframes within the composition. Positions are three-dimensional: x in −1–1, y in 0–1, and z zero. Relative to the composer's top center, the adapter maps these to `[x × width / (2 × stageScale), y × height / stageScale, 0]`. Thus `[1, 0.5, 0]` selects the right-side midpoint and `[-1, 1, 0]` the lower-left corner. Authored timing and easing remain intact; side changes and character poses stay in the asset. The slot neither resizes nor reframes the copy, and copied RTL text remains unmirrored. Assets without this slot retain their existing placement.
+
+For assets with `composer-side`, the composition height minus `anchorRect.y` declares the artwork's extent below that slot. The lowest measured attachment plus this scaled extent must leave 20 px below the artwork in the viewport. A bottom-docked composer without that room shows the poster before any copy is created.
+
+An eligible composer contains an enabled textarea, has at most 300 nodes, has no expanded popup, and has no transformed ancestor. The live input keeps its draft, focus and selection. Input, pointer interaction, scrolling, focus changes, geometry changes and cancellation remove the copy and restore the original. Unsupported or malformed assets and unsuitable targets show the existing finite poster fallback; reduced motion also uses the poster. The adapter has no manifest parameters or marker namespace.
+
 `StaticTriggerDecoration` is a native `<button type="button">` named by `label` (default `Play celebration` when empty), with an `aria-hidden` image from `imageUrl`. It calls `onActivate` on click, Enter and Space, draws its focus ring in `currentColor` and declares no colors of its own.
 
 ```tsx
@@ -317,7 +342,7 @@ export const Trigger = ({ onActivate }: { onActivate: () => void }) => (
 
 ## Capabilities
 
-`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `composer-anchor-v1`, `interaction-composer-outline-v1`, `interaction-cat-borrow-v1`, `static-poster-v1` and `static-trigger-v1`. Any other `interaction-*` id is unsupported. A host keeps only scenes whose `requiredCapabilities` are all in the set:
+`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `composer-anchor-v1`, `interaction-composer-outline-v1`, `interaction-cat-borrow-v1`, `interaction-copy-track-v1`, `interaction-composer-carry-v1`, `static-poster-v1` and `static-trigger-v1`. Any other `interaction-*` id is unsupported. A host keeps only scenes whose `requiredCapabilities` are all in the set:
 
 ```ts
 import {
@@ -378,7 +403,7 @@ export const halloweenLabels: Partial<HalloweenLabels> = {
 
 ### NewYearScene
 
-`PenguinStar` and `SnowmanDelivery` play on a gift click, picked at random.
+`PenguinStar`, `SnowmanDelivery` and `ElfFireworks` play on a gift click, picked at random.
 `GiftWrapping` and `ReindeerTakeoff` form the secret pool for `happy new year`,
 selected without consecutive repeats independently of gift clicks. Snow, confetti
 and sleigh scenes are no longer included.
@@ -387,7 +412,7 @@ and sleigh scenes are no longer included.
 
 From the main entry:
 
-- `CelebrationCapability`: `LottieLightSvgV1`, `ViewportStageV1`, `ComposerAnchorV1`, `InteractionComposerOutlineV1`, `InteractionCatBorrowV1`, `StaticPosterV1`, `StaticTriggerV1`.
+- `CelebrationCapability`: `LottieLightSvgV1`, `ViewportStageV1`, `ComposerAnchorV1`, `InteractionComposerOutlineV1`, `InteractionCatBorrowV1`, `InteractionCopyTrackV1`, `InteractionComposerCarryV1`, `StaticPosterV1`, `StaticTriggerV1`.
 - `CelebrationDirectionMode`: `None`, `Mirror`, `Variant`.
 - `CelebrationLayout`: `Mobile`, `Desktop`.
 - `CelebrationColorScheme`: `Light`, `Dark`.
@@ -439,7 +464,7 @@ its reversible visual transform is cancelled when playback stops.
 Typing, pointer/focus interaction, scrolling, viewport or target changes,
 hidden tabs, navigation, scene replacement and motion-preference changes stop
 the scene and release its player, listeners, observers and timers. The gift
-picks the penguin or the snowman; the secret phrase picks the elves or reindeer.
+picks the penguin, the snowman or the fireworks elf; the secret phrase picks the elves or reindeer.
 Hosts can override `penguinStarToastMessage` through existing labels. The scene
 budgets 140 generated SVG artwork nodes, 32 animated properties, 80 keyframes
 per property and 120 KB of composition data. It uses no external assets,
@@ -590,6 +615,49 @@ properties (48 on mobile), 128 keyframes per property, 1,300 keyframes in
 total, 170 KB of composition data and 10 snow puffs (4 on mobile). It uses no
 external assets, filters, masks, gradients or per-frame host measurements;
 these limits are not a frame-rate guarantee.
+
+New Year's elf fireworks, "Some Buttons Were Made for Launching", reuses the
+gift-wrapping master elf. He fades in on the composer's upper edge with a sack of
+rockets, sets the sack down and tosses the rockets one by one onto the rim, where
+each lands upright with a wobble. Wondering what could launch them, he looks
+along the rim, walks to the composer's send button, lowers a candy cane, hooks
+an inert visual copy of the button, tugs twice and yanks it over his shoulder
+onto the rim. A press by hand does nothing; he scratches his cap, then jumps on
+the button with both boots. The fuses spark, the rockets fire from the far end
+of the rack and burst across the whole viewport above the composer while he
+cheers with two hops on the squashed button. He hops off, kicks the copy back
+into its exact slot and walks to the last rocket, which only fizzles. He peers
+into it, it fires, and he rides it away holding on; his cap flutters down to the
+rim, the final burst goes off, he falls back beside the cap, shakes off the
+dizziness, puts the cap on, bows and leaves with his sack.
+
+The send button is the composer's inline-end-most button. It is borrowed only
+when it is idle, visible, unfocused, unhovered, untransformed, 24–120 × 24–64 px
+with at most 40 nodes, inside the composer and far enough toward its end, and
+when a cane of at most 200 px reaches its top; a disabled button still qualifies,
+since only its copy moves. Otherwise he pulls a drawn detonator out of the sack
+and the story is the same, without borrowing anything. Without an eligible
+composer that leaves 170 px of headroom (140 px on mobile), the scene shows a
+static elf under one burst. Reduced motion, unsupported browser APIs and player
+failures show the same still. RTL mirrors the rim and the travel but never the
+copied button's text. Mobile keeps the full story with fewer rockets and
+smaller bursts.
+
+One 25.6-second native Lottie SVG composition carries the elf, rockets, bursts
+and props; the provider allows 28.1 seconds. The button copy is an inert,
+`aria-hidden` snapshot driven by WAAPI keyframes generated from the same plan
+and started on the Lottie clock through the session's `onPlaybackStarted`
+callback; only the original's opacity is animated, from the hook until the copy
+is back in its rect, and the original is never clicked, focused or reparented.
+Typing, pointer/focus interaction, scrolling, viewport or target changes, hidden
+tabs, navigation and motion-preference changes stop the scene and release its
+player, copy, listeners, observers and timers. Hosts can override
+`elfFireworksToastMessage` through the New Year labels. The scene budgets one
+player, one button copy, at most 17 layers, 6 rockets with 5 bursts of 12 sparks
+plus an 18-spark finale (4 rockets, 3 × 8 + 12 sparks on mobile) and 220 KB of
+composition data (150 KB on mobile). It uses no external assets, filters, masks,
+gradients or per-frame host measurements; these limits are not a frame-rate
+guarantee.
 
 The Halloween portal briefly pulls visual copies of up to two adjacent, visible
 conversation-history rows into its claw, then restores the rows. It never changes

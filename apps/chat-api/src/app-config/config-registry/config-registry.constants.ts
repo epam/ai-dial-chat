@@ -8,6 +8,7 @@ import { AnnouncementSeverity } from '../dto/announcement-severity.enum';
 import {
   localOnlyKey,
   managedConfigKey,
+  managedFeatureKey,
 } from '../managed-config/key-management';
 import {
   LocalOnlyReason,
@@ -23,6 +24,7 @@ import {
   CELEBRATION_SCENE_PAIR_PATTERN,
   CelebrationDeliveryMode,
 } from '../types/celebration-delivery';
+import { FILE_MANAGER_ALLOWED_TABS } from '../types/file-manager-tabs';
 import { OnboardingHintTarget } from '../types/onboarding-hint-target';
 import { SpendingLimitsMode } from '../types/spending-limits-mode';
 
@@ -95,8 +97,7 @@ const ONBOARDING_HINTS_SCHEMA: ManagedValueSchema = {
   },
 };
 
-/* Schema 1.1.0: the announcement banner, its list and the celebrations. The
- * welcome-text, File Manager and usage-limit keys follow in 1.2.0. */
+/* Schema 1.1.0: the announcement banner, its list and the celebrations. */
 
 /* Both sanitizers (`sanitizeAnnouncementHtml` on the server, DOMPurify in the
  * banner) keep exactly these tags. */
@@ -158,6 +159,20 @@ const ANNOUNCEMENT_ITEMS_SCHEMA: ManagedValueSchema = {
       },
     },
   },
+};
+
+/* Schema 1.2.0: the welcome text, the File Manager tabs, the usage limits and
+ * the usage-limits control, the first managed feature. */
+
+/* Mirrors `admitFileManagerTabs`, stricter: known ids only, no repeats. The
+ * value is a set: `normalizeFileManagerTabs` emits the fixed tab order and
+ * falls back to every tab when no source tab is listed. */
+const FILE_MANAGER_TABS_SCHEMA: ManagedValueSchema = {
+  type: ManagedSchemaType.Array,
+  minItems: 1,
+  maxItems: FILE_MANAGER_ALLOWED_TABS.length,
+  uniqueItems: true,
+  items: { type: ManagedSchemaType.String, enum: FILE_MANAGER_ALLOWED_TABS },
 };
 
 const CELEBRATION_EVENT_ID_SCHEMA: ManagedValueSchema = {
@@ -412,6 +427,13 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Operator-authored plain-text copy shown below the greeting heading on the new-chat start screen. Rendered as text, never as markup. Null/blank hides it. Sourced from WELCOME_SCREEN_DESCRIPTION.',
     owner: 'chat-team',
     envVar: 'WELCOME_SCREEN_DESCRIPTION',
+    management: managedConfigKey({
+      title: 'Welcome text',
+      description:
+        'Plain text below the greeting on the new-chat screen; markup is shown as typed.',
+      order: 10,
+      value: boundedText(1000),
+    }),
   },
   {
     key: 'footer.html',
@@ -695,9 +717,16 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     defaultValue: ['all', 'my_files', 'shared', 'organization'],
     critical: false,
     description:
-      'Which File Manager tabs are shown to users. Defaults to the All tab plus the three source tabs when FILE_MANAGER_AVAILABLE_TABS is unset or resolves to no valid ids.',
+      'Which File Manager tabs are shown to users, normalized by normalizeFileManagerTabs into the fixed tab order. Defaults to the All tab plus the three source tabs when FILE_MANAGER_AVAILABLE_TABS is unset, resolves to no valid ids or lists no source tab.',
     owner: 'chat-team',
     envVar: 'FILE_MANAGER_AVAILABLE_TABS',
+    management: managedConfigKey({
+      title: 'File Manager tabs',
+      description:
+        'Which File Manager tabs users see. Tabs always appear in the order All, My files, Shared, Organization; the order here does not matter. All appears only with at least two other tabs.',
+      order: 30,
+      value: FILE_MANAGER_TABS_SCHEMA,
+    }),
   },
   {
     key: 'features.liveChatInteraction',
@@ -787,6 +816,12 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'next to the model selector. Off by default.',
     owner: 'chat-team',
     envVar: 'USAGE_LIMITS_CONTROL_ENABLED',
+    management: managedFeatureKey({
+      title: 'Usage-limits control',
+      description:
+        'Shows the token and cost usage-limits control next to the model selector.',
+      order: 1,
+    }),
   },
   {
     key: 'features.orgUnitsEnabled',
@@ -839,19 +874,6 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
     envVar: 'APPLICATION_VISUALIZERS',
     management: localOnlyKey(LocalOnlyReason.SecurityPolicy),
-  },
-  {
-    key: 'publish.publicationFilterSources',
-    type: 'config',
-    valueType: 'json',
-    visibility: 'client',
-    defaultValue: ['title', 'role', 'dial_roles'],
-    critical: false,
-    description:
-      "Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES (comma-separated); falls back to the legacy default when unset or empty.",
-    owner: 'chat-team',
-    envVar: 'PUBLICATION_FILTER_SOURCES',
-    management: localOnlyKey(LocalOnlyReason.Capability),
   },
   {
     key: 'content.additionalLocales',
@@ -928,6 +950,13 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Percentage (1–99) of a capped day/week/month token or cost limit at which the composer shows its usage banner above the input. Governs the banner only — the usage dial and the Settings → Usage page keep their fixed 75% running-low mark.',
     owner: 'chat-team',
     envVar: 'USAGE_LIMITS_WARNING_THRESHOLD_PERCENT',
+    management: managedConfigKey({
+      title: 'Usage warning threshold (%)',
+      description:
+        'Share of a capped day, week or month limit at which the usage banner appears above the message box. The usage dial and the Usage page keep their own 75% mark.',
+      order: 40,
+      value: { type: ManagedSchemaType.Integer, minimum: 1, maximum: 99 },
+    }),
   },
   {
     key: 'usageLimits.spendingLimitsMode',
@@ -940,5 +969,15 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       "DIAL Core's spendingLimits.mode (off, shadow or enforce), which DIAL Core does not report to the caller. Decides whether Settings → Usage shows the caller's budgets, and whether the Usage page, the usage banner and the usage dial present the role cost limit (off, shadow) or only the budgets (enforce). Must equal DIAL Core's value; off by default.",
     owner: 'chat-team',
     envVar: 'SPENDING_LIMITS_MODE',
+    management: managedConfigKey({
+      title: 'Spending limits mode',
+      description:
+        "Must equal DIAL Core's spending-limits mode. off: budgets are hidden. shadow: budgets are shown as not yet enforced. enforce: only budgets are shown. It changes what Chat shows, not what DIAL Core enforces.",
+      order: 41,
+      value: {
+        type: ManagedSchemaType.String,
+        enum: Object.values(SpendingLimitsMode),
+      },
+    }),
   },
 ];

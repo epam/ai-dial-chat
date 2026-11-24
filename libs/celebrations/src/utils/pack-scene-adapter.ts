@@ -2,6 +2,7 @@ import type { CelebrationAnchors } from '../models/celebration';
 import type {
   CelebrationComposerAnchorPlacement,
   CelebrationSceneDescriptor,
+  CelebrationTextDirection,
 } from '../models/celebration-pack';
 import type {
   LottieAnimationContext,
@@ -16,10 +17,22 @@ import {
 import {
   prepareAnchoredSceneData,
   requiresCatBorrow,
+  requiresComposerCarry,
   requiresComposerOutline,
+  requiresCopyTrack,
   type PackScenePreparation,
 } from './celebration-pack-scene';
+import {
+  onComposerCarryAnimationCreated,
+  onComposerCarryPlaybackStarted,
+  prepareComposerCarryScene,
+} from './composer-carry-adapter';
 import { watchComposer } from './composer-watch';
+import {
+  onCopyTrackAnimationCreated,
+  onCopyTrackPlaybackStarted,
+  prepareCopyTrackScene,
+} from './copy-track-adapter';
 
 /** Host inputs an anchored adapter prepares against, fixed at activation. */
 export interface PackSceneAdapterEnvironment {
@@ -27,6 +40,10 @@ export interface PackSceneAdapterEnvironment {
   anchors: CelebrationAnchors;
   /** Whether a `mirror` scene is flipped for RTL. */
   isMirrored: boolean;
+  /** Whether the host uses its mobile layout. */
+  isMobile: boolean;
+  /** The host's writing direction at activation. */
+  direction: CelebrationTextDirection;
 }
 
 /** How `LottieScene` runs one kind of `composer-anchor-v1` scene. */
@@ -99,6 +116,30 @@ const CAT_BORROW_ADAPTER: PackSceneAdapter = {
   onPlaybackStarted: onCatBorrowPlaybackStarted,
 };
 
+const COPY_TRACK_ADAPTER: PackSceneAdapter = {
+  watchedAnchors: ['composer', 'starterList', 'welcomeRegion'],
+  isAvailable: () => hasObservers() && hasWebAnimations(),
+  prepare: (data, placement, { anchors, isMobile, direction }) =>
+    prepareCopyTrackScene(data, placement, { anchors, isMobile, direction }),
+  onAnimationCreated: (context) => {
+    watchAnchor(context);
+    onCopyTrackAnimationCreated(context);
+  },
+  onPlaybackStarted: onCopyTrackPlaybackStarted,
+};
+
+const COMPOSER_CARRY_ADAPTER: PackSceneAdapter = {
+  watchedAnchors: ['composer'],
+  isAvailable: () => hasObservers() && hasWebAnimations(),
+  prepare: (data, placement, { anchors }) =>
+    prepareComposerCarryScene(data, placement, anchors.composer),
+  onAnimationCreated: (context) => {
+    watchAnchor(context);
+    onComposerCarryAnimationCreated(context);
+  },
+  onPlaybackStarted: onComposerCarryPlaybackStarted,
+};
+
 /** Returns the adapter of a `composer-anchor-v1` scene, or `undefined` for a viewport stage. */
 export const resolvePackSceneAdapter = (
   scene: CelebrationSceneDescriptor,
@@ -107,7 +148,8 @@ export const resolvePackSceneAdapter = (
     scene.placement.template !== CelebrationPlacementTemplate.ComposerAnchorV1
   )
     return undefined;
-  return requiresCatBorrow(scene)
-    ? CAT_BORROW_ADAPTER
-    : anchoredAdapter(requiresComposerOutline(scene));
+  if (requiresCatBorrow(scene)) return CAT_BORROW_ADAPTER;
+  if (requiresCopyTrack(scene)) return COPY_TRACK_ADAPTER;
+  if (requiresComposerCarry(scene)) return COMPOSER_CARRY_ADAPTER;
+  return anchoredAdapter(requiresComposerOutline(scene));
 };

@@ -11,6 +11,7 @@ import type {
 } from '../../../models/celebration-pack';
 import type { LottieComposition } from '../../../models/lottie-composition';
 import catSpike from '../../../stories/fixtures/cat-borrow-spike.lottie.json';
+import snowmanSpike from '../../../stories/fixtures/copy-track-snowman.desktop.lottie.json';
 import {
   lottieFixture,
   packSceneFixture,
@@ -710,6 +711,193 @@ describe('LottieScene', () => {
       });
     });
   });
+  describe('LottieScene — copy track', () => {
+    const rects = new Map<Element, DOMRect>();
+    const originalAnimate = Object.getOwnPropertyDescriptor(
+      Element.prototype,
+      'animate',
+    );
+    const originalTimeline = Object.getOwnPropertyDescriptor(
+      document,
+      'timeline',
+    );
+    const started: {
+      element: Element;
+      animation: { startTime: number | null; cancel: () => void };
+    }[] = [];
+    let card: HTMLButtonElement;
+
+    const copyTrackScene = () =>
+      packSceneFixture({
+        id: 'snowman-delivery',
+        requiredCapabilities: [
+          CelebrationCapability.LottieLightSvgV1,
+          CelebrationCapability.ComposerAnchorV1,
+          CelebrationCapability.InteractionCopyTrackV1,
+          CelebrationCapability.StaticPosterV1,
+        ],
+        placement: {
+          template: CelebrationPlacementTemplate.ComposerAnchorV1,
+          anchor: CelebrationAnchor.Composer,
+          anchorRect: { x: 0, y: 0, width: 240, height: 56 },
+          edge: CelebrationAnchorEdge.Top,
+          scale: { min: 0.9, max: 0.9 },
+          fallback: CelebrationAnchorFallback.StageAnchor,
+        },
+        direction: CelebrationDirectionMode.None,
+        timing: {
+          playbackDurationMs: 25000,
+          loadTimeoutMs: 2000,
+          readyTimeoutMs: 250,
+          maxLifetimeMs: 27500,
+        },
+        variants: [{ when: {}, animationAssetId: 'snowman-spike' }],
+      });
+
+    beforeEach(() => {
+      source = JSON.parse(JSON.stringify(snowmanSpike));
+      started.length = 0;
+      rects.clear();
+      state.starterList = 'starters';
+      const region = document.createElement('main');
+      region.setAttribute('role', 'region');
+      const composer = document.createElement('div');
+      composer.className = 'test-composer';
+      const starters = document.createElement('ul');
+      starters.className = 'starters';
+      card = document.createElement('button');
+      card.type = 'button';
+      card.textContent = 'Tell me a riddle';
+      starters.append(card);
+      region.append(composer, starters);
+      document.body.append(region);
+      rects.set(composer, new DOMRect(290, 425, 700, 114));
+      rects.set(starters, new DOMRect(389, 559, 164, 40));
+      rects.set(card, new DOMRect(389, 559, 164, 40));
+      vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(
+        function (this: Element) {
+          return rects.get(this) ?? new DOMRect(0, 0, 0, 0);
+        },
+      );
+      vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(
+        1280,
+      );
+      vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(
+        900,
+      );
+      const original = window.getComputedStyle;
+      vi.spyOn(window, 'getComputedStyle').mockImplementation((element) => {
+        const style = original(element);
+        return {
+          ...style,
+          visibility: style.visibility || 'visible',
+          opacity: style.opacity || '1',
+        } as CSSStyleDeclaration;
+      });
+      vi.stubGlobal(
+        'ResizeObserver',
+        class {
+          observe = vi.fn();
+          disconnect = vi.fn();
+        },
+      );
+      Object.defineProperty(document, 'timeline', {
+        configurable: true,
+        value: { currentTime: 4200 },
+      });
+      Object.defineProperty(Element.prototype, 'animate', {
+        configurable: true,
+        value(this: Element) {
+          const animation = { startTime: null, cancel: vi.fn() };
+          started.push({ element: this, animation });
+          return animation;
+        },
+      });
+    });
+
+    afterEach(() => {
+      document.body.replaceChildren();
+      vi.unstubAllGlobals();
+      if (originalTimeline)
+        Object.defineProperty(document, 'timeline', originalTimeline);
+      else Reflect.deleteProperty(document, 'timeline');
+      if (originalAnimate)
+        Object.defineProperty(Element.prototype, 'animate', originalAnimate);
+      else Reflect.deleteProperty(Element.prototype, 'animate');
+    });
+
+    it('starts the card copy and the original on the reported frame-0 time', async () => {
+      renderScene(copyTrackScene());
+      await flush();
+      animations[0].emit('DOMLoaded');
+      animations[0].emit('enterFrame');
+
+      expect(started.some(({ element }) => element === card)).toBe(true);
+      expect(started.length).toBeGreaterThan(1);
+      started.forEach(({ animation }) =>
+        expect(animation.startTime).toBe(4200),
+      );
+    });
+
+    it('ends the scene and restores the card when the starter anchor changes', async () => {
+      const { container, rerender } = renderScene(copyTrackScene());
+      await flush();
+      animations[0].emit('DOMLoaded');
+      animations[0].emit('enterFrame');
+      state.starterList = 'starters-b';
+      rerender(
+        <LottieScene
+          scene={copyTrackScene()}
+          loaders={loaders()}
+          context={LTR}
+        />,
+      );
+      await flush();
+
+      expect(container.querySelector('svg, img')).toBeNull();
+      started.forEach(({ animation }) =>
+        expect(animation.cancel).toHaveBeenCalledOnce(),
+      );
+    });
+
+    it('shows only the poster under reduced motion and loads nothing', async () => {
+      state.reduced = true;
+      const sceneLoaders = loaders();
+      const { container } = renderScene(copyTrackScene(), sceneLoaders);
+      await flush();
+
+      expect(poster(container)).toBeTruthy();
+      expect(sceneLoaders.loadAnimationData).not.toHaveBeenCalled();
+      expect(loadLottiePlayer).not.toHaveBeenCalled();
+      expect(started).toHaveLength(0);
+    });
+
+    it('plays a drawn-sled section on the stage anchor and copies nothing when the composer and the starters are missing', async () => {
+      document.body.replaceChildren();
+      const { container } = renderScene(copyTrackScene());
+      await flush();
+      animations[0]?.emit('DOMLoaded');
+      animations[0]?.emit('enterFrame');
+
+      expect(started).toHaveLength(0);
+      expect(card.isConnected).toBe(false);
+      expect(container.querySelector('svg')).toBeTruthy();
+      expect(poster(container)).toBeNull();
+    });
+
+    it('shows the poster without loading the player when Web Animations are missing', async () => {
+      Object.defineProperty(Element.prototype, 'animate', {
+        configurable: true,
+        value: undefined,
+      });
+      const { container } = renderScene(copyTrackScene());
+      await flush();
+
+      expect(poster(container)).toBeTruthy();
+      expect(loadLottiePlayer).not.toHaveBeenCalled();
+    });
+  });
+
   describe('LottieScene — cat borrowing', () => {
     const rects = new Map<Element, DOMRect>();
     const originalTimeline = Object.getOwnPropertyDescriptor(

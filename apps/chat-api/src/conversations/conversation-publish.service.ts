@@ -18,7 +18,6 @@ import { readPublicationDisplayAuthor } from '../common/utils/user-display-name'
 import { DeploymentsService } from '../deployments/deployments.service';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
-import type { PublishRuleDto } from '../publish/dto/publish-rule.dto';
 import {
   resolvePublicationsForSource,
   toPublicationList,
@@ -93,7 +92,6 @@ export class ConversationPublishService {
     path: string,
     folderPath: string,
     author: string,
-    rules?: PublishRuleDto[],
   ): Promise<PublishConversationResultDto> {
     const encodedPath = encodeDialResourcePath(path);
     const sourceUrl = `${CONVERSATION_RESOURCE_PREFIX}/${bucket}/${encodedPath}`;
@@ -166,8 +164,8 @@ export class ConversationPublishService {
         { action: 'ADD' as const, sourceUrl, targetUrl },
         ...attachmentResources,
       ],
+      /* No `rules`: an absent key leaves the target folder's stored DIAL Core rules untouched. */
       displayAuthor: author,
-      rules: rules ?? [],
     };
 
     let result;

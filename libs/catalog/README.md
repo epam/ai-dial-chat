@@ -1225,8 +1225,8 @@ disabled until the user picks one. Confirming calls
 removal is a request an administrator must approve, so the folder still reads
 as published afterwards.
 
-`onPublish(item, folderPath, rules, author, publishCredentials)` receives the
-publication's display author as its fourth argument — the value the publish
+`onPublish(item, folderPath, author, publishCredentials)` receives the
+publication's display author as its third argument — the value the publish
 panel's Author field holds, already trimmed. Seed that field with
 `publishDefaultAuthor`: the library has no access to the signed-in user, so
 the host resolves its own display name and passes it in. An empty `author` is
@@ -1234,7 +1234,12 @@ a valid state that never blocks submit; what it means is the host's decision
 (`apps/chat` omits the field from the request so the backend attributes the
 publication to the caller's own session name).
 
-The fifth argument is the credentials opt-in. The panel renders that checkbox
+The catalog no longer offers publication access rules: `onPublish` has no
+`rules` argument, and the former `hidePublishAccessRules`,
+`ruleSourceOptions` and `onFetchExistingRules` props are gone, so a host
+that passed them (for example to hide the section) drops them.
+
+The fourth argument is the credentials opt-in. The panel renders that checkbox
 only for a `Toolset` whose `credentials.authenticationType` is set and is not
 `ToolsetAuthenticationType.None`, and whose `credentials.globalStatus` is
 `CredentialStatus.SignedIn` — DIAL Core copies only the global credential to
@@ -1257,10 +1262,9 @@ drives the Unpublish action.
   item={toolset}
   isOpen
   onClose={handleClose}
-  onPublish={async (item, folderPath, rules, author, publishCredentials) => {
+  onPublish={async (item, folderPath, author, publishCredentials) => {
     await publishEntity(item, {
       folderPath,
-      rules,
       author,
       publishCredentials,
     });
@@ -1344,7 +1348,7 @@ and `getPublishDirectUnavailableNote(item, folderPath, dependencies)` (on
 into a folder instead of filing a publication request. When the predicate holds
 for the selected folder, submit calls `onPublishDirectly` instead of `onPublish`
 (with the same `onPublishSuccess`, whose third argument says the write was
-direct, `onPublishError` and `isTargetTakenError` handling) and the publish panel hides the access rules, author and credentials
+direct, `onPublishError` and `isTargetTakenError` handling) and the publish panel hides the author and credentials
 controls. The predicate is asked only once the dependency list has settled (with
 no `getPublishDependencies` there is nothing to wait for): the panel shows the
 request layout while the list loads and switches at most once, to direct, after

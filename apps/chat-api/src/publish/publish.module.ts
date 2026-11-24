@@ -12,8 +12,6 @@ import { ApplicationDependencyResolver } from './dependencies/application-depend
 import { PublishDependenciesService } from './dependencies/publish-dependencies.service';
 import { OrgUnitCopyService } from './org-unit-copy.service';
 import { PublishDependenciesController } from './publish-dependencies.controller';
-import { PublishRulesController } from './publish-rules.controller';
-import { PublishRulesService } from './publish-rules.service';
 import { PublishController } from './publish.controller';
 import { PublishService } from './publish.service';
 import { VersionStatusesService } from './version-statuses.service';
@@ -28,18 +26,13 @@ import { VersionStatusesService } from './version-statuses.service';
     OrgUnitsModule,
     ToolsetsListingModule,
   ],
-  controllers: [
-    PublishController,
-    PublishDependenciesController,
-    PublishRulesController,
-  ],
+  controllers: [PublishController, PublishDependenciesController],
   providers: [
     PublishService,
     ApplicationPublishCopyService,
     ApplicationPublishPreparationService,
     OrgUnitCopyService,
     VersionStatusesService,
-    PublishRulesService,
     PublishDependenciesService,
     ApplicationDependencyResolver,
   ],

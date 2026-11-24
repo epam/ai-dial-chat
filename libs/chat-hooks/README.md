@@ -484,7 +484,7 @@ const ProjectsPage = () => {
     projectsClient,
     isProjectsEnabled,
   );
-  const { project, isNotFound } = useProject(
+  const { project, isNotFound, isAccessDenied } = useProject(
     projectsClient,
     projectId,
     isProjectsEnabled,
@@ -508,6 +508,8 @@ successful load it watches the first 1000 listed ids:
 
 A client without `watchProjects` gets a one-off load, as before.
 
+`useProject` returns `{ project, isLoading, hasError, isNotFound, isAccessDenied, retry, refresh }`. A `404` sets `isNotFound`, and a `403` sets `isAccessDenied`: the caller lost access to a project in another user's bucket, because the owner stopped sharing it or deleted it (DIAL Core answers both the same way). Any other failure sets `hasError`, the only state where `retry` can help.
+
 `useProjects` also returns `refresh()`, which re-reads the list without the loading state and keeps the current list when the request fails. Use it for a change the watch cannot report, such as the caller dropping a shared project from their list (DIAL Core emits no `DELETE` event for that).
 
 `useProjectConversations` reads a project's whole conversation list once,
@@ -525,7 +527,7 @@ meanwhile), calls `onDelete` once on a delete, and reconnects with the same
 backoff as `useProjects`, followed by one `onChange`. `useProject().refresh()`
 and `useProjectConversations().refresh()` re-read without the loading state;
 `refresh` of `useProject` resolves a `ProjectRefreshOutcome` (`Updated`,
-`NotFound`, `Failed`, `Skipped`). `useProjectConversations().markViewed(id)`
+`NotFound`, `AccessLost` on a `403`, `Failed`, `Skipped`). `useProjectConversations().markViewed(id)`
 clears a row's `isUnread` at once and calls the optional
 `ProjectsApiClient.markProjectConversationViewed`.
 `useProjectArtifacts(client, projectId)` reads the files the agents of the
@@ -904,7 +906,12 @@ const ProjectPage = () => {
         conversations.refresh(),
         artifacts.refresh(),
       ]);
-      if (outcome === ProjectRefreshOutcome.NotFound) leavePage();
+      if (
+        outcome === ProjectRefreshOutcome.NotFound ||
+        outcome === ProjectRefreshOutcome.AccessLost
+      ) {
+        leavePage();
+      }
     },
     onDelete: leavePage,
   });
@@ -5595,8 +5602,6 @@ returns `panelProps` to spread on `StandaloneSaveToFolderPanel` from
 - the version choice, checked against `versionPattern` and reported as a
   `ResourceSaveVersionError` (`Invalid`, `Unchanged`, `Exists`) that
   `labels.getVersionError` turns into text;
-- the access rules of the pending Organization folder, fetched with
-  `publishClient.getPublishRules`, and kept while the same folder stays chosen;
 - the private dependencies of what is being saved: pass `loadDependencies`
   (`() => Promise<PublishDependency[]>`, already mapped with
   `mapResourceDependencyDto`) and `panelProps.dependencies` holds its result while
@@ -5648,7 +5653,8 @@ hook reads no i18n, app context or storage.
 `runResourceSave(adapter, choice, publish)` is the orchestrator the hook runs.
 With an edit adapter (`ResourceEditSaveAdapter`) it saves in place or as a
 new version, then moves into another Personal folder, or publishes to an
-Organization folder. With a create adapter (`ResourceCreateSaveAdapter`, told
+Organization folder. The publish request carries no access rules, so DIAL Core keeps any
+rules already stored on the folder. With a create adapter (`ResourceCreateSaveAdapter`, told
 apart by `isResourceCreateAdapter`) it calls `createIn` with the chosen
 Personal folder, or with the root before publishing; the result's `isCreated`
 is then `true`, and the panel offers no version choice. A failure after the save resolves with the
@@ -5661,9 +5667,7 @@ when `choice.isDirectWrite` is `true` and the adapter has `saveIntoOrgUnit`
 `saveIntoOrgUnit(savedId, folderPath)` replaces `publish`, and the result's
 `isWrittenToOrgUnit` is `true`. `useResourceSavePanel` sets `isDirectWrite`
 from its optional `canSaveDirectlyTo(folderPath)` parameter (for example from
-`buildFolderGuards`), only for the Organization root, and for such a
-destination it fetches no rules, does not wait for them and hides the rules
-editor through `accessRules.isHiddenFor`. Without the parameter every
+`buildFolderGuards`), only for the Organization root. Without the parameter every
 Organization destination keeps the publish rows. The optional
 `getDisabledReason(folderPath, root)` parameter (for example the guards'
 `getDisabledReason`) is returned to the panel as
@@ -5705,7 +5709,6 @@ const { panelProps } = useResourceSavePanel({
     ),
   getMissingNamespacesReason: (missing) =>
     `You have no write access to ${missing.join(', ')} in this folder`,
-  ruleSourceOptions: ['roles'],
   labels: {
     personalRoot: 'Personal',
     organizationRoot: 'Organization',

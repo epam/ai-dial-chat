@@ -87,13 +87,15 @@ export const group = (
   ],
 });
 
-const ellipse = ([x, y]: Point, [w, h]: Point): SnowmanShape => ({
+/** An ellipse centred at a point. */
+export const ellipse = ([x, y]: Point, [w, h]: Point): SnowmanShape => ({
   ty: 'el',
   p: fixed([x, y]),
   s: fixed([w, h]),
   d: 1,
 });
-const rect = ([x, y]: Point, [w, h]: Point, r = 0): SnowmanShape => ({
+/** A rectangle centred at a point, with optional corner radius. */
+export const rect = ([x, y]: Point, [w, h]: Point, r = 0): SnowmanShape => ({
   ty: 'rc',
   p: fixed([x, y]),
   s: fixed([w, h]),
@@ -101,7 +103,11 @@ const rect = ([x, y]: Point, [w, h]: Point, r = 0): SnowmanShape => ({
   d: 1,
 });
 /** A closed or open polyline with optional symmetric smoothing. */
-const path = (points: Point[], closed = true, smooth = 0): SnowmanShape => {
+export const path = (
+  points: Point[],
+  closed = true,
+  smooth = 0,
+): SnowmanShape => {
   const tangent = (i: number): Point => {
     if (!smooth) return [0, 0];
     const prev = points[(i + points.length - 1) % points.length];

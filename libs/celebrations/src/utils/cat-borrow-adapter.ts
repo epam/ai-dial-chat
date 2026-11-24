@@ -34,6 +34,7 @@ import {
   CatBorrowSection,
   CatBorrowSlot,
 } from '../types/cat-borrow';
+import { PackSceneCompanionKind } from '../types/pack-scene';
 import { findBorrowTargets, type BorrowTargets } from './borrow-targets';
 import type { PackScenePreparation } from './celebration-pack-scene';
 import {
@@ -675,7 +676,8 @@ export const prepareCatBorrowScene = (
   );
   return {
     ...preparation,
-    borrow: {
+    companion: {
+      kind: PackSceneCompanionKind.CatBorrow,
       copies,
       watched: prizes.flatMap(({ target, support }) =>
         support ? [target, support] : [target],
@@ -693,8 +695,8 @@ export const onCatBorrowAnimationCreated = ({
   addDisposer,
   cancel,
 }: LottieAnimationContext<PackScenePreparation>): void => {
-  const { borrow } = preparation;
-  if (!borrow) return;
+  const { companion: borrow } = preparation;
+  if (borrow?.kind !== PackSceneCompanionKind.CatBorrow) return;
   const layer = document.createElement('div');
   layer.setAttribute(COPY_LAYER_ATTRIBUTE, '');
   layer.setAttribute('aria-hidden', 'true');
@@ -729,8 +731,8 @@ export const onCatBorrowPlaybackStarted = ({
   preparation,
   timelineZeroMs,
 }: LottiePlaybackStartContext<PackScenePreparation>): void => {
-  const { borrow } = preparation;
-  if (!borrow) return;
+  const { companion: borrow } = preparation;
+  if (borrow?.kind !== PackSceneCompanionKind.CatBorrow) return;
   borrow.handlers.startedAtMs = timelineZeroMs;
   borrow.copies.start(timelineZeroMs);
 };

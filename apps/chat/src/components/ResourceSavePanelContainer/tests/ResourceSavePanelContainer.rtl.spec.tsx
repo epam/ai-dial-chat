@@ -13,7 +13,6 @@ import { OrgUnitsProvider } from '../../../context/OrgUnitsContext';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { useResourceVersionHistory } from '../../../hooks/publish/useResourceVersionHistory';
 import { listOrgUnits } from '../../../server-api/org-units.api';
-import { getPublishRules } from '../../../server-api/publish-rules.api';
 import { NotifiableEntity } from '../../../types/entity-notification';
 import ResourceSavePanelContainer from '../ResourceSavePanelContainer';
 
@@ -42,14 +41,11 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
   };
 });
 vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ config: { publicationFilterSources: ['roles'] } }),
+  useAppConfig: () => ({ config: {} }),
   useFeatureFlag: vi.fn(),
 }));
 vi.mock('../../../server-api/org-units.api', () => ({
   listOrgUnits: vi.fn(),
-}));
-vi.mock('../../../server-api/publish-rules.api', () => ({
-  getPublishRules: vi.fn(),
 }));
 vi.mock('../../../server-api/publish.api', () => ({
   publishCatalogEntity: vi.fn(),
@@ -74,7 +70,6 @@ describe('ResourceSavePanelContainer — notes in a right-to-left page', () => {
     vi.clearAllMocks();
     vi.mocked(useFeatureFlag).mockReturnValue(true);
     vi.mocked(useResourceVersionHistory).mockReturnValue(undefined);
-    vi.mocked(getPublishRules).mockResolvedValue([]);
     vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
       expandedPaths: new Set<string>(),

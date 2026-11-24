@@ -8,6 +8,8 @@ export enum NewYearScene {
   SnowmanDelivery = 'snowman-delivery',
   /** Two reindeer free a ribbon caught on a page button before taking flight. */
   ReindeerTakeoff = 'reindeer-takeoff',
+  /** An elf fishes the send button onto the composer rim, stomps it to launch fireworks and rides the last rocket away. */
+  ElfFireworks = 'elf-fireworks',
 }
 
 /** Where the snowman stages his delivery, chosen once from measured geometry. */
@@ -21,5 +23,15 @@ export enum SnowmanStage {
   /** A self-contained snowy platform below the page content, with a drawn sled. */
   Platform = 'platform',
   /** No free band fits the story; only the static still is shown. */
+  Static = 'static',
+}
+
+/** What the fireworks elf presses to launch his rockets, chosen once from measured geometry. */
+export enum ElfFireworksMode {
+  /** An inert copy of the composer's send button, fished onto the rim with a candy cane. */
+  Button = 'button',
+  /** A drawn detonator box from the sack, when no send button is eligible. */
+  Detonator = 'detonator',
+  /** No eligible composer leaves room for the story; only the static still is shown. */
   Static = 'static',
 }

@@ -64,6 +64,8 @@ export enum ProjectsI18nKeys {
   ViewError = 'projects.view.error',
   ViewNotFound = 'projects.view.notFound',
   ViewBrowseProjects = 'projects.view.browseProjects',
+  ViewAccessDenied = 'projects.view.accessDenied',
+  ViewAccessDeniedDescription = 'projects.view.accessDeniedDescription',
   ViewDeletedElsewhere = 'projects.view.deletedElsewhere',
   ViewMainContent = 'projects.view.mainContent',
   ChatsTitle = 'projects.chats.title',

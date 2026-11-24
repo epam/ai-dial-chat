@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { handleDialSdkError } from '../../../common/dial/dial-error.mapper';
+import { DIAL_STORED_FILE_NAME_MAX_BYTES } from '../../../common/validators/dial-entity-name.validator';
 import type { DialClientService } from '../../../dial/dial-client.service';
 import type { ConversationResponseDto } from '../../../openapi/openapi-response.dto';
 import { BackgroundGenerationStatus } from '../../dto/background-generation.dto';
@@ -14,6 +15,7 @@ import { ConversationTitleCacheService } from '../../listing/conversation-title-
 import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
 import { ProjectConversationStore } from '../../persistence/project-conversation.store';
 import { ConversationErrorCode } from '../../types/conversation-error-code.enum';
+import { getConversationTitleMaxBytes } from '../../utils/conversation.utils';
 import { ConversationLifecycleService } from '../conversation-lifecycle.service';
 
 vi.mock('../../../common/dial/dial-error.mapper', () => ({
@@ -537,6 +539,59 @@ describe('ConversationLifecycleService', () => {
           }),
         }),
       );
+    });
+
+    describe('long titles', () => {
+      const LONG_TITLE = 'Quarterly debt report '.repeat(12).trim();
+
+      const duplicateLongTitle = async () => {
+        mockGetConversation({
+          ...SHARED_CONVERSATION,
+          id: 'test-bucket/gpt-4o-mini1__Quarterly',
+          name: LONG_TITLE,
+        });
+        const saveSpy = vi.spyOn(mockDialClient.client, 'saveConversation');
+        await service.duplicateConversation(
+          'test-bucket/gpt-4o-mini1__Quarterly',
+          'test-token',
+          'test-bucket',
+        );
+        const body = (
+          saveSpy.mock.calls[0][2] as unknown as {
+            body: { id: string; name: string };
+          }
+        ).body;
+        return { fileName: body.id.slice('test-bucket/'.length), body };
+      };
+
+      it('cuts the title so the copy file name fits the stored file name limit', async () => {
+        const { fileName, body } = await duplicateLongTitle();
+
+        expect(Buffer.byteLength(LONG_TITLE, 'utf8')).toBeGreaterThan(
+          DIAL_STORED_FILE_NAME_MAX_BYTES,
+        );
+        expect(fileName).toBe(`gpt-4o-mini1__${body.name}`);
+        expect(LONG_TITLE.startsWith(body.name)).toBe(true);
+        expect(Buffer.byteLength(body.name, 'utf8')).toBeLessThanOrEqual(
+          getConversationTitleMaxBytes('gpt-4o-mini1'),
+        );
+      });
+
+      it('keeps the copy file name within the limit when a collision adds a UUID', async () => {
+        vi.spyOn(
+          mockDialClient.client,
+          'getConversationMetadata',
+        ).mockResolvedValue({ data: { name: 'taken' } } as never);
+
+        const { fileName, body } = await duplicateLongTitle();
+
+        expect(fileName).toMatch(
+          new RegExp(`^gpt-4o-mini1__${body.name}__[0-9a-f-]{36}$`),
+        );
+        expect(Buffer.byteLength(fileName, 'utf8')).toBeLessThanOrEqual(
+          DIAL_STORED_FILE_NAME_MAX_BYTES,
+        );
+      });
     });
 
     describe('scheduled-task runs', () => {

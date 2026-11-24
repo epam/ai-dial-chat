@@ -1,5 +1,34 @@
 import { describe, expect, it } from 'vitest';
-import { getLastMessageTime } from '../utils/project-conversation-activity.util';
+import {
+  getConversationActivityTime,
+  getLastMessageTime,
+} from '../utils/project-conversation-activity.util';
+
+describe('getConversationActivityTime', () => {
+  const at = (time: number) => ({ timestamp: new Date(time).toISOString() });
+
+  it('returns the body updatedAt when it is later than the last message', () => {
+    expect(
+      getConversationActivityTime({ updatedAt: 900, messages: [at(100)] }),
+    ).toBe(900);
+  });
+
+  it('returns the last message when the body updatedAt is its creation time', () => {
+    expect(
+      getConversationActivityTime({ updatedAt: 50, messages: [at(300)] }),
+    ).toBe(300);
+  });
+
+  it('falls back to the other value when one is missing or invalid', () => {
+    expect(getConversationActivityTime({ updatedAt: 400 })).toBe(400);
+    expect(
+      getConversationActivityTime({ updatedAt: 'x', messages: [at(300)] }),
+    ).toBe(300);
+    expect(
+      getConversationActivityTime({ updatedAt: Number.NaN, messages: [] }),
+    ).toBeUndefined();
+  });
+});
 
 describe('getLastMessageTime', () => {
   it('returns the newest message time whatever the message order', () => {

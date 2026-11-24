@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MAX_CYCLE_REPETITIONS,
   applyElasticRange,
   buildSectionPath,
+  buildSplicedPath,
+  cycleCount,
+  repeatCycle,
   toCompositionFrame,
+  toLocalFrame,
   toTimeRemapProperty,
 } from '../lottie-time-remap';
 
@@ -185,5 +190,129 @@ describe('lottie time remap', () => {
     expect(keyframes[1].s[0]).toBeCloseTo(599.999 / FPS, 9);
     expect(keyframes[2].s).toEqual([1500 / FPS]);
     expect(keyframes[3].s).toEqual([1800 / FPS]);
+  });
+});
+
+describe('spliced paths and step cycles', () => {
+  const trunk = { from: 0, to: 1500 };
+  const pickup = {
+    cut: { from: 240, to: 354 },
+    fill: { from: 1600, to: 1714 },
+  };
+  const carry = {
+    cut: { from: 1260, to: 1392 },
+    fill: { from: 1800, to: 1932 },
+  };
+
+  it('keeps every trunk frame after a splice on its composition frame', () => {
+    const path = buildSplicedPath(trunk, [carry, pickup]);
+
+    expect(toCompositionFrame(path, 720)).toBeCloseTo(720, 9);
+    expect(toCompositionFrame(path, 1450)).toBeCloseTo(1450, 9);
+    expect(toCompositionFrame(path, 1650)).toBeCloseTo(290, 9);
+    expect(path.at(-1)?.to).toBe(1500);
+  });
+
+  it('rejects a fill that does not last as long as its cut', () => {
+    expect(() =>
+      buildSplicedPath(trunk, [
+        { cut: pickup.cut, fill: { from: 1600, to: 1700 } },
+      ]),
+    ).toThrow('does not last as long as its cut');
+  });
+
+  it('rejects overlapping cuts', () => {
+    expect(() =>
+      buildSplicedPath(trunk, [
+        pickup,
+        { cut: { from: 300, to: 400 }, fill: { from: 1800, to: 1900 } },
+      ]),
+    ).toThrow('overlaps');
+  });
+
+  it('plays a cycle k times inside its window, filling the window exactly', () => {
+    const path = repeatCycle(buildSectionPath([trunk]), {
+      cycle: { from: 1311, to: 1325 },
+      from: 1311,
+      to: 1353,
+      count: 3,
+    });
+    const plays = path.filter(({ localFrom }) => localFrom === 1311);
+
+    expect(plays.map(({ from, to }) => [from, to])).toEqual([
+      [1311, 1325],
+      [1325, 1339],
+      [1339, 1353],
+    ]);
+    expect(toCompositionFrame(path, 1400)).toBeCloseTo(1400, 9);
+  });
+
+  it('maps a composition frame back to the local frame it shows, through splices', () => {
+    const path = buildSplicedPath({ from: 0, to: 100 }, [
+      { cut: { from: 20, to: 30 }, fill: { from: 200, to: 210 } },
+    ]);
+
+    expect(toLocalFrame(path, 10)).toBeCloseTo(10, 9);
+    expect(toLocalFrame(path, 25)).toBeCloseTo(205, 9);
+    expect(toLocalFrame(path, 30)).toBeCloseTo(30, 9);
+    expect(toLocalFrame(path, 100)).toBeCloseTo(100, 9);
+    expect(toLocalFrame(path, 120)).toBeUndefined();
+  });
+
+  it('speeds the cycle up to fit more plays in the same window', () => {
+    const path = repeatCycle(buildSectionPath([trunk]), {
+      cycle: { from: 1311, to: 1325 },
+      from: 1311,
+      to: 1353,
+      count: 6,
+    });
+
+    expect(
+      path
+        .filter(({ localFrom }) => localFrom === 1311)
+        .every(({ from, to }) => Math.abs(to - from - 7) < 1e-9),
+    ).toBe(true);
+  });
+
+  it('writes a hold before every repetition so the cycle steps back cleanly', () => {
+    const path = repeatCycle(buildSectionPath([trunk]), {
+      cycle: { from: 1311, to: 1325 },
+      from: 1311,
+      to: 1353,
+      count: 3,
+    });
+    const keyframes = toTimeRemapProperty(path, 60).k as { h?: number }[];
+
+    expect(keyframes.filter(({ h }) => h === 1)).toHaveLength(3);
+  });
+
+  it('rounds the cycle count to the distance and caps it', () => {
+    expect(cycleCount(460, 30.6)).toBe(15);
+    expect(cycleCount(10, 30.6)).toBe(1);
+    expect(cycleCount(5000, 30.6)).toBe(MAX_CYCLE_REPETITIONS);
+  });
+
+  it('rejects a cycle window across a splice step', () => {
+    const path = buildSplicedPath(trunk, [pickup]);
+
+    expect(() =>
+      repeatCycle(path, {
+        cycle: { from: 300, to: 310 },
+        from: 230,
+        to: 260,
+        count: 2,
+      }),
+    ).toThrow('crosses a step');
+  });
+
+  it('rejects a count outside 1–24', () => {
+    expect(() =>
+      repeatCycle(buildSectionPath([trunk]), {
+        cycle: { from: 0, to: 10 },
+        from: 0,
+        to: 30,
+        count: 25,
+      }),
+    ).toThrow('outside 1–24');
   });
 });

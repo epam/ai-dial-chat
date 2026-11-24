@@ -603,50 +603,15 @@ describe('AppConfigContext', () => {
     });
   });
 
-  describe('publicationFilterSources', () => {
-    it('defaults to the legacy-matching list before the config loads', () => {
-      mockGetClientConfig.mockReturnValue(new Promise(() => undefined));
-      const { result } = renderHook(() => useAppConfig(), { wrapper });
-      expect(result.current.config.publicationFilterSources).toEqual([
-        'title',
-        'role',
-        'dial_roles',
-      ]);
-    });
-
-    it('surfaces an operator-configured list from a successful API call', async () => {
-      mockGetClientConfig.mockResolvedValue({
-        ...READY_RESPONSE,
-        config: {
-          ...(READY_RESPONSE as unknown as { config: object }).config,
-          publicationFilterSources: ['roles', 'department'],
-        },
-      } as unknown as ClientConfigResponseDto);
-
-      const { result } = renderHook(() => useAppConfig(), { wrapper });
-      await waitFor(() =>
-        expect(result.current.status).toBe(UserConfigStatus.Ready),
-      );
-      expect(result.current.config.publicationFilterSources).toEqual([
-        'roles',
-        'department',
-      ]);
-    });
-
-    it('remains at the default when the API call fails', async () => {
-      mockGetClientConfig.mockRejectedValue(new Error('network error'));
-      const { result } = renderHook(() => useAppConfig(), { wrapper });
-
-      await waitFor(() =>
-        expect(result.current.status).toBe(UserConfigStatus.Error),
-      );
-
-      expect(result.current.config.publicationFilterSources).toEqual([
-        'title',
-        'role',
-        'dial_roles',
-      ]);
-    });
+  it('exposes no publication filter sources, since publish access rules are gone', async () => {
+    mockGetClientConfig.mockResolvedValue(READY_RESPONSE);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+    expect(result.current.config).not.toHaveProperty(
+      'publicationFilterSources',
+    );
   });
 
   describe('additionalContentLocales', () => {

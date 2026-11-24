@@ -41,16 +41,18 @@ describe('NewYear', () => {
   });
 
   describe('New Year event contract', () => {
-    it('offers the penguin and the snowman on gift clicks and the elves or reindeer for the phrase', () => {
+    it('offers the penguin, the snowman and the fireworks elf on gift clicks and the elves or reindeer for the phrase', () => {
       expect(newYear.scenes.map(({ id }) => id)).toEqual([
         NewYearScene.PenguinStar,
         NewYearScene.GiftWrapping,
         NewYearScene.SnowmanDelivery,
         NewYearScene.ReindeerTakeoff,
+        NewYearScene.ElfFireworks,
       ]);
       expect(newYear.clickSceneIds).toEqual([
         NewYearScene.PenguinStar,
         NewYearScene.SnowmanDelivery,
+        NewYearScene.ElfFireworks,
       ]);
       expect(newYear.secretTrigger?.sceneIds).toEqual([
         NewYearScene.GiftWrapping,
@@ -59,10 +61,20 @@ describe('NewYear', () => {
     });
 
     it.each([
-      [NewYearScene.SnowmanDelivery, [NewYearScene.PenguinStar]],
-      [NewYearScene.PenguinStar, [NewYearScene.SnowmanDelivery]],
+      [
+        NewYearScene.SnowmanDelivery,
+        [NewYearScene.PenguinStar, NewYearScene.ElfFireworks],
+      ],
+      [
+        NewYearScene.PenguinStar,
+        [NewYearScene.SnowmanDelivery, NewYearScene.ElfFireworks],
+      ],
+      [
+        NewYearScene.ElfFireworks,
+        [NewYearScene.PenguinStar, NewYearScene.SnowmanDelivery],
+      ],
     ])(
-      'keeps the other click scene when the host disables %s',
+      'keeps the other click scenes when the host disables %s',
       (disabled, expected) => {
         const pools = resolveCelebrationPools(newYear, {
           disabledScenes: [disabled],

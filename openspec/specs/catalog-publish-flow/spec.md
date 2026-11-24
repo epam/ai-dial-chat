@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Publishing a catalog entity: folder-tree destination picking, inline folder creation, access rules, and submission against real backend data.
+Publishing a catalog entity: folder-tree destination picking, inline folder creation, and submission against real backend data.
 
 ## Requirements
 
@@ -232,54 +232,13 @@ Accessibility: the submit-error callout SHALL use `role="alert"`.
 - **WHEN** `libs/catalog/src/components/Details/DetailsPanel.tsx` is inspected
 - **THEN** it imports `PublishPanel` from `@epam/ai-dial-publish-panel` and passes `resource={{ title, version, type, iconUrl }}`, and no `item: CatalogItem` prop is passed to `PublishPanel`
 
-### Requirement: Catalog publish flow wires the shared access-rules editor and includes rules in the publish request
-
-`DetailsPanel`'s `usePublishFlow` instance SHALL supply `rules`/`setRules` to its inline `PublishPanel` render via the `rules`/`onRulesChange` props, together with `ruleSourceOptions`. `ruleSourceOptions` is threaded down from `CatalogProps.ruleSourceOptions?: string[]` through `Catalog` and `DetailsPanelProps`, the same way `publishFolderItems`/`publishLabels` are, and `DetailsPanel` defaults it to an empty list when absent. `CatalogView` supplies it from `useAppConfig().config.publicationFilterSources`.
-
-A host MAY opt out of the section with `CatalogProps.hidePublishAccessRules?: boolean` (default `false`, threaded `Catalog` → `DetailsPanel` → `DetailsPublishContent`, the same way `hideCreateButton` is). When it is set, `DetailsPublishContent` SHALL NOT pass `rules`/`onRulesChange` to `PublishPanel`, so the section and its "Add rule" control are not rendered. The publish flow still owns `rules`: when `onFetchExistingRules` is supplied it keeps pre-filling them for the selected folder, and `onPublish` receives them unchanged (an empty array when none were fetched), so publishing without the section never drops a folder's existing rules.
-
-`CatalogView` SHALL pass `handlePublish` from the app hook `useCatalogPublishing` (`apps/chat/src/hooks/useCatalogPublishing/useCatalogPublishing.ts`) as `onPublish`. Its signature is `(item, folderPath, rules, author, publishCredentials)`; it SHALL map `rules` through `toPublishRuleDto` and forward them to `publishCatalogEntity`, which includes them in the request body sent to `POST /api/v1/catalog/{entityType}/{entityId}/publish` (see `catalog-publish-api`).
-
-#### Scenario: Rules entered in the details panel reach the publish call
-- **GIVEN** the user has added one rule (`source: 'title'`, `function: 'EQUAL'`, `targets: ['Internal Tools']`) and selected a destination folder for an application
-- **WHEN** the user clicks Publish
-- **THEN** `publishCatalogEntity` is called with a request body whose `rules` array contains exactly that one rule
-
-#### Scenario: No rules added sends an empty array
-- **GIVEN** the user has not added any rules
-- **WHEN** the user clicks Publish for a toolset
-- **THEN** `publishCatalogEntity` is called with `rules: []`, identical to today's behavior
-
-#### Scenario: Hidden access rules render no section and still publish
-- **GIVEN** the host sets `hidePublishAccessRules`
-- **WHEN** the Publish sub-view opens in `DetailsPanel`
-- **THEN** no "Allow access if all match" section or "Add rule" control is rendered
-- **AND** after the user selects a folder and clicks Publish, `onPublish` is called with the rules `onFetchExistingRules` resolved for that folder, or `[]` when none were resolved
-
-#### Scenario: Same rules section appears for applications and toolsets
-- **WHEN** the Publish sub-view opens inside `DetailsPanel` for an Application and, separately, for a Toolset
-- **THEN** the same access-rules section renders identically in both cases, since `PublishPanel` has no entity-type-specific branching for this section
-
-### Requirement: Selecting a destination folder pre-fills the rules editor with that folder's existing rules
-
-`DetailsPanel`'s `usePublishFlow` instance SHALL be supplied an `onFetchExistingRules` option — a thin call to the same `apps/chat/src/server-api/publish-rules.api.ts`'s `getPublishRules(folderPath)` used by the conversation flow — passed down through `CatalogProps` from `CatalogView` (or supplied directly by `DetailsPanel` if threading through `Catalog` is unnecessary; decided at implementation time, matching however `onCreatePublishFolder` is currently threaded). For applications and toolsets, choosing a destination folder replaces the rules editor's contents with that folder's already-configured rules (or empties it, if none).
-
-#### Scenario: Selecting a folder with prior rules pre-fills the editor for an application
-- **GIVEN** the user opens the Publish sub-view for an application and selects a destination folder that already has a configured rule
-- **WHEN** the lookup resolves
-- **THEN** the rules editor shows that existing rule as a chip, without the user having entered it
-
-#### Scenario: A rules-lookup failure does not block the catalog publish flow
-- **GIVEN** the user selects a destination folder for a toolset and the rules lookup fails
-- **THEN** folder selection, manual rule entry, and the Publish submit action all remain fully usable; only the pre-fill did not occur
-
 ### Requirement: Catalog publish panel offers an editable author pre-filled with the publisher's name
 
 The catalog publish sub-view SHALL show the shared publish panel's author field, pre-filled with the signed-in user's display name, and SHALL send the submitted value with the publish request so it becomes the published entity's **Hosted by** value.
 
-State ownership: `DetailsPanel`'s existing `usePublishFlow` instance owns `author`/`setAuthor` (see `publish-panel-library`) and supplies them to its inline `PublishPanel` render via the new required `author`/`onAuthorChange` props, threaded the same way `rules`/`onRulesChange` already are.
+State ownership: `DetailsPanel`'s existing `usePublishFlow` instance owns `author`/`setAuthor` (see `publish-panel-library`) and supplies them to its inline `PublishPanel` render via the new required `author`/`onAuthorChange` props, threaded the same way `hidePublishAuthor` is.
 
-A host that collects the author elsewhere MAY opt out of the field with `CatalogProps.hidePublishAuthor?: boolean` (default `false`, threaded `Catalog` → `DetailsPanel` → `DetailsPublishContent`, the same way `hideCreateButton` is). When it is set, `DetailsPublishContent` SHALL NOT pass `author`/`onAuthorChange` to `PublishPanel`, so the field is not rendered, and `onPublish` receives `publishDefaultAuthor` (or an empty string) as its author argument. `pg-chat` sets both `hidePublishAuthor` and `hidePublishAccessRules` and does not pass `publishDefaultAuthor`, so its publish requests carry no `author` and the backend's session-derived fallback applies.
+A host that collects the author elsewhere MAY opt out of the field with `CatalogProps.hidePublishAuthor?: boolean` (default `false`, threaded `Catalog` → `DetailsPanel` → `DetailsPublishContent`, the same way `hideCreateButton` is). When it is set, `DetailsPublishContent` SHALL NOT pass `author`/`onAuthorChange` to `PublishPanel`, so the field is not rendered, and `onPublish` receives `publishDefaultAuthor` (or an empty string) as its author argument. `pg-chat` sets `hidePublishAuthor` and does not pass `publishDefaultAuthor`, so its publish requests carry no `author` and the backend's session-derived fallback applies.
 
 Prefill is host-resolved, not lib-resolved. `CatalogProps` and `DetailsPanelProps` (`libs/catalog/src/models/item-details-props.ts`) SHALL gain `publishDefaultAuthor?: string`, threaded `CatalogView` → `Catalog` → `DetailsPanel` → `usePublishFlow`'s `defaultAuthor` option, exactly as `publishFolderItems`/`publishLabels` already are. `CatalogView` SHALL resolve the value from `useUserProfile()`'s `displayName`. Neither `libs/catalog` nor `libs/publish-panel` reads `UserContext`, OIDC claims, or i18n for it, per AGENTS.md §Library isolation; `publishDefaultAuthor` is the app-level adapter contract that carries the host's session knowledge across the boundary.
 
@@ -515,7 +474,7 @@ i18n keys: `publish.dependenciesTitle`, `publish.dependenciesDescription`, `publ
 
 #### Scenario: Schema app saved by a direct write into an org unit
 - **WHEN** the committed destination is a unit folder the user may write to, and the app has form values
-- **THEN** the panel lists the private dependencies of those values and the rules editor stays hidden
+- **THEN** the panel lists the private dependencies of those values and no access-rules editor renders
 
 #### Scenario: Personal destination
 - **WHEN** the committed destination is under the Personal root
@@ -549,7 +508,7 @@ i18n keys: `publish.dependenciesTitle`, `publish.dependenciesDescription`, `publ
 ### Requirement: The catalog Publish panel writes directly into a unit folder the user may approve
 `DetailsPanel`'s publish flow SHALL receive from the host `canPublishDirectlyTo(item, folderPath, dependencies)` (backed by `useOrgUnitsContext` and the entity's namespace; `useDetailsPublish` adapts it to the flow's `canPublishDirectlyTo(folderPath)` and passes the loaded dependency list), `getPublishDirectUnavailableNote(item, folderPath, dependencies)` for the information note, and `onPublishDirectly(item, folderPath)`. When the selected folder satisfies `canPublishDirectlyTo`, submit SHALL call `onPublishDirectly`, which the host implements with the generated client's `copyCatalogEntityToOrgUnit` sending `{ folderPath, version }` with the item's version (no `version` for an unversioned type), and SHALL NOT call `onPublish`. Otherwise submit calls `onPublish` as before. The org-unit rights load and refresh when the panel becomes active, as they do today for the folder guards. `isPublishVisible` and the entity-type gate are unchanged: the panel is still offered for the user's own source item only.
 
-For a direct destination the panel SHALL hide the access rules editor and SHALL NOT fetch the folder's existing rules, SHALL hide the author field and the credentials checkbox, and SHALL show one neutral line (`catalog.publish.directCredentialsNote`) for a toolset that would otherwise offer credentials. The item's publish-history marker is ignored for a direct destination (a direct write leaves no history), a credentials choice made on an earlier request folder is cleared on entering a direct one, and the rules of an earlier request folder are neither sent nor shown; moving back to a request folder loads that folder's rules again. The submit button keeps its label. The dependencies section keeps its source (`getPublishDependencies`, DIAL Core, no iframe special case) and its wording; when the user would otherwise write directly but lacks `write` on the namespace of a listed dependency, the folder stays usable, submit files a publication request, and the panel shows an information note (`catalog.publish.directUnavailableDependencies`) naming the missing types and saying a request is sent instead of a direct save. The direct path is chosen only after the dependency list has settled (success or failure): the panel shows the request layout while the list loads and switches at most once, to direct, after it settles. A failed dependency read leaves an empty list, so direct is offered and the server's namespace check is the backstop. The taken-name check SHALL be the existing `onCheckTargetExists` with the item's version: it asks the path the direct copy writes, and a `409` of the copy SHALL be recognised by `isTargetTakenError` so the same callout shows.
+For a direct destination the panel SHALL hide the author field and the credentials checkbox, and SHALL show one neutral line (`catalog.publish.directCredentialsNote`) for a toolset that would otherwise offer credentials. The item's publish-history marker is ignored for a direct destination (a direct write leaves no history), a credentials choice made on an earlier request folder is cleared on entering a direct one. The submit button keeps its label. The dependencies section keeps its source (`getPublishDependencies`, DIAL Core, no iframe special case) and its wording; when the user would otherwise write directly but lacks `write` on the namespace of a listed dependency, the folder stays usable, submit files a publication request, and the panel shows an information note (`catalog.publish.directUnavailableDependencies`) naming the missing types and saying a request is sent instead of a direct save. The direct path is chosen only after the dependency list has settled (success or failure): the panel shows the request layout while the list loads and switches at most once, to direct, after it settles. A failed dependency read leaves an empty list, so direct is offered and the server's namespace check is the backstop. The taken-name check SHALL be the existing `onCheckTargetExists` with the item's version: it asks the path the direct copy writes, and a `409` of the copy SHALL be recognised by `isTargetTakenError` so the same callout shows.
 
 On success the host SHALL report a save into the folder (not "publish requested") with the Save panel's `resourceSavePanel.savedToFolder` text shown as a success notification, and keep the folder in the recent publish folders; like every other publish path it SHALL NOT refetch the catalog. On failure the panel SHALL stay open with the error announced assertively and submit enabled for a retry, which completes the copy and reuses what exists.
 
@@ -565,7 +524,7 @@ New strings: `catalog.publish.directCredentialsNote` and `catalog.publish.direct
 
 #### Scenario: Direct destination hides publication-only controls
 - **WHEN** the selected folder is a direct destination
-- **THEN** the rules editor, the author field and the credentials checkbox are not rendered and no existing-rules fetch is made
+- **THEN** the author field and the credentials checkbox are not rendered
 
 #### Scenario: Taken name
 - **WHEN** the path the copy would write already exists

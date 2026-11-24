@@ -24,6 +24,4 @@ export interface FolderDestinationRoot {
   onExpandedPathsChange?: (paths: Set<string>) => void;
   /** Folder path keys inside this root that the host is currently fetching. */
   loadingPaths?: Set<string>;
-  /** Whether a folder under this root takes access rules, edited below the tree once selected. Defaults to `false`. */
-  hasAccessRules?: boolean;
 }

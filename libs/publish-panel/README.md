@@ -45,7 +45,7 @@ optional.
 
 ### PublishPanel
 
-Scrollable body of the Publish flow, in two views like the save panel. The main view (`PublishPanelView.Main`) shows the entity summary row, a destination row — the committed path as one truncating name, or `noFolderSelectedLabel`, with a Change/Choose button — then the callouts, author, credentials and access rules. The folder view (`PublishPanelView.ChangeFolder`) shows only the folder search and tree, bound to `pendingFolderPath`. The host owns the view switch, header and footer; `usePublishFolderView` holds that state. Switching views moves focus into the folder view and back to the Change button. It does not render publish history; use `PublishHistoryList` directly to show history in a custom layout.
+Scrollable body of the Publish flow, in two views like the save panel. The main view (`PublishPanelView.Main`) shows the entity summary row, a destination row — the committed path as one truncating name, or `noFolderSelectedLabel`, with a Change/Choose button — then the callouts, author and credentials. The folder view (`PublishPanelView.ChangeFolder`) shows only the folder search and tree, bound to `pendingFolderPath`. The host owns the view switch, header and footer; `usePublishFolderView` holds that state. Switching views moves focus into the folder view and back to the Change button. It does not render publish history; use `PublishHistoryList` directly to show history in a custom layout.
 
 ```tsx
 import {
@@ -73,15 +73,11 @@ const folderView = usePublishFolderView({
   isSubmitting={false}
   author={author}
   onAuthorChange={setAuthor}
-  rules={rules}
-  onRulesChange={setRules}
-  ruleSourceOptions={['title', 'roles', 'dial_roles']}
 />;
 ```
 
-`author` is the publication's display author, rendered as a text field between
-the destination row and the access-rules section. It is a controlled value like
-`rules`: pass `usePublishFlow`'s `author`/`setAuthor` straight through. An
+`author` is the publication's display author, rendered as a text field after
+the destination row. It is a controlled value: pass `usePublishFlow`'s `author`/`setAuthor` straight through. An
 empty author is a valid state and never blocks submission — the host decides
 what an unset author means (both AI DIAL Chat hosts omit the field from the
 publish request so the backend falls back to the session's own display name).
@@ -143,9 +139,6 @@ through. The checkbox is disabled while `isSubmitting` is `true`.
   isSubmitting={false}
   author={author}
   onAuthorChange={setAuthor}
-  rules={rules}
-  onRulesChange={setRules}
-  ruleSourceOptions={['title', 'roles', 'dial_roles']}
   publishCredentials={publishCredentials}
   onPublishCredentialsChange={setPublishCredentials}
   labels={{
@@ -185,7 +178,7 @@ replaces the default title-only row and is ignored once `resource.type` is set.
 
 Standalone end-edge slide-in shell for the Publish flow: backdrop, header with Close, the `PublishPanel` body, and a pinned `PublishFooter`. It drives the drill-in itself through `usePublishFolderView`: Change opens the folder view titled `labels.changeFolderTitle` with a Back button, the footer turns into Cancel and Select, and only Select calls `onSelectedFolderPathChange`. The shell is the UI kit's `SideDrawer`, so focus is kept inside while it is open and Escape or a backdrop press closes it; `returnFocusRef` still decides where focus lands afterwards, and `colors` themes the backdrop, panel, divider, scrollbar and title.
 
-While open it behaves as a modal dialog: it takes focus on mount, cycles Tab and Shift+Tab within itself, closes on Escape, and returns focus to `returnFocusRef` on close. Tab is left alone while focus sits outside the panel, so the folder-row menus and the rule source picker it renders through portals stay keyboard-operable. While closed it is `inert`, so nothing inside it is reachable.
+While open it behaves as a modal dialog: it takes focus on mount, cycles Tab and Shift+Tab within itself, closes on Escape, and returns focus to `returnFocusRef` on close. Tab is left alone while focus sits outside the panel, so the folder-row menus it renders through portals stay keyboard-operable. While closed it is `inert`, so nothing inside it is reachable.
 
 ```tsx
 import { StandalonePublishPanel } from '@epam/ai-dial-publish-panel';
@@ -202,9 +195,6 @@ import { StandalonePublishPanel } from '@epam/ai-dial-publish-panel';
   isSubmitting={false}
   author={author}
   onAuthorChange={setAuthor}
-  rules={rules}
-  onRulesChange={setRules}
-  ruleSourceOptions={['title', 'roles', 'dial_roles']}
   onClose={handleClose}
   onSubmit={handleSubmit}
 />;
@@ -226,31 +216,16 @@ import { PublishFooter } from '@epam/ai-dial-publish-panel';
 />;
 ```
 
-### PublishAccessRules
-
-Access-rules section of the Publish flow: one removable chip per rule, an "Add rule" trigger opening `PublishAccessRuleEditor`, and a "Clear all" control shown only when rules exist. Pass `folderName` so the section states which destination folder the rules apply to; leave it `undefined` while no folder is selected and the section prompts the user to pick one instead, warning when rules already exist without a destination.
-
-```tsx
-import { PublishAccessRules } from '@epam/ai-dial-publish-panel';
-
-<PublishAccessRules
-  rules={rules}
-  onRulesChange={setRules}
-  sourceOptions={['title', 'roles', 'dial_roles']}
-  folderName={selectedFolderName}
-/>;
-```
-
 ### Folder tree
 
 The destination folder tree, with search, lazy expansion and inline folder creation, is the file manager's `FolderDestinationTree` (`@epam/ai-dial-react-file-manager`). `PublishPanel` and `StandaloneSaveToFolderPanel` render it through `FolderDestinationPanelBody`, and this library no longer exports its own tree. A host that needs the tree on its own imports it from the file manager; `getDisabledReason(destination)` on both panels is forwarded to it (`rootKey` is `''` for `PublishPanel`, whose one root has an empty key, and `path: []` is the root itself).
 
 ### StandaloneSaveToFolderPanel
 
-The "save to a folder, optionally as a new version" flow. `StandaloneSaveToFolderPanel` adapts the file manager's `FolderDestinationPanel` (`@epam/ai-dial-react-file-manager`), an end-edge side panel, to this flow: it supplies the summary, the version choice, the dependency notes, the history and the access rules, and the package supplies the drawer, the destination row, the folder search and tree, and the Cancel / Save / Select footer. It has two views:
+The "save to a folder, optionally as a new version" flow. `StandaloneSaveToFolderPanel` adapts the file manager's `FolderDestinationPanel` (`@epam/ai-dial-react-file-manager`), an end-edge side panel, to this flow: it supplies the summary, the version choice, the dependency notes and the history, and the package supplies the drawer, the destination row, the folder search and tree, and the Cancel / Save / Select footer. It has two views:
 
 - **Main** — when `getDisabledReason` returns a reason for the committed destination, that reason is shown as an error under the destination (the host also disables Save); the entity summary (the entity header when `resource.type` is set, the title otherwise), the committed destination as a folder name with the file manager's folder icon (`FolderName`, the path joined with `/`) and a small **Change** action, an optional version choice, and a Cancel / Save footer.
-- **Change folder** — a back button, folder search and the multi-root folder tree, with a Cancel / Select footer. A destination picked here is pending until Select commits it through `onDestinationChange`; Back and Cancel discard it. While a folder of a root with `hasAccessRules` is pending and `accessRules` (`SaveToFolderAccessRulesProps`) is passed, `PublishAccessRules` renders below the tree for that folder (through the panel's `renderFolderViewFooter`); `onPendingDestinationChange` tells the host which folder is pending — including the reset to `destination` on entering and leaving the view — so it can load that folder's existing rules. `accessRules.isHiddenFor(destination)` hides the section for a destination that takes no rules (the host passes it for a direct write into an org unit); omit it to show the section for every folder of such a root.
+- **Change folder** — a back button, folder search and the multi-root folder tree, with a Cancel / Select footer. A destination picked here is pending until Select commits it through `onDestinationChange`; Back and Cancel discard it.
 
 The version section renders only when `version` (`SaveToFolderVersionProps`) is passed: a `RadioGroup` of "Keep version {version}" and "Save as new version", the latter revealing a required version input whose error the host supplies as `newVersionError`. Pass no `version` for an unversioned resource. `submitError` is announced through an assertive `LiveRegion`; `foldersError` shows above the tree with a Retry action when `onRetryFolders` is given. Every control is disabled while `isSubmitting`.
 
@@ -430,7 +405,7 @@ Folder options use the typography class `optionClassName` (default `'dial-small-
 
 ### usePublishFlow
 
-Manages all state for the Publish flow: folder selection, optimistic local folder creation with rollback, existing-publication detection, access rules, the display author, and submit handling.
+Manages all state for the Publish flow: folder selection, optimistic local folder creation with rollback, existing-publication detection, the display author, and submit handling.
 
 ```tsx
 import { usePublishFlow } from '@epam/ai-dial-publish-panel';
@@ -440,7 +415,7 @@ const publishFlow = usePublishFlow({
   history,
   folderItems,
   defaultAuthor: currentUserDisplayName,
-  onPublish: async (item, folderPath, rules, author, publishCredentials) => {
+  onPublish: async (item, folderPath, author, publishCredentials) => {
     /* ... */
   },
   onPublishSuccess: (item, folderPath, isDirectWrite) => {
@@ -457,16 +432,17 @@ The library holds no notion of a session, so the host resolves the signed-in
 user's display name and passes it here. It may resolve after the first render:
 while the user has not edited the field, a later `defaultAuthor` replaces the
 current value; once `setAuthor` has been called, it no longer does.
-`handleSubmit` forwards the trimmed `author` to `onPublish` as its fourth
+`handleSubmit` forwards the trimmed `author` to `onPublish` as its third
 argument.
 
 The hook also owns `publishCredentials` (a `boolean`) and
-`setPublishCredentials`, forwarded to `onPublish` as its fifth argument. It
+`setPublishCredentials`, forwarded to `onPublish` as its fourth argument. It
 starts `false`, `reset()` restores it to `false`, and it is never pre-filled
 from history or the selected folder — a folder whose previous publication
-carried shared credentials still opens with the option cleared. The argument
-is additive, so a host callback declaring only the first four parameters stays
-assignable and keeps behaving as it did.
+carried shared credentials still opens with the option cleared. A host
+callback declaring only the first three parameters stays assignable. Earlier releases passed access rules as the third argument and
+rendered an access-rules section; both were removed, so a host callback that
+still declares a `rules` parameter must drop it.
 
 `onCheckTargetExists(item, folderPath)` is an optional callback resolving to
 `true` when another resource already holds the published path of `item` in
@@ -508,16 +484,14 @@ instead of filing a request. `usePublishFlow` returns `isDirectWrite`: `true`
 when a folder is selected, both options are supplied and the predicate holds for
 it. While it is `true`, `handleSubmit` calls `onPublishDirectly` instead of
 `onPublish`, with the same `onPublishSuccess`, `onPublishError`,
-`isTargetTakenError` and `hasSubmitError` handling, and sends no rules, author or
-credentials. For a direct folder the hook also skips `onFetchExistingRules`
-(`rules` is emptied, and loaded again on moving back to a request folder),
-reports `hasExistingPublicationInFolder` as `false` (a direct write leaves no
+`isTargetTakenError` and `hasSubmitError` handling, and sends no author or
+credentials. For a direct folder the hook also reports `hasExistingPublicationInFolder` as `false` (a direct write leaves no
 history), and clears the credentials choice on entering it. A host that supplies
 neither option sees no change. The library learns nothing about endpoints, rights
 data or namespaces: both arrive from the host.
 
 Pass the flow's `isDirectWrite` to `PublishPanel`. For `true` the panel renders
-no access-rules section, author field or credentials checkbox, drops the
+no author field or credentials checkbox, drops the
 admin-approval callout and shows `labels.directWriteNote` (a plain line, nothing
 when the host supplies none) in the credentials checkbox's place.
 `directUnavailableNote` is a finished host sentence rendered as an information
@@ -577,7 +551,7 @@ const {
 
 ### PublishPanelView
 
-`Main` (summary, destination row, author, credentials and rules) and `ChangeFolder` (folder search and tree).
+`Main` (summary, destination row, author and credentials) and `ChangeFolder` (folder search and tree).
 
 ## Utilities
 

@@ -4,6 +4,7 @@ import { StringUtils } from '../../common/utils/string-utils';
 import {
   DIAL_ENTITY_NAME_FORBIDDEN_CHARS_RE,
   DIAL_ENTITY_NAME_MAX_BYTES,
+  DIAL_STORED_FILE_NAME_MAX_BYTES,
 } from '../../common/validators/dial-entity-name.validator';
 import { PUBLIC_BUCKET } from '../../constants/dial.constants';
 import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
@@ -21,6 +22,8 @@ import type { CompoundNextToken } from '../types/conversation.types';
 
 const CONVERSATION_NAME_SEPARATOR = '__';
 const UUID_PART_LENGTHS = [8, 4, 4, 4, 12] as const;
+/* A `generateUUID()` value: 32 hex digits and 4 hyphens, all ASCII. */
+const UUID_BYTES = 36;
 const VERSION_METADATA_SEPARATOR_REGEX = /[-+]/;
 const HEX_REGEX = /^[\da-f]+$/i;
 const VERSION_NUMBER_PART_REGEX = /^\d+$/;
@@ -119,7 +122,15 @@ export const getRunIdFromFilename = (
   return suffix != null && isUuid(suffix) ? suffix : undefined;
 };
 
-export const prepareEntityName = (prompt?: string): string => {
+/**
+ * Turns free text into a DIAL resource title: its first non-empty line, with
+ * forbidden characters replaced by spaces, cut to `maxBytes` UTF-8 bytes on a
+ * character boundary, and without trailing dots or whitespace.
+ */
+export const prepareEntityName = (
+  prompt?: string,
+  maxBytes: number = DIAL_ENTITY_NAME_MAX_BYTES,
+): string => {
   const clearName =
     prompt
       ?.replace(/\r\n|\r/gm, '\n')
@@ -128,10 +139,27 @@ export const prepareEntityName = (prompt?: string): string => {
       .filter(Boolean)[0] ?? '';
 
   return StringUtils.stripTrailingChar(
-    StringUtils.truncateToUtf8Bytes(clearName, DIAL_ENTITY_NAME_MAX_BYTES),
+    StringUtils.truncateToUtf8Bytes(clearName, maxBytes),
     '.',
   ).trimEnd();
 };
+
+/**
+ * UTF-8 bytes left for the title in a `{deploymentKey}__{title}__{uuid}`
+ * conversation file name, so the whole name fits
+ * `DIAL_STORED_FILE_NAME_MAX_BYTES`. `deploymentKey` is the part of the file
+ * name before the title, without any folder in front of it. The UUID is
+ * always reserved, including for a duplicate that gains one only on a
+ * collision. Never negative.
+ */
+export const getConversationTitleMaxBytes = (deploymentKey: string): number =>
+  Math.max(
+    0,
+    DIAL_STORED_FILE_NAME_MAX_BYTES -
+      StringUtils.getUtf8ByteLength(deploymentKey) -
+      2 * CONVERSATION_NAME_SEPARATOR.length -
+      UUID_BYTES,
+  );
 
 /**
  * The `x-project-id` header of a conversation path: the project id for a
@@ -177,7 +205,18 @@ export const buildNewConversation = ({
 }): NewConversation => {
   const now = Date.now();
   const uuid = generateUUID();
-  const name = getConversationName('New chat', firstMessage);
+  /*
+   * An application id carries its folders (`applications/{bucket}/…`); only
+   * its last segment is part of the file name.
+   */
+  const fileNameDeploymentKey = fileDeploymentKey.slice(
+    fileDeploymentKey.lastIndexOf('/') + 1,
+  );
+  const name = getConversationName(
+    'New chat',
+    firstMessage,
+    getConversationTitleMaxBytes(fileNameDeploymentKey),
+  );
   const fileName = `${fileDeploymentKey}__${name}__${uuid}`;
   const userMessage: ConversationMessageDto = {
     id: uuid,
@@ -207,7 +246,10 @@ export const buildNewConversation = ({
 export const getConversationName = (
   defaultName: string,
   prompt?: string,
-): string => prepareEntityName(prompt) || prepareEntityName(defaultName);
+  maxBytes?: number,
+): string =>
+  prepareEntityName(prompt, maxBytes) ||
+  prepareEntityName(defaultName, maxBytes);
 
 /**
  * Extracts the human-readable title from a DIAL Core conversation filename.

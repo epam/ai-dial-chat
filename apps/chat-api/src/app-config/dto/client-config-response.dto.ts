@@ -126,7 +126,7 @@ export class ClientConfigDto {
 
   @ApiProperty({
     description:
-      'Which File Manager tabs are shown to users. Defaults to the All tab plus the three source tabs.',
+      'Which File Manager tabs are shown to users, as a set in the fixed order all, my_files, shared, organization. all is present only with at least two source tabs; a configured list with no source tab falls back to all four. Defaults to the All tab plus the three source tabs.',
     type: [String],
     example: ['all', 'my_files', 'shared', 'organization'],
   })
@@ -260,14 +260,6 @@ export class ClientConfigDto {
     default: {},
   })
   customVariables!: Record<string, unknown>;
-
-  @ApiProperty({
-    description:
-      "Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES; falls back to the legacy default when unset or empty.",
-    type: [String],
-    example: ['title', 'role', 'dial_roles'],
-  })
-  publicationFilterSources!: string[];
 
   @ApiProperty({
     description:

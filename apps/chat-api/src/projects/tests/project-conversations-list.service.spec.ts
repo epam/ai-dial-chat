@@ -330,6 +330,7 @@ describe('ProjectConversationsListService — published project', () => {
   const bodiesByTitle = (
     store: ReturnType<typeof makeService>['store'],
     times: Record<string, number[] | undefined>,
+    updatedAts: Record<string, number> = {},
   ) => {
     store.readConversationWithEtag.mockImplementation((async (
       locator: string,
@@ -341,6 +342,9 @@ describe('ProjectConversationsListService — published project', () => {
           messages: (times[title] ?? []).map((time) => ({
             timestamp: iso(time),
           })),
+          ...(updatedAts[title] != null
+            ? { updatedAt: updatedAts[title] }
+            : {}),
         },
         etag: '"sha256:x"',
       };
@@ -419,6 +423,52 @@ describe('ProjectConversationsListService — published project', () => {
     ]);
   });
 
+  it('orders a chat changed after its last message by that change, as the personal project does', async () => {
+    const { service, store } = makeService([
+      listing([
+        file('gpt-4o__Renamed__1', 1000),
+        file('gpt-4o__Answered__2', 1000),
+        file('gpt-4o__Legacy__3', 1000),
+      ]),
+    ]);
+    /* Renamed after its last message; Legacy predates the stamp, its updatedAt is its creation. */
+    bodiesByTitle(
+      store,
+      { Renamed: [100], Answered: [500], Legacy: [300] },
+      { Renamed: 800, Answered: 500, Legacy: 50 },
+    );
+
+    const { items } = await service.listProjectConversations(
+      PUBLISHED,
+      'token',
+      'u-bucket',
+    );
+
+    expect(items.map((item) => item.title)).toEqual([
+      'Renamed',
+      'Answered',
+      'Legacy',
+    ]);
+  });
+
+  it('orders a chat without a dated message by its recorded change', async () => {
+    const { service, store } = makeService([
+      listing([
+        file('gpt-4o__Undated__1', 1000),
+        file('gpt-4o__Dated__2', 1000),
+      ]),
+    ]);
+    bodiesByTitle(store, { Dated: [100] }, { Undated: 200 });
+
+    const { items } = await service.listProjectConversations(
+      PUBLISHED,
+      'token',
+      'u-bucket',
+    );
+
+    expect(items.map((item) => item.title)).toEqual(['Undated', 'Dated']);
+  });
+
   it('reuses the cached last message while the file is unchanged', async () => {
     const { service, store } = makeService([
       listing([file('gpt-4o__Chat__1', 1000)]),
@@ -430,6 +480,39 @@ describe('ProjectConversationsListService — published project', () => {
     await service.listProjectConversations(PUBLISHED, 'token', 'u-bucket');
 
     expect(store.readConversationWithEtag).toHaveBeenCalledOnce();
+  });
+
+  it('re-reads a body cached with only its last message once', async () => {
+    const { service, store, cache } = makeService([
+      listing([
+        file('gpt-4o__Renamed__1', 1000),
+        file('gpt-4o__Answered__2', 1000),
+      ]),
+    ]);
+    bodiesByTitle(
+      store,
+      { Renamed: [100], Answered: [500] },
+      { Renamed: 800, Answered: 500 },
+    );
+    await cache.set(
+      'projects:conversation-title:projects/public/handbook/conversations/gpt-4o__Renamed__1',
+      {
+        updatedAt: 1000,
+        title: 'Renamed',
+        version: '"sha256:x"',
+        lastMessageAt: 100,
+        hasActivity: true,
+      },
+    );
+
+    const { items } = await service.listProjectConversations(
+      PUBLISHED,
+      'token',
+      'u-bucket',
+    );
+
+    expect(store.readConversationWithEtag).toHaveBeenCalledTimes(2);
+    expect(items.map((item) => item.title)).toEqual(['Renamed', 'Answered']);
   });
 
   it('re-reads a body cached without its last message once', async () => {

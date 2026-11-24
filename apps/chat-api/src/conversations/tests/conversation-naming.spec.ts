@@ -1,11 +1,20 @@
 import { describe, expect, it } from 'vitest';
+import { DIAL_STORED_FILE_NAME_MAX_BYTES } from '../../common/validators/dial-entity-name.validator';
 import {
+  buildNewConversation,
   buildRenamedConversationPath,
   getConversationTitleFromName,
   getConversationName,
+  getConversationTitleMaxBytes,
   isApplicationDeploymentPath,
   prepareEntityName,
 } from '../utils/conversation.utils';
+
+const utf8Bytes = (value: string): number => Buffer.byteLength(value, 'utf8');
+
+/* The first message from the "Filename too long" report: 220 ASCII characters. */
+const LONG_FIRST_MESSAGE =
+  'Show the outstanding amount of general government debt securities for every reporting country in the euro area broken down by fixed-rate variable-rate and inflation-linked instruments for the last four quarters in euro';
 
 describe('conversation naming helpers', () => {
   describe('prepareEntityName', () => {
@@ -66,6 +75,19 @@ describe('conversation naming helpers', () => {
     it('should remove trailing dots after truncation', () => {
       const result = prepareEntityName(`${'a'.repeat(254)}.ignored`);
       expect(result).toBe('a'.repeat(254));
+    });
+
+    it('truncates to a smaller byte limit when one is given', () => {
+      expect(prepareEntityName('a'.repeat(300), 100)).toBe('a'.repeat(100));
+    });
+
+    it('truncates multi-byte input to a given limit on a character boundary', () => {
+      // 33 × 3 = 99 bytes; a 34th '日' would make 102
+      expect(prepareEntityName('日'.repeat(100), 100)).toBe('日'.repeat(33));
+    });
+
+    it('returns an empty title for a zero byte limit', () => {
+      expect(prepareEntityName('Hello', 0)).toBe('');
     });
 
     it('should filter out empty lines and use first non-empty line', () => {
@@ -165,6 +187,77 @@ describe('conversation naming helpers', () => {
         'Custom :prompt; with "special" chars',
       );
       expect(result).toBe('Custom  prompt  with  special  chars');
+    });
+
+    it('applies the byte limit to the prompt and to the default name', () => {
+      expect(getConversationName('New chat', 'Hello world', 5)).toBe('Hello');
+      expect(getConversationName('New chat', '', 3)).toBe('New');
+    });
+  });
+
+  describe('getConversationTitleMaxBytes', () => {
+    it('leaves room for the deployment key, both separators and the UUID', () => {
+      expect(getConversationTitleMaxBytes('gpt-4o-mini1')).toBe(
+        DIAL_STORED_FILE_NAME_MAX_BYTES - 12 - 4 - 36,
+      );
+    });
+
+    it('counts the deployment key in UTF-8 bytes', () => {
+      expect(getConversationTitleMaxBytes('модель')).toBe(
+        DIAL_STORED_FILE_NAME_MAX_BYTES - 12 - 4 - 36,
+      );
+    });
+
+    it('never returns a negative budget', () => {
+      expect(getConversationTitleMaxBytes('a'.repeat(500))).toBe(0);
+    });
+  });
+
+  describe('buildNewConversation file name length', () => {
+    const build = (firstMessage: string, deploymentId: string) =>
+      buildNewConversation({
+        firstMessage,
+        deploymentId,
+        folderId: 'bucket',
+        toId: (fileName) => `bucket/${fileName}`,
+      });
+
+    it.each([
+      ['the reported long ASCII message', LONG_FIRST_MESSAGE],
+      ['a 300-byte ASCII message', 'a'.repeat(300)],
+      ['a long Cyrillic message', 'я'.repeat(200)],
+      ['a long emoji message', '👋🏽'.repeat(100)],
+    ])(
+      'keeps the file name of %s within the stored file name limit',
+      (_label, firstMessage) => {
+        const { fileName, conversation } = build(firstMessage, 'gpt-4o-mini1');
+
+        expect(utf8Bytes(fileName)).toBeLessThanOrEqual(
+          DIAL_STORED_FILE_NAME_MAX_BYTES,
+        );
+        expect(fileName).toBe(
+          `gpt-4o-mini1__${conversation.name}__${conversation.messages[0].id}`,
+        );
+        expect(conversation.messages[0].content).toBe(firstMessage);
+      },
+    );
+
+    it('keeps a short title whole', () => {
+      expect(build('What is AI?', 'gpt-4o').conversation.name).toBe(
+        'What is AI?',
+      );
+    });
+
+    it('counts only the last segment of an application deployment id', () => {
+      const deploymentId = 'applications/catalog/support-bot__1.0.0';
+      const { fileName, conversation } = build('a'.repeat(300), deploymentId);
+      const lastSegment = fileName.slice(fileName.lastIndexOf('/') + 1);
+
+      expect(fileName.startsWith('applications/catalog/')).toBe(true);
+      expect(utf8Bytes(lastSegment)).toBe(DIAL_STORED_FILE_NAME_MAX_BYTES);
+      expect(conversation.name).toBe(
+        'a'.repeat(getConversationTitleMaxBytes('support-bot__1.0.0')),
+      );
     });
   });
 

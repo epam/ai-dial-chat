@@ -10,7 +10,7 @@ Define how conversations derive display names and storage paths in DIAL Core. Bo
 
 When `POST /api/v1/conversations` is called, the backend SHALL set `conversation.name` to the **base name** derived from `firstMessage` with **no numeric deduplication suffix**, even when another conversation in the user's bucket already has the same display title.
 
-**Base name derivation** (unchanged): the first non-empty line of `firstMessage`, stripped of disallowed characters via `prepareEntityName`, truncated to 255 UTF-8 bytes; falls back to `"New chat"` when the message is empty or yields no printable characters.
+**Base name derivation**: the first non-empty line of `firstMessage`, stripped of disallowed characters via `prepareEntityName`, truncated to the UTF-8 bytes `getConversationTitleMaxBytes` leaves once the file name's deployment segment, both `__` separators and the 36-character UUID are counted; falls back to `"New chat"` (truncated the same way) when the message is empty or yields no printable characters. See Requirement: Conversation file names fit DIAL Core's file-system limit.
 
 `resolveUniqueConversationName` and `fetchAllUserTitles` SHALL NOT be called from `createConversation`.
 
@@ -142,6 +142,32 @@ This differs deliberately from `createConversation`, which always appends a UUID
 
 - **WHEN** the source conversation lives at `folder/sub/gpt-4o__Hello`
 - **THEN** the duplicate is written under `folder/sub/` as well
+
+---
+
+### Requirement: Conversation file names fit DIAL Core's file-system limit
+
+The file name the backend composes when it creates or duplicates a conversation SHALL be at most `DIAL_STORED_FILE_NAME_MAX_BYTES` (218) UTF-8 bytes, counted on the decoded name. Linux file systems cap one path segment at 255 bytes, and DIAL Core's default `filesystem` storage provider (jclouds) first writes the resource to a temporary `<name>-<uuid>` file, which needs 37 of them. A longer name fails Core's background sync with `Filename too long`, and the user sees "DIAL Core returned a server error".
+
+`createConversation` (top-level and project) and `duplicateConversation` SHALL cut the title to `getConversationTitleMaxBytes(deploymentKey)` bytes: `DIAL_STORED_FILE_NAME_MAX_BYTES` minus the bytes of the deployment segment of the file name, both `__` separators and 36 for the UUID. The cut happens on a character boundary, before trailing dots and whitespace are removed. Only the last `/`-separated segment of a created conversation's deployment id counts, because an application id's `applications/{bucket}/` part is folders. A duplicate always reserves the UUID bytes, so the name fits whether or not a collision adds one. `conversation.name` SHALL equal the cut title.
+
+Rename and LLM naming change only `conversation.name`, not the path, so they keep the 255-byte `DIAL_ENTITY_NAME_MAX_BYTES` limit. Requests that read an existing conversation still accept file names up to `DIAL_PATH_SEGMENT_MAX_BYTES`.
+
+#### Scenario: A long first message is cut to fit the file name
+
+- **WHEN** a conversation is created with `deploymentId: "gpt-4o-mini1"` and a 220-character single-line first message
+- **THEN** the file name `gpt-4o-mini1__{title}__{uuid}` is at most 218 UTF-8 bytes
+- **AND** `conversation.name` is that `{title}`, and the user message keeps the full first message
+
+#### Scenario: A non-ASCII title is counted in bytes
+
+- **WHEN** the first message is 200 Cyrillic letters (2 bytes each)
+- **THEN** the title is cut to the byte budget, not to a character count, and the file name is at most 218 UTF-8 bytes
+
+#### Scenario: A duplicate with a long title fits after a collision
+
+- **WHEN** a conversation whose stored name is longer than 218 bytes is duplicated and the clean destination path is taken
+- **THEN** the destination file name `{deploymentKey}__{title}__{uuid}` is at most 218 UTF-8 bytes
 
 ---
 

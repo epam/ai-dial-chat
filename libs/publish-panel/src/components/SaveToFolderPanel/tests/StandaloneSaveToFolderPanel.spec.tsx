@@ -1,4 +1,3 @@
-import type { FolderDestination } from '@epam/ai-dial-react-file-manager';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
@@ -22,12 +21,10 @@ interface PanelStubProps {
   submitError?: string;
   roots: unknown[];
   mainSections: ReactNode;
-  renderFolderViewFooter: (pending: FolderDestination | undefined) => ReactNode;
   getDisabledReason?: unknown;
 }
 
 const panelProps = vi.fn();
-let pendingForFooter: FolderDestination | undefined;
 
 /* The real panel and its tree live in the file-manager package; this lib owns only the mapping onto them. */
 vi.mock('@epam/ai-dial-react-file-manager', () => ({
@@ -39,7 +36,6 @@ vi.mock('@epam/ai-dial-react-file-manager', () => ({
           {props.item.summary ?? props.item.title}
         </div>
         {props.mainSections}
-        <div>{props.renderFolderViewFooter(pendingForFooter)}</div>
         {props.submitError && <p>{props.submitError}</p>}
         <button
           disabled={props.action.isDisabled}
@@ -52,25 +48,12 @@ vi.mock('@epam/ai-dial-react-file-manager', () => ({
   },
 }));
 
-vi.mock('../../PublishAccessRules/PublishAccessRules', () => ({
-  PublishAccessRules: (props: { folderName?: string }) => (
-    <section aria-label="Access rules">{props.folderName}</section>
-  ),
-}));
-
-const accessRules = {
-  rules: [],
-  onRulesChange: vi.fn(),
-  sourceOptions: ['roles'],
-};
-
 const roots: FolderDestinationRoot[] = [
   { key: 'personal', label: 'Personal', items: [] },
   {
     key: 'organization',
     label: 'Organization',
     items: [],
-    hasAccessRules: true,
   },
 ];
 
@@ -93,7 +76,6 @@ const renderPanel = (props: Partial<StandaloneSaveToFolderPanelProps> = {}) =>
 describe('StandaloneSaveToFolderPanel', () => {
   beforeEach(() => {
     panelProps.mockClear();
-    pendingForFooter = undefined;
   });
 
   it('names the dialog by its title and shows the resource title when there is no entity type', () => {
@@ -136,18 +118,6 @@ describe('StandaloneSaveToFolderPanel', () => {
     expect(screen.getByText('Could not save')).toBeTruthy();
   });
 
-  it('hands the panel roots without the host-only access-rules flag', () => {
-    renderPanel();
-    expect(panelProps).toHaveBeenCalledWith(
-      expect.objectContaining({
-        roots: [
-          { key: 'personal', label: 'Personal', items: [] },
-          { key: 'organization', label: 'Organization', items: [] },
-        ],
-      }),
-    );
-  });
-
   it('forwards getDisabledReason to the panel', () => {
     const getDisabledReason = vi.fn();
     renderPanel({ getDisabledReason });
@@ -171,38 +141,5 @@ describe('StandaloneSaveToFolderPanel', () => {
     expect(screen.getByText('Org note')).toBeTruthy();
     expect(screen.getByText('Dependencies note')).toBeTruthy();
     expect(screen.getByText('Keep version 1.0.0')).toBeTruthy();
-  });
-
-  it('shows access rules under the tree for a folder of a root that takes them', () => {
-    pendingForFooter = { rootKey: 'organization', path: ['EPAM'] };
-    renderPanel({ accessRules });
-    expect(
-      screen.getByRole('region', { name: 'Access rules' }).textContent,
-    ).toBe('EPAM');
-  });
-
-  it('shows no access rules for a root that takes none or before a folder is picked', () => {
-    pendingForFooter = { rootKey: 'personal', path: ['Notes'] };
-    const { unmount } = renderPanel({ accessRules });
-    expect(screen.queryByRole('region', { name: 'Access rules' })).toBeNull();
-    unmount();
-
-    pendingForFooter = undefined;
-    renderPanel({ accessRules });
-    expect(screen.queryByRole('region', { name: 'Access rules' })).toBeNull();
-  });
-
-  it('hides the access rules for a destination the host marks as taking none', () => {
-    pendingForFooter = { rootKey: 'organization', path: ['EPAM'] };
-    const isHiddenFor = vi.fn(
-      (destination: { path: string[] }) => destination.path[0] === 'EPAM',
-    );
-    renderPanel({ accessRules: { ...accessRules, isHiddenFor } });
-
-    expect(screen.queryByRole('region', { name: 'Access rules' })).toBeNull();
-    expect(isHiddenFor).toHaveBeenCalledWith({
-      rootKey: 'organization',
-      path: ['EPAM'],
-    });
   });
 });

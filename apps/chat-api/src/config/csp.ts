@@ -10,6 +10,8 @@ export const CSP_NONCE_PLACEHOLDER = '__DIAL_CSP_NONCE__';
 interface CspOptions {
   allowedConnectOrigins?: string[];
   nonce?: string;
+  /** Hash sources (`sha256-<base64>`) of the inline scripts the served HTML carries. */
+  scriptHashes?: string[];
   allowWasm?: boolean;
   allowInlineStyles?: boolean;
   allowStyleAttributes?: boolean;
@@ -139,6 +141,7 @@ export const createHelmetOptions = (
   {
     allowedConnectOrigins = [],
     nonce,
+    scriptHashes = [],
     allowWasm = false,
     allowInlineStyles = false,
     allowStyleAttributes = false,
@@ -173,6 +176,9 @@ export const createHelmetOptions = (
       fontSrc: ["'self'", 'data:'],
       scriptSrc: [
         "'self'",
+        /* Only the exact inline scripts of the built `index.html` (the theme
+         * paint in its head), never inline scripts in general. */
+        ...scriptHashes.map((hash) => `'${hash}'`),
         /* This permission belongs to the executing document/worker, never
          * to the API response returning document bytes or a WASM binary. */
         ...(allowWasm ? ["'wasm-unsafe-eval'"] : []),

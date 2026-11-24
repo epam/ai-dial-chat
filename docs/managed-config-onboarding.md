@@ -79,15 +79,17 @@ Chat needs its own Core API key, separate from `DIAL_API_KEY` and
 ## 3. Upload the schema and publish
 
 Upload the schema version you publish against (see
-[Verifying an upload](managed-config-schema.md#verifying-an-upload)): `1.1.0`
-manages the tour, the announcements and the celebrations, `1.0.0` only the
-tour, and this build accepts both. Upload it as a user
+[Verifying an upload](managed-config-schema.md#verifying-an-upload)): `1.2.0`
+adds the welcome text, the File Manager tabs, the usage values and the
+usage-limits control to `1.1.0`, which manages the tour, the announcements and
+the celebrations; `1.0.0` manages only the tour, and this build accepts all
+three. Upload it as a user
 with a role in `schemaManagerRoles`. Studio's UI has no upload screen, and an
 API key is refused with 403, so call the instance route with the user's token:
 
 ```sh
 BODY=$(jq --arg op "$(uuidgen | tr A-Z a-z)" '. + {operationId: $op}' \
-  apps/chat-api/managed-config-schema/ai-dial-chat-1.1.0.json)
+  apps/chat-api/managed-config-schema/ai-dial-chat-1.2.0.json)
 ROUTE="$DIAL_CORE_URL/v1/deployments/ai-dial-chat/route/v1"
 curl -sS -X POST "$ROUTE/schema-validations" -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' -d "$BODY"   # {"valid":true,"errors":[]}
@@ -111,6 +113,8 @@ env:
   MANAGED_CONFIG_ACTIVE_KEYS: 'onboarding.hints'
   # With schema 1.1.0, for example:
   # 'onboarding.hints,announcement.title,announcement.description,announcement.items,ui.activeEventId,ui.celebrationsEnabledByDefault,ui.celebrationDelivery.mode,ui.celebrationDelivery.revision,ui.celebrationDelivery.externalScenes,ui.celebrationDelivery.externalEvents'
+  # With schema 1.2.0, add for example:
+  # 'welcomeScreen.description,fileManager.availableTabs,usageLimits.warningThresholdPercent,usageLimits.spendingLimitsMode,features.usageLimitsControl'
 # secret: MANAGED_CONFIG_API_KEY
 ```
 

@@ -3,16 +3,12 @@ import {
   EntityHeader,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import {
-  FolderDestinationPanel,
-  type FolderDestination,
-} from '@epam/ai-dial-react-file-manager';
+import { FolderDestinationPanel } from '@epam/ai-dial-react-file-manager';
 import { Input, RadioGroup } from '@epam/ai-dial-ui-kit';
-import { FC, ReactNode, useId, useMemo } from 'react';
+import { FC, ReactNode, useId } from 'react';
 import { DEFAULT_DEPENDENCIES_TITLE } from '../../constants/publish-dependencies';
 import type { StandaloneSaveToFolderPanelProps } from '../../models/save-to-folder-panel';
 import { SaveVersionMode } from '../../types/save-to-folder';
-import { PublishAccessRules } from '../PublishAccessRules/PublishAccessRules';
 import { PublishDependenciesList } from '../PublishDependenciesList/PublishDependenciesList';
 import { VersionHistorySection } from '../VersionHistorySection/VersionHistorySection';
 import styles from './StandaloneSaveToFolderPanel.module.scss';
@@ -36,7 +32,6 @@ export const StandaloneSaveToFolderPanel: FC<
   getDisabledReason,
   onCreateFolder,
   version,
-  accessRules,
   dependencies,
   dependenciesLabels,
   dependenciesStyles,
@@ -84,16 +79,6 @@ export const StandaloneSaveToFolderPanel: FC<
   const noteClass = mergeClasses(noteClassName, styles.note);
   const hasDependenciesNote =
     Boolean(dependenciesNote) && (dependencies?.length ?? 0) === 0;
-
-  /* The panel knows nothing of access rules, so the host's flag is stripped from the roots it receives. */
-  const panelRoots = useMemo(
-    () =>
-      roots.map((root) => {
-        const { hasAccessRules: _hasAccessRules, ...panelRoot } = root;
-        return panelRoot;
-      }),
-    [roots],
-  );
 
   const summary: ReactNode =
     resource.type != null ? (
@@ -185,41 +170,6 @@ export const StandaloneSaveToFolderPanel: FC<
     </div>
   );
 
-  /* Rules are scoped to the folder picked in the tree, so they sit with it, as in the Publish panel. */
-  const renderFolderViewFooter = (
-    pendingDestination: FolderDestination | undefined,
-  ): ReactNode => {
-    const pendingRoot = roots.find(
-      (candidate) => candidate.key === pendingDestination?.rootKey,
-    );
-    if (
-      !accessRules ||
-      !pendingDestination ||
-      !pendingRoot?.hasAccessRules ||
-      accessRules.isHiddenFor?.(pendingDestination)
-    ) {
-      return null;
-    }
-    return (
-      <div className="mt-1">
-        <PublishAccessRules
-          rules={accessRules.rules}
-          onRulesChange={accessRules.onRulesChange}
-          sourceOptions={accessRules.sourceOptions}
-          folderName={
-            pendingDestination.path[pendingDestination.path.length - 1] ??
-            pendingRoot.label
-          }
-          disabled={isSubmitting}
-          isLoading={accessRules.isLoading}
-          hasLoadError={accessRules.hasLoadError}
-          labels={accessRules.labels}
-          styles={accessRules.styles}
-        />
-      </div>
-    );
-  };
-
   return (
     <FolderDestinationPanel
       isOpen={isOpen}
@@ -242,13 +192,12 @@ export const StandaloneSaveToFolderPanel: FC<
         onClick: onSubmit,
       }}
       item={{ title: resource.title, summary }}
-      roots={panelRoots}
+      roots={roots}
       destination={destination}
       onDestinationChange={onDestinationChange}
       onCreateFolder={onCreateFolder}
       getDisabledReason={getDisabledReason}
       mainSections={mainSections}
-      renderFolderViewFooter={renderFolderViewFooter}
       isSubmitting={isSubmitting}
       submitError={submitError}
       foldersError={foldersError}

@@ -32,6 +32,22 @@ export const DIAL_ENTITY_NAME_FORBIDDEN_CHARS_RE =
 /** Upper bound of a DIAL resource name, in UTF-8 bytes. */
 export const DIAL_ENTITY_NAME_MAX_BYTES = 255;
 
+/*
+ * Bytes a jclouds `filesystem` blob store adds to a file name: it first
+ * writes `<name>-<uuid>` as a temporary file, then renames it.
+ */
+const FILESYSTEM_TEMP_SUFFIX_BYTES = 37;
+
+/**
+ * Upper bound, in UTF-8 bytes, of a file name the backend composes for DIAL
+ * Core to store (such as `{deploymentKey}__{title}__{uuid}`). Linux file
+ * systems cap one path segment at 255 bytes, and DIAL Core's default
+ * `filesystem` storage provider needs 37 of them for its temporary file, so a
+ * longer name fails with "Filename too long" when Core syncs the resource.
+ */
+export const DIAL_STORED_FILE_NAME_MAX_BYTES =
+  DIAL_ENTITY_NAME_MAX_BYTES - FILESYSTEM_TEMP_SUFFIX_BYTES;
+
 /** Names DIAL Core reserves for its own markers and segments. */
 const RESERVED_NAMES = new Set([
   '.',
@@ -74,10 +90,11 @@ export const isValidDialEntityName = (value: unknown): value is string => {
  * (the path is decoded before it is re-encoded), control and bidi characters.
  */
 /**
- * Upper bound of one stored path segment, in UTF-8 bytes. A conversation
- * file name wraps a title of up to `DIAL_ENTITY_NAME_MAX_BYTES` in its
- * deployment id and a UUID, so the entity-name bound would reject the name
- * of any chat started with a long message.
+ * Upper bound of one stored path segment, in UTF-8 bytes. New conversation
+ * file names fit `DIAL_STORED_FILE_NAME_MAX_BYTES`, but older ones wrap a
+ * title of up to `DIAL_ENTITY_NAME_MAX_BYTES` in the deployment id and a
+ * UUID, and a chat stored on a provider without the file-system limit must
+ * stay readable.
  */
 export const DIAL_PATH_SEGMENT_MAX_BYTES = 1024;
 

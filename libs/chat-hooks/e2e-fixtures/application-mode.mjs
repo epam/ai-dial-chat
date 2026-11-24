@@ -64,7 +64,7 @@ function Conversation() {
       mount('publication', mod.PublishPanel, {
         resource:{title:'Fixture publication'},history:[],folderItems:[],selectedFolderPath:[],
         onSelectedFolderPathChange:noop,onCreateFolder:async()=>{},hasExistingPublicationInFolder:false,
-        hasWriteAccess:true,isSubmitting:false,rules:[],onRulesChange:noop,ruleSourceOptions:[]
+        hasWriteAccess:true,isSubmitting:false
       });
     });
     globalThis.__openFileManagerFeature = () => Promise.all([loadStyles(),import('@epam/ai-dial-ui-kit/styles.css'),import('@epam/ai-dial-react-file-manager/styles.css'),import('@epam/ai-dial-chat-shared/file-manager')]).then(([, , , mod]) => {

@@ -1,8 +1,11 @@
 import type { LottieLayer, LottieProperty } from '../models/lottie-composition';
+import type { LottieTimeRemapSegment } from '../models/lottie-time-remap';
 import type {
   CopyFallOptions,
+  CopyPathOptions,
   CopyTrack,
   CopyTrackOptions,
+  CopyTravelOptions,
 } from '../models/lottie-track-keyframes';
 
 /** Screen-space gravity of a falling copy, in px/s², as in the compiled Cat. */
@@ -73,16 +76,8 @@ const toKeyframe = (
   easing,
 });
 
-const readSamples = (
-  layer: LottieLayer,
-  {
-    toCompositionMs,
-    releaseFrame,
-    fromFrame = 0,
-    mirror,
-    scale,
-  }: CopyTrackOptions,
-): CopySample[] => {
+/* The position, rotation and opacity tracks of a copy layer, which must share keyframe times and easing. */
+const sharedKeyframes = (layer: LottieLayer) => {
   const position = layer.ks?.p;
   const rotation = layer.ks?.r;
   const opacity = layer.ks?.o;
@@ -102,6 +97,20 @@ const readSamples = (
       )
     )
       malformed(`"${layer.nm}" tracks do not share keyframe times and easing`);
+  return { position, rotation, opacity, reference };
+};
+
+const readSamples = (
+  layer: LottieLayer,
+  {
+    toCompositionMs,
+    releaseFrame,
+    fromFrame = 0,
+    mirror,
+    scale,
+  }: CopyTrackOptions,
+): CopySample[] => {
+  const { position, rotation, opacity, reference } = sharedKeyframes(layer);
   if (!reference.some(({ t }) => t === releaseFrame))
     malformed(`"${layer.nm}" has no keyframe at the release`);
   const positions = keyframesOf(position);
@@ -216,4 +225,129 @@ export const appendCopyFall = (
     ...keyframes,
     ...samples.map((entry) => toKeyframe(entry, durationMs)),
   ];
+};
+
+/* Local frames are compared with this tolerance, since remap pieces come from seconds. */
+const FRAME_EPSILON = 1e-6;
+
+const isStep = (
+  segment: LottieTimeRemapSegment,
+  next: LottieTimeRemapSegment | undefined,
+) =>
+  next !== undefined &&
+  Math.abs(next.localFrom - segment.localTo) > FRAME_EPSILON;
+
+/**
+ * Returns the copy's WAAPI keyframes for the whole section path: every authored
+ * keyframe once per remap piece that shows it, in composition time, as a
+ * translation from `origin` plus rotation and opacity. A piece that starts or
+ * ends at a step must have a keyframe there.
+ */
+export const copyPathKeyframes = (
+  layer: LottieLayer,
+  {
+    durationMs,
+    frameRate,
+    segments,
+    origin,
+    scale,
+    mirror = 1,
+  }: CopyPathOptions,
+): Keyframe[] => {
+  const { position, rotation, opacity, reference } = sharedKeyframes(layer);
+  const positions = keyframesOf(position);
+  if (!positions) malformed(`"${layer.nm}" has no position keyframes`);
+  const hasKeyAt = (frame: number) =>
+    reference.some(({ t }) => Math.abs(t - frame) <= FRAME_EPSILON);
+  const samples: CopySample[] = [];
+  let lastLocal: number | undefined;
+  let lastMs: number | undefined;
+  segments.forEach((segment, index) => {
+    const previous = segments[index - 1];
+    const next = segments[index + 1];
+    if (previous && isStep(previous, segment) && !hasKeyAt(segment.localFrom))
+      malformed(
+        `"${layer.nm}" has no keyframe at local frame ${segment.localFrom}`,
+      );
+    if (isStep(segment, next) && !hasKeyAt(segment.localTo))
+      malformed(
+        `"${layer.nm}" has no keyframe at local frame ${segment.localTo}`,
+      );
+    const rate =
+      (segment.to - segment.from) / (segment.localTo - segment.localFrom);
+    reference.forEach((keyframe, keyIndex) => {
+      if (
+        keyframe.t < segment.localFrom - FRAME_EPSILON ||
+        keyframe.t > segment.localTo + FRAME_EPSILON
+      )
+        return;
+      const ms =
+        ((segment.from + (keyframe.t - segment.localFrom) * rate) / frameRate) *
+        1000;
+      /* A continuous join shows the same keyframe at the same time twice. */
+      if (
+        lastLocal !== undefined &&
+        lastMs !== undefined &&
+        Math.abs(lastLocal - keyframe.t) <= FRAME_EPSILON &&
+        Math.abs(lastMs - ms) <= 1e-3
+      )
+        return;
+      const [x, y] = positions[keyIndex].s;
+      samples.push({
+        ms,
+        x: (x - origin.x) * scale * mirror,
+        y: (y - origin.y) * scale,
+        rotation:
+          (keyframesOf(rotation)?.[keyIndex].s[0] ?? staticValue(rotation, 0)) *
+          mirror,
+        opacity:
+          (keyframesOf(opacity)?.[keyIndex].s[0] ?? staticValue(opacity, 100)) /
+          100,
+        easing: easingOf(keyframe),
+      });
+      lastLocal = keyframe.t;
+      lastMs = ms;
+    });
+  });
+  if (!samples.length) malformed(`"${layer.nm}" has no keyframe in the story`);
+  return withEnds(samples, durationMs).map((sample) =>
+    toKeyframe(sample, durationMs),
+  );
+};
+
+/* Holds the first sample from offset 0 and the last to offset 1, so WAAPI never
+   makes up an end keyframe from the element's underlying value. */
+const withEnds = <T extends { ms: number }>(
+  samples: readonly T[],
+  durationMs: number,
+): T[] => {
+  const head = samples[0];
+  const tail = samples[samples.length - 1];
+  return [
+    ...(head.ms > 0 ? [{ ...head, ms: 0 }] : []),
+    ...samples,
+    ...(tail.ms < durationMs ? [{ ...tail, ms: durationMs }] : []),
+  ];
+};
+
+/** Returns the WAAPI keyframes of a travel null, in composition time, as a translation from `origin`. */
+export const copyTravelKeyframes = (
+  layer: LottieLayer,
+  { durationMs, frameRate, origin, scale, mirror = 1 }: CopyTravelOptions,
+): Keyframe[] => {
+  const positions = keyframesOf(layer.ks?.p);
+  if (!positions?.length) malformed(`"${layer.nm}" has no position keyframes`);
+  const samples = positions.map((keyframe) => ({
+    ms: (keyframe.t / frameRate) * 1000,
+    x: (keyframe.s[0] - origin.x) * scale * mirror,
+    y: (keyframe.s[1] - origin.y) * scale,
+    rotation: 0,
+    opacity: 1,
+    easing: easingOf(keyframe),
+  }));
+  return withEnds(samples, durationMs).map(({ ms, x, y, easing }) => ({
+    offset: Math.min(1, Math.max(0, ms / durationMs)),
+    transform: `translate(${format(x)}px, ${format(y)}px)`,
+    easing,
+  }));
 };

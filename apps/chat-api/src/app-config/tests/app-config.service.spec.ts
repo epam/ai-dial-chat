@@ -270,11 +270,6 @@ describe('AppConfigService', () => {
       expect(result.config.footerHtmlMessage).toBe('');
       expect(result.config.customVisualizers).toEqual([]);
       expect(result.config.applicationVisualizers).toEqual({});
-      expect(result.config.publicationFilterSources).toEqual([
-        'title',
-        'role',
-        'dial_roles',
-      ]);
       expect(result.config.maxAttachmentFileSizeBytes).toBe(536_870_912);
       expect(result.config.usageLimitsWarningThresholdPercent).toBe(75);
       expect(result.config.projectContextFileMaxBytes).toBe(1_048_576);
@@ -360,18 +355,11 @@ describe('AppConfigService', () => {
       expect(result.config.usageLimitsWarningThresholdPercent).toBe(90);
     });
 
-    it('surfaces an operator-configured publicationFilterSources list verbatim', async () => {
-      const { service } = makeService(async (key: string) =>
-        key === 'publish.publicationFilterSources'
-          ? ['roles', 'department']
-          : undefined,
-      );
+    it('no longer returns a publication filter-source list in config', async () => {
+      const { service } = makeService(async () => undefined);
       const result = await service.getClientConfig(ctx);
 
-      expect(result.config.publicationFilterSources).toEqual([
-        'roles',
-        'department',
-      ]);
+      expect(result.config).not.toHaveProperty('publicationFilterSources');
     });
 
     it('surfaces configured additionalContentLocales and defaults them to []', async () => {
@@ -1625,18 +1613,11 @@ describe('AppConfigService', () => {
         null,
         ['all', 'my_files', 'shared', 'organization'],
       ],
-      ['fileManager.availableTabs', 'fileManagerTabs', [1, null], [1, null]],
       [
-        'publish.publicationFilterSources',
-        'publicationFilterSources',
-        'x',
-        ['title', 'role', 'dial_roles'],
-      ],
-      [
-        'publish.publicationFilterSources',
-        'publicationFilterSources',
+        'fileManager.availableTabs',
+        'fileManagerTabs',
         [1, null],
-        [1, null],
+        ['all', 'my_files', 'shared', 'organization'],
       ],
       ['content.additionalLocales', 'additionalContentLocales', 'de', []],
       ['overlay.allowedOrigins', 'overlayAllowedOrigins', {}, []],
@@ -1731,7 +1712,6 @@ describe('AppConfigService', () => {
         'customVisualizers',
         'applicationVisualizers',
         'customVariables',
-        'publicationFilterSources',
         'additionalContentLocales',
         'maxAttachmentFileSizeBytes',
         'usageLimitsWarningThresholdPercent',
@@ -2185,6 +2165,7 @@ describe('AppConfigService', () => {
           WELCOME_SCREEN_DESCRIPTION: 'Welcome',
           FILE_MANAGER_AVAILABLE_TABS: 'shared',
           USAGE_LIMITS_WARNING_THRESHOLD_PERCENT: '80',
+          SPENDING_LIMITS_MODE: 'shadow',
           USAGE_LIMITS_CONTROL_ENABLED: 'true',
           SCHEDULED_TASKS_ENABLED: 'true',
           SCHEDULED_TASKS_ENABLED_ROLES: 'beta',
@@ -2196,7 +2177,6 @@ describe('AppConfigService', () => {
           ORG_UNITS_ENABLED: 'true',
           LIVE_CHAT_INTERACTION_ENABLED: 'true',
           LIVE_CHAT_INTERACTION_ENABLED_ROLES: 'beta',
-          PUBLICATION_FILTER_SOURCES: 'title,role',
           SCHEDULED_TASKS_ENABLED: 'true',
         },
       ],
@@ -2218,7 +2198,7 @@ describe('AppConfigService', () => {
           snapshotResolution(env),
         );
 
-        expect(CONFIG_DEFINITIONS.filter(isManagedKey)).toHaveLength(10);
+        expect(CONFIG_DEFINITIONS.filter(isManagedKey)).toHaveLength(15);
         expect(stripped).toEqual(withMetadata);
       },
     );

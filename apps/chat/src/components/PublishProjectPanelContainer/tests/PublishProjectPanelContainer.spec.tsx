@@ -3,19 +3,15 @@ import {
   PublishTargetTakenError,
 } from '@epam/ai-dial-chat-hooks';
 import { OrgUnitNamespace } from '@epam/ai-dial-chat-shared';
-import type { PublicationRule } from '@epam/ai-dial-publish-panel';
-import { PublicationRuleFunction } from '@epam/ai-dial-publish-panel';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProjectsI18nKeys } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
-import { useAppConfig as useAppConfigMock } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { useOrgUnitFolderGuards } from '../../../hooks/publish/useOrgUnitFolderGuards';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
-import { getPublishRules } from '../../../server-api/publish-rules.api';
 import {
   getCatalogPublishDependencies,
   getCatalogPublishHistory,
@@ -23,12 +19,6 @@ import {
   publishCatalogEntity,
 } from '../../../server-api/publish.api';
 import PublishProjectPanelContainer from '../PublishProjectPanelContainer';
-
-const mockRule: PublicationRule = {
-  source: 'role',
-  function: PublicationRuleFunction.Contain,
-  targets: ['engineering'],
-};
 
 const reasonProp = vi.fn();
 
@@ -44,8 +34,6 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       hasExistingPublicationInFolder,
       isTargetTaken,
       isTargetChecking,
-      rules,
-      onRulesChange,
       onSelectedFolderPathChange,
       onAuthorChange,
       onSubmit,
@@ -67,8 +55,6 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       hasExistingPublicationInFolder: boolean;
       isTargetTaken?: boolean;
       isTargetChecking?: boolean;
-      rules: PublicationRule[];
-      onRulesChange: (rules: PublicationRule[]) => void;
       onSelectedFolderPathChange: (path: string[] | undefined) => void;
       onAuthorChange: (author: string) => void;
       onSubmit: () => void;
@@ -91,9 +77,6 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
         <span>targetChecking:{String(isTargetChecking)}</span>
         <button onClick={() => onSelectedFolderPathChange(['Marketing'])}>
           Select Marketing
-        </button>
-        <button onClick={() => onRulesChange([...rules, mockRule])}>
-          Add mock rule
         </button>
         <button onClick={() => onAuthorChange('  ')}>Clear author</button>
         <button onClick={onSubmit}>Publish</button>
@@ -118,7 +101,6 @@ vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
   getCatalogPublishHistory: vi.fn(),
   getCatalogPublishDependencies: vi.fn(),
 }));
-vi.mock('../../../server-api/publish-rules.api');
 vi.mock('../../../context/NotificationContext');
 
 const mockShowPublishError = vi.fn();
@@ -177,10 +159,6 @@ describe('PublishProjectPanelContainer', () => {
     vi.mocked(useNotification).mockReturnValue(
       createNotificationContextValue(mockShowNotification),
     );
-    useAppConfigMock.mockReturnValue({
-      config: { publicationFilterSources: ['role'] },
-    });
-    vi.mocked(getPublishRules).mockResolvedValue([]);
     vi.mocked(getCatalogPublishHistory).mockResolvedValue([]);
   });
 
@@ -299,9 +277,6 @@ describe('PublishProjectPanelContainer', () => {
     await userEvent.click(
       screen.getByRole('button', { name: 'Select Marketing' }),
     );
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Add mock rule' }),
-    );
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
 
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
@@ -311,13 +286,10 @@ describe('PublishProjectPanelContainer', () => {
       {
         folderPath: 'Marketing',
         author: 'Jane Doe',
-        rules: [
-          expect.objectContaining({
-            source: 'role',
-            targets: ['engineering'],
-          }),
-        ],
       },
+    );
+    expect(vi.mocked(publishCatalogEntity).mock.calls[0][2]).not.toHaveProperty(
+      'rules',
     );
     expect(mockRememberPublishFolder).toHaveBeenCalledWith(['Marketing']);
     expect(mockShowNotification).toHaveBeenCalled();

@@ -6,7 +6,7 @@ import {
   type PublishHistoryEntryDto,
 } from '@epam/ai-dial-chat-api-client';
 import { triggerBrowserDownload } from '@epam/ai-dial-chat-hooks/utils';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -277,6 +277,27 @@ describe('ProjectViewPage', () => {
     renderAt();
 
     expect(await screen.findByText(ProjectsI18nKeys.ViewNotFound)).toBeTruthy();
+  });
+
+  it('explains lost access to a shared project and offers only the way back', async () => {
+    vi.mocked(getProject).mockRejectedValue(
+      new ResponseError(new Response(null, { status: 403 })),
+    );
+    const { router } = renderAt();
+
+    expect(
+      (await screen.findAllByText(ProjectsI18nKeys.ViewAccessDenied)).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByText(ProjectsI18nKeys.ViewAccessDeniedDescription),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: ButtonsI18nKeys.Retry }),
+    ).toBeNull();
+    await userEvent.click(
+      screen.getByRole('button', { name: ProjectsI18nKeys.ViewBrowseProjects }),
+    );
+    expect(router.state.location.pathname).toBe('/projects');
   });
 
   it('opens a shared project read-only: Pin and Download only', async () => {
@@ -1233,6 +1254,83 @@ describe('ProjectViewPage', () => {
           message: ProjectsI18nKeys.ViewDeletedElsewhere,
         }),
       );
+    });
+
+    it('announces lost access found by a refresh, unpins the project and returns to the list', async () => {
+      const { watch, router } = await renderWatched();
+      vi.mocked(getProject).mockRejectedValue(
+        new ResponseError(new Response(null, { status: 403 })),
+      );
+
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 1,
+        etag: '"e2"',
+      });
+
+      await waitFor(() =>
+        expect(router.state.location.pathname).toBe('/projects'),
+      );
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: ProjectsI18nKeys.ViewAccessDenied,
+        }),
+      );
+      expect(userConfig.replacePinnedProjectId).toHaveBeenCalledWith(
+        PROJECT_ID,
+        null,
+      );
+    });
+
+    it('shows one toast when a delete event and lost access arrive together', async () => {
+      const { watch, router } = await renderWatched();
+      let rejectRefresh!: (reason: unknown) => void;
+      vi.mocked(getProject).mockReturnValue(
+        new Promise((_, reject) => {
+          rejectRefresh = reject;
+        }),
+      );
+
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 1,
+        etag: '"e2"',
+      });
+      await waitFor(() => expect(getProject).toHaveBeenCalledTimes(2));
+      watch.send({ id: PROJECT_ID, action: 'DELETE', timestamp: 2 });
+      await waitFor(() =>
+        expect(router.state.location.pathname).toBe('/projects'),
+      );
+      rejectRefresh(new ResponseError(new Response(null, { status: 403 })));
+      await act(async () => undefined);
+
+      expect(showNotificationMock).toHaveBeenCalledOnce();
+    });
+
+    it('keeps the page and shows no toast when a refresh fails for another reason', async () => {
+      const { watch, router } = await renderWatched();
+      vi.mocked(getProject).mockRejectedValue(
+        new ResponseError(new Response(null, { status: 503 })),
+      );
+
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 1,
+        etag: '"e2"',
+      });
+      await waitFor(() => expect(getProject).toHaveBeenCalledTimes(2));
+      await act(async () => undefined);
+
+      expect(router.state.location.pathname).toBe(
+        '/projects/view/a1b2c3/marketing/q4',
+      );
+      expect(showNotificationMock).not.toHaveBeenCalled();
+      expect(
+        screen.getByRole('heading', { level: 1, name: 'q4' }),
+      ).toBeTruthy();
     });
 
     it('does not refresh on events while a chat is being created', async () => {
