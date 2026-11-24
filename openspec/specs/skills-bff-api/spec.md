@@ -353,7 +353,9 @@ A DIAL Core `412 Precondition Failed` response (the supplied `If-Match` no longe
 - **THEN** DIAL Core returns `412 Precondition Failed` and the system returns `412 Precondition Failed` unchanged
 
 ### Requirement: Whole-skill write limits match DIAL Core's real defaults
-The system SHALL enforce, before calling DIAL Core, the same limits DIAL Core itself enforces (`ComplexResourceService.Settings`, verified in source): at most 100 files total (manifest included), at most 1 MiB per file, at most 16 MiB total content across all files — using the same status codes Core itself uses for these cases (`400` for file-count exceeded, `413` for any per-file or total-size limit exceeded), configurable via validated `EnvironmentVariables` fields with these exact defaults.
+Before calling DIAL Core, chat-api SHALL enforce its configured upload limits. The defaults match Core: `SKILL_UPLOAD_MAX_FILES` is 100 files total (manifest included), `SKILL_FILE_UPLOAD_MAX_BYTES` is 1 MiB per file, and `SKILL_UPLOAD_MAX_TOTAL_BYTES` is 16 MiB across all files. Exceeding the count returns `400`; exceeding a byte limit returns `413`.
+
+Core enforces its own count limit. Its general setting is `aidial.complexResource.maxFiles`; a configured `aidial.complexResource.types.skills.maxFiles` takes precedence for skills. Operators configure the two services independently.
 
 The system SHALL NOT rely on the previous `SKILL_UPLOAD_MAX_BYTES` (a compressed-ZIP-ingress Multer limit) for any of these checks — it has no remaining meaning once no ZIP is ever uploaded, and is retired.
 

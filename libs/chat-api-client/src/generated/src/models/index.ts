@@ -1915,6 +1915,12 @@ export interface ClientConfigDto {
    */
   aiTextRefinementAvailable?: boolean;
   /**
+   * Maximum files per skill, including the root SKILL.md.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  skillUploadMaxFiles?: number;
+  /**
    * Active start-page celebration module ID selected by UI_EVENT. Null when UI_EVENT is absent or none. Event IDs are open-ended; clients ignore IDs not present in their local registry.
    * @type {string}
    * @memberof ClientConfigDto

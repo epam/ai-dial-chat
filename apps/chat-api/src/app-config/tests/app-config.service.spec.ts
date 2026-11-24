@@ -96,6 +96,15 @@ describe('AppConfigService', () => {
       ).toEqual(origins);
     });
 
+    it('exposes the validated skill file count limit', async () => {
+      const { service } = buildResolutionStack({
+        SKILL_UPLOAD_MAX_FILES: '500',
+      });
+      expect(
+        (await service.getClientConfig(ctx)).config.skillUploadMaxFiles,
+      ).toBe(500);
+    });
+
     describe('aiTextRefinementAvailable', () => {
       /* ConfigService resolves process.env before its constructor config, so
        * a shell (or local env file) carrying UTILITY_MODEL — set to run the
@@ -1721,6 +1730,7 @@ describe('AppConfigService', () => {
         'projectContextFileMaxBytes',
         'projectContextTotalMaxBytes',
         'projectContextAllowedExtensions',
+        'skillUploadMaxFiles',
         'catalogCreationPermissions',
         'modelCatalogAvailable',
       ]);

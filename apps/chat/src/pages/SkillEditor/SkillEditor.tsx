@@ -66,6 +66,7 @@ import {
   EditorI18nKeys,
   SkillEditorI18nKeys,
 } from '../../constants/translation-keys';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useSkills } from '../../context/SkillsContext';
@@ -141,6 +142,7 @@ const SkillEditorPage: FC = () => {
     TextRefinementPurpose.SkillInstructions,
   );
   const refinementLabels = useTextRefinementLabels();
+  const { config } = useAppConfig();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useUser();
@@ -328,6 +330,7 @@ const SkillEditorPage: FC = () => {
     resolveManifestImport,
     contentRevisions,
   } = useSkillFileActions({
+    maxFiles: config.skillUploadMaxFiles,
     files,
     setFiles,
     filesContentRef,

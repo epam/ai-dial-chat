@@ -6087,6 +6087,7 @@ const {
   resolveManifestImport,
   contentRevisions,
 } = useSkillFileActions({
+  maxFiles: config.skillUploadMaxFiles,
   files,
   setFiles,
   filesContentRef,
@@ -6212,6 +6213,8 @@ if (error === SkillPreviewErrorKind.Forbidden) {
 
 Validates a staged skill-file upload batch against per-file/limit and path-safety rules, in-batch and against-existing duplicates, and projected total size/count — mirroring the BFF's authoritative limits for immediate feedback; the server remains the final gate. Detects at most one root `SKILL.md` in the batch as a manifest-import candidate.
 
+Pass the optional `maxFiles` to check the total count, including the root manifest. When omitted, the server enforces the count on save.
+
 A candidate with `replacesExisting: true` whose path is in `existingPaths` is a confirmed overwrite, not a duplicate: it is counted once toward the file limit, and the optional `existingFileBytes` (bytes per existing path) lets the projected size drop the replaced file's share. Two candidates at the same path are still both duplicates. A candidate at a path in the optional `existingFolderPaths` is always a duplicate — a file never replaces a folder.
 
 ```ts
@@ -6219,6 +6222,7 @@ import { validateSkillFileBatch } from '@epam/ai-dial-chat-hooks';
 
 const { results, batchErrors, manifestCandidate } =
   await validateSkillFileBatch(candidates, {
+    maxFiles: config.skillUploadMaxFiles,
     existingPaths: ['agents/analyzer.md'],
     existingTotalBytes: 2048,
     existingFileBytes: new Map([['agents/analyzer.md', 2048]]),

@@ -32,14 +32,6 @@ export const SKILL_FILE_UPLOAD_MAX_BYTES = 1_048_576;
 export const SKILL_UPLOAD_MAX_TOTAL_BYTES = 16_777_216;
 
 /**
- * Client-side mirror of the backend's default `SKILL_UPLOAD_MAX_FILES`
- * (`apps/chat-api/src/config/environment.config.ts`), used only for
- * immediate inline feedback on the projected total file count (including the
- * root `SKILL.md`) — the server remains authoritative regardless.
- */
-export const SKILL_UPLOAD_MAX_FILES = 100;
-
-/**
  * Zero-byte object written at `<folder>/.dial_folder` so an otherwise empty
  * skill folder survives a save — DIAL Core storage has no directory objects,
  * so a folder only exists as a file's path prefix.

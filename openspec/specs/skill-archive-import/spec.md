@@ -171,7 +171,7 @@ An entry the ZIP reader itself refuses — while enumerating the central directo
 
 ### Requirement: Decompressed-content limits are enforced incrementally, not from ZIP metadata
 
-The system SHALL enforce the existing Skill content limits — maximum 100 files including `SKILL.md`, maximum 1 MiB per file, maximum 16 MiB total uncompressed content — against bytes actually produced while decompressing each entry, aborting the read as soon as a limit is exceeded. The system SHALL NOT rely on a ZIP entry's declared uncompressed-size metadata alone to make this determination.
+The system SHALL enforce the existing Skill content limits — up to `SKILL_UPLOAD_MAX_FILES` files including `SKILL.md` (100 by default), maximum 1 MiB per file, maximum 16 MiB total uncompressed content — against bytes actually produced while decompressing each entry, aborting the read as soon as a limit is exceeded. The system SHALL NOT rely on a ZIP entry's declared uncompressed-size metadata alone to make this determination.
 
 The system SHALL additionally enforce a separate, configurable compressed-ingress limit (`SKILL_ARCHIVE_UPLOAD_MAX_BYTES`) on the archive file as received, before extraction begins.
 
@@ -180,7 +180,7 @@ The system SHALL additionally enforce a separate, configurable compressed-ingres
 - **THEN** the response is `413 Payload Too Large` and no extraction is attempted
 
 #### Scenario: A file count above the limit is rejected
-- **WHEN** an archive's normalized file set (including `SKILL.md`) exceeds 100 files
+- **WHEN** an archive's normalized file set (including `SKILL.md`) exceeds the configured `SKILL_UPLOAD_MAX_FILES`
 - **THEN** the response is `400 Bad Request`
 
 #### Scenario: A single oversized file is rejected during decompression

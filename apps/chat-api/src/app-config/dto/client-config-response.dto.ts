@@ -27,6 +27,14 @@ export class ClientConfigDto {
   })
   aiTextRefinementAvailable?: boolean;
 
+  @ApiPropertyOptional({
+    type: Number,
+    minimum: 1,
+    description: 'Maximum files per skill, including the root SKILL.md.',
+    example: 100,
+  })
+  skillUploadMaxFiles?: number;
+
   @ApiProperty({
     description:
       'Active start-page celebration module ID selected by UI_EVENT. Null when UI_EVENT is absent or none. Event IDs are open-ended; clients ignore IDs not present in their local registry.',

@@ -6,7 +6,6 @@ import {
 import { describe, expect, it } from 'vitest';
 import {
   SKILL_FILE_UPLOAD_MAX_BYTES,
-  SKILL_UPLOAD_MAX_FILES,
   SKILL_UPLOAD_MAX_TOTAL_BYTES,
 } from '../skill';
 import {
@@ -39,6 +38,7 @@ const buildCandidate = (
 });
 
 const baseContext = {
+  maxFiles: 500,
   existingPaths: [] as string[],
   existingTotalBytes: 0,
   manifestByteLength: 100,
@@ -145,7 +145,7 @@ describe('validateSkillFileBatch', () => {
 
   it('frees the bytes and count of a replaced file from the projected totals', async () => {
     const existingPaths = Array.from(
-      { length: SKILL_UPLOAD_MAX_FILES - 1 },
+      { length: baseContext.maxFiles - 1 },
       (_, index) => `file-${index}.md`,
     );
     const candidate = {
@@ -175,7 +175,7 @@ describe('validateSkillFileBatch', () => {
   it('rejects the whole batch when projected total file count exceeds the limit', async () => {
     const candidate = buildCandidate('extra.md');
     const existingPaths = Array.from(
-      { length: SKILL_UPLOAD_MAX_FILES - 1 },
+      { length: baseContext.maxFiles - 1 },
       (_, i) => `file-${i}.md`,
     );
     const { batchErrors } = await validateSkillFileBatch([candidate], {
