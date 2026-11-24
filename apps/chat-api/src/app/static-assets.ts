@@ -1,4 +1,4 @@
-import { randomBytes } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { join, posix, relative, sep } from 'path';
@@ -23,6 +23,24 @@ const PDF_WORKER_PATH = /^\/assets\/pdf\.worker\.min-[\w-]+\.mjs$/;
 export const HASHED_ASSET_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
 type PathExists = (path: string) => boolean;
+
+const INLINE_SCRIPT = /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi;
+
+/**
+ * Returns a CSP hash source (`sha256-<base64>`) for every inline script in
+ * `html`, so the app-shell policy allows exactly those scripts and no other
+ * inline code. The build inlines the theme-paint script into the head
+ * (`tools/vite/inline-public-script.mjs`) to spare first paint a blocking
+ * request. The browser hashes the text between the tags as is, so the nonce
+ * placeholder in the tag's attributes does not change the hash.
+ */
+export const collectInlineScriptHashes = (html: string): string[] =>
+  [...html.matchAll(INLINE_SCRIPT)]
+    .filter(([, attributes, body]) => !/\bsrc\s*=/i.test(attributes) && body)
+    .map(
+      ([, , body]) =>
+        `sha256-${createHash('sha256').update(body, 'utf8').digest('base64')}`,
+    );
 
 interface FrontendMiddlewareOptions {
   frontendRootPath?: string;
@@ -128,6 +146,9 @@ export const createFrontendMiddleware = async ({
       );
     }
 
+    const scriptHashes =
+      template == null ? [] : collectInlineScriptHashes(template);
+
     const serveHtml: RequestHandler = (req, res, next) => {
       if (template == null) {
         next();
@@ -136,7 +157,7 @@ export const createFrontendMiddleware = async ({
       const nonce = randomBytes(32).toString('base64');
       const monitoring = cspMode === CspMode.ReportOnly;
       if (monitoring) {
-        policy({ allowWasm, allowInlineStyles: true })(
+        policy({ allowWasm, allowInlineStyles: true, scriptHashes })(
           req,
           res,
           () => undefined,
@@ -144,6 +165,7 @@ export const createFrontendMiddleware = async ({
       }
       policy({
         nonce,
+        scriptHashes,
         allowWasm,
         allowStyleAttributes,
         reportOnly: monitoring,

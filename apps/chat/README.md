@@ -163,7 +163,13 @@ Three things keep them off the first paint:
   every other module of that barrel.
 - `vite.config.mts` gives `ag-grid-*` and `@epam/ai-dial-react-file-manager`
   their own chunk groups (`build.rolldownOptions.output.codeSplitting`), so
-  small shared modules are never co-located with them.
+  small shared modules are never co-located with them. Everything else the
+  entry imports statically (the `$initial` tag) goes into two chunks,
+  `vendor` (third-party JS) and `app-shell` (app and lib modules plus every
+  stylesheet the entry imports), so a cold load fetches a handful of files and
+  one stylesheet instead of ~150 module preloads and a dozen render-blocking
+  stylesheets. That stylesheet keeps the dev server's cascade order: Inter,
+  kit, file manager, CSS Modules, Tailwind, `styles.scss`.
 - Inter is self-hosted through `@fontsource-variable/inter`, imported in
   `main.tsx`; the page loads no third-party stylesheet. `index.html` preloads
   the Latin subset, which every page draws, so the font request starts with the
