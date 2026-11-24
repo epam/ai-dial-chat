@@ -17,14 +17,10 @@ import {
 import { useUser } from '../../context/auth/UserContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useSkills } from '../../context/SkillsContext';
+import SkillDetailsPanelGate from './SkillDetailsPanelGate';
 
 const CatalogView = lazy(async () => {
   const module = await import('../CatalogView/CatalogView');
-  return { default: module.default };
-});
-
-const SkillDetailsPanelContainer = lazy(async () => {
-  const module = await import('./SkillDetailsPanelContainer');
   return { default: module.default };
 });
 
@@ -119,6 +115,6 @@ export const useSkillSelectorOverlay = ({
     activeMentionDetailsTrigger: ChatSkillDetailsTrigger.Click,
     isRowTooltipHidden: true,
     renderCatalogContent,
-    detailsPanelComponent: SkillDetailsPanelContainer,
+    detailsPanelComponent: SkillDetailsPanelGate,
   });
 };
