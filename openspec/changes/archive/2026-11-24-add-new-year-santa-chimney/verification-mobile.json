@@ -1,0 +1,27 @@
+{
+  "giftDoesNotLoadSanta": true,
+  "phraseLoadsSanta": true,
+  "scene": {
+    "svgs": 0,
+    "images": 1,
+    "copies": 0,
+    "toast": true
+  },
+  "santaRequests": [
+    {
+      "path": "/api/v1/celebrations/assets/santa-history-full-mobile-e44dde821ea6b972",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v1/celebrations/assets/santa-history-poster-dbf68dbaca2e2cac",
+      "method": "GET"
+    }
+  ],
+  "sent": [],
+  "cleanup": {
+    "copies": 0,
+    "svg": 0,
+    "hiddenRows": 0
+  },
+  "errors": []
+}

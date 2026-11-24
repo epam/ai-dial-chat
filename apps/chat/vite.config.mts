@@ -33,6 +33,7 @@ export default defineConfig(() => ({
     trustedStyleNoncePlugin(),
     // Inlines the synchronous theme-paint script into the `index.html` head; see the plugin's doc.
     inlinePublicScriptPlugin('theme-init.js'),
+    inlinePublicScriptPlugin('boot-prefetch.js'),
     tailwindcss(),
     react(),
     svgr(),

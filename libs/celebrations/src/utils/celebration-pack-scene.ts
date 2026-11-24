@@ -10,6 +10,7 @@ import type {
 } from '../models/celebration-pack';
 import type { ComposerCarryPreparation } from '../models/composer-carry';
 import type { CopyTrackPreparation } from '../models/copy-track-preparation';
+import type { HistoryLadderPreparation } from '../models/history-ladder';
 import {
   CelebrationCapability,
   CelebrationDirectionMode,
@@ -35,6 +36,8 @@ export interface PackScenePreparation {
   aspectRatio: number;
   /** How an anchored stage maps onto the viewport; absent for a viewport stage. */
   anchor?: ComposerAnchorMapping;
+  /** Whether a generic interaction has mapped native units directly onto the viewport. */
+  isViewportMapped?: boolean;
   /** The payload of the adapter that prepared the scene; each adapter reads only its own kind. */
   companion?: PackSceneCompanion;
 }
@@ -43,7 +46,8 @@ export interface PackScenePreparation {
 export type PackSceneCompanion =
   | ({ kind: PackSceneCompanionKind.CatBorrow } & CatBorrowPreparation)
   | ({ kind: PackSceneCompanionKind.CopyTrack } & CopyTrackPreparation)
-  | ({ kind: PackSceneCompanionKind.ComposerCarry } & ComposerCarryPreparation);
+  | ({ kind: PackSceneCompanionKind.ComposerCarry } & ComposerCarryPreparation)
+  | ({ kind: PackSceneCompanionKind.HistoryLadder } & HistoryLadderPreparation);
 
 /** Whether the scene asks for the `interaction-cat-borrow-v1` adapter. */
 export const requiresCatBorrow = (scene: CelebrationSceneDescriptor): boolean =>
@@ -65,6 +69,14 @@ export const requiresComposerCarry = (
     CelebrationCapability.InteractionComposerCarryV1,
   );
 
+/** Whether the scene requires six measured history stations and one copy. */
+export const requiresHistoryLadder = (
+  scene: CelebrationSceneDescriptor,
+): boolean =>
+  scene.requiredCapabilities.includes(
+    CelebrationCapability.InteractionHistoryLadderV1,
+  );
+
 /** Whether this release can play the scene's renderer, capabilities and placement. */
 export const isCelebrationSceneSupported = (
   scene: CelebrationSceneDescriptor,
@@ -77,13 +89,25 @@ export const isCelebrationSceneSupported = (
   const isCatBorrow = requiresCatBorrow(scene);
   const isCopyTrack = requiresCopyTrack(scene);
   const isComposerCarry = requiresComposerCarry(scene);
+  const isHistoryLadder = requiresHistoryLadder(scene);
   return (
     scene.renderer === CelebrationCapability.LottieLightSvgV1 &&
     (isAnchored || template === CelebrationPlacementTemplate.ViewportStageV1) &&
-    (isAnchored || interactions.length === 0) &&
+    (isAnchored || interactions.length === 0 || isHistoryLadder) &&
     interactions.length <= 1 &&
     (!(isCatBorrow || isCopyTrack || isComposerCarry) ||
       scene.direction === CelebrationDirectionMode.None) &&
+    (!isHistoryLadder ||
+      (!isAnchored &&
+        scene.direction === CelebrationDirectionMode.None &&
+        scene.requiredCapabilities.includes(
+          CelebrationCapability.ViewportStageV1,
+        ) &&
+        scene.variants.every(
+          (variant) =>
+            (variant.placement ?? scene.placement).template ===
+            CelebrationPlacementTemplate.ViewportStageV1,
+        ))) &&
     scene.requiredCapabilities.every((capability) =>
       SUPPORTED_CELEBRATION_CAPABILITIES.has(capability),
     )

@@ -1,6 +1,7 @@
 import type { CelebrationAnchors } from '../models/celebration';
 import type {
   CelebrationComposerAnchorPlacement,
+  CelebrationPlacementDescriptor,
   CelebrationSceneDescriptor,
   CelebrationTextDirection,
 } from '../models/celebration-pack';
@@ -20,6 +21,7 @@ import {
   requiresComposerCarry,
   requiresComposerOutline,
   requiresCopyTrack,
+  requiresHistoryLadder,
   type PackScenePreparation,
 } from './celebration-pack-scene';
 import {
@@ -33,6 +35,11 @@ import {
   onCopyTrackPlaybackStarted,
   prepareCopyTrackScene,
 } from './copy-track-adapter';
+import {
+  onHistoryLadderAnimationCreated,
+  onHistoryLadderPlaybackStarted,
+  prepareHistoryLadderScene,
+} from './history-ladder-adapter';
 
 /** Host inputs an anchored adapter prepares against, fixed at activation. */
 export interface PackSceneAdapterEnvironment {
@@ -46,7 +53,7 @@ export interface PackSceneAdapterEnvironment {
   direction: CelebrationTextDirection;
 }
 
-/** How `LottieScene` runs one kind of `composer-anchor-v1` scene. */
+/** How `LottieScene` prepares and runs one explicit interaction contract. */
 export interface PackSceneAdapter {
   /** Anchors whose change ends the scene. */
   watchedAnchors: readonly (keyof CelebrationAnchors)[];
@@ -55,7 +62,7 @@ export interface PackSceneAdapter {
   /** Measures the host and returns a private, mapped copy of the data; throws to show the poster. */
   prepare: (
     data: unknown,
-    placement: CelebrationComposerAnchorPlacement,
+    placement: CelebrationPlacementDescriptor,
     environment: PackSceneAdapterEnvironment,
   ) => PackScenePreparation;
   /** Installs observers once the renderer exists. */
@@ -76,6 +83,14 @@ const hasWebAnimations = () =>
   typeof Element !== 'undefined' &&
   typeof Element.prototype.animate === 'function';
 
+const composerPlacement = (
+  placement: CelebrationPlacementDescriptor,
+): CelebrationComposerAnchorPlacement => {
+  if (placement.template !== CelebrationPlacementTemplate.ComposerAnchorV1)
+    throw new TypeError('This interaction requires composer placement');
+  return placement;
+};
+
 const watchAnchor = ({
   preparation,
   host,
@@ -95,7 +110,7 @@ const anchoredAdapter = (withOutline: boolean): PackSceneAdapter => ({
   prepare: (data, placement, { anchors, isMirrored }) =>
     prepareAnchoredSceneData(
       data,
-      placement,
+      composerPlacement(placement),
       anchors.composer,
       isMirrored,
       withOutline,
@@ -108,7 +123,7 @@ const CAT_BORROW_ADAPTER: PackSceneAdapter = {
   watchedAnchors: ['composer', 'starterList', 'welcomeRegion'],
   isAvailable: () => hasObservers() && hasWebAnimations(),
   prepare: (data, placement, { anchors }) =>
-    prepareCatBorrowScene(data, placement, anchors),
+    prepareCatBorrowScene(data, composerPlacement(placement), anchors),
   onAnimationCreated: (context) => {
     watchAnchor(context);
     onCatBorrowAnimationCreated(context);
@@ -120,7 +135,11 @@ const COPY_TRACK_ADAPTER: PackSceneAdapter = {
   watchedAnchors: ['composer', 'starterList', 'welcomeRegion'],
   isAvailable: () => hasObservers() && hasWebAnimations(),
   prepare: (data, placement, { anchors, isMobile, direction }) =>
-    prepareCopyTrackScene(data, placement, { anchors, isMobile, direction }),
+    prepareCopyTrackScene(data, composerPlacement(placement), {
+      anchors,
+      isMobile,
+      direction,
+    }),
   onAnimationCreated: (context) => {
     watchAnchor(context);
     onCopyTrackAnimationCreated(context);
@@ -132,7 +151,11 @@ const COMPOSER_CARRY_ADAPTER: PackSceneAdapter = {
   watchedAnchors: ['composer'],
   isAvailable: () => hasObservers() && hasWebAnimations(),
   prepare: (data, placement, { anchors }) =>
-    prepareComposerCarryScene(data, placement, anchors.composer),
+    prepareComposerCarryScene(
+      data,
+      composerPlacement(placement),
+      anchors.composer,
+    ),
   onAnimationCreated: (context) => {
     watchAnchor(context);
     onComposerCarryAnimationCreated(context);
@@ -140,10 +163,27 @@ const COMPOSER_CARRY_ADAPTER: PackSceneAdapter = {
   onPlaybackStarted: onComposerCarryPlaybackStarted,
 };
 
-/** Returns the adapter of a `composer-anchor-v1` scene, or `undefined` for a viewport stage. */
+const HISTORY_LADDER_ADAPTER: PackSceneAdapter = {
+  watchedAnchors: [
+    'historyContainer',
+    'historyRowLink',
+    'composer',
+    'composerAddCluster',
+    'composerModelSelector',
+    'starterList',
+    'welcomeRegion',
+  ],
+  isAvailable: () => hasObservers() && hasWebAnimations(),
+  prepare: prepareHistoryLadderScene,
+  onAnimationCreated: onHistoryLadderAnimationCreated,
+  onPlaybackStarted: onHistoryLadderPlaybackStarted,
+};
+
+/** Returns an explicit interaction adapter, or the ordinary anchored adapter. */
 export const resolvePackSceneAdapter = (
   scene: CelebrationSceneDescriptor,
 ): PackSceneAdapter | undefined => {
+  if (requiresHistoryLadder(scene)) return HISTORY_LADDER_ADAPTER;
   if (
     scene.placement.template !== CelebrationPlacementTemplate.ComposerAnchorV1
   )

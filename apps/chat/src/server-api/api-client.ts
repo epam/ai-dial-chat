@@ -41,6 +41,7 @@ import {
   refreshCsrfToken,
   setCsrfToken,
 } from './base';
+import { createBootPrefetchFetch } from './boot-prefetch';
 
 const csrfMiddleware = createCsrfMiddleware({ getCsrfToken, setCsrfToken });
 
@@ -84,6 +85,7 @@ export const createApiConfiguration = (): Configuration =>
   new Configuration({
     basePath: '',
     credentials: 'include',
+    fetchApi: createBootPrefetchFetch(),
     middleware: [csrfMiddleware, unauthorizedMiddleware, telemetryMiddleware],
   });
 

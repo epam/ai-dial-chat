@@ -46,11 +46,41 @@ const makeSnapshot = (element: HTMLElement, rect: DOMRect): HTMLElement => {
   ];
   const prefix = `celebration-copy-${++snapshotId}-`;
   const ids = new Map<string, string>();
+  const propertyNames = new Map<string, string>();
+  const serializedName = (name: string) => {
+    let serialized = propertyNames.get(name);
+    if (serialized === undefined) {
+      /* CSSOM names may contain unescaped characters in custom identifiers. */
+      serialized = name.replace(
+        /[^\w-]/gu,
+        (character) => `\\${character.codePointAt(0)?.toString(16)} `,
+      );
+      propertyNames.set(name, serialized);
+    }
+    return serialized;
+  };
   originals.forEach((original, index) => {
     const copy = duplicates[index];
     const style = getComputedStyle(original);
-    for (const name of Array.from(style))
-      copy.style.setProperty(name, style.getPropertyValue(name));
+    /* Preserve invalid inline custom properties that computed style omits.
+       Resolved properties keep the former setProperty priority semantics. */
+    const remainingCustom = new Set(
+      Array.from(copy.style).filter((name) => name.startsWith('--')),
+    );
+    let declarations = '';
+    const propertyCount = style.length;
+    for (let property = 0; property < propertyCount; property++) {
+      const name = style[property];
+      remainingCustom.delete(name);
+      declarations += `${serializedName(name)}:${style.getPropertyValue(name)};`;
+    }
+    for (const name of remainingCustom) {
+      const priority = copy.style.getPropertyPriority(name);
+      declarations += `${serializedName(name)}:${copy.style.getPropertyValue(name)}${priority ? ' !important' : ''};`;
+    }
+    /* One parse/write per node avoids repeatedly expanding a large inline
+       declaration block for every inherited theme variable. */
+    copy.style.cssText = declarations;
     copy.style.animation = 'none';
     copy.style.transition = 'none';
     if (copy.id) {
