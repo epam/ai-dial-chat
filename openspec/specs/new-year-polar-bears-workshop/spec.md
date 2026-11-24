@@ -93,14 +93,36 @@ Themes SHALL own the native JSON/SVG, poster, manifest and scene labels. Chat SH
 - **WHEN** a published pack requires composer carry but the deployed runtime does not advertise it
 - **THEN** existing unsupported-capability handling prevents unsupported animation playback and other eligible scenes remain available
 
+### Requirement: Ordinary New Year gift-click integration
+
+Themes SHALL also publish `polar-bears-workshop` in a new immutable `new-year-default` version, preserving the existing scenes and accepted bear artwork. When `new-year` is active, delivery is `prefer-external`, and the host allows `new-year/polar-bears-workshop`, the scene SHALL join the existing gift-click pool. It SHALL NOT join the `happy new year` secret pool, whose existing scenes and Santa routing SHALL remain unchanged.
+
+#### Scenario: Gift click selects the bears
+- **WHEN** the ordinary New Year event admits `polar-bears-workshop` and its gift trigger selects that scene
+- **THEN** the accepted bear animation or its safe static fallback plays using the existing composer-carry runtime
+- **AND** the other eligible gift-click scenes remain available
+
+#### Scenario: Secret phrase preserves Santa routing
+- **WHEN** the user submits `happy new year` with Santa and the bears both admitted
+- **THEN** the existing secret pool, including Santa, remains available
+- **AND** the bears are not selected and no conversation or model request is sent
+
+#### Scenario: Bears are not admitted
+- **WHEN** delivery is bundled or the host removes `new-year/polar-bears-workshop` from its scene allowlist
+- **THEN** the bears do not join the gift-click pool and other admitted scenes remain available
+
+#### Scenario: Client lacks composer carry
+- **WHEN** a client supports the pack but does not support `interaction-composer-carry-v1`
+- **THEN** it omits the bears while retaining the other supported, admitted scenes
+
 ### Requirement: Independently enabled New Year Polar Bears event
 
-The scene SHALL be published as the separate external-only `new-year-polar-bears` event, with an English event title and keyboard-accessible static trigger. Its own catalog default SHALL select the Polar Bears pack. Existing `new-year` defaults and scene pools SHALL remain unchanged. The host SHALL enable the new event through its existing event and external-delivery configuration, with no new application translation key or feature flag.
+The existing external-only `new-year-polar-bears` event SHALL remain available with its English event title, keyboard-accessible static trigger and own catalog default. Adding the bears to the ordinary New Year pack SHALL NOT modify this published event or its immutable assets. The host MAY select it independently through the existing event and external-delivery configuration.
 
 #### Scenario: Explicit event activation
 - **WHEN** the host selects and allows the `new-year-polar-bears` external event
 - **THEN** its static trigger starts the Polar Bears scene or the supported static fallback
 
-#### Scenario: Existing New Year activation
-- **WHEN** the host continues to select `new-year`
-- **THEN** its existing default pack and eligible scenes remain unchanged
+#### Scenario: Ordinary New Year remains selected
+- **WHEN** the host selects `new-year` and allows the bears as an ordinary scene
+- **THEN** the existing New Year gift trigger remains in place and the host does not need to select or allow the separate `new-year-polar-bears` event
