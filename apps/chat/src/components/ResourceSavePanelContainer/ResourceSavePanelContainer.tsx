@@ -297,7 +297,9 @@ const ResourceSavePanelContainer: FC<Props> = ({
       newVersionPlaceholder: t(ResourceSavePanelI18nKeys.NewVersionPlaceholder),
       searchPlaceholder: t(CatalogI18nKeys.PublishFolderSearchPlaceholder),
       clearSearchAriaLabel: commonLabels.clearSearchAriaLabel,
-      folderEmptyStateLabel: t(CatalogI18nKeys.PublishFolderEmptyState),
+      folderEmptyStateLabel: t(CatalogI18nKeys.PublishFolderEmptyState, {
+        query: '{query}',
+      }),
       cancelCreatingFolderLabel: t(ButtonsI18nKeys.Cancel),
       addSiblingFolderLabel: commonLabels.addSiblingFolderLabel,
       addChildFolderLabel: commonLabels.addChildFolderLabel,

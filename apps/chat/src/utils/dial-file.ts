@@ -231,7 +231,10 @@ export const getDestinationPanelTexts = (
   closeAriaLabel: t(ButtonsI18nKeys.Close),
   searchPlaceholder: t(CatalogI18nKeys.PublishFolderSearchPlaceholder),
   clearSearchAriaLabel: t(BasicI18nKeys.ClearSearch),
-  folderEmptyStateLabel: t(CatalogI18nKeys.PublishFolderEmptyState),
+  /* The package fills `{query}`; passing it through keeps i18next from leaving `{{query}}` behind. */
+  folderEmptyStateLabel: t(CatalogI18nKeys.PublishFolderEmptyState, {
+    query: '{query}',
+  }),
   cancelCreatingFolderLabel: t(ButtonsI18nKeys.Cancel),
   addSiblingFolderLabel: t(PublishI18nKeys.AddSiblingFolder),
   addChildFolderLabel: t(PublishI18nKeys.AddChildFolder),
@@ -283,3 +286,16 @@ export const getDestinationPanelTitle = (
       : DialFileManagerI18nKeys.CopyFileTitle,
   );
 };
+
+/** Returns the Copy and Move destination-panel title callbacks the file manager shell takes. */
+export const getDestinationPanelTitles = (
+  t: TFunction,
+): {
+  getCopyDestinationTitle: (count: number, isFolder: boolean) => string;
+  getMoveDestinationTitle: (count: number, isFolder: boolean) => string;
+} => ({
+  getCopyDestinationTitle: (count, isFolder) =>
+    getDestinationPanelTitle(t, DestinationFolderMode.Copy, count, isFolder),
+  getMoveDestinationTitle: (count, isFolder) =>
+    getDestinationPanelTitle(t, DestinationFolderMode.Move, count, isFolder),
+});

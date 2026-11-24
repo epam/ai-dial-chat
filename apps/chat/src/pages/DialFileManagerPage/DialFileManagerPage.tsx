@@ -11,7 +11,6 @@ import {
   type DialFileManagerShellLabels,
 } from '@epam/ai-dial-chat-shared';
 import {
-  DestinationFolderMode,
   DialFileManagerTabs,
   useDialFileManagerTabs,
 } from '@epam/ai-dial-react-file-manager';
@@ -39,7 +38,7 @@ import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholde
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 import {
   getDestinationPanelTexts,
-  getDestinationPanelTitle,
+  getDestinationPanelTitles,
 } from '../../utils/dial-file';
 
 /*
@@ -243,20 +242,7 @@ const DialFileManagerPage: FC = () => {
       duplicateLabel: t(ButtonsI18nKeys.Duplicate),
       addFolderLabel: t(DialFileManagerI18nKeys.FolderPickerAddFolderLabel),
       destinationPanelTexts: getDestinationPanelTexts(t),
-      getCopyDestinationTitle: (count, isFolder) =>
-        getDestinationPanelTitle(
-          t,
-          DestinationFolderMode.Copy,
-          count,
-          isFolder,
-        ),
-      getMoveDestinationTitle: (count, isFolder) =>
-        getDestinationPanelTitle(
-          t,
-          DestinationFolderMode.Move,
-          count,
-          isFolder,
-        ),
+      ...getDestinationPanelTitles(t),
       copyDestinationHeading: t(DialFileManagerI18nKeys.CopyDestinationHeading),
       moveDestinationHeading: t(DialFileManagerI18nKeys.MoveDestinationHeading),
       copyDestinationButton: t(ButtonsI18nKeys.Copy),
