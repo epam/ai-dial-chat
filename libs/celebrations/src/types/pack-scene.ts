@@ -6,4 +6,6 @@ export enum PackSceneCompanionKind {
   CopyTrack = 'copy-track',
   /** The single inert composer copy of an `interaction-composer-carry-v1` scene. */
   ComposerCarry = 'composer-carry',
+  /** Measured history stations and the optional falling row copy. */
+  HistoryLadder = 'history-ladder',
 }

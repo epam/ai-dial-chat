@@ -17,7 +17,7 @@ App-owned rules for choosing between bundled and externally delivered celebratio
 3. The event ID is either in the compiled registry or admitted as an external-only event by app delivery policy.
 4. The host selection (`CelebrationEventSelection`: enabled/disabled scenes, secret and decor flags) is intersected.
 
-Pack bindings, theme bindings and embedding appearance overrides SHALL only choose visuals for an event and scenes that already passed all gates. They SHALL never enable an event, re-enable a scene, or widen a pool. The one way a compiled event's click pool grows is an operator decision: an `externalScenes` entry that names a scene ID the bundled event does not define adds that pack scene (see "Composition by stable scene ID"). A pack alone can never add a scene.
+Pack bindings, theme bindings and embedding appearance overrides SHALL only choose visuals for an event and scenes that already passed all gates. They SHALL never enable an event, re-enable a scene, or widen a pool. The one way a compiled event's click or secret pool grows is an operator decision: an `externalScenes` entry that names a scene ID the bundled event does not define adds that pack scene (see "Composition by stable scene ID"). A pack alone can never add a scene.
 
 The delivery policy is `ClientConfigResponseDto.celebrationDelivery`: `mode` (`bundled` | `prefer-external`, default `bundled`), `revision`, `externalScenes` (allowlisted `eventId/sceneId` replacements of bundled scenes, or additions of new pack scenes) and `externalEvents` (admitted external-only event IDs). It is app configuration owned by the central registry in `apps/chat-api/src/app-config/config-registry/config-registry.constants.ts` and defined by `celebration-delivery-policy`. It is not a theme field.
 
@@ -70,8 +70,8 @@ A reference that does not resolve to a published, valid pack SHALL fall through 
 **[Contract]** For a known event, the app SHALL produce one logical `CelebrationEvent` before passing it to `CelebrationProvider`. In that event:
 
 - a pack scene whose ID the bundled event defines replaces that scene; its `durationMs` becomes the descriptor's `maxLifetimeMs`, and its `labelId` stays the bundled one
-- a pack scene whose ID the bundled event does not define is added only when its `eventId/sceneId` is allowlisted in `externalScenes`; it is appended to the scenes and to `clickSceneIds`, never to the secret pool, and it uses its own `labelId`, resolved from the pack's labels. Without an allowlist entry it SHALL be ignored, so a pack can never add a scene by itself
-- `id`, `iconUrl`, `Decoration`, `secretTrigger`, `decorBehaviors` and `titleLabelId` stay those of the bundled event; `clickSceneIds` and `labels` only gain the added scenes and their new label IDs, and a pack label never overrides a bundled label ID
+- a pack scene whose ID the bundled event does not define is added only when its `eventId/sceneId` is allowlisted in `externalScenes`; it is appended to the scenes and to the secret pool when the compiled event lists the ID in `secretTrigger.externalSceneIds`, otherwise to `clickSceneIds`, and it uses its own `labelId`, resolved from the pack's labels. Without an allowlist entry it SHALL be ignored, so a pack can never add a scene by itself
+- `id`, `iconUrl`, `Decoration`, secret phrases, `decorBehaviors` and `titleLabelId` stay those of the bundled event; the declared secret or click pool and `labels` only gain the admitted scenes and their new label IDs, and a pack label never overrides a bundled label ID
 
 **[Invariant]** Event and scene IDs and pools are stable today:
 

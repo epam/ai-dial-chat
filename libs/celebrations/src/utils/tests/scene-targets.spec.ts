@@ -115,6 +115,44 @@ describe('scene target observation', () => {
     expect(source.getBoundingClientRect).toHaveBeenCalledTimes(reads);
   });
 
+  it('checks semantic membership only after external mutations and cancels once', async () => {
+    const hasTargetSetChanged = vi.fn(() => false);
+    dispose = observeSceneTargets(
+      [source],
+      onChange,
+      [layer],
+      hasTargetSetChanged,
+    );
+    const reads = vi.mocked(source.getBoundingClientRect).mock.calls.length;
+    layer.append(document.createElement('span'));
+    await Promise.resolve();
+    expect(hasTargetSetChanged).not.toHaveBeenCalled();
+    expect(source.getBoundingClientRect).toHaveBeenCalledTimes(reads);
+    const sibling = document.createElement('aside');
+    document.body.append(sibling);
+    await Promise.resolve();
+    expect(hasTargetSetChanged).toHaveBeenCalledOnce();
+    expect(onChange).not.toHaveBeenCalled();
+    hasTargetSetChanged.mockReturnValue(true);
+    sibling.className = 'new-control';
+    await Promise.resolve();
+    expect(onChange).toHaveBeenCalledOnce();
+    const calls = hasTargetSetChanged.mock.calls.length;
+    sibling.remove();
+    await Promise.resolve();
+    expect(hasTargetSetChanged).toHaveBeenCalledTimes(calls);
+    expect(onChange).toHaveBeenCalledOnce();
+  });
+
+  it('can detect the first semantic target when no baseline was visible', async () => {
+    const hasTargetSetChanged = vi.fn(() => true);
+    dispose = observeSceneTargets([], onChange, [layer], hasTargetSetChanged);
+    parent.append(document.createElement('textarea'));
+    await Promise.resolve();
+    expect(onChange).toHaveBeenCalledOnce();
+    expect(source.getBoundingClientRect).not.toHaveBeenCalled();
+  });
+
   it('releases observers once and does no work after disposal', async () => {
     start();
     dispose?.();

@@ -35,6 +35,7 @@ import {
   preparePackSceneData,
   resolveVariantPlacement,
   resolvePosterObjectPosition,
+  requiresHistoryLadder,
   type PackScenePreparation,
 } from '../../utils/celebration-pack-scene';
 import {
@@ -42,6 +43,7 @@ import {
   selectCelebrationVariant,
 } from '../../utils/celebration-variant';
 import { resolvePackSceneAdapter } from '../../utils/pack-scene-adapter';
+import { ComposerCornerPoster } from '../ComposerCornerPoster/ComposerCornerPoster';
 import styles from './LottieScene.module.scss';
 
 /** Props of `LottieScene`. */
@@ -74,15 +76,23 @@ export const LottieScene: FC<LottieSceneProps> = ({
 }) => {
   const { anchors, isMobile } = useCelebrationEnvironment();
   const isReducedMotion = useReducedMotion();
-  const isAnchored =
-    scene.placement.template === CelebrationPlacementTemplate.ComposerAnchorV1;
-  /* The anchored adapter (outline or cat-borrow); none for a viewport stage. */
+  const isHistoryLadder = requiresHistoryLadder(scene);
+  const hasSafePoster = isHistoryLadder;
+  /* Plain viewport scenes have no interaction adapter. */
   const [adapter] = useState(() => resolvePackSceneAdapter(scene));
   /* Layout, anchors and motion preference are fixed at activation; a change ends the scene. */
-  const [initial] = useState(() => ({ anchors, isMobile, isReducedMotion }));
+  const [initial] = useState(() => ({
+    anchors,
+    isMobile,
+    isReducedMotion,
+    direction: context.direction,
+    colorScheme: context.colorScheme,
+  }));
   const isChanged =
     initial.isMobile !== isMobile ||
     initial.isReducedMotion !== isReducedMotion ||
+    initial.direction !== context.direction ||
+    initial.colorScheme !== context.colorScheme ||
     (adapter?.watchedAnchors.some(
       (name) => initial.anchors[name] !== anchors[name],
     ) ??
@@ -120,7 +130,7 @@ export const LottieScene: FC<LottieSceneProps> = ({
         playbackMs: scene.timing.playbackDurationMs,
       },
       /* An anchored preparation is a private copy built for one session. */
-      ownership: isAnchored
+      ownership: adapter
         ? LottieDataOwnership.Transferred
         : LottieDataOwnership.Shared,
       getAnimationData: ({ data }) => data,
@@ -131,7 +141,7 @@ export const LottieScene: FC<LottieSceneProps> = ({
         adapter?.onPlaybackStarted?.(started);
       },
     }),
-    [scene.timing, isAnchored, adapter],
+    [scene.timing, adapter],
   );
   const animationAssetId = variant?.animationAssetId;
   const loadData = useCallback(
@@ -146,11 +156,7 @@ export const LottieScene: FC<LottieSceneProps> = ({
     playback,
     /* Runs after the player and data load, so the composer is measured as it is then. */
     prepare: (_player, data) => {
-      if (
-        !adapter ||
-        placement.template !== CelebrationPlacementTemplate.ComposerAnchorV1
-      )
-        return preparePackSceneData(data);
+      if (!adapter) return preparePackSceneData(data);
       return adapter.prepare(data, placement, {
         anchors: initial.anchors,
         isMirrored,
@@ -162,15 +168,20 @@ export const LottieScene: FC<LottieSceneProps> = ({
   });
 
   useComposerInterrupts(
-    isAnchored &&
+    Boolean(adapter) &&
       !isChanged &&
       (phase === LottieScenePhase.Loading ||
         phase === LottieScenePhase.Prepared),
     cancel,
   );
 
+  useEffect(() => {
+    if (isChanged) cancel();
+  }, [isChanged, cancel]);
+
   const isPoster =
     !isChanged &&
+    (!hasSafePoster || phase !== LottieScenePhase.Ended) &&
     (initial.isReducedMotion ||
       variant === undefined ||
       (phase === LottieScenePhase.Failed && !hasPlaybackStarted));
@@ -205,7 +216,18 @@ export const LottieScene: FC<LottieSceneProps> = ({
 
   if (isChanged) return null;
   if (isPoster) {
-    if (!isPosterVisible) return null;
+    if (!isPosterVisible || !posterUrl) return null;
+    if (hasSafePoster)
+      return (
+        <ComposerCornerPoster
+          src={posterUrl}
+          anchors={anchors}
+          direction={context.direction}
+          isMirrored={isMirrored}
+          protectHistory={isHistoryLadder}
+          onDismiss={cancel}
+        />
+      );
     return (
       <div className={sceneClassName} dir={context.direction} inert>
         <img
@@ -228,7 +250,7 @@ export const LottieScene: FC<LottieSceneProps> = ({
     );
   }
   if (!preparation || phase !== LottieScenePhase.Prepared) return null;
-  if (preparation.anchor)
+  if (preparation.anchor || preparation.isViewportMapped)
     return (
       <div
         ref={hostRef}
@@ -236,7 +258,7 @@ export const LottieScene: FC<LottieSceneProps> = ({
         dir={context.direction}
         inert
         data-celebration-anchor={
-          preparation.anchor.source ? 'composer' : 'stage-anchor'
+          preparation.anchor?.source ? 'composer' : 'stage-anchor'
         }
       />
     );
