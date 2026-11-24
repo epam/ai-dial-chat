@@ -22,6 +22,7 @@ interface PanelStubProps {
   roots: unknown[];
   mainSections: ReactNode;
   getDisabledReason?: unknown;
+  canCreateFolderIn?: unknown;
   onCreateFolder: (
     rootKey: string,
     parentPath: string[],
@@ -137,6 +138,14 @@ describe('StandaloneSaveToFolderPanel', () => {
     renderPanel({ getDisabledReason });
     expect(panelProps).toHaveBeenCalledWith(
       expect.objectContaining({ getDisabledReason }),
+    );
+  });
+
+  it('forwards canCreateFolderIn to the panel', () => {
+    const canCreateFolderIn = vi.fn(() => false);
+    renderPanel({ canCreateFolderIn });
+    expect(panelProps).toHaveBeenCalledWith(
+      expect.objectContaining({ canCreateFolderIn }),
     );
   });
 

@@ -59,6 +59,8 @@ export interface StandalonePublishPanelProps {
   onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
   /** Reason a folder is unavailable as a destination, or `undefined` when usable; see `PublishPanel`'s `getDisabledReason`. */
   getDisabledReason?: (destination: FolderDestination) => string | undefined;
+  /** Whether a new folder may be created inside `destination`; forwarded to the folder tree, see `FolderDestinationTreeProps.canCreateFolderIn` in `@epam/ai-dial-react-file-manager`. */
+  canCreateFolderIn?: (destination: FolderDestination) => boolean;
   /** Externally-controlled set of expanded folder path keys. */
   expandedPaths?: Set<string>;
   /** Called when the set of expanded folders changes. */
@@ -144,6 +146,7 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   onSelectedFolderPathChange,
   onCreateFolder,
   getDisabledReason,
+  canCreateFolderIn,
   expandedPaths,
   onExpandedPathsChange,
   loadingPaths,
@@ -325,6 +328,7 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
             onPendingFolderPathChange={folderView.setPendingFolderPath}
             onCreateFolder={onCreateFolder}
             getDisabledReason={getDisabledReason}
+            canCreateFolderIn={canCreateFolderIn}
             expandedPaths={expandedPaths}
             onExpandedPathsChange={onExpandedPathsChange}
             loadingPaths={loadingPaths}

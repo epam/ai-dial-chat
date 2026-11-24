@@ -35,7 +35,7 @@ Every other public folder and its subtree is hidden.
   - `useOrgUnits` adds `isPublicFolderVisible`;
   - `usePublishFolders` adds the optional param `isFolderVisible`, which prunes `folderItems` after remembered and locally created folders are merged in;
   - `useDialFileManager` / `useDialFileListing` add the optional `isPublicFolderVisible`, applied to the Organization tab's `items` and `searchResults`, and resetting a current path that is hidden.
-- `libs/publish-panel`: `PublishFoldersTree`, `PublishPanel`, `StandalonePublishPanel` and the save panel gain the optional `canCreateFolderIn(destination)`. With it, "Create new folder", "Add child" and "Add sibling" are offered only where the new folder would stay visible.
+- `libs/publish-panel`: `PublishPanel`, `StandalonePublishPanel` and `StandaloneSaveToFolderPanel` gain the optional `canCreateFolderIn(destination)` and forward it to the `@epam/ai-dial-react-file-manager` folder tree, which gains the same prop. With it, "Create new folder", "Add child" and "Add sibling" are offered only where the new folder would stay visible.
 - `apps/chat`:
   - `OrgUnitsContext` exposes `isPublicFolderVisible` (`true` while the flag is off);
   - the publish-folder and file-manager adapters pass it in and call `ensureUnits()` when a public listing is first shown.

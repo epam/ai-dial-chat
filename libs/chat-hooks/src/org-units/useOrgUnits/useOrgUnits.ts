@@ -3,6 +3,7 @@ import {
   canSaveToFolderAt,
   canWriteIntoOrgUnitAt,
   canRequestPublicationAt,
+  findOwningOrgUnit,
   isOrgUnitTreeFolder,
   type OrgUnitAccess,
   type OrgUnitNamespace,
@@ -43,6 +44,8 @@ export interface UseOrgUnitsResult {
   canPublishDirectlyAt: OrgUnitRightCheck;
   /** Whether a public folder stays listed: it is a unit, lies inside one or is an ancestor of one. `true` until the status is `Ready`, so missing data never hides a folder. */
   isPublicFolderVisible: (publicPath: string) => boolean;
+  /** Whether a new public folder created inside the path would stay listed by `isPublicFolderVisible`: the path lies inside an org unit. `false` for the public root and an ancestor-only folder once the status is `Ready`; `true` until then. */
+  canCreatePublicFolderIn: (publicPath: string) => boolean;
 }
 
 const NO_UNITS: OrgUnitAccess = { hasAdminAccess: false, units: [] };
@@ -149,6 +152,12 @@ export const useOrgUnits = ({
     [isReady, access],
   );
 
+  const canCreatePublicFolderIn = useCallback(
+    (publicPath: string): boolean =>
+      !isReady || findOwningOrgUnit(access.units, publicPath) != null,
+    [isReady, access],
+  );
+
   return useMemo(
     () => ({
       status,
@@ -160,6 +169,7 @@ export const useOrgUnits = ({
       canPublishDirectlyAt,
       hasAdminAccess: isReady && access.hasAdminAccess,
       isPublicFolderVisible,
+      canCreatePublicFolderIn,
     }),
     [
       status,
@@ -172,6 +182,7 @@ export const useOrgUnits = ({
       isReady,
       access.hasAdminAccess,
       isPublicFolderVisible,
+      canCreatePublicFolderIn,
     ],
   );
 };

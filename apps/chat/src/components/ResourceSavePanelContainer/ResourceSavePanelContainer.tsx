@@ -143,13 +143,14 @@ const ResourceSavePanelContainer: FC<Props> = ({
     [editorAdapter, t],
   );
   const organization = usePublishFolders();
-  const { canSaveDirectlyTo, getDisabledReason } = useOrgUnitFolderGuards({
-    purpose: OrgUnitFolderGuardPurpose.Save,
-    namespace: getOrgUnitNamespace(editorAdapter.publishEntityType),
-    isActive: isOpen,
-    isQuickApp: notifiableEntity === NotifiableEntity.QuickApp,
-    shouldRefreshOnOpen: true,
-  });
+  const { canSaveDirectlyTo, getDisabledReason, canCreateFolderIn } =
+    useOrgUnitFolderGuards({
+      purpose: OrgUnitFolderGuardPurpose.Save,
+      namespace: getOrgUnitNamespace(editorAdapter.publishEntityType),
+      isActive: isOpen,
+      isQuickApp: notifiableEntity === NotifiableEntity.QuickApp,
+      shouldRefreshOnOpen: true,
+    });
   const notifySaved = useResourceSaveNotification({
     resourceName,
     notifiableEntity,
@@ -361,6 +362,7 @@ const ResourceSavePanelContainer: FC<Props> = ({
   return (
     <StandaloneSaveToFolderPanel
       {...panelProps}
+      canCreateFolderIn={canCreateFolderIn}
       versionHistory={versionHistory}
       isOpen={isOpen}
       onClose={onClose}

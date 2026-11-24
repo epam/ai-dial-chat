@@ -426,6 +426,29 @@ describe('useOrgUnits', () => {
       });
 
       expect(result.current.isPublicFolderVisible('Shared')).toBe(true);
+      expect(result.current.canCreatePublicFolderIn('')).toBe(true);
+    });
+  });
+
+  describe('canCreatePublicFolderIn', () => {
+    it('allows a new folder only inside a unit once the units are ready', async () => {
+      const unit = {
+        ...ACME,
+        folder: 'public/Acme/Risk/',
+        path: 'public/Acme/Risk',
+      };
+      const listOrgUnits = vi.fn().mockResolvedValue(listResult([unit]));
+      const { result } = renderHook(() => useOrgUnits({ listOrgUnits }));
+      act(() => result.current.ensureUnits());
+      await waitFor(() =>
+        expect(result.current.status).toBe(OrgUnitsStatus.Ready),
+      );
+
+      expect(result.current.canCreatePublicFolderIn('Acme/Risk')).toBe(true);
+      expect(result.current.canCreatePublicFolderIn('Acme/Risk/Q1')).toBe(true);
+      expect(result.current.canCreatePublicFolderIn('Acme')).toBe(false);
+      expect(result.current.canCreatePublicFolderIn('')).toBe(false);
+      expect(result.current.canCreatePublicFolderIn('Shared')).toBe(false);
     });
   });
 });

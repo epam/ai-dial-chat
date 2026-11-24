@@ -129,6 +129,8 @@ export interface StandaloneSaveToFolderPanelProps {
   onDestinationChange: (destination: FolderDestination) => void;
   /** Reason a folder is unavailable as a destination, or `undefined` when it is usable; forwarded to the folder tree, see `FolderDestinationTreeProps.getDisabledReason`. */
   getDisabledReason?: (destination: FolderDestination) => string | undefined;
+  /** Whether a new folder may be created inside `destination`; forwarded to the folder tree, see `FolderDestinationTreeProps.canCreateFolderIn`. */
+  canCreateFolderIn?: (destination: FolderDestination) => boolean;
   /** Called when a new folder name is confirmed under `rootKey` at `parentPath`. */
   onCreateFolder: (
     rootKey: string,

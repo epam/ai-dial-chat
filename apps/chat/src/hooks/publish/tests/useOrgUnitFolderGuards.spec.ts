@@ -27,6 +27,9 @@ const canPublishAt = vi.fn((path: string) => path !== 'Acme/Secret');
 const canSaveDirectlyAt = vi.fn(() => true);
 const ensureUnits = vi.fn();
 const refreshUnits = vi.fn();
+const canCreatePublicFolderIn = vi.fn((path: string) =>
+  path.startsWith('Acme'),
+);
 
 describe('useOrgUnitFolderGuards', () => {
   beforeEach(() => {
@@ -35,6 +38,7 @@ describe('useOrgUnitFolderGuards', () => {
     vi.mocked(useOrgUnitsContext).mockReturnValue({
       status: OrgUnitsStatus.Ready,
       isPublicFolderVisible: vi.fn(() => true),
+      canCreatePublicFolderIn,
       ensureUnits,
       refreshUnits,
       canSaveAt,
@@ -254,5 +258,40 @@ describe('useOrgUnitFolderGuards', () => {
 
       expect(result.current).toBe(first);
     });
+  });
+
+  it('allows creating a folder only where the org-unit rule keeps it listed', () => {
+    const guards = getGuards(
+      OrgUnitFolderGuardPurpose.Publish,
+      OrgUnitNamespace.Prompts,
+    );
+
+    expect(
+      guards.canCreateFolderIn({ rootKey: '', path: ['Acme', 'Q1'] }),
+    ).toBe(true);
+    expect(guards.canCreateFolderIn({ rootKey: '', path: ['Shared'] })).toBe(
+      false,
+    );
+    expect(canCreatePublicFolderIn).toHaveBeenCalledWith('Shared');
+  });
+
+  it('judges only the Organization root of the Save tree', () => {
+    const guards = getGuards(
+      OrgUnitFolderGuardPurpose.Save,
+      OrgUnitNamespace.Toolsets,
+    );
+
+    expect(
+      guards.canCreateFolderIn({
+        rootKey: SaveDestinationRoot.Personal,
+        path: ['Shared'],
+      }),
+    ).toBe(true);
+    expect(
+      guards.canCreateFolderIn({
+        rootKey: SaveDestinationRoot.Organization,
+        path: ['Shared'],
+      }),
+    ).toBe(false);
   });
 });

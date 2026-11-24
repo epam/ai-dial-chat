@@ -333,6 +333,7 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       dependencies,
       versionHistory,
       getDisabledReason,
+      canCreateFolderIn,
       isDirectWrite,
       directUnavailableNote,
       labels,
@@ -344,6 +345,10 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
         rootKey: string;
         path: string[];
       }) => string | undefined;
+      canCreateFolderIn?: (destination: {
+        rootKey: string;
+        path: string[];
+      }) => boolean;
       allowReplace?: boolean;
       isTargetTaken?: boolean;
       isTargetChecking?: boolean;
@@ -363,6 +368,12 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
           disabledReason:
           {getDisabledReason?.({ rootKey: '', path: ['Acme', 'Secret'] }) ??
             'none'}
+        </span>
+        <span>
+          canCreateIn:
+          {String(
+            canCreateFolderIn?.({ rootKey: '', path: ['Shared'] }) ?? 'any',
+          )}
         </span>
         <span>panelAllowReplace:{String(allowReplace)}</span>
         <span>targetTaken:{String(isTargetTaken)}</span>
@@ -1848,6 +1859,16 @@ describe('DetailsPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
 
     expect(screen.getByText('disabledReason:No access')).toBeTruthy();
+  });
+
+  it('forwards canCreatePublishFolderIn to the publish panel as canCreateFolderIn', async () => {
+    renderPanel({
+      canCreatePublishFolderIn: ({ path }) => path[0] !== 'Shared',
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    expect(screen.getByText('canCreateIn:false')).toBeTruthy();
   });
 
   it('disables no publish folder without getPublishDisabledReason', async () => {

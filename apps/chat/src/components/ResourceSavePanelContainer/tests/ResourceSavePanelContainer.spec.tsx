@@ -135,6 +135,7 @@ const mockOrgUnits = (status: OrgUnitsStatus, hasAdminAccess = false) =>
     ensureUnits,
     refreshUnits: vi.fn(),
     isPublicFolderVisible: vi.fn(() => true),
+    canCreatePublicFolderIn: vi.fn(() => true),
     canSaveAt: vi.fn(),
     canSaveDirectlyAt,
     canPublishDirectlyAt: vi.fn(() => false),

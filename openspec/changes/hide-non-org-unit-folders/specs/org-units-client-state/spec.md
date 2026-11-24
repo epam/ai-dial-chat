@@ -13,7 +13,11 @@ The function SHALL reuse the per-`units`-array normalisation memo of `findOwning
 - when the status is `Ready`, it returns `isOrgUnitTreeFolder(units, publicPath)`;
 - in `Idle`, `Loading`, `Disabled` and `Error`, it returns `true`, so missing data never hides a folder.
 
-`useOrgUnitsContext()` (`apps/chat/src/context/OrgUnitsContext.tsx`) SHALL forward it in its memoised value. While `features.orgUnitsEnabled` is off, it SHALL answer `true` for every path.
+`useOrgUnits` SHALL also return `canCreatePublicFolderIn(publicPath: string): boolean`, a `useCallback` that tells a folder tree whether a new folder created inside the path would stay listed:
+- when the status is `Ready`, it returns whether `findOwningOrgUnit(units, publicPath)` finds an owner, so it is `false` for the public root and for an ancestor-only folder;
+- before `Ready`, it returns `true`.
+
+`useOrgUnitsContext()` (`apps/chat/src/context/OrgUnitsContext.tsx`) SHALL forward both answers in its memoised value. While `features.orgUnitsEnabled` is off, it SHALL answer `true` for every path.
 
 The existing answers of the hook are unchanged. No new state, request or cache is introduced: the answer reads the units `ensureUnits` and `refreshUnits` already load.
 
@@ -36,3 +40,7 @@ The existing answers of the hook are unchanged. No new state, request or cache i
 #### Scenario: Loaded
 - **WHEN** the status is `Ready` and `Shared/` lies under no unit and above none
 - **THEN** `isPublicFolderVisible('Shared')` is `false`
+
+#### Scenario: Where a new folder stays listed
+- **WHEN** the status is `Ready` and the only unit is `public/Acme/Risk/`
+- **THEN** `canCreatePublicFolderIn` is `true` for `Acme/Risk` and `Acme/Risk/Q1`, and `false` for `Acme`, `Shared` and the public root `''`

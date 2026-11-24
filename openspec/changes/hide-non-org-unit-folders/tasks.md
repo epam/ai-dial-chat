@@ -33,27 +33,27 @@ Architecture guard for every slice that touches `libs/*`: the lib receives only 
 
 ## 3. Folder creation never produces a hidden folder
 
-> **Blocked — approach not decided.** Issue #8825 (#9970) merged first and moved the Publish and Save folder trees to `FolderDestinationPanel` / `FolderDestinationTree` from the external `@epam/ai-dial-react-file-manager` (`0.5.0-dev.5`). That package has no per-parent creation gate: only `getDisabledReason`, `roots[].canCreateFolders` (root level) and `onValidateFolderName`. The slice was implemented against the former `PublishFoldersTree` and removed from the branch during the rebase onto that change; the original commit is kept on `backup/hide-non-org-unit-folders-pre-rebase`. Options: add `canCreateFolderIn` to `@epam/ai-dial-react-file-manager` and bump it here; refuse the name through `onValidateFolderName` (needs a new localized error string, and the create actions stay visible); or move the slice to a follow-up. Tasks 3.1–3.4 below describe the original plan and will be rewritten once the approach is chosen.
+> Issue #8825 (#9970) merged first and moved the Publish and Save trees to `FolderDestinationPanel` / `FolderDestinationTree` from `@epam/ai-dial-react-file-manager`. The per-parent gate therefore lives in that package: `canCreateFolderIn` on `FolderDestinationTree`, `FolderDestinationPanel` and `FolderDestinationPanelBody` (epam/ai-dial-react-file-manager#109). This slice needs the file-manager release that ships it.
 
-- [ ] 3.1 `libs/publish-panel/src/components/PublishFoldersTree/PublishFoldersTree.tsx`: add the optional `canCreateFolderIn?: (destination: FolderDestination) => boolean`, and make `canCreateUnder` require it. Thread it through:
+- [x] 3.1 `libs/publish-panel`: add the optional `canCreateFolderIn?: (destination: FolderDestination) => boolean` and forward it to `FolderDestinationPanelBody` / `FolderDestinationPanel`, which pass it to the tree:
   - `PublishPanel` and `StandalonePublishPanel` (`libs/publish-panel/src/components/PublishPanel/`);
-  - `SaveToFolderPanel` / `StandaloneSaveToFolderPanel` (`libs/publish-panel/src/components/SaveToFolderPanel/`). If `feat/file-destintaion-side-panel` (Issue #8825) has merged first, thread it through `FolderDestinationPanel` instead.
+  - `StandaloneSaveToFolderPanel` (`libs/publish-panel/src/components/SaveToFolderPanel/`).
 
-  Add cases to `libs/publish-panel/src/components/PublishFoldersTree/tests/PublishFoldersTree.spec.tsx`: trailing "Create new folder", "Add child" and "Add sibling" are hidden for a parent the predicate refuses, and offered when no predicate is given.
-  - Verification: `npm run test:file -- libs/publish-panel/src/components/PublishFoldersTree/tests/PublishFoldersTree.spec.tsx`
-- [ ] 3.2 `libs/catalog`: add `canCreatePublishFolderIn` next to `getPublishDisabledReason`:
+  The tree behaviour ("Create new folder" disabled, "Add child" and "Add sibling" omitted for a refused parent) is tested in the file-manager package; publish-panel adds forwarding cases.
+  - [ ] Bump `@epam/ai-dial-react-file-manager` to the release with `canCreateFolderIn` (root `package.json` and the `^` peers) once epam/ai-dial-react-file-manager#109 is published.
+- [x] 3.2 `libs/catalog`: add `canCreatePublishFolderIn` next to `getPublishDisabledReason`:
   - in `libs/catalog/src/models/catalog-props.ts` and `libs/catalog/src/models/item-details-props.ts`;
   - forwarded by `Catalog` → `DetailsPanel` → `DetailsPublishContent` to `PublishPanel` as `canCreateFolderIn`.
 
   Add one forwarding case to `libs/catalog/src/components/Details/tests/DetailsPanel.spec.tsx`.
   - Verification: `npm run test:file -- libs/catalog/src/components/Details/tests/DetailsPanel.spec.tsx`
-- [ ] 3.3 `apps/chat/src/hooks/publish/useOrgUnitFolderGuards.ts`: return `canCreateFolderIn`. For an Organization destination it is `true` only when the parent lies inside a unit; it is also `true` while the rule is not `Ready`, and for other roots. Pass it from:
+- [x] 3.3 `apps/chat/src/hooks/publish/useOrgUnitFolderGuards.ts`: return `canCreateFolderIn` (new `OrgUnitFolderGuards` type). It reads the new hook answer `canCreatePublicFolderIn` (added to `useOrgUnits` and to the `org-units-client-state` delta), because `isPublicFolderVisible` is also `true` for an ancestor-only folder, where a new child would be hidden. For an Organization destination it is `true` only when the parent lies inside a unit; it is also `true` while the rule is not `Ready`, and for other roots. Pass it from:
   - `CatalogView` as `canCreatePublishFolderIn`;
-  - `PublishConversationPanelContainer`, `PublishProjectPanelContainer` and `ResourceSavePanelContainer` (the latter through `libs/chat-hooks/src/catalog/useResourceSavePanel/useResourceSavePanel.ts` if the panel props flow from there).
+  - `PublishConversationPanelContainer`, `PublishProjectPanelContainer` and `ResourceSavePanelContainer` (the latter passes it straight to `StandaloneSaveToFolderPanel`; `useResourceSavePanel` is untouched). Guard and org-unit fixtures in the container tests gain the new fields.
 
   Extend `apps/chat/src/hooks/publish/tests/useOrgUnitFolderGuards.spec.ts`.
-  - Verification: `npm run test:file -- apps/chat/src/hooks/publish/tests/useOrgUnitFolderGuards.spec.ts`, `npm run test:file -- libs/chat-hooks/src/catalog/useResourceSavePanel/tests/useResourceSavePanel.spec.ts`
-- [ ] 3.4 Slice check: `npm run verify:changed`.
+  - Verification: `npm run test:file -- apps/chat/src/hooks/publish/tests/useOrgUnitFolderGuards.spec.ts`, `npm run test:file -- libs/chat-hooks/src/org-units/useOrgUnits/tests/useOrgUnits.spec.ts`
+- [x] 3.4 Slice check, run in the worktree: `nx run-many -t typecheck lint` for chat-hooks, publish-panel and catalog; `tsc` on the app tsconfigs; vitest for chat-hooks `src/org-units` and `src/catalog`, all of catalog and publish-panel, and the app's publish hooks and containers. Result: all pass except one `Card.spec.tsx` case, which fails only under the full catalog run and passes alone with and without this change.
 
 ## 4. File manager Organization section
 

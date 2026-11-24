@@ -64,7 +64,7 @@ The `useOrgUnits` / `OrgUnitsContext` answer is the predicate's single source: `
 - **THEN** it is listed whatever the org units are
 
 ### Requirement: Folder creation never produces a hidden folder
-The folder tree in `libs/publish-panel` (`PublishFoldersTree`, as rendered by `PublishPanel`, `StandalonePublishPanel` and the save panel) SHALL accept an optional `canCreateFolderIn(destination: FolderDestination): boolean`. When it returns `false` for a parent, the tree SHALL NOT offer the trailing "Create new folder" button or the "Add child" item for that parent, nor "Add sibling" for that parent's children.
+The Publish and Save panels in `libs/publish-panel` (`PublishPanel`, `StandalonePublishPanel`, `StandaloneSaveToFolderPanel`) SHALL accept an optional `canCreateFolderIn(destination: FolderDestination): boolean` and forward it to the `@epam/ai-dial-react-file-manager` folder tree they render. When it returns `false` for a parent, the tree SHALL NOT offer the trailing "Create new folder" button or the "Add child" item for that parent, nor "Add sibling" for that parent's children.
 
 `libs/catalog` SHALL forward the host's predicate as `canCreatePublishFolderIn`, next to `getPublishDisabledReason`. The host answer comes from `useOrgUnitFolderGuards` (`apps/chat/src/hooks/publish/useOrgUnitFolderGuards.ts`):
 - for an Organization destination, `true` only when the parent lies inside an org unit;
