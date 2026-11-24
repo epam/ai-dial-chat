@@ -79,7 +79,7 @@ export class PublishController {
   @ApiResponse({
     status: 400,
     description:
-      'Validation error — invalid entityType, entityId, folderPath, version, or rules',
+      'Validation error — invalid entityType, entityId, folderPath, version or author, or an undeclared field',
   })
   @ApiResponse({
     status: 401,
@@ -112,7 +112,6 @@ export class PublishController {
       folderPath,
       version,
       author,
-      rules,
       publishCredentials,
     }: PublishCatalogEntityDto,
   ): Promise<PublishResultDto> {
@@ -125,7 +124,6 @@ export class PublishController {
       folderPath,
       version,
       resolveDisplayAuthor(author, claims),
-      rules,
       publishCredentials,
       sub,
     );

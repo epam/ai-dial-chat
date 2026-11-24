@@ -1,14 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import {
-  ArrayMaxSize,
-  IsArray,
   IsBoolean,
   IsOptional,
   IsString,
   Matches,
   MaxLength,
-  ValidateNested,
 } from 'class-validator';
 import {
   STORED_RESOURCE_VERSION_PATTERN,
@@ -20,7 +16,6 @@ import {
   DISPLAY_AUTHOR_MAX_LENGTH,
   NO_CONTROL_CHARACTERS,
 } from './publish-author';
-import { PublishRuleDto } from './publish-rule.dto';
 
 /**
  * Request body for `POST /api/v1/catalog/{entityType}/{entityId}/publish`.
@@ -65,19 +60,6 @@ export class PublishCatalogEntityDto {
   @MaxLength(DISPLAY_AUTHOR_MAX_LENGTH)
   @Matches(NO_CONTROL_CHARACTERS, { message: CONTROL_CHARACTERS_MESSAGE })
   author?: string;
-
-  @ApiPropertyOptional({
-    description:
-      'Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.',
-    type: [PublishRuleDto],
-    default: [],
-  })
-  @IsOptional()
-  @IsArray()
-  @ArrayMaxSize(20)
-  @ValidateNested({ each: true })
-  @Type(() => PublishRuleDto)
-  rules?: PublishRuleDto[];
 
   @ApiPropertyOptional({
     description:

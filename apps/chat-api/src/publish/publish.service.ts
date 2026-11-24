@@ -36,7 +36,6 @@ import { CatalogEntityType } from './dto/catalog-entity-params.dto';
 import { createTargetExistsConflict } from './dto/publish-conflict.dto';
 import { PublishHistoryEntryDto } from './dto/publish-history-entry.dto';
 import { PublishResultDto } from './dto/publish-result.dto';
-import type { PublishRuleDto } from './dto/publish-rule.dto';
 import { PublishTargetCheckDto } from './dto/publish-target-check.dto';
 import type { UnpublishAccessDto } from './dto/unpublish-access.dto';
 import { UnpublishResultDto } from './dto/unpublish-result.dto';
@@ -178,7 +177,6 @@ export class PublishService {
     folderPath: string,
     version: string | undefined,
     author: string,
-    rules?: PublishRuleDto[],
     publishCredentials?: boolean,
     userSub: string = bucket,
   ): Promise<PublishResultDto> {
@@ -250,8 +248,8 @@ export class PublishService {
           /* No `publishCredentials`: the flag is a per-resource choice made for the application only (design D9). */
           ...(prepared?.dependencyResources ?? []),
         ],
+        /* No `rules`: an absent key leaves the target folder's stored DIAL Core rules untouched, while `[]` could replace them. */
         displayAuthor: author,
-        rules: rules ?? [],
       };
       try {
         result = await this.dialClient.client.createPublication({

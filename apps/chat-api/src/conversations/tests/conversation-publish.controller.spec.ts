@@ -88,29 +88,17 @@ describe('ConversationPublishController (integration)', () => {
       'Planning/My conversation',
       'Organization/Data Science',
       'Test User',
-      undefined,
     );
   });
 
-  it('forwards rules from the request body to the service', async () => {
-    const rules = [
-      { source: 'role', function: 'CONTAIN', targets: ['engineering'] },
-    ];
-
+  it('rejects a request that still sends access rules with 400', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/conversations/publish')
       .query({ path: 'Planning/My conversation' })
-      .send({ folderPath: 'Organization/Data Science', rules })
-      .expect(201);
+      .send({ folderPath: 'Organization/Data Science', rules: [] })
+      .expect(400);
 
-    expect(service.publish).toHaveBeenCalledWith(
-      TEST_USER.at,
-      TEST_USER.bucket,
-      'Planning/My conversation',
-      'Organization/Data Science',
-      'Test User',
-      rules,
-    );
+    expect(service.publish).not.toHaveBeenCalled();
   });
 
   it('forwards a submitted author to the service in place of the session name', async () => {
@@ -126,7 +114,6 @@ describe('ConversationPublishController (integration)', () => {
       'Planning/My conversation',
       'Organization/Data Science',
       'DIAL Team',
-      undefined,
     );
   });
 
@@ -143,7 +130,6 @@ describe('ConversationPublishController (integration)', () => {
       'Planning/My conversation',
       'Organization/Data Science',
       'DIAL Team',
-      undefined,
     );
   });
 
@@ -160,7 +146,6 @@ describe('ConversationPublishController (integration)', () => {
       'Planning/My conversation',
       'Organization/Data Science',
       'Test User',
-      undefined,
     );
   });
 
@@ -184,21 +169,6 @@ describe('ConversationPublishController (integration)', () => {
       .send({
         folderPath: 'Organization/Data Science',
         author: 'DIAL Team\nInjected log line',
-      })
-      .expect(400);
-
-    expect(service.publish).not.toHaveBeenCalled();
-  });
-
-  it('rejects a request with an invalid rule function enum value', async () => {
-    await request(app.getHttpServer())
-      .post('/api/v1/conversations/publish')
-      .query({ path: 'my-conversation' })
-      .send({
-        folderPath: 'Organization',
-        rules: [
-          { source: 'role', function: 'MATCHES', targets: ['engineering'] },
-        ],
       })
       .expect(400);
 

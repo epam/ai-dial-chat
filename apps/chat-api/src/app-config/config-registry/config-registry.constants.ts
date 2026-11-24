@@ -876,19 +876,6 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     management: localOnlyKey(LocalOnlyReason.SecurityPolicy),
   },
   {
-    key: 'publish.publicationFilterSources',
-    type: 'config',
-    valueType: 'json',
-    visibility: 'client',
-    defaultValue: ['title', 'role', 'dial_roles'],
-    critical: false,
-    description:
-      "Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES (comma-separated); falls back to the legacy default when unset or empty.",
-    owner: 'chat-team',
-    envVar: 'PUBLICATION_FILTER_SOURCES',
-    management: localOnlyKey(LocalOnlyReason.Capability),
-  },
-  {
     key: 'content.additionalLocales',
     type: 'config',
     valueType: 'json',

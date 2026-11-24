@@ -8912,7 +8912,7 @@
             }
           },
           "400": {
-            "description": "Validation error — invalid entityType, entityId, folderPath, version, or rules"
+            "description": "Validation error — invalid entityType, entityId, folderPath, version or author, or an undeclared field"
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
@@ -9576,68 +9576,6 @@
           }
         },
         "summary": "List the private dependencies of unsaved application values",
-        "tags": ["publish"]
-      }
-    },
-    "/api/v1/publish/rules": {
-      "get": {
-        "description": "Returns the exact requested folder's own access-restriction rules by proxying DIAL Core's `getPublicationRules` — ancestor-folder rules in the underlying response are discarded, never returned.",
-        "operationId": "getPublishRules",
-        "parameters": [
-          {
-            "name": "folderPath",
-            "required": true,
-            "in": "query",
-            "description": "Destination folder under the Organization/public bucket to look up existing access rules for.",
-            "schema": {
-              "example": "Organization/Data Science/Shared chats",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The folder's own rules, or an empty array when it has none",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PublishRulesResultDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation error — invalid folderPath"
-          },
-          "401": {
-            "description": "Not authenticated — valid session cookie required"
-          },
-          "403": {
-            "description": "DIAL Core denied access to the resource"
-          },
-          "404": {
-            "description": "DIAL Core resource not found"
-          },
-          "409": {
-            "description": "DIAL Core reported a conflict with the current resource state"
-          },
-          "413": {
-            "description": "DIAL Core rejected the payload as too large"
-          },
-          "422": {
-            "description": "DIAL Core could not process the request"
-          },
-          "429": {
-            "description": "DIAL Core rate-limited the request"
-          },
-          "502": {
-            "description": "DIAL Core returned an error response"
-          },
-          "503": {
-            "description": "The session user bucket could not be resolved because DIAL Core is unavailable (raised by session authentication; an unreachable DIAL Core during the call itself is reported as 502)"
-          }
-        },
-        "summary": "Get a destination folder's already-configured access rules",
         "tags": ["publish"]
       }
     },
@@ -13582,14 +13520,6 @@
             "additionalProperties": true,
             "default": {}
           },
-          "publicationFilterSources": {
-            "description": "Allowed claim/category names selectable as a publication access rule's source. Sourced from PUBLICATION_FILTER_SOURCES; falls back to the legacy default when unset or empty.",
-            "example": ["title", "role", "dial_roles"],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
           "additionalContentLocales": {
             "description": "Additional content locales (canonical BCP-47 tags) a toolset's or application's Name/Description can be translated into. Sourced from ADDITIONAL_CONTENT_LOCALES, or the deprecated AVAILABLE_LOCALES when that is absent; empty when neither is set. May include the primary locale, which the client drops.",
             "example": ["de", "fr-FR"],
@@ -13682,7 +13612,6 @@
           "customVisualizers",
           "applicationVisualizers",
           "customVariables",
-          "publicationFilterSources",
           "additionalContentLocales",
           "maxAttachmentFileSizeBytes",
           "usageLimitsWarningThresholdPercent",
@@ -18533,30 +18462,6 @@
         },
         "required": ["path"]
       },
-      "PublishRuleDto": {
-        "type": "object",
-        "properties": {
-          "source": {
-            "type": "string",
-            "description": "Claim/category name this rule matches against.",
-            "example": "roles"
-          },
-          "function": {
-            "type": "string",
-            "enum": ["EQUAL", "CONTAIN", "REGEX"],
-            "example": "CONTAIN"
-          },
-          "targets": {
-            "description": "Values combined with OR; exactly one pattern when function is REGEX.",
-            "example": ["engineering", "support"],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": ["source", "function", "targets"]
-      },
       "PublishConversationDto": {
         "type": "object",
         "properties": {
@@ -18570,14 +18475,6 @@
             "description": "Display author recorded on the publication as `displayAuthor`. Omitted, blank, or whitespace-only falls back to the session's own display name, which is what every caller got before this field existed.",
             "example": "DIAL Team",
             "maxLength": 200
-          },
-          "rules": {
-            "description": "Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.",
-            "default": [],
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PublishRuleDto"
-            }
           }
         },
         "required": ["folderPath"]
@@ -20750,14 +20647,6 @@
             "example": "DIAL Team",
             "maxLength": 200
           },
-          "rules": {
-            "description": "Access-restriction rules combined with AND; forwarded to DIAL Core unchanged. Omitted or empty means no additional restriction.",
-            "default": [],
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PublishRuleDto"
-            }
-          },
           "publishCredentials": {
             "type": "boolean",
             "description": "Publish the entity together with the publisher's own credentials for it. DIAL Core honours it by copying the credential onto the published copy, so members of the organization use the entity without authorising individually. Omitted or `false` sends exactly the request every caller sent before this field existed. The flag grants no additional authorization: Core still derives the actor from the bearer token, enforces target-folder write access, and holds the publication `PENDING` until an administrator approves it. No credential value ever crosses the wire — only this boolean.",
@@ -21058,19 +20947,6 @@
           }
         },
         "required": ["schemaId", "properties"]
-      },
-      "PublishRulesResultDto": {
-        "type": "object",
-        "properties": {
-          "rules": {
-            "description": "The requested folder's own access-restriction rules, or an empty array when the folder has none configured.",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PublishRuleDto"
-            }
-          }
-        },
-        "required": ["rules"]
       },
       "ScheduleCronDto": {
         "type": "object",

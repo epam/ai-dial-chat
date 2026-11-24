@@ -20,7 +20,6 @@ import type {
   PublishConflictDto,
   PublishHistoryEntryDto,
   PublishResultDto,
-  PublishRulesResultDto,
   PublishTargetCheckDto,
   ResourceDependenciesResultDto,
   ResourceIdResponseDto,
@@ -65,10 +64,6 @@ export interface GetCatalogUnpublishAccessRequest {
 export interface GetCatalogVersionStatusesRequest {
   entityType: GetCatalogVersionStatusesEntityTypeEnum;
   entityId: string;
-}
-
-export interface GetPublishRulesRequest {
-  folderPath: string;
 }
 
 export interface PublishCatalogEntityRequest {
@@ -605,68 +600,6 @@ export class PublishApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<Array<VersionStatusEntryDto>> {
     const response = await this.getCatalogVersionStatusesRaw(
-      requestParameters,
-      initOverrides,
-    );
-    return await response.value();
-  }
-
-  /**
-   * Returns the exact requested folder\'s own access-restriction rules by proxying DIAL Core\'s `getPublicationRules` — ancestor-folder rules in the underlying response are discarded, never returned.
-   * Get a destination folder\'s already-configured access rules
-   */
-  async getPublishRulesRaw(
-    requestParameters: GetPublishRulesRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<PublishRulesResultDto>> {
-    if (requestParameters['folderPath'] == null) {
-      throw new runtime.RequiredError(
-        'folderPath',
-        'Required parameter "folderPath" was null or undefined when calling getPublishRules().',
-      );
-    }
-
-    const queryParameters: runtime.HTTPQuery = {};
-
-    if (requestParameters['folderPath'] != null) {
-      queryParameters['folderPath'] = requestParameters['folderPath'];
-    }
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('bearer', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-
-    let urlPath = `/api/v1/publish/rules`;
-
-    const response = await this.request(
-      {
-        path: urlPath,
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse<PublishRulesResultDto>(response);
-  }
-
-  /**
-   * Returns the exact requested folder\'s own access-restriction rules by proxying DIAL Core\'s `getPublicationRules` — ancestor-folder rules in the underlying response are discarded, never returned.
-   * Get a destination folder\'s already-configured access rules
-   */
-  async getPublishRules(
-    requestParameters: GetPublishRulesRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<PublishRulesResultDto> {
-    const response = await this.getPublishRulesRaw(
       requestParameters,
       initOverrides,
     );

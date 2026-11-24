@@ -13,7 +13,6 @@ import { ApplicationPublishPreparationService } from '../application-publish-pre
 import { ApplicationDependencyResolver } from '../dependencies/application-dependency.resolver';
 import { PublishDependenciesService } from '../dependencies/publish-dependencies.service';
 import { CatalogEntityType } from '../dto/catalog-entity-params.dto';
-import { PublishRuleFunction } from '../dto/publish-rule.dto';
 import { PublishService } from '../publish.service';
 
 /* The caller's session bucket, passed through to every publish call. */
@@ -107,7 +106,6 @@ describe('PublishService', () => {
             },
           ],
           displayAuthor: 'Test User',
-          rules: [],
         },
       });
       expect(result).toEqual({
@@ -234,7 +232,6 @@ describe('PublishService', () => {
             },
           ],
           displayAuthor: 'Test User',
-          rules: [],
         },
       });
       expect(result).toEqual({
@@ -287,37 +284,7 @@ describe('PublishService', () => {
       });
     });
 
-    it('passes the caller-supplied rules through to createPublication unchanged', async () => {
-      const { service, dialClient } = makeService();
-      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
-        okResponse({}),
-      );
-
-      const rules = [
-        {
-          source: 'roles',
-          function: PublishRuleFunction.Contain,
-          targets: ['engineering', 'support'],
-        },
-      ];
-
-      await service.publish(
-        'token-abc',
-        TEST_BUCKET,
-        CatalogEntityType.Toolset,
-        'toolsets/bucket-123/tool-abc123__1.2.0',
-        'Organization/Data Science',
-        '1.2.0',
-        'Test User',
-        rules,
-      );
-
-      expect(dialClient.client.createPublication).toHaveBeenCalledWith(
-        expect.objectContaining({ body: expect.objectContaining({ rules }) }),
-      );
-    });
-
-    it('defaults rules to [] when omitted', async () => {
+    it('sends no rules key to createPublication, leaving the folder rules untouched', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
         okResponse({}),
@@ -333,11 +300,9 @@ describe('PublishService', () => {
         'Test User',
       );
 
-      expect(dialClient.client.createPublication).toHaveBeenCalledWith(
-        expect.objectContaining({
-          body: expect.objectContaining({ rules: [] }),
-        }),
-      );
+      const [[{ body }]] = vi.mocked(dialClient.client.createPublication).mock
+        .calls;
+      expect(body).not.toHaveProperty('rules');
     });
 
     it('sets publishCredentials on the ADD resource when the flag is true', async () => {
@@ -354,7 +319,6 @@ describe('PublishService', () => {
         'Organization/Data Science',
         '1.2.0',
         'Test User',
-        undefined,
         true,
       );
 
@@ -393,7 +357,6 @@ describe('PublishService', () => {
         'Organization/Data Science',
         '1.2.0',
         'Test User',
-        undefined,
         false,
       );
 
@@ -518,7 +481,6 @@ describe('PublishService', () => {
             },
           ],
           displayAuthor: 'Test User',
-          rules: [],
         },
       });
     });
@@ -729,7 +691,7 @@ describe('PublishService', () => {
       );
     });
 
-    it('builds the request title as "{entity name} {version}", without the author, and sets displayAuthor/rules separately', async () => {
+    it('builds the request title as "{entity name} {version}", without the author, and sets displayAuthor separately', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
         okResponse({}),
@@ -750,7 +712,6 @@ describe('PublishService', () => {
           body: expect.objectContaining({
             name: 'tool-abc123 1.2.0',
             displayAuthor: 'Unknown Author',
-            rules: [],
           }),
         }),
       );
@@ -1932,7 +1893,6 @@ describe('PublishService, publishing an application with its dependencies', () =
         'Organization/Agents',
         version,
         'Test User',
-        undefined,
         publishCredentials,
         'user-1',
       );
@@ -2241,7 +2201,6 @@ describe('PublishService, publishing an application with its dependencies', () =
       'Organization/Agents',
       undefined,
       'Test User',
-      undefined,
       undefined,
       'user-1',
     );

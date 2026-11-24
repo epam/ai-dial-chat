@@ -431,12 +431,6 @@ export const ENV_KEY_CASES: readonly EnvKeyCase[] = [
     nonDefault: '{"app-1":{"title":"Viz","url":"https://viz.example.com"}}',
   },
   {
-    key: 'publish.publicationFilterSources',
-    variable: 'PUBLICATION_FILTER_SOURCES',
-    typedDefault: '',
-    nonDefault: 'title,department',
-  },
-  {
     key: 'content.additionalLocales',
     variable: 'ADDITIONAL_CONTENT_LOCALES',
     nonDefault: 'de-de,fr,de-DE',
@@ -713,16 +707,6 @@ export const PARSER_CASES: readonly ScenarioCase[] = [
     ['all unknown', 'nope,other'],
     ['separators only', ' , '],
   ]),
-  ...parserCases(
-    'publish.publicationFilterSources',
-    'PUBLICATION_FILTER_SOURCES',
-    [
-      ['absent', undefined],
-      ['empty', ''],
-      ['valid', 'title, department'],
-      ['separators only', ' , '],
-    ],
-  ),
   ...parserCases('content.additionalLocales', 'ADDITIONAL_CONTENT_LOCALES', [
     ['absent', undefined],
     ['empty', ''],
