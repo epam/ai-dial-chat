@@ -210,9 +210,10 @@ The supported app locale today is `en` only (`apps/chat/src/i18n/locales/en.json
 - The first released adapter is `interaction-composer-outline-v1` (S3, #9222). Its behaviour is defined by `celebration-composer-anchoring`. It requires `composer-anchor-v1` placement and has no manifest parameters.
 - The second released adapter is `interaction-cat-borrow-v1` (S4, #9223). Its behaviour is defined by `celebration-ui-borrowing`. It requires `composer-anchor-v1` placement and `direction: none`, and it has no manifest parameters.
 - The third released adapter is `interaction-copy-track-v1` (S7 batch 1, #9226). Its behaviour is defined by `celebration-copy-track`. It requires `composer-anchor-v1` placement and `direction: none`, and it has no manifest parameters.
+- The composer-carry adapter is `interaction-composer-carry-v1`. Its behavior is defined by `celebration-composer-carry`; it requires `composer-anchor-v1` and `direction: none`, and has no manifest parameters. Published packs require matching Themes validation support and a runtime that advertises the capability.
 - Every other `interaction-*` capability SHALL be unsupported, so a scene that requires one falls back as unsupported. A scene SHALL require at most one `interaction-*` capability.
 - An adapter's manifest parameters SHALL be limited to an `interaction` object of finite numbers, booleans and adapter-defined string-enum values, plus Lottie marker names. No released adapter defines one, and the descriptor has no `interaction` field.
-- An adapter MAY fit Lottie layers whose `nm` equals one of its adapter-defined slot names, for example `composer-outline`, `composer-parcel`, `cat-root`, `cat-floor` or `ct-actor`, or starts with an adapter-defined prefix, for example `ct-track:`, `ct-follow:` or `ct-if:`, or adds an adapter-defined section suffix to such a name, for example `ct-travel#rim,platform`. It SHALL change only the geometry, timing or opacity the adapter defines for that slot. A slot that is missing, duplicated or malformed is a preparation failure.
+- An adapter MAY fit Lottie layers whose `nm` equals one of its adapter-defined slot names, for example `composer-outline`, `composer-parcel`, `cat-root`, `cat-floor`, `ct-actor`, `composer-carry`, `composer-decoration` or optional `composer-side`, or starts with an adapter-defined prefix, for example `ct-track:`, `ct-follow:` or `ct-if:`, or adds an adapter-defined section suffix to such a name, for example `ct-travel#rim,platform`. It SHALL change only the geometry, timing or opacity the adapter defines for that slot. A required slot that is missing, or any recognized slot that is duplicated or malformed, is a preparation failure.
 - An adapter MAY write a time-remap track on a precomposition slot it defines, for example `cat-rig` or `ct-actor`. It SHALL NOT remap the root composition. An authored time remap on such a slot is malformed.
 - Manifests SHALL never carry selectors, functions, code, class names or DOM paths.
 - v1 runtimes SHALL ignore Lottie `markers`, with one exception: an adapter that the scene requires reads markers whose `cm` starts with its own namespace (`cat:` for `interaction-cat-borrow-v1`, `ct:` for `interaction-copy-track-v1`). Markers in that namespace that are malformed are a preparation failure. All other markers stay ignored.
@@ -248,6 +249,10 @@ The supported app locale today is `en` only (`apps/chat/src/i18n/locales/en.json
 #### Scenario: Unknown namespace
 - **WHEN** a pack introduces markers named `penguin:grip` before any adapter defines them
 - **THEN** every runtime ignores them, and no scene changes behaviour
+
+#### Scenario: Composer carry is supported
+- **WHEN** a composer-anchored scene with direction `none` requires `interaction-composer-carry-v1`
+- **THEN** the runtime maps only its carry, decoration and optional side slots and uses one inert composer snapshot
 
 ### Requirement: Decorative accessibility of pack scenes
 

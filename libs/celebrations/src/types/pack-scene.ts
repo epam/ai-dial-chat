@@ -4,4 +4,6 @@ export enum PackSceneCompanionKind {
   CatBorrow = 'cat-borrow',
   /** The copy and watched host of an `interaction-copy-track-v1` scene. */
   CopyTrack = 'copy-track',
+  /** The single inert composer copy of an `interaction-composer-carry-v1` scene. */
+  ComposerCarry = 'composer-carry',
 }

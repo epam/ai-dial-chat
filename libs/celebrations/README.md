@@ -314,6 +314,18 @@ A `composer-anchor-v1` scene with `direction: 'none'` may require `interaction-c
 
 A browser without `Element.prototype.animate`, `ResizeObserver` or `MutationObserver` shows the poster. So does a malformed `ct:` marker or slot (every rule that needs no page is checked before the page is measured, including closed cycles), or a page where no section fits. In every section, with or without a copy, interaction, typing, scrolling, viewport changes, a hidden tab, a moved or changed target, or a change of any of the three anchors ends the scene, and the original is restored. A failure after the first frame renders nothing.
 
+#### Carrying the composer (`interaction-composer-carry-v1`)
+
+This adapter supports a finite horizontal out-and-back story. It requires `composer-anchor-v1`, the top edge and `direction: 'none'`. A pack using it requires a compatible Chat runtime and Themes release that accept `interaction-composer-carry-v1`; publishing an asset alone does not deploy runtime support.
+
+The asset defines a root null named `composer-carry` and a direct-child null named `composer-decoration`. All artwork descends from the carrier. The carrier has identity scale, anchor and rotation, and a keyframed three-dimensional position with zero y/z. Its x values are in 0–1000, with the first and final keyframes at rest. The final keyframe is at the composition's out point. The adapter maps x1000 to a measured offscreen position and applies the same authored timing and easing to an inert copy of the entire composer. The decoration slot's reference width is 520; only that slot is fitted horizontally, preserving character proportions and readable RTL text.
+
+An optional direct-child null named `composer-side` binds its descendants to measured side or corner contacts. It has identity anchor, scale and rotation, and a static position or at most 64 ordered position keyframes within the composition. Positions are three-dimensional: x in −1–1, y in 0–1, and z zero. Relative to the composer's top center, the adapter maps these to `[x × width / (2 × stageScale), y × height / stageScale, 0]`. Thus `[1, 0.5, 0]` selects the right-side midpoint and `[-1, 1, 0]` the lower-left corner. Authored timing and easing remain intact; side changes and character poses stay in the asset. The slot neither resizes nor reframes the copy, and copied RTL text remains unmirrored. Assets without this slot retain their existing placement.
+
+For assets with `composer-side`, the composition height minus `anchorRect.y` declares the artwork's extent below that slot. The lowest measured attachment plus this scaled extent must leave 20 px below the artwork in the viewport. A bottom-docked composer without that room shows the poster before any copy is created.
+
+An eligible composer contains an enabled textarea, has at most 300 nodes, has no expanded popup, and has no transformed ancestor. The live input keeps its draft, focus and selection. Input, pointer interaction, scrolling, focus changes, geometry changes and cancellation remove the copy and restore the original. Unsupported or malformed assets and unsuitable targets show the existing finite poster fallback; reduced motion also uses the poster. The adapter has no manifest parameters or marker namespace.
+
 `StaticTriggerDecoration` is a native `<button type="button">` named by `label` (default `Play celebration` when empty), with an `aria-hidden` image from `imageUrl`. It calls `onActivate` on click, Enter and Space, draws its focus ring in `currentColor` and declares no colors of its own.
 
 ```tsx
@@ -330,7 +342,7 @@ export const Trigger = ({ onActivate }: { onActivate: () => void }) => (
 
 ## Capabilities
 
-`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `composer-anchor-v1`, `interaction-composer-outline-v1`, `interaction-cat-borrow-v1`, `interaction-copy-track-v1`, `static-poster-v1` and `static-trigger-v1`. Any other `interaction-*` id is unsupported. A host keeps only scenes whose `requiredCapabilities` are all in the set:
+`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `composer-anchor-v1`, `interaction-composer-outline-v1`, `interaction-cat-borrow-v1`, `interaction-copy-track-v1`, `interaction-composer-carry-v1`, `static-poster-v1` and `static-trigger-v1`. Any other `interaction-*` id is unsupported. A host keeps only scenes whose `requiredCapabilities` are all in the set:
 
 ```ts
 import {
@@ -400,7 +412,7 @@ and sleigh scenes are no longer included.
 
 From the main entry:
 
-- `CelebrationCapability`: `LottieLightSvgV1`, `ViewportStageV1`, `ComposerAnchorV1`, `InteractionComposerOutlineV1`, `InteractionCatBorrowV1`, `InteractionCopyTrackV1`, `StaticPosterV1`, `StaticTriggerV1`.
+- `CelebrationCapability`: `LottieLightSvgV1`, `ViewportStageV1`, `ComposerAnchorV1`, `InteractionComposerOutlineV1`, `InteractionCatBorrowV1`, `InteractionCopyTrackV1`, `InteractionComposerCarryV1`, `StaticPosterV1`, `StaticTriggerV1`.
 - `CelebrationDirectionMode`: `None`, `Mirror`, `Variant`.
 - `CelebrationLayout`: `Mobile`, `Desktop`.
 - `CelebrationColorScheme`: `Light`, `Dark`.
