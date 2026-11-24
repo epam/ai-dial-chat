@@ -42,6 +42,7 @@ import {
   buildConversationUrl,
   buildNewConversation,
   getConversationTitleFromName,
+  getConversationTitleMaxBytes,
   getDeploymentKey,
   isApplicationDeploymentPath,
   prepareEntityName,
@@ -422,12 +423,19 @@ export class ConversationLifecycleService {
       isApplicationDeployment,
     );
     const sourceTitle = sourceData.name?.trim() || pathTitle;
-    const uniqueTitle = prepareEntityName(sourceTitle);
-
     const deploymentKey = getDeploymentKey(
       decodedFilename,
       isApplicationDeployment,
     );
+    /*
+     * Cut to what the file name leaves, with room for the collision UUID, so
+     * the copy of a chat with a long title still fits on DIAL Core's disk.
+     */
+    const uniqueTitle = prepareEntityName(
+      sourceTitle,
+      getConversationTitleMaxBytes(deploymentKey),
+    );
+
     const decodedRenamedFilename = `${deploymentKey}__${uniqueTitle}`;
     /*
      * A UUID-suffixed copy left under `.scheduler/{scheduleId}` would be read
