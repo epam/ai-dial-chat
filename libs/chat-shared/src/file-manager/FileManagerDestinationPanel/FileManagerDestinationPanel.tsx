@@ -25,9 +25,9 @@ import {
   toDestinationPath,
   toPathSegments,
 } from '../destination-folders';
-import { isHiddenPath } from '../path';
 import type { FileManagerController } from '../file-manager-controller';
 import type { FileManagerDestinationPanelLabels } from '../labels';
+import { isHiddenPath } from '../path';
 
 /* The panel shows the one section the items come from, so it has one root; the key is not shown anywhere. */
 const ROOT_KEY = 'files';
