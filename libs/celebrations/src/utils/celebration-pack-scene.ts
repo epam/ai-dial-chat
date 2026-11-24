@@ -8,6 +8,7 @@ import type {
   CelebrationStageAlignment,
   CelebrationTextDirection,
 } from '../models/celebration-pack';
+import type { ComposerCarryPreparation } from '../models/composer-carry';
 import type { CopyTrackPreparation } from '../models/copy-track-preparation';
 import {
   CelebrationCapability,
@@ -41,7 +42,8 @@ export interface PackScenePreparation {
 /** An adapter's payload on a pack preparation, tagged with its kind. */
 export type PackSceneCompanion =
   | ({ kind: PackSceneCompanionKind.CatBorrow } & CatBorrowPreparation)
-  | ({ kind: PackSceneCompanionKind.CopyTrack } & CopyTrackPreparation);
+  | ({ kind: PackSceneCompanionKind.CopyTrack } & CopyTrackPreparation)
+  | ({ kind: PackSceneCompanionKind.ComposerCarry } & ComposerCarryPreparation);
 
 /** Whether the scene asks for the `interaction-cat-borrow-v1` adapter. */
 export const requiresCatBorrow = (scene: CelebrationSceneDescriptor): boolean =>
@@ -55,6 +57,14 @@ export const requiresCopyTrack = (scene: CelebrationSceneDescriptor): boolean =>
     CelebrationCapability.InteractionCopyTrackV1,
   );
 
+/** Whether the scene asks to carry an inert copy of the whole composer. */
+export const requiresComposerCarry = (
+  scene: CelebrationSceneDescriptor,
+): boolean =>
+  scene.requiredCapabilities.includes(
+    CelebrationCapability.InteractionComposerCarryV1,
+  );
+
 /** Whether this release can play the scene's renderer, capabilities and placement. */
 export const isCelebrationSceneSupported = (
   scene: CelebrationSceneDescriptor,
@@ -66,12 +76,13 @@ export const isCelebrationSceneSupported = (
   );
   const isCatBorrow = requiresCatBorrow(scene);
   const isCopyTrack = requiresCopyTrack(scene);
+  const isComposerCarry = requiresComposerCarry(scene);
   return (
     scene.renderer === CelebrationCapability.LottieLightSvgV1 &&
     (isAnchored || template === CelebrationPlacementTemplate.ViewportStageV1) &&
     (isAnchored || interactions.length === 0) &&
     interactions.length <= 1 &&
-    (!(isCatBorrow || isCopyTrack) ||
+    (!(isCatBorrow || isCopyTrack || isComposerCarry) ||
       scene.direction === CelebrationDirectionMode.None) &&
     scene.requiredCapabilities.every((capability) =>
       SUPPORTED_CELEBRATION_CAPABILITIES.has(capability),
