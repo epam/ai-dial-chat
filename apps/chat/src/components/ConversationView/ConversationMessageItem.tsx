@@ -103,7 +103,7 @@ const preloadEditInput = () => void loadConversationInput();
  */
 const EMPTY_FALLBACK_CITATION_GROUPS: AnnotationGroup[] = [];
 
-interface Props {
+export interface ConversationMessageItemProps {
   contentRef?: Ref<HTMLDivElement>;
   msg: MessageType;
   index: number;
@@ -281,9 +281,7 @@ interface Props {
   fallbackCitationGroups?: AnnotationGroup[];
 }
 
-export type ConversationMessageItemProps = Props;
-
-const ConversationMessageItem: FC<Props> = ({
+const ConversationMessageItem: FC<ConversationMessageItemProps> = ({
   msg,
   contentRef,
   index,
