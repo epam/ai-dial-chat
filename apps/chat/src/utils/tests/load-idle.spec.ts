@@ -96,4 +96,63 @@ describe('load-idle', () => {
 
     expect(callback).not.toHaveBeenCalled();
   });
+
+  it('serves every pending callback from one load listener and one idle callback', () => {
+    setReadyState('loading');
+    const addEventListener = vi.spyOn(window, 'addEventListener');
+    let idleCallback: () => void = () => undefined;
+    const requestIdleCallback = vi.fn((callback: () => void) => {
+      idleCallback = callback;
+      return 1;
+    });
+    vi.stubGlobal('requestIdleCallback', requestIdleCallback);
+    vi.stubGlobal('cancelIdleCallback', vi.fn());
+    const first = vi.fn();
+    const second = vi.fn();
+
+    scheduleAfterLoadIdle(first);
+    scheduleAfterLoadIdle(second);
+    window.dispatchEvent(new Event('load'));
+    idleCallback();
+
+    expect(
+      addEventListener.mock.calls.filter(([type]) => type === 'load'),
+    ).toHaveLength(1);
+    expect(requestIdleCallback).toHaveBeenCalledTimes(1);
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).toHaveBeenCalledTimes(1);
+    addEventListener.mockRestore();
+  });
+
+  it('keeps the other callbacks when one of them is cancelled', () => {
+    setReadyState('loading');
+    const cancelled = vi.fn();
+    const kept = vi.fn();
+
+    const cancel = scheduleAfterLoadIdle(cancelled);
+    scheduleAfterLoadIdle(kept);
+    cancel();
+    window.dispatchEvent(new Event('load'));
+    vi.runAllTimers();
+
+    expect(cancelled).not.toHaveBeenCalled();
+    expect(kept).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels the idle callback once the last pending callback is cancelled', () => {
+    setReadyState('complete');
+    const requestIdleCallback = vi.fn(() => 7);
+    const cancelIdleCallback = vi.fn();
+    vi.stubGlobal('requestIdleCallback', requestIdleCallback);
+    vi.stubGlobal('cancelIdleCallback', cancelIdleCallback);
+
+    const cancelFirst = scheduleAfterLoadIdle(vi.fn());
+    const cancelSecond = scheduleAfterLoadIdle(vi.fn());
+    cancelFirst();
+    expect(cancelIdleCallback).not.toHaveBeenCalled();
+
+    cancelSecond();
+    expect(cancelIdleCallback).toHaveBeenCalledWith(7);
+    expect(isAfterLoadIdle()).toBe(false);
+  });
 });
