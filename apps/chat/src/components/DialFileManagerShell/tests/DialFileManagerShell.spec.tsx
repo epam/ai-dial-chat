@@ -716,11 +716,31 @@ describe('DialFileManagerShell', () => {
     });
   });
 
-  it('passes the hook result onCreateFolder straight through to DialFileManager without wrapping it, so the destination-folder popup targets its own browsed path via the same fallback', () => {
-    const onCreateFolder = vi.fn();
+  it('forwards DialFileManager onCreateFolder arguments unchanged, so the destination-folder popup targets its own browsed path via the same fallback', async () => {
+    const onCreateFolder = vi.fn().mockResolvedValue(false);
     renderShell({ onCreateFolder });
-    expect(capturedDialFileManagerProps.current?.onCreateFolder).toBe(
-      onCreateFolder,
+    const forwardCreateFolder = capturedDialFileManagerProps.current
+      ?.onCreateFolder as (
+      file: { fileContent: File; name: string },
+      folderPath: string,
+      fileId: string,
+    ) => Promise<void>;
+    const file = {
+      fileContent: new File([], '.dial_folder'),
+      name: '.dial_folder',
+    };
+
+    await expect(
+      forwardCreateFolder(
+        file,
+        '/My files/reports/archive',
+        '/My files/reports/archive/.dial_folder',
+      ),
+    ).resolves.toBeUndefined();
+    expect(onCreateFolder).toHaveBeenCalledWith(
+      file,
+      '/My files/reports/archive',
+      '/My files/reports/archive/.dial_folder',
     );
   });
 
